@@ -228,10 +228,6 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 	return PyArray_SwapAxes(self, axis1, axis2);
 }
 
-static char doc_getfield[] = "m.getfield(dtype, offset) returns a field "\
-	" of the given array as a certain type. \nA field is a view of "\
-	" the array's data with each itemsize determined by the\ngiven type"\
-	" and the offset into the current array.";
 
 /* steals typed reference */
 /*OBJECT_API
@@ -279,9 +275,6 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	return _ARET(PyArray_GetField(self, dtype, offset));
 }
 
-
-static char doc_setfield[] = "m.setfield(value, dtype, offset) places val "\
-	"into field of the given array defined by the data type and offset.";
 
 /*OBJECT_API
  Set a subset of bytes from each element of the array
@@ -384,9 +377,6 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 	}
 }
 
-static char doc_byteswap[] = "m.byteswap(False)  Swap the bytes in"\
-	" the array.  Return the byteswapped array.  If the first argument"\
-	" is TRUE, byteswap in-place and return a reference to self.";
 
 static PyObject *
 array_byteswap(PyArrayObject *self, PyObject *args)
@@ -399,9 +389,6 @@ array_byteswap(PyArrayObject *self, PyObject *args)
 	return PyArray_Byteswap(self, inplace);
 }
 
-static char doc_tolist[] = "m.tolist().	 Copy the data portion of the array"\
-	" to a hierarchical python list and return that list.";
-
 static PyObject *
 array_tolist(PyArrayObject *self, PyObject *args)
 {
@@ -409,8 +396,6 @@ array_tolist(PyArrayObject *self, PyObject *args)
         return PyArray_ToList(self);
 }
 
-static char doc_tostring[] = "m.tostring(order='C')  Construct a Python string "\
-        "containing the raw bytes in the array";
 
 static PyObject *
 array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -424,7 +409,6 @@ array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return PyArray_ToString(self, order);
 }
 
-static char doc_tofile[] = "m.tofile(fid, sep="") write the data to a file.";
 
 static PyObject *
 array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -461,8 +445,6 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return Py_None;
 }
 
-static char doc_toscalar[] = "m.item().  Copy the first data point of "\
-	"the array to a standard Python scalar and return it.";
 
 static PyObject *
 array_toscalar(PyArrayObject *self, PyObject *args) {
@@ -476,9 +458,6 @@ array_toscalar(PyArrayObject *self, PyObject *args) {
 	}
 }
 
-static char doc_cast[] = "m.astype(t).	Cast array m to type t.	 \n\n"\
-	"t can be either a string representing a typecode, or a python type"\
-	" object of type int, float, or complex.";
 
 static PyObject *
 array_cast(PyArrayObject *self, PyObject *args)
@@ -585,11 +564,6 @@ array_getarray(PyArrayObject *self, PyObject *args)
 	}
 }
 
-static char doc_copy[] = "m.copy(|order). Return a copy of the array.\n"\
-	"If order is 'C' (False) then the result is contiguous (default). \n"\
-	"If order is 'Fortran' (True) then the result has fortran order. \n"\
-	"If order is 'Any' (None) then the result has fortran order \n"\
-	"only if m is already in fortran order.";
 
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args)
@@ -601,10 +575,6 @@ array_copy(PyArrayObject *self, PyObject *args)
         return PyArray_NewCopy(self, fortran);
 }
 
-static char doc_resize[] = "self.resize(new_shape, refcheck=True, order=False).  "\
-	"Change size and shape of self inplace.\n"\
-	"\n    Array must own its own memory and not be referenced by other " \
-	"arrays\n    Returns None.";
 
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -767,7 +737,6 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
         }
 }
 
-static char doc_deepcopy[] = "Used if copy.deepcopy is called on an array.";
 
 static PyObject *
 array_deepcopy(PyArrayObject *self, PyObject *args)
@@ -1570,117 +1539,130 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 }
 
 static PyMethodDef array_methods[] = {
-        {"tolist",	 (PyCFunction)array_tolist,	1, doc_tolist},
-        {"item", (PyCFunction)array_toscalar, METH_VARARGS, doc_toscalar},
-	{"tofile", (PyCFunction)array_tofile,
-         METH_VARARGS | METH_KEYWORDS, doc_tofile},
-        {"tostring", (PyCFunction)array_tostring,
-	 METH_VARARGS | METH_KEYWORDS, doc_tostring},
-        {"byteswap",   (PyCFunction)array_byteswap,	1, doc_byteswap},
-        {"astype", (PyCFunction)array_cast, 1, doc_cast},
+        {"astype", (PyCFunction)array_cast,
+            1, NULL},
+        {"byteswap", (PyCFunction)array_byteswap,
+            1, NULL},
+        {"copy", (PyCFunction)array_copy,
+            1, NULL},
 	{"getfield", (PyCFunction)array_getfield,
-	 METH_VARARGS | METH_KEYWORDS, doc_getfield},
-	{"setfield", (PyCFunction)array_setfield,
-	 METH_VARARGS | METH_KEYWORDS, doc_setfield},
-        {"copy", (PyCFunction)array_copy, 1, doc_copy},
+            METH_VARARGS | METH_KEYWORDS, NULL},
+        {"item", (PyCFunction)array_toscalar,
+            METH_VARARGS, NULL},
+	{"tofile", (PyCFunction)array_tofile,
+            METH_VARARGS | METH_KEYWORDS, NULL},
+        {"tolist", (PyCFunction)array_tolist,
+            1, NULL},
+        {"tostring", (PyCFunction)array_tostring,
+            METH_VARARGS | METH_KEYWORDS, NULL},
         {"resize", (PyCFunction)array_resize,
-	 METH_VARARGS | METH_KEYWORDS, doc_resize},
+            METH_VARARGS | METH_KEYWORDS, NULL},
+	{"setfield", (PyCFunction)array_setfield,
+            METH_VARARGS | METH_KEYWORDS, NULL},
 
 	/* for subtypes */
-	{"__array__", (PyCFunction)array_getarray, 1, doc_array_getarray},
-	{"__array_wrap__", (PyCFunction)array_wraparray, 1, doc_wraparray},
+	{"__array__", (PyCFunction)array_getarray,
+            1, doc_array_getarray},
+	{"__array_wrap__", (PyCFunction)array_wraparray,
+            1, doc_wraparray},
 
 	/* for the copy module */
-        {"__copy__", (PyCFunction)array_copy, 1, doc_copy},
-        {"__deepcopy__", (PyCFunction)array_deepcopy, 1, doc_deepcopy},
+        {"__copy__", (PyCFunction)array_copy,
+            1, NULL},
+        {"__deepcopy__", (PyCFunction)array_deepcopy,
+            1, NULL},
 
         /* for Pickling */
-        {"__reduce__", (PyCFunction) array_reduce, 1, doc_reduce},
-	{"__setstate__", (PyCFunction) array_setstate, 1, doc_setstate},
-	{"dumps", (PyCFunction) array_dumps, 1, doc_dumps},
-	{"dump", (PyCFunction) array_dump, 1, doc_dump},
+        {"__reduce__", (PyCFunction) array_reduce,
+            1, doc_reduce},
+	{"__setstate__", (PyCFunction) array_setstate,
+            1, doc_setstate},
+	{"dumps", (PyCFunction) array_dumps,
+            1, doc_dumps},
+	{"dump", (PyCFunction) array_dump,
+            1, doc_dump},
 
 	/* Extended methods added 2005 */
-	{"all", (PyCFunction)array_all,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+        {"all", (PyCFunction)array_all,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"any", (PyCFunction)array_any,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"argmax",	(PyCFunction)array_argmax,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"argmin",  (PyCFunction)array_argmin,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"argsort",	(PyCFunction)array_argsort,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"choose",	(PyCFunction)array_choose,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"argmax", (PyCFunction)array_argmax,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"argmin", (PyCFunction)array_argmin,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"argsort", (PyCFunction)array_argsort,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"choose", (PyCFunction)array_choose,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"clip", (PyCFunction)array_clip,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"compress", (PyCFunction)array_compress,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"conj", (PyCFunction)array_conjugate,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS, NULL},
 	{"conjugate", (PyCFunction)array_conjugate,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS, NULL},
 	{"cumprod", (PyCFunction)array_cumprod,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"cumsum", (PyCFunction)array_cumsum,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"diagonal", (PyCFunction)array_diagonal,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"fill", (PyCFunction)array_fill,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS, NULL},
 	{"flatten", (PyCFunction)array_flatten,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS, NULL},
 	{"max", (PyCFunction)array_max,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"mean", (PyCFunction)array_mean,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"min", (PyCFunction)array_min,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"newbyteorder", (PyCFunction)array_newbyteorder,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS, NULL},
 	{"nonzero", (PyCFunction)array_nonzero,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS, NULL},
 	{"prod", (PyCFunction)array_prod,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"ptp", (PyCFunction)array_ptp,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"put",	(PyCFunction)array_put,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"putmask",	(PyCFunction)array_putmask,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"putmask", (PyCFunction)array_putmask,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"ravel", (PyCFunction)array_ravel,
-	 METH_VARARGS, NULL},
-	{"repeat",	(PyCFunction)array_repeat,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"reshape",	(PyCFunction)array_reshape,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS, NULL},
+	{"repeat", (PyCFunction)array_repeat,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"reshape", (PyCFunction)array_reshape,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"round", (PyCFunction)array_round,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"searchsorted",  (PyCFunction)array_searchsorted,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"searchsorted", (PyCFunction)array_searchsorted,
+	    METH_VARARGS, NULL},
 	{"setflags", (PyCFunction)array_setflags,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"sort",	(PyCFunction)array_sort,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"squeeze",	(PyCFunction)array_squeeze,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"sort", (PyCFunction)array_sort,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"squeeze", (PyCFunction)array_squeeze,
+	    METH_VARARGS, NULL},
 	{"std", (PyCFunction)array_stddev,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"sum", (PyCFunction)array_sum,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"swapaxes", (PyCFunction)array_swapaxes,
-	 METH_VARARGS, NULL},
-	{"take",	(PyCFunction)array_take,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS, NULL},
+	{"take", (PyCFunction)array_take,
+	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"trace", (PyCFunction)array_trace,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"transpose",	(PyCFunction)array_transpose,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"transpose", (PyCFunction)array_transpose,
+	    METH_VARARGS, NULL},
 	{"var", (PyCFunction)array_variance,
-	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"view",  (PyCFunction)array_view,
-	 METH_VARARGS, NULL},
+	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"view", (PyCFunction)array_view,
+	    METH_VARARGS, NULL},
         {NULL,		NULL}		/* sentinel */
 };
 

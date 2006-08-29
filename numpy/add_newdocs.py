@@ -447,6 +447,30 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
 #
 ##############################################################################
 
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
+"""a.__copy__(|order) -> copy, possibly with different order.
+
+Return a copy of the array.
+
+Argument:
+    order -- Order of returned copy (default 'C')
+	If order is 'C' (False) then the result is contiguous (default).
+	If order is 'Fortran' (True) then the result has fortran order.
+	If order is 'Any' (None) then the result has fortran order
+	only if m is already in fortran order.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
+"""a.__deepcopy__() -> Deep copy of array.
+
+Used if copy.deepcopy is called on an array.
+
+"""))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
 """ a.all(axis=None)
 
@@ -506,6 +530,24 @@ less space than sorts along other axis.
 """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
+"""a.astype(t) -> Copy of array cast to type t.
+
+Cast array m to type t.  t can be either a string representing a typecode,
+or a python type object of type int, float, or complex.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
+"""a.byteswap(False) -> View or copy. Swap the bytes in the array.
+
+Swap the bytes in the array.  Return the byteswapped array.  If the first
+argument is TRUE, byteswap in-place and return a reference to self.
+
+"""))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
 """ a.choose(b0, b1, ..., bn, out=None, mode='raise')
 
@@ -540,6 +582,21 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
 """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
+"""a.copy(|order) -> copy, possibly with different order.
+
+Return a copy of the array.
+
+Argument:
+    order -- Order of returned copy (default 'C')
+	If order is 'C' (False) then the result is contiguous (default).
+	If order is 'Fortran' (True) then the result has fortran order.
+	If order is 'Any' (None) then the result has fortran order
+	only if m is already in fortran order.;
+
+"""))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('cumprod',
 """a.cumprod(axis=None, dtype=None)
 
@@ -564,6 +621,25 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
 """a.flatten([fortran]) return a 1-d array (always copy)
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('getfield',
+"""a.getfield(dtype, offset) -> field of array as given type.
+
+Returns a field of the given array as a certain type. A field is a view of
+the array's data with each itemsize determined by the given type and the
+offset into the current array.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('item',
+"""a.item() ->  copy of first array item as Python scalar.
+
+Copy the first element of array to a standard Python scalar and return
+it. The array must be of size one.
+
 """))
 
 
@@ -653,8 +729,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('repeat',
 """a.repeat(repeats=, axis=none)
 
-copy elements of a, repeats times.  the repeats argument must
-be a sequence of length a.shape[axis] or a scalar.;
+copy elements of a, repeats times.  the repeats argument must be a sequence
+of length a.shape[axis] or a scalar.
 
 """))
 
@@ -662,9 +738,18 @@ be a sequence of length a.shape[axis] or a scalar.;
 add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
 """a.reshape(d1, d2, ..., dn, order='c')
 
-Return a new array from this one.  The new array must have the
-same number of elements as self.  Also always returns a view or
-raises a ValueError if that is impossible.;
+Return a new array from this one.  The new array must have the same number
+of elements as self.  Also always returns a view or raises a ValueError if
+that is impossible.;
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
+"""a.resize(new_shape, refcheck=True, order=False) -> None. Change array shape.
+
+Change size and shape of self inplace.  Array must own its own memory and
+not be referenced by other arrays.    Returns None.
 
 """))
 
@@ -678,11 +763,18 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
 """a.searchsorted(v)
 
- Assuming that a is a 1-D array, in ascending order and represents
- bin boundaries, then a.searchsorted(values) gives an array of bin
- numbers, giving the bin into which each value would be placed.
- This method is helpful for histograming.  Note: No warning is
- given if the boundaries, in a, are not in ascending order.;
+ Assuming that a is a 1-D array, in ascending order and represents bin
+ boundaries, then a.searchsorted(values) gives an array of bin numbers,
+ giving the bin into which each value would be placed.  This method is
+ helpful for histograming.  Note: No warning is given if the boundaries, in
+ a, are not in ascending order.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('setfield',
+"""m.setfield(value, dtype, offset) -> None.
+places val into field of the given array defined by the data type and offset.
 
 """))
 
@@ -794,9 +886,32 @@ given axis.
 """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
+"""a.tofile(fid, sep="") -> None. Write the data to a file.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
+"""a.tolist() -> Array as hierarchical list.
+
+Copy the data portion of the array to a hierarchical python list and return
+that list.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
+"""a.tostring(order='C') -> binary array data as Python string.
+
+Construct a Python string containing the raw bytes in the array.
+
+"""))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
 """a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
-return the sum along the offset diagonal of the arrays indicated
+return the sum along the offset diagonal of the array's indicated
 axis1 and axis2.
 
 """))
@@ -840,5 +955,3 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 Type can be either a new sub-type object or a data-descriptor object
 
 """))
-
-
