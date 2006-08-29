@@ -540,9 +540,9 @@ def extract(condition, arr):
     """Return the elements of ravel(arr) where ravel(condition) is True
     (in 1D).
 
-    Equivalent to compress(ravel(condition), ravel(arr),0).
+    Equivalent to compress(ravel(condition), ravel(arr)).
     """
-    return _nx.take(ravel(arr), nonzero(ravel(condition))[0],axis=0)
+    return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
 def place(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but the 1D array vals has the

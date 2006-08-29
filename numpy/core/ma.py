@@ -1604,8 +1604,17 @@ def masked_array (a, mask=nomask, fill_value=None):
     """
     return array(a, mask=mask, copy=0, fill_value=fill_value)
 
-sum = add.reduce
-product = multiply.reduce
+def sum (target, axis=None, dtype=None):
+    if axis is None:
+        target = ravel(target)
+        axis = 0
+    return add.reduce(target, axis, dtype)
+
+def product (target, axis=None, dtype=None):
+    if axis is None:
+        target = ravel(target)
+        axis = 0
+    return multiply.reduce(target, axis, dtype)
 
 def average (a, axis=None, weights=None, returned = 0):
     """average(a, axis=None, weights=None)

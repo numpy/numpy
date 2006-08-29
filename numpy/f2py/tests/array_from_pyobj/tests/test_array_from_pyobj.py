@@ -222,7 +222,7 @@ class Array:
         if arr1.shape != arr2.shape:
             return False
         s = arr1==arr2
-        return alltrue(s.flatten(),axis=0)
+        return alltrue(s.flatten())
 
     def __str__(self):
         return str(self.arr)

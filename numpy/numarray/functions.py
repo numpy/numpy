@@ -206,7 +206,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     ##file whose size may be determined before allocation, should be
     ##quick -- only one allocation will be needed.
     
-    recsize = dtype.itemsize * N.product([i for i in shape if i != -1],axis=0)
+    recsize = dtype.itemsize * N.product([i for i in shape if i != -1])
     blocksize = max(_BLOCKSIZE/recsize, 1)*recsize
 
     ##try to estimate file size
@@ -268,7 +268,7 @@ def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
     if shape is None:
         count = -1
     else:
-        count = N.product(shape,axis=0)*dtype.itemsize
+        count = N.product(shape)*dtype.itemsize
     res = N.fromstring(datastring, count=count)
     if shape is not None:
         res.shape = shape

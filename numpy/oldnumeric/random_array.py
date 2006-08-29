@@ -166,7 +166,7 @@ def multinomial(trials, probs, shape=[]):
            trials is the number of trials in each multinomial distribution.
            probs is a one dimensional array. There are len(prob)+1 events.
            prob[i] is the probability of the i-th event, 0<=i<len(prob).
-           The probability of event len(prob) is 1.-Numeric.sum(prob,axis=0).
+           The probability of event len(prob) is 1.-Numeric.sum(prob).
 
        The first form returns a single 1-D array containing one multinomially
            distributed vector.

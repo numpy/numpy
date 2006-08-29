@@ -661,7 +661,7 @@ Singular values less than s[0]*rcond are treated as zero.
     if one_eq:
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
         if results['rank']==n and m>n:
-            resids = array([sum((ravel(bstar)[n:])**2,axis=0)], dtype=result_t)
+            resids = array([sum((ravel(bstar)[n:])**2)], dtype=result_t)
     else:
         x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
         if results['rank']==n and m>n:

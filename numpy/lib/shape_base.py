@@ -32,7 +32,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     if isscalar(res):
         outarr = zeros(outshape,asarray(res).dtype)
         outarr[ind] = res
-        Ntot = product(outshape,axis=0)
+        Ntot = product(outshape)
         k = 1
         while k < Ntot:
             # increment the index
@@ -48,7 +48,7 @@ def apply_along_axis(func1d,axis,arr,*args):
             k += 1
         return outarr
     else:
-        Ntot = product(outshape,axis=0)
+        Ntot = product(outshape)
         holdshape = outshape
         outshape = list(arr.shape)
         outshape[axis] = len(res)
