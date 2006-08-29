@@ -448,6 +448,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
 ##############################################################################
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
+""" a.__array__(|dtype) -> reference if type unchanged, copy otherwise.
+
+Returns either a new reference to self if dtype is not given or a new array
+of provided data type if dtype is different from the current dtype of the
+array.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
+"""a.__array_wrap__(obj) -> Object of same type as a from ndarray obj.
+
+"""))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
 """a.__copy__(|order) -> copy, possibly with different order.
 
@@ -467,6 +483,29 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
 """a.__deepcopy__() -> Deep copy of array.
 
 Used if copy.deepcopy is called on an array.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__reduce__',
+"""a.__reduce__()
+
+For pickling.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
+"""a.__setstate__(version, shape, typecode, isfortran, rawdata)
+
+For unpickling.
+
+Arguments:
+    version -- optional pickle version. If omitted defaults to 0.
+    shape -- a tuple giving the shape
+    typecode -- a typecode
+    isFortran --  a bool stating if Fortran or no
+    rawdata -- a binary string with the data (or a list if Object array)
 
 """))
 
@@ -569,16 +608,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('compress',
 """a.compress(condition=, axis=None, out=None)
+
 """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('conj',
 """a.conj()
+
 """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
 """a.conjugate()
+
 """))
 
 
@@ -611,6 +653,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('cumsum',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
 """a.diagonal(offset=0, axis1=0, axis2=1)
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
+"""a.dump(file) Dump to specified file.
+
+Arguments:
+    file -- string naming the dump file.
+
+"""))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('dumps',
+"""a.dumps() -> string containing the dump?
+
 """))
 
 

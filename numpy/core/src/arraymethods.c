@@ -481,8 +481,6 @@ array_cast(PyArrayObject *self, PyObject *args)
 
 /* default sub-type implementation */
 
-static char doc_wraparray[] = "m.__array_wrap__(obj) returns an object of "\
-	"type m from the ndarray object obj";
 
 static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
@@ -515,8 +513,6 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 	return ret;
 }
 
-
-static char doc_array_getarray[] = "m.__array__(|dtype) just returns either a new reference to self if dtype is not given or a new array of provided data type if dtype is different from the current dtype of the array.";
 
 static PyObject *
 array_getarray(PyArrayObject *self, PyObject *args)
@@ -811,7 +807,6 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
 	return 0;
 }
 
-static char doc_reduce[] = "a.__reduce__()  for pickling.";
 
 static PyObject *
 array_reduce(PyArrayObject *self, PyObject *args)
@@ -886,14 +881,7 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	return ret;
 }
 
-static char doc_setstate[] = "a.__setstate__(tuple) for unpickling.";
 
-/*
-	   1) a Tuple giving the shape
-	   2) a PyArray_Descr Object
-	   3) a Bool stating if Fortran or not
-	   4) a binary string with the data (or a list if Object array)
-*/
 
 static size_t _array_fill_strides(intp *, intp *, int, size_t, int, int *);
 
@@ -1108,8 +1096,6 @@ PyArray_Dumps(PyObject *self, int protocol)
 }
 
 
-static char doc_dump[] = "m.dump(file)";
-
 static PyObject *
 array_dump(PyArrayObject *self, PyObject *args)
 {
@@ -1124,7 +1110,6 @@ array_dump(PyArrayObject *self, PyObject *args)
 	return Py_None;
 }
 
-static char doc_dumps[] = "m.dumps()";
 
 static PyObject *
 array_dumps(PyArrayObject *self, PyObject *args)
@@ -1539,50 +1524,30 @@ array_newbyteorder(PyArrayObject *self, PyObject *args)
 }
 
 static PyMethodDef array_methods[] = {
-        {"astype", (PyCFunction)array_cast,
-            1, NULL},
-        {"byteswap", (PyCFunction)array_byteswap,
-            1, NULL},
-        {"copy", (PyCFunction)array_copy,
-            1, NULL},
-	{"getfield", (PyCFunction)array_getfield,
-            METH_VARARGS | METH_KEYWORDS, NULL},
-        {"item", (PyCFunction)array_toscalar,
-            METH_VARARGS, NULL},
-	{"tofile", (PyCFunction)array_tofile,
-            METH_VARARGS | METH_KEYWORDS, NULL},
-        {"tolist", (PyCFunction)array_tolist,
-            1, NULL},
-        {"tostring", (PyCFunction)array_tostring,
-            METH_VARARGS | METH_KEYWORDS, NULL},
-        {"resize", (PyCFunction)array_resize,
-            METH_VARARGS | METH_KEYWORDS, NULL},
-	{"setfield", (PyCFunction)array_setfield,
-            METH_VARARGS | METH_KEYWORDS, NULL},
 
 	/* for subtypes */
 	{"__array__", (PyCFunction)array_getarray,
-            1, doc_array_getarray},
+            METH_VARARGS, NULL},
 	{"__array_wrap__", (PyCFunction)array_wraparray,
-            1, doc_wraparray},
+            METH_VARARGS, NULL},
 
 	/* for the copy module */
         {"__copy__", (PyCFunction)array_copy,
-            1, NULL},
+            METH_VARARGS, NULL},
         {"__deepcopy__", (PyCFunction)array_deepcopy,
-            1, NULL},
+            METH_VARARGS, NULL},
 
         /* for Pickling */
         {"__reduce__", (PyCFunction) array_reduce,
-            1, doc_reduce},
+            METH_VARARGS, NULL},
 	{"__setstate__", (PyCFunction) array_setstate,
-            1, doc_setstate},
+            METH_VARARGS, NULL},
 	{"dumps", (PyCFunction) array_dumps,
-            1, doc_dumps},
+            METH_VARARGS, NULL},
 	{"dump", (PyCFunction) array_dump,
-            1, doc_dump},
+            METH_VARARGS, NULL},
 
-	/* Extended methods added 2005 */
+	/* Original and Extended methods added 2005 */
         {"all", (PyCFunction)array_all,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"any", (PyCFunction)array_any,
@@ -1593,6 +1558,10 @@ static PyMethodDef array_methods[] = {
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"argsort", (PyCFunction)array_argsort,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
+        {"astype", (PyCFunction)array_cast,
+            METH_VARARGS, NULL},
+        {"byteswap", (PyCFunction)array_byteswap,
+            METH_VARARGS, NULL},
 	{"choose", (PyCFunction)array_choose,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"clip", (PyCFunction)array_clip,
@@ -1603,6 +1572,8 @@ static PyMethodDef array_methods[] = {
 	    METH_VARARGS, NULL},
 	{"conjugate", (PyCFunction)array_conjugate,
 	    METH_VARARGS, NULL},
+        {"copy", (PyCFunction)array_copy,
+            METH_VARARGS, NULL},
 	{"cumprod", (PyCFunction)array_cumprod,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"cumsum", (PyCFunction)array_cumsum,
@@ -1613,6 +1584,10 @@ static PyMethodDef array_methods[] = {
 	    METH_VARARGS, NULL},
 	{"flatten", (PyCFunction)array_flatten,
 	    METH_VARARGS, NULL},
+	{"getfield", (PyCFunction)array_getfield,
+            METH_VARARGS | METH_KEYWORDS, NULL},
+        {"item", (PyCFunction)array_toscalar,
+            METH_VARARGS, NULL},
 	{"max", (PyCFunction)array_max,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"mean", (PyCFunction)array_mean,
@@ -1637,10 +1612,14 @@ static PyMethodDef array_methods[] = {
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"reshape", (PyCFunction)array_reshape,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
+        {"resize", (PyCFunction)array_resize,
+            METH_VARARGS | METH_KEYWORDS, NULL},
 	{"round", (PyCFunction)array_round,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"searchsorted", (PyCFunction)array_searchsorted,
 	    METH_VARARGS, NULL},
+	{"setfield", (PyCFunction)array_setfield,
+            METH_VARARGS | METH_KEYWORDS, NULL},
 	{"setflags", (PyCFunction)array_setflags,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"sort", (PyCFunction)array_sort,
@@ -1655,6 +1634,12 @@ static PyMethodDef array_methods[] = {
 	    METH_VARARGS, NULL},
 	{"take", (PyCFunction)array_take,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
+	{"tofile", (PyCFunction)array_tofile,
+            METH_VARARGS | METH_KEYWORDS, NULL},
+        {"tolist", (PyCFunction)array_tolist,
+            METH_VARARGS, NULL},
+        {"tostring", (PyCFunction)array_tostring,
+            METH_VARARGS | METH_KEYWORDS, NULL},
 	{"trace", (PyCFunction)array_trace,
 	    METH_VARARGS|METH_KEYWORDS, NULL},
 	{"transpose", (PyCFunction)array_transpose,
