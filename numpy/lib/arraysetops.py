@@ -66,7 +66,7 @@ def unique1d( ar1, retindx = False ):
     if retindx:
         ar = numpy.array(ar1).ravel()
         perm = ar.argsort()
-        aux = ar.take(perm,0)
+        aux = ar.take(perm)
         flag = ediff1d( aux, 1 ) != 0
         return perm.compress(flag), aux.compress(flag)
     else:
@@ -113,8 +113,8 @@ def setmember1d( ar1, ar2 ):
     tt = concat( (zlike( ar1 ),
                   zlike( ar2 ) + 1) )
     perm = ar.argsort()
-    aux = ar.take(perm,0)
-    aux2 = tt.take(perm,0)
+    aux = ar.take(perm)
+    aux2 = tt.take(perm)
     flag = ediff1d( aux, 1 ) == 0
 
     ii = numpy.where( flag * aux2 )[0]
@@ -124,7 +124,7 @@ def setmember1d( ar1, ar2 ):
 
     indx = perm.argsort()[:len( ar1 )]
 
-    return flag.take( indx , 0)
+    return flag.take( indx )
 
 ##
 # 03.11.2005, c
