@@ -6944,7 +6944,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
                 }
                 if (l == 0 && minitype->type_num == PyArray_BOOL) {
                         Py_DECREF(minitype);
-                        minitype = PyArray_DescrFromType(PyArray_INTP);
+                        minitype = PyArray_DescrFromType(PyArray_DEFAULT);
                 }
                 while (--l >= 0) {
                         PyArray_Descr *newtype;

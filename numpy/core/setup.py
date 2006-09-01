@@ -102,7 +102,8 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('NPY_NO_SIGNAL')
                 
             if sys.version[:3] < '2.4':
-                if check_func('strtod'):
+                if config_cmd.check_func('strtod', decl=False,
+                                         headers=['stdlib.h']):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
 
             target_f = open(target,'a')
