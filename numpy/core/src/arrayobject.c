@@ -6974,6 +6974,11 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         outtype = _array_small_type(chktype, minitype);
         Py_DECREF(chktype);
         Py_DECREF(minitype);
+        /* VOID Arrays should not occur by "default" */
+        if (outtype->type_num == PyArray_VOID) {
+                Py_DECREF(outtype);
+                return PyArray_DescrFromType(PyArray_OBJECT);
+        }
         return outtype;
 }
 
