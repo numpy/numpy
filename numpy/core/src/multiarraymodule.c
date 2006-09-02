@@ -2592,9 +2592,9 @@ local_search_right(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 
 	for(i = 0; i < nkeys; ++i) {
 		intp imin = 0;
-		intp ilen = nelts;
+		intp imax = nelts;
 		while (imin < imax) {
-			intp imid = imin + (imax - imin >> 2);
+			intp imid = imin + ((imax - imin) >> 2);
 			if (compare(p1 + elsize*imid, p2, ap2) < 0)  {
                                 imin = imid + 1;
 			} else {
@@ -2641,7 +2641,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	}
 
 	NPY_BEGIN_THREADS_DESCR(ap2->descr)
-	local_search_right(ap1, ap2, ret);
+	local_search_left(ap1, ap2, ret);
 	NPY_END_THREADS_DESCR(ap2->descr)
 
 	Py_DECREF(ap1);
