@@ -2505,6 +2505,23 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 }
 
 
+/* local_search_left
+ *
+ * Use bisection to find the indices i into ap1 s.t.
+ *
+ *      ap1[j] < key <= ap1[i] for all 0 <= j < i and all keys in ap2,
+ *
+ * When there is no such index i, set i = len(ap1).  Return the results in ret. All
+ * arrays are assumed contiguous on entry and both ap1 and ap2 are assumed to
+ * be of the same comparable type.
+ *
+ * Arguments:
+ *
+ * ap1 -- array to be searched, contiguous on entry and assumed sorted.
+ * ap2 -- array of keys, contiguous on entry.
+ * ret -- return array of intp, contiguous on entry.
+ *
+ */
 static void
 local_search_left(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 {
@@ -2543,6 +2560,53 @@ local_search_left(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 	}
 }
 
+
+/* local_search_right
+ *
+ * Use bisection to find the indices i into ap1 s.t.
+ *
+ *      ap1[j] <= key < ap1[i] for all 0 <= j < i and all keys in ap2.
+ *
+ * When there is no such index i, set i = len(ap1).  Return the results in ret. All
+ * arrays are assumed contiguous on entry and both ap1 and ap2 are assumed to
+ * be of the same comparable type.
+ *
+ * Arguments:
+ *
+ * ap1 -- array to be searched, contiguous on entry and assumed sorted.
+ * ap2 -- array of keys, contiguous on entry.
+ * ret -- return array of intp, contiguous on entry.
+ *
+ */
+static void
+local_search_right(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
+{
+	PyArray_CompareFunc *compare = ap2->descr->f->compare;
+	intp nelts = ap1->dimensions[ap1->nd - 1];
+	intp nkeys = PyArray_SIZE(ap2);
+	char *p1 = ap1->data;
+	char *p2 = ap2->data;
+	intp *pr = (intp *)ret->data;
+	int elsize = ap1->descr->elsize;
+	intp i;
+
+	for(i = 0; i < nkeys; ++i) {
+		intp imin = 0;
+		intp ilen = nelts;
+		while (imin < imax) {
+			intp imid = imin + (imax - imin >> 2);
+			if (compare(p1 + elsize*imid, p2, ap2) < 0)  {
+                                imin = imid + 1;
+			} else {
+				imax = imid;
+			}
+		}
+                *pr = imin;
+                pr += 1;
+                p2 += elsize;
+	}
+}
+
 /*MULTIARRAY_API
  Numeric.searchsorted(a,v)
 */
@@ -2577,7 +2641,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	}
 
 	NPY_BEGIN_THREADS_DESCR(ap2->descr)
-	local_search_left(ap1, ap2, ret);
+	local_search_right(ap1, ap2, ret);
 	NPY_END_THREADS_DESCR(ap2->descr)
 
 	Py_DECREF(ap1);
