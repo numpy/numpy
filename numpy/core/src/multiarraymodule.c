@@ -2506,7 +2506,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
 
 static void
-local_where(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
+local_search_left(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 {
 	PyArray_CompareFunc *compare = ap2->descr->f->compare;
 	intp  min_i, max_i, i, j;
@@ -2577,7 +2577,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
 	}
 
 	NPY_BEGIN_THREADS_DESCR(ap2->descr)
-	local_where(ap1, ap2, ret);
+	local_search_left(ap1, ap2, ret);
 	NPY_END_THREADS_DESCR(ap2->descr)
 
 	Py_DECREF(ap1);
