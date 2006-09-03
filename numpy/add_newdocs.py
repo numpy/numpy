@@ -877,10 +877,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
 
            a[j] < key <= a[i] for all j < i,
 
-    If such an index does not exist, a.size() is used. The result is such that
-    if the key were to be inserted into a in the slot before the index i, then
-    the order of a would be preserved and i would be the smallest index with
-    that property.
+    If such an index does not exist, a.size() is used. Consequently, i is the
+    index of the first item in a that is >= key. If the key were to be inserted
+    into a in the slot before the index i, then the order of a would be
+    preserved and i would be the smallest index with that property.
 
     The method call
 
@@ -891,10 +891,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
 
            a[j] <= key < a[i] for all j < i,
 
-    If such an index does not exist, a.size() is used. The result is such that
-    if the key were to be inserted into a in the slot before the index i, then
-    the order of a would be preserved and i would be the largest index with
-    that property.
+    If such an index does not exist, a.size() is used. Consequently, i is the
+    index of the first item in a that is > key. If the key were to be inserted
+    into a in the slot before the index i, then the order of a would be
+    preserved and i would be the largest index with that property.
 
     """))
 
