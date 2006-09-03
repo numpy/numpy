@@ -819,13 +819,40 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
-"""a.searchsorted(v)
+"""a.searchsorted(values=v, side='left') -> array of indices.
 
- Assuming that a is a 1-D array, in ascending order and represents bin
- boundaries, then a.searchsorted(values) gives an array of bin numbers,
- giving the bin into which each value would be placed.  This method is
- helpful for histograming.  Note: No warning is given if the boundaries, in
- a, are not in ascending order.
+    Required Arguments:
+        v -- keys to be searched for in a.
+
+    Keyword arguments
+        side -- {'left', 'right'}, default('left').
+
+    If a is a 1-D array in ascending order, then
+
+        a.searchsorted(v, side='left')
+
+    returns an array of indices i such that for each element of values the
+    following holds:
+
+           a[j] < key <= a[i] for all j < i,
+
+    If such an index does not exist, a.size() is used. The result is such that
+    if the key were to be inserted in the slot before the index i, then the
+    order of a would be preserved and i would be the smallest index with that
+    property.
+
+    If a is a 1-D array in ascending order, then
+
+        a.searchsorted(v, side='right')
+
+    returns an array of indices i such that for each element of values the
+    following holds:
+
+           a[j] <= key < a[i] for all j < i,
+
+    If such an index does not exist, a.size() is used. The result is that if the
+    key were to be inserted in the slot before the index i, then the order of a
+    would be preserved and i would be the largest index with that property.
 
 """))
 

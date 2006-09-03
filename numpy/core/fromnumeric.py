@@ -220,14 +220,49 @@ def argmin(a, axis=None):
         return _wrapit(a, 'argmin', axis)
     return argmin(axis)
 
-def searchsorted(a, v):
-    """searchsorted(a, v)
+def searchsorted(a, v, side ='left'):
+    """-> array ind. Inserting v[i] before a[ind[i]] will leave a in order.
+
+    Required Arguments:
+        a -- sorted 1-D array to be searched.
+        v -- keys to be searched for in a.
+
+    Keyword arguments
+        side -- {'left', 'right'}, default('left').
+
+    If a is a 1-D array in ascending order, then
+
+        searchsorted(a, v, side='left')
+
+    returns an array of indices i such that for each element of values the
+    following holds:
+
+           a[j] < key <= a[i] for all j < i,
+
+    If such an index does not exist, a.size() is used. The result is such that
+    if the key were to be inserted in the slot before the index i, then the
+    order of a would be preserved and i would be the smallest index with that
+    property.
+
+    If a is a 1-D array in ascending order, then
+
+        searchsorted(a, v, side='right')
+
+    returns an array of indices i such that for each element of values the
+    following holds:
+
+           a[j] <= key < a[i] for all j < i,
+
+    If such an index does not exist, a.size() is used. The result is that if the
+    key were to be inserted in the slot before the index i, then the order of a
+    would be preserved and i would be the largest index with that property.
+
     """
     try:
         searchsorted = a.searchsorted
     except AttributeError:
-        return _wrapit(a, 'searchsorted', v)
-    return searchsorted(v)
+        return _wrapit(a, 'searchsorted', v, side)
+    return searchsorted(v, side)
 
 def resize(a, new_shape):
     """resize(a,new_shape) returns a new array with the specified shape.

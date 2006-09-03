@@ -693,13 +693,32 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_searchsorted(PyArrayObject *self, PyObject *args)
+array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
 	PyObject *values;
+        char *side = "left";
+        static char *kwlist[] = {"values","side", NULL};
+        NPY_SEARCHKIND which;
 
-	if (!PyArg_ParseTuple(args, "O", &values)) return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|s", kwlist, &values, &side))
+            return NULL;
+	if (strlen(side) < 1) {
+		PyErr_SetString(PyExc_ValueError,
+                        "Searchsorted side string must be at least length 1");
+		return PY_FAIL;
+	}
 
-	return _ARET(PyArray_SearchSorted(self, values));
+        if (side[0] == 'l' || side[0] == 'L')
+                which = NPY_SEARCHLEFT;
+        else if (side[0] == 'r' || side[0] == 'R')
+                which = NPY_SEARCHRIGHT;
+        else {
+		PyErr_Format(PyExc_ValueError,
+                        "%s is an unrecognized side", side);
+		return PY_FAIL;
+	}
+
+	return _ARET(PyArray_SearchSorted(self, values, which));
 }
 
 static void
@@ -1549,25 +1568,25 @@ static PyMethodDef array_methods[] = {
 
 	/* Original and Extended methods added 2005 */
         {"all", (PyCFunction)array_all,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"any", (PyCFunction)array_any,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"argmax", (PyCFunction)array_argmax,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"argmin", (PyCFunction)array_argmin,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"argsort", (PyCFunction)array_argsort,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
         {"astype", (PyCFunction)array_cast,
             METH_VARARGS, NULL},
         {"byteswap", (PyCFunction)array_byteswap,
             METH_VARARGS, NULL},
 	{"choose", (PyCFunction)array_choose,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"clip", (PyCFunction)array_clip,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"compress", (PyCFunction)array_compress,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"conj", (PyCFunction)array_conjugate,
 	    METH_VARARGS, NULL},
 	{"conjugate", (PyCFunction)array_conjugate,
@@ -1575,11 +1594,11 @@ static PyMethodDef array_methods[] = {
         {"copy", (PyCFunction)array_copy,
             METH_VARARGS, NULL},
 	{"cumprod", (PyCFunction)array_cumprod,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"cumsum", (PyCFunction)array_cumsum,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"diagonal", (PyCFunction)array_diagonal,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"fill", (PyCFunction)array_fill,
 	    METH_VARARGS, NULL},
 	{"flatten", (PyCFunction)array_flatten,
@@ -1589,51 +1608,51 @@ static PyMethodDef array_methods[] = {
         {"item", (PyCFunction)array_toscalar,
             METH_VARARGS, NULL},
 	{"max", (PyCFunction)array_max,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"mean", (PyCFunction)array_mean,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"min", (PyCFunction)array_min,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"newbyteorder", (PyCFunction)array_newbyteorder,
 	    METH_VARARGS, NULL},
 	{"nonzero", (PyCFunction)array_nonzero,
 	    METH_VARARGS, NULL},
 	{"prod", (PyCFunction)array_prod,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"ptp", (PyCFunction)array_ptp,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"put",	(PyCFunction)array_put,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"putmask", (PyCFunction)array_putmask,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"ravel", (PyCFunction)array_ravel,
 	    METH_VARARGS, NULL},
 	{"repeat", (PyCFunction)array_repeat,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"reshape", (PyCFunction)array_reshape,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
         {"resize", (PyCFunction)array_resize,
             METH_VARARGS | METH_KEYWORDS, NULL},
 	{"round", (PyCFunction)array_round,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"searchsorted", (PyCFunction)array_searchsorted,
-	    METH_VARARGS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"setfield", (PyCFunction)array_setfield,
             METH_VARARGS | METH_KEYWORDS, NULL},
 	{"setflags", (PyCFunction)array_setflags,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"sort", (PyCFunction)array_sort,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"squeeze", (PyCFunction)array_squeeze,
 	    METH_VARARGS, NULL},
 	{"std", (PyCFunction)array_stddev,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"sum", (PyCFunction)array_sum,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"swapaxes", (PyCFunction)array_swapaxes,
 	    METH_VARARGS, NULL},
 	{"take", (PyCFunction)array_take,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"tofile", (PyCFunction)array_tofile,
             METH_VARARGS | METH_KEYWORDS, NULL},
         {"tolist", (PyCFunction)array_tolist,
@@ -1641,11 +1660,11 @@ static PyMethodDef array_methods[] = {
         {"tostring", (PyCFunction)array_tostring,
             METH_VARARGS | METH_KEYWORDS, NULL},
 	{"trace", (PyCFunction)array_trace,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"transpose", (PyCFunction)array_transpose,
 	    METH_VARARGS, NULL},
 	{"var", (PyCFunction)array_variance,
-	    METH_VARARGS|METH_KEYWORDS, NULL},
+	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"view", (PyCFunction)array_view,
 	    METH_VARARGS, NULL},
         {NULL,		NULL}		/* sentinel */

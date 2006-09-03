@@ -183,6 +183,13 @@ typedef enum {
 
 
 typedef enum {
+        NPY_SEARCHLEFT=0,
+        NPY_SEARCHRIGHT=1,
+} NPY_SEARCHKIND;
+#define NPY_NSEARCHKINDS NPY_SEARCHRIGHT + 1
+
+
+typedef enum {
         NPY_NOSCALAR=-1,
         NPY_BOOL_SCALAR,
         NPY_INTPOS_SCALAR,

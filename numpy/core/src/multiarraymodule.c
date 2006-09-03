@@ -2526,37 +2526,27 @@ static void
 local_search_left(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 {
 	PyArray_CompareFunc *compare = ap2->descr->f->compare;
-	intp  min_i, max_i, i, j;
-	int location, elsize = ap1->descr->elsize;
-	intp elements = ap1->dimensions[ap1->nd-1];
-	intp n = PyArray_SIZE(ap2);
-	intp *rp = (intp *)ret->data;
-	char *ip = ap2->data;
-	char *vp = ap1->data;
+	intp nelts = ap1->dimensions[ap1->nd - 1];
+	intp nkeys = PyArray_SIZE(ap2);
+	char *p1 = ap1->data;
+	char *p2 = ap2->data;
+	intp *pr = (intp *)ret->data;
+	int elsize = ap1->descr->elsize;
+	intp i;
 
-	for (j=0; j<n; j++, ip+=elsize, rp++) {
-		min_i = 0;
-		max_i = elements;
-		while (min_i != max_i) {
-			i = (max_i-min_i)/2 + min_i;
-			location = compare(ip, vp+elsize*i, ap2);
-			if (location == 0) {
-				while (i > 0) {
-					if (compare(ip, vp+elsize*(--i), ap2) \
-					    != 0) {
-						i = i+1; break;
-					}
-				}
-				min_i = i;
-				break;
-			}
-			else if (location < 0) {
-				max_i = i;
-			} else {
-				min_i = i+1;
-			}
+	for(i = 0; i < nkeys; ++i) {
+		intp imin = 0;
+		intp imax = nelts;
+		while (imin < imax) {
+			intp imid = imin + ((imax - imin) >> 2);
+			if (compare(p1 + elsize*imid, p2, ap2) < 0)
+                                imin = imid + 1;
+			else
+				imax = imid;
 		}
-		*rp = min_i;
+                *pr = imin;
+                pr += 1;
+                p2 += elsize;
 	}
 }
 
@@ -2595,11 +2585,10 @@ local_search_right(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
 		intp imax = nelts;
 		while (imin < imax) {
 			intp imid = imin + ((imax - imin) >> 2);
-			if (compare(p1 + elsize*imid, p2, ap2) < 0)  {
+			if (compare(p1 + elsize*imid, p2, ap2) <= 0)
                                 imin = imid + 1;
-			} else {
+			else
 				imax = imid;
-			}
 		}
                 *pr = imin;
                 pr += 1;
@@ -2611,39 +2600,54 @@ local_search_right(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret)
  Numeric.searchsorted(a,v)
 */
 static PyObject *
-PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2)
+PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHKIND which)
 {
-	PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
+	PyArrayObject *ap1=NULL;
+        PyArrayObject *ap2=NULL;
+        PyArrayObject *ret=NULL;
 	int typenum = 0;
 
 	NPY_BEGIN_THREADS_DEF
 
 	typenum = PyArray_ObjectType((PyObject *)op1, 0);
 	typenum = PyArray_ObjectType(op2, typenum);
-	ret = NULL;
+
+        /* need ap1 as contiguous array and of right type */
 	ap1 = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op1,
 							    typenum,
 							    1, 1);
-	if (ap1 == NULL) return NULL;
-	ap2 = (PyArrayObject *)PyArray_ContiguousFromAny(op2, typenum,
-							    0, 0);
-	if (ap2 == NULL) goto fail;
+	if (ap1 == NULL)
+            return NULL;
 
+        /* need ap2 as contiguous array and of right type */
+        ap2 = (PyArrayObject *)PyArray_ContiguousFromAny(op2, typenum,
+							    0, 0);
+	if (ap2 == NULL)
+            goto fail;
+
+        /* ret is a contiguous array of intp type to hold returned indices */
 	ret = (PyArrayObject *)PyArray_New(ap2->ob_type, ap2->nd,
 					   ap2->dimensions, PyArray_INTP,
 					   NULL, NULL, 0, 0, (PyObject *)ap2);
-	if (ret == NULL) goto fail;
+	if (ret == NULL)
+            goto fail;
 
+        /* check that comparison function exists */
 	if (ap2->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError,
 				"compare not supported for type");
 		goto fail;
 	}
 
-	NPY_BEGIN_THREADS_DESCR(ap2->descr)
-	local_search_left(ap1, ap2, ret);
-	NPY_END_THREADS_DESCR(ap2->descr)
-
+        if (which == NPY_SEARCHLEFT) {
+                NPY_BEGIN_THREADS_DESCR(ap2->descr)
+                local_search_left(ap1, ap2, ret);
+                NPY_END_THREADS_DESCR(ap2->descr)
+        } else if (which == NPY_SEARCHRIGHT) {
+                NPY_BEGIN_THREADS_DESCR(ap2->descr)
+                local_search_right(ap1, ap2, ret);
+                NPY_END_THREADS_DESCR(ap2->descr)
+        }
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
 	return (PyObject *)ret;
@@ -6519,8 +6523,8 @@ _PyArray_GetSigintBuf(void)
 
 #else
 
-static void 
-_PyArray_SigintHandler(int signum) 
+static void
+_PyArray_SigintHandler(int signum)
 {
         return;
 }
@@ -6554,14 +6558,14 @@ test_interrupt(PyObject *self, PyObject *args)
         else {
 
                 NPY_SIGINT_ON
-                        
+
                 while(a>=0) {
                         a += 1;
                 }
-                
-                NPY_SIGINT_OFF                        
+
+                NPY_SIGINT_OFF
         }
-            
+
         return PyInt_FromLong(a);
 }
 

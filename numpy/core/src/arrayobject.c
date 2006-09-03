@@ -2399,9 +2399,9 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
                 }
         }
 
-        /* Be sure values array is "broadcastable" 
+        /* Be sure values array is "broadcastable"
            to shape of mit->dimensions, mit->nd */
-        
+
         if ((it = (PyArrayIterObject *)\
              PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd))==NULL) {
                 Py_DECREF(arr);
@@ -4698,7 +4698,7 @@ _check_axis(PyArrayObject *arr, int *axis, int flags)
                         if (temp) *axis = PyArray_NDIM(temp)-1;
                         else *axis = 0;
                 }
-                else { 
+                else {
                         temp = (PyObject *)arr;
                         Py_INCREF(temp);
                         *axis = 0;
@@ -6288,7 +6288,7 @@ array_base_get(PyArrayObject *self)
 }
 
 /* Create a view of a complex array with an equivalent data-type
-   except it is real instead of complex. 
+   except it is real instead of complex.
 */
 
 static PyArrayObject *
@@ -6301,7 +6301,7 @@ _get_part(PyArrayObject *self, int imag)
         type = PyArray_DescrFromType(self->descr->type_num -
                                      PyArray_NUM_FLOATTYPE);
         offset = (imag ? type->elsize : 0);
-        
+
         if (!PyArray_ISNBO(self->descr->byteorder)) {
                 PyArray_Descr *new;
                 new = PyArray_DescrNew(type);
@@ -6759,14 +6759,14 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
 {
         PyArray_Descr *outtype;
         int outtype_num, save_num;
-        
-        if (chktype->type_num > mintype->type_num) 
+
+        if (chktype->type_num > mintype->type_num)
                 outtype_num = chktype->type_num;
-        else 
+        else
                 outtype_num = mintype->type_num;
-        
+
         save_num = outtype_num;
-        while(outtype_num < PyArray_NTYPES && 
+        while(outtype_num < PyArray_NTYPES &&
               !(PyArray_CanCastSafely(chktype->type_num, outtype_num)
                 && PyArray_CanCastSafely(mintype->type_num, outtype_num)))
                 outtype_num++;
@@ -8627,7 +8627,7 @@ PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
         PyArrayIterObject *it;
         int i, diff, j, compat, k;
         PyArrayObject *ao = (PyArrayObject *)obj;
- 
+
         if (ao->nd > nd) goto err;
         compat = 1;
         diff = j = nd - ao->nd;
@@ -8642,7 +8642,7 @@ PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
 
         it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
         PyObject_Init((PyObject *)it, &PyArrayIter_Type);
-        
+
         if (it == NULL)
                 return NULL;
 
