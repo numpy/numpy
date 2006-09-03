@@ -220,42 +220,49 @@ def argmin(a, axis=None):
         return _wrapit(a, 'argmin', axis)
     return argmin(axis)
 
-def searchsorted(a, v, side ='left'):
-    """-> array ind. Inserting v[i] before a[ind[i]] will leave a in order.
+def searchsorted(a, v, side='left'):
+    """-> index array. Inserting v[i] before a[index[i]] maintains a in order.
 
-    Required Arguments:
+    Required arguments:
         a -- sorted 1-D array to be searched.
-        v -- keys to be searched for in a.
+        v -- array of keys to be searched for in a.
 
-    Keyword arguments
+    Keyword arguments:
         side -- {'left', 'right'}, default('left').
 
-    If a is a 1-D array in ascending order, then
+    Returns:
+        array of indices with the same shape as a.
+
+    The array to be searched must be 1-D and is assumed to be sorted in
+    ascending order.
+
+    The function call
 
         searchsorted(a, v, side='left')
 
-    returns an array of indices i such that for each element of values the
-    following holds:
+    returns an index array with the same shape as v such that for each value i
+    in the index and the corresponding key in v the following holds:
 
            a[j] < key <= a[i] for all j < i,
 
     If such an index does not exist, a.size() is used. The result is such that
-    if the key were to be inserted in the slot before the index i, then the
-    order of a would be preserved and i would be the smallest index with that
-    property.
+    if the key were to be inserted into a in the slot before the index i, then
+    the order of a would be preserved and i would be the smallest index with
+    that property.
 
-    If a is a 1-D array in ascending order, then
+    The function call
 
         searchsorted(a, v, side='right')
 
-    returns an array of indices i such that for each element of values the
-    following holds:
+    returns an index array with the same shape as v such that for each value i
+    in the index and the corresponding key in v the following holds:
 
            a[j] <= key < a[i] for all j < i,
 
-    If such an index does not exist, a.size() is used. The result is that if the
-    key were to be inserted in the slot before the index i, then the order of a
-    would be preserved and i would be the largest index with that property.
+    If such an index does not exist, a.size() is used. The result is such that
+    if the key were to be inserted into a in the slot before the index i, then
+    the order of a would be preserved and i would be the largest index with
+    that property.
 
     """
     try:

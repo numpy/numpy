@@ -695,16 +695,16 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-	PyObject *values;
+	PyObject *keys;
         char *side = "left";
-        static char *kwlist[] = {"values","side", NULL};
+        static char *kwlist[] = {"keys", "side", NULL};
         NPY_SEARCHKIND which;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|s", kwlist, &values, &side))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|s", kwlist, &keys, &side))
             return NULL;
 	if (strlen(side) < 1) {
 		PyErr_SetString(PyExc_ValueError,
-                        "Searchsorted side string must be at least length 1");
+                        "Searchsorted: side must be nonempty string");
 		return PY_FAIL;
 	}
 
@@ -714,11 +714,11 @@ array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 which = NPY_SEARCHRIGHT;
         else {
 		PyErr_Format(PyExc_ValueError,
-                        "%s is an unrecognized side", side);
+                        "%s is not a valid value of side", side);
 		return PY_FAIL;
 	}
 
-	return _ARET(PyArray_SearchSorted(self, values, which));
+	return _ARET(PyArray_SearchSorted(self, keys, which));
 }
 
 static void
