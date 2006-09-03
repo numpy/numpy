@@ -43,10 +43,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
             return array([float(start)])
         step = (stop-start)/float((num-1))
         y = _nx.arange(0, num) * step + start
-        y[-1] = stop        
+        y[-1] = stop
     else:
         step = (stop-start)/float(num)
-        y = _nx.arange(0, num) * step + start  
+        y = _nx.arange(0, num) * step + start
     if retstep:
         return y, step
     else:
@@ -398,11 +398,11 @@ def diff(a, n=1, axis=-1):
         return a[slice1]-a[slice2]
 
 try:
-    add_docstring(digitize, 
+    add_docstring(digitize,
 r"""digitize(x,bins)
-   
+
 Return the index of the bin to which each value of x belongs.
-  
+
 Each index i returned is such that bins[i-1] <= x < bins[i] if
 bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
 bins is monotonically decreasing.
@@ -415,7 +415,7 @@ except RuntimeError:
 try:
     add_docstring(bincount,
 r"""bincount(x,weights=None)
-    
+
 Return the number of occurrences of each value in x.
 
 x must be a list of non-negative integers.  The output, b[i],
@@ -439,7 +439,7 @@ raise a TypeError
 """)
 except RuntimeError:
     pass
-    
+
 def angle(z, deg=0):
     """Return the angle of the complex argument z.
     """
@@ -535,7 +535,7 @@ def unique(x):
         items = list(set(x))
         items.sort()
         return asarray(items)
-        
+
 def extract(condition, arr):
     """Return the elements of ravel(arr) where ravel(condition) is True
     (in 1D).
@@ -732,7 +732,7 @@ def cov(m,y=None, rowvar=1, bias=0):
     covariance matrix.
 
     If y is given it is treated as an additional (set of)
-    variable(s). 
+    variable(s).
 
     Normalization is by (N-1) where N is the number of observations
     (unbiased estimate).  If bias is 1 then normalization is by N.
@@ -752,7 +752,7 @@ def cov(m,y=None, rowvar=1, bias=0):
         axis = 1
         tup = (newaxis, slice(None))
 
-        
+
     if y is not None:
         y = array(y,copy=False,ndmin=2)
         X = concatenate((X,y),axis)
@@ -772,7 +772,7 @@ def cov(m,y=None, rowvar=1, bias=0):
         return (dot(X.transpose(), X.conj()) / fact).squeeze()
     else:
         return (dot(X,X.transpose().conj())/fact).squeeze()
-    
+
 def corrcoef(x, y=None, rowvar=1, bias=0):
     """The correlation coefficients
     """
@@ -948,19 +948,19 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
 #always succeed
 def add_newdoc(place, obj, doc):
-    """Adds documentation to obj which is in module place. 
+    """Adds documentation to obj which is in module place.
 
     If doc is a string add it to obj as a docstring
 
     If doc is a tuple, then the first element is interpreted as
        an attribute of obj and the second as the docstring
           (method, docstring)
-          
+
     If doc is a list, then each element of the list should be a
        sequence of length two --> [(method1, docstring1),
        (method2, docstring2), ...]
 
-    This routine never raises an error. 
+    This routine never raises an error.
        """
     try:
         new = {}
@@ -1005,7 +1005,7 @@ def meshgrid(x,y):
     numRows, numCols = len(y), len(x)  # yes, reversed
     x = x.reshape(1,numCols)
     X = x.repeat(numRows, axis=0)
-    
+
     y = y.reshape(numRows,1)
     Y = y.repeat(numCols, axis=1)
     return X, Y
@@ -1020,7 +1020,7 @@ def delete(arr, obj, axis=None):
     or an array of integers indicated which sub-arrays to
     remove.
 
-    If axis is None, then ravel the array first. 
+    If axis is None, then ravel the array first.
 
     Example:
     >>> arr = [[3,4,5],
@@ -1035,14 +1035,14 @@ def delete(arr, obj, axis=None):
     array([[3,4,5],
            [6,7,8]])
     """
-    wrap = None    
+    wrap = None
     if type(arr) is not ndarray:
         try:
             wrap = arr.__array_wrap__
         except AttributeError:
             pass
-    
-    
+
+
     arr = asarray(arr)
     ndim = arr.ndim
     if axis is None:
@@ -1055,7 +1055,7 @@ def delete(arr, obj, axis=None):
             return wrap(arr)
         else:
             return arr.copy()
-    slobj = [slice(None)]*ndim    
+    slobj = [slice(None)]*ndim
     N = arr.shape[axis]
     newshape = list(arr.shape)
     if isinstance(obj, (int, long, integer)):
@@ -1069,7 +1069,7 @@ def delete(arr, obj, axis=None):
         slobj[axis] = slice(obj,None)
         slobj2 = [slice(None)]*ndim
         slobj2[axis] = slice(obj+1,None)
-        new[slobj] = arr[slobj2]        
+        new[slobj] = arr[slobj2]
     elif isinstance(obj, slice):
         start, stop, step = obj.indices(N)
         numtodel = len(xrange(start, stop, step))
@@ -1086,7 +1086,7 @@ def delete(arr, obj, axis=None):
         else:
             slobj[axis] = slice(None, start)
             new[slobj] = arr[slobj]
-        # copy end chunck 
+        # copy end chunck
         if stop == N:
             pass
         else:
@@ -1097,7 +1097,7 @@ def delete(arr, obj, axis=None):
         # copy middle pieces
         if step == 1:
             pass
-        else:  # use array indexing. 
+        else:  # use array indexing.
             obj = arange(start, stop, step, dtype=intp)
             all = arange(start, stop, dtype=intp)
             obj = setdiff1d(all, obj)
@@ -1130,14 +1130,14 @@ def insert(arr, obj, values, axis=None):
                    [4,5,6],
                    [7,8,9]])
 
-    >>> insertinto(a, [1,2], [[4],[5]], axis=0)
+    >>> insert(a, [1,2], [[4],[5]], axis=0)
     array([[1,2,3],
            [4,4,4],
            [4,5,6],
            [5,5,5],
            [7,8,9])
     """
-    wrap = None    
+    wrap = None
     if type(arr) is not ndarray:
         try:
             wrap = arr.__array_wrap__
@@ -1178,7 +1178,7 @@ def insert(arr, obj, values, axis=None):
         new[slobj] = arr[slobj2]
         if wrap:
             return wrap(new)
-        return new        
+        return new
 
     elif isinstance(obj, slice):
         # turn it into a range object
@@ -1214,4 +1214,3 @@ def append(arr, values, axis=None):
         values = ravel(values)
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
-
