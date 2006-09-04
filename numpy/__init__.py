@@ -3,14 +3,15 @@ NumPy
 ==========
 
 You can support the development of NumPy and SciPy by purchasing
-"Guide to NumPy" at
+the book "Guide to NumPy" at
 
   http://www.trelgol.com
 
-It is being distributed for a fee for only a limited time to
-cover some of the costs of development.
+It is being distributed for a fee for only a few years to
+cover some of the costs of development.  After the restriction period
+it will also be freely available. 
 
-Documentation is also available in the docstrings and at
+Additional documentation is available in the docstrings and at
 
 http://www.scipy.org.
 """

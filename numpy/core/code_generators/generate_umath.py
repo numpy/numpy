@@ -432,7 +432,7 @@ defdict = {
 'rint' :
     Ufunc(1, 1, None,
           'round x elementwise to the nearest integer, round halfway cases away from zero',
-          TD(flts, f='rint'),
+          TD(inexact, f='rint'),
           TD(M, f='rint'),
           ),
 'arctan2' :

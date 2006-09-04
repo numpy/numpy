@@ -219,6 +219,8 @@ static PyObject *
 PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
 {
 	PyObject *f, *ret=NULL, *tmp, *op1, *op2;
+        int ret_int=0;
+        PyArray_Descr *my_descr;
         if (out && (PyArray_SIZE(out) != PyArray_SIZE(a))) {
                 PyErr_SetString(PyExc_ValueError,
                                 "invalid output shape");
@@ -284,17 +286,24 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
                         return PyObject_CallFunction(n_ops.rint, "O", a);
                 }
                 op1 = n_ops.multiply;
-                op2 = n_ops.divide;
+                op2 = n_ops.true_divide;
         }
         else {
-                op1 = n_ops.divide;
+                op1 = n_ops.true_divide;
                 op2 = n_ops.multiply;
                 decimals = -decimals;
         }
         if (!out) {
-                Py_INCREF(a->descr);
+                if (PyArray_ISINTEGER(a)) {
+                        ret_int = 1;
+                        my_descr = PyArray_DescrFromType(NPY_DOUBLE);
+                }
+                else {
+                        Py_INCREF(a->descr);
+                        my_descr = a->descr;
+                }
                 out = (PyArrayObject *)PyArray_Empty(a->nd, a->dimensions,
-                                                     a->descr,
+                                                     my_descr,
                                                      PyArray_ISFORTRAN(a));
                 if (out == NULL) return NULL;
         }
@@ -313,6 +322,13 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
  finish:
 	Py_DECREF(f);
         Py_DECREF(out);
+        if (ret_int) {
+                Py_INCREF(a->descr);
+                tmp = PyArray_CastToType((PyArrayObject *)ret, 
+                                         a->descr, PyArray_ISFORTRAN(a));
+                Py_DECREF(ret);
+                return tmp;
+        }
 	return ret;
 
 }

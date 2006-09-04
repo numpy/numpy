@@ -556,9 +556,10 @@ def round_(a, decimals=0, out=None):
         Reference to out, where None specifies a copy of the original array a.
 
     Round to the specified number of decimals. When 'decimals' is negative it
-    specifies the number of positions to the left of the decimal point. The real
-    and imaginary parts of complex numbers are rounded separately. Nothing is
-    done if the array is not of float type.
+    specifies the number of positions to the left of the decimal point. The
+    real and imaginary parts of complex numbers are rounded separately.
+    Nothing is done if the array is not of float type and 'decimals' is greater
+    than or equal to 0.
 
     The keyword 'out' may be used to specify a different array to hold the
     result rather than the default copy of 'a'. If the type of the array
