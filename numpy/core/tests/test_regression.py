@@ -344,8 +344,8 @@ class test_regression(NumpyTestCase):
         assert_equal(N.array([[1,2],3,4],dtype=object).shape, (3,))
         assert_equal(N.array([[1,2],[3,4]],dtype=object).shape, (2,2))
         assert_equal(N.array([(1,2),(3,4)],dtype=object).shape, (2,2))
-        assert_equal(N.array([],dtype=object).shape, ())
-        assert_equal(N.array([[],[],[]],dtype=object).shape, (3,))
+        assert_equal(N.array([],dtype=object).shape, (0,))
+        assert_equal(N.array([[],[],[]],dtype=object).shape, (3,0))
         assert_equal(N.array([[3,4],[5,6],None],dtype=object).shape, (3,))
         
     def check_lexsort(self,level=rlevel):

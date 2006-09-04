@@ -7146,7 +7146,7 @@ ObjectArray_FromNestedList(PyObject *s, PyArray_Descr *typecode, int fortran)
 /* steals reference to typecode */
 static PyObject *
 Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
-                   int min_depth, int max_depth, int isobject)
+                   int min_depth, int max_depth)
 {
         PyArrayObject *r;
         int nd;
@@ -7156,9 +7156,6 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
         int check_it;
         int type = typecode->type_num;
         int itemsize = typecode->elsize;
-
-        if (isobject)
-                return ObjectArray_FromNestedList(s, typecode, fortran);
 
         stop_at_string = ((type == PyArray_OBJECT) ||   \
                           (type == PyArray_STRING && \
@@ -8227,17 +8224,26 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 if (PySequence_Check(op)) {
                         PyObject *thiserr;
                         /* necessary but not sufficient */
-
                         Py_INCREF(newtype);
                         r = Array_FromSequence(op, newtype, flags & FORTRAN,
-                                               min_depth, max_depth, isobject);
-                        if (r == NULL && \
-                            ((thiserr = PyErr_Occurred()) &&            \
-                             !PyErr_GivenExceptionMatches(thiserr,
-                                                          PyExc_MemoryError))) {
-                                /* It wasn't really a sequence after all.
-                                 * Try interpreting it as a scalar */
-                                PyErr_Clear();
+                                               min_depth, max_depth);
+                        if (r == NULL && (thiserr=PyErr_Occurred()) && \
+                            !PyErr_GivenExceptionMatches(thiserr, 
+                                                         PyExc_MemoryError)) {
+                                /* If object was explicitly requested, 
+                                   then try nested list object array creation
+                                */
+                                if (isobject) {
+                                        PyErr_Clear();
+                                        Py_INCREF(newtype);
+                                        r = ObjectArray_FromNestedList  \
+                                                (op, newtype, flags & FORTRAN);
+                                        seq = TRUE;
+                                        Py_DECREF(newtype);
+                                }
+                                else {
+                                        PyErr_Clear();
+                                }
                         }
                         else {
                                 seq = TRUE;
