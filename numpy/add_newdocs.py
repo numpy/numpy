@@ -860,7 +860,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
     Round to the specified number of decimals. When 'decimals' is negative it
     specifies the number of positions to the left of the decimal point. The real
     and imaginary parts of complex numbers are rounded separately. Nothing is
-    done if the array is not of float type.
+    done if the array is not of float type and 'decimals' is >= 0.
 
     The keyword 'out' may be used to specify a different array to hold the
     result rather than the default 'a'. If the type of the array specified by
