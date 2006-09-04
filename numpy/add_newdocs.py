@@ -848,7 +848,28 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
-    """a.round(decimals=0, out=None)
+    """a.round(decimals=0, out=None) -> out (a). Rounds to 'decimals' places.
+
+    Keyword arguments:
+        decimals -- number of decimals to round to (default 0). May be negative.
+        out -- existing array to use for output (default a).
+
+    Return:
+        Reference to out, where None specifies the original array a.
+
+    Round to the specified number of decimals. When 'decimals' is negative it
+    specifies the number of positions to the left of the decimal point. The real
+    and imaginary parts of complex numbers are rounded separately. Nothing is
+    done if the array is not of float type.
+
+    The keyword 'out' may be used to specify a different array to hold the
+    result rather than the default 'a'. If the type of the array specified by
+    'out' differs from that of 'a', the result is cast to the new type.
+
+    Numpy rounds to even. Thus 1.5 and 2.5 round to 2, -0.5 and 0.5 round to 0,
+    etc. Results may also be surprising due to the inexact representation of
+    decimal fractions in IEEE floating point and the errors introduced in
+    scaling the numbers when 'decimals' is something other than 0.
 
     """))
 
