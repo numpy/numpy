@@ -645,6 +645,7 @@ typedef int Py_ssize_t;
 #define PY_SSIZE_T_MIN INT_MIN
 #define NPY_SSIZE_T_PYFMT "i"
 #define constchar const char
+#define PyIndex_Check(op) 0
 #else
 #define NPY_SSIZE_T_PYFMT "n"
 #define constchar char

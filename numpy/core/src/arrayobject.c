@@ -560,6 +560,12 @@ PyArray_PyIntAsIntp(PyObject *o)
                 Py_DECREF(arr);
                 return ret;
         }
+#if (PY_VERSION_HEX >= 0x02050000)
+	if (PyIndex_Check(op)) {
+		long_value = (longlong) PyNumber_Index(op);
+		goto finish;
+	}
+#endif
         if (o->ob_type->tp_as_number != NULL &&                 \
             o->ob_type->tp_as_number->nb_long != NULL) {
                 obj = o->ob_type->tp_as_number->nb_long(o);
@@ -643,6 +649,12 @@ PyArray_PyIntAsInt(PyObject *o)
                 Py_DECREF(arr);
                 return ret;
         }
+#if (PY_VERSION_HEX >= 0x02050000)
+	if (PyIndex_Check(o)) {
+		long_value = (longlong) PyNumber_Index(o);
+		goto finish;
+	}
+#endif
         if (o->ob_type->tp_as_number != NULL &&         \
             o->ob_type->tp_as_number->nb_int != NULL) {
                 obj = o->ob_type->tp_as_number->nb_int(o);
@@ -2679,7 +2691,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         }
 
         if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
-            PyLong_Check(op)) {
+            PyLong_Check(op) || PyIndex_Check(index)) {
                 intp value;
                 value = PyArray_PyIntAsIntp(op);
                 if (!PyErr_Occurred()) {
@@ -2792,7 +2804,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         }
 
         if (PyInt_Check(index) || PyArray_IsScalar(index, Integer) ||
-            PyLong_Check(index)) {
+            PyLong_Check(index) || PyIndex_Check(index)) {
                 intp value;
                 value = PyArray_PyIntAsIntp(index);
                 if (PyErr_Occurred())
@@ -2890,6 +2902,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
    Python so that 0-dim arrays are passed as scalars
 */
 
+
 static PyObject *
 array_subscript_nice(PyArrayObject *self, PyObject *op)
 {
@@ -2898,7 +2911,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         intp vals[MAX_DIMS];
 
         if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) || \
-            PyLong_Check(op)) {
+            PyLong_Check(op) || PyIndex_Check(op)) {
                 intp value;
                 value = PyArray_PyIntAsIntp(op);
                 if (PyErr_Occurred())
