@@ -1543,7 +1543,11 @@ def repeat(a, repeats, axis=None):
     """
     af = filled(a)
     if isinstance(repeats, types.IntType):
-        repeats = tuple([repeats]*(shape(af)[axis]))
+        if axis is None:
+            num = af.size
+        else:
+            num = af.shape[axis]
+        repeats = tuple([repeats]*num)
 
     m = getmask(a)
     if m is not nomask:

@@ -155,7 +155,7 @@ class PackageLoader:
 
      Optional keyword inputs:
 
-       - verbose - integer specifying verbosity level [default: 0].
+       - verbose - integer specifying verbosity level [default: -1].
                    verbose=-1 will suspend also warnings.
        - force   - when True, force reloading loaded packages [default: False].
        - postpone - when True, don't load packages [default: False]
@@ -168,7 +168,7 @@ class PackageLoader:
         self.info_modules = {}
         if options.get('force',False):
             self.imported_packages = []
-        self.verbose = verbose = options.get('verbose',False)
+        self.verbose = verbose = options.get('verbose',-1)
         postpone = options.get('postpone',None)
         self._init_info_modules(packages or None)
 
