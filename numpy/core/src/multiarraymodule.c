@@ -2659,7 +2659,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHKIND which)
                 NPY_BEGIN_THREADS_DESCR(ap2->descr)
                 local_search_left(ap1, ap2, ret);
                 NPY_END_THREADS_DESCR(ap2->descr)
-        } else if (which == NPY_SEARCHRIGHT) {
+        }
+        else if (which == NPY_SEARCHRIGHT) {
                 NPY_BEGIN_THREADS_DESCR(ap2->descr)
                 local_search_right(ap1, ap2, ret);
                 NPY_END_THREADS_DESCR(ap2->descr)

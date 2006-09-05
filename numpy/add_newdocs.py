@@ -1067,7 +1067,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     If 'sep' is empty this method is equivalent to file.write(a.tostring()). If
     'sep' is not empty each data item is converted to the nearest Python type
     and formatted using "format"%item. The resulting strings are written to the
-    file separated by the contents of 'sep'.
+    file separated by the contents of 'sep'. The data is always written in "C"
+    (row major) order independent of the order of 'a'.
 
     The data produced by this method can be recovered by using the function
     fromfile().
@@ -1079,15 +1080,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """a.tolist() -> Array as hierarchical list.
 
     Copy the data portion of the array to a hierarchical python list and return
-    that list.
+    that list. Data items are converted to the nearest compatible Python type.
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
-    """a.tostring(order='C') -> binary array data as Python string.
+    """a.tostring(order='C') -> raw copy of array data as a Python string.
 
-    Construct a Python string containing the raw bytes in the array.
+    Keyword arguments:
+        order -- order of the data item in the copy {"C","F","A"} (default "C")
+
+    Construct a Python string containing the raw bytes in the array. The order
+    of the data in arrays with ndim > 1 is specified by the 'order' keyword and
+    this keyword overrides the order of the array. The
+    choices are:
+
+        "C"       -- C order (row major)
+        "Fortran" -- Fortran order (column major)
+        "Any"     -- Current order of array.
+        None      -- Same as "Any"
 
     """))
 
