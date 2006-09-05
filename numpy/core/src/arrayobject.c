@@ -561,8 +561,8 @@ PyArray_PyIntAsIntp(PyObject *o)
                 return ret;
         }
 #if (PY_VERSION_HEX >= 0x02050000)
-	if (PyIndex_Check(op)) {
-		long_value = (longlong) PyNumber_Index(op);
+	if (PyIndex_Check(o)) {
+		long_value = (longlong) PyNumber_Index(o);
 		goto finish;
 	}
 #endif
@@ -2691,7 +2691,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         }
 
         if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
-            PyLong_Check(op) || PyIndex_Check(index)) {
+            PyLong_Check(op) || PyIndex_Check(op)) {
                 intp value;
                 value = PyArray_PyIntAsIntp(op);
                 if (!PyErr_Occurred()) {
