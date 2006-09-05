@@ -7,6 +7,7 @@ __all__ = ['fftshift','ifftshift','fftfreq']
 
 from numpy.core import asarray, concatenate, arange, take, \
     array, integer
+from numpy import hstack
 import types
 
 def fftshift(x,axes=None):
@@ -62,5 +63,4 @@ def fftfreq(n,d=1.0):
       f = [0,1,...,(n-1)/2,-(n-1)/2,...,-1]/(d*n)   if n is odd
     """
     assert isinstance(n,types.IntType) or isinstance(n, integer)
-    k = range(0,(n-1)/2+1)+range(-(n/2),0)
-    return array(k,'d')/(n*d)
+    return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
