@@ -7157,15 +7157,20 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
         int type = typecode->type_num;
         int itemsize = typecode->elsize;
 
-        stop_at_string = ((type == PyArray_OBJECT) ||   \
-                          (type == PyArray_STRING && \
-                           typecode->type == PyArray_STRINGLTR) ||      \
-                          (type == PyArray_UNICODE) ||  \
+        check_it = ((type != PyArray_STRING) &&
+                    (type != PyArray_UNICODE) &&
+                    (type != PyArray_VOID) &&
+                    (type != PyArray_CHAR));
+                    
+        stop_at_string = ((type == PyArray_OBJECT) ||   
+                          (type == PyArray_STRING && 
+                           typecode->type == PyArray_STRINGLTR) ||     
+                          (type == PyArray_UNICODE) ||  
                           (type == PyArray_VOID));
-
+        
         stop_at_tuple = (type == PyArray_VOID && (typecode->names       \
                                                   || typecode->subarray));
-
+        
         if (!((nd=discover_depth(s, MAX_DIMS+1, stop_at_string,
                                  stop_at_tuple)) > 0)) {
                 if (nd==0)
@@ -7186,7 +7191,6 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
                 goto fail;
         }
 
-        check_it = !(stop_at_string || type == PyArray_STRING);
         if(discover_dimensions(s,nd,d, check_it) == -1) goto fail;
 
         if (typecode->type == PyArray_CHARLTR && nd > 0 && d[nd-1]==1) {
