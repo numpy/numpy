@@ -1035,7 +1035,25 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('take',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
-    """a.tofile(fid, sep="") -> None. Write the data to a file.
+    """a.tofile(fid, sep="", format="%s") -> None. Write the data to a file.
+
+    Required arguments:
+        file -- an open file object or a filename
+
+    Keyword arguments:
+        sep -- separator for text output. Write binary if empty (default "")
+        format -- format string for text file output (default "%s")
+
+    A convenience function for quick storage of array data. Information on
+    endianess and precision is lost, so this method is not a good choice for
+    files intended to archive data or transport data between machines with
+    different endianess. Some of these problems can be overcome by outputting
+    text files at the expense of speed and file size.
+
+    If 'sep' is empty this method is equivalent to file.write(a.tostring()). If
+    'sep' is not empty each data item is converted to the nearest Python type
+    and formatted using "format"%item. The resulting strings are written to the
+    file separated by the contents of 'sep'.
 
     """))
 
