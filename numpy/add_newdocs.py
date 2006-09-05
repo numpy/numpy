@@ -147,18 +147,32 @@ add_newdoc('numpy.core.multiarray','fromstring',
     """)
 
 add_newdoc('numpy.core.multiarray','fromfile',
-    """fromfile(file=, dtype=float, count=-1, sep='')
+    """fromfile(file=, dtype=float, count=-1, sep='') -> array.
 
-    Return an array of the given data type from a (text or binary) file.
-    The file argument can be an open file or a string with the name of a
-    file to read from.  If count==-1, then the entire file is read,
-    otherwise count is the number of items of the given type read in.  If
-    sep is '' then read a binary file, otherwise it gives the separator
-    between elements in a text file.
+    Required arguments:
+        file -- open file object or string containing file name.
 
-    WARNING: This function should be used sparingly, as it is not a
-    platform-independent method of persistence.  But it can be useful to
-    read in simply-formatted or binary data quickly.
+    Keyword arguments:
+        dtype -- type and order of the returned array (default float)
+        count -- number of items to input (default all)
+        sep -- separater between items if file is a text file (default "")
+
+    Return an array of the given data type from a text or binary file. The
+    'file' argument can be an open file or a string with the name of a file to
+    read from.  If 'count' == -1 the entire file is read, otherwise count is the
+    number of items of the given type to read in.  If 'sep' is "" it means to
+    read binary data from the file using the specified dtype, otherwise it gives
+    the separator between elements in a text file. The 'dtype' value is also
+    used to determine the size and order of the items in binary files.
+
+
+    Data written using the tofile() method can be conveniently recovered using
+    this function.
+
+    WARNING: This function should be used sparingly as the binary files are not
+    platform independent. In particular, they contain no endianess or datatype
+    information. Nevertheless it can be useful for reading in simply formatted
+    or binary data quickly.
 
     """)
 
@@ -1038,7 +1052,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     """a.tofile(fid, sep="", format="%s") -> None. Write the data to a file.
 
     Required arguments:
-        file -- an open file object or a filename
+        file -- an open file object or a string containing a filename
 
     Keyword arguments:
         sep -- separator for text output. Write binary if empty (default "")
@@ -1048,12 +1062,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     endianess and precision is lost, so this method is not a good choice for
     files intended to archive data or transport data between machines with
     different endianess. Some of these problems can be overcome by outputting
-    text files at the expense of speed and file size.
+    the data as text files at the expense of speed and file size.
 
     If 'sep' is empty this method is equivalent to file.write(a.tostring()). If
     'sep' is not empty each data item is converted to the nearest Python type
     and formatted using "format"%item. The resulting strings are written to the
     file separated by the contents of 'sep'.
+
+    The data produced by this method can be recovered by using the function
+    fromfile().
 
     """))
 
