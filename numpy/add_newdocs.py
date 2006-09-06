@@ -35,26 +35,97 @@ new dtype object.
             ]
            )
 
-add_newdoc('numpy.core', 'flatiter',
-           [('__array__',
-"""__array__(type=None)
-Get array from iterator"""),
-            ('copy',
-"""copy()
-Get a copy of the iterator as a 1-d array"""),
-            ('coords', "An N-d tuple of current coordinates.")
-            ]
-           )
+###############################################################################
+#
+# flatiter
+#
+# flatiter needs a toplevel description
+#
+###############################################################################
 
-add_newdoc('numpy.core', 'broadcast',
-           [('size', "total size of broadcasted result"),
-            ('index', "current index in broadcasted result"),
-            ('shape', "shape of broadcasted result"),
-            ('iters', "tuple of individual iterators"),
-            ('numiter', "number of iterators"),
-            ('nd', "number of dimensions of broadcasted result")
-            ]
-           )
+# attributes
+add_newdoc('numpy.core', 'flatiter', ('base',
+    """documentation needed
+
+    """))
+
+
+
+add_newdoc('numpy.core', 'flatiter', ('coords',
+    """An N-d tuple of current coordinates.
+
+    """))
+
+
+
+add_newdoc('numpy.core', 'flatiter', ('index',
+    """documentation needed
+
+    """))
+
+
+
+# functions
+add_newdoc('numpy.core', 'flatiter', ('__array__',
+    """__array__(type=None) Get array from iterator
+
+    """))
+
+
+add_newdoc('numpy.core', 'flatiter', ('copy',
+    """copy() Get a copy of the iterator as a 1-d array
+
+    """))
+
+
+###############################################################################
+#
+# broadcast
+#
+###############################################################################
+
+# attributes
+add_newdoc('numpy.core', 'broadcast', ('index',
+    """current index in broadcasted result
+
+    """))
+
+
+add_newdoc('numpy.core', 'broadcast', ('iters',
+    """tuple of individual iterators
+
+    """))
+
+
+add_newdoc('numpy.core', 'broadcast', ('nd',
+    """number of dimensions of broadcasted result
+
+    """))
+
+
+add_newdoc('numpy.core', 'broadcast', ('numiter',
+    """number of iterators
+
+    """))
+
+
+add_newdoc('numpy.core', 'broadcast', ('shape',
+    """shape of broadcasted result
+
+    """))
+
+
+add_newdoc('numpy.core', 'broadcast', ('size',
+    """total size of broadcasted result
+
+    """))
+
+
+###############################################################################
+#
+# numpy functions
+#
+###############################################################################
 
 add_newdoc('numpy.core.multiarray','array',
     """array(object, dtype=None, copy=1,order=None, subok=0,ndmin=0)
@@ -324,12 +395,6 @@ add_newdoc('numpy.core.multiarray','getbuffer',
 ##############################################################################
 #
 # Documentation for ndarray attributes and methods
-#
-# Todo:
-#
-# expand and reformat documentation.
-#
-# do all methods prior to Extended methods added 2005
 #
 ##############################################################################
 
@@ -1019,6 +1084,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
       ---------------------------------------------------
       bool, int8, int16, int32        int32
 
+    Warning: The arithmetic is modular and no error is raised on overflow.
+
     Examples:
 
     >>> array([0.5, 1.5]).sum()
@@ -1029,6 +1096,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
     array([0, 6])
     >>> array([[0, 1], [0, 5]]).sum(axis=1)
     array([1, 5])
+    >>> ones(128, dtype=int8).sum(dtype=int8) # overflow!
+    -128
 
     """))
 
