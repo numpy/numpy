@@ -2526,7 +2526,8 @@ fancy_indexing_check(PyObject *args)
                 for (i=0; i<n; i++) {
                         obj = PyTuple_GET_ITEM(args,i);
                         if (PyArray_Check(obj)) {
-                                if (PyArray_ISINTEGER(obj) || PyArray_ISBOOL(obj))
+                                if (PyArray_ISINTEGER(obj) || 
+                                    PyArray_ISBOOL(obj))
                                         retval = SOBJ_ISFANCY;
                                 else {
                                         retval = SOBJ_BADARRAY;
@@ -2558,7 +2559,8 @@ fancy_indexing_check(PyObject *args)
                         obj = PySequence_GetItem(args, i);
                         if (obj == NULL) return SOBJ_ISFANCY;
                         if (PyArray_Check(obj)) {
-                                if (PyArray_ISINTEGER(obj))
+                                if (PyArray_ISINTEGER(obj) ||
+                                    PyArray_ISBOOL(obj))
                                         retval = SOBJ_LISTTUP;
                                 else
                                         retval = SOBJ_BADARRAY;
@@ -2566,8 +2568,8 @@ fancy_indexing_check(PyObject *args)
                         else if (PySequence_Check(obj)) {
                                 retval = SOBJ_LISTTUP;
                         }
-                        else if (PySlice_Check(obj) || obj == Py_Ellipsis || \
-                            obj == Py_None) {
+                        else if (PySlice_Check(obj) || obj == Py_Ellipsis || 
+                                 obj == Py_None) {
                                 retval = SOBJ_NOTFANCY;
                         }
                         Py_DECREF(obj);
@@ -2688,16 +2690,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 PyErr_SetString(PyExc_IndexError,
                                 "0-d arrays can't be indexed.");
                 return NULL;
-        }
-
-        if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
-            PyLong_Check(op) || PyIndex_Check(op)) {
-                intp value;
-                value = PyArray_PyIntAsIntp(op);
-                if (!PyErr_Occurred()) {
-                        return array_big_item(self, value);
-                }
-                PyErr_Clear();
         }
 
         fancy = fancy_indexing_check(op);
@@ -2846,9 +2838,10 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                                 "0-d arrays can't be indexed.");
                 return -1;
         }
-
+        
         /* optimization for integer-tuple */
-        if (self->nd > 1 && (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd)) \
+        if (self->nd > 1 && 
+            (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd)) 
             && PyArray_IntpFromSequence(index, vals, self->nd) == self->nd) {
                 int i;
                 char *item;

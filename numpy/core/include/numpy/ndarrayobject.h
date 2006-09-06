@@ -1223,7 +1223,6 @@ typedef struct {
         npy_intp              bscoord[NPY_MAXDIMS];
 
         PyObject              *indexobj;               /* creating obj */
-        int                   view;
         int                   consec;
         char                  *dataptr;
 
