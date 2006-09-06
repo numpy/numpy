@@ -2414,9 +2414,10 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 						   mps[0]->dimensions,
 						   PyArray_INTP,
 						   NULL, NULL, 0, 0, NULL);
-		if (ret == NULL) return NULL;
+                
+		if (ret == NULL) goto fail;
 		*((intp *)(ret->data)) = 0;
-		return (PyObject *)ret;
+                goto finish;
 	}
 	if (axis < 0) axis += nd;
 	if ((axis < 0) || (axis >= nd)) {
@@ -2502,8 +2503,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
 	NPY_END_THREADS
 
+ finish:
 	for (i=0; i<n; i++) {Py_XDECREF(mps[i]); Py_XDECREF(its[i]);}
-	Py_DECREF(rit);
+	Py_XDECREF(rit);
 	_pya_free(mps);
 	_pya_free(its);
 	return (PyObject *)ret;
