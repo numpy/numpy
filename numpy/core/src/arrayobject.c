@@ -8692,7 +8692,7 @@ PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
                         it->dims_m1[i];
                 if (i > 0)
                         it->factors[nd-i-1] = it->factors[nd-i] *       \
-                                it->ao->dimensions[nd-i];
+                                dims[nd-i];
         }
         PyArray_ITER_RESET(it);
 
