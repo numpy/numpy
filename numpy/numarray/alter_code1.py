@@ -59,8 +59,6 @@ import os
 import re
 import glob
 
-
-
 def changeimports(fstr, name, newname):
     importstr = 'import %s' % name
     importasstr = 'import %s as ' % name
