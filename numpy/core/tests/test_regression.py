@@ -359,6 +359,11 @@ class test_regression(NumpyTestCase):
         assert_equal(N.arange(4,dtype='<c8').imag.max(),0.0)
         assert_equal(N.arange(4,dtype='>c8').real.max(),3.0)
         assert_equal(N.arange(4,dtype='<c8').real.max(),3.0)
+        
+    def check_multiple_assign(self, level=rlevel):
+        """Ticket #273"""
+        a = N.zeros((3,1),int)
+        a[[1,2]] = 1        
 
 if __name__ == "__main__":
     NumpyTest().run()
