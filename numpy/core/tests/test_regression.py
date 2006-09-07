@@ -359,6 +359,10 @@ class test_regression(NumpyTestCase):
         assert_equal(N.arange(4,dtype='<c8').imag.max(),0.0)
         assert_equal(N.arange(4,dtype='>c8').real.max(),3.0)
         assert_equal(N.arange(4,dtype='<c8').real.max(),3.0)
+ 
+    def check_masked_array_repeat(self, level=rlevel):
+        """Ticket #271"""
+        N.ma.array([1],mask=False).repeat(10)
         
     def check_multiple_assign(self, level=rlevel):
         """Ticket #273"""
