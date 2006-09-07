@@ -74,8 +74,12 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	if (kwds != NULL) {
 		PyObject *ref;
 		ref = PyDict_GetItemString(kwds, "order");
-		if (ref == NULL ||                                      \
-		    (PyArray_OrderConverter(ref, &order) == PY_FAIL))
+                if (ref == NULL) {
+                        PyErr_SetString(PyExc_TypeError, 
+                                        "invalid keyword argument");
+                        return NULL;
+                }
+		if ((PyArray_OrderConverter(ref, &order) == PY_FAIL))
 			return NULL;
 	}
 
