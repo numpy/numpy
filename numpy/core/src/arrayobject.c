@@ -12,6 +12,7 @@ Heavily modified in 2005 with inspiration from Numarray
 by
 
 Travis Oliphant,  oliphant@ee.byu.edu
+Brigham Young Univeristy
 
 maintainer email:  oliphant.travis@ieee.org
 
@@ -2432,7 +2433,8 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
                         PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(arr));
                         memmove(mit->dataptr, it->dataptr, sizeof(PyObject *));
                         /* ignored unless VOID array with object's */
-                        copyswap(mit->dataptr, NULL, swap, arr);
+                        if (swap)
+                                copyswap(mit->dataptr, NULL, swap, arr);
                         PyArray_MapIterNext(mit);
                         PyArray_ITER_NEXT(it);
                 }
@@ -9698,11 +9700,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 
         mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
         if (mit->ait == NULL) return;
-
-        /* If this is just a view, then do nothing more    */
-        /*   views are handled by just adjusting the strides
-             and dimensions of the object.
-        */
 
         /* no subspace iteration needed.  Finish up and Return */
         if (subnd == 0) {

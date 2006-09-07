@@ -5,10 +5,11 @@
   Original file
   Copyright (c) 1995, 1996, 1997 Jim Hugunin, hugunin@mit.edu
 
-  Modified extensively for numpy in 2005
+  Modified for numpy in 2005
 
   Travis E. Oliphant
   oliphant@ee.byu.edu
+  Brigham Young University
 */
 
 /* $Id: multiarraymodule.c,v 1.36 2005/09/14 00:14:00 teoliphant Exp $ */
