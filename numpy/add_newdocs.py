@@ -937,17 +937,18 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
         Reference to out, where None specifies the original array a.
 
     Round to the specified number of decimals. When 'decimals' is negative it
-    specifies the number of positions to the left of the decimal point. The real
-    and imaginary parts of complex numbers are rounded separately. Nothing is
-    done if the array is not of float type and 'decimals' is >= 0.
+    specifies the number of positions to the left of the decimal point. The
+    real and imaginary parts of complex numbers are rounded separately. Nothing
+    is done if the array is not of float type and 'decimals' is >= 0.
 
     The keyword 'out' may be used to specify a different array to hold the
     result rather than the default 'a'. If the type of the array specified by
-    'out' differs from that of 'a', the result is cast to the new type.
+    'out' differs from that of 'a', the result is cast to the new type,
+    otherwise the original type is kept. Floats round to floats by default.
 
-    Numpy rounds to even. Thus 1.5 and 2.5 round to 2, -0.5 and 0.5 round to 0,
-    etc. Results may also be surprising due to the inexact representation of
-    decimal fractions in IEEE floating point and the errors introduced in
+    Numpy rounds to even. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round to
+    0.0, etc. Results may also be surprising due to the inexact representation
+    of decimal fractions in IEEE floating point and the errors introduced in
     scaling the numbers when 'decimals' is something other than 0.
 
     """))
@@ -960,7 +961,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
         v -- array of keys to be searched for in a.
 
     Keyword arguments:
-        side -- {'left', 'right'}, default('left').
+        side -- {'left', 'right'}, (default 'left').
 
     Returns:
         index array with the same shape as keys.
@@ -978,9 +979,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
            a[j] < key <= a[i] for all j < i,
 
     If such an index does not exist, a.size() is used. Consequently, i is the
-    index of the first item in a that is >= key. If the key were to be inserted
-    into a in the slot before the index i, then the order of a would be
-    preserved and i would be the smallest index with that property.
+    index of the first item in 'a' that is >= key. If the key were to be
+    inserted into a in the slot before the index i, then the order of a would
+    be preserved and i would be the smallest index with that property.
 
     The method call
 
@@ -992,9 +993,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
            a[j] <= key < a[i] for all j < i,
 
     If such an index does not exist, a.size() is used. Consequently, i is the
-    index of the first item in a that is > key. If the key were to be inserted
-    into a in the slot before the index i, then the order of a would be
-    preserved and i would be the largest index with that property.
+    index of the first item in 'a' that is > key. If the key were to be
+    inserted into a in the slot before the index i, then the order of a would
+    be preserved and i would be the largest index with that property.
 
     """))
 

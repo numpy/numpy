@@ -245,10 +245,10 @@ def searchsorted(a, v, side='left'):
 
            a[j] < key <= a[i] for all j < i,
 
-    If such an index does not exist, a.size() is used. The result is such that
-    if the key were to be inserted into a in the slot before the index i, then
-    the order of a would be preserved and i would be the smallest index with
-    that property.
+    If such an index does not exist, a.size() is used. Consequently, i is the
+    index of the first item in 'a' that is >= key. If the key were to be
+    inserted into a in the slot before the index i, then the order of a would
+    be preserved and i would be the smallest index with that property.
 
     The function call
 
@@ -259,10 +259,10 @@ def searchsorted(a, v, side='left'):
 
            a[j] <= key < a[i] for all j < i,
 
-    If such an index does not exist, a.size() is used. The result is such that
-    if the key were to be inserted into a in the slot before the index i, then
-    the order of a would be preserved and i would be the largest index with
-    that property.
+    If such an index does not exist, a.size() is used. Consequently, i is the
+    index of the first item in 'a' that is > key. If the key were to be
+    inserted into a in the slot before the index i, then the order of a would
+    be preserved and i would be the largest index with that property.
 
     """
     try:
@@ -549,10 +549,10 @@ def round_(a, decimals=0, out=None):
     """Returns reference to result. Copies a and rounds to 'decimals' places.
 
     Keyword arguments:
-        decimals -- number of decimals to round to (default 0). May be negative.
+        decimals -- number of decimal places to round to (default 0).
         out -- existing array to use for output (default copy of a).
 
-    Return:
+    Returns:
         Reference to out, where None specifies a copy of the original array a.
 
     Round to the specified number of decimals. When 'decimals' is negative it
@@ -562,14 +562,16 @@ def round_(a, decimals=0, out=None):
     than or equal to 0.
 
     The keyword 'out' may be used to specify a different array to hold the
-    result rather than the default copy of 'a'. If the type of the array
-    specified by 'out' differs from that of 'a', the result is cast to the new
-    type.
+    result rather than the default 'a'. If the type of the array specified by
+    'out' differs from that of 'a', the result is cast to the new type,
+    otherwise the original type is kept. Floats round to floats by default.
 
-    Numpy rounds to even. Thus 1.5 and 2.5 round to 2, -0.5 and 0.5 round to 0,
-    etc. Results may also be surprising due to the inexact representation of
-    decimal fractions in IEEE floating point and the errors introduced in
+    Numpy rounds to even. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round to
+    0.0, etc. Results may also be surprising due to the inexact representation
+    of decimal fractions in IEEE floating point and the errors introduced in
     scaling the numbers when 'decimals' is something other than 0.
+
+    The function around is an alias for round_.
 
     """
     try:
