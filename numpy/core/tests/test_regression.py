@@ -352,6 +352,14 @@ class test_regression(NumpyTestCase):
         """Lexsort memory error"""
         v = N.array([1,2,3,4,5,6,7,8,9,10])
         assert_equal(N.lexsort(v),0)
+        
+    def check_masked_array_multiply(self,level=rlevel):
+        """Ticket #254"""
+        a = N.ma.zeros((4,1))
+        a[2,0] = N.ma.masked
+        b = N.zeros((4,2))
+        a*b
+        b*a
 
     def check_swap_real(self, level=rlevel):
         """Ticket #265"""
@@ -359,7 +367,11 @@ class test_regression(NumpyTestCase):
         assert_equal(N.arange(4,dtype='<c8').imag.max(),0.0)
         assert_equal(N.arange(4,dtype='>c8').real.max(),3.0)
         assert_equal(N.arange(4,dtype='<c8').real.max(),3.0)
- 
+
+    def check_object_array_from_list(self, level=rlevel):
+        """Ticket #270"""
+        a = N.array([1,'A',None])
+        
     def check_masked_array_repeat(self, level=rlevel):
         """Ticket #271"""
         N.ma.array([1],mask=False).repeat(10)
@@ -367,7 +379,10 @@ class test_regression(NumpyTestCase):
     def check_multiple_assign(self, level=rlevel):
         """Ticket #273"""
         a = N.zeros((3,1),int)
-        a[[1,2]] = 1        
-
+        a[[1,2]] = 1
+        
+    def check_empty_array_type(self, level=rlevel):
+        assert_equal(N.array([]).dtype, N.zeros(0).dtype)
+        
 if __name__ == "__main__":
     NumpyTest().run()
