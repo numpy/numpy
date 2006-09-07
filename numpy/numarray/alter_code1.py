@@ -52,7 +52,7 @@ Makes the following changes:
    - .setimaginary() --> .imag
    
 """
-__all__ = ['convertfile', 'convertall']
+__all__ = ['convertfile', 'convertall', 'converttree']
 
 import sys
 import os

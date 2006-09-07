@@ -28,7 +28,7 @@ Makes the following changes:
  * Converts uses of type(...) is <type>
    isinstance(..., <type>)
 """
-__all__ = ['convertfile', 'convertall']
+__all__ = ['convertfile', 'convertall', 'converttree']
 
 import sys
 import os
@@ -194,6 +194,16 @@ def convertall(direc=os.path.curdir):
     files = glob.glob(os.path.join(direc,'*.py'))
     for afile in files:
         convertfile(afile)
+
+def _func(arg, dirname, fnames):
+    convertall(dirname)
+
+def converttree(direc=os.path.curdir):
+    """Convert all .py files in the tree given
+
+    """
+    os.path.walk(direc, _func, None)
+        
 
 if __name__ == '__main__':
     fromargs(sys.argv)

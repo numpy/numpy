@@ -192,10 +192,11 @@ def _commastring(astr):
     return result
 
 def _getintp_ctype():
-    if _getintp_ctype.cache:
-        return _getintp_ctype.cache
-    import ctypes
+    val = _getintp_ctype.cache
+    if val is not None:
+        return val
     char = dtype('p').char
+    import ctypes
     if (char == 'i'):
         val = ctypes.c_int
     elif char == 'l':
@@ -203,7 +204,7 @@ def _getintp_ctype():
     elif char == 'q':
         val = ctypes.c_longlong
     else:
-        raise ValueError, "confused about intp->ctypes."
+        val = ctypes.c_long
     _getintp_ctype.cache = val
     return val
 _getintp_ctype.cache = None

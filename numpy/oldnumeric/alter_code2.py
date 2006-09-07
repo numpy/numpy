@@ -2,6 +2,8 @@
 This module converts code written for numpy.oldnumeric to work
 with numpy
 
+FIXME:  Flesh this out.
+
 Makes the following changes:
  * Converts typecharacters '1swu' to 'bhHI' respectively
    when used as typecodes
@@ -17,11 +19,11 @@ Makes the following changes:
    oldnumeric.random_array, and oldnumeric.fft
 
 """
-#__all__ = ['convertfile', 'convertall']
+#__all__ = ['convertfile', 'convertall', 'converttree']
 __all__ = []
 
 import warnings
-warnings.warn("numpy.oldnumeric.alter_code2 is not ready yet.")
+warnings.warn("numpy.oldnumeric.alter_code2 is not working yet.")
 
 import sys
 import os
@@ -130,6 +132,15 @@ def convertall(direc=os.path.curdir):
     files = glob.glob(os.path.join(direc,'*.py'))
     for afile in files:
         convertfile(afile)
+
+def _func(arg, dirname, fnames):
+    convertall(dirname)
+
+def converttree(direc=os.path.curdir):
+    """Convert all .py files in the tree given
+
+    """
+    os.path.walk(direc, _func, None)        
 
 if __name__ == '__main__':
     fromargs(sys.argv)

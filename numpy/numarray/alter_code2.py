@@ -2,12 +2,14 @@
 This module converts code written for numpy.numarray to work
 with numpy
 
+FIXME:  finish this. 
+
 """
-#__all__ = ['convertfile', 'convertall']
+#__all__ = ['convertfile', 'convertall', 'converttree']
 __all__ = []
 
 import warnings
-warnings.warn("numpy.numarray.alter_code2 is not ready yet.")
+warnings.warn("numpy.numarray.alter_code2 is not working yet.")
 import sys
 
 
@@ -15,70 +17,6 @@ import os
 import re
 import glob
 
-# To convert typecharacters we need to 
-# Not very safe.  Disabled for now..
-def replacetypechars(astr):
-    astr = astr.replace("'s'","'h'")
-    astr = astr.replace("'b'","'B'")
-    astr = astr.replace("'1'","'b'")
-    astr = astr.replace("'w'","'H'")
-    astr = astr.replace("'u'","'I'")
-    return astr
-
-def changeimports(fstr, name, newname):
-    importstr = 'import %s' % name
-    importasstr = 'import %s as ' % name
-    fromstr = 'from %s import ' % name
-    fromall=0
-
-    fstr = fstr.replace(importasstr, 'import %s as ' % newname)
-    fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name))
-
-    ind = 0
-    Nlen = len(fromstr)
-    Nlen2 = len("from %s import " % newname)
-    while 1:
-        found = fstr.find(fromstr,ind)
-        if (found < 0):
-            break
-        ind = found + Nlen
-        if fstr[ind] == '*':
-            continue
-        fstr = "%sfrom %s import %s" % (fstr[:found], newname, fstr[ind:])
-        ind += Nlen2 - Nlen
-    return fstr, fromall
-
-def replaceattr(astr):
-    astr = astr.replace("matrixmultiply","dot")
-    return astr
-
-def replaceother(astr):
-    astr = re.sub(r'typecode\s*=', 'dtype=', astr)
-    astr = astr.replace('ArrayType', 'ndarray')
-    astr = astr.replace('NewAxis', 'newaxis')
-    return astr
-
-import datetime
-def fromstr(filestr):
-    #filestr = replacetypechars(filestr)
-    filestr, fromall1 = changeimports(filestr, 'numpy.oldnumeric', 'numpy')
-    filestr, fromall1 = changeimports(filestr, 'numpy.core.multiarray', 'numpy')
-    filestr, fromall1 = changeimports(filestr, 'numpy.core.umath', 'numpy')
-    filestr, fromall3 = changeimports(filestr, 'LinearAlgebra',
-                                      'numpy.linalg.old')
-    filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.random.oldrng')
-    filestr, fromall3 = changeimports(filestr, 'RNG.Statistics', 'numpy.random.oldrngstats')
-    filestr, fromall3 = changeimports(filestr, 'RandomArray', 'numpy.random.oldrandomarray')
-    filestr, fromall3 = changeimports(filestr, 'FFT', 'numpy.fft.old')
-    filestr, fromall3 = changeimports(filestr, 'MA', 'numpy.core.ma')
-    fromall = fromall1 or fromall2 or fromall3
-    filestr = replaceattr(filestr)
-    filestr = replaceother(filestr)
-    today = datetime.date.today().strftime('%b %d, %Y')
-    name = os.path.split(sys.argv[0])[-1]
-    filestr = '## Automatically adapted for '\
-              'numpy %s by %s\n\n%s' % (today, name, filestr)
-    return filestr
 
 def makenewfile(name, filestr):
     fid = file(name, 'w')
@@ -117,6 +55,16 @@ def convertall(direc=os.path.curdir):
     files = glob.glob(os.path.join(direc,'*.py'))
     for afile in files:
         convertfile(afile)
+
+def _func(arg, dirname, fnames):
+    convertall(dirname)
+
+def converttree(direc=os.path.curdir):
+    """Convert all .py files in the tree given
+
+    """
+    os.path.walk(direc, _func, None)
+
 
 if __name__ == '__main__':
     fromargs(sys.argv)

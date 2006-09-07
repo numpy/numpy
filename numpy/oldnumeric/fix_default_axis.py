@@ -33,8 +33,7 @@ prod
 std
 mean
 """
-__all__ = ['convertfile', 'convertall', 'converttree',
-           'convertfile2','convertall2', 'converttree2']
+__all__ = ['convertfile', 'convertall', 'converttree']
 
 import sys
 import os
