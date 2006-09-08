@@ -348,10 +348,20 @@ class test_regression(NumpyTestCase):
         assert_equal(N.array([[],[],[]],dtype=object).shape, (3,0))
         assert_equal(N.array([[3,4],[5,6],None],dtype=object).shape, (3,))
         
+    def check_character_array_strip(self,level=rlevel):
+        """Ticket #246"""
+        x = N.char.array(("x","x ","x  "))
+        for c in x: assert_equal(c,"x")
+
     def check_lexsort(self,level=rlevel):
         """Lexsort memory error"""
         v = N.array([1,2,3,4,5,6,7,8,9,10])
         assert_equal(N.lexsort(v),0)
+        
+    def check_pickle_dtype(self,level=rlevel):
+        """Ticket #251"""
+        import pickle
+        pickle.dumps(N.float)
         
     def check_masked_array_multiply(self,level=rlevel):
         """Ticket #254"""
