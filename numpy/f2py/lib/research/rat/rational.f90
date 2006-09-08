@@ -18,6 +18,7 @@ module rational
     end function rat_create
 
      subroutine rat_set(obj, n, d)
+       implicit none
        type(rat_struct) :: obj
        integer :: n,d
        print*,'In rat_set'

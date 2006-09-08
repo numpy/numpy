@@ -283,10 +283,10 @@ class test_Statements(NumpyTestCase):
         assert_equal(parse(Optional,'optional a , b'),'OPTIONAL a, b')
 
     def check_intent(self):
-        assert_equal(parse(Intent,'intent (in) a'),'INTENT (in) a')
-        assert_equal(parse(Intent,'intent(in)::a'),'INTENT (in) a')
-        assert_equal(parse(Intent,'intent(in) a , b'),'INTENT (in) a, b')
-        assert_equal(parse(Intent,'intent (in, out) a'),'INTENT (in, out) a')
+        assert_equal(parse(Intent,'intent (in) a'),'INTENT (IN) a')
+        assert_equal(parse(Intent,'intent(in)::a'),'INTENT (IN) a')
+        assert_equal(parse(Intent,'intent(in) a , b'),'INTENT (IN) a, b')
+        assert_equal(parse(Intent,'intent (in, out) a'),'INTENT (IN, OUT) a')
 
     def check_entry(self):
         assert_equal(parse(Entry,'entry a'), 'ENTRY a')
@@ -297,7 +297,7 @@ class test_Statements(NumpyTestCase):
                      'ENTRY a BIND (C, NAME = "a b")')
         assert_equal(parse(Entry,'entry a result (b)'), 'ENTRY a RESULT (b)')
         assert_equal(parse(Entry,'entry a bind(d) result (b)'),
-                     'ENTRY a RESULT (b) BIND (d)')
+                     'ENTRY a RESULT (b) BIND (D)')
         assert_equal(parse(Entry,'entry a result (b) bind( c )'),
                      'ENTRY a RESULT (b) BIND (C)')
         assert_equal(parse(Entry,'entry a(b,*) result (g)'),
@@ -475,6 +475,9 @@ class test_Statements(NumpyTestCase):
         assert_equal(parse(Implicit,'implicit'),'IMPLICIT NONE')
         assert_equal(parse(Implicit,'implicit integer (i-m)'),
                      'IMPLICIT INTEGER ( i-m )')
-
+        assert_equal(parse(Implicit,'implicit integer (i-m,p,q-r)'),
+                     'IMPLICIT INTEGER ( i-m, p, q-r )')
+        assert_equal(parse(Implicit,'implicit integer (i-m), real (z)'),
+                     'IMPLICIT INTEGER ( i-m ), REAL ( z )')
 if __name__ == "__main__":
     NumpyTest().run()

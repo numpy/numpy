@@ -390,10 +390,12 @@ class Implicit(Statement):
         implicit_rules = self.parent.a.implicit_rules
         if not self.items:
             if implicit_rules:
-                raise AnalyzeError,'IMPLICIT NONE implies emtpy implicit_rules'\
-                      ' but got %r' % (implicit_rules) 
+                self.warning('overriding previously set implicit rule mapping'\
+                      ' %r.' % (implicit_rules))
+            self.parent.a.implicit_rules = None
             return
         if implicit_rules is None:
+            self.warning('overriding previously set IMPLICIT NONE')
             self.parent.a.implicit_rules = implicit_rules = {}
         for stmt,specs in self.items:
             s,e = specs

@@ -156,10 +156,12 @@ class Call(Statement):
 
     def analyze(self):
         a = self.programblock.a
+        variables = a.variables
         if hasattr(a, 'external'):
             external = a.external
             if self.designator in external:
                 print 'Need to analyze:',self
+        print self
         return
 
 class Goto(Statement):
@@ -853,7 +855,7 @@ class Use(Statement):
                 fn = get_module_file(self.name, d)
                 if fn is not None:
                     break
-            if 1 and fn is not None:
+            if fn is not None:
                 from readfortran import FortranFileReader
                 from parsefortran import FortranParser
                 self.info('looking module information from %r' % (fn))
@@ -866,6 +868,11 @@ class Use(Statement):
 
         if not modules.has_key(self.name):
             self.warning('no information about the use module %r' % (self.name))
+            return
+
+        use_provides = self.parent.a.use_provides
+        
+        
         return
 
 class Exit(Statement):

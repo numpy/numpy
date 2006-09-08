@@ -156,6 +156,7 @@ def simple_main():
         parser = FortranParser(reader)
         parser.parse()
         parser.analyze()
+        print parser.block.topyf()
         #print parser.block
 
 def profile_main():

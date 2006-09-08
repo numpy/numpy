@@ -8,40 +8,59 @@ import sys
 from base_classes import BeginStatement, EndStatement, Statement,\
      AttributeHolder, ProgramBlock
 from readfortran import Line
-from utils import filter_stmts, parse_bind, parse_result
+from utils import filter_stmts, parse_bind, parse_result, AnalyzeError
 
 class HasImplicitStmt:
 
-    a = AttributeHolder(implicit_rules = None)
+    a = AttributeHolder(implicit_rules = {})
 
     def get_type(self, name):
         implicit_rules = self.a.implicit_rules
-        if implicit_rules=={}:
-            raise ValueError,'Implicit rules mapping is null'
+        if implicit_rules is None:
+            raise AnalyzeError,'Implicit rules mapping is null'
         l = name[0].lower()
         if implicit_rules.has_key(l):
             return implicit_rules[l]
-        # default rules
+        # default rules:
         if l in 'ijklmn':
-            return implicit_rules['default_integer']
-        return implicit_rules['default_real']
+            l = 'default_integer'
+        else:
+            l = 'default_real'
+        t = implicit_rules.get(l, None)
+        if t is None:
+            if l[8:]=='real':
+                implicit_rules[l] = t = Real(self, self.item.copy('real'))
+            else:
+                implicit_rules[l] = t = Integer(self, self.item.copy('integer'))
+        return t
 
-    def initialize(self):
+    def topyf(self, tab='  '):
         implicit_rules = self.a.implicit_rules
-        if implicit_rules is not None:
-            return
-        self.a.implicit_rules = implicit_rules = {}
-        real = Real(self, self.item.copy('real'))
-        assert real.isvalid
-        integer = Integer(self, self.item.copy('integer'))
-        assert integer.isvalid
-        implicit_rules['default_real'] = real
-        implicit_rules['default_integer'] = integer
-        return
+        if implicit_rules is None:
+            return tab + 'IMPLICIT NONE\n'
+        items = {}
+        for c,t in implicit_rules.items():
+            if c.startswith('default'):
+                continue
+            st = t.tostr()
+            if items.has_key(st):
+                items[st].append(c)
+            else:
+                items[st] = [c]
+        if not items:
+            return tab + '! default IMPLICIT rules apply\n'
+        s = 'IMPLICIT'
+        ls = []
+        for st,l in items.items():
+            l.sort()
+            ls.append(st + ' (%s)' % (', '.join(l)))
+        s += ' ' + ', '.join(ls)
+        return tab + s + '\n'
 
 class HasUseStmt:
 
-    a = AttributeHolder(use = {})
+    a = AttributeHolder(use = {},
+                        use_provides = {})
 
     def get_entity(self, name):
         for modname, modblock in self.top.a.module.items():
@@ -49,22 +68,39 @@ class HasUseStmt:
                 if getattr(stmt,'name','') == name:
                     return stmt
         return
-    
-    def initialize(self):
-        
-        return
+
+    def topyf(self):
+        pass
 
 class HasVariables:
 
     a = AttributeHolder(variables = {})
 
+    def topyf(self,tab=''):
+        s = ''
+        for name, var in self.a.variables.items():
+            s += tab + str(var) + '\n'
+        return s
+
 class HasTypeDecls:
 
     a = AttributeHolder(type_decls = {})
 
+    def topyf(self, tab=''):
+        s = ''
+        for name, stmt in self.a.type_decls.items():
+            s += stmt.topyf(tab='  '+tab)
+        return s
+
 class HasAttributes:
 
     a = AttributeHolder(attributes = [])
+
+    def topyf(self, tab=''):
+        s = ''
+        for attr in self.a.attributes:
+            s += tab + attr + '\n'
+        return s
 
 class HasModuleProcedures:
 
@@ -136,6 +172,15 @@ class BeginSource(BeginStatement):
                 return
         return BeginStatement.process_subitem(self, item)
 
+    def topyf(self, tab=''): # XXXX
+        s = ''
+        for name, stmt in self.a.module.items():
+            s += stmt.topyf()
+        for name, stmt in self.a.external_subprogram.items():
+            s += stmt.topyf()
+        for name, stmt in self.a.blockdata.items():
+            s += stmt.topyf()
+        return s
 # Module
 
 class EndModule(EndStatement):
@@ -166,12 +211,6 @@ class Module(BeginStatement, HasAttributes,
     def analyze(self):
         content = self.content[:]
 
-        [stmt.analyze() for stmt in filter_stmts(content, Use)]
-        HasUseStmt.initialize(self)
-
-        [stmt.analyze() for stmt in filter_stmts(content, Implicit)]
-        HasImplicitStmt.initialize(self)
-
         while content:
             stmt = content.pop(0)
             if isinstance(stmt, Contains):
@@ -187,6 +226,17 @@ class Module(BeginStatement, HasAttributes,
             self.show_message('Not analyzed content: %s' % content)
 
         return
+
+    def topyf(self, tab=''):
+        s = tab + 'MODULE '+self.name + '\n'
+        s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
+        s +=  HasTypeDecls.topyf(self, tab=tab+'  ')
+        s +=  HasVariables.topyf(self, tab=tab+'  ')
+        s +=  tab + '  CONTAINS\n'
+        for name, stmt in self.a.module_subprogram.items():
+            s += stmt.topyf(tab=tab+'    ')
+        s += tab + 'END MODULE ' + self.name + '\n'
+        return s
 
 # Python Module
 
@@ -219,7 +269,8 @@ class EndProgram(EndStatement):
     """
     match = re.compile(r'end(\s*program\s*\w*|)\Z', re.I).match
 
-class Program(BeginStatement, ProgramBlock, HasAttributes,
+class Program(BeginStatement, ProgramBlock,
+              HasAttributes,
               HasImplicitStmt, HasUseStmt):
     """ PROGRAM [name]
     """
@@ -312,7 +363,8 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
 
 class SubProgramStatement(BeginStatement, ProgramBlock,
                           HasImplicitStmt, HasAttributes,
-                          HasUseStmt, HasVariables, HasTypeDecls
+                          HasUseStmt,
+                          HasVariables, HasTypeDecls
                           ):
     """
     [ <prefix> ] <FUNCTION|SUBROUTINE> <name> [ ( <args> ) ] [ <suffix> ]
@@ -377,6 +429,9 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
     def analyze(self):
         content = self.content[:]
 
+        if self.prefix:
+            self.a.attributes.extend(prefix.upper().split())
+
         variables = self.a.variables
         for a in self.args:
             assert not variables.has_key(a)
@@ -384,13 +439,9 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
             variables[a] = Variable(self, a)
 
         if isinstance(self, Function):
-            variables[self.result] = Variable(self, self.result)
-
-        [stmt.analyze() for stmt in filter_stmts(content, Use)]
-        HasUseStmt.initialize(self)
-
-        [stmt.analyze() for stmt in filter_stmts(content, Implicit)]
-        HasImplicitStmt.initialize(self)
+            var = variables[self.result] = Variable(self, self.result)
+            if self.typedecl is not None:
+                var.set_type(self.typedecl)
 
         while content:
             stmt = content.pop(0)
@@ -404,10 +455,23 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
                 continue
             else:
                 stmt.analyze()
+
         if content:
             self.show_message('Not analyzed content: %s' % content)
 
         return
+
+    def topyf(self, tab=''):
+        s = tab + self.__class__.__name__.upper()
+        s += ' ' + self.name + ' (%s)' % (', '.join(self.args))
+        if isinstance(self, Function) and self.result != self.name:
+            s += ' RESULT (%s)' % (self.result)
+        s += '\n'
+        s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
+        s +=  HasTypeDecls.topyf(self, tab=tab+'  ')
+        s +=  HasVariables.topyf(self, tab=tab+'  ')
+        s += tab + 'END ' + self.__class__.__name__.upper() + ' ' + self.name + '\n'
+        return s
 
 class EndSubroutine(EndStatement):
     """
@@ -728,13 +792,15 @@ class EndType(EndStatement):
 
 class Type(BeginStatement, HasVariables, HasAttributes):
     """
-    TYPE [ [, <type-attr-spec-list>] ::] <type-name> [ ( <type-param-name-list> ) ]
+    TYPE [ [ , <type-attr-spec-list>] :: ] <type-name> [ ( <type-param-name-list> ) ]
     <type-attr-spec> = <access-spec> | EXTENDS ( <parent-type-name> )
                        | ABSTRACT | BIND(C)
     """
     match = re.compile(r'type\b\s*').match
     end_stmt_cls = EndType
-    is_name = re.compile(r'\w+\Z').match
+
+    a = AttributeHolder(extends = None,
+                        parameters = [])
 
     def process_item(self):
         line = self.item.get_line()[4:].lstrip()
@@ -753,11 +819,11 @@ class Type(BeginStatement, HasVariables, HasAttributes):
         if i!=-1:
             self.name = line[:i].rstrip()
             assert line[-1]==')',`line`
-            self.params = line[i+1:-1].lstrip()
+            self.params = split_comma(line[i+1:-1].lstrip())
         else:
             self.name = line
-            self.params = ''
-        if not self.is_name(self.name):
+            self.params = []
+        if not is_name(self.name):
             self.isvalid = False
             return
         return BeginStatement.process_item(self)
@@ -768,7 +834,7 @@ class Type(BeginStatement, HasVariables, HasAttributes):
             s += ', '.join(['']+self.specs) + ' ::'
         s += ' ' + self.name
         if self.params:
-            s += ' ('+self.params+')'
+            s += ' ('+', '.join(self.params)+')'
         return s
 
     def get_classes(self):
@@ -777,9 +843,44 @@ class Type(BeginStatement, HasVariables, HasAttributes):
 
     def analyze(self):
         BeginStatement.analyze(self)
-        assert isinstance(self.parent,HasTypeDecls)
+        for spec in self.specs:
+            i = spec.find('(')
+            if i!=-1:
+                assert spec.endswith(')'),`spec`
+                s = spec[:i].rstrip().upper()
+                n = spec[i+1:-1].strip()
+                if s=='EXTENDS':
+                    self.a.extends = n
+                    continue
+                elif s=='BIND':
+                    args,rest = parse_bind(spec)
+                    assert not rest,`rest`
+                    spec = 'BIND(%s)' % (', '.join(args))
+                else:
+                    spec = '%s(%s)' % (s,n)
+                    self.warning('Unknown type-attr-spec %r' % (spec))
+            else:
+                spec = spec.upper()
+                if spec not in ['PUBLIC', 'PRIVATE', 'ABSTRACT']:
+                    self.warning('Unknown type-attr-spec %r' % (spec))
+            self.a.attributes.append(spec)
+        self.a.parameters.extend(self.params)
+        assert isinstance(self.parent,HasTypeDecls),`self.parent.__class__`
         self.parent.a.type_decls[self.name] = self
         return
+
+    def topyf(self, tab=''):
+        s = tab + 'TYPE'
+        if self.a.extends is not None:
+            s += ', EXTENDS(%s) ::' % (self.a.extends) 
+        s += ' ' + self.name
+        if self.a.parameters:
+            s += ' (%s)' % (', '.join(self.a.parameters))
+        s += '\n'
+        s += HasAttributes.topyf(self, tab=tab+'  ')
+        s += HasVariables.topyf(self, tab=tab+'  ')
+        s += tab + 'END TYPE ' + self.name + '\n'
+        return s
 
 TypeDecl = Type
 
