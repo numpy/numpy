@@ -12,6 +12,7 @@ from numpy import tril, trapz as _Ntrapz, hanning, rot90, triu, diff, \
 
 from numpy.linalg import eig, svd
 from numpy.random import rand, randn
+import numpy as nn
      
 from typeconv import convtypecode
 
