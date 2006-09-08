@@ -348,6 +348,13 @@ class test_regression(NumpyTestCase):
         assert_equal(N.array([[],[],[]],dtype=object).shape, (3,0))
         assert_equal(N.array([[3,4],[5,6],None],dtype=object).shape, (3,))
         
+    def check_mem_around(self,level=rlevel):
+        """Ticket #243"""
+        x = N.zeros((1,))
+        y = [0]
+        decimal = 6
+        N.around(abs(x-y),decimal) <= 10.0**(-decimal)
+        
     def check_character_array_strip(self,level=rlevel):
         """Ticket #246"""
         x = N.char.array(("x","x ","x  "))
