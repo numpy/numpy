@@ -927,7 +927,7 @@ cdef class RandomState:
         osigma = PyArray_FROM_OTF(sigma, NPY_DOUBLE, NPY_ALIGNED)
         if _sp.any(_sp.less_equal(osigma, 0.0)):
             raise ValueError("sigma <= 0.0")
-        return cont2_array(self.internal_state, rk_lognormal, size, mean, sigma)
+        return cont2_array(self.internal_state, rk_lognormal, size, omean, osigma)
     
     def rayleigh(self, scale=1.0, size=None):
         """Rayleigh distribution.
