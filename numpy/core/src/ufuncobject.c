@@ -3103,6 +3103,15 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
 	return (PyObject *)self;
 }
 
+/* This is the first-part of the CObject structure.
+
+   I don't think this will change, but if it should, then
+   this needs to be fixed.  The exposed C-API was insufficient 
+   because I needed to replace the pointer and it wouldn't
+   let me with a destructor set (even though it works fine 
+   with the destructor). 
+ */
+
 typedef struct {
         PyObject_HEAD
         void *c_obj;
@@ -3155,7 +3164,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     	PyObject *key, *cobj;
 	int i;
         int *newtypes=NULL;
-
 
 	descr=PyArray_DescrFromType(usertype);
 	if ((usertype < PyArray_USERDEF) || (descr==NULL)) {
