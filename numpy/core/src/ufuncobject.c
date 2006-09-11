@@ -7,7 +7,8 @@
   This supports mathematical (and Boolean) functions on arrays and other python
   objects.  Math on large arrays of basic C types is rather efficient.
 
-  Travis E. Oliphant  (2005-2006), oliphant@ee.byu.edu (oliphant.travis@ieee.org)
+  Travis E. Oliphant  2005, 2006 oliphant@ee.byu.edu (oliphant.travis@ieee.org)
+  Brigham Young University
 
   based on the
 
@@ -3030,20 +3031,23 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
 			       PyUFuncGenericFunction *oldfunc)
 {
 	int i,j;
+        int res = -1;
 	/* Find the location of the matching signature */
 	for (i=0; i<func->ntypes; i++) {
 		for (j=0; j<func->nargs; j++) {
 			if (signature[j] == func->types[i*func->nargs+j])
 				break;
 		}
-		if (j >= func->nargs) return -1;
+		if (j >= func->nargs) continue;
 		
 		if (oldfunc != NULL) {
 			*oldfunc = func->functions[i];
 		}
 		func->functions[i] = newfunc;
+                res = 0;
+                break;
 	}
-	return -1;
+	return res;
 
 }
 
