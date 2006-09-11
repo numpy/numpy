@@ -187,6 +187,16 @@ typedef struct {
         PyObject *callable;
 } PyUFunc_PyFuncData;
 
+/* A linked-list of function information for
+   user-defined 1-d loops.
+ */
+typedef struct _loop1d_info {
+        PyUFuncGenericFunction func;
+        void *data;
+        int *arg_types;
+        struct _loop1d_info *next;
+} PyUFunc_Loop1d;
+
 
 #include "__ufunc_api.h"
 

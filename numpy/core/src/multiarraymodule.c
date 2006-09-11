@@ -1731,7 +1731,6 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
 }
 
 
-
 /*OBJECT_API*/
 static PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
