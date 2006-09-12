@@ -3125,11 +3125,10 @@ static int
 cmp_arg_types(int *arg1, int *arg2, int n)
 {
         while (n--) {
-                if (*arg1 > *arg2)
-                        return 1;
-                else if (*arg1 < *arg2)
+                if (PyArray_EquivTypenums(*arg1, *arg2)) continue;
+                if (PyArray_CanCastSafely(*arg1, *arg2))
                         return -1;
-                arg1++; arg2++;
+                return 1;
         }
         return 0;
 }
