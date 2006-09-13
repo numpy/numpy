@@ -149,7 +149,7 @@ class test_matrix_return(NumpyTestCase):
             'searchsorted', 'setflags', 'setfield', 'sort', 'take',
             'tofile', 'tolist', 'tostring', 'all', 'any', 'sum',
             'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes'
+            'prod', 'std', 'ctypes', 'itemset'
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:

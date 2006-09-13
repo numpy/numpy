@@ -524,7 +524,11 @@ long rk_poisson(rk_state *state, double lam)
     {
         return rk_poisson_ptrs(state, lam);
     }
-    else
+    else if (lam == 0) 
+    {
+        return 0;
+    }
+    else 
     {
         return rk_poisson_mult(state, lam);
     }

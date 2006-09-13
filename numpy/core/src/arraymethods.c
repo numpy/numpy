@@ -543,7 +543,7 @@ array_setscalar(PyArrayObject *self, PyObject *args) {
         
         if (n < 0) {
                 PyErr_SetString(PyExc_ValueError, 
-                                "setitem must have at least one argument");
+                                "itemset must have at least one argument");
                 return NULL;
         }
         obj = PyTuple_GET_ITEM(args, n);

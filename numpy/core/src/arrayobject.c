@@ -3391,6 +3391,18 @@ array_power_is_scalar(PyObject *o2, double* exp)
                     return 1;
             }
     }
+#if (PY_VERSION_HEX >= 0x02050000)
+    if (PyIndex_Check(o2)) {
+            Py_ssize_t val;
+            val = PyNumber_Index(obj);
+            if (val == -1 && PyErr_Occurred()) {
+                    PyErr_Clear();
+                    return 0;
+            }
+            *exp = (double) val;
+            return 1;
+    }
+#endif
     return 0;
 }
 
@@ -3398,10 +3410,9 @@ array_power_is_scalar(PyObject *o2, double* exp)
 static PyObject *
 fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace) {
         double exp;
-        if (PyArray_Check(a1) && (PyArray_ISFLOAT(a1) ||
-                                  PyArray_ISCOMPLEX(a1))) {
-                if (array_power_is_scalar(o2, &exp)) {
-                        PyObject *fastop = NULL;
+        if (PyArray_Check(a1) && array_power_is_scalar(o2, &exp)) {
+                PyObject *fastop = NULL;
+                if (PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1)) {
                         if (exp == 1.0) {
                                 /* we have to do this one special, as the
                                    "copy" method of array objects isn't set
@@ -3431,6 +3442,17 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace) {
                         } else {
                                 return PyArray_GenericUnaryFunction(a1,
                                                                     fastop);
+                        }
+                }
+                else if (exp==2.0) {
+                        fastop = n_ops.multiply;
+                        if (inplace) {
+                                return PyArray_GenericInplaceBinaryFunction \
+                                        (a1, (PyObject *)a1, fastop);
+                        }
+                        else {
+                                return PyArray_GenericBinaryFunction \
+                                        (a1, (PyObject *)a1, fastop);
                         }
                 }
         }

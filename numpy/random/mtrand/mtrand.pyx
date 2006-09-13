@@ -1020,8 +1020,8 @@ cdef class RandomState:
         """
         cdef ndarray olam
         olam = <ndarray>PyArray_FROM_OTF(lam, NPY_DOUBLE, NPY_ALIGNED)
-        if _sp.any(_sp.less_equal(olam, 0)):
-            raise ValueError("lam <= 0")
+        if _sp.any(_sp.less(olam, 0)):
+            raise ValueError("lam < 0")
         return discd_array(self.internal_state, rk_poisson, size, olam)
 
     def zipf(self, a, size=None):
