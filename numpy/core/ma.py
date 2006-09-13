@@ -1360,16 +1360,22 @@ array(data = %(data)s,
         return self._data.dtype
     dtype = property(fget=_get_dtype, doc="type of the array elements.")
 
-    def item(self):
-        "Return Python scalar if possible."
+    def item(self, *args):
+        "Return Python scalar if possible"
         if self._mask is not nomask:
-            m = fromnumeric.ravel(self._mask)
+            m = self._mask.item(*args)
             try:
                 if m[0]:
                     return masked
             except IndexError:
                 return masked
-        return self._data.item()
+        return self._data.item(*args)
+
+    def itemset(self, *args):
+        "Set Python scalar into array"
+        item = args[-1]
+        args = args[:-1]
+        self[args] = item
 
     def tolist(self, fill_value=None):
         "Convert to list"

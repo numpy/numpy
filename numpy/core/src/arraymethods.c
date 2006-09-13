@@ -534,6 +534,120 @@ array_toscalar(PyArrayObject *self, PyObject *args) {
         }
 }
 
+static PyObject *
+array_setscalar(PyArrayObject *self, PyObject *args) {
+        int n, nd;
+        int ret = -1;
+        PyObject *obj;
+        n = PyTuple_GET_SIZE(args)-1;
+        
+        if (n < 0) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "setitem must have at least one argument");
+                return NULL;
+        }
+        obj = PyTuple_GET_ITEM(args, n);
+        if (n==0) {
+                if (self->nd == 0 || PyArray_SIZE(self) == 1) {
+                        ret = self->descr->f->setitem(obj, self->data, self);
+                }                
+                else {
+                        PyErr_SetString(PyExc_ValueError, 
+                                        "can only place a scalar for an "
+                                        " array of size 1");
+                        return NULL;
+                }
+        }
+        else if (n != self->nd && (n > 1 || self->nd==0)) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "incorrect number of indices for "      \
+                                "array");
+                return NULL;
+        }
+        else if (n==1) { /* allows for flat setting as well as 1-d case */
+                intp value, loc, index, factor;
+                intp factors[MAX_DIMS];
+                PyObject *indobj;
+
+                indobj = PyTuple_GET_ITEM(args, 0);
+                if (PyTuple_Check(indobj)) {
+                        PyObject *res;
+                        PyObject *newargs;
+                        PyObject *tmp;
+                        int i, nn;
+                        nn = PyTuple_GET_SIZE(indobj);
+                        newargs = PyTuple_New(nn+1);
+                        Py_INCREF(obj);
+                        for (i=0; i<nn; i++) {
+                                tmp = PyTuple_GET_ITEM(indobj, i);
+                                Py_INCREF(tmp);
+                                PyTuple_SET_ITEM(newargs, i, tmp);
+                        }
+                        PyTuple_SET_ITEM(newargs, nn, obj);
+                        /* Call with a converted set of arguments */
+                        res = array_setscalar(self, newargs);
+                        Py_DECREF(newargs);
+                        return res;
+                }
+                value = PyArray_PyIntAsIntp(indobj);
+                if (error_converting(value)) {
+                        PyErr_SetString(PyExc_ValueError, "invalid integer");
+                        return NULL;
+                }
+                if (value >= PyArray_SIZE(self)) {
+                        PyErr_SetString(PyExc_ValueError, 
+                                        "index out of bounds");
+                        return NULL;
+                }
+                if (self->nd == 1) {
+                        ret = self->descr->f->setitem(obj, self->data + value, 
+                                                      self);
+                        goto finish;
+                }
+                nd = self->nd;
+                factor = 1;
+                while (nd--) {
+                        factors[nd] = factor;
+                        factor *= self->dimensions[nd];
+                }
+                loc = 0;
+                for (nd=0; nd < self->nd; nd++) {
+                        index = value / factors[nd];
+                        value = value % factors[nd];
+                        loc += self->strides[nd]*index;
+                }
+                
+                ret = self->descr->f->setitem(obj, self->data + loc, self);
+        }
+        else {
+                intp loc, index[MAX_DIMS];
+                PyObject *tupargs;
+                tupargs = PyTuple_GetSlice(args, 1, n+1);
+                nd = PyArray_IntpFromSequence(tupargs, index, MAX_DIMS);
+                Py_DECREF(tupargs);
+                if (nd < n) return NULL;
+                loc = 0;
+                while (nd--) {
+                        if (index[nd] < 0) 
+                                index[nd] += self->dimensions[nd];
+                        if (index[nd] < 0 || 
+                            index[nd] >= self->dimensions[nd]) {
+                                PyErr_SetString(PyExc_ValueError, 
+                                                "index out of bounds");
+                                return NULL;
+                        }
+                        loc += self->strides[nd]*index[nd];
+                }
+                ret = self->descr->f->setitem(obj, self->data + loc, self);
+        }
+
+ finish:
+        if (ret < 0) return NULL;
+        Py_INCREF(Py_None);
+        return Py_None;
+}
+
+
 
 static PyObject *
 array_cast(PyArrayObject *self, PyObject *args)
@@ -1682,6 +1796,8 @@ static PyMethodDef array_methods[] = {
 	{"getfield", (PyCFunction)array_getfield,
             METH_VARARGS | METH_KEYWORDS, NULL},
         {"item", (PyCFunction)array_toscalar,
+            METH_VARARGS, NULL},
+        {"itemset", (PyCFunction) array_setscalar,
             METH_VARARGS, NULL},
 	{"max", (PyCFunction)array_max,
 	    METH_VARARGS | METH_KEYWORDS, NULL},
