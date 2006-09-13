@@ -578,9 +578,9 @@ PyUFunc_clearfperr()
 
 
 #define NO_UFUNCLOOP        0
-#define ZERODIM_REDUCELOOP  0
+#define ZERO_EL_REDUCELOOP  0
 #define ONE_UFUNCLOOP       1
-#define ONEDIM_REDUCELOOP   1
+#define ONE_EL_REDUCELOOP   1
 #define NOBUFFER_UFUNCLOOP  2
 #define NOBUFFER_REDUCELOOP 2
 #define BUFFER_UFUNCLOOP  3
@@ -1832,12 +1832,12 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
 	aar = *arr;
 
         if (loop->N == 0) {
-                loop->meth = ZERODIM_REDUCELOOP;
+                loop->meth = ZERO_EL_REDUCELOOP;
         }
         else if (PyArray_ISBEHAVED_RO(aar) &&		\
                  otype == (aar)->descr->type_num) {
 		if (loop->N == 1) {
-			loop->meth = ONEDIM_REDUCELOOP;
+			loop->meth = ONE_EL_REDUCELOOP;
 		}
 		else {
 			loop->meth = NOBUFFER_UFUNCLOOP;
@@ -1856,7 +1856,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         else
                 loop->obj = 0;
 
-        if (loop->meth == ZERODIM_REDUCELOOP) {
+        if (loop->meth == ZERO_EL_REDUCELOOP) {
                 idarr = _getidentity(self, otype, str);
                 if (idarr == NULL) goto fail;
                 if (idarr->descr->elsize > UFUNC_MAXIDENTITY) {
@@ -1913,10 +1913,10 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
                         outsize = PyArray_MultiplyList(loop_i, aar->nd);
                 }
 		if (ind_size == 0) {
-			loop->meth = ZERODIM_REDUCELOOP;
+			loop->meth = ZERO_EL_REDUCELOOP;
 			return loop;
 		}
-		if (loop->meth == ONEDIM_REDUCELOOP)
+		if (loop->meth == ONE_EL_REDUCELOOP)
 			loop->meth = NOBUFFER_REDUCELOOP;
 		break;
 	}
@@ -1938,7 +1938,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         loop->outsize = loop->ret->descr->elsize;
         loop->bufptr[1] = loop->ret->data;
 
-	if (loop->meth == ZERODIM_REDUCELOOP) {
+	if (loop->meth == ZERO_EL_REDUCELOOP) {
 		loop->size = PyArray_SIZE(loop->ret);
 		return loop;
 	}
@@ -1946,7 +1946,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
 	loop->it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)aar);
         if (loop->it == NULL) return NULL;
 
-	if (loop->meth == ONEDIM_REDUCELOOP) {
+	if (loop->meth == ONE_EL_REDUCELOOP) {
 		loop->size = loop->it->size;
 		return loop;
 	}
@@ -2046,7 +2046,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
         NPY_LOOP_BEGIN_THREADS
         switch(loop->meth) {
-        case ZERODIM_REDUCELOOP:
+        case ZERO_EL_REDUCELOOP:
 		/* fprintf(stderr, "ZERO..%d\n", loop->size); */
 		for(i=0; i<loop->size; i++) {
 			if (loop->obj) Py_INCREF(*((PyObject **)loop->idptr));
@@ -2054,7 +2054,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 			loop->bufptr[1] += loop->outsize;
 		}
                 break;
-        case ONEDIM_REDUCELOOP:
+        case ONE_EL_REDUCELOOP:
 		/*fprintf(stderr, "ONEDIM..%d\n", loop->size); */
                 while(loop->index < loop->size) {
 			if (loop->obj)
@@ -2189,7 +2189,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
 	NPY_LOOP_BEGIN_THREADS
         switch(loop->meth) {
-        case ZERODIM_REDUCELOOP: /* Accumulate */
+        case ZERO_EL_REDUCELOOP: /* Accumulate */
 		/* fprintf(stderr, "ZERO..%d\n", loop->size); */
 		for(i=0; i<loop->size; i++) {
 			if (loop->obj)
@@ -2198,7 +2198,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 			loop->bufptr[1] += loop->outsize;
 		}
                 break;
-        case ONEDIM_REDUCELOOP: /* Accumulate */
+        case ONE_EL_REDUCELOOP: /* Accumulate */
 		/* fprintf(stderr, "ONEDIM..%d\n", loop->size); */
                 while(loop->index < loop->size) {
 			if (loop->obj)
@@ -2369,7 +2369,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 	NPY_LOOP_BEGIN_THREADS
 	switch(loop->meth) {
 	/* zero-length index -- return array immediately */
-	case ZERODIM_REDUCELOOP:
+	case ZERO_EL_REDUCELOOP:
 		/* fprintf(stderr, "ZERO..\n"); */
 		break;
 	/* NOBUFFER -- behaved array and same type */

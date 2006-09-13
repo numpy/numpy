@@ -452,14 +452,86 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 static PyObject *
 array_toscalar(PyArrayObject *self, PyObject *args) {
-        if (!PyArg_ParseTuple(args, "")) return NULL;
-	if (self->nd == 0 || PyArray_SIZE(self) == 1)
-		return self->descr->f->getitem(self->data, self);
-	else {
-		PyErr_SetString(PyExc_ValueError, "can only convert an"	\
-				" array of size 1 to Python scalar.");
-		return NULL;
-	}
+        int n, nd;
+        n = PyTuple_GET_SIZE(args);
+        
+        if (n==1) {
+                PyObject *obj;
+                obj = PyTuple_GET_ITEM(args, 0);
+                if (PyTuple_Check(obj)) {
+                        args = obj;
+                        n = PyTuple_GET_SIZE(args);
+                }
+        }
+        
+        if (n==0) {
+                if (self->nd == 0 || PyArray_SIZE(self) == 1)
+                        return self->descr->f->getitem(self->data, self);
+                else {
+                        PyErr_SetString(PyExc_ValueError, 
+                                        "can only convert an array "    \
+                                        " of size 1 to a Python scalar");
+                        return NULL;
+                }
+        }
+        else if (n != self->nd && (n > 1 || self->nd==0)) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "incorrect number of indices for "      \
+                                "array");
+                return NULL;
+        }
+        else if (n==1) { /* allows for flat getting as well as 1-d case */
+                intp value, loc, index, factor;
+                intp factors[MAX_DIMS];
+                value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
+                if (error_converting(value)) {
+                        PyErr_SetString(PyExc_ValueError, "invalid integer");
+                        return NULL;
+                }
+                if (value >= PyArray_SIZE(self)) {
+                        PyErr_SetString(PyExc_ValueError, 
+                                        "index out of bounds");
+                        return NULL;
+                }
+                if (self->nd == 1) {
+                        return self->descr->f->getitem(self->data + value, 
+                                                       self);
+                }
+                nd = self->nd;
+                factor = 1;
+                while (nd--) {
+                        factors[nd] = factor;
+                        factor *= self->dimensions[nd];
+                }
+                loc = 0;
+                for (nd=0; nd < self->nd; nd++) {
+                        index = value / factors[nd];
+                        value = value % factors[nd];
+                        loc += self->strides[nd]*index;
+                }
+                
+                return self->descr->f->getitem(self->data + loc,
+                                               self);
+                
+        }
+        else {
+                intp loc, index[MAX_DIMS];
+                nd = PyArray_IntpFromSequence(args, index, MAX_DIMS);
+                if (nd < n) return NULL;
+                loc = 0;
+                while (nd--) {
+                        if (index[nd] < 0) 
+                                index[nd] += self->dimensions[nd];
+                        if (index[nd] < 0 || 
+                            index[nd] >= self->dimensions[nd]) {
+                                PyErr_SetString(PyExc_ValueError, 
+                                                "index out of bounds");
+                                return NULL;
+                        }
+                        loc += self->strides[nd]*index[nd];
+                }
+                return self->descr->f->getitem(self->data + loc, self);
+        }
 }
 
 
