@@ -141,7 +141,7 @@ def atleast_2d(*arys):
     """
     res = []
     for ary in arys:
-        res.append(array(ary,copy=False,subok=2,ndmin=2))
+        res.append(array(ary,copy=False,subok=True,ndmin=2))
     if len(res) == 1:
         return res[0]
     else:
@@ -246,10 +246,13 @@ def column_stack(tup):
         Description:
             Take a sequence of 1D arrays and stack them as columns
             to make a single 2D array.  All arrays in the sequence
-            must have the same length.
+            must have the same first dimension.  2D arrays are
+            stacked as-is, just like with hstack.  1D arrays are turned
+            into 2D columns first.
+            
         Arguments:
-            tup -- sequence of 1D arrays.  All arrays must have the same
-                   length.
+            tup -- sequence of 1D or 2D arrays.  All arrays must have the same
+                   first dimension.
         Examples:
             >>> import numpy
             >>> a = array((1,2,3))
@@ -260,7 +263,12 @@ def column_stack(tup):
                    [3, 4]])
 
     """
-    arrays = map(_nx.transpose,map(atleast_2d,tup))
+    arrays = []
+    for v in tup:
+        arr = array(v,copy=False,subok=True)
+        if arr.ndim < 2:
+            arr = array(arr,copy=False,subok=True,ndmin=2).T
+        arrays.append(arr)
     return _nx.concatenate(arrays,1)
 
 def dstack(tup):

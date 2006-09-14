@@ -6,7 +6,7 @@ __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'common_type']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, array, isnan, obj2sctype
+from numpy.core.numeric import asarray, array, isnan, obj2sctype, zeros
 from ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
@@ -68,7 +68,11 @@ def iscomplex(x):
 
     For scalars, return a boolean.
     """
-    return imag(x) != 0
+    ax = asarray(x)
+    if issubclass(ax.dtype.type, _nx.complexfloating):
+        return ax.imag != 0
+    res = zeros(ax.shape, bool)
+    return +res  # convet to array-scalar if needed
 
 def isreal(x):
     """Return a boolean array where elements are True if that element

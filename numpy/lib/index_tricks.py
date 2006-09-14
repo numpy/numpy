@@ -225,7 +225,7 @@ class concatenator(object):
                 if start is None: start = 0
                 if step is None:
                     step = 1
-                if type(step) is type(1j):
+                if isinstance(step, complex):
                     size = int(abs(step))
                     newobj = function_base.linspace(start, stop, num=size)
                 else:
@@ -281,17 +281,19 @@ class r_class(concatenator):
 
 r_ = r_class()
 
+import warnings
+
 class c_class(concatenator):
     """Translates slice objects to concatenation along the second axis.
 
-        For example:
-        >>> c_[array([[1],[2],[3]]), array([[4],[5],[6]])]
-        array([[1, 4],
-               [2, 5],
-               [3, 6]])
+       This is deprecated.  Use r_[...,'-1']
     """
     def __init__(self):
         concatenator.__init__(self, -1)
+
+    def __getitem__(self, obj):
+        warnings.warn("c_ is deprecated use r_[...,'-1']")
+        return concatenator.__getitem__(self, obj)
 
 c_ = c_class()
 
@@ -383,9 +385,6 @@ class ndindex(object):
 # Cosmetic changes by T. Oliphant 2001
 #
 #
-# This module provides a convenient method for constructing
-# array indices algorithmically. It provides one importable object,
-# 'index_expression'.
 
 class _index_expression_class(object):
     """
