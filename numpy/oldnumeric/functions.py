@@ -119,3 +119,4 @@ def cross_product(a, b, axis1=-1, axis2=-1):
 
 def average(a, axis=0, weights=None, returned=False):
     return N.average(a, axis, weights, returned)
+

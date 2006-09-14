@@ -5,7 +5,8 @@
 from numpy.testing import *
 set_package_path()
 from numpy import arange, rot90, add, fliplr, flipud, zeros, ones, eye, \
-     array, diag
+     array, diag, histogram2d
+import numpy as np
 restore_path()
 
 ##################################################
@@ -133,13 +134,12 @@ class test_rot90(NumpyTestCase):
 
 class test_histogram2d(NumpyTestCase):
     def check_simple(self):
-        import numpy as np
         x = array([ 0.41702200,  0.72032449,  0.00011437481, 0.302332573,  0.146755891])
         y = array([ 0.09233859,  0.18626021,  0.34556073,  0.39676747,  0.53881673])
         xedges = np.linspace(0,1,10)
         yedges = np.linspace(0,1,10)
-        H = np.histogram2d(x, y, (xedges, yedges))[0]
-        answer = np.array([[0, 0, 0, 1, 0, 0, 0, 0, 0],
+        H = histogram2d(x, y, (xedges, yedges))[0]
+        answer = array([[0, 0, 0, 1, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 1, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0, 0],
                            [1, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -148,7 +148,26 @@ class test_histogram2d(NumpyTestCase):
                            [0, 0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0, 0]])
-        assert_equal(H, answer)
-
+        assert_array_equal(H.T, answer)
+    def check_asym(self):
+        x = array([1, 1, 2, 3, 4, 4, 4, 5])
+        y = array([1, 3, 2, 0, 1, 2, 3, 4])
+        H, xed, yed = histogram2d(x,y, (6, 5), range = [[0,6],[0,5]], normed=True)
+        answer = array([[0.,0,0,0,0],
+                        [0,1,0,1,0],
+                        [0,0,1,0,0],
+                        [1,0,0,0,0],
+                        [0,1,1,1,0],
+                        [0,0,0,0,1]])
+        assert_array_almost_equal(H, answer/8., 3)
+    def check_norm(self):
+        x = array([1,2,3,1,2,3,1,2,3])
+        y = array([1,1,1,2,2,2,3,3,3]) 
+        H, xed, yed = histogram2d(x,y,[[1,2,3,5], [1,2,3,5]], normed=True)
+        answer=array([[1,1,.5],
+                     [1,1,.5],
+                     [.5,.5,.25]])/9.
+        assert_array_almost_equal(H, answer, 3)
+        
 if __name__ == "__main__":
     NumpyTest().run()

@@ -353,6 +353,31 @@ class test_histogram(NumpyTestCase):
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))
 
+class test_histogramnd(NumpyTestCase):
+    def check_simple(self):
+        x = array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5], \
+        [.5, .5, 1.5], [.5, 1.5, 2.5], [.5, 2.5, 2.5]])
+        H, edges = histogramnd(x, (2,3,3), range = [[-1,1], [0,3], [0,3]])
+        answer = asarray([[[0,1,0], [0,0,1], [1,0,0]], [[0,1,0], [0,0,1], [0,0,1]]])
+        assert(all(H == answer))
+        # Check normalization
+        ed = [[-2,0,2], [0,1,2,3], [0,1,2,3]]
+        H, edges = histogramnd(x, bins = ed, normed = True)
+        assert(all(H == answer/12.))
+        # Check that H has the correct shape.
+        H, edges = histogramnd(x, (2,3,4), range = [[-1,1], [0,3], [0,4]], normed=True)
+        answer = asarray([[[0,1,0,0], [0,0,1,0], [1,0,0,0]], [[0,1,0,0], [0,0,1,0], [0,0,1,0]]])
+        assert_array_almost_equal(H, answer/6., 4)
+        # Check that a sequence of arrays is accepted and H has the correct shape.
+        z = [squeeze(y) for y in split(x,3,axis=1)]
+        H, edges = histogramnd(z, bins=(4,3,2),range=[[-2,2], [0,3], [0,2]])
+        answer = asarray([[[0,0],[0,0],[0,0]], 
+                          [[0,1], [0,0], [1,0]], 
+                          [[0,1], [0,0],[0,0]], 
+                          [[0,0],[0,0],[0,0]]])
+        assert_array_equal(H, answer)
+                
+
 class test_unique(NumpyTestCase):
     def check_simple(self):
         x = array([4,3,2,1,1,2,3,4, 0])
