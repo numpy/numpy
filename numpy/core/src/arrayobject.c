@@ -5305,15 +5305,6 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                 /* It is bad to have unitialized OBJECT pointers */
                 /* which could also be sub-fields of a VOID array */
                 if (descr->hasobject) {
-                        /*
-                        if (descr != &OBJECT_Descr) {
-                                PyErr_SetString(PyExc_TypeError,
-                                                "fields with object members " \
-                                                "not yet supported.");
-                                goto fail;
-                        }
-                        */
-
                         memset(data, 0, sd);
                 }
         }
@@ -5345,7 +5336,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                                 /* update flags before finalize function */
                                 PyArray_UpdateFlags(self, UPDATE_ALL);
                         }
-                        if PyCObject_Check(func) {
+                        if PyCObject_Check(func) { /* A C-function is stored here */
                                 PyArray_FinalizeFunc *cfunc;
                                 cfunc = PyCObject_AsVoidPtr(func);
                                 Py_DECREF(func);
@@ -6473,6 +6464,11 @@ array_flat_set(PyArrayObject *self, PyObject *val)
         selfit = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
         if (selfit == NULL) goto exit;
 
+        if (arrit->size == 0 || selfit->size == 0) {
+                PyErr_SetString(PyExc_ValueError, "trying to set with 0-sized array");
+                goto exit;
+        }
+
         swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
         copyswap = self->descr->f->copyswap;
         if (self->descr->hasobject) {
@@ -6480,8 +6476,9 @@ array_flat_set(PyArrayObject *self, PyObject *val)
                         PyArray_Item_XDECREF(selfit->dataptr, self->descr);
                         PyArray_Item_INCREF(arrit->dataptr, PyArray_DESCR(arr));
                         memmove(selfit->dataptr, arrit->dataptr,
-                                sizeof(PyObject *));
-                        copyswap(selfit->dataptr, NULL, swap, self);
+                                sizeof(PyObject **));
+                        if (swap) 
+                                copyswap(selfit->dataptr, NULL, swap, self);
                         PyArray_ITER_NEXT(selfit);
                         PyArray_ITER_NEXT(arrit);
                         if (arrit->index == arrit->size)
@@ -6493,7 +6490,8 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 
         while(selfit->index < selfit->size) {
                 memmove(selfit->dataptr, arrit->dataptr, self->descr->elsize);
-                copyswap(selfit->dataptr, NULL, swap, self);
+                if (swap)
+                        copyswap(selfit->dataptr, NULL, swap, self);
                 PyArray_ITER_NEXT(selfit);
                 PyArray_ITER_NEXT(arrit);
                 if (arrit->index == arrit->size)
@@ -9219,6 +9217,11 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         if (arrval==NULL) return -1;
         val_it = (PyArrayIterObject *)PyArray_IterNew(arrval);
         if (val_it==NULL) goto finish;
+        if (val_it->size == 0) {
+                PyErr_SetString(PyExc_ValueError,
+                                "trying to set with zero-sized array");
+                goto finish;
+        }
 
         /* Check for Boolean -- this is first becasue
            Bool is a subclass of Int */
@@ -9655,7 +9658,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
         /* Sub-space iteration */
         if (mit->subspace != NULL) {
                 PyArray_ITER_NEXT(mit->subspace);
-                if (mit->subspace->index == mit->subspace->size) {
+                if (mit->subspace->index >= mit->subspace->size) {
                         /* reset coord to coordinates of
                            beginning of the subspace */
                         memcpy(coord, mit->bscoord,
