@@ -251,7 +251,7 @@ typedef struct _loop1d_info {
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */
-#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__)
+#elif defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 #include <ieeefp.h>
 
 #define UFUNC_CHECK_STATUS(ret) {				\
