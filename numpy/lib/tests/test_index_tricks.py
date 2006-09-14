@@ -39,7 +39,7 @@ class test_concatenator(NumpyTestCase):
     def check_2d(self):
         b = rand(5,5)
         c = rand(5,5)
-        d = r_[b,c,'1']  # append columns
+        d = r_['1',b,c]  # append columns
         assert(d.shape == (5,10))
         assert_array_equal(d[:,:5],b)
         assert_array_equal(d[:,5:],c)

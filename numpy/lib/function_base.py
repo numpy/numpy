@@ -103,7 +103,7 @@ def histogram(a, bins=10, range=None, normed=False):
     else:
         return n, bins
 
-def  histogramnd(sample, bins=10, range=None, normed=False):
+def histogramnd(sample, bins=10, range=None, normed=False):
     """histogramnd(sample, bins = 10, range = None, normed = False) -> H, edges
     
     Return the N-dimensional histogram computed from sample.
