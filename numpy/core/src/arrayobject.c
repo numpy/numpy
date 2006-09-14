@@ -6464,7 +6464,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
         selfit = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
         if (selfit == NULL) goto exit;
 
-        if (arrit->size == 0 || selfit->size == 0) {
+        if (arrit->size == 0) {
                 PyErr_SetString(PyExc_ValueError, "trying to set with 0-sized array");
                 goto exit;
         }
