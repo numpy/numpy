@@ -199,16 +199,18 @@ class concatenator(object):
         self.col = 0
         return res
 
-    def __init__(self, axis=0, matrix=False):
+    def __init__(self, axis=0, matrix=False, ndmin=1, trans1d=-1):
         self._axis = axis
         self._matrix = matrix
         self.axis = axis
         self.matrix = matrix
         self.col = 0
+        self.trans1d = trans1d
+        self.ndmin = ndmin
 
     def __getitem__(self,key):
-        trans1d = -1
-        ndmin = 1
+        trans1d = self.trans1d
+        ndmin = self.ndmin
         if isinstance(key, str):
             frame = sys._getframe().f_back
             mymat = matrix.bmat(key,frame.f_globals,frame.f_locals)
@@ -320,14 +322,10 @@ import warnings
 class c_class(concatenator):
     """Translates slice objects to concatenation along the second axis.
 
-       This is deprecated.  Use r_['-1',...]
+       This is equivalent to r_['-1,2,0',...]
     """
     def __init__(self):
-        concatenator.__init__(self, -1)
-
-    def __getitem__(self, obj):
-        warnings.warn("c_ is deprecated use r_['-1',...]")
-        return concatenator.__getitem__(self, obj)
+        concatenator.__init__(self, -1, ndmin=2, trans1d=0)
 
 c_ = c_class()
 
