@@ -494,7 +494,8 @@ array_toscalar(PyArrayObject *self, PyObject *args) {
                         return NULL;
                 }
                 if (self->nd == 1) {
-                        return self->descr->f->getitem(self->data + value, 
+                        value *= self->strides[0];
+                        return self->descr->f->getitem(self->data + value,
                                                        self);
                 }
                 nd = self->nd;
@@ -600,6 +601,7 @@ array_setscalar(PyArrayObject *self, PyObject *args) {
                         return NULL;
                 }
                 if (self->nd == 1) {
+                        value *= self->strides[0];
                         ret = self->descr->f->setitem(obj, self->data + value, 
                                                       self);
                         goto finish;
