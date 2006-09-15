@@ -6464,10 +6464,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
         selfit = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
         if (selfit == NULL) goto exit;
 
-        if (arrit->size == 0) {
-                PyErr_SetString(PyExc_ValueError, "trying to set with 0-sized array");
-                goto exit;
-        }
+        if (arrit->size == 0) {retval = 0; goto exit;}
 
         swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
         copyswap = self->descr->f->copyswap;
@@ -9217,11 +9214,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         if (arrval==NULL) return -1;
         val_it = (PyArrayIterObject *)PyArray_IterNew(arrval);
         if (val_it==NULL) goto finish;
-        if (val_it->size == 0) {
-                PyErr_SetString(PyExc_ValueError,
-                                "trying to set with zero-sized array");
-                goto finish;
-        }
+        if (val_it->size == 0) {retval = 0; goto finish;}
 
         /* Check for Boolean -- this is first becasue
            Bool is a subclass of Int */
