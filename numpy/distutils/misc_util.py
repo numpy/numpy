@@ -1204,7 +1204,7 @@ class Configuration(object):
         revision = None
         try:
             sin, sout = os.popen4('svnversion')
-            m = re.search(r'(?P<revision>\d+)', sout.read())
+            m = re.match(r'(?P<revision>\d+)', sout.read())
             if m:
                 revision = int(m.group('revision'))
                 return revision
