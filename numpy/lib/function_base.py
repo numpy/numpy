@@ -4,7 +4,7 @@ __all__ = ['logspace', 'linspace',
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
            'unique', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
-           'histogram', 'histogramnd', 'bincount', 'digitize', 'cov',
+           'histogram', 'histogramdd', 'bincount', 'digitize', 'cov',
            'corrcoef', 'msort', 'median', 'sinc', 'hamming', 'hanning',
            'bartlett', 'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc',
            'add_docstring', 'meshgrid', 'delete', 'insert', 'append'
@@ -103,14 +103,14 @@ def histogram(a, bins=10, range=None, normed=False):
     else:
         return n, bins
 
-def histogramnd(sample, bins=10, range=None, normed=False):
-    """histogramnd(sample, bins = 10, range = None, normed = False) -> H, edges
+def histogramdd(sample, bins=10, range=None, normed=False):
+    """histogramdd(sample, bins = 10, range = None, normed = False) -> H, edges
     
-    Return the N-dimensional histogram computed from sample.
+    Return the D-dimensional histogram computed from sample.
     
     Parameters
     ----------
-    sample: A sequence of N arrays, or an KxN array. 
+    sample: A sequence of D arrays, or an NxD array. 
     bins:   A sequence of edge arrays, or a sequence of the number of bins. 
             If a scalar is given, it is assumed to be the number of bins
             for all dimensions. 
@@ -126,7 +126,7 @@ def histogramnd(sample, bins=10, range=None, normed=False):
     
     Example:
     x = random.randn(100,3)
-    H, edges = histogramnd(x, bins = (5, 6, 7))
+    H, edges = histogramdd(x, bins = (5, 6, 7))
     
     See also: histogram
     """
