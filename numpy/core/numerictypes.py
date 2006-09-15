@@ -444,7 +444,7 @@ for key, val in _typestr.items():
 # Add additional strings to the sctypeDict
 
 _toadd = ['int', 'float', 'complex', 'bool', 'object', 'string', ('str', allTypes['string_']),
-          'unicode', 'object']
+          'unicode', 'object', ('a', allTypes['string_'])]
 
 for name in _toadd:
     if isinstance(name, tuple):
