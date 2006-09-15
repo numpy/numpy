@@ -1202,14 +1202,15 @@ class Configuration(object):
         """ Return path's SVN revision number.
         """
         revision = None
+        m = None
         try:
             sin, sout = os.popen4('svnversion')
             m = re.match(r'(?P<revision>\d+)', sout.read())
-            if m:
-                revision = int(m.group('revision'))
-                return revision
         except:
             pass
+        if m:
+            revision = int(m.group('revision'))
+            return revision
         if sys.platform=='win32' and os.environ.get('SVN_ASP_DOT_NET_HACK',None):
             entries = njoin(path,'_svn','entries')
         else:
