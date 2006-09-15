@@ -1201,14 +1201,31 @@ class Configuration(object):
     def _get_svn_revision(self,path):
         """ Return path's SVN revision number.
         """
-        entries = njoin(path,'.svn','entries')
         revision = None
-        if os.path.isfile(entries):
-            f = open(entries)
-            m = re.search(r'revision="(?P<revision>\d+)"',f.read())
-            f.close()
+        try:
+            sin, sout = os.popen4('svnversion')
+            m = re.search(r'(?P<revision>\d+)', sout.read())
             if m:
                 revision = int(m.group('revision'))
+                return revision
+        except:
+            pass
+        if sys.platform=='win32' and os.environ.get('SVN_ASP_DOT_NET_HACK',None):
+            entries = njoin(path,'_svn','entries')
+        else:
+            entries = njoin(path,'.svn','entries')
+        if os.path.isfile(entries):
+            f = open(entries)
+            fstr = f.read()
+            f.close()
+            if fstr[:5] == '<?xml':  # pre 1.4
+                m = re.search(r'revision="(?P<revision>\d+)"',fstr)
+                if m:
+                    revision = int(m.group('revision'))
+            else:  # non-xml entries file --- check to be sure that
+                m = re.search(r'dir[\n\r]+(?P<revision>\d+)', fstr)
+                if m:
+                    revision = int(m.group('revision'))
         return revision
 
     def get_version(self, version_file=None, version_variable=None):
