@@ -347,10 +347,10 @@ def info(obj):
     print "byteoffset: 0"
     print "bytestride: ", obj.strides[0]
     print "itemsize: ", obj.itemsize
-    print "aligned: ", obj.flags.isaligned
+    print "aligned: ", obj.flags.aligned
     print "contiguous: ", obj.flags.contiguous
-    print "buffer: ", obj.data
-    print "data pointer:", obj._as_paramater_, "(DEBUG ONLY)"
+    print "buffer: ", repr(obj.data)
+    print "data pointer:", obj.ctypes._as_parameter_, "(DEBUG ONLY)"
     print "byteorder: ",
     endian = obj.dtype.byteorder
     if endian in ['|','=']:
@@ -360,7 +360,7 @@ def info(obj):
     else:
         print "little"
     print "byteswap: ", not obj.dtype.isnative
-    print "type: ", typefrom(obj)
+    print "type: ", typefrom(obj).name
 
 #clipmode is ignored if axis is not 0 and array is not 1d
 def put(array, indices, values, axis=0, clipmode=RAISE):

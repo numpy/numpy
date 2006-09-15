@@ -530,6 +530,23 @@ _scipy_dtypechar_inverse = {}
 for key,value in _scipy_dtypechar.items():
     _scipy_dtypechar_inverse[value] = key
 
+_val = numpy.int_(0).itemsize
+if _val == 8:
+    _scipy_dtypechar_inverse['l'] = Int64
+    _scipy_dtypechar_inverse['L'] = UInt64
+elif _val == 4:
+    _scipy_dtypechar_inverse['l'] = Int32
+    _scipy_dtypechar_inverse['L'] = UInt32
+
+del _val
+
+if LP64:
+    _scipy_dtypechar_inverse['p'] = Int64
+    _scipy_dtypechar_inverse['P'] = UInt64
+else:
+    _scipy_dtypechar_inverse['p'] = Int32
+    _scipy_dtypechar_inverse['P'] = UInt32
+    
 def typefrom(obj):
     return _scipy_dtypechar_inverse[obj.dtype.char]
 
