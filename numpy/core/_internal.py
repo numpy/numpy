@@ -87,7 +87,9 @@ def _array_descr(descriptor):
     offset = 0
     for field in ordered_fields:
         if field[1] > offset:
-            result.append(('','|V%d' % (field[1]-offset)))
+            num = field[1] - offset
+            result.append(('','|V%d' % num))
+            offset += num
         if len(field) > 3:
             name = (field[2],field[3])
         else:
