@@ -213,7 +213,6 @@ def _makenamedict(module='numpy'):
                     thedict[modname] = moddict
     return thedict, dictlist
 
-
 def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
     """Get help information for a function, class, or module.
 
@@ -276,16 +275,16 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
 
     elif inspect.isclass(object):
         name = object.__name__
-        if hasattr(object, '__init__'):
-            arguments = apply(inspect.formatargspec, inspect.getargspec(object.__init__.im_func))
-            arglist = arguments.split(', ')
-            if len(arglist) > 1:
-                arglist[1] = "("+arglist[1]
-                arguments = ", ".join(arglist[1:])
-            else:
-                arguments = "()"
-        else:
-            arguments = "()"
+        arguments = "()"
+        try:
+            if hasattr(object, '__init__'):
+                arguments = apply(inspect.formatargspec, inspect.getargspec(object.__init__.im_func))
+                arglist = arguments.split(', ')
+                if len(arglist) > 1:
+                    arglist[1] = "("+arglist[1]
+                    arguments = ", ".join(arglist[1:])
+        except:
+            pass
 
         if len(name+arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
