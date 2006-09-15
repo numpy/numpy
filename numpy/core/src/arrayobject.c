@@ -10729,32 +10729,10 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                 return NULL;
 
         if (align) {
-                conv = NULL;
-                if PyDict_Check(odescr)
-                        conv =  _convert_from_dict(odescr, 1);
-                else if PyList_Check(odescr) {
-			PyErr_SetString(PyExc_ValueError,
-					"align cannot be True"		\
-					" with array_descriptor "	\
-					"specification.");
-			return NULL;
-		}
-                else if PyString_Check(odescr)
-                        conv = _convert_from_commastring(odescr, 1);
-                else {
-                        PyErr_SetString(PyExc_ValueError,
-                                        "align can only be non-zero for " \
-                                        "dictionary, list, and string objects.");
-                }
-                if (conv) return (PyObject *)conv;
-                if (!PyErr_Occurred()) {
-                        PyErr_SetString(PyExc_ValueError,
-                                        "data-type-descriptor not understood");
-                }
-                return NULL;
+                if (!PyArray_DescrAlignConverter(odescr, &conv))
+                        return NULL;
         }
-
-        if (!PyArray_DescrConverter(odescr, &conv))
+        else if (!PyArray_DescrConverter(odescr, &conv))
                 return NULL;
         /* Get a new copy of it unless it's already a copy */
         if (copy && conv->fields == Py_None) {

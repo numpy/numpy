@@ -1478,6 +1478,7 @@ typedef struct {
 #define PyArray_ToScalar(data, arr) \
         PyArray_Scalar(data, PyArray_DESCR(arr), (PyObject *)arr)
 
+
 /* These might be faster without the dereferencing of obj
    going on inside -- of course an optimizing compiler should
    inline the constants inside a for loop making it a moot point

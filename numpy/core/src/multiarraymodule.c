@@ -4661,6 +4661,57 @@ _check_for_commastring(char *type, int len)
 
 
 /*MULTIARRAY_API
+ Get type-descriptor from an object forcing alignment if possible
+ None goes to DEFAULT type.
+*/
+static int
+PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
+{
+        if PyDict_Check(obj) {
+                *at =  _convert_from_dict(obj, 1);
+        }
+        else if PyString_Check(obj)
+                *at = _convert_from_commastring(obj, 1);
+        else {
+                return PyArray_DescrConverter(obj, at);
+        }
+        if (*at == NULL) {
+                if (!PyErr_Occurred()) {
+                        PyErr_SetString(PyExc_ValueError,
+                                        "data-type-descriptor not understood");
+                }
+                return PY_FAIL;
+        } 
+        return PY_SUCCEED;
+}
+
+/*MULTIARRAY_API
+ Get type-descriptor from an object forcing alignment if possible
+ None goes to NULL.
+*/
+static int
+PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
+{
+        if PyDict_Check(obj) {
+                *at =  _convert_from_dict(obj, 1);
+        }
+        else if PyString_Check(obj)
+                *at = _convert_from_commastring(obj, 1);
+        else {
+                return PyArray_DescrConverter2(obj, at);
+        }
+        if (*at == NULL) {
+                if (!PyErr_Occurred()) {
+                        PyErr_SetString(PyExc_ValueError,
+                                        "data-type-descriptor not understood");
+                }
+                return PY_FAIL;
+        } 
+        return PY_SUCCEED;
+}
+
+
+/*MULTIARRAY_API
  Get typenum from an object -- None goes to NULL
 */
 static int

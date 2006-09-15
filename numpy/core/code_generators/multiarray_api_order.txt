@@ -78,3 +78,5 @@ PyArray_OutputConverter
 PyArray_BroadcastToShape
 _PyArray_SigintHandler
 _PyArray_GetSigintBuf
+PyArray_DescrAlignConverter
+PyArray_DescrAlignConverter2
