@@ -6785,6 +6785,11 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
         PyArray_Descr *outtype;
         int outtype_num, save_num;
 
+        if (PyArray_EquivTypes(chktype, mintype)) {
+                Py_INCREF(mintype);
+                return mintype;
+        }
+
         if (chktype->type_num > mintype->type_num)
                 outtype_num = chktype->type_num;
         else
@@ -6872,22 +6877,32 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         PyArray_Descr *chktype=NULL;
         PyArray_Descr *outtype;
 
-        if (minitype == NULL)
-                minitype = PyArray_DescrFromType(PyArray_BOOL);
-        else Py_INCREF(minitype);
-
-        if (max < 0) goto deflt;
+        /* These need to come first because if op already carries
+           a descr structure, then we want it to be the result if minitype
+           is NULL.
+        */
 
         if (PyArray_Check(op)) {
                 chktype = PyArray_DESCR(op);
                 Py_INCREF(chktype);
+                if (minitype == NULL) return chktype;
+                Py_INCREF(minitype);
                 goto finish;
         }
 
         if (PyArray_IsScalar(op, Generic)) {
                 chktype = PyArray_DescrFromScalar(op);
+                if (minitype == NULL) return chktype;
+                Py_INCREF(minitype);
                 goto finish;
         }
+
+        if (minitype == NULL) {
+                minitype = PyArray_DescrFromType(PyArray_BOOL);
+        }
+        else Py_INCREF(minitype);
+
+        if (max < 0) goto deflt;
 
         chktype = _array_find_python_scalar_type(op);
         if (chktype) {
@@ -6999,8 +7014,10 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         outtype = _array_small_type(chktype, minitype);
         Py_DECREF(chktype);
         Py_DECREF(minitype);
-        /* VOID Arrays should not occur by "default" */
-        if (outtype->type_num == PyArray_VOID) {
+        /* VOID Arrays should not occur by "default" 
+           unless intput was already a VOID */
+        if (outtype->type_num == PyArray_VOID && \
+            minitype->type_num != PyArray_VOID) {
                 Py_DECREF(outtype);
                 return PyArray_DescrFromType(PyArray_OBJECT);
         }
