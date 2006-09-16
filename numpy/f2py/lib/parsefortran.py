@@ -10,6 +10,8 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 Created: May 2006
 """
 
+__all__ = ['FortranParser']
+
 import re
 import sys
 import traceback
@@ -24,6 +26,10 @@ class FortranParser:
     cache = {}
 
     def __init__(self, reader):
+        """
+        Parser of FortranReader structure.
+        Use .parse() method for parsing, parsing result is saved in .block attribute.
+        """
         self.reader = reader
         if self.cache.has_key(reader.id):
             parser = self.cache[reader.id]
@@ -156,7 +162,7 @@ def simple_main():
         parser = FortranParser(reader)
         parser.parse()
         parser.analyze()
-        print parser.block.topyf()
+        print parser.block.torepr(4)
         #print parser.block
 
 def profile_main():

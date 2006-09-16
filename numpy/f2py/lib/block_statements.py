@@ -14,7 +14,7 @@ class HasImplicitStmt:
 
     a = AttributeHolder(implicit_rules = {})
 
-    def get_type(self, name):
+    def get_type_by_name(self, name):
         implicit_rules = self.a.implicit_rules
         if implicit_rules is None:
             raise AnalyzeError,'Implicit rules mapping is null'
@@ -74,7 +74,18 @@ class HasUseStmt:
 
 class HasVariables:
 
-    a = AttributeHolder(variables = {})
+    a = AttributeHolder(variables = {},
+                        variable_names = [] # defines the order of declarations
+                        )
+
+    def get_variable_by_name(self, name):
+        variables = self.a.variables
+        if variables.has_key(name):
+            var = variables[name]
+        else:
+            var = variables[name] = Variable(self, name)
+            self.a.variable_names.append(name)
+        return var
 
     def topyf(self,tab=''):
         s = ''
@@ -92,8 +103,17 @@ class HasTypeDecls:
             s += stmt.topyf(tab='  '+tab)
         return s
 
+    def get_type_decl_by_kind(self, kind):
+        type_decls = self.a.type_decls
+        type_decl = type_decls.get(kind, None)
+        if type_decl is None:
+            return self.get_entity(kind)
+            raise NotImplementedError,'get type_decl from use modules'
+        return type_decl
+
 class HasAttributes:
 
+    known_attributes = []
     a = AttributeHolder(attributes = [])
 
     def topyf(self, tab=''):
@@ -101,6 +121,29 @@ class HasAttributes:
         for attr in self.a.attributes:
             s += tab + attr + '\n'
         return s
+
+    def is_private(self):
+        attributes = self.a.attributes
+        if 'PUBLIC' in attributes: return False
+        if 'PRIVATE' in attributes: return True
+        return
+    def is_public(self): return not self.is_private()
+
+    def update_attributes(self,*attrs):
+        attributes = self.a.attributes
+        known_attributes = self.known_attributes
+        if len(attrs)==1 and isinstance(attrs[0],(tuple,list)):
+            attrs = attrs[0]
+        for attr in attrs:
+            uattr = attr.upper()
+            if uattr not in attributes:
+                if isinstance(known_attributes,(list, tuple)):
+                    if uattr not in known_attributes:
+                        self.warning('unknown attribute %r' % (attr))
+                elif known_attributes(uattr):
+                    self.warning('unknown attribute %r' % (attr))
+                attributes.append(uattr)
+        return
 
 class HasModuleProcedures:
 
@@ -196,9 +239,14 @@ class Module(BeginStatement, HasAttributes,
     """
     match = re.compile(r'module\s*\w+\Z', re.I).match
     end_stmt_cls = EndModule
+
     a = AttributeHolder(module_subprogram = {},
-                        module_data = {},
+                        module_provides = {}, # all symbols that are public and so
+                                              # can be imported via USE statement
+                                              # by other blocks
                         )
+
+    known_attributes = ['PUBLIC', 'PRIVATE']
 
     def get_classes(self):
         return access_spec + specification_part + module_subprogram_part
@@ -207,6 +255,9 @@ class Module(BeginStatement, HasAttributes,
         name = self.item.get_line().replace(' ','')[len(self.blocktype):].strip()
         self.name = name
         return BeginStatement.process_item(self)
+
+    def get_provides(self):
+        return self.a.module_provides
 
     def analyze(self):
         content = self.content[:]
@@ -225,11 +276,19 @@ class Module(BeginStatement, HasAttributes,
         if content:
             self.show_message('Not analyzed content: %s' % content)
 
+        module_provides = self.a.module_provides
+        for name, var in self.a.variables.items():
+            if var.is_public():
+                if module_provides.has_key(name):
+                    self.warning('module data object name conflict with %s, overriding.' % (name))
+                module_provides[name] = var
+
         return
 
     def topyf(self, tab=''):
         s = tab + 'MODULE '+self.name + '\n'
         s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
+        s +=  HasAttributesStmt.topyf(self, tab=tab+'  ')
         s +=  HasTypeDecls.topyf(self, tab=tab+'  ')
         s +=  HasVariables.topyf(self, tab=tab+'  ')
         s +=  tab + '  CONTAINS\n'
@@ -270,7 +329,7 @@ class EndProgram(EndStatement):
     match = re.compile(r'end(\s*program\s*\w*|)\Z', re.I).match
 
 class Program(BeginStatement, ProgramBlock,
-              HasAttributes,
+              HasAttributes, # XXX: why Program needs .attributes?
               HasImplicitStmt, HasUseStmt):
     """ PROGRAM [name]
     """
@@ -340,6 +399,8 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
     end_stmt_cls = EndInterface
     blocktype = 'interface'
 
+    a = AttributeHolder(interface_provides = {})
+
     def get_classes(self):
         return intrinsic_type_spec + interface_specification
 
@@ -358,6 +419,29 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
             return 'ABSTRACT INTERFACE'
         return 'INTERFACE '+ str(self.generic_spec)
 
+    def get_provides(self):
+        return self.a.interface_provides
+
+    def analyze(self):
+        content = self.content[:]
+
+        while content:
+            stmt = content.pop(0)
+            if isinstance(stmt, self.end_stmt_cls):
+                break
+            stmt.analyze()
+            assert isinstance(stmt, SubProgramStatement),`stmt.__class__.__name__`
+        if content:
+            self.show_message('Not analyzed content: %s' % content)
+
+        parent_provides = self.parent.get_provides()
+        if parent_provides is not None:
+            if self.is_public():
+                if parent_provides.has_key(self.name):
+                    self.warning('interface name conflict with %s, overriding.' % (self.name))
+                parent_provides[self.name] = self
+    
+        return
 
 # Subroutine
 
@@ -369,6 +453,8 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
     """
     [ <prefix> ] <FUNCTION|SUBROUTINE> <name> [ ( <args> ) ] [ <suffix> ]
     """
+    known_attributes = ['PUBLIC', 'PRIVATE']
+
     a = AttributeHolder(internal_subprogram = {})
 
     def process_item(self):
@@ -430,7 +516,7 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
         content = self.content[:]
 
         if self.prefix:
-            self.a.attributes.extend(prefix.upper().split())
+            self.update_attributes(prefix.upper().split())
 
         variables = self.a.variables
         for a in self.args:
@@ -459,6 +545,13 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
         if content:
             self.show_message('Not analyzed content: %s' % content)
 
+        parent_provides = self.parent.get_provides()
+        if parent_provides is not None:
+            if self.is_public():
+                if parent_provides.has_key(self.name):
+                    self.warning('module subprogram name conflict with %s, overriding.' % (self.name))
+                parent_provides[self.name] = self
+
         return
 
     def topyf(self, tab=''):
@@ -486,6 +579,7 @@ class Subroutine(SubProgramStatement):
     """
     end_stmt_cls = EndSubroutine
     match = re.compile(r'(recursive|pure|elemental|\s)*subroutine\s*\w+', re.I).match
+    _repr_attr_names = ['prefix','bind','suffix','args'] + Statement._repr_attr_names
 
 # Function
 
@@ -506,6 +600,7 @@ class Function(SubProgramStatement):
     """
     end_stmt_cls = EndFunction
     match = re.compile(r'(recursive|pure|elemental|\s)*function\s*\w+', re.I).match
+    _repr_attr_names = ['prefix','bind','suffix','args','typedecl'] + Statement._repr_attr_names
 
 # Handle subprogram prefixes
 
@@ -800,7 +895,11 @@ class Type(BeginStatement, HasVariables, HasAttributes):
     end_stmt_cls = EndType
 
     a = AttributeHolder(extends = None,
-                        parameters = [])
+                        parameters = {},
+                        component_names = [], # specifies component order for sequence types
+                        components = {}
+                        )
+    known_attributes = re.compile(r'\A(PUBLIC|PRIVATE|SEQUENCE|ABSTRACT|BIND\s*\(.*\))\Z').match
 
     def process_item(self):
         line = self.item.get_line()[4:].lstrip()
@@ -858,15 +957,41 @@ class Type(BeginStatement, HasVariables, HasAttributes):
                     spec = 'BIND(%s)' % (', '.join(args))
                 else:
                     spec = '%s(%s)' % (s,n)
-                    self.warning('Unknown type-attr-spec %r' % (spec))
             else:
                 spec = spec.upper()
-                if spec not in ['PUBLIC', 'PRIVATE', 'ABSTRACT']:
-                    self.warning('Unknown type-attr-spec %r' % (spec))
-            self.a.attributes.append(spec)
-        self.a.parameters.extend(self.params)
-        assert isinstance(self.parent,HasTypeDecls),`self.parent.__class__`
+            self.update_attributes(spec)
+
+        component_names = self.a.component_names
+        content = self.content[:]
+        while content:
+            stmt = content.pop(0)
+            if isinstance(stmt, self.end_stmt_cls):
+                break
+            stmt.analyze()
+
+        if content:
+            self.show_message('Not analyzed content: %s' % content)
+
+        parameters = self.a.parameters
+        components = self.a.components
+        component_names = self.a.component_names
+        for name in self.a.variable_names:
+            var = self.a.variables[name]
+            if name in self.params:
+                parameters[name] = var
+            else:
+                component_names.append(name)
+                components[name] = var
+
         self.parent.a.type_decls[self.name] = self
+
+        parent_provides = self.parent.get_provides()
+        if parent_provides is not None:
+            if self.is_public():
+                if parent_provides.has_key(self.name):
+                    self.warning('type declaration name conflict with %s, overriding.' % (self.name))
+                parent_provides[self.name] = self
+
         return
 
     def topyf(self, tab=''):

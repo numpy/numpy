@@ -19,11 +19,14 @@ class FortranAnalyzer:
         block is a BeginSource instance with relevant attributes:
           name - reader name
           content - a list of statements
+
         Statements are either block statements or simple statements.
+
         Block statements have the following relevant attributes:
           name - block name
           blocktype - statement name (equal to lowered statement class name)
           content - a list of statements
+
         Block statements may have additional attributes:
           BeginSource: top
           Module:
@@ -42,6 +45,7 @@ class FortranAnalyzer:
           Associate: associations
           Type: specs, params
           Enum:
+
         Simple statements have various attributes:
           Assignment: variable, expr
           PointerAssignment: variable, expr

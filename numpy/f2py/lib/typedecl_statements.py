@@ -1,9 +1,14 @@
 
+__all__ = ['Integer', 'Real', 'DoublePrecision', 'Complex', 'DoubleComplex',
+           'Character', 'Logical', 'Byte', 'TypeStmt','Class',
+           'intrinsic_type_spec', 'declaration_type_spec',
+           'Implicit']
+
 import re
 import string
 from base_classes import Statement, BeginStatement, EndStatement,\
      AttributeHolder, Variable
-from utils import split_comma, AnalyzeError, name_re, is_entity_decl
+from utils import split_comma, AnalyzeError, name_re, is_entity_decl, is_name, CHAR_BIT
 
 # Intrinsic type specification statements
 
@@ -27,6 +32,10 @@ class TypeDeclarationStatement(Statement):
                             | LOGICAL [<kind-selector>]
 
     <kind-selector> = ( [ KIND = ] <scalar-int-initialization-expr> )
+    EXTENSION:
+      <kind-selector> = ( [ KIND = ] <scalar-int-initialization-expr> )
+                        | * <length>
+    
     <char-selector> = <length-selector>
                       | ( LEN = <type-param-value>, KIND = <scalar-int-initialization-expr> )
                       | ( <type-param-value>, [ KIND = ] <scalar-int-initialization-expr> )
@@ -61,6 +70,7 @@ class TypeDeclarationStatement(Statement):
     <digit-string> = <digit> [ <digit> ]..
     <kind-param> = <digit-string> | <scalar-int-constant-name>
     """
+    _repr_attr_names = ['selector','attrspec','entity_decls'] + Statement._repr_attr_names
 
     def process_item(self):
         item = self.item
@@ -146,13 +156,19 @@ class TypeDeclarationStatement(Statement):
             assert self.parent.typedecl is None,`self.parent.typedecl`
             self.parent.typedecl = self
             self.ignore = True
+        if isinstance(self, Type):
+            self.name = self.selector[1].lower()
+            assert is_name(self.name),`self.name`
+        else:
+            self.name = clsname
         return
 
     def _parse_kind_selector(self, selector):
         if not selector:
-            return ''
+            return '',''
+        length,kind = '',''
         if selector.startswith('*'):
-            kind = selector[1:].lstrip()
+            length = selector[1:].lstrip()
         else:
             assert selector[0]+selector[-1]=='()',`selector`
             l = selector[1:-1].strip()
@@ -162,7 +178,7 @@ class TypeDeclarationStatement(Statement):
                 kind = l[1:].lstrip()
             else:
                 kind = l
-        return kind
+        return length,kind
 
     def _parse_char_selector(self, selector):
         if not selector:
@@ -213,8 +229,8 @@ class TypeDeclarationStatement(Statement):
     def tostr(self):
         clsname = self.__class__.__name__.upper()
         s = ''
+        length, kind = self.selector
         if isinstance(self, Character):
-            length, kind = self.selector
             if length and kind:
                 s += '(LEN=%s, KIND=%s)' % (length,kind)
             elif length:
@@ -222,9 +238,14 @@ class TypeDeclarationStatement(Statement):
             elif kind:
                 s += '(KIND=%s)' % (kind)
         else:
-            kind = self.selector
-            if kind:
-                s += '(KIND=%s)' % (kind)
+            if isinstance(self, Type):
+                s += '(%s)' % (kind)
+            else:
+                if length:
+                    s += '*%s' % (length)
+                if kind:
+                    s += '(KIND=%s)' % (kind)
+                
         return clsname + s
 
     def __str__(self):
@@ -244,7 +265,9 @@ class TypeDeclarationStatement(Statement):
         return self.selector==other.selector
 
     def astypedecl(self):
-        return self.__class__(self.parent, self.item.copy(self.tostr()))
+        if self.entity_decls or self.attrspec:
+            return self.__class__(self.parent, self.item.copy(self.tostr()))
+        return self
 
     def analyze(self):
         if not self.entity_decls:
@@ -253,11 +276,8 @@ class TypeDeclarationStatement(Statement):
         typedecl = self.astypedecl()
         for item in self.entity_decls:
             name, array_spec, char_length, value = self._parse_entity(item)
-            if not variables.has_key(name):
-                variables[name] = var = Variable(self, name)
-            else:
-                var = variables[name]
-                var.add_parent(self)
+            var = self.parent.get_variable(name)
+            var.add_parent(self)
             if char_length:
                 var.set_length(char_length)
             else:
@@ -267,6 +287,7 @@ class TypeDeclarationStatement(Statement):
                 var.set_bounds(array_spec)
             if value:
                 var.set_init(value)
+            var.analyze()
         return
 
     def _parse_entity(self, line):
@@ -296,34 +317,170 @@ class TypeDeclarationStatement(Statement):
             value = item.apply_map(line[1:].lstrip())
         return name, array_spec, char_length, value
 
+    def get_zero_value(self):
+        raise NotImplementedError,`self.__class__.__name__`
+
+    def assign_expression(self, name, value):
+        return '%s = %s' % (name, value)
+
+    def get_kind(self):
+        return self.selector[1] or self.default_kind
+
+    def get_length(self):
+        return self.selector[0] or 1
+
+    def get_bit_size(self):
+        return CHAR_BIT * int(self.get_kind())
+
+    def get_byte_size(self):
+        return self.get_bit_size() / CHAR_BIT
+
+    def is_intrinsic(self): return not isinstance(self,(Type,Class))
+    def is_derived(self): return isinstance(self,Type)
+
+    def is_numeric(self): return isinstance(self,(Integer,Real, DoublePrecision,Complex,DoubleComplex,Byte))
+    def is_nonnumeric(self): return isinstance(self,(Character,Logical))
+
+
 class Integer(TypeDeclarationStatement):
     match = re.compile(r'integer\b',re.I).match
+    default_kind = 4
+
+    def get_c_type(self):
+        return 'npy_int%s' % (self.get_bit_size())
+
+    def get_zero_value(self):
+        kind = self.get_kind()
+        if kind==self.default_kind: return '0'
+        return '0_%s' % (kind)
 
 class Real(TypeDeclarationStatement):
     match = re.compile(r'real\b',re.I).match
+    default_kind = 4
+
+    def get_c_type(self):
+        return 'npy_float%s' % (self.get_bit_size())
+
+    def get_zero_value(self):
+        kind = self.get_kind()
+        if kind==self.default_kind: return '0.0'
+        return '0_%s' % (kind)
 
 class DoublePrecision(TypeDeclarationStatement):
     match = re.compile(r'double\s*precision\b',re.I).match
+    default_kind = 8
+    
+    def get_zero_value(self):
+        return '0.0D0'
+
+    def get_c_type(self):
+        return 'npy_float%s' % (self.get_bit_size())
 
 class Complex(TypeDeclarationStatement):
     match = re.compile(r'complex\b',re.I).match
+    default_kind = 4
+
+    def get_kind(self):
+        length, kind = self.selector
+        if kind:
+            return kind
+        if length:
+            return int(length)/2
+        return self.default_kind
+
+    def get_length(self):
+        return 2 * int(self.get_kind())
+
+    def get_bit_size(self):
+        return CHAR_BIT * self.get_length()
+
+    def get_zero_value(self):
+        kind = self.get_kind()
+        if kind==self.default_kind: return '(0.0, 0.0)'
+        return '(0.0_%s, 0.0_%s)' % (kind, kind)
+
+    def get_c_type(self):
+        return 'npy_complex%s' % (self.get_bit_size())
 
 class DoubleComplex(TypeDeclarationStatement):
     # not in standard
     match = re.compile(r'double\s*complex\b',re.I).match
+    default_kind = 8
+
+    def get_kind(self): return self.default_kind
+    def get_length(self): return 2 * self.get_kind()
+    def get_bit_size(self):
+        return CHAR_BIT * self.get_length()
+
+    def get_zero_value(self):
+        return '(0.0D0,0.0D0)'
+
+    def get_c_type(self):
+        return 'npy_complex%s' % (self.get_bit_size())
 
 class Logical(TypeDeclarationStatement):
     match = re.compile(r'logical\b',re.I).match
+    default_kind = 4
+
+    def get_zero_value(self):
+        return ".FALSE."
+
+    def get_c_type(self):
+        return 'npy_int%s' % (self.get_bit_size())
 
 class Character(TypeDeclarationStatement):
     match = re.compile(r'character\b',re.I).match
+    default_kind = 1
+
+    def get_bit_size(self):
+        return CHAR_BIT * int(self.get_length()) * int(self.get_kind())
+
+    def get_c_type(self):
+        return 'f2py_string%s' % (self.get_bit_size())
+
+    def get_zero_value(self):
+        return "''"
 
 class Byte(TypeDeclarationStatement):
     # not in standard
     match = re.compile(r'byte\b',re.I).match
+    default_kind = 1
+
+    def get_zero_value(self):
+        return '0'
+
+    def get_c_type(self):
+        return 'npy_int%s' % (self.get_bit_size())
 
 class Type(TypeDeclarationStatement):
     match = re.compile(r'type\s*\(', re.I).match
+
+    def get_zero_value(self):
+        kind = self.selector
+        assert is_name(kind),`kind`
+        type_decl = self.get_type_decl(kind)
+        component_names = type_decl.a.component_names
+        components = type_decl.a.components
+        l = []
+        for name in component_names:
+            var = components[name]
+            l.append(var.typedecl.get_zero_value())
+        return '%s(%s)' % (type_decl.name, ', '.join(l))
+
+    def get_kind(self):
+        # See 4.5.2, page 48
+        raise NotImplementedError,`self.__class__.__name__`
+
+    def get_bit_size(self):
+        type_decl = self.get_type_decl(self.name)
+        s = 0
+        for name,var in type_decl.a.components.items():
+            s += var.get_bit_size()
+        return s
+
+    def get_c_type(self):
+        return 'f2py_type_%s_%s' % (self.name, self.get_bit_size())
+    
 TypeStmt = Type
 
 class Class(TypeDeclarationStatement):

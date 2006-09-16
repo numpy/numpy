@@ -52,6 +52,7 @@ class GeneralAssignment(Statement):
 
     match = re.compile(r'\w[^=]*\s*=\>?').match
     item_re = re.compile(r'(?P<variable>\w[^=]*)\s*(?P<sign>=\>?)\s*(?P<expr>.*)\Z',re.I).match
+    _repr_attr_names = ['variable','sign','expr'] + Statement._repr_attr_names
 
     def process_item(self):
         m = self.item_re(self.item.get_line())
@@ -525,6 +526,7 @@ class ModuleProcedure(Statement):
     def analyze(self):
         module_procedures = self.parent.a.module_procedures
         module_procedures.extend(self.items)
+        # XXX: add names to parent_provides
         return
 
 class Access(Statement):
@@ -560,7 +562,7 @@ class Access(Statement):
                 var = self.get_variable(name)
                 var.update(clsname)
         else:
-            self.parent.a.attributes.append(clsname)
+            self.parent.update_attributes(clsname)
         return
 
 class Public(Access):
@@ -847,8 +849,11 @@ class Use(Statement):
         return tab + s
 
     def analyze(self):
-        modules = self.top.a.module
+        use = self.parent.a.use
+        if use.has_key(self.name):
+            return
 
+        modules = self.top.a.module
         if not modules.has_key(self.name):
             fn = None
             for d in self.reader.include_dirs:
@@ -867,9 +872,10 @@ class Use(Statement):
                 modules.update(parser.block.a.module)
 
         if not modules.has_key(self.name):
-            self.warning('no information about the use module %r' % (self.name))
+            self.warning('no information about the module %r in use statement' % (self.name))
             return
 
+        module = modules[self.name]
         use_provides = self.parent.a.use_provides
         
         
@@ -1111,7 +1117,7 @@ class Sequence(Statement):
         return
     def __str__(self): return self.get_indent_tab() + 'SEQUENCE'
     def analyze(self):
-        self.parent.a.attributes.append('SEQUENCE')
+        self.parent.update_attributes('SEQUENCE')
         return
 
 class External(StatementWithNamelist):
@@ -1218,6 +1224,7 @@ class Common(Statement):
                 var = self.get_variable(name)
                 if shape is not None:
                     var.set_bounds(shape)
+            # XXX: add name,var to parent_provides
         return
 
 class Optional(StatementWithNamelist):

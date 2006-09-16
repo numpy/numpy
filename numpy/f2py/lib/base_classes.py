@@ -50,12 +50,28 @@ class AttributeHolder:
                   % (self.__class__.__name__,name,','.join(self._attributes.keys()))
         self._attributes[name] = value
 
-    def __repr__(self):
-        l = []
+    def isempty(self):
         for k in self._attributes.keys():
             v = getattr(self,k)
-            l.append('%s=%r' % (k,v))
-        return '%s(%s)' % (self.__class__.__name__,', '.join(l))
+            if v: return False
+        return True
+
+    def __repr__(self): return self.torepr()
+
+    def torepr(self, depth=-1, tab = ''):
+        if depth==0: return tab + self.__class__.__name__
+        l = [self.__class__.__name__+':']
+        ttab = tab + '    '
+        for k in self._attributes.keys():
+            v = getattr(self,k)
+            if v:
+                if isinstance(v,list):
+                    l.append(ttab + '%s=<%s-list>' % (k,len(v)))
+                elif isinstance(v,dict):
+                    l.append(ttab + '%s=<dict with keys %s>' % (k,v.keys()))
+                else:
+                    l.append(ttab + '%s=<%s>' % (k,type(v)))
+        return '\n'.join(l)
 
     def todict(self):
         d = {}
@@ -94,6 +110,33 @@ class Variable:
         self.check = []
         self.init = None
         return
+
+    def get_bit_size(self):
+        typesize = self.typedecl.get_bit_size(self)
+        if self.is_pointer():
+            # The size of pointer descriptor is compiler version dependent. Read:
+            #   http://www.nersc.gov/vendor_docs/intel/f_ug1/pgwarray.htm
+            #   https://www.cca-forum.org/pipermail/cca-fortran/2003-February/000123.html
+            #   https://www.cca-forum.org/pipermail/cca-fortran/2003-February/000122.html
+            # On sgi descriptor size may be 128+ bits!
+            if self.is_array():
+                wordsize = 4 # XXX: on a 64-bit system it is 8.
+                rank = len(self.bounds or self.dimension)
+                return 6 * wordsize + 12 * rank
+            return typesize
+        if self.is_array():
+            size = reduce(lambda x,y:x*y,self.bounds or self.dimension,1)
+            if self.length:
+                size *= self.length
+            return size * typesize
+        if self.length:
+            return self.length * typesize
+        return typesize
+
+    def get_typedecl(self):
+        if self.typedecl is None:
+            self.set_type(self.parent.get_type(self.name))
+        return self.typedecl
 
     def add_parent(self, parent):
         if id(parent) not in map(id, self.parents):
@@ -182,6 +225,9 @@ class Variable:
     def is_parameter(self): return 'PARAMETER' in self.attributes
     def is_optional(self): return 'OPTIONAL' in self.attributes
     def is_required(self): return 'REQUIRED' in self.attributes
+    def is_pointer(self): return 'POINTER' in self.attributes
+
+    def is_array(self): return not not (self.bounds or self.dimensions)
 
     def update(self, *attrs):
         attributes = self.attributes
@@ -221,8 +267,9 @@ class Variable:
 
     def __str__(self):
         s = ''
-        if self.typedecl is not None:
-            s += self.typedecl.tostr() + ' '
+        typedecl = self.get_typedecl()
+        if typedecl is not None:
+            s += typedecl.tostr() + ' '
         a = self.attributes[:]
         if self.dimension is not None:
             a.append('DIMENSION(%s)' % (', '.join(self.dimension)))
@@ -246,6 +293,10 @@ class Variable:
             s += ' = ' + self.init
         return s
 
+    def analyze(self):
+        typedecl = self.get_typedecl()
+        return
+
 class ProgramBlock:
     pass
 
@@ -257,6 +308,7 @@ class Statement:
       isvalid - boolean, when False, the Statement instance will be ignored
     """
     modes = ['free90','fix90','fix77','pyf']
+    _repr_attr_names = []
 
     def __init__(self, parent, item):
         self.parent = parent
@@ -264,15 +316,18 @@ class Statement:
             self.reader = item.reader
         else:
             self.reader = parent.reader
-        self.top = getattr(parent,'top',None)
+        self.top = getattr(parent,'top',None) # the top of statement tree
+        self.item = item
+
         if isinstance(parent, ProgramBlock):
             self.programblock = parent
         elif isinstance(self, ProgramBlock):
             self.programblock = self
         elif hasattr(parent,'programblock'):
             self.programblock = parent.programblock
-
-        self.item = item
+        else:
+            #self.warning('%s.programblock attribute not set.' % (self.__class__.__name__))
+            pass
 
         # when a statement instance is constructed by error, set isvalid to False
         self.isvalid = True
@@ -291,6 +346,31 @@ class Statement:
         self.process_item()
 
         return
+
+    def __repr__(self):
+        return self.torepr()
+
+    def torepr(self, depth=-1,incrtab=''):
+        tab = incrtab + self.get_indent_tab()
+        clsname = self.__class__.__name__
+        l = [tab + yellow_text(clsname)]
+        if depth==0:
+            return '\n'.join(l)
+        ttab = tab + '  '
+        for n in self._repr_attr_names:
+            attr = getattr(self, n, None)
+            if not attr: continue
+            if hasattr(attr, 'torepr'):
+                r = attr.torepr(depht-1,incrtab)
+            else:
+                r = repr(attr)
+            l.append(ttab + '%s=%s' % (n, r))
+        if self.item is not None: l.append(ttab + 'item=%r' % (self.item))
+        if not self.isvalid: l.append(ttab + 'isvalid=%r' % (self.isvalid))
+        if self.ignore: l.append(ttab + 'ignore=%r' % (self.ignore))
+        if not self.a.isempty():
+            l.append(ttab + 'a=' + self.a.torepr(depth-1,incrtab+'  ').lstrip())
+        return '\n'.join(l)
 
     def get_indent_tab(self,colon=None,deindent=False):
         if self.reader.isfix:
@@ -321,8 +401,11 @@ class Statement:
         return tab
 
     def format_message(self, kind, message):
-        message = self.reader.format_message(kind, message,
-                                             self.item.span[0], self.item.span[1])
+        if self.item is not None:
+            message = self.reader.format_message(kind, message,
+                                                 self.item.span[0], self.item.span[1])
+        else:
+            return message
         return message
 
     def show_message(self, message, stream=sys.stderr):
@@ -350,13 +433,26 @@ class Statement:
         return
 
     def get_variable(self, name):
-        variables = self.parent.a.variables
-        if not variables.has_key(name):
-            variables[name] = var = Variable(self, name)
-        else:
-            var = variables[name]
-            var.add_parent(self)
-        return var
+        """ Return Variable instance of variable name.
+        """
+        mth = getattr(self,'get_variable_by_name', self.parent.get_variable)
+        return mth(name)
+
+    def get_type(self, name):
+        """ Return type declaration using implicit rules
+        for name.
+        """
+        mth = getattr(self,'get_type_by_name', self.parent.get_type)
+        return mth(name)
+
+    def get_type_decl(self, kind):
+        mth = getattr(self,'get_type_decl_by_kind', self.parent.get_type_decl)
+        return mth(kind)
+
+    def get_provides(self):
+        """ Returns dictonary containing statements that block provides or None when N/A.
+        """
+        return
 
 class BeginStatement(Statement):
     """ <blocktype> <name>
@@ -371,13 +467,14 @@ class BeginStatement(Statement):
                 with the line label
       parent  - Block or FortranParser instance
       item    - Line instance containing the block start statement
-      get_item, put_item - methods to retrive/submit Line instaces
+      get_item, put_item - methods to retrive/submit Line instances
                 from/to Fortran reader.
       isvalid - boolean, when False, the Block instance will be ignored.
 
       stmt_cls, end_stmt_cls
 
     """
+    _repr_attr_names = ['blocktype','name'] + Statement._repr_attr_names
     def __init__(self, parent, item=None):
 
         self.content = []
@@ -388,7 +485,6 @@ class BeginStatement(Statement):
         if not hasattr(self, 'name'):
             # process_item may change this
             self.name = '__'+self.blocktype.upper()+'__' 
-
         Statement.__init__(self, parent, item)
         return
 
@@ -399,6 +495,20 @@ class BeginStatement(Statement):
         l=[self.get_indent_tab(colon=':') + self.tostr()]
         for c in self.content:
             l.append(str(c))
+        return '\n'.join(l)
+
+    def torepr(self, depth=-1, incrtab=''):
+        tab = incrtab + self.get_indent_tab()
+        ttab = tab + '  '
+        l=[Statement.torepr(self, depth=depth,incrtab=incrtab)]
+        if depth==0 or not self.content:
+            return '\n'.join(l)
+        l.append(ttab+'content:')
+        for c in self.content:
+            if isinstance(c,EndStatement):
+                l.append(c.torepr(depth-1,incrtab))
+            else:
+                l.append(c.torepr(depth-1,incrtab + '  '))
         return '\n'.join(l)
 
     def process_item(self):
@@ -543,6 +653,7 @@ class EndStatement(Statement):
       name
       blocktype
     """
+    _repr_attr_names = ['blocktype','name'] + Statement._repr_attr_names
 
     def __init__(self, parent, item):
         if not hasattr(self, 'blocktype'):
@@ -571,7 +682,10 @@ class EndStatement(Statement):
     def analyze(self):
         return
 
+    def get_indent_tab(self,colon=None,deindent=False):
+        return Statement.get_indent_tab(self, colon=colon, deindent=True)
+
     def __str__(self):
-        return self.get_indent_tab()[:-2] + 'END %s %s'\
+        return self.get_indent_tab() + 'END %s %s'\
                % (self.blocktype.upper(),self.name or '')
 

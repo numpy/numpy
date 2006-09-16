@@ -74,6 +74,8 @@ def parse_result(line, item = None):
     return name, line[i+1:].lstrip()
 
 def filter_stmts(content, classes):
+    """ Pop and return classes instances from content.
+    """
     stmts = []
     indices = []
     for i in range(len(content)):
@@ -123,3 +125,30 @@ def get_module_file(name, directory, _cache={}):
                 return fn
         f.close()
     return
+
+def str2stmt(string, isfree=True, isstrict=False):
+    """ Convert Fortran code to Statement tree.
+    """
+    from readfortran import Line, FortranStringReader
+    from parsefortran import FortranParser
+    reader = FortranStringReader(string, isfree, isstrict)
+    parser = FortranParser(reader)
+    parser.parse()
+    parser.analyze()
+    block = parser.block
+    while len(block.content)==1:
+        block = block.content[0]
+    return block
+
+def get_char_bit():
+    import numpy
+    one = numpy.ubyte(1)
+    two = numpy.ubyte(2)
+    n = numpy.ubyte(2)
+    i = 1
+    while n>=two:
+        n <<= one
+        i += 1
+    return i
+
+CHAR_BIT = get_char_bit()
