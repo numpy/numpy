@@ -400,6 +400,11 @@ class test_regression(NumpyTestCase):
         
     def check_empty_array_type(self, level=rlevel):
         assert_equal(N.array([]).dtype, N.zeros(0).dtype)
+
+    def check_void_coercion(self, level=rlevel):
+        dt = N.dtype([('a','f4'),('b','i4')])
+        x = N.zeros((1,),dt)
+        assert(N.r_[x,x].dtype == dt)
         
 if __name__ == "__main__":
     NumpyTest().run()
