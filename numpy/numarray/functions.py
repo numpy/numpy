@@ -340,27 +340,57 @@ def identity(n, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, True)
     return N.identity(n, dtype)
 
-def info(obj):
-    print "class: ", type(obj)
-    print "shape: ", obj.shape
-    print "strides: ", obj.strides
-    print "byteoffset: 0"
-    print "bytestride: ", obj.strides[0]
-    print "itemsize: ", obj.itemsize
-    print "aligned: ", obj.flags.aligned
-    print "contiguous: ", obj.flags.contiguous
-    print "buffer: ", repr(obj.data)
-    print "data pointer:", obj.ctypes._as_parameter_, "(DEBUG ONLY)"
-    print "byteorder: ",
+def info(obj, output=sys.stdout, numpy=0):
+    if numpy:
+        bp = lambda x: x
+    else:
+        bp = lambda x: int(x)
+    cls = getattr(obj, '__class__', type(obj))
+    if numpy:
+        nm = getattr(cls, '__name__', cls)
+    else:
+        nm = cls
+    print >> output, "class: ", nm
+    print >> output, "shape: ", obj.shape
+    strides = obj.strides
+    print >> output, "strides: ", strides
+    if not numpy:
+        print >> output, "byteoffset: 0"
+        if len(strides) > 0:
+            bs = obj.strides[0]
+        else:
+            bs = obj.itemsize
+        print >> output, "bytestride: ", bs
+    print >> output, "itemsize: ", obj.itemsize
+    print >> output, "aligned: ", bp(obj.flags.aligned)
+    print >> output, "contiguous: ", bp(obj.flags.contiguous)
+    if numpy:
+        print >> output, "fortran: ", obj.flags.fortran
+    if not numpy:
+        print >> output, "buffer: ", repr(obj.data)
+    if not numpy:
+        extra = " (DEBUG ONLY)"
+        tic = "'"
+    else:
+        extra = ""
+        tic = ""
+    print >> output, "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_), extra)
+    print >> output, "byteorder: ",
     endian = obj.dtype.byteorder
     if endian in ['|','=']:
-        print sys.byteorder
+        print >> output, "%s%s%s" % (tic, sys.byteorder, tic)
+        byteswap = False
     elif endian == '>':
-        print "big"
+        print >> output, "%sbig%s" % (tic, tic)
+        byteswap = sys.byteorder != "big"
     else:
-        print "little"
-    print "byteswap: ", not obj.dtype.isnative
-    print "type: ", typefrom(obj).name
+        print >> output, "%slittle%s" % (tic, tic)
+        byteswap = sys.byteorder != "little"
+    print >> output, "byteswap: ", bp(byteswap)
+    if not numpy:
+        print >> output, "type: ", typefrom(obj).name
+    else:
+        print >> output, "type: %s" % obj.dtype
 
 #clipmode is ignored if axis is not 0 and array is not 1d
 def put(array, indices, values, axis=0, clipmode=RAISE):

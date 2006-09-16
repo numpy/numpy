@@ -143,7 +143,7 @@ def vander(x, N=None):
         X[:,i] = x**(N-i-1)
     return X
 
-def  histogram2d(x,y, bins=10, range=None, normed=False):
+def histogram2d(x,y, bins=10, range=None, normed=False):
     """histogram2d(x,y, bins=10, range=None, normed=False) -> H, xedges, yedges
     
     Compute the 2D histogram from samples x,y. 
@@ -159,7 +159,6 @@ def  histogram2d(x,y, bins=10, range=None, normed=False):
     The histogram array is a count of the number of samples in each 
     two dimensional bin. 
     Setting normed to True returns a density rather than a bin count. 
-    Data falling outside of the edges are not counted.
     """
     import numpy as np
     try:

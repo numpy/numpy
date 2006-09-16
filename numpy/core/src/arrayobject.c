@@ -11086,6 +11086,12 @@ arraydescr_str(PyArray_Descr *self)
                 PyObject *p;
                 PyObject *t = PyString_FromString("(");
                 p = arraydescr_str(self->subarray->base);
+                if (!self->subarray->base->names && !self->subarray->base->subarray) {
+                        PyObject *t=PyString_FromString("'");
+                        PyString_Concat(&p, t);
+                        PyString_ConcatAndDel(&t, p);
+                        p = t;
+                }
                 PyString_ConcatAndDel(&t, p);
                 PyString_ConcatAndDel(&t, PyString_FromString(","));
                 PyString_ConcatAndDel(&t, PyObject_Str(self->subarray->shape));
@@ -11093,11 +11099,12 @@ arraydescr_str(PyArray_Descr *self)
                 sub = t;
         }
         else {
-                PyObject *t=PyString_FromString("'");
-                sub = arraydescr_protocol_typestr_get(self);
-                PyString_Concat(&sub, t);
-                PyString_ConcatAndDel(&t, sub);
-                sub = t;
+                if (!PyArray_ISNBO(self->byteorder)) {
+                        sub = arraydescr_protocol_typestr_get(self);
+                }
+                else {
+                        sub = arraydescr_typename_get(self);
+                }
         }
         return sub;
 }
@@ -11108,6 +11115,12 @@ arraydescr_repr(PyArray_Descr *self)
         PyObject *sub, *s;
         s = PyString_FromString("dtype(");
         sub = arraydescr_str(self);
+        if (!self->names && !self->subarray) {
+                PyObject *t=PyString_FromString("'");
+                PyString_Concat(&sub, t);
+                PyString_ConcatAndDel(&t, sub);
+                sub = t;
+        }
         PyString_ConcatAndDel(&s, sub);
         sub = PyString_FromString(")");
         PyString_ConcatAndDel(&s, sub);

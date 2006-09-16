@@ -238,7 +238,10 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
 
     if object is None:
         info(info)
-    elif isinstance(object, types.StringType):
+    elif isinstance(object, ndarray):
+        import numpy.numarray as nn
+        nn.info(object, output=output, numpy=1)
+    elif isinstance(object, str):
         if _namedict is None:
             _namedict, _dictlist = _makenamedict(toplevel)
         numfound = 0
