@@ -112,7 +112,7 @@ class Variable:
         return
 
     def get_bit_size(self):
-        typesize = self.typedecl.get_bit_size(self)
+        typesize = self.typedecl.get_bit_size()
         if self.is_pointer():
             # The size of pointer descriptor is compiler version dependent. Read:
             #   http://www.nersc.gov/vendor_docs/intel/f_ug1/pgwarray.htm
@@ -227,7 +227,7 @@ class Variable:
     def is_required(self): return 'REQUIRED' in self.attributes
     def is_pointer(self): return 'POINTER' in self.attributes
 
-    def is_array(self): return not not (self.bounds or self.dimensions)
+    def is_array(self): return not not (self.bounds or self.dimension)
 
     def update(self, *attrs):
         attributes = self.attributes

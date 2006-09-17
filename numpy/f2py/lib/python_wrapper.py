@@ -127,6 +127,7 @@ PyMODINIT_FUNC init%(modulename)s(void) {
 '''
 
     main_fortran_template = '''\
+! -*- f90 -*-
 %(fortran_code_list)s
 '''
     def __init__(self, modulename):
@@ -305,7 +306,16 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
   return pyobj_to_string_len(obj, (f2py_string*)value, %(ctype_bytes)s);
 }
 ''' % (locals())
-
+        elif ctype.startswith('f2py_type_'):
+            ctype_bits = int(ctype.split('_')[-1])
+            ctype_bytes = ctype_bits / CHAR_BIT
+            self.add_typedef(ctype,'typedef struct { char data[%s]; } %s;' % (ctype_bytes,ctype))
+            return '''
+static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
+  return pyobj_to_string_len(obj, (f2py_string*)value, %(ctype_bytes)s);
+}
+''' % (locals())
+        
 class PythonCAPIFunction(WrapperBase):
     capi_function_template = '''
 static char f2py_doc_%(function_name)s[] = "%(function_doc)s";
@@ -430,8 +440,9 @@ initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
 '''
     fortran_code_template = '''\
        function create_%(typename)s_object_f() result (obj)
+         %(typedecl_list)s
          %(typedecl)s obj
-!         %(initexpr)s
+!        %(initexpr)s
        end
        subroutine initialize_%(typename)s_interface_f(init_c)
          external create_%(typename)s_object_f
@@ -443,6 +454,7 @@ initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
         WrapperBase.__init__(self)
         self.parent = parent
         self.typedecl = typedecl.astypedecl()
+        self.typedecl_list = []
         self.ctype = self.typedecl.get_c_type()
         self.byte_size = self.typedecl.get_byte_size()
         self.typename = self.typedecl.name.lower()
@@ -455,6 +467,8 @@ initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
         if ctype.startswith('npy_'):
             pass
         elif ctype.startswith('f2py_string'):
+            pass
+        elif ctype.startswith('f2py_type'):
             pass
         else:
             self.parent.typedef_list.append(self.apply_attributes(self.typedef_template))
@@ -498,7 +512,7 @@ if __name__ == '__main__':
           integer d,n
         end type rational
       end module rat
-      subroutine foo(a,b)
+      subroutine foo(a,b,c)
         use rat
         integer a
         character*5 b

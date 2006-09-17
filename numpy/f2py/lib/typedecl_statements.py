@@ -456,9 +456,7 @@ class Type(TypeDeclarationStatement):
     match = re.compile(r'type\s*\(', re.I).match
 
     def get_zero_value(self):
-        kind = self.selector
-        assert is_name(kind),`kind`
-        type_decl = self.get_type_decl(kind)
+        type_decl = self.get_type_decl(self.name)
         component_names = type_decl.a.component_names
         components = type_decl.a.components
         l = []
