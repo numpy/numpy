@@ -7015,7 +7015,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         Py_DECREF(chktype);
         Py_DECREF(minitype);
         /* VOID Arrays should not occur by "default" 
-           unless intput was already a VOID */
+           unless input was already a VOID */
         if (outtype->type_num == PyArray_VOID && \
             minitype->type_num != PyArray_VOID) {
                 Py_DECREF(outtype);
