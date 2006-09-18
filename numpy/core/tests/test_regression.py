@@ -405,6 +405,12 @@ class test_regression(NumpyTestCase):
         dt = N.dtype([('a','f4'),('b','i4')])
         x = N.zeros((1,),dt)
         assert(N.r_[x,x].dtype == dt)
+
+    def check_void_copyswap(self, level=rlevel):
+        dt = N.dtype([('one', '<i4'),('two', '<i4')])
+        x = N.array((1,2), dtype=dt)
+        x = x.byteswap()
+        assert(x['one'] > 1 and x['two'] > 2)
         
 if __name__ == "__main__":
     NumpyTest().run()
