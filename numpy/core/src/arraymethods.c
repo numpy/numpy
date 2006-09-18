@@ -650,7 +650,6 @@ array_setscalar(PyArrayObject *self, PyObject *args) {
 }
 
 
-
 static PyObject *
 array_cast(PyArrayObject *self, PyObject *args)
 {
@@ -668,7 +667,7 @@ array_cast(PyArrayObject *self, PyObject *args)
 	if (descr->names != NULL) {
 		return PyArray_FromArray(self, descr, NPY_FORCECAST);
 	}
-	return _ARET(PyArray_CastToType(self, descr, 0));
+	return PyArray_CastToType(self, descr, 0);
 }
 
 /* default sub-type implementation */
@@ -1351,7 +1350,7 @@ array_transpose(PyArrayObject *self, PyObject *args)
 		PyDimMem_FREE(permute.ptr);
 	}
 
-	return _ARET(ret);
+	return ret;
 }
 
 #define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : PyArray_NOTYPE)
