@@ -4529,7 +4529,7 @@ _convert_from_dict(PyObject *obj, int align)
 	totalsize = 0;
 	for(i=0; i<n; i++) {
 		PyObject *tup, *descr, *index, *item, *name, *off;
-		int len, ret;
+		int len, ret, _align;
 		PyArray_Descr *newdescr;
 
 		/* Build item to insert (descr, offset, [title])*/
@@ -4552,6 +4552,10 @@ _convert_from_dict(PyObject *obj, int align)
 			goto fail;
 		}
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
+		if (align) {
+			_align = newdescr->alignment;
+			maxalign = MAX(maxalign,_align);
+		}
 		if (offsets) {
 			long offset;
 			off = PyObject_GetItem(offsets, index);
@@ -4566,16 +4570,12 @@ _convert_from_dict(PyObject *obj, int align)
 			if (offset > totalsize) totalsize = offset;
 		}
 		else {
-			if (align) {
-				int _align = newdescr->alignment;
-				if (_align > 1) totalsize =		\
-					((totalsize + _align - 1)/_align)* \
-                                        _align;
+			if (align && _align > 1) {
+				totalsize = ((totalsize + _align - 1)   \
+					     /_align)*_align;
 			}
 			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
 		}
-                if (align)
-                        maxalign = MAX(maxalign,newdescr->alignment);
 		if (len == 3) PyTuple_SET_ITEM(tup, 2, item);
 		name = PyObject_GetItem(names, index);
 		Py_DECREF(index);
