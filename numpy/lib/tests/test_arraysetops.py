@@ -6,6 +6,7 @@ from numpy.testing import *
 set_package_path()
 import numpy
 from numpy.lib.arraysetops import *
+from numpy.lib.arraysetops import ediff1d
 restore_path()
 
 ##################################################
@@ -68,6 +69,17 @@ class test_aso(NumpyTestCase):
         c = setxor1d( a, b )
         assert_array_equal( c, ec )
 
+    def check_ediff1d(self):
+        zero_elem = numpy.array([])
+        one_elem = numpy.array([1])
+        two_elem = numpy.array([1,2])
+        
+        assert_array_equal([],ediff1d(zero_elem))
+        assert_array_equal([0],ediff1d(zero_elem,to_begin=0))
+        assert_array_equal([0],ediff1d(zero_elem,to_end=0))
+        assert_array_equal([-1,0],ediff1d(zero_elem,to_begin=-1,to_end=0))
+        assert_array_equal([],ediff1d(one_elem))
+        assert_array_equal([1],ediff1d(two_elem))
 
     ##
     # 03.11.2005, c

@@ -34,27 +34,16 @@ import numpy
 
 ##
 # 03.11.2005, c
-def ediff1d( ar1, to_end = None, to_begin = None ):
+def ediff1d(ary, to_end = None, to_begin = None):
     """Array difference with prefixed and/or appended value."""
-    dar1 = ar1[1:] - ar1[:-1]
-    if to_end and to_begin:
-        shape = (ar1.shape[0] + 1,) + ar1.shape[1:]
-        ed = numpy.empty( shape, dtype = ar1.dtype )
-        ed[0], ed[-1] = to_begin, to_end
-        ed[1:-1] = dar1
-    elif to_end:
-        ed = numpy.empty( ar1.shape, dtype = ar1.dtype )
-        ed[-1] = to_end
-        ed[:-1] = dar1
-    elif to_begin:
-        ed = numpy.empty( ar1.shape, dtype = ar1.dtype )
-        ed[0] = to_begin
-        ed[1:] = dar1
-    else:
-        ed = dar1
-
+    ary = numpy.asarray(ary)
+    ed = ary[1:] - ary[:-1]
+    if to_begin is not None:
+        ed = numpy.insert(ed, 0, to_begin)
+    if to_end is not None:
+        ed = numpy.append(ed, to_end)
+        
     return ed
-
 
 ##
 # 01.11.2005, c
@@ -95,11 +84,11 @@ def intersect1d_nu( ar1, ar2 ):
 # 01.11.2005, c
 def setxor1d( ar1, ar2 ):
     """Set exclusive-or of 1D arrays with unique elements."""
-    aux = numpy.concatenate( (ar1, ar2 ) )
+    aux = numpy.concatenate((ar1, ar2))
     aux.sort()
-    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
-    flag2 = ediff1d( flag, 0 ) == 0
-    return aux.compress( flag2 )
+    flag = ediff1d(aux, to_end = 1, to_begin = 1) == 0
+    flag2 = ediff1d(flag) == 0
+    return aux.compress(flag2)
 
 ##
 # 03.11.2005, c
