@@ -4569,11 +4569,13 @@ _convert_from_dict(PyObject *obj, int align)
 			if (align) {
 				int _align = newdescr->alignment;
 				if (_align > 1) totalsize =		\
-					((totalsize + _align - 1)/_align)*_align;
-				maxalign = MAX(maxalign,_align);
+					((totalsize + _align - 1)/_align)* \
+                                        _align;
 			}
 			PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
 		}
+                if (align)
+                        maxalign = MAX(maxalign,newdescr->alignment);
 		if (len == 3) PyTuple_SET_ITEM(tup, 2, item);
 		name = PyObject_GetItem(names, index);
 		Py_DECREF(index);
@@ -4586,13 +4588,14 @@ _convert_from_dict(PyObject *obj, int align)
 		/* Insert into dictionary */
 		if (PyDict_GetItem(fields, name) != NULL) {
 			PyErr_SetString(PyExc_ValueError,
-					"name already used as a name or title");
+					"name already used as a name or "\
+                                        "title");
 			ret = PY_FAIL;
 		}
 		PyDict_SetItem(fields, name, tup);
 		Py_DECREF(name);
 		if (len == 3) {
-			if ((PyString_Check(item) || PyUnicode_Check(item)) && \
+			if ((PyString_Check(item) || PyUnicode_Check(item)) &&
 			    PyDict_GetItem(fields, item) != NULL) {
 				PyErr_SetString(PyExc_ValueError,
 						"title already used as a "\
