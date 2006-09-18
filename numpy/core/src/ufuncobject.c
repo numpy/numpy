@@ -3212,7 +3212,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
         }
         else {
                 PyUFunc_Loop1d *current, *prev=NULL;
-                int cmp;
+                int cmp=1;
                 /* There is already at least 1 loop. Place this one in 
                    lexicographic order.  If the next one signature
                    is exactly like this one, then just replace.
@@ -3235,7 +3235,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
                 else { /* insert it before the current one 
                           by hacking the internals of cobject to 
                           replace the function pointer --- 
-                          can't use API because destructor is set. 
+                          can't use CObject API because destructor is set. 
                        */
                         funcdata->next = current;
                         if (prev == NULL) { /* place this at front */
