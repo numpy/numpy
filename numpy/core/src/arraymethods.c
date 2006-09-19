@@ -1353,6 +1353,27 @@ array_transpose(PyArrayObject *self, PyObject *args)
 	return ret;
 }
 
+/* Return typenumber from dtype2 unless it is NULL, then return 
+   NPY_DOUBLE if dtype1->type_num is integer or bool
+   and dtype1->type_num otherwise. 
+*/
+static int
+_get_type_num_double(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
+{
+        if (dtype2 == NULL) { /* Use floating point reduction 
+                                 on integer data-types */
+                if (dtype1->type_num < NPY_FLOAT) {
+                        return NPY_DOUBLE;
+                }
+                else {
+                        return dtype1->type_num;
+                }
+        }
+        else {
+                return dtype2->type_num;
+        }
+}
+
 #define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : PyArray_NOTYPE)
 
 static PyObject *
@@ -1361,6 +1382,7 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	int axis=MAX_DIMS;
 	PyArray_Descr *dtype=NULL;
         PyArrayObject *out=NULL;
+        int num;
 	static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
@@ -1368,9 +1390,10 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 &axis, PyArray_DescrConverter2,
 					 &dtype,
                                          PyArray_OutputConverter,
-                                         &out)) return NULL;
+                                         &out)) return NULL;        
 
-	return PyArray_Mean(self, axis, _CHKTYPENUM(dtype), out);
+        num = _get_type_num_double(self->descr, dtype);
+	return PyArray_Mean(self, axis, num, out);
 }
 
 static PyObject *
@@ -1489,6 +1512,7 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	int axis=MAX_DIMS;
 	PyArray_Descr *dtype=NULL;
         PyArrayObject *out=NULL;
+        int num;
 	static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
@@ -1498,7 +1522,8 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                          PyArray_OutputConverter,
                                          &out)) return NULL;
 
-	return PyArray_Std(self, axis, _CHKTYPENUM(dtype), out, 0);
+        num = _get_type_num_double(self->descr, dtype);
+        return PyArray_Std(self, axis, num, out, 0);
 }
 
 
@@ -1508,6 +1533,7 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	int axis=MAX_DIMS;
 	PyArray_Descr *dtype=NULL;
         PyArrayObject *out=NULL;
+        int num;
 	static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
@@ -1517,7 +1543,8 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                          PyArray_OutputConverter,
                                          &out)) return NULL;
 
-	return PyArray_Std(self, axis, _CHKTYPENUM(dtype), out, 1);
+        num = _get_type_num_double(self->descr, dtype);
+	return PyArray_Std(self, axis, num, out, 1);
 }
 
 
