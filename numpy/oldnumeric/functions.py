@@ -40,7 +40,7 @@ def argmax(x, axis=-1):
     return N.argmax(x, axis)
 
 def argmin(x, axis=-1):
-    return N.argmax(x, axis)
+    return N.argmin(x, axis)
 
 def compress(condition, m, axis=-1):
     return N.compress(condition, m, axis)
