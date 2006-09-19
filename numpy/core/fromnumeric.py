@@ -125,7 +125,7 @@ def transpose(a, axes=None):
     return transpose(axes)
 
 def sort(a, axis=-1, kind='quicksort'):
-    """Return copy of array sorted along the given axis.
+    """Returns copy of 'a' sorted along the given axis.
 
     Keyword arguments:
 
@@ -135,7 +135,7 @@ def sort(a, axis=-1, kind='quicksort'):
 
     Returns: None.
 
-    This method sorts a in place along the given axis using the algorithm
+    This method sorts 'a' in place along the given axis using the algorithm
     specified by the kind keyword.
 
     The various sorts may characterized by average speed, worst case
@@ -147,9 +147,9 @@ def sort(a, axis=-1, kind='quicksort'):
     |------------------------------------------------------|
     |    kind   | speed |  worst case | work space | stable|
     |------------------------------------------------------|
-    |'quicksort'|   1   |    o(n)     |      0     |   no  |
-    |'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
-    |'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
+    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
+    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
     All the sort algorithms make temporary copies of the data when the sort is
@@ -162,7 +162,7 @@ def sort(a, axis=-1, kind='quicksort'):
     return a
 
 def argsort(a, axis=-1, kind='quicksort'):
-    """Return array of indices that index a in sorted order.
+    """Returns array of indices that index 'a' in sorted order.
 
     Keyword arguments:
 
@@ -170,11 +170,11 @@ def argsort(a, axis=-1, kind='quicksort'):
     kind -- sorting algorithm (default 'quicksort')
             Possible values: 'quicksort', 'mergesort', or 'heapsort'
 
-    Returns: array of indices that sort a along the specified axis.
+    Returns: array of indices that sort 'a' along the specified axis.
 
     This method executes an indirect sort along the given axis using the
     algorithm specified by the kind keyword. It returns an array of indices of
-    the same shape as a that index data along the given axis in sorted order.
+    the same shape as 'a' that index data along the given axis in sorted order.
 
     The various sorts are characterized by average speed, worst case
     performance, need for work space, and whether they are stable. A stable
@@ -184,9 +184,9 @@ def argsort(a, axis=-1, kind='quicksort'):
     |------------------------------------------------------|
     |    kind   | speed |  worst case | work space | stable|
     |------------------------------------------------------|
-    |'quicksort'|   1   |   o(n^2)    |      0     |   no  |
-    |'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
-    |'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
+    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
+    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
     All the sort algorithms make temporary copies of the data when the sort is not

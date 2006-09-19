@@ -356,7 +356,7 @@ add_newdoc('numpy.core.multiarray','where',
 
 
 add_newdoc('numpy.core.multiarray','lexsort',
-    """lexsort(keys=, axis=-1)
+    """lexsort(keys=, axis=-1) -> array of indices. argsort with list of keys.
 
     Return an array of indices similar to argsort, except the sorting is
     done using the provided sorting keys.  First the sort is done using
@@ -658,7 +658,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
 
     This method executes an indirect sort along the given axis using the
     algorithm specified by the kind keyword. It returns an array of indices of
-    the same shape as a that index data along the given axis in sorted order.
+    the same shape as 'a' that index data along the given axis in sorted order.
 
     The various sorts are characterized by average speed, worst case
     performance, need for work space, and whether they are stable. A stable
@@ -668,9 +668,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     |------------------------------------------------------|
     |    kind   | speed |  worst case | work space | stable|
     |------------------------------------------------------|
-    |'quicksort'|   1   |   o(n^2)    |      0     |   no  |
-    |'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
-    |'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
+    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
+    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
     All the sort algorithms make temporary copies of the data when the sort is
@@ -1024,7 +1024,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
 
     Returns: None.
 
-    This method sorts a in place along the given axis using the algorithm
+    This method sorts 'a' in place along the given axis using the algorithm
     specified by the kind keyword.
 
     The various sorts may characterized by average speed, worst case
@@ -1036,9 +1036,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     |------------------------------------------------------|
     |    kind   | speed |  worst case | work space | stable|
     |------------------------------------------------------|
-    |'quicksort'|   1   |    o(n)     |      0     |   no  |
-    |'mergesort'|   2   | o(n*log(n)) |    ~n/2    |   yes |
-    |'heapsort' |   3   | o(n*log(n)) |      0     |   no  |
+    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
+    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
+    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
     All the sort algorithms make temporary copies of the data when the sort is
