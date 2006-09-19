@@ -52,7 +52,7 @@ Makes the following changes:
    - .setimaginary() --> .imag
    
 """
-__all__ = ['convertfile', 'convertall', 'converttree']
+__all__ = ['convertfile', 'convertall', 'converttree', 'convertsrc']
 
 import sys
 import os
@@ -164,6 +164,7 @@ def replaceother(astr):
     
 import datetime
 def fromstr(filestr):
+    savestr = filestr[:]
     filestr, fromall = changeimports(filestr, 'numarray', 'numpy.numarray')
     base = 'numarray'
     newbase = 'numpy.numarray'
@@ -175,40 +176,42 @@ def fromstr(filestr):
 
     filestr = replaceattr(filestr)
     filestr = replaceother(filestr)
-    today = datetime.date.today().strftime('%b %d, %Y')
-    name = os.path.split(sys.argv[0])[-1]
-    filestr = '## Automatically adapted for '\
-              'numpy.numarray %s by %s\n\n%s' % (today, name, filestr)
-    return filestr
+    if savestr != filestr:
+        name = os.path.split(sys.argv[0])[-1]
+        today = datetime.date.today().strftime('%b %d, %Y')
+        filestr = '## Automatically adapted for '\
+                  'numpy.numarray %s by %s\n\n%s' % (today, name, filestr)
+        return filestr, 1
+    return filestr, 0
 
 def makenewfile(name, filestr):
     fid = file(name, 'w')
     fid.write(filestr)
     fid.close()
 
-def getandcopy(name):
-    fid = file(name)
-    filestr = fid.read()
-    fid.close()
-    base, ext = os.path.splitext(name)
-    makenewfile(base+'.orig', filestr)
-    return filestr
-
-def convertfile(filename):
-    """Convert the filename given from using Numeric to using NumPy
+def convertfile(filename, orig=1):
+    """Convert the filename given from using Numarray to using NumPy
 
     Copies the file to filename.orig and then over-writes the file
     with the updated code
     """
-    filestr = getandcopy(filename)
-    filestr = fromstr(filestr)
-    makenewfile(filename, filestr)
+    fid = open(filename)
+    filestr = fid.read()
+    fid.close()
+    filestr, changed = fromstr(filestr)
+    if changed:
+        if orig:
+            base, ext = os.path.splitext(filename)
+            os.rename(filename, base+".orig")
+        else:
+            os.remove(filename)
+        makenewfile(filename, filestr)
 
 def fromargs(args):
     filename = args[1]
     convertfile(filename)
 
-def convertall(direc=os.path.curdir):
+def convertall(direc=os.path.curdir, orig=1):
     """Convert all .py files to use numpy.oldnumeric (from Numeric) in the directory given
 
     For each file, a backup of <usesnumeric>.py is made as
@@ -217,7 +220,44 @@ def convertall(direc=os.path.curdir):
     """
     files = glob.glob(os.path.join(direc,'*.py'))
     for afile in files:
-        convertfile(afile)
+        if afile[-8:] == 'setup.py': continue
+        convertfile(afile, orig)
+
+header_re = re.compile(r'(numarray/libnumarray.h)')
+
+def convertsrc(direc=os.path.curdir, ext=None, orig=1):
+    """Replace Numeric/arrayobject.h with numpy/oldnumeric.h in all files in the
+    directory with extension give by list ext (if ext is None, then all files are
+    replaced)."""
+    if ext is None:
+        files = glob.glob(os.path.join(direc,'*'))
+    else:
+        files = []
+        for aext in ext:
+            files.extend(glob.glob(os.path.join(direc,"*.%s" % aext)))
+    for afile in files:
+        fid = open(afile)
+        fstr = fid.read()
+        fid.close()
+        fstr, n = header_re.subn(r'numpy/libnumarray.h',fstr)
+        if n > 0:
+            if orig:
+                base, ext = os.path.splitext(afile)
+                os.rename(afile, base+".orig")
+            else:
+                os.remove(afile)
+            makenewfile(afile, fstr)
+                
+def _func(arg, dirname, fnames):
+    convertall(dirname, orig=0)
+    convertsrc(dirname, ['h','c'], orig=0)
+
+def converttree(direc=os.path.curdir):
+    """Convert all .py files in the tree given
+
+    """
+    os.path.walk(direc, _func, None)
+
 
 if __name__ == '__main__':
-    fromargs(sys.argv)
+    converttree(sys.argv)
