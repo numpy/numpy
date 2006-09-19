@@ -1360,17 +1360,15 @@ array_transpose(PyArrayObject *self, PyObject *args)
 static int
 _get_type_num_double(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
 {
-        if (dtype2 == NULL) { /* Use floating point reduction 
-                                 on integer data-types */
-                if (dtype1->type_num < NPY_FLOAT) {
-                        return NPY_DOUBLE;
-                }
-                else {
-                        return dtype1->type_num;
-                }
+        if (dtype2 != NULL)
+                return dtype2->type_num;
+        
+        /* For integer or bool data-types */
+        if (dtype1->type_num < NPY_FLOAT) {
+                return NPY_DOUBLE;
         }
         else {
-                return dtype2->type_num;
+                return dtype1->type_num;
         }
 }
 
