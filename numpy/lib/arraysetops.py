@@ -89,6 +89,9 @@ def intersect1d_nu( ar1, ar2 ):
 def setxor1d( ar1, ar2 ):
     """Set exclusive-or of 1D arrays with unique elements."""
     aux = numpy.concatenate((ar1, ar2))
+    if aux.size == 0:
+        return aux
+    
     aux.sort()
     flag = ediff1d(aux, to_end = 1, to_begin = 1) == 0
     flag2 = ediff1d(flag) == 0
@@ -129,8 +132,11 @@ def union1d( ar1, ar2 ):
 # 03.11.2005, c
 def setdiff1d( ar1, ar2 ):
     """Set difference of 1D arrays with unique elements."""
-    aux = setmember1d( ar1, ar2 )
-    return ar1.compress(aux == 0)
+    aux = setmember1d(ar1,ar2)
+    if aux.size == 0:
+        return aux
+    else:
+        return numpy.asarray(ar1).compress(aux == 0)
 
 ##
 # 02.11.2005, c
