@@ -563,7 +563,11 @@ PyArray_PyIntAsIntp(PyObject *o)
         }
 #if (PY_VERSION_HEX >= 0x02050000)
 	if (PyIndex_Check(o)) {
-		long_value = (longlong) PyNumber_Index(o);
+                PyObject* value = PyNumber_Index(o);
+		if (value==NULL) {
+		  return -1;
+		}
+		long_value = (longlong) PyInt_AsSsize_t(value);
 		goto finish;
 	}
 #endif
@@ -652,7 +656,8 @@ PyArray_PyIntAsInt(PyObject *o)
         }
 #if (PY_VERSION_HEX >= 0x02050000)
 	if (PyIndex_Check(o)) {
-		long_value = (longlong) PyNumber_Index(o);
+                PyObject* value = PyNumber_Index(o);
+		long_value = (longlong) PyInt_AsSsize_t(value);
 		goto finish;
 	}
 #endif
@@ -3393,8 +3398,14 @@ array_power_is_scalar(PyObject *o2, double* exp)
     }
 #if (PY_VERSION_HEX >= 0x02050000)
     if (PyIndex_Check(o2)) {
+            PyObject* value = PyNumber_Index(o2);
             Py_ssize_t val;
-            val = PyNumber_Index(obj);
+	    if (value==NULL) {
+	      if (PyErr_Occurred())
+		PyErr_Clear();
+	      return 0;
+	    }
+            val = PyInt_AsSsize_t(value);
             if (val == -1 && PyErr_Occurred()) {
                     PyErr_Clear();
                     return 0;
