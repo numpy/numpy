@@ -2578,23 +2578,25 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         }
 
         if (otype == NULL) {
-		/* For integer types --- makes sure at
-		   least a long is used */
+		/* For integer types --- make sure at
+		   least a long is used for add and multiply
+                   reduction --- to avoid overflow */
 		int typenum = PyArray_TYPE(mp);
-		if (PyTypeNum_ISINTEGER(typenum) &&	\
-		    (mp->descr->elsize < sizeof(long))) {
-			if (PyTypeNum_ISUNSIGNED(typenum))
-				typenum = PyArray_ULONG;
-			else
-				typenum = PyArray_LONG;
-		}
-		else if (PyTypeNum_ISBOOL(typenum) && \
-			 ((strcmp(self->name,"add")==0) ||	\
-			  (strcmp(self->name,"multiply")==0))) {
-			typenum = PyArray_LONG;
-		}
-		otype = PyArray_DescrFromType(typenum);
-	}
+                if ((typenum < NPY_FLOAT) &&                \
+                    ((strcmp(self->name,"add")==0) ||       \
+                     (strcmp(self->name,"multiply")==0))) {
+                        if (PyTypeNum_ISBOOL(typenum)) 
+                                typenum = PyArray_LONG;
+                        else if (mp->descr->elsize < sizeof(long)) {
+                                if (PyTypeNum_ISUNSIGNED(typenum))
+                                        typenum = PyArray_ULONG;
+                                else
+                                        typenum = PyArray_LONG;
+                        }
+                }
+                otype = PyArray_DescrFromType(typenum);
+        }
+
 
         switch(operation) {
         case UFUNC_REDUCE:
