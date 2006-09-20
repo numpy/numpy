@@ -64,7 +64,7 @@ def unique1d(ar1, retindx=False):
         return perm.compress(flag), aux.compress(flag)
     
     else:
-        ar = numpy.array(sorted(ar))
+        ar.sort()
         return ar.compress(ediff1d(ar, 1) != 0)
 
 ##

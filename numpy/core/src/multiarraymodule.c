@@ -4529,7 +4529,7 @@ _convert_from_dict(PyObject *obj, int align)
 	totalsize = 0;
 	for(i=0; i<n; i++) {
 		PyObject *tup, *descr, *index, *item, *name, *off;
-		int len, ret, _align;
+		int len, ret, _align=1;
 		PyArray_Descr *newdescr;
 
 		/* Build item to insert (descr, offset, [title])*/

@@ -82,7 +82,10 @@ testing --> ScipyTest, NumpyTest
 """
 
     def test(level=1, verbosity=1):
-        return NumpyTest().test(level, verbosity)
+        if level <= 10:	
+           return NumpyTest().test(level, verbosity)
+        else:
+           return NumpyTest().testall(level, verbosity)
     test.__doc__ = NumpyTest.test.__doc__
 
     import add_newdocs
