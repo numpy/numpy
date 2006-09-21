@@ -77,7 +77,7 @@ def changeimports(fstr, name, newname):
     fromstr = 'from %s import ' % name
     fromall=0
 
-    fstr = re.sub(r'(import [^,]+,\s*)(%s)' % name,
+    fstr = re.sub(r'(import\s+[^,\n\r]+,\s*)(%s)' % name,
                   "\\1%s as %s" % (newname, name), fstr)
     fstr = fstr.replace(importasstr, 'import %s as ' % newname)
     fstr = fstr.replace(importstr, 'import %s as %s' % (newname,name))
