@@ -2609,15 +2609,14 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
   Convert object to searchsorted side
 */
 static int
-PyArray_SearchsideConverter(PyObject *obj, NPY_SEARCHSIDE *side)
+PyArray_SearchsideConverter(PyObject *obj, void *addr)
 {
+        NPY_SEARCHSIDE *side = (NPY_SEARCHSIDE *)addr;
 	char *str = PyString_AsString(obj);
 
-	if (!str)
-                return PY_FAIL;
-	if (strlen(str) < 1) {
+	if (!str || strlen(str) < 1) {
 		PyErr_SetString(PyExc_ValueError,
-                                "side must be nonempty string");
+                                "expected nonempty string for keyword 'side'");
 		return PY_FAIL;
 	}
 
@@ -2627,7 +2626,7 @@ PyArray_SearchsideConverter(PyObject *obj, NPY_SEARCHSIDE *side)
                 *side = NPY_SEARCHRIGHT;
         else {
 		PyErr_Format(PyExc_ValueError,
-                             "side has invalid value '%s'", str);
+                             "'%s' is an invalid value for keyword 'side'", str);
 		return PY_FAIL;
 	}
 	return PY_SUCCEED;
