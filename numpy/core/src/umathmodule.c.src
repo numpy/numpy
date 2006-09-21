@@ -1207,7 +1207,6 @@ static void
 /**end repeat**/
 
 
-
 static PyObject *
 Py_reciprocal(PyObject *o)
 {
@@ -1217,6 +1216,40 @@ Py_reciprocal(PyObject *o)
     result = PyNumber_Divide(one, o);
     Py_DECREF(one);
     return result;
+}
+
+static PyObject *
+_npy_ObjectMax(PyObject *i1, PyObject *i2)
+{
+        int cmp;
+        PyObject *res;
+        if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
+        
+        if (cmp >= 0) {
+                res = i1;
+        }
+        else {
+                res = i2;
+        }
+        Py_INCREF(res);
+        return res;
+}
+
+static PyObject *
+_npy_ObjectMin(PyObject *i1, PyObject *i2)
+{
+        int cmp;
+        PyObject *res;
+        if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
+        
+        if (cmp <= 0) {
+                res = i1;
+        }
+        else {
+                res = i2;
+        }
+        Py_INCREF(res);
+        return res;
 }
 
 /* ones_like is defined here because it's used for x**0 */
