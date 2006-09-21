@@ -80,3 +80,4 @@ _PyArray_SigintHandler
 _PyArray_GetSigintBuf
 PyArray_DescrAlignConverter
 PyArray_DescrAlignConverter2
+PyArray_SearchsideConverter
