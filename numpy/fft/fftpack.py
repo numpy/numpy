@@ -68,10 +68,10 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
 def fft(a, n=None, axis=-1):
     """fft(a, n=None, axis=-1)
 
-    Will return the n point discrete Fourier transform of a. n defaults to the
-    length of a. If n is larger than a, then a will be zero-padded to make up
-    the difference. If n is smaller than a, the first n items in a will be
-    used.
+    Return the n point discrete Fourier transform of a. n defaults to
+    the length of a. If n is larger than the length of a, then a will
+    be zero-padded to make up the difference.  If n is smaller than
+    the length of a, only the first n items in a will be used.
 
     The packing of the result is "standard": If A = fft(a, n), then A[0]
     contains the zero-frequency term, A[1:n/2+1] contains the
@@ -90,10 +90,11 @@ def fft(a, n=None, axis=-1):
 def ifft(a, n=None, axis=-1):
     """ifft(a, n=None, axis=-1)
 
-    Will return the n point inverse discrete Fourier transform of a.  n
-    defaults to the length of a. If n is larger than a, then a will be
-    zero-padded to make up the difference. If n is smaller than a, then a will
-    be truncated to reduce its size.
+    Return the n point inverse discrete Fourier transform of a.  n
+    defaults to the length of a. If n is larger than the length of a,
+    then a will be zero-padded to make up the difference. If n is
+    smaller than the length of a, then a will be truncated to reduce
+    its size.
 
     The input array is expected to be packed the same way as the output of
     fft, as discussed in it's documentation.
@@ -115,9 +116,9 @@ def ifft(a, n=None, axis=-1):
 def rfft(a, n=None, axis=-1):
     """rfft(a, n=None, axis=-1)
 
-    Will return the n point discrete Fourier transform of the real valued
-    array a. n defaults to the length of a. n is the length of the input, not
-    the output.
+    Return the n point discrete Fourier transform of the real valued
+    array a. n defaults to the length of a. n is the length of the
+    input, not the output.
 
     The returned array will be the nonnegative frequency terms of the
     Hermite-symmetric, complex transform of the real array. So for an 8-point
@@ -136,11 +137,11 @@ def rfft(a, n=None, axis=-1):
 def irfft(a, n=None, axis=-1):
     """irfft(a, n=None, axis=-1)
 
-    Will return the real valued n point inverse discrete Fourier transform of
-    a, where a contains the nonnegative frequency terms of a Hermite-symmetric
-    sequence. n is the length of the result, not the input. If n is not
-    supplied, the default is 2*(len(a)-1). If you want the length of the
-    result to be odd, you have to say so.
+    Return the real valued n point inverse discrete Fourier transform
+    of a, where a contains the nonnegative frequency terms of a
+    Hermite-symmetric sequence. n is the length of the result, not the
+    input. If n is not supplied, the default is 2*(len(a)-1). If you
+    want the length of the result to be odd, you have to say so.
 
     If you specify an n such that a must be zero-padded or truncated, the
     extra/removed values will be added/removed at high frequencies. One can
