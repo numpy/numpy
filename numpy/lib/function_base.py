@@ -1150,11 +1150,11 @@ def delete(arr, obj, axis=None):
               [1,2,3],
               [6,7,8]]
 
-    >>> deletefrom(arr, 1, 1)
+    >>> delete(arr, 1, 1)
     array([[3,5],
            [1,3],
            [6,8])
-    >>> deletefrom(arr, 1, 0)
+    >>> delete(arr, 1, 0)
     array([[3,4,5],
            [6,7,8]])
     """
