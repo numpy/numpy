@@ -1,7 +1,7 @@
 # Module containing non-deprecated functions borrowed from Numeric.
 
 # functions that are now methods
-__all__ = ['take', 'reshape', 'choose', 'repeat', 'put', 'putmask',
+__all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
            'swapaxes', 'transpose', 'sort', 'argsort', 'argmax', 'argmin',
            'searchsorted', 'alen',
            'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
@@ -94,14 +94,7 @@ def put (a, ind, v, mode='raise'):
            for i in ind: a.flat[i] = v[i]
        a must be a contiguous numpy array.
     """
-    return a.put(v,ind, mode)
-
-def putmask (a, mask, v):
-    """putmask(a, mask, v) results in a = v for all places mask is true.
-       If v is shorter than mask it will be repeated as necessary.
-       In particular v can be a scalar or length 1 array.
-    """
-    return a.putmask(v, mask)
+    return a.put(ind, v, mode)
 
 def swapaxes(a, axis1, axis2):
     """swapaxes(a, axis1, axis2) returns array a with axis1 and axis2

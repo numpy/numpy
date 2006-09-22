@@ -878,18 +878,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ptp',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
-    """a.put(values, indices, mode) sets a.flat[n] = values[n] for
-    each n in indices. v can be scalar or shorter than indices, and
-    it will repeat.
-
+    """a.put(indices, values, mode) sets a.flat[n] = values[n] for
+    each n in indices. If values is shorter than indices then it
+    will repeat.
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('putmask',
-    """a.putmask(values, mask) sets a.flat[n] = v[n] for each n where
-    mask.flat[n] is true. v can be scalar.
-
-    """))
+add_newdoc('numpy.core.multiarray', 'putmask',
+    """putmask(a, mask, values) sets a.flat[n] = values[n] for each n where
+    mask.flat[n] is true.  If values is not the same size of a and mask then
+    it will repeat.  This gives different behavior than a[mask] = values.
+    """)
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',

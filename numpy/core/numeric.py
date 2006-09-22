@@ -14,7 +14,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'fromiter', 'array_equal', 'array_equiv',
            'indices', 'fromfunction',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
-           'ones', 'identity', 'allclose', 'compare_chararrays',
+           'ones', 'identity', 'allclose', 'compare_chararrays', 'putmask',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
            'seterrcall', 'geterrcall', 'flatnonzero',
            'Inf', 'inf', 'infty', 'Infinity',
@@ -120,7 +120,7 @@ set_numeric_ops = multiarray.set_numeric_ops
 can_cast = multiarray.can_cast
 lexsort = multiarray.lexsort
 compare_chararrays = multiarray.compare_chararrays
-
+putmask = multiarray.putmask
 
 def asarray(a, dtype=None, order=None):
     """Returns a as an array.

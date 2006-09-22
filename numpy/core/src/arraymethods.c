@@ -40,27 +40,14 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
 	PyObject *indices, *values;
         NPY_CLIPMODE mode=NPY_RAISE;
-	static char *kwlist[] = {"values", "indices", "mode", NULL};
+	static char *kwlist[] = {"indices", "values", "mode", NULL};
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O&", kwlist,
-					 &values, &indices,
+					 &indices, &values,
                                          PyArray_ClipmodeConverter,
                                          &mode))
 		return NULL;
 	return PyArray_PutTo(self, values, indices, mode);
-}
-
-static PyObject *
-array_putmask(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-	PyObject *mask, *values;
-
-	static char *kwlist[] = {"values", "mask", NULL};
-
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist,
-					 &values, &mask))
-		return NULL;
-	return PyArray_PutMask(self, values, mask);
 }
 
 static PyObject *
@@ -1826,8 +1813,6 @@ static PyMethodDef array_methods[] = {
 	{"ptp", (PyCFunction)array_ptp,
 	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"put",	(PyCFunction)array_put,
-	    METH_VARARGS | METH_KEYWORDS, NULL},
-	{"putmask", (PyCFunction)array_putmask,
 	    METH_VARARGS | METH_KEYWORDS, NULL},
 	{"ravel", (PyCFunction)array_ravel,
 	    METH_VARARGS, NULL},

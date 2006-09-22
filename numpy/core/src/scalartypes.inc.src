@@ -1122,7 +1122,7 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 /**begin repeat
 
-#name=take, getfield, put, putmask, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round, argmax, argmin, max, min, ptp, any, all, resize, reshape, choose#
+#name=take, getfield, put, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round, argmax, argmin, max, min, ptp, any, all, resize, reshape, choose#
 */
 
 static PyObject *
@@ -1330,8 +1330,6 @@ static PyMethodDef gentype_methods[] = {
         {"take",        (PyCFunction)gentype_take,
          METH_VARARGS|METH_KEYWORDS, NULL},
         {"put", (PyCFunction)gentype_put,
-         METH_VARARGS|METH_KEYWORDS, NULL},
-        {"putmask",     (PyCFunction)gentype_putmask,
          METH_VARARGS|METH_KEYWORDS, NULL},
         {"repeat",      (PyCFunction)gentype_repeat,
          METH_VARARGS|METH_KEYWORDS, NULL},

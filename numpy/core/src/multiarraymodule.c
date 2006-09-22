@@ -3648,6 +3648,22 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         return NULL;
 }
 
+static PyObject *
+array_putmask(PyObject *module, PyObject *args, PyObject *kwds)
+{
+	PyObject *mask, *values;
+        PyObject *array; 
+        
+	static char *kwlist[] = {"arr", "mask", "values", NULL};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OO:putmask", kwlist,
+                                         &PyArray_Type,
+					 &array, &mask, &values))
+		return NULL;
+
+	return PyArray_PutMask(array, values, mask);
+}
+
 /*MULTIARRAY_API
  Put values into an array according to a mask.
 */
@@ -6687,6 +6703,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS, NULL},
 	{"lexsort", (PyCFunction)array_lexsort,
 	 METH_VARARGS | METH_KEYWORDS, NULL},
+        {"putmask", (PyCFunction)array_putmask,
+         METH_VARARGS | METH_KEYWORDS, NULL},
 	{"fromstring",(PyCFunction)array_fromString,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"fromiter",(PyCFunction)array_fromIter,
