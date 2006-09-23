@@ -3916,7 +3916,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow,
         char *data;
 
         if (self->nd == 0) {
-                PyErr_SetString(PyExc_ValueError, "cannot slice a scalar");
+                PyErr_SetString(PyExc_ValueError, "cannot slice a 0-d array");
                 return NULL;
         }
 
@@ -5811,7 +5811,7 @@ array_iter(PyArrayObject *arr)
 {
         if (arr->nd == 0) {
                 PyErr_SetString(PyExc_TypeError,
-                                "iteration over a scalar (0-dim array)");
+                                "iteration over a 0-d array");
                 return NULL;
         }
         return PySeqIter_New((PyObject *)arr);
