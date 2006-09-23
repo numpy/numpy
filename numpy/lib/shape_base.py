@@ -530,7 +530,7 @@ def dsplit(ary,indices_or_sections):
 def repmat(a, m, n):
     """Repeat a 0-d to 2-d array mxn times
     """
-    a = asarray(a)
+    a = asanyarray(a)
     ndim = a.ndim
     if ndim == 0:
         origrows, origcols = (1,1)
