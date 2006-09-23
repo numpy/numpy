@@ -7739,6 +7739,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         if (newtype == NULL) {newtype = oldtype; Py_INCREF(oldtype);}
         type = newtype->type_num;
         itemsize = newtype->elsize;
+        if (itemsize == 0) {
+                PyArray_DESCR_REPLACE(newtype);
+                if (newtype == NULL) return NULL;
+                newtype->elsize = oldtype->elsize;
+                itemsize = newtype->elsize;
+        }
 
         /* Don't copy if sizes are compatible */
         if ((flags & ENSURECOPY) || PyArray_EquivTypes(oldtype, newtype)) {
@@ -11126,13 +11132,11 @@ arraydescr_str(PyArray_Descr *self)
                 PyString_ConcatAndDel(&t, PyString_FromString(")"));
                 sub = t;
         }
+        else if (PyDataType_ISFLEXIBLE(self) || !PyArray_ISNBO(self->byteorder)) {
+                sub = arraydescr_protocol_typestr_get(self);
+        }
         else {
-                if (!PyArray_ISNBO(self->byteorder)) {
-                        sub = arraydescr_protocol_typestr_get(self);
-                }
-                else {
-                        sub = arraydescr_typename_get(self);
-                }
+                sub = arraydescr_typename_get(self);
         }
         return sub;
 }
