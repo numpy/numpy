@@ -11,7 +11,6 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
         NPY_CLIPMODE mode=NPY_RAISE;
 	static char *kwlist[] = {"indices", "axis", "out", "mode", NULL};
 
-	dimension=0;
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O&", kwlist,
 					 &indices, PyArray_AxisConverter,
 					 &dimension,
