@@ -411,6 +411,45 @@ class test_regression(NumpyTestCase):
         x = N.array((1,2), dtype=dt)
         x = x.byteswap()
         assert(x['one'] > 1 and x['two'] > 2)
+
+    def check_method_args(self, level=rlevel):
+        # Make sure methods and functions have same default axis
+        # keyword and arguments
+        funcs1= ['argmax', 'argmin', 'sum', ('product', 'prod'),
+                 ('sometrue', 'any'),
+                 ('alltrue', 'all'), 'cumsum', ('cumproduct', 'cumprod'),
+                 'ptp', 'cumprod', 'prod', 'std', 'var', 'mean',
+                 'round', 'min', 'max', 'argsort', 'sort']
+        funcs2 = ['compress', 'take', 'repeat']
+        
+        for func in funcs1:
+            arr = N.random.rand(8,7)
+            arr2 = arr.copy()
+            if isinstance(func, tuple):
+                func_meth = func[1]
+                func = func[0]
+            else:
+                func_meth = func
+            res1 = getattr(arr, func_meth)()
+            res2 = getattr(N, func)(arr2)
+            if res1 is None:
+                assert abs(arr-res2).max() < 1e-8, func
+            else:
+                assert abs(res1-res2).max() < 1e-8, func
+
+        for func in funcs2:
+            arr1 = N.random.rand(8,7)
+            arr2 = N.random.rand(8,7)
+            res1 = None
+            if func == 'compress':
+                arr1 = arr1.ravel()
+                res1 = getattr(arr2, func)(arr1)
+            else:
+                arr2 = (15*arr2).astype(int).ravel()
+            if res1 is None:
+                res1 = getattr(arr1, func)(arr2)
+            res2 = getattr(N, func)(arr1, arr2)
+            assert abs(res1-res2).max() < 1e-8, func
         
 if __name__ == "__main__":
     NumpyTest().run()
