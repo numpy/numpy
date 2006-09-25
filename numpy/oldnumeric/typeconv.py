@@ -1,5 +1,5 @@
 
-__all__ = ['oldtype2dtype', 'convtypecode', 'convtypecode2']
+__all__ = ['oldtype2dtype', 'convtypecode', 'convtypecode2', 'oldtypecodes']
 
 import numpy as N
 
@@ -42,3 +42,20 @@ def convtypecode2(typecode, dtype=None):
                 return N.dtype(typecode)
     else:
         return dtype
+
+_changedtypes = {'B': 'b',
+                 'b': '1',
+                 'h': 's',
+                 'H': 'w',
+                 'I': 'u'}
+                 
+class _oldtypecodes(dict):
+    def __getitem__(self, obj):
+        char = N.dtype(obj).char
+        try:
+            return _changedtypes[char]
+        except KeyError:
+            return char
+
+
+oldtypecodes = _oldtypecodes()
