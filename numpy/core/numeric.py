@@ -425,9 +425,9 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         typename=arr.dtype.name
         lf = ''
         if issubclass(arr.dtype.type, flexible):
-            typename = str(arr.dtype)
+            typename = "'%s'" % str(arr.dtype)
             lf = '\n'+' '*len("array(")
-        return cName + "(%s, %sdtype='%s')" % (lst, lf, typename)
+        return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
