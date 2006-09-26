@@ -341,7 +341,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 static PyObject *
 OBJECT_getitem(char *ip, PyArrayObject *ap)
 {
-        if (PyArray_ISALIGNED(ap)) {
+        if (!ap || PyArray_ISALIGNED(ap)) {
                 Py_INCREF(*(PyObject **)ip);
                 return *(PyObject **)ip;
         }
@@ -358,7 +358,7 @@ static int
 OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
         Py_INCREF(op);
-        if (PyArray_ISALIGNED(ap)) {
+        if (!ap || PyArray_ISALIGNED(ap)) {
                 Py_XDECREF(*(PyObject **)ov);
                 *(PyObject **)ov = op;
         }

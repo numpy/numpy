@@ -3661,7 +3661,7 @@ array_putmask(PyObject *module, PyObject *args, PyObject *kwds)
 					 &array, &mask, &values))
 		return NULL;
 
-	return PyArray_PutMask(array, values, mask);
+	return PyArray_PutMask((PyArrayObject *)array, values, mask);
 }
 
 /*MULTIARRAY_API

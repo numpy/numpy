@@ -1707,6 +1707,7 @@ object_arrtype_dealloc(PyObject *v)
 #name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
 #TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
 #work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,1#
+#default=0*16,1*2,2#
 */
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -1717,9 +1718,26 @@ static PyObject *
 
         _WORK@work@
 
-        if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
+        if (!PyArg_ParseTuple(args, "|O", &obj)) return NULL;
 
         typecode = PyArray_DescrFromType(PyArray_@TYPE@);
+        if (obj == NULL) {
+#if @default@ == 0
+                char *mem;
+                PyObject *obj;
+                mem = malloc(sizeof(@name@));
+                memset(mem, 0, sizeof(@name@));
+                obj = PyArray_Scalar(mem, typecode, NULL);
+                free(mem);
+                return obj;
+#elif @default@ == 1
+                return PyArray_Scalar(NULL, typecode, NULL);
+#elif @default@ == 2
+                PyObject *obj = Py_None;
+                return PyArray_Scalar(&obj, typecode, NULL);
+#endif
+        }
+
         arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
         return PyArray_Return((PyArrayObject *)arr);
 }
@@ -1737,7 +1755,9 @@ bool_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         PyObject *obj=NULL;
         PyObject *arr;
 
-        if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
+        if (!PyArg_ParseTuple(args, "|O", &obj)) return NULL;
+        if (obj == NULL)
+                PyArrayScalar_RETURN_FALSE;
         if (obj == Py_False)
                 PyArrayScalar_RETURN_FALSE;
         if (obj == Py_True)
