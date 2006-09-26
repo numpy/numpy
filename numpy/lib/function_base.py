@@ -1046,11 +1046,10 @@ def median(m):
     """median(m) returns a median of m along the first dimension of m.
     """
     sorted = msort(m)
+    index = int(sorted.shape[0]/2)
     if sorted.shape[0] % 2 == 1:
-        return sorted[int(sorted.shape[0]/2)]
+        return sorted[index]
     else:
-        sorted = msort(m)
-        index = sorted.shape[0]/2
         return (sorted[index-1]+sorted[index])/2.0
 
 def trapz(y, x=None, dx=1.0, axis=-1):
