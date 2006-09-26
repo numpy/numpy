@@ -80,6 +80,29 @@ class _ndptr(object):
 #  use with ctypes argtypes mechanism
 _pointer_type_cache = {}
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
+    """Array-checking restype/argtypes.
+    
+    An ndpointer instance is used to describe an ndarray in restypes
+    and argtypes specifications.  This approach is more flexible than
+    using, for example,
+    
+    POINTER(c_double)
+    
+    since several restrictions can be specified, which are verified
+    upon calling the ctypes function.  These include data type
+    (dtype), number of dimensions (ndim), shape and flags (e.g.
+    'CONTIGUOUS' or 'FORTRAN').  If a given array does not satisfy the
+    specified restrictions, a TypeError is raised.
+    
+    Example:
+        
+        clib.somefunc.argtypes = [ndpointer(dtype=float64,
+                                            ndim=1,
+                                            flags='CONTIGUOUS')]
+        clib.somefunc(array([1,2,3],dtype=float64))
+
+    """
+    
     if dtype is not None:
         dtype = _dtype(dtype)
     num = None
