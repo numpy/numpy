@@ -171,7 +171,7 @@ def _add_aliases():
         typeobj = typeinfo[a][-1]
         # insert bit-width version for this class (if relevant)
         base, bit, char = bitname(typeobj)
-        if base[-3:] == 'int': continue
+        if base[-3:] == 'int' or char[0] in 'ui': continue
         if base != '':
             myname = "%s%d" % (base, bit)
             if (name != 'longdouble' and name != 'clongdouble') or \
@@ -209,6 +209,8 @@ def _add_integer_aliases():
     for ctype in _ctypes:
         val = typeinfo[ctype]
         bits = val[2]
+        charname = 'i%d' % (bits/8,)
+        ucharname = 'u%d' % (bits/8,)
         intname = 'int%d' % bits
         UIntname = 'UInt%d' % bits
         Intname = 'Int%d' % bits
@@ -223,6 +225,8 @@ def _add_integer_aliases():
             sctypeDict[uintname] = utypeobj
             sctypeDict[Intname] = typeobj
             sctypeDict[UIntname] = utypeobj
+            sctypeDict[charname] = typeobj
+            sctypeDict[ucharname] = utypeobj
             sctypeNA[Intname] = typeobj
             sctypeNA[UIntname] = utypeobj
         sctypeNA[typeobj] = Intname
