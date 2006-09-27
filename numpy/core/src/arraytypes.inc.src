@@ -92,7 +92,14 @@ static int
         else {
                 temp = (@typ@)@func2@(op);
         }
-        if (PyErr_Occurred()) return -1;
+        if (PyErr_Occurred()) {
+                if (PySequence_Check(op)) {
+                        PyErr_Clear();
+                        PyErr_SetString(PyExc_TypeError, "setting an array"\
+                                        " element with a sequence.");
+                }
+                return -1;
+        }
         if (ap == NULL || PyArray_ISBEHAVED(ap))
                 *((@typ@ *)ov)=temp;
         else {
@@ -265,6 +272,13 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         char *buffer;
 #endif
 
+        if (!PyString_Check(op) && !PyUnicode_Check(op) && 
+            PySequence_Check(op)) {
+                PyErr_SetString(PyExc_TypeError, 
+                                "setting an array element with a sequence");
+                return -1;
+        }
+
         if ((temp=PyObject_Unicode(op)) == NULL) return -1;
         ptr = PyUnicode_AS_UNICODE(temp);
         if ((ptr == NULL) || (PyErr_Occurred())) {
@@ -320,9 +334,15 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
         char *ptr;
         int len;
-        PyObject *temp=PyObject_Str(op);
+        PyObject *temp=NULL;
 
-        if (temp == NULL) return -1;
+        if (!PyString_Check(op) && !PyUnicode_Check(op) && 
+            PySequence_Check(op)) {
+                PyErr_SetString(PyExc_TypeError, 
+                                "setting an array element with a sequence");
+                return -1;
+        }
+        if ((temp = PyObject_Str(op)) == NULL) return -1;
 
         if (PyString_AsStringAndSize(temp, &ptr, &len) == -1) {
                 Py_DECREF(temp);
