@@ -187,6 +187,17 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 
     return lst
 
+def _convert_arrays(obj):
+    newtup = []
+    for k in obj:
+        if isinstance(k, _gen.ndarray):
+            k = k.tolist()
+        elif isinstance(k, tuple):
+            k = _convert_arrays(k)
+        newtup.append(k)
+    return tuple(newtup)
+
+
 def array2string(a, max_line_width = None, precision = None,
                  suppress_small = None, separator=' ', prefix="",
                  style=repr):
@@ -196,6 +207,8 @@ def array2string(a, max_line_width = None, precision = None,
         try:
             lst = a._format(x)
         except AttributeError:
+            if isinstance(x, tuple):
+                x = _convert_arrays(x)
             lst = style(x)
     elif reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
@@ -212,6 +225,7 @@ def _extendLine(s, line, word, max_line_len, next_line_prefix):
     line += word
     return s, line
 
+
 def _formatArray(a, format_function, rank, max_line_len,
                  next_line_prefix, separator, edge_items, summary_insert):
     """formatArray is designed for two modes of operation:
@@ -222,7 +236,10 @@ def _formatArray(a, format_function, rank, max_line_len,
 
     """
     if rank == 0:
-        return str(a.item())
+        obj = a.item()
+        if isinstance(obj, tuple):
+            obj = _convert_arrays(obj)
+        return str(obj)
 
     if summary_insert and 2*edge_items < len(a):
         leading_items, trailing_items, summary_insert1 = \

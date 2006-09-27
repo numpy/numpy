@@ -452,27 +452,26 @@ static PyObject *
 gentype_str(PyObject *self)
 {
         PyArrayObject *arr;
-        PyObject *ret, *tmp;
+        PyObject *ret;
 
         arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr==NULL) return NULL;
-        ret = PyObject_Str((tmp=arr->descr->f->getitem(arr->data, arr)));
+        ret = PyObject_Str((PyObject *)arr);
         Py_DECREF(arr);
-        Py_XDECREF(tmp);
         return ret;
 }
+
 
 static PyObject *
 gentype_repr(PyObject *self)
 {
         PyArrayObject *arr;
-        PyObject *ret, *tmp ;
+        PyObject *ret;
 
         arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr==NULL) return NULL;
-        ret = PyObject_Repr((tmp=arr->descr->f->getitem(arr->data, arr)));
+        ret = PyObject_Str((PyObject *)arr);
         Py_DECREF(arr);
-        Py_XDECREF(tmp);
         return ret;
 }
 
