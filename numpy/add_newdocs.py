@@ -363,8 +363,10 @@ add_newdoc('numpy.core.multiarray','lexsort',
     key[0], then the resulting list of indices is further manipulated by
     sorting on key[1], and so forth. The result is a sort on multiple
     keys.  If the keys represented columns of a spreadsheet, for example,
-    this would sort using multiple columns.  The keys argument must be a
-    sequence of things that can be converted to arrays of the same shape.
+    this would sort using multiple columns (the last key being used for the
+    primary sort order, the second-to-last key for the secondary sort order, 
+    and so on).  The keys argument must be a sequence of things that can be 
+    converted to arrays of the same shape.
 
     """)
 
