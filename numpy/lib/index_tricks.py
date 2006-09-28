@@ -72,7 +72,7 @@ def ix_(*args):
     nd = len(args)
     baseshape = [1]*nd
     for k in range(nd):
-        new = _nx.array(args[k])
+        new = _nx.asarray(args[k])
         if (new.ndim != 1):
             raise ValueError, "Cross index must be 1 dimensional"
         if issubclass(new.dtype.type, _nx.bool_):
