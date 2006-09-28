@@ -806,7 +806,10 @@ class mkl_info(system_info):
             return
         info = {}
         dict_append(info,**mkl)
-        dict_append(info,libraries = ['pthread'], include_dirs = incl_dirs)
+        dict_append(info,
+                    libraries = ['pthread'],
+                    define_macros=[('SCIPY_MKL_H',None)],
+                    include_dirs = incl_dirs)
         self.set_info(**info)
 
 class lapack_mkl_info(mkl_info):
