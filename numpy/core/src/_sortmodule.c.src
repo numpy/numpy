@@ -360,24 +360,24 @@ static int
 /**begin repeat
 #TYPE=STRING,UNICODE#
 #comp=strncmp,PyArray_CompareUCS4#
-#type=char *, PyArray_UCS4 *#
+#type=char, PyArray_UCS4#
 */
 static void
-@TYPE@_amergesort0(intp *pl, intp *pr, @type@*v, intp *pw, int elsize)
+@TYPE@_amergesort0(intp *pl, intp *pr, @type@ *v, intp *pw, int len)
 {
-	@type@ vp;
+	@type@ *vp;
         intp vi, *pi, *pj, *pk, *pm;
 
         if (pr - pl > SMALL_MERGESORT) {
                 /* merge sort */
                 pm = pl + ((pr - pl + 1)>>1);
-                @TYPE@_amergesort0(pl,pm-1,v,pw,elsize);
-                @TYPE@_amergesort0(pm,pr,v,pw,elsize);
+                @TYPE@_amergesort0(pl,pm-1,v,pw,len);
+                @TYPE@_amergesort0(pm,pr,v,pw,len);
                 for(pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
                         *pi = *pj;
                 }
                 for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
-                        if (@comp@(v[*pk],v[*pj],elsize)<=0) {
+                        if (@comp@(v+(*pk)*len,v+(*pj)*len,len)<=0) {
                                 *pm = *pk;
                                 ++pk;
                         }else{
@@ -392,9 +392,9 @@ static void
                 /* insertion sort */
                 for(pi = pl + 1; pi <= pr; ++pi) {
                         vi = *pi;
-                        vp = v[vi];
-                        for(pj = pi, pk = pi - 1; 		\
-			    pj > pl && (@comp@(vp, v[*pk],elsize)<=0); \
+                        vp = v + vi*len;
+                        for(pj = pi, pk = pi - 1;                       \
+			    pj > pl && (@comp@(vp, v+(*pk)*len,len)<=0); \
 			    --pj, --pk) {
                                 *pj = *pk;
                         }
@@ -404,12 +404,14 @@ static void
 }
 
 static int
-@TYPE@_amergesort(@type@*v, intp *tosort, intp num, PyArrayObject *arr)
+@TYPE@_amergesort(@type@ *v, intp *tosort, intp num, PyArrayObject *arr)
 {
 	intp *pl, *pr, *pw;
-	int elsize;
+	int elsize, chars;
 
 	elsize = arr->descr->elsize;
+
+        chars = elsize / sizeof(@type@);
 
 	pl = tosort; pr = pl + num - 1;
 	pw = PyDimMem_NEW((1+num/2));
@@ -419,7 +421,7 @@ static int
 		return -1;
 	}
 
-	@TYPE@_amergesort0(pl, pr, v, pw, elsize);
+	@TYPE@_amergesort0(pl, pr, v, pw, chars);
 	PyDimMem_FREE(pw);
 	return 0;
 }
