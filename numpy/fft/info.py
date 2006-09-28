@@ -13,12 +13,12 @@ Core FFT routines
 
  Real FFTs
 
-   refft
-   irefft
-   refft2
-   irefft2
-   refftn
-   irefftn
+   rfft
+   irfft
+   rfft2
+   irfft2
+   rfftn
+   irfftn
 
  Hermite FFTs
 
