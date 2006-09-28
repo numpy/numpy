@@ -451,5 +451,10 @@ class test_regression(NumpyTestCase):
             res2 = getattr(N, func)(arr1, arr2)
             assert abs(res1-res2).max() < 1e-8, func
         
+    def check_mem_lexsort_strings(self, level=rlevel):
+        """Ticket #298"""
+        lst = ['abc','cde','fgh']
+        N.lexsort((lst,))
+        
 if __name__ == "__main__":
     NumpyTest().run()
