@@ -48,16 +48,18 @@ def ediff1d(ary, to_end = None, to_begin = None):
 ##
 # 01.11.2005, c
 # 02.11.2005
-def unique1d(ar1, retindx=False):
-    """Unique elements of 1D array. When ret_indx is True, return also the
-    indices indx such that ar1.flat[indx] is the resulting array of unique
-    elements."""
+def unique1d(ar1, return_index=False):
+    """Unique elements of 1D array. When return_index is True, return
+    also the indices indx such that ar1.flat[indx] is the resulting
+    array of unique elements.
+    
+    """
     ar = numpy.asarray(ar1).ravel()
     if ar.size == 0:
-        if retindx: return numpy.empty(0, numpy.bool), ar
+        if return_index: return numpy.empty(0, numpy.bool), ar
         else: return ar
     
-    if retindx:
+    if return_index:
         perm = ar.argsort()
         aux = ar.take(perm)
         flag = ediff1d(aux, 1) != 0
