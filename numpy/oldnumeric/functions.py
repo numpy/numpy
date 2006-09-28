@@ -6,7 +6,7 @@ import numpy.core.numeric as nn
 from typeconv import convtypecode, convtypecode2
 
 __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
-           'cumsum', 'cumproduct', 'compress',
+           'cumsum', 'cumproduct', 'compress', 'fromfunction',
            'ones', 'empty', 'identity', 'zeros', 'array', 'asarray',
            'nonzero', 'reshape', 'arange', 'fromstring', 'ravel', 'trace',
            'indices', 'where','sarray','cross_product', 'argmax', 'argmin',
@@ -44,7 +44,10 @@ def argmin(x, axis=-1):
 
 def compress(condition, m, axis=-1):
     return N.compress(condition, m, axis)
-    
+   
+def fromfunction(args, dimensions):
+    return N.fromfunction(args, dimensions, dtype=int)
+ 
 def ones(shape, typecode='l', savespace=0, dtype=None):
     """ones(shape, dtype=int) returns an array of the given
     dimensions which is initialized to all ones.

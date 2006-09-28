@@ -43,7 +43,7 @@ import os, sys, math, operator
 from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
      allclose, any, around, argsort, array_equal, array_equiv,\
      array_str, array_repr, CLIP, RAISE, WRAP, clip, concatenate, \
-     diagonal, e, pi, fromfunction, indices, inner as innerproduct, nonzero, \
+     diagonal, e, pi, indices, inner as innerproduct, nonzero, \
      outer as outerproduct, kron as kroneckerproduct, lexsort, putmask, rank, \
      resize, searchsorted, shape, size, sort, swapaxes, trace, transpose
 import numpy as N
@@ -67,9 +67,12 @@ def type2dtype(typecode, type, dtype, use_default=True):
         else:
             dtype = N.dtype(type)
     if use_default and dtype is None:
-        dtype = N.dtype(None)
+        dtype = N.dtype('int')
     return dtype
-    
+
+def fromfunction(shape, dimensions, type=None, typecode=None, dtype=None):
+    dtype = type2dtype(typecode, type, dtype, 1)
+    return N.fromfunction(shape, dimensions, dtype=dtype)    
 def ones(shape, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, 1)
     return N.ones(shape, dtype)

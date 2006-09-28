@@ -16,7 +16,7 @@ Functions
 -   reshape                    - Return array with new shape
 -   repeat                     - Repeat elements of array
 -   choose                     - Construct new array from indexed array tuple
--   cross_correlate            - Correlate two 1-d arrays
+-   correlate                  - Correlate two 1-d arrays
 -   searchsorted               - Search for element in 1-d array
 -   sum                        - Total sum over a specified dimension
 -   average                    - Average, possibly weighted, over axis or array.
@@ -29,9 +29,8 @@ Functions
 
 More Functions:
 
--   arrayrange (arange)        - Return regularly spaced array
+-   arange                     - Return regularly spaced array
 -   asarray                    - Guarantee NumPy array
--   sarray                     - Guarantee a NumPy array that keeps precision
 -   convolve                   - Convolve two 1-d arrays
 -   swapaxes                   - Exchange axes
 -   concatenate                - Join arrays together
@@ -40,9 +39,9 @@ More Functions:
 -   argsort                    - Indices of sorted array
 -   argmax                     - Index of largest value
 -   argmin                     - Index of smallest value
--   innerproduct               - Innerproduct of two arrays
+-   inner                      - Innerproduct of two arrays
 -   dot                        - Dot product (matrix multiplication)
--   outerproduct               - Outerproduct of two arrays
+-   outer                      - Outerproduct of two arrays
 -   resize                     - Return array with arbitrary new shape
 -   indices                    - Tuple of indices
 -   fromfunction               - Construct array from universal function

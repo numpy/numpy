@@ -448,17 +448,21 @@ def indices(dimensions, dtype=int):
         lst.append( add.accumulate(tmp, i, dtype)-1 )
     return array(lst)
 
-def fromfunction(function, dimensions, **kwargs):
-    """fromfunction(function, dimensions, dtype=int) returns an array constructed by
-    calling function on a tuple of number grids.  The function should
-    accept as many arguments as there are dimensions which is a list of
-    numbers indicating the length of the desired output for each axis.
+def fromfunction(function, shape, **kwargs):
+    """returns an array constructed by calling a function on a tuple
+    of number grids.  The function should accept as many arguments as the
+    length of shape and work on array inputs.  The shape argument is a 
+    sequence of numbers indicating the length of the desired output 
+    for each axis.
 
-    The function can also accept keyword arguments which will be
-    passed in as well.
+    The function can also accept keyword arguments (except dtype), 
+    which will be passed through fromfunction to the function itself.
+    The dtype argument (default float) determines the data-type of 
+    the index grid passed to the function. 
+    
     """
-    dtype = kwargs.get('dtype', int)
-    args = indices(dimensions,dtype=dtype)
+    dtype = kwargs.pop('dtype', float)
+    args = indices(shape, dtype=dtype)
     return function(*args,**kwargs)
 
 def isscalar(num):

@@ -6,7 +6,7 @@ __all__ = ['load', 'sort', 'copy_reg', 'clip', 'Unpickler', 'rank',
            'choose', 'swapaxes', 'array_str',
            'pi', 'math', 'concatenate', 'putmask', 'put',
            'around', 'vdot', 'transpose', 'array2string', 'diagonal',
-           'searchsorted', 'fromfunction', 'copy', 'resize',
+           'searchsorted', 'copy', 'resize',
            'array_repr', 'e', 'StringIO', 'pickle',
            'argsort', 'convolve', 'loads', 'cross_correlate',
            'Pickler', 'dot', 'outerproduct', 'innerproduct', 'insert']
@@ -21,7 +21,7 @@ from pickle import load, loads
 
 from numpy import sort, clip, rank, sign, shape, putmask, allclose, size,\
      choose, swapaxes, array_str, array_repr, e, pi, put, \
-     fromfunction, resize, around, concatenate, vdot, transpose, \
+     resize, around, concatenate, vdot, transpose, \
      diagonal, searchsorted, argsort, convolve, dot, \
      outer as outerproduct, inner as innerproduct, correlate as cross_correlate, \
      place as insert
