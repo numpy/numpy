@@ -275,7 +275,7 @@ PyArray_ScalarFromObject(PyObject *object)
 
 
 static PyObject *
-gentype_alloc(PyTypeObject *type, int nitems)
+gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 {
         PyObject *obj;
         const size_t size = _PyObject_VAR_SIZE(type, nitems+1);
@@ -1080,8 +1080,8 @@ gentype_squeeze(PyObject *self, PyObject *args)
         return self;
 }
 
-static int
-gentype_getreadbuf(PyObject *, int, void **);
+static Py_ssize_t
+gentype_getreadbuf(PyObject *, Py_ssize_t, void **);
 
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args)
@@ -1596,8 +1596,8 @@ static PySequenceMethods voidtype_as_sequence = {
 
 
 
-static int
-gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
+static Py_ssize_t
+gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
 {
         int numbytes;
         PyArray_Descr *outcode;
@@ -1616,8 +1616,8 @@ gentype_getreadbuf(PyObject *self, int segment, void **ptrptr)
         return numbytes;
 }
 
-static int
-gentype_getsegcount(PyObject *self, int *lenp)
+static Py_ssize_t
+gentype_getsegcount(PyObject *self, Py_ssize_t *lenp)
 {
         PyArray_Descr *outcode;
 
@@ -1628,8 +1628,8 @@ gentype_getsegcount(PyObject *self, int *lenp)
         return 1;
 }
 
-static int
-gentype_getcharbuf(PyObject *self, int segment, constchar **ptrptr)
+static Py_ssize_t
+gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
 {
         if (PyArray_IsScalar(self, String) ||   \
             PyArray_IsScalar(self, Unicode))
@@ -1644,10 +1644,10 @@ gentype_getcharbuf(PyObject *self, int segment, constchar **ptrptr)
 
 
 static PyBufferProcs gentype_as_buffer = {
-        (getreadbufferproc)gentype_getreadbuf,    /*bf_getreadbuffer*/
-        (getwritebufferproc)0,                    /*bf_getwritebuffer*/
-        (getsegcountproc)gentype_getsegcount,     /*bf_getsegcount*/
-        (getcharbufferproc)gentype_getcharbuf,      /*bf_getcharbuffer*/
+        gentype_getreadbuf,    /*bf_getreadbuffer*/
+        NULL,                 /*bf_getwritebuffer*/
+        gentype_getsegcount,     /*bf_getsegcount*/
+        gentype_getcharbuf,    /*bf_getcharbuffer*/
 };
 
 
@@ -2133,7 +2133,7 @@ static PyMappingMethods object_arrtype_as_mapping = {
 static Py_ssize_t
 object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp)
 {
-        int newlen;
+        Py_ssize_t newlen;
         int cnt;
         PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 

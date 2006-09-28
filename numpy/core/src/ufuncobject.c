@@ -2958,7 +2958,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
         PyUFunc_PyFuncData *fdata;
         PyUFuncObject *self;
         char *fname, *str;
-        int fname_len=-1;
+        Py_ssize_t fname_len=-1;
 	int offset[2];
 
         if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) return NULL;

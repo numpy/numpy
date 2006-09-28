@@ -905,7 +905,8 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 	else if (PyDescr_HASFIELDS(dtype)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
  			if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
 					      &title)) return;
@@ -1080,7 +1081,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 	int fortran;
 	PyObject *rawdata;
 	char *datastr;
-	int len;
+	Py_ssize_t len;
 	intp size, dimensions[MAX_DIMS];
 	int nd;
 

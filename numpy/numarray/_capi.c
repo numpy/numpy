@@ -123,7 +123,7 @@ getReadBufferDataPtr(PyObject *buffobj, void **buff)
 static int 
 getBufferSize(PyObject *buffobj) 
 {
-  int segcount, size=0;
+  Py_ssize_t segcount, size=0;
   PyObject *buff2;
   if ((buff2 = getBuffer(buffobj))) 
     {

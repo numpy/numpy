@@ -163,7 +163,8 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         else if (PyDescr_HASFIELDS(descr)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                               &title)) return;
@@ -190,7 +191,8 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
         else if PyDescr_HASFIELDS(descr) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                               &title)) return;
@@ -4521,7 +4523,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 PyObject *res=NULL, *temp, *a, *b;
                 PyObject *key, *value, *temp2;
                 PyObject *op;
-                int pos=0;
+                Py_ssize_t pos=0;
                 op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
                 while (PyDict_Next(self->descr->fields, &pos, &key, &value)) {
                         a = PyArray_EnsureAnyArray(array_subscript(self, key));
@@ -5390,7 +5392,8 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         else if (PyDescr_HASFIELDS(dtype)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                               &title)) return;
@@ -5566,7 +5569,8 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         if (PyDescr_HASFIELDS(dtype)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                               &title)) return;
@@ -6601,7 +6605,7 @@ static PyGetSetDef array_getsetlist[] = {
 
 
 static PyObject *
-array_alloc(PyTypeObject *type, int nitems)
+array_alloc(PyTypeObject *type, Py_ssize_t nitems)
 {
         PyObject *obj;
         /* nitems will always be 0 */
@@ -10674,7 +10678,8 @@ _arraydescr_isnative(PyArray_Descr *self)
         else {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 while(PyDict_Next(self->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                               &title)) return -1;
@@ -10864,7 +10869,8 @@ _descr_find_object(PyArray_Descr *self)
         if (PyDescr_HASFIELDS(self)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 while (PyDict_Next(self->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                               &title)) {
@@ -11025,7 +11031,8 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
                 PyObject *newvalue;
                 PyObject *old;
                 PyArray_Descr *newdescr;
-                int pos = 0, len, i;
+                Py_ssize_t pos = 0;
+                int len, i;
                 newfields = PyDict_New();
                 /* make new dictionary with replaced */
                 /* PyArray_Descr Objects */

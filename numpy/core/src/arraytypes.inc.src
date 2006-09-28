@@ -333,7 +333,7 @@ static int
 STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
         char *ptr;
-        int len;
+        Py_ssize_t len;
         PyObject *temp=NULL;
 
         if (!PyString_Check(op) && !PyUnicode_Check(op) && 
@@ -1250,7 +1250,8 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
         if (PyArray_HASFIELDS(arr)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new, *descr;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 descr = arr->descr;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
@@ -1278,7 +1279,8 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         if (PyArray_HASFIELDS(arr)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new, *descr;
-                int offset, pos=0;
+                int offset;
+                Py_ssize_t pos=0;
                 descr = arr->descr;  /* Save it */
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
                         if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
@@ -1500,7 +1502,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         if (PyArray_HASFIELDS(ap)) {
                 PyArray_Descr *descr, *new;
                 PyObject *key, *value, *title;
-                int savedflags, offset, pos=0;
+                int savedflags, offset;
+                Py_ssize_t pos=0;
                 descr = ap->descr;
                 savedflags = ap->flags;
                 while (PyDict_Next(descr->fields, &pos, &key, &value)) {
