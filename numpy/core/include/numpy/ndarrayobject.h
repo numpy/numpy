@@ -1416,6 +1416,13 @@ typedef struct {
 #define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||            \
                            PyObject_TypeCheck((op), &PyArray_Type))
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
+#define PyArray_HasArrayInterfaceType(op, type, context, out)              \
+        ((((out)=PyArray_FromStructInterface(op)) != Py_NotImplemented) || \
+         (((out)=PyArray_FromInterface(op)) != Py_NotImplemented) ||    \
+         (((out)=PyArray_FromArrayAttr(op, type, context)) !=           \
+          Py_NotImplemented))
+#define PyArray_HasArrayInterface(op, out)              \
+        PyArray_HasArrayInterfaceType(op, NULL, NULL, out)
 
 #define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))
 #define PyArray_IsScalar(obj, cls)                              \

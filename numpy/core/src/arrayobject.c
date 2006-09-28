@@ -1158,7 +1158,7 @@ static int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
         PyArrayObject *src;
-        PyArray_Descr* dtype;
+        PyObject *r;
         int ret;
 
         /* Special code to mimic Numeric behavior for
@@ -1184,17 +1184,24 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
         }
 
         if (PyArray_Check(src_object)) {
-                dtype = NULL;
+                src = (PyArrayObject *)src_object;
+                Py_INCREF(src);
+        }
+        else if (!PyArray_IsScalar(src_object, Generic) && 
+                 PyArray_HasArrayInterface(src_object, r)) {
+                src = (PyArrayObject *)r;
         }
         else {
+                PyArray_Descr* dtype;
                 dtype = dest->descr;
                 Py_INCREF(dtype);
+                src = (PyArrayObject *)PyArray_FromAny(src_object, dtype, 0,
+                                                       dest->nd,
+                                                       FORTRAN_IF(dest), 
+                                                       NULL);
         }
-        src = (PyArrayObject *)PyArray_FromAny(src_object, dtype, 0,
-                                               dest->nd,
-                                               FORTRAN_IF(dest), NULL);
         if (src == NULL) return -1;
-
+        
         ret = PyArray_MoveInto(dest, src);
         Py_DECREF(src);
         return ret;
@@ -8253,10 +8260,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             if (flags & UPDATEIFCOPY) goto err;
             r = Array_FromPyScalar(op, newtype);
         }
-        else if (((r = PyArray_FromStructInterface(op))!=Py_NotImplemented)|| \
-                 ((r = PyArray_FromInterface(op)) != Py_NotImplemented) || \
-                 ((r = PyArray_FromArrayAttr(op, newtype, context))     \
-                  != Py_NotImplemented)) {
+        else if (PyArray_HasArrayInterfaceType(op, newtype, context, r)) {
                 PyObject *new;
                 if (r == NULL) {Py_XDECREF(newtype); return NULL;}
                 if (newtype != NULL || flags != 0) {
