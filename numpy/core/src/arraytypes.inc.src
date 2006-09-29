@@ -1,27 +1,64 @@
 /* -*- c -*- */
 
-/**begin repeat
-#name=UnsignedLong,UnsignedLongLong,LongLong#
-#type=ulong,ulonglong,longlong#
- */
-static @type@
-MyPyLong_As@name@(PyObject *vv)
+static longlong
+MyPyLong_AsLongLong(PyObject *vv)
 {
-        @type@ ret;
+        longlong ret;
 
         if (!PyLong_Check(vv)) {
                 PyObject *mylong;
                 mylong = PyNumber_Long(vv);
-                if (mylong == NULL) return (@type@) -1;
+                if (mylong == NULL) return (longlong) -1;
+                vv = mylong;
+        }
+        else Py_INCREF(vv);        
+
+        ret = PyLong_AsLongLong(vv);
+        Py_DECREF(vv);
+        return ret;
+}
+
+static ulong
+MyPyLong_AsUnsignedLong(PyObject *vv)
+{
+        longlong val;
+
+        if (!PyLong_Check(vv)) {
+                PyObject *mylong;
+                mylong = PyNumber_Long(vv);
+                if (mylong == NULL) return (ulong) -1;
                 vv = mylong;
         }
         else Py_INCREF(vv);
 
-        ret = PyLong_As@name@(vv);
+        val = PyLong_AsLongLong(vv);
+        Py_DECREF(vv);
+        return (ulong) val;
+}
+
+static ulonglong
+MyPyLong_AsUnsignedLongLong(PyObject *vv)
+{
+        ulonglong ret;
+
+        if (!PyLong_Check(vv)) {
+                PyObject *mylong;
+                mylong = PyNumber_Long(vv);
+                if (mylong == NULL) return (ulonglong) -1;
+                vv = mylong;
+        }
+        else Py_INCREF(vv);
+
+        ret = PyLong_AsUnsignedLongLong(vv);
+        if (PyErr_Occurred()) {
+                longlong new;
+                PyErr_Clear();
+                new = PyLong_AsLongLong(vv);
+                ret = (ulonglong) new;
+        }
         Py_DECREF(vv);
         return ret;
 }
-/**end repeat**/
 
 
 static double
@@ -86,6 +123,7 @@ static int
 @TYP@_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
         @typ@ temp;  /* ensures alignment */
 
+
         if (PyArray_IsScalar(op, @kind@)) {
                 temp = ((Py@kind@ScalarObject *)op)->obval;
         }
@@ -95,7 +133,7 @@ static int
         if (PyErr_Occurred()) {
                 if (PySequence_Check(op)) {
                         PyErr_Clear();
-                        PyErr_SetString(PyExc_TypeError, "setting an array"\
+                        PyErr_SetString(PyExc_ValueError, "setting an array" \
                                         " element with a sequence.");
                 }
                 return -1;
@@ -274,11 +312,10 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 
         if (!PyString_Check(op) && !PyUnicode_Check(op) && 
             PySequence_Check(op)) {
-                PyErr_SetString(PyExc_TypeError, 
+                PyErr_SetString(PyExc_ValueError, 
                                 "setting an array element with a sequence");
                 return -1;
         }
-
         if ((temp=PyObject_Unicode(op)) == NULL) return -1;
         ptr = PyUnicode_AS_UNICODE(temp);
         if ((ptr == NULL) || (PyErr_Occurred())) {
@@ -338,7 +375,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 
         if (!PyString_Check(op) && !PyUnicode_Check(op) && 
             PySequence_Check(op)) {
-                PyErr_SetString(PyExc_TypeError, 
+                PyErr_SetString(PyExc_ValueError, 
                                 "setting an array element with a sequence");
                 return -1;
         }
