@@ -313,11 +313,13 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 #endif
 
         if (!PyString_Check(op) && !PyUnicode_Check(op) && 
-            PySequence_Check(op)) {
+            PySequence_Check(op) && PySequence_Size(op) > 0) {
                 PyErr_SetString(PyExc_ValueError, 
                                 "setting an array element with a sequence");
                 return -1;
         }
+        /* Sequence_Size might have returned an error */
+        if (PyErr_Occurred()) PyErr_Clear();
         if ((temp=PyObject_Unicode(op)) == NULL) return -1;
         ptr = PyUnicode_AS_UNICODE(temp);
         if ((ptr == NULL) || (PyErr_Occurred())) {
@@ -375,12 +377,14 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         Py_ssize_t len;
         PyObject *temp=NULL;
 
-        if (!PyString_Check(op) && !PyUnicode_Check(op) && 
-            PySequence_Check(op)) {
+        if (!PyString_Check(op) && !PyUnicode_Check(op) &&
+            PySequence_Check(op) && PySequence_Size(op) > 0) {
                 PyErr_SetString(PyExc_ValueError, 
                                 "setting an array element with a sequence");
                 return -1;
         }
+        /* Sequence_Size might have returned an error */
+        if (PyErr_Occurred()) PyErr_Clear();
         if ((temp = PyObject_Str(op)) == NULL) return -1;
 
         if (PyString_AsStringAndSize(temp, &ptr, &len) == -1) {

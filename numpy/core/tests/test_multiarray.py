@@ -166,7 +166,7 @@ class test_zero_rank(NumpyTestCase):
             x[i] = v
         self.failUnlessRaises(IndexError, assign, a, 0, 42)
         self.failUnlessRaises(IndexError, assign, b, 0, '')
-        self.failUnlessRaises(TypeError, assign, a, (), '')
+        self.failUnlessRaises(ValueError, assign, a, (), '')
 
     def check_newaxis(self):
         a,b = self.d
