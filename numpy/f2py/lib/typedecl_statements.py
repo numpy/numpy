@@ -470,14 +470,10 @@ class Type(TypeDeclarationStatement):
         raise NotImplementedError,`self.__class__.__name__`
 
     def get_bit_size(self):
-        type_decl = self.get_type_decl(self.name)
-        s = 0
-        for name,var in type_decl.a.components.items():
-            s += var.get_bit_size()
-        return s
+        return self.get_type_decl(self.name).get_bit_size()
 
     def get_c_type(self):
-        return 'f2py_type_%s_%s' % (self.name, self.get_bit_size())
+        return self.get_type_decl(self.name).get_c_type()
     
 TypeStmt = Type
 

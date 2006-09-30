@@ -29,7 +29,8 @@ int pyobj_to_npy_longlong(PyObject *obj, npy_longlong* value) {
     Py_DECREF(tmp);
   }
   if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_TypeError, "Failed to convert python object to C npy_longlong.");
+    PyErr_SetString(PyExc_TypeError,
+		    "Failed to convert python object to C npy_longlong.");
   }
   return 0;
 }

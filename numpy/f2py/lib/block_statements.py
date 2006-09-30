@@ -1007,6 +1007,37 @@ class Type(BeginStatement, HasVariables, HasAttributes):
         s += tab + 'END TYPE ' + self.name + '\n'
         return s
 
+    # Wrapper methods:
+
+    def get_bit_size(self, _cache={}):
+        try:
+            return _cache[id(self)]
+        except KeyError:
+            s = 0
+            for name,var in self.a.components.items():
+                s += var.get_bit_size()
+            _cache[id(self)] = s
+        return s
+
+    def get_f_type(self):
+        return 'TYPE(%s)' % (self.name)
+
+    def get_c_type(self):
+        return 'f2py_type_%s_%s' % (self.name, self.get_bit_size())
+
+    def get_c_name(self):
+        return 'f2py_type_%s' % (self.name)
+
+    def get_c_struct_name(self):
+        return self.get_c_name() + '_struct'
+
+    def get_c_struct(self):
+        l = []
+        for name, var in self.a.components.items():
+            t = var.get_typedecl()
+            l.append('  %s %s;' % (t.get_c_type(), name))
+        return 'typedef struct {\n%s\n} %s;' % ('\n'.join(l), self.get_c_struct_name())
+
 TypeDecl = Type
 
 # Enum

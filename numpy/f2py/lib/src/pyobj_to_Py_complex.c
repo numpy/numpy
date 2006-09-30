@@ -33,7 +33,8 @@ int pyobj_to_Py_complex(PyObject* obj, Py_complex* value) {
     }
   }
   if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_TypeError, "Failed to convert python object to C Py_complex.");
+    PyErr_SetString(PyExc_TypeError,
+		    "Failed to convert python object to C Py_complex.");
   }
   return 0;
 }

@@ -25,7 +25,8 @@ int pyobj_to_long(PyObject *obj, long* value) {
     Py_DECREF(tmp);
   }
   if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_TypeError, "Failed to convert python object to C long.");
+    PyErr_SetString(PyExc_TypeError,
+                    "Failed to convert python object to C long.");
   }
   return 0;
 }

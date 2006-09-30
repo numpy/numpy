@@ -9,86 +9,7 @@ from block_statements import *
 #from typedecl_statements import intrinsic_type_spec, Character
 from utils import CHAR_BIT
 
-class WrapperBase:
-
-
-    def __init__(self):
-        self.srcdir = os.path.join(os.path.dirname(__file__),'src')
-        return
-    def warning(self, message):
-        print >> sys.stderr, message
-    def info(self, message):
-        print >> sys.stderr, message
-
-    def get_resource_content(self, name, ext):
-        if name.startswith('pyobj_to_'):
-            body = self.generate_pyobj_to_ctype_c(name[9:])
-            if body is not None: return body
-        generator_mth_name = 'generate_' + name + ext.replace('.','_')
-        generator_mth = getattr(self, generator_mth_name, lambda : None)
-        body = generator_mth()
-        if body is not None:
-            return body
-        fn = os.path.join(self.srcdir,name+ext)
-        if os.path.isfile(fn):
-            f = open(fn,'r')
-            body = f.read()
-            f.close()
-            return body
-        self.warning('No such file: %r' % (fn))
-        return
-
-    def get_dependencies(self, code):
-        l = []
-        for uses in re.findall(r'(?<=depends:)([,\w\s.]+)', code, re.I):
-            for use in uses.split(','):
-                use = use.strip()
-                if not use: continue
-                l.append(use)
-        return l
-
-    def apply_attributes(self, template):
-        """
-        Apply instance attributes to template string.
-
-        Replace rules for attributes:
-        _list  - will be joined with newline
-        _clist - _list will be joined with comma
-        _elist - _list will be joined
-        ..+.. - attributes will be added
-        [..]  - will be evaluated
-        """
-        replace_names = set(re.findall(r'[ ]*%\(.*?\)s', template))
-        d = {}
-        for name in replace_names:
-            tab = ' ' * (len(name)-len(name.lstrip()))
-            name = name.lstrip()[2:-2]
-            names = name.split('+')
-            joinsymbol = '\n'
-            attrs = None
-            for n in names:
-                realname = n.strip()
-                if n.endswith('_clist'):
-                    joinsymbol = ', '
-                    realname = realname[:-6] + '_list'
-                elif n.endswith('_elist'):
-                    joinsymbol = ''
-                    realname = realname[:-6] + '_list'
-                if hasattr(self, realname):
-                    attr = getattr(self, realname)
-                elif realname.startswith('['):
-                    attr = eval(realname)
-                else:
-                    self.warning('Undefined %r attribute: %r' % (self.__class__.__name__, realname))
-                    continue
-                if attrs is None:
-                    attrs = attr
-                else:
-                    attrs += attr
-            if isinstance(attrs, list):
-                attrs = joinsymbol.join(attrs)
-            d[name] = str(attrs).replace('\n','\n'+tab)
-        return template % d
+from wrapper_base import *
 
 class PythonWrapperModule(WrapperBase):
 
@@ -101,21 +22,29 @@ extern \"C\" {
 #define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "numpy/arrayobject.h"
 
-%(include_list)s
-%(cppmacro_list)s
+%(header_list)s
+
 %(typedef_list)s
-%(objdecl_list)s
+
 %(extern_list)s
-%(c_function_list)s
-%(capi_function_list)s
+
+%(c_code_list)s
+
+%(capi_code_list)s
+
+%(objdecl_list)s
+
 static PyObject *f2py_module;
+
 static PyMethodDef f2py_module_methods[] = {
   %(module_method_list)s
   {NULL,NULL,0,NULL}
 };
+
 PyMODINIT_FUNC init%(modulename)s(void) {
   f2py_module = Py_InitModule("%(modulename)s", f2py_module_methods);
-  %(initialize_interface_list)s
+  import_array();
+  %(module_init_list)s
   if (PyErr_Occurred()) {
     PyErr_SetString(PyExc_ImportError, "can\'t initialize module %(modulename)s");
     return;
@@ -133,31 +62,49 @@ PyMODINIT_FUNC init%(modulename)s(void) {
     def __init__(self, modulename):
         WrapperBase.__init__(self)
         self.modulename = modulename
-        self.include_list = []
+        #self.include_list = []
+        #self.cppmacro_list = []
+        
+        self.header_list = []
         self.typedef_list = []
-        self.cppmacro_list = []
-        self.objdecl_list = []
-        self.c_function_list = []
         self.extern_list = []
-        self.capi_function_list = []
+        self.objdecl_list = []
+        self.c_code_list = []
+        self.capi_code_list = []
+
         self.module_method_list = []
-        self.initialize_interface_list = []
+        self.module_init_list = []
+
         self.fortran_code_list = []
 
-        self.defined_types = []
-        self.defined_macros = []
-        self.defined_c_functions = []
-        self.defined_typedefs = []
+        #self.defined_types = []
+        #self.defined_macros = []
+        #self.defined_c_functions = []
+        #self.defined_typedefs = []
+
+        self.list_names = ['header', 'typedef', 'extern', 'objdecl',
+                           'c_code','capi_code','module_method','module_init',
+                           'fortran_code']
+
         return
 
     def add(self, block):
         if isinstance(block, BeginSource):
-            for name, subblock in block.a.external_subprogram.items():
-                self.add(subblock)
+            for name, moduleblock in block.a.module.items():
+                self.add(moduleblock)
+            #for name, subblock in block.a.external_subprogram.items():
+            #    self.add(subblock)
         elif isinstance(block, (Subroutine, Function)):
             self.info('Generating interface for %s' % (block.name))
             f = PythonCAPIFunction(self, block)
-            f.fill()            
+            f.fill()
+        elif isinstance(block, Module):
+            for name,declblock in block.a.type_decls.items():
+                self.add(declblock)
+        elif isinstance(block, TypeDecl):
+            PythonCAPIDerivedType(self, block)
+        elif isinstance(block, tuple(declaration_type_spec)):
+            PythonCAPIIntrinsicType(self, block)
         else:
             raise NotImplementedError,`block.__class__.__name__`
         return
@@ -167,155 +114,306 @@ PyMODINIT_FUNC init%(modulename)s(void) {
     def fortran_code(self):
         return self.apply_attributes(self.main_fortran_template)
 
-    def add_c_function(self, name):
-        if name not in self.defined_c_functions:
-            body = self.get_resource_content(name,'.c')
-            if body is None:
-                self.warning('Failed to get C function %r content.' % (name))
-                return
-            for d in self.get_dependencies(body):
-                if d.endswith('.cpp'):
-                    self.add_cppmacro(d[:-4])
-                elif d.endswith('.c'):
-                    self.add_c_function(d[:-2])
-                else:
-                    self.warning('Unknown dependence: %r.' % (d))
-            self.defined_c_functions.append(name)
-            self.c_function_list.append(body)
-        return
-
-    def add_cppmacro(self, name):
-        if name not in self.defined_macros:
-            body = self.get_resource_content(name,'.cpp')
-            if body is None:
-                self.warning('Failed to get CPP macro %r content.' % (name))
-                return
-            for d in self.get_dependencies(body):
-                if d.endswith('.cpp'):
-                    self.add_cppmacro(d[:-4])
-                elif d.endswith('.c'):
-                    self.add_c_function(d[:-2])
-                else:
-                    self.warning('Unknown dependence: %r.' % (d))
-            self.defined_macros.append(name)
-            self.cppmacro_list.append(body)
-        return
-
-    def add_type(self, typedecl):
-        typewrap = TypeDecl(self, typedecl)
-        typename = typewrap.typename
-        if typename not in self.defined_types:
-            self.defined_types.append(typename)
-            typewrap.fill()
-        return typename
-
-    def add_typedef(self, name, code):
-        if name not in self.defined_typedefs:
-            self.typedef_list.append(code)
-            self.defined_types.append(name)
-        return
-
-    def add_include(self, include):
-        if include not in self.include_list:
-            self.include_list.append(include)
-        return
-
     def add_subroutine(self, block):
+        raise
         f = PythonCAPIFunction(self, block)
         f.fill()
         return
 
-    def generate_pyobj_to_ctype_c(self, ctype):
-        if ctype.startswith('npy_int'):
-            ctype_bits = int(ctype[7:])
-            return '''
-/* depends: pyobj_to_long.c, pyobj_to_npy_longlong.c */
-#if NPY_BITSOF_LONG == %(ctype_bits)s
-#define pyobj_to_%(ctype)s pyobj_to_long
-#else
-#if NPY_BITSOF_LONG > %(ctype_bits)s
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  long tmp;
-  if (pyobj_to_long(obj,&tmp)) {
-    *value = (%(ctype)s)tmp;
-    return 1;
-  }
-  return 0;
-}
-#else
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  npy_longlong tmp;
-  if (pyobj_to_npy_longlong(obj,&tmp)) {
-    *value = (%(ctype)s)tmp;
-    return 1;
-  }
-  return 0;
-}
-#endif
-#endif
-''' % (locals())
-        elif ctype.startswith('npy_float'):
-            ctype_bits = int(ctype[9:])
-            return '''
-/* depends: pyobj_to_double.c */
-#if NPY_BITSOF_DOUBLE == %(ctype_bits)s
-#define pyobj_to_%(ctype)s pyobj_to_double
-#else
-#if NPY_BITSOF_DOUBLE > %(ctype_bits)s
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  double tmp;
-  if (pyobj_to_double(obj,&tmp)) {
-    *value = (%(ctype)s)tmp;
-    return 1;
-  }
-  return 0;
-}
-#else
-#error, "NOTIMPLEMENTED pyobj_to_%(ctype)s"
-#endif
-#endif
-''' % (locals())
-        elif ctype.startswith('npy_complex'):
-            ctype_bits = int(ctype[11:])
-            cfloat_bits = ctype_bits/2
-            return '''
-/* depends: pyobj_to_Py_complex.c */
-#if NPY_BITSOF_DOUBLE >= %(cfloat_bits)s
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  Py_complex c;
-  if (pyobj_to_Py_complex(obj,&c)) {
-    (*value).real = (npy_float%(cfloat_bits)s)c.real;
-    (*value).imag = (npy_float%(cfloat_bits)s)c.imag; 
-    return 1;
-  }
-  return 0;
-}
-#else
-#error, "NOTIMPLEMENTED pyobj_to_%(ctype)s"
-#endif
-''' % (locals())
-        elif ctype.startswith('f2py_string'):
-            ctype_bits = int(ctype[11:])
-            ctype_bytes = ctype_bits / CHAR_BIT
-            self.add_typedef('f2py_string','typedef char * f2py_string;')
-            self.add_typedef(ctype,'typedef struct { char data[%s]; } %s;' % (ctype_bytes,ctype))
-            self.add_include('#include <string.h>')
-            return '''
-/* depends: pyobj_to_string_len.c */
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  return pyobj_to_string_len(obj, (f2py_string*)value, %(ctype_bytes)s);
-}
-''' % (locals())
-        elif ctype.startswith('f2py_type_'):
-            ctype_bits = int(ctype.split('_')[-1])
-            ctype_bytes = ctype_bits / CHAR_BIT
-            self.add_typedef(ctype,'typedef struct { char data[%s]; } %s;' % (ctype_bytes,ctype))
-            return '''
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  return pyobj_to_string_len(obj, (f2py_string*)value, %(ctype_bytes)s);
-}
-''' % (locals())
+
+
         
+class PythonCAPIIntrinsicType(WrapperBase):
+    """
+    Fortran intrinsic type hooks.
+    """
+    _defined_types = []
+    def __init__(self, parent, typedecl):
+        WrapperBase.__init__(self)
+        self.name = name = typedecl.name
+        if name in self._defined_types:
+            return
+        self._defined_types.append(name)
+
+        self.ctype = ctype = typedecl.get_c_type()
+
+        if ctype.startswith('npy_'):
+            from generate_pyobj_tofrom_funcs import pyobj_to_npy_scalar
+            d = pyobj_to_npy_scalar(ctype)
+            for v in d.values():
+                self.resolve_dependencies(parent, v)
+            for k,v in d.items():
+                l = getattr(parent, k+'_list')
+                l.append(v)
+            return
+        
+        if not ctype.startswith('f2py_type_'):
+            raise NotImplementedError,`name,ctype`
+
+        for n in parent.list_names:
+            l = getattr(parent,n + '_list')
+            l.append(self.apply_attributes(getattr(self, n+'_template','')))
+
+        return
+
+class PythonCAPIDerivedType(WrapperBase):
+    """
+    Fortran 90 derived type hooks.
+    """
+
+    header_template = '''\
+#define %(oname)sObject_Check(obj) \\
+    PyObject_TypeCheck((PyObject*)obj, &%(oname)sType)
+#define %(init_func)s_f \\
+    F_FUNC(%(init_func)s,%(INIT_FUNC)s)
+'''
+
+    typedef_template = '''\
+typedef void * %(ctype)s;
+typedef struct {
+  PyObject_HEAD
+  %(ptrstruct_list)s
+  %(ctype)s data;
+} %(oname)sObject;
+'''
+
+    extern_template = '''\
+static PyTypeObject %(oname)sType;
+'''
+
+    objdecl_template = '''\
+static PyMethodDef %(oname)s_methods[] = {
+    %(type_method_list)s
+    {NULL}  /* Sentinel */
+};
+
+static PyGetSetDef %(oname)s_getseters[] = {
+    %(type_getseters_list)s
+    {NULL}  /* Sentinel */
+};
+
+static PyTypeObject %(oname)sType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                         /*ob_size*/
+    "%(name)s",                /*tp_name*/
+    sizeof(%(oname)sObject),    /*tp_basicsize*/
+    0,                         /*tp_itemsize*/
+    (destructor)%(oname)s_dealloc, /*tp_dealloc*/
+    0,                         /*tp_print*/
+    0,                         /*tp_getattr*/
+    0,                         /*tp_setattr*/
+    0,                         /*tp_compare*/
+    %(oname)s_repr,            /*tp_repr*/
+    0,                         /*tp_as_number*/
+    0,                         /*tp_as_sequence*/
+    0,                         /*tp_as_mapping*/
+    0,                         /*tp_hash */
+    0,                         /*tp_call*/
+    0,                         /*tp_str*/
+    0,                         /*tp_getattro*/
+    0,                         /*tp_setattro*/
+    0,                         /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
+    "Fortran derived type %(name)s objects",        /* tp_doc */
+    0,		               /* tp_traverse */
+    0,		               /* tp_clear */
+    0,		               /* tp_richcompare */
+    0,		               /* tp_weaklistoffset */
+    0,		               /* tp_iter */
+    0,		               /* tp_iternext */
+    %(oname)s_methods,          /* tp_methods */
+    0 /*%(oname)s_members*/,    /* tp_members */
+    %(oname)s_getseters,       /* tp_getset */
+    0,                         /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    (initproc)%(oname)s_init,      /* tp_init */
+    0,                         /* tp_alloc */
+    %(oname)s_new,                 /* tp_new */
+};
+'''
+
+    module_init_template = '''\
+if (PyType_Ready(&%(oname)sType) < 0)
+  return;
+PyModule_AddObject(f2py_module, "%(name)s",
+                                (PyObject *)&%(oname)sType);
+'''
+
+    c_code_template = '''\
+static void %(init_func)s_c(
+               %(init_func_c_arg_clist)s) {
+  %(init_func_c_body_list)s
+}
+'''
+
+    capi_code_template = '''\
+static void %(oname)s_dealloc(%(oname)sObject* self) {
+  PyMem_Free(self->data);
+  self->ob_type->tp_free((PyObject*)self);
+}
+
+static int pyobj_to_%(ctype)s(PyObject *obj,
+                              %(ctype)s* value_ptr) {
+  if (%(oname)sObject_Check(obj)) {
+    if (!memcpy(value_ptr,((%(oname)sObject *)obj)->data, %(byte_size)s)) {
+      PyErr_SetString(PyExc_MemoryError,
+         "failed to copy %(name)s instance memory to %(ctype)s object.");
+    }
+    return 1;
+  }
+  return 0;
+}
+
+static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value_ptr) {
+  %(oname)sObject* obj = (%(oname)sObject*)(%(oname)sType.tp_alloc(&%(oname)sType, 0));
+  if (obj == NULL)
+    return NULL;
+  obj->data = PyMem_Malloc(%(byte_size)s);
+  if (obj->data == NULL) {
+    Py_DECREF(obj);
+    return PyErr_NoMemory();
+  }
+  if (value_ptr) {
+    if (!memcpy(obj->data, value_ptr, %(byte_size)s)) {
+      PyErr_SetString(PyExc_MemoryError,
+         "failed to copy %(ctype)s object memory to %(name)s instance.");
+    }
+  }
+  %(init_func)s_f(%(init_func)s_c, obj, obj->data);
+  return (PyObject*)obj;
+}
+
+static PyObject * %(oname)s_new(PyTypeObject *type,
+                                PyObject *args, PyObject *kwds)
+{
+  return pyobj_from_%(ctype)s(NULL);
+}
+
+static int %(oname)s_init(%(oname)sObject *self,
+                          PyObject *capi_args, PyObject *capi_kwds)
+{
+   return !PyArg_ParseTuple(capi_args,"%(attr_format_elist)s"
+                                      %(attr_init_clist)s);
+}
+
+static PyObject * %(oname)s_as_tuple(%(oname)sObject * self) {
+  return Py_BuildValue("%(as_tuple_format_elist)s"
+                        %(as_tuple_arg_clist)s);
+}
+
+static PyObject * %(oname)s_repr(PyObject * self) {
+  PyObject* r = PyString_FromString("%(name)s(");
+  PyString_ConcatAndDel(&r, PyObject_Repr(%(oname)s_as_tuple((%(oname)sObject*)self)));
+  PyString_ConcatAndDel(&r, PyString_FromString(")"));
+  return r;
+}
+
+%(getset_func_list)s
+'''
+
+    fortran_code_template = '''\
+      subroutine %(init_func)s(init_func_c, self, obj)
+      %(use_stmt_list)s
+      external init_func_c
+!     self is %(oname)sObject
+      external self
+      %(ftype)s obj
+      call init_func_c(%(init_func_f_arg_clist)s)
+      end
+'''
+
+    #module_method_template = ''''''
+
+    _defined_types = []
+    def __init__(self, parent, typedecl):
+        WrapperBase.__init__(self)
+        name = typedecl.name
+        if name in self._defined_types:
+            return
+        self._defined_types.append(name)
+
+        self.name = name
+        self.oname = oname = 'f2py_' + name
+        self.ctype = typedecl.get_c_type()
+        self.ctype_ptrs = self.ctype + '_ptrs'
+        self.ftype = typedecl.get_f_type()
+        self.byte_size = byte_size = typedecl.get_bit_size() / CHAR_BIT
+        WrapperCPPMacro(parent, 'F_FUNC')
+
+        self.init_func_f_arg_list = ['self']
+        self.init_func_c_arg_list = ['%sObject *self' % (self.oname)]
+        self.init_func_c_body_list = []
+        self.ptrstruct_list = []
+        self.attr_decl_list = []
+        self.attr_format_list = []
+        self.attr_init_list = []
+        self.as_tuple_format_list = []
+        self.as_tuple_arg_list = []
+        self.getset_func_list = []
+        self.type_getseters_list = []
+        for n in typedecl.a.component_names:
+            v = typedecl.a.components[n]
+            t = v.get_typedecl()
+            ct = t.get_c_type()
+            on = 'f2py_' + t.name
+            parent.add(t)
+            self.ptrstruct_list.append('%s* %s_ptr;' % (ct, n))
+            self.init_func_f_arg_list.append('obj %% %s' % (n))
+            self.init_func_c_arg_list.append('\n%s * %s_ptr' % (ct, n))
+            self.init_func_c_body_list.append('''\
+if (!((void*)%(n)s_ptr >= self->data
+      && (void*)%(n)s_ptr < self->data + %(byte_size)s ))
+  fprintf(stderr,"INCONSISTENCY IN %(name)s WRAPPER: "
+                 "self->data=%%p <= %(n)s_ptr=%%p < self->data+%(byte_size)s=%%p\\n",
+                 self->data, %(n)s_ptr, self->data + %(byte_size)s);
+self->%(n)s_ptr = %(n)s_ptr;
+''' % (locals()))
+            self.attr_format_list.append('O&')
+            WrapperCCode(parent, 'pyobj_to_%s' % (ct))
+            self.attr_init_list.append('\npyobj_to_%s, self->%s_ptr' % (ct,n))
+            WrapperCCode(parent, 'pyobj_from_%s' % (ct))
+            self.as_tuple_format_list.append('O&')
+            self.as_tuple_arg_list.append('\npyobj_from_%s, self->%s_ptr' % (ct, n))
+            self.getset_func_list.append('''\
+static PyObject * %(oname)s_get_%(n)s(%(oname)sObject *self,
+                                      void *closure) {
+  return pyobj_from_%(ct)s(self->%(n)s_ptr);
+}
+static int %(oname)s_set_%(n)s(%(oname)sObject *self,
+                               PyObject *value, void *closure)
+{
+  if (value == NULL) {
+    PyErr_SetString(PyExc_TypeError,
+                    "Cannot delete %(name)s attribute %(n)s");
+    return -1;
+  }
+  if (pyobj_to_%(ct)s(value, self->%(n)s_ptr))
+    return 0;
+  return -1;
+}
+''' % (locals()))
+            self.type_getseters_list.append('{"%(n)s",(getter)%(oname)s_get_%(n)s, (setter)%(oname)s_set_%(n)s,\n "component %(n)s",NULL},' % (locals()))
+        if self.attr_init_list: self.attr_init_list.insert(0,'')
+        if self.as_tuple_arg_list: self.as_tuple_arg_list.insert(0,'')
+        self.init_func = self.ctype + '_init'
+        self.INIT_FUNC = self.init_func.upper()
+
+        self.type_method_list = []
+        self.type_method_list.append('{"as_tuple",(PyCFunction)%(oname)s_as_tuple,METH_NOARGS,\n "Return %(name)s components as tuple."},' % (self.__dict__))
+        self.cname = typedecl.get_c_name()
+
+        self.use_stmt_list = []
+        if isinstance(typedecl.parent, Module):
+            self.use_stmt_list.append('use %s' % (typedecl.parent.name))
+
+        for n in parent.list_names:
+            l = getattr(parent,n + '_list')
+            l.append(self.apply_attributes(getattr(self, n+'_template','')))
+        return
+
 class PythonCAPIFunction(WrapperBase):
     capi_function_template = '''
 static char f2py_doc_%(function_name)s[] = "%(function_doc)s";
@@ -412,15 +510,15 @@ class ArgumentWrapper(WrapperBase):
         self.parent.pyarg_format_list.append('O&')
         self.parent.keyword_list.append('"%s"' % (self.name))
 
-        self.grand_parent.add_c_function('pyobj_to_%s' % (self.ctype))
         return
 
-class TypeDecl(WrapperBase):
+
+class TypeDecl2(WrapperBase):
     cppmacro_template = '''\
 #define initialize_%(typename)s_interface F_FUNC(initialize_%(typename)s_interface_f,INITIALIZE_%(TYPENAME)s_INTERFACE_F)\
 '''
     typedef_template = '''\
-typedef struct { char data[%(byte_size)s] } %(ctype)s;
+typedef struct { char data[%(byte_size)s]; } %(ctype)s;
 typedef %(ctype)s (*create_%(typename)s_functype)(void);
 typedef void (*initialize_%(typename)s_interface_functype)(create_%(typename)s_functype);\
 '''
@@ -449,6 +547,14 @@ initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
          call init_c(create_%(typename)s_object_f)
        end
 '''
+    pyobj_to_type_template = '''
+    static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
+      if (PyTuple_Check(obj)) {
+        return 0;
+      }
+    return 0;
+    }
+'''
 
     def __init__(self, parent, typedecl):
         WrapperBase.__init__(self)
@@ -464,12 +570,17 @@ initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
 
     def fill(self):
         ctype =self.typedecl.get_c_type()
-        if ctype.startswith('npy_'):
-            pass
-        elif ctype.startswith('f2py_string'):
-            pass
-        elif ctype.startswith('f2py_type'):
-            pass
+        if ctype.startswith('npy_') or ctype.startswith('f2py_string'):
+            # wrappers are defined via pyobj_to_* functions
+            self.parent.add_c_function('pyobj_to_%s' % (self.ctype))
+            return
+        if ctype.startswith('f2py_type'):
+            return
+            self.parent.add_typedef(ctype,
+                                    self.apply_attributes('typedef struct { char data[%(byte_size)s]; } %(ctype)s;'))
+            self.parent.add_c_function(self.apply_attributes('pyobj_to_%(ctype)s'),
+                                       self.apply_attributes(self.pyobj_to_type_template)
+                                       )
         else:
             self.parent.typedef_list.append(self.apply_attributes(self.typedef_template))
             self.parent.objdecl_list.append(self.apply_attributes(self.objdecl_template))
@@ -490,9 +601,13 @@ if __name__ == '__main__':
     stmt = str2stmt("""
     module rat
       integer :: i
+      type info
+        integer flag
+      end type info
       type rational
         integer n
-        integer*8 d
+        integer d
+        type(info) i
       end type rational
     end module rat
     subroutine foo(a)
@@ -508,16 +623,20 @@ if __name__ == '__main__':
 
     foo_code = """! -*- f90 -*-
       module rat
+        type info
+          integer flag
+        end type info
         type rational
-          integer d,n
+          integer n,d
+          type(info) i
         end type rational
       end module rat
-      subroutine foo(a,b,c)
+      subroutine foo(a,b)
         use rat
         integer a
-        character*5 b
-        type(rational) c
-        print*,'a=',a,b,c
+        !character*5 b
+        type(rational) b
+        print*,'a=',a,b
       end
 """
 
@@ -556,8 +675,31 @@ if __name__ == '__main__':
     setup(configuration=configuration)
 ''')
     f.close()
-    print get_char_bit()
+    #print get_char_bit()
     os.system('python foo_setup.py config_fc --fcompiler=gnu95 build build_ext --inplace')
     import foo
-    print dir(foo)
-    foo.foo(2,"abcdefg")
+    #print foo.__doc__
+    #print dir(foo)
+    #print foo.info.__doc__
+    #print foo.rational.__doc__
+    #print dir(foo.rational)
+    i = foo.info(7)
+    #print i #,i.as_tuple()
+    #print 'i.flag=',i.flag
+    r = foo.rational(2,3,i)
+    print r
+    j = r.i
+    print 'r.i.flag=',(r.i).flag
+    print 'j.flag=',j.flag
+    #print 'r=',r
+    sys.exit()
+    n,d,ii = r.as_tuple()
+    n += 1
+    print n,d
+    print r
+    #foo.foo(2,r)
+    print r.n, r.d
+    r.n = 5
+    print r
+    r.n -= 1
+    print r
