@@ -23,6 +23,7 @@ extern \"C\" {
 
 #define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
 
 %(header_list)s
 
@@ -140,13 +141,7 @@ class PythonCAPIIntrinsicType(WrapperBase):
         self.ctype = ctype = typedecl.get_c_type()
 
         if ctype.startswith('npy_'):
-            from generate_pyobj_tofrom_funcs import pyobj_to_npy_scalar
-            d = pyobj_to_npy_scalar(ctype)
-            for v in d.values():
-                self.resolve_dependencies(parent, v)
-            for k,v in d.items():
-                l = getattr(parent, k+'_list')
-                l.append(v)
+            WrapperCCode(parent, 'pyobj_from_%s' % (ctype))
             return
         
         if not ctype.startswith('f2py_type_'):
@@ -598,38 +593,14 @@ initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
 
 
 if __name__ == '__main__':
-    #from utils import str2stmt, get_char_bit
-    
-    stmt = parse("""
-    module rat
-      integer :: i
-      type info
-        integer flag
-      end type info
-      type rational
-        integer n
-        integer d
-        type(info) i
-      end type rational
-    end module rat
-    subroutine foo(a)
-    use rat
-    type(rational) a
-    end
-    """)
-    #stmt = stmt.content[-1].content[1]
-    #print stmt
-    #wrapgen = TypeWrapper(stmt)
-    #print wrapgen.fortran_code()
-    #print wrapgen.c_code()
 
     foo_code = """! -*- f90 -*-
       module rat
         type info
-          integer flag
+          complex flag
         end type info
         type rational
-          integer n,d
+          !integer n,d
           type(info) i
         end type rational
       end module rat
@@ -685,14 +656,15 @@ if __name__ == '__main__':
     #print foo.info.__doc__
     #print foo.rational.__doc__
     #print dir(foo.rational)
-    i = foo.info(7)
+    i = foo.info(70+3j)
+    print 'i=',i
     #print i #,i.as_tuple()
     #print 'i.flag=',i.flag
-    r = foo.rational(2,3,i)
+    r = foo.rational(i)
     print r
     j = r.i
     print 'r.i.flag=',(r.i).flag
-    print 'j.flag=',j.flag
+    print 'j.flag=',type(j.flag)
     #print 'r=',r
     sys.exit()
     n,d,ii = r.as_tuple()

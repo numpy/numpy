@@ -9,12 +9,41 @@ __all__ = ['pyobj_to_npy_scalar','pyobj_to_f2py_string','pyobj_from_npy_scalar']
 from parser.api import CHAR_BIT
 
 def pyobj_from_npy_int(ctype):
-    ctype_bits = int(ctype[7:])
-    itemsize = ctype_bits/CHAR_BIT
     dtype = ctype.upper()
+    cls = 'Int'+ctype[7:]
     return '''\
+/* depends: SCALARS_IN_BITS.cpp */
 static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
-  return PyArray_Return(PyArray_SimpleNewFromData(0, NULL, %(dtype)s, (char*)value));
+  PyObject* obj = PyArrayScalar_New(%(cls)s);
+  if (obj==NULL) /* TODO: set exception */ return NULL;
+  PyArrayScalar_ASSIGN(obj,%(cls)s,*value);
+  return obj;
+}
+''' % (locals())
+
+def pyobj_from_npy_float(ctype):
+    dtype = ctype.upper()
+    cls = 'Float'+ctype[9:]
+    return '''\
+/* depends: SCALARS_IN_BITS.cpp */
+static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
+  PyObject* obj = PyArrayScalar_New(%(cls)s);
+  if (obj==NULL) /* TODO: set exception */ return NULL;
+  PyArrayScalar_ASSIGN(obj,%(cls)s,*value);
+  return obj;
+}
+''' % (locals())
+
+def pyobj_from_npy_complex(ctype):
+    dtype = ctype.upper()
+    cls = 'Complex'+ctype[11:]
+    return '''\
+/* depends: SCALARS_IN_BITS.cpp */
+static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
+  PyObject* obj = PyArrayScalar_New(%(cls)s);
+  if (obj==NULL) /* TODO: set exception */ return NULL;
+  PyArrayScalar_ASSIGN(obj,%(cls)s,*value);
+  return obj;
 }
 ''' % (locals())
 
@@ -125,5 +154,9 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
 def pyobj_from_npy_scalar(ctype):
     if ctype.startswith('npy_int'):
         return dict(c_code=pyobj_from_npy_int(ctype))
+    elif ctype.startswith('npy_float'):
+        return dict(c_code=pyobj_from_npy_float(ctype))
+    elif ctype.startswith('npy_complex'):
+        return dict(c_code=pyobj_from_npy_complex(ctype))
     raise NotImplementedError,`ctype`
 

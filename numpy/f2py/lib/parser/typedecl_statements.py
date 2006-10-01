@@ -341,11 +341,14 @@ class TypeDeclarationStatement(Statement):
     def get_length(self):
         return self.selector[0] or 1
 
-    def get_bit_size(self):
-        return CHAR_BIT * int(self.get_kind())
-
     def get_byte_size(self):
-        return self.get_bit_size() / CHAR_BIT
+        length, kind = self.selector
+        if length: return int(length)
+        if kind: return int(kind)
+        return self.default_kind
+
+    def get_bit_size(self):
+        return CHAR_BIT * int(self.get_byte_size())
 
     def is_intrinsic(self): return not isinstance(self,(Type,Class))
     def is_derived(self): return isinstance(self,Type)
@@ -381,7 +384,10 @@ class Real(TypeDeclarationStatement):
 class DoublePrecision(TypeDeclarationStatement):
     match = re.compile(r'double\s*precision\b',re.I).match
     default_kind = 8
-    
+
+    def get_byte_size(self):
+        return self.default_kind
+
     def get_zero_value(self):
         return '0.0D0'
 
@@ -392,19 +398,11 @@ class Complex(TypeDeclarationStatement):
     match = re.compile(r'complex\b',re.I).match
     default_kind = 4
 
-    def get_kind(self):
+    def get_byte_size(self):
         length, kind = self.selector
-        if kind:
-            return kind
-        if length:
-            return int(length)/2
-        return self.default_kind
-
-    def get_length(self):
-        return 2 * int(self.get_kind())
-
-    def get_bit_size(self):
-        return CHAR_BIT * self.get_length()
+        if length: return 2*int(length)
+        if kind: return 2*int(kind)
+        return 2*self.default_kind
 
     def get_zero_value(self):
         kind = self.get_kind()
@@ -419,10 +417,8 @@ class DoubleComplex(TypeDeclarationStatement):
     match = re.compile(r'double\s*complex\b',re.I).match
     default_kind = 8
 
-    def get_kind(self): return self.default_kind
-    def get_length(self): return 2 * self.get_kind()
-    def get_bit_size(self):
-        return CHAR_BIT * self.get_length()
+    def get_byte_size(self):
+        return 2 * self.default_kind
 
     def get_zero_value(self):
         return '(0.0D0,0.0D0)'
