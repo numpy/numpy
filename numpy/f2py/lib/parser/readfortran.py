@@ -4,12 +4,14 @@ Defines FortranReader classes for reading Fortran codes from
 files and strings. FortranReader handles comments and line continuations
 of both fix and free format Fortran codes.
 
+-----
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License. See http://scipy.org.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 Author: Pearu Peterson <pearu@cens.ioc.ee>
 Created: May 2006
+-----
 """
 
 __all__ = ['FortranFileReader',
@@ -710,10 +712,13 @@ class FortranFileReader(FortranReaderBase):
 
 class FortranStringReader(FortranReaderBase):
     
-    def __init__(self, string, isfree, isstrict):
+    def __init__(self, string, isfree, isstrict, include_dirs = None):
         self.id = 'string-'+str(id(string))
         source = StringIO(string)
         FortranReaderBase.__init__(self, source, isfree, isstrict)
+        if include_dirs is not None:
+            self.include_dirs = include_dirs[:]
+        return
 
 # Testing:
 

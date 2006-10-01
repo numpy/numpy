@@ -1,5 +1,16 @@
+"""
+-----
+Permission to use, modify, and distribute this software is given under the
+terms of the NumPy License. See http://scipy.org.
 
-__all__ = ['Statement','BeginStatement','EndStatement']
+NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
+Author: Pearu Peterson <pearu@cens.ioc.ee>
+Created: May 2006
+-----
+"""
+
+__all__ = ['Statement','BeginStatement','EndStatement', 'Variable',
+           'AttributeHolder','ProgramBlock']
 
 import re
 import sys

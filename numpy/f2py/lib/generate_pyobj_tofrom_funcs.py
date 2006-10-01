@@ -6,7 +6,7 @@ functions.
 """
 __all__ = ['pyobj_to_npy_scalar','pyobj_to_f2py_string','pyobj_from_npy_scalar']
 
-from utils import CHAR_BIT
+from parser.api import CHAR_BIT
 
 def pyobj_from_npy_int(ctype):
     ctype_bits = int(ctype[7:])

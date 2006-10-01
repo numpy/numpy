@@ -1,3 +1,15 @@
+"""
+Test parsing single Fortran lines.
+
+-----
+Permission to use, modify, and distribute this software is given under the
+terms of the NumPy License. See http://scipy.org.
+
+NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
+Author: Pearu Peterson <pearu@cens.ioc.ee>
+Created: May 2006
+-----
+"""
 
 from numpy.testing import *
 from block_statements import *
@@ -430,19 +442,19 @@ class test_Statements(NumpyTestCase):
 
     def check_integer(self):
         assert_equal(parse(Integer,'integer'),'INTEGER')
-        assert_equal(parse(Integer,'integer*4'),'INTEGER(KIND=4)')
-        assert_equal(parse(Integer,'integer*4 a'),'INTEGER(KIND=4) a')
-        assert_equal(parse(Integer,'integer*4, a'),'INTEGER(KIND=4) a')
-        assert_equal(parse(Integer,'integer*4 a ,b'),'INTEGER(KIND=4) a, b')
-        assert_equal(parse(Integer,'integer*4 :: a ,b'),'INTEGER(KIND=4) a, b')
-        assert_equal(parse(Integer,'integer*4 a(1,2)'),'INTEGER(KIND=4) a(1,2)')
-        assert_equal(parse(Integer,'integer*4 :: a(1,2),b'),'INTEGER(KIND=4) a(1,2), b')
+        assert_equal(parse(Integer,'integer*4'),'INTEGER*4')
+        assert_equal(parse(Integer,'integer*4 a'),'INTEGER*4 a')
+        assert_equal(parse(Integer,'integer*4, a'),'INTEGER*4 a')
+        assert_equal(parse(Integer,'integer*4 a ,b'),'INTEGER*4 a, b')
+        assert_equal(parse(Integer,'integer*4 :: a ,b'),'INTEGER*4 a, b')
+        assert_equal(parse(Integer,'integer*4 a(1,2)'),'INTEGER*4 a(1,2)')
+        assert_equal(parse(Integer,'integer*4 :: a(1,2),b'),'INTEGER*4 a(1,2), b')
         assert_equal(parse(Integer,'integer*4 external :: a'),
-                     'INTEGER(KIND=4), external :: a')
+                     'INTEGER*4, external :: a')
         assert_equal(parse(Integer,'integer*4, external :: a'),
-                     'INTEGER(KIND=4), external :: a')
+                     'INTEGER*4, external :: a')
         assert_equal(parse(Integer,'integer*4 external , intent(in) :: a'),
-                     'INTEGER(KIND=4), external, intent(in) :: a')
+                     'INTEGER*4, external, intent(in) :: a')
         assert_equal(parse(Integer,'integer(kind=4)'),'INTEGER(KIND=4)')
         assert_equal(parse(Integer,'integer ( kind = 4)'),'INTEGER(KIND=4)')
         assert_equal(parse(Integer,'integer(kind=2+2)'),'INTEGER(KIND=2+2)')
@@ -479,5 +491,6 @@ class test_Statements(NumpyTestCase):
                      'IMPLICIT INTEGER ( i-m, p, q-r )')
         assert_equal(parse(Implicit,'implicit integer (i-m), real (z)'),
                      'IMPLICIT INTEGER ( i-m ), REAL ( z )')
+
 if __name__ == "__main__":
     NumpyTest().run()

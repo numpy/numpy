@@ -1,9 +1,33 @@
+"""
+Fortran single line statements.
+
+-----
+Permission to use, modify, and distribute this software is given under the
+terms of the NumPy License. See http://scipy.org.
+
+NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
+Author: Pearu Peterson <pearu@cens.ioc.ee>
+Created: May 2006
+-----
+"""
+
+__all__ = ['GeneralAssignment',
+           'Assignment','PointerAssignment','Assign','Call','Goto','ComputedGoto','AssignedGoto',
+           'Continue','Return','Stop','Print','Read','Read0','Read1','Write','Flush','Wait',
+           'Contains','Allocate','Deallocate','ModuleProcedure','Access','Public','Private',
+           'Close','Cycle','Backspace','Endfile','Rewind','Open','Format','Save',
+           'Data','Nullify','Use','Exit','Parameter','Equivalence','Dimension','Target',
+           'Pointer','Protected','Volatile','Value','ArithmeticIf','Intrinsic',
+           'Inquire','Sequence','External','Namelist','Common','Optional','Intent',
+           'Entry','Import','ForallStmt','SpecificBinding','GenericBinding',
+           'FinalBinding','Allocatable','Asynchronous','Bind','Else','ElseIf',
+           'Case','WhereStmt','ElseWhere','Enumerator','FortranName','Threadsafe',
+           'Depend','Check','CallStatement','CallProtoArgument','Pause']
 
 import re
 import sys
 
 from base_classes import Statement, Variable
-#from expression import Expression
 
 # Auxiliary tools
 

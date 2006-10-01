@@ -5,9 +5,11 @@ import re
 import os
 import sys
 
-from block_statements import *
+from parser.api import *
+
+#from block_statements import *
 #from typedecl_statements import intrinsic_type_spec, Character
-from utils import CHAR_BIT
+#from utils import CHAR_BIT
 
 from wrapper_base import *
 
@@ -596,9 +598,9 @@ initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
 
 
 if __name__ == '__main__':
-    from utils import str2stmt, get_char_bit
-
-    stmt = str2stmt("""
+    #from utils import str2stmt, get_char_bit
+    
+    stmt = parse("""
     module rat
       integer :: i
       type info
@@ -641,7 +643,7 @@ if __name__ == '__main__':
 """
 
     wm = PythonWrapperModule('foo')
-    wm.add(str2stmt(foo_code))
+    wm.add(parse(foo_code))
     #wm.add_fortran_code(foo_code)
     #wm.add_subroutine(str2stmt(foo_code))
     #print wm.c_code()

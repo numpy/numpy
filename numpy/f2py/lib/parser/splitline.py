@@ -2,15 +2,14 @@
 """
 Defines LineSplitter and helper functions.
 
-Copyright 2006 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@cens.ioc.ee>          
+-----
 Permission to use, modify, and distribute this software is given under the
-terms of the LGPL.  See http://www.fsf.org
+terms of the NumPy License. See http://scipy.org.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Revision:$
-$Date: 2000/07/31 07:04:03 $
-Pearu Peterson
+Author: Pearu Peterson <pearu@cens.ioc.ee>
+Created: May 2006
+-----
 """
 
 __all__ = ['String','string_replace_map','splitquote','splitparen']
@@ -410,6 +409,8 @@ def test():
 
     l = string_replace_map('a()')
     print l
+    print 'ok'
+
 if __name__ == '__main__':
     test()
 

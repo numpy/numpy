@@ -2,10 +2,61 @@
 Created: September 2006
 Author: Pearu Peterson <pearu.peterson@gmail.com>
 
-Structure
-=========
+Fortran parser package structure
+================================
 
-numpy.f2py.lib package contains the following files:
+numpy.f2py.lib.parser package contains the following files:
+
+api.py
+------
+
+Public API for Fortran parser.
+
+It exposes Statement classes, CHAR_BIT constant, and parse function.
+
+Function parse(<input>, ..) parses, analyzes and returns Statement
+tree of Fortran input. For example,
+
+::
+  >>> from api import parse
+  >>> code = """
+  ... c comment
+  ...       subroutine foo(a)
+  ...       integer a
+  ...       print*,"a=",a
+  ...       end
+  ... """
+  >>> tree = parse(code,isfree=False)
+  >>> print tree
+        !BEGINSOURCE <cStringIO.StringI object at 0xb75ac410> mode=fix90
+          SUBROUTINE foo(a)
+            INTEGER a
+            PRINT *, "a=", a
+          END SUBROUTINE foo
+  >>>
+  >>> tree
+        BeginSource
+          blocktype='beginsource'
+          name='<cStringIO.StringI object at 0xb75ac410> mode=fix90'
+          a=AttributeHolder:
+        external_subprogram=<dict with keys ['foo']>
+          content:
+            Subroutine
+              args=['a']
+              item=Line('subroutine foo(a)',(3, 3),'')
+              a=AttributeHolder:
+          variables=<dict with keys ['a']>
+              content:
+                Integer
+                  selector=('', '')
+                  entity_decls=['a']
+                  item=Line('integer a',(4, 4),'')
+                Print
+                  item=Line('print*,"a=",a',(5, 5),'')
+            EndSubroutine
+              blocktype='subroutine'
+              name='foo'
+              item=Line('end',(6, 6),'')
 
 readfortran.py
 --------------
