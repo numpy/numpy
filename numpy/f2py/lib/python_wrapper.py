@@ -248,20 +248,29 @@ static void %(init_func)s_c(
 
     capi_code_template = '''\
 static void %(oname)s_dealloc(%(oname)sObject* self) {
-  PyMem_Free(self->data);
+  if (self->data)
+    PyMem_Free(self->data);
   self->ob_type->tp_free((PyObject*)self);
 }
 
 static int pyobj_to_%(ctype)s(PyObject *obj,
                               %(ctype)s* value_ptr) {
+  int return_value = 0;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_to_%(ctype)s(type=%%s)\\n",PyString_AS_STRING(PyObject_Repr(PyObject_Type(obj))));
+#endif
   if (%(oname)sObject_Check(obj)) {
     if (!memcpy(value_ptr,((%(oname)sObject *)obj)->data, %(byte_size)s)) {
       PyErr_SetString(PyExc_MemoryError,
          "failed to copy %(name)s instance memory to %(ctype)s object.");
+    } else {
+      return_value = 1;
     }
-    return 1;
   }
-  return 0;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_to_%(ctype)s: return_value=%%d, PyErr_Occurred()=%%p\\n", return_value, PyErr_Occurred());
+#endif
+  return return_value;
 }
 
 static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value_ptr) {
@@ -292,8 +301,17 @@ static PyObject * %(oname)s_new(PyTypeObject *type,
 static int %(oname)s_init(%(oname)sObject *self,
                           PyObject *capi_args, PyObject *capi_kwds)
 {
-   return !PyArg_ParseTuple(capi_args,"%(attr_format_elist)s"
-                                      %(attr_init_clist)s);
+   int return_value = 0;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"%(oname)s_init()\\n");
+#endif
+   if (!PyArg_ParseTuple(capi_args,"%(attr_format_elist)s"
+                                   %(attr_init_clist)s))
+      return_value = -1;                             
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"%(oname)s_init: return_value=%%d, PyErr_Occurred()=%%p\\n", return_value, PyErr_Occurred());
+#endif
+   return return_value;
 }
 
 static PyObject * %(oname)s_as_tuple(%(oname)sObject * self) {
@@ -597,7 +615,7 @@ if __name__ == '__main__':
     foo_code = """! -*- f90 -*-
       module rat
         type info
-          complex flag
+          complex*8 flag
         end type info
         type rational
           !integer n,d
@@ -641,6 +659,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('foo',
                          sources=['foomodule.c'],
                          libraries = ['foolib'],
+                         define_macros = [('F2PY_DEBUG_PYOBJ_TOFROM',None)]
                          )
     return config
 if __name__ == '__main__':
@@ -656,11 +675,11 @@ if __name__ == '__main__':
     #print foo.info.__doc__
     #print foo.rational.__doc__
     #print dir(foo.rational)
-    i = foo.info(70+3j)
+    i = foo.info(2)
     print 'i=',i
     #print i #,i.as_tuple()
     #print 'i.flag=',i.flag
-    r = foo.rational(i)
+    r = foo.rational(2)
     print r
     j = r.i
     print 'r.i.flag=',(r.i).flag

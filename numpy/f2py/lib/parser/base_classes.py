@@ -675,7 +675,7 @@ class EndStatement(Statement):
         item = self.item
         line = item.get_line().replace(' ','')[3:]
         blocktype = self.blocktype
-        if line.startswith(blocktype):
+        if line.lower().startswith(blocktype):
             line = line[len(blocktype):].strip()
         else:
             if line:

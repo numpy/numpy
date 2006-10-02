@@ -12,8 +12,12 @@ Created: May 2006
 """
 
 __all__ = ['BeginSource','Module','PythonModule','Program','BlockData','Interface',
-           'Subroutine','Function','Select','EndWhere','WhereConstruct','ForallConstruct',
-           'IfThen','If','Do','Associate','TypeDecl','Enum']
+           'Subroutine','Function','Select','WhereConstruct','ForallConstruct',
+           'IfThen','If','Do','Associate','TypeDecl','Enum',
+           'EndSource','EndModule','EndPythonModule','EndProgram','EndBlockData','EndInterface',
+           'EndSubroutine','EndFunction','EndSelect','EndWhere','EndForall',
+           'EndIfThen','EndDo','EndAssociate','EndType','EndEnum',
+           ]
 
 import re
 import sys
@@ -100,9 +104,12 @@ class HasVariables:
             self.a.variable_names.append(name)
         return var
 
-    def topyf(self,tab=''):
+    def topyf(self,tab='', only_variables = None):
         s = ''
-        for name, var in self.a.variables.items():
+        if only_variables is None:
+            only_variables = self.a.variables.keys()
+        for name in only_variables:
+            var = self.a.variables[name]
             s += tab + str(var) + '\n'
         return s
 
@@ -206,6 +213,8 @@ class BeginSource(BeginStatement):
         return
 
     def get_classes(self):
+        if self.reader.ispyf:
+            return [PythonModule] + program_unit
         return program_unit
 
     def process_subitem(self, item):
@@ -231,11 +240,11 @@ class BeginSource(BeginStatement):
     def topyf(self, tab=''): # XXXX
         s = ''
         for name, stmt in self.a.module.items():
-            s += stmt.topyf()
+            s += stmt.topyf(tab=tab)
         for name, stmt in self.a.external_subprogram.items():
-            s += stmt.topyf()
+            s += stmt.topyf(tab=tab)
         for name, stmt in self.a.blockdata.items():
-            s += stmt.topyf()
+            s += stmt.topyf(tab=tab)
         return s
 # Module
 
@@ -415,7 +424,10 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
     a = AttributeHolder(interface_provides = {})
 
     def get_classes(self):
-        return intrinsic_type_spec + interface_specification
+        l = intrinsic_type_spec + interface_specification
+        if self.reader.mode=='pyf':
+            return [Subroutine, Function] + l 
+        return l
 
     def process_item(self):
         line = self.item.get_line()
@@ -456,6 +468,9 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
     
         return
 
+    def is_public(self):
+        return True # TODO: need review.
+
 # Subroutine
 
 class SubProgramStatement(BeginStatement, ProgramBlock,
@@ -475,8 +490,8 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
         item = self.item
         line = item.get_line()
         m = self.match(line)
-        i = line.find(clsname)
-        assert i!=-1,`line`
+        i = line.lower().find(clsname)
+        assert i!=-1,`clsname, line`
         self.prefix = line[:i].rstrip()
         self.name = line[i:m.end()].lstrip()[len(clsname):].strip()
         line = line[m.end():].lstrip()
@@ -575,7 +590,7 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
         s += '\n'
         s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
         s +=  HasTypeDecls.topyf(self, tab=tab+'  ')
-        s +=  HasVariables.topyf(self, tab=tab+'  ')
+        s +=  HasVariables.topyf(self, tab=tab+'  ', only_variables = self.args)
         s += tab + 'END ' + self.__class__.__name__.upper() + ' ' + self.name + '\n'
         return s
 
@@ -771,7 +786,7 @@ class If(BeginStatement):
     IF ( <scalar-logical-expr> ) action-stmt
     """
 
-    match = re.compile(r'if\s*\(').match
+    match = re.compile(r'if\s*\(',re.I).match
 
     def process_item(self):
         item = self.item
@@ -779,14 +794,14 @@ class If(BeginStatement):
         classes = self.get_classes()
         classes = [cls for cls in classes if mode in cls.modes]
 
-        line = item.get_line()[2:]
+        line = item.get_line()[2:].lstrip()
         i = line.find(')')
         expr = line[1:i].strip()
         line = line[i+1:].strip()
         if line.lower()=='then':
             self.isvalid = False
             return
-        self.expr = expr[1:-1]
+        self.expr = item.apply_map(expr)
 
         if not line:
             newitem = self.get_item()

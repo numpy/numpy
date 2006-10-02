@@ -29,6 +29,8 @@ from __version__ import version
 def configuration(parent_package='',top_path=None):
     config = Configuration('f2py', parent_package, top_path)
 
+    config.add_subpackage('lib')
+
     config.add_data_dir('docs')
 
     config.add_data_files('src/fortranobject.c',
@@ -51,10 +53,30 @@ def configuration(parent_package='',top_path=None):
             f.write('''\
 #!/usr/bin/env %s
 # See http://cens.ioc.ee/projects/f2py2e/
-import os
+import os, sys
+for mode in ["g3-numpy", "2e-numeric", "2e-numarray", "2e-numpy"]:
+    try:
+        i=sys.argv.index("--"+mode)
+        del sys.argv[i]
+        break
+    except ValueError: pass
 os.environ["NO_SCIPY_IMPORT"]="f2py"
-import numpy.f2py as f2py
-f2py.main()
+if mode=="g3-numpy":
+    try:
+        from main import main
+    except ImportError:
+        from numpy.f2py.lib.api import main
+elif mode=="2e-numeric":
+    from f2py2e import main
+elif mode=="2e-numarray":
+    sys.argv.append("-DNUMARRAY")
+    from f2py2e import main
+elif mode=="2e-numpy":
+    from numpy.f2py import main
+else:
+    print >> sys.stderr, "Unknown mode:",`mode`
+    sys.exit(1)
+main()
 '''%(os.path.basename(sys.executable)))
             f.close()
         return target

@@ -12,6 +12,7 @@ Created: Oct 2006
 """
 
 # import all Statement classes:
+from base_classes import EndStatement
 from block_statements import *
 
 # CHAR_BIT is used to convert object bit sizes to byte sizes
@@ -34,8 +35,8 @@ def parse(input, isfree=None, isstrict=None, include_dirs = None):
     if os.path.isfile(input):
         reader = FortranFileReader(input,
                                    include_dirs = include_dirs)
-        if isfree is None: reader.isfree
-        if isstrict is None: reader.isstrict
+        if isfree is None: isfree = reader.isfree
+        if isstrict is None: isstrict = reader.isstrict
         reader.set_mode(isfree, isstrict)
     elif isinstance(input, str):
         if isfree is None: isfree = True

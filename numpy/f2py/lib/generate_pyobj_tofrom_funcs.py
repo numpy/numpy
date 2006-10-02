@@ -114,13 +114,20 @@ def pyobj_to_npy_complex(ctype):
 /* depends: pyobj_to_Py_complex.c */
 #if NPY_BITSOF_DOUBLE >= %(cfloat_bits)s
 static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
+  int return_value = 0;
   Py_complex c;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_to_%(ctype)s(type=%%s)\\n",PyString_AS_STRING(PyObject_Repr(PyObject_Type(obj))));
+#endif
   if (pyobj_to_Py_complex(obj,&c)) {
     (*value).real = (npy_float%(cfloat_bits)s)c.real;
-    (*value).imag = (npy_float%(cfloat_bits)s)c.imag; 
-    return 1;
+    (*value).imag = (npy_float%(cfloat_bits)s)c.imag;
+    return_value = 1;
   }
-  return 0;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_to_%(ctype)s: return_value=%%d, PyErr_Occurred()=%%p\\n", return_value, PyErr_Occurred());
+#endif
+  return return_value;
 }
 #else
 #error, "NOTIMPLEMENTED pyobj_to_%(ctype)s"

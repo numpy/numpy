@@ -1,7 +1,5 @@
 """
-F2PY G3 --- The third generation of Fortran to Python Interface Generator.
-
-Use api module for importing public symbols.
+Public API for F2PY G3.
 
 -----
 Permission to use, modify, and distribute this software is given under the
@@ -12,3 +10,5 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 Created: Oct 2006
 -----
 """
+
+from main import main
