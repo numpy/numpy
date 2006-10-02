@@ -425,7 +425,10 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         typename=arr.dtype.name
         lf = ''
         if issubclass(arr.dtype.type, flexible):
-            typename = "'%s'" % str(arr.dtype)
+            if arr.dtype.names:
+                typename = "%s" % str(arr.dtype)
+            else:
+                typename = "'%s'" % str(arr.dtype)
             lf = '\n'+' '*len("array(")
         return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
 

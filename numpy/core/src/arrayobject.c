@@ -7519,7 +7519,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
         }
         _pya_free(buffers[0]);
         _pya_free(buffers[1]);
-        if (!PyArray_ISNUMBER(in) && PyErr_Occurred()) return -1;
+        if (PyErr_Occurred()) return -1;
         return 0;
 }
 
@@ -8282,27 +8282,25 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                         isobject = 1;
                 }
                 if (PySequence_Check(op)) {
-                        PyObject *thiserr;
+                        PyObject *thiserr=NULL;
                         /* necessary but not sufficient */
                         Py_INCREF(newtype);
                         r = Array_FromSequence(op, newtype, flags & FORTRAN,
                                                min_depth, max_depth);
-                        if (r == NULL && (thiserr=PyErr_Occurred()) && \
-                            !PyErr_GivenExceptionMatches(thiserr, 
-                                                         PyExc_MemoryError)) {
+                        if (r == NULL && (thiserr=PyErr_Occurred())) {
+                                if (PyErr_GivenExceptionMatches(thiserr, 
+                                                                PyExc_MemoryError))
+                                        return NULL;
                                 /* If object was explicitly requested, 
                                    then try nested list object array creation
                                 */
+                                PyErr_Clear();
                                 if (isobject) {
-                                        PyErr_Clear();
                                         Py_INCREF(newtype);
                                         r = ObjectArray_FromNestedList  \
                                                 (op, newtype, flags & FORTRAN);
                                         seq = TRUE;
                                         Py_DECREF(newtype);
-                                }
-                                else {
-                                        PyErr_Clear();
                                 }
                         }
                         else {

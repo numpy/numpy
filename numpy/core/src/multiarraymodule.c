@@ -6531,7 +6531,7 @@ as_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
         void *memptr;
         static char *kwlist[] = {"mem", "size", "readonly", NULL};
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "O" \
-                                         NPY_SSIZE_T_PYFMT "|O&", 
+                                         NPY_SSIZE_T_PYFMT "|O&", kwlist,
                                          &mem, &size, PyArray_BoolConverter,
                                          &ro)) return NULL;
         memptr = PyLong_AsVoidPtr(mem);
