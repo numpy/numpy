@@ -2812,7 +2812,8 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         }
 
         if (PyInt_Check(index) || PyArray_IsScalar(index, Integer) ||
-            PyLong_Check(index) || PyIndex_Check(index)) {
+            PyLong_Check(index) || (PyIndex_Check(index) && 
+                                    !PySequence_Check(index))) {
                 intp value;
                 value = PyArray_PyIntAsIntp(index);
                 if (PyErr_Occurred())
@@ -2920,7 +2921,8 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         intp vals[MAX_DIMS];
 
         if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) || \
-            PyLong_Check(op) || PyIndex_Check(op)) {
+            PyLong_Check(op) || (PyIndex_Check(op) && 
+                                 !PySequence_Check(op))) {
                 intp value;
                 value = PyArray_PyIntAsIntp(op);
                 if (PyErr_Occurred())
@@ -3844,8 +3846,8 @@ _array_copy_nice(PyArrayObject *self)
 static PyObject *
 array_index(PyArrayObject *v)
 {
-        if (PyArray_SIZE(v) != 1 || !PyArray_ISINTEGER(v)) {
-                PyErr_SetString(PyExc_TypeError, "only length-1 integer " \
+        if (v->nd != 0 || !PyArray_ISINTEGER(v)) {
+                PyErr_SetString(PyExc_TypeError, "only 0-d integer"     \
                                 "arrays can be converted to an index");
                 return NULL;
         }
