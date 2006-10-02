@@ -522,9 +522,10 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         interface = getattr(obj, "__array_interface__", None)
         if interface is None or not isinstance(interface, dict):
             raise ValueError("Unknown input type")
-        dtype = interface.get("descr", None) or interface.get("typestr")
-        shape = interface.get("shape")
-        strides = interface.get("strides", None)
-        return recarray(shape, dtype, buf=obj, offset=offset, strides=strides)
-        
-                
+        obj = sb.array(obj)
+        if dtype is not None and (obj.dtype != dtype):
+            obj = obj.view(dtype)
+        res  = obj.view(recarray)
+        if issubclass(res.dtype.type, nt.void):
+            res.dtype = sb.dtype((record, res.dtype))
+        return res
