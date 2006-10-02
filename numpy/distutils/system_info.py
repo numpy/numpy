@@ -502,6 +502,8 @@ class system_info:
             exts = [so_ext] + static_exts
         if sys.platform == 'cygwin':
             exts.append('.dll.a')
+        if sys.platform == 'darwin':
+            exts.append('.dylib')
         return exts
 
     def check_libs(self,lib_dir,libs,opt_libs =[]):
