@@ -6523,6 +6523,26 @@ buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
+as_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
+{
+        PyObject *mem;
+        Py_ssize_t size;
+        Bool ro=FALSE;
+        void *memptr;
+        static char *kwlist[] = {"mem", "size", "readonly", NULL};
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O" \
+                                         NPY_SSIZE_T_PYFMT "|O&", 
+                                         &mem, &size, PyArray_BoolConverter,
+                                         &ro)) return NULL;
+        memptr = PyLong_AsVoidPtr(mem);
+        if (memptr == NULL) return NULL;
+        if (ro) {
+                return PyBuffer_FromMemory(memptr, size);
+        }
+        return PyBuffer_FromReadWriteMemory(memptr, size);
+}
+
+static PyObject *
 format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
@@ -6731,6 +6751,8 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS, NULL},
 	{"getbuffer", (PyCFunction)buffer_buffer,
 	 METH_VARARGS | METH_KEYWORDS, NULL},
+        {"asbuffer", (PyCFunction)as_buffer,
+         METH_VARARGS, NULL},
         {"format_longfloat", (PyCFunction)format_longfloat,
          METH_VARARGS | METH_KEYWORDS, NULL},
         {"compare_chararrays", (PyCFunction)compare_chararrays,

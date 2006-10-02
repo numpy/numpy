@@ -270,6 +270,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if isinstance(shape, int):
         shape = (shape,)
 
+    arrayList = [sb.asarray(x) for x in arrayList]
+
     if formats is None and dtype is None:
         # go through each object in the list to see if it is an ndarray
         # and determine the formats.
@@ -494,10 +496,10 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         return fromstring(obj, dtype, shape=shape, offset=offset, **kwds)
 
     elif isinstance(obj, (list, tuple)):
-        if isinstance(obj[0], sb.ndarray):
-            return fromarrays(obj, dtype=dtype, shape=shape, **kwds)
-        else:
+        if isinstance(obj[0], tuple):
             return fromrecords(obj, dtype=dtype, shape=shape, **kwds)
+        else:
+            return fromarrays(obj, dtype=dtype, shape=shape, **kwds)
 
     elif isinstance(obj, recarray):
         new = obj.copy()
@@ -517,4 +519,12 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         return res
 
     else:
-        raise ValueError("Unknown input type")
+        interface = getattr(obj, "__array_interface__", None)
+        if interface is None or not isinstance(interface, dict):
+            raise ValueError("Unknown input type")
+        dtype = interface.get("descr", None) or interface.get("typestr")
+        shape = interface.get("shape")
+        strides = interface.get("strides", None)
+        return recarray(shape, dtype, buf=obj, offset=offset, strides=strides)
+        
+                
