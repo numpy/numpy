@@ -263,8 +263,8 @@ class test_regression(NumpyTestCase):
     def check_rec_iterate(self,level=rlevel):
         """Ticket #160"""
         descr = N.dtype([('i',int),('f',float),('s','|S3')])
-        x = N.rec.array([[1,1.1,'1.0'],
-                         [2,2.2,'2.0']],dtype=descr)
+        x = N.rec.array([(1,1.1,'1.0'),
+                         (2,2.2,'2.0')],dtype=descr)
         x[0].tolist()
         [i for i in x[0]]
 

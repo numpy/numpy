@@ -496,7 +496,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         return fromstring(obj, dtype, shape=shape, offset=offset, **kwds)
 
     elif isinstance(obj, (list, tuple)):
-        if isinstance(obj[0], tuple):
+        if isinstance(obj[0], (tuple, list)):
             return fromrecords(obj, dtype=dtype, shape=shape, **kwds)
         else:
             return fromarrays(obj, dtype=dtype, shape=shape, **kwds)
