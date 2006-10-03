@@ -1070,14 +1070,35 @@ typedef struct {
                 }                                                       \
         }
 
-#define PyArray_ITER_NEXT(it) {                                         \
-        (it)->index++;                                          \
-        if ((it)->nd_m1 == 0) {                                         \
-                _PyArray_ITER_NEXT1(it);                                \
+#define _PyArray_ITER_NEXT3(it) {                                       \
+                if ((it)->coordinates[2] < (it)->dims_m1[2]) {          \
+                        (it)->coordinates[2]++;                         \
+                        (it)->dataptr += (it)->strides[2];              \
+                }                                                       \
+                else {                                                  \
+                        (it)->coordinates[2] = 0;                       \
+                        (it)->dataptr -= (it)->backstrides[2];          \
+                        if ((it)->coordinates[1] < (it)->dims_m1[1]) {  \
+                                (it)->coordinates[1]++;                 \
+                                (it)->dataptr += (it)->strides[1];      \
+                        }                                               \
+                        else {                                          \
+                                (it)->coordinates[1] = 0;               \
+                                (it)->coordinates[0]++;                 \
+                                (it)->dataptr += (it)->strides[0] -     \
+                                        (it)->backstrides[1];           \
+                        }                                               \
+                }                                                       \
+        }
+                                
+#define PyArray_ITER_NEXT(it) {                                     \
+        (it)->index++;                                            \
+        if ((it)->nd_m1 == 0) {                                   \
+                _PyArray_ITER_NEXT1(it);                          \
         }                                                               \
         else if ((it)->contiguous)  (it)->dataptr += (it)->ao->descr->elsize; \
-        else if ((it)->nd_m1 == 1) {                                    \
-                _PyArray_ITER_NEXT2(it);                                \
+        else if ((it)->nd_m1 == 1) {                              \
+                _PyArray_ITER_NEXT2(it);                          \
         }                                                               \
         else {                                                          \
                 int __npy_i;                                            \
