@@ -263,14 +263,14 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> r.a
     array([1, 2, 3, 4])
     """
-        
+    
+    arrayList = [sb.asarray(x) for x in arrayList]
+    
     if shape is None or shape == 0:
         shape = arrayList[0].shape
 
     if isinstance(shape, int):
         shape = (shape,)
-
-    arrayList = [sb.asarray(x) for x in arrayList]
 
     if formats is None and dtype is None:
         # go through each object in the list to see if it is an ndarray
