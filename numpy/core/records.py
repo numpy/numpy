@@ -291,7 +291,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     if dtype is not None:
         descr = sb.dtype(dtype)
-        _names = dtype.names
+        _names = descr.names
     else:
         parsed = format_parser(formats, names, titles, aligned, byteorder)
         _names = parsed._names
