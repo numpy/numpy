@@ -900,7 +900,7 @@ class Use(Statement):
 
         module = modules[self.name]
         use_provides = self.parent.a.use_provides
-        
+        print use
         
         return
 

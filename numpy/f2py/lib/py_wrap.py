@@ -1,12 +1,10 @@
-
-__all__ = ['TypeWrapper']
+__all__ = ['PythonWrapperModule']
 
 import re
 import os
 import sys
 
 from parser.api import *
-
 from wrapper_base import *
 
 class PythonWrapperModule(WrapperBase):
@@ -94,8 +92,10 @@ PyMODINIT_FUNC init%(modulename)s(void) {
             for name,declblock in block.a.type_decls.items():
                 self.add(declblock)
         elif isinstance(block, TypeDecl):
+            self.info('Generating interface for %s' % (block.name))
             PythonCAPIDerivedType(self, block)
         elif isinstance(block, tuple(declaration_type_spec)):
+            self.info('Generating interface for %s' % (block.name))
             PythonCAPIIntrinsicType(self, block)
         else:
             raise NotImplementedError,`block.__class__.__name__`
@@ -106,15 +106,6 @@ PyMODINIT_FUNC init%(modulename)s(void) {
     def fortran_code(self):
         return self.apply_attributes(self.main_fortran_template)
 
-    def add_subroutine(self, block):
-        raise
-        f = PythonCAPIFunction(self, block)
-        f.fill()
-        return
-
-
-
-        
 class PythonCAPIIntrinsicType(WrapperBase):
     """
     Fortran intrinsic type hooks.
@@ -417,271 +408,3 @@ static int %(oname)s_set_%(n)s(%(oname)sObject *self,
             l = getattr(parent,n + '_list')
             l.append(self.apply_attributes(getattr(self, n+'_template','')))
         return
-
-class PythonCAPIFunction(WrapperBase):
-    capi_function_template = '''
-static char f2py_doc_%(function_name)s[] = "%(function_doc)s";
-static PyObject* f2py_%(function_name)s(PyObject *capi_self, PyObject *capi_args, PyObject *capi_keywds) {
-  PyObject * volatile capi_buildvalue = NULL;
-  volatile int f2py_success = 1;
-  %(decl_list)s
-  static char *capi_kwlist[] = {%(keyword_clist+optkw_clist+extrakw_clist+["NULL"])s};
-  if (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,
-                                   "%(pyarg_format_elist)s",
-                                   %(["capi_kwlist"]+pyarg_obj_clist)s))
-     return NULL;
-  %(frompyobj_list)s
-  %(call_list)s
-  f2py_success = !PyErr_Occurred();
-  if (f2py_success) {
-    %(pyobjfrom_list)s
-    capi_buildvalue = Py_BuildValue(%(buildvalue_clist)s);
-    %(clean_pyobjfrom_list)s
-  }
-  %(clean_frompyobj_list)s
-  return capi_buildvalue;
-}
-'''    
-
-    pymethoddef_template = '''\
-{"%(function_name)s", (PyCFunction)f2py_%(function_name)s, METH_VARARGS | METH_KEYWORDS, f2py_doc_%(function_name)s},\
-'''
-
-    cppmacro_template = '''\
-#define %(function_name)s_f F_FUNC(%(function_name)s,%(FUNCTION_NAME)s)
-'''
-
-    extdef_template = '''\
-extern void %(function_name)s_f();\
-'''
-
-    def __init__(self, parent, block):
-        WrapperBase.__init__(self)
-        self.parent = parent
-        self.block = block
-        self.function_name = block.name
-        self.FUNCTION_NAME = self.function_name.upper()
-        self.function_doc = ''
-        self.args_list = block.args
-        self.decl_list = []
-        self.keyword_list = []
-        self.optkw_list = []
-        self.extrakw_list = []
-        self.frompyobj_list = []
-        self.call_list = []
-        self.pyobjfrom_list = []
-        self.buildvalue_list = []
-        self.clean_pyobjfrom_list = []
-        self.clean_frompyobj_list = []
-        self.pyarg_format_list = []
-        self.pyarg_obj_list = []
-        return
-
-    def fill(self):
-        for argname in self.args_list:
-            var = self.block.a.variables[argname]
-            argwrap = ArgumentWrapper(self, var)
-            argwrap.fill()
-        self.call_list.append('%s_f(%s);' % (self.function_name, ', '.join(['&'+a for a in self.args_list])))
-        if not self.buildvalue_list:
-            self.buildvalue_list.append('""')
-        self.parent.capi_function_list.append(self.apply_attributes(self.capi_function_template))
-        self.parent.module_method_list.append(self.apply_attributes(self.pymethoddef_template))
-        self.parent.extern_list.append(self.apply_attributes(self.extdef_template))
-        self.parent.add_cppmacro('F_FUNC')
-        self.parent.cppmacro_list.append(self.apply_attributes(self.cppmacro_template))
-        return
-
-class ArgumentWrapper(WrapperBase):
-
-    objdecl_template = '%(ctype)s %(name)s;'
-    pyarg_obj_template = '\npyobj_to_%(ctype)s, &%(name)s'
-
-    def __init__(self, parent, variable):
-        WrapperBase.__init__(self)
-        self.parent = parent
-        self.grand_parent = parent.parent
-        self.variable = variable
-        self.typedecl = variable.typedecl
-        self.name = variable.name
-        self.ctype = self.typedecl.get_c_type()
-        
-    def fill(self):
-        typename = self.grand_parent.add_type(self.typedecl)
-        self.parent.decl_list.append(self.apply_attributes(self.objdecl_template))
-        
-        self.parent.pyarg_obj_list.append(self.apply_attributes(self.pyarg_obj_template))
-        self.parent.pyarg_format_list.append('O&')
-        self.parent.keyword_list.append('"%s"' % (self.name))
-
-        return
-
-
-class TypeDecl2(WrapperBase):
-    cppmacro_template = '''\
-#define initialize_%(typename)s_interface F_FUNC(initialize_%(typename)s_interface_f,INITIALIZE_%(TYPENAME)s_INTERFACE_F)\
-'''
-    typedef_template = '''\
-typedef struct { char data[%(byte_size)s]; } %(ctype)s;
-typedef %(ctype)s (*create_%(typename)s_functype)(void);
-typedef void (*initialize_%(typename)s_interface_functype)(create_%(typename)s_functype);\
-'''
-    objdecl_template = '''\
-static create_%(typename)s_functype create_%(typename)s_object;
-'''
-    funcdef_template = '''\
-static void initialize_%(typename)s_interface_c(create_%(typename)s_functype create_object_f) {
-  create_%(typename)s_object = create_object_f;
-}
-'''
-    extdef_template = '''\
-extern void initialize_%(typename)s_interface(initialize_%(typename)s_interface_functype);\
-'''
-    initcall_template = '''\
-initialize_%(typename)s_interface(initialize_%(typename)s_interface_c);\
-'''
-    fortran_code_template = '''\
-       function create_%(typename)s_object_f() result (obj)
-         %(typedecl_list)s
-         %(typedecl)s obj
-!        %(initexpr)s
-       end
-       subroutine initialize_%(typename)s_interface_f(init_c)
-         external create_%(typename)s_object_f
-         call init_c(create_%(typename)s_object_f)
-       end
-'''
-    pyobj_to_type_template = '''
-    static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-      if (PyTuple_Check(obj)) {
-        return 0;
-      }
-    return 0;
-    }
-'''
-
-    def __init__(self, parent, typedecl):
-        WrapperBase.__init__(self)
-        self.parent = parent
-        self.typedecl = typedecl.astypedecl()
-        self.typedecl_list = []
-        self.ctype = self.typedecl.get_c_type()
-        self.byte_size = self.typedecl.get_byte_size()
-        self.typename = self.typedecl.name.lower()
-        self.TYPENAME = self.typedecl.name.upper()
-        self.initexpr = self.typedecl.assign_expression('obj',self.typedecl.get_zero_value())
-        return
-
-    def fill(self):
-        ctype =self.typedecl.get_c_type()
-        if ctype.startswith('npy_') or ctype.startswith('f2py_string'):
-            # wrappers are defined via pyobj_to_* functions
-            self.parent.add_c_function('pyobj_to_%s' % (self.ctype))
-            return
-        if ctype.startswith('f2py_type'):
-            return
-            self.parent.add_typedef(ctype,
-                                    self.apply_attributes('typedef struct { char data[%(byte_size)s]; } %(ctype)s;'))
-            self.parent.add_c_function(self.apply_attributes('pyobj_to_%(ctype)s'),
-                                       self.apply_attributes(self.pyobj_to_type_template)
-                                       )
-        else:
-            self.parent.typedef_list.append(self.apply_attributes(self.typedef_template))
-            self.parent.objdecl_list.append(self.apply_attributes(self.objdecl_template))
-            self.parent.c_function_list.append(self.apply_attributes(self.funcdef_template))
-            self.parent.extern_list.append(self.apply_attributes(self.extdef_template))
-            self.parent.initialize_interface_list.append(self.apply_attributes(self.initcall_template))
-            self.parent.fortran_code_list.append(self.apply_attributes(self.fortran_code_template))
-            self.parent.add_cppmacro('F_FUNC')
-            self.parent.cppmacro_list.append(self.apply_attributes(self.cppmacro_template))
-        return
-
-
-
-
-if __name__ == '__main__':
-
-    foo_code = """! -*- f90 -*-
-      module rat
-        type info
-          complex*8 flag
-        end type info
-        type rational
-          !integer n,d
-          type(info) i
-        end type rational
-      end module rat
-      subroutine foo(a,b)
-        use rat
-        integer a
-        !character*5 b
-        type(rational) b
-        print*,'a=',a,b
-      end
-"""
-
-    wm = PythonWrapperModule('foo')
-    wm.add(parse(foo_code))
-    #wm.add_fortran_code(foo_code)
-    #wm.add_subroutine(str2stmt(foo_code))
-    #print wm.c_code()
-
-    c_code = wm.c_code()
-    f_code = wm.fortran_code()
-
-    f = open('foomodule.c','w')
-    f.write(c_code)
-    f.close()
-    f = open('foo.f','w')
-    f.write(foo_code)
-    f.close()
-    f = open('foo_wrap.f','w')
-    f.write(f_code)
-    f.close()
-    f = open('foo_setup.py','w')
-    f.write('''\
-def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration('foopack',parent_package,top_path)
-    config.add_library('foolib',
-                       sources = ['foo.f','foo_wrap.f'])
-    config.add_extension('foo',
-                         sources=['foomodule.c'],
-                         libraries = ['foolib'],
-                         define_macros = [('F2PY_DEBUG_PYOBJ_TOFROM',None)]
-                         )
-    return config
-if __name__ == '__main__':
-    from numpy.distutils.core import setup
-    setup(configuration=configuration)
-''')
-    f.close()
-    #print get_char_bit()
-    os.system('python foo_setup.py config_fc --fcompiler=gnu95 build build_ext --inplace')
-    import foo
-    #print foo.__doc__
-    #print dir(foo)
-    #print foo.info.__doc__
-    #print foo.rational.__doc__
-    #print dir(foo.rational)
-    i = foo.info(2)
-    print 'i=',i
-    #print i #,i.as_tuple()
-    #print 'i.flag=',i.flag
-    r = foo.rational(2)
-    print r
-    j = r.i
-    print 'r.i.flag=',(r.i).flag
-    print 'j.flag=',type(j.flag)
-    #print 'r=',r
-    sys.exit()
-    n,d,ii = r.as_tuple()
-    n += 1
-    print n,d
-    print r
-    #foo.foo(2,r)
-    print r.n, r.d
-    r.n = 5
-    print r
-    r.n -= 1
-    print r

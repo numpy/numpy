@@ -34,7 +34,7 @@ class HasImplicitStmt:
     def get_type_by_name(self, name):
         implicit_rules = self.a.implicit_rules
         if implicit_rules is None:
-            raise AnalyzeError,'Implicit rules mapping is null'
+            raise AnalyzeError,'Implicit rules mapping is null while getting %r type' % (name)
         l = name[0].lower()
         if implicit_rules.has_key(l):
             return implicit_rules[l]
@@ -86,8 +86,9 @@ class HasUseStmt:
                     return stmt
         return
 
-    def topyf(self):
-        pass
+    def topyf(self, tab='  '):
+        sys.stderr.write('HasUseStmt.topyf not implemented\n')
+        return ''
 
 class HasVariables:
 
@@ -160,7 +161,7 @@ class HasAttributes:
                 if isinstance(known_attributes,(list, tuple)):
                     if uattr not in known_attributes:
                         self.warning('unknown attribute %r' % (attr))
-                elif known_attributes(uattr):
+                elif not known_attributes(uattr):
                     self.warning('unknown attribute %r' % (attr))
                 attributes.append(uattr)
         return
@@ -266,6 +267,7 @@ class Module(BeginStatement, HasAttributes,
                         module_provides = {}, # all symbols that are public and so
                                               # can be imported via USE statement
                                               # by other blocks
+                        module_interface = {}
                         )
 
     known_attributes = ['PUBLIC', 'PRIVATE']
@@ -280,6 +282,9 @@ class Module(BeginStatement, HasAttributes,
 
     def get_provides(self):
         return self.a.module_provides
+
+    def get_interface(self):
+        return self.a.module_interface
 
     def analyze(self):
         content = self.content[:]
@@ -310,9 +315,11 @@ class Module(BeginStatement, HasAttributes,
     def topyf(self, tab=''):
         s = tab + 'MODULE '+self.name + '\n'
         s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
-        s +=  HasAttributesStmt.topyf(self, tab=tab+'  ')
+        s +=  HasAttributes.topyf(self, tab=tab+'  ')
         s +=  HasTypeDecls.topyf(self, tab=tab+'  ')
         s +=  HasVariables.topyf(self, tab=tab+'  ')
+        for name, stmt in self.a.module_interface.items():
+            s += stmt.topyf(tab=tab+'    ')
         s +=  tab + '  CONTAINS\n'
         for name, stmt in self.a.module_subprogram.items():
             s += stmt.topyf(tab=tab+'    ')
@@ -400,7 +407,7 @@ class EndInterface(EndStatement):
     blocktype = 'interface'
 
 class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
-                HasModuleProcedures
+                HasModuleProcedures, HasAttributes
                 ):
     """
     INTERFACE [<generic-spec>] | ABSTRACT INTERFACE
@@ -422,6 +429,8 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
     blocktype = 'interface'
 
     a = AttributeHolder(interface_provides = {})
+
+    known_attributes = ['PUBLIC','PRIVATE']
 
     def get_classes(self):
         l = intrinsic_type_spec + interface_specification
@@ -455,21 +464,35 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
             if isinstance(stmt, self.end_stmt_cls):
                 break
             stmt.analyze()
-            assert isinstance(stmt, SubProgramStatement),`stmt.__class__.__name__`
+            #assert isinstance(stmt, SubProgramStatement),`stmt.__class__.__name__`
         if content:
             self.show_message('Not analyzed content: %s' % content)
 
-        parent_provides = self.parent.get_provides()
-        if parent_provides is not None:
-            if self.is_public():
-                if parent_provides.has_key(self.name):
-                    self.warning('interface name conflict with %s, overriding.' % (self.name))
-                parent_provides[self.name] = self
-    
+        if self.parent.a.variables.has_key(self.name):
+            var = self.parent.a.variables.pop(self.name)
+            self.update_attributes(var.attributes)
+
+        parent_interface = self.parent.get_interface()
+        if parent_interface.has_key(self.name):
+            p = parent_interface[self.name]
+            last = p.content.pop()
+            assert isinstance(last,EndInterface),`last.__class__`
+            p.content += self.content
+            p.update_attributes(self.a.attributes)
+        else:
+            parent_interface[self.name] = self
         return
 
     def is_public(self):
-        return True # TODO: need review.
+        return 'PUBLIC' in self.a.attributes
+
+    def topyf(self, tab=''):
+        s = tab + self.tostr() + '\n'
+        s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
+        s +=  HasAttributes.topyf(self, tab=tab+'  ')
+        s +=  HasUseStmt.topyf(self, tab=tab+'  ')
+        s += tab + 'END' + self.tostr() + '\n'
+        return s        
 
 # Subroutine
 
@@ -927,7 +950,7 @@ class Type(BeginStatement, HasVariables, HasAttributes):
                         component_names = [], # specifies component order for sequence types
                         components = {}
                         )
-    known_attributes = re.compile(r'\A(PUBLIC|PRIVATE|SEQUENCE|ABSTRACT|BIND\s*\(.*\))\Z').match
+    known_attributes = re.compile(r'\A(PUBLIC|PRIVATE|SEQUENCE|ABSTRACT|BIND\s*\(.*\))\Z',re.I).match
 
     def process_item(self):
         line = self.item.get_line()[4:].lstrip()

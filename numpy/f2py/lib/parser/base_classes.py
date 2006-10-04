@@ -122,6 +122,14 @@ class Variable:
         self.init = None
         return
 
+    def __repr__(self):
+        l = []
+        for a in ['name','typedecl','dimension','bounds','length','attributes','intent','bind','check','init']:
+            v = getattr(self,a)
+            if v:
+                l.append('%s=%r' % (a,v))
+        return 'Variable: ' + ', '.join(l)
+
     def get_bit_size(self):
         typesize = self.typedecl.get_bit_size()
         if self.is_pointer():
@@ -372,7 +380,7 @@ class Statement:
             attr = getattr(self, n, None)
             if not attr: continue
             if hasattr(attr, 'torepr'):
-                r = attr.torepr(depht-1,incrtab)
+                r = attr.torepr(depth-1,incrtab)
             else:
                 r = repr(attr)
             l.append(ttab + '%s=%s' % (n, r))

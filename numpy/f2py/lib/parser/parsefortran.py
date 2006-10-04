@@ -66,10 +66,10 @@ class FortranParser:
                 message = reader.format_message('FATAL ERROR',
                                                 'while processing line',
                                                 reader.linecount, reader.linecount)
-                reader.show_message(message, sys.stdout)
+                reader.show_message(message, sys.stderr)
                 reader = reader.reader
-            traceback.print_exc(file=sys.stdout)
-            self.reader.show_message(red_text('STOPPED PARSING'), sys.stdout)
+            traceback.print_exc(file=sys.stderr)
+            self.reader.show_message(red_text('STOPPED PARSING'), sys.stderr)
             return
         return
 
@@ -84,8 +84,12 @@ class FortranParser:
             self.block.analyze()
         except AnalyzeError:
             pass
-        except:
-            raise
+        except Exception, msg:
+            if str(msg) != '123454321':
+                traceback.print_exc(file=sys.stderr)
+                self.reader.show_message(red_text('FATAL ERROR: STOPPED ANALYSING %r CONTENT' % (self.reader.source) ), sys.stderr)
+                sys.exit(123454321)
+            return
         self.is_analyzed = True
         return
 
