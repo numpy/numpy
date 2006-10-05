@@ -124,6 +124,11 @@ typedef struct {
 	PyObject *base;
 } PyVoidScalarObject;
 
+/* Macros
+     Py<Cls><bitsize>ScalarObject
+     Py<Cls><bitsize>ArrType_Type
+   are defined in ndarrayobject.h 
+*/
 
 #define PyArrayScalar_False ((PyObject *)(&(_PyArrayScalar_BoolValues[0])))
 #define PyArrayScalar_True ((PyObject *)(&(_PyArrayScalar_BoolValues[1])))

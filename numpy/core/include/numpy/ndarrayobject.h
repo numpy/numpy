@@ -289,27 +289,47 @@ typedef enum {
 #define NPY_UINT8 NPY_ULONG
         typedef long npy_int8;
         typedef unsigned long npy_uint8;
+#define PyInt8ScalarObject PyLongScalarObject
+#define PyInt8ArrType_Type PyLongArrType_Type
+#define PyUInt8ScalarObject PyULongScalarObject
+#define PyUInt8ArrType_Type PyULongArrType_Type
 #elif NPY_BITSOF_LONG == 16
 #define NPY_INT16 NPY_LONG
 #define NPY_UINT16 NPY_ULONG
         typedef long npy_int16;
         typedef unsigned long npy_uint16;
+#define PyInt16ScalarObject PyLongScalarObject
+#define PyInt16ArrType_Type PyLongArrType_Type
+#define PyUInt16ScalarObject PyULongScalarObject
+#define PyUInt16ArrType_Type PyULongArrType_Type
 #elif NPY_BITSOF_LONG == 32
 #define NPY_INT32 NPY_LONG
 #define NPY_UINT32 NPY_ULONG
         typedef long npy_int32;
         typedef unsigned long npy_uint32;
         typedef unsigned long npy_ucs4;
+#define PyInt32ScalarObject PyLongScalarObject
+#define PyInt32ArrType_Type PyLongArrType_Type
+#define PyUInt32ScalarObject PyULongScalarObject
+#define PyUInt32ArrType_Type PyULongArrType_Type
 #elif NPY_BITSOF_LONG == 64
 #define NPY_INT64 NPY_LONG
 #define NPY_UINT64 NPY_ULONG
         typedef long npy_int64;
         typedef unsigned long npy_uint64;
+#define PyInt64ScalarObject PyLongScalarObject
+#define PyInt64ArrType_Type PyLongArrType_Type
+#define PyUInt64ScalarObject PyULongScalarObject
+#define PyUInt64ArrType_Type PyULongArrType_Type
 #elif NPY_BITSOF_LONG == 128
 #define NPY_INT128 NPY_LONG
 #define NPY_UINT128 NPY_ULONG
         typedef long npy_int128;
         typedef unsigned long npy_uint128;
+#define PyInt128ScalarObject PyLongScalarObject
+#define PyInt128ArrType_Type PyLongArrType_Type
+#define PyUInt128ScalarObject PyULongScalarObject
+#define PyUInt128ArrType_Type PyULongArrType_Type
 #endif
 
 #if NPY_BITSOF_LONGLONG == 8
@@ -318,6 +338,10 @@ typedef enum {
 #    define NPY_UINT8 NPY_ULONGLONG
         typedef npy_longlong npy_int8;
         typedef npy_ulonglong npy_uint8;
+#    define PyInt8ScalarObject PyLongLongScalarObject
+#    define PyInt8ArrType_Type PyLongLongArrType_Type
+#    define PyUInt8ScalarObject PyULongLongScalarObject
+#    define PyUInt8ArrType_Type PyULongLongArrType_Type
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT8
 #  define NPY_MIN_LONGLONG NPY_MIN_INT8
@@ -328,6 +352,10 @@ typedef enum {
 #    define NPY_UINT16 NPY_ULONGLONG
         typedef npy_longlong npy_int16;
         typedef npy_ulonglong npy_uint16;
+#    define PyInt16ScalarObject PyLongLongScalarObject
+#    define PyInt16ArrType_Type PyLongLongArrType_Type
+#    define PyUInt16ScalarObject PyULongLongScalarObject
+#    define PyUInt16ArrType_Type PyULongLongArrType_Type
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT16
 #  define NPY_MIN_LONGLONG NPY_MIN_INT16
@@ -339,6 +367,10 @@ typedef enum {
         typedef npy_longlong npy_int32;
         typedef npy_ulonglong npy_uint32;
         typedef npy_ulonglong npy_ucs4;
+#    define PyInt32ScalarObject PyLongLongScalarObject
+#    define PyInt32ArrType_Type PyLongLongArrType_Type
+#    define PyUInt32ScalarObject PyULongLongScalarObject
+#    define PyUInt32ArrType_Type PyULongLongArrType_Type
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT32
 #  define NPY_MIN_LONGLONG NPY_MIN_INT32
@@ -349,6 +381,10 @@ typedef enum {
 #    define NPY_UINT64 NPY_ULONGLONG
         typedef npy_longlong npy_int64;
         typedef npy_ulonglong npy_uint64;
+#    define PyInt64ScalarObject PyLongLongScalarObject
+#    define PyInt64ArrType_Type PyLongLongArrType_Type
+#    define PyUInt64ScalarObject PyULongLongScalarObject
+#    define PyUInt64ArrType_Type PyULongLongArrType_Type
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT64
 #  define NPY_MIN_LONGLONG NPY_MIN_INT64
@@ -359,6 +395,10 @@ typedef enum {
 #    define NPY_UINT128 NPY_ULONGLONG
         typedef npy_longlong npy_int128;
         typedef npy_ulonglong npy_uint128;
+#    define PyInt128ScalarObject PyLongLongScalarObject
+#    define PyInt128ArrType_Type PyLongLongArrType_Type
+#    define PyUInt128ScalarObject PyULongLongScalarObject
+#    define PyUInt128ArrType_Type PyULongLongArrType_Type
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT128
 #  define NPY_MIN_LONGLONG NPY_MIN_INT128
@@ -368,6 +408,10 @@ typedef enum {
 #  define NPY_UINT256 NPY_ULONGLONG
         typedef npy_longlong npy_int256;
         typedef npy_ulonglong npy_uint256;
+#  define PyInt256ScalarObject PyLongLongScalarObject
+#  define PyInt256ArrType_Type PyLongLongArrType_Type
+#  define PyUInt256ScalarObject PyULongLongScalarObject
+#  define PyUInt256ArrType_Type PyULongLongArrType_Type
 #  define NPY_MAX_LONGLONG NPY_MAX_INT256
 #  define NPY_MIN_LONGLONG NPY_MIN_INT256
 #  define NPY_MAX_ULONGLONG NPY_MAX_UINT256
@@ -379,6 +423,10 @@ typedef enum {
 #define NPY_UINT8 NPY_UINT
         typedef int npy_int8;
         typedef unsigned int npy_uint8;
+#    define PyInt8ScalarObject PyIntScalarObject
+#    define PyInt8ArrType_Type PyIntArrType_Type
+#    define PyUInt8ScalarObject PyUIntScalarObject
+#    define PyUInt8ArrType_Type PyUIntArrType_Type
 #endif
 #elif NPY_BITSOF_INT == 16
 #ifndef NPY_INT16
@@ -386,6 +434,10 @@ typedef enum {
 #define NPY_UINT16 NPY_UINT
         typedef int npy_int16;
         typedef unsigned int npy_uint16;
+#    define PyInt16ScalarObject PyIntScalarObject
+#    define PyInt16ArrType_Type PyIntArrType_Type
+#    define PyUInt16ScalarObject PyIntUScalarObject
+#    define PyUInt16ArrType_Type PyIntUArrType_Type
 #endif
 #elif NPY_BITSOF_INT == 32
 #ifndef NPY_INT32
@@ -394,6 +446,10 @@ typedef enum {
         typedef int npy_int32;
         typedef unsigned int npy_uint32;
         typedef unsigned int npy_ucs4;
+#    define PyInt32ScalarObject PyIntScalarObject
+#    define PyInt32ArrType_Type PyIntArrType_Type
+#    define PyUInt32ScalarObject PyUIntScalarObject
+#    define PyUInt32ArrType_Type PyUIntArrType_Type
 #endif
 #elif NPY_BITSOF_INT == 64
 #ifndef NPY_INT64
@@ -401,6 +457,10 @@ typedef enum {
 #define NPY_UINT64 NPY_UINT
         typedef int npy_int64;
         typedef unsigned int npy_uint64;
+#    define PyInt64ScalarObject PyIntScalarObject
+#    define PyInt64ArrType_Type PyIntArrType_Type
+#    define PyUInt64ScalarObject PyUIntScalarObject
+#    define PyUInt64ArrType_Type PyUIntArrType_Type
 #endif
 #elif NPY_BITSOF_INT == 128
 #ifndef NPY_INT128
@@ -408,6 +468,10 @@ typedef enum {
 #define NPY_UINT128 NPY_UINT
         typedef int npy_int128;
         typedef unsigned int npy_uint128;
+#    define PyInt128ScalarObject PyIntScalarObject
+#    define PyInt128ArrType_Type PyIntArrType_Type
+#    define PyUInt128ScalarObject PyUIntScalarObject
+#    define PyUInt128ArrType_Type PyUIntArrType_Type
 #endif
 #endif
 
@@ -417,6 +481,10 @@ typedef enum {
 #define NPY_UINT8 NPY_USHORT
         typedef short npy_int8;
         typedef unsigned short npy_uint8;
+#    define PyInt8ScalarObject PyShortScalarObject
+#    define PyInt8ArrType_Type PyShortArrType_Type
+#    define PyUInt8ScalarObject PyUShortScalarObject
+#    define PyUInt8ArrType_Type PyUShortArrType_Type
 #endif
 #elif NPY_BITSOF_SHORT == 16
 #ifndef NPY_INT16
@@ -424,6 +492,10 @@ typedef enum {
 #define NPY_UINT16 NPY_USHORT
         typedef short npy_int16;
         typedef unsigned short npy_uint16;
+#    define PyInt16ScalarObject PyShortScalarObject
+#    define PyInt16ArrType_Type PyShortArrType_Type
+#    define PyUInt16ScalarObject PyUShortScalarObject
+#    define PyUInt16ArrType_Type PyUShortArrType_Type
 #endif
 #elif NPY_BITSOF_SHORT == 32
 #ifndef NPY_INT32
@@ -432,6 +504,10 @@ typedef enum {
         typedef short npy_int32;
         typedef unsigned short npy_uint32;
         typedef unsigned short npy_ucs4;
+#    define PyInt32ScalarObject PyShortScalarObject
+#    define PyInt32ArrType_Type PyShortArrType_Type
+#    define PyUInt32ScalarObject PyUShortScalarObject
+#    define PyUInt32ArrType_Type PyUShortArrType_Type
 #endif
 #elif NPY_BITSOF_SHORT == 64
 #ifndef NPY_INT64
@@ -439,6 +515,10 @@ typedef enum {
 #define NPY_UINT64 NPY_USHORT
         typedef short npy_int64;
         typedef unsigned short npy_uint64;
+#    define PyInt64ScalarObject PyShortScalarObject
+#    define PyInt64ArrType_Type PyShortArrType_Type
+#    define PyUInt64ScalarObject PyUShortScalarObject
+#    define PyUInt64ArrType_Type PyUShortArrType_Type
 #endif
 #elif NPY_BITSOF_SHORT == 128
 #ifndef NPY_INT128
@@ -446,6 +526,10 @@ typedef enum {
 #define NPY_UINT128 NPY_USHORT
         typedef short npy_int128;
         typedef unsigned short npy_uint128;
+#    define PyInt128ScalarObject PyShortScalarObject
+#    define PyInt128ArrType_Type PyShortArrType_Type
+#    define PyUInt128ScalarObject PyUShortScalarObject
+#    define PyUInt128ArrType_Type PyUShortArrType_Type
 #endif
 #endif
 
@@ -456,6 +540,10 @@ typedef enum {
 #define NPY_UINT8 NPY_UBYTE
         typedef signed char npy_int8;
         typedef unsigned char npy_uint8;
+#    define PyInt8ScalarObject PyByteScalarObject
+#    define PyInt8ArrType_Type PyByteArrType_Type
+#    define PyUInt8ScalarObject PyUByteScalarObject
+#    define PyUInt8ArrType_Type PyUByteArrType_Type
 #endif
 #elif NPY_BITSOF_CHAR == 16
 #ifndef NPY_INT16
@@ -463,6 +551,10 @@ typedef enum {
 #define NPY_UINT16 NPY_UBYTE
         typedef signed char npy_int16;
         typedef unsigned char npy_uint16;
+#    define PyInt16ScalarObject PyByteScalarObject
+#    define PyInt16ArrType_Type PyByteArrType_Type
+#    define PyUInt16ScalarObject PyUByteScalarObject
+#    define PyUInt16ArrType_Type PyUByteArrType_Type
 #endif
 #elif NPY_BITSOF_CHAR == 32
 #ifndef NPY_INT32
@@ -471,6 +563,10 @@ typedef enum {
         typedef signed char npy_int32;
         typedef unsigned char npy_uint32;
         typedef unsigned char npy_ucs4;
+#    define PyInt32ScalarObject PyByteScalarObject
+#    define PyInt32ArrType_Type PyByteArrType_Type
+#    define PyUInt32ScalarObject PyUByteScalarObject
+#    define PyUInt32ArrType_Type PyUByteArrType_Type
 #endif
 #elif NPY_BITSOF_CHAR == 64
 #ifndef NPY_INT64
@@ -478,6 +574,10 @@ typedef enum {
 #define NPY_UINT64 NPY_UBYTE
         typedef signed char npy_int64;
         typedef unsigned char npy_uint64;
+#    define PyInt64ScalarObject PyByteScalarObject
+#    define PyInt64ArrType_Type PyByteArrType_Type
+#    define PyUInt64ScalarObject PyUByteScalarObject
+#    define PyUInt64ArrType_Type PyUByteArrType_Type
 #endif
 #elif NPY_BITSOF_CHAR == 128
 #ifndef NPY_INT128
@@ -485,6 +585,10 @@ typedef enum {
 #define NPY_UINT128 NPY_UBYTE
         typedef signed char npy_int128;
         typedef unsigned char npy_uint128;
+#    define PyInt128ScalarObject PyByteScalarObject
+#    define PyInt128ArrType_Type PyByteArrType_Type
+#    define PyUInt128ScalarObject PyUByteScalarObject
+#    define PyUInt128ArrType_Type PyUByteArrType_Type
 #endif
 #endif
 
@@ -496,6 +600,10 @@ typedef enum {
 #define NPY_COMPLEX32 NPY_CDOUBLE
         typedef  double npy_float16;
         typedef npy_cdouble npy_complex32;
+#    define PyFloat16ScalarObject PyDoubleScalarObject
+#    define PyComplex32ScalarObject PyCDoubleScalarObject
+#    define PyFloat16ArrType_Type PyDoubleArrType_Type
+#    define PyComplex32ArrType_Type PyCDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_DOUBLE == 32
 #ifndef NPY_FLOAT32
@@ -503,6 +611,10 @@ typedef enum {
 #define NPY_COMPLEX64 NPY_CDOUBLE
         typedef double npy_float32;
         typedef npy_cdouble npy_complex64;
+#    define PyFloat32ScalarObject PyDoubleScalarObject
+#    define PyComplex64ScalarObject PyCDoubleScalarObject
+#    define PyFloat32ArrType_Type PyDoubleArrType_Type
+#    define PyComplex64ArrType_Type PyCDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_DOUBLE == 64
 #ifndef NPY_FLOAT64
@@ -510,6 +622,10 @@ typedef enum {
 #define NPY_COMPLEX128 NPY_CDOUBLE
         typedef double npy_float64;
         typedef npy_cdouble npy_complex128;
+#    define PyFloat64ScalarObject PyDoubleScalarObject
+#    define PyComplex128ScalarObject PyCDoubleScalarObject
+#    define PyFloat64ArrType_Type PyDoubleArrType_Type
+#    define PyComplex128ArrType_Type PyCDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_DOUBLE == 80
 #ifndef NPY_FLOAT80
@@ -517,6 +633,10 @@ typedef enum {
 #define NPY_COMPLEX160 NPY_CDOUBLE
         typedef double npy_float80;
         typedef npy_cdouble npy_complex160;
+#    define PyFloat80ScalarObject PyDoubleScalarObject
+#    define PyComplex160ScalarObject PyCDoubleScalarObject
+#    define PyFloat80ArrType_Type PyDoubleArrType_Type
+#    define PyComplex160ArrType_Type PyCDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_DOUBLE == 96
 #ifndef NPY_FLOAT96
@@ -524,6 +644,10 @@ typedef enum {
 #define NPY_COMPLEX192 NPY_CDOUBLE
         typedef double npy_float96;
         typedef npy_cdouble npy_complex192;
+#    define PyFloat96ScalarObject PyDoubleScalarObject
+#    define PyComplex192ScalarObject PyCDoubleScalarObject
+#    define PyFloat96ArrType_Type PyDoubleArrType_Type
+#    define PyComplex192ArrType_Type PyCDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_DOUBLE == 128
 #ifndef NPY_FLOAT128
@@ -531,6 +655,10 @@ typedef enum {
 #define NPY_COMPLEX256 NPY_CDOUBLE
         typedef double npy_float128;
         typedef npy_cdouble npy_complex256;
+#    define PyFloat128ScalarObject PyDoubleScalarObject
+#    define PyComplex256ScalarObject PyCDoubleScalarObject
+#    define PyFloat128ArrType_Type PyDoubleArrType_Type
+#    define PyComplex256ArrType_Type PyCDoubleArrType_Type
 #endif
 #endif
 
@@ -542,6 +670,10 @@ typedef enum {
 #define NPY_COMPLEX32 NPY_CFLOAT
         typedef float npy_float16;
         typedef npy_cfloat npy_complex32;
+#    define PyFloat16ScalarObject PyFloatScalarObject
+#    define PyComplex32ScalarObject PyCFloatScalarObject
+#    define PyFloat16ArrType_Type PyFloatArrType_Type
+#    define PyComplex32ArrType_Type PyCFloatArrType_Type
 #endif
 #elif NPY_BITSOF_FLOAT == 32
 #ifndef NPY_FLOAT32
@@ -549,6 +681,10 @@ typedef enum {
 #define NPY_COMPLEX64 NPY_CFLOAT
         typedef float npy_float32;
         typedef npy_cfloat npy_complex64;
+#    define PyFloat32ScalarObject PyFloatScalarObject
+#    define PyComplex64ScalarObject PyCFloatScalarObject
+#    define PyFloat32ArrType_Type PyFloatArrType_Type
+#    define PyComplex64ArrType_Type PyCFloatArrType_Type
 #endif
 #elif NPY_BITSOF_FLOAT == 64
 #ifndef NPY_FLOAT64
@@ -556,6 +692,10 @@ typedef enum {
 #define NPY_COMPLEX128 NPY_CFLOAT
         typedef float npy_float64;
         typedef npy_cfloat npy_complex128;
+#    define PyFloat64ScalarObject PyFloatScalarObject
+#    define PyComplex128ScalarObject PyCFloatScalarObject
+#    define PyFloat64ArrType_Type PyFloatArrType_Type
+#    define PyComplex128ArrType_Type PyCFloatArrType_Type
 #endif
 #elif NPY_BITSOF_FLOAT == 80
 #ifndef NPY_FLOAT80
@@ -563,6 +703,10 @@ typedef enum {
 #define NPY_COMPLEX160 NPY_CFLOAT
         typedef float npy_float80;
         typedef npy_cfloat npy_complex160;
+#    define PyFloat80ScalarObject PyFloatScalarObject
+#    define PyComplex160ScalarObject PyCFloatScalarObject
+#    define PyFloat80ArrType_Type PyFloatArrType_Type
+#    define PyComplex160ArrType_Type PyCFloatArrType_Type
 #endif
 #elif NPY_BITSOF_FLOAT == 96
 #ifndef NPY_FLOAT96
@@ -570,6 +714,10 @@ typedef enum {
 #define NPY_COMPLEX192 NPY_CFLOAT
         typedef float npy_float96;
         typedef npy_cfloat npy_complex192;
+#    define PyFloat96ScalarObject PyFloatScalarObject
+#    define PyComplex192ScalarObject PyCFloatScalarObject
+#    define PyFloat96ArrType_Type PyFloatArrType_Type
+#    define PyComplex192ArrType_Type PyCFloatArrType_Type
 #endif
 #elif NPY_BITSOF_FLOAT == 128
 #ifndef NPY_FLOAT128
@@ -577,6 +725,10 @@ typedef enum {
 #define NPY_COMPLEX256 NPY_CFLOAT
         typedef float npy_float128;
         typedef npy_cfloat npy_complex256;
+#    define PyFloat128ScalarObject PyFloatScalarObject
+#    define PyComplex256ScalarObject PyCFloatScalarObject
+#    define PyFloat128ArrType_Type PyFloatArrType_Type
+#    define PyComplex256ArrType_Type PyCFloatArrType_Type
 #endif
 #endif
 
@@ -587,6 +739,10 @@ typedef enum {
 #define NPY_COMPLEX32 NPY_CLONGDOUBLE
         typedef npy_longdouble npy_float16;
         typedef npy_clongdouble npy_complex32;
+#    define PyFloat16ScalarObject PyLongDoubleScalarObject
+#    define PyComplex32ScalarObject PyCLongDoubleScalarObject
+#    define PyFloat16ArrType_Type PyLongDoubleArrType_Type
+#    define PyComplex32ArrType_Type PyCLongDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 32
 #ifndef NPY_FLOAT32
@@ -594,6 +750,10 @@ typedef enum {
 #define NPY_COMPLEX64 NPY_CLONGDOUBLE
         typedef npy_longdouble npy_float32;
         typedef npy_clongdouble npy_complex64;
+#    define PyFloat32ScalarObject PyLongDoubleScalarObject
+#    define PyComplex64ScalarObject PyCLongDoubleScalarObject
+#    define PyFloat32ArrType_Type PyLongDoubleArrType_Type
+#    define PyComplex64ArrType_Type PyCLongDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 64
 #ifndef NPY_FLOAT64
@@ -601,6 +761,10 @@ typedef enum {
 #define NPY_COMPLEX128 NPY_CLONGDOUBLE
         typedef npy_longdouble npy_float64;
         typedef npy_clongdouble npy_complex128;
+#    define PyFloat64ScalarObject PyLongDoubleScalarObject
+#    define PyComplex128ScalarObject PyCLongDoubleScalarObject
+#    define PyFloat64ArrType_Type PyLongDoubleArrType_Type
+#    define PyComplex128ArrType_Type PyCLongDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 80
 #ifndef NPY_FLOAT80
@@ -608,6 +772,10 @@ typedef enum {
 #define NPY_COMPLEX160 NPY_CLONGDOUBLE
         typedef npy_longdouble npy_float80;
         typedef npy_clongdouble npy_complex160;
+#    define PyFloat80ScalarObject PyLongDoubleScalarObject
+#    define PyComplex160ScalarObject PyCLongDoubleScalarObject
+#    define PyFloat80ArrType_Type PyLongDoubleArrType_Type
+#    define PyComplex160ArrType_Type PyCLongDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 96
 #ifndef NPY_FLOAT96
@@ -615,6 +783,10 @@ typedef enum {
 #define NPY_COMPLEX192 NPY_CLONGDOUBLE
         typedef npy_longdouble npy_float96;
         typedef npy_clongdouble npy_complex192;
+#    define PyFloat96ScalarObject PyLongDoubleScalarObject
+#    define PyComplex192ScalarObject PyCLongDoubleScalarObject
+#    define PyFloat96ArrType_Type PyLongDoubleArrType_Type
+#    define PyComplex192ArrType_Type PyCLongDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 128
 #ifndef NPY_FLOAT128
@@ -622,12 +794,20 @@ typedef enum {
 #define NPY_COMPLEX256 NPY_CLONGDOUBLE
         typedef npy_longdouble npy_float128;
         typedef npy_clongdouble npy_complex256;
+#    define PyFloat128ScalarObject PyLongDoubleScalarObject
+#    define PyComplex256ScalarObject PyCLongDoubleScalarObject
+#    define PyFloat128ArrType_Type PyLongDoubleArrType_Type
+#    define PyComplex256ArrType_Type PyCLongDoubleArrType_Type
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 256
 #define NPY_FLOAT256 NPY_LONGDOUBLE
 #define NPY_COMPLEX512 NPY_CLONGDOUBLE
         typedef npy_longdouble npy_float256;
         typedef npy_clongdouble npy_complex512;
+#    define PyFloat256ScalarObject PyLongDoubleScalarObject
+#    define PyComplex512ScalarObject PyCLongDoubleScalarObject
+#    define PyFloat256ArrType_Type PyLongDoubleArrType_Type
+#    define PyComplex512ArrType_Type PyCLongDoubleArrType_Type
 #endif
 
         /* End of typedefs for numarray style bit-width names */
