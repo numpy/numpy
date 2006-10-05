@@ -514,7 +514,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
 
     elif isinstance(obj, recarray):
         copied = 0
-        if dtype is not None and (new.dtype != dtype):
+        if dtype is not None and (obj.dtype != dtype):
             new = obj.astype(dtype)
             copied = 1
         else:
