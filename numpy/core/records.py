@@ -513,13 +513,11 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             return fromarrays(obj, dtype=dtype, shape=shape, **kwds)
 
     elif isinstance(obj, recarray):
-        copied = 0
         if dtype is not None and (obj.dtype != dtype):
-            new = obj.astype(dtype)
-            copied = 1
+            new = obj.view(dtype)
         else:
             new = obj
-        if copy and not copied:
+        if copy:
             new = new.copy()
         return new
 
@@ -527,13 +525,11 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, sb.ndarray):
-        copied = 0
         if dtype is not None and (obj.dtype != dtype):
-            new = obj.astype(dtype)
-            copied = 1
+            new = obj.view(dtype)
         else:
             new = obj
-        if copy and not copied:
+        if copy:
             new = new.copy()
         res = new.view(recarray)
         if issubclass(res.dtype.type, nt.void):
