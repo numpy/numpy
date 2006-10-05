@@ -306,7 +306,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     for k, obj in enumerate(arrayList):
         nn = len(descr[k].shape)
         if obj.shape[nn:] != shape:
-            raise ValueError, "array-shape mismatch in array", k
+            raise ValueError, "array-shape mismatch in array %d" % k
         
     _array = recarray(shape, descr)
 
