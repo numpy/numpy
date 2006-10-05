@@ -92,6 +92,10 @@ def roots(p):
     # find non-zero array entries
     non_zero = NX.nonzero(NX.ravel(p))[0]
 
+    # Return an empty array if polynomial is all zeros
+    if len(non_zero) == 0:
+        return NX.array([])
+
     # find the number of trailing zeros -- this is the number of roots at 0.
     trailing_zeros = len(p) - non_zero[-1] - 1
 
@@ -109,7 +113,7 @@ def roots(p):
         A[0, :] = -p[1:] / p[0]
         roots = _eigvals(A)
     else:
-        return NX.array([])
+        roots = NX.array([])
 
     # tack any zeros onto the back of the array
     roots = hstack((roots, NX.zeros(trailing_zeros, roots.dtype)))
