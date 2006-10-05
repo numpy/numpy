@@ -1023,8 +1023,7 @@ def i0(x):
 
 def kaiser(M,beta):
     """kaiser(M, beta) returns a Kaiser window of length M with shape parameter
-    beta. It depends on numpy.special (in full numpy) for the modified bessel
-    function i0.
+    beta. 
     """
     from numpy.dual import i0
     n = arange(0,M)

@@ -749,79 +749,23 @@ gentype_priority_get(PyObject *self)
 }
 
 static PyObject *
-gentype_typestr_get(PyObject *self)
-{
-        PyArrayObject *arr;
-        PyObject *ret;
-
-        arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-        ret = PyObject_GetAttrString((PyObject *)arr->descr, "str");
-        Py_DECREF(arr);
-        return ret;
-}
-
-static PyObject *
-gentype_descr_get(PyObject *self)
-{
-        PyArrayObject *arr;
-        PyObject *inter;
-        PyObject *ret;
-
-        arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-        inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
-        Py_DECREF(arr);
-        if (inter == NULL) return NULL;
-        ret = PyDict_GetItemString(inter, "descr");
-        Py_DECREF(inter);
-        Py_XINCREF(ret);
-        return ret;
-}
-
-static PyObject *
 gentype_shape_get(PyObject *self)
 {
         return PyTuple_New(0);
-}
-
-static PyObject *
-gentype_dataptr_get(PyObject *self)
-{
-        return Py_BuildValue("NO",PyString_FromString(""),Py_True);
 }
 
 
 static PyObject *
 gentype_interface_get(PyObject *self)
 {
-        PyObject *obj, *dict;
-        dict = PyDict_New();
-        if (dict == NULL) return NULL;
-        obj = gentype_typestr_get(self);
-        if (obj == NULL) goto fail;
-        PyDict_SetItemString(dict, "typestr", obj);
-        Py_DECREF(obj);
+        PyArrayObject *arr;
+        PyObject *inter;
 
-        obj = gentype_shape_get(self);
-        if (obj == NULL) goto fail;
-        PyDict_SetItemString(dict, "shape", obj);
-        PyDict_SetItemString(dict, "strides", obj);
-        Py_DECREF(obj);
-
-        obj = gentype_dataptr_get(self);
-        if (obj == NULL) goto fail;
-        PyDict_SetItemString(dict, "data", obj);
-        Py_DECREF(obj);
-
-        obj = gentype_descr_get(self);
-        if (obj == NULL) goto fail;
-        PyDict_SetItemString(dict, "descr", obj);
-        Py_DECREF(obj);
-
-        return dict;
-
- fail:
-        Py_DECREF(dict);
-        return NULL;
+        arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+        if (arr == NULL) return NULL;
+        inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
+        Py_DECREF(arr);
+        return inter;
 }
 
 

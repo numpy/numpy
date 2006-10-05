@@ -6702,7 +6702,8 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
         }
         if (PyArray_Check(s))
                 return PyArray_NDIM(s);
-        if(PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s))
+        if (PyArray_IsScalar(s, Generic)) return 0;
+        if (PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s))
                 return stop_at_string ? 0:1;
         if (stop_at_tuple && PyTuple_Check(s)) return 0;
         if ((e=PyObject_GetAttrString(s, "__array_interface__")) != NULL) {
