@@ -2,6 +2,7 @@
 import os
 import sys
 import re
+
 __all__ = ['WrapperBase','WrapperCPPMacro','WrapperCCode']
 
 class WrapperBase:
@@ -101,6 +102,12 @@ class WrapperBase:
                 attrs = joinsymbol.join(attrs)
             d[name] = str(attrs).replace('\n','\n'+tab)
         return template % d
+
+    def apply_templates(self, child):
+        for n in parent.list_names:
+            l = getattr(parent,n + '_list')
+            l.append(child.apply_attributes(getattr(child, n+'_template','')))
+        return
 
 class WrapperCPPMacro(WrapperBase):
     """

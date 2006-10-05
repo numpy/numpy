@@ -266,7 +266,7 @@ def build_extension(sys_argv):
                                  extra_objects = extra_objects,
                                  )
         if external_subprograms:
-            wrapper = PythonWrapper(modulename)
+            wrapper = PythonWrapperModule(modulename)
             for block in external_subprograms:
                 wrapper.add(block)
             c_code = wrapper.c_code()
@@ -301,7 +301,7 @@ def build_extension(sys_argv):
         new_sys_argv += ['config_fc'] + fc_flags
     sys.argv[:] = new_sys_argv
 
-    sys.stderr.write('setup arguments: %r' % (' '.join(sys.argv)))
+    sys.stderr.write('setup arguments: %r\n' % (' '.join(sys.argv)))
 
     from numpy.distutils.core import setup
     setup(configuration=configuration)
