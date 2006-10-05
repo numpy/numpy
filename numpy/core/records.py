@@ -301,11 +301,12 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     d0 = descr[0].shape
     nn = len(d0)
     if nn > 0:
-        shape = shape[nn:]
+        shape = shape[:-nn]
         
     for k, obj in enumerate(arrayList):
         nn = len(descr[k].shape)
-        if obj.shape[nn:] != shape:
+        testshape = obj.shape[:len(obj.shape)-nn]
+        if testshape != shape:
             raise ValueError, "array-shape mismatch in array %d" % k
         
     _array = recarray(shape, descr)
