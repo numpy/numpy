@@ -78,7 +78,7 @@ PyArray_CanCoerceScalar
 PyArray_NewFlagsObject
 PyArray_CanCastScalar
 PyArray_CompareUCS4
-PyArray_RemoveLargest
+PyArray_RemoveSmallest
 PyArray_ElementStrides
 PyArray_Item_INCREF
 PyArray_Item_XDECREF

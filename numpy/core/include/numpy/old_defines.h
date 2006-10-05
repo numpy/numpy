@@ -165,3 +165,5 @@
 #define PyArray_MAX_ELSIZE NPY_MAX_ELSIZE
 
 #define PyArray_USE_PYMEM NPY_USE_PYMEM
+
+#define PyArray_RemoveLargest PyArray_RemoveSmallest

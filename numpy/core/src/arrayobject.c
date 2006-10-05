@@ -950,7 +950,7 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
                 return -1;
         }
 
-        maxaxis = PyArray_RemoveLargest(multi);
+        maxaxis = PyArray_RemoveSmallest(multi);
         if (maxaxis < 0) { /* copy 1 0-d array to another */
                 PyArray_XDECREF(dest);
                 memcpy(dest->data, src->data, elsize);
@@ -7455,7 +7455,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 
         icopyfunc = in->descr->f->copyswapn;
         ocopyfunc = out->descr->f->copyswapn;
-        maxaxis = PyArray_RemoveLargest(multi);
+        maxaxis = PyArray_RemoveSmallest(multi);
         if (maxaxis < 0) { /* cast 1 0-d array to another */
                 N = 1;
                 maxdim = 1;
@@ -8765,7 +8765,8 @@ PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
 
 /*OBJECT_API
  Get Iterator that iterates over all but one axis (don't use this with
- PyArray_ITER_GOTO1D).  The axis will be over-written if negative.
+ PyArray_ITER_GOTO1D).  The axis will be over-written if negative
+ with the axis having the smallest stride. 
 */
 static PyObject *
 PyArray_IterAllButAxis(PyObject *obj, int *inaxis)
@@ -8778,15 +8779,21 @@ PyArray_IterAllButAxis(PyObject *obj, int *inaxis)
         if (PyArray_NDIM(obj)==0)
                 return (PyObject *)it;
         if (*inaxis < 0) {
-                int i, maxaxis=0;
-                intp maxdim=PyArray_DIM(obj,0);
+                int i, minaxis=0;
+                intp minstride=0;
+                i = 0;
+                while (minstride==0 && i<PyArray_NDIM(obj)) {
+                        minstride = PyArray_STRIDE(obj,i);
+                        i++;
+                }
                 for (i=1; i<PyArray_NDIM(obj); i++) {
-                        if (PyArray_DIM(obj,i) > maxdim) {
-                                maxaxis = i;
-                                maxdim = PyArray_DIM(obj,i);
+                        if (PyArray_STRIDE(obj,i) > 0 && 
+                            PyArray_STRIDE(obj, i) < minstride) {
+                                minaxis = i;
+                                minstride = PyArray_STRIDE(obj,i);
                         }
                 }
-                *inaxis = maxaxis;
+                *inaxis = minaxis;
         }
         axis = *inaxis;
         /* adjust so that will not iterate over axis */
@@ -8807,27 +8814,36 @@ PyArray_IterAllButAxis(PyObject *obj, int *inaxis)
    adjusted */
 
 /*OBJECT_API
-  Adjusts previously broadcasted iterators so that the largest axis
-  is not iterated over.
-  Returns dimension which is largest in the range [0,multi->nd).
+  Adjusts previously broadcasted iterators so that the axis with 
+  the smallest sum of iterator strides is not iterated over.
+  Returns dimension which is smallest in the range [0,multi->nd).
   A -1 is returned if multi->nd == 0.
  */
 static int
-PyArray_RemoveLargest(PyArrayMultiIterObject *multi)
+PyArray_RemoveSmallest(PyArrayMultiIterObject *multi)
 {
         PyArrayIterObject *it;
-        int i;
-        int axis=0;
-        intp longest;
+        int i, j;
+        int axis;
+        intp smallest;
+        intp sumstrides[NPY_MAXDIMS];
 
         if (multi->nd == 0) return -1;
 
-        longest = multi->dimensions[0];
+
+        for (i=0; i<multi->nd; i++) {
+                sumstrides[i] = 0;
+                for (j=0; j<multi->numiter; j++) {
+                        sumstrides[i] = multi->iters[j]->strides[i];
+                }
+        }
+        axis=0;
+        smallest = sumstrides[0];
         /* Find longest dimension */
         for (i=1; i<multi->nd; i++) {
-                if (multi->dimensions[i] > longest) {
+                if (sumstrides[i] < smallest) {
                         axis = i;
-                        longest = multi->dimensions[i];
+                        smallest = sumstrides[i];
                 }
         }
 

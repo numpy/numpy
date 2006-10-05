@@ -1144,37 +1144,60 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
         loop->numiter = self->nargs;
 
-        /* Fill in steps */
-        if (loop->meth != ONE_UFUNCLOOP) {
-		int ldim = 0;
-		intp maxdim=-1;
+	/* Fill in steps */
+	if (loop->meth != ONE_UFUNCLOOP) {
+		int ldim;
+		intp minsum;
+		intp maxdim;
 		PyArrayIterObject *it;
+		intp stride_sum[NPY_MAXDIMS];
+		int j;
 
-                /* Fix iterators */
+		/* Fix iterators */
 
-                /* Find the **largest** dimension */
+		/* Optimize axis the iteration takes place over
 
-		maxdim = -1;
-		for (i=loop->nd - 1; i>=0; i--) {
-			if (loop->dimensions[i] > maxdim) {
-				ldim = i;
-				maxdim = loop->dimensions[i];
+		The first thought was to have the loop go 
+		over the largest dimension to minimize the number of loops
+		
+		However, on processors with slow memory bus and cache,
+		the slowest loops occur when the memory access occurs for
+		large strides. 
+		
+		Thus, choose the axis for which strides of the last iterator is 
+		smallest but non-zero.
+		 */
+
+		for (i=0; i<loop->nd-1; i++) {
+			stride_sum[i] = 0;
+			for (j=0; j<loop->numiter; j++) {
+				stride_sum[i] += loop->iters[j]->strides[i];
 			}
 		}
 
+		ldim = loop->nd - 1;
+		minsum = stride_sum[loop->nd-1];
+		for (i=loop->nd - 2; i>=0; i--) {
+			if (stride_sum[i] < minsum ) {
+				ldim = i;
+				minsum = stride_sum[i];
+			}
+		}
+
+		maxdim = loop->dimensions[ldim];
 		loop->size /= maxdim;
-                loop->bufcnt = maxdim;
+		loop->bufcnt = maxdim;
 		loop->lastdim = ldim;
 
-                /* Fix the iterators so the inner loop occurs over the
+		/* Fix the iterators so the inner loop occurs over the
 		   largest dimensions -- This can be done by
 		   setting the size to 1 in that dimension
 		   (just in the iterators)
-                 */
+		 */
 
 		for (i=0; i<loop->numiter; i++) {
 			it = loop->iters[i];
-                        it->contiguous = 0;
+			it->contiguous = 0;
 			it->size /= (it->dims_m1[ldim]+1);
 			it->dims_m1[ldim] = 0;
 			it->backstrides[ldim] = 0;
@@ -1184,7 +1207,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 			   so don't change them) */
 
 			/* Set the steps to the strides in that dimension */
-                        loop->steps[i] = it->strides[ldim];
+			loop->steps[i] = it->strides[ldim];
 		}
 
 		/* fix up steps where we will be copying data to
@@ -1201,8 +1224,8 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 				/* These are changed later if casting is needed */
 			}
 		}
-        }
-        else { /* uniformly-strided case ONE_UFUNCLOOP */
+	}
+	else { /* uniformly-strided case ONE_UFUNCLOOP */
 		for (i=0; i<self->nargs; i++) {
 			if (PyArray_SIZE(mps[i]) == 1)
 				loop->steps[i] = 0;
@@ -1466,19 +1489,21 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 			       loop->steps, loop->funcdata);
 		UFUNC_CHECK_ERROR(loop);
 		break;
-	case NOBUFFER_UFUNCLOOP:
+	case NOBUFFER_UFUNCLOOP: 
 		/* Everything is notswapped, aligned and of the
 		   right type but not contiguous. -- Almost as fast.
 		*/
-                /*fprintf(stderr, "NOBUFFER...%d\n", loop->size);*/
+		/*fprintf(stderr, "NOBUFFER...%d\n", loop->size);*/
 		while (loop->index < loop->size) {
 			for (i=0; i<self->nargs; i++)
 				loop->bufptr[i] = loop->iters[i]->dataptr;
-
+			
 			loop->function((char **)loop->bufptr, &(loop->bufcnt),
 				       loop->steps, loop->funcdata);
 			UFUNC_CHECK_ERROR(loop);
 
+			/* Adjust loop pointers */
+			
 			for (i=0; i<self->nargs; i++) {
 				PyArray_ITER_NEXT(loop->iters[i]);
 			}
@@ -1506,7 +1531,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
 		int ninnerloops = loop->ninnerloops;
 		Bool pyobject[NPY_MAXARGS];
 		int datasize[NPY_MAXARGS];
-                int i, j, k, stopcondition;
+                int j, k, stopcondition;
 		char *myptr1, *myptr2;
 
 
