@@ -476,7 +476,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     return _array
 
 def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
-          names=None, titles=None, aligned=False, byteorder=None):
+          names=None, titles=None, aligned=False, byteorder=None, copy=True):
     """Construct a record array from a wide-variety of objects.
     """
 
@@ -513,18 +513,29 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
             return fromarrays(obj, dtype=dtype, shape=shape, **kwds)
 
     elif isinstance(obj, recarray):
-        new = obj.copy()
-        if dtype is not None:
-            new.dtype = dtype
+        copied = 0
+        if dtype is not None and (new.dtype != dtype):
+            new = obj.astype(dtype)
+            copied = 1
+        else:
+            new = obj
+        if copy and not copied:
+            new = new.copy()
         return new
 
     elif isinstance(obj, file):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
     elif isinstance(obj, sb.ndarray):
+        copied = 0
         if dtype is not None and (obj.dtype != dtype):
-            obj = obj.view(dtype)
-        res = obj.view(recarray)
+            new = obj.astype(dtype)
+            copied = 1
+        else:
+            new = obj
+        if copy and not copied:
+            new = new.copy()
+        res = new.view(recarray)
         if issubclass(res.dtype.type, nt.void):
             res.dtype = sb.dtype((record, res.dtype))
         return res
