@@ -173,7 +173,7 @@ def build_extension(sys_argv):
     """
     Build wrappers to Fortran 90 modules and external subprograms.
     """
-    modulename = get_option_value(sys_argv,'-m','untitled','unknown')
+    modulename = get_option_value(sys_argv,'-m','untitled','unspecified')
 
     build_dir = get_option_value('--build-dir','.',None)
     if build_dir is None:

@@ -104,8 +104,8 @@ class WrapperBase:
         return template % d
 
     def apply_templates(self, child):
-        for n in parent.list_names:
-            l = getattr(parent,n + '_list')
+        for n in self.list_names:
+            l = getattr(self,n + '_list')
             l.append(child.apply_attributes(getattr(child, n+'_template','')))
         return
 

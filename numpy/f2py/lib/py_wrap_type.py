@@ -299,7 +299,7 @@ static int %(oname)s_set_%(n)s(%(oname)sObject *self,
         if isinstance(typedecl.parent, Module):
             self.use_stmt_list.append('use %s' % (typedecl.parent.name))
 
-        for n in parent.list_names:
-            l = getattr(parent,n + '_list')
-            l.append(self.apply_attributes(getattr(self, n+'_template','')))
+        parent.apply_templates(self)
+
+
         return
