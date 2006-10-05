@@ -175,7 +175,7 @@ def build_extension(sys_argv):
     """
     modulename = get_option_value(sys_argv,'-m','untitled','unspecified')
 
-    build_dir = get_option_value('--build-dir','.',None)
+    build_dir = get_option_value(sys_argv,'--build-dir','.',None)
     if build_dir is None:
         build_dir = tempfile.mktemp()
         clean_build_dir = True
@@ -271,8 +271,8 @@ def build_extension(sys_argv):
                 wrapper.add(block)
             c_code = wrapper.c_code()
             f_code = wrapper.fortran_code()
-            c_fn = os.path.join(temp_dir,'%smodule.c' % (modulename))
-            f_fn = os.path.join(temp_dir,'%s_f_wrappers_f2py.f' % (modulename))
+            c_fn = os.path.join(build_dir,'%smodule.c' % (modulename))
+            f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py.f' % (modulename))
             f = open(c_fn,'w')
             f.write(c_code)
             f.close()

@@ -12,7 +12,7 @@ def pyobj_from_npy_int(ctype):
     dtype = ctype.upper()
     cls = 'Int'+ctype[7:]
     return '''\
-/* depends: SCALARS_IN_BITS.cpp */
+/* depends: SCALARS_IN_BITS2.cpp */
 static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
   PyObject* obj = PyArrayScalar_New(%(cls)s);
   if (obj==NULL) /* TODO: set exception */ return NULL;
@@ -25,7 +25,7 @@ def pyobj_from_npy_float(ctype):
     dtype = ctype.upper()
     cls = 'Float'+ctype[9:]
     return '''\
-/* depends: SCALARS_IN_BITS.cpp */
+/* depends: SCALARS_IN_BITS2.cpp */
 static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
   PyObject* obj = PyArrayScalar_New(%(cls)s);
   if (obj==NULL) /* TODO: set exception */ return NULL;
@@ -38,7 +38,7 @@ def pyobj_from_npy_complex(ctype):
     dtype = ctype.upper()
     cls = 'Complex'+ctype[11:]
     return '''\
-/* depends: SCALARS_IN_BITS.cpp */
+/* depends: SCALARS_IN_BITS2.cpp */
 static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
   PyObject* obj = PyArrayScalar_New(%(cls)s);
   if (obj==NULL) /* TODO: set exception */ return NULL;

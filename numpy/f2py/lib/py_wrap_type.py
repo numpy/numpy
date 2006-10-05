@@ -1,8 +1,22 @@
 
-__all__ = ['PythonCAPIIntrinsicType', 'PythonCAPIDerivedType']
+__all__ = ['PythonCAPIType']
 
 from wrapper_base import *
-from parser.api import CHAR_BIT, Module
+from parser.api import CHAR_BIT, Module, declaration_type_spec, TypeDecl
+
+class PythonCAPIType(WrapperBase):
+    """
+    Fortran type hooks.
+    """
+    def __init__(self, parent, typedecl):
+        WrapperBase.__init__(self)
+        if isinstance(typedecl, tuple(declaration_type_spec)):
+            PythonCAPIIntrinsicType(parent, typedecl)
+        elif isinstance(typedecl, TypeDecl):
+            PythonCAPIDerivedType(parent, typedecl)
+        else:
+            raise NotImplementedError,`self.__class__,typedecl.__class__`
+        return
 
 class PythonCAPIIntrinsicType(WrapperBase):
     """
@@ -21,6 +35,7 @@ class PythonCAPIIntrinsicType(WrapperBase):
 
         if ctype.startswith('npy_'):
             WrapperCCode(parent, 'pyobj_from_%s' % (ctype))
+            WrapperCCode(parent, 'pyobj_to_%s' % (ctype))
             return
         
         if not ctype.startswith('f2py_type_'):
@@ -247,6 +262,7 @@ static PyObject * %(oname)s_repr(PyObject * self) {
         for n in typedecl.a.component_names:
             v = typedecl.a.components[n]
             t = v.get_typedecl()
+            PythonCAPIType(t)
             ct = t.get_c_type()
             on = 'f2py_' + t.name
             parent.add(t)
@@ -262,9 +278,7 @@ if (!((void*)%(n)s_ptr >= self->data
 self->%(n)s_ptr = %(n)s_ptr;
 ''' % (locals()))
             self.attr_format_list.append('O&')
-            WrapperCCode(parent, 'pyobj_to_%s' % (ct))
             self.attr_init_list.append('\npyobj_to_%s, self->%s_ptr' % (ct,n))
-            WrapperCCode(parent, 'pyobj_from_%s' % (ct))
             self.as_tuple_format_list.append('O&')
             self.as_tuple_arg_list.append('\npyobj_from_%s, self->%s_ptr' % (ct, n))
             self.getset_func_list.append('''\

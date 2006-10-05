@@ -87,8 +87,11 @@ class WrapperBase:
                 elif n.endswith('_elist'):
                     joinsymbol = ''
                     realname = realname[:-6] + '_list'
+                realname_lower = realname.lower()
                 if hasattr(self, realname):
                     attr = getattr(self, realname)
+                elif hasattr(self, realname_lower):
+                    attr = getattr(self, realname_lower).upper()
                 elif realname.startswith('['):
                     attr = eval(realname)
                 else:

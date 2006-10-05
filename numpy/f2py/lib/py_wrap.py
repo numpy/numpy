@@ -55,12 +55,13 @@ PyMODINIT_FUNC init%(modulename)s(void) {
 '''
 
     main_fortran_template = '''\
-! -*- f90 -*-
 %(fortran_code_list)s
 '''
     def __init__(self, modulename):
         WrapperBase.__init__(self)
         self.modulename = modulename
+        self.cname = 'f2py_' + modulename
+
         
         self.header_list = []
         self.typedef_list = []
@@ -91,10 +92,8 @@ PyMODINIT_FUNC init%(modulename)s(void) {
         elif isinstance(block, Module):
             for name,declblock in block.a.type_decls.items():
                 self.add(declblock)
-        elif isinstance(block, TypeDecl):
-            PythonCAPIDerivedType(self, block)
-        elif isinstance(block, tuple(declaration_type_spec)):
-            PythonCAPIIntrinsicType(self, block)
+        elif isinstance(block, tuple([TypeDecl]+declaration_type_spec)):
+            PythonCAPIType(self, block)
         else:
             raise NotImplementedError,`block.__class__.__name__`
         return
