@@ -5067,7 +5067,6 @@ PyArray_EquivTypes(PyArray_Descr *typ1, PyArray_Descr *typ2)
 	if (typenum1 == PyArray_VOID || \
 	    typenum2 == PyArray_VOID) {
 		return ((typenum1 == typenum2) &&
-			(typ1->typeobj == typ2->typeobj) &&
 			_equivalent_fields(typ1->fields, typ2->fields));
 	}
 	return (typ1->kind == typ2->kind);
