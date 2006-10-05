@@ -9244,7 +9244,6 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         PyArray_Descr *type;
         PyArray_Descr *indtype=NULL;
         int swap, retval=-1;
-        int itemsize;
         intp start, step_size;
         intp n_steps;
         PyObject *obj=NULL;
@@ -9266,7 +9265,32 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         }
 
         type = self->ao->descr;
-        itemsize = type->elsize;
+
+        /* Check for Boolean -- this is first becasue
+           Bool is a subclass of Int */
+
+        if (PyBool_Check(ind)) {
+                retval = 0;
+                if (PyObject_IsTrue(ind)) {
+                        retval = type->f->setitem(val, self->dataptr, self->ao);
+                }
+                goto finish;
+        }
+
+        start = PyArray_PyIntAsIntp(ind);
+        if (start==-1 && PyErr_Occurred()) PyErr_Clear();
+        else {
+                if (start < -self->size || start >= self->size) {
+                        PyErr_Format(PyExc_ValueError,
+                                     "index (%d) out of range", start);
+                        goto finish;
+                }
+                retval = 0;
+                PyArray_ITER_GOTO1D(self, start);
+                retval = type->f->setitem(val, self->dataptr, self->ao);
+                PyArray_ITER_RESET(self);
+                goto finish;
+        }
 
         Py_INCREF(type);
         arrval = PyArray_FromAny(val, type, 0, 0, 0, NULL);
@@ -9275,23 +9299,12 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         if (val_it==NULL) goto finish;
         if (val_it->size == 0) {retval = 0; goto finish;}
 
-        /* Check for Boolean -- this is first becasue
-           Bool is a subclass of Int */
-
         copyswap = PyArray_DESCR(arrval)->f->copyswap;
         swap = (PyArray_ISNOTSWAPPED(self->ao)!=PyArray_ISNOTSWAPPED(arrval));
-        if (PyBool_Check(ind)) {
-                if (PyObject_IsTrue(ind)) {
-                        copyswap(self->dataptr, PyArray_DATA(arrval),
-                                  swap, arrval);
-                }
-                retval=0;
-                goto finish;
-        }
+        
+        /* Check Slice */
 
-        /* Check for Integer or Slice */
-
-        if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {
+        if (PySlice_Check(ind)) {
                 start = parse_subindex(ind, &step_size, &n_steps,
                                        self->size);
                 if (start == -1) goto finish;
@@ -9325,11 +9338,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         /* convert to INTP array if Integer array scalar or List */
 
         indtype = PyArray_DescrFromType(PyArray_INTP);
-        if (PyArray_IsScalar(ind, Integer)) {
-                Py_INCREF(indtype);
-                obj = PyArray_FromScalar(ind, indtype);
-        }
-        else if (PyList_Check(ind)) {
+        if (PyList_Check(ind)) {
                 Py_INCREF(indtype);
                 obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST, NULL);
         }
