@@ -999,10 +999,13 @@ def analyzeline(m,case,line):
             groupcache[groupcounter]['implicit']=impl
     elif case=='data':
         ll=[]
-        dl='';il='';f=0;fc=1
+        dl='';il='';f=0;fc=1;inp=0
         for c in m.group('after'):
-            if c=="'": fc=not fc
-            if c=='/' and fc: f=f+1;continue
+            if not inp:
+                if c=="'": fc=not fc
+                if c=='/' and fc: f=f+1;continue
+            if c=='(': inp = inp + 1
+            elif c==')': inp = inp - 1
             if f==0: dl=dl+c
             elif f==1: il=il+c
             elif f==2:
