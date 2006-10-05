@@ -10634,8 +10634,11 @@ arraydescr_shape_get(PyArray_Descr *self)
         if (self->subarray == NULL) {
                 return PyTuple_New(0);
         }
-        Py_INCREF(self->subarray->shape);
-        return (PyObject *)(self->subarray->shape);
+        if (PyTuple_Check(self->subarray->shape)) {
+                Py_INCREF(self->subarray->shape);
+                return (PyObject *)(self->subarray->shape);
+        }
+        return Py_BuildValue("(O)", self->subarray->shape);
 }
 
 static PyObject *

@@ -285,10 +285,6 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
             formats += ','
         formats=formats[:-1]
 
-    for obj in arrayList:
-        if obj.shape != shape:
-            raise ValueError, "array has different shape"
-
     if dtype is not None:
         descr = sb.dtype(dtype)
         _names = descr.names
@@ -296,6 +292,21 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         parsed = format_parser(formats, names, titles, aligned, byteorder)
         _names = parsed._names
         descr = parsed._descr
+
+    # Determine shape from data-type.
+    if len(descr) != len(arrayList):
+        raise ValueError, "mismatch between the number of fields "\
+              "and the number of arrays"
+    
+    d0 = descr[0].shape
+    nn = len(d0)
+    if nn > 0:
+        shape = shape[nn:]
+        
+    for k, obj in enumerate(arrayList):
+        nn = len(descr[k].shape)
+        if obj.shape[nn:] != shape:
+            raise ValueError, "array-shape mismatch in array", k
         
     _array = recarray(shape, descr)
 
