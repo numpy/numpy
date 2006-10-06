@@ -131,7 +131,7 @@ def dump_signature(sys_argv):
     only_names = []
     skip_names = []
     options = []
-    for word in sys_argv[1:]:
+    for word in sys_argv:
         if word=='': pass
         elif word=='only:': flag = 'only'
         elif word=='skip:': flag = 'skip'
@@ -146,7 +146,7 @@ def dump_signature(sys_argv):
     output_stream.write('''!    -*- f90 -*-
 ! Note: the context of this file is case sensitive.
 ''')
-    output_stream.write('PYTHON MODULE %s\n' % (module_name))
+    output_stream.write('PYTHON MODULE %s\n' % (modulename))
     output_stream.write('  INTERFACE\n\n')
     for filename in file_names:
         if not os.path.isfile(filename):
@@ -154,6 +154,8 @@ def dump_signature(sys_argv):
             continue
         sys.stderr.write('Parsing %r..\n' % (filename))
         block = parse(filename)
+        if block is None:
+            sys.exit(1)
         output_stream.write('! File: %s, source mode = %r\n' % (filename, block.reader.mode))
         if block.content and isinstance(block.content[0],PythonModule):
             for subblock in block.content[0].content[0].content:
@@ -163,7 +165,7 @@ def dump_signature(sys_argv):
         else:
             output_stream.write(block.topyf('    ')+'\n')
     output_stream.write('  END INTERFACE\n')
-    output_stream.write('END PYTHON MODULE %s\n' % (module_name))
+    output_stream.write('END PYTHON MODULE %s\n' % (modulename))
     
     if signature_output not in ['stdout','stderr']:
         output_stream.close()

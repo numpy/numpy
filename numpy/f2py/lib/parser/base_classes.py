@@ -229,6 +229,39 @@ class Variable:
                         'POINTER', 'PROTECTED', 'SAVE', 'TARGET', 'VALUE',
                         'VOLATILE', 'REQUIRED']
 
+    def is_intent_in(self):
+        if not self.intent: return True
+        if 'HIDE' in self.intent: return False
+        if 'INPLACE' in self.intent: return False
+        if 'IN' in self.intent: return True
+        if 'OUT' in self.intent: return False
+        if 'INOUT' in self.intent: return False
+        if 'OUTIN' in self.intent: return False
+        return True
+
+    def is_intent_inout(self):
+        if 'INOUT' in self.intent:
+            if 'IN' in self.intent or 'HIDE' in self.intent or 'INPLACE' in self.intent:
+                self.warning('INOUT ignored in INPUT(%s)' % (', '.join(self.intent)))
+                return False
+            return True
+        return False
+
+    def is_intent_hide(self):
+        if 'HIDE' in self.intent: return True
+        if 'OUT' in self.intent:
+            return 'IN' not in self.intent and 'INPLACE' not in self.intent and 'INOUT' not in self.intent
+        return False
+
+    def is_intent_inplace(self): return 'INPLACE' in self.intent
+    def is_intent_out(self): return 'OUT' in self.intent
+    def is_intent_c(self): return 'C' in self.intent
+    def is_intent_cache(self): return 'CACHE' in self.intent
+    def is_intent_copy(self): return 'COPY' in self.intent
+    def is_intent_overwrite(self): return 'OVERWRITE' in self.intent
+    def is_intent_callback(self): return 'CALLBACK' in self.intent
+    def is_intent_aux(self): return 'AUX' in self.intent
+
     def is_private(self):
         if 'PUBLIC' in self.attributes: return False
         if 'PRIVATE' in self.attributes: return True
@@ -242,8 +275,8 @@ class Variable:
     def is_external(self): return 'EXTERNAL' in self.attributes
     def is_intrinsic(self): return 'INTRINSIC' in self.attributes
     def is_parameter(self): return 'PARAMETER' in self.attributes
-    def is_optional(self): return 'OPTIONAL' in self.attributes
-    def is_required(self): return 'REQUIRED' in self.attributes
+    def is_optional(self): return 'OPTIONAL' in self.attributes and 'REQUIRED' not in self.attributes and not self.is_intent_hide()
+    def is_required(self): return self.is_optional() and not self.is_intent_hide()
     def is_pointer(self): return 'POINTER' in self.attributes
 
     def is_array(self): return not not (self.bounds or self.dimension)

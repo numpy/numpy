@@ -41,7 +41,7 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
   if (f2py_success) {
     %(pyobjfrom_list)s
     capi_buildvalue = Py_BuildValue("%(return_format_elist)s"
-                                    %(return_obj_list)s);
+                                    %(return_obj_clist)s);
     %(clean_pyobjfrom_list)s
   }
   %(clean_call_list)s
@@ -92,6 +92,9 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
                 args_f.append('&'+argname)
             else:
                 args_f.append(argname)
+            if var.is_intent_out(): # and is_scalar
+                self.return_format_list.append('O&')
+                self.return_obj_list.append('\npyobj_from_%s, &%s' % (ctype, argname))
 
         WrapperCPPMacro(parent, 'F_FUNC')
         self.call_list.append('%s_f(%s);' % (name,', '.join(args_f)))
@@ -99,6 +102,8 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
         self.clean_pyobjfrom_list.reverse()
         self.clean_call_list.reverse()
         self.clean_frompyobj_list.reverse()
+
         if self.return_obj_list: self.return_obj_list.insert(0,'')
+
         parent.apply_templates(self)
         return

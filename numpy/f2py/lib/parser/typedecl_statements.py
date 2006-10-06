@@ -512,12 +512,13 @@ class Implicit(Statement):
             for spec in split_comma(item[i+1:-1].strip(), self.item):
                 if '-' in spec:
                     s,e = spec.lower().split('-')
-                    assert s in self.letters and e in self.letters
+                    s = s.strip()
+                    e = e.strip()
+                    assert s in self.letters and e in self.letters,`s,e`
                 else:
-                    e = s = spec.lower()
-                    assert s in self.letters
+                    e = s = spec.lower().strip()
+                    assert s in self.letters,`s,e`
                 specs.append((s,e))
-            self.specs = specs
             tspec = item[:i].rstrip()
             stmt = None
             for cls in declaration_type_spec:
@@ -557,10 +558,10 @@ class Implicit(Statement):
             self.warning('overriding previously set IMPLICIT NONE')
             self.parent.a.implicit_rules = implicit_rules = {}
         for stmt,specs in self.items:
-            s,e = specs
-            for l in string.lowercase[string.lowercase.index(s.lower()):\
-                                      string.lowercase.index(e.lower())+1]:
-                implicit_rules[l] = stmt
+            for s,e in specs:
+                for l in string.lowercase[string.lowercase.index(s.lower()):\
+                                          string.lowercase.index(e.lower())+1]:
+                    implicit_rules[l] = stmt
         return
 
 intrinsic_type_spec = [ \
