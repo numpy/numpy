@@ -456,5 +456,25 @@ class test_regression(NumpyTestCase):
         lst = ['abc','cde','fgh']
         N.lexsort((lst,))
         
+    def check_recarray_copy(self, level=rlevel):
+        """Ticket #312"""
+        dt = [('x',N.int16),('y',N.float64)]
+        ra = N.array([(1,2.3)], dtype=dt)
+        rb = N.rec.array(ra, dtype=dt)
+        rb['x'] = 2.
+        assert ra['x'] != rb['x']
+        
+    def check_rec_fromarray(self, level=rlevel):
+        """Ticket #322"""
+        x1 = N.array([[1,2],[3,4],[5,6]])
+        x2 = N.array(['a','dd','xyz'])
+        x3 = N.array([1.1,2,3])
+        N.rec.fromarrays([x1,x2,x3], formats="(2,)i4,a3,f8")
+        
+    def check_object_array_assign(self, level=rlevel):
+        x = N.empty((2,2),object)
+        x.flat[2] = (1,2,3)
+        assert_equal(x.flat[2],(1,2,3))
+        
 if __name__ == "__main__":
     NumpyTest().run()
