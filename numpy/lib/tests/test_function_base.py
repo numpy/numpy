@@ -93,6 +93,13 @@ class test_linspace(NumpyTestCase):
         t3 = linspace(0,1,2).dtype
         assert_equal(t1, t2)
         assert_equal(t2, t3)
+        
+class test_insert(NumpyTestCase):
+    def check_basic(self):
+        a = [1,2,3]
+        assert_equal(insert(a,0,1), [1,1,2,3])
+        assert_equal(insert(a,3,1), [1,2,3,1])
+        assert_equal(insert(a,[1,1,1],[1,2,3]), [1,1,2,3,2,3])
 
 class test_amax(NumpyTestCase):
     def check_basic(self):
