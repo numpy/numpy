@@ -240,6 +240,7 @@ class Variable:
         return True
 
     def is_intent_inout(self):
+        if not self.intent: return False
         if 'INOUT' in self.intent:
             if 'IN' in self.intent or 'HIDE' in self.intent or 'INPLACE' in self.intent:
                 self.warning('INOUT ignored in INPUT(%s)' % (', '.join(self.intent)))
@@ -248,19 +249,20 @@ class Variable:
         return False
 
     def is_intent_hide(self):
+        if not self.intent: return False
         if 'HIDE' in self.intent: return True
         if 'OUT' in self.intent:
             return 'IN' not in self.intent and 'INPLACE' not in self.intent and 'INOUT' not in self.intent
         return False
 
-    def is_intent_inplace(self): return 'INPLACE' in self.intent
-    def is_intent_out(self): return 'OUT' in self.intent
-    def is_intent_c(self): return 'C' in self.intent
-    def is_intent_cache(self): return 'CACHE' in self.intent
-    def is_intent_copy(self): return 'COPY' in self.intent
-    def is_intent_overwrite(self): return 'OVERWRITE' in self.intent
-    def is_intent_callback(self): return 'CALLBACK' in self.intent
-    def is_intent_aux(self): return 'AUX' in self.intent
+    def is_intent_inplace(self): return self.intent and 'INPLACE' in self.intent
+    def is_intent_out(self): return  self.intent and 'OUT' in self.intent
+    def is_intent_c(self): return  self.intent and 'C' in self.intent
+    def is_intent_cache(self): return  self.intent and 'CACHE' in self.intent
+    def is_intent_copy(self): return  self.intent and 'COPY' in self.intent
+    def is_intent_overwrite(self): return  self.intent and 'OVERWRITE' in self.intent
+    def is_intent_callback(self): return  self.intent and 'CALLBACK' in self.intent
+    def is_intent_aux(self): return  self.intent and 'AUX' in self.intent
 
     def is_private(self):
         if 'PUBLIC' in self.attributes: return False

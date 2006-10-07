@@ -12,7 +12,6 @@ def pyobj_from_npy_int(ctype):
     dtype = ctype.upper()
     cls = 'Int'+ctype[7:]
     return '''\
-/* depends: SCALARS_IN_BITS2.cpp */
 static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
   PyObject* obj = PyArrayScalar_New(%(cls)s);
   if (obj==NULL) /* TODO: set exception */ return NULL;
@@ -56,56 +55,19 @@ static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
 }
 '''
 
+
+
 def pyobj_to_npy_int(ctype):
+    Cls = ctype[4].upper()+ctype[5:]
     ctype_bits = int(ctype[7:])
-    return '''
-/* depends: pyobj_to_long.c, pyobj_to_npy_longlong.c */
-#if NPY_BITSOF_LONG == %(ctype_bits)s
-#define pyobj_to_%(ctype)s pyobj_to_long
-#else
-#if NPY_BITSOF_LONG > %(ctype_bits)s
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  long tmp;
-  if (pyobj_to_long(obj,&tmp)) {
-    *value = (%(ctype)s)tmp;
-    return 1;
-  }
-  return 0;
-}
-#else
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  npy_longlong tmp;
-  if (pyobj_to_npy_longlong(obj,&tmp)) {
-    *value = (%(ctype)s)tmp;
-    return 1;
-  }
-  return 0;
-}
-#endif
-#endif
-''' % (locals())
+    CTYPE = ctype.upper()
+    return capi_code_template_scalar % (locals())
 
 def pyobj_to_npy_float(ctype):
+    Cls = ctype[4].upper()+ctype[5:]
     ctype_bits = int(ctype[9:])
-    return '''
-/* depends: pyobj_to_double.c */
-#if NPY_BITSOF_DOUBLE == %(ctype_bits)s
-#define pyobj_to_%(ctype)s pyobj_to_double
-#else
-#if NPY_BITSOF_DOUBLE > %(ctype_bits)s
-static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
-  double tmp;
-  if (pyobj_to_double(obj,&tmp)) {
-    *value = (%(ctype)s)tmp;
-    return 1;
-  }
-  return 0;
-}
-#else
-#error, "NOTIMPLEMENTED pyobj_to_%(ctype)s"
-#endif
-#endif
-''' % (locals())
+    CTYPE = ctype.upper()
+    return capi_code_template_scalar % (locals())
 
 def pyobj_to_npy_complex(ctype):
     ctype_bits = int(ctype[11:])

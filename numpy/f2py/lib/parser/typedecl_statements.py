@@ -400,7 +400,7 @@ class Complex(TypeDeclarationStatement):
 
     def get_byte_size(self):
         length, kind = self.selector
-        if length: return 2*int(length)
+        if length: return int(length)
         if kind: return 2*int(kind)
         return 2*self.default_kind
 
@@ -412,13 +412,17 @@ class Complex(TypeDeclarationStatement):
     def get_c_type(self):
         return 'npy_complex%s' % (self.get_bit_size())
 
+    def get_part_typedecl(self):
+        bz = self.get_byte_size()/2
+        return Real(self.parent, self.item.copy('REAL*%s' % (bz)))
+        
 class DoubleComplex(TypeDeclarationStatement):
     # not in standard
     match = re.compile(r'double\s*complex\b',re.I).match
     default_kind = 8
 
     def get_byte_size(self):
-        return 2 * self.default_kind
+        return 2*self.default_kind
 
     def get_zero_value(self):
         return '(0.0D0,0.0D0)'

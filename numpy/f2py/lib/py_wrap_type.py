@@ -22,25 +22,147 @@ class PythonCAPIIntrinsicType(WrapperBase):
     """
     Fortran intrinsic type hooks.
     """
+
+    capi_code_template_scalar = '''
+static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
+  PyObject* obj = PyArrayScalar_New(%(Cls)s);
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_from_%(ctype)s(value=%%"%(CTYPE)s_FMT")\\n",*value);
+#endif
+  if (obj==NULL) /* TODO: set exception */ return NULL;
+  PyArrayScalar_ASSIGN(obj,%(Cls)s,*value);
+  return obj;
+}
+
+static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
+  int return_value = 0;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_to_%(ctype)s(type=%%s)\\n",PyString_AS_STRING(PyObject_Repr(PyObject_Type(obj))));
+#endif
+  if (obj==NULL) ;
+  else if (PyArray_IsScalar(obj,%(Cls)s)) {
+    *value = PyArrayScalar_VAL(obj,%(Cls)s);
+    return_value = 1;
+  }
+  else if (PySequence_Check(obj)) {
+    if (PySequence_Size(obj)==1)
+      return_value = pyobj_to_%(ctype)s(PySequence_GetItem(obj,0),value);
+  } else {
+    PyObject* sc = Py%(Cls)sArrType_Type.tp_new(
+      &Py%(Cls)sArrType_Type,Py_BuildValue("(O)",obj),NULL);
+    if (sc==NULL) ;
+    else if (PyArray_IsScalar(sc, Generic))
+      return_value = pyobj_to_%(ctype)s(sc,value);
+    else
+      return_value = pyobj_to_%(ctype)s(PyArray_ScalarFromObject(sc),value);
+  }
+  if (!return_value && !PyErr_Occurred()) {
+    PyObject* r = PyString_FromString("Failed to convert ");
+    PyString_ConcatAndDel(&r, PyObject_Repr(PyObject_Type(obj)));
+    PyString_ConcatAndDel(&r, PyString_FromString(" to C %(ctype)s"));
+    PyErr_SetObject(PyExc_TypeError,r);
+  }
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  if (PyErr_Occurred()) {
+    if (return_value)
+      fprintf(stderr,"pyobj_to_%(ctype)s:INCONSISTENCY with return_value=%%d and PyErr_Occurred()=%%p\\n",return_value, PyErr_Occurred());
+    else
+      fprintf(stderr,"pyobj_to_%(ctype)s: PyErr_Occurred()=%%p\\n", PyErr_Occurred());
+  } else {
+    if (return_value)
+      fprintf(stderr,"pyobj_to_%(ctype)s: value=%%"%(CTYPE)s_FMT"\\n", *value);
+    else
+      fprintf(stderr,"pyobj_to_%(ctype)s:INCONSISTENCY with return_value=%%d and PyErr_Occurred()=%%p\\n",return_value, PyErr_Occurred());
+  }
+#endif
+  return return_value;
+}
+'''
+
+    capi_code_template_complex_scalar = '''
+static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
+  PyObject* obj = PyArrayScalar_New(%(Cls)s);
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_from_%(ctype)s(value=(%%"%(FCTYPE)s_FMT",%%"%(FCTYPE)s_FMT"))\\n",value->real, value->imag);
+#endif
+  if (obj==NULL) /* TODO: set exception */ return NULL;
+  PyArrayScalar_ASSIGN(obj,%(Cls)s,*value);
+  return obj;
+}
+
+static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
+  int return_value = 0;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_to_%(ctype)s(type=%%s)\\n",PyString_AS_STRING(PyObject_Repr(PyObject_Type(obj))));
+#endif
+  if (obj==NULL) ;
+  else if (PyArray_IsScalar(obj,%(Cls)s)) {
+    value->real = PyArrayScalar_VAL(obj,%(Cls)s).real;
+    value->imag = PyArrayScalar_VAL(obj,%(Cls)s).imag;
+    return_value = 1;
+  }
+  else if (PySequence_Check(obj)) {
+    if (PySequence_Size(obj)==1)
+      return_value = pyobj_to_%(ctype)s(PySequence_GetItem(obj,0),value);
+    else if (PySequence_Size(obj)==2) {
+      return_value = pyobj_to_%(fctype)s(PySequence_GetItem(obj,0),&(value->real))
+                     && pyobj_to_%(fctype)s(PySequence_GetItem(obj,1),&(value->imag));
+    }
+  } else {
+    PyObject* sc = Py%(Cls)sArrType_Type.tp_new(
+      &Py%(Cls)sArrType_Type,Py_BuildValue("(O)",obj),NULL);
+    if (sc==NULL) ;
+    else if (PyArray_IsScalar(sc, Generic))
+      return_value = pyobj_to_%(ctype)s(sc,value);
+    else
+      return_value = pyobj_to_%(ctype)s(PyArray_ScalarFromObject(sc),value);
+  }
+  if (!return_value && !PyErr_Occurred()) {
+    PyObject* r = PyString_FromString("Failed to convert ");
+    PyString_ConcatAndDel(&r, PyObject_Repr(PyObject_Type(obj)));
+    PyString_ConcatAndDel(&r, PyString_FromString(" to C %(ctype)s"));
+    PyErr_SetObject(PyExc_TypeError,r);
+  }
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  if (PyErr_Occurred()) {
+    if (return_value)
+      fprintf(stderr,"pyobj_to_%(ctype)s:INCONSISTENCY with return_value=%%d and PyErr_Occurred()=%%p\\n",return_value, PyErr_Occurred());
+    else
+      fprintf(stderr,"pyobj_to_%(ctype)s: PyErr_Occurred()=%%p\\n", PyErr_Occurred());
+  } else {
+    if (return_value)
+      fprintf(stderr,"pyobj_to_%(ctype)s: value=(%%"%(FCTYPE)s_FMT",%%"%(FCTYPE)s_FMT")\\n",
+      value->real, value->imag);
+    else
+      fprintf(stderr,"pyobj_to_%(ctype)s:INCONSISTENCY with return_value=%%d and PyErr_Occurred()=%%p\\n",return_value, PyErr_Occurred());
+  }
+#endif
+  return return_value;
+}
+'''
+ 
     _defined = []
     def __init__(self, parent, typedecl):
         WrapperBase.__init__(self)
         self.name = name = typedecl.name
-        if name in self._defined:
+        self.ctype = ctype = typedecl.get_c_type()
+        if ctype in self._defined:
             return
-        self._defined.append(name)
-        self.info('Generating interface for %s: %s' % (typedecl.__class__, name))
-
-        ctype = typedecl.get_c_type()
+        self._defined.append(ctype)
+        self.info('Generating interface for %s: %s' % (typedecl.__class__, ctype))
 
         if ctype.startswith('npy_'):
-            WrapperCCode(parent, 'pyobj_from_%s' % (ctype))
-            WrapperCCode(parent, 'pyobj_to_%s' % (ctype))
+            self.Cls = ctype[4].upper() + ctype[5:] 
+            if ctype.startswith('npy_int') or ctype.startswith('npy_float'):
+                self.capi_code_template = self.capi_code_template_scalar
+            elif ctype.startswith('npy_complex'):
+                PythonCAPIIntrinsicType(parent, typedecl.get_part_typedecl())
+                bits = int(ctype[11:])
+                self.fctype = 'npy_float%s' % (bits/2)
+                self.capi_code_template = self.capi_code_template_complex_scalar
+            parent.apply_templates(self)
             return
-        
-        if not ctype.startswith('f2py_type_'):
-            raise NotImplementedError,`name,ctype`
-        return
+        raise NotImplementedError,`name,ctype`
 
 class PythonCAPIDerivedType(WrapperBase):
     """
@@ -314,6 +436,4 @@ static int %(oname)s_set_%(n)s(%(oname)sObject *self,
             self.use_stmt_list.append('use %s' % (typedecl.parent.name))
 
         parent.apply_templates(self)
-
-
         return
