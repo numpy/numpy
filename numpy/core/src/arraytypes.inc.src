@@ -404,6 +404,10 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 static PyObject *
 OBJECT_getitem(char *ip, PyArrayObject *ap)
 {
+        if (*(PyObject **)ip == NULL) {
+                Py_INCREF(Py_None);
+                return Py_None;
+        }
         if (!ap || PyArray_ISALIGNED(ap)) {
                 Py_INCREF(*(PyObject **)ip);
                 return *(PyObject **)ip;
@@ -771,7 +775,12 @@ OBJECT_to_@to@(PyObject **ip, @totyp@ *op, intp n, PyArrayObject *aip,
         register intp i;
         int skip=@skip@;
         for(i=0;i<n;i++,ip++,op+=skip) {
-                @to@_setitem(*ip, (char *)op, aop);
+                if (*ip == NULL) {
+                        @to@_setitem(Py_False, (char *)op, aop);
+                }
+                else {
+                        @to@_setitem(*ip, (char *)op, aop);
+                }
         }
 }
 /**end repeat**/
@@ -1222,7 +1231,7 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
                 sstride /= sizeof(PyObject **);
                 if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src, sizeof(PyObject **))) {
                         for (i=0; i<n; i++) {
-                                Py_INCREF(*src);
+                                Py_XINCREF(*src);
                                 Py_XDECREF(*dst);
                                 *dst = *src;
                                 dst += dstride;
@@ -1234,7 +1243,7 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
                         for (i=0; i<n; i++) {
                                 dp = dst;
                                 sp = src;
-                                Py_INCREF(*sp);
+                                Py_XINCREF(*sp);
                                 Py_XDECREF(*dp);
                                 memcpy(dst, src, sizeof(PyObject *));
                                 dst += dstride;
@@ -1252,13 +1261,13 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
 
         if (src != NULL) {
                 if (__ALIGNED(dst,sizeof(PyObject **)) && __ALIGNED(src,sizeof(PyObject **))) {
-                        Py_INCREF(*src);
+                        Py_XINCREF(*src);
                         Py_XDECREF(*dst);
                         *dst = *src;
                 }
                 else {
                         PyObject **dp=dst, **sp=src;
-                        Py_INCREF(*sp);
+                        Py_XINCREF(*sp);
                         Py_XDECREF(*dp);
                         memcpy(dst, src, sizeof(PyObject *));
                 }
@@ -1523,6 +1532,7 @@ static Bool
 OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
 {
 
+        if (*ip == NULL) return FALSE;
         if (PyArray_ISALIGNED(ap)) {
                 return (Bool) PyObject_IsTrue(*ip);
         }
@@ -1623,6 +1633,11 @@ static int
 static int
 OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *ap)
 {
+        if ((*ip1 == NULL) || (*ip2 == NULL)) {
+                if (ip1 == ip2) return 1;
+                if (ip1 == NULL) return -1;
+                return 1;
+        }                
         return PyObject_Compare(*ip1, *ip2);
 }
 
@@ -1698,9 +1713,15 @@ OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *aip)
 {
         register intp i;
         PyObject *mp=ip[0]; *max_ind=0;
-        for(i=1; i<n; i++) {
+        i = 1;
+        while(i<n && mp==NULL) {
+                mp=ip[i];
+                i++;
+        }
+        if (i==n) return 0;
+        for(i=n; i<n; i++) {
                 ip++;
-                if (PyObject_Compare(*ip,mp) > 0) {
+                if (*ip != NULL && PyObject_Compare(*ip,mp) > 0) {
                         mp = *ip;
                         *max_ind=i;
                 }

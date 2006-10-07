@@ -822,6 +822,12 @@ class vectorize(object):
             if (nargs > self.nin) or (nargs < self.nin_wo_defaults):
                 raise ValueError, "mismatch between python function inputs"\
                       " and received arguments"
+
+        if (self.lastcallargs != nargs):
+            self.lastcallargs = nargs
+            self.ufunc = None
+            self.nout = None
+
         if self.nout is None or self.otypes == '':
             newargs = []
             for arg in args:
@@ -832,21 +838,20 @@ class vectorize(object):
             else:
                 self.nout = 1
                 theout = (theout,)
-            if self.otypes == '':
-                otypes = []
-                for k in range(self.nout):
-                    otypes.append(asarray(theout[k]).dtype.char)
-                self.otypes = ''.join(otypes)
+            otypes = []
+            for k in range(self.nout):
+                otypes.append(asarray(theout[k]).dtype.char)
+            self.otypes = ''.join(otypes)
 
-        if (self.ufunc is None) or (self.lastcallargs != nargs):
+        if (self.ufunc is None):
             self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
-            self.lastcallargs = nargs
 
         if self.nout == 1:
-            return array(self.ufunc(*args),copy=False).astype(self.otypes[0])
+            _res = array(self.ufunc(*args),copy=False).astype(self.otypes[0])
         else:
-            return tuple([array(x,copy=False).astype(c) \
+            _res = tuple([array(x,copy=False).astype(c) \
                           for x, c in zip(self.ufunc(*args), self.otypes)])
+        return _res
 
 def cov(m,y=None, rowvar=1, bias=0):
     """Estimate the covariance matrix.
