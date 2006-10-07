@@ -369,22 +369,6 @@ class test_kron(NumpyTestCase):
         assert_equal(type(kron(ma,ma)), myarray) 
         assert_equal(type(kron(a,ma)), ndarray) 
         assert_equal(type(kron(ma,a)), myarray) 
-    def check_rank_checking(self):
-        one = ones([2])
-        two = ones([2,2])
-        three = ones([2,2,2])
-        for a in [one, two, three]:
-            for b in [one, two, three]:
-                if a is b is two:
-                    continue
-                try:
-                    kron(a, b)
-                except ValueError:
-                    continue
-                except:
-                    pass
-                assert False, "ValueError expected"
-
 
 class test_tile(NumpyTestCase):
     def check_basic(self):
