@@ -476,5 +476,11 @@ class test_regression(NumpyTestCase):
         x.flat[2] = (1,2,3)
         assert_equal(x.flat[2],(1,2,3))
         
+    def check_ndmin_float64(self, level=rlevel):
+        """Ticket #324"""
+        x = N.array([1,2,3],dtype=N.float64)        
+        assert_equal(N.array(x,dtype=N.float32,ndmin=2).ndim,2)        
+        assert_equal(N.array(x,dtype=N.float64,ndmin=2).ndim,2)
+        
 if __name__ == "__main__":
     NumpyTest().run()
