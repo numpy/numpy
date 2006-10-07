@@ -5180,7 +5180,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 			else {
 				ret = PyArray_NewCopy((PyArrayObject*)op,
 						      order);
-				if (oldtype == type) return ret;
+				if (oldtype == type) goto finish;
 				Py_INCREF(oldtype);
 				Py_DECREF(PyArray_DESCR(ret));
 				PyArray_DESCR(ret) = oldtype;
