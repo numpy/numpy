@@ -438,7 +438,7 @@ class Logical(TypeDeclarationStatement):
         return ".FALSE."
 
     def get_c_type(self):
-        return 'npy_int%s' % (self.get_bit_size())
+        return 'f2py_bool%s' % (self.get_bit_size())
 
 class Character(TypeDeclarationStatement):
     match = re.compile(r'character\b',re.I).match
