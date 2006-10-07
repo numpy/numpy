@@ -487,5 +487,10 @@ class test_regression(NumpyTestCase):
         assert_equal(N.array(x,dtype=N.float32,ndmin=2).ndim,2)        
         assert_equal(N.array(x,dtype=N.float64,ndmin=2).ndim,2)
         
+    def check_mem_axis_minimization(self, level=rlevel):
+        """Ticket #327"""
+        data = N.arange(5)
+        data = N.add.outer(data,data)
+        
 if __name__ == "__main__":
     NumpyTest().run()
