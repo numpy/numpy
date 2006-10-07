@@ -1168,7 +1168,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 		smallest but non-zero.
 		 */
 
-		for (i=0; i<loop->nd-1; i++) {
+		for (i=0; i<loop->nd; i++) {
 			stride_sum[i] = 0;
 			for (j=0; j<loop->numiter; j++) {
 				stride_sum[i] += loop->iters[j]->strides[i];
