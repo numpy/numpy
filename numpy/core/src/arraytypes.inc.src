@@ -1821,11 +1821,18 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 {
         intp i;
         PyObject *tmp1, *tmp2, *tmp=NULL;
+        PyObject *in1, *in2;
         PyObject **tmp3;
         for(i=0;i<n;i++,ip1+=is1,ip2+=is2) {
-                tmp1 = PyNumber_Multiply(*((PyObject **)ip1),
-                                         *((PyObject **)ip2));
-                if (!tmp1) { Py_XDECREF(tmp); return;}
+                if ((*((PyObject **)ip1) == NULL) || (*((PyObject **)ip2) == NULL)) {
+                        tmp1 = Py_False;
+                        Py_INCREF(Py_False);
+                }
+                else {
+                        tmp1 = PyNumber_Multiply(*((PyObject **)ip1),
+                                                 *((PyObject **)ip2));
+                        if (!tmp1) { Py_XDECREF(tmp); return;}
+                }
                 if (i == 0) {
                         tmp = tmp1;
                 } else {
