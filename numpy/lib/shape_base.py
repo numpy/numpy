@@ -564,7 +564,7 @@ def kron(a,b):
     return result
 
 def tile(A, reps):
-    """Repeat an array the number of times given in the integer tuple, tup.
+    """Repeat an array the number of times given in the integer tuple, reps.
 
     If reps has length d, the result will have dimension of max(d, A.ndim).
     If reps is scalar it is treated as a 1-tuple.
