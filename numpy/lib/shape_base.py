@@ -604,8 +604,8 @@ def tile(A, reps):
     c = _nx.array(A,copy=False,subok=True,ndmin=d)
     shape = list(c.shape)
     n = c.size
-    if (d < A.ndim):
-        tup = (1,)*(A.ndim-d) + tup
+    if (d < c.ndim):
+        tup = (1,)*(c.ndim-d) + tup
     for i, nrep in enumerate(tup):
         if nrep!=1:
             c = c.reshape(-1,n).repeat(nrep,0)

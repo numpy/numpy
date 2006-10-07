@@ -386,6 +386,17 @@ class test_kron(NumpyTestCase):
                 assert False, "ValueError expected"
 
 
+class test_tile(NumpyTestCase):
+    def check_basic(self):
+        a = array([0,1,2])
+        b = [[1,2],[3,4]]
+        assert_equal(tile(a,2), [0,1,2,0,1,2])
+        assert_equal(tile(a,(2,2)), [[0,1,2,0,1,2],[0,1,2,0,1,2]])
+        assert_equal(tile(a,(1,2)), [[0,1,2,0,1,2]])
+        assert_equal(tile(b, 2), [[1,2,1,2],[3,4,3,4]])
+        assert_equal(tile(b,(2,1)),[[1,2],[3,4],[1,2],[3,4]])
+        assert_equal(tile(b,(2,2)),[[1,2,1,2],[3,4,3,4],[1,2,1,2],[3,4,3,4]])
+        
 # Utility
 
 def compare_results(res,desired):
