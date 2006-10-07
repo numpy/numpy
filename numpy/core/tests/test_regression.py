@@ -456,6 +456,11 @@ class test_regression(NumpyTestCase):
         lst = ['abc','cde','fgh']
         N.lexsort((lst,))
         
+    def check_fancy_index(self, level=rlevel):
+        """Ticket #302"""
+        x = N.array([1,2])[N.array([0])]
+        assert_equal(x.shape,(1,))
+        
     def check_recarray_copy(self, level=rlevel):
         """Ticket #312"""
         dt = [('x',N.int16),('y',N.float64)]
