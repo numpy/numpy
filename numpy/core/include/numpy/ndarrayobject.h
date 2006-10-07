@@ -36,6 +36,17 @@ extern "C" CONFUSE_EMACS
            Handle that here.
          */
 
+#define NPY_BYTE_FMT "hhd"
+#define NPY_UBYTE_FMT "hhu"
+#define NPY_SHORT_FMT "hd"
+#define NPY_USHORT_FMT "hu"
+#define NPY_INT_FMT "d"
+#define NPY_UINT_FMT "u"
+#define NPY_LONG_FMT "ld"
+#define NPY_ULONG_FMT "lu"
+#define NPY_FLOAT_FMT "g"
+#define NPY_DOUBLE_FMT "g"
+
 #ifdef PY_LONG_LONG
 typedef PY_LONG_LONG npy_longlong;
 typedef unsigned PY_LONG_LONG npy_ulonglong;
@@ -293,6 +304,8 @@ typedef enum {
 #define PyInt8ArrType_Type PyLongArrType_Type
 #define PyUInt8ScalarObject PyULongScalarObject
 #define PyUInt8ArrType_Type PyULongArrType_Type
+#define NPY_INT8_FMT NPY_LONG_FMT
+#define NPY_UINT8_FMT NPY_ULONG_FMT
 #elif NPY_BITSOF_LONG == 16
 #define NPY_INT16 NPY_LONG
 #define NPY_UINT16 NPY_ULONG
@@ -302,6 +315,8 @@ typedef enum {
 #define PyInt16ArrType_Type PyLongArrType_Type
 #define PyUInt16ScalarObject PyULongScalarObject
 #define PyUInt16ArrType_Type PyULongArrType_Type
+#define NPY_INT16_FMT NPY_LONG_FMT
+#define NPY_UINT16_FMT NPY_ULONG_FMT
 #elif NPY_BITSOF_LONG == 32
 #define NPY_INT32 NPY_LONG
 #define NPY_UINT32 NPY_ULONG
@@ -312,6 +327,8 @@ typedef enum {
 #define PyInt32ArrType_Type PyLongArrType_Type
 #define PyUInt32ScalarObject PyULongScalarObject
 #define PyUInt32ArrType_Type PyULongArrType_Type
+#define NPY_INT32_FMT NPY_LONG_FMT
+#define NPY_UINT32_FMT NPY_ULONG_FMT
 #elif NPY_BITSOF_LONG == 64
 #define NPY_INT64 NPY_LONG
 #define NPY_UINT64 NPY_ULONG
@@ -321,6 +338,8 @@ typedef enum {
 #define PyInt64ArrType_Type PyLongArrType_Type
 #define PyUInt64ScalarObject PyULongScalarObject
 #define PyUInt64ArrType_Type PyULongArrType_Type
+#define NPY_INT64_FMT NPY_LONG_FMT
+#define NPY_UINT64_FMT NPY_ULONG_FMT
 #elif NPY_BITSOF_LONG == 128
 #define NPY_INT128 NPY_LONG
 #define NPY_UINT128 NPY_ULONG
@@ -330,6 +349,8 @@ typedef enum {
 #define PyInt128ArrType_Type PyLongArrType_Type
 #define PyUInt128ScalarObject PyULongScalarObject
 #define PyUInt128ArrType_Type PyULongArrType_Type
+#define NPY_INT128_FMT NPY_LONG_FMT
+#define NPY_UINT128_FMT NPY_ULONG_FMT
 #endif
 
 #if NPY_BITSOF_LONGLONG == 8
@@ -342,6 +363,8 @@ typedef enum {
 #    define PyInt8ArrType_Type PyLongLongArrType_Type
 #    define PyUInt8ScalarObject PyULongLongScalarObject
 #    define PyUInt8ArrType_Type PyULongLongArrType_Type
+#define NPY_INT8_FMT NPY_LONGLONG_FMT
+#define NPY_UINT8_FMT NPY_ULONGLONG_FMT
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT8
 #  define NPY_MIN_LONGLONG NPY_MIN_INT8
@@ -356,6 +379,8 @@ typedef enum {
 #    define PyInt16ArrType_Type PyLongLongArrType_Type
 #    define PyUInt16ScalarObject PyULongLongScalarObject
 #    define PyUInt16ArrType_Type PyULongLongArrType_Type
+#define NPY_INT16_FMT NPY_LONGLONG_FMT
+#define NPY_UINT16_FMT NPY_ULONGLONG_FMT
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT16
 #  define NPY_MIN_LONGLONG NPY_MIN_INT16
@@ -371,6 +396,8 @@ typedef enum {
 #    define PyInt32ArrType_Type PyLongLongArrType_Type
 #    define PyUInt32ScalarObject PyULongLongScalarObject
 #    define PyUInt32ArrType_Type PyULongLongArrType_Type
+#define NPY_INT32_FMT NPY_LONGLONG_FMT
+#define NPY_UINT32_FMT NPY_ULONGLONG_FMT
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT32
 #  define NPY_MIN_LONGLONG NPY_MIN_INT32
@@ -385,6 +412,8 @@ typedef enum {
 #    define PyInt64ArrType_Type PyLongLongArrType_Type
 #    define PyUInt64ScalarObject PyULongLongScalarObject
 #    define PyUInt64ArrType_Type PyULongLongArrType_Type
+#define NPY_INT64_FMT NPY_LONGLONG_FMT
+#define NPY_UINT64_FMT NPY_ULONGLONG_FMT
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT64
 #  define NPY_MIN_LONGLONG NPY_MIN_INT64
@@ -399,6 +428,8 @@ typedef enum {
 #    define PyInt128ArrType_Type PyLongLongArrType_Type
 #    define PyUInt128ScalarObject PyULongLongScalarObject
 #    define PyUInt128ArrType_Type PyULongLongArrType_Type
+#define NPY_INT128_FMT NPY_LONGLONG_FMT
+#define NPY_UINT128_FMT NPY_ULONGLONG_FMT
 #  endif
 #  define NPY_MAX_LONGLONG NPY_MAX_INT128
 #  define NPY_MIN_LONGLONG NPY_MIN_INT128
@@ -412,6 +443,8 @@ typedef enum {
 #  define PyInt256ArrType_Type PyLongLongArrType_Type
 #  define PyUInt256ScalarObject PyULongLongScalarObject
 #  define PyUInt256ArrType_Type PyULongLongArrType_Type
+#define NPY_INT256_FMT NPY_LONGLONG_FMT
+#define NPY_UINT256_FMT NPY_ULONGLONG_FMT
 #  define NPY_MAX_LONGLONG NPY_MAX_INT256
 #  define NPY_MIN_LONGLONG NPY_MIN_INT256
 #  define NPY_MAX_ULONGLONG NPY_MAX_UINT256
@@ -427,6 +460,8 @@ typedef enum {
 #    define PyInt8ArrType_Type PyIntArrType_Type
 #    define PyUInt8ScalarObject PyUIntScalarObject
 #    define PyUInt8ArrType_Type PyUIntArrType_Type
+#define NPY_INT8_FMT NPY_INT_FMT
+#define NPY_UINT8_FMT NPY_UINT_FMT
 #endif
 #elif NPY_BITSOF_INT == 16
 #ifndef NPY_INT16
@@ -438,6 +473,8 @@ typedef enum {
 #    define PyInt16ArrType_Type PyIntArrType_Type
 #    define PyUInt16ScalarObject PyIntUScalarObject
 #    define PyUInt16ArrType_Type PyIntUArrType_Type
+#define NPY_INT16_FMT NPY_INT_FMT
+#define NPY_UINT16_FMT NPY_UINT_FMT
 #endif
 #elif NPY_BITSOF_INT == 32
 #ifndef NPY_INT32
@@ -450,6 +487,8 @@ typedef enum {
 #    define PyInt32ArrType_Type PyIntArrType_Type
 #    define PyUInt32ScalarObject PyUIntScalarObject
 #    define PyUInt32ArrType_Type PyUIntArrType_Type
+#define NPY_INT32_FMT NPY_INT_FMT
+#define NPY_UINT32_FMT NPY_UINT_FMT
 #endif
 #elif NPY_BITSOF_INT == 64
 #ifndef NPY_INT64
@@ -461,6 +500,8 @@ typedef enum {
 #    define PyInt64ArrType_Type PyIntArrType_Type
 #    define PyUInt64ScalarObject PyUIntScalarObject
 #    define PyUInt64ArrType_Type PyUIntArrType_Type
+#define NPY_INT64_FMT NPY_INT_FMT
+#define NPY_UINT64_FMT NPY_UINT_FMT
 #endif
 #elif NPY_BITSOF_INT == 128
 #ifndef NPY_INT128
@@ -472,6 +513,8 @@ typedef enum {
 #    define PyInt128ArrType_Type PyIntArrType_Type
 #    define PyUInt128ScalarObject PyUIntScalarObject
 #    define PyUInt128ArrType_Type PyUIntArrType_Type
+#define NPY_INT128_FMT NPY_INT_FMT
+#define NPY_UINT128_FMT NPY_UINT_FMT
 #endif
 #endif
 
@@ -485,6 +528,8 @@ typedef enum {
 #    define PyInt8ArrType_Type PyShortArrType_Type
 #    define PyUInt8ScalarObject PyUShortScalarObject
 #    define PyUInt8ArrType_Type PyUShortArrType_Type
+#define NPY_INT8_FMT NPY_SHORT_FMT
+#define NPY_UINT8_FMT NPY_USHORT_FMT
 #endif
 #elif NPY_BITSOF_SHORT == 16
 #ifndef NPY_INT16
@@ -496,6 +541,8 @@ typedef enum {
 #    define PyInt16ArrType_Type PyShortArrType_Type
 #    define PyUInt16ScalarObject PyUShortScalarObject
 #    define PyUInt16ArrType_Type PyUShortArrType_Type
+#define NPY_INT16_FMT NPY_SHORT_FMT
+#define NPY_UINT16_FMT NPY_USHORT_FMT
 #endif
 #elif NPY_BITSOF_SHORT == 32
 #ifndef NPY_INT32
@@ -508,6 +555,8 @@ typedef enum {
 #    define PyInt32ArrType_Type PyShortArrType_Type
 #    define PyUInt32ScalarObject PyUShortScalarObject
 #    define PyUInt32ArrType_Type PyUShortArrType_Type
+#define NPY_INT32_FMT NPY_SHORT_FMT
+#define NPY_UINT32_FMT NPY_USHORT_FMT
 #endif
 #elif NPY_BITSOF_SHORT == 64
 #ifndef NPY_INT64
@@ -519,6 +568,8 @@ typedef enum {
 #    define PyInt64ArrType_Type PyShortArrType_Type
 #    define PyUInt64ScalarObject PyUShortScalarObject
 #    define PyUInt64ArrType_Type PyUShortArrType_Type
+#define NPY_INT64_FMT NPY_SHORT_FMT
+#define NPY_UINT64_FMT NPY_USHORT_FMT
 #endif
 #elif NPY_BITSOF_SHORT == 128
 #ifndef NPY_INT128
@@ -530,6 +581,8 @@ typedef enum {
 #    define PyInt128ArrType_Type PyShortArrType_Type
 #    define PyUInt128ScalarObject PyUShortScalarObject
 #    define PyUInt128ArrType_Type PyUShortArrType_Type
+#define NPY_INT128_FMT NPY_SHORT_FMT
+#define NPY_UINT128_FMT NPY_USHORT_FMT
 #endif
 #endif
 
@@ -544,6 +597,8 @@ typedef enum {
 #    define PyInt8ArrType_Type PyByteArrType_Type
 #    define PyUInt8ScalarObject PyUByteScalarObject
 #    define PyUInt8ArrType_Type PyUByteArrType_Type
+#define NPY_INT8_FMT NPY_BYTE_FMT
+#define NPY_UINT8_FMT NPY_UBYTE_FMT
 #endif
 #elif NPY_BITSOF_CHAR == 16
 #ifndef NPY_INT16
@@ -555,6 +610,8 @@ typedef enum {
 #    define PyInt16ArrType_Type PyByteArrType_Type
 #    define PyUInt16ScalarObject PyUByteScalarObject
 #    define PyUInt16ArrType_Type PyUByteArrType_Type
+#define NPY_INT16_FMT NPY_BYTE_FMT
+#define NPY_UINT16_FMT NPY_UBYTE_FMT
 #endif
 #elif NPY_BITSOF_CHAR == 32
 #ifndef NPY_INT32
@@ -567,6 +624,8 @@ typedef enum {
 #    define PyInt32ArrType_Type PyByteArrType_Type
 #    define PyUInt32ScalarObject PyUByteScalarObject
 #    define PyUInt32ArrType_Type PyUByteArrType_Type
+#define NPY_INT32_FMT NPY_BYTE_FMT
+#define NPY_UINT32_FMT NPY_UBYTE_FMT
 #endif
 #elif NPY_BITSOF_CHAR == 64
 #ifndef NPY_INT64
@@ -578,6 +637,8 @@ typedef enum {
 #    define PyInt64ArrType_Type PyByteArrType_Type
 #    define PyUInt64ScalarObject PyUByteScalarObject
 #    define PyUInt64ArrType_Type PyUByteArrType_Type
+#define NPY_INT64_FMT NPY_BYTE_FMT
+#define NPY_UINT64_FMT NPY_UBYTE_FMT
 #endif
 #elif NPY_BITSOF_CHAR == 128
 #ifndef NPY_INT128
@@ -589,6 +650,8 @@ typedef enum {
 #    define PyInt128ArrType_Type PyByteArrType_Type
 #    define PyUInt128ScalarObject PyUByteScalarObject
 #    define PyUInt128ArrType_Type PyUByteArrType_Type
+#define NPY_INT128_FMT NPY_BYTE_FMT
+#define NPY_UINT128_FMT NPY_UBYTE_FMT
 #endif
 #endif
 
@@ -604,6 +667,8 @@ typedef enum {
 #    define PyComplex32ScalarObject PyCDoubleScalarObject
 #    define PyFloat16ArrType_Type PyDoubleArrType_Type
 #    define PyComplex32ArrType_Type PyCDoubleArrType_Type
+#define NPY_FLOAT16_FMT NPY_DOUBLE_FMT
+#define NPY_COMPLEX32_FMT NPY_CDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_DOUBLE == 32
 #ifndef NPY_FLOAT32
@@ -615,6 +680,8 @@ typedef enum {
 #    define PyComplex64ScalarObject PyCDoubleScalarObject
 #    define PyFloat32ArrType_Type PyDoubleArrType_Type
 #    define PyComplex64ArrType_Type PyCDoubleArrType_Type
+#define NPY_FLOAT32_FMT NPY_DOUBLE_FMT
+#define NPY_COMPLEX64_FMT NPY_CDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_DOUBLE == 64
 #ifndef NPY_FLOAT64
@@ -626,6 +693,8 @@ typedef enum {
 #    define PyComplex128ScalarObject PyCDoubleScalarObject
 #    define PyFloat64ArrType_Type PyDoubleArrType_Type
 #    define PyComplex128ArrType_Type PyCDoubleArrType_Type
+#define NPY_FLOAT64_FMT NPY_DOUBLE_FMT
+#define NPY_COMPLEX128_FMT NPY_CDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_DOUBLE == 80
 #ifndef NPY_FLOAT80
@@ -637,6 +706,8 @@ typedef enum {
 #    define PyComplex160ScalarObject PyCDoubleScalarObject
 #    define PyFloat80ArrType_Type PyDoubleArrType_Type
 #    define PyComplex160ArrType_Type PyCDoubleArrType_Type
+#define NPY_FLOAT80_FMT NPY_DOUBLE_FMT
+#define NPY_COMPLEX160_FMT NPY_CDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_DOUBLE == 96
 #ifndef NPY_FLOAT96
@@ -648,6 +719,8 @@ typedef enum {
 #    define PyComplex192ScalarObject PyCDoubleScalarObject
 #    define PyFloat96ArrType_Type PyDoubleArrType_Type
 #    define PyComplex192ArrType_Type PyCDoubleArrType_Type
+#define NPY_FLOAT96_FMT NPY_DOUBLE_FMT
+#define NPY_COMPLEX192_FMT NPY_CDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_DOUBLE == 128
 #ifndef NPY_FLOAT128
@@ -659,6 +732,8 @@ typedef enum {
 #    define PyComplex256ScalarObject PyCDoubleScalarObject
 #    define PyFloat128ArrType_Type PyDoubleArrType_Type
 #    define PyComplex256ArrType_Type PyCDoubleArrType_Type
+#define NPY_FLOAT128_FMT NPY_DOUBLE_FMT
+#define NPY_COMPLEX256_FMT NPY_CDOUBLE_FMT
 #endif
 #endif
 
@@ -674,6 +749,8 @@ typedef enum {
 #    define PyComplex32ScalarObject PyCFloatScalarObject
 #    define PyFloat16ArrType_Type PyFloatArrType_Type
 #    define PyComplex32ArrType_Type PyCFloatArrType_Type
+#define NPY_FLOAT16_FMT NPY_FLOAT_FMT
+#define NPY_COMPLEX32_FMT NPY_CFLOAT_FMT
 #endif
 #elif NPY_BITSOF_FLOAT == 32
 #ifndef NPY_FLOAT32
@@ -685,6 +762,8 @@ typedef enum {
 #    define PyComplex64ScalarObject PyCFloatScalarObject
 #    define PyFloat32ArrType_Type PyFloatArrType_Type
 #    define PyComplex64ArrType_Type PyCFloatArrType_Type
+#define NPY_FLOAT32_FMT NPY_FLOAT_FMT
+#define NPY_COMPLEX64_FMT NPY_CFLOAT_FMT
 #endif
 #elif NPY_BITSOF_FLOAT == 64
 #ifndef NPY_FLOAT64
@@ -696,6 +775,8 @@ typedef enum {
 #    define PyComplex128ScalarObject PyCFloatScalarObject
 #    define PyFloat64ArrType_Type PyFloatArrType_Type
 #    define PyComplex128ArrType_Type PyCFloatArrType_Type
+#define NPY_FLOAT64_FMT NPY_FLOAT_FMT
+#define NPY_COMPLEX128_FMT NPY_CFLOAT_FMT
 #endif
 #elif NPY_BITSOF_FLOAT == 80
 #ifndef NPY_FLOAT80
@@ -707,6 +788,8 @@ typedef enum {
 #    define PyComplex160ScalarObject PyCFloatScalarObject
 #    define PyFloat80ArrType_Type PyFloatArrType_Type
 #    define PyComplex160ArrType_Type PyCFloatArrType_Type
+#define NPY_FLOAT80_FMT NPY_FLOAT_FMT
+#define NPY_COMPLEX160_FMT NPY_CFLOAT_FMT
 #endif
 #elif NPY_BITSOF_FLOAT == 96
 #ifndef NPY_FLOAT96
@@ -718,6 +801,8 @@ typedef enum {
 #    define PyComplex192ScalarObject PyCFloatScalarObject
 #    define PyFloat96ArrType_Type PyFloatArrType_Type
 #    define PyComplex192ArrType_Type PyCFloatArrType_Type
+#define NPY_FLOAT96_FMT NPY_FLOAT_FMT
+#define NPY_COMPLEX192_FMT NPY_CFLOAT_FMT
 #endif
 #elif NPY_BITSOF_FLOAT == 128
 #ifndef NPY_FLOAT128
@@ -729,6 +814,8 @@ typedef enum {
 #    define PyComplex256ScalarObject PyCFloatScalarObject
 #    define PyFloat128ArrType_Type PyFloatArrType_Type
 #    define PyComplex256ArrType_Type PyCFloatArrType_Type
+#define NPY_FLOAT128_FMT NPY_FLOAT_FMT
+#define NPY_COMPLEX256_FMT NPY_CFLOAT_FMT
 #endif
 #endif
 
@@ -743,6 +830,8 @@ typedef enum {
 #    define PyComplex32ScalarObject PyCLongDoubleScalarObject
 #    define PyFloat16ArrType_Type PyLongDoubleArrType_Type
 #    define PyComplex32ArrType_Type PyCLongDoubleArrType_Type
+#define NPY_FLOAT16_FMT NPY_LONGDOUBLE_FMT
+#define NPY_COMPLEX32_FMT NPY_CLONGDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 32
 #ifndef NPY_FLOAT32
@@ -754,6 +843,8 @@ typedef enum {
 #    define PyComplex64ScalarObject PyCLongDoubleScalarObject
 #    define PyFloat32ArrType_Type PyLongDoubleArrType_Type
 #    define PyComplex64ArrType_Type PyCLongDoubleArrType_Type
+#define NPY_FLOAT32_FMT NPY_LONGDOUBLE_FMT
+#define NPY_COMPLEX64_FMT NPY_CLONGDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 64
 #ifndef NPY_FLOAT64
@@ -765,6 +856,8 @@ typedef enum {
 #    define PyComplex128ScalarObject PyCLongDoubleScalarObject
 #    define PyFloat64ArrType_Type PyLongDoubleArrType_Type
 #    define PyComplex128ArrType_Type PyCLongDoubleArrType_Type
+#define NPY_FLOAT64_FMT NPY_LONGDOUBLE_FMT
+#define NPY_COMPLEX128_FMT NPY_CLONGDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 80
 #ifndef NPY_FLOAT80
@@ -776,6 +869,8 @@ typedef enum {
 #    define PyComplex160ScalarObject PyCLongDoubleScalarObject
 #    define PyFloat80ArrType_Type PyLongDoubleArrType_Type
 #    define PyComplex160ArrType_Type PyCLongDoubleArrType_Type
+#define NPY_FLOAT80_FMT NPY_LONGDOUBLE_FMT
+#define NPY_COMPLEX160_FMT NPY_CLONGDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 96
 #ifndef NPY_FLOAT96
@@ -787,6 +882,8 @@ typedef enum {
 #    define PyComplex192ScalarObject PyCLongDoubleScalarObject
 #    define PyFloat96ArrType_Type PyLongDoubleArrType_Type
 #    define PyComplex192ArrType_Type PyCLongDoubleArrType_Type
+#define NPY_FLOAT96_FMT NPY_LONGDOUBLE_FMT
+#define NPY_COMPLEX192_FMT NPY_CLONGDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 128
 #ifndef NPY_FLOAT128
@@ -798,6 +895,8 @@ typedef enum {
 #    define PyComplex256ScalarObject PyCLongDoubleScalarObject
 #    define PyFloat128ArrType_Type PyLongDoubleArrType_Type
 #    define PyComplex256ArrType_Type PyCLongDoubleArrType_Type
+#define NPY_FLOAT128_FMT NPY_LONGDOUBLE_FMT
+#define NPY_COMPLEX256_FMT NPY_CLONGDOUBLE_FMT
 #endif
 #elif NPY_BITSOF_LONGDOUBLE == 256
 #define NPY_FLOAT256 NPY_LONGDOUBLE
@@ -808,6 +907,8 @@ typedef enum {
 #    define PyComplex512ScalarObject PyCLongDoubleScalarObject
 #    define PyFloat256ArrType_Type PyLongDoubleArrType_Type
 #    define PyComplex512ArrType_Type PyCLongDoubleArrType_Type
+#define NPY_FLOAT256_FMT NPY_LONGDOUBLE_FMT
+#define NPY_COMPLEX512_FMT NPY_CLONGDOUBLE_FMT
 #endif
 
         /* End of typedefs for numarray style bit-width names */
