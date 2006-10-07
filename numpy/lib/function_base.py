@@ -1289,7 +1289,7 @@ def insert(arr, obj, values, axis=None):
     newshape = list(arr.shape)
     if isinstance(obj, (int, long, integer)):
         if (obj < 0): obj += N
-        if (obj < 0 or obj > N or (obj == N and N != 0)):
+        if obj < 0 or obj > N:
             raise ValueError, "index (%d) out of range (0<=index<=%d) "\
                   "in dimension %d" % (obj, N, axis)
         newshape[axis] += 1;
