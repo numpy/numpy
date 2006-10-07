@@ -1,7 +1,7 @@
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','row_stack', 'dstack','array_split','split','hsplit',
            'vsplit','dsplit','apply_over_axes','expand_dims',
-           'apply_along_axis', 'repmat', 'kron']
+           'apply_along_axis', 'tile', 'kron']
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, zeros, newaxis, outer, \
@@ -526,24 +526,6 @@ def dsplit(ary,indices_or_sections):
         raise ValueError, 'vsplit only works on arrays of 3 or more dimensions'
     return split(ary,indices_or_sections,2)
 
-# should figure out how to generalize this one.
-def repmat(a, m, n):
-    """Repeat a 0-d to 2-d array mxn times
-    """
-    a = asanyarray(a)
-    ndim = a.ndim
-    if ndim == 0:
-        origrows, origcols = (1,1)
-    elif ndim == 1:
-        origrows, origcols = (1, a.shape[0])
-    else:
-        origrows, origcols = a.shape
-    rows = origrows * m
-    cols = origcols * n
-    c = a.reshape(1,a.size).repeat(m, 0).reshape(rows, origcols).repeat(n,0)
-    return c.reshape(rows, cols)
-
-
 def _getwrapper(*args):
     """Find the wrapper for the array with the highest priority.
 
@@ -580,3 +562,56 @@ def kron(a,b):
     if wrapper is not None:
         result = wrapper(result)
     return result
+
+def tile(A, reps):
+    """Repeat an array the number of times given in the integer tuple, tup.
+
+    If reps has length d, the result will have dimension of max(d, A.ndim).
+    If reps is scalar it is treated as a 1-tuple.
+
+    If A.ndim < d, A is promoted to be d-dimensional by prepending new axes.
+    So a shape (3,) array is promoted to (1,3) for 2-D replication,
+    or shape (1,1,3) for 3-D replication.
+    If this is not the desired behavior, promote A to d-dimensions manually
+    before calling this function.
+
+    If d < A.ndim, tup is promoted to A.ndim by pre-pending 1's to it.  Thus
+    for an A.shape of (2,3,4,5), a tup of (2,2) is treated as (1,1,2,2)
+
+
+    Examples:
+    >>> a = array([0,1,2])
+    >>> tile(a,2)
+    array([0, 1, 2, 0, 1, 2])
+    >>> tile(a,(1,2))
+    array([[0, 1, 2, 0, 1, 2]])
+    >>> tile(a,(2,2))
+    array([[0, 1, 2, 0, 1, 2],
+           [0, 1, 2, 0, 1, 2]])
+    >>> tile(a,(2,1,2))
+    array([[[0, 1, 2, 0, 1, 2]],
+
+           [[0, 1, 2, 0, 1, 2]]])
+
+    See Also:
+       repeat
+    """
+    try:
+        tup = tuple(reps)
+    except TypeError:
+        tup = (reps,)
+    d = len(tup)
+    c = _nx.array(A,copy=False,subok=True,ndmin=d)
+    shape = list(c.shape)
+    n = c.size
+    if (d < A.ndim):
+        tup = (1,)*(A.ndim-d) + tup
+    for i, nrep in enumerate(tup):
+        if nrep!=1:
+            c = c.reshape(-1,n).repeat(nrep,0)
+        dim_in = shape[i]
+        dim_out = dim_in*nrep
+        shape[i] = dim_out
+        n /= dim_in
+    return c.reshape(shape)
+

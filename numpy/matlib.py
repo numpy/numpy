@@ -6,7 +6,7 @@ from numpy import *
 __version__ = N.__version__
 
 __all__ = N.__all__[:] # copy numpy namespace
-__all__ += ['rand', 'randn']
+__all__ += ['rand', 'randn', 'repmat']
 
 def empty(shape, dtype=None, order='C'):
     """return an empty matrix of the given shape
@@ -48,4 +48,18 @@ def randn(*args):
        args = args[0]
     return asmatrix(N.random.randn(*args))
 
-    
+def repmat(a, m, n):
+    """Repeat a 0-d to 2-d array mxn times
+    """
+    a = asanyarray(a)
+    ndim = a.ndim
+    if ndim == 0:
+        origrows, origcols = (1,1)
+    elif ndim == 1:
+        origrows, origcols = (1, a.shape[0])
+    else:
+        origrows, origcols = a.shape
+    rows = origrows * m
+    cols = origcols * n
+    c = a.reshape(1,a.size).repeat(m, 0).reshape(rows, origcols).repeat(n,0)
+    return c.reshape(rows, cols)
