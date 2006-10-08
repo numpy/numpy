@@ -46,9 +46,12 @@ class build_clib(old_build_clib):
             return
 
         # Make sure that library sources are complete.
+        languages = []
         for (lib_name, build_info) in self.libraries:
             if not all_strings(build_info.get('sources',[])):
                 self.run_command('build_src')
+            l = build_info.get('language',None)
+            if l and l not in languages: languages.append(l)
 
         from distutils.ccompiler import new_compiler
         self.compiler = new_compiler(compiler=self.compiler,
@@ -69,7 +72,8 @@ class build_clib(old_build_clib):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
                                            verbose=self.verbose,
                                            dry_run=self.dry_run,
-                                           force=self.force)
+                                           force=self.force,
+                                           requiref90='f90' in languages)
             self.fcompiler.customize(self.distribution)
 
             libraries = self.libraries
@@ -124,12 +128,14 @@ class build_clib(old_build_clib):
                          'for fortran compiler: %s' \
                          % (config_fc))
                 from numpy.distutils.fcompiler import new_fcompiler
+                requiref90 = build_info.get('language','c')=='f90'
                 fcompiler = new_fcompiler(compiler=self.fcompiler.compiler_type,
                                           verbose=self.verbose,
                                           dry_run=self.dry_run,
-                                          force=self.force)
+                                          force=self.force,
+                                          requiref90=requiref90)
                 fcompiler.customize(config_fc)
-
+            
             macros = build_info.get('macros')
             include_dirs = build_info.get('include_dirs')
             extra_postargs = build_info.get('extra_compiler_args') or []

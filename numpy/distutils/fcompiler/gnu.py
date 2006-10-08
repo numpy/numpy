@@ -28,7 +28,7 @@ class GnuFCompiler(FCompiler):
     executables = {
         'version_cmd'  : [fc_exe,"--version"],
         'compiler_f77' : [fc_exe, "-g", "-Wall","-fno-second-underscore"],
-        'compiler_f90' : None,
+        'compiler_f90' : None, # Use --fcompiler=gnu95 for f90 codes
         'compiler_fix' : None,
         'linker_so'    : [fc_exe, "-g", "-Wall"],
         'archiver'     : ["ar", "-cr"],
@@ -49,6 +49,8 @@ class GnuFCompiler(FCompiler):
             executables[key].append('-mno-cygwin')
 
     g2c = 'g2c'
+
+    suggested_f90_compiler = 'gnu95'
 
     #def get_linker_so(self):
     #    # win32 linking should be handled by standard linker

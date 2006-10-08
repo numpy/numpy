@@ -104,6 +104,11 @@ class FCompiler(CCompiler):
     shared_lib_format = "%s%s"
     exe_extension = ""
 
+    # If compiler does not support compiling Fortran 90 then it can
+    # suggest using another compiler. For example, gnu would suggest
+    # gnu95 compiler type when there are F90 sources.
+    suggested_f90_compiler = None
+
     ######################################################################
     ## Methods that subclasses may redefine. But don't call these methods!
     ## They are private to FCompiler class and may return unexpected
@@ -589,13 +594,23 @@ _default_compilers = (
     ('mac',('gnu','gnu95',)),
     )
 
-def _find_existing_fcompiler(compilers, osname=None, platform=None):
+def _find_existing_fcompiler(compilers, osname=None, platform=None, requiref90=None):
     for compiler in compilers:
         v = None
         try:
             c = new_fcompiler(plat=platform, compiler=compiler)
             c.customize()
             v = c.get_version()
+            if requiref90 and c.compiler_f90 is None:
+                v = None
+                new_compiler = c.suggested_f90_compiler
+                if new_compiler:
+                    c = new_fcompiler(plat=platform, compiler=new_compiler)
+                    c.customize()
+                    v = c.get_version()
+            if requiref90 and c.compiler_f90 is None:
+                raise ValueError,'%s does not support compiling f90 codes, skipping.' \
+                      % (c.__class__.__name__)
         except DistutilsModuleError:
             pass
         except Exception, msg:
@@ -604,7 +619,7 @@ def _find_existing_fcompiler(compilers, osname=None, platform=None):
             return compiler
     return
 
-def get_default_fcompiler(osname=None, platform=None):
+def get_default_fcompiler(osname=None, platform=None, requiref90=None):
     """ Determine the default Fortran compiler to use for the given platform. """
     if osname is None:
         osname = os.name
@@ -622,7 +637,8 @@ def get_default_fcompiler(osname=None, platform=None):
         matching_compilers.append('gnu')
     compiler =  _find_existing_fcompiler(matching_compilers,
                                          osname=osname,
-                                         platform=platform)
+                                         platform=platform,
+                                         requiref90=requiref90)
     if compiler is not None:
         return compiler
     return matching_compilers[0]
@@ -631,7 +647,8 @@ def new_fcompiler(plat=None,
                   compiler=None,
                   verbose=0,
                   dry_run=0,
-                  force=0):
+                  force=0,
+                  requiref90=0):
     """ Generate an instance of some FCompiler subclass for the supplied
     platform/compiler combination.
     """
@@ -639,7 +656,7 @@ def new_fcompiler(plat=None,
         plat = os.name
     try:
         if compiler is None:
-            compiler = get_default_fcompiler(plat)
+            compiler = get_default_fcompiler(plat,requiref90=requiref90)
         (module_name, class_name, long_description) = fcompiler_class[compiler]
     except KeyError:
         msg = "don't know how to compile Fortran code on platform '%s'" % plat

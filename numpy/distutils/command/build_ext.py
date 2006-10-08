@@ -75,6 +75,13 @@ class build_ext (old_build_ext):
                     need_f_compiler = 1
                     break
 
+        requiref90 = 0
+        if need_f_compiler:
+            for ext in self.extensions:
+                if getattr(ext,'language','c')=='f90':
+                    requiref90 = 1
+                    break
+
         # Determine if C++ compiler is needed.
         need_cxx_compiler = 0
         for ext in self.extensions:
@@ -100,7 +107,8 @@ class build_ext (old_build_ext):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
                                            verbose=self.verbose,
                                            dry_run=self.dry_run,
-                                           force=self.force)
+                                           force=self.force,
+                                           requiref90=requiref90)
             if self.fcompiler.get_version():
                 self.fcompiler.customize(self.distribution)
                 self.fcompiler.customize_cmd(self)
