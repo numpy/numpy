@@ -605,9 +605,12 @@ def _find_existing_fcompiler(compilers, osname=None, platform=None, requiref90=N
                 v = None
                 new_compiler = c.suggested_f90_compiler
                 if new_compiler:
+                    log.warn('Trying %r compiler as suggested by %r compiler for f90 support.' % (compiler, new_compiler))
                     c = new_fcompiler(plat=platform, compiler=new_compiler)
                     c.customize()
                     v = c.get_version()
+                    if v is not None:
+                        compiler = new_compiler
             if requiref90 and c.compiler_f90 is None:
                 raise ValueError,'%s does not support compiling f90 codes, skipping.' \
                       % (c.__class__.__name__)
