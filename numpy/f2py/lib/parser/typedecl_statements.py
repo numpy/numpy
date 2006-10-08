@@ -260,8 +260,8 @@ class TypeDeclarationStatement(Statement):
                 
         return clsname + s
 
-    def __str__(self):
-        tab = self.get_indent_tab()
+    def tofortran(self,isfix=None):
+        tab = self.get_indent_tab(isfix=isfix)
         s = self.tostr()
         if self.attrspec:
             s += ', ' + ', '.join(self.attrspec)
@@ -270,6 +270,9 @@ class TypeDeclarationStatement(Statement):
         if self.entity_decls:
             s += ' ' + ', '.join(self.entity_decls)
         return tab + s
+    
+    def __str__(self):
+        return self.tofortran()
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
@@ -538,8 +541,8 @@ class Implicit(Statement):
         self.items = items
         return
 
-    def __str__(self):
-        tab = self.get_indent_tab()
+    def tofortran(self, isfix=None):
+        tab = self.get_indent_tab(isfix=isfix)
         if not self.items:
             return tab + 'IMPLICIT NONE'
         l = []

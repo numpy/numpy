@@ -44,6 +44,56 @@ Options
   --2d-numeric     Use f2py2e tool with Numeric support.
   --2d-numarray    Use f2py2e tool with Numarray support.
 
+  -m <modulename>  Name of the module; f2py generates a Python/C API
+                   file <modulename>module.c or extension module <modulename>.
+                   For wrapping Fortran 90 modules, f2py will use Fortran
+                   module names.
+
+
+Options effective only with -h
+------------------------------
+
+  -h <filename>    Write signatures of the fortran routines to file <filename>
+                   and exit. You can then edit <filename> and use it instead
+                   of <fortran files> for generating extension module source.
+                   If <filename> is stdout or stderr then the signatures are
+                   printed to the corresponding stream.
+
+  --overwrite-signature  Overwrite existing signature file.
+
+Options effective only with -c
+------------------------------
+
+  -c               Compile fortran sources and build extension module.
+
+  --build-dir <dirname>  All f2py generated files are created in <dirname>.
+                   Default is tempfile.mktemp() and it will be removed after
+                   f2py stops unless <dirname> is specified via --build-dir
+                   option.
+
+numpy.distutils options effective only with -c
+----------------------------------------------
+
+  --fcompiler=<name>      Specify Fortran compiler type by vendor
+
+
+
+Extra options effective only with -c
+------------------------------------
+
+  -L/path/to/lib/ -l<libname>
+  -D<name[=define]> -U<name>
+  -I/path/to/include/
+  <filename>.o <filename>.(so|dynlib|dll) <filename>.a
+
+  Using the following macros may be required with non-gcc Fortran
+  compilers:
+    -DPREPEND_FORTRAN -DNO_APPEND_FORTRAN -DUPPERCASE_FORTRAN
+    -DUNDERSCORE_G77
+
+  -DF2PY_DEBUG_PYOBJ_TOFROM  --- pyobj_(to|from)_<ctype> functions will
+  print debugging messages to stderr.
+
 """
 
 import re
@@ -266,6 +316,7 @@ def build_extension(sys_argv):
                                  undef_macros = undef_macros,
                                  include_dirs = include_dirs,
                                  extra_objects = extra_objects,
+                                 language = 'f90',
                                  )
         if external_subprograms:
             wrapper = PythonWrapperModule(modulename)

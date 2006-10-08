@@ -846,8 +846,8 @@ class If(BeginStatement):
         assert len(self.content)==1,`self.content`
         return 'IF (%s) %s' % (self.expr, str(self.content[0]).lstrip())
 
-    def __str__(self):
-        return self.get_indent_tab(colon=':') + self.tostr()
+    def tofortran(self,isfix=None):
+        return self.get_indent_tab(colon=':',isfix=isfix) + self.tostr()
 
     def get_classes(self):
         return action_stmt

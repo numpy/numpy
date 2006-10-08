@@ -2,7 +2,8 @@
 __all__ = ['PythonCAPIType']
 
 from wrapper_base import *
-from parser.api import CHAR_BIT, Module, declaration_type_spec, TypeDecl
+from parser.api import CHAR_BIT, Module, declaration_type_spec, \
+     TypeDecl, TypeStmt, Subroutine, Function
 
 class PythonCAPIType(WrapperBase):
     """
@@ -11,7 +12,11 @@ class PythonCAPIType(WrapperBase):
     def __init__(self, parent, typedecl):
         WrapperBase.__init__(self)
         if isinstance(typedecl, tuple(declaration_type_spec)):
-            PythonCAPIIntrinsicType(parent, typedecl)
+            if isinstance(typedecl, TypeStmt):
+                type_decl = typedecl.get_type_decl(typedecl.name)
+                PythonCAPIDerivedType(parent, type_decl)
+            else:
+                PythonCAPIIntrinsicType(parent, typedecl)
         elif isinstance(typedecl, TypeDecl):
             PythonCAPIDerivedType(parent, typedecl)
         else:
@@ -516,6 +521,7 @@ static PyObject * %(oname)s_repr(PyObject * self) {
     fortran_code_template = '''\
       subroutine %(init_func)s(init_func_c, self, obj)
       %(use_stmt_list)s
+      %(type_decl_list)s
       external init_func_c
 !     self is %(oname)sObject
       external self
@@ -557,7 +563,7 @@ static PyObject * %(oname)s_repr(PyObject * self) {
         for n in typedecl.a.component_names:
             v = typedecl.a.components[n]
             t = v.get_typedecl()
-            PythonCAPIType(t)
+            PythonCAPIType(parent, t)
             ct = t.get_c_type()
             on = 'f2py_' + t.name
             parent.add(t)
@@ -605,8 +611,12 @@ static int %(oname)s_set_%(n)s(%(oname)sObject *self,
         self.cname = typedecl.get_c_name()
 
         self.use_stmt_list = []
+        self.type_decl_list = []
         if isinstance(typedecl.parent, Module):
             self.use_stmt_list.append('use %s' % (typedecl.parent.name))
-
+        elif isinstance(typedecl.parent, (Subroutine, Function)):
+            self.type_decl_list.append(typedecl.asfix())
+        else:
+            raise NotImplementedError,'types declared in '+typedecl.parent.__class__.__name__
         parent.apply_templates(self)
         return

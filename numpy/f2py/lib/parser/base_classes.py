@@ -426,8 +426,9 @@ class Statement:
             l.append(ttab + 'a=' + self.a.torepr(depth-1,incrtab+'  ').lstrip())
         return '\n'.join(l)
 
-    def get_indent_tab(self,colon=None,deindent=False):
-        if self.reader.isfix:
+    def get_indent_tab(self,colon=None,deindent=False,isfix=None):
+        if isfix is None: isfix = self.reader.isfix
+        if isfix:
             tab = ' '*6
         else:
             tab = ''
@@ -441,19 +442,35 @@ class Statement:
             return tab
         s = self.item.label
         if colon is None:
-            if self.reader.isfix:
+            if isfix:
                 colon = ''
             else:
                 colon = ':'
         if s:
             c = ''
-            if self.reader.isfix:
+            if isfix:
                 c = ' '
             tab = tab[len(c+s)+len(colon):]
             if not tab: tab = ' '
             tab = c + s + colon + tab
         return tab
 
+    def __str__(self):
+        return self.tofortran()
+
+    def asfix(self):
+        lines = []
+        for line in self.tofortran(isfix=True).split('\n'):
+            if len(line)>72 and line[0]==' ':
+                lines.append(line[:72]+'&\n     &')
+                line = line[72:]
+                while len(line)>66:
+                    lines.append(line[:66]+'&\n     &')
+                    line = line[66:]
+                lines.append(line+'\n')
+            else: lines.append(line+'\n')
+        return ''.join(lines).replace('\n     &\n','\n')
+        
     def format_message(self, kind, message):
         if self.item is not None:
             message = self.reader.format_message(kind, message,
@@ -544,11 +561,11 @@ class BeginStatement(Statement):
 
     def tostr(self):
         return self.blocktype.upper() + ' '+ self.name
-    
-    def __str__(self):
-        l=[self.get_indent_tab(colon=':') + self.tostr()]
+
+    def tofortran(self, isfix=None):
+        l=[self.get_indent_tab(colon=':', isfix=isfix) + self.tostr()]
         for c in self.content:
-            l.append(str(c))
+            l.append(c.tofortran(isfix=isfix))
         return '\n'.join(l)
 
     def torepr(self, depth=-1, incrtab=''):
@@ -736,10 +753,10 @@ class EndStatement(Statement):
     def analyze(self):
         return
 
-    def get_indent_tab(self,colon=None,deindent=False):
-        return Statement.get_indent_tab(self, colon=colon, deindent=True)
+    def get_indent_tab(self,colon=None,deindent=False,isfix=None):
+        return Statement.get_indent_tab(self, colon=colon, deindent=True,isfix=isfix)
 
-    def __str__(self):
-        return self.get_indent_tab() + 'END %s %s'\
+    def tofortran(self, isfix=None):
+        return self.get_indent_tab(isfix=isfix) + 'END %s %s'\
                % (self.blocktype.upper(),self.name or '')
 
