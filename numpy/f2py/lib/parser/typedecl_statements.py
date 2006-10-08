@@ -445,7 +445,10 @@ class Character(TypeDeclarationStatement):
     default_kind = 1
 
     def get_bit_size(self):
-        return CHAR_BIT * int(self.get_length()) * int(self.get_kind())
+        length = self.get_length()
+        if length=='*':
+            return 0  # model for character*(*)
+        return CHAR_BIT * int(length) * int(self.get_kind())
 
     def get_c_type(self):
         return 'f2py_string%s' % (self.get_bit_size())

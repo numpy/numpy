@@ -31,10 +31,9 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
   volatile int f2py_success = 1;
   %(decl_list)s
   static char *capi_kwlist[] = {%(kw_clist+optkw_clist+extrakw_clist+["NULL"])s};
-  if (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,
-                                   "%(pyarg_format_elist)s",
-                                   %(["capi_kwlist"]+pyarg_obj_clist)s))
-     return NULL;
+  if (PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,
+                                  "%(pyarg_format_elist)s",
+                                   %(["capi_kwlist"]+pyarg_obj_clist)s)) {
   %(frompyobj_list)s
   %(call_list)s
   f2py_success = !PyErr_Occurred();
@@ -46,6 +45,7 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
   }
   %(clean_call_list)s
   %(clean_frompyobj_list)s
+  }
   return capi_buildvalue;
 }
 '''
@@ -79,17 +79,28 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
         self.clean_frompyobj_list = []
 
         args_f = []
+        extra_args_f = []
         for argname in block.args:
             var = block.a.variables[argname]
             typedecl = var.get_typedecl()
             PythonCAPIType(parent, typedecl)
             ctype = typedecl.get_c_type()
-            self.decl_list.append('%s %s;' % (ctype, argname))
+            if ctype=='f2py_string0':
+                self.decl_list.append('%s %s = {NULL,0};' % (ctype, argname))
+            else:
+                self.decl_list.append('%s %s;' % (ctype, argname))
             self.kw_list.append('"%s"' % (argname))
             self.pyarg_format_list.append('O&')
             self.pyarg_obj_list.append('\npyobj_to_%s, &%s' % (ctype, argname))
             if 1: # is_scalar
-                args_f.append('&'+argname)
+                if ctype=='f2py_string0':
+                    args_f.append('%s.data' % argname)
+                    extra_args_f.append('%s.len' % argname)
+                    self.clean_frompyobj_list.append(\
+                        'if (%s.len) free(%s.data);' % (argname,argname))
+                else:
+                    args_f.append('&'+argname)
+                
             else:
                 args_f.append(argname)
             if var.is_intent_out(): # and is_scalar
@@ -97,7 +108,7 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
                 self.return_obj_list.append('\npyobj_from_%s, &%s' % (ctype, argname))
 
         WrapperCPPMacro(parent, 'F_FUNC')
-        self.call_list.append('%s_f(%s);' % (name,', '.join(args_f)))
+        self.call_list.append('%s_f(%s);' % (name,', '.join(args_f+extra_args_f)))
 
         self.clean_pyobjfrom_list.reverse()
         self.clean_call_list.reverse()

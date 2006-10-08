@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+
+"""
 
 import os
 import sys
@@ -99,6 +102,13 @@ fortran_code = '''
       character*5 a
 !f2py intent(in,out) a
       a(1:2) = "12"
+      end
+      subroutine foostringstar(a)
+      character*(*) a
+!f2py intent(in,out) a
+      if (len(a).gt.0) then
+        a(1:1) = "1"
+      endif
       end
 '''
 
@@ -518,6 +528,15 @@ class test_m(NumpyTestCase):
         r = func([1])
         assert isinstance(r,string0),`type(r)`
         assert_equal(r,'12]  ')
+
+    def check_foo_string0(self, level=1):
+        i = string0('abcde')
+        e = string0('12cde')
+        func = m.foostringstar
+        r = func('abcde')
+        assert_equal(r,'1bcde')
+        r = func('')
+        assert_equal(r,'')
         
 if __name__ == "__main__":
     NumpyTest().run()

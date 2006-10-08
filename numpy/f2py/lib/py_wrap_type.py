@@ -238,6 +238,52 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
 #endif
   return return_value;
 }
+'''
+    capi_code_template_string0_scalar = '''
+static PyObject* pyobj_from_%(ctype)s(%(ctype)s* value) {
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_from_%(ctype)s(value->len=%%d, value->data=\'%%s\')\\n",value->len, value->data);
+#endif
+  PyArray_Descr* descr = PyArray_DescrNewFromType(NPY_STRING);
+  descr->elsize = value->len;
+  PyObject* obj = PyArray_Scalar(value->data, descr, NULL);
+  if (obj==NULL) /* TODO: set exception */ return NULL;
+  return obj;
+}
+
+static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
+  int return_value = 0;
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  fprintf(stderr,"pyobj_to_%(ctype)s(type=%%s)\\n",PyString_AS_STRING(PyObject_Repr(PyObject_Type(obj))));
+#endif
+  if (PyString_Check(obj)) {
+    value->len = PyString_GET_SIZE(obj);
+    value->data = malloc(value->len*sizeof(char));
+    return_value = !! strncpy(value->data,PyString_AS_STRING(obj),value->len);
+  } else {
+    return_value = pyobj_to_%(ctype)s(PyObject_Str(obj), value);
+  }
+  if (!return_value && !PyErr_Occurred()) {
+    PyObject* r = PyString_FromString("Failed to convert ");
+    PyString_ConcatAndDel(&r, PyObject_Repr(PyObject_Type(obj)));
+    PyString_ConcatAndDel(&r, PyString_FromString(" to C %(ctype)s"));
+    PyErr_SetObject(PyExc_TypeError,r);
+  }
+#if defined(F2PY_DEBUG_PYOBJ_TOFROM)
+  if (PyErr_Occurred()) {
+    if (return_value)
+      fprintf(stderr,"pyobj_to_%(ctype)s:INCONSISTENCY with return_value=%%d and PyErr_Occurred()=%%p\\n",return_value, PyErr_Occurred());
+    else
+      fprintf(stderr,"pyobj_to_%(ctype)s: PyErr_Occurred()=%%p\\n", PyErr_Occurred());
+  } else {
+    if (return_value)
+      fprintf(stderr,"pyobj_to_%(ctype)s: value->len=%%d, value->data=\'%%s\'\\n", value->len, value->data);
+    else
+      fprintf(stderr,"pyobj_to_%(ctype)s:INCONSISTENCY with return_value=%%d and PyErr_Occurred()=%%p\\n",return_value, PyErr_Occurred());
+  }
+#endif
+  return return_value;
+}
 ''' 
     _defined = []
     def __init__(self, parent, typedecl):
@@ -270,12 +316,21 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
                 self.capi_code_template = self.capi_code_template_logical_scalar
                 parent.apply_templates(self)
                 return
+            if ctype == 'f2py_string0':
+                self.header_template = '''
+#include <string.h>
+typedef struct { char* data; size_t len; } %(ctype)s;
+'''
+                self.capi_code_template = self.capi_code_template_string0_scalar
+                parent.apply_templates(self)
+                return
+                raise NotImplementedError,`name,ctype`
             if ctype.startswith('f2py_string'):
                 self.bits = bits = int(ctype[11:])
                 self.bytes = bits/CHAR_BIT
                 self.header_template = '''
 #include <string.h>
-typedef struct { char data[%(bytes)s] } %(ctype)s;
+typedef struct { char data[%(bytes)s]; } %(ctype)s;
 '''
                 self.capi_code_template = self.capi_code_template_string_scalar
                 parent.apply_templates(self)

@@ -109,7 +109,9 @@ class WrapperBase:
     def apply_templates(self, child):
         for n in self.list_names:
             l = getattr(self,n + '_list')
-            l.append(child.apply_attributes(getattr(child, n+'_template','')))
+            c = child.apply_attributes(getattr(child, n+'_template',''))
+            if c:
+                l.append(c)
         return
 
 class WrapperCPPMacro(WrapperBase):
