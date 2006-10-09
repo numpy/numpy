@@ -364,9 +364,6 @@ class Integer(TypeDeclarationStatement):
     match = re.compile(r'integer\b',re.I).match
     default_kind = 4
 
-    def get_c_type(self):
-        return 'npy_int%s' % (self.get_bit_size())
-
     def get_zero_value(self):
         kind = self.get_kind()
         if kind==self.default_kind: return '0'
@@ -375,9 +372,6 @@ class Integer(TypeDeclarationStatement):
 class Real(TypeDeclarationStatement):
     match = re.compile(r'real\b',re.I).match
     default_kind = 4
-
-    def get_c_type(self):
-        return 'npy_float%s' % (self.get_bit_size())
 
     def get_zero_value(self):
         kind = self.get_kind()
@@ -394,9 +388,6 @@ class DoublePrecision(TypeDeclarationStatement):
     def get_zero_value(self):
         return '0.0D0'
 
-    def get_c_type(self):
-        return 'npy_float%s' % (self.get_bit_size())
-
 class Complex(TypeDeclarationStatement):
     match = re.compile(r'complex\b',re.I).match
     default_kind = 4
@@ -411,9 +402,6 @@ class Complex(TypeDeclarationStatement):
         kind = self.get_kind()
         if kind==self.default_kind: return '(0.0, 0.0)'
         return '(0.0_%s, 0.0_%s)' % (kind, kind)
-
-    def get_c_type(self):
-        return 'npy_complex%s' % (self.get_bit_size())
 
     def get_part_typedecl(self):
         bz = self.get_byte_size()/2
@@ -430,18 +418,12 @@ class DoubleComplex(TypeDeclarationStatement):
     def get_zero_value(self):
         return '(0.0D0,0.0D0)'
 
-    def get_c_type(self):
-        return 'npy_complex%s' % (self.get_bit_size())
-
 class Logical(TypeDeclarationStatement):
     match = re.compile(r'logical\b',re.I).match
     default_kind = 4
 
     def get_zero_value(self):
         return ".FALSE."
-
-    def get_c_type(self):
-        return 'f2py_bool%s' % (self.get_bit_size())
 
 class Character(TypeDeclarationStatement):
     match = re.compile(r'character\b',re.I).match
@@ -453,9 +435,6 @@ class Character(TypeDeclarationStatement):
             return 0  # model for character*(*)
         return CHAR_BIT * int(length) * int(self.get_kind())
 
-    def get_c_type(self):
-        return 'f2py_string%s' % (self.get_bit_size())
-
     def get_zero_value(self):
         return "''"
 
@@ -466,9 +445,6 @@ class Byte(TypeDeclarationStatement):
 
     def get_zero_value(self):
         return '0'
-
-    def get_c_type(self):
-        return 'npy_int%s' % (self.get_bit_size())
 
 class Type(TypeDeclarationStatement):
     match = re.compile(r'type\s*\(', re.I).match
@@ -489,9 +465,6 @@ class Type(TypeDeclarationStatement):
 
     def get_bit_size(self):
         return self.get_type_decl(self.name).get_bit_size()
-
-    def get_c_type(self):
-        return self.get_type_decl(self.name).get_c_type()
     
 TypeStmt = Type
 

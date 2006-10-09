@@ -1070,25 +1070,6 @@ class Type(BeginStatement, HasVariables, HasAttributes):
             _cache[id(self)] = s
         return s
 
-    def get_f_type(self):
-        return 'TYPE(%s)' % (self.name)
-
-    def get_c_type(self):
-        return 'f2py_type_%s_%s' % (self.name, self.get_bit_size())
-    
-    def get_c_name(self):
-        return 'f2py_type_%s' % (self.name)
-
-    def get_c_struct_name(self):
-        return self.get_c_name() + '_struct'
-
-    def get_c_struct(self):
-        l = []
-        for name, var in self.a.components.items():
-            t = var.get_typedecl()
-            l.append('  %s %s;' % (t.get_c_type(), name))
-        return 'typedef struct {\n%s\n} %s;' % ('\n'.join(l), self.get_c_struct_name())
-
 TypeDecl = Type
 
 # Enum

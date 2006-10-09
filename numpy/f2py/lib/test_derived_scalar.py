@@ -66,8 +66,9 @@ class test_m(NumpyTestCase):
         assert isinstance(a,m.myt),`a`
         r = m.foo(a)
         assert isinstance(r,m.myt),`r`
+        assert r is a
         assert_equal(r.flag,3)
-        assert_equal(a.flag,2)
+        assert_equal(a.flag,3)
         
 if __name__ == "__main__":
     NumpyTest().run()

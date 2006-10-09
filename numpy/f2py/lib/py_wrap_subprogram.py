@@ -3,6 +3,7 @@ __all__ = ['PythonCAPISubProgram']
 
 import sys
 
+from parser.api import TypeDecl, TypeStmt
 from wrapper_base import *
 from py_wrap_type import *
 
@@ -80,32 +81,40 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
 
         args_f = []
         extra_args_f = []
+        argindex = -1
         for argname in block.args:
+            argindex += 1
             var = block.a.variables[argname]
             typedecl = var.get_typedecl()
             PythonCAPIType(parent, typedecl)
-            ctype = typedecl.get_c_type()
-            if ctype=='f2py_string0':
-                self.decl_list.append('%s %s = {NULL,0};' % (ctype, argname))
-            else:
-                self.decl_list.append('%s %s;' % (ctype, argname))
+            ti = PyTypeInterface(typedecl)
             self.kw_list.append('"%s"' % (argname))
-            self.pyarg_format_list.append('O&')
-            self.pyarg_obj_list.append('\npyobj_to_%s, &%s' % (ctype, argname))
-            if 1: # is_scalar
-                if ctype=='f2py_string0':
-                    args_f.append('%s.data' % argname)
+
+            if isinstance(typedecl, TypeStmt):
+                self.pyarg_format_list.append('O&')
+                self.decl_list.append('%s* %s = NULL;' % (ti.otype, argname))
+                self.pyarg_obj_list.append('\npyobj_to_%s_inplace, &%s' % (ti.ctype, argname))
+                args_f.append('%s->data' % (argname)) # is_scalar
+            else:
+                self.pyarg_format_list.append('O&')
+                assert not isinstance(typedecl, TypeDecl)
+                if ti.ctype=='f2py_string0':
+                    self.decl_list.append('%s %s = {NULL,0};' % (ti.ctype, argname))
+                    args_f.append('%s.data' % argname)  # is_scalar
                     extra_args_f.append('%s.len' % argname)
                     self.clean_frompyobj_list.append(\
                         'if (%s.len) free(%s.data);' % (argname,argname))
                 else:
-                    args_f.append('&'+argname)
-                
-            else:
-                args_f.append(argname)
+                    self.decl_list.append('%s %s;' % (ti.ctype, argname))
+                    args_f.append('&'+argname) # is_scalar
+                self.pyarg_obj_list.append('\npyobj_to_%s, &%s' % (ti.ctype, argname))
             if var.is_intent_out(): # and is_scalar
-                self.return_format_list.append('O&')
-                self.return_obj_list.append('\npyobj_from_%s, &%s' % (ctype, argname))
+                if isinstance(typedecl, TypeStmt):
+                    self.return_format_list.append('N')
+                    self.return_obj_list.append('\n%s' % (argname))
+                else:
+                    self.return_format_list.append('O&')
+                    self.return_obj_list.append('\npyobj_from_%s, &%s' % (ti.ctype, argname))
 
         WrapperCPPMacro(parent, 'F_FUNC')
         self.call_list.append('%s_f(%s);' % (name,', '.join(args_f+extra_args_f)))
