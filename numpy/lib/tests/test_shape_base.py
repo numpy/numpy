@@ -11,8 +11,6 @@ class test_apply_along_axis(NumpyTestCase):
         a = ones((20,10),'d')
         assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
     def check_simple101(self,level=11):
-        # This test causes segmentation fault (Numeric 23.3,23.6,Python 2.3.4)
-        # when enabled and shape(a)[1]>100. See Issue 202.
         a = ones((10,101),'d')
         assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
 
@@ -370,6 +368,7 @@ class test_kron(NumpyTestCase):
         assert_equal(type(kron(a,ma)), ndarray) 
         assert_equal(type(kron(ma,a)), myarray) 
 
+
 class test_tile(NumpyTestCase):
     def check_basic(self):
         a = array([0,1,2])
@@ -380,7 +379,19 @@ class test_tile(NumpyTestCase):
         assert_equal(tile(b, 2), [[1,2,1,2],[3,4,3,4]])
         assert_equal(tile(b,(2,1)),[[1,2],[3,4],[1,2],[3,4]])
         assert_equal(tile(b,(2,2)),[[1,2,1,2],[3,4,3,4],[1,2,1,2],[3,4,3,4]])
-        
+
+    def check_kroncompare(self):
+        import numpy.random as nr
+	reps=[(2,),(1,2),(2,1),(2,2),(2,3,2),(3,2)]
+        shape=[(3,),(2,3),(3,4,3),(3,2,3),(4,3,2,4),(2,2)]
+        for s in shape:
+            b = nr.randint(0,10,size=s)
+            for r in reps:
+                a = ones(r, b.dtype)
+                large = tile(b, r)
+                klarge = kron(a, b)
+                assert_equal(large, klarge)
+
 # Utility
 
 def compare_results(res,desired):
