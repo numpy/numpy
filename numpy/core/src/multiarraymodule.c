@@ -1751,6 +1751,21 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 		return (void*)PyErr_NoMemory();
 	}
 
+        if (PyArray_Check(op)) {
+                for (i=0; i<n; i++) {
+                        mps[i] = array_big_item((PyArrayObject *)op, i);
+                }
+                if (!PyArray_ISCARRAY(op)) {
+                        for (i=0; i<n; i++) {
+                                PyObject *obj;
+                                obj = PyArray_NewCopy(mps[i], NPY_CORDER);
+                                Py_DECREF(mps[i]);
+                                mps[i] = (PyArrayObject *)obj;
+                        }
+                }                        
+                return mps;
+        }
+
 	for(i=0; i<n; i++) {
 		otmp = PySequence_GetItem(op, i);
 		if (!PyArray_CheckAnyScalar(otmp)) {
