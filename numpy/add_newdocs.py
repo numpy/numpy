@@ -828,7 +828,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
       Average the array over the given axis.  If the axis is None,
       average over all dimensions of the array.  Equivalent to
 
-        a.sum(axis, dtype) * 1.0 / size(a, axis).
+        a.sum(axis, dtype) / size(a, axis).
 
       The optional dtype argument is the data type for intermediate
       calculations in the sum.;

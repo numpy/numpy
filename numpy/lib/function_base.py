@@ -234,7 +234,7 @@ def average(a, axis=None, weights=None, returned=False):
     average over all dimensions of the array.  Equivalent to
     a.mean(axis) and to
 
-      a.sum(axis) * 1.0 / size(a, axis)
+      a.sum(axis) / size(a, axis)
 
     If weights are given, result is:
         sum(a * weights,axis) / sum(weights,axis),
