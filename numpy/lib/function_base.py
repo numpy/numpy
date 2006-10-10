@@ -230,14 +230,11 @@ def histogramdd(sample, bins=10, range=None, normed=False):
 def average(a, axis=None, weights=None, returned=False):
     """average(a, axis=None weights=None, returned=False)
 
-    Average the array over the given axis.  If the axis is None, average
-    over all dimensions of the array.  Equivalent to a.mean(axis)
+    Average the array over the given axis.  If the axis is None,
+    average over all dimensions of the array.  Equivalent to
+    a.mean(axis) and to
 
-    If an integer axis is given, this equals:
-        a.sum(axis) * 1.0 / len(a)
-
-    If axis is None, this equals:
-        a.sum(axis) * 1.0 / product(a.shape,axis=0)
+      a.sum(axis) * 1.0 / size(a, axis)
 
     If weights are given, result is:
         sum(a * weights,axis) / sum(weights,axis),
