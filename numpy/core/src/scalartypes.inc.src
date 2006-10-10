@@ -834,9 +834,9 @@ gentype_imag_get(PyObject *self)
         PyObject *ret;
         int typenum;
 
-        typecode = _realdescr_fromcomplexscalar(self, &typenum);
         if (PyArray_IsScalar(self, ComplexFloating)) {
-            ret = PyArray_Scalar((char *)scalar_value(self, NULL)
+                typecode = _realdescr_fromcomplexscalar(self, &typenum);
+                ret = PyArray_Scalar((char *)scalar_value(self, NULL)
                                  + typecode->elsize, typecode, NULL);
         }
         else if (PyArray_IsScalar(self, Object)) {
@@ -854,6 +854,7 @@ gentype_imag_get(PyObject *self)
         }
         else {
                 char *temp;
+                typecode = PyArray_DescrFromScalar(self);
                 temp = PyDataMem_NEW(typecode->elsize);
                 memset(temp, '\0', typecode->elsize);
                 ret = PyArray_Scalar(temp, typecode, NULL);

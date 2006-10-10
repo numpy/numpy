@@ -552,7 +552,7 @@ def kron(a,b):
     a = array(a,copy=False,subok=True,ndmin=b.ndim)
     ndb, nda = b.ndim, a.ndim
     if (nda == 0 or ndb == 0):
-        return a * b
+        return _nx.multiply(a,b)
     as = a.shape
     bs = b.shape
     if not a.flags.contiguous:
