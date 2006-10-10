@@ -831,7 +831,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
         a.sum(axis, dtype) / size(a, axis).
 
       The optional dtype argument is the data type for intermediate
-      calculations in the sum.;
+      calculations in the sum.
 
     """))
 
