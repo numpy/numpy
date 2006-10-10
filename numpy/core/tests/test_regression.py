@@ -498,5 +498,9 @@ class test_regression(NumpyTestCase):
         data = N.arange(5)
         data = N.add.outer(data,data)
         
+    def check_mem_float_imag(self, level=rlevel):
+        """Ticket #330"""
+        N.float64(1.0).imag
+        
 if __name__ == "__main__":
     NumpyTest().run()
