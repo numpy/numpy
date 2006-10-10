@@ -394,14 +394,14 @@ class FCompiler(CCompiler):
             flavor = ':f90'
             compiler = self.compiler_f90
             if compiler is None:
-                raise DistutilsExecError, 'f90 not supported by '\
-                      +self.__class__.__name__
+                raise DistutilsExecError, 'f90 not supported by %s needed for %s'\
+                      % (self.__class__.__name__,src)
         else:
             flavor = ':fix'
             compiler = self.compiler_fix
             if compiler is None:
-                raise DistutilsExecError, 'f90 (fixed) not supported by '\
-                      +self.__class__.__name__
+                raise DistutilsExecError, 'f90 (fixed) not supported by %s needed for %s'\
+                      % (self.__class__.__name__,src)
         if self.object_switch[-1]==' ':
             o_args = [self.object_switch.strip(),obj]
         else:
@@ -755,7 +755,8 @@ is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z',re.I).match
 _has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-',re.I).search
 _has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-',re.I).search
 _has_fix_header = re.compile(r'-[*]-\s*fix\s*-[*]-',re.I).search
-_free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]',re.I).match
+_free_f90_start = re.compile(r'[^c*!]\s*[^\s\d\t]',re.I).match
+
 def is_free_format(file):
     """Check if file is in free format Fortran."""
     # f90 allows both fixed and free format, assuming fixed unless
@@ -763,16 +764,17 @@ def is_free_format(file):
     result = 0
     f = open(file,'r')
     line = f.readline()
-    n = 15 # the number of non-comment lines to scan for hints
+    n = 10000 # the number of non-comment lines to scan for hints
     if _has_f_header(line):
         n = 0
     elif _has_f90_header(line):
         n = 0
         result = 1
     while n>0 and line:
-        if line[0]!='!':
+        line = line.rstrip()
+        if line and line[0]!='!':
             n -= 1
-            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-2:-1]=='&':
+            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-1:]=='&':
                 result = 1
                 break
         line = f.readline()
