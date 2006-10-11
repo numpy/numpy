@@ -31,6 +31,12 @@ def _fix_real_lt_zero(x):
         x = _tocomplex(x)
     return x
 
+def _fix_int_lt_zero(x):
+    x = asarray(x)
+    if any(isreal(x) & (x < 0)):
+        x = x * 1.0
+    return x
+
 def _fix_real_abs_gt_1(x):
     x = asarray(x)
     if any(isreal(x) & (abs(x)>1)):
@@ -64,6 +70,7 @@ def log2(x):
 
 def power(x, p):
     x = _fix_real_lt_zero(x)
+    p = _fix_int_lt_zero(p)
     return nx.power(x, p)
 
 def arccos(x):
