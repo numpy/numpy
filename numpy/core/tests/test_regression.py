@@ -502,5 +502,9 @@ class test_regression(NumpyTestCase):
         """Ticket #330"""
         N.float64(1.0).imag
         
+    def check_dtype_tuple(self, level=rlevel):
+        """Ticket #334"""
+        assert N.dtype('i4') == N.dtype(('i4',()))
+        
 if __name__ == "__main__":
     NumpyTest().run()
