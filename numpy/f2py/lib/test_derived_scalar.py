@@ -25,6 +25,7 @@ def build(fortran_code, rebuild=True):
             os.remove(m.__file__)
             raise ImportError,'%s is newer than %s' % (__file__, m.__file__)
     except ImportError,msg:
+        assert str(msg).startswith('No module named'),str(msg)
         print msg, ', recompiling %s.' % (modulename)
         import tempfile
         fname = tempfile.mktemp() + '.f90'
@@ -32,14 +33,14 @@ def build(fortran_code, rebuild=True):
         f.write(fortran_code)
         f.close()
         sys_argv = []
-        sys_argv.extend(['--build-dir','dsctmp'])
+        sys_argv.extend(['--build-dir','tmp'])
         #sys_argv.extend(['-DF2PY_DEBUG_PYOBJ_TOFROM'])
         from main import build_extension
         sys_argv.extend(['-m',modulename, fname])
         build_extension(sys_argv)
         os.remove(fname)
-        os.system(' '.join([sys.executable] + sys.argv))
-        sys.exit(0)
+        status = os.system(' '.join([sys.executable] + sys.argv))
+        sys.exit(status)
     return m
 
 fortran_code = '''
@@ -50,6 +51,14 @@ subroutine foo(a)
   type(myt) a
 !f2py intent(in,out) a
   a % flag = a % flag + 1
+end
+function foo2(a)
+  type myt
+    integer flag
+  end type myt
+  type(myt) a
+  type(myt) foo2
+  foo2 % flag = a % flag + 2
 end
 '''
 
@@ -69,6 +78,22 @@ class test_m(NumpyTestCase):
         assert r is a
         assert_equal(r.flag,3)
         assert_equal(a.flag,3)
+
+        a.flag = 5
+        assert_equal(r.flag,5)
+
+        #s = m.foo((5,))
+
+    def check_foo2_simple(self, level=1):
+        a = m.myt(2)
+        assert_equal(a.flag,2)
+        assert isinstance(a,m.myt),`a`
+        r = m.foo2(a)
+        assert isinstance(r,m.myt),`r`
+        assert r is not a
+        assert_equal(a.flag,2)
+        assert_equal(r.flag,4)
+
         
 if __name__ == "__main__":
     NumpyTest().run()

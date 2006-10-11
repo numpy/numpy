@@ -48,6 +48,7 @@ class PythonCAPIType(WrapperBase):
         if isinstance(typedecl, tuple(declaration_type_spec)):
             if isinstance(typedecl, TypeStmt):
                 type_decl = typedecl.get_type_decl(typedecl.name)
+                assert type_decl is not None,"%s %s" % (typedecl,typedecl.name)
                 PythonCAPIDerivedType(parent, type_decl)
             else:
                 PythonCAPIIntrinsicType(parent, typedecl)
@@ -584,6 +585,7 @@ static PyObject * %(otype)s_repr(PyObject * self) {
             return
         self._defined.append(name)
         self.info('Generating interface for %s: %s' % (typedecl.__class__, name))
+        parent.isf90 = True
 
         self.name = name
         self.otype = otype = ti.otype

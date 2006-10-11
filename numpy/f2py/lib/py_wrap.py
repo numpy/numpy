@@ -78,7 +78,7 @@ PyMODINIT_FUNC init%(modulename)s(void) {
         self.list_names = ['header', 'typedef', 'extern', 'objdecl',
                            'c_code','capi_code','module_method','module_init',
                            'fortran_code']
-
+        self.isf90 = False
         return
 
     def add(self, block):
@@ -87,12 +87,22 @@ PyMODINIT_FUNC init%(modulename)s(void) {
                 self.add(moduleblock)
             #for name, subblock in block.a.external_subprogram.items():
             #    self.add(subblock)
-        elif isinstance(block, (Subroutine, Function)):
+        elif isinstance(block, Subroutine):
             PythonCAPISubProgram(self, block)
+        elif isinstance(block, Function):
+            fcode = block.subroutine_wrapper_code()
+            self.fortran_code_list.append(fcode)
+            wrapper_block = block.subroutine_wrapper()
+            PythonCAPISubProgram(self, wrapper_block)
         elif isinstance(block, Module):
+            self.isf90 = True
             for name,declblock in block.a.type_decls.items():
                 self.add(declblock)
+            for name,subblock in block.a.module_subprogram.items():
+                self.add(subblock)
         elif isinstance(block, tuple([TypeDecl]+declaration_type_spec)):
+            if isinstance(block, (TypeDecl, TypeStmt)):
+                self.isf90 = True
             PythonCAPIType(self, block)
         else:
             raise NotImplementedError,`block.__class__.__name__`

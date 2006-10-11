@@ -297,9 +297,9 @@ def build_extension(sys_argv):
             wrapper = PythonWrapperModule(block.name)
             wrapper.add(block)
             c_code = wrapper.c_code()
-            f_code = wrapper.fortran_code()
+            f_code = '! -*- f90 -*-\n' + wrapper.fortran_code()
             c_fn = os.path.join(build_dir,'%smodule.c' % (block.name))
-            f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py.f' % (block.name))
+            f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py.f90' % (block.name))
             f = open(c_fn,'w')
             f.write(c_code)
             f.close()
@@ -325,7 +325,13 @@ def build_extension(sys_argv):
             c_code = wrapper.c_code()
             f_code = wrapper.fortran_code()
             c_fn = os.path.join(build_dir,'%smodule.c' % (modulename))
-            f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py.f' % (modulename))
+            ext = '.f'
+            language = 'f77'
+            if wrapper.isf90:
+                f_code = '! -*- f90 -*-\n' + f_code
+                ext = '.f90'
+                language = 'f90'
+            f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py%s' % (modulename, ext))
             f = open(c_fn,'w')
             f.write(c_code)
             f.close()
@@ -342,6 +348,7 @@ def build_extension(sys_argv):
                                  undef_macros = undef_macros,
                                  include_dirs = include_dirs,
                                  extra_objects = extra_objects,
+                                 language = language
                                  )
         return config
 
