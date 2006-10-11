@@ -4249,9 +4249,10 @@ _convert_from_tuple(PyObject *obj)
 					"invalid shape in fixed-type tuple.");
 			goto fail;
 		}
-		/* If (type, 1) was given, it is equivalent to type... */
-		if (shape.len == 1 && shape.ptr[0] == 1 && \
-		    PyNumber_Check(val)) {
+		/* If (type, 1) was given, it is equivalent to type... 
+                   or (type, ()) was given it is equivalent to type... */
+		if ((shape.len == 1 && shape.ptr[0] == 1 && PyNumber_Check(val)) || \
+                    (shape.len == 0 && PyTuple_Check(val))) {
 			PyDimMem_FREE(shape.ptr);
 			return type;
 		}
