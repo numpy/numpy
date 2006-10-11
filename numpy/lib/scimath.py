@@ -54,13 +54,13 @@ def logn(n, x):
     """
     x = _fix_real_lt_zero(x)
     n = _fix_real_lt_zero(n)
-    return log(x)/log(n)
+    return nx.log(x)/nx.log(n)
 
 def log2(x):
     """ Take log base 2 of x.
     """
     x = _fix_real_lt_zero(x)
-    return log(x)/_ln2
+    return nx.log(x)/_ln2
 
 def power(x, p):
     x = _fix_real_lt_zero(x)
@@ -68,12 +68,12 @@ def power(x, p):
 
 def arccos(x):
     x = _fix_real_abs_gt_1(x)
-    return arccos(x)
+    return nx.arccos(x)
 
 def arcsin(x):
     x = _fix_real_abs_gt_1(x)
-    return arcsin(x)
+    return nx.arcsin(x)
 
 def arctanh(x):
     x = _fix_real_abs_gt_1(x)
-    return arctanh(x)
+    return nx.arctanh(x)
