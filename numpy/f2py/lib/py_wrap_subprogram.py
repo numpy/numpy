@@ -3,7 +3,7 @@ __all__ = ['PythonCAPISubProgram']
 
 import sys
 
-from parser.api import TypeDecl, TypeStmt
+from parser.api import TypeDecl, TypeStmt, Module
 from wrapper_base import *
 from py_wrap_type import *
 
@@ -12,20 +12,18 @@ class PythonCAPISubProgram(WrapperBase):
     Fortran subprogram hooks.
     """
 
-    header_template = '''\
+    header_template_f77 = '''\
 #define %(name)s_f F_FUNC(%(name)s, %(NAME)s)
 '''
-    typedef_template = ''
-    extern_template = '''\
+    extern_template_f77 = '''\
 extern void %(name)s_f();
 '''
-    objdecl_template = '''\
+    objdecl_template_doc = '''\
 static char %(cname)s__doc[] = "";
 '''
-    module_init_template = ''
     module_method_template = '''\
 {"%(pyname)s", (PyCFunction)%(cname)s, METH_VARARGS | METH_KEYWORDS, %(cname)s__doc},'''
-    c_code_template = ''
+
     capi_code_template = '''\
 static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *capi_keywds) {
   PyObject * volatile capi_buildvalue = NULL;
@@ -50,8 +48,35 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
   return capi_buildvalue;
 }
 '''
-    fortran_code_template = ''
-    
+
+    header_template_module = '''
+#define %(name)s_f (*%(name)s_func_ptr)
+#define %(init_func)s_f F_FUNC(%(init_func)s, %(INIT_FUNC)s)
+'''
+    typedef_template_module = '''
+typedef void (*%(name)s_functype)();
+'''
+    extern_template_module = '''\
+static %(name)s_functype %(name)s_func_ptr;
+'''
+    objdecl_template_module = '''
+'''
+    fortran_code_template_module = '''
+    subroutine %(init_func)s(init_func_c)
+      use %(mname)s
+      external init_func_c
+      call init_func_c(%(name)s)
+    end
+'''
+    c_code_template_module = '''
+static void %(init_func)s_c(%(name)s_functype func_ptr) {
+  %(name)s_func_ptr = func_ptr;
+}
+'''
+    module_init_template_module = '''
+%(init_func)s_f(%(init_func)s_c);
+'''
+
     _defined = []
     def __init__(self, parent, block):
         WrapperBase.__init__(self)
@@ -65,6 +90,30 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
         if pyname.startswith('f2pywrap_'):
             pyname = pyname[9:]
         self.pyname = pyname
+
+        self.header_template = ''
+        self.extern_template = ''
+        self.module_init_template = ''
+        self.typedef_template = ''
+        self.c_code_template = ''
+        self.objdecl_template =  ''
+        self.fortran_code_template = ''
+
+        if isinstance(block.parent, Module):
+            self.mname = block.parent.name
+            self.init_func = '%s_init' % (name)
+            self.typedef_template += self.typedef_template_module
+            self.header_template += self.header_template_module
+            self.fortran_code_template += self.fortran_code_template_module
+            self.module_init_template += self.module_init_template_module
+            self.objdecl_template += self.objdecl_template_module
+            self.c_code_template += self.c_code_template_module
+            self.extern_template += self.extern_template_module
+        else:
+            self.extern_template += self.extern_template_f77
+            self.header_template += self.header_template_f77
+
+        self.objdecl_template += self.objdecl_template_doc
 
         self.decl_list = []
         self.kw_list = []
@@ -111,7 +160,8 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
                     self.pyarg_obj_list.append('\npyobj_to_%s, &%s' % (ti.ctype, argname))
                 assert not isinstance(typedecl, TypeDecl)
                 if ti.ctype=='f2py_string0':
-                    assert not var.is_intent_out(),'intent(out) not implemented for "%s"' % (var)
+                    if not var.is_intent_in():
+                        assert not var.is_intent_out(),'intent(out) not implemented for "%s"' % (var)
                     self.decl_list.append('%s %s = {NULL,0};' % (ti.ctype, argname))
                     args_f.append('%s.data' % argname)  # is_scalar
                     extra_args_f.append('%s.len' % argname)
