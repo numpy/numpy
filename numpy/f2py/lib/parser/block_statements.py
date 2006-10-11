@@ -90,6 +90,24 @@ class HasUseStmt:
         sys.stderr.write('HasUseStmt.topyf not implemented\n')
         return ''
 
+class AccessSpecs:
+
+    a = AttributeHolder(private_id_list = [], public_id_list = [])
+
+    def topyf(self, tab='  '):
+        private_list = self.a.private_id_list
+        public_list = self.a.public_id_list
+        l = []
+        if '' in private_list: l.append(tab + 'PRIVATE\n')
+        if '' in public_list: l.append(tab + 'PUBLIC\n')
+        for a in private_list:
+            if not a: continue
+            l.append(tab + 'PRIVATE :: %s\n' % (a))
+        for a in public_list:
+            if not a: continue
+            l.append(tab + 'PUBLIC :: %s\n' % (a))
+        return ''.join(l)
+
 class HasVariables:
 
     a = AttributeHolder(variables = {},
@@ -129,7 +147,6 @@ class HasTypeDecls:
         type_decl = type_decls.get(kind, None)
         if type_decl is None:
             return self.get_entity(kind)
-            raise NotImplementedError,'get type_decl from use modules'
         return type_decl
 
 class HasAttributes:
@@ -142,13 +159,6 @@ class HasAttributes:
         for attr in self.a.attributes:
             s += tab + attr + '\n'
         return s
-
-    def is_private(self):
-        attributes = self.a.attributes
-        if 'PUBLIC' in attributes: return False
-        if 'PRIVATE' in attributes: return True
-        return
-    def is_public(self): return not self.is_private()
 
     def update_attributes(self,*attrs):
         attributes = self.a.attributes
@@ -254,7 +264,7 @@ class EndModule(EndStatement):
 
 class Module(BeginStatement, HasAttributes,
              HasImplicitStmt, HasUseStmt, HasVariables,
-             HasTypeDecls):
+             HasTypeDecls, AccessSpecs):
     """
     MODULE <name>
      ..
@@ -315,6 +325,7 @@ class Module(BeginStatement, HasAttributes,
     def topyf(self, tab=''):
         s = tab + 'MODULE '+self.name + '\n'
         s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
+        s +=  AccessSpecs.topyf(self, tab=tab+'  ')
         s +=  HasAttributes.topyf(self, tab=tab+'  ')
         s +=  HasTypeDecls.topyf(self, tab=tab+'  ')
         s +=  HasVariables.topyf(self, tab=tab+'  ')
@@ -358,8 +369,8 @@ class EndProgram(EndStatement):
     match = re.compile(r'end(\s*program\s*\w*|)\Z', re.I).match
 
 class Program(BeginStatement, ProgramBlock,
-              HasAttributes, # XXX: why Program needs .attributes?
-              HasImplicitStmt, HasUseStmt):
+              #HasAttributes, # XXX: why Program needs .attributes?
+              HasImplicitStmt, HasUseStmt, AccessSpecs):
     """ PROGRAM [name]
     """
     match = re.compile(r'program\s*\w*\Z', re.I).match
@@ -386,7 +397,7 @@ class EndBlockData(EndStatement):
     blocktype = 'blockdata'
 
 class BlockData(BeginStatement, HasImplicitStmt, HasUseStmt,
-                HasVariables):
+                HasVariables, AccessSpecs):
     """
     BLOCK DATA [ <block-data-name> ]
     """
@@ -407,7 +418,7 @@ class EndInterface(EndStatement):
     blocktype = 'interface'
 
 class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
-                HasModuleProcedures, HasAttributes
+                HasModuleProcedures, AccessSpecs
                 ):
     """
     INTERFACE [<generic-spec>] | ABSTRACT INTERFACE
@@ -430,8 +441,6 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
 
     a = AttributeHolder(interface_provides = {})
 
-    known_attributes = ['PUBLIC','PRIVATE']
-
     def get_classes(self):
         l = intrinsic_type_spec + interface_specification
         if self.reader.mode=='pyf':
@@ -453,8 +462,8 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
             return 'ABSTRACT INTERFACE'
         return 'INTERFACE '+ str(self.generic_spec)
 
-    def get_provides(self):
-        return self.a.interface_provides
+    #def get_provides(self):
+    #    return self.a.interface_provides
 
     def analyze(self):
         content = self.content[:]
@@ -483,9 +492,6 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
             parent_interface[self.name] = self
         return
 
-    def is_public(self):
-        return 'PUBLIC' in self.a.attributes
-
     def topyf(self, tab=''):
         s = tab + self.tostr() + '\n'
         s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
@@ -499,12 +505,11 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
 class SubProgramStatement(BeginStatement, ProgramBlock,
                           HasImplicitStmt, HasAttributes,
                           HasUseStmt,
-                          HasVariables, HasTypeDecls
+                          HasVariables, HasTypeDecls, AccessSpecs
                           ):
     """
     [ <prefix> ] <FUNCTION|SUBROUTINE> <name> [ ( <args> ) ] [ <suffix> ]
     """
-    known_attributes = ['PUBLIC', 'PRIVATE']
 
     a = AttributeHolder(internal_subprogram = {})
 
@@ -596,12 +601,12 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
         if content:
             self.show_message('Not analyzed content: %s' % content)
 
-        parent_provides = self.parent.get_provides()
-        if parent_provides is not None:
-            if self.is_public():
-                if parent_provides.has_key(self.name):
-                    self.warning('module subprogram name conflict with %s, overriding.' % (self.name))
-                parent_provides[self.name] = self
+        #parent_provides = self.parent.get_provides()
+        #if parent_provides is not None:
+        #    if self.is_public():
+        #        if parent_provides.has_key(self.name):
+        #            self.warning('module subprogram name conflict with %s, overriding.' % (self.name))
+        #        parent_provides[self.name] = self
 
         return
 
@@ -612,6 +617,7 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
             s += ' RESULT (%s)' % (self.result)
         s += '\n'
         s +=  HasImplicitStmt.topyf(self, tab=tab+'  ')
+        s +=  AccessSpecs.topyf(self, tab=tab+'  ')
         s +=  HasTypeDecls.topyf(self, tab=tab+'  ')
         s +=  HasVariables.topyf(self, tab=tab+'  ', only_variables = self.args)
         s += tab + 'END ' + self.__class__.__name__.upper() + ' ' + self.name + '\n'
@@ -652,6 +658,42 @@ class Function(SubProgramStatement):
     end_stmt_cls = EndFunction
     match = re.compile(r'(recursive|pure|elemental|\s)*function\s*\w+', re.I).match
     _repr_attr_names = ['prefix','bind','suffix','args','typedecl'] + Statement._repr_attr_names
+
+    def subroutine_wrapper_code(self):
+        name = 'f2pywrap_' + self.name
+        args = ['f2pyvalue_'+self.result] + self.args
+        var = self.a.variables[self.result]
+        typedecl = var.get_typedecl().astypedecl()
+        lines = []
+        tab = ' '*6
+        lines.append('%sSUBROUTINE %s(%s)' % (tab, name, ', '.join(args)))
+        if isinstance(self.parent,Module):
+            lines.append('%s  USE %s' % (tab, self.parent.name))
+        else:
+            if isinstance(typedecl, TypeStmt):
+                type_decl = typedecl.get_type_decl(typedecl.name)
+                if type_decl.parent is self:
+                    for line in str(type_decl).split('\n'):
+                        lines.append('%s  %s' % (tab, line.lstrip()))
+            lines.append('%s  EXTERNAL %s' % (tab, self.name))
+            lines.append('%s  %s %s' % (tab, str(typedecl).lstrip(), self.name))
+        lines.append('%s  %s %s' % (tab, str(typedecl).lstrip(), args[0]))
+        lines.append('!f2py intent(out) %s' % (args[0]))
+        for a in self.args:
+            v = self.a.variables[a]
+            lines.append('%s  %s' % (tab, str(v).lstrip()))
+        lines.append('%s  %s = %s(%s)' % (tab, args[0], self.name, ', '.join(self.args)))
+        #lines.append('%s  print*,"%s=",%s' % (tab, args[0], args[0])) # debug line
+        lines.append('%sEND SUBROUTINE %s' % (tab, name))
+        return '\n'.join(lines)
+
+    def subroutine_wrapper(self):
+        code = self.subroutine_wrapper_code()
+        from api import parse
+        block = parse(code) # XXX: set include_dirs
+        while len(block.content)==1:
+            block = block.content[0]
+        return block
 
 # Handle subprogram prefixes
 
@@ -936,7 +978,7 @@ class EndType(EndStatement):
     match = re.compile(r'end\s*type\s*\w*\Z', re.I).match
     blocktype = 'type'
 
-class Type(BeginStatement, HasVariables, HasAttributes):
+class Type(BeginStatement, HasVariables, HasAttributes, AccessSpecs):
     """
     TYPE [ [ , <type-attr-spec-list>] :: ] <type-name> [ ( <type-param-name-list> ) ]
     <type-attr-spec> = <access-spec> | EXTENDS ( <parent-type-name> )
@@ -1053,6 +1095,7 @@ class Type(BeginStatement, HasVariables, HasAttributes):
         if self.a.parameters:
             s += ' (%s)' % (', '.join(self.a.parameters))
         s += '\n'
+        s += AccessSpecs.topyf(self, tab=tab+'  ')
         s += HasAttributes.topyf(self, tab=tab+'  ')
         s += HasVariables.topyf(self, tab=tab+'  ')
         s += tab + 'END TYPE ' + self.name + '\n'

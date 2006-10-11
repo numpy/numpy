@@ -170,6 +170,7 @@ class Variable:
                     'variable %r already has type %s,'\
                     ' resetting to %s' \
                     % (self.name, self.typedecl.tostr(),typedecl.tostr()))
+        assert typedecl is not None
         self.typedecl = typedecl
         return
 
@@ -282,6 +283,7 @@ class Variable:
     def is_pointer(self): return 'POINTER' in self.attributes
 
     def is_array(self): return not not (self.bounds or self.dimension)
+    def is_scalar(self): return not self.is_array()
 
     def update(self, *attrs):
         attributes = self.attributes
@@ -334,7 +336,7 @@ class Variable:
         if self.check:
             a.append('CHECK(%s)' % (', '.join(self.check)))
         if a:
-            s += ', '.join(a) + ' :: '
+            s += ', ' + ', '.join(a) + ' :: '
         s += self.name
         if self.bounds:
             s += '(%s)' % (', '.join(self.bounds))

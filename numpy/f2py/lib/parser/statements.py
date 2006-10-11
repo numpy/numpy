@@ -580,13 +580,14 @@ class Access(Statement):
         return tab + clsname
 
     def analyze(self):
-        clsname = self.__class__.__name__.upper()
+        clsname = self.__class__.__name__
+        l = getattr(self.parent.a, clsname.lower() + '_id_list')
         if self.items:
             for name in self.items:
-                var = self.get_variable(name)
-                var.update(clsname)
+                if name not in l: l.append(name)
         else:
-            self.parent.update_attributes(clsname)
+            if '' not in l:
+                l.append('')
         return
 
 class Public(Access):

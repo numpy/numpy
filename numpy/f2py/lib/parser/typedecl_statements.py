@@ -289,6 +289,12 @@ class TypeDeclarationStatement(Statement):
             return
         variables = self.parent.a.variables
         typedecl = self.astypedecl()
+        attrspec = self.attrspec[:]
+        try:
+            access_spec = [a for a in attrspec if a.lower() in ['private','public']][0]
+            attrspec.remove(access_spec)
+        except IndexError:
+            access_spec = None
         for item in self.entity_decls:
             name, array_spec, char_length, value = self._parse_entity(item)
             var = self.parent.get_variable(name)
@@ -302,6 +308,9 @@ class TypeDeclarationStatement(Statement):
                 var.set_bounds(array_spec)
             if value:
                 var.set_init(value)
+            if access_spec is not None:
+                l = getattr(self.parent.a,access_spec.lower() + '_id_list')
+                l.append(name)
             var.analyze()
         return
 
