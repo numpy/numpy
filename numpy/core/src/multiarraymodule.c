@@ -6767,7 +6767,7 @@ static struct PyMethodDef array_module_methods[] = {
 	{"getbuffer", (PyCFunction)buffer_buffer,
 	 METH_VARARGS | METH_KEYWORDS, NULL},
         {"asbuffer", (PyCFunction)as_buffer,
-         METH_VARARGS, NULL},
+         METH_VARARGS | METH_KEYWORDS, NULL},
         {"format_longfloat", (PyCFunction)format_longfloat,
          METH_VARARGS | METH_KEYWORDS, NULL},
         {"compare_chararrays", (PyCFunction)compare_chararrays,
