@@ -16,7 +16,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
            'ones', 'identity', 'allclose', 'compare_chararrays', 'putmask',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
-           'seterrcall', 'geterrcall', 'flatnonzero',
+           'seterrcall', 'geterrcall', 'errstate', 'flatnonzero',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS']
@@ -715,6 +715,14 @@ def geterrcall():
     """Return the current callback function used on floating-point errors.
     """
     return umath.geterrobj()[2]
+
+class errstate(object):
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+    def __enter__(self):
+        self.oldstate = seterr(**self.kwargs)
+    def __exit__(self, *exc_info):
+        numpy.seterr(**self.oldstate)
 
 def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
