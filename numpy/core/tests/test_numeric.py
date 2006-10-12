@@ -2,6 +2,7 @@ from numpy.core import *
 from numpy.random import rand, randint
 from numpy.testing import *
 from numpy.core.multiarray import dot as dot_
+import sys
 
 class Vec:
     def __init__(self,sequence=None):
@@ -246,6 +247,12 @@ class test_binary_repr(NumpyTestCase):
 
     def test_large(self):
         assert_equal(binary_repr(10736848),'101000111101010011010000')
+        
+import sys
+if sys.version_info[:2] >= (2, 5):
+    set_local_path()
+    from test_errstate import *
+    restore_path()
 
 if __name__ == '__main__':
     NumpyTest().run()
