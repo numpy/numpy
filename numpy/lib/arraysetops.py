@@ -11,17 +11,17 @@ Contains:
   union1d,
   setdiff1d
 
-All functions work best with integer numerical arrays on input. For floating
-point arrays, innacurate results may appear due to usual round-off and
-floating point comparison issues.
+All functions work best with integer numerical arrays on input
+(e.g. indices). For floating point arrays, innacurate results may appear due to
+usual round-off and floating point comparison issues.
 
 Except unique1d, union1d and intersect1d_nu, all functions expect inputs with
 unique elements. Speed could be gained in some operations by an implementaion
 of sort(), that can provide directly the permutation vectors, avoiding thus
 calls to argsort().
 
-Run test_unique1d_speed() to compare numpy.unique1d() with numpy.unique() - it
-should be the same.
+Run test_unique1d_speed() to compare performance of numpy.unique1d() and
+numpy.unique() - it should be the same.
 
 To do: Optionally return indices analogously to unique1d for all functions.
 
@@ -32,7 +32,6 @@ last revision: 12.10.2006
 """
 __all__ = ['ediff1d', 'unique1d', 'intersect1d', 'intersect1d_nu', 'setxor1d',
            'setmember1d', 'union1d', 'setdiff1d']
-
 
 import time
 import numpy as nm
@@ -201,7 +200,6 @@ def test_unique1d_speed( plot_results = False ):
         dt2s.append( dt2 )
 
         assert nm.alltrue( b == c )
-
 
     print nItems
     print dt1s
