@@ -69,7 +69,7 @@ def set_local_path(reldir='', level=1):
         testfile = sys.argv[0]
     else:
         testfile = f.f_locals['__file__']
-    local_path = os.path.join(os.path.dirname(os.path.abspath(testfile)),reldir)
+    local_path = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(testfile)),reldir))
     if DEBUG:
         print 'Inserting %r to sys.path' % (local_path)
     sys.path.insert(0,local_path)
