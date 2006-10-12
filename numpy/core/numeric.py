@@ -1,7 +1,7 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'arange', 'array', 'zeros', 'empty', 'broadcast', 'dtype',
            'fromstring', 'fromfile', 'frombuffer','newbuffer',
-           'getbuffer', 'where', 'argwhere',
+           'getbuffer', 'int_asbuffer', 'where', 'argwhere',
            'concatenate', 'fastCopyAndTranspose', 'lexsort',
            'set_numeric_ops', 'can_cast',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
@@ -113,6 +113,7 @@ fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
 newbuffer = multiarray.newbuffer
 getbuffer = multiarray.getbuffer
+int_asbuffer = multiarray.int_asbuffer
 where = multiarray.where
 concatenate = multiarray.concatenate
 fastCopyAndTranspose = multiarray._fastCopyAndTranspose
