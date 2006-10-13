@@ -132,7 +132,7 @@ class nd_grid(object):
                 start = key[k].start
                 if start is None: start=0
                 if step is None: step=1
-                if type(step) is type(1j):
+                if isinstance(step, complex):
                     size.append(int(abs(step)))
                     typ = float
                 else:
@@ -151,9 +151,10 @@ class nd_grid(object):
                 start = key[k].start
                 if start is None: start=0
                 if step is None: step=1
-                if type(step) is type(1j):
+                if isinstance(step, complex):
                     step = int(abs(step))
-                    step = (key[k].stop - start)/float(step-1)
+                    if step != 1:
+                        step = (key[k].stop - start)/float(step-1)
                 nn[k] = (nn[k]*step+start)
             if self.sparse:
                 slobj = [_nx.newaxis]*len(size)
@@ -167,10 +168,11 @@ class nd_grid(object):
             stop = key.stop
             start = key.start
             if start is None: start = 0
-            if type(step) is type(1j):
+            if isinstance(step, complex):
                 step = abs(step)
                 length = int(step)
-                step = (key.stop-start)/float(step-1)
+                if step != 1:
+                    step = (key.stop-start)/float(step-1)
                 stop = key.stop+step
                 return _nx.arange(0, length,1, float)*step + start
             else:
