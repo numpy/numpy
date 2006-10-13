@@ -448,13 +448,24 @@ static PyTypeObject %(otype)sType = {
     0,                         /* tp_alloc */
     %(otype)s_new,                 /* tp_new */
 };
-'''
 
+void *F2PY_%(otype)s_API[] = {
+  (void *) &%(otype)sType,
+  (void *) pyobj_from_%(ctype)s,
+  (void *) pyobj_to_%(ctype)s_inplace
+};
+'''
+    
     module_init_template = '''\
 if (PyType_Ready(&%(otype)sType) < 0)
-  return;
+  goto capi_err;
 PyModule_AddObject(f2py_module, "%(name)s",
                                 (PyObject *)&%(otype)sType);
+{
+  PyObject* c_api = PyCObject_FromVoidPtr((void *)F2PY_%(otype)s_API, NULL);
+  PyModule_AddObject(f2py_module, "_%(name)s_API", c_api);
+  if (PyErr_Occurred()) goto capi_err;
+}
 '''
 
     c_code_template = '''\

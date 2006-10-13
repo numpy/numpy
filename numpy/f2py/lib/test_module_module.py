@@ -16,7 +16,7 @@ import os
 import sys
 from numpy.testing import *
 
-def build(fortran_code, rebuild=True):
+def build(fortran_code, rebuild=True, build_dir = 'tmp'):
     modulename = os.path.splitext(os.path.basename(__file__))[0] + '_ext'
     try:
         exec ('import %s as m' % (modulename))
@@ -25,27 +25,25 @@ def build(fortran_code, rebuild=True):
             os.remove(m.__file__)
             raise ImportError,'%s is newer than %s' % (__file__, m.__file__)
     except ImportError,msg:
-        assert str(msg)==('No module named %s' % (modulename)),str(msg)
+        assert str(msg)==('No module named %s' % (modulename)) \
+               or str(msg).startswith('%s is newer than' % (__file__)),str(msg)
         print msg, ', recompiling %s.' % (modulename)
-        import tempfile
-        fname = tempfile.mktemp() + '.f90'
+        fname = os.path.join(build_dir, modulename + '_source.f90')
         f = open(fname,'w')
         f.write(fortran_code)
         f.close()
         sys_argv = []
-        sys_argv.extend(['--build-dir','tmp'])
+        sys_argv.extend(['--build-dir',build_dir])
         #sys_argv.extend(['-DF2PY_DEBUG_PYOBJ_TOFROM'])
         from main import build_extension
         sys_argv.extend(['-m',modulename, fname])
         build_extension(sys_argv)
-        os.remove(fname)
         status = os.system(' '.join([sys.executable] + sys.argv))
         sys.exit(status)
     return m
 
 fortran_code = '''
 module test_module_module_ext2
-
   type rat
     integer n,d
   end type rat

@@ -43,11 +43,17 @@ static PyMethodDef f2py_module_methods[] = {
 PyMODINIT_FUNC init%(modulename)s(void) {
   f2py_module = Py_InitModule("%(modulename)s", f2py_module_methods);
   import_array();
-  %(module_init_list)s
   if (PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "can\'t initialize module %(modulename)s");
+    PyErr_SetString(PyExc_ImportError, "failed to load array module.");
     return;
   }
+  %(module_init_list)s
+  return;
+capi_err:
+  if (!PyErr_Occurred()) {
+    PyErr_SetString(PyExc_RuntimeError, "failed to initialize %(modulename)s module.");
+  }
+  return;
 }
 #ifdef __cplusplus
 }
