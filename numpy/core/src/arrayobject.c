@@ -6706,18 +6706,6 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
         if (PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s))
                 return stop_at_string ? 0:1;
         if (stop_at_tuple && PyTuple_Check(s)) return 0;
-        if ((e=PyObject_GetAttrString(s, "__array_interface__")) != NULL) {
-                d = -1;
-                if (PyDict_Check(e)) {
-                        PyObject *new;
-                        new = PyDict_GetItemString(e, "shape");
-                        if (new && PyTuple_Check(new))
-                                d = PyTuple_GET_SIZE(new);
-                }
-                Py_DECREF(e);
-                if (d>-1) return d;
-        }
-        else PyErr_Clear();
         if ((e=PyObject_GetAttrString(s, "__array_struct__")) != NULL) {
                 d = -1;
                 if (PyCObject_Check(e)) {
@@ -6729,6 +6717,18 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
                 }
                 Py_DECREF(e);
                 if (d > -1) return d;
+        }
+        else PyErr_Clear();
+        if ((e=PyObject_GetAttrString(s, "__array_interface__")) != NULL) {
+                d = -1;
+                if (PyDict_Check(e)) {
+                        PyObject *new;
+                        new = PyDict_GetItemString(e, "shape");
+                        if (new && PyTuple_Check(new))
+                                d = PyTuple_GET_SIZE(new);
+                }
+                Py_DECREF(e);
+                if (d>-1) return d;
         }
         else PyErr_Clear();
 
@@ -7211,11 +7211,8 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
         int type = typecode->type_num;
         int itemsize = typecode->elsize;
 
-        check_it = ((type != PyArray_STRING) &&
-                    (type != PyArray_UNICODE) &&
-                    (type != PyArray_VOID) &&
-                    (type != PyArray_CHAR));
-                    
+        check_it = (typecode->type != PyArray_CHARLTR);
+
         stop_at_string = ((type == PyArray_OBJECT) ||   
                           (type == PyArray_STRING && 
                            typecode->type == PyArray_STRINGLTR) ||     
