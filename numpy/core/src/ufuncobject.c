@@ -791,8 +791,8 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 		PyErr_Format(PyExc_ValueError,
 			     "buffer size (%d) is not in range "
                              "(%"INTP_FMT" - %"INTP_FMT") or not a multiple of 16",
-			     *bufsize, PyArray_MIN_BUFSIZE,
-			     PyArray_MAX_BUFSIZE);
+			     *bufsize, (intp) PyArray_MIN_BUFSIZE,
+			     (intp) PyArray_MAX_BUFSIZE);
 		return -1;
 	}
 

@@ -830,7 +830,7 @@ gentype_real_get(PyObject *self)
 static PyObject *
 gentype_imag_get(PyObject *self)
 {
-        PyArray_Descr *typecode;
+        PyArray_Descr *typecode=NULL;
         PyObject *ret;
         int typenum;
 
@@ -861,7 +861,7 @@ gentype_imag_get(PyObject *self)
                 PyDataMem_FREE(temp);
         }
 
-        Py_DECREF(typecode);
+        Py_XDECREF(typecode);
         return ret;
 }
 

@@ -9282,7 +9282,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         else {
                 if (start < -self->size || start >= self->size) {
                         PyErr_Format(PyExc_ValueError,
-                                     "index (%d) out of range", start);
+                                     "index (%" NPY_INTP_FMT \
+                                     ") out of range", start);
                         goto finish;
                 }
                 retval = 0;
