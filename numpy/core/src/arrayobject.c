@@ -4445,7 +4445,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         int val;
 
         /* Cast arrays to a common type */
-        if (self->descr->type != other->descr->type) {
+        if (self->descr->type_num != other->descr->type_num) {
                 PyObject *new;
                 if (self->descr->type_num == PyArray_STRING && \
                     other->descr->type_num == PyArray_UNICODE) {

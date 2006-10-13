@@ -1593,10 +1593,10 @@ typedef struct {
 
 #define PyTypeNum_ISNUMBER(type) (type <= NPY_CLONGDOUBLE)
 
-#define PyTypeNum_ISSTRING(type) ((type == NPY_STRING) || \
-                               (type == NPY_UNICODE))
+#define PyTypeNum_ISSTRING(type) ((type == NPY_STRING) ||       \
+                                  (type == NPY_UNICODE))
 
-#define PyTypeNum_ISCOMPLEX(type) ((type >= NPY_CFLOAT) && \
+#define PyTypeNum_ISCOMPLEX(type) ((type >= NPY_CFLOAT) &&      \
                                 (type <= NPY_CLONGDOUBLE))
 
 #define PyTypeNum_ISPYTHON(type) ((type == NPY_LONG) || \
