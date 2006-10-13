@@ -252,7 +252,7 @@ except ImportError:
         pass
 
 
-def tensordot(a, b, axes=[-1,0]):
+def tensordot(a, b, axes=2):
     """tensordot returns the product for any (ndim >= 1) arrays.
 
     r_{xxx, yyy} = \sum_k a_{xxx,k} b_{k,yyy} where
@@ -265,9 +265,18 @@ def tensordot(a, b, axes=[-1,0]):
     When there is more than one axis to sum over, the corresponding
     arguments to axes should be sequences of the same length with the first
     axis to sum over given first in both sequences, the second axis second,
-    and so forth. 
+    and so forth.
+
+    If the axes argument is an integer, N, then the last N dimensions of a
+    and first N dimensions of b are summed over. 
     """
-    axes_a, axes_b = axes
+    try:
+        iter(axes)
+    except:
+        axes_a = range(-axes,0)
+        axes_b = range(0,axes)
+    else:
+        axes_a, axes_b = axes
     try:
         na = len(axes_a)
         axes_a = list(axes_a)
