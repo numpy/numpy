@@ -201,16 +201,21 @@ def polyfit(x, y, N, rcond=-1):
     value method takes a paramenter, 'rcond', which sets a limit on the
     relative size of the smallest singular value to be used in solving the
     equation. The default value of rcond is the double precision machine
-    precision as the actual solution is carried out in double precision.
+    precision as the actual solution is carried out in double precision. If you
+    are simply interested in a polynomial line drawn through the data points
+    and *not* in a true power series expansion about zero, then the best bet is
+    to scale the x sample points to the interval [0,1] as the problem will
+    probably be much better posed.
 
     WARNING: Power series fits are full of pitfalls for the unwary once the
-    degree of the fit get up around 4 or 5. Computation of the polynomial
-    values are sensitive to coefficient errors and the Vandermonde matrix is
-    ill conditioned. The knobs available to tune the fit are degree and rcond.
-    The rcond knob is a bit flaky and it can be useful to use values of rcond
-    less than the machine precision, 1e-24 for instance, but the quality of the
-    resulting fit needs to be checked against the data. The quality of
-    polynomial fits *can not* be taken for granted.
+    degree of the fit get up around 4 or 5 and the interval of sample points
+    gets large. Computation of the polynomial values are sensitive to
+    coefficient errors and the Vandermonde matrix is ill conditioned. The knobs
+    available to tune the fit are degree and rcond.  The rcond knob is a bit
+    flaky and it can be useful to use values of rcond less than the machine
+    precision, 1e-24 for instance, but the quality of the resulting fit needs
+    to be checked against the data. The quality of polynomial fits *can not* be
+    taken for granted.
 
     For more info, see
     http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
