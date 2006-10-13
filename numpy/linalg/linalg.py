@@ -140,12 +140,12 @@ def solvetensor(a, b, axes=None):
             allaxes.remove(k)
             allaxes.insert(an, k)
         a = a.transpose(allaxes)
-        
+
     oldshape = a.shape[-(an-b.ndim):]
     prod = 1
     for k in oldshape:
         prod *= k
-    
+
     a = a.reshape(-1,prod)
     b = b.ravel()
     res = solve(a, b)
@@ -184,17 +184,17 @@ def solve(a, b):
 def invtensor(a, ind=2):
     """Find the inverse tensor.
 
-    ind > 0 ==> first (ind) indices of a are summed over 
+    ind > 0 ==> first (ind) indices of a are summed over
     ind < 0 ==> last (-ind) indices of a are summed over
 
     if ind is a list, then it specifies the summed over axes
 
     When the inv tensor and the tensor are summed over the
-    indicated axes a separable identity tensor remains. 
+    indicated axes a separable identity tensor remains.
 
     The inverse has the summed over axes at the end.
     """
-    
+
     a = asarray(a)
     oldshape = a.shape
     prod = 1
@@ -217,7 +217,7 @@ def invtensor(a, ind=2):
     a = a.reshape(-1,prod)
     ia = inv(a)
     return ia.reshape(*invshape)
-    
+
 
 # Matrix inversion
 
@@ -250,7 +250,7 @@ def cholesky(a):
 
 def qr(a, mode='full'):
     """cacluates A=QR, Q orthonormal, R upper triangular
-    
+
     mode:  'full' --> (Q,R)
            'r'    --> R
            'economic' --> A2 where the diagonal + upper triangle
@@ -267,8 +267,8 @@ def qr(a, mode='full'):
         routine_name = 'zgeqrf'
     else:
         lapack_routine = lapack_lite.dgeqrf
-        routine_name = 'dgeqrf'        
-        
+        routine_name = 'dgeqrf'
+
     # calculate optimal size of work data 'work'
     lwork = 1
     work = zeros((lwork,), t)
@@ -307,7 +307,7 @@ def qr(a, mode='full'):
 
     if isComplexType(t):
         lapack_routine = lapack_lite.zungqr
-        routine_name = 'zungqr'                
+        routine_name = 'zungqr'
     else:
         lapack_routine = lapack_lite.dorgqr
         routine_name = 'dorgqr'
@@ -326,7 +326,7 @@ def qr(a, mode='full'):
 
     if results['info'] > 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
-    
+
     q = a[:mn,:].transpose()
 
     if (q.dtype != result_t):
@@ -476,7 +476,7 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
                 v[ind[2*i]] = vr[ind[2*i]] + 1j*vr[ind[2*i+1]]
                 v[ind[2*i+1]] = vr[ind[2*i]] - 1j*vr[ind[2*i+1]]
             result_t = _complexType(result_t)
-            
+
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
     vt = v.transpose().astype(result_t)
@@ -534,7 +534,7 @@ def svd(a, full_matrices=1, compute_uv=1):
     u,s,vh = svd(a)
 
     If a is an M x N array, then the svd produces a factoring of the array
-    into two unitary (orthogonal) 2-d arrays u (MxM) and vh (NxN) and a 
+    into two unitary (orthogonal) 2-d arrays u (MxM) and vh (NxN) and a
     min(M,N)-length array of singular values such that
 
                      a == dot(u,dot(S,vh))
@@ -613,10 +613,10 @@ def svd(a, full_matrices=1, compute_uv=1):
 
 # Generalized inverse
 
-def pinv(a, rcond = 1.e-10):
+def pinv(a, rcond=1e-15 ):
     """Return the (Moore-Penrose) pseudo-inverse of a 2-d array
 
-    This method computes the generalized inverse using the 
+    This method computes the generalized inverse using the
     singular-value decomposition and all singular values larger than
     rcond of the largest.
     """
@@ -660,18 +660,18 @@ def det(a):
 
 # Linear Least Squares
 
-def lstsq(a, b, rcond=1.e-10):
+def lstsq(a, b, rcond=-1):
     """returns x,resids,rank,s
-where x minimizes 2-norm(|b - Ax|)
-      resids is the sum square residuals
-      rank is the rank of A
-      s is the rank of the singular values of A in descending order
+    where x minimizes 2-norm(|b - Ax|)
+    resids is the sum square residuals
+    rank is the rank of A
+    s is the rank of the singular values of A in descending order
 
-If b is a matrix then x is also a matrix with corresponding columns.
-If the rank of A is less than the number of columns of A or greater than
-the number of rows, then residuals will be returned as an empty array
-otherwise resids = sum((b-dot(A,x)**2).
-Singular values less than s[0]*rcond are treated as zero.
+    If b is a matrix then x is also a matrix with corresponding columns.
+    If the rank of A is less than the number of columns of A or greater than
+    the number of rows, then residuals will be returned as an empty array
+    otherwise resids = sum((b-dot(A,x)**2).
+    Singular values less than s[0]*rcond are treated as zero.
 """
     import math
     a = asarray(a)

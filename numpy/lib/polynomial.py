@@ -30,13 +30,13 @@ def _eigvals(arg):
         get_linalg_funcs()
         return eigvals(arg)
 
-def _lstsq(X, y):
+def _lstsq(X, y, rcond):
     "Do least squares on the arguments"
     try:
-        return lstsq(X, y)
+        return lstsq(X, y, rcond)
     except TypeError:
         get_linalg_funcs()
-        return lstsq(X, y)
+        return lstsq(X, y, rcond)
 
 def poly(seq_of_zeros):
     """ Return a sequence representing a polynomial given a sequence of roots.
@@ -169,10 +169,10 @@ def polyder(p, m=1):
             val = poly1d(val)
         return val
 
-def polyfit(x, y, N):
+def polyfit(x, y, N, rcond=-1):
     """
 
-    Do a best fit polynomial of order N of y to x.  Return value is a
+    Do a best fit polynomial of degree N of y to x.  Return value is a
     vector of polynomial coefficients [pk ... p1 p0].  Eg, for N=2
 
       p2*x0^2 +  p1*x0 + p0 = y1
@@ -195,7 +195,22 @@ def polyfit(x, y, N):
 
       p = (XT*X)^-1 * XT * y
 
-    where XT is the transpose of X and -1 denotes the inverse.
+    where XT is the transpose of X gand -1 denotes the inverse. However, this
+    method is susceptible to rounding errors and generally the singular value
+    decomposition is preferred and that is the method used here. The singular
+    value method takes a paramenter, 'rcond', which sets a limit on the
+    relative size of the smallest singular value to be used in solving the
+    equation. The default value of rcond is the double precision machine
+    precision as the actual solution is carried out in double precision.
+
+    WARNING: Power series fits are full of pitfalls for the unwary once the
+    degree of the fit get up around 4 or 5. Computation of the polynomial
+    values are sensitive to coefficient errors and the Vandermonde matrix is
+    ill conditioned. The knobs available to tune the fit are degree and rcond.
+    The rcond knob is a bit flaky and it can be useful to use values of rcond
+    less than the machine precision, 1e-24 for instance, but the quality of the
+    resulting fit needs to be checked against the data. The quality of
+    polynomial fits *can not* be taken for granted.
 
     For more info, see
     http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
@@ -205,12 +220,10 @@ def polyfit(x, y, N):
     See also polyval
 
     """
-    x = NX.asarray(x)+0.
-    y = NX.asarray(y)+0.
-    y = NX.reshape(y, (len(y), 1))
-    X = vander(x, N+1)
-    c, resids, rank, s = _lstsq(X, y)
-    c.shape = (N+1,)
+    x = NX.asarray(x) + 0.0
+    y = NX.asarray(y) + 0.0
+    v = vander(x, N+1)
+    c, resids, rank, s = _lstsq(v, y, rcond)
     return c
 
 
