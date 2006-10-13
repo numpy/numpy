@@ -10792,12 +10792,13 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
         PyObject *odescr;
         PyArray_Descr *descr, *conv;
-        int align=0;
+        Bool align=FALSE;
         Bool copy=FALSE;
         static char *kwlist[] = {"dtype", "align", "copy", NULL};
 
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&",
-                                         kwlist, &odescr, &align,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&",
+                                         kwlist, &odescr, 
+                                         PyArray_BoolConverter, &align,
                                          PyArray_BoolConverter, &copy))
                 return NULL;
 
@@ -11160,6 +11161,7 @@ arraydescr_str(PyArray_Descr *self)
         else if (self->subarray) {
                 PyObject *p;
                 PyObject *t = PyString_FromString("(");
+                PyObject *sh;
                 p = arraydescr_str(self->subarray->base);
                 if (!self->subarray->base->names && !self->subarray->base->subarray) {
                         PyObject *t=PyString_FromString("'");
@@ -11169,7 +11171,15 @@ arraydescr_str(PyArray_Descr *self)
                 }
                 PyString_ConcatAndDel(&t, p);
                 PyString_ConcatAndDel(&t, PyString_FromString(","));
-                PyString_ConcatAndDel(&t, PyObject_Str(self->subarray->shape));
+                if (!PyTuple_Check(self->subarray->shape)) {
+                        sh = Py_BuildValue("(O)", self->subarray->shape);
+                }
+                else {
+                        sh = self->subarray->shape;
+                        Py_INCREF(sh);
+                }
+                PyString_ConcatAndDel(&t, PyObject_Str(sh));
+                Py_DECREF(sh);
                 PyString_ConcatAndDel(&t, PyString_FromString(")"));
                 sub = t;
         }
