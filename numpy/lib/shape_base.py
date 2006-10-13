@@ -1,6 +1,6 @@
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','row_stack', 'dstack','array_split','split','hsplit',
-           'vsplit','dsplit','apply_over_axes','expand_dims',
+           'vsplit','dsplit','apply_over_axes','expand_dims', 
            'apply_along_axis', 'kron', 'tile', 'get_array_wrap']
 
 import numpy.core.numeric as _nx

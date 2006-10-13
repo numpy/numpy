@@ -7,7 +7,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
            'isfortran', 'empty_like', 'zeros_like',
            'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot',
-           'alterdot', 'restoredot', 'rollaxis', 'cross', 'tensordot',
+           'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
            'little_endian', 'require',
@@ -331,6 +331,25 @@ def tensordot(a, b, axes=2):
     bt = b.transpose(newaxes_b).reshape(newshape_b)
     res = dot(at, bt)
     return res.reshape(olda + oldb)
+
+def roll(a, shift, axis=None):
+    """Roll the elements in the array by 'shift' positions along
+    the given axis.
+    """
+    a = asanyarray(a)
+    if axis is None:
+        n = a.size
+        reshape=1
+    else:
+        n = a.shape[axis]
+        reshape=0
+    shift %= n
+    indexes = concatenate((arange(n-shift,n),arange(n-shift)))
+    res = a.take(indexes, axis)
+    if reshape:
+        return res.reshape(a.shape)
+    else:
+        return res
 
 def rollaxis(a, axis, start=0):
     """Return transposed array so that axis is rolled before start.
