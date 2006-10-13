@@ -4686,21 +4686,34 @@ _convert_from_dict(PyObject *obj, int align)
 	return NULL;
 }
 
+#define _chk_byteorder(arg) (arg == '>' || arg == '<' ||        \
+                             arg == '|' || arg == '=')
+
 static int
 _check_for_commastring(char *type, int len)
 {
 	int i;
 
+        /* Check for ints at start of string */
 	if ((type[0] >= '0' && type[0] <= '9') ||
-            ((len > 1) && (type[0] == '>' || type[0] == '<' ||  \
-                           type[0] == '|' || type[0] == '=') && \
+            ((len > 1) && _chk_byteorder(type[0]) && 
              (type[1] >= '0' && type[1] <= '9')))
                 return 1;
+
+        /* Check for empty tuple */
+        if (((len > 1) && (type[0] == '(' && type[1] == ')')) ||
+            ((len > 3) && _chk_byteorder(type[0]) && 
+             (type[1] == '(' && type[2] == ')')))
+                return 1;
+             
+        /* Check for presence of commas */
 	for (i=1;i<len;i++)
 		if (type[i] == ',') return 1;
 
         return 0;
 }
+
+#undef _chk_byteorder
 
 /*
    any object with
