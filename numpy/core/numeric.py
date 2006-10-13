@@ -252,7 +252,7 @@ except ImportError:
         pass
 
 
-def tensordot(a, b, axes=(-1,0)):
+def tensordot(a, b, axes=[-1,0]):
     """tensordot returns the product for any (ndim >= 1) arrays.
 
     r_{xxx, yyy} = \sum_k a_{xxx,k} b_{k,yyy} where
