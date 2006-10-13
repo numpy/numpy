@@ -325,15 +325,17 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
   return return_value;
 }
 ''' 
-    _defined = []
     def __init__(self, parent, typedecl):
         WrapperBase.__init__(self)
         self.name = name = typedecl.name
         ti = PyTypeInterface(typedecl)
         self.ctype = ctype = ti.ctype
-        if ctype in self._defined:
+
+        defined = parent.defined_types
+        if name in defined:
             return
-        self._defined.append(ctype)
+        defined.append(name)
+        
         self.info('Generating interface for %s: %s' % (typedecl.__class__, ctype))
 
         if isinstance(typedecl, (Integer,Byte,Real,DoublePrecision)):
@@ -580,14 +582,16 @@ static PyObject * %(otype)s_repr(PyObject * self) {
     def __init__(self, parent, typedecl):
         WrapperBase.__init__(self)
         ti = PyTypeInterface(typedecl)
-        name = typedecl.name
-        if name in self._defined:
+        self.ctype = ctype = ti.ctype
+        defined = parent.defined_types
+        if ctype in defined:
             return
-        self._defined.append(name)
-        self.info('Generating interface for %s: %s' % (typedecl.__class__, name))
+        defined.append(ctype)
+
+        self.info('Generating interface for %s: %s' % (typedecl.__class__, ctype))
         parent.isf90 = True
 
-        self.name = name
+        self.name = name = typedecl.name
         self.otype = otype = ti.otype
         self.ctype = ctype = ti.ctype
         self.ctype_ptrs = self.ctype + '_ptrs'

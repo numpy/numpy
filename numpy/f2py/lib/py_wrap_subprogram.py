@@ -57,6 +57,7 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
 typedef void (*%(name)s_functype)();
 '''
     extern_template_module = '''\
+extern void %(init_func)s_f( %(name)s_functype);
 static %(name)s_functype %(name)s_func_ptr;
 '''
     objdecl_template_module = '''
@@ -77,14 +78,16 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
 %(init_func)s_f(%(init_func)s_c);
 '''
 
-    _defined = []
     def __init__(self, parent, block):
         WrapperBase.__init__(self)
         self.name = name = pyname = block.name
         self.cname = cname = '%s_%s' % (parent.cname,name)
-        if cname in self._defined:
+
+        defined = parent.defined_capi_codes
+        if cname in defined:
             return
-        self._defined.append(cname)
+        defined.append(cname)
+        
         self.info('Generating interface for %s: %s' % (block.__class__, cname))
 
         if pyname.startswith('f2pywrap_'):
@@ -99,6 +102,8 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
         self.objdecl_template =  ''
         self.fortran_code_template = ''
 
+        WrapperCPPMacro(parent, 'F_FUNC')
+        
         if isinstance(block.parent, Module):
             self.mname = block.parent.name
             self.init_func = '%s_init' % (name)
@@ -179,7 +184,7 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
                     self.return_format_list.append('O&')
                     self.return_obj_list.append('\npyobj_from_%s, &%s' % (ti.ctype, argname))
 
-        WrapperCPPMacro(parent, 'F_FUNC')
+
         self.call_list.append('%s_f(%s);' % (name,', '.join(args_f+extra_args_f)))
 
         self.clean_pyobjfrom_list.reverse()

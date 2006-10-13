@@ -118,12 +118,12 @@ class WrapperCPPMacro(WrapperBase):
     """
     CPP macros
     """
-    _defined_macros = []
     def __init__(self, parent, name):
         WrapperBase.__init__(self)
-        if name in self._defined_macros:
+        defined = parent.defined_cpp_code
+        if name in defined:
             return
-        self._defined_macros.append(name)
+        defined.append(name)
 
         body = self.get_resource_content(name,'.cpp')
         if body is None:
@@ -137,12 +137,12 @@ class WrapperCCode(WrapperBase):
     """
     C code
     """
-    _defined_codes = []
     def __init__(self, parent, name):
         WrapperBase.__init__(self)
-        if name in self._defined_codes:
+        defined = parent.defined_c_code
+        if name in defined:
             return
-        self._defined_codes.append(name)
+        defined.append(name)
 
         body = self.get_resource_content(name,'.c')
         if body is None:

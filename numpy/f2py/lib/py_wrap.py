@@ -57,10 +57,18 @@ PyMODINIT_FUNC init%(modulename)s(void) {
     main_fortran_template = '''\
 %(fortran_code_list)s
 '''
+
+
+
     def __init__(self, modulename):
         WrapperBase.__init__(self)
         self.modulename = modulename
         self.cname = 'f2py_' + modulename
+
+        self.defined_cpp_code = []
+        self.defined_c_code = []
+        self.defined_types = []
+        self.defined_capi_codes = []
 
         
         self.header_list = []
