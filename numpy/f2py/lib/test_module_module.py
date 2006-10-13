@@ -28,6 +28,7 @@ def build(fortran_code, rebuild=True, build_dir = 'tmp'):
         assert str(msg)==('No module named %s' % (modulename)) \
                or str(msg).startswith('%s is newer than' % (__file__)),str(msg)
         print msg, ', recompiling %s.' % (modulename)
+        if not os.path.isdir(build_dir): os.makedirs(build_dir)
         fname = os.path.join(build_dir, modulename + '_source.f90')
         f = open(fname,'w')
         f.write(fortran_code)

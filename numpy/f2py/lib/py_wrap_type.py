@@ -332,12 +332,12 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
         self.ctype = ctype = ti.ctype
 
         defined = parent.defined_types
-        if name in defined:
+        if ctype in defined:
             return
-        defined.append(name)
+        defined.append(ctype)
         
-        self.info('Generating interface for %s: %s' % (typedecl.__class__, ctype))
-
+        self.info('Generating interface for %s: %s' % (typedecl.__class__.__name__, ctype))
+        self.parent = parent
         if isinstance(typedecl, (Integer,Byte,Real,DoublePrecision)):
             self.Cls = ctype[4].upper() + ctype[5:]
             self.capi_code_template = self.capi_code_template_scalar
@@ -376,14 +376,14 @@ class PythonCAPIDerivedType(WrapperBase):
     Fortran 90 derived type hooks.
     """
 
-    header_template = '''\
+    header_template_wrapper = '''\
 #define %(otype)s_Check(obj) \\
     PyObject_TypeCheck((PyObject*)obj, &%(otype)sType)
 #define %(init_func)s_f \\
     F_FUNC(%(init_func)s,%(INIT_FUNC)s)
 '''
 
-    typedef_template = '''\
+    typedef_template_wrapper = '''\
 typedef void * %(ctype)s;
 typedef struct {
   PyObject_HEAD
@@ -392,11 +392,26 @@ typedef struct {
 } %(otype)s;
 '''
 
-    extern_template = '''\
+    typedef_template_importer = '''\
+typedef void * %(ctype)s;
+typedef struct {
+  PyObject_HEAD
+  %(ptrstruct_list)s
+  %(ctype)s data;
+} %(otype)s;
+typedef int (*pyobj_to_%(ctype)s_inplace_functype)(PyObject*, %(otype)s** );
+typedef int (*pyobj_to_%(ctype)s_functype)(PyObject*, %(otype)s* );
+typedef PyObject* (*pyobj_from_%(ctype)s_functype)(%(ctype)s*);
+#define %(otype)sType (*(PyTypeObject *)PyArray_API[0])
+#define pyobj_from_%(ctype)s ((pyobj_from_%(ctype)s_functype)PyArray_API[1])
+#define pyobj_to_%(ctype)s_inplace ((pyobj_to_%(ctype)s_inplace_functype)PyArray_API[2])
+'''
+
+    extern_template_wrapper = '''\
 static PyTypeObject %(otype)sType;
 '''
 
-    objdecl_template = '''\
+    objdecl_template_wrapper = '''\
 static PyMethodDef %(otype)s_methods[] = {
     %(type_method_list)s
     {NULL}  /* Sentinel */
@@ -410,7 +425,7 @@ static PyGetSetDef %(otype)s_getseters[] = {
 static PyTypeObject %(otype)sType = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "%(name)s",                /*tp_name*/
+    "%(modulename)s.%(name)s",                /*tp_name*/
     sizeof(%(otype)s),    /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)%(otype)s_dealloc, /*tp_dealloc*/
@@ -455,27 +470,51 @@ void *F2PY_%(otype)s_API[] = {
   (void *) pyobj_to_%(ctype)s_inplace
 };
 '''
-    
-    module_init_template = '''\
-if (PyType_Ready(&%(otype)sType) < 0)
-  goto capi_err;
-PyModule_AddObject(f2py_module, "%(name)s",
-                                (PyObject *)&%(otype)sType);
+
+    objdecl_template_importer = '''\
+static void **F2PY_%(otype)s_API;
+'''
+    module_init_template_wrapper = '''\
+if (PyType_Ready(&%(otype)sType) < 0) goto capi_err;
+PyModule_AddObject(f2py_module, "%(name)s", (PyObject *)&%(otype)sType);
 {
   PyObject* c_api = PyCObject_FromVoidPtr((void *)F2PY_%(otype)s_API, NULL);
-  PyModule_AddObject(f2py_module, "_%(name)s_API", c_api);
+  PyModule_AddObject(f2py_module, "_%(NAME)s_API", c_api);
+  if (PyErr_Occurred()) goto capi_err;
+}
+'''
+    module_init_template_importer = '''\
+{
+  PyObject *c_api = NULL;
+  PyObject *wrappermodule = PyImport_ImportModule("%(wrappermodulename)s");
+  if (wrappermodule == NULL) goto capi_%(name)s_err;
+  c_api = PyObject_GetAttrString(wrappermodule, "_%(NAME)s_API");
+  if (c_api == NULL) {Py_DECREF(wrappermodule); goto capi_%(name)s_err;}
+  if (PyCObject_Check(c_api)) {
+      F2PY_%(otype)s_API = (void **)PyCObject_AsVoidPtr(c_api);
+  }
+  Py_DECREF(c_api);
+  Py_DECREF(wrappermodule);
+  if (F2PY_%(otype)s_API != NULL) goto capi_%(name)s_ok;
+capi_%(name)s_err:
+  PyErr_Print();
+  PyErr_SetString(PyExc_ImportError, "%(wrappermodulename)s failed to import");
+  return;
+capi_%(name)s_ok:
+  c_api = PyCObject_FromVoidPtr((void *)F2PY_%(otype)s_API, NULL);
+  PyModule_AddObject(f2py_module, "_%(NAME)s_API", c_api);
   if (PyErr_Occurred()) goto capi_err;
 }
 '''
 
-    c_code_template = '''\
+    c_code_template_wrapper = '''\
 static void %(init_func)s_c(
                %(init_func_c_arg_clist)s) {
   %(init_func_c_body_list)s
 }
 '''
 
-    capi_code_template = '''\
+    capi_code_template_wrapper = '''\
 static void %(otype)s_dealloc(%(otype)s* self) {
   if (self->data)
     PyMem_Free(self->data);
@@ -575,7 +614,7 @@ static PyObject * %(otype)s_repr(PyObject * self) {
 %(getset_func_list)s
 '''
 
-    fortran_code_template = '''\
+    fortran_code_template_wrapper = '''\
       subroutine %(init_func)s(init_func_c, self, obj)
       %(use_stmt_list)s
       %(type_decl_list)s
@@ -599,16 +638,39 @@ static PyObject * %(otype)s_repr(PyObject * self) {
             return
         defined.append(ctype)
 
-        self.info('Generating interface for %s: %s' % (typedecl.__class__, ctype))
-        parent.isf90 = True
 
+
+        implement_wrappers = True
+        if isinstance(typedecl.parent,Module) and typedecl.parent.name!=parent.modulename:
+            implement_wrappers = False
+            self.info('Using api for %s.%s: %s' % (parent.modulename, typedecl.name, ctype))
+            self.wrappermodulename = typedecl.parent.name
+        else:
+            self.info('Generating interface for %s.%s: %s' % (parent.modulename, typedecl.name, ctype))
+        
+        parent.isf90 = True
+        self.parent = parent
         self.name = name = typedecl.name
         self.otype = otype = ti.otype
         self.ctype = ctype = ti.ctype
         self.ctype_ptrs = self.ctype + '_ptrs'
         self.ftype = ti.ftype
         self.bytes = bytes = ti.bytes
-        WrapperCPPMacro(parent, 'F_FUNC')
+
+        if not implement_wrappers:
+            self.typedef_template = self.typedef_template_importer
+            self.objdecl_template = self.objdecl_template_importer
+            self.module_init_template = self.module_init_template_importer
+        else:
+            self.header_template = self.header_template_wrapper
+            self.typedef_template = self.typedef_template_wrapper
+            self.extern_template = self.extern_template_wrapper
+            self.objdecl_template = self.objdecl_template_wrapper
+            self.module_init_template = self.module_init_template_wrapper
+            self.c_code_template = self.c_code_template_wrapper
+            self.capi_code_template = self.capi_code_template_wrapper
+            self.fortran_code_template = self.fortran_code_template_wrapper
+            WrapperCPPMacro(parent, 'F_FUNC')
 
         self.init_func_f_arg_list = ['self']
         self.init_func_c_arg_list = ['%s *self' % (otype)]

@@ -88,7 +88,8 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
             return
         defined.append(cname)
         
-        self.info('Generating interface for %s: %s' % (block.__class__, cname))
+        self.info('Generating interface for %s %s: %s' % (parent.modulename, block.__class__.__name__, cname))
+        self.parent = parent
 
         if pyname.startswith('f2pywrap_'):
             pyname = pyname[9:]
