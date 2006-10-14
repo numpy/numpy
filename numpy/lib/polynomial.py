@@ -7,9 +7,10 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polyfit']
 
 import re
+import warnings
 import numpy.core.numeric as NX
 
-from numpy.core import isscalar
+from numpy.core import isscalar, abs
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex
@@ -169,11 +170,11 @@ def polyder(p, m=1):
             val = poly1d(val)
         return val
 
-def polyfit(x, y, N, rcond=-1):
+def polyfit(x, y, deg, rcond=-1):
     """
 
-    Do a best fit polynomial of degree N of y to x.  Return value is a
-    vector of polynomial coefficients [pk ... p1 p0].  Eg, for N=2
+    Do a best fit polynomial of degree 'deg' of 'x' to 'y'.  Return value is a
+    vector of polynomial coefficients [pk ... p1 p0].  Eg, for n=2
 
       p2*x0^2 +  p1*x0 + p0 = y1
       p2*x1^2 +  p1*x1 + p0 = y1
@@ -201,21 +202,22 @@ def polyfit(x, y, N, rcond=-1):
     value method takes a paramenter, 'rcond', which sets a limit on the
     relative size of the smallest singular value to be used in solving the
     equation. The default value of rcond is the double precision machine
-    precision as the actual solution is carried out in double precision. If you
-    are simply interested in a polynomial line drawn through the data points
-    and *not* in a true power series expansion about zero, then the best bet is
-    to scale the x sample points to the interval [0,1] as the problem will
-    probably be much better posed.
+    precision as the actual solution is carried out in double precision. The
+    vector x is also normalized by its maximum absolute value before the fit
+    to improve the condition of the Vandermonde matrix.
 
     WARNING: Power series fits are full of pitfalls for the unwary once the
-    degree of the fit get up around 4 or 5 and the interval of sample points
-    gets large. Computation of the polynomial values are sensitive to
-    coefficient errors and the Vandermonde matrix is ill conditioned. The knobs
-    available to tune the fit are degree and rcond.  The rcond knob is a bit
-    flaky and it can be useful to use values of rcond less than the machine
-    precision, 1e-24 for instance, but the quality of the resulting fit needs
-    to be checked against the data. The quality of polynomial fits *can not* be
-    taken for granted.
+    degree of the fit becomes large or the interval of sample points is badly
+    uncentered. The basic problem is that the powers x**n are not generally a
+    good basis for the functions on the sample interval with the result that
+    the Vandermonde matrix is ill conditioned and computation of the polynomial
+    values is sensitive to coefficient error. The quality of the resulting fit
+    should be checked against the data whenever the condition number is large,
+    as the quality of polynomial fits *can not* be taken for granted. If all
+    you want to do is draw a smooth curve through the y values and polyfit is
+    not doing the job, try centering the sample range or look into
+    scipy.interpolate, which includes some nice spline fitting functions that
+    may be of use.
 
     For more info, see
     http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
@@ -225,10 +227,38 @@ def polyfit(x, y, N, rcond=-1):
     See also polyval
 
     """
+    order = deg + 1.
     x = NX.asarray(x) + 0.0
     y = NX.asarray(y) + 0.0
-    v = vander(x, N+1)
+
+    # check arguments.
+    if deg < 0 :
+        raise ValueError, "expected deg >= 0"
+    if x.ndim != 1 or x.size == 0:
+        raise TypeError, "expected non-empty vector for x"
+    if y.ndim < 1 or y.ndim > 2 :
+        raise TypeError, "expected 1D or 2D array for y"
+    if x.shape[0] != y.shape[0] :
+        raise TypeError, "expected x and y to have same length"
+
+    # scale x to improve condition number
+    scale = abs(x).max()
+    if scale != 0 :
+        x /= scale
+
+    # solve least squares equation for powers of x
+    v = vander(x, order)
     c, resids, rank, s = _lstsq(v, y, rcond)
+
+    # warn on rank reduction, which indicates an ill conditioned matrix
+    if rank != order :
+        # fixme -- want a warning here, not an exception
+        raise RuntimeError, "degree reduced to %d" % (rank - 1)
+
+    # scale returned coefficients
+    if scale != 0 :
+        c /= vander([scale], order)[0]
+
     return c
 
 
