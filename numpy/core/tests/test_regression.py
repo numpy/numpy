@@ -510,6 +510,11 @@ class test_regression(NumpyTestCase):
         """Ticket #335"""
         N.dtype([('col1', '()i4')])
         
+    def check_mgrid_single_element(self, level=rlevel):
+        """Ticket #339"""
+        assert_array_equal(N.mgrid[0:0:1j],[0])
+        assert_array_equal(N.mgrid[0:0],[])
+        
     def check_numeric_carray_compare(self, level=rlevel):
         """Ticket #341"""
         assert_equal(N.array([ 'X' ], 'c'),'X')        
