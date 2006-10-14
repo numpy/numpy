@@ -221,13 +221,83 @@ def dump_signature(sys_argv):
         output_stream.close()
     return
 
-def build_extension(sys_argv):
+def construct_extension_sources(modulename, parse_files, include_dirs, build_dir):
+    """
+    Construct wrapper sources.
+    """
+    from py_wrap import PythonWrapperModule
+
+    f90_modules = []
+    external_subprograms = []
+    for filename in parse_files:
+        if not os.path.isfile(filename):
+            sys.stderr.write('No or not a file %r. Skipping.\n' % (filename))
+            continue
+        sys.stderr.write('Parsing %r..\n' % (filename))
+        for block in parse(filename, include_dirs=include_dirs).content:
+            if isinstance(block, Module):
+                f90_modules.append(block)
+            elif isinstance(block, (Subroutine, Function)):
+                external_subprograms.append(block)
+            else:
+                sys.stderr.write("Unhandled structure: %r\n" % (block.__class__))
+
+    module_infos = []
+
+    for block in f90_modules:
+        wrapper = PythonWrapperModule(block.name)
+        wrapper.add(block)
+        c_code = wrapper.c_code()
+        f_code = '! -*- f90 -*-\n' + wrapper.fortran_code()
+        c_fn = os.path.join(build_dir,'%smodule.c' % (block.name))
+        f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py.f90' % (block.name))
+        f = open(c_fn,'w')
+        f.write(c_code)
+        f.close()
+        f = open(f_fn,'w')
+        f.write(f_code)
+        f.close()
+        f_lib = '%s_f_wrappers_f2py' % (block.name)
+        module_info = {'name':block.name, 'c_sources':[c_fn],
+                       'f_sources':[f_fn], 'language':'f90'}
+        module_infos.append(module_info)
+
+    if external_subprograms:
+        wrapper = PythonWrapperModule(modulename)
+        for block in external_subprograms:
+            wrapper.add(block)
+        c_code = wrapper.c_code()
+        f_code = wrapper.fortran_code()
+        c_fn = os.path.join(build_dir,'%smodule.c' % (modulename))
+        ext = '.f'
+        language = 'f77'
+        if wrapper.isf90:
+            f_code = '! -*- f90 -*-\n' + f_code
+            ext = '.f90'
+            language = 'f90'
+        f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py%s' % (modulename, ext))
+        f = open(c_fn,'w')
+        f.write(c_code)
+        f.close()
+        f = open(f_fn,'w')
+        f.write(f_code)
+        f.close()
+        module_info = {'name':modulename, 'c_sources':[c_fn],
+                       'f_sources':[f_fn], 'language':language}
+        module_infos.append(module_info)
+
+    return module_infos
+
+def build_extension(sys_argv, sources_only = False):
     """
     Build wrappers to Fortran 90 modules and external subprograms.
     """
     modulename = get_option_value(sys_argv,'-m','untitled','unspecified')
 
-    build_dir = get_option_value(sys_argv,'--build-dir','.',None)
+    if sources_only:
+        build_dir = get_option_value(sys_argv,'--build-dir','.','')
+    else:
+        build_dir = get_option_value(sys_argv,'--build-dir','.',None)
     if build_dir is None:
         build_dir = tempfile.mktemp()
         clean_build_dir = True
@@ -267,23 +337,11 @@ def build_extension(sys_argv):
     else:
         parse_files = fortran_files + c_files
 
-    f90_modules = []
-    external_subprograms = []
+    module_infos = construct_extension_sources(modulename, parse_files, include_dirs, build_dir)
 
-    for filename in parse_files:
-        if not os.path.isfile(filename):
-            sys.stderr.write('No or not a file %r. Skipping.\n' % (filename))
-            continue
-        sys.stderr.write('Parsing %r..\n' % (filename))
-        for block in parse(filename, include_dirs=include_dirs).content:
-            if isinstance(block, Module):
-                f90_modules.append(block)
-            elif isinstance(block, (Subroutine, Function)):
-                external_subprograms.append(block)
-            else:
-                sys.stderr.write("Unhandled structure: %r\n" % (block.__class__))
+    if sources_only:
+        return
 
-    from py_wrap import PythonWrapperModule
     def configuration(parent_package='', top_path=None):
         from numpy.distutils.misc_util import Configuration
         config = Configuration('',parent_package,top_path)
@@ -293,62 +351,25 @@ def build_extension(sys_argv):
                                sources = fortran_files)
             libraries.insert(0,flibname)
 
-        for block in f90_modules:
-            wrapper = PythonWrapperModule(block.name)
-            wrapper.add(block)
-            c_code = wrapper.c_code()
-            f_code = '! -*- f90 -*-\n' + wrapper.fortran_code()
-            c_fn = os.path.join(build_dir,'%smodule.c' % (block.name))
-            f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py.f90' % (block.name))
-            f = open(c_fn,'w')
-            f.write(c_code)
-            f.close()
-            f = open(f_fn,'w')
-            f.write(f_code)
-            f.close()
-            f_lib = '%s_f_wrappers_f2py' % (block.name)
-            config.add_library(f_lib,
-                               sources = [f_fn])
-            config.add_extension(block.name,
-                                 sources=[c_fn] + c_files,
-                                 libraries = [f_lib] + libraries,
+        for module_info in module_infos:
+            name = module_info['name']
+            c_sources = module_info['c_sources']
+            f_sources = module_info['f_sources']
+            language = module_info['language']
+            if f_sources:
+                f_lib = '%s_f_wrappers_f2py' % (name)
+                config.add_library(f_lib, sources = f_sources)
+                libs = [f_lib] + libraries
+            else:
+                libs = libraries
+            config.add_extension(name,
+                                 sources=c_sources + c_files,
+                                 libraries = libs,
                                  define_macros = define_macros,
                                  undef_macros = undef_macros,
                                  include_dirs = include_dirs,
                                  extra_objects = extra_objects,
-                                 language = 'f90',
-                                 )
-        if external_subprograms:
-            wrapper = PythonWrapperModule(modulename)
-            for block in external_subprograms:
-                wrapper.add(block)
-            c_code = wrapper.c_code()
-            f_code = wrapper.fortran_code()
-            c_fn = os.path.join(build_dir,'%smodule.c' % (modulename))
-            ext = '.f'
-            language = 'f77'
-            if wrapper.isf90:
-                f_code = '! -*- f90 -*-\n' + f_code
-                ext = '.f90'
-                language = 'f90'
-            f_fn = os.path.join(build_dir,'%s_f_wrappers_f2py%s' % (modulename, ext))
-            f = open(c_fn,'w')
-            f.write(c_code)
-            f.close()
-            f = open(f_fn,'w')
-            f.write(f_code)
-            f.close()
-            f_lib = '%s_f_wrappers_f2py' % (modulename)
-            config.add_library(f_lib,
-                               sources = [f_fn])
-            config.add_extension(modulename,
-                                 sources=[c_fn] + c_files,
-                                 libraries = [f_lib] + libraries,
-                                 define_macros = define_macros,
-                                 undef_macros = undef_macros,
-                                 include_dirs = include_dirs,
-                                 extra_objects = extra_objects,
-                                 language = language
+                                 language = language,
                                  )
         return config
 
@@ -390,4 +411,8 @@ def main(sys_argv = None):
     if '-h' in sys_argv:
         dump_signature(sys_argv)
         return
-    print >> sys.stdout, __usage__
+    if not sys_argv or '--help' in sys_argv:
+        print >> sys.stdout, __usage__
+
+    build_extension(sys_argv, sources_only = True)
+    return

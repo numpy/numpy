@@ -390,6 +390,7 @@ typedef struct {
   %(ptrstruct_list)s
   %(ctype)s data;
 } %(otype)s;
+typedef void (*%(init_func)s_c_functype)(%(init_func_c_ctype_arg_clist)s);
 '''
 
     typedef_template_importer = '''\
@@ -409,6 +410,7 @@ typedef PyObject* (*pyobj_from_%(ctype)s_functype)(%(ctype)s*);
 
     extern_template_wrapper = '''\
 static PyTypeObject %(otype)sType;
+extern void %(init_func)s_f(%(init_func)s_c_functype, void*, %(ctype)s);
 '''
 
     objdecl_template_wrapper = '''\
@@ -674,6 +676,7 @@ static PyObject * %(otype)s_repr(PyObject * self) {
 
         self.init_func_f_arg_list = ['self']
         self.init_func_c_arg_list = ['%s *self' % (otype)]
+        self.init_func_c_ctype_arg_list = ['%s *' % (otype)]
         self.init_func_c_body_list = []
         self.ptrstruct_list = []
         self.attr_decl_list = []
@@ -693,6 +696,7 @@ static PyObject * %(otype)s_repr(PyObject * self) {
             self.ptrstruct_list.append('%s* %s_ptr;' % (ct, n))
             self.init_func_f_arg_list.append('obj %% %s' % (n))
             self.init_func_c_arg_list.append('\n%s * %s_ptr' % (ct, n))
+            self.init_func_c_ctype_arg_list.append('\n%s *' % (ct))
             self.init_func_c_body_list.append('''\
 if (!((void*)%(n)s_ptr >= self->data
       && (void*)%(n)s_ptr < self->data + %(bytes)s ))

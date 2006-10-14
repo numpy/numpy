@@ -16,7 +16,7 @@ class PythonCAPISubProgram(WrapperBase):
 #define %(name)s_f F_FUNC(%(name)s, %(NAME)s)
 '''
     extern_template_f77 = '''\
-extern void %(name)s_f();
+extern void %(name)s_f(%(ctype_args_f_clist)s);
 '''
     objdecl_template_doc = '''\
 static char %(cname)s__doc[] = "";
@@ -54,10 +54,11 @@ static PyObject* %(cname)s(PyObject *capi_self, PyObject *capi_args, PyObject *c
 #define %(init_func)s_f F_FUNC(%(init_func)s, %(INIT_FUNC)s)
 '''
     typedef_template_module = '''
-typedef void (*%(name)s_functype)();
+typedef void (*%(name)s_functype)(%(ctype_args_f_clist)s);
+typedef void (*%(init_func)s_c_functype)(%(name)s_functype);
 '''
     extern_template_module = '''\
-extern void %(init_func)s_f( %(name)s_functype);
+extern void %(init_func)s_f(%(init_func)s_c_functype);
 static %(name)s_functype %(name)s_func_ptr;
 '''
     objdecl_template_module = '''
@@ -139,6 +140,8 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
 
         args_f = []
         extra_args_f = []
+        ctype_args_f = []
+        extra_ctype_args_f = []
         argindex = -1
         for argname in block.args:
             argindex += 1
@@ -160,6 +163,7 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
                         self.clean_frompyobj_list.append('Py_DECREF(%s);' % (argname))
                 self.decl_list.append('%s* %s = NULL;' % (ti.otype, argname))
                 args_f.append('%s->data' % (argname)) # is_scalar
+                ctype_args_f.append(ti.ctype)
             else:
                 if var.is_intent_in():
                     self.pyarg_format_list.append('O&')
@@ -170,13 +174,15 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
                         assert not var.is_intent_out(),'intent(out) not implemented for "%s"' % (var)
                     self.decl_list.append('%s %s = {NULL,0};' % (ti.ctype, argname))
                     args_f.append('%s.data' % argname)  # is_scalar
+                    ctype_args_f.append('char*')
+                    extra_ctype_args_f.append('int')
                     extra_args_f.append('%s.len' % argname)
                     self.clean_frompyobj_list.append(\
                         'if (%s.len) free(%s.data);' % (argname,argname))
                 else:
                     self.decl_list.append('%s %s;' % (ti.ctype, argname))
                     args_f.append('&'+argname) # is_scalar
-
+                    ctype_args_f.append(ti.ctype+'*')
             if var.is_intent_out(): # and is_scalar
                 if isinstance(typedecl, TypeStmt):
                     self.return_format_list.append('N')
@@ -187,6 +193,11 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
 
 
         self.call_list.append('%s_f(%s);' % (name,', '.join(args_f+extra_args_f)))
+
+        self.ctype_args_f_list = ctype_args_f + extra_ctype_args_f
+        if not self.ctype_args_f_list:
+            self.ctype_args_f_list.append('void')
+        
 
         self.clean_pyobjfrom_list.reverse()
         self.clean_call_list.reverse()

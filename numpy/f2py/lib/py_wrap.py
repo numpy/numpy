@@ -45,7 +45,7 @@ PyMODINIT_FUNC init%(modulename)s(void) {
   import_array();
   if (PyErr_Occurred()) {
     PyErr_SetString(PyExc_ImportError, "failed to load array module.");
-    return;
+    goto capi_err;
   }
   %(module_init_list)s
   return;
