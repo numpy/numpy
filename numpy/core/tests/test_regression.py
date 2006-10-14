@@ -506,5 +506,24 @@ class test_regression(NumpyTestCase):
         """Ticket #334"""
         assert N.dtype('i4') == N.dtype(('i4',()))
         
+    def check_dtype_posttuple(self, level=rlevel):
+        """Ticket #335"""
+        N.dtype([('col1', '()i4')])
+        
+    def check_numeric_carray_compare(self, level=rlevel):
+        """Ticket #341"""
+        assert_equal(N.array([ 'X' ], 'c'),'X')        
+        
+    def check_string_array_size(self, level=rlevel):
+        """Ticket #342"""
+        self.failUnlessRaises(ValueError,
+                              N.array,[['X'],['X','X','X']],'|S1')
+                              
+    def check_dtype_repr(self, level=rlevel):
+        """Ticket #344"""
+        dt1=N.dtype(('uint32', 2))
+        dt2=N.dtype(('uint32', (2,)))        
+        assert_equal(dt1.__repr__(), dt2.__repr__())
+                
 if __name__ == "__main__":
     NumpyTest().run()
