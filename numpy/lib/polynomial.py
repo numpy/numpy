@@ -11,11 +11,14 @@ import warnings
 import numpy.core.numeric as NX
 
 from numpy.core import isscalar, abs
+from numpy.lib.machar import MachAr
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex
 eigvals = None
 lstsq = None
+_single_eps = MachAr(NX.single).eps
+_double_eps = MachAr(NX.double).eps
 
 def get_linalg_funcs():
     "Look for linear algebra functions in numpy"
@@ -170,7 +173,7 @@ def polyder(p, m=1):
             val = poly1d(val)
         return val
 
-def polyfit(x, y, deg, rcond=-1):
+def polyfit(x, y, deg, rcond=None):
     """
 
     Do a best fit polynomial of degree 'deg' of 'x' to 'y'.  Return value is a
@@ -241,6 +244,14 @@ def polyfit(x, y, deg, rcond=-1):
     if x.shape[0] != y.shape[0] :
         raise TypeError, "expected x and y to have same length"
 
+    # set rcond
+    if rcond is None :
+        xtype = x.dtype
+        if xtype == NX.single or xtype == NX.csingle :
+            rcond = _single_eps
+        else :
+            rcond = _double_eps
+
     # scale x to improve condition number
     scale = abs(x).max()
     if scale != 0 :
@@ -253,7 +264,7 @@ def polyfit(x, y, deg, rcond=-1):
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order :
         # fixme -- want a warning here, not an exception
-        raise RuntimeError, "degree reduced to %d" % (rank - 1)
+        raise RuntimeError, "Rank deficit fit. Try degree %d." % (rank - 1)
 
     # scale returned coefficients
     if scale != 0 :
