@@ -230,7 +230,7 @@ def polyfit(x, y, deg, rcond=None):
     See also polyval
 
     """
-    order = deg + 1.
+    order = int(deg) + 1
     x = NX.asarray(x) + 0.0
     y = NX.asarray(y) + 0.0
 
