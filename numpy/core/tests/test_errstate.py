@@ -1,6 +1,13 @@
-#~ import sys
-#~ if sys.version_info[:2] >= (2, 5):
-    #~ exec """
+
+# The following exec statement (or something like it) is needed to
+# prevent SyntaxError on Python < 2.5. Even though this is a test,
+# SyntaxErrors are not acceptable; on Debian systems, they block
+# byte-compilation during install and thus cause the package to fail
+# to install.
+
+import sys
+if sys.version_info[:2] >= (2, 5):
+    exec """
 from __future__ import with_statement
 from numpy.core import *
 from numpy.random import rand, randint
@@ -38,7 +45,7 @@ class test_errstate(NumpyTestCase):
                 pass
             else:
                 self.fail()
-#~ """
+"""
 
 if __name__ == '__main__':
     from numpy.testing import *
