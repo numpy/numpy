@@ -194,8 +194,8 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     Returns
 
-        full == False -- coeficients
-        full == True -- coeficients, residuals, rank, singular values.
+        full == False -- coefficients
+        full == True -- coefficients, residuals, rank, singular values, rcond.
 
     Warns
 
@@ -309,7 +309,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
         c /= vander([scale], order)[0]
 
     if full :
-        return c, resids, rank, s
+        return c, resids, rank, s, rcond
     else :
         return c
 

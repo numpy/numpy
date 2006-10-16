@@ -188,7 +188,7 @@ def tensorinv(a, ind=2):
     ind must be a positive integer specifying
     how many indices at the front of the array are involved
     in the inverse sum.
-    
+
     the result is ainv with shape a.shape[ind:] + a.shape[:ind]
 
     tensordot(ainv, a, ind) is an identity operator
@@ -266,9 +266,9 @@ def qr(a, mode='full'):
                    part of A2 is R. This is faster if you only need R
     """
     _assertRank2(a)
+    m,n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
-    m,n = a.shape
     mn = min(m,n)
     tau = zeros((mn,), t)
     if isComplexType(t):
@@ -282,7 +282,7 @@ def qr(a, mode='full'):
     lwork = 1
     work = zeros((lwork,), t)
     results=lapack_routine(m, n, a, m, tau, work, -1, 0)
-    if results['info'] > 0:
+    if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
     # do qr decomposition
@@ -290,23 +290,19 @@ def qr(a, mode='full'):
     work = zeros((lwork,),t)
     results=lapack_routine(m, n, a, m, tau, work, lwork, 0)
 
-    if results['info'] > 0:
+    if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
-    #  atemp: convert fortrag storing order to num storing order
-    atemp = a.transpose()
-
-    if atemp.dtype != result_t:
-        atemp = atemp.astype(result_t)
-
-    #  economic mode
+    #  economic mode. Isn't actually economic.
     if mode[0]=='e':
-        return atemp
+        if t != result_t :
+            a = a.astype(result_t)
+        return a.T
 
     #  generate r
-    r = zeros((mn,n), result_t)
+    r = _fastCopyAndTranspose(result_t, a[:,:mn])
     for i in range(mn):
-            r[i, i:] = atemp[i, i:]
+        r[i,:i].fill(0.0)
 
     #  'r'-mode, that is, calculate only r
     if mode[0]=='r':
@@ -325,21 +321,17 @@ def qr(a, mode='full'):
     lwork = 1
     work=zeros((lwork,), t)
     results=lapack_routine(m,mn,mn, a, m, tau, work, -1, 0)
-    if results['info'] > 0:
+    if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
     # compute q
     lwork = int(abs(work[0]))
     work=zeros((lwork,), t)
     results=lapack_routine(m,mn,mn, a, m, tau, work, lwork, 0)
-
-    if results['info'] > 0:
+    if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
-    q = a[:mn,:].transpose()
-
-    if (q.dtype != result_t):
-        q = q.astype(result_t)
+    q = _fastCopyAndTranspose(result_t, a[:mn,:])
 
     return q,r
 
