@@ -11,14 +11,14 @@ import warnings
 import numpy.core.numeric as NX
 
 from numpy.core import isscalar, abs
-from numpy.lib.machar import MachAr
+from numpy.lib.getlimits import finfo
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex
 eigvals = None
 lstsq = None
-_single_eps = MachAr(NX.single).eps
-_double_eps = MachAr(NX.double).eps
+_single_eps = finfo(NX.single).eps
+_double_eps = finfo(NX.double).eps
 
 class RankWarning(UserWarning):
     """Issued by polyfit when Vandermonde matrix is rank deficient.

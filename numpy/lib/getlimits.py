@@ -80,9 +80,9 @@ class finfo(object):
             setattr(self,word,getattr(machar, word))
         for word in ['tiny','resolution','epsneg']:
             setattr(self,word,getattr(machar, word).squeeze())
-        self.max = machar.huge.squeeze()
+        self.max = machar.huge.flat[0]
         self.min = -self.max
-        self.eps = machar.epsilon.squeeze()
+        self.eps = machar.eps.flat[0]
         self.nexp = machar.iexp
         self.nmant = machar.it
         self.machar = machar
