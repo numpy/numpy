@@ -4,7 +4,7 @@ Functions to operate on polynomials.
 
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
-           'polyfit']
+           'polyfit', 'RankWarning']
 
 import re
 import warnings
@@ -19,6 +19,11 @@ eigvals = None
 lstsq = None
 _single_eps = MachAr(NX.single).eps
 _double_eps = MachAr(NX.double).eps
+
+class RankWarning(UserWarning):
+    """Issued by polyfit when Vandermonde matrix is rank deficient.
+    """
+    pass
 
 def get_linalg_funcs():
     "Look for linear algebra functions in numpy"
@@ -173,8 +178,28 @@ def polyder(p, m=1):
             val = poly1d(val)
         return val
 
-def polyfit(x, y, deg, rcond=None):
-    """
+def polyfit(x, y, deg, rcond=None, full=False):
+    """Least squares polynomial fit.
+
+    Required arguments
+
+        x -- vector of sample points
+        y -- vector or 2D array of values to fit
+        deg -- degree of the fitting polynomial
+
+    Keyword arguments
+
+        rcond -- relative condition number of the fit (default len(x)*eps)
+        full -- return full diagnostic output (default False)
+
+    Returns
+
+        full == False -- coeficients
+        full == True -- coeficients, residuals, rank, singular values.
+
+    Warns
+
+        RankWarning -- if rank is reduced and not full output
 
     Do a best fit polynomial of degree 'deg' of 'x' to 'y'.  Return value is a
     vector of polynomial coefficients [pk ... p1 p0].  Eg, for n=2
@@ -199,21 +224,34 @@ def polyfit(x, y, deg, rcond=None):
 
       p = (XT*X)^-1 * XT * y
 
-    where XT is the transpose of X gand -1 denotes the inverse. However, this
+    where XT is the transpose of X and -1 denotes the inverse. However, this
     method is susceptible to rounding errors and generally the singular value
     decomposition is preferred and that is the method used here. The singular
     value method takes a paramenter, 'rcond', which sets a limit on the
     relative size of the smallest singular value to be used in solving the
-    equation. The default value of rcond is the double precision machine
-    precision as the actual solution is carried out in double precision. The
-    vector x is also normalized by its maximum absolute value before the fit
-    to improve the condition of the Vandermonde matrix.
+    equation. This may result in lowering the rank of the Vandermonde matrix,
+    in which case a RankWarning is issued. If polyfit issues a RankWarning, try
+    a fit of lower degree or replace x by x - x.mean(), both of which will
+    generally improve the condition number. The routine already normalizes the
+    vector x by its maximum absolute value to help in this regard. The rcond
+    parameter may also be set to a value smaller than its default, but this may
+    result in bad fits. The current default value of rcond is len(x)*eps, where
+    eps is the relative precision of the floating type being used, generally
+    around 1e-7 and 2e-16 for IEEE single and double precision respectively.
+    This value of rcond is fairly conservative but works pretty well when x -
+    x.mean() is used in place of x.
 
-    WARNING: Power series fits are full of pitfalls for the unwary once the
+    The warnings can be turned off by:
+
+    >>> import numpy
+    >>> import warnings
+    >>> warnings.simplefilter('ignore',numpy.RankWarning)
+
+    DISCLAIMER: Power series fits are full of pitfalls for the unwary once the
     degree of the fit becomes large or the interval of sample points is badly
-    uncentered. The basic problem is that the powers x**n are not generally a
-    good basis for the functions on the sample interval with the result that
-    the Vandermonde matrix is ill conditioned and computation of the polynomial
+    centered. The basic problem is that the powers x**n are generally a poor
+    basis for the functions on the sample interval with the result that the
+    Vandermonde matrix is ill conditioned and computation of the polynomial
     values is sensitive to coefficient error. The quality of the resulting fit
     should be checked against the data whenever the condition number is large,
     as the quality of polynomial fits *can not* be taken for granted. If all
@@ -248,9 +286,9 @@ def polyfit(x, y, deg, rcond=None):
     if rcond is None :
         xtype = x.dtype
         if xtype == NX.single or xtype == NX.csingle :
-            rcond = _single_eps
+            rcond = len(x)*_single_eps
         else :
-            rcond = _double_eps
+            rcond = len(x)*_double_eps
 
     # scale x to improve condition number
     scale = abs(x).max()
@@ -262,15 +300,18 @@ def polyfit(x, y, deg, rcond=None):
     c, resids, rank, s = _lstsq(v, y, rcond)
 
     # warn on rank reduction, which indicates an ill conditioned matrix
-    if rank != order :
-        # fixme -- want a warning here, not an exception
-        raise RuntimeError, "Rank deficit fit. Try degree %d." % (rank - 1)
+    if rank != order and not full:
+        msg = "Polyfit may be poorly conditioned"
+        warnings.warn(msg, RankWarning)
 
     # scale returned coefficients
     if scale != 0 :
         c /= vander([scale], order)[0]
 
-    return c
+    if full :
+        return c, resids, rank, s
+    else :
+        return c
 
 
 
@@ -605,3 +646,8 @@ class poly1d(object):
         """Return the mth derivative of this polynomial.
         """
         return poly1d(polyder(self.coeffs, m=m))
+
+# Stuff to do on module import
+
+warnings.simplefilter('always',RankWarning)
+
