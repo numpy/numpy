@@ -7,7 +7,8 @@ Paul Dubois for Masked Arrays
 Pearu Peterson for f2py and distutils and help with code organization
 Robert Kern for mtrand, bug fixes, help with distutils, and code organization
 Eric Jones for sundry subroutines
-Fernando Perez for code snippets, ideas, bufixes, and testing.
+Fernando Perez for code snippets, ideas, bugfixes, and testing.
+Ed Schofield for matrix.py patches, bugfixes, testing, and docstrings.
 John Hunter for code snippets (from matplotlib)
 Chris Hanley for help with records.py, testing, and bug fixes.
 Travis Vaught and Joe Cooper for administration of numpy.org web site and SVN 
