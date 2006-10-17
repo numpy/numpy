@@ -4082,7 +4082,7 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
 }
 
 static PyObject *
-array_repr_builtin(PyArrayObject *self)
+array_repr_builtin(PyArrayObject *self, int repr)
 {
         PyObject *ret;
         char *string;
@@ -4095,26 +4095,34 @@ array_repr_builtin(PyArrayObject *self)
                 return NULL;
         }
 
-        n = 6;
-        sprintf(string, "array(");
-
+        if (repr) {
+                n = 6;
+                sprintf(string, "array(");
+        }
+        else {
+                n = 0;
+        }
         if (dump_data(&string, &n, &max_n, self->data,
                       self->nd, self->dimensions,
                       self->strides, self) < 0) {
                 _pya_free(string); return NULL;
         }
 
-        if (PyArray_ISEXTENDED(self)) {
-                char buf[100];
-                snprintf(buf, sizeof(buf), "%d", self->descr->elsize);
-                sprintf(string+n, ", '%c%s')", self->descr->type, buf);
-                ret = PyString_FromStringAndSize(string, n+6+strlen(buf));
+        if (repr) {
+                if (PyArray_ISEXTENDED(self)) {
+                        char buf[100];
+                        snprintf(buf, sizeof(buf), "%d", self->descr->elsize);
+                        sprintf(string+n, ", '%c%s')", self->descr->type, buf);
+                        ret = PyString_FromStringAndSize(string, n+6+strlen(buf));
+                }
+                else {
+                        sprintf(string+n, ", '%c')", self->descr->type);
+                        ret = PyString_FromStringAndSize(string, n+6);
+                }
         }
         else {
-                sprintf(string+n, ", '%c')", self->descr->type);
-                ret = PyString_FromStringAndSize(string, n+6);
+                ret = PyString_FromStringAndSize(string, n);
         }
-
 
         _pya_free(string);
         return ret;
@@ -4152,7 +4160,7 @@ array_repr(PyArrayObject *self)
         PyObject *s, *arglist;
 
         if (PyArray_ReprFunction == NULL) {
-                s = array_repr_builtin(self);
+                s = array_repr_builtin(self, 1);
         } else {
                 arglist = Py_BuildValue("(O)", self);
                 s = PyEval_CallObject(PyArray_ReprFunction, arglist);
@@ -4167,7 +4175,7 @@ array_str(PyArrayObject *self)
         PyObject *s, *arglist;
 
         if (PyArray_StrFunction == NULL) {
-                s = array_repr(self);
+                s = array_repr_builtin(self, 0);
         } else {
                 arglist = Py_BuildValue("(O)", self);
                 s = PyEval_CallObject(PyArray_StrFunction, arglist);

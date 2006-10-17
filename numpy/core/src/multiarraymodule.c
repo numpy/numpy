@@ -6411,13 +6411,16 @@ array__reconstruct(PyObject *dummy, PyObject *args)
 static PyObject *
 array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds)
 {
-	PyObject *op;
+	PyObject *op=NULL;
 	int repr=1;
 	static char *kwlist[] = {"f", "repr", NULL};
 
-	if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|i", kwlist,
+	if(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi", kwlist,
 					&op, &repr)) return NULL;
-	if (!PyCallable_Check(op)) {
+
+        /* reset the array_repr function to built-in */
+        if (op == Py_None) op = NULL;
+	if (op != NULL && !PyCallable_Check(op)) {
 		PyErr_SetString(PyExc_TypeError,
 				"Argument must be callable.");
 		return NULL;
