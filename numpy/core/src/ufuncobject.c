@@ -548,7 +548,7 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus)
 		HANDLEIT(DIVIDEBYZERO, "divide by zero");
 		HANDLEIT(OVERFLOW, "overflow");
 		HANDLEIT(UNDERFLOW, "underflow");
-		HANDLEIT(INVALID, "invalid");
+		HANDLEIT(INVALID, "invalid value");
 	}
 	return 0;
 }
