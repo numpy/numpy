@@ -6578,6 +6578,7 @@ buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 
 #ifndef _MSC_VER
 #include <setjmp.h>
+#include <signal.h>
 jmp_buf _NPY_SIGSEGV_BUF;
 static void
 _SigSegv_Handler(int signum)
