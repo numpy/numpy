@@ -7757,6 +7757,18 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                 itemsize = newtype->elsize;
         }
 
+        /* Can't cast unless ndim-0 array, FORCECAST is specified
+           or the cast is safe.
+        */
+        if (!(flags & FORCECAST) && !PyArray_NDIM(arr)==0 && 
+            !PyArray_CanCastTo(oldtype, newtype)) {
+                Py_DECREF(newtype);
+                PyErr_SetString(PyExc_TypeError,
+                                "array cannot be safely cast "  \
+                                "to required type");
+                return NULL;
+        }
+        
         /* Don't copy if sizes are compatible */
         if ((flags & ENSURECOPY) || PyArray_EquivTypes(oldtype, newtype)) {
                 arrflags = arr->flags;
@@ -7799,7 +7811,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                    count and return the input */
                 else {
                         Py_DECREF(newtype);
-                        if ((flags & ENSUREARRAY)) {
+                        if ((flags & ENSUREARRAY) && !PyArray_CheckExact(arr)) {
                                 Py_INCREF(arr->descr);
                                 ret = (PyArrayObject *)                 \
                                         PyArray_NewFromDescr(&PyArray_Type,
@@ -7822,46 +7834,31 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         /* The desired output type is different than the input
            array type */
         else {
-                /* Cast to the desired type if we can do it safely
-                   Also cast if source is a ndim-0 array to mimic
-                   behavior with Python scalars */
-                if (flags & FORCECAST || PyArray_NDIM(arr)==0 ||
-                    PyArray_CanCastTo(oldtype, newtype)) {
-                        if ((flags & UPDATEIFCOPY) &&           \
-                            (!PyArray_ISWRITEABLE(arr))) {
-                                Py_DECREF(newtype);
-                                PyErr_SetString(PyExc_ValueError, msg);
-                                return NULL;
-                        }
-                        if ((flags & ENSUREARRAY)) {
-                                subtype = &PyArray_Type;
-                        }
-                        ret = (PyArrayObject *)\
-                                PyArray_NewFromDescr(subtype,
-                                                     newtype,
-                                                     arr->nd,
-                                                     arr->dimensions,
-                                                     NULL, NULL,
-                                                     flags & FORTRAN,
-                                                     (PyObject *)arr);
-                        if (ret == NULL) return NULL;
-                        if (PyArray_CastTo(ret, arr) < 0) {
-                                Py_DECREF(ret);
-                                return NULL;
-                        }
-                        if (flags & UPDATEIFCOPY)  {
-                                ret->flags |= UPDATEIFCOPY;
-                                ret->base = (PyObject *)arr;
-                                PyArray_FLAGS(ret->base) &= ~WRITEABLE;
-                                Py_INCREF(arr);
-                        }
-                }
-                else {
+                if ((flags & UPDATEIFCOPY) &&                   \
+                    (!PyArray_ISWRITEABLE(arr))) {
                         Py_DECREF(newtype);
-                        PyErr_SetString(PyExc_TypeError,
-                                        "array cannot be safely cast " \
-                                        "to required type");
-                        ret = NULL;
+                        PyErr_SetString(PyExc_ValueError, msg);
+                        return NULL;
+                }
+                if ((flags & ENSUREARRAY)) {
+                        subtype = &PyArray_Type;
+                }
+                ret = (PyArrayObject *)                         \
+                        PyArray_NewFromDescr(subtype, newtype,
+                                             arr->nd, arr->dimensions,
+                                             NULL, NULL,
+                                             flags & FORTRAN,
+                                             (PyObject *)arr);
+                if (ret == NULL) return NULL;
+                if (PyArray_CastTo(ret, arr) < 0) {
+                        Py_DECREF(ret);
+                        return NULL;
+                }
+                if (flags & UPDATEIFCOPY)  {
+                        ret->flags |= UPDATEIFCOPY;
+                        ret->base = (PyObject *)arr;
+                        PyArray_FLAGS(ret->base) &= ~WRITEABLE;
+                        Py_INCREF(arr);
                 }
         }
         return (PyObject *)ret;
