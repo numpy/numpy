@@ -469,52 +469,80 @@ static PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 		 NPY_ORDER fortran)
 {
-        intp i;
+	intp i;
 	intp *dimensions = newdims->ptr;
-        PyArrayObject *ret;
+	PyArrayObject *ret;
 	int n = newdims->len;
-        Bool same, incref=TRUE;
+	Bool same, incref=TRUE;
 	intp *strides = NULL;
 	intp newstrides[MAX_DIMS];
+	int flags;
 
 	if (fortran == PyArray_ANYORDER)
 		fortran = PyArray_ISFORTRAN(self);
 
-        /*  Quick check to make sure anything actually needs to be done */
-        if (n == self->nd) {
-                same = TRUE;
-                i=0;
-                while(same && i<n) {
-                        if (PyArray_DIM(self,i) != dimensions[i])
-                                same=FALSE;
-                        i++;
-                }
-                if (same) return PyArray_View(self, NULL, NULL);
-        }
+	/*  Quick check to make sure anything actually needs to be done */
+	if (n == self->nd) {
+		same = TRUE;
+		i=0;
+		while(same && i<n) {
+			if (PyArray_DIM(self,i) != dimensions[i])
+				same=FALSE;
+			i++;
+		}
+		if (same) return PyArray_View(self, NULL, NULL);
+	}
 
 	/* Returns a pointer to an appropriate strides array
 	   if all we are doing is inserting ones into the shape,
 	   or removing ones from the shape
-	   or doing a combination of the two*/
+	   or doing a combination of the two  
+	   In this case we don't need to do anything but update strides and 
+	   dimensions.	So, we can handle non single-segment cases.
+	*/
 	i=_check_ones(self, n, dimensions, newstrides);
 	if (i==0) strides=newstrides;
 
-	if (strides==NULL) {
-		if ((n == 0) ||
-		    (PyArray_ISCONTIGUOUS(self) && (fortran != PyArray_FORTRANORDER)) ||
-		    (PyArray_ISFORTRAN(self) && (fortran != PyArray_CORDER))) {
-			incref = TRUE;
-		}
-		else {
-			PyObject *tmp;
-			tmp = PyArray_NewCopy(self, fortran);
-			if (tmp==NULL) return NULL;
-			self = (PyArrayObject *)tmp;
+	flags = self->flags;
+
+	if (strides==NULL) { /* we are really re-shaping not just adding ones
+				to the shape somewhere */		 
+		
+		/* fix any -1 dimensions and check new-dimensions against 
+		   old size */
+		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
+			return NULL;
+
+		/* sometimes we have to create a new copy of the array
+		   in order to get the right orientation 
+		*/
+		if (!(PyArray_ISONESEGMENT(self)) || 
+		    ((self->nd > 1) && 
+		     ((PyArray_ISCONTIGUOUS(self) && fortran == NPY_FORTRANORDER)
+		      || (PyArray_ISFORTRAN(self) && fortran == NPY_CORDER)))) {
+			PyObject *new;
+			new = PyArray_NewCopy(self, fortran);
+			if (new == NULL) return NULL;
 			incref = FALSE;
+			self = (PyArrayObject *)new;
+			flags = self->flags;
 		}
 
-		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
-			goto fail;
+		/* We always have to interpret the contiguous buffer correctly
+		 */
+
+		/* Make sure the flags argument is set. 
+		*/
+		if (n > 1) {
+			if (fortran == NPY_FORTRANORDER) {
+				flags &= ~NPY_CONTIGUOUS;
+				flags |= NPY_FORTRAN;
+			}
+			else {
+				flags &= ~NPY_FORTRAN;
+				flags |= NPY_CONTIGUOUS;
+			}
+		}
 	}
 	else if (n > 0) {
 		/* replace any 0-valued strides with
@@ -546,15 +574,15 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 					   n, dimensions,
 					   strides,
 					   self->data,
-					   self->flags, (PyObject *)self);
+					   flags, (PyObject *)self);
 
 	if (ret== NULL) goto fail;
 
-        if (incref) Py_INCREF(self);
-        ret->base = (PyObject *)self;
+	if (incref) Py_INCREF(self);
+	ret->base = (PyObject *)self;
 	PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
 
-        return (PyObject *)ret;
+	return (PyObject *)ret;
 
  fail:
 	if (!incref) {Py_DECREF(self);}
