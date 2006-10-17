@@ -529,6 +529,14 @@ class test_regression(NumpyTestCase):
         dt1=N.dtype(('uint32', 2))
         dt2=N.dtype(('uint32', (2,)))        
         assert_equal(dt1.__repr__(), dt2.__repr__())
+
+    def check_reshape_order(self, level=rlevel):
+        """Make sure reshape order works."""
+        a = N.arange(6).reshape(2,3,order='F')
+        assert_equal(a,[[0,2,4],[1,3,5]])
+        a = N.array([[1,2],[3,4],[5,6],[7,8]])
+        b = a[:,1]
+        assert_equal(b.reshape(2,2,order='F'), [[2,6],[4,8]])
                 
 if __name__ == "__main__":
     NumpyTest().run()

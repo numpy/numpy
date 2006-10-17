@@ -5,17 +5,23 @@ Perry Greenfield, J Todd Miller, Rick White, Paul Barrett for Numarray
     which gave much inspiration and showed the way forward.
 Paul Dubois for Masked Arrays
 Pearu Peterson for f2py and distutils and help with code organization
-Robert Kern for mtrand, bug fixes, help with distutils, and code organization
+Robert Kern for mtrand, bug fixes, help with distutils, code organization, 
+    and much more. 
 Eric Jones for sundry subroutines
 Fernando Perez for code snippets, ideas, bugfixes, and testing.
 Ed Schofield for matrix.py patches, bugfixes, testing, and docstrings.
 John Hunter for code snippets (from matplotlib)
 Chris Hanley for help with records.py, testing, and bug fixes.
-Travis Vaught and Joe Cooper for administration of numpy.org web site and SVN 
+Travis Vaught, Joe Cooper, Jeff Strunk for administration of 
+    numpy.org web site and SVN 
 Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing
-David Cooke for many code improvements including the auto-generated C-API, and optimizations.
-Alexander Belopolsky (Sasha) for Masked array bug-fixes and tests, rank-0 array improvements, scalar math help and other code additions
-Francesc Altet for unicode and nested record tests and help with nested records
-Tim Hochberg for getting the build working on MSVC, optimization improvements, and code review
-Charles Harris for the sorting code originally written for Numarray.
+David Cooke for many code improvements including the auto-generated C-API,
+    and optimizations.
+Alexander Belopolsky (Sasha) for Masked array bug-fixes and tests, 
+    rank-0 array improvements, scalar math help and other code additions
+Francesc Altet for unicode and nested record tests 
+    and much help with rooting out nested record array bugs. 
+Tim Hochberg for getting the build working on MSVC, optimization 
+    improvements, and code review
+Charles Harris for the sorting code originally written for Numarray and for    improvements to polyfit, many bug fixes, and documentation strings.
