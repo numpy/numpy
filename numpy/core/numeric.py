@@ -156,16 +156,11 @@ def require(a, dtype=None, requirements=None):
         return asanyarray(a, dtype=dtype)
 
     if 'ENSUREARRAY' in requirements or 'E' in requirements:
-        func = asarray
+        subok = 0
     else:
-        func = asanyarray
+        subok = 1
 
-    if 'FORCECAST' in requirements or 'FORCE' in requirements:
-        arr = func(a)
-        if dtype is not None and arr.dtype != dtype:
-            arr = arr.astype(dtype)
-    else:
-        arr = func(a, dtype=dtype)
+    arr = array(a, dtype=dtype, copy=False, subok=subok)
 
     copychar = 'A'
     if 'FORTRAN' in requirements or 'F' in requirements:
@@ -180,7 +175,7 @@ def require(a, dtype=None, requirements=None):
     return arr   
 
 def isfortran(a):
-    """Returns True if 'a' is laid out in Fortran-order in memory.
+    """Returns True if 'a' is laid out in Fortran-order in memory (and a.ndim > 1)
     """
     return a.flags.fnc
 

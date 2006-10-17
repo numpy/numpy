@@ -664,11 +664,18 @@ _find_matching_userloop(PyObject *obj, int *arg_types,
 static int
 select_types(PyUFuncObject *self, int *arg_types,
              PyUFuncGenericFunction *function, void **data,
-	     PyArray_SCALARKIND *scalars)
+	     PyArray_SCALARKIND *scalars,
+             PyArray_Descr *dtype)
 {
 	int i, j;
 	char start_type;
 	int userdef=-1;
+
+        /*
+          if (dtype != NULL)
+          return extract_specified_loop(self, arg_types, function, data,
+          scalars, dtype)
+        */
 
 	if (self->userloops) {
 		for (i=0; i<self->nin; i++) {
@@ -745,37 +752,11 @@ static int PyUFunc_NUM_NODEFAULTS=0;
 static PyObject *PyUFunc_PYVALS_NAME=NULL;
 
 
-/*UFUNC_API*/
 static int
-PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
+_extract_pyvals(PyObject *ref, char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
-        PyObject *thedict;
-        PyObject *ref=NULL;
-	PyObject *retval;
+        PyObject *retval;
 
-        #if USE_USE_DEFAULTS==1
-	if (PyUFunc_NUM_NODEFAULTS != 0) {
-        #endif
-		if (PyUFunc_PYVALS_NAME == NULL) {
-			PyUFunc_PYVALS_NAME = \
-				PyString_InternFromString(UFUNC_PYVALS_NAME);
-		}
-		thedict = PyThreadState_GetDict();
-		if (thedict == NULL) {
-			thedict = PyEval_GetBuiltins();
-		}
-		ref = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
-        #if USE_USE_DEFAULTS==1
-	}
-        #endif
-	if (ref == NULL) {
-		*errmask = UFUNC_ERR_DEFAULT;
-		*errobj = Py_BuildValue("NO",
-					PyString_FromString(name),
-					Py_None);
-		*bufsize = PyArray_BUFSIZE;
-		return 0;
-	}
 	*errobj = NULL;
 	if (!PyList_Check(ref) || (PyList_GET_SIZE(ref)!=3)) {
 		PyErr_Format(PyExc_TypeError, "%s must be a length 3 list.",
@@ -818,6 +799,41 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 	if (*errobj == NULL) return -1;
 
 	return 0;
+}
+
+
+
+/*UFUNC_API*/
+static int
+PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
+{
+        PyObject *thedict;
+        PyObject *ref=NULL;
+
+        #if USE_USE_DEFAULTS==1
+	if (PyUFunc_NUM_NODEFAULTS != 0) {
+        #endif
+		if (PyUFunc_PYVALS_NAME == NULL) {
+			PyUFunc_PYVALS_NAME = \
+				PyString_InternFromString(UFUNC_PYVALS_NAME);
+		}
+		thedict = PyThreadState_GetDict();
+		if (thedict == NULL) {
+			thedict = PyEval_GetBuiltins();
+		}
+		ref = PyDict_GetItem(thedict, PyUFunc_PYVALS_NAME);
+        #if USE_USE_DEFAULTS==1
+	}
+        #endif
+	if (ref == NULL) {
+		*errmask = UFUNC_ERR_DEFAULT;
+		*errobj = Py_BuildValue("NO",
+					PyString_FromString(name),
+					Py_None);
+		*bufsize = PyArray_BUFSIZE;
+		return 0;
+	}
+        return _extract_pyvals(ref, name, bufsize, errmask, errobj);
 }
 
 /* Create copies for any arrays that are less than loop->bufsize
@@ -891,7 +907,8 @@ _has_reflected_op(PyObject *op, char *name)
 #undef _GETATTR_
 
 static int
-construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
+construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
+                 PyArray_Descr *dtype)
 {
         int nargs, i, maxsize;
         int arg_types[NPY_MAXARGS];
@@ -959,13 +976,13 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps)
 
         /* Select an appropriate function for these argument types. */
         if (select_types(loop->ufunc, arg_types, &(loop->function),
-                         &(loop->funcdata), scalars) == -1)
+                         &(loop->funcdata), scalars, dtype) == -1)
 		return -1;
 
         /* FAIL with NotImplemented if the other object has
 	   the __r<op>__ method and has __array_priority__ as
 	   an attribute (signalling it can handle ndarray's)
-	   and is not already an ndarray or bigndarray
+	   and is not already an ndarray
 	*/
         if ((arg_types[1] == PyArray_OBJECT) &&				\
             (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
@@ -1355,10 +1372,13 @@ ufuncloop_dealloc(PyUFuncLoopObject *self)
 }
 
 static PyUFuncLoopObject *
-construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
+construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObject **mps)
 {
 	PyUFuncLoopObject *loop;
 	int i;
+        PyArray_Descr *dtype=NULL;
+        PyObject *extobj=NULL;
+        char *name;
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_ValueError, "function not supported");
@@ -1379,12 +1399,48 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyArrayObject **mps)
 	loop->errobj = NULL;
         loop->notimplemented = 0;
 
-	if (PyUFunc_GetPyValues((self->name ? self->name : ""),
-				&(loop->bufsize), &(loop->errormask),
-				&(loop->errobj)) < 0) goto fail;
 
+        /* Extract dtype= keyword and
+           extobj= keyword if present
+           Raise an error if anything else present in the keyword dictionary
+        */
+        if (kwds != NULL) {
+                PyObject *key, *value;
+                Py_ssize_t pos;
+                while (PyDict_Next(kwds, &pos, &key, &value)) {
+                        if (!PyString_Check(key)) {
+                                PyErr_SetString(PyExc_TypeError, "invalid keyword");
+                                goto fail;
+                        }
+                        if (strncmp(PyString_AS_STRING(key), "extobj", 6) == 0) {
+                                extobj = value;
+                        }
+                        else if (strncmp(PyString_AS_STRING(key), "dtype", 5) == 0) {
+                                if (PyArray_DescrConverter2(value, &dtype) == PY_FAIL)
+                                        goto fail;
+                        }
+                        else {
+                                PyErr_Format(PyExc_TypeError, "'%s' is an invalid keyword",
+                                             PyString_AS_STRING(key));
+                                goto fail;
+                        }
+                }
+        }
+
+        name = self->name ? self->name : "";
+        if (extobj == NULL) {
+                if (PyUFunc_GetPyValues(name,
+                                        &(loop->bufsize), &(loop->errormask),
+                                        &(loop->errobj)) < 0) goto fail;
+        }
+        else {
+                if (_extract_pyvals(extobj, name,
+                                    &(loop->bufsize), &(loop->errormask),
+                                    &(loop->errobj)) < 0) goto fail;
+        }
+        
 	/* Setup the arrays */
-	if (construct_arrays(loop, args, mps) < 0) goto fail;
+	if (construct_arrays(loop, args, mps, dtype) < 0) goto fail;
 
 	PyUFunc_clearfperr();
 
@@ -1465,14 +1521,14 @@ _printcastbuf(PyUFuncLoopObject *loop, int bufnum)
 
 /*UFUNC_API*/
 static int
-PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args,
+PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
 			PyArrayObject **mps)
 {
 	PyUFuncLoopObject *loop;
 	int i;
         NPY_BEGIN_THREADS_DEF
 
-	if (!(loop = construct_loop(self, args, mps))) return -1;
+        if (!(loop = construct_loop(self, args, kwds, mps))) return -1;
         if (loop->notimplemented) {ufuncloop_dealloc(loop); return -2;}
 
 	NPY_LOOP_BEGIN_THREADS
@@ -1833,7 +1889,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
 	loop->instrides = (*arr)->strides[axis];
 
 	if (select_types(loop->ufunc, arg_types, &(loop->function),
-			 &(loop->funcdata), scalars) == -1) goto fail;
+			 &(loop->funcdata), scalars, NULL) == -1) goto fail;
 
 	/* output type may change -- if it does
 	 reduction is forced into that type
@@ -1844,7 +1900,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
 		arg_types[0] = otype;
 		arg_types[1] = otype;
 		if (select_types(loop->ufunc, arg_types, &(loop->function),
-				 &(loop->funcdata), scalars) == -1)
+				 &(loop->funcdata), scalars, NULL) == -1)
 			goto fail;
 	}
 
@@ -2769,7 +2825,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 }
 
 static PyObject *
-ufunc_generic_call(PyUFuncObject *self, PyObject *args)
+ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 {
 	int i;
 	PyTupleObject *ret;
@@ -2783,7 +2839,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args)
 	   if something goes wrong. */
 	for(i=0; i<self->nargs; i++) mps[i] = NULL;
 
-        errval = PyUFunc_GenericFunction(self, args, mps);
+        errval = PyUFunc_GenericFunction(self, args, kwds, mps);
         if (errval < 0) {
 		for(i=0; i<self->nargs; i++) {
 			PyArray_XDECREF_ERR(mps[i]);
@@ -3317,7 +3373,7 @@ ufunc_repr(PyUFuncObject *self)
  */
 
 static PyObject *
-ufunc_outer(PyUFuncObject *self, PyObject *args)
+ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 {
 	int i;
 	PyObject *ret;
@@ -3376,7 +3432,7 @@ ufunc_outer(PyUFuncObject *self, PyObject *args)
 	Py_DECREF(ap1);
 	Py_DECREF(ap2);
 	Py_DECREF(ap_new);
-	ret = ufunc_generic_call(self, new_args);
+	ret = ufunc_generic_call(self, new_args, kwds);
 	Py_DECREF(new_args);
 	return ret;
 
@@ -3385,7 +3441,6 @@ ufunc_outer(PyUFuncObject *self, PyObject *args)
 	Py_XDECREF(ap2);
 	Py_XDECREF(ap_new);
 	return NULL;
-
 }
 
 
@@ -3416,7 +3471,7 @@ static struct PyMethodDef ufunc_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS},
 	{"reduceat",  (PyCFunction)ufunc_reduceat,
 	 METH_VARARGS | METH_KEYWORDS},
-	{"outer", (PyCFunction)ufunc_outer, METH_VARARGS},
+	{"outer", (PyCFunction)ufunc_outer, METH_VARARGS | METH_KEYWORDS},
 	{NULL,		NULL}		/* sentinel */
 };
 
@@ -3590,7 +3645,7 @@ static PyTypeObject PyUFunc_Type = {
 	0,		               /*tp_as_sequence*/
 	0,		               /*tp_as_mapping*/
 	(hashfunc)0,		       /*tp_hash*/
-	(ternaryfunc)ufunc_generic_call,		/*tp_call*/
+	(ternaryfunc)ufunc_generic_call, /*tp_call*/
 	(reprfunc)ufunc_repr,	       /*tp_str*/
         0,	          	       /* tp_getattro */
         0,			       /* tp_setattro */
