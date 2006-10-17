@@ -5259,6 +5259,8 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
                 flags |= ENSUREARRAY;
         }
 
+        flags |= NPY_FORCECAST;
+
         ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL);
 
  finish:
