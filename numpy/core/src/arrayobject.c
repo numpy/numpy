@@ -5255,9 +5255,15 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         size = 1;
         sd = (size_t) descr->elsize;
         if (sd == 0) {
-                PyErr_SetString(PyExc_ValueError, "Empty data-type");
-                Py_DECREF(descr);
-                return NULL;
+                if (!PyDataType_ISSTRING(descr)) {
+                        PyErr_SetString(PyExc_ValueError, "Empty data-type");
+                        Py_DECREF(descr);
+                        return NULL;
+                }
+                PyArray_DESCR_REPLACE(descr);
+                if (descr->type_num == NPY_STRING) descr->elsize = 1;
+                else descr->elsize = sizeof(PyArray_UCS4);
+                sd = (size_t) descr->elsize;  
         }
         largest = MAX_INTP / sd;
         for (i=0;i<nd;i++) {
