@@ -1198,6 +1198,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
    C-contiguous array)*/
 #define NPY_FORTRAN       0x0002
 
+#define NPY_C_CONTIGUOUS NPY_CONTIGUOUS
+#define NPY_F_CONTIGUOUS NPY_FORTRAN
+
 /*
   Note: all 0-d arrays are CONTIGUOUS and FORTRAN contiguous. If a
    1-d array is CONTIGUOUS it is also FORTRAN contiguous

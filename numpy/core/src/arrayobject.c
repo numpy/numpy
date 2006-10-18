@@ -11574,6 +11574,14 @@ static PyGetSetDef arrayflags_getsets[] = {
          (getter)arrayflags_contiguous_get,
          NULL,
          ""},
+        {"c_contiguous",
+         (getter)arrayflags_contiguous_get,
+         NULL,
+         ""},
+        {"f_contiguous",
+         (getter)arrayflags_fortran_get,
+         NULL,
+         ""},
         {"fortran",
          (getter)arrayflags_fortran_get,
          NULL,
@@ -11691,6 +11699,10 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
         case 12:
                 if (strncmp(key, "UPDATEIFCOPY", n)==0)
                         return arrayflags_updateifcopy_get(self);
+                if (strncmp(key, "C_CONTIGUOUS", n)==0)
+                        return arrayflags_contiguous_get(self);
+                if (strncmp(key, "F_CONTIGUOUS", n)==0)
+                        return arrayflags_fortran_get(self);
                 break;
         }
 
@@ -11736,8 +11748,8 @@ arrayflags_print(PyArrayFlagsObject *self)
 
         return PyString_FromFormat("  %s : %s\n  %s : %s\n  %s : %s\n"\
                                    "  %s : %s\n  %s : %s\n  %s : %s",
-                                   "CONTIGUOUS", _torf_(fl, CONTIGUOUS),
-                                   "FORTRAN", _torf_(fl, FORTRAN),
+                                   "C_CONTIGUOUS", _torf_(fl, CONTIGUOUS),
+                                   "F_CONTIGUOUS", _torf_(fl, FORTRAN),
                                    "OWNDATA", _torf_(fl, OWNDATA),
                                    "WRITEABLE", _torf_(fl, WRITEABLE),
                                    "ALIGNED", _torf_(fl, ALIGNED),
