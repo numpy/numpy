@@ -674,6 +674,7 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
         PyArray_Descr *dtype;
         int nargs;
         int i, j;
+        int strtype=0;
 
         nargs = self->nargs;
  
@@ -681,14 +682,35 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
                 n = PyTuple_GET_SIZE(type_tup);
                 if (n != 1 && n != nargs) {
                         PyErr_Format(PyExc_ValueError, 
-                                     "a type-tuple must be specified "  \
+                                     "a type-tuple must be specified " \
                                      "of length 1 or %d for %s", nargs, 
                                      self->name ? self->name : "(unknown)");
                         return -1;
                 }
         }
-        else {
-                n = 1;
+        else if PyString_Check(type_tup) {
+                int slen;
+                char *thestr;
+                slen = PyString_GET_SIZE(type_tup);
+                thestr = PyString_AS_STRING(type_tup);
+                for (i=0; i < slen-2; i++) {
+                        if (thestr[i] == '-' && thestr[i+1] == '>')
+                                break;
+                }
+                if (i < slen-2) {
+                        strtype = 1;
+                        n = slen-2;
+                        if (i != self->nin || 
+                            slen-2-i != self->nout) {
+                                PyErr_Format(PyExc_ValueError, 
+                                             "a type-string for %s, "   \
+                                             "requires %d typecode(s) before " \
+                                             "and %d after the -> sign", 
+                                             self->name ? self->name : "(unknown)",
+                                             self->nin, self->nout);
+                                return -1;
+                        } 
+                }
         }
         rtypenums = (int *)_pya_malloc(n*sizeof(int));
         if (rtypenums==NULL) {
@@ -696,7 +718,23 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
                 return -1;
         }
         
-        if (PyTuple_Check(type_tup)) {
+        if (strtype) {
+                char *ptr;
+                ptr = PyString_AS_STRING(type_tup);
+                i = 0;
+                while (i < n) {
+                        if (*ptr == '-' || *ptr == '>') { 
+                                ptr++;
+                                continue;
+                        }
+                        dtype = PyArray_DescrFromType((int) *ptr);
+                        if (dtype == NULL) goto fail;
+                        rtypenums[i] = dtype->type_num;
+                        Py_DECREF(dtype);
+                        ptr++; i++;
+                }
+        }
+        else if (PyTuple_Check(type_tup)) {
                 for (i=0; i<n; i++) {
                         if (PyArray_DescrConverter(PyTuple_GET_ITEM     \
                                                    (type_tup, i),
@@ -781,6 +819,7 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
         }
         PyErr_SetString(PyExc_TypeError, msg);
 
+
  fail:
         _pya_free(rtypenums);
         return -1;
@@ -788,7 +827,6 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
  finish:
         _pya_free(rtypenums);
         return 0;
-
                 
 }
 
@@ -1534,8 +1572,9 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
 	loop->errobj = NULL;
         loop->notimplemented = 0;
 
+        name = self->name ? self->name : "";
 
-        /* Extract dtype= keyword and
+        /* Extract type= keyword and
            extobj= keyword if present
            Raise an error if anything else present in the keyword dictionary
         */
@@ -1550,18 +1589,18 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
                         if (strncmp(PyString_AS_STRING(key), "extobj", 6) == 0) {
                                 extobj = value;
                         }
-                        else if (strncmp(PyString_AS_STRING(key), "dtype", 5) == 0) {
+                        else if (strncmp(PyString_AS_STRING(key), "type", 5) == 0) {
                                 typetup = value;
                         }
                         else {
-                                PyErr_Format(PyExc_TypeError, "'%s' is an invalid keyword",
-                                             PyString_AS_STRING(key));
+                                PyErr_Format(PyExc_TypeError, 
+                                             "'%s' is an invalid keyword to %s",
+                                             PyString_AS_STRING(key), name);
                                 goto fail;
                         }
                 }
         }
 
-        name = self->name ? self->name : "";
         if (extobj == NULL) {
                 if (PyUFunc_GetPyValues(name,
                                         &(loop->bufsize), &(loop->errormask),
