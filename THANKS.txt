@@ -24,4 +24,5 @@ Francesc Altet for unicode and nested record tests
     and much help with rooting out nested record array bugs. 
 Tim Hochberg for getting the build working on MSVC, optimization 
     improvements, and code review
-Charles Harris for the sorting code originally written for Numarray and for    improvements to polyfit, many bug fixes, and documentation strings.
+Charles Harris for the sorting code originally written for Numarray and 
+    for improvements to polyfit, many bug fixes, and documentation strings.

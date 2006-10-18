@@ -4749,41 +4749,44 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 static PyObject *
 _check_axis(PyArrayObject *arr, int *axis, int flags)
 {
-        PyObject *temp;
+        PyObject *temp1, *temp2;
         int n = arr->nd;
 
         if ((*axis >= MAX_DIMS) || (n==0)) {
                 if (n != 1) {
-                        temp = PyArray_Ravel(arr,0);
-                        if (temp) *axis = PyArray_NDIM(temp)-1;
-                        else *axis = 0;
+                        temp1 = PyArray_Ravel(arr,0);
+                        if (temp1 == NULL) {*axis=0; return NULL;}
+                        *axis = PyArray_NDIM(temp1)-1;
                 }
                 else {
-                        temp = (PyObject *)arr;
-                        Py_INCREF(temp);
+                        temp1 = (PyObject *)arr;
+                        Py_INCREF(temp1);
                         *axis = 0;
                 }
-                return temp;
+                if (!flags) return temp1;
         }
         else {
-                if (flags) {
-                        temp = PyArray_CheckFromAny((PyObject *)arr, NULL,
-                                               0, 0, flags, NULL);
-                        if (temp == NULL) return NULL;
-                }
-                else {
-                        Py_INCREF(arr);
-                        temp = (PyObject *)arr;
-                }
+                temp1 = (PyObject *)arr;
+                Py_INCREF(temp1);
         }
+        if (flags) {
+                temp2 = PyArray_CheckFromAny((PyObject *)temp1, NULL,
+                                             0, 0, flags, NULL);
+                Py_DECREF(temp1);
+                if (temp2 == NULL) return NULL;
+        }
+        else {
+                temp2 = (PyObject *)temp1;
+        }
+        n = PyArray_NDIM(temp2);
         if (*axis < 0) *axis += n;
         if ((*axis < 0) || (*axis >= n)) {
                 PyErr_Format(PyExc_ValueError,
                              "axis(=%d) out of bounds", *axis);
-                Py_DECREF(temp);
+                Py_DECREF(temp2);
                 return NULL;
         }
-        return temp;
+        return temp2;
 }
 
 #include "arraymethods.c"

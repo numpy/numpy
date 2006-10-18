@@ -537,6 +537,12 @@ class test_regression(NumpyTestCase):
         a = N.array([[1,2],[3,4],[5,6],[7,8]])
         b = a[:,1]
         assert_equal(b.reshape(2,2,order='F'), [[2,6],[4,8]])
+
+    def check_repeat_discont(self, level=rlevel):
+        """Ticket #352"""
+        a = N.arange(12).reshape(4,3)[:,2]
+        assert_equal(a.repeat(3), [2,2,2,5,5,5,8,8,8,11,11,11])
+        
                 
 if __name__ == "__main__":
     NumpyTest().run()
