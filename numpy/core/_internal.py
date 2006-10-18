@@ -248,7 +248,7 @@ class _ctypes(object):
         return (obj*self._arr.ndim)(*self._arr.strides)
     
     def get_data(self):
-        return self._ctypes.c_void_p(self._data)
+        return self._data
 
     def get_shape(self):
         if self._zerod: 
@@ -261,7 +261,7 @@ class _ctypes(object):
         return (_getintp_ctype()*self._arr.ndim)(*self._arr.strides)
 
     def get_as_parameter(self):
-        return self._data
+        return self._ctypes.c_void_p(self._data)
     
     data = property(get_data, None, doc="c-types data")
     shape = property(get_shape, None, doc="c-types shape")

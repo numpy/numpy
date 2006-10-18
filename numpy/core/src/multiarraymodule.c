@@ -454,6 +454,25 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 	return 0;
 }
 
+/* returns True if self->nd > 1 and all 
+   there is more than one dimension filled with 1.
+ */
+static int
+_nd_bigger_than_one(PyArrayObject *arr)
+{
+        int i, nd;
+        int count=0;
+        nd = arr->nd;
+        if (nd > 1) {
+                for (i=0; i<nd; i++) {
+                        if (arr->dimensions[i] > 1)
+                                count++;
+                        if (count > 1) return 1;
+                }
+        }
+        return 0;
+}
+
 /* Returns a new array
    with the new shape from the data
    in the old array --- order-perspective depends on fortran argument.
@@ -514,12 +533,16 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 			return NULL;
 
 		/* sometimes we have to create a new copy of the array
-		   in order to get the right orientation 
+		   in order to get the right orientation and
+                   because we can't just re-use the buffer with the 
+                   data in the order it is in.
 		*/
 		if (!(PyArray_ISONESEGMENT(self)) || 
-		    ((self->nd > 1) && 
-		     ((PyArray_ISCONTIGUOUS(self) && fortran == NPY_FORTRANORDER)
-		      || (PyArray_ISFORTRAN(self) && fortran == NPY_CORDER)))) {
+                    (((PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) && 
+                       fortran == NPY_FORTRANORDER)
+                      || (PyArray_CHKFLAGS(self, NPY_FORTRAN) && 
+                          fortran == NPY_CORDER)) && 
+                     _nd_bigger_than_one(self))) {
 			PyObject *new;
 			new = PyArray_NewCopy(self, fortran);
 			if (new == NULL) return NULL;

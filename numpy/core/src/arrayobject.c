@@ -7819,7 +7819,8 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                    count and return the input */
                 else {
                         Py_DECREF(newtype);
-                        if ((flags & ENSUREARRAY) && !PyArray_CheckExact(arr)) {
+                        if ((flags & ENSUREARRAY) && 
+                            !PyArray_CheckExact(arr)) {
                                 Py_INCREF(arr->descr);
                                 ret = (PyArrayObject *)                 \
                                         PyArray_NewFromDescr(&PyArray_Type,
@@ -7840,7 +7841,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         }
 
         /* The desired output type is different than the input
-           array type */
+           array type and copy was not specified */
         else {
                 if ((flags & UPDATEIFCOPY) &&                   \
                     (!PyArray_ISWRITEABLE(arr))) {
