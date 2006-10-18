@@ -1574,7 +1574,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
 
         name = self->name ? self->name : "";
 
-        /* Extract type= keyword and
+        /* Extract sig= keyword and
            extobj= keyword if present
            Raise an error if anything else present in the keyword dictionary
         */
@@ -1589,7 +1589,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
                         if (strncmp(PyString_AS_STRING(key), "extobj", 6) == 0) {
                                 extobj = value;
                         }
-                        else if (strncmp(PyString_AS_STRING(key), "type", 5) == 0) {
+                        else if (strncmp(PyString_AS_STRING(key), "sig", 5) == 0) {
                                 typetup = value;
                         }
                         else {
