@@ -78,10 +78,10 @@ class IntelItaniumFCompiler(IntelFCompiler):
                       ' for (the Itanium\(TM\)|Itanium\(R\))-based applications(,|)'\
                       '\s+Version (?P<version>[^\s*]*)'
 
-Intel(R) Fortran Itanium(R) Compiler for Itanium(R)-based applications
-Version 9.1    Build 20060928 Package ID: l_fc_c_9.1.039
-Copyright (C) 1985-2006 Intel Corporation.  All rights reserved.
-30 DAY EVALUATION LICENSE
+#Intel(R) Fortran Itanium(R) Compiler for Itanium(R)-based applications
+#Version 9.1    Build 20060928 Package ID: l_fc_c_9.1.039
+#Copyright (C) 1985-2006 Intel Corporation.  All rights reserved.
+#30 DAY EVALUATION LICENSE
 
     for fc_exe in map(find_executable,['ifort','efort','efc']):
         if os.path.isfile(fc_exe):

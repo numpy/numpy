@@ -71,6 +71,8 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 	n = PyTuple_Size(args);
 	if (n <= 1) {
+                if (PyTuple_GET_ITEM(args, 0) == Py_None)
+                        return PyArray_View(self, NULL, NULL);
 		if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter,
 				      &newshape)) return NULL;
 	}
@@ -774,6 +776,10 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	}
 	n = PyTuple_Size(args);
 	if (n <= 1) {
+                if (PyTuple_GET_ITEM(args, 0) == Py_None) {
+                        Py_INCREF(Py_None);
+                        return Py_None;
+                }
 		if (!PyArg_ParseTuple(args, "O&", PyArray_IntpConverter,
 				      &newshape)) return NULL;
 	}
