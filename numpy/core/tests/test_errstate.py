@@ -45,6 +45,17 @@ class test_errstate(NumpyTestCase):
                 pass
             else:
                 self.fail()
+                
+    def test_errcall(self):
+        def foo(*args):
+            print args
+        olderrcall = geterrcall()
+        with errstate(call=foo):
+            assert(geterrcall() is foo), 'call is not foo'
+            with errstate(call=None):
+                assert(geterrcall() is None), 'call is not None'
+        assert(geterrcall() is olderrcall), 'call is not olderrcall'
+
 """
 
 if __name__ == '__main__':

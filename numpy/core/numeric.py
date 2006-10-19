@@ -753,6 +753,10 @@ def geterrcall():
     """
     return umath.geterrobj()[2]
 
+class _unspecified(object): 
+    pass
+_Unspecified = _unspecified()
+
 class errstate(object):
     """with errstate(**state): --> operations in following block use given state.
     
@@ -781,15 +785,15 @@ class errstate(object):
     # Note that we don't want to run the above doctests because they will fail
     # without a from __future__ import with_statement
     def __init__(self, **kwargs):
-        self.call = kwargs.pop('call',None)
+        self.call = kwargs.pop('call',_Unspecified)
         self.kwargs = kwargs
     def __enter__(self):
         self.oldstate = seterr(**self.kwargs)
-        if self.call:
+        if self.call is not _Unspecified:
             self.oldcall = seterrcall(self.call)
     def __exit__(self, *exc_info):
         seterr(**self.oldstate)
-        if self.call:
+        if self.call is not _Unspecified:
             seterrcall(self.oldcall)
 
 def _setdef():
