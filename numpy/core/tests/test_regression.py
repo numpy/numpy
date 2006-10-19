@@ -215,8 +215,9 @@ class test_regression(NumpyTestCase):
 
     def check_longfloat_repr(self,level=rlevel):
         """Ticket #112"""
-        a = N.exp(N.array([1000],dtype=N.longfloat))
-        assert(str(a)[1:9] == str(a[0])[:8])
+        if N.longfloat(0).itemsize > 8:
+            a = N.exp(N.array([1000],dtype=N.longfloat))
+            assert(str(a)[1:9] == str(a[0])[:8])
 
     def check_argmax(self,level=rlevel):
         """Ticket #119"""

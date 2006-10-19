@@ -781,11 +781,17 @@ class errstate(object):
     # Note that we don't want to run the above doctests because they will fail
     # without a from __future__ import with_statement
     def __init__(self, **kwargs):
+        try:
+            self.errcall = kwargs.pop('errcall')
+        except KeyError:
+            self.errcall = None
         self.kwargs = kwargs
     def __enter__(self):
         self.oldstate = seterr(**self.kwargs)
+        self.oldcall = seterrcall(self.errcall)
     def __exit__(self, *exc_info):
         seterr(**self.oldstate)
+        seterrcall(self.oldcall)
 
 def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT2, None]
