@@ -127,9 +127,9 @@ class test_ma(NumpyTestCase):
         self.failUnless (eq(numpy.tanh(x), tanh(xm)))
         olderr = numpy.seterr(divide='ignore', invalid='ignore')
         self.failUnless (eq(numpy.sqrt(abs(x)), sqrt(xm)))
-        numpy.seterr(**olderr)
         self.failUnless (eq(numpy.log(abs(x)), log(xm)))
         self.failUnless (eq(numpy.log10(abs(x)), log10(xm)))
+        numpy.seterr(**olderr)
         self.failUnless (eq(numpy.exp(x), exp(xm)))
         self.failUnless (eq(numpy.arcsin(z), arcsin(zm)))
         self.failUnless (eq(numpy.arccos(z), arccos(zm)))
@@ -680,10 +680,11 @@ class test_ufuncs(NumpyTestCase):
             mf = getattr(numpy.ma, f)
             args = self.d[:uf.nin]
             olderr = numpy.geterr()
-            if f in ['sqrt', 'arctanh', 'arcsin', 'arccos', 'arccosh', 'arctanh']:
+            if f in ['sqrt', 'arctanh', 'arcsin', 'arccos', 'arccosh', 'arctanh', 'log',
+                     'log10','divide','true_divide', 'floor_divide', 'remainder', 'fmod']:
                 numpy.seterr(invalid='ignore')
-            if f in ['arctanh']:
-                numpyseterr(divide='ignore']
+            if f in ['arctanh', 'log', 'log10']:
+                numpy.seterr(divide='ignore')
             ur = uf(*args)
             mr = mf(*args)
             numpy.seterr(**olderr)
