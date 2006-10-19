@@ -27,18 +27,20 @@ typedef struct {
 #define UFUNC_ERR_WARN   1
 #define UFUNC_ERR_RAISE  2
 #define UFUNC_ERR_CALL   3
+#define UFUNC_ERR_PRINT  4
+#define UFUNC_ERR_LOG    5
 
 	/* Python side integer mask */
 
-#define UFUNC_MASK_DIVIDEBYZERO 0x03
-#define UFUNC_MASK_OVERFLOW 0x0c
-#define UFUNC_MASK_UNDERFLOW 0x30
-#define UFUNC_MASK_INVALID 0xc0
+#define UFUNC_MASK_DIVIDEBYZERO 0x07
+#define UFUNC_MASK_OVERFLOW 0x3f
+#define UFUNC_MASK_UNDERFLOW 0x1ff
+#define UFUNC_MASK_INVALID 0xfff
 
 #define UFUNC_SHIFT_DIVIDEBYZERO 0
-#define UFUNC_SHIFT_OVERFLOW     2
-#define UFUNC_SHIFT_UNDERFLOW    4
-#define UFUNC_SHIFT_INVALID      6
+#define UFUNC_SHIFT_OVERFLOW     3
+#define UFUNC_SHIFT_UNDERFLOW    6
+#define UFUNC_SHIFT_INVALID      9
 
 
 /* platform-dependent code translates floating point
@@ -49,7 +51,13 @@ typedef struct {
 #define UFUNC_FPE_UNDERFLOW     4
 #define UFUNC_FPE_INVALID       8
 
-#define UFUNC_ERR_DEFAULT 0  /* Default error mode */
+#define UFUNC_ERR_DEFAULT  0      /* Error mode that avoids look-up (no checking) */
+
+   /* Default user error mode */
+#define UFUNC_ERR_DEFAULT2                               \
+        (UFUNC_ERR_PRINT << UFUNC_SHIFT_DIVIDEBYZERO) +  \
+        (UFUNC_ERR_PRINT << UFUNC_SHIFT_OVERFLOW) +      \
+        (UFUNC_ERR_PRINT << UFUNC_SHIFT_INVALID)        
 
 	/* Only internal -- not exported, yet*/
 typedef struct {
@@ -70,8 +78,9 @@ typedef struct {
 	/* The error handling */
 	int errormask;         /* Integer showing desired error handling */
 	PyObject *errobj;      /* currently a tuple with
-				  (string, func or None)
+				  (string, func or obj with write method or None)
 			       */
+        int first;
 
 	/* Specific function and data to use */
 	PyUFuncGenericFunction function;
@@ -134,6 +143,7 @@ typedef struct {
 	/* The error handling */
 	int errormask;
 	PyObject *errobj;
+        int first;
 
         PyUFuncGenericFunction function;
         void *funcdata;
@@ -201,12 +211,13 @@ typedef struct _loop1d_info {
 #include "__ufunc_api.h"
 
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
-
-#define UFUNC_CHECK_ERROR(arg)                                         \
-	if (((arg)->obj && PyErr_Occurred()) ||                        \
-            ((arg)->errormask &&                                       \
-             PyUFunc_checkfperr((arg)->errormask,                      \
-                                (arg)->errobj)))                       \
+        
+#define UFUNC_CHECK_ERROR(arg)                                          \
+	if (((arg)->obj && PyErr_Occurred()) ||                         \
+            ((arg)->errormask &&                                        \
+             PyUFunc_checkfperr((arg)->errormask,                       \
+                                (arg)->errobj,                          \
+                                &(arg)->first)))                        \
 		goto fail
 
 /* This code checks the IEEE status flags in a platform-dependent way */

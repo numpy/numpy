@@ -473,7 +473,7 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
 */
 
 static int
-_error_handler(int method, PyObject *errobj, char *errtype, int retstatus)
+_error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *first)
 {
 	PyObject *pyfunc, *ret, *args;
 	char *name=PyString_AS_STRING(PyTuple_GET_ITEM(errobj,0));
@@ -512,6 +512,29 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus)
 		Py_DECREF(ret);
 
 		break;
+        case UFUNC_ERR_PRINT:
+                if (*first) {
+                        fprintf(stderr, "Warning: %s encountered in %s\n", errtype, name);
+                        *first = 0;
+                }
+                break;
+        case UFUNC_ERR_LOG:
+                if (first) {
+                        *first = 0;
+                        pyfunc = PyTuple_GET_ITEM(errobj, 1);
+                        if (pyfunc == Py_None) {
+                                PyErr_Format(PyExc_NameError,
+                                             "log specified for %s (in %s) but no " \
+                                             "object with write method found.",
+                                             errtype, name);
+                                goto fail;
+                        }
+                        snprintf(msg, 100, "Warning: %s encountered in %s\n", errtype, name);
+                        ret = PyObject_CallMethod(pyfunc, "write", "s", msg);
+                        if (ret == NULL) goto fail;
+                        Py_DECREF(ret);
+                }
+                break;
 	}
 	DISABLE_C_API
 	return 0;
@@ -535,13 +558,13 @@ PyUFunc_getfperr(void)
 			handle = errmask & UFUNC_MASK_##NAME;\
 			if (handle && \
 			    _error_handler(handle >> UFUNC_SHIFT_##NAME, \
-					   errobj, str, retstatus) < 0)  \
+					   errobj, str, retstatus, first) < 0) \
 				return -1;		      \
 			}}
 
 /*UFUNC_API*/
 static int
-PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus)
+PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus, int *first)
 {
 	int handle;
 	if (errmask && retstatus) {
@@ -558,13 +581,13 @@ PyUFunc_handlefperr(int errmask, PyObject *errobj, int retstatus)
 
 /*UFUNC_API*/
 static int
-PyUFunc_checkfperr(int errmask, PyObject *errobj)
+PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
 	int retstatus;
 
 	/* 1. check hardware flag --- this is platform dependent code */
 	retstatus = PyUFunc_getfperr();
-	return PyUFunc_handlefperr(errmask, errobj, retstatus);
+	return PyUFunc_handlefperr(errmask, errobj, retstatus, first);
 }
 
 
@@ -958,14 +981,21 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 			     *errmask);
 		return -1;
 	}
-
+        
 	retval = PyList_GET_ITEM(ref, 2);
 	if (retval != Py_None && !PyCallable_Check(retval)) {
-		PyErr_SetString(PyExc_TypeError,
-				"callback function must be callable");
-		return -1;
+                PyObject *temp;
+                temp = PyObject_GetAttrString(retval, "write");
+                if (temp == NULL || !PyCallable_Check(temp)) {
+                        PyErr_SetString(PyExc_TypeError,
+                                        "python object must be callable or have " \
+                                        "a callable write method");
+                        Py_XDECREF(temp);
+                        return -1;
+                }
+                Py_DECREF(temp);
 	}
-
+        
 	*errobj = Py_BuildValue("NO",
 				PyString_FromString(name),
 				retval);
@@ -1571,6 +1601,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
         }
 	loop->errobj = NULL;
         loop->notimplemented = 0;
+        loop->first = 1;
 
         name = self->name ? self->name : "";
 
@@ -2057,6 +2088,7 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
 	loop->it = NULL;
 	loop->rit = NULL;
 	loop->errobj = NULL;
+        loop->first = 1;
 	loop->decref=NULL;
         loop->N = (*arr)->dimensions[axis];
 	loop->instrides = (*arr)->strides[axis];

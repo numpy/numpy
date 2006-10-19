@@ -30,7 +30,7 @@ extern "C" CONFUSE_EMACS
 #define NPY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NPY_VERSION 0x01000008
+#define NPY_VERSION 0x01000009
 
         /* Some platforms don't define bool, long long, or long double.
            Handle that here.

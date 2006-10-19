@@ -633,7 +633,9 @@ def array_equiv(a1, a2):
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
             "raise":ERR_RAISE,
-            "call":ERR_CALL}
+            "call":ERR_CALL,
+            "print":ERR_PRINT,
+            "log":ERR_LOG}
 
 _errdict_rev = {}
 for key in _errdict.keys():
@@ -690,10 +692,10 @@ def geterr():
 
     Returns a dictionary with entries "divide", "over", "under", and
     "invalid", whose values are from the strings
-    "ignore", "warn", "raise", and "call".
+    "ignore", "print", "log", "warn", "raise", and "call".
     """
     maskvalue = umath.geterrobj()[1]
-    mask = 3
+    mask = 7
     res = {}
     val = (maskvalue >> SHIFT_DIVIDEBYZERO) & mask
     res['divide'] = _errdict_rev[val]
@@ -728,7 +730,8 @@ def getbufsize():
 
 def seterrcall(func):
     """Set the callback function used when a floating-point error handler
-    is set to 'call'.
+    is set to 'call' or the object with a write method for use when
+    the floating-point error handler is set to 'log'
 
     'func' should be a function that takes two arguments. The first is
     type of error ("divide", "over", "under", or "invalid"), and the second
@@ -737,7 +740,8 @@ def seterrcall(func):
     Returns the old handler.
     """
     if func is not None and not callable(func):
-        raise ValueError, "Only callable can be used as callback"
+        if not hasattr(func, 'write') or not callable(func.write):
+            raise ValueError, "Only callable can be used as callback"
     pyvals = umath.geterrobj()
     old = geterrcall()
     pyvals[2] = func
@@ -784,7 +788,7 @@ class errstate(object):
         seterr(**self.oldstate)
 
 def _setdef():
-    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
+    defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT2, None]
     umath.seterrobj(defval)
 
 # set the default values

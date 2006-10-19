@@ -550,6 +550,7 @@ static PyObject *
 
 #if @fperr@
     int retstatus;
+    int first;
 #endif
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
@@ -584,7 +585,8 @@ static PyObject *
 	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
 				&errobj) < 0)
 	    return NULL;
-	if (PyUFunc_handlefperr(errmask, errobj, retstatus))
+        first = 1;
+	if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
 	    return NULL;
     }
 #endif
@@ -625,6 +627,7 @@ static PyObject *
     PyObject *ret;
     @name@ arg1, arg2;
     int retstatus;
+    int first;
 
 #if @cmplx@
     @name@ out = {0,0};
@@ -678,7 +681,8 @@ static PyObject *
 	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
 				&errobj) < 0)
 	    return NULL;
-	if (PyUFunc_handlefperr(errmask, errobj, retstatus))
+        first = 1;
+	if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
 	    return NULL;
     }
 
