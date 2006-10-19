@@ -21,8 +21,10 @@ Test isposinf, isneginf, sign
 array([True, False, False, False, False, False], dtype=bool)
 >>> U.isneginf(a)
 array([False, True, False, False, False, False], dtype=bool)
+>>> olderr = nx.seterr(invalid='ignore')
 >>> nx.sign(a)
 array([ 1., -1.,  0.,  0.,  1., -1.])
+>>> olderr = nx.seterr(**olderr)
 
 Same thing with an output array:
 >>> y = nx.zeros(a.shape, bool)
@@ -34,8 +36,10 @@ array([True, False, False, False, False, False], dtype=bool)
 array([False, True, False, False, False, False], dtype=bool)
 >>> y
 array([False, True, False, False, False, False], dtype=bool)
+>>> olderr = nx.seterr(invalid='ignore')
 >>> nx.sign(a, y)
 array([True, True, False, False, True, True], dtype=bool)
+>>> olderr = nx.seterr(**olderr)
 >>> y
 array([True, True, False, False, True, True], dtype=bool)
 

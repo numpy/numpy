@@ -86,11 +86,15 @@ class test_ma(NumpyTestCase):
             self.failUnless(eq(x + y, xm + ym))
             self.failUnless(eq(x - y, xm - ym))
             self.failUnless(eq(x * y, xm * ym))
+            olderr = numpy.seterr(divide='ignore', invalid='ignore')
             self.failUnless(eq(x / y, xm / ym))
+            numpy.seterr(**olderr)
             self.failUnless(eq(a10 + y, a10 + ym))
             self.failUnless(eq(a10 - y, a10 - ym))
             self.failUnless(eq(a10 * y, a10 * ym))
+            olderr = numpy.seterr(divide='ignore', invalid='ignore')
             self.failUnless(eq(a10 / y, a10 / ym))
+            numpy.seterr(**olderr)
             self.failUnless(eq(x + a10, xm + a10))
             self.failUnless(eq(x - a10, xm - a10))
             self.failUnless(eq(x * a10, xm * a10))
@@ -101,7 +105,9 @@ class test_ma(NumpyTestCase):
             self.failUnless(eq(numpy.add(x,y), add(xm, ym)))
             self.failUnless(eq(numpy.subtract(x,y), subtract(xm, ym)))
             self.failUnless(eq(numpy.multiply(x,y), multiply(xm, ym)))
+            olderr = numpy.seterr(divide='ignore', invalid='ignore')
             self.failUnless(eq(numpy.divide(x,y), divide(xm, ym)))
+            numpy.seterr(**olderr)
 
 
     def check_testMixedArithmetic(self):
@@ -119,7 +125,9 @@ class test_ma(NumpyTestCase):
         self.failUnless (eq(numpy.sinh(x), sinh(xm)))
         self.failUnless (eq(numpy.tan(x), tan(xm)))
         self.failUnless (eq(numpy.tanh(x), tanh(xm)))
+        olderr = numpy.seterr(divide='ignore', invalid='ignore')
         self.failUnless (eq(numpy.sqrt(abs(x)), sqrt(xm)))
+        numpy.seterr(**olderr)
         self.failUnless (eq(numpy.log(abs(x)), log(xm)))
         self.failUnless (eq(numpy.log10(abs(x)), log10(xm)))
         self.failUnless (eq(numpy.exp(x), exp(xm)))
@@ -671,8 +679,14 @@ class test_ufuncs(NumpyTestCase):
                 uf = getattr(fromnumeric, f)
             mf = getattr(numpy.ma, f)
             args = self.d[:uf.nin]
+            olderr = numpy.geterr()
+            if f in ['sqrt', 'arctanh', 'arcsin', 'arccos', 'arccosh', 'arctanh']:
+                numpy.seterr(invalid='ignore')
+            if f in ['arctanh']:
+                numpyseterr(divide='ignore']
             ur = uf(*args)
             mr = mf(*args)
+            numpy.seterr(**olderr)
             self.failUnless(eq(ur.filled(0), mr.filled(0), f))
             self.failUnless(eqmask(ur.mask, mr.mask))
 

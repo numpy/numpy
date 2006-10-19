@@ -127,11 +127,17 @@ class test_isnan(NumpyTestCase):
         res = isnan(z) == 0
         assert_all(alltrue(res,axis=0))
     def check_posinf(self):
+        olderr = seterr(divide='ignore')
         assert_all(isnan(array((1.,))/0.) == 0)
+        seterr(**olderr)
     def check_neginf(self):
+        olderr = seterr(divide='ignore')
         assert_all(isnan(array((-1.,))/0.) == 0)
+        seterr(**olderr)
     def check_ind(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         assert_all(isnan(array((0.,))/0.) == 1)
+        seterr(**olderr)
     #def check_qnan(self):             log(-1) return pi*j now
     #    assert_all(isnan(log(-1.)) == 1)
     def check_integer(self):
@@ -139,7 +145,9 @@ class test_isnan(NumpyTestCase):
     def check_complex(self):
         assert_all(isnan(1+1j) == 0)
     def check_complex1(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         assert_all(isnan(array(0+0j)/0.) == 1)
+        seterr(**olderr)
 
 class test_isfinite(NumpyTestCase):
     def check_goodvalues(self):
@@ -147,11 +155,17 @@ class test_isfinite(NumpyTestCase):
         res = isfinite(z) == 1
         assert_all(alltrue(res,axis=0))
     def check_posinf(self):
+        olderr = seterr(divide='ignore')
         assert_all(isfinite(array((1.,))/0.) == 0)
+        seterr(**olderr)
     def check_neginf(self):
+        olderr = seterr(divide='ignore')
         assert_all(isfinite(array((-1.,))/0.) == 0)
+        seterr(**olderr)
     def check_ind(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         assert_all(isfinite(array((0.,))/0.) == 0)
+        seterr(**olderr)
     #def check_qnan(self):
     #    assert_all(isfinite(log(-1.)) == 0)
     def check_integer(self):
@@ -159,7 +173,9 @@ class test_isfinite(NumpyTestCase):
     def check_complex(self):
         assert_all(isfinite(1+1j) == 1)
     def check_complex1(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         assert_all(isfinite(array(1+1j)/0.) == 0)
+        seterr(**olderr)
 
 class test_isinf(NumpyTestCase):
     def check_goodvalues(self):
@@ -167,36 +183,52 @@ class test_isinf(NumpyTestCase):
         res = isinf(z) == 0
         assert_all(alltrue(res,axis=0))
     def check_posinf(self):
+        olderr = seterr(divide='ignore')
         assert_all(isinf(array((1.,))/0.) == 1)
+        seterr(**olderr)
     def check_posinf_scalar(self):
+        olderr = seterr(divide='ignore')
         assert_all(isinf(array(1.,)/0.) == 1)
+        seterr(**olderr)
     def check_neginf(self):
+        olderr = seterr(divide='ignore')
         assert_all(isinf(array((-1.,))/0.) == 1)
+        seterr(**olderr)
     def check_neginf_scalar(self):
+        olderr = seterr(divide='ignore')
         assert_all(isinf(array(-1.)/0.) == 1)
+        seterr(**olderr)
     def check_ind(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         assert_all(isinf(array((0.,))/0.) == 0)
+        seterr(**olderr)
     #def check_qnan(self):
     #    assert_all(isinf(log(-1.)) == 0)
     #    assert_all(isnan(log(-1.)) == 1)
 
 class test_isposinf(NumpyTestCase):
     def check_generic(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         vals = isposinf(array((-1.,0,1))/0.)
+        seterr(**olderr)
         assert(vals[0] == 0)
         assert(vals[1] == 0)
         assert(vals[2] == 1)
 
 class test_isneginf(NumpyTestCase):
     def check_generic(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         vals = isneginf(array((-1.,0,1))/0.)
+        seterr(**olderr)
         assert(vals[0] == 1)
         assert(vals[1] == 0)
         assert(vals[2] == 0)
 
 class test_nan_to_num(NumpyTestCase):
     def check_generic(self):
+        olderr = seterr(divide='ignore', invalid='ignore')
         vals = nan_to_num(array((-1.,0,1))/0.)
+        seterr(**olderr)
         assert_all(vals[0] < -1e10) and assert_all(isfinite(vals[0]))
         assert(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(isfinite(vals[2]))
@@ -208,13 +240,17 @@ class test_nan_to_num(NumpyTestCase):
         assert_all(vals == 1+1j)
     def check_complex_bad(self):
         v = 1+1j
+        olderr = seterr(divide='ignore', invalid='ignore')
         v += array(0+1.j)/0.
+        seterr(**olderr)
         vals = nan_to_num(v)
         # !! This is actually (unexpectedly) zero
         assert_all(isfinite(vals))
     def check_complex_bad2(self):
         v = 1+1j
+        olderr = seterr(divide='ignore', invalid='ignore')
         v += array(-1+1.j)/0.
+        seterr(**olderr)
         vals = nan_to_num(v)
         assert_all(isfinite(vals))
         #assert_all(vals.imag > 1e10)  and assert_all(isfinite(vals))
