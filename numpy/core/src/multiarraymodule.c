@@ -4158,6 +4158,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         int nd;
 
         seq->ptr = NULL;
+        seq->len = 0;
         if (obj == Py_None) return PY_SUCCEED;
         len = PySequence_Size(obj);
         if (len == -1) { /* Check to see if it is a number */
