@@ -13,7 +13,7 @@ Created: May 2006
 
 __all__ = ['split_comma', 'specs_split_comma',
            'ParseError','AnalyzeError',
-           'get_module_file','parse_bind','parse_result','is_name',
+           'get_module_file','parse_bind','parse_result','is_name','parse_array_spec',
            'CHAR_BIT','str2stmt']
 
 import re
@@ -30,20 +30,26 @@ name_re = re.compile(r'[a-z_]\w*',re.I).match
 is_entity_decl = re.compile(r'^[a-z_]\w*',re.I).match
 is_int_literal_constant = re.compile(r'^\d+(_\w+|)$').match
 
-def split_comma(line, item = None, comma=','):
+def split_comma(line, item = None, comma=',', keep_empty=False):
     items = []
     if item is None:
         for s in line.split(comma):
             s = s.strip()
-            if not s: continue
+            if not s and not keep_empty: continue
             items.append(s)
         return items
     newitem = item.copy(line, True)
     apply_map = newitem.apply_map
     for s in newitem.get_line().split(comma):
         s = apply_map(s).strip()
-        if not s: continue
+        if not s and not keep_empty: continue
         items.append(s)
+    return items
+
+def parse_array_spec(line, item = None):
+    items = []
+    for spec in split_comma(line, item):
+        items.append(tuple(split_comma(spec, item, comma=':', keep_empty=True)))
     return items
 
 def specs_split_comma(line, item = None, upper=False):

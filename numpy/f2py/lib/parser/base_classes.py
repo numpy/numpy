@@ -120,6 +120,11 @@ class Variable:
         self.bind = []
         self.check = []
         self.init = None
+
+        # after calling analyze the following additional attributes are set:
+        # .is_array:
+        #    rank
+        #    shape
         return
 
     def __repr__(self):
@@ -339,7 +344,7 @@ class Variable:
             s += ', ' + ', '.join(a) + ' :: '
         s += self.name
         if self.bounds:
-            s += '(%s)' % (', '.join(self.bounds))
+            s += '(%s)' % (', '.join([':'.join(spec) for spec in self.bounds]))
         if self.length:
             if is_int_literal_constant(self.length):
                 s += '*%s' % (self.length)
@@ -349,8 +354,59 @@ class Variable:
             s += ' = ' + self.init
         return s
 
+    def get_array_spec(self):
+        assert self.is_array(),'array_spec is available only for arrays'
+        if self.bounds:
+            if self.dimension:
+                self.parent.warning('both bounds=%r and dimension=%r are defined, ignoring dimension.' % (self.bounds, self.dimension))
+            array_spec = self.bounds
+        else:
+            array_spec = self.dimension
+        return array_spec
+
+    def is_deferred_shape_array(self):
+        if not self.is_array(): return False
+        return self.is_allocatable() or self.is_pointer():
+
+    def is_assumed_size_array(self):
+        if not self.is_array(): return False
+        return self.get_array_spec()[-1][-1]=='*'
+
+    def is_assumed_shape_array(self):
+        if not self.is_array(): return False
+        if self.is_deferred_shape_array(): return False
+        for spec in self.get_array_spec():
+            if not spec[-1]: return True
+        return False
+
+    def is_explicit_shape_array(self):
+        if not self.is_array(): return False
+        if self.is_deferred_shape_array(): return False
+        for spec in self.get_array_spec():
+            if not spec[-1] or spec[-1] == '*': return False
+        return True
+
+    def is_allocatable_array(self):
+        return self.is_array() and self.is_allocatable()
+
+    def is_array_pointer(self):
+        return self.is_array() and self.is_pointer()
+    
     def analyze(self):
         typedecl = self.get_typedecl()
+        if self.is_array():
+            array_spec = self.get_array_spec()
+            self.rank = len(array_spec)
+            if self.is_deferred_shape_array(): # a(:,:)
+                pass
+            elif self.is_explict_shape_array(self):
+                shape = []
+                for spec in array_spec:
+                    if len(spec)==1:
+                        shape.append(spec[0])
+                    else:
+                        shape.append(spec[1]-spec[0])
+                self.shape = shape  
         return
 
 class ProgramBlock:

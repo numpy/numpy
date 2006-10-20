@@ -20,7 +20,7 @@ import re
 import string
 from base_classes import Statement, BeginStatement, EndStatement,\
      AttributeHolder, Variable
-from utils import split_comma, AnalyzeError, name_re, is_entity_decl, is_name, CHAR_BIT
+from utils import split_comma, AnalyzeError, name_re, is_entity_decl, is_name, CHAR_BIT, parse_array_spec
 
 # Intrinsic type specification statements
 
@@ -325,7 +325,7 @@ class TypeDeclarationStatement(Statement):
         if line.startswith('('):
             i = line.find(')')
             assert i!=-1,`line`
-            array_spec = split_comma(line[1:i].strip(), item)
+            array_spec = parse_array_spec(line[1:i].strip(), item)
             line = line[i+1:].lstrip()
         char_length = None
         if line.startswith('*'):
