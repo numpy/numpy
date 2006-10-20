@@ -12,6 +12,7 @@ class PyTypeInterface:
     def __init__(self, typedecl):
         if isinstance(typedecl, TypeStmt):
             typedecl = typedecl.get_type_decl(typedecl.name)
+        self._typedecl = typedecl
         if isinstance(typedecl, TypeDecl):
             self.name = name = typedecl.name
             tname = 'f2py_type_%s_' % (name)
@@ -37,7 +38,13 @@ class PyTypeInterface:
             self.otype = '%sObject' % (ctype)
             self.ftype = 'TYPE(%s)' % (name)
         return
-    
+    def __repr__(self): return '%s(%r)' % (self.__class__.__name__, self._typedecl)
+    def __str__(self):
+        s = []
+        for k,v in self.__dict__.items():
+            if k.startswith('_'): continue
+            s.append('%s=%s' % (k,v))
+        return 'PyTypeInterface(%s)' % (', '.join(s))
 
 class PythonCAPIType(WrapperBase):
     """

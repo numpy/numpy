@@ -146,51 +146,53 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
         for argname in block.args:
             argindex += 1
             var = block.a.variables[argname]
-            assert var.is_scalar(),'array support not implemented: "%s"' % (var)
             typedecl = var.get_typedecl()
             PythonCAPIType(parent, typedecl)
             ti = PyTypeInterface(typedecl)
             if var.is_intent_in():
                 self.kw_list.append('"%s"' % (argname))
 
-            if isinstance(typedecl, TypeStmt):
-                if var.is_intent_in():
-                    self.pyarg_format_list.append('O&')
-                    self.pyarg_obj_list.append('\npyobj_to_%s_inplace, &%s' % (ti.ctype, argname))
-                else:
-                    self.frompyobj_list.append('%s = (%s*)pyobj_from_%s(NULL);' % (argname,ti.otype,ti.ctype))
-                    if not var.is_intent_out():
-                        self.clean_frompyobj_list.append('Py_DECREF(%s);' % (argname))
-                self.decl_list.append('%s* %s = NULL;' % (ti.otype, argname))
-                args_f.append('%s->data' % (argname)) # is_scalar
-                ctype_args_f.append(ti.ctype)
-            else:
-                if var.is_intent_in():
-                    self.pyarg_format_list.append('O&')
-                    self.pyarg_obj_list.append('\npyobj_to_%s, &%s' % (ti.ctype, argname))
-                assert not isinstance(typedecl, TypeDecl)
-                if ti.ctype=='f2py_string0':
-                    if not var.is_intent_in():
-                        assert not var.is_intent_out(),'intent(out) not implemented for "%s"' % (var)
-                    self.decl_list.append('%s %s = {NULL,0};' % (ti.ctype, argname))
-                    args_f.append('%s.data' % argname)  # is_scalar
-                    ctype_args_f.append('char*')
-                    extra_ctype_args_f.append('int')
-                    extra_args_f.append('%s.len' % argname)
-                    self.clean_frompyobj_list.append(\
-                        'if (%s.len) free(%s.data);' % (argname,argname))
-                else:
-                    self.decl_list.append('%s %s;' % (ti.ctype, argname))
-                    args_f.append('&'+argname) # is_scalar
-                    ctype_args_f.append(ti.ctype+'*')
-            if var.is_intent_out(): # and is_scalar
+            if var.is_scalar():
                 if isinstance(typedecl, TypeStmt):
-                    self.return_format_list.append('N')
-                    self.return_obj_list.append('\n%s' % (argname))
+                    if var.is_intent_in():
+                        self.pyarg_format_list.append('O&')
+                        self.pyarg_obj_list.append('\npyobj_to_%s_inplace, &%s' % (ti.ctype, argname))
+                    else:
+                        self.frompyobj_list.append('%s = (%s*)pyobj_from_%s(NULL);' % (argname,ti.otype,ti.ctype))
+                        if not var.is_intent_out():
+                            self.clean_frompyobj_list.append('Py_DECREF(%s);' % (argname))
+                    self.decl_list.append('%s* %s = NULL;' % (ti.otype, argname))
+                    args_f.append('%s->data' % (argname)) # is_scalar
+                    ctype_args_f.append(ti.ctype)
                 else:
-                    self.return_format_list.append('O&')
-                    self.return_obj_list.append('\npyobj_from_%s, &%s' % (ti.ctype, argname))
-
+                    if var.is_intent_in():
+                        self.pyarg_format_list.append('O&')
+                        self.pyarg_obj_list.append('\npyobj_to_%s, &%s' % (ti.ctype, argname))
+                    assert not isinstance(typedecl, TypeDecl)
+                    if ti.ctype=='f2py_string0':
+                        if not var.is_intent_in():
+                            assert not var.is_intent_out(),'intent(out) not implemented for "%s"' % (var)
+                        self.decl_list.append('%s %s = {NULL,0};' % (ti.ctype, argname))
+                        args_f.append('%s.data' % argname)  # is_scalar
+                        ctype_args_f.append('char*')
+                        extra_ctype_args_f.append('int')
+                        extra_args_f.append('%s.len' % argname)
+                        self.clean_frompyobj_list.append(\
+                        'if (%s.len) free(%s.data);' % (argname,argname))
+                    else:
+                        self.decl_list.append('%s %s;' % (ti.ctype, argname))
+                        args_f.append('&'+argname) # is_scalar
+                        ctype_args_f.append(ti.ctype+'*')
+                if var.is_intent_out(): # and is_scalar
+                    if isinstance(typedecl, TypeStmt):
+                        self.return_format_list.append('N')
+                        self.return_obj_list.append('\n%s' % (argname))
+                    else:
+                        self.return_format_list.append('O&')
+                        self.return_obj_list.append('\npyobj_from_%s, &%s' % (ti.ctype, argname))
+            else:
+                print `ti,var.dimension,var.bounds`
+                assert var.is_scalar(),'array support not implemented: "%s"' % (var)
 
         self.call_list.append('%s_f(%s);' % (name,', '.join(args_f+extra_args_f)))
 

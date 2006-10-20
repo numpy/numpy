@@ -310,7 +310,7 @@ def build_extension(sys_argv, sources_only = False):
     libraries = get_values(sys_argv,'-l',strip_prefix=True)
     _define_macros = get_values(sys_argv,'-D',strip_prefix=True)
     undef_macros = get_values(sys_argv,'-U',strip_prefix=True)
-    extra_objects = get_values(sys_argv,'','[.](o|a|so|dll|dynlib|sl)')
+    extra_objects = get_values(sys_argv,'','[.](o|a|so|dll|dylib|sl)')
 
     define_macros = []
     for item in _define_macros:
