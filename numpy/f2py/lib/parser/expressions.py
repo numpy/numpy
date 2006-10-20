@@ -28,49 +28,46 @@ class DefinedOp:
     def __str__(self): return '.%s.' % (self.letters)
     def __repr__(self): return '%s(%r)' % (self.__class__.__name__, self.letters)
 
-def set_subclasses(cls):
-    for basecls in cls.__bases__:
-        if issubclass(basecls, Base):
-            try:
-                subclasses = basecls.__dict__['_subclasses']
-            except KeyError:
-                subclasses = basecls._subclasses = []
-            subclasses.append(cls)
-    return
+class NoChildAllowed:
+    pass
+class NoChildAllowedError(Exception):
+    pass
+class NoMatchError(Exception):
+    pass
 
 is_name = re.compile(r'\A[a-z]\w*\Z',re.I).match
 
-class Expression:
-    def __new__(cls, string):
-        if is_name(string):
-            obj = object.__new__(Name)
-            obj._init(string)
-            return obj
-
-class NoMatch(Exception):
-    pass
-
 class Base(object):
+
+    subclasses = {}
+
     def __new__(cls, string):
         match = getattr(cls,'match',None)
         if match is not None:
             if match(string):
                 obj = object.__new__(cls)
-                obj._init(string)
+                init = cls.__dict__.get('init', Base.init)
+                init(obj, string)
                 return obj
-        else:
-            assert cls._subclasses,`cls`
-            for c in cls._subclasses:
-                try:
-                    return c(string)
-                except NoMatch, msg:
-                    pass
-        raise NoMatch,'%s: %r' % (cls.__name__, string)
-    def _init(self, string):
+        for c in Base.subclasses.get(cls.__name__,[]):
+            try:
+                return c(string)
+            except NoMatchError:
+                pass
+        raise NoMatchError,'%s: %r' % (cls.__name__, string)
+
+    def init(self, string):
         self.string = string
         return
-    def __str__(self): return self.string
+    
+    def __str__(self):
+        str_func = self.__class__.__dict__.get('tostr', None)
+        if str_func is not None:
+            return str_func(self)
+        return self.string
     def __repr__(self): return '%s(%r)' % (self.__class__.__name__, self.string)
+
+
 
 class Primary(Base):
     """
@@ -111,11 +108,7 @@ class Designator(Primary):
     <structure-component> = <data-ref>
     """
 
-class Name(Designator):
-    """
-    <name> = <letter> [ <alpha-numeric-character> ]...
-    """
-    match = is_name
+
 
 class LiteralConstant(Constant):
     """
@@ -127,27 +120,122 @@ class LiteralConstant(Constant):
                  | <boz-literal-constant>
     """
 
-class IntLiteralConstant(LiteralConstant):
+class SignedIntLiteralConstant(LiteralConstant):
+    """
+    <signed-int-literal-constant> = [ <sign> ] <int-literal-constant>
+    <sign> = + | -
+    """
+    match = re.compile(r'\A[+-]\s*\d+\Z').match
+
+    def init(self, string):
+        Base.init(self, string)
+        self.content = [string[0], IntLiteralConstant(string[1:].lstrip())]
+        return
+    def tostr(self):
+        return '%s%s' % tuple(self.content)
+
+class NamedConstant(Constant):
+    """
+    <named-constant> = <name>
+    """
+
+def compose_patterns(pattern_list, names join=''):
+    return join.join(pattern_list)
+
+def add_pattern(pattern_name, *pat_list):
+    p = ''
+    for pat in pat_list:
+        if isinstance(pat, PatternOptional):
+            p += '(%s|)' % (add_pattern(None, pat.args))
+        elif isinstance(pat, PatternOr):
+            p += '(%s)' % ('|'.join([add_pattern(None, p1) for p1 in par.args]))
+        else:
+            subpat = pattern_map.get(pat,None)
+            if subpat is None:
+                p += pat
+            else:
+                p += '(?P<%s>%s)' % (pat, subpat)
+    if pattern_map is not None:
+        pattern_map[pattern_name] = p
+    return p
+
+
+
+class PatternBase:
+    def __init__(self,*args):
+        self.args = args
+        return
+
+class PatternOptional(PatternBase):
+    pass
+class PatternOr(PatternBase):
+    pass
+class PatternJoin(PatternBase):
+    join = ''
+
+pattern_map = {
+    'name': r'[a-zA-Z]\w+'
+    'digit-string': r'\d+'
+    }
+add_pattern('kind-param',
+            PatternOr('digit-string','name'))
+add_pattern('int-literal-constant',
+            'digit-string',PatternOptional('_','kind-param'))
+
+name_pat = r'[a-z]\w*'
+digit_pat = r'\d'
+digit_string_pat = r'\d+'
+kind_param_pat = '(%s|%s)' % (digit_string_pat, name_pat)
+
+class Name(Designator, NamedConstant, NoChildAllowed):
+    """
+    <name> = <letter> [ <alpha-numeric-character> ]...
+    """
+    match = re.compile(r'\A'+name_pat+r'\Z',re.I).match
+
+class IntLiteralConstant(SignedIntLiteralConstant, NoChildAllowed):
     """
     <int-literal-constant> = <digit-string> [ _ <kind-param> ]
     <kind-param> = <digit-string>
                  | <scalar-int-constant-name>
     <digit-string> = <digit> [ <digit> ]...
     """
+    match = compose_pattern([digit_string_pat, '_', kind_param_pat],r'\s*')
+
+    compose_pattern('int-literal-constant','digit-string','_','kind-param')
+
+class DigitString(IntLiteralConstant, NoChildAllowed):
+    """
+    <digit-string> = <digit> [ <digit> ]...
+    """
     match = re.compile(r'\A\d+\Z').match
 
-class NamedConstant(Constant, Name):
-    """
-    <named-constant> = <name>
-    """
+################# Setting up Base.subclasses #####################
 
+def set_subclasses(cls):
+    """
+    Append cls to cls base classes attribute lists `_subclasses`
+    so that all classes derived from Base know their subclasses
+    one level down.
+    """
+    for basecls in cls.__bases__:
+        if issubclass(basecls, Base):
+            if issubclass(basecls, NoChildAllowed):
+                raise NoChildAllowedError,'%s while adding %s' % (basecls.__name__,cls.__name__)
+            try:
+                Base.subclasses[basecls.__name__].append(cls)
+            except KeyError:
+                Base.subclasses[basecls.__name__] = [cls]
+    return
 ClassType = type(Base)
 for clsname in dir():
     cls = eval(clsname)
     if isinstance(cls, ClassType) and issubclass(cls, Base):
         set_subclasses(cls)
 
-class Level1Expression(Primary):
+####################################################################
+
+class Level1Expression:#(Primary):
     """
     <level-1-expr> = [ <defined-unary-op> ] <primary>
     <defined-unary-op> = . <letter> [ <letter> ]... .

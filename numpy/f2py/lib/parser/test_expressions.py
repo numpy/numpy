@@ -11,7 +11,7 @@ class test_Base(NumpyTestCase):
         assert isinstance(a,Name),`a`
         a = Designator('a')
         assert isinstance(a,Name),`a`
-        a = Primary('a')
+        a = Constant('a')
         assert isinstance(a,Name),`a`
         a = Base('a')
         assert isinstance(a,Name),`a`
@@ -28,6 +28,10 @@ class test_Base(NumpyTestCase):
         a = Constant('1')
         assert isinstance(a,IntLiteralConstant),`a`
         a = Base('1')
+        assert isinstance(a,IntLiteralConstant),`a`
+        a = Base('+1')
+        assert isinstance(a,SignedIntLiteralConstant),`a`
+        a = IntLiteralConstant('0')
         assert isinstance(a,IntLiteralConstant),`a`
         #a = NamedConstant('1') # raise NoMatch error
 
