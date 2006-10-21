@@ -366,7 +366,7 @@ class Variable:
 
     def is_deferred_shape_array(self):
         if not self.is_array(): return False
-        return self.is_allocatable() or self.is_pointer():
+        return self.is_allocatable() or self.is_pointer()
 
     def is_assumed_size_array(self):
         if not self.is_array(): return False

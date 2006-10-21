@@ -1,3 +1,15 @@
+"""
+Tools for constructing patterns.
+
+-----
+Permission to use, modify, and distribute this software is given under the
+terms of the NumPy License. See http://scipy.org.
+
+NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
+Author: Pearu Peterson <pearu@cens.ioc.ee>
+Created: Oct 2006
+-----
+"""
 
 import re
 
@@ -20,6 +32,15 @@ class Pattern:
                            '|': '[|]',
                            '(': r'\(',
                            ')': r'\)',
+                           '[': r'\[',
+                           ']': r'\]',
+                           '^': '[^]',
+                           '$': '[$]',
+                           '?': '[?]',
+                           '{': '\{',
+                           '}': '\}',
+                           '>': '[>]',
+                           '<': '[<]',
                            }
 
     def __init__(self, label, pattern, optional=0):
@@ -28,11 +49,47 @@ class Pattern:
         self.optional = optional
         return
 
+    def get_compiled(self):
+        try:
+            return self._compiled_pattern
+        except AttributeError:
+            self._compiled_pattern = compiled = re.compile(self.pattern)
+            return compiled
+
     def match(self, string):
-        if hasattr(self, '_compiled_match'):
-            return self._compiled.match(string)
-        self._compiled = compiled = re.compile(self.pattern)
-        return compiled.match(string)
+        return self.get_compiled().match(string)
+
+    def rsplit(self, string):
+        """
+        Return (<lhs>, <pattern_match>, <rhs>) where
+          string = lhs + pattern_match + rhs
+        and rhs does not contain pattern_match.
+        If no pattern_match is found in string, return None.
+        """
+        compiled = self.get_compiled()
+        t = compiled.split(string)
+        if len(t) < 3: return
+        rhs = t[-1]
+        pattern_match = t[-2]
+        assert abs(self).match(pattern_match),`pattern_match`
+        lhs = ''.join(t[:-2])
+        return lhs, pattern_match, rhs
+
+    def lsplit(self, string):
+        """
+        Return (<lhs>, <pattern_match>, <rhs>) where
+          string = lhs + pattern_match + rhs
+        and rhs does not contain pattern_match.
+        If no pattern_match is found in string, return None.
+        """
+        compiled = self.get_compiled()
+        t = compiled.split(string) # can be optimized
+        if len(t) < 3: return
+        lhs = t[0]
+        pattern_match = t[1]
+        rhs = ''.join(t[2:])
+        assert abs(self).match(pattern_match),`pattern_match`
+        return lhs, pattern_match, rhs
 
     def __abs__(self):
         return Pattern(self.label, r'\A' + self.pattern+ r'\Z')
@@ -42,7 +99,10 @@ class Pattern:
 
     def __or__(self, other):
         label = '( %s OR %s )' % (self.label, other.label)
-        pattern = '(%s|%s)' % (self.pattern, other.pattern)
+        if self.pattern==other.pattern:
+            pattern = self.pattern
+        else:
+            pattern = '(%s|%s)' % (self.pattern, other.pattern)
         return Pattern(label, pattern)
 
     def __and__(self, other):
@@ -99,15 +159,38 @@ class Pattern:
         pattern = '(?P%s%s)' % (label.replace('-','_'), self.pattern)
         return Pattern(label, pattern)
 
-name = Pattern('<name>', r'[a-z]\w*')
+    def rename(self, label):
+        if label[0]+label[-1]!='<>':
+            label = '<%s>' % (label)
+        return Pattern(label, self.pattern, self.optional)
+
+# Predefined patterns
+
+letter = Pattern('<letter>','[a-zA-Z]')
+name = Pattern('<name>', r'[a-zA-Z]\w*')
+digit = Pattern('<digit>',r'\d')
+underscore = Pattern('<underscore>', '_')
+hex_digit = Pattern('<hex-digit>',r'[\da-fA-F]')
+
 digit_string = Pattern('<digit-string>',r'\d+')
+hex_digit_string = Pattern('<hex-digit-string>',r'[\da-fA-F]+')
+
 sign = Pattern('<sign>',r'[+-]')
 exponent_letter = Pattern('<exponent-letter>',r'[ED]')
+
+alphanumeric_character = Pattern('<alphanumeric-character>','\w') # [a-z0-9_]
+special_character = Pattern('<special-character>',r'[ =+-*/\()[\]{},.:;!"%&~<>?,\'`^|$#@]')
+character = alphanumeric_character | special_character
 
 kind_param = digit_string | name
 signed_digit_string = ~sign + digit_string
 int_literal_constant = digit_string + ~('_' + kind_param)
 signed_int_literal_constant = ~sign + int_literal_constant
+
+binary_constant = '[Bb]' + ("'" & digit_string & "'" | '"' & digit_string & '"')
+octal_constant = '[Oo]' + ("'" & digit_string & "'" | '"' & digit_string & '"')
+hex_constant = '[Zz]' + ("'" & hex_digit_string & "'" | '"' & hex_digit_string & '"')
+boz_literal_constant = binary_constant | octal_constant | hex_constant
 
 exponent = signed_digit_string
 significand = digit_string + '.' + ~digit_string | '.' + digit_string
@@ -115,5 +198,67 @@ real_literal_constant = significand + ~(exponent_letter + exponent) + ~ ('_' + k
                         digit_string + exponent_letter + exponent + ~ ('_' + kind_param)
 signed_real_literal_constant = ~sign + real_literal_constant
 
+named_constant = name
+real_part = signed_int_literal_constant | signed_real_literal_constant | named_constant
+imag_part = real_part
+complex_literal_constant = '(' + real_part + ',' + imag_part + ')'
 
-print signed_real_literal_constant
+char_literal_constant = ~( kind_param + '_') + "'.*'" | ~( kind_param + '_') + '".*"'
+
+logical_literal_constant = '[.](TRUE|FALSE)[.]' + ~ ('_' + kind_param)
+literal_constant = int_literal_constant | real_literal_constant | complex_literal_constant | logical_literal_constant | char_literal_constant | boz_literal_constant
+constant = literal_constant | named_constant
+int_constant = int_literal_constant | boz_literal_constant | named_constant
+char_constant = char_literal_constant | named_constant
+abs_constant = abs(constant)
+
+power_op = Pattern('<power-op>','[*]{2}')
+mult_op = Pattern('<mult-op>','[*/]')
+add_op = Pattern('<add-op>','[+-]')
+concat_op = Pattern('<concat-op>','[/]{}')
+rel_op = Pattern('<rel-op>','([.](EQ|NE|LT|LE|GT|GE)[.])|[=]{2}|/[=]|[<]|[<][=]|[>]|[=][>]')
+not_op = Pattern('<not-op>','[.]NOT[.]')
+and_op = Pattern('<and-op>','[.]AND[.]')
+or_op = Pattern('<or-op>','[.]OR[.]')
+equiv_op = Pattern('<equiv-op>','[.](EQV|NEQV)[.]')
+intrinsic_operator = power_op | mult_op | add_op | concat_op | rel_op | not_op | and_op | or_op | equiv_op
+extended_intrinsic_operator = intrinsic_operator
+
+defined_unary_op = Pattern('<defined-unary-op>','[.][a-zA-Z]+[.]')
+defined_binary_op = Pattern('<defined-binary-op>','[.][a-zA-Z]+[.]')
+defined_operator = defined_unary_op | defined_binary_op | extended_intrinsic_operator
+
+label = Pattern('<label>','\d{1,5}')
+
+def _test():
+    assert name.match('a1_a')
+    assert abs(name).match('a1_a')
+    assert not abs(name).match('a1_a[]')
+
+    m = abs(kind_param)
+    assert m.match('23')
+    assert m.match('SHORT')
+
+    m = abs(signed_digit_string)
+    assert m.match('23')
+    assert m.match('+ 23')
+    assert m.match('- 23')
+    assert m.match('-23')
+    assert not m.match('+n')
+
+    m = ~sign.named() + digit_string.named('number')
+    r = m.match('23')
+    assert r.groupdict()=={'number': '23', 'sign': None}
+    r = m.match('- 23')
+    assert r.groupdict()=={'number': '23', 'sign': '-'}
+
+    m = abs(char_literal_constant)
+    assert m.match('"adadfa"')
+    assert m.match('"adadfa""adad"')
+    assert m.match('HEY_"adadfa"')
+    assert m.match('HEY _ "ad\tadfa"')
+    assert not m.match('adadfa')
+    print 'ok'
+
+if __name__ == '__main__':
+    _test()
