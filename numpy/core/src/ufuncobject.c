@@ -803,6 +803,7 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
                         else if (rtypenums[0] == funcdata->arg_types[self->nin]) {
                                 i = nargs;
                         }
+			else i = -1;
                         if (i == nargs) {
                                 *function = funcdata->func;
                                 *data = funcdata->data;
@@ -831,6 +832,7 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
                 else if (rtypenums[0] == self->types[j*nargs+self->nin]) {
                         i = nargs;
                 }
+		else i = -1;
                 if (i == nargs) {
                         *function = self->functions[j];
                         *data = self->data[j];
