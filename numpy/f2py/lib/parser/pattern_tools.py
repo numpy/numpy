@@ -21,10 +21,13 @@ class Pattern:
     ~p1        -> [ <p1> ]
     ~~p1       -> [ <p1> ]...
     ~~~p1      -> <p1> [ <p1> ]...
-    ~~~~p1     -> <p1> [ <p1> ]...
+    ~~~~p1     -> ~~~p1
     abs(p1)    -> whole string match of <p1>
     p1.named(name) -> match of <p1> has name
     p1.match(string) -> return string match with <p1>
+    p1.flags(<re.I,..>)
+    p1.rsplit(..)
+    p1.lsplit(..)
     """
     _special_symbol_map = {'.': '[.]',
                            '*': '[*]',
@@ -41,19 +44,27 @@ class Pattern:
                            '}': '\}',
                            '>': '[>]',
                            '<': '[<]',
+                           '=': '[=]'
                            }
 
-    def __init__(self, label, pattern, optional=0):
+    def __init__(self, label, pattern, optional=0, flags=0):
         self.label = label
         self.pattern = pattern
         self.optional = optional
+        self._flags = flags
         return
+
+    def flags(self, *flags):
+        f = self._flags
+        for f1 in flags:
+            f = f | f1
+        return Pattern(self.label, self.pattern, optional=self.optional, flags=f)
 
     def get_compiled(self):
         try:
             return self._compiled_pattern
         except AttributeError:
-            self._compiled_pattern = compiled = re.compile(self.pattern)
+            self._compiled_pattern = compiled = re.compile(self.pattern, self._flags)
             return compiled
 
     def match(self, string):
@@ -69,10 +80,10 @@ class Pattern:
         compiled = self.get_compiled()
         t = compiled.split(string)
         if len(t) < 3: return
-        rhs = t[-1]
-        pattern_match = t[-2]
+        rhs = t[-1].strip()
+        pattern_match = t[-2].strip()
         assert abs(self).match(pattern_match),`pattern_match`
-        lhs = ''.join(t[:-2])
+        lhs = (''.join(t[:-2])).strip()
         return lhs, pattern_match, rhs
 
     def lsplit(self, string):
@@ -85,14 +96,14 @@ class Pattern:
         compiled = self.get_compiled()
         t = compiled.split(string) # can be optimized
         if len(t) < 3: return
-        lhs = t[0]
-        pattern_match = t[1]
-        rhs = ''.join(t[2:])
+        lhs = t[0].strip()
+        pattern_match = t[1].strip()
+        rhs = (''.join(t[2:])).strip()
         assert abs(self).match(pattern_match),`pattern_match`
         return lhs, pattern_match, rhs
 
     def __abs__(self):
-        return Pattern(self.label, r'\A' + self.pattern+ r'\Z')
+        return Pattern(self.label, r'\A' + self.pattern+ r'\Z',flags=self._flags)
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.label, self.pattern)
@@ -101,54 +112,61 @@ class Pattern:
         label = '( %s OR %s )' % (self.label, other.label)
         if self.pattern==other.pattern:
             pattern = self.pattern
+            flags = self._flags
         else:
             pattern = '(%s|%s)' % (self.pattern, other.pattern)
-        return Pattern(label, pattern)
+            flags = self._flags | other._flags
+        return Pattern(label, pattern, flags=flags)
 
     def __and__(self, other):
         if isinstance(other, Pattern):
             label = '%s%s' % (self.label, other.label)
             pattern = self.pattern + other.pattern
+            flags = self._flags | other._flags
         else:
             assert isinstance(other,str),`other`
             label = '%s%s' % (self.label, other)
             pattern = self.pattern + other
-        return Pattern(label, pattern)
+            flags = self._flags
+        return Pattern(label, pattern, flags=flags)
 
     def __rand__(self, other):
         assert isinstance(other,str),`other`
         label = '%s%s' % (other, self.label)
         pattern = other + self.pattern
-        return Pattern(label, pattern)
+        return Pattern(label, pattern, flags=self._flags)
 
     def __invert__(self):
         if self.optional:
             if self.optional==1:
-                return Pattern(self.label + '...', self.pattern[:-1] + '*', 2)
+                return Pattern(self.label + '...', self.pattern[:-1] + '*', optional=2,flags=self._flags)
             if self.optional==2:
-                return Pattern('%s %s' % (self.label[1:-4].strip(), self.label), self.pattern[:-1] + '+', 3)
+                return Pattern('%s %s' % (self.label[1:-4].strip(), self.label), self.pattern[:-1] + '+',
+                               optional=3, flags=self._flags)
             return self
         label = '[ %s ]' % (self.label)
         pattern = '(%s)?' % (self.pattern)
-        return Pattern(label, pattern, 1)
+        return Pattern(label, pattern, optional=1, flags=self._flags)
 
     def __add__(self, other):
         if isinstance(other, Pattern):
             label = '%s %s' % (self.label, other.label)
             pattern = self.pattern + r'\s*' + other.pattern
+            flags = self._flags | other._flags
         else:
             assert isinstance(other,str),`other`
             label = '%s %s' % (self.label, other)
             other = self._special_symbol_map.get(other, other)
             pattern = self.pattern + r'\s*' + other
-        return Pattern(label, pattern)
+            flags = self._flags
+        return Pattern(label, pattern, flags = flags)
 
     def __radd__(self, other):
         assert isinstance(other,str),`other`
         label = '%s %s' % (other, self.label)
         other = self._special_symbol_map.get(other, other)
         pattern = other + r'\s*' + self.pattern
-        return Pattern(label, pattern)
+        return Pattern(label, pattern, flags=self._flags)
 
     def named(self, name = None):
         if name is None:
@@ -157,45 +175,54 @@ class Pattern:
         else:
             label = '<%s>' % (name)
         pattern = '(?P%s%s)' % (label.replace('-','_'), self.pattern)
-        return Pattern(label, pattern)
+        return Pattern(label, pattern, flags=self._flags)
 
     def rename(self, label):
         if label[0]+label[-1]!='<>':
             label = '<%s>' % (label)
-        return Pattern(label, self.pattern, self.optional)
+        return Pattern(label, self.pattern, optional=self.optional, flags=self._flags)
 
 # Predefined patterns
 
-letter = Pattern('<letter>','[a-zA-Z]')
-name = Pattern('<name>', r'[a-zA-Z]\w*')
+letter = Pattern('<letter>','[A-Z]',flags=re.I)
+name = Pattern('<name>', r'[A-Z]\w*',flags=re.I)
 digit = Pattern('<digit>',r'\d')
 underscore = Pattern('<underscore>', '_')
-hex_digit = Pattern('<hex-digit>',r'[\da-fA-F]')
+binary_digit = Pattern('<binary-digit>',r'[01]')
+octal_digit = Pattern('<octal-digit>',r'[0-7]')
+hex_digit = Pattern('<hex-digit>',r'[\dA-F]',flags=re.I)
 
 digit_string = Pattern('<digit-string>',r'\d+')
-hex_digit_string = Pattern('<hex-digit-string>',r'[\da-fA-F]+')
+binary_digit_string = Pattern('<binary-digit-string>',r'[01]+')
+octal_digit_string = Pattern('<octal-digit-string>',r'[0-7]+')
+hex_digit_string = Pattern('<hex-digit-string>',r'[\dA-F]+',flags=re.I)
 
 sign = Pattern('<sign>',r'[+-]')
-exponent_letter = Pattern('<exponent-letter>',r'[ED]')
+exponent_letter = Pattern('<exponent-letter>',r'[ED]',flags=re.I)
 
-alphanumeric_character = Pattern('<alphanumeric-character>','\w') # [a-z0-9_]
+alphanumeric_character = Pattern('<alphanumeric-character>',r'\w') # [A-Z0-9_]
 special_character = Pattern('<special-character>',r'[ =+-*/\()[\]{},.:;!"%&~<>?,\'`^|$#@]')
 character = alphanumeric_character | special_character
 
 kind_param = digit_string | name
+kind_param_named = kind_param.named('kind-param')
 signed_digit_string = ~sign + digit_string
 int_literal_constant = digit_string + ~('_' + kind_param)
 signed_int_literal_constant = ~sign + int_literal_constant
 
-binary_constant = '[Bb]' + ("'" & digit_string & "'" | '"' & digit_string & '"')
-octal_constant = '[Oo]' + ("'" & digit_string & "'" | '"' & digit_string & '"')
-hex_constant = '[Zz]' + ("'" & hex_digit_string & "'" | '"' & hex_digit_string & '"')
+int_literal_constant_named = digit_string.named('value') + ~ ('_' + kind_param_named)
+
+binary_constant = ('B' + ("'" & binary_digit_string & "'" | '"' & binary_digit_string & '"')).flags(re.I)
+octal_constant = ('O' + ("'" & octal_digit_string & "'" | '"' & octal_digit_string & '"')).flags(re.I)
+hex_constant = ('Z' + ("'" & hex_digit_string & "'" | '"' & hex_digit_string & '"')).flags(re.I)
 boz_literal_constant = binary_constant | octal_constant | hex_constant
 
 exponent = signed_digit_string
 significand = digit_string + '.' + ~digit_string | '.' + digit_string
 real_literal_constant = significand + ~(exponent_letter + exponent) + ~ ('_' + kind_param) | \
                         digit_string + exponent_letter + exponent + ~ ('_' + kind_param)
+real_literal_constant_named = (significand + ~(exponent_letter + exponent) |\
+                               digit_string + exponent_letter + exponent).named('value') +  ~ ('_' + kind_param_named)
 signed_real_literal_constant = ~sign + real_literal_constant
 
 named_constant = name
@@ -203,32 +230,58 @@ real_part = signed_int_literal_constant | signed_real_literal_constant | named_c
 imag_part = real_part
 complex_literal_constant = '(' + real_part + ',' + imag_part + ')'
 
-char_literal_constant = ~( kind_param + '_') + "'.*'" | ~( kind_param + '_') + '".*"'
+a_n_rep_char = Pattern('<alpha-numeric-rep-char>',r'\w')
+rep_char = Pattern('<rep-char>',r'.')
+char_literal_constant = ~( kind_param + '_') + ("'" + ~~rep_char + "'" | '"' + ~~rep_char + '"' )
+a_n_char_literal_constant_named1 = ~( kind_param_named + '_') + (~~~("'" + ~~a_n_rep_char + "'" )).named('value')
+a_n_char_literal_constant_named2 = ~( kind_param_named + '_') + (~~~('"' + ~~a_n_rep_char + '"' )).named('value')
 
-logical_literal_constant = '[.](TRUE|FALSE)[.]' + ~ ('_' + kind_param)
+logical_literal_constant = ('[.](TRUE|FALSE)[.]' + ~ ('_' + kind_param)).flags(re.I)
+logical_literal_constant_named = Pattern('<value>',r'[.](TRUE|FALSE)[.]',flags=re.I).named() + ~ ('_' + kind_param_named)
 literal_constant = int_literal_constant | real_literal_constant | complex_literal_constant | logical_literal_constant | char_literal_constant | boz_literal_constant
 constant = literal_constant | named_constant
 int_constant = int_literal_constant | boz_literal_constant | named_constant
 char_constant = char_literal_constant | named_constant
-abs_constant = abs(constant)
+
 
 power_op = Pattern('<power-op>','[*]{2}')
 mult_op = Pattern('<mult-op>','[*/]')
 add_op = Pattern('<add-op>','[+-]')
 concat_op = Pattern('<concat-op>','[/]{}')
-rel_op = Pattern('<rel-op>','([.](EQ|NE|LT|LE|GT|GE)[.])|[=]{2}|/[=]|[<]|[<][=]|[>]|[=][>]')
-not_op = Pattern('<not-op>','[.]NOT[.]')
-and_op = Pattern('<and-op>','[.]AND[.]')
-or_op = Pattern('<or-op>','[.]OR[.]')
-equiv_op = Pattern('<equiv-op>','[.](EQV|NEQV)[.]')
+rel_op = Pattern('<rel-op>','([.](EQ|NE|LT|LE|GT|GE)[.])|[=]{2}|/[=]|[<]|[<][=]|[>]|[=][>]',flags=re.I)
+not_op = Pattern('<not-op>','[.]NOT[.]',flags=re.I)
+and_op = Pattern('<and-op>','[.]AND[.]',flags=re.I)
+or_op = Pattern('<or-op>','[.]OR[.]',flags=re.I)
+equiv_op = Pattern('<equiv-op>','[.](EQV|NEQV)[.]',flags=re.I)
 intrinsic_operator = power_op | mult_op | add_op | concat_op | rel_op | not_op | and_op | or_op | equiv_op
 extended_intrinsic_operator = intrinsic_operator
 
-defined_unary_op = Pattern('<defined-unary-op>','[.][a-zA-Z]+[.]')
-defined_binary_op = Pattern('<defined-binary-op>','[.][a-zA-Z]+[.]')
+defined_unary_op = Pattern('<defined-unary-op>','[.][A-Z]+[.]',flags=re.I)
+defined_binary_op = Pattern('<defined-binary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_operator = defined_unary_op | defined_binary_op | extended_intrinsic_operator
 
 label = Pattern('<label>','\d{1,5}')
+
+keyword = name
+keyword_equal = keyword + '='
+
+abs_constant = abs(constant)
+abs_literal_constant = abs(literal_constant)
+abs_int_literal_constant = abs(int_literal_constant)
+abs_int_literal_constant_named = abs(int_literal_constant_named)
+abs_real_literal_constant = abs(real_literal_constant)
+abs_real_literal_constant_named = abs(real_literal_constant_named)
+abs_complex_literal_constant = abs(complex_literal_constant)
+abs_logical_literal_constant = abs(logical_literal_constant)
+abs_char_literal_constant = abs(char_literal_constant)
+abs_boz_literal_constant = abs(boz_literal_constant)
+abs_name = abs(name)
+abs_a_n_char_literal_constant_named1 = abs(a_n_char_literal_constant_named1)
+abs_a_n_char_literal_constant_named2 = abs(a_n_char_literal_constant_named2)
+abs_logical_literal_constant_named = abs(logical_literal_constant_named)
+abs_binary_constant = abs(binary_constant)
+abs_octal_constant = abs(octal_constant)
+abs_hex_constant = abs(hex_constant)
 
 def _test():
     assert name.match('a1_a')
