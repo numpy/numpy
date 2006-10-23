@@ -1613,21 +1613,23 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
         */
         if (kwds != NULL) {
                 PyObject *key, *value;
-                Py_ssize_t pos;
+                Py_ssize_t pos=0;
                 while (PyDict_Next(kwds, &pos, &key, &value)) {
                         if (!PyString_Check(key)) {
-                                PyErr_SetString(PyExc_TypeError, "invalid keyword");
+                                PyErr_SetString(PyExc_TypeError, 
+                                                "invalid keyword");
                                 goto fail;
                         }
-                        if (strncmp(PyString_AS_STRING(key), "extobj", 6) == 0) {
+                        if (strncmp(PyString_AS_STRING(key),"extobj",6) == 0) {
                                 extobj = value;
                         }
-                        else if (strncmp(PyString_AS_STRING(key), "sig", 5) == 0) {
+                        else if (strncmp(PyString_AS_STRING(key),"sig",5)==0) {
                                 typetup = value;
                         }
                         else {
                                 PyErr_Format(PyExc_TypeError, 
-                                             "'%s' is an invalid keyword to %s",
+                                             "'%s' is an invalid keyword " \
+                                             "to %s",
                                              PyString_AS_STRING(key), name);
                                 goto fail;
                         }
