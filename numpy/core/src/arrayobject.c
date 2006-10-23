@@ -10562,6 +10562,13 @@ PyArray_DescrNew(PyArray_Descr *base)
 static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
+        if (self->fields == Py_None) {
+                fprintf(stderr, "*** Reference count error detected: \n" \
+                        "an attempt was made to deallocate %d (%c) ***\n", 
+                        self->type_num, self->type);
+                Py_INCREF(self);
+                return;
+        }
         Py_XDECREF(self->typeobj);
         Py_XDECREF(self->names);
         Py_XDECREF(self->fields);
