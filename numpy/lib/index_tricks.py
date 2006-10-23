@@ -78,7 +78,7 @@ def ix_(*args):
         if issubclass(new.dtype.type, _nx.bool_):
             new = new.nonzero()[0]
         baseshape[k] = len(new)
-        new.shape = tuple(baseshape)
+        new = new.reshape(tuple(baseshape))
         out.append(new)
         baseshape[k] = 1
     return tuple(out)
