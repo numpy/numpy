@@ -1667,18 +1667,73 @@ UNICODE_compare(register PyArray_UCS4 *ip1, register PyArray_UCS4 *ip2,
         return 0;
 }
 
-/* possibly redefine compare in terms of fields and subarrays if any */
-/* this would have to properly align data (if needed for the type)
-   before passing on to the _compare function of sub-fields
+/* If fields are defined, then compare on first field and if equal
+   compare on second field.  Continue until done or comparison results
+   in not_equal. 
 
-   More importantly, it's unclear what is meant by < and > so we really
-   can't implement it correctly.
+   Must align data passed on to sub-comparisons. 
 */
 
 static int
 VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 {
-        return STRING_compare(ip1, ip2, ap);
+        PyArray_Descr *descr, *new;
+        PyObject *names, *key;
+        PyObject *tup, *title;
+        char *nip1, *nip2;
+        int i, offset, res=0;
+
+        if (!PyArray_HASFIELDS(ap)) 
+                return STRING_compare(ip1, ip2, ap);
+        
+        descr = ap->descr;
+        /* Compare on the first-field.  If equal, then
+           compare on the second-field, etc.
+        */
+        names = descr->names;
+        for (i=0; i<PyTuple_GET_SIZE(names); i++) {
+                key = PyTuple_GET_ITEM(names, i);
+                tup = PyDict_GetItem(descr->fields, key);
+                if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset,
+                                      &title)) {
+                        goto finish;
+                }
+                ap->descr = new;
+                nip1 = ip1+offset;
+                nip2 = ip2+offset;
+                if (new->alignment > 1) {
+                        if (((intp)(nip1) % new->alignment) != 0) {
+                                /* create buffer and copy */
+                                nip1 = _pya_malloc(new->elsize);
+                                if (nip1 == NULL) goto finish;
+                                memcpy(nip1, ip1+offset, new->elsize);
+                        }
+                        if (((intp)(nip2) % new->alignment) != 0) {
+                            /* copy data to a buffer */
+                                nip2 = _pya_malloc(new->elsize);
+                                if (nip2 == NULL) {
+                                        if (nip1 != ip1+offset) 
+                                                _pya_free(nip1);
+                                        goto finish;
+                                }
+                                memcpy(nip2, ip2+offset, new->elsize);
+                        }
+                }
+                res = new->f->compare(nip1, nip2, ap);
+                if (new->alignment > 1) {
+                        if (nip1 != ip1+offset) {
+                                _pya_free(nip1);
+                        }
+                        if (nip2 != ip2+offset) {
+                                _pya_free(nip2);
+                        }
+                }
+                if (res != 0) break;
+        }
+
+ finish:
+        ap->descr = descr;
+        return res;
 }
 
 /****************** argfunc **********************************/

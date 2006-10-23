@@ -1634,7 +1634,7 @@ typedef struct {
 #define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)obj)->type_num)
 #define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)obj)->type_num)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)obj)->names)
+#define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)obj)->names != NULL)
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
