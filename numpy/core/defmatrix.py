@@ -289,7 +289,10 @@ class matrix(N.ndarray):
 
     def getA(self):
         return self.__array__()
-
+    
+    def getA1(self):
+        return self.__array__().ravel()
+    
     def getT(self):
         return self.transpose()
 
@@ -301,6 +304,7 @@ class matrix(N.ndarray):
 
     T = property(getT, None, doc="transpose")
     A = property(getA, None, doc="base array")
+    A1 = property(getA1, None, doc="1-d base array")
     H = property(getH, None, doc="hermitian (conjugate) transpose")
     I = property(getI, None, doc="inverse")
 
