@@ -311,7 +311,7 @@ typedef struct _loop1d_info {
 		| ((FP_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
 		| ((FP_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
 		| ((FP_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
-	fp_clr_flag( FP_DIV_BY_ZERO | FP_OVERFLOW | FP_UNDERFLOW | FP_INVALID); \
+	fp_swap_flag(0); \
 }
 
 #define generate_divbyzero_error() fp_raise_xcp(FP_DIV_BY_ZERO)
