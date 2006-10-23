@@ -84,10 +84,10 @@ class test_regression(NumpyTestCase):
 
     def check_noncontiguous_fill(self,level=rlevel):
         """Ticket #58."""
-        a = N.zeros((4,2))
-        b = a[:,1]
+        a = N.zeros((5,3))
+	b = a[:,:2,]
         def rs():
-            b.shape = (2,2)
+            b.shape = (10,)
         self.failUnlessRaises(AttributeError,rs)
         
     def check_bool(self,level=rlevel):

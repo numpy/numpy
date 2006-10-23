@@ -411,6 +411,120 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 	return 0;
 }
 
+/* attempt to reshape an array without copying data
+ *
+ * This function should correctly handle all reshapes, including 
+ * axes of length 1. Zero strides should work but are untested.
+ *
+ * If a copy is needed, returns 0
+ * If no copy is needed, returns 1 and fills newstrides 
+ *     with appropriate strides
+ *
+ * The "fortran" argument describes how the array should be viewed
+ * during the reshape, not how it is stored in memory (that 
+ * information is in self->strides).
+ *
+ * If some output dimensions have length 1, the strides assigned to
+ * them are arbitrary. In the current implementation, they are the
+ * stride of the next-fastest index.
+ */
+static int
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims, 
+			intp *newstrides, int fortran)
+{
+	int oldnd;
+	intp olddims[MAX_DIMS];
+	intp oldstrides[MAX_DIMS];
+	int oi, oj, ok, ni, nj, nk;
+	int np, op;
+
+	oldnd = 0;
+	for (oi=0; oi<self->nd; oi++) {
+		if (self->dimensions[oi]!=1) {
+			olddims[oldnd] = self->dimensions[oi];
+			oldstrides[oldnd] = self->strides[oi];
+			oldnd++;
+		}
+	}
+
+	/*
+	fprintf(stderr, "_attempt_nocopy_reshape( (");
+	for (oi=0; oi<oldnd; oi++) 
+		fprintf(stderr, "(%d,%d), ", olddims[oi], oldstrides[oi]);
+	fprintf(stderr, ") -> (");
+	for (ni=0; ni<newnd; ni++) 
+		fprintf(stderr, "(%d,*), ", newdims[ni]);
+	fprintf(stderr, "), fortran=%d)\n", fortran);
+	*/
+
+
+	np = 1;
+	for (ni=0; ni<newnd; ni++) np*=newdims[ni];
+
+	op = 1;
+	for (oi=0; oi<oldnd; oi++) op*=olddims[oi];
+
+	if (np != op) return 0; /* different total sizes; no hope */
+
+
+	oi = 0;
+	oj = 1;
+	ni = 0;
+	nj = 1;
+
+	while(ni<newnd && oi<oldnd) {
+
+		np = newdims[ni];
+		op = olddims[oi];
+
+		while (np!=op) {
+			if (np<op) {
+				np *= newdims[nj++];
+			} else {
+				op *= olddims[oj++];
+			}
+		}
+
+		for(ok=oi; ok<oj-1; ok++) {
+			if (fortran) {
+				if (oldstrides[ok+1] !=		\
+				    olddims[ok]*oldstrides[ok]) 
+					return 0; /* not contiguous enough */
+			} else { /* C order */
+				if (oldstrides[ok] !=			\
+				    olddims[ok+1]*oldstrides[ok+1]) 
+					return 0; /* not contiguous enough */
+			}
+		}
+
+		if (fortran) {
+			newstrides[ni]=oldstrides[oi];
+			for (nk=ni+1;nk<nj;nk++) 
+				newstrides[nk]=newstrides[nk-1]*newdims[nk-1];
+		} else { /* C order */
+			newstrides[nj-1]=oldstrides[oj-1];
+			for (nk=nj-1;nk>ni;nk--) 
+				newstrides[nk-1]=newstrides[nk]*newdims[nk];
+		}
+
+		ni = nj++;
+		oi = oj++;
+
+	}
+
+	/*
+	fprintf(stderr, "success: _attempt_nocopy_reshape (");
+	for (oi=0; oi<oldnd; oi++) 
+		fprintf(stderr, "(%d,%d), ", olddims[oi], oldstrides[oi]);
+	fprintf(stderr, ") -> (");
+	for (ni=0; ni<newnd; ni++) 
+		fprintf(stderr, "(%d,%d), ", newdims[ni], newstrides[ni]);
+	fprintf(stderr, ")\n");
+	*/
+
+	return 1;
+}
+
 static int
 _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 {
@@ -452,25 +566,6 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 		}
 	}
 	return 0;
-}
-
-/* returns True if self->nd > 1 and all 
-   there is more than one dimension filled with 1.
- */
-static int
-_nd_bigger_than_one(PyArrayObject *arr)
-{
-        int i, nd;
-        int count=0;
-        nd = arr->nd;
-        if (nd > 1) {
-                for (i=0; i<nd; i++) {
-                        if (arr->dimensions[i] > 1)
-                                count++;
-                        if (count > 1) return 1;
-                }
-        }
-        return 0;
 }
 
 /* Returns a new array
@@ -541,14 +636,23 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                     (((PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) && 
                        fortran == NPY_FORTRANORDER)
                       || (PyArray_CHKFLAGS(self, NPY_FORTRAN) && 
-                          fortran == NPY_CORDER)) && 
-                     _nd_bigger_than_one(self))) {
+                          fortran == NPY_CORDER)) && (self->nd > 1))) {
+
+		    int success=0;
+		    success = _attempt_nocopy_reshape(self,n,dimensions,
+                                                      newstrides,fortran);
+		    if (success) {
+			/* no need to copy the array after all */
+			strides = newstrides;
+			flags = self->flags;
+		    } else {
 			PyObject *new;
 			new = PyArray_NewCopy(self, fortran);
 			if (new == NULL) return NULL;
 			incref = FALSE;
 			self = (PyArrayObject *)new;
 			flags = self->flags;
+		    }
 		}
 
 		/* We always have to interpret the contiguous buffer correctly
