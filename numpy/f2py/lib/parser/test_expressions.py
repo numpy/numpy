@@ -4,6 +4,27 @@ from numpy.testing import *
 
 from expressions import *
 
+class test_Expr(NumpyTestCase):
+
+    def check_simple(self):
+        cls = Expr
+        a = cls('a .op. b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a .op. b')
+        assert_equal(repr(a),"Expr(Name('a'), '.op.', Name('b'))")
+
+        a = cls('a')
+        assert isinstance(a,Name),`a`
+        assert_equal(str(a),'a')
+
+class test_Procedure_Designator(NumpyTestCase):
+
+    def check_part_ref(self):
+        cls = Part_Ref
+        a = cls('a')
+        assert isinstance(a, Name),`a`
+        assert_equal(str(a),'a')
+        
 class test_Type_Spec(NumpyTestCase):
 
     def check_kind_selector(self):
@@ -124,6 +145,83 @@ class test_Type_Spec(NumpyTestCase):
         a = cls('double precision')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'DOUBLE PRECISION')
+
+    def check_type_param_spec(self):
+        cls = Type_Param_Spec
+        a = cls('a')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a')
+        assert_equal(repr(a),"Type_Param_Spec(None, Name('a'))")
+
+        a = cls('k=a')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'k = a')
+
+        a = cls('k=:')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'k = :')
+
+    def check_type_param_spec_list(self):
+        cls = Type_Param_Spec_List
+        a = cls('a')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a')
+        assert_equal(repr(a),"Type_Param_Spec_List(Type_Param_Spec(None, Name('a')))")
+
+        a = cls('a,b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a, b')
+
+        a = cls('k=a,c,g=1')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'k = a, c, g = 1')
+
+class test_Type_Param_Inquiry(NumpyTestCase):
+    
+    def check_simple(self):
+        cls = Type_Param_Inquiry
+        a = cls('a % b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a % b')
+        assert_equal(repr(a),"Type_Param_Inquiry(Name('a'), '%', Name('b'))")
+
+class test_Function_Reference(NumpyTestCase):
+
+    def check_simple(self):
+        cls = Function_Reference
+        a = cls('f()')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'f()')
+        assert_equal(repr(a),"Function_Reference(Name('f'), '(', None, ')')")
+
+        a = cls('f(2,k=1,a)')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'f(2, k = 1, a)')
+
+class test_Structure_Constructor(NumpyTestCase):
+
+    def check_proc_component_ref(self):
+        cls = Proc_Component_Ref
+        a = cls('a % b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a % b')
+        assert_equal(repr(a),"Proc_Component_Ref(Name('a'), '%', Name('b'))")
+
+    def check_structure_constructor(self):
+        cls = Structure_Constructor
+        a = cls('t()')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'t()')
+        assert_equal(repr(a),"Structure_Constructor(Derived_Type_Spec(Name('t'), None), '(', None, ')')")
+
+        a = cls('t(s=1, a)')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'t(s = 1, a)')
+
+        a = cls('a=k')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a = k')
+        assert_equal(repr(a),"Structure_Constructor(Name('a'), Name('k'))")
     
 class test_Array_Constructor(NumpyTestCase):
 

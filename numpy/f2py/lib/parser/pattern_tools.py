@@ -26,8 +26,8 @@ class Pattern:
     p1.named(name) -> match of <p1> has name
     p1.match(string) -> return string match with <p1>
     p1.flags(<re.I,..>)
-    p1.rsplit(..)
-    p1.lsplit(..)
+    p1.rsplit(..) -> split a string from the rightmost p1 occurrence
+    p1.lsplit(..) -> split a string from the leftmost p1 occurrence
     """
     _special_symbol_map = {'.': '[.]',
                            '*': '[*]',
@@ -253,6 +253,7 @@ not_op = Pattern('<not-op>','[.]NOT[.]',flags=re.I)
 and_op = Pattern('<and-op>','[.]AND[.]',flags=re.I)
 or_op = Pattern('<or-op>','[.]OR[.]',flags=re.I)
 equiv_op = Pattern('<equiv-op>','[.](EQV|NEQV)[.]',flags=re.I)
+percent_op = Pattern('<percent-op>',r'%',flags=re.I)
 intrinsic_operator = power_op | mult_op | add_op | concat_op | rel_op | not_op | and_op | or_op | equiv_op
 extended_intrinsic_operator = intrinsic_operator
 
@@ -282,6 +283,9 @@ abs_logical_literal_constant_named = abs(logical_literal_constant_named)
 abs_binary_constant = abs(binary_constant)
 abs_octal_constant = abs(octal_constant)
 abs_hex_constant = abs(hex_constant)
+
+intrinsic_type_name = Pattern('<intrinsic-type-name>',r'(INTEGER|REAL|COMPLEX|LOGICAL|CHARACTER|DOUBLE\s*COMPLEX|DOUBLE\s*PRECISION|BYTE)',flags=re.I)
+abs_intrinsic_type_name = abs(intrinsic_type_name)
 
 def _test():
     assert name.match('a1_a')
