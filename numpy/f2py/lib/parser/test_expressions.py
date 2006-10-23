@@ -17,6 +17,15 @@ class test_Expr(NumpyTestCase):
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
 
+class test_Designator(NumpyTestCase):
+
+    def check_substring(self):
+        cls = Substring
+        a = cls('a(1:2)')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a(1 : 2)')
+        assert_equal(repr(a),"Substring(Name('a'), Substring_Range(Int_Literal_Constant('1', None), Int_Literal_Constant('2', None)))")
+
 class test_Procedure_Designator(NumpyTestCase):
 
     def check_part_ref(self):
@@ -32,7 +41,7 @@ class test_Type_Spec(NumpyTestCase):
         a = cls('(1)')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(KIND = 1)')
-        assert_equal(repr(a),"Kind_Selector('(', Int_Literal_Constant('1',None), ')')")
+        assert_equal(repr(a),"Kind_Selector('(', Int_Literal_Constant('1', None), ')')")
 
         a = cls('(kind=1+2)')
         assert isinstance(a,cls),`a`
@@ -62,7 +71,7 @@ class test_Type_Spec(NumpyTestCase):
         a = cls('1')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'1')
-        assert_equal(repr(a),"Char_Length(Int_Literal_Constant('1',None))")
+        assert_equal(repr(a),"Char_Length(Int_Literal_Constant('1', None))")
 
         a = cls('(1)')
         assert isinstance(a,cls),`a`
@@ -92,7 +101,7 @@ class test_Type_Spec(NumpyTestCase):
         a = cls('(len=2, kind=8)')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(LEN = 2, KIND = 8)')
-        assert_equal(repr(a),"Char_Selector(Int_Literal_Constant('2',None), Int_Literal_Constant('8',None))")
+        assert_equal(repr(a),"Char_Selector(Int_Literal_Constant('2', None), Int_Literal_Constant('8', None))")
 
 
         a = cls('(2, kind=8)')
@@ -148,10 +157,10 @@ class test_Type_Spec(NumpyTestCase):
 
     def check_type_param_spec(self):
         cls = Type_Param_Spec
-        a = cls('a')
+        a = cls('a=1')
         assert isinstance(a,cls),`a`
-        assert_equal(str(a),'a')
-        assert_equal(repr(a),"Type_Param_Spec(None, Name('a'))")
+        assert_equal(str(a),'a = 1')
+        assert_equal(repr(a),"Type_Param_Spec(Name('a'), '=', Int_Literal_Constant('1', None))")
 
         a = cls('k=a')
         assert isinstance(a,cls),`a`
@@ -163,14 +172,14 @@ class test_Type_Spec(NumpyTestCase):
 
     def check_type_param_spec_list(self):
         cls = Type_Param_Spec_List
-        a = cls('a')
-        assert isinstance(a,cls),`a`
-        assert_equal(str(a),'a')
-        assert_equal(repr(a),"Type_Param_Spec_List(Type_Param_Spec(None, Name('a')))")
 
         a = cls('a,b')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a, b')
+        assert_equal(repr(a),"Type_Param_Spec_List(',', (Name('a'), Name('b')))")
+
+        a = cls('a')
+        assert isinstance(a,Name),`a`
 
         a = cls('k=a,c,g=1')
         assert isinstance(a,cls),`a`
@@ -198,6 +207,61 @@ class test_Function_Reference(NumpyTestCase):
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'f(2, k = 1, a)')
 
+    def check_alt_return_spec(self):
+        cls = Alt_Return_Spec
+        a = cls('* 123')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'*123')
+        assert_equal(repr(a),"Alt_Return_Spec('123')")
+        
+    def check_substring_range(self):
+        cls = Substring_Range
+        a = cls('a:b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a : b')
+        assert_equal(repr(a),"Substring_Range(Name('a'), Name('b'))")
+
+        a = cls('a:')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a :')
+
+        a = cls(':b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),': b')
+
+        a = cls(':')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),':')
+
+    def check_array_section(self):
+        cls = Array_Section
+        a = cls('a(:)')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a(:)')
+        assert_equal(repr(a),"Array_Section(Name('a'), Substring_Range(None, None))")
+
+        a = cls('a(2:)')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a(2 :)')
+
+    def check_procedure_designator(self):
+        cls = Procedure_Designator
+        a = cls('a%b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a % b')
+        assert_equal(repr(a),"Procedure_Designator(Name('a'), '%', Name('b'))")
+        
+    def check_data_ref(self):
+        cls = Data_Ref
+        a = cls('a%b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'a % b')
+        assert_equal(repr(a),"Data_Ref('%', (Name('a'), Name('b')))")
+
+        a = cls('a')
+        assert isinstance(a,Name),`a`
+        assert_equal(str(a),'a')
+
 class test_Structure_Constructor(NumpyTestCase):
 
     def check_proc_component_ref(self):
@@ -219,9 +283,13 @@ class test_Structure_Constructor(NumpyTestCase):
         assert_equal(str(a),'t(s = 1, a)')
 
         a = cls('a=k')
-        assert isinstance(a,cls),`a`
+        assert isinstance(a,Structure_Constructor_2),`a`
         assert_equal(str(a),'a = k')
-        assert_equal(repr(a),"Structure_Constructor(Name('a'), Name('k'))")
+        assert_equal(repr(a),"Structure_Constructor_2(Name('a'), '=', Name('k'))")
+
+        a = cls('a')
+        assert isinstance(a,Name),`a`
+        assert_equal(str(a),'a')
     
 class test_Array_Constructor(NumpyTestCase):
 
@@ -230,7 +298,7 @@ class test_Array_Constructor(NumpyTestCase):
         a = cls('n = 3, 5')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'n = 3, 5')
-        assert_equal(repr(a),"Ac_Implied_Do_Control(Name('n'), [Int_Literal_Constant('3',None), Int_Literal_Constant('5',None)])")
+        assert_equal(repr(a),"Ac_Implied_Do_Control(Name('n'), [Int_Literal_Constant('3', None), Int_Literal_Constant('5', None)])")
 
         a = cls('n = 3+1, 5, 1')
         assert isinstance(a,cls),`a`
@@ -241,10 +309,10 @@ class test_Array_Constructor(NumpyTestCase):
         a = cls('a, b')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a, b')
-        assert_equal(repr(a),"Ac_Value_List(Name('a'), Name('b'))")
+        assert_equal(repr(a),"Ac_Value_List(',', (Name('a'), Name('b')))")
 
         a = cls('a')
-        assert isinstance(a,cls),`a`
+        assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
         
     def check_ac_implied_do(self):
@@ -252,7 +320,7 @@ class test_Array_Constructor(NumpyTestCase):
         a = cls('( a, b, n = 1, 5 )')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(a, b, n = 1, 5)')
-        assert_equal(repr(a),"Ac_Implied_Do(Ac_Value_List(Name('a'), Name('b')), Ac_Implied_Do_Control(Name('n'), [Int_Literal_Constant('1',None), Int_Literal_Constant('5',None)]))")
+        assert_equal(repr(a),"Ac_Implied_Do(Ac_Value_List(',', (Name('a'), Name('b'))), Ac_Implied_Do_Control(Name('n'), [Int_Literal_Constant('1', None), Int_Literal_Constant('5', None)]))")
 
     def check_ac_spec(self):
         cls = Ac_Spec
@@ -292,12 +360,12 @@ class test_Constant(NumpyTestCase):
         a = cls('1')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'1')
-        assert_equal(repr(a),"%s('1',None)" % (cls.__name__))
+        assert_equal(repr(a),"%s('1', None)" % (cls.__name__))
 
         a = cls('21_2')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'21_2')
-        assert_equal(repr(a),"%s('21','2')" % (cls.__name__))
+        assert_equal(repr(a),"%s('21', '2')" % (cls.__name__))
 
         a = cls('21_SHORT')
         assert isinstance(a,cls),`a`
@@ -316,12 +384,12 @@ class test_Constant(NumpyTestCase):
         a = cls('12.78')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'12.78')
-        assert_equal(repr(a),"%s('12.78',None)" % (cls.__name__))
+        assert_equal(repr(a),"%s('12.78', None)" % (cls.__name__))
 
         a = cls('12.78_8')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'12.78_8')
-        assert_equal(repr(a),"%s('12.78','8')" % (cls.__name__))
+        assert_equal(repr(a),"%s('12.78', '8')" % (cls.__name__))
 
         a = cls('12.')
         assert isinstance(a,cls),`a`
@@ -371,7 +439,7 @@ class test_Constant(NumpyTestCase):
         a = cls('(1.0, -1.0)')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(1.0, -1.0)')
-        assert_equal(repr(a),"%s(Real_Part(None, Real_Literal_Constant('1.0',None)), Imag_Part('-', Real_Literal_Constant('1.0',None)))" % (cls.__name__))
+        assert_equal(repr(a),"Complex_Literal_Constant(Signed_Real_Literal_Constant('1.0', None), Signed_Real_Literal_Constant('-1.0', None))")
 
         a = cls('(3,3.1E6)')
         assert isinstance(a,cls),`a`

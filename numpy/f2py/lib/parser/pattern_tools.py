@@ -209,8 +209,8 @@ kind_param_named = kind_param.named('kind-param')
 signed_digit_string = ~sign + digit_string
 int_literal_constant = digit_string + ~('_' + kind_param)
 signed_int_literal_constant = ~sign + int_literal_constant
-
 int_literal_constant_named = digit_string.named('value') + ~ ('_' + kind_param_named)
+signed_int_literal_constant_named = (~sign + digit_string).named('value') + ~ ('_' + kind_param_named)
 
 binary_constant = ('B' + ("'" & binary_digit_string & "'" | '"' & binary_digit_string & '"')).flags(re.I)
 octal_constant = ('O' + ("'" & octal_digit_string & "'" | '"' & octal_digit_string & '"')).flags(re.I)
@@ -223,6 +223,8 @@ real_literal_constant = significand + ~(exponent_letter + exponent) + ~ ('_' + k
                         digit_string + exponent_letter + exponent + ~ ('_' + kind_param)
 real_literal_constant_named = (significand + ~(exponent_letter + exponent) |\
                                digit_string + exponent_letter + exponent).named('value') +  ~ ('_' + kind_param_named)
+signed_real_literal_constant_named = (~sign + (significand + ~(exponent_letter + exponent) |\
+                               digit_string + exponent_letter + exponent)).named('value') +  ~ ('_' + kind_param_named)
 signed_real_literal_constant = ~sign + real_literal_constant
 
 named_constant = name
@@ -262,6 +264,7 @@ defined_binary_op = Pattern('<defined-binary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_operator = defined_unary_op | defined_binary_op | extended_intrinsic_operator
 
 label = Pattern('<label>','\d{1,5}')
+abs_label = abs(label)
 
 keyword = name
 keyword_equal = keyword + '='
@@ -269,8 +272,12 @@ keyword_equal = keyword + '='
 abs_constant = abs(constant)
 abs_literal_constant = abs(literal_constant)
 abs_int_literal_constant = abs(int_literal_constant)
+abs_signed_int_literal_constant = abs(signed_int_literal_constant)
+abs_signed_int_literal_constant_named = abs(signed_int_literal_constant_named)
 abs_int_literal_constant_named = abs(int_literal_constant_named)
 abs_real_literal_constant = abs(real_literal_constant)
+abs_signed_real_literal_constant = abs(signed_real_literal_constant)
+abs_signed_real_literal_constant_named = abs(signed_real_literal_constant_named)
 abs_real_literal_constant_named = abs(real_literal_constant_named)
 abs_complex_literal_constant = abs(complex_literal_constant)
 abs_logical_literal_constant = abs(logical_literal_constant)
