@@ -145,7 +145,7 @@ class test_matrix_return(NumpyTestCase):
             }
         excluded_methods = [
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
-            'getA', 'item', 'nonzero', 'put', 'putmask', 'resize',
+            'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort', 'take',
             'tofile', 'tolist', 'tostring', 'all', 'any', 'sum',
             'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',

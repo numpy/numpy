@@ -7,6 +7,10 @@ from numpy.core.multiarray import _flagdict, flagsobj
 
 try:
     import ctypes
+    if ctypes.__version__ < '1.0.1':
+        import warnings
+        warnings.warn("All features of ctypes interface may not work with " \
+                      "ctypes < 1.0.1")
 except ImportError:
     ctypes = None
 
@@ -91,14 +95,14 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     since several restrictions can be specified, which are verified
     upon calling the ctypes function.  These include data type
     (dtype), number of dimensions (ndim), shape and flags (e.g.
-    'CONTIGUOUS' or 'FORTRAN').  If a given array does not satisfy the
+    'C_CONTIGUOUS' or 'F_CONTIGUOUS').  If a given array does not satisfy the
     specified restrictions, a TypeError is raised.
     
     Example:
         
         clib.somefunc.argtypes = [ndpointer(dtype=float64,
                                             ndim=1,
-                                            flags='CONTIGUOUS')]
+                                            flags='C_CONTIGUOUS')]
         clib.somefunc(array([1,2,3],dtype=float64))
 
     """

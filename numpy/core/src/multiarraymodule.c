@@ -7151,7 +7151,11 @@ set_flaginfo(PyObject *d)
         Py_DECREF(s);
         PyDict_SetItemString(newd, "FORTRAN", s=PyInt_FromLong(FORTRAN));
         Py_DECREF(s);
+        PyDict_SetItemString(newd, "F_CONTIGUOUS", s=PyInt_FromLong(FORTRAN));
+        Py_DECREF(s);
         PyDict_SetItemString(newd, "CONTIGUOUS", s=PyInt_FromLong(CONTIGUOUS));
+        Py_DECREF(s);
+        PyDict_SetItemString(newd, "C_CONTIGUOUS", s=PyInt_FromLong(CONTIGUOUS));
         Py_DECREF(s);
         PyDict_SetItemString(newd, "ALIGNED", s=PyInt_FromLong(ALIGNED));
         Py_DECREF(s);
