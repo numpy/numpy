@@ -1689,7 +1689,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 if (PyObject_IsTrue(uic)) {
 			self->flags = flagback;
                         PyErr_SetString(PyExc_ValueError,
-                                        "cannot set UPDATEIFCOPY"       \
+                                        "cannot set UPDATEIFCOPY "       \
                                         "flag to True");
                         return NULL;
                 }

@@ -159,13 +159,17 @@ def require(a, dtype=None, requirements=None):
         subok = 0
     else:
         subok = 1
-
+        
     arr = array(a, dtype=dtype, copy=False, subok=subok)
 
     copychar = 'A'
-    if 'FORTRAN' in requirements or 'F' in requirements:
+    if 'FORTRAN' in requirements or \
+       'F_CONTIGUOUS' in requirements or \
+       'F' in requirements:
         copychar = 'F'
-    elif 'CONTIGUOUS' in requirements or 'C' in requirements:
+    elif 'CONTIGUOUS' in requirements or \
+         'C_CONTIGUOUS' in requirements or \
+         'C' in requirements:
         copychar = 'C'
 
     for prop in requirements:
@@ -175,7 +179,7 @@ def require(a, dtype=None, requirements=None):
     return arr   
 
 def isfortran(a):
-    """Returns True if 'a' is laid out in Fortran-order in memory (and a.ndim > 1)
+    """Returns True if 'a' is arranged in Fortran-order in memory with a.ndim > 1
     """
     return a.flags.fnc
 
