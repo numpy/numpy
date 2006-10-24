@@ -7147,23 +7147,27 @@ set_flaginfo(PyObject *d)
 
         newd = PyDict_New();
 
-        PyDict_SetItemString(newd, "OWNDATA", s=PyInt_FromLong(OWNDATA));
-        Py_DECREF(s);
-        PyDict_SetItemString(newd, "FORTRAN", s=PyInt_FromLong(FORTRAN));
-        Py_DECREF(s);
-        PyDict_SetItemString(newd, "F_CONTIGUOUS", s=PyInt_FromLong(FORTRAN));
-        Py_DECREF(s);
-        PyDict_SetItemString(newd, "CONTIGUOUS", s=PyInt_FromLong(CONTIGUOUS));
-        Py_DECREF(s);
-        PyDict_SetItemString(newd, "C_CONTIGUOUS", s=PyInt_FromLong(CONTIGUOUS));
-        Py_DECREF(s);
-        PyDict_SetItemString(newd, "ALIGNED", s=PyInt_FromLong(ALIGNED));
-        Py_DECREF(s);
+#define _addnew(val, one) \
+        PyDict_SetItemString(newd, #val, s=PyInt_FromLong(val)); \
+        Py_DECREF(s); \
+        PyDict_SetItemString(newd, #one, s=PyInt_FromLong(val)); \
+        Py_DECREF(s)
 
-        PyDict_SetItemString(newd, "UPDATEIFCOPY", s=PyInt_FromLong(UPDATEIFCOPY));
-        Py_DECREF(s);
-        PyDict_SetItemString(newd, "WRITEABLE", s=PyInt_FromLong(WRITEABLE));
-        Py_DECREF(s);
+#define _addone(val) \
+        PyDict_SetItemString(newd, #val, s=PyInt_FromLong(val)); \
+        Py_DECREF(s)
+
+        _addnew(OWNDATA, O);
+        _addnew(FORTRAN, F);
+        _addnew(CONTIGUOUS, C);
+        _addnew(ALIGNED, A);
+        _addnew(UPDATEIFCOPY, U);
+        _addnew(WRITEABLE, W);
+        _addone(C_CONTIGUOUS);
+        _addone(F_CONTIGUOUS);
+        
+#undef _addone
+#undef _addnew
 
         PyDict_SetItemString(d, "_flagdict", newd);
         Py_DECREF(newd);

@@ -51,9 +51,12 @@ def _num_fromflags(flaglist):
         num += _flagdict[val]
     return num
 
+_flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE', 
+              'OWNDATA', 'UPDATEIFCOPY']
 def _flags_fromnum(num):
     res = []
-    for key, value in _flagdict.items():
+    for key in _flagnames:
+        value = _flagdict[key]
         if (num & value):
             res.append(key)
     return res

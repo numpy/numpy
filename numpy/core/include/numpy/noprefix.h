@@ -136,7 +136,9 @@ compatibility measure*/
 #define LONGDOUBLE_FMT NPY_LONGDOUBLE_FMT
 
 #define CONTIGUOUS         NPY_CONTIGUOUS
+#define C_CONTIGUOUS       NPY_C_CONTIGUOUS
 #define FORTRAN            NPY_FORTRAN
+#define F_CONTIGUOUS       NPY_F_CONTIGUOUS
 #define OWNDATA            NPY_OWNDATA
 #define FORCECAST          NPY_FORCECAST
 #define ENSURECOPY         NPY_ENSURECOPY
