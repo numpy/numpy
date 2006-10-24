@@ -82,7 +82,7 @@ class Pattern:
         if len(t) < 3: return
         rhs = t[-1].strip()
         pattern_match = t[-2].strip()
-        assert abs(self).match(pattern_match),`pattern_match`
+        assert abs(self).match(pattern_match),`self,string,t,pattern_match`
         lhs = (''.join(t[:-2])).strip()
         return lhs, pattern_match, rhs
 
@@ -248,13 +248,13 @@ char_constant = char_literal_constant | named_constant
 
 power_op = Pattern('<power-op>','[*]{2}')
 mult_op = Pattern('<mult-op>','[*/]')
-add_op = Pattern('<add-op>','[+-]')
-concat_op = Pattern('<concat-op>','[/]{}')
-rel_op = Pattern('<rel-op>','([.](EQ|NE|LT|LE|GT|GE)[.])|[=]{2}|/[=]|[<]|[<][=]|[>]|[=][>]',flags=re.I)
+add_op = Pattern('<add-op>',r'[+-]')
+concat_op = Pattern('<concat-op>',r'[/]{2}')
+rel_op = Pattern('<rel-op>','[.]EQ[.]|[.]NE[.]|[.]LT[.]|[.]LE[.]|[.]GT[.]|[.]GE[.]|[=]{2}|/[=]|[<][=]|[<]|[>][=]|[>]',flags=re.I)
 not_op = Pattern('<not-op>','[.]NOT[.]',flags=re.I)
 and_op = Pattern('<and-op>','[.]AND[.]',flags=re.I)
 or_op = Pattern('<or-op>','[.]OR[.]',flags=re.I)
-equiv_op = Pattern('<equiv-op>','[.](EQV|NEQV)[.]',flags=re.I)
+equiv_op = Pattern('<equiv-op>','[.]EQV[.]|[.]NEQV[.]',flags=re.I)
 percent_op = Pattern('<percent-op>',r'%',flags=re.I)
 intrinsic_operator = power_op | mult_op | add_op | concat_op | rel_op | not_op | and_op | or_op | equiv_op
 extended_intrinsic_operator = intrinsic_operator
@@ -262,6 +262,8 @@ extended_intrinsic_operator = intrinsic_operator
 defined_unary_op = Pattern('<defined-unary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_binary_op = Pattern('<defined-binary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_operator = defined_unary_op | defined_binary_op | extended_intrinsic_operator
+
+non_defined_binary_op = intrinsic_operator | logical_literal_constant
 
 label = Pattern('<label>','\d{1,5}')
 abs_label = abs(label)
