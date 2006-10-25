@@ -543,7 +543,12 @@ class test_regression(NumpyTestCase):
         """Ticket #352"""
         a = N.arange(12).reshape(4,3)[:,2]
         assert_equal(a.repeat(3), [2,2,2,5,5,5,8,8,8,11,11,11])
-        
+
+    def check_array_index(self, level=rlevel):
+        """Make sure optimization is not called in this case."""
+        a = N.array([1,2,3])
+        a2 = N.array([[1,2,3]])
+        assert_equal(a[N.where(a==3)], a2[N.where(a2==3)])
                 
 if __name__ == "__main__":
     NumpyTest().run()
