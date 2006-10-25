@@ -202,7 +202,7 @@ class NumberBase(Base):
     def match(number_pattern, string):
         m = number_pattern.match(string)
         if m is None: return
-        return m.group('value'),m.group('kind_param')
+        return m.group('value').upper(),m.group('kind_param')
     match = staticmethod(match)
     def init(self, value, kind_param):
         self.value = value
@@ -257,6 +257,7 @@ class StringBase(Base):
     def tostr(self): return str(self.string)
     def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.string)
 
+
 ##################################################
 
 class Name(StringBase):
@@ -275,6 +276,9 @@ class Binary_Constant(StringBase):
     subclass_names = []
     def match(string): return StringBase.match(pattern.abs_binary_constant, string)
     match = staticmethod(match)
+    def init(self, string):
+        self.string = string.upper()
+        return
 
 class Octal_Constant(StringBase):
     """
@@ -284,6 +288,9 @@ class Octal_Constant(StringBase):
     subclass_names = []
     def match(string): return StringBase.match(pattern.abs_octal_constant, string)
     match = staticmethod(match)
+    def init(self, string):
+        self.string = string.upper()
+        return
 
 class Hex_Constant(StringBase):
     """
@@ -293,7 +300,9 @@ class Hex_Constant(StringBase):
     subclass_names = []
     def match(string): return StringBase.match(pattern.abs_hex_constant, string)
     match = staticmethod(match)
-
+    def init(self, string):
+        self.string = string.upper()
+        return
 
 class Int_Literal_Constant(NumberBase):
     """
@@ -534,7 +543,7 @@ class Primary(Base):
                 | <type-param-name>
                 | ( <expr> )
     """
-    subclass_names = ['Parenthesis', 'Constant', 'Designator','Array_Constructor','Structure_Constructor',
+    subclass_names = ['Constant', 'Parenthesis', 'Designator','Array_Constructor','Structure_Constructor',
                       'Function_Reference', 'Type_Param_Inquiry', 'Type_Param_Name', 
                        ]
 
@@ -1014,7 +1023,7 @@ class Designator(Base):
     <substring-range> = [ <scalar-int-expr> ] : [ <scalar-int-expr> ]
     <structure-component> = <data-ref>
     """
-    subclass_names = ['Object_Name','Array_Element','Array_Section','Structure_Component',
+    subclass_names = ['Object_Name','Array_Section','Array_Element','Structure_Component',
                       'Substring'
                       ]
 
@@ -1476,8 +1485,10 @@ if 0:
         if lhs==rhs: return 0
         rhs_deps = Base_deps[rhs]
         lhs_deps = Base_deps[lhs]
+        if lhs in rhs_deps and rhs in lhs_deps: return 0
         if lhs in rhs_deps: return -1
         if rhs in lhs_deps: return 1
+        return 0
         return cmp(len(lhs_deps),len(rhs_deps))
 
     for clsname,deps in Base_deps.items():

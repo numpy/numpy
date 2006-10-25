@@ -494,7 +494,7 @@ class test_Real_Literal_Constant(NumpyTestCase):
 
         a = cls('10.9e-17_quad')
         assert isinstance(a,cls),`a`
-        assert_equal(str(a),'10.9e-17_quad')
+        assert_equal(str(a),'10.9E-17_quad')
 
 class test_Signed_Real_Literal_Constant(NumpyTestCase):
 
@@ -551,7 +551,7 @@ class test_Signed_Real_Literal_Constant(NumpyTestCase):
 
         a = cls('-10.9e-17_quad')
         assert isinstance(a,cls),`a`
-        assert_equal(str(a),'-10.9e-17_quad')
+        assert_equal(str(a),'-10.9E-17_quad')
 
 
 class test_Complex_Literal_Constant(NumpyTestCase):
@@ -620,7 +620,7 @@ class test_Logical_Literal_Constant(NumpyTestCase):
 
         a = cls('.True.')
         assert isinstance(a,cls),`a`
-        assert_equal(str(a),'.True.')
+        assert_equal(str(a),'.TRUE.')
 
         a = cls('.FALSE.')
         assert isinstance(a,cls),`a`
@@ -1060,6 +1060,60 @@ class test_And_Operand(NumpyTestCase):
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'.NOT. a')
         assert_equal(repr(a),"And_Operand('.NOT.', Name('a'))")
+
+class test_Primary(NumpyTestCase):
+
+    def check_simple(self):
+        cls = Primary
+        a = cls('a')
+        assert isinstance(a,Name),`a`
+        assert_equal(str(a),'a')
+
+        a = cls('(a)')
+        assert isinstance(a,Parenthesis),`a`
+        assert_equal(str(a),'(a)')
+
+        a = cls('1')
+        assert isinstance(a,Int_Literal_Constant),`a`
+        assert_equal(str(a),'1')
+
+        a = cls('1.')
+        assert isinstance(a,Real_Literal_Constant),`a`
+        assert_equal(str(a),'1.')
+
+        a = cls('(1, n)')
+        assert isinstance(a,Complex_Literal_Constant),`a`
+        assert_equal(str(a),'(1, n)')
+
+        a = cls('.true.')
+        assert isinstance(a,Logical_Literal_Constant),`a`
+        assert_equal(str(a),'.TRUE.')
+
+        a = cls('"hey a()c"')
+        assert isinstance(a,Char_Literal_Constant),`a`
+        assert_equal(str(a),'"hey a()c"')
+
+        a = cls('b"0101"')
+        assert isinstance(a,Binary_Constant),`a`
+        assert_equal(str(a),'B"0101"')
+
+        a = cls('o"0107"')
+        assert isinstance(a,Octal_Constant),`a`
+        assert_equal(str(a),'O"0107"')
+
+        a = cls('z"a107"')
+        assert isinstance(a,Hex_Constant),`a`
+        assert_equal(str(a),'Z"A107"')
+
+        a = cls('a % b')
+        assert isinstance(a,Data_Ref),`a`
+        assert_equal(str(a),'a % b')
+
+        a = cls('a(:)')
+        assert isinstance(a,Array_Section),`a`
+        assert_equal(str(a),'a(:)')
+
+        
         
 if __name__ == "__main__":
     NumpyTest().run()
