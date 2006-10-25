@@ -72,14 +72,14 @@ class test_Char_Length(NumpyTestCase):
 
     def check_char_length(self):
         cls = Char_Length
-        a = cls('1')
-        assert isinstance(a,cls),`a`
-        assert_equal(str(a),'1')
-        assert_equal(repr(a),"Char_Length(Int_Literal_Constant('1', None))")
-
         a = cls('(1)')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(1)')
+        assert_equal(repr(a),"Char_Length('(', Int_Literal_Constant('1', None), ')')")
+
+        a = cls('1')
+        assert isinstance(a,Int_Literal_Constant),`a`
+        assert_equal(str(a),'1')
 
         a = cls('(*)')
         assert isinstance(a,cls),`a`
@@ -215,7 +215,7 @@ class test_Function_Reference(NumpyTestCase):
         a = cls('f()')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'f()')
-        assert_equal(repr(a),"Function_Reference(Name('f'), '(', None, ')')")
+        assert_equal(repr(a),"Function_Reference(Name('f'), None)")
 
         a = cls('f(2,k=1,a)')
         assert isinstance(a,cls),`a`
@@ -302,7 +302,7 @@ class test_Structure_Constructor(NumpyTestCase):
         a = cls('t()')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'t()')
-        assert_equal(repr(a),"Structure_Constructor(Name('t'), None)")
+        assert_equal(repr(a),"Structure_Constructor(Type_Name('t'), None)")
 
         a = cls('t(s=1, a)')
         assert isinstance(a,cls),`a`
@@ -726,7 +726,7 @@ class test_Derived_Type_Spec(NumpyTestCase):
         a = cls('a(b)')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a(b)')
-        assert_equal(repr(a),"Derived_Type_Spec(Name('a'), Name('b'))")
+        assert_equal(repr(a),"Derived_Type_Spec(Type_Name('a'), Name('b'))")
 
         a = cls('a(b,c,g=1)')
         assert isinstance(a,cls),`a`
@@ -745,9 +745,9 @@ class test_Type_Name(NumpyTestCase):
     def check_simple(self):
         cls = Type_Name
         a = cls('a')
-        assert isinstance(a,Name),`a`
+        assert isinstance(a,cls),`a`
         assert_equal(str(a),'a')
-        assert_equal(repr(a),"Name('a')")
+        assert_equal(repr(a),"Type_Name('a')")
 
         self.assertRaises(NoMatchError,cls,'integer')
         self.assertRaises(NoMatchError,cls,'doubleprecision')
