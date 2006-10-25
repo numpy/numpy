@@ -2793,6 +2793,28 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *index, PyObject *op)
 }
 
 
+/* return -1 if tuple-object seq is not a tuple of integers.
+   otherwise fill vals with converted integers
+*/
+static int
+_tuple_of_integers(PyObject *seq, intp *vals, int maxvals)
+{
+        int i;
+        PyObject *obj;
+        intp temp;
+
+        for (i=0; i<maxvals; i++) {
+                obj = PyTuple_GET_ITEM(seq, i);
+                if ((PyArray_Check(obj) && PyArray_NDIM(obj) > 0) ||
+                    PyList_Check(obj)) return -1;
+                temp = PyArray_PyIntAsIntp(obj);
+                if (error_converting(temp)) return -1;
+                vals[i] = temp;
+        }
+        return 0;
+}
+
+
 static int
 array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 {
@@ -2857,9 +2879,9 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
         }
         
         /* optimization for integer-tuple */
-        if (self->nd > 1 && 
+        if (self->nd > 1 &&
             (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == self->nd)) 
-            && PyArray_IntpFromSequence(index, vals, self->nd) == self->nd) {
+            && (_tuple_of_integers(index, vals, self->nd) >= 0)) {
                 int i;
                 char *item;
                 for (i=0; i<self->nd; i++) {
@@ -2934,7 +2956,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         /* optimization for a tuple of integers */
         if (self->nd > 1 && PyTuple_Check(op) &&
             (PyTuple_GET_SIZE(op) == self->nd)
-            && PyArray_IntpFromSequence(op, vals, self->nd) == self->nd) {
+            && (_tuple_of_integers(op, vals, self->nd) >= 0)) {
                 int i;
                 char *item;
                 for (i=0; i<self->nd; i++) {
@@ -4860,6 +4882,7 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
         }
         return nd;
 }
+
 
 
 /* Check whether the given array is stored contiguously (row-wise) in

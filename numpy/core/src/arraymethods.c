@@ -402,6 +402,9 @@ array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
+/* This should grow an order= keyword to be consistent
+ */
+
 static PyObject *
 array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
