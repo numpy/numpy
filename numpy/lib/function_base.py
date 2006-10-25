@@ -764,10 +764,16 @@ class vectorize(object):
   Description:
 
     Define a vectorized function which takes nested sequence
-    objects or numpy arrays as inputs and returns a
+    of objects or numpy arrays as inputs and returns a
     numpy array as output, evaluating the function over successive
     tuples of the input arrays like the python map function except it uses
     the broadcasting rules of numpy.
+
+    Data-type of output of vectorized is determined by calling the function
+    with the first element of the input.  This can be avoided by specifying
+    the otypes argument as either a string of typecode characters or a list
+    of data-types specifiers.  There should be one data-type specifier for
+    each output. 
 
   Input:
 
@@ -804,11 +810,13 @@ class vectorize(object):
             self.__doc__ = doc
         if isinstance(otypes, types.StringType):
             self.otypes = otypes
+            for char in self.otypes:
+                if char not in typecodes['All']:
+                    raise ValueError, "invalid otype specified"
+        elif iterable(otypes):
+            self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
         else:
-            raise ValueError, "output types must be a string"
-        for char in self.otypes:
-            if char not in typecodes['All']:
-                raise ValueError, "invalid typecode specified"
+            raise ValueError, "output types must be a string of typecode characters or a list of data-types"
         self.lastcallargs = 0
 
     def __call__(self, *args):
@@ -835,10 +843,11 @@ class vectorize(object):
             else:
                 self.nout = 1
                 theout = (theout,)
-            otypes = []
-            for k in range(self.nout):
-                otypes.append(asarray(theout[k]).dtype.char)
-            self.otypes = ''.join(otypes)
+            if self.otypes == '':
+                otypes = []
+                for k in range(self.nout):
+                    otypes.append(asarray(theout[k]).dtype.char)
+                self.otypes = ''.join(otypes)
 
         if (self.ufunc is None):
             self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
