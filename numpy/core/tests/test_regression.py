@@ -213,11 +213,13 @@ class test_regression(NumpyTestCase):
         x = N.arange(10,dtype='>f8')
         assert_array_equal(ref,x)
 
-    def check_longfloat_repr(self,level=rlevel):
-        """Ticket #112"""
-        if N.longfloat(0).itemsize > 8:
-            a = N.exp(N.array([1000],dtype=N.longfloat))
-            assert(str(a)[1:9] == str(a[0])[:8])
+#    Longfloat support is not consistent enough across
+#     platforms for this test to be meaningful.
+#    def check_longfloat_repr(self,level=rlevel):
+#        """Ticket #112"""
+#        if N.longfloat(0).itemsize > 8:
+#            a = N.exp(N.array([1000],dtype=N.longfloat))
+#            assert(str(a)[1:9] == str(a[0])[:8])
 
     def check_argmax(self,level=rlevel):
         """Ticket #119"""
