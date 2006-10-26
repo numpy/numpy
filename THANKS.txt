@@ -33,3 +33,4 @@ David Huard for histogram improvements including 2-d and d-d code and
 Albert Strasheim for documentation, bug-fixes, regression tests and 
     Valgrind expertise.
 Stefan van der Walt for documentation, bug-fixes and regression-tests.
+Andrew Straw for help with http://www.scipy.org, documentation, and testing. 
