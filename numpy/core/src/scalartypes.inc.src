@@ -32,6 +32,8 @@ static void *
 scalar_value(PyObject *scalar, PyArray_Descr *descr)
 {
         int type_num;
+        int align;
+        intp memloc;
         if (descr == NULL) {
                 descr = PyArray_DescrFromScalar(scalar);
                 type_num = descr->type_num;
@@ -111,8 +113,17 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         }
         else _IFCASE(Object);
         
-        PyErr_SetString(PyExc_RuntimeError, "bad scalar");
-        return NULL;
+
+        /* Use the alignment flag to figure out where the data begins
+           after a PyObject_HEAD
+        */
+        memloc = (intp)scalar;
+        memloc += sizeof(PyObject);
+        /* now round-up to the nearest alignment value 
+         */
+        align = descr->alignment;
+        if (align > 1) memloc = ((memloc + align - 1)/align)*align;
+        return (void *)memloc
 #undef _IFCASE
 #undef _OBJ
 #undef _CHK
@@ -2578,7 +2589,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
                 conv->subarray = NULL;
                 Py_DECREF(conv);
         }
-        Py_DECREF(new->typeobj);
+        Py_XDECREF(new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
         return new;
@@ -2651,7 +2662,7 @@ PyArray_DescrFromScalar(PyObject *sc)
 
 /* New reference */
 /*OBJECT_API
- Get a typeobject from a type-number
+ Get a typeobject from a type-number -- can return NULL.
 */
 static PyObject *
 PyArray_TypeObjectFromType(int type)
@@ -2662,7 +2673,7 @@ PyArray_TypeObjectFromType(int type)
         descr = PyArray_DescrFromType(type);
         if (descr == NULL) return NULL;
         obj = (PyObject *)descr->typeobj;
-        Py_INCREF(obj);
+        Py_XINCREF(obj);
         Py_DECREF(descr);
         return obj;
 }

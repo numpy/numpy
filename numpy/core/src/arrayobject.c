@@ -1316,11 +1316,11 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         type_num = descr->type_num;
         if (type_num == PyArray_BOOL)
                 PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)data);
-        else if (type_num == PyArray_OBJECT) {
+        else if (type_num == PyArray_OBJECT ||          \
+                 ((type=descr->typeobj)==NULL)) {
                 return descr->f->getitem(data, base);
         }
         itemsize = descr->elsize;
-        type = descr->typeobj;
         copyswap = descr->f->copyswap;
         swap = !PyArray_ISNBO(descr->byteorder);
         if PyTypeNum_ISSTRING(type_num) { /* Eliminate NULL bytes */
@@ -1541,7 +1541,8 @@ PyArray_TypeNumFromName(char *str)
 
         for (i=0; i<NPY_NUMUSERTYPES; i++) {
                 descr = userdescrs[i];
-                if (strcmp(descr->typeobj->tp_name, str) == 0)
+                if (descr->typeobj && 
+                    strcmp(descr->typeobj->tp_name, str) == 0)
                         return descr->type_num;
         }
 
@@ -1588,10 +1589,12 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                                 " is missing.");
                 return -1;
         }
+        /*
         if (descr->typeobj == NULL) {
                 PyErr_SetString(PyExc_ValueError, "missing typeobject");
                 return -1;
         }
+        */
         userdescrs = realloc(userdescrs,
                              (NPY_NUMUSERTYPES+1)*sizeof(void *));
         if (userdescrs == NULL) {
@@ -10576,7 +10579,7 @@ PyArray_DescrNew(PyArray_Descr *base)
                 Py_INCREF(new->subarray->shape);
                 Py_INCREF(new->subarray->base);
         }
-        Py_INCREF(new->typeobj);
+        Py_XINCREF(new->typeobj);
         return new;
 }
 
@@ -10658,8 +10661,14 @@ arraydescr_typename_get(PyArray_Descr *self)
         PyObject *res;
 	char *s;
         static int prefix_len=0;
-
+        
         if (PyTypeNum_ISUSERDEF(self->type_num)) {
+                if (typeobj == NULL) {
+                        return PyString_FromFormat("%s%d (%d)", 
+                                                   self->kind,
+                                                   self->elsize,
+                                                   self->type_num);
+                }
 		s = strrchr(typeobj->tp_name, '.');
 		if (s == NULL) {
 			res = PyString_FromString(typeobj->tp_name);
@@ -10883,6 +10892,10 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
         Py_DECREF(mod);
         if (obj == NULL) {Py_DECREF(ret); return NULL;}
         PyTuple_SET_ITEM(ret, 0, obj);
+        if (self->typeobj == NULL) { /* Must handle this case in getitem */
+                obj = self->f->getitem(NULL, NULL);
+                if (obj == NULL) {Py_DECREF(ret); return NULL;}
+        }
         if (PyTypeNum_ISUSERDEF(self->type_num) ||              \
             ((self->type_num == PyArray_VOID &&                 \
               self->typeobj != &PyVoidArrType_Type))) {
