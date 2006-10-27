@@ -2556,6 +2556,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
         /* Otherwise --- type is a sub-type of an array scalar
            currently only VOID allows it -- use it as the type-object.
+           This is for non-registered data-type objects. 
         */
         /* look for a dtypedescr attribute */
         if (!PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
