@@ -123,7 +123,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
          */
         align = descr->alignment;
         if (align > 1) memloc = ((memloc + align - 1)/align)*align;
-        return (void *)memloc
+        return (void *)memloc;
 #undef _IFCASE
 #undef _OBJ
 #undef _CHK

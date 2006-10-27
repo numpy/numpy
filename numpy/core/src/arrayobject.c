@@ -10663,7 +10663,7 @@ arraydescr_typename_get(PyArray_Descr *self)
         
         if (PyTypeNum_ISUSERDEF(self->type_num)) {
                 if (typeobj == NULL) {
-                        return PyString_FromFormat("%s%d (%d)", 
+                        return PyString_FromFormat("%c%d (%d)", 
                                                    self->kind,
                                                    self->elsize,
                                                    self->type_num);
