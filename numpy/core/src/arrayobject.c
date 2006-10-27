@@ -1432,6 +1432,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         }
         else {
                 destptr = scalar_value(obj, descr);
+                if (destptr == NULL) {Py_DECREF(obj); return NULL;}
         }
         /* copyswap for OBJECT increments the reference count */
         copyswap(destptr, data, swap, base);
