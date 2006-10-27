@@ -189,16 +189,23 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
                                  NULL, NULL, 0, NULL);
         if (r==NULL) {Py_XDECREF(outcode); return NULL;}
 
-        if (PyDataType_ISUSERDEF(typecode)) {
-                /* Use setitem to set array from scalar */
-                if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
-                        Py_XDECREF(outcode);
-                        Py_DECREF(r);
-                        return NULL;
-                }
-        }
 
         memptr = scalar_value(scalar, typecode);
+        
+        if (memptr == NULL) {
+                if (PyDataType_ISUSERDEF(typecode)) {
+                        /* Use setitem to set array from scalar */
+                        if (typecode->f->setitem(scalar, 
+                                                 PyArray_DATA(r), r) < 0) {
+                                Py_XDECREF(outcode);
+                                Py_DECREF(r);
+                                return NULL;
+                        }
+                }
+                PyErr_SetString(PyExc_ValueError, "invalid scalar");
+                return NULL;
+        }
+
 #ifndef Py_UNICODE_WIDE
         if (typecode->type_num == PyArray_UNICODE) {
                 PyUCS2Buffer_AsUCS4((Py_UNICODE *)memptr,
