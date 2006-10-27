@@ -1550,7 +1550,7 @@ PyArray_TypeNumFromName(char *str)
 /*
   returns typenum to associate with this type >=PyArray_USERDEF.
   needs the userdecrs table and PyArray_NUMUSER variables
-  defined in arratypes.inc
+  defined in arraytypes.inc
 */
 /*MULTIARRAY_API
  Register Data type
