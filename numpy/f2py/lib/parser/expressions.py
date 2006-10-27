@@ -1432,6 +1432,7 @@ class Parenthesis(BracketBase):
 ClassType = type(Base)
 Base_classes = {}
 for clsname in dir():
+    break
     cls = eval(clsname)
     if isinstance(cls, ClassType) and issubclass(cls, Base) and not cls.__name__.endswith('Base'):
         Base_classes[cls.__name__] = cls
@@ -1450,6 +1451,7 @@ def _rpl_list(clsname):
     return l
 
 for cls in Base_classes.values():
+    break
     if not hasattr(cls, 'subclass_names'): continue
     opt_subclass_names = []
     for n in cls.subclass_names:
@@ -1497,6 +1499,7 @@ if 0:
 
 # Initialize Base.subclasses dictionary:
 for clsname, cls in Base_classes.items():
+    break
     subclass_names = getattr(cls, 'subclass_names', None)
     if subclass_names is None:
         print '%s class is missing subclass_names list' % (clsname)
