@@ -207,7 +207,6 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
         castfunc = PyArray_GetCastFunc(indescr, outtype);
         if (castfunc == NULL) return -1;
         ptr = scalar_value(scalar, indescr);
-        if (ptr == NULL) return -1;
         castfunc(ptr, ctypeptr, 1, NULL, NULL);
         return 0;
 }
@@ -253,11 +252,6 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
 
         memptr = scalar_value(scalar, typecode);
-        if (memptr == NULL) {
-                Py_XDECREF(outcode);
-                Py_DECREF(r);
-                return NULL;
-        }
         
 #ifndef Py_UNICODE_WIDE
         if (typecode->type_num == PyArray_UNICODE) {
@@ -883,7 +877,6 @@ gentype_real_get(PyObject *self)
                 void *ptr;
                 typecode = _realdescr_fromcomplexscalar(self, &typenum);
                 ptr = scalar_value(self, NULL);
-                if (ptr == NULL) {Py_DECREF(typecode); return NULL;}
                 ret = PyArray_Scalar(ptr, typecode, NULL);
                 Py_DECREF(typecode);
                 return ret;
@@ -909,10 +902,6 @@ gentype_imag_get(PyObject *self)
                 char *ptr;
                 typecode = _realdescr_fromcomplexscalar(self, &typenum);
                 ptr = (char *)scalar_value(self, NULL);
-                if (ptr == NULL) {
-                        Py_DECREF(typecode);
-                        return NULL;
-                }
                 ret = PyArray_Scalar(ptr + typecode->elsize,
                                      typecode, NULL);
         }
@@ -1167,7 +1156,6 @@ voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
                 if (!PyArray_ISNBO(self->descr->byteorder)) {
                         new = PyArray_DescrFromScalar(ret);
                         ptr = scalar_value(ret, new);
-                        if (ptr == NULL) {Py_DECREF(new); return NULL;}
                         byte_swap_vector(ptr, 1, new->elsize);
                         Py_DECREF(new);
                 }
