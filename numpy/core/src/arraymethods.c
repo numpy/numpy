@@ -897,20 +897,7 @@ static void
 _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 	       PyObject *deepcopy, PyObject *visit)
 {
-	if (dtype->hasobject == 0) return;
-	if (dtype->type_num == PyArray_OBJECT) {
-		PyObject **itemp, **otemp;
-		PyObject *res;
-		itemp = (PyObject **)iptr;
-		otemp = (PyObject **)optr;
-		Py_XINCREF(*itemp);
-		/* call deepcopy on this argument */
-		res = PyObject_CallFunctionObjArgs(deepcopy,
-						   *itemp, visit, NULL);
-		Py_XDECREF(*itemp);
-		Py_XDECREF(*otemp);
-		*otemp = res;
-	}
+	if (!PyDataType_REFCHK(dtype)) return;
 	else if (PyDescr_HASFIELDS(dtype)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
@@ -923,6 +910,20 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 				       deepcopy, visit);
                 }
         }
+        else {
+		PyObject **itemp, **otemp;
+		PyObject *res;
+		itemp = (PyObject **)iptr;
+		otemp = (PyObject **)optr;
+		Py_XINCREF(*itemp);
+		/* call deepcopy on this argument */
+		res = PyObject_CallFunctionObjArgs(deepcopy,
+						   *itemp, visit, NULL);
+		Py_XDECREF(*itemp);
+		Py_XDECREF(*otemp);
+		*otemp = res;
+	}
+
 }
 
 
@@ -936,7 +937,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
 
         if (!PyArg_ParseTuple(args, "O", &visit)) return NULL;
         ret = PyArray_Copy(self);
-        if (self->descr->hasobject) {
+        if (PyDataType_REFCHK(self->descr)) {
                 copy = PyImport_ImportModule("copy");
                 if (copy == NULL) return NULL;
                 deepcopy = PyObject_GetAttrString(copy, "deepcopy");
@@ -1057,7 +1058,7 @@ array_reduce(PyArrayObject *self, PyObject *args)
 	mybool = (PyArray_ISFORTRAN(self) ? Py_True : Py_False);
 	Py_INCREF(mybool);
 	PyTuple_SET_ITEM(state, 3, mybool);
-	if (self->descr->hasobject || self->descr->f->listpickle) {
+	if (PyDataType_FLAGCHK(self->descr, NPY_LIST_PICKLE)) {
 		thestr = _getlist_pkl(self);
 	}
 	else {
@@ -1134,7 +1135,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 		return NULL;
 	}
 
-	if (typecode->hasobject || typecode->f->listpickle) {
+	if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
 		if (!PyList_Check(rawdata)) {
 			PyErr_SetString(PyExc_TypeError,
 					"object pickle not returning list");
@@ -1187,7 +1188,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 					   &(self->flags));
 	}
 
-	if (typecode->hasobject != 1 && !typecode->f->listpickle) {
+	if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
                 int swap=!PyArray_ISNOTSWAPPED(self);
 		self->data = datastr;
 		if (!_IsAligned(self) || swap) {
@@ -1234,7 +1235,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
 			if (self->dimensions) PyDimMem_FREE(self->dimensions);
 			return PyErr_NoMemory();
 		}
-		if (self->descr->hasobject) memset(self->data, 0, PyArray_NBYTES(self));
+		if (PyDataType_FLAGCHK(self->descr, NPY_NEEDS_INIT))
+                        memset(self->data, 0, PyArray_NBYTES(self));
 		self->flags |= OWNDATA;
 		self->base = NULL;
 		if (_setlist_pkl(self, rawdata) < 0)

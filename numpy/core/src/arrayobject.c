@@ -46,7 +46,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
 static int
 _check_object_rec(PyArray_Descr *descr)
 {
-        if (descr->hasobject && !PyDescr_ISOBJECT(descr)) {
+        if (PyDataType_HASFIELDS(descr) && PyDataType_REFCHK(descr)) {
                 PyErr_SetString(PyExc_TypeError, "Not supported for this data-type.");
                 return -1;
         }
@@ -154,7 +154,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
 {
         PyObject **temp;
 
-        if (descr->hasobject == 0) return;
+        if (!PyDataType_REFCHK(descr)) return;
 
         if (descr->type_num == PyArray_OBJECT) {
                 temp = (PyObject **)data;
@@ -182,7 +182,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
 {
         PyObject **temp;
 
-        if (descr->hasobject == 0) return;
+        if (!PyDataType_REFCHK(descr)) return;
 
         if (descr->type_num == PyArray_OBJECT) {
                 temp = (PyObject **)data;
@@ -216,7 +216,7 @@ PyArray_INCREF(PyArrayObject *mp)
         PyObject **data, **temp;
         PyArrayIterObject *it;
 
-        if (mp->descr->hasobject == 0) return 0;
+        if (!PyDataType_REFCHK(mp->descr)) return 0;
 
         if (mp->descr->type_num != PyArray_OBJECT) {
                 it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
@@ -267,7 +267,7 @@ PyArray_XDECREF(PyArrayObject *mp)
         PyObject **temp;
         PyArrayIterObject *it;
 
-        if (mp->descr->hasobject == 0) return 0;
+        if (!PyDataType_REFCHK(mp->descr)) return 0;
 
         if (mp->descr->type_num != PyArray_OBJECT) {
                 it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
@@ -1314,16 +1314,14 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         int swap;
 
         type_num = descr->type_num;
-        type = descr->typeobj;
         if (type_num == PyArray_BOOL)
                 PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)data);
-        else if (type_num == PyArray_OBJECT ||           
-                 (PyTypeNum_ISUSERDEF(type_num) &&
-                  !(PyType_IsSubtype(type, &PyGenericArrType_Type)))) {
+        else if (PyDataType_FLAGCHK(descr, NPY_USE_GETITEM)) {
                 return descr->f->getitem(data, base);
         }
         itemsize = descr->elsize;
         copyswap = descr->f->copyswap;
+        type = descr->typeobj;
         swap = !PyArray_ISNBO(descr->byteorder);
         if PyTypeNum_ISSTRING(type_num) { /* Eliminate NULL bytes */
                 char *dptr = data;
@@ -1705,8 +1703,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 
         n3 = (sep ? strlen((const char *)sep) : 0);
         if (n3 == 0) { /* binary data */
-                if (self->descr->hasobject) {
-                        PyErr_SetString(PyExc_ValueError, "cannot write "\
+                if (PyDataType_FLAGCHK(self->descr, NPY_LIST_PICKLE)) {
+                        PyErr_SetString(PyExc_ValueError, "cannot write " \
                                         "object arrays to a file in "   \
                                         "binary mode");
                         return -1;
@@ -1934,7 +1932,7 @@ array_dealloc(PyArrayObject *self) {
 
         if ((self->flags & OWNDATA) && self->data) {
                 /* Free internal references if an Object array */
-                if (self->descr->hasobject) {
+                if (PyDataType_FLAGCHK(self->descr, NPY_ITEM_REFCOUNT)) {
                         Py_INCREF(self); /*hold on to self */
                         PyArray_XDECREF(self);
                         /* Don't need to DECREF -- because we are deleting
@@ -2443,7 +2441,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
         copyswap = PyArray_DESCR(arr)->f->copyswap;
         PyArray_MapIterReset(mit);
         /* Need to decref hasobject arrays */
-        if (descr->hasobject) {
+        if (PyDataType_FLAGCHK(descr, NPY_ITEM_REFCOUNT)) {
                 while (index--) {
                         PyArray_Item_XDECREF(mit->dataptr, PyArray_DESCR(arr));
                         PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(arr));
@@ -5368,7 +5366,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
                 /* It is bad to have unitialized OBJECT pointers */
                 /* which could also be sub-fields of a VOID array */
-                if (descr->hasobject) {
+                if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
                         memset(data, 0, sd);
                 }
         }
@@ -5431,14 +5429,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 static void
 _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
 {
-        if (dtype->hasobject == 0) {
+        if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
                 memset(optr, 0, dtype->elsize);
-        }
-        else if (PyDescr_ISOBJECT(dtype)) {
-                PyObject **temp;
-                Py_INCREF(zero);
-                temp = (PyObject **)optr;
-                *temp = zero;
         }
         else if (PyDescr_HASFIELDS(dtype)) {
                 PyObject *key, *value, *title=NULL;
@@ -5450,6 +5442,12 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
                                               &title)) return;
                         _putzero(optr + offset, zero, new);
                 }
+        }
+        else {
+                PyObject **temp;
+                Py_INCREF(zero);
+                temp = (PyObject **)optr;
+                *temp = zero;
         }
         return;
 }
@@ -5480,12 +5478,6 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if (!PyArray_ISONESEGMENT(self)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "resize only works on single-segment arrays");
-                return NULL;
-        }
-
-        if (self->descr->hasobject) {
-                PyErr_SetString(PyExc_ValueError,
-                                "cannot resize an object-array like this");
                 return NULL;
         }
 
@@ -5547,7 +5539,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if ((newsize > oldsize) && PyArray_ISWRITEABLE(self)) {
                 /* Fill new memory with zeros */
                 elsize = self->descr->elsize;
-                if (self->descr->hasobject) {
+                if (PyDataType_FLAGCHK(self->descr, NPY_ITEM_REFCOUNT)) {
                         PyObject *zero = PyInt_FromLong(0);
                         char *optr;
                         optr = self->data + oldsize*elsize;
@@ -5595,7 +5587,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
 {
-        if (!dtype->hasobject) {
+        if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
                 if ((obj == Py_None) ||
                     (PyInt_Check(obj) && PyInt_AsLong(obj)==0))
                         return;
@@ -5610,14 +5602,7 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
                         Py_XDECREF(arr);
                 }
         }
-        if (PyDescr_ISOBJECT(dtype)) {
-                PyObject **temp;
-                Py_XINCREF(obj);
-                temp = (PyObject **)optr;
-                *temp = obj;
-                return;
-        }
-        if (PyDescr_HASFIELDS(dtype)) {
+        else if (PyDescr_HASFIELDS(dtype)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
                 int offset;
@@ -5627,6 +5612,13 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
                                               &title)) return;
                         _fillobject(optr + offset, obj, new);
                 }
+        }
+        else {
+                PyObject **temp;
+                Py_XINCREF(obj);
+                temp = (PyObject **)optr;
+                *temp = obj;
+                return;
         }
 }
 
@@ -5815,7 +5807,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                              dims.ptr,
                                              strides.ptr, NULL, fortran, NULL);
                 if (ret == NULL) {descr=NULL;goto fail;}
-                if (descr->hasobject) { /* place Py_None in object positions */
+                if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)) { 
+                        /* place Py_None in object positions */
                         PyArray_FillObjectArray(ret, Py_None);
                         if (PyErr_Occurred()) {
                                 descr=NULL;
@@ -6235,9 +6228,12 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
                 PyErr_SetString(PyExc_TypeError, "invalid data-type for array");
                 return -1;
         }
-        if (newtype->hasobject || self->descr->hasobject) {
-                PyErr_SetString(PyExc_TypeError,                        \
-                                "Cannot change data-type for object"    \
+        if (PyDataType_FLAGCHK(newtype, NPY_ITEM_HASOBJECT) ||
+            PyDataType_FLAGCHK(newtype, NPY_ITEM_IS_POINTER) ||
+            PyDataType_FLAGCHK(self->descr, NPY_ITEM_HASOBJECT) || 
+            PyDataType_FLAGCHK(self->descr, NPY_ITEM_IS_POINTER)) {
+                PyErr_SetString(PyExc_TypeError,                      \
+                                "Cannot change data-type for object " \
                                 "array.");
                 Py_DECREF(newtype);
                 return -1;
@@ -6535,7 +6531,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 
         swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
         copyswap = self->descr->f->copyswap;
-        if (self->descr->hasobject) {
+        if (PyDataType_REFCHK(self->descr)) {
                 while(selfit->index < selfit->size) {
                         PyArray_Item_XDECREF(selfit->dataptr, self->descr);
                         PyArray_Item_INCREF(arrit->dataptr, PyArray_DESCR(arr));
@@ -7520,9 +7516,9 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
                 PyErr_NoMemory();
                 return -1;
         }
-        if (out->descr->hasobject)
+        if (PyDataType_FLAGCHK(out->descr, NPY_NEEDS_INIT))
                 memset(buffers[0], 0, N*delsize);
-        if (in->descr->hasobject)
+        if (PyDataType_FLAGCHK(in->descr, NPY_NEEDS_INIT))
                 memset(buffers[1], 0, N*selsize);
 
 #if NPY_ALLOW_THREADS
@@ -7548,12 +7544,12 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
                         }
 #endif
         Py_DECREF(multi);
-        if (in->descr->hasobject) {
+        if (PyDataType_REFCHK(in->descr)) {
                 obptr = buffers[1];
                 for (i=0; i<N; i++, obptr+=selsize)
                         PyArray_Item_XDECREF(obptr, out->descr);
         }
-        if (out->descr->hasobject) {
+        if (PyDataType_REFCHK(out->descr)) {
                 obptr = buffers[0];
                 for (i=0; i<N; i++, obptr+=delsize)
                         PyArray_Item_XDECREF(obptr, out->descr);
@@ -10617,7 +10613,10 @@ static PyMemberDef arraydescr_members[] = {
         {"byteorder", T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
         {"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
         {"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
+        /* Get rid of this in 1.1 */
         {"hasobject", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
+        /* END */
+        {"flags", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
         {"names", T_OBJECT, offsetof(PyArray_Descr, names), RO, NULL},
         {NULL},
 };
@@ -10870,7 +10869,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
         /* version number of this pickle type. Increment if we need to
            change the format. Be sure to handle the old versions in
            arraydescr_setstate. */
-        const int version = 2;
+        const int version = 3;
         PyObject *ret, *mod, *obj;
         PyObject *state;
         char endian;
@@ -10906,7 +10905,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
                 endian = '<';
                 if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
         }
-        state = PyTuple_New(7);
+        state = PyTuple_New(8);
         PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
         PyTuple_SET_ITEM(state, 1, PyString_FromFormat("%c", endian));
         PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
@@ -10932,6 +10931,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 
         PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
         PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
+        PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
 
         PyTuple_SET_ITEM(ret, 2, state);
         return ret;
@@ -10944,8 +10944,9 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 static int
 _descr_find_object(PyArray_Descr *self)
 {
-        if (self->hasobject || self->type_num == PyArray_OBJECT || self->kind == 'O')
-                return 1;
+        if (self->hasobject || self->type_num == PyArray_OBJECT || 
+            self->kind == 'O')
+                return NPY_OBJECT_DTYPE_FLAGS;
         if (PyDescr_HASFIELDS(self)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new;
@@ -10958,8 +10959,8 @@ _descr_find_object(PyArray_Descr *self)
                                 return 0;
                         }
                         if (_descr_find_object(new)) {
-                                new->hasobject = 1;
-                                return 1;
+                                new->hasobject = NPY_OBJECT_DTYPE_FLAGS;
+                                return NPY_OBJECT_DTYPE_FLAGS;
                         }
                 }
         }
@@ -10974,26 +10975,61 @@ static PyObject *
 arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 {
         int elsize = -1, alignment = -1;
-        int version = 2;
+        int version = 3;
         char endian;
         PyObject *subarray, *fields, *names=NULL;
         int incref_names = 1;
+        int dtypeflags=0;
 
         if (self->fields == Py_None) {Py_INCREF(Py_None); return Py_None;}
 
-        if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian, &subarray,
-                              &names, &fields, &elsize, &alignment)) {
-            PyErr_Clear();
-            if (!PyArg_ParseTuple(args, "(icOOii)", &version, &endian,
-                                  &subarray, &fields, &elsize,
-                                  &alignment)) {
-                PyErr_Clear();
-                version = 0;
-                if (!PyArg_ParseTuple(args, "(cOOii)", &endian, &subarray,
-                                      &fields, &elsize, &alignment)) {
-                    return NULL;
+        if (PyTuple_GET_SIZE(args) != 1 || 
+            !(PyTuple_Check(PyTuple_GET_ITEM(args, 0)))) {
+                PyErr_BadInternalCall();
+                return NULL;
+        }
+        switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
+        case 8:
+                if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian, 
+                                      &subarray, &names, &fields, &elsize, 
+                                      &alignment, &dtypeflags)) {
+                        return NULL;
                 }
-            }
+                break;
+        case 7:
+                if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian, 
+                                      &subarray, &names, &fields, &elsize, 
+                                      &alignment)) {
+                        return NULL;
+                }
+                break;
+        case 6:
+                if (!PyArg_ParseTuple(args, "(icOOii)", &version, 
+                                      &endian, &subarray, &fields, 
+                                      &elsize, &alignment)) {
+                        PyErr_Clear();
+                }
+                break;
+        case 5:
+                version = 0;
+                if (!PyArg_ParseTuple(args, "(cOOii)", 
+                                      &endian, &subarray, &fields, &elsize, 
+                                      &alignment)) {
+                        return NULL;
+                }
+                break;
+        default:
+                version = -1; /* raise an error */
+        }
+        
+        /* If we ever need another pickle format, increment the version
+           number. But we should still be able to handle the old versions.
+        */
+        if (version < 0 || version > 3) {
+            PyErr_Format(PyExc_ValueError,
+                         "can't handle version %d of numpy.dtype pickle",
+                         version);
+            return NULL;
         }
 
         if (version == 1 || version == 0) {
@@ -11010,18 +11046,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             else {
                 names = Py_None;
             }
-            version = 2;
         }
 
-        /* If we ever need another pickle format, increment the version
-           number. But we should still be able to handle the old versions.
-        */
-        if (version != 2) {
-            PyErr_Format(PyExc_ValueError,
-                         "can't handle version %d of numpy.dtype pickle",
-                         version);
-            return NULL;
-        }
 
         if ((fields == Py_None && names != Py_None) ||  \
             (names == Py_None && fields != Py_None)) {
@@ -11064,7 +11090,10 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                 self->alignment = alignment;
         }
 
-        self->hasobject = _descr_find_object(self);
+        self->hasobject = dtypeflags;
+        if (version < 3) {
+                self->hasobject = _descr_find_object(self);
+        }
         Py_INCREF(Py_None);
         return Py_None;
 }

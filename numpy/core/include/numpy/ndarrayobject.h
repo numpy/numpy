@@ -1105,14 +1105,40 @@ typedef struct {
         int **cancastscalarkindto;
         int *cancastto;
 
-        /* Set to 1 if you want pickles of this type
-           to go out as lists of _getitem objects
-        */
-        int listpickle;
+        int listpickle;           /* Unused */
 
 } PyArray_ArrFuncs;
 
+#define NPY_ITEM_REFCOUNT   0x01  /* The item must be reference counted
+                                     when it is inserted or extracted. */
+#define NPY_ITEM_HASOBJECT  0x01  /* Same as needing REFCOUNT */
 
+#define NPY_LIST_PICKLE     0x02  /* Convert to list for pickling */
+#define NPY_ITEM_IS_POINTER 0x06  /* The item is a POINTER -- automatic
+                                     LIST_PICKLE       */
+
+#define NPY_NEEDS_INIT      0x08  /* memory needs to be initialized 
+                                     for this data-type */
+
+#define NPY_NEEDS_PYAPI     0x10  /* operations need Python C-API 
+                                     so don't give-up thread. */
+
+#define NPY_USE_GETITEM     0x20  /* Use f.getitem when extracting elements 
+                                     of this data-type */
+
+
+/* These are inherited for global data-type if any data-types in the field 
+   have them */
+#define NPY_FROM_FIELDS     (NPY_NEEDS_INIT | NPY_LIST_PICKLE | NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
+                                     
+#define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM | NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
+
+#define PyDataType_FLAGCHK(dtype, flag) \
+        ((dtype->hasobject & flag) == flag)
+#define PyDataType_REFCHK(dtype) \
+        PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
+
+/* Change dtype hasobject to 32-bit in 1.1 and change its name */
 typedef struct {
         PyObject_HEAD
         PyTypeObject *typeobj;  /* the type object representing an
@@ -1123,7 +1149,8 @@ typedef struct {
         char type;              /* unique-character representing this type */
         char byteorder;         /* '>' (big), '<' (little), '|'
                                    (not-applicable), or '=' (native). */
-        char hasobject;        /* non-zero if it has object arrays in fields */
+        char hasobject;         /* non-zero if it has object arrays 
+                                   in fields */
         int type_num;          /* number representing this type */
         int elsize;             /* element size for this type */
         int alignment;          /* alignment needed for this type */
@@ -1294,8 +1321,12 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS _save = PyEval_SaveThread();
 #define NPY_END_THREADS   if (_save) PyEval_RestoreThread(_save);
-#define NPY_BEGIN_THREADS_DESCR(dtype) if (!((dtype)->hasobject)) NPY_BEGIN_THREADS
-#define NPY_END_THREADS_DESCR(dtype) if (!((dtype)->hasobject)) NPY_END_THREADS
+#define NPY_BEGIN_THREADS_DESCR(dtype)                          \
+        if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+                NPY_BEGIN_THREADS
+#define NPY_END_THREADS_DESCR(dtype)                            \
+        if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+                NPY_END_THREADS
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
 #define NPY_ALLOW_C_API      __save__ = PyGILState_Ensure();
 #define NPY_DISABLE_C_API    PyGILState_Release(__save__);

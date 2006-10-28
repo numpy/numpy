@@ -514,7 +514,8 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         }
 
  finish:
-        if (descr->hasobject) {
+        if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
+            PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {                
                 PyErr_SetString(PyExc_ValueError,
                                 "tried to get void-array with object"
                                 " members as buffer.");
@@ -622,7 +623,8 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         {
                 const void *buffer;
                 Py_ssize_t buflen;
-                if (descr->hasobject) {
+                if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
+                    PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
                         PyErr_SetString(PyExc_ValueError,
                                         "tried to set void-array with object"
                                         " members using buffer.");
@@ -2105,7 +2107,7 @@ static PyArray_Descr @from@_Descr = {
 #NAME= Bool, Byte, UByte, Short, UShort, Int, UInt, Long, ULong, LongLong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, Object#
 #kind= GENBOOL, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED, FLOATING, FLOATING, FLOATING, COMPLEX, COMPLEX, COMPLEX, OBJECT#
 #endian= |*3, =*14, |#
-#isobject= 0*17,1#
+#isobject= 0*17,NPY_OBJECT_DTYPE_FLAGS#
 */
 
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
@@ -2154,7 +2156,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_ScalarKindFunc*)NULL,
         NULL,
         NULL,
-        0
+        0,
 };
 
 static PyArray_Descr @from@_Descr = {

@@ -2571,7 +2571,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 				     "merge sort not available for item %d", i);
 			goto fail;
 		}
-		if (!object && mps[i]->descr->hasobject) object = 1;
+		if (!object && 
+                    PyDataType_FLAGCHK(mps[i]->descr, NPY_NEEDS_PYAPI))
+                        object = 1;
 		its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis	\
 			((PyObject *)mps[i], &axis);
 		if (its[i]==NULL) goto fail;
@@ -3715,7 +3717,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);
         if (nv <= 0) goto finish;
-        if (self->descr->hasobject) {
+        if (PyDataType_REFCHK(self->descr)) {
                 switch(clipmode) {
                 case NPY_RAISE:
                         for(i=0; i<ni; i++) {
@@ -3891,7 +3893,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                 return Py_None;
         }
         if (nv > 0) {
-                if (self->descr->hasobject) {
+                if (PyDataType_REFCHK(self->descr)) {
                         for(i=0; i<ni; i++) {
                                 src = values->data + chunk * (i % nv);
                                 tmp = ((Bool *)(mask->data))[i];
@@ -4337,9 +4339,8 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
                 new->names = conv->names;
                 Py_XINCREF(new->names);
 	}
+        new->hasobject = conv->hasobject;
 	Py_DECREF(conv);
-        if (conv->hasobject)
-                new->hasobject = 1;
 	*errflag = 0;
 	return new;
 
@@ -4417,7 +4418,7 @@ _convert_from_tuple(PyObject *obj)
 		PyDimMem_FREE(shape.ptr);
 		newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
 		newdescr->subarray->base = type;
-		if (type->hasobject) newdescr->hasobject = 1;
+                newdescr->hasobject = type->hasobject;
 		Py_INCREF(val);
 		newdescr->subarray->shape = val;
 		Py_XDECREF(newdescr->fields);
@@ -4448,7 +4449,8 @@ _convert_from_array_descr(PyObject *obj)
 	PyObject *nameslist;
 	PyArray_Descr *new;
 	PyArray_Descr *conv;
-        int hasobject=0;
+        int dtypeflags=0;
+
 
 	n = PyList_GET_SIZE(obj);
 	nameslist = PyTuple_New(n);
@@ -4505,8 +4507,7 @@ _convert_from_array_descr(PyObject *obj)
 					"two fields with the same name");
                         goto fail;
                 }
-                if (!hasobject && conv->hasobject)
-                        hasobject = 1;
+                dtypeflags |= (conv->hasobject & NPY_FROM_FIELDS);
 		tup = PyTuple_New((title == NULL ? 2 : 3));
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
@@ -4528,7 +4529,7 @@ _convert_from_array_descr(PyObject *obj)
 	new->fields = fields;
         new->names = nameslist;
 	new->elsize = totalsize;
-        new->hasobject=hasobject;
+        new->hasobject=dtypeflags;
 	return new;
 
  fail:
@@ -4558,7 +4559,7 @@ _convert_from_list(PyObject *obj, int align)
 	PyObject *nameslist=NULL;
        	int ret;
 	int maxalign=0;
-        int hasobject=0;
+        int dtypeflags=0;
 
 	n = PyList_GET_SIZE(obj);
 	/* Ignore any empty string at end which _internal._commastring
@@ -4580,8 +4581,7 @@ _convert_from_list(PyObject *obj, int align)
 			Py_DECREF(key);
 			goto fail;
 		}
-		if (!hasobject && conv->hasobject)
-			hasobject=1;
+                dtypeflags |= (conv->hasobject & NPY_FROM_FIELDS);
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
 		if (align) {
 			int _align;
@@ -4599,7 +4599,7 @@ _convert_from_list(PyObject *obj, int align)
 	new = PyArray_DescrNewFromType(PyArray_VOID);
 	new->fields = fields;
         new->names = nameslist;
-        new->hasobject=hasobject;
+        new->hasobject=dtypeflags;
 	if (maxalign > 1) {
 		totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
 	}
@@ -4709,7 +4709,7 @@ _convert_from_dict(PyObject *obj, int align)
 	int n, i;
 	int totalsize;
 	int maxalign=0;
-        int hasobject=0;
+        int dtypeflags=0;
 
 	fields = PyDict_New();
 	if (fields == NULL) return (PyArray_Descr *)PyErr_NoMemory();
@@ -4815,8 +4815,7 @@ _convert_from_dict(PyObject *obj, int align)
 		}
 		Py_DECREF(tup);
 		if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
-                if (!hasobject && newdescr->hasobject)
-                        hasobject = 1;
+                dtypeflags |= (newdescr->hasobject & NPY_FROM_FIELDS);
 		totalsize += newdescr->elsize;
 	}
 
@@ -4834,7 +4833,7 @@ _convert_from_dict(PyObject *obj, int align)
         }
         new->names = names;
 	new->fields = fields;
-        new->hasobject=hasobject;
+        new->hasobject = dtypeflags;
 	return new;
 
  fail:
@@ -5415,7 +5414,7 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 						    fortran, NULL);
 	if (ret == NULL) return NULL;
 
-	if (type->hasobject) {
+	if (PyDataType_REFCHK(type)) {
                 PyArray_FillObjectArray(ret, Py_None);
 		if (PyErr_Occurred()) {Py_DECREF(ret); return NULL;}
 	}
@@ -5476,8 +5475,8 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 				"itemsize cannot be zero");
 		return NULL;
 	}
-
-	if (typecode->type_num == PyArray_OBJECT || typecode->f->listpickle) {
+        
+	if (PyDataType_FLAGCHK(typecode, NPY_ITEM_IS_POINTER)) {
 		if (obj == NULL) obj = Py_None;
 		dptr = &obj;
 	}
@@ -5534,7 +5533,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 						    fortran, NULL);
 	if (ret == NULL) return NULL;
 
-	if (type->hasobject) {
+	if (PyDataType_REFCHK(type)) {
 		PyObject *zero = PyInt_FromLong(0);
                 PyArray_FillObjectArray(ret, zero);
                 Py_DECREF(zero);
@@ -5617,8 +5616,8 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 
 	if (dtype == NULL)
 		dtype=PyArray_DescrFromType(PyArray_DEFAULT);
-
-        if (dtype->hasobject) {
+        
+        if (PyDataType_FLAGCHK(dtype, NPY_ITEM_IS_POINTER)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "Cannot create an object array from"    \
                                 " a string");
@@ -5797,9 +5796,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
         elsize = dtype->elsize;
 
         /* We would need to alter the memory RENEW code to decrement any
-           reference counts before just throwing away the memory.
+           reference counts before throwing away any memory.
          */
-        if (dtype->hasobject) {
+        if (PyDataType_REFCHK(dtype)) {
                 PyErr_SetString(PyExc_ValueError, "cannot create "\
                                 "object arrays from iterator");
                 goto done;
@@ -5911,7 +5910,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
 	PyArray_ScanFunc *scan;
 	Bool binary;
 
-        if (typecode->hasobject) {
+        if (PyDataType_REFCHK(typecode)) {
                 PyErr_SetString(PyExc_ValueError, "cannot read into"
                                 "object array");
                 Py_DECREF(typecode);
@@ -6105,7 +6104,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 	int write=1;
 
 
-	if (type->hasobject) {
+	if (PyDataType_REFCHK(type)) {
 		PyErr_SetString(PyExc_ValueError,
 				"cannot create an OBJECT array from memory"\
 				" buffer");
@@ -7227,29 +7226,28 @@ PyMODINIT_FUNC initmultiarray(void) {
 	s = PyString_FromString("3.0");
 	PyDict_SetItemString(d, "__version__", s);
 	Py_DECREF(s);
-	s = PyInt_FromLong(NPY_ALLOW_THREADS);
-	PyDict_SetItemString(d, "ALLOW_THREADS", s);
-	Py_DECREF(s);
 
-	s = PyInt_FromLong(NPY_BUFSIZE);
-	PyDict_SetItemString(d, "BUFSIZE", s);
-	Py_DECREF(s);
+#define ADDCONST(NAME) \
+        s = PyInt_FromLong(NPY_##NAME); \
+        PyDict_SetItemString(d, #NAME, s); \
+        Py_DECREF(s)
 
-	s = PyInt_FromLong(NPY_CLIP);
-	PyDict_SetItemString(d, "CLIP", s);
-	Py_DECREF(s);
 
-	s = PyInt_FromLong(NPY_RAISE);
-	PyDict_SetItemString(d, "RAISE", s);
-	Py_DECREF(s);
+        ADDCONST(ALLOW_THREADS);
+        ADDCONST(BUFSIZE);
+        ADDCONST(CLIP);
 
-	s = PyInt_FromLong(NPY_WRAP);
-	PyDict_SetItemString(d, "WRAP", s);
-	Py_DECREF(s);
+        ADDCONST(ITEM_HASOBJECT);
+        ADDCONST(LIST_PICKLE);
+        ADDCONST(ITEM_IS_POINTER);
+        ADDCONST(NEEDS_INIT);
+        ADDCONST(NEEDS_PYAPI);
+        ADDCONST(USE_GETITEM);
 
-	s = PyInt_FromLong(NPY_MAXDIMS);
-	PyDict_SetItemString(d, "MAXDIMS", s);
-	Py_DECREF(s);
+        ADDCONST(RAISE);
+        ADDCONST(WRAP);
+        ADDCONST(MAXDIMS);
+#undef ADDCONST
 
 	Py_INCREF(&PyArray_Type);
 	PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
