@@ -270,7 +270,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 #endif
         {
                 memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
-                if (PyArray_ISOBJECT(r)) {
+                if (PyDataType_FLAGCHK(typecode, NPY_ITEM_HASOBJECT)) {
                         Py_INCREF(*((PyObject **)memptr));
                 }
         }
