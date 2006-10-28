@@ -250,7 +250,14 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
                                  NULL, NULL, 0, NULL);
         if (r==NULL) {Py_XDECREF(outcode); return NULL;}
 
-
+        if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
+                if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
+                        Py_XDECREF(outcode); Py_DECREF(r);
+                        return NULL;
+                }
+                goto finish;
+        }
+        
         memptr = scalar_value(scalar, typecode);
         
 #ifndef Py_UNICODE_WIDE
@@ -268,6 +275,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
                 }
         }
 
+ finish:
         if (outcode == NULL) return r;
 
         if (outcode->type_num == typecode->type_num) {

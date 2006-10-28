@@ -1126,6 +1126,9 @@ typedef struct {
 #define NPY_USE_GETITEM     0x20  /* Use f.getitem when extracting elements 
                                      of this data-type */
 
+#define NPY_USE_SETITEM     0x40  /* Use f.setitem when setting creating
+                                     0-d array from this data-type.
+                                  */
 
 /* These are inherited for global data-type if any data-types in the field 
    have them */
