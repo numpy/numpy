@@ -290,7 +290,7 @@ def tensordot(a, b, axes=2):
         nb = 1
 
     a, b = asarray(a), asarray(b)
-    as = a.shape
+    as_ = a.shape
     nda = len(a.shape)
     bs = b.shape
     ndb = len(b.shape)
@@ -298,7 +298,7 @@ def tensordot(a, b, axes=2):
     if (na != nb): equal = 0
     else:
         for k in xrange(na):
-            if as[axes_a[k]] != bs[axes_b[k]]:
+            if as_[axes_a[k]] != bs[axes_b[k]]:
                 equal = 0
                 break
             if axes_a[k] < 0:
@@ -314,9 +314,9 @@ def tensordot(a, b, axes=2):
     newaxes_a = notin + axes_a
     N2 = 1
     for axis in axes_a:
-        N2 *= as[axis]
+        N2 *= as_[axis]
     newshape_a = (-1, N2)
-    olda = [as[axis] for axis in notin]
+    olda = [as_[axis] for axis in notin]
 
     notin = [k for k in range(ndb) if k not in axes_b]
     newaxes_b = axes_b + notin
