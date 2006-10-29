@@ -201,12 +201,23 @@ class recarray(sb.ndarray):
             return obj.view(chararray)
         return obj.view(sb.ndarray)
 
+# Save the dictionary
+#  If the attr is a field name and not in the saved dictionary
+#  Undo any "setting" of the attribute and do a setfield
+# Thus, you can't create attributes on-the-fly that are field names. 
+
     def __setattr__(self, attr, val):
+        newattr = attr not in self.__dict__
         try:
-            return object.__setattr__(self, attr, val)
-        except AttributeError: # Must be a fieldname
-            pass
-        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+            res = object.__setattr__(self, attr, val)
+        except AttributeError:
+            fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+        else:
+            fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+            if attr not in fielddict:
+                return res
+            if newattr:         # We just added this one
+                object.__delattr__(self, attr)
         try:
             res = fielddict[attr][:2]
         except (TypeError,KeyError):
