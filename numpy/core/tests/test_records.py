@@ -70,5 +70,20 @@ class test_fromrecords(NumpyTestCase):
         for k in xrange(len(ra)):
             assert ra[k].item() == pa[k].item()
 
+    def check_recarray_conflict_fields(self):
+        ra = rec.array([(1,'abc',2.3),(2,'xyz',4.2),
+                        (3,'wrs',1.3)],
+                       names='field, shape, mean')
+        ra.mean = [1.1,2.2,3.3]
+        assert_array_almost_equal(ra['mean'], [1.1,2.2,3.3])
+        assert type(ra.mean) is type(ra.var)
+        ra.shape = (1,3)
+        assert ra.shape == (1,3)
+        ra.shape = ['A','B','C']
+        assert_array_equal(ra['shape'], [['A','B','C']])
+        ra.field = 5
+        assert_array_equal(ra['field'], [[5,5,5]])
+        assert callable(ra.field)
+
 if __name__ == "__main__":
     NumpyTest().run()

@@ -7,6 +7,8 @@ import numerictypes as nt
 import types
 import os
 
+ndarray = sb.ndarray
+
 _byteorderconv = {'b':'>',
                   'l':'<',
                   'n':'=',
@@ -164,7 +166,7 @@ class record(nt.void):
 # If byteorder is given it forces a particular byteorder on all
 #  the fields (and any subfields)
 
-class recarray(sb.ndarray):
+class recarray(ndarray):
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
                 byteorder=None, aligned=False):
@@ -175,9 +177,9 @@ class recarray(sb.ndarray):
             descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
         if buf is None:
-            self = sb.ndarray.__new__(subtype, shape, (record, descr))
+            self = ndarray.__new__(subtype, shape, (record, descr))
         else:
-            self = sb.ndarray.__new__(subtype, shape, (record, descr),
+            self = ndarray.__new__(subtype, shape, (record, descr),
                                       buffer=buf, offset=offset,
                                       strides=strides)
         return self
@@ -187,7 +189,7 @@ class recarray(sb.ndarray):
             return object.__getattribute__(self,attr)
         except AttributeError: # attr must be a fieldname
             pass
-        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+        fielddict = ndarray.__getattribute__(self,'dtype').fields
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
@@ -199,7 +201,7 @@ class recarray(sb.ndarray):
             return obj
         if obj.dtype.char in 'SU':
             return obj.view(chararray)
-        return obj.view(sb.ndarray)
+        return obj.view(ndarray)
 
 # Save the dictionary
 #  If the attr is a field name and not in the saved dictionary
@@ -209,15 +211,22 @@ class recarray(sb.ndarray):
     def __setattr__(self, attr, val):
         newattr = attr not in self.__dict__
         try:
-            res = object.__setattr__(self, attr, val)
-        except AttributeError:
-            fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
-        else:
-            fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+            ret = object.__setattr__(self, attr, val)
+        except:
+            fielddict = ndarray.__getattribute__(self,'dtype').fields
             if attr not in fielddict:
-                return res
+                exctype, value = sys.exc_info()[:2]
+                raise exctype, value
+        else:
+            fielddict = ndarray.__getattribute__(self,'dtype').fields
+            if attr not in fielddict:
+                return ret
             if newattr:         # We just added this one
-                object.__delattr__(self, attr)
+                try:            #  or this setattr worked on an internal
+                                #  attribute. 
+                    object.__delattr__(self, attr)
+                except:
+                    return ret
         try:
             res = fielddict[attr][:2]
         except (TypeError,KeyError):
@@ -225,17 +234,17 @@ class recarray(sb.ndarray):
         return self.setfield(val,*res)
 
     def __getitem__(self, indx):
-        obj = sb.ndarray.__getitem__(self, indx)
-        if (isinstance(obj, sb.ndarray) and obj.dtype.isbuiltin):
-            return obj.view(sb.ndarray)
+        obj = ndarray.__getitem__(self, indx)
+        if (isinstance(obj, ndarray) and obj.dtype.isbuiltin):
+            return obj.view(ndarray)
         return obj
 
     def field(self,attr, val=None):
         if isinstance(attr,int):
-            names = sb.ndarray.__getattribute__(self,'dtype').names
+            names = ndarray.__getattribute__(self,'dtype').names
             attr=names[attr]
 
-        fielddict = sb.ndarray.__getattribute__(self,'dtype').fields
+        fielddict = ndarray.__getattribute__(self,'dtype').fields
 
         res = fielddict[attr][:2]
 
@@ -245,20 +254,20 @@ class recarray(sb.ndarray):
                 return obj
             if obj.dtype.char in 'SU':
                 return obj.view(chararray)
-            return obj.view(sb.ndarray)
+            return obj.view(ndarray)
         else:
             return self.setfield(val, *res)
 
     def view(self, obj):
         try:
-            if issubclass(obj, sb.ndarray):
-                return sb.ndarray.view(self, obj)
+            if issubclass(obj, ndarray):
+                return ndarray.view(self, obj)
         except TypeError:
             pass
         dtype = sb.dtype(obj)
         if dtype.fields is None:
             return self.__array__().view(dtype)
-        return sb.ndarray.view(self, obj)            
+        return ndarray.view(self, obj)            
     
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
@@ -288,7 +297,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         # and determine the formats.
         formats = ''
         for obj in arrayList:
-            if not isinstance(obj, sb.ndarray):
+            if not isinstance(obj, ndarray):
                 raise ValueError, "item in the array list must be an ndarray."
             formats += _typestr[obj.dtype.type]
             if issubclass(obj.dtype.type, nt.flexible):
@@ -536,7 +545,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     elif isinstance(obj, file):
         return fromfile(obj, dtype=dtype, shape=shape, offset=offset)
 
-    elif isinstance(obj, sb.ndarray):
+    elif isinstance(obj, ndarray):
         if dtype is not None and (obj.dtype != dtype):
             new = obj.view(dtype)
         else:
