@@ -116,7 +116,8 @@ fortran_doc (FortranDataDef def) {
     }
   } else {
     PyArray_Descr *d = PyArray_DescrFromType(def.type);
-    if (sprintf(p,"%s'%c'-",p,d->type)==0) goto fail;
+    if (sprintf(p,"%s'%c'-",p,d->type)==0) {Py_DECREF(d); goto fail;}
+    Py_DECREF(d);
     if (def.data==NULL) {
       if (sprintf(p,"%sarray(%" NPY_INTP_FMT,p,def.dims.d[0])==0) goto fail;
       for(i=1;i<def.rank;++i)
@@ -521,7 +522,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
   */
   char mess[200];
   PyArrayObject *arr = NULL;
-  PyArray_Descr *descr = PyArray_DescrFromType(type_num);
+  PyArray_Descr *descr;
+  char typechar;
+  int elsize;
 
   if ((intent & F2PY_INTENT_HIDE)
       || ((intent & F2PY_INTENT_CACHE) && (obj==Py_None))
@@ -549,15 +552,20 @@ PyArrayObject* array_from_pyobj(const int type_num,
     return arr;
   }
 
+  descr = PyArray_DescrFromType(type_num);
+  elsize = descr->elsize;
+  typechar = descr->type;
+  Py_DECREF(descr);   
   if (PyArray_Check(obj)) {
     arr = (PyArrayObject *)obj;
-
+    
     if (intent & F2PY_INTENT_CACHE) {
       /* intent(cache) */
       if (PyArray_ISONESEGMENT(obj)
-	  && PyArray_ITEMSIZE((PyArrayObject *)obj)>=descr->elsize) {
-	if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims))
+	  && PyArray_ITEMSIZE((PyArrayObject *)obj)>=elsize) {
+	if (check_and_fix_dimensions((PyArrayObject *)obj,rank,dims)) {
 	  return NULL; /*XXX: set exception */
+        }
 	if (intent & F2PY_INTENT_OUT)
 	  Py_INCREF(obj);
 	return (PyArrayObject *)obj;
@@ -565,9 +573,9 @@ PyArrayObject* array_from_pyobj(const int type_num,
       sprintf(mess,"failed to initialize intent(cache) array");
       if (!PyArray_ISONESEGMENT(obj))
 	sprintf(mess+strlen(mess)," -- input must be in one segment");
-      if (PyArray_ITEMSIZE(arr)<descr->elsize)
+      if (PyArray_ITEMSIZE(arr)<elsize)
 	sprintf(mess+strlen(mess)," -- expected at least elsize=%d but got %d",
-		descr->elsize,PyArray_ITEMSIZE(arr)
+		elsize,PyArray_ITEMSIZE(arr)
 		);
       PyErr_SetString(PyExc_ValueError,mess);
       return NULL;
@@ -575,11 +583,12 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
     /* here we have always intent(in) or intent(inout) or intent(inplace) */
 
-    if (check_and_fix_dimensions(arr,rank,dims))
+    if (check_and_fix_dimensions(arr,rank,dims)) {
       return NULL; /*XXX: set exception */
+    }
 
     if ((! (intent & F2PY_INTENT_COPY))
-	&& PyArray_ITEMSIZE(arr)==descr->elsize
+	&& PyArray_ITEMSIZE(arr)==elsize
 	&& ARRAY_ISCOMPATIBLE(arr,type_num)
 	) {
       if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
@@ -597,14 +606,14 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	sprintf(mess+strlen(mess)," -- input not contiguous");
       if (!(intent & F2PY_INTENT_C) && !PyArray_ISFARRAY(arr))
 	sprintf(mess+strlen(mess)," -- input not fortran contiguous");
-      if (PyArray_ITEMSIZE(arr)!=descr->elsize)
+      if (PyArray_ITEMSIZE(arr)!=elsize)
 	sprintf(mess+strlen(mess)," -- expected elsize=%d but got %d",
-		descr->elsize,
+		elsize,
 		PyArray_ITEMSIZE(arr)
 		);
       if (!(ARRAY_ISCOMPATIBLE(arr,type_num)))
 	sprintf(mess+strlen(mess)," -- input '%c' not compatible to '%c'",
-		arr->descr->type,descr->type);
+		arr->descr->type,typechar);
       PyErr_SetString(PyExc_ValueError,mess);
       return NULL;
     }
