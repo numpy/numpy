@@ -213,12 +213,12 @@ class recarray(ndarray):
         try:
             ret = object.__setattr__(self, attr, val)
         except:
-            fielddict = ndarray.__getattribute__(self,'dtype').fields
+            fielddict = ndarray.__getattribute__(self,'dtype').fields or {}
             if attr not in fielddict:
                 exctype, value = sys.exc_info()[:2]
                 raise exctype, value
         else:
-            fielddict = ndarray.__getattribute__(self,'dtype').fields
+            fielddict = ndarray.__getattribute__(self,'dtype').fields or {}
             if attr not in fielddict:
                 return ret
             if newattr:         # We just added this one
