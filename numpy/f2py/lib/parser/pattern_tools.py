@@ -70,6 +70,9 @@ class Pattern:
     def match(self, string):
         return self.get_compiled().match(string)
 
+    def search(self, string):
+        return self.get_compiled().search(string)
+
     def rsplit(self, string):
         """
         Return (<lhs>, <pattern_match>, <rhs>) where
@@ -182,6 +185,11 @@ class Pattern:
             label = '<%s>' % (label)
         return Pattern(label, self.pattern, optional=self.optional, flags=self._flags)
 
+    def __call__(self, string):
+        m = self.match(string)
+        if m is None: return
+        return m.group()
+
 # Predefined patterns
 
 letter = Pattern('<letter>','[A-Z]',flags=re.I)
@@ -245,6 +253,10 @@ constant = literal_constant | named_constant
 int_constant = int_literal_constant | boz_literal_constant | named_constant
 char_constant = char_literal_constant | named_constant
 
+# assume that replace_string_map is applied:
+part_ref = name + ~((r'[(]' + name + r'[)]'))
+data_ref = part_ref + ~~~(r'[%]' + part_ref)
+primary = constant | name | data_ref | (r'[(]' + name + r'[)]')
 
 power_op = Pattern('<power-op>','[*]{2}')
 mult_op = Pattern('<mult-op>','[*/]')
@@ -271,6 +283,9 @@ abs_label = abs(label)
 keyword = name
 keyword_equal = keyword + '='
 
+
+
+
 abs_constant = abs(constant)
 abs_literal_constant = abs(literal_constant)
 abs_int_literal_constant = abs(int_literal_constant)
@@ -295,6 +310,23 @@ abs_hex_constant = abs(hex_constant)
 
 intrinsic_type_name = Pattern('<intrinsic-type-name>',r'(INTEGER|REAL|COMPLEX|LOGICAL|CHARACTER|DOUBLE\s*COMPLEX|DOUBLE\s*PRECISION|BYTE)',flags=re.I)
 abs_intrinsic_type_name = abs(intrinsic_type_name)
+
+access_spec = Pattern('<access-spec>',r'PUBLIC|PRIVATE',flags=re.I)
+abs_access_spec = abs(access_spec)
+
+attr_spec = Pattern('<attr-spec>',r'ALLOCATABLE|ASYNCHRONOUS|EXTERNAL|INTENT|INTRINSIC|OPTIONAL|PARAMETER|POINTER|PROTECTED|SAVE|TARGET|VALUE|VOLATILE',flags=re.I)
+abs_attr_spec = abs(attr_spec)
+
+dimension = Pattern('<dimension>',r'DIMENSION', flags=re.I)
+abs_dimension = abs(dimension)
+
+intent = Pattern('<intent>', r'INTENT', flags=re.I)
+abs_intent = abs(intent)
+
+intent_spec = Pattern('<intent-spec>', r'INOUT|IN|OUT', flags=re.I)
+abs_intent_spec = abs(intent_spec)
+
+subroutine = Pattern('<subroutine>', r'SUBROUTINE', flags=re.I)
 
 def _test():
     assert name.match('a1_a')

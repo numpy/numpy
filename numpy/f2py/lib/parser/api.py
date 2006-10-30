@@ -18,17 +18,7 @@ from block_statements import *
 # CHAR_BIT is used to convert object bit sizes to byte sizes
 from utils import CHAR_BIT
 
-def parse(input, isfree=None, isstrict=None, include_dirs = None):
-    """ Parse input and return Statement tree.
-
-    input            --- string or filename.
-    isfree, isstrict --- specify input Fortran format.
-                         Defaults are True, False, respectively, or
-                         determined from input.
-    include_dirs     --- list of include directories.
-                         Default contains current working directory
-                         and the directory of file name.
-    """
+def get_reader(input, isfree=None, isstrict=None, include_dirs = None):
     import os
     import re
     from readfortran import FortranFileReader, FortranStringReader
@@ -61,9 +51,21 @@ def parse(input, isfree=None, isstrict=None, include_dirs = None):
                                      include_dirs = include_dirs)
     else:
         raise TypeError,'Expected string or filename input but got %s' % (type(input))
+    return reader
+
+def parse(input, isfree=None, isstrict=None, include_dirs = None):
+    """ Parse input and return Statement tree.
+
+    input            --- string or filename.
+    isfree, isstrict --- specify input Fortran format.
+                         Defaults are True, False, respectively, or
+                         determined from input.
+    include_dirs     --- list of include directories.
+                         Default contains current working directory
+                         and the directory of file name.
+    """
+    reader = get_reader(input, isfree, isstrict, include_dirs)
     parser = FortranParser(reader)
     parser.parse()
     parser.analyze()
     return parser.block
-
-    

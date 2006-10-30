@@ -9,9 +9,11 @@ for clsname in dir():
         Base_classes[cls.__name__] = cls
 
 
-if 0: # Optimize subclass tree:
+if 1: # Optimize subclass tree:
 
     def _rpl_list(clsname):
+        if not Base_classes.has_key(clsname):
+            return [] # remove this code when all classes are implemented
         cls = Base_classes[clsname]
         if cls.__dict__.has_key('match'): return [clsname]
         l = []
@@ -29,10 +31,11 @@ if 0: # Optimize subclass tree:
             for n1 in _rpl_list(n):
                 if n1 not in opt_subclass_names:  opt_subclass_names.append(n1)
         if not opt_subclass_names==cls.subclass_names:
-            #print cls.__name__,':',', '.join(cls.subclass_names),'->',', '.join(opt_subclass_names)
+            print cls.__name__,':',', '.join(cls.subclass_names),'->',', '.join(opt_subclass_names)
             cls.subclass_names[:] = opt_subclass_names
         #else:
         #    print cls.__name__,':',opt_subclass_names
+
 
 # Initialize Base.subclasses dictionary:
 for clsname, cls in Base_classes.items():
@@ -50,19 +53,21 @@ for clsname, cls in Base_classes.items():
         else:
             print '%s not implemented needed by %s' % (n,clsname)
 
-if 1:
+if 0:
     for cls in Base_classes.values():
         subclasses = Base.subclasses.get(cls.__name__,[])
         subclasses_names = [c.__name__ for c in subclasses]
         subclass_names = getattr(cls,'subclass_names', [])
         use_names = getattr(cls,'use_names',[])
         for n in subclasses_names:
+            break
             if n not in subclass_names:
                 print '%s needs to be added to %s subclasses_name list' % (n,cls.__name__)
         for n in subclass_names:
+            break
             if n not in subclasses_names:
                 print '%s needs to be added to %s subclass_name list' % (n,cls.__name__)
-        for n in use_names:
+        for n in use_names:            
             if not Base_classes.has_key(n):
                 print '%s not defined used by %s' % (n, cls.__name__)
 #import pprint

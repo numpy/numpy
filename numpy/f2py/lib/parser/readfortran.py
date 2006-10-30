@@ -260,6 +260,17 @@ class FortranReaderBase:
         self.put_single_line(line)
         return line
 
+    # Parser methods:
+    def get_item(self):
+        try:
+            return self.next(ignore_comments = True)
+        except StopIteration:
+            pass
+        return
+
+    def put_item(self):
+        self.fifo_item.insert(0, item)
+        return
     # Iterator methods:
 
     def __iter__(self):

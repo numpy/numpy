@@ -15,6 +15,7 @@ Created: Oct 2006
 import re
 from splitline import string_replace_map
 import pattern_tools as pattern
+from readfortran import FortranReaderBase
 
 ############################# Base classes ################################
 
@@ -22,11 +23,23 @@ class NoMatchError(Exception):
     pass
 
 class Base(object):
-
+    """
+    """
     subclasses = {}
 
     def __new__(cls, string):
         #print '__new__:',cls.__name__,`string`
+        if isinstance(string, FortranReaderBase) and not issubclass(cls, BlockBase):
+            reader = string
+            item = reader.get_item()
+            try:
+                obj = cls(item.line)
+            except NoMatchError:
+                obj = None
+            if obj is None:
+                reader.put_item(item)
+                return
+            return obj
         match = cls.__dict__.get('match', None)
         if match is not None:
             result = cls.match(string)
@@ -53,6 +66,11 @@ class Base(object):
         raise NoMatchError,'%s: %r' % (cls.__name__, string)
 
     findall = staticmethod(re.compile(r'(_F2PY_STRING_CONSTANT_\d+_|F2PY_EXPR_TUPLE_\d+)').findall)
+    def apply_map(line, repmap):
+        for k in Base.findall(line):
+            line = line.replace(k, repmap[k])
+        return line
+    apply_map = staticmethod(apply_map)
     
     def init_list(self, *items):
         self.items = items
@@ -76,21 +94,42 @@ class Base(object):
             return self.torepr()
         return '%s(%r)' % (self.__class__.__name__, self.string)
 
+class BlockBase(Base):
+    """
+    <block-base> = <subcls>
+                     [ <subcls> ]...
+                     [ <endcls> ]
+    """
+    def match(reader, subcls, endcls):
+        content = []
+        return content,
+        
+    def init(self, content):
+        self.content = content
+        return
+    def tostr(self):
+        return '\n'.join(map(str, self.content))
+    def torepr(self):
+        return '\n'.join(map(repr, self.content))
+    def get_content(reader, content_class, end_class):
+        #for content_class.sub
+        pass
+    
 class SequenceBase(Base):
     """
     <sequence-base> = <obj>, <obj> [ , <obj> ]...
     """
     def match(separator, subcls, string):
         line, repmap = string_replace_map(string)
-        if separator not in line:
-            return
+        if isinstance(separator, str):
+            splitted = line.split(separator)
+        else:
+            splitted = separator[1].split(line)
+            separator = separator[0]
+        if len(splitted)<=1: return
         lst = []
-        for p in line.split(separator):
-            p = p.strip()
-            for k in Base.findall(p):
-                p = p.replace(k,repmap[k])
-            lst.append(subcls(p))
-        #if len(lst)==1: return lst[0]
+        for p in splitted:
+            lst.append(subcls(repmap(p.strip())))
         return separator, tuple(lst)
     match = staticmethod(match)
     def init(self, separator, items):
@@ -100,6 +139,7 @@ class SequenceBase(Base):
     def tostr(self):
         s = self.separator
         if s==',': s = s + ' '
+        elif s==' ': pass
         else: s = ' ' + s + ' '
         return s.join(map(str, self.items))
     def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.separator, self.items)
@@ -159,6 +199,16 @@ class BinaryOpBase(Base):
         return '%s %s %s' % (self.lhs, self.op, self.rhs)
     def torepr(self):
         return '%s(%r, %r, %r)' % (self.__class__.__name__,self.lhs, self.op, self.rhs)
+
+class SeparatorBase(BinaryOpBase):
+    """
+    <shape-base> = <lhs> : <rhs>
+    """
+    def init(self, lhs, rhs):
+        self.lhs = lhs
+        self.op = ':'
+        self.rhs = rhs
+        return
 
 class KeywordValueBase(BinaryOpBase):
     """
@@ -257,6 +307,42 @@ class StringBase(Base):
     def tostr(self): return str(self.string)
     def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.string)
 
+class STRINGBase(StringBase):
+    """
+    <STRING-base> = <XYZ>
+    """
+    match = staticmethod(StringBase.match)
+    def init(self, string):
+        self.string = string.upper()
+        return
+
+class EndStmtBase(Base):
+    """
+    <end-stmt-base> = END [ <stmt> [ <stmt-name>] ]
+    """
+    def match(stmt_type, stmt_name, string):
+        start = string[:3].upper()
+        if start != 'END': return
+        line = string[3:].lstrip()
+        start = line[:len(stmt_type)].upper()
+        if start:
+            if start != stmt_type: return
+            line = line[len(stmt_type):].lstrip()
+        else:
+            line = ''
+        if line:
+            return stmt_type, stmt_name(line)
+        return stmt_type, None
+    match = staticmethod(match)
+    def init(self, stmt_type, stmt_name):
+        self.type, self.name = stmt_type, stmt_name
+        return
+    def tostr(self):
+        if self.name is not None:
+            return 'END %s %s' % (self.type, self.name)
+        return 'END %s' % (self.type)
+    def torepr(self):
+        return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.name)
 
 ##################################################
 
@@ -355,6 +441,7 @@ class Char_Literal_Constant(Base):
                               | [ <kind-param> _ ] \" <rep-char> \"
     """
     subclass_names = []
+    rep = pattern.char_literal_constant
     def match(string):
         if string[-1] not in '"\'': return
         if string[-1]=='"':
@@ -543,7 +630,8 @@ class Primary(Base):
                 | <type-param-name>
                 | ( <expr> )
     """
-    subclass_names = ['Constant', 'Parenthesis', 'Designator','Array_Constructor','Structure_Constructor',
+    subclass_names = ['Constant', 'Parenthesis', 'Designator','Array_Constructor',
+                      'Structure_Constructor',
                       'Function_Reference', 'Type_Param_Inquiry', 'Type_Param_Name', 
                        ]
 
@@ -756,7 +844,7 @@ class Ac_Do_Variable(Base):
     <ac-do-variable> = <scalar-int-variable>
     <ac-do-variable> shall be a named variable    
     """
-    subclass_names = ['Name']
+    subclass_names = ['Scalar_Int_Variable']
 
 class Type_Spec(Base):
     """
@@ -1045,11 +1133,17 @@ class Parent_String(Base):
     """
     subclass_names = ['Scalar_Variable_Name', 'Array_Element', 'Scalar_Structure_Component', 'Scalar_Constant']
 
-class Scalar_Variable_Name(Base):
+class Variable_Name(Base):
     """
-    <scalar-variable-name> = <name>
+    <variable-name> = <name>
     """
     subclass_names = ['Name']
+
+class Scalar_Variable_Name(Base):
+    """
+    <scalar-variable-name> = <variable-name>
+    """
+    subclass_names = ['Variable_Name']
 
 class Scalar_Structure_Component(Base):
     """

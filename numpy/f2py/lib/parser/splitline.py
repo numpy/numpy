@@ -30,6 +30,17 @@ def split2(line, lower=False):
 _f2py_str_findall = re.compile(r"_F2PY_STRING_CONSTANT_\d+_").findall
 _is_name = re.compile(r'\w*\Z',re.I).match
 _is_simple_str = re.compile(r'\w*\Z',re.I).match
+_f2py_findall = re.compile(r'(_F2PY_STRING_CONSTANT_\d+_|F2PY_EXPR_TUPLE_\d+)').findall
+
+class string_replace_dict(dict):
+    """
+    Dictionary object that is callable for applying map returned
+    by string_replace_map() function.
+    """
+    def __call__(self, line):
+        for k in _f2py_findall(line):
+            line = line.replace(k, self[k])
+        return line
 
 def string_replace_map(line, lower=False,
                        _cache={'index':0,'pindex':0}):
@@ -39,7 +50,7 @@ def string_replace_map(line, lower=False,
     Returns a new line and the replacement map.
     """
     items = []
-    string_map = {}
+    string_map = string_replace_dict()
     rev_string_map = {}
     for item in splitquote(line, lower=lower)[0]:
         if isinstance(item, String) and not _is_simple_str(item[1:-1]):

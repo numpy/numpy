@@ -2,7 +2,8 @@
 
 from numpy.testing import *
 
-from expressions import *
+#from expressions import *
+from Fortran2003 import *
 
 class test_Expr(NumpyTestCase):
 
@@ -692,7 +693,7 @@ class test_Subscript_Triplet(NumpyTestCase):
 class test_Section_Subscript(NumpyTestCase):
 
     def check_simple(self):
-        cls_in = Section_Subscript
+        cls = Section_Subscript
 
         a = cls('1:2')
         assert isinstance(a, Subscript_Triplet),`a`
