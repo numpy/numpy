@@ -551,6 +551,10 @@ class test_regression(NumpyTestCase):
         a = N.array([1,2,3])
         a2 = N.array([[1,2,3]])
         assert_equal(a[N.where(a==3)], a2[N.where(a2==3)])
+
+    def check_object_argmax(self, level=rlevel):
+        a = N.array([1,2,3],dtype=object)
+        assert a.argmax() == 2
                 
 if __name__ == "__main__":
     NumpyTest().run()

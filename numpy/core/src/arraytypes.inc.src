@@ -1775,8 +1775,7 @@ OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *aip)
                 mp=ip[i];
                 i++;
         }
-        if (i==n) return 0;
-        for(i=n; i<n; i++) {
+        for(; i<n; i++) {
                 ip++;
                 if (*ip != NULL && PyObject_Compare(*ip,mp) > 0) {
                         mp = *ip;
