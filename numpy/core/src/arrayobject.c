@@ -10613,9 +10613,6 @@ static PyMemberDef arraydescr_members[] = {
         {"byteorder", T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
         {"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
         {"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
-        /* Get rid of this in 1.1 */
-        {"hasobject", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
-        /* END */
         {"flags", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
         {"names", T_OBJECT, offsetof(PyArray_Descr, names), RO, NULL},
         {NULL},
@@ -10795,6 +10792,18 @@ arraydescr_fields_get(PyArray_Descr *self)
         return PyDictProxy_New(self->fields);
 }
 
+static PyObject *
+arraydescr_hasobject_get(PyArray_Descr *self)
+{
+        PyObject *res;
+        if (PyDataType_FLAGCHK(self, NPY_ITEM_HASOBJECT))
+                res = Py_True;
+        else
+                res = Py_False;
+        Py_INCREF(res);
+        return res;
+}
+
 static PyGetSetDef arraydescr_getsets[] = {
         {"subdtype",
          (getter)arraydescr_subdescr_get,
@@ -10822,8 +10831,10 @@ static PyGetSetDef arraydescr_getsets[] = {
          NULL, NULL},
         {"fields",
          (getter)arraydescr_fields_get,
-         NULL,
-         NULL},
+         NULL, NULL},
+        {"hasobject",
+         (getter)arraydescr_hasobject_get,
+         NULL, NULL},
         {NULL, NULL, NULL, NULL},
 };
 
