@@ -268,7 +268,7 @@ class FortranReaderBase:
             pass
         return
 
-    def put_item(self):
+    def put_item(self, item):
         self.fifo_item.insert(0, item)
         return
     # Iterator methods:
@@ -389,6 +389,7 @@ class FortranReaderBase:
     def show_message(self, message, stream = sys.stdout):
         stream.write(message+'\n')
         stream.flush()
+        return
 
     def format_message(self, kind, message, startlineno, endlineno,
                        startcolno=0, endcolno=-1):
@@ -423,6 +424,22 @@ class FortranReaderBase:
                                startcolno=0, endcolno=-1):
         return self.format_message('WARNING',message, startlineno,
                                    endlineno, startcolno, endcolno)
+
+    def error(self, message, item=None):
+        if item is None:
+            m = self.format_error_message(message, len(self.source_lines)-2, len(self.source_lines))
+        else:
+            m = self.format_error_message(message, item.span[0], item.span[1])
+        self.show_message(m)
+        return
+
+    def warning(self, message, item=None):
+        if item is None:
+            m = self.format_warning_message(message, len(self.source_lines)-2, len(self.source_lines))
+        else:
+            m = self.format_warning_message(message, item.span[0], item.span[1])
+        self.show_message(m)
+        return
 
     # Auxiliary methods for processing raw source lines:
 

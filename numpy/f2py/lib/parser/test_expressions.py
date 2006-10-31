@@ -1,8 +1,6 @@
 
-
 from numpy.testing import *
 
-#from expressions import *
 from Fortran2003 import *
 
 class test_Expr(NumpyTestCase):

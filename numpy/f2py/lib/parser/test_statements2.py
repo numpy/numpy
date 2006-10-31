@@ -183,7 +183,30 @@ class test_Specification_Part(NumpyTestCase):
         a = cls(reader)
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'INTEGER :: a')
-        assert_equal(repr(a),'INTEGER :: a')
+        assert_equal(repr(a), "Specification_Part(Type_Declaration_Stmt(Intrinsic_Type_Spec('INTEGER', None), None, Entity_Decl(Name('a'), None, None, None)))")
+
+class test_Subroutine_Subprogram(NumpyTestCase):
+
+    def check_simple(self):
+        from api import get_reader
+        reader = get_reader('''\
+      subroutine foo
+      end subroutine foo''')
+        cls = Subroutine_Subprogram
+        a = cls(reader)
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'SUBROUTINE foo\nEND SUBROUTINE foo')
+        assert_equal(repr(a),"Subroutine_Subprogram(Subroutine_Stmt(None, Name('foo'), None, None), End_Subroutine_Stmt('SUBROUTINE', Name('foo')))")
+
+        reader = get_reader('''\
+      subroutine foo
+        integer a
+      end subroutine foo''')
+        cls = Subroutine_Subprogram
+        a = cls(reader)
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'SUBROUTINE foo\nINTEGER :: a\nEND SUBROUTINE foo')
+
 
 if __name__ == "__main__":
     NumpyTest().run()
