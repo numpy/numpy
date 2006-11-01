@@ -31,7 +31,9 @@ class Base(object):
 
     def __new__(cls, string):
         #print '__new__:',cls.__name__,`string`
-        if isinstance(string, FortranReaderBase) and not issubclass(cls, BlockBase):
+        match = cls.__dict__.get('match', None)
+        if isinstance(string, FortranReaderBase) and not issubclass(cls, BlockBase) \
+               and match is not None:
             reader = string
             item = reader.get_item()
             if item is None: return
@@ -44,7 +46,6 @@ class Base(object):
                 return
             obj._item = item
             return obj
-        match = cls.__dict__.get('match', None)
         if match is not None:
             result = cls.match(string)
         else:
@@ -109,6 +110,7 @@ class BlockBase(Base):
                      [ <endcls> ]
     """
     def match(startcls, subclasses, endcls, reader):
+        assert isinstance(reader,FortranReaderBase),`reader`
         content = []
         if startcls is not None:
             try:
@@ -157,9 +159,12 @@ class BlockBase(Base):
             start_stmt = content[0]
             end_stmt = content[-1]
             if isinstance(end_stmt, endcls) and hasattr(end_stmt, 'name'):
-                if end_stmt.name is not None and start_stmt.name != end_stmt.name:
-                    end_stmt._item.reader.error('expected <%s-name> is %s but got %s. Ignoring.'\
-                                                % (end_stmt.type.lower(), start_stmt.name, end_stmt.name))
+                if end_stmt.name is not None:
+                    if start_stmt.name != end_stmt.name:
+                        end_stmt._item.reader.error('expected <%s-name> is %s but got %s. Ignoring.'\
+                                                    % (end_stmt.type.lower(), start_stmt.name, end_stmt.name))
+                else:
+                    end_stmt.name = start_stmt.name
         return content,
     match = staticmethod(match)
 
@@ -432,13 +437,16 @@ class EndStmtBase(Base):
 ############################### SECTION  2 ####################################
 ###############################################################################
 
-class Program(Base): # R201
+class Program(BlockBase): # R201
     """
     <program> = <program-unit>
                   [ <program-unit> ] ...
     """
     subclass_names = []
     use_names = ['Program_Unit']
+    def match(reader):
+        return BlockBase.match(Program_Unit, [Program_Unit], None, reader)
+    match = staticmethod(match)
 
 class Program_Unit(Base): # R202
     """
@@ -684,9 +692,16 @@ class Char_Constant(Base): # R309
     subclass_names = ['Constant']
 
 #R310: <intrinsic-operator> = <power-op> | <mult-op> | <add-op> | <concat-op> | <rel-op> | <not-op> | <and-op> | <or-op> | <equiv-op>
-#R311: <defined-operator> = <defined--unary-op> | <defined-binary-op> | <extended-intrinsic-op>
+#R311: <defined-operator> = <defined-unary-op> | <defined-binary-op> | <extended-intrinsic-op>
 #R312: <extended-intrinsic-op> = <intrinsic-op>
-#R313: <label> = <digit> [ <digit> [ <digit> [ <digit> [ <digit> ] ] ] ]
+
+class Label(StringBase): # R313
+    """
+    <label> = <digit> [ <digit> [ <digit> [ <digit> [ <digit> ] ] ] ]
+    """
+    subclass_names = []
+    def match(string): return StringBase.match(pattern.abs_label, string)
+    match = staticmethod(match)
 
 ###############################################################################
 ############################### SECTION  4 ####################################
@@ -2907,7 +2922,7 @@ class Block(Base): # R801
     subclass_names = []
     use_names = ['Execution_Part_Construct']
 
-class If_Construct(Base):
+class If_Construct(Base): # R802
     """
     <if-construct> = <if-then-stmt>
                            <block>
@@ -2919,39 +2934,45 @@ class If_Construct(Base):
                          ]
                          <end-if-stmt>
     """
+    subclass_names = []
     use_names = ['If_Then_Stmt', 'Block', 'Else_If_Stmt', 'Else_Stmt', 'End_If_Stmt']
 
-class If_Then_Stmt(Base):
+class If_Then_Stmt(Base): # R803
     """
     <if-then-stmt> = [ <if-construct-name> : ] IF ( <scalar-logical-expr> ) THEN
     """
+    subclass_names = []
     use_names = ['If_Construct_Name', 'Scalar_Logical_Expr']
 
-class Else_If_Stmt(Base):
+class Else_If_Stmt(Base): # R804
     """
     <else-if-stmt> = ELSE IF ( <scalar-logical-expr> ) THEN [ <if-construct-name> ]
     """
+    subclass_names = []
     use_names = ['Scalar_Logical_Expr', 'If_Construct_Name']
 
-class Else_Stmt(Base):
+class Else_Stmt(Base): # R805
     """
     <else-stmt> = ELSE [ <if-construct-name> ]
     """
+    subclass_names = []
     use_names = ['If_Construct_Name']
 
-class End_If_Stmt(Base):
+class End_If_Stmt(Base): # R806
     """
     <end-if-stmt> = END IF [ <if-construct-name> ]
     """
+    subclass_names = []
     use_names = ['If_Construct_Name']
 
-class If_Stmt(Base):
+class If_Stmt(Base): # R807
     """
     <if-stmt> = IF ( <scalar-logical-expr> ) <action-stmt>
     """
+    subclass_names = []
     use_names = ['Scalar_Logical_Expr', 'Action_Stmt']
 
-class Case_Construct(Base):
+class Case_Construct(Base): # R808
     """
     <case-construct> = <select-case-stmt>
                            [ <case-stmt>
@@ -2959,42 +2980,48 @@ class Case_Construct(Base):
                            ]..
                            <end-select-stmt>
     """
+    subclass_names = []
     use_names = ['Select_Case_Stmt', 'Case_Stmt', 'End_Select_Stmt']
 
-class Select_Case_Stmt(Base):
+class Select_Case_Stmt(Base): # R809
     """
     <select-case-stmt> = [ <case-construct-name> : ] SELECT CASE ( <case-expr> )
     """
+    subclass_names = []
     use_names = ['Case_Construct_Name', 'Case_Expr']
 
-class Case_Stmt(Base):
+class Case_Stmt(Base): # R810
     """
     <case-stmt> = CASE <case-selector> [ <case-construct-name> ]
     """
+    subclass_names = []
     use_names = ['Case_Selector', 'Case_Construct_Name']
 
-class End_Select_Stmt(Base):
+class End_Select_Stmt(Base): # R811
     """
     <end-select-stmt> = END SELECT [ <case-construct-name> ]
     """
+    subclass_names = []
     use_names = ['Case_Construct_Name']
 
-class Case_Expr(Base):
+class Case_Expr(Base): # R812
     """
     <case-expr> = <scalar-int-expr>
                   | <scalar-char-expr>
                   | <scalar-logical-expr>
     """
+    subclass_names = []
     subclass_names = ['Scalar_Int_Expr', 'Scalar_Char_Expr', 'Scalar_Logical_Expr']
 
-class Case_Selector(Base):
+class Case_Selector(Base): # R813
     """
     <case-selector> = ( <case-value-range-list> )
                       | DEFAULT
     """
+    subclass_names = []
     use_names = ['Case_Value_Range_List']
 
-class Case_Value_Range(Base):
+class Case_Value_Range(Base): # R814
     """
     <case-value-range> = <case-value>
                          | <case-value> :
@@ -3012,40 +3039,44 @@ class Case_Value(Base): # R815
     subclass_names = ['Scalar_Int_Initialization_Expr', 'Scalar_Char_Initialization_Expr', 'Scalar_Logical_Initialization_Expr']
 
 
-class Associate_Construct(Base):
+class Associate_Construct(Base): # R816
     """
     <associate-construct> = <associate-stmt>
                                 <block>
                                 <end-associate-stmt>
     """
+    subclass_names = []
     use_names = ['Associate_Stmt', 'Block', 'End_Associate_Stmt']
 
-class Associate_Stmt(Base):
+class Associate_Stmt(Base): # R817
     """
     <associate-stmt> = [ <associate-construct-name> : ] ASSOCIATE ( <association-list> )
     """
-    use_names = ['Associate_Construct_Name', 'Associateion_List']
+    subclass_names = []
+    use_names = ['Associate_Construct_Name', 'Association_List']
 
-class Association(Base):
+class Association(Base): # R818
     """
     <association> = <associate-name> => <selector>
     """
+    subclass_names = []
     use_names = ['Associate_Name', 'Selector']
 
-class Selector(Base):
+class Selector(Base): # R819
     """
     <selector> = <expr>
                  | <variable>
     """
     subclass_names = ['Expr', 'Variable']
 
-class End_Associate_Stmt(Base):
+class End_Associate_Stmt(Base): # R820
     """
     <end-associate-stmt> = END ASSOCIATE [ <associate-construct-name> ]
     """
+    subclass_names = []
     use_names = ['Associate_Construct_Name']
 
-class Select_Type_Construct(Base):
+class Select_Type_Construct(Base): # R821
     """
     <select-type-construct> = <select-type-stmt>
                                   [ <type-guard-stmt>
@@ -3053,95 +3084,224 @@ class Select_Type_Construct(Base):
                                   ]...
                                   <end-select-type-stmt>
     """
+    subclass_names = []
     use_names = ['Select_Type_Stmt', 'Type_Guard_Stmt', 'Block', 'End_Select_Type_Stmt']
 
-class Select_Type_Stmt(Base):
+class Select_Type_Stmt(Base): # R822
     """
     <select-type-stmt> = [ <select-construct-name> : ] SELECT TYPE ( [ <associate-name> => ] <selector> )
     """
+    subclass_names = []
     use_names = ['Select_Construct_Name', 'Associate_Name', 'Selector']
 
-class Type_Guard_Stmt(Base):
+class Type_Guard_Stmt(Base): # R823
     """
     <type-guard-stmt> = TYPE IS ( <type-spec> ) [ <select-construct-name> ]
                         | CLASS IS ( <type-spec> ) [ <select-construct-name> ]
                         | CLASS DEFAULT [ <select-construct-name> ]
     """
+    subclass_names = []
     use_names = ['Type_Spec', 'Select_Construct_Name']
 
-class End_Select_Type_Stmt(Base):
+class End_Select_Type_Stmt(Base): # R824
     """
     <end-select-type-stmt> = END SELECT [ <select-construct-name> ]
     """
+    subclass_names = []
     use_names = ['Select_Construct_Name']
 
-class Do_Construct(Base):
+class Do_Construct(Base): # R825
     """
     <do-construct> = <block-do-construct>
                      | <nonblock-do-construct>
     """
     subclass_names = ['Block_Do_Construct', 'Nonblock_Do_Construct']
 
-class Block_Do_Construct(Base):
+class Block_Do_Construct(Base): # R826
     """
     <block-do-construct> = <do-stmt>
                                <do-block>
                                <end-do>
     """
+    subclass_names = []
     use_names = ['Do_Stmt', 'Do_Block', 'End_Do']
 
-class Do_Stmt(Base):
+class Do_Stmt(Base): # R827
     """
     <do-stmt> = <label-do-stmt>
                 | <nonlabel-do-stmt>
     """
     subclass_names = ['Label_Do_Stmt', 'Nonlabel_Do_Stmt']
 
-class Label_Do_Stmt(Base):
+class Label_Do_Stmt(Base): # R828
     """
     <label-do-stmt> = [ <do-construct-name> : ] DO <label> [ <loop-control> ]
     """
+    subclass_names = []
     use_names = ['Do_Construct_Name', 'Label', 'Loop_Control']
 
-class NonLabel_Do_Stmt(Base):
+class Nonlabel_Do_Stmt(Base): # R829
     """
     <nonlabel-do-stmt> = [ <do-construct-name> : ] DO [ <loop-control> ]
     """
+    subclass_names = []
     use_names = ['Do_Construct_Name', 'Loop_Control']
 
-class Loop_Control(Base):
+class Loop_Control(Base): # R830
     """
     <loop-control> = [ , ] <do-variable> = <scalar-int-expr> , <scalar-int-expr> [ , <scalar-int-expr> ]
                      | [ , ] WHILE ( <scalar-logical-expr> )
     """
+    subclass_names = []
     use_names = ['Do_Variable', 'Scalar_Int_Expr', 'Scalar_Logical_Expr']
 
-class Do_Variable(Base):
+class Do_Variable(Base): # R831
     """
     <do-variable> = <scalar-int-variable>
     """
     subclass_names = ['Scalar_Int_Variable']
 
-class Do_Block(Base):
+class Do_Block(Base): # R832
     """
     <do-block> = <block>
     """
     subclass_names = ['Block']
 
-class End_Do(Base):
+class End_Do(Base): # R833
     """
     <end-do> = <end-do-stmt>
                | <continue-stmt>
     """
     subclass_names = ['End_Do_Stmt', 'Continue_Stmt']
 
-class End_Do_Stmt(Base):
+class End_Do_Stmt(Base): # R834
     """
     <end-do-stmt> = END DO [ <do-construct-name> ]
     """
+    subclass_names = []
     use_names = ['Do_Construct_Name']
 
-#...
+class Nonblock_Do_Construct(Base): # R835
+    """
+    <nonblock-do-stmt> = <action-term-do-construct>
+                         | <outer-shared-do-construct>
+    """
+    subclass_names = ['Action_Term_Do_Construct', 'Outer_Shared_Do_Construct']
+
+class Action_Term_Do_Construct(Base): # R836
+    """
+    <action-term-do-construct> = <label-do-stmt>
+                                     <do-body>
+                                     <do-term-action-stmt>
+    """
+    subclass_names = []
+    use_names = ['Label_Do_Stmt', 'Do_Body', 'Do_Term_Action_Stmt']
+
+class Do_Body(Base): # R837
+    """
+    <do-body> = [ <execution-part-construct> ]...
+    """
+    subclass_names = []
+    use_names = ['Execution_Part_Construct']
+
+class Do_Term_Action_Stmt(Base): # R838
+    """
+    <do-term-action-stmt> = <action-stmt>
+    C824: <do-term-action-stmt> shall not be <continue-stmt>, <goto-stmt>, <return-stmt>, <stop-stmt>,
+                          <exit-stmt>, <cycle-stmt>, <end-function-stmt>, <end-subroutine-stmt>,
+                          <end-program-stmt>, <arithmetic-if-stmt>
+    """
+    subclass_names = ['Action_Stmt']
+
+class Outer_Shared_Do_Construct(Base): # R839
+    """
+    <outer-shared-do-construct> = <label-do-stmt>
+                                      <do-body>
+                                      <shared-term-do-construct>
+    """
+    subclass_names = []
+    use_names = ['Label_Do_Stmt', 'Do_Body', 'Shared_Term_Do_Construct']
+
+class Shared_Term_Do_Construct(Base): # R840
+    """
+    <shared-term-do-construct> = <outer-shared-do-construct>
+                                 | <inner-shared-do-construct>
+    """
+    subclass_names = ['Outer_Shared_Do_Construct', 'Inner_Shared_Do_Construct']
+
+class Inner_Shared_Do_Construct(Base): # R841
+    """
+    <inner-shared-do-construct> = <label-do-stmt>
+                                      <do-body>
+                                      <do-term-shared-stmt>
+    """
+    subclass_names = []
+    use_names = ['Label_Do_Stmt', 'Do_Body', 'Do_Term_Shared_Stmt']
+
+class Do_Term_Shared_Stmt(Base): # R842
+    """
+    <do-term-shared-stmt> = <action-stmt>
+    C826: see C824 above.
+    """
+    subclass_names = ['Action_Stmt']
+
+class Cycle_Stmt(Base): # R843
+    """
+    <cycle-stmt> = CYCLE [ <do-construct-name> ]
+    """
+    subclass_names = []
+    use_names = ['Do_Construct_Name']
+
+class Exit_Stmt(Base): # R844
+    """
+    <exit-stmt> = EXIT [ <do-construct-name> ]
+    """
+    subclass_names = []
+    use_names = ['Do_Construct_Name']
+
+class Goto_Stmt(Base): # R845
+    """
+    <goto-stmt> = GO TO <label>
+    """
+    subclass_names = []
+    use_names = ['Label']
+
+class Computed_Goto_Stmt(Base): # R846
+    """
+    <computed-goto-stmt> = GO TO ( <label-list> ) [ , ] <scalar-int-expr>
+    """
+    subclass_names = []
+    use_names = ['Label_List', 'Scalar_Int_Expr']
+
+class Arithmetic_If_Stmt(Base): # R847
+    """
+    <arithmetic-if-stmt> = IF ( <scalar-numeric-expr> ) <label> , <label> , <label>
+    """
+    subclass_names = []
+    use_names = ['Scalar_Numeric_Expr', 'Label']
+
+class Continue_Stmt(Base): # R848
+    """
+    <continue-stmt> = CONTINUE
+    """
+    subclass_names = []
+    
+class Stop_Stmt(Base): # R849
+    """
+    <stop-stmt> = STOP [ <stop-code> ]
+    """
+    subclass_names = []
+    use_names = ['Stop_Code']
+
+class Stop_Code(StringBase): # R850
+    """
+    <stop-code> = <scalar-char-constant>
+                  | <digit> [ <digit> [ <digit> [ <digit> [ <digit> ] ] ] ]
+    """
+    subclass_names = ['Scalar_Char_Constant']
+    def match(string): return StringBase.match(pattern.abs_label, string)
+    match = staticmethod(match)
+
 
 ###############################################################################
 ############################### SECTION  9 ####################################
@@ -3154,6 +3314,309 @@ class Io_Unit(Base): # R901
                 | <internal-file-variable>
     """
     subclass_names = ['File_Unit_Number', 'Internal_File_Variable']
+
+class File_Unit_Number(Base): # R902
+    """
+    <file-unit-number> = <scalar-int-expr>
+    """
+    subclass_names = ['Scalar_Int_Expr']
+
+class Internal_File_Variable(Base): # R903
+    """
+    <internal-file-variable> = <char-variable>
+    C901: <char-variable> shall not be an array section with a vector subscript.
+    """
+    subclass_names = ['Char_Variable']
+
+class Open_Stmt(Base): # R904
+    """
+    <open-stmt> = OPEN ( <connect-spec-list> )
+    """
+    subclass_names = []
+    use_names = ['Connect_Spec_List']
+
+class Connect_Spec(Base): # R905
+    """
+    <connect-spec> = [ UNIT = ] <file-unit-number>
+                     | ACCESS = <scalar-default-char-expr>
+                     | ACTION = <scalar-default-char-expr>
+                     | ASYNCHRONOUS = <scalar-default-char-expr>
+                     | BLANK = <scalar-default-char-expr>
+                     | DECIMAL = <scalar-default-char-expr>
+                     | DELIM = <scalar-default-char-expr>
+                     | ENCODING = <scalar-default-char-expr>
+                     | ERR = <label>
+                     | FILE = <file-name-expr>
+                     | FORM = <scalar-default-char-expr>
+                     | IOMSG = <iomsg-variable>
+                     | IOSTAT = <scalar-int-variable>
+                     | PAD = <scalar-default-char-expr>
+                     | POSITION = <scalar-default-char-expr>
+                     | RECL = <scalar-int-expr>
+                     | ROUND = <scalar-default-char-expr>
+                     | SIGN = <scalar-default-char-expr>
+                     | STATUS = <scalar-default-char-expr>
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Scalar_Default_Char_Expr', 'Label', 'File_Name_Expr', 'Iomsg_Variable',
+                 'Scalar_Int_Expr', 'Scalar_Int_Variable']
+
+class File_Name_Expr(Base): # R906
+    """
+    <file-name-expr> = <scalar-default-char-expr>
+    """
+    subclass_names = ['Scalar_Default_Char_Expr']
+
+class Iomsg_Variable(Base): # R907
+    """
+    <iomsg-variable> = <scalar-default-char-variable>
+    """
+    subclass_names = ['Scalar_Default_Char_Variable']
+
+class Close_Stmt(Base): # R908
+    """
+    <close-stmt> = CLOSE ( <close-spec-list> )
+    """
+    subclass_names = []
+    use_names = ['Close_Spec_List']
+
+class Close_Spec(Base): # R909
+    """
+    <close-spec> = [ UNIT = ] <file-unit-number>
+                   | IOSTAT = <scalar-int-variable>
+                   | IOMSG = <iomsg-variable>
+                   | ERR = <label>
+                   | STATUS = <scalar-default-char-expr>
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Scalar_Default_Char_Expr', 'Label', 'Iomsg_Variable',
+                 'Scalar_Int_Variable']
+
+class Read_Stmt(Base): # R910
+    """
+    <read-stmt> = READ ( <io-control-spec-list> ) [ <input-item-list> ]
+                  | READ <format> [ , <input-item-list> ]
+    """
+    subclass_names = []
+    use_names = ['Io_Control_Spec_List', 'Input_Item_List', 'Format']
+
+class Write_Stmt(Base): # R911
+    """
+    <write-stmt> = WRITE ( <io-control-spec-list> ) [ <output-item-list> ]
+    """
+    subclass_names = []
+    use_names = ['Io_Control_Spec_List', 'Output_Item_List']
+
+class Print_Stmt(Base): # R912
+    """
+    <print-stmt> = PRINT <format> [ , <output-item-list> ]
+    """
+    subclass_names = []
+    use_names = ['Format', 'Output_Item_List']
+
+class Io_Control_Spec(Base): # R913
+    """
+    <io-control-spec> = [ UNIT = ] <io-unit>
+                        | [ FMT = ] <format>
+                        | [ NML = ] <namelist-group-name>
+                        | ADVANCE = <scalar-default-char-expr>
+                        | ASYNCHRONOUS = <scalar-char-initialization-expr>
+                        | BLANK = <scalar-default-char-expr>
+                        | DECIMAL = <scalar-default-char-expr>
+                        | DELIM = <scalar-default-char-expr>
+                        | END = <label>
+                        | EOR = <label>
+                        | ERR = <label>
+                        | ID = <scalar-int-variable>
+                        | IOMSG = <iomsg-variable>
+                        | IOSTAT = <scalar-int-variable>
+                        | PAD = <scalar-default-char-expr>
+                        | POS = <scalar-int-expr>
+                        | REC = <scalar-int-expr>
+                        | ROUND = <scalar-default-char-expr>
+                        | SIGN = <scalar-default-char-expr>
+                        | SIZE = <scalar-int-variable>
+    """
+    subclass_names = []
+    use_names = ['Io_Unit', 'Format', 'Namelist_Group_Name', 'Scalar_Default_Char_Expr',
+                 'Scalar_Char_Initialization_Expr', 'Label', 'Scalar_Int_Variable',
+                 'Iomsg_Variable', 'Scalar_Int_Expr']
+
+class Format(Base): # R914
+    """
+    <format> = <default-char-expr>
+               | <label>
+               | *
+    """
+    subclass_names = ['Default_Char_Expr', 'Label']
+
+class Input_Item(Base): # R915
+    """
+    <input-item> = <variable>
+                   | <io-implied-do>
+    """
+    subclass_names = ['Variable', 'Io_Implied_Do']
+
+class Output_Item(Base): # R916
+    """
+    <output-item> = <expr>
+                    | <io-implied-do>
+    """
+    subclass_names = ['Expr', 'Io_Implied_Do']
+
+class Io_Implied_Do(Base): # R917
+    """
+    <io-implied-do> = ( <io-implied-do-object-list> , <io-implied-do-control> )
+    """
+    subclass_names = []
+    use_names = ['Io_Implied_Do_Object_List', 'Io_Implied_Do_Control']
+
+class Io_Implied_Do_Object(Base): # R918
+    """
+    <io-implied-do-object> = <input-item>
+                             | <output-item>
+    """
+    subclass_names = ['Input_Item', 'Output_Item']
+
+class Io_Implied_Do_Control(Base): # R919
+    """
+    <io-implied-do-control> = <do-variable> = <scalar-int-expr> , <scalar-int-expr> [ , <scalar-int-expr> ]
+    """
+    subclass_names = []
+    use_names = ['Do_Variable', 'Scalar_Int_Expr']
+
+class Dtv_Type_Spec(Base): # R920
+    """
+    <dtv-type-spec> = TYPE ( <derived-type-spec> )
+                      | CLASS ( <derived-type-spec> )
+    """
+    subclass_names = []
+    use_names = ['Derived_Type_Spec']
+
+class Wait_Stmt(Base): # R921
+    """
+    <wait-stmt> = WAIT ( <wait-spec-list> )
+    """
+    subclass_names = []
+    use_names = ['Wait_Spec_List']
+
+class Wait_Spec(Base): # R922
+    """
+    <wait-spec> = [ UNIT = ] <file-unit-number>
+                  | END = <label>
+                  | EOR = <label>
+                  | ERR = <label>
+                  | ID = <scalar-int-expr>
+                  | IOMSG = <iomsg-variable>
+                  | IOSTAT = <scalar-int-variable>
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Label', 'Scalar_Int_Expr', 'Iomsg_Variable', 'Scalar_Int_Variable']
+
+class Backspace_Stmt(Base): # R923
+    """
+    <backspace-stmt> = BACKSPACE <file-unit-number>
+                       | BACKSPACE ( <position-spec-list> )
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Position_Spec_List']
+
+class Endfile_Stmt(Base): # R924
+    """
+    <endfile-stmt> = ENDFILE <file-unit-number>
+                     | ENDFILE ( <position-spec-list> )
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Position_Spec_List']
+
+class Rewind_Stmt(Base): # R925
+    """
+    <rewind-stmt> = REWIND <file-unit-number>
+                    | REWIND ( <position-spec-list> )
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Position_Spec_List']
+
+class Position_Spec(Base): # R926
+    """
+    <position-spec> = [ UNIT = ] <file-unit-number>
+                      | IOMSG = <iomsg-variable>
+                      | IOSTAT = <scalar-int-variable>
+                      | ERR = <label>
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Iomsg_Variable', 'Scalar_Int_Variable', 'Label']
+
+class Flush_Stmt(Base): # R927
+    """
+    <flush-stmt> = FLUSH <file-unit-number>
+                    | FLUSH ( <position-spec-list> )
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Position_Spec_List']
+
+class Flush_Spec(Base): # R928
+    """
+    <flush-spec> = [ UNIT = ] <file-unit-number>
+                   | IOMSG = <iomsg-variable>
+                   | IOSTAT = <scalar-int-variable>
+                   | ERR = <label>
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'Iomsg_Variable', 'Scalar_Int_Variable', 'Label']
+
+class Inquire_Stmt(Base): # R929
+    """
+    <inquire-stmt> = INQUIRE ( <inquire-spec-list> )
+                     | INQUIRE ( IOLENGTH = <scalar-int-variable> ) <output-item-list>
+    """
+    subclass_names = []
+    use_names = ['Inquire_Spec_List', 'Scalar_Int_Variable', 'Output_Item_List']
+
+class Inquire_Spec(Base): # R930
+    """
+    <inquire-spec> = [ UNIT = ] <file-unit-number>
+                     | FILE = <file-name-expr>
+                     | ACCESS = <scalar-default-char-variable>
+                     | ACTION = <scalar-default-char-variable>
+                     | ASYNCHRONOUS = <scalar-default-char-variable>
+                     | BLANK = <scalar-default-char-variable>
+                     | DECIMAL = <scalar-default-char-variable>
+                     | DELIM = <scalar-default-char-variable>
+                     | DIRECT = <scalar-default-char-variable>
+                     | ENCODING = <scalar-default-char-variable>
+                     | ERR = <label>
+                     | EXIST = <scalar-default-logical-variable>
+                     | FORM = <scalar-default-char-variable>
+                     | FORMATTED = <scalar-default-char-variable>
+                     | ID = <scalar-int-expr>
+                     | IOMSG = <iomsg-variable>
+                     | IOSTAT = <scalar-int-variable>
+                     | NAME = <scalar-default-char-variable>
+                     | NAMED = <scalar-default-logical-variable>
+                     | NEXTREC = <scalar-int-variable>
+                     | NUMBER = <scalar-int-variable>
+                     | OPENED = <scalar-default-logical-variable>
+                     | PAD = <scalar-default-char-variable>
+                     | PENDING = <scalar-default-logical-variable>
+                     | POS = <scalar-int-variable>
+                     | POSITION = <scalar-default-char-variable>
+                     | READ = <scalar-default-char-variable>
+                     | READWRITE = <scalar-default-char-variable>
+                     | RECL = <scalar-int-variable>
+                     | ROUND = <scalar-default-char-variable>
+                     | SEQUENTIAL = <scalar-default-char-variable>
+                     | SIGN = <scalar-default-char-variable>
+                     | SIZE = <scalar-int-variable>
+                     | STREAM = <scalar-default-char-variable>
+                     | UNFORMATTED = <scalar-default-char-variable>
+                     | WRITE = <scalar-default-char-variable>
+    """
+    subclass_names = []
+    use_names = ['File_Unit_Number', 'File_Name_Expr', 'Scalar_Default_Char_Variable',
+                 'Scalar_Default_Logical_Variable', 'Scalar_Int_Variable', 'Scalar_Int_Expr',
+                 'Label', 'Iomsg_Variable']
+
 
 ###############################################################################
 ############################### SECTION 10 ####################################
@@ -3916,6 +4379,7 @@ if 1: # Optimize subclass tree:
 
     def _rpl_list(clsname):
         if not Base_classes.has_key(clsname):
+            print 'Not implemented:',clsname
             return [] # remove this code when all classes are implemented
         cls = Base_classes[clsname]
         if cls.__dict__.has_key('match'): return [clsname]
@@ -3956,7 +4420,7 @@ for clsname, cls in Base_classes.items():
         else:
             print '%s not implemented needed by %s' % (n,clsname)
 
-if 0:
+if 1:
     for cls in Base_classes.values():
         subclasses = Base.subclasses.get(cls.__name__,[])
         subclasses_names = [c.__name__ for c in subclasses]
@@ -3970,7 +4434,7 @@ if 0:
             break
             if n not in subclasses_names:
                 print '%s needs to be added to %s subclass_name list' % (n,cls.__name__)
-        for n in use_names:            
+        for n in use_names + subclass_names:            
             if not Base_classes.has_key(n):
                 print '%s not defined used by %s' % (n, cls.__name__)
 

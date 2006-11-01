@@ -274,6 +274,7 @@ extended_intrinsic_operator = intrinsic_operator
 defined_unary_op = Pattern('<defined-unary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_binary_op = Pattern('<defined-binary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_operator = defined_unary_op | defined_binary_op | extended_intrinsic_operator
+abs_defined_operator = abs(defined_operator)
 
 non_defined_binary_op = intrinsic_operator | logical_literal_constant
 
