@@ -590,15 +590,6 @@ def svd(a, full_matrices=1, compute_uv=1):
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
                                  work, -1, iwork, 0)
         lwork = int(work[0])
-        if option == 'N' and lwork==1:
-            # there seems to be a bug in dgesdd of lapack
-            #   (NNemec, 060310)
-            # returning the wrong lwork size for option == 'N'
-            results = lapack_routine('A', m, n, a, m, s, u, m, vt, n,
-                                     work, -1, iwork, 0)
-            lwork = int(work[0])
-            assert lwork > 1
-
         work = zeros((lwork,), t)
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
                                  work, lwork, iwork, 0)

@@ -7243,6 +7243,7 @@ PyMODINIT_FUNC initmultiarray(void) {
         ADDCONST(NEEDS_INIT);
         ADDCONST(NEEDS_PYAPI);
         ADDCONST(USE_GETITEM);
+        ADDCONST(USE_SETITEM);
 
         ADDCONST(RAISE);
         ADDCONST(WRAP);

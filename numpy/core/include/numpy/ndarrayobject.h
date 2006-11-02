@@ -1114,8 +1114,7 @@ typedef struct {
 #define NPY_ITEM_HASOBJECT  0x01  /* Same as needing REFCOUNT */
 
 #define NPY_LIST_PICKLE     0x02  /* Convert to list for pickling */
-#define NPY_ITEM_IS_POINTER 0x06  /* The item is a POINTER -- automatic
-                                     LIST_PICKLE       */
+#define NPY_ITEM_IS_POINTER 0x04  /* The item is a POINTER  */
 
 #define NPY_NEEDS_INIT      0x08  /* memory needs to be initialized 
                                      for this data-type */

@@ -437,6 +437,33 @@ lapack_lite_dgesdd(PyObject *self, PyObject *args)
                           DDATA(vt),&ldvt,DDATA(work),&lwork,IDATA(iwork),
                           &info);
 
+    if (info == 0 && lwork == -1) {
+            /* We need to check the result because
+               sometimes the "optimal" value is actually
+               too small.
+               Change it to the maximum of the minimum and the optimal.
+            */
+            long nwork, work0 = (long) *DDATA(work);
+            int mn = MIN(m,n);
+            int mx = MAX(m,n);
+            switch(jobz){
+            case 'N':
+                    nwork = MAX(work0,3*mn + MAX(mx,6*mn)+500);
+                    break;
+            case 'O':
+                    nwork = MAX(work0,3*mn*mn +                 \
+                                MAX(mx,5*mn*mn+4*mn+500));
+                    break;
+            case 'S':
+            case 'A':
+                    nwork = MAX(work0,3*mn*mn +                 \
+                                MAX(mx,4*mn*(mn+1))+500);
+                    break;
+            defaul:
+                    nwork = work0;
+            }
+            *DDATA(work) = (double) nwork;
+    }
     return Py_BuildValue("{s:i,s:c,s:i,s:i,s:i,s:i,s:i,s:i,s:i}","dgesdd_",
                          lapack_lite_status__,"jobz",jobz,"m",m,"n",n,
                          "lda",lda,"ldu",ldu,"ldvt",ldvt,"lwork",lwork,
