@@ -920,24 +920,40 @@ def corrcoef(x, y=None, rowvar=1, bias=0):
 def blackman(M):
     """blackman(M) returns the M-point Blackman window.
     """
+    if M < 1:
+        return array([])
+    if M == 1:
+        return ones(1, float)
     n = arange(0,M)
     return 0.42-0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
 
 def bartlett(M):
     """bartlett(M) returns the M-point Bartlett window.
     """
+    if M < 1:
+        return array([])
+    if M == 1:
+        return ones(1, float)
     n = arange(0,M)
     return where(less_equal(n,(M-1)/2.0),2.0*n/(M-1),2.0-2.0*n/(M-1))
 
 def hanning(M):
     """hanning(M) returns the M-point Hanning window.
     """
+    if M < 1:
+        return array([])
+    if M == 1:
+        return ones(1, float)
     n = arange(0,M)
     return 0.5-0.5*cos(2.0*pi*n/(M-1))
 
 def hamming(M):
     """hamming(M) returns the M-point Hamming window.
     """
+    if M < 1:
+        return array([])
+    if M == 1:
+        return ones(1,float)
     n = arange(0,M)
     return 0.54-0.46*cos(2.0*pi*n/(M-1))
 
