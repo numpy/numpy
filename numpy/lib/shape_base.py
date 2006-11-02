@@ -553,20 +553,20 @@ def kron(a,b):
     ndb, nda = b.ndim, a.ndim
     if (nda == 0 or ndb == 0):
         return _nx.multiply(a,b)
-    as = a.shape
+    as_ = a.shape
     bs = b.shape
     if not a.flags.contiguous:
-        a = reshape(a, as)
+        a = reshape(a, as_)
     if not b.flags.contiguous:
         b = reshape(b, bs)
     nd = ndb
     if (ndb != nda):
         if (ndb > nda):
-            as = (1,)*(ndb-nda) + as
+            as_ = (1,)*(ndb-nda) + as_
         else:
             bs = (1,)*(nda-ndb) + bs
             nd = nda        
-    result = outer(a,b).reshape(as+bs)
+    result = outer(a,b).reshape(as_+bs)
     axis = nd-1
     for k in xrange(nd):
         result = concatenate(result, axis=axis)

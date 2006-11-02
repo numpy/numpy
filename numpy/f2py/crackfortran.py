@@ -1647,13 +1647,13 @@ def analyzebody(block,args,tab=''):
             if args is not None and b['name'] not in args:
                 continue
             else:
-                as=b['args']
+                as_=b['args']
             if b['name'] in skipfuncs:
                 continue
             if onlyfuncs and b['name'] not in onlyfuncs:
                 continue
-        else: as=args
-        b=postcrack(b,as,tab=tab+'\t')
+        else: as_=args
+        b=postcrack(b,as_,tab=tab+'\t')
         if b['block']=='interface' and not b['body']:
             if not b.has_key('f2pyenhancements'):
                 continue
