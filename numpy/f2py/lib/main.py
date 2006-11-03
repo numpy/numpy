@@ -38,7 +38,7 @@ extension modules are built.
 Options
 -------
 
-  --3g-numpy       Use numpy.f2py.lib tool, the 3rd generation of F2PY,
+  --g3-numpy       Use numpy.f2py.lib tool, the 3rd generation of F2PY,
                    with NumPy support.
   --2d-numpy       Use numpy.f2py tool with NumPy support. [DEFAULT]
   --2d-numeric     Use f2py2e tool with Numeric support.
@@ -48,6 +48,7 @@ Options
                    file <modulename>module.c or extension module <modulename>.
                    For wrapping Fortran 90 modules, f2py will use Fortran
                    module names.
+  --parse          Parse Fortran files and print result to stdout.
 
 
 Options effective only with -h
@@ -98,6 +99,7 @@ Extra options effective only with -c
 
 import re
 import shutil
+import parser.api
 from parser.api import parse, PythonModule, EndStatement, Module, Subroutine, Function
 
 def get_values(sys_argv, prefix='', suffix='', strip_prefix=False, strip_suffix=False):
@@ -153,6 +155,33 @@ def get_option_value(sys_argv, option, default_value = None, default_return = No
 
 def get_signature_output(sys_argv):
     return get_option_value(sys_argv,'-h','stdout')
+
+
+def parse_files(sys_argv):
+    flag = 'file'
+    file_names = [] 
+    only_names = []
+    skip_names = []
+    options = []
+    for word in sys_argv:
+        if word=='': pass
+        elif word=='only:': flag = 'only'
+        elif word=='skip:': flag = 'skip'
+        elif word==':': flag = 'file'
+        elif word.startswith('--'): options.append(word)
+        else:
+            {'file': file_names,'only': only_names, 'skip': skip_names}[flag].append(word)
+
+    if options:
+        sys.stderr.write('Unused options: %s\n' % (', '.join(options)))
+    for filename in file_names:
+        if not os.path.isfile(filename):
+            sys.stderr.write('No or not a file %r. Skipping.\n' % (filename))
+            continue
+        sys.stderr.write('Parsing %r..\n' % (filename))
+        reader = parser.api.get_reader(filename)
+        print parser.api.Fortran2003.Program(reader)
+    return
 
 def dump_signature(sys_argv):
     """ Read Fortran files and dump the signatures to file or stdout.
@@ -303,7 +332,7 @@ def build_extension(sys_argv, sources_only = False):
         clean_build_dir = True
     else:
         clean_build_dir = False
-    if not os.path.exists(build_dir): os.makedirs(build_dir)
+    if build_dir and not os.path.exists(build_dir): os.makedirs(build_dir)
 
     include_dirs = get_values(sys_argv,'-I',strip_prefix=True)
     library_dirs = get_values(sys_argv,'-L',strip_prefix=True)
@@ -407,6 +436,10 @@ def main(sys_argv = None):
     if '-c' in sys_argv:
         sys_argv.remove('-c')
         build_extension(sys_argv)
+        return
+    if '--parse' in sys_argv:
+        sys_argv.remove('--parse')
+        parse_files(sys_argv)
         return
     if '-h' in sys_argv:
         dump_signature(sys_argv)

@@ -11,6 +11,7 @@ Created: Oct 2006
 -----
 """
 
+import Fortran2003
 # import all Statement classes:
 from base_classes import EndStatement
 from block_statements import *
@@ -64,6 +65,7 @@ def parse(input, isfree=None, isstrict=None, include_dirs = None):
                          Default contains current working directory
                          and the directory of file name.
     """
+    from parsefortran import FortranParser
     reader = get_reader(input, isfree, isstrict, include_dirs)
     parser = FortranParser(reader)
     parser.parse()

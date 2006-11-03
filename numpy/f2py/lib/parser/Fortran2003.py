@@ -24,12 +24,26 @@ from readfortran import FortranReaderBase
 class NoMatchError(Exception):
     pass
 
+class ParseError(Exception):
+    pass
+
 class Base(object):
-    """
+    """ Base class for Fortran 2003 syntax rules.
+
+    All Base classes have the following attributes:
+      .string - original argument to construct a class instance, it's type
+                is either str or FortranReaderBase.
+      .item   - Line instance (holds label) or None.
     """
     subclasses = {}
 
-    def __new__(cls, string):
+    def __new__(cls, string, parent_cls = None):
+        """
+        """
+        if parent_cls is None:
+            parent_cls = [cls]
+        elif cls not in parent_cls:
+            parent_cls.append(cls)
         #print '__new__:',cls.__name__,`string`
         match = cls.__dict__.get('match', None)
         if isinstance(string, FortranReaderBase) and not issubclass(cls, BlockBase) \
@@ -38,41 +52,52 @@ class Base(object):
             item = reader.get_item()
             if item is None: return
             try:
-                obj = cls(item.line)
+                obj = cls(item.line, parent_cls = parent_cls)
             except NoMatchError:
                 obj = None
             if obj is None:
                 reader.put_item(item)
                 return
-            obj._item = item
+            obj.item = item
             return obj
+        errmsg = '%s: %r' % (cls.__name__, string)
         if match is not None:
-            result = cls.match(string)
+            try:
+                result = cls.match(string)
+            except NoMatchError, msg:
+                if str(msg)==errmsg: # avoid recursion 1.
+                    raise
+                result = None
         else:
             result = None
+
         #print '__new__:result:',cls.__name__,`string,result`
         if isinstance(result, tuple):
             obj = object.__new__(cls)
             obj.string = string
-            if hasattr(cls, 'init'):
-                obj.init(*result)
+            obj.item = None
+            if hasattr(cls, 'init'): obj.init(*result)
             return obj
         elif isinstance(result, Base):
             return result
         elif result is None:
             for subcls in Base.subclasses.get(cls.__name__,[]):
-                #print cls.__name__,subcls.__name__,`string`
+                if subcls in parent_cls: # avoid recursion 2.
+                    continue
+                #print '%s:%s: %r' % (cls.__name__,subcls.__name__,string)
                 try:
-                    return subcls(string)
-                except NoMatchError:
-                    pass
+                    obj = subcls(string, parent_cls = parent_cls)
+                except NoMatchError, msg:
+                    obj = None
+                if obj is not None:
+                    return obj
         else:
             raise AssertionError,`result`
-        raise NoMatchError,'%s: %r' % (cls.__name__, string)
+        raise NoMatchError,errmsg
 
-    def restore_reader(self):
-        self._item.reader.put_item(self._item)
-        return
+##     def restore_reader(self):
+##         self._item.reader.put_item(self._item)
+##         return
 
     def init_list(self, *items):
         self.items = items
@@ -84,22 +109,18 @@ class Base(object):
     def torepr_list(self):
         return '%s(%s)' % (self.__class__.__name__,', '.join(map(repr,self.items)))
 
-    def __str__(self):
-        return self.tostr()
-        if self.__class__.__dict__.has_key('tostr'):
-            return self.tostr()
-        return repr(self)
+    def __str__(self): return self.tostr()
 
-    def __repr__(self):
-        return self.torepr()
-        if self.__class__.__dict__.has_key('torepr'):
-            return self.torepr()
-        return '%s(%r)' % (self.__class__.__name__, self.string)
+    def __repr__(self): return self.torepr()
 
     def __cmp__(self, other):
         if self is other: return 0
         if not isinstance(other, self.__class__): return -1
         return self.compare(other)
+
+    def tofortran(self, tab='', isfix=None):
+        return tab + str(self)
+
 
 class BlockBase(Base):
     """
@@ -151,14 +172,19 @@ class BlockBase(Base):
                 if item is not None:
                     reader.error('failed to parse with %s, skipping.' % ('|'.join([c.__name__ for c in classes[i:]])), item)
                     continue
-                reader.error('unexpected eof file while looking line for <%s>.' % (classes[-1].__name__.lower().replace('_','-')))
+                if hasattr(content[0],'name'):
+                    reader.error('unexpected eof file while looking line for <%s> of %s.'\
+                                 % (classes[-1].__name__.lower().replace('_','-'), content[0].name))
+                else:
+                    reader.error('unexpected eof file while looking line for <%s>.'\
+                                 % (classes[-1].__name__.lower().replace('_','-')))
             break
         if not content: return
         if startcls is not None and endcls is not None:
             # check names of start and end statements:
             start_stmt = content[0]
             end_stmt = content[-1]
-            if isinstance(end_stmt, endcls) and hasattr(end_stmt, 'name'):
+            if isinstance(end_stmt, endcls) and hasattr(end_stmt, 'name') and hasattr(start_stmt, 'name'):
                 if end_stmt.name is not None:
                     if start_stmt.name != end_stmt.name:
                         end_stmt._item.reader.error('expected <%s-name> is %s but got %s. Ignoring.'\
@@ -172,17 +198,31 @@ class BlockBase(Base):
         self.content = content
         return
     def tostr(self):
-        return '\n'.join(map(str, self.content))
+        return self.tofortran()
     def torepr(self):
         return '%s(%s)' % (self.__class__.__name__,', '.join(map(repr, self.content)))
 
-    def restore_reader(self):
-        content = self.content[:]
-        content.reverse()
-        for obj in content:
-            obj.restore_reader()
-        return
-    
+    def tofortran(self, tab='', isfix=None):
+        l = []
+        start = self.content[0]
+        end = self.content[-1]
+        extra_tab = ''
+        if isinstance(end, EndStmtBase):
+            extra_tab = '  '
+        l.append(start.tofortran(tab=tab,isfix=isfix))
+        for item in self.content[1:-1]:
+            l.append(item.tofortran(tab=tab+extra_tab,isfix=isfix))
+        if len(self.content)>1:
+            l.append(end.tofortran(tab=tab,isfix=isfix))
+        return '\n'.join(l)
+
+##     def restore_reader(self):
+##         content = self.content[:]
+##         content.reverse()
+##         for obj in content:
+##             obj.restore_reader()
+##         return
+
 class SequenceBase(Base):
     """
     <sequence-base> = <obj>, <obj> [ , <obj> ]...
@@ -245,15 +285,26 @@ class BinaryOpBase(Base):
     """
     def match(lhs_cls, op_pattern, rhs_cls, string, right=True):
         line, repmap = string_replace_map(string)
-        if right:
-            t = op_pattern.rsplit(line)
+        if isinstance(op_pattern, str):
+            if right:
+                t = line.rsplit(op_pattern,1)
+            else:
+                t = line.split(op_pattern,1)
+            if len(t)!=2: return
+            lhs, rhs = t[0].rstrip(), t[1].lstrip()
+            op = op_pattern
         else:
-            t = op_pattern.lsplit(line)
-        if t is None or len(t)!=3: return
-        lhs, op, rhs = t
+            if right:
+                t = op_pattern.rsplit(line)
+            else:
+                t = op_pattern.lsplit(line)
+            if t is None or len(t)!=3: return
+            lhs, op, rhs = t
+            lhs = lhs.rstrip()
+            rhs = rhs.lstrip()
+            op = op.upper()
         if not lhs: return
         if not rhs: return
-        op = op.upper()
         lhs_obj = lhs_cls(repmap(lhs))
         rhs_obj = rhs_cls(repmap(rhs))
         return lhs_obj, op, rhs_obj
@@ -270,25 +321,78 @@ class BinaryOpBase(Base):
     def compare(self, other):
         return cmp((self.op,self.lhs,self.rhs),(other.op,other.lhs,other.rhs))
 
-class SeparatorBase(BinaryOpBase):
+class SeparatorBase(Base):
     """
-    <shape-base> = <lhs> : <rhs>
+    <separator-base> = [ <lhs> ] : [ <rhs> ]
     """
-    def init(self, lhs, rhs):
-        self.lhs = lhs
-        self.op = ':'
-        self.rhs = rhs
-        return
-
-class KeywordValueBase(BinaryOpBase):
-    """
-    <keyword-value-base> = <keyword> = <rhs>
-    """
-    def match(cls, string):
-        if '=' not in string: return
-        lhs,rhs = string.split('=',1)
-        return Keyword(lhs.rstrip()),'=',cls(rhs.lstrip())
+    def match(lhs_cls, rhs_cls, string, require_lhs=False, require_rhs=False):
+        line, repmap = string_replace_map(string)
+        if ':' not in line: return
+        lhs,rhs = line.split(':',1)
+        lhs = lhs.rstrip()
+        rhs = rhs.lstrip()
+        lhs_obj, rhs_obj = None, None
+        if lhs:
+            if lhs_cls is None: return
+            lhs_obj = lhs_cls(repmap(lhs))
+        elif require_lhs:
+            return
+        if rhs:
+            if rhs_cls is None: return
+            rhs_obj = rhs_cls(repmap(rhs))
+        elif require_rhs:
+            return
+        return lhs_obj, rhs_obj
     match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        s = ''
+        if self.items[0] is not None:
+            s += '%s :' % (self.items[0])
+        else:
+            s += ':'
+        if self.items[1] is not None:
+            s += ' %s' % (self.items[1])
+        return s
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
+
+class KeywordValueBase(Base):
+    """
+    <keyword-value-base> = [ <lhs> = ] <rhs>
+    """
+    def match(lhs_cls, rhs_cls, string, require_lhs = True, upper_lhs = False):
+        if require_lhs and '=' not in string: return
+        if isinstance(lhs_cls, (list, tuple)):
+            for s in lhs_cls:
+                try:
+                    obj = KeywordValueBase.match(s, rhs_cls, string, require_lhs=require_lhs, upper_lhs=upper_lhs)
+                except NoMatchError:
+                    obj = None
+                if obj is not None: return obj
+            return obj
+        lhs,rhs = string.split('=',1)
+        lhs = lhs.rstrip()
+        rhs = rhs.lstrip()
+        if not rhs: return
+        if not lhs:
+            if require_lhs: return
+            return None, rhs_cls(rhs)
+        if isinstance(lhs_cls, str):
+            if upper_lhs:
+                lhs = lhs.upper()
+            if lhs_cls!=lhs: return
+            return lhs, rhs_cls(rhs)
+        return lhs_cls(lhs),rhs_cls(rhs)
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        if self.items[0] is None: return str(self.items[1])
+        return '%s = %s' % tuple(self.items)
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
 
 class BracketBase(Base):
     """
@@ -317,8 +421,6 @@ class BracketBase(Base):
     def compare(self, other):
         return cmp((self.left,self.item,self.right),(other.left,other.item,other.right))
 
-
-
 class NumberBase(Base):
     """
     <number-base> = <number> [ _ <kind-param> ]
@@ -344,7 +446,7 @@ class CallBase(Base):
     """
     <call-base> = <lhs> ( [ <rhs> ] )
     """
-    def match(lhs_cls, rhs_cls, string):
+    def match(lhs_cls, rhs_cls, string, upper_lhs = False, require_rhs=False):
         if not string.endswith(')'): return
         line, repmap = string_replace_map(string)
         i = line.find('(')
@@ -353,27 +455,54 @@ class CallBase(Base):
         if not lhs: return
         rhs = line[i+1:-1].strip()
         lhs = repmap(lhs)
+        if upper_lhs:
+            lhs = lhs.upper()
+        rhs = repmap(rhs)
+        if isinstance(lhs_cls, str):
+            if lhs_cls!=lhs: return
+        else:
+            lhs = lhs_cls(lhs)
         if rhs:
-            rhs = repmap(rhs)
-            return lhs_cls(lhs), rhs_cls(rhs)
-        return lhs_cls(lhs), None
+            if isinstance(rhs_cls, str):
+                if rhs_cls!=rhs: return
+            else:
+                rhs = rhs_cls(rhs)
+            return lhs, rhs
+        elif require_rhs:
+            return
+        return lhs, None
     match = staticmethod(match)
-    def init(self, lhs, rhs):
-        self.lhs = lhs
-        self.rhs = rhs
+    def init(self, *args):
+        self.items = args
         return
     def tostr(self):
-        if self.rhs is None: return '%s()' % (self.lhs)
-        return '%s(%s)' % (self.lhs, self.rhs)
-    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.lhs, self.rhs)
+        if self.items[1] is None: return '%s()' % (self.items[0])
+        return '%s(%s)' % (self.items[0], self.items[1])
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
     def compare(self, other):
-        return cmp((self.lhs,self.rhs),(other.lhs,other.rhs))
+        return cmp(self.items,other.items)
+
+class CALLBase(CallBase):
+    """
+    <CALL-base> = <LHS> ( [ <rhs> ] )
+    """
+    def match(lhs_cls, rhs_cls, string, require_rhs = False):
+        return CallBase.match(lhs_cls, rhs_cls, string, upper_lhs=True, require_rhs = require_rhs)
+    match = staticmethod(match)
 
 class StringBase(Base):
     """
     <string-base> = <xyz>
     """
     def match(pattern, string):
+        if isinstance(pattern, (list,tuple)):
+            for p in pattern:
+                obj = StringBase.match(p, string)
+                if obj is not None: return obj
+            return
+        if isinstance(pattern, str):
+            if len(pattern)==len(string) and pattern==string: return string,
+            return
         if pattern.match(string): return string,
         return
     match = staticmethod(match)
@@ -390,25 +519,60 @@ class STRINGBase(StringBase):
     <STRING-base> = <XYZ>
     """
     match = staticmethod(StringBase.match)
-    def init(self, string):
-        self.string = string.upper()
+    def match(pattern, string):
+        if isinstance(pattern, (list,tuple)):
+            for p in pattern:
+                obj = STRINGBase.match(p, string)
+                if obj is not None: return obj
+            return
+        STRING = string.upper()
+        if isinstance(pattern, str):
+            if len(pattern)==len(string) and pattern==STRING: return STRING,
+            return
+        if pattern.match(STRING): return STRING,
         return
+    match = staticmethod(match)
 
-class EndStmtBase(Base):
+class StmtBase(Base):
+    """
+    [ <label> ] <stmt>
+    """
+    def tofortran(self, tab='', isfix=None):
+        label = None
+        if self.item is not None: label = self.item.label
+        if isfix:
+            colon = ''
+            c = ' '
+        else:
+            colon = ':'
+            c = ''
+        if label:
+            t = c + label + colon
+            if isfix:
+                while len(t)<6: t += ' '
+            else:
+                tab = tab[len(t):] or ' '
+        else:
+            t = ''
+        return t + tab + str(self)
+
+class EndStmtBase(StmtBase):
     """
     <end-stmt-base> = END [ <stmt> [ <stmt-name>] ]
     """
-    def match(stmt_type, stmt_name, string):
+    def match(stmt_type, stmt_name, string, require_stmt_type=False):
         start = string[:3].upper()
         if start != 'END': return
         line = string[3:].lstrip()
         start = line[:len(stmt_type)].upper()
         if start:
-            if start != stmt_type: return
+            if start.replace(' ','') != stmt_type.replace(' ',''): return
             line = line[len(stmt_type):].lstrip()
         else:
+            if require_stmt_type: return
             line = ''
         if line:
+            if stmt_name is None: return
             return stmt_type, stmt_name(line)
         return stmt_type, None
     match = staticmethod(match)
@@ -424,6 +588,59 @@ class EndStmtBase(Base):
     def compare(self, other):
         return cmp((self.type,self.name),(other.type,other.name))
 
+def _ensure_single_spaces(string):
+    return ' '.join([s for s in string.split(' ') if s])
+
+class WORDClsBase(Base):
+    """
+    <WORD-cls> = <WORD> [ [ :: ] <cls> ]
+    """
+    def match(pattern, cls, string, check_colons=False, require_cls=False):
+        if isinstance(pattern, (tuple,list)):
+            for p in pattern:
+                try:
+                    obj = WORDClsBase.match(p, cls, string, check_colons=check_colons, require_cls=require_cls)
+                except NoMatchError:
+                    obj = None
+                if obj is not None: return obj
+            return
+        if isinstance(pattern, str):
+            if string[:len(pattern)].upper()!=pattern: return
+            line = string[len(pattern):]
+            if not line: return pattern, None
+            if 'a'<=line[0].lower()<='z' or line[0]=='_': return
+            line = line.lstrip()
+            if not line:
+                if require_cls: return
+                return pattern, None
+            if cls is None: return
+            return pattern, cls(line)
+        m = pattern.match(string)
+        if m is None: return
+        line = string[len(m.group()):]
+        if pattern.value is not None:
+            pattern_value = pattern.value
+        else:
+            pattern_value = m.group().upper()
+        if not line: return pattern_value, None
+        if 'a'<=line[0].lower()<='z' or line[0]=='_': return
+        line = line.lstrip()
+        if not line:
+            if require_cls: return
+            return pattern_value, None
+        if cls is None: return
+        return pattern_value, cls(line)
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        if self.items[1] is None: return str(self.items[0])
+        s = str(self.items[1])
+        if s and s[0] in '(*':
+            return '%s%s' % (self.items[0], s)
+        return '%s %s' % (self.items[0], s)
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
 
 ###############################################################################
 ############################### SECTION  1 ####################################
@@ -512,7 +729,7 @@ class Declaration_Construct(Base): # R207
                       'Interface_Block', 'Parameter_Stmt', 'Procedure_Declaration_Stmt',
                       'Specification_Stmt', 'Type_Declaration_Stmt', 'Stmt_Function_Stmt']
 
-class Execution_Part(Base): # R208
+class Execution_Part(BlockBase): # R208
     """
     <execution-part> = <executable-construct>
                        | [ <execution-part-construct> ]...
@@ -520,7 +737,9 @@ class Execution_Part(Base): # R208
     <execution-part> shall not contain <end-function-stmt>, <end-program-stmt>, <end-subroutine-stmt>
     """
     subclass_names = []
-    use_names = ['Executable_Construct', 'Execution_Part_Construct']
+    use_names = ['Executable_Construct_C201', 'Execution_Part_Construct_C201']
+    def match(string): return BlockBase.match(Executable_Construct_C201, [Execution_Part_Construct_C201], None, string)
+    match = staticmethod(match)
 
 class Execution_Part_Construct(Base): # R209
     """
@@ -530,6 +749,9 @@ class Execution_Part_Construct(Base): # R209
                                  | <data-stmt>
     """
     subclass_names = ['Executable_Construct', 'Format_Stmt', 'Entry_Stmt', 'Data_Stmt']
+
+class Execution_Part_Construct_C201(Base):
+    subclass_names = ['Executable_Construct_C201', 'Format_Stmt', 'Entry_Stmt', 'Data_Stmt']
 
 class Internal_Subprogram_Part(Base): # R210
     """
@@ -589,6 +811,11 @@ class Executable_Construct(Base):# R213
     subclass_names = ['Action_Stmt', 'Associate_Stmt', 'Case_Construct', 'Do_Construct',
                       'Forall_Construct', 'If_Construct', 'Select_Type_Construct', 'Where_Construct']
 
+class Executable_Construct_C201(Base):
+    subclass_names = Executable_Construct.subclass_names[:]
+    subclass_names[subclass_names.index('Action_Stmt')] = 'Action_Stmt_C201'
+    
+
 class Action_Stmt(Base):# R214
     """
     <action-stmt> = <allocate-stmt>
@@ -631,6 +858,41 @@ class Action_Stmt(Base):# R214
                       'Read_Stmt', 'Return_Stmt', 'Rewind_Stmt', 'Stop_Stmt', 'Wait_Stmt',
                       'Where_Stmt', 'Write_Stmt', 'Arithmetic_If_Stmt', 'Computed_Goto_Stmt']
 
+class Action_Stmt_C201(Base):
+    """
+    <action-stmt-c201> = <action-stmt>
+    C201 is applied.
+    """
+    subclass_names = Action_Stmt.subclass_names[:]
+    subclass_names.remove('End_Function_Stmt')
+    subclass_names.remove('End_Subroutine_Stmt')
+    #subclass_names.remove('End_Program_Stmt')
+
+class Action_Stmt_C802(Base):
+    """
+    <action-stmt-c802> = <action-stmt>
+    C802 is applied.
+    """
+    subclass_names = Action_Stmt.subclass_names[:]
+    subclass_names.remove('End_Function_Stmt')
+    subclass_names.remove('End_Subroutine_Stmt')
+    subclass_names.remove('If_Stmt')
+
+class Action_Stmt_C824(Base):
+    """
+    <action-stmt-c824> = <action-stmt>
+    C824 is applied.
+    """
+    subclass_names = Action_Stmt.subclass_names[:]
+    subclass_names.remove('End_Function_Stmt')
+    subclass_names.remove('End_Subroutine_Stmt')
+    subclass_names.remove('Continue_Stmt')
+    subclass_names.remove('Goto_Stmt')
+    subclass_names.remove('Return_Stmt')
+    subclass_names.remove('Stop_Stmt')
+    subclass_names.remove('Exit_Stmt')
+    subclass_names.remove('Cycle_Stmt')
+    subclass_names.remove('Arithmetic_If_Stmt')
 
 class Keyword(Base): # R215
     """
@@ -714,7 +976,7 @@ class Type_Spec(Base): # R401
     """
     subclass_names = ['Intrinsic_Type_Spec', 'Derived_Type_Spec']
 
-class Type_Param_Value(Base): # R402
+class Type_Param_Value(StringBase): # R402
     """
     <type-param-value> = <scalar-int-expr>
                        | *
@@ -722,15 +984,10 @@ class Type_Param_Value(Base): # R402
     """
     subclass_names = ['Scalar_Int_Expr']
     use_names = []
-    def match(string):
-        if string in ['*',':']: return string,
-        return
+    def match(string): return StringBase.match(['*',':'], string)
     match = staticmethod(match)
-    def init(self, value): self.value = value
-    def tostr(self): return str(self.value)
-    def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.value)
 
-class Intrinsic_Type_Spec(Base): # R403
+class Intrinsic_Type_Spec(WORDClsBase): # R403
     """
     <intrinsic-type-spec> = INTEGER [ <kind-selector> ]
                             | REAL [ <kind-selector> ]
@@ -746,45 +1003,23 @@ class Intrinsic_Type_Spec(Base): # R403
     use_names = ['Kind_Selector','Char_Selector']
         
     def match(string):
-        if string[:7].upper()=='INTEGER':
-            t = string[:7].upper()
-            line = string[7:].lstrip()
-            if line: return t,Kind_Selector(line)
-            return t,None
-        elif string[:4].upper()=='REAL':
-            t = string[:4].upper()
-            line = string[4:].lstrip()
-            if line: return t,Kind_Selector(line)
-            return t,None
-        elif string[:7].upper()=='COMPLEX':
-            t = string[:7].upper()
-            line = string[7:].lstrip()
-            if line: return t,Kind_Selector(line)
-            return t,None
-        elif string[:7].upper()=='LOGICAL':
-            t = string[:7].upper()
-            line = string[7:].lstrip()
-            if line: return t,Kind_Selector(line)
-            return t,None
-        elif string[:9].upper()=='CHARACTER':
-            t = string[:9].upper()
-            line = string[9:].lstrip()
-            if line: return t,Char_Selector(line)
-        elif string[:6].upper()=='DOUBLE':
-            line = string[6:].lstrip().upper()
-            if line=='COMPLEX':
-                return 'DOUBLE COMPLEX',None
-            if line=='PRECISION':
-                return 'DOUBLE PRECISION',None
-        elif string.upper()=='BYTE':
-            return 'BYTE',None
+        for w,cls in [('INTEGER',Kind_Selector),
+                      ('REAL',Kind_Selector),
+                      ('COMPLEX',Kind_Selector),
+                      ('LOGICAL',Kind_Selector),
+                      ('CHARACTER',Char_Selector),
+                      (pattern.abs_double_complex_name, None),
+                      (pattern.abs_double_precision_name, None),
+                      ('BYTE', None),
+                      ]:
+            try:
+                obj = WORDClsBase.match(w,cls,string)
+            except NoMatchError:
+                obj = None
+            if obj is not None: return obj
         return
     match = staticmethod(match)
-    init = Base.init_list
-    def tostr(self):
-        if self.items[1] is None: return str(self.items[0])
-        return '%s%s' % tuple(self.items)
-    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.items[0], self.items[1])
+
 
 class Kind_Selector(Base): # R404
     """
@@ -847,41 +1082,32 @@ class Boz_Literal_Constant(Base): # R411
     """
     subclass_names = ['Binary_Constant','Octal_Constant','Hex_Constant']
 
-class Binary_Constant(StringBase): # R412
+class Binary_Constant(STRINGBase): # R412
     """
     <binary-constant> = B ' <digit> [ <digit> ]... '
                         | B \" <digit> [ <digit> ]... \"
     """
     subclass_names = []
-    def match(string): return StringBase.match(pattern.abs_binary_constant, string)
+    def match(string): return STRINGBase.match(pattern.abs_binary_constant, string)
     match = staticmethod(match)
-    def init(self, string):
-        self.string = string.upper()
-        return
 
-class Octal_Constant(StringBase): # R413
+class Octal_Constant(STRINGBase): # R413
     """
     <octal-constant> = O ' <digit> [ <digit> ]... '
                        | O \" <digit> [ <digit> ]... \"
     """
     subclass_names = []
-    def match(string): return StringBase.match(pattern.abs_octal_constant, string)
+    def match(string): return STRINGBase.match(pattern.abs_octal_constant, string)
     match = staticmethod(match)
-    def init(self, string):
-        self.string = string.upper()
-        return
 
-class Hex_Constant(StringBase): # R414
+class Hex_Constant(STRINGBase): # R414
     """
     <hex-constant> = Z ' <digit> [ <digit> ]... '
                      | Z \" <digit> [ <digit> ]... \"
     """
     subclass_names = []
-    def match(string): return StringBase.match(pattern.abs_hex_constant, string)
+    def match(string): return STRINGBase.match(pattern.abs_hex_constant, string)
     match = staticmethod(match)
-    def init(self, string):
-        self.string = string.upper()
-        return
 
 #R415: <hex-digit> = <digit> | A | B | C | D | E | F
 
@@ -913,7 +1139,7 @@ class Complex_Literal_Constant(Base): # R421
     subclass_names = []
     use_names = ['Real_Part','Imag_Part']
     def match(string):
-        if string[0]+string[-1]!='()': return
+        if not string or string[0]+string[-1]!='()': return
         if not pattern.abs_complex_literal_constant.match(string):
             return
         r,i = string[1:-1].split(',')
@@ -1092,12 +1318,43 @@ class Derived_Type_Def(Base): # R429
     use_names = ['Derived_Type_Stmt', 'Type_Param_Def_Stmt', 'Private_Or_Sequence',
                  'Component_Part', 'Type_Bound_Procedure_Part', 'End_Type_Stmt']
 
-class Derived_Type_Stmt(Base): # R430
+class Derived_Type_Stmt(StmtBase): # R430
     """
     <derived-type-stmt> = TYPE [ [ , <type-attr-spec-list> ] :: ] <type-name> [ ( <type-param-name-list> ) ]
     """
     subclass_names = []
     use_names = ['Type_Attr_Spec_List', 'Type_Name', 'Type_Param_Name_List']
+    def match(string):
+        if string[:4].upper()!='TYPE': return
+        line = string[4:].lstrip()
+        i = line.find('::')
+        attr_specs = None
+        if i!=-1:
+            if line.startswith(','):
+                l = line[1:i].strip()
+                if not l: return
+                attr_specs = Type_Attr_Spec_List(l)
+            line = line[i+2:].lstrip()
+        m = pattern.name.match(line)
+        if m is None: return
+        name = Type_Name(m.group())
+        line = line[m.end():].lstrip()
+        if not line: return attr_specs, name, None
+        if line[0]+line[-1]!='()': return
+        return attr_specs, name, Type_Param_Name_List(line[1:-1].strip())
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+    def tostr(self):
+        s = 'TYPE'
+        if self.items[0] is not None:
+            s += ', %s :: %s' % (self.items[0], self.items[1])
+        else:
+            s += ' :: %s' % (self.items[1])
+        if self.items[2] is not None:
+            s += '(%s)' % (self.items[2])
+        return s
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
 
 class Type_Name(Name): # C424
     """
@@ -1120,6 +1377,29 @@ class Type_Attr_Spec(Base): # R431
     """
     subclass_names = ['Access_Spec']
     use_names = ['Parent_Type_Name']
+    def match(string):
+        if len(string)==8 and string.upper()=='ABSTRACT': return 'ABSTRACT',None
+        if string[:4].upper()=='BIND':
+            line = string[4:].lstrip()
+            if not line: return
+            if line[0]+line[-1]!='()': return
+            if line[1:-1].strip().upper()=='C': return 'BIND','C'
+            return
+        if string[:7].upper()=='EXTENDS':
+            line = string[7:].lstrip()
+            if not line: return
+            if line[0]+line[-1]!='()': return
+            line = line[1:-1].strip()
+            if not line: return
+            return 'EXTENDS', Parent_Type_Name(line)
+    match = staticmethod(match)
+    def init(self,*args):
+        self.items = args
+    def tostr(self):
+        if self.items[1] is None: return str(self.items[0])
+        return '%s(%s)' % tuple(self.items)
+    def torepr(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
 
 class Private_Or_Sequence(Base): # R432
     """
@@ -1128,52 +1408,109 @@ class Private_Or_Sequence(Base): # R432
     """
     subclass_names = ['Private_Components_Stmt', 'Sequence_Stmt']
 
-class End_Type_Stmt(Base): # R433
+class End_Type_Stmt(EndStmtBase): # R433
     """
     <end-type-stmt> = END TYPE [ <type-name> ]
     """
     subclass_names = []
     use_names = ['Type_Name']
-    
-class Sequence_Stmt(Base): # R434
+    def match(string): return EndStmtBase.match('TYPE',Type_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
+
+class Sequence_Stmt(STRINGBase): # R434
     """
     <sequence-stmt> = SEQUENCE
     """
     subclass_names = []
-    def match(string):
-        if len(string) != 8: return
-        start = string.upper()
-        if start=='SEQUENCE': return start,
-        return
+    def match(string): return STRINGBase.match('SEQUENCE', string)
     match = staticmethod(match)
 
-class Type_Param_Def_Stmt(Base): # R435
+class Type_Param_Def_Stmt(StmtBase): # R435
     """
     <type-param-def-stmt> = INTEGER [ <kind-selector> ] , <type-param-attr-spec> :: <type-param-decl-list>
     """
     subclass_names = []
     use_names = ['Kind_Selector', 'Type_Param_Attr_Spec', 'Type_Param_Decl_List']
+    def match(string):
+        if string[:7].upper()!='INTEGER': return
+        line, repmap = string_replace_map(string[7:].lstrip())
+        if not line: return
+        i = line.find(',')
+        if i==-1: return
+        kind_selector = repmap(line[:i].rstrip()) or None
+        line = repmap(line[i+1:].lstrip())
+        i = line.find('::')
+        if i==-1: return
+        l1 = line[:i].rstrip()
+        l2 = line[i+2:].lstrip()
+        if not l1 or not l2: return
+        if kind_selector: kind_selector = Kind_Selector(kind_selector)
+        return kind_selector, Type_Param_Attr_Spec(l1), Type_Param_Decl_List(l2)
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+    def tostr(self):
+        s = 'INTEGER'
+        if self.items[0] is not None:
+            s += '%s, %s :: %s' % (self.items[0], self.items[1], self.items[2])
+        else:
+            s += ', %s :: %s' % (self.items[1], self.items[2])
+        return s
+    def torepr(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))        
 
-class Type_Param_Decl(Base): # R436
+
+class Type_Param_Decl(BinaryOpBase): # R436
     """
     <type-param-decl> = <type-param-name> [ = <scalar-int-initialization-expr> ]
     """
-    subclass_names = []
-    use_names = ['Type_Param_Name', 'Scalar_Int_Initialization_Expr']
-
-class Type_Param_Attr_Spec(Base): # R437
+    subclass_names = ['Type_Param_Name']
+    use_names = ['Scalar_Int_Initialization_Expr']
+    def match(string):
+        if '=' not in string: return
+        lhs,rhs = string.split('=',1)
+        lhs = lhs.rstrip()
+        rhs = rhs.lstrip()
+        if not lhs or not rhs: return
+        return Type_Param_Name(lhs),'=',Scalar_Int_Initialization_Expr(rhs)
+    match = staticmethod(match)
+    
+class Type_Param_Attr_Spec(STRINGBase): # R437
     """
     <type-param-attr-spec> = KIND
                              | LEN
     """
     subclass_names = []
+    def match(string): return STRINGBase.match(['KIND', 'LEN'], string)
+    match = staticmethod(match)
 
-class Component_Part(Base): # R438
+
+class Component_Part(BlockBase): # R438
     """
     <component-part> = [ <component-def-stmt> ]...
     """
     subclass_names = []
     use_names = ['Component_Def_Stmt']
+    def match(reader):
+        content = []
+        while 1:
+            try:
+                obj = Component_Def_Stmt(reader)
+            except NoMatchError:
+                obj = None
+            if obj is None:
+                break
+            content.append(obj)
+        if content:
+            return content,
+        return
+    match = staticmethod(match)
+
+    def tofortran(self, tab='', isfix=None):
+        l = []
+        for item in self.content:
+            l.append(item.tofortran(tab=tab,isfix=isfix))
+        return '\n'.join(l)
 
 class Component_Def_Stmt(Base): # R439
     """
@@ -1182,22 +1519,33 @@ class Component_Def_Stmt(Base): # R439
     """
     subclass_names = ['Data_Component_Def_Stmt', 'Proc_Component_Def_Stmt']
 
-class Data_Component_Def_Stmt(Base): # R440
+class Data_Component_Def_Stmt(StmtBase): # R440
     """
     <data-component-def-stmt> = <declaration-type-spec> [ [ , <component-attr-spec-list> ] :: ] <component-decl-list>
     """
     subclass_names = []
     use_names = ['Declaration_Type_Spec', 'Component_Attr_Spec_List', 'Component_Decl_List']
 
-class Component_Attr_Spec(Base): # R441
+class Dimension_Component_Attr_Spec(CALLBase):
+    """
+    <dimension-component-attr-spec> = DIMENSION ( <component-array-spec> )
+    """
+    subclass_names = []
+    use_names = ['Component_Array_Spec']
+    def match(string): return CALLBase.match('DIMENSION', Component_Array_Spec, string)
+    match = staticmethod(match)
+
+class Component_Attr_Spec(STRINGBase): # R441
     """
     <component-attr-spec> = POINTER
                             | DIMENSION ( <component-array-spec> )
                             | ALLOCATABLE
                             | <access-spec>
     """
-    subclass_names = ['Access_Spec']
-    use_names = ['Component_Array_Spec']
+    subclass_names = ['Access_Spec', 'Dimension_Component_Attr_Spec']
+    use_names = []
+    def match(string): return STRINGBase.match(['POINTER', 'ALLOCATABLE'], string)
+    match = staticmethod(match)
 
 class Component_Decl(Base): # R442
     """
@@ -1205,6 +1553,51 @@ class Component_Decl(Base): # R442
     """
     subclass_names = []
     use_names = ['Component_Name', 'Component_Array_Spec', 'Char_Length', 'Component_Initialization']
+    def match(string):
+        m = pattern.name.match(string)
+        if m is None: return
+        name = Component_Name(m.group())
+        newline = string[m.end():].lstrip()
+        if not newline: return name, None, None, None
+        array_spec = None
+        char_length = None
+        init = None
+        if newline.startswith('('):
+            line, repmap = string_replace_map(newline)
+            i = line.find(')')
+            if i==-1: return
+            array_spec = Component_Array_Spec(repmap(line[1:i].strip()))
+            newline = repmap(line[i+1:].lstrip())
+        if newline.startswith('*'):
+            line, repmap = string_replace_map(newline)
+            i = line.find('=')
+            if i!=-1:
+                char_length = repmap(line[1:i].strip())
+                newline = repmap(newline[i:].lstrip())
+            else:
+                char_length = repmap(newline[1:].strip())
+                newline = ''
+            char_length = Char_Length(char_length)
+        if newline.startswith('='):
+            init = Component_Initialization(newline)
+        else:
+            assert newline=='',`newline`
+        return name, array_spec, char_length, init
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        s = str(self.items[0])
+        if self.items[1] is not None:
+            s += '(' + str(self.items[1]) + ')'
+        if self.items[2] is not None:
+            s += '*' + str(self.items[2])
+        if self.items[3] is not None:
+            s += ' ' + str(self.items[3])
+        return s
+    def torepr(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
 
 class Component_Array_Spec(Base): # R443
     """
@@ -1220,8 +1613,21 @@ class Component_Initialization(Base): # R444
     """
     subclass_names = []
     use_names = ['Initialization_Expr', 'Null_Init']
+    def match(string):
+        if string.startswith('=>'):
+            return '=>', Null_Init(string[2:].lstrip())
+        if string.startswith('='):
+            return '=', Initialization_Expr(string[2:].lstrip())
+        return
+    match = staticmethod(match)
+    def init(self, op, rhs):
+        self.op = op
+        self.rhs = rhs
+        return
+    def tostr(self): return '%s %s' % (self.op, self.rhs)
+    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.op, self.rhs)
 
-class Proc_Component_Def_Stmt(Base): # R445
+class Proc_Component_Def_Stmt(StmtBase): # R445
     """
     <proc-component-def-stmt> = PROCEDURE ( [ <proc-interface> ] ) , <proc-component-attr-spec-list> :: <proc-decl-list>
     """
@@ -1238,7 +1644,7 @@ class Proc_Component_Attr_Spec(Base): # R446
     subclass_names = []
     use_names = ['Arg_Name', 'Access_Spec']
 
-class Private_Components_Stmt(Base): # R447
+class Private_Components_Stmt(StmtBase): # R447
     """
     <private-components-stmt> = PRIVATE
     """
@@ -1254,7 +1660,7 @@ class Type_Bound_Procedure_Part(Base): # R448
     subclass_names = []
     use_names = ['Contains_Stmt', 'Binding_Private_Stmt', 'Proc_Binding_Stmt']
 
-class Binding_Private_Stmt(Base): # R449
+class Binding_Private_Stmt(StmtBase): # R449
     """
     <binding-private-stmt> = PRIVATE
     """
@@ -1314,16 +1720,16 @@ class Type_Param_Spec(KeywordValueBase): # R456
     """
     subclass_names = ['Type_Param_Value']
     use_names = ['Keyword']
-    def match(string): return KeywordValueBase.match(Type_Param_Value, string)
+    def match(string): return KeywordValueBase.match(Keyword, Type_Param_Value, string)
     match = staticmethod(match)
 
-class Structure_Constructor_2(KeywordValueBase):
+class Structure_Constructor_2(KeywordValueBase): # R457.b
     """
     <structure-constructor-2> = [ <keyword> = ] <component-data-source>
     """
     subclass_names = ['Component_Data_Source']
     use_names = ['Keyword']
-    def match(string): return KeywordValueBase.match(Component_Data_Source, string)
+    def match(string): return KeywordValueBase.match(Keyword, Component_Data_Source, string)
     match = staticmethod(match)
 
 class Structure_Constructor(CallBase): # R457
@@ -1342,7 +1748,7 @@ class Component_Spec(KeywordValueBase): # R458
     """
     subclass_names = ['Component_Data_Source']
     use_names = ['Keyword']
-    def match(string): return KeywordValueBase.match(Component_Data_Source, string)
+    def match(string): return KeywordValueBase.match(Keyword, Component_Data_Source, string)
     match = staticmethod(match)
 
 class Component_Data_Source(Base): # R459
@@ -1363,13 +1769,13 @@ class Enum_Def(Base): # R460
     subclass_names = []
     use_names = ['Enum_Def_Stmt', 'Enumerator_Def_Stmt', 'End_Enum_Stmt']
 
-class Enum_Def_Stmt(Base): # R461
+class Enum_Def_Stmt(StmtBase): # R461
     """
     <enum-def-stmt> = ENUM, BIND(C)
     """
     subclass_names = []
 
-class Enumerator_Def_Stmt(Base): # R462
+class Enumerator_Def_Stmt(StmtBase): # R462
     """
     <enumerator-def-stmt> = ENUMERATOR [ :: ] <enumerator-list>
     """
@@ -1388,13 +1794,15 @@ class Enumerator(BinaryOpBase): # R463
         return Named_Constant(lhs.rstrip()),'=',Scalar_Int_Initialization_Expr(rhs.lstrip())
     match = staticmethod(match)
 
-class End_Enum_Stmt(Base): # R464
+class End_Enum_Stmt(EndStmtBase): # R464
     """
     <end-enum-stmt> = END ENUM
     """
     subclass_names = []
+    def match(string): return EndStmtBase.match('ENUM',None, string, requite_stmt_type=True)
+    match = staticmethod(match)
 
-class Array_Constructor(BracketBase): # R469
+class Array_Constructor(BracketBase): # R465
     """
     <array-constructor> = (/ <ac-spec> /)
                           | <left-square-bracket> <ac-spec> <right-square-bracket>
@@ -1512,14 +1920,21 @@ class Type_Declaration_Stmt(Base): # R501
 
     def match(string):
         line, repmap = string_replace_map(string)
-        i = line.find(',')
-        if i==-1:
-            i = line.find('::')
-        if i==-1:
-            m = re.search(r'\s[a-z_]',line,re.I)
-            if m is None: return
-            i = m.start()
-        type_spec = Declaration_Type_Spec(repmap(line[:i]))
+        i = line.find('::')
+        if i!=-1:
+            j = line[:i].find(',')
+            if j!=-1:
+                i = j
+        else:
+            if line[:6].upper()=='DOUBLE':
+                m = re.search(r'\s[a-z_]',line[6:].lstrip(),re.I)
+                if m is None: return
+                i = m.start() + len(line)-len(line[6:].lstrip())
+            else:
+                m = re.search(r'\s[a-z_]',line,re.I)
+                if m is None: return
+                i = m.start()
+        type_spec = Declaration_Type_Spec(repmap(line[:i].rstrip()))
         if type_spec is None: return
         line = line[i:].lstrip()
         if line.startswith(','):
@@ -1577,31 +1992,23 @@ class Declaration_Type_Spec(Base): # R502
     def tostr(self): return '%s(%s)' % tuple(map(str,self.items))
     def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.items[0], self.items[1])
 
-class Dimension_Attr_Spec(CallBase):
+class Dimension_Attr_Spec(CALLBase): # R503.d
     """
     <dimension-attr-spec> = DIMENSION ( <array-spec> )
     """
     subclass_names = []
     use_names = ['Array_Spec']
-    def match(string): return CallBase.match(pattern.abs_dimension, Array_Spec, string)
+    def match(string): return CALLBase.match('DIMENSION', Array_Spec, string)
     match = staticmethod(match)
-    def init(self, lhs, rhs):
-        self.lhs = lhs.upper()
-        self.rhs = rhs
-        return
 
-class Intent_Attr_Spec(CallBase):
+class Intent_Attr_Spec(CALLBase): # R503.f
     """
     <intent-attr-spec> = INTENT ( <intent-spec> )
     """
     subclass_names = []
     use_names = ['Intent_Spec']
-    def match(string): return CallBase.match(pattern.abs_intent, Intent_Spec, string)
+    def match(string): return CALLBase.match('INTENT', Intent_Spec, string)
     match = staticmethod(match)
-    def init(self, lhs, rhs):
-        self.lhs = lhs.upper()
-        self.rhs = rhs
-        return
 
 class Attr_Spec(STRINGBase): # R503
     """
@@ -1709,13 +2116,15 @@ class Initialization(Base): # R506
     def tostr(self): return '%s %s' % (self.op, self.rhs)
     def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.op, self.rhs)
 
-class Null_Init(Base): # R507
+class Null_Init(STRINGBase): # R507
     """
     <null-init> = <function-reference>
 
     <function-reference> shall be a reference to the NULL intrinsic function with no arguments.
     """
     subclass_names = ['Function_Reference']
+    def match(string): return STRINGBase.match('NULL', string)
+    match = staticmethod(match)
 
 class Access_Spec(STRINGBase): # R508
     """
@@ -1723,7 +2132,7 @@ class Access_Spec(STRINGBase): # R508
                     | PRIVATE
     """
     subclass_names = []
-    def match(string): return STRINGBase.match(pattern.abs_access_spec, string)
+    def match(string): return STRINGBase.match(['PUBLIC','PRIVATE'], string)
     match = staticmethod(match)
 
 class Language_Binding_Spec(Base): # R509
@@ -1766,21 +2175,29 @@ class Array_Spec(Base): # R510
                    | <deferred-shape-spec-list>
                    | <assumed-size-spec>
     """
-    subclass_names = ['Explicit_Shape_Spec_List', 'Assumed_Shape_Spec_List',
-                      'Deferred_Shape_Spec_List', 'Assumed_Size_Spec']
+    subclass_names = ['Assumed_Size_Spec', 'Explicit_Shape_Spec_List', 'Assumed_Shape_Spec_List',
+                      'Deferred_Shape_Spec_List']
 
 class Explicit_Shape_Spec(SeparatorBase): # R511
     """
     <explicit-shape-spec> = [ <lower-bound> : ] <upper-bound>
     """
-    subclass_names = ['Upper_Bound']
-    use_names = ['Lower_Bound']
+    subclass_names = []
+    use_names = ['Lower_Bound', 'Upper_Bound']
     def match(string):
         line, repmap = string_replace_map(string)
-        if ':' not in line: return
+        if ':' not in line:
+            return None, Upper_Bound(string)
         lower,upper = line.split(':',1)
+        lower = lower.rstrip()
+        upper = upper.lstrip()
+        if not upper: return
+        if not lower: return
         return Lower_Bound(repmap(lower)), Upper_Bound(repmap(upper))
     match = staticmethod(match)
+    def tostr(self):
+        if self.items[0] is None: return str(self.items[1])
+        return SeparatorBase.tostr(self)
     
 class Lower_Bound(Base): # R512
     """
@@ -1794,18 +2211,24 @@ class Upper_Bound(Base): # R513
     """
     subclass_names = ['Specification_Expr']
 
-class Assumed_Shape_Spec(Base): # R514
+class Assumed_Shape_Spec(SeparatorBase): # R514
     """
     <assumed-shape-spec> = [ <lower-bound> ] :
     """
     subclass_names = []
     use_names = ['Lower_Bound']
+    def match(string): return SeparatorBase.match(Lower_Bound, None, string)
+    match = staticmethod(match)
 
-class Deferred_Shape_Spec(Base): # R515
+class Deferred_Shape_Spec(SeparatorBase): # R515
     """
     <deferred_shape_spec> = :
     """
     subclass_names = []
+    def match(string):
+        if string==':': return None,None
+        return
+    match = staticmethod(match)
 
 class Assumed_Size_Spec(Base): # R516
     """
@@ -1813,7 +2236,33 @@ class Assumed_Size_Spec(Base): # R516
     """
     subclass_names = []
     use_names = ['Explicit_Shape_Spec_List', 'Lower_Bound']
-
+    def match(string):
+        if not string.endswith('*'): return
+        line = string[:-1].rstrip()
+        if not line: return None,None
+        if line.endswith(':'):
+            line, repmap = string_replace_map(line[:-1].rstrip())
+            i = line.rfind(',')
+            if i==-1:
+                return None, Lower_Bound(repmap(line))
+            return Explicit_Shape_Spec_List(repmap(line[:i].rstrip())), Lower_Bound(repmap(line[i+1:].lstrip()))
+        if not line.endswith(','): return
+        line = line[:-1].rstrip()
+        return Explicit_Shape_Spec_List(line), None
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        s = ''
+        if self.items[0] is not None:
+            s += str(self.items[0]) + ', '
+        if self.items[1] is not None:
+            s += str(self.items[1]) + ' : '
+        s += '*'
+        return s
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
+    
 class Intent_Spec(STRINGBase): # R517
     """
     <intent-spec> = IN
@@ -1824,7 +2273,7 @@ class Intent_Spec(STRINGBase): # R517
     def match(string): return STRINGBase.match(pattern.abs_intent_spec, string)
     match = staticmethod(match)
 
-class Access_Stmt(Base): # R518
+class Access_Stmt(StmtBase): # R518
     """
     <access-stmt> = <access-spec> [ [ :: ] <access-id-list> ]
     """
@@ -1838,21 +2287,21 @@ class Access_Id(Base): # R519
     """
     subclass_names = ['Use_Name', 'Generic_Spec']
 
-class Allocatable_Stmt(Base): # R520
+class Allocatable_Stmt(StmtBase): # R520
     """
     <allocateble-stmt> = ALLOCATABLE [ :: ] <object-name> [ ( <deferred-shape-spec-list> ) ] [ , <object-name> [ ( <deferred-shape-spec-list> ) ] ]...
     """
     subclass_names = []
     use_names = ['Object_Name', 'Deferred_Shape_Spec_List']
 
-class Asynchronous_Stmt(Base): # R521
+class Asynchronous_Stmt(StmtBase): # R521
     """
     <asynchronous-stmt> = ASYNCHRONOUS [ :: ] <object-name-list>
     """
     subclass_names = []
     use_names = ['Object_Name_List']
 
-class Bind_Stmt(Base): # R522
+class Bind_Stmt(StmtBase): # R522
     """
     <bind-stmt> = <language-binding-spec> [ :: ] <bind-entity-list>
     """
@@ -1867,7 +2316,7 @@ class Bind_Entity(Base): # R523
     subclass_names = ['Entity_Name']
     use_names = ['Common_Block_Name']
 
-class Data_Stmt(Base): # R524
+class Data_Stmt(StmtBase): # R524
     """
     <data-stmt> = DATA <data-stmt-set> [ [ , ] <data-stmt-set> ]...
     """
@@ -1948,64 +2397,91 @@ class Constant_Subobject(Base): # R534
     """
     subclass_names = ['Designator']
 
-class Dimension_Stmt(Base): # R535
+class Dimension_Stmt(StmtBase): # R535
     """
     <dimension-stmt> = DIMENSION [ :: ] <array-name> ( <array-spec> ) [ , <array-name> ( <array-spec> ) ]...
     """
     subclass_names = []
     use_names = ['Array_Name', 'Array_Spec']
+    def match(string):
+        if string[:9].upper()!='DIMENSION': return
+        line, repmap = string_replace_map(string[9:].lstrip())
+        if line.startswith('::'): line = line[2:].lstrip()
+        decls = []
+        for s in line.split(','):
+            s = s.strip()
+            if not s.endswith(')'): return
+            i = s.find('(')
+            if i==-1: return
+            decls.append((Array_Name(repmap(s[:i].rstrip())), Array_Spec(repmap(s[i+1:-1].strip()))))
+        if not decls: return
+        return decls,
+    match = staticmethod(match)
+    def init(self, items):
+        self.items = items
+        return
+    def tostr(self):
+        return 'DIMENSION :: ' + ', '.join(['%s(%s)' % ns for ns in self.items])
+    def torepr(self):
+        return '%s(%r)' % (self.__class__.__name__, self.items)
 
-class Intent_Stmt(Base): # R536
+class Intent_Stmt(StmtBase): # R536
     """
     <intent-stmt> = INTENT ( <intent-spec> ) [ :: ] <dummy-arg-name-list>
     """
     subclass_names = []
     use_names = ['Intent_Spec', 'Dummy_Arg_Name_List']
 
-class Optional_Stmt(Base): # R537
+class Optional_Stmt(StmtBase): # R537
     """
     <optional-stmt> = OPTIONAL [ :: ] <dummy-arg-name-list>
     """
     subclass_names = []
     use_names = ['Dummy_Arg_Name_List']
 
-class Parameter_Stmt(Base): # R538
+class Parameter_Stmt(StmtBase, CALLBase): # R538
     """
     <parameter-stmt> = PARAMETER ( <named-constant-def-list> )
     """
     subclass_names = []
     use_names = ['Named_Constant_Def_List']
+    def match(string): return CALLBase.match('PARAMETER', Named_Constant_Def_List, string, require_rhs=True)
+    match = staticmethod(match)
 
-class Named_Constant_Def(Base): # R539
+class Named_Constant_Def(KeywordValueBase): # R539
     """
     <named-constant-def> = <named-constant> = <initialization-expr>
     """
     subclass_names = []
     use_names = ['Named_Constant', 'Initialization_Expr']
-
-class Pointer_Stmt(Base): # R540
+    def match(string): return KeywordValueBase.match(Named_Constant, Initialization_Expr, string)
+    match = staticmethod(match)
+    
+class Pointer_Stmt(StmtBase): # R540
     """
     <pointer-stmt> = POINTER [ :: ] <pointer-decl-list>
     """
     subclass_names = []
     use_names = ['Pointer_Decl_List']
 
-class Pointer_Decl(Base): # R541
+class Pointer_Decl(CallBase): # R541
     """
     <pointer-decl> = <object-name> [ ( <deferred-shape-spec-list> ) ]
                      | <proc-entity-name>
     """
-    use_names = ['Object_Name', 'Deferred_Shape_Spec_List']
-    subclass_names = ['Proc_Entity_Name']
+    subclass_names = ['Proc_Entity_Name', 'Object_Name']
+    use_names = ['Deferred_Shape_Spec_List']
+    def match(string): return CallBase.match(Object_Name, Deferred_Shape_Spec_List, string, require_rhs=True)
+    match = staticmethod(match)
 
-class Protected_Stmt(Base): # R542
+class Protected_Stmt(StmtBase): # R542
     """
     <protected-stmt> = PROTECTED [ :: ] <entity-name-list>
     """
     subclass_names = []
     use_names = ['Entity_Name_List']
 
-class Save_Stmt(Base): # R543
+class Save_Stmt(StmtBase): # R543
     """
     <save-stmt> = SAVE [ [ :: ] <saved-entity-list> ]
     """
@@ -2027,49 +2503,88 @@ class Proc_Pointer_Name(Base): # R545
     """
     subclass_names = ['Name']
 
-class Target_Stmt(Base): # R546
+class Target_Stmt(StmtBase): # R546
     """
     <target-stmt> = TARGET [ :: ] <object-name> [ ( <array-spec> ) ] [ , <object-name> [ ( <array-spec> ) ]]
     """
     subclass_names = []
     use_names = ['Object_Name', 'Array_Spec']
 
-class Value_Stmt(Base): # R547
+class Value_Stmt(StmtBase): # R547
     """
     <value-stmt> = VALUE [ :: ] <dummy-arg-name-list>
     """
     subclass_names = []
     use_names = ['Dummy_Arg_Name_List']
 
-class Volatile_Stmt(Base): # R548
+class Volatile_Stmt(StmtBase): # R548
     """
     <volatile-stmt> = VOLATILE [ :: ] <object-name-list>
     """
     subclass_names = []
     use_names = ['Object_Name_List']
 
-class Implicit_Stmt(Base): # R549
+class Implicit_Stmt(StmtBase, WORDClsBase): # R549
     """
     <implicit-stmt> = IMPLICIT <implicit-spec-list>
                       | IMPLICIT NONE
     """
     subclass_names = []
     use_names = ['Implicit_Spec_List']
+    def match(string):
+        for w,cls in [(pattern.abs_implicit_none, None),
+                      ('IMPLICIT', Implicit_Spec_List)]:
+            try:
+                obj = WORDClsBase.match(w, cls, string)
+            except NoMatchError:
+                obj = None
+            if obj is not None: return obj
+        return
+    match = staticmethod(match)
 
-class Implicit_Spec(Base): # R550
+class Implicit_Spec(CallBase): # R550
     """
     <implicit-spec> = <declaration-type-spec> ( <letter-spec-list> )
     """
     subclass_names = []
     use_names = ['Declaration_Type_Spec', 'Letter_Spec_List']
+    def match(string):
+        if not string.endswith(')'): return
+        i = string.rfind('(')
+        if i==-1: return
+        s1 = string[:i].rstrip()
+        s2 = string[i+1:-1].strip()
+        if not s1 or not s2: return
+        return Declaration_Type_Spec(s1), Letter_Spec_List(s2)
+    match = staticmethod(match)
 
 class Letter_Spec(Base): # R551
     """
     <letter-spec> = <letter> [ - <letter> ]
     """
     subclass_names = []
+    def match(string):
+        if len(string)==1:
+            lhs = string.upper()
+            if 'A'<=lhs<='Z': return lhs, None
+            return
+        if '-' not in string: return
+        lhs,rhs = string.split('-',1)
+        lhs = lhs.strip().upper()
+        rhs = rhs.strip().upper()
+        if not len(lhs)==len(rhs)==1: return
+        if not ('A'<=lhs<=rhs<='Z'): return
+        return lhs,rhs
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        if self.items[1] is None: return str(self.items[0])
+        return '%s - %s' % tuple(self.items)
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
 
-class Namelist_Stmt(Base): # R552
+class Namelist_Stmt(StmtBase): # R552
     """
     <namelist-stmt> = NAMELIST / <namelist-group-name> / <namelist-group-object-list> [ [ , ] / <namelist-group-name> / <namelist-group-object-list> ]
     """
@@ -2082,12 +2597,14 @@ class Namelist_Group_Object(Base): # R553
     """
     subclass_names = ['Variable_Name']
 
-class Equivalence_Stmt(Base): # R554
+class Equivalence_Stmt(StmtBase, WORDClsBase): # R554
     """
     <equivalence-stmt> = EQUIVALENCE <equivalence-set-list>
     """
     subclass_names = []
     use_names = ['Equivalence_Set_List']
+    def match(string): return WORDClsBase.match('EQUIVALENCE', Equivalence_Set_List, string)
+    match = staticmethod(match)
 
 class Equivalence_Set(Base): # R555
     """
@@ -2095,6 +2612,21 @@ class Equivalence_Set(Base): # R555
     """
     subclass_names = []
     use_names = ['Equivalence_Object', 'Equivalence_Object_List']
+    def match(string):
+        if not string or string[0]+string[-1]!='()': return
+        line = string[1:-1].strip()
+        if not line: return
+        l = Equivalence_Object_List(line)
+        obj = l.items[0]
+        l.items = l.items[1:]
+        if not l.items: return
+        return obj, l
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self): return '(%s, %s)' % tuple(self.items)
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
 
 class Equivalence_Object(Base): # R556
     """
@@ -2104,20 +2636,89 @@ class Equivalence_Object(Base): # R556
     """
     subclass_names = ['Variable_Name', 'Array_Element', 'Substring']
 
-class Common_Stmt(Base): # R557
+class Common_Stmt(StmtBase): # R557
     """
     <common-stmt> = COMMON [ / [ <common-block-name> ] / ] <common-block-object-list> [ [ , ] / [ <common-block-name> ] / <common-block-object-list> ]...
     """
     subclass_names = []
     use_names = ['Common_Block_Name', 'Common_Block_Object_List']
+    def match(string):
+        if string[:6].upper()!='COMMON': return
+        line = string[6:]
+        if not line or 'A'<=line[0].upper()<='Z' or line[0]=='_': return
+        line, repmap = string_replace_map(line.lstrip())
+        items = []
+        if line.startswith('/'):
+            i = line.find('/',1)
+            if i==-1: return
+            name = line[1:i].strip() or None
+            if name is not None: name = Common_Block_Name(name)
+            line = line[i+1:].lstrip()
+            i = line.find('/')
+            if i==-1:
+                lst = Common_Block_Object_List(repmap(line))
+                line = ''
+            else:
+                l = line[:i].rstrip()
+                if l.endswith(','): l = l[:-1].rstrip()
+                if not l: return
+                lst = Common_Block_Object_List(repmap(l))
+                line = line[i:].lstrip()
+        else:
+            name = None
+            i = line.find('/')
+            if i==-1:
+                lst = Common_Block_Object_List(repmap(line))
+                line = ''
+            else:
+                l = line[:i].rstrip()
+                if l.endswith(','): l = l[:-1].rstrip()
+                if not l: return
+                lst = Common_Block_Object_List(repmap(l))
+                line = line[i:].lstrip()
+        items.append((name, lst))
+        while line:
+            if line.startswith(','): line = line[1:].lstrip()
+            if not line.startswith('/'): return
+            i = line.find('/',1)
+            name = line[1:i].strip() or None
+            if name is not None: name = Common_Block_Name(name)
+            line = line[i+1:].lstrip()
+            i = line.find('/')
+            if i==-1:
+                lst = Common_Block_Object_List(repmap(line))
+                line = ''
+            else:
+                l = line[:i].rstrip()
+                if l.endswith(','): l = l[:-1].rstrip()
+                if not l: return
+                lst = Common_Block_Object_List(repmap(l))
+                line = line[i:].lstrip()
+            items.append((name, lst))
+        return items,
+    match = staticmethod(match)
+    def init(self, items):
+        self.items = items
+        return
+    def tostr(self):
+        s = 'COMMON'
+        for (name, lst) in self.items:
+            if name is not None:
+                s += ' /%s/ %s' % (name, lst)
+            else:
+                s += ' // %s' % (lst)
+        return s
+    def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.items)
 
-class Common_Block_Object(Base): # R558
+class Common_Block_Object(CallBase): # R558
     """
     <common-block-object> = <variable-name> [ ( <explicit-shape-spec-list> ) ]
                             | <proc-pointer-name>
     """
-    subclass_names = ['Proc_Pointer_Name']
+    subclass_names = ['Proc_Pointer_Name','Variable_Name']
     use_names = ['Variable_Name', 'Explicit_Shape_Spec_List']
+    def match(string): return CallBase.match(Variable_Name, Explicit_Shape_Spec_List, string, require_rhs=True)
+    match = staticmethod(match)
 
 ###############################################################################
 ############################### SECTION  6 ####################################
@@ -2183,11 +2784,11 @@ class Int_Variable(Base): # R608
 
 class Substring(CallBase): # R609
     """
-    <substring> = <parent-string> ( <substring-range> )    
+    <substring> = <parent-string> ( <substring-range> )
     """
     subclass_names = []
     use_names = ['Parent_String','Substring_Range']
-    def match(string): return CallBase.match(Parent_String, Substring_Range, string)
+    def match(string): return CallBase.match(Parent_String, Substring_Range, string, require_rhs=True)
     match = staticmethod(match)
 
 class Parent_String(Base): # R610
@@ -2199,36 +2800,15 @@ class Parent_String(Base): # R610
     """
     subclass_names = ['Scalar_Variable_Name', 'Array_Element', 'Scalar_Structure_Component', 'Scalar_Constant']
 
-class Substring_Range(Base): # R611
+class Substring_Range(SeparatorBase): # R611
     """
     <substring-range> = [ <scalar-int-expr> ] : [ <scalar-int-expr> ]
     """
     subclass_names = []
     use_names = ['Scalar_Int_Expr']
     def match(string):
-        line, repmap = string_replace_map(string)
-        if ':' not in line: return
-        lhs,rhs = line.split(':',1)
-        lhs = lhs.rstrip()
-        rhs = rhs.lstrip()
-        lhs_obj, rhs_obj = None, None
-        if lhs:
-            lhs_obj = Scalar_Int_Expr(repmap(lhs))
-        if rhs:
-            rhs_obj = Scalar_Int_Expr(repmap(rhs))
-        return lhs_obj, rhs_obj
+        return SeparatorBase.match(Scalar_Int_Expr, Scalar_Int_Expr, string)
     match = staticmethod(match)
-    def init(self, lhs, rhs):
-        self.lhs, self.rhs = lhs, rhs
-        return
-    def tostr(self):
-        if self.lhs is None:
-            if self.rhs is None: return ':'
-            return ': '+ str(self.rhs)
-        else:
-            if self.rhs is None: return str(self.lhs)+' :'
-            return str(self.lhs)+' : '+ str(self.rhs)
-    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.lhs, self.rhs)
 
 class Data_Ref(SequenceBase): # R612
     """
@@ -2236,7 +2816,7 @@ class Data_Ref(SequenceBase): # R612
     """
     subclass_names = ['Part_Ref']
     use_names = []
-    def match(string): return SequenceBase.match('%', Part_Ref, string)
+    def match(string): return SequenceBase.match(r'%', Part_Ref, string)
     match = staticmethod(match)
 
 class Part_Ref(CallBase): # R613
@@ -2245,7 +2825,8 @@ class Part_Ref(CallBase): # R613
     """
     subclass_names = ['Part_Name']
     use_names = ['Section_Subscript_List']
-    def match(string): return CallBase.match(Part_Name, Section_Subscript_List, string)
+    def match(string):
+        return CallBase.match(Part_Name, Section_Subscript_List, string, require_rhs=True)
     match = staticmethod(match)
 
 class Structure_Component(Base): # R614
@@ -2277,7 +2858,7 @@ class Array_Section(CallBase): # R617
     """
     subclass_names = ['Data_Ref']
     use_names = ['Substring_Range']
-    def match(string): return CallBase.match(Data_Ref, Substring_Range, string)
+    def match(string): return CallBase.match(Data_Ref, Substring_Range, string, require_rhs=True)
     match = staticmethod(match)
 
 class Subscript(Base): # R618
@@ -2346,22 +2927,34 @@ class Vector_Subscript(Base): # R622
     """
     subclass_names = ['Int_Expr']
 
-class Allocate_Stmt(Base): # R623
+class Allocate_Stmt(StmtBase): # R623
     """
     <allocate-stmt> = ALLOCATE ( [ <type-spec> :: ] <allocation-list> [ , <alloc-opt-list> ] )
     """
     subclass_names = []
     use_names = ['Type_Spec', 'Allocation_List', 'Alloc_Opt_List']
     
-class Alloc_Opt(Base):# R624
+class Alloc_Opt(KeywordValueBase):# R624
     """
     <alloc-opt> = STAT = <stat-variable>
                   | ERRMSG = <errmsg-variable>
                   | SOURCE = <source-expr>
     """
     subclass_names = []
-    use_names = ['Stat_Variable', 'Errmsg_Variable', 'Source_Expr',
-                 ]
+    use_names = ['Stat_Variable', 'Errmsg_Variable', 'Source_Expr']
+    def match(string):
+        for (k,v) in [('STAT', Stat_Variable),
+                      ('ERRMSG', Errmsg_Variable),
+                      ('SOURCE', Source_Expr)
+                      ]:
+            try:
+                obj = KeywordValueBase.match(k, v, string, upper_lhs = True)
+            except NoMatchError:
+                obj = None
+            if obj is not None: return obj
+        return
+    match = staticmethod(match)
+
 
 class Stat_Variable(Base):# R625
     """
@@ -2396,12 +2989,26 @@ class Allocate_Object(Base): # R629
     """
     subclass_names = ['Variable_Name', 'Structure_Component']
 
-class Allocate_Shape_Spec(Base): # R630
+class Allocate_Shape_Spec(SeparatorBase): # R630
     """
     <allocate-shape-spec> = [ <lower-bound-expr> : ] <upper-bound-expr>
     """
     subclass_names = []
     use_names = ['Lower_Bound_Expr', 'Upper_Bound_Expr']
+    def match(string):
+        line, repmap = string_replace_map(string)
+        if ':' not in line: return None, Upper_Bound_Expr(string)
+        lower,upper = line.split(':',1)
+        lower = lower.rstrip()
+        upper = upper.lstrip()
+        if not upper: return
+        if not lower: return
+        return Lower_Bound_Expr(repmap(lower)), Upper_Bound_Expr(repmap(upper))
+    match = staticmethod(match)
+    def tostr(self):
+        if self.items[0] is None: return str(self.items[1])
+        return SeparatorBase.tostr(self)
+
 
 class Lower_Bound_Expr(Base): # R631
     """
@@ -2415,13 +3022,15 @@ class Upper_Bound_Expr(Base): # R632
     """
     subclass_names = ['Scalar_Int_Expr']
 
-class Nullify_Stmt(Base): # R633
+class Nullify_Stmt(StmtBase, CALLBase): # R633
     """
     <nullify-stmt> = NULLIFY ( <pointer-object-list> )
     """
     subclass_names = []
     use_names = ['Pointer_Object_List']
-
+    def match(string): return CALLBase.match('NULLIFY', Pointer_Object_List, string, require_rhs=True)
+    match = staticmethod(match)
+    
 class Pointer_Object(Base): # R634
     """
     <pointer-object> = <variable-name>
@@ -2430,21 +3039,31 @@ class Pointer_Object(Base): # R634
     """
     subclass_names = ['Variable_Name', 'Structure_Component', 'Proc_Pointer_Name']
 
-class Deallocate_Stmt(Base): # R635
+class Deallocate_Stmt(StmtBase): # R635
     """
     <deallocate-stmt> = DEALLOCATE ( <allocate-object-list> [ , <dealloc-opt-list> ] )
     """
     subclass_names = []
     use_names = ['Allocate_Object_List', 'Dealloc_Opt_List']
 
-class Dealloc_Opt(Base): # R636
+class Dealloc_Opt(KeywordValueBase): # R636
     """
     <dealloc-opt> = STAT = <stat-variable>
                     | ERRMSG = <errmsg-variable>
     """
     subclass_names = []
     use_names = ['Stat_Variable', 'Errmsg_Variable']
-
+    def match(string):
+        for (k,v) in [('STAT', Stat_Variable),
+                      ('ERRMSG', Errmsg_Variable),
+                      ]:
+            try:
+                obj = KeywordValueBase.match(k, v, string, upper_lhs = True)
+            except NoMatchError:
+                obj = None
+            if obj is not None: return obj
+        return
+    match = staticmethod(match)
 
 class Scalar_Char_Initialization_Expr(Base):
     subclass_names = ['Char_Initialization_Expr']
@@ -2469,7 +3088,7 @@ class Primary(Base): # R701
                       'Function_Reference', 'Type_Param_Inquiry', 'Type_Param_Name', 
                        ]
 
-class Parenthesis(BracketBase):
+class Parenthesis(BracketBase): # R701.h
     """
     <parenthesis> = ( <expr> )
     """
@@ -2487,7 +3106,7 @@ class Level_1_Expr(UnaryOpBase): # R702
     use_names = []
     def match(string):
         if pattern.non_defined_binary_op.match(string):
-            raise NoMatchError,`string`
+            raise NoMatchError,'%s: %r' % (Level_1_Expr.__name__, string)
         return UnaryOpBase.match(\
             pattern.defined_unary_op.named(),Primary,string)
     match = staticmethod(match)
@@ -2515,8 +3134,7 @@ class Add_Operand(BinaryOpBase): # R705
     subclass_names = ['Mult_Operand']
     use_names = ['Add_Operand','Mult_Operand']
     def match(string):
-        return BinaryOpBase.match(\
-            Add_Operand,pattern.mult_op.named(),Mult_Operand,string)
+        return BinaryOpBase.match(Add_Operand,pattern.mult_op.named(),Mult_Operand,string)
     match = staticmethod(match)
 
 class Level_2_Expr(BinaryOpBase): # R706
@@ -2534,7 +3152,7 @@ class Level_2_Expr(BinaryOpBase): # R706
             Level_2_Expr,pattern.add_op.named(),Add_Operand,string)
     match = staticmethod(match)
 
-class Level_2_Unary_Expr(UnaryOpBase):
+class Level_2_Unary_Expr(UnaryOpBase): # R706.c
     """
     <level-2-unary-expr> = [ <add-op> ] <add-operand>
     """
@@ -2705,14 +3323,17 @@ class Logical_Initialization_Expr(Base): # R733
     """
     subclass_names = ['Logical_Expr']
 
-class Assignment_Stmt(Base): # R734
+class Assignment_Stmt(StmtBase, BinaryOpBase): # R734
     """
     <assignment-stmt> = <variable> = <expr>
     """
     subclass_names = []
     use_names = ['Variable', 'Expr']
-
-class Pointer_Assignment_Stmt(Base): # R735
+    def match(string):
+        return BinaryOpBase.match(Variable, '=', Expr, string, right=False)
+    match = staticmethod(match)
+    
+class Pointer_Assignment_Stmt(StmtBase): # R735
     """
     <pointer-assignment-stmt> = <data-pointer-object> [ ( <bounds-spec-list> ) ] => <data-target>
                                 | <data-pointer-object> ( <bounds-remapping-list> ) => <data-target>
@@ -2730,19 +3351,23 @@ class Data_Pointer_Object(Base): # R736
     subclass_names = ['Variable_Name']
     use_names = ['Variable', 'Data_Pointer_Component_Name']
 
-class Bounds_Spec(Base): # R737
+class Bounds_Spec(SeparatorBase): # R737
     """
     <bounds-spec> = <lower-bound-expr> :
     """
     subclass_names = []
     use_names = ['Lower_Bound_Expr']
+    def match(string): return SeparatorBase.match(Lower_Bound_Expr, None, string, require_lhs=True)
+    match = staticmethod(match)
 
-class Bounds_Remapping(Base): # R738
+class Bounds_Remapping(SeparatorBase): # R738
     """
     <bounds-remapping> = <lower-bound-expr> : <upper-bound-expr>
     """
     subclass_names = []
     use_classes = ['Lower_Bound_Expr', 'Upper_Bound_Expr']
+    def match(string): return SeparatorBase.match(Lower_Bound_Expr, Upper_Bound_Expr, string, require_lhs=True, require_rhs=True)
+    match = staticmethod(match)
 
 class Data_Target(Base): # R739
     """
@@ -2765,8 +3390,7 @@ class Proc_Component_Ref(BinaryOpBase): # R741
     subclass_names = []
     use_names = ['Variable','Procedure_Component_Name']
     def match(string):
-        return BinaryOpBase.match(\
-            Variable, pattern.percent_op.named(), Procedure_Component_Name, string)            
+        return BinaryOpBase.match(Variable, r'%', Procedure_Component_Name, string)            
     match = staticmethod(match)
 
 class Proc_Target(Base): # R742
@@ -2778,7 +3402,7 @@ class Proc_Target(Base): # R742
     subclass_names = ['Proc_Component_Ref', 'Procedure_Name', 'Expr']
 
 
-class Where_Stmt(Base): # R743
+class Where_Stmt(StmtBase): # R743
     """
     <where-stmt> = WHERE ( <mask-expr> ) <where-assignment-stmt>
     """
@@ -2801,7 +3425,7 @@ class Where_Construct(Base): # R744
                  'Elsewhere_Stmt', 'End_Where_Stmt'
                  ]
 
-class Where_Construct_Stmt(Base): # R745
+class Where_Construct_Stmt(StmtBase): # R745
     """
     <where-construct-stmt> = [ <where-construct-name> : ] WHERE ( <mask-expr> )
     """
@@ -2828,26 +3452,29 @@ class Mask_Expr(Base): # R748
     """
     subclass_names = ['Logical_Expr']
 
-class Masked_Elsewhere_Stmt(Base): # R749
+class Masked_Elsewhere_Stmt(StmtBase): # R749
     """
     <masked-elsewhere-stmt> = ELSEWHERE ( <mask-expr> ) [ <where-construct-name> ]
     """
     subclass_names = []
     use_names = ['Mask_Expr', 'Where_Construct_Name']
 
-class Elsewhere_Stmt(Base): # R750
+class Elsewhere_Stmt(StmtBase): # R750
     """
     <elsewhere-stmt> = ELSEWHERE [ <where-construct-name> ]
     """
     subclass_names = []
     use_names = ['Where_Construct_Name']
 
-class End_Where_Stmt(Base): # R751
+class End_Where_Stmt(EndStmtBase): # R751
     """
     <end-where-stmt> = END WHERE [ <where-construct-name> ]
     """
     subclass_names = []
     use_names = ['Where_Construct_Name']
+    def match(string): return EndStmtBase.match('WHERE',Where_Construct_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
+
 
 class Forall_Construct(Base): # R752
     """
@@ -2858,7 +3485,7 @@ class Forall_Construct(Base): # R752
     subclass_names = []
     use_names = ['Forall_Construct_Stmt', 'Forall_Body_Construct', 'End_Forall_Stmt']
 
-class Forall_Construct_Stmt(Base): # R753
+class Forall_Construct_Stmt(StmtBase): # R753
     """
     <forall-construct-stmt> = [ <forall-construct-name> : ] FORALL <forall-header>
     """
@@ -2897,14 +3524,16 @@ class Forall_Assignment_Stmt(Base): # R757
     """
     subclass_names = ['Assignment_Stmt', 'Pointer_Assignment_Stmt']
 
-class End_Forall_Stmt(Base): # R758
+class End_Forall_Stmt(EndStmtBase): # R758
     """
     <end-forall-stmt> = END FORALL [ <forall-construct-name> ]
     """
     subclass_names = []
     use_names = ['Forall_Construct_Name']
+    def match(string): return EndStmtBase.match('FORALL',Forall_Construct_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
 
-class Forall_Stmt(Base): # R759
+class Forall_Stmt(StmtBase): # R759
     """
     <forall-stmt> = FORALL <forall-header> <forall-assignment-stmt>
     """
@@ -2915,14 +3544,16 @@ class Forall_Stmt(Base): # R759
 ############################### SECTION  8 ####################################
 ###############################################################################
 
-class Block(Base): # R801
+class Block(BlockBase): # R801
     """
     block = [ <execution-part-construct> ]...
     """
     subclass_names = []
     use_names = ['Execution_Part_Construct']
+    def match(string): return BlockBase.match(None, [Execution_Part_Construct], None, string)
+    match = staticmethod(match)
 
-class If_Construct(Base): # R802
+class If_Construct(BlockBase): # R802
     """
     <if-construct> = <if-then-stmt>
                            <block>
@@ -2937,41 +3568,165 @@ class If_Construct(Base): # R802
     subclass_names = []
     use_names = ['If_Then_Stmt', 'Block', 'Else_If_Stmt', 'Else_Stmt', 'End_If_Stmt']
 
-class If_Then_Stmt(Base): # R803
+    def match(reader):
+        content = []
+        try:
+            obj = If_Then_Stmt(reader)
+        except NoMatchError:
+            obj = None
+        if obj is None: return
+        content.append(obj)
+        obj = Block(reader)
+        if obj is None: return # todo: restore reader
+        content.append(obj)
+        while 1:
+            try:
+                obj = Else_If_Stmt(reader)
+            except NoMatchError:
+                obj = None
+            if obj is not None:
+                content.append(obj)
+                obj = Block(reader)
+                if obj is None: return # todo: restore reader
+                content.append(obj)
+                continue
+            try:
+                obj = Else_Stmt(reader)
+            except NoMatchError:
+                obj = None
+            if obj is not None:
+                content.append(obj)
+                obj = Block(reader)
+                if obj is None: return # todo: restore reader
+                content.append(obj)
+            break
+        try:
+            obj = End_If_Stmt(reader)
+        except NoMatchError:
+            obj = None
+        if obj is None: return # todo: restore reader
+        content.append(obj)
+        return content,
+    match = staticmethod(match)
+
+    def tofortran(self, tab='', isfix=None):
+        l = []
+        start = self.content[0]
+        end = self.content[-1]
+        l.append(start.tofortran(tab=tab,isfix=isfix))
+        for item in self.content[1:-1]:
+            if isinstance(item, (Else_If_Stmt, Else_Stmt)):
+                l.append(item.tofortran(tab=tab,isfix=isfix))
+            else:
+                l.append(item.tofortran(tab=tab+'  ',isfix=isfix))
+        l.append(end.tofortran(tab=tab,isfix=isfix))
+        return '\n'.join(l)
+
+
+class If_Then_Stmt(StmtBase): # R803
     """
     <if-then-stmt> = [ <if-construct-name> : ] IF ( <scalar-logical-expr> ) THEN
     """
     subclass_names = []
     use_names = ['If_Construct_Name', 'Scalar_Logical_Expr']
+    def match(string):
+        if string[:2].upper()!='IF': return
+        if string[-4:].upper()!='THEN': return
+        line = string[2:-4].strip()
+        if not line: return
+        if line[0]+line[-1]!='()': return
+        return Scalar_Logical_Expr(line[1:-1].strip()),
+    match = staticmethod(match)
+    def init(self, expr):
+        self.expr = expr
+        return
+    def tostr(self): return 'IF (%s) THEN' % (self.expr)
+    def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.expr)
 
-class Else_If_Stmt(Base): # R804
+class Else_If_Stmt(StmtBase): # R804
     """
     <else-if-stmt> = ELSE IF ( <scalar-logical-expr> ) THEN [ <if-construct-name> ]
     """
     subclass_names = []
     use_names = ['Scalar_Logical_Expr', 'If_Construct_Name']
 
-class Else_Stmt(Base): # R805
+    def match(string):
+        if string[:4].upper()!='ELSE': return
+        line = string[4:].lstrip()
+        if line[:2].upper()!='IF': return
+        line = line[2:].lstrip()
+        if not line.startswith('('): return
+        i = line.rfind(')')
+        if i==-1: return
+        expr = line[1:i].strip()
+        line = line[i+1:].lstrip()
+        if line[:4].upper()!='THEN': return
+        line = line[4:].lstrip()
+        if line: return Scalar_Logical_Expr(expr), If_Construct_Name(line)
+        return Scalar_Logical_Expr(expr), None
+    match = staticmethod(match)
+    def init(self, *args):
+        self.expr, self.iflabel = args
+        return
+    def tostr(self):
+        if self.iflabel is None:
+            return 'ELSE IF (%s) THEN' % (self.expr)
+        return 'ELSE IF (%s) THEN %s' % (self.expr, self.iflabel)
+    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.expr, self.iflabel)
+
+class Else_Stmt(StmtBase): # R805
     """
     <else-stmt> = ELSE [ <if-construct-name> ]
     """
     subclass_names = []
     use_names = ['If_Construct_Name']
+    def match(string):
+        if string[:4].upper()!='ELSE': return
+        line = string[4:].lstrip()
+        if line: return If_Construct_Name(line),
+        return None,
+    match = staticmethod(match)
+    def init(self, iflabel):
+        self.iflabel = iflabel
+        return
+    def tostr(self):
+        if self.iflabel is None:
+            return 'ELSE'
+        return 'ELSE %s' % (self.expr, self.iflabel)
+    def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.iflabel)
 
-class End_If_Stmt(Base): # R806
+class End_If_Stmt(EndStmtBase): # R806
     """
     <end-if-stmt> = END IF [ <if-construct-name> ]
     """
     subclass_names = []
     use_names = ['If_Construct_Name']
+    def match(string): return EndStmtBase.match('IF',If_Construct_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
 
-class If_Stmt(Base): # R807
+class If_Stmt(StmtBase): # R807
     """
     <if-stmt> = IF ( <scalar-logical-expr> ) <action-stmt>
     """
     subclass_names = []
-    use_names = ['Scalar_Logical_Expr', 'Action_Stmt']
-
+    use_names = ['Scalar_Logical_Expr', 'Action_Stmt_C802']
+    def match(string):
+        if string[:2].upper() != 'IF': return
+        line, repmap = string_replace_map(string)
+        line = line[2:].lstrip()
+        if not line.startswith('('): return
+        i = line.find(')')
+        if i==-1: return
+        expr = repmap(line[1:i].strip())
+        stmt = repmap(line[i+1:].lstrip())
+        return Scalar_Logical_Expr(expr), Action_Stmt_C802(stmt)
+    match = staticmethod(match)
+    def init(self, *args):
+        self.expr, self.stmt = args
+        return
+    def tostr(self): return 'IF (%s) %s' % (self.expr, self.stmt)
+    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.expr, self.stmt)
+    
 class Case_Construct(Base): # R808
     """
     <case-construct> = <select-case-stmt>
@@ -2983,26 +3738,28 @@ class Case_Construct(Base): # R808
     subclass_names = []
     use_names = ['Select_Case_Stmt', 'Case_Stmt', 'End_Select_Stmt']
 
-class Select_Case_Stmt(Base): # R809
+class Select_Case_Stmt(StmtBase): # R809
     """
     <select-case-stmt> = [ <case-construct-name> : ] SELECT CASE ( <case-expr> )
     """
     subclass_names = []
     use_names = ['Case_Construct_Name', 'Case_Expr']
 
-class Case_Stmt(Base): # R810
+class Case_Stmt(StmtBase): # R810
     """
     <case-stmt> = CASE <case-selector> [ <case-construct-name> ]
     """
     subclass_names = []
     use_names = ['Case_Selector', 'Case_Construct_Name']
 
-class End_Select_Stmt(Base): # R811
+class End_Select_Stmt(EndStmtBase): # R811
     """
     <end-select-stmt> = END SELECT [ <case-construct-name> ]
     """
     subclass_names = []
     use_names = ['Case_Construct_Name']
+    def match(string): return EndStmtBase.match('SELECT',Case_Construct_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
 
 class Case_Expr(Base): # R812
     """
@@ -3021,7 +3778,7 @@ class Case_Selector(Base): # R813
     subclass_names = []
     use_names = ['Case_Value_Range_List']
 
-class Case_Value_Range(Base): # R814
+class Case_Value_Range(SeparatorBase): # R814
     """
     <case-value-range> = <case-value>
                          | <case-value> :
@@ -3029,6 +3786,8 @@ class Case_Value_Range(Base): # R814
                          | <case-value> : <case-value>
     """
     subclass_names = ['Case_Value']
+    def match(string): return SeparatorBase.match(Case_Value, Case_Value, string)
+    match = staticmethod(match)
 
 class Case_Value(Base): # R815
     """
@@ -3048,19 +3807,21 @@ class Associate_Construct(Base): # R816
     subclass_names = []
     use_names = ['Associate_Stmt', 'Block', 'End_Associate_Stmt']
 
-class Associate_Stmt(Base): # R817
+class Associate_Stmt(StmtBase): # R817
     """
     <associate-stmt> = [ <associate-construct-name> : ] ASSOCIATE ( <association-list> )
     """
     subclass_names = []
     use_names = ['Associate_Construct_Name', 'Association_List']
 
-class Association(Base): # R818
+class Association(BinaryOpBase): # R818
     """
     <association> = <associate-name> => <selector>
     """
     subclass_names = []
     use_names = ['Associate_Name', 'Selector']
+    def match(string): return BinaryOpBase.match(Assiciate_Name, '=>', Selector, string)
+    match = staticmethod(match)
 
 class Selector(Base): # R819
     """
@@ -3069,12 +3830,14 @@ class Selector(Base): # R819
     """
     subclass_names = ['Expr', 'Variable']
 
-class End_Associate_Stmt(Base): # R820
+class End_Associate_Stmt(EndStmtBase): # R820
     """
     <end-associate-stmt> = END ASSOCIATE [ <associate-construct-name> ]
     """
     subclass_names = []
     use_names = ['Associate_Construct_Name']
+    def match(string): return EndStmtBase.match('ASSOCIATE',Associate_Construct_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
 
 class Select_Type_Construct(Base): # R821
     """
@@ -3087,14 +3850,14 @@ class Select_Type_Construct(Base): # R821
     subclass_names = []
     use_names = ['Select_Type_Stmt', 'Type_Guard_Stmt', 'Block', 'End_Select_Type_Stmt']
 
-class Select_Type_Stmt(Base): # R822
+class Select_Type_Stmt(StmtBase): # R822
     """
     <select-type-stmt> = [ <select-construct-name> : ] SELECT TYPE ( [ <associate-name> => ] <selector> )
     """
     subclass_names = []
     use_names = ['Select_Construct_Name', 'Associate_Name', 'Selector']
 
-class Type_Guard_Stmt(Base): # R823
+class Type_Guard_Stmt(StmtBase): # R823
     """
     <type-guard-stmt> = TYPE IS ( <type-spec> ) [ <select-construct-name> ]
                         | CLASS IS ( <type-spec> ) [ <select-construct-name> ]
@@ -3103,12 +3866,14 @@ class Type_Guard_Stmt(Base): # R823
     subclass_names = []
     use_names = ['Type_Spec', 'Select_Construct_Name']
 
-class End_Select_Type_Stmt(Base): # R824
+class End_Select_Type_Stmt(EndStmtBase): # R824
     """
     <end-select-type-stmt> = END SELECT [ <select-construct-name> ]
     """
     subclass_names = []
     use_names = ['Select_Construct_Name']
+    def match(string): return EndStmtBase.match('SELECT',Select_Construct_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
 
 class Do_Construct(Base): # R825
     """
@@ -3117,7 +3882,7 @@ class Do_Construct(Base): # R825
     """
     subclass_names = ['Block_Do_Construct', 'Nonblock_Do_Construct']
 
-class Block_Do_Construct(Base): # R826
+class Block_Do_Construct(BlockBase): # R826
     """
     <block-do-construct> = <do-stmt>
                                <do-block>
@@ -3125,6 +3890,48 @@ class Block_Do_Construct(Base): # R826
     """
     subclass_names = []
     use_names = ['Do_Stmt', 'Do_Block', 'End_Do']
+    def match(reader):
+        assert isinstance(reader,FortranReaderBase),`reader`
+        content = []
+        try:
+            obj = Do_Stmt(reader)
+        except NoMatchError:
+            obj = None
+        if obj is None: return
+        content.append(obj)
+        if isinstance(obj, Label_Do_Stmt):
+            label = str(obj.dolabel)
+            while 1:
+                try:
+                    obj = Execution_Part_Construct(reader)
+                except NoMatchError:
+                    obj = None
+                if obj is None: break
+                content.append(obj)
+                if isinstance(obj, Continue_Stmt) and obj.item.label==label:
+                    return content,
+            return
+            raise RuntimeError,'Expected continue stmt with specified label'
+        else:
+            obj = End_Do(reader)
+            content.append(obj)
+            raise NotImplementedError
+        return content,
+    match = staticmethod(match)
+
+    def tofortran(self, tab='', isfix=None):
+        if not isinstance(self.content[0], Label_Do_Stmt):
+            return BlockBase.tofortran(tab, isfix)
+        l = []
+        start = self.content[0]
+        end = self.content[-1]
+        extra_tab = '  '
+        l.append(start.tofortran(tab=tab,isfix=isfix))
+        for item in self.content[1:-1]:
+            l.append(item.tofortran(tab=tab+extra_tab,isfix=isfix))
+        if len(self.content)>1:
+            l.append(end.tofortran(tab=tab,isfix=isfix))
+        return '\n'.join(l)
 
 class Do_Stmt(Base): # R827
     """
@@ -3133,14 +3940,29 @@ class Do_Stmt(Base): # R827
     """
     subclass_names = ['Label_Do_Stmt', 'Nonlabel_Do_Stmt']
 
-class Label_Do_Stmt(Base): # R828
+class Label_Do_Stmt(StmtBase): # R828
     """
     <label-do-stmt> = [ <do-construct-name> : ] DO <label> [ <loop-control> ]
     """
     subclass_names = []
     use_names = ['Do_Construct_Name', 'Label', 'Loop_Control']
-
-class Nonlabel_Do_Stmt(Base): # R829
+    def match(string):
+        if string[:2].upper()!='DO': return
+        line = string[2:].lstrip()
+        m = pattern.label.match(line)
+        if m is None: return
+        label = m.group()
+        line = line[m.end():].lstrip()
+        if line: return Label(label), Loop_Control(line)
+        return Label(label), None
+    match = staticmethod(match)
+    def init(self,*args):
+        self.dolabel, self.loop_control = args
+    def tostr(self):
+        if self.loop_control is None: return 'DO %s' % (self.dolabel)
+        return 'DO %s %s' % (self.dolabel, self.loop_control)
+    
+class Nonlabel_Do_Stmt(StmtBase): # R829
     """
     <nonlabel-do-stmt> = [ <do-construct-name> : ] DO [ <loop-control> ]
     """
@@ -3154,7 +3976,31 @@ class Loop_Control(Base): # R830
     """
     subclass_names = []
     use_names = ['Do_Variable', 'Scalar_Int_Expr', 'Scalar_Logical_Expr']
-
+    def match(string):
+        if string.startswith(','):
+            line, repmap = string_replace_map(string[1:].lstrip())
+        else:
+            line, repmap = string_replace_map(string)
+        if line[:5].upper()=='WHILE' and line[5:].lstrip().startswith('('):
+            l = line[5:].lstrip()
+            i = l.find(')')
+            if i!=-1 and i==len(l)-1:
+                return Scalar_Logical_Expr(repmap(l[1:i].strip())),
+        if line.count('=')!=1: return
+        var,rhs = line.split('=')
+        rhs = [s.strip() for s in rhs.lstrip().split(',')]
+        if not 2<=len(rhs)<=3: return
+        return Variable(repmap(var.rstrip())),map(Scalar_Int_Expr, map(repmap,rhs))
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+    def tostr(self):
+        if len(self.items)==1: return ', WHILE (%s)' % (self.items[0])
+        return ', %s = %s' % (self.items[0], ', '.join(map(str,self.items[1])))
+    def torepr(self):
+        if len(self.items)==1: return '%s(%r)' % (self.__class__.__name__, self.items[0])
+        return '%s(%r, %r)' % (self.__class__.__name__, self.items[0], self.items[1])
+    
 class Do_Variable(Base): # R831
     """
     <do-variable> = <scalar-int-variable>
@@ -3174,12 +4020,14 @@ class End_Do(Base): # R833
     """
     subclass_names = ['End_Do_Stmt', 'Continue_Stmt']
 
-class End_Do_Stmt(Base): # R834
+class End_Do_Stmt(EndStmtBase): # R834
     """
     <end-do-stmt> = END DO [ <do-construct-name> ]
     """
     subclass_names = []
     use_names = ['Do_Construct_Name']
+    def match(string): return EndStmtBase.match('DO',Do_Construct_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
 
 class Nonblock_Do_Construct(Base): # R835
     """
@@ -3188,7 +4036,7 @@ class Nonblock_Do_Construct(Base): # R835
     """
     subclass_names = ['Action_Term_Do_Construct', 'Outer_Shared_Do_Construct']
 
-class Action_Term_Do_Construct(Base): # R836
+class Action_Term_Do_Construct(BlockBase): # R836
     """
     <action-term-do-construct> = <label-do-stmt>
                                      <do-body>
@@ -3196,24 +4044,35 @@ class Action_Term_Do_Construct(Base): # R836
     """
     subclass_names = []
     use_names = ['Label_Do_Stmt', 'Do_Body', 'Do_Term_Action_Stmt']
+    def match(reader):
+        content = []
+        for cls in [Label_Do_Stmt, Do_Body, Do_Term_Action_Stmt]:
+            obj = cls(reader)
+            if obj is None: # todo: restore reader
+                return
+            content.append(obj)
+        return content,
+    match = staticmethod(match)
 
-class Do_Body(Base): # R837
+class Do_Body(BlockBase): # R837
     """
     <do-body> = [ <execution-part-construct> ]...
     """
     subclass_names = []
     use_names = ['Execution_Part_Construct']
+    def match(string): return BlockBase.match(None, [Execution_Part_Construct], None, string)
+    match = staticmethod(match)
 
-class Do_Term_Action_Stmt(Base): # R838
+class Do_Term_Action_Stmt(StmtBase): # R838
     """
     <do-term-action-stmt> = <action-stmt>
     C824: <do-term-action-stmt> shall not be <continue-stmt>, <goto-stmt>, <return-stmt>, <stop-stmt>,
                           <exit-stmt>, <cycle-stmt>, <end-function-stmt>, <end-subroutine-stmt>,
                           <end-program-stmt>, <arithmetic-if-stmt>
     """
-    subclass_names = ['Action_Stmt']
+    subclass_names = ['Action_Stmt_C824']
 
-class Outer_Shared_Do_Construct(Base): # R839
+class Outer_Shared_Do_Construct(BlockBase): # R839
     """
     <outer-shared-do-construct> = <label-do-stmt>
                                       <do-body>
@@ -3221,6 +4080,15 @@ class Outer_Shared_Do_Construct(Base): # R839
     """
     subclass_names = []
     use_names = ['Label_Do_Stmt', 'Do_Body', 'Shared_Term_Do_Construct']
+    def match(reader):
+        content = []
+        for cls in [Label_Do_Stmt, Do_Body, Shared_Term_Do_Construct]:
+            obj = cls(reader)
+            if obj is None: # todo: restore reader
+                return
+            content.append(obj)
+        return content,
+    match = staticmethod(match)
 
 class Shared_Term_Do_Construct(Base): # R840
     """
@@ -3229,7 +4097,7 @@ class Shared_Term_Do_Construct(Base): # R840
     """
     subclass_names = ['Outer_Shared_Do_Construct', 'Inner_Shared_Do_Construct']
 
-class Inner_Shared_Do_Construct(Base): # R841
+class Inner_Shared_Do_Construct(BlockBase): # R841
     """
     <inner-shared-do-construct> = <label-do-stmt>
                                       <do-body>
@@ -3238,60 +4106,104 @@ class Inner_Shared_Do_Construct(Base): # R841
     subclass_names = []
     use_names = ['Label_Do_Stmt', 'Do_Body', 'Do_Term_Shared_Stmt']
 
-class Do_Term_Shared_Stmt(Base): # R842
+    def match(reader):
+        content = []
+        for cls in [Label_Do_Stmt, Do_Body, Do_Term_Shared_Stmt]:
+            obj = cls(reader)
+            if obj is None: # todo: restore reader
+                return
+            content.append(obj)
+        return content,
+    match = staticmethod(match)
+
+class Do_Term_Shared_Stmt(StmtBase): # R842
     """
     <do-term-shared-stmt> = <action-stmt>
     C826: see C824 above.
     """
     subclass_names = ['Action_Stmt']
 
-class Cycle_Stmt(Base): # R843
+class Cycle_Stmt(StmtBase, WORDClsBase): # R843
     """
     <cycle-stmt> = CYCLE [ <do-construct-name> ]
     """
     subclass_names = []
     use_names = ['Do_Construct_Name']
+    def match(string): return WORDClsBase.match('CYCLE', Do_Construct_Name, string)
+    match = staticmethod(match)
 
-class Exit_Stmt(Base): # R844
+class Exit_Stmt(StmtBase, WORDClsBase): # R844
     """
     <exit-stmt> = EXIT [ <do-construct-name> ]
     """
     subclass_names = []
     use_names = ['Do_Construct_Name']
+    def match(string): return WORDClsBase.match('EXIT', Do_Construct_Name, string)
+    match = staticmethod(match)
 
-class Goto_Stmt(Base): # R845
+class Goto_Stmt(StmtBase): # R845
     """
     <goto-stmt> = GO TO <label>
     """
     subclass_names = []
     use_names = ['Label']
+    def match(string):
+        if string[:2].upper() != 'GO': return
+        line = string[2:].lstrip()
+        if line[:2].upper() != 'TO': return
+        return Label(line[2:].lstrip()),
+    match = staticmethod(match)
+    def init(self, value): self.value = value
+    def tostr(self): return 'GO TO %s' % (self.value)
+    def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.value)
 
-class Computed_Goto_Stmt(Base): # R846
+class Computed_Goto_Stmt(StmtBase): # R846
     """
     <computed-goto-stmt> = GO TO ( <label-list> ) [ , ] <scalar-int-expr>
     """
     subclass_names = []
     use_names = ['Label_List', 'Scalar_Int_Expr']
 
-class Arithmetic_If_Stmt(Base): # R847
+class Arithmetic_If_Stmt(StmtBase): # R847
     """
     <arithmetic-if-stmt> = IF ( <scalar-numeric-expr> ) <label> , <label> , <label>
     """
     subclass_names = []
     use_names = ['Scalar_Numeric_Expr', 'Label']
+    def match(string):
+        if string[:2].upper() != 'IF': return
+        line = string[2:].lstrip()
+        if not line.startswith('('): return
+        i = line.rfind(')')
+        if i==-1: return
+        labels = line[i+1:].lstrip().split(',')
+        if len(labels) != 3: return
+        labels = [Label(l.strip()) for l in labels]
+        return Scalar_Numeric_Expr(line[1:i].strip()), labels
+    match = staticmethod(match)
+    def init(self, *args):
+        self.expr, self.labels = args
+        return
+    def tostr(self): return 'IF (%s) %s' % (self.expr, ', '.join(map(str,self.labels)))
+    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.expr, ', '.join(map(repr,self.labels)))
 
-class Continue_Stmt(Base): # R848
+class Continue_Stmt(StmtBase, STRINGBase): # R848
     """
     <continue-stmt> = CONTINUE
     """
     subclass_names = []
-    
-class Stop_Stmt(Base): # R849
+    def match(string): return STRINGBase.match('CONTINUE', string)
+    match = staticmethod(match)
+
+
+class Stop_Stmt(StmtBase, WORDClsBase): # R849
     """
     <stop-stmt> = STOP [ <stop-code> ]
     """
     subclass_names = []
     use_names = ['Stop_Code']
+    def match(string): return WORDClsBase.match('STOP', Stop_Code, string)
+    match = staticmethod(match)
 
 class Stop_Code(StringBase): # R850
     """
@@ -3307,13 +4219,15 @@ class Stop_Code(StringBase): # R850
 ############################### SECTION  9 ####################################
 ###############################################################################
 
-class Io_Unit(Base): # R901
+class Io_Unit(StringBase): # R901
     """
     <io-unit> = <file-unit-number>
                 | *
                 | <internal-file-variable>
     """
     subclass_names = ['File_Unit_Number', 'Internal_File_Variable']
+    def match(string): return StringBase.match('*', string)
+    match = staticmethod(match)
 
 class File_Unit_Number(Base): # R902
     """
@@ -3328,7 +4242,7 @@ class Internal_File_Variable(Base): # R903
     """
     subclass_names = ['Char_Variable']
 
-class Open_Stmt(Base): # R904
+class Open_Stmt(StmtBase): # R904
     """
     <open-stmt> = OPEN ( <connect-spec-list> )
     """
@@ -3373,7 +4287,7 @@ class Iomsg_Variable(Base): # R907
     """
     subclass_names = ['Scalar_Default_Char_Variable']
 
-class Close_Stmt(Base): # R908
+class Close_Stmt(StmtBase): # R908
     """
     <close-stmt> = CLOSE ( <close-spec-list> )
     """
@@ -3392,7 +4306,7 @@ class Close_Spec(Base): # R909
     use_names = ['File_Unit_Number', 'Scalar_Default_Char_Expr', 'Label', 'Iomsg_Variable',
                  'Scalar_Int_Variable']
 
-class Read_Stmt(Base): # R910
+class Read_Stmt(StmtBase): # R910
     """
     <read-stmt> = READ ( <io-control-spec-list> ) [ <input-item-list> ]
                   | READ <format> [ , <input-item-list> ]
@@ -3400,21 +4314,95 @@ class Read_Stmt(Base): # R910
     subclass_names = []
     use_names = ['Io_Control_Spec_List', 'Input_Item_List', 'Format']
 
-class Write_Stmt(Base): # R911
+class Write_Stmt(StmtBase): # R911
     """
     <write-stmt> = WRITE ( <io-control-spec-list> ) [ <output-item-list> ]
     """
     subclass_names = []
     use_names = ['Io_Control_Spec_List', 'Output_Item_List']
-
-class Print_Stmt(Base): # R912
+    def match(string):
+        if string[:5].upper()!='WRITE': return
+        line = string[5:].lstrip()
+        if not line.startswith('('): return
+        line, repmap = string_replace_map(line)
+        i = line.find(')')
+        if i==-1: return
+        l = line[1:i].strip()
+        if not l: return
+        l = repmap(l)
+        if i==len(line)-1:
+            return Io_Control_Spec_List(l),None
+        return Io_Control_Spec_List(l), Output_Item_List(repmap(line[i+1:].lstrip()))
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        if self.items[1] is None: return 'WRITE(%s)' % (self.items[0])
+        return 'WRITE(%s) %s' % tuple(self.items)
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
+    
+class Print_Stmt(StmtBase): # R912
     """
     <print-stmt> = PRINT <format> [ , <output-item-list> ]
     """
     subclass_names = []
     use_names = ['Format', 'Output_Item_List']
+    def match(string):
+        if string[:5].upper()!='PRINT': return
+        line = string[5:]
+        if not line: return
+        c = line[0].upper()
+        if 'A'<=c<='Z' or c=='_' or '0'<=c<='9': return
+        line, repmap = string_replace_map(line.lstrip())
+        i = line.find(',')
+        if i==-1: return Format(repmap(line)), None
+        l = repmap(line[i+1:].lstrip())
+        if not l: return
+        return Format(repmap(line[:i].rstrip())), Output_Item_List(l)
+    match = staticmethod(match)
+    def init(self, *args):
+        self.items = args
+        return
+    def tostr(self):
+        if self.items[1] is None: return 'PRINT %s' % (self.items[0])
+        return 'PRINT %s, %s' % tuple(self.items)
+    def torepr(self): return '%s(%s)' % (self.__class__.__name__, ', '.join(map(repr,self.items)))
+    
+class Io_Control_Spec_List(SequenceBase): # R913-list
+    """
+    <io-control-spec-list> is a list taking into account C910, C917, C918
+    """
+    subclass_names = []
+    use_names = ['Io_Control_Spec']
+    def match(string):
+        line, repmap = string_replace_map(string)
+        splitted = line.split(',')
+        if not splitted: return
+        lst = []
+        for i in range(len(splitted)):
+            p = splitted[i].strip()
+            if i==0:
+                if '=' not in p: p = 'UNIT=%s' % (repmap(p))
+                else: p = repmap(p)
+            elif i==1:
+                if '=' not in p:
+                    p = repmap(p)
+                    try:
+                        f = Format(p)
+                        # todo: make sure that f is char-expr, if not, raise NoMatchError
+                        p = 'FMT=%s' % (Format(p))
+                    except NoMatchError:
+                        p = 'NML=%s' % (Namelist_Group_Name(p))
+                else:
+                    p = repmap(p)
+            else:
+                p = repmap(p)
+            lst.append(Io_Control_Spec(p))
+        return ',', tuple(lst)
+    match = staticmethod(match)
 
-class Io_Control_Spec(Base): # R913
+class Io_Control_Spec(KeywordValueBase): # R913
     """
     <io-control-spec> = [ UNIT = ] <io-unit>
                         | [ FMT = ] <format>
@@ -3441,14 +4429,35 @@ class Io_Control_Spec(Base): # R913
     use_names = ['Io_Unit', 'Format', 'Namelist_Group_Name', 'Scalar_Default_Char_Expr',
                  'Scalar_Char_Initialization_Expr', 'Label', 'Scalar_Int_Variable',
                  'Iomsg_Variable', 'Scalar_Int_Expr']
+    def match(string):
+        for (k,v) in [\
+            (['ADVANCE', 'BLANK', 'DECIMAL', 'DELIM', 'PAD', 'ROUND', 'SIGN'], Scalar_Default_Char_Expr),
+            ('ASYNCHRONOUS', Scalar_Char_Initialization_Expr),
+            (['END','EOR','ERR'], Label),
+            (['ID','IOSTAT','SIZE'], Scalar_Int_Variable),
+            ('IOMSG', Iomsg_Variable),
+            (['POS', 'REC'], Scalar_Int_Expr),
+            ('UNIT', Io_Unit),
+            ('FMT', Format),
+            ('NML', Namelist_Group_Name)
+            ]:
+            try:
+                obj = KeywordValueBase.match(k, v, string, upper_lhs = True)
+            except NoMatchError:
+                obj = None
+            if obj is not None: return obj
+        return
+    match = staticmethod(match)
 
-class Format(Base): # R914
+class Format(StringBase): # R914
     """
     <format> = <default-char-expr>
                | <label>
                | *
     """
-    subclass_names = ['Default_Char_Expr', 'Label']
+    subclass_names = ['Label', 'Default_Char_Expr']
+    def match(string): return StringBase.match('*', string)
+    match = staticmethod(match)
 
 class Input_Item(Base): # R915
     """
@@ -3493,14 +4502,16 @@ class Dtv_Type_Spec(Base): # R920
     subclass_names = []
     use_names = ['Derived_Type_Spec']
 
-class Wait_Stmt(Base): # R921
+class Wait_Stmt(StmtBase, CALLBase): # R921
     """
     <wait-stmt> = WAIT ( <wait-spec-list> )
     """
     subclass_names = []
     use_names = ['Wait_Spec_List']
+    def match(string): return CALLBase.match('WAIT', Wait_Spec_List, string, require_rhs=True)
+    match = staticmethod(match)
 
-class Wait_Spec(Base): # R922
+class Wait_Spec(KeywordValueBase): # R922
     """
     <wait-spec> = [ UNIT = ] <file-unit-number>
                   | END = <label>
@@ -3512,8 +4523,24 @@ class Wait_Spec(Base): # R922
     """
     subclass_names = []
     use_names = ['File_Unit_Number', 'Label', 'Scalar_Int_Expr', 'Iomsg_Variable', 'Scalar_Int_Variable']
+    def match(string):
+        for (k,v) in [\
+            (['END','EOR','ERR'], Label),
+            ('IOSTAT', Scalar_Int_Variable),
+            ('IOMSG', Iomsg_Variable),
+            ('ID', Scalar_Int_Expr),
+            ('UNIT', File_Unit_Number),
+            ]:
+            try:
+                obj = KeywordValueBase.match(k, v, string, upper_lhs = True)
+            except NoMatchError:
+                obj = None
+            if obj is not None: return obj
+        return 'UNIT', File_Unit_Number(string)
 
-class Backspace_Stmt(Base): # R923
+    match = staticmethod(match)
+
+class Backspace_Stmt(StmtBase): # R923
     """
     <backspace-stmt> = BACKSPACE <file-unit-number>
                        | BACKSPACE ( <position-spec-list> )
@@ -3521,7 +4548,7 @@ class Backspace_Stmt(Base): # R923
     subclass_names = []
     use_names = ['File_Unit_Number', 'Position_Spec_List']
 
-class Endfile_Stmt(Base): # R924
+class Endfile_Stmt(StmtBase): # R924
     """
     <endfile-stmt> = ENDFILE <file-unit-number>
                      | ENDFILE ( <position-spec-list> )
@@ -3529,7 +4556,7 @@ class Endfile_Stmt(Base): # R924
     subclass_names = []
     use_names = ['File_Unit_Number', 'Position_Spec_List']
 
-class Rewind_Stmt(Base): # R925
+class Rewind_Stmt(StmtBase): # R925
     """
     <rewind-stmt> = REWIND <file-unit-number>
                     | REWIND ( <position-spec-list> )
@@ -3547,7 +4574,7 @@ class Position_Spec(Base): # R926
     subclass_names = []
     use_names = ['File_Unit_Number', 'Iomsg_Variable', 'Scalar_Int_Variable', 'Label']
 
-class Flush_Stmt(Base): # R927
+class Flush_Stmt(StmtBase): # R927
     """
     <flush-stmt> = FLUSH <file-unit-number>
                     | FLUSH ( <position-spec-list> )
@@ -3565,7 +4592,7 @@ class Flush_Spec(Base): # R928
     subclass_names = []
     use_names = ['File_Unit_Number', 'Iomsg_Variable', 'Scalar_Int_Variable', 'Label']
 
-class Inquire_Stmt(Base): # R929
+class Inquire_Stmt(StmtBase): # R929
     """
     <inquire-stmt> = INQUIRE ( <inquire-spec-list> )
                      | INQUIRE ( IOLENGTH = <scalar-int-variable> ) <output-item-list>
@@ -3622,7 +4649,7 @@ class Inquire_Spec(Base): # R930
 ############################### SECTION 10 ####################################
 ###############################################################################
 
-class Format_Stmt(Base): # R1001
+class Format_Stmt(StmtBase): # R1001
     """
     <format-stmt> = FORMAT <format-specification>
     """
@@ -3739,22 +4766,26 @@ class N(Base): # R1014
     """
     subclass_names = ['Int_Literal_Constant']
 
-class Sign_Edit_Desc(Base): # R1015
+class Sign_Edit_Desc(STRINGBase): # R1015
     """
     <sign-edit-desc> = SS
                        | SP
                        | S
     """
     subclass_names = []
+    def match(string): return STRINGBase.match(['SS','SP','S'], string)
+    match = staticmethod(match)
     
-class Blank_Interp_Edit_Desc(Base): # R1016
+class Blank_Interp_Edit_Desc(STRINGBase): # R1016
     """
     <blank-interp-edit-desc> = BN
                                | BZ
     """
     subclass_names = []
-    
-class Round_Edit_Desc(Base): # R1017
+    def match(string): return STRINGBase.match(['BN','BZ',], string)
+    match = staticmethod(match)
+
+class Round_Edit_Desc(STRINGBase): # R1017
     """
     <round-edit-desc> = RU
                         | RD
@@ -3764,14 +4795,18 @@ class Round_Edit_Desc(Base): # R1017
                         | RP
     """
     subclass_names = []
-    
-class Decimal_Edit_Desc(Base): # R1018
+    def match(string): return STRINGBase.match(['RU','RD','RZ','RN','RC','RP'], string)
+    match = staticmethod(match)
+
+class Decimal_Edit_Desc(STRINGBase): # R1018
     """
     <decimal-edit-desc> = DC
                           | DP
     """
     subclass_names = []
-    
+    def match(string): return STRINGBase.match(['DC','DP'], string)
+    match = staticmethod(match)
+
 class Char_String_Edit_Desc(Base): # R1019
     """
     <char-string-edit-desc> = <char-literal-constant>
@@ -3794,20 +4829,22 @@ class Main_Program(Base): # R1101
     use_names = ['Program_Stmt', 'Specification_Part', 'Execution_Part', 'Internal_Subprogram_Part',
                  'End_Program_Stmt']
 
-class Program_Stmt(Base): # R1102
+class Program_Stmt(StmtBase): # R1102
     """
     <program-stmt> = PROGRAM <program-name>
     """
     subclass_names = []
     use_names = ['Program_Name']
 
-class End_Program_Stmt(Base): # R1103
+class End_Program_Stmt(EndStmtBase): # R1103
     """
     <end-program-stmt> = END [ PROGRAM [ <program-name> ] ]
     """
     subclass_names = []
     use_names = ['Program_Name']
-    
+    def match(string): return EndStmtBase.match('PROGRAM',Program_Name, string)
+    match = staticmethod(match)
+
 class Module(Base): # R1104
     """
     <module> = <module-stmt>
@@ -3818,19 +4855,21 @@ class Module(Base): # R1104
     subclass_names = []
     use_names = ['Module_Stmt', 'Specification_Part', 'Module_Subprogram_Part', 'End_Module_Stmt']
 
-class Module_Stmt(Base): # R1105
+class Module_Stmt(StmtBase): # R1105
     """
     <module-stmt> = MODULE <module-name>
     """
     subclass_names = []
     use_names = ['Module_Name']
 
-class End_Module_Stmt(Base): # R1106
+class End_Module_Stmt(EndStmtBase): # R1106
     """
     <end-module-stmt> = END [ MODULE [ <module-name> ] ]
     """
     subclass_names = []
     use_names = ['Module_Name']
+    def match(string): return EndStmtBase.match('MODULE',Module_Name, string, require_stmt_type=True)
+    match = staticmethod(match)
 
 class Module_Subprogram_Part(Base): # R1107
     """
@@ -3848,7 +4887,7 @@ class Module_Subprogram(Base): # R1108
     """
     subclass_names = ['Function_Subprogram', 'Subroutine_Subprogram']
 
-class Use_Stmt(Base): # R1109
+class Use_Stmt(StmtBase): # R1109
     """
     <use-stmt> = USE [ [ , <module-nature> ] :: ] <module-name> [ , <rename-list> ]
                  | USE [ [ , <module-nature> ] :: ] <module-name> , ONLY: [ <only-list> ]
@@ -3856,13 +4895,15 @@ class Use_Stmt(Base): # R1109
     subclass_names = []
     use_names = ['Module_Nature', 'Module_Name', 'Rename_List', 'Only_List']
 
-class Module_Nature(Base): # R1110
+class Module_Nature(STRINGBase): # R1110
     """
     <module-nature> = INTRINSIC
                       | NON_INTRINSIC
     """
     subclass_names = []
-    
+    def match(string): return STRINGBase.match(['INTRINSIC','NON_INTRINSIC'], string)
+    match = staticmethod(match)
+
 class Rename(Base): # R1111
     """
     <rename> = <local-name> => <use-name>
@@ -3908,19 +4949,21 @@ class Block_Data(Base): # R1116
     subclass_names = []
     use_names = ['Block_Data_Stmt', 'Specification_Part', 'End_Block_Data_Stmt']
 
-class Block_Data_Stmt(Base): # R1117
+class Block_Data_Stmt(StmtBase): # R1117
     """
     <block-data-stmt> = BLOCK DATA [ <block-data-name> ]
     """
     subclass_names = []
     use_names = ['Block_Data_Name']
 
-class End_Block_Data_Stmt(Base): # R1118
+class End_Block_Data_Stmt(EndStmtBase): # R1118
     """
     <end-block-data-stmt> = END [ BLOCK DATA [ <block-data-name> ] ]
     """
     subclass_names = []
     use_names = ['Block_Data_Name']
+    def match(string): return EndStmtBase.match('BLOCK DATA',Block_Data_Name, string)
+    match = staticmethod(match)
 
 ###############################################################################
 ############################### SECTION 12 ####################################
@@ -3943,7 +4986,7 @@ class Interface_Specification(Base): # R1202
     """
     subclass_names = ['Interface_Body', 'Procedure_Stmt']
 
-class Interface_Stmt(Base): # R1203
+class Interface_Stmt(StmtBase): # R1203
     """
     <interface-stmt> = INTERFACE [ <generic-spec> ]
                        | ABSTRACT INTERFACE
@@ -3951,12 +4994,14 @@ class Interface_Stmt(Base): # R1203
     subclass_names = []
     use_names = ['Generic_Spec']
 
-class End_Interface_Stmt(Base): # R1204
+class End_Interface_Stmt(EndStmtBase): # R1204
     """
     <end-interface-stmt> = END INTERFACE [ <generic-spec> ]
     """
     subclass_names = []
     use_names = ['Generic_Spec']
+    def match(string): return EndStmtBase.match('INTERFACE',Generic_Spec, string, require_stmt_type=True)
+    match = staticmethod(match)
 
 class Interface_Body(Base): # R1205
     """
@@ -3970,7 +5015,7 @@ class Interface_Body(Base): # R1205
     subclass_names = []
     use_names = ['Function_Stmt', 'Specification_Part', 'Subroutine_Stmt', 'End_Function_Stmt', 'End_Subroutine_Stmt']
 
-class Procedure_Stmt(Base): # R1206
+class Procedure_Stmt(StmtBase): # R1206
     """
     <procedure-stmt> = [ MODULE ] PROCEDURE <procedure-name-list>
     """
@@ -3996,7 +5041,7 @@ class Dtio_Generic_Spec(Base): # R1208
     """
     subclass_names = []
 
-class Import_Stmt(Base): # R1209
+class Import_Stmt(StmtBase): # R1209
     """
     <import-stmt> = IMPORT [ :: ] <import-name-list>
     """
@@ -4016,14 +5061,25 @@ class Import_Stmt(Base): # R1209
     def tostr(self): return 'IMPORT :: %s' % (self.names)
     def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.names)
 
-class External_Stmt(Base): # R1210
+class External_Stmt(StmtBase): # R1210
     """
     <external-stmt> = EXTERNAL [ :: ] <external-name-list>
     """
     subclass_names = []
     use_names = ['External_Name_List']
+    def match(string):
+        if string[:8].upper() != 'EXTERNAL': return
+        line = string[8:].lstrip()
+        if line.startswith('::'): line = line[2:].lstrip()
+        return External_Name_List(line),
+    match = staticmethod(match)
+    def init(self, names):
+        self.names = names
+        return
+    def tostr(self): return 'EXTERNAL :: %s' % (self.names)
+    def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.names)
 
-class Procedure_Declaration_Stmt(Base): # R1211
+class Procedure_Declaration_Stmt(StmtBase): # R1211
     """
     <procedure-declaration-stmt> = PROCEDURE ( [ <proc-interface> ] ) [ [ , <proc-attr-spec> ]... :: ] <proc-decl-list>
     """
@@ -4061,7 +5117,7 @@ class Interface_Name(Base): # R1215
     """
     subclass_names = ['Name']
 
-class Intrinsic_Stmt(Base): # R1216
+class Intrinsic_Stmt(StmtBase): # R1216
     """
     <intrinsic-stmt> = INTRINSIC [ :: ] <intrinsic-procedure-name-list>
     """
@@ -4078,12 +5134,30 @@ class Function_Reference(CallBase): # R1217
         return CallBase.match(Procedure_Designator, Actual_Arg_Spec_List, string)
     match = staticmethod(match)
 
-class Call_Stmt(Base): # R1218
+class Call_Stmt(StmtBase): # R1218
     """
     <call-stmt> = CALL <procedure-designator> [ ( [ <actual-arg-spec-list> ] ) ]
     """
     subclass_names = []
     use_names = ['Procedure_Designator', 'Actual_Arg_Spec_List']
+    def match(string):
+        if string[:4].upper()!='CALL': return
+        line, repmap = string_replace_map(string[4:].lstrip())
+        if line.endswith(')'):
+            i = line.rfind('(')
+            if i==-1: return
+            args = repmap(line[i+1:-1].strip())
+            if args:
+                return Procedure_Designator(repmap(line[:i].rstrip())),Actual_Arg_Spec_List(args)
+            return Procedure_Designator(repmap(line[:i].rstrip())),None
+        return Procedure_Designator(string[4:].lstrip()),None
+    match = staticmethod(match)
+    def init(self, *args):
+        self.designator, self.args = args
+    def tostr(self):
+        if self.args is None: return 'CALL %s' % (self.designator)
+        return 'CALL %s(%s)' % (self.designator, self.args)
+    def torepr(self): return '%s(%r, %r)' % (self.__class__.__name__, self.designator, self.args)
 
 class Procedure_Designator(BinaryOpBase): # R1219
     """
@@ -4104,7 +5178,7 @@ class Actual_Arg_Spec(KeywordValueBase): # R1220
     """
     subclass_names = ['Actual_Arg']
     use_names = ['Keyword']
-    def match(string): return KeywordValueBase.match(Actual_Arg, string)
+    def match(string): return KeywordValueBase.match(Keyword, Actual_Arg, string)
     match = staticmethod(match)
 
 class Actual_Arg(Base): # R1221
@@ -4150,7 +5224,7 @@ class Function_Subprogram(BlockBase): # R1223
         return BlockBase.match(Function_Stmt, [Specification_Part, Execution_Part, Internal_Subprogram_Part], End_Function_Stmt, reader)
     match = staticmethod(match)
 
-class Function_Stmt(Base): # R1224
+class Function_Stmt(StmtBase): # R1224
     """
     <function-stmt> = [ <prefix> ] FUNCTION <function-name> ( [ <dummy-arg-name-list> ] ) [ <suffix> ]
     """
@@ -4178,7 +5252,7 @@ class Prefix(SequenceBase): # R1227
     def match(string): return SequenceBase.match(Prefix._separator, Prefix_Spec, string)
     match = staticmethod(match)
 
-class Prefix_Spec(StringBase): # R1228
+class Prefix_Spec(STRINGBase): # R1228
     """
     <prefix-spec> = <declaration-type-spec>
                     | RECURSIVE
@@ -4187,13 +5261,7 @@ class Prefix_Spec(StringBase): # R1228
     """
     subclass_names = ['Declaration_Type_Spec']
     def match(string):
-        if len(string)==9:
-            upper = string.upper()
-            if upper in ['RECURSIVE', 'ELEMENTAL']: return upper,
-        elif len(string)==4:
-            upper = string.upper()
-            if upper=='PURE': return upper,
-        return None
+        return STRINGBase.match(['RECURSIVE', 'PURE', 'ELEMENTAL'], string)
     match = staticmethod(match)
 
 class Suffix(Base): # R1229
@@ -4210,8 +5278,7 @@ class End_Function_Stmt(EndStmtBase): # R1230
     """
     subclass_names = []
     use_names = ['Function_Name']
-    def match(string):
-        return EndStmtBase.match('FUNCTION',Function_Name, string)
+    def match(string): return EndStmtBase.match('FUNCTION',Function_Name, string)
     match = staticmethod(match)
 
 class Subroutine_Subprogram(BlockBase): # R1231
@@ -4229,7 +5296,7 @@ class Subroutine_Subprogram(BlockBase): # R1231
         return BlockBase.match(Subroutine_Stmt, [Specification_Part, Execution_Part, Internal_Subprogram_Part], End_Subroutine_Stmt, reader)
     match = staticmethod(match)
 
-class Subroutine_Stmt(Base): # R1232
+class Subroutine_Stmt(StmtBase): # R1232
     """
     <subroutine-stmt> = [ <prefix> ] SUBROUTINE <subroutine-name> [ ( [ <dummy-arg-list> ] ) [ <proc-language-binding-spec> ] ]
     """
@@ -4238,6 +5305,7 @@ class Subroutine_Stmt(Base): # R1232
     def match(string):
         line, repmap = string_replace_map(string)
         m = pattern.subroutine.search(line)
+        if m is None: return
         prefix = line[:m.start()].rstrip() or None
         if prefix is not None:
             prefix = Prefix(repmap(prefix))
@@ -4282,9 +5350,7 @@ class Dummy_Arg(StringBase): # R1233
                   | *
     """
     subclass_names = ['Dummy_Arg_Name']
-    def match(string):
-        if string=='*': return '*',
-        return
+    def match(string): return StringBase.match('*', string)
     match = staticmethod(match)
 
 class End_Subroutine_Stmt(EndStmtBase): # R1234
@@ -4296,27 +5362,42 @@ class End_Subroutine_Stmt(EndStmtBase): # R1234
     def match(string): return EndStmtBase.match('SUBROUTINE', Subroutine_Name, string)
     match = staticmethod(match)
 
-class Entry_Stmt(Base): # R1235
+class Entry_Stmt(StmtBase): # R1235
     """
     <entry-stmt> = ENTRY <entry-name> [ ( [ <dummy-arg-list> ] ) [ <suffix> ] ]
     """
     subclass_names = []
     use_names = ['Entry_Name', 'Dummy_Arg_List', 'Suffix']
 
-class Return_Stmt(Base): # R1236
+class Return_Stmt(StmtBase): # R1236
     """
     <return-stmt> = RETURN [ <scalar-int-expr> ]
     """
     subclass_names = []
     use_names = ['Scalar_Int_Expr']
+    def match(string):
+        start = string[:6].upper()
+        if start!='RETURN': return
+        if len(string)==6: return None,
+        return Scalar_Int_Expr(string[6:].lstrip()),
+    match = staticmethod(match)
+    def init(self, value):
+        self.value = value
+        return
+    def tostr(self): 
+        if self.value is None: return 'RETURN'
+        return 'RETURN %s' % (self.value)
+    def torepr(self): return '%s(%r)' % (self.__class__.__name__, self.value)
 
-class Contains_Stmt(Base): # R1237
+class Contains_Stmt(StmtBase, STRINGBase): # R1237
     """
     <contains-stmt> = CONTAINS
     """
     subclass_names = []
+    def match(string): return STRINGBase.match('CONTAINS',string)
+    match = staticmethod(match)
 
-class Stmt_Function_Stmt(Base): # R1238
+class Stmt_Function_Stmt(StmtBase): # R1238
     """
     <stmt-function-stmt> = <function-name> ( [ <dummy-arg-name-list> ] ) = Scalar_Expr
     """

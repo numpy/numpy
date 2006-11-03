@@ -47,18 +47,19 @@ class Pattern:
                            '=': '[=]'
                            }
 
-    def __init__(self, label, pattern, optional=0, flags=0):
+    def __init__(self, label, pattern, optional=0, flags=0, value=None):
         self.label = label
         self.pattern = pattern
         self.optional = optional
         self._flags = flags
+        self.value = value
         return
 
     def flags(self, *flags):
         f = self._flags
         for f1 in flags:
             f = f | f1
-        return Pattern(self.label, self.pattern, optional=self.optional, flags=f)
+        return Pattern(self.label, self.pattern, optional=self.optional, flags=f, value=self.value)
 
     def get_compiled(self):
         try:
@@ -83,6 +84,7 @@ class Pattern:
         compiled = self.get_compiled()
         t = compiled.split(string)
         if len(t) < 3: return
+        if '' in t[1:-1]: return
         rhs = t[-1].strip()
         pattern_match = t[-2].strip()
         assert abs(self).match(pattern_match),`self,string,t,pattern_match`
@@ -106,7 +108,7 @@ class Pattern:
         return lhs, pattern_match, rhs
 
     def __abs__(self):
-        return Pattern(self.label, r'\A' + self.pattern+ r'\Z',flags=self._flags)
+        return Pattern(self.label, r'\A' + self.pattern+ r'\Z',flags=self._flags, value=self.value)
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.label, self.pattern)
@@ -178,16 +180,17 @@ class Pattern:
         else:
             label = '<%s>' % (name)
         pattern = '(?P%s%s)' % (label.replace('-','_'), self.pattern)
-        return Pattern(label, pattern, flags=self._flags)
+        return Pattern(label, pattern, flags=self._flags, value= self.value)
 
     def rename(self, label):
         if label[0]+label[-1]!='<>':
             label = '<%s>' % (label)
-        return Pattern(label, self.pattern, optional=self.optional, flags=self._flags)
+        return Pattern(label, self.pattern, optional=self.optional, flags=self._flags, value=self.value)
 
     def __call__(self, string):
         m = self.match(string)
         if m is None: return
+        if self.value is not None: return self.value
         return m.group()
 
 # Predefined patterns
@@ -259,7 +262,7 @@ data_ref = part_ref + ~~~(r'[%]' + part_ref)
 primary = constant | name | data_ref | (r'[(]' + name + r'[)]')
 
 power_op = Pattern('<power-op>','[*]{2}')
-mult_op = Pattern('<mult-op>','[*/]')
+mult_op = Pattern('<mult-op>',r'[/*]')
 add_op = Pattern('<add-op>',r'[+-]')
 concat_op = Pattern('<concat-op>',r'[/]{2}')
 rel_op = Pattern('<rel-op>','[.]EQ[.]|[.]NE[.]|[.]LT[.]|[.]LE[.]|[.]GT[.]|[.]GE[.]|[=]{2}|/[=]|[<][=]|[<]|[>][=]|[>]',flags=re.I)
@@ -311,9 +314,16 @@ abs_hex_constant = abs(hex_constant)
 
 intrinsic_type_name = Pattern('<intrinsic-type-name>',r'(INTEGER|REAL|COMPLEX|LOGICAL|CHARACTER|DOUBLE\s*COMPLEX|DOUBLE\s*PRECISION|BYTE)',flags=re.I)
 abs_intrinsic_type_name = abs(intrinsic_type_name)
+double_complex_name = Pattern('<double-complex-name>','DOUBLE\s*COMPLEX', flags=re.I, value='DOUBLE COMPLEX')
+double_precision_name = Pattern('<double-precision-name>','DOUBLE\s*PRECISION', flags=re.I, value='DOUBLE PRECISION')
+abs_double_complex_name = abs(double_complex_name)
+abs_double_precision_name = abs(double_precision_name)
 
 access_spec = Pattern('<access-spec>',r'PUBLIC|PRIVATE',flags=re.I)
 abs_access_spec = abs(access_spec)
+
+implicit_none = Pattern('<implicit-none>',r'IMPLICIT\s*NONE',flags=re.I, value='IMPLICIT NONE')
+abs_implicit_none = abs(implicit_none)
 
 attr_spec = Pattern('<attr-spec>',r'ALLOCATABLE|ASYNCHRONOUS|EXTERNAL|INTENT|INTRINSIC|OPTIONAL|PARAMETER|POINTER|PROTECTED|SAVE|TARGET|VALUE|VOLATILE',flags=re.I)
 abs_attr_spec = abs(attr_spec)

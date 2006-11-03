@@ -399,7 +399,7 @@ class Variable:
             self.rank = len(array_spec)
             if self.is_deferred_shape_array(): # a(:,:)
                 pass
-            elif self.is_explict_shape_array(self):
+            elif self.is_explicit_shape_array():
                 shape = []
                 for spec in array_spec:
                     if len(spec)==1:
