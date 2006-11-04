@@ -82,11 +82,12 @@ class format_parser:
         else:
             self._names = []
 
-        # if the names are not specified, they will be assigned as "f1, f2,..."
-        # if not enough names are specified, they will be assigned as "f[n+1],
-        # f[n+2],..." etc. where n is the number of specified names..."
-        self._names += ['f%d' % i for i in range(len(self._names)+1,
-                                                 self._nfields+1)]
+        # if the names are not specified, they will be assigned as
+        #  "f0, f1, f2,..."
+        # if not enough names are specified, they will be assigned as "f[n],
+        # f[n+1],..." etc. where n is the number of specified names..."
+        self._names += ['f%d' % i for i in range(len(self._names),
+                                                 self._nfields)]
         # check for redundant names
         _dup = find_duplicate(self._names)
         if _dup:
