@@ -852,14 +852,38 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 	int axis=-1;
 	int val;
 	PyArray_SORTKIND which=PyArray_QUICKSORT;
-	static char *kwlist[] = {"axis", "kind", NULL};
+        PyObject *order=NULL;
+        PyArray_Descr *saved=NULL;
+        PyArray_Descr *newd;
+        static char *kwlist[] = {"axis", "kind", "order", NULL};
+        
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O", kwlist, &axis,
+                                         PyArray_SortkindConverter, &which,
+                                         &order))
+                return NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&", kwlist, &axis,
-					 PyArray_SortkindConverter, &which))
-		return NULL;
+        if (order != NULL) {
+                PyObject *new_name;
+                saved = self->descr;
+                if (saved->names == NULL) {
+                        PyErr_SetString(PyExc_ValueError, "Cannot specify " \
+                                        "order with no fields.");
+                        return NULL;
+                }
+                new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
+                                               "OO", saved, order);
+                if (new_name == NULL) return NULL;
+                newd = PyArray_DescrNew(saved);
+                newd->names = new_name;
+                self->descr = newd;
+        }
 
-	val = PyArray_Sort(self, axis, which);
-	if (val < 0) return NULL;
+        val = PyArray_Sort(self, axis, which);
+        if (order != NULL) {
+                Py_XDECREF(self->descr);
+                self->descr = saved;
+        }
+        if (val < 0) return NULL;
 	Py_INCREF(Py_None);
 	return Py_None;
 }
