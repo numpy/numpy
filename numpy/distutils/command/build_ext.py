@@ -357,7 +357,7 @@ class build_ext (old_build_ext):
         # make g77-compiled static libs available to MSVC
         lib_added = False
         for lib in self.fcompiler.libraries:
-            if not lib.startswtih('msvcr'):
+            if not lib.startswith('msvcr'):
                 c_libraries.append(lib)
                 p = combine_paths(f_lib_dirs, 'lib' + lib + '.a')
                 if p:
