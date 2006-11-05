@@ -85,11 +85,11 @@ class test_regression(NumpyTestCase):
     def check_noncontiguous_fill(self,level=rlevel):
         """Ticket #58."""
         a = N.zeros((5,3))
-	b = a[:,:2,]
+        b = a[:,:2,]
         def rs():
             b.shape = (10,)
         self.failUnlessRaises(AttributeError,rs)
-        
+
     def check_bool(self,level=rlevel):
         """Ticket #60"""
         x = N.bool_(1)
@@ -128,7 +128,7 @@ class test_regression(NumpyTestCase):
     def check_kron_matrix(self,level=rlevel):
         """Ticket #71"""
         x = N.matrix('[1 0; 1 0]')
-        assert_equal(type(N.kron(x,x)),type(x))        
+        assert_equal(type(N.kron(x,x)),type(x))
 
     def check_scalar_compare(self,level=rlevel):
         """Ticket #72"""
@@ -334,14 +334,14 @@ class test_regression(NumpyTestCase):
     def check_unique_zero_sized(self,level=rlevel):
         """Ticket #205"""
         assert_array_equal([], N.unique(N.array([])))
-        
+
     def check_chararray_rstrip(self,level=rlevel):
         """Ticket #222"""
         x = N.chararray((1,),5)
         x[0] = 'a   '
         x = x.rstrip()
         assert_equal(x[0], 'a')
-        
+
     def check_object_array_shape(self,level=rlevel):
         """Ticket #239"""
         assert_equal(N.array([[1,2],3,4],dtype=object).shape, (3,))
@@ -350,14 +350,14 @@ class test_regression(NumpyTestCase):
         assert_equal(N.array([],dtype=object).shape, (0,))
         assert_equal(N.array([[],[],[]],dtype=object).shape, (3,0))
         assert_equal(N.array([[3,4],[5,6],None],dtype=object).shape, (3,))
-        
+
     def check_mem_around(self,level=rlevel):
         """Ticket #243"""
         x = N.zeros((1,))
         y = [0]
         decimal = 6
         N.around(abs(x-y),decimal) <= 10.0**(-decimal)
-        
+
     def check_character_array_strip(self,level=rlevel):
         """Ticket #246"""
         x = N.char.array(("x","x ","x  "))
@@ -367,12 +367,12 @@ class test_regression(NumpyTestCase):
         """Lexsort memory error"""
         v = N.array([1,2,3,4,5,6,7,8,9,10])
         assert_equal(N.lexsort(v),0)
-        
+
     def check_pickle_dtype(self,level=rlevel):
         """Ticket #251"""
         import pickle
         pickle.dumps(N.float)
-        
+
     def check_masked_array_multiply(self,level=rlevel):
         """Ticket #254"""
         a = N.ma.zeros((4,1))
@@ -391,16 +391,16 @@ class test_regression(NumpyTestCase):
     def check_object_array_from_list(self, level=rlevel):
         """Ticket #270"""
         a = N.array([1,'A',None])
-        
+
     def check_masked_array_repeat(self, level=rlevel):
         """Ticket #271"""
         N.ma.array([1],mask=False).repeat(10)
-        
+
     def check_multiple_assign(self, level=rlevel):
         """Ticket #273"""
         a = N.zeros((3,1),int)
         a[[1,2]] = 1
-        
+
     def check_empty_array_type(self, level=rlevel):
         assert_equal(N.array([]).dtype, N.zeros(0).dtype)
 
@@ -424,7 +424,7 @@ class test_regression(NumpyTestCase):
                  'ptp', 'cumprod', 'prod', 'std', 'var', 'mean',
                  'round', 'min', 'max', 'argsort', 'sort']
         funcs2 = ['compress', 'take', 'repeat']
-        
+
         for func in funcs1:
             arr = N.random.rand(8,7)
             arr2 = arr.copy()
@@ -453,17 +453,17 @@ class test_regression(NumpyTestCase):
                 res1 = getattr(arr1, func)(arr2)
             res2 = getattr(N, func)(arr1, arr2)
             assert abs(res1-res2).max() < 1e-8, func
-        
+
     def check_mem_lexsort_strings(self, level=rlevel):
         """Ticket #298"""
         lst = ['abc','cde','fgh']
         N.lexsort((lst,))
-        
+
     def check_fancy_index(self, level=rlevel):
         """Ticket #302"""
         x = N.array([1,2])[N.array([0])]
         assert_equal(x.shape,(1,))
-        
+
     def check_recarray_copy(self, level=rlevel):
         """Ticket #312"""
         dt = [('x',N.int16),('y',N.float64)]
@@ -471,66 +471,66 @@ class test_regression(NumpyTestCase):
         rb = N.rec.array(ra, dtype=dt)
         rb['x'] = 2.
         assert ra['x'] != rb['x']
-        
+
     def check_rec_fromarray(self, level=rlevel):
         """Ticket #322"""
         x1 = N.array([[1,2],[3,4],[5,6]])
         x2 = N.array(['a','dd','xyz'])
         x3 = N.array([1.1,2,3])
         N.rec.fromarrays([x1,x2,x3], formats="(2,)i4,a3,f8")
-        
+
     def check_object_array_assign(self, level=rlevel):
         x = N.empty((2,2),object)
         x.flat[2] = (1,2,3)
         assert_equal(x.flat[2],(1,2,3))
-        
+
     def check_ndmin_float64(self, level=rlevel):
         """Ticket #324"""
-        x = N.array([1,2,3],dtype=N.float64)        
-        assert_equal(N.array(x,dtype=N.float32,ndmin=2).ndim,2)        
+        x = N.array([1,2,3],dtype=N.float64)
+        assert_equal(N.array(x,dtype=N.float32,ndmin=2).ndim,2)
         assert_equal(N.array(x,dtype=N.float64,ndmin=2).ndim,2)
-        
+
     def check_mem_vectorise(self, level=rlevel):
         """Ticket #325"""
         vt = N.vectorize(lambda *args: args)
         vt(N.zeros((1,2,1)), N.zeros((2,1,1)), N.zeros((1,1,2)))
-        vt(N.zeros((1,2,1)), N.zeros((2,1,1)), N.zeros((1,1,2)), N.zeros((2,2)))                
-        
+        vt(N.zeros((1,2,1)), N.zeros((2,1,1)), N.zeros((1,1,2)), N.zeros((2,2)))
+
     def check_mem_axis_minimization(self, level=rlevel):
         """Ticket #327"""
         data = N.arange(5)
         data = N.add.outer(data,data)
-        
+
     def check_mem_float_imag(self, level=rlevel):
         """Ticket #330"""
         N.float64(1.0).imag
-        
+
     def check_dtype_tuple(self, level=rlevel):
         """Ticket #334"""
         assert N.dtype('i4') == N.dtype(('i4',()))
-        
+
     def check_dtype_posttuple(self, level=rlevel):
         """Ticket #335"""
         N.dtype([('col1', '()i4')])
-        
+
     def check_mgrid_single_element(self, level=rlevel):
         """Ticket #339"""
         assert_array_equal(N.mgrid[0:0:1j],[0])
         assert_array_equal(N.mgrid[0:0],[])
-        
+
     def check_numeric_carray_compare(self, level=rlevel):
         """Ticket #341"""
-        assert_equal(N.array([ 'X' ], 'c'),'X')        
-        
+        assert_equal(N.array([ 'X' ], 'c'),'X')
+
     def check_string_array_size(self, level=rlevel):
         """Ticket #342"""
         self.failUnlessRaises(ValueError,
                               N.array,[['X'],['X','X','X']],'|S1')
-                              
+
     def check_dtype_repr(self, level=rlevel):
         """Ticket #344"""
         dt1=N.dtype(('uint32', 2))
-        dt2=N.dtype(('uint32', (2,)))        
+        dt2=N.dtype(('uint32', (2,)))
         assert_equal(dt1.__repr__(), dt2.__repr__())
 
     def check_reshape_order(self, level=rlevel):
@@ -555,6 +555,16 @@ class test_regression(NumpyTestCase):
     def check_object_argmax(self, level=rlevel):
         a = N.array([1,2,3],dtype=object)
         assert a.argmax() == 2
-                
+
+    def check_recarray_fields(self, level=rlevel):
+        """Ticket #372"""
+        dt = N.dtype([('f0',"i4"),('f1',"i4")])
+        for a in [N.array([(1,2),(3,4)],"i4,i4"),
+                  N.rec.array([(1,2),(3,4)],"i4,i4"),
+                  N.rec.array([(1,2),(3,4)]),
+                  N.rec.fromarrays([(1,2),(3,4)],"i4,i4"),
+                  N.rec.fromarrays([(1,2),(3,4)])]:
+            assert_equal(a.dtype,dt)
+
 if __name__ == "__main__":
     NumpyTest().run()
