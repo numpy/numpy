@@ -7,10 +7,6 @@ from numpy.core.multiarray import _flagdict, flagsobj
 
 try:
     import ctypes
-    if ctypes.__version__ < '1.0.1':
-        import warnings
-        warnings.warn("All features of ctypes interface may not work with " \
-                      "ctypes < 1.0.1")
 except ImportError:
     ctypes = None
 
@@ -24,9 +20,13 @@ else:
     import numpy.core._internal as nic
     c_intp = nic._getintp_ctype()
     del nic
-    
+
     # Adapted from Albert Strasheim
     def load_library(libname, loader_path):
+        if ctypes.__version__ < '1.0.1':
+            import warnings
+            warnings.warn("All features of ctypes interface may not work " \
+                          "with ctypes < 1.0.1")
         if '.' not in libname:
             if sys.platform == 'win32':
                 libname = '%s.dll' % libname
@@ -51,7 +51,7 @@ def _num_fromflags(flaglist):
         num += _flagdict[val]
     return num
 
-_flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE', 
+_flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
               'OWNDATA', 'UPDATEIFCOPY']
 def _flags_fromnum(num):
     res = []
@@ -88,28 +88,28 @@ class _ndptr(object):
 _pointer_type_cache = {}
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     """Array-checking restype/argtypes.
-    
+
     An ndpointer instance is used to describe an ndarray in restypes
     and argtypes specifications.  This approach is more flexible than
     using, for example,
-    
+
     POINTER(c_double)
-    
+
     since several restrictions can be specified, which are verified
     upon calling the ctypes function.  These include data type
     (dtype), number of dimensions (ndim), shape and flags (e.g.
     'C_CONTIGUOUS' or 'F_CONTIGUOUS').  If a given array does not satisfy the
     specified restrictions, a TypeError is raised.
-    
+
     Example:
-        
+
         clib.somefunc.argtypes = [ndpointer(dtype=float64,
                                             ndim=1,
                                             flags='C_CONTIGUOUS')]
         clib.somefunc(array([1,2,3],dtype=float64))
 
     """
-    
+
     if dtype is not None:
         dtype = _dtype(dtype)
     num = None
