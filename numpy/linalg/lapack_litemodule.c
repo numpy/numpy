@@ -85,11 +85,11 @@ extern int FNAME(zgeqrf)(int *m, int *n, f2c_doublecomplex a[], int *lda,
                           int *lwork, int *info);
 
 extern int FNAME(dorgqr)(int *m, int *n, int *k, double a[], int *lda,
-                          double tau[], double work[], 
+                          double tau[], double work[],
                           int *lwork, int *info);
 
 extern int FNAME(zungqr)(int *m, int *n, int *k, f2c_doublecomplex a[],
-                          int *lda, f2c_doublecomplex tau[], 
+                          int *lda, f2c_doublecomplex tau[],
                           f2c_doublecomplex work[], int *lwork, int *info);
 
 static PyObject *LapackError;
@@ -370,7 +370,7 @@ lapack_lite_dgelsd(PyObject *self, PyObject *args)
             FNAME(dgelsd)(&m,&n,&nrhs,DDATA(a),&lda,DDATA(b),&ldb,
                           DDATA(s),&rcond,&rank,DDATA(work),&lwork,
                           IDATA(iwork),&info);
-    
+
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i,s:d,s:i,s:i,s:i}","dgelsd_",
                          lapack_lite_status__,"m",m,"n",n,"nrhs",nrhs,
                          "lda",lda,"ldb",ldb,"rcond",rcond,"rank",rank,
@@ -443,26 +443,25 @@ lapack_lite_dgesdd(PyObject *self, PyObject *args)
                too small.
                Change it to the maximum of the minimum and the optimal.
             */
-            long nwork, work0 = (long) *DDATA(work);
+            long work0 = (long) *DDATA(work);
             int mn = MIN(m,n);
             int mx = MAX(m,n);
+
             switch(jobz){
             case 'N':
-                    nwork = MAX(work0,3*mn + MAX(mx,6*mn)+500);
+                    work0 = MAX(work0,3*mn + MAX(mx,6*mn)+500);
                     break;
             case 'O':
-                    nwork = MAX(work0,3*mn*mn +                 \
+                    work0 = MAX(work0,3*mn*mn +                 \
                                 MAX(mx,5*mn*mn+4*mn+500));
                     break;
             case 'S':
             case 'A':
-                    nwork = MAX(work0,3*mn*mn +                 \
+                    work0 = MAX(work0,3*mn*mn +                 \
                                 MAX(mx,4*mn*(mn+1))+500);
                     break;
-            default:
-                    nwork = work0;
             }
-            *DDATA(work) = (double) nwork;
+            *DDATA(work) = (double) work0;
     }
     return Py_BuildValue("{s:i,s:c,s:i,s:i,s:i,s:i,s:i,s:i,s:i}","dgesdd_",
                          lapack_lite_status__,"jobz",jobz,"m",m,"n",n,
@@ -529,7 +528,7 @@ lapack_lite_dgeqrf(PyObject *self, PyObject *args)
         TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dgeqrf"));
 
         lapack_lite_status__ = \
-                FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau), 
+                FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
                               DDATA(work), &lwork, &info);
 
         return Py_BuildValue("{s:l,s:l,s:l,s:l,s:l,s:l}","dgeqrf_",
@@ -546,7 +545,7 @@ lapack_lite_dorgqr(PyObject *self, PyObject *args)
         PyObject *a, *tau, *work;
         int lda;
         int info;
-        
+
         TRY(PyArg_ParseTuple(args,"lllOlOOll",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
         TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dorgqr"));
         TRY(check_object(tau,PyArray_DOUBLE,"tau","PyArray_DOUBLE","dorgqr"));
@@ -755,7 +754,7 @@ lapack_lite_zgeqrf(PyObject *self, PyObject *args)
         PyObject *a, *tau, *work;
         int lda;
         int info;
-        
+
         TRY(PyArg_ParseTuple(args,"llOlOOll",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
 /* check objects and convert to right storage order */
@@ -765,7 +764,7 @@ lapack_lite_zgeqrf(PyObject *self, PyObject *args)
 
         lapack_lite_status__ = \
         FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work), &lwork, &info);
-        
+
         return Py_BuildValue("{s:l,s:l,s:l,s:l,s:l,s:l}","zgeqrf_",lapack_lite_status__,"m",m,"n",n,"lda",lda,"lwork",lwork,"info",info);
 }
 
@@ -786,9 +785,9 @@ lapack_lite_zungqr(PyObject *self, PyObject *args)
 
 
         lapack_lite_status__ = \
-        FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work), 
+        FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
                       &lwork, &info);
-        
+
         return Py_BuildValue("{s:l,s:l}","zungqr_",lapack_lite_status__,
                              "info",info);
 }
@@ -821,7 +820,7 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
 
 static char lapack_lite_module_documentation[] = "";
 
-DL_EXPORT(void) 
+DL_EXPORT(void)
 initlapack_lite(void)
 {
     PyObject *m,*d;
