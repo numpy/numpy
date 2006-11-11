@@ -859,7 +859,7 @@ class vectorize(object):
                           for x, c in zip(self.ufunc(*args), self.otypes)])
         return _res
 
-def cov(m,y=None, rowvar=1, bias=0):
+def cov(m, y=None, rowvar=1, bias=0):
     """Estimate the covariance matrix.
 
     If m is a vector, return the variance.  For matrices return the
@@ -876,7 +876,7 @@ def cov(m,y=None, rowvar=1, bias=0):
     is a variable and the observations are in the rows.
     """
 
-    X = array(m,ndmin=2)
+    X = array(m, ndmin=2, dtype=float)
     if X.shape[0] == 1:
         rowvar = 1
     if rowvar:
@@ -888,7 +888,7 @@ def cov(m,y=None, rowvar=1, bias=0):
 
 
     if y is not None:
-        y = array(y,copy=False,ndmin=2)
+        y = array(y, copy=False, ndmin=2, dtype=float)
         X = concatenate((X,y),axis)
 
     X -= X.mean(axis=1-axis)[tup]
@@ -903,9 +903,9 @@ def cov(m,y=None, rowvar=1, bias=0):
         fact = N-1.0
 
     if not rowvar:
-        return (dot(X.transpose(), X.conj()) / fact).squeeze()
+        return (dot(X.T, X.conj()) / fact).squeeze()
     else:
-        return (dot(X,X.transpose().conj())/fact).squeeze()
+        return (dot(X, X.T.conj()) / fact).squeeze()
 
 def corrcoef(x, y=None, rowvar=1, bias=0):
     """The correlation coefficients
