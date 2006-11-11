@@ -459,7 +459,7 @@ lapack_lite_dgesdd(PyObject *self, PyObject *args)
                     nwork = MAX(work0,3*mn*mn +                 \
                                 MAX(mx,4*mn*(mn+1))+500);
                     break;
-            defaul:
+            default:
                     nwork = work0;
             }
             *DDATA(work) = (double) nwork;
