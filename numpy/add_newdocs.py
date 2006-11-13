@@ -208,7 +208,7 @@ add_newdoc('numpy.core.multiarray','fromstring',
 
     """)
 
-add_newdoc('numpy.core.multiarray','fromstring',
+add_newdoc('numpy.core.multiarray','fromiter',
     """fromiter(iterable, dtype, count=-1)
 
     Return a new 1d array initialized from iterable. If count is
