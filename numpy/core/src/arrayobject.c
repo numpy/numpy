@@ -7088,30 +7088,56 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         return outtype;
 }
 
+/* adapted from Numarray */
+static int 
+setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, intp offset)
+{
+        Py_ssize_t i, slen = PySequence_Length(s);
+        int res = 0;
+
+        if (dim > a->nd) {
+                PyErr_Format(PyExc_ValueError,
+                             "setArrayFromSequence: sequence/array dimensions mismatch.");
+                return -1;
+        }
+
+        if (slen != a->dimensions[dim]) {
+                PyErr_Format(PyExc_ValueError,
+                             "setArrayFromSequence: sequence/array shape mismatch.");
+                return -1;
+        }
+
+        for(i=0; i<slen; i++) {
+                PyObject *o = PySequence_GetItem(s, i);
+                if ((a->nd - dim) > 1) {
+                        res = setArrayFromSequence(a, o, dim+1, offset);
+                }
+                else {
+                        res = a->descr->f->setitem(o, (a->data + offset), a);
+                }
+                Py_DECREF(o);
+                if (res < 0) return res;
+                offset += a->strides[dim];
+        }
+        return 0;
+}
+
+
 static int
 Assign_Array(PyArrayObject *self, PyObject *v)
 {
-        PyObject *e;
-        int l, r;
-
         if (!PySequence_Check(v)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "assignment from non-sequence");
                 return -1;
         }
+        if (self->nd == 0) {
+                PyErr_SetString(PyExc_ValueError,
+                                "assignment to 0-d array");
+                return -1;
+        }
 
-        l=PyObject_Length(v);
-        if(l < 0) return -1;
-
-        while(--l >= 0)
-                {
-                        e=PySequence_GetItem(v,l);
-                        if (e == NULL) return -1;
-                        r = PySequence_SetItem((PyObject*)self,l,e);
-                        Py_DECREF(e);
-                        if(r == -1) return -1;
-                }
-        return 0;
+        return setArrayFromSequence(self, v, 0, 0);
 }
 
 /* "Array Scalars don't call this code" */
