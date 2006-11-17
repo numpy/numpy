@@ -10614,6 +10614,7 @@ arraydescr_dealloc(PyArray_Descr *self)
                         "an attempt was made to deallocate %d (%c) ***\n", 
                         self->type_num, self->type);
                 Py_INCREF(self);
+                Py_INCREF(self);
                 return;
         }
         Py_XDECREF(self->typeobj);

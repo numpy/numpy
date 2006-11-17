@@ -979,11 +979,11 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     typenum = PyArray_ObjectType(op2, typenum);
     
     type = PyArray_DescrFromType(typenum);
-    
+    Py_INCREF(type);   
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
-    if (ap1==NULL) goto fail;
+    if (ap1==NULL) {Py_DECREF(type); goto fail;}
     op1 = PyArray_Flatten(ap1, 0);
-    if (op1==NULL) goto fail;
+    if (op1==NULL) {Py_DECREF(type); goto fail;}
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
     
