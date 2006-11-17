@@ -50,8 +50,24 @@ _arraydescr_fromobj(PyObject *obj)
         if (dtypedescr) {
                 ret = PyArray_DescrConverter(dtypedescr, &new);
                 Py_DECREF(dtypedescr);
-                if (ret == PY_SUCCEED) return new;
+                if (ret == PY_SUCCEED) {
+                        PyObject *length;
+                        length = PyObject_GetAttrString(obj, "_length_");
+                        PyErr_Clear();
+                        if (length) { /* derived type */
+                                PyObject *newtup;
+                                PyArray_Descr *derived;
+                                newtup = Py_BuildValue("NO", new, length);
+                                ret = PyArray_DescrConverter(newtup, &derived);
+                                Py_DECREF(newtup);
+                                if (ret == PY_SUCCEED) return derived;
+                                PyErr_Clear();
+                                return NULL;
+                        }
+                        return new;
+                }
                 PyErr_Clear();
+                return NULL;
         }
         /* Understand ctypes structures --
            bit-fields are not supported */
