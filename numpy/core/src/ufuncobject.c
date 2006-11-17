@@ -1961,7 +1961,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
 				for (i=0; i<self->nargs; i++) {
 					if (loop->cast[i]) {
 						if (steps[i] == 0) {
-							Py_XDECREF(*((PyObject **)castbuf[i]));
+							Py_CLEAR(*((PyObject **)castbuf[i]));
 						}
 						else {
 							int size = loop->bufsize;
@@ -1972,7 +1972,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
 								size = loop->leftover;
 
 							for (j=0; j<size; j++) {
-								Py_XDECREF(*objptr);
+								Py_CLEAR(*objptr);
 								objptr += 1;
 							}
 						}
