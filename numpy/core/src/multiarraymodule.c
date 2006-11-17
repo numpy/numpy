@@ -70,11 +70,12 @@ _arraydescr_fromobj(PyObject *obj)
                 return NULL;
         }
         /* Understand ctypes structures --
-           bit-fields are not supported */
+           bit-fields are not supported 
+           automatically aligns */
         dtypedescr = PyObject_GetAttrString(obj, "_fields_");
         PyErr_Clear();
         if (dtypedescr) {
-                ret = PyArray_DescrConverter(dtypedescr, &new);
+                ret = PyArray_DescrAlignConverter(dtypedescr, &new);
                 Py_DECREF(dtypedescr);
                 if (ret == PY_SUCCEED) return new;
                 PyErr_Clear();
@@ -4475,7 +4476,7 @@ _convert_from_tuple(PyObject *obj)
  shape parameter).
 */
 static PyArray_Descr *
-_convert_from_array_descr(PyObject *obj)
+_convert_from_array_descr(PyObject *obj, int align)
 {
 	int n, i, totalsize;
 	int ret;
@@ -4485,6 +4486,7 @@ _convert_from_array_descr(PyObject *obj)
 	PyArray_Descr *new;
 	PyArray_Descr *conv;
         int dtypeflags=0;
+        int maxalign = 0;
 
 
 	n = PyList_GET_SIZE(obj);
@@ -4545,6 +4547,13 @@ _convert_from_array_descr(PyObject *obj)
                 dtypeflags |= (conv->hasobject & NPY_FROM_FIELDS);
 		tup = PyTuple_New((title == NULL ? 2 : 3));
 		PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
+                if (align) {
+			int _align;
+			_align = conv->alignment;
+			if (_align > 1) totalsize =			\
+				((totalsize + _align - 1)/_align)*_align;
+			maxalign = MAX(maxalign, _align);
+                }
 		PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 
 		/* Title can be "meta-data".  Only insert it
@@ -4565,6 +4574,10 @@ _convert_from_array_descr(PyObject *obj)
         new->names = nameslist;
 	new->elsize = totalsize;
         new->hasobject=dtypeflags;
+	if (maxalign > 1) {
+		totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
+	}
+	if (align) new->alignment = maxalign;        
 	return new;
 
  fail:
@@ -4577,9 +4590,6 @@ _convert_from_array_descr(PyObject *obj)
 /* a list specifying a data-type can just be
    a list of formats.  The names for the fields
    will default to f0, f1, f2, and so forth.
-
-   or it can be an array_descr format string -- in which case
-   align must be 0.
 */
 
 static PyArray_Descr *
@@ -4927,8 +4937,12 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
         if PyDict_Check(obj) {
                 *at =  _convert_from_dict(obj, 1);
         }
-        else if PyString_Check(obj)
+        else if PyString_Check(obj) {
                 *at = _convert_from_commastring(obj, 1);
+        }
+        else if PyList_Check(obj) {
+                *at = _convert_from_array_descr(obj, 1);
+        }
         else {
                 return PyArray_DescrConverter(obj, at);
         }
@@ -4952,8 +4966,12 @@ PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
         if PyDict_Check(obj) {
                 *at =  _convert_from_dict(obj, 1);
         }
-        else if PyString_Check(obj)
+        else if PyString_Check(obj) {
                 *at = _convert_from_commastring(obj, 1);
+        }
+        else if PyList_Check(obj) {
+                *at = _convert_from_array_descr(obj, 1);
+        }
         else {
                 return PyArray_DescrConverter2(obj, at);
         }
@@ -5114,7 +5132,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	}
 	/* or a list */
 	else if (PyList_Check(obj)) {
-		*at = _convert_from_array_descr(obj);
+		*at = _convert_from_array_descr(obj,0);
 		if (*at == NULL) {
 			if (PyErr_Occurred()) return PY_FAIL;
 			goto fail;

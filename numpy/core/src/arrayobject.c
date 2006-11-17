@@ -10865,10 +10865,6 @@ static PyGetSetDef arraydescr_getsets[] = {
         {NULL, NULL, NULL, NULL},
 };
 
-static PyArray_Descr *_convert_from_dict(PyObject *obj, int align);
-static PyArray_Descr *_convert_from_commastring(PyObject *obj, int align);
-static PyArray_Descr *_convert_from_array_descr(PyObject *obj);
-
 static PyObject *
 arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
