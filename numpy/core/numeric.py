@@ -207,6 +207,10 @@ def _mode_from_name(mode):
     return mode
 
 def correlate(a,v,mode='valid'):
+    """Return the discrete, linear correlation of 1-D sequences
+    a and v; mode can be 0 (valid), 1 (same), or 2 (full)
+    to specify the size of the resulting sequence
+    """
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,v,mode)
 
