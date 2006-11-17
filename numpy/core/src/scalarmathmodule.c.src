@@ -156,6 +156,10 @@ static void
 }
 /**end repeat**/
 
+#ifndef SIZEOF_BYTE
+#define SIZEOF_BYTE 1
+#endif
+
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong#
    #big=(int,uint)*2,(longlong,ulonglong)*2#

@@ -37,7 +37,7 @@ typedef enum
   tObject=PyArray_OBJECT,        /* placeholder... does nothing */
   tMaxType=PyArray_NTYPES,
   tDefault = tFloat64,
-#if BITSOF_LONG == 64
+#if NPY_BITSOF_LONG == 64
   tLong = tInt64,
 #else
   tLong = tInt32,
