@@ -4027,7 +4027,7 @@ static PySequenceMethods array_as_sequence = {
 #if PY_VERSION_HEX >= 0x02050000
         (lenfunc)array_length,          /*sq_length*/
         (binaryfunc)NULL,               /* sq_concat is handled by nb_add*/
-        (ssizeargfunc)NULL,
+        (ssizeargfunc)NULL,             
         (ssizeargfunc)array_item_nice,
         (ssizessizeargfunc)array_slice,
         (ssizeobjargproc)array_ass_item,               /*sq_ass_item*/
@@ -10976,7 +10976,6 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 }
 
 /* returns 1 if this data-type has an object portion
-
    used when setting the state because hasobject is not stored.
  */
 static int
@@ -11397,6 +11396,26 @@ descr_length(PyObject *self0)
 }
 
 static PyObject *
+descr_repeat(PyObject *self, Py_ssize_t length)
+{
+        PyObject *tup;
+        PyArray_Descr *new;
+        if (length < 0)
+                return PyErr_Format(PyExc_ValueError,
+#if (PY_VERSION_HEX < 0x02050000)
+                                    "Array length must be >= 0, not %d",
+#else
+                                    "Array length must be >= 0, not %zd",
+#endif
+                                    length);
+        tup = Py_BuildValue("O" NPY_SSIZE_T_PYFMT, self, length);
+        if (tup == NULL) return NULL;
+        PyArray_DescrConverter(tup, &new);
+        Py_DECREF(tup);
+        return (PyObject *)new;
+}
+
+static PyObject *
 descr_subscript(PyArray_Descr *self, PyObject *op)
 {
 
@@ -11449,6 +11468,12 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         return NULL;
 }
 
+static PySequenceMethods descr_as_sequence = {
+        descr_length,
+        (binaryfunc)NULL,
+        descr_repeat,
+};
+
 static PyMappingMethods descr_as_mapping = {
         descr_length,                       /*mp_length*/
         (binaryfunc)descr_subscript,        /*mp_subscript*/
@@ -11472,7 +11497,7 @@ static PyTypeObject PyArrayDescr_Type = {
         0,                                      /* tp_compare */
         (reprfunc)arraydescr_repr,              /* tp_repr */
         0,                                      /* tp_as_number */
-        0,                                      /* tp_as_sequence */
+        &descr_as_sequence,                     /* tp_as_sequence */
         &descr_as_mapping,                      /* tp_as_mapping */
         0,                                      /* tp_hash */
         0,                                      /* tp_call */
