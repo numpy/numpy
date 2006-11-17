@@ -41,9 +41,28 @@ _arraydescr_fromobj(PyObject *obj)
 	if (dtypedescr) {
 		ret = PyArray_DescrConverter(dtypedescr, &new);
 		Py_DECREF(dtypedescr);
-		if (ret) return new;
+		if (ret == PY_SUCCEED) return new;
 		PyErr_Clear();
 	}
+        /* Understand basic ctypes */
+        dtypedescr = PyObject_GetAttrString(obj, "_type_");
+        PyErr_Clear();
+        if (dtypedescr) {
+                ret = PyArray_DescrConverter(dtypedescr, &new);
+                Py_DECREF(dtypedescr);
+                if (ret == PY_SUCCEED) return new;
+                PyErr_Clear();
+        }
+        /* Understand ctypes structures --
+           bit-fields are not supported */
+        dtypedescr = PyObject_GetAttrString(obj, "_fields_");
+        PyErr_Clear();
+        if (dtypedescr) {
+                ret = PyArray_DescrConverter(dtypedescr, &new);
+                Py_DECREF(dtypedescr);
+                if (ret == PY_SUCCEED) return new;
+                PyErr_Clear();
+        }
 	return NULL;
 }
 
