@@ -565,6 +565,24 @@ class test_regression(NumpyTestCase):
                   N.rec.fromarrays([(1,2),(3,4)],"i4,i4"),
                   N.rec.fromarrays([(1,2),(3,4)])]:
             assert_equal(a.dtype,dt)
+            
+    def check_refcount(self, level=rlevel):
+        """Ticket #378"""
+        import sys        
+        
+        a = N.arange(100*100).reshape([100,100])
+        b = a
+        
+        i = 1
+        
+        def p(x,y): return 123
+        v = N.vectorize(p)
+        
+        rc = sys.getrefcount(i)
+        for j in range(15):
+            d = v(a,b)
+        assert(sys.getrefcount(i) >= rc)
+        
 
 if __name__ == "__main__":
     NumpyTest().run()
