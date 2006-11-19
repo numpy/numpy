@@ -103,7 +103,7 @@ def _exit_interactive_session(_cache=[]):
 
 def setup(**attr):
 
-    if len(sys.argv)<=1:
+    if len(sys.argv)<=1 and not attr.get('script_args',[]):
         from interactive import interactive_sys_argv
         import atexit
         atexit.register(_exit_interactive_session)
