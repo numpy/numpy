@@ -1,12 +1,26 @@
 from numpy.testing import *
 from StringIO import StringIO
 import pickle
+import sys
 
 set_local_path()
 import numpy as N
 restore_path()
 
 rlevel = 1
+
+def assert_valid_refcount(op):
+    a = N.arange(100 * 100)
+    b = N.arange(100*100).reshape(100, 100)
+    c = b
+
+    i = 1
+
+    rc = sys.getrefcount(i)
+    for j in range(15):
+        d = op(b,c)
+
+    assert(sys.getrefcount(i) >= rc)
 
 class test_regression(NumpyTestCase):
     def check_invalid_round(self,level=rlevel):
@@ -565,24 +579,16 @@ class test_regression(NumpyTestCase):
                   N.rec.fromarrays([(1,2),(3,4)],"i4,i4"),
                   N.rec.fromarrays([(1,2),(3,4)])]:
             assert_equal(a.dtype,dt)
-            
-    def check_refcount(self, level=rlevel):
+
+    def check_refcount_vectorize(self, level=rlevel):
         """Ticket #378"""
-        import sys        
-        
-        a = N.arange(100*100).reshape([100,100])
-        b = a
-        
-        i = 1
-        
         def p(x,y): return 123
         v = N.vectorize(p)
-        
-        rc = sys.getrefcount(i)
-        for j in range(15):
-            d = v(a,b)
-        assert(sys.getrefcount(i) >= rc)
-        
+        assert_valid_refcount(v)
+
+    def check_refcount_vdot(self, level=rlevel):
+        """Changeset #3443"""
+        assert_valid_refcount(N.vdot)
 
 if __name__ == "__main__":
     NumpyTest().run()
