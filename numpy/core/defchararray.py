@@ -151,7 +151,7 @@ class chararray(ndarray):
         for k, val in enumerate(myiter):
             newval = []
             for chk in val[1:]:
-                if chk.dtype is object_ and chk.item() is None:
+                if not chk or (chk.dtype is object_ and chk.item() is None):
                     break
                 newval.append(chk)
             this_str = val[0].rstrip('\x00')
