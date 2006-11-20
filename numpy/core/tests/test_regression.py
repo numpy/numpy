@@ -590,5 +590,9 @@ class test_regression(NumpyTestCase):
         """Changeset #3443"""
         assert_valid_refcount(N.vdot)
 
+    def check_startswith(self, level=rlevel):
+        ca = N.char.array(['Hi','There'])
+        assert_equal(ca.startswith('H'),[True,False])
+
 if __name__ == "__main__":
     NumpyTest().run()
