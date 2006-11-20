@@ -911,10 +911,10 @@ typedef enum {
 #define NPY_COMPLEX512_FMT NPY_CLONGDOUBLE_FMT
 #endif
 
-        /* End of typedefs for numarray style bit-width names */
+/* End of typedefs for numarray style bit-width names */
 
-/* This is to typedef npy_intp to the appropriate pointer size for this platform.
- * Py_intptr_t, Py_uintptr_t are defined in pyport.h. */
+/* This is to typedef npy_intp to the appropriate pointer size for this
+ * platform.  Py_intptr_t, Py_uintptr_t are defined in pyport.h. */
 typedef Py_intptr_t npy_intp;
 typedef Py_uintptr_t npy_uintp;
 #define NPY_SIZEOF_INTP SIZEOF_PY_INTPTR_T
@@ -996,16 +996,22 @@ typedef Py_uintptr_t npy_uintp;
 #endif
 
 /* Dimensions and strides */
-#define PyDimMem_NEW(size) ((npy_intp *)PyArray_malloc(size*sizeof(npy_intp)))
+#define PyDimMem_NEW(size)                                         \
+    ((npy_intp *)PyArray_malloc(size*sizeof(npy_intp)))
+
 #define PyDimMem_FREE(ptr) PyArray_free(ptr)
-#define PyDimMem_RENEW(ptr,size) ((npy_intp *)PyArray_realloc(ptr,size*sizeof(npy_intp)))
+
+#define PyDimMem_RENEW(ptr,size)                                   \
+        ((npy_intp *)PyArray_realloc(ptr,size*sizeof(npy_intp)))
 
 
   /* These must deal with unaligned and swapped data if necessary */
 typedef PyObject * (PyArray_GetItemFunc) (void *, void *);
 typedef int (PyArray_SetItemFunc)(PyObject *, void *, void *);
 
-typedef void (PyArray_CopySwapNFunc)(void *, npy_intp, void *, npy_intp, npy_intp, int, void *);
+typedef void (PyArray_CopySwapNFunc)(void *, npy_intp, void *, npy_intp,
+                                     npy_intp, int, void *);
+
 typedef void (PyArray_CopySwapFunc)(void *, void *, int, void *);
 typedef npy_bool (PyArray_NonzeroFunc)(void *, void *);
 
@@ -1015,9 +1021,13 @@ typedef npy_bool (PyArray_NonzeroFunc)(void *, void *);
   */
 typedef int (PyArray_CompareFunc)(const void *, const void *, void *);
 typedef int (PyArray_ArgFunc)(void*, npy_intp, npy_intp*, void *);
-typedef void (PyArray_DotFunc)(void *, npy_intp, void *, npy_intp, void *, npy_intp,
-                               void *);
-typedef void (PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *, void *);
+
+typedef void (PyArray_DotFunc)(void *, npy_intp, void *, npy_intp, void *,
+                               npy_intp, void *);
+
+typedef void (PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,
+                                       void *);
+
 typedef int (PyArray_ScanFunc)(FILE *, void *, void *, void *);
 typedef int (PyArray_FromStrFunc)(char *, void *, char **, void *);
 
@@ -1131,13 +1141,17 @@ typedef struct {
 
 /* These are inherited for global data-type if any data-types in the field
    have them */
-#define NPY_FROM_FIELDS     (NPY_NEEDS_INIT | NPY_LIST_PICKLE | NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
+#define NPY_FROM_FIELDS    (NPY_NEEDS_INIT | NPY_LIST_PICKLE |             \
+                            NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
 
-#define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM | NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
+#define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM |       \
+                                NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
+                                NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#define PyDataType_FLAGCHK(dtype, flag) \
-        ((dtype->hasobject & (flag)) == (flag))
-#define PyDataType_REFCHK(dtype) \
+#define PyDataType_FLAGCHK(dtype, flag)                                   \
+        (((dtype)->hasobject & (flag)) == (flag))
+
+#define PyDataType_REFCHK(dtype)                                          \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
 /* Change dtype hasobject to 32-bit in 1.1 and change its name */
@@ -1310,8 +1324,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 
 
-#define PyArray_CHKFLAGS(m, FLAGS) \
+#define PyArray_CHKFLAGS(m, FLAGS)                              \
         ((((PyArrayObject *)(m))->flags & (FLAGS)) == (FLAGS))
+
 #define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_CONTIGUOUS)
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_WRITEABLE)
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ALIGNED)
@@ -1323,12 +1338,15 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS _save = PyEval_SaveThread();
 #define NPY_END_THREADS   if (_save) PyEval_RestoreThread(_save);
+
 #define NPY_BEGIN_THREADS_DESCR(dtype)                          \
         if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
                 NPY_BEGIN_THREADS
+
 #define NPY_END_THREADS_DESCR(dtype)                            \
         if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
                 NPY_END_THREADS
+
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
 #define NPY_ALLOW_C_API      __save__ = PyGILState_Ensure();
 #define NPY_DISABLE_C_API    PyGILState_Release(__save__);
@@ -1369,20 +1387,20 @@ typedef struct {
         memset((it)->coordinates, 0, ((it)->nd_m1+1)*sizeof(npy_intp)); \
 }
 
-#define _PyArray_ITER_NEXT1(it) {               \
-                (it)->dataptr += (it)->strides[0];      \
-                (it)->coordinates[0]++;                 \
+#define _PyArray_ITER_NEXT1(it) {                                       \
+                (it)->dataptr += (it)->strides[0];                      \
+                (it)->coordinates[0]++;                                 \
         }
 
 #define _PyArray_ITER_NEXT2(it) {                                       \
                 if ((it)->coordinates[1] < (it)->dims_m1[1]) {          \
                         (it)->coordinates[1]++;                         \
-                        (it)->dataptr += (it)->strides[1];                      \
+                        (it)->dataptr += (it)->strides[1];              \
                 }                                                       \
                 else {                                                  \
-                        (it)->coordinates[1] = 0;                               \
+                        (it)->coordinates[1] = 0;                       \
                         (it)->coordinates[0]++;                         \
-                        (it)->dataptr += (it)->strides[0] -                     \
+                        (it)->dataptr += (it)->strides[0] -             \
                                 (it)->backstrides[1];                   \
                 }                                                       \
         }
@@ -1408,69 +1426,71 @@ typedef struct {
                 }                                                       \
         }
 
-#define PyArray_ITER_NEXT(it) {                                     \
-        (it)->index++;                                            \
-        if ((it)->nd_m1 == 0) {                                   \
-                _PyArray_ITER_NEXT1(it);                          \
-        }                                                               \
+#define PyArray_ITER_NEXT(it) {                                               \
+        (it)->index++;                                                        \
+        if ((it)->nd_m1 == 0) {                                               \
+                _PyArray_ITER_NEXT1(it);                                      \
+        }                                                                     \
         else if ((it)->contiguous)  (it)->dataptr += (it)->ao->descr->elsize; \
-        else if ((it)->nd_m1 == 1) {                              \
-                _PyArray_ITER_NEXT2(it);                          \
-        }                                                               \
-        else {                                                          \
-                int __npy_i;                                            \
-                for (__npy_i = (it)->nd_m1; __npy_i >= 0; __npy_i--) {          \
-                        if ((it)->coordinates[__npy_i] <                        \
-                            (it)->dims_m1[__npy_i]) {                           \
-                                (it)->coordinates[__npy_i]++;                   \
-                                (it)->dataptr += (it)->strides[__npy_i];        \
-                                break;                                  \
-                        }                                               \
-                        else {                                          \
-                                (it)->coordinates[__npy_i] = 0;         \
-                                (it)->dataptr -= (it)->backstrides[__npy_i];    \
-                        }                                               \
-                }                                                       \
-        }                                                               \
+        else if ((it)->nd_m1 == 1) {                                          \
+                _PyArray_ITER_NEXT2(it);                                      \
+        }                                                                     \
+        else {                                                                \
+                int __npy_i;                                                  \
+                for (__npy_i = (it)->nd_m1; __npy_i >= 0; __npy_i--) {        \
+                        if ((it)->coordinates[__npy_i] <                      \
+                            (it)->dims_m1[__npy_i]) {                         \
+                                (it)->coordinates[__npy_i]++;                 \
+                                (it)->dataptr += (it)->strides[__npy_i];      \
+                                break;                                        \
+                        }                                                     \
+                        else {                                                \
+                                (it)->coordinates[__npy_i] = 0;               \
+                                (it)->dataptr -= (it)->backstrides[__npy_i];  \
+                        }                                                     \
+                }                                                             \
+        }                                                                     \
 }
 
-#define PyArray_ITER_GOTO(it, destination) {                            \
-                int __npy_i;                                            \
-                (it)->index = 0;                                                \
-                (it)->dataptr = (it)->ao->data;                         \
-                for (__npy_i = (it)->nd_m1; __npy_i>=0; __npy_i--) {                    \
-                        if (destination[__npy_i] < 0) {                     \
-                                destination[__npy_i] += (it)->dims_m1[__npy_i]+1; \
-                        }                                               \
-                        (it)->dataptr += destination[__npy_i] *         \
-                                (it)->strides[__npy_i];                 \
-                        (it)->coordinates[__npy_i] = destination[__npy_i];      \
-                        (it)->index += destination[__npy_i] *                   \
-                                ( __npy_i==(it)->nd_m1 ? 1 :                    \
-                                  (it)->dims_m1[__npy_i+1]+1) ;                 \
-                }                                                       \
+#define PyArray_ITER_GOTO(it, destination) {                                  \
+                int __npy_i;                                                  \
+                (it)->index = 0;                                              \
+                (it)->dataptr = (it)->ao->data;                               \
+                for (__npy_i = (it)->nd_m1; __npy_i>=0; __npy_i--) {          \
+                        if (destination[__npy_i] < 0) {                       \
+                                destination[__npy_i] +=                       \
+                                        (it)->dims_m1[__npy_i]+1;             \
+                        }                                                     \
+                        (it)->dataptr += destination[__npy_i] *               \
+                                (it)->strides[__npy_i];                       \
+                        (it)->coordinates[__npy_i] = destination[__npy_i];    \
+                        (it)->index += destination[__npy_i] *                 \
+                                ( __npy_i==(it)->nd_m1 ? 1 :                  \
+                                  (it)->dims_m1[__npy_i+1]+1) ;               \
+                }                                                             \
         }
 
-#define PyArray_ITER_GOTO1D(it, ind) {                                  \
-                int __npy_i;                                            \
-                npy_intp __npy_ind = (npy_intp) (ind);                          \
-                if (__npy_ind < 0) __npy_ind += (it)->size;                     \
-                (it)->index = __npy_ind;                                        \
-                if ((it)->nd_m1 == 0) {                                   \
-                        (it)->dataptr = (it)->ao->data + __npy_ind *           \
-                                (it)->strides[0];                         \
-                }                                                       \
-                else if ((it)->contiguous)                                \
-                        (it)->dataptr = (it)->ao->data + __npy_ind *            \
-                                (it)->ao->descr->elsize;                        \
-                else {                                                  \
-                        (it)->dataptr = (it)->ao->data;                 \
-                        for (__npy_i = 0; __npy_i<=(it)->nd_m1; __npy_i++) {            \
-                                (it)->dataptr += (__npy_ind / (it)->factors[__npy_i]) \
-                                        * (it)->strides[__npy_i];               \
-                                __npy_ind %= (it)->factors[__npy_i];            \
-                        }                                               \
-                }                                                       \
+#define PyArray_ITER_GOTO1D(it, ind) {                                        \
+                int __npy_i;                                                  \
+                npy_intp __npy_ind = (npy_intp) (ind);                        \
+                if (__npy_ind < 0) __npy_ind += (it)->size;                   \
+                (it)->index = __npy_ind;                                      \
+                if ((it)->nd_m1 == 0) {                                       \
+                        (it)->dataptr = (it)->ao->data + __npy_ind *          \
+                                (it)->strides[0];                             \
+                }                                                             \
+                else if ((it)->contiguous)                                    \
+                        (it)->dataptr = (it)->ao->data + __npy_ind *          \
+                                (it)->ao->descr->elsize;                      \
+                else {                                                        \
+                        (it)->dataptr = (it)->ao->data;                       \
+                        for (__npy_i = 0; __npy_i<=(it)->nd_m1; __npy_i++) {  \
+                                (it)->dataptr +=                              \
+                                        (__npy_ind / (it)->factors[__npy_i])  \
+                                        * (it)->strides[__npy_i];             \
+                                __npy_ind %= (it)->factors[__npy_i];          \
+                        }                                                     \
+                }                                                             \
 }
 
 #define PyArray_ITER_DATA(it) (((PyArrayIterObject *)(it))->dataptr)
@@ -1491,49 +1511,49 @@ typedef struct {
         PyArrayIterObject    *iters[NPY_MAXARGS];     /* iterators */
 } PyArrayMultiIterObject;
 
-#define PyArray_MultiIter_RESET(multi) {                          \
-                int __npy_mi;                                     \
-                PyArrayMultiIterObject *__npy_mul = (multi);      \
-                __npy_mul->index = 0;                             \
-                for (__npy_mi = 0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
-                        PyArray_ITER_RESET(__npy_mul->iters[__npy_mi]);   \
-                }                                                 \
+#define PyArray_MultiIter_RESET(multi) {                                      \
+                int __npy_mi;                                                 \
+                PyArrayMultiIterObject *__npy_mul = (multi);                  \
+                __npy_mul->index = 0;                                         \
+                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
+                        PyArray_ITER_RESET(__npy_mul->iters[__npy_mi]);       \
+                }                                                             \
         }
 
-#define PyArray_MultiIter_NEXT(multi) {                          \
-                int __npy_mi;                                     \
-                PyArrayMultiIterObject *__npy_mul = (multi);      \
-                __npy_mul->index += 1;                           \
-                for (__npy_mi=0; __npy_mi<__npy_mul->numiter; __npy_mi++) {      \
-                        PyArray_ITER_NEXT(__npy_mul->iters[__npy_mi]);   \
-                }                                                \
+#define PyArray_MultiIter_NEXT(multi) {                                       \
+                int __npy_mi;                                                 \
+                PyArrayMultiIterObject *__npy_mul = (multi);                  \
+                __npy_mul->index += 1;                                        \
+                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
+                        PyArray_ITER_NEXT(__npy_mul->iters[__npy_mi]);        \
+                }                                                             \
         }
 
-#define PyArray_MultiIter_GOTO(multi, dest) {                           \
-                int __npy_mi;                                           \
-                PyArrayMultiIterObject *__npy_mul = (multi);            \
-                for (__npy_mi=0; __npy_mi<__npy_mul->numiter; __npy_mi++) {             \
-                        PyArray_ITER_GOTO(__npy_mul->iters[__npy_mi], dest);    \
-                }                                                       \
-                __npy_mul->index = __npy_mul->iters[0]->index;                  \
+#define PyArray_MultiIter_GOTO(multi, dest) {                                 \
+                int __npy_mi;                                                 \
+                PyArrayMultiIterObject *__npy_mul = (multi);                  \
+                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
+                        PyArray_ITER_GOTO(__npy_mul->iters[__npy_mi], dest);  \
+                }                                                             \
+                __npy_mul->index = __npy_mul->iters[0]->index;                \
         }
 
-#define PyArray_MultiIter_GOTO1D(multi, ind) {                          \
-                int __npy_mi;                                           \
-                PyArrayMultiIterObject *__npy_mul = (multi);            \
-                for (__npy_mi=0; __npy_mi<__npy_mul->numiter; __npy_mi++) {             \
-                        PyArray_ITER_GOTO1D(__npy_mul->iters[__npy_mi], ind);   \
-                }                                                       \
-                __npy_mul->index = __npy_mul->iters[0]->index;                  \
+#define PyArray_MultiIter_GOTO1D(multi, ind) {                                \
+                int __npy_mi;                                                 \
+                PyArrayMultiIterObject *__npy_mul = (multi);                  \
+                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
+                        PyArray_ITER_GOTO1D(__npy_mul->iters[__npy_mi], ind); \
+                }                                                             \
+                __npy_mul->index = __npy_mul->iters[0]->index;                \
         }
 
-#define PyArray_MultiIter_DATA(multi, i)                        \
+#define PyArray_MultiIter_DATA(multi, i)                                      \
         (((PyArrayMultiIterObject *)(multi))->iters[i]->dataptr)
 
-#define PyArray_MultiIter_SIZE(multi)                   \
+#define PyArray_MultiIter_SIZE(multi)                                         \
         ((PyArrayMultiIterObject *)(multi))->size
 
-#define PyArray_MultiIter_NEXTi(multi, i)                               \
+#define PyArray_MultiIter_NEXTi(multi, i)                                     \
         PyArray_ITER_NEXT(((PyArrayMultiIterObject *)(multi))->iters[i])
 
 /* Store the information needed for fancy-indexing over an array */
@@ -1583,10 +1603,16 @@ typedef struct {
  */
 
 #define PyArray_NDIM(obj) (((PyArrayObject *)(obj))->nd)
-#define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || PyArray_CHKFLAGS(m, NPY_CONTIGUOUS) || \
+#define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 ||                      \
+                                 PyArray_CHKFLAGS(m, NPY_CONTIGUOUS) ||       \
                                  PyArray_CHKFLAGS(m, NPY_FORTRAN))
-#define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_FORTRAN) && (PyArray_NDIM(m) > 1))
-#define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_FORTRAN) ? NPY_FORTRAN : 0))
+
+#define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_FORTRAN) &&             \
+                             (PyArray_NDIM(m) > 1))
+
+#define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_FORTRAN) ?            \
+                              NPY_FORTRAN : 0))
+
 #define FORTRAN_IF PyArray_FORTRAN_IF
 #define PyArray_DATA(obj) ((void *)(((PyArrayObject *)(obj))->data))
 #define PyArray_BYTES(obj) (((PyArrayObject *)(obj))->data)
@@ -1599,53 +1625,56 @@ typedef struct {
 #define PyArray_FLAGS(obj) (((PyArrayObject *)(obj))->flags)
 #define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->descr->elsize)
 #define PyArray_TYPE(obj) (((PyArrayObject *)(obj))->descr->type_num)
-#define PyArray_GETITEM(obj,itemptr)                    \
-        ((PyArrayObject *)(obj))->descr->f->getitem((char *)(itemptr),    \
+
+#define PyArray_GETITEM(obj,itemptr)                                          \
+        ((PyArrayObject *)(obj))->descr->f->getitem((char *)(itemptr),        \
                                                  (PyArrayObject *)(obj));
-#define PyArray_SETITEM(obj,itemptr,v)                                  \
-        ((PyArrayObject *)(obj))->descr->f->setitem((PyObject *)(v),      \
-                                                    (char *)(itemptr),  \
+
+#define PyArray_SETITEM(obj,itemptr,v)                                        \
+        ((PyArrayObject *)(obj))->descr->f->setitem((PyObject *)(v),          \
+                                                    (char *)(itemptr),        \
                                                     (PyArrayObject *)(obj));
 
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
-#define PyTypeNum_ISUNSIGNED(type) (((type) == NPY_UBYTE) || \
-                                 ((type) == NPY_USHORT) || \
-                                 ((type) == NPY_UINT) ||  \
-                                 ((type) == NPY_ULONG) || \
+
+#define PyTypeNum_ISUNSIGNED(type) (((type) == NPY_UBYTE) ||   \
+                                 ((type) == NPY_USHORT) ||     \
+                                 ((type) == NPY_UINT) ||       \
+                                 ((type) == NPY_ULONG) ||      \
                                  ((type) == NPY_ULONGLONG))
 
-#define PyTypeNum_ISSIGNED(type) (((type) == NPY_BYTE) || \
-                               ((type) == NPY_SHORT) ||   \
-                               ((type) == NPY_INT) ||     \
-                               ((type) == NPY_LONG) ||    \
+#define PyTypeNum_ISSIGNED(type) (((type) == NPY_BYTE) ||      \
+                               ((type) == NPY_SHORT) ||        \
+                               ((type) == NPY_INT) ||          \
+                               ((type) == NPY_LONG) ||         \
                                ((type) == NPY_LONGLONG))
 
-#define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&        \
+#define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&     \
                                 ((type) <= NPY_ULONGLONG))
 
-#define PyTypeNum_ISFLOAT(type) (((type) >= NPY_FLOAT) &&  \
+#define PyTypeNum_ISFLOAT(type) (((type) >= NPY_FLOAT) &&      \
                               ((type) <= NPY_LONGDOUBLE))
 
 #define PyTypeNum_ISNUMBER(type) ((type) <= NPY_CLONGDOUBLE)
 
-#define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||       \
+#define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||    \
                                   ((type) == NPY_UNICODE))
 
-#define PyTypeNum_ISCOMPLEX(type) (((type) >= NPY_CFLOAT) &&      \
+#define PyTypeNum_ISCOMPLEX(type) (((type) >= NPY_CFLOAT) &&   \
                                 ((type) <= NPY_CLONGDOUBLE))
 
-#define PyTypeNum_ISPYTHON(type) (((type) == NPY_LONG) || \
-                                  ((type) == NPY_DOUBLE) ||       \
-                                  ((type) == NPY_CDOUBLE) ||      \
-                                  ((type) == NPY_BOOL) || \
+#define PyTypeNum_ISPYTHON(type) (((type) == NPY_LONG) ||      \
+                                  ((type) == NPY_DOUBLE) ||    \
+                                  ((type) == NPY_CDOUBLE) ||   \
+                                  ((type) == NPY_BOOL) ||      \
                                   ((type) == NPY_OBJECT ))
 
-#define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) && \
+#define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) &&  \
                                     ((type) <=NPY_VOID))
 
 #define PyTypeNum_ISUSERDEF(type) (((type) >= NPY_USERDEF) && \
-                                   ((type) < NPY_USERDEF+\
+                                   ((type) < NPY_USERDEF+     \
                                     NPY_NUMUSERTYPES))
 
 #define PyTypeNum_ISEXTENDED(type) (PyTypeNum_ISFLEXIBLE(type) ||  \
@@ -1705,6 +1734,7 @@ typedef struct {
 
 #define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&       \
                                     PyArray_ISNOTSWAPPED(m))
+
 #define PyArray_ISCARRAY(m) PyArray_FLAGSWAP(m, NPY_CARRAY)
 #define PyArray_ISCARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_CARRAY_RO)
 #define PyArray_ISFARRAY(m) PyArray_FLAGSWAP(m, NPY_FARRAY)
@@ -1751,83 +1781,106 @@ typedef struct {
 
 #define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
 
-#define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||            \
+#define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||                  \
                            PyObject_TypeCheck(op, &PyArray_Type))
+
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
-#define PyArray_HasArrayInterfaceType(op, type, context, out)              \
-        ((((out)=PyArray_FromStructInterface(op)) != Py_NotImplemented) || \
-         (((out)=PyArray_FromInterface(op)) != Py_NotImplemented) ||    \
-         (((out)=PyArray_FromArrayAttr(op, type, context)) !=           \
+
+#define PyArray_HasArrayInterfaceType(op, type, context, out)                 \
+        ((((out)=PyArray_FromStructInterface(op)) != Py_NotImplemented) ||    \
+         (((out)=PyArray_FromInterface(op)) != Py_NotImplemented) ||          \
+         (((out)=PyArray_FromArrayAttr(op, type, context)) !=                 \
           Py_NotImplemented))
-#define PyArray_HasArrayInterface(op, out)              \
+
+#define PyArray_HasArrayInterface(op, out)                                    \
         PyArray_HasArrayInterfaceType(op, NULL, NULL, out)
 
 #define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))
-#define PyArray_IsScalar(obj, cls)                              \
+
+#define PyArray_IsScalar(obj, cls)                                            \
         (PyObject_TypeCheck(obj, &Py##cls##ArrType_Type))
-#define PyArray_CheckScalar(m) (PyArray_IsScalar(m, Generic) || \
+
+#define PyArray_CheckScalar(m) (PyArray_IsScalar(m, Generic) ||               \
                                 PyArray_IsZeroDim(m))
-#define PyArray_IsPythonNumber(obj) \
-        (PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) || \
+
+#define PyArray_IsPythonNumber(obj)                                           \
+        (PyInt_Check(obj) || PyFloat_Check(obj) || PyComplex_Check(obj) ||    \
          PyLong_Check(obj) || PyBool_Check(obj))
-#define PyArray_IsPythonScalar(obj) \
-        (PyArray_IsPythonNumber(obj) || PyString_Check(obj) ||  \
+
+#define PyArray_IsPythonScalar(obj)                                           \
+        (PyArray_IsPythonNumber(obj) || PyString_Check(obj) ||                \
          PyUnicode_Check(obj))
-#define PyArray_IsAnyScalar(obj)                                        \
+
+#define PyArray_IsAnyScalar(obj)                                              \
         (PyArray_IsScalar(obj, Generic) || PyArray_IsPythonScalar(obj))
-#define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) || \
+
+#define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) ||           \
                                      PyArray_CheckScalar(obj))
 
-#define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), (m) : \
+#define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ?                   \
+                                  Py_INCREF(m), (m) :                         \
                                   (PyArrayObject *)(PyArray_Copy(m)))
 
-#define PyArray_SAMESHAPE(a1,a2) ((PyArray_NDIM(a1) == PyArray_NDIM(a2)) && \
-                                  PyArray_CompareLists(PyArray_DIMS(a1), \
-                                                       PyArray_DIMS(a2), \
+#define PyArray_SAMESHAPE(a1,a2) ((PyArray_NDIM(a1) == PyArray_NDIM(a2)) &&   \
+                                  PyArray_CompareLists(PyArray_DIMS(a1),      \
+                                                       PyArray_DIMS(a2),      \
                                                        PyArray_NDIM(a1)))
+
 #define PyArray_SIZE(m) PyArray_MultiplyList(PyArray_DIMS(m), PyArray_NDIM(m))
 #define PyArray_NBYTES(m) (PyArray_ITEMSIZE(m) * PyArray_SIZE(m))
 #define PyArray_FROM_O(m) PyArray_FromAny(m, NULL, 0, 0, 0, NULL)
-#define PyArray_FROM_OF(m,flags) PyArray_CheckFromAny(m, NULL, 0, 0, flags, NULL)
-#define PyArray_FROM_OT(m,type) PyArray_FromAny(m, PyArray_DescrFromType(type), \
-                                                      0, 0, 0, NULL);
-#define PyArray_FROM_OTF(m, type, flags)                                \
-        PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0,           \
-                        (((flags) & NPY_ENSURECOPY) ?                       \
+
+#define PyArray_FROM_OF(m,flags) PyArray_CheckFromAny(m, NULL, 0, 0, flags,   \
+                                                      NULL)
+
+#define PyArray_FROM_OT(m,type) PyArray_FromAny(m,                            \
+                                PyArray_DescrFromType(type), 0, 0, 0, NULL);
+
+#define PyArray_FROM_OTF(m, type, flags)                                      \
+        PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0,                 \
+                        (((flags) & NPY_ENSURECOPY) ?                         \
                          ((flags) | NPY_DEFAULT) : (flags)), NULL)
-#define PyArray_FROMANY(m, type, min, max, flags)                       \
-        PyArray_FromAny(m, PyArray_DescrFromType(type), min, max,       \
-                        (((flags) & NPY_ENSURECOPY) ?                       \
+
+#define PyArray_FROMANY(m, type, min, max, flags)                             \
+        PyArray_FromAny(m, PyArray_DescrFromType(type), min, max,             \
+                        (((flags) & NPY_ENSURECOPY) ?                         \
                          (flags) | NPY_DEFAULT : (flags)), NULL)
-#define PyArray_ZEROS(m, dims, type, fortran) \
+
+#define PyArray_ZEROS(m, dims, type, fortran)                                 \
         PyArray_Zeros(m, dims, PyArray_DescrFromType(type), fortran)
-#define PyArray_EMPTY(m, dims, type, fortran) \
+
+#define PyArray_EMPTY(m, dims, type, fortran)                                 \
         PyArray_Empty(m, dims, PyArray_DescrFromType(type), fortran)
 
-#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val, PyArray_NBYTES(obj))
+#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val,            \
+                                           PyArray_NBYTES(obj))
 
 #define PyArray_REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define NPY_REFCOUNT PyArray_REFCOUNT
 #define NPY_MAX_ELSIZE (2*SIZEOF_LONGDOUBLE)
 
-#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)   \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
+#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)             \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
                               max_depth, NPY_DEFAULT, NULL)
 
-#define PyArray_EquivArrTypes(a1, a2)                                   \
+#define PyArray_EquivArrTypes(a1, a2)                                         \
         PyArray_EquivTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
 
-#define PyArray_EquivByteorders(b1, b2) \
+#define PyArray_EquivByteorders(b1, b2)                                       \
         (((b1) == (b2)) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
 
-#define PyArray_SimpleNew(nd, dims, typenum) \
+#define PyArray_SimpleNew(nd, dims, typenum)                                  \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
-#define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
-        PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, data, 0, NPY_CARRAY, NULL)
-#define PyArray_SimpleNewFromDescr(nd, dims, descr) \
-        PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, NULL, NULL, 0, NULL)
 
-#define PyArray_ToScalar(data, arr) \
+#define PyArray_SimpleNewFromData(nd, dims, typenum, data)                    \
+        PyArray_New(&PyArray_Type, nd, dims, typenum, NULL,                   \
+                    data, 0, NPY_CARRAY, NULL)
+
+#define PyArray_SimpleNewFromDescr(nd, dims, descr)                           \
+        PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims,                  \
+                             NULL, NULL, 0, NULL)
+
+#define PyArray_ToScalar(data, arr)                                           \
         PyArray_Scalar(data, PyArray_DESCR(arr), (PyObject *)arr)
 
 
@@ -1836,66 +1889,67 @@ typedef struct {
    inline the constants inside a for loop making it a moot point
 */
 
-#define PyArray_GETPTR1(obj, i) (void *)(PyArray_BYTES(obj) +           \
+#define PyArray_GETPTR1(obj, i) (void *)(PyArray_BYTES(obj) +                 \
                                          (i)*PyArray_STRIDES(obj)[0])
 
-#define PyArray_GETPTR2(obj, i, j) (void *)(PyArray_BYTES(obj) +        \
-                                            (i)*PyArray_STRIDES(obj)[0] + \
+#define PyArray_GETPTR2(obj, i, j) (void *)(PyArray_BYTES(obj) +              \
+                                            (i)*PyArray_STRIDES(obj)[0] +     \
                                             (j)*PyArray_STRIDES(obj)[1])
 
-#define PyArray_GETPTR3(obj, i, j, k) (void *)(PyArray_BYTES(obj) +     \
-                                               (i)*PyArray_STRIDES(obj)[0] + \
-                                               (j)*PyArray_STRIDES(obj)[1] + \
-                                               (k)*PyArray_STRIDES(obj)[2]) \
+#define PyArray_GETPTR3(obj, i, j, k) (void *)(PyArray_BYTES(obj) +           \
+                                            (i)*PyArray_STRIDES(obj)[0] +     \
+                                            (j)*PyArray_STRIDES(obj)[1] +     \
+                                            (k)*PyArray_STRIDES(obj)[2])      \
 
-#define PyArray_GETPTR4(obj, i, j, k, l) (void *)(PyArray_BYTES(obj) +  \
-                                                  (i)*PyArray_STRIDES(obj)[0] + \
-                                                  (j)*PyArray_STRIDES(obj)[1] + \
-                                                  (k)*PyArray_STRIDES(obj)[2] + \
-                                                  (l)*PyArray_STRIDES(obj)[3])
+#define PyArray_GETPTR4(obj, i, j, k, l) (void *)(PyArray_BYTES(obj) +        \
+                                            (i)*PyArray_STRIDES(obj)[0] +     \
+                                            (j)*PyArray_STRIDES(obj)[1] +     \
+                                            (k)*PyArray_STRIDES(obj)[2] +     \
+                                            (l)*PyArray_STRIDES(obj)[3])
 
 #define PyArray_XDECREF_ERR(obj) \
-        if (obj && (PyArray_FLAGS(obj) & NPY_UPDATEIFCOPY)) {      \
-                PyArray_FLAGS(PyArray_BASE(obj)) |= NPY_WRITEABLE; \
-                PyArray_FLAGS(obj) &= ~NPY_UPDATEIFCOPY; \
-        }\
+        if (obj && (PyArray_FLAGS(obj) & NPY_UPDATEIFCOPY)) {                 \
+                PyArray_FLAGS(PyArray_BASE(obj)) |= NPY_WRITEABLE;            \
+                PyArray_FLAGS(obj) &= ~NPY_UPDATEIFCOPY;                      \
+        }                                                                     \
         Py_XDECREF(obj)
 
-#define PyArray_DESCR_REPLACE(descr) do {       \
-                PyArray_Descr *_new_;                   \
-                _new_ = PyArray_DescrNew(descr);        \
-                Py_XDECREF(descr);                      \
-                descr = _new_;                          \
+#define PyArray_DESCR_REPLACE(descr) do {                                     \
+                PyArray_Descr *_new_;                                         \
+                _new_ = PyArray_DescrNew(descr);                              \
+                Py_XDECREF(descr);                                            \
+                descr = _new_;                                                \
         } while(0)
 
 /* Copy should always return contiguous array */
 #define PyArray_Copy(obj) PyArray_NewCopy(obj, NPY_CORDER)
 
-#define PyArray_FromObject(op, type, min_depth, max_depth)              \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,     \
+#define PyArray_FromObject(op, type, min_depth, max_depth)                    \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
                               max_depth, NPY_BEHAVED | NPY_ENSUREARRAY, NULL)
 
-#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)    \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,     \
+#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)          \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
                               max_depth, NPY_DEFAULT | NPY_ENSUREARRAY, NULL)
 
-#define PyArray_CopyFromObject(op, type, min_depth, max_depth)          \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,     \
-                        max_depth, NPY_ENSURECOPY | NPY_DEFAULT | NPY_ENSUREARRAY, NULL)
+#define PyArray_CopyFromObject(op, type, min_depth, max_depth)                \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
+                        max_depth, NPY_ENSURECOPY | NPY_DEFAULT |             \
+                        NPY_ENSUREARRAY, NULL)
 
-#define PyArray_Cast(mp, type_num) \
+#define PyArray_Cast(mp, type_num)                                            \
         PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)
 
-#define PyArray_Take(ap, items, axis) \
+#define PyArray_Take(ap, items, axis)                                         \
         PyArray_TakeFrom(ap, items, axis, NULL, NPY_RAISE)
 
-#define PyArray_Put(ap, items, values) \
+#define PyArray_Put(ap, items, values)                                        \
         PyArray_PutTo(ap, items, values, NPY_RAISE)
 
 /* Compatibility with old Numeric stuff -- don't use in new code */
 
-#define PyArray_FromDimsAndData(nd, d, type, data) \
-        PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type), \
+#define PyArray_FromDimsAndData(nd, d, type, data)                            \
+        PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type),   \
                                         data)
 
 #include "old_defines.h"
