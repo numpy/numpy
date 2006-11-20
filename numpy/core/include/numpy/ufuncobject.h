@@ -57,7 +57,7 @@ typedef struct {
 #define UFUNC_ERR_DEFAULT2                               \
         (UFUNC_ERR_PRINT << UFUNC_SHIFT_DIVIDEBYZERO) +  \
         (UFUNC_ERR_PRINT << UFUNC_SHIFT_OVERFLOW) +      \
-        (UFUNC_ERR_PRINT << UFUNC_SHIFT_INVALID)        
+        (UFUNC_ERR_PRINT << UFUNC_SHIFT_INVALID)
 
 	/* Only internal -- not exported, yet*/
 typedef struct {
@@ -211,7 +211,7 @@ typedef struct _loop1d_info {
 #include "__ufunc_api.h"
 
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
-        
+
 #define UFUNC_CHECK_ERROR(arg)                                          \
 	if (((arg)->obj && PyErr_Occurred()) ||                         \
             ((arg)->errormask &&                                        \

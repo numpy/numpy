@@ -209,7 +209,7 @@ typedef enum {
         NPY_COMPLEX_SCALAR,
         NPY_OBJECT_SCALAR,
 } NPY_SCALARKIND;
-#define NPY_NSCALARKINDS NPY_OBJECT_SCALAR+1
+#define NPY_NSCALARKINDS (NPY_OBJECT_SCALAR+1)
 
 typedef enum {
         NPY_ANYORDER=-1,
@@ -285,7 +285,7 @@ typedef enum {
 #define NPY_SIZEOF_DOUBLE SIZEOF_DOUBLE
 #define NPY_SIZEOF_LONGDOUBLE SIZEOF_LONG_DOUBLE
 #define NPY_SIZEOF_LONGLONG SIZEOF_LONG_LONG
-#define NPY_BITSOF_BOOL sizeof(npy_bool)*CHAR_BIT
+#define NPY_BITSOF_BOOL (sizeof(npy_bool)*CHAR_BIT)
 #define NPY_BITSOF_CHAR CHAR_BIT
 #define NPY_BITSOF_SHORT (SIZEOF_SHORT*CHAR_BIT)
 #define NPY_BITSOF_INT (SIZEOF_INT*CHAR_BIT)
@@ -929,7 +929,7 @@ typedef Py_uintptr_t npy_uintp;
     typedef int Py_ssize_t;
     #define PY_SSIZE_T_MAX INT_MAX
     #define PY_SSIZE_T_MIN INT_MIN
-  #endif 
+  #endif
 #define NPY_SSIZE_T_PYFMT "i"
 #undef PyIndex_Check
 #define constchar const char
@@ -1116,27 +1116,27 @@ typedef struct {
 #define NPY_LIST_PICKLE     0x02  /* Convert to list for pickling */
 #define NPY_ITEM_IS_POINTER 0x04  /* The item is a POINTER  */
 
-#define NPY_NEEDS_INIT      0x08  /* memory needs to be initialized 
+#define NPY_NEEDS_INIT      0x08  /* memory needs to be initialized
                                      for this data-type */
 
-#define NPY_NEEDS_PYAPI     0x10  /* operations need Python C-API 
+#define NPY_NEEDS_PYAPI     0x10  /* operations need Python C-API
                                      so don't give-up thread. */
 
-#define NPY_USE_GETITEM     0x20  /* Use f.getitem when extracting elements 
+#define NPY_USE_GETITEM     0x20  /* Use f.getitem when extracting elements
                                      of this data-type */
 
 #define NPY_USE_SETITEM     0x40  /* Use f.setitem when setting creating
                                      0-d array from this data-type.
                                   */
 
-/* These are inherited for global data-type if any data-types in the field 
+/* These are inherited for global data-type if any data-types in the field
    have them */
 #define NPY_FROM_FIELDS     (NPY_NEEDS_INIT | NPY_LIST_PICKLE | NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
-                                     
+
 #define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM | NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
 #define PyDataType_FLAGCHK(dtype, flag) \
-        ((dtype->hasobject & flag) == flag)
+        ((dtype->hasobject & (flag)) == (flag))
 #define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
@@ -1151,7 +1151,7 @@ typedef struct {
         char type;              /* unique-character representing this type */
         char byteorder;         /* '>' (big), '<' (little), '|'
                                    (not-applicable), or '=' (native). */
-        char hasobject;         /* non-zero if it has object arrays 
+        char hasobject;         /* non-zero if it has object arrays
                                    in fields */
         int type_num;          /* number representing this type */
         int elsize;             /* element size for this type */
@@ -1276,21 +1276,21 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARR_HAS_DESCR  0x0800
 
 
-#define NPY_BEHAVED NPY_ALIGNED | NPY_WRITEABLE
-#define NPY_BEHAVED_NS NPY_ALIGNED | NPY_WRITEABLE | NPY_NOTSWAPPED
-#define NPY_CARRAY NPY_CONTIGUOUS | NPY_BEHAVED
-#define NPY_CARRAY_RO NPY_CONTIGUOUS | NPY_ALIGNED
-#define NPY_FARRAY NPY_FORTRAN | NPY_BEHAVED
-#define NPY_FARRAY_RO NPY_FORTRAN | NPY_ALIGNED
+#define NPY_BEHAVED (NPY_ALIGNED | NPY_WRITEABLE)
+#define NPY_BEHAVED_NS (NPY_ALIGNED | NPY_WRITEABLE | NPY_NOTSWAPPED)
+#define NPY_CARRAY (NPY_CONTIGUOUS | NPY_BEHAVED)
+#define NPY_CARRAY_RO (NPY_CONTIGUOUS | NPY_ALIGNED)
+#define NPY_FARRAY (NPY_FORTRAN | NPY_BEHAVED)
+#define NPY_FARRAY_RO (NPY_FORTRAN | NPY_ALIGNED)
 #define NPY_DEFAULT NPY_CARRAY
 #define NPY_IN_ARRAY NPY_CARRAY_RO
 #define NPY_OUT_ARRAY NPY_CARRAY
-#define NPY_INOUT_ARRAY NPY_CARRAY | NPY_UPDATEIFCOPY
+#define NPY_INOUT_ARRAY (NPY_CARRAY | NPY_UPDATEIFCOPY)
 #define NPY_IN_FARRAY NPY_FARRAY_RO
 #define NPY_OUT_FARRAY NPY_FARRAY
-#define NPY_INOUT_FARRAY NPY_FARRAY | NPY_UPDATEIFCOPY
+#define NPY_INOUT_FARRAY (NPY_FARRAY | NPY_UPDATEIFCOPY)
 
-#define NPY_UPDATE_ALL NPY_CONTIGUOUS | NPY_FORTRAN | NPY_ALIGNED
+#define NPY_UPDATE_ALL (NPY_CONTIGUOUS | NPY_FORTRAN | NPY_ALIGNED)
 
 
 /* Size of internal buffers used for alignment */
@@ -1407,7 +1407,7 @@ typedef struct {
                         }                                               \
                 }                                                       \
         }
-                                
+
 #define PyArray_ITER_NEXT(it) {                                     \
         (it)->index++;                                            \
         if ((it)->nd_m1 == 0) {                                   \
@@ -1473,7 +1473,7 @@ typedef struct {
                 }                                                       \
 }
 
-#define PyArray_ITER_DATA(it) ((PyArrayIterObject *)it)->dataptr
+#define PyArray_ITER_DATA(it) (((PyArrayIterObject *)(it))->dataptr)
 
 
 /*
@@ -1528,13 +1528,13 @@ typedef struct {
         }
 
 #define PyArray_MultiIter_DATA(multi, i)                        \
-        (((PyArrayMultiIterObject *)multi)->iters[i]->dataptr)
+        (((PyArrayMultiIterObject *)(multi))->iters[i]->dataptr)
 
 #define PyArray_MultiIter_SIZE(multi)                   \
-        ((PyArrayMultiIterObject *)multi)->size
+        ((PyArrayMultiIterObject *)(multi))->size
 
 #define PyArray_MultiIter_NEXTi(multi, i)                               \
-        PyArray_ITER_NEXT(((PyArrayMultiIterObject *)multi)->iters[i])
+        PyArray_ITER_NEXT(((PyArrayMultiIterObject *)(multi))->iters[i])
 
 /* Store the information needed for fancy-indexing over an array */
 
@@ -1600,52 +1600,52 @@ typedef struct {
 #define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->descr->elsize)
 #define PyArray_TYPE(obj) (((PyArrayObject *)(obj))->descr->type_num)
 #define PyArray_GETITEM(obj,itemptr)                    \
-        ((PyArrayObject *)(obj))->descr->f->getitem((char *)itemptr,    \
-                                                 (PyArrayObject *)obj);
+        ((PyArrayObject *)(obj))->descr->f->getitem((char *)(itemptr),    \
+                                                 (PyArrayObject *)(obj));
 #define PyArray_SETITEM(obj,itemptr,v)                                  \
-        ((PyArrayObject *)(obj))->descr->f->setitem((PyObject *)v,      \
+        ((PyArrayObject *)(obj))->descr->f->setitem((PyObject *)(v),      \
                                                     (char *)(itemptr),  \
                                                     (PyArrayObject *)(obj));
 
 
-#define PyTypeNum_ISBOOL(type) (type == NPY_BOOL)
-#define PyTypeNum_ISUNSIGNED(type) ((type == NPY_UBYTE) || \
-                                 (type == NPY_USHORT) || \
-                                 (type == NPY_UINT) ||  \
-                                 (type == NPY_ULONG) || \
-                                 (type == NPY_ULONGLONG))
+#define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
+#define PyTypeNum_ISUNSIGNED(type) (((type) == NPY_UBYTE) || \
+                                 ((type) == NPY_USHORT) || \
+                                 ((type) == NPY_UINT) ||  \
+                                 ((type) == NPY_ULONG) || \
+                                 ((type) == NPY_ULONGLONG))
 
-#define PyTypeNum_ISSIGNED(type) ((type == NPY_BYTE) || \
-                               (type == NPY_SHORT) ||   \
-                               (type == NPY_INT) ||     \
-                               (type == NPY_LONG) ||    \
-                               (type == NPY_LONGLONG))
+#define PyTypeNum_ISSIGNED(type) (((type) == NPY_BYTE) || \
+                               ((type) == NPY_SHORT) ||   \
+                               ((type) == NPY_INT) ||     \
+                               ((type) == NPY_LONG) ||    \
+                               ((type) == NPY_LONGLONG))
 
-#define PyTypeNum_ISINTEGER(type) ((type >= NPY_BYTE) &&        \
-                                (type <= NPY_ULONGLONG))
+#define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&        \
+                                ((type) <= NPY_ULONGLONG))
 
-#define PyTypeNum_ISFLOAT(type) ((type >= NPY_FLOAT) &&  \
-                              (type <= NPY_LONGDOUBLE))
+#define PyTypeNum_ISFLOAT(type) (((type) >= NPY_FLOAT) &&  \
+                              ((type) <= NPY_LONGDOUBLE))
 
-#define PyTypeNum_ISNUMBER(type) (type <= NPY_CLONGDOUBLE)
+#define PyTypeNum_ISNUMBER(type) ((type) <= NPY_CLONGDOUBLE)
 
-#define PyTypeNum_ISSTRING(type) ((type == NPY_STRING) ||       \
-                                  (type == NPY_UNICODE))
+#define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||       \
+                                  ((type) == NPY_UNICODE))
 
-#define PyTypeNum_ISCOMPLEX(type) ((type >= NPY_CFLOAT) &&      \
-                                (type <= NPY_CLONGDOUBLE))
+#define PyTypeNum_ISCOMPLEX(type) (((type) >= NPY_CFLOAT) &&      \
+                                ((type) <= NPY_CLONGDOUBLE))
 
-#define PyTypeNum_ISPYTHON(type) ((type == NPY_LONG) || \
-                                  (type == NPY_DOUBLE) ||       \
-                                  (type == NPY_CDOUBLE) ||      \
-                                  (type == NPY_BOOL) || \
-                                  (type == NPY_OBJECT ))
+#define PyTypeNum_ISPYTHON(type) (((type) == NPY_LONG) || \
+                                  ((type) == NPY_DOUBLE) ||       \
+                                  ((type) == NPY_CDOUBLE) ||      \
+                                  ((type) == NPY_BOOL) || \
+                                  ((type) == NPY_OBJECT ))
 
-#define PyTypeNum_ISFLEXIBLE(type) ((type>=NPY_STRING) && \
-                                    (type<=NPY_VOID))
+#define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) && \
+                                    ((type) <=NPY_VOID))
 
-#define PyTypeNum_ISUSERDEF(type) ((type >= NPY_USERDEF) && \
-                                   (type < NPY_USERDEF+\
+#define PyTypeNum_ISUSERDEF(type) (((type) >= NPY_USERDEF) && \
+                                   ((type) < NPY_USERDEF+\
                                     NPY_NUMUSERTYPES))
 
 #define PyTypeNum_ISEXTENDED(type) (PyTypeNum_ISFLEXIBLE(type) ||  \
@@ -1655,19 +1655,19 @@ typedef struct {
 
 
 #define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(_PyADt(obj))
-#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(((PyArray_Descr*)obj)->type_num )
-#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISPYTHON(obj) PyTypeNum_ISPYTHON(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)obj)->type_num)
-#define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)obj)->names != NULL)
+#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(((PyArray_Descr*)(obj))->type_num )
+#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISPYTHON(obj) PyTypeNum_ISPYTHON(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
+#define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)(obj))->names != NULL)
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
@@ -1752,7 +1752,7 @@ typedef struct {
 #define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
 
 #define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||            \
-                           PyObject_TypeCheck((op), &PyArray_Type))
+                           PyObject_TypeCheck(op, &PyArray_Type))
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 #define PyArray_HasArrayInterfaceType(op, type, context, out)              \
         ((((out)=PyArray_FromStructInterface(op)) != Py_NotImplemented) || \
@@ -1764,7 +1764,7 @@ typedef struct {
 
 #define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))
 #define PyArray_IsScalar(obj, cls)                              \
-        (PyObject_TypeCheck((obj), &Py##cls##ArrType_Type))
+        (PyObject_TypeCheck(obj, &Py##cls##ArrType_Type))
 #define PyArray_CheckScalar(m) (PyArray_IsScalar(m, Generic) || \
                                 PyArray_IsZeroDim(m))
 #define PyArray_IsPythonNumber(obj) \
@@ -1778,7 +1778,7 @@ typedef struct {
 #define PyArray_CheckAnyScalar(obj) (PyArray_IsPythonScalar(obj) || \
                                      PyArray_CheckScalar(obj))
 
-#define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), m : \
+#define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ? Py_INCREF(m), (m) : \
                                   (PyArrayObject *)(PyArray_Copy(m)))
 
 #define PyArray_SAMESHAPE(a1,a2) ((PyArray_NDIM(a1) == PyArray_NDIM(a2)) && \
@@ -1804,11 +1804,11 @@ typedef struct {
 #define PyArray_EMPTY(m, dims, type, fortran) \
         PyArray_Empty(m, dims, PyArray_DescrFromType(type), fortran)
 
-#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), (val), PyArray_NBYTES(obj))
+#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val, PyArray_NBYTES(obj))
 
 #define PyArray_REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define NPY_REFCOUNT PyArray_REFCOUNT
-#define NPY_MAX_ELSIZE 2*SIZEOF_LONGDOUBLE
+#define NPY_MAX_ELSIZE (2*SIZEOF_LONGDOUBLE)
 
 #define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)   \
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
@@ -1837,22 +1837,22 @@ typedef struct {
 */
 
 #define PyArray_GETPTR1(obj, i) (void *)(PyArray_BYTES(obj) +           \
-                                         i*PyArray_STRIDES(obj)[0])
+                                         (i)*PyArray_STRIDES(obj)[0])
 
 #define PyArray_GETPTR2(obj, i, j) (void *)(PyArray_BYTES(obj) +        \
-                                            i*PyArray_STRIDES(obj)[0] + \
-                                            j*PyArray_STRIDES(obj)[1])
+                                            (i)*PyArray_STRIDES(obj)[0] + \
+                                            (j)*PyArray_STRIDES(obj)[1])
 
 #define PyArray_GETPTR3(obj, i, j, k) (void *)(PyArray_BYTES(obj) +     \
-                                               i*PyArray_STRIDES(obj)[0] + \
-                                               j*PyArray_STRIDES(obj)[1] + \
-                                               k*PyArray_STRIDES(obj)[2]) \
+                                               (i)*PyArray_STRIDES(obj)[0] + \
+                                               (j)*PyArray_STRIDES(obj)[1] + \
+                                               (k)*PyArray_STRIDES(obj)[2]) \
 
 #define PyArray_GETPTR4(obj, i, j, k, l) (void *)(PyArray_BYTES(obj) +  \
-                                                  i*PyArray_STRIDES(obj)[0] + \
-                                                  j*PyArray_STRIDES(obj)[1] + \
-                                                  k*PyArray_STRIDES(obj)[2] + \
-                                                  l*PyArray_STRIDES(obj)[3])
+                                                  (i)*PyArray_STRIDES(obj)[0] + \
+                                                  (j)*PyArray_STRIDES(obj)[1] + \
+                                                  (k)*PyArray_STRIDES(obj)[2] + \
+                                                  (l)*PyArray_STRIDES(obj)[3])
 
 #define PyArray_XDECREF_ERR(obj) \
         if (obj && (PyArray_FLAGS(obj) & NPY_UPDATEIFCOPY)) {      \
