@@ -771,7 +771,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
-    """a.dump(file) Dump to specified file.
+    """a.dump(file) Dump a pickle of the array to the specified file.
+
+    The array can be read back with pickle.load or numpy.load
 
     Arguments:
         file -- string naming the dump file.
@@ -780,8 +782,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dumps',
-    """a.dumps() -> string containing the dump?
+    """a.dumps() returns the pickle of the array as a string.
 
+    pickle.loads or numpy.loads will convert the string back to an array.
     """))
 
 
