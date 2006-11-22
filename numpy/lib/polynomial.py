@@ -367,7 +367,7 @@ def polysub(a1, a2):
     a2 = atleast_1d(a2)
     diff = len(a2) - len(a1)
     if diff == 0:
-        return a1 - a2
+        val = a1 - a2
     elif diff > 0:
         zr = NX.zeros(diff, a1.dtype)
         val = NX.concatenate((zr, a1)) - a2
