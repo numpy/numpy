@@ -3,7 +3,7 @@ from numpy.oldnumeric.linear_algebra import *
 
 import numpy.oldnumeric.linear_algebra as nol
 
-__all__ = nol.__all__
+__all__ = list(nol.__all__)
 __all__ += ['qr_decomposition']
 
 from numpy.linalg import qr as _qr

@@ -7,7 +7,7 @@ import types
 from user_array import UserArray, asarray
 import numpy.oldnumeric as Numeric
 from numpy.oldnumeric import dot, identity, multiply
-import linear_algebra as LinearAlgebra
+import numpy.oldnumeric.linear_algebra as LinearAlgebra
 from numpy import matrix as Matrix, squeeze
 
 # Hidden names that will be the same. 
