@@ -572,11 +572,14 @@ class test_regression(NumpyTestCase):
 
     def check_recarray_fields(self, level=rlevel):
         """Ticket #372"""
-        dt = N.dtype([('f0',"i4"),('f1',"i4")])
+        dt0 = N.dtype([('f0','i4'),('f1','i4')])
+        dt1 = N.dtype([('f0','i8'),('f1','i8')])
         for a in [N.array([(1,2),(3,4)],"i4,i4"),
                   N.rec.array([(1,2),(3,4)],"i4,i4"),
-                  N.rec.fromarrays([(1,2),(3,4)],"i4,i4")]:
-            assert_equal(a.dtype,dt)
+                  N.rec.array([(1,2),(3,4)]),
+                  N.rec.fromarrays([(1,2),(3,4)],"i4,i4"),
+                  N.rec.fromarrays([(1,2),(3,4)])]:
+            assert(a.dtype in [dt0,dt1])
 
     def check_refcount_vectorize(self, level=rlevel):
         """Ticket #378"""
