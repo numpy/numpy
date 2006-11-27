@@ -575,9 +575,7 @@ class test_regression(NumpyTestCase):
         dt = N.dtype([('f0',"i4"),('f1',"i4")])
         for a in [N.array([(1,2),(3,4)],"i4,i4"),
                   N.rec.array([(1,2),(3,4)],"i4,i4"),
-                  N.rec.array([(1,2),(3,4)]),
-                  N.rec.fromarrays([(1,2),(3,4)],"i4,i4"),
-                  N.rec.fromarrays([(1,2),(3,4)])]:
+                  N.rec.fromarrays([(1,2),(3,4)],"i4,i4")]:
             assert_equal(a.dtype,dt)
 
     def check_refcount_vectorize(self, level=rlevel):
