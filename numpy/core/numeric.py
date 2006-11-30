@@ -207,18 +207,17 @@ def _mode_from_name(mode):
     return mode
 
 def correlate(a,v,mode='valid'):
-    """Return the discrete, linear correlation of 1-D sequences
-    a and v; mode can be 0 (valid), 1 (same), or 2 (full)
-    to specify the size of the resulting sequence
+    """Return the discrete, linear correlation of 1-D sequences a and v; mode
+    can be 'valid', 'same', or 'full' to specify the size of the resulting
+    sequence
     """
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,v,mode)
 
 
 def convolve(a,v,mode='full'):
-    """Returns the discrete, linear convolution of 1-D
-    sequences a and v; mode can be 0 (valid), 1 (same), or 2 (full)
-    to specify size of the resulting sequence.
+    """Returns the discrete, linear convolution of 1-D sequences a and v; mode
+    can be 'valid', 'same', or 'full' to specify size of the resulting sequence.
     """
     if (len(v) > len(a)):
         a, v = v, a
@@ -229,8 +228,9 @@ inner = multiarray.inner
 dot = multiarray.dot
 
 def outer(a,b):
-    """outer(a,b) returns the outer product of two vectors.
-    result(i,j) = a(i)*b(j) when a and b are vectors
+    """Returns the outer product of two vectors.
+
+    result[i,j] = a[i]*b[j] when a and b are vectors.
     Will accept any arguments that can be made into vectors.
     """
     a = asarray(a)
@@ -239,8 +239,10 @@ def outer(a,b):
 
 def vdot(a, b):
     """Returns the dot product of 2 vectors (or anything that can be made into
-    a vector). NB: this is not the same as `dot`, as it takes the conjugate
-    of its first argument if complex and always returns a scalar."""
+    a vector).
+    
+    Note: this is not the same as `dot`, as it takes the conjugate of its first
+    argument if complex and always returns a scalar."""
     return dot(asarray(a).ravel().conj(), asarray(b).ravel())
 
 # try to import blas optimized dot if available
@@ -474,8 +476,8 @@ set_string_function(array_repr, 1)
 little_endian = (sys.byteorder == 'little')
 
 def indices(dimensions, dtype=int):
-    """indices(dimensions,dtype=int) returns an array representing a grid
-    of indices with row-only, and column-only variation.
+    """Returns an array representing a grid of indices with row-only, and
+    column-only variation.
     """
     tmp = ones(dimensions, dtype)
     lst = []
@@ -484,17 +486,17 @@ def indices(dimensions, dtype=int):
     return array(lst)
 
 def fromfunction(function, shape, **kwargs):
-    """returns an array constructed by calling a function on a tuple
-    of number grids.  The function should accept as many arguments as the
-    length of shape and work on array inputs.  The shape argument is a 
-    sequence of numbers indicating the length of the desired output 
-    for each axis.
-
-    The function can also accept keyword arguments (except dtype), 
-    which will be passed through fromfunction to the function itself.
-    The dtype argument (default float) determines the data-type of 
-    the index grid passed to the function. 
+    """Returns an array constructed by calling a function on a tuple of number
+    grids.
     
+    The function should accept as many arguments as the length of shape and work
+    on array inputs.  The shape argument is a sequence of numbers indicating the
+    length of the desired output for each axis.
+
+    The function can also accept keyword arguments (except dtype), which will be
+    passed through fromfunction to the function itself.  The dtype argument
+    (default float) determines the data-type of the index grid passed to the
+    function. 
     """
     dtype = kwargs.pop('dtype', float)
     args = indices(shape, dtype=dtype)
@@ -586,8 +588,8 @@ def load(file):
 # These might wind up in a special abbreviations module
 
 def ones(shape, dtype=None, order='C'):
-    """ones(shape, dtype=None) returns an array of the given
-    dimensions which is initialized to all ones.
+    """Returns an array of the given dimensions which is initialized to all
+    ones.
     """
     a = empty(shape, dtype, order)
     a.fill(1)
@@ -596,25 +598,33 @@ def ones(shape, dtype=None, order='C'):
     #a+=1
     return a
 
-def identity(n,dtype=None):
-    """identity(n) returns the identity 2-d array of shape n x n.
+def identity(n, dtype=None):
+    """Returns the identity 2-d array of shape n x n.
+
+    identity(n)[i,j] == 1 for all i == j
+                     == 0 for all i != j
     """
     a = array([1]+n*[0],dtype=dtype)
     b = empty((n,n),dtype=dtype)
+
+    # Note that this assignment depends on the convention that since the a array
+    # is shorter than the flattened b array, then the a array will be repeated
+    # until it is the appropriate size. Given a's construction, this nicely sets
+    # the diagonal to all ones.
     b.flat = a
     return b
 
-def allclose (a, b, rtol=1.e-5, atol=1.e-8):
-    """ allclose(a,b,rtol=1.e-5,atol=1.e-8)
-        Returns true if all components of a and b are equal
-        subject to given tolerances.
-        The relative error rtol must be positive and << 1.0
-        The absolute error atol comes into play for those elements
-        of y that are very small or zero; it says how small x must be also.
+def allclose(a, b, rtol=1.e-5, atol=1.e-8):
+    """Returns True if all components of a and b are equal subject to given
+    tolerances.
+
+    The relative error rtol must be positive and << 1.0
+    The absolute error atol usually comes into play for those elements of b that
+    are very small or zero; it says how small a must be also.
     """
     x = array(a, copy=False)
     y = array(b, copy=False)
-    d = less(absolute(x-y), atol + rtol * absolute(y))
+    d = less_equal(absolute(x-y), atol + rtol * absolute(y))
     return d.ravel().all()
 
 
