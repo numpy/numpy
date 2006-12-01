@@ -9337,6 +9337,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 goto finish;
         }
 
+        if (PySequence_Check(ind) || PySlice_Check(ind)) goto skip;
         start = PyArray_PyIntAsIntp(ind);
         if (start==-1 && PyErr_Occurred()) PyErr_Clear();
         else {
@@ -9350,9 +9351,14 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 PyArray_ITER_GOTO1D(self, start);
                 retval = type->f->setitem(val, self->dataptr, self->ao);
                 PyArray_ITER_RESET(self);
+                if (retval < 0) {
+                        PyErr_SetString(PyExc_ValueError, 
+                                        "Error setting single item of array.");
+                }
                 goto finish;
         }
 
+ skip:
         Py_INCREF(type);
         arrval = PyArray_FromAny(val, type, 0, 0, 0, NULL);
         if (arrval==NULL) return -1;
@@ -9408,7 +9414,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 obj = ind;
         }
 
-        if (PyArray_Check(obj)) {
+        if (obj != NULL && PyArray_Check(obj)) {
                 /* Check for Boolean object */
                 if (PyArray_TYPE(obj)==PyArray_BOOL) {
                         if (iter_ass_sub_Bool(self, (PyArrayObject *)obj,
