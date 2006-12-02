@@ -3881,7 +3881,7 @@ static PyObject *
 array_index(PyArrayObject *v)
 {
         if (v->nd != 0 || !PyArray_ISINTEGER(v)) {
-                PyErr_SetString(PyExc_TypeError, "only 0-d integer"     \
+                PyErr_SetString(PyExc_TypeError, "only 0-d integer "     \
                                 "arrays can be converted to an index");
                 return NULL;
         }
