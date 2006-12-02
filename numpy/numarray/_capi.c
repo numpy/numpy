@@ -123,12 +123,11 @@ getReadBufferDataPtr(PyObject *buffobj, void **buff)
 static int 
 getBufferSize(PyObject *buffobj) 
 {
-  Py_ssize_t segcount, size=0;
+  Py_ssize_t size=0;
   PyObject *buff2;
   if ((buff2 = getBuffer(buffobj))) 
     {
-      segcount = buff2->ob_type->tp_as_buffer->bf_getsegcount(buff2, 
-								&size);
+      (void) buff2->ob_type->tp_as_buffer->bf_getsegcount(buff2, &size);
       Py_DECREF(buff2);
     }
   else
@@ -621,12 +620,11 @@ callStrideConvCFunc(PyObject *self, PyObject *args) {
     PyObject *inbuffObj, *outbuffObj, *shapeObj;
     PyObject *inbstridesObj, *outbstridesObj;
     CfuncObject *me = (CfuncObject *) self;
-    int  nshape, ninbstrides, noutbstrides, nargs;
+    int  nshape, ninbstrides, noutbstrides;
     maybelong shape[MAXDIM], inbstrides[MAXDIM], 
 	    outbstrides[MAXDIM], *outbstrides1 = outbstrides;
     long inboffset, outboffset, nbytes=0;
 
-    nargs = PyObject_Length(args);
     if (!PyArg_ParseTuple(args, "OOlOOlO|l",
             &shapeObj, &inbuffObj,  &inboffset, &inbstridesObj,
             &outbuffObj, &outboffset, &outbstridesObj,

@@ -1192,9 +1192,8 @@ static struct PyMethodDef methods[] = {
 };
 
 PyMODINIT_FUNC initscalarmath(void) {
-    PyObject *m;
 
-    m = Py_InitModule("scalarmath", methods);
+    Py_InitModule("scalarmath", methods);
 
     import_array();
     import_umath();

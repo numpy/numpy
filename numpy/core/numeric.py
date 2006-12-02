@@ -587,15 +587,29 @@ def load(file):
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
+def _maketup(descr, val):
+    dt = dtype(descr)
+    # Place val in all scalar tuples:
+    fields = dt.fields
+    if fields is None:
+        return val
+    else:
+        res = [_maketup(fields[name][0],val) for name in dt.names]
+        return tuple(res)
+
 def ones(shape, dtype=None, order='C'):
     """Returns an array of the given dimensions which is initialized to all
     ones.
     """
     a = empty(shape, dtype, order)
-    a.fill(1)
-    # Above is faster now after addition of fast loops.
-    #a = zeros(shape, dtype, order)
-    #a+=1
+    try:
+        a.fill(1)
+        # Above is faster now after addition of fast loops.
+        #a = zeros(shape, dtype, order)
+        #a+=1
+    except TypeError:
+        obj = _maketup(dtype, 1)
+        a.fill(obj)
     return a
 
 def identity(n, dtype=None):

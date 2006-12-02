@@ -1279,15 +1279,10 @@ static void
 {
         intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
         char *i1 = args[0], *op = args[1];
-        c@typ@ *x, *y;
-        @typ@ xr, xi, xmag2;
+        c@typ@ *y;
 
         for (i = 0; i < n; i++, i1 += is1, op += os) {
-                x = (c@typ@ *)i1;
                 y = (c@typ@ *)op;
-                xr = x->real;
-                xi = x->imag;
-                xmag2 = xr*xr + xi*xi;
                 y->real = 1.0;
                 y->imag = 0.0;
         }

@@ -1065,8 +1065,6 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 static int
 PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
 {
-
-        intp size;
         int elsize, simple;
         PyArrayIterObject *idest, *isrc;
         void (*myfunc)(char *, intp, char *, intp, intp, int);
@@ -1082,7 +1080,7 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
                 return -1;
         }
 
-        if ((size=PyArray_SIZE(dest)) != PyArray_SIZE(src)) {
+        if (PyArray_SIZE(dest) != PyArray_SIZE(src)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "arrays must have the same number of elements"
                                 " for copy");
@@ -2081,7 +2079,7 @@ slice_GetIndices(PySliceObject *r, intp length,
                  intp *start, intp *stop, intp *step,
                  intp *slicelength)
 {
-        intp defstart, defstop;
+        intp defstop;
 
         if (r->step == Py_None) {
                 *step = 1;
@@ -2093,8 +2091,8 @@ slice_GetIndices(PySliceObject *r, intp length,
                         return -1;
                 }
         }
+        /* defstart = *step < 0 ? length - 1 : 0; */
 
-        defstart = *step < 0 ? length - 1 : 0;
         defstop = *step < 0 ? -1 : length;
 
         if (r->start == Py_None) {
@@ -5737,7 +5735,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                  "offset", "strides",
                                  "order", NULL};
         PyArray_Descr *descr=NULL;
-        int type_num;
         int itemsize;
         PyArray_Dims dims = {NULL, 0};
         PyArray_Dims strides = {NULL, 0};
@@ -5775,7 +5772,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         if (descr == NULL)
                 descr = PyArray_DescrFromType(PyArray_DEFAULT);
 
-        type_num = descr->type_num;
         itemsize = descr->elsize;
 
         if (itemsize == 0) {
@@ -7815,7 +7811,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 {
 
         PyArrayObject *ret=NULL;
-        int type, itemsize;
+        int itemsize;
         int copy = 0;
         int arrflags;
         PyArray_Descr *oldtype;
@@ -7827,7 +7823,6 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         subtype = arr->ob_type;
 
         if (newtype == NULL) {newtype = oldtype; Py_INCREF(oldtype);}
-        type = newtype->type_num;
         itemsize = newtype->elsize;
         if (itemsize == 0) {
                 PyArray_DESCR_REPLACE(newtype);
@@ -9235,7 +9230,7 @@ static int
 iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                   PyArrayIterObject *val, int swap)
 {
-        int index, strides, itemsize;
+        int index, strides;
         char *dptr;
         PyArray_CopySwapFunc *copyswap;
 
@@ -9244,7 +9239,6 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                                 "boolean index array should have 1 dimension");
                 return -1;
         }
-        itemsize = self->ao->descr->elsize;
         index = ind->dimensions[0];
         strides = ind->strides[0];
         dptr = ind->data;
@@ -9272,12 +9266,10 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
         PyArray_Descr *typecode;
         intp num;
         PyArrayIterObject *ind_it;
-        int itemsize;
         int index;
         PyArray_CopySwapFunc *copyswap;
 
         typecode = self->ao->descr;
-        itemsize = typecode->elsize;
         copyswap = self->ao->descr->f->copyswap;
         if (ind->nd == 0) {
                 num = *((intp *)ind->data);

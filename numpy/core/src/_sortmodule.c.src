@@ -464,9 +464,8 @@ static struct PyMethodDef methods[] = {
 
 PyMODINIT_FUNC
 init_sort(void) {
-	PyObject *m;
 
-	m = Py_InitModule("_sort", methods);
+	Py_InitModule("_sort", methods);
 
 	import_array();
 	add_sortfuncs();

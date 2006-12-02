@@ -1115,7 +1115,7 @@ static int
 construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                  PyObject *typetup)
 {
-        int nargs, i, maxsize;
+        int nargs, i;
         int arg_types[NPY_MAXARGS];
 	PyArray_SCALARKIND scalars[NPY_MAXARGS];
 	PyUFuncObject *self=loop->ufunc;
@@ -1326,7 +1326,6 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 	if (loop->size == 0) return nargs;
 
 
-	maxsize = 0;
         for (i=0; i<self->nargs; i++) {
 		loop->needbuffer[i] = 0;
                 if (arg_types[i] != mps[i]->descr->type_num ||

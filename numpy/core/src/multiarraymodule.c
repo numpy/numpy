@@ -3710,7 +3710,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
               NPY_CLIPMODE clipmode)
 {
         PyArrayObject  *indices, *values;
-        int i, chunk, ni, max_item, nv, tmp, thistype;
+        int i, chunk, ni, max_item, nv, tmp;
         char *src, *dest;
         int copied = 0;
 
@@ -3743,7 +3743,6 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         if (indices == NULL) goto fail;
         ni = PyArray_SIZE(indices);
 
-	thistype = self->descr->type_num;
         Py_INCREF(self->descr);
 	values = (PyArrayObject *)PyArray_FromAny(values0, self->descr, 0, 0,
 						  DEFAULT | FORCECAST, NULL);
@@ -3876,7 +3875,7 @@ static PyObject *
 PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
         PyArrayObject  *mask, *values;
-        int i, chunk, ni, max_item, nv, tmp, thistype;
+        int i, chunk, ni, max_item, nv, tmp;
         char *src, *dest;
         int copied=0;
 
@@ -3914,9 +3913,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                 goto fail;
         }
 
-	thistype = self->descr->type_num;
         values = (PyArrayObject *)\
-		PyArray_ContiguousFromAny(values0, thistype, 0, 0);
+		PyArray_ContiguousFromAny(values0, self->descr->type_num, 0, 0);
 	if (values == NULL) goto fail;
         nv = PyArray_SIZE(values);	 /* zero if null array */
         if (nv <= 0) {

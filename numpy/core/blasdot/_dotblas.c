@@ -1071,10 +1071,10 @@ static struct PyMethodDef dotblas_module_methods[] = {
 /* Initialization function for the module */
 PyMODINIT_FUNC init_dotblas(void) {
     int i;
-    PyObject *m, *d, *s;
+    PyObject *d, *s;
     
     /* Create the module and add the functions */
-    m = Py_InitModule3("_dotblas", dotblas_module_methods, module_doc);
+    Py_InitModule3("_dotblas", dotblas_module_methods, module_doc);
 
     /* Import the array object */
     import_array();
