@@ -563,6 +563,7 @@ PyArray_PyIntAsIntp(PyObject *o)
                 Py_DECREF(arr);
                 return ret;
         }
+
 #if (PY_VERSION_HEX >= 0x02050000)
 	if (PyIndex_Check(o)) {
                 PyObject* value = PyNumber_Index(o);
@@ -3880,9 +3881,9 @@ _array_copy_nice(PyArrayObject *self)
 static PyObject *
 array_index(PyArrayObject *v)
 {
-        if (v->nd != 0 || !PyArray_ISINTEGER(v)) {
-                PyErr_SetString(PyExc_TypeError, "only 0-d integer "     \
-                                "arrays can be converted to an index");
+        if (!PyArray_ISINTEGER(v) || PyArray_SIZE(v) != 1) {
+                PyErr_SetString(PyExc_TypeError, "only integer arrays with "     \
+                                "one element can be converted to an index");
                 return NULL;
         }
         return v->descr->f->getitem(v->data, v);
