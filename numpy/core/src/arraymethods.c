@@ -862,12 +862,13 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                          &order))
                 return NULL;
 
+        if (order == Py_None) order = NULL;
         if (order != NULL) {
                 PyObject *new_name;
                 saved = self->descr;
                 if (saved->names == NULL) {
                         PyErr_SetString(PyExc_ValueError, "Cannot specify " \
-                                        "order with no fields.");
+                                        "order when the array has no fields.");
                         return NULL;
                 }
                 new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
@@ -893,13 +894,38 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
 	int axis=-1;
 	PyArray_SORTKIND which=PyArray_QUICKSORT;
-	static char *kwlist[] = {"axis", "kind", NULL};
+        PyObject *order=NULL, *res;
+        PyArray_Descr *newd, *saved=NULL;
+	static char *kwlist[] = {"axis", "kind", "order", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&", kwlist, &axis,
-					 PyArray_SortkindConverter, &which))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O", kwlist, &axis,
+					 PyArray_SortkindConverter, &which,
+                                         &order))
 		return NULL;
 
-	return _ARET(PyArray_ArgSort(self, axis, which));
+        if (order == Py_None) order = NULL;
+        if (order != NULL) {
+                PyObject *new_name;
+                saved = self->descr;
+                if (saved->names == NULL) {
+                        PyErr_SetString(PyExc_ValueError, "Cannot specify " \
+                                        "order when the array has no fields.");
+                        return NULL;
+                }
+                new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
+                                               "OO", saved, order);
+                if (new_name == NULL) return NULL;
+                newd = PyArray_DescrNew(saved);
+                newd->names = new_name;
+                self->descr = newd;
+        }
+
+        res = PyArray_ArgSort(self, axis, which);
+        if (order != NULL) {
+                Py_XDECREF(self->descr);
+                self->descr = saved;
+        }
+        return _ARET(res);
 }
 
 static PyObject *

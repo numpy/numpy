@@ -17,7 +17,7 @@ mode_equivalents = {
 class memmap(ndarray):
     __array_priority__ = -100.0
     def __new__(subtype, name, dtype=uint8, mode='r+', offset=0,
-                shape=None, order=0):
+                shape=None, order='C'):
         try:
             mode = mode_equivalents[mode]
         except KeyError:
@@ -50,7 +50,7 @@ class memmap(ndarray):
             for k in shape:
                 size *= k
 
-        bytes = offset + size*_dbytes
+        bytes = long(offset + size*_dbytes)
 
         if mode == 'w+' or (mode == 'r+' and flen < bytes):
             fid.seek(bytes-1,0)

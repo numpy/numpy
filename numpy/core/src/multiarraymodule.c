@@ -2181,7 +2181,8 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 	swap = !PyArray_ISNOTSWAPPED(op);
 	if (it == NULL) return -1;
 
-	BEGIN_THREADS
+	NPY_BEGIN_THREADS_DESCR(op->descr)
+
 	sort = op->descr->f->sort[which];
 	size = it->size;
 	N = op->dimensions[axis];
@@ -2216,7 +2217,7 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 		}
 	}
 
-	END_THREADS
+	NPY_END_THREADS_DESCR(op->descr)
 
 	Py_DECREF(it);
 	return 0;
@@ -2253,7 +2254,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
 	swap = !PyArray_ISNOTSWAPPED(op);
 
-	BEGIN_THREADS
+	NPY_BEGIN_THREADS_DESCR(op->descr)
 
 	argsort = op->descr->f->argsort[which];
 	size = it->size;
@@ -2299,7 +2300,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 		}
 	}
 
-	END_THREADS
+	NPY_END_THREADS_DESCR(op->descr)
 
 	Py_DECREF(it);
 	Py_DECREF(rit);

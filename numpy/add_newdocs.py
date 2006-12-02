@@ -648,13 +648,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
-    """a.argsort(axis=-1, kind='quicksort') -> indices that sort a along axis.
+    """a.argsort(axis=-1, kind='quicksort', order=None) -> indices
+
+    Return array of indices that sort a along the given axis.
 
     Keyword arguments:
 
-    axis -- axis to be indirectly sorted (default -1)
-    kind -- sorting algorithm (default 'quicksort')
-            Possible values: 'quicksort', 'mergesort', or 'heapsort'
+    axis  -- axis to be indirectly sorted (default -1)
+    kind  -- sorting algorithm (default 'quicksort')
+             Possible values: 'quicksort', 'mergesort', or 'heapsort'
+    order -- If a has fields defined, then the order keyword can be the
+             field name to sort on or a list (or tuple) of field names
+             to indicate the order that fields should be used to define
+             the sort.         
 
     Returns: array of indices that sort a along the specified axis.
 
@@ -1017,13 +1023,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
-    """a.sort(axis=-1, kind='quicksort') -> None. Sort a along the given axis.
+    """a.sort(axis=-1, kind='quicksort', order=None) -> None.
+
+    Sort a along the given axis.
 
     Keyword arguments:
 
-    axis -- axis to be sorted (default -1)
-    kind -- sorting algorithm (default 'quicksort')
-            Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+    axis  -- axis to be sorted (default -1)
+    kind  -- sorting algorithm (default 'quicksort')
+             Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+    order -- If a has fields defined, then the order keyword can be the
+             field name to sort on or a list (or tuple) of field names
+             to indicate the order that fields should be used to define
+             the sort.         
 
     Returns: None.
 
