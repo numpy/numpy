@@ -8445,7 +8445,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
         outtype = _array_find_type(op, intype, MAX_DIMS);
         ret = outtype->type_num;
         Py_DECREF(outtype);
-        Py_DECREF(intype);
+        Py_XDECREF(intype);
         return ret;
 }
 

@@ -117,14 +117,20 @@ def transpose(a, axes=None):
         return _wrapit(a, 'transpose', axes)
     return transpose(axes)
 
-def sort(a, axis=-1, kind='quicksort'):
+def sort(a, axis=-1, kind='quicksort', order=None):
     """Returns copy of 'a' sorted along the given axis.
 
     Keyword arguments:
 
-    axis -- axis to be sorted (default -1)
-    kind -- sorting algorithm (default 'quicksort')
-            Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+    axis  -- axis to be sorted (default -1).  Can be None
+             to indicate that a flattened and sorted array should
+             be returned (the array method does not support this). 
+    kind  -- sorting algorithm (default 'quicksort')
+             Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+    order -- For an array with fields defined, this argument allows
+             specification of which fields to compare first, second,
+             etc.  Not all fields need be specified.
+            
 
     Returns: None.
 
@@ -150,18 +156,27 @@ def sort(a, axis=-1, kind='quicksort'):
     and use less space than sorts along other axis.
 
     """
-    a = asanyarray(a).copy()
-    a.sort(axis, kind)
+    if axis is None:
+        a = asanyarray(a).flatten()
+        axis = 0
+    else:
+        a = asanyarray(a).copy()
+    a.sort(axis, kind, order)
     return a
 
-def argsort(a, axis=-1, kind='quicksort'):
+def argsort(a, axis=-1, kind='quicksort', order=None):
     """Returns array of indices that index 'a' in sorted order.
 
     Keyword arguments:
 
-    axis -- axis to be indirectly sorted (default -1)
-    kind -- sorting algorithm (default 'quicksort')
-            Possible values: 'quicksort', 'mergesort', or 'heapsort'
+    axis  -- axis to be indirectly sorted (default -1)
+             Can be None to indicate return indices into the
+             flattened array. 
+    kind  -- sorting algorithm (default 'quicksort')
+             Possible values: 'quicksort', 'mergesort', or 'heapsort'
+    order -- For an array with fields defined, this argument allows
+             specification of which fields to compare first, second,
+             etc.  Not all fields need be specified.
 
     Returns: array of indices that sort 'a' along the specified axis.
 
@@ -190,8 +205,8 @@ def argsort(a, axis=-1, kind='quicksort'):
     try:
         argsort = a.argsort
     except AttributeError:
-        return _wrapit(a, 'argsort', axis, kind)
-    return argsort(axis, kind)
+        return _wrapit(a, 'argsort', axis, kind, order)
+    return argsort(axis, kind, order)
 
 def argmax(a, axis=None):
     """argmax(a,axis=None) returns the indices to the maximum value of the

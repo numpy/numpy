@@ -2388,7 +2388,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
 	n = op->nd;
 	if ((n==0) || (PyArray_SIZE(op)==1)) return 0;
-
+        
 	if (axis < 0) axis += n;
 	if ((axis < 0) || (axis >= n)) {
 		PyErr_Format(PyExc_ValueError,
@@ -2468,7 +2468,7 @@ argsort_static_compare(const void *ip1, const void *ip2)
 static PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
-	PyArrayObject *ap=NULL, *ret=NULL, *store;
+	PyArrayObject *ap=NULL, *ret=NULL, *store, *op2;
 	intp *ip;
 	intp i, j, n, m, orign;
 	int argsort_elsize;
@@ -2485,25 +2485,21 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 		*((intp *)ret->data) = 0;
 		return (PyObject *)ret;
 	}
-	if (axis < 0) axis += n;
-	if ((axis < 0) || (axis >= n)) {
-		PyErr_Format(PyExc_ValueError,
-			     "axis(=%d) out of bounds", axis);
-		return NULL;
-	}
+
+	if ((op2=(PyAO *)_check_axis(op, &axis, 0))==NULL) return NULL;
 
 	/* Determine if we should use new algorithm or not */
-	if (op->descr->f->argsort[which] != NULL) {
-		return _new_argsort(op, axis, which);
+	if (op2->descr->f->argsort[which] != NULL) {
+		return _new_argsort(op2, axis, which);
 	}
 
-	if ((which != PyArray_QUICKSORT) || op->descr->f->compare == NULL) {
+	if ((which != PyArray_QUICKSORT) || op2->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError,
 				"requested sort not available for type");
 		goto fail;
 	}
 
-	SWAPAXES(ap, op);
+	SWAPAXES(ap, op2);
 
 	op = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ap,
 							   PyArray_NOTYPE,

@@ -898,7 +898,8 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyArray_Descr *newd, *saved=NULL;
 	static char *kwlist[] = {"axis", "kind", "order", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O", kwlist, &axis,
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O", kwlist, 
+                                         PyArray_AxisConverter, &axis,
 					 PyArray_SortkindConverter, &which,
                                          &order))
 		return NULL;
