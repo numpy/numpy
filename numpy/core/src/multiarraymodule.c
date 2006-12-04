@@ -2486,25 +2486,32 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 		return (PyObject *)ret;
 	}
 
+        /* Creates new reference op2 */
 	if ((op2=(PyAO *)_check_axis(op, &axis, 0))==NULL) return NULL;
-
+        
 	/* Determine if we should use new algorithm or not */
 	if (op2->descr->f->argsort[which] != NULL) {
-		return _new_argsort(op2, axis, which);
+		ret = _new_argsort(op2, axis, which);
+                Py_DECREF(op2);
+                return ret;
 	}
 
+        op = NULL;
 	if ((which != PyArray_QUICKSORT) || op2->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError,
 				"requested sort not available for type");
+                Py_DECREF(op2);
 		goto fail;
 	}
 
+        /* ap will contain the reference to op2 */
 	SWAPAXES(ap, op2);
 
 	op = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ap,
 							   PyArray_NOTYPE,
 							   1, 0);
 
+        Py_DECREF(ap);
 	if (op == NULL) return NULL;
 
 	ret = (PyArrayObject *)PyArray_New(op->ob_type, op->nd,
@@ -2538,7 +2545,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 	return (PyObject *)op;
 
  fail:
-	Py_XDECREF(ap);
+	Py_XDECREF(op);
 	Py_XDECREF(ret);
 	return NULL;
 
