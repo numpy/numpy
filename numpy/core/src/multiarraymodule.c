@@ -2496,11 +2496,11 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 return ret;
 	}
 
-        op = NULL;
 	if ((which != PyArray_QUICKSORT) || op2->descr->f->compare == NULL) {
 		PyErr_SetString(PyExc_TypeError,
 				"requested sort not available for type");
                 Py_DECREF(op2);
+                op = NULL;
 		goto fail;
 	}
 
