@@ -2491,9 +2491,9 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         
 	/* Determine if we should use new algorithm or not */
 	if (op2->descr->f->argsort[which] != NULL) {
-		ret = _new_argsort(op2, axis, which);
-                Py_DECREF(op2);
-                return ret;
+		ret = (PyArrayObject *)_new_argsort(op2, axis, which);
+		Py_DECREF(op2);
+		return (PyObject *)ret;
 	}
 
 	if ((which != PyArray_QUICKSORT) || op2->descr->f->compare == NULL) {
