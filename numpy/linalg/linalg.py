@@ -20,7 +20,7 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
         maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        argsort
+        argsort, isfinite
 from numpy.lib import triu, iterable
 from numpy.linalg import lapack_lite
 
@@ -119,6 +119,11 @@ def _assertSquareness(*arrays):
     for a in arrays:
         if max(a.shape) != min(a.shape):
             raise LinAlgError, 'Array must be square'
+
+def _assertFinite(*arrays):
+    for a in arrays:
+        if not (isfinite(a).all()):
+            raise LinAlgError, "Array must not contain infs or NaNs"
 
 # Linear equations
 
@@ -340,6 +345,7 @@ def qr(a, mode='full'):
 def eigvals(a):
     _assertRank2(a)
     _assertSquareness(a)
+    _assertFinite(a)
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
@@ -434,6 +440,7 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
+    _assertFinite(a)
     a, t, result_t = _convertarray(a) # convert to double or cdouble type
     real_t = _linalgRealType(t)
     n = a.shape[0]
