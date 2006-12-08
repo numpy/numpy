@@ -6918,26 +6918,52 @@ _array_find_python_scalar_type(PyObject *op)
 {
     if (PyFloat_Check(op)) {
         return PyArray_DescrFromType(PyArray_DOUBLE);
-    } else if (PyComplex_Check(op)) {
-        return PyArray_DescrFromType(PyArray_CDOUBLE);
-    } else if (PyInt_Check(op)) {
-        /* bools are a subclass of int */
-        if (PyBool_Check(op)) {
-            return PyArray_DescrFromType(PyArray_BOOL);
-        } else {
-            return  PyArray_DescrFromType(PyArray_LONG);
-        }
-    } else if (PyLong_Check(op)) {
-        /* if integer can fit into a longlong then return that
-         */
-        if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
-            PyErr_Clear();
-            return PyArray_DescrFromType(PyArray_OBJECT);
-        }
-        return PyArray_DescrFromType(PyArray_LONGLONG);
+    } 
+    else if (PyComplex_Check(op)) {
+            return PyArray_DescrFromType(PyArray_CDOUBLE);
+    } 
+    else if (PyInt_Check(op)) {
+            /* bools are a subclass of int */
+            if (PyBool_Check(op)) {
+                    return PyArray_DescrFromType(PyArray_BOOL);
+            } else {
+                    return  PyArray_DescrFromType(PyArray_LONG);
+            }
+    } 
+    else if (PyLong_Check(op)) {
+            /* if integer can fit into a longlong then return that
+             */
+            if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
+                    PyErr_Clear();
+                    return PyArray_DescrFromType(PyArray_OBJECT);
+            }
+            return PyArray_DescrFromType(PyArray_LONGLONG);
     }
     return NULL;
 }
+
+static PyArray_Descr *
+_use_default_type(PyObject *op)
+{
+        int typenum, l;
+        PyObject *type;
+        
+        typenum = -1;
+        l = 0;
+        type = (PyObject *)op->ob_type;
+        while (l < PyArray_NUMUSERTYPES) {
+                if (type == (PyObject *)(userdescrs[l]->typeobj)) {
+                        typenum = l + PyArray_USERDEF;
+                        break;
+                }
+                l++;
+        }
+        if (typenum == -1) {
+                typenum = PyArray_OBJECT;
+        }
+        return PyArray_DescrFromType(typenum);
+}
+
 
 /* op is an object to be converted to an ndarray.
 
@@ -7086,7 +7112,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 
 
  deflt:
-        chktype = PyArray_DescrFromType(PyArray_OBJECT);
+        chktype = _use_default_type(op);
 
  finish:
 
