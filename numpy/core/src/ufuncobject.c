@@ -652,19 +652,19 @@ static int
 _find_matching_userloop(PyObject *obj, int *arg_types, 
                         PyArray_SCALARKIND *scalars,
                         PyUFuncGenericFunction *function, void **data, 
-                        int nargs)
+                        int nargs, int nin)
 {
         PyUFunc_Loop1d *funcdata;
         int i;
         funcdata = (PyUFunc_Loop1d *)PyCObject_AsVoidPtr(obj);
         while (funcdata != NULL) {
-                for (i=0; i<nargs; i++) {
+                for (i=0; i<nin; i++) {
 			if (!PyArray_CanCoerceScalar(arg_types[i],
 						     funcdata->arg_types[i],
 						     scalars[i])) 
                                 break;
                 }
-                if (i==nargs) { /* match found */
+                if (i==nin) { /* match found */
                         *function = funcdata->func;
                         *data = funcdata->data;
                         /* Make sure actual arg_types supported
@@ -901,7 +901,8 @@ select_types(PyUFuncObject *self, int *arg_types,
                    data and argtypes
                 */
                 ret = _find_matching_userloop(obj, arg_types, scalars,
-                                              function, data, self->nargs);
+                                              function, data, self->nargs,
+                                              self->nin);
                 Py_DECREF(obj);
                 return ret;
 	}
@@ -3493,7 +3494,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 
         /* If it's not there, then make one and return. */
         if (cobj == NULL) {
-                cobj = PyCObject_FromVoidPtr((void *)function, 
+                cobj = PyCObject_FromVoidPtr((void *)funcdata,
                                              _loop1d_list_free);
                 if (cobj == NULL) goto fail;
                 PyDict_SetItem(ufunc->userloops, key, cobj);
