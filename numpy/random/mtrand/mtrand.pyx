@@ -1,3 +1,4 @@
+
 # mtrand.pyx -- A Pyrex wrapper of Jean-Sebastien Roy's RandomKit
 #
 # Copyright 2005 Robert Kern (robert.kern@gmail.com)
@@ -1206,23 +1207,23 @@ cdef class RandomState:
         shuffle(x)
         """
         cdef long i, j
-        cdef int copy=0
+        cdef int copy
 
         i = len(x) - 1
         try:
- 	    j = len(x[0])
+            j = len(x[0])
         except:
             j = 0
 
         if (j == 0):
-	    # adaptation of random.shuffle()
+            # adaptation of random.shuffle()
             while i > 0:
                 j = rk_interval(i, self.internal_state)
                 x[i], x[j] = x[j], x[i]
                 i = i - 1
         else:
             # make copies
-	    copy = hasattr(x[0].copy)
+            copy = hasattr(x[0], 'copy')
             if copy:                 
                 while(i > 0):
                     j = rk_interval(i, self.internal_state)
