@@ -47,7 +47,7 @@ class chararray(ndarray):
         if isinstance(val, (string_, unicode_)):
             temp = val.rstrip()
             if len(temp) == 0:
-                val = val[0]
+                val = ''
             else:
                 val = temp
         return val
