@@ -9,6 +9,13 @@ from distutils.command import build_ext
 from distutils.dep_util import newer_group, newer
 from distutils.util import get_platform
 
+try:
+    from Pyrex.Compiler import Main
+    have_pyrex = True
+except ImportError:
+    have_pyrex = False
+
+import numpy.f2py
 from numpy.distutils import log
 from numpy.distutils.misc_util import fortran_ext_match, \
      appendpath, is_string, is_sequence
@@ -46,7 +53,6 @@ class build_src(build_ext.build_ext):
         self.package_dir = None
         self.f2pyflags = None
         self.swigflags = None
-        return
 
     def finalize_options(self):
         self.set_undefined_options('build',
@@ -79,20 +85,17 @@ class build_src(build_ext.build_ext):
             self.swigflags = []
         else:
             self.swigflags = self.swigflags.split() # XXX spaces??
-        return
 
     def run(self):
         if not (self.extensions or self.libraries):
             return
         self.build_sources()
 
-        return
-
     def build_sources(self):
 
         if self.inplace:
-            self.get_package_dir = self.get_finalized_command('build_py')\
-                                   .get_package_dir
+            self.get_package_dir = \
+                     self.get_finalized_command('build_py').get_package_dir
 
         self.build_py_modules_sources()
 
@@ -106,8 +109,6 @@ class build_src(build_ext.build_ext):
                 self.build_extension_sources(ext)
 
         self.build_data_files_sources()
-
-        return
 
     def build_data_files_sources(self):
         if not self.data_files:
@@ -143,7 +144,6 @@ class build_src(build_ext.build_ext):
             else:
                 raise
         self.data_files[:] = new_data_files
-        return
 
     def build_py_modules_sources(self):
         if not self.py_modules:
@@ -170,7 +170,6 @@ class build_src(build_ext.build_ext):
             else:
                 new_py_modules.append(source)
         self.py_modules[:] = new_py_modules
-        return
 
     def build_library_sources(self, lib_name, build_info):
         sources = list(build_info.get('sources',[]))
@@ -237,8 +236,6 @@ class build_src(build_ext.build_ext):
         #    self.distribution.headers.append((package,f))
 
         ext.sources = sources
-
-        return
 
     def generate_sources(self, sources, extension):
         new_sources = []
@@ -334,12 +331,6 @@ class build_src(build_ext.build_ext):
         return new_sources
 
     def pyrex_sources(self, sources, extension):
-        have_pyrex = False
-        try:
-            import Pyrex
-            have_pyrex = True
-        except ImportError:
-            pass
         new_sources = []
         ext_name = extension.name.split('.')[-1]
         for source in sources:
@@ -447,8 +438,7 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file,'newer')) \
                    and not skip_f2py:
                 log.info("f2py: %s" % (source))
-                import numpy.f2py as f2py2e
-                f2py2e.run_main(f2py_options + ['--build-dir',target_dir,source])
+                f2py.run_main(f2py_options + ['--build-dir',target_dir,source])
             else:
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
         else:
@@ -463,10 +453,9 @@ class build_src(build_ext.build_ext):
             depends = f_sources + extension.depends
             if (self.force or newer_group(depends, target_file, 'newer')) \
                    and not skip_f2py:
-                import numpy.f2py as f2py2e
                 log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
-                f2py2e.run_main(f2py_options + ['--lower',
+                f2py.run_main(f2py_options + ['--lower',
                                                 '--build-dir',target_dir]+\
                                 ['-m',ext_name]+f_sources)
             else:
@@ -486,8 +475,7 @@ class build_src(build_ext.build_ext):
             extension.include_dirs.append(self.build_src)
 
         if not skip_f2py:
-            import numpy.f2py as f2py2e
-            d = os.path.dirname(f2py2e.__file__)
+            d = os.path.dirname(f2py.__file__)
             source_c = os.path.join(d,'src','fortranobject.c')
             source_h = os.path.join(d,'src','fortranobject.h')
             if newer(source_c,target_c) or newer(source_h,target_h):
