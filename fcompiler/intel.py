@@ -78,9 +78,14 @@ class IntelFCompiler(FCompiler):
 class IntelItaniumFCompiler(IntelFCompiler):
     compiler_type = 'intele'
     description = 'Intel Fortran Compiler for Itanium apps'
-    version_pattern = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler'\
-                      ' for the Itanium\(TM\)-based applications,'\
-                      ' Version (?P<version>[^\s*]*)'
+    version_pattern = r'Intel\(R\) Fortran (90 Compiler Itanium\(TM\)|Itanium\(R\)) Compiler'\
+                      ' for (the Itanium\(TM\)|Itanium\(R\))-based applications(,|)'\
+                      '\s+Version (?P<version>[^\s*]*)'
+
+#Intel(R) Fortran Itanium(R) Compiler for Itanium(R)-based applications
+#Version 9.1    Build 20060928 Package ID: l_fc_c_9.1.039
+#Copyright (C) 1985-2006 Intel Corporation.  All rights reserved.
+#30 DAY EVALUATION LICENSE
 
     possible_executables = ['ifort', 'efort', 'efc']
 
@@ -130,9 +135,6 @@ class IntelVisualFCompiler(FCompiler):
 
     ar_exe = 'lib.exe'
     fc_exe = 'ifl'
-    if sys.platform=='win32':
-        from distutils.msvccompiler import MSVCCompiler
-        ar_exe = MSVCCompiler().lib
 
     executables = {
         'version_cmd'  : ['<F77>', "-FI -V -c %(fname)s.f -o %(fname)s.o" \
@@ -182,9 +184,9 @@ class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
 
     compiler_type = 'intelev'
     description = 'Intel Visual Fortran Compiler for Itanium apps'
-    version_pattern = r'Intel\(R\) Fortran 90 Compiler Itanium\(TM\) Compiler'\
-                      ' for the Itanium\(TM\)-based applications,'\
-                      ' Version (?P<version>[^\s*]*)'
+    version_pattern = r'Intel\(R\) Fortran (90 Compiler Itanium\(TM\)|Itanium\(R\)) Compiler'\
+                      ' for (the Itanium\(TM\)|Itanium\(R\))-based applications(,|)'\
+                      '\s+Version (?P<version>[^\s*]*)'
 
     fc_exe = 'efl' # XXX this is a wild guess
     ar_exe = IntelVisualFCompiler.ar_exe

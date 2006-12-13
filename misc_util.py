@@ -19,7 +19,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_dependencies', 'is_local_src_dir', 'get_ext_source_files',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath','njoin',
-           'is_sequence', 'is_string', 'as_list', 'gpaths']
+           'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language']
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
@@ -307,6 +307,18 @@ def as_list(seq):
         return list(seq)
     else:
         return [seq]
+
+def get_language(sources):
+    """ Determine language value (c,f77,f90) from sources """
+    language = 'c'
+    for source in sources:
+        if isinstance(source, str):
+            if f90_ext_match(source):
+                language = 'f90'
+                break
+            elif fortran_ext_match(source):
+                language = 'f77'
+    return language
 
 def has_f_sources(sources):
     """ Return True if sources contains Fortran files """
@@ -1008,6 +1020,10 @@ class Configuration(object):
         ext_args['name'] = dot_join(self.name,name)
         ext_args['sources'] = sources
 
+        language = ext_args.get('language',None)
+        if language is None:
+            ext_args['language'] = get_language(sources)
+
         if ext_args.has_key('extra_info'):
             extra_info = ext_args['extra_info']
             del ext_args['extra_info']
@@ -1066,10 +1082,15 @@ class Configuration(object):
           include_dirs
           extra_compiler_args
           f2py_options
+          language
         """
         build_info = copy.copy(build_info)
         name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
+
+        language = build_info.get('language',None)
+        if language is None:
+            build_info['language'] = get_language(sources)
 
         self._fix_paths_dict(build_info)
 
@@ -1191,14 +1212,32 @@ class Configuration(object):
     def _get_svn_revision(self,path):
         """ Return path's SVN revision number.
         """
-        entries = njoin(path,'.svn','entries')
         revision = None
+        m = None
+        try:
+            sin, sout = os.popen4('svnversion')
+            m = re.match(r'(?P<revision>\d+)', sout.read())
+        except:
+            pass
+        if m:
+            revision = int(m.group('revision'))
+            return revision
+        if sys.platform=='win32' and os.environ.get('SVN_ASP_DOT_NET_HACK',None):
+            entries = njoin(path,'_svn','entries')
+        else:
+            entries = njoin(path,'.svn','entries')
         if os.path.isfile(entries):
             f = open(entries)
-            m = re.search(r'revision="(?P<revision>\d+)"',f.read())
+            fstr = f.read()
             f.close()
-            if m:
-                revision = int(m.group('revision'))
+            if fstr[:5] == '<?xml':  # pre 1.4
+                m = re.search(r'revision="(?P<revision>\d+)"',fstr)
+                if m:
+                    revision = int(m.group('revision'))
+            else:  # non-xml entries file --- check to be sure that
+                m = re.search(r'dir[\n\r]+(?P<revision>\d+)', fstr)
+                if m:
+                    revision = int(m.group('revision'))
         return revision
 
     def get_version(self, version_file=None, version_variable=None):
@@ -1351,7 +1390,11 @@ def default_config_dict(name = None, parent_name = None, local_path=None):
 def dict_append(d, **kws):
     for k, v in kws.items():
         if d.has_key(k):
-            d[k].extend(v)
+            ov = d[k]
+            if isinstance(ov,str):
+                d[k] = v
+            else:
+                d[k].extend(v)
         else:
             d[k] = v
 

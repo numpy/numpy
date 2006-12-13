@@ -29,7 +29,7 @@ class GnuFCompiler(FCompiler):
     executables = {
         'version_cmd'  : [None, "--version"],
         'compiler_f77' : [None, "-g", "-Wall","-fno-second-underscore"],
-        'compiler_f90' : None,
+        'compiler_f90' : None, # Use --fcompiler=gnu95 for f90 codes
         'compiler_fix' : None,
         'linker_so'    : [None, "-g", "-Wall"],
         'archiver'     : ["ar", "-cr"],
@@ -50,6 +50,8 @@ class GnuFCompiler(FCompiler):
             executables[key].append('-mno-cygwin')
 
     g2c = 'g2c'
+
+    suggested_f90_compiler = 'gnu95'
 
     #def get_linker_so(self):
     #    # win32 linking should be handled by standard linker
@@ -277,5 +279,8 @@ if __name__ == '__main__':
     from numpy.distutils.fcompiler import new_fcompiler
     #compiler = new_fcompiler(compiler='gnu')
     compiler = GnuFCompiler()
+    compiler.customize()
+    print compiler.get_version()
+    compiler = Gnu95FCompiler()
     compiler.customize()
     print compiler.get_version()

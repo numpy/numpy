@@ -49,7 +49,7 @@ class FCompiler(CCompiler):
     DON'T call these methods (except get_version) after
     constructing a compiler instance or inside any other method.
     All methods, except get_version_cmd() and get_flags_version(), may
-    call get_version() method.
+    call the get_version() method.
 
     After constructing a compiler instance, always call customize(dist=None)
     method that finalizes compiler construction and makes the following
@@ -170,6 +170,11 @@ class FCompiler(CCompiler):
                   'ranlib']:
             if e not in self.executables:
                 self.executables[e] = None
+
+    # If compiler does not support compiling Fortran 90 then it can
+    # suggest using another compiler. For example, gnu would suggest
+    # gnu95 compiler type when there are F90 sources.
+    suggested_f90_compiler = None
 
     ######################################################################
     ## Methods that subclasses may redefine. But don't call these methods!
@@ -471,14 +476,14 @@ class FCompiler(CCompiler):
             flavor = ':f90'
             compiler = self.compiler_f90
             if compiler is None:
-                raise DistutilsExecError, 'f90 not supported by '\
-                      +self.__class__.__name__
+                raise DistutilsExecError, 'f90 not supported by %s needed for %s'\
+                      % (self.__class__.__name__,src)
         else:
             flavor = ':fix'
             compiler = self.compiler_fix
             if compiler is None:
-                raise DistutilsExecError, 'f90 (fixed) not supported by '\
-                      +self.__class__.__name__
+                raise DistutilsExecError, 'f90 (fixed) not supported by %s needed for %s'\
+                      % (self.__class__.__name__,src)
         if self.object_switch[-1]==' ':
             o_args = [self.object_switch.strip(),obj]
         else:
@@ -642,7 +647,8 @@ def load_all_fcompiler_classes():
                                                         klass,
                                                         klass.description)
 
-def _find_existing_fcompiler(compiler_types, osname=None, platform=None):
+def _find_existing_fcompiler(compiler_types, osname=None, platform=None,
+                             requiref90=False):
     from numpy.distutils.core import get_distribution
     dist = get_distribution(always=True)
     for compiler_type in compiler_types:
@@ -651,6 +657,21 @@ def _find_existing_fcompiler(compiler_types, osname=None, platform=None):
             c = new_fcompiler(plat=platform, compiler=compiler_type)
             c.customize(dist)
             v = c.get_version()
+            if requiref90 and c.compiler_f90 is None:
+                v = None
+                new_compiler = c.suggested_f90_compiler
+                if new_compiler:
+                    log.warn('Trying %r compiler as suggested by %r '
+                             'compiler for f90 support.' % (compiler,
+                                                            new_compiler))
+                    c = new_fcompiler(plat=platform, compiler=new_compiler)
+                    c.customize(dist)
+                    v = c.get_version()
+                    if v is not None:
+                        compiler_type = new_compiler
+            if requiref90 and c.compiler_f90 is None:
+                raise ValueError('%s does not support compiling f90 codes, '
+                                 'skipping.' % (c.__class__.__name__))
         except DistutilsModuleError:
             pass
         except CompilerNotFound:
@@ -659,7 +680,7 @@ def _find_existing_fcompiler(compiler_types, osname=None, platform=None):
             return compiler_type
     return None
 
-def get_default_fcompiler(osname=None, platform=None):
+def get_default_fcompiler(osname=None, platform=None, requiref90=False):
     """Determine the default Fortran compiler to use for the given platform."""
     if osname is None:
         osname = os.name
@@ -673,14 +694,16 @@ def get_default_fcompiler(osname=None, platform=None):
         matching_compiler_types.append('gnu')
     compiler_type =  _find_existing_fcompiler(matching_compiler_types,
                                               osname=osname,
-                                              platform=platform)
+                                              platform=platform,
+                                              requiref90=requiref90)
     return compiler_type
 
 def new_fcompiler(plat=None,
                   compiler=None,
                   verbose=0,
                   dry_run=0,
-                  force=0):
+                  force=0,
+                  requiref90=False):
     """Generate an instance of some FCompiler subclass for the supplied
     platform/compiler combination.
     """
@@ -688,7 +711,7 @@ def new_fcompiler(plat=None,
     if plat is None:
         plat = os.name
     if compiler is None:
-        compiler = get_default_fcompiler(plat)
+        compiler = get_default_fcompiler(plat, requiref90=requiref90)
     try:
         module_name, klass, long_description = fcompiler_class[compiler]
     except KeyError:
@@ -774,7 +797,8 @@ is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z',re.I).match
 _has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-',re.I).search
 _has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-',re.I).search
 _has_fix_header = re.compile(r'-[*]-\s*fix\s*-[*]-',re.I).search
-_free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]',re.I).match
+_free_f90_start = re.compile(r'[^c*!]\s*[^\s\d\t]',re.I).match
+
 def is_free_format(file):
     """Check if file is in free format Fortran."""
     # f90 allows both fixed and free format, assuming fixed unless
@@ -782,16 +806,17 @@ def is_free_format(file):
     result = 0
     f = open(file,'r')
     line = f.readline()
-    n = 15 # the number of non-comment lines to scan for hints
+    n = 10000 # the number of non-comment lines to scan for hints
     if _has_f_header(line):
         n = 0
     elif _has_f90_header(line):
         n = 0
         result = 1
     while n>0 and line:
-        if line[0]!='!':
+        line = line.rstrip()
+        if line and line[0]!='!':
             n -= 1
-            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-2:-1]=='&':
+            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-1:]=='&':
                 result = 1
                 break
         line = f.readline()

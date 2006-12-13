@@ -2,6 +2,7 @@
 import sys
 import distutils.core
 from distutils.core import Command
+from distutils.errors import DistutilsSetupError
 from distutils import log
 from numpy.distutils.fcompiler import show_fcompilers, new_fcompiler
 
@@ -76,7 +77,28 @@ class config_fc(Command):
                            verbose=self.distribution.verbose)
         fc.customize(self.distribution)
         self.fcompiler = fc
+        if self.fcompiler.compiler_f90 is not None:
+            self.f90compiler = fc
+        else:
+            self.f90compiler = None
         log.info('%s (%s)' % (fc.description, fc.get_version()))
 
     def run(self):
         pass
+
+    def get_f77_compiler(self):
+        if self.fcompiler.compiler_f77 is None:
+            raise DistutilsSetupError("could not find a Fortran 77 compiler")
+        return self.fcompiler
+
+    def get_f90_compiler(self):
+        if self.f90compiler is not None:
+            return self.f90compiler
+        if self.fcompiler.compiler_f90 is None:
+            fc = new_fcompiler(compiler=self.fcompiler,
+                               verbose=self.distribution.verbose,
+                               requiref90=True)
+            if fc is None:
+                raise DistutilsSetupError("could not find a Fortran 90 compiler")
+            self.f90compiler = fc
+            return fc

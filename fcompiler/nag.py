@@ -29,7 +29,11 @@ class NAGFCompiler(FCompiler):
     def get_flags_opt(self):
         return ['-O4']
     def get_flags_arch(self):
-        return ['-target=native']
+        version = self.get_version()
+        if version < '5.1':
+            return ['-target=native']
+        else:
+            return ['']
     def get_flags_debug(self):
         return ['-g','-gline','-g90','-nan','-C']
 

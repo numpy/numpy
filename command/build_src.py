@@ -438,7 +438,8 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file,'newer')) \
                    and not skip_f2py:
                 log.info("f2py: %s" % (source))
-                f2py.run_main(f2py_options + ['--build-dir',target_dir,source])
+                numpy.f2py.run_main(f2py_options
+                                    + ['--build-dir',target_dir,source])
             else:
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
         else:
@@ -455,7 +456,7 @@ class build_src(build_ext.build_ext):
                    and not skip_f2py:
                 log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
-                f2py.run_main(f2py_options + ['--lower',
+                numpy.f2py.run_main(f2py_options + ['--lower',
                                                 '--build-dir',target_dir]+\
                                 ['-m',ext_name]+f_sources)
             else:
@@ -475,7 +476,7 @@ class build_src(build_ext.build_ext):
             extension.include_dirs.append(self.build_src)
 
         if not skip_f2py:
-            d = os.path.dirname(f2py.__file__)
+            d = os.path.dirname(numpy.f2py.__file__)
             source_c = os.path.join(d,'src','fortranobject.c')
             source_h = os.path.join(d,'src','fortranobject.h')
             if newer(source_c,target_c) or newer(source_h,target_h):

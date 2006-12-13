@@ -502,6 +502,8 @@ class system_info:
             exts = [so_ext] + static_exts
         if sys.platform == 'cygwin':
             exts.append('.dll.a')
+        if sys.platform == 'darwin':
+            exts.append('.dylib')
         return exts
 
     def check_libs(self,lib_dir,libs,opt_libs =[]):
@@ -806,7 +808,10 @@ class mkl_info(system_info):
             return
         info = {}
         dict_append(info,**mkl)
-        dict_append(info,libraries = ['pthread'], include_dirs = incl_dirs)
+        dict_append(info,
+                    libraries = ['pthread'],
+                    define_macros=[('SCIPY_MKL_H',None)],
+                    include_dirs = incl_dirs)
         self.set_info(**info)
 
 class lapack_mkl_info(mkl_info):

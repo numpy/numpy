@@ -75,8 +75,15 @@ class build_ext (old_build_ext):
                     need_f_compiler = True
                     break
 
+        requiref90 = False
+        if need_f_compiler:
+            for ext in self.extensions:
+                if getattr(ext,'language','c')=='f90':
+                    requiref90 = True
+                    break
+
         # Determine if C++ compiler is needed.
-        need_cxx_compiler = 0
+        need_cxx_compiler = False
         for ext in self.extensions:
             if has_cxx_sources(ext.sources):
                 need_cxx_compiler = True
@@ -96,6 +103,11 @@ class build_ext (old_build_ext):
 
         # Initialize Fortran/C++ compilers if needed.
         if need_f_compiler:
+            cf = self.get_finalized_command('config_fc')
+            if requiref90:
+                self.fcompiler = cf.get_f90_compiler()
+            else:
+                self.fcompiler = cf.get_f77_compiler()
             if self.fcompiler.get_version():
                 self.fcompiler.customize_cmd(self)
                 self.fcompiler.show_customization()
@@ -343,7 +355,7 @@ class build_ext (old_build_ext):
         # make g77-compiled static libs available to MSVC
         lib_added = False
         for lib in self.fcompiler.libraries:
-            if not lib.startswtih('msvcr'):
+            if not lib.startswith('msvcr'):
                 c_libraries.append(lib)
                 p = combine_paths(f_lib_dirs, 'lib' + lib + '.a')
                 if p:

@@ -198,7 +198,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
         # 'CCSHARED', 'LDSHARED', 'SO')
         try:
             self.compiler_so.remove('-Wstrict-prototypes')
-        except ValueError:
+        except (AttributeError, ValueError):
             pass
         
         if hasattr(self,'compiler') and self.compiler[0].find('cc')>=0:

@@ -9,6 +9,11 @@ from distutils.dep_util import newer_group
 from numpy.distutils.misc_util import filter_sources, has_f_sources,\
      has_cxx_sources, all_strings, get_lib_source_files, is_sequence
 
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 class build_clib(old_build_clib):
 
     description = "build C/C++/F libraries used by Python extensions"
@@ -24,29 +29,41 @@ class build_clib(old_build_clib):
 
     def finalize_options(self):
         old_build_clib.finalize_options(self)
-        self.set_undefined_options('build_ext',
+        self._languages = None
+        self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
 
+    def get_languages(self):
+        """Return a set of language names used in this library.
+        Valid language names are 'c', 'f77', and 'f90'.
+
+        Note that this has a side effect of running 'build_src'.
+        """
+        if self._languages is None:
+            languages = set()
+            for (lib_name, build_info) in self.libraries:
+                if not all_strings(build_info.get('sources',[])):
+                    self.run_command('build_src')
+                l = build_info.get('language',None)
+                if l:
+                    languages.add(l)
+            self._languages = languages
+        return self._languages
+
     def have_f_sources(self):
-        for (lib_name, build_info) in self.libraries:
-            if has_f_sources(build_info.get('sources',[])):
-                return True
-        return False
+        l = self.get_languages()
+        return 'f90' in l or 'f77' in l
 
     def have_cxx_sources(self):
-        for (lib_name, build_info) in self.libraries:
-            if has_cxx_sources(build_info.get('sources',[])):
-                return True
-        return False
+        l = self.get_languages()
+        return 'c' in l
 
     def run(self):
         if not self.libraries:
             return
 
         # Make sure that library sources are complete.
-        for (lib_name, build_info) in self.libraries:
-            if not all_strings(build_info.get('sources',[])):
-                self.run_command('build_src')
+        languages = self.get_languages()
 
         from distutils.ccompiler import new_compiler
         self.compiler = new_compiler(compiler=self.compiler,
@@ -63,6 +80,11 @@ class build_clib(old_build_clib):
         self.compiler.show_customization()
 
         if self.have_f_sources():
+            cf = self.get_finalized_command('config_fc')
+            if 'f90' in languages:
+                self.fcompiler = cf.get_f90_compiler()
+            else:
+                self.fcompiler = cf.get_f77_compiler()
             libraries = self.libraries
             self.libraries = None
             self.fcompiler.customize_cmd(self)
@@ -111,10 +133,12 @@ class build_clib(old_build_clib):
                          'for fortran compiler: %s' \
                          % (config_fc))
                 from numpy.distutils.fcompiler import new_fcompiler
+                requiref90 = build_info.get('language','c')=='f90'
                 fcompiler = new_fcompiler(compiler=self.fcompiler.compiler_type,
                                           verbose=self.verbose,
                                           dry_run=self.dry_run,
-                                          force=self.force)
+                                          force=self.force,
+                                          requiref90=requiref90)
                 fcompiler.customize(config_fc)
 
             macros = build_info.get('macros')
