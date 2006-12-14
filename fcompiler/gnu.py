@@ -15,7 +15,7 @@ compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 class GnuFCompiler(FCompiler):
 
     compiler_type = 'gnu'
-    description = 'GNU Fortran Compiler'
+    description = 'GNU Fortran 77 compiler'
     version_match = simple_version_match(start=r'GNU Fortran (?!95)')
 
     # 'g77 --version' results
@@ -236,7 +236,7 @@ class GnuFCompiler(FCompiler):
 class Gnu95FCompiler(GnuFCompiler):
 
     compiler_type = 'gnu95'
-    description = 'GNU 95 Fortran Compiler'
+    description = 'GNU Fortran 95 compiler'
     version_match = simple_version_match(start='GNU Fortran 95')
 
     # 'gfortran --version' results:

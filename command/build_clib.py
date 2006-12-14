@@ -32,18 +32,17 @@ class build_clib(old_build_clib):
         self._languages = None
         self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
+        # we set this to the appropiate Fortran compiler object
+        # (f77 or f90) in the .run() method
+        self._fcompiler = None
 
-    def get_languages(self):
+    def languages(self):
         """Return a set of language names used in this library.
         Valid language names are 'c', 'f77', and 'f90'.
-
-        Note that this has a side effect of running 'build_src'.
         """
         if self._languages is None:
             languages = set()
             for (lib_name, build_info) in self.libraries:
-                if not all_strings(build_info.get('sources',[])):
-                    self.run_command('build_src')
                 l = build_info.get('language',None)
                 if l:
                     languages.add(l)
@@ -51,19 +50,21 @@ class build_clib(old_build_clib):
         return self._languages
 
     def have_f_sources(self):
-        l = self.get_languages()
+        l = self.languages()
         return 'f90' in l or 'f77' in l
 
     def have_cxx_sources(self):
-        l = self.get_languages()
-        return 'c' in l
+        l = self.languages()
+        return 'c++' in l
 
     def run(self):
         if not self.libraries:
             return
 
         # Make sure that library sources are complete.
-        languages = self.get_languages()
+        self.run_command('build_src')
+
+        languages = self.languages()
 
         from distutils.ccompiler import new_compiler
         self.compiler = new_compiler(compiler=self.compiler,
@@ -80,17 +81,17 @@ class build_clib(old_build_clib):
         self.compiler.show_customization()
 
         if self.have_f_sources():
-            cf = self.get_finalized_command('config_fc')
             if 'f90' in languages:
-                self.fcompiler = cf.get_f90_compiler()
+                fc = self.fcompiler.f90()
             else:
-                self.fcompiler = cf.get_f77_compiler()
+                fc = self.fcompiler.f77()
             libraries = self.libraries
             self.libraries = None
-            self.fcompiler.customize_cmd(self)
+            fc.customize_cmd(self)
             self.libraries = libraries
 
-            self.fcompiler.show_customization()
+            fc.show_customization()
+            self._fcompiler = fc
 
         self.build_libraries(self.libraries)
 
@@ -102,11 +103,10 @@ class build_clib(old_build_clib):
         return filenames
 
     def build_libraries(self, libraries):
+        fcompiler = self._fcompiler
+        compiler = self.compiler
 
         for (lib_name, build_info) in libraries:
-            # default compilers
-            compiler = self.compiler
-            fcompiler = self.fcompiler
 
             sources = build_info.get('sources')
             if sources is None or not is_sequence(sources):
@@ -132,13 +132,6 @@ class build_clib(old_build_clib):
                 log.info('using setup script specified config_fc '\
                          'for fortran compiler: %s' \
                          % (config_fc))
-                from numpy.distutils.fcompiler import new_fcompiler
-                requiref90 = build_info.get('language','c')=='f90'
-                fcompiler = new_fcompiler(compiler=self.fcompiler.compiler_type,
-                                          verbose=self.verbose,
-                                          dry_run=self.dry_run,
-                                          force=self.force,
-                                          requiref90=requiref90)
                 fcompiler.customize(config_fc)
 
             macros = build_info.get('macros')

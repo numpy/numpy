@@ -10,6 +10,7 @@ __all__ = ['FCompiler','new_fcompiler','show_fcompilers',
 import os
 import sys
 import re
+import new
 try:
     set
 except NameError:
@@ -63,11 +64,15 @@ class FCompiler(CCompiler):
       libraries
       library_dirs
     """
-    # for documentation purposes, these are the environment variables
-    # used.
+
+    # These are the environment variables and distutils keys used.
     # Each configuration descripition is
     # (<hook name>, <environment variable>, <key in distutils.cfg>)
     # The hook names are handled by the self._environment_hook method.
+    #  - names starting with 'self.' call methods in this class
+    #  - names starting with 'exe.' return the key in the executables dict
+    #  - names like'flags.YYY' return self.get_flag_YYY()
+
     distutils_vars = EnvironmentConfig(
         noopt = (None, None, 'noopt'),
         noarch = (None, None, 'noarch'),
@@ -171,6 +176,14 @@ class FCompiler(CCompiler):
             if e not in self.executables:
                 self.executables[e] = None
 
+    def __copy__(self):
+        obj = new.instance(self.__class__, self.__dict__)
+        obj.distutils_vars = obj.distutils_vars.clone(obj._environment_hook)
+        obj.command_vars = obj.command_vars.clone(obj._environment_hook)
+        obj.flag_vars = obj.flag_vars.clone(obj._environment_hook)
+        obj.executables = obj.executables.copy()
+        return obj
+
     # If compiler does not support compiling Fortran 90 then it can
     # suggest using another compiler. For example, gnu would suggest
     # gnu95 compiler type when there are F90 sources.
@@ -231,11 +244,11 @@ class FCompiler(CCompiler):
                     return fc_exe
             return None
 
-        f77 = set_exe('compiler_f77')
-        if not f77:
-            raise CompilerNotFound('f77')
         f90 = set_exe('compiler_f90')
         if not f90:
+            raise CompilerNotFound('f90')
+        f77 = set_exe('compiler_f77', f90=f90)
+        if not f77:
             raise CompilerNotFound('f90')
         set_exe('compiler_fix', f90=f90)
 
@@ -372,6 +385,11 @@ class FCompiler(CCompiler):
             vflags = self.flag_vars.version
             self.set_executables(version_cmd=[vers_cmd]+vflags)
 
+        f77flags = []
+        f90flags = []
+        freeflags = []
+        fixflags = []
+
         if f77:
             f77flags = self.flag_vars.f77
         if f90:
@@ -438,11 +456,6 @@ class FCompiler(CCompiler):
 
         self.set_library_dirs(self.get_library_dirs())
         self.set_libraries(self.get_libraries())
-
-        verbose = self.distutils_vars.get('verbose', self.verbose)
-        if verbose:
-            self.dump_properties()
-        return
 
     def dump_properties(self):
         """ Print out the attributes of a compiler instance. """
@@ -680,8 +693,7 @@ def _find_existing_fcompiler(compiler_types, osname=None, platform=None,
             return compiler_type
     return None
 
-def get_default_fcompiler(osname=None, platform=None, requiref90=False):
-    """Determine the default Fortran compiler to use for the given platform."""
+def available_fcompilers_for_platform(osname=None, platform=None):
     if osname is None:
         osname = os.name
     if platform is None:
@@ -689,9 +701,18 @@ def get_default_fcompiler(osname=None, platform=None, requiref90=False):
     matching_compiler_types = []
     for pattern, compiler_type in _default_compilers:
         if re.match(pattern, platform) or re.match(pattern, osname):
-            matching_compiler_types.extend(list(compiler_type))
+            for ct in compiler_type:
+                if ct not in matching_compiler_types:
+                    matching_compiler_types.append(ct)
     if not matching_compiler_types:
         matching_compiler_types.append('gnu')
+    return matching_compiler_types
+
+def get_default_fcompiler(osname=None, platform=None, requiref90=False):
+    """Determine the default Fortran compiler to use for the given
+    platform."""
+    matching_compiler_types = available_fcompilers_for_platform(osname,
+                                                                platform)
     compiler_type =  _find_existing_fcompiler(matching_compiler_types,
                                               osname=osname,
                                               platform=platform,
@@ -725,7 +746,7 @@ def new_fcompiler(plat=None,
     compiler = klass(verbose=verbose, dry_run=dry_run, force=force)
     return compiler
 
-def show_fcompilers(dist = None):
+def show_fcompilers(dist=None):
     """Print list of available compilers (used by the "--help-fcompiler"
     option to "config_fc").
     """
@@ -735,6 +756,10 @@ def show_fcompilers(dist = None):
         dist = Distribution()
         dist.script_name = os.path.basename(sys.argv[0])
         dist.script_args = ['config_fc'] + sys.argv[1:]
+        try:
+            dist.script_args.remove('--help-fcompiler')
+        except ValueError:
+            pass
         dist.cmdclass['config_fc'] = config_fc
         dist.parse_config_files()
         dist.parse_command_line()
@@ -744,35 +769,38 @@ def show_fcompilers(dist = None):
     compilers_ni = []
     if not fcompiler_class:
         load_all_fcompiler_classes()
-    not_available = object()
-    for compiler in fcompiler_class.keys():
-        v = not_available
+    platform_compilers = available_fcompilers_for_platform()
+    for compiler in platform_compilers:
+        v = None
         try:
             c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
         except (DistutilsModuleError, CompilerNotFound):
-            v = not_available
+            pass
         if v is None:
             compilers_na.append(("fcompiler="+compiler, None,
                               fcompiler_class[compiler][2]))
-        elif v is not_available:
-            compilers_ni.append(("fcompiler="+compiler, None,
-                                 fcompiler_class[compiler][2]))
         else:
+            c.dump_properties()
             compilers.append(("fcompiler="+compiler, None,
                               fcompiler_class[compiler][2] + ' (%s)' % v))
+
+    compilers_ni = list(set(fcompiler_class.keys()) - set(platform_compilers))
+    compilers_ni = [("fcompiler="+fc, None, fcompiler_class[fc][2])
+                    for fc in compilers_ni]
 
     compilers.sort()
     compilers_na.sort()
     compilers_ni.sort()
     pretty_printer = FancyGetopt(compilers)
-    pretty_printer.print_help("List of available Fortran compilers:")
+    pretty_printer.print_help("Fortran compilers found:")
     pretty_printer = FancyGetopt(compilers_na)
-    pretty_printer.print_help("List of unavailable Fortran compilers:")
+    pretty_printer.print_help("Compilers available for this "
+                              "platform, but not found:")
     if compilers_ni:
         pretty_printer = FancyGetopt(compilers_ni)
-        pretty_printer.print_help("List of unimplemented Fortran compilers:")
+        pretty_printer.print_help("Compilers not available on this platform:")
     print "For compiler details, run 'config_fc --verbose' setup command."
 
 def dummy_fortran_file():

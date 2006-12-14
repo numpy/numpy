@@ -3,11 +3,12 @@
 # compilers (they must define linker_exe first).
 # Pearu Peterson
 
-import os, signal
+import os, signal, copy
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
 from numpy.distutils.exec_command import exec_command
+from numpy.distutils.fcompiler import FCompiler, new_fcompiler
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -27,26 +28,31 @@ class config(old_config):
         f = self.distribution.get_command_obj('config_fc')
         self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
+        self._fcompiler = None
 
     def run(self):
         self._check_compiler()
 
-    def _check_compiler (self):
+    def _check_compiler(self):
         old_config._check_compiler(self)
-        from numpy.distutils.fcompiler import FCompiler, new_fcompiler
-        if not isinstance(self.fcompiler, FCompiler):
-            self.fcompiler = new_fcompiler(compiler=self.fcompiler,
-                                           dry_run=self.dry_run, force=1)
-            self.fcompiler.customize(self.distribution)
-            self.fcompiler.customize_cmd(self)
-            self.fcompiler.show_customization()
 
-    def _wrap_method(self,mth,lang,args):
+    def get_fcompiler(self):
+        if self._fcompiler is None:
+            fc = self.fcompiler.fortran()
+            fc.force = 1
+            fc.dry_run = self.dry_run
+            fc.customize(self.distribution)
+            fc.customize_cmd(self)
+            fc.show_customization()
+            self._fcompiler = fc
+        return self._fcompiler
+
+    def _wrap_method(self, mth, lang, args):
         from distutils.ccompiler import CompileError
         from distutils.errors import DistutilsExecError
         save_compiler = self.compiler
-        if lang in ['f77','f90']:
-            self.compiler = self.fcompiler
+        if lang in ('f77', 'f90'):
+            self.compiler = self.get_fcompiler()
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError,CompileError),msg:

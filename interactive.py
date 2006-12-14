@@ -20,7 +20,7 @@ def show_environ(*args):
 
 def show_fortran_compilers(*args):
     from fcompiler import show_fcompilers
-    show_fcompilers({})
+    show_fcompilers()
 
 def show_compilers(*args):
     from distutils.ccompiler import show_compilers

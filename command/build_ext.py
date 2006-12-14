@@ -19,6 +19,9 @@ from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      get_numpy_include_dirs, is_sequence
 
 
+def ext_language(ext):
+    return getattr(ext, 'language', 'c')
+
 class build_ext (old_build_ext):
 
     description = "build C/C++/F extensions (compile/link to build directory)"
@@ -39,6 +42,42 @@ class build_ext (old_build_ext):
             self.include_dirs.extend(self.distribution.include_dirs or [])
         self.set_undefined_options('config_fc',
                                    ('fcompiler', 'fcompiler'))
+        self._fcompiler = None
+
+    def initialize_fcompiler(self, build_clib):
+        # Determine if Fortran compiler is needed.
+        requiref77 = requiref90 = False
+        if build_clib:
+            lang = build_clib.languages()
+            requiref77 = 'f77' in lang
+            requiref90 = 'f90' in lang
+        else:
+            for ext in self.extensions:
+                language = ext_language(ext)
+                if language == 'f77':
+                    requiref77 = True
+                elif language == 'f90':
+                    requiref90 = True
+                elif has_f_sources(ext.sources):
+                    # because we don't know any better, assume F77
+                    requiref77 = True
+
+        if not (requiref77 or requiref90):
+            return
+
+        if requiref90:
+            self.fcompiler.need_f90()
+        if requiref77:
+            self.fcompiler.need_f77()
+
+        fc = self.fcompiler.fortran(requiref90)
+        if fc.get_version():
+            fc.customize_cmd(self)
+            fc.show_customization()
+        else:
+            self.warn('fcompiler=%s is not available.' % (
+                fc.compiler_type,))
+        self._fcompiler = fc
 
     def run(self):
         if not self.extensions:
@@ -46,41 +85,17 @@ class build_ext (old_build_ext):
 
         # Make sure that extension sources are complete.
         self.run_command('build_src')
-#        for ext in self.extensions:
-#            if not all_strings(ext.sources):
-#                 self.run_command('build_src')
 
+        # Not including C libraries to the list of
+        # extension libraries automatically to prevent
+        # bogus linking commands. Extensions must
+        # explicitly specify the C libraries that they use.
         if self.distribution.has_c_libraries():
             self.run_command('build_clib')
             build_clib = self.get_finalized_command('build_clib')
             self.library_dirs.append(build_clib.build_clib)
         else:
             build_clib = None
-
-        # Not including C libraries to the list of
-        # extension libraries automatically to prevent
-        # bogus linking commands. Extensions must
-        # explicitly specify the C libraries that they use.
-
-        # Determine if Fortran compiler is needed.
-        if build_clib and build_clib.fcompiler is not None:
-            need_f_compiler = True
-        else:
-            need_f_compiler = False
-            for ext in self.extensions:
-                if has_f_sources(ext.sources):
-                    need_f_compiler = True
-                    break
-                if getattr(ext,'language','c') in ['f77','f90']:
-                    need_f_compiler = True
-                    break
-
-        requiref90 = False
-        if need_f_compiler:
-            for ext in self.extensions:
-                if getattr(ext,'language','c')=='f90':
-                    requiref90 = True
-                    break
 
         # Determine if C++ compiler is needed.
         need_cxx_compiler = False
@@ -101,20 +116,7 @@ class build_ext (old_build_ext):
         self.compiler.customize_cmd(self)
         self.compiler.show_customization()
 
-        # Initialize Fortran/C++ compilers if needed.
-        if need_f_compiler:
-            cf = self.get_finalized_command('config_fc')
-            if requiref90:
-                self.fcompiler = cf.get_f90_compiler()
-            else:
-                self.fcompiler = cf.get_f77_compiler()
-            if self.fcompiler.get_version():
-                self.fcompiler.customize_cmd(self)
-                self.fcompiler.show_customization()
-            else:
-                self.warn('fcompiler=%s is not available.' % (
-                    self.fcompiler.compiler_type,))
-                self.fcompiler = None
+        self.initialize_fcompiler(build_clib)
 
         # Build extensions
         self.build_extensions()
@@ -122,6 +124,62 @@ class build_ext (old_build_ext):
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
         return sources
+
+    def get_fortran_objects(self, ext, f_sources, fmodule_sources,
+                            macros, include_dirs):
+        if not f_sources and not fmodule_sources:
+            return None, []
+
+        fcompiler = self._fcompiler
+
+        extra_postargs = []
+        module_dirs = ext.module_dirs[:]
+
+        macros = []
+
+        if check_for_f90_modules:
+            module_build_dir = os.path.join(
+                self.build_temp,os.path.dirname(
+                self.get_ext_filename(fullname)))
+
+            self.mkpath(module_build_dir)
+            if fcompiler.module_dir_switch is None:
+                existing_modules = glob('*.mod')
+            extra_postargs += fcompiler.module_options(\
+                module_dirs,module_build_dir)
+
+        f_objects = []
+        if fmodule_sources:
+            log.info("compiling Fortran 90 module sources")
+            f_objects = fcompiler.compile(fmodule_sources,
+                                          output_dir=self.build_temp,
+                                          macros=macros,
+                                          include_dirs=include_dirs,
+                                          debug=self.debug,
+                                          extra_postargs=extra_postargs,
+                                          depends=ext.depends)
+
+        if check_for_f90_modules \
+               and fcompiler.module_dir_switch is None:
+            for f in glob('*.mod'):
+                if f in existing_modules:
+                    continue
+                try:
+                    self.move_file(f, module_build_dir)
+                except DistutilsFileError:  # already exists in destination
+                    os.remove(f)
+
+        if f_sources:
+            log.info("compiling Fortran sources")
+            f_objects += fcompiler.compile(f_sources,
+                                           output_dir=self.build_temp,
+                                           macros=macros,
+                                           include_dirs=include_dirs,
+                                           debug=self.debug,
+                                           extra_postargs=extra_postargs,
+                                           depends=ext.depends)
+
+        return fcompiler, f_objects
 
     def build_extension(self, ext):
         sources = ext.sources
@@ -212,58 +270,10 @@ class build_ext (old_build_ext):
                                               **kws)
             self.compiler.compiler_so[0] = old_compiler
 
-        check_for_f90_modules = not not fmodule_sources
-
-        if f_sources or fmodule_sources:
-            extra_postargs = []
-            module_dirs = ext.module_dirs[:]
-
-            #if self.fcompiler.compiler_type=='ibm':
-            macros = []
-
-            if check_for_f90_modules:
-                module_build_dir = os.path.join(\
-                    self.build_temp,os.path.dirname(\
-                    self.get_ext_filename(fullname)))
-
-                self.mkpath(module_build_dir)
-                if self.fcompiler.module_dir_switch is None:
-                    existing_modules = glob('*.mod')
-                extra_postargs += self.fcompiler.module_options(\
-                    module_dirs,module_build_dir)
-
-            f_objects = []
-            if fmodule_sources:
-                log.info("compiling Fortran 90 module sources")
-                f_objects = self.fcompiler.compile(fmodule_sources,
-                                                   output_dir=self.build_temp,
-                                                   macros=macros,
-                                                   include_dirs=include_dirs,
-                                                   debug=self.debug,
-                                                   extra_postargs=extra_postargs,
-                                                   depends=ext.depends)
-
-            if check_for_f90_modules \
-                   and self.fcompiler.module_dir_switch is None:
-                for f in glob('*.mod'):
-                    if f in existing_modules:
-                        continue
-                    try:
-                        self.move_file(f, module_build_dir)
-                    except DistutilsFileError:  # already exists in destination
-                        os.remove(f)
-
-            if f_sources:
-                log.info("compiling Fortran sources")
-                f_objects += self.fcompiler.compile(f_sources,
-                                                    output_dir=self.build_temp,
-                                                    macros=macros,
-                                                    include_dirs=include_dirs,
-                                                    debug=self.debug,
-                                                    extra_postargs=extra_postargs,
-                                                    depends=ext.depends)
-        else:
-            f_objects = []
+        fcompiler, f_objects = self.get_fortran_objects(ext,
+                                                        f_sources,
+                                                        fmodule_sources,
+                                                        macros, include_dirs)
 
         objects = c_objects + f_objects
 
@@ -276,13 +286,10 @@ class build_ext (old_build_ext):
         except:
             pass
 
-        use_fortran_linker = getattr(ext,'language','c') in ['f77','f90'] \
-                             and self.fcompiler is not None
+        use_fortran_linker = getattr(ext,'language','c') in ['f77','f90']
         c_libraries = []
         c_library_dirs = []
-        if use_fortran_linker or f_sources:
-            use_fortran_linker = 1
-        elif self.distribution.has_c_libraries():
+        if not use_fortran_linker and self.distribution.has_c_libraries():
             build_clib = self.get_finalized_command('build_clib')
             f_libs = []
             for (lib_name, build_info) in build_clib.libraries:
@@ -295,8 +302,12 @@ class build_ext (old_build_ext):
                     c_library_dirs.extend(build_info.get('library_dirs',[]))
             for l in ext.libraries:
                 if l in f_libs:
-                    use_fortran_linker = 1
+                    use_fortran_linker = True
+                    fcompiler = self.fcompiler.fortran()
                     break
+
+        if use_fortran_linker and not fcompiler:
+            fcompiler = self.fcompiler.fortran()
 
         # Always use system linker when using MSVC compiler.
         if self.compiler.compiler_type=='msvc' and use_fortran_linker:
@@ -307,8 +318,8 @@ class build_ext (old_build_ext):
             if cxx_sources:
                 # XXX: Which linker should be used, Fortran or C++?
                 log.warn('mixing Fortran and C++ is untested')
-            link = self.fcompiler.link_shared_object
-            language = ext.language or self.fcompiler.detect_language(f_sources)
+            link = fcompiler.link_shared_object
+            language = ext.language or fcompiler.detect_language(f_sources)
         else:
             link = self.compiler.link_shared_object
             if sys.version[:3]>='2.3':
@@ -342,7 +353,8 @@ class build_ext (old_build_ext):
     def _libs_with_msvc_and_fortran(self, c_libraries, c_library_dirs):
         # Always use system linker when using MSVC compiler.
         f_lib_dirs = []
-        for dir in self.fcompiler.library_dirs:
+        fcompiler = self.fcompiler.fortran()
+        for dir in fcompiler.library_dirs:
             # correct path when compiling in Cygwin but with normal Win
             # Python
             if dir.startswith('/usr/lib'):
@@ -354,7 +366,7 @@ class build_ext (old_build_ext):
 
         # make g77-compiled static libs available to MSVC
         lib_added = False
-        for lib in self.fcompiler.libraries:
+        for lib in fcompiler.libraries:
             if not lib.startswith('msvcr'):
                 c_libraries.append(lib)
                 p = combine_paths(f_lib_dirs, 'lib' + lib + '.a')
