@@ -56,7 +56,7 @@ def array_constructor(shape, typecode, thestr, Endian=LittleEndian):
         x = mu.fromstring(thestr, typecode)
     x.shape = shape
     if LittleEndian != Endian:
-        return x.byteswap(TRUE)
+        return x.byteswap(True)
     else:
         return x
 
