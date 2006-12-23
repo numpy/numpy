@@ -129,6 +129,9 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
+    def argsort(self, axis=-1, kind='quicksort', order=None):
+        return self.__array__().argsort(axis, kind, order)
+
     def _generalmethod(self, name, myiter):
         res = [None]*myiter.size
         maxsize = -1
