@@ -122,6 +122,11 @@ def _leading_trailing(a):
         b = _gen.concatenate(tuple(l))
     return b
 
+def _boolFormatter(x):
+    if x: return ' True'
+    else: return 'False'
+    
+
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix=""):
 
@@ -145,10 +150,10 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         format_function = a._format
     except AttributeError:
         dtypeobj = a.dtype.type
-        if issubclass(dtypeobj, _nt.bool):
-            format = "%s"
-            format_function = lambda x: format % x
-        if issubclass(dtypeobj, _nt.integer):
+        if issubclass(dtypeobj, _nt.bool_):
+            # make sure True and False line up.
+            format_function = _boolFormatter
+        elif issubclass(dtypeobj, _nt.integer):
             max_str_len = max(len(str(max_reduce(data))),
                               len(str(min_reduce(data))))
             format = '%' + str(max_str_len) + 'd'
@@ -179,7 +184,6 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 
     next_line_prefix = " " # skip over "["
     next_line_prefix += " "*len(prefix)                  # skip over array(
-
 
     lst = _formatArray(a, format_function, len(a.shape), max_line_width,
                        next_line_prefix, separator,
@@ -248,7 +252,6 @@ def _formatArray(a, format_function, rank, max_line_len,
         leading_items, trailing_items, summary_insert1 = 0, len(a), ""
 
     if rank == 1:
-
         s = ""
         line = next_line_prefix
         for i in xrange(leading_items):
