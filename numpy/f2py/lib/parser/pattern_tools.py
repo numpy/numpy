@@ -278,6 +278,8 @@ defined_unary_op = Pattern('<defined-unary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_binary_op = Pattern('<defined-binary-op>','[.][A-Z]+[.]',flags=re.I)
 defined_operator = defined_unary_op | defined_binary_op | extended_intrinsic_operator
 abs_defined_operator = abs(defined_operator)
+defined_op = Pattern('<defined-op>','[.][A-Z]+[.]',flags=re.I)
+abs_defined_op = abs(defined_op)
 
 non_defined_binary_op = intrinsic_operator | logical_literal_constant
 
@@ -338,6 +340,9 @@ intent_spec = Pattern('<intent-spec>', r'INOUT|IN|OUT', flags=re.I)
 abs_intent_spec = abs(intent_spec)
 
 subroutine = Pattern('<subroutine>', r'SUBROUTINE', flags=re.I)
+
+select_case = Pattern('<select-case>', r'SELECT\s*CASE', flags=re.I, value='SELECT CASE')
+abs_select_case = abs(select_case)
 
 def _test():
     assert name.match('a1_a')

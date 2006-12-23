@@ -508,14 +508,14 @@ class test_Type_Attr_Spec(NumpyTestCase): # R431
         a = cls('abstract')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'ABSTRACT')
-        assert_equal(repr(a),"Type_Attr_Spec('ABSTRACT', None)")
+        assert_equal(repr(a),"Type_Attr_Spec('ABSTRACT')")
 
         a = cls('bind (c )')
-        assert isinstance(a, cls),`a`
+        assert isinstance(a, Language_Binding_Spec),`a`
         assert_equal(str(a),'BIND(C)')
 
         a = cls('extends(a)')
-        assert isinstance(a, cls),`a`
+        assert isinstance(a, Type_EXTENDS_Parent_Type_Name),`a`
         assert_equal(str(a),'EXTENDS(a)')
 
         a = cls('private')
@@ -625,6 +625,19 @@ class test_Component_Decl(NumpyTestCase): # R442
         a = cls('a(1) => NULL')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a(1) => NULL')
+
+class test_Final_Binding(NumpyTestCase): # R454
+
+    def check_simple(self):
+        cls = Final_Binding
+        a = cls('final a, b')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'FINAL :: a, b')
+        assert_equal(repr(a),"Final_Binding('FINAL', Final_Subroutine_Name_List(',', (Name('a'), Name('b'))))")
+
+        a = cls('final::a')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'FINAL :: a')
 
 class test_Derived_Type_Spec(NumpyTestCase): # R455
 
@@ -1009,6 +1022,22 @@ class test_Assumed_Size_Spec(NumpyTestCase): # R516
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a : b, 1 : *')
 
+class test_Access_Stmt(NumpyTestCase): # R518
+
+    def check_simple(self):
+        cls = Access_Stmt
+        a = cls('private')
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'PRIVATE')
+        assert_equal(repr(a),"Access_Stmt('PRIVATE', None)")
+
+        a = cls('public a,b')
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'PUBLIC :: a, b')
+
+        a = cls('public ::a')
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'PUBLIC :: a')
 
 class test_Parameter_Stmt(NumpyTestCase): # R538
 
@@ -1658,6 +1687,25 @@ class test_Proc_Component_Ref(NumpyTestCase): # R741
         assert_equal(str(a),'a % b')
         assert_equal(repr(a),"Proc_Component_Ref(Name('a'), '%', Name('b'))")
 
+class test_Where_Stmt(NumpyTestCase): # R743
+
+    def check_simple(self):
+        cls = Where_Stmt
+        a = cls('where (a) c=2')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'WHERE (a) c = 2')
+        assert_equal(repr(a),"Where_Stmt(Name('a'), Assignment_Stmt(Name('c'), '=', Int_Literal_Constant('2', None)))")
+
+class test_Where_Construct_Stmt(NumpyTestCase): # R745
+
+    def check_simple(self):
+        cls = Where_Construct_Stmt
+        a = cls('where (a)')
+        assert isinstance(a,cls),`a`
+        assert_equal(str(a),'WHERE (a)')
+        assert_equal(repr(a),"Where_Construct_Stmt(Name('a'))")
+
+
 ###############################################################################
 ############################### SECTION  8 ####################################
 ###############################################################################
@@ -1792,6 +1840,27 @@ class test_Wait_Spec(NumpyTestCase): # R922
 ############################### SECTION 11 ####################################
 ###############################################################################
 
+class test_Use_Stmt(NumpyTestCase): # R1109
+
+    def check_simple(self):
+        cls = Use_Stmt
+        a = cls('use a')
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'USE :: a')
+        assert_equal(repr(a),"Use_Stmt(None, Name('a'), '', None)")
+
+        a = cls('use :: a, c=>d')
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'USE :: a, c => d')
+
+        a = cls('use :: a, operator(.hey.)=>operator(.hoo.)')
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'USE :: a, OPERATOR(.HEY.) => OPERATOR(.HOO.)')
+
+        a = cls('use, intrinsic :: a, operator(.hey.)=>operator(.hoo.), c=>g')
+        assert isinstance(a, cls),`a`
+        assert_equal(str(a),'USE, INTRINSIC :: a, OPERATOR(.HEY.) => OPERATOR(.HOO.), c => g')
+
 class test_Module_Nature(NumpyTestCase): # R1110
 
     def check_simple(self):
@@ -1873,7 +1942,7 @@ class test_Alt_Return_Spec(NumpyTestCase): # R1222
         a = cls('* 123')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'*123')
-        assert_equal(repr(a),"Alt_Return_Spec('123')")
+        assert_equal(repr(a),"Alt_Return_Spec(Label('123'))")
 
 class test_Prefix(NumpyTestCase): # R1227
 
@@ -1988,12 +2057,17 @@ class test_Contains(NumpyTestCase): # R1237
         assert_equal(repr(a),"Contains_Stmt('CONTAINS')")
 
 if 1:
+    nof_needed_tests = 0
+    nof_needed_match = 0
+    total_needs = 0
+    total_classes = 0
     for name in dir():
         obj = eval(name)
         if not isinstance(obj, ClassType): continue
         if not issubclass(obj, Base): continue
         clsname = obj.__name__
         if clsname.endswith('Base'): continue
+        total_classes += 1
         subclass_names = obj.__dict__.get('subclass_names',None)
         use_names = obj.__dict__.get('use_names',None)
         if not use_names: continue
@@ -2002,16 +2076,26 @@ if 1:
             test_cls = eval('test_%s' % (clsname))
         except NameError:
             test_cls = None
+        total_needs += 1
         if match is None:
             if test_cls is None:
-                print '%s needs match implementation and tests' % (clsname)
+                #print 'Needs tests:', clsname
+                print 'Needs match implementation:', clsname
+                nof_needed_tests += 1
+                nof_needed_match += 1
             else:
-                print '%s needs match implementation' % (clsname)
+                print 'Needs match implementation:', clsname
+                nof_needed_match += 1
         else:
             if test_cls is None:
-                print '%s needs tests' % (clsname)
+                #print 'Needs tests:', clsname
+                nof_needed_tests += 1
         continue
-
-
+    print '-----'
+    print 'Nof match implementation needs:',nof_needed_match,'out of',total_needs
+    print 'Nof tests needs:',nof_needed_tests,'out of',total_needs
+    print 'Total number of classes:',total_classes
+    print '-----'
+    
 if __name__ == "__main__":
     NumpyTest().run()
