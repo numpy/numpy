@@ -581,6 +581,13 @@ class test_regression(NumpyTestCase):
                   N.rec.fromarrays([(1,2),(3,4)])]:
             assert(a.dtype in [dt0,dt1])
 
+    def check_random_shuffle(self, level=rlevel):
+        """Ticket #374"""
+        a = N.arange(5).reshape((5,1))
+        b = a.copy()
+        N.random.shuffle(b)
+        assert_equal(sorted(b),a)
+
     def check_refcount_vectorize(self, level=rlevel):
         """Ticket #378"""
         def p(x,y): return 123
