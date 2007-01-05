@@ -1708,12 +1708,11 @@ object_arrtype_dealloc(PyObject *v)
 #define _WORK(num)  \
         if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) { \
                 PyTypeObject *sup; \
-                PyObject *ret; \
                 /* We are inheriting from a Python type as well so \
                    give it first dibs on conversion */ \
                 sup = (PyTypeObject *)PyTuple_GET_ITEM(type->tp_bases, num); \
-                ret = sup->tp_new(type, args, kwds); \
-                if (ret) return ret; \
+                robj = sup->tp_new(type, args, kwds); \
+                if (robj != NULL) goto finish;              \
                 if (PyTuple_GET_SIZE(args)!=1) return NULL; \
                 PyErr_Clear(); \
                 /* now do default conversion */ \
@@ -1723,7 +1722,7 @@ object_arrtype_dealloc(PyObject *v)
 #define _WORKz _WORK(0)
 #define _WORK0
 
-/**begin repeat
+/**begin repeat1
 #name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
 #TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
 #work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,1#
@@ -1733,33 +1732,64 @@ static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
         PyObject *obj=NULL;
+        PyObject *robj;
         PyObject *arr;
-        PyArray_Descr *typecode;
+        PyArray_Descr *typecode=NULL;
+        int itemsize;
+        void *dest, *src;
 
         _WORK@work@
 
         if (!PyArg_ParseTuple(args, "|O", &obj)) return NULL;
 
         typecode = PyArray_DescrFromType(PyArray_@TYPE@);
+        Py_INCREF(typecode);
         if (obj == NULL) {
 #if @default@ == 0
                 char *mem;
-                PyObject *obj;
                 mem = malloc(sizeof(@name@));
                 memset(mem, 0, sizeof(@name@));
-                obj = PyArray_Scalar(mem, typecode, NULL);
+                robj = PyArray_Scalar(mem, typecode, NULL);
                 free(mem);
-                return obj;
 #elif @default@ == 1
-                return PyArray_Scalar(NULL, typecode, NULL);
+                robj = PyArray_Scalar(NULL, typecode, NULL);
 #elif @default@ == 2
-                PyObject *obj = Py_None;
-                return PyArray_Scalar(&obj, typecode, NULL);
+                obj = Py_None;
+                robj = PyArray_Scalar(&obj, typecode, NULL);
 #endif
+                goto finish;
         }
 
         arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
-        return PyArray_Return((PyArrayObject *)arr);
+        robj = PyArray_Return((PyArrayObject *)arr);
+
+ finish:
+        if (robj->ob_type == type) return robj;
+        /* Need to allocate new type and copy data-area over */
+        if (type->tp_itemsize) {
+                itemsize = PyString_GET_SIZE(robj);
+        }
+        else itemsize = 0;
+        obj = type->tp_alloc(type, itemsize);
+        if (obj == NULL) {Py_DECREF(robj); return NULL;}
+        if (typecode==NULL) 
+                typecode = PyArray_DescrFromType(PyArray_@TYPE@);
+        dest = scalar_value(obj, typecode);
+        src = scalar_value(robj, typecode);
+        Py_DECREF(typecode);
+#if @default@ == 0
+        *((npy_@name@ *)dest) = *((npy_@name@ *)src);
+#elif @default@ == 1
+        if (itemsize == 0) {
+                itemsize = ((PyUnicodeObject *)robj)->length << 2;
+        }
+        memcpy(dest, src, itemsize);
+#elif @default@ == 2
+        memcpy(dest, src, sizeof(void *));
+        Py_INCREF(*((PyObject **)dest));
+#endif
+        Py_DECREF(robj);
+        return obj;
 }
 /**end repeat**/
 
@@ -2524,6 +2554,17 @@ _typenum_fromtypeobj(PyObject *type, int user)
         return typenum;
 }
 
+static PyArray_Descr *
+_descr_from_subtype(PyObject *type)
+{
+        PyObject *mro;
+        mro = ((PyTypeObject *)type)->tp_mro;
+        if (PyTuple_GET_SIZE(mro) < 2) {
+                return PyArray_DescrFromType(PyArray_OBJECT);
+        }
+        return PyArray_DescrFromTypeObject(PyTuple_GET_ITEM(mro, 1));
+}
+
 /*New reference */
 /*OBJECT_API
  */
@@ -2563,33 +2604,31 @@ PyArray_DescrFromTypeObject(PyObject *type)
         }
 
         /* Otherwise --- type is a sub-type of an array scalar
-           currently only VOID allows it -- use it as the type-object.
-           This is for non-registered data-type objects. 
-        */
-        /* look for a dtypedescr attribute */
-        if (!PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
-                PyErr_SetString(PyExc_TypeError,
-                                "data type cannot be determined from "
-                                "type object");
-                return NULL;
-        }
-        new = PyArray_DescrNewFromType(PyArray_VOID);
+           not corresponding to a registered data-type object.
+         */
 
-        conv = _arraydescr_fromobj(type);
-        if (conv) {
-                new->fields = conv->fields;
-                Py_INCREF(new->fields);
-                new->names = conv->names;
-                Py_INCREF(new->names);
-                new->elsize = conv->elsize;
-                new->subarray = conv->subarray;
-                conv->subarray = NULL;
-                Py_DECREF(conv);
+        /* Do special thing for VOID sub-types
+        */
+        if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
+                new = PyArray_DescrNewFromType(PyArray_VOID);
+
+                conv = _arraydescr_fromobj(type);
+                if (conv) {
+                        new->fields = conv->fields;
+                        Py_INCREF(new->fields);
+                        new->names = conv->names;
+                        Py_INCREF(new->names);
+                        new->elsize = conv->elsize;
+                        new->subarray = conv->subarray;
+                        conv->subarray = NULL;
+                        Py_DECREF(conv);
+                }
+                Py_XDECREF(new->typeobj);
+                new->typeobj = (PyTypeObject *)type;
+                Py_INCREF(type);
+                return new;
         }
-        Py_XDECREF(new->typeobj);
-        new->typeobj = (PyTypeObject *)type;
-        Py_INCREF(type);
-        return new;
+        return _descr_from_subtype(type);
 }
 
 /*OBJECT_API
