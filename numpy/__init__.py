@@ -66,7 +66,7 @@ lib       --- Basic functions used by several sub-packages and useful
 random    --- Core Random Tools
 linalg    --- Core Linear Algebra Tools
 fft       --- Core FFT routines
-testing   --- Scipy testing tools
+testing   --- Numpy testing tools
 
   These packages require explicit import
 f2py      --- Fortran to Python Interface Generator. 
@@ -78,7 +78,7 @@ Global symbols from subpackages
 -------------------------------
 core    --> *
 lib     --> *
-testing --> ScipyTest, NumpyTest
+testing --> NumpyTest
 """
 
     def test(level=1, verbosity=1):
