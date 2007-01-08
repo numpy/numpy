@@ -104,10 +104,14 @@ def _getmaxmin(t):
     return f.max, f.min
 
 def nan_to_num(x):
-    # mapping:
-    #    NaN -> 0
-    #    Inf -> limits.double_max
-    #   -Inf -> limits.double_min
+    """
+    Replaces NaN's with 0 and infinities with large numbers
+
+    The following mappings are applied:
+        NaN -> 0
+        Inf -> limits.double_max
+       -Inf -> limits.double_min
+    """
     try:
         t = x.dtype.type
     except AttributeError:
