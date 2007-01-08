@@ -701,7 +701,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     """a.byteswap(False) -> View or copy. Swap the bytes in the array.
 
     Swap the bytes in the array.  Return the byteswapped array.  If the first
-    argument is TRUE, byteswap in-place and return a reference to self.
+    argument is True, byteswap in-place and return a reference to self.
 
     """))
 
