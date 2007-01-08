@@ -31,7 +31,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
         outarr = zeros(outshape,asarray(res).dtype)
-        outarr[ind] = res
+        outarr[tuple(ind)] = res
         Ntot = product(outshape)
         k = 1
         while k < Ntot:
@@ -44,7 +44,7 @@ def apply_along_axis(func1d,axis,arr,*args):
                 n -= 1
             i.put(indlist,ind)
             res = func1d(arr[tuple(i.tolist())],*args)
-            outarr[ind] = res
+            outarr[tuple(ind)] = res
             k += 1
         return outarr
     else:

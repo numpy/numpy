@@ -14,6 +14,10 @@ class test_apply_along_axis(NumpyTestCase):
         a = ones((10,101),'d')
         assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
 
+    def check_3d(self):
+        a = arange(27).reshape((3,3,3))
+        assert_array_equal(apply_along_axis(sum,0,a), [[27,30,33],[36,39,42],[45,48,51]])
+
 class test_array_split(NumpyTestCase):
     def check_integer_0_split(self):
         a = arange(10)
