@@ -325,7 +325,7 @@ class test_Real_Literal_Constant(NumpyTestCase): # R417
         a = cls('0.0D+0')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'0.0D+0')
-        
+
 class test_Char_Selector(NumpyTestCase): # R424
 
     def check_char_selector(self):
@@ -343,7 +343,7 @@ class test_Char_Selector(NumpyTestCase): # R424
         a = cls('(2, 8)')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(LEN = 2, KIND = 8)')
-        
+
         a = cls('(kind=8)')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(KIND = 8)')
@@ -728,7 +728,7 @@ class test_Structure_Constructor(NumpyTestCase): # R457
         a = cls('a')
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
-    
+
 class test_Component_Spec(NumpyTestCase): # R458
 
     def check_simple(self):
@@ -820,7 +820,7 @@ class test_Ac_Value_List(NumpyTestCase): # R469-list
         assert_equal(str(a),'a')
 
 class test_Ac_Implied_Do(NumpyTestCase): # R470
-    
+
     def check_ac_implied_do(self):
         cls = Ac_Implied_Do
         a = cls('( a, b, n = 1, 5 )')
@@ -876,7 +876,7 @@ class test_Declaration_Type_Spec(NumpyTestCase): # R502
         a = cls('Integer*2')
         assert isinstance(a, Intrinsic_Type_Spec),`a`
         assert_equal(str(a), 'INTEGER*2')
-        
+
         a = cls('type(foo)')
         assert isinstance(a, cls),`a`
         assert_equal(str(a), 'TYPE(foo)')
@@ -969,7 +969,7 @@ class test_Explicit_Shape_Spec(NumpyTestCase): # R511
         assert_equal(str(a),'a')
 
 class test_Upper_Bound(NumpyTestCase): # R513
-    
+
     def check_simple(self):
         cls = Upper_Bound
         a = cls('a')
@@ -1055,7 +1055,7 @@ class test_Parameter_Stmt(NumpyTestCase): # R538
         a = cls('PARAMETER        ( ONE = 1.0D+0, ZERO = 0.0D+0 )')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'PARAMETER(ONE = 1.0D+0, ZERO = 0.0D+0)')
-        
+
 class test_Named_Constant_Def(NumpyTestCase): # R539
 
     def check_simple(self):
@@ -1170,7 +1170,7 @@ class test_Common_Block_Object(NumpyTestCase): # R558
 ###############################################################################
 
 class test_Substring(NumpyTestCase): # R609
-    
+
     def check_simple(self):
         cls = Substring
         a = cls('a(:)')
@@ -1185,7 +1185,7 @@ class test_Substring(NumpyTestCase): # R609
 
 
 class test_Substring_Range(NumpyTestCase): # R611
-    
+
     def check_simple(self):
         cls = Substring_Range
         a = cls(':')
@@ -1237,7 +1237,7 @@ class test_Part_Ref(NumpyTestCase): # R613
         assert_equal(str(a),'a')
 
 class test_Type_Param_Inquiry(NumpyTestCase): # R615
-    
+
     def check_simple(self):
         cls = Type_Param_Inquiry
         a = cls('a % b')
@@ -1272,7 +1272,7 @@ class test_Section_Subscript(NumpyTestCase): # R619
         a = cls('zzz')
         assert isinstance(a, Name),`a`
         assert_equal(str(a),'zzz')
-        
+
 class test_Section_Subscript_List(NumpyTestCase): # R619-list
 
     def check_simple(self):
@@ -1320,7 +1320,7 @@ class test_Subscript_Triplet(NumpyTestCase): # R620
         assert_equal(str(a),'a + 1 :')
 
 class test_Alloc_Opt(NumpyTestCase): # R624
-    
+
     def check_simple(self):
         cls = Alloc_Opt
         a = cls('stat=a')
@@ -1329,7 +1329,7 @@ class test_Alloc_Opt(NumpyTestCase): # R624
         assert_equal(repr(a),"Alloc_Opt('STAT', Name('a'))")
 
 class test_Nullify_Stmt(NumpyTestCase): # R633
-    
+
     def check_simple(self):
         cls = Nullify_Stmt
         a = cls('nullify (a)')
@@ -1662,7 +1662,7 @@ class test_Expr(NumpyTestCase): # R722
         self.assertRaises(NoMatchError,Scalar_Int_Expr,'a,b')
 
 class test_Assignment_Stmt(NumpyTestCase): # R734
-    
+
     def check_simple(self):
         cls = Assignment_Stmt
         a = cls('a = b')
@@ -1792,7 +1792,7 @@ class test_Io_Control_Spec_List(NumpyTestCase): # R913-list
             a = cls('123,a')
             assert isinstance(a, cls),`a`
             assert_equal(str(a),'UNIT = 123, NML = a')
-        
+
 class test_Format(NumpyTestCase): # R914
 
     def check_simple(self):
@@ -2096,6 +2096,6 @@ if 1:
     print 'Nof tests needs:',nof_needed_tests,'out of',total_needs
     print 'Total number of classes:',total_classes
     print '-----'
-    
+
 if __name__ == "__main__":
     NumpyTest().run()

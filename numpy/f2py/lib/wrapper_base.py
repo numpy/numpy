@@ -1,4 +1,3 @@
-
 import os
 import sys
 import re
@@ -57,7 +56,7 @@ class WrapperBase:
             elif d.endswith('.c'):
                 WrapperCCode(parent, d[:-2])
             else:
-                self.warning('Unknown dependence: %r.' % (d))        
+                self.warning('Unknown dependence: %r.' % (d))
         return
 
     def apply_attributes(self, template):

@@ -1,4 +1,3 @@
-
 import os
 import re
 import sys
@@ -452,8 +451,6 @@ class NumpyTest:
                 continue
             modules.append(module)
 
-        
-
         self.test_files = []
         suites = []
         for module in modules:
@@ -535,7 +532,7 @@ class NumpyTest:
 
             if not sys.modules.has_key(test_dir_module):
                 sys.modules[test_dir_module] = imp.new_module(test_dir_module)
-            
+
             for fn in os.listdir(test_dir):
                 base, ext = os.path.splitext(fn)
                 if ext != '.py':
@@ -581,7 +578,7 @@ class NumpyTest:
         all_tests = unittest.TestSuite(suite_list)
         if level<0:
             return all_tests
-       
+
         runner = unittest.TextTestRunner(verbosity=verbosity)
         # Use the builtin displayhook. If the tests are being run
         # under IPython (for instance), any doctest test suites will
@@ -628,7 +625,7 @@ class NumpyTest:
         sys.stdout.flush()
 
 ScipyTest = NumpyTest
-        
+
 def importall(package):
     """
     Try recursively to import all subpackages under package.

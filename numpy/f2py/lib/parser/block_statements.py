@@ -391,7 +391,7 @@ class Program(BeginStatement, ProgramBlock,
 
 class EndBlockData(EndStatement):
     """
-    END [ BLOCK DATA [ <block-data-name> ] ] 
+    END [ BLOCK DATA [ <block-data-name> ] ]
     """
     match = re.compile(r'end(\s*block\s*data\s*\w*|)\Z', re.I).match
     blocktype = 'blockdata'
@@ -410,7 +410,7 @@ class BlockData(BeginStatement, HasImplicitStmt, HasUseStmt,
 
     def get_classes(self):
         return specification_part
-        
+
 # Interface
 
 class EndInterface(EndStatement):
@@ -432,7 +432,7 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
                         | READ ( UNFORMATTED )
                         | WRITE ( FORMATTED )
                         | WRITE ( UNFORMATTED )
-    
+
     """
     modes = ['free90', 'fix90', 'pyf']
     match = re.compile(r'(interface\s*(\w+\s*\(.*\)|\w*)|abstract\s*interface)\Z',re.I).match
@@ -444,7 +444,7 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
     def get_classes(self):
         l = intrinsic_type_spec + interface_specification
         if self.reader.mode=='pyf':
-            return [Subroutine, Function] + l 
+            return [Subroutine, Function] + l
         return l
 
     def process_item(self):
@@ -498,7 +498,7 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
         s +=  HasAttributes.topyf(self, tab=tab+'  ')
         s +=  HasUseStmt.topyf(self, tab=tab+'  ')
         s += tab + 'END' + self.tostr() + '\n'
-        return s        
+        return s
 
 # Subroutine
 
@@ -729,7 +729,7 @@ class EndSelect(EndStatement):
 class Select(BeginStatement):
     """
     [ <case-construct-name> : ] SELECT CASE ( <case-expr> )
-    
+
     """
     match = re.compile(r'select\s*case\s*\(.*\)\Z',re.I).match
     end_stmt_cls = EndSelect
@@ -738,7 +738,7 @@ class Select(BeginStatement):
         return 'SELECT CASE ( %s )' % (self.expr)
     def process_item(self):
         self.expr = self.item.get_line()[6:].lstrip()[4:].lstrip()[1:-1].strip()
-        self.name = self.item.label                
+        self.name = self.item.label
         return BeginStatement.process_item(self)
 
     def get_classes(self):
@@ -751,7 +751,7 @@ class EndWhere(EndStatement):
     END WHERE [ <where-construct-name> ]
     """
     match = re.compile(r'end\s*\where\s*\w*\Z',re.I).match
-    
+
 
 class Where(BeginStatement):
     """
@@ -782,7 +782,7 @@ class EndForall(EndStatement):
     END FORALL [ <forall-construct-name> ]
     """
     match = re.compile(r'end\s*forall\s*\w*\Z',re.I).match
-    
+
 class Forall(BeginStatement):
     """
     [ <forall-construct-name> : ] FORALL <forall-header>
@@ -842,7 +842,7 @@ class IfThen(BeginStatement):
         self.expr = line[1:-1].strip()
         self.name = item.label
         return BeginStatement.process_item(self)
-        
+
     def get_classes(self):
         return [Else, ElseIf] + execution_part_construct
 
@@ -883,7 +883,7 @@ class If(BeginStatement):
             self.put_item(newitem)
         self.isvalid = False
         return
-        
+
     def tostr(self):
         assert len(self.content)==1,`self.content`
         return 'IF (%s) %s' % (self.expr, str(self.content[0]).lstrip())
@@ -959,7 +959,7 @@ class Associate(BeginStatement):
     """
     match = re.compile(r'associate\s*\(.*\)\Z',re.I).match
     end_stmt_cls = EndAssociate
-    
+
     def process_item(self):
         line = self.item.get_line()[9:].lstrip()
         self.associations = line[1:-1].strip()
@@ -1090,7 +1090,7 @@ class Type(BeginStatement, HasVariables, HasAttributes, AccessSpecs):
     def topyf(self, tab=''):
         s = tab + 'TYPE'
         if self.a.extends is not None:
-            s += ', EXTENDS(%s) ::' % (self.a.extends) 
+            s += ', EXTENDS(%s) ::' % (self.a.extends)
         s += ' ' + self.name
         if self.a.parameters:
             s += ' (%s)' % (', '.join(self.a.parameters))
@@ -1171,7 +1171,7 @@ intrinsic_type_spec = [ SubprogramPrefix, Integer , Real,
 derived_type_spec = [  ]
 type_spec = intrinsic_type_spec + derived_type_spec
 declaration_type_spec = intrinsic_type_spec + [ TypeStmt, Class ]
-    
+
 type_declaration_stmt = declaration_type_spec
 
 private_or_sequence = [ Private, Sequence ]

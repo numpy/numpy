@@ -9,7 +9,7 @@ the book "Guide to NumPy" at
 
 It is being distributed for a fee for only a few years to
 cover some of the costs of development.  After the restriction period
-it will also be freely available. 
+it will also be freely available.
 
 Additional documentation is available in the docstrings and at
 
@@ -53,7 +53,7 @@ else:
     __all__ += core.__all__
     __all__ += lib.__all__
     __all__ += ['linalg', 'fft', 'random', 'ctypeslib']
-        
+
     if __doc__ is not None:
         __doc__ += """
 
@@ -69,9 +69,9 @@ fft       --- Core FFT routines
 testing   --- Numpy testing tools
 
   These packages require explicit import
-f2py      --- Fortran to Python Interface Generator. 
-distutils --- Enhancements to distutils with support for 
-              Fortran compilers support and more. 
+f2py      --- Fortran to Python Interface Generator.
+distutils --- Enhancements to distutils with support for
+              Fortran compilers support and more.
 
 
 Global symbols from subpackages
@@ -82,7 +82,7 @@ testing --> NumpyTest
 """
 
     def test(level=1, verbosity=1):
-        if level <= 10:	
+        if level <= 10:
            return NumpyTest().test(level, verbosity)
         else:
            return NumpyTest().testall(level, verbosity)

@@ -1,4 +1,3 @@
-
 from numpy.testing import *
 set_package_path()
 import numpy.lib;
@@ -360,17 +359,17 @@ class test_kron(NumpyTestCase):
     def check_return_type(self):
         a = ones([2,2])
         m = asmatrix(a)
-        assert_equal(type(kron(a,a)), ndarray) 
-        assert_equal(type(kron(m,m)), matrix) 
-        assert_equal(type(kron(a,m)), matrix) 
-        assert_equal(type(kron(m,a)), matrix) 
-        class myarray(ndarray): 
+        assert_equal(type(kron(a,a)), ndarray)
+        assert_equal(type(kron(m,m)), matrix)
+        assert_equal(type(kron(a,m)), matrix)
+        assert_equal(type(kron(m,a)), matrix)
+        class myarray(ndarray):
             __array_priority__ = 0.0
         ma = myarray(a.shape, a.dtype, a.data)
-        assert_equal(type(kron(a,a)), ndarray) 
-        assert_equal(type(kron(ma,ma)), myarray) 
-        assert_equal(type(kron(a,ma)), ndarray) 
-        assert_equal(type(kron(ma,a)), myarray) 
+        assert_equal(type(kron(a,a)), ndarray)
+        assert_equal(type(kron(ma,ma)), myarray)
+        assert_equal(type(kron(a,ma)), ndarray)
+        assert_equal(type(kron(ma,a)), myarray)
 
 
 class test_tile(NumpyTestCase):

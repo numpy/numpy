@@ -110,7 +110,7 @@ class build_clib(old_build_clib):
             sources = list(sources)
 
 
-            
+
             lib_file = compiler.library_filename(lib_name,
                                                  output_dir=self.build_clib)
 
@@ -135,7 +135,7 @@ class build_clib(old_build_clib):
                                           force=self.force,
                                           requiref90=requiref90)
                 fcompiler.customize(config_fc)
-            
+
             macros = build_info.get('macros')
             include_dirs = build_info.get('include_dirs')
             extra_postargs = build_info.get('extra_compiler_args') or []

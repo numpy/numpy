@@ -10,5 +10,5 @@ except ImportError:
 It can be downloaded by checking out the latest source from
 http://svn.scipy.org/svn/scipy/trunk/Lib/stsci or by downloading and
 installing all of SciPy from http://www.scipy.org.
-"""      
+"""
         raise ImportError(msg)

@@ -2101,7 +2101,7 @@ def diagonal(a, k = 0, axis1=0, axis2=1):
         return masked_array(d, m)
     else:
         return masked_array(d, fromnumeric.diagonal(m, k, axis1, axis2))
-    
+
 def trace (a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
     (defined by the last two dimenions) of the array.
@@ -2177,7 +2177,7 @@ array.choose = _m(_choose)
 del _choose
 
 def _clip(self,a_min,a_max,out=None):
-    return MaskedArray(data = self.data.clip(asarray(a_min).data, 
+    return MaskedArray(data = self.data.clip(asarray(a_min).data,
                                              asarray(a_max).data),
                        mask = mask_or(self.mask,
                                       mask_or(getmask(a_min),getmask(a_max))))
@@ -2215,7 +2215,7 @@ array.getfield = _m(not_implemented)
 
 def _max(a, axis=None, out=None):
     if out is not None:
-        raise TypeError("Output arrays Unsupported for masked arrays")    
+        raise TypeError("Output arrays Unsupported for masked arrays")
     if axis is None:
         return maximum(a)
     else:
@@ -2254,7 +2254,7 @@ def _squeeze(self):
     except AttributeError:
         result = _wrapit(self, 'squeeze')
     return result
-array.squeeze = _m(_squeeze)      
+array.squeeze = _m(_squeeze)
 
 array.strides = property(_m(not_implemented))
 array.sum = _m(sum)

@@ -1,4 +1,3 @@
-
 # XXX: investigate cases that are disabled under win32
 #
 

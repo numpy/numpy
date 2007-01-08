@@ -6,7 +6,6 @@ Examples:
   python return_real.py --quiet
 """
 
-
 import f2py2e
 from Numeric import array
 

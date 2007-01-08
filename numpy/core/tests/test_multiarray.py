@@ -1,4 +1,3 @@
-
 from numpy.testing import *
 from numpy.core import *
 from numpy import random
@@ -196,7 +195,7 @@ class test_zero_rank(NumpyTestCase):
     def check_output(self):
         x = array(2)
         self.failUnlessRaises(ValueError, add, x, [1], x)
-        
+
 class test_creation(NumpyTestCase):
     def check_from_attribute(self):
         class x(object):
@@ -283,23 +282,23 @@ class test_pickling(NumpyTestCase):
         p = loads(s)
         assert_equal(a, p)
 
-class test_fancy_indexing(NumpyTestCase): 
-    def check_list(self): 
-        x = ones((1,1)) 
-        x[:,[0]] = 2.0 
-        assert_array_equal(x, array([[2.0]])) 
+class test_fancy_indexing(NumpyTestCase):
+    def check_list(self):
+        x = ones((1,1))
+        x[:,[0]] = 2.0
+        assert_array_equal(x, array([[2.0]]))
 
-        x = ones((1,1,1)) 
-        x[:,:,[0]] = 2.0 
-        assert_array_equal(x, array([[[2.0]]])) 
+        x = ones((1,1,1))
+        x[:,:,[0]] = 2.0
+        assert_array_equal(x, array([[[2.0]]]))
 
-    def check_tuple(self): 
-        x = ones((1,1)) 
-        x[:,(0,)] = 2.0 
-        assert_array_equal(x, array([[2.0]])) 
-        x = ones((1,1,1)) 
-        x[:,:,(0,)] = 2.0 
-        assert_array_equal(x, array([[[2.0]]])) 
+    def check_tuple(self):
+        x = ones((1,1))
+        x[:,(0,)] = 2.0
+        assert_array_equal(x, array([[2.0]]))
+        x = ones((1,1,1))
+        x[:,:,(0,)] = 2.0
+        assert_array_equal(x, array([[[2.0]]]))
 
 class test_string_compare(NumpyTestCase):
     def check_string(self):
@@ -309,8 +308,8 @@ class test_string_compare(NumpyTestCase):
         assert_array_equal(g1 != g2, [g1[i] != g2[i] for i in [0,1,2]])
         assert_array_equal(g1 <= g2, [g1[i] <= g2[i] for i in [0,1,2]])
         assert_array_equal(g1 >= g2, [g1[i] >= g2[i] for i in [0,1,2]])
-        assert_array_equal(g1 < g2, [g1[i] < g2[i] for i in [0,1,2]]) 
-        assert_array_equal(g1 > g2, [g1[i] > g2[i] for i in [0,1,2]]) 
+        assert_array_equal(g1 < g2, [g1[i] < g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 > g2, [g1[i] > g2[i] for i in [0,1,2]])
 
     def check_mixed(self):
         g1 = array(["spam","spa","spammer","and eggs"])
@@ -321,7 +320,7 @@ class test_string_compare(NumpyTestCase):
         assert_array_equal(g1 > g2, [x > g2 for x in g1])
         assert_array_equal(g1 <= g2, [x <= g2 for x in g1])
         assert_array_equal(g1 >= g2, [x >= g2 for x in g1])
-        
+
 
     def check_unicode(self):
         g1 = array([u"This",u"is",u"example"])
@@ -330,8 +329,8 @@ class test_string_compare(NumpyTestCase):
         assert_array_equal(g1 != g2, [g1[i] != g2[i] for i in [0,1,2]])
         assert_array_equal(g1 <= g2, [g1[i] <= g2[i] for i in [0,1,2]])
         assert_array_equal(g1 >= g2, [g1[i] >= g2[i] for i in [0,1,2]])
-        assert_array_equal(g1 < g2,  [g1[i] < g2[i] for i in [0,1,2]]) 
-        assert_array_equal(g1 > g2,  [g1[i] > g2[i] for i in [0,1,2]]) 
+        assert_array_equal(g1 < g2,  [g1[i] < g2[i] for i in [0,1,2]])
+        assert_array_equal(g1 > g2,  [g1[i] > g2[i] for i in [0,1,2]])
 
 
 class test_argmax(NumpyTestCase):
@@ -339,10 +338,10 @@ class test_argmax(NumpyTestCase):
         a = random.normal(0,1,(4,5,6,7,8))
         for i in xrange(a.ndim):
             amax = a.max(i)
-            aargmax = a.argmax(i)  
+            aargmax = a.argmax(i)
             axes = range(a.ndim)
             axes.remove(i)
-            assert all(amax == aargmax.choose(*a.transpose(i,*axes)))        
+            assert all(amax == aargmax.choose(*a.transpose(i,*axes)))
 
 class test_newaxis(NumpyTestCase):
     def check_basic(self):

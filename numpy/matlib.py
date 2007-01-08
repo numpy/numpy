@@ -12,7 +12,7 @@ def empty(shape, dtype=None, order='C'):
     """return an empty matrix of the given shape
     """
     return ndarray.__new__(matrix, shape, dtype, order=order)
-        
+
 def ones(shape, dtype=None, order='C'):
     """return a matrix initialized to all ones
     """
@@ -23,7 +23,7 @@ def ones(shape, dtype=None, order='C'):
 def zeros(shape, dtype=None, order='C'):
     """return a matrix initialized to all zeros
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)    
+    a = ndarray.__new__(matrix, shape, dtype, order=order)
     a.fill(0)
     return a
 

@@ -36,7 +36,7 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
     a = asarray(a)
 
     if n == None: n = a.shape[axis]
-    
+
     if n < 1: raise ValueError("Invalid number of FFT data points (%d) specified." % n)
 
     try:

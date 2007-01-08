@@ -125,7 +125,7 @@ def _leading_trailing(a):
 def _boolFormatter(x):
     if x: return ' True'
     else: return 'False'
-    
+
 
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix=""):

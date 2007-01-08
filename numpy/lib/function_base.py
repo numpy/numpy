@@ -109,39 +109,39 @@ def histogram(a, bins=10, range=None, normed=False):
 
 def histogramdd(sample, bins=10, range=None, normed=False):
     """histogramdd(sample, bins = 10, range = None, normed = False) -> H, edges
-    
+
     Return the D-dimensional histogram computed from sample.
-    
+
     Parameters
     ----------
-    sample: A sequence of D arrays, or an NxD array. 
-    bins:   A sequence of edge arrays, or a sequence of the number of bins. 
+    sample: A sequence of D arrays, or an NxD array.
+    bins:   A sequence of edge arrays, or a sequence of the number of bins.
             If a scalar is given, it is assumed to be the number of bins
-            for all dimensions. 
+            for all dimensions.
     range:  A sequence of lower and upper bin edges (default: [min, max]).
-    normed: If False, returns the number of samples in each bin. 
+    normed: If False, returns the number of samples in each bin.
             If True, returns the frequency distribution.
-    
-    
+
+
     Output
     ------
     H:      Histogram array.
-    edges:  List of arrays defining the bin edges. 
-    
+    edges:  List of arrays defining the bin edges.
+
     Example:
     x = random.randn(100,3)
     H, edges = histogramdd(x, bins = (5, 6, 7))
-    
+
     See also: histogram
     """
-    
+
     try:
         N, D = sample.shape
     except (AttributeError, ValueError):
         ss = atleast_2d(sample)
         sample = ss.transpose()
         N, D = sample.shape
-    
+
     nbin = empty(D, int)
     edges = D*[None]
     dedges = D*[None]
@@ -152,7 +152,7 @@ def histogramdd(sample, bins=10, range=None, normed=False):
             raise AttributeError, 'The dimension of bins must be a equal to the dimension of the sample x.'
     except TypeError:
         bins = D*[bins]
-        
+
     if range is None:
         smin = atleast_1d(sample.min(0))
         smax = atleast_1d(sample.max(0))
@@ -161,7 +161,7 @@ def histogramdd(sample, bins=10, range=None, normed=False):
         smax = zeros(D)
         for i in arange(D):
             smin[i], smax[i] = range[i]
-    
+
     for i in arange(D):
         if isscalar(bins[i]):
             nbin[i] = bins[i]
@@ -169,18 +169,18 @@ def histogramdd(sample, bins=10, range=None, normed=False):
         else:
             edges[i] = asarray(bins[i], float)
             nbin[i] = len(edges[i])-1
-            
+
 
 
     Ncount = {}
     nbin =  asarray(nbin)
 
     for i in arange(D):
-        Ncount[i] = digitize(sample[:,i], edges[i]) 
+        Ncount[i] = digitize(sample[:,i], edges[i])
         dedges[i] = diff(edges[i])
     # Remove values falling outside of bins
     # Values that fall on an edge are put in the right bin.
-    # For the rightmost bin, we want values equal to the right 
+    # For the rightmost bin, we want values equal to the right
     # edge to be counted in the last bin, and not as an outlier.
     outliers = zeros(N, int)
     for i in arange(D):
@@ -192,23 +192,23 @@ def histogramdd(sample, bins=10, range=None, normed=False):
     for i in arange(D):
         Ncount[i] = Ncount[i][indices] - 1
     N = len(indices)
-    
+
     # Flattened histogram matrix (1D)
     hist = zeros(nbin.prod(), int)
-    
+
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
     shape = []
     xy = zeros(N, int)
     for i in arange(0, D-1):
         xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
-        
+
     xy += Ncount[ni[-1]]
 
-    # Compute the number of repetitions in xy and assign it to the flattened histmat. 
+    # Compute the number of repetitions in xy and assign it to the flattened histmat.
     if len(xy) == 0:
         return zeros(nbin, int)
-        
+
     flatcount = bincount(xy)
     a = arange(len(flatcount))
     hist[a] = flatcount
@@ -219,7 +219,7 @@ def histogramdd(sample, bins=10, range=None, normed=False):
         hist = hist.swapaxes(i,j)
         if (hist.shape == nbin).all():
             break
-    
+
     if normed:
         s = hist.sum()
         for i in arange(D):
@@ -227,9 +227,9 @@ def histogramdd(sample, bins=10, range=None, normed=False):
             shape[i] = nbin[i]
             hist = hist / dedges[i].reshape(shape)
         hist /= s
-        
-    return hist, edges 
-    
+
+    return hist, edges
+
 
 def average(a, axis=None, weights=None, returned=False):
     """average(a, axis=None weights=None, returned=False)
@@ -777,7 +777,7 @@ class vectorize(object):
     with the first element of the input.  This can be avoided by specifying
     the otypes argument as either a string of typecode characters or a list
     of data-types specifiers.  There should be one data-type specifier for
-    each output. 
+    each output.
 
   Input:
 
@@ -1054,7 +1054,7 @@ def i0(x):
 
 def kaiser(M,beta):
     """kaiser(M, beta) returns a Kaiser window of length M with shape parameter
-    beta. 
+    beta.
     """
     from numpy.dual import i0
     n = arange(0,M)

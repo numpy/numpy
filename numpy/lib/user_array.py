@@ -196,7 +196,7 @@ class container(object):
         return self.array.__getattribute__(attr)
 
 #############################################################
-# Test of class container 
+# Test of class container
 #############################################################
 if __name__ == '__main__':
     temp=reshape(arange(10000),(100,100))

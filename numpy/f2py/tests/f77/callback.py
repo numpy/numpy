@@ -1,4 +1,3 @@
-
 __usage__ = """
 Run:
   python callback.py [<f2py options>]

@@ -715,32 +715,32 @@ class test_ufuncs(NumpyTestCase):
 
 
 class test_array_methods(NumpyTestCase):
-        
+
     def setUp(self):
-        x = numpy.array([ 8.375,  7.545,  8.828,  8.5  ,  1.757,  5.928,  
-                          8.43 ,  7.78 ,  9.865,  5.878,  8.979,  4.732,  
-                          3.012,  6.022,  5.095,  3.116,  5.238,  3.957,  
+        x = numpy.array([ 8.375,  7.545,  8.828,  8.5  ,  1.757,  5.928,
+                          8.43 ,  7.78 ,  9.865,  5.878,  8.979,  4.732,
+                          3.012,  6.022,  5.095,  3.116,  5.238,  3.957,
                           6.04 ,  9.63 ,  7.712,  3.382,  4.489,  6.479,
-                          7.189,  9.645,  5.395,  4.961,  9.894,  2.893,  
+                          7.189,  9.645,  5.395,  4.961,  9.894,  2.893,
                           7.357,  9.828,  6.272,  3.758,  6.693,  0.993])
         X = x.reshape(6,6)
         XX = x.reshape(3,2,2,3)
-    
-        m = numpy.array([0, 1, 0, 1, 0, 0, 
-                         1, 0, 1, 1, 0, 1, 
-                         0, 0, 0, 1, 0, 1, 
-                         0, 0, 0, 1, 1, 1, 
-                         1, 0, 0, 1, 0, 0, 
+
+        m = numpy.array([0, 1, 0, 1, 0, 0,
+                         1, 0, 1, 1, 0, 1,
+                         0, 0, 0, 1, 0, 1,
+                         0, 0, 0, 1, 1, 1,
+                         1, 0, 0, 1, 0, 0,
                          0, 0, 1, 0, 1, 0])
         mx = array(data=x,mask=m)
         mX = array(data=X,mask=m.reshape(X.shape))
         mXX = array(data=XX,mask=m.reshape(XX.shape))
-    
-        m2 = numpy.array([1, 1, 0, 1, 0, 0, 
-                          1, 1, 1, 1, 0, 1, 
-                          0, 0, 1, 1, 0, 1, 
-                          0, 0, 0, 1, 1, 1, 
-                          1, 0, 0, 1, 1, 0, 
+
+        m2 = numpy.array([1, 1, 0, 1, 0, 0,
+                          1, 1, 1, 1, 0, 1,
+                          0, 0, 1, 1, 0, 1,
+                          0, 0, 0, 1, 1, 1,
+                          1, 0, 0, 1, 1, 0,
                           0, 0, 1, 0, 1, 1])
         m2x = array(data=x,mask=m2)
         m2X = array(data=X,mask=m2.reshape(X.shape))
@@ -789,14 +789,14 @@ class test_array_methods(NumpyTestCase):
         self.failUnless(eq(mXcp.data,mX.filled(1).cumprod(0)))
         mXcp = mX.cumprod(1)
         self.failUnless(eq(mXcp.data,mX.filled(1).cumprod(1)))
-                           
+
     def test_cumsum(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         mXcp = mX.cumsum(0)
         self.failUnless(eq(mXcp.data,mX.filled(0).cumsum(0)))
         mXcp = mX.cumsum(1)
         self.failUnless(eq(mXcp.data,mX.filled(0).cumsum(1)))
-                           
+
     def test_varstd(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         self.failUnless(eq(mX.var(axis=None),mX.compressed().var()))
@@ -809,7 +809,7 @@ class test_array_methods(NumpyTestCase):
             self.failUnless(eq(mXvar0[k],mX[:,k].compressed().var()))
             self.failUnless(eq(numpy.sqrt(mXvar0[k]),
                                mX[:,k].compressed().std()))
-        
+
 
 def eqmask(m1, m2):
     if m1 is nomask:

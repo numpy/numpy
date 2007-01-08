@@ -159,7 +159,7 @@ def get_signature_output(sys_argv):
 
 def parse_files(sys_argv):
     flag = 'file'
-    file_names = [] 
+    file_names = []
     only_names = []
     skip_names = []
     options = []
@@ -206,7 +206,7 @@ def dump_signature(sys_argv):
         output_stream = open(signature_output,'w')
 
     flag = 'file'
-    file_names = [] 
+    file_names = []
     only_names = []
     skip_names = []
     options = []
@@ -245,7 +245,7 @@ def dump_signature(sys_argv):
             output_stream.write(block.topyf('    ')+'\n')
     output_stream.write('  END INTERFACE\n')
     output_stream.write('END PYTHON MODULE %s\n' % (modulename))
-    
+
     if signature_output not in ['stdout','stderr']:
         output_stream.close()
     return

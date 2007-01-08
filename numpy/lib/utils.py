@@ -7,7 +7,7 @@ from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
            'issubdtype', 'deprecate', 'get_numarray_include',
-	   'get_include', 'info', 'source', 'who']
+           'get_include', 'info', 'source', 'who']
 
 def issubclass_(arg1, arg2):
     try:
@@ -195,7 +195,7 @@ _dictlist = None
 # Traverse all module directories underneath globals
 # to see if something is defined
 def _makenamedict(module='numpy'):
-    module = __import__(module, globals(), locals(), []) 
+    module = __import__(module, globals(), locals(), [])
     thedict = {module.__name__:module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
@@ -373,4 +373,3 @@ def source(object, output=sys.stdout):
         print >> output,  inspect.getsource(object)
     except:
         print >> output,  "Not available for this object."
-

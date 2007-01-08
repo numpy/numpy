@@ -44,10 +44,10 @@ def argmin(x, axis=-1):
 
 def compress(condition, m, axis=-1):
     return N.compress(condition, m, axis)
-   
+
 def fromfunction(args, dimensions):
     return N.fromfunction(args, dimensions, dtype=int)
- 
+
 def ones(shape, typecode='l', savespace=0, dtype=None):
     """ones(shape, dtype=int) returns an array of the given
     dimensions which is initialized to all ones.
@@ -61,7 +61,7 @@ def zeros(shape, typecode='l', savespace=0, dtype=None):
     """zeros(shape, dtype=int) returns an array of the given
     dimensions which is initialized to all zeros
     """
-    dtype = convtypecode(typecode,dtype)            
+    dtype = convtypecode(typecode,dtype)
     return mu.zeros(shape, dtype)
 
 def identity(n,typecode='l', dtype=None):
@@ -71,7 +71,7 @@ def identity(n,typecode='l', dtype=None):
     return nn.identity(n, dtype)
 
 def empty(shape, typecode='l', dtype=None):
-    dtype = convtypecode(typecode, dtype)    
+    dtype = convtypecode(typecode, dtype)
     return mu.empty(shape, dtype)
 
 def array(sequence, typecode=None, copy=1, savespace=0, dtype=None):
@@ -122,4 +122,3 @@ def cross_product(a, b, axis1=-1, axis2=-1):
 
 def average(a, axis=0, weights=None, returned=False):
     return N.average(a, axis, weights, returned)
-

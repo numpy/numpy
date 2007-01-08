@@ -8,7 +8,7 @@ class Vec:
     def __init__(self,sequence=None):
         if sequence is None:
             sequence=[]
-        self.array=array(sequence)    
+        self.array=array(sequence)
     def __add__(self,other):
         out=Vec()
         out.array=self.array+other.array
@@ -118,7 +118,7 @@ class test_dot(NumpyTestCase):
         b2 = rand(1,1)
         c1 = dot(b1,b2)
         c2 = dot_(b1,b2)
-        assert_almost_equal(c1, c2, decimal=self.N)        
+        assert_almost_equal(c1, c2, decimal=self.N)
 
     def check_all(self):
         dims = [(),(1,),(1,1)]
@@ -196,14 +196,14 @@ class test_seterr(NumpyTestCase):
             self.fail()
         seterr(divide='ignore')
         array([1.]) / array([0.])
-        
-        
+
+
 class test_fromiter(NumpyTestCase):
-    
+
     def makegen(self):
         for x in xrange(24):
             yield x**2
-            
+
     def test_types(self):
         ai32 = fromiter(self.makegen(), int32)
         ai64 = fromiter(self.makegen(), int64)
@@ -247,7 +247,7 @@ class test_binary_repr(NumpyTestCase):
 
     def test_large(self):
         assert_equal(binary_repr(10736848),'101000111101010011010000')
-        
+
 import sys
 if sys.version_info[:2] >= (2, 5):
     set_local_path()

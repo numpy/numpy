@@ -1,4 +1,3 @@
-
 import imp
 import os
 import sys
@@ -54,7 +53,7 @@ def configuration(parent_package='',top_path=None):
                 #  which is done in error-handling
                 #  ufunc code.  NPY_ALLOW_C_API and friends
                 #  cause the segfault. So, we disable threading
-                #  for now. 
+                #  for now.
             if sys.version[:5] < '2.4.2':
                 nosmp = 1
             else:
@@ -100,7 +99,7 @@ def configuration(parent_package='',top_path=None):
 
             if sys.platform == 'win32':
                 moredefs.append('NPY_NO_SIGNAL')
-                
+
             if sys.version[:3] < '2.4':
                 if config_cmd.check_func('strtod', decl=False,
                                          headers=['stdlib.h']):

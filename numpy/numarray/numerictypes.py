@@ -118,7 +118,7 @@ class NumericType(object):
             self.default = None
             self.typeno = -1
             return self
-            
+
     def __init__(self, name, bytes, default, typeno):
         if not isinstance(name, str):
             raise TypeError("name must be a string")
@@ -159,7 +159,7 @@ class UnsignedIntegralType(IntegralType, UnsignedType):
 
 class FloatingType(NumericType):
     pass
-        
+
 class ComplexType(NumericType):
     pass
 
@@ -174,7 +174,7 @@ class ObjectType(NumericType):
 Any = AnyType("Any", None, None, _tAny)
 
 Object = ObjectType("Object", None, None, _tObject)
-    
+
 # Numeric Types:
 
 Bool  = BooleanType("Bool", 1, 0, _tBool)
@@ -182,7 +182,7 @@ Int8  = SignedIntegralType( "Int8", 1, 0, _tInt8)
 Int16 = SignedIntegralType("Int16", 2, 0, _tInt16)
 Int32 = SignedIntegralType("Int32", 4, 0, _tInt32)
 Int64 = SignedIntegralType("Int64", 8, 0, _tInt64)
-    
+
 Float32  = FloatingType("Float32", 4, 0.0, _tFloat32)
 Float64  = FloatingType("Float64", 8, 0.0, _tFloat64)
 
@@ -227,8 +227,8 @@ else:
     Long = _register("Long", Int32)
     _register("ULong", UInt32)
     MaybeLong = _register("MaybeLong", Int32)
-    __all__.append('MaybeLong')    
-    
+    __all__.append('MaybeLong')
+
 
 _register("UByte",  UInt8)
 _register("UShort", UInt16)
@@ -249,7 +249,7 @@ _register("i4", Int32)
 _register("i8", Int64)
 if HasUInt64:
     _register("u8", UInt64)
-    
+
 _register("f4", Float32)
 _register("f8", Float64)
 _register("c8", Complex32)
@@ -272,7 +272,7 @@ if LP64:
     _register("l", Int64)
 else:
     _register("l", Int32)
-    
+
 _register("d", Float64)
 _register("f", Float32)
 _register("D", Complex64)
@@ -311,7 +311,7 @@ else:
     genericTypeRank = ['Bool','Int8','UInt8','Int16','UInt16',
                        'Int32', 'UInt32', 'Int64', 'UInt64',
                        'Float32','Float64', 'Complex32', 'Complex64', 'Object']
-    
+
 pythonTypeRank = [ bool, int, long, float, complex ]
 
 # The next line is not platform independent XXX Needs to be generalized
@@ -321,7 +321,7 @@ if not LP64:
         long:("Int64","int"),
         float:("Float64","float"),
         complex:("Complex64","complex")}
-    
+
     scalarTypeMap = {
         int:"Int32",
         long:"Int64",
@@ -348,7 +348,7 @@ scalarTypeMap.update({bool:"Bool"})
 def _initGenericCoercions():
     global genericCoercions
     genericCoercions = {}
-    
+
     # vector with ...
     for ntype1 in genericTypeRank:
         nt1 = typeDict[ntype1]
@@ -375,14 +375,14 @@ def _initGenericCoercions():
                         size = min(2*ntypesize1, MAX_INT_SIZE)
                     else:
                         size = ntypesize2
-                outtype = "Int"+str(8*size)                
+                outtype = "Int"+str(8*size)
             else:
                 if rank1 >= rank2:
                     outtype = ntype1
                 else:
                     outtype = ntype2
             genericCoercions[(ntype1, ntype2)] = outtype
-            
+
         for ntype2 in pythonTypeRank:
             # scalar
             mapto, kind = pythonTypeMap[ntype2]
@@ -397,7 +397,7 @@ def _initGenericCoercions():
                     outtype = mapto
             genericCoercions[(ntype1, ntype2)] = outtype
             genericCoercions[(ntype2, ntype1)] = outtype
-            
+
     # scalar-scalar
     for ntype1 in pythonTypeRank:
         maptype1 = scalarTypeMap[ntype1]
@@ -405,7 +405,7 @@ def _initGenericCoercions():
         for ntype2 in pythonTypeRank:
             maptype2 = scalarTypeMap[ntype2]
             genericCoercions[(ntype1, ntype2)] = genericCoercions[(maptype1, maptype2)]
-            
+
     # Special cases more easily dealt with outside of the loop
     genericCoercions[("Complex32", "Float64")] = "Complex64"
     genericCoercions[("Float64", "Complex32")] = "Complex64"
@@ -454,42 +454,42 @@ typecodes = {'Integer': '1silN',
 if HasUInt64:
     _MaximumType = {
         Bool :  UInt64,
-        
+
         Int8  : Int64,
         Int16 : Int64,
         Int32 : Int64,
         Int64 : Int64,
-        
+
         UInt8  : UInt64,
         UInt16 : UInt64,
         UInt32 : UInt64,
         UInt8  : UInt64,
-        
+
         Float32 : Float64,
         Float64 : Float64,
-        
+
         Complex32 : Complex64,
-        Complex64 : Complex64    
+        Complex64 : Complex64
         }
 else:
         _MaximumType = {
         Bool :  Int64,
-        
+
         Int8  : Int64,
         Int16 : Int64,
         Int32 : Int64,
         Int64 : Int64,
-        
+
         UInt8  : Int64,
         UInt16 : Int64,
         UInt32 : Int64,
         UInt8  : Int64,
-       
+
         Float32 : Float64,
         Float64 : Float64,
-        
+
         Complex32 : Complex64,
-        Complex64 : Complex64    
+        Complex64 : Complex64
         }
 
 def MaximumType(t):
@@ -510,7 +510,7 @@ def getType(type):
         raise TypeError("Not a numeric type")
 
 scalarTypes = (bool,int,long,float,complex)
-    
+
 _scipy_dtypechar = {
     Int8 : 'b',
     UInt8 : 'B',
@@ -546,7 +546,6 @@ if LP64:
 else:
     _scipy_dtypechar_inverse['p'] = Int32
     _scipy_dtypechar_inverse['P'] = UInt32
-    
+
 def typefrom(obj):
     return _scipy_dtypechar_inverse[obj.dtype.char]
-

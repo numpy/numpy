@@ -30,7 +30,7 @@ import os
 import re
 import glob
 
-# To convert typecharacters we need to 
+# To convert typecharacters we need to
 # Not very safe.  Disabled for now..
 def replacetypechars(astr):
     astr = astr.replace("'s'","'h'")
@@ -140,7 +140,7 @@ def converttree(direc=os.path.curdir):
     """Convert all .py files in the tree given
 
     """
-    os.path.walk(direc, _func, None)        
+    os.path.walk(direc, _func, None)
 
 if __name__ == '__main__':
     fromargs(sys.argv)

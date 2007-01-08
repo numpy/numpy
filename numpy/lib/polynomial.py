@@ -650,4 +650,3 @@ class poly1d(object):
 # Stuff to do on module import
 
 warnings.simplefilter('always',RankWarning)
-

@@ -95,7 +95,7 @@ class GeneralAssignment(Statement):
             if sign=='=>':
                 self.__class__ = PointerAssignment
             else:
-                self.__class__ = Assignment            
+                self.__class__ = Assignment
         apply_map = self.item.apply_map
         self.variable = apply_map(m.group('variable').replace(' ',''))
         self.expr = apply_map(m.group('expr'))
@@ -247,7 +247,7 @@ class AssignedGoto(Statement):
         tab = self.get_indent_tab(isfix=isfix)
         if self.items:
             return tab + 'GO TO %s (%s)' \
-                   % (self.varname, ', '.join(self.items)) 
+                   % (self.varname, ', '.join(self.items))
         return tab + 'GO TO %s' % (self.varname)
     def analyze(self): return
 
@@ -339,7 +339,7 @@ Read0:    READ ( <io-control-spec-list> ) [ <input-item-list> ]
                              | [ NML = ] <namelist-group-name>
                              | ADVANCE = <scalar-default-char-expr>
                              ...
-    
+
 Read1:    READ <format> [, <input-item-list>]
     <format> == <default-char-expr> | <label> | *
     """
@@ -525,7 +525,7 @@ class Deallocate(Statement):
     def tofortran(self, isfix=None): return self.get_indent_tab(isfix=isfix) \
         + 'DEALLOCATE (%s)' % (', '.join(self.items))
     def analyze(self): return
-    
+
 class ModuleProcedure(Statement):
     """
     [ MODULE ] PROCEDURE <procedure-name-list>
@@ -704,7 +704,7 @@ class Format(Statement):
                             ...
     <sign-edit-descr> = SS | SP | S
     ...
-    
+
     """
     match = re.compile(r'format\s*\(.*\)\Z', re.I).match
     def process_item(self):
@@ -775,7 +775,7 @@ class Data(Statement):
                    | <substring>
     <array-element> = <data-ref>
     <array-section> = <data-ref> [ ( <substring-range> ) ]
-    
+
     """
     match = re.compile(r'data\b',re.I).match
 
@@ -903,7 +903,7 @@ class Use(Statement):
         module = modules[self.name]
         use_provides = self.parent.a.use_provides
         print use
-        
+
         return
 
 class Exit(Statement):
@@ -966,7 +966,7 @@ class Equivalence(Statement):
 class Dimension(Statement):
     """
     DIMENSION [ :: ] <array-name> ( <array-spec> ) [ , <array-name> ( <array-spec> ) ]...
-    
+
     """
     match = re.compile(r'dimension\b', re.I).match
     def process_item(self):
@@ -990,7 +990,7 @@ class Dimension(Statement):
 class Target(Statement):
     """
     TARGET [ :: ] <object-name> ( <array-spec> ) [ , <object-name> ( <array-spec> ) ]...
-    
+
     """
     match = re.compile(r'target\b', re.I).match
     def process_item(self):
@@ -1018,7 +1018,7 @@ class Pointer(Statement):
     POINTER [ :: ] <pointer-decl-list>
     <pointer-decl> = <object-name> [ ( <deferred-shape-spec-list> ) ]
                    | <proc-entity-name>
-    
+
     """
     match = re.compile(r'pointer\b',re.I).match
     def process_item(self):
@@ -1111,7 +1111,7 @@ class Inquire(Statement):
     """
     INQUIRE ( <inquire-spec-list> )
     INQUIRE ( IOLENGTH = <scalar-int-variable> ) <output-item-list>
-    
+
     <inquire-spec> = [ UNIT = ] <file-unit-number>
                      | FILE = <file-name-expr>
                      ...
@@ -1495,7 +1495,7 @@ class GenericBinding(Statement):
         s += ' :: ' + self.spec + ' => ' + ', '.join(self.items)
         return tab + s
 
-        
+
 class FinalBinding(StatementWithNamelist):
     """
     FINAL [ :: ] <final-subroutine-name-list>
@@ -1515,7 +1515,7 @@ class Allocatable(Statement):
         self.items = split_comma(line, self.item)
         return
     def tofortran(self, isfix=None):
-        return self.get_indent_tab(isfix=isfix) + 'ALLOCATABLE ' + ', '.join(self.items) 
+        return self.get_indent_tab(isfix=isfix) + 'ALLOCATABLE ' + ', '.join(self.items)
     def analyze(self):
         for line in self.items:
             i = line.find('(')
@@ -1583,7 +1583,7 @@ class Else(Statement):
         if self.name and self.name!=parent_name:
             self.warning('expected if-construct-name %r but got %r, skipping.'\
                          % (parent_name, self.name))
-            self.isvalid = False        
+            self.isvalid = False
         return
 
     def tofortran(self, isfix=None):
@@ -1610,9 +1610,9 @@ class ElseIf(Statement):
         if self.name and self.name!=parent_name:
             self.warning('expected if-construct-name %r but got %r, skipping.'\
                          % (parent_name, self.name))
-            self.isvalid = False        
+            self.isvalid = False
         return
-        
+
     def tofortran(self, isfix=None):
         s = ''
         if self.name:
@@ -1658,7 +1658,7 @@ class Case(Statement):
         if self.name and self.name!=parent_name:
             self.warning('expected case-construct-name %r but got %r, skipping.'\
                          % (parent_name, self.name))
-            self.isvalid = False        
+            self.isvalid = False
         return
 
     def tofortran(self, isfix=None):
@@ -1854,4 +1854,3 @@ class Pause(Statement):
             return self.get_indent_tab(isfix=isfix) + 'PAUSE ' + self.value
         return self.get_indent_tab(isfix=isfix) + 'PAUSE'
     def analyze(self): return
-

@@ -34,7 +34,7 @@ def unravel_index(x,dims):
     """
     if x > _nx.prod(dims)-1 or x < 0:
         raise ValueError("Invalid index, must be 0 <= x <= number of elements.")
-        
+
     idx = _nx.empty_like(dims)
 
     # Take dimensions
@@ -275,7 +275,7 @@ class concatenator(object):
                     newobj = array(newobj, copy=False, subok=True,
                                    ndmin=ndmin)
                     if trans1d != -1 and tempobj.ndim < ndmin:
-                        k2 = ndmin-tempobj.ndim                        
+                        k2 = ndmin-tempobj.ndim
                         if (trans1d < 0):
                             trans1d += k2 + 1
                         defaxes = range(ndmin)

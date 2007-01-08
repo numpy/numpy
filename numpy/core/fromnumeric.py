@@ -124,13 +124,13 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     axis  -- axis to be sorted (default -1).  Can be None
              to indicate that a flattened and sorted array should
-             be returned (the array method does not support this). 
+             be returned (the array method does not support this).
     kind  -- sorting algorithm (default 'quicksort')
              Possible values: 'quicksort', 'mergesort', or 'heapsort'.
     order -- For an array with fields defined, this argument allows
              specification of which fields to compare first, second,
              etc.  Not all fields need be specified.
-            
+
 
     Returns: None.
 
@@ -171,7 +171,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
     axis  -- axis to be indirectly sorted (default -1)
              Can be None to indicate return indices into the
-             flattened array. 
+             flattened array.
     kind  -- sorting algorithm (default 'quicksort')
              Possible values: 'quicksort', 'mergesort', or 'heapsort'
     order -- For an array with fields defined, this argument allows

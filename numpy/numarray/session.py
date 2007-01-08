@@ -209,7 +209,7 @@ class _ObjectProxy(object):
         return False
 
 
-class _SaveSession(object):    
+class _SaveSession(object):
     """Tag object which marks the end of a save session and holds the
     saved session variable names as a list of strings in the same
     order as the session pickles."""
@@ -250,13 +250,13 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
                       Defaults to dictionary.keys().
 
     'file'            a filename or file object for the session file.
-    
+
     'dictionary'      the dictionary in which to look up the variables.
                       Defaults to the caller's globals()
-    
+
     'verbose'         print additional debug output when True.
     """
-    
+
     global VERBOSE
     VERBOSE = verbose
 
@@ -264,7 +264,7 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
 
     if isinstance(file, str):
         file = open(file, "wb")
-        
+
     if dictionary is None:
         dictionary = _callers_globals()
 
@@ -272,7 +272,7 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
         keys = dictionary.keys()
     else:
         keys = variables.split(",")
-        
+
     source_modules = _callers_modules() + sys.modules.keys()
 
     p = pickle.Pickler(file, protocol=2)
@@ -303,7 +303,7 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
     file.close()
 
 def load(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
-    
+
     """load a numpy session from a file and store the specified
     'variables' into 'dictionary'.
 
@@ -311,16 +311,16 @@ def load(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
                       Defaults to dictionary.keys().
 
     'file'            a filename or file object for the session file.
-    
+
     'dictionary'      the dictionary in which to look up the variables.
                       Defaults to the caller's globals()
 
     'verbose'         print additional debug output when True.
     """
-    
+
     global VERBOSE
     VERBOSE = verbose
-            
+
     if isinstance(file, str):
         file = open(file, "rb")
     if dictionary is None:
@@ -346,4 +346,3 @@ def load(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
 def test():
     import doctest, numpy.numarray.session
     return doctest.testmod(numpy.numarray.session)
-

@@ -1,7 +1,7 @@
 # This module re-creates the RNG interface from Numeric
 # Replace import RNG with import numpy.oldnumeric.rng as RNG
 #
-# It is for backwards compatibility only. 
+# It is for backwards compatibility only.
 
 
 __all__ = ['CreateGenerator','ExponentialDistribution','LogNormalDistribution','NormalDistribution',
@@ -21,7 +21,7 @@ class Distribution(object):
 
     def density(self,x):
         raise NotImplementedError
-    
+
     def __call__(self, x):
         return self.density(x)
 
@@ -36,7 +36,7 @@ class Distribution(object):
 class ExponentialDistribution(Distribution):
     def __init__(self, lambda_):
         if (lambda_ <= 0):
-            raise error, "parameter must be positive"  
+            raise error, "parameter must be positive"
         Distribution.__init__(self, 'exponential', lambda_)
 
     def density(x):
@@ -115,7 +115,7 @@ class CreateGenerator(object):
     def sample(self, n):
         return self._dist._sample(self._rng, n)
 
-    
+
 standard_generator = CreateGenerator(-1)
 
 def ranf():
@@ -126,12 +126,10 @@ def random_sample(*n):
     """random_sample(n) = array of n random numbers;
 
     random_sample(n1, n2, ...)= random array of shape (n1, n2, ..)"""
-    
+
     if not n:
         return standard_generator.ranf()
     m = 1
     for i in n:
         m = m * i
     return standard_generator.sample(m).reshape(*n)
-    
-

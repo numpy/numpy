@@ -4,7 +4,7 @@ Core Linear Algebra Tools
 
  Linear Algebra Basics:
 
-   norm       --- Vector or matrix norm 
+   norm       --- Vector or matrix norm
    inv        --- Inverse of a square matrix
    solve      --- Solve a linear system of equations
    det        --- Determinant of a square matrix

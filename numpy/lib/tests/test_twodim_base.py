@@ -162,12 +162,12 @@ class test_histogram2d(NumpyTestCase):
         assert_array_almost_equal(H, answer/8., 3)
     def check_norm(self):
         x = array([1,2,3,1,2,3,1,2,3])
-        y = array([1,1,1,2,2,2,3,3,3]) 
+        y = array([1,1,1,2,2,2,3,3,3])
         H, xed, yed = histogram2d(x,y,[[1,2,3,5], [1,2,3,5]], normed=True)
         answer=array([[1,1,.5],
                      [1,1,.5],
                      [.5,.5,.25]])/9.
         assert_array_almost_equal(H, answer, 3)
-        
+
 if __name__ == "__main__":
     NumpyTest().run()

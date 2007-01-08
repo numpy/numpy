@@ -97,7 +97,7 @@ class test_Statements(NumpyTestCase):
         assert_equal(parse(Read, 'read "hey a" , a'),'READ "hey a", a')
         assert_equal(parse(Read, 'read * , a  , b'),'READ *, a, b')
         assert_equal(parse(Read, 'read ( unit  =10 )'),'READ (UNIT = 10)')
-        
+
     def check_write(self):
         assert_equal(parse(Write, 'write ( 10 )'),'WRITE (10)')
         assert_equal(parse(Write, 'write ( 10 , a )'),'WRITE (10, a)')
@@ -207,7 +207,7 @@ class test_Statements(NumpyTestCase):
 
     def check_exit(self):
         assert_equal(parse(Exit,'exit'),'EXIT')
-        assert_equal(parse(Exit,'exit ab'),'EXIT ab')        
+        assert_equal(parse(Exit,'exit ab'),'EXIT ab')
 
     def check_parameter(self):
         assert_equal(parse(Parameter,'parameter (a = b(1,2))'),
@@ -481,7 +481,7 @@ class test_Statements(NumpyTestCase):
                      'CHARACTER(LEN=3, KIND=fA(1,2))')
         assert_equal(parse(Character,'character(len=3,kind=fA(1,2))'),
                      'CHARACTER(LEN=3, KIND=fa(1,2))')
-        
+
     def check_implicit(self):
         assert_equal(parse(Implicit,'implicit none'),'IMPLICIT NONE')
         assert_equal(parse(Implicit,'implicit'),'IMPLICIT NONE')

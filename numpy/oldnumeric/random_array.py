@@ -18,7 +18,7 @@ def seed(x=0, y=0):
     if (x == 0 or y == 0):
         mt.seed()
     else:
-        mt.seed((x,y))        
+        mt.seed((x,y))
 
 def get_seed():
     raise NotImplementedError, \
@@ -266,5 +266,3 @@ def test():
 
 if __name__ == '__main__':
     test()
-
-

@@ -1,4 +1,3 @@
-
 import sys
 
 from numpy.testing import *
@@ -93,7 +92,7 @@ class test_linspace(NumpyTestCase):
         t3 = linspace(0,1,2).dtype
         assert_equal(t1, t2)
         assert_equal(t2, t3)
-        
+
 class test_insert(NumpyTestCase):
     def check_basic(self):
         a = [1,2,3]
@@ -276,23 +275,23 @@ class test_vectorize(NumpyTestCase):
         f = vectorize(addsubtract)
         r = f([0,3,6,9],5)
         assert_array_equal(r,[5,8,1,4])
-    def check_large(self): 
-        x = linspace(-3,2,10000) 
-        f = vectorize(lambda x: x) 
-        y = f(x) 
-        assert_array_equal(y, x) 
+    def check_large(self):
+        x = linspace(-3,2,10000)
+        f = vectorize(lambda x: x)
+        y = f(x)
+        assert_array_equal(y, x)
 
 class test_digitize(NumpyTestCase):
     def check_forward(self):
 	x = arange(-6,5)
 	bins = arange(-5,5)
 	assert_array_equal(digitize(x,bins),arange(11))
-	
+
     def check_reverse(self):
 	x = arange(5,-6,-1)
 	bins = arange(5,-5,-1)
 	assert_array_equal(digitize(x,bins),arange(11))
-	
+
     def check_random(self):
 	x = rand(10)
 	bin = linspace(x.min(), x.max(), 10)
@@ -378,12 +377,12 @@ class test_histogramdd(NumpyTestCase):
         # Check that a sequence of arrays is accepted and H has the correct shape.
         z = [squeeze(y) for y in split(x,3,axis=1)]
         H, edges = histogramdd(z, bins=(4,3,2),range=[[-2,2], [0,3], [0,2]])
-        answer = asarray([[[0,0],[0,0],[0,0]], 
-                          [[0,1], [0,0], [1,0]], 
-                          [[0,1], [0,0],[0,0]], 
+        answer = asarray([[[0,0],[0,0],[0,0]],
+                          [[0,1], [0,0], [1,0]],
+                          [[0,1], [0,0],[0,0]],
                           [[0,0],[0,0],[0,0]]])
         assert_array_equal(H, answer)
-                
+
 
 class test_unique(NumpyTestCase):
     def check_simple(self):

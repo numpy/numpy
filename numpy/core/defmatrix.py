@@ -1,4 +1,3 @@
-
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import numeric as N
@@ -135,7 +134,7 @@ class matrix(N.ndarray):
         if out.ndim == 0:
             return out[()]
         if out.ndim == 1:
-            sh = out.shape[0] 
+            sh = out.shape[0]
             # Determine when we should have a column array
             try:
                 n = len(index)
@@ -146,14 +145,14 @@ class matrix(N.ndarray):
             else:
                 out.shape = (1,sh)
         return out
-            
+
     def _get_truendim(self):
         shp = self.shape
         truend = 0
         for val in shp:
             if (val > 1): truend += 1
         return truend
-        
+
 
     def __mul__(self, other):
         if isinstance(other, N.ndarray) or N.isscalar(other) or \
@@ -249,28 +248,28 @@ class matrix(N.ndarray):
 
     def var(self, axis=None, dtype=None, out=None):
         return N.ndarray.var(self, axis, dtype, out)._align(axis)
-    
+
     def prod(self, axis=None, dtype=None, out=None):
         return N.ndarray.prod(self, axis, dtype, out)._align(axis)
-    
+
     def any(self, axis=None, out=None):
-        return N.ndarray.any(self, axis, out)._align(axis)        
+        return N.ndarray.any(self, axis, out)._align(axis)
 
     def all(self, axis=None, out=None):
         return N.ndarray.all(self, axis, out)._align(axis)
-        
+
     def max(self, axis=None, out=None):
         return N.ndarray.max(self, axis, out)._align(axis)
 
     def argmax(self, axis=None, out=None):
         return N.ndarray.argmax(self, axis, out)._align(axis)
-    
+
     def min(self, axis=None, out=None):
         return N.ndarray.min(self, axis, out)._align(axis)
-    
+
     def argmin(self, axis=None, out=None):
         return N.ndarray.argmin(self, axis, out)._align(axis)
-    
+
     def ptp(self, axis=None, out=None):
         return N.ndarray.ptp(self, axis, out)._align(axis)
 
@@ -289,10 +288,10 @@ class matrix(N.ndarray):
 
     def getA(self):
         return self.__array__()
-    
+
     def getA1(self):
         return self.__array__().ravel()
-    
+
     def getT(self):
         return self.transpose()
 
@@ -300,7 +299,7 @@ class matrix(N.ndarray):
         if issubclass(self.dtype.type, N.complexfloating):
             return self.transpose().conjugate()
         else:
-            return self.transpose()    
+            return self.transpose()
 
     T = property(getT, None, doc="transpose")
     A = property(getA, None, doc="base array")

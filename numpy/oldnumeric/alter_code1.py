@@ -52,7 +52,7 @@ for name in _func2:
 
 for name in _func4:
     _astr = r"""(%s\s*[(][^,]*?[,][^,]*?[,][^,]*?[,][^'"]*?['"])b(['"][^)]*?[)])"""%name
-    func_re[name] = re.compile(_astr, re.DOTALL)    
+    func_re[name] = re.compile(_astr, re.DOTALL)
 
 for name in _meth1:
     _astr = r"""(.%s\s*[(][^'"]*?['"])b(['"][^)]*?[)])"""%name
@@ -143,7 +143,7 @@ def fromstr(filestr):
     filestr, fromall1 = changeimports(filestr, 'ArrayPrinter', 'numpy.oldnumeric.array_printer')
     filestr, fromall2 = changeimports(filestr, 'numerix', 'numpy.oldnumeric')
     filestr, fromall3 = changeimports(filestr, 'scipy_base', 'numpy.oldnumeric')
-    filestr, fromall3 = changeimports(filestr, 'Matrix', 'numpy.oldnumeric.matrix')    
+    filestr, fromall3 = changeimports(filestr, 'Matrix', 'numpy.oldnumeric.matrix')
     filestr, fromall3 = changeimports(filestr, 'MLab', 'numpy.oldnumeric.mlab')
     filestr, fromall3 = changeimports(filestr, 'LinearAlgebra', 'numpy.oldnumeric.linear_algebra')
     filestr, fromall3 = changeimports(filestr, 'RNG', 'numpy.oldnumeric.rng')
@@ -225,7 +225,7 @@ def convertsrc(direc=os.path.curdir, ext=None, orig=1):
             else:
                 os.remove(afile)
             makenewfile(afile, fstr)
-                
+
 def _func(arg, dirname, fnames):
     convertall(dirname, orig=0)
     convertsrc(dirname, ext=['h','c'], orig=0)
@@ -234,7 +234,7 @@ def converttree(direc=os.path.curdir):
     """Convert all .py files and source code files in the tree given
     """
     os.path.walk(direc, _func, None)
-        
+
 
 if __name__ == '__main__':
     fromargs(sys.argv)

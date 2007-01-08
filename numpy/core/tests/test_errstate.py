@@ -1,4 +1,3 @@
-
 # The following exec statement (or something like it) is needed to
 # prevent SyntaxError on Python < 2.5. Even though this is a test,
 # SyntaxErrors are not acceptable; on Debian systems, they block
@@ -17,7 +16,7 @@ from numpy.testing import *
 
 class test_errstate(NumpyTestCase):
 
-    
+
     def test_invalid(self):
         with errstate(all='raise', under='ignore'):
             a = -arange(3)
@@ -31,7 +30,7 @@ class test_errstate(NumpyTestCase):
                 pass
             else:
                 self.fail()
-                
+
     def test_divide(self):
         with errstate(all='raise', under='ignore'):
             a = -arange(3)
@@ -45,7 +44,7 @@ class test_errstate(NumpyTestCase):
                 pass
             else:
                 self.fail()
-                
+
     def test_errcall(self):
         def foo(*args):
             print args

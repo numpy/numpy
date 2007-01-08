@@ -1,4 +1,3 @@
-
 # Don't add these to the __all__ variable though
 from numpy import *
 
@@ -34,7 +33,7 @@ __all__ += precision.__all__
 __all__ += functions.__all__
 __all__ += ufuncs.__all__
 __all__ += misc.__all__
-        
+
 del compat
 del functions
 del precision

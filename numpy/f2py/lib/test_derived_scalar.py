@@ -94,6 +94,6 @@ class test_m(NumpyTestCase):
         assert_equal(a.flag,2)
         assert_equal(r.flag,4)
 
-        
+
 if __name__ == "__main__":
     NumpyTest().run()

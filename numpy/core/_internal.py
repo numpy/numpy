@@ -1,4 +1,3 @@
-
 #A place for code to be called from C-code
 #  that implements more complicated stuff.
 
@@ -40,7 +39,7 @@ def _makenames_list(adict):
     titles = [x[3] for x in allfields]
 
     return names, formats, offsets, titles
-    
+
 # Called in PyArray_DescrConverter function when
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
@@ -219,7 +218,7 @@ class _missing_ctypes(object):
 
     def c_void_p(self, num):
         return num
-    
+
 class _ctypes(object):
     def __init__(self, array, ptr=None):
         try:
@@ -233,7 +232,7 @@ class _ctypes(object):
             self._zerod = True
         else:
             self._zerod = False
-    
+
     def data_as(self, obj):
         return self._ctypes.cast(self._data, obj)
 
@@ -246,12 +245,12 @@ class _ctypes(object):
         if self._zerod:
             return None
         return (obj*self._arr.ndim)(*self._arr.strides)
-    
+
     def get_data(self):
         return self._data
 
     def get_shape(self):
-        if self._zerod: 
+        if self._zerod:
             return None
         return (_getintp_ctype()*self._arr.ndim)(*self._arr.shape)
 
@@ -262,7 +261,7 @@ class _ctypes(object):
 
     def get_as_parameter(self):
         return self._ctypes.c_void_p(self._data)
-    
+
     data = property(get_data, None, doc="c-types data")
     shape = property(get_shape, None, doc="c-types shape")
     strides = property(get_strides, None, doc="c-types strides")

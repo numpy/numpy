@@ -79,7 +79,7 @@ class FortranParser:
         if self.block is None:
             self.reader.show_message('Nothing to analyze.')
             return
-        
+
         try:
             self.block.analyze()
         except AnalyzeError:
@@ -129,9 +129,9 @@ module foo
     hey = 1
     end subroutine bar
     abstract interface
- 
+
     end interface
- 
+
 end module foo
 """
     reader = FortranStringReader(string, True, False)
@@ -195,4 +195,3 @@ if __name__ == "__main__":
     simple_main()
     #profile_main()
     #parse_all_f()
-    

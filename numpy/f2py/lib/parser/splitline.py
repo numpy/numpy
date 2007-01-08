@@ -209,7 +209,7 @@ class LineSplitter(LineSplitterBase):
         quotechar = self.quotechar
         l = []
         l_append = l.append
-        
+
         nofslashes = 0
         if quotechar is None:
             # search for string start
@@ -323,7 +323,7 @@ class LineSplitterParen(LineSplitterBase):
         self.startchar = paren[0]
         self.endchar = paren[1]
         self.stopchar = None
-        
+
     def get_item(self):
         fifo_pop = self.fifo_line.pop
         try:
@@ -336,7 +336,7 @@ class LineSplitterParen(LineSplitterBase):
         stopchar = self.stopchar
         l = []
         l_append = l.append
-        
+
         nofslashes = 0
         if stopchar is None:
             # search for parenthesis start
@@ -377,7 +377,7 @@ class LineSplitterParen(LineSplitterBase):
             except IndexError:
                 break
         return ParenString(''.join(l))
-                
+
 def test():
     splitter = LineSplitter('abc\\\' def"12\\"3""56"dfad\'a d\'')
     l = [item for item in splitter]
@@ -394,7 +394,7 @@ def test():
     l,stopchar = splitquote('"abc123&')
     assert l==['"abc123&'],`l`
     assert stopchar=='"'
-    
+
     splitter = LineSplitter(' &abc"123','"')
     l = [item for item in splitter]
     assert l==[' &abc"','123']
@@ -402,7 +402,7 @@ def test():
     l,stopchar = splitquote(' &abc"123','"')
     assert l==[' &abc"','123']
     assert stopchar is None
-        
+
     l = split2('')
     assert l==('',''),`l`
     l = split2('12')
@@ -424,4 +424,3 @@ def test():
 
 if __name__ == '__main__':
     test()
-

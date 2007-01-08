@@ -5,7 +5,6 @@ Examples:
   python return_complex.py --quiet
 """
 
-
 import f2py2e
 from Numeric import array
 
