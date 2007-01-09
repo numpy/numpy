@@ -1764,7 +1764,7 @@ static PyObject *
         robj = PyArray_Return((PyArrayObject *)arr);
 
  finish:
-        if (robj->ob_type == type) return robj;
+        if ((robj==NULL) || (robj->ob_type == type)) return robj;
         /* Need to allocate new type and copy data-area over */
         if (type->tp_itemsize) {
                 itemsize = PyString_GET_SIZE(robj);

@@ -381,11 +381,12 @@ class test_tile(NumpyTestCase):
         assert_equal(tile(a,(1,2)), [[0,1,2,0,1,2]])
         assert_equal(tile(b, 2), [[1,2,1,2],[3,4,3,4]])
         assert_equal(tile(b,(2,1)),[[1,2],[3,4],[1,2],[3,4]])
-        assert_equal(tile(b,(2,2)),[[1,2,1,2],[3,4,3,4],[1,2,1,2],[3,4,3,4]])
+        assert_equal(tile(b,(2,2)),[[1,2,1,2],[3,4,3,4],
+                                    [1,2,1,2],[3,4,3,4]])
 
     def check_kroncompare(self):
         import numpy.random as nr
-	reps=[(2,),(1,2),(2,1),(2,2),(2,3,2),(3,2)]
+        reps=[(2,),(1,2),(2,1),(2,2),(2,3,2),(3,2)]
         shape=[(3,),(2,3),(3,4,3),(3,2,3),(4,3,2,4),(2,2)]
         for s in shape:
             b = nr.randint(0,10,size=s)
@@ -404,3 +405,4 @@ def compare_results(res,desired):
 
 if __name__ == "__main__":
     NumpyTest().run()
+ 
