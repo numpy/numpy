@@ -2,8 +2,7 @@ import imp
 import os
 import sys
 from os.path import join
-from glob import glob
-from distutils.dep_util import newer,newer_group
+from distutils.dep_util import newer
 
 FUNCTIONS_TO_CHECK = [
     ('expl', 'HAVE_LONGDOUBLE_FUNCS'),

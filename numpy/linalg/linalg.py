@@ -20,8 +20,8 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
         maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        argsort, isfinite
-from numpy.lib import triu, iterable
+        isfinite
+from numpy.lib import triu
 from numpy.linalg import lapack_lite
 
 fortran_int = intc
@@ -113,7 +113,7 @@ def _fastCopyAndTranspose(type, *arrays):
 def _assertRank2(*arrays):
     for a in arrays:
         if len(a.shape) != 2:
-            raise LinAlgError, 'Array must be two-dimensional'
+            raise LinAlgError, '%d-dimensional array given. Array must be two-dimensional' % len(a.shape)
 
 def _assertSquareness(*arrays):
     for a in arrays:

@@ -568,7 +568,7 @@ def kron(a,b):
             nd = nda
     result = outer(a,b).reshape(as_+bs)
     axis = nd-1
-    for k in xrange(nd):
+    for _ in xrange(nd):
         result = concatenate(result, axis=axis)
     if wrapper is not None:
         result = wrapper(result)

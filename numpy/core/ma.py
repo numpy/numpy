@@ -1683,7 +1683,6 @@ def average (a, axis=None, weights=None, returned = 0):
                     d = add.reduce(w, axis)
                     del w
                 elif wsh == (ash[axis],):
-                    ni = ash[axis]
                     r = [newaxis]*len(ash)
                     r[axis] = slice(None, None, 1)
                     w = eval ("w["+ repr(tuple(r)) + "] * ones(ash, float)")
@@ -1708,7 +1707,6 @@ def average (a, axis=None, weights=None, returned = 0):
                     n = add.reduce(a*w, axis)
                     d = add.reduce(w, axis)
                 elif wsh == (ash[axis],):
-                    ni = ash[axis]
                     r = [newaxis]*len(ash)
                     r[axis] = slice(None, None, 1)
                     w = eval ("w["+ repr(tuple(r)) + "] * masked_array(ones(ash, float), mask)")

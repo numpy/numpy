@@ -1,15 +1,9 @@
-import imp
-import os
 from os.path import join
-from glob import glob
-from distutils.dep_util import newer,newer_group
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration,dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.misc_util import Configuration
 
     config = Configuration('lib',parent_package,top_path)
-    local_dir = config.local_path
 
     config.add_include_dirs(join('..','core','include'))
 

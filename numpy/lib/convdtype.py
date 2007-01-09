@@ -1,6 +1,5 @@
 from tokenize import  generate_tokens
 import token
-from StringIO import StringIO
 import sys
 def insert(s1, s2, posn):
     """insert s1 into s2 at positions posn
@@ -17,6 +16,7 @@ def insert(s1, s2, posn):
 
 def insert_dtype(readline, output=None):
     """
+    >>> from StringIO import StringIO
     >>> src = "zeros((2,3), dtype=float); zeros((2,3));"
     >>> insert_dtype(StringIO(src).readline)
     zeros((2,3), dtype=float); zeros((2,3), dtype=int);

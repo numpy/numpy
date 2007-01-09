@@ -8,7 +8,6 @@ __all__ = ['unravel_index',
            'ndenumerate','ndindex']
 
 import sys
-import types
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, ScalarType, array
 
@@ -318,8 +317,6 @@ class r_class(concatenator):
         concatenator.__init__(self, 0)
 
 r_ = r_class()
-
-import warnings
 
 class c_class(concatenator):
     """Translates slice objects to concatenation along the second axis.

@@ -5,7 +5,7 @@
 __all__ = ['diag','diagflat','eye','fliplr','flipud','rot90','tri','triu',
            'tril','vander','histogram2d']
 
-from numpy.core.numeric import asanyarray, int_, equal, subtract, arange, \
+from numpy.core.numeric import asanyarray, equal, subtract, arange, \
      zeros, arange, greater_equal, multiply, ones, asarray
 
 def fliplr(m):

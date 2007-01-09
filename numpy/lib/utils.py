@@ -1,8 +1,8 @@
-import sys, os
+import sys
 import inspect
 import types
-from numpy.core.numerictypes import obj2sctype, integer, generic
-from numpy.core.multiarray import dtype as _dtype, _flagdict, flagsobj
+from numpy.core.numerictypes import obj2sctype, generic
+from numpy.core.multiarray import dtype as _dtype
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',

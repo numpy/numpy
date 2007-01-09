@@ -639,7 +639,7 @@ def trim_zeros(filt, trim='fb'):
 
 import sys
 if sys.hexversion < 0x2040000:
-   from sets import Set as set
+    from sets import Set as set
 
 def unique(x):
     """Return sorted unique items from an array or sequence.

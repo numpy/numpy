@@ -11,12 +11,9 @@ __all__ = ['NewAxis',
 
 import numpy.core.multiarray as multiarray
 import numpy.core.umath as um
-from numpy.core.numeric import array, correlate, outer, cross
-from numpy.core.umath import sign, absolute, multiply
+from numpy.core.numeric import array, correlate
 import functions
 import sys
-
-import types
 
 from cPickle import dump, dumps
 
