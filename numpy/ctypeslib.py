@@ -2,7 +2,7 @@ __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
            'c_intp']
 
 import sys, os
-from numpy import integer, product, ndarray, dtype as _dtype, deprecate
+from numpy import integer, ndarray, dtype as _dtype, deprecate
 from numpy.core.multiarray import _flagdict, flagsobj
 
 try:

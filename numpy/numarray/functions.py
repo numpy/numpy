@@ -1,4 +1,3 @@
-
 # missing Numarray defined names (in from numarray import *)
 ##__all__ = ['ClassicUnpickler', 'Complex32_fromtype',
 ##           'Complex64_fromtype', 'ComplexArray', 'Error',
@@ -8,7 +7,7 @@
 ##           'PyINT_TYPES', 'PyLevel2Type', 'PyNUMERIC_TYPES', 'PyREAL_TYPES',
 ##           'SUPPRESS_SMALL',
 ##           'SuitableBuffer', 'USING_BLAS',
-##           'UsesOpPriority', 
+##           'UsesOpPriority',
 ##           'codegenerator', 'generic', 'libnumarray', 'libnumeric',
 ##           'make_ufuncs', 'memory',
 ##           'numarrayall', 'numarraycore', 'numinclude', 'safethread',
@@ -72,7 +71,7 @@ def type2dtype(typecode, type, dtype, use_default=True):
 
 def fromfunction(shape, dimensions, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, 1)
-    return N.fromfunction(shape, dimensions, dtype=dtype)    
+    return N.fromfunction(shape, dimensions, dtype=dtype)
 def ones(shape, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, 1)
     return N.ones(shape, dtype)
@@ -90,7 +89,7 @@ def where(condition, x=None, y=None, out=None):
         out[...] = arr
         return out
     return arr
-    
+
 def indices(shape, type=None):
     return N.indices(shape, type)
 
@@ -118,7 +117,7 @@ def around(array, digits=0, output=None):
     if output is None:
         return ret
     return
-    
+
 def array2list(arr):
     return arr.tolist()
 
@@ -174,7 +173,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
         shape = (-1,)
     if not isinstance(shape, tuple):
         shape = (shape,)
-        
+
     if (list(shape).count(-1)>1):
         raise ValueError("At most one unspecified dimension in shape")
 
@@ -208,7 +207,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     ##the most common case, namely reading in data from an unchanging
     ##file whose size may be determined before allocation, should be
     ##quick -- only one allocation will be needed.
-    
+
     recsize = dtype.itemsize * N.product([i for i in shape if i != -1])
     blocksize = max(_BLOCKSIZE/recsize, 1)*recsize
 
@@ -265,7 +264,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     if a.dtype.char == '?':
         N.not_equal(a, 0, a)
     return a
-    
+
 def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, True)
     if shape is None:
@@ -275,7 +274,7 @@ def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
     res = N.fromstring(datastring, count=count)
     if shape is not None:
         res.shape = shape
-    return res                
+    return res
 
 
 # check_overflow is ignored
@@ -333,12 +332,12 @@ def getShape(shape, *args):
         if not issubclass(dummy.dtype.type, N.integer):
             raise TypeError
         if len(dummy) > N.MAXDIMS:
-            raise TypeError        
+            raise TypeError
     except:
         raise TypeError("Shape must be a sequence of integers")
     return shape
 
-    
+
 def identity(n, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, True)
     return N.identity(n, dtype)
@@ -455,8 +454,8 @@ def take(array, indices, axis=0, outarr=None, clipmode=RAISE):
         if outarr is None:
             return res
         out[...] = res
-        return 
-    
+        return
+
 def tensormultiply(a1, a2):
     a1, a2 = N.asarray(a1), N.asarray(a2)
     if (a1.shape[-1] != a2.shape[0]):

@@ -1,4 +1,4 @@
-# All of the functions allow formats to be a dtype 
+# All of the functions allow formats to be a dtype
 __all__ = ['record', 'recarray', 'format_parser']
 
 import numeric as sb
@@ -110,7 +110,7 @@ class format_parser:
         if (byteorder is not None):
             byteorder = _byteorderconv[byteorder[0]]
             descr = descr.newbyteorder(byteorder)
-            
+
         self._descr = descr
 
 class record(nt.void):
@@ -129,7 +129,7 @@ class record(nt.void):
             pass
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr,None)
-        if res:            
+        if res:
             obj = self.getfield(*res[:2])
             # if it has fields return a recarray,
             # if it's a string return 'SU' return a chararray
@@ -142,7 +142,7 @@ class record(nt.void):
         else:
             raise AttributeError, "'record' object has no "\
                   "attribute '%s'" % attr
-        
+
 
     def __setattr__(self, attr, val):
         if attr in ['setfield', 'getfield', 'dtype']:
@@ -171,7 +171,7 @@ class recarray(ndarray):
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
                 byteorder=None, aligned=False):
-        
+
         if dtype is not None:
             descr = sb.dtype(dtype)
         else:
@@ -207,7 +207,7 @@ class recarray(ndarray):
 # Save the dictionary
 #  If the attr is a field name and not in the saved dictionary
 #  Undo any "setting" of the attribute and do a setfield
-# Thus, you can't create attributes on-the-fly that are field names. 
+# Thus, you can't create attributes on-the-fly that are field names.
 
     def __setattr__(self, attr, val):
         newattr = attr not in self.__dict__
@@ -224,14 +224,14 @@ class recarray(ndarray):
                 return ret
             if newattr:         # We just added this one
                 try:            #  or this setattr worked on an internal
-                                #  attribute. 
+                                #  attribute.
                     object.__delattr__(self, attr)
                 except:
                     return ret
         try:
             res = fielddict[attr][:2]
         except (TypeError,KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr 
+            raise AttributeError, "record array has no attribute %s" % attr
         return self.setfield(val,*res)
 
     def __getitem__(self, indx):
@@ -268,8 +268,8 @@ class recarray(ndarray):
         dtype = sb.dtype(obj)
         if dtype.fields is None:
             return self.__array__().view(dtype)
-        return ndarray.view(self, obj)            
-    
+        return ndarray.view(self, obj)
+
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """ create a record array from a (flat) list of arrays
@@ -284,9 +284,9 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> r.a
     array([1, 2, 3, 4])
     """
-    
+
     arrayList = [sb.asarray(x) for x in arrayList]
-    
+
     if shape is None or shape == 0:
         shape = arrayList[0].shape
 
@@ -318,18 +318,18 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if len(descr) != len(arrayList):
         raise ValueError, "mismatch between the number of fields "\
               "and the number of arrays"
-    
+
     d0 = descr[0].shape
     nn = len(d0)
     if nn > 0:
         shape = shape[:-nn]
-        
+
     for k, obj in enumerate(arrayList):
         nn = len(descr[k].shape)
         testshape = obj.shape[:len(obj.shape)-nn]
         if testshape != shape:
             raise ValueError, "array-shape mismatch in array %d" % k
-        
+
     _array = recarray(shape, descr)
 
     # populate the record array (makes a copy)
@@ -369,7 +369,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     (2, 'de', 1.3)
     ]
     """
-    
+
     nfields = len(recList[0])
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList,dtype=object)
@@ -400,7 +400,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
             retval.shape = shape
 
     res = retval.view(recarray)
-        
+
     res.dtype = sb.dtype((record, res.dtype))
     return res
 
@@ -409,7 +409,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """ create a (read-only) record array from binary data contained in
     a string"""
-    
+
 
     if dtype is None and formats is None:
         raise ValueError, "Must have dtype= or formats="
@@ -418,11 +418,11 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
         descr = sb.dtype(dtype)
     else:
         descr = format_parser(formats, names, titles, aligned, byteorder)._descr
-        
+
     itemsize = descr.itemsize
     if (shape is None or shape == 0 or shape == -1):
         shape = (len(datastring)-offset) / itemsize
-        
+
     _array = recarray(shape, descr, buf=datastring, offset=offset)
     return _array
 
@@ -465,7 +465,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     if (offset > 0):
         fd.seek(offset, 1)
     size = get_remaining_size(fd)
-    
+
     if dtype is not None:
         descr = sb.dtype(dtype)
     else:
@@ -520,7 +520,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
                 'aligned' : aligned,
                 'byteorder' : byteorder
                 }
-        
+
     if obj is None:
         if shape is None:
             raise ValueError("Must define a shape if obj is None")

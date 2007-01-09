@@ -1,4 +1,3 @@
-
 from numpy.testing import *
 set_package_path()
 from numpy import array, ones, r_, mgrid

@@ -5,7 +5,7 @@
 __all__ = ['diag','diagflat','eye','fliplr','flipud','rot90','tri','triu',
            'tril','vander','histogram2d']
 
-from numpy.core.numeric import asanyarray, int_, equal, subtract, arange, \
+from numpy.core.numeric import asanyarray, equal, subtract, arange, \
      zeros, arange, greater_equal, multiply, ones, asarray
 
 def fliplr(m):
@@ -50,7 +50,7 @@ def eye(N, M=None, k=0, dtype=float):
         return m.astype(dtype)
 
 def diag(v, k=0):
-    """ returns a copy of the the k-th diagonal if v is a 2-d array 
+    """ returns a copy of the the k-th diagonal if v is a 2-d array
         or returns a 2-d array with v as the k-th diagonal if v is a
         1-d array.
     """
@@ -100,7 +100,7 @@ def diagflat(v,k=0):
     if not wrap:
         return res
     return wrap(res)
-    
+
 def tri(N, M=None, k=0, dtype=float):
     """ returns a N-by-M array where all the diagonals starting from
         lower left corner up to the k-th are all ones.
@@ -108,7 +108,7 @@ def tri(N, M=None, k=0, dtype=float):
     if M is None: M = N
     m = greater_equal(subtract.outer(arange(N), arange(M)),-k)
     if m.dtype != dtype:
-        return m.astype(dtype)    
+        return m.astype(dtype)
 
 def tril(m, k=0):
     """ returns the elements on and below the k-th diagonal of m.  k=0 is the
@@ -145,20 +145,20 @@ def vander(x, N=None):
 
 def histogram2d(x,y, bins=10, range=None, normed=False):
     """histogram2d(x,y, bins=10, range=None, normed=False) -> H, xedges, yedges
-    
-    Compute the 2D histogram from samples x,y. 
+
+    Compute the 2D histogram from samples x,y.
 
     Parameters
     ----------
     x,y: 1D data series. Both arrays must have the same length.
-    bins: Number of bins -or- [nbin x, nbin y] -or- 
+    bins: Number of bins -or- [nbin x, nbin y] -or-
          [bin edges] -or- [x bin edges, y bin edges].
     range:  A sequence of lower and upper bin edges (default: [min, max]).
-    normed: True or False. 
-    
-    The histogram array is a count of the number of samples in each 
-    two dimensional bin. 
-    Setting normed to True returns a density rather than a bin count. 
+    normed: True or False.
+
+    The histogram array is a count of the number of samples in each
+    two dimensional bin.
+    Setting normed to True returns a density rather than a bin count.
     """
     import numpy as np
     try:
@@ -196,19 +196,19 @@ def histogram2d(x,y, bins=10, range=None, normed=False):
         xedges = yedges.copy()
         ynbin = len(yedges)-1
         xnbin = len(xedges)-1
-    
+
     dxedges = np.diff(xedges)
     dyedges = np.diff(yedges)
-    
+
     # Flattened histogram matrix (1D)
     hist = np.zeros((xnbin)*(ynbin), int)
 
     # Count the number of sample in each bin (1D)
-    xbin = np.digitize(x,xedges) 
-    ybin = np.digitize(y,yedges) 
- 
+    xbin = np.digitize(x,xedges)
+    ybin = np.digitize(y,yedges)
+
     # Values that fall on an edge are put in the right bin.
-    # For the rightmost bin, we want values equal to the right 
+    # For the rightmost bin, we want values equal to the right
     # edge to be counted in the last bin, and not as an outlier.
     xdecimal = int(-np.log10(dxedges.min()))+6
     ydecimal = int(-np.log10(dyedges.min()))+6
@@ -220,15 +220,15 @@ def histogram2d(x,y, bins=10, range=None, normed=False):
     outliers = (xbin==0) | (xbin==xnbin+1) | (ybin==0) | (ybin == ynbin+1)
     xbin = xbin[outliers==False] - 1
     ybin = ybin[outliers==False] - 1
-    
+
     # Compute the sample indices in the flattened histogram matrix.
     if xnbin >= ynbin:
         xy = ybin*(xnbin) + xbin
-        
+
     else:
         xy = xbin*(ynbin) + ybin
-        
-       
+
+
     # Compute the number of repetitions in xy and assign it to the flattened
     #  histogram matrix.
 

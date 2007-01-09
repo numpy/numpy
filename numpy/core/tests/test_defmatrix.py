@@ -177,8 +177,8 @@ class test_indexing(NumpyTestCase):
         y = zeros((3,1),float)
         y[:,0] = [0.8,0.2,0.3]
         x[:,1] = y>0.5
-        assert_equal(x, [[0,1],[0,0],[0,0]])    
-        
+        assert_equal(x, [[0,1],[0,0],[0,0]])
+
 
 if __name__ == "__main__":
     NumpyTest().run()

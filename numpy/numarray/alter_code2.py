@@ -2,7 +2,7 @@
 This module converts code written for numpy.numarray to work
 with numpy
 
-FIXME:  finish this. 
+FIXME:  finish this.
 
 """
 #__all__ = ['convertfile', 'convertall', 'converttree']

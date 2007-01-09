@@ -1,4 +1,3 @@
-
 import re
 import os
 import sys
@@ -275,7 +274,7 @@ class Gnu95FCompiler(GnuFCompiler):
     def get_libraries(self):
         opt = GnuFCompiler.get_libraries(self)
         if sys.platform == 'darwin':
-            opt.remove('cc_dynamic')        
+            opt.remove('cc_dynamic')
         return opt
 
 if __name__ == '__main__':

@@ -85,7 +85,7 @@ if using_newcore:
             'complex_long_double':'PyArray_CDOUBLE',
             'string':'PyArray_CHAR', # f2py 2e is not ready for PyArray_STRING (must set itemisize etc)
             #'string':'PyArray_STRING'
-                
+
                 }
 c2pycode_map={'double':'d',
               'float':'f',

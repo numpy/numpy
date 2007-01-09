@@ -1,4 +1,3 @@
-
 __all__ = ['oldtype2dtype', 'convtypecode', 'convtypecode2', 'oldtypecodes']
 
 import numpy as N
@@ -48,7 +47,7 @@ _changedtypes = {'B': 'b',
                  'h': 's',
                  'H': 'w',
                  'I': 'u'}
-                 
+
 class _oldtypecodes(dict):
     def __getitem__(self, obj):
         char = N.dtype(obj).char

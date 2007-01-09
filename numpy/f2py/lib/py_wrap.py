@@ -76,7 +76,7 @@ capi_err:
         self.defined_types = []
         self.defined_capi_codes = []
 
-        
+
         self.header_list = []
         self.typedef_list = []
         self.extern_list = []
@@ -121,7 +121,7 @@ capi_err:
         else:
             raise NotImplementedError,`block.__class__.__name__`
         return
-    
+
     def c_code(self):
         return self.apply_attributes(self.main_template)
     def fortran_code(self):

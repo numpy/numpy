@@ -52,9 +52,9 @@ class FortranReaderError: # TODO: may be derive it from Exception
 class Line:
     """ Holds a Fortran source line.
     """
-    
+
     f2py_strmap_findall = re.compile(r'(_F2PY_STRING_CONSTANT_\d+_|F2PY_EXPR_TUPLE_\d+)').findall
-    
+
     def __init__(self, line, linenospan, label, reader):
         self.line = line.strip()
         self.span = linenospan
@@ -87,7 +87,7 @@ class Line:
         self.line = self.apply_map(line)
         self.strline = None
         return
-    
+
     def __repr__(self):
         return self.__class__.__name__+'(%r,%s,%r)' \
                % (self.line, self.span, self.label)
@@ -182,7 +182,7 @@ class FortranReaderBase:
                  used to retrive a line.
         source may contain
           - Fortran 77 code
-          - fixed format Fortran 90 code          
+          - fixed format Fortran 90 code
           - free format Fortran 90 code
           - .pyf signatures - extended free format Fortran 90 syntax
         """
@@ -277,7 +277,7 @@ class FortranReaderBase:
         return self
 
     def next(self, ignore_comments = False):
-            
+
         try:
             if self.reader is not None:
                 try:
@@ -402,7 +402,7 @@ class FortranReaderBase:
                 break
             linenostr = '%5d:' % (i)
             if i==endlineno:
-                sourceline = self.source_lines[i-1] 
+                sourceline = self.source_lines[i-1]
                 l0 = linenostr+sourceline[:startcolno]
                 if endcolno==-1:
                     l1 = sourceline[startcolno:]
@@ -414,7 +414,7 @@ class FortranReaderBase:
             else:
                 r.append(linenostr+ self.source_lines[i-1])
         return '\n'.join(r)
-    
+
     def format_error_message(self, message, startlineno, endlineno,
                              startcolno=0, endcolno=-1):
         return self.format_message('ERROR',message, startlineno,
@@ -555,7 +555,7 @@ class FortranReaderBase:
             # XXX: should we do line.replace('\\'+mlstr[0],mlstr[0])
             #      for line in multilines?
             return self.multiline_item(prefix,multilines,suffix,
-                                       startlineno, self.linecount)        
+                                       startlineno, self.linecount)
 
     # The main method of interpreting raw source lines within
     # the following contexts: f77, fixed f90, free f90, pyf.
@@ -565,7 +565,7 @@ class FortranReaderBase:
         a source item is ..
         - a fortran line
         - a list of continued fortran lines
-        - a multiline - lines inside triple-qoutes, only when in ispyf mode        
+        - a multiline - lines inside triple-qoutes, only when in ispyf mode
         """
         get_single_line = self.get_single_line
         line = get_single_line()
@@ -613,7 +613,7 @@ class FortranReaderBase:
             return self.line_item(''.join(lines),startlineno,self.linecount,label)
 
         handle_inline_comment = self.handle_inline_comment
-        
+
         if self.isfix90 and not is_f2py_directive:
             # handle inline comment
             newline,qc = handle_inline_comment(line[6:], startlineno)
@@ -739,7 +739,7 @@ class FortranFileReader(FortranReaderBase):
         self.file.close()
 
 class FortranStringReader(FortranReaderBase):
-    
+
     def __init__(self, string, isfree, isstrict, include_dirs = None):
         self.id = 'string-'+str(id(string))
         source = StringIO(string)
@@ -765,7 +765,7 @@ cf2py call me ! hey
     reader = FortranStringReader(string_f77,False,True)
     for item in reader:
         print item
-    
+
     filename = tempfile.mktemp()+'.f'
     f = open(filename,'w')
     f.write(string_f77)
@@ -823,7 +823,7 @@ cComment
        obj%bin_wid,'  VEL_DMO = ', obj%vel_dmo
       end subroutine foo
       subroutine
- 
+
      & foo
       end
 """

@@ -173,7 +173,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);
 \tPyFortran_Type.ob_type = &PyType_Type;
 \timport_array();
-\tif (PyErr_Occurred()) 
+\tif (PyErr_Occurred())
 \t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return;}
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R"""+"""evision: $\");

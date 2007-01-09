@@ -1,4 +1,3 @@
-
 from numpy.testing import *
 set_package_path()
 import numpy.lib;
@@ -13,6 +12,10 @@ class test_apply_along_axis(NumpyTestCase):
     def check_simple101(self,level=11):
         a = ones((10,101),'d')
         assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
+
+    def check_3d(self):
+        a = arange(27).reshape((3,3,3))
+        assert_array_equal(apply_along_axis(sum,0,a), [[27,30,33],[36,39,42],[45,48,51]])
 
 class test_array_split(NumpyTestCase):
     def check_integer_0_split(self):
@@ -356,17 +359,17 @@ class test_kron(NumpyTestCase):
     def check_return_type(self):
         a = ones([2,2])
         m = asmatrix(a)
-        assert_equal(type(kron(a,a)), ndarray) 
-        assert_equal(type(kron(m,m)), matrix) 
-        assert_equal(type(kron(a,m)), matrix) 
-        assert_equal(type(kron(m,a)), matrix) 
-        class myarray(ndarray): 
+        assert_equal(type(kron(a,a)), ndarray)
+        assert_equal(type(kron(m,m)), matrix)
+        assert_equal(type(kron(a,m)), matrix)
+        assert_equal(type(kron(m,a)), matrix)
+        class myarray(ndarray):
             __array_priority__ = 0.0
         ma = myarray(a.shape, a.dtype, a.data)
-        assert_equal(type(kron(a,a)), ndarray) 
-        assert_equal(type(kron(ma,ma)), myarray) 
-        assert_equal(type(kron(a,ma)), ndarray) 
-        assert_equal(type(kron(ma,a)), myarray) 
+        assert_equal(type(kron(a,a)), ndarray)
+        assert_equal(type(kron(ma,ma)), myarray)
+        assert_equal(type(kron(a,ma)), ndarray)
+        assert_equal(type(kron(ma,a)), myarray)
 
 
 class test_tile(NumpyTestCase):
@@ -378,11 +381,12 @@ class test_tile(NumpyTestCase):
         assert_equal(tile(a,(1,2)), [[0,1,2,0,1,2]])
         assert_equal(tile(b, 2), [[1,2,1,2],[3,4,3,4]])
         assert_equal(tile(b,(2,1)),[[1,2],[3,4],[1,2],[3,4]])
-        assert_equal(tile(b,(2,2)),[[1,2,1,2],[3,4,3,4],[1,2,1,2],[3,4,3,4]])
+        assert_equal(tile(b,(2,2)),[[1,2,1,2],[3,4,3,4],
+                                    [1,2,1,2],[3,4,3,4]])
 
     def check_kroncompare(self):
         import numpy.random as nr
-	reps=[(2,),(1,2),(2,1),(2,2),(2,3,2),(3,2)]
+        reps=[(2,),(1,2),(2,1),(2,2),(2,3,2),(3,2)]
         shape=[(3,),(2,3),(3,4,3),(3,2,3),(4,3,2,4),(2,2)]
         for s in shape:
             b = nr.randint(0,10,size=s)
@@ -401,3 +405,4 @@ def compare_results(res,desired):
 
 if __name__ == "__main__":
     NumpyTest().run()
+ 

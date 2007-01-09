@@ -1,4 +1,4 @@
-# This module is for compatibility only.  
+# This module is for compatibility only.
 
 __all__ = ['UserArray', 'squeeze', 'Matrix', 'asarray', 'dot', 'k', 'Numeric', 'LinearAlgebra', 'identity', 'multiply', 'types', 'string']
 
@@ -10,7 +10,7 @@ from numpy.oldnumeric import dot, identity, multiply
 import numpy.oldnumeric.linear_algebra as LinearAlgebra
 from numpy import matrix as Matrix, squeeze
 
-# Hidden names that will be the same. 
+# Hidden names that will be the same.
 
 _table = [None]*256
 for k in range(256):

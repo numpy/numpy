@@ -1,4 +1,3 @@
-
 from numpy.testing import *
 set_package_path()
 import numpy.core.umath as ncu
@@ -11,7 +10,7 @@ types = [N.bool_, N.byte, N.ubyte, N.short, N.ushort, N.intc, N.uintc,
          N.single, N.double, N.longdouble, N.csingle,
          N.cdouble, N.clongdouble]
 
-# This compares scalarmath against ufuncs. 
+# This compares scalarmath against ufuncs.
 
 class test_types(NumpyTestCase):
     def check_types(self, level=1):

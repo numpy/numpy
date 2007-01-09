@@ -16,8 +16,8 @@ h_template = r"""
 #ifdef _MULTIARRAYMODULE
 
 typedef struct {
-	PyObject_HEAD
-	npy_bool obval;
+        PyObject_HEAD
+        npy_bool obval;
 } PyBoolScalarObject;
 
 

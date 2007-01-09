@@ -1,4 +1,3 @@
-
 from os.path import join
 
 def configuration(parent_package='',top_path=None):
@@ -6,7 +5,7 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('numarray',parent_package,top_path)
 
     config.add_data_files('numpy/')
-    
+
     # Configure fftpack_lite
     config.add_extension('_capi',
                          sources=['_capi.c']

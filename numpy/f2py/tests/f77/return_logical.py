@@ -1,4 +1,3 @@
-
 __usage__ = """
 Run:
   python return_logical.py [<f2py options>]

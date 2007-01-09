@@ -17,4 +17,3 @@ from numpy import less, cosh, arcsinh, add, ceil, arctan2, floor_divide, \
      arccosh, logical_or, minimum, conjugate, tan, greater, bitwise_xor, \
      fabs, floor, sqrt, arctan, right_shift, absolute, sin, \
      multiply, greater_equal, left_shift, exp, divide as divide_safe
- 

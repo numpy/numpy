@@ -50,7 +50,7 @@ Ndescr = [
         ('z2', 'b1')]),
     ('color', 'S2'),
     ('info', [
-        ('Name', 'U8'),  
+        ('Name', 'U8'),
         ('Value', 'c16')]),
     ('y', 'f8', (2, 2)),
     ('z', 'u1')]
@@ -333,7 +333,7 @@ class test_read_values_nested_multiple(read_values_nested, NumpyTestCase):
 
 class test_empty_field(NumpyTestCase):
     def check_assign(self):
-        a = numpy.arange(10, dtype=numpy.float32)    
+        a = numpy.arange(10, dtype=numpy.float32)
         a.dtype = [("int",   "<0i4"),("float", "<2f4")]
         assert(a['int'].shape == (5,0))
         assert(a['float'].shape == (5,2))

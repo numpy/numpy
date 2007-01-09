@@ -47,7 +47,7 @@ class TypeDeclarationStatement(Statement):
     EXTENSION:
       <kind-selector> = ( [ KIND = ] <scalar-int-initialization-expr> )
                         | * <length>
-    
+
     <char-selector> = <length-selector>
                       | ( LEN = <type-param-value>, KIND = <scalar-int-initialization-expr> )
                       | ( <type-param-value>, [ KIND = ] <scalar-int-initialization-expr> )
@@ -218,7 +218,7 @@ class TypeDeclarationStatement(Statement):
                     kind = l[4:].lstrip()[1:].lstrip()
                     l = ''
                 else:
-                    kind = ''                    
+                    kind = ''
             else:
                 assert len(l)==2
                 if l[0].lower().startswith('len'):
@@ -257,7 +257,7 @@ class TypeDeclarationStatement(Statement):
                     s += '*%s' % (length)
                 if kind:
                     s += '(KIND=%s)' % (kind)
-                
+
         return clsname + s
 
     def tofortran(self,isfix=None):
@@ -270,7 +270,7 @@ class TypeDeclarationStatement(Statement):
         if self.entity_decls:
             s += ' ' + ', '.join(self.entity_decls)
         return tab + s
-    
+
     def __str__(self):
         return self.tofortran()
 
@@ -415,7 +415,7 @@ class Complex(TypeDeclarationStatement):
     def get_part_typedecl(self):
         bz = self.get_byte_size()/2
         return Real(self.parent, self.item.copy('REAL*%s' % (bz)))
-        
+
 class DoubleComplex(TypeDeclarationStatement):
     # not in standard
     match = re.compile(r'double\s*complex\b',re.I).match
@@ -474,7 +474,7 @@ class Type(TypeDeclarationStatement):
 
     def get_bit_size(self):
         return self.get_type_decl(self.name).get_bit_size()
-    
+
 TypeStmt = Type
 
 class Class(TypeDeclarationStatement):

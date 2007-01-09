@@ -78,7 +78,7 @@ import numpy as N
 
 class test_docs(NumpyTestCase):
     def check_doctests(self): return self.rundocs()
-    
+
     def check_roots(self):
         assert_array_equal(N.roots([1,0,0]), [0,0])
 

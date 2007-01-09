@@ -364,8 +364,8 @@ add_newdoc('numpy.core.multiarray','lexsort',
     sorting on key[1], and so forth. The result is a sort on multiple
     keys.  If the keys represented columns of a spreadsheet, for example,
     this would sort using multiple columns (the last key being used for the
-    primary sort order, the second-to-last key for the secondary sort order, 
-    and so on).  The keys argument must be a sequence of things that can be 
+    primary sort order, the second-to-last key for the secondary sort order,
+    and so on).  The keys argument must be a sequence of things that can be
     converted to arrays of the same shape.
 
     """)
@@ -660,7 +660,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     order -- If a has fields defined, then the order keyword can be the
              field name to sort on or a list (or tuple) of field names
              to indicate the order that fields should be used to define
-             the sort.         
+             the sort.
 
     Returns: array of indices that sort a along the specified axis.
 
@@ -701,7 +701,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     """a.byteswap(False) -> View or copy. Swap the bytes in the array.
 
     Swap the bytes in the array.  Return the byteswapped array.  If the first
-    argument is TRUE, byteswap in-place and return a reference to self.
+    argument is True, byteswap in-place and return a reference to self.
 
     """))
 
@@ -1035,7 +1035,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     order -- If a has fields defined, then the order keyword can be the
              field name to sort on or a list (or tuple) of field names
              to indicate the order that fields should be used to define
-             the sort.         
+             the sort.
 
     Returns: None.
 

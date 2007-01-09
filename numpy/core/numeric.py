@@ -159,7 +159,7 @@ def require(a, dtype=None, requirements=None):
         subok = 0
     else:
         subok = 1
-        
+
     arr = array(a, dtype=dtype, copy=False, subok=subok)
 
     copychar = 'A'
@@ -176,7 +176,7 @@ def require(a, dtype=None, requirements=None):
         if not arr.flags[prop]:
             arr = arr.copy(copychar)
             break
-    return arr   
+    return arr
 
 def isfortran(a):
     """Returns True if 'a' is arranged in Fortran-order in memory with a.ndim > 1
@@ -240,7 +240,7 @@ def outer(a,b):
 def vdot(a, b):
     """Returns the dot product of 2 vectors (or anything that can be made into
     a vector).
-    
+
     Note: this is not the same as `dot`, as it takes the conjugate of its first
     argument if complex and always returns a scalar."""
     return dot(asarray(a).ravel().conj(), asarray(b).ravel())
@@ -265,7 +265,7 @@ def tensordot(a, b, axes=2):
     the axes to be summed over are given by the axes argument.
     the first element of the sequence determines the axis or axes
     in arr1 to sum over, and the second element in axes argument sequence
-    determines the axis or axes in arr2 to sum over. 
+    determines the axis or axes in arr2 to sum over.
 
     When there is more than one axis to sum over, the corresponding
     arguments to axes should be sequences of the same length with the first
@@ -273,7 +273,7 @@ def tensordot(a, b, axes=2):
     and so forth.
 
     If the axes argument is an integer, N, then the last N dimensions of a
-    and first N dimensions of b are summed over. 
+    and first N dimensions of b are summed over.
     """
     try:
         iter(axes)
@@ -375,8 +375,8 @@ def rollaxis(a, axis, start=0):
         raise ValueError, msg % ('axis', axis, n)
     if not (0 <= start < n+1):
         raise ValueError, msg % ('start', start, n+1)
-    if (axis < start): # it's been removed 
-        start -= 1    
+    if (axis < start): # it's been removed
+        start -= 1
     if axis==start:
         return a
     axes = range(0,n)
@@ -488,7 +488,7 @@ def indices(dimensions, dtype=int):
 def fromfunction(function, shape, **kwargs):
     """Returns an array constructed by calling a function on a tuple of number
     grids.
-    
+
     The function should accept as many arguments as the length of shape and work
     on array inputs.  The shape argument is a sequence of numbers indicating the
     length of the desired output for each axis.
@@ -496,7 +496,7 @@ def fromfunction(function, shape, **kwargs):
     The function can also accept keyword arguments (except dtype), which will be
     passed through fromfunction to the function itself.  The dtype argument
     (default float) determines the data-type of the index grid passed to the
-    function. 
+    function.
     """
     dtype = kwargs.pop('dtype', float)
     args = indices(shape, dtype=dtype)
@@ -532,7 +532,7 @@ _lkup = {
     'C':'1100',
     'D':'1101',
     'E':'1110',
-    'F':'1111',    
+    'F':'1111',
     'L':''}
 
 def binary_repr(num):
@@ -698,7 +698,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     FloatingPointError: overflow encountered in short_scalars
     >>> seterr(all='ignore')
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
-    
+
     """
 
     pyvals = umath.geterrobj()
@@ -785,16 +785,16 @@ def geterrcall():
     """
     return umath.geterrobj()[2]
 
-class _unspecified(object): 
+class _unspecified(object):
     pass
 _Unspecified = _unspecified()
 
 class errstate(object):
     """with errstate(**state): --> operations in following block use given state.
-    
+
     # Set error handling to known state.
-    >>> _ = seterr(invalid='raise', divide='raise', over='raise', under='ignore') 
-    
+    >>> _ = seterr(invalid='raise', divide='raise', over='raise', under='ignore')
+
     |>> a = -arange(3)
     |>> with errstate(invalid='ignore'):
     ...     print sqrt(a)
@@ -812,7 +812,7 @@ class errstate(object):
     Traceback (most recent call last):
         ...
     FloatingPointError: divide by zero encountered in divide
-    
+
     """
     # Note that we don't want to run the above doctests because they will fail
     # without a from __future__ import with_statement

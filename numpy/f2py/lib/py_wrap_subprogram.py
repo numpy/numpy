@@ -1,4 +1,3 @@
-
 __all__ = ['PythonCAPISubProgram']
 
 import sys
@@ -88,7 +87,7 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
         if cname in defined:
             return
         defined.append(cname)
-        
+
         self.info('Generating interface for %s %s: %s' % (parent.modulename, block.__class__.__name__, cname))
         self.parent = parent
 
@@ -105,7 +104,7 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
         self.fortran_code_template = ''
 
         WrapperCPPMacro(parent, 'F_FUNC')
-        
+
         if isinstance(block.parent, Module):
             self.mname = block.parent.name
             self.init_func = '%s_init' % (name)
@@ -199,7 +198,7 @@ static void %(init_func)s_c(%(name)s_functype func_ptr) {
         self.ctype_args_f_list = ctype_args_f + extra_ctype_args_f
         if not self.ctype_args_f_list:
             self.ctype_args_f_list.append('void')
-        
+
 
         self.clean_pyobjfrom_list.reverse()
         self.clean_call_list.reverse()

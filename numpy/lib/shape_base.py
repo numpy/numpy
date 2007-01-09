@@ -1,6 +1,6 @@
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack',
            'column_stack','row_stack', 'dstack','array_split','split','hsplit',
-           'vsplit','dsplit','apply_over_axes','expand_dims', 
+           'vsplit','dsplit','apply_over_axes','expand_dims',
            'apply_along_axis', 'kron', 'tile', 'get_array_wrap']
 
 import numpy.core.numeric as _nx
@@ -31,7 +31,7 @@ def apply_along_axis(func1d,axis,arr,*args):
     #  if res is a number, then we have a smaller output array
     if isscalar(res):
         outarr = zeros(outshape,asarray(res).dtype)
-        outarr[ind] = res
+        outarr[tuple(ind)] = res
         Ntot = product(outshape)
         k = 1
         while k < Ntot:
@@ -44,7 +44,7 @@ def apply_along_axis(func1d,axis,arr,*args):
                 n -= 1
             i.put(indlist,ind)
             res = func1d(arr[tuple(i.tolist())],*args)
-            outarr[ind] = res
+            outarr[tuple(ind)] = res
             k += 1
         return outarr
     else:
@@ -249,7 +249,7 @@ def column_stack(tup):
             must have the same first dimension.  2D arrays are
             stacked as-is, just like with hstack.  1D arrays are turned
             into 2D columns first.
-            
+
         Arguments:
             tup -- sequence of 1D or 2D arrays.  All arrays must have the same
                    first dimension.
@@ -532,12 +532,12 @@ def get_array_wrap(*args):
     In case of ties, leftmost wins. If no wrapper is found, return None
     """
     wrappers = [(getattr(x, '__array_priority__', 0), -i,
-                 x.__array_wrap__) for i, x in enumerate(args) 
+                 x.__array_wrap__) for i, x in enumerate(args)
                                    if hasattr(x, '__array_wrap__')]
     wrappers.sort()
     if wrappers:
         return wrappers[-1][-1]
-    return None 
+    return None
 
 def kron(a,b):
     """kronecker product of a and b
@@ -548,7 +548,7 @@ def kron(a,b):
      [ a[m-1,0]*b, a[m-1,1]*b, ... , a[m-1,n-1]*b  ]]
     """
     wrapper = get_array_wrap(a, b)
-    b = asanyarray(b)    
+    b = asanyarray(b)
     a = array(a,copy=False,subok=True,ndmin=b.ndim)
     ndb, nda = b.ndim, a.ndim
     if (nda == 0 or ndb == 0):
@@ -565,10 +565,10 @@ def kron(a,b):
             as_ = (1,)*(ndb-nda) + as_
         else:
             bs = (1,)*(nda-ndb) + bs
-            nd = nda        
+            nd = nda
     result = outer(a,b).reshape(as_+bs)
     axis = nd-1
-    for k in xrange(nd):
+    for _ in xrange(nd):
         result = concatenate(result, axis=axis)
     if wrapper is not None:
         result = wrapper(result)
@@ -626,4 +626,3 @@ def tile(A, reps):
         shape[i] = dim_out
         n /= dim_in
     return c.reshape(shape)
-

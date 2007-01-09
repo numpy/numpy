@@ -1,4 +1,3 @@
-
 from numpy.testing import *
 set_package_path()
 from numpy.core.umath import minimum, maximum, exp
@@ -167,7 +166,7 @@ class _test_complex_real(NumpyTestCase):
     def setUp(self):
         self.x = 0.52
         self.z = self.x+0j
-        self.funcs = ['arcsin', 'arccos', 'arctan', 'arcsinh', 'arccosh', 
+        self.funcs = ['arcsin', 'arccos', 'arctan', 'arcsinh', 'arccosh',
                       'arctanh', 'sin', 'cos', 'tan', 'exp', 'log', 'sqrt',
                       'log10']
     def test_it(self):

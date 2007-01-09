@@ -38,7 +38,7 @@ class chararray(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        # The b is a special case because it is used for reconstructing. 
+        # The b is a special case because it is used for reconstructing.
         if not _globalvar and self.dtype.char not in 'SUb':
             raise ValueError, "Can only create a chararray from string data."
 
@@ -52,23 +52,23 @@ class chararray(ndarray):
                 val = temp
         return val
 
-    def __eq__(self, other): 
+    def __eq__(self, other):
         return compare_chararrays(self, other, '==', True)
 
-    def __ne__(self, other): 
+    def __ne__(self, other):
         return compare_chararrays(self, other, '!=', True)
 
     def __ge__(self, other):
-        return compare_chararrays(self, other, '>=', True)        
+        return compare_chararrays(self, other, '>=', True)
 
     def __le__(self, other):
-        return compare_chararrays(self, other, '<=', True)                
+        return compare_chararrays(self, other, '<=', True)
 
     def __gt__(self, other):
         return compare_chararrays(self, other, '>', True)
 
     def __lt__(self, other):
-        return compare_chararrays(self, other, '<', True)        
+        return compare_chararrays(self, other, '<', True)
 
     def __add__(self, other):
         b = broadcast(self, other)

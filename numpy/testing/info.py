@@ -1,12 +1,12 @@
 """
-Scipy testing tools
+Numpy testing tools
 ===================
 
-Scipy-style unit-testing
+Numpy-style unit-testing
 ------------------------
 
-  ScipyTest -- Scipy tests site manager
-  ScipyTestCase -- unittest.TestCase with measure method
+  NumpyTest -- Numpy tests site manager
+  NumpyTestCase -- unittest.TestCase with measure method
   IgnoreException -- raise when checking disabled feature, it'll be ignored
   set_package_path -- prepend package build directory to path
   set_local_path -- prepend local directory (to tests files) to path

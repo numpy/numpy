@@ -95,7 +95,7 @@ def get_base_classes(cls):
     bases = ()
     for c in cls.__bases__:
         bases += get_base_classes(c)
-    return bases + cls.__bases__ + (cls,) 
+    return bases + cls.__bases__ + (cls,)
 
 class Variable:
     """
@@ -391,7 +391,7 @@ class Variable:
 
     def is_array_pointer(self):
         return self.is_array() and self.is_pointer()
-    
+
     def analyze(self):
         typedecl = self.get_typedecl()
         if self.is_array():
@@ -406,7 +406,7 @@ class Variable:
                         shape.append(spec[0])
                     else:
                         shape.append(spec[1]-spec[0])
-                self.shape = shape  
+                self.shape = shape
         return
 
 class ProgramBlock:
@@ -528,7 +528,7 @@ class Statement:
                 lines.append(line+'\n')
             else: lines.append(line+'\n')
         return ''.join(lines).replace('\n     &\n','\n')
-        
+
     def format_message(self, kind, message):
         if self.item is not None:
             message = self.reader.format_message(kind, message,
@@ -613,7 +613,7 @@ class BeginStatement(Statement):
             self.blocktype = self.__class__.__name__.lower()
         if not hasattr(self, 'name'):
             # process_item may change this
-            self.name = '__'+self.blocktype.upper()+'__' 
+            self.name = '__'+self.blocktype.upper()+'__'
         Statement.__init__(self, parent, item)
         return
 
@@ -701,7 +701,7 @@ class BeginStatement(Statement):
                     return False
                 # item may be cloned that changes the items line:
                 line = item.get_line()
-                
+
         # Check if f77 code contains inline comments or other f90
         # constructs that got undetected by get_source_info.
         if item.reader.isfix77:
@@ -734,10 +734,10 @@ class BeginStatement(Statement):
                         % (item.get_line(),self.__class__.__name__),
                         item.span[0], item.span[1])
                 self.show_message(message)
-    
+
                 item.reader.set_mode(False, False)
                 self.classes = classes
-            
+
                 r = BeginStatement.process_subitem(self, item)
                 if r is None:
                     # restore f77 fix mode
@@ -817,4 +817,3 @@ class EndStatement(Statement):
     def tofortran(self, isfix=None):
         return self.get_indent_tab(isfix=isfix) + 'END %s %s'\
                % (self.blocktype.upper(),self.name or '')
-

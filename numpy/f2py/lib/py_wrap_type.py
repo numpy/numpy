@@ -1,4 +1,3 @@
-
 __all__ = ['PythonCAPIType', 'PyTypeInterface']
 
 from wrapper_base import *
@@ -331,7 +330,7 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
 #endif
   return return_value;
 }
-''' 
+'''
     def __init__(self, parent, typedecl):
         WrapperBase.__init__(self)
         self.name = name = typedecl.name
@@ -342,7 +341,7 @@ static int pyobj_to_%(ctype)s(PyObject *obj, %(ctype)s* value) {
         if ctype in defined:
             return
         defined.append(ctype)
-        
+
         self.info('Generating interface for %s: %s' % (typedecl.__class__.__name__, ctype))
         self.parent = parent
         if isinstance(typedecl, (Integer,Byte,Real,DoublePrecision)):
@@ -601,7 +600,7 @@ static int %(otype)s_init(%(otype)s *self,
    if (!PyArg_ParseTuple(capi_args,"%(attr_format_elist)s"
                                    %(attr_init_clist)s))
       return_value = -1;
-   
+
 #if defined(F2PY_DEBUG_PYOBJ_TOFROM)
   fprintf(stderr,"%(otype)s_init: return_value=%%d, PyErr_Occurred()=%%p\\n", return_value, PyErr_Occurred());
 #endif
@@ -656,7 +655,7 @@ static PyObject * %(otype)s_repr(PyObject * self) {
             self.wrappermodulename = typedecl.parent.name
         else:
             self.info('Generating interface for %s.%s: %s' % (parent.modulename, typedecl.name, ctype))
-        
+
         parent.isf90 = True
         self.parent = parent
         self.name = name = typedecl.name

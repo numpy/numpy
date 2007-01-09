@@ -31,7 +31,7 @@ from array_printer import array2string
 
 class Unpickler(pickle.Unpickler):
     def __init__(self, *args, **kwds):
-        raise NotImplemented    
+        raise NotImplemented
     def load_array(self):
         raise NotImplemented
 

@@ -3,7 +3,7 @@
 #  The character strings are still for "new" NumPy
 #   which is the only Incompatibility with Numeric
 
-__all__ = ['Character', 'Complex', 'Float', 
+__all__ = ['Character', 'Complex', 'Float',
            'PrecisionError', 'PyObject', 'Int', 'UInt',
            'UnsignedInteger', 'string', 'typecodes', 'zeros']
 
@@ -46,25 +46,25 @@ except(PrecisionError):
 try:
     UnsignedInt16 = _lookup(_code_table, "UnsignedInteger", 16)
     UInt16 = UnsignedInt16
-    __all__.extend(['UnsignedInt16', 'UInt16'])    
+    __all__.extend(['UnsignedInt16', 'UInt16'])
 except(PrecisionError):
     pass
 try:
     UnsignedInt32 = _lookup(_code_table, "UnsignedInteger", 32)
     UInt32 = UnsignedInt32
-    __all__.extend(['UnsignedInt32', 'UInt32'])        
+    __all__.extend(['UnsignedInt32', 'UInt32'])
 except(PrecisionError):
     pass
 try:
     UnsignedInt64 = _lookup(_code_table, "UnsignedInteger", 64)
     UInt64 = UnsignedInt64
-    __all__.extend(['UnsignedInt64', 'UInt64'])        
+    __all__.extend(['UnsignedInt64', 'UInt64'])
 except(PrecisionError):
     pass
 try:
     UnsignedInt128 = _lookup(_code_table, "UnsignedInteger", 128)
     UInt128 = UnsignedInt128
-    __all__.extend(['UnsignedInt128', 'UInt128'])            
+    __all__.extend(['UnsignedInt128', 'UInt128'])
 except(PrecisionError):
     pass
 UnsignedInteger = 'u'
@@ -77,7 +77,7 @@ except(PrecisionError):
     pass
 try:
     Int8 = _lookup(_code_table, 'Integer', 8)
-    __all__.append('Int8')    
+    __all__.append('Int8')
 except(PrecisionError):
     pass
 try:
@@ -109,7 +109,7 @@ except(PrecisionError):
     pass
 try:
     Float8 = _lookup(_code_table, 'Float', 8)
-    __all__.append('Float8')    
+    __all__.append('Float8')
 except(PrecisionError):
     pass
 try:
@@ -119,17 +119,17 @@ except(PrecisionError):
     pass
 try:
     Float32 = _lookup(_code_table, 'Float', 32)
-    __all__.append('Float32')      
+    __all__.append('Float32')
 except(PrecisionError):
     pass
 try:
     Float64 = _lookup(_code_table, 'Float', 64)
-    __all__.append('Float64')          
+    __all__.append('Float64')
 except(PrecisionError):
     pass
 try:
     Float128 = _lookup(_code_table, 'Float', 128)
-    __all__.append('Float128')              
+    __all__.append('Float128')
 except(PrecisionError):
     pass
 Float = 'd'
@@ -141,22 +141,22 @@ except(PrecisionError):
     pass
 try:
     Complex8 = _lookup(_code_table, 'Complex', 16)
-    __all__.append('Complex8')    
+    __all__.append('Complex8')
 except(PrecisionError):
     pass
 try:
     Complex16 = _lookup(_code_table, 'Complex', 32)
-    __all__.append('Complex16')        
+    __all__.append('Complex16')
 except(PrecisionError):
     pass
 try:
     Complex32 = _lookup(_code_table, 'Complex', 64)
-    __all__.append('Complex32')        
+    __all__.append('Complex32')
 except(PrecisionError):
     pass
 try:
     Complex64 = _lookup(_code_table, 'Complex', 128)
-    __all__.append('Complex64')            
+    __all__.append('Complex64')
 except(PrecisionError):
     pass
 try:

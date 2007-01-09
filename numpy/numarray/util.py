@@ -1,4 +1,3 @@
-
 from numpy import geterr
 
 __all__ = ['MathDomainError', 'UnderflowError', 'NumOverflowError', 'handleError',
@@ -39,4 +38,3 @@ def get_numarray_include_dirs():
     base = os.path.dirname(numpy.__file__)
     newdirs = [os.path.join(base, 'numarray')]
     return newdirs
-        

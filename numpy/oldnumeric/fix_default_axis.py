@@ -52,7 +52,7 @@ _all = _func0 + _funcm1
 func_re = {}
 
 for name in _all:
-    _astr = r"""%s\s*[(]"""%name 
+    _astr = r"""%s\s*[(]"""%name
     func_re[name] = re.compile(_astr)
 
 
@@ -142,7 +142,7 @@ def _import_change(fstr, names):
             fstr = "%s%s%s" % (fstr[:ind], "import numpy.oldnumeric as numpy",
                                fstr[ind+len(importstr):])
             num += 1
-            
+
     # case 2
     importre = re.compile("""import numpy as ([A-Za-z0-9_]+)""")
     modules = importre.findall(fstr)
@@ -230,7 +230,7 @@ def add_axis(fstr, import_change=False):
         return fstr, total
     else:
         fstr, num = _import_change(fstr, _funcm1+_func0)
-        return fstr, num        
+        return fstr, num
 
 
 def makenewfile(name, filestr):

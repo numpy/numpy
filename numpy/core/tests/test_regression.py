@@ -602,5 +602,16 @@ class test_regression(NumpyTestCase):
         ca = N.char.array(['Hi','There'])
         assert_equal(ca.startswith('H'),[True,False])
 
+    def check_noncommutative_reduce_accumulate(self, level=rlevel):
+        """Ticket #413"""
+        tosubtract = N.arange(5)
+        todivide = N.array([2.0, 0.5, 0.25])
+        assert_equal(N.subtract.reduce(tosubtract), -10)
+        assert_equal(N.divide.reduce(todivide), 16.0)
+        assert_array_equal(N.subtract.accumulate(tosubtract), 
+            N.array([0, -1, -3, -6, -10]))
+        assert_array_equal(N.divide.accumulate(todivide),
+            N.array([2., 4., 16.]))
+
 if __name__ == "__main__":
     NumpyTest().run()

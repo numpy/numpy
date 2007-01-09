@@ -192,7 +192,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
         # not valid for C++ code, only for C.  Remove it if it's there to
         # avoid a spurious warning on every compilation.  All the default
         # options used by distutils can be extracted with:
-        
+
         # from distutils import sysconfig
         # sysconfig.get_config_vars('CC', 'CXX', 'OPT', 'BASECFLAGS',
         # 'CCSHARED', 'LDSHARED', 'SO')
@@ -200,7 +200,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
             self.compiler_so.remove('-Wstrict-prototypes')
         except (AttributeError, ValueError):
             pass
-        
+
         if hasattr(self,'compiler') and self.compiler[0].find('cc')>=0:
             if not self.compiler_cxx:
                 if self.compiler[0][:3] == 'gcc':

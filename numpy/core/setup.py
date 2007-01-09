@@ -1,10 +1,8 @@
-
 import imp
 import os
 import sys
 from os.path import join
-from glob import glob
-from distutils.dep_util import newer,newer_group
+from distutils.dep_util import newer
 
 FUNCTIONS_TO_CHECK = [
     ('expl', 'HAVE_LONGDOUBLE_FUNCS'),
@@ -54,7 +52,7 @@ def configuration(parent_package='',top_path=None):
                 #  which is done in error-handling
                 #  ufunc code.  NPY_ALLOW_C_API and friends
                 #  cause the segfault. So, we disable threading
-                #  for now. 
+                #  for now.
             if sys.version[:5] < '2.4.2':
                 nosmp = 1
             else:
@@ -100,7 +98,7 @@ def configuration(parent_package='',top_path=None):
 
             if sys.platform == 'win32':
                 moredefs.append('NPY_NO_SIGNAL')
-                
+
             if sys.version[:3] < '2.4':
                 if config_cmd.check_func('strtod', decl=False,
                                          headers=['stdlib.h']):

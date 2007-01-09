@@ -1,4 +1,3 @@
-
 """Backward compatible with LinearAlgebra from Numeric
 """
 # This module is a lite version of the linalg.py module in SciPy which contains
@@ -7,10 +6,10 @@
 # zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
 
-__all__ = ['LinAlgError', 'solve_linear_equations', 
+__all__ = ['LinAlgError', 'solve_linear_equations',
            'inverse', 'cholesky_decomposition', 'eigenvalues',
-           'Heigenvalues', 'generalized_inverse', 
-           'determinant', 'singular_value_decomposition', 
+           'Heigenvalues', 'generalized_inverse',
+           'determinant', 'singular_value_decomposition',
            'eigenvectors',  'Heigenvectors',
            'linear_least_squares'
            ]
@@ -52,7 +51,7 @@ def eigenvectors(A):
 def Heigenvectors(A):
     w, v = linalg.eigh(A)
     return w, transpose(v)
-    
+
 # Generalized inverse
 
 def generalized_inverse(a, rcond = 1.e-10):

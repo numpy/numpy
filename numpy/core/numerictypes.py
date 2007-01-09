@@ -216,7 +216,7 @@ def _add_integer_aliases():
         Intname = 'Int%d' % bits
         uval = typeinfo['U'+ctype]
         typeobj = val[-1]
-        utypeobj = uval[-1]        
+        utypeobj = uval[-1]
         if intname not in allTypes.keys():
             uintname = 'uint%d' % bits
             allTypes[intname] = typeobj

@@ -549,6 +549,6 @@ class test_m(NumpyTestCase):
         assert_equal(r,'1bcde')
         r = func('')
         assert_equal(r,'')
-        
+
 if __name__ == "__main__":
     NumpyTest().run()

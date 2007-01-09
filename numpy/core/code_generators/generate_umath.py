@@ -267,7 +267,7 @@ defdict = {
     Ufunc(2, 1, None,
           'returns minimum (if x1 < x2: x1;  else: x2) elementwise',
           TD(noobj),
-          TD(O, f='_npy_ObjectMin')          
+          TD(O, f='_npy_ObjectMin')
           ),
 'bitwise_and' :
     Ufunc(2, 1, One,

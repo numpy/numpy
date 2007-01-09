@@ -18,7 +18,7 @@ def seed(x=0, y=0):
     if (x == 0 or y == 0):
         mt.seed()
     else:
-        mt.seed((x,y))        
+        mt.seed((x,y))
 
 def get_seed():
     raise NotImplementedError, \
@@ -72,30 +72,30 @@ def standard_normal(shape=[]):
     return mt.standard_normal(shape)
 
 def normal(mean, std, shape=[]):
-        """normal(mean, std, n) or normal(mean, std, [n, m, ...]) returns
-           array of random numbers randomly distributed with specified mean and
-           standard deviation"""
-        if shape == []:
-            shape = None
-        return mt.normal(mean, std, shape)
+    """normal(mean, std, n) or normal(mean, std, [n, m, ...]) returns
+    array of random numbers randomly distributed with specified mean and
+    standard deviation"""
+    if shape == []:
+        shape = None
+    return mt.normal(mean, std, shape)
 
 def multivariate_normal(mean, cov, shape=[]):
-       """multivariate_normal(mean, cov) or multivariate_normal(mean, cov, [m, n, ...])
-          returns an array containing multivariate normally distributed random numbers
-          with specified mean and covariance.
-
-          mean must be a 1 dimensional array. cov must be a square two dimensional
-          array with the same number of rows and columns as mean has elements.
-
-          The first form returns a single 1-D array containing a multivariate
-          normal.
-
-          The second form returns an array of shape (m, n, ..., cov.shape[0]).
-          In this case, output[i,j,...,:] is a 1-D array containing a multivariate
-          normal."""
-       if shape == []:
-           shape = None
-       return mt.multivariate_normal(mean, cov, shape)
+    """multivariate_normal(mean, cov) or multivariate_normal(mean, cov, [m, n, ...])
+    returns an array containing multivariate normally distributed random numbers
+    with specified mean and covariance.
+    
+    mean must be a 1 dimensional array. cov must be a square two dimensional
+    array with the same number of rows and columns as mean has elements.
+    
+    The first form returns a single 1-D array containing a multivariate
+    normal.
+    
+    The second form returns an array of shape (m, n, ..., cov.shape[0]).
+    In this case, output[i,j,...,:] is a 1-D array containing a multivariate
+    normal."""
+    if shape == []:
+        shape = None
+    return mt.multivariate_normal(mean, cov, shape)
 
 def exponential(mean, shape=[]):
     """exponential(mean, n) or exponential(mean, [n, m, ...]) returns array
@@ -195,8 +195,8 @@ def mean_var_test(x, type, mean, var, skew=[]):
     print "(should be about ", mean, "):", x_mean
     print "Variance of those random numbers (should be about ", var, "):", x_var
     if skew != []:
-       x_skew = (Numeric.sum(x_minus_mean*x_minus_mean*x_minus_mean,axis=0)/9998.)/x_var**(3./2.)
-       print "Skewness of those random numbers (should be about ", skew, "):", x_skew
+        x_skew = (Numeric.sum(x_minus_mean*x_minus_mean*x_minus_mean,axis=0)/9998.)/x_var**(3./2.)
+        print "Skewness of those random numbers (should be about ", skew, "):", x_skew
 
 def test():
     obj = mt.get_state()
@@ -266,5 +266,3 @@ def test():
 
 if __name__ == '__main__':
     test()
-
-

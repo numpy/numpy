@@ -1114,7 +1114,7 @@ def get_atlas_version(**config):
     if _cached_atlas_version.has_key(key):
         return _cached_atlas_version[key]
     c = cmd_config(Distribution())
-    atlas_version = None  
+    atlas_version = None
     try:
         s, o = c.get_output(atlas_version_c_text,
                             libraries=libraries, library_dirs=library_dirs)

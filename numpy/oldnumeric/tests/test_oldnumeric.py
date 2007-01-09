@@ -80,7 +80,7 @@ class test_oldtypes(NumPyTestCase):
         a1 = array([0,1,0], Bool)
         a2 = array([0,1,0], bool)
         assert_array_equal(a1, a2)
-        
+
 
 if __name__ == "__main__":
     NumPyTest().run()

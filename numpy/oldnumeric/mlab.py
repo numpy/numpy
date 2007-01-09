@@ -13,7 +13,7 @@ from numpy import tril, trapz as _Ntrapz, hanning, rot90, triu, diff, \
 from numpy.linalg import eig, svd
 from numpy.random import rand, randn
 import numpy as nn
-     
+
 from typeconv import convtypecode
 
 def eye(N, M=None, k=0, typecode=None, dtype=None):
@@ -25,7 +25,7 @@ def eye(N, M=None, k=0, typecode=None, dtype=None):
     m = nn.equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
     if m.dtype != dtype:
         return m.astype(dtype)
-    
+
 def tri(N, M=None, k=0, typecode=None, dtype=None):
     """ returns a N-by-M array where all the diagonals starting from
         lower left corner up to the k-th are all ones.
@@ -35,7 +35,7 @@ def tri(N, M=None, k=0, typecode=None, dtype=None):
     m = nn.greater_equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
     if m.dtype != dtype:
         return m.astype(dtype)
-    
+
 def trapz(y, x=None, axis=-1):
     return _Ntrapz(y, x, axis=axis)
 
@@ -113,10 +113,9 @@ __all__ += precision.__all__
 __all__ += functions.__all__
 __all__ += ufuncs.__all__
 __all__ += misc.__all__
-        
+
 del compat
 del functions
 del precision
 del ufuncs
 del misc
-

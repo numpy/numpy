@@ -1,4 +1,3 @@
-
 from os.path import join, split
 
 def configuration(parent_package='',top_path=None):
@@ -32,7 +31,7 @@ def configuration(parent_package='',top_path=None):
                         )
 
     config.add_data_files(('.', join('mtrand', 'randomkit.h')))
-    
+
     return config
 
 def testcode_wincrypt():

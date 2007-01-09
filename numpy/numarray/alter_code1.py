@@ -50,7 +50,7 @@ Makes the following changes:
    - .setimag() --> .imag =
    - .getimaginary() --> .imag
    - .setimaginary() --> .imag
-   
+
 """
 __all__ = ['convertfile', 'convertall', 'converttree', 'convertsrc']
 
@@ -111,14 +111,14 @@ def replaceattr(astr):
     astr = astr.replace(".is_fortran_contiguous()",".flags.fortran")
     astr = astr.replace(".itemsize()",".itemsize")
     astr = astr.replace(".size()",".size")
-    astr = astr.replace(".nelements()",".size")    
+    astr = astr.replace(".nelements()",".size")
     astr = astr.replace(".typecode()",".dtype.char")
     astr = astr.replace(".stddev()",".std()")
     astr = astr.replace(".getshape()", ".shape")
     astr = astr.replace(".getflat()", ".ravel()")
     astr = astr.replace(".getreal", ".real")
     astr = astr.replace(".getimag", ".imag")
-    astr = astr.replace(".getimaginary", ".imag")            
+    astr = astr.replace(".getimaginary", ".imag")
 
     # preserve uses of flat that should be o.k.
     tmpstr = flatindex_re.sub(r"@@@@\2",astr)
@@ -161,9 +161,9 @@ def replaceother(astr):
     astr = setshape_re.sub('\\1.shape = \\2', astr)
     astr = setreal_re.sub('\\1.real = \\2', astr)
     astr = setimag_re.sub('\\1.imag = \\2', astr)
-    astr = setimaginary_re.sub('\\1.imag = \\2', astr)    
+    astr = setimaginary_re.sub('\\1.imag = \\2', astr)
     return astr
-    
+
 import datetime
 def fromstr(filestr):
     savestr = filestr[:]
@@ -249,7 +249,7 @@ def convertsrc(direc=os.path.curdir, ext=None, orig=1):
             else:
                 os.remove(afile)
             makenewfile(afile, fstr)
-                
+
 def _func(arg, dirname, fnames):
     convertall(dirname, orig=0)
     convertsrc(dirname, ['h','c'], orig=0)
