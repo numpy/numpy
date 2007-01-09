@@ -237,8 +237,7 @@ class matrix(N.ndarray):
         over all dimensions.  This preserves the orientation of the
         result as a row or column.
         """
-        # FIXME: should out=None be used here, or should it just be out?
-        return N.ndarray.sum(self, axis, dtype, out=None)._align(axis)
+        return N.ndarray.sum(self, axis, dtype, out)._align(axis)
 
     def mean(self, axis=None, out=None):
         return N.ndarray.mean(self, axis, out)._align(axis)
