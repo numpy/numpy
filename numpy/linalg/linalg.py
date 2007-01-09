@@ -113,7 +113,8 @@ def _fastCopyAndTranspose(type, *arrays):
 def _assertRank2(*arrays):
     for a in arrays:
         if len(a.shape) != 2:
-            raise LinAlgError, '%d-dimensional array given. Array must be two-dimensional' % len(a.shape)
+            raise LinAlgError, '%d-dimensional array given. Array must be \
+            two-dimensional' % len(a.shape)
 
 def _assertSquareness(*arrays):
     for a in arrays:
@@ -141,7 +142,7 @@ def tensorsolve(a, b, axes=None):
     an = a.ndim
 
     if axes is not None:
-        allaxes = range(0,an)
+        allaxes = range(0, an)
         for k in axes:
             allaxes.remove(k)
             allaxes.insert(an, k)
@@ -152,7 +153,7 @@ def tensorsolve(a, b, axes=None):
     for k in oldshape:
         prod *= k
 
-    a = a.reshape(-1,prod)
+    a = a.reshape(-1, prod)
     b = b.ravel()
     res = solve(a, b)
     res.shape = oldshape
@@ -228,7 +229,7 @@ def tensorinv(a, ind=2):
             prod *= k
     else:
         raise ValueError, "Invalid ind argument."
-    a = a.reshape(prod,-1)
+    a = a.reshape(prod, -1)
     ia = inv(a)
     return ia.reshape(*invshape)
 
@@ -254,7 +255,8 @@ def cholesky(a):
         lapack_routine = lapack_lite.dpotrf
     results = lapack_routine('L', n, a, m, 0)
     if results['info'] > 0:
-        raise LinAlgError, 'Matrix is not positive definite - Cholesky decomposition cannot be computed'
+        raise LinAlgError, 'Matrix is not positive definite - \
+        Cholesky decomposition cannot be computed'
     s = triu(a, k=0).transpose()
     if (s.dtype != result_t):
         return s.astype(result_t)
@@ -271,10 +273,10 @@ def qr(a, mode='full'):
                    part of A2 is R. This is faster if you only need R
     """
     _assertRank2(a)
-    m,n = a.shape
+    m, n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
-    mn = min(m,n)
+    mn = min(m, n)
     tau = zeros((mn,), t)
     if isComplexType(t):
         lapack_routine = lapack_lite.zgeqrf
@@ -286,20 +288,20 @@ def qr(a, mode='full'):
     # calculate optimal size of work data 'work'
     lwork = 1
     work = zeros((lwork,), t)
-    results=lapack_routine(m, n, a, m, tau, work, -1, 0)
+    results = lapack_routine(m, n, a, m, tau, work, -1, 0)
     if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
     # do qr decomposition
     lwork = int(abs(work[0]))
-    work = zeros((lwork,),t)
-    results=lapack_routine(m, n, a, m, tau, work, lwork, 0)
+    work = zeros((lwork,), t)
+    results = lapack_routine(m, n, a, m, tau, work, lwork, 0)
 
     if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
     #  economic mode. Isn't actually economic.
-    if mode[0]=='e':
+    if mode[0] == 'e':
         if t != result_t :
             a = a.astype(result_t)
         return a.T
@@ -310,7 +312,7 @@ def qr(a, mode='full'):
         r[i,:i].fill(0.0)
 
     #  'r'-mode, that is, calculate only r
-    if mode[0]=='r':
+    if mode[0] == 'r':
         return r
 
     #  from here on: build orthonormal matrix q from a
@@ -324,21 +326,21 @@ def qr(a, mode='full'):
 
     # determine optimal lwork
     lwork = 1
-    work=zeros((lwork,), t)
-    results=lapack_routine(m,mn,mn, a, m, tau, work, -1, 0)
+    work = zeros((lwork,), t)
+    results = lapack_routine(m, mn, mn, a, m, tau, work, -1, 0)
     if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
     # compute q
     lwork = int(abs(work[0]))
-    work=zeros((lwork,), t)
-    results=lapack_routine(m,mn,mn, a, m, tau, work, lwork, 0)
+    work = zeros((lwork,), t)
+    results = lapack_routine(m, mn, mn, a, m, tau, work, lwork, 0)
     if results['info'] != 0:
         raise LinAlgError, '%s returns %d' % (routine_name, results['info'])
 
     q = _fastCopyAndTranspose(result_t, a[:mn,:])
 
-    return q,r
+    return q, r
 
 
 # Eigenvalues
@@ -401,13 +403,13 @@ def eigvalsh(a, UPLO='L'):
         lwork = 1
         work = zeros((lwork,), t)
         lrwork = 1
-        rwork = zeros((lrwork,),real_t)
+        rwork = zeros((lrwork,), real_t)
         results = lapack_routine('N', UPLO, n, a, n, w, work, -1,
                                  rwork, -1, iwork, liwork,  0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
         lrwork = int(rwork[0])
-        rwork = zeros((lrwork,),real_t)
+        rwork = zeros((lrwork,), real_t)
         results = lapack_routine('N', UPLO, n, a, n, w, work, lwork,
                                 rwork, lrwork, iwork, liwork,  0)
     else:
@@ -449,27 +451,27 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
         # Complex routines take different arguments
         lapack_routine = lapack_lite.zgeev
         w = zeros((n,), t)
-        v = zeros((n,n), t)
+        v = zeros((n, n), t)
         lwork = 1
-        work = zeros((lwork,),t)
-        rwork = zeros((2*n,),real_t)
+        work = zeros((lwork,), t)
+        rwork = zeros((2*n,), real_t)
         results = lapack_routine('N', 'V', n, a, n, w,
                                  dummy, 1, v, n, work, -1, rwork, 0)
         lwork = int(abs(work[0]))
-        work = zeros((lwork,),t)
+        work = zeros((lwork,), t)
         results = lapack_routine('N', 'V', n, a, n, w,
                                  dummy, 1, v, n, work, lwork, rwork, 0)
     else:
         lapack_routine = lapack_lite.dgeev
         wr = zeros((n,), t)
         wi = zeros((n,), t)
-        vr = zeros((n,n), t)
+        vr = zeros((n, n), t)
         lwork = 1
-        work = zeros((lwork,),t)
+        work = zeros((lwork,), t)
         results = lapack_routine('N', 'V', n, a, n, wr, wi,
                                   dummy, 1, vr, n, work, -1, 0)
         lwork = int(work[0])
-        work = zeros((lwork,),t)
+        work = zeros((lwork,), t)
         results = lapack_routine('N', 'V', n, a, n, wr, wi,
                                   dummy, 1, vr, n, work, lwork, 0)
         if all(wi == 0.0):
@@ -508,25 +510,25 @@ def eigh(a, UPLO='L'):
         lwork = 1
         work = zeros((lwork,), t)
         lrwork = 1
-        rwork = zeros((lrwork,),real_t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, -1,
+        rwork = zeros((lrwork,), real_t)
+        results = lapack_routine('V', UPLO, n, a, n, w, work, -1,
                                  rwork, -1, iwork, liwork,  0)
         lwork = int(abs(work[0]))
         work = zeros((lwork,), t)
         lrwork = int(rwork[0])
         rwork = zeros((lrwork,), real_t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork,
+        results = lapack_routine('V', UPLO, n, a, n, w, work, lwork,
                                  rwork, lrwork, iwork, liwork,  0)
     else:
         lapack_routine = lapack_lite.dsyevd
         w = zeros((n,), t)
         lwork = 1
-        work = zeros((lwork,),t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, -1,
+        work = zeros((lwork,), t)
+        results = lapack_routine('V', UPLO, n, a, n, w, work, -1,
                 iwork, liwork, 0)
         lwork = int(work[0])
-        work = zeros((lwork,),t)
-        results = lapack_routine('V', UPLO, n, a, n,w, work, lwork,
+        work = zeros((lwork,), t)
+        results = lapack_routine('V', UPLO, n, a, n, w, work, lwork,
                 iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
@@ -559,15 +561,15 @@ def svd(a, full_matrices=1, compute_uv=1):
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
     a = _fastCopyAndTranspose(t, a)
-    s = zeros((min(n,m),), real_t)
+    s = zeros((min(n, m),), real_t)
     if compute_uv:
         if full_matrices:
             nu = m
             nvt = n
             option = 'A'
         else:
-            nu = min(n,m)
-            nvt = min(n,m)
+            nu = min(n, m)
+            nvt = min(n, m)
             option = 'S'
         u = zeros((nu, m), t)
         vt = zeros((n, nvt), t)
@@ -575,13 +577,13 @@ def svd(a, full_matrices=1, compute_uv=1):
         option = 'N'
         nu = 1
         nvt = 1
-        u = empty((1,1), t)
-        vt = empty((1,1), t)
+        u = empty((1, 1), t)
+        vt = empty((1, 1), t)
 
-    iwork = zeros((8*min(m,n),), fortran_int)
+    iwork = zeros((8*min(m, n),), fortran_int)
     if isComplexType(t):
         lapack_routine = lapack_lite.zgesdd
-        rwork = zeros((5*min(m,n)*min(m,n) + 5*min(m,n),), real_t)
+        rwork = zeros((5*min(m, n)*min(m, n) + 5*min(m, n),), real_t)
         lwork = 1
         work = zeros((lwork,), t)
         results = lapack_routine(option, m, n, a, m, s, u, m, vt, nvt,
@@ -625,7 +627,7 @@ def pinv(a, rcond=1e-15 ):
     m = u.shape[0]
     n = vt.shape[1]
     cutoff = rcond*maximum.reduce(s)
-    for i in range(min(n,m)):
+    for i in range(min(n, m)):
         if s[i] > cutoff:
             s[i] = 1./s[i]
         else:
@@ -655,7 +657,7 @@ def det(a):
     elif (info > 0):
         return 0.0
     sign = add.reduce(pivots != arange(1, n+1)) % 2
-    return (1.-2.*sign)*multiply.reduce(diagonal(a),axis=-1)
+    return (1.-2.*sign)*multiply.reduce(diagonal(a), axis=-1)
 
 # Linear Least Squares
 
@@ -682,28 +684,28 @@ def lstsq(a, b, rcond=-1):
     m  = a.shape[0]
     n  = a.shape[1]
     n_rhs = b.shape[1]
-    ldb = max(n,m)
+    ldb = max(n, m)
     if m != b.shape[0]:
         raise LinAlgError, 'Incompatible dimensions'
     t, result_t = _commonType(a, b)
     real_t = _linalgRealType(t)
-    bstar = zeros((ldb,n_rhs),t)
+    bstar = zeros((ldb, n_rhs), t)
     bstar[:b.shape[0],:n_rhs] = b.copy()
     a, bstar = _fastCopyAndTranspose(t, a, bstar)
-    s = zeros((min(m,n),),real_t)
-    nlvl = max( 0, int( math.log( float(min( m,n ))/2. ) ) + 1 )
-    iwork = zeros((3*min(m,n)*nlvl+11*min(m,n),), fortran_int)
+    s = zeros((min(m, n),), real_t)
+    nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
+    iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
     if isComplexType(t):
         lapack_routine = lapack_lite.zgelsd
         lwork = 1
         rwork = zeros((lwork,), real_t)
-        work = zeros((lwork,),t)
+        work = zeros((lwork,), t)
         results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
                                  0, work, -1, rwork, iwork, 0)
         lwork = int(abs(work[0]))
-        rwork = zeros((lwork,),real_t)
-        a_real = zeros((m,n),real_t)
-        bstar_real = zeros((ldb,n_rhs,),real_t)
+        rwork = zeros((lwork,), real_t)
+        a_real = zeros((m, n), real_t)
+        bstar_real = zeros((ldb, n_rhs,), real_t)
         results = lapack_lite.dgelsd(m, n, n_rhs, a_real, m,
                                      bstar_real, ldb, s, rcond,
                                      0, rwork, -1, iwork, 0)
@@ -727,13 +729,13 @@ def lstsq(a, b, rcond=-1):
     resids = array([], t)
     if one_eq:
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
-        if results['rank']==n and m>n:
+        if results['rank'] == n and m > n:
             resids = array([sum((ravel(bstar)[n:])**2)], dtype=result_t)
     else:
         x = array(transpose(bstar)[:n,:], dtype=result_t, copy=True)
-        if results['rank']==n and m>n:
-            resids = sum((transpose(bstar)[n:,:])**2,axis=0).astype(result_t)
-    st = s[:min(n,m)].copy().astype(_realType(result_t))
+        if results['rank'] == n and m > n:
+            resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(result_t)
+    st = s[:min(n, m)].copy().astype(_realType(result_t))
     return wrap(x), resids, results['rank'], st
 
 def norm(x, ord=None):
@@ -786,9 +788,9 @@ def norm(x, ord=None):
             return ((abs(x)**ord).sum())**(1.0/ord)
     elif nd == 2:
         if ord == 2:
-            return svd(x,compute_uv=0).max()
+            return svd(x, compute_uv=0).max()
         elif ord == -2:
-            return svd(x,compute_uv=0).min()
+            return svd(x, compute_uv=0).min()
         elif ord == 1:
             return abs(x).sum(axis=0).max()
         elif ord == Inf:
