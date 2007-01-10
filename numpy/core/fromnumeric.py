@@ -41,6 +41,35 @@ def _wrapit(obj, method, *args, **kwds):
     return result
 
 def take(a, indices, axis=None, out=None, mode='raise'):
+    """Return an array with values pulled from the given array at the given
+    indices.
+
+    This function does the same thing as "fancy" indexing; however, it can be
+    easier to use if you need to specify a given axis.
+
+    :Parameters:
+      - `a` : array
+        The source array
+      - `indices` : int array
+        The indices of the values to extract.
+      - `axis` : None or int, optional (default=None)
+        The axis over which to select values. None signifies that the operation
+        should be performed over the flattened array. 
+      - `out` : array, optional
+        If provided, the result will be inserted into this array. It should be
+        of the appropriate shape and dtype.
+      - `mode` : one of 'raise', 'wrap', or 'clip', optional (default='raise')
+        Specifies how out-of-bounds indices will behave.
+        - 'raise' : raise an error
+        - 'wrap' : wrap around
+        - 'clip' : clip to the range
+
+    :Returns:
+      - `subarray` : array
+
+    :See also:
+      numpy.ndarray.take() is the equivalent method.
+    """
     try:
         take = a.take
     except AttributeError:
@@ -49,8 +78,25 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
 # not deprecated --- copy if necessary, view otherwise
 def reshape(a, newshape, order='C'):
-    """Change the shape of a to newshape.
-    Return a new view object if possible otherwise return a copy.
+    """Return an array that uses the data of the given array, but with a new
+    shape.
+
+    :Parameters:
+      - `a` : array
+      - `newshape` : shape tuple or int
+        The new shape should be compatible with the original shape. If an
+        integer, then the result will be a 1D array of that length.
+      - `order` : 'C' or 'FORTRAN', optional (default='C')
+        Whether the array data should be viewed as in C (row-major) order or
+        FORTRAN (column-major) order.
+
+    :Returns:
+      - `reshaped_array` : array
+        This will be a new view object if possible; otherwise, it will return
+        a copy.
+
+    :See also:
+      numpy.ndarray.reshape() is the equivalent method.
     """
     try:
         reshape = a.reshape
@@ -59,6 +105,44 @@ def reshape(a, newshape, order='C'):
     return reshape(newshape, order=order)
 
 def choose(a, choices, out=None, mode='raise'):
+    """Use an index array to construct a new array from a set of choices.
+
+    Given an array of integers in {0, 1, ..., n-1} and a set of n choice arrays,
+    this function will create a new array that merges each of the choice arrays.
+    Where a value in `a` is i, then the new array will have the value that
+    choices[i] contains in the same place.
+
+    :Parameters:
+      - `a` : int array
+        This array must contain integers in [0, n-1], where n is the number of
+        choices.
+      - `choices` : sequence of arrays
+        Each of the choice arrays should have the same shape as the index array.
+      - `out` : array, optional
+        If provided, the result will be inserted into this array. It should be
+        of the appropriate shape and dtype
+      - `mode` : one of 'raise', 'wrap', or 'clip', optional (default='raise')
+        Specifies how out-of-bounds indices will behave.
+        - 'raise' : raise an error
+        - 'wrap' : wrap around
+        - 'clip' : clip to the range
+
+    :Returns:
+      - `merged_array` : array
+
+    :See also:
+      numpy.ndarray.choose() is the equivalent method.
+
+    :Example:
+      >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13], 
+      ...   [20, 21, 22, 23], [30, 31, 32, 33]]
+      >>> choose([2, 3, 1, 0], choices)
+      array([20, 31, 12,  3])
+      >>> choose([2, 4, 1, 0], choices, mode='clip')
+      array([20, 31, 12,  3])
+      >>> choose([2, 4, 1, 0], choices, mode='wrap')
+      array([20,  1, 12,  3])
+    """
     try:
         choose = a.choose
     except AttributeError:
@@ -66,12 +150,29 @@ def choose(a, choices, out=None, mode='raise'):
     return choose(choices, out=out, mode=mode)
 
 def repeat(a, repeats, axis=None):
-    """repeat elements of a repeats times along axis
-       repeats is a sequence of length a.shape[axis]
-       telling how many times to repeat each element.
-       If repeats is an integer, it is interpreted as
-       a tuple of length a.shape[axis] containing repeats.
-       The argument a can be anything array(a) will accept.
+    """Repeat elements of an array.
+
+    :Parameters:
+      - `a` : array
+      - `repeats` : int or int array
+        The number of repetitions for each element. If a plain integer, then it
+        is applied to all elements. If an array, it needs to be of the same
+        length as the chosen axis.
+      - `axis` : None or int, optional (default=None)
+        The axis along which to repeat values. If None, then this function will
+        operated on the flattened array `a` and return a similarly flat result.
+
+    :Returns:
+      - `repeated_array` : array
+
+    :See also:
+      numpy.ndarray.repeat() is the equivalent method.
+
+    :Example:
+      >>> repeat([0, 1, 2], 2)
+      array([0, 0, 1, 1, 2, 2])
+      >>> repeat([0, 1, 2], [2, 3, 4])
+      array([0, 0, 1, 1, 1, 2, 2, 2, 2])
     """
     try:
         repeat = a.repeat
