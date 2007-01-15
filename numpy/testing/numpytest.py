@@ -192,7 +192,12 @@ class NumpyTestCase (unittest.TestCase):
                 runner.run(test)
         return
 
-ScipyTestCase = NumpyTestCase
+class ScipyTestCase(NumpyTestCase):
+    def __init__(self, package=None):
+        warnings.warn("ScipyTestCase is now called NumpyTestCase; please update your code",
+                         DeprecationWarning)
+        NumpyTestCase.__init__(self, package)
+
 
 def _get_all_method_names(cls):
     names = dir(cls)
@@ -624,7 +629,12 @@ class NumpyTest:
         print>>sys.stdout, message
         sys.stdout.flush()
 
-ScipyTest = NumpyTest
+class ScipyTest(NumpyTest):
+    def __init__(self, package=None):
+        warnings.warn("ScipyTest is now called NumpyTest; please update your code",
+                         DeprecationWarning)
+        NumpyTest.__init__(self, package)
+
 
 def importall(package):
     """
