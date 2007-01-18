@@ -261,10 +261,10 @@ part_ref = name + ~((r'[(]' + name + r'[)]'))
 data_ref = part_ref + ~~~(r'[%]' + part_ref)
 primary = constant | name | data_ref | (r'[(]' + name + r'[)]')
 
-power_op = Pattern('<power-op>','[*]{2}')
-mult_op = Pattern('<mult-op>',r'[/*]')
+power_op = Pattern('<power-op>',r'(?<![*])[*]{2}(?![*])')
+mult_op = Pattern('<mult-op>',r'(?<![*])[*](?![*])|(?<![/])[/](?![/])')
 add_op = Pattern('<add-op>',r'[+-]')
-concat_op = Pattern('<concat-op>',r'[/]{2}')
+concat_op = Pattern('<concat-op>',r'(?<![/])[/]{2}(?![/])')
 rel_op = Pattern('<rel-op>','[.]EQ[.]|[.]NE[.]|[.]LT[.]|[.]LE[.]|[.]GT[.]|[.]GE[.]|[=]{2}|/[=]|[<][=]|[<]|[>][=]|[>]',flags=re.I)
 not_op = Pattern('<not-op>','[.]NOT[.]',flags=re.I)
 and_op = Pattern('<and-op>','[.]AND[.]',flags=re.I)
@@ -372,6 +372,29 @@ def _test():
     assert m.match('HEY_"adadfa"')
     assert m.match('HEY _ "ad\tadfa"')
     assert not m.match('adadfa')
+
+    def assert_equal(result, expect):
+        try:
+            assert result==expect
+        except AssertionError, msg:
+            raise AssertionError,"Expected %r but got %r: %s" \
+                  % (expect, result, msg)
+
+    m = mult_op.named()
+    assert m.rsplit('a *  b')
+    assert_equal(m.lsplit('a * c* b'),('a','*','c* b'))
+    assert_equal(m.rsplit('a * c* b'),('a * c','*','b'))
+    assert_equal(m.lsplit('a * b ** c'),('a','*','b ** c'))
+    assert_equal(m.rsplit('a * b ** c'),('a','*','b ** c'))
+    assert_equal(m.lsplit('a * b ** c * d'),('a','*','b ** c * d'))
+    assert_equal(m.rsplit('a * b ** c * d'),('a * b ** c','*','d'))
+
+    m = power_op.named()
+    assert m.rsplit('a **  b')
+    assert_equal(m.lsplit('a * b ** c'),('a * b','**','c'))
+    assert_equal(m.rsplit('a * b ** c'),('a * b','**','c'))
+    assert_equal(m.lsplit('a ** b ** c'),('a','**','b ** c'))
+    assert_equal(m.rsplit('a ** b ** c'),('a ** b','**','c'))
     print 'ok'
 
 if __name__ == '__main__':
