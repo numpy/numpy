@@ -29,10 +29,14 @@ divide_tolerance = 1.e-35
 class MAError (Exception):
     def __init__ (self, args=None):
         "Create an exception"
+
+        # The .args attribute must be a tuple.
+        if not isinstance(args, tuple):
+            args = (args,)
         self.args = args
     def __str__(self):
         "Calculate the string representation"
-        return str(self.args)
+        return str(self.args[0])
     __repr__ = __str__
 
 class _MaskedPrintOption:
