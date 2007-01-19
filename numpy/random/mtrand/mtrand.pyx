@@ -1241,7 +1241,7 @@ cdef class RandomState:
 
         permutation(x)
         """
-        if type(x) is int:
+        if isinstance(x, (int, _sp.integer)):
             arr = _sp.arange(x)
         else:
             arr = _sp.array(x)

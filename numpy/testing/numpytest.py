@@ -6,6 +6,7 @@ import glob
 import types
 import unittest
 import traceback
+import warnings
 
 __all__ = ['set_package_path', 'set_local_path', 'restore_path',
            'IgnoreException', 'NumpyTestCase', 'NumpyTest',
