@@ -1495,6 +1495,9 @@ typedef struct {
 
 #define PyArray_ITER_DATA(it) (((PyArrayIterObject *)(it))->dataptr)
 
+#define PyArray_ITER_NOTDONE(it) (((PyArrayIterObject *)(it))->index <  \
+                                  ((PyArrayIterObject *)(it))->size)
+
 
 /*
    Any object passed to PyArray_Broadcast must be binary compatible with
