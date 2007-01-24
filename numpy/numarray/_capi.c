@@ -2938,7 +2938,7 @@ NA_checkFPErrors(void)
 #if defined(__GLIBC__) || defined(darwin) || defined(__MINGW32__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
-#include <mingw/fenv.h>
+#include "fenv/fenv.c"
 #endif
 
 static int 
