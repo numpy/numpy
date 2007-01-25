@@ -1381,18 +1381,40 @@ typedef struct {
 /* Iterator API */
 #define PyArrayIter_Check(op) PyObject_TypeCheck(op, &PyArrayIter_Type)
 
+#define _PyAIT(it) ((PyArrayIterObject *)(it))
 #define PyArray_ITER_RESET(it) {                                        \
-        (it)->index = 0;                                                \
-        (it)->dataptr = (it)->ao->data;                                 \
-        memset((it)->coordinates, 0, ((it)->nd_m1+1)*sizeof(npy_intp)); \
+        _PyAIT(it)->index = 0;                                          \
+        _PyAIT(it)->dataptr = _PyAIT(it)->ao->data;                     \
+        memset(_PyAIT(it)->coordinates, 0,                              \
+	       (_PyAIT(it)->nd_m1+1)*sizeof(npy_intp));                 \
 }
 
 #define _PyArray_ITER_NEXT1(it) {                                       \
-                (it)->dataptr += (it)->strides[0];                      \
-                (it)->coordinates[0]++;                                 \
-        }
+        (it)->dataptr += _PyAIT(it)->strides[0];                        \
+        (it)->coordinates[0]++;                                         \
+}
 
 #define _PyArray_ITER_NEXT2(it) {                                       \
+        if ((it)->coordinates[1] < (it)->dims_m1[1]) {                  \
+                (it)->coordinates[1]++;                                 \
+                (it)->dataptr += (it)->strides[1];                      \
+        }                                                               \
+        else {                                                          \
+                (it)->coordinates[1] = 0;                               \
+                (it)->coordinates[0]++;                                 \
+                (it)->dataptr += (it)->strides[0] -                     \
+                        (it)->backstrides[1];                           \
+        }                                                               \
+}
+
+#define _PyArray_ITER_NEXT3(it) {                                       \
+        if ((it)->coordinates[2] < (it)->dims_m1[2]) {                  \
+                (it)->coordinates[2]++;                                 \
+                (it)->dataptr += (it)->strides[2];                      \
+        }                                                               \
+        else {                                                          \
+                (it)->coordinates[2] = 0;                               \
+                (it)->dataptr -= (it)->backstrides[2];                  \
                 if ((it)->coordinates[1] < (it)->dims_m1[1]) {          \
                         (it)->coordinates[1]++;                         \
                         (it)->dataptr += (it)->strides[1];              \
@@ -1403,100 +1425,84 @@ typedef struct {
                         (it)->dataptr += (it)->strides[0] -             \
                                 (it)->backstrides[1];                   \
                 }                                                       \
-        }
-
-#define _PyArray_ITER_NEXT3(it) {                                       \
-                if ((it)->coordinates[2] < (it)->dims_m1[2]) {          \
-                        (it)->coordinates[2]++;                         \
-                        (it)->dataptr += (it)->strides[2];              \
-                }                                                       \
-                else {                                                  \
-                        (it)->coordinates[2] = 0;                       \
-                        (it)->dataptr -= (it)->backstrides[2];          \
-                        if ((it)->coordinates[1] < (it)->dims_m1[1]) {  \
-                                (it)->coordinates[1]++;                 \
-                                (it)->dataptr += (it)->strides[1];      \
-                        }                                               \
-                        else {                                          \
-                                (it)->coordinates[1] = 0;               \
-                                (it)->coordinates[0]++;                 \
-                                (it)->dataptr += (it)->strides[0] -     \
-                                        (it)->backstrides[1];           \
-                        }                                               \
-                }                                                       \
-        }
-
-#define PyArray_ITER_NEXT(it) {                                               \
-        (it)->index++;                                                        \
-        if ((it)->nd_m1 == 0) {                                               \
-                _PyArray_ITER_NEXT1(it);                                      \
-        }                                                                     \
-        else if ((it)->contiguous)  (it)->dataptr += (it)->ao->descr->elsize; \
-        else if ((it)->nd_m1 == 1) {                                          \
-                _PyArray_ITER_NEXT2(it);                                      \
-        }                                                                     \
-        else {                                                                \
-                int __npy_i;                                                  \
-                for (__npy_i = (it)->nd_m1; __npy_i >= 0; __npy_i--) {        \
-                        if ((it)->coordinates[__npy_i] <                      \
-                            (it)->dims_m1[__npy_i]) {                         \
-                                (it)->coordinates[__npy_i]++;                 \
-                                (it)->dataptr += (it)->strides[__npy_i];      \
-                                break;                                        \
-                        }                                                     \
-                        else {                                                \
-                                (it)->coordinates[__npy_i] = 0;               \
-                                (it)->dataptr -= (it)->backstrides[__npy_i];  \
-                        }                                                     \
-                }                                                             \
-        }                                                                     \
+        }                                                               \
 }
 
-#define PyArray_ITER_GOTO(it, destination) {                                  \
-                int __npy_i;                                                  \
-                (it)->index = 0;                                              \
-                (it)->dataptr = (it)->ao->data;                               \
-                for (__npy_i = (it)->nd_m1; __npy_i>=0; __npy_i--) {          \
-                        if (destination[__npy_i] < 0) {                       \
-                                destination[__npy_i] +=                       \
-                                        (it)->dims_m1[__npy_i]+1;             \
-                        }                                                     \
-                        (it)->dataptr += destination[__npy_i] *               \
-                                (it)->strides[__npy_i];                       \
-                        (it)->coordinates[__npy_i] = destination[__npy_i];    \
-                        (it)->index += destination[__npy_i] *                 \
-                                ( __npy_i==(it)->nd_m1 ? 1 :                  \
-                                  (it)->dims_m1[__npy_i+1]+1) ;               \
-                }                                                             \
-        }
-
-#define PyArray_ITER_GOTO1D(it, ind) {                                        \
-                int __npy_i;                                                  \
-                npy_intp __npy_ind = (npy_intp) (ind);                        \
-                if (__npy_ind < 0) __npy_ind += (it)->size;                   \
-                (it)->index = __npy_ind;                                      \
-                if ((it)->nd_m1 == 0) {                                       \
-                        (it)->dataptr = (it)->ao->data + __npy_ind *          \
-                                (it)->strides[0];                             \
-                }                                                             \
-                else if ((it)->contiguous)                                    \
-                        (it)->dataptr = (it)->ao->data + __npy_ind *          \
-                                (it)->ao->descr->elsize;                      \
-                else {                                                        \
-                        (it)->dataptr = (it)->ao->data;                       \
-                        for (__npy_i = 0; __npy_i<=(it)->nd_m1; __npy_i++) {  \
-                                (it)->dataptr +=                              \
-                                        (__npy_ind / (it)->factors[__npy_i])  \
-                                        * (it)->strides[__npy_i];             \
-                                __npy_ind %= (it)->factors[__npy_i];          \
-                        }                                                     \
-                }                                                             \
+#define PyArray_ITER_NEXT(it) {                                            \
+        _PyAIT(it)->index++;                                               \
+        if (_PyAIT(it)->nd_m1 == 0) {                                      \
+                _PyArray_ITER_NEXT1(_PyAIT(it));                           \
+        }                                                                  \
+        else if (_PyAIT(it)->contiguous)                                   \
+	        _PyAIT(it)->dataptr += _PyAIT(it)->ao->descr->elsize;      \
+        else if (_PyAIT(it)->nd_m1 == 1) {                                 \
+                _PyArray_ITER_NEXT2(_PyAIT(it));                           \
+        }                                                                  \
+        else {                                                             \
+                int __npy_i;                                               \
+                for (__npy_i=_PyAIT(it)->nd_m1; __npy_i >= 0; __npy_i--) { \
+                        if (_PyAIT(it)->coordinates[__npy_i] <             \
+                            _PyAIT(it)->dims_m1[__npy_i]) {                \
+                                _PyAIT(it)->coordinates[__npy_i]++;        \
+                                _PyAIT(it)->dataptr +=                     \
+                                        _PyAIT(it)->strides[__npy_i];      \
+                                break;                                     \
+                        }                                                  \
+                        else {                                             \
+                                _PyAIT(it)->coordinates[__npy_i] = 0;      \
+                                _PyAIT(it)->dataptr -=                     \
+                                        _PyAIT(it)->backstrides[__npy_i];  \
+                        }                                                  \
+                }                                                          \
+        }                                                                  \
 }
 
-#define PyArray_ITER_DATA(it) (((PyArrayIterObject *)(it))->dataptr)
+#define PyArray_ITER_GOTO(it, destination) {                            \
+        int __npy_i;                                                    \
+        _PyAIT(it)->index = 0;                                          \
+        _PyAIT(it)->dataptr = _PyAIT(it)->ao->data;                     \
+        for (__npy_i = _PyAIT(it)->nd_m1; __npy_i>=0; __npy_i--) {      \
+                if (destination[__npy_i] < 0) {                         \
+                        destination[__npy_i] +=                         \
+                                _PyAIT(it)->dims_m1[__npy_i]+1;         \
+                }                                                       \
+                _PyAIT(it)->dataptr += destination[__npy_i] *           \
+                        _PyAIT(it)->strides[__npy_i];                   \
+                _PyAIT(it)->coordinates[__npy_i] =                      \
+                        destination[__npy_i];                           \
+                _PyAIT(it)->index += destination[__npy_i] *             \
+                        ( __npy_i==_PyAIT(it)->nd_m1 ? 1 :              \
+                          _PyAIT(it)->dims_m1[__npy_i+1]+1) ;           \
+        }                                                               \
+}
 
-#define PyArray_ITER_NOTDONE(it) (((PyArrayIterObject *)(it))->index <  \
-                                  ((PyArrayIterObject *)(it))->size)
+#define PyArray_ITER_GOTO1D(it, ind) {                                     \
+        int __npy_i;                                                       \
+        npy_intp __npy_ind = (npy_intp) (ind);                             \
+        if (__npy_ind < 0) __npy_ind += _PyAIT(it)->size;                  \
+        _PyAIT(it)->index = __npy_ind;                                     \
+        if (_PyAIT(it)->nd_m1 == 0) {                                      \
+                _PyAIT(it)->dataptr = _PyAIT(it)->ao->data +               \
+                        __npy_ind * _PyAIT(it)->strides[0];                \
+        }                                                                  \
+        else if (_PyAIT(it)->contiguous)                                   \
+                _PyAIT(it)->dataptr = _PyAIT(it)->ao->data +               \
+                        __npy_ind * _PyAIT(it)->ao->descr->elsize;         \
+        else {                                                             \
+                _PyAIT(it)->dataptr = _PyAIT(it)->ao->data;                \
+                for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1;              \
+                     __npy_i++) {                                          \
+                        _PyAIT(it)->dataptr +=                             \
+                                (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
+                                * _PyAIT(it)->strides[__npy_i];            \
+                        __npy_ind %= _PyAIT(it)->factors[__npy_i];         \
+                }                                                          \
+        }                                                                  \
+}
+
+#define PyArray_ITER_DATA(it) ((void *)(_PyAIT(it)->dataptr))
+
+#define PyArray_ITER_NOTDONE(it) (_PyAIT(it)->index < _PyAIT(it)->size)
 
 
 /*
@@ -1514,50 +1520,47 @@ typedef struct {
         PyArrayIterObject    *iters[NPY_MAXARGS];     /* iterators */
 } PyArrayMultiIterObject;
 
+#define _PyMIT(m) ((PyArrayMultiIterObject *)(m))
 #define PyArray_MultiIter_RESET(multi) {                                      \
-                int __npy_mi;                                                 \
-                PyArrayMultiIterObject *__npy_mul = (multi);                  \
-                __npy_mul->index = 0;                                         \
-                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
-                        PyArray_ITER_RESET(__npy_mul->iters[__npy_mi]);       \
-                }                                                             \
-        }
+        int __npy_mi;                                                         \
+        _PyMIT(multi)->index = 0;                                             \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter;  __npy_mi++) {    \
+                PyArray_ITER_RESET(_PyMIT(multi)->iters[__npy_mi]);           \
+        }                                                                     \
+}
 
 #define PyArray_MultiIter_NEXT(multi) {                                       \
-                int __npy_mi;                                                 \
-                PyArrayMultiIterObject *__npy_mul = (multi);                  \
-                __npy_mul->index += 1;                                        \
-                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
-                        PyArray_ITER_NEXT(__npy_mul->iters[__npy_mi]);        \
-                }                                                             \
-        }
+        int __npy_mi;                                                         \
+        _PyMIT(multi)->index++;                                               \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter;   __npy_mi++) {   \
+                PyArray_ITER_NEXT(_PyMIT(multi)->iters[__npy_mi]);            \
+        }                                                                     \
+}
 
-#define PyArray_MultiIter_GOTO(multi, dest) {                                 \
-                int __npy_mi;                                                 \
-                PyArrayMultiIterObject *__npy_mul = (multi);                  \
-                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
-                        PyArray_ITER_GOTO(__npy_mul->iters[__npy_mi], dest);  \
-                }                                                             \
-                __npy_mul->index = __npy_mul->iters[0]->index;                \
-        }
+#define PyArray_MultiIter_GOTO(multi, dest) {                               \
+        int __npy_mi;                                                       \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {   \
+                PyArray_ITER_GOTO(_PyMIT(multi)->iters[__npy_mi], dest);    \
+        }                                                                   \
+        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;              \
+}
 
-#define PyArray_MultiIter_GOTO1D(multi, ind) {                                \
-                int __npy_mi;                                                 \
-                PyArrayMultiIterObject *__npy_mul = (multi);                  \
-                for (__npy_mi=0; __npy_mi < __npy_mul->numiter; __npy_mi++) { \
-                        PyArray_ITER_GOTO1D(__npy_mul->iters[__npy_mi], ind); \
-                }                                                             \
-                __npy_mul->index = __npy_mul->iters[0]->index;                \
-        }
+#define PyArray_MultiIter_GOTO1D(multi, ind) {                             \
+        int __npy_mi;                                                      \
+        for (__npy_mi=0; __npy_mi < _PyMIT(multi)->numiter; __npy_mi++) {  \
+                PyArray_ITER_GOTO1D(_PyMIT(multi)->iters[__npy_mi], ind);  \
+        }                                                                  \
+        _PyMIT(multi)->index = _PyMIT(multi)->iters[0]->index;             \
+}
 
-#define PyArray_MultiIter_DATA(multi, i)                                      \
-        (((PyArrayMultiIterObject *)(multi))->iters[i]->dataptr)
+#define PyArray_MultiIter_DATA(multi, i)                \
+        ((void *)(_PyMIT(multi)->iters[i]->dataptr))
 
-#define PyArray_MultiIter_SIZE(multi)                                         \
-        ((PyArrayMultiIterObject *)(multi))->size
+#define PyArray_MultiIter_NEXTi(multi, i)               \
+        PyArray_ITER_NEXT(_PyMIT(multi)->iters[i])
 
-#define PyArray_MultiIter_NEXTi(multi, i)                                     \
-        PyArray_ITER_NEXT(((PyArrayMultiIterObject *)(multi))->iters[i])
+#define PyArray_MultiIter_NOTDONE(multi)                \
+        (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
 /* Store the information needed for fancy-indexing over an array */
 
