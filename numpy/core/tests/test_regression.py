@@ -586,7 +586,7 @@ class test_regression(NumpyTestCase):
         a = N.arange(5).reshape((5,1))
         b = a.copy()
         N.random.shuffle(b)
-        assert_equal(sorted(b),a)
+        assert_equal(N.sort(b, axis=0),a)
 
     def check_refcount_vectorize(self, level=rlevel):
         """Ticket #378"""
