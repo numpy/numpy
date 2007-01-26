@@ -7,10 +7,10 @@ def configuration(parent_package='',top_path=None):
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup
-    setup(maintainer = "SciPy Developers",
+    setup(maintainer = "NumPy Developers",
           maintainer_email = "numpy-dev@numpy.org",
-          description = "SciPy test module",
+          description = "NumPy test module",
           url = "http://www.numpy.org",
-          license = "SciPy License (BSD Style)",
+          license = "NumPy License (BSD Style)",
           **configuration(top_path='').todict()
           )

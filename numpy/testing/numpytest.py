@@ -211,7 +211,7 @@ def _get_all_method_names(cls):
 
 
 # for debug build--check for memory leaks during the test.
-class _SciPyTextTestResult(unittest._TextTestResult):
+class _NumPyTextTestResult(unittest._TextTestResult):
     def startTest(self, test):
         unittest._TextTestResult.startTest(self, test)
         if self.showAll:
@@ -228,9 +228,9 @@ class _SciPyTextTestResult(unittest._TextTestResult):
                               sys.gettotalrefcount()))
         return
 
-class SciPyTextTestRunner(unittest.TextTestRunner):
+class NumPyTextTestRunner(unittest.TextTestRunner):
     def _makeResult(self):
-        return _SciPyTextTestResult(self.stream, self.descriptions, self.verbosity)
+        return _NumPyTextTestResult(self.stream, self.descriptions, self.verbosity)
 
 
 class NumpyTest:
