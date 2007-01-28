@@ -95,7 +95,7 @@ cdef extern from "numpy/arrayobject.h":
         cdef int numiter
         cdef npy_intp size, index
         cdef int nd
-        cdef npy_intp dimensions[NPY_MAXDIMS]
+        cdef npy_intp *dimensions
         cdef void **iters
 
     object PyArray_ZEROS(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)

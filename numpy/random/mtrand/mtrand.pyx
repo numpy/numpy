@@ -511,7 +511,7 @@ cdef class RandomState:
         """
         cdef ndarray state "arrayObject_state"
         state = <ndarray>_sp.empty(624, int)
-        memcpy(<void*>(state.data), self.internal_state.key, 624*sizeof(long))
+        memcpy(<void*>(state.data), <void*>(self.internal_state.key), 624*sizeof(long))
         return ('MT19937', state, self.internal_state.pos)
         
     def set_state(self, state):
@@ -530,7 +530,7 @@ cdef class RandomState:
         obj = <ndarray>PyArray_ContiguousFromObject(key, NPY_LONG, 1, 1)
         if obj.dimensions[0] != 624:
             raise ValueError("state must be 624 longs")
-        memcpy(self.internal_state.key, <void*>(obj.data), 624*sizeof(long))
+        memcpy(<void*>(self.internal_state.key), <void*>(obj.data), 624*sizeof(long))
         self.internal_state.pos = pos
     
     # Pickling support:
