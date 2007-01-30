@@ -614,7 +614,10 @@ class poly1d(object):
         elif key in ['o']:
             return self.order
         else:
-            return self.__dict__[key]
+            try:
+                return self.__dict__[key]
+            except KeyError:
+                raise AttributeError("'%s' has no attribute '%s'" % (self.__class__, key))
 
     def __getitem__(self, val):
         ind = self.order - val
