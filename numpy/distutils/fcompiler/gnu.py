@@ -1,6 +1,5 @@
 import re
 import os
-import platform
 import sys
 import warnings
 
@@ -62,14 +61,16 @@ class GnuFCompiler(FCompiler):
     def get_flags_linker_so(self):
         opt = self.linker_so[1:]
         if sys.platform=='darwin':
-            osx_version = platform.mac_ver()[0][:4]
-            osx_major, osx_minor = osx_version.split('.')
+            # MACOSX_DEPLOYMENT_TARGET must be at least 10.3. This is
+            # a reasonable default value even when building on 10.4 when using
+            # the official Python distribution and those derived from it (when
+            # not broken).
             target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
             if target is None or target == '':
-                target = osx_version
+                target = '10.3'
             major, minor = target.split('.')
             if int(minor) < 3:
-                minor = osx_minor
+                minor = '3'
                 warnings.warn('Environment variable '
                     'MACOSX_DEPLOYMENT_TARGET reset to %s.%s' % (major, minor))
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '%s.%s' % (major,
