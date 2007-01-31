@@ -31,7 +31,7 @@ else:
 
 pyx_ext = Extension('numpyx',
                  pyx_sources,
-                 include_dirs = [numpy.get_numpy_include()])
+                 include_dirs = [numpy.get_include()])
 
 # Call the routine which does the real work
 setup(name        = 'numpyx',
