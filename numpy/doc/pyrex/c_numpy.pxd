@@ -59,6 +59,8 @@ cdef extern from "numpy/arrayobject.h":
         NPY_UPDATE_ALL 
 
     cdef enum defines:
+        # Note: as of Pyrex 0.9.5, enums are type-checked more strictly, so this
+        # can't be used as an integer.
         NPY_MAXDIMS
 
     ctypedef struct npy_cdouble:
@@ -95,8 +97,10 @@ cdef extern from "numpy/arrayobject.h":
         cdef int numiter
         cdef npy_intp size, index
         cdef int nd
-        cdef npy_intp dimensions[NPY_MAXDIMS]
-        cdef flatiter iters[NPY_MAXDIMS]
+        # These next two should be arrays of [NPY_MAXITER], but that is
+        # difficult to cleanly specify in Pyrex. Fortunately, it doesn't matter.
+        cdef npy_intp *dimensions
+        cdef void **iters
 
     object PyArray_ZEROS(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
     object PyArray_EMPTY(int ndims, npy_intp* dims, NPY_TYPES type_num, int fortran)
