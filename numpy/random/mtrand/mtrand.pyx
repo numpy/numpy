@@ -1200,6 +1200,90 @@ cdef class RandomState:
 
         return multin
 
+    def dirichlet(self, object alpha, size=None):
+        """dirichlet(alpha, size=None)
+        
+        Draw `size` samples of dimension k from a Dirichlet distribution. A 
+        Dirichlet-distributed random variable can be seen as a multivariate 
+        generalization of a Beta distribution. Dirichlet pdf is the conjugate
+        prior of a multinomial in Bayesian inference.
+        
+        :Parameters:
+            alpha : array
+                parameter of the distribution (k dimension
+                      for sample of dimension k).
+            size : array
+                number of samples to draw.
+
+        $X \approx \prod_{i=1}^{k}{x^{\alpha_i-1}_i}$
+        
+        Uses the following property for computation: for each dimension,
+        draw a random sample y_i from a standard gamma generator of shape 
+        alpha_i, then X = \frac{1}{\sum_{i=1}^k{y_i}} (y_1, ..., y_n) is 
+        Dirichlet distributed. 
+        
+        Reference:
+            - David Mc Kay : Information Theory, inference and Learning 
+                 algorithms, chapter 23. the book is available for free at 
+                 http://www.inference.phy.cam.ac.uk/mackay/
+        """
+
+        #=================
+        # Pure python algo
+        #=================
+        #alpha   = N.atleast_1d(alpha)
+        #k       = alpha.size
+
+        #if n == 1:
+        #    val = N.zeros(k)
+        #    for i in range(k):
+        #        val[i]   = sgamma(alpha[i], n)
+        #    val /= N.sum(val)
+        #else:
+        #    val = N.zeros((k, n))
+        #    for i in range(k):
+        #        val[i]   = sgamma(alpha[i], n)
+        #    val /= N.sum(val, axis = 0)
+        #    val = val.T
+
+        #return val
+
+        cdef long       k
+        cdef long       totsize
+        cdef ndarray    alpha_arr, val_arr
+        cdef double     *alpha_data, *val_data
+        cdef long       i, j
+        cdef double     acc, invacc
+
+        k           = len(alpha)
+        alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
+        alpha_data  = <double*>alpha_arr.data
+
+        if size is None:
+            shape = (k,)
+        elif type(size) is int:
+            shape = (size, k)
+        else:
+            shape = size + (k,)
+
+        diric   = _sp.zeros(shape, _sp.float64)
+        val_arr = <ndarray>diric
+        val_data= <double*>val_arr.data
+
+        i = 0
+        totsize = PyArray_SIZE(val_arr)
+        while i < totsize:
+            acc = 0.0
+            for j from 0 <= j < k:
+                val_data[i+j]   = rk_standard_gamma(self.internal_state, alpha_data[j])
+                acc             = acc + val_data[i+j]
+            invacc  = 1/acc
+            for j from 0 <= j < k:
+                val_data[i+j]   = val_data[i+j] * invacc
+            i = i + k
+
+        return diric
+
     # Shuffling and permutations:
     def shuffle(self, object x):
         """Modify a sequence in-place by shuffling its contents.
@@ -1294,6 +1378,7 @@ logseries = _rand.logseries
 
 multivariate_normal = _rand.multivariate_normal
 multinomial = _rand.multinomial
+dirichlet = _rand.dirichlet
 
 shuffle = _rand.shuffle
 permutation = _rand.permutation

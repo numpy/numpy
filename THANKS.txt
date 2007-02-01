@@ -34,3 +34,4 @@ Albert Strasheim for documentation, bug-fixes, regression tests and
     Valgrind expertise.
 Stefan van der Walt for documentation, bug-fixes and regression-tests.
 Andrew Straw for help with http://www.scipy.org, documentation, and testing. 
+David Cournapeau for documentation, bug-fixes, and code contributions.
