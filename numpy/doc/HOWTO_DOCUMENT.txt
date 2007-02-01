@@ -1,0 +1,104 @@
+
+Both NumPy and SciPy follow a convention for docstrings that provide
+for some consistency while also allowing epydoc to produce
+nicely-formatted reference guides. 
+
+The docstring format uses reST syntax as interpreted by epydoc
+(which should understand how to process some of our conventions at
+some point)
+
+Here is an example:
+
+"""
+one-line summary or signature
+
+Several sentences providing an extended description
+
+:Parameters:
+    var1 : type information
+        Explanation
+    var2 : type information
+        Explanation
+    long_variable_name : 
+        Explanation
+
+:Returns: 
+    named : type
+        Explanation
+    list :
+        Explanation
+    of :
+        Explanation
+    outputs :
+        even more explaining
+
+:OtherParameters:
+    only_seldom_used_keywords : type
+        Explanation
+    common_parametrs_listed_above : type
+        Explanation
+
+:SeeAlso:
+  - otherfunc : relationship (optional)
+  - newfunc : relationship (optional)
+
+
+Notes
+-----
+
+Notes about the implementation algorithm (if needed).
+
+This can have multiple paragraphs as can all sections.
+
+Examples
+--------
+
+examples in doctest format
+
+>>> a=[1,2,3]
+>>> [x + 3 for x in a]
+[4,5,6]
+"""
+
+Comments:
+
+1) The first line of the signature should **not** copy the signature.
+If the function is written in C, then this first line should be the
+signature.  If the function signature is generic (uses *args or **kwds), 
+then a function signature can be included
+
+2) Use optional in the "type" field for parameters that are
+non-keyword optional for C-functions.
+
+3) The OtherParameters section is for functions taking a lot of keywords 
+which are not always used or neeeded and whose description would clutter
+then main purpose of the function.
+
+4) The See Also section can list additional related functions.  The
+purpose of this section is to direct users to other functions they may
+not be aware of or have easy means to discover (i.e. by looking at the
+docstring of the module).  Thus, repeating functions that are in the
+same module is not useful and can create a cluttered document.  Please
+use judgement when listing additional functions.  Routines that
+provide additional information in their docstrings for this function are
+useful to include here.
+
+5) The Notes section can contain algorithmic information if that is useful. 
+
+6) The Examples section is strongly encouraged.  The examples can provide a mini-tutorial as well as additional regression testing.  
+
+
+Common reST concepts:
+
+For paragraphs, indentation is significant and indicates indentation
+in the output. New paragraphs are marked with blank line.
+
+Use *italics*, **bold**, and ``courier`` if needed in any explanations
+(but not for variable names and doctest code or multi-line code)
+
+Use :lm:eqn for in-line math in latex format (remember to use the
+raw-format for your text string or escape any '\' symbols). Use :m:eqn
+for non-latex math.
+
+A more extensive example of reST markup can be found here:
+http://docutils.sourceforge.net/docs/user/rst/demo.txt
