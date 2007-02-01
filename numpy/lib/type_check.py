@@ -6,7 +6,8 @@ __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'common_type']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, array, isnan, obj2sctype, zeros
+from numpy.core.numeric import asarray, asanyarray, array, isnan, \
+		obj2sctype, zeros
 from ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
@@ -45,22 +46,21 @@ def asfarray(a, dtype=_nx.float_):
     dtype = _nx.obj2sctype(dtype)
     if not issubclass(dtype, _nx.inexact):
         dtype = _nx.float_
-    a = asarray(a,dtype=dtype)
-    return a
+    return asanyarray(a,dtype=dtype)
 
 def real(val):
     """Return the real part of val.
 
     Useful if val maybe a scalar or an array.
     """
-    return asarray(val).real
+    return asanyarray(val).real
 
 def imag(val):
     """Return the imaginary part of val.
 
     Useful if val maybe a scalar or an array.
     """
-    return asarray(val).imag
+    return asanyarray(val).imag
 
 def iscomplex(x):
     """Return a boolean array where elements are True if that element
@@ -68,7 +68,7 @@ def iscomplex(x):
 
     For scalars, return a boolean.
     """
-    ax = asarray(x)
+    ax = asanyarray(x)
     if issubclass(ax.dtype.type, _nx.complexfloating):
         return ax.imag != 0
     res = zeros(ax.shape, bool)
@@ -105,7 +105,7 @@ def _getmaxmin(t):
 
 def nan_to_num(x):
     """
-    Replaces NaN's with 0 and infinities with large numbers
+    Returns a copy of replacing NaN's with 0 and Infs with large numbers
 
     The following mappings are applied:
         NaN -> 0
@@ -118,10 +118,12 @@ def nan_to_num(x):
         t = obj2sctype(type(x))
     if issubclass(t, _nx.complexfloating):
         y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
-    elif issubclass(t, _nx.integer):
-        y = array(x)
     else:
-        y = array(x)
+        try:
+            y = x.copy()
+        except AttributeError:
+            y = array(x)
+    if not issubclass(t, _nx.integer):
         if not y.shape:
             y = array([x])
             scalar = True
@@ -146,7 +148,7 @@ def real_if_close(a,tol=100):
 
     "Close enough" is defined as tol*(machine epsilon of a's element type).
     """
-    a = asarray(a)
+    a = asanyarray(a)
     if not issubclass(a.dtype.type, _nx.complexfloating):
         return a
     if tol > 1:

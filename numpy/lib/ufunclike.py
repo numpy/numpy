@@ -5,13 +5,13 @@ storing results in an output array.
 __all__ = ['fix', 'isneginf', 'isposinf', 'log2']
 
 import numpy.core.numeric as nx
-from numpy.core.numeric import asarray, empty, isinf, signbit
+from numpy.core.numeric import asarray, empty, isinf, signbit, asanyarray
 import numpy.core.umath as umath
 
 def fix(x, y=None):
     """ Round x to nearest integer towards zero.
     """
-    x = asarray(x)
+    x = asanyarray(x)
     if y is None:
         y = nx.floor(x)
     else:
@@ -49,7 +49,7 @@ def log2(x, y=None):
 
     If y is an array, the result replaces the contents of y.
     """
-    x = asarray(x)
+    x = asanyarray(x)
     if y is None:
         y = umath.log(x)
     else:
