@@ -121,9 +121,6 @@ def memory_bounds(a):
     nd_a = len(ashape)
     bytes_a = int(ai['typestr'][2:])
 
-    # a_low points to first element of array
-    # a_high points to last element of the array
-
     a_low = a_high = a_data
     if astrides is None: # contiguous case
         a_high += product(ashape, dtype=int)*bytes_a
