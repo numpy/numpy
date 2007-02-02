@@ -8,7 +8,7 @@ from numpy.core import product, ndarray
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
            'issubdtype', 'deprecate', 'get_numarray_include',
            'get_include', 'info', 'source', 'who',
-           'memory_bounds', 'may_share_memory']
+           'byte_bounds', 'may_share_memory']
 
 def issubclass_(arg1, arg2):
     try:
@@ -106,11 +106,14 @@ get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 # Determine if two arrays can share memory
 #--------------------------------------------
 
-def memory_bounds(a):
+def byte_bounds(a):
     """(low, high) are pointers to the end-points of an array
 
     low is the first byte
     high is just *past* the last byte
+
+    If the array is not single-segment, then it may not actually
+    use every byte between these bounds. 
 
     The array provided must conform to the Python-side of the array interface
     """
@@ -143,8 +146,8 @@ def may_share_memory(a, b):
     A return of True does not necessarily mean that the two arrays
     share any element.  It just means that they *might*.
     """
-    a_low, a_high = memory_bounds(a)
-    b_low, b_high = memory_bounds(b)
+    a_low, a_high = byte_bounds(a)
+    b_low, b_high = byte_bounds(b)
     if b_low >= a_high or a_low >= b_high:
         return False
     return True
