@@ -2,6 +2,7 @@ from util import *
 from numerictypes import *
 from functions import *
 from ufuncs import *
+from compat import *
 from session import *
 
 import util
