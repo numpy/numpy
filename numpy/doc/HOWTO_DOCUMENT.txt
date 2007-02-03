@@ -85,10 +85,18 @@ useful to include here.
 
 5) The Notes section can contain algorithmic information if that is useful. 
 
-6) The Examples section is strongly encouraged.  The examples can provide a mini-tutorial as well as additional regression testing.  
+6) The Examples section is strongly encouraged.  The examples can provide a mini-tutorial as well as additional regression testing.
 
 
 Common reST concepts:
+
+A reST-documented module should define
+
+  __docformat__ = 'restructuredtext'
+
+at the top level in accordance with PEP 258.  Note that the
+__docformat__ variable in a package's __init__.py file does not apply
+to objects defined in subpackages and submodules.
 
 For paragraphs, indentation is significant and indicates indentation
 in the output. New paragraphs are marked with blank line.
@@ -96,9 +104,9 @@ in the output. New paragraphs are marked with blank line.
 Use *italics*, **bold**, and ``courier`` if needed in any explanations
 (but not for variable names and doctest code or multi-line code)
 
-Use :lm:eqn for in-line math in latex format (remember to use the
-raw-format for your text string or escape any '\' symbols). Use :m:eqn
-for non-latex math.
+Use :lm:`eqn` for in-line math in latex format (remember to use the
+raw-format for your text string or escape any '\' symbols). Use
+:m:`eqn` for non-latex math.
 
 A more extensive example of reST markup can be found here:
 http://docutils.sourceforge.net/docs/user/rst/demo.txt
