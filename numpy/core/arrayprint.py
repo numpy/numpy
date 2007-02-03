@@ -3,6 +3,7 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 """
 __all__ = ["array2string", "set_printoptions", "get_printoptions"]
+__docformat__ = 'restructuredtext'
 
 #
 # Written by Konrad Hinsen <hinsenk@ere.umontreal.ca>
@@ -68,21 +69,21 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None):
     """Set options associated with printing.
 
-    precision  the default number of digits of precision for floating
-                   point output
-                   (default 8)
-    threshold  total number of array elements which trigger summarization
-                   rather than full repr.
-                   (default 1000)
-    edgeitems  number of array items in summary at beginning and end of
-                   each dimension.
-                   (default 3)
-    linewidth  the number of characters per line for the purpose of inserting
-                   line breaks.
-                   (default 75)
-    suppress    Boolean value indicating whether or not suppress printing
-                   of small floating point values using scientific notation
-                   (default False)
+    :Parameters:
+        precision : int
+            Number of digits of precision for floating point output (default 8).
+        threshold : int
+            Total number of array elements which trigger summarization
+            rather than full repr (default 1000).
+        edgeitems : int
+            Number of array items in summary at beginning and end of
+            each dimension (default 3).
+        linewidth : int
+            The number of characters per line for the purpose of inserting
+            line breaks (default 75).
+        suppress : bool
+            Whether or not suppress printing of small floating point values
+            using scientific notation (default False).
     """
 
     global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
@@ -100,6 +101,19 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     return
 
 def get_printoptions():
+    """Return the current print options.
+
+    :Returns:
+        precision : int
+        threshold : int
+        edgeitems : int
+        linewidth : int
+        suppress : bool
+
+    :SeeAlso:
+     - set_printoptions : parameter descriptions
+
+    """
     return _float_output_precision, _summaryThreshold, _summaryEdgeItems, \
            _line_width, _float_output_suppress_small
 
@@ -205,6 +219,37 @@ def _convert_arrays(obj):
 def array2string(a, max_line_width = None, precision = None,
                  suppress_small = None, separator=' ', prefix="",
                  style=repr):
+    """Return a string representation of an array.
+
+    :Parameters:
+        a : ndarray
+            Input array.
+        max_line_width : int
+            The maximum number of columns the string should span. Newline
+            characters splits the string appropriately after array elements.
+        precision : int
+            Floating point precision.
+        suppress_small : bool
+            Represent very small numbers as zero.
+        separator : string
+            Inserted between elements.
+        prefix : string
+            An array is typically printed as
+
+            'prefix(' + array2string(a) + ')'
+
+            The length of the prefix string is used to align the
+            output correctly.
+        style : function
+
+    Examples
+    --------
+
+    >>> x = array([1e-16,1,2,3])
+    >>> print array2string(x,precision=2,separator=',',suppress_small=True)
+    [ 0., 1., 2., 3.]
+
+    """
 
     if a.shape == ():
         x = a.item()
