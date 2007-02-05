@@ -67,21 +67,31 @@ def iterable(y):
     return 1
 
 def histogram(a, bins=10, range=None, normed=False):
-    """histogram(sample, bins = 10, range = None, normed = False) -> H, ledges
+    """Compute the histogram from a set of data.
 
-    Return the distribution of a sample.
+    :Parameters:
+      - `a` : array
+        The data to histogram. n-D arrays will be flattened.
+      - `bins` : int or sequence of floats, optional
+        If an int, then the number of equal-width bins in the given range.
+        Otherwise, a sequence of the lower bound of each bin.
+      - `range` : (float, float), optional
+        The lower and upper range of the bins. If not provided, then (a.min(),
+        a.max()) is used. Values outside of this range are allocated to the
+        closest bin.
+      - `normed` : bool, optional
+        If False, the result array will contain the number of samples in each bin.
+        If True, the result array is the value of the probability *density*
+        function at the bin normalized such that the *integral* over the range
+        is 1. Note that the sum of all of the histogram values will not usually
+        be 1; it is not a probability *mass* function.
 
-    Parameters
-    ----------
-    bins: Number of bins
-    range: Lower and upper bin edges (default: [sample.min(), sample.max()]).
-        All values greater than range are stored in the last bin.
-    normed: If False (default), return the number of samples in each bin.
-        If True, return a frequency distribution.
-
-    Output
-    ------
-    histogram array, left bin edges array.
+    :Returns:
+      - `hist` : array (n,)
+        The values of the histogram. See `normed` for a description of the
+        possible semantics.
+      - `lower_edges` : float array (n,)
+        The lower edges of each bin.
     """
     a = asarray(a).ravel()
     if not iterable(bins):
