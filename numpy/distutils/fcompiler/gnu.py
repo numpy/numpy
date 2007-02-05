@@ -196,6 +196,8 @@ class GnuFCompiler(FCompiler):
                 # there's also: athlon-tbird, athlon-4, athlon-xp
             elif cpu.is_Nocona():
                 march_opt = '-march=nocona'
+            elif cpu.is_Core2():
+                march_opt = '-march=nocona'
             elif cpu.is_Prescott():
                 march_opt = '-march=prescott'
             elif cpu.is_PentiumIV():
@@ -216,7 +218,12 @@ class GnuFCompiler(FCompiler):
         if gnu_ver >= '3.4.4':
             if cpu.is_PentiumM():
                 march_opt = '-march=pentium-m'
-
+        
+        # Future:
+        # if gnu_ver >= '4.3':
+        #    if cpu.is_Core2():
+        #        march_opt = '-march=core2'
+        
         # Note: gcc 3.2 on win32 has breakage with -march specified
         if '3.1.1' <= gnu_ver <= '3.4' and sys.platform=='win32':
             march_opt = ''
