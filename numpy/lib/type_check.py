@@ -117,7 +117,7 @@ def nan_to_num(x):
     except AttributeError:
         t = obj2sctype(type(x))
     if issubclass(t, _nx.complexfloating):
-        y = nan_to_num(x.real) + 1j * nan_to_num(x.imag)
+        return nan_to_num(x.real) + 1j * nan_to_num(x.imag)
     else:
         try:
             y = x.copy()
