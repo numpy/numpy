@@ -4039,7 +4039,7 @@ static int
 PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
 {
         char *str;
-        if (object == Py_None) {
+        if (object == NULL || object == Py_None) {
                 *val = PyArray_ANYORDER;
         }
         else if (!PyString_Check(object) || PyString_GET_SIZE(object) < 1) {
