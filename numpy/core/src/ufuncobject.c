@@ -815,7 +815,6 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
                         }
                         funcdata = funcdata->next;
                 }
-                Py_DECREF(obj);
                 PyErr_SetString(PyExc_TypeError, msg);
                 goto fail;
         }
