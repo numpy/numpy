@@ -383,6 +383,7 @@ def polymul(a1, a2):
     """Multiplies two polynomials represented as sequences.
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
+    a1,a2 = poly1d(a1),poly1d(a2)
     val = NX.convolve(a1, a2)
     if truepoly:
         val = poly1d(val)

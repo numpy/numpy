@@ -613,5 +613,9 @@ class test_regression(NumpyTestCase):
         assert_array_equal(N.divide.accumulate(todivide),
             N.array([2., 4., 16.]))
 
+    def check_mem_polymul(self, level=rlevel):
+        """Ticket #448"""
+        N.polymul([],[1.])
+
 if __name__ == "__main__":
     NumpyTest().run()
