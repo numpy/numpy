@@ -615,7 +615,7 @@ array_setscalar(PyArrayObject *self, PyObject *args) {
         else {
                 intp loc, index[MAX_DIMS];
                 PyObject *tupargs;
-                tupargs = PyTuple_GetSlice(args, 1, n+1);
+                tupargs = PyTuple_GetSlice(args, 0, n);
                 nd = PyArray_IntpFromSequence(tupargs, index, MAX_DIMS);
                 Py_DECREF(tupargs);
                 if (nd < n) return NULL;
