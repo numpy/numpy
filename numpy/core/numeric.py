@@ -219,8 +219,11 @@ def convolve(a,v,mode='full'):
     """Returns the discrete, linear convolution of 1-D sequences a and v; mode
     can be 'valid', 'same', or 'full' to specify size of the resulting sequence.
     """
+    a,v = array(a,ndmin=1),array(v,ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
+    assert len(a) > 0, 'a cannot be empty'
+    assert len(v) > 0, 'v cannot be empty'
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,asarray(v)[::-1],mode)
 

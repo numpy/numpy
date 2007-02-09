@@ -616,6 +616,11 @@ class test_regression(NumpyTestCase):
     def check_mem_polymul(self, level=rlevel):
         """Ticket #448"""
         N.polymul([],[1.])
+        
+    def check_convolve_empty(self, level=rlevel):
+        """Convolve should raise an error for empty input array."""
+        self.failUnlessRaises(AssertionError,N.convolve,[],[1])
+        self.failUnlessRaises(AssertionError,N.convolve,[1],[])
 
 if __name__ == "__main__":
     NumpyTest().run()
