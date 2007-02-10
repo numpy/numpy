@@ -15,9 +15,8 @@ __all__ = ['set_package_path', 'set_local_path', 'restore_path',
            ]
 
 DEBUG=0
+from numpy.testing.utils import jiffies
 get_frame = sys._getframe
-from utils import jiffies
-
 
 class IgnoreException(Exception):
     "Ignoring this exception due to disabled feature"
@@ -236,8 +235,7 @@ class NumPyTextTestRunner(unittest.TextTestRunner):
 class NumpyTest:
     """ Numpy tests site manager.
 
-    Usage:
-      >>> NumpyTest(<package>).test(level=1,verbosity=1)
+    Usage: NumpyTest(<package>).test(level=1,verbosity=1)
 
     <package> is package name or its module object.
 
