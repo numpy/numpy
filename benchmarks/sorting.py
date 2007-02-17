@@ -1,31 +1,25 @@
-import timeit
+from benchmark import Benchmark
+
+modules = ['numpy','Numeric','numarray']
+b = Benchmark(modules,runs=3,reps=100)
 
 N = 10000
-t1 = timeit.Timer('a=array(None,shape=%d);a.sort()'%N,'from numarray import array')
-t2 = timeit.Timer('a=empty(shape=%d);a.sort()'%N,'from numpy import empty')
-t3 = timeit.Timer('a=empty(shape=%d);sort(a)'%N,'from Numeric import empty,sort')
-
-print "1-D length = ", N
-print "Numarray: ", t1.repeat(3,100)
-print "NumPy: ", t2.repeat(3,100)
-print "Numeric: ", t3.repeat(3,100)
+b.title = 'Sorting %d elements' % N
+b['numarray'] = ('a=N.array(None,shape=%d);a.sort()'%N,'')
+b['numpy'] = ('a=N.empty(shape=%d);a.sort()'%N,'')
+b['Numeric'] = ('a=N.empty(shape=%d);N.sort(a)'%N,'')
+b.run()
 
 N1,N2 = 100,100
-t1 = timeit.Timer('a=array(None,shape=(%d,%d));a.sort()'%(N1,N2),'from numarray import array')
-t2 = timeit.Timer('a=empty(shape=(%d,%d));a.sort()'%(N1,N2),'from numpy import empty')
-t3 = timeit.Timer('a=empty(shape=(%d,%d));sort(a)'%(N1,N2),'from Numeric import empty,sort')
-
-print "2-D shape = (%d,%d), last-axis" % (N1,N2)
-print "Numarray: ", t1.repeat(3,100)
-print "NumPy: ", t2.repeat(3,100)
-print "Numeric: ", t3.repeat(3,100)
+b.title = 'Sorting (%d,%d) elements, last axis' % (N1,N2)
+b['numarray'] = ('a=N.array(None,shape=(%d,%d));a.sort()'%(N1,N2),'')
+b['numpy'] = ('a=N.empty(shape=(%d,%d));a.sort()'%(N1,N2),'')
+b['Numeric'] = ('a=N.empty(shape=(%d,%d));N.sort(a)'%(N1,N2),'')
+b.run()
 
 N1,N2 = 100,100
-t1 = timeit.Timer('a=array(None,shape=(%d,%d));a.sort(0)'%(N1,N2),'from numarray import array')
-t2 = timeit.Timer('a=empty(shape=(%d,%d));a.sort(0)'%(N1,N2),'from numpy import empty')
-t3 = timeit.Timer('a=empty(shape=(%d,%d));sort(a,0)'%(N1,N2),'from Numeric import empty,sort')
-
-print "2-D shape = (%d,%d), first-axis" % (N1,N2)
-print "Numarray: ", t1.repeat(3,100)
-print "NumPy: ", t2.repeat(3,100)
-print "Numeric: ", t3.repeat(3,100)
+b.title = 'Sorting (%d,%d) elements, first axis' % (N1,N2)
+b['numarray'] = ('a=N.array(None,shape=(%d,%d));a.sort(0)'%(N1,N2),'')
+b['Numeric'] = ('a=N.empty(shape=(%d,%d));N.sort(a,0)'%(N1,N2),'')
+b['numpy'] = ('a=N.empty(shape=(%d,%d));N.sort(a,0)'%(N1,N2),'')
+b.run()

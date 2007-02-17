@@ -1,9 +1,17 @@
-import timeit
+from benchmark import Benchmark
+
+modules = ['numpy','Numeric','numarray']
+
+b = Benchmark(modules,
+              title='Casting a (10,10) integer array to float.',
+              runs=3,reps=10000)
+
 N = [10,10]
-t1 = timeit.Timer('b = a.astype(int)','import numpy;a=numpy.zeros(shape=%s,dtype=float)'%N)
-t2 = timeit.Timer('b = a.astype("l")','import Numeric;a=Numeric.zeros(shape=%s,typecode="d")'%N)
-t3 = timeit.Timer("b = a.astype('l')","import numarray; a=numarray.zeros(shape=%s,typecode='d')"%N)
-print "1-D length = ", N
-print "NumPy: ", t1.repeat(3,1000)
-print "Numeric: ", t2.repeat(3,1000)
-print "Numarray: ", t3.repeat(3,1000)
+b['numpy'] = ('b = a.astype(int)',
+              'a=numpy.zeros(shape=%s,dtype=float)' % N)
+b['Numeric'] = ('b = a.astype("l")',
+                'a=Numeric.zeros(shape=%s,typecode="d")' % N)
+b['numarray'] = ("b = a.astype('l')",
+                 "a=numarray.zeros(shape=%s,typecode='d')" % N)
+
+b.run()
