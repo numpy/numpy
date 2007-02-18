@@ -691,15 +691,17 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Example:
 
-    >>> seterr(over='raise')
+    >>> seterr(over='raise') # doctest: +SKIP
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
-    >>> seterr(all='warn', over='raise')
+    
+    >>> seterr(all='warn', over='raise') # doctest: +SKIP
     {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
-    >>> int16(32000) * int16(3)
+    
+    >>> int16(32000) * int16(3) # doctest: +SKIP
     Traceback (most recent call last):
           File "<stdin>", line 1, in ?
     FloatingPointError: overflow encountered in short_scalars
-    >>> seterr(all='ignore')
+    >>> seterr(all='ignore') # doctest: +SKIP
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
 
     """

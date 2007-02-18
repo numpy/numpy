@@ -108,6 +108,7 @@ class nd_grid(object):
                    [2, 2, 2, 2, 2],
                    [3, 3, 3, 3, 3],
                    [4, 4, 4, 4, 4]],
+           <BLANKLINE>
                   [[0, 1, 2, 3, 4],
                    [0, 1, 2, 3, 4],
                    [0, 1, 2, 3, 4],
@@ -118,7 +119,11 @@ class nd_grid(object):
 
            >>> ogrid = nd_grid(sparse=True)
            >>> ogrid[0:5,0:5]
-           [array([[0],[1],[2],[3],[4]]), array([[0, 1, 2, 3, 4]])]
+           [array([[0],
+                  [1],
+                  [2],
+                  [3],
+                  [4]]), array([[0, 1, 2, 3, 4]])]
            
     """
     def __init__(self, sparse=False):
@@ -359,15 +364,15 @@ class ndindex(object):
     will then return an N-dimensional counter.
 
     Example:
-    >>> for index in ndindex(4,3,2):
-            print index
-    (0,0,0)
-    (0,0,1)
-    (0,1,0)
-    ...
-    (3,1,1)
-    (3,2,0)
-    (3,2,1)
+    >>> for index in ndindex(3,2,1):
+    ...     print index
+    (0, 0, 0)
+    (0, 1, 0)
+    (1, 0, 0)
+    (1, 1, 0)
+    (2, 0, 0)
+    (2, 1, 0)
+
     """
 
     def __init__(self, *args):

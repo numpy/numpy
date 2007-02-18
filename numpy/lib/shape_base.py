@@ -288,15 +288,17 @@ def dstack(tup):
         >>> a = array((1,2,3))
         >>> b = array((2,3,4))
         >>> numpy.dstack((a,b))
-        array([       [[1, 2],
-                       [2, 3],
-                       [3, 4]]])
+        array([[[1, 2],
+                [2, 3],
+                [3, 4]]])
         >>> a = array([[1],[2],[3]])
         >>> b = array([[2],[3],[4]])
         >>> numpy.dstack((a,b))
-        array([[        [1, 2]],
-        [        [2, 3]],
-        [        [3, 4]]])
+        array([[[1, 2]],
+        <BLANKLINE>
+               [[2, 3]],
+        <BLANKLINE>
+               [[3, 4]]])
         
     """
     return _nx.concatenate(map(atleast_3d,tup),2)
@@ -436,6 +438,7 @@ def hsplit(ary,indices_or_sections):
             >>> numpy.hsplit(a,2)
             [array([1, 2]), array([3, 4])]
             >>> a = array([[1,2,3,4],[1,2,3,4]])
+            >>> hsplit(a,2)
             [array([[1, 2],
                    [1, 2]]), array([[3, 4],
                    [3, 4]])]
@@ -482,8 +485,8 @@ def vsplit(ary,indices_or_sections):
             import numpy
             >>> a = array([[1,2,3,4],
             ...            [1,2,3,4]])
-            >>> numpy.vsplit(a)
-            [array([       [1, 2, 3, 4]]), array([       [1, 2, 3, 4]])]
+            >>> numpy.vsplit(a,2)
+            [array([[1, 2, 3, 4]]), array([[1, 2, 3, 4]])]
 
     """
     if len(_nx.shape(ary)) < 2:
@@ -518,8 +521,9 @@ def dsplit(ary,indices_or_sections):
             dstack, split, array_split, hsplit, vsplit.
         Examples:
             >>> a = array([[[1,2,3,4],[1,2,3,4]]])
-            [array([       [[1, 2],
-                    [1, 2]]]), array([       [[3, 4],
+            >>> dsplit(a,2)
+            [array([[[1, 2],
+                    [1, 2]]]), array([[[3, 4],
                     [3, 4]]])]
 
     """
@@ -603,7 +607,7 @@ def tile(A, reps):
            [0, 1, 2, 0, 1, 2]])
     >>> tile(a,(2,1,2))
     array([[[0, 1, 2, 0, 1, 2]],
-
+    <BLANKLINE>
            [[0, 1, 2, 0, 1, 2]]])
 
     See Also:

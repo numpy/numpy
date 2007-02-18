@@ -665,7 +665,7 @@ def unique(x):
 
     Example:
     >>> unique([5,2,4,0,4,4,2,2,1])
-    array([0,1,2,4,5])
+    array([0, 1, 2, 4, 5])
     
     """
     try:
@@ -806,13 +806,13 @@ class vectorize(object):
 
   Example:
 
-    def myfunc(a, b):
-        if a > b:
-            return a-b
-        else
-            return a+b
+    >>> def myfunc(a, b):
+    ...    if a > b:
+    ...        return a-b
+    ...    else:
+    ...        return a+b
 
-    vfunc = vectorize(myfunc)
+    >>> vfunc = vectorize(myfunc)
 
     >>> vfunc([1, 2, 3, 4], 2)
     array([3, 4, 1, 2])
@@ -1197,16 +1197,16 @@ def delete(arr, obj, axis=None):
 
     Example:
     >>> arr = [[3,4,5],
-              [1,2,3],
-              [6,7,8]]
+    ...       [1,2,3],
+    ...       [6,7,8]]
 
     >>> delete(arr, 1, 1)
-    array([[3,5],
-           [1,3],
-           [6,8])
+    array([[3, 5],
+           [1, 3],
+           [6, 8]])
     >>> delete(arr, 1, 0)
-    array([[3,4,5],
-           [6,7,8]])
+    array([[3, 4, 5],
+           [6, 7, 8]])
     """
     wrap = None
     if type(arr) is not ndarray:
@@ -1300,15 +1300,15 @@ def insert(arr, obj, values, axis=None):
 
     Example:
     >>> a = array([[1,2,3],
-                   [4,5,6],
-                   [7,8,9]])
+    ...            [4,5,6],
+    ...            [7,8,9]])
 
     >>> insert(a, [1,2], [[4],[5]], axis=0)
-    array([[1,2,3],
-           [4,4,4],
-           [4,5,6],
-           [5,5,5],
-           [7,8,9])
+    array([[1, 2, 3],
+           [4, 4, 4],
+           [4, 5, 6],
+           [5, 5, 5],
+           [7, 8, 9]])
     """
     wrap = None
     if type(arr) is not ndarray:

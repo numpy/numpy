@@ -142,6 +142,7 @@ def choose(a, choices, out=None, mode='raise'):
       array([20, 31, 12,  3])
       >>> choose([2, 4, 1, 0], choices, mode='wrap')
       array([20,  1, 12,  3])
+      
     """
     try:
         choose = a.choose
@@ -173,6 +174,7 @@ def repeat(a, repeats, axis=None):
       array([0, 0, 1, 1, 2, 2])
       >>> repeat([0, 1, 2], [2, 3, 4])
       array([0, 0, 1, 1, 1, 2, 2, 2, 2])
+      
     """
     try:
         repeat = a.repeat
@@ -487,16 +489,16 @@ def sum(x, axis=None, dtype=None, out=None):
 
         x.dtype                         default sum() dtype
         ---------------------------------------------------
-        bool, Int8, Int16, Int32        Int32
+        bool, int8, int16, int32        int32
 
     Examples:
-    >>> sum([0.5, 1.5])
+    >>> N.sum([0.5, 1.5])
     2.0
-    >>> sum([0.5, 1.5], dtype=Int32)
+    >>> N.sum([0.5, 1.5], dtype=N.int32)
     1
-    >>> sum([[0, 1], [0, 5]])
-    array([0, 6])
-    >>> sum([[0, 1], [0, 5]], axis=1)
+    >>> N.sum([[0, 1], [0, 5]])
+    6
+    >>> N.sum([[0, 1], [0, 5]], axis=1)
     array([1, 5])
     """
     if isinstance(x, _gentype):

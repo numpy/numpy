@@ -269,7 +269,8 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
 
        Example:
           >>> from numpy import *
-          >>> info(polyval)
+          >>> info(polyval) # doctest: +SKIP
+          
           polyval(p, x)
 
             Evaluate the polymnomial p at x.

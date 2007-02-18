@@ -56,7 +56,7 @@ def poly(seq_of_zeros):
         
         >>> b = roots([1,3,1,5,6])
         >>> poly(b)
-        array([1., 3., 1., 5., 6.])
+        array([ 1.,  3.,  1.,  5.,  6.])
         
     """
     seq_of_zeros = atleast_1d(seq_of_zeros)
