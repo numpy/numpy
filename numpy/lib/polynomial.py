@@ -50,13 +50,14 @@ def _lstsq(X, y, rcond):
 def poly(seq_of_zeros):
     """ Return a sequence representing a polynomial given a sequence of roots.
 
-        If the input is a matrix, return the characteristic polynomial.
+    If the input is a matrix, return the characteristic polynomial.
 
-        Example:
-
-         >>> b = roots([1,3,1,5,6])
-         >>> poly(b)
-         array([1., 3., 1., 5., 6.])
+    Example:
+        
+        >>> b = roots([1,3,1,5,6])
+        >>> poly(b)
+        array([1., 3., 1., 5., 6.])
+        
     """
     seq_of_zeros = atleast_1d(seq_of_zeros)
     sh = seq_of_zeros.shape

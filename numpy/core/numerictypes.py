@@ -80,7 +80,7 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes']
 
-from multiarray import typeinfo, ndarray, array, empty, dtype
+from numpy.core.multiarray import typeinfo, ndarray, array, empty, dtype
 import types as _types
 
 # we don't export these for import *, but we do want them accessible

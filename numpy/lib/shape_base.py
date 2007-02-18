@@ -274,29 +274,30 @@ def column_stack(tup):
 def dstack(tup):
     """ Stack arrays in sequence depth wise (along third dimension)
 
-        Description:
-            Take a sequence of arrays and stack them along the third axis.
-            All arrays in the sequence must have the same shape along all
-            but the third axis.  This is a simple way to stack 2D arrays
-            (images) into a single 3D array for processing.
-            dstack will rebuild arrays divided by dsplit.
-        Arguments:
-            tup -- sequence of arrays.  All arrays must have the same
-                   shape.
-        Examples:
-            >>> import numpy
-            >>> a = array((1,2,3))
-            >>> b = array((2,3,4))
-            >>> numpy.dstack((a,b))
-            array([       [[1, 2],
-                    [2, 3],
-                    [3, 4]]])
-            >>> a = array([[1],[2],[3]])
-            >>> b = array([[2],[3],[4]])
-            >>> numpy.dstack((a,b))
-            array([[        [1, 2]],
-                   [        [2, 3]],
-                   [        [3, 4]]])
+    Description:
+        Take a sequence of arrays and stack them along the third axis.
+        All arrays in the sequence must have the same shape along all
+        but the third axis.  This is a simple way to stack 2D arrays
+        (images) into a single 3D array for processing.
+        dstack will rebuild arrays divided by dsplit.
+    Arguments:
+        tup -- sequence of arrays.  All arrays must have the same
+               shape.
+    Examples:
+        >>> import numpy
+        >>> a = array((1,2,3))
+        >>> b = array((2,3,4))
+        >>> numpy.dstack((a,b))
+        array([       [[1, 2],
+                       [2, 3],
+                       [3, 4]]])
+        >>> a = array([[1],[2],[3]])
+        >>> b = array([[2],[3],[4]])
+        >>> numpy.dstack((a,b))
+        array([[        [1, 2]],
+        [        [2, 3]],
+        [        [3, 4]]])
+        
     """
     return _nx.concatenate(map(atleast_3d,tup),2)
 

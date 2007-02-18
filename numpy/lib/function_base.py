@@ -143,6 +143,7 @@ def histogramdd(sample, bins=10, range=None, normed=False):
     H, edges = histogramdd(x, bins = (5, 6, 7))
 
     See also: histogram
+    
     """
 
     try:
@@ -263,6 +264,7 @@ def average(a, axis=None, weights=None, returned=False):
 
     Raises ZeroDivisionError if appropriate.  (The version in MA does
     not -- it returns masked values).
+    
     """
     if axis is None:
         a = array(a).ravel()
@@ -376,31 +378,32 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
 def select(condlist, choicelist, default=0):
     """ Return an array composed of different elements of choicelist
-        depending on the list of conditions.
+    depending on the list of conditions.
 
-        condlist is a list of condition arrays containing ones or zeros
+    condlist is a list of condition arrays containing ones or zeros
 
-        choicelist is a list of choice arrays (of the "same" size as the
-        arrays in condlist).  The result array has the "same" size as the
-        arrays in choicelist.  If condlist is [c0, ..., cN-1] then choicelist
-        must be of length N.  The elements of the choicelist can then be
-        represented as [v0, ..., vN-1]. The default choice if none of the
-        conditions are met is given as the default argument.
+    choicelist is a list of choice arrays (of the "same" size as the
+    arrays in condlist).  The result array has the "same" size as the
+    arrays in choicelist.  If condlist is [c0, ..., cN-1] then choicelist
+    must be of length N.  The elements of the choicelist can then be
+    represented as [v0, ..., vN-1]. The default choice if none of the
+    conditions are met is given as the default argument.
 
-        The conditions are tested in order and the first one statisfied is
-        used to select the choice. In other words, the elements of the
-        output array are found from the following tree (notice the order of
-        the conditions matters):
+    The conditions are tested in order and the first one statisfied is
+    used to select the choice. In other words, the elements of the
+    output array are found from the following tree (notice the order of
+    the conditions matters):
 
-        if c0: v0
-        elif c1: v1
-        elif c2: v2
-        ...
-        elif cN-1: vN-1
-        else: default
+    if c0: v0
+    elif c1: v1
+    elif c2: v2
+    ...
+    elif cN-1: vN-1
+    else: default
 
-        Note that one of the condition arrays must be large enough to handle
-        the largest array in the choice list.
+    Note that one of the condition arrays must be large enough to handle
+    the largest array in the choice list.
+    
     """
     n = len(condlist)
     n2 = len(choicelist)
@@ -452,7 +455,8 @@ def gradient(f, *varargs):
     Outputs:
 
       N arrays of the same shape as f giving the derivative of f with respect
-       to each dimension.
+      to each dimension.
+       
     """
     N = len(f.shape)  # number of dimensions
     n = len(varargs)
@@ -542,6 +546,7 @@ bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
 bins is monotonically decreasing.
 
 Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
+
 """)
 except RuntimeError:
     pass
@@ -558,6 +563,7 @@ is specified, every occurrence of i at a position p contributes
 weights[p] instead of 1.
 
 See also: histogram, digitize, unique.
+
 """)
 except RuntimeError:
     pass
@@ -570,6 +576,7 @@ Add a docstring to a built-in obj if possible.
 If the obj already has a docstring raise a RuntimeError
 If this routine does not know how to add a docstring to the object
 raise a TypeError
+
 """)
 except RuntimeError:
     pass
@@ -612,6 +619,7 @@ def sort_complex(a):
     the imaginary part if the real part is equal (the default sort order
     for complex arrays).  This function is a wrapper ensuring a complex
     return type.
+
     """
     b = array(a,copy=True)
     b.sort()
@@ -633,6 +641,7 @@ def trim_zeros(filt, trim='fb'):
         >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
         >>> numpy.trim_zeros(a)
         array([1, 2, 3, 2, 1])
+        
     """
     first = 0
     trim = trim.upper()
@@ -657,6 +666,7 @@ def unique(x):
     Example:
     >>> unique([5,2,4,0,4,4,2,2,1])
     array([0,1,2,4,5])
+    
     """
     try:
         tmp = x.flatten()
@@ -682,6 +692,7 @@ def place(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but the 1D array vals has the
     same number of elements as the non-zero values of mask. Inverse of
     extract.
+    
     """
     return _insert(arr, mask, vals)
 
