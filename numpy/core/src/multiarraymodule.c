@@ -1902,14 +1902,14 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
 		if (PyTypeNum_ISUSERDEF(neededtype)) return FALSE;
 		switch(scalar) {
 		case PyArray_INTPOS_SCALAR:
-			return (neededtype >= PyArray_LONG);
+			return (neededtype >= PyArray_BYTE);
 		case PyArray_INTNEG_SCALAR:
-			return (neededtype >= PyArray_LONG) &&	\
+			return (neededtype >= PyArray_BYTE) &&	\
 				!(PyTypeNum_ISUNSIGNED(neededtype));
 		case PyArray_FLOAT_SCALAR:
-			return (neededtype >= PyArray_DOUBLE);
+			return (neededtype >= PyArray_FLOAT);
 		case PyArray_COMPLEX_SCALAR:
-			return (neededtype >= PyArray_CDOUBLE);
+			return (neededtype >= PyArray_CFLOAT);
 		default:
 			return 1; /* should never get here... */
 		}
