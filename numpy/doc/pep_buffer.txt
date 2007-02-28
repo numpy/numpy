@@ -109,13 +109,13 @@ Specification
     typedef PyObject *(*getbufferproc)(PyObject *obj, void **buf,
                                        Py_ssize_t *len, int requires)
  
-      Return a pointer to memory in buf and the length of that memory
-      buffer in buf.  Requirements for the memory are provided in
+      Return a pointer to memory in *buf and the length of that memory
+      buffer in *len.  Requirements for the memory are provided in
       requires (PYBUFFER_WRITE, PYBUFFER_ONESEGMENT).  NULL is
       returned and an error raised if the object cannot return a view
       with those requirements.  Otherwise, an object-specific "view"
-      object is returned (which can just be a borrowed reference to
-      obj).
+      object is returned (which can just be as simple as a borrowed 
+      reference to obj).
 
       This view object should be used in the other API calls and 
       does not need to be decref'd.  It should be "released" if the
@@ -126,7 +126,7 @@ Specification
       This function is called when a view of memory previously
       acquired from the object is no longer needed.  It is up to the
       exporter of the API to make sure all views have been released
-      before eliminating a reference to a previously returned pointer.
+      before re-allocating the previously returned pointer.
       It is up to consumers of the API to call this function on the
       object whose view is obtained when it is no longer needed.  A -1
       is returned on error and 0 on success.
@@ -224,9 +224,9 @@ Additions to the struct string-syntax
    ctypes and NumPy for example).  Here are the proposed additions:
 
    Character         Description
-   ==================================
+   =============================================================
    '1'               bit (number before states how many bits)
-   '?'               platform _Bool type 
+   't'               platform _Bool type if available
    'g'               long double  
    'F'               complex float  
    'D'               complex double 
