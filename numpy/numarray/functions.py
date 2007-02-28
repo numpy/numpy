@@ -270,8 +270,8 @@ def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
     if shape is None:
         count = -1
     else:
-        count = N.product(shape)*dtype.itemsize
-    res = N.fromstring(datastring, count=count)
+        count = N.product(shape)
+    res = N.fromstring(datastring, dtype=dtype, count=count)
     if shape is not None:
         res.shape = shape
     return res
