@@ -248,7 +248,7 @@ Additions to the struct string-syntax
    'w' will return Python unicode.  Unpacking a multi-dimensional
    array will return a list of lists.  Un-packing a pointer will
    return a ctypes pointer object.  Un-packing a bit will return a
-   Python Bool.
+   Python Bool.  Spaces in the struct-string syntax will be ignored.
 
    Endian-specification ('=','>','<') is also allowed inside the
    string so that it can change if needed.  The previously-specified
@@ -262,6 +262,36 @@ Additions to the struct string-syntax
 
    Functions should be added to ctypes to create a ctypes object from
    a struct description, and add long-double, and ucs-2 to ctypes.
+
+Examples of Data-Format Descriptions
+
+   Here are some examples of C-structures and how they would be
+   represented using the struct-style syntax:
+
+   float                     
+      'f'
+   complex double
+      'F' or 'ff'
+   RGB Pixel data
+      'BBB' or 'B:r: B:g: B:b:'
+   Mixed endian (weird but possible)
+      '>i:big: <i:little:'
+   Nested structure
+      struct {
+             int ival;
+             struct {
+                 unsigned short sval;
+                 unsigned char bval;
+                 unsigned char cval;
+             } sub;
+      }
+      'i:ival: T{H:sval: B:bval: B:cval:}:sub:'
+   Nested array
+      struct {
+             int ival;
+             double data[16*4];
+      }
+      'i:ival: (16,4)d:data:'
 
 Code to be affected
 
