@@ -148,8 +148,13 @@ Specification
       having to compute it separately.
 
       The returned object is a Python CObject surrounding a char *
-      pointer which will deallocate the memory for the char * when
-      the reference disappears. 
+      pointer which will manage the memory for the char * when the
+      reference disappears.
+
+      If this is routine is not provided, then it is the same as if
+      "B" were the returned string (i.e. it's just a block of bytes)
+      and itemsize==1.
+
 
     typedef PyObject *(*shapebufferproc)(PyObject *view)
 
@@ -158,17 +163,26 @@ Specification
       struct {
          int ndim
          Py_ssize_t *shape;
-         Py_ssize_t *strides;
+         Py_ssize_t *strides; 
       }
 
       The strides pointer can be NULL if the memory is C-style contiguous
-      otherwise it provides the striding in each dimension. 
+      otherwise it provides the striding in each dimension (how many bytes
+      to skip to get to the next element along a particular dimension).
 
-      When the returned Object is deallocated, the memory for the shape
-      and strides is freed.
+      When the returned object is collected, the memory for the shape
+      and strides is freed by the deallocator stored in the CObject.
 
-      All of these routines are optional for a type object (but the last
-      three make no sense unless the first one is implemented).
+      If this routine is not provided, then it's equivalent to
+      ndim == 1 and shape == [len]
+
+      Notice that the buffer length, len, should be
+          (shape[0]*...*shape[ndim-1])*itemsize regardless of the strides.
+
+
+    All of these routines are optional for a type object (but the last
+    three make no sense unless the first one is implemented).
+
 
 
 New C-API calls are proposed
