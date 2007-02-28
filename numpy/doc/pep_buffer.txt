@@ -131,7 +131,7 @@ Specification
       object whose view is obtained when it is no longer needed.  A -1
       is returned on error and 0 on success.
 
-    typedef char *(*formatbufferproc)(PyObject *view, int *itemsize)
+    typedef PyObject *(*formatbufferproc)(PyObject *view, int *itemsize)
 
       Get the format-string of the memory using the struct-module
       string syntax (see below for proposed additions to that syntax).
@@ -147,15 +147,28 @@ Specification
       However, very often objects already know the itemsize without
       having to compute it separately.
 
+      The returned object is a Python CObject surrounding a char *
+      pointer which will deallocate the memory for the char * when
+      the reference disappears. 
+
     typedef PyObject *(*shapebufferproc)(PyObject *view)
 
-      Return a 2-tuple of lists containing shape information: (shape,
-      strides).  The strides object can be None if the memory is
-      C-style contiguous) otherwise it provides the striding in each 
-      dimension. 
+      Return a Python CObject surrounding a pointer to the structure
 
-    All of these routines are optional for a type object (but the last
-    three make no sense unless the first one is implemented).
+      struct {
+         int ndim
+         Py_ssize_t *shape;
+         Py_ssize_t *strides;
+      }
+
+      The strides pointer can be NULL if the memory is C-style contiguous
+      otherwise it provides the striding in each dimension. 
+
+      When the returned Object is deallocated, the memory for the shape
+      and strides is freed.
+
+      All of these routines are optional for a type object (but the last
+      three make no sense unless the first one is implemented).
 
 
 New C-API calls are proposed
@@ -217,6 +230,15 @@ New C-API calls are proposed
       Return the implied size of the data-format area from a struct-style
       description.
 
+   PyObject *PyObject_BufferFormat(char *format, int copy)
+      Construct a CObject to return as the format in the buffer interface
+      from a string being sure to copy if specified.
+
+   PyObject *PyObject_BufferShape(int ndim, Py_ssize_t *shape, Py_ssize_t *strides)
+      Construct a CObject to return as the shape object in the buffer interface.
+      The values are copied from the arrays pointed to by shape and strides.
+      Strides can be NULL if the memory is C-style contiguous. 
+
 Additions to the struct string-syntax
 
    The struct string-syntax is missing some characters to fully
@@ -239,6 +261,7 @@ Additions to the struct string-syntax
    '&'               specific pointer (prefix before another charater) 
    'X{}'             pointer to a function (optional function 
                                              signature inside {})
+   ' '               ignored (allow readability)
 
    The struct module will be changed to understand these as well and
    return appropriate Python objects on unpacking.  Un-packing a
@@ -250,7 +273,7 @@ Additions to the struct string-syntax
 
    Endian-specification ('=','>','<') is also allowed inside the
    string so that it can change if needed.  The previously-specified
-   endian string is enforce at all times.  The default endian is '='.
+   endian string is enforce until changed.  The default endian is '='.
 
    According to the struct-module, a number can preceed a character
    code to specify how many of that type there are.  The
@@ -311,7 +334,9 @@ Issues and Details
    The proposed locking mechanism relies entirely on the objects
    implementing the buffer interface to do their own thing.  Ideally
    an object that implements the buffer interface should keep at least
-   a number indicating how many releases are extant.
+   a number indicating how many releases are extant.  If there are views
+   to a memory location, then reallocation should fail and raise
+   an error. 
 
    The handling of discontiguous memory is new and can be seen as a
    modification of the multiple-segment interface.  It is motivated by
@@ -328,6 +353,11 @@ Issues and Details
    structures.  It seems like specifying a nested structure should be
    specified as several ways of viewing memory areas (ctypes and
    NumPy) already allow this.
+
+   Python Objects are returned for Format and Shape descriptions so 
+   that memory-management is simply handled using reference-counting. 
+
+
 
 Copyright
 
