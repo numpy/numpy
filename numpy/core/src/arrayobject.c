@@ -4254,6 +4254,7 @@ _myunincmp(PyArray_UCS4 *s1, PyArray_UCS4 *s2, int len1, int len2)
         PyArray_UCS4 *s1t=s1, *s2t=s2;
         int val;
         intp size;
+        int diff;
 
         if ((intp)s1 % sizeof(PyArray_UCS4) != 0) {
                 size = len1*sizeof(PyArray_UCS4);
@@ -4267,9 +4268,12 @@ _myunincmp(PyArray_UCS4 *s1, PyArray_UCS4 *s2, int len1, int len2)
         }
         val = PyArray_CompareUCS4(s1t, s2t, MIN(len1,len2));
         if ((val != 0) || (len1 == len2)) goto finish;
-        if (len2 > len1) {sptr = s2t+len1; val = -1;}
-        else {sptr = s1t+len2; val = 1;}
-        if (*sptr != 0) goto finish;
+        if (len2 > len1) {sptr = s2t+len1; val = -1; diff=len2-len1;}
+        else {sptr = s1t+len2; val = 1; diff=len1-len2;}
+        while (diff--) {
+                if (*sptr != 0) goto finish;
+                sptr++;
+        }
         val = 0;
 
  finish:
@@ -4291,13 +4295,17 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
 {
         char *sptr;
         int val;
+        int diff;
 
         val = strncmp(s1, s2, MIN(len1, len2));
         if ((val != 0) || (len1 == len2)) return val;
-        if (len2 > len1) {sptr = s2+len1; val = -1;}
-        else {sptr = s1+len2; val = 1;}
-        if (*sptr != 0) return val;
-        return 0;
+        if (len2 > len1) {sptr = s2+len1; val = -1; diff=len2-len1;}
+        else {sptr = s1+len2; val = 1; diff=len1-len2;}
+        while (diff--) {
+                if (*sptr != 0) return val; 
+                sptr++;
+        }
+        return 0; /* Only happens if NULLs are everywhere */
 }
 
 /* Borrowed from Numarray */
