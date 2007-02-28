@@ -1298,9 +1298,7 @@ static void
 VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 intp n, int swap, PyArrayObject *arr)
 {
-        int itemsize;
         if (arr == NULL) return;
-        itemsize = arr->descr->elsize;
         if (PyArray_HASFIELDS(arr)) {
                 PyObject *key, *value, *title=NULL;
                 PyArray_Descr *new, *descr;
@@ -1320,8 +1318,30 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 arr->descr = descr;
                 return;
         }
+        if (swap && arr->descr->subarray != NULL) {
+                PyArray_Descr *descr, *new;
+                npy_intp num;                
+                npy_intp i;
+                int subitemsize;
+                char *dstptr, *srcptr;
+                descr = arr->descr;
+                new = descr->subarray->base;
+                arr->descr = new;
+                dstptr = dst;
+                srcptr = src;
+                subitemsize = new->elsize;
+                num = descr->elsize / subitemsize;
+                for (i=0; i<n; i++) {
+                        new->f->copyswapn(dstptr, subitemsize, srcptr,
+                                          subitemsize, num, swap, arr);
+                        dstptr += dstride;
+                        if (srcptr) srcptr += sstride;
+                }
+                arr->descr = descr;
+                return;
+        }
         if (src != NULL) {
-                memcpy(dst, src, itemsize * n);
+                memcpy(dst, src, arr->descr->elsize * n);
         }
         return;
 }
@@ -1346,6 +1366,20 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                                          (src != NULL ? src+offset : NULL), 
                                          swap, arr);
                 }
+                arr->descr = descr;
+                return;
+        }
+        if (swap && arr->descr->subarray != NULL) {
+                PyArray_Descr *descr, *new;
+                npy_intp num;                
+                int itemsize;
+                descr = arr->descr;
+                new = descr->subarray->base;
+                arr->descr = new;
+                itemsize = new->elsize;
+                num = descr->elsize / itemsize;
+                new->f->copyswapn(dst, itemsize, src,
+                                  itemsize, num, swap, arr);
                 arr->descr = descr;
                 return;
         }
