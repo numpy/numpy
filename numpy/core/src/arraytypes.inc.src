@@ -360,14 +360,19 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         return 0;
 }
 
-/* STRING -- can handle both NULL-terminated and not NULL-terminated cases */
+/* STRING -- can handle both NULL-terminated and not NULL-terminated cases 
+             will truncate all ending NULLs in returned string.
+*/    
 static PyObject *
 STRING_getitem(char *ip, PyArrayObject *ap)
 {
-        if (ip[ap->descr->elsize-1])
-                return PyString_FromStringAndSize(ip,ap->descr->elsize);
-        else
-                return PyString_FromString(ip);
+        /* Will eliminate NULLs at the end */
+        char *ptr;
+        int size = ap->descr->elsize;
+
+        ptr = ip + size-1;
+        while (*ptr-- == '\0') size--;
+        return PyString_FromStringAndSize(ip,size);
 }
 
 static int
