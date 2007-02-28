@@ -339,7 +339,7 @@ def searchsorted(a, v, side='left'):
         side -- {'left', 'right'}, default('left').
 
     Returns:
-        array of indices with the same shape as a.
+        array of indices with the same shape as v.
 
     The array to be searched must be 1-D and is assumed to be sorted in
     ascending order.
