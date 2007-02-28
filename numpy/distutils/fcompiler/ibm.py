@@ -8,8 +8,8 @@ from distutils import log
 class IbmFCompiler(FCompiler):
 
     compiler_type = 'ibm'
-    version_pattern =  r'xlf\(1\)\s*IBM XL Fortran (Advanced Edition |)Version (?P<version>[^\s*]*)'
-
+    version_pattern =  r'(xlf\(1\)\s*|)IBM XL Fortran ((Advanced Edition |)Version |Enterprise Edition V)(?P<version>[^\s*]*)'
+    #IBM XL Fortran Enterprise Edition V10.1 for AIX \nVersion: 10.01.0000.0004
     executables = {
         'version_cmd'  : ["xlf"],
         'compiler_f77' : ["xlf"],
@@ -22,6 +22,16 @@ class IbmFCompiler(FCompiler):
 
     def get_version(self,*args,**kwds):
         version = FCompiler.get_version(self,*args,**kwds)
+
+        if version is None:
+            # Let's try version_cmd with -qversion flag that V10 supports:
+            l = self.__class__.executables['version_cmd']
+            if '-qversion' not in l:
+                l.append('-qversion')
+                version = FCompiler.get_version(self,*args,**kwds)
+                if version is None:
+                    l.remove('-qversion')
+                
         xlf_dir = '/etc/opt/ibmcmp/xlf'
         if version is None and os.path.isdir(xlf_dir):
             # If the output of xlf does not contain version info
