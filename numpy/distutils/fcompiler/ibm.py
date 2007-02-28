@@ -11,7 +11,7 @@ class IbmFCompiler(FCompiler):
     version_pattern =  r'(xlf\(1\)\s*|)IBM XL Fortran ((Advanced Edition |)Version |Enterprise Edition V)(?P<version>[^\s*]*)'
     #IBM XL Fortran Enterprise Edition V10.1 for AIX \nVersion: 10.01.0000.0004
     executables = {
-        'version_cmd'  : ["xlf"],
+        'version_cmd'  : ["xlf","-qversion"],
         'compiler_f77' : ["xlf"],
         'compiler_fix' : ["xlf90", "-qfixed"],
         'compiler_f90' : ["xlf90"],
@@ -24,14 +24,16 @@ class IbmFCompiler(FCompiler):
         version = FCompiler.get_version(self,*args,**kwds)
 
         if version is None:
-            # Let's try version_cmd with -qversion flag that V10 supports:
-            l = self.__class__.executables['version_cmd']
-            if '-qversion' not in l:
-                l.append('-qversion')
+            # Let's try version_cmd without -qversion flag that
+            # xlf versions <=8.x don't have.
+            version_cmd =  self.version_cmd
+            orig_version_cmd = version_cmd[:]
+            if '-qversion' in version_cmd:
+                version_cmd.remove('-qversion')
                 version = FCompiler.get_version(self,*args,**kwds)
                 if version is None:
-                    l.remove('-qversion')
-                
+                    version_cmd[:] = orig_version_cmd
+
         xlf_dir = '/etc/opt/ibmcmp/xlf'
         if version is None and os.path.isdir(xlf_dir):
             # If the output of xlf does not contain version info
@@ -61,7 +63,10 @@ class IbmFCompiler(FCompiler):
         version = self.get_version(ok_status=[0,40])
         if version is not None:
             import tempfile
-            xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
+            if sys.platform.startswith('aix'):
+                xlf_cfg = '/etc/xlf.cfg'
+            else:
+                xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
             new_cfg = tempfile.mktemp()+'_xlf.cfg'
             log.info('Creating '+new_cfg)
             fi = open(xlf_cfg,'r')
