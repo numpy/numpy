@@ -8,7 +8,7 @@ what others have contributed.
 
 Simple changes and obvious improvements are always welcome.  Changes
 that fundamentally change behavior need discussion on 
-numpy-discussions@lists.sourceforge.net before anything is done.
+numpy-discussions@scipy.org before anything is done.
 
 Please add meaningful comments when you check changes in.  These comments
 form the basis of the change-log.

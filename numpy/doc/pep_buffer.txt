@@ -1,0 +1,307 @@
+PEP: <unassigned>
+Title: Revising the buffer protocol
+Version: $Revision: $
+Last-Modified: $Date:  $
+Author: Travis Oliphant <oliphant@ee.byu.edu>
+Status: Draft
+Type: Standards Track
+Created: 28-Aug-2006
+Python-Version: 3000
+
+Abstract
+
+   This PEP proposes re-designing the buffer API (PyBufferProcs
+   function pointers) to improve the way Python allows memory sharing
+   in Python 3.0
+
+   In particular, it is proposed that the multiple-segment and
+   character buffer portions of the buffer API are eliminated and
+   additional function pointers are provided to allow sharing any
+   multi-dimensional nature of the memory and what data-format the
+   memory contains.
+
+Rationale
+
+   The buffer protocol allows different Python types to exchange a
+   pointer to a sequence of internal buffers.  This functionality is
+   '''extremely''' useful for sharing large segments of memory between
+   different high-level objects, but it's too limited and has issues.
+
+    1. There is the little (never?) used "sequence-of-segments" option
+       (bf_getsegcount)
+
+    2. There is the apparently redundant character-buffer option
+       (bf_getcharbuffer)
+
+    3. There is no way for a consumer to tell the buffer-API-exporting
+       object it is "finished" with its view of the memory and
+       therefore no way for the exporting object to be sure that it is
+       safe to reallocate the pointer to the memory that it owns (the
+       array object reallocating its memory after sharing it with the
+       buffer object which held the original pointer led to the
+       infamous buffer-object problem).
+
+    4. Memory is just a pointer with a length. There is no way to
+       describe what's "in" the memory (float, int, C-structure, etc.)
+
+    5. There is no shape information provided for the memory.  But,
+       several array-like Python types could make use of a standard
+       way to describe the shape-interpretation of the memory
+       (!wxPython, GTK, pyQT, CVXOPT, !PyVox, Audio and Video
+       Libraries, ctypes, !NumPy, data-base interfaces, etc.)
+
+    There are two widely used libraries that use the concept of
+    discontiguous memory: PIL and NumPy.  Their view of discontiguous
+    arrays is a bit different, though.  NumPy uses the notion of
+    constant striding in each dimension as it's basic concept of an
+    array. In this way a simple sub-region of a larger array can be
+    described without copying the data.  Strided memory is a common
+    way to describe data to many computing libraries (such as the BLAS
+    and LAPACK).
+
+    The PIL uses a more opaque memory representation. Sometimes an
+    image is contained in a contiguous segment of memory, but
+    sometimes it is contained in an array of pointers to the
+    contiguous segments (usually lines) of the image.  This allows the
+    image to not be loaded entirely into memory.  The PIL is where the
+    idea of multiple buffer segments in the original buffer interface
+    came from, I believe.
+
+    The buffer interface should allow discontiguous memory areas to
+    share standard striding information.  However, consumers that do
+    not want to deal with strided memory should also be able to
+    request a contiguous segment easily.    
+
+
+Proposal Overview
+
+   * Eliminate the char-buffer and multiple-segment sections of the
+     buffer-protocol.
+
+   * Unify the read/write versions of getting the buffer.
+
+   * Add a new function to the protocol that should be called when
+     the consumer object is "done" with the view.
+
+   * Add a new function to allow the protocol to describe what is in
+     memory (unifying what is currently done now in struct and
+     array)
+
+   * Add a new function to allow the protocol to share shape
+     information
+
+   * Fix all objects in core and standard library to conform to the
+     new interface
+
+   * Extend the struct module to handle more format specifiers
+
+Specification
+
+    Change the PyBufferProcs structure to
+
+    typedef struct {
+         getbufferproc bf_getbuffer
+         releasebufferproc bf_releasebuffer
+         formatbufferproc bf_getbufferformat
+         shapebufferproc bf_getbuffershape 
+    }
+
+    typedef PyObject *(*getbufferproc)(PyObject *obj, void **buf,
+                                       Py_ssize_t *len, int requires)
+ 
+      Return a pointer to memory in buf and the length of that memory
+      buffer in buf.  Requirements for the memory are provided in
+      requires (PYBUFFER_WRITE, PYBUFFER_ONESEGMENT).  NULL is
+      returned and an error raised if the object cannot return a view
+      with those requirements.  Otherwise, an object-specific "view"
+      object is returned (which can just be a borrowed reference to
+      obj).
+
+      This view object should be used in the other API calls and 
+      does not need to be decref'd.  It should be "released" if the
+      interface exporter provides the bf_releasebuffer function.
+
+    typedef int (*releasebufferproc)(PyObject *view)
+
+      This function is called when a view of memory previously
+      acquired from the object is no longer needed.  It is up to the
+      exporter of the API to make sure all views have been released
+      before eliminating a reference to a previously returned pointer.
+      It is up to consumers of the API to call this function on the
+      object whose view is obtained when it is no longer needed.  A -1
+      is returned on error and 0 on success.
+
+    typedef char *(*formatbufferproc)(PyObject *view, int *itemsize)
+
+      Get the format-string of the memory using the struct-module
+      string syntax (see below for proposed additions to that syntax).
+      Also, there is never an alignment assumption in this
+      string---the full byte-layout is always required.  If the
+      implied size of this string is smaller than the length of the
+      buffer then it is assumed that the string is repeated.
+
+      If itemsize is not NULL, then return the size implied by the
+      format string.  This could be the entire length of the buffer or
+      just the length of each element.  It is equivalent to *itemsize
+      = PyObject_SizeFromFormat(ret) if ret is the returned string.
+      However, very often objects already know the itemsize without
+      having to compute it separately.
+
+    typedef PyObject *(*shapebufferproc)(PyObject *view)
+
+      Return a 2-tuple of lists containing shape information: (shape,
+      strides).  The strides object can be None if the memory is
+      C-style contiguous) otherwise it provides the striding in each 
+      dimension. 
+
+    All of these routines are optional for a type object (but the last
+    three make no sense unless the first one is implemented).
+
+
+New C-API calls are proposed
+
+   int 
+   PyObject_CheckBuffer(PyObject *obj)
+
+      return 1 if the getbuffer function is available otherwise 0
+
+   PyObject * 
+   PyObject_GetBuffer(PyObject *obj, void **buf, Py_ssize_t *len,
+                      int requires)
+
+      return a borrowed reference to a "view" object of memory for the
+      object.  Requirements for the memory should be given in requires
+      (PYBUFFER_WRITE, PYBUFFER_ONESEGMENT).  The memory pointer is in
+      *buf and its length in *len. 
+
+      Note, the memory is not considered a single segment of memory 
+      unless PYBUFFER_ONESEGMENT is used in requires. Get possible
+      striding using PyObject_GetBufferShape on the view object. 
+      
+   int
+   PyObject_ReleaseBuffer(PyObject *view)
+      
+      call this function to tell obj that you are done with your "view"
+      This is a no-op if the object doesn't implement a release function.
+      Only call this after a previous PyObject_GetBuffer has succeeded. 
+      Return -1 on error. 
+      
+   char *
+   PyObject_GetBufferFormat(PyObject *view, int *itemsize)
+
+      Return a NULL-terminated string indicating the data-format of
+      the memory buffer.  The string is in struct-module syntax with
+      the exception that there is never an alignment assumption (all
+      bytes must be accounted for). If the length of the buffer
+      indicated by this string is smaller than the total length of the
+      buffer, then a repeat of the string is implied to fill the
+      length of the buffer.
+
+      If itemsize is not NULL, then return the implied size
+      of each item (this could be calculated from the format string
+      but it is often known by the view object anyway). 
+
+   PyObject *
+   PyObject_GetBufferShape(PyObject *view)
+
+      Return a 2-tuple of lists (shape, stride) providing the
+      multi-dimensional shape of the memory area.  The stride
+      shows how many bytes to skip in each dimension to move
+      in that dimension from the start of the array. 
+
+      Memory that is not a single contiguous-buffer can be represented
+      with the pointer returned from GetBuffer and the shape and
+      strides returned from GetBufferShape.
+
+   int PyObject_SizeFromFormat(char *)
+      Return the implied size of the data-format area from a struct-style
+      description.
+
+Additions to the struct string-syntax
+
+   The struct string-syntax is missing some characters to fully
+   implement data-format descriptions already available elsewhere (in
+   ctypes and NumPy for example).  Here are the proposed additions:
+
+   Character         Description
+   ==================================
+   '1'               bit (number before states how many bits)
+   '?'               platform _Bool type 
+   'g'               long double  
+   'F'               complex float  
+   'D'               complex double 
+   'G'               complex long double 
+   'c'               ucs-1 (latin-1) encoding 
+   'u'               ucs-2 
+   'w'               ucs-4 
+   'O'               pointer to Python Object 
+   'T{}'             structure (detailed layout inside {}) 
+   '(k1,k2,...,kn)'  multi-dimensional array of whatever follows 
+   ':name:'          optional name of the preceeding element 
+   '&'               specific pointer (prefix before another charater) 
+   'X{}'             pointer to a function (optional function 
+                                             signature inside {})
+
+   The struct module will be changed to understand these as well and
+   return appropriate Python objects on unpacking.  Un-packing a
+   long-double will return a c-types long_double.  Unpacking 'u' or
+   'w' will return Python unicode.  Unpacking a multi-dimensional
+   array will return a list of lists.  Un-packing a pointer will
+   return a ctypes pointer object.  Un-packing a bit will return a
+   Python Bool.
+
+   Endian-specification ('=','>','<') is also allowed inside the
+   string so that it can change if needed.  The previously-specified
+   endian string is enforce at all times.  The default endian is '='.
+
+   According to the struct-module, a number can preceed a character
+   code to specify how many of that type there are.  The
+   (k1,k2,...,kn) extension also allows specifying if the data is
+   supposed to be viewed as a (C-style contiguous, last-dimension
+   varies the fastest) multi-dimensional array of a particular format.
+
+   Functions should be added to ctypes to create a ctypes object from
+   a struct description, and add long-double, and ucs-2 to ctypes.
+
+Code to be affected
+
+   All objects and modules in Python that export or consume the old
+   buffer interface will be modified.  Here is a partial list.
+     
+   * buffer object
+   * bytes object
+   * string object
+   * array module
+   * struct module
+   * mmap module
+   * ctypes module
+
+   anything else using the buffer API
+
+Issues and Details
+
+   The proposed locking mechanism relies entirely on the objects
+   implementing the buffer interface to do their own thing.  Ideally
+   an object that implements the buffer interface should keep at least
+   a number indicating how many releases are extant.
+
+   The handling of discontiguous memory is new and can be seen as a
+   modification of the multiple-segment interface.  It is motivated by
+   NumPy (used to be Numeric).  NumPy objects should be able to share
+   their strided memory with code that understands how to manage
+   strided memory.
+
+   Code should also be able to request contiguous memory if needed and
+   objects exporting the buffer interface should be able to handle
+   that either by raising an error (or constructing a read-only
+   contiguous object and returning that as the view).
+
+   Currently the struct module does not allow specification of nested
+   structures.  It seems like specifying a nested structure should be
+   specified as several ways of viewing memory areas (ctypes and
+   NumPy) already allow this.
+
+Copyright
+
+   This PEP is placed in the public domain
+
