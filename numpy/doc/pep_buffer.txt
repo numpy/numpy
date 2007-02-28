@@ -225,12 +225,10 @@ Additions to the struct string-syntax
 
    Character         Description
    =============================================================
-   '1'               bit (number before states how many bits)
-   't'               platform _Bool type if available
+   't'               bit (number before states how many bits)
+   '?'               platform _Bool type
    'g'               long double  
-   'F'               complex float  
-   'D'               complex double 
-   'G'               complex long double 
+   'Z'               complex (whatever the next specifier is)
    'c'               ucs-1 (latin-1) encoding 
    'u'               ucs-2 
    'w'               ucs-4 
@@ -271,7 +269,7 @@ Examples of Data-Format Descriptions
    float                     
       'f'
    complex double
-      'F' or 'ff'
+      'zd'
    RGB Pixel data
       'BBB' or 'B:r: B:g: B:b:'
    Mixed endian (weird but possible)
