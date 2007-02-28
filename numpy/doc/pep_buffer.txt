@@ -269,7 +269,7 @@ Examples of Data-Format Descriptions
    float                     
       'f'
    complex double
-      'zd'
+      'Zd'
    RGB Pixel data
       'BBB' or 'B:r: B:g: B:b:'
    Mixed endian (weird but possible)
