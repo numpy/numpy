@@ -3,6 +3,7 @@ import re
 import sys
 
 from numpy.distutils.fcompiler import FCompiler
+from numpy.distutils.exec_command import exec_command, find_executable
 from distutils import log
 
 class IbmFCompiler(FCompiler):
@@ -23,19 +24,18 @@ class IbmFCompiler(FCompiler):
     def get_version(self,*args,**kwds):
         version = FCompiler.get_version(self,*args,**kwds)
 
-        if version is None:
-            # Let's try version_cmd without -qversion flag that
-            # xlf versions <=8.x don't have.
-            version_cmd =  self.version_cmd
-            orig_version_cmd = version_cmd[:]
-            if '-qversion' in version_cmd:
-                version_cmd.remove('-qversion')
-                version = FCompiler.get_version(self,*args,**kwds)
-                if version is None:
-                    version_cmd[:] = orig_version_cmd
+        if version is None and sys.platform.startswith('aix'):
+            # use lslpp to find out xlf version
+            lslpp = find_executable('lslpp')
+            xlf = find_executable('xlf')
+            if os.path.exists(xlf) and os.path.exists(lslpp):
+                s,o = exec_command(lslpp + ' -Lc xlfcmp')
+                m = re.search('xlfcmp:(?P<version>\d+([.]\d+)+)', o)
+                if m: version = m.group('version')
 
         xlf_dir = '/etc/opt/ibmcmp/xlf'
         if version is None and os.path.isdir(xlf_dir):
+            # linux:
             # If the output of xlf does not contain version info
             # (that's the case with xlf 8.1, for instance) then
             # let's try another method:
