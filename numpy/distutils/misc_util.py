@@ -1304,7 +1304,7 @@ class Configuration(object):
 
         return version
 
-    def make_svn_version_py(self):
+    def make_svn_version_py(self, delete=True):
         """ Generate package __svn_version__.py file from SVN revision number,
         it will be removed after python exits but will be available
         when sdist, etc commands are executed.
@@ -1326,10 +1326,12 @@ class Configuration(object):
 
             import atexit
             def rm_file(f=target,p=self.info):
-                try: os.remove(f); p('removed '+f)
-                except OSError: pass
-                try: os.remove(f+'c'); p('removed '+f+'c')
-                except OSError: pass
+                if delete:
+                    try: os.remove(f); p('removed '+f)
+                    except OSError: pass
+                    try: os.remove(f+'c'); p('removed '+f+'c')
+                    except OSError: pass
+
             atexit.register(rm_file)
 
             return target
