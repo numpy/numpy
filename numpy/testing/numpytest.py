@@ -398,7 +398,7 @@ class NumpyTest:
         mstr = self._module_str
         suite_list = []
         if hasattr(test_module,'test_suite'):
-            suite_list.extend(test_module.test_suite._tests)
+            suite_list.extend(test_module.test_suite(level)._tests)
         for name in dir(test_module):
             obj = getattr(test_module, name)
             if type(obj) is not type(unittest.TestCase) \
