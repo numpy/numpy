@@ -520,7 +520,7 @@ lapack_lite_dgeqrf(PyObject *self, PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"llOlOOll",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
+        TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
         /* check objects and convert to right storage order */
         TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dgeqrf"));
@@ -531,7 +531,7 @@ lapack_lite_dgeqrf(PyObject *self, PyObject *args)
                 FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
                               DDATA(work), &lwork, &info);
 
-        return Py_BuildValue("{s:l,s:l,s:l,s:l,s:l,s:l}","dgeqrf_",
+        return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","dgeqrf_",
                              lapack_lite_status__,"m",m,"n",n,"lda",lda,
                              "lwork",lwork,"info",info);
 }
@@ -546,14 +546,14 @@ lapack_lite_dorgqr(PyObject *self, PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"lllOlOOll",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
+        TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
         TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dorgqr"));
         TRY(check_object(tau,PyArray_DOUBLE,"tau","PyArray_DOUBLE","dorgqr"));
         TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dorgqr"));
         lapack_lite_status__ = \
         FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work), &lwork, &info);
 
-        return Py_BuildValue("{s:l,s:l}","dorgqr_",lapack_lite_status__,
+        return Py_BuildValue("{s:i,s:i}","dorgqr_",lapack_lite_status__,
                              "info",info);
 }
 
@@ -778,7 +778,7 @@ lapack_lite_zungqr(PyObject *self, PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"lllOlOOll",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
+        TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
         TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zungqr"));
         TRY(check_object(tau,PyArray_CDOUBLE,"tau","PyArray_CDOUBLE","zungqr"));
         TRY(check_object(work,PyArray_CDOUBLE,"work","PyArray_CDOUBLE","zungqr"));
@@ -788,7 +788,7 @@ lapack_lite_zungqr(PyObject *self, PyObject *args)
         FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
                       &lwork, &info);
 
-        return Py_BuildValue("{s:l,s:l}","zungqr_",lapack_lite_status__,
+        return Py_BuildValue("{s:i,s:i}","zungqr_",lapack_lite_status__,
                              "info",info);
 }
 
