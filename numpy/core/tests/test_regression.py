@@ -608,7 +608,7 @@ class test_regression(NumpyTestCase):
         todivide = N.array([2.0, 0.5, 0.25])
         assert_equal(N.subtract.reduce(tosubtract), -10)
         assert_equal(N.divide.reduce(todivide), 16.0)
-        assert_array_equal(N.subtract.accumulate(tosubtract), 
+        assert_array_equal(N.subtract.accumulate(tosubtract),
             N.array([0, -1, -3, -6, -10]))
         assert_array_equal(N.divide.accumulate(todivide),
             N.array([2., 4., 16.]))
@@ -621,6 +621,12 @@ class test_regression(NumpyTestCase):
         """Convolve should raise an error for empty input array."""
         self.failUnlessRaises(AssertionError,N.convolve,[],[1])
         self.failUnlessRaises(AssertionError,N.convolve,[1],[])
+
+    def check_multidim_byteswap(self, level=rlevel):
+        """Ticket #449"""
+        r=N.array([(1,(0,1,2))], dtype="i2,3i2")
+        assert_array_equal(r.byteswap(),
+                           N.array([(256,(0,256,512))],r.dtype))
 
     def check_string_NULL(self, level=rlevel):
         """Changeset 3557"""
