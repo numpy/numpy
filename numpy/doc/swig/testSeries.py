@@ -711,6 +711,8 @@ if __name__ == "__main__":
     suite.addTest(unittest.makeSuite(SeriesTestCase))
 
     # Execute the test suite
-    print "Testing Module Series\n"
+    print "Testing Module Series"
+    print "NumPy version", N.__version__
+    print
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(len(result.errors) + len(result.failures))

@@ -72,7 +72,7 @@ ToDo
 ----
 
   * Support for complex data types should be added.  Currently swig
-    dies with a syntax error when the %numpy_typemaps macro isused
+    dies with a syntax error when the %numpy_typemaps macro is used
     with complex types.
 
   * Better ARGOUT typemaps need to be implemented and tested.  I

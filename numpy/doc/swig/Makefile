@@ -13,7 +13,7 @@ WEB_PAGES = numpy_swig.html
 # List all of the subdirectories here for recursive make
 SUBDIRS = 
 
-all: $(WRAPPERS) series.cxx series.h
+all: $(WRAPPERS) series.cxx series.h html
 	./setup.py build
 
 %_wrap.cxx: %.i numpy.i series.h
