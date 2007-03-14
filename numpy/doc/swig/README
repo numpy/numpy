@@ -58,8 +58,10 @@ The setup.py script is a standard python distutils script.  It defines
 a _Series extension module and a Series python module.  The Makefile
 automates everything, setting up the dependencies, calling swig to
 generate the wrappers, and calling setup.py to compile the wrapper
-code and generate the shared object.  Targets "all" (default),
-"clean" and "html" (generate HTML documentation) are supported.
+code and generate the shared object.  Targets "all" (default), "doc"
+and "clean" are supported.  The "doc" target creates HTML
+documentation (with make target "html"), and PDF documentation (with
+make targets "tex" and "pdf").
 
 To build and test the code, simply execute from the shell::
 
