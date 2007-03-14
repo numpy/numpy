@@ -1,4 +1,4 @@
-Notes for the swig_numpy/new directory
+Notes for the numpy/doc/swig directory
 ======================================
 
 This set of files is for developing and testing file numpy.i, which is
@@ -21,8 +21,12 @@ consists of functions with argument signatures of the form::
 
     (type* IN_ARRAY1, int DIM1)
     (type* IN_ARRAY2, int DIM1, int DIM2)
+    (int DIM1, type* IN_ARRAY1)``
+    (int DIM1, int DIM2, type* IN_ARRAY2)``
     (type* INPLACE_ARRAY1, int DIM1)
     (type* INPLACE_ARRAY2, int DIM1, int DIM2)
+    (int DIM1, type* INPLACE_ARRAY1)
+    (int DIM1, int DIM2, type* INPLACE_ARRAY2)
 
 which take a pointer to an array of type "type", whose length is
 specified by the integer(s) DIM1 (and DIM2).
@@ -30,10 +34,10 @@ specified by the integer(s) DIM1 (and DIM2).
 The objective for the IN_ARRAY signatures is for SWIG to generate
 python wrappers that take a container that constitutes a valid
 argument to the numpy array constructor, and can be used to build an
-array of type "type".  Currently, types "char", "unsigned char",
-"signed char", "short", "int", "long", "float", "double" and
-"PyObject" are supported, although only the types "short", "int",
-"long", "float" and "double" are tested.
+array of type "type".  Currently, types "signed char", "unsigned
+char", "short", "unsigned short", "int", "unsigned int", "long",
+"unsigned long", "long long", "unsigned long long", "float", "double",
+"PyObject" and "char" are supported and tested.
 
 The objective for the INPLACE_ARRAY signatures is for SWIG to generate
 python wrappers that accept a numpy array of any of the above-listed

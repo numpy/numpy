@@ -304,6 +304,10 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *     (TYPE* ARGOUT_ARRAY1[ANY])
  *     (TYPE* ARGOUT_ARRAY2[ANY][ANY])
  *
+ *     (int DIM1, TYPE* IN_ARRAY1)
+ *     (int DIM1, int DIM2, TYPE* IN_ARRAY2)
+ *     (int DIM1, TYPE* INPLACE_ARRAY1)
+ *
  * where "TYPE" is any type supported by the NumPy module.  In python,
  * the dimensions will not need to be specified.  The IN_ARRAYs can be
  * a numpy array or any sequence that can be converted to a numpy
@@ -314,32 +318,45 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  * These typemaps can be applied to existing functions using the
  * %apply directive:
  *
- *     %apply (double* IN_ARRAY1, int DIM1) {double* series, int length};
- *     double sum(double* series, int length);
+ *     %apply (double* IN_ARRAY1, int DIM1) {(double* series, int length)};
+ *     double prod(double* series, int length);
  *
- *     %apply (double* IN_ARRAY2, int DIM1, int DIM2) {double* mx, int rows, int cols};
+ *     %apply (double* IN_ARRAY2, int DIM1, int DIM2) {(double* mx, int rows, int cols)};
  *     double max(double* mx, int rows, int cols);
  *
- *     %apply (double* INPLACE_ARRAY1, int DIM1) {double* series, int length};
+ *     %apply (double* INPLACE_ARRAY1, int DIM1) {(double* series, int length)};
+ *     void ones(double* series, int length);
+ *
+ *     %apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* mx, int rows, int cols)};
+ *     void floor(double* mx, int rows, int cols);
+ *
+ *     %apply (double* ARGOUT_ARRAY1[ANY] {(double series, int length)};
  *     void negate(double* series, int length);
  *
- *     %apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {double* mx, int rows, int cols};
+ *     %apply (double* ARGOUT_ARRAY2[ANY][ANY]) {(double* mx, int rows, int cols)};
  *     void normalize(double* mx, int rows, int cols);
  *
- *     %apply (double* ARGOUT_ARRAY1[ANY] {double series, int length};
- *     void negate(double* series, int length);
+ *     %apply (int DIM1, double* IN_ARRAY1) {(int length, double* series)}
+ *     double sum(int length, double* series)
  *
- *     %apply (double* ARGOUT_ARRAY2[ANY][ANY]) {double* mx, int rows, int cols};
- *     void normalize(double* mx, int rows, int cols);
+ *     %apply (int DIM1, int DIM2, double* IN_ARRAY2) {(int rows, int cols, double* matrix)}
+ *     double min(int length, double* series)
+ *
+ *     %apply (int DIM1, double* INPLACE_ARRAY1) {(int length, double* series)}
+ *     double zeros(int length, double* series)
  *
  * or directly with
  *
- *     double sum(double* IN_ARRAY1, int DIM1);
+ *     double prod(double* IN_ARRAY1, int DIM1);
  *     double max(double* IN_ARRAY2, int DIM1, int DIM2);
- *     void sum(double* INPLACE_ARRAY1, int DIM1);
- *     void sum(double* INPLACE_ARRAY2, int DIM1, int DIM2);
- *     void sum(double* ARGOUT_ARRAY1[ANY]);
- *     void sum(double* ARGOUT_ARRAY2[ANY][ANY]);
+ *     void ones(double* INPLACE_ARRAY1, int DIM1);
+ *     void floor(double* INPLACE_ARRAY2, int DIM1, int DIM2);
+ *     void negate(double* ARGOUT_ARRAY1[ANY]);
+ *     void normalize(double* ARGOUT_ARRAY2[ANY][ANY]);
+ *
+ *     double sum(int DIM1, double* IN_ARRAY1)
+ *     double min(int DIM1, int DIM2, double* IN_ARRAY2)
+ *     void zeros(int DIM1, double* INPLACE_ARRAY1)
  */
 
 %define %numpy_typemaps(TYPE, TYPECODE)
@@ -439,6 +456,55 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
     obj = Py_Build_Value("(O)", outArray);
     $result = PySequence_Concat($result, obj);
   }
+}
+
+/* Typemap suite for (int DIM1, TYPE* IN_ARRAY1)
+ */
+%typemap(in) (int DIM1, TYPE* IN_ARRAY1)
+             (PyArrayObject* array=NULL, int is_new_object=0) {
+  array = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new_object);
+  npy_intp size[1] = {-1};
+  if (!array || !require_dimensions(array, 1) || !require_size(array, size, 1)) SWIG_fail;
+  $1 = (int) array->dimensions[0];
+  $2 = (TYPE*) array->data;
+}
+%typemap(freearg) (int DIM1, TYPE* IN_ARRAY1) {
+  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+}
+
+/* Typemap suite for (int DIM1, int DIM2, TYPE* IN_ARRAY2)
+ */
+%typemap(in) (int DIM1, int DIM2, TYPE* IN_ARRAY2)
+             (PyArrayObject* array=NULL, int is_new_object=0) {
+  array = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new_object);
+  npy_intp size[2] = {-1,-1};
+  if (!array || !require_dimensions(array, 2) || !require_size(array, size, 1)) SWIG_fail;
+  $1 = (int) array->dimensions[0];
+  $2 = (int) array->dimensions[1];
+  $3 = (TYPE*) array->data;
+}
+%typemap(freearg) (int DIM1, int DIM2, TYPE* IN_ARRAY2) {
+  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+}
+
+/* Typemap suite for (int DIM1, TYPE* INPLACE_ARRAY1)
+ */
+%typemap(in) (int DIM1, TYPE* INPLACE_ARRAY1) (PyArrayObject* temp=NULL) {
+  temp = obj_to_array_no_conversion($input, TYPECODE);
+  if (!temp  || !require_contiguous(temp)) SWIG_fail;
+  $1 = 1;
+  for (int i=0; i<temp->nd; ++i) $1 *= temp->dimensions[i];
+  $2 = (TYPE*) temp->data;
+}
+
+/* Typemap suite for (int DIM1, int DIM2, TYPE* INPLACE_ARRAY2)
+ */
+%typemap(in) (int DIM1, int DIM2, TYPE* INPLACE_ARRAY2) (PyArrayObject* temp=NULL) {
+  temp = obj_to_array_no_conversion($input, TYPECODE);
+  if (!temp || !require_contiguous(temp)) SWIG_fail;
+  $1 = (int) temp->dimensions[0];
+  $2 = (int) temp->dimensions[1];
+  $3 = (TYPE*) temp->data;
 }
 
 %enddef    /* %numpy_typemaps() macro */
