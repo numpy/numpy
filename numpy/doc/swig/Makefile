@@ -5,16 +5,28 @@ PROXIES    = $(INTERFACES:.i=.py      )
 
 # ReStructured Text
 RST2HTML = rst2html.py
-RFLAGS = --generator --time --no-xml-declaration
+RST2LATEX = rst2latex.py
+RFLAGS = --generator --time
+HTML_FLAGS = --no-xml-declaration
+LATEX_FLAGS =
+LATEX = pdflatex
 
 # Web pages that need to be made
 WEB_PAGES = numpy_swig.html
 
+# LaTeX files that need to be made
+LATEX_FILES = numpy_swig.tex
+
+# PDF files that need to be made
+PDF_FILES = numpy_swig.pdf
+
 # List all of the subdirectories here for recursive make
 SUBDIRS = 
 
-all: $(WRAPPERS) series.cxx series.h html
+all: $(WRAPPERS) series.cxx series.h
 	./setup.py build
+
+doc: html pdf
 
 %_wrap.cxx: %.i numpy.i series.h
 	swig -c++ -python $<
@@ -22,11 +34,24 @@ all: $(WRAPPERS) series.cxx series.h html
 html: $(WEB_PAGES)
 
 %.html: %.txt
-	$(RST2HTML) $(RFLAGS) $< $@
+	$(RST2HTML) $(RFLAGS) $(HTML_FLAGS) $< $@
+
+tex: $(LATEX_FILES)
+
+%.tex: %.txt
+	$(RST2LATEX) $(RFLAGS) $(LATEX_FLAGS) $< $@
+
+pdf: $(PDF_FILES)
+
+%.pdf: %.tex
+	$(LATEX) $<
+	$(LATEX) $<
 
 clean:
 	$(RM) -r build
 	$(RM) $(WRAPPERS)
 	$(RM) $(PROXIES)
+	$(RM) $(LATEX_FILES)
+	$(RM) *.aux *.dvi *.log *.out *~
 
-.PHONY : html clean
+.PHONY : alll doc html tex pdf clean
