@@ -1,0 +1,319 @@
+========================================
+numpy.i: a SWIG Interface File for NumPy
+========================================
+
+:Author:      Bill Spotz
+:Institution: Sandia National Laboratories
+:Date:        10 March, 2007
+
+Introduction
+============
+
+The Simple Wrapper and Interface Generator (or `SWIG
+<http://www.swig.org>`_) is a powerful tool for generating wrapper
+code for interfacing to a wide variety of scripting languages.
+`SWIG`_ can parse header files, and using only the code prototypes,
+create an interface to the target language.  But `SWIG`_ is not
+omnipotent.  For example, it cannot know from the prototype::
+
+    double rms(double* seq, int n);
+
+what exactly ``seq`` is.  Is it a single value to be altered in-place?
+Is it an array, and if so what is its length?  Is it input-only?
+Output-only?  Input-output?  `SWIG`_ cannot determine these details,
+and does not attempt to do so.
+
+Making an educated guess, humans can conclude that this is probably a
+routine that takes an input-only array of length ``n`` of ``double``
+values called ``seq`` and returns the root mean square.  The default
+behavior of `SWIG`_, however, will be to create a wrapper function
+that compiles, but is nearly impossible to use from the scripting
+language in the way the C routine was intended.
+
+For `python <http://www.python.org>`_, the preferred way of handling
+contiguous (or technically, *strided*) blocks of homogeneous data is
+with the module `NumPy <http://numpy.scipy.org>`_, which provides full
+object-oriented access to arrays of data.  Therefore, the most logical
+python interface for the ``rms`` function would be::
+
+    def rms(seq):
+
+where ``seq`` would be a `NumPy`_ array of ``double`` values, and its
+length ``n`` would be extracted from ``seq`` internally before being
+passed to the C routine.  Even better, since `NumPy`_ supports
+construction of arrays from arbitrary `python`_ sequences, ``seq``
+itself could be a nearly arbitrary sequence (so long as each element
+can be converted to a ``double``) and the wrapper code would
+internally convert it to a `NumPy`_ array before extracting its data
+and length.
+
+`SWIG`_ allows these types of conversions to be defined via a
+mechanism called typemaps.  This document provides information on how
+to use ``numpy.i``, a `SWIG`_ interface file that defines a series of
+typemaps intended to make the type of array-related conversions
+described above relatively simple to implement.  For example, suppose
+that the ``rms`` function prototype defined above was in a header file
+named ``rms.h``.  To obtain the python interface discussed above, your
+`SWIG`_ interface file would need the following::
+
+    %{
+    #include "rms.h"
+    %}
+    %include "numpy.i"
+    %apply (double* IN_ARRAY1, int DIM1) {(double* seq, int n)};
+    %include "rms.h"
+
+Typemaps are keyed off a list of one or more function arguments,
+either by type or by type and name.  We will refer to such lists as
+*signatures*.  One of the many typemaps defined by ``numpy.i`` is used
+above and has the signature ``(double* IN_ARRAY1, int DIM1)``.  The
+argument names are intended to suggest that the ``double*`` argument
+is an input array of one dimension and that the ``int`` represents
+that dimension.  This is precisely the pattern in the ``rms``
+prototype.
+
+Hopefully, no actual prototypes to be wrapped will have the names
+``IN_ARRAY1`` and ``DIM1``.  We use the ``%apply`` directive to apply
+the typemap for one-dimensional input arrays of type ``double`` to the
+actual prototype used by ``rms``.  Using ``numpy.i`` effectively,
+therefore, requires knowing what typemaps are available and what they
+do.
+
+Using numpy.i
+=============
+
+The ``numpy.i`` file is currently located in the ``numpy/docs/swig``
+sub-directory under the ``numpy`` installation directory.  Typically,
+you will want to copy it to the directory where you are developing
+your wrappers.
+
+A simple module that only uses a single `SWIG`_ interface file should
+include the following::
+
+    %{
+    #define SWIG_FILE_WITH_INIT
+    %}
+    %include "numpy.i"
+    %init %{
+    import_array();
+    %}
+
+Only one interface file should call ``import_array()``.  If you have
+more than one `SWIG`_ interface file, then subsequent files should not
+``#define SWIG_FILE_WITH_INIT`` and should not call
+``import_array()``.
+
+Available Typemaps
+==================
+
+The typemap directives provided by ``numpy.i`` for arrays of different
+data types, say ``double`` and ``int``, are identical to one another
+except for the C and `NumPy`_ type specifications.  The typemaps are
+therefore implemented via a macro::
+
+    %numpy_typemaps(TYPE, TYPECODE)
+
+that can be invoked for appropriate ``(TYPE, TYPECODE)`` pairs.  For
+example::
+
+    %numpy_typemaps(double, NPY_DOUBLE)
+    %numpy_typemaps(int,    NPY_INT   )
+
+The ``numpy.i`` interface file uses the ``%numpy_typemaps`` macro to
+implement typemaps for the following C-types:
+
+  * ``signed char``
+  * ``unsigned char``
+  * ``short``
+  * ``unsigned short``
+  * ``int``
+  * ``unsigned int``
+  * ``long``
+  * ``unsigned long``
+  * ``long long``
+  * ``unsigned long long``
+  * ``float``
+  * ``double``
+  * ``PyObject``
+  * ``char``
+
+Note that C++ type ``bool`` is not supported in the list above.  NumPy
+bools are a single byte, while the C++ ``bool`` is four bytes (at
+least on my system).  Therefore::
+
+    %numpy_typemaps(bool, NPY_BOOL)
+
+will result in typemaps that will produce code that reference
+improper data lengths.  You can implement the following macro
+expansion::
+
+    %numpy_typemaps(bool, NPY_UINT)
+
+to fix the data length problem, and `Input Arrays`_ will work fine,
+but `In-place Arrays`_ will fail type-checking.
+
+In the following descriptions, we reference a generic ``TYPE``, which
+could be any of the C-types listed above.
+
+Input Arrays
+------------
+
+Input arrays are defined as arrays of data that are passed into a
+routine but are not altered in-place or returned to the user.  The
+python input array is therefore allowed to be almost any python
+sequence (such as a list) that can be converted to the requested type
+of array.  The input array signatures are
+
+  * ``(TYPE* IN_ARRAY1, int DIM1)``
+  * ``(TYPE* IN_ARRAY2, int DIM1, int DIM2)``
+
+In-place Arrays
+---------------
+
+In-place arrays are defined as arrays that are modified in-place.  The
+input values may or may not be used, but the values at the time the
+function returns are significant.  The provided python argument must
+therefore be a `NumPy`_ array of the required type.  The in-place
+signatures are
+
+  * ``(TYPE* INPLACE_ARRAY1, int DIM1)``
+  * ``(TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)``
+
+Argout Arrays
+-------------
+
+Argout arrays are arrays that appear in the input arguments in C, but
+are in fact output arrays.  This pattern occurs often when there is
+more than one output variable and the single return argument is
+therefore not sufficient.  In python, the convential way to return
+multiple arguments is to pack them into a tuple and return the tuple.
+This is what the argout typemaps do.  If a wrapped function that uses
+argout these argout typemaps has more than one return argument, they
+are so packed.  The python user does not pass these arrays in, they
+simply get returned.  The argout signatures are
+
+  * ``(TYPE ARGOUT_ARRAY1[ANY])``
+  * ``(TYPE ARGOUT_ARRAY2[ANY][ANY])``
+
+Helper Functions
+================
+
+The ``numpy.i`` file containes several macros and routines that it
+uses internally to build its typemaps.  However, these functions may
+be useful elsewhere in your interface file.
+
+Macros
+------
+
+  **is_array(a)**
+    Evaluates as true if ``a`` is non-``NULL`` and can be cast to a
+    ``PyArrayObject*``.
+
+  **array_type(a)**
+    Evaluates to the integer data type code of ``a``, assuming ``a`` can
+    be cast to a ``PyArrayObject*``.
+
+  **array_dimensions(a)**
+    Evaluates to the integer number of dimensions of ``a``, assuming
+    ``a`` can be cast to a ``PyArrayObject*``.
+
+  **array_size(a,i)**
+    Evaluates to the ``i``-th dimension size of ``a``, assuming ``a``
+    can be cast to a ``PyArrayObject*``.
+
+  **array_is_contiguous(a)**
+    Evaluates as true if ``a`` is a contiguous array.  Equivalent to
+    ``(PyArray_ISCONTIGUOUS(a))``.
+
+Routines
+--------
+
+  **char* pytype_string(PyObject* py_obj)**
+    Given a ``PyObject*``, return a string describing its type.
+
+
+  **char* typecode_string(int typecode)**
+    Given a `NumPy`_ integer typecode, return a string describing the type.
+
+
+  **int type_match(int actual_type, int desired_type)**
+    Make sure input has correct `NumPy`_ type.  Allow character and
+    byte to match.  Also allow int and long to match.
+
+
+  **PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode)**
+    Given a ``PyObject*``, cast it to a ``PyArrayObject*`` if legal.
+    If not, set the python error string appropriately and return
+    ``NULL``.
+
+
+  **PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode, int* is_new_object)**
+    Convert the given ``PyObject*`` to a `NumPy`_ array with the given
+    typecode.  On Success, return a valid ``PyArrayObject*`` with the
+    correct type.  On failure, the python error string will be set and
+    the routine returns ``NULL``.
+
+
+  **PyArrayObject* make_contiguous(PyArrayObject* ary, int* is_new_object, int min_dims, int max_dims)**
+    Given a ``PyArrayObject*``, check to see if it is contiguous.  If
+    so, return the input pointer and flag it as not a new object.  If
+    it is not contiguous, create a new ``PyArrayObject*`` using the
+    original data, flag it as a new object and return the pointer.
+
+
+  **PyArrayObject* obj_to_array_contiguous_allow_conversion(PyObject* input, int typecode, int* is_new_object)**
+    Convert a given ``PyObject*`` to a contiguous ``PyArrayObject*``
+    of the specified type.  If the input object is not a contiguous
+    ``PyArrayObject*``, a new one will be created and the new object
+    flag will be set.
+
+
+  **int require_contiguous(PyArrayObject* ary)**
+    Test whether a ``PyArrayObject*`` is contiguous.  If array is
+    contiguous, return 1.  Otherwise, set the python error string and
+    return 0.
+
+
+  **int require_dimensions(PyArrayObject* ary, int exact_dimensions)**
+    Require the given ``PyArrayObject*`` to have a specified number of
+    dimensions.  If the array has the specified number of dimensions,
+    return 1.  Otherwise, set the python error string and return 0.
+
+
+  **int require_dimensions_n(PyArrayObject* ary, int* exact_dimensions, int n)**
+    Require the given ``PyArrayObject*`` to have one of a list of
+    specified number of dimensions.  If the array has one of the
+    specified number of dimensions, return 1.  Otherwise, set the
+    python error string and return 0.
+
+
+  **int require_size(PyArrayObject* ary, int* size, int n)**
+    Require the given ``PyArrayObject*`` to have a specified shape.
+    If the array has the specified shape, return 1.  Otherwise, set
+    the python error string and return 0.
+
+
+  **static PyArrayObject *contiguous_typed_array(PyObject *obj, int typecode, int expectnd, int *expectdims)**
+    This function tries to create a contiguous `NumPy`_ array of type
+    typecode from an arbitrary python object ``obj``.  This should
+    work for any sequence object.  The argument ``expectnd`` is the
+    expected number of dimensions, ignored if <= 0.  The argument
+    ``expectdims`` is an array of expected dimensions, ignored if <=
+    0.  This routine raises a ``ValueError`` exception if the
+    underlying ``PyArray_ContiguousFromObject`` routine fails, if the
+    array has a bad shape, if the extent of a given dimension doesn't
+    match the specified extent.  If ``obj`` is a contiguous
+    ``PyArrayObject*`` then a reference is returned; if ``obj`` is a
+    python sequence, then a new ``PyArrayObject*`` is created and
+    returned.
+
+Acknowledgements
+================
+
+Many people have worked to glue `SWIG`_ and `NumPy`_ (and its
+predecessors Numeric and numarray) together.  The effort to
+standardize this work into ``numpy.i`` began at the 2005 SciPy
+Conference with a conversation between Fernando Perez and myself.
+Fernando collected helper functions and typemaps from Michael Hunter,
+Anna Omelchenko and Michael Sanner.  Their work has made this end
+result possible.

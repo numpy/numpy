@@ -1,0 +1,604 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.4: http://docutils.sourceforge.net/" />
+<title>numpy.i: a SWIG Interface File for NumPy</title>
+<meta name="author" content="Bill Spotz" />
+<meta name="date" content="10 March, 2007" />
+<style type="text/css">
+
+/*
+:Author: David Goodger
+:Contact: goodger@users.sourceforge.net
+:Date: $Date: 2005-12-18 01:56:14 +0100 (Sun, 18 Dec 2005) $
+:Revision: $Revision: 4224 $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin-left: 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left {
+  clear: left }
+
+img.align-right {
+  clear: right }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font-family: serif ;
+  font-size: 100% }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em ;
+  background-color: #eeeeee }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+tt.docutils {
+  background-color: #eeeeee }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="numpy-i-a-swig-interface-file-for-numpy">
+<h1 class="title">numpy.i: a SWIG Interface File for NumPy</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Bill Spotz</td></tr>
+<tr class="field"><th class="docinfo-name">Institution:</th><td class="field-body">Sandia National Laboratories</td>
+</tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>10 March, 2007</td></tr>
+</tbody>
+</table>
+<div class="section">
+<h1><a id="introduction" name="introduction">Introduction</a></h1>
+<p>The Simple Wrapper and Interface Generator (or <a class="reference" href="http://www.swig.org">SWIG</a>) is a powerful tool for generating wrapper
+code for interfacing to a wide variety of scripting languages.
+<a class="reference" href="http://www.swig.org">SWIG</a> can parse header files, and using only the code prototypes,
+create an interface to the target language.  But <a class="reference" href="http://www.swig.org">SWIG</a> is not
+omnipotent.  For example, it cannot know from the prototype:</p>
+<pre class="literal-block">
+double rms(double* seq, int n);
+</pre>
+<p>what exactly <tt class="docutils literal"><span class="pre">seq</span></tt> is.  Is it a single value to be altered in-place?
+Is it an array, and if so what is its length?  Is it input-only?
+Output-only?  Input-output?  <a class="reference" href="http://www.swig.org">SWIG</a> cannot determine these details,
+and does not attempt to do so.</p>
+<p>Making an educated guess, humans can conclude that this is probably a
+routine that takes an input-only array of length <tt class="docutils literal"><span class="pre">n</span></tt> of <tt class="docutils literal"><span class="pre">double</span></tt>
+values called <tt class="docutils literal"><span class="pre">seq</span></tt> and returns the root mean square.  The default
+behavior of <a class="reference" href="http://www.swig.org">SWIG</a>, however, will be to create a wrapper function
+that compiles, but is nearly impossible to use from the scripting
+language in the way the C routine was intended.</p>
+<p>For <a class="reference" href="http://www.python.org">python</a>, the preferred way of handling
+contiguous (or technically, <em>strided</em>) blocks of homogeneous data is
+with the module <a class="reference" href="http://numpy.scipy.org">NumPy</a>, which provides full
+object-oriented access to arrays of data.  Therefore, the most logical
+python interface for the <tt class="docutils literal"><span class="pre">rms</span></tt> function would be:</p>
+<pre class="literal-block">
+def rms(seq):
+</pre>
+<p>where <tt class="docutils literal"><span class="pre">seq</span></tt> would be a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array of <tt class="docutils literal"><span class="pre">double</span></tt> values, and its
+length <tt class="docutils literal"><span class="pre">n</span></tt> would be extracted from <tt class="docutils literal"><span class="pre">seq</span></tt> internally before being
+passed to the C routine.  Even better, since <a class="reference" href="http://numpy.scipy.org">NumPy</a> supports
+construction of arrays from arbitrary <a class="reference" href="http://www.python.org">python</a> sequences, <tt class="docutils literal"><span class="pre">seq</span></tt>
+itself could be a nearly arbitrary sequence (so long as each element
+can be converted to a <tt class="docutils literal"><span class="pre">double</span></tt>) and the wrapper code would
+internally convert it to a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array before extracting its data
+and length.</p>
+<p><a class="reference" href="http://www.swig.org">SWIG</a> allows these types of conversions to be defined via a
+mechanism called typemaps.  This document provides information on how
+to use <tt class="docutils literal"><span class="pre">numpy.i</span></tt>, a <a class="reference" href="http://www.swig.org">SWIG</a> interface file that defines a series of
+typemaps intended to make the type of array-related conversions
+described above relatively simple to implement.  For example, suppose
+that the <tt class="docutils literal"><span class="pre">rms</span></tt> function prototype defined above was in a header file
+named <tt class="docutils literal"><span class="pre">rms.h</span></tt>.  To obtain the python interface discussed above, your
+<a class="reference" href="http://www.swig.org">SWIG</a> interface file would need the following:</p>
+<pre class="literal-block">
+%{
+#include &quot;rms.h&quot;
+%}
+%include &quot;numpy.i&quot;
+%apply (double* IN_ARRAY1, int DIM1) {(double* seq, int n)};
+%include &quot;rms.h&quot;
+</pre>
+<p>Typemaps are keyed off a list of one or more function arguments,
+either by type or by type and name.  We will refer to such lists as
+<em>signatures</em>.  One of the many typemaps defined by <tt class="docutils literal"><span class="pre">numpy.i</span></tt> is used
+above and has the signature <tt class="docutils literal"><span class="pre">(double*</span> <span class="pre">IN_ARRAY1,</span> <span class="pre">int</span> <span class="pre">DIM1)</span></tt>.  The
+argument names are intended to suggest that the <tt class="docutils literal"><span class="pre">double*</span></tt> argument
+is an input array of one dimension and that the <tt class="docutils literal"><span class="pre">int</span></tt> represents
+that dimension.  This is precisely the pattern in the <tt class="docutils literal"><span class="pre">rms</span></tt>
+prototype.</p>
+<p>Hopefully, no actual prototypes to be wrapped will have the names
+<tt class="docutils literal"><span class="pre">IN_ARRAY1</span></tt> and <tt class="docutils literal"><span class="pre">DIM1</span></tt>.  We use the <tt class="docutils literal"><span class="pre">%apply</span></tt> directive to apply
+the typemap for one-dimensional input arrays of type <tt class="docutils literal"><span class="pre">double</span></tt> to the
+actual prototype used by <tt class="docutils literal"><span class="pre">rms</span></tt>.  Using <tt class="docutils literal"><span class="pre">numpy.i</span></tt> effectively,
+therefore, requires knowing what typemaps are available and what they
+do.</p>
+</div>
+<div class="section">
+<h1><a id="using-numpy-i" name="using-numpy-i">Using numpy.i</a></h1>
+<p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> file is currently located in the <tt class="docutils literal"><span class="pre">numpy/docs/swig</span></tt>
+sub-directory under the <tt class="docutils literal"><span class="pre">numpy</span></tt> installation directory.  Typically,
+you will want to copy it to the directory where you are developing
+your wrappers.</p>
+<p>A simple module that only uses a single <a class="reference" href="http://www.swig.org">SWIG</a> interface file should
+include the following:</p>
+<pre class="literal-block">
+%{
+#define SWIG_FILE_WITH_INIT
+%}
+%include &quot;numpy.i&quot;
+%init %{
+import_array();
+%}
+</pre>
+<p>Only one interface file should call <tt class="docutils literal"><span class="pre">import_array()</span></tt>.  If you have
+more than one <a class="reference" href="http://www.swig.org">SWIG</a> interface file, then subsequent files should not
+<tt class="docutils literal"><span class="pre">#define</span> <span class="pre">SWIG_FILE_WITH_INIT</span></tt> and should not call
+<tt class="docutils literal"><span class="pre">import_array()</span></tt>.</p>
+</div>
+<div class="section">
+<h1><a id="available-typemaps" name="available-typemaps">Available Typemaps</a></h1>
+<p>The typemap directives provided by <tt class="docutils literal"><span class="pre">numpy.i</span></tt> for arrays of different
+data types, say <tt class="docutils literal"><span class="pre">double</span></tt> and <tt class="docutils literal"><span class="pre">int</span></tt>, are identical to one another
+except for the C and <a class="reference" href="http://numpy.scipy.org">NumPy</a> type specifications.  The typemaps are
+therefore implemented via a macro:</p>
+<pre class="literal-block">
+%numpy_typemaps(TYPE, TYPECODE)
+</pre>
+<p>that can be invoked for appropriate <tt class="docutils literal"><span class="pre">(TYPE,</span> <span class="pre">TYPECODE)</span></tt> pairs.  For
+example:</p>
+<pre class="literal-block">
+%numpy_typemaps(double, NPY_DOUBLE)
+%numpy_typemaps(int,    NPY_INT   )
+</pre>
+<p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> interface file uses the <tt class="docutils literal"><span class="pre">%numpy_typemaps</span></tt> macro to
+implement typemaps for the following C-types:</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">signed</span> <span class="pre">char</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">char</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">short</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">short</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">int</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">long</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">long</span> <span class="pre">long</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">long</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">float</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">double</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">PyObject</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">char</span></tt></li>
+</ul>
+</blockquote>
+<p>Note that C++ type <tt class="docutils literal"><span class="pre">bool</span></tt> is not supported in the list above.  NumPy
+bools are a single byte, while the C++ <tt class="docutils literal"><span class="pre">bool</span></tt> is four bytes (at
+least on my system).  Therefore:</p>
+<pre class="literal-block">
+%numpy_typemaps(bool, NPY_BOOL)
+</pre>
+<p>will result in typemaps that will produce code that reference
+improper data lengths.  You can implement the following macro
+expansion:</p>
+<pre class="literal-block">
+%numpy_typemaps(bool, NPY_UINT)
+</pre>
+<p>to fix the data length problem, and <a class="reference" href="#input-arrays">Input Arrays</a> will work fine,
+but <a class="reference" href="#in-place-arrays">In-place Arrays</a> will fail type-checking.</p>
+<p>In the following descriptions, we reference a generic <tt class="docutils literal"><span class="pre">TYPE</span></tt>, which
+could be any of the C-types listed above.</p>
+<div class="section">
+<h2><a id="input-arrays" name="input-arrays">Input Arrays</a></h2>
+<p>Input arrays are defined as arrays of data that are passed into a
+routine but are not altered in-place or returned to the user.  The
+python input array is therefore allowed to be almost any python
+sequence (such as a list) that can be converted to the requested type
+of array.  The input array signatures are</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">IN_ARRAY1,</span> <span class="pre">int</span> <span class="pre">DIM1)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">IN_ARRAY2,</span> <span class="pre">int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2)</span></tt></li>
+</ul>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="in-place-arrays" name="in-place-arrays">In-place Arrays</a></h2>
+<p>In-place arrays are defined as arrays that are modified in-place.  The
+input values may or may not be used, but the values at the time the
+function returns are significant.  The provided python argument must
+therefore be a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array of the required type.  The in-place
+signatures are</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">INPLACE_ARRAY1,</span> <span class="pre">int</span> <span class="pre">DIM1)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">INPLACE_ARRAY2,</span> <span class="pre">int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2)</span></tt></li>
+</ul>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="argout-arrays" name="argout-arrays">Argout Arrays</a></h2>
+<p>Argout arrays are arrays that appear in the input arguments in C, but
+are in fact output arrays.  This pattern occurs often when there is
+more than one output variable and the single return argument is
+therefore not sufficient.  In python, the convential way to return
+multiple arguments is to pack them into a tuple and return the tuple.
+This is what the argout typemaps do.  If a wrapped function that uses
+argout these argout typemaps has more than one return argument, they
+are so packed.  The python user does not pass these arrays in, they
+simply get returned.  The argout signatures are</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">(TYPE</span> <span class="pre">ARGOUT_ARRAY1[ANY])</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(TYPE</span> <span class="pre">ARGOUT_ARRAY2[ANY][ANY])</span></tt></li>
+</ul>
+</blockquote>
+</div>
+</div>
+<div class="section">
+<h1><a id="helper-functions" name="helper-functions">Helper Functions</a></h1>
+<p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> file containes several macros and routines that it
+uses internally to build its typemaps.  However, these functions may
+be useful elsewhere in your interface file.</p>
+<div class="section">
+<h2><a id="macros" name="macros">Macros</a></h2>
+<blockquote>
+<dl class="docutils">
+<dt><strong>is_array(a)</strong></dt>
+<dd>Evaluates as true if <tt class="docutils literal"><span class="pre">a</span></tt> is non-<tt class="docutils literal"><span class="pre">NULL</span></tt> and can be cast to a
+<tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>.</dd>
+<dt><strong>array_type(a)</strong></dt>
+<dd>Evaluates to the integer data type code of <tt class="docutils literal"><span class="pre">a</span></tt>, assuming <tt class="docutils literal"><span class="pre">a</span></tt> can
+be cast to a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>.</dd>
+<dt><strong>array_dimensions(a)</strong></dt>
+<dd>Evaluates to the integer number of dimensions of <tt class="docutils literal"><span class="pre">a</span></tt>, assuming
+<tt class="docutils literal"><span class="pre">a</span></tt> can be cast to a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>.</dd>
+<dt><strong>array_size(a,i)</strong></dt>
+<dd>Evaluates to the <tt class="docutils literal"><span class="pre">i</span></tt>-th dimension size of <tt class="docutils literal"><span class="pre">a</span></tt>, assuming <tt class="docutils literal"><span class="pre">a</span></tt>
+can be cast to a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>.</dd>
+<dt><strong>array_is_contiguous(a)</strong></dt>
+<dd>Evaluates as true if <tt class="docutils literal"><span class="pre">a</span></tt> is a contiguous array.  Equivalent to
+<tt class="docutils literal"><span class="pre">(PyArray_ISCONTIGUOUS(a))</span></tt>.</dd>
+</dl>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="routines" name="routines">Routines</a></h2>
+<blockquote>
+<dl class="docutils">
+<dt><strong>char* pytype_string(PyObject* py_obj)</strong></dt>
+<dd>Given a <tt class="docutils literal"><span class="pre">PyObject*</span></tt>, return a string describing its type.</dd>
+<dt><strong>char* typecode_string(int typecode)</strong></dt>
+<dd>Given a <a class="reference" href="http://numpy.scipy.org">NumPy</a> integer typecode, return a string describing the type.</dd>
+<dt><strong>int type_match(int actual_type, int desired_type)</strong></dt>
+<dd>Make sure input has correct <a class="reference" href="http://numpy.scipy.org">NumPy</a> type.  Allow character and
+byte to match.  Also allow int and long to match.</dd>
+<dt><strong>PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode)</strong></dt>
+<dd>Given a <tt class="docutils literal"><span class="pre">PyObject*</span></tt>, cast it to a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> if legal.
+If not, set the python error string appropriately and return
+<tt class="docutils literal"><span class="pre">NULL</span></tt>.</dd>
+<dt><strong>PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode, int* is_new_object)</strong></dt>
+<dd>Convert the given <tt class="docutils literal"><span class="pre">PyObject*</span></tt> to a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array with the given
+typecode.  On Success, return a valid <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> with the
+correct type.  On failure, the python error string will be set and
+the routine returns <tt class="docutils literal"><span class="pre">NULL</span></tt>.</dd>
+<dt><strong>PyArrayObject* make_contiguous(PyArrayObject* ary, int* is_new_object, int min_dims, int max_dims)</strong></dt>
+<dd>Given a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>, check to see if it is contiguous.  If
+so, return the input pointer and flag it as not a new object.  If
+it is not contiguous, create a new <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> using the
+original data, flag it as a new object and return the pointer.</dd>
+<dt><strong>PyArrayObject* obj_to_array_contiguous_allow_conversion(PyObject* input, int typecode, int* is_new_object)</strong></dt>
+<dd>Convert a given <tt class="docutils literal"><span class="pre">PyObject*</span></tt> to a contiguous <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>
+of the specified type.  If the input object is not a contiguous
+<tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>, a new one will be created and the new object
+flag will be set.</dd>
+<dt><strong>int require_contiguous(PyArrayObject* ary)</strong></dt>
+<dd>Test whether a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> is contiguous.  If array is
+contiguous, return 1.  Otherwise, set the python error string and
+return 0.</dd>
+<dt><strong>int require_dimensions(PyArrayObject* ary, int exact_dimensions)</strong></dt>
+<dd>Require the given <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> to have a specified number of
+dimensions.  If the array has the specified number of dimensions,
+return 1.  Otherwise, set the python error string and return 0.</dd>
+<dt><strong>int require_dimensions_n(PyArrayObject* ary, int* exact_dimensions, int n)</strong></dt>
+<dd>Require the given <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> to have one of a list of
+specified number of dimensions.  If the array has one of the
+specified number of dimensions, return 1.  Otherwise, set the
+python error string and return 0.</dd>
+<dt><strong>int require_size(PyArrayObject* ary, int* size, int n)</strong></dt>
+<dd>Require the given <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> to have a specified shape.
+If the array has the specified shape, return 1.  Otherwise, set
+the python error string and return 0.</dd>
+<dt><strong>static PyArrayObject *contiguous_typed_array(PyObject *obj, int typecode, int expectnd, int *expectdims)</strong></dt>
+<dd>This function tries to create a contiguous <a class="reference" href="http://numpy.scipy.org">NumPy</a> array of type
+typecode from an arbitrary python object <tt class="docutils literal"><span class="pre">obj</span></tt>.  This should
+work for any sequence object.  The argument <tt class="docutils literal"><span class="pre">expectnd</span></tt> is the
+expected number of dimensions, ignored if &lt;= 0.  The argument
+<tt class="docutils literal"><span class="pre">expectdims</span></tt> is an array of expected dimensions, ignored if &lt;=
+0.  This routine raises a <tt class="docutils literal"><span class="pre">ValueError</span></tt> exception if the
+underlying <tt class="docutils literal"><span class="pre">PyArray_ContiguousFromObject</span></tt> routine fails, if the
+array has a bad shape, if the extent of a given dimension doesn't
+match the specified extent.  If <tt class="docutils literal"><span class="pre">obj</span></tt> is a contiguous
+<tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> then a reference is returned; if <tt class="docutils literal"><span class="pre">obj</span></tt> is a
+python sequence, then a new <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> is created and
+returned.</dd>
+</dl>
+</blockquote>
+</div>
+</div>
+<div class="section">
+<h1><a id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
+<p>Many people have worked to glue <a class="reference" href="http://www.swig.org">SWIG</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> (and its
+predecessors Numeric and numarray) together.  The effort to
+standardize this work into <tt class="docutils literal"><span class="pre">numpy.i</span></tt> began at the 2005 SciPy
+Conference with a conversation between Fernando Perez and myself.
+Fernando collected helper functions and typemaps from Michael Hunter,
+Anna Omelchenko and Michael Sanner.  Their work has made this end
+result possible.</p>
+</div>
+</div>
+<div class="footer">
+<hr class="footer" />
+Generated on: 2007-03-14 15:24 UTC.
+Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
+
+</div>
+</body>
+</html>

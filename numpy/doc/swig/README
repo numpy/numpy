@@ -1,16 +1,15 @@
 Notes for the swig_numpy/new directory
 ======================================
 
-This set of files is for developing and testing file numpy.i, which
-is intended to be a set of typemaps for helping SWIG interface between
-C and C++ code that uses C arrays and the python module Numeric (also
-known informally as NumPy, also to be replaced in the future with
-scipy_core).  It is ultimately hoped that numpy.i will be included
-as part of the SWIG and/or SciPy distribution(s).
+This set of files is for developing and testing file numpy.i, which is
+intended to be a set of typemaps for helping SWIG interface between C
+and C++ code that uses C arrays and the python module NumPy.  It is
+ultimately hoped that numpy.i will be included as part of the SWIG
+distribution.
 
 In the spirit of "writing your tests first", I will begin by
 describing the tests, as they are a good example of what we are trying
-to do with numpy.i.  The files related to testing are
+to do with numpy.i.  The files related to testing are::
 
     series.h
     series.cxx
@@ -18,34 +17,34 @@ to do with numpy.i.  The files related to testing are
 
 The series.h header file contains prototypes for functions that
 illustrate the wrapping issues we wish to address.  Right now, this
-consists of functions with argument signatures of the form
+consists of functions with argument signatures of the form::
 
     (type* IN_ARRAY1, int DIM1)
     (type* IN_ARRAY2, int DIM1, int DIM2)
     (type* INPLACE_ARRAY1, int DIM1)
+    (type* INPLACE_ARRAY2, int DIM1, int DIM2)
 
 which take a pointer to an array of type "type", whose length is
 specified by the integer(s) DIM1 (and DIM2).
 
 The objective for the IN_ARRAY signatures is for SWIG to generate
 python wrappers that take a container that constitutes a valid
-argument to the Numeric.array constructor, and can be used to build an
+argument to the numpy array constructor, and can be used to build an
 array of type "type".  Currently, types "char", "unsigned char",
 "signed char", "short", "int", "long", "float", "double" and
 "PyObject" are supported, although only the types "short", "int",
 "long", "float" and "double" are tested.
 
 The objective for the INPLACE_ARRAY signatures is for SWIG to generate
-python wrappers that accept a Numeric array of any of the above-listed
+python wrappers that accept a numpy array of any of the above-listed
 types.
 
 The source file series.cxx contains the actual implementations of the
 functions described in series.h.  The python script testSeries.py
 tests the resulting python wrappers using the unittest module.
 
-The SWIG interface file Series.i is used to generate the wrapper
-code.  It is pretty short, but everything in it is important.  The
-SWIG_FILE_WITH_INIT macro allows numpy.i to be used with multiple
+The SWIG interface file Series.i is used to generate the wrapper code.
+The SWIG_FILE_WITH_INIT macro allows numpy.i to be used with multiple
 python modules.  If it is specified, then the %init block found in
 Series.i is required.  The other things done in Series.i are the
 inclusion of the series.h and numpy.i files, and the "%apply"
@@ -55,10 +54,10 @@ The setup.py script is a standard python distutils script.  It defines
 a _Series extension module and a Series python module.  The Makefile
 automates everything, setting up the dependencies, calling swig to
 generate the wrappers, and calling setup.py to compile the wrapper
-code and generate the shared object.  Targets "all" (default) and
-"clean" ar supported.
+code and generate the shared object.  Targets "all" (default),
+"clean" and "html" (generate HTML documentation) are supported.
 
-To build and test the code, simply execute from the shell,
+To build and test the code, simply execute from the shell::
 
     $ make
     $ testSeries.py
@@ -66,57 +65,15 @@ To build and test the code, simply execute from the shell,
 ================================================================================
 
 ToDo
-====
+----
 
-  * Tests for the (INPLACE_ARRAY2, DIM1, DIM2) nedd to be added to
-    series.h, series.cxx and testSeries.py.
+  * Support for complex data types should be added.  Currently swig
+    dies with a syntax error when the %numpy_typemaps macro isused
+    with complex types.
 
-  * Support for complex data types should be added.  Currently the
-    macro substitution doesn't seem to like the two words you need to
-    specify "complex double", etc.
-
-  * ARGOUT typemaps need to be implemented and tested.  I stalled on
-    this because SWIG implements a new method for aggregating output
-    arguments; it has changed from a tuple to a list and requires
-    importing a different SWIG library file.  I didn't particularly
-    want to spend time trying to support both approaches, and I ended
-    up not finishing a typemap for either.
-
-
-Notes Bill:
-
-The numpy.i file currently defines typemaps of the form
-
-      (type* IN_ARRAY1, int DIM1)
-      (type* IN_ARRAY2, int DIM1, int DIM2)
-      (type* INPLACE_ARRAY1, int DIM1)
-      (type* INPLACE_ARRAY2, int DIM1, int DIM2)
-
-and has the beginnings of typemaps of the form
-
-      (type* ARGOUT_ARRAY[ANY])
-      (type* ARGOUT_ARRAY[ANY][ANY])
-
-where "type" is almost any type supported by Numeric (I have had 
-trouble with complex), the "1" suffix can be used with any dimension 
-array as long as DIM1 reflects the total size, and the "2" suffix is 
-for explicitly 2-dimensional arrays.  IN_ARRAYs can be any reasonable 
-container that can be used to construct a Numeric array.  
-INPLACE_ARRAYs must be Numeric arrays.
-
-I hit a snag with the ARGOUT typemaps, because the swig libraries have 
-changed and I did not know the best way to proceed.  Basically, the old 
-way produced a tuple on the LHS if needed and the new way produces a 
-list.  I forget why swig made the change, but the actual swig library 
-file you import changed because of it and I didn't feel like spending 
-time trying to support both approaches.
-
-So the ARGOUT typemaps need to be finished, functions that would use 
-them need to be added to series.{h,cxx} and tests for the resulting 
-python interface need to be added to testSeries.py.
-
-Most of the functions I deal with cannot use the ARGOUT typemaps 
-anyway, because they usually involve input arrays that share the same 
-dimension arguments as the output arrays, which will require a special 
-approach.  So I don't have a lot of motivation there . . . but it 
-definitely needs to be done before any kind of release.
+  * Better ARGOUT typemaps need to be implemented and tested.  I
+    stalled on this because SWIG implements a new method for
+    aggregating output arguments; it has changed from a tuple to a
+    list and requires importing a different SWIG library file.  I
+    didn't particularly want to spend time trying to support both
+    approaches, and I ended up not finishing a typemap for either.

@@ -7,12 +7,17 @@ from distutils      import sysconfig
 # Third-party modules - we depend on numpy for everything
 import numpy
 
+# Obtain the numpy include directory.  This logic works across numpy versions.
+try:
+    numpy_include = numpy.get_include()
+except AttributeError:
+    numpy_include = numpy.get_numpy_include()
+
 # _Series extension module
 _Series = Extension("_Series",
                     ["Series_wrap.cxx",
                      "series.cxx"],
-                    include_dirs = [numpy.get_numpy_include()],
-#                    libraries = ["m"]
+                    include_dirs = [numpy_include],
                     )
 
 # Series setup

@@ -6,10 +6,11 @@
 #include "stdio.h"
 #include <numpy/arrayobject.h>
 
-/* The following code originally appeared in enthought/kiva/agg/src/numeric.i,
- * author unknown.  It was translated from C++ to C by John Hunter.  Bill
- * Spotz has modified it slightly to fix some minor bugs, add some comments
- * and some functionality.
+/* The following code originally appeared in
+ * enthought/kiva/agg/src/numeric.i, author unknown.  It was
+ * translated from C++ to C by John Hunter.  Bill Spotz has modified
+ * it slightly to fix some minor bugs, upgrade to numpy (all
+ * versions), add some comments and some functionality.
  */
 
 /* Macros to extract array attributes.
@@ -19,6 +20,37 @@
 #define array_dimensions(a)    (((PyArrayObject *)a)->nd)
 #define array_size(a,i)        (((PyArrayObject *)a)->dimensions[i])
 #define array_is_contiguous(a) (PyArray_ISCONTIGUOUS(a))
+
+/* Support older NumPy data type names
+*/
+#if NDARRAY_VERSION < 0x01000000
+#define NPY_BOOL        PyArray_BOOL
+#define NPY_BYTE        PyArray_BYTE
+#define NPY_UBYTE       PyArray_UBYTE
+#define NPY_SHORT       PyArray_SHORT
+#define NPY_USHORT      PyArray_USHORT
+#define NPY_INT         PyArray_INT
+#define NPY_UINT        PyArray_UINT
+#define NPY_LONG        PyArray_LONG
+#define NPY_ULONG       PyArray_ULONG
+#define NPY_LONGLONG    PyArray_LONGLONG
+#define NPY_ULONGLONG   PyArray_ULONGLONG
+#define NPY_FLOAT       PyArray_FLOAT
+#define NPY_DOUBLE      PyArray_DOUBLE
+#define NPY_LONGDOUBLE  PyArray_LONGDOUBLE
+#define NPY_CFLOAT      PyArray_CFLOAT
+#define NPY_CDOUBLE     PyArray_CDOUBLE
+#define NPY_CLONGDOUBLE PyArray_CLONGDOUBLE
+#define NPY_OBJECT      PyArray_OBJECT
+#define NPY_STRING      PyArray_STRING
+#define NPY_UNICODE     PyArray_UNICODE
+#define NPY_VOID        PyArray_VOID
+#define NPY_NTYPES      PyArray_NTYPES
+#define NPY_NOTYPE      PyArray_NOTYPE
+#define NPY_CHAR        PyArray_CHAR
+#define NPY_USERDEF     PyArray_USERDEF
+#define npy_intp        intp
+#endif
 
 /* Given a PyObject, return a string describing its type.
  */
@@ -38,13 +70,18 @@ char* pytype_string(PyObject* py_obj) {
   return "unkown type";
 }
 
-/* Given a Numeric typecode, return a string describing the type.
+/* Given a NumPy typecode, return a string describing the type.
  */
 char* typecode_string(int typecode) {
-  char* type_names[20] = {"char","unsigned byte","byte","short",
-			  "unsigned short","int","unsigned int","long",
-			  "float","double","complex float","complex double",
-			  "object","ntype","unkown"};
+  static char* type_names[24] = {"bool", "byte", "unsigned byte",
+				 "short", "unsigned short", "int",
+				 "unsigned int", "long", "unsigned long",
+				 "long long", "unsigned long long",
+				 "float", "double", "long double",
+				 "complex float", "complex double",
+				 "complex long double", "object",
+				 "string", "unicode", "void", "ntypes",
+				 "notype", "char"};
   return type_names[typecode];
 }
 
@@ -57,45 +94,43 @@ int type_match(int actual_type, int desired_type) {
 
 /* Given a PyObject pointer, cast it to a PyArrayObject pointer if
  * legal.  If not, set the python error string appropriately and
- * return NULL./
+ * return NULL.
  */
 PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode) {
   PyArrayObject* ary = NULL;
-  if (is_array(input) && (typecode == PyArray_NOTYPE || 
-			  PyArray_EquivTypenums(array_type(input), 
-						typecode))) {
-        ary = (PyArrayObject*) input;
-    }
-    else if is_array(input) {
-      char* desired_type = typecode_string(typecode);
-      char* actual_type = typecode_string(array_type(input));
-      PyErr_Format(PyExc_TypeError, 
-		   "Array of type '%s' required.  Array of type '%s' given", 
-		   desired_type, actual_type);
-      ary = NULL;
-    }
-    else {
-      char * desired_type = typecode_string(typecode);
-      char * actual_type = pytype_string(input);
-      PyErr_Format(PyExc_TypeError, 
-		   "Array of type '%s' required.  A %s was given", 
-		   desired_type, actual_type);
-      ary = NULL;
-    }
+  if (is_array(input) && (typecode == NPY_NOTYPE ||
+			  type_match(array_type(input), typecode))) {
+    ary = (PyArrayObject*) input;
+  }
+  else if is_array(input) {
+    char* desired_type = typecode_string(typecode);
+    char* actual_type = typecode_string(array_type(input));
+    PyErr_Format(PyExc_TypeError, 
+		 "Array of type '%s' required.  Array of type '%s' given", 
+		 desired_type, actual_type);
+    ary = NULL;
+  }
+  else {
+    char * desired_type = typecode_string(typecode);
+    char * actual_type = pytype_string(input);
+    PyErr_Format(PyExc_TypeError, 
+		 "Array of type '%s' required.  A %s was given", 
+		 desired_type, actual_type);
+    ary = NULL;
+  }
   return ary;
 }
 
-/* Convert the given PyObject to a Numeric array with the given
+/* Convert the given PyObject to a NumPy array with the given
  * typecode.  On Success, return a valid PyArrayObject* with the
  * correct type.  On failure, the python error string will be set and
  * the routine returns NULL.
  */
 PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode,
-                                             int* is_new_object)
-{
+                                             int* is_new_object) {
   PyArrayObject* ary = NULL;
   PyObject* py_obj;
-  if (is_array(input) && (typecode == PyArray_NOTYPE || type_match(array_type(input),typecode))) {
+  if (is_array(input) && (typecode == NPY_NOTYPE || type_match(array_type(input),typecode))) {
     ary = (PyArrayObject*) input;
     *is_new_object = 0;
   }
@@ -114,8 +149,7 @@ PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode,
  * flag it as a new object and return the pointer.
  */
 PyArrayObject* make_contiguous(PyArrayObject* ary, int* is_new_object,
-                               int min_dims, int max_dims)
-{
+                               int min_dims, int max_dims) {
   PyArrayObject* result;
   if (array_is_contiguous(ary)) {
     result = ary;
@@ -216,7 +250,7 @@ int require_dimensions_n(PyArrayObject* ary, int* exact_dimensions, int n) {
  * array has the specified shape, return 1.  Otherwise, set the python
  * error string and return 0.
  */
-int require_size(PyArrayObject* ary, int* size, int n) {
+int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   int i;
   int success = 1;
   int len;
@@ -253,236 +287,202 @@ int require_size(PyArrayObject* ary, int* size, int n) {
   }
   return success;
 }
-/* End John Hunter translation (with modifications by Bill Spotz) */
+/* End John Hunter translation (with modifications by Bill Spotz)
+ */
 
 %}
 
-/* TYPEMAP_IN macros
+/* %numpy_typemaps() macro
  *
- * This family of typemaps allows pure input C arguments of the form
+ * This macro defines a family of typemaps that allow pure input C
+ * arguments of the form
  *
- *     (type* IN_ARRAY1, int DIM1)
- *     (type* IN_ARRAY2, int DIM1, int DIM2)
+ *     (TYPE* IN_ARRAY1, int DIM1)
+ *     (TYPE* IN_ARRAY2, int DIM1, int DIM2)
+ *     (TYPE* INPLACE_ARRAY1, int DIM1)
+ *     (TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)
+ *     (TYPE* ARGOUT_ARRAY1[ANY])
+ *     (TYPE* ARGOUT_ARRAY2[ANY][ANY])
  *
- * where "type" is any type supported by the Numeric module, to be
- * called in python with an argument list of a single array (or any
- * python object that can be passed to the Numeric.array constructor
- * to produce an arrayof te specified shape).  This can be applied to
- * a existing functions using the %apply directive:
+ * where "TYPE" is any type supported by the NumPy module.  In python,
+ * the dimensions will not need to be specified.  The IN_ARRAYs can be
+ * a numpy array or any sequence that can be converted to a numpy
+ * array of the specified type.  The INPLACE_ARRAYs must be numpy
+ * arrays of the appropriate type.  The ARGOUT_ARRAYs will be returned
+ * as numpy arrays of the appropriate type.
+
+ * These typemaps can be applied to existing functions using the
+ * %apply directive:
  *
- *     %apply (double* IN_ARRAY1, int DIM1) {double* series, int length}
- *     %apply (double* IN_ARRAY2, int DIM1, int DIM2) {double* mx, int rows, int cols}
+ *     %apply (double* IN_ARRAY1, int DIM1) {double* series, int length};
  *     double sum(double* series, int length);
+ *
+ *     %apply (double* IN_ARRAY2, int DIM1, int DIM2) {double* mx, int rows, int cols};
  *     double max(double* mx, int rows, int cols);
  *
- * or with
+ *     %apply (double* INPLACE_ARRAY1, int DIM1) {double* series, int length};
+ *     void negate(double* series, int length);
+ *
+ *     %apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {double* mx, int rows, int cols};
+ *     void normalize(double* mx, int rows, int cols);
+ *
+ *     %apply (double* ARGOUT_ARRAY1[ANY] {double series, int length};
+ *     void negate(double* series, int length);
+ *
+ *     %apply (double* ARGOUT_ARRAY2[ANY][ANY]) {double* mx, int rows, int cols};
+ *     void normalize(double* mx, int rows, int cols);
+ *
+ * or directly with
  *
  *     double sum(double* IN_ARRAY1, int DIM1);
  *     double max(double* IN_ARRAY2, int DIM1, int DIM2);
- */
-
-/* One dimensional input arrays */
-%define TYPEMAP_IN1(type,typecode)
-%typemap(in) (type* IN_ARRAY1, int DIM1)
-             (PyArrayObject* array=NULL, int is_new_object) {
-  int size[1] = {-1};
-  array = obj_to_array_contiguous_allow_conversion($input, typecode, &is_new_object);
-  if (!array || !require_dimensions(array,1) || !require_size(array,size,1)) SWIG_fail;
-  $1 = (type*) array->data;
-  $2 = array->dimensions[0];
-}
-%typemap(freearg) (type* IN_ARRAY1, int DIM1) {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
-}
-%enddef
-
-/* Define concrete examples of the TYPEMAP_IN1 macros */
-TYPEMAP_IN1(char,          PyArray_CHAR  )
-TYPEMAP_IN1(unsigned char, PyArray_UBYTE )
-TYPEMAP_IN1(signed char,   PyArray_SBYTE )
-TYPEMAP_IN1(short,         PyArray_SHORT )
-TYPEMAP_IN1(int,           PyArray_INT   )
-TYPEMAP_IN1(long,          PyArray_LONG  )
-TYPEMAP_IN1(float,         PyArray_FLOAT )
-TYPEMAP_IN1(double,        PyArray_DOUBLE)
-TYPEMAP_IN1(PyObject,      PyArray_OBJECT)
-
-#undef TYPEMAP_IN1
-
- /* Two dimensional input arrays */
-%define TYPEMAP_IN2(type,typecode)
-  %typemap(in) (type* IN_ARRAY2, int DIM1, int DIM2)
-               (PyArrayObject* array=NULL, int is_new_object) {
-  int size[2] = {-1,-1};
-  array = obj_to_array_contiguous_allow_conversion($input, typecode, &is_new_object);
-  if (!array || !require_dimensions(array,2) || !require_size(array,size,1)) SWIG_fail;
-  $1 = (type*) array->data;
-  $2 = array->dimensions[0];
-  $3 = array->dimensions[1];
-}
-%typemap(freearg) (type* IN_ARRAY2, int DIM1, int DIM2) {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
-}
-%enddef
-
-/* Define concrete examples of the TYPEMAP_IN2 macros */
-TYPEMAP_IN2(char,          PyArray_CHAR  )
-TYPEMAP_IN2(unsigned char, PyArray_UBYTE )
-TYPEMAP_IN2(signed char,   PyArray_SBYTE )
-TYPEMAP_IN2(short,         PyArray_SHORT )
-TYPEMAP_IN2(int,           PyArray_INT   )
-TYPEMAP_IN2(long,          PyArray_LONG  )
-TYPEMAP_IN2(float,         PyArray_FLOAT )
-TYPEMAP_IN2(double,        PyArray_DOUBLE)
-TYPEMAP_IN2(PyObject,      PyArray_OBJECT)
-
-#undef TYPEMAP_IN2
-
-/* TYPEMAP_INPLACE macros
- *
- * This family of typemaps allows input/output C arguments of the form
- *
- *     (type* INPLACE_ARRAY1, int DIM1)
- *     (type* INPLACE_ARRAY2, int DIM1, int DIM2)
- *
- * where "type" is any type supported by the Numeric module, to be
- * called in python with an argument list of a single contiguous
- * Numeric array.  This can be applied to an existing function using
- * the %apply directive:
- *
- *     %apply (double* INPLACE_ARRAY1, int DIM1) {double* series, int length}
- *     %apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {double* mx, int rows, int cols}
- *     void negate(double* series, int length);
- *     void normalize(double* mx, int rows, int cols);
- *     
- *
- * or with
- *
  *     void sum(double* INPLACE_ARRAY1, int DIM1);
  *     void sum(double* INPLACE_ARRAY2, int DIM1, int DIM2);
+ *     void sum(double* ARGOUT_ARRAY1[ANY]);
+ *     void sum(double* ARGOUT_ARRAY2[ANY][ANY]);
  */
 
- /* One dimensional input/output arrays */
-%define TYPEMAP_INPLACE1(type,typecode)
-%typemap(in) (type* INPLACE_ARRAY1, int DIM1) (PyArrayObject* temp=NULL) {
-  int i;
-  temp = obj_to_array_no_conversion($input,typecode);
+%define %numpy_typemaps(TYPE, TYPECODE)
+
+/* Typemap suite for (TYPE* IN_ARRAY1, int DIM1)
+ */
+%typemap(in) (TYPE* IN_ARRAY1, int DIM1)
+             (PyArrayObject* array=NULL, int is_new_object=0) {
+  array = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new_object);
+  npy_intp size[1] = {-1};
+  if (!array || !require_dimensions(array, 1) || !require_size(array, size, 1)) SWIG_fail;
+  $1 = (TYPE*) array->data;
+  $2 = (int) array->dimensions[0];
+}
+%typemap(freearg) (TYPE* IN_ARRAY1, int DIM1) {
+  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+}
+
+/* Typemap suite for (TYPE* IN_ARRAY2, int DIM1, int DIM2)
+ */
+%typemap(in) (TYPE* IN_ARRAY2, int DIM1, int DIM2)
+             (PyArrayObject* array=NULL, int is_new_object=0) {
+  array = obj_to_array_contiguous_allow_conversion($input, TYPECODE, &is_new_object);
+  npy_intp size[2] = {-1,-1};
+  if (!array || !require_dimensions(array, 2) || !require_size(array, size, 1)) SWIG_fail;
+  $1 = (TYPE*) array->data;
+  $2 = (int) array->dimensions[0];
+  $3 = (int) array->dimensions[1];
+}
+%typemap(freearg) (TYPE* IN_ARRAY2, int DIM1, int DIM2) {
+  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+}
+
+/* Typemap suite for (TYPE* INPLACE_ARRAY1, int DIM1)
+ */
+%typemap(in) (TYPE* INPLACE_ARRAY1, int DIM1) (PyArrayObject* temp=NULL) {
+  temp = obj_to_array_no_conversion($input, TYPECODE);
   if (!temp  || !require_contiguous(temp)) SWIG_fail;
-  $1 = (type*) temp->data;
+  $1 = (TYPE*) temp->data;
   $2 = 1;
-  for (i=0; i<temp->nd; ++i) $2 *= temp->dimensions[i];
+  for (int i=0; i<temp->nd; ++i) $2 *= temp->dimensions[i];
 }
-%enddef
 
-/* Define concrete examples of the TYPEMAP_INPLACE1 macro */
-TYPEMAP_INPLACE1(char,          PyArray_CHAR  )
-TYPEMAP_INPLACE1(unsigned char, PyArray_UBYTE )
-TYPEMAP_INPLACE1(signed char,   PyArray_SBYTE )
-TYPEMAP_INPLACE1(short,         PyArray_SHORT )
-TYPEMAP_INPLACE1(int,           PyArray_INT   )
-TYPEMAP_INPLACE1(long,          PyArray_LONG  )
-TYPEMAP_INPLACE1(float,         PyArray_FLOAT )
-TYPEMAP_INPLACE1(double,        PyArray_DOUBLE)
-TYPEMAP_INPLACE1(PyObject,      PyArray_OBJECT)
-
-#undef TYPEMAP_INPLACE1
-
- /* Two dimensional input/output arrays */
-%define TYPEMAP_INPLACE2(type,typecode)
-  %typemap(in) (type* INPLACE_ARRAY2, int DIM1, int DIM2) (PyArrayObject* temp=NULL) {
-  temp = obj_to_array_no_conversion($input,typecode);
-  if (!temp || !require_contiguous(temp)) SWIG_fail;
-  $1 = (type*) temp->data;
-  $2 = temp->dimensions[0];
-  $3 = temp->dimensions[1];
-}
-%enddef
-
-/* Define concrete examples of the TYPEMAP_INPLACE2 macro */
-TYPEMAP_INPLACE2(char,          PyArray_CHAR  )
-TYPEMAP_INPLACE2(unsigned char, PyArray_UBYTE )
-TYPEMAP_INPLACE2(signed char,   PyArray_SBYTE )
-TYPEMAP_INPLACE2(short,         PyArray_SHORT )
-TYPEMAP_INPLACE2(int,           PyArray_INT   )
-TYPEMAP_INPLACE2(long,          PyArray_LONG  )
-TYPEMAP_INPLACE2(float,         PyArray_FLOAT )
-TYPEMAP_INPLACE2(double,        PyArray_DOUBLE)
-TYPEMAP_INPLACE2(PyObject,      PyArray_OBJECT)
-
-#undef TYPEMAP_INPLACE2
-
-/* TYPEMAP_ARGOUT macros
- *
- * This family of typemaps allows output C arguments of the form
- *
- *     (type* ARGOUT_ARRAY[ANY])
- *     (type* ARGOUT_ARRAY[ANY][ANY])
- *
- * where "type" is any type supported by the Numeric module, to be
- * called in python with an argument list of a single contiguous
- * Numeric array.  This can be applied to an existing function using
- * the %apply directive:
- *
- *     %apply (double* ARGOUT_ARRAY[ANY] {double series, int length}
- *     %apply (double* ARGOUT_ARRAY[ANY][ANY]) {double* mx, int rows, int cols}
- *     void negate(double* series, int length);
- *     void normalize(double* mx, int rows, int cols);
- *     
- *
- * or with
- *
- *     void sum(double* ARGOUT_ARRAY[ANY]);
- *     void sum(double* ARGOUT_ARRAY[ANY][ANY]);
+/* Typemap suite for (TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)
  */
+%typemap(in) (TYPE* INPLACE_ARRAY2, int DIM1, int DIM2) (PyArrayObject* temp=NULL) {
+  temp = obj_to_array_no_conversion($input, TYPECODE);
+  if (!temp || !require_contiguous(temp)) SWIG_fail;
+  $1 = (TYPE*) temp->data;
+  $2 = (int) temp->dimensions[0];
+  $3 = (int) temp->dimensions[1];
+}
 
- /* One dimensional input/output arrays */
-%define TYPEMAP_ARGOUT1(type,typecode)
-%typemap(in,numinputs=0) type ARGOUT_ARRAY[ANY] {
-  $1 = (type*) malloc($1_dim0*sizeof(type));
+/* Typemap suite for (TYPE ARGOUT_ARRAY1[ANY])
+ */
+%typemap(in,numinputs=0) (TYPE ARGOUT_ARRAY1[ANY]) {
+  $1 = (TYPE*) malloc($1_dim0*sizeof(TYPE));
   if (!$1) {
     PyErr_SetString(PyExc_RuntimeError, "Failed to allocate memory");
     SWIG_fail;
   }
 }
-%typemap(argout) ARGOUT_ARRAY[ANY] {
-  int dimensions[1] = {$1_dim0};
-  PyObject* outArray = PyArray_FromDimsAndData(1, dimensions, typecode, (char*)$1);
+%typemap(argout) (TYPE ARGOUT_ARRAY1[ANY]) {
+  PyObject * obj = NULL;
+  npy_intp dimensions[1] = { $1_dim0 };
+  PyObject* outArray = PyArray_FromDimsAndData(1, dimensions, TYPECODE, (char*)$1);
+  if ($result == Py_None) {
+    Py_DECREF($result);
+    $result = outArray;
+  }
+  else {
+    if (!PyTuple_Check($result)) $result = Py_BuildValue("(O)", $result);
+    obj = Py_Build_Value("(O)", outArray);
+    $result = PySequence_Concat($result, obj);
+  }
 }
-%enddef
 
-/* Define concrete examples of the TYPEMAP_ARGOUT1 macro */
-TYPEMAP_ARGOUT1(char,          PyArray_CHAR  )
-TYPEMAP_ARGOUT1(unsigned char, PyArray_UBYTE )
-TYPEMAP_ARGOUT1(signed char,   PyArray_SBYTE )
-TYPEMAP_ARGOUT1(short,         PyArray_SHORT )
-TYPEMAP_ARGOUT1(int,           PyArray_INT   )
-TYPEMAP_ARGOUT1(long,          PyArray_LONG  )
-TYPEMAP_ARGOUT1(float,         PyArray_FLOAT )
-TYPEMAP_ARGOUT1(double,        PyArray_DOUBLE)
-TYPEMAP_ARGOUT1(PyObject,      PyArray_OBJECT)
-
-#undef TYPEMAP_ARGOUT1
-
- /* Two dimensional input/output arrays */
-%define TYPEMAP_ARGOUT2(type,typecode)
-  %typemap(in) (type* ARGOUT_ARRAY2, int DIM1, int DIM2) (PyArrayObject* temp=NULL) {
-  temp = obj_to_array_no_conversion($input,typecode);
-  if (!temp || !require_contiguous(temp)) SWIG_fail;
-  $1 = (type*) temp->data;
-  $2 = temp->dimensions[0];
-  $3 = temp->dimensions[1];
+/* Typemap suite for (TYPE ARGOUT_ARRAY2[ANY][ANY])
+ */
+%typemap(in,numinputs=0) (TYPE ARGOUT_ARRAY2[ANY][ANY]) {
+  $1 = (TYPE*) malloc($1_dim0 * $1_dim1 * sizeof(TYPE));
+  if (!$1) {
+    PyErr_SetString(PyExc_RuntimeError, "Failed to allocate memory");
+    SWIG_fail;
+  }
 }
-%enddef
+%typemap(argout) (TYPE ARGOUT_ARRAY1[ANY][ANY]) {
+  PyObject * obj = NULL;
+  npy_intp dimensions[2] = { $1_dim0, $1_dim1 };
+  PyObject* outArray = PyArray_FromDimsAndData(1, dimensions, TYPECODE, (char*)$1);
+  if ($result == Py_None) {
+    Py_DECREF($result);
+    $result = outArray;
+  }
+  else {
+    if (!PyTuple_Check($result)) $result = Py_BuildValue("(O)", $result);
+    obj = Py_Build_Value("(O)", outArray);
+    $result = PySequence_Concat($result, obj);
+  }
+}
 
-/* Define concrete examples of the TYPEMAP_ARGOUT2 macro */
-TYPEMAP_ARGOUT2(char,          PyArray_CHAR  )
-TYPEMAP_ARGOUT2(unsigned char, PyArray_UBYTE )
-TYPEMAP_ARGOUT2(signed char,   PyArray_SBYTE )
-TYPEMAP_ARGOUT2(short,         PyArray_SHORT )
-TYPEMAP_ARGOUT2(int,           PyArray_INT   )
-TYPEMAP_ARGOUT2(long,          PyArray_LONG  )
-TYPEMAP_ARGOUT2(float,         PyArray_FLOAT )
-TYPEMAP_ARGOUT2(double,        PyArray_DOUBLE)
-TYPEMAP_ARGOUT2(PyObject,      PyArray_OBJECT)
+%enddef    /* %numpy_typemaps() macro */
 
-#undef TYPEMAP_ARGOUT2
+
+/* Concrete instances of the %numpy_typemaps() macro: Each invocation
+ * below applies all of the typemaps above to the specified data type.
+ */
+%numpy_typemaps(signed char,         NPY_BYTE     ) /**/
+%numpy_typemaps(unsigned char,       NPY_UBYTE    ) /**/
+%numpy_typemaps(short,               NPY_SHORT    ) /**/
+%numpy_typemaps(unsigned short,      NPY_USHORT   ) /**/
+%numpy_typemaps(int,                 NPY_INT      ) /**/
+%numpy_typemaps(unsigned int,        NPY_UINT     ) /**/
+%numpy_typemaps(long,                NPY_LONG     ) /**/
+%numpy_typemaps(unsigned long,       NPY_ULONG    ) /**/
+%numpy_typemaps(long long,           NPY_LONGLONG ) /**/
+%numpy_typemaps(unsigned long long,  NPY_ULONGLONG) /**/
+%numpy_typemaps(float,               NPY_FLOAT    ) /**/
+%numpy_typemaps(double,              NPY_DOUBLE   ) /**/
+%numpy_typemaps(PyObject,            NPY_OBJECT   )
+%numpy_typemaps(char,                NPY_CHAR     )
+
+/* ***************************************************************
+ * The follow macro expansion does not work, because C++ bool is 4
+ * bytes and NPY_BOOL is 1 byte
+ */
+/*%numpy_typemaps(bool, NPY_BOOL)
+ */
+
+/* ***************************************************************
+ * On my Mac, I get the following warning for this macro expansion:
+ * 'swig/python detected a memory leak of type 'long double *', no destructor found.'
+ */
+/*%numpy_typemaps(long double, NPY_LONGDOUBLE)
+ */
+
+/* ***************************************************************
+ * Swig complains about a syntax error for the following macros
+ * expansions:
+ */
+/*%numpy_typemaps(complex float,       NPY_CFLOAT     )
+ */
+/*%numpy_typemaps(complex double,      NPY_CDOUBLE    )
+ */
+/*%numpy_typemaps(complex long double, NPY_CLONGDOUBLE)
+ */
