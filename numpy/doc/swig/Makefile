@@ -54,4 +54,4 @@ clean:
 	$(RM) $(LATEX_FILES)
 	$(RM) *.aux *.dvi *.log *.out *~
 
-.PHONY : alll doc html tex pdf clean
+.PHONY : all doc html tex pdf clean
