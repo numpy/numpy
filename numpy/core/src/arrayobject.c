@@ -8942,7 +8942,7 @@ PyArray_RemoveSmallest(PyArrayMultiIterObject *multi)
         for (i=0; i<multi->nd; i++) {
                 sumstrides[i] = 0;
                 for (j=0; j<multi->numiter; j++) {
-                        sumstrides[i] = multi->iters[j]->strides[i];
+                        sumstrides[i] += multi->iters[j]->strides[i];
                 }
         }
         axis=0;
