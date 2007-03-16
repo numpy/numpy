@@ -327,8 +327,6 @@ r_ = r_class()
 
 class c_class(concatenator):
     """Translates slice objects to concatenation along the second axis.
-
-       This is equivalent to r_['-1,2,0',...]
     """
     def __init__(self):
         concatenator.__init__(self, -1, ndmin=2, trans1d=0)
