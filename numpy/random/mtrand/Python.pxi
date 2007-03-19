@@ -10,8 +10,12 @@ cdef extern from "Python.h":
 
     # String API
     char* PyString_AsString(object string)
+    char* PyString_AS_STRING(object string)
     object PyString_FromString(char* c_string)
     object PyString_FromStringAndSize(char* c_string, int length)
+
+    # Float API
+    double PyFloat_AsDouble(object ob)
 
     # Memory API
     void* PyMem_Malloc(size_t n)
@@ -32,8 +36,16 @@ cdef extern from "Python.h":
         destructor2 destr)
     void* PyCObject_AsVoidPtr(object self)
     void* PyCObject_GetDesc(object self)
-    int PyCObject_SetVoidPtr(object self, void* cobj)
-   
+    int PyCObject_SetVoidPtr(object self, void* cobj)  
+
+    # TypeCheck API
+    int PyFloat_Check(object obj)
+    int PyInt_Check(object obj)
+
+    # Error API
+    int PyErr_Occurred()
+    void PyErr_Clear()
+ 
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
