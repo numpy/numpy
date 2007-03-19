@@ -5,7 +5,7 @@
 <meta name="generator" content="Docutils 0.4: http://docutils.sourceforge.net/" />
 <title>numpy.i: a SWIG Interface File for NumPy</title>
 <meta name="author" content="Bill Spotz" />
-<meta name="date" content="10 March, 2007" />
+<meta name="date" content="18 March, 2007" />
 <style type="text/css">
 
 /*
@@ -302,11 +302,33 @@ ul.auto-toc {
 <tr class="field"><th class="docinfo-name">Institution:</th><td class="field-body">Sandia National Laboratories</td>
 </tr>
 <tr><th class="docinfo-name">Date:</th>
-<td>10 March, 2007</td></tr>
+<td>18 March, 2007</td></tr>
 </tbody>
 </table>
+<div class="contents topic">
+<p class="topic-title first"><a id="contents" name="contents">Contents</a></p>
+<ul class="simple">
+<li><a class="reference" href="#introduction" id="id1" name="id1">Introduction</a></li>
+<li><a class="reference" href="#using-numpy-i" id="id2" name="id2">Using numpy.i</a></li>
+<li><a class="reference" href="#available-typemaps" id="id3" name="id3">Available Typemaps</a><ul>
+<li><a class="reference" href="#input-arrays" id="id4" name="id4">Input Arrays</a></li>
+<li><a class="reference" href="#in-place-arrays" id="id5" name="id5">In-Place Arrays</a></li>
+<li><a class="reference" href="#argout-arrays" id="id6" name="id6">Argout Arrays</a></li>
+<li><a class="reference" href="#other-common-types-bool" id="id7" name="id7">Other Common Types: bool</a></li>
+<li><a class="reference" href="#other-common-types-complex" id="id8" name="id8">Other Common Types: complex</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#helper-functions" id="id9" name="id9">Helper Functions</a><ul>
+<li><a class="reference" href="#macros" id="id10" name="id10">Macros</a></li>
+<li><a class="reference" href="#routines" id="id11" name="id11">Routines</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#beyond-the-provided-typemaps" id="id12" name="id12">Beyond the Provided Typemaps</a></li>
+<li><a class="reference" href="#acknowledgements" id="id13" name="id13">Acknowledgements</a></li>
+</ul>
+</div>
 <div class="section">
-<h1><a id="introduction" name="introduction">Introduction</a></h1>
+<h1><a class="toc-backref" href="#id1" id="introduction" name="introduction">Introduction</a></h1>
 <p>The Simple Wrapper and Interface Generator (or <a class="reference" href="http://www.swig.org">SWIG</a>) is a powerful tool for generating wrapper
 code for interfacing to a wide variety of scripting languages.
 <a class="reference" href="http://www.swig.org">SWIG</a> can parse header files, and using only the code prototypes,
@@ -329,7 +351,7 @@ language in the way the C routine was intended.</p>
 contiguous (or technically, <em>strided</em>) blocks of homogeneous data is
 with the module <a class="reference" href="http://numpy.scipy.org">NumPy</a>, which provides full
 object-oriented access to arrays of data.  Therefore, the most logical
-python interface for the <tt class="docutils literal"><span class="pre">rms</span></tt> function would be:</p>
+<a class="reference" href="http://www.python.org">python</a> interface for the <tt class="docutils literal"><span class="pre">rms</span></tt> function would be:</p>
 <pre class="literal-block">
 def rms(seq):
 </pre>
@@ -347,8 +369,8 @@ to use <tt class="docutils literal"><span class="pre">numpy.i</span></tt>, a <a 
 typemaps intended to make the type of array-related conversions
 described above relatively simple to implement.  For example, suppose
 that the <tt class="docutils literal"><span class="pre">rms</span></tt> function prototype defined above was in a header file
-named <tt class="docutils literal"><span class="pre">rms.h</span></tt>.  To obtain the python interface discussed above, your
-<a class="reference" href="http://www.swig.org">SWIG</a> interface file would need the following:</p>
+named <tt class="docutils literal"><span class="pre">rms.h</span></tt>.  To obtain the <a class="reference" href="http://www.python.org">python</a> interface discussed above,
+your <a class="reference" href="http://www.swig.org">SWIG</a> interface file would need the following:</p>
 <pre class="literal-block">
 %{
 #define SWIG_FILE_WITH_INIT
@@ -372,12 +394,12 @@ argument names are intended to suggest that the <tt class="docutils literal"><sp
 is an input array of one dimension and that the <tt class="docutils literal"><span class="pre">int</span></tt> represents
 that dimension.  This is precisely the pattern in the <tt class="docutils literal"><span class="pre">rms</span></tt>
 prototype.</p>
-<p>Most likely, no actual prototypes to be wrapped will have the names
-<tt class="docutils literal"><span class="pre">IN_ARRAY1</span></tt> and <tt class="docutils literal"><span class="pre">DIM1</span></tt>.  We use the <tt class="docutils literal"><span class="pre">%apply</span></tt> directive to apply
-the typemap for one-dimensional input arrays of type <tt class="docutils literal"><span class="pre">double</span></tt> to the
-actual prototype used by <tt class="docutils literal"><span class="pre">rms</span></tt>.  Using <tt class="docutils literal"><span class="pre">numpy.i</span></tt> effectively,
-therefore, requires knowing what typemaps are available and what they
-do.</p>
+<p>Most likely, no actual prototypes to be wrapped will have the argument
+names <tt class="docutils literal"><span class="pre">IN_ARRAY1</span></tt> and <tt class="docutils literal"><span class="pre">DIM1</span></tt>.  We use the <tt class="docutils literal"><span class="pre">%apply</span></tt> directive to
+apply the typemap for one-dimensional input arrays of type <tt class="docutils literal"><span class="pre">double</span></tt>
+to the actual prototype used by <tt class="docutils literal"><span class="pre">rms</span></tt>.  Using <tt class="docutils literal"><span class="pre">numpy.i</span></tt>
+effectively, therefore, requires knowing what typemaps are available
+and what they do.</p>
 <p>Note that if the C function signature was in a different order:</p>
 <pre class="literal-block">
 double rms(int n, double* seq);
@@ -390,7 +412,7 @@ typemaps with the data pointer given last:</p>
 </pre>
 </div>
 <div class="section">
-<h1><a id="using-numpy-i" name="using-numpy-i">Using numpy.i</a></h1>
+<h1><a class="toc-backref" href="#id2" id="using-numpy-i" name="using-numpy-i">Using numpy.i</a></h1>
 <p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> file is currently located in the <tt class="docutils literal"><span class="pre">numpy/docs/swig</span></tt>
 sub-directory under the <tt class="docutils literal"><span class="pre">numpy</span></tt> installation directory.  Typically,
 you will want to copy it to the directory where you are developing
@@ -407,7 +429,7 @@ include the following:</p>
 import_array();
 %}
 </pre>
-<p>Within a compiled python module, <tt class="docutils literal"><span class="pre">import_array()</span></tt> should only get
+<p>Within a compiled <a class="reference" href="http://www.python.org">python</a> module, <tt class="docutils literal"><span class="pre">import_array()</span></tt> should only get
 called once.  This could be in a C/C++ file that you have written and
 is linked to the module.  If this is the case, then none of your
 interface files should <tt class="docutils literal"><span class="pre">#define</span> <span class="pre">SWIG_FILE_WITH_INIT</span></tt> or call
@@ -418,22 +440,24 @@ one <a class="reference" href="http://www.swig.org">SWIG</a> interface file, the
 <tt class="docutils literal"><span class="pre">#define</span> <span class="pre">SWIG_FILE_WITH_INIT</span></tt> and call <tt class="docutils literal"><span class="pre">import_array()</span></tt>.</p>
 </div>
 <div class="section">
-<h1><a id="available-typemaps" name="available-typemaps">Available Typemaps</a></h1>
+<h1><a class="toc-backref" href="#id3" id="available-typemaps" name="available-typemaps">Available Typemaps</a></h1>
 <p>The typemap directives provided by <tt class="docutils literal"><span class="pre">numpy.i</span></tt> for arrays of different
-data types, say <tt class="docutils literal"><span class="pre">double</span></tt> and <tt class="docutils literal"><span class="pre">int</span></tt>, are identical to one another
-except for the C and <a class="reference" href="http://numpy.scipy.org">NumPy</a> type specifications.  The typemaps are
+data types, say <tt class="docutils literal"><span class="pre">double</span></tt> and <tt class="docutils literal"><span class="pre">int</span></tt>, and dimensions of different
+types, say <tt class="docutils literal"><span class="pre">int</span></tt> or <tt class="docutils literal"><span class="pre">long</span></tt>, are identical to one another except
+for the C and <a class="reference" href="http://numpy.scipy.org">NumPy</a> type specifications.  The typemaps are
 therefore implemented (typically behind the scenes) via a macro:</p>
 <pre class="literal-block">
-%numpy_typemaps(TYPE, TYPECODE)
+%numpy_typemaps(DATA_TYPE, DATA_TYPECODE, DIM_TYPE)
 </pre>
-<p>that can be invoked for appropriate <tt class="docutils literal"><span class="pre">(TYPE,</span> <span class="pre">TYPECODE)</span></tt> pairs.  For
-example:</p>
+<p>that can be invoked for appropriate <tt class="docutils literal"><span class="pre">(DATA_TYPE,</span> <span class="pre">DATA_TYPECODE,</span>
+<span class="pre">DIM_TYPE)</span></tt> triplets.  For example:</p>
 <pre class="literal-block">
-%numpy_typemaps(double, NPY_DOUBLE)
-%numpy_typemaps(int,    NPY_INT   )
+%numpy_typemaps(double, NPY_DOUBLE, int)
+%numpy_typemaps(int,    NPY_INT   , int)
 </pre>
 <p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> interface file uses the <tt class="docutils literal"><span class="pre">%numpy_typemaps</span></tt> macro to
-implement typemaps for the following C-types:</p>
+implement typemaps for the following C data types and <tt class="docutils literal"><span class="pre">int</span></tt>
+dimension types:</p>
 <blockquote>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">signed</span> <span class="pre">char</span></tt></li>
@@ -448,84 +472,118 @@ implement typemaps for the following C-types:</p>
 <li><tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">long</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">float</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">double</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">PyObject</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">char</span></tt></li>
 </ul>
 </blockquote>
-<p>Note that C++ type <tt class="docutils literal"><span class="pre">bool</span></tt> is not supported in the list above.  NumPy
-bools are a single byte, while the C++ <tt class="docutils literal"><span class="pre">bool</span></tt> is four bytes (at
-least on my system).  Therefore:</p>
+<p>In the following descriptions, we reference a generic <tt class="docutils literal"><span class="pre">DATA_TYPE</span></tt>, which
+could be any of the C data types listed above.</p>
+<div class="section">
+<h2><a class="toc-backref" href="#id4" id="input-arrays" name="input-arrays">Input Arrays</a></h2>
+<p>Input arrays are defined as arrays of data that are passed into a
+routine but are not altered in-place or returned to the user.  The
+<a class="reference" href="http://www.python.org">python</a> input array is therefore allowed to be almost any <a class="reference" href="http://www.python.org">python</a>
+sequence (such as a list) that can be converted to the requested type
+of array.  The input array signatures are</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">(DATA_TYPE*</span> <span class="pre">IN_ARRAY1,</span> <span class="pre">int</span> <span class="pre">DIM1)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(DATA_TYPE*</span> <span class="pre">IN_ARRAY2,</span> <span class="pre">int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">DATA_TYPE*</span> <span class="pre">IN_ARRAY1)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2,</span> <span class="pre">DATA_TYPE*</span> <span class="pre">IN_ARRAY2)</span></tt></li>
+</ul>
+</blockquote>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id5" id="in-place-arrays" name="in-place-arrays">In-Place Arrays</a></h2>
+<p>In-place arrays are defined as arrays that are modified in-place.  The
+input values may or may not be used, but the values at the time the
+function returns are significant.  The provided <a class="reference" href="http://www.python.org">python</a> argument
+must therefore be a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array of the required type.  The in-place
+signatures are</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">(DATA_TYPE*</span> <span class="pre">INPLACE_ARRAY1,</span> <span class="pre">int</span> <span class="pre">DIM1)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(DATA_TYPE*</span> <span class="pre">INPLACE_ARRAY2,</span> <span class="pre">int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">DATA_TYPE*</span> <span class="pre">INPLACE_ARRAY1)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2,</span> <span class="pre">DATA_TYPE*</span> <span class="pre">INPLACE_ARRAY2)</span></tt></li>
+</ul>
+</blockquote>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id6" id="argout-arrays" name="argout-arrays">Argout Arrays</a></h2>
+<p>Argout arrays are arrays that appear in the input arguments in C, but
+are in fact output arrays.  This pattern occurs often when there is
+more than one output variable and the single return argument is
+therefore not sufficient.  In <a class="reference" href="http://www.python.org">python</a>, the convential way to return
+multiple arguments is to pack them into a tuple and return the tuple.
+This is what the argout typemaps do.  If a wrapped function that uses
+these argout typemaps has more than one return argument, they are so
+packed.  The <a class="reference" href="http://www.python.org">python</a> user does not pass these arrays in, they simply
+get returned.  The argout signatures are</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">(DATA_TYPE</span> <span class="pre">ARGOUT_ARRAY1[ANY])</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(DATA_TYPE</span> <span class="pre">ARGOUT_ARRAY2[ANY][ANY])</span></tt></li>
+</ul>
+</blockquote>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id7" id="other-common-types-bool" name="other-common-types-bool">Other Common Types: bool</a></h2>
+<p>Note that C++ type <tt class="docutils literal"><span class="pre">bool</span></tt> is not supported in the list in the
+<a class="reference" href="#available-typemaps">Available Typemaps</a> section.  NumPy bools are a single byte, while
+the C++ <tt class="docutils literal"><span class="pre">bool</span></tt> is four bytes (at least on my system).  Therefore:</p>
 <pre class="literal-block">
-%numpy_typemaps(bool, NPY_BOOL)
+%numpy_typemaps(bool, NPY_BOOL, int)
 </pre>
 <p>will result in typemaps that will produce code that reference
 improper data lengths.  You can implement the following macro
 expansion:</p>
 <pre class="literal-block">
-%numpy_typemaps(bool, NPY_UINT)
+%numpy_typemaps(bool, NPY_UINT, int)
 </pre>
 <p>to fix the data length problem, and <a class="reference" href="#input-arrays">Input Arrays</a> will work fine,
-but <a class="reference" href="#in-place-arrays">In-place Arrays</a> might fail type-checking.</p>
-<p>In the following descriptions, we reference a generic <tt class="docutils literal"><span class="pre">TYPE</span></tt>, which
-could be any of the C-types listed above.</p>
-<div class="section">
-<h2><a id="input-arrays" name="input-arrays">Input Arrays</a></h2>
-<p>Input arrays are defined as arrays of data that are passed into a
-routine but are not altered in-place or returned to the user.  The
-python input array is therefore allowed to be almost any python
-sequence (such as a list) that can be converted to the requested type
-of array.  The input array signatures are</p>
-<blockquote>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">IN_ARRAY1,</span> <span class="pre">int</span> <span class="pre">DIM1)</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">IN_ARRAY2,</span> <span class="pre">int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2)</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">TYPE*</span> <span class="pre">IN_ARRAY1)</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2,</span> <span class="pre">TYPE*</span> <span class="pre">IN_ARRAY2)</span></tt></li>
-</ul>
-</blockquote>
+but <a class="reference" href="#in-place-arrays">In-Place Arrays</a> might fail type-checking.</p>
 </div>
 <div class="section">
-<h2><a id="in-place-arrays" name="in-place-arrays">In-place Arrays</a></h2>
-<p>In-place arrays are defined as arrays that are modified in-place.  The
-input values may or may not be used, but the values at the time the
-function returns are significant.  The provided python argument must
-therefore be a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array of the required type.  The in-place
-signatures are</p>
-<blockquote>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">INPLACE_ARRAY1,</span> <span class="pre">int</span> <span class="pre">DIM1)</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">(TYPE*</span> <span class="pre">INPLACE_ARRAY2,</span> <span class="pre">int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2)</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">TYPE*</span> <span class="pre">INPLACE_ARRAY1)</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">(int</span> <span class="pre">DIM1,</span> <span class="pre">int</span> <span class="pre">DIM2,</span> <span class="pre">TYPE*</span> <span class="pre">INPLACE_ARRAY2)</span></tt></li>
-</ul>
-</blockquote>
-</div>
-<div class="section">
-<h2><a id="argout-arrays" name="argout-arrays">Argout Arrays</a></h2>
-<p>Argout arrays are arrays that appear in the input arguments in C, but
-are in fact output arrays.  This pattern occurs often when there is
-more than one output variable and the single return argument is
-therefore not sufficient.  In python, the convential way to return
-multiple arguments is to pack them into a tuple and return the tuple.
-This is what the argout typemaps do.  If a wrapped function that uses
-these argout typemaps has more than one return argument, they are so
-packed.  The python user does not pass these arrays in, they simply
-get returned.  The argout signatures are</p>
-<blockquote>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">(TYPE</span> <span class="pre">ARGOUT_ARRAY1[ANY])</span></tt></li>
-<li><tt class="docutils literal"><span class="pre">(TYPE</span> <span class="pre">ARGOUT_ARRAY2[ANY][ANY])</span></tt></li>
-</ul>
-</blockquote>
+<h2><a class="toc-backref" href="#id8" id="other-common-types-complex" name="other-common-types-complex">Other Common Types: complex</a></h2>
+<p>Typemap conversions for complex floating-point types is also not
+supported automatically.  This is because <a class="reference" href="http://www.python.org">python</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> are
+written in C, which does not have native complex types.  Both
+<a class="reference" href="http://www.python.org">python</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> implement their own (essentially equivalent)
+<tt class="docutils literal"><span class="pre">struct</span></tt> definitions for complex variables:</p>
+<pre class="literal-block">
+/* Python */
+typedef struct {double real; double imag;} Py_complex;
+
+/* NumPy */
+typedef struct {float  real, imag;} npy_cfloat;
+typedef struct {double real, imag;} npy_cdouble;
+</pre>
+<p>We could have implemented:</p>
+<pre class="literal-block">
+%numpy_typemaps(Py_complex , NPY_DOUBLE , int)
+%numpy_typemaps(npy_cfloat , NPY_CFLOAT , int)
+%numpy_typemaps(npy_cdouble, NPY_CDOUBLE, int)
+</pre>
+<p>which would have provided automatic type conversions for arrays of
+type <tt class="docutils literal"><span class="pre">Py_complex</span></tt>, <tt class="docutils literal"><span class="pre">npy_cfloat</span></tt> and <tt class="docutils literal"><span class="pre">npy_cdouble</span></tt>.  However, it
+seemed unlikely that there would be any independent (non-<a class="reference" href="http://www.python.org">python</a>,
+non-<a class="reference" href="http://numpy.scipy.org">NumPy</a>) application code that people would be using <a class="reference" href="http://www.swig.org">SWIG</a> to
+generate a python interface to, that also used these definitions for
+complex types.  More likely, these application codes will define their
+own complex types, or in the case of C++, use <tt class="docutils literal"><span class="pre">std::complex</span></tt>.
+Assuming these data structures are compatible with <a class="reference" href="http://www.python.org">python</a> and
+<a class="reference" href="http://numpy.scipy.org">NumPy</a> complex types, <tt class="docutils literal"><span class="pre">%numpy_typemap</span></tt> expansions as above (with
+the user's complex type substituted for the first argument) should
+work.</p>
 </div>
 </div>
 <div class="section">
-<h1><a id="helper-functions" name="helper-functions">Helper Functions</a></h1>
+<h1><a class="toc-backref" href="#id9" id="helper-functions" name="helper-functions">Helper Functions</a></h1>
 <p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> file containes several macros and routines that it
 uses internally to build its typemaps.  However, these functions may
 be useful elsewhere in your interface file.</p>
 <div class="section">
-<h2><a id="macros" name="macros">Macros</a></h2>
+<h2><a class="toc-backref" href="#id10" id="macros" name="macros">Macros</a></h2>
 <blockquote>
 <dl class="docutils">
 <dt><strong>is_array(a)</strong></dt>
@@ -547,7 +605,7 @@ can be cast to a <tt class="docutils literal"><span class="pre">PyArrayObject*</
 </blockquote>
 </div>
 <div class="section">
-<h2><a id="routines" name="routines">Routines</a></h2>
+<h2><a class="toc-backref" href="#id11" id="routines" name="routines">Routines</a></h2>
 <blockquote>
 <dl class="docutils">
 <dt><strong>char* pytype_string(PyObject* py_obj)</strong></dt>
@@ -611,7 +669,45 @@ returned.</dd>
 </div>
 </div>
 <div class="section">
-<h1><a id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
+<h1><a class="toc-backref" href="#id12" id="beyond-the-provided-typemaps" name="beyond-the-provided-typemaps">Beyond the Provided Typemaps</a></h1>
+<p>There are many C or C++ array/<a class="reference" href="http://numpy.scipy.org">NumPy</a> array situations not covered by
+a simple <tt class="docutils literal"><span class="pre">%include</span> <span class="pre">&quot;numpy.i&quot;</span></tt>.  Nevertheless, <tt class="docutils literal"><span class="pre">numpy.i</span></tt> may still
+be helpful when you encounter them.</p>
+<blockquote>
+<ul>
+<li><p class="first">In some situations, it is possible that you could use the
+<tt class="docutils literal"><span class="pre">%numpy_templates</span></tt> macro to implement typemaps for your own
+types.  See the <a class="reference" href="#other-common-types-bool">Other Common Types: bool</a> or <a class="reference" href="#other-common-types-complex">Other Common
+Types: complex</a> sections for examples.  Another situation is if
+your dimensions are of a type other than <tt class="docutils literal"><span class="pre">int</span></tt> (say <tt class="docutils literal"><span class="pre">long</span></tt> for
+example):</p>
+<pre class="literal-block">
+%numpy_typemaps(double, NPY_DOUBLE, long)
+</pre>
+</li>
+<li><p class="first">You can use the code in <tt class="docutils literal"><span class="pre">numpy.i</span></tt> to write your own typemaps.
+For example, if you had a three-dimensional array as a function
+argument, you could cut-and-paste the appropriate two-dimensional
+typemap into your interface file.  The modification for the third
+dimension would be trivial.</p>
+</li>
+<li><p class="first">Sometimes, the best approach is to use the <tt class="docutils literal"><span class="pre">%extend</span></tt> directive
+to define new methods for your classes (or overload existing ones)
+that take a <tt class="docutils literal"><span class="pre">PyObject*</span></tt> (that either is or can be converted to a
+<tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>) instead of a pointer to a buffer.  In this
+case, the helper routines in <tt class="docutils literal"><span class="pre">numpy.i</span></tt> can be very useful.</p>
+</li>
+<li><p class="first">Writing typemaps can be a bit nonintuitive.  If you have specific
+questions about writing <a class="reference" href="http://www.swig.org">SWIG</a> typemaps for <a class="reference" href="http://numpy.scipy.org">NumPy</a>, the
+developers of <tt class="docutils literal"><span class="pre">numpy.i</span></tt> do monitor the
+<a class="reference" href="mailto:Numpy-discussion&#64;scipy.org">Numpy-discussion</a> and
+<a class="reference" href="mailto:Swig-user&#64;lists.sourceforge.net">Swig-user</a> mail lists.</p>
+</li>
+</ul>
+</blockquote>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id13" id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
 <p>Many people have worked to glue <a class="reference" href="http://www.swig.org">SWIG</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> (and its
 predecessors Numeric and numarray) together.  The effort to
 standardize this work into <tt class="docutils literal"><span class="pre">numpy.i</span></tt> began at the 2005 SciPy
@@ -623,7 +719,7 @@ result possible.</p>
 </div>
 <div class="footer">
 <hr class="footer" />
-Generated on: 2007-03-14 20:27 UTC.
+Generated on: 2007-03-19 04:09 UTC.
 Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
 
 </div>

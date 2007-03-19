@@ -13,6 +13,7 @@ to do with numpy.i.  The files related to testing are::
 
     series.h
     series.cxx
+    Series.i
     testSeries.py
 
 The series.h header file contains prototypes for functions that
