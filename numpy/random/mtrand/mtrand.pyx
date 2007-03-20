@@ -146,7 +146,7 @@ cdef object cont1_array_sc(rk_state *state, rk_cont1 func, object size, double a
     if size is None:
         return func(state, a)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -245,7 +245,7 @@ cdef object cont3_array_sc(rk_state *state, rk_cont3 func, object size, double a
     if size is None:
         return func(state, a, b, c)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Float64)
+        array = <ndarray>_sp.empty(size, _sp.float64)
         length = PyArray_SIZE(array)
         array_data = <double *>array.data
         for i from 0 <= i < length:
@@ -417,7 +417,7 @@ cdef object discd_array_sc(rk_state *state, rk_discd func, object size, double a
     if size is None:
         return func(state, a)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
