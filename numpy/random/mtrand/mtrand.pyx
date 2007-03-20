@@ -314,7 +314,7 @@ cdef object discnp_array_sc(rk_state *state, rk_discnp func, object size, long n
     if size is None:
         return func(state, n, p)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
@@ -364,7 +364,7 @@ cdef object discnmN_array_sc(rk_state *state, rk_discnmN func, object size,
     if size is None:
         return func(state, n, m, N)
     else:
-        array = <ndarray>_sp.empty(size, _sp.Int)
+        array = <ndarray>_sp.empty(size, int)
         length = PyArray_SIZE(array)
         array_data = <long *>array.data
         for i from 0 <= i < length:
