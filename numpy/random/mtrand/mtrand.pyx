@@ -776,7 +776,7 @@ cdef class RandomState:
 
         fshape = PyFloat_AsDouble(shape)
         if not PyErr_Occurred():
-            if fscale <= 0:
+            if fshape <= 0:
                 raise ValueError("shape <= 0")
             return cont1_array_sc(self.internal_state, rk_standard_gamma, size, fshape)
 
@@ -887,7 +887,7 @@ cdef class RandomState:
         if not PyErr_Occurred():
             if fdf <= 0:
                 raise ValueError("df <= 0")
-            return cont1_array(self.internal_state, rk_chisquare, size, fdf)
+            return cont1_array_sc(self.internal_state, rk_chisquare, size, fdf)
 
         PyErr_Clear()
 

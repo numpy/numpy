@@ -16,6 +16,7 @@ cdef extern from "Python.h":
 
     # Float API
     double PyFloat_AsDouble(object ob)
+    long PyInt_AsLong(object ob)
 
     # Memory API
     void* PyMem_Malloc(size_t n)
