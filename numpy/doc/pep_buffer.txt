@@ -17,8 +17,8 @@ function pointers) to improve the way Python allows memory sharing
 in Python 3.0
 
 In particular, it is proposed that the multiple-segment and
-character buffer portions of the buffer API are eliminated and
-additional function pointers are provided to allow sharing any
+character buffer portions of the buffer API be eliminated and
+additional function pointers be provided to allow sharing any
 multi-dimensional nature of the memory and what data-format the
 memory contains.
 
@@ -28,7 +28,7 @@ Rationale
 The buffer protocol allows different Python types to exchange a
 pointer to a sequence of internal buffers.  This functionality is
 *extremely* useful for sharing large segments of memory between
-different high-level objects, but it's too limited and has issues.
+different high-level objects, but it is too limited and has issues.
 
 1. There is the little (never?) used "sequence-of-segments" option
    (bf_getsegcount)
@@ -53,28 +53,38 @@ different high-level objects, but it's too limited and has issues.
    (wxPython, GTK, pyQT, CVXOPT, PyVox, Audio and Video
    Libraries, ctypes, NumPy, data-base interfaces, etc.)
 
-There are two widely used libraries that use the concept of
-discontiguous memory: PIL and NumPy.  Their view of discontiguous
-arrays is a bit different, though.  NumPy uses the notion of
-constant striding in each dimension as its basic concept of an
-array. In this way a simple sub-region of a larger array can be
-described without copying the data.  Strided memory is also a common
-way to describe data in many computing libraries (such as the BLAS
-and LAPACK).
+6. There is no way to share discontiguous memory (except through
+   the sequence of segments notion).  
 
-The PIL uses a more opaque memory representation. Sometimes an
-image is contained in a contiguous segment of memory, but
-sometimes it is contained in an array of pointers to the
-contiguous segments (usually lines) of the image.  This allows the
-image to not be loaded entirely into memory but still managed
-abstractly as if it were. I believe, the PIL is where the idea of
-multiple buffer segments in the original buffer interface came
-from, I believe.
+   There are two widely used libraries that use the concept of
+   discontiguous memory: PIL and NumPy.  Their view of discontiguous
+   arrays is different, though.  This buffer interface allows
+   sharing of either memory model.  Exporters will only use one         
+   approach and consumers may choose to support discontiguous 
+   arrays of each type however they choose. 
 
-The buffer interface should allow discontiguous memory areas to
-share standard striding information.  However, consumers that do
-not want to deal with strided memory should also be able to
-request a contiguous segment easily.
+   NumPy uses the notion of constant striding in each dimension as its
+   basic concept of an array. With this concept, a simple sub-region
+   of a larger array can be described without copying the data.   T
+   Thus, stride information is the additional information that must be
+   shared. 
+
+   The PIL uses a more opaque memory representation. Sometimes an
+   image is contained in a contiguous segment of memory, but sometimes
+   it is contained in an array of pointers to the contiguous segments
+   (usually lines) of the image.  The PIL is where the idea of multiple
+   buffer segments in the original buffer interface came from. 
+  
+
+   NumPy's strided memory model is used more often in computational
+   libraries and because it is so simple it makes sense to support
+   memory sharing using this model.  The PIL memory model is used often
+   in C-code where a 2-d array can be then accessed using double
+   pointer indirection:  e.g. image[i][j].  
+
+   The buffer interface should allow the object to export either of these
+   memory models.  Consumers are free to either require contiguous memory
+   or write code to handle either memory model.  
 
 Proposal Overview
 =================
@@ -87,15 +97,15 @@ Proposal Overview
 * Add a new function to the interface that should be called when
   the consumer object is "done" with the view.
 
-* Add a new memory_view object that is returned from the 
-  buffer interface getbuffer call.  This memory_view object
-  contains
-* Add a new function to allow the interface to describe what is in
+* Add a new variable to allow the interface to describe what is in
   memory (unifying what is currently done now in struct and
   array)
 
-* Add a new function to allow the protocol to share shape and 
-  stride information
+* Add a new variable to allow the protocol to share shape information
+
+* Add a new variable for sharing stride information
+
+* Add a new mechanism for sharing array of arrays. 
 
 * Fix all objects in the core and the standard library to conform
   to the new interface
@@ -120,14 +130,25 @@ Change the PyBufferProcs structure to
                                        Py_ssize_t *len, int *writeable,
                                        char **format, int *ndims,
                                        Py_ssize_t **shape,
-                                       Py_ssize_t **strides)
+                                       Py_ssize_t **strides,
+                                       void **segments)
 
-Return a pointer to memory in ``*buf`` and the length of that memory
-buffer (in bytes) in ``*len``.  The next arguments are optional.
-NULL is returned on failure.   On success an oject-specific
-view is returned (which may just be a borrowed reference to obj).
-This view should be passed to bf_releasebuffer when the consumer
-is done with the view.
+All variables except the first are optional.  Use NULL for all
+un-needed variables.  Thus, this function can be called to get only
+the desired information from an object. NULL is returned on failure.
+On success an object-specific view is returned (which may just be a
+borrowed reference to obj).  This view should be passed to
+bf_releasebuffer when the consumer is done with the view.
+
+buf
+     a pointer to the start of the memory for the object is returned in
+    ``*buf``
+
+len
+     adress of an integer variable to hold the total bytes
+     of memory the object uses.  This should be the same
+     as the product of the shape array multiplied by the
+     number of bytes per item of memory. 
 
 writeable
     address of an integer variable to hold whether or not the memory
@@ -158,21 +179,39 @@ shape
     If this variable is not provided then it is assumed that
     ``(*shape[0]) == len / itemsize``.
 
-stride
-    address of a ``Py_ssize_t*`` variable that will be filled
-    with a pointer to an array of ``Py_ssize_t`` of length ``*ndims``
-    indicating the number of bytes to skip to get to the next
-    element in each dimension.  If this is NULL, then
-    the memory is assumed to be C-style contigous with
-    the last dimension varying the fastest.  An
-    error should be raised if this is not accurate and
-    strides are not requested.  This variable may be
-    set to NULL when called if memory is C-style
-    contiguous.
 
-    This view object should be used in the other API call and 
-    does not need to be decref'd.  It should be "released" if the
-    interface exporter provides the bf_releasebuffer function.
+strides 
+    address of a ``Py_ssize_t*`` variable that will be filled with a
+    pointer to an array of ``Py_ssize_t`` of length ``*ndims``
+    indicating the number of bytes to skip to get to the next element
+    in each dimension.  If this is NULL, then the memory is assumed to
+    be C-style contigous with the last dimension varying the fastest.
+    An error should be raised if this is not accurate and strides are
+    not requested.  This variable may be set to NULL (with no error
+    set) if memory is actually C-style contiguous.
+
+
+segments
+    address to array-of-pointers-style array model.  Only one of
+    strides or segments can be used (the other one must be NULL).  
+    If the object does not support this kind of memory model and it
+    is requested, then an error should be raised and *segments set
+    to NULL.  The segments variable should be recast to a 
+    pointer-to-a-pointer-to-a-pointer-...-to-a-pointer depending on 
+    the output of ndims.   
+
+    Thus, if ndims is 2, segments should be cast to (<type> ***)
+    so that (*segments)[i][j] refers to the (i,j)th element
+    of the array.  If ndims is 3, segments should be cast to (<type> ****)
+    so that (*segments)[i][j][k] refers to the (i,j,k)th element
+    of the array. 
+
+
+The view object should be used in the other API call and does not need
+to be decref'd.  It should be "released" if the interface exporter
+provides the bf_releasebuffer function.  Otherwise, it may be
+discared.  The view object is exporter-specific.
+
 
 ``typedef int (*releasebufferproc)(PyObject *view)``
     This function is called (if defined by the exporting object)
@@ -203,7 +242,8 @@ Return 1 if the getbuffer function is available otherwise 0.
     PyObject * PyObject_GetBuffer(PyObject *obj, void **buf,
                                   Py_ssize_t *len, int *writeable,
                                   char **format, int *ndims,
-                                  Py_ssize_t **shape, Py_ssize_t **strides)
+                                  Py_ssize_t **shape, Py_ssize_t **strides,
+                                  void **segments)
 
 Get the buffer and optional information variables about the buffer.
 Return an object-specific view object (which may be simply a
@@ -227,6 +267,33 @@ Returns -1 on error.
 
 Return the implied itemsize of the data-format area from a struct-style
 description.
+
+::
+
+    int PyObject_GetContiguous(PyObject *obj, void **buf, Py_ssize_t *len)
+
+Return a contiguous chunk of memory representing the buffer.  If a
+copy is made then return 1.  If no copy was needed return 0.  If an
+error occurred in probing the buffer interface, then return -1.  The
+contiguous chunk of memory is pointed to by ``*buf`` and the length
+of that memory is ``*len``.  The buffer is C-style contiguous
+meaning the last dimension varies the fastest. 
+
+:: 
+
+    int PyObject_CopyToObject(PyObject *obj, void *buf, Py_ssize_t len)
+
+Copy ``len`` bytes of data pointed to by the contiguous chunk of
+memory pointed to by ``buf`` into the buffer exported by obj.  Return
+0 on success and return -1 and raise an error on failure.  If the 
+object does not have a writeable buffer, then an error is raised.  
+The data is copied into an array in C-style contiguous fashion meaning the
+last variable varies the fastest. 
+
+The last two C-API calls allow a standard way of getting data in and out
+of Python objects no matter how it is actually stored.  These calls use
+the buffer interface to perform their work. 
+
 
 
 Additions to the struct string-syntax
@@ -259,11 +326,13 @@ Character         Description
 
 The struct module will be changed to understand these as well and
 return appropriate Python objects on unpacking.  Un-packing a
-long-double will return a c-types long_double.  Unpacking 'u' or
+long-double will return a decimal object.  Unpacking 'u' or
 'w' will return Python unicode.  Unpacking a multi-dimensional
 array will return a list of lists.  Un-packing a pointer will
 return a ctypes pointer object.  Un-packing a bit will return a
 Python Bool.  Spaces in the struct-string syntax will be ignored.
+Unpacking a named-object will return a Python class with attributes 
+having those names. 
 
 Endian-specification ('=','>','<') is also allowed inside the
 string so that it can change if needed.  The previously-specified
@@ -334,11 +403,12 @@ Issues and Details
 ==================
 
 The proposed locking mechanism relies entirely on the objects
-implementing the buffer interface to do their own thing.  Ideally
-an object that implements the buffer interface should keep at least
-a number indicating how many releases are extant.  If there are views
-to a memory location, then any subsequent reallocation should fail and raise
-an error.
+implementing the buffer interface to do their own thing.  Ideally an
+object that implements the buffer interface and can re-allocate
+memory, should store in its structure at least a number indicating how
+many views are extant.  If there are still un-released views to a
+memory location, then any subsequent reallocation should fail and
+raise an error.
 
 The sharing of strided memory is new and can be seen as a
 modification of the multiple-segment interface.  It is motivated by
@@ -347,9 +417,9 @@ with code that understands how to manage strided memory because
 strided memory is very common when interfacing with compute libraries.
 
 Currently the struct module does not allow specification of nested
-structures.  It seems like specifying a nested structure should be
-specified as several ways of viewing memory areas (e.g. ctypes and
-NumPy) already allow this.
+structures.  The modifications to struct requested allow for
+specifying nested structures as several ways of viewing memory areas
+(e.g. ctypes and NumPy) already allow this.
 
 Memory management of the format string and the shape and strides
 array is always the responsibility of the exporting object and can
