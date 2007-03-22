@@ -53,11 +53,11 @@ def poly(seq_of_zeros):
     If the input is a matrix, return the characteristic polynomial.
 
     Example:
-        
+
         >>> b = roots([1,3,1,5,6])
         >>> poly(b)
         array([ 1.,  3.,  1.,  5.,  6.])
-        
+
     """
     seq_of_zeros = atleast_1d(seq_of_zeros)
     sh = seq_of_zeros.shape
@@ -655,5 +655,3 @@ class poly1d(object):
 # Stuff to do on module import
 
 warnings.simplefilter('always',RankWarning)
-
-    

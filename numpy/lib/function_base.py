@@ -143,7 +143,7 @@ def histogramdd(sample, bins=10, range=None, normed=False):
     H, edges = histogramdd(x, bins = (5, 6, 7))
 
     See also: histogram
-    
+
     """
 
     try:
@@ -264,7 +264,7 @@ def average(a, axis=None, weights=None, returned=False):
 
     Raises ZeroDivisionError if appropriate.  (The version in MA does
     not -- it returns masked values).
-    
+
     """
     if axis is None:
         a = array(a).ravel()
@@ -403,7 +403,7 @@ def select(condlist, choicelist, default=0):
 
     Note that one of the condition arrays must be large enough to handle
     the largest array in the choice list.
-    
+
     """
     n = len(condlist)
     n2 = len(choicelist)
@@ -456,7 +456,7 @@ def gradient(f, *varargs):
 
       N arrays of the same shape as f giving the derivative of f with respect
       to each dimension.
-       
+
     """
     N = len(f.shape)  # number of dimensions
     n = len(varargs)
@@ -641,7 +641,7 @@ def trim_zeros(filt, trim='fb'):
         >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
         >>> numpy.trim_zeros(a)
         array([1, 2, 3, 2, 1])
-        
+
     """
     first = 0
     trim = trim.upper()
@@ -666,7 +666,7 @@ def unique(x):
     Example:
     >>> unique([5,2,4,0,4,4,2,2,1])
     array([0, 1, 2, 4, 5])
-    
+
     """
     try:
         tmp = x.flatten()
@@ -692,7 +692,7 @@ def place(arr, mask, vals):
     """Similar to putmask arr[mask] = vals but the 1D array vals has the
     same number of elements as the non-zero values of mask. Inverse of
     extract.
-    
+
     """
     return _insert(arr, mask, vals)
 
