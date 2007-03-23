@@ -283,19 +283,19 @@ class test_vectorize(NumpyTestCase):
 
 class test_digitize(NumpyTestCase):
     def check_forward(self):
-	x = arange(-6,5)
-	bins = arange(-5,5)
-	assert_array_equal(digitize(x,bins),arange(11))
+        x = arange(-6,5)
+        bins = arange(-5,5)
+        assert_array_equal(digitize(x,bins),arange(11))
 
     def check_reverse(self):
-	x = arange(5,-6,-1)
-	bins = arange(5,-5,-1)
-	assert_array_equal(digitize(x,bins),arange(11))
+        x = arange(5,-6,-1)
+        bins = arange(5,-5,-1)
+        assert_array_equal(digitize(x,bins),arange(11))
 
     def check_random(self):
-	x = rand(10)
-	bin = linspace(x.min(), x.max(), 10)
-	assert all(digitize(x,bin) != 0)
+        x = rand(10)
+        bin = linspace(x.min(), x.max(), 10)
+        assert all(digitize(x,bin) != 0)
 
 class test_unwrap(NumpyTestCase):
     def check_simple(self):

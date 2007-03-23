@@ -85,7 +85,7 @@ class memmap(ndarray):
         self._mmap.flush()
 
     def close(self):
-	self._mmap.close()
+        self._mmap.close()
 
     def __del__(self):
         if self._mmap is not None:
