@@ -304,7 +304,8 @@ Routines
 
   **int type_match(int actual_type, int desired_type)**
     Make sure input has correct `NumPy`_ type.  Allow character and
-    byte to match.  Also allow int and long to match.
+    byte to match.  Also allow int and long to match.  This is
+    deprecated .  You should use ``PyArray_EquivTypenums()`` instead.
 
 
   **PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode)**
@@ -359,26 +360,13 @@ Routines
     the python error string and return 0.
 
 
-  **static PyArrayObject *contiguous_typed_array(PyObject *obj, int typecode, int expectnd, int *expectdims)**
-    This function tries to create a contiguous `NumPy`_ array of type
-    typecode from an arbitrary python object ``obj``.  This should
-    work for any sequence object.  The argument ``expectnd`` is the
-    expected number of dimensions, ignored if <= 0.  The argument
-    ``expectdims`` is an array of expected dimensions, ignored if <=
-    0.  This routine raises a ``ValueError`` exception if the
-    underlying ``PyArray_ContiguousFromObject`` routine fails, if the
-    array has a bad shape, if the extent of a given dimension doesn't
-    match the specified extent.  If ``obj`` is a contiguous
-    ``PyArrayObject*`` then a reference is returned; if ``obj`` is a
-    python sequence, then a new ``PyArrayObject*`` is created and
-    returned.
-
 Beyond the Provided Typemaps
 ============================
 
 There are many C or C++ array/`NumPy`_ array situations not covered by
-a simple ``%include "numpy.i"``.  Nevertheless, ``numpy.i`` may still
-be helpful when you encounter them.
+a simple ``%include "numpy.i"`` and subsequent ``%apply`` directives.
+Nevertheless, ``numpy.i`` may still be helpful when you encounter
+them.
 
   * In some situations, it is possible that you could use the
     ``%numpy_templates`` macro to implement typemaps for your own
