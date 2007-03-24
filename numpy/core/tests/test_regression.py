@@ -633,5 +633,12 @@ class test_regression(NumpyTestCase):
         assert_equal(N.array("a\x00\x0b\x0c\x00").item(),
                      'a\x00\x0b\x0c')
 
+    def check_matrix_multiply_by_1d_vector(self, level=rlevel) :
+        """Ticket #473"""
+        def mul() :
+            N.mat(N.eye(2))*N.ones(2)
+
+        self.failUnlessRaises(ValueError,mul)
+
 if __name__ == "__main__":
     NumpyTest().run()
