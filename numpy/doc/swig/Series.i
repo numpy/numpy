@@ -15,13 +15,15 @@
 
 %define %apply_numpy_typemaps(TYPE)
 
+%apply (TYPE IN_ARRAY1[ANY]) {(TYPE vector[ANY])};
 %apply (TYPE* IN_ARRAY1, int DIM1) {(TYPE* series, int size)};
-%apply (TYPE* IN_ARRAY2, int DIM1, int DIM2) {(TYPE* matrix, int rows, int cols)};
-%apply (TYPE* INPLACE_ARRAY1, int DIM1) {(TYPE* array, int size)};
-%apply (TYPE* INPLACE_ARRAY2, int DIM1, int DIM2) {(TYPE* array, int rows, int cols)};
 %apply (int DIM1, TYPE* IN_ARRAY1) {(int size, TYPE* series)};
+%apply (TYPE IN_ARRAY2[ANY][ANY]) {(TYPE matrix[ANY][ANY])};
+%apply (TYPE* IN_ARRAY2, int DIM1, int DIM2) {(TYPE* matrix, int rows, int cols)};
 %apply (int DIM1, int DIM2, TYPE* IN_ARRAY2) {(int rows, int cols, TYPE* matrix)};
+%apply (TYPE* INPLACE_ARRAY1, int DIM1) {(TYPE* array, int size)};
 %apply (int DIM1, TYPE* INPLACE_ARRAY1) {(int size, TYPE* array)};
+%apply (TYPE* INPLACE_ARRAY2, int DIM1, int DIM2) {(TYPE* array, int rows, int cols)};
 %apply (int DIM1, int DIM2, TYPE* INPLACE_ARRAY2) {(int rows, int cols, TYPE* array)};
 
 %enddef    /* %apply_numpy_typemaps() macro */

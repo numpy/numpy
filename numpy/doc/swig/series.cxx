@@ -5,6 +5,7 @@
 
 // The following macro defines a family of functions with the forms
 //
+//     TYPE SNAMELength(TYPE vector[3]);
 //     TYPE SNAMEProd( TYPE * series, int size);
 //     void SNAMEOnes( TYPE * array,  int size);
 //     TYPE SNAMEMax(  TYPE * matrix, int rows, int cols);
@@ -20,16 +21,24 @@
 // TYPE/SNAME pairs.  The resulting functions are for testing numpy
 // interfaces, respectively, for:
 //
+//  * 1D input arrays, hard-coded length
 //  * 1D input arrays
-//  * 1D in-place arrays
-//  * 2D input arrays
-//  * 2D in-place arrays
 //  * 1D input arrays, data last
+//  * 1D in-place arrays
 //  * 1D in-place arrays, data last
+//  * 2D input arrays, hard-coded length
+//  * 2D input arrays
 //  * 2D input arrays, data last
+//  * 2D in-place arrays
 //  * 2D in-place arrays, data last
 //
 #define TEST_FUNCS(TYPE, SNAME) \
+\
+TYPE SNAME ## Length(TYPE vector[3]) {                   \
+  double result = 0;                                     \
+  for (int i=0; i<3; ++i) result += vector[i]*vector[i]; \
+  return (TYPE)sqrt(result);   			         \
+}                                                        \
 \
 TYPE SNAME ## Prod(TYPE * series, int size) {     \
   TYPE result = 1;                                \
@@ -37,9 +46,23 @@ TYPE SNAME ## Prod(TYPE * series, int size) {     \
   return result;                                  \
 }                                                 \
 \
+TYPE SNAME ## Sum(int size, TYPE * series) {      \
+  TYPE result = 0;                                \
+  for (int i=0; i<size; ++i) result += series[i]; \
+  return result;                                  \
+}                                                 \
+\
 void SNAME ## Ones(TYPE * array, int size) { \
   for (int i=0; i<size; ++i) array[i] = 1;   \
 }                                            \
+\
+void SNAME ## Zeros(int size, TYPE * array) { \
+  for (int i=0; i<size; ++i) array[i] = 0;    \
+}                                             \
+\
+TYPE SNAME ## Det(TYPE matrix[2][2]) {                          \
+  return matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]; \
+}                                                               \
 \
 TYPE SNAME ## Max(TYPE * matrix, int rows, int cols) {	  \
   int i, j, index;                                        \
@@ -48,6 +71,18 @@ TYPE SNAME ## Max(TYPE * matrix, int rows, int cols) {	  \
     for (i=0; i<rows; ++i) {                              \
       index = j*rows + i;                                 \
       if (matrix[index] > result) result = matrix[index]; \
+    }                                                     \
+  }                                                       \
+  return result;                                          \
+}                                                         \
+\
+TYPE SNAME ## Min(int rows, int cols, TYPE * matrix) {    \
+  int i, j, index;                                        \
+  TYPE result = matrix[0];                                \
+  for (j=0; j<cols; ++j) {                                \
+    for (i=0; i<rows; ++i) {                              \
+      index = j*rows + i;                                 \
+      if (matrix[index] < result) result = matrix[index]; \
     }                                                     \
   }                                                       \
   return result;                                          \
@@ -62,28 +97,6 @@ void SNAME ## Floor(TYPE * array, int rows, int cols, TYPE floor) { \
     }                                                               \
   }                                                                 \
 }                                                                   \
-\
-TYPE SNAME ## Sum(int size, TYPE * series) {      \
-  TYPE result = 0;                                \
-  for (int i=0; i<size; ++i) result += series[i]; \
-  return result;                                  \
-}                                                 \
-\
-void SNAME ## Zeros(int size, TYPE * array) { \
-  for (int i=0; i<size; ++i) array[i] = 0;    \
-}                                             \
-\
-TYPE SNAME ## Min(int rows, int cols, TYPE * matrix) {    \
-  int i, j, index;                                        \
-  TYPE result = matrix[0];                                \
-  for (j=0; j<cols; ++j) {                                \
-    for (i=0; i<rows; ++i) {                              \
-      index = j*rows + i;                                 \
-      if (matrix[index] < result) result = matrix[index]; \
-    }                                                     \
-  }                                                       \
-  return result;                                          \
-}                                                         \
 \
 void SNAME ## Ceil(int rows, int cols, TYPE * array, TYPE ceil) { \
   int i, j, index;                                                \

@@ -174,9 +174,11 @@ routine but are not altered in-place or returned to the user.  The
 sequence (such as a list) that can be converted to the requested type
 of array.  The input array signatures are
 
+  * ``(DATA_TYPE IN_ARRAY[ANY])``
   * ``(DATA_TYPE* IN_ARRAY1, int DIM1)``
-  * ``(DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, DATA_TYPE* IN_ARRAY1)``
+  * ``(DATA_TYPE IN_ARRAY[ANY])``
+  * ``(DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2)``
 
 In-Place Arrays
@@ -189,8 +191,8 @@ must therefore be a `NumPy`_ array of the required type.  The in-place
 signatures are
 
   * ``(DATA_TYPE* INPLACE_ARRAY1, int DIM1)``
-  * ``(DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, DATA_TYPE* INPLACE_ARRAY1)``
+  * ``(DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2)``
 
 Argout Arrays
