@@ -4,7 +4,7 @@ numpy.i: a SWIG Interface File for NumPy
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
-:Date:        18 March, 2007
+:Date:        24 March, 2007
 
 .. contents::
 
@@ -174,12 +174,16 @@ routine but are not altered in-place or returned to the user.  The
 sequence (such as a list) that can be converted to the requested type
 of array.  The input array signatures are
 
-  * ``(DATA_TYPE IN_ARRAY[ANY])``
+  * ``(DATA_TYPE IN_ARRAY1[ANY])``
   * ``(DATA_TYPE* IN_ARRAY1, int DIM1)``
   * ``(int DIM1, DATA_TYPE* IN_ARRAY1)``
-  * ``(DATA_TYPE IN_ARRAY[ANY])``
+  * ``(DATA_TYPE IN_ARRAY2[ANY][ANY])``
   * ``(DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2)``
+
+The first signature listed, ``(DATA_TYPE IN_ARRAY[ANY])`` is for
+hard-coded one-dimensional arrays.  Likewise, ``(DATA_TYPE
+IN_ARRAY2[ANY][ANY])`` is for two-dimensional arrays.
 
 In-Place Arrays
 ---------------
@@ -190,8 +194,10 @@ function returns are significant.  The provided `python`_ argument
 must therefore be a `NumPy`_ array of the required type.  The in-place
 signatures are
 
+  * ``(DATA_TYPE INPLACE_ARRAY1[ANY])``
   * ``(DATA_TYPE* INPLACE_ARRAY1, int DIM1)``
   * ``(int DIM1, DATA_TYPE* INPLACE_ARRAY1)``
+  * ``(DATA_TYPE INPLACE_ARRAY2[ANY][ANY])``
   * ``(DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2)``
 

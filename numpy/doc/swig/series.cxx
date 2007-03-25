@@ -5,15 +5,18 @@
 
 // The following macro defines a family of functions with the forms
 //
-//     TYPE SNAMELength(TYPE vector[3]);
-//     TYPE SNAMEProd( TYPE * series, int size);
-//     void SNAMEOnes( TYPE * array,  int size);
-//     TYPE SNAMEMax(  TYPE * matrix, int rows, int cols);
-//     void SNAMEFloor(TYPE * array,  int rows, int cols, TYPE floor);
-//     TYPE SNAMESum(  int size, TYPE * series);
-//     void SNAMEZeros(int size, TYPE * array);
-//     TYPE SNAMEMin(  int rows, int cols, TYPE * matrix);
-//     void SNAMECeil( int rows, int cols, TYPE * array, TYPE ceil);
+//     TYPE SNAMELength( TYPE vector[3]);
+//     TYPE SNAMEProd(   TYPE * series, int size);
+//     TYPE SNAMESum(    int size, TYPE * series);
+//     void SNAMEReverse(TYPE array[3]);
+//     void SNAMEOnes(   TYPE * array,  int size);
+//     void SNAMEZeros(  int size, TYPE * array);
+//     TYPE SNAMEDet(    TYPE matrix[2][2]);
+//     TYPE SNAMEMax(    TYPE * matrix, int rows, int cols);
+//     TYPE SNAMEMin(    int rows, int cols, TYPE * matrix);
+//     void SNAMEScale(  TYPE matrix[3][3]);
+//     void SNAMEFloor(  TYPE * array,  int rows, int cols, TYPE floor);
+//     void SNAMECeil(   int rows, int cols, TYPE * array, TYPE ceil);
 //
 // for any specified type TYPE (for example: short, unsigned int, long
 // long, etc.) with given short name SNAME (for example: short, uint,
@@ -24,11 +27,13 @@
 //  * 1D input arrays, hard-coded length
 //  * 1D input arrays
 //  * 1D input arrays, data last
+//  * 1D in-place arrays, hard-coded length
 //  * 1D in-place arrays
 //  * 1D in-place arrays, data last
 //  * 2D input arrays, hard-coded length
 //  * 2D input arrays
 //  * 2D input arrays, data last
+//  * 2D in-place arrays, hard-coded lengths
 //  * 2D in-place arrays
 //  * 2D in-place arrays, data last
 //
@@ -51,6 +56,12 @@ TYPE SNAME ## Sum(int size, TYPE * series) {      \
   for (int i=0; i<size; ++i) result += series[i]; \
   return result;                                  \
 }                                                 \
+\
+void SNAME ## Reverse(TYPE array[3]) { \
+  TYPE temp = array[0];		       \
+  array[0] = array[2];                 \
+  array[2] = temp;                     \
+}                                      \
 \
 void SNAME ## Ones(TYPE * array, int size) { \
   for (int i=0; i<size; ++i) array[i] = 1;   \
@@ -87,6 +98,12 @@ TYPE SNAME ## Min(int rows, int cols, TYPE * matrix) {    \
   }                                                       \
   return result;                                          \
 }                                                         \
+\
+void SNAME ## Scale(TYPE array[3][3], TYPE val) { \
+  for (int i=0; i<3; ++i)                         \
+    for (int j=0; j<3; ++j)                       \
+      array[i][j] *= val;                         \
+}                                                 \
 \
 void SNAME ## Floor(TYPE * array, int rows, int cols, TYPE floor) { \
   int i, j, index;                                                  \

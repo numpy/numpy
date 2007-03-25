@@ -303,18 +303,18 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  * arguments of the form
  *
  *     (DATA_TYPE IN_ARRAY1[ANY])
- *
  *     (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
  *     (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
  *
  *     (DATA_TYPE IN_ARRAY2[ANY][ANY])
- *
  *     (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  *     (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
  *
+ *     (DATA_TYPE INPLACE_ARRAY1[ANY])
  *     (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
  *     (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
  *
+ *     (DATA_TYPE IN_ARRAY2[ANY][ANY])
  *     (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  *     (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_ARRAY2)
  *
@@ -350,11 +350,17 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *     %apply (int DIM1, int DIM2, double* IN_ARRAY2) {(int rows, int cols, double* matrix)}
  *     double min(int length, double* series)
  *
+ *     %apply (double INPLACE_ARRAY1[ANY]) {(double vector[3])};
+ *     void reverse(double vector[3]);
+ *
  *     %apply (double* INPLACE_ARRAY1, int DIM1) {(double* series, int length)};
  *     void ones(double* series, int length);
  *
  *     %apply (int DIM1, double* INPLACE_ARRAY1) {(int length, double* series)}
  *     double zeros(int length, double* series)
+ *
+ *     %apply (double INPLACE_ARRAY2[ANY][ANY]) {(double matrix[3][3])};
+ *     void scale(double matrix[3][3]);
  *
  *     %apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* matrix, int rows, int cols)};
  *     void floor(double* matrix, int rows, int cols);
@@ -370,19 +376,19 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *
  * or directly with
  *
- *     double length(double IN_ARRAY[ANY]);
- *
+ *     double length(double IN_ARRAY1[ANY]);
  *     double prod(double* IN_ARRAY1, int DIM1);
  *     double sum( int DIM1, double* IN_ARRAY1)
  *
  *     double det(double IN_ARRAY2[ANY][ANY]);
- *
  *     double max(double* IN_ARRAY2, int DIM1, int DIM2);
  *     double min(int DIM1, int DIM2, double* IN_ARRAY2)
  *
+ *     void reverse(double INPLACE_ARRAY1[ANY]);
  *     void ones( double* INPLACE_ARRAY1, int DIM1);
  *     void zeros(int DIM1, double* INPLACE_ARRAY1)
  *
+ *     void scale(double INPLACE_ARRAY2[ANY][ANY]);
  *     void floor(double* INPLACE_ARRAY2, int DIM1, int DIM2, double floor);
  *     void ceil( int DIM1, int DIM2, double* INPLACE_ARRAY2, double ceil );
  *
@@ -501,6 +507,23 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
 }
 
+/* Typemap suite for (DATA_TYPE INPLACE_ARRAY1[ANY])
+ */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE INPLACE_ARRAY1[ANY])
+{
+  $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),DATA_TYPECODE);
+}
+%typemap(in)
+  (DATA_TYPE INPLACE_ARRAY1[ANY])
+  (PyArrayObject* temp=NULL)
+{
+  temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
+  npy_intp size[1] = { $1_dim0 };
+  if (!temp  || !require_dimensions(temp,1) || !require_size(temp, size, 1)) SWIG_fail;
+  $1 = ($1_ltype) temp->data;
+}
+
 /* Typemap suite for (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
@@ -535,6 +558,23 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   $1 = 1;
   for (int i=0; i<temp->nd; ++i) $1 *= temp->dimensions[i];
   $2 = (DATA_TYPE*) temp->data;
+}
+
+/* Typemap suite for (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
+ */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
+{
+  $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),DATA_TYPECODE);
+}
+%typemap(in)
+  (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
+  (PyArrayObject* temp=NULL)
+{
+  temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
+  npy_intp size[2] = { $1_dim0, $1_dim1 };
+  if (!temp  || !require_dimensions(temp,2) || !require_size(temp, size, 2)) SWIG_fail;
+  $1 = ($1_ltype) temp->data;
 }
 
 /* Typemap suite for (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)

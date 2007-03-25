@@ -44,6 +44,12 @@ class SeriesTestCase(unittest.TestCase):
         "Test scharSum function"
         self.assertEquals(Series.scharSum([-5,6,-7,8]), 2)
 
+    def testScharReverse(self):
+        "Test scharReverse function"
+        vector = N.array([1,2,4],'b')
+        Series.scharReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
+
     def testScharOnes(self):
         "Test scharOnes function"
         myArray = N.zeros(5,'b')
@@ -79,6 +85,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.scharMin(matrix), 4)
 
+    def testScharScale(self):
+        "Test scharScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'b')
+        Series.scharScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testScharFloor(self):
         "Test scharFloor function"
         matrix = N.array([[10,-2],[-6,7]],'b')
@@ -112,6 +124,12 @@ class SeriesTestCase(unittest.TestCase):
     def testUcharSum(self):
         "Test ucharSum function"
         self.assertEquals(Series.ucharSum([5,6,7,8]), 26)
+
+    def testUcharReverse(self):
+        "Test ucharReverse function"
+        vector = N.array([1,2,4],'B')
+        Series.ucharReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testUcharOnes(self):
         "Test ucharOnes function"
@@ -148,6 +166,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.ucharMin(matrix), 4)
 
+    def testUcharScale(self):
+        "Test ucharScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'B')
+        Series.ucharScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testUcharFloor(self):
         "Test ucharFloor function"
         matrix = N.array([[10,2],[6,7]],'B')
@@ -181,6 +205,12 @@ class SeriesTestCase(unittest.TestCase):
     def testShortSum(self):
         "Test shortSum function"
         self.assertEquals(Series.shortSum([-5,6,-7,8]), 2)
+
+    def testShortReverse(self):
+        "Test shortReverse function"
+        vector = N.array([1,2,4],'h')
+        Series.shortReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testShortOnes(self):
         "Test shortOnes function"
@@ -217,6 +247,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.shortMin(matrix), 4)
 
+    def testShortScale(self):
+        "Test shortScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'h')
+        Series.shortScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testShortFloor(self):
         "Test shortFloor function"
         matrix = N.array([[10,-2],[-6,7]],'h')
@@ -250,6 +286,12 @@ class SeriesTestCase(unittest.TestCase):
     def testUshortSum(self):
         "Test ushortSum function"
         self.assertEquals(Series.ushortSum([5,6,7,8]), 26)
+
+    def testUshortReverse(self):
+        "Test ushortReverse function"
+        vector = N.array([1,2,4],'H')
+        Series.ushortReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testUshortOnes(self):
         "Test ushortOnes function"
@@ -285,6 +327,12 @@ class SeriesTestCase(unittest.TestCase):
         "Test ushortMin function"
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.ushortMin(matrix), 4)
+
+    def testUshortScale(self):
+        "Test ushortScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'H')
+        Series.ushortScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
 
     def testUshortFloor(self):
         "Test ushortFloor function"
@@ -326,6 +374,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.intOnes(myArray)
         N.testing.assert_array_equal(myArray, N.array([1,1,1,1,1]))
 
+    def testIntReverse(self):
+        "Test intReverse function"
+        vector = N.array([1,2,4],'i')
+        Series.intReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
+
     def testIntZeros(self):
         "Test intZeros function"
         myArray = N.ones(5,'i')
@@ -354,6 +408,12 @@ class SeriesTestCase(unittest.TestCase):
         "Test intMin function"
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.intMin(matrix), 4)
+
+    def testIntScale(self):
+        "Test intScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'i')
+        Series.intScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
 
     def testIntFloor(self):
         "Test intFloor function"
@@ -390,6 +450,12 @@ class SeriesTestCase(unittest.TestCase):
         "Test uintSum function"
         self.assertEquals(Series.uintSum([5,6,7,8]), 26)
 
+    def testUintReverse(self):
+        "Test uintReverse function"
+        vector = N.array([1,2,4],'I')
+        Series.uintReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
+
     def testUintOnes(self):
         "Test uintOnes function"
         myArray = N.zeros(5,'I')
@@ -425,6 +491,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.uintMin(matrix), 4)
 
+    def testUintScale(self):
+        "Test uintScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'I')
+        Series.uintScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testUintFloor(self):
         "Test uintFloor function"
         matrix = N.array([[10,2],[6,7]],'I')
@@ -458,6 +530,12 @@ class SeriesTestCase(unittest.TestCase):
     def testLongSum(self):
         "Test longSum function"
         self.assertEquals(Series.longSum([-5,6,-7,8]), 2)
+
+    def testLongReverse(self):
+        "Test longReverse function"
+        vector = N.array([1,2,4],'l')
+        Series.longReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testLongOnes(self):
         "Test longOnes function"
@@ -494,6 +572,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.longMin(matrix), 4)
 
+    def testLongScale(self):
+        "Test longScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'l')
+        Series.longScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testLongFloor(self):
         "Test longFloor function"
         matrix = N.array([[10,-2],[-6,7]],'l')
@@ -527,6 +611,12 @@ class SeriesTestCase(unittest.TestCase):
     def testUlongSum(self):
         "Test ulongSum function"
         self.assertEquals(Series.ulongSum([5,6,7,8]), 26)
+
+    def testUlongReverse(self):
+        "Test ulongReverse function"
+        vector = N.array([1,2,4],'L')
+        Series.ulongReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testUlongOnes(self):
         "Test ulongOnes function"
@@ -563,6 +653,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.ulongMin(matrix), 4)
 
+    def testUlongScale(self):
+        "Test ulongScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'L')
+        Series.ulongScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testUlongFloor(self):
         "Test ulongFloor function"
         matrix = N.array([[10,2],[6,7]],'L')
@@ -596,6 +692,12 @@ class SeriesTestCase(unittest.TestCase):
     def testLongLongSum(self):
         "Test longLongSum function"
         self.assertEquals(Series.longLongSum([-5,6,-7,8]), 2)
+
+    def testLongLongReverse(self):
+        "Test longLongReverse function"
+        vector = N.array([1,2,4],'q')
+        Series.longLongReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testLongLongOnes(self):
         "Test longLongOnes function"
@@ -632,6 +734,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.longLongMin(matrix), 4)
 
+    def testLongLongScale(self):
+        "Test longLongScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'q')
+        Series.longLongScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testLongLongFloor(self):
         "Test longLongFloor function"
         matrix = N.array([[10,-2],[-6,7]],'q')
@@ -665,6 +773,12 @@ class SeriesTestCase(unittest.TestCase):
     def testUlongLongSum(self):
         "Test ulongLongSum function"
         self.assertEquals(Series.ulongLongSum([5,6,7,8]), 26)
+
+    def testUlongLongReverse(self):
+        "Test ulongLongReverse function"
+        vector = N.array([1,2,4],'Q')
+        Series.ulongLongReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testUlongLongOnes(self):
         "Test ulongLongOnes function"
@@ -701,6 +815,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.ulongLongMin(matrix), 4)
 
+    def testUlongLongScale(self):
+        "Test ulongLongScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'Q')
+        Series.ulongLongScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testUlongLongFloor(self):
         "Test ulongLongFloor function"
         matrix = N.array([[10,2],[6,7]],'Q')
@@ -734,6 +854,12 @@ class SeriesTestCase(unittest.TestCase):
     def testFloatSum(self):
         "Test floatSum function"
         self.assertEquals(Series.floatSum([-5,6,-7,8]), 2)
+
+    def testFloatReverse(self):
+        "Test floatReverse function"
+        vector = N.array([1,2,4],'f')
+        Series.floatReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testFloatOnes(self):
         "Test floatOnes function"
@@ -774,6 +900,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.floatMin(matrix), 4)
 
+    def testFloatScale(self):
+        "Test floatScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'f')
+        Series.floatScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
+
     def testFloatFloor(self):
         "Test floatFloor function"
         matrix = N.array([[10,-2],[-6,7]],'f')
@@ -807,6 +939,12 @@ class SeriesTestCase(unittest.TestCase):
     def testDoubleSum(self):
         "Test doubleSum function"
         self.assertEquals(Series.doubleSum([-5,6,-7,8]), 2)
+
+    def testDoubleReverse(self):
+        "Test doubleReverse function"
+        vector = N.array([1,2,4],'d')
+        Series.doubleReverse(vector)
+        self.assertEquals((vector == [4,2,1]).all(), True)
 
     def testDoubleOnes(self):
         "Test doubleOnes function"
@@ -846,6 +984,12 @@ class SeriesTestCase(unittest.TestCase):
         "Test doubleMin function"
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(Series.doubleMin(matrix), 4)
+
+    def testDoubleScale(self):
+        "Test doubleScale function"
+        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'d')
+        Series.doubleScale(matrix,4)
+        self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
 
     def testDoubleFloor(self):
         "Test doubleFloor function"
