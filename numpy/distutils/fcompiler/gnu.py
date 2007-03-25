@@ -250,12 +250,13 @@ class GnuFCompiler(FCompiler):
 class Gnu95FCompiler(GnuFCompiler):
 
     compiler_type = 'gnu95'
-    version_match = simple_version_match(start='GNU Fortran 95')
+    version_match = simple_version_match(start='GNU Fortran (95|\(GCC\))')
 
     # 'gfortran --version' results:
     # Debian: GNU Fortran 95 (GCC 4.0.3 20051023 (prerelease) (Debian 4.0.2-3))
     # OS X: GNU Fortran 95 (GCC) 4.1.0
     #       GNU Fortran 95 (GCC) 4.2.0 20060218 (experimental)
+    #       GNU Fortran (GCC) 4.3.0 20070316 (experimental)
 
     for fc_exe in map(find_executable,['gfortran','f95']):
         if os.path.isfile(fc_exe):
