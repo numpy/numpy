@@ -422,7 +422,10 @@ def select(condlist, choicelist, default=0):
         pfac = asarray(1)
         for k in range(n2+1):
             pfac = pfac + asarray(choicelist[k])
-        S = S*ones(asarray(pfac).shape)
+        if type(S) in ScalarType:
+            S = S*ones(asarray(pfac).shape, type(S))
+        else:
+            S = S*ones(asarray(pfac).shape, S.dtype)
     return choose(S, tuple(choicelist))
 
 def _asarray1d(arr, copy=False):
