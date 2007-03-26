@@ -1983,7 +1983,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			mps[i] = NULL;
 		}
 	}
-        else if (intypekind != scalarkind) { \
+        else if ((stype != NULL) && (intypekind != scalarkind)) {       \
                 /* we need to upconvert to type that
                    handles both intype and stype
                    and don't forcecast the scalars.
@@ -1994,6 +1994,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
                                              scalarkind)) {
                         Py_XDECREF(intype);
                         intype = stype;
+                        Py_INCREF(stype);
                 }
                 for (i=0; i<n; i++) {
                         Py_XDECREF(mps[i]);
