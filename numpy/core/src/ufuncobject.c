@@ -1118,10 +1118,9 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         int nargs, i;
         int arg_types[NPY_MAXARGS];
 	PyArray_SCALARKIND scalars[NPY_MAXARGS];
-        PyArray_SCALARKIND kindof, new;
+        PyArray_SCALARKIND maxarrkind, maxsckind, new;
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
-        Bool samekind=TRUE;
 	PyTypeObject *subtype=&PyArray_Type;
         PyObject *context=NULL;
         PyObject *obj;
@@ -1137,6 +1136,8 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         }
 
         /* Get each input argument */
+        maxarrkind = PyArray_NOSCALAR;
+        maxsckind = PyArray_NOSCALAR;
         for (i=0; i<self->nin; i++) {
                 obj = PyTuple_GET_ITEM(args,i);
                 if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
@@ -1161,18 +1162,20 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 		/* Scalars are 0-dimensional arrays
 		   at this point
 		*/
+
+                /* We need to keep track of whether or not scalars
+                   are mixed with arrays of different kinds.
+                */
+
 		if (mps[i]->nd > 0) {
                         scalars[i] = PyArray_NOSCALAR;
 			allscalars=FALSE;
                         new = PyArray_ScalarKind(arg_types[i], NULL);
+                        maxarrkind = NPY_MAX(new, maxarrkind);
 		}
 		else {
                         scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
-                        new = scalars[i];
-                }
-                if (i==0) kindof=new;
-                else if (kindof != new) {
-                        samekind=FALSE;
+                        maxsckind = NPY_MAX(scalars[i], maxsckind);
                 }
         }
 
@@ -1181,14 +1184,13 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                 return nargs;
         }
 
-	/* If everything is a scalar, or scalars mixed with arrays of different kinds
-           then use normal coercion rules */
-	if (allscalars || !samekind) {
+	/* If everything is a scalar, or scalars mixed with arrays of 
+           different kinds of lesser types then use normal coercion rules */
+	if (allscalars || (maxsckind > maxarrkind)) {
 		for (i=0; i<self->nin; i++) {
 			scalars[i] = PyArray_NOSCALAR;
 		}
 	}
-
 
         /* Select an appropriate function for these argument types. */
         if (select_types(loop->ufunc, arg_types, &(loop->function),
