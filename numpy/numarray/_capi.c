@@ -224,8 +224,12 @@ static int int_dividebyzero_error(long value, long unused) {
 }
 
 /* Likewise for Integer overflows */
-#if defined(linux)
+#if defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
 #include <fenv.h>
+#elif defined(__CYGWIN__)
+#include "numpy/fenv/fenv.c"
+#endif
 static int int_overflow_error(Float64 value) { /* For x86_64 */
 	feraiseexcept(FE_OVERFLOW);
 	return (int) value;
