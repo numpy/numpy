@@ -4297,7 +4297,7 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
         int val;
         int diff;
 
-        val = strncmp(s1, s2, MIN(len1, len2));
+        val = memcmp(s1, s2, MIN(len1, len2));
         if ((val != 0) || (len1 == len2)) return val;
         if (len2 > len1) {sptr = s2+len1; val = -1; diff=len2-len1;}
         else {sptr = s1+len2; val = 1; diff=len1-len2;}
