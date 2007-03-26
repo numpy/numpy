@@ -1926,7 +1926,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	PyObject *otmp;
 	PyArray_Descr *intype=NULL, *stype=NULL;
 	PyArray_Descr *newtype=NULL;
-	NPY_SCALARKIND scalarkind;
+	NPY_SCALARKIND scalarkind, intypekind;
 
 	*retn = n = PySequence_Length(op);
 	if (PyErr_Occurred()) {*retn = 0; return NULL;}
@@ -1960,6 +1960,8 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			Py_XDECREF(intype);
 			intype = newtype;
 			mps[i] = NULL;
+                        intypekind = PyArray_ScalarKind(intype->type_num,
+                                                        NULL);
 		}
 		else {
 			newtype = PyArray_DescrFromObject(otmp, stype);
@@ -1967,13 +1969,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			stype = newtype;
 			scalarkind = PyArray_ScalarKind(newtype->type_num,
 							NULL);
-			if (intype && \
-			    !PyArray_CanCoerceScalar(newtype->type_num,
-						     intype->type_num,
-						     scalarkind)) {
-				Py_XDECREF(intype);
-				intype = stype;
-			}
 			mps[i] = (PyArrayObject *)Py_None;
 			Py_INCREF(Py_None);
 		}
@@ -1988,6 +1983,23 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 			mps[i] = NULL;
 		}
 	}
+        else if (intypekind != scalarkind) { \
+                /* we need to upconvert to type that
+                   handles both intype and stype
+                   and don't forcecast the scalars.
+                */
+                
+                if (!PyArray_CanCoerceScalar(stype->type_num,
+                                             intype->type_num,
+                                             scalarkind)) {
+                        Py_XDECREF(intype);
+                        intype = stype;
+                }
+                for (i=0; i<n; i++) {
+                        Py_XDECREF(mps[i]);
+                        mps[i] = NULL;
+                }
+        }
 	/* Make sure all arrays are actual array objects. */
 	for(i=0; i<n; i++) {
 		int flags = CARRAY;

@@ -1118,8 +1118,10 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         int nargs, i;
         int arg_types[NPY_MAXARGS];
 	PyArray_SCALARKIND scalars[NPY_MAXARGS];
+        PyArray_SCALARKIND kindof, new;
 	PyUFuncObject *self=loop->ufunc;
 	Bool allscalars=TRUE;
+        Bool samekind=TRUE;
 	PyTypeObject *subtype=&PyArray_Type;
         PyObject *context=NULL;
         PyObject *obj;
@@ -1160,11 +1162,18 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 		   at this point
 		*/
 		if (mps[i]->nd > 0) {
-			scalars[i] = PyArray_NOSCALAR;
+                        scalars[i] = PyArray_NOSCALAR;
 			allscalars=FALSE;
+                        new = PyArray_ScalarKind(arg_types[i], NULL);
 		}
-		else scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
-
+		else {
+                        scalars[i] = PyArray_ScalarKind(arg_types[i], &(mps[i]));
+                        new = scalars[i];
+                }
+                if (i==0) kindof=new;
+                else if (kindof != new) {
+                        samekind=FALSE;
+                }
         }
 
         if (flexible && !object) {
@@ -1172,12 +1181,14 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                 return nargs;
         }
 
-	/* If everything is a scalar, then use normal coercion rules */
-	if (allscalars) {
+	/* If everything is a scalar, or scalars mixed with arrays of different kinds
+           then use normal coercion rules */
+	if (allscalars || !samekind) {
 		for (i=0; i<self->nin; i++) {
 			scalars[i] = PyArray_NOSCALAR;
 		}
 	}
+
 
         /* Select an appropriate function for these argument types. */
         if (select_types(loop->ufunc, arg_types, &(loop->function),
