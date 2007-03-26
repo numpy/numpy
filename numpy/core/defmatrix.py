@@ -154,12 +154,12 @@ class matrix(N.ndarray):
 
 
     def __mul__(self, other):
-        if not isscalar(other) :
-            try :
-                other = asmatrix(other)
-            except :
-                return NotImplemented
-        return N.dot(self, other)
+        if isinstance(other,(N.ndarray, list, tuple)) :
+            # This promotes 1-D vectors to row vectors
+            return N.dot(self, asmatrix(other))
+        if N.isscalar(other) or not hasattr(other, '__rmul__') :
+            return N.dot(self, other)
+        return NotImplemented
 
     def __rmul__(self, other):
         return N.dot(other, self)
