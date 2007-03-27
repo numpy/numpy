@@ -12,15 +12,21 @@
 Abstract
 ========
 
-This PEP proposes re-designing the buffer API (PyBufferProcs
+This PEP proposes re-designing the buffer interface (PyBufferProcs
 function pointers) to improve the way Python allows memory sharing
 in Python 3.0
 
-In particular, it is proposed that the multiple-segment and
-character buffer portions of the buffer API be eliminated and
-additional function pointers be provided to allow sharing any
-multi-dimensional nature of the memory and what data-format the
-memory contains.
+In particular, it is proposed that the character buffer portion 
+of the API be elminated and the multiple-segment portion be 
+re-designed in conjunction with allowing for strided memory
+to be shared.   In addition, the new buffer interface will 
+allow the sharing of any multi-dimensional nature of the
+memory and what data-format the memory contains. 
+
+This interface will allow any extension module to either 
+create objects that share memory or create algorithms that
+use memory from arbitrary objects. 
+
 
 Rationale
 =========
@@ -30,8 +36,8 @@ pointer to a sequence of internal buffers.  This functionality is
 *extremely* useful for sharing large segments of memory between
 different high-level objects, but it is too limited and has issues.
 
-1. There is the little (never?) used "sequence-of-segments" option
-   (bf_getsegcount)
+1. There is the little used "sequence-of-segments" option
+   (bf_getsegcount) that is not motivated very well. 
 
 2. There is the apparently redundant character-buffer option
    (bf_getcharbuffer)
@@ -58,8 +64,8 @@ different high-level objects, but it is too limited and has issues.
 
    There are two widely used libraries that use the concept of
    discontiguous memory: PIL and NumPy.  Their view of discontiguous
-   arrays is different, though.  This buffer interface allows
-   sharing of either memory model.  Exporters will only use one         
+   arrays is different, though.  The proposed buffer interface allows
+   sharing of either memory model.  Exporters will use only one        
    approach and consumers may choose to support discontiguous 
    arrays of each type however they choose. 
 
@@ -73,8 +79,7 @@ different high-level objects, but it is too limited and has issues.
    image is contained in a contiguous segment of memory, but sometimes
    it is contained in an array of pointers to the contiguous segments
    (usually lines) of the image.  The PIL is where the idea of multiple
-   buffer segments in the original buffer interface came from. 
-  
+   buffer segments in the original buffer interface came from.   
 
    NumPy's strided memory model is used more often in computational
    libraries and because it is so simple it makes sense to support
@@ -95,7 +100,7 @@ Proposal Overview
 * Unify the read/write versions of getting the buffer.
 
 * Add a new function to the interface that should be called when
-  the consumer object is "done" with the view.
+  the consumer object is "done" with the memory area. 
 
 * Add a new variable to allow the interface to describe what is in
   memory (unifying what is currently done now in struct and
@@ -105,7 +110,8 @@ Proposal Overview
 
 * Add a new variable for sharing stride information
 
-* Add a new mechanism for sharing array of arrays. 
+* Add a new mechanism for sharing arrays that must 
+  be accessed using pointer indirection. 
 
 * Fix all objects in the core and the standard library to conform
   to the new interface
@@ -131,14 +137,14 @@ Change the PyBufferProcs structure to
                                        char **format, int *ndims,
                                        Py_ssize_t **shape,
                                        Py_ssize_t **strides,
-                                       void **segments)
+                                       int **isptr)
 
 All variables except the first are optional.  Use NULL for all
 un-needed variables.  Thus, this function can be called to get only
 the desired information from an object. NULL is returned on failure.
-On success an object-specific view is returned (which may just be a
-borrowed reference to obj).  This view should be passed to
-bf_releasebuffer when the consumer is done with the view.
+On success a "buffer-provider" object is returned (which may just be a
+borrowed reference to obj).  This provider should be passed to 
+bf_releasebuffer when the consumer is done with the memory. 
 
 buf
      a pointer to the start of the memory for the object is returned in
@@ -179,7 +185,6 @@ shape
     If this variable is not provided then it is assumed that
     ``(*shape[0]) == len / itemsize``.
 
-
 strides 
     address of a ``Py_ssize_t*`` variable that will be filled with a
     pointer to an array of ``Py_ssize_t`` of length ``*ndims``
@@ -191,38 +196,57 @@ strides
     set) if memory is actually C-style contiguous.
 
 
-segments
-    address to array-of-pointers-style array model.  Only one of
-    strides or segments can be used (the other one must be NULL).  
-    If the object does not support this kind of memory model and it
-    is requested, then an error should be raised and *segments set
-    to NULL.  The segments variable should be recast to a 
-    pointer-to-a-pointer-to-a-pointer-...-to-a-pointer depending on 
-    the output of ndims.   
+isptr
 
-    Thus, if ndims is 2, segments should be cast to (<type> ***)
-    so that (*segments)[i][j] refers to the (i,j)th element
-    of the array.  If ndims is 3, segments should be cast to (<type> ****)
-    so that (*segments)[i][j][k] refers to the (i,j,k)th element
-    of the array. 
+    address of a ``int *`` variable that will be filled with a pointer
+    to an array of ``int`` of length ``*ndims`` indicating whether or
+    not the value stored in the memory strided to along this dimension
+    must be de-referenced to continue the striding process. 
+
+    Here is a function that returns a pointer to the element in an 
+    N-D array pointed to by an N-dimesional index array:
+
+    void* get_item_pointer(int ndim, void* buf, Py_ssize_t* strides,
+                           int* isptr, Py_ssize_t *indices) {
+        char* pointer = (char*)buf;
+        int i;
+        for (i = 0; i < ndim; i++) {
+            pointer += strides[i]*indices[i];
+            if (isptr[i]) {
+                pointer = *(char**)pointer;
+            }   
+        }
+        return (void*)pointer;
+    } 
 
 
-The view object should be used in the other API call and does not need
+The provider object should be used in the other API call and does not need
 to be decref'd.  It should be "released" if the interface exporter
 provides the bf_releasebuffer function.  Otherwise, it may be
-discared.  The view object is exporter-specific.
+discarded.  The provider object is exporter-specific.
 
+The memory for the shape, strides, isptr arrays and the format string is
+managed by the provider object.  This memory must be guaranteed by the provider
+as long as the appropriate lock is held.
 
-``typedef int (*releasebufferproc)(PyObject *view)``
+``typedef int (*releasebufferproc)(PyObject *view, int which)``
     This function is called (if defined by the exporting object)
-    when a view of memory previously acquired from the object is no
+    when memory previously acquired from the object is no
     longer needed.  It is up to the exporter of the API to make sure
-    all views have been released before re-allocating any previously
+    all exported buffers have been released before re-allocating any previously
     shared memory.  It is up to consumers of the API to call this
-    function on the object whose view is obtained when it is no
-    longer needed.   Any format string, shape array or strides array
-    returned through the interface should also not be referenced after
-    the releasebuffer call is made.
+    function on the object whose buffer is obtained when it is no
+    longer needed.   
+
+    which is a flag which states what lock can be released.  It can 
+    be an 'or'ing of any of the following flags. 
+
+    PYBUF_MEMORY
+    PYBUF_SHAPE 
+    PYBUF_STRIDES (strides and isptr)
+    PYBUF_FORMAT
+    PYBUF_ALL (all of the above). 
+
     A -1 is returned on error and 0 on success.
 
     Both of these routines are optional for a type object
