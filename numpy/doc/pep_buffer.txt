@@ -25,7 +25,8 @@ memory and what data-format the memory contains.
 
 This interface will allow any extension module to either 
 create objects that share memory or create algorithms that
-use memory from arbitrary objects. 
+use and manipulate raw memory from arbitrary objects that 
+export the interface. 
 
 
 Rationale
@@ -137,14 +138,15 @@ Change the PyBufferProcs structure to
                                        char **format, int *ndims,
                                        Py_ssize_t **shape,
                                        Py_ssize_t **strides,
-                                       int **isptr)
+                                       Py_ssize_t **suboffsets)
 
-All variables except the first are optional.  Use NULL for all
+All variables except the first are optional.  Pass NULL for all
 un-needed variables.  Thus, this function can be called to get only
 the desired information from an object. NULL is returned on failure.
 On success a "buffer-provider" object is returned (which may just be a
 borrowed reference to obj).  This provider should be passed to 
-bf_releasebuffer when the consumer is done with the memory. 
+bf_releasebuffer when the consumer is done with the memory.  The consumer
+is responsible for keeping a reference to obj until releasebuffer is called.
 
 buf
      a pointer to the start of the memory for the object is returned in
@@ -196,24 +198,29 @@ strides
     set) if memory is actually C-style contiguous.
 
 
-isptr
+suboffsets
 
-    address of a ``int *`` variable that will be filled with a pointer
-    to an array of ``int`` of length ``*ndims`` indicating whether or
-    not the value stored in the memory strided to along this dimension
-    must be de-referenced to continue the striding process. 
+    address of a ``Py_ssize_t *`` variable that will be filled with a
+    pointer to an array of ``Py_ssize_t`` of length ``*ndims``.  If
+    these suboffset numbers are >=0, then the value stored along the
+    respective dimension is a pointer and the suboffset value dictates
+    how many bytes to add to the pointer before de-referencing.  A
+    suboffset value that it negative indicates that no de-referencing
+    should occur (striding in a contiguous memory block). If the value
+    returned in *suboffsets is NULL, then all suboffsets are assumed
+    to be negative.
 
-    Here is a function that returns a pointer to the element in an 
-    N-D array pointed to by an N-dimesional index array:
+    For clarity, here is a function that returns a pointer to the
+    element in an N-D array pointed to by an N-dimesional index:
 
     void* get_item_pointer(int ndim, void* buf, Py_ssize_t* strides,
-                           int* isptr, Py_ssize_t *indices) {
+                           Py_ssize_t* suboffsets, Py_ssize_t *indices) {
         char* pointer = (char*)buf;
         int i;
         for (i = 0; i < ndim; i++) {
             pointer += strides[i]*indices[i];
-            if (isptr[i]) {
-                pointer = *(char**)pointer;
+            if (suboffsets[i] >=0 ) {
+                pointer = *((char**)pointer) + suboffsets[i];
             }   
         }
         return (void*)pointer;
