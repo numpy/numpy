@@ -344,24 +344,28 @@ meaning the last dimension varies the fastest.
 
 Copy ``len`` bytes of data pointed to by the contiguous chunk of
 memory pointed to by ``buf`` into the buffer exported by obj.  Return
-0 on success and return -1 and raise an error on failure.  If the 
-object does not have a writeable buffer, then an error is raised.  
-The data is copied into an array in C-style contiguous fashion meaning the
-last variable varies the fastest. 
+0 on success and return -1 and raise an error on failure.  If the
+object does not have a writeable buffer, then an error is raised.  The
+data is copied into an array in C-style contiguous fashion meaning the
+last variable varies the fastest.
 
-The last two C-API calls allow a standard way of getting data in and out
-of Python objects no matter how it is actually stored.  These calls use
-the buffer interface to perform their work. 
-
-::
-    int PyObject_IsContiguous(int *ndims, Py_ssize_t *shape, Py_ssize_t *strides, Py_ssize_t *suboffsets)
-
-Return 1 if the memory defined by shape, strides, and suboffsets is contiguous.  Return 0 otherwise. 
+The last two C-API calls allow a standard way of getting data in and
+out of Python objects no matter how it is actually stored.  These
+calls use the buffer interface to perform their work.
 
 ::
-    void PyObject_FillContiguousStrides(int *ndims, Py_ssize_t *shape, Py_ssize_t *strides)
+    int PyObject_IsContiguous(int *ndims, Py_ssize_t *shape, 
+                              Py_ssize_t *strides, Py_ssize_t *suboffsets)
 
-Fill the strides array with byte-strides of a contiguous array of the given shape. 
+Return 1 if the memory defined by shape, strides, and suboffsets is
+contiguous.  Return 0 otherwise.
+
+::
+    void PyObject_FillContiguousStrides(int *ndims, Py_ssize_t *shape, 
+                                        Py_ssize_t *strides)
+
+Fill the strides array with byte-strides of a contiguous array of the
+given shape.
 
 
 
