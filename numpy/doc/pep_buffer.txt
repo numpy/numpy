@@ -32,10 +32,11 @@ export the interface.
 Rationale
 =========
 
-The buffer protocol allows different Python types to exchange a
-pointer to a sequence of internal buffers.  This functionality is
-*extremely* useful for sharing large segments of memory between
-different high-level objects, but it is too limited and has issues.
+The Python 2.X buffer protocol allows different Python types to
+exchange a pointer to a sequence of internal buffers.  This
+functionality is *extremely* useful for sharing large segments of
+memory between different high-level objects, but it is too limited and
+has issues:
 
 1. There is the little used "sequence-of-segments" option
    (bf_getsegcount) that is not motivated very well. 
@@ -101,7 +102,7 @@ Proposal Overview
 * Unify the read/write versions of getting the buffer.
 
 * Add a new function to the interface that should be called when
-  the consumer object is "done" with the memory area. 
+  the consumer object is "done" with the memory area.  
 
 * Add a new variable to allow the interface to describe what is in
   memory (unifying what is currently done now in struct and
@@ -119,6 +120,10 @@ Proposal Overview
 
 * Extend the struct module to handle more format specifiers
 
+* Extend the buffer object into a new memory object which places
+  a Python veneer around the buffer interface. 
+
+
 Specification
 =============
 
@@ -133,59 +138,60 @@ Change the PyBufferProcs structure to
 
 ::
 
-    typedef PyObject *(*getbufferproc)(PyObject *obj, void **buf,
-                                       Py_ssize_t *len, int *writeable,
-                                       char **format, int *ndims,
-                                       Py_ssize_t **shape,
-                                       Py_ssize_t **strides,
-                                       Py_ssize_t **suboffsets)
+    typedef int (*getbufferproc)(PyObject *obj, struct bufferinfo *view)
 
-All variables except the first are optional.  Pass NULL for all
-un-needed variables.  Thus, this function can be called to get only
-the desired information from an object. NULL is returned on failure.
-On success a "buffer-provider" object is returned (which may just be a
-borrowed reference to obj).  This provider should be passed to 
-bf_releasebuffer when the consumer is done with the memory.  The consumer
-is responsible for keeping a reference to obj until releasebuffer is called.
+This function returns 0 on success and -1 on failure (and raises an error). 
+The first variable is the "exporting" object.  The second argument is the
+address to a bufferinfo structure
+
+struct bufferinfo {
+       PyObject *releaseobj;
+       void *buf;
+       Py_ssize_t len;
+       int readonly;
+       char *format;
+       int ndims;
+       Py_ssize_t *shape;
+       Py_ssize_t *strides;
+       Py_ssize_t *suboffsets;
+}
+
+Upon return, the bufferinfo structure is filled in with relevant
+information about the buffer.  This same bufferinfo structure should
+be passed to bf_releasebuffer when the consumer is done with the
+memory. The caller is responsible for keeping a reference to obj until
+releasebuffer is called.
+
+The members of the bufferinfo structure are:
 
 buf
-     a pointer to the start of the memory for the object is returned in
-    ``*buf``
+    a pointer to the start of the memory for the object
 
-len
-     adress of an integer variable to hold the total bytes
-     of memory the object uses.  This should be the same
-     as the product of the shape array multiplied by the
-     number of bytes per item of memory. 
+len 
+    the total bytes of memory the object uses.  This should be the
+    same as the product of the shape array multiplied by the number of
+    bytes per item of memory.
 
-writeable
-    address of an integer variable to hold whether or not the memory
-    is writeable. If this is NULL, then you must assume the memory
-    is read-only.
+readonly
+    an integer variable to hold whether or not the memory is
+    readonly.  Non-zero means the memory is readonly, zero means the
+    memory is writeable. 
 
 format
-    address of a format-string (following extended struct
-    syntax) indicating what is in each element of
-    of memory.  The number of elements is len / itemsize,
-    where itemsize is the number of bytes implied by the format.
-    NULL if not needed in which case format is "B" for
-    unsigned bytes.  The memory for this string must not
-    be freed by the consumer --- it is managed by the exporter.
+    a format-string (following extended struct syntax) indicating what
+    is in each element of of memory.  The number of elements is len /
+    itemsize, where itemsize is the number of bytes implied by the
+    format.  For standard unsigned bytes use a format string of "B".
 
 ndims
-    address of a variable storing the number of dimensions
-    or NULL if not needed.  If shape and/or strides are given
-    then this must be non NULL.  If this variable is
-    not provided then it is assumed that ``*ndims == 1``.
+    a variable storing the number of dimensions the memory represents.
+    Should be >=0. 
 
 shape
-    address of a ``Py_ssize_t*`` variable that will be filled
-    with a pointer to an array of ``Py_ssize_t`` of length ``*ndims``
-    indicating the shape of the memory as an N-D array.
-    Ignored if this is NULL.  Note that
-    ``((*shape)[0] * ... * (*shape)[ndims-1])*itemsize = len``.
-    If this variable is not provided then it is assumed that
-    ``(*shape[0]) == len / itemsize``.
+    an array of ``Py_ssize_t`` of length ``ndims`` indicating the
+    shape of the memory as an N-D array.  Note that ``((*shape)[0] *
+    ... * (*shape)[ndims-1])*itemsize = len``.  This can be NULL
+    to indicate 1-d arrays. 
 
 strides 
     address of a ``Py_ssize_t*`` variable that will be filled with a
@@ -193,25 +199,21 @@ strides
     indicating the number of bytes to skip to get to the next element
     in each dimension.  If this is NULL, then the memory is assumed to
     be C-style contigous with the last dimension varying the fastest.
-    An error should be raised if this is not accurate and strides are
-    not requested.  This variable may be set to NULL (with no error
-    set) if memory is actually C-style contiguous.
-
 
 suboffsets
-
     address of a ``Py_ssize_t *`` variable that will be filled with a
     pointer to an array of ``Py_ssize_t`` of length ``*ndims``.  If
     these suboffset numbers are >=0, then the value stored along the
     respective dimension is a pointer and the suboffset value dictates
-    how many bytes to add to the pointer before de-referencing.  A
+    how many bytes to add to the pointer after de-referencing.  A
     suboffset value that it negative indicates that no de-referencing
     should occur (striding in a contiguous memory block). If the value
-    returned in *suboffsets is NULL, then all suboffsets are assumed
-    to be negative.
+    returned in suboffsets is NULL, then all suboffsets are assumed
+    to be negative (i.e no de-referencing is needed). 
 
     For clarity, here is a function that returns a pointer to the
-    element in an N-D array pointed to by an N-dimesional index:
+    element in an N-D array pointed to by an N-dimesional index when
+    there are both strides and suboffsets.  
 
     void* get_item_pointer(int ndim, void* buf, Py_ssize_t* strides,
                            Py_ssize_t* suboffsets, Py_ssize_t *indices) {
@@ -227,36 +229,40 @@ suboffsets
     } 
 
 
-The provider object should be used in the other API call and does not need
-to be decref'd.  It should be "released" if the interface exporter
-provides the bf_releasebuffer function.  Otherwise, it may be
-discarded.  The provider object is exporter-specific.
+The exporter is responsible for making sure the memory pointed to by
+buf, format, shape, strides, and suboffsets is valid until
+releasebuffer is called.  If the exporter wants to be able to change
+shape, strides, and/or suboffsets before releasebuffer is called then
+it should allocate those arrays when getbuffer is called and free them
+when releasebuffer is called.
 
-The memory for the shape, strides, isptr arrays and the format string is
-managed by the provider object.  This memory must be guaranteed by the provider
-as long as the appropriate lock is held.
 
-``typedef int (*releasebufferproc)(PyObject *view, int which)``
-    This function is called (if defined by the exporting object)
-    when memory previously acquired from the object is no
-    longer needed.  It is up to the exporter of the API to make sure
-    all exported buffers have been released before re-allocating any previously
-    shared memory.  It is up to consumers of the API to call this
-    function on the object whose buffer is obtained when it is no
-    longer needed.   
+The same bufferinfo struct should be used in the other buffer
+interface call. The caller is responsible for the memory of the
+bufferinfo object itself.
 
-    which is a flag which states what lock can be released.  It can 
-    be an 'or'ing of any of the following flags. 
-
-    PYBUF_MEMORY
-    PYBUF_SHAPE 
-    PYBUF_STRIDES (strides and isptr)
-    PYBUF_FORMAT
-    PYBUF_ALL (all of the above). 
-
-    A -1 is returned on error and 0 on success.
+``typedef int (*releasebufferproc)(PyObject *obj, struct bufferinfo *view)``
+    Callers of getbufferproc must make sure that this function is
+    called when memory previously acquired from the object is no
+    longer needed.  The exporter of the interface must make sure that
+    any memory pointed to in the bufferinfo structure remains valid
+    until releasebuffer is called.
 
     Both of these routines are optional for a type object
+
+    If the releasebuffer function is not provided then it does not ever
+    need to be called. 
+    
+Exporters will need to define a releasebuffer function if they can
+re-allocate their memory, strides, shape, suboffsets, or format
+variables which they might share through the struct bufferinfo.
+Several mechanisms could be used to keep track of how many getbuffer
+calls have been made and shared.  Either a single variable could be
+used to keep track of how many "views" have been exported, or a
+linked-list of bufferinfo structures filled in could be maintained in
+each objet.  All that is needed is to ensure that any memory shared
+through the bufferinfo structure remains valid until releasebuffer is
+called on that memory.
 
 
 New C-API calls are proposed
@@ -270,27 +276,49 @@ Return 1 if the getbuffer function is available otherwise 0.
 
 ::
 
-    PyObject * PyObject_GetBuffer(PyObject *obj, void **buf,
-                                  Py_ssize_t *len, int *writeable,
-                                  char **format, int *ndims,
-                                  Py_ssize_t **shape, Py_ssize_t **strides,
-                                  void **segments)
+    PyObject *PyObject_GetBuffer(PyObject *obj)
 
-Get the buffer and optional information variables about the buffer.
-Return an object-specific view object (which may be simply a
-borrowed reference to the object itself).
+Return a memory-view object.
 
-::
+A memory-view object is an extended buffer object that can replace
+the buffer object.  It's C-structure is
 
-    int PyObject_ReleaseBuffer(PyObject *view)
+typedef struct {
+    PyObject_HEAD
+    PyObject *base;
+    void *ptr;
+    Py_ssize_t len;
+    int readonly;
+    char *format;
+    int ndims;
+    Py_ssize_t *shape;
+    Py_ssize_t *strides;
+    Py_ssize_t *suboffsets;
+    int itemsize;
+} PyBufferObject;
 
-Call this function to tell obj that you are done with your "view"
-This doesn't do anything if the object doesn't implement a release function.
-Only call this after a previous PyObject_GetBuffer has succeeded and when
-you will not be needing or referring to the memory (or the format, shape, 
-and strides memory used in the view -- if you will use these for a longer
-period of time make copies).
-Returns -1 on error.
+This is very similar to the current buffer object except offset has
+been removed because ptr can just be modified by offset and a single
+offset is not sufficient.  Also the hash has been removed because
+using the buffer object has a hash even if it is read-only is rarely
+useful.  The id of the buffer object should be used instead.
+
+Also, the format, ndims, shape, strides, and suboffsets has been
+added. These additions will allow multi-dimensional slicing of the
+memory-view object which can be added at some point.  This object
+always owns it's own shape, strides, and suboffsets arrays and it's own
+format string, but always borrows the memory from the object pointed to
+by base. 
+
+The itemsize is a convenience and specifies the number of bytes
+indicated by the format string if positive.  If negative, then the
+number of bytes must be computed from the format string. 
+
+This object never reallocates ptr, shape, strides, subboffsets or
+format and therefore does not need to keep track of how many views it
+has exported.
+
+Thus, it does not define a releasebuffer function. 
 
 ::
 
@@ -324,6 +352,16 @@ last variable varies the fastest.
 The last two C-API calls allow a standard way of getting data in and out
 of Python objects no matter how it is actually stored.  These calls use
 the buffer interface to perform their work. 
+
+::
+    int PyObject_IsContiguous(int *ndims, Py_ssize_t *shape, Py_ssize_t *strides, Py_ssize_t *suboffsets)
+
+Return 1 if the memory defined by shape, strides, and suboffsets is contiguous.  Return 0 otherwise. 
+
+::
+    void PyObject_FillContiguousStrides(int *ndims, Py_ssize_t *shape, Py_ssize_t *strides)
+
+Fill the strides array with byte-strides of a contiguous array of the given shape. 
 
 
 
@@ -367,7 +405,7 @@ having those names.
 
 Endian-specification ('=','>','<') is also allowed inside the
 string so that it can change if needed.  The previously-specified
-endian string is enforce until changed.  The default endian is '='.
+endian string is in force until changed.  The default endian is '='.
 
 According to the struct-module, a number can preceed a character
 code to specify how many of that type there are.  The
@@ -427,36 +465,40 @@ buffer interface will be modified.  Here is a partial list.
 * mmap module
 * ctypes module
 
-Anything else using the buffer API
+Anything else using the buffer API.  
 
 
 Issues and Details
 ==================
 
-The proposed locking mechanism relies entirely on the objects
-implementing the buffer interface to do their own thing.  Ideally an
-object that implements the buffer interface and can re-allocate
-memory, should store in its structure at least a number indicating how
-many views are extant.  If there are still un-released views to a
-memory location, then any subsequent reallocation should fail and
-raise an error.
+The proposed locking mechanism relies entirely on the exporter 
+object to not alter the memory pointed to by the buffer structure 
+until a corresponding releasebuffer is called.  
 
-The sharing of strided memory is new and can be seen as a
+The sharing of strided memory and suboffsets is new and can be seen as a
 modification of the multiple-segment interface.  It is motivated by
-NumPy.  NumPy objects should be able to share their strided memory
+NumPy and the PIL.  NumPy objects should be able to share their strided memory
 with code that understands how to manage strided memory because
 strided memory is very common when interfacing with compute libraries.
 
+Also it should be able to write generic code that works with both
+kinds of memory.
+
 Currently the struct module does not allow specification of nested
-structures.  The modifications to struct requested allow for
-specifying nested structures as several ways of viewing memory areas
-(e.g. ctypes and NumPy) already allow this.
+structures.  The proposed modifications to struct allow for specifying
+nested structures as several ways of viewing memory areas (e.g. ctypes
+and NumPy) already allow this.
 
 Memory management of the format string and the shape and strides
 array is always the responsibility of the exporting object and can
 be shared between different views. If the consuming object needs to
 keep these memory areas longer than the view is held, then it must
-copy them to its own memory.
+copy them to its own memory.  
+
+Code
+========
+
+The author of the PEP promises to contribute and maintain the code for this proposal but will welcome any help. 
 
 
 Copyright
