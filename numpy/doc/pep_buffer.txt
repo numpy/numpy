@@ -207,9 +207,9 @@ suboffsets
     respective dimension is a pointer and the suboffset value dictates
     how many bytes to add to the pointer after de-referencing.  A
     suboffset value that it negative indicates that no de-referencing
-    should occur (striding in a contiguous memory block). If the value
-    returned in suboffsets is NULL, then all suboffsets are assumed
-    to be negative (i.e no de-referencing is needed). 
+    should occur (striding in a contiguous memory block).  If all 
+    suboffsets are negative (i.e. no de-referencing is needed, then
+    this must be NULL.
 
     For clarity, here is a function that returns a pointer to the
     element in an N-D array pointed to by an N-dimesional index when
@@ -220,10 +220,10 @@ suboffsets
         char* pointer = (char*)buf;
         int i;
         for (i = 0; i < ndim; i++) {
-            pointer += strides[i]*indices[i];
             if (suboffsets[i] >=0 ) {
                 pointer = *((char**)pointer) + suboffsets[i];
-            }   
+            }
+            pointer += strides[i]*indices[i];
         }
         return (void*)pointer;
     } 
@@ -329,43 +329,53 @@ description.
 
 ::
 
-    int PyObject_GetContiguous(PyObject *obj, void **buf, Py_ssize_t *len)
+    int PyObject_GetContiguous(PyObject *obj, void **buf, Py_ssize_t *len,
+                               int fortran)
 
 Return a contiguous chunk of memory representing the buffer.  If a
 copy is made then return 1.  If no copy was needed return 0.  If an
 error occurred in probing the buffer interface, then return -1.  The
-contiguous chunk of memory is pointed to by ``*buf`` and the length
-of that memory is ``*len``.  The buffer is C-style contiguous
-meaning the last dimension varies the fastest. 
+contiguous chunk of memory is pointed to by ``*buf`` and the length of
+that memory is ``*len``.  If the object is multi-dimensional, then if
+fortran is 1, the first dimension of the underlying array will vary
+the fastest in the buffer.  If fortran is 0, then the last dimension
+will vary the fastest (C-style contiguous). If fortran is -1, then it
+does not matter and you will get whatever the object decides is easiest.
 
 :: 
 
-    int PyObject_CopyToObject(PyObject *obj, void *buf, Py_ssize_t len)
+    int PyObject_CopyToObject(PyObject *obj, void *buf, Py_ssize_t len,
+                              int fortran)
 
 Copy ``len`` bytes of data pointed to by the contiguous chunk of
 memory pointed to by ``buf`` into the buffer exported by obj.  Return
 0 on success and return -1 and raise an error on failure.  If the
-object does not have a writeable buffer, then an error is raised.  The
-data is copied into an array in C-style contiguous fashion meaning the
-last variable varies the fastest.
+object does not have a writeable buffer, then an error is raised.  If
+fortran is 1, then if the object is multi-dimensional, then the data
+will be copied into the array in Fortran-style (first dimension varies
+the fastest).  If fortran is 0, then the data will be copied into the
+array in C-style (last dimension varies the fastest).  If fortran is -1, then
+it does not matter and the copy will be made in whatever way is
+easiest. 
 
 The last two C-API calls allow a standard way of getting data in and
-out of Python objects no matter how it is actually stored.  These
-calls use the buffer interface to perform their work.
+out of Python objects into contiguous memory areas no matter how it is
+actually stored.  These calls use the buffer interface to perform
+their work. 
 
 ::
-    int PyObject_IsContiguous(int *ndims, Py_ssize_t *shape, 
-                              Py_ssize_t *strides, Py_ssize_t *suboffsets)
+    int PyObject_IsContiguous(struct bufferinfo *view);
 
-Return 1 if the memory defined by shape, strides, and suboffsets is
+Return 1 if the memory defined by the view object is C-style
 contiguous.  Return 0 otherwise.
 
 ::
-    void PyObject_FillContiguousStrides(int *ndims, Py_ssize_t *shape, 
+    void PyObject_FillContiguousStrides(int *ndims, Py_ssize_t *shape,
+                                        int itemsize, 
                                         Py_ssize_t *strides)
 
 Fill the strides array with byte-strides of a contiguous array of the
-given shape.
+given shape with the given number of bytes per element. 
 
 
 
@@ -374,7 +384,10 @@ Additions to the struct string-syntax
 
 The struct string-syntax is missing some characters to fully
 implement data-format descriptions already available elsewhere (in
-ctypes and NumPy for example).  Here are the proposed additions:
+ctypes and NumPy for example).  The Python 2.5 specification is 
+at http://docs.python.org/lib/module-struct.html
+
+Here are the proposed additions:
 
 
 ================  ===========
@@ -475,15 +488,16 @@ Anything else using the buffer API.
 Issues and Details
 ==================
 
-The proposed locking mechanism relies entirely on the exporter 
-object to not alter the memory pointed to by the buffer structure 
-until a corresponding releasebuffer is called.  
+The proposed locking mechanism relies entirely on the exporter object
+to not alter the memory pointed to by the buffer structure until a
+corresponding releasebuffer is called.
 
-The sharing of strided memory and suboffsets is new and can be seen as a
-modification of the multiple-segment interface.  It is motivated by
-NumPy and the PIL.  NumPy objects should be able to share their strided memory
-with code that understands how to manage strided memory because
-strided memory is very common when interfacing with compute libraries.
+The sharing of strided memory and suboffsets is new and can be seen as
+a modification of the multiple-segment interface.  It is motivated by
+NumPy and the PIL.  NumPy objects should be able to share their
+strided memory with code that understands how to manage strided memory
+because strided memory is very common when interfacing with compute
+libraries.
 
 Also it should be able to write generic code that works with both
 kinds of memory.
@@ -493,16 +507,29 @@ structures.  The proposed modifications to struct allow for specifying
 nested structures as several ways of viewing memory areas (e.g. ctypes
 and NumPy) already allow this.
 
-Memory management of the format string and the shape and strides
-array is always the responsibility of the exporting object and can
-be shared between different views. If the consuming object needs to
-keep these memory areas longer than the view is held, then it must
-copy them to its own memory.  
+Memory management of the format string, the shape array, the strides
+array, and the suboffsets array is always the responsibility of the
+exporting object and can be shared between different views. If the
+consuming object needs to keep these memory areas longer than the view
+is held, then it must copy them to its own memory.
 
 Code
 ========
 
-The author of the PEP promises to contribute and maintain the code for this proposal but will welcome any help. 
+The author of the PEP promises to contribute and maintain the code for
+this proposal but will welcome any help.
+
+
+Examples
+=========
+
+NumPy
+
+PIL
+
+Array Object
+
+Bytes Object
 
 
 Copyright
