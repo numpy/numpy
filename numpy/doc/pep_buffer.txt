@@ -2,7 +2,7 @@
 :Title: Revising the buffer protocol
 :Version: $Revision: $
 :Last-Modified: $Date:  $
-:Author: Travis Oliphant <oliphant@ee.byu.edu>
+:Authors: Travis Oliphant <oliphant@ee.byu.edu>, Carl Banks <pythondev@aerojockey.com>
 :Status: Draft
 :Type: Standards Track
 :Content-Type: text/x-rst
@@ -91,7 +91,7 @@ has issues:
 
    The buffer interface should allow the object to export either of these
    memory models.  Consumers are free to either require contiguous memory
-   or write code to handle either memory model.  
+   or write code to handle one or both of these memory models. 
 
 Proposal Overview
 =================
@@ -123,6 +123,8 @@ Proposal Overview
 * Extend the buffer object into a new memory object which places
   a Python veneer around the buffer interface. 
 
+* Add a few functions to make it easy to copy contiguous data
+  in and out of object supporting the buffer interface. 
 
 Specification
 =============
@@ -132,9 +134,12 @@ Change the PyBufferProcs structure to
 ::
 
     typedef struct {
-         getbufferproc bf_getbuffer
-         releasebufferproc bf_releasebuffer
+         getbufferproc bf_getbuffer;
+         releasebufferproc bf_releasebuffer;
+         lockbufferproc bf_lockbuffer;
+         robufferproc bf_robuffer;
     }
+
 
 ::
 
@@ -145,7 +150,7 @@ The first variable is the "exporting" object.  The second argument is the
 address to a bufferinfo structure
 
 struct bufferinfo {
-       PyObject *releaseobj;
+       PyObject *releaser;
        void *buf;
        Py_ssize_t len;
        int readonly;
@@ -154,7 +159,7 @@ struct bufferinfo {
        Py_ssize_t *shape;
        Py_ssize_t *strides;
        Py_ssize_t *suboffsets;
-}
+};
 
 Upon return, the bufferinfo structure is filled in with relevant
 information about the buffer.  This same bufferinfo structure should
@@ -164,6 +169,12 @@ releasebuffer is called.
 
 The members of the bufferinfo structure are:
 
+releaser
+    the Python object whose bf_releasebuffer function should be called
+    when the consumer is done with the memory. After return, a new
+    reference to this object is obtained.  Normally, this will
+    be the same object 
+   
 buf
     a pointer to the start of the memory for the object
 
@@ -174,8 +185,8 @@ len
 
 readonly
     an integer variable to hold whether or not the memory is
-    readonly.  Non-zero means the memory is readonly, zero means the
-    memory is writeable. 
+    readonly.  1 means the memory is readonly, zero means the
+    memory is writeable,
 
 format
     a format-string (following extended struct syntax) indicating what
@@ -204,7 +215,7 @@ suboffsets
     address of a ``Py_ssize_t *`` variable that will be filled with a
     pointer to an array of ``Py_ssize_t`` of length ``*ndims``.  If
     these suboffset numbers are >=0, then the value stored along the
-    respective dimension is a pointer and the suboffset value dictates
+    indicated dimension is a pointer and the suboffset value dictates
     how many bytes to add to the pointer after de-referencing.  A
     suboffset value that it negative indicates that no de-referencing
     should occur (striding in a contiguous memory block).  If all 
@@ -220,14 +231,20 @@ suboffsets
         char* pointer = (char*)buf;
         int i;
         for (i = 0; i < ndim; i++) {
+            pointer += strides[i]*indices[i];
             if (suboffsets[i] >=0 ) {
                 pointer = *((char**)pointer) + suboffsets[i];
             }
-            pointer += strides[i]*indices[i];
         }
         return (void*)pointer;
     } 
 
+    Notice the suboffset is added "after" the dereferencing occurs.
+    Thus slicing in the ith dimension would add to the suboffsets in
+    the i-1st dimension.  Slicing in the first dimension would change
+    the location of the starting pointer directly (i.e. buf would
+    be modified).  
+    
 
 The exporter is responsible for making sure the memory pointed to by
 buf, format, shape, strides, and suboffsets is valid until
@@ -265,6 +282,19 @@ through the bufferinfo structure remains valid until releasebuffer is
 called on that memory.
 
 
+``typedef int (*lockbufferproc)(PyObject *obj)`` This
+
+    This function allows the caller to lock the buffer object of
+    ``obj`` without retrieving all the information about the memory
+    area.
+
+    A 0 is returned on success and a -1 is returned (with an error
+    message set) on error.  An error is returned if the memory cannot
+    be set readonly when it is attempted. 
+
+    This routine is optional. 
+
+
 New C-API calls are proposed
 ============================
 
@@ -278,24 +308,18 @@ Return 1 if the getbuffer function is available otherwise 0.
 
     PyObject *PyObject_GetBuffer(PyObject *obj)
 
-Return a memory-view object.
+Return a memory-view object from an object that defines the buffer interface. 
+If make_ro is non-zero then request that the memory is made read-only until 
+release buffer is called. 
 
-A memory-view object is an extended buffer object that can replace
-the buffer object.  It's C-structure is
+A memory-view object is an extended buffer object that should replace
+the buffer object in Python 3K.  It's C-structure is
 
 typedef struct {
     PyObject_HEAD
-    PyObject *base;
-    void *ptr;
-    Py_ssize_t len;
-    int readonly;
-    char *format;
-    int ndims;
-    Py_ssize_t *shape;
-    Py_ssize_t *strides;
-    Py_ssize_t *suboffsets;
+    struct bufferinfo view;
     int itemsize;
-} PyBufferObject;
+} PyMemoryViewObject;
 
 This is very similar to the current buffer object except offset has
 been removed because ptr can just be modified by offset and a single
@@ -318,7 +342,25 @@ This object never reallocates ptr, shape, strides, subboffsets or
 format and therefore does not need to keep track of how many views it
 has exported.
 
-Thus, it does not define a releasebuffer function. 
+Thus, it does not define a releasebuffer function, or have a numviews
+variable. 
+
+::
+    int PyObject_ReleaseBuffer(PyObject *obj)
+
+Release the buffer lock for the object, ``obj``.  This function does nothing
+if the object does not define a release buffer function.  Always returns 0. 
+
+::
+    int PyObject_LockBuffer(PyObject *obj, int make_ro)
+
+Lock the buffer for the object, ``obj``.  This function does nothing
+if the object does not define a lock buffer function.  If make_ro is
+0, then just lock the buffer.  If make_ro is 1, then lock the buffer
+and make the memory read only.  If make_ro is -1, then just make the
+memory read only without locking the buffer.  if make_ro != 0 and the
+object cannot change the state of the memory to read only, then raise
+a MemoryError.
 
 ::
 
@@ -489,8 +531,9 @@ Issues and Details
 ==================
 
 The proposed locking mechanism relies entirely on the exporter object
-to not alter the memory pointed to by the buffer structure until a
-corresponding releasebuffer is called.
+to not invalidate any of the memory pointed to by the buffer structure
+until a corresponding releasebuffer is called.  The data area can be
+modified (unless it is set read-only), but the 
 
 The sharing of strided memory and suboffsets is new and can be seen as
 a modification of the multiple-segment interface.  It is motivated by
@@ -516,20 +559,138 @@ is held, then it must copy them to its own memory.
 Code
 ========
 
-The author of the PEP promises to contribute and maintain the code for
+The authors of the PEP promise to contribute and maintain the code for
 this proposal but will welcome any help.
 
 
 Examples
 =========
 
-NumPy
+Ex 1.
+--------
+Here is skeleton implementation of a ByteBufferSlice array, sans boilerplate and error checking.
+This shows the use of releasebuffer and lockbuffer and why both are useful. 
 
-PIL
+::
 
-Array Object
+    typedef struct  {
+      PyObject_HEAD
+      PyObject* releaser;
+      unsigned char* buf;
+      Py_ssize_t length;
+    }
+    ByteBufferSliceObject;
+    
+    
+    PyObject* ByteBufferSlice_new(PyObject* bufobj, Py_ssize_t start, Py_ssize_t end) {
+      ByteBufferSliceObject* self;
+      BufferInfoObject* bufinfo;
+    
+      self = (ByteBufferSliceObject*)type->tp_alloc(type, 0);
+      bufinfo = PyObject_GetBuffer(bufobj);
+    
+      self->releaser = bufinfo->view.releaser;
+      self->buf = bufinfo->view.buf + start;
+      self->length = end-start;
+    
+      /* look how soon we're done with this information */
+      Py_DECREF(bufinfo);
+    
+      return self;
+    }
+    
+    
+    PyObject* ByteBufferSlice_dealloc(PyObject* self) {
+      PyObject_ReleaseBuffer(self->releaser);
+      self->ob_type->tp_free((PyObject*)self);
+    }
+    
+    
+    int ByteBufferSlice_getbuffer(PyObject* self, struct bufferinfo *view, int make_ro) {
+      BufferInfoObject* bufinfo;
+      static Py_ssize_t stridesarray[] = { 1 };
+      int ret;
+    
+      view->releaser = self->releaser;
+      view->buf = self->buf;
+      view->length = self->length;
+      view->itemsize = 1;
+      view->format = "B";
+      view->ndims = 1;
+      view->strides = stridesarray;
+      view->shape = &self->length;
+      view->suboffsets = NULL;
+    
+      /* Before we go, increase the original buffer's lock count */
+      ret = PyObject_LockBuffer(self->releaser, make_ro);
+      if (ret == -1) return ret; 
 
-Bytes Object
+      self->readonly = 
+      if (make_ro && ret != -1) {
+         self->readonly = -1;
+      }
+      return ret;
+    }
+    
+    /* don't define releasebuffer or lockbuffer */
+    /* only objects that could actually re-allocate memory would define these */
+    
+    /* Now look how easy this is */
+    /* Everything works out if ByteBufferSlice reexports the buffer */
+    
+    PyObject* ByteBufferSlice_getslice(PyObject* self, Py_ssize_t start, Py_ssize_t end) {
+      return ByteBufferSlice_new(self,start,end);
+    }
+
+
+Ex. 2
+----------
+
+This example shows how an image object that uses contiguous lines might expose its buffer. 
+
+struct rgba {
+    unsigned char r, g, b, a;
+};
+
+struct ImageObject {
+    PyObject_HEAD;
+    ...
+    struct rgba** lines;
+    Py_ssize_t height;
+    Py_ssize_t width;
+    Py_ssize_t shape_array[2];
+    Py_ssize_t stride_array[2];
+    Py_ssize_t view_count;
+};
+
+"lines" points to malloced 1-D array of (struct rgba*).  Each pointer
+in THAT block points to a seperately malloced array of (struct rgba).
+
+In order to access, say, the red value of the pixel at x=30, y=50, you'd use "lines[50][30].r".
+
+So what does ImageObject's getbuffer do?  Leaving error checking out:
+
+int Image_getbuffer(PyObject *self, struct bufferinfo *view) {
+
+    static Py_ssize_t = suboffsets[2] = { -1, 0 };
+
+    view->buf = self->lines;
+    view->len = self->height*self->width;
+    view->readonly = 0;
+    *ndims = 2;
+    self->shape_array[0] = height;
+    self->shape_array[1] = width;
+    *shape = &self->shape_array;
+    self->stride_array[0] = sizeof(struct rgba*);  /* yep */
+    self->stride_array[1] = sizeof(struct rgba);
+    *strides = &self->stride_array;
+    *isptr = _isptr;
+
+    self->view_count ++;
+    /* create and return view object here, but for what? */
+} 
+
+
 
 
 Copyright
