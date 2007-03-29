@@ -4,7 +4,7 @@ numpy.i: a SWIG Interface File for NumPy
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
-:Date:        24 March, 2007
+:Date:        29 March, 2007
 
 .. contents::
 
@@ -182,8 +182,9 @@ of array.  The input array signatures are
   * ``(int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2)``
 
 The first signature listed, ``(DATA_TYPE IN_ARRAY[ANY])`` is for
-hard-coded one-dimensional arrays.  Likewise, ``(DATA_TYPE
-IN_ARRAY2[ANY][ANY])`` is for two-dimensional arrays.
+one-dimensional arrays with hard-coded dimensions.  Likewise,
+``(DATA_TYPE IN_ARRAY2[ANY][ANY])`` is for two-dimensional arrays with
+hard-coded dimensions.
 
 In-Place Arrays
 ---------------
@@ -216,6 +217,31 @@ get returned.  The argout signatures are
 
   * ``(DATA_TYPE ARGOUT_ARRAY1[ANY])``
   * ``(DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])``
+
+Output Arrays
+-------------
+
+The ``numpy.i`` interface file does not support typemaps for output
+arrays, for several reasons.  First, C/C++ function return arguments
+do not have names, so signatures for ``%typemap(out)`` do not include
+names.  This means that if ``numpy.i`` supported them, they would
+apply to all pointer return arguments for the supported numeric
+types.  This seems too dangerous.  Second, C/C++ return arguments are
+limited to a single value.  This prevents obtaining dimension
+information in a general way.  Third, arrays with hard-coded lengths
+are not permitted as return arguments.  In other words::
+
+    double[3] newVector(double x, double y, double z);
+
+is not legal C/C++ syntax.  Therefore, we cannot provide typemaps of
+the form::
+
+    %typemap(out) (TYPE[ANY]);
+
+If you run into a situation where a function or method is returning a
+pointer to an array, your best bet is to write your own version of the
+function to be wrapped, either with ``%extend`` for the case of class
+methods or ``%ignore`` and ``%rename`` for the case of functions.
 
 Other Common Types: bool
 ------------------------
@@ -373,8 +399,50 @@ Beyond the Provided Typemaps
 
 There are many C or C++ array/`NumPy`_ array situations not covered by
 a simple ``%include "numpy.i"`` and subsequent ``%apply`` directives.
-Nevertheless, ``numpy.i`` may still be helpful when you encounter
-them.
+
+A Common Example
+----------------
+
+Consider a reasonable prototype for a dot product function::
+
+    double dot(int len, double* vec1, double* vec2);
+
+The python interface that we want is::
+
+    def dot(vec1, vec2):
+
+The problem here is that there is one dimension argument and two array
+arguments, and our typemaps are set up for dimensions that apply to a
+single array (in fact, `SWIG`_ does not provide a mechanism for
+associating ``len`` with ``vec2`` that takes two python input
+arguments).  The recommended solution is the following::
+
+    %apply (int DIM1, double* IN_ARRAY1) {(int len1, double* vec1),
+                                          (int len2, double* vec2)}
+    %rename (dot) my_dot;
+    %inline %{
+    double my_dot(int len1, double* vec1, int len2, double* vec2) {
+        if (len1 != len2) {
+	    PyErr_Format(PyExc_ValueError,
+                         "Arrays of lengths (%d,%d) given",
+                         len1, len2);
+	    return 0.0;
+        }
+        return dot(len1, vec1, vec2);
+    }
+    %}
+
+If the header file that contains the prototype for ``dot()`` also
+contains other prototypes that you want to wrap, so that you need to
+``%include`` this header file, then you will also need a ``%ignore
+dot;`` directive, placed after the ``%rename`` and before the
+``%include`` directives.
+
+Other Situations
+----------------
+
+There are other wrapping situations in which ``numpy.i`` may be
+helpful when you encounter them.
 
   * In some situations, it is possible that you could use the
     ``%numpy_templates`` macro to implement typemaps for your own
@@ -388,7 +456,7 @@ them.
   * You can use the code in ``numpy.i`` to write your own typemaps.
     For example, if you had a three-dimensional array as a function
     argument, you could cut-and-paste the appropriate two-dimensional
-    typemap into your interface file.  The modification for the third
+    typemap into your interface file.  The modifications for the third
     dimension would be trivial.
 
   * Sometimes, the best approach is to use the ``%extend`` directive
@@ -403,13 +471,31 @@ them.
     `Numpy-discussion <mailto:Numpy-discussion@scipy.org>`_ and
     `Swig-user <mailto:Swig-user@lists.sourceforge.net>`_ mail lists.
 
+A Final Note
+------------
+
+When you use the ``%apply`` directive, as is usually necessary to use
+``numpy.i``, it will remain in effect until you tell `SWIG`_ that it
+shouldn't be.  If the arguments to the functions or methods that you
+are wrapping have common names, such as ``length`` or ``vector``,
+these typemaps may get applied in situations you do not expect or
+want.  Therefore, it is always a good idea to add a ``%clear``
+directive after you are done with a specific typemap::
+
+    %apply (double* IN_ARRAY1, int DIM1) {(double* vector, int length)}
+    %include "my_header.h"
+    %clear (double* vector, int length);
+
+In general, you should target these typemap signatures specifically
+where you want them, and then clear them after you are done.
+
 Acknowledgements
 ================
 
-Many people have worked to glue `SWIG`_ and `NumPy`_ (and its
-predecessors Numeric and numarray) together.  The effort to
-standardize this work into ``numpy.i`` began at the 2005 SciPy
-Conference with a conversation between Fernando Perez and myself.
-Fernando collected helper functions and typemaps from Michael Hunter,
-Anna Omelchenko and Michael Sanner.  Their work has made this end
-result possible.
+Many people have worked to glue `SWIG`_ and `NumPy`_ together (as well
+as `SWIG`_ and the predecessors of `NumPy`_, Numeric and numarray).
+The effort to standardize this work into ``numpy.i`` began at the 2005
+`SciPy <http://scipy.org>`_ Conference with a conversation between
+Fernando Perez and myself.  Fernando collected helper functions and
+typemaps from Michael Hunter, Anna Omelchenko and Michael Sanner.
+Their work has made this end result possible.

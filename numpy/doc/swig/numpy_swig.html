@@ -5,7 +5,7 @@
 <meta name="generator" content="Docutils 0.4: http://docutils.sourceforge.net/" />
 <title>numpy.i: a SWIG Interface File for NumPy</title>
 <meta name="author" content="Bill Spotz" />
-<meta name="date" content="18 March, 2007" />
+<meta name="date" content="29 March, 2007" />
 <style type="text/css">
 
 /*
@@ -302,7 +302,7 @@ ul.auto-toc {
 <tr class="field"><th class="docinfo-name">Institution:</th><td class="field-body">Sandia National Laboratories</td>
 </tr>
 <tr><th class="docinfo-name">Date:</th>
-<td>18 March, 2007</td></tr>
+<td>29 March, 2007</td></tr>
 </tbody>
 </table>
 <div class="contents topic">
@@ -314,17 +314,23 @@ ul.auto-toc {
 <li><a class="reference" href="#input-arrays" id="id4" name="id4">Input Arrays</a></li>
 <li><a class="reference" href="#in-place-arrays" id="id5" name="id5">In-Place Arrays</a></li>
 <li><a class="reference" href="#argout-arrays" id="id6" name="id6">Argout Arrays</a></li>
-<li><a class="reference" href="#other-common-types-bool" id="id7" name="id7">Other Common Types: bool</a></li>
-<li><a class="reference" href="#other-common-types-complex" id="id8" name="id8">Other Common Types: complex</a></li>
+<li><a class="reference" href="#output-arrays" id="id7" name="id7">Output Arrays</a></li>
+<li><a class="reference" href="#other-common-types-bool" id="id8" name="id8">Other Common Types: bool</a></li>
+<li><a class="reference" href="#other-common-types-complex" id="id9" name="id9">Other Common Types: complex</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#helper-functions" id="id9" name="id9">Helper Functions</a><ul>
-<li><a class="reference" href="#macros" id="id10" name="id10">Macros</a></li>
-<li><a class="reference" href="#routines" id="id11" name="id11">Routines</a></li>
+<li><a class="reference" href="#helper-functions" id="id10" name="id10">Helper Functions</a><ul>
+<li><a class="reference" href="#macros" id="id11" name="id11">Macros</a></li>
+<li><a class="reference" href="#routines" id="id12" name="id12">Routines</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#beyond-the-provided-typemaps" id="id12" name="id12">Beyond the Provided Typemaps</a></li>
-<li><a class="reference" href="#acknowledgements" id="id13" name="id13">Acknowledgements</a></li>
+<li><a class="reference" href="#beyond-the-provided-typemaps" id="id13" name="id13">Beyond the Provided Typemaps</a><ul>
+<li><a class="reference" href="#a-common-example" id="id14" name="id14">A Common Example</a></li>
+<li><a class="reference" href="#other-situations" id="id15" name="id15">Other Situations</a></li>
+<li><a class="reference" href="#a-final-note" id="id16" name="id16">A Final Note</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#acknowledgements" id="id17" name="id17">Acknowledgements</a></li>
 </ul>
 </div>
 <div class="section">
@@ -494,8 +500,9 @@ of array.  The input array signatures are</p>
 </ul>
 </blockquote>
 <p>The first signature listed, <tt class="docutils literal"><span class="pre">(DATA_TYPE</span> <span class="pre">IN_ARRAY[ANY])</span></tt> is for
-hard-coded one-dimensional arrays.  Likewise, <tt class="docutils literal"><span class="pre">(DATA_TYPE</span>
-<span class="pre">IN_ARRAY2[ANY][ANY])</span></tt> is for two-dimensional arrays.</p>
+one-dimensional arrays with hard-coded dimensions.  Likewise,
+<tt class="docutils literal"><span class="pre">(DATA_TYPE</span> <span class="pre">IN_ARRAY2[ANY][ANY])</span></tt> is for two-dimensional arrays with
+hard-coded dimensions.</p>
 </div>
 <div class="section">
 <h2><a class="toc-backref" href="#id5" id="in-place-arrays" name="in-place-arrays">In-Place Arrays</a></h2>
@@ -534,7 +541,31 @@ get returned.  The argout signatures are</p>
 </blockquote>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id7" id="other-common-types-bool" name="other-common-types-bool">Other Common Types: bool</a></h2>
+<h2><a class="toc-backref" href="#id7" id="output-arrays" name="output-arrays">Output Arrays</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> interface file does not support typemaps for output
+arrays, for several reasons.  First, C/C++ function return arguments
+do not have names, so signatures for <tt class="docutils literal"><span class="pre">%typemap(out)</span></tt> do not include
+names.  This means that if <tt class="docutils literal"><span class="pre">numpy.i</span></tt> supported them, they would
+apply to all pointer return arguments for the supported numeric
+types.  This seems too dangerous.  Second, C/C++ return arguments are
+limited to a single value.  This prevents obtaining dimension
+information in a general way.  Third, arrays with hard-coded lengths
+are not permitted as return arguments.  In other words:</p>
+<pre class="literal-block">
+double[3] newVector(double x, double y, double z);
+</pre>
+<p>is not legal C/C++ syntax.  Therefore, we cannot provide typemaps of
+the form:</p>
+<pre class="literal-block">
+%typemap(out) (TYPE[ANY]);
+</pre>
+<p>If you run into a situation where a function or method is returning a
+pointer to an array, your best bet is to write your own version of the
+function to be wrapped, either with <tt class="docutils literal"><span class="pre">%extend</span></tt> for the case of class
+methods or <tt class="docutils literal"><span class="pre">%ignore</span></tt> and <tt class="docutils literal"><span class="pre">%rename</span></tt> for the case of functions.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id8" id="other-common-types-bool" name="other-common-types-bool">Other Common Types: bool</a></h2>
 <p>Note that C++ type <tt class="docutils literal"><span class="pre">bool</span></tt> is not supported in the list in the
 <a class="reference" href="#available-typemaps">Available Typemaps</a> section.  NumPy bools are a single byte, while
 the C++ <tt class="docutils literal"><span class="pre">bool</span></tt> is four bytes (at least on my system).  Therefore:</p>
@@ -551,7 +582,7 @@ expansion:</p>
 but <a class="reference" href="#in-place-arrays">In-Place Arrays</a> might fail type-checking.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id8" id="other-common-types-complex" name="other-common-types-complex">Other Common Types: complex</a></h2>
+<h2><a class="toc-backref" href="#id9" id="other-common-types-complex" name="other-common-types-complex">Other Common Types: complex</a></h2>
 <p>Typemap conversions for complex floating-point types is also not
 supported automatically.  This is because <a class="reference" href="http://www.python.org">python</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> are
 written in C, which does not have native complex types.  Both
@@ -585,12 +616,12 @@ work.</p>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id9" id="helper-functions" name="helper-functions">Helper Functions</a></h1>
+<h1><a class="toc-backref" href="#id10" id="helper-functions" name="helper-functions">Helper Functions</a></h1>
 <p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> file containes several macros and routines that it
 uses internally to build its typemaps.  However, these functions may
 be useful elsewhere in your interface file.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id10" id="macros" name="macros">Macros</a></h2>
+<h2><a class="toc-backref" href="#id11" id="macros" name="macros">Macros</a></h2>
 <blockquote>
 <dl class="docutils">
 <dt><strong>is_array(a)</strong></dt>
@@ -612,7 +643,7 @@ can be cast to a <tt class="docutils literal"><span class="pre">PyArrayObject*</
 </blockquote>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id11" id="routines" name="routines">Routines</a></h2>
+<h2><a class="toc-backref" href="#id12" id="routines" name="routines">Routines</a></h2>
 <blockquote>
 <dl class="docutils">
 <dt><strong>char* pytype_string(PyObject* py_obj)</strong></dt>
@@ -664,11 +695,50 @@ the python error string and return 0.</dd>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id12" id="beyond-the-provided-typemaps" name="beyond-the-provided-typemaps">Beyond the Provided Typemaps</a></h1>
+<h1><a class="toc-backref" href="#id13" id="beyond-the-provided-typemaps" name="beyond-the-provided-typemaps">Beyond the Provided Typemaps</a></h1>
 <p>There are many C or C++ array/<a class="reference" href="http://numpy.scipy.org">NumPy</a> array situations not covered by
-a simple <tt class="docutils literal"><span class="pre">%include</span> <span class="pre">&quot;numpy.i&quot;</span></tt> and subsequent <tt class="docutils literal"><span class="pre">%apply</span></tt> directives.
-Nevertheless, <tt class="docutils literal"><span class="pre">numpy.i</span></tt> may still be helpful when you encounter
-them.</p>
+a simple <tt class="docutils literal"><span class="pre">%include</span> <span class="pre">&quot;numpy.i&quot;</span></tt> and subsequent <tt class="docutils literal"><span class="pre">%apply</span></tt> directives.</p>
+<div class="section">
+<h2><a class="toc-backref" href="#id14" id="a-common-example" name="a-common-example">A Common Example</a></h2>
+<p>Consider a reasonable prototype for a dot product function:</p>
+<pre class="literal-block">
+double dot(int len, double* vec1, double* vec2);
+</pre>
+<p>The python interface that we want is:</p>
+<pre class="literal-block">
+def dot(vec1, vec2):
+</pre>
+<p>The problem here is that there is one dimension argument and two array
+arguments, and our typemaps are set up for dimensions that apply to a
+single array (in fact, <a class="reference" href="http://www.swig.org">SWIG</a> does not provide a mechanism for
+associating <tt class="docutils literal"><span class="pre">len</span></tt> with <tt class="docutils literal"><span class="pre">vec2</span></tt> that takes two python input
+arguments).  The recommended solution is the following:</p>
+<pre class="literal-block">
+%apply (int DIM1, double* IN_ARRAY1) {(int len1, double* vec1),
+                                      (int len2, double* vec2)}
+%rename (dot) my_dot;
+%inline %{
+double my_dot(int len1, double* vec1, int len2, double* vec2) {
+    if (len1 != len2) {
+        PyErr_Format(PyExc_ValueError,
+                     &quot;Arrays of lengths (%d,%d) given&quot;,
+                     len1, len2);
+        return 0.0;
+    }
+    return dot(len1, vec1, vec2);
+}
+%}
+</pre>
+<p>If the header file that contains the prototype for <tt class="docutils literal"><span class="pre">dot()</span></tt> also
+contains other prototypes that you want to wrap, so that you need to
+<tt class="docutils literal"><span class="pre">%include</span></tt> this header file, then you will also need a <tt class="docutils literal"><span class="pre">%ignore</span>
+<span class="pre">dot;</span></tt> directive, placed after the <tt class="docutils literal"><span class="pre">%rename</span></tt> and before the
+<tt class="docutils literal"><span class="pre">%include</span></tt> directives.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id15" id="other-situations" name="other-situations">Other Situations</a></h2>
+<p>There are other wrapping situations in which <tt class="docutils literal"><span class="pre">numpy.i</span></tt> may be
+helpful when you encounter them.</p>
 <blockquote>
 <ul>
 <li><p class="first">In some situations, it is possible that you could use the
@@ -684,7 +754,7 @@ example):</p>
 <li><p class="first">You can use the code in <tt class="docutils literal"><span class="pre">numpy.i</span></tt> to write your own typemaps.
 For example, if you had a three-dimensional array as a function
 argument, you could cut-and-paste the appropriate two-dimensional
-typemap into your interface file.  The modification for the third
+typemap into your interface file.  The modifications for the third
 dimension would be trivial.</p>
 </li>
 <li><p class="first">Sometimes, the best approach is to use the <tt class="docutils literal"><span class="pre">%extend</span></tt> directive
@@ -703,19 +773,37 @@ developers of <tt class="docutils literal"><span class="pre">numpy.i</span></tt>
 </blockquote>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id13" id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
-<p>Many people have worked to glue <a class="reference" href="http://www.swig.org">SWIG</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> (and its
-predecessors Numeric and numarray) together.  The effort to
-standardize this work into <tt class="docutils literal"><span class="pre">numpy.i</span></tt> began at the 2005 SciPy
-Conference with a conversation between Fernando Perez and myself.
-Fernando collected helper functions and typemaps from Michael Hunter,
-Anna Omelchenko and Michael Sanner.  Their work has made this end
-result possible.</p>
+<h2><a class="toc-backref" href="#id16" id="a-final-note" name="a-final-note">A Final Note</a></h2>
+<p>When you use the <tt class="docutils literal"><span class="pre">%apply</span></tt> directive, as is usually necessary to use
+<tt class="docutils literal"><span class="pre">numpy.i</span></tt>, it will remain in effect until you tell <a class="reference" href="http://www.swig.org">SWIG</a> that it
+shouldn't be.  If the arguments to the functions or methods that you
+are wrapping have common names, such as <tt class="docutils literal"><span class="pre">length</span></tt> or <tt class="docutils literal"><span class="pre">vector</span></tt>,
+these typemaps may get applied in situations you do not expect or
+want.  Therefore, it is always a good idea to add a <tt class="docutils literal"><span class="pre">%clear</span></tt>
+directive after you are done with a specific typemap:</p>
+<pre class="literal-block">
+%apply (double* IN_ARRAY1, int DIM1) {(double* vector, int length)}
+%include &quot;my_header.h&quot;
+%clear (double* vector, int length);
+</pre>
+<p>In general, you should target these typemap signatures specifically
+where you want them, and then clear them after you are done.</p>
+</div>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id17" id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
+<p>Many people have worked to glue <a class="reference" href="http://www.swig.org">SWIG</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> together (as well
+as <a class="reference" href="http://www.swig.org">SWIG</a> and the predecessors of <a class="reference" href="http://numpy.scipy.org">NumPy</a>, Numeric and numarray).
+The effort to standardize this work into <tt class="docutils literal"><span class="pre">numpy.i</span></tt> began at the 2005
+<a class="reference" href="http://scipy.org">SciPy</a> Conference with a conversation between
+Fernando Perez and myself.  Fernando collected helper functions and
+typemaps from Michael Hunter, Anna Omelchenko and Michael Sanner.
+Their work has made this end result possible.</p>
 </div>
 </div>
 <div class="footer">
 <hr class="footer" />
-Generated on: 2007-03-25 03:02 UTC.
+Generated on: 2007-03-29 20:45 UTC.
 Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
 
 </div>
