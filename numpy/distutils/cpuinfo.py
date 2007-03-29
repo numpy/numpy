@@ -185,13 +185,13 @@ class linux_cpuinfo(cpuinfo_base):
         return self.is_PentiumIV() and self.has_sse3()
 
     def _is_Nocona(self):
-        return self.is_64bit() and self.is_i686()
-    
+        return self.is_64bit() and self.is_PentiumIV()
+
     def _is_Core2(self):
         return self.is_64bit() and self.is_Intel() and \
                re.match(r'.*?Core\(TM\)2\b', \
                         self.info[0]['model name']) is not None
-    
+
     def _is_Itanium(self):
         return re.match(r'.*?Itanium\b',
                         self.info[0]['family']) is not None
