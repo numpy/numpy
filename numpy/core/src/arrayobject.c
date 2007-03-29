@@ -11438,7 +11438,7 @@ descr_length(PyObject *self0)
         PyArray_Descr *self = (PyArray_Descr *)self0;
 
         if (self->names)
-                return PyDict_Size(self->fields);
+                return PyTuple_GET_SIZE(self->names);
         else return 0;
 }
 
