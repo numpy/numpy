@@ -10,6 +10,7 @@ __all__ = ['unravel_index',
 import sys
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, ScalarType, array
+import math
 
 import function_base
 import numpy.core.defmatrix as matrix
@@ -141,7 +142,7 @@ class nd_grid(object):
                     size.append(int(abs(step)))
                     typ = float
                 else:
-                    size.append(int((key[k].stop - start)/(step*1.0)))
+                    size.append(math.ceil((key[k].stop - start)/(step*1.0)))
                 if isinstance(step, float) or \
                     isinstance(start, float) or \
                     isinstance(key[k].stop, float):
