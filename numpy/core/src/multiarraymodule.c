@@ -1146,6 +1146,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         PyArrayObject *mina=NULL;
         PyArrayObject *newout=NULL, *newin=NULL;
         PyArray_Descr *indescr;
+        PyObject *zero;
 
         func = self->descr->f->fastclip;
         if (func == NULL || !PyArray_CheckAnyScalar(min) || 
@@ -1163,14 +1164,47 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                 Py_INCREF(indescr);
         }
 
+        /* Convert max to an array */
         maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0, 
                                          NPY_DEFAULT, NULL);
         if (maxa == NULL) return NULL;
         Py_INCREF(indescr);
+
+
+        /* If we are unsigned, then make sure min is not <0 */
+        /* This is to match the behavior of 
+           _slow_array_clip
+
+           We allow min and max to go beyond the limits
+           for other data-types in which case they
+           are interpreted as their modular counterparts.
+        */           
+        if (PyArray_ISUNSIGNED(self)) {
+                int cmp;
+                zero = PyInt_FromLong(0);
+                cmp = PyObject_RichCompareBool(min, zero, Py_LT);
+                if (cmp == -1) { Py_DECREF(zero); goto fail;}
+                if (cmp == 1) {
+                        min = zero;
+                }
+                else {
+                        Py_DECREF(zero);
+                        Py_INCREF(min);
+                }
+        }
+        else {
+                Py_INCREF(min);
+        }
+
+        /* Convert min to an array */
         mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0, 
                                          NPY_DEFAULT, NULL);
+        Py_DECREF(min);
         if (mina == NULL) goto fail;
-        
+
+
+        /* Check to see if input is single-segment, aligned,
+           and in native byteorder */
         if (PyArray_ISONESEGMENT(self) && PyArray_CHKFLAGS(self, ALIGNED) &&
             PyArray_ISNOTSWAPPED(self)) 
                 ingood = 1;
@@ -1188,6 +1222,11 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                 Py_INCREF(newin);
         }
 
+        /* At this point, newin is a single-segment, aligned, and correct
+           byte-order array if ingood == 0, then it is a copy, otherwise, 
+           it is the input
+        */
+
         /* If we have already made a copy of the data, then use 
            that as the output array
         */
@@ -1198,7 +1237,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* Now, we know newin is a usable array for fastclip,
            we need to make sure the output array is available
            and usable */
-        if (out == NULL) {
+        if (out == NULL) { 
                 Py_INCREF(indescr);
                 out = (NPY_AO*)PyArray_NewFromDescr(self->ob_type,
 						    indescr, self->nd, 
@@ -1209,6 +1248,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                 if (out == NULL) goto fail;
                 outgood = 1;
         }
+        else Py_INCREF(out);
         /* Input is good at this point */
         if (out == newin) {
                 outgood = 1;
