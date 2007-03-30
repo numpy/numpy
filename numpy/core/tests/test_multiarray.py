@@ -355,16 +355,33 @@ class test_clip(NumpyTestCase):
         assert N.all(x >= cmin)
         assert N.all(x <= cmax)
 
-    def _clip_type(self,type_group,amax,cmin,cmax,inplace=False):
-        for T in N.sctypes[type_group]:
-            x = (N.random.random(1000) * amax).astype(T)
-            if inplace:
-                x.clip(cmin,cmax,x)
-            else:
-                x = x.clip(cmin,cmax)
+    def _clip_type(self,type_group,array_max,
+                   clip_min,clip_max,inplace=False,
+                   expected_min=None,expected_max=None):
+        if expected_min is None:
+            expected_min = clip_min
+        if expected_max is None:
+            expected_max = clip_max
 
-            self._check_range(x,cmin,cmax)
-            return x
+        for T in N.sctypes[type_group]:
+            if sys.byteorder == 'little':
+                byte_orders = ['=','>']
+            else:
+                byte_orders = ['<','=']
+
+            for byteorder in byte_orders:
+                dtype = N.dtype(T).newbyteorder(byteorder)
+                if dtype.byteorder == '|': byteorder = '|'
+
+                x = (N.random.random(1000) * array_max).astype(dtype)
+                if inplace:
+                    x.clip(clip_min,clip_max,x)
+                else:
+                    x = x.clip(clip_min,clip_max)
+
+                assert_equal(byteorder,x.dtype.byteorder)
+                self._check_range(x,expected_min,expected_max)
+                return x
 
     def check_basic(self):
         for inplace in [False]: # XXX fixme -> ,True]:
@@ -375,8 +392,7 @@ class test_clip(NumpyTestCase):
             self._clip_type('int',1024,0,0)
 
             # XXX fixme
-            #x = self._check_type('uint',1024,-120,100)
-            #assert N.all(x >= 0)
+            #x = self._check_type('uint',1024,-120,100,expected_min=0)
             x = self._clip_type('uint',1024,0,0)
 
 # Import tests from unicode
