@@ -1760,6 +1760,9 @@ typedef struct {
 #define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ALIGNED)
 
 
+#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(((PyArray_Descr *)(d))->byteorder)
+
+
 
 /* This is the form of the struct that's returned pointed by the
    PyCObject attribute of an array __array_struct__. See

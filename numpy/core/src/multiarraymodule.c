@@ -1145,7 +1145,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         PyArrayObject *maxa=NULL;
         PyArrayObject *mina=NULL;
         PyArrayObject *newout=NULL, *newin=NULL;
-        PyArray_Descr *indescr;
+        PyArray_Descr *indescr, *newdescr;
         PyObject *zero;
 
         func = self->descr->f->fastclip;
@@ -1155,20 +1155,40 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 
         /* Use the fast scalar clip function */
 
-        if (PyArray_ISNOTSWAPPED(self)) {
-                indescr = PyArray_DescrNewByteorder(self->descr, '=');
-                if (indescr == NULL) goto fail;
+        /* First we need to figure out the correct type */
+        indescr = PyArray_DescrFromObject(min, NULL);
+        if (indescr == NULL) return NULL;
+        newdescr = PyArray_DescrFromObject(max, indescr);
+        Py_DECREF(indescr);
+
+        if (newdescr == NULL) return NULL;
+        /* Use the scalar descriptor only if it is of a bigger
+           KIND than the input array (and then find the
+           type that matches both).
+        */
+        if (PyArray_ScalarKind(newdescr->type_num, NULL) > 
+            PyArray_ScalarKind(self->descr->type_num, NULL)) {
+                indescr = _array_small_type(newdescr, self->descr);
+                func = indescr->f->fastclip;
         }
-        else { 
+        else {
                 indescr = self->descr;
                 Py_INCREF(indescr);
+        }
+        Py_DECREF(newdescr);
+        
+        if (!PyDataType_ISNOTSWAPPED(indescr)) {
+                PyArray_Descr *descr2;
+                descr2 = PyArray_DescrNewByteorder(indescr, '=');
+                Py_DECREF(indescr);
+                if (descr2 == NULL) goto fail;
+                indescr = descr2;
         }
 
         /* Convert max to an array */
         maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0, 
                                          NPY_DEFAULT, NULL);
         if (maxa == NULL) return NULL;
-        Py_INCREF(indescr);
 
 
         /* If we are unsigned, then make sure min is not <0 */
@@ -1197,6 +1217,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         }
 
         /* Convert min to an array */
+        Py_INCREF(indescr);
         mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0, 
                                          NPY_DEFAULT, NULL);
         Py_DECREF(min);
@@ -1206,7 +1227,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* Check to see if input is single-segment, aligned,
            and in native byteorder */
         if (PyArray_ISONESEGMENT(self) && PyArray_CHKFLAGS(self, ALIGNED) &&
-            PyArray_ISNOTSWAPPED(self)) 
+            PyArray_ISNOTSWAPPED(self) && (self->descr == indescr))
                 ingood = 1;
 
         if (!ingood) {
@@ -1223,8 +1244,10 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         }
 
         /* At this point, newin is a single-segment, aligned, and correct
-           byte-order array if ingood == 0, then it is a copy, otherwise, 
-           it is the input
+           byte-order array of the correct type
+
+           if ingood == 0, then it is a copy, otherwise, 
+           it is the original input.
         */
 
         /* If we have already made a copy of the data, then use 
@@ -1254,8 +1277,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                 outgood = 1;
         }
         if (!outgood && PyArray_ISONESEGMENT(out) && 
-            PyArray_CHKFLAGS(out, ALIGNED) && 
-            PyArray_ISNOTSWAPPED(out)) {
+            PyArray_CHKFLAGS(out, ALIGNED) && PyArray_ISNOTSWAPPED(out) &&  
+            PyArray_EquivTypes(out->descr, indescr)) {
                 outgood = 1;
         }
 
@@ -1263,25 +1286,24 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* Create one, now */
         if (!outgood) {
                 int oflags;
-                PyArray_Descr *odescr;
                 if (PyArray_ISFORTRAN(out)) 
-                        oflags = NPY_FARRAY | NPY_UPDATEIFCOPY;
+                        oflags = NPY_FARRAY;
                 else 
-                        oflags = NPY_CARRAY | NPY_UPDATEIFCOPY;
-                if (PyArray_ISNOTSWAPPED(out)) {
-                        odescr = PyArray_DescrNewByteorder(out->descr, '=');
-                        if (odescr == NULL) goto fail;
-                }
-                else { 
-                        odescr = out->descr;
-                        Py_INCREF(odescr);
-                }
-                newout = (NPY_AO*)PyArray_FromArray(out, odescr, oflags);
+                        oflags = NPY_CARRAY;
+                oflags |= NPY_UPDATEIFCOPY | NPY_FORCECAST;
+                newout = (NPY_AO*)PyArray_FromArray(out, indescr, oflags);
                 if (newout == NULL) goto fail;
         }
         else {
                 newout = out;
                 Py_INCREF(newout);
+        }
+
+        /* make sure the shape of the output array is the same */
+        if (!PyArray_SAMESHAPE(newin, newout)) {
+                PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
+                                "same shape as the input.");
+                goto fail;
         }
 
         if (newout->data != newin->data) {
@@ -1305,6 +1327,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         Py_XDECREF(maxa);
         Py_XDECREF(mina);
         Py_XDECREF(newin);
+        PyArray_XDECREF_ERR(newout);
         return NULL;
 }
 
@@ -2130,19 +2153,21 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
                    handles both intype and stype
                    and don't forcecast the scalars.
                 */
-                
+
                 if (!PyArray_CanCoerceScalar(stype->type_num,
                                              intype->type_num,
                                              scalarkind)) {
+                        newtype = _array_small_type(intype, stype);
                         Py_XDECREF(intype);
-                        intype = stype;
-                        Py_INCREF(stype);
+                        intype = newtype;
                 }
                 for (i=0; i<n; i++) {
                         Py_XDECREF(mps[i]);
                         mps[i] = NULL;
                 }
         }
+
+
 	/* Make sure all arrays are actual array objects. */
 	for(i=0; i<n; i++) {
 		int flags = CARRAY;
@@ -2217,25 +2242,23 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
 		sizes[i] = PyArray_NBYTES(mps[i]);
 	}
 
-        Py_INCREF(mps[0]->descr);
         if (!ret) {
+                Py_INCREF(mps[0]->descr);
                 ret = (PyArrayObject *)PyArray_NewFromDescr(ap->ob_type,
                                                             mps[0]->descr,
                                                             ap->nd,
                                                             ap->dimensions,
                                                             NULL, NULL, 0,
                                                             (PyObject *)ap);
-                if (ret == NULL) goto fail;
         }
         else {
                 PyArrayObject *obj;
-                int flags = NPY_CARRAY | NPY_UPDATEIFCOPY;
+                int flags = NPY_CARRAY | NPY_UPDATEIFCOPY | NPY_FORCECAST;
 
                 if (PyArray_SIZE(ret) != PyArray_SIZE(ap)) {
                         PyErr_SetString(PyExc_TypeError,
                                         "invalid shape for output array.");
                         ret = NULL;
-                        Py_DECREF(mps[0]->descr);
                         goto fail;
                 }
                 if (clipmode == NPY_RAISE) {
@@ -2245,12 +2268,14 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
                         */
                         flags |= NPY_ENSURECOPY;
                 }
+                Py_INCREF(mps[0]->descr);
                 obj = (PyArrayObject *)PyArray_FromArray(ret, mps[0]->descr,
                                                          flags);
                 if (obj != ret) copyret = 1;
                 ret = obj;
         }
 
+        if (ret == NULL) goto fail;
 	elsize = ret->descr->elsize;
 	m = PyArray_SIZE(ret);
 	self_data = (intp *)ap->data;

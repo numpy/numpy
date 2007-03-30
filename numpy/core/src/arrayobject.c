@@ -10389,6 +10389,7 @@ PyArray_MultiIterNew(int n, ...)
                 PyErr_Format(PyExc_ValueError,
                              "Need between 2 and (%d) "                 \
                              "array objects (inclusive).", NPY_MAXARGS);
+                return NULL;
         }
 
         /* fprintf(stderr, "multi new...");*/
@@ -11972,6 +11973,17 @@ arrayflags_print(PyArrayFlagsObject *self)
 }
 
 
+static int
+arrayflags_compare(PyArrayFlagsObject *self, PyArrayFlagsObject *other)
+{
+        if (self->flags == other->flags)
+                return 0;
+        else if (self->flags < other->flags)
+                return -1;
+        else
+                return 1;
+}
+
 static PyMappingMethods arrayflags_as_mapping = {
 #if PY_VERSION_HEX >= 0x02050000
         (lenfunc)NULL,                       /*mp_length*/
@@ -12009,7 +12021,7 @@ static PyTypeObject PyArrayFlags_Type = {
         0,                                      /* tp_print */
         0,                                      /* tp_getattr */
         0,                                      /* tp_setattr */
-        0,                                      /* tp_compare */
+        (cmpfunc)arrayflags_compare,            /* tp_compare */
         (reprfunc)arrayflags_print,             /* tp_repr */
         0,                                      /* tp_as_number */
         0,                                      /* tp_as_sequence */

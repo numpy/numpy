@@ -371,7 +371,6 @@ class test_clip(NumpyTestCase):
 
             for byteorder in byte_orders:
                 dtype = N.dtype(T).newbyteorder(byteorder)
-                if dtype.byteorder == '|': byteorder = '|'
 
                 x = (N.random.random(1000) * array_max).astype(dtype)
                 if inplace:
@@ -379,28 +378,27 @@ class test_clip(NumpyTestCase):
                 else:
                     x = x.clip(clip_min,clip_max)
 
+                if x.dtype.byteorder == '|': byteorder = '|'
                 assert_equal(byteorder,x.dtype.byteorder)
                 self._check_range(x,expected_min,expected_max)
                 return x
 
     def check_basic(self):
-        for inplace in [False]: # XXX fixme -> ,True]:
-            self._clip_type('float',1024,-12.8,100.2)
-            self._clip_type('float',1024,0,0)
+        for inplace in [False, True]: 
+            self._clip_type('float',1024,-12.8,100.2, inplace=inplace)
+            self._clip_type('float',1024,0,0, inplace=inplace)
 
-            self._clip_type('int',1024,-120,100.5)
-            self._clip_type('int',1024,0,0)
+            self._clip_type('int',1024,-120,100.5, inplace=inplace)
+            self._clip_type('int',1024,0,0, inplace=inplace)
 
-            # XXX fixme
-            #x = self._check_type('uint',1024,-120,100,expected_min=0)
-            x = self._clip_type('uint',1024,0,0)
+            x = self._clip_type('uint',1024,-120,100,expected_min=0, inplace=inplace)
+            x = self._clip_type('uint',1024,0,0, inplace=inplace)
 
-    # XXX fixme
-    def check_record_array(self,level=2):
+    def check_record_array(self):
         rec = N.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
                       dtype=[('x', '<f8'), ('y', '<f8'), ('z', '<f8')])
-        rec['x'].clip(-0.3,0.5)
-        self._check_range(rec['x'],-0.3,0.5)
+        y = rec['x'].clip(-0.3,0.5)
+        self._check_range(y,-0.3,0.5)
 
 # Import tests from unicode
 set_local_path()
