@@ -1264,14 +1264,6 @@ array(data = %(data)s,
                     value = numeric.array(value, dtype=object)
                     d = d.astype(object)
                     result = fromnumeric.choose(m, (d, value))
-                except IndexError:
-                    #ok, if scalar
-                    if d.shape:
-                        raise
-                    elif m:
-                        result = numeric.array(value, dtype=d.dtype)
-                    else:
-                        result = d
             return result
 
     def ids (self):

@@ -611,7 +611,7 @@ class test_ma(NumpyTestCase):
         self.failUnless(minimum(xm, xm).mask)
         self.failUnless(xm.filled().dtype is xm.data.dtype)
         x = array(0, mask=0)
-        self.failUnless(x.filled() is x.data)
+        self.failUnless(x.filled() == x.data)
         self.failUnlessEqual(str(xm), str(masked_print_option))
 
     def check_testArrayMethods(self):
