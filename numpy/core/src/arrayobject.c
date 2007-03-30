@@ -3042,7 +3042,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 
         if (mp->nd == 0) {
                 Bool noellipses = TRUE;
-                if (op == Py_Ellipsis)
+                if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op))
                         noellipses = FALSE;
                 else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) || 
                          (PyArray_Check(op) && (PyArray_DIMS(op)==0) &&

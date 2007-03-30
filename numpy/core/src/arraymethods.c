@@ -264,7 +264,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 					 PyArray_DescrConverter,
 					 &dtype, &offset)) return NULL;
 
-	return _ARET(PyArray_GetField(self, dtype, offset));
+	return PyArray_GetField(self, dtype, offset);
 }
 
 
