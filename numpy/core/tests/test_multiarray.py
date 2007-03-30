@@ -1,6 +1,7 @@
 from numpy.testing import *
 from numpy.core import *
 from numpy import random
+import numpy as N
 
 class test_flags(NumpyTestCase):
     def setUp(self):
@@ -348,6 +349,35 @@ class test_newaxis(NumpyTestCase):
         sk = array([0,-0.1,0.1])
         res = 250*sk[:,newaxis]
         assert_almost_equal(res.ravel(),250*sk)
+
+class test_clip(NumpyTestCase):
+    def _check_range(self,x,cmin,cmax):
+        assert N.all(x >= cmin)
+        assert N.all(x <= cmax)
+
+    def _clip_type(self,type_group,amax,cmin,cmax,inplace=False):
+        for T in N.sctypes[type_group]:
+            x = (N.random.random(1000) * amax).astype(T)
+            if inplace:
+                x.clip(cmin,cmax,x)
+            else:
+                x = x.clip(cmin,cmax)
+
+            self._check_range(x,cmin,cmax)
+            return x
+
+    def check_basic(self):
+        for inplace in [False]: # XXX fixme -> ,True]:
+            self._clip_type('float',1024,-12.8,100.2)
+            self._clip_type('float',1024,0,0)
+
+            self._clip_type('int',1024,-120,100.5)
+            self._clip_type('int',1024,0,0)
+
+            # XXX fixme
+            #x = self._check_type('uint',1024,-120,100)
+            #assert N.all(x >= 0)
+            x = self._clip_type('uint',1024,0,0)
 
 # Import tests from unicode
 set_local_path()
