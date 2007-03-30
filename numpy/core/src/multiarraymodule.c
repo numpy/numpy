@@ -1100,11 +1100,8 @@ PyArray_Nonzero(PyArrayObject *self)
 
 }
 
-/*MULTIARRAY_API
- Clip
-*/
 static PyObject *
-PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
+_slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
 {
 	PyObject *selector=NULL, *newtup=NULL, *ret=NULL;
 	PyObject *res1=NULL, *res2=NULL, *res3=NULL;
@@ -1137,9 +1134,140 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 	return ret;
 }
 
-/* Why doesn't this just call the ufunc?
-   All we need to do is add it to the list of needed ufuncs.
- */
+/*MULTIARRAY_API
+ Clip
+*/
+static PyObject *
+PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
+{
+        PyArray_FastClipFunc *func;
+        int outgood=0, ingood=0;                
+        PyArrayObject *maxa=NULL;
+        PyArrayObject *mina=NULL;
+        PyArrayObject *newout=NULL, *newin=NULL;
+        PyArray_Descr *indescr;
+
+        func = self->descr->f->fastclip;
+        if (func == NULL || !PyArray_CheckAnyScalar(min) || 
+            !PyArray_CheckAnyScalar(max))
+                return _slow_array_clip(self, min, max, out);
+
+        /* Use the fast scalar clip function */
+
+        if (PyArray_ISNOTSWAPPED(self)) {
+                indescr = PyArray_DescrNewByteorder(self->descr, '=');
+                if (indescr == NULL) goto fail;
+        }
+        else { 
+                indescr = self->descr;
+                Py_INCREF(indescr);
+        }
+
+        maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0, 
+                                         NPY_DEFAULT, NULL);
+        if (maxa == NULL) return NULL;
+        Py_INCREF(indescr);
+        mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0, 
+                                         NPY_DEFAULT, NULL);
+        if (mina == NULL) goto fail;
+        
+        if (PyArray_ISONESEGMENT(self) && PyArray_CHKFLAGS(self, ALIGNED) &&
+            PyArray_ISNOTSWAPPED(self)) 
+                ingood = 1;
+
+        if (!ingood) {
+                int flags;
+                if (PyArray_ISFORTRAN(self)) flags = NPY_FARRAY;
+                else flags = NPY_CARRAY;
+                Py_INCREF(indescr);
+                newin = (NPY_AO *)PyArray_FromArray(self, indescr, flags);
+                if (newin == NULL) goto fail;
+        }
+        else {
+                newin = self;
+                Py_INCREF(newin);
+        }
+
+        /* If we have already made a copy of the data, then use 
+           that as the output array
+        */
+        if (out == NULL && !ingood) {
+                out = newin;
+        }
+
+        /* Now, we know newin is a usable array for fastclip,
+           we need to make sure the output array is available
+           and usable */
+        if (out == NULL) {
+                Py_INCREF(indescr);
+                out = (NPY_AO*)PyArray_NewFromDescr(self->ob_type,
+						    indescr, self->nd, 
+                                                    self->dimensions,
+						    NULL, NULL,
+						    PyArray_ISFORTRAN(self),
+                                                    NULL);
+                if (out == NULL) goto fail;
+                outgood = 1;
+        }
+        /* Input is good at this point */
+        if (out == newin) {
+                outgood = 1;
+        }
+        if (!outgood && PyArray_ISONESEGMENT(out) && 
+            PyArray_CHKFLAGS(out, ALIGNED) && 
+            PyArray_ISNOTSWAPPED(out)) {
+                outgood = 1;
+        }
+
+        /* Do we still not have a suitable output array? */
+        /* Create one, now */
+        if (!outgood) {
+                int oflags;
+                PyArray_Descr *odescr;
+                if (PyArray_ISFORTRAN(out)) 
+                        oflags = NPY_FARRAY | NPY_UPDATEIFCOPY;
+                else 
+                        oflags = NPY_CARRAY | NPY_UPDATEIFCOPY;
+                if (PyArray_ISNOTSWAPPED(out)) {
+                        odescr = PyArray_DescrNewByteorder(out->descr, '=');
+                        if (odescr == NULL) goto fail;
+                }
+                else { 
+                        odescr = out->descr;
+                        Py_INCREF(odescr);
+                }
+                newout = (NPY_AO*)PyArray_FromArray(out, odescr, oflags);
+                if (newout == NULL) goto fail;
+        }
+        else {
+                newout = out;
+                Py_INCREF(newout);
+        }
+
+        if (newout->data != newin->data) {
+                memcpy(newout->data, newin->data, PyArray_NBYTES(newin));
+        }
+        
+        /* Now we can call the fast-clip function */
+
+        func(newin->data, PyArray_SIZE(newin), mina->data, maxa->data,
+             newout->data);
+        
+        /* Clean up temporary variables */
+        Py_DECREF(mina);
+        Py_DECREF(maxa);
+        Py_DECREF(newin);
+        /* Copy back into out if out was not already a nice array. */
+        Py_DECREF(newout);
+        return (PyObject *)out;
+        
+ fail:
+        Py_XDECREF(maxa);
+        Py_XDECREF(mina);
+        Py_XDECREF(newin);
+        return NULL;
+}
+
 
 /*MULTIARRAY_API
  Conjugate
@@ -1148,41 +1276,15 @@ static PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
 	if (PyArray_ISCOMPLEX(self)) {
-		PyObject *new;
-		intp size, i;
-		/* Make a copy */
-                new = PyArray_NewCopy(self, -1);
-                if (new==NULL) return NULL;
-		size = PyArray_SIZE(new);
-		if (self->descr->type_num == PyArray_CFLOAT) {
-			cfloat *dptr = (cfloat *) PyArray_DATA(new);
-			for (i=0; i<size; i++) {
-				dptr->imag = -dptr->imag;
-				dptr++;
-			}
-		}
-		else if (self->descr->type_num == PyArray_CDOUBLE) {
-			cdouble *dptr = (cdouble *)PyArray_DATA(new);
-			for (i=0; i<size; i++) {
-				dptr->imag = -dptr->imag;
-				dptr++;
-			}
-		}
-		else if (self->descr->type_num == PyArray_CLONGDOUBLE) {
-			clongdouble *dptr = (clongdouble *)PyArray_DATA(new);
-			for (i=0; i<size; i++) {
-				dptr->imag = -dptr->imag;
-				dptr++;
-			}
-		}
-                if (out) {
-                        if (PyArray_CopyAnyInto(out, (PyArrayObject *)new)<0)
-                                return NULL;
-                        Py_INCREF(out);
-                        Py_DECREF(new);
-                        return (PyObject *)out;
+                if (out == NULL) {
+                        return PyArray_GenericUnaryFunction(self, 
+                                                            n_ops.conjugate);
                 }
-		return new;
+                else {
+                        return PyArray_GenericBinaryFunction(self, 
+                                                             (PyObject *)out,
+                                                             n_ops.conjugate);
+                }
 	}
 	else {
                 PyArrayObject *ret;
@@ -1926,7 +2028,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 	PyObject *otmp;
 	PyArray_Descr *intype=NULL, *stype=NULL;
 	PyArray_Descr *newtype=NULL;
-	NPY_SCALARKIND scalarkind, intypekind;
+	NPY_SCALARKIND scalarkind=NPY_NOSCALAR, intypekind=NPY_NOSCALAR;
 
 	*retn = n = PySequence_Length(op);
 	if (PyErr_Occurred()) {*retn = 0; return NULL;}

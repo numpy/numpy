@@ -1040,6 +1040,9 @@ typedef int (PyArray_FillWithScalarFunc)(void *, npy_intp, void *, void *);
 
 typedef int (PyArray_ScalarKindFunc)(void *);
 
+typedef void (PyArray_FastClipFunc)(void *in, npy_intp n_in, void *min,
+                                    void *max, void *out);
+
 typedef struct {
         npy_intp *ptr;
         int len;
@@ -1115,8 +1118,7 @@ typedef struct {
         int **cancastscalarkindto;
         int *cancastto;
 
-        int listpickle;           /* Unused */
-
+        PyArray_FastClipFunc *fastclip;
 } PyArray_ArrFuncs;
 
 #define NPY_ITEM_REFCOUNT   0x01  /* The item must be reference counted
@@ -1317,7 +1319,16 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 #define PyArray_MAX(a,b) (((a)>(b))?(a):(b))
 #define PyArray_MIN(a,b) (((a)<(b))?(a):(b))
-
+#define PyArray_CLT(p,q) ((((p).real==(q).real) ? ((p).imag < (q).imag) : \
+                               ((p).real < (q).real)))
+#define PyArray_CGT(p,q) ((((p).real==(q).real) ? ((p).imag > (q).imag) : \
+                               ((p).real > (q).real)))
+#define PyArray_CLE(p,q) ((((p).real==(q).real) ? ((p).imag <= (q).imag) : \
+                               ((p).real <= (q).real)))
+#define PyArray_CGE(p,q) ((((p).real==(q).real) ? ((p).imag >= (q).imag) : \
+                               ((p).real >= (q).real)))
+#define PyArray_CEQ(p,q) (((p).real==(q).real) && ((p).imag == (q).imag))
+#define PyArray_CNE(p,q) (((p).real!=(q).real) || ((p).imag != (q).imag))
 
 /*
  * C API:  consists of Macros and functions.  The MACROS are defined here.

@@ -3167,7 +3167,8 @@ typedef struct {
                 *ceil,
                 *maximum,
                 *minimum,
-                *rint;
+                *rint,
+                *conjugate;
 } NumericOps;
 
 static NumericOps n_ops; /* NB: static objects inlitialized to zero */
@@ -3224,6 +3225,7 @@ PyArray_SetNumericOps(PyObject *dict)
         SET(maximum);
         SET(minimum);
         SET(rint);
+        SET(conjugate);
         return 0;
 }
 
@@ -3273,6 +3275,7 @@ PyArray_GetNumericOps(void)
         GET(maximum);
         GET(minimum);
         GET(rint);
+        GET(conjugate);
         return dict;
 
  fail:
