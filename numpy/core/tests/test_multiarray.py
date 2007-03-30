@@ -395,6 +395,13 @@ class test_clip(NumpyTestCase):
             #x = self._check_type('uint',1024,-120,100,expected_min=0)
             x = self._clip_type('uint',1024,0,0)
 
+    # XXX fixme
+    def check_record_array(self,level=2):
+        rec = N.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
+                      dtype=[('x', '<f8'), ('y', '<f8'), ('z', '<f8')])
+        rec['x'].clip(-0.3,0.5)
+        self._check_range(rec['x'],-0.3,0.5)
+
 # Import tests from unicode
 set_local_path()
 from test_unicode import *
