@@ -7,11 +7,15 @@ from glob import glob
 __all__ = ['PackageLoader']
 
 class PackageLoader:
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, infunc=False):
         """ Manages loading packages.
         """
 
-        self.parent_frame = frame = sys._getframe(1)
+        if infunc:
+            _level = 2
+        else:
+            _level = 1
+        self.parent_frame = frame = sys._getframe(_level)
         self.parent_name = eval('__name__',frame.f_globals,frame.f_locals)
         parent_path = eval('__path__',frame.f_globals,frame.f_locals)
         if isinstance(parent_path, str):

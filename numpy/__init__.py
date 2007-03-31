@@ -29,7 +29,10 @@ else:
     from version import version as __version__
 
     from _import_tools import PackageLoader
-    pkgload = PackageLoader()
+
+    def pkgload(*packages, **options):
+        loader = PackageLoader(infunc=True)
+        return loader(*packages, **options)
 
     import testing
     from testing import ScipyTest, NumpyTest

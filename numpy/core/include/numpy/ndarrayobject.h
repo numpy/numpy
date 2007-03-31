@@ -1761,7 +1761,7 @@ typedef struct {
 
 
 #define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(((PyArray_Descr *)(d))->byteorder)
-
+#define PyDataType_ISBYTESWAPPED(d) (!PyDataType_ISNOTSWAPPED(d))
 
 
 /* This is the form of the struct that's returned pointed by the
