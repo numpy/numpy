@@ -306,7 +306,7 @@ class test_clip(NumpyTestCase):
 
     # Now the real test cases
     def test_simple_double(self):
-        print "=== testing native double input with scalar min/max ==="
+        """Test native double input with scalar min/max."""
         a   = self._generate_data(self.nr, self.nc)
         m   = 0.1
         M   = 0.6
@@ -315,7 +315,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_int(self):
-        print "=== testing native int input with scalar min/max ==="
+        """Test native int input with scalar min/max."""
         a   = self._generate_int_data(self.nr, self.nc)
         a   = a.astype(int) 
         m   = -2
@@ -325,7 +325,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_array_double(self):
-        print "=== testing native double input with array min/max ==="
+        """Test native double input with array min/max."""
         a   = self._generate_data(self.nr, self.nc)
         m   = zeros(a.shape)
         M   = m + 0.5
@@ -334,7 +334,8 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_nonnative(self):
-        print "=== testing non native double input with scalar min/max ==="
+        """Test non native double input with scalar min/max.
+        Test native double input with non native double scalar min/max."""
         a   = self._generate_non_native_data(self.nr, self.nc)
         m   = -0.5
         M   = 0.6
@@ -342,7 +343,7 @@ class test_clip(NumpyTestCase):
         act = self.clip(a, m, M)
         assert_array_equal(ac, act)
 
-        print "=== testing native double input with non native double scalar min/max ==="
+        "Test native double input with non native double scalar min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5
         M   = self._neg_byteorder(0.6)
@@ -352,7 +353,9 @@ class test_clip(NumpyTestCase):
         assert_array_equal(ac, act)
 
     def test_simple_complex(self):
-        print "=== testing native complex input with native double scalar min/max ==="
+        """Test native complex input with native double scalar min/max.
+        Test native input with complex double scalar min/max.
+        """
         a   = 3 * self._generate_data_complex(self.nr, self.nc)
         m   = -0.5
         M   = 1.
@@ -360,7 +363,7 @@ class test_clip(NumpyTestCase):
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
-        print "=== testing native input with complex double scalar min/max ==="
+        "Test native input with complex double scalar min/max."
         a   = 3 * self._generate_data(self.nr, self.nc)
         m   = -0.5 + 1.j
         M   = 1. + 2.j
@@ -369,7 +372,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_clip_non_contig(self):
-        print "=== testing clip for non contiguous native input and native scalar min/max ==="
+        """Test clip for non contiguous native input and native scalar min/max."""
         a   = self._generate_data(self.nr * 2, self.nc * 3)
         a   = a[::2, ::3]
         assert not a.flags['F_CONTIGUOUS']
@@ -379,7 +382,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_out(self):
-        print "=== testing native double input with scalar min/max ==="
+        """Test native double input with scalar min/max."""
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5
         M   = 0.6
@@ -390,7 +393,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_int32_inout(self):
-        print "=== testing native int32 input with double min/max and int32 out ==="
+        """Test native int32 input with double min/max and int32 out."""
         a   = self._generate_int32_data(self.nr, self.nc)
         m   = float64(0)
         M   = float64(2)
@@ -401,7 +404,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_int64_out(self):
-        print "=== testing native int32 input with int32 scalar min/max and int64 out ==="
+        """Test native int32 input with int32 scalar min/max and int64 out."""
         a   = self._generate_int32_data(self.nr, self.nc)
         m   = int32(-1)
         M   = int32(1)
@@ -412,7 +415,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_int64_inout(self):
-        print "=== testing native in32 input with double array min/max and int32 out ==="
+        """Test native in32 input with double array min/max and int32 out."""
         a   = self._generate_int32_data(self.nr, self.nc)
         m   = zeros(a.shape, float64)
         M   = float64(1)
@@ -423,7 +426,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(ac, act)
 
     def test_simple_int32_out(self):
-        print "=== testing native double input with scalar min/max and int out ==="
+        """Test native double input with scalar min/max and int out."""
         a   = self._generate_data(self.nr, self.nc)
         m   = -1.0
         M   = 2.0
@@ -433,8 +436,8 @@ class test_clip(NumpyTestCase):
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
-    def test_simple_inplace(self):
-        print "=== INPLACE: testing native double input with array min/max ==="
+    def test_simple_inplace_01(self):
+        """Test native double input with array min/max in-place."""
         a   = self._generate_data(self.nr, self.nc)
         ac  = a.copy()
         m   = zeros(a.shape)
@@ -443,7 +446,8 @@ class test_clip(NumpyTestCase):
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a, ac)
 
-        print "=== INPLACE: testing native double input with scalar min/max ==="
+    def test_simple_inplace_02(self):
+        """Test native double input with scalar min/max in-place."""
         a   = self._generate_data(self.nr, self.nc)
         ac  = a.copy()
         m   = -0.5
@@ -453,7 +457,7 @@ class test_clip(NumpyTestCase):
         assert_array_strict_equal(a, ac)
 
     def test_noncontig_inplace(self):
-        print "=== INPLACE: testing non contiguous double input with double scalar min/max ==="
+        """Test non contiguous double input with double scalar min/max in-place."""
         a   = self._generate_data(self.nr * 2, self.nc * 3)
         a   = a[::2, ::3]
         assert not a.flags['F_CONTIGUOUS']
@@ -465,12 +469,8 @@ class test_clip(NumpyTestCase):
         self.clip(a, m, M, ac)
         assert_array_equal(a, ac)
 
-    def test_type_cast(self):
-        print "\n==================="
-        print "    Test cast      "
-        print "==================="
-
-        print "=== testing native double input with scalar min/max ==="
+    def test_type_cast_01(self):
+        "Test native double input with scalar min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5
         M   = 0.6
@@ -478,7 +478,8 @@ class test_clip(NumpyTestCase):
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
-        print "=== testing native int32 input with int32 scalar min/max ==="
+    def test_type_cast_02(self):
+        "Test native int32 input with int32 scalar min/max."
         a   = self._generate_int_data(self.nr, self.nc)
         a   = a.astype(int32) 
         m   = -2
@@ -487,7 +488,8 @@ class test_clip(NumpyTestCase):
         act = self.clip(a, m, M)
         assert_array_strict_equal(ac, act)
 
-        print "=== testing native int32 input with float64 scalar min/max ==="
+    def test_type_cast_03(self):
+        "Test native int32 input with float64 scalar min/max."
         a   = self._generate_int32_data(self.nr, self.nc)
         m   = -2
         M   = 4
@@ -495,7 +497,8 @@ class test_clip(NumpyTestCase):
         act = self.clip(a, float64(m), float64(M))
         assert_array_strict_equal(ac, act)
 
-        print "=== testing native int32 input with float32 scalar min/max ==="
+    def test_type_cast_04(self):
+        "Test native int32 input with float32 scalar min/max."
         a   = self._generate_int32_data(self.nr, self.nc)
         m   = float32(-2)
         M   = float32(4)
@@ -503,7 +506,8 @@ class test_clip(NumpyTestCase):
         ac  = self.clip(a,m,M)
         assert_array_strict_equal(ac, act)        
 
-        print "=== testing native int32 with double arrays min/max ==="
+    def test_type_cast_04(self):
+        "Test native int32 with double arrays min/max."
         a   = self._generate_int_data(self.nr, self.nc)
         m   = -0.5
         M   = 1.
@@ -511,8 +515,8 @@ class test_clip(NumpyTestCase):
         act = self.clip(a, m * zeros(a.shape), M)
         assert_array_strict_equal(ac, act)
 
- 
-        print "=== testing native with NON native scalar min/max==="
+    def test_type_cast_05(self):
+        "Test native with NON native scalar min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = 0.5
         m_s = self._neg_byteorder(m)
@@ -521,7 +525,8 @@ class test_clip(NumpyTestCase):
         ac  = self.fastclip(a, m_s, M)
         assert_array_strict_equal(ac, act)
 
-        print "=== testing NON native with native array min/max==="
+    def test_type_cast_06(self):
+        "Test NON native with native array min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5 * ones(a.shape)
         M   = 1.
@@ -531,7 +536,8 @@ class test_clip(NumpyTestCase):
         ac  = self.fastclip(a_s, m, M)
         assert_array_strict_equal(ac, act)
 
-        print "=== testing NON native with native scalar min/max==="
+    def test_type_cast_07(self):
+        "Test NON native with native scalar min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5
         M   = 1.
@@ -541,7 +547,8 @@ class test_clip(NumpyTestCase):
         act = a_s.clip(m, M)
         assert_array_strict_equal(ac, act)
 
-        print "=== testing native with NON native array min/max==="
+    def test_type_cast_08(self):
+        "Test native with NON native array min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5 * ones(a.shape)
         M   = 1.
@@ -551,7 +558,8 @@ class test_clip(NumpyTestCase):
         act = self.clip(a, m_s, M)
         assert_array_strict_equal(ac, act)
 
-        print "=== OUT arg: testing native int32 with float min/max and float out ==="
+    def test_type_cast_09(self):
+        """Test native int32 with float min/max and float out for output argument."""
         a   = self._generate_int_data(self.nr, self.nc)
         b   = zeros(a.shape, dtype = float32)
         m   = float32(-0.5)
