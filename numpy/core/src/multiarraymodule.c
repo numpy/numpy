@@ -1291,6 +1291,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                 else 
                         oflags = NPY_CARRAY;
                 oflags |= NPY_UPDATEIFCOPY | NPY_FORCECAST;
+                Py_INCREF(indescr);
                 newout = (NPY_AO*)PyArray_FromArray(out, indescr, oflags);
                 if (newout == NULL) goto fail;
         }
