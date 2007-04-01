@@ -815,14 +815,16 @@ static PyObject *
 /**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*2#
    #oper=oct*16, hex*16#
+   #kind=(int*5, long*5, int, long*2, int, long*2)*2#
+   #cap=(Int*5, Long*5, Int, Long*2, Int, Long*2)*2#
 **/
 static PyObject *
 @name@_@oper@(PyObject *obj)
 {
     PyObject *pyint;
-    pyint = @name@_int(obj);
+    pyint = @name@_@kind@(obj);
     if (pyint == NULL) return NULL;
-    return PyInt_Type.tp_as_number->nb_@oper@(pyint);
+    return Py@cap@_Type.tp_as_number->nb_@oper@(pyint);
 }
 /**end repeat**/
 
