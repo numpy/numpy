@@ -8892,7 +8892,7 @@ PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
                         it->strides[i] = 0;
                 }
                 else {
-                        it->strides[i] = ao->strides[i];
+                        it->strides[i] = ao->strides[k];
                 }
                 it->backstrides[i] = it->strides[i] *   \
                         it->dims_m1[i];
