@@ -12,6 +12,8 @@
 //     void SNAMEOnes(    TYPE * array,  int size);
 //     void SNAMEZeros(   int size, TYPE * array);
 //     void SNAMEEOSplit( TYPE vector[3], TYPE even[3], odd[3]);
+//     void SNAMETwos(    TYPE * twoVec, int size);
+//     void SNAMEThrees(  int size, TYPE * threeVec);
 //     TYPE SNAMEDet(     TYPE matrix[2][2]);
 //     TYPE SNAMEMax(     TYPE * matrix, int rows, int cols);
 //     TYPE SNAMEMin(     int rows, int cols, TYPE * matrix);
@@ -33,6 +35,8 @@
 //  * 1D in-place arrays
 //  * 1D in-place arrays, data last
 //  * 1D argout arrays, hard-coded length
+//  * 1D argout arrays
+//  * 1D argout arrays, data last
 //  * 2D input arrays, hard-coded length
 //  * 2D input arrays
 //  * 2D input arrays, data last

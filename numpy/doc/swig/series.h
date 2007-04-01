@@ -11,6 +11,8 @@
 //     void SNAMEOnes(    TYPE * array,  int size);
 //     void SNAMEZeros(   int size, TYPE * array);
 //     void SNAMEEOSplit( TYPE vector[3], TYPE even[3], TYPE odd[3]);
+//     void SNAMETwos(    TYPE * twoVec, int size);
+//     void SNAMEThrees(  int size, TYPE * threeVec);
 //     TYPE SNAMEDet(     TYPE matrix[2][2]);
 //     TYPE SNAMEMax(     TYPE * matrix, int rows, int cols);
 //     TYPE SNAMEMin(     int rows, int cols, TYPE * matrix);
