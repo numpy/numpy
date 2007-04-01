@@ -292,6 +292,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   }
   return success;
 }
+
 /* End John Hunter translation (with modifications by Bill Spotz)
  */
 
@@ -617,56 +618,32 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE ARGOUT_ARRAY1[ANY])
+  (PyObject * array = NULL)
 {
-  $1 = (DATA_TYPE*) malloc($1_dim0*sizeof(DATA_TYPE));
-  if (!$1) {
-    PyErr_SetString(PyExc_RuntimeError, "Failed to allocate memory");
-    SWIG_fail;
-  }
+  npy_intp dims[1] = { $1_dim0 };
+  array = PyArray_SimpleNew(1, dims, DATA_TYPECODE);
+  $1 = ($1_ltype)((PyArrayObject*)array)->data;
 }
 %typemap(argout)
   (DATA_TYPE ARGOUT_ARRAY1[ANY])
 {
-  PyObject * obj = NULL;
-  npy_intp dimensions[1] = { $1_dim0 };
-  PyObject* outArray = PyArray_FromDimsAndData(1, dimensions, DATA_TYPECODE, (char*)$1);
-  if ($result == Py_None) {
-    Py_DECREF($result);
-    $result = outArray;
-  }
-  else {
-    if (!PyTuple_Check($result)) $result = Py_BuildValue("(O)", $result);
-    obj = Py_Build_Value("(O)", outArray);
-    $result = PySequence_Concat($result, obj);
-  }
+  $result = SWIG_Python_AppendOutput($result,array$argnum);
 }
 
 /* Typemap suite for (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
+  (PyObject * array = NULL)
 {
-  $1 = (DATA_TYPE*) malloc($1_dim0 * $1_dim1 * sizeof(DATA_TYPE));
-  if (!$1) {
-    PyErr_SetString(PyExc_RuntimeError, "Failed to allocate memory");
-    SWIG_fail;
-  }
+  npy_intp dims[2] = { $1_dim0, $1_dim1 };
+  array = PyArray_SimpleNew(2, dims, DATA_TYPECODE);
+  $1 = ($1_ltype)((PyArrayObject*)array)->data;
 }
 %typemap(argout)
-  (DATA_TYPE ARGOUT_ARRAY1[ANY][ANY])
+  (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
 {
-  PyObject * obj = NULL;
-  npy_intp dimensions[2] = { $1_dim0, $1_dim1 };
-  PyObject* outArray = PyArray_FromDimsAndData(1, dimensions, DATA_TYPECODE, (char*)$1);
-  if ($result == Py_None) {
-    Py_DECREF($result);
-    $result = outArray;
-  }
-  else {
-    if (!PyTuple_Check($result)) $result = Py_BuildValue("(O)", $result);
-    obj = Py_Build_Value("(O)", outArray);
-    $result = PySequence_Concat($result, obj);
-  }
+  $result = SWIG_Python_AppendOutput($result,array$argnum);
 }
 
 %enddef    /* %numpy_typemaps() macro */

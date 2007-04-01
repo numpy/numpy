@@ -4,18 +4,20 @@
 // The following macro defines the prototypes for a family of
 // functions with the forms
 //
-//     TYPE SNAMELength(   TYPE vector[3]);
-//     TYPE SNAMEProd(     TYPE * series, int size);
-//     TYPE SNAMESum(      int size, TYPE * series);
-//     void SNAMEReverse(TYPE array[3]);
-//     void SNAMEOnes(     TYPE * array,  int size);
-//     void SNAMEZeros(    int size, TYPE * array);
-//     TYPE SNAMEDet(      TYPE matrix[2][2]);
-//     TYPE SNAMEMax(      TYPE * matrix, int rows, int cols);
-//     TYPE SNAMEMin(      int rows, int cols, TYPE * matrix);
-//     void SNAMEScale(    TYPE array[3][3]);
-//     void SNAMEFloor(    TYPE * array,  int rows, int cols, TYPE floor);
-//     void SNAMECeil(     int rows, int cols, TYPE * array,  TYPE ceil );
+//     TYPE SNAMELength(  TYPE vector[3]);
+//     TYPE SNAMEProd(    TYPE * series, int size);
+//     TYPE SNAMESum(     int size, TYPE * series);
+//     void SNAMEReverse( TYPE array[3]);
+//     void SNAMEOnes(    TYPE * array,  int size);
+//     void SNAMEZeros(   int size, TYPE * array);
+//     void SNAMEEOSplit( TYPE vector[3], TYPE even[3], TYPE odd[3]);
+//     TYPE SNAMEDet(     TYPE matrix[2][2]);
+//     TYPE SNAMEMax(     TYPE * matrix, int rows, int cols);
+//     TYPE SNAMEMin(     int rows, int cols, TYPE * matrix);
+//     void SNAMEScale(   TYPE array[3][3]);
+//     void SNAMEFloor(   TYPE * array,  int rows, int cols, TYPE floor);
+//     void SNAMECeil(    int rows, int cols, TYPE * array,  TYPE ceil );
+//     void SNAMESetIdent(TYPE in[3][3], TYPE lower[3][3], TYPE upper[3][3]);
 //
 // for any specified type TYPE (for example: short, unsigned int, long
 // long, etc.) with given short name SNAME (for example: short, uint,
@@ -29,27 +31,31 @@
 //  * 1D in-place arrays, hard-coded length
 //  * 1D in-place arrays
 //  * 1D in-place arrays, data last
+//  * 1D argout arrays, hard-coded length
 //  * 2D input arrays, hard-coded lengths
 //  * 2D input arrays
 //  * 2D input arrays, data last
 //  * 2D in-place arrays, hard-coded lengths
 //  * 2D in-place arrays
 //  * 2D in-place arrays, data last
+//  * 2D argout arrays, hard-coded length
 //
 #define TEST_FUNC_PROTOS(TYPE, SNAME) \
 \
-TYPE SNAME ## Length( TYPE vector[3]); \
-TYPE SNAME ## Prod(   TYPE * series, int size); \
-TYPE SNAME ## Sum(    int size, TYPE * series); \
-void SNAME ## Reverse(TYPE array[3]); \
-void SNAME ## Ones(   TYPE * array,  int size); \
-void SNAME ## Zeros(  int size, TYPE * array); \
-TYPE SNAME ## Det(    TYPE matrix[2][2]); \
-TYPE SNAME ## Max(    TYPE * matrix, int rows, int cols); \
-TYPE SNAME ## Min(    int rows, int cols, TYPE * matrix); \
-void SNAME ## Scale(  TYPE array[3][3], TYPE val); \
-void SNAME ## Floor(  TYPE * array, int rows, int cols, TYPE floor); \
-void SNAME ## Ceil(   int rows, int cols, TYPE * array, TYPE ceil );
+TYPE SNAME ## Length(  TYPE vector[3]); \
+TYPE SNAME ## Prod(    TYPE * series, int size); \
+TYPE SNAME ## Sum(     int size, TYPE * series); \
+void SNAME ## Reverse( TYPE array[3]); \
+void SNAME ## Ones(    TYPE * array,  int size); \
+void SNAME ## Zeros(   int size, TYPE * array); \
+void SNAME ## EOSplit( TYPE vector[3], TYPE even[3], TYPE odd[3]); \
+TYPE SNAME ## Det(     TYPE matrix[2][2]); \
+TYPE SNAME ## Max(     TYPE * matrix, int rows, int cols); \
+TYPE SNAME ## Min(     int rows, int cols, TYPE * matrix); \
+void SNAME ## Scale(   TYPE array[3][3], TYPE val); \
+void SNAME ## Floor(   TYPE * array, int rows, int cols, TYPE floor); \
+void SNAME ## Ceil(    int rows, int cols, TYPE * array, TYPE ceil ); \
+void SNAME ## LUSplit( TYPE matrix[3][3], TYPE lower[3][3], TYPE upper[3][3]);
 
 TEST_FUNC_PROTOS(signed char       , schar    )
 TEST_FUNC_PROTOS(unsigned char     , uchar    )

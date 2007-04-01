@@ -62,6 +62,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.scharZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
 
+    def testScharEOSplit(self):
+        "Test scharEOSplit function"
+        even, odd = Series.scharEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
+
     def testScharDet(self):
         "Test scharDet function"
         matrix = [[6,7],[8,9]]
@@ -103,6 +109,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.scharCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,-2],[-6,5]]))
 
+    def testScharLUSplit(self):
+        "Test scharLUSplit function"
+        lower, upper = Series.scharLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     #####################################################
     ### Test functions that take arrays of type UBYTE ###
     def testUcharLength(self):
@@ -142,6 +154,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'B')
         Series.ucharZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testUcharEOSplit(self):
+        "Test ucharEOSplit function"
+        even, odd = Series.ucharEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testUcharDet(self):
         "Test ucharDet function"
@@ -184,6 +202,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.ucharCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,2],[5,5]]))
 
+    def testUcharLUSplit(self):
+        "Test ucharLUSplit function"
+        lower, upper = Series.ucharLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     #####################################################
     ### Test functions that take arrays of type SHORT ###
     def testShortLength(self):
@@ -223,6 +247,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'h')
         Series.shortZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testShortEOSplit(self):
+        "Test shortEOSplit function"
+        even, odd = Series.shortEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testShortDet(self):
         "Test shortDet function"
@@ -265,6 +295,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.shortCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,-2],[-6,5]]))
 
+    def testShortLUSplit(self):
+        "Test shortLUSplit function"
+        lower, upper = Series.shortLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     ######################################################
     ### Test functions that take arrays of type USHORT ###
     def testUshortLength(self):
@@ -304,6 +340,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'H')
         Series.ushortZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testUshortEOSplit(self):
+        "Test ushortEOSplit function"
+        even, odd = Series.ushortEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testUshortDet(self):
         "Test ushortDet function"
@@ -346,6 +388,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.ushortCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,2],[5,5]]))
 
+    def testUshortLUSplit(self):
+        "Test ushortLUSplit function"
+        lower, upper = Series.ushortLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     ###################################################
     ### Test functions that take arrays of type INT ###
     def testIntLength(self):
@@ -385,6 +433,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'i')
         Series.intZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testIntEOSplit(self):
+        "Test intEOSplit function"
+        even, odd = Series.intEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testIntDet(self):
         "Test intDet function"
@@ -427,6 +481,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.intCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,-2],[-6,5]]))
 
+    def testIntLUSplit(self):
+        "Test intLUSplit function"
+        lower, upper = Series.intLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     ####################################################
     ### Test functions that take arrays of type UINT ###
     def testUintLength(self):
@@ -467,6 +527,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'I')
         Series.uintZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testUintEOSplit(self):
+        "Test uintEOSplit function"
+        even, odd = Series.uintEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testUintDet(self):
         "Test uintDet function"
@@ -509,6 +575,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.uintCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,2],[5,5]]))
 
+    def testUintLUSplit(self):
+        "Test uintLUSplit function"
+        lower, upper = Series.uintLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     ####################################################
     ### Test functions that take arrays of type LONG ###
     def testLongLength(self):
@@ -548,6 +620,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'l')
         Series.longZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testLongEOSplit(self):
+        "Test longEOSplit function"
+        even, odd = Series.longEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testLongDet(self):
         "Test longDet function"
@@ -590,6 +668,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.longCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,-2],[-6,5]]))
 
+    def testLongLUSplit(self):
+        "Test longLUSplit function"
+        lower, upper = Series.longLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     #####################################################
     ### Test functions that take arrays of type ULONG ###
     def testUlongLength(self):
@@ -629,6 +713,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'L')
         Series.ulongZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testUlongEOSplit(self):
+        "Test ulongEOSplit function"
+        even, odd = Series.ulongEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testUlongDet(self):
         "Test ulongDet function"
@@ -671,6 +761,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.ulongCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,2],[5,5]]))
 
+    def testUlongLUSplit(self):
+        "Test ulongLUSplit function"
+        lower, upper = Series.ulongLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     ########################################################
     ### Test functions that take arrays of type LONGLONG ###
     def testLongLongLength(self):
@@ -710,6 +806,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'q')
         Series.longLongZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testLongLongEOSplit(self):
+        "Test longLongEOSplit function"
+        even, odd = Series.longLongEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testLongLongDet(self):
         "Test longLongDet function"
@@ -752,6 +854,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.longLongCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,-2],[-6,5]]))
 
+    def testLongLongLUSplit(self):
+        "Test longLongLUSplit function"
+        lower, upper = Series.longLongLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
+
     #########################################################
     ### Test functions that take arrays of type ULONGLONG ###
     def testUlongLongLength(self):
@@ -791,6 +899,12 @@ class SeriesTestCase(unittest.TestCase):
         myArray = N.ones(5,'Q')
         Series.ulongLongZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
+
+    def testUlongLongEOSplit(self):
+        "Test ulongLongEOSplit function"
+        even, odd = Series.ulongLongEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
 
     def testUlongLongDet(self):
         "Test ulongLongDet function"
@@ -832,6 +946,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = N.array([[10,2],[6,7]],'Q')
         Series.ulongLongCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,2],[5,5]]))
+
+    def testUlongLongLUSplit(self):
+        "Test ulongLongLUSplit function"
+        lower, upper = Series.ulongLongLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
 
     #####################################################
     ### Test functions that take arrays of type FLOAT ###
@@ -882,6 +1002,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.floatZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
 
+    def testFloatEOSplit(self):
+        "Test floatEOSplit function"
+        even, odd = Series.floatEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
+
     def testFloatMax(self):
         "Test floatMax function"
         matrix = [[-6,5,-4],[3.14,-2.718,1]]
@@ -917,6 +1043,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = N.array([[10,-2],[-6,7]],'f')
         Series.floatCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,-2],[-6,5]]))
+
+    def testFloatLUSplit(self):
+        "Test floatLUSplit function"
+        lower, upper = Series.floatLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
 
     ######################################################
     ### Test functions that take arrays of type DOUBLE ###
@@ -962,6 +1094,12 @@ class SeriesTestCase(unittest.TestCase):
         Series.doubleZeros(myArray)
         N.testing.assert_array_equal(myArray, N.array([0,0,0,0,0]))
 
+    def testDoubleEOSplit(self):
+        "Test doubleEOSplit function"
+        even, odd = Series.doubleEOSplit([1,2,3])
+        self.assertEquals((even == [1,0,3]).all(), True)
+        self.assertEquals((odd  == [0,2,0]).all(), True)
+
     def testDoubleDet(self):
         "Test doubleDet function"
         matrix = [[6,7],[8,9]]
@@ -1002,6 +1140,12 @@ class SeriesTestCase(unittest.TestCase):
         matrix = N.array([[10,-2],[-6,7]],'d')
         Series.doubleCeil(matrix,5)
         N.testing.assert_array_equal(matrix, N.array([[5,-2],[-6,5]]))
+
+    def testDoubleLUSplit(self):
+        "Test doubleLUSplit function"
+        lower, upper = Series.doubleLUSplit([[1,2,3],[4,5,6],[7,8,9]])
+        self.assertEquals((lower == [[1,0,0],[4,5,0],[7,8,9]]).all(), True)
+        self.assertEquals((upper == [[0,2,3],[0,0,6],[0,0,0]]).all(), True)
 
 ######################################################################
 
