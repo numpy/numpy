@@ -1372,14 +1372,7 @@ def get_numpy_include_dirs():
     include_dirs = Configuration.numpy_include_dirs[:]
     if not include_dirs:
         import numpy
-        if numpy.show_config is None:
-            # running from numpy_core source directory
-            include_dirs.append(njoin(os.path.dirname(numpy.__file__),
-                                             'core', 'include'))
-        else:
-            # using installed numpy core headers
-            import numpy.core as core
-            include_dirs.append(njoin(os.path.dirname(core.__file__), 'include'))
+        include_dirs = [ numpy.get_include() ]
     # else running numpy/core/setup.py
     return include_dirs
 

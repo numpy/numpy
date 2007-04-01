@@ -1,3 +1,4 @@
+import os
 import sys
 import inspect
 import types
@@ -40,10 +41,15 @@ def get_include():
       Extension('extension_name', ...
                 include_dirs=[numpy.get_include()])
     """
-    from numpy.distutils.misc_util import get_numpy_include_dirs
-    include_dirs = get_numpy_include_dirs()
-    assert len(include_dirs)==1,`include_dirs`
-    return include_dirs[0]
+    import numpy
+    if numpy.show_config is None:
+        # running from numpy source directory
+        d = os.path.join(os.path.dirname(numpy.__file__), 'core', 'include')
+    else:
+        # using installed numpy core headers
+        import numpy.core as core
+        d = os.path.join(os.path.dirname(core.__file__), 'include')
+    return d
 
 def get_numarray_include(type=None):
     """Return the directory in the package that contains the numpy/*.h header
@@ -54,15 +60,14 @@ def get_numarray_include(type=None):
 
       import numpy
       Extension('extension_name', ...
-                include_dirs=[numpy.get_include()])
+                include_dirs=[numpy.get_numarray_include()])
     """
     from numpy.numarray import get_numarray_include_dirs
-    from numpy.distutils.misc_util import get_numpy_include_dirs
     include_dirs = get_numarray_include_dirs()
     if type is None:
         return include_dirs[0]
     else:
-        return include_dirs + get_numpy_include_dirs()
+        return include_dirs + [get_include()]
 
 
 if sys.version_info < (2, 4):
