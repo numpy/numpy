@@ -2673,7 +2673,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
 static PyObject *
 array_subscript(PyArrayObject *self, PyObject *op)
 {
-        int nd, oned, fancy;
+        int nd, fancy;
         PyArrayObject *other;
         PyArrayMapIterObject *mit;
 
@@ -2729,7 +2729,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                                 return (PyObject *)self;
                         }
                         else {
-                                oned = 0;
+                                intp oned = 0;
                                 Py_INCREF(self->descr);
                                 return PyArray_NewFromDescr(self->ob_type,
                                                             self->descr,
@@ -2747,6 +2747,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         fancy = fancy_indexing_check(op);
 
         if (fancy != SOBJ_NOTFANCY) {
+                int oned;
                 oned = ((self->nd == 1) &&
                         !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
 
