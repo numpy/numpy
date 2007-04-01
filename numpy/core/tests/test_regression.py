@@ -640,5 +640,10 @@ class test_regression(NumpyTestCase):
 
         self.failUnlessRaises(ValueError,mul)
 
+    def check_junk_in_string_fields_of_recarray(self, level=rlevel):
+        """Ticket #483"""
+        r = N.array([['abc']], dtype=[('var1', '|S20')])
+        assert str(r['var1'][0][0]) == 'abc'
+
 if __name__ == "__main__":
     NumpyTest().run()
