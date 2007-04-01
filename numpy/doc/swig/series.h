@@ -32,6 +32,8 @@
 //  * 1D in-place arrays
 //  * 1D in-place arrays, data last
 //  * 1D argout arrays, hard-coded length
+//  * 1D argout arrays
+//  * 1D argout arrays, data last
 //  * 2D input arrays, hard-coded lengths
 //  * 2D input arrays
 //  * 2D input arrays, data last
@@ -49,6 +51,8 @@ void SNAME ## Reverse( TYPE array[3]); \
 void SNAME ## Ones(    TYPE * array,  int size); \
 void SNAME ## Zeros(   int size, TYPE * array); \
 void SNAME ## EOSplit( TYPE vector[3], TYPE even[3], TYPE odd[3]); \
+void SNAME ## Twos(    TYPE * twoVec, int size); \
+void SNAME ## Threes(  int size, TYPE * threeVec); \
 TYPE SNAME ## Det(     TYPE matrix[2][2]); \
 TYPE SNAME ## Max(     TYPE * matrix, int rows, int cols); \
 TYPE SNAME ## Min(     int rows, int cols, TYPE * matrix); \

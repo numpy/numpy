@@ -25,6 +25,8 @@
 
 %apply (TYPE ARGOUT_ARRAY1[ANY]) {(TYPE even[3])};
 %apply (TYPE ARGOUT_ARRAY1[ANY]) {(TYPE odd[ 3])};
+%apply (TYPE* ARGOUT_ARRAY1, int DIM1) {(TYPE* twoVec, int size)};
+%apply (int DIM1, TYPE* ARGOUT_ARRAY1) {(int size, TYPE* threeVec)};
 
 %apply (TYPE IN_ARRAY2[ANY][ANY]) {(TYPE matrix[ANY][ANY])};
 %apply (TYPE* IN_ARRAY2, int DIM1, int DIM2) {(TYPE* matrix, int rows, int cols)};

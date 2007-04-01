@@ -87,6 +87,14 @@ void SNAME ## EOSplit(TYPE vector[3], TYPE even[3], TYPE odd[3]) { \
   }								   \
 }								   \
 \
+void SNAME ## Twos(TYPE* twoVec, int size) { \
+  for (int i=0; i<size; ++i) twoVec[i] = 2;  \
+}					     \
+\
+void SNAME ## Threes(int size, TYPE* threeVec) { \
+  for (int i=0; i<size; ++i) threeVec[i] = 3;	 \
+}						 \
+\
 TYPE SNAME ## Det(TYPE matrix[2][2]) {                          \
   return matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]; \
 }                                                               \

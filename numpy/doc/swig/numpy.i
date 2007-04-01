@@ -315,21 +315,25 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *     (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
  *     (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
  *
- *     (DATA_TYPE IN_ARRAY2[ANY][ANY])
+ *     (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
  *     (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  *     (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_ARRAY2)
  *
  *     (DATA_TYPE ARGOUT_ARRAY1[ANY])
+ *     (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
+ *     (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
  *
  *     (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
  *
- * where "DATA_TYPE" is any type supported by the NumPy module.  In python,
- * the dimensions will not need to be specified.  The IN_ARRAYs can be
- * a numpy array or any sequence that can be converted to a numpy
- * array of the specified type.  The INPLACE_ARRAYs must be numpy
- * arrays of the appropriate type.  The ARGOUT_ARRAYs will be returned
- * as numpy arrays of the appropriate type.
-
+ * where "DATA_TYPE" is any type supported by the NumPy module, and
+ * "DIM_TYPE" is any int-like type suitable for specifying dimensions.
+ * In python, the dimensions will not need to be specified (except for
+ * the "DATA_TYPE* ARGOUT_ARRAY1" typemaps).  The IN_ARRAYs can be a
+ * numpy array or any sequence that can be converted to a numpy array
+ * of the specified type.  The INPLACE_ARRAYs must be numpy arrays of
+ * the appropriate type.  The ARGOUT_ARRAYs will be returned as numpy
+ * arrays of the appropriate type.
+ *
  * These typemaps can be applied to existing functions using the
  * %apply directive:
  *
@@ -369,11 +373,21 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *     %apply (int DIM1, int DIM2, double* INPLACE_ARRAY2) {(int rows, int cols, double* matrix)};
  *     void ceil(int rows, int cols, double* matrix);
  *
- *     %apply (double ARGOUT_ARRAY1[ANY] {(double series[int length])};
- *     void negate(double* series, int length);
+ *     %apply (double IN_ARRAY1[ANY]    ) {(double vector[ANY])};
+ *     %apply (double ARGOUT_ARRAY1[ANY]) {(double even[    3])};
+ *     %apply (double ARGOUT_ARRAY1[ANY]) {(double odd[     3])};
+ *     void eoSplit(double vector[3], double even[3], double odd[3]);
  *
- *     %apply (double ARGOUT_ARRAY2[ANY][ANY]) {(double matrix[int rows][int cols])};
- *     void normalize(double* matrix, int rows, int cols);
+ *     %apply (double* ARGOUT_ARRAY1, int DIM1) {(double* twoVec, int size)};
+ *     void twos(double* twoVec, int size);
+ *
+ *     %apply (int DIM1, double* ARGOUT_ARRAY1) {(int size, double* threeVec)};
+ *     void threes(int size, double* threeVec);
+ *
+ *     %apply (double IN_ARRAY2[ANY][ANY])     {(double matrix[2][2])};
+ *     %apply (double ARGOUT_ARRAY2[ANY][ANY]) {(double upper[ 3][3])};
+ *     %apply (double ARGOUT_ARRAY2[ANY][ANY]) {(double lower[ 3][3])};
+ *     void luSplit(double matrix[3][3], double upper[3][3], double lower[3][3]);
  *
  * or directly with
  *
@@ -393,9 +407,13 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *     void floor(double* INPLACE_ARRAY2, int DIM1, int DIM2, double floor);
  *     void ceil( int DIM1, int DIM2, double* INPLACE_ARRAY2, double ceil );
  *
- *     void negate(double ARGOUT_ARRAY1[ANY]);
+ *     void eoSplit(double IN_ARRAY1[ANY], double ARGOUT_ARRAY1[ANY],
+ *                  double ARGOUT_ARRAY1[ANY]);
+ *     void twos(double* ARGOUT_ARRAY1, int DIM1)
+ *     void threes(int DIM1, double* ARGOUT_ARRAY1)
  *
- *     void normalize(double ARGOUT_ARRAY2[ANY][ANY]);
+ *     void luSplit(double IN_ARRAY2[ANY][ANY], double ARGOUT_ARRAY2[ANY][ANY],
+ *                  double ARGOUT_ARRAY2[ANY][ANY]);
  */
 
 %define %numpy_typemaps(DATA_TYPE, DATA_TYPECODE, DIM_TYPE)
@@ -626,6 +644,54 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 }
 %typemap(argout)
   (DATA_TYPE ARGOUT_ARRAY1[ANY])
+{
+  $result = SWIG_Python_AppendOutput($result,array$argnum);
+}
+
+/* Typemap suite for (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
+ */
+%typemap(in,numinputs=1)
+  (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
+  (PyObject * array = NULL)
+{
+  if (!PyInt_Check($input)) {
+    char* typestring = pytype_string($input);
+    PyErr_Format(PyExc_TypeError, 
+		 "Int dimension expected.  '%s' given.", 
+		 typestring);
+    SWIG_fail;
+  }
+  $2 = (DIM_TYPE) PyInt_AsLong($input);
+  npy_intp dims[1] = { (npy_intp) $2 };
+  array = PyArray_SimpleNew(1, dims, DATA_TYPECODE);
+  $1 = (DATA_TYPE*)((PyArrayObject*)array)->data;
+}
+%typemap(argout)
+  (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
+{
+  $result = SWIG_Python_AppendOutput($result,array$argnum);
+}
+
+/* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
+ */
+%typemap(in,numinputs=1)
+  (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
+  (PyObject * array = NULL)
+{
+  if (!PyInt_Check($input)) {
+    char* typestring = pytype_string($input);
+    PyErr_Format(PyExc_TypeError, 
+		 "Int dimension expected.  '%s' given.", 
+		 typestring);
+    SWIG_fail;
+  }
+  $1 = (DIM_TYPE) PyInt_AsLong($input);
+  npy_intp dims[1] = { (npy_intp) $1 };
+  array = PyArray_SimpleNew(1, dims, DATA_TYPECODE);
+  $2 = (DATA_TYPE*)((PyArrayObject*)array)->data;
+}
+%typemap(argout)
+  (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
 {
   $result = SWIG_Python_AppendOutput($result,array$argnum);
 }

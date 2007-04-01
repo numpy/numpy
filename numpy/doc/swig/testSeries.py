@@ -68,6 +68,16 @@ class SeriesTestCase(unittest.TestCase):
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
 
+    def testScharTwos(self):
+        "Test scharTwos function"
+        twos = Series.scharTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testScharThrees(self):
+        "Test scharThrees function"
+        threes = Series.scharThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
+
     def testScharDet(self):
         "Test scharDet function"
         matrix = [[6,7],[8,9]]
@@ -160,6 +170,16 @@ class SeriesTestCase(unittest.TestCase):
         even, odd = Series.ucharEOSplit([1,2,3])
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
+
+    def testUcharTwos(self):
+        "Test ucharTwos function"
+        twos = Series.ucharTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testUcharThrees(self):
+        "Test ucharThrees function"
+        threes = Series.ucharThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
 
     def testUcharDet(self):
         "Test ucharDet function"
@@ -254,6 +274,16 @@ class SeriesTestCase(unittest.TestCase):
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
 
+    def testShortTwos(self):
+        "Test shortTwos function"
+        twos = Series.shortTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testShortThrees(self):
+        "Test shortThrees function"
+        threes = Series.shortThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
+
     def testShortDet(self):
         "Test shortDet function"
         matrix = [[6,7],[8,9]]
@@ -347,6 +377,16 @@ class SeriesTestCase(unittest.TestCase):
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
 
+    def testUshortTwos(self):
+        "Test ushortTwos function"
+        twos = Series.ushortTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testUshortThrees(self):
+        "Test ushortThrees function"
+        threes = Series.ushortThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
+
     def testUshortDet(self):
         "Test ushortDet function"
         matrix = [[7,6],[9,8]]
@@ -439,6 +479,16 @@ class SeriesTestCase(unittest.TestCase):
         even, odd = Series.intEOSplit([1,2,3])
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
+
+    def testIntTwos(self):
+        "Test intTwos function"
+        twos = Series.intTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testIntThrees(self):
+        "Test intThrees function"
+        threes = Series.intThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
 
     def testIntDet(self):
         "Test intDet function"
@@ -534,6 +584,16 @@ class SeriesTestCase(unittest.TestCase):
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
 
+    def testUintTwos(self):
+        "Test uintTwos function"
+        twos = Series.uintTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testUintThrees(self):
+        "Test uintThrees function"
+        threes = Series.uintThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
+
     def testUintDet(self):
         "Test uintDet function"
         matrix = [[7,6],[9,8]]
@@ -626,6 +686,16 @@ class SeriesTestCase(unittest.TestCase):
         even, odd = Series.longEOSplit([1,2,3])
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
+
+    def testLongTwos(self):
+        "Test longTwos function"
+        twos = Series.longTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testLongThrees(self):
+        "Test longThrees function"
+        threes = Series.longThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
 
     def testLongDet(self):
         "Test longDet function"
@@ -720,6 +790,16 @@ class SeriesTestCase(unittest.TestCase):
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
 
+    def testUlongTwos(self):
+        "Test ulongTwos function"
+        twos = Series.ulongTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testUlongThrees(self):
+        "Test ulongThrees function"
+        threes = Series.ulongThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
+
     def testUlongDet(self):
         "Test ulongDet function"
         matrix = [[7,6],[9,8]]
@@ -813,6 +893,16 @@ class SeriesTestCase(unittest.TestCase):
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
 
+    def testLongLongTwos(self):
+        "Test longLongTwos function"
+        twos = Series.longLongTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testLongLongThrees(self):
+        "Test longLongThrees function"
+        threes = Series.longLongThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
+
     def testLongLongDet(self):
         "Test longLongDet function"
         matrix = [[6,7],[8,9]]
@@ -905,6 +995,16 @@ class SeriesTestCase(unittest.TestCase):
         even, odd = Series.ulongLongEOSplit([1,2,3])
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
+
+    def testUlongLongTwos(self):
+        "Test ulongLongTwos function"
+        twos = Series.ulongLongTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testUlongLongThrees(self):
+        "Test ulongLongThrees function"
+        threes = Series.ulongLongThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
 
     def testUlongLongDet(self):
         "Test ulongLongDet function"
@@ -1008,6 +1108,16 @@ class SeriesTestCase(unittest.TestCase):
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
 
+    def testFloatTwos(self):
+        "Test floatTwos function"
+        twos = Series.floatTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testFloatThrees(self):
+        "Test floatThrees function"
+        threes = Series.floatThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
+
     def testFloatMax(self):
         "Test floatMax function"
         matrix = [[-6,5,-4],[3.14,-2.718,1]]
@@ -1099,6 +1209,16 @@ class SeriesTestCase(unittest.TestCase):
         even, odd = Series.doubleEOSplit([1,2,3])
         self.assertEquals((even == [1,0,3]).all(), True)
         self.assertEquals((odd  == [0,2,0]).all(), True)
+
+    def testDoubleTwos(self):
+        "Test doubleTwos function"
+        twos = Series.doubleTwos(5)
+        self.assertEquals((twos == [2,2,2,2,2]).all(), True)
+
+    def testDoubleThrees(self):
+        "Test doubleThrees function"
+        threes = Series.doubleThrees(6)
+        self.assertEquals((threes == [3,3,3,3,3,3]).all(), True)
 
     def testDoubleDet(self):
         "Test doubleDet function"
