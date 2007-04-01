@@ -3287,6 +3287,11 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 	}
 
 	nd = ap1->nd+ap2->nd-2;
+        if (nd > NPY_MAXDIMS) {
+                PyErr_SetString(PyExc_ValueError, 
+                                "dot: too many dimensions in result");
+                goto fail;
+        }
 	j = 0;
 	for(i=0; i<ap1->nd-1; i++) {
 		dimensions[j++] = ap1->dimensions[i];
