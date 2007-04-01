@@ -371,7 +371,7 @@ STRING_getitem(char *ip, PyArrayObject *ap)
         int size = ap->descr->elsize;
 
         ptr = ip + size-1;
-        while (*ptr-- == '\0') size--;
+        while (*ptr-- == '\0' && size > 0) size--;
         return PyString_FromStringAndSize(ip,size);
 }
 
