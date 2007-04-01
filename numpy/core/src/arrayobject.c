@@ -324,7 +324,7 @@ _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides,
 
         switch(elsize) {
         case 8:
-                _FAST_MOVE(Float64);
+                _FAST_MOVE(Int64);
         case 4:
                 _FAST_MOVE(Int32);
         case 1:
@@ -333,8 +333,8 @@ _strided_byte_copy(char *dst, intp outstrides, char *src, intp instrides,
                 _FAST_MOVE(Int16);
         case 16:
                 for (i=0; i<N; i++) {
-                        ((Float64 *)tout)[0] = ((Float64 *)tin)[0];
-                        ((Float64 *)tout)[1] = ((Float64 *)tin)[1];
+                        ((Int64 *)tout)[0] = ((Int64 *)tin)[0];
+                        ((Int64 *)tout)[1] = ((Int64 *)tin)[1];
                         tin += instrides;
                         tout += outstrides;
                 }
