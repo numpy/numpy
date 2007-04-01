@@ -637,7 +637,10 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
                 }
                 res = PyObject_AsReadBuffer(op, &buffer, &buflen);
                 if (res == -1) goto fail;
-                memcpy(ip, buffer, MIN(buflen, itemsize));
+                memcpy(ip, buffer, NPY_MIN(buflen, itemsize));
+                if (itemsize > buflen) {
+                        memset(ip+buflen, 0, (itemsize-buflen));
+                }
         }
         return 0;
 
