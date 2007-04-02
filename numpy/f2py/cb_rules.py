@@ -64,7 +64,7 @@ f2py_cb_start_clock();
 \tif (PyCObject_Check(#name#_capi)) {
 \t#name#_typedef #name#_cptr;
 \t#name#_cptr = PyCObject_AsVoidPtr(#name#_capi);
-\t#returncptr#(*#name#_cptr)(#optargs_nm##args_nm#);
+\t#returncptr#(*#name#_cptr)(#optargs_nm##args_nm##strarglens_nm#);
 \t#return#
 \t}
 \tif (capi_arglist==NULL) {
@@ -288,9 +288,9 @@ cb_arg_rules=[
     isarray:'#ctype# *',
     isstring:'#ctype#'
     },
-     'strarglens':{isstring:',int #varname#_cb_len'}, # untested with multiple args
-     'strarglens_td':{isstring:',int'}, # untested with multiple args
-
+    'strarglens':{isstring:',int #varname#_cb_len'}, # untested with multiple args
+    'strarglens_td':{isstring:',int'}, # untested with multiple args
+    'strarglens_nm':{isstring:',#varname#_cb_len'}, # untested with multiple args 
      },
     { # Scalars
     'decl':{l_not(isintent_c):'\t#ctype# #varname#=(*#varname#_cb_capi);'},
