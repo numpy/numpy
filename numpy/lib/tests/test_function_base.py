@@ -365,7 +365,7 @@ class test_histogramdd(NumpyTestCase):
         [.5, .5, 1.5], [.5, 1.5, 2.5], [.5, 2.5, 2.5]])
         H, edges = histogramdd(x, (2,3,3), range = [[-1,1], [0,3], [0,3]])
         answer = asarray([[[0,1,0], [0,0,1], [1,0,0]], [[0,1,0], [0,0,1], [0,0,1]]])
-        assert(all(H == answer))
+        assert_array_equal(H,answer)
         # Check normalization
         ed = [[-2,0,2], [0,1,2,3], [0,1,2,3]]
         H, edges = histogramdd(x, bins = ed, normed = True)
@@ -383,6 +383,27 @@ class test_histogramdd(NumpyTestCase):
                           [[0,0],[0,0],[0,0]]])
         assert_array_equal(H, answer)
 
+        Z = zeros((5,5,5))
+        Z[range(5), range(5), range(5)] = 1.
+        H,edges = histogramdd([arange(5), arange(5), arange(5)], 5)
+        assert_array_equal(H, Z)
+    
+    def check_shape(self):
+        x = rand(100,3)
+        hist3d, edges = histogramdd(x, bins = (5, 7, 6))
+        assert_array_equal(hist3d.shape, (5,7,6))
+        
+    def check_weights(self):
+        v = rand(100,2)
+        hist, edges = histogramdd(v)
+        n_hist, edges = histogramdd(v, normed=True)
+        w_hist, edges = histogramdd(v, weights=ones(100))
+        assert_array_equal(w_hist, hist)
+        w_hist, edges = histogramdd(v, weights=ones(100)*2, normed=True)
+        assert_array_equal(w_hist, n_hist)
+        w_hist, edges = histogramdd(v, weights=ones(100, int)*2)
+        assert_array_equal(w_hist, 2*hist)
+            
 
 class test_unique(NumpyTestCase):
     def check_simple(self):

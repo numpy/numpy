@@ -1,3 +1,4 @@
+__docformat__ = "restructuredtext en"
 __all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
            'copy', 'iterable', #'base_repr', 'binary_repr',
@@ -117,46 +118,49 @@ def histogram(a, bins=10, range=None, normed=False):
     else:
         return n, bins
 
-def histogramdd(sample, bins=10, range=None, normed=False):
-    """histogramdd(sample, bins = 10, range = None, normed = False) -> H, edges
+def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
+    """histogramdd(sample, bins=10, range=None, normed=False, weights=None)                                                                
 
-    Return the D-dimensional histogram computed from sample.
+    Return the D-dimensional histogram of the sample.
 
-    Parameters
-    ----------
-    sample: A sequence of D arrays, or an NxD array.
-    bins:   A sequence of edge arrays, or a sequence of the number of bins.
-            If a scalar is given, it is assumed to be the number of bins
-            for all dimensions.
-    range:  A sequence of lower and upper bin edges (default: [min, max]).
-    normed: If False, returns the number of samples in each bin.
-            If True, returns the frequency distribution.
+    :Parameters:
+      - `sample` : A sequence of D arrays, or an NxD array. 
+      - `bins` : A sequence of edge arrays, a sequence of bin number, 
+                or a scalar (the number of bins for all dimensions.) 
+      - `range` : A sequence of lower and upper bin edges (default: [min, max]).
+      - `normed` : Boolean, if False, return the number of samples in each bin,
+                if True, returns the density.
+      - `weights` : An array of weights. The weights are normed only if normed is True. 
+             Should weights.sum() not equal N, the total bin count will 
+             not be equal to the number of samples.
 
-
-    Output
-    ------
-    H:      Histogram array.
-    edges:  List of arrays defining the bin edges.
+    :Return:
+      - `hist` : Histogram array.
+      - `edges` : List of arrays defining the bin edges. 
+    
 
     Example:
-    x = random.randn(100,3)
-    H, edges = histogramdd(x, bins = (5, 6, 7))
+      >>> x = random.randn(100,3)
+      >>> hist3d, edges = histogramdd(x, bins = (5, 6, 7))
 
-    See also: histogram
+    :SeeAlso: histogram
 
     """
 
-    try:
+    try: 
+        # Sample is an ND-array.
         N, D = sample.shape
-    except (AttributeError, ValueError):
-        ss = atleast_2d(sample)
-        sample = ss.transpose()
+    except (AttributeError, ValueError): 
+        # Sample is a sequence of 1D arrays.
+        sample = atleast_2d(sample).T
         N, D = sample.shape
 
     nbin = empty(D, int)
     edges = D*[None]
     dedges = D*[None]
-
+    if weights is not None:
+        weights = asarray(weights)
+    
     try:
         M = len(bins)
         if M != D:
@@ -164,6 +168,8 @@ def histogramdd(sample, bins=10, range=None, normed=False):
     except TypeError:
         bins = D*[bins]
 
+    # Select range for each dimension
+    # Used only if number of bins is given.
     if range is None:
         smin = atleast_1d(sample.min(0))
         smax = atleast_1d(sample.max(0))
@@ -173,39 +179,37 @@ def histogramdd(sample, bins=10, range=None, normed=False):
         for i in arange(D):
             smin[i], smax[i] = range[i]
 
+    # Create edge arrays
     for i in arange(D):
         if isscalar(bins[i]):
-            nbin[i] = bins[i]
-            edges[i] = linspace(smin[i], smax[i], nbin[i]+1)
+            nbin[i] = bins[i] + 2 # +2 for outlier bins
+            edges[i] = linspace(smin[i], smax[i], nbin[i]-1)
         else:
             edges[i] = asarray(bins[i], float)
-            nbin[i] = len(edges[i])-1
-
-
-
-    Ncount = {}
+            nbin[i] = len(edges[i])+1  # +1 for outlier bins
+        dedges[i] = diff(edges[i])
+        
     nbin =  asarray(nbin)
-
+    
+    # Compute the bin number each sample falls into. 
+    Ncount = {}
     for i in arange(D):
         Ncount[i] = digitize(sample[:,i], edges[i])
-        dedges[i] = diff(edges[i])
-    # Remove values falling outside of bins
-    # Values that fall on an edge are put in the right bin.
+    
+    # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right
     # edge to be counted in the last bin, and not as an outlier.
     outliers = zeros(N, int)
     for i in arange(D):
+        # Rounding precision
         decimal = int(-log10(dedges[i].min())) +6
+        # Find which points are on the rightmost edge.
         on_edge = where(around(sample[:,i], decimal) == around(edges[i][-1], decimal))[0]
+        # Shift these points one bin to the left. 
         Ncount[i][on_edge] -= 1
-        outliers += (Ncount[i] == 0) | (Ncount[i] == nbin[i]+1)
-    indices = where(outliers == 0)[0]
-    for i in arange(D):
-        Ncount[i] = Ncount[i][indices] - 1
-    N = len(indices)
 
     # Flattened histogram matrix (1D)
-    hist = zeros(nbin.prod(), int)
+    hist = zeros(nbin.prod(), float)
 
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
@@ -213,29 +217,33 @@ def histogramdd(sample, bins=10, range=None, normed=False):
     xy = zeros(N, int)
     for i in arange(0, D-1):
         xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
-
     xy += Ncount[ni[-1]]
 
     # Compute the number of repetitions in xy and assign it to the flattened histmat.
     if len(xy) == 0:
-        return zeros(nbin, int)
+        return zeros(nbin-2, int), edges
 
-    flatcount = bincount(xy)
+    flatcount = bincount(xy, weights)
     a = arange(len(flatcount))
     hist[a] = flatcount
 
     # Shape into a proper matrix
     hist = hist.reshape(sort(nbin))
-    for i,j in enumerate(ni):
+    for i in arange(nbin.size):
+        j = ni[i]
         hist = hist.swapaxes(i,j)
-        if (hist.shape == nbin).all():
-            break
+        ni[i],ni[j] = ni[j],ni[i]
 
+    # Remove outliers (indices 0 and -1 for each dimension).
+    core = D*[slice(1,-1)]
+    hist = hist[core]
+    
+    # Normalize if normed is True
     if normed:
         s = hist.sum()
         for i in arange(D):
             shape = ones(D, int)
-            shape[i] = nbin[i]
+            shape[i] = nbin[i]-2
             hist = hist / dedges[i].reshape(shape)
         hist /= s
 

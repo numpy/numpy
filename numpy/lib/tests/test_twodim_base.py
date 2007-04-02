@@ -149,6 +149,13 @@ class test_histogram2d(NumpyTestCase):
                            [0, 0, 0, 0, 0, 0, 0, 0, 0],
                            [0, 0, 0, 0, 0, 0, 0, 0, 0]])
         assert_array_equal(H.T, answer)
+        H = histogram2d(x, y, xedges)[0]
+        assert_array_equal(H.T, answer)
+        H,xedges,yedges = histogram2d(range(10),range(10))
+        assert_array_equal(H, eye(10,10))
+        assert_array_equal(xedges, np.linspace(0,9,11))
+        assert_array_equal(yedges, np.linspace(0,9,11))
+        
     def check_asym(self):
         x = array([1, 1, 2, 3, 4, 4, 4, 5])
         y = array([1, 3, 2, 0, 1, 2, 3, 4])
@@ -160,6 +167,8 @@ class test_histogram2d(NumpyTestCase):
                         [0,1,1,1,0],
                         [0,0,0,0,1]])
         assert_array_almost_equal(H, answer/8., 3)
+        assert_array_equal(xed, np.linspace(0,6,7))
+        assert_array_equal(yed, np.linspace(0,5,6))
     def check_norm(self):
         x = array([1,2,3,1,2,3,1,2,3])
         y = array([1,1,1,2,2,2,3,3,3])
@@ -169,5 +178,10 @@ class test_histogram2d(NumpyTestCase):
                      [.5,.5,.25]])/9.
         assert_array_almost_equal(H, answer, 3)
 
+    def check_all_outliers(self):
+        r = rand(100)+1.
+        H, xed, yed = histogram2d(r, r, (4, 5), range=([0,1], [0,1]))
+        assert_array_equal(H, 0)
+        
 if __name__ == "__main__":
     NumpyTest().run()
