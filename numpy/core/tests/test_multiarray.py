@@ -377,11 +377,12 @@ class test_clip(NumpyTestCase):
                     x.clip(clip_min,clip_max,x)
                 else:
                     x = x.clip(clip_min,clip_max)
+                    byteorder = '='
 
                 if x.dtype.byteorder == '|': byteorder = '|'
                 assert_equal(byteorder,x.dtype.byteorder)
                 self._check_range(x,expected_min,expected_max)
-                return x
+        return x
 
     def check_basic(self):
         for inplace in [False, True]: 

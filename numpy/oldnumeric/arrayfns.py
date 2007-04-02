@@ -22,16 +22,8 @@ def array_set(vals1, indices, vals2):
         raise error, "vals1 and vals2 must have same number of dimensions (>=1)"
     vals1[indices] = vals2
 
-def construct3(mask, itype):
-    raise NotImplementedError
-
 from numpy import digitize
-
-def find_mask(fs, node_edges):
-    raise NotImplementedError
-
-def histogram(lst, weight=None):
-    raise NotImplementedError
+from numpy import bincount as histogram
 
 def index_sort(arr):
     return asarray(arr).argsort(kind='heap')
@@ -67,16 +59,40 @@ def reverse(x, n):
 
 def span(lo, hi, num, d2=0):
     x = linspace(lo, hi, num)
-    if d2 <= 0
+    if d2 <= 0:
         return x
     else:
         ret = empty((d2,num),x.dtype)
         ret[...] = x
         return ret
 
+def zmin_zmax(z, ireg):
+    z = asarray(z, dtype=float)
+    ireg = asarray(ireg, dtype=int)
+    if z.shape != ireg.shape or z.ndim != 2:
+        raise ValueError, "z and ireg must be the same shape and 2-d"
+    ix, iy = nx.nonzero(ireg)
+    # Now, add more indices
+    x1m = ix - 1
+    y1m = iy-1
+    i1 = x1m>=0
+    i2 = y1m>=0
+    i3 = i1 & i2
+    nix = nx.r_[ix, x1m[i1], x1m[i1], ix[i2] ]
+    niy = nx.r_[iy, iy[i1],  y1m[i3], y1m[i2]]
+    # remove any negative indices
+    zres = z[nix,niy]
+    return zres.min().item(), zres.max().item()
+
+
+def find_mask(fs, node_edges):
+    raise NotImplementedError
+
 def to_corners(arr, nv, nvsum):
     raise NotImplementedError
 
-def zmin_zmax(z, ireg):
+
+def construct3(mask, itype):
     raise NotImplementedError
-        
+
+
