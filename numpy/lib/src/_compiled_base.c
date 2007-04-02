@@ -337,6 +337,128 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
     return NULL;
 }
 
+static npy_intp
+binary_search(double dval, double dlist [], npy_intp len)
+{
+    /* binary_search accepts three arguments: a numeric value and
+     * a numeric array and its length. It assumes that the array is sorted in
+     * increasing order. It returns the index of the array's
+     * largest element which is <= the value. It will return -1 if
+     * the value is less than the least element of the array. */
+    /* self is not used */
+    npy_intp bottom , top , middle, result;
+
+    if (dval < dlist [0])
+        result = -1 ;
+    else {
+        bottom = 0;
+        top = len - 1;
+        while (bottom < top) {
+            middle = (top + bottom) / 2 ;
+            if (dlist [middle] < dval)
+                bottom = middle + 1 ;
+            else if (dlist [middle] > dval)
+                top = middle - 1 ;
+            else
+                return middle ;
+        }
+        if (dlist [bottom] > dval)
+            result = bottom - 1 ;
+        else
+            result = bottom ;
+    }
+
+    return result ;
+}
+
+static PyObject *
+arr_interp(PyObject *self, PyObject *args, PyObject *kwdict)
+{
+
+    PyObject *fp, *xp, *x;
+    PyObject *left=NULL, *right=NULL;
+    PyArrayObject *afp=NULL, *axp=NULL, *ax=NULL, *af=NULL;
+    npy_intp i, lenx, lenxp, indx;
+    double lval, rval;
+    double *dy, *dx, *dz, *dres, *slopes;
+
+    static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
+    
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "OOO|OO", kwlist, 
+                                     &x, &xp, &fp, &left, &right))
+        return NULL;
+    
+
+    afp = (NPY_AO*)PyArray_ContiguousFromAny(fp, NPY_DOUBLE, 1, 1);
+    if (afp == NULL) return NULL;
+    axp = (NPY_AO*)PyArray_ContiguousFromAny(xp, NPY_DOUBLE, 1, 1);
+    if (axp == NULL) goto fail;
+    ax = (NPY_AO*)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 1, 0);
+    if (ax == NULL) goto fail;
+
+    lenxp = axp->dimensions[0];
+    if (afp->dimensions[0] != lenxp) {
+        PyErr_SetString(PyExc_ValueError, "interp: fp and xp are not the same length.");
+        goto fail;
+    }
+
+    af = (NPY_AO*)PyArray_SimpleNew(ax->nd, ax->dimensions, NPY_DOUBLE);
+    if (af == NULL) goto fail;
+
+    lenx = PyArray_SIZE(ax);
+
+    dy = (double *)PyArray_DATA(afp);
+    dx = (double *)PyArray_DATA(axp);
+    dz = (double *)PyArray_DATA(ax);
+    dres = (double *)PyArray_DATA(af);
+
+    /* Get left and right fill values. */
+    if ((left == NULL) || (left == Py_None)) {
+        lval = dy[0];
+    }
+    else {
+        lval = PyFloat_AsDouble(left);
+        if ((lval==-1) && PyErr_Occurred()) 
+            goto fail;
+    }
+    if ((right == NULL) || (right == Py_None)) {
+        rval = dy[lenxp-1];
+    }
+    else {
+        rval = PyFloat_AsDouble(right);
+        if ((rval==-1) && PyErr_Occurred()) 
+            goto fail;
+    }
+    
+    slopes = (double *) PyDataMem_NEW((lenxp-1)*sizeof(double));
+    for (i=0; i < lenxp-1; i++) {
+        slopes[i] = (dy[i+1] - dy[i])/(dx[i+1]-dx[i]);
+    }
+    for (i=0; i<lenx; i++) {
+        indx = binary_search(dz[i], dx, lenxp);
+        if (indx < 0)
+            dres[i] = lval;
+        else if (indx >= lenxp - 1) 
+            dres[i] = rval;
+        else 
+            dres[i] = slopes[indx]*(dz[i]-dx[indx]) + dy[indx];
+    }
+
+    PyDataMem_FREE(slopes);
+    Py_DECREF(afp);
+    Py_DECREF(axp);
+    Py_DECREF(ax);
+    return (PyObject *)af;
+
+ fail:
+    Py_XDECREF(afp);
+    Py_XDECREF(axp);
+    Py_XDECREF(ax);
+    Py_XDECREF(af);
+    return NULL;
+}
+
+
 
 static PyTypeObject *PyMemberDescr_TypePtr=NULL;
 static PyTypeObject *PyGetSetDescr_TypePtr=NULL;
@@ -408,7 +530,9 @@ static struct PyMethodDef methods[] = {
      arr_insert__doc__},
     {"bincount", (PyCFunction)arr_bincount,  
      METH_VARARGS | METH_KEYWORDS, NULL},
-     {"digitize", (PyCFunction)arr_digitize, METH_VARARGS | METH_KEYWORDS,
+    {"digitize", (PyCFunction)arr_digitize, METH_VARARGS | METH_KEYWORDS,
+     NULL},
+    {"interp", (PyCFunction)arr_interp, METH_VARARGS | METH_KEYWORDS,
      NULL},
     {"add_docstring", (PyCFunction)arr_add_docstring, METH_VARARGS,
      NULL},
@@ -435,7 +559,7 @@ define_types(void)
 	return;
 }
 
-/* Initialization function for the module (*must* be called initArray) */
+/* Initialization function for the module (*must* be called init<name>) */
 
 PyMODINIT_FUNC init_compiled_base(void) {
     PyObject *m, *d, *s;

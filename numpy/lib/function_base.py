@@ -8,7 +8,8 @@ __all__ = ['logspace', 'linspace',
            'histogram', 'histogramdd', 'bincount', 'digitize', 'cov',
            'corrcoef', 'msort', 'median', 'sinc', 'hamming', 'hanning',
            'bartlett', 'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc',
-           'add_docstring', 'meshgrid', 'delete', 'insert', 'append'
+           'add_docstring', 'meshgrid', 'delete', 'insert', 'append',
+           'interp'
            ]
 
 import types
@@ -24,7 +25,7 @@ from numpy.core.numerictypes import typecodes
 from numpy.lib.shape_base import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
-from _compiled_base import digitize, bincount
+from _compiled_base import digitize, bincount, interp
 from arraysetops import setdiff1d
 
 #end Fernando's utilities
@@ -591,6 +592,25 @@ raise a TypeError
 """)
 except RuntimeError:
     pass
+
+try:
+    add_docstring(interp,
+r"""interp(x, xp, fp, left=None, right=None)
+
+Return the value of a piecewise-linear function at each value in x.
+
+The piecewise-linear function, f, is defined by the known data-points fp=f(xp).
+The xp points must be sorted in increasing order but this is not checked.
+
+For values of x < xp[0] return the value given by left.  If left is None, then
+return fp[0].
+For values of x > xp[-1] return the value given by right. If right is None, then
+return fp[-1].
+"""
+                  )
+except RuntimeError:
+    pass
+
 
 def angle(z, deg=0):
     """Return the angle of the complex argument z.

@@ -1235,3 +1235,4 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     Type can be either a new sub-type object or a data-descriptor object
 
     """))
+

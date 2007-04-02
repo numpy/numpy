@@ -479,7 +479,9 @@ array_toscalar(PyArrayObject *self, PyObject *args) {
                         PyErr_SetString(PyExc_ValueError, "invalid integer");
                         return NULL;
                 }
-                if (value >= PyArray_SIZE(self)) {
+                factor = PyArray_SIZE(self);
+                if (value < 0) value += factor;
+                if ((value >= factor) || (value < 0)) {
                         PyErr_SetString(PyExc_ValueError, 
                                         "index out of bounds");
                         return NULL;
