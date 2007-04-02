@@ -248,7 +248,15 @@ unsigned long rk_interval(unsigned long max, rk_state *state)
 #endif
 
 	/* Search a random value in [0..mask] <= max */
+#if ULONG_MAX > 0xffffffffUL
+	if (max <= 0xffffffffUL) {
+		while ((value = (rk_random(state) & mask)) > max);
+	} else {
+		while ((value = (rk_ulong(state) & mask)) > max);
+	}
+#else
 	while ((value = (rk_ulong(state) & mask)) > max);
+#endif
 
 	return value;
 }
