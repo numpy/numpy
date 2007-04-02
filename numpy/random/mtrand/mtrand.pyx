@@ -522,15 +522,16 @@ cdef class RandomState:
         get_state() -> ('MT19937', int key[624], int pos)
         """
         cdef ndarray state "arrayObject_state"
-        state = <ndarray>_sp.empty(624, int)
+        state = <ndarray>_sp.empty(624, _sp.uint)
         memcpy(<void*>(state.data), <void*>(self.internal_state.key), 624*sizeof(long))
+        state = <ndarray>_sp.asarray(state, _sp.uint32)
         return ('MT19937', state, self.internal_state.pos)
-        
+
     def set_state(self, state):
         """Set the state from a tuple.
-        
+
         state = ('MT19937', int key[624], int pos)
-        
+
         set_state(state)
         """
         cdef ndarray obj "arrayObject_obj"
@@ -539,7 +540,11 @@ cdef class RandomState:
         if algorithm_name != 'MT19937':
             raise ValueError("algorithm must be 'MT19937'")
         key, pos = state[1:]
-        obj = <ndarray>PyArray_ContiguousFromObject(key, NPY_LONG, 1, 1)
+        try:
+            obj = <ndarray>PyArray_ContiguousFromObject(key, NPY_ULONG, 1, 1)
+        except TypeError:
+            # compatibility -- could be an older pickle
+            obj = <ndarray>PyArray_ContiguousFromObject(key, NPY_LONG, 1, 1)
         if obj.dimensions[0] != 624:
             raise ValueError("state must be 624 longs")
         memcpy(<void*>(self.internal_state.key), <void*>(obj.data), 624*sizeof(long))
