@@ -248,6 +248,9 @@ class test_binary_repr(NumpyTestCase):
     def test_large(self):
         assert_equal(binary_repr(10736848),'101000111101010011010000')
 
+    def test_negative(self):
+        assert_equal(binary_repr(-1), '-1')
+        assert_equal(binary_repr(-1, width=8), '11111111')
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)

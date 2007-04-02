@@ -546,29 +546,44 @@ _lkup = {
     'F':'1111',
     'L':''}
 
-def binary_repr(num):
+def binary_repr(num, width=None):
     """Return the binary representation of the input number as a string.
 
     This is equivalent to using base_repr with base 2, but about 25x
     faster.
+
+    For negative numbers, if width is not given, a - sign is added to the
+    front. If width is given, the two's complement of the number is
+    returned, with respect to that width.
     """
-    ostr = hex(num)
-    bin = ''
-    for ch in ostr[2:]:
-        bin += _lkup[ch]
-    if '1' in bin:
-        ind = 0
-        while bin[ind] == '0':
-            ind += 1
-        return bin[ind:]
-    else:
+    sign = ''
+    if num < 0:
+        if width is None:
+            sign = '-'
+            num = -num
+        else:
+            # replace num with its 2-complement
+            num = 2**width + num
+    elif num == 0:
         return '0'
+    ostr = hex(num)
+    bin = ''.join([_lkup[ch] for ch in ostr[2:]])
+    bin = bin.lstrip('0')
+    if width is not None:
+        bin = bin.zfill(width)
+    return sign + bin
 
 def base_repr (number, base=2, padding=0):
-    """Return the representation of a number in any given base.
-    """
-    chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    """Return the representation of a number in the given base.
 
+    Base can't be larger than 36.
+    """
+    if number < 0:
+        raise ValueError("negative numbers not handled in base_repr")
+    if base > 36:
+        raise ValueError("bases greater than 36 not handled in base_repr")
+
+    chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     import math
     lnb = math.log(base)
     res = padding*chars[0]
