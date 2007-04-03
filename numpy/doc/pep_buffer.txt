@@ -39,7 +39,7 @@ memory between different high-level objects, but it is too limited and
 has issues:
 
 1. There is the little used "sequence-of-segments" option
-   (bf_getsegcount) that is not motivated very well. 
+   (bf_getsegcount) that is not well motivated. 
 
 2. There is the apparently redundant character-buffer option
    (bf_getcharbuffer)
@@ -85,8 +85,8 @@ has issues:
 
    NumPy's strided memory model is used more often in computational
    libraries and because it is so simple it makes sense to support
-   memory sharing using this model.  The PIL memory model is used often
-   in C-code where a 2-d array can be then accessed using double
+   memory sharing using this model.  The PIL memory model is sometimes 
+   used in C-code where a 2-d array can be then accessed using double
    pointer indirection:  e.g. image[i][j].  
 
    The buffer interface should allow the object to export either of these
@@ -129,6 +129,16 @@ Proposal Overview
 Specification
 =============
 
+While the new specification allows for complicated memory sharing.
+Simple contiguous buffers of bytes can still be obtained from an
+object.  In fact, the new protocol allows a standard mechanism for
+doing this even if the original object is not represented as a
+contiguous chunk of memory.
+
+The easiest way is to use the provided C-API to obtain a contiguous
+chunk of memory like the old buffer protocol allowed.
+
+
 Change the PyBufferProcs structure to
 
 ::
@@ -136,21 +146,22 @@ Change the PyBufferProcs structure to
     typedef struct {
          getbufferproc bf_getbuffer;
          releasebufferproc bf_releasebuffer;
-         lockbufferproc bf_lockbuffer;
-         robufferproc bf_robuffer;
     }
 
 
 ::
 
-    typedef int (*getbufferproc)(PyObject *obj, struct bufferinfo *view)
+    typedef int (*getbufferproc)(PyObject *obj, struct bufferinfo *view) 
 
-This function returns 0 on success and -1 on failure (and raises an error). 
-The first variable is the "exporting" object.  The second argument is the
-address to a bufferinfo structure
+This function returns 0 on success and -1 on failure (and raises an
+error). The first variable is the "exporting" object.  The second
+argument is the address to a bufferinfo structure.  If view is NULL,
+then no information is returned but a lock on the memory is still
+obtained.  In this case, releasebuffer should also be called with NULL.
+
+The bufferinfo structure is:
 
 struct bufferinfo {
-       PyObject *releaser;
        void *buf;
        Py_ssize_t len;
        int readonly;
@@ -161,19 +172,15 @@ struct bufferinfo {
        Py_ssize_t *suboffsets;
 };
 
-Upon return, the bufferinfo structure is filled in with relevant
-information about the buffer.  This same bufferinfo structure should
-be passed to bf_releasebuffer when the consumer is done with the
-memory. The caller is responsible for keeping a reference to obj until
-releasebuffer is called.
+Upon return from getbufferproc, the bufferinfo structure is filled in
+with relevant information about the buffer.  This same bufferinfo
+structure must be passed to bf_releasebuffer (if available) when the
+consumer is done with the memory. The caller is responsible for
+keeping a reference to obj until releasebuffer is called.
+
 
 The members of the bufferinfo structure are:
 
-releaser
-    the Python object whose bf_releasebuffer function should be called
-    when the consumer is done with the memory. After return, a new
-    reference to this object is obtained.  Normally, this will
-    be the same object 
    
 buf
     a pointer to the start of the memory for the object
@@ -186,7 +193,8 @@ len
 readonly
     an integer variable to hold whether or not the memory is
     readonly.  1 means the memory is readonly, zero means the
-    memory is writeable,
+    memory is writeable.
+
 
 format
     a format-string (following extended struct syntax) indicating what
@@ -282,19 +290,6 @@ through the bufferinfo structure remains valid until releasebuffer is
 called on that memory.
 
 
-``typedef int (*lockbufferproc)(PyObject *obj)`` This
-
-    This function allows the caller to lock the buffer object of
-    ``obj`` without retrieving all the information about the memory
-    area.
-
-    A 0 is returned on success and a -1 is returned (with an error
-    message set) on error.  An error is returned if the memory cannot
-    be set readonly when it is attempted. 
-
-    This routine is optional. 
-
-
 New C-API calls are proposed
 ============================
 
@@ -317,50 +312,36 @@ the buffer object in Python 3K.  It's C-structure is
 
 typedef struct {
     PyObject_HEAD
+    PyObject *base;
     struct bufferinfo view;
     int itemsize;
+    int flags;
 } PyMemoryViewObject;
 
 This is very similar to the current buffer object except offset has
 been removed because ptr can just be modified by offset and a single
 offset is not sufficient.  Also the hash has been removed because
-using the buffer object has a hash even if it is read-only is rarely
-useful.  The id of the buffer object should be used instead.
+using the buffer object as a hash even if it is read-only is rarely
+useful.  
 
-Also, the format, ndims, shape, strides, and suboffsets has been
+Also, the format, ndims, shape, strides, and suboffsets have been
 added. These additions will allow multi-dimensional slicing of the
 memory-view object which can be added at some point.  This object
-always owns it's own shape, strides, and suboffsets arrays and it's own
-format string, but always borrows the memory from the object pointed to
-by base. 
+always owns it's own shape, strides, and suboffsets arrays and it's
+own format string, but always borrows the memory from the object
+pointed to by base.
 
 The itemsize is a convenience and specifies the number of bytes
-indicated by the format string if positive.  If negative, then the
-number of bytes must be computed from the format string. 
+indicated by the format string if positive.  
 
 This object never reallocates ptr, shape, strides, subboffsets or
 format and therefore does not need to keep track of how many views it
 has exported.
 
-Thus, it does not define a releasebuffer function, or have a numviews
-variable. 
-
-::
-    int PyObject_ReleaseBuffer(PyObject *obj)
-
-Release the buffer lock for the object, ``obj``.  This function does nothing
-if the object does not define a release buffer function.  Always returns 0. 
-
-::
-    int PyObject_LockBuffer(PyObject *obj, int make_ro)
-
-Lock the buffer for the object, ``obj``.  This function does nothing
-if the object does not define a lock buffer function.  If make_ro is
-0, then just lock the buffer.  If make_ro is 1, then lock the buffer
-and make the memory read only.  If make_ro is -1, then just make the
-memory read only without locking the buffer.  if make_ro != 0 and the
-object cannot change the state of the memory to read only, then raise
-a MemoryError.
+It exports a view using the base object.  It releases a view by releasing
+the view on the base object.  Because, it will never re-allocate memory, 
+it does not need to keep track of how many it has exported but simple 
+reference counting will suffice. 
 
 ::
 
@@ -402,7 +383,7 @@ easiest.
 
 The last two C-API calls allow a standard way of getting data in and
 out of Python objects into contiguous memory areas no matter how it is
-actually stored.  These calls use the buffer interface to perform
+actually stored.  These calls use the extended buffer interface to perform
 their work. 
 
 ::
@@ -532,8 +513,10 @@ Issues and Details
 
 The proposed locking mechanism relies entirely on the exporter object
 to not invalidate any of the memory pointed to by the buffer structure
-until a corresponding releasebuffer is called.  The data area can be
-modified (unless it is set read-only), but the 
+until a corresponding releasebuffer is called.  If it wants to be able
+to change its own shape and/or strides arrays, then it needs to create
+memory for these in the bufferinfo structure and copy information
+over.
 
 The sharing of strided memory and suboffsets is new and can be seen as
 a modification of the multiple-segment interface.  It is motivated by
@@ -542,19 +525,13 @@ strided memory with code that understands how to manage strided memory
 because strided memory is very common when interfacing with compute
 libraries.
 
-Also it should be able to write generic code that works with both
-kinds of memory.
-
-Currently the struct module does not allow specification of nested
-structures.  The proposed modifications to struct allow for specifying
-nested structures as several ways of viewing memory areas (e.g. ctypes
-and NumPy) already allow this.
+Also with this approach it should be possible to write generic code
+that works with both kinds of memory.
 
 Memory management of the format string, the shape array, the strides
-array, and the suboffsets array is always the responsibility of the
-exporting object and can be shared between different views. If the
-consuming object needs to keep these memory areas longer than the view
-is held, then it must copy them to its own memory.
+array, and the suboffsets array in the bufferinfo structure is always
+the responsibility of the exporting object.  The consumer should not
+set these pointers to any other memory or try to free them. 
 
 Code
 ========
@@ -566,84 +543,7 @@ this proposal but will welcome any help.
 Examples
 =========
 
-Ex 1.
---------
-Here is skeleton implementation of a ByteBufferSlice array, sans boilerplate and error checking.
-This shows the use of releasebuffer and lockbuffer and why both are useful. 
-
-::
-
-    typedef struct  {
-      PyObject_HEAD
-      PyObject* releaser;
-      unsigned char* buf;
-      Py_ssize_t length;
-    }
-    ByteBufferSliceObject;
-    
-    
-    PyObject* ByteBufferSlice_new(PyObject* bufobj, Py_ssize_t start, Py_ssize_t end) {
-      ByteBufferSliceObject* self;
-      BufferInfoObject* bufinfo;
-    
-      self = (ByteBufferSliceObject*)type->tp_alloc(type, 0);
-      bufinfo = PyObject_GetBuffer(bufobj);
-    
-      self->releaser = bufinfo->view.releaser;
-      self->buf = bufinfo->view.buf + start;
-      self->length = end-start;
-    
-      /* look how soon we're done with this information */
-      Py_DECREF(bufinfo);
-    
-      return self;
-    }
-    
-    
-    PyObject* ByteBufferSlice_dealloc(PyObject* self) {
-      PyObject_ReleaseBuffer(self->releaser);
-      self->ob_type->tp_free((PyObject*)self);
-    }
-    
-    
-    int ByteBufferSlice_getbuffer(PyObject* self, struct bufferinfo *view, int make_ro) {
-      BufferInfoObject* bufinfo;
-      static Py_ssize_t stridesarray[] = { 1 };
-      int ret;
-    
-      view->releaser = self->releaser;
-      view->buf = self->buf;
-      view->length = self->length;
-      view->itemsize = 1;
-      view->format = "B";
-      view->ndims = 1;
-      view->strides = stridesarray;
-      view->shape = &self->length;
-      view->suboffsets = NULL;
-    
-      /* Before we go, increase the original buffer's lock count */
-      ret = PyObject_LockBuffer(self->releaser, make_ro);
-      if (ret == -1) return ret; 
-
-      self->readonly = 
-      if (make_ro && ret != -1) {
-         self->readonly = -1;
-      }
-      return ret;
-    }
-    
-    /* don't define releasebuffer or lockbuffer */
-    /* only objects that could actually re-allocate memory would define these */
-    
-    /* Now look how easy this is */
-    /* Everything works out if ByteBufferSlice reexports the buffer */
-    
-    PyObject* ByteBufferSlice_getslice(PyObject* self, Py_ssize_t start, Py_ssize_t end) {
-      return ByteBufferSlice_new(self,start,end);
-    }
-
-
-Ex. 2
+Ex. 1
 ----------
 
 This example shows how an image object that uses contiguous lines might expose its buffer. 
@@ -672,24 +572,30 @@ So what does ImageObject's getbuffer do?  Leaving error checking out:
 
 int Image_getbuffer(PyObject *self, struct bufferinfo *view) {
 
-    static Py_ssize_t = suboffsets[2] = { -1, 0 };
+    static Py_ssize_t suboffsets[2] = { -1, 0 };
 
     view->buf = self->lines;
     view->len = self->height*self->width;
     view->readonly = 0;
-    *ndims = 2;
+    view->ndims = 2;
     self->shape_array[0] = height;
     self->shape_array[1] = width;
-    *shape = &self->shape_array;
-    self->stride_array[0] = sizeof(struct rgba*);  /* yep */
+    view->shape = &self->shape_array;
+    self->stride_array[0] = sizeof(struct rgba*);  
     self->stride_array[1] = sizeof(struct rgba);
-    *strides = &self->stride_array;
-    *isptr = _isptr;
+    view->strides = &self->stride_array;
+    view->suboffsets = suboffsets;
 
     self->view_count ++;
-    /* create and return view object here, but for what? */
+
+    return 0;
 } 
 
+
+int Image_releasebuffer(PyObject *self, struct bufferinfo *view) {
+    self->view_count--;
+    return 0;
+}
 
 
 
