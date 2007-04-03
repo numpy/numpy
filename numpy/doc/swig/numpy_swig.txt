@@ -4,7 +4,7 @@ numpy.i: a SWIG Interface File for NumPy
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
-:Date:        29 March, 2007
+:Date:        3 April, 2007
 
 .. contents::
 
@@ -202,6 +202,9 @@ signatures are
   * ``(DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2)``
 
+These typemaps now check to make sure that the ``INPLACE_ARRAY``
+arguments use native byte ordering.  If not, an exception is raised.
+
 Argout Arrays
 -------------
 
@@ -326,9 +329,14 @@ Macros
     Evaluates to the integer data type code of ``a``, assuming ``a`` can
     be cast to a ``PyArrayObject*``.
 
-  **array_dimensions(a)**
+  **array_numdims(a)**
     Evaluates to the integer number of dimensions of ``a``, assuming
     ``a`` can be cast to a ``PyArrayObject*``.
+
+  **array_dimensions(a)**
+    Evaluates to an array of type ``npy_intp`` and length
+    ``array_numdims(a)``, giving the lengths of all of the dimensions
+    of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.
 
   **array_size(a,i)**
     Evaluates to the ``i``-th dimension size of ``a``, assuming ``a``
@@ -337,6 +345,10 @@ Macros
   **array_is_contiguous(a)**
     Evaluates as true if ``a`` is a contiguous array.  Equivalent to
     ``(PyArray_ISCONTIGUOUS(a))``.
+
+  **array_is_native(a)**
+    Evaluates as true if the data buffer of ``a`` uses native byte
+    order.  Equivalent to ``(PyArray_ISNOTSWAPPED(a))``.
 
 Routines
 --------
@@ -387,6 +399,11 @@ Routines
     contiguous, return 1.  Otherwise, set the python error string and
     return 0.
 
+
+  **int require_native(PyArray_Object* ary)**
+    Require that a numpy array is not byte-swapped.  If the array is
+    not byte-swapped, return 1.  Otherwise, set the python error string
+    and return 0.
 
   **int require_dimensions(PyArrayObject* ary, int exact_dimensions)**
     Require the given ``PyArrayObject*`` to have a specified number of
@@ -511,4 +528,6 @@ The effort to standardize this work into ``numpy.i`` began at the 2005
 `SciPy <http://scipy.org>`_ Conference with a conversation between
 Fernando Perez and myself.  Fernando collected helper functions and
 typemaps from Michael Hunter, Anna Omelchenko and Michael Sanner.
-Their work has made this end result possible.
+Sebastian Hasse has also provided additional error checking and use
+cases.  The work of these contributors has made this end result
+possible.

@@ -210,8 +210,8 @@ int require_contiguous(PyArrayObject* ary) {
 }
 
 /* Require that a numpy array is not byte-swapped.  If the array is
- * byte-swapped, return 1.  Otherwise, set the python error string and
- * return 0.
+ * not byte-swapped, return 1.  Otherwise, set the python error string
+ * and return 0.
  */
 int require_native(PyArrayObject* ary) {
   int native = 1;
