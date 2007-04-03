@@ -419,15 +419,15 @@ Character         Description
 't'               bit (number before states how many bits)
 '?'               platform _Bool type
 'g'               long double  
-'Z'               complex (whatever the next specifier is)
 'c'               ucs-1 (latin-1) encoding 
 'u'               ucs-2 
 'w'               ucs-4 
 'O'               pointer to Python Object 
+'Z'               complex (whatever the next specifier is)
+'&'               specific pointer (prefix before another charater) 
 'T{}'             structure (detailed layout inside {}) 
 '(k1,k2,...,kn)'  multi-dimensional array of whatever follows 
 ':name:'          optional name of the preceeding element 
-'&'               specific pointer (prefix before another charater) 
 'X{}'             pointer to a function (optional function 
                                          signature inside {})
 ' '               ignored (allow better readability)
