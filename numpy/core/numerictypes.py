@@ -228,7 +228,9 @@ def _add_integer_aliases():
             sctypeDict[charname] = typeobj
             sctypeDict[ucharname] = utypeobj
             sctypeNA[Intname] = typeobj
-            sctypeNA[UIntname] = utypeobj
+            sctypeNA[UIntname] = utypeobj            
+            sctypeNA[charname] = typeobj
+            sctypeNA[ucharname] = utypeobj
         sctypeNA[typeobj] = Intname
         sctypeNA[utypeobj] = UIntname
         sctypeNA[val[0]] = Intname
