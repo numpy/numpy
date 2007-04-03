@@ -19,9 +19,11 @@
  */
 #define is_array(a)            ((a) && PyArray_Check((PyArrayObject *)a))
 #define array_type(a)          (int)(PyArray_TYPE(a))
-#define array_dimensions(a)    (((PyArrayObject *)a)->nd)
+#define array_numdims(a)       (((PyArrayObject *)a)->nd)
+#define array_dimensions(a)    (((PyArrayObject *)a)->dimensions)
 #define array_size(a,i)        (((PyArrayObject *)a)->dimensions[i])
 #define array_is_contiguous(a) (PyArray_ISCONTIGUOUS(a))
+#define array_is_native(a)     (PyArray_ISNOTSWAPPED(a))
 
 /* Support older NumPy data type names
 */
@@ -207,16 +209,30 @@ int require_contiguous(PyArrayObject* ary) {
   return contiguous;
 }
 
+/* Require that a numpy array is not byte-swapped.  If the array is
+ * byte-swapped, return 1.  Otherwise, set the python error string and
+ * return 0.
+ */
+int require_native(PyArrayObject* ary) {
+  int native = 1;
+  if (!array_is_native(ary)) {
+    PyErr_SetString(PyExc_TypeError,
+		    "Array must have native byteorder.  A byte-swapped array was given");
+    native = 0;
+  }
+  return native;
+}
+
 /* Require the given PyArrayObject to have a specified number of
  * dimensions.  If the array has the specified number of dimensions,
  * return 1.  Otherwise, set the python error string and return 0.
  */
 int require_dimensions(PyArrayObject* ary, int exact_dimensions) {
   int success = 1;
-  if (array_dimensions(ary) != exact_dimensions) {
+  if (array_numdims(ary) != exact_dimensions) {
     PyErr_Format(PyExc_TypeError, 
 		 "Array must have %d dimensions.  Given array has %d dimensions", 
-		 exact_dimensions, array_dimensions(ary));
+		 exact_dimensions, array_numdims(ary));
     success = 0;
   }
   return success;
@@ -233,7 +249,7 @@ int require_dimensions_n(PyArrayObject* ary, int* exact_dimensions, int n) {
   char dims_str[255] = "";
   char s[255];
   for (i = 0; i < n && !success; i++) {
-    if (array_dimensions(ary) == exact_dimensions[i]) {
+    if (array_numdims(ary) == exact_dimensions[i]) {
       success = 1;
     }
   }
@@ -246,7 +262,7 @@ int require_dimensions_n(PyArrayObject* ary, int* exact_dimensions, int n) {
     strcat(dims_str,s);
     PyErr_Format(PyExc_TypeError, 
 		 "Array must be have %s dimensions.  Given array has %d dimensions",
-		 dims_str, array_dimensions(ary));
+		 dims_str, array_numdims(ary));
   }
   return success;
 }    
@@ -539,7 +555,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
   npy_intp size[1] = { $1_dim0 };
-  if (!temp  || !require_dimensions(temp,1) || !require_size(temp, size, 1)) SWIG_fail;
+  if (!temp || !require_dimensions(temp,1) || !require_size(temp, size, 1)
+      || !require_contiguous(temp) || !require_native(temp)) SWIG_fail;
   $1 = ($1_ltype) temp->data;
 }
 
@@ -555,7 +572,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   (PyArrayObject* temp=NULL)
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
-  if (!temp  || !require_contiguous(temp)) SWIG_fail;
+  if (!temp || !require_contiguous(temp) || !require_native(temp)) SWIG_fail;
   $1 = (DATA_TYPE*) temp->data;
   $2 = 1;
   for (int i=0; i<temp->nd; ++i) $2 *= temp->dimensions[i];
@@ -573,7 +590,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   (PyArrayObject* temp=NULL)
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
-  if (!temp  || !require_contiguous(temp)) SWIG_fail;
+  if (!temp || !require_contiguous(temp) || !require_native(temp)) SWIG_fail;
   $1 = 1;
   for (int i=0; i<temp->nd; ++i) $1 *= temp->dimensions[i];
   $2 = (DATA_TYPE*) temp->data;
@@ -592,7 +609,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
   npy_intp size[2] = { $1_dim0, $1_dim1 };
-  if (!temp  || !require_dimensions(temp,2) || !require_size(temp, size, 2)) SWIG_fail;
+  if (!temp || !require_dimensions(temp,2) || !require_size(temp, size, 2)
+      || !require_contiguous(temp) || !require_native(temp)) SWIG_fail;
   $1 = ($1_ltype) temp->data;
 }
 
@@ -608,7 +626,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   (PyArrayObject* temp=NULL)
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
-  if (!temp || !require_contiguous(temp)) SWIG_fail;
+  if (!temp || !require_dimensions(temp,2) || !require_contiguous(temp)
+      || !require_native(temp)) SWIG_fail;
   $1 = (DATA_TYPE*) temp->data;
   $2 = (DIM_TYPE) temp->dimensions[0];
   $3 = (DIM_TYPE) temp->dimensions[1];
@@ -626,7 +645,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   (PyArrayObject* temp=NULL)
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
-  if (!temp || !require_contiguous(temp)) SWIG_fail;
+  if (!temp || !require_dimensions(temp,2) || !require_contiguous(temp)
+      || !require_native(temp)) SWIG_fail;
   $1 = (DIM_TYPE) temp->dimensions[0];
   $2 = (DIM_TYPE) temp->dimensions[1];
   $3 = (DATA_TYPE*) temp->data;
