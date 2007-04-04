@@ -29,6 +29,7 @@ all: $(WRAPPERS) Vector.cxx Vector.h Matrix.cxx Matrix.h Tensor.cxx Tensor.h
 test: all
 	test1D.py
 	test2D.py
+	test3D.py
 
 doc: html pdf
 
