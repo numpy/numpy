@@ -2,6 +2,7 @@ version='1.0.3'
 release=False
 
 if not release:
+    version += '.dev'
     import os
     svn_version_file = os.path.join(os.path.dirname(__file__),
                                    'core','__svn_version__.py')
@@ -11,4 +12,4 @@ if not release:
                               open(svn_version_file),
                               svn_version_file,
                               ('.py','U',1))
-        version += '.dev'+svn.version
+        version += svn.version

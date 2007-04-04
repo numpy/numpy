@@ -1312,31 +1312,31 @@ class Configuration(object):
         If __svn_version__.py existed before, nothing is done.
         """
         target = njoin(self.local_path,'__svn_version__.py')
-        if os.path.isfile(target):
+        revision = self._get_svn_revision(self.local_path)
+        if os.path.isfile(target) or revision is None:
             return
-        def generate_svn_version_py():
-            if not os.path.isfile(target):
-                revision = self._get_svn_revision(self.local_path)
-                assert revision is not None,'hmm, why I am not inside SVN tree???'
-                version = str(revision)
-                self.info('Creating %s (version=%r)' % (target,version))
-                f = open(target,'w')
-                f.write('version = %r\n' % (version))
-                f.close()
+        else:
+            def generate_svn_version_py():
+                if not os.path.isfile(target):
+                    version = str(revision)
+                    self.info('Creating %s (version=%r)' % (target,version))
+                    f = open(target,'w')
+                    f.write('version = %r\n' % (version))
+                    f.close()
 
-            import atexit
-            def rm_file(f=target,p=self.info):
-                if delete:
-                    try: os.remove(f); p('removed '+f)
-                    except OSError: pass
-                    try: os.remove(f+'c'); p('removed '+f+'c')
-                    except OSError: pass
+                import atexit
+                def rm_file(f=target,p=self.info):
+                    if delete:
+                        try: os.remove(f); p('removed '+f)
+                        except OSError: pass
+                        try: os.remove(f+'c'); p('removed '+f+'c')
+                        except OSError: pass
 
-            atexit.register(rm_file)
+                atexit.register(rm_file)
 
-            return target
+                return target
 
-        self.add_data_files(('', generate_svn_version_py()))
+            self.add_data_files(('', generate_svn_version_py()))
 
     def make_config_py(self,name='__config__'):
         """ Generate package __config__.py file containing system_info
