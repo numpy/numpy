@@ -330,7 +330,8 @@ ul.auto-toc {
 <li><a class="reference" href="#a-final-note" id="id16" name="id16">A Final Note</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#acknowledgements" id="id17" name="id17">Acknowledgements</a></li>
+<li><a class="reference" href="#summary" id="id17" name="id17">Summary</a></li>
+<li><a class="reference" href="#acknowledgements" id="id18" name="id18">Acknowledgements</a></li>
 </ul>
 </div>
 <div class="section">
@@ -357,9 +358,15 @@ language in the way the C routine was intended.</p>
 contiguous (or technically, <em>strided</em>) blocks of homogeneous data is
 with the module <a class="reference" href="http://numpy.scipy.org">NumPy</a>, which provides full
 object-oriented access to arrays of data.  Therefore, the most logical
-<a class="reference" href="http://www.python.org">python</a> interface for the <tt class="docutils literal"><span class="pre">rms</span></tt> function would be:</p>
+<a class="reference" href="http://www.python.org">python</a> interface for the <tt class="docutils literal"><span class="pre">rms</span></tt> function would be (including doc
+string):</p>
 <pre class="literal-block">
 def rms(seq):
+    &quot;&quot;&quot;
+    rms(numpy.ndarray) -&gt; double
+    rms(list) -&gt; double
+    rms(tuple) -&gt; double
+    &quot;&quot;&quot;
 </pre>
 <p>where <tt class="docutils literal"><span class="pre">seq</span></tt> would be a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array of <tt class="docutils literal"><span class="pre">double</span></tt> values, and its
 length <tt class="docutils literal"><span class="pre">n</span></tt> would be extracted from <tt class="docutils literal"><span class="pre">seq</span></tt> internally before being
@@ -406,6 +413,66 @@ apply the typemap for one-dimensional input arrays of type <tt class="docutils l
 to the actual prototype used by <tt class="docutils literal"><span class="pre">rms</span></tt>.  Using <tt class="docutils literal"><span class="pre">numpy.i</span></tt>
 effectively, therefore, requires knowing what typemaps are available
 and what they do.</p>
+<p>A <a class="reference" href="http://www.swig.org">SWIG</a> interface file that includes the <a class="reference" href="http://www.swig.org">SWIG</a> directives given
+above will produce wrapper code that looks something like:</p>
+<pre class="literal-block">
+ 1 PyObject *_wrap_rms(PyObject *args) {
+ 2   PyObject *resultobj = 0;
+ 3   double *arg1 = (double *) 0 ;
+ 4   int arg2 ;
+ 5   double result;
+ 6   PyArrayObject *array1 = NULL ;
+ 7   int is_new_object1 = 0 ;
+ 8   PyObject * obj0 = 0 ;
+ 9
+10   if (!PyArg_ParseTuple(args,(char *)&quot;O:rms&quot;,&amp;obj0)) SWIG_fail;
+11   {
+12     array1 = obj_to_array_contiguous_allow_conversion(
+13                  obj0, NPY_DOUBLE, &amp;is_new_object1);
+14     npy_intp size[1] = {
+15       -1
+16     };
+17     if (!array1 || !require_dimensions(array1, 1) ||
+18         !require_size(array1, size, 1)) SWIG_fail;
+19     arg1 = (double*) array1-&gt;data;
+20     arg2 = (int) array1-&gt;dimensions[0];
+21   }
+22   result = (double)rms(arg1,arg2);
+23   resultobj = SWIG_From_double((double)(result));
+24   {
+25     if (is_new_object1 &amp;&amp; array1) Py_DECREF(array1);
+26   }
+27   return resultobj;
+28 fail:
+29   {
+30     if (is_new_object1 &amp;&amp; array1) Py_DECREF(array1);
+31   }
+32   return NULL;
+33 }
+</pre>
+<p>The typemaps from <tt class="docutils literal"><span class="pre">numpy.i</span></tt> are responsible for the following lines
+of code: 12--20, 25 and 30.  Line 10 parses the input to the <tt class="docutils literal"><span class="pre">rms</span></tt>
+function.  From the format string <tt class="docutils literal"><span class="pre">&quot;O:rms&quot;</span></tt>, we can see that the
+argument list is expected to be a single python object (specified by
+the <tt class="docutils literal"><span class="pre">O</span></tt> before the colon) and whose pointer is stored in <tt class="docutils literal"><span class="pre">obj0</span></tt>.
+A number of functions, supplied by <tt class="docutils literal"><span class="pre">numpy.i</span></tt>, are called to make and
+check the (possible) conversion from a generic python object to a
+<a class="reference" href="http://numpy.scipy.org">NumPy</a> array.  These functions are explained in the section <a class="reference" href="#helper-functions">Helper
+Functions</a>, but hopefully their names are self-explanatory.  At line
+12 we use <tt class="docutils literal"><span class="pre">obj0</span></tt> to construct a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.  At line 17, we
+check the validity of the result: that it is non-null and that it has
+a single dimension of arbitrary length.  Once these states are
+verified, we extract the data buffer and length in lines 19 and 20 so
+that we can call the underlying C function at line 22.  Line 25
+performs memory management for the case where we have created a new
+array that is no longer needed.</p>
+<p>This code has a significant amount of error handling.  Note the
+<tt class="docutils literal"><span class="pre">SWIG_fail</span></tt> is a macro for <tt class="docutils literal"><span class="pre">goto</span> <span class="pre">fail</span></tt>, refering to the label at
+line 28.  If the user provides the wrong number of arguments, this
+will be caught at line 10.  If construction of the <a class="reference" href="http://numpy.scipy.org">NumPy</a> array
+fails or produces an array with the wrong number of dimensions, these
+errors are caught at line 17.  And finally, if an error is detected,
+memory is still managed correctly at line 30.</p>
 <p>Note that if the C function signature was in a different order:</p>
 <pre class="literal-block">
 double rms(int n, double* seq);
@@ -416,6 +483,9 @@ typemaps with the data pointer given last:</p>
 <pre class="literal-block">
 %apply (int DIM1, double* IN_ARRAY1) {(int n, double* seq)};
 </pre>
+<p>This simply has the effect of switching the definitions of <tt class="docutils literal"><span class="pre">arg1</span></tt>
+and <tt class="docutils literal"><span class="pre">arg2</span></tt> in lines 3 and 4 of the generated code above, and their
+assignments in lines 19 and 20.</p>
 </div>
 <div class="section">
 <h1><a class="toc-backref" href="#id2" id="using-numpy-i" name="using-numpy-i">Using numpy.i</a></h1>
@@ -731,6 +801,9 @@ double dot(int len, double* vec1, double* vec2);
 <p>The python interface that we want is:</p>
 <pre class="literal-block">
 def dot(vec1, vec2):
+    &quot;&quot;&quot;
+    dot(PyObject,PyObject) -&gt; double
+    &quot;&quot;&quot;
 </pre>
 <p>The problem here is that there is one dimension argument and two array
 arguments, and our typemaps are set up for dimensions that apply to a
@@ -753,11 +826,13 @@ double my_dot(int len1, double* vec1, int len2, double* vec2) {
 }
 %}
 </pre>
-<p>If the header file that contains the prototype for <tt class="docutils literal"><span class="pre">dot()</span></tt> also
-contains other prototypes that you want to wrap, so that you need to
-<tt class="docutils literal"><span class="pre">%include</span></tt> this header file, then you will also need a <tt class="docutils literal"><span class="pre">%ignore</span>
+<p>If the header file that contains the prototype for <tt class="docutils literal"><span class="pre">double</span> <span class="pre">dot()</span></tt>
+also contains other prototypes that you want to wrap, so that you need
+to <tt class="docutils literal"><span class="pre">%include</span></tt> this header file, then you will also need a <tt class="docutils literal"><span class="pre">%ignore</span>
 <span class="pre">dot;</span></tt> directive, placed after the <tt class="docutils literal"><span class="pre">%rename</span></tt> and before the
-<tt class="docutils literal"><span class="pre">%include</span></tt> directives.</p>
+<tt class="docutils literal"><span class="pre">%include</span></tt> directives.  Or, if the function in question is a class
+method, you will want to use <tt class="docutils literal"><span class="pre">%extend</span></tt> rather than <tt class="docutils literal"><span class="pre">%inline</span></tt> in
+addition to <tt class="docutils literal"><span class="pre">%ignore</span></tt>.</p>
 </div>
 <div class="section">
 <h2><a class="toc-backref" href="#id15" id="other-situations" name="other-situations">Other Situations</a></h2>
@@ -815,7 +890,41 @@ where you want them, and then clear them after you are done.</p>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id17" id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
+<h1><a class="toc-backref" href="#id17" id="summary" name="summary">Summary</a></h1>
+<p>Out of the box, <tt class="docutils literal"><span class="pre">numpy.i</span></tt> provides typemaps that support conversion
+between <a class="reference" href="http://numpy.scipy.org">NumPy</a> arrays and C arrays:</p>
+<blockquote>
+<ul class="simple">
+<li>That can be one of 12 different scalar types: <tt class="docutils literal"><span class="pre">signed</span> <span class="pre">char</span></tt>,
+<tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">char</span></tt>, <tt class="docutils literal"><span class="pre">short</span></tt>, <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">short</span></tt>, <tt class="docutils literal"><span class="pre">int</span></tt>,
+<tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span></tt>, <tt class="docutils literal"><span class="pre">long</span></tt>, <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span></tt>, <tt class="docutils literal"><span class="pre">long</span> <span class="pre">long</span></tt>,
+<tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">long</span></tt>, <tt class="docutils literal"><span class="pre">float</span></tt> and <tt class="docutils literal"><span class="pre">double</span></tt>.</li>
+<li>That support 16 different argument signatures for each data type,
+including:<ul>
+<li>One-dimensional and two-dimensional arrays.</li>
+<li>Input-only, in-place, and argout behavior.</li>
+<li>Hard-coded dimensions, data-buffer-then-dimensions
+specification, and dimensions-then-data-buffer specification.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> interface file also provides additional tools for
+wrapper developers, including:</p>
+<blockquote>
+<ul class="simple">
+<li>A <a class="reference" href="http://www.swig.org">SWIG</a> macro (<tt class="docutils literal"><span class="pre">%numpy_typemaps</span></tt>) with three arguments for
+implementing the 16 argument signatures for the user's choice of
+(1) C data type, (2) <a class="reference" href="http://numpy.scipy.org">NumPy</a> data type (assuming they match), and
+(3) dimension type.</li>
+<li>Seven C macros and eleven C functions that can be used to write
+specialized typemaps, extensions, or inlined functions that handle
+cases not covered by the provided typemaps.</li>
+</ul>
+</blockquote>
+</div>
+<div class="section">
+<h1><a class="toc-backref" href="#id18" id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
 <p>Many people have worked to glue <a class="reference" href="http://www.swig.org">SWIG</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> together (as well
 as <a class="reference" href="http://www.swig.org">SWIG</a> and the predecessors of <a class="reference" href="http://numpy.scipy.org">NumPy</a>, Numeric and numarray).
 The effort to standardize this work into <tt class="docutils literal"><span class="pre">numpy.i</span></tt> began at the 2005
@@ -829,7 +938,7 @@ possible.</p>
 </div>
 <div class="footer">
 <hr class="footer" />
-Generated on: 2007-04-03 21:50 UTC.
+Generated on: 2007-04-04 16:10 UTC.
 Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
 
 </div>

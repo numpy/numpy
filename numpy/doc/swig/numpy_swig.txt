@@ -36,9 +36,15 @@ For `python <http://www.python.org>`_, the preferred way of handling
 contiguous (or technically, *strided*) blocks of homogeneous data is
 with the module `NumPy <http://numpy.scipy.org>`_, which provides full
 object-oriented access to arrays of data.  Therefore, the most logical
-`python`_ interface for the ``rms`` function would be::
+`python`_ interface for the ``rms`` function would be (including doc
+string)::
 
     def rms(seq):
+        """
+        rms(numpy.ndarray) -> double
+        rms(list) -> double
+        rms(tuple) -> double
+        """
 
 where ``seq`` would be a `NumPy`_ array of ``double`` values, and its
 length ``n`` would be extracted from ``seq`` internally before being
@@ -88,6 +94,68 @@ to the actual prototype used by ``rms``.  Using ``numpy.i``
 effectively, therefore, requires knowing what typemaps are available
 and what they do.
 
+A `SWIG`_ interface file that includes the `SWIG`_ directives given
+above will produce wrapper code that looks something like::
+
+     1 PyObject *_wrap_rms(PyObject *args) {
+     2   PyObject *resultobj = 0;
+     3   double *arg1 = (double *) 0 ;
+     4   int arg2 ;
+     5   double result;
+     6   PyArrayObject *array1 = NULL ;
+     7   int is_new_object1 = 0 ;
+     8   PyObject * obj0 = 0 ;
+     9  
+    10   if (!PyArg_ParseTuple(args,(char *)"O:rms",&obj0)) SWIG_fail;
+    11   {
+    12     array1 = obj_to_array_contiguous_allow_conversion(
+    13                  obj0, NPY_DOUBLE, &is_new_object1);
+    14     npy_intp size[1] = {
+    15       -1 
+    16     };
+    17     if (!array1 || !require_dimensions(array1, 1) ||
+    18         !require_size(array1, size, 1)) SWIG_fail;
+    19     arg1 = (double*) array1->data;
+    20     arg2 = (int) array1->dimensions[0];
+    21   }
+    22   result = (double)rms(arg1,arg2);
+    23   resultobj = SWIG_From_double((double)(result));
+    24   {
+    25     if (is_new_object1 && array1) Py_DECREF(array1);
+    26   }
+    27   return resultobj;
+    28 fail:
+    29   {
+    30     if (is_new_object1 && array1) Py_DECREF(array1);
+    31   }
+    32   return NULL;
+    33 }
+
+The typemaps from ``numpy.i`` are responsible for the following lines
+of code: 12--20, 25 and 30.  Line 10 parses the input to the ``rms``
+function.  From the format string ``"O:rms"``, we can see that the
+argument list is expected to be a single python object (specified by
+the ``O`` before the colon) and whose pointer is stored in ``obj0``.
+A number of functions, supplied by ``numpy.i``, are called to make and
+check the (possible) conversion from a generic python object to a
+`NumPy`_ array.  These functions are explained in the section `Helper
+Functions`_, but hopefully their names are self-explanatory.  At line
+12 we use ``obj0`` to construct a `NumPy`_ array.  At line 17, we
+check the validity of the result: that it is non-null and that it has
+a single dimension of arbitrary length.  Once these states are
+verified, we extract the data buffer and length in lines 19 and 20 so
+that we can call the underlying C function at line 22.  Line 25
+performs memory management for the case where we have created a new
+array that is no longer needed.
+
+This code has a significant amount of error handling.  Note the
+``SWIG_fail`` is a macro for ``goto fail``, refering to the label at
+line 28.  If the user provides the wrong number of arguments, this
+will be caught at line 10.  If construction of the `NumPy`_ array
+fails or produces an array with the wrong number of dimensions, these
+errors are caught at line 17.  And finally, if an error is detected,
+memory is still managed correctly at line 30.
+
 Note that if the C function signature was in a different order::
 
     double rms(int n, double* seq);
@@ -97,6 +165,10 @@ the argument list for ``rms``.  Fortunately, ``numpy.i`` has a set of
 typemaps with the data pointer given last::
 
     %apply (int DIM1, double* IN_ARRAY1) {(int n, double* seq)};
+
+This simply has the effect of switching the definitions of ``arg1``
+and ``arg2`` in lines 3 and 4 of the generated code above, and their
+assignments in lines 19 and 20.
 
 Using numpy.i
 =============
@@ -440,6 +512,9 @@ Consider a reasonable prototype for a dot product function::
 The python interface that we want is::
 
     def dot(vec1, vec2):
+        """
+        dot(PyObject,PyObject) -> double
+        """
 
 The problem here is that there is one dimension argument and two array
 arguments, and our typemaps are set up for dimensions that apply to a
@@ -462,11 +537,13 @@ arguments).  The recommended solution is the following::
     }
     %}
 
-If the header file that contains the prototype for ``dot()`` also
-contains other prototypes that you want to wrap, so that you need to
-``%include`` this header file, then you will also need a ``%ignore
+If the header file that contains the prototype for ``double dot()``
+also contains other prototypes that you want to wrap, so that you need
+to ``%include`` this header file, then you will also need a ``%ignore
 dot;`` directive, placed after the ``%rename`` and before the
-``%include`` directives.
+``%include`` directives.  Or, if the function in question is a class
+method, you will want to use ``%extend`` rather than ``%inline`` in
+addition to ``%ignore``.
 
 Other Situations
 ----------------
@@ -518,6 +595,39 @@ directive after you are done with a specific typemap::
 
 In general, you should target these typemap signatures specifically
 where you want them, and then clear them after you are done.
+
+Summary
+=======
+
+Out of the box, ``numpy.i`` provides typemaps that support conversion
+between `NumPy`_ arrays and C arrays:
+
+  * That can be one of 12 different scalar types: ``signed char``,
+    ``unsigned char``, ``short``, ``unsigned short``, ``int``,
+    ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
+    ``unsigned long long``, ``float`` and ``double``.
+
+  * That support 16 different argument signatures for each data type,
+    including:
+
+    + One-dimensional and two-dimensional arrays.
+
+    + Input-only, in-place, and argout behavior.
+
+    + Hard-coded dimensions, data-buffer-then-dimensions
+      specification, and dimensions-then-data-buffer specification.
+
+The ``numpy.i`` interface file also provides additional tools for
+wrapper developers, including:
+
+  * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
+    implementing the 16 argument signatures for the user's choice of
+    (1) C data type, (2) `NumPy`_ data type (assuming they match), and
+    (3) dimension type.
+
+  * Seven C macros and eleven C functions that can be used to write
+    specialized typemaps, extensions, or inlined functions that handle
+    cases not covered by the provided typemaps.
 
 Acknowledgements
 ================
