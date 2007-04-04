@@ -4,7 +4,7 @@ numpy.i: a SWIG Interface File for NumPy
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
-:Date:        3 April, 2007
+:Date:        4 April, 2007
 
 .. contents::
 
@@ -252,11 +252,14 @@ of array.  The input array signatures are
   * ``(DATA_TYPE IN_ARRAY2[ANY][ANY])``
   * ``(DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2)``
+  * ``(DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])``
+  * ``(DATA_TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3)``
+  * ``(int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_ARRAY3)``
 
 The first signature listed, ``(DATA_TYPE IN_ARRAY[ANY])`` is for
 one-dimensional arrays with hard-coded dimensions.  Likewise,
 ``(DATA_TYPE IN_ARRAY2[ANY][ANY])`` is for two-dimensional arrays with
-hard-coded dimensions.
+hard-coded dimensions, and similarly for three-dimensional.
 
 In-Place Arrays
 ---------------
@@ -273,6 +276,9 @@ signatures are
   * ``(DATA_TYPE INPLACE_ARRAY2[ANY][ANY])``
   * ``(DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2)``
   * ``(int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2)``
+  * ``(DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY])``
+  * ``(DATA_TYPE* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3)``
+  * ``(int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_ARRAY3)``
 
 These typemaps now check to make sure that the ``INPLACE_ARRAY``
 arguments use native byte ordering.  If not, an exception is raised.
@@ -295,14 +301,15 @@ arrays in, they simply get returned.  The argout signatures are
   * ``(DATA_TYPE* ARGOUT_ARRAY1, int DIM1)``
   * ``(int DIM1, DATA_TYPE* ARGOUT_ARRAY1)``
   * ``(DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])``
+  * ``(DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY])``
 
 These are typically used in situations where in C/C++, you would
 allocate a(n) array(s) on the heap, and call the function to fill the
 array(s) values.  In python, the arrays are allocated for you and
 returned as new array objects.
 
-Note that we support ``DATA_TYPE*`` argout typemaps in 1D, but not
-2D.  This because of a quirk with the `SWIG`_ typemap syntax and
+Note that we support ``DATA_TYPE*`` argout typemaps in 1D, but not 2D
+or 3D.  This because of a quirk with the `SWIG`_ typemap syntax and
 cannot be avoided.  Note that for these types of 1D typemaps, the
 python function will take a single argument representing ``DIM1``.
 
@@ -561,10 +568,10 @@ helpful when you encounter them.
         %numpy_typemaps(double, NPY_DOUBLE, long)
 
   * You can use the code in ``numpy.i`` to write your own typemaps.
-    For example, if you had a three-dimensional array as a function
-    argument, you could cut-and-paste the appropriate two-dimensional
-    typemap into your interface file.  The modifications for the third
-    dimension would be trivial.
+    For example, if you had a four-dimensional array as a function
+    argument, you could cut-and-paste the appropriate
+    three-dimensional typemaps into your interface file.  The
+    modifications for the fourth dimension would be trivial.
 
   * Sometimes, the best approach is to use the ``%extend`` directive
     to define new methods for your classes (or overload existing ones)
@@ -607,10 +614,10 @@ between `NumPy`_ arrays and C arrays:
     ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
     ``unsigned long long``, ``float`` and ``double``.
 
-  * That support 16 different argument signatures for each data type,
+  * That support 23 different argument signatures for each data type,
     including:
 
-    + One-dimensional and two-dimensional arrays.
+    + One-dimensional, two-dimensional and three-dimensional arrays.
 
     + Input-only, in-place, and argout behavior.
 
@@ -621,7 +628,7 @@ The ``numpy.i`` interface file also provides additional tools for
 wrapper developers, including:
 
   * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
-    implementing the 16 argument signatures for the user's choice of
+    implementing the 23 argument signatures for the user's choice of
     (1) C data type, (2) `NumPy`_ data type (assuming they match), and
     (3) dimension type.
 
