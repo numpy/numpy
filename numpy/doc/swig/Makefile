@@ -1,5 +1,5 @@
 # SWIG
-INTERFACES = Vector.i Matrix.i
+INTERFACES = Vector.i Matrix.i Tensor.i
 WRAPPERS   = $(INTERFACES:.i=_wrap.cxx)
 PROXIES    = $(INTERFACES:.i=.py      )
 
@@ -23,7 +23,7 @@ PDF_FILES = numpy_swig.pdf
 # List all of the subdirectories here for recursive make
 SUBDIRS = 
 
-all: $(WRAPPERS) Vector.cxx Vector.h Matrix.cxx Matrix.h
+all: $(WRAPPERS) Vector.cxx Vector.h Matrix.cxx Matrix.h Tensor.cxx Tensor.h
 	./setup.py build
 
 test: all

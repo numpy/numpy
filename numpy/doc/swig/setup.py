@@ -27,10 +27,17 @@ _Matrix = Extension("_Matrix",
                     include_dirs = [numpy_include],
                     )
 
+# _Tensor extension module
+_Tensor = Extension("_Tensor",
+                    ["Tensor_wrap.cxx",
+                     "tensor.cxx"],
+                    include_dirs = [numpy_include],
+                    )
+
 # NumyTypemapTests setup
 setup(name        = "NumpyTypemapTests",
       description = "Functions that work on arrays",
       author      = "Bill Spotz",
-      py_modules  = ["Vector", "Matrix"],
-      ext_modules = [_Vector , _Matrix ]
+      py_modules  = ["Vector", "Matrix", "Tensor"],
+      ext_modules = [_Vector , _Matrix , _Tensor ]
       )
