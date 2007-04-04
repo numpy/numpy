@@ -10,8 +10,7 @@ __all__ = ['FCompiler','new_fcompiler','show_fcompilers',
 import os
 import sys
 import re
-from types import StringType,NoneType
-from distutils.sysconfig import get_config_var
+from distutils.sysconfig import get_config_var, get_python_lib
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError,DistutilsArgError,\
      DistutilsExecError,CompileError,LinkError,DistutilsPlatformError
@@ -338,7 +337,14 @@ class FCompiler(CCompiler):
         linker_so = self.__get_cmd(self.get_linker_so,'LDSHARED')
         if linker_so:
             linker_so_flags = self.__get_flags(self.get_flags_linker_so,'LDFLAGS')
-            self.set_executables(linker_so=[linker_so]+linker_so_flags)
+            if sys.platform.startswith('aix'):
+                python_lib = get_python_lib(standard_lib=1)
+                ld_so_aix = os.path.join(python_lib, 'config', 'ld_so_aix')
+                python_exp = os.path.join(python_lib, 'config', 'python.exp')
+                linker_so = [ld_so_aix, linker_so, '-bI:'+python_exp]
+            else:
+                linker_so = [linker_so]
+            self.set_executables(linker_so=linker_so+linker_so_flags)
 
         linker_exe = self.__get_cmd(self.get_linker_exe,'LD')
         if linker_exe:
