@@ -14,20 +14,34 @@ to do with numpy.i.  The files related to testing are::
     series.h
     series.cxx
     Series.i
-    testSeries.py
+    test1D.py
+    test2D.py
 
 The series.h header file contains prototypes for functions that
 illustrate the wrapping issues we wish to address.  Right now, this
 consists of functions with argument signatures of the form::
 
+    (type IN_ARRAY1[ANY])
     (type* IN_ARRAY1, int DIM1)
+    (int DIM1, type* IN_ARRAY1)
+
+    (type IN_ARRAY2[ANY][ANY])
     (type* IN_ARRAY2, int DIM1, int DIM2)
-    (int DIM1, type* IN_ARRAY1)``
-    (int DIM1, int DIM2, type* IN_ARRAY2)``
+    (int DIM1, int DIM2, type* IN_ARRAY2)
+
+    (type INPLACE_ARRAY1[ANY])
     (type* INPLACE_ARRAY1, int DIM1)
-    (type* INPLACE_ARRAY2, int DIM1, int DIM2)
     (int DIM1, type* INPLACE_ARRAY1)
+
+    (type INPLACE_ARRAY2[ANY][ANY])
+    (type* INPLACE_ARRAY2, int DIM1, int DIM2)
     (int DIM1, int DIM2, type* INPLACE_ARRAY2)
+
+    (type ARGOUT_ARRAY1[ANY])
+    (type* ARGOUT_ARRAY1, int DIM1)
+    (int DIM1, type* ARGOUT_ARRAY1)
+
+    (type ARGOUT_ARRAY2[ANY][ANY])
 
 which take a pointer to an array of type "type", whose length is
 specified by the integer(s) DIM1 (and DIM2).
@@ -45,8 +59,9 @@ python wrappers that accept a numpy array of any of the above-listed
 types.
 
 The source file series.cxx contains the actual implementations of the
-functions described in series.h.  The python script testSeries.py
-tests the resulting python wrappers using the unittest module.
+functions described in series.h.  The python scripts test1D.py and
+test2D.py test the resulting python wrappers using the unittest
+module.
 
 The SWIG interface file Series.i is used to generate the wrapper code.
 The SWIG_FILE_WITH_INIT macro allows numpy.i to be used with multiple
@@ -67,7 +82,7 @@ make targets "tex" and "pdf").
 To build and test the code, simply execute from the shell::
 
     $ make
-    $ testSeries.py
+    $ make test
 
 ================================================================================
 

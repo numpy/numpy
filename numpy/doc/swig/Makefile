@@ -26,6 +26,10 @@ SUBDIRS =
 all: $(WRAPPERS) series.cxx series.h
 	./setup.py build
 
+test: all
+	test1D.py
+	test2D.py
+
 doc: html pdf
 
 %_wrap.cxx: %.i numpy.i series.h
@@ -54,4 +58,4 @@ clean:
 	$(RM) $(LATEX_FILES)
 	$(RM) *.aux *.dvi *.log *.out *~
 
-.PHONY : all doc html tex pdf clean
+.PHONY : all test doc html tex pdf clean
