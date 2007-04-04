@@ -51,8 +51,8 @@ python wrappers that take a container that constitutes a valid
 argument to the numpy array constructor, and can be used to build an
 array of type "type".  Currently, types "signed char", "unsigned
 char", "short", "unsigned short", "int", "unsigned int", "long",
-"unsigned long", "long long", "unsigned long long", "float", "double",
-"PyObject" and "char" are supported and tested.
+"unsigned long", "long long", "unsigned long long", "float", and
+"double" are supported and tested.
 
 The objective for the INPLACE_ARRAY signatures is for SWIG to generate
 python wrappers that accept a numpy array of any of the above-listed
@@ -89,13 +89,10 @@ To build and test the code, simply execute from the shell::
 ToDo
 ----
 
-  * Support for complex data types should be added.  Currently swig
-    dies with a syntax error when the %numpy_typemaps macro is used
-    with complex types.
+  * Write tests for 3D typemaps.
 
-  * Better ARGOUT typemaps need to be implemented and tested.  I
-    stalled on this because SWIG implements a new method for
-    aggregating output arguments; it has changed from a tuple to a
-    list and requires importing a different SWIG library file.  I
-    didn't particularly want to spend time trying to support both
-    approaches, and I ended up not finishing a typemap for either.
+  * Add ARGOUT typemaps that assume the function allocates the buffers
+    internally.
+
+  * Add "naked" typemaps for argument lists that do not specify
+    dimensions.
