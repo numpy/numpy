@@ -5,6 +5,7 @@ import sys
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command, find_executable
 from distutils import log
+from distutils.sysconfig import get_python_lib
 
 class IbmFCompiler(FCompiler):
 
@@ -47,6 +48,15 @@ class IbmFCompiler(FCompiler):
                 from distutils.version import LooseVersion
                 self.version = version = LooseVersion(l[0])
         return version
+
+    def get_linker_so(self):
+        if sys.platform.startswith('aix'):
+            python_lib = get_python_lib(standard_lib=1)
+            ld_so_aix = os.path.join(python_lib, 'config', 'ld_so_aix')
+            python_exp = os.path.join(python_lib, 'config', 'python.exp')
+            return [ld_so_aix, self.executables['linker_so'], python_exp]
+        else:
+            return FCompiler.get_linker_so(self)
 
     def get_flags(self):
         return ['-qextname']
