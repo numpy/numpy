@@ -1,5 +1,5 @@
 # SWIG
-INTERFACES = Series.i
+INTERFACES = Vector.i Matrix.i
 WRAPPERS   = $(INTERFACES:.i=_wrap.cxx)
 PROXIES    = $(INTERFACES:.i=.py      )
 
@@ -23,7 +23,7 @@ PDF_FILES = numpy_swig.pdf
 # List all of the subdirectories here for recursive make
 SUBDIRS = 
 
-all: $(WRAPPERS) series.cxx series.h
+all: $(WRAPPERS) Vector.cxx Vector.h Matrix.cxx Matrix.h
 	./setup.py build
 
 test: all
@@ -32,7 +32,7 @@ test: all
 
 doc: html pdf
 
-%_wrap.cxx: %.i numpy.i series.h
+%_wrap.cxx: %.i %.h numpy.i
 	swig -c++ -python $<
 
 html: $(WEB_PAGES)
@@ -56,6 +56,6 @@ clean:
 	$(RM) $(WRAPPERS)
 	$(RM) $(PROXIES)
 	$(RM) $(LATEX_FILES)
-	$(RM) *.aux *.dvi *.log *.out *~
+	$(RM) *.pyc *.aux *.dvi *.log *.out *~
 
 .PHONY : all test doc html tex pdf clean

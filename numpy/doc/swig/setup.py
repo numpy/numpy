@@ -13,17 +13,24 @@ try:
 except AttributeError:
     numpy_include = numpy.get_numpy_include()
 
-# _Series extension module
-_Series = Extension("_Series",
-                    ["Series_wrap.cxx",
-                     "series.cxx"],
+# _Vector extension module
+_Vector = Extension("_Vector",
+                    ["Vector_wrap.cxx",
+                     "vector.cxx"],
                     include_dirs = [numpy_include],
                     )
 
-# Series setup
-setup(name        = "Series",
-      description = "Functions that work on series",
+# _Matrix extension module
+_Matrix = Extension("_Matrix",
+                    ["Matrix_wrap.cxx",
+                     "matrix.cxx"],
+                    include_dirs = [numpy_include],
+                    )
+
+# NumyTypemapTests setup
+setup(name        = "NumpyTypemapTests",
+      description = "Functions that work on arrays",
       author      = "Bill Spotz",
-      py_modules  = ["Series"],
-      ext_modules = [_Series]
+      py_modules  = ["Vector", "Matrix"],
+      ext_modules = [_Vector , _Matrix ]
       )
