@@ -2081,15 +2081,18 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
         PyArrayObject *idarr;
 	PyArrayObject *aar;
         intp loop_i[MAX_DIMS], outsize=0;
-        int arg_types[3] = {otype, otype, otype};
+        int arg_types[3];
 	PyArray_SCALARKIND scalars[3] = {PyArray_NOSCALAR, PyArray_NOSCALAR,
 					 PyArray_NOSCALAR};
-	int i, j;
-	int nd = (*arr)->nd;
+	int i, j, nd;
         int flags;
 	/* Reduce type is the type requested of the input
 	   during reduction */
 
+        nd = (*arr)->nd;
+        arg_types[0] = otype;
+        arg_types[1] = otype;
+        arg_types[2] = otype;
         if ((loop = _pya_malloc(sizeof(PyUFuncReduceObject)))==NULL) {
                 PyErr_NoMemory(); return loop;
         }
