@@ -2937,12 +2937,11 @@ NA_checkFPErrors(void)
 	return retstatus;
 }
 
-#elif defined(linux) || defined(darwin) || defined(__CYGWIN__)
-
+#elif defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
 #if defined(__GLIBC__) || defined(darwin) || defined(__MINGW32__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
-#include "numpy/fenv/fenv.c"
+#include "numpy/fenv/fenv.h"
 #endif
 
 static int 
