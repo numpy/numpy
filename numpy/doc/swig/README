@@ -14,17 +14,17 @@ to do with numpy.i.  The files related to testing are::
     Vector.h
     Vector.cxx
     Vector.i
-    test1D.py
+    testVector.py
 
     Matrix.h
     Matrix.cxx
     Matrix.i
-    test2D.py
+    testMatrix.py
 
     Tensor.h
     Tensor.cxx
     Tensor.i
-    test3D.py
+    testTensor.py
 
 The header files contain prototypes for functions that illustrate the
 wrapping issues we wish to address.  Right now, this consists of
@@ -83,9 +83,9 @@ types.
 
 The source files Vector.cxx, Matrix.cxx and Tensor.cxx contain the
 actual implementations of the functions described in Vector.h,
-Matrix.h and Tensor.h.  The python scripts test1D.py, test2D.py and
-test3D.py test the resulting python wrappers using the unittest
-module.
+Matrix.h and Tensor.h.  The python scripts testVector.py,
+testMatrix.py and testTensor.py test the resulting python wrappers
+using the unittest module.
 
 The SWIG interface files Vector.i, Matrix.i and Tensor.i are used to
 generate the wrapper code.  The SWIG_FILE_WITH_INIT macro allows

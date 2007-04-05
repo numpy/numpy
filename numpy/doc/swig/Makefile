@@ -27,9 +27,9 @@ all: $(WRAPPERS) Vector.cxx Vector.h Matrix.cxx Matrix.h Tensor.cxx Tensor.h
 	./setup.py build
 
 test: all
-	test1D.py
-	test2D.py
-	test3D.py
+	testVector.py
+	testMatrix.py
+	testTensor.py
 
 doc: html pdf
 
