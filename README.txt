@@ -9,6 +9,10 @@ find it.  You can help the process with a site.cfg file.
 
 If fast BLAS and LAPACK cannot be found, then a slower default version is used. 
 
+After installation, tests can be run with
+
+python -c 'import numpy; numpy.test()'
+
 The most current development version is always available from a
 subversion repostiory:
 
