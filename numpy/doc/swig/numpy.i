@@ -640,7 +640,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   (PyArrayObject* temp=NULL)
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
-  if (!temp || !require_contiguous(temp) || !require_native(temp)) SWIG_fail;
+  if (!temp || !require_dimensions(temp,1) || !require_contiguous(temp)
+      || !require_native(temp)) SWIG_fail;
   $1 = (DATA_TYPE*) temp->data;
   $2 = 1;
   for (int i=0; i<temp->nd; ++i) $2 *= array_size(temp,i);
@@ -658,7 +659,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   (PyArrayObject* temp=NULL)
 {
   temp = obj_to_array_no_conversion($input, DATA_TYPECODE);
-  if (!temp || !require_contiguous(temp) || !require_native(temp)) SWIG_fail;
+  if (!temp || !require_dimensions(temp,1) || !require_contiguous(temp)
+      || !require_native(temp)) SWIG_fail;
   $1 = 1;
   for (int i=0; i<temp->nd; ++i) $1 *= array_size(temp,i);
   $2 = (DATA_TYPE*) temp->data;
