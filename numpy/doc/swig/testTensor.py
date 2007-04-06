@@ -29,6 +29,7 @@ class TensorTestCase(unittest.TestCase):
         self.typeCode = "d"
         self.result   = sqrt(28.0/8)
 
+    # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNorm(self):
         "Test norm function"
         print >>sys.stderr, self.typeStr, "... ",
@@ -40,6 +41,32 @@ class TensorTestCase(unittest.TestCase):
         else:
             self.assertAlmostEqual(norm(tensor), self.result, 6)
 
+    # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
+    def testNormWrongDim(self):
+        "Test norm function with wrong dimensions"
+        print >>sys.stderr, self.typeStr, "... ",
+        norm = Tensor.__dict__[self.typeStr + "Norm"]
+        tensor = [[0,1,2,3],
+                  [3,2,1,0]]
+        self.assertRaises(TypeError, norm, tensor)
+
+    # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
+    def testNormWrongSize(self):
+        "Test norm function with wrong size"
+        print >>sys.stderr, self.typeStr, "... ",
+        norm = Tensor.__dict__[self.typeStr + "Norm"]
+        tensor = [[[0,1,0], [2,3,2]],
+                  [[3,2,3], [1,0,1]]]
+        self.assertRaises(TypeError, norm, tensor)
+
+    # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
+    def testNormNonContainer(self):
+        "Test norm function with non-container"
+        print >>sys.stderr, self.typeStr, "... ",
+        norm = Tensor.__dict__[self.typeStr + "Norm"]
+        self.assertRaises(TypeError, norm, None)
+
+    # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMax(self):
         "Test max function"
         print >>sys.stderr, self.typeStr, "... ",
@@ -48,18 +75,21 @@ class TensorTestCase(unittest.TestCase):
                   [[5,6], [7,8]]]
         self.assertEquals(max(tensor), 8)
 
+    # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxNonContainer(self):
-        "Test max function with None"
+        "Test max function with non-container"
         print >>sys.stderr, self.typeStr, "... ",
         max = Tensor.__dict__[self.typeStr + "Max"]
         self.assertRaises(TypeError, max, None)
 
+    # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxWrongDim(self):
-        "Test max function with a 1D array"
+        "Test max function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         max = Tensor.__dict__[self.typeStr + "Max"]
         self.assertRaises(TypeError, max, [0, -1, 2, -3])
 
+    # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMin(self):
         "Test min function"
         print >>sys.stderr, self.typeStr, "... ",
@@ -68,6 +98,21 @@ class TensorTestCase(unittest.TestCase):
                   [[5,4], [3,2]]]
         self.assertEquals(min(tensor), 2)
 
+    # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
+    def testMinNonContainer(self):
+        "Test min function"
+        print >>sys.stderr, self.typeStr, "... ",
+        min = Tensor.__dict__[self.typeStr + "Min"]
+        self.assertRaises(TypeError, min, True)
+
+    # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
+    def testMinWrongDim(self):
+        "Test min function with wrong dimensions"
+        print >>sys.stderr, self.typeStr, "... ",
+        min = Tensor.__dict__[self.typeStr + "Min"]
+        self.assertRaises(TypeError, min, [[1,3],[5,7]])
+
+    # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
     def testScale(self):
         "Test scale function"
         print >>sys.stderr, self.typeStr, "... ",
@@ -80,6 +125,43 @@ class TensorTestCase(unittest.TestCase):
                                       [[0,4,0], [4,0,4], [0,4,0]],
                                       [[4,0,4], [0,4,0], [4,0,4]]]).all(), True)
 
+    # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
+    def testScaleWrongType(self):
+        "Test scale function with wrong type"
+        print >>sys.stderr, self.typeStr, "... ",
+        scale = Tensor.__dict__[self.typeStr + "Scale"]
+        tensor = N.array([[[1,0,1], [0,1,0], [1,0,1]],
+                          [[0,1,0], [1,0,1], [0,1,0]],
+                          [[1,0,1], [0,1,0], [1,0,1]]],'c')
+        self.assertRaises(TypeError, scale, tensor)
+
+    # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
+    def testScaleWrongDim(self):
+        "Test scale function with wrong dimensions"
+        print >>sys.stderr, self.typeStr, "... ",
+        scale = Tensor.__dict__[self.typeStr + "Scale"]
+        tensor = N.array([[1,0,1], [0,1,0], [1,0,1],
+                          [0,1,0], [1,0,1], [0,1,0]],self.typeCode)
+        self.assertRaises(TypeError, scale, tensor)
+
+    # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
+    def testScaleWrongSize(self):
+        "Test scale function with wrong size"
+        print >>sys.stderr, self.typeStr, "... ",
+        scale = Tensor.__dict__[self.typeStr + "Scale"]
+        tensor = N.array([[[1,0], [0,1], [1,0]],
+                          [[0,1], [1,0], [0,1]],
+                          [[1,0], [0,1], [1,0]]],self.typeCode)
+        self.assertRaises(TypeError, scale, tensor)
+
+    # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
+    def testScaleNonArray(self):
+        "Test scale function with non-array"
+        print >>sys.stderr, self.typeStr, "... ",
+        scale = Tensor.__dict__[self.typeStr + "Scale"]
+        self.assertRaises(TypeError, scale, True)
+
+    # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testFloor(self):
         "Test floor function"
         print >>sys.stderr, self.typeStr, "... ",
@@ -90,6 +172,31 @@ class TensorTestCase(unittest.TestCase):
         N.testing.assert_array_equal(tensor, N.array([[[4,4], [4,4]],
                                                       [[5,6], [7,8]]]))
 
+    # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
+    def testFloorWrongType(self):
+        "Test floor function with wrong type"
+        print >>sys.stderr, self.typeStr, "... ",
+        floor = Tensor.__dict__[self.typeStr + "Floor"]
+        tensor = N.array([[[1,2], [3,4]],
+                          [[5,6], [7,8]]],'c')
+        self.assertRaises(TypeError, floor, tensor)
+
+    # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
+    def testFloorWrongDim(self):
+        "Test floor function with wrong type"
+        print >>sys.stderr, self.typeStr, "... ",
+        floor = Tensor.__dict__[self.typeStr + "Floor"]
+        tensor = N.array([[1,2], [3,4], [5,6], [7,8]],self.typeCode)
+        self.assertRaises(TypeError, floor, tensor)
+
+    # Test (type* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
+    def testFloorNonArray(self):
+        "Test floor function with non-array"
+        print >>sys.stderr, self.typeStr, "... ",
+        floor = Tensor.__dict__[self.typeStr + "Floor"]
+        self.assertRaises(TypeError, floor, object)
+
+    # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
     def testCeil(self):
         "Test ceil function"
         print >>sys.stderr, self.typeStr, "... ",
@@ -100,6 +207,33 @@ class TensorTestCase(unittest.TestCase):
         N.testing.assert_array_equal(tensor, N.array([[[5,5], [5,5]],
                                                       [[5,4], [3,2]]]))
 
+    # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
+    def testCeilWrongType(self):
+        "Test ceil function with wrong type"
+        print >>sys.stderr, self.typeStr, "... ",
+        ceil = Tensor.__dict__[self.typeStr + "Ceil"]
+        tensor = N.array([[[9,8], [7,6]],
+                          [[5,4], [3,2]]],'c')
+        self.assertRaises(TypeError, ceil, tensor)
+
+    # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
+    def testCeilWrongDim(self):
+        "Test ceil function with wrong dimensions"
+        print >>sys.stderr, self.typeStr, "... ",
+        ceil = Tensor.__dict__[self.typeStr + "Ceil"]
+        tensor = N.array([[9,8], [7,6], [5,4], [3,2]], self.typeCode)
+        self.assertRaises(TypeError, ceil, tensor)
+
+    # Test (int DIM1, int DIM2, int DIM3, type* INPLACE_ARRAY3) typemap
+    def testCeilNonArray(self):
+        "Test ceil function with non-array"
+        print >>sys.stderr, self.typeStr, "... ",
+        ceil = Tensor.__dict__[self.typeStr + "Ceil"]
+        tensor = [[[9,8], [7,6]],
+                  [[5,4], [3,2]]]
+        self.assertRaises(TypeError, ceil, tensor)
+
+    # Test (type ARGOUT_ARRAY3[ANY][ANY][ANY]) typemap
     def testLUSplit(self):
         "Test luSplit function"
         print >>sys.stderr, self.typeStr, "... ",
