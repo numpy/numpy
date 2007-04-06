@@ -315,8 +315,13 @@ def _set_array_types():
         _add_array_type('complex', 2*bits)
     _gi = dtype('p')
     if _gi.type not in sctypes['int']:
-        sctypes['int'].append(_gi.type)
-        sctypes['uint'].append(dtype('P').type)
+        indx = 0
+        sz = _gi.itemsize
+        _lst = sctypes['int']
+        while (indx < len(_lst) and sz >= _lst[indx](0).itemsize):
+            indx += 1
+        sctypes['int'].insert(indx, _gi.type)
+        sctypes['uint'].insert(indx, dtype('P').type)
 _set_array_types()
 
 
