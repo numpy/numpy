@@ -36,6 +36,14 @@ class MatrixTestCase(unittest.TestCase):
         self.assertEquals(det(matrix), 30)
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
+    def testDetBadList(self):
+        "Test det function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        det = Matrix.__dict__[self.typeStr + "Det"]
+        matrix = [[8,7], ["e", "pi"]]
+        self.assertRaises(BadListError, det, matrix)
+
+    # Test (type IN_ARRAY2[ANY][ANY]) typemap
     def testDetWrongDim(self):
         "Test det function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
@@ -67,6 +75,14 @@ class MatrixTestCase(unittest.TestCase):
         self.assertEquals(max(matrix), 6)
 
     # Test (type* IN_ARRAY2, int DIM1, int DIM2) typemap
+    def testMaxBadList(self):
+        "Test max function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        max = Matrix.__dict__[self.typeStr + "Max"]
+        matrix = [[6,"five",4], ["three", 2, "one"]]
+        self.assertRaises(BadListError, max, matrix)
+
+    # Test (type* IN_ARRAY2, int DIM1, int DIM2) typemap
     def testMaxNonContainer(self):
         "Test max function with non-container"
         print >>sys.stderr, self.typeStr, "... ",
@@ -87,6 +103,14 @@ class MatrixTestCase(unittest.TestCase):
         min = Matrix.__dict__[self.typeStr + "Min"]
         matrix = [[9,8],[7,6],[5,4]]
         self.assertEquals(min(matrix), 4)
+
+    # Test (int DIM1, int DIM2, type* IN_ARRAY2) typemap
+    def testMinBadList(self):
+        "Test min function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        min = Matrix.__dict__[self.typeStr + "Min"]
+        matrix = [["nine","eight"], ["seven","six"]]
+        self.assertRaises(BadListError, min, matrix)
 
     # Test (int DIM1, int DIM2, type* IN_ARRAY2) typemap
     def testMinWrongDim(self):

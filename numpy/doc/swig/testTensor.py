@@ -42,6 +42,15 @@ class TensorTestCase(unittest.TestCase):
             self.assertAlmostEqual(norm(tensor), self.result, 6)
 
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
+    def testNormBadList(self):
+        "Test norm function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        norm = Tensor.__dict__[self.typeStr + "Norm"]
+        tensor = [[[0,"one"],[2,3]],
+                  [[3,"two"],[1,0]]]
+        self.assertRaises(BadListError, norm, tensor)
+
+    # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNormWrongDim(self):
         "Test norm function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
@@ -76,6 +85,15 @@ class TensorTestCase(unittest.TestCase):
         self.assertEquals(max(tensor), 8)
 
     # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
+    def testMaxBadList(self):
+        "Test max function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        max = Tensor.__dict__[self.typeStr + "Max"]
+        tensor = [[[1,"two"], [3,4]],
+                  [[5,"six"], [7,8]]]
+        self.assertRaises(BadListError, max, tensor)
+
+    # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxNonContainer(self):
         "Test max function with non-container"
         print >>sys.stderr, self.typeStr, "... ",
@@ -99,8 +117,17 @@ class TensorTestCase(unittest.TestCase):
         self.assertEquals(min(tensor), 2)
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
+    def testMinBadList(self):
+        "Test min function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        min = Tensor.__dict__[self.typeStr + "Min"]
+        tensor = [[["nine",8], [7,6]],
+                  [["five",4], [3,2]]]
+        self.assertRaises(BadListError, min, tensor)
+
+    # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMinNonContainer(self):
-        "Test min function"
+        "Test min function with non-container"
         print >>sys.stderr, self.typeStr, "... ",
         min = Tensor.__dict__[self.typeStr + "Min"]
         self.assertRaises(TypeError, min, True)

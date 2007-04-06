@@ -35,6 +35,13 @@ class VectorTestCase(unittest.TestCase):
         self.assertEquals(length([5, 12, 0]), 13)
 
     # Test the (type IN_ARRAY1[ANY]) typemap
+    def testLengthBadList(self):
+        "Test length function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        length = Vector.__dict__[self.typeStr + "Length"]
+        self.assertRaises(BadListError, length, [5, "twelve", 0])
+
+    # Test the (type IN_ARRAY1[ANY]) typemap
     def testLengthWrongSize(self):
         "Test length function with wrong size"
         print >>sys.stderr, self.typeStr, "... ",
@@ -63,6 +70,13 @@ class VectorTestCase(unittest.TestCase):
         self.assertEquals(prod([1,2,3,4]), 24)
 
     # Test the (type* IN_ARRAY1, int DIM1) typemap
+    def testProdBadList(self):
+        "Test prod function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        prod = Vector.__dict__[self.typeStr + "Prod"]
+        self.assertRaises(BadListError, prod, [[1,"two"], ["e","pi"]])
+
+    # Test the (type* IN_ARRAY1, int DIM1) typemap
     def testProdWrongDim(self):
         "Test prod function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
@@ -82,6 +96,13 @@ class VectorTestCase(unittest.TestCase):
         print >>sys.stderr, self.typeStr, "... ",
         sum = Vector.__dict__[self.typeStr + "Sum"]
         self.assertEquals(sum([5,6,7,8]), 26)
+
+    # Test the (int DIM1, type* IN_ARRAY1) typemap
+    def testSumBadList(self):
+        "Test sum function with bad list"
+        print >>sys.stderr, self.typeStr, "... ",
+        sum = Vector.__dict__[self.typeStr + "Sum"]
+        self.assertRaises(BadListError, sum, [3,4, 5, "pi"])
 
     # Test the (int DIM1, type* IN_ARRAY1) typemap
     def testSumWrongDim(self):
