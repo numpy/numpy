@@ -224,7 +224,7 @@ static int int_dividebyzero_error(long value, long unused) {
 }
 
 /* Likewise for Integer overflows */
-#if defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
 #if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
@@ -2937,7 +2937,7 @@ NA_checkFPErrors(void)
 	return retstatus;
 }
 
-#elif defined(linux) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
+#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
 #if defined(__GLIBC__) || defined(darwin) || defined(__MINGW32__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
