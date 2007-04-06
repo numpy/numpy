@@ -12,13 +12,13 @@ LATEX_FLAGS =
 LATEX = pdflatex
 
 # Web pages that need to be made
-WEB_PAGES = numpy_swig.html
+WEB_PAGES = numpy_swig.html testing.html
 
 # LaTeX files that need to be made
-LATEX_FILES = numpy_swig.tex
+LATEX_FILES = numpy_swig.tex testing.tex
 
 # PDF files that need to be made
-PDF_FILES = numpy_swig.pdf
+PDF_FILES = numpy_swig.pdf testing.pdf
 
 # List all of the subdirectories here for recursive make
 SUBDIRS = 
