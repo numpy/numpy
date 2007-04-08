@@ -190,14 +190,14 @@ typedef enum {
         NPY_HEAPSORT=1,
         NPY_MERGESORT=2,
 } NPY_SORTKIND;
-#define NPY_NSORTS NPY_MERGESORT + 1
+#define NPY_NSORTS (NPY_MERGESORT + 1)
 
 
 typedef enum {
         NPY_SEARCHLEFT=0,
         NPY_SEARCHRIGHT=1,
 } NPY_SEARCHSIDE;
-#define NPY_NSEARCHSIDES NPY_SEARCHRIGHT + 1
+#define NPY_NSEARCHSIDES (NPY_SEARCHRIGHT + 1)
 
 
 typedef enum {
@@ -209,7 +209,7 @@ typedef enum {
         NPY_COMPLEX_SCALAR,
         NPY_OBJECT_SCALAR,
 } NPY_SCALARKIND;
-#define NPY_NSCALARKINDS (NPY_OBJECT_SCALAR+1)
+#define NPY_NSCALARKINDS (NPY_OBJECT_SCALAR + 1)
 
 typedef enum {
         NPY_ANYORDER=-1,
