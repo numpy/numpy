@@ -441,6 +441,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* Typemap suite for (DATA_TYPE IN_ARRAY1[ANY])
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE IN_ARRAY1[ANY])
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DATA_TYPE IN_ARRAY1[ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -458,6 +463,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* Typemap suite for (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -476,6 +486,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -494,6 +509,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* Typemap suite for (DATA_TYPE IN_ARRAY2[ANY][ANY])
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE IN_ARRAY2[ANY][ANY])
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -511,6 +531,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* Typemap suite for (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -530,6 +555,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -549,6 +579,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* Typemap suite for (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -567,6 +602,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 /* Typemap suite for (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2,
  *                    DIM_TYPE DIM3)
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
   (PyArrayObject* array=NULL, int is_new_object=0)
@@ -588,6 +628,11 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, 
  *                    DATA_TYPE* IN_ARRAY3)
  */
+%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+  (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
+{
+  $1 = ($input != NULL);
+}
 %typemap(in)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
   (PyArrayObject* array=NULL, int is_new_object=0)
