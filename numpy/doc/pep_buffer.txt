@@ -1,13 +1,13 @@
-:PEP: XXX
-:Title: Revising the buffer protocol
-:Version: $Revision: $
-:Last-Modified: $Date:  $
-:Authors: Travis Oliphant <oliphant@ee.byu.edu>, Carl Banks <pythondev@aerojockey.com>
-:Status: Draft
-:Type: Standards Track
-:Content-Type: text/x-rst
-:Created: 28-Aug-2006
-:Python-Version: 3000
+PEP: 3118
+Title: Revising the buffer protocol
+Version: $Revision$
+Last-Modified: $Date$
+Authors: Travis Oliphant <oliphant@ee.byu.edu>, Carl Banks <pythondev@aerojockey.com>
+Status: Draft
+Type: Standards Track
+Content-Type: text/x-rst
+Created: 28-Aug-2006
+Python-Version: 3000
 
 Abstract
 ========
@@ -135,8 +135,8 @@ object.  In fact, the new protocol allows a standard mechanism for
 doing this even if the original object is not represented as a
 contiguous chunk of memory.
 
-The easiest way is to use the provided C-API to obtain a contiguous
-chunk of memory like the old buffer protocol allowed.
+The easiest way to obtain a simple contiguous chunk of memory is
+to use the provided C-API to obtain a chunk of memory.
 
 
 Change the PyBufferProcs structure to
@@ -151,17 +151,68 @@ Change the PyBufferProcs structure to
 
 ::
 
-    typedef int (*getbufferproc)(PyObject *obj, struct bufferinfo *view) 
+    typedef int (*getbufferproc)(PyObject *obj, struct bufferinfo *view, int flags) 
 
 This function returns 0 on success and -1 on failure (and raises an
 error). The first variable is the "exporting" object.  The second
 argument is the address to a bufferinfo structure.  If view is NULL,
 then no information is returned but a lock on the memory is still
-obtained.  In this case, releasebuffer should also be called with NULL.
+obtained.  In this case, the corresponding releasebuffer should also
+be called with NULL.
 
-The bufferinfo structure is:
+The third argument indicates what kind of buffer the exporter is allowed to return.   It tells the
+exporter what elements the bufferinfo structure the consumer is going to make use of.  This
+allows the exporter to simplify and/or raise an error if it can't support the operation.  
 
-struct bufferinfo {
+It also allows the caller to make a request for a simple "view" and
+receive it or have an error raised if it's not possible. 
+
+All of the following assume that at least buf, len, and readonly will be
+utilized by the caller. 
+
+Py_BUF_SIMPLE
+   The returned buffer will only be assumed to be readable (the object
+   may or may not have writeable memory).  Only the buf, len, and
+   readonly variables may be accessed. The format will be
+   assumed to be unsigned bytes.  This is a "stand-alone" flag constant.
+   It never needs to be |'d to the others. 
+
+Py_BUF_WRITEABLE
+   The returned buffer must be writeable.  If it cannot be, then raise an error. 
+
+Py_BUF_READONLY
+   The returned buffer must be readonly and the underlying object should make
+   its memory readonly if that is possible.  
+
+Py_BUF_FORMAT
+   The consumer will be using the format string information so make sure that 
+   member is filled correctly. 
+
+Py_BUF_SHAPE
+   The consumer can (and might) make use of using the ndims and shape members of the structure
+   so make sure they are filled in correctly. 
+   
+Py_BUF_STRIDES (implies SHAPE)
+   The consumer can (and might) make use of the strides member of the structure (as well
+   as ndims and shape)
+
+Py_BUF_OFFSETS (implies STRIDES)
+   The consumer can (and might) make use of the suboffsets member (as well as 
+   ndims, shape, and strides)
+
+Thus, the consumer simply wanting an contiguous chunk of bytes from
+the object would use Py_BUF_SIMPLE, while a consumer that understands
+how to make use of the most complicated cases would use
+Py_BUF_OFFSETS.
+
+There is a C-API that simple exporting objects can use to fill-in the
+buffer info structure correctly according to the provided flags if a
+contiguous chunk of memory is all that can be exported.
+
+
+The bufferinfo structure is::
+
+  struct bufferinfo {
        void *buf;
        Py_ssize_t len;
        int readonly;
@@ -170,18 +221,19 @@ struct bufferinfo {
        Py_ssize_t *shape;
        Py_ssize_t *strides;
        Py_ssize_t *suboffsets;
-};
+       void *internal;
+  };
 
-Upon return from getbufferproc, the bufferinfo structure is filled in
+Before calling this function, the bufferinfo structure can be filled with
+whatever.  Upon return from getbufferproc, the bufferinfo structure is filled in
 with relevant information about the buffer.  This same bufferinfo
 structure must be passed to bf_releasebuffer (if available) when the
 consumer is done with the memory. The caller is responsible for
-keeping a reference to obj until releasebuffer is called.
-
+keeping a reference to obj until releasebuffer is called (i.e. this
+call does not alter the reference count of obj). 
 
 The members of the bufferinfo structure are:
 
-   
 buf
     a pointer to the start of the memory for the object
 
@@ -195,29 +247,28 @@ readonly
     readonly.  1 means the memory is readonly, zero means the
     memory is writeable.
 
-
-format
-    a format-string (following extended struct syntax) indicating what
-    is in each element of of memory.  The number of elements is len /
-    itemsize, where itemsize is the number of bytes implied by the
-    format.  For standard unsigned bytes use a format string of "B".
+format 
+    a NULL-terminated format-string (following the struct-style syntax
+    including extensions) indicating what is in each element of
+    memory.  The number of elements is len / itemsize, where itemsize
+    is the number of bytes implied by the format.  For standard
+    unsigned bytes use a format string of "B".
 
 ndims
     a variable storing the number of dimensions the memory represents.
-    Should be >=0. 
+    Must be >=0. 
 
 shape
     an array of ``Py_ssize_t`` of length ``ndims`` indicating the
     shape of the memory as an N-D array.  Note that ``((*shape)[0] *
-    ... * (*shape)[ndims-1])*itemsize = len``.  This can be NULL
-    to indicate 1-d arrays. 
+    ... * (*shape)[ndims-1])*itemsize = len``.
 
 strides 
     address of a ``Py_ssize_t*`` variable that will be filled with a
     pointer to an array of ``Py_ssize_t`` of length ``*ndims``
     indicating the number of bytes to skip to get to the next element
-    in each dimension.  If this is NULL, then the memory is assumed to
-    be C-style contigous with the last dimension varying the fastest.
+    in each dimension.  For C-style contiguous arrays (where the
+    last-dimension varies the fastest) this must be filled in.  
 
 suboffsets
     address of a ``Py_ssize_t *`` variable that will be filled with a
@@ -232,39 +283,47 @@ suboffsets
 
     For clarity, here is a function that returns a pointer to the
     element in an N-D array pointed to by an N-dimesional index when
-    there are both strides and suboffsets.  
+    there are both strides and suboffsets.::
 
-    void* get_item_pointer(int ndim, void* buf, Py_ssize_t* strides,
+      void* get_item_pointer(int ndim, void* buf, Py_ssize_t* strides,
                            Py_ssize_t* suboffsets, Py_ssize_t *indices) {
-        char* pointer = (char*)buf;
-        int i;
-        for (i = 0; i < ndim; i++) {
-            pointer += strides[i]*indices[i];
-            if (suboffsets[i] >=0 ) {
-                pointer = *((char**)pointer) + suboffsets[i];
-            }
-        }
-        return (void*)pointer;
-    } 
+          char* pointer = (char*)buf;
+          int i;
+          for (i = 0; i < ndim; i++) {
+              pointer += strides[i]*indices[i];
+              if (suboffsets[i] >=0 ) {
+                  pointer = *((char**)pointer) + suboffsets[i];
+              }
+          }
+          return (void*)pointer;
+      }
 
     Notice the suboffset is added "after" the dereferencing occurs.
     Thus slicing in the ith dimension would add to the suboffsets in
-    the i-1st dimension.  Slicing in the first dimension would change
+    the (i-1)st dimension.  Slicing in the first dimension would change
     the location of the starting pointer directly (i.e. buf would
     be modified).  
+
+internal
+    This is for use internally by the exporting object.  For example,
+    this might be re-cast as an integer by the exporter and used to 
+    store flags about whether or not the shape, strides, and suboffsets
+    arrays must be freed when the buffer is released.   The consumer
+    should never touch this value. 
     
 
 The exporter is responsible for making sure the memory pointed to by
 buf, format, shape, strides, and suboffsets is valid until
 releasebuffer is called.  If the exporter wants to be able to change
 shape, strides, and/or suboffsets before releasebuffer is called then
-it should allocate those arrays when getbuffer is called and free them
-when releasebuffer is called.
+it should allocate those arrays when getbuffer is called (pointing to
+them in the buffer-info structure provided) and free them when
+releasebuffer is called.
 
 
-The same bufferinfo struct should be used in the other buffer
+The same bufferinfo struct should be used in the release-buffer
 interface call. The caller is responsible for the memory of the
-bufferinfo object itself.
+bufferinfo structure itself. 
 
 ``typedef int (*releasebufferproc)(PyObject *obj, struct bufferinfo *view)``
     Callers of getbufferproc must make sure that this function is
@@ -285,9 +344,11 @@ Several mechanisms could be used to keep track of how many getbuffer
 calls have been made and shared.  Either a single variable could be
 used to keep track of how many "views" have been exported, or a
 linked-list of bufferinfo structures filled in could be maintained in
-each objet.  All that is needed is to ensure that any memory shared
-through the bufferinfo structure remains valid until releasebuffer is
-called on that memory.
+each object.  
+
+All that is specifically required by the exporter, however, is to
+ensure that any memory shared through the bufferinfo structure remains
+valid until releasebuffer is called on the bufferinfo structure.
 
 
 New C-API calls are proposed
@@ -301,28 +362,45 @@ Return 1 if the getbuffer function is available otherwise 0.
 
 ::
 
-    PyObject *PyObject_GetBuffer(PyObject *obj)
+    int PyObject_GetBuffer(PyObject *obj, struct bufferinfo *view, int flags)
+
+This is a C-API version of the getbuffer function call.  It checks to
+make sure object has the required function pointer and issues the
+call.  Returns -1 and raises an error on failure and returns 0 on 
+success. 
+
+::
+    int PyObject_ReleaseBuffer(PyObject *obj, struct bufferinfo *view)
+
+This is a C-API version of the releasebuffer function call.  It checks to
+make sure the object has the required function pointer and issues the call.  Returns 0
+on success and -1 (with an error raised) on failure. This function always 
+succeeds if there is no releasebuffer function for the object. 
+
+::
+
+    PyObject *PyObject_GetMemoryView(PyObject *obj)
 
 Return a memory-view object from an object that defines the buffer interface. 
 If make_ro is non-zero then request that the memory is made read-only until 
 release buffer is called. 
 
 A memory-view object is an extended buffer object that should replace
-the buffer object in Python 3K.  It's C-structure is
+the buffer object in Python 3K.  It's C-structure is::
 
-typedef struct {
-    PyObject_HEAD
-    PyObject *base;
-    struct bufferinfo view;
-    int itemsize;
-    int flags;
-} PyMemoryViewObject;
+  typedef struct {
+      PyObject_HEAD
+      PyObject *base;
+      struct bufferinfo view;
+      int itemsize;
+      int flags;
+  } PyMemoryViewObject;
 
 This is very similar to the current buffer object except offset has
 been removed because ptr can just be modified by offset and a single
-offset is not sufficient.  Also the hash has been removed because
-using the buffer object as a hash even if it is read-only is rarely
-useful.  
+offset is not sufficient for the sub-offsets.  Also the hash has been
+removed because using the buffer object as a hash even if it is
+read-only is rarely useful.
 
 Also, the format, ndims, shape, strides, and suboffsets have been
 added. These additions will allow multi-dimensional slicing of the
@@ -338,10 +416,10 @@ This object never reallocates ptr, shape, strides, subboffsets or
 format and therefore does not need to keep track of how many views it
 has exported.
 
-It exports a view using the base object.  It releases a view by releasing
-the view on the base object.  Because, it will never re-allocate memory, 
-it does not need to keep track of how many it has exported but simple 
-reference counting will suffice. 
+It exports a view using the base object.  It releases a view by
+releasing the view on the base object.  Because, it will never
+re-allocate memory, it does not need to keep track of how many it has
+exported but simple reference counting will suffice.
 
 ::
 
@@ -363,7 +441,8 @@ that memory is ``*len``.  If the object is multi-dimensional, then if
 fortran is 1, the first dimension of the underlying array will vary
 the fastest in the buffer.  If fortran is 0, then the last dimension
 will vary the fastest (C-style contiguous). If fortran is -1, then it
-does not matter and you will get whatever the object decides is easiest.
+does not matter and you will get whatever the object decides is more
+efficient.
 
 :: 
 
@@ -378,8 +457,8 @@ fortran is 1, then if the object is multi-dimensional, then the data
 will be copied into the array in Fortran-style (first dimension varies
 the fastest).  If fortran is 0, then the data will be copied into the
 array in C-style (last dimension varies the fastest).  If fortran is -1, then
-it does not matter and the copy will be made in whatever way is
-easiest. 
+it does not matter and the copy will be made in whatever way is more
+efficient.
 
 The last two C-API calls allow a standard way of getting data in and
 out of Python objects into contiguous memory areas no matter how it is
@@ -387,19 +466,29 @@ actually stored.  These calls use the extended buffer interface to perform
 their work. 
 
 ::
-    int PyObject_IsContiguous(struct bufferinfo *view);
 
-Return 1 if the memory defined by the view object is C-style
-contiguous.  Return 0 otherwise.
+    int PyObject_IsContiguous(struct bufferinfo *view, int fortran);
+
+Return 1 if the memory defined by the view object is C-style (fortran = 0)
+or Fortran-style (fortran = 1) contiguous.  Return 0 otherwise.
 
 ::
+
     void PyObject_FillContiguousStrides(int *ndims, Py_ssize_t *shape,
                                         int itemsize, 
-                                        Py_ssize_t *strides)
+                                        Py_ssize_t *strides, int fortran)
 
-Fill the strides array with byte-strides of a contiguous array of the
-given shape with the given number of bytes per element. 
+Fill the strides array with byte-strides of a contiguous (C-style if
+fortran is 0 or Fortran-style if fortran is 1) array of the given
+shape with the given number of bytes per element.
 
+::
+    int PyObject_FillBufferInfo(struct bufferinfo *view, void *buf, Py_ssize_t len,
+                                 int readonly, int infoflags)
+
+Fills in a buffer-info structure correctly for an exporter that can only share
+a contiguous chunk of memory of "unsigned bytes" of the given length.  Returns 0 on success
+and -1 (with raising an error) on error 
 
 
 Additions to the struct string-syntax
@@ -430,22 +519,27 @@ Character         Description
 ':name:'          optional name of the preceeding element 
 'X{}'             pointer to a function (optional function 
                                          signature inside {})
-' '               ignored (allow better readability)
+' \n\t'           ignored (allow better readability) 
+                             -- this may already be true
 ================  ===========
 
 The struct module will be changed to understand these as well and
-return appropriate Python objects on unpacking.  Un-packing a
-long-double will return a decimal object.  Unpacking 'u' or
-'w' will return Python unicode.  Unpacking a multi-dimensional
-array will return a list of lists.  Un-packing a pointer will
-return a ctypes pointer object.  Un-packing a bit will return a
-Python Bool.  Spaces in the struct-string syntax will be ignored.
-Unpacking a named-object will return a Python class with attributes 
-having those names. 
+return appropriate Python objects on unpacking.  Unpacking a
+long-double will return a decimal object or a ctypes long-double.
+Unpacking 'u' or 'w' will return Python unicode.  Unpacking a
+multi-dimensional array will return a list (of lists if >1d).
+Unpacking a pointer will return a ctypes pointer object. Unpacking a
+function pointer will return a ctypes call-object (perhaps). Unpacking
+a bit will return a Python Bool.  White-space in the struct-string
+syntax will be ignored if it isn't already.  Unpacking a named-object
+will return some kind of named-tuple-like object that acts like a
+tuple but whose entries can also be accessed by name. Unpacking a
+nested structure will return a nested tuple.
 
-Endian-specification ('=','>','<') is also allowed inside the
+Endian-specification ('!', '@','=','>','<') is also allowed inside the
 string so that it can change if needed.  The previously-specified
-endian string is in force until changed.  The default endian is '='.
+endian string is in force until changed.  The default endian is '@'
+which means native data-types.
 
 According to the struct-module, a number can preceed a character
 code to specify how many of that type there are.  The
@@ -460,16 +554,21 @@ Examples of Data-Format Descriptions
 ====================================
 
 Here are some examples of C-structures and how they would be
-represented using the struct-style syntax:
+represented using the struct-style syntax. 
+
+<named> is the constructor for a named-tuple (not-specified yet).
 
 float
-    'f'
+    'f' <--> Python float
 complex double
-    'Zd'
+    'Zd' <--> Python complex
 RGB Pixel data
-    'BBB' or 'B:r: B:g: B:b:'
+    'BBB' <--> (int, int, int)
+    'B:r: B:g: B:b:' <--> <named>((int, int, int), ('r','g','b'))
+    
 Mixed endian (weird but possible)
-    '>i:big: <i:little:'
+    '>i:big: <i:little:' <--> <named>((int, int), ('big', 'little'))
+
 Nested structure
     ::
 
@@ -481,7 +580,13 @@ Nested structure
                  unsigned char cval;
              } sub;
         }
-        'i:ival: T{H:sval: B:bval: B:cval:}:sub:'
+        """i:ival: 
+           T{
+              H:sval: 
+              B:bval: 
+              B:cval:
+            }:sub:
+        """
 Nested array
     ::
 
@@ -489,7 +594,10 @@ Nested array
              int ival;
              double data[16*4];
         }
-        'i:ival: (16,4)d:data:'
+        """i:ival: 
+           (16,4)d:data:
+        """
+
 
 Code to be affected
 ===================
@@ -511,6 +619,10 @@ Anything else using the buffer API.
 Issues and Details
 ==================
 
+It is intended that this PEP will be back-ported to Python 2.6 by
+adding the C-API and the two functions to the existing buffer
+protocol.
+
 The proposed locking mechanism relies entirely on the exporter object
 to not invalidate any of the memory pointed to by the buffer structure
 until a corresponding releasebuffer is called.  If it wants to be able
@@ -525,13 +637,27 @@ strided memory with code that understands how to manage strided memory
 because strided memory is very common when interfacing with compute
 libraries.
 
-Also with this approach it should be possible to write generic code
+Also, with this approach it should be possible to write generic code
 that works with both kinds of memory.
 
 Memory management of the format string, the shape array, the strides
 array, and the suboffsets array in the bufferinfo structure is always
 the responsibility of the exporting object.  The consumer should not
 set these pointers to any other memory or try to free them. 
+
+Several ideas were discussed and rejected: 
+
+    Having a "releaser" object whose release-buffer was called.  This
+    was deemed unacceptable because it caused the protocol to be
+    asymmetric (you called release on something different than you
+    "got" the buffer from).  It also complicated the protocol without
+    providing a real benefit.
+
+    Passing all the struct variables separately into the function.
+    This had the advantage that it allowed one to set NULL to
+    variables that were not of interest, but it also made the function
+    call more difficult.  The flags variable allows the same
+    ability of consumers to be "simple" in how they call the protocol. 
 
 Code
 ========
@@ -540,62 +666,116 @@ The authors of the PEP promise to contribute and maintain the code for
 this proposal but will welcome any help.
 
 
+
+
 Examples
 =========
 
 Ex. 1
 ----------
 
-This example shows how an image object that uses contiguous lines might expose its buffer. 
+This example shows how an image object that uses contiguous lines might expose its buffer.::
 
-struct rgba {
-    unsigned char r, g, b, a;
-};
+  struct rgba {
+      unsigned char r, g, b, a;
+  };
 
-struct ImageObject {
-    PyObject_HEAD;
-    ...
-    struct rgba** lines;
-    Py_ssize_t height;
-    Py_ssize_t width;
-    Py_ssize_t shape_array[2];
-    Py_ssize_t stride_array[2];
-    Py_ssize_t view_count;
-};
+  struct ImageObject {
+      PyObject_HEAD;
+      ...
+      struct rgba** lines;
+      Py_ssize_t height;
+      Py_ssize_t width;
+      Py_ssize_t shape_array[2];
+      Py_ssize_t stride_array[2];
+      Py_ssize_t view_count;
+  };
 
 "lines" points to malloced 1-D array of (struct rgba*).  Each pointer
 in THAT block points to a seperately malloced array of (struct rgba).
 
 In order to access, say, the red value of the pixel at x=30, y=50, you'd use "lines[50][30].r".
 
-So what does ImageObject's getbuffer do?  Leaving error checking out:
+So what does ImageObject's getbuffer do?  Leaving error checking out::
 
-int Image_getbuffer(PyObject *self, struct bufferinfo *view) {
+  int Image_getbuffer(PyObject *self, struct bufferinfo *view, int flags) {
 
-    static Py_ssize_t suboffsets[2] = { -1, 0 };
+      static Py_ssize_t suboffsets[2] = { -1, 0 };
 
-    view->buf = self->lines;
-    view->len = self->height*self->width;
-    view->readonly = 0;
-    view->ndims = 2;
-    self->shape_array[0] = height;
-    self->shape_array[1] = width;
-    view->shape = &self->shape_array;
-    self->stride_array[0] = sizeof(struct rgba*);  
-    self->stride_array[1] = sizeof(struct rgba);
-    view->strides = &self->stride_array;
-    view->suboffsets = suboffsets;
+      view->buf = self->lines;
+      view->len = self->height*self->width;
+      view->readonly = 0;
+      view->ndims = 2;
+      self->shape_array[0] = height;
+      self->shape_array[1] = width;
+      view->shape = &self->shape_array;
+      self->stride_array[0] = sizeof(struct rgba*);  
+      self->stride_array[1] = sizeof(struct rgba);
+      view->strides = &self->stride_array;
+      view->suboffsets = suboffsets;
 
-    self->view_count ++;
+      self->view_count ++;
 
-    return 0;
-} 
+      return 0;
+  } 
 
 
-int Image_releasebuffer(PyObject *self, struct bufferinfo *view) {
-    self->view_count--;
-    return 0;
+  int Image_releasebuffer(PyObject *self, struct bufferinfo *view) {
+      self->view_count--;
+      return 0;
+  }
+
+
+Ex. 2
+-----------
+
+This example shows how an object that wants to expose a contiguous
+chunk of memory (which will never be re-allocated while the object is
+alive) would do that.
+
+int myobject_getbuffer(PyObject *self, struct bufferinfo *view, int flags) {
+
+    void *buf;
+    Py_ssize_t len;
+    int readonly=0;
+        
+    buf = /* Point to buffer */
+    len = /* Set to size of buffer */
+    readonly = /* Set to 1 if readonly */
+
+    return PyObject_FillBufferInfo(view, buf, len, readonly, flags);    
 }
+
+/* No releasebuffer is necessary because the memory will never 
+be re-allocated so the locking mechanism is not needed
+*/
+
+Ex.  3
+-----------
+
+A consumer that wants to only get a simple contiguous chunk of bytes
+from a Python object, obj would do the following:
+
+
+  struct bufferinfo view;
+  int ret;
+      
+  if (PyObject_GetBuffer(obj, &view, Py_BUF_SIMPLE) < 0) {
+       /* error return */
+  }
+
+  /* Now, view.buf is the pointer to memory
+          view.len is the length
+          view.readonly is whether or not the memory is read-only.
+   */
+  
+
+  /* After using the information and you don't need it anymore */
+  
+  if (PyObject_ReleaseBuffer(obj, &view) < 0) {
+          /* error return */
+  }
+  
 
 
 
