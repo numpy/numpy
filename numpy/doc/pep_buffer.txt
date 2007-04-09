@@ -366,24 +366,23 @@ Return 1 if the getbuffer function is available otherwise 0.
 
 This is a C-API version of the getbuffer function call.  It checks to
 make sure object has the required function pointer and issues the
-call.  Returns -1 and raises an error on failure and returns 0 on 
-success. 
+call.  Returns -1 and raises an error on failure and returns 0 on
+success.
 
 ::
     int PyObject_ReleaseBuffer(PyObject *obj, struct bufferinfo *view)
 
-This is a C-API version of the releasebuffer function call.  It checks to
-make sure the object has the required function pointer and issues the call.  Returns 0
-on success and -1 (with an error raised) on failure. This function always 
-succeeds if there is no releasebuffer function for the object. 
+This is a C-API version of the releasebuffer function call.  It checks
+to make sure the object has the required function pointer and issues
+the call.  Returns 0 on success and -1 (with an error raised) on
+failure. This function always succeeds if there is no releasebuffer
+function for the object.
 
 ::
 
     PyObject *PyObject_GetMemoryView(PyObject *obj)
 
-Return a memory-view object from an object that defines the buffer interface. 
-If make_ro is non-zero then request that the memory is made read-only until 
-release buffer is called. 
+Return a memory-view object from an object that defines the buffer interface.
 
 A memory-view object is an extended buffer object that should replace
 the buffer object in Python 3K.  It's C-structure is::
