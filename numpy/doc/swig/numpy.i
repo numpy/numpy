@@ -690,7 +690,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
       || !require_native(array)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
   $2 = 1;
-  for (int i=0; i<array->nd; ++i) $2 *= array_size(array,i);
+  for (int i=0; i < array_numdims(array); ++i) $2 *= array_size(array,i);
 }
 
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
@@ -708,7 +708,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   if (!array || !require_dimensions(array,1) || !require_contiguous(array)
       || !require_native(array)) SWIG_fail;
   $1 = 1;
-  for (int i=0; i<array->nd; ++i) $1 *= array_size(array,i);
+  for (int i=0; i < array_numdims(array); ++i) $1 *= array_size(array,i);
   $2 = (DATA_TYPE*) array_data(array);
 }
 
