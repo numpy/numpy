@@ -129,7 +129,7 @@ def configuration(parent_package='',top_path=None):
         incl_dir = os.path.dirname(target)
         if incl_dir not in config.numpy_include_dirs:
             config.numpy_include_dirs.append(incl_dir)
-
+        
         config.add_data_files((header_dir,target))
         return target
 
@@ -196,18 +196,47 @@ def configuration(parent_package='',top_path=None):
                          depends = deps,
                          )
 
+    # fixme: later, get this from the configuration.
+    vector_threads = 1
+    
+    umath_include_dirs = []
+    umath_library_dirs = []
+    umath_libraries = []
+
+    if vector_threads==1:
+        cprops_macros = []
+        
+        # update the umath includes/libraries to use the threading library.
+        umath_include_dirs.append('cprops_thread')
+        umath_library_dirs.append('cprops_thread')
+        umath_libraries.append('cprops')
+        
+        if sys.platform == 'win32':
+            # fixme: is this only for gcc, or does msvc need it as well?
+            umath_libraries.append('iberty') # needed for random, srandom
+            umath_libraries.append('wsock32') # needed for select
+
+        config.add_library('cprops', join('cprops_thread', '*.c'),
+                           macros=cprops_macros,
+                           include_dirs='cprops_thread')
+    
     config.add_extension('umath',
                          sources = [generate_config_h,
+                                    
                                     join('src','umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
                                     ],
-                         depends = [join('src','ufuncobject.c'),
+                         depends = [join('src','ufuncthreadapi.c'),
+                                    join('src','ufuncobject.c'),
                                     generate_umath_py,
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
+                         include_dirs = umath_include_dirs,
+                         library_dirs = umath_library_dirs,
+                         libraries = umath_libraries,
                          )
 
     config.add_extension('_sort',

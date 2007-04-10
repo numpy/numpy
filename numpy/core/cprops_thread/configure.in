@@ -1,0 +1,762 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(hashlist.c)
+AC_CONFIG_HEADER(config.h)
+
+CPROPSVERSION=`head -n 1 VERSION`
+AC_SUBST(CPROPSVERSION)
+CPROPSLIBVERSION=`head -n 2 VERSION | tail -n 1`
+AC_SUBST(CPROPSLIBVERSION)
+AC_SUBST(SED)
+
+SUBDIRS=
+root_dir=`pwd`
+AC_SUBST(root_dir)
+
+AC_ARG_WITH(cflags,
+[  --with-cflags=FLAGS     use FLAGS for CFLAGS],
+CFLAGS="$CFLAGS $withval")
+
+AC_ARG_WITH(libs,
+[  --with-libs=LIBS        use LIBS for extra libraries],
+LIBS="$LIBS $withval")
+
+OPT_OBJS=""
+
+AC_CANONICAL_HOST
+
+case "$host" in
+  *-linux-*)
+    CFLAGS="$CFLAGS -D_REENTRANT -D_GNU_SOURCE"
+    ;;
+  *-solaris*)
+    LIBS="$LIBS -lsocket -lnsl"
+    AC_MSG_CHECKING([where ar is])
+    for loc in /usr/xpg4/bin /usr/ccs/bin /usr/local/bin /usr/bin; do
+      if test -x "$loc/ar"; then
+        ardir="$loc"
+		break;
+      fi
+    done
+    if test "x$ardir" != "x"; then
+	AR=$ardir/ar
+    fi
+    AC_MSG_RESULT($ardir)
+    ;;
+  *-apple-darwin6*)
+    CFLAGS="$CFLAGS -no-cpp-precomp"
+	;;
+esac
+
+
+dnl -------------------------------------------------------------------------
+dnl check for gnu make
+dnl -------------------------------------------------------------------------
+
+make_command=""
+for a in "$MAKE" make gmake gnumake 
+  do test -z "$a" && continue
+    if  ( sh -c "$a --version" 2>/dev/null | grep GNU >/dev/null ) 
+      then make_command=$a ; break;
+    fi
+  done
+if test -z $make_command ; then 
+  gnu_make=""
+else
+  gnu_make="$make_command"
+fi
+
+AC_SUBST(gnu_make)
+
+
+dnl -------------------------------------------------------------------------
+dnl Checks for programs.
+dnl -------------------------------------------------------------------------
+
+AC_PROG_CC
+AC_PROG_LEX
+AC_PROG_YACC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+if test "$GCC" = "yes" ; then
+  CFLAGS="$CFLAGS -O2"
+fi
+
+dnl -------------------------------------------------------------------------
+dnl Checks for libraries.
+dnl -------------------------------------------------------------------------
+
+AC_CHECK_LIB(dl, dlsym)
+if test -z "$pthread"; then
+    AC_CHECK_LIB(pthread, pthread_create, [LIBS="$LIBS -lpthread"])
+fi
+
+dnl -------------------------------------------------------------------------
+dnl Checks for header files
+dnl -------------------------------------------------------------------------
+
+AC_HEADER_STDC
+AC_CHECK_HEADER(fcntl.h, AC_DEFINE([CP_HAS_FCNTL_H]), )
+AC_CHECK_HEADER(sys/time.h, AC_DEFINE([CP_HAS_SYS_TIME_H]), )
+AC_CHECK_HEADER(stdarg.h, AC_DEFINE([CP_HAS_STDARG_H]), )
+AC_CHECK_HEADER(unistd.h, AC_DEFINE([CP_HAS_UNISTD_H]), )
+AC_CHECK_HEADER(pthread.h, AC_DEFINE([CP_HAS_PTHREAD_H]), )
+AC_CHECK_HEADER(regex.h, AC_DEFINE([CP_HAS_REGEX_H]), )
+AC_CHECK_HEADER(sys/socket.h, AC_DEFINE([CP_HAS_SYS_SOCKET_H]), )
+AC_CHECK_HEADER(sys/select.h, AC_DEFINE([CP_HAS_SYS_SELECT_H]), )
+AC_CHECK_HEADER(netinet/in.h, AC_DEFINE([CP_HAS_NETINET_IN_H]), )
+AC_CHECK_HEADER(netdb.h, AC_DEFINE([CP_HAS_NETDB_H]), )
+AC_CHECK_HEADER(sys/poll.h, AC_DEFINE([CP_HAS_SYS_POLL_H]), )
+AC_CHECK_HEADER(dirent.h, AC_DEFINE([CP_HAS_DIRENT_H]), )
+
+AC_CHECK_HEADER(dlfcn.h,[
+AC_DEFINE_UNQUOTED(CP_HAS_DLFCN_H, 1, [define if you have <dlfcn.h>])
+ac_have_dlfcn_h=yes
+],[
+ac_have_dlfcn_h=
+])
+
+dnl -------------------------------------------------------------------------
+dnl Checks for typedefs, structures, and compiler characteristics
+dnl -------------------------------------------------------------------------
+
+AC_C_CONST
+AC_C_INLINE 
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+AC_MSG_CHECKING(whether long long is supported)
+AC_TRY_COMPILE([
+#include <stdio.h>
+], [
+    long long l = 1;
+], 
+[ 
+    AC_MSG_RESULT(yes)
+    AC_DEFINE([CP_HAS_LONG_LONG], [1], [long long supported])
+], [
+    AC_MSG_RESULT(no)
+])
+
+AC_MSG_CHECKING(whether variadic macros are supported)
+AC_TRY_COMPILE([
+#include <stdio.h>
+#define PRINT(fmt, ...) printf(fmt, ## __VA_ARGS__)
+], [
+    PRINT("%d %d %d", 1, 2, 3);
+    return 0;
+], [
+AC_MSG_RESULT(yes)
+AC_DEFINE([CP_HAS_VARIADIC_MACROS], [1], [variadic macros are supported])
+], [
+AC_MSG_RESULT(no)
+])
+
+
+dnl -------------------------------------------------------------------------
+dnl Checks for library functions
+dnl -------------------------------------------------------------------------
+
+AC_MSG_CHECKING(whether struct addrinfo is defined)
+AC_TRY_LINK([
+#include <sys/types.h>
+#include <netdb.h>
+], [
+struct addrinfo p;
+struct addrinfo *a = &p;
+], [
+AC_MSG_RESULT(yes)
+AC_DEFINE([CP_HAS_ADDRINFO], [1], [struct addrinfo is defined])
+], [
+AC_MSG_RESULT(no)
+])
+
+AC_MSG_CHECKING(whether PTHREAD_MUTEX_RECURSIVE is supported)
+AC_TRY_RUN([
+#define GNU_SOURCE
+#include <pthread.h>
+
+int main(void) 
+{
+    int rc;
+    pthread_mutex_t m;
+    pthread_mutexattr_t a;
+
+    if ((rc = pthread_mutexattr_init(&a))) return rc;
+    if ((rc = pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE)))
+        return rc;
+
+    if ((rc = pthread_mutex_init(&m, &a))) return rc;
+    if ((rc = pthread_mutex_lock(&m))) return rc;
+    if ((rc = pthread_mutex_trylock(&m))) return rc;
+    pthread_mutex_unlock(&m);
+    pthread_mutex_unlock(&m);
+
+    return 0;
+}
+],
+recursive_mutex=yes
+AC_MSG_RESULT(yes)
+AC_DEFINE(CP_HAS_PTHREAD_MUTEX_RECURSIVE, [1], 
+              [Define to 1 if PTHREAD_MUTEX_RECURSIVE is supported]),
+AC_MSG_RESULT(no))
+
+if test "x$recursive_mutex" = "x" ; then
+AC_MSG_CHECKING(whether PTHREAD_MUTEX_RECURSIVE_NP is supported)
+AC_TRY_RUN([
+#define GNU_SOURCE
+#include <pthread.h>
+
+int main(void) 
+{
+    int rc;
+    pthread_mutex_t m;
+    pthread_mutexattr_t a;
+
+    if ((rc = pthread_mutexattr_init(&a))) return rc;
+    if ((rc = pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE_NP)))
+        return rc;
+
+    if ((rc = pthread_mutex_init(&m, &a))) return rc;
+    if ((rc = pthread_mutex_lock(&m))) return rc;
+    if ((rc = pthread_mutex_trylock(&m))) return rc;
+    pthread_mutex_unlock(&m);
+    pthread_mutex_unlock(&m);
+
+    return 0;
+}
+],
+recursive_mutex=yes
+AC_MSG_RESULT(yes)
+AC_DEFINE(CP_HAS_PTHREAD_MUTEX_RECURSIVE_NP, [1], 
+              [Define to 1 if PTHREAD_MUTEX_RECURSIVE_NP is supported]),
+AC_MSG_RESULT(no))
+fi
+
+AC_FUNC_MEMCMP
+AC_FUNC_STRFTIME
+AC_FUNC_VPRINTF
+AC_CHECK_FUNC(strstr, AC_DEFINE([CP_HAS_STRSTR]),)
+AC_CHECK_FUNC(memset, AC_DEFINE([CP_HAS_MEMSET]),)
+AC_CHECK_FUNC(strdup, AC_DEFINE([CP_HAS_STRDUP]),)
+AC_CHECK_FUNC(strndup, AC_DEFINE([CP_HAS_STRNDUP]),)
+AC_CHECK_FUNC(regcomp, AC_DEFINE([CP_HAS_REGCOMP]),)
+AC_CHECK_FUNC(strerror_r, AC_DEFINE([CP_HAS_STRERROR_R]),)
+AC_CHECK_FUNC(gettimeofday, AC_DEFINE([CP_HAS_GETTIMEOFDAY]),)
+AC_CHECK_FUNC(getopt, AC_DEFINE([CP_HAS_GETOPT]),)
+AC_CHECK_FUNC(dlopen, AC_DEFINE([CP_HAS_DLOPEN]),)
+AC_CHECK_FUNC(sigaction, AC_DEFINE([CP_HAS_SIGACTION]),)
+AC_CHECK_FUNC(read, AC_DEFINE([CP_HAS_READ]),)
+AC_CHECK_FUNC(write, AC_DEFINE([CP_HAS_WRITE]),)
+AC_CHECK_FUNC(socket, AC_DEFINE([CP_HAS_SOCKET]),)
+AC_CHECK_FUNC(select, AC_DEFINE([CP_HAS_SELECT]),)
+AC_CHECK_FUNC(poll, AC_DEFINE([CP_HAS_POLL]),)
+AC_CHECK_FUNC(inet_ntoa, AC_DEFINE([CP_HAS_INET_NTOA]),)
+AC_CHECK_FUNC(inet_ntop, AC_DEFINE([CP_HAS_INET_NTOP]),)
+AC_CHECK_FUNC(gethostname, AC_DEFINE([CP_HAS_GETHOSTNAME]),)
+AC_CHECK_FUNC(getaddrinfo, AC_DEFINE([CP_HAS_GETADDRINFO]),)
+AC_CHECK_FUNC(getcwd, AC_DEFINE([CP_HAS_GETCWD]),)
+AC_CHECK_FUNC(gmtime_r, AC_DEFINE([CP_HAS_GMTIME_R]),)
+AC_CHECK_FUNC(localtime_r, AC_DEFINE([CP_HAS_LOCALTIME_R]),)
+AC_CHECK_FUNC(pthread_getunique_np, AC_DEFINE([CP_HAS_PTHREAD_GETUNIQUE_NP]),)
+AC_CHECK_FUNC(random, AC_DEFINE([CP_HAS_RANDOM]),)
+AC_CHECK_FUNC(strlcat, AC_DEFINE([CP_HAS_STRLCAT]),)
+AC_CHECK_FUNC(strlcpy, AC_DEFINE([CP_HAS_STRLCPY]),)
+AC_CHECK_FUNC(snprintf, AC_DEFINE([CP_HAS_SNPRINTF]),)
+AC_CHECK_FUNC(vsprintf, AC_DEFINE([CP_HAS_VSPRINTF]),)
+AC_CHECK_FUNC(vsnprintf, AC_DEFINE([CP_HAS_VSNPRINTF]),)
+AC_CHECK_FUNC(strcasecmp, AC_DEFINE([CP_HAS_STRCASECMP]),)
+AC_CHECK_FUNC(strncasecmp, AC_DEFINE([CP_HAS_STRNCASECMP]),)
+AC_CHECK_FUNC(srandom, AC_DEFINE([CP_HAS_SRANDOM]),)
+AC_CHECK_FUNC(stat, AC_DEFINE([CP_HAS_STAT]),)
+AC_CHECK_FUNC(strptime, AC_DEFINE([CP_HAS_STRPTIME]),)
+AC_CHECK_FUNC(getpagesize, AC_DEFINE([CP_HAS_GETPAGESIZE]),)
+
+
+dnl -------------------------------------------------------------------------
+dnl collection behavior options
+dnl -------------------------------------------------------------------------
+
+AC_ARG_ENABLE(hashtable-multiples,
+[  --enable-hashtable-multiples   hashtables allow multiple values [[disabled]]], [
+  if test "$enableval" = yes; then
+      echo enabling multiple values in hash tables
+      AC_DEFINE([CP_HASHTABLE_MUTLIPLE_VALUES], [1], [allow multiple values])
+  else
+      echo disabling multiple values in hash tables
+      AC_DEFINE([CP_HASHTABLE_MUTLIPLE_VALUES], [0], [no multiple values])
+  fi
+])
+
+AC_ARG_ENABLE(hashlist-multiples,
+[  --enable-hashlist-multiples    hashlists allow multiple values [[disabled]]], [
+  if test "$enableval" = yes; then
+      echo enabling multiple values in hash lists
+      AC_DEFINE([CP_HASHLIST_MUTLIPLE_VALUES], [1], [allow multiple values])
+  else
+      echo disabling multiple values in hash lists
+      AC_DEFINE([CP_HASHLIST_MUTLIPLE_VALUES], [0], [no multiple values])
+  fi
+])
+
+dnl -------------------------------------------------------------------------
+dnl server cookie support
+dnl -------------------------------------------------------------------------
+
+AC_ARG_ENABLE(server-cookies,
+[  --disable-server-cookies       server support for http cookies [[enabled]]], 
+  enable_server_cookies=$enableval, enable_server_cookies=yes)
+
+if test "$enable_server_cookies" = yes ; then
+  echo enabling server support for http cookies
+  AC_DEFINE(CP_USE_COOKIES, [1], [Define to 1 if supporting http cookies])
+else
+  echo disabling server support for http cookies
+  AC_DEFINE(CP_USE_COOKIES, [0], [not supporting http cookies])
+fi
+	
+dnl -------------------------------------------------------------------------
+dnl http session support
+dnl -------------------------------------------------------------------------
+
+AC_ARG_ENABLE(http-sessions,
+[  --disable-http-sessions        support for http sessions [[enabled]]], 
+	enable_http_sessions=$enableval, enable_http_sessions=yes)
+
+if test "$enable_http_sessions" = yes ; then
+    echo enabling http sessions
+    AC_DEFINE(CP_USE_HTTP_SESSIONS, [1], [Define to 1 if supporting http sessions])
+else
+	echo disabling http sessions
+    AC_DEFINE(CP_USE_HTTP_SESSIONS, [0], [not supporting http sessions])
+fi
+
+dnl -------------------------------------------------------------------------
+dnl openssl 
+dnl -------------------------------------------------------------------------
+
+AC_ARG_WITH(ssl, 
+[  --with-ssl[=DIR]          path to OpenSSL installation [[/usr/local/ssl]]], [
+  AC_MSG_CHECKING(for libssl)
+  if test -d "$withval"; then
+    ssllib="$withval/lib";
+    sslinc="$withval/include";
+	AC_MSG_RESULT(found)
+  else
+    AC_MSG_RESULT(not found)
+    AC_MSG_ERROR(can't find OpenSSL installation at $withval)
+  fi
+])
+
+AC_ARG_ENABLE(ssl,
+[  --enable-ssl                   enable ssl support [[enabled]]], [
+  if test "$enableval" = no ; then
+    AC_MSG_RESULT(disabling ssl)
+	ssl=no
+  else
+    ssl=yes
+  fi
+],[
+  ssl=yes
+])
+
+dnl check where openssl is installed
+if test "$ssl" = "yes" ; then
+  AC_MSG_CHECKING(libssl location)
+  if test "x$ssllib" = "x" && test "x$sslinc" = "x"; then
+    for loc in /usr/lib /usr/local/ssl/lib /usr/local/openssl/lib; do
+      if test -f "$loc/libssl.a"; then
+        ssllib="$loc"
+		break
+      fi
+    done
+    for loc in /usr/include/ssl /usr/include/openssl /usr/local/ssl/include \
+               /usr/local/openssl/include; do
+      if test -d "$loc"; then
+        sslinc="$loc"
+		break
+      fi
+    done
+  fi
+
+  if test "x$ssllib" = "x" ; then
+    AC_MSG_RESULT(not found, disabling)
+	ssl=no
+  else
+    AC_MSG_RESULT( $ssllib)
+  fi
+fi
+
+
+if test "$ssl" = "yes" ; then
+  LIBS="$LIBS -lssl"
+  ssl_example="test_ssl_client.c"
+  AC_DEFINE(CP_USE_SSL, [1], [Define to 1 if compiling with OpenSSL support])
+  if test "x$sslinc" != "x" ; then
+    CFLAGS="$CFLAGS -I $sslinc"
+  fi
+  if test "x$ssllib" != "x" ; then
+    LDFLAGS="$LDFLAGS -L$ssllib"
+  fi
+
+  case "$host" in
+    *-*-openbsd* | *-*-freebsd* | *-*-netbsd* | *-*-darwin*)
+      LIBS="$LIBS -lcrypto"
+      ;;
+    *-solaris*)
+      LIBS="$LIBS -lcrypto"
+      ;;
+  esac
+fi
+  
+dnl -------------------------------------------------------------------------
+dnl cp_dbms support 
+dnl -------------------------------------------------------------------------
+
+dnl cp_dbms enabled by default unless dlfcn.h is missing
+if test "$ac_have_dlfcn_h" = "yes" ; then
+  AC_ARG_ENABLE(cp-dbms,
+  [  --enable-cp-dbms               build dbms abstraction layer [[enabled]]], 
+    make_cp_dbms=$enableval, make_cp_dbms=yes)
+else
+  AC_ARG_ENABLE(cp-dbms,
+  [  --enable-cp-dbms               build dbms abstraction layer [[disabled]]], 
+    make_cp_dbms=$enableval, make_cp_dbms=)
+fi
+  
+dnl -------------------------------------------------------------------------
+dnl postgres declarations
+dnl -------------------------------------------------------------------------
+
+use_pgsql=""
+pg_dir_prm=""
+pg_lib_prm=""
+pg_include_prm=""
+
+AC_ARG_WITH(postgres, 
+[  --with-postgres[[=DIR]]          enable postgres support, assume postgres
+                                 installation in DIR [[disabled]]], 
+[ use_pgsql="1"
+  pg_dir_prm=$withval], [])
+
+AC_ARG_WITH(postgres-libs,
+[  --with-postgres-libs=DIR       use postgres libraries installed in DIR],
+[ use_pgsql="1"
+  pg_lib_prm=$withval], [])
+
+AC_ARG_WITH(postgres-includes,
+[  --with-postgres-includes=DIR   use postgres header files installed in DIR],
+[ use_pgsql="1"
+  pg_include_prm=$withval], [])
+
+if test "x$use_pgsql" != "x" ; then
+  make_cp_dbms=yes
+fi
+
+dnl -------------------------------------------------------------------------
+dnl mysql declarations
+dnl -------------------------------------------------------------------------
+
+use_mysql=""
+mysql_dir_prm=""
+mysql_lib_prm=""
+mysql_include_prm=""
+
+AC_ARG_WITH(mysql, 
+[  --with-mysql[[=DIR]]             enable mysql support, assume mysql
+                                 installation in DIR [[disabled]]], 
+[ use_mysql="1"
+  mysql_dir_prm=$withval], [])
+
+AC_ARG_WITH(mysql-libs,
+[  --with-mysql-libs=DIR          use mysql libraries installed in DIR],
+[ use_mysql="1"
+  mysql_lib_prm=$withval], [])
+
+AC_ARG_WITH(mysql-includes,
+[  --with-mysql-includes=DIR      use mysql header files installed in DIR],
+[ use_mysql="1"
+  mysql_include_prm=$withval], [])
+
+if test "x$use_mysql" != "x" ; then
+  make_cp_dbms=yes
+fi
+
+dnl -------------------------------------------------------------------------
+dnl link cp_dbms support statically or dynamically
+dnl -------------------------------------------------------------------------
+
+dnl if dlfcn available, use --enable-static-dbms configuration option. 
+dnl Otherwise, link dbms libraries statically.
+if test "$ac_have_dlfcn_h" = "yes" ; then
+  AC_ARG_ENABLE(static-dbms,
+  [  --enable-static-dbms           link dbms drivers statically [[disabled]]], 
+    cp_dbms_static=$enableval, cp_dbms_static=no)
+else
+  cp_dbms_static=yes
+fi
+
+if test "$make_cp_dbms" = yes; then
+  OPT_OBJS=db.o
+  if test "$cp_dbms_static" = yes ; then
+    echo linking dbms drivers statically
+	AC_DEFINE(CP_DBMS_STATIC, [1], 
+              [Define to 1 if linking dbms libraries statically]),
+  else
+    echo linking dbms drivers dynamically
+  fi
+fi
+
+dnl -------------------------------------------------------------------------
+dnl postgres setup
+dnl -------------------------------------------------------------------------
+
+AC_MSG_CHECKING(whether to compile postgres support) 
+if test "x$use_pgsql" != "x" ; then
+  AC_MSG_RESULT(yes)
+  if test -e "$pg_lib_prm/libpq.a" ; then
+    pg_lib = $pg_lib_prm
+  else
+    for loc in $pg_dir_prm /usr/local /usr /usr/local/pgsql /usr/local/postgres /usr/local/postgresql /opt/pgsql /opt/postgres /opt/postgresql ; do
+      if test -e "$loc/lib/libpq.a" ; then
+	    pg_lib="$loc/lib"
+		break
+	  fi
+    done
+  fi
+
+  if test "x$pg_lib" = "x" ; then
+    AC_MSG_ERROR(can't find postgres client library)
+  fi
+
+  if test -e "$pg_include_prm/libpq-fe.h" ; then
+    pg_include = $pg_include_prm
+  else
+    for loc in $pg_dir_prm /usr/local /usr /usr/local/pgsql /usr/local/postgres /usr/local/postgresql /opt/pgsql /opt/postgres /opt/postgresql ; do
+      if test -e "$loc/include/libpq-fe.h" ; then
+  	    pg_include="$loc/include"
+		break
+      fi
+    done
+  fi
+
+  if test "x$pg_include" = "x" ; then
+    AC_MSG_ERROR(can't find postgres client header files)
+  fi
+
+  dnl libpq treats binary parameters as big endian (network order) - check if 
+  dnl conversions required
+  AC_MSG_CHECKING(whether hardware byte order is little endian)
+  AC_TRY_RUN([
+    int main(void) 
+	{
+	    int i = 1;
+		char *c = (char *) &i;
+		return *c == 0;
+	}],
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(CP_BYTE_ORDER_LITTLE_ENDIAN, [1], 
+              [Define to 1 if hardware byte order is little endian]),
+	AC_MSG_RESULT(no))
+
+  OPT_TARGETS="$OPT_TARGETS libcp_dbms_postgres.la"
+  OPT_INSTALL="$OPT_INSTALL install-libcp-dbms-postgres"
+  PGSQL_CFLAGS="$CFLAGS -I$pg_include"
+  PGSQL_LDFLAGS="$LDFLAGS -L$pg_lib"
+  PGSQL_LIBS="$LIBS -lpq"
+  AC_SUBST(PGSQL_CFLAGS)
+  AC_SUBST(PGSQL_LDFLAGS)
+  AC_SUBST(PGSQL_LIBS)
+  PGSQL_SRC=db_postgres.c
+  PGSQL_HDR=db_postgres.h
+  PGSQL_OBJ=db_postgres.o
+  AC_SUBST(PGSQL_SRC)
+  AC_SUBST(PGSQL_HDR)
+  AC_SUBST(PGSQL_OBJ)
+  CP_DBMS_PGSQL_LIBVERSION=`cat LIBVERSION_CP_DBMS_POSTGRES`
+  AC_SUBST(CP_DBMS_PGSQL_LIBVERSION)
+  db_examples="$db_examples test_pq.c"
+  if test "$cp_dbms_static" = "yes" ; then
+    CFLAGS="$CFLAGS -I$pg_include"
+    LDFLAGS="$LDFLAGS -L$pg_lib"
+    LIBS="$LIBS -lpq"
+    OPT_OBJS="$OPT_OBJS db_postgres.o"
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
+  
+dnl -------------------------------------------------------------------------
+dnl mysql setup
+dnl -------------------------------------------------------------------------
+
+AC_MSG_CHECKING(whether to compile mysql support) 
+if test "x$use_mysql" != "x" ; then
+  AC_MSG_RESULT(yes)
+  if test -e "$mysql_lib_prm/libmysqlclient.a" ; then
+    mysql_lib = $mysql_lib_prm
+  else
+    for loc in $mysql_dir_prm /usr/local /usr /usr/local/mysql /opt/mysql ; do
+      if test -e "$loc/lib/libmysqlclient.a" ; then
+	    mysql_lib="$loc/lib"
+		break
+	  fi
+    done
+  fi
+
+  if test "x$mysql_lib" = "x" ; then
+    AC_MSG_ERROR(can't find mysql client library)
+  fi
+
+  if test -e "$mysql_include_prm/mysql.h" ; then
+    mysql_include = $mysql_include_prm
+  else
+    for loc in $mysql_dir_prm /usr/local /usr /usr/local/mysql /opt/mysql ; do
+      if test -e "$loc/include/mysql.h" ; then
+  	    mysql_include="$loc/include"
+		break
+      fi
+    done
+  fi
+
+  if test "x$mysql_include" = "x" ; then
+    AC_MSG_ERROR(can't find mysql client header files)
+  fi
+
+  OPT_TARGETS="$OPT_TARGETS libcp_dbms_mysql.la"
+  OPT_INSTALL="$OPT_INSTALL install-libcp-dbms-mysql"
+  MYSQL_CFLAGS="$CFLAGS -I$mysql_include"
+  MYSQL_LDFLAGS="$LDFLAGS -L$mysql_lib"
+  MYSQL_LIBS="$LIBS -lmysqlclient -lz"
+  AC_SUBST(MYSQL_CFLAGS)
+  AC_SUBST(MYSQL_LDFLAGS)
+  AC_SUBST(MYSQL_LIBS)
+  MYSQL_SRC=db_mysql.c
+  MYSQL_HDR=db_mysql.h
+  MYSQL_OBJ=db_mysql.o
+  AC_SUBST(MYSQL_SRC)
+  AC_SUBST(MYSQL_HDR)
+  AC_SUBST(MYSQL_OBJ)
+  CP_DBMS_MYSQL_LIBVERSION=`cat LIBVERSION_CP_DBMS_MYSQL`
+  AC_SUBST(CP_DBMS_MYSQL_LIBVERSION)
+  db_examples="$db_examples test_mysql.c"
+  if test "$cp_dbms_static" = "yes" ; then
+    CFLAGS="$CFLAGS -I$mysql_include"
+    LDFLAGS="$LDFLAGS -L$mysql_lib"
+    LIBS="$LIBS -lmysqlclient -lz"
+    OPT_OBJS="$OPT_OBJS db_mysql.o"
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
+  
+dnl -------------------------------------------------------------------------
+dnl build cpsvc
+dnl -------------------------------------------------------------------------
+
+AC_ARG_ENABLE(cpsvc,
+[  --enable-cpsvc                 build cpsvc [[yes]]], 
+  enable_cpsvc=$enableval, enable_cpsvc=yes)
+
+if test "$enable_cpsvc" = yes ; then
+  echo building cpsvc
+  CPSVC=yes
+  subdirs="$subdirs svc"
+else
+  echo skipping cpsvc
+  CPSVC=
+fi
+
+dnl define enable-cpsp option unless dlfcn.h missing
+if test "$ac_have_dlfcn_h" = "yes" ; then 
+AC_ARG_ENABLE(cpsp,
+[  --enable-cpsp                  build cpsp [[yes]]], 
+  enable_cpsp=$enableval, enable_cpsp=yes)
+else
+  enable_cpsp=
+fi
+
+if test "$enable_cpsp" = yes ; then
+
+  if test "$LEX" = "" || test "$LEX" = ":" ; then
+    AC_MSG_ERROR(lex required for cpsp - either install lex or disable cpsp);
+  fi
+
+  if test "$YACC" = "" || test "$YACC" = ":" ; then
+    AC_MSG_ERROR(yacc required for cpsp - either install yacc or disable cpsp);
+  fi
+
+  echo enabling cpsp service
+  CPSP=yes
+  AC_DEFINE([CP_USE_CPSP], [1], [supporting cpsp])
+  subdirs="$subdirs svc/cpsp"
+  cpsp_sources="cpsp.c cpsp_invoker.c"
+  AC_SUBST(cpsp_sources)
+else
+  echo skipping cpsp
+  CPSP=
+fi
+
+AC_SUBST(subdirs)
+AC_SUBST(OPT_TARGETS)
+AC_SUBST(OPT_INSTALL)
+AC_SUBST(ssl_example)
+AC_SUBST(db_examples)
+
+if test "x$CFLAGS" = "x" ; then
+  CFLAGS=-O2
+fi
+
+output=Makefile
+
+if test "x$CPSVC" != "x" ; then
+  output="$output svc/Makefile"
+fi
+
+if test "x$CPSP" != "x" ; then
+  output="$output svc/cpsp/Makefile svc/cpsp/cpsp-gen.sh svc/cpsp/Makefile.cpsp"
+fi
+
+output="$output example/Makefile"
+
+dnl -------------------------------------------------------------------------
+dnl set current version number for default server name in http.h
+dnl -------------------------------------------------------------------------
+mv http.h http.h.in
+sed "s/__CPROPSVERSION/$CPROPSVERSION/" http.h.in > http.h
+
+AC_SUBST(OPT_OBJS)
+
+dnl check for makedepend
+MAKEDEPEND=`which makedepend | sed '/^no /d'`
+if test "x$MAKEDEPEND" = "x" ; then
+  for loc in /usr/X11R6/bin /usr/X/bin; do
+    if test -e "$loc/makedepend"; then
+	  MAKEDEPEND=$loc/makedepend -Y
+	  break
+	fi
+  done
+  if test "x$MAKEDEPEND" = "x" ; then
+    MAKEDEPEND=$root_dir/makedepend.sh
+  fi
+else
+  MAKEDEPEND="$MAKEDEPEND -Y"
+fi
+
+AC_SUBST(MAKEDEPEND)
+
+AC_OUTPUT($output)
+
+dnl -------------------------------------------------------------------------
+dnl create dependencies
+dnl -------------------------------------------------------------------------
+
+make depend
+if test "$enable_cpsvc" = "yes" ; then
+	pushd svc  > /dev/null
+	make depend 
+	popd > /dev/null
+fi
+pushd example > /dev/null
+make depend
+popd > /dev/null

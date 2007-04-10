@@ -91,8 +91,12 @@ typedef unsigned char npy_bool;
 #error Must use Python with unicode enabled.
 #endif
 
-
-typedef signed char npy_byte;
+/* FIXME: changed npy_byte from signed to unsigned to get it to compile on windows...
+ *        This is JUST FOR TESTING AS IT ISN'T REALLY WHAT WE WANT.  Figure out
+ *        how deal with noprefix.h declaring bytes as a signed byte where a windows.h
+ *        header has declared it as a unsigned byte later...
+ */
+typedef unsigned char npy_byte;
 typedef unsigned char npy_ubyte;
 typedef unsigned short npy_ushort;
 typedef unsigned int npy_uint;

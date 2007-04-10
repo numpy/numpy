@@ -6,6 +6,7 @@
 #include "numpy/ufuncobject.h"
 #include "abstract.h"
 #include <math.h>
+#include "numpy/ufuncthreadapi.h"
 
 /* A whole slew of basic math functions are provided originally
    by Konrad Hinsen. */
@@ -2046,6 +2047,7 @@ static char ldexp_signatures[] = {
 
 #include "__umath_generated.c"
 
+#include "ufuncthreadapi.c"
 
 #include "ufuncobject.c"
 
@@ -2119,6 +2121,10 @@ static struct PyMethodDef methods[] = {
 	 METH_VARARGS, NULL},
 	{"geterrobj", (PyCFunction) ufunc_geterr,
 	 METH_VARARGS, NULL},
+	{"_setthreading", (PyCFunction) ufunc_setthreading,
+	 METH_VARARGS, doc_setthreading},
+	{"_getthreading", (PyCFunction) ufunc_getthreading,
+	 METH_NOARGS, doc_getthreading},
 	{NULL,		NULL, 0}		/* sentinel */
 };
 
@@ -2218,6 +2224,9 @@ PyMODINIT_FUNC initumath(void) {
 	PyDict_SetItemString(d, "conj", s);
 	PyDict_SetItemString(d, "mod", s2);
 
+    /* initialize the default thread settings for the ufuncs. */
+    init_thread_settings(&thread_settings);
+     
 	return;
  err:
 	/* Check for errors */

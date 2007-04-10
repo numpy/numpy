@@ -17,6 +17,8 @@ from records import *
 from memmap import *
 from defchararray import *
 import scalarmath
+import threadapi
+from threadapi import *
 del nt
 
 from fromnumeric import amax as max, amin as min, \
@@ -29,6 +31,7 @@ __all__ += fromnumeric.__all__
 __all__ += defmatrix.__all__
 __all__ += rec.__all__
 __all__ += char.__all__
+__all__ += threadapi.__all__
 
 
 
