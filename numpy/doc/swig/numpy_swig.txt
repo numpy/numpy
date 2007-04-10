@@ -421,6 +421,10 @@ Macros
     Evaluates to the ``i``-th dimension size of ``a``, assuming ``a``
     can be cast to a ``PyArrayObject*``.
 
+  **array_data(a)**
+    Evaluates to a pointer of type ``void*`` that points to the data
+    buffer of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.
+
   **array_is_contiguous(a)**
     Evaluates as true if ``a`` is a contiguous array.  Equivalent to
     ``(PyArray_ISCONTIGUOUS(a))``.

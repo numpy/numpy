@@ -22,6 +22,7 @@
 #define array_numdims(a)       (((PyArrayObject *)a)->nd)
 #define array_dimensions(a)    (((PyArrayObject *)a)->dimensions)
 #define array_size(a,i)        (((PyArrayObject *)a)->dimensions[i])
+#define array_data(a)          (((PyArrayObject *)a)->data)
 #define array_is_contiguous(a) (PyArray_ISCONTIGUOUS(a))
 #define array_is_native(a)     (PyArray_ISNOTSWAPPED(a))
 
@@ -453,7 +454,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE, &is_new_object);
   npy_intp size[1] = { $1_dim0 };
   if (!array || !require_dimensions(array, 1) || !require_size(array, size, 1)) SWIG_fail;
-  $1 = ($1_ltype) array->data;
+  $1 = ($1_ltype) array_data(array);
 }
 %typemap(freearg)
   (DATA_TYPE IN_ARRAY1[ANY])
@@ -475,7 +476,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE, &is_new_object);
   npy_intp size[1] = { -1 };
   if (!array || !require_dimensions(array, 1) || !require_size(array, size, 1)) SWIG_fail;
-  $1 = (DATA_TYPE*) array->data;
+  $1 = (DATA_TYPE*) array_data(array);
   $2 = (DIM_TYPE) array_size(array,0);
 }
 %typemap(freearg)
@@ -499,7 +500,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   npy_intp size[1] = {-1};
   if (!array || !require_dimensions(array, 1) || !require_size(array, size, 1)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
-  $2 = (DATA_TYPE*) array->data;
+  $2 = (DATA_TYPE*) array_data(array);
 }
 %typemap(freearg)
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
@@ -521,7 +522,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE, &is_new_object);
   npy_intp size[2] = { $1_dim0, $1_dim1 };
   if (!array || !require_dimensions(array, 2) || !require_size(array, size, 2)) SWIG_fail;
-  $1 = ($1_ltype) array->data;
+  $1 = ($1_ltype) array_data(array);
 }
 %typemap(freearg)
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
@@ -543,7 +544,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE, &is_new_object);
   npy_intp size[2] = { -1, -1 };
   if (!array || !require_dimensions(array, 2) || !require_size(array, size, 2)) SWIG_fail;
-  $1 = (DATA_TYPE*) array->data;
+  $1 = (DATA_TYPE*) array_data(array);
   $2 = (DIM_TYPE) array_size(array,0);
   $3 = (DIM_TYPE) array_size(array,1);
 }
@@ -569,7 +570,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   if (!array || !require_dimensions(array, 2) || !require_size(array, size, 2)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
   $2 = (DIM_TYPE) array_size(array,1);
-  $3 = (DATA_TYPE*) array->data;
+  $3 = (DATA_TYPE*) array_data(array);
 }
 %typemap(freearg)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
@@ -591,7 +592,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE, &is_new_object);
   npy_intp size[3] = { $1_dim0, $1_dim1, $1_dim2 };
   if (!array || !require_dimensions(array, 3) || !require_size(array, size, 3)) SWIG_fail;
-  $1 = ($1_ltype) array->data;
+  $1 = ($1_ltype) array_data(array);
 }
 %typemap(freearg)
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
@@ -614,7 +615,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE, &is_new_object);
   npy_intp size[3] = { -1, -1, -1 };
   if (!array || !require_dimensions(array, 3) || !require_size(array, size, 3)) SWIG_fail;
-  $1 = (DATA_TYPE*) array->data;
+  $1 = (DATA_TYPE*) array_data(array);
   $2 = (DIM_TYPE) array_size(array,0);
   $3 = (DIM_TYPE) array_size(array,1);
   $4 = (DIM_TYPE) array_size(array,2);
@@ -643,7 +644,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   $1 = (DIM_TYPE) array_size(array,0);
   $2 = (DIM_TYPE) array_size(array,1);
   $3 = (DIM_TYPE) array_size(array,2);
-  $4 = (DATA_TYPE*) array->data;
+  $4 = (DATA_TYPE*) array_data(array);
 }
 %typemap(freearg)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
@@ -670,7 +671,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   npy_intp size[1] = { $1_dim0 };
   if (!array || !require_dimensions(array,1) || !require_size(array, size, 1)
       || !require_contiguous(array) || !require_native(array)) SWIG_fail;
-  $1 = ($1_ltype) array->data;
+  $1 = ($1_ltype) array_data(array);
 }
 
 /* Typemap suite for (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
@@ -687,9 +688,9 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_no_conversion($input, DATA_TYPECODE);
   if (!array || !require_dimensions(array,1) || !require_contiguous(array)
       || !require_native(array)) SWIG_fail;
-  $1 = (DATA_TYPE*) array->data;
+  $1 = (DATA_TYPE*) array_data(array);
   $2 = 1;
-  for (int i=0; i<array->nd; ++i) $2 *= array_size(array,i);
+  for (int i=0; i < array_numdims(array); ++i) $2 *= array_size(array,i);
 }
 
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
@@ -707,8 +708,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   if (!array || !require_dimensions(array,1) || !require_contiguous(array)
       || !require_native(array)) SWIG_fail;
   $1 = 1;
-  for (int i=0; i<array->nd; ++i) $1 *= array_size(array,i);
-  $2 = (DATA_TYPE*) array->data;
+  for (int i=0; i < array_numdims(array); ++i) $1 *= array_size(array,i);
+  $2 = (DATA_TYPE*) array_data(array);
 }
 
 /* Typemap suite for (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
@@ -726,7 +727,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   npy_intp size[2] = { $1_dim0, $1_dim1 };
   if (!array || !require_dimensions(array,2) || !require_size(array, size, 2)
       || !require_contiguous(array) || !require_native(array)) SWIG_fail;
-  $1 = ($1_ltype) array->data;
+  $1 = ($1_ltype) array_data(array);
 }
 
 /* Typemap suite for (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
@@ -743,7 +744,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_no_conversion($input, DATA_TYPECODE);
   if (!array || !require_dimensions(array,2) || !require_contiguous(array)
       || !require_native(array)) SWIG_fail;
-  $1 = (DATA_TYPE*) array->data;
+  $1 = (DATA_TYPE*) array_data(array);
   $2 = (DIM_TYPE) array_size(array,0);
   $3 = (DIM_TYPE) array_size(array,1);
 }
@@ -764,7 +765,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
       || !require_native(array)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
   $2 = (DIM_TYPE) array_size(array,1);
-  $3 = (DATA_TYPE*) array->data;
+  $3 = (DATA_TYPE*) array_data(array);
 }
 
 /* Typemap suite for (DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY])
@@ -782,7 +783,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   npy_intp size[3] = { $1_dim0, $1_dim1, $1_dim2 };
   if (!array || !require_dimensions(array,3) || !require_size(array, size, 3)
       || !require_contiguous(array) || !require_native(array)) SWIG_fail;
-  $1 = ($1_ltype) array->data;
+  $1 = ($1_ltype) array_data(array);
 }
 
 /* Typemap suite for (DATA_TYPE* INPLACE_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2,
@@ -800,7 +801,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   array = obj_to_array_no_conversion($input, DATA_TYPECODE);
   if (!array || !require_dimensions(array,3) || !require_contiguous(array)
       || !require_native(array)) SWIG_fail;
-  $1 = (DATA_TYPE*) array->data;
+  $1 = (DATA_TYPE*) array_data(array);
   $2 = (DIM_TYPE) array_size(array,0);
   $3 = (DIM_TYPE) array_size(array,1);
   $4 = (DIM_TYPE) array_size(array,2);
@@ -824,7 +825,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   $1 = (DIM_TYPE) array_size(array,0);
   $2 = (DIM_TYPE) array_size(array,1);
   $3 = (DIM_TYPE) array_size(array,2);
-  $4 = (DATA_TYPE*) array->data;
+  $4 = (DATA_TYPE*) array_data(array);
 }
 
 /*************************/
@@ -839,7 +840,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 {
   npy_intp dims[1] = { $1_dim0 };
   array = PyArray_SimpleNew(1, dims, DATA_TYPECODE);
-  $1 = ($1_ltype)((PyArrayObject*)array)->data;
+  $1 = ($1_ltype) array_data(array);
 }
 %typemap(argout)
   (DATA_TYPE ARGOUT_ARRAY1[ANY])
@@ -863,7 +864,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   $2 = (DIM_TYPE) PyInt_AsLong($input);
   npy_intp dims[1] = { (npy_intp) $2 };
   array = PyArray_SimpleNew(1, dims, DATA_TYPECODE);
-  $1 = (DATA_TYPE*)((PyArrayObject*)array)->data;
+  $1 = (DATA_TYPE*) array_data(array);
 }
 %typemap(argout)
   (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
@@ -887,7 +888,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
   $1 = (DIM_TYPE) PyInt_AsLong($input);
   npy_intp dims[1] = { (npy_intp) $1 };
   array = PyArray_SimpleNew(1, dims, DATA_TYPECODE);
-  $2 = (DATA_TYPE*)((PyArrayObject*)array)->data;
+  $2 = (DATA_TYPE*) array_data(array);
 }
 %typemap(argout)
   (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
@@ -903,7 +904,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 {
   npy_intp dims[2] = { $1_dim0, $1_dim1 };
   array = PyArray_SimpleNew(2, dims, DATA_TYPECODE);
-  $1 = ($1_ltype)((PyArrayObject*)array)->data;
+  $1 = ($1_ltype) array_data(array);
 }
 %typemap(argout)
   (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
@@ -919,7 +920,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 {
   npy_intp dims[3] = { $1_dim0, $1_dim1, $1_dim2 };
   array = PyArray_SimpleNew(3, dims, DATA_TYPECODE);
-  $1 = ($1_ltype)((PyArrayObject*)array)->data;
+  $1 = ($1_ltype) array_data(array);
 }
 %typemap(argout)
   (DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY])
