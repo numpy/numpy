@@ -160,50 +160,56 @@ then no information is returned but a lock on the memory is still
 obtained.  In this case, the corresponding releasebuffer should also
 be called with NULL.
 
-The third argument indicates what kind of buffer the exporter is allowed to return.   It tells the
-exporter what elements the bufferinfo structure the consumer is going to make use of.  This
-allows the exporter to simplify and/or raise an error if it can't support the operation.  
+The third argument indicates what kind of buffer the exporter is
+allowed to return.  It tells the exporter what elements the bufferinfo
+structure the consumer is going to make use of.  This allows the
+exporter to simplify and/or raise an error if it can't support the
+operation.
 
 It also allows the caller to make a request for a simple "view" and
 receive it or have an error raised if it's not possible. 
 
-All of the following assume that at least buf, len, and readonly will be
-utilized by the caller. 
+All of the following assume that at least buf, len, and readonly will
+be utilized by the caller.
 
-Py_BUF_SIMPLE
+BUF_SIMPLE
    The returned buffer will only be assumed to be readable (the object
    may or may not have writeable memory).  Only the buf, len, and
-   readonly variables may be accessed. The format will be
-   assumed to be unsigned bytes.  This is a "stand-alone" flag constant.
-   It never needs to be |'d to the others. 
+   readonly variables may be accessed. The format will be assumed to
+   be unsigned bytes.  This is a "stand-alone" flag constant.  It
+   never needs to be |'d to the others.
 
-Py_BUF_WRITEABLE
-   The returned buffer must be writeable.  If it cannot be, then raise an error. 
+BUF_WRITEABLE
+   The returned buffer must be writeable.  If it cannot be, then raise
+   an error.
 
-Py_BUF_READONLY
-   The returned buffer must be readonly and the underlying object should make
-   its memory readonly if that is possible.  
+BUF_READONLY
+   The returned buffer must be readonly and the underlying object
+   should make its memory readonly.  If it cannot do that, then an
+   error should be raised if this flag is requested.
 
-Py_BUF_FORMAT
-   The consumer will be using the format string information so make sure that 
-   member is filled correctly. 
+BUF_FORMAT
+   The consumer will be using the format string information so make
+   sure that member is filled correctly.
 
-Py_BUF_SHAPE
-   The consumer can (and might) make use of using the ndims and shape members of the structure
-   so make sure they are filled in correctly. 
+BUF_SHAPE   
+   The consumer can (and might) make use of using the ndims and shape
+   members of the structure so make sure they are filled in correctly.
    
-Py_BUF_STRIDES (implies SHAPE)
-   The consumer can (and might) make use of the strides member of the structure (as well
-   as ndims and shape)
+BUF_STRIDES (implies BUF_SHAPE)
+   The consumer can (and might) make use of the strides member of the
+   structure (as well as ndims and shape)
 
-Py_BUF_OFFSETS (implies STRIDES)
-   The consumer can (and might) make use of the suboffsets member (as well as 
-   ndims, shape, and strides)
+BUF_OFFSETS (implies BUF_STRIDES)
+   The consumer can (and might) make use of the suboffsets member (as
+   well as ndims, shape, and strides)
+
+BUF_FULL
+   This is the same as BUF_OFFSETS | BUF_FORMAT 
 
 Thus, the consumer simply wanting an contiguous chunk of bytes from
-the object would use Py_BUF_SIMPLE, while a consumer that understands
-how to make use of the most complicated cases would use
-Py_BUF_OFFSETS.
+the object would use BUF_SIMPLE, while a consumer that understands
+how to make use of the most complicated cases would use BUF_FULL.
 
 There is a C-API that simple exporting objects can use to fill-in the
 buffer info structure correctly according to the provided flags if a
@@ -267,8 +273,13 @@ strides
     address of a ``Py_ssize_t*`` variable that will be filled with a
     pointer to an array of ``Py_ssize_t`` of length ``*ndims``
     indicating the number of bytes to skip to get to the next element
-    in each dimension.  For C-style contiguous arrays (where the
-    last-dimension varies the fastest) this must be filled in.  
+    in each dimension.  If this is not requested by the caller
+    (BUF_STRIDES is not set), then this member of the structure will
+    not be used and the consumer is assuming the array is C-style
+    contiguous.  If this is not the case, then an error should be
+    raised.  If this member is requested by the caller (BUF_STRIDES is
+    set), then it must be filled in.
+
 
 suboffsets
     address of a ``Py_ssize_t *`` variable that will be filled with a
@@ -482,12 +493,13 @@ fortran is 0 or Fortran-style if fortran is 1) array of the given
 shape with the given number of bytes per element.
 
 ::
-    int PyObject_FillBufferInfo(struct bufferinfo *view, void *buf, Py_ssize_t len,
-                                 int readonly, int infoflags)
+    int PyObject_FillBufferInfo(struct bufferinfo *view, void *buf, 
+                                Py_ssize_t len, int readonly, int infoflags)
 
-Fills in a buffer-info structure correctly for an exporter that can only share
-a contiguous chunk of memory of "unsigned bytes" of the given length.  Returns 0 on success
-and -1 (with raising an error) on error 
+Fills in a buffer-info structure correctly for an exporter that can
+only share a contiguous chunk of memory of "unsigned bytes" of the
+given length.  Returns 0 on success and -1 (with raising an error) on
+error. 
 
 
 Additions to the struct string-syntax
@@ -535,10 +547,12 @@ will return some kind of named-tuple-like object that acts like a
 tuple but whose entries can also be accessed by name. Unpacking a
 nested structure will return a nested tuple.
 
-Endian-specification ('!', '@','=','>','<') is also allowed inside the
-string so that it can change if needed.  The previously-specified
-endian string is in force until changed.  The default endian is '@'
-which means native data-types.
+Endian-specification ('!', '@','=','>','<', '^') is also allowed
+inside the string so that it can change if needed.  The
+previously-specified endian string is in force until changed.  The
+default endian is '@' which means native data-types and alignment.  If
+un-aligned, native data-types are requested, then the endian
+specification is '^'.  
 
 According to the struct-module, a number can preceed a character
 code to specify how many of that type there are.  The
