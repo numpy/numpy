@@ -39,6 +39,11 @@
 #ifndef _CP_MEMPOOL_H
 #define _CP_MEMPOOL_H
 
+#ifdef _WIN32
+/* needed on minw32 for size_t */
+#include <stddef.h>
+#endif
+
 #include "common.h"
 #include "collection.h"
 

@@ -20,6 +20,10 @@
 /* eric: used in mempool.c.  Not valid on windows. */
 /* Define to 1 if you have the `getpagesize' function. */
 #define CP_HAS_GETPAGESIZE 1
+
+#else
+/* eric: used internally by cprops_thread to turn on windows features */
+#define _WINDOWS
 #endif
 
 /* eric: This is used in mempool.c, but I don't know how important it is... */
