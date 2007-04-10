@@ -1803,6 +1803,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
 
     static cp_thread_pool* thread_pool=NULL;
     cp_pooled_thread* thread;
+    NPY_BEGIN_THREADS_DEF
     
     if (thread_pool == NULL)
     {
@@ -1813,7 +1814,6 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
         thread_pool = cp_thread_pool_create(1, 20);
     }
 
-    NPY_BEGIN_THREADS_DEF
 
     if (!(loop = construct_loop(self, args, kwds, mps))) return -1;
     if (loop->notimplemented) {ufuncloop_dealloc(loop); return -2;}

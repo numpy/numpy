@@ -21,6 +21,19 @@
 /* Define to 1 if you have the `getpagesize' function. */
 #define CP_HAS_GETPAGESIZE 1
 
+/* eric: used in thread.c 
+ * Define to 1 if you have the `random' function. 
+ * Note: Even on win32, we can use this with mingw32, but
+ * I don't think it is crictical, so for simplicity, just use
+ * the alternative when building on windows.
+ */ 
+#define CP_HAS_RANDOM 1
+
+/* eric: used in thread.c */
+/* Define to 1 if you have the `srandom' function. */
+/* Note: same comment as above for CP_HAS_RANDOM */
+#define CP_HAS_SRANDOM 1
+
 #else
 /* eric: used internally by cprops_thread to turn on windows features */
 #define _WINDOWS
@@ -31,13 +44,6 @@
 #define CP_HAS_PTHREAD_MUTEX_RECURSIVE 1
 
 
-/* eric: used in thread.c */
-/* Define to 1 if you have the `random' function. */
-#define CP_HAS_RANDOM 1
-
-/* eric: used in thread.c */
-/* Define to 1 if you have the `srandom' function. */
-#define CP_HAS_SRANDOM 1
 
 /* eric: what system doesn't have this??? */
 /* Define to 1 if you have the `read' function. */

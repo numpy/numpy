@@ -212,8 +212,6 @@ def configuration(parent_package='',top_path=None):
         umath_libraries.append('cprops')
         
         if sys.platform == 'win32':
-            # fixme: is this only for gcc, or does msvc need it as well?
-            umath_libraries.append('iberty') # needed for random, srandom
             umath_libraries.append('wsock32') # needed for select
 
         config.add_library('cprops', join('cprops_thread', '*.c'),

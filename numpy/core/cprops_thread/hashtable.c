@@ -41,6 +41,13 @@
 #define CP_HASHTABLE_MULTIPLE_VALUES 1
 #endif
 
+/* Microsoft's compiler uses stricmp for strcasecmp 
+ * MSVC defines this macro (version number) and mingw32 does not.
+ */
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#endif
+
 static int table_sizes[] = 
     {
            5,        7,       11,       23,       47,
