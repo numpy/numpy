@@ -57,6 +57,13 @@ class test_average(NumpyTestCase):
         assert_array_equal(y5.mean(0), average(y5, 0))
         assert_array_equal(y5.mean(1), average(y5, 1))
 
+    def check_weighted(self):
+        y1 = array([[1,2,3],
+                    [4,5,6]])
+        actual = average(y1,weights=[1,2],axis=0)            
+        desired = array([3.,4.,5.])
+        assert_array_equal(actual, desired)
+
 class test_logspace(NumpyTestCase):
     def check_basic(self):
         y = logspace(0,6)
