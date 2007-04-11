@@ -9,7 +9,7 @@
 #include <numpy/arrayobject.h>
 
 /* The following code originally appeared in
- * enthought/kiva/agg/src/numeric.i, author unknown.  It was
+ * enthought/kiva/agg/src/numeric.i written by Eric Jones.  It was
  * translated from C++ to C by John Hunter.  Bill Spotz has modified
  * it slightly to fix some minor bugs, upgrade to numpy (all
  * versions), add some comments and some functionality.
@@ -445,7 +445,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DATA_TYPE IN_ARRAY1[ANY])
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DATA_TYPE IN_ARRAY1[ANY])
@@ -467,7 +467,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
@@ -490,7 +490,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
@@ -513,7 +513,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
@@ -535,7 +535,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
@@ -559,7 +559,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
@@ -583,7 +583,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
@@ -606,7 +606,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
@@ -632,7 +632,7 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
 {
-  $1 = ($input != NULL);
+  $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
