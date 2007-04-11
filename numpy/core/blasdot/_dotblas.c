@@ -12,62 +12,62 @@ static char module_doc[] =
 
 static PyArray_DotFunc *oldFunctions[PyArray_NTYPES];
 
-static void 
-FLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res, 
+static void
+FLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 	  intp n, void *tmp)
 {
     register int na = stridea / sizeof(float);
     register int nb = strideb / sizeof(float);
 
-    if ((sizeof(float) * na == stridea) && 
+    if ((sizeof(float) * na == stridea) &&
 	(sizeof(float) * nb == strideb))
 	    *((float *)res) = cblas_sdot((int)n, (float *)a, na, (float *)b, nb);
-    
-    else 
+
+    else
 	    oldFunctions[PyArray_FLOAT](a, stridea, b, strideb, res, n, tmp);
 }
 
-static void 
-DOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res, 
+static void
+DOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 	   intp n, void *tmp)
 {
     register int na = stridea / sizeof(double);
     register int nb = strideb / sizeof(double);
 
-    if ((sizeof(double) * na == stridea) && 
-	(sizeof(double) * nb == strideb))    
+    if ((sizeof(double) * na == stridea) &&
+	(sizeof(double) * nb == strideb))
 	    *((double *)res) = cblas_ddot((int)n, (double *)a, na, (double *)b, nb);
     else
 	    oldFunctions[PyArray_DOUBLE](a, stridea, b, strideb, res, n, tmp);
 }
 
-static void 
-CFLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res, 
+static void
+CFLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 	   intp n, void *tmp)
 {
-    
+
     register int na = stridea / sizeof(cfloat);
     register int nb = strideb / sizeof(cfloat);
 
-    if ((sizeof(cfloat) * na == stridea) && 
-	(sizeof(cfloat) * nb == strideb))    
+    if ((sizeof(cfloat) * na == stridea) &&
+	(sizeof(cfloat) * nb == strideb))
 	    cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
     else
 	    oldFunctions[PyArray_CFLOAT](a, stridea, b, strideb, res, n, tmp);
 }
 
-static void 
-CDOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res, 
+static void
+CDOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 	    intp n, void *tmp)
 {
     register int na = stridea / sizeof(cdouble);
     register int nb = strideb / sizeof(cdouble);
 
-    if ((sizeof(cdouble) * na == stridea) && 
-	(sizeof(cdouble) * nb == strideb))    
+    if ((sizeof(cdouble) * na == stridea) &&
+	(sizeof(cdouble) * nb == strideb))
 	    cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb, (double *)res);
     else
-	    oldFunctions[PyArray_CDOUBLE](a, stridea, b, strideb, res, n, tmp);    
+	    oldFunctions[PyArray_CDOUBLE](a, stridea, b, strideb, res, n, tmp);
 }
 
 
@@ -76,10 +76,10 @@ static Bool altered=FALSE;
 static char doc_alterdot[] = "alterdot() changes all dot functions to use blas.";
 
 static PyObject *
-dotblas_alterdot(PyObject *dummy, PyObject *args) 
+dotblas_alterdot(PyObject *dummy, PyObject *args)
 {
     PyArray_Descr *descr;
-    
+
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
     /* Replace the dot functions to the ones using blas */
@@ -88,15 +88,15 @@ dotblas_alterdot(PyObject *dummy, PyObject *args)
 	descr = PyArray_DescrFromType(PyArray_FLOAT);
 	oldFunctions[PyArray_FLOAT] = descr->f->dotfunc;
 	descr->f->dotfunc = (PyArray_DotFunc *)FLOAT_dot;
-	
+
 	descr = PyArray_DescrFromType(PyArray_DOUBLE);
 	oldFunctions[PyArray_DOUBLE] = descr->f->dotfunc;
 	descr->f->dotfunc = (PyArray_DotFunc *)DOUBLE_dot;
-	
+
 	descr = PyArray_DescrFromType(PyArray_CFLOAT);
 	oldFunctions[PyArray_CFLOAT] = descr->f->dotfunc;
 	descr->f->dotfunc = (PyArray_DotFunc *)CFLOAT_dot;
-	
+
 	descr = PyArray_DescrFromType(PyArray_CDOUBLE);
 	oldFunctions[PyArray_CDOUBLE] = descr->f->dotfunc;
 	descr->f->dotfunc = (PyArray_DotFunc *)CDOUBLE_dot;
@@ -111,7 +111,7 @@ dotblas_alterdot(PyObject *dummy, PyObject *args)
 static char doc_restoredot[] = "restoredot() restores dots to defaults.";
 
 static PyObject *
-dotblas_restoredot(PyObject *dummy, PyObject *args) 
+dotblas_restoredot(PyObject *dummy, PyObject *args)
 {
     PyArray_Descr *descr;
 
@@ -137,7 +137,7 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
 	descr->f->dotfunc = oldFunctions[PyArray_CDOUBLE];
 	oldFunctions[PyArray_CDOUBLE] = NULL;
 	Py_XDECREF(descr);
-	
+
 	altered = FALSE;
     }
 
@@ -147,7 +147,7 @@ dotblas_restoredot(PyObject *dummy, PyObject *args)
 
 typedef enum {_scalar, _column, _row, _matrix} MatrixShape;
 
-static MatrixShape 
+static MatrixShape
 _select_matrix_shape(PyArrayObject *array)
 {
     switch (array->nd) {
@@ -175,7 +175,7 @@ _select_matrix_shape(PyArrayObject *array)
 static char doc_matrixproduct[] = "dot(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic numpy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
-dotblas_matrixproduct(PyObject *dummy, PyObject *args) 
+dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
@@ -192,23 +192,23 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     PyTypeObject *subtype;
     PyArray_Descr *dtype;
     MatrixShape ap1shape, ap2shape;
-    
+
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
-	
-    /* 
-     * "Matrix product" using the BLAS.  
+
+    /*
+     * "Matrix product" using the BLAS.
      * Only works for float double and complex types.
      */
 
-    typenum = PyArray_ObjectType(op1, 0);  
+    typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
-    
+
     /* This function doesn't handle other types */
     if ((typenum != PyArray_DOUBLE && typenum != PyArray_CDOUBLE &&
 	 typenum != PyArray_FLOAT && typenum != PyArray_CFLOAT)) {
 	return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct(op1, op2));
     }
-    
+
     dtype = PyArray_DescrFromType(typenum);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED, NULL);
     if (ap1 == NULL) return NULL;
@@ -216,7 +216,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED, NULL);
     if (ap2 == NULL) goto fail;
 
-    if ((ap1->nd > 2) || (ap2->nd > 2)) {  
+    if ((ap1->nd > 2) || (ap2->nd > 2)) {
 	/* This function doesn't handle dimensions greater than 2 -- other
 	   than to ensure the dot function is altered
 	*/
@@ -225,16 +225,16 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    PyObject *tmp1, *tmp2;
 	    tmp1 = PyTuple_New(0);
 	    tmp2 = dotblas_alterdot(NULL, tmp1);
-	    Py_DECREF(tmp1); 
+	    Py_DECREF(tmp1);
 	    Py_DECREF(tmp2);
 	}
-	ret = (PyArrayObject *)PyArray_MatrixProduct((PyObject *)ap1, 
+	ret = (PyArrayObject *)PyArray_MatrixProduct((PyObject *)ap1,
 						     (PyObject *)ap2);
-	Py_DECREF(ap1); 
+	Py_DECREF(ap1);
 	Py_DECREF(ap2);
 	return PyArray_Return(ret);
     }
-    
+
     if (!PyArray_ElementStrides((PyObject *)ap1)) {
 	    op1 = PyArray_NewCopy(ap1, PyArray_ANYORDER);
 	    Py_DECREF(ap1);
@@ -249,7 +249,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     }
     ap1shape = _select_matrix_shape(ap1);
     ap2shape = _select_matrix_shape(ap2);
-    
+
     if (ap1shape == _scalar || ap2shape == _scalar) {
         PyArrayObject *oap1, *oap2;
         oap1 = ap1; oap2 = ap2;
@@ -267,11 +267,11 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 
  	if (ap1->nd == 0 || ap2->nd == 0) {
             intp *thisdims;
-            if (ap1->nd == 0) { 
+            if (ap1->nd == 0) {
                 nd = ap2->nd;
                 thisdims = ap2->dimensions;
             }
-            else { 
+            else {
                 nd = ap1->nd;
                 thisdims = ap1->dimensions;
             }
@@ -281,7 +281,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
                 l *= dimensions[j];
             }
         }
-        else { 
+        else {
             l = oap1->dimensions[oap1->nd-1];
 
             if (oap2->dimensions[0] != l) {
@@ -292,7 +292,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
             /* nd = 0 or 1 or 2 */
             /* If nd == 0 do nothing ... */
             if (nd == 1) {
-                /* Either ap1->nd is 1 dim or ap2->nd is 1 dim 
+                /* Either ap1->nd is 1 dim or ap2->nd is 1 dim
                    and the other is 2-dim */
                 dimensions[0] = (oap1->nd == 2) ? oap1->dimensions[0] : oap2->dimensions[1];
                 l = dimensions[0];
@@ -316,21 +316,21 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     else { /* (ap1->nd <= 2 && ap2->nd <= 2) */
 	/*  Both ap1 and ap2 are vectors or matrices */
 	l = ap1->dimensions[ap1->nd-1];
-	
+
 	if (ap2->dimensions[0] != l) {
 	    PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
 	    goto fail;
 	}
 	nd = ap1->nd+ap2->nd-2;
-	
-	if (nd == 1) 
+
+	if (nd == 1)
 	    dimensions[0] = (ap1->nd == 2) ? ap1->dimensions[0] : ap2->dimensions[1];
 	else if (nd == 2) {
 	    dimensions[0] = ap1->dimensions[0];
 	    dimensions[1] = ap2->dimensions[1];
 	}
     }
-    
+
     /* Choose which subtype to return */
     if (ap1->ob_type != ap2->ob_type) {
 	prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
@@ -341,12 +341,12 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	prior1 = prior2 = 0.0;
 	subtype = ap1->ob_type;
     }
-    
+
     ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
 				       typenum, NULL, NULL, 0, 0,
 				       (PyObject *)
 				       (prior2 > prior1 ? ap2 : ap1));
-    
+
     if (ret == NULL) goto fail;
     numbytes = PyArray_NBYTES(ret);
     memset(ret->data, 0, numbytes);
@@ -386,19 +386,19 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		a1s = ap1->strides[maxind] / sizeof(double);
 		rets = ret->strides[maxind] / sizeof(double);
 		for (i=0; i < ap1->dimensions[oind]; i++) {
-		    cblas_daxpy(l, val, (double *)ptr, a1s, 
+		    cblas_daxpy(l, val, (double *)ptr, a1s,
 				(double *)rptr, rets);
 		    ptr += ap1->strides[oind];
 		    rptr += ret->strides[oind];
 		}
 	    }
-	} 
+	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    if (l == 1) {
 		cdouble *ptr1, *ptr2, *res;
 		ptr1 = (cdouble *)ap2->data;
 		ptr2 = (cdouble *)ap1->data;
-		res = (cdouble *)ret->data;		
+		res = (cdouble *)ret->data;
 		res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
 		res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
 	    }
@@ -419,7 +419,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		a1s = ap1->strides[maxind] / sizeof(cdouble);
 		rets = ret->strides[maxind] / sizeof(cdouble);
 		for (i=0; i < ap1->dimensions[oind]; i++) {
-		    cblas_zaxpy(l, pval, (double *)ptr, a1s, 
+		    cblas_zaxpy(l, pval, (double *)ptr, a1s,
 				(double *)rptr, rets);
 		    ptr += ap1->strides[oind];
 		    rptr += ret->strides[oind];
@@ -448,7 +448,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		a1s = ap1->strides[maxind] / sizeof(float);
 		rets = ret->strides[maxind] / sizeof(float);
 		for (i=0; i < ap1->dimensions[oind]; i++) {
-		    cblas_saxpy(l, val, (float *)ptr, a1s, 
+		    cblas_saxpy(l, val, (float *)ptr, a1s,
 				(float *)rptr, rets);
 		    ptr += ap1->strides[oind];
 		    rptr += ret->strides[oind];
@@ -460,7 +460,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		cfloat *ptr1, *ptr2, *res;
 		ptr1 = (cfloat *)ap2->data;
 		ptr2 = (cfloat *)ap1->data;
-		res = (cfloat *)ret->data;		
+		res = (cfloat *)ret->data;
 		res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
 		res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
 	    }
@@ -481,7 +481,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 		a1s = ap1->strides[maxind] / sizeof(cfloat);
 		rets = ret->strides[maxind] / sizeof(cfloat);
 		for (i=0; i < ap1->dimensions[oind]; i++) {
-		    cblas_caxpy(l, pval, (float *)ptr, a1s, 
+		    cblas_caxpy(l, pval, (float *)ptr, a1s,
 				(float *)rptr, rets);
 		    ptr += ap1->strides[oind];
 		    rptr += ret->strides[oind];
@@ -501,24 +501,24 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	else {
 	    ap1s = ap1->strides[0] / ap1->descr->elsize;
 	}
-	    
+
 	/* Dot product between two vectors -- Level 1 BLAS */
 	if (typenum == PyArray_DOUBLE) {
-	    double result = cblas_ddot(l, (double *)ap1->data, ap1s, 
+	    double result = cblas_ddot(l, (double *)ap1->data, ap1s,
 				       (double *)ap2->data, ap2s);
 	    *((double *)ret->data) = result;
 	}
 	else if (typenum == PyArray_FLOAT) {
-	    float result = cblas_sdot(l, (float *)ap1->data, ap1s, 
+	    float result = cblas_sdot(l, (float *)ap1->data, ap1s,
 				      (float *)ap2->data, ap2s);
 	    *((float *)ret->data) = result;
 	}
 	else if (typenum == PyArray_CDOUBLE) {
-	    cblas_zdotu_sub(l, (double *)ap1->data, ap1s, 
+	    cblas_zdotu_sub(l, (double *)ap1->data, ap1s,
 			    (double *)ap2->data, ap2s, (double *)ret->data);
 	}
 	else if (typenum == PyArray_CFLOAT) {
-	    cblas_cdotu_sub(l, (float *)ap1->data, ap1s, 
+	    cblas_cdotu_sub(l, (float *)ap1->data, ap1s,
 			    (float *)ap2->data, ap2s, (float *)ret->data);
 	}
 	NPY_END_ALLOW_THREADS
@@ -547,29 +547,29 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	}
 	ap2s = ap2->strides[0] / ap2->descr->elsize;
 	if (typenum == PyArray_DOUBLE) {
-	    cblas_dgemv(Order, CblasNoTrans,  
-			ap1->dimensions[0], ap1->dimensions[1], 
-			1.0, (double *)ap1->data, lda, 
+	    cblas_dgemv(Order, CblasNoTrans,
+			ap1->dimensions[0], ap1->dimensions[1],
+			1.0, (double *)ap1->data, lda,
 			(double *)ap2->data, ap2s, 0.0, (double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_FLOAT) {
-	    cblas_sgemv(Order, CblasNoTrans,  
-			ap1->dimensions[0], ap1->dimensions[1], 
-			1.0, (float *)ap1->data, lda, 
+	    cblas_sgemv(Order, CblasNoTrans,
+			ap1->dimensions[0], ap1->dimensions[1],
+			1.0, (float *)ap1->data, lda,
 			(float *)ap2->data, ap2s, 0.0, (float *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CDOUBLE) {
-	    cblas_zgemv(Order, 
-			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1], 
-			oneD, (double *)ap1->data, lda, 
-			(double *)ap2->data, ap2s, zeroD, 
+	    cblas_zgemv(Order,
+			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1],
+			oneD, (double *)ap1->data, lda,
+			(double *)ap2->data, ap2s, zeroD,
 			(double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CFLOAT) {
-	    cblas_cgemv(Order, 
-			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1], 
-			oneF, (float *)ap1->data, lda, 
-			(float *)ap2->data, ap2s, zeroF, 
+	    cblas_cgemv(Order,
+			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1],
+			oneF, (float *)ap1->data, lda,
+			(float *)ap2->data, ap2s, zeroF,
 			(float *)ret->data, 1);
 	}
 	NPY_END_ALLOW_THREADS
@@ -602,33 +602,33 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	    ap1s = ap1->strides[0] / ap1->descr->elsize;
 	}
 	if (typenum == PyArray_DOUBLE) {
-	    cblas_dgemv(Order, 
-			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+	    cblas_dgemv(Order,
+			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			1.0, (double *)ap2->data, lda,
 			(double *)ap1->data, ap1s, 0.0, (double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_FLOAT) {
 	    cblas_sgemv(Order,
-			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			1.0, (float *)ap2->data, lda,
 			(float *)ap1->data, ap1s, 0.0, (float *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    cblas_zgemv(Order,
-			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			oneD, (double *)ap2->data, lda,
 			(double *)ap1->data, ap1s, zeroD, (double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CFLOAT) {
 	    cblas_cgemv(Order,
-			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+			CblasTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			oneF, (float *)ap2->data, lda,
 			(float *)ap1->data, ap1s, zeroF, (float *)ret->data, 1);
 	}
 	NPY_END_ALLOW_THREADS
     }
     else { /* (ap1->nd == 2 && ap2->nd == 2) */
-	/* Matrix matrix multiplication -- Level 3 BLAS */  
+	/* Matrix matrix multiplication -- Level 3 BLAS */
 	/*  L x M  multiplied by M x N */
 	enum CBLAS_ORDER Order;
 	enum CBLAS_TRANSPOSE Trans1, Trans2;
@@ -638,7 +638,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	/* We may be able to handle single-segment arrays here
 	   using appropriate values of Order, Trans1, and Trans2.
 	*/
-	
+
  	if (!PyArray_ISCONTIGUOUS(ap2)) {
 	    PyObject *new;
 	    new = PyArray_Copy(ap2);
@@ -655,7 +655,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	}
 
 	NPY_BEGIN_ALLOW_THREADS
-	
+
 	Order = CblasRowMajor;
 	Trans1 = CblasNoTrans;
 	Trans2 = CblasNoTrans;
@@ -664,9 +664,9 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	M = ap2->dimensions[0];
 	lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
 	ldb = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
-	ldc = (ret->dimensions[1] > 1 ? ret->dimensions[1] : 1);	    
+	ldc = (ret->dimensions[1] > 1 ? ret->dimensions[1] : 1);
 	if (typenum == PyArray_DOUBLE) {
-	    cblas_dgemm(Order, Trans1, Trans2, 
+	    cblas_dgemm(Order, Trans1, Trans2,
 			L, N, M,
 			1.0, (double *)ap1->data, lda,
 			(double *)ap2->data, ldb,
@@ -674,14 +674,14 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	}
 	else if (typenum == PyArray_FLOAT) {
 	    cblas_sgemm(Order, Trans1, Trans2,
-			L, N, M, 
+			L, N, M,
 			1.0, (float *)ap1->data, lda,
 			(float *)ap2->data, ldb,
 			0.0, (float *)ret->data, ldc);
 	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    cblas_zgemm(Order, Trans1, Trans2,
-			L, N, M, 
+			L, N, M,
 			oneD, (double *)ap1->data, lda,
 			(double *)ap2->data, ldb,
 			zeroD, (double *)ret->data, ldc);
@@ -700,7 +700,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return PyArray_Return(ret);
-	
+
  fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
@@ -712,7 +712,7 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 static char doc_innerproduct[] = "innerproduct(a,b)\nReturns the inner product of a and b for arrays of floating point types.\nLike the generic NumPy equivalent the product sum is over\nthe last dimension of a and b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
-dotblas_innerproduct(PyObject *dummy, PyObject *args) 
+dotblas_innerproduct(PyObject *dummy, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *ap1, *ap2, *ret;
@@ -727,15 +727,15 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     double prior1, prior2;
 
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
-	
-    /* 
+
+    /*
      * Inner product using the BLAS.  The product sum is taken along the last
      * dimensions of the two arrays.
      * Only speeds things up for float double and complex types.
      */
 
 
-    typenum = PyArray_ObjectType(op1, 0);  
+    typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
 
     /* This function doesn't handle other types */
@@ -750,7 +750,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     ap2 = (PyArrayObject *)PyArray_ContiguousFromObject(op2, typenum, 0, 0);
     if (ap2 == NULL) goto fail;
 
-    if ((ap1->nd > 2) || (ap2->nd > 2)) {  
+    if ((ap1->nd > 2) || (ap2->nd > 2)) {
 	/* This function doesn't handle dimensions greater than 2 -- other
 	   than to ensure the dot function is altered
 	*/
@@ -759,12 +759,12 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 	    PyObject *tmp1, *tmp2;
 	    tmp1 = PyTuple_New(0);
 	    tmp2 = dotblas_alterdot(NULL, tmp1);
-	    Py_DECREF(tmp1); 
+	    Py_DECREF(tmp1);
 	    Py_DECREF(tmp2);
 	}
-	ret = (PyArrayObject *)PyArray_InnerProduct((PyObject *)ap1, 
+	ret = (PyArrayObject *)PyArray_InnerProduct((PyObject *)ap1,
 						    (PyObject *)ap2);
-	Py_DECREF(ap1); 
+	Py_DECREF(ap1);
 	Py_DECREF(ap2);
 	return PyArray_Return(ret);
     }
@@ -785,14 +785,14 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     else { /* (ap1->nd <= 2 && ap2->nd <= 2) */
 	/*  Both ap1 and ap2 are vectors or matrices */
 	l = ap1->dimensions[ap1->nd-1];
-	
+
 	if (ap2->dimensions[ap2->nd-1] != l) {
 	    PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
 	    goto fail;
 	}
 	nd = ap1->nd+ap2->nd-2;
- 
-	if (nd == 1) 
+
+	if (nd == 1)
 	    dimensions[0] = (ap1->nd == 2) ? ap1->dimensions[0] : ap2->dimensions[0];
 	else if (nd == 2) {
 	    dimensions[0] = ap1->dimensions[0];
@@ -804,12 +804,12 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
     prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
     subtype = (prior2 > prior1 ? ap2->ob_type : ap1->ob_type);
-    
-    ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions, 
-				       typenum, NULL, NULL, 0, 0, 
+
+    ret = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+				       typenum, NULL, NULL, 0, 0,
 				       (PyObject *)\
 				       (prior2 > prior1 ? ap2 : ap1));
-    
+
     if (ret == NULL) goto fail;
     NPY_BEGIN_ALLOW_THREADS
     memset(ret->data, 0, PyArray_NBYTES(ret));
@@ -819,7 +819,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 	if (typenum == PyArray_DOUBLE) {
 	    cblas_daxpy(l, *((double *)ap2->data), (double *)ap1->data, 1,
 			(double *)ret->data, 1);
-	} 
+	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    cblas_zaxpy(l, (double *)ap2->data, (double *)ap1->data, 1,
 			(double *)ret->data, 1);
@@ -836,21 +836,21 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     else if (ap1->nd == 1 && ap2->nd == 1) {
 	/* Dot product between two vectors -- Level 1 BLAS */
 	if (typenum == PyArray_DOUBLE) {
-	    double result = cblas_ddot(l, (double *)ap1->data, 1, 
+	    double result = cblas_ddot(l, (double *)ap1->data, 1,
 				       (double *)ap2->data, 1);
 	    *((double *)ret->data) = result;
 	}
 	else if (typenum == PyArray_CDOUBLE) {
-	    cblas_zdotu_sub(l, (double *)ap1->data, 1, 
+	    cblas_zdotu_sub(l, (double *)ap1->data, 1,
 			    (double *)ap2->data, 1, (double *)ret->data);
 	}
 	else if (typenum == PyArray_FLOAT) {
-	    float result = cblas_sdot(l, (float *)ap1->data, 1, 
+	    float result = cblas_sdot(l, (float *)ap1->data, 1,
 				      (float *)ap2->data, 1);
 	    *((float *)ret->data) = result;
 	}
 	else if (typenum == PyArray_CFLOAT) {
-	    cblas_cdotu_sub(l, (float *)ap1->data, 1, 
+	    cblas_cdotu_sub(l, (float *)ap1->data, 1,
 			    (float *)ap2->data, 1, (float *)ret->data);
 	}
     }
@@ -858,26 +858,26 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 	/* Matrix-vector multiplication -- Level 2 BLAS */
 	lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
 	if (typenum == PyArray_DOUBLE) {
-	    cblas_dgemv(CblasRowMajor, 
-			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1], 
+	    cblas_dgemv(CblasRowMajor,
+			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1],
 			1.0, (double *)ap1->data, lda,
 			(double *)ap2->data, 1, 0.0, (double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CDOUBLE) {
-	    cblas_zgemv(CblasRowMajor, 
-			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1], 
+	    cblas_zgemv(CblasRowMajor,
+			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1],
 			oneD, (double *)ap1->data, lda,
 			(double *)ap2->data, 1, zeroD, (double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_FLOAT) {
-	    cblas_sgemv(CblasRowMajor, 
-			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1], 
+	    cblas_sgemv(CblasRowMajor,
+			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1],
 			1.0, (float *)ap1->data, lda,
 			(float *)ap2->data, 1, 0.0, (float *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CFLOAT) {
-	    cblas_cgemv(CblasRowMajor, 
-			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1], 
+	    cblas_cgemv(CblasRowMajor,
+			CblasNoTrans,  ap1->dimensions[0], ap1->dimensions[1],
 			oneF, (float *)ap1->data, lda,
 			(float *)ap2->data, 1, zeroF, (float *)ret->data, 1);
 	}
@@ -886,32 +886,32 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 	/* Vector matrix multiplication -- Level 2 BLAS */
 	lda = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
 	if (typenum == PyArray_DOUBLE) {
-	    cblas_dgemv(CblasRowMajor, 
-			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+	    cblas_dgemv(CblasRowMajor,
+			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			1.0, (double *)ap2->data, lda,
 			(double *)ap1->data, 1, 0.0, (double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CDOUBLE) {
-	    cblas_zgemv(CblasRowMajor, 
-			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+	    cblas_zgemv(CblasRowMajor,
+			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			oneD, (double *)ap2->data, lda,
 			(double *)ap1->data, 1, zeroD, (double *)ret->data, 1);
 	}
 	else if (typenum == PyArray_FLOAT) {
-	    cblas_sgemv(CblasRowMajor, 
-			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+	    cblas_sgemv(CblasRowMajor,
+			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			1.0, (float *)ap2->data, lda,
 			(float *)ap1->data, 1, 0.0, (float *)ret->data, 1);
 	}
 	else if (typenum == PyArray_CFLOAT) {
-	    cblas_cgemv(CblasRowMajor, 
-			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1], 
+	    cblas_cgemv(CblasRowMajor,
+			CblasNoTrans,  ap2->dimensions[0], ap2->dimensions[1],
 			oneF, (float *)ap2->data, lda,
 			(float *)ap1->data, 1, zeroF, (float *)ret->data, 1);
 	}
     }
-    else { /* (ap1->nd == 2 && ap2->nd == 2) */  
-	/* Matrix matrix multiplication -- Level 3 BLAS */  
+    else { /* (ap1->nd == 2 && ap2->nd == 2) */
+	/* Matrix matrix multiplication -- Level 3 BLAS */
 	lda = (ap1->dimensions[1] > 1 ? ap1->dimensions[1] : 1);
 	ldb = (ap2->dimensions[1] > 1 ? ap2->dimensions[1] : 1);
 	ldc = (ret->dimensions[1] > 1 ? ret->dimensions[1] : 1);
@@ -948,7 +948,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return PyArray_Return(ret);
-	
+
  fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
@@ -969,31 +969,31 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     PyArray_Descr *type;
 
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
-	
-    /* 
+
+    /*
      * Conjugating dot product using the BLAS for vectors.
      * Multiplies op1 and op2, each of which must be vector.
      */
 
-    typenum = PyArray_ObjectType(op1, 0);  
+    typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
-    
+
     type = PyArray_DescrFromType(typenum);
-    Py_INCREF(type);   
+    Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1==NULL) {Py_DECREF(type); goto fail;}
     op1 = PyArray_Flatten(ap1, 0);
     if (op1==NULL) {Py_DECREF(type); goto fail;}
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
-    
+
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
     if (ap2==NULL) goto fail;
     op2 = PyArray_Flatten(ap2, 0);
     if (op2 == NULL) goto fail;
     Py_DECREF(ap2);
     ap2 = (PyArrayObject *)op2;
-    
+
     if (typenum != PyArray_FLOAT && typenum != PyArray_DOUBLE &&
 	typenum != PyArray_CFLOAT && typenum != PyArray_CDOUBLE) {
 	if (!altered) {
@@ -1001,7 +1001,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 	    PyObject *tmp1, *tmp2;
 	    tmp1 = PyTuple_New(0);
 	    tmp2 = dotblas_alterdot(NULL, tmp1);
-	    Py_DECREF(tmp1); 
+	    Py_DECREF(tmp1);
 	    Py_DECREF(tmp2);
 	}
 	if (PyTypeNum_ISCOMPLEX(typenum)) {
@@ -1009,10 +1009,10 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 	    if (op1==NULL) goto fail;
 	    Py_DECREF(ap1);
 	    ap1 = (PyArrayObject *)op1;
-	}	
-	ret = (PyArrayObject *)PyArray_InnerProduct((PyObject *)ap1, 
+	}
+	ret = (PyArrayObject *)PyArray_InnerProduct((PyObject *)ap1,
 						    (PyObject *)ap2);
-	Py_DECREF(ap1); 
+	Py_DECREF(ap1);
 	Py_DECREF(ap2);
 	return PyArray_Return(ret);
     }
@@ -1022,7 +1022,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 	goto fail;
     }
     l = ap1->dimensions[ap1->nd-1];
-  
+
     ret = (PyArrayObject *)PyArray_SimpleNew(0, dimensions, typenum);
     if (ret == NULL) goto fail;
 
@@ -1030,19 +1030,19 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
 
     /* Dot product between two vectors -- Level 1 BLAS */
     if (typenum == PyArray_DOUBLE) {
-	*((double *)ret->data) = cblas_ddot(l, (double *)ap1->data, 1, 
+	*((double *)ret->data) = cblas_ddot(l, (double *)ap1->data, 1,
 					    (double *)ap2->data, 1);
     }
     else if (typenum == PyArray_FLOAT) {
-	*((float *)ret->data) = cblas_sdot(l, (float *)ap1->data, 1, 
+	*((float *)ret->data) = cblas_sdot(l, (float *)ap1->data, 1,
 					   (float *)ap2->data, 1);
     }
     else if (typenum == PyArray_CDOUBLE) {
-	cblas_zdotc_sub(l, (double *)ap1->data, 1, 
+	cblas_zdotc_sub(l, (double *)ap1->data, 1,
 			(double *)ap2->data, 1, (double *)ret->data);
     }
     else if (typenum == PyArray_CFLOAT) {
-	cblas_cdotc_sub(l, (float *)ap1->data, 1, 
+	cblas_cdotc_sub(l, (float *)ap1->data, 1,
 			(float *)ap2->data, 1, (float *)ret->data);
     }
 
@@ -1051,7 +1051,7 @@ static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return PyArray_Return(ret);
-	
+
  fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
@@ -1072,7 +1072,7 @@ static struct PyMethodDef dotblas_module_methods[] = {
 PyMODINIT_FUNC init_dotblas(void) {
     int i;
     PyObject *d, *s;
-    
+
     /* Create the module and add the functions */
     Py_InitModule3("_dotblas", dotblas_module_methods, module_doc);
 
@@ -1088,5 +1088,5 @@ PyMODINIT_FUNC init_dotblas(void) {
     s = dotblas_alterdot(NULL, d);
     Py_DECREF(d);
     Py_DECREF(s);
-    
+
 }
