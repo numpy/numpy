@@ -9,7 +9,7 @@
 #include <numpy/arrayobject.h>
 
 /* The following code originally appeared in
- * enthought/kiva/agg/src/numeric.i, author unknown.  It was
+ * enthought/kiva/agg/src/numeric.i written by Eric Jones.  It was
  * translated from C++ to C by John Hunter.  Bill Spotz has modified
  * it slightly to fix some minor bugs, upgrade to numpy (all
  * versions), add some comments and some functionality.
