@@ -151,7 +151,7 @@ Change the PyBufferProcs structure to
 
 ::
 
-    typedef int (*getbufferproc)(PyObject *obj, struct bufferinfo *view, int flags) 
+    typedef int (*getbufferproc)(PyObject *obj, PyBuffer *view, int flags) 
 
 This function returns 0 on success and -1 on failure (and raises an
 error). The first variable is the "exporting" object.  The second
@@ -222,21 +222,22 @@ The bufferinfo structure is::
        void *buf;
        Py_ssize_t len;
        int readonly;
-       char *format;
+       const char *format;
        int ndims;
        Py_ssize_t *shape;
        Py_ssize_t *strides;
        Py_ssize_t *suboffsets;
+       int itemsize;
        void *internal;
-  };
+  } PyBuffer;
 
-Before calling this function, the bufferinfo structure can be filled with
-whatever.  Upon return from getbufferproc, the bufferinfo structure is filled in
-with relevant information about the buffer.  This same bufferinfo
-structure must be passed to bf_releasebuffer (if available) when the
-consumer is done with the memory. The caller is responsible for
-keeping a reference to obj until releasebuffer is called (i.e. this
-call does not alter the reference count of obj). 
+Before calling this function, the bufferinfo structure can be filled
+with whatever.  Upon return from getbufferproc, the bufferinfo
+structure is filled in with relevant information about the buffer.
+This same bufferinfo structure must be passed to bf_releasebuffer (if
+available) when the consumer is done with the memory. The caller is
+responsible for keeping a reference to obj until releasebuffer is
+called (i.e. this call does not alter the reference count of obj).
 
 The members of the bufferinfo structure are:
 
@@ -315,6 +316,12 @@ suboffsets
     the location of the starting pointer directly (i.e. buf would
     be modified).  
 
+itemsize
+    This is a storage for the itemsize of each element of the shared
+    memory.  It can be obtained using PyBuffer_SizeFromFormat but an
+    exporter may know it without making this call and thus storing it
+    is more convenient and faster. 
+
 internal
     This is for use internally by the exporting object.  For example,
     this might be re-cast as an integer by the exporter and used to 
@@ -336,7 +343,7 @@ The same bufferinfo struct should be used in the release-buffer
 interface call. The caller is responsible for the memory of the
 bufferinfo structure itself. 
 
-``typedef int (*releasebufferproc)(PyObject *obj, struct bufferinfo *view)``
+``typedef int (*releasebufferproc)(PyObject *obj, PyBuffer *view)``
     Callers of getbufferproc must make sure that this function is
     called when memory previously acquired from the object is no
     longer needed.  The exporter of the interface must make sure that
@@ -373,7 +380,8 @@ Return 1 if the getbuffer function is available otherwise 0.
 
 ::
 
-    int PyObject_GetBuffer(PyObject *obj, struct bufferinfo *view, int flags)
+    int PyObject_GetBuffer(PyObject *obj, PyBuffer *view, 
+                           int flags)  
 
 This is a C-API version of the getbuffer function call.  It checks to
 make sure object has the required function pointer and issues the
@@ -381,7 +389,7 @@ call.  Returns -1 and raises an error on failure and returns 0 on
 success.
 
 ::
-    int PyObject_ReleaseBuffer(PyObject *obj, struct bufferinfo *view)
+    int PyObject_ReleaseBuffer(PyObject *obj, PyBuffer *view)
 
 This is a C-API version of the releasebuffer function call.  It checks
 to make sure the object has the required function pointer and issues
@@ -395,45 +403,38 @@ function for the object.
 
 Return a memory-view object from an object that defines the buffer interface.
 
-A memory-view object is an extended buffer object that should replace
-the buffer object in Python 3K.  It's C-structure is::
-
-  typedef struct {
-      PyObject_HEAD
-      PyObject *base;
-      struct bufferinfo view;
-      int itemsize;
-      int flags;
-  } PyMemoryViewObject;
-
-This is very similar to the current buffer object except offset has
-been removed because ptr can just be modified by offset and a single
-offset is not sufficient for the sub-offsets.  Also the hash has been
-removed because using the buffer object as a hash even if it is
-read-only is rarely useful.
-
-Also, the format, ndims, shape, strides, and suboffsets have been
-added. These additions will allow multi-dimensional slicing of the
-memory-view object which can be added at some point.  This object
-always owns it's own shape, strides, and suboffsets arrays and it's
-own format string, but always borrows the memory from the object
-pointed to by base.
-
-The itemsize is a convenience and specifies the number of bytes
-indicated by the format string if positive.  
-
-This object never reallocates ptr, shape, strides, subboffsets or
-format and therefore does not need to keep track of how many views it
-has exported.
-
-It exports a view using the base object.  It releases a view by
-releasing the view on the base object.  Because, it will never
-re-allocate memory, it does not need to keep track of how many it has
-exported but simple reference counting will suffice.
+A memory-view object is an extended buffer object that could replace
+the buffer object (but doesn't have to).  It's C-structure is
 
 ::
 
-    int PyObject_SizeFromFormat(char *)
+  typedef struct {
+      PyObject_HEAD
+      PyObject *base;      
+      int ndims;
+      Py_ssize_t *starts;  /* slice starts */
+      Py_ssize_t *stops;   /* slice stops */
+      Py_ssize_t *steps;   /* slice steps */
+  } PyMemoryViewObject;
+
+This is functionally similar to the current buffer object except only
+a reference to base is kept.  The actual memory for base must be
+re-grabbed using the buffer-protocol, whenever it is needed. 
+
+The getbuffer and releasebuffer for this object use the underlying
+base object (adjusted using the slice information).  If the number of
+dimensions of the base object (or the strides or the size) has changed
+when a new view is requested, then the getbuffer will trigger an error. 
+
+This memory-view object will support mult-dimensional slicing.  Slices
+of the memory-view object are other memory-view objects. When an
+"element" from the memory-view is returned it is always a tuple of
+bytes object + format string which can then be interpreted using the
+struct module if desired.
+
+::
+
+    int PyBuffer_SizeFromFormat(const char *)
 
 Return the implied itemsize of the data-format area from a struct-style
 description.
@@ -441,32 +442,32 @@ description.
 ::
 
     int PyObject_GetContiguous(PyObject *obj, void **buf, Py_ssize_t *len,
-                               char **format, int fortran)
+                               char **format, char fortran)
 
 Return a contiguous chunk of memory representing the buffer.  If a
 copy is made then return 1.  If no copy was needed return 0.  If an
 error occurred in probing the buffer interface, then return -1.  The
 contiguous chunk of memory is pointed to by ``*buf`` and the length of
 that memory is ``*len``.  If the object is multi-dimensional, then if
-fortran is 1, the first dimension of the underlying array will vary
-the fastest in the buffer.  If fortran is 0, then the last dimension
-will vary the fastest (C-style contiguous). If fortran is -1, then it
+fortran is 'F', the first dimension of the underlying array will vary
+the fastest in the buffer.  If fortran is 'C', then the last dimension
+will vary the fastest (C-style contiguous). If fortran is 'A', then it
 does not matter and you will get whatever the object decides is more
 efficient.  
 
 :: 
 
     int PyObject_CopyToObject(PyObject *obj, void *buf, Py_ssize_t len,
-                              int fortran)
+                              char fortran)
 
 Copy ``len`` bytes of data pointed to by the contiguous chunk of
 memory pointed to by ``buf`` into the buffer exported by obj.  Return
 0 on success and return -1 and raise an error on failure.  If the
 object does not have a writeable buffer, then an error is raised.  If
-fortran is 1, then if the object is multi-dimensional, then the data
+fortran is 'F', then if the object is multi-dimensional, then the data
 will be copied into the array in Fortran-style (first dimension varies
-the fastest).  If fortran is 0, then the data will be copied into the
-array in C-style (last dimension varies the fastest).  If fortran is -1, then
+the fastest).  If fortran is 'C', then the data will be copied into the
+array in C-style (last dimension varies the fastest).  If fortran is 'A', then
 it does not matter and the copy will be made in whatever way is more
 efficient.
 
@@ -477,24 +478,24 @@ their work.
 
 ::
 
-    int PyObject_IsContiguous(struct bufferinfo *view, int fortran);
+    int PyBuffer_IsContiguous(PyBuffer *view, char fortran);
 
-Return 1 if the memory defined by the view object is C-style (fortran = 0)
-or Fortran-style (fortran = 1) contiguous.  Return 0 otherwise.
+Return 1 if the memory defined by the view object is C-style (fortran = 'C')
+or Fortran-style (fortran = 'A') contiguous.  Return 0 otherwise.
 
 ::
 
-    void PyObject_FillContiguousStrides(int *ndims, Py_ssize_t *shape,
+    void PyBuffer_FillContiguousStrides(int *ndims, Py_ssize_t *shape,
                                         int itemsize, 
-                                        Py_ssize_t *strides, int fortran)
+                                        Py_ssize_t *strides, char fortran)
 
 Fill the strides array with byte-strides of a contiguous (C-style if
 fortran is 0 or Fortran-style if fortran is 1) array of the given
 shape with the given number of bytes per element.
 
 ::
-    int PyObject_FillBufferInfo(struct bufferinfo *view, void *buf, 
-                                Py_ssize_t len, int readonly, int infoflags)
+    int PyBuffer_FillInfo(PyBuffer *view, void *buf, 
+                          Py_ssize_t len, int readonly, int infoflags)
 
 Fills in a buffer-info structure correctly for an exporter that can
 only share a contiguous chunk of memory of "unsigned bytes" of the
@@ -715,7 +716,7 @@ So what does ImageObject's getbuffer do?  Leaving error checking out::
 
 ::
 
-  int Image_getbuffer(PyObject *self, struct bufferinfo *view, int flags) {
+  int Image_getbuffer(PyObject *self, PyBuffer *view, int flags) {
 
       static Py_ssize_t suboffsets[2] = { -1, 0 };
 
@@ -737,7 +738,7 @@ So what does ImageObject's getbuffer do?  Leaving error checking out::
   } 
 
 
-  int Image_releasebuffer(PyObject *self, struct bufferinfo *view) {
+  int Image_releasebuffer(PyObject *self, PyBuffer *view) {
       self->view_count--;
       return 0;
   }
@@ -752,7 +753,7 @@ alive) would do that.
 
 ::
 
-  int myobject_getbuffer(PyObject *self, struct bufferinfo *view, int flags) {
+  int myobject_getbuffer(PyObject *self, PyBuffer *view, int flags) {
 
       void *buf;
       Py_ssize_t len;
@@ -777,7 +778,7 @@ from a Python object, obj would do the following:
 
 ::
 
-  struct bufferinfo view;
+  PyBuffer view;
   int ret;
       
   if (PyObject_GetBuffer(obj, &view, Py_BUF_SIMPLE) < 0) {
