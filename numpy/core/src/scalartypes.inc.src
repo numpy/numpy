@@ -1761,6 +1761,7 @@ static PyObject *
         }
 
         arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
+        if ((arr==NULL) || (PyArray_NDIM(arr) > 0)) return arr;
         robj = PyArray_Return((PyArrayObject *)arr);
 
  finish:
