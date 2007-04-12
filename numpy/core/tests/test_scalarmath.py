@@ -32,6 +32,12 @@ class test_types(NumpyTestCase):
                        val.dtype.char == valo.dtype.char, \
                        "error with (%d,%d)" % (k,l)
 
+    def check_type_create(self, level=1):
+        for k, atype in enumerate(types):
+            a = array([1,2,3],atype)
+            b = atype([1,2,3])
+            assert_equal(a,b)
+
 class test_power(NumpyTestCase):
     def check_small_types(self):
         for t in [N.int8, N.int16]:
