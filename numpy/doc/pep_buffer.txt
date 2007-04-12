@@ -172,44 +172,44 @@ receive it or have an error raised if it's not possible.
 All of the following assume that at least buf, len, and readonly will
 be utilized by the caller.
 
-BUF_SIMPLE
+Py_BUF_SIMPLE
    The returned buffer will only be assumed to be readable (the object
    may or may not have writeable memory).  Only the buf, len, and
    readonly variables may be accessed. The format will be assumed to
    be unsigned bytes.  This is a "stand-alone" flag constant.  It
    never needs to be |'d to the others.
 
-BUF_WRITEABLE
+Py_BUF_WRITEABLE
    The returned buffer must be writeable.  If it cannot be, then raise
    an error.
 
-BUF_READONLY
+Py_BUF_READONLY
    The returned buffer must be readonly and the underlying object
    should make its memory readonly.  If it cannot do that, then an
    error should be raised if this flag is requested.
 
-BUF_FORMAT
+Py_BUF_FORMAT
    The consumer will be using the format string information so make
    sure that member is filled correctly.
 
-BUF_SHAPE   
+Py_BUF_SHAPE   
    The consumer can (and might) make use of using the ndims and shape
    members of the structure so make sure they are filled in correctly.
    
-BUF_STRIDES (implies BUF_SHAPE)
+Py_BUF_STRIDES (implies Py_BUF_SHAPE)
    The consumer can (and might) make use of the strides member of the
    structure (as well as ndims and shape)
 
-BUF_OFFSETS (implies BUF_STRIDES)
+Py_BUF_OFFSETS (implies Py_BUF_STRIDES)
    The consumer can (and might) make use of the suboffsets member (as
    well as ndims, shape, and strides)
 
-BUF_FULL
-   This is the same as BUF_OFFSETS | BUF_FORMAT 
+Py_BUF_FULL
+   This is the same as Py_BUF_OFFSETS | Py_BUF_FORMAT 
 
-Thus, the consumer simply wanting an contiguous chunk of bytes from
-the object would use BUF_SIMPLE, while a consumer that understands
-how to make use of the most complicated cases would use BUF_FULL.
+Thus, the consumer simply wanting a contiguous chunk of bytes from
+the object would use Py_BUF_SIMPLE, while a consumer that understands
+how to make use of the most complicated cases could use Py_BUF_FULL.
 
 There is a C-API that simple exporting objects can use to fill-in the
 buffer info structure correctly according to the provided flags if a
@@ -441,7 +441,7 @@ description.
 ::
 
     int PyObject_GetContiguous(PyObject *obj, void **buf, Py_ssize_t *len,
-                               int fortran)
+                               char **format, int fortran)
 
 Return a contiguous chunk of memory representing the buffer.  If a
 copy is made then return 1.  If no copy was needed return 0.  If an
@@ -452,7 +452,7 @@ fortran is 1, the first dimension of the underlying array will vary
 the fastest in the buffer.  If fortran is 0, then the last dimension
 will vary the fastest (C-style contiguous). If fortran is -1, then it
 does not matter and you will get whatever the object decides is more
-efficient.
+efficient.  
 
 :: 
 
@@ -685,9 +685,11 @@ Examples
 =========
 
 Ex. 1
-----------
+-----------
 
 This example shows how an image object that uses contiguous lines might expose its buffer.::
+
+::
 
   struct rgba {
       unsigned char r, g, b, a;
@@ -710,6 +712,8 @@ in THAT block points to a seperately malloced array of (struct rgba).
 In order to access, say, the red value of the pixel at x=30, y=50, you'd use "lines[50][30].r".
 
 So what does ImageObject's getbuffer do?  Leaving error checking out::
+
+::
 
   int Image_getbuffer(PyObject *self, struct bufferinfo *view, int flags) {
 
@@ -746,18 +750,20 @@ This example shows how an object that wants to expose a contiguous
 chunk of memory (which will never be re-allocated while the object is
 alive) would do that.
 
-int myobject_getbuffer(PyObject *self, struct bufferinfo *view, int flags) {
+::
 
-    void *buf;
-    Py_ssize_t len;
-    int readonly=0;
+  int myobject_getbuffer(PyObject *self, struct bufferinfo *view, int flags) {
+
+      void *buf;
+      Py_ssize_t len;
+      int readonly=0;
         
-    buf = /* Point to buffer */
-    len = /* Set to size of buffer */
-    readonly = /* Set to 1 if readonly */
-
-    return PyObject_FillBufferInfo(view, buf, len, readonly, flags);    
-}
+      buf = /* Point to buffer */
+      len = /* Set to size of buffer */
+      readonly = /* Set to 1 if readonly */
+  
+      return PyObject_FillBufferInfo(view, buf, len, readonly, flags);    
+  }
 
 /* No releasebuffer is necessary because the memory will never 
 be re-allocated so the locking mechanism is not needed
@@ -769,6 +775,7 @@ Ex.  3
 A consumer that wants to only get a simple contiguous chunk of bytes
 from a Python object, obj would do the following:
 
+::
 
   struct bufferinfo view;
   int ret;
@@ -790,7 +797,36 @@ from a Python object, obj would do the following:
   }
   
 
+Ex. 4
+-----------
 
+A consumer that wants to be able to use any object's memory but is
+writing an algorithm that only handle contiguous memory could do the following:
+
+::
+
+    void *buf;
+    Py_ssize_t len;
+    char *format;
+
+    if (PyObject_GetContiguous(obj, &buf, &len, &format, 0) < 0) {
+       /* error return */
+    }
+
+    /* process memory pointed to by buffer if format is correct */
+
+    /* Optional: 
+    
+       if, after processing, we want to copy data from buffer back
+       into the the object  
+ 
+       we could do
+       */
+
+    if (PyObject_CopyToObject(obj, buf, len, 0) < 0) {
+           /*        error return */
+    }
+   
 
 Copyright
 =========
