@@ -374,7 +374,7 @@ written in C, which does not have native complex types.  Both
 
 We could have implemented::
 
-    %numpy_typemaps(Py_complex , NPY_DOUBLE , int)
+    %numpy_typemaps(Py_complex , NPY_CDOUBLE, int)
     %numpy_typemaps(npy_cfloat , NPY_CFLOAT , int)
     %numpy_typemaps(npy_cdouble, NPY_CDOUBLE, int)
 
