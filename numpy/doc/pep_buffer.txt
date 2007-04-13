@@ -73,7 +73,7 @@ has issues:
 
    NumPy uses the notion of constant striding in each dimension as its
    basic concept of an array. With this concept, a simple sub-region
-   of a larger array can be described without copying the data.   T
+   of a larger array can be described without copying the data.   
    Thus, stride information is the additional information that must be
    shared. 
 
@@ -161,59 +161,83 @@ obtained.  In this case, the corresponding releasebuffer should also
 be called with NULL.
 
 The third argument indicates what kind of buffer the exporter is
-allowed to return.  It tells the exporter what elements the bufferinfo
-structure the consumer is going to make use of.  This allows the
-exporter to simplify and/or raise an error if it can't support the
-operation.
+allowed to return.  It essentially tells the exporter what kind of
+memory area the consumer can deal with.  It also indicates what
+members of the PyBuffer structure the consumer is going to care about.
 
-It also allows the caller to make a request for a simple "view" and
-receive it or have an error raised if it's not possible. 
+The exporter can use this information to simplify how much of the PyBuffer
+structure is filled in and/or raise an error if the object can't support
+a simpler view of its memory. 
 
-All of the following assume that at least buf, len, and readonly will
-be utilized by the caller.
+Thus, the caller can request a simple "view" and either receive it or
+have an error raised if it is not possible.
 
-Py_BUF_SIMPLE
-   The returned buffer will only be assumed to be readable (the object
-   may or may not have writeable memory).  Only the buf, len, and
-   readonly variables may be accessed. The format will be assumed to
-   be unsigned bytes.  This is a "stand-alone" flag constant.  It
-   never needs to be |'d to the others.
+All of the following assume that at least buf, len, and readonly
+will always be utilized by the caller.  
+
+Py_BUF_SIMPLE 
+
+   The returned buffer will be assumed to be readable (the object may
+   or may not have writeable memory).  Only the buf, len, and readonly
+   variables may be accessed. The format will be assumed to be
+   unsigned bytes .  This is a "stand-alone" flag constant.  It never
+   needs to be |'d to the others.  The exporter will raise an 
+   error if it cannot provide such a contiguous buffer. 
 
 Py_BUF_WRITEABLE
-   The returned buffer must be writeable.  If it cannot be, then raise
-   an error.
 
-Py_BUF_READONLY
-   The returned buffer must be readonly and the underlying object
-   should make its memory readonly.  If it cannot do that, then an
-   error should be raised if this flag is requested.
+   The returned buffer must be writeable.  If it is not writeable,
+   then raise an error.
+
+Py_BUF_READONLY 
+
+   The returned buffer must be readonly.  If the object is already
+   read-only or it can make its memory read-only (and there are no
+   other views on the object) then it should do so and return the
+   buffer information.  If the object does not have read-only memory
+   (or cannot make it read-only), then an error should be raised.
 
 Py_BUF_FORMAT
-   The consumer will be using the format string information so make
-   sure that member is filled correctly.
+        
+   The returned buffer must have true format information.  This would 
+   be used when the consumer is going to be checking for what 'kind'
+   of data is actually stored.  An exporter should always be able
+   to provide this information if requested. 
 
-Py_BUF_SHAPE   
-   The consumer can (and might) make use of using the ndims and shape
-   members of the structure so make sure they are filled in correctly.
+Py_BUF_SHAPE 
+
+   The returned buffer must have shape information.  The memory will
+   be assumed C-style contiguous (last dimension varies the fastest).
+   The exporter may raise an error if it cannot provide this kind 
+   of contiguous buffer. 
    
-Py_BUF_STRIDES (implies Py_BUF_SHAPE)
-   The consumer can (and might) make use of the strides member of the
-   structure (as well as ndims and shape)
+Py_BUF_STRIDES (implies Py_BUF_SHAPE) 
+
+   The returned buffer must have strides information. This would be
+   used when the consumer can handle strided, discontiguous arrays. 
+   Handling strides automatically assumes you can handle shape. 
+   The exporter may raise an error if cannot provide a strided-only
+   representation of the data (i.e. without the suboffsets). 
 
 Py_BUF_OFFSETS (implies Py_BUF_STRIDES)
-   The consumer can (and might) make use of the suboffsets member (as
-   well as ndims, shape, and strides)
 
-Py_BUF_FULL
-   This is the same as Py_BUF_OFFSETS | Py_BUF_FORMAT 
+   The returned buffer must have suboffsets information.  This would
+   be used when the consumer can handle indirect array referencing
+   implied by these suboffsets.  
+
+Py_BUF_FULL (Py_BUF_OFFSETS | Py_BUF_WRITEABLE | Py_BUF_FORMAT)
 
 Thus, the consumer simply wanting a contiguous chunk of bytes from
 the object would use Py_BUF_SIMPLE, while a consumer that understands
-how to make use of the most complicated cases could use Py_BUF_FULL.
+how to make use of the most complicated cases could use Py_BUF_INDIRECT.
+
+If format information is going to be probed, then Py_BUF_FORMAT must
+be |'d to the flags otherwise the consumer assumes it is unsigned
+bytes.
 
 There is a C-API that simple exporting objects can use to fill-in the
 buffer info structure correctly according to the provided flags if a
-contiguous chunk of memory is all that can be exported.
+contiguous chunk of "unsigned bytes" is all that can be exported.
 
 
 The bufferinfo structure is::
@@ -268,18 +292,19 @@ ndims
 shape
     an array of ``Py_ssize_t`` of length ``ndims`` indicating the
     shape of the memory as an N-D array.  Note that ``((*shape)[0] *
-    ... * (*shape)[ndims-1])*itemsize = len``.
+    ... * (*shape)[ndims-1])*itemsize = len``.  If ndims is 0 (indicating
+    a scalar), then this must be NULL.
 
 strides 
     address of a ``Py_ssize_t*`` variable that will be filled with a
-    pointer to an array of ``Py_ssize_t`` of length ``*ndims``
-    indicating the number of bytes to skip to get to the next element
-    in each dimension.  If this is not requested by the caller
-    (BUF_STRIDES is not set), then this member of the structure will
-    not be used and the consumer is assuming the array is C-style
-    contiguous.  If this is not the case, then an error should be
-    raised.  If this member is requested by the caller (BUF_STRIDES is
-    set), then it must be filled in.
+    pointer to an array of ``Py_ssize_t`` of length ``ndims`` (or NULL
+    if ndims is 0).  indicating the number of bytes to skip to get to
+    the next element in each dimension.  If this is not requested by
+    the caller (BUF_STRIDES is not set), then this member of the
+    structure will not be used and the consumer is assuming the array
+    is C-style contiguous.  If this is not the case, then an error
+    should be raised.  If this member is requested by the caller
+    (BUF_STRIDES is set), then it must be filled in.
 
 
 suboffsets
@@ -471,7 +496,17 @@ array in C-style (last dimension varies the fastest).  If fortran is 'A', then
 it does not matter and the copy will be made in whatever way is more
 efficient.
 
-The last two C-API calls allow a standard way of getting data in and
+::
+
+    void PyBuffer_FreeMem(void *buf)
+
+This function frees the memory returned by PyObject_GetContiguous if a
+copy was made.  Do not call this function unless
+PyObject_GetContiguous returns a 1 indicating that new memory was
+created.
+
+
+These last three C-API calls allow a standard way of getting data in and
 out of Python objects into contiguous memory areas no matter how it is
 actually stored.  These calls use the extended buffer interface to perform
 their work. 
