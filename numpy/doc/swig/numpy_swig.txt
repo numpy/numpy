@@ -436,75 +436,194 @@ Macros
 Routines
 --------
 
-  **char* pytype_string(PyObject* py_obj)**
-    Given a ``PyObject*``, return a string describing its type.
+  **pytype_string()**
+
+    Return type: ``char*``
+
+    Arguments:
+
+    * ``PyObject* py_obj``, a general python object.
+
+    Return a string describing the type of ``py_obj``.
 
 
-  **char* typecode_string(int typecode)**
-    Given a `NumPy`_ integer typecode, return a string describing the type.
+  **typecode_string()**
+
+    Return type: ``char*``
+
+    Arguments:
+
+    * ``int typecode``, a `NumPy`_ integer typecode.
+
+    Return a string describing the type corresponding to the `NumPy`_
+    ``typecode``.
+
+  **type_match()**
+
+    Return type: ``int``
+
+    Arguments:
+
+    * ``int actual_type``, the `NumPy`_ typecode of a `NumPy`_ array.
+
+    * ``int desired_type``, the desired `NumPy`_ typecode.
+
+    Make sure that ``actual_type`` is compatible with
+    ``desired_type``.  For example, this allows character and
+    byte types, or int and long types, to match.  This is now
+    equivalent to ``PyArray_EquivTypenums()``.
 
 
-  **int type_match(int actual_type, int desired_type)**
-    Make sure input has correct `NumPy`_ type.  Allow character and
-    byte to match.  Also allow int and long to match.  This is
-    deprecated .  You should use ``PyArray_EquivTypenums()`` instead.
+  **obj_to_array_no_conversion()**
+
+    Return type: ``PyArrayObject*``
+
+    Arguments:
+
+    * ``PyObject* input``, a general python object.
+
+    * ``int typecode``, the desired `NumPy`_ typecode.
+
+    Cast ``input`` to a ``PyArrayObject*`` if legal, and ensure that
+    it is of type ``typecode``.  If ``input`` cannot be cast, or the
+    ``typecode`` is wrong, set a python error and return ``NULL``.
 
 
-  **PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode)**
-    Given a ``PyObject*``, cast it to a ``PyArrayObject*`` if legal.
-    If not, set the python error string appropriately and return
-    ``NULL``.
+  **obj_to_array_allow_conversion()**
+
+    Return type: ``PyArrayObject*``
+
+    Arguments:
+
+    * ``PyObject* input``, a general python object.
+
+    * ``int typecode``, the desired `NumPy`_ typecode of the resulting
+      array.
+
+    * ``int* is_new_object``, returns a value of 0 if no conversion
+      performed, else 1.
+
+    Convert ``input`` to a `NumPy`_ array with the given ``typecode``.
+    On success, return a valid ``PyArrayObject*`` with the correct
+    type.  On failure, the python error string will be set and the
+    routine returns ``NULL``.
 
 
-  **PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode, int* is_new_object)**
-    Convert the given ``PyObject*`` to a `NumPy`_ array with the given
-    typecode.  On Success, return a valid ``PyArrayObject*`` with the
-    correct type.  On failure, the python error string will be set and
-    the routine returns ``NULL``.
+  **make_contiguous()**
+
+    Return type: ``PyArrayObject*``
+
+    Arguments:
+
+    * ``PyArrayObject* ary``, a `NumPy`_ array.
+
+    * ``int* is_new_object``, returns a value of 0 if no conversion
+      performed, else 1.
+
+    * ``int min_dims``, minimum allowable dimensions.
+
+    * ``int max_dims``, maximum allowable dimensions.
+
+    Check to see if ``ary`` is contiguous.  If so, return the input
+    pointer and flag it as not a new object.  If it is not contiguous,
+    create a new ``PyArrayObject*`` using the original data, flag it
+    as a new object and return the pointer.
 
 
-  **PyArrayObject* make_contiguous(PyArrayObject* ary, int* is_new_object, int min_dims, int max_dims)**
-    Given a ``PyArrayObject*``, check to see if it is contiguous.  If
-    so, return the input pointer and flag it as not a new object.  If
-    it is not contiguous, create a new ``PyArrayObject*`` using the
-    original data, flag it as a new object and return the pointer.
+  **obj_to_array_contiguous_allow_conversion()**
 
+    Return type: ``PyArrayObject*``
 
-  **PyArrayObject* obj_to_array_contiguous_allow_conversion(PyObject* input, int typecode, int* is_new_object)**
-    Convert a given ``PyObject*`` to a contiguous ``PyArrayObject*``
-    of the specified type.  If the input object is not a contiguous
+    Arguments:
+
+    * ``PyObject* input``, a general python object.
+
+    * ``int typecode``, the desired `NumPy`_ typecode of the resulting
+      array.
+
+    * ``int* is_new_object``, returns a value of 0 if no conversion
+      performed, else 1.
+
+    Convert ``input`` to a contiguous ``PyArrayObject*`` of the
+    specified type.  If the input object is not a contiguous
     ``PyArrayObject*``, a new one will be created and the new object
     flag will be set.
 
 
-  **int require_contiguous(PyArrayObject* ary)**
-    Test whether a ``PyArrayObject*`` is contiguous.  If array is
-    contiguous, return 1.  Otherwise, set the python error string and
+  **require_contiguous()**
+
+    Return type: ``int``
+
+    Arguments:
+
+    * ``PyArrayObject* ary``, a `NumPy`_ array.
+
+    Test whether ``ary`` is contiguous.  If so, return 1.  Otherwise,
+    set a python error and return 0.
+
+
+  **require_native()**
+
+    Return type: ``int``
+
+    Arguments:
+
+    * ``PyArray_Object* ary``, a `NumPy`_ array.
+
+    Require that ``ary`` is not byte-swapped.  If the array is not
+    byte-swapped, return 1.  Otherwise, set a python error and return
+    0.
+
+  **require_dimensions()**
+
+    Return type: ``int``
+
+    Arguments:
+
+    * ``PyArrayObject* ary``, a `NumPy`_ array.
+
+    * ``int exact_dimensions``, the desired number of dimensions.
+
+    Require ``ary`` to have a specified number of dimensions.  If the
+    array has the specified number of dimensions, return 1.
+    Otherwise, set a python error and return 0.
+
+
+  **require_dimensions_n()**
+
+    Return type: ``int``
+
+    Arguments:
+
+    * ``PyArrayObject* ary``, a `NumPy`_ array.
+
+    * ``int* exact_dimensions``, an array of integers representing
+      acceptable numbers of dimensions.
+
+    * ``int n``, the length of ``exact_dimensions``.
+
+    Require ``ary`` to have one of a list of specified number of
+    dimensions.  If the array has one of the specified number of
+    dimensions, return 1.  Otherwise, set the python error string and
     return 0.
 
 
-  **int require_native(PyArray_Object* ary)**
-    Require that a numpy array is not byte-swapped.  If the array is
-    not byte-swapped, return 1.  Otherwise, set the python error string
+  **require_size()**
+
+    Return type: ``int``
+
+    Arguments:
+
+    * ``PyArrayObject* ary``, a `NumPy`_ array.
+
+    * ``npy_int* size``, an array representing the desired lengths of
+      each dimension.
+
+    * ``int n``, the length of ``size``.
+
+    Require ``ary`` to have a specified shape.  If the array has the
+    specified shape, return 1.  Otherwise, set the python error string
     and return 0.
-
-  **int require_dimensions(PyArrayObject* ary, int exact_dimensions)**
-    Require the given ``PyArrayObject*`` to have a specified number of
-    dimensions.  If the array has the specified number of dimensions,
-    return 1.  Otherwise, set the python error string and return 0.
-
-
-  **int require_dimensions_n(PyArrayObject* ary, int* exact_dimensions, int n)**
-    Require the given ``PyArrayObject*`` to have one of a list of
-    specified number of dimensions.  If the array has one of the
-    specified number of dimensions, return 1.  Otherwise, set the
-    python error string and return 0.
-
-
-  **int require_size(PyArrayObject* ary, int* size, int n)**
-    Require the given ``PyArrayObject*`` to have a specified shape.
-    If the array has the specified shape, return 1.  Otherwise, set
-    the python error string and return 0.
 
 
 Beyond the Provided Typemaps
