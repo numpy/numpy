@@ -4,7 +4,7 @@ numpy.i: a SWIG Interface File for NumPy
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
-:Date:        4 April, 2007
+:Date:        13 April, 2007
 
 .. contents::
 
@@ -41,6 +41,7 @@ string)::
 
     def rms(seq):
         """
+	rms: return the root mean square of a sequence
         rms(numpy.ndarray) -> double
         rms(list) -> double
         rms(tuple) -> double
@@ -134,19 +135,19 @@ above will produce wrapper code that looks something like::
 The typemaps from ``numpy.i`` are responsible for the following lines
 of code: 12--20, 25 and 30.  Line 10 parses the input to the ``rms``
 function.  From the format string ``"O:rms"``, we can see that the
-argument list is expected to be a single python object (specified by
-the ``O`` before the colon) and whose pointer is stored in ``obj0``.
-A number of functions, supplied by ``numpy.i``, are called to make and
-check the (possible) conversion from a generic python object to a
-`NumPy`_ array.  These functions are explained in the section `Helper
-Functions`_, but hopefully their names are self-explanatory.  At line
-12 we use ``obj0`` to construct a `NumPy`_ array.  At line 17, we
-check the validity of the result: that it is non-null and that it has
-a single dimension of arbitrary length.  Once these states are
-verified, we extract the data buffer and length in lines 19 and 20 so
-that we can call the underlying C function at line 22.  Line 25
-performs memory management for the case where we have created a new
-array that is no longer needed.
+argument list is expected to be a single `python`_ object (specified
+by the ``O`` before the colon) and whose pointer is stored in
+``obj0``.  A number of functions, supplied by ``numpy.i``, are called
+to make and check the (possible) conversion from a generic `python`_
+object to a `NumPy`_ array.  These functions are explained in the
+section `Helper Functions`_, but hopefully their names are
+self-explanatory.  At line 12 we use ``obj0`` to construct a `NumPy`_
+array.  At line 17, we check the validity of the result: that it is
+non-null and that it has a single dimension of arbitrary length.  Once
+these states are verified, we extract the data buffer and length in
+lines 19 and 20 so that we can call the underlying C function at line
+22.  Line 25 performs memory management for the case where we have
+created a new array that is no longer needed.
 
 This code has a significant amount of error handling.  Note the
 ``SWIG_fail`` is a macro for ``goto fail``, refering to the label at
@@ -305,13 +306,13 @@ arrays in, they simply get returned.  The argout signatures are
 
 These are typically used in situations where in C/C++, you would
 allocate a(n) array(s) on the heap, and call the function to fill the
-array(s) values.  In python, the arrays are allocated for you and
+array(s) values.  In `python`_, the arrays are allocated for you and
 returned as new array objects.
 
 Note that we support ``DATA_TYPE*`` argout typemaps in 1D, but not 2D
 or 3D.  This because of a quirk with the `SWIG`_ typemap syntax and
 cannot be avoided.  Note that for these types of 1D typemaps, the
-python function will take a single argument representing ``DIM1``.
+`python`_ function will take a single argument representing ``DIM1``.
 
 Output Arrays
 -------------
@@ -382,9 +383,9 @@ which would have provided automatic type conversions for arrays of
 type ``Py_complex``, ``npy_cfloat`` and ``npy_cdouble``.  However, it
 seemed unlikely that there would be any independent (non-`python`_,
 non-`NumPy`_) application code that people would be using `SWIG`_ to
-generate a python interface to, that also used these definitions for
-complex types.  More likely, these application codes will define their
-own complex types, or in the case of C++, use ``std::complex``.
+generate a `python`_ interface to, that also used these definitions
+for complex types.  More likely, these application codes will define
+their own complex types, or in the case of C++, use ``std::complex``.
 Assuming these data structures are compatible with `python`_ and
 `NumPy`_ complex types, ``%numpy_typemap`` expansions as above (with
 the user's complex type substituted for the first argument) should
@@ -442,7 +443,7 @@ Routines
 
     Arguments:
 
-    * ``PyObject* py_obj``, a general python object.
+    * ``PyObject* py_obj``, a general `python`_ object.
 
     Return a string describing the type of ``py_obj``.
 
@@ -480,13 +481,13 @@ Routines
 
     Arguments:
 
-    * ``PyObject* input``, a general python object.
+    * ``PyObject* input``, a general `python`_ object.
 
     * ``int typecode``, the desired `NumPy`_ typecode.
 
     Cast ``input`` to a ``PyArrayObject*`` if legal, and ensure that
     it is of type ``typecode``.  If ``input`` cannot be cast, or the
-    ``typecode`` is wrong, set a python error and return ``NULL``.
+    ``typecode`` is wrong, set a `python`_ error and return ``NULL``.
 
 
   **obj_to_array_allow_conversion()**
@@ -495,7 +496,7 @@ Routines
 
     Arguments:
 
-    * ``PyObject* input``, a general python object.
+    * ``PyObject* input``, a general `python`_ object.
 
     * ``int typecode``, the desired `NumPy`_ typecode of the resulting
       array.
@@ -505,7 +506,7 @@ Routines
 
     Convert ``input`` to a `NumPy`_ array with the given ``typecode``.
     On success, return a valid ``PyArrayObject*`` with the correct
-    type.  On failure, the python error string will be set and the
+    type.  On failure, the `python`_ error string will be set and the
     routine returns ``NULL``.
 
 
@@ -536,7 +537,7 @@ Routines
 
     Arguments:
 
-    * ``PyObject* input``, a general python object.
+    * ``PyObject* input``, a general `python`_ object.
 
     * ``int typecode``, the desired `NumPy`_ typecode of the resulting
       array.
@@ -559,7 +560,7 @@ Routines
     * ``PyArrayObject* ary``, a `NumPy`_ array.
 
     Test whether ``ary`` is contiguous.  If so, return 1.  Otherwise,
-    set a python error and return 0.
+    set a `python`_ error and return 0.
 
 
   **require_native()**
@@ -571,8 +572,8 @@ Routines
     * ``PyArray_Object* ary``, a `NumPy`_ array.
 
     Require that ``ary`` is not byte-swapped.  If the array is not
-    byte-swapped, return 1.  Otherwise, set a python error and return
-    0.
+    byte-swapped, return 1.  Otherwise, set a `python`_ error and
+    return 0.
 
   **require_dimensions()**
 
@@ -586,7 +587,7 @@ Routines
 
     Require ``ary`` to have a specified number of dimensions.  If the
     array has the specified number of dimensions, return 1.
-    Otherwise, set a python error and return 0.
+    Otherwise, set a `python`_ error and return 0.
 
 
   **require_dimensions_n()**
@@ -604,8 +605,8 @@ Routines
 
     Require ``ary`` to have one of a list of specified number of
     dimensions.  If the array has one of the specified number of
-    dimensions, return 1.  Otherwise, set the python error string and
-    return 0.
+    dimensions, return 1.  Otherwise, set the `python`_ error string
+    and return 0.
 
 
   **require_size()**
@@ -622,8 +623,8 @@ Routines
     * ``int n``, the length of ``size``.
 
     Require ``ary`` to have a specified shape.  If the array has the
-    specified shape, return 1.  Otherwise, set the python error string
-    and return 0.
+    specified shape, return 1.  Otherwise, set the `python`_ error
+    string and return 0.
 
 
 Beyond the Provided Typemaps
@@ -639,7 +640,7 @@ Consider a reasonable prototype for a dot product function::
 
     double dot(int len, double* vec1, double* vec2);
 
-The python interface that we want is::
+The `python`_ interface that we want is::
 
     def dot(vec1, vec2):
         """
@@ -649,7 +650,7 @@ The python interface that we want is::
 The problem here is that there is one dimension argument and two array
 arguments, and our typemaps are set up for dimensions that apply to a
 single array (in fact, `SWIG`_ does not provide a mechanism for
-associating ``len`` with ``vec2`` that takes two python input
+associating ``len`` with ``vec2`` that takes two `python`_ input
 arguments).  The recommended solution is the following::
 
     %apply (int DIM1, double* IN_ARRAY1) {(int len1, double* vec1),
