@@ -4,6 +4,9 @@
 # packages will use all sections so you should leave out sections that your
 # package does not use.
 
+# To assist automatic installation like easy_install, the user's home directory
+# will also be checked for the file ~/.numpy-site.cfg .
+
 # The format of the file is that of the standard library's ConfigParser module.
 #
 #   http://www.python.org/doc/current/lib/module-ConfigParser.html
