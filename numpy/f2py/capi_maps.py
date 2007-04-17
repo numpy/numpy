@@ -307,6 +307,10 @@ def getarrdims(a,var,verbose=0):
             i=i+1
             if d not in ['*',':','(*)','(:)']:
                 ret['cbsetdims']='%s#varname#_Dims[%d]=%s,'%(ret['cbsetdims'],i,d)
+            elif isintent_in(var):
+                outmess('getarrdims:warning: assumed shape array, using 0 instead of %r\n' \
+                        % (d))
+                ret['cbsetdims']='%s#varname#_Dims[%d]=%s,'%(ret['cbsetdims'],i,0)
             elif verbose :
                 errmess('getarrdims: If in call-back function: array argument %s must have bounded dimensions: got %s\n'%(`a`,`d`))
         if ret['cbsetdims']: ret['cbsetdims']=ret['cbsetdims'][:-1]
