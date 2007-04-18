@@ -58,7 +58,7 @@ Global parameters:
 The file 'site.cfg' is looked for in
 
 1) Directory of main setup.py file being run.
-2) Home directory of user running the setup.py file (Not implemented yet)
+2) Home directory of user running the setup.py file as ~/.numpy-site.cfg
 3) System wide directory (location of this file...)
 
 The first one found is used to get system configuration options The
@@ -349,7 +349,9 @@ class system_info:
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
-        self.files = get_standard_file('site.cfg')
+        self.files = []
+        self.files.extend(get_standard_file('.numpy-site.cfg'))
+        self.files.extend(get_standard_file('site.cfg'))
         self.parse_config_files()
         self.search_static_first = self.cp.getboolean(self.section,
                                                       'search_static_first')

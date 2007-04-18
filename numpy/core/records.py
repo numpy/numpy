@@ -6,6 +6,7 @@ from defchararray import chararray
 import numerictypes as nt
 import types
 import os
+import sys
 
 ndarray = sb.ndarray
 
@@ -128,7 +129,7 @@ class record(nt.void):
         except AttributeError:
             pass
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
-        res = fielddict.get(attr,None)
+        res = fielddict.get(attr, None)
         if res:
             obj = self.getfield(*res[:2])
             # if it has fields return a recarray,
@@ -146,15 +147,15 @@ class record(nt.void):
 
     def __setattr__(self, attr, val):
         if attr in ['setfield', 'getfield', 'dtype']:
-            raise AttributeError, "Cannot set '%s' attribute" % attr;
+            raise AttributeError, "Cannot set '%s' attribute" % attr
         try:
-            return nt.void.__setattr__(self,attr,val)
+            return nt.void.__setattr__(self, attr, val)
         except AttributeError:
             pass
-        fielddict = nt.void.__getattribute__(self,'dtype').fields
-        res = fielddict.get(attr,None)
+        fielddict = nt.void.__getattribute__(self, 'dtype').fields
+        res = fielddict.get(attr, None)
         if res:
-            return self.setfield(val,*res[:2])
+            return self.setfield(val, *res[:2])
         else:
             raise AttributeError, "'record' object has no "\
                   "attribute '%s'" % attr
@@ -187,7 +188,7 @@ class recarray(ndarray):
 
     def __getattribute__(self, attr):
         try:
-            return object.__getattribute__(self,attr)
+            return object.__getattribute__(self, attr)
         except AttributeError: # attr must be a fieldname
             pass
         fielddict = ndarray.__getattribute__(self,'dtype').fields
@@ -232,7 +233,7 @@ class recarray(ndarray):
             res = fielddict[attr][:2]
         except (TypeError,KeyError):
             raise AttributeError, "record array has no attribute %s" % attr
-        return self.setfield(val,*res)
+        return self.setfield(val, *res)
 
     def __getitem__(self, indx):
         obj = ndarray.__getitem__(self, indx)
@@ -240,10 +241,10 @@ class recarray(ndarray):
             return obj.view(ndarray)
         return obj
 
-    def field(self,attr, val=None):
-        if isinstance(attr,int):
+    def field(self, attr, val=None):
+        if isinstance(attr, int):
             names = ndarray.__getattribute__(self,'dtype').names
-            attr=names[attr]
+            attr = names[attr]
 
         fielddict = ndarray.__getattribute__(self,'dtype').fields
 
@@ -304,7 +305,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
             if issubclass(obj.dtype.type, nt.flexible):
                 formats += `obj.itemsize`
             formats += ','
-        formats=formats[:-1]
+        formats = formats[:-1]
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -370,7 +371,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     nfields = len(recList[0])
     if formats is None and dtype is None:  # slower
-        obj = sb.array(recList,dtype=object)
+        obj = sb.array(recList, dtype=object)
         arrlist = [sb.array(obj[...,i].tolist()) for i in xrange(nfields)]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned, byteorder=byteorder)

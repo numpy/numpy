@@ -453,7 +453,10 @@ class NumpyTest:
                 continue
             if os.path.basename(os.path.dirname(module.__file__))=='tests':
                 continue
-            modules.append(module)
+            modules.append((name, module))
+
+        modules.sort()
+        modules = [m[1] for m in modules]
 
         self.test_files = []
         suites = []

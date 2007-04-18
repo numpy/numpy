@@ -5,7 +5,7 @@
 <meta name="generator" content="Docutils 0.4: http://docutils.sourceforge.net/" />
 <title>numpy.i: a SWIG Interface File for NumPy</title>
 <meta name="author" content="Bill Spotz" />
-<meta name="date" content="4 April, 2007" />
+<meta name="date" content="13 April, 2007" />
 <style type="text/css">
 
 /*
@@ -302,7 +302,7 @@ ul.auto-toc {
 <tr class="field"><th class="docinfo-name">Institution:</th><td class="field-body">Sandia National Laboratories</td>
 </tr>
 <tr><th class="docinfo-name">Date:</th>
-<td>4 April, 2007</td></tr>
+<td>13 April, 2007</td></tr>
 </tbody>
 </table>
 <div class="contents topic">
@@ -363,6 +363,7 @@ string):</p>
 <pre class="literal-block">
 def rms(seq):
     &quot;&quot;&quot;
+    rms: return the root mean square of a sequence
     rms(numpy.ndarray) -&gt; double
     rms(list) -&gt; double
     rms(tuple) -&gt; double
@@ -453,19 +454,19 @@ above will produce wrapper code that looks something like:</p>
 <p>The typemaps from <tt class="docutils literal"><span class="pre">numpy.i</span></tt> are responsible for the following lines
 of code: 12--20, 25 and 30.  Line 10 parses the input to the <tt class="docutils literal"><span class="pre">rms</span></tt>
 function.  From the format string <tt class="docutils literal"><span class="pre">&quot;O:rms&quot;</span></tt>, we can see that the
-argument list is expected to be a single python object (specified by
-the <tt class="docutils literal"><span class="pre">O</span></tt> before the colon) and whose pointer is stored in <tt class="docutils literal"><span class="pre">obj0</span></tt>.
-A number of functions, supplied by <tt class="docutils literal"><span class="pre">numpy.i</span></tt>, are called to make and
-check the (possible) conversion from a generic python object to a
-<a class="reference" href="http://numpy.scipy.org">NumPy</a> array.  These functions are explained in the section <a class="reference" href="#helper-functions">Helper
-Functions</a>, but hopefully their names are self-explanatory.  At line
-12 we use <tt class="docutils literal"><span class="pre">obj0</span></tt> to construct a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.  At line 17, we
-check the validity of the result: that it is non-null and that it has
-a single dimension of arbitrary length.  Once these states are
-verified, we extract the data buffer and length in lines 19 and 20 so
-that we can call the underlying C function at line 22.  Line 25
-performs memory management for the case where we have created a new
-array that is no longer needed.</p>
+argument list is expected to be a single <a class="reference" href="http://www.python.org">python</a> object (specified
+by the <tt class="docutils literal"><span class="pre">O</span></tt> before the colon) and whose pointer is stored in
+<tt class="docutils literal"><span class="pre">obj0</span></tt>.  A number of functions, supplied by <tt class="docutils literal"><span class="pre">numpy.i</span></tt>, are called
+to make and check the (possible) conversion from a generic <a class="reference" href="http://www.python.org">python</a>
+object to a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.  These functions are explained in the
+section <a class="reference" href="#helper-functions">Helper Functions</a>, but hopefully their names are
+self-explanatory.  At line 12 we use <tt class="docutils literal"><span class="pre">obj0</span></tt> to construct a <a class="reference" href="http://numpy.scipy.org">NumPy</a>
+array.  At line 17, we check the validity of the result: that it is
+non-null and that it has a single dimension of arbitrary length.  Once
+these states are verified, we extract the data buffer and length in
+lines 19 and 20 so that we can call the underlying C function at line
+22.  Line 25 performs memory management for the case where we have
+created a new array that is no longer needed.</p>
 <p>This code has a significant amount of error handling.  Note the
 <tt class="docutils literal"><span class="pre">SWIG_fail</span></tt> is a macro for <tt class="docutils literal"><span class="pre">goto</span> <span class="pre">fail</span></tt>, refering to the label at
 line 28.  If the user provides the wrong number of arguments, this
@@ -623,12 +624,12 @@ arrays in, they simply get returned.  The argout signatures are</p>
 </blockquote>
 <p>These are typically used in situations where in C/C++, you would
 allocate a(n) array(s) on the heap, and call the function to fill the
-array(s) values.  In python, the arrays are allocated for you and
+array(s) values.  In <a class="reference" href="http://www.python.org">python</a>, the arrays are allocated for you and
 returned as new array objects.</p>
 <p>Note that we support <tt class="docutils literal"><span class="pre">DATA_TYPE*</span></tt> argout typemaps in 1D, but not 2D
 or 3D.  This because of a quirk with the <a class="reference" href="http://www.swig.org">SWIG</a> typemap syntax and
 cannot be avoided.  Note that for these types of 1D typemaps, the
-python function will take a single argument representing <tt class="docutils literal"><span class="pre">DIM1</span></tt>.</p>
+<a class="reference" href="http://www.python.org">python</a> function will take a single argument representing <tt class="docutils literal"><span class="pre">DIM1</span></tt>.</p>
 </div>
 <div class="section">
 <h2><a class="toc-backref" href="#id7" id="output-arrays" name="output-arrays">Output Arrays</a></h2>
@@ -688,7 +689,7 @@ typedef struct {double real, imag;} npy_cdouble;
 </pre>
 <p>We could have implemented:</p>
 <pre class="literal-block">
-%numpy_typemaps(Py_complex , NPY_DOUBLE , int)
+%numpy_typemaps(Py_complex , NPY_CDOUBLE, int)
 %numpy_typemaps(npy_cfloat , NPY_CFLOAT , int)
 %numpy_typemaps(npy_cdouble, NPY_CDOUBLE, int)
 </pre>
@@ -696,9 +697,9 @@ typedef struct {double real, imag;} npy_cdouble;
 type <tt class="docutils literal"><span class="pre">Py_complex</span></tt>, <tt class="docutils literal"><span class="pre">npy_cfloat</span></tt> and <tt class="docutils literal"><span class="pre">npy_cdouble</span></tt>.  However, it
 seemed unlikely that there would be any independent (non-<a class="reference" href="http://www.python.org">python</a>,
 non-<a class="reference" href="http://numpy.scipy.org">NumPy</a>) application code that people would be using <a class="reference" href="http://www.swig.org">SWIG</a> to
-generate a python interface to, that also used these definitions for
-complex types.  More likely, these application codes will define their
-own complex types, or in the case of C++, use <tt class="docutils literal"><span class="pre">std::complex</span></tt>.
+generate a <a class="reference" href="http://www.python.org">python</a> interface to, that also used these definitions
+for complex types.  More likely, these application codes will define
+their own complex types, or in the case of C++, use <tt class="docutils literal"><span class="pre">std::complex</span></tt>.
 Assuming these data structures are compatible with <a class="reference" href="http://www.python.org">python</a> and
 <a class="reference" href="http://numpy.scipy.org">NumPy</a> complex types, <tt class="docutils literal"><span class="pre">%numpy_typemap</span></tt> expansions as above (with
 the user's complex type substituted for the first argument) should
@@ -745,56 +746,160 @@ order.  Equivalent to <tt class="docutils literal"><span class="pre">(PyArray_IS
 <div class="section">
 <h2><a class="toc-backref" href="#id12" id="routines" name="routines">Routines</a></h2>
 <blockquote>
-<dl class="docutils">
-<dt><strong>char* pytype_string(PyObject* py_obj)</strong></dt>
-<dd>Given a <tt class="docutils literal"><span class="pre">PyObject*</span></tt>, return a string describing its type.</dd>
-<dt><strong>char* typecode_string(int typecode)</strong></dt>
-<dd>Given a <a class="reference" href="http://numpy.scipy.org">NumPy</a> integer typecode, return a string describing the type.</dd>
-<dt><strong>int type_match(int actual_type, int desired_type)</strong></dt>
-<dd>Make sure input has correct <a class="reference" href="http://numpy.scipy.org">NumPy</a> type.  Allow character and
-byte to match.  Also allow int and long to match.  This is
-deprecated .  You should use <tt class="docutils literal"><span class="pre">PyArray_EquivTypenums()</span></tt> instead.</dd>
-<dt><strong>PyArrayObject* obj_to_array_no_conversion(PyObject* input, int typecode)</strong></dt>
-<dd>Given a <tt class="docutils literal"><span class="pre">PyObject*</span></tt>, cast it to a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> if legal.
-If not, set the python error string appropriately and return
-<tt class="docutils literal"><span class="pre">NULL</span></tt>.</dd>
-<dt><strong>PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode, int* is_new_object)</strong></dt>
-<dd>Convert the given <tt class="docutils literal"><span class="pre">PyObject*</span></tt> to a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array with the given
-typecode.  On Success, return a valid <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> with the
-correct type.  On failure, the python error string will be set and
-the routine returns <tt class="docutils literal"><span class="pre">NULL</span></tt>.</dd>
-<dt><strong>PyArrayObject* make_contiguous(PyArrayObject* ary, int* is_new_object, int min_dims, int max_dims)</strong></dt>
-<dd>Given a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>, check to see if it is contiguous.  If
-so, return the input pointer and flag it as not a new object.  If
-it is not contiguous, create a new <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> using the
-original data, flag it as a new object and return the pointer.</dd>
-<dt><strong>PyArrayObject* obj_to_array_contiguous_allow_conversion(PyObject* input, int typecode, int* is_new_object)</strong></dt>
-<dd>Convert a given <tt class="docutils literal"><span class="pre">PyObject*</span></tt> to a contiguous <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>
-of the specified type.  If the input object is not a contiguous
+<p><strong>pytype_string()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">char*</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyObject*</span> <span class="pre">py_obj</span></tt>, a general <a class="reference" href="http://www.python.org">python</a> object.</li>
+</ul>
+<p>Return a string describing the type of <tt class="docutils literal"><span class="pre">py_obj</span></tt>.</p>
+</blockquote>
+<p><strong>typecode_string()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">char*</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">typecode</span></tt>, a <a class="reference" href="http://numpy.scipy.org">NumPy</a> integer typecode.</li>
+</ul>
+<p>Return a string describing the type corresponding to the <a class="reference" href="http://numpy.scipy.org">NumPy</a>
+<tt class="docutils literal"><span class="pre">typecode</span></tt>.</p>
+</blockquote>
+<p><strong>type_match()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">int</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">actual_type</span></tt>, the <a class="reference" href="http://numpy.scipy.org">NumPy</a> typecode of a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">desired_type</span></tt>, the desired <a class="reference" href="http://numpy.scipy.org">NumPy</a> typecode.</li>
+</ul>
+<p>Make sure that <tt class="docutils literal"><span class="pre">actual_type</span></tt> is compatible with
+<tt class="docutils literal"><span class="pre">desired_type</span></tt>.  For example, this allows character and
+byte types, or int and long types, to match.  This is now
+equivalent to <tt class="docutils literal"><span class="pre">PyArray_EquivTypenums()</span></tt>.</p>
+</blockquote>
+<p><strong>obj_to_array_no_conversion()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyObject*</span> <span class="pre">input</span></tt>, a general <a class="reference" href="http://www.python.org">python</a> object.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">typecode</span></tt>, the desired <a class="reference" href="http://numpy.scipy.org">NumPy</a> typecode.</li>
+</ul>
+<p>Cast <tt class="docutils literal"><span class="pre">input</span></tt> to a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> if legal, and ensure that
+it is of type <tt class="docutils literal"><span class="pre">typecode</span></tt>.  If <tt class="docutils literal"><span class="pre">input</span></tt> cannot be cast, or the
+<tt class="docutils literal"><span class="pre">typecode</span></tt> is wrong, set a <a class="reference" href="http://www.python.org">python</a> error and return <tt class="docutils literal"><span class="pre">NULL</span></tt>.</p>
+</blockquote>
+<p><strong>obj_to_array_allow_conversion()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyObject*</span> <span class="pre">input</span></tt>, a general <a class="reference" href="http://www.python.org">python</a> object.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">typecode</span></tt>, the desired <a class="reference" href="http://numpy.scipy.org">NumPy</a> typecode of the resulting
+array.</li>
+<li><tt class="docutils literal"><span class="pre">int*</span> <span class="pre">is_new_object</span></tt>, returns a value of 0 if no conversion
+performed, else 1.</li>
+</ul>
+<p>Convert <tt class="docutils literal"><span class="pre">input</span></tt> to a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array with the given <tt class="docutils literal"><span class="pre">typecode</span></tt>.
+On success, return a valid <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> with the correct
+type.  On failure, the <a class="reference" href="http://www.python.org">python</a> error string will be set and the
+routine returns <tt class="docutils literal"><span class="pre">NULL</span></tt>.</p>
+</blockquote>
+<p><strong>make_contiguous()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyArrayObject*</span> <span class="pre">ary</span></tt>, a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.</li>
+<li><tt class="docutils literal"><span class="pre">int*</span> <span class="pre">is_new_object</span></tt>, returns a value of 0 if no conversion
+performed, else 1.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">min_dims</span></tt>, minimum allowable dimensions.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">max_dims</span></tt>, maximum allowable dimensions.</li>
+</ul>
+<p>Check to see if <tt class="docutils literal"><span class="pre">ary</span></tt> is contiguous.  If so, return the input
+pointer and flag it as not a new object.  If it is not contiguous,
+create a new <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> using the original data, flag it
+as a new object and return the pointer.</p>
+</blockquote>
+<p><strong>obj_to_array_contiguous_allow_conversion()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyObject*</span> <span class="pre">input</span></tt>, a general <a class="reference" href="http://www.python.org">python</a> object.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">typecode</span></tt>, the desired <a class="reference" href="http://numpy.scipy.org">NumPy</a> typecode of the resulting
+array.</li>
+<li><tt class="docutils literal"><span class="pre">int*</span> <span class="pre">is_new_object</span></tt>, returns a value of 0 if no conversion
+performed, else 1.</li>
+</ul>
+<p>Convert <tt class="docutils literal"><span class="pre">input</span></tt> to a contiguous <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> of the
+specified type.  If the input object is not a contiguous
 <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt>, a new one will be created and the new object
-flag will be set.</dd>
-<dt><strong>int require_contiguous(PyArrayObject* ary)</strong></dt>
-<dd>Test whether a <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> is contiguous.  If array is
-contiguous, return 1.  Otherwise, set the python error string and
-return 0.</dd>
-<dt><strong>int require_native(PyArray_Object* ary)</strong></dt>
-<dd>Require that a numpy array is not byte-swapped.  If the array is
-not byte-swapped, return 1.  Otherwise, set the python error string
-and return 0.</dd>
-<dt><strong>int require_dimensions(PyArrayObject* ary, int exact_dimensions)</strong></dt>
-<dd>Require the given <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> to have a specified number of
-dimensions.  If the array has the specified number of dimensions,
-return 1.  Otherwise, set the python error string and return 0.</dd>
-<dt><strong>int require_dimensions_n(PyArrayObject* ary, int* exact_dimensions, int n)</strong></dt>
-<dd>Require the given <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> to have one of a list of
-specified number of dimensions.  If the array has one of the
-specified number of dimensions, return 1.  Otherwise, set the
-python error string and return 0.</dd>
-<dt><strong>int require_size(PyArrayObject* ary, int* size, int n)</strong></dt>
-<dd>Require the given <tt class="docutils literal"><span class="pre">PyArrayObject*</span></tt> to have a specified shape.
-If the array has the specified shape, return 1.  Otherwise, set
-the python error string and return 0.</dd>
-</dl>
+flag will be set.</p>
+</blockquote>
+<p><strong>require_contiguous()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">int</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyArrayObject*</span> <span class="pre">ary</span></tt>, a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.</li>
+</ul>
+<p>Test whether <tt class="docutils literal"><span class="pre">ary</span></tt> is contiguous.  If so, return 1.  Otherwise,
+set a <a class="reference" href="http://www.python.org">python</a> error and return 0.</p>
+</blockquote>
+<p><strong>require_native()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">int</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyArray_Object*</span> <span class="pre">ary</span></tt>, a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.</li>
+</ul>
+<p>Require that <tt class="docutils literal"><span class="pre">ary</span></tt> is not byte-swapped.  If the array is not
+byte-swapped, return 1.  Otherwise, set a <a class="reference" href="http://www.python.org">python</a> error and
+return 0.</p>
+</blockquote>
+<p><strong>require_dimensions()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">int</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyArrayObject*</span> <span class="pre">ary</span></tt>, a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">exact_dimensions</span></tt>, the desired number of dimensions.</li>
+</ul>
+<p>Require <tt class="docutils literal"><span class="pre">ary</span></tt> to have a specified number of dimensions.  If the
+array has the specified number of dimensions, return 1.
+Otherwise, set a <a class="reference" href="http://www.python.org">python</a> error and return 0.</p>
+</blockquote>
+<p><strong>require_dimensions_n()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">int</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyArrayObject*</span> <span class="pre">ary</span></tt>, a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.</li>
+<li><tt class="docutils literal"><span class="pre">int*</span> <span class="pre">exact_dimensions</span></tt>, an array of integers representing
+acceptable numbers of dimensions.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">n</span></tt>, the length of <tt class="docutils literal"><span class="pre">exact_dimensions</span></tt>.</li>
+</ul>
+<p>Require <tt class="docutils literal"><span class="pre">ary</span></tt> to have one of a list of specified number of
+dimensions.  If the array has one of the specified number of
+dimensions, return 1.  Otherwise, set the <a class="reference" href="http://www.python.org">python</a> error string
+and return 0.</p>
+</blockquote>
+<p><strong>require_size()</strong></p>
+<blockquote>
+<p>Return type: <tt class="docutils literal"><span class="pre">int</span></tt></p>
+<p>Arguments:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">PyArrayObject*</span> <span class="pre">ary</span></tt>, a <a class="reference" href="http://numpy.scipy.org">NumPy</a> array.</li>
+<li><tt class="docutils literal"><span class="pre">npy_int*</span> <span class="pre">size</span></tt>, an array representing the desired lengths of
+each dimension.</li>
+<li><tt class="docutils literal"><span class="pre">int</span> <span class="pre">n</span></tt>, the length of <tt class="docutils literal"><span class="pre">size</span></tt>.</li>
+</ul>
+<p>Require <tt class="docutils literal"><span class="pre">ary</span></tt> to have a specified shape.  If the array has the
+specified shape, return 1.  Otherwise, set the <a class="reference" href="http://www.python.org">python</a> error
+string and return 0.</p>
+</blockquote>
 </blockquote>
 </div>
 </div>
@@ -808,7 +913,7 @@ a simple <tt class="docutils literal"><span class="pre">%include</span> <span cl
 <pre class="literal-block">
 double dot(int len, double* vec1, double* vec2);
 </pre>
-<p>The python interface that we want is:</p>
+<p>The <a class="reference" href="http://www.python.org">python</a> interface that we want is:</p>
 <pre class="literal-block">
 def dot(vec1, vec2):
     &quot;&quot;&quot;
@@ -818,7 +923,7 @@ def dot(vec1, vec2):
 <p>The problem here is that there is one dimension argument and two array
 arguments, and our typemaps are set up for dimensions that apply to a
 single array (in fact, <a class="reference" href="http://www.swig.org">SWIG</a> does not provide a mechanism for
-associating <tt class="docutils literal"><span class="pre">len</span></tt> with <tt class="docutils literal"><span class="pre">vec2</span></tt> that takes two python input
+associating <tt class="docutils literal"><span class="pre">len</span></tt> with <tt class="docutils literal"><span class="pre">vec2</span></tt> that takes two <a class="reference" href="http://www.python.org">python</a> input
 arguments).  The recommended solution is the following:</p>
 <pre class="literal-block">
 %apply (int DIM1, double* IN_ARRAY1) {(int len1, double* vec1),
@@ -948,7 +1053,7 @@ possible.</p>
 </div>
 <div class="footer">
 <hr class="footer" />
-Generated on: 2007-04-10 15:20 UTC.
+Generated on: 2007-04-13 20:43 UTC.
 Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
 
 </div>

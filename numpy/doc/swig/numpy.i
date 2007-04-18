@@ -965,9 +965,9 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  * Swig complains about a syntax error for the following macros
  * expansions:
  */
-/*%numpy_typemaps(complex float,       NPY_CFLOAT     )
+/*%numpy_typemaps(complex float,  NPY_CFLOAT , int)
  */
-/*%numpy_typemaps(complex double,      NPY_CDOUBLE    )
+/*%numpy_typemaps(complex double, NPY_CDOUBLE, int)
  */
 /*%numpy_typemaps(complex long double, NPY_CLONGDOUBLE)
  */

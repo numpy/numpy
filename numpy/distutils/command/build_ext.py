@@ -47,11 +47,10 @@ class build_ext (old_build_ext):
             return
 
         # Make sure that extension sources are complete.
-        for ext in self.extensions:
-            if not all_strings(ext.sources):
-                self.run_command('build_src')
+        self.run_command('build_src')
 
         if self.distribution.has_c_libraries():
+            self.run_command('build_clib')
             build_clib = self.get_finalized_command('build_clib')
             self.library_dirs.append(build_clib.build_clib)
         else:
