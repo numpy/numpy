@@ -7732,12 +7732,18 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
                 if (!PyArray_ISNUMBER(mp) && PyErr_Occurred()) return -1;
         }
 
-        /* If the input or output is STRING, UNICODE, or VOID */
+        /* If the input or output is OBJECT, STRING, UNICODE, or VOID */
         /*  then getitem and setitem are used for the cast */
         /*  and byteswapping is handled by those methods */
 
-        iswap = PyArray_ISBYTESWAPPED(mp) && !PyArray_ISFLEXIBLE(mp);
-        oswap = PyArray_ISBYTESWAPPED(out) && !PyArray_ISFLEXIBLE(out);
+        if (PyArray_ISFLEXIBLE(mp) || PyArray_ISOBJECT(mp) || PyArray_ISOBJECT(out) ||
+            PyArray_ISFLEXIBLE(out)) {
+                iswap = oswap = 0;
+        }
+        else {
+                iswap = PyArray_ISBYTESWAPPED(mp);
+                oswap = PyArray_ISBYTESWAPPED(out);
+        }
 
         return _broadcast_cast(out, mp, castfunc, iswap, oswap);
 }
