@@ -11,7 +11,7 @@ import warnings
 __all__ = ['set_package_path', 'set_local_path', 'restore_path',
            'IgnoreException', 'NumpyTestCase', 'NumpyTest',
            'ScipyTestCase', 'ScipyTest', # for backward compatibility
-           'importall'
+           'importall',
            ]
 
 DEBUG=0
@@ -338,7 +338,7 @@ class NumpyTest:
         short_module_name = self._rename_map.get(short_module_name,short_module_name)
         return short_module_name
 
-    def _get_module_tests(self,module,level,verbosity):
+    def _get_module_tests(self, module, level, verbosity):
         mstr = self._module_str
 
         short_module_name = self._get_short_module_name(module)
@@ -395,9 +395,8 @@ class NumpyTest:
 
     def _get_suite_list(self, test_module, level, module_name='__main__',
                         verbosity=1):
-        mstr = self._module_str
         suite_list = []
-        if hasattr(test_module,'test_suite'):
+        if hasattr(test_module, 'test_suite'):
             suite_list.extend(test_module.test_suite(level)._tests)
         for name in dir(test_module):
             obj = getattr(test_module, name)
@@ -410,44 +409,14 @@ class NumpyTest:
                 if getattr(suite,'isrunnable',lambda mthname:1)(mthname):
                     suite_list.append(suite)
         if verbosity>=0:
-            self.info('  Found %s tests for %s' % (len(suite_list),module_name))
+            self.info('  Found %s tests for %s' % (len(suite_list), module_name))
         return suite_list
 
-    def test(self,level=1,verbosity=1):
-        """ Run Numpy module test suite with level and verbosity.
-
-        level:
-          None           --- do nothing, return None
-          < 0            --- scan for tests of level=abs(level),
-                             don't run them, return TestSuite-list
-          > 0            --- scan for tests of level, run them,
-                             return TestRunner
-
-        verbosity:
-          >= 0           --- show information messages
-          > 1            --- show warnings on missing tests
-
-        It is assumed that package tests suite follows the following
-        convention: for each package module, there exists file
-        <packagepath>/tests/test_<modulename>.py that defines
-        TestCase classes (with names having prefix 'test_') with methods
-        (with names having prefixes 'check_' or 'bench_'); each of
-        these methods are called when running unit tests.
-        """
-        if level is None: # Do nothing.
-            return
-
-        if isinstance(self.package, str):
-            exec 'import %s as this_package' % (self.package)
-        else:
-            this_package = self.package
-
+    def _test_suite_from_modules(self, this_package, level, verbosity):
         package_name = this_package.__name__
-
         modules = []
         for name, module in sys.modules.items():
-            if package_name != name[:len(package_name)] \
-                   or module is None:
+            if not name.startswith(package_name) or module is None:
                 continue
             if not hasattr(module,'__file__'):
                 continue
@@ -465,9 +434,128 @@ class NumpyTest:
 
         suites.extend(self._get_suite_list(sys.modules[package_name],
                                            abs(level), verbosity=verbosity))
+        return unittest.TestSuite(suites)
 
-        all_tests = unittest.TestSuite(suites)
-        if level<0:
+    def _test_suite_from_all_tests(self, this_package, level, verbosity):
+        importall(this_package)
+        package_name = this_package.__name__
+
+        # Find all tests/ directories under the package
+        test_dirs_names = {}
+        for name, module in sys.modules.items():
+            if not name.startswith(package_name) or module is None:
+                continue
+            if not hasattr(module, '__file__'):
+                continue
+            d = os.path.dirname(module.__file__)
+            if os.path.basename(d)=='tests':
+                continue
+            d = os.path.join(d, 'tests')
+            if not os.path.isdir(d):
+                continue
+            if test_dirs_names.has_key(d): continue
+            test_dir_module = '.'.join(name.split('.')[:-1]+['tests'])
+            test_dirs_names[d] = test_dir_module
+
+        test_dirs = test_dirs_names.keys()
+        test_dirs.sort()
+
+        # For each file in each tests/ directory with a test case in it,
+        # import the file, and add the test cases to our list
+        suite_list = []
+        testcase_match = re.compile(r'\s*class\s+\w+\s*\(.*TestCase').match
+        for test_dir in test_dirs:
+            test_dir_module = test_dirs_names[test_dir]
+
+            if not sys.modules.has_key(test_dir_module):
+                sys.modules[test_dir_module] = imp.new_module(test_dir_module)
+
+            for fn in os.listdir(test_dir):
+                base, ext = os.path.splitext(fn)
+                if ext != '.py':
+                    continue
+                f = os.path.join(test_dir, fn)
+
+                # check that file contains TestCase class definitions:
+                fid = open(f, 'r')
+                skip = True
+                for line in fid:
+                    if testcase_match(line):
+                        skip = False
+                        break
+                fid.close()
+                if skip:
+                    continue
+
+                # import the test file
+                n = test_dir_module + '.' + base
+                # in case test files import local modules
+                sys.path.insert(0, test_dir)
+                fo = None
+                try:
+                    try:
+                        fo = open(f)
+                        test_module = imp.load_module(n, fo, f,
+                                                      ('.py', 'U', 1))
+                    except Exception, msg:
+                        print 'Failed importing %s: %s' % (f,msg)
+                        continue
+                finally:
+                    if fo:
+                        fo.close()
+                    del sys.path[0]
+
+                suites = self._get_suite_list(test_module, level,
+                                              module_name=n,
+                                              verbosity=verbosity)
+                suite_list.extend(suites)
+
+        all_tests = unittest.TestSuite(suite_list)
+        return all_tests
+
+    def test(self, level=1, verbosity=1, all=False):
+        """Run Numpy module test suite with level and verbosity.
+
+        level:
+          None           --- do nothing, return None
+          < 0            --- scan for tests of level=abs(level),
+                             don't run them, return TestSuite-list
+          > 0            --- scan for tests of level, run them,
+                             return TestRunner
+          > 10           --- run all tests (same as specifying all=True).
+                             (backward compatibility).
+
+        verbosity:
+          >= 0           --- show information messages
+          > 1            --- show warnings on missing tests
+
+        all:
+          True            --- run all test files (like self.testall())
+          False (default) --- only run test files associated with a module
+
+        It is assumed (when all=False) that package tests suite follows the
+        following convention: for each package module, there exists file
+        <packagepath>/tests/test_<modulename>.py that defines TestCase classes
+        (with names having prefix 'test_') with methods (with names having
+        prefixes 'check_' or 'bench_'); each of these methods are called when
+        running unit tests.
+        """
+        if level is None: # Do nothing.
+            return
+
+        if isinstance(self.package, str):
+            exec 'import %s as this_package' % (self.package)
+        else:
+            this_package = self.package
+
+        if all:
+            all_tests = self._test_suite_from_all_tests(this_package,
+                                                        level, verbosity)
+        else:
+            all_tests = self._test_suite_from_modules(this_package,
+                                                      level, verbosity)
+
+        if level < 0:
             return all_tests
 
         runner = unittest.TextTestRunner(verbosity=verbosity)
@@ -482,7 +570,7 @@ class NumpyTest:
             sys.displayhook = old_displayhook
         return runner
 
-    def testall(self,level=1,verbosity=1):
+    def testall(self, level=1,verbosity=1):
         """ Run Numpy module test suite with level and verbosity.
 
         level:
@@ -501,102 +589,7 @@ class NumpyTest:
         directory and no assumptions are made for naming the
         TestCase classes or their methods.
         """
-        if level is None: # Do nothing.
-            return
-
-        if isinstance(self.package, str):
-            exec 'import %s as this_package' % (self.package)
-        else:
-            this_package = self.package
-        package_name = this_package.__name__
-
-        importall(this_package)
-
-        test_dirs_names = {}
-        for name, module in sys.modules.items():
-            if package_name != name[:len(package_name)] \
-                   or module is None:
-                continue
-            if not hasattr(module,'__file__'):
-                continue
-            d = os.path.dirname(module.__file__)
-            if os.path.basename(d)=='tests':
-                continue
-            d = os.path.join(d, 'tests')
-            if not os.path.isdir(d):
-                continue
-            if test_dirs_names.has_key(d): continue
-            test_dir_module = '.'.join(name.split('.')[:-1]+['tests'])
-            test_dirs_names[d] = test_dir_module
-
-        test_dirs = test_dirs_names.keys()
-        test_dirs.sort()
-
-        suite_list = []
-        testcase_match = re.compile(r'\s*class\s+[_\w]+\s*\(.*TestCase').match
-        for test_dir in test_dirs:
-            test_dir_module = test_dirs_names[test_dir]
-
-            if not sys.modules.has_key(test_dir_module):
-                sys.modules[test_dir_module] = imp.new_module(test_dir_module)
-
-            for fn in os.listdir(test_dir):
-                base, ext = os.path.splitext(fn)
-                if ext != '.py':
-                    continue
-                f = os.path.join(test_dir, fn)
-
-                # check that file contains TestCase class definitions:
-                fid = open(f)
-                skip = True
-                for line in fid.readlines():
-                    if testcase_match(line):
-                        skip = False
-                        break
-                fid.close()
-                if skip:
-                    continue
-
-                # import the test file
-                n = test_dir_module + '.' + base
-                sys.path.insert(0,test_dir) # in case test files import local modules
-                try:
-                    test_module = imp.load_module(n,
-                                                  open(f),
-                                                  f,
-                                                  ('.py', 'U', 1))
-                except Exception, msg:
-                    print 'Failed importing %s: %s' % (f,msg)
-                    del sys.path[0]
-                    continue
-                del sys.path[0]
-
-                for name in dir(test_module):
-                    obj = getattr(test_module, name)
-                    if type(obj) is not type(unittest.TestCase) \
-                           or not issubclass(obj, unittest.TestCase) \
-                           or not self.check_testcase_name(obj.__name__):
-                        continue
-                    for mthname in self._get_method_names(obj,abs(level)):
-                        suite = obj(mthname)
-                        if getattr(suite,'isrunnable',lambda mthname:1)(mthname):
-                            suite_list.append(suite)
-
-        all_tests = unittest.TestSuite(suite_list)
-        if level<0:
-            return all_tests
-
-        runner = unittest.TextTestRunner(verbosity=verbosity)
-        # Use the builtin displayhook. If the tests are being run
-        # under IPython (for instance), any doctest test suites will
-        # fail otherwise.
-        old_displayhook = sys.displayhook
-        sys.displayhook = sys.__displayhook__
-        try:
-            runner.run(all_tests)
-        finally:
-            sys.displayhook = old_displayhook
-        return runner
+        return self.test(level=level, verbosity=verbosity, all=True)
 
     def run(self):
         """ Run Numpy module test suite with level and verbosity
