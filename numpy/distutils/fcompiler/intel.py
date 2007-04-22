@@ -1,17 +1,24 @@
+# -*- encoding: iso-8859-1 -*-
+# above encoding b/c there's a non-ASCII character in the sample output
+# of intele
 # http://developer.intel.com/software/products/compilers/flin/
 
 import os
 import sys
 
 from numpy.distutils.cpuinfo import cpu
+from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
 from numpy.distutils.exec_command import find_executable
+
+def intel_version_match(type):
+    # Match against the important stuff in the version string
+    return simple_version_match(start=r'Intel.*?Fortran.*?%s.*?Version' % (type,))
 
 class IntelFCompiler(FCompiler):
 
     compiler_type = 'intel'
-    version_pattern = r'Intel\(R\) Fortran Compiler for 32-bit '\
-                      'applications, Version (?P<version>[^\s*]*)'
+    version_match = intel_version_match('32-bit')
 
     for fc_exe in map(find_executable,['ifort','ifc']):
         if os.path.isfile(fc_exe):
@@ -74,9 +81,8 @@ class IntelFCompiler(FCompiler):
 
 class IntelItaniumFCompiler(IntelFCompiler):
     compiler_type = 'intele'
-    version_pattern = r'Intel\(R\) Fortran (90 Compiler Itanium\(TM\)|Itanium\(R\)) Compiler'\
-                      ' for (the Itanium\(TM\)|Itanium\(R\))-based applications(,|)'\
-                      '\s+Version (?P<version>[^\s*]*)'
+
+    version_match = intel_version_match('Itanium')
 
 #Intel(R) Fortran Itanium(R) Compiler for Itanium(R)-based applications
 #Version 9.1    Build 20060928 Package ID: l_fc_c_9.1.039
@@ -101,8 +107,7 @@ class IntelItaniumFCompiler(IntelFCompiler):
 class IntelEM64TFCompiler(IntelFCompiler):
     compiler_type = 'intelem'
 
-    version_pattern = r'Intel\(R\) Fortran Compiler for Intel\(R\) EM64T-based '\
-                      'applications, Version (?P<version>[^\s*]*)'
+    version_match = intel_version_match('EM64T-based')
 
     for fc_exe in map(find_executable,['ifort','efort','efc']):
         if os.path.isfile(fc_exe):
@@ -125,11 +130,13 @@ class IntelEM64TFCompiler(IntelFCompiler):
             opt.extend(['-tpp7', '-xW'])
         return opt
 
+# Is there no difference in the version string between the above compilers
+# and the Visual compilers?
+
 class IntelVisualFCompiler(FCompiler):
 
     compiler_type = 'intelv'
-    version_pattern = r'Intel\(R\) Fortran Compiler for 32-bit applications, '\
-                      'Version (?P<version>[^\s*]*)'
+    version_match = intel_version_match('32-bit')
 
     ar_exe = 'lib.exe'
     fc_exe = 'ifl'
@@ -181,9 +188,7 @@ class IntelVisualFCompiler(FCompiler):
 class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
 
     compiler_type = 'intelev'
-    version_pattern = r'Intel\(R\) Fortran (90 Compiler Itanium\(TM\)|Itanium\(R\)) Compiler'\
-                      ' for (the Itanium\(TM\)|Itanium\(R\))-based applications(,|)'\
-                      '\s+Version (?P<version>[^\s*]*)'
+    version_match = intel_version_match('Itanium')
 
     fc_exe = 'efl' # XXX this is a wild guess
     ar_exe = IntelVisualFCompiler.ar_exe

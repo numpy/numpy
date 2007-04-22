@@ -28,7 +28,7 @@ class FCompiler(CCompiler):
 
     Methods that subclasses may redefine:
 
-        get_version_cmd(), get_linker_so(), get_version()
+        find_executables(), get_version_cmd(), get_linker_so(), get_version()
         get_flags(), get_flags_opt(), get_flags_arch(), get_flags_debug()
         get_flags_f77(), get_flags_opt_f77(), get_flags_arch_f77(),
         get_flags_debug_f77(), get_flags_f90(), get_flags_opt_f90(),
@@ -112,6 +112,11 @@ class FCompiler(CCompiler):
     ## Methods that subclasses may redefine. But don't call these methods!
     ## They are private to FCompiler class and may return unexpected
     ## results if used elsewhere. So, you have been warned..
+
+    def find_executables(self):
+        """Modify self.executables to hold found executables, instead of
+        searching for them at class creation time."""
+        pass
 
     def get_version_cmd(self):
         """ Compiler command to print out version information. """
@@ -267,6 +272,7 @@ class FCompiler(CCompiler):
             noarch = conf.get('noarch',[None,noopt])[1]
         debug = conf.get('debug',[None,0])[1]
 
+        self.find_executables()
 
         f77 = self.__get_cmd('compiler_f77','F77',(conf,'f77exec'))
         f90 = self.__get_cmd('compiler_f90','F90',(conf,'f90exec'))
