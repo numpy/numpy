@@ -811,9 +811,12 @@ class mkl_info(system_info):
         info = {}
         dict_append(info,**mkl)
         dict_append(info,
-                    libraries = ['pthread'],
                     define_macros=[('SCIPY_MKL_H',None)],
                     include_dirs = incl_dirs)
+        if sys.platform == 'win32':
+            pass # win32 has no pthread library
+        else:
+            dict_append(libraries = ['pthread'])
         self.set_info(**info)
 
 class lapack_mkl_info(mkl_info):
@@ -822,7 +825,11 @@ class lapack_mkl_info(mkl_info):
         mkl = get_info('mkl')
         if not mkl:
             return
-        lapack_libs = self.get_libs('lapack_libs',['mkl_lapack32','mkl_lapack64'])
+        if sys.platform == 'win32':
+            lapack_libs = self.get_libs('lapack_libs',['mkl_lapack'])
+        else:
+            lapack_libs = self.get_libs('lapack_libs',['mkl_lapack32','mkl_lapack64'])
+            
         info = {'libraries': lapack_libs}
         dict_append(info,**mkl)
         self.set_info(**info)
