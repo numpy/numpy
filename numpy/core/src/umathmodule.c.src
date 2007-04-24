@@ -1039,9 +1039,8 @@ static void
 
 
 /**begin repeat
-#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
-#otyp=float*4, double*6#
+#TYP=UBYTE,USHORT,UINT,ULONG,ULONGLONG#
+#typ=ubyte, ushort, uint, ulong, ulonglong#
 */
 static void
 @TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
@@ -1058,6 +1057,41 @@ static void
 		}
 	}
 }
+/**end repeat**/
+
+
+/**begin repeat
+#TYP=BYTE,SHORT,INT,LONG,LONGLONG#
+#typ=char, short, int, long, longlong#
+*/
+static void
+@TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
+{
+	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+	char *i1=args[0], *i2=args[1], *op=args[2];
+        @typ@ x, y, tmp;
+	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+                y = *((@typ@ *)i2);
+		if (y == 0) {
+			generate_divbyzero_error();
+			*((@typ@ *)op)=0;
+		}
+		else {
+                        x = *((@typ@ *)i1);
+                        tmp = x / y;
+                        if (((x > 0) != (y > 0)) && (x % y != 0)) tmp--;
+                        *((@typ@ *)op)= tmp;
+		}
+	}
+}
+/**end repeat**/
+
+
+/**begin repeat
+#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+#otyp=float*4, double*6#
+*/
 static void
 @TYP@_true_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -1076,6 +1110,8 @@ static void
 }
 #define @TYP@_floor_divide @TYP@_divide
 /**end repeat**/
+
+
 
 /**begin repeat
 #TYP=FLOAT,DOUBLE,LONGDOUBLE#
