@@ -3757,7 +3757,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         char *src, *dest;
         int copyret=0;
 
-        indices = ret = NULL;
+        indices = NULL;
 	self = (PyAO *)_check_axis(self0, &axis, CARRAY);
         if (self == NULL) return NULL;
 
