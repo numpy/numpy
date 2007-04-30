@@ -380,7 +380,7 @@ class test_clip(NumpyTestCase):
                     byteorder = '='
 
                 if x.dtype.byteorder == '|': byteorder = '|'
-                assert_equal(byteorder,x.dtype.byteorder)
+                assert_equal(x.dtype.byteorder,byteorder)
                 self._check_range(x,expected_min,expected_max)
         return x
 
