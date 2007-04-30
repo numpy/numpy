@@ -16,7 +16,7 @@ try:
 except NameError:
     from sets import Set as set
 
-from distutils.sysconfig import get_config_var
+from distutils.sysconfig import get_config_var, get_python_lib
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError,DistutilsArgError,\
      DistutilsExecError,CompileError,LinkError,DistutilsPlatformError
@@ -40,7 +40,7 @@ class FCompiler(CCompiler):
 
     Methods that subclasses may redefine:
 
-        get_version_cmd(), get_linker_so(), get_version()
+        find_executables(), get_version_cmd(), get_linker_so(), get_version()
         get_flags(), get_flags_opt(), get_flags_arch(), get_flags_debug()
         get_flags_f77(), get_flags_opt_f77(), get_flags_arch_f77(),
         get_flags_debug_f77(), get_flags_f90(), get_flags_opt_f90(),
@@ -438,7 +438,14 @@ class FCompiler(CCompiler):
         linker_so = self.command_vars.linker_so
         if linker_so:
             linker_so_flags = to_list(self.flag_vars.linker_so)
-            self.set_executables(linker_so=[linker_so]+linker_so_flags)
+            if sys.platform.startswith('aix'):
+                python_lib = get_python_lib(standard_lib=1)
+                ld_so_aix = os.path.join(python_lib, 'config', 'ld_so_aix')
+                python_exp = os.path.join(python_lib, 'config', 'python.exp')
+                linker_so = [ld_so_aix, linker_so, '-bI:'+python_exp]
+            else:
+                linker_so = [linker_so]
+            self.set_executables(linker_so=linker_so+linker_so_flags)
 
         linker_exe = self.command_vars.linker_exe
         if linker_exe:

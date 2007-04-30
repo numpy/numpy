@@ -137,7 +137,7 @@ class build_ext (old_build_ext):
 
         macros = []
 
-        if check_for_f90_modules:
+        if fmodule_sources:
             module_build_dir = os.path.join(
                 self.build_temp,os.path.dirname(
                 self.get_ext_filename(fullname)))
@@ -159,8 +159,7 @@ class build_ext (old_build_ext):
                                           extra_postargs=extra_postargs,
                                           depends=ext.depends)
 
-        if check_for_f90_modules \
-               and fcompiler.module_dir_switch is None:
+        if fmodule_sources and fcompiler.module_dir_switch is None:
             for f in glob('*.mod'):
                 if f in existing_modules:
                     continue
@@ -258,17 +257,15 @@ class build_ext (old_build_ext):
         if cxx_sources:
             log.info("compiling C++ sources")
 
-            old_compiler = self.compiler.compiler_so[0]
-            self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
+            cxx_compiler = self.compiler.cxx_compiler()
 
-            c_objects += self.compiler.compile(cxx_sources,
+            c_objects += cxx_compiler.compile(cxx_sources,
                                               output_dir=output_dir,
                                               macros=macros,
                                               include_dirs=include_dirs,
                                               debug=self.debug,
                                               extra_postargs=extra_args,
                                               **kws)
-            self.compiler.compiler_so[0] = old_compiler
 
         fcompiler, f_objects = self.get_fortran_objects(ext,
                                                         f_sources,
@@ -281,10 +278,7 @@ class build_ext (old_build_ext):
             objects.extend(ext.extra_objects)
         extra_args = ext.extra_link_args or []
 
-        try:
-            old_linker_so_0 = self.compiler.linker_so[0]
-        except:
-            pass
+        linker = self.compiler.link_shared_object
 
         use_fortran_linker = getattr(ext,'language','c') in ['f77','f90']
         c_libraries = []
@@ -318,37 +312,30 @@ class build_ext (old_build_ext):
             if cxx_sources:
                 # XXX: Which linker should be used, Fortran or C++?
                 log.warn('mixing Fortran and C++ is untested')
-            link = fcompiler.link_shared_object
+            linker = fcompiler.link_shared_object
             language = ext.language or fcompiler.detect_language(f_sources)
         else:
-            link = self.compiler.link_shared_object
+            linker = self.compiler.link_shared_object
             if sys.version[:3]>='2.3':
                 language = ext.language or self.compiler.detect_language(sources)
             else:
                 language = ext.language
             if cxx_sources:
-                self.compiler.linker_so[0] = self.compiler.compiler_cxx[0]
+                linker = self.compiler.cxx_compiler().link_shared_object
 
         if sys.version[:3]>='2.3':
             kws = {'target_lang':language}
         else:
             kws = {}
 
-        link(objects, ext_filename,
-             libraries=self.get_libraries(ext) + c_libraries + clib_libraries,
-             library_dirs=ext.library_dirs + c_library_dirs + clib_library_dirs,
-             runtime_library_dirs=ext.runtime_library_dirs,
-             extra_postargs=extra_args,
-             export_symbols=self.get_export_symbols(ext),
-             debug=self.debug,
-             build_temp=self.build_temp,**kws)
-
-        try:
-            self.compiler.linker_so[0] = old_linker_so_0
-        except:
-            pass
-
-        return
+        linker(objects, ext_filename,
+               libraries=self.get_libraries(ext) + c_libraries + clib_libraries,
+               library_dirs=ext.library_dirs+c_library_dirs+clib_library_dirs,
+               runtime_library_dirs=ext.runtime_library_dirs,
+               extra_postargs=extra_args,
+               export_symbols=self.get_export_symbols(ext),
+               debug=self.debug,
+               build_temp=self.build_temp,**kws)
 
     def _libs_with_msvc_and_fortran(self, c_libraries, c_library_dirs):
         # Always use system linker when using MSVC compiler.

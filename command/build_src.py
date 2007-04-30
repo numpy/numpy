@@ -15,7 +15,9 @@ try:
 except ImportError:
     have_pyrex = False
 
-import numpy.f2py
+# this import can't be done here, as it uses numpy stuff only available
+# after it's installed
+#import numpy.f2py
 from numpy.distutils import log
 from numpy.distutils.misc_util import fortran_ext_match, \
      appendpath, is_string, is_sequence
@@ -438,6 +440,7 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file,'newer')) \
                    and not skip_f2py:
                 log.info("f2py: %s" % (source))
+                import numpy.f2py
                 numpy.f2py.run_main(f2py_options
                                     + ['--build-dir',target_dir,source])
             else:
@@ -456,6 +459,7 @@ class build_src(build_ext.build_ext):
                    and not skip_f2py:
                 log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
+                import numpy.f2py
                 numpy.f2py.run_main(f2py_options + ['--lower',
                                                 '--build-dir',target_dir]+\
                                 ['-m',ext_name]+f_sources)
@@ -476,6 +480,7 @@ class build_src(build_ext.build_ext):
             extension.include_dirs.append(self.build_src)
 
         if not skip_f2py:
+            import numpy.f2py
             d = os.path.dirname(numpy.f2py.__file__)
             source_c = os.path.join(d,'src','fortranobject.c')
             source_h = os.path.join(d,'src','fortranobject.h')

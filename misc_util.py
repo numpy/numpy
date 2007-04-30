@@ -962,9 +962,9 @@ class Configuration(object):
         return
 
     def add_numarray_include_dirs(self):
-	import numpy.numarray.util as nnu
-	self.add_include_dirs(*nnu.get_numarray_include_dirs())
-	
+        import numpy.numarray.util as nnu
+        self.add_include_dirs(*nnu.get_numarray_include_dirs())
+
     def add_headers(self,*files):
         """ Add installable headers to configuration.
         Argument(s) can be either
@@ -1294,7 +1294,7 @@ class Configuration(object):
 
         return version
 
-    def make_svn_version_py(self):
+    def make_svn_version_py(self, delete=True):
         """ Generate package __svn_version__.py file from SVN revision number,
         it will be removed after python exits but will be available
         when sdist, etc commands are executed.
@@ -1302,29 +1302,31 @@ class Configuration(object):
         If __svn_version__.py existed before, nothing is done.
         """
         target = njoin(self.local_path,'__svn_version__.py')
-        if os.path.isfile(target):
+        revision = self._get_svn_revision(self.local_path)
+        if os.path.isfile(target) or revision is None:
             return
-        def generate_svn_version_py():
-            if not os.path.isfile(target):
-                revision = self._get_svn_revision(self.local_path)
-                assert revision is not None,'hmm, why I am not inside SVN tree???'
-                version = str(revision)
-                self.info('Creating %s (version=%r)' % (target,version))
-                f = open(target,'w')
-                f.write('version = %r\n' % (version))
-                f.close()
+        else:
+            def generate_svn_version_py():
+                if not os.path.isfile(target):
+                    version = str(revision)
+                    self.info('Creating %s (version=%r)' % (target,version))
+                    f = open(target,'w')
+                    f.write('version = %r\n' % (version))
+                    f.close()
 
-            import atexit
-            def rm_file(f=target,p=self.info):
-                try: os.remove(f); p('removed '+f)
-                except OSError: pass
-                try: os.remove(f+'c'); p('removed '+f+'c')
-                except OSError: pass
-            atexit.register(rm_file)
+                import atexit
+                def rm_file(f=target,p=self.info):
+                    if delete:
+                        try: os.remove(f); p('removed '+f)
+                        except OSError: pass
+                        try: os.remove(f+'c'); p('removed '+f+'c')
+                        except OSError: pass
 
-            return target
+                atexit.register(rm_file)
 
-        self.add_data_files(('', generate_svn_version_py()))
+                return target
+
+            self.add_data_files(('', generate_svn_version_py()))
 
     def make_config_py(self,name='__config__'):
         """ Generate package __config__.py file containing system_info
@@ -1360,14 +1362,7 @@ def get_numpy_include_dirs():
     include_dirs = Configuration.numpy_include_dirs[:]
     if not include_dirs:
         import numpy
-        if numpy.show_config is None:
-            # running from numpy_core source directory
-            include_dirs.append(njoin(os.path.dirname(numpy.__file__),
-                                             'core', 'include'))
-        else:
-            # using installed numpy core headers
-            import numpy.core as core
-            include_dirs.append(njoin(os.path.dirname(core.__file__), 'include'))
+        include_dirs = [ numpy.get_include() ]
     # else running numpy/core/setup.py
     return include_dirs
 

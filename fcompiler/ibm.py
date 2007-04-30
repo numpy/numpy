@@ -3,7 +3,9 @@ import re
 import sys
 
 from numpy.distutils.fcompiler import FCompiler
+from numpy.distutils.exec_command import exec_command, find_executable
 from distutils import log
+from distutils.sysconfig import get_python_lib
 
 compilers = ['IBMFCompiler']
 
@@ -11,10 +13,10 @@ class IBMFCompiler(FCompiler):
 
     compiler_type = 'ibm'
     description = 'IBM XL Fortran Compiler'
-    version_pattern =  r'xlf\(1\)\s*IBM XL Fortran (Advanced Edition |)Version (?P<version>[^\s*]*)'
-
+    version_pattern =  r'(xlf\(1\)\s*|)IBM XL Fortran ((Advanced Edition |)Version |Enterprise Edition V)(?P<version>[^\s*]*)'
+    #IBM XL Fortran Enterprise Edition V10.1 for AIX \nVersion: 10.01.0000.0004
     executables = {
-        'version_cmd'  : ["<F77>"],
+        'version_cmd'  : ["<F77>", "-qversion"],
         'compiler_f77' : ["xlf"],
         'compiler_fix' : ["xlf90", "-qfixed"],
         'compiler_f90' : ["xlf90"],
@@ -25,8 +27,19 @@ class IBMFCompiler(FCompiler):
 
     def get_version(self,*args,**kwds):
         version = FCompiler.get_version(self,*args,**kwds)
+
+        if version is None and sys.platform.startswith('aix'):
+            # use lslpp to find out xlf version
+            lslpp = find_executable('lslpp')
+            xlf = find_executable('xlf')
+            if os.path.exists(xlf) and os.path.exists(lslpp):
+                s,o = exec_command(lslpp + ' -Lc xlfcmp')
+                m = re.search('xlfcmp:(?P<version>\d+([.]\d+)+)', o)
+                if m: version = m.group('version')
+
         xlf_dir = '/etc/opt/ibmcmp/xlf'
         if version is None and os.path.isdir(xlf_dir):
+            # linux:
             # If the output of xlf does not contain version info
             # (that's the case with xlf 8.1, for instance) then
             # let's try another method:
@@ -54,7 +67,10 @@ class IBMFCompiler(FCompiler):
         version = self.get_version(ok_status=[0,40])
         if version is not None:
             import tempfile
-            xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
+            if sys.platform.startswith('aix'):
+                xlf_cfg = '/etc/xlf.cfg'
+            else:
+                xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
             new_cfg = tempfile.mktemp()+'_xlf.cfg'
             log.info('Creating '+new_cfg)
             fi = open(xlf_cfg,'r')

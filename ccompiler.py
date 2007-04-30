@@ -8,9 +8,9 @@ from distutils import ccompiler
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
-import log
-from exec_command import exec_command
-from misc_util import cyg2win32, is_sequence, mingw32
+from numpy.distutils import log
+from numpy.distutils.exec_command import exec_command
+from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32
 from distutils.spawn import _nt_quote_args
 
 # hack to set compiler optimizing options. Needs to integrated with something.
@@ -20,6 +20,10 @@ def _new_init_posix():
     _old_init_posix()
     distutils.sysconfig._config_vars['OPT'] = '-Wall -g -O0'
 #distutils.sysconfig._init_posix = _new_init_posix
+
+def replace_method(klass, method_name, func):
+    m = new.instancemethod(func, None, klass)
+    setattr(klass, method_name, m)
 
 # Using customized CCompiler.spawn.
 def CCompiler_spawn(self, cmd, display=None):
@@ -37,7 +41,8 @@ def CCompiler_spawn(self, cmd, display=None):
         print o
         raise DistutilsExecError,\
               'Command "%s" failed with exit status %d' % (cmd, s)
-CCompiler.spawn = new.instancemethod(CCompiler_spawn,None,CCompiler)
+
+replace_method(CCompiler, 'spawn', CCompiler_spawn)
 
 def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir=''):
     if output_dir is None:
@@ -63,8 +68,7 @@ def CCompiler_object_filenames(self, source_filenames, strip_dir=0, output_dir='
         obj_names.append(obj_name)
     return obj_names
 
-CCompiler.object_filenames = new.instancemethod(CCompiler_object_filenames,
-                                                None,CCompiler)
+replace_method(CCompiler, 'object_filenames', CCompiler_object_filenames)
 
 def CCompiler_compile(self, sources, output_dir=None, macros=None,
                       include_dirs=None, debug=0, extra_preargs=None,
@@ -114,7 +118,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     # Return *all* object filenames, not just the ones we just built.
     return objects
 
-CCompiler.compile = new.instancemethod(CCompiler_compile,None,CCompiler)
+replace_method(CCompiler, 'compile', CCompiler_compile)
 
 def CCompiler_customize_cmd(self, cmd):
     """ Customize compiler using distutils command.
@@ -139,8 +143,7 @@ def CCompiler_customize_cmd(self, cmd):
         self.set_link_objects(cmd.link_objects)
     return
 
-CCompiler.customize_cmd = new.instancemethod(\
-    CCompiler_customize_cmd,None,CCompiler)
+replace_method(CCompiler, 'customize_cmd', CCompiler_customize_cmd)
 
 def _compiler_to_string(compiler):
     props = []
@@ -179,9 +182,7 @@ def CCompiler_show_customization(self):
         print _compiler_to_string(self)
         print '*'*80
 
-CCompiler.show_customization = new.instancemethod(\
-    CCompiler_show_customization,None,CCompiler)
-
+replace_method(CCompiler, 'show_customization', CCompiler_show_customization)
 
 def CCompiler_customize(self, dist, need_cxx=0):
     # See FCompiler.customize for suggested usage.
@@ -192,7 +193,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
         # not valid for C++ code, only for C.  Remove it if it's there to
         # avoid a spurious warning on every compilation.  All the default
         # options used by distutils can be extracted with:
-        
+
         # from distutils import sysconfig
         # sysconfig.get_config_vars('CC', 'CXX', 'OPT', 'BASECFLAGS',
         # 'CCSHARED', 'LDSHARED', 'SO')
@@ -200,10 +201,10 @@ def CCompiler_customize(self, dist, need_cxx=0):
             self.compiler_so.remove('-Wstrict-prototypes')
         except (AttributeError, ValueError):
             pass
-        
+
         if hasattr(self,'compiler') and self.compiler[0].find('cc')>=0:
             if not self.compiler_cxx:
-                if self.compiler[0][:3] == 'gcc':
+                if self.compiler[0].startswith('gcc'):
                     a, b = 'gcc', 'g++'
                 else:
                     a, b = 'cc', 'c++'
@@ -215,10 +216,23 @@ def CCompiler_customize(self, dist, need_cxx=0):
             log.warn('Missing compiler_cxx fix for '+self.__class__.__name__)
     return
 
-CCompiler.customize = new.instancemethod(\
-    CCompiler_customize,None,CCompiler)
+replace_method(CCompiler, 'customize', CCompiler_customize)
 
-def simple_version_match(pat=r'[-.\d]+', ignore=None, start=''):
+def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
+    """
+    Simple matching of version numbers, for use in CCompiler and FCompiler
+    classes.
+
+    :Parameters:
+        pat : regex matching version numbers.
+        ignore : false or regex matching expressions to skip over.
+        start : false or regex matching the start of where to start looking
+                for version numbers.
+
+    :Returns:
+        A function that is appropiate to use as the .version_match
+        attribute of a CCompiler class.
+    """
     def matcher(self, version_string):
         pos = 0
         if start:
@@ -271,15 +285,26 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
     self.version = version
     return version
 
-CCompiler.get_version = new.instancemethod(\
-    CCompiler_get_version,None,CCompiler)
+replace_method(CCompiler, 'get_version', CCompiler_get_version)
+
+def CCompiler_cxx_compiler(self):
+    cxx = copy(self)
+    cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
+    if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
+        # AIX needs the ld_so_aix script included with Python
+        cxx.linker_so = [cxx.linker_so[0]] + cxx.compiler_cxx[0] \
+                        + cxx.linker_so[2:]
+    else:
+        cxx.linker_so = [cxx.compiler_cxx[0]] + cxx.linker_so[1:]
+    return cxx
+
+replace_method(CCompiler, 'cxx_compiler', CCompiler_cxx_compiler)
 
 compiler_class['intel'] = ('intelccompiler','IntelCCompiler',
                            "Intel C Compiler for 32-bit applications")
 compiler_class['intele'] = ('intelccompiler','IntelItaniumCCompiler',
                            "Intel C Itanium Compiler for Itanium-based applications")
-ccompiler._default_compilers = ccompiler._default_compilers \
-                               + (('linux.*','intel'),('linux.*','intele'))
+ccompiler._default_compilers += (('linux.*','intel'),('linux.*','intele'))
 
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',

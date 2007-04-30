@@ -1,4 +1,3 @@
-
 import os
 import sys
 from pprint import pformat
@@ -12,7 +11,7 @@ def show_information(*args):
     for a in ['name']:
         print 'os.%s = %s' % (a,pformat(getattr(os,a)))
     if hasattr(os,'uname'):
-        print 'system,node,release,version,machine = ',os.uname()    
+        print 'system,node,release,version,machine = ',os.uname()
 
 def show_environ(*args):
     for k,i in os.environ.items():
@@ -29,7 +28,7 @@ def show_compilers(*args):
 def show_tasks(argv,ccompiler,fcompiler):
     print """\
 
-Tasks: 
+Tasks:
   i       - Show python/platform/machine information
   ie      - Show environment information
   c       - Show C compilers information
@@ -65,7 +64,7 @@ def edit_argv(*args):
     if s:
         argv[1:] = splitcmdline(s)
     return
-    
+
 def interactive_sys_argv(argv):
     print '='*72
     print 'Starting interactive session'
@@ -186,4 +185,3 @@ def interactive_sys_argv(argv):
 
     print '-'*72
     return argv
-

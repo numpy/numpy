@@ -5,7 +5,7 @@ cpuinfo
 Copyright 2002 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@cens.ioc.ee>
 Permission to use, modify, and distribute this software is given under the
-terms of the SciPy (BSD style) license.  See LICENSE.txt that came with
+terms of the NumPy (BSD style) license.  See LICENSE.txt that came with
 this distribution for specifics.
 
 Note:  This should be merged into proc at some point.  Perhaps proc should
@@ -185,7 +185,12 @@ class linux_cpuinfo(cpuinfo_base):
         return self.is_PentiumIV() and self.has_sse3()
 
     def _is_Nocona(self):
-        return self.is_PentiumIV() and self.is_64bit()
+        return self.is_64bit() and self.is_PentiumIV()
+
+    def _is_Core2(self):
+        return self.is_64bit() and self.is_Intel() and \
+               re.match(r'.*?Core\(TM\)2\b', \
+                        self.info[0]['model name']) is not None
 
     def _is_Itanium(self):
         return re.match(r'.*?Itanium\b',

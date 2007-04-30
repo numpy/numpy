@@ -129,10 +129,13 @@ class build_clib(old_build_clib):
 
             config_fc = build_info.get('config_fc',{})
             if fcompiler is not None and config_fc:
-                log.info('using setup script specified config_fc '\
+                log.info('using additional config_fc from setup script '\
                          'for fortran compiler: %s' \
-                         % (config_fc))
-                fcompiler.customize(config_fc)
+                         % (config_fc,))
+                dist = self.distribution
+                base_config_fc = dist.get_option_dict('config_fc').copy()
+                base_config_fc.update(config_fc)
+                fcompiler.customize(base_config_fc)
 
             macros = build_info.get('macros')
             include_dirs = build_info.get('include_dirs')
@@ -163,18 +166,14 @@ class build_clib(old_build_clib):
 
             if cxx_sources:
                 log.info("compiling C++ sources")
-                old_compiler = self.compiler.compiler_so[0]
-                self.compiler.compiler_so[0] = self.compiler.compiler_cxx[0]
-
-                cxx_objects = compiler.compile(cxx_sources,
-                                               output_dir=self.build_temp,
-                                               macros=macros,
-                                               include_dirs=include_dirs,
-                                               debug=self.debug,
-                                               extra_postargs=extra_postargs)
+                cxx_compiler = compiler.cxx_compiler()
+                cxx_objects = cxx_compiler.compile(cxx_sources,
+                                                   output_dir=self.build_temp,
+                                                   macros=macros,
+                                                   include_dirs=include_dirs,
+                                                   debug=self.debug,
+                                                   extra_postargs=extra_postargs)
                 objects.extend(cxx_objects)
-
-                self.compiler.compiler_so[0] = old_compiler
 
             if f_sources:
                 log.info("compiling Fortran sources")
@@ -191,7 +190,7 @@ class build_clib(old_build_clib):
                                             debug=self.debug)
 
             clib_libraries = build_info.get('libraries',[])
-            for lname,binfo in libraries:
+            for lname, binfo in libraries:
                 if lname in clib_libraries:
                     clib_libraries.extend(binfo[1].get('libraries',[]))
             if clib_libraries:

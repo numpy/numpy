@@ -58,7 +58,7 @@ Global parameters:
 The file 'site.cfg' is looked for in
 
 1) Directory of main setup.py file being run.
-2) Home directory of user running the setup.py file (Not implemented yet)
+2) Home directory of user running the setup.py file as ~/.numpy-site.cfg
 3) System wide directory (location of this file...)
 
 The first one found is used to get system configuration options The
@@ -104,7 +104,7 @@ Authors:
 Copyright 2002 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@cens.ioc.ee>
 Permission to use, modify, and distribute this software is given under the
-terms of the SciPy (BSD style) license.  See LICENSE.txt that came with
+terms of the NumPy (BSD style) license.  See LICENSE.txt that came with
 this distribution for specifics.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
@@ -349,7 +349,9 @@ class system_info:
         defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
         defaults['search_static_first'] = str(self.search_static_first)
         self.cp = ConfigParser.ConfigParser(defaults)
-        self.files = get_standard_file('site.cfg')
+        self.files = []
+        self.files.extend(get_standard_file('.numpy-site.cfg'))
+        self.files.extend(get_standard_file('site.cfg'))
         self.parse_config_files()
         self.search_static_first = self.cp.getboolean(self.section,
                                                       'search_static_first')
@@ -809,9 +811,12 @@ class mkl_info(system_info):
         info = {}
         dict_append(info,**mkl)
         dict_append(info,
-                    libraries = ['pthread'],
                     define_macros=[('SCIPY_MKL_H',None)],
                     include_dirs = incl_dirs)
+        if sys.platform == 'win32':
+            pass # win32 has no pthread library
+        else:
+            dict_append(info, libraries=['pthread'])
         self.set_info(**info)
 
 class lapack_mkl_info(mkl_info):
@@ -820,7 +825,11 @@ class lapack_mkl_info(mkl_info):
         mkl = get_info('mkl')
         if not mkl:
             return
-        lapack_libs = self.get_libs('lapack_libs',['mkl_lapack32','mkl_lapack64'])
+        if sys.platform == 'win32':
+            lapack_libs = self.get_libs('lapack_libs',['mkl_lapack'])
+        else:
+            lapack_libs = self.get_libs('lapack_libs',['mkl_lapack32','mkl_lapack64'])
+            
         info = {'libraries': lapack_libs}
         dict_append(info,**mkl)
         self.set_info(**info)
@@ -1114,7 +1123,7 @@ def get_atlas_version(**config):
     if _cached_atlas_version.has_key(key):
         return _cached_atlas_version[key]
     c = cmd_config(Distribution())
-    atlas_version = None  
+    atlas_version = None
     try:
         s, o = c.get_output(atlas_version_c_text,
                             libraries=libraries, library_dirs=library_dirs)
