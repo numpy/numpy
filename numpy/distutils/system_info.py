@@ -816,7 +816,7 @@ class mkl_info(system_info):
         if sys.platform == 'win32':
             pass # win32 has no pthread library
         else:
-            dict_append(libraries = ['pthread'])
+            dict_append(info, libraries=['pthread'])
         self.set_info(**info)
 
 class lapack_mkl_info(mkl_info):
