@@ -26,6 +26,9 @@ class VastFCompiler(GnuFCompiler):
     module_dir_switch = None  #XXX Fix me
     module_include_switch = None #XXX Fix me
 
+    def find_executables(self):
+        pass
+
     def get_version_cmd(self):
         f90 = self.compiler_f90[0]
         d,b = os.path.split(f90)

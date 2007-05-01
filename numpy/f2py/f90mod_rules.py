@@ -24,6 +24,7 @@ outmess=sys.stdout.write
 show=pprint.pprint
 
 from auxfuncs import *
+import numpy as N
 import capi_maps
 import cfuncs
 import rules
@@ -44,7 +45,8 @@ def findf90modules(m):
 fgetdims1 = """\
       external f2pysetdata
       logical ns
-      integer s(*),r,i,j
+      integer r,i,j
+      integer(%d) s(*)
       ns = .FALSE.
       if (allocated(d)) then
          do i=1,r
@@ -56,7 +58,7 @@ fgetdims1 = """\
             deallocate(d)
          end if
       end if
-      if ((.not.allocated(d)).and.(s(1).ge.1)) then"""
+      if ((.not.allocated(d)).and.(s(1).ge.1)) then""" % N.intp().itemsize
 
 fgetdims2="""\
       end if

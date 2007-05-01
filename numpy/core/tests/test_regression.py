@@ -645,5 +645,13 @@ class test_regression(NumpyTestCase):
         r = N.array([['abc']], dtype=[('var1', '|S20')])
         assert str(r['var1'][0][0]) == 'abc'
 
+    def check_take_output(self, level=rlevel):
+        """Ensure that 'take' honours output parameter."""
+        x = N.arange(12).reshape((3,4))
+        a = N.take(x,[0,2],axis=1)
+        b = N.zeros_like(a)
+        N.take(x,[0,2],axis=1,out=b)
+        assert_array_equal(a,b)
+
 if __name__ == "__main__":
     NumpyTest().run()

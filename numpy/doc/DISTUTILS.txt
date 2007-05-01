@@ -9,6 +9,8 @@ NumPy Distutils - Users Guide
 :Revision: $LastChangedRevision$
 :SVN source: $HeadURL$
 
+.. contents::
+
 SciPy structure
 '''''''''''''''
 

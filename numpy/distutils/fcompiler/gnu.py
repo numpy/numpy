@@ -4,7 +4,6 @@ import sys
 import warnings
 
 from numpy.distutils.cpuinfo import cpu
-from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command, find_executable
 from numpy.distutils.misc_util import mingw32, msvc_runtime_library
@@ -12,7 +11,31 @@ from numpy.distutils.misc_util import mingw32, msvc_runtime_library
 class GnuFCompiler(FCompiler):
 
     compiler_type = 'gnu'
-    version_match = simple_version_match(start=r'GNU Fortran (?!95)')
+
+    def gnu_version_match(self, version_string):
+        """Handle the different versions of GNU fortran compilers"""
+        m = re.match(r'GNU Fortran', version_string)
+        if not m:
+            return None
+        m = re.match(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
+        if m:
+            return ('gfortran', m.group(1))
+        m = re.match(r'GNU Fortran.*?([0-9-.]+)', version_string)
+        if m:
+            v = m.group(1)
+            if v.startswith('0') or v.startswith('2') or v.startswith('3'):
+                # the '0' is for early g77's
+                return ('g77', v)
+            else:
+                # at some point in the 4.x series, the ' 95' was dropped
+                # from the version string
+                return ('gfortran', v)
+
+    def version_match(self, version_string):
+        v = self.gnu_version_match(version_string)
+        if not v or v[0] != 'g77':
+            return None
+        return v[1]
 
     # 'g77 --version' results
     # SunOS: GNU Fortran (GCC 3.2) 3.2 20020814 (release)
@@ -21,18 +44,15 @@ class GnuFCompiler(FCompiler):
     #         GNU Fortran 0.5.25 20010319 (prerelease)
     # Redhat: GNU Fortran (GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5)) 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
 
-    for fc_exe in map(find_executable,['g77','f77']):
-        if os.path.isfile(fc_exe):
-            break
     executables = {
-        'version_cmd'  : [fc_exe,"--version"],
-        'compiler_f77' : [fc_exe, "-g", "-Wall","-fno-second-underscore"],
+        'version_cmd'  : ["g77", "--version"],
+        'compiler_f77' : ["g77", "-g", "-Wall","-fno-second-underscore"],
         'compiler_f90' : None, # Use --fcompiler=gnu95 for f90 codes
         'compiler_fix' : None,
-        'linker_so'    : [fc_exe, "-g", "-Wall"],
+        'linker_so'    : ["g77", "-g", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
-        'linker_exe'   : [fc_exe, "-g", "-Wall"]
+        'linker_exe'   : ["g77", "-g", "-Wall"]
         }
     module_dir_switch = None
     module_include_switch = None
@@ -50,6 +70,13 @@ class GnuFCompiler(FCompiler):
     g2c = 'g2c'
 
     suggested_f90_compiler = 'gnu95'
+
+    def find_executables(self):
+        for fc_exe in [find_executable(c) for c in ['g77','f77']]:
+            if os.path.isfile(fc_exe):
+                break
+        for key in ['version_cmd', 'compiler_f77', 'linker_so', 'linker_exe']:
+            self.executables[key][0] = fc_exe
 
     #def get_linker_so(self):
     #    # win32 linking should be handled by standard linker
@@ -218,12 +245,11 @@ class GnuFCompiler(FCompiler):
         if gnu_ver >= '3.4.4':
             if cpu.is_PentiumM():
                 march_opt = '-march=pentium-m'
-        
         # Future:
         # if gnu_ver >= '4.3':
         #    if cpu.is_Core2():
         #        march_opt = '-march=core2'
-        
+
         # Note: gcc 3.2 on win32 has breakage with -march specified
         if '3.1.1' <= gnu_ver <= '3.4' and sys.platform=='win32':
             march_opt = ''
@@ -250,26 +276,32 @@ class GnuFCompiler(FCompiler):
 class Gnu95FCompiler(GnuFCompiler):
 
     compiler_type = 'gnu95'
-    version_match = simple_version_match(start='GNU Fortran (95|\(GCC\))')
+
+    def version_match(self, version_string):
+        v = self.gnu_version_match(version_string)
+        if not v or v[0] != 'gfortran':
+            return None
+        return v[1]
 
     # 'gfortran --version' results:
+    # XXX is the below right?
     # Debian: GNU Fortran 95 (GCC 4.0.3 20051023 (prerelease) (Debian 4.0.2-3))
+    #         GNU Fortran 95 (GCC) 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
     # OS X: GNU Fortran 95 (GCC) 4.1.0
     #       GNU Fortran 95 (GCC) 4.2.0 20060218 (experimental)
     #       GNU Fortran (GCC) 4.3.0 20070316 (experimental)
 
-    for fc_exe in map(find_executable,['gfortran','f95']):
-        if os.path.isfile(fc_exe):
-            break
     executables = {
-        'version_cmd'  : [fc_exe,"--version"],
-        'compiler_f77' : [fc_exe,"-Wall","-ffixed-form","-fno-second-underscore"],
-        'compiler_f90' : [fc_exe,"-Wall","-fno-second-underscore"],
-        'compiler_fix' : [fc_exe,"-Wall","-ffixed-form","-fno-second-underscore"],
-        'linker_so'    : [fc_exe,"-Wall"],
+        'version_cmd'  : ["gfortran", "--version"],
+        'compiler_f77' : ["gfortran", "-Wall", "-ffixed-form",
+                          "-fno-second-underscore"],
+        'compiler_f90' : ["gfortran", "-Wall", "-fno-second-underscore"],
+        'compiler_fix' : ["gfortran", "-Wall", "-ffixed-form",
+                          "-fno-second-underscore"],
+        'linker_so'    : ["gfortran", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
-        'linker_exe'   : [fc_exe,"-Wall"]
+        'linker_exe'   : ["gfortran", "-Wall"]
         }
 
     # use -mno-cygwin flag for g77 when Python is not Cygwin-Python
@@ -282,6 +314,14 @@ class Gnu95FCompiler(GnuFCompiler):
     module_include_switch = '-I'
 
     g2c = 'gfortran'
+
+    def find_executables(self):
+        for fc_exe in [find_executable(c) for c in ['gfortran','f95']]:
+            if os.path.isfile(fc_exe):
+                break
+        for key in ['version_cmd', 'compiler_f77', 'compiler_f90',
+                    'compiler_fix', 'linker_so', 'linker_exe']:
+            self.executables[key][0] = fc_exe
 
     def get_libraries(self):
         opt = GnuFCompiler.get_libraries(self)

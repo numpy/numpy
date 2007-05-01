@@ -15,7 +15,7 @@ but always 1-d) --- only has .copy and .__array__  attributes of an array!!!
 
 If you used typecode characters:
 
-'c' -> 'S1'
+'c' -> 'S1' or 'c'
 'b' -> 'B'
 '1' -> 'b'
 's' -> 'h'
@@ -35,12 +35,12 @@ using PyMemData_FREE(ptr);
 a->descr->zero       -->   PyArray_Zero(a)
 a->descr->one        -->   PyArray_One(a)
 
-Numeric/arrayobject.h  -->  numpy/arrayobject.h
+Numeric/arrayobject.h  -->  numpy/oldnumeric.h
 
 
 # These will actually work and are defines for PyArray_BYTE, 
 #   but you really should change it in your code
-PyArray_CHAR         -->  PyArray_BYTE  
+PyArray_CHAR         -->  PyArray_CHAR  
    (or PyArray_STRING which is more flexible)  
 PyArray_SBYTE        -->  PyArray_BYTE
 

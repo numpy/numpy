@@ -5,6 +5,14 @@ import numpy.core.umath as ncu
 from numpy import zeros, ndarray, array, choose
 restore_path()
 
+class test_division(NumpyTestCase):
+    def check_division_int(self):
+        # int division should return the floor of the result, a la Python
+        x = array([5, 10, 90, 100, -5, -10, -90, -100, -120])
+        assert_equal(x / 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
+        assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
+        assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
+
 class test_power(NumpyTestCase):
     def check_power_float(self):
         x = array([1., 2., 3.])
