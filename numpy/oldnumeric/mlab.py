@@ -55,7 +55,8 @@ def prod(x, axis=0):
     return _Nprod(x, axis)
 
 def std(x, axis=0):
-    return _Nstd(x, axis)
+    N = asarray(x).shape[axis]
+    return _Nstd(x, axis)*sqrt(N/(N-1.))
 
 def mean(x, axis=0):
     return _Nmean(x, axis)
