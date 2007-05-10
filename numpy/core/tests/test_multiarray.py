@@ -116,9 +116,28 @@ class test_fromstring(NumpyTestCase):
         a = fromstring('\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@',dtype='<f4')
         assert_array_equal(a, array([1,2,3,4]))
 
+    def check_string(self):
+        a = fromstring('1,2,3,4', sep=',')
+        assert_array_equal(a, [1., 2., 3., 4.])
+
+    def check_counted_string(self):
+        a = fromstring('1,2,3,4', count=4, sep=',')
+        assert_array_equal(a, [1., 2., 3., 4.])
+        a = fromstring('1,2,3,4', count=3, sep=',')
+        assert_array_equal(a, [1., 2., 3.])
+
+    def check_string_with_ws(self):
+        a = fromstring('1 2  3     4   ', dtype=int, sep=' ')
+        assert_array_equal(a, [1, 2, 3, 4])
+
+    def check_counted_string_with_ws(self):
+        a = fromstring('1 2  3     4   ', count=3, dtype=int, sep=' ')
+        assert_array_equal(a, [1, 2, 3])
+
     def check_ascii(self):
-        a = fromstring('1 , 2 , 3 , 4',sep=',')
-        b = fromstring('1,2,3,4',dtype=float,sep=',')
+        a = fromstring('1 , 2 , 3 , 4', sep=',')
+        b = fromstring('1,2,3,4', dtype=float, sep=',')
+        assert_array_equal(a, [1.,2.,3.,4.])
         assert_array_equal(a,b)
 
 class test_zero_rank(NumpyTestCase):

@@ -5828,34 +5828,237 @@ array_set_typeDict(PyObject *ignored, PyObject *args)
 	return Py_None;
 }
 
+
+/* Reading from a file or a string.
+
+   As much as possible, we try to use the same code for both files and strings,
+   so the semantics for fromstring and fromfile are the same, especially with
+   regards to the handling of text representations.
+ */
+
+
+typedef int (*next_element)(void **, void *, PyArray_Descr *, void *);
+typedef int (*skip_separator)(void **, const char *, void *);
+
 static int
-_skip_sep(char **ptr, char *sep)
+fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
+		     const char *end)
 {
-	char *a;
-	int n;
-	n = strlen(sep);
-	a = *ptr;
-	while(*a != '\0' && (strncmp(a, sep, n) != 0))
-		a++;
-	if (*a == '\0') return -1;
-	*ptr = a+strlen(sep);
-	return 0;
+	int r = dtype->f->fromstr(*s, dptr, s, dtype);
+	if (end != NULL && *s > end) {
+		return -1;
+	}
+	return r;
 }
 
-/* steals a reference to dtype -- accepts NULL */
-/*OBJECT_API*/
+static int
+fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
+		      void *stream_data)
+{
+	/* the NULL argument is for backwards-compatibility */
+	return dtype->f->scanfunc(*fp, dptr, NULL, dtype);
+}
+
+/* Remove multiple whitespace from the separator, and add a space to the
+   beginning and end. This simplifies the separator-skipping code below.
+*/
+static char *
+swab_separator(char *sep)
+{
+	int skip_space = 0;
+	char *s, *start;
+	s = start = malloc(strlen(sep)+3);
+	/* add space to front if there isn't one */
+	if (*sep != '\0' && !isspace(*sep)) {
+		*s = ' '; s++;
+	}
+	while (*sep != '\0') {
+		if (isspace(*sep)) {
+			if (skip_space) {
+				sep++;
+			} else {
+				*s = ' ';
+				s++; sep++;
+				skip_space = 1;
+			}
+		} else {
+			*s = *sep;
+			s++; sep++;
+			skip_space = 0;
+		}
+	}
+	/* add space to end if there isn't one */
+	if (s != start && s[-1] == ' ') {
+		*s = ' ';
+		s++;
+	}
+	*s = '\0';
+	return start;
+}
+
+/* Assuming that the separator is the next bit in the string (file), skip it.
+
+   Single spaces in the separator are matched to arbitrary-long sequences
+   of whitespace in the input.
+
+   If we can't match the separator, return -2.
+   If we hit the end of the string (file), return -1.
+   Otherwise, return 0.
+ */
+
+static int
+fromstr_skip_separator(char **s, const char *sep, const char *end)
+{
+	char *string = *s;
+	int result = 0;
+	while (1) {
+		char c = *string;
+		if (c == '\0' || (end != NULL && string >= end)) {
+			result = -1;
+			break;
+		} else if (*sep == '\0') {
+			/* matched separator */
+			result = 0;
+			break;
+		} else if (*sep == ' ') {
+			if (!isspace(c)) {
+				sep++;
+				continue;
+			}
+		} else if (*sep != c) {
+			result = -2;
+			break;
+		} else {
+			sep++;
+		}
+		string++;
+	}
+	*s = string;
+	return result;
+}
+
+static int
+fromfile_skip_separator(FILE **fp, const char *sep, void *stream_data)
+{
+	int result = 0;
+	while (1) {
+		int c = fgetc(*fp);
+		if (c == EOF) {
+			result = -1;
+			break;
+		} else if (*sep == '\0') {
+			/* matched separator */
+			ungetc(c, *fp);
+			result = 0;
+			break;
+		} else if (*sep == ' ') {
+			if (!isspace(c)) {
+				sep++;
+				ungetc(c, *fp);
+			}
+		} else if (*sep != c) {
+			ungetc(c, *fp);
+			result = -2;
+			break;
+		} else {
+			sep++;
+		}
+	}
+	return result;
+}
+
+/* Create an array by reading from the given stream, using the passed
+   next_element and skip_separator functions.
+ */
+
+#define FROM_BUFFER_SIZE 4096
+static PyArrayObject *
+array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
+		void *stream, next_element next, skip_separator skip_sep,
+		void *stream_data)
+{
+	PyArrayObject *r;
+	intp i;
+	char *dptr, *clean_sep;
+
+	intp thisbuf = 0;
+	intp size;
+	intp bytes, totalbytes;
+
+	size = (num >= 0) ? num : FROM_BUFFER_SIZE;
+
+	r = (PyArrayObject *)
+		PyArray_NewFromDescr(&PyArray_Type,
+				     dtype,
+				     1, &size,
+				     NULL, NULL,
+				     0, NULL);
+	if (r == NULL) return NULL;
+	clean_sep = swab_separator(sep);
+	NPY_BEGIN_ALLOW_THREADS;
+	totalbytes = bytes = size * dtype->elsize;
+	dptr = r->data;
+	for (i=0; num < 0 || i < num; i++) {
+		if (next(&stream, dptr, dtype, stream_data) < 0)
+			break;
+		*nread += 1;
+		thisbuf += 1;
+		dptr += dtype->elsize;
+		if (num < 0 && thisbuf == size) {
+			totalbytes += bytes;
+			r->data = PyDataMem_RENEW(r->data, totalbytes);
+			dptr = r->data + (totalbytes - bytes);
+			thisbuf = 0;
+		}
+		if (skip_sep(&stream, clean_sep, stream_data) < 0)
+			break;
+	}
+	if (num < 0) {
+		r->data = PyDataMem_RENEW(r->data, (*nread)*dtype->elsize);
+		PyArray_DIM(r,0) = *nread;
+	}
+	NPY_END_ALLOW_THREADS;
+	free(clean_sep);
+	if (PyErr_Occurred()) {
+		Py_DECREF(r);
+		return NULL;
+	}
+	return r;
+}
+#undef FROM_BUFFER_SIZE
+
+/*OBJECT_API
+
+  Given a pointer to a string ``data``, a string length ``slen``, and
+  a ``PyArray_Descr``, return an array corresponding to the data
+  encoded in that string.
+
+  If the dtype is NULL, the default array type is used (double).
+  If non-null, the reference is stolen.
+
+  If ``slen`` is < 0, then the end of string is used for text data.
+  It is an error for ``slen`` to be < 0 for binary data (since embedded NULLs
+  would be the norm).
+
+  The number of elements to read is given as ``num``; if it is < 0, then
+  then as many as possible are read.
+
+  If ``sep`` is NULL or empty, then binary data is assumed, else
+  text data, with ``sep`` as the separator between elements. Whitespace in
+  the separator matches any length of whitespace in the text, and a match
+  for whitespace around the separator is added.
+ */
 static PyObject *
 PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
-		   intp n, char *sep)
+		   intp num, char *sep)
 {
 	int itemsize;
 	PyArrayObject *ret;
 	Bool binary;
 
-
 	if (dtype == NULL)
 		dtype=PyArray_DescrFromType(PyArray_DEFAULT);
-        
+
         if (PyDataType_FLAGCHK(dtype, NPY_ITEM_IS_POINTER)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "Cannot create an object array from"    \
@@ -5874,7 +6077,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 	binary = ((sep == NULL) || (strlen(sep) == 0));
 
 	if (binary) {
-		if (n < 0 ) {
+		if (num < 0 ) {
 			if (slen % itemsize != 0) {
 				PyErr_SetString(PyExc_ValueError,
 						"string size must be a "\
@@ -5882,9 +6085,9 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 				Py_DECREF(dtype);
 				return NULL;
 			}
-			n = slen/itemsize;
+			num = slen/itemsize;
 		} else {
-			if (slen < n*itemsize) {
+			if (slen < num*itemsize) {
 				PyErr_SetString(PyExc_ValueError,
 						"string is smaller than " \
 						"requested size");
@@ -5893,111 +6096,40 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 			}
 		}
 
-		if ((ret = (PyArrayObject *)\
-		     PyArray_NewFromDescr(&PyArray_Type, dtype,
-					  1, &n, NULL, NULL,
-					  0, NULL)) == NULL)
-			return NULL;
-		memcpy(ret->data, data, n*dtype->elsize);
-		return (PyObject *)ret;
-	}
-	else {  /* read from character-based string */
-		char *ptr;
-		PyArray_FromStrFunc *fromstr;
-		char *dptr;
-		intp nread=0;
-		intp index;
-
-		fromstr = dtype->f->fromstr;
-		if (fromstr == NULL) {
+		ret = (PyArrayObject *)
+			PyArray_NewFromDescr(&PyArray_Type, dtype,
+					     1, &num, NULL, NULL,
+					     0, NULL);
+		if (ret == NULL) return NULL;
+		memcpy(ret->data, data, num*dtype->elsize);
+	} else {
+		/* read from character-based string */
+		size_t nread = 0;
+		char *end;
+		if (dtype->f->scanfunc == NULL) {
 			PyErr_SetString(PyExc_ValueError,
 					"don't know how to read "	\
-					"character strings for given "	\
+					"character strings with that "	\
 					"array type");
 			Py_DECREF(dtype);
 			return NULL;
 		}
-
-		if (n!=-1) {
-			ret = (PyArrayObject *) \
-				PyArray_NewFromDescr(&PyArray_Type,
-						     dtype, 1, &n, NULL,
-						     NULL, 0, NULL);
-			if (ret == NULL) return NULL;
-			NPY_BEGIN_ALLOW_THREADS
-			ptr = data;
-			dptr = ret->data;
-			for (index=0; index < n; index++) {
-				if (fromstr(ptr, dptr, &ptr, ret) < 0)
-					break;
-				nread += 1;
-				dptr += dtype->elsize;
-				if (_skip_sep(&ptr, sep) < 0)
-					break;
-			}
-			if (nread < n) {
-				fprintf(stderr, "%ld items requested but "\
-					"only %ld read\n",
-					(long) n, (long) nread);
-				ret->data = \
-					PyDataMem_RENEW(ret->data,
-							nread *		\
-							ret->descr->elsize);
-				PyArray_DIM(ret,0) = nread;
-
-			}
-			NPY_END_ALLOW_THREADS
+		if (slen < 0) {
+			end = NULL;
+		} else {
+			end = data + slen;
 		}
-		else {
-#define _FILEBUFNUM 4096
-			intp thisbuf=0;
-			intp size = _FILEBUFNUM;
-			intp bytes;
-			intp totalbytes;
-			char *end;
-			int val;
-
-			ret = (PyArrayObject *)\
-				PyArray_NewFromDescr(&PyArray_Type,
-						     dtype,
-						     1, &size,
-						     NULL, NULL,
-						     0, NULL);
-			if (ret==NULL) return NULL;
-			NPY_BEGIN_ALLOW_THREADS
-			totalbytes = bytes = size * dtype->elsize;
-			dptr = ret->data;
-			ptr = data;
-			end = data+slen;
-			while (ptr < end) {
-				val = fromstr(ptr, dptr, &ptr, ret);
-				if (val < 0) break;
-				nread += 1;
-				val = _skip_sep(&ptr, sep);
-				if (val < 0) break;
-				thisbuf += 1;
-				dptr += dtype->elsize;
-				if (thisbuf == size) {
-					totalbytes += bytes;
-					ret->data = PyDataMem_RENEW(ret->data,
-								  totalbytes);
-					dptr = ret->data + \
-						(totalbytes - bytes);
-					thisbuf = 0;
-				}
-			}
-			ret->data = PyDataMem_RENEW(ret->data,
-						    nread*ret->descr->elsize);
-			PyArray_DIM(ret,0) = nread;
-#undef _FILEBUFNUM
-			NPY_END_ALLOW_THREADS
-		}
+		ret = array_from_text(dtype, num, sep, &nread,
+				      data,
+				      (next_element) fromstr_next_element,
+				      (skip_separator) fromstr_skip_separator,
+				      end);
 	}
 	return (PyObject *)ret;
 }
 
 static PyObject *
-array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
+array_fromstring(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	char *data;
 	Py_ssize_t nin=-1;
@@ -6015,6 +6147,148 @@ array_fromString(PyObject *ignored, PyObject *args, PyObject *keywds)
 	}
 
 	return PyArray_FromString(data, (intp)s, descr, (intp)nin, sep);
+}
+
+
+
+static PyArrayObject *
+array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, intp num, size_t *nread)
+{
+	PyArrayObject *r;
+	intp start, numbytes;
+
+	if (num < 0) {
+		int fail=0;
+		start = (intp )ftell(fp);
+		if (start < 0) fail=1;
+		if (fseek(fp, 0, SEEK_END) < 0) fail=1;
+		numbytes = (intp) ftell(fp);
+		if (numbytes < 0) fail=1;
+		numbytes -= start;
+		if (fseek(fp, start, SEEK_SET) < 0) fail=1;
+		if (fail) {
+			PyErr_SetString(PyExc_IOError,
+					"could not seek in file");
+			Py_DECREF(dtype);
+			return NULL;
+		}
+		num = numbytes / dtype->elsize;
+	}
+	r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+						  dtype,
+						  1, &num,
+						  NULL, NULL,
+						  0, NULL);
+	if (r==NULL) return NULL;
+	NPY_BEGIN_ALLOW_THREADS;
+	*nread = fread(r->data, dtype->elsize, num, fp);
+	NPY_END_ALLOW_THREADS;
+	return r;
+}
+
+/*OBJECT_API
+
+  Given a ``FILE *`` pointer ``fp``, and a ``PyArray_Descr``, return an
+  array corresponding to the data encoded in that file.
+
+  If the dtype is NULL, the default array type is used (double).
+  If non-null, the reference is stolen.
+
+  The number of elements to read is given as ``num``; if it is < 0, then
+  then as many as possible are read.
+
+  If ``sep`` is NULL or empty, then binary data is assumed, else
+  text data, with ``sep`` as the separator between elements. Whitespace in
+  the separator matches any length of whitespace in the text, and a match
+  for whitespace around the separator is added.
+
+  For memory-mapped files, use the buffer interface. No more data than
+  necessary is read by this routine.
+*/
+static PyObject *
+PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
+{
+	PyArrayObject *ret;
+	size_t nread = 0;
+
+        if (PyDataType_REFCHK(dtype)) {
+                PyErr_SetString(PyExc_ValueError,
+				"cannot read into object array");
+                Py_DECREF(dtype);
+                return NULL;
+        }
+	if (dtype->elsize == 0) {
+		PyErr_SetString(PyExc_ValueError, "0-sized elements.");
+		Py_DECREF(dtype);
+		return NULL;
+	}
+
+	if ((sep == NULL) || (strlen(sep) == 0)) {
+		ret = array_fromfile_binary(fp, dtype, num, &nread);
+	} else {
+		if (dtype->f->scanfunc == NULL) {
+			PyErr_SetString(PyExc_ValueError,
+					"don't know how to read "	\
+					"character files with that "	\
+					"array type");
+			Py_DECREF(dtype);
+			return NULL;
+		}
+		ret = array_from_text(dtype, num, sep, &nread,
+				      fp,
+				      (next_element) fromfile_next_element,
+				      (skip_separator) fromfile_skip_separator,
+				      NULL);
+	}
+	if (((intp) nread) < num) {
+		fprintf(stderr, "%ld items requested but only %ld read\n",
+			(long) num, (long) nread);
+		ret->data = PyDataMem_RENEW(ret->data,
+					    nread * ret->descr->elsize);
+		PyArray_DIM(ret,0) = nread;
+	}
+	return (PyObject *)ret;
+}
+
+static PyObject *
+array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
+{
+	PyObject *file=NULL, *ret;
+	FILE *fp;
+	char *sep="";
+	Py_ssize_t nin=-1;
+	static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
+	PyArray_Descr *type=NULL;
+
+	if (!PyArg_ParseTupleAndKeywords(args, keywds,
+                                         "O|O&" NPY_SSIZE_T_PYFMT "s",
+                                         kwlist,
+					 &file,
+					 PyArray_DescrConverter, &type,
+					 &nin, &sep)) {
+		return NULL;
+	}
+
+	if (type == NULL) type = PyArray_DescrFromType(PyArray_DEFAULT);
+
+	if (PyString_Check(file) || PyUnicode_Check(file)) {
+		file = PyObject_CallFunction((PyObject *)&PyFile_Type,
+					     "Os", file, "rb");
+		if (file==NULL) return NULL;
+	}
+	else {
+		Py_INCREF(file);
+	}
+	fp = PyFile_AsFile(file);
+	if (fp == NULL) {
+		PyErr_SetString(PyExc_IOError,
+				"first argument must be an open file");
+		Py_DECREF(file);
+		return NULL;
+	}
+	ret = PyArray_FromFile(fp, type, (intp) nin, sep);
+	Py_DECREF(file);
+	return ret;
 }
 
 
@@ -6108,7 +6382,7 @@ done:
 }
 
 static PyObject *
-array_fromIter(PyObject *ignored, PyObject *args, PyObject *keywds)
+array_fromiter(PyObject *ignored, PyObject *args, PyObject *keywds)
 {
 	PyObject *iter;
 	Py_ssize_t nin=-1;
@@ -6127,208 +6401,6 @@ array_fromIter(PyObject *ignored, PyObject *args, PyObject *keywds)
 	return PyArray_FromIter(iter, descr, (intp)nin);
 }
 
-
-
-
-/* This needs an open file object and reads it in directly.
-   memory-mapped files handled differently through buffer interface.
-
-file pointer number in resulting 1d array
-(can easily reshape later, -1 for to end of file)
-type of array
-sep is a separator string for character-based data (or NULL for binary)
-   " " means whitespace
-*/
-
-/*OBJECT_API*/
-static PyObject *
-PyArray_FromFile(FILE *fp, PyArray_Descr *typecode, intp num, char *sep)
-{
-	PyArrayObject *r;
-	size_t nread = 0;
-	PyArray_ScanFunc *scan;
-	Bool binary;
-
-        if (PyDataType_REFCHK(typecode)) {
-                PyErr_SetString(PyExc_ValueError, "cannot read into"
-                                "object array");
-                Py_DECREF(typecode);
-                return NULL;
-        }
-	if (typecode->elsize == 0) {
-		PyErr_SetString(PyExc_ValueError, "0-sized elements.");
-		Py_DECREF(typecode);
-		return NULL;
-	}
-
-	binary = ((sep == NULL) || (strlen(sep) == 0));
-	if (num == -1 && binary) {  /* Get size for binary file*/
-		intp start, numbytes;
-		int fail=0;
-		start = (intp )ftell(fp);
-		if (start < 0) fail=1;
-		if (fseek(fp, 0, SEEK_END) < 0) fail=1;
-		numbytes = (intp) ftell(fp);
-		if (numbytes < 0) fail=1;
-		numbytes -= start;
-		if (fseek(fp, start, SEEK_SET) < 0) fail=1;
-		if (fail) {
-			PyErr_SetString(PyExc_IOError,
-					"could not seek in file");
-			Py_DECREF(typecode);
-			return NULL;
-		}
-		num = numbytes / typecode->elsize;
-	}
-
-	if (binary) { /* binary data */
-		r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-							  typecode,
-							  1, &num,
-							  NULL, NULL,
-							  0, NULL);
-		if (r==NULL) return NULL;
-		NPY_BEGIN_ALLOW_THREADS
-		nread = fread(r->data, typecode->elsize, num, fp);
-		NPY_END_ALLOW_THREADS
-	}
-	else {  /* character reading */
-		intp i;
-		char *dptr;
-		int done=0;
-
-		scan = typecode->f->scanfunc;
-		if (scan == NULL) {
-			PyErr_SetString(PyExc_ValueError,
-					"don't know how to read "	\
-					"character files with that "	\
-					"array type");
-			Py_DECREF(typecode);
-			return NULL;
-		}
-
-		if (num != -1) {  /* number to read is known */
-			r = (PyArrayObject *)\
-				PyArray_NewFromDescr(&PyArray_Type,
-						     typecode,
-						     1, &num,
-						     NULL, NULL,
-						     0, NULL);
-			if (r==NULL) return NULL;
-			NPY_BEGIN_ALLOW_THREADS
-			dptr = r->data;
-			for (i=0; i < num; i++) {
-				if (done) break;
-				done = scan(fp, dptr, sep, NULL);
-				if (done < -2) break;
-				nread += 1;
-				dptr += r->descr->elsize;
-			}
-			NPY_END_ALLOW_THREADS
-			if (PyErr_Occurred()) {
-				Py_DECREF(r);
-				return NULL;
-			}
-		}
-		else { /* we have to watch for the end of the file and
-			  reallocate at the end */
-#define _FILEBUFNUM 4096
-			intp thisbuf=0;
-			intp size = _FILEBUFNUM;
-			intp bytes;
-			intp totalbytes;
-
-			r = (PyArrayObject *)\
-				PyArray_NewFromDescr(&PyArray_Type,
-						     typecode,
-						     1, &size,
-						     NULL, NULL,
-						     0, NULL);
-			if (r==NULL) return NULL;
-			NPY_BEGIN_ALLOW_THREADS
-			totalbytes = bytes = size * typecode->elsize;
-			dptr = r->data;
-			while (!done) {
-				done = scan(fp, dptr, sep, NULL);
-
-				/* end of file reached trying to
-				   scan value.  done is 1 or 2
-				   if end of file reached trying to
-				   scan separator.  Still good value.
-				*/
-				if (done < -2) break;
-				thisbuf += 1;
-				nread += 1;
-				dptr += r->descr->elsize;
-				if (!done && thisbuf == size) {
-					totalbytes += bytes;
-					r->data = PyDataMem_RENEW(r->data,
-								  totalbytes);
-					dptr = r->data + (totalbytes - bytes);
-					thisbuf = 0;
-				}
-			}
-			r->data = PyDataMem_RENEW(r->data, nread*r->descr->elsize);
-			PyArray_DIM(r,0) = nread;
-			num = nread;
-			NPY_END_ALLOW_THREADS
-#undef _FILEBUFNUM
-		}
-		if (PyErr_Occurred()) {
-			Py_DECREF(r);
-			return NULL;
-		}
-
-	}
-	if (((intp) nread) < num) {
-		fprintf(stderr, "%ld items requested but only %ld read\n",
-			(long) num, (long) nread);
-		r->data = PyDataMem_RENEW(r->data, nread * r->descr->elsize);
-		PyArray_DIM(r,0) = nread;
-	}
-	return (PyObject *)r;
-}
-
-static PyObject *
-array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
-{
-	PyObject *file=NULL, *ret;
-	FILE *fp;
-	char *sep="";
-	Py_ssize_t nin=-1;
-	static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
-	PyArray_Descr *type=NULL;
-
-	if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                                         "O|O&" NPY_SSIZE_T_PYFMT "s",
-                                         kwlist,
-					 &file,
-					 PyArray_DescrConverter, &type,
-					 &nin, &sep)) {
-		return NULL;
-	}
-
-	if (type == NULL) type = PyArray_DescrFromType(PyArray_DEFAULT);
-
-	if (PyString_Check(file) || PyUnicode_Check(file)) {
-		file = PyObject_CallFunction((PyObject *)&PyFile_Type,
-					     "Os", file, "rb");
-		if (file==NULL) return NULL;
-	}
-	else {
-		Py_INCREF(file);
-	}
-	fp = PyFile_AsFile(file);
-	if (fp == NULL) {
-		PyErr_SetString(PyExc_IOError,
-				"first argument must be an open file");
-		Py_DECREF(file);
-		return NULL;
-	}
-	ret = PyArray_FromFile(fp, type, (intp) nin, sep);
-	Py_DECREF(file);
-	return ret;
-}
 
 /*OBJECT_API*/
 static PyObject *
@@ -7213,9 +7285,9 @@ static struct PyMethodDef array_module_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS, NULL},
         {"putmask", (PyCFunction)array_putmask,
          METH_VARARGS | METH_KEYWORDS, NULL},
-	{"fromstring",(PyCFunction)array_fromString,
+	{"fromstring",(PyCFunction)array_fromstring,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
-	{"fromiter",(PyCFunction)array_fromIter,
+	{"fromiter",(PyCFunction)array_fromiter,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
 	{"concatenate", (PyCFunction)array_concatenate,
 	 METH_VARARGS|METH_KEYWORDS, NULL},
