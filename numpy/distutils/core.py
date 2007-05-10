@@ -130,19 +130,17 @@ def setup(**attr):
         distutils.core._setup_stop_after = "commandline"
         try:
             dist = setup(**new_attr)
+        finally:
             distutils.core._setup_distribution = old_dist
             distutils.core._setup_stop_after = old_stop
-        except Exception,msg:
-            distutils.core._setup_distribution = old_dist
-            distutils.core._setup_stop_after = old_stop
-            raise msg
         if dist.help or not _command_line_ok():
             # probably displayed help, skip running any commands
             return dist
 
         # create setup dictionary and append to new_attr
         config = configuration()
-        if hasattr(config,'todict'): config = config.todict()
+        if hasattr(config,'todict'):
+            config = config.todict()
         _dict_append(new_attr, **config)
 
     # Move extension source libraries to libraries
