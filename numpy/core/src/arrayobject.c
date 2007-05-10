@@ -5368,7 +5368,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                         return NULL;
                 }
                 size *= dims[i];
-                if (size <=0 || size > largest) {
+                if (size > largest) {
                         PyErr_SetString(PyExc_ValueError,
                                         "dimensions too large.");
                         Py_DECREF(descr);

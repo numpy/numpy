@@ -1875,7 +1875,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 	ret = (PyArrayObject *)\
 		PyArray_NewFromDescr(ap->ob_type,
 				     ap->descr,
-				     n, permutation,
+				     n, ap->dimensions,
 				     NULL, ap->data, ap->flags,
 				     (PyObject *)ap);
 	if (ret == NULL) return NULL;
@@ -1884,6 +1884,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 	ret->base = (PyObject *)ap;
 	Py_INCREF(ap);
 
+	/* fix the dimensions and strides of the return-array */
 	for(i=0; i<n; i++) {
 		ret->dimensions[i] = ap->dimensions[permutation[i]];
 		ret->strides[i] = ap->strides[permutation[i]];
