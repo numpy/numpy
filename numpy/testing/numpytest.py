@@ -627,7 +627,7 @@ class NumpyTest:
 class ScipyTest(NumpyTest):
     def __init__(self, package=None):
         warnings.warn("ScipyTest is now called NumpyTest; please update your code",
-                         DeprecationWarning)
+                         DeprecationWarning, stacklevel=2)
         NumpyTest.__init__(self, package)
 
 
