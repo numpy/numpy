@@ -1,7 +1,17 @@
+"""
+Get API information encoded in C files.
+
+See ``find_function`` for how functions should be formatted, and
+``read_order`` for how the order of the functions should be
+specified.
+"""
 import sys, os, re
 import md5
 import textwrap
 
+__docformat__ = 'restructuredtext'
+
+# The files under src/ that are scanned for API functions
 API_FILES = ['arraymethods.c',
              'arrayobject.c',
              'arraytypes.inc.src',
@@ -128,6 +138,27 @@ def split_arguments(argstr):
 
 
 def find_functions(filename, tag='API'):
+    """
+    Scan the file, looking for tagged functions.
+
+    Assuming ``tag=='API'``, a tagged function looks like::
+
+        /*API*/
+        static returntype*
+        function_name(argtype1 arg1, argtype2 arg2)
+        {
+        }
+
+    where the return type must be on a separate line, the function
+    name must start the line, and the opening ``{`` must start the line.
+
+    An optional documentation comment in ReST format may follow the tag,
+    as in::
+
+        /*API
+          This function does foo...
+         */
+    """
     fo = open(filename, 'r')
     functions = []
     return_type = None
@@ -191,6 +222,11 @@ def find_functions(filename, tag='API'):
     return functions
 
 def read_order(order_file):
+    """
+    Read the order of the API functions from a file.
+
+    Comments can be put on lines starting with #
+    """
     fo = open(order_file, 'r')
     order = {}
     i = 0
