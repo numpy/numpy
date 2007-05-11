@@ -530,9 +530,10 @@ class Configuration(object):
         caller_frame = get_frame(caller_level)
         caller_name = eval('__name__',caller_frame.f_globals,caller_frame.f_locals)
         self.local_path = get_path(caller_name, top_path)
+        # local_path -- directory of a file (usually setup.py) that
+        #               defines a configuration() function.
         if top_path is None:
             top_path = self.local_path
-            self.local_path = '.'
         if package_path is None:
             package_path = self.local_path
         elif os.path.isdir(njoin(self.local_path,package_path)):
