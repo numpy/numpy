@@ -730,7 +730,7 @@ def place(arr, mask, vals):
 def nansum(a, axis=None):
     """Sum the array over the given axis, treating NaNs as 0.
     """
-    y = array(a)
+    y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = 0
     return y.sum(axis)
@@ -738,7 +738,7 @@ def nansum(a, axis=None):
 def nanmin(a, axis=None):
     """Find the minimium over the given axis, ignoring NaNs.
     """
-    y = array(a)
+    y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = _nx.inf
     return y.min(axis)
@@ -746,7 +746,7 @@ def nanmin(a, axis=None):
 def nanargmin(a, axis=None):
     """Find the indices of the minimium over the given axis ignoring NaNs.
     """
-    y = array(a)
+    y = array(a, subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = _nx.inf
     return y.argmin(axis)
@@ -754,7 +754,7 @@ def nanargmin(a, axis=None):
 def nanmax(a, axis=None):
     """Find the maximum over the given axis ignoring NaNs.
     """
-    y = array(a)
+    y = array(a, subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = -_nx.inf
     return y.max(axis)
@@ -762,7 +762,7 @@ def nanmax(a, axis=None):
 def nanargmax(a, axis=None):
     """Find the maximum over the given axis ignoring NaNs.
     """
-    y = array(a)
+    y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = -_nx.inf
     return y.argmax(axis)
