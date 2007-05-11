@@ -6641,7 +6641,15 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 	double value;
 
 	*next = PyNumber_Subtract(stop, start);
-	if (!(*next)) return -1;
+	if (!(*next)) {
+                if (PyTuple_Check(stop)) {
+                        PyErr_Clear();
+                        PyErr_SetString(PyExc_TypeError, 
+                                        "arange: scalar arguments expected "\
+                                        "instead of a tuple.");
+                }
+                return -1;
+        }
 	val = PyNumber_TrueDivide(*next, step);
 	Py_DECREF(*next); *next=NULL;
 	if (!val) return -1;
