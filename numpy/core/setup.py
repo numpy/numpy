@@ -42,10 +42,16 @@ def configuration(parent_package='',top_path=None):
             tc = generate_testcode(target)
             from distutils import sysconfig
             python_include = sysconfig.get_python_inc()
+            python_h = join(python_include, 'Python.h')
+            if not os.path.isfile(python_h):
+                raise SystemError,\
+                      "Non-existing %s. Perhaps you need to install"\
+                      " python-dev|python-devel." % (python_h)
             result = config_cmd.try_run(tc,include_dirs=[python_include],
                                         library_dirs = default_lib_dirs)
             if not result:
-                raise "ERROR: Failed to test configuration"
+                raise SystemError,"Failed to test configuration. "\
+                      "See previous error messages for more information."
 
                 # Python 2.3 causes a segfault when
                 #  trying to re-acquire the thread-state
