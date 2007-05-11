@@ -5368,7 +5368,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                         return NULL;
                 }
                 size *= dims[i];
-                if (size <=0 || size > largest) {
+                if (size > largest) {
                         PyErr_SetString(PyExc_ValueError,
                                         "dimensions too large.");
                         Py_DECREF(descr);
@@ -6937,15 +6937,13 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
         else {
                 outtype = PyArray_DescrFromType(outtype_num);
         }
-        if (PyTypeNum_ISEXTENDED(outtype->type_num) &&          \
-            (PyTypeNum_ISEXTENDED(mintype->type_num) ||         \
-             mintype->type_num==0)) {
+        if (PyTypeNum_ISEXTENDED(outtype->type_num)) {
                 int testsize = outtype->elsize;
                 register int chksize, minsize;
                 chksize = chktype->elsize;
                 minsize = mintype->elsize;
                 /* Handle string->unicode case separately
-                   because string itemsize is twice as large */
+                   because string itemsize is 4* as large */
                 if (outtype->type_num == PyArray_UNICODE &&
                     mintype->type_num == PyArray_STRING) {
                         testsize = MAX(chksize, 4*minsize);

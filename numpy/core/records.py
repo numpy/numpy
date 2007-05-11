@@ -136,7 +136,7 @@ class record(nt.void):
             # if it's a string return 'SU' return a chararray
             # otherwise return a normal array
             if obj.dtype.fields:
-                return obj.view(recarray)
+                return obj.view(obj.__class__)
             if obj.dtype.char in 'SU':
                 return obj.view(chararray)
             return obj

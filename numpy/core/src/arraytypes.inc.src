@@ -11,7 +11,7 @@ MyPyLong_AsLongLong(PyObject *vv)
                 if (mylong == NULL) return (longlong) -1;
                 vv = mylong;
         }
-        else Py_INCREF(vv);        
+        else Py_INCREF(vv);
 
         ret = PyLong_AsLongLong(vv);
         Py_DECREF(vv);
@@ -867,18 +867,9 @@ static void
 
 /****************** scan *************************************/
 
-#define _ENDSCAN \
-        if (num != 1) { \
-                if (num == 0) return -3; \
-                if (num == EOF) return -4; \
-                return -5; \
-        } \
-        if (sep != NULL) { \
-                num = fscanf(fp, sep); \
-                if (num == 0) return 0; \
-                if (num == EOF) return -1; \
-        } \
-        return 0
+/* The first ignore argument is for backwards compatibility.
+   Should be removed when the API version is bumped up.
+ */
 
 /**begin repeat
 
@@ -887,11 +878,9 @@ static void
 #format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT,"f","lf","Lf"#
 */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, char *sep, void *ignore)
+@fname@_scan (FILE *fp, @type@ *ip, void *ignore, PyArray_Descr *ignore2)
 {
-        int num;
-        num = fscanf(fp, "%"@format@, ip);
-        _ENDSCAN;
+        return fscanf(fp, "%"@format@, ip);
 }
 
 /**end repeat**/
@@ -903,24 +892,24 @@ static int
 #format="d","u"#
 */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, char *sep, void *ignore)
+@fname@_scan (FILE *fp, @type@ *ip, void *ignore, PyArray_Descr *ignore2)
 {
         @btype@ temp;
         int num;
         num = fscanf(fp, "%"@format@, &temp);
         *ip = (@type@) temp;
-        _ENDSCAN;
+	return num;
 }
 /**end repeat**/
 
 static int
-BOOL_scan (FILE *fp, Bool *ip, char *sep, void *ignore)
+BOOL_scan (FILE *fp, Bool *ip, void *ignore, PyArray_Descr *ignore2)
 {
         int temp;
         int num;
         num = fscanf(fp, "%d", &temp);
         *ip = (Bool) (temp != 0);
-        _ENDSCAN;
+	return num;
 }
 
 /**begin repeat
@@ -928,8 +917,6 @@ BOOL_scan (FILE *fp, Bool *ip, char *sep, void *ignore)
 */
 #define @fname@_scan NULL
 /**end repeat**/
-
-#undef _ENDSCAN
 
 /****************** fromstr *************************************/
 
@@ -940,7 +927,7 @@ BOOL_scan (FILE *fp, Bool *ip, char *sep, void *ignore)
 #btype=(long,ulong)*5#
 */
 static int
-@fname@_fromstr(char *str, @type@ *ip, char **endptr, void *ignore)
+@fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *ignore)
 {
         @btype@ result;
 
@@ -956,7 +943,7 @@ static int
 */
 #if (PY_VERSION_HEX >= 0x02040000) || defined(PyOS_ascii_strtod)
 static int
-@fname@_fromstr(char *str, @type@ *ip, char **endptr, void *ignore)
+@fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *ignore)
 {
         double result;
 

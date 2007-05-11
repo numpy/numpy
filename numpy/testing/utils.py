@@ -180,7 +180,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
                 header='Items are not equal to %d significant digits:' %
                                  significant,
                 verbose=verbose)
-    assert math.fabs(sc_desired - sc_actual) < pow(10.,-1*significant), msg
+    assert math.fabs(sc_desired - sc_actual) < pow(10.,-(significant-1)), msg
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header=''):
