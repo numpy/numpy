@@ -332,7 +332,7 @@ add_newdoc('numpy.core.multiarray','set_string_function',
 add_newdoc('numpy.core.multiarray','set_numeric_ops',
     """set_numeric_ops(op=func, ...)
 
-    Set some or all of the number methods for all array objects.  Don't
+    Set some or all of the number methods for all array objects.  Do not
     forget **dict can be used as the argument list.  Return the functions
     that were replaced, which can be stored and set later.
 
@@ -810,7 +810,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('getfield',
     """a.getfield(dtype, offset) -> field of array as given type.
 
     Returns a field of the given array as a certain type. A field is a view of
-    the array's data with each itemsize determined by the given type and the
+    the array data with each itemsize determined by the given type and the
     offset into the current array.
 
     """))
@@ -832,15 +832,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
-    """a.mean(axis=None, dtype=None)
+    """a.mean(axis=None, dtype=None, out=None) -> mean
 
-      Average the array over the given axis.  If the axis is None,
-      average over all dimensions of the array.  Equivalent to
+    Returns the average of the array elements.  The average is taken over the
+    flattened array by default, otherwise over the specified axis.
+    
+    :Parameters:
+        axis : integer
+            Axis along which the means are computed. The default is
+            to compute the standard deviation of the flattened array.
+        dtype : type
+            Type to use in computing the means. For arrays of
+            integer type the default is float32, for arrays of float types it
+            is the same as the array type.
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
 
-        a.sum(axis, dtype) / size(a, axis).
+    :Returns:
+        mean : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
 
-      The optional dtype argument is the data type for intermediate
-      calculations in the sum.
+    :SeeAlso:
+        - var : variance
+        - std : standard deviation
+
+    Notes
+    -----
+        The mean is the sum of the elements along the axis divided by the
+        number of elements.
 
     """))
 
@@ -1072,15 +1094,39 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """a.std(axis=None, dtype=None, out=None) -> standard deviation.
 
-    The standard deviation isa measure of the spread of a
-    distribution.
+    Returns the standard deviation of the array elements, a measure of the
+    spread of a distribution. The standard deviation is computed for the
+    flattened array by default, otherwise over the specified axis.
 
-    The standard deviation is the square root of the average of the
-    squared deviations from the mean, i.e.
-        std = sqrt(mean((x - x.mean())**2,axis=0)).
+    :Parameters:
+        axis : integer
+            Axis along which the standard deviation is computed. The default is
+            to compute the standard deviation of the flattened array.
+        dtype : type
+            Type to use in computing the standard deviation. For arrays of
+            integer type the default is float32, for arrays of float types it
+            is the same as the array type.
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
 
-    For multidimensional arrays, std is computed by default along the
-    first axis.
+    :Returns:
+        standard deviation : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+        - var : variance
+        - mean : average
+
+    Notes
+    -----
+
+      The standard deviation is the square root of the average of the squared
+      deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
+      computed standard deviation is biased, i.e., the mean is computed by
+      dividing by the number of elements, N, rather than by N-1.
 
     """))
 
@@ -1224,7 +1270,41 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
-    """a.var(axis=None, dtype=None)
+    """a.var(axis=None, dtype=None, out=None) -> variance
+
+    Returns the variance of the array elements, a measure of the spread of a
+    distribution.  The variance is computed for the flattened array by default,
+    otherwise over the specified axis.
+
+    :Parameters:
+        axis : integer
+            Axis along which the variance is computed. The default is to
+            compute the variance of the flattened array.
+        dtype : type
+            Type to use in computing the variance. For arrays of integer type
+            the default is float32, for arrays of float types it is the same as
+            the array type.
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+    :Returns:
+        variance : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+        - std : standard deviation
+        - mean: average
+
+    Notes
+    -----
+
+      The variance is the average of the squared deviations from the mean, i.e.
+      var = mean((x - x.mean())**2).  The computed variance is biased, i.e.,
+      the mean is computed by dividing by the number of elements, N, rather
+      than by N-1.
 
     """))
 

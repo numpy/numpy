@@ -691,12 +691,38 @@ def round_(a, decimals=0, out=None):
 around = round_
 
 def mean(a, axis=None, dtype=None, out=None):
-    """mean(a, axis=None, dtype=None)
-    Return the arithmetic mean.
+    """Compute the mean along the specified axis.
 
-    The mean is the sum of the elements divided by the number of elements.
+    Returns the average of the array elements.  The average is taken over the
+    flattened array by default, otherwise over the specified axis.
 
-    See also: average
+    :Parameters:
+        axis : integer
+            Axis along which the means are computed. The default is
+            to compute the standard deviation of the flattened array.
+        dtype : type
+            Type to use in computing the means. For arrays of
+            integer type the default is float32, for arrays of float types it
+            is the same as the array type.
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+    :Returns:
+        mean : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+        - var : variance
+        - std : standard deviation
+
+    Notes
+    -----
+        The mean is the sum of the elements along the axis divided by the
+        number of elements.
+
     """
     try:
         mean = a.mean
@@ -704,14 +730,44 @@ def mean(a, axis=None, dtype=None, out=None):
         return _wrapit(a, 'mean', axis, dtype, out)
     return mean(axis, dtype, out)
 
+
 def std(a, axis=None, dtype=None, out=None):
-    """std(sample, axis=None, dtype=None)
-    Return the standard deviation, a measure of the spread of a distribution.
+    """Compute the standard deviation along the specified axis.
 
-    The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e. std = sqrt(mean((x - x.mean())**2)).
+    Returns the standard deviation of the array elements, a measure of the
+    spread of a distribution. The standard deviation is computed for the
+    flattened array by default, otherwise over the specified axis.
 
-    See also: var
+    :Parameters:
+        axis : integer
+            Axis along which the standard deviation is computed. The default is
+            to compute the standard deviation of the flattened array.
+        dtype : type
+            Type to use in computing the standard deviation. For arrays of
+            integer type the default is float32, for arrays of float types it
+            is the same as the array type.
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+    :Returns:
+        standard deviation : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+        - var : variance
+        - mean : average
+
+    Notes
+    -----
+
+      The standard deviation is the square root of the average of the squared
+      deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
+      computed standard deviation is biased, i.e., the mean is computed by
+      dividing by the number of elements, N, rather than by N-1.
+
     """
     try:
         std = a.std
@@ -719,14 +775,44 @@ def std(a, axis=None, dtype=None, out=None):
         return _wrapit(a, 'std', axis, dtype, out)
     return std(axis, dtype, out)
 
+
 def var(a, axis=None, dtype=None, out=None):
-    """var(sample, axis=None, dtype=None)
-    Return the variance, a measure of the spread of a distribution.
+    """Compute the variance along the specified axis.
 
-    The variance is the average of the squared deviations from the mean,
-    i.e. var = mean((x - x.mean())**2).
+    Returns the variance of the array elements, a measure of the spread of a
+    distribution.  The variance is computed for the flattened array by default,
+    otherwise over the specified axis.
 
-    See also: std
+    :Parameters:
+        axis : integer
+            Axis along which the variance is computed. The default is to
+            compute the variance of the flattened array.
+        dtype : type
+            Type to use in computing the variance. For arrays of integer type
+            the default is float32, for arrays of float types it is the same as
+            the array type.
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+    :Returns:
+        variance : depends, see above
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+        - std : standard deviation
+        - mean : average
+
+    Notes
+    -----
+
+      The variance is the average of the squared deviations from the mean, i.e.
+      var = mean((x - x.mean())**2).  The computed variance is biased, i.e.,
+      the mean is computed by dividing by the number of elements, N, rather
+      than by N-1.
+
     """
     try:
         var = a.var
