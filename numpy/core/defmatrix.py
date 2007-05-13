@@ -247,29 +247,35 @@ class matrix(N.ndarray):
         the flattened array by default, otherwise over the specified axis.
 
         :Parameters:
+
             axis : integer
                 Axis along which the means are computed. The default is
                 to compute the standard deviation of the flattened array.
+
             dtype : type
                 Type to use in computing the means. For arrays of integer type
                 the default is float32, for arrays of float types it is the
                 same as the array type.
+
             out : ndarray
                 Alternative output array in which to place the result. It must
                 have the same shape as the expected output but the type will be
                 cast if necessary.
 
         :Returns:
+
             mean : The return type varies, see above.
                 A new array holding the result is returned unless out is
                 specified, in which case a reference to out is returned.
 
         :SeeAlso:
+
             - var : variance
             - std : standard deviation
 
         Notes
         -----
+
             The mean is the sum of the elements along the axis divided by the
             number of elements.
 
@@ -284,25 +290,30 @@ class matrix(N.ndarray):
         flattened array by default, otherwise over the specified axis.
 
         :Parameters:
+
             axis : integer
                 Axis along which the standard deviation is computed. The
                 default is to compute the standard deviation of the flattened
                 array.
+
             dtype : type
                 Type to use in computing the standard deviation. For arrays of
                 integer type the default is float32, for arrays of float types
                 it is the same as the array type.
+
             out : ndarray
                 Alternative output array in which to place the result. It must
                 have the same shape as the expected output but the type will be
                 cast if necessary.
 
         :Returns:
+
             standard deviation : The return type varies, see above.
                 A new array holding the result is returned unless out is
                 specified, in which case a reference to out is returned.
 
         :SeeAlso:
+
             - var : variance
             - mean : average
 
@@ -326,24 +337,29 @@ class matrix(N.ndarray):
         default, otherwise over the specified axis.
 
         :Parameters:
+
             axis : integer
                 Axis along which the variance is computed. The default is to
                 compute the variance of the flattened array.
+
             dtype : type
                 Type to use in computing the variance. For arrays of integer
                 type the default is float32, for arrays of float types it is
                 the same as the array type.
+
             out : ndarray
                 Alternative output array in which to place the result. It must
                 have the same shape as the expected output but the type will be
                 cast if necessary.
 
         :Returns:
+
             variance : depends, see above
                 A new array holding the result is returned unless out is
                 specified, in which case a reference to out is returned.
 
         :SeeAlso:
+
             - std : standard deviation
             - mean : average
 
