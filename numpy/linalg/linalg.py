@@ -344,7 +344,42 @@ def qr(a, mode='full'):
 
 
 # Eigenvalues
+
+
 def eigvals(a):
+    """Compute the eigenvalues of the general 2-d array a.
+
+    A simple interface to the LAPACK routines dgeev and zgeev that sets the
+    flags to return only the eigenvalues of general real and complex arrays
+    respectively.
+
+    :Parameters:
+
+        a : 2-d array
+            A complex or real 2-d array whose eigenvalues and eigenvectors
+            will be computed.
+
+    :Returns:
+
+        w : 1-d double or complex array
+            The eigenvalues. The eigenvalues are not necessarily ordered, nor
+            are they necessarily real for real matrices.
+
+    :SeeAlso:
+
+        - eig : eigenvalues and right eigenvectors of general arrays
+        - eigvalsh : eigenvalues of symmetric or Hemitiean arrays.
+        - eigh : eigenvalues and eigenvectors of symmetric/Hermitean arrays.
+
+    :Notes:
+    -------
+
+        The number w is an eigenvalue of a if there exists a vector v
+        satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
+        the characteristic equation det(a - w[i]*I) = 0, where det is the
+        determinant and I is the identity matrix.
+
+    """
     _assertRank2(a)
     _assertSquareness(a)
     _assertFinite(a)
@@ -389,6 +424,44 @@ def eigvals(a):
 
 
 def eigvalsh(a, UPLO='L'):
+    """Compute the eigenvalues of the symmetric or Hermitean 2-d array a.
+
+    A simple interface to the LAPACK routines dsyevd and zheevd that sets the
+    flags to return only the eigenvalues of real symmetric and complex
+    Hermetian arrays respectively.
+
+    :Parameters:
+
+        a : 2-d array
+            A complex or real 2-d array whose eigenvalues and eigenvectors
+            will be computed.
+
+        UPLO : string
+            Specifies whether the pertinent array date is taken from the upper
+            or lower triangular part of a. Possible values are 'L', and 'U' for
+            upper and lower respectively. Default is 'L'.
+
+    :Returns:
+
+        w : 1-d double array
+            The eigenvalues. The eigenvalues are not necessarily ordered.
+
+    :SeeAlso:
+
+        - eigh : eigenvalues and eigenvectors of symmetric/Hermitean arrays.
+        - eigvals : eigenvalues of general real or complex arrays.
+        - eig : eigenvalues and eigenvectors of general real or complex arrays.
+
+    :Notes:
+    -------
+
+        The number w is an eigenvalue of a if there exists a vector v
+        satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
+        the characteristic equation det(a - w[i]*I) = 0, where det is the
+        determinant and I is the identity matrix. The eigenvalues of real
+        symmetric or complex Hermitean matrices are always real.
+
+    """
     _assertRank2(a)
     _assertSquareness(a)
     t, result_t = _commonType(a)
@@ -432,13 +505,58 @@ def _convertarray(a):
     a = _fastCT(a.astype(t))
     return a, t, result_t
 
+
 # Eigenvectors
 
+
 def eig(a):
-    """eig(a) returns u,v  where u is the eigenvalues and
-v is a matrix of eigenvectors with vector v[:,i] corresponds to
-eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
-"""
+    """Eigenvalues and right eigenvectors of a general matrix.
+
+    A simple interface to the LAPACK routines dgeev and zgeev that compute the
+    eigenvalues and eigenvectors of general real and complex arrays
+    respectively.
+
+    :Parameters:
+
+        a : 2-d array
+            A complex or real 2-d array whose eigenvalues and eigenvectors
+            will be computed.
+
+    :Returns:
+
+        w : 1-d double or complex array
+            The eigenvalues. The eigenvalues are not necessarily ordered, nor
+            are they necessarily real for real matrices.
+
+        v : 2-d double or complex double array.
+            The normalized eigenvector corresponding to the eigenvalue w[i] is
+            the column v[:,i].
+
+    :SeeAlso:
+
+        - eigvalsh : eigenvalues of symmetric or Hemitiean arrays.
+        - eig : eigenvalues and right eigenvectors for non-symmetric arrays
+        - eigvals : eigenvalues of non-symmetric array.
+
+    :Notes:
+    -------
+
+        The number w is an eigenvalue of a if there exists a vector v
+        satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
+        the characteristic equation det(a - w[i]*I) = 0, where det is the
+        determinant and I is the identity matrix. The arrays a, w, and v
+        satisfy the equation dot(a,v[i]) = w[i]*v[:,i].
+
+        The array v of eigenvectors may not be of maximum rank, that is, some
+        of the columns may be dependent, although roundoff error may obscure
+        that fact. If the eigenvalues are all different, then theoretically the
+        eigenvectors are independent. Likewise, the matrix of eigenvectors is
+        unitary if the matrix a is normal, i.e., if dot(a, a.H) = dot(a.H, a).
+
+        The left and right eigenvectors are not necessarily the (Hemitian)
+        transposes of each other.
+
+    """
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
@@ -492,8 +610,51 @@ eigenvalue u[i].  Satisfies the equation dot(a, v[:,i]) = u[i]*v[:,i]
     vt = v.transpose().astype(result_t)
     return w.astype(result_t), wrap(vt)
 
+
 def eigh(a, UPLO='L'):
     """Compute eigenvalues for a Hermitian-symmetric matrix.
+
+    A simple interface to the LAPACK routines dsyevd and zheevd that compute
+    the eigenvalues and eigenvectors of real symmetric and complex Hermitian
+    arrays respectively.
+
+    :Parameters:
+
+        a : 2-d array
+            A complex Hermitian or symmetric real 2-d array whose eigenvalues
+            and eigenvectors will be computed.
+
+        UPLO : string
+            Specifies whether the pertinent array date is taken from the upper
+            or lower triangular part of a. Possible values are 'L', and 'U'.
+            Default is 'L'.
+
+    :Returns:
+
+        w : 1-d double array
+            The eigenvalues. The eigenvalues are not necessarily ordered.
+
+        v : 2-d double or complex double array, depending on input array type
+            The normalized eigenvector corresponding to the eigenvalue w[i] is
+            the column v[:,i].
+
+    :SeeAlso:
+
+        - eigvalsh : eigenvalues of symmetric or Hemitiean arrays.
+        - eig : eigenvalues and right eigenvectors for non-symmetric arrays
+        - eigvals : eigenvalues of non-symmetric array.
+
+    :Notes:
+    -------
+
+        The number w is an eigenvalue of a if there exists a vector v
+        satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
+        the characteristic equation det(a - w[i]*I) = 0, where det is the
+        determinant and I is the identity matrix. The eigenvalues of real
+        symmetric or complex Hermitean matrices are always real. The array v
+        of eigenvectors is unitary and a, w, and v satisfy the equation
+        dot(a,v[i]) = w[i]*v[:,i].
+
     """
     a, wrap = _makearray(a)
     _assertRank2(a)
