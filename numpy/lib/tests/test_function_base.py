@@ -60,7 +60,7 @@ class test_average(NumpyTestCase):
     def check_weighted(self):
         y1 = array([[1,2,3],
                     [4,5,6]])
-        actual = average(y1,weights=[1,2],axis=0)            
+        actual = average(y1,weights=[1,2],axis=0)
         desired = array([3.,4.,5.])
         assert_array_equal(actual, desired)
 
@@ -394,12 +394,12 @@ class test_histogramdd(NumpyTestCase):
         Z[range(5), range(5), range(5)] = 1.
         H,edges = histogramdd([arange(5), arange(5), arange(5)], 5)
         assert_array_equal(H, Z)
-    
+
     def check_shape(self):
         x = rand(100,3)
         hist3d, edges = histogramdd(x, bins = (5, 7, 6))
         assert_array_equal(hist3d.shape, (5,7,6))
-        
+
     def check_weights(self):
         v = rand(100,2)
         hist, edges = histogramdd(v)
@@ -410,7 +410,11 @@ class test_histogramdd(NumpyTestCase):
         assert_array_equal(w_hist, n_hist)
         w_hist, edges = histogramdd(v, weights=ones(100, int)*2)
         assert_array_equal(w_hist, 2*hist)
-            
+
+    def check_identical_samples(self):
+        x = zeros((10,2),int)
+        hist, edges = histogramdd(x, bins=2)
+        assert_array_equal(edges[0],array([-0.5,  0. ,  0.5]))
 
 class test_unique(NumpyTestCase):
     def check_simple(self):
