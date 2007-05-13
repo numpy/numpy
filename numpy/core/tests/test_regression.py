@@ -633,6 +633,11 @@ class test_regression(NumpyTestCase):
         assert_equal(N.array("a\x00\x0b\x0c\x00").item(),
                      'a\x00\x0b\x0c')
 
+    def check_mem_string_concat(self, level=rlevel):
+        """Ticket #469"""
+        x = N.array([])
+        N.append(x,'asdasd\tasdasd')
+
     def check_matrix_multiply_by_1d_vector(self, level=rlevel) :
         """Ticket #473"""
         def mul() :
@@ -652,6 +657,26 @@ class test_regression(NumpyTestCase):
         b = N.zeros_like(a)
         N.take(x,[0,2],axis=1,out=b)
         assert_array_equal(a,b)
+
+    def check_frompyfunc_endian(self, level=rlevel):
+        """Ticket #503"""
+        from math import radians
+        uradians = N.frompyfunc(radians, 1, 1)
+        big_endian = N.array([83.4, 83.5], dtype='>f8')
+        little_endian = N.array([83.4, 83.5], dtype='<f8')
+        assert_almost_equal(uradians(big_endian).astype(float),
+                            uradians(little_endian).astype(float))
+
+    def check_mem_string_arr(self, level=rlevel):
+        """Ticket #514"""
+        s = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        t = []
+        N.hstack((t, s ))
+
+    def check_arr_transpose(self, level=rlevel):
+        """Ticket #516"""
+        x = N.random.rand(*(2,)*16)
+        y = x.transpose(range(16))
 
 if __name__ == "__main__":
     NumpyTest().run()
