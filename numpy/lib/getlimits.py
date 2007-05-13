@@ -7,7 +7,7 @@ from machar import MachAr
 import numpy.core.numeric as numeric
 import numpy.core.numerictypes as ntypes
 from numpy.core.numeric import array
-
+import numpy as N
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
@@ -21,6 +21,15 @@ _convert_to_float = {
     }
 
 class finfo(object):
+    """Machine limits for floating point types.
+
+    :Parameters:
+        dtype : floating point type or instance
+
+    :SeeAlso:
+      - numpy.lib.machar.MachAr
+
+    """
 
     _finfo_cache = {}
 
@@ -105,6 +114,50 @@ maxexp=%(maxexp)6s   max=     %(_str_max)s
 nexp  =%(nexp)6s   min=       -max
 ---------------------------------------------------------------------
 ''' % self.__dict__
+
+
+class iinfo:
+    """Limits for integer types.
+
+    :Parameters:
+        type : integer type or instance
+
+    """
+
+    # Should be using dtypes as keys, but hash-function isn't yet implemented
+    _min_values = {'int8': -2**7,
+                   'int16': -2**15,
+                   'int32': -2**31,
+                   'int64': -2**63,
+                   'uint8': 0,
+                   'uint16': 0,
+                   'uint32': 0,
+                   'uint64': 0}
+
+    _max_values = {'int8': 2**7 - 1,
+                   'int16': 2**15 - 1,
+                   'int32': 2**31 - 1,
+                   'int64': 2**63 - 1,
+                   'uint8': 2**8 - 1,
+                   'uint16': 2**16 - 1,
+                   'uint32': 2**32 - 1,
+                   'uint64': 2**64 - 1}
+
+    def __init__(self, type):
+        self.dtype = str(N.dtype(type))
+        if not (self.dtype in self._min_values and \
+                self.dtype in self._max_values):
+            raise ValueError("Invalid integer data type.")
+
+    def min(self):
+        """Minimum value of given dtype."""
+        return self._min_values[self.dtype]
+    min = property(min)
+
+    def max(self):
+        """Maximum value of given dtype."""
+        return self._max_values[self.dtype]
+    max = property(max)
 
 if __name__ == '__main__':
     f = finfo(ntypes.single)
