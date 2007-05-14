@@ -1,4 +1,5 @@
 # Module containing non-deprecated functions borrowed from Numeric.
+__docformat__ = "restructuredtext en"
 
 # functions that are now methods
 __all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
@@ -228,10 +229,12 @@ def transpose(a, axes=None):
 def sort(a, axis=-1, kind='quicksort', order=None):
     """Return copy of 'a' sorted along the given axis.
 
+    *Description*
+
     Perform an inplace sort along the given axis using the algorithm specified
     by the kind keyword.
 
-    :Parameters:
+    *Parameters*:
 
         a : array type
             Array to be sorted.
@@ -249,35 +252,39 @@ def sort(a, axis=-1, kind='quicksort', order=None):
             which fields to compare first, second, etc.  Not all fields need be
             specified.
 
-    :Returns:
+    *Returns*:
 
-        sorted array : type is unchanged.
+        sorted_array : type is unchanged.
 
-    :SeeAlso:
+    *SeeAlso*:
 
-      - argsort : indirect sort
-      - lexsort : indirect stable sort on multiple keys
-      - searchsorted : find keys in sorted array
+        argsort
+            Indirect sort
+        lexsort
+            Indirect stable sort on multiple keys
+        searchsorted
+            Find keys in sorted array
 
-    :Notes:
-    ------
+    *Notes*
 
-    The various sorts are characterized by average speed, worst case
-    performance, need for work space, and whether they are stable. A stable
-    sort keeps items with the same key in the same relative order. The three
-    available algorithms have the following properties:
+        The various sorts are characterized by average speed, worst case
+        performance, need for work space, and whether they are stable. A stable
+        sort keeps items with the same key in the same relative order. The
+        three available algorithms have the following properties:
 
-    |------------------------------------------------------|
-    |    kind   | speed |  worst case | work space | stable|
-    |------------------------------------------------------|
-    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
-    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
-    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
-    |------------------------------------------------------|
+        +-----------+-------+-------------+------------+-------+
+        |    kind   | speed |  worst case | work space | stable|
+        +===========+=======+=============+============+=======+
+        | quicksort |   1   | O(n^2)      |     0      |   no  |
+        +-----------+-------+-------------+------------+-------+
+        | mergesort |   2   | O(n*log(n)) |    ~n/2    |   yes |
+        +-----------+-------+-------------+------------+-------+
+        | heapsort  |   3   | O(n*log(n)) |     0      |   no  |
+        +-----------+-------+-------------+------------+-------+
 
-    All the sort algorithms make temporary copies of the data when the sort is not
-    along the last axis. Consequently, sorts along the last axis are faster and use
-    less space than sorts along other axis.
+        All the sort algorithms make temporary copies of the data when the sort
+        is not along the last axis. Consequently, sorts along the last axis are
+        faster and use less space than sorts along other axis.
 
     """
     if axis is None:
@@ -292,11 +299,13 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 def argsort(a, axis=-1, kind='quicksort', order=None):
     """Returns array of indices that index 'a' in sorted order.
 
+    *Description*
+
     Perform an indirect sort along the given axis using the algorithm specified
     by the kind keyword. It returns an array of indices of the same shape as
-    'a' that index data along the given axis in sorted order.
+    a that index data along the given axis in sorted order.
 
-    :Parameters:
+    *Parameters*:
 
         a : array type
             Array containing values that the returned indices should sort.
@@ -314,35 +323,38 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
             which fields to compare first, second, etc.  Not all fields need be
             specified.
 
-    :Returns:
+    *Returns*:
 
         indices : integer array
             Array of indices that sort 'a' along the specified axis.
 
-    :SeeAlso:
+    *SeeAlso*:
 
-      - lexsort : indirect stable sort with multiple keys
-      - sort : inplace sort
+        lexsort
+            Indirect stable sort with multiple keys
+        sort
+            Inplace sort
 
-    :Notes:
-    ------
+    *Notes*
 
-    The various sorts are characterized by average speed, worst case
-    performance, need for work space, and whether they are stable. A stable
-    sort keeps items with the same key in the same relative order. The three
-    available algorithms have the following properties:
+        The various sorts are characterized by average speed, worst case
+        performance, need for work space, and whether they are stable. A stable
+        sort keeps items with the same key in the same relative order. The
+        three available algorithms have the following properties:
 
-    |------------------------------------------------------|
-    |    kind   | speed |  worst case | work space | stable|
-    |------------------------------------------------------|
-    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
-    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
-    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
-    |------------------------------------------------------|
+        +-----------+-------+-------------+------------+-------+
+        |    kind   | speed |  worst case | work space | stable|
+        +===========+=======+=============+============+=======+
+        | quicksort |   1   | O(n^2)      |     0      |   no  |
+        +-----------+-------+-------------+------------+-------+
+        | mergesort |   2   | O(n*log(n)) |    ~n/2    |   yes |
+        +-----------+-------+-------------+------------+-------+
+        | heapsort  |   3   | O(n*log(n)) |     0      |   no  |
+        +-----------+-------+-------------+------------+-------+
 
-    All the sort algorithms make temporary copies of the data when the sort is not
-    along the last axis. Consequently, sorts along the last axis are faster and use
-    less space than sorts along other axis.
+        All the sort algorithms make temporary copies of the data when the sort
+        is not along the last axis. Consequently, sorts along the last axis are
+        faster and use less space than sorts along other axis.
 
     """
     try:
@@ -377,14 +389,17 @@ def argmin(a, axis=None):
 def searchsorted(a, v, side='left'):
     """Returns indices where keys in v should be inserted to maintain order.
 
-    Find the indices into a sorted array such that if the corresponding keys in
-    v were inserted before the indices the order of a would be preserved.  If
-    side='left', then the first such index is returned. If side='right', then
-    the last such index is returned. If there is no such index because the key
-    is out of bounds, then the length of a is returned, i.e., the key would
-    need to be appended. The returned index array has the same shape as v.
+    *Description*
 
-    :Parameters:
+        Find the indices into a sorted array such that if the corresponding
+        keys in v were inserted before the indices the order of a would be
+        preserved.  If side='left', then the first such index is returned. If
+        side='right', then the last such index is returned. If there is no such
+        index because the key is out of bounds, then the length of a is
+        returned, i.e., the key would need to be appended. The returned index
+        array has the same shape as v.
+
+    *Parameters*:
 
         a : array
             1-d array sorted in ascending order.
@@ -396,18 +411,20 @@ def searchsorted(a, v, side='left'):
             Possible values are : 'left', 'right'. Default is 'left'. Return
             the first or last index where the key could be inserted.
 
-    :Returns:
+    *Returns*:
 
         indices : integer array
             Array of insertion points with the same shape as v.
 
-    :SeeAlso:
+    *SeeAlso*:
 
-        - sort
-        - histogram
+        sort
+            Inplace sort
+        histogram
+            Produce histogram from 1-d data
 
-    :Notes:
-    -------
+
+    *Notes*
 
         The array a must be 1-d and is assumed to be sorted in ascending order.
         Searchsorted uses binary search to find the required insertion points.
@@ -464,56 +481,64 @@ def squeeze(a):
 def diagonal(a, offset=0, axis1=0, axis2=1):
     """Return specified diagonals. Uses first two indices by default.
 
-    If a is 2-d, return the diagonal of self with the given offset, i.e., the
+    *Description*
+
+    If a is 2-d, returns the diagonal of self with the given offset, i.e., the
     collection of elements of the form a[i,i+offset]. If a is n-d with n > 2,
     then the axes specified by axis1 and axis2 are used to determine the 2-d
     subarray whose diagonal is returned. The shape of the resulting array can be
     determined by removing axis1 and axis2 and appending an index to the right
     equal to the size of the resulting diagonals.
 
-    :Parameters:
+    *Parameters*:
+
         offset : integer
             Offset of the diagonal from the main diagonal. Can be both positive
             and negative. Defaults to main diagonal.
+
         axis1 : integer
             Axis to be used as the first axis of the 2-d subarrays from which
             the diagonals should be taken. Defaults to first axis.
+
         axis2 : integer
             Axis to be used as the second axis of the 2-d subarrays from which
             the diagonals should be taken. Defaults to second axis.
 
-    :Returns:
-        array_of_diagonals : same type as original array
+    *Returns*:
+
+        array_of_diagonals : type of original array
             If a is 2-d, then a 1-d array containing the diagonal is returned.
             If a is n-d, n > 2, then an array of diagonals is returned.
 
-    :SeeAlso:
-        - diag : matlab workalike for 1-d and 2-d arrays
-        - diagflat : creates diagonal arrays
-        - trace : sum along diagonals
+    *SeeAlso*:
 
-    Examples
-    --------
+        diag :
+            matlab workalike for 1-d and 2-d arrays
+        diagflat :
+            creates diagonal arrays
+        trace :
+            sum along diagonals
 
-    >>> a = arange(4).reshape(2,2)
-    >>> a
-    array([[0, 1],
-           [2, 3]])
-    >>> a.diagonal()
-    array([0, 3])
-    >>> a.diagonal(1)
-    array([1])
+    *Examples*:
 
-    >>> a = arange(8).reshape(2,2,2)
-    >>> a
-    array([[[0, 1],
-            [2, 3]],
+        >>> a = arange(4).reshape(2,2)
+        >>> a
+        array([[0, 1],
+               [2, 3]])
+        >>> a.diagonal()
+        array([0, 3])
+        >>> a.diagonal(1)
+        array([1])
 
-           [[4, 5],
-            [6, 7]]])
-    >>> a.diagonal(0,-2,-1)
-    array([[0, 3],
-           [4, 7]])
+        >>> a = arange(8).reshape(2,2,2)
+        >>> a
+        array([[[0, 1],
+                [2, 3]],
+               [[4, 5],
+                [6, 7]]])
+        >>> a.diagonal(0,-2,-1)
+        array([[0, 3],
+               [4, 7]])
 
     """
     return asarray(a).diagonal(offset, axis1, axis2)
@@ -788,10 +813,12 @@ around = round_
 def mean(a, axis=None, dtype=None, out=None):
     """Compute the mean along the specified axis.
 
-    Returns the average of the array elements.  The average is taken over the
-    flattened array by default, otherwise over the specified axis.
+    *Description*
 
-    :Parameters:
+        Returns the average of the array elements.  The average is taken over
+        the flattened array by default, otherwise over the specified axis.
+
+    *Parameters*:
 
         axis : integer
             Axis along which the means are computed. The default is
@@ -807,19 +834,20 @@ def mean(a, axis=None, dtype=None, out=None):
             the same shape as the expected output but the type will be cast if
             necessary.
 
-    :Returns:
+    *Returns*:
 
         mean : The return type varies, see above.
             A new array holding the result is returned unless out is specified,
             in which case a reference to out is returned.
 
-    :SeeAlso:
+    *SeeAlso*:
 
-        - var : variance
-        - std : standard deviation
+        var
+            Variance
+        std
+            Standard deviation
 
-    Notes
-    -----
+    *Notes*
 
         The mean is the sum of the elements along the axis divided by the
         number of elements.
@@ -835,11 +863,13 @@ def mean(a, axis=None, dtype=None, out=None):
 def std(a, axis=None, dtype=None, out=None):
     """Compute the standard deviation along the specified axis.
 
-    Returns the standard deviation of the array elements, a measure of the
-    spread of a distribution. The standard deviation is computed for the
-    flattened array by default, otherwise over the specified axis.
+    *Description*
 
-    :Parameters:
+        Returns the standard deviation of the array elements, a measure of the
+        spread of a distribution. The standard deviation is computed for the
+        flattened array by default, otherwise over the specified axis.
+
+    *Parameters*:
 
         axis : integer
             Axis along which the standard deviation is computed. The default is
@@ -855,24 +885,25 @@ def std(a, axis=None, dtype=None, out=None):
             the same shape as the expected output but the type will be cast if
             necessary.
 
-    :Returns:
+    *Returns*:
 
-        standard deviation : The return type varies, see above.
+        standard_deviation : The return type varies, see above.
             A new array holding the result is returned unless out is specified,
             in which case a reference to out is returned.
 
-    :SeeAlso:
+    *SeeAlso*:
 
-        - var : variance
-        - mean : average
+        var
+            Variance
+        mean
+            Average
 
-    Notes
-    -----
+    *Notes*
 
-      The standard deviation is the square root of the average of the squared
-      deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
-      computed standard deviation is biased, i.e., the mean is computed by
-      dividing by the number of elements, N, rather than by N-1.
+        The standard deviation is the square root of the average of the squared
+        deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).
+        The computed standard deviation is biased, i.e., the mean is computed
+        by dividing by the number of elements, N, rather than by N-1.
 
     """
     try:
@@ -885,11 +916,13 @@ def std(a, axis=None, dtype=None, out=None):
 def var(a, axis=None, dtype=None, out=None):
     """Compute the variance along the specified axis.
 
-    Returns the variance of the array elements, a measure of the spread of a
-    distribution.  The variance is computed for the flattened array by default,
-    otherwise over the specified axis.
+    *Description*
 
-    :Parameters:
+        Returns the variance of the array elements, a measure of the spread of
+        a distribution.  The variance is computed for the flattened array by
+        default, otherwise over the specified axis.
+
+    *Parameters*:
 
         axis : integer
             Axis along which the variance is computed. The default is to
@@ -905,24 +938,25 @@ def var(a, axis=None, dtype=None, out=None):
             the same shape as the expected output but the type will be cast if
             necessary.
 
-    :Returns:
+    *Returns*:
 
         variance : depends, see above
             A new array holding the result is returned unless out is specified,
             in which case a reference to out is returned.
 
-    :SeeAlso:
+    *SeeAlso*:
 
-        - std : standard deviation
-        - mean : average
+        std
+            Standard deviation
+        mean
+            Average
 
-    Notes
-    -----
+    *Notes*
 
-      The variance is the average of the squared deviations from the mean, i.e.
-      var = mean((x - x.mean())**2).  The computed variance is biased, i.e.,
-      the mean is computed by dividing by the number of elements, N, rather
-      than by N-1.
+        The variance is the average of the squared deviations from the mean,
+        i.e.  var = mean((x - x.mean())**2).  The computed variance is biased,
+        i.e., the mean is computed by dividing by the number of elements, N,
+        rather than by N-1.
 
     """
     try:
