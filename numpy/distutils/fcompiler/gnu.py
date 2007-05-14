@@ -225,6 +225,8 @@ class GnuFCompiler(FCompiler):
                 march_opt = '-march=nocona'
             elif cpu.is_Core2():
                 march_opt = '-march=nocona'
+            elif cpu.is_Xeon() and cpu.is_64bit():
+                march_opt = '-march=nocona'
             elif cpu.is_Prescott():
                 march_opt = '-march=prescott'
             elif cpu.is_PentiumIV():
