@@ -1,3 +1,4 @@
+.. -*- rest -*-
 
 Created: September 2006
 Author: Pearu Peterson <pearu.peterson@gmail.com>
@@ -92,17 +93,17 @@ Line instance has the following attributes:
 
   * .line - contains Fortran code line
   * .span - a 2-tuple containing the span of line numbers containing
-            Fortran code in the original Fortran file
+    Fortran code in the original Fortran file
   * .label - the label of Fortran code line
   * .reader - the FortranReaderBase class instance
   * .strline - if not None then contains Fortran code line with parenthesis
-             content and string literal constants saved in .strlinemap dictionary.
+    content and string literal constants saved in .strlinemap dictionary.
   * .is_f2py_directive - True if line started with f2py directive comment.
 
 and the following methods:
 
   * .get_line() - returns .strline (also evalutes it if None). Also
-                  handles Hollerith contstants in fixed F77 mode.
+    handles Hollerith contstants in fixed F77 mode.
   * .isempty()  - returns True if Fortran line contains no code.
   * .copy(line=None, apply_map=False) - returns a Line instance
     with given .span, .label, .reader information but line content
@@ -137,7 +138,7 @@ Comment instance has the following attributes:
 
   * .comment - comment string
   * .span - a 2-tuple containing the span of line numbers containing
-            Fortran comment in the original Fortran file
+    Fortran comment in the original Fortran file
   * .reader - the FortranReaderBase class instance
 
 and .isempty() method.
@@ -152,7 +153,7 @@ MultiLine instance has the following attributes:
   * .block - a list of lines
   * .suffix - the content of <suffix>
   * .span - a 2-tuple containing the span of line numbers containing
-            multiline syntax in the original Fortran file
+    multiline syntax in the original Fortran file
   * .reader - the FortranReaderBase class instance
 
 and .isempty() method.
@@ -191,12 +192,12 @@ True, the content of a .pyf file is assumed. For example,
 FortranReaderBase has the following attributes:
 
   * .source - a file-like object with .next() method to retrive 
-              a source code line
+    a source code line
   * .source_lines - a list of read source lines
   * .reader - a FortranReaderBase instance for reading files
-              from INCLUDE statements.
+    from INCLUDE statements.
   * .include_dirs - a list of directories where INCLUDE files
-              are searched. Default is ['.'].
+    are searched. Default is ['.'].
 
 and the following methods:
 
@@ -240,20 +241,20 @@ Statement instance has the following attributes:
   * .parent  - it is either parent block-type statement or FortranParser instance.
   * .item    - Line instance containing Fortran statement line information, see above.
   * .isvalid - when False then processing this Statement instance will be skipped,
-               for example, when the content of .item does not match with
-               the Statement class.
+    for example, when the content of .item does not match with
+    the Statement class.
   * .ignore  - when True then the Statement instance will be ignored.
   * .modes   - a list of Fortran format modes where the Statement instance is valid.
 
 and the following methods:
 
   * .info(message), .warning(message), .error(message) - to spit messages to
-               sys.stderr stream.
+    sys.stderr stream.
   * .get_variable(name) - get Variable instance by name that is defined in
-               current namespace. If name is not defined, then the corresponding
-               Variable instance is created.
+    current namespace. If name is not defined, then the corresponding
+    Variable instance is created.
   * .analyze() - calculate various information about the Statement, this information
-               is saved in .a attribute that is AttributeHolder instance.
+    is saved in .a attribute that is AttributeHolder instance.
 
 All statement classes are derived from Statement class. Block statements are
 derived from BeginStatement class and is assumed to end with EndStatement
@@ -261,7 +262,7 @@ instance in .content attribute list. BeginStatement and EndStatement instances
 have the following attributes:
 
   * .name      - name of the block, blocks without names use line label
-                 as the name.
+    as the name.
   * .blocktype - type of the block (derived from class name)
   * .content   - a list of Statement (or Line) instances.
 
@@ -331,19 +332,19 @@ In summary, .a attribute may hold different information sets as follows:
 
   * BeginSource - .module, .external_subprogram, .blockdata
   * Module - .attributes, .implicit_rules, .use, .use_provides, .variables,
-             .type_decls, .module_subprogram, .module_data
+    .type_decls, .module_subprogram, .module_data
   * PythonModule - .implicit_rules, .use, .use_provides
   * Program - .attributes, .implicit_rules, .use, .use_provides
   * BlockData - .implicit_rules, .use, .use_provides, .variables
   * Interface - .implicit_rules, .use, .use_provides, .module_procedures
   * Function, Subroutine - .implicit_rules, .attributes, .use, .use_statements,
-                .variables, .type_decls, .internal_subprogram
+    .variables, .type_decls, .internal_subprogram
   * TypeDecl - .variables, .attributes
 
 Block statements have the following methods:
 
   * .get_classes() - returns a list of Statement classes that are valid
-                     as a content of given block statement.
+    as a content of given block statement.
 
 The following one line statements are defined:
 
