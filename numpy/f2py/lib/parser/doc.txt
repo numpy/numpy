@@ -19,6 +19,7 @@ Function parse(<input>, ..) parses, analyzes and returns Statement
 tree of Fortran input. For example,
 
 ::
+
   >>> from api import parse
   >>> code = """
   ... c comment
@@ -74,6 +75,7 @@ well as detects if Fortran file is in free or fixed format.
 For example,
 
 ::
+
   >>> from readfortran import *
   >>> import os
   >>> reader = FortranFileReader(os.path.expanduser('~/src/blas/daxpy.f'))
