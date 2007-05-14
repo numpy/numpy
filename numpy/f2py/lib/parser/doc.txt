@@ -311,9 +311,9 @@ and methods:
 
   * .tostr() - return string representation of Fortran type declaration
   * .astypedecl() - pure type declaration instance, it has no .entity_decls
-                    and .attrspec.
+    and .attrspec.
   * .analyze() - processes .entity_decls and .attsspec attributes and adds
-                 Variable instance to .parent.a.variables dictionary.
+    Variable instance to .parent.a.variables dictionary.
 
 The following block statements are defined in block_statements.py:
 
@@ -329,16 +329,16 @@ deriving them from the following classes:
 
 In summary, .a attribute may hold different information sets as follows:
 
-  BeginSource - .module, .external_subprogram, .blockdata
-  Module - .attributes, .implicit_rules, .use, .use_provides, .variables,
-           .type_decls, .module_subprogram, .module_data
-  PythonModule - .implicit_rules, .use, .use_provides
-  Program - .attributes, .implicit_rules, .use, .use_provides
-  BlockData - .implicit_rules, .use, .use_provides, .variables
-  Interface - .implicit_rules, .use, .use_provides, .module_procedures
-  Function, Subroutine - .implicit_rules, .attributes, .use, .use_statements,
-              .variables, .type_decls, .internal_subprogram
-  TypeDecl - .variables, .attributes
+  * BeginSource - .module, .external_subprogram, .blockdata
+  * Module - .attributes, .implicit_rules, .use, .use_provides, .variables,
+             .type_decls, .module_subprogram, .module_data
+  * PythonModule - .implicit_rules, .use, .use_provides
+  * Program - .attributes, .implicit_rules, .use, .use_provides
+  * BlockData - .implicit_rules, .use, .use_provides, .variables
+  * Interface - .implicit_rules, .use, .use_provides, .module_procedures
+  * Function, Subroutine - .implicit_rules, .attributes, .use, .use_statements,
+                .variables, .type_decls, .internal_subprogram
+  * TypeDecl - .variables, .attributes
 
 Block statements have the following methods:
 
