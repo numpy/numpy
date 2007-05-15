@@ -133,11 +133,15 @@ class record(nt.void):
         if res:
             obj = self.getfield(*res[:2])
             # if it has fields return a recarray,
-            # if it's a string return 'SU' return a chararray
-            # otherwise return a normal array
-            if obj.dtype.fields:
+            # if it's a string ('SU') return a chararray
+            # otherwise return the object
+            try:
+                dt = obj.dtype
+            except AttributeError:
+                return obj
+            if dt.fields:
                 return obj.view(obj.__class__)
-            if obj.dtype.char in 'SU':
+            if dt.char in 'SU':
                 return obj.view(chararray)
             return obj
         else:
@@ -159,6 +163,16 @@ class record(nt.void):
         else:
             raise AttributeError, "'record' object has no "\
                   "attribute '%s'" % attr
+
+    def pprint(self):
+        # pretty-print all fields
+        names = self.dtype.names
+        maxlen = max([len(name) for name in names])
+        rows = []
+        fmt = '%% %ds: %%s' %maxlen
+        for name in names:
+            rows.append(fmt%(name, getattr(self, name)))
+        return "\n".join(rows)
 
 # The recarray is almost identical to a standard array (which supports
 #   named fields already)  The biggest difference is that it can use

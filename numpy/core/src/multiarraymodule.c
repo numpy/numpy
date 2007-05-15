@@ -26,8 +26,6 @@
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 static PyObject *_numpy_internal=NULL; /* A Python module for callbacks */
-static int _multiarray_module_loaded=0;
-
 
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
@@ -7501,8 +7499,6 @@ PyMODINIT_FUNC initmultiarray(void) {
 	PyObject *m, *d, *s;
 	PyObject *c_api;
 
-	if (_multiarray_module_loaded) return;
-	_multiarray_module_loaded = 1;
 	/* Create the module and add the functions */
 	m = Py_InitModule("multiarray", array_module_methods);
 	if (!m) goto err;
