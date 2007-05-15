@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include "fenv.h"
 
-const fenv_t __fe_dfl_env = {
+const fenv_t npy__fe_dfl_env = {
 	0xffff0000,
 	0xffff0000,
 	0xffffffff,
