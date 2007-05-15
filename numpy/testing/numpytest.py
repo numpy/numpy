@@ -195,7 +195,7 @@ class NumpyTestCase (unittest.TestCase):
 class ScipyTestCase(NumpyTestCase):
     def __init__(self, package=None):
         warnings.warn("ScipyTestCase is now called NumpyTestCase; please update your code",
-                         DeprecationWarning)
+                         DeprecationWarning, stacklevel=2)
         NumpyTestCase.__init__(self, package)
 
 
