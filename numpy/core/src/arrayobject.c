@@ -6859,10 +6859,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 
         if ((nd == 0) || PyString_Check(s) ||           \
             PyUnicode_Check(s) || PyBuffer_Check(s)) {
-                if PyUnicode_Check(s)
-                        *itemsize = MAX(*itemsize, 4*n);
-                else
-                        *itemsize = MAX(*itemsize, n);
+                *itemsize = MAX(*itemsize, n);
                 return 0;
         }
         for (i=0; i<n; i++) {
