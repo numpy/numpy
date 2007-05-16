@@ -14,6 +14,13 @@ try:
 except NameError:
     from sets import Set as set
 
+# Fix Python distutils bug sf #1718574:
+_l = old_build_clib.user_options
+for _i in range(len(_l)):
+    if _l[_i][0] in ['build-clib', 'build-temp']:
+        _l[_i] = (_l[_i][0]+'=',)+_l[_i][1:]
+#
+
 class build_clib(old_build_clib):
 
     description = "build C/C++/F libraries used by Python extensions"

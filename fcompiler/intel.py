@@ -79,7 +79,6 @@ class IntelFCompiler(FCompiler):
         v = self.get_version()
         if v and v >= '8.0':
             opt.append('-nofor_main')
-        opt.extend(self.get_flags_arch())
         return opt
 
 class IntelItaniumFCompiler(IntelFCompiler):

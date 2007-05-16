@@ -1158,6 +1158,8 @@ from distutils.util import get_platform
 
 class lapack_opt_info(system_info):
 
+    notfounderror = LapackNotFoundError
+
     def calc_info(self):
 
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
@@ -1252,6 +1254,8 @@ class lapack_opt_info(system_info):
 
 
 class blas_opt_info(system_info):
+
+    notfounderror = BlasNotFoundError
 
     def calc_info(self):
 
