@@ -6918,10 +6918,18 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
                 return mintype;
         }
 
+
         if (chktype->type_num > mintype->type_num)
                 outtype_num = chktype->type_num;
-        else
-                outtype_num = mintype->type_num;
+        else {
+                if (PyDataType_ISOBJECT(chktype) && \
+                    PyDataType_ISSTRING(mintype)) {
+                        return PyArray_DescrFromType(NPY_OBJECT);
+                }
+                else {
+                        outtype_num = mintype->type_num;
+                }
+        }
 
         save_num = outtype_num;
         while(outtype_num < PyArray_NTYPES &&
