@@ -835,8 +835,15 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     """
     x = array(a, copy=False)
     y = array(b, copy=False)
-    d = less_equal(absolute(x-y), atol + rtol * absolute(y))
-    return d.ravel().all()
+    d1 = less_equal(absolute(x-y), atol + rtol * absolute(y))
+    xinf = isinf(x)
+    yinf = isinf(y)
+    xneg = signbit(x)
+    yneg = signbit(y)
+    d2 = (xinf == yinf)
+    d3 = (xneg == yneg)
+    d4 = logical_not(d2)
+    return (d1.all() and not d4.any()) or (d2.all() and d3.all())
 
 
 def array_equal(a1, a2):
