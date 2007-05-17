@@ -218,7 +218,14 @@ static void
     }
 #endif
     else {
+#if @neg@
+        @name@ tmp;
+        tmp = a / b;
+        if (((a > 0) != (b > 0)) && (a % b != 0)) tmp--;
+        *out = tmp;
+#else
 	*out = a / b;
+#endif
     }
 }
 #define @name@_ctype_floor_divide @name@_ctype_divide
