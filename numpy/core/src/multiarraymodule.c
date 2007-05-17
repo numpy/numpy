@@ -7584,9 +7584,10 @@ PyMODINIT_FUNC initmultiarray(void) {
 
 	if (set_typeinfo(d) != 0) goto err;
 
-	_numpy_internal =						\
-		PyImport_ImportModule("numpy.core._internal");
-	if (_numpy_internal != NULL) return;
+	if (_numpy_internal == NULL) {
+	    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+	    if (_numpy_internal != NULL) return;
+	}
 
  err:
 	if (!PyErr_Occurred()) {
