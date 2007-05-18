@@ -9,7 +9,7 @@ def show_fortran_compilers(_cache=[]):
     # Using cache to prevent infinite recursion
     if _cache: return
     _cache.append(1)
-
+    log.set_verbosity(-2)
     from numpy.distutils.fcompiler import show_fcompilers
     import distutils.core
     dist = distutils.core._setup_distribution
