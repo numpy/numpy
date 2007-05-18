@@ -21,7 +21,7 @@ try:
 except ImportError:
     numpy_version = 'N/A'
 
-__all__ = ['main']
+__all__ = ['main', 'compile']
 
 __usage__ = """
 F2PY G3 --- The third generation of Fortran to Python Interface Generator
@@ -100,7 +100,8 @@ Extra options effective only with -c
 import re
 import shutil
 import parser.api
-from parser.api import parse, PythonModule, EndStatement, Module, Subroutine, Function
+from parser.api import parse, PythonModule, EndStatement, Module, Subroutine, Function,\
+     get_reader
 
 def get_values(sys_argv, prefix='', suffix='', strip_prefix=False, strip_suffix=False):
     """
@@ -200,9 +201,11 @@ def dump_signature(sys_argv):
         if os.path.isfile(signature_output):
             overwrite = get_option(sys_argv, '--overwrite-signature', False)
             if not overwrite:
-                print >> sys.stderr, 'Signature file %r exists. Use --overwrite-signature to overwrite.' % (signature_output)
+                print >> sys.stderr, 'Signature file %r exists. '\
+                      'Use --overwrite-signature to overwrite.' % (signature_output)
                 sys.exit()
-        modulename = get_option_value(sys_argv,'-m',os.path.basename(name),os.path.basename(name))
+        modulename = get_option_value(sys_argv,'-m',os.path.basename(name),
+                                      os.path.basename(name))
         output_stream = open(signature_output,'w')
 
     flag = 'file'
@@ -217,7 +220,8 @@ def dump_signature(sys_argv):
         elif word==':': flag = 'file'
         elif word.startswith('--'): options.append(word)
         else:
-            {'file': file_names,'only': only_names, 'skip': skip_names}[flag].append(word)
+            {'file': file_names,'only': only_names,
+             'skip': skip_names}[flag].append(word)
 
     if options:
         sys.stderr.write('Unused options: %s\n' % (', '.join(options)))
@@ -286,7 +290,7 @@ def construct_extension_sources(modulename, parse_files, include_dirs, build_dir
         f = open(f_fn,'w')
         f.write(f_code)
         f.close()
-        f_lib = '%s_f_wrappers_f2py' % (block.name)
+        #f_lib = '%s_f_wrappers_f2py' % (block.name)
         module_info = {'name':block.name, 'c_sources':[c_fn],
                        'f_sources':[f_fn], 'language':'f90'}
         module_infos.append(module_info)
@@ -371,7 +375,7 @@ def build_extension(sys_argv, sources_only = False):
     if sources_only:
         return
 
-    def configuration(parent_package='', top_path=None):
+    def configuration(parent_package='', top_path=None or ''):
         from numpy.distutils.misc_util import Configuration
         config = Configuration('',parent_package,top_path)
         flibname = modulename + '_fortran_f2py'
@@ -403,10 +407,18 @@ def build_extension(sys_argv, sources_only = False):
         return config
 
     old_sys_argv = sys.argv[:]
-    new_sys_argv = [sys.argv[0]] + ['build',
-                                   '--build-temp',build_dir,
-                                   '--build-base',build_dir,
-                                   '--build-platlib','.']
+    build_dir_ext_temp = os.path.join(build_dir,'ext_temp')
+    build_dir_clib_temp = os.path.join(build_dir,'clib_temp')
+    build_dir_clib_clib = os.path.join(build_dir,'clib_clib')
+    new_sys_argv = [sys.argv[0]] + ['build_ext',
+                                    '--build-temp',build_dir_ext_temp,
+                                    '--build-lib',build_dir,
+                                    'build_clib',
+                                    '--build-temp',build_dir_clib_temp,
+                                    '--build-clib',build_dir_clib_clib,
+                                    ]
+    temp_dirs = [build_dir_ext_temp, build_dir_clib_temp, build_dir_clib_clib]
+        
     if fc_flags:
         new_sys_argv += ['config_fc'] + fc_flags
     sys.argv[:] = new_sys_argv
@@ -418,9 +430,11 @@ def build_extension(sys_argv, sources_only = False):
 
     sys.argv[:] = old_sys_argv
 
-    if clean_build_dir and os.path.exists(build_dir):
-        sys.stderr.write('Removing build directory %s\n'%(build_dir))
-        shutil.rmtree(build_dir)
+    if 1 or clean_build_dir:
+        for d in temp_dirs:
+            if os.path.exists(d):
+                sys.stderr.write('Removing build directory %s\n'%(d))
+                shutil.rmtree(d)
     return
 
 def main(sys_argv = None):
@@ -449,3 +463,73 @@ def main(sys_argv = None):
 
     build_extension(sys_argv, sources_only = True)
     return
+
+def compile(source,
+            jobname = 'untitled',
+            extra_args = [],
+            source_ext = None,
+            modulenames = None
+            ):
+    """
+    Build extension module from processing source with f2py.
+
+    jobname - the name of compile job. For non-module source
+              this will be also the name of extension module.
+    modulenames - the list of extension module names that
+              the given compilation job should create.
+    extra_args - a list of extra arguments for numpy style
+              setup.py command line.
+    source_ext - extension of the Fortran source file: .f90 or .f
+
+    Extension modules are saved to current working directory.
+    Returns a list of module objects according to modulenames
+    input.
+    """
+    from nary import encode
+    tempdir = tempfile.gettempdir()
+    s = 'f2pyjob_%s_%s' % (jobname, encode(source))
+    tmpdir = os.path.join(tempdir, s)
+    if source_ext is None:
+        reader = get_reader(source)
+        source_ext = {'free90':'.f90','fix90':'.f90','fix77':'.f','pyf':'.pyf'}[reader.mode]
+        
+    if modulenames is None:
+        modulenames = jobname,
+    if os.path.isdir(tmpdir):    
+        try:
+            sys.path.insert(0, tmpdir)
+            modules = []
+            for modulename in modulenames:
+                exec('import %s as m' % (modulename))
+                modules.append(m)
+            sys.path.pop(0)
+            return modules
+        except ImportError:
+            pass
+        finally:
+            sys.path.pop(0)
+    else:
+        os.mkdir(tmpdir)
+
+    fname = os.path.join(tmpdir,'%s_src%s' % (jobname, source_ext))
+
+    f = open(fname,'w')
+    f.write(source)
+    f.close()
+
+    sys_argv = []
+    sys_argv.extend(['--build-dir',tmpdir])
+    #sys_argv.extend(['-DF2PY_DEBUG_PYOBJ_TOFROM'])
+    sys_argv.extend(['-m',jobname, fname])
+
+    build_extension(sys_argv + extra_args)
+
+    sys.path.insert(0, tmpdir)
+    modules = []
+    for modulename in modulenames:
+        exec('import %s as m' % (modulename))
+        modules.append(m)
+    sys.path.pop(0)
+    return modules
+
+#EOF

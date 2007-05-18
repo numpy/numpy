@@ -15,33 +15,9 @@ Created: Oct 2006
 import os
 import sys
 from numpy.testing import *
-
-def build(fortran_code, rebuild=True):
-    modulename = os.path.splitext(os.path.basename(__file__))[0]+'_ext'
-    try:
-        exec ('import %s as m' % (modulename))
-        if rebuild and os.stat(m.__file__)[8] < os.stat(__file__)[8]:
-            del sys.modules[m.__name__] # soft unload extension module
-            os.remove(m.__file__)
-            raise ImportError,'%s is newer than %s' % (__file__, m.__file__)
-    except ImportError,msg:
-        assert str(msg).startswith('No module named'),str(msg)
-        print msg, ', recompiling %s.' % (modulename)
-        import tempfile
-        fname = tempfile.mktemp() + '.f90'
-        f = open(fname,'w')
-        f.write(fortran_code)
-        f.close()
-        sys_argv = []
-        sys_argv.extend(['--build-dir','tmp'])
-        #sys_argv.extend(['-DF2PY_DEBUG_PYOBJ_TOFROM'])
-        from main import build_extension
-        sys_argv.extend(['-m',modulename, fname])
-        build_extension(sys_argv)
-        os.remove(fname)
-        status = os.system(' '.join([sys.executable] + sys.argv))
-        sys.exit(status)
-    return m
+set_package_path()
+from lib.main import build_extension, compile
+restore_path()
 
 fortran_code = '''
 subroutine foo(a)
@@ -62,8 +38,7 @@ function foo2(a)
 end
 '''
 
-# tester note: set rebuild=True when changing fortan_code and for SVN
-m = build(fortran_code, rebuild=True)
+m, = compile(fortran_code, 'test_derived_scalar_ext')
 
 from numpy import *
 
