@@ -18,7 +18,7 @@ from numpy.distutils.system_info import combine_paths
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources, get_ext_source_files, all_strings, \
      get_numpy_include_dirs, is_sequence
-
+from numpy.distutils.command.config_compiler import show_fortran_compilers
 
 class build_ext (old_build_ext):
 
@@ -27,6 +27,11 @@ class build_ext (old_build_ext):
     user_options = old_build_ext.user_options + [
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
+        ]
+
+    help_options = old_build_ext.help_options + [
+        ('help-fcompiler',None, "list available Fortran compilers",
+         show_fortran_compilers),
         ]
 
     def initialize_options(self):
