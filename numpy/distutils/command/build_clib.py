@@ -29,11 +29,7 @@ class build_clib(old_build_clib):
     def initialize_options(self):
         old_build_clib.initialize_options(self)
         self.fcompiler = None
-
-    def finalize_options(self):
-        old_build_clib.finalize_options(self)
-        self.set_undefined_options('build_ext',
-                                   ('fcompiler', 'fcompiler'))
+        return
 
     def have_f_sources(self):
         for (lib_name, build_info) in self.libraries:

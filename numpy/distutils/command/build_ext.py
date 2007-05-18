@@ -38,9 +38,7 @@ class build_ext (old_build_ext):
         incl_dirs = self.include_dirs
         old_build_ext.finalize_options(self)
         if incl_dirs is not None:
-            self.include_dirs.extend(self.distribution.include_dirs or [])
-        self.set_undefined_options('config_fc',
-                                   ('fcompiler', 'fcompiler'))
+            self.include_dirs.extend(self.distribution.include_dirs or [])        
         return
 
     def run(self):
@@ -224,7 +222,6 @@ class build_ext (old_build_ext):
             modpath = string.split(fullname, '.')
             package = string.join(modpath[0:-1], '.')
             base = modpath[-1]
-
             build_py = self.get_finalized_command('build_py')
             package_dir = build_py.get_package_dir(package)
             ext_filename = os.path.join(package_dir,

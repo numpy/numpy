@@ -5,7 +5,7 @@ from distutils.util import get_platform
 
 class build(old_build):
 
-    sub_commands = [('config_fc',     lambda *args: 1),
+    sub_commands = [('config_fc',     lambda *args: True),
                     ('build_src',     old_build.has_ext_modules),
                     ] + old_build.sub_commands
 
@@ -16,3 +16,6 @@ class build(old_build):
         if build_scripts is None:
             self.build_scripts = os.path.join(self.build_base,
                                               'scripts' + plat_specifier)
+        return
+
+#EOF

@@ -1,5 +1,6 @@
 import sys
 from distutils.core import Command
+from numpy.distutils import log
 
 #XXX: Implement confic_cc for enhancing C/C++ compiler options.
 #XXX: Linker flags
@@ -56,7 +57,22 @@ class config_fc(Command):
         return
 
     def finalize_options(self):
-        # Do nothing.
+        log.info('unifing config_fc, build_ext, build_clib commands fcompiler options')
+        build_clib = self.get_finalized_command('build_clib')
+        build_ext = self.get_finalized_command('build_ext')
+        for a in ['fcompiler']:
+            l = []
+            for c in [self, build_clib, build_ext]:
+                v = getattr(c,a)
+                if v is not None and v not in l: l.append(v)
+            if not l: v1 = None
+            else: v1 = l[0]
+            if len(l)>1:
+                log.warn('  commands have different --%s options: %s'\
+                         ', using first in list as default' % (a, l))
+            if v1:
+                for c in [self, build_clib, build_ext]:
+                    if getattr(c,a) is None: setattr(c, a, v1)
         return
 
     def run(self):
