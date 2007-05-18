@@ -2,7 +2,6 @@ import sys
 from distutils.core import Command
 from numpy.distutils import log
 
-#XXX: Implement confic_cc for enhancing C/C++ compiler options.
 #XXX: Linker flags
 
 def show_fortran_compilers(_cache=[]):
@@ -21,6 +20,8 @@ class config_fc(Command):
 
     config_fc command is used by the FCompiler.customize() method.
     """
+
+    description = "specify Fortran 77/Fortran 90 compiler information"
 
     user_options = [
         ('fcompiler=',None,"specify Fortran compiler type"),
@@ -85,6 +86,8 @@ class config_cc(Command):
     """ Distutils command to hold user specified options
     to C/C++ compilers.
     """
+
+    description = "specify C/C++ compiler information"
 
     user_options = [
         ('compiler=',None,"specify C/C++ compiler type"),
