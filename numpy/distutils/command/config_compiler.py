@@ -57,12 +57,14 @@ class config_fc(Command):
         return
 
     def finalize_options(self):
-        log.info('unifing config_fc, build_ext, build_clib commands fcompiler options')
+        log.info('unifing config_fc, config, build_clib, build_ext commands --fcompiler options')
         build_clib = self.get_finalized_command('build_clib')
         build_ext = self.get_finalized_command('build_ext')
+        config = self.get_finalized_command('config')
+        cmd_list = [self, config, build_clib, build_ext]
         for a in ['fcompiler']:
             l = []
-            for c in [self, build_clib, build_ext]:
+            for c in cmd_list:
                 v = getattr(c,a)
                 if v is not None and v not in l: l.append(v)
             if not l: v1 = None
@@ -71,7 +73,45 @@ class config_fc(Command):
                 log.warn('  commands have different --%s options: %s'\
                          ', using first in list as default' % (a, l))
             if v1:
-                for c in [self, build_clib, build_ext]:
+                for c in cmd_list:
+                    if getattr(c,a) is None: setattr(c, a, v1)
+        return
+
+    def run(self):
+        # Do nothing.
+        return
+
+class config_cc(Command):
+    """ Distutils command to hold user specified options
+    to C/C++ compilers.
+    """
+
+    user_options = [
+        ('compiler=',None,"specify C/C++ compiler type"),
+        ]
+
+    def initialize_options(self):
+        self.compiler = None
+        return
+
+    def finalize_options(self):
+        log.info('unifing config_cc, config, build_clib, build_ext commands --compiler options')
+        build_clib = self.get_finalized_command('build_clib')
+        build_ext = self.get_finalized_command('build_ext')
+        config = self.get_finalized_command('config')
+        cmd_list = [self, config, build_clib, build_ext]
+        for a in ['compiler']:
+            l = []
+            for c in cmd_list:
+                v = getattr(c,a)
+                if v is not None and v not in l: l.append(v)
+            if not l: v1 = None
+            else: v1 = l[0]
+            if len(l)>1:
+                log.warn('  commands have different --%s options: %s'\
+                         ', using first in list as default' % (a, l))
+            if v1:
+                for c in cmd_list:
                     if getattr(c,a) is None: setattr(c, a, v1)
         return
 

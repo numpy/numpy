@@ -35,6 +35,7 @@ from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
 numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,
                   'build_scripts':    build_scripts.build_scripts,
+                  'config_cc':        config_compiler.config_cc,
                   'config_fc':        config_compiler.config_fc,
                   'config':           config.config,
                   'build_ext':        build_ext.build_ext,

@@ -14,20 +14,12 @@ LANG_EXT['f90'] = '.f90'
 
 class config(old_config):
     old_config.user_options += [
-        ('fcompiler=', None,
-         "specify the Fortran compiler type"),
+        ('fcompiler=', None, "specify the Fortran compiler type"),
         ]
 
     def initialize_options(self):
         self.fcompiler = None
         old_config.initialize_options(self)
-        return
-
-    def finalize_options(self):
-        old_config.finalize_options(self)
-        f = self.distribution.get_command_obj('config_fc')
-        self.set_undefined_options('config_fc',
-                                   ('fcompiler', 'fcompiler'))
         return
 
     def _check_compiler (self):
