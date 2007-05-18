@@ -8,12 +8,14 @@ import sys
 from distutils.command import build_ext
 from distutils.dep_util import newer_group, newer
 from distutils.util import get_platform
+from distutils.errors import DistutilsError, DistutilsSetupError
 
 from numpy.distutils import log
 from numpy.distutils.misc_util import fortran_ext_match, \
      appendpath, is_string, is_sequence
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
+from numpy.distutils.exec_command import splitcmdline
 
 class build_src(build_ext.build_ext):
 
@@ -21,8 +23,12 @@ class build_src(build_ext.build_ext):
 
     user_options = [
         ('build-src=', 'd', "directory to \"build\" sources to"),
-        ('f2pyflags=', None, "additonal flags to f2py"),
-        ('swigflags=', None, "additional flags to swig"),
+        ('f2py-opts=', None, "list of f2py command line options"),
+        ('swig=', None, "path to the SWIG executable"),
+        ('swig-opts=', None, "list of SWIG command line options"),
+        ('swig-cpp', None, "make SWIG create C++ files (default is autodetected from sources)"),
+        ('f2pyflags=', None, "additional flags to f2py (use --f2py-opts= instead)"), # obsolete
+        ('swigflags=', None, "additional flags to swig (use --swig-opts= instead)"), # obsolete
         ('force', 'f', "forcibly build everything (ignore file timestamps)"),
         ('inplace', 'i',
          "ignore build-lib and put compiled extensions into the source " +
@@ -44,8 +50,12 @@ class build_src(build_ext.build_ext):
         self.force = None
         self.inplace = None
         self.package_dir = None
-        self.f2pyflags = None
-        self.swigflags = None
+        self.f2pyflags = None # obsolete
+        self.f2py_opts = None
+        self.swigflags = None # obsolete
+        self.swig_opts = None
+        self.swig_cpp = None
+        self.swig = None
         return
 
     def finalize_options(self):
@@ -63,22 +73,48 @@ class build_src(build_ext.build_ext):
         if self.build_src is None:
             plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
             self.build_src = os.path.join(self.build_base, 'src'+plat_specifier)
-        if self.inplace is None:
-            build_ext = self.get_finalized_command('build_ext')
-            self.inplace = build_ext.inplace
 
         # py_modules_dict is used in build_py.find_package_modules
         self.py_modules_dict = {}
 
-        if self.f2pyflags is None:
-            self.f2pyflags = []
+        if self.f2pyflags:
+            if self.f2py_opts:
+                log.warn('ignoring --f2pyflags as --f2py-opts already used')
+            else:
+                self.f2py_opts = self.f2pyflags
+            self.f2pyflags = None
+        if self.f2py_opts is None:
+            self.f2py_opts = []
         else:
-            self.f2pyflags = self.f2pyflags.split() # XXX spaces??
+            self.f2py_opts = splitcmdline(self.f2py_opts)
 
-        if self.swigflags is None:
-            self.swigflags = []
+        if self.swigflags:
+            if self.swig_opts:
+                log.warn('ignoring --swigflags as --swig-opts already used')
+            else:
+                self.swig_opts = self.swigflags
+            self.swigflags = None
+
+        if self.swig_opts is None: 
+            self.swig_opts = []
         else:
-            self.swigflags = self.swigflags.split() # XXX spaces??
+            self.swig_opts = splitcmdline(self.swig_opts)
+
+        # use options from build_ext command
+        build_ext = self.get_finalized_command('build_ext')
+        if self.inplace is None:
+            self.inplace = build_ext.inplace
+        if self.swig_cpp is None:
+            self.swig_cpp = build_ext.swig_cpp
+        for c in ['swig','swig_opt']:
+            o = '--'+c.replace('_','-')
+            v = getattr(build_ext,c,None) 
+            if v:
+                if getattr(self,c):
+                    log.warn('both build_src and build_ext define %s option' % (o))
+                else:
+                    log.info('using "%s=%s" option from build_ext command' % (o,v))
+                    setattr(self, c, v)
         return
 
     def run(self):
@@ -141,7 +177,7 @@ class build_src(build_ext.build_ext):
                 filenames = get_data_files((d,files))
                 new_data_files.append((d, filenames))
             else:
-                raise
+                raise TypeError(repr(data))
         self.data_files[:] = new_data_files
         return
 
@@ -361,16 +397,14 @@ class build_src(build_ext.build_ext):
                             output_file=target_file)
                         pyrex_result = Main.compile(source, options=options)
                         if pyrex_result.num_errors != 0:
-                            raise RuntimeError("%d errors in Pyrex compile" %
-                                               pyrex_result.num_errors)
+                            raise DistutilsError,"%d errors while compiling %r with Pyrex" \
+                                  % (pyrex_result.num_errors, source)
                     elif os.path.isfile(target_file):
-                        log.warn("Pyrex needed to compile %s but not available."\
-                                 " Using old target %s"\
+                        log.warn("Pyrex required for compiling %r but not available,"\
+                                 " using old target %r"\
                                  % (source, target_file))
                     else:
-                        raise SystemError,"Non-existing target %r. "\
-                              "Perhaps you need to install Pyrex."\
-                              % (target_file)
+                        raise DistutilsError,"Pyrex required for compiling %r but not available" % (source)
                 new_sources.append(target_file)
             else:
                 new_sources.append(source)
@@ -395,9 +429,9 @@ class build_src(build_ext.build_ext):
                 if os.path.isfile(source):
                     name = get_f2py_modulename(source)
                     if name != ext_name:
-                        raise ValueError('mismatch of extension names: %s '
-                                         'provides %r but expected %r' % (
-                                          source, name, ext_name))
+                        raise DistutilsSetupError('mismatch of extension names: %s '
+                                                  'provides %r but expected %r' % (
+                            source, name, ext_name))
                     target_file = os.path.join(target_dir,name+'module.c')
                 else:
                     log.debug('  source %s does not exist: skipping f2py\'ing.' \
@@ -406,16 +440,16 @@ class build_src(build_ext.build_ext):
                     skip_f2py = 1
                     target_file = os.path.join(target_dir,name+'module.c')
                     if not os.path.isfile(target_file):
-                        log.debug('  target %s does not exist:\n   '\
-                                  'Assuming %smodule.c was generated with '\
-                                  '"build_src --inplace" command.' \
-                                  % (target_file, name))
+                        log.warn('  target %s does not exist:\n   '\
+                                 'Assuming %smodule.c was generated with '\
+                                 '"build_src --inplace" command.' \
+                                 % (target_file, name))
                         target_dir = os.path.dirname(base)
                         target_file = os.path.join(target_dir,name+'module.c')
                         if not os.path.isfile(target_file):
-                            raise ValueError("%r missing" % (target_file,))
-                        log.debug('   Yes! Using %s as up-to-date target.' \
-                                  % (target_file))
+                            raise DistutilsSetupError("%r missing" % (target_file,))
+                        log.info('   Yes! Using %r as up-to-date target.' \
+                                 % (target_file))
                 target_dirs.append(target_dir)
                 f2py_sources.append(source)
                 f2py_targets[source] = target_file
@@ -430,7 +464,7 @@ class build_src(build_ext.build_ext):
 
         map(self.mkpath, target_dirs)
 
-        f2py_options = extension.f2py_options + self.f2pyflags
+        f2py_options = extension.f2py_options + self.f2py_opts
 
         if self.distribution.libraries:
             for name,build_info in self.distribution.libraries:
@@ -441,7 +475,7 @@ class build_src(build_ext.build_ext):
 
         if f2py_sources:
             if len(f2py_sources) != 1:
-                raise ValueError(
+                raise DistutilsSetupError(
                     'only one .pyf file is allowed per extension module but got'\
                     ' more: %r' % (f2py_sources,))
             source = f2py_sources[0]
@@ -478,7 +512,7 @@ class build_src(build_ext.build_ext):
                           % (target_file))
 
         if not os.path.isfile(target_file):
-            raise ValueError("%r missing" % (target_file,))
+            raise DistutilsError("f2py target file %r not generated" % (target_file,))
 
         target_c = os.path.join(self.build_src,'fortranobject.c')
         target_h = os.path.join(self.build_src,'fortranobject.h')
@@ -500,9 +534,9 @@ class build_src(build_ext.build_ext):
                 self.copy_file(source_h,target_h)
         else:
             if not os.path.isfile(target_c):
-                raise ValueError("%r missing" % (target_c,))
+                raise DistutilsSetupError("f2py target_c file %r not found" % (target_c,))
             if not os.path.isfile(target_h):
-                raise ValueError("%r missing" % (target_h,))
+                raise DistutilsSetupError("f2py target_h file %r not found" % (target_h,))
 
         for name_ext in ['-f2pywrappers.f','-f2pywrappers2.f90']:
             filename = os.path.join(target_dir,ext_name + name_ext)
@@ -522,8 +556,12 @@ class build_src(build_ext.build_ext):
         target_dirs = []
         py_files = []     # swig generated .py files
         target_ext = '.c'
-        typ = None
-        is_cpp = 0
+        if self.swig_cpp:
+            typ = 'c++'
+            is_cpp = True
+        else:
+            typ = None
+            is_cpp = False
         skip_swig = 0
         ext_name = extension.name.split('.')[-1]
 
@@ -539,35 +577,43 @@ class build_src(build_ext.build_ext):
                 if os.path.isfile(source):
                     name = get_swig_modulename(source)
                     if name != ext_name[1:]:
-                        raise ValueError(
+                        raise DistutilsSetupError(
                             'mismatch of extension names: %s provides %r'
                             ' but expected %r' % (source, name, ext_name[1:]))
                     if typ is None:
                         typ = get_swig_target(source)
                         is_cpp = typ=='c++'
-                        if is_cpp:
-                            target_ext = '.cpp'
+                        if is_cpp: target_ext = '.cpp'
                     else:
-                        assert typ == get_swig_target(source), repr(typ)
+                        typ2 = get_swig_target(source)
+                        if typ!=typ2:
+                            log.warn('expected %r but source %r defines %r swig target' \
+                                     % (typ, source, typ2))
+                            if typ2=='c++':
+                                log.warn('resetting swig target to c++ (some targets may have .c extension)')
+                                is_cpp = True
+                                target_ext = '.cpp'
+                            else:
+                                log.warn('assuming that %r has c++ swig target' % (source))
                     target_file = os.path.join(target_dir,'%s_wrap%s' \
                                                % (name, target_ext))
                 else:
-                    log.debug('  source %s does not exist: skipping swig\'ing.' \
+                    log.warn('  source %s does not exist: skipping swig\'ing.' \
                              % (source))
                     name = ext_name[1:]
                     skip_swig = 1
                     target_file = _find_swig_target(target_dir, name)
                     if not os.path.isfile(target_file):
-                        log.debug('  target %s does not exist:\n   '\
-                                  'Assuming %s_wrap.{c,cpp} was generated with '\
-                                  '"build_src --inplace" command.' \
+                        log.warn('  target %s does not exist:\n   '\
+                                 'Assuming %s_wrap.{c,cpp} was generated with '\
+                                 '"build_src --inplace" command.' \
                                  % (target_file, name))
                         target_dir = os.path.dirname(base)
                         target_file = _find_swig_target(target_dir, name)
                         if not os.path.isfile(target_file):
-                            raise ValueError("%r missing" % (target_file,))
-                        log.debug('   Yes! Using %s as up-to-date target.' \
-                                  % (target_file))
+                            raise DistutilsSetupError("%r missing" % (target_file,))
+                        log.warn('   Yes! Using %r as up-to-date target.' \
+                                 % (target_file))
                 target_dirs.append(target_dir)
                 new_sources.append(target_file)
                 py_files.append(os.path.join(py_target_dir, name+'.py'))
@@ -583,7 +629,7 @@ class build_src(build_ext.build_ext):
             return new_sources + py_files
 
         map(self.mkpath, target_dirs)
-        swig = self.find_swig()
+        swig = self.swig or self.find_swig()
         swig_cmd = [swig, "-python"]
         if is_cpp:
             swig_cmd.append('-c++')
@@ -595,7 +641,7 @@ class build_src(build_ext.build_ext):
             if self.force or newer_group(depends, target, 'newer'):
                 log.info("%s: %s" % (os.path.basename(swig) \
                                      + (is_cpp and '++' or ''), source))
-                self.spawn(swig_cmd + self.swigflags \
+                self.spawn(swig_cmd + self.swig_opts \
                            + ["-o", target, '-outdir', py_target_dir, source])
             else:
                 log.debug("  skipping '%s' swig interface (up-to-date)" \
