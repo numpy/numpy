@@ -138,7 +138,7 @@ class build_ext (old_build_ext):
                 ext_language = 'f77'
             else:
                 ext_language = 'c' # default
-            if l and l!=ext_language:
+            if l and l!=ext_language and ext.language:
                 log.warn('resetting extension %r language from %r to %r.' % (ext.name,l,ext_language))
             ext.language = ext_language
             # global language

@@ -309,8 +309,9 @@ def as_list(seq):
         return [seq]
 
 def get_language(sources):
+    # not used in numpy/scipy packages, use build_ext.detect_language instead
     """ Determine language value (c,f77,f90) from sources """
-    language = 'c'
+    language = None
     for source in sources:
         if isinstance(source, str):
             if f90_ext_match(source):
@@ -1030,11 +1031,7 @@ class Configuration(object):
         ext_args = copy.copy(kw)
         ext_args['name'] = dot_join(self.name,name)
         ext_args['sources'] = sources
-
-        language = ext_args.get('language',None)
-        if language is None:
-            ext_args['language'] = get_language(sources)
-
+        
         if ext_args.has_key('extra_info'):
             extra_info = ext_args['extra_info']
             del ext_args['extra_info']
@@ -1098,10 +1095,6 @@ class Configuration(object):
         build_info = copy.copy(build_info)
         name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
-
-        language = build_info.get('language',None)
-        if language is None:
-            build_info['language'] = get_language(sources)
 
         self._fix_paths_dict(build_info)
 
