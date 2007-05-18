@@ -495,9 +495,9 @@ def compile(source,
         
     if modulenames is None:
         modulenames = jobname,
-    if os.path.isdir(tmpdir):    
+    if os.path.isdir(tmpdir):
+        sys.path.insert(0, tmpdir)
         try:
-            sys.path.insert(0, tmpdir)
             modules = []
             for modulename in modulenames:
                 exec('import %s as m' % (modulename))
@@ -506,8 +506,7 @@ def compile(source,
             return modules
         except ImportError:
             pass
-        finally:
-            sys.path.pop(0)
+        sys.path.pop(0)
     else:
         os.mkdir(tmpdir)
 
