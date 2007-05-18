@@ -9,7 +9,6 @@ def show_fortran_compilers(_cache=[]):
     # Using cache to prevent infinite recursion
     if _cache: return
     _cache.append(1)
-    log.set_verbosity(-2)
     from numpy.distutils.fcompiler import show_fcompilers
     import distutils.core
     dist = distutils.core._setup_distribution
@@ -57,11 +56,12 @@ class config_fc(Command):
         return
 
     def finalize_options(self):
-        log.info('unifing config_fc, config, build_clib, build_ext commands --fcompiler options')
+        log.info('unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options')
         build_clib = self.get_finalized_command('build_clib')
         build_ext = self.get_finalized_command('build_ext')
         config = self.get_finalized_command('config')
-        cmd_list = [self, config, build_clib, build_ext]
+        build = self.get_finalized_command('build')
+        cmd_list = [self, config, build_clib, build_ext, build]
         for a in ['fcompiler']:
             l = []
             for c in cmd_list:
@@ -95,11 +95,12 @@ class config_cc(Command):
         return
 
     def finalize_options(self):
-        log.info('unifing config_cc, config, build_clib, build_ext commands --compiler options')
+        log.info('unifing config_cc, config, build_clib, build_ext, build commands --compiler options')
         build_clib = self.get_finalized_command('build_clib')
         build_ext = self.get_finalized_command('build_ext')
         config = self.get_finalized_command('config')
-        cmd_list = [self, config, build_clib, build_ext]
+        build = self.get_finalized_command('build')
+        cmd_list = [self, config, build_clib, build_ext, build]
         for a in ['compiler']:
             l = []
             for c in cmd_list:
