@@ -390,6 +390,7 @@ class build_ext (old_build_ext):
         return
 
     def _libs_with_msvc_and_fortran(self, fcompiler, c_libraries, c_library_dirs):
+        if fcompiler is None: return
         # Always use system linker when using MSVC compiler.
         f_lib_dirs = []
         for dir in fcompiler.library_dirs:
