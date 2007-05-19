@@ -65,7 +65,7 @@ class config(old_config):
                     for d in self.fcompiler.library_dirs or []:
                         # correct path when compiling in Cygwin but with normal Win
                         # Python
-                        if dir.startswith('/usr/lib'):
+                        if d.startswith('/usr/lib'):
                             s,o = exec_command(['cygpath', '-w', d], use_tee=False)
                             if not s: d = o
                     f_lib_dirs.append(d)
