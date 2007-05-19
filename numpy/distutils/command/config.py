@@ -61,15 +61,13 @@ class config(old_config):
             if lang in ['f77','f90']:
                 lang = 'c' # always use system linker when using MSVC compiler
                 if self.fcompiler:
-                    f_lib_dirs = []
                     for d in self.fcompiler.library_dirs or []:
                         # correct path when compiling in Cygwin but with normal Win
                         # Python
                         if d.startswith('/usr/lib'):
                             s,o = exec_command(['cygpath', '-w', d], use_tee=False)
                             if not s: d = o
-                    f_lib_dirs.append(d)
-                    library_dirs.extend(f_lib_dirs)
+                        library_dirs.append(d)
                     for libname in self.fcompiler.libraries or []:
                         if libname not in libraries:
                             libraries.append(libname)
