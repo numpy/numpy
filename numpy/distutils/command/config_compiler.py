@@ -67,7 +67,9 @@ class config_fc(Command):
             l = []
             for c in cmd_list:
                 v = getattr(c,a)
-                if v is not None and v not in l: l.append(v)
+                if v is not None:
+                    if not isinstance(v, str): v = v.compiler_type
+                    if v not in l: l.append(v)
             if not l: v1 = None
             else: v1 = l[0]
             if len(l)>1:
@@ -108,7 +110,9 @@ class config_cc(Command):
             l = []
             for c in cmd_list:
                 v = getattr(c,a)
-                if v is not None and v not in l: l.append(v)
+                if v is not None:
+                    if not isinstance(v, str): v = v.compiler_type
+                    if v not in l: l.append(v)
             if not l: v1 = None
             else: v1 = l[0]
             if len(l)>1:
