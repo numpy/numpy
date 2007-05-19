@@ -7,6 +7,7 @@ import os, signal
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
+from distutils.file_util import copy_file
 from numpy.distutils.exec_command import exec_command
 
 LANG_EXT['f77'] = '.f'
@@ -54,9 +55,46 @@ class config(old_config):
     def _link (self, body,
                headers, include_dirs,
                libraries, library_dirs, lang):
+        if self.compiler.compiler_type=='msvc':
+            libraries = libraries[:]
+            library_dirs = library_dirs[:]
+            if lang in ['f77','f90']:
+                lang = 'c' # always use system linker when using MSVC compiler
+                if self.fcompiler:
+                    f_lib_dirs = []
+                    for d in self.fcompiler.library_dirs or []:
+                        # correct path when compiling in Cygwin but with normal Win
+                        # Python
+                        if dir.startswith('/usr/lib'):
+                            s,o = exec_command(['cygpath', '-w', d], use_tee=False)
+                            if not s: d = o
+                    f_lib_dirs.append(d)
+                    library_dirs.extend(f_lib_dirs)
+                    for libname in self.fcompiler.libraries or []:
+                        if libname not in libraries:
+                            libraries.append(libname)
+            for libname in libraries or []:
+                if libname.startswith('msvcr'): continue
+                fileexists = False
+                for libdir in library_dirs or []:
+                    libfile = os.path.join(libdir,'%s.lib' % (libname))
+                    if os.path.isfile(libfile):
+                        fileexists = True
+                        break
+                if fileexists:
+                    continue
+                # make g77-compiled static libs available to MSVC
+                for libdir in library_dirs or []:
+                    libfile = os.path.join(libdir,'lib%s.a' % (libname))
+                    if os.path.isfile(libfile):
+                        # copy libname.a file to name.lib so that MSVC linker
+                        # can find it
+                        copy_file(libfile, os.path.join(libdir,'%s.lib' % (libname)))
+                        break
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
+        
 
     def check_func(self, func,
                    headers=None, include_dirs=None,
