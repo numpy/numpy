@@ -56,8 +56,8 @@ class config(old_config):
                headers, include_dirs,
                libraries, library_dirs, lang):
         if self.compiler.compiler_type=='msvc':
-            libraries = libraries[:]
-            library_dirs = library_dirs[:]
+            libraries = (libraries or [])[:]
+            library_dirs = (library_dirs or [])[:]
             if lang in ['f77','f90']:
                 lang = 'c' # always use system linker when using MSVC compiler
                 if self.fcompiler:
@@ -71,7 +71,7 @@ class config(old_config):
                     for libname in self.fcompiler.libraries or []:
                         if libname not in libraries:
                             libraries.append(libname)
-            for libname in libraries or []:
+            for libname in libraries:
                 if libname.startswith('msvcr'): continue
                 fileexists = False
                 for libdir in library_dirs or []:
@@ -82,7 +82,7 @@ class config(old_config):
                 if fileexists:
                     continue
                 # make g77-compiled static libs available to MSVC
-                for libdir in library_dirs or []:
+                for libdir in library_dirs:
                     libfile = os.path.join(libdir,'lib%s.a' % (libname))
                     if os.path.isfile(libfile):
                         # copy libname.a file to name.lib so that MSVC linker
