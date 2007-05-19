@@ -72,23 +72,29 @@ class config(old_config):
                         if libname not in libraries:
                             libraries.append(libname)
             for libname in libraries:
-                if libname.startswith('msvcr'): continue
+                if libname.startswith('msvc'): continue
                 fileexists = False
                 for libdir in library_dirs or []:
                     libfile = os.path.join(libdir,'%s.lib' % (libname))
                     if os.path.isfile(libfile):
                         fileexists = True
                         break
-                if fileexists:
-                    continue
+                if fileexists: continue
                 # make g77-compiled static libs available to MSVC
+                fileexists = False
                 for libdir in library_dirs:
                     libfile = os.path.join(libdir,'lib%s.a' % (libname))
                     if os.path.isfile(libfile):
                         # copy libname.a file to name.lib so that MSVC linker
                         # can find it
-                        copy_file(libfile, os.path.join(libdir,'%s.lib' % (libname)))
+                        libfile2 = os.path.join(libdir,'%s.lib' % (libname))
+                        copy_file(libfile, libfile2)
+                        self.temp_files.append(libfile2)
+                        fileexists = True
                         break
+                if fileexists: continue
+                log.warn('could not find library %r in directories %s' \
+                         % (libname, library_dirs))
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))

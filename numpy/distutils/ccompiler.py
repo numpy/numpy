@@ -288,6 +288,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
 replace_method(CCompiler, 'get_version', CCompiler_get_version)
 
 def CCompiler_cxx_compiler(self):
+    if self.compiler_type=='msvc': return self
     cxx = copy(self)
     cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
     if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
