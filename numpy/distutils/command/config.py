@@ -21,7 +21,6 @@ class config(old_config):
     def initialize_options(self):
         self.fcompiler = None
         old_config.initialize_options(self)
-        return
 
     def _check_compiler (self):
         old_config._check_compiler(self)
@@ -32,7 +31,6 @@ class config(old_config):
             self.fcompiler.customize(self.distribution)
             self.fcompiler.customize_cmd(self)
             self.fcompiler.show_customization()
-        return
 
     def _wrap_method(self,mth,lang,args):
         from distutils.ccompiler import CompileError
@@ -62,10 +60,11 @@ class config(old_config):
                 lang = 'c' # always use system linker when using MSVC compiler
                 if self.fcompiler:
                     for d in self.fcompiler.library_dirs or []:
-                        # correct path when compiling in Cygwin but with normal Win
-                        # Python
+                        # correct path when compiling in Cygwin but with
+                        # normal Win Python
                         if d.startswith('/usr/lib'):
-                            s,o = exec_command(['cygpath', '-w', d], use_tee=False)
+                            s,o = exec_command(['cygpath', '-w', d],
+                                               use_tee=False)
                             if not s: d = o
                         library_dirs.append(d)
                     for libname in self.fcompiler.libraries or []:
@@ -98,7 +97,6 @@ class config(old_config):
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
-        
 
     def check_func(self, func,
                    headers=None, include_dirs=None,

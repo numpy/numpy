@@ -2,7 +2,6 @@
 """
 
 import os
-import string
 import sys
 from glob import glob
 
@@ -16,9 +15,14 @@ from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.system_info import combine_paths
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
-     has_cxx_sources, get_ext_source_files, all_strings, \
+     has_cxx_sources, get_ext_source_files, \
      get_numpy_include_dirs, is_sequence
 from numpy.distutils.command.config_compiler import show_fortran_compilers
+
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 class build_ext (old_build_ext):
 
@@ -37,14 +41,12 @@ class build_ext (old_build_ext):
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
-        return
 
     def finalize_options(self):
         incl_dirs = self.include_dirs
         old_build_ext.finalize_options(self)
         if incl_dirs is not None:
-            self.include_dirs.extend(self.distribution.include_dirs or [])        
-        return
+            self.include_dirs.extend(self.distribution.include_dirs or [])
 
     def run(self):
         if not self.extensions:
@@ -56,7 +58,7 @@ class build_ext (old_build_ext):
         if self.distribution.has_c_libraries():
             self.run_command('build_clib')
             build_clib = self.get_finalized_command('build_clib')
-            self.library_dirs.append(build_clib.build_clib)            
+            self.library_dirs.append(build_clib.build_clib)
         else:
             build_clib = None
 
@@ -96,9 +98,9 @@ class build_ext (old_build_ext):
 
         # Determine if C++/Fortran 77/Fortran 90 compilers are needed.
         # Update extension libraries, library_dirs, and macros.
-        all_languages = []
+        all_languages = set()
         for ext in self.extensions:
-            ext_languages = []
+            ext_languages = set()
             c_libs = []
             c_lib_dirs = []
             macros = []
@@ -107,31 +109,30 @@ class build_ext (old_build_ext):
                     binfo = clibs[libname]
                     c_libs += binfo.get('libraries',[])
                     c_lib_dirs += binfo.get('library_dirs',[])
-                    for m in  binfo.get('macros',[]):
-                        if m not in macros: macros.append(m)
+                    for m in binfo.get('macros',[]):
+                        if m not in macros:
+                            macros.append(m)
                 for l in clibs.get(libname,{}).get('source_languages',[]):
-                    if l not in ext_languages: ext_languages.append(l)
+                    ext_languages.add(l)
             if c_libs:
                 new_c_libs = ext.libraries + c_libs
-                log.info('updating extension %r libraries from %r to %r' \
+                log.info('updating extension %r libraries from %r to %r'
                          % (ext.name, ext.libraries, new_c_libs))
                 ext.libraries = new_c_libs
                 ext.library_dirs = ext.library_dirs + c_lib_dirs
             if macros:
-                log.info('extending extension %r defined_macros with %r' \
+                log.info('extending extension %r defined_macros with %r'
                          % (ext.name, macros))
                 ext.define_macros = ext.define_macros + macros
-            
+
             # determine extension languages
-            if 'f77' not in ext_languages and has_f_sources(ext.sources):
-                ext_languages.append('f77')
-            if 'c++' not in ext_languages and has_cxx_sources(ext.sources):
-                ext_languages.append('c++')
-            if sys.version[:3]>='2.3':
-                l = ext.language or self.compiler.detect_language(ext.sources)
-            else:
-                l = ext.language
-            if l and l not in ext_languages: ext_languages.append(l)
+            if has_f_sources(ext.sources):
+                ext_languages.add('f77')
+            if has_cxx_sources(ext.sources):
+                ext_languages.add('c++')
+            l = ext.language or self.compiler.detect_language(ext.sources)
+            if l:
+                ext_languages.add(l)
             # reset language attribute for choosing proper linker
             if 'c++' in ext_languages:
                 ext_language = 'c++'
@@ -141,12 +142,12 @@ class build_ext (old_build_ext):
                 ext_language = 'f77'
             else:
                 ext_language = 'c' # default
-            if l and l!=ext_language and ext.language:
-                log.warn('resetting extension %r language from %r to %r.' % (ext.name,l,ext_language))
+            if l and l != ext_language and ext.language:
+                log.warn('resetting extension %r language from %r to %r.' %
+                         (ext.name,l,ext_language))
             ext.language = ext_language
             # global language
-            for l in ext_languages:
-                if l not in all_languages: all_languages.append(l)
+            all_languages.update(ext_languages)
 
         need_f90_compiler = 'f90' in all_languages
         need_f77_compiler = 'f77' in all_languages
@@ -179,7 +180,8 @@ class build_ext (old_build_ext):
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:
-                self.warn('f77_compiler=%s is not available.' % (fcompiler.compiler_type))
+                self.warn('f77_compiler=%s is not available.' %
+                          (fcompiler.compiler_type))
                 self._f77_compiler = None
         else:
             self._f77_compiler = None
@@ -197,14 +199,14 @@ class build_ext (old_build_ext):
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:
-                self.warn('f90_compiler=%s is not available.' % (fcompiler.compiler_type))
+                self.warn('f90_compiler=%s is not available.' %
+                          (fcompiler.compiler_type))
                 self._f90_compiler = None
         else:
             self._f90_compiler = None
 
         # Build extensions
         self.build_extensions()
-        return
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
@@ -213,10 +215,10 @@ class build_ext (old_build_ext):
     def build_extension(self, ext):
         sources = ext.sources
         if sources is None or not is_sequence(sources):
-            raise DistutilsSetupError, \
-                  ("in 'ext_modules' option (extension '%s'), " +
-                   "'sources' must be present and must be " +
-                   "a list of source filenames") % ext.name
+            raise DistutilsSetupError(
+                ("in 'ext_modules' option (extension '%s'), " +
+                 "'sources' must be present and must be " +
+                 "a list of source filenames") % ext.name)
         sources = list(sources)
 
         if not sources:
@@ -224,8 +226,8 @@ class build_ext (old_build_ext):
 
         fullname = self.get_ext_fullname(ext.name)
         if self.inplace:
-            modpath = string.split(fullname, '.')
-            package = string.join(modpath[0:-1], '.')
+            modpath = fullname.split('.')
+            package = '.'.join(modpath[0:-1])
             base = modpath[-1]
             build_py = self.get_finalized_command('build_py')
             package_dir = build_py.get_package_dir(package)
@@ -269,7 +271,7 @@ class build_ext (old_build_ext):
         else: # in case ext.language is c++, for instance
             fcompiler = self._f90_compiler or self._f77_compiler
         cxx_compiler = self._cxx_compiler
-        
+
         # check for the availability of required compilers
         if cxx_sources and cxx_compiler is None:
             raise DistutilsError, "extension %r has C++ sources" \
@@ -301,7 +303,7 @@ class build_ext (old_build_ext):
                                               **kws)
 
         if cxx_sources:
-            log.info("compiling C++ sources")            
+            log.info("compiling C++ sources")
             c_objects += cxx_compiler.compile(cxx_sources,
                                               output_dir=output_dir,
                                               macros=macros,
@@ -315,15 +317,15 @@ class build_ext (old_build_ext):
         if fmodule_sources:
             log.info("compiling Fortran 90 module sources")
             module_dirs = ext.module_dirs[:]
-            module_build_dir = os.path.join(\
-                    self.build_temp,os.path.dirname(\
+            module_build_dir = os.path.join(
+                self.build_temp,os.path.dirname(
                     self.get_ext_filename(fullname)))
-            
+
             self.mkpath(module_build_dir)
             if fcompiler.module_dir_switch is None:
                 existing_modules = glob('*.mod')
-            extra_postargs += fcompiler.module_options(\
-                    module_dirs,module_build_dir)
+            extra_postargs += fcompiler.module_options(
+                module_dirs,module_build_dir)
             f_objects += fcompiler.compile(fmodule_sources,
                                            output_dir=self.build_temp,
                                            macros=macros,
@@ -344,7 +346,8 @@ class build_ext (old_build_ext):
                     try:
                         self.move_file(f, module_build_dir)
                     except DistutilsFileError:
-                        log.warn('failed to move %r to %r' % (f, module_build_dir))
+                        log.warn('failed to move %r to %r' %
+                                 (f, module_build_dir))
         if f_sources:
             log.info("compiling Fortran sources")
             f_objects += fcompiler.compile(f_sources,
@@ -362,7 +365,7 @@ class build_ext (old_build_ext):
         extra_args = ext.extra_link_args or []
         libraries = self.get_libraries(ext)[:]
         library_dirs = ext.library_dirs[:]
-        
+
         linker = self.compiler.link_shared_object
         # Always use system linker when using MSVC compiler.
         if self.compiler.compiler_type=='msvc':
@@ -387,11 +390,11 @@ class build_ext (old_build_ext):
                export_symbols=self.get_export_symbols(ext),
                debug=self.debug,
                build_temp=self.build_temp,**kws)
-        return
 
-    def _libs_with_msvc_and_fortran(self, fcompiler, c_libraries, c_library_dirs):
+    def _libs_with_msvc_and_fortran(self, fcompiler, c_libraries,
+                                    c_library_dirs):
         if fcompiler is None: return
-        
+
         for libname in c_libraries:
             if libname.startswith('msvc'): continue
             fileexists = False
@@ -415,9 +418,9 @@ class build_ext (old_build_ext):
                     fileexists = True
                     break
             if fileexists: continue
-            log.warn('could not find library %r in directories %s' \
+            log.warn('could not find library %r in directories %s'
                      % (libname, c_library_dirs))
-        
+
         # Always use system linker when using MSVC compiler.
         f_lib_dirs = []
         for dir in fcompiler.library_dirs:
@@ -441,7 +444,6 @@ class build_ext (old_build_ext):
                         copy_file(p[0], dst_name)
                     if self.build_temp not in c_library_dirs:
                         c_library_dirs.append(self.build_temp)
-        return
 
     def get_source_files (self):
         self.check_extensions_list(self.extensions)

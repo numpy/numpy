@@ -86,7 +86,6 @@ class build_clib(old_build_clib):
             self.fcompiler.show_customization()
 
         self.build_libraries(self.libraries)
-        return
 
     def get_source_files(self):
         self.check_library_list(self.libraries)
@@ -113,7 +112,7 @@ class build_clib(old_build_clib):
                        = filter_sources(sources)
             requiref90 = not not fmodule_sources or \
                          build_info.get('language','c')=='f90'
-            
+
             # save source type information so that build_ext can use it.
             source_languages = []
             if c_sources: source_languages.append('c')
@@ -160,7 +159,7 @@ class build_clib(old_build_clib):
             module_dirs = build_info.get('module_dirs') or []
             module_build_dir = os.path.dirname(lib_file)
             if requiref90: self.mkpath(module_build_dir)
-            
+
             if compiler.compiler_type=='msvc':
                 # this hack works around the msvc compiler attributes
                 # problem, msvc uses its own convention :(
@@ -187,7 +186,7 @@ class build_clib(old_build_clib):
                                                    debug=self.debug,
                                                    extra_postargs=extra_postargs)
                 objects.extend(cxx_objects)
-        
+
             if f_sources or fmodule_sources:
                 extra_postargs = []
                 f_objects = []
@@ -249,5 +248,3 @@ class build_clib(old_build_clib):
                     clib_libraries.extend(binfo[1].get('libraries',[]))
             if clib_libraries:
                 build_info['libraries'] = clib_libraries
-        return
-#EOF

@@ -12,7 +12,6 @@ def show_fortran_compilers(_cache=[]):
     import distutils.core
     dist = distutils.core._setup_distribution
     show_fcompilers(dist)
-    return
 
 class config_fc(Command):
     """ Distutils command to hold user specified options
@@ -54,7 +53,6 @@ class config_fc(Command):
         self.debug = None
         self.noopt = None
         self.noarch = None
-        return
 
     def finalize_options(self):
         log.info('unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options')
@@ -78,7 +76,6 @@ class config_fc(Command):
             if v1:
                 for c in cmd_list:
                     if getattr(c,a) is None: setattr(c, a, v1)
-        return
 
     def run(self):
         # Do nothing.
@@ -97,7 +94,6 @@ class config_cc(Command):
 
     def initialize_options(self):
         self.compiler = None
-        return
 
     def finalize_options(self):
         log.info('unifing config_cc, config, build_clib, build_ext, build commands --compiler options')

@@ -24,7 +24,6 @@ class build(old_build):
     def initialize_options(self):
         old_build.initialize_options(self)
         self.fcompiler = None
-        return
 
     def finalize_options(self):
         build_scripts = self.build_scripts
@@ -33,6 +32,3 @@ class build(old_build):
         if build_scripts is None:
             self.build_scripts = os.path.join(self.build_base,
                                               'scripts' + plat_specifier)
-        return
-
-#EOF
