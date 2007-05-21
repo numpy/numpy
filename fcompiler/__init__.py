@@ -770,7 +770,6 @@ def show_fcompilers(dist=None):
         dist.cmdclass['config_fc'] = config_fc
         dist.parse_config_files()
         dist.parse_command_line()
-
     compilers = []
     compilers_na = []
     compilers_ni = []
@@ -779,12 +778,14 @@ def show_fcompilers(dist=None):
     platform_compilers = available_fcompilers_for_platform()
     for compiler in platform_compilers:
         v = None
+        log.set_verbosity(-2)
         try:
             c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
         except (DistutilsModuleError, CompilerNotFound):
             pass
+
         if v is None:
             compilers_na.append(("fcompiler="+compiler, None,
                               fcompiler_class[compiler][2]))
