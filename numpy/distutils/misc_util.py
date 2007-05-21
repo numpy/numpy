@@ -40,29 +40,35 @@ def rel_path(path, parent_path):
         path = apath[len(pd)+1:]
     return path
 
-def get_path(mod_name, parent_path=None):
-    """ Return path of the module.
+def get_path_from_frame(frame, parent_path=None):
+    """ Return path of the module given a frame object from the call stack.
 
     Returned path is relative to parent_path when given,
     otherwise it is absolute path.
     """
-    if mod_name == '__builtin__':
-        #builtin if/then added by Pearu for use in core.run_setup.
-        d = os.path.dirname(os.path.abspath(sys.argv[0]))
-    else:
-        __import__(mod_name)
-        mod = sys.modules[mod_name]
-        if hasattr(mod,'__file__'):
-            filename = mod.__file__
+
+    # First, try to find if the file name is in the frame.
+    try:
+        caller_file = eval('__file__', frame.f_globals, frame.f_locals)
+        d = os.path.dirname(os.path.abspath(caller_file))
+    except NameError:
+        # __file__ is not defined, so let's try __name__. We try this second
+        # because setuptools spoofs __name__ to be '__main__' even though
+        # sys.modules['__main__'] might be something else, like easy_install(1).
+        caller_name = eval('__name__', frame.f_globals, frame.f_locals)
+        __import__(caller_name)
+        mod = sys.modules[caller_name]
+        if hasattr(mod, '__file__'):
             d = os.path.dirname(os.path.abspath(mod.__file__))
         else:
             # we're probably running setup.py as execfile("setup.py")
             # (likely we're building an egg)
             d = os.path.abspath('.')
             # hmm, should we use sys.argv[0] like in __builtin__ case?
-
+ 
     if parent_path is not None:
         d = rel_path(d, parent_path)
+
     return d or '.'
 
 def njoin(*path):
@@ -529,8 +535,7 @@ class Configuration(object):
         self.version = None
 
         caller_frame = get_frame(caller_level)
-        caller_name = eval('__name__',caller_frame.f_globals,caller_frame.f_locals)
-        self.local_path = get_path(caller_name, top_path)
+        self.local_path = get_path_from_frame(caller_frame, top_path)
         # local_path -- directory of a file (usually setup.py) that
         #               defines a configuration() function.
         if top_path is None:
