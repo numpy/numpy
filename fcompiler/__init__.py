@@ -454,7 +454,7 @@ class FCompiler(CCompiler):
 
         ar = self.command_vars.archiver
         if ar:
-            arflags = to_list(self.flag_vars.arflags)
+            arflags = to_list(self.flag_vars.ar)
             self.set_executables(archiver=[ar]+arflags)
 
         ranlib = self.command_vars.ranlib
