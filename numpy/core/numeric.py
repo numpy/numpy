@@ -818,10 +818,10 @@ def identity(n, dtype=None):
     a = array([1]+n*[0],dtype=dtype)
     b = empty((n,n),dtype=dtype)
 
-    # Note that this assignment depends on the convention that since the a array
-    # is shorter than the flattened b array, then the a array will be repeated
-    # until it is the appropriate size. Given a's construction, this nicely sets
-    # the diagonal to all ones.
+    # Note that this assignment depends on the convention that since the a
+    # array is shorter than the flattened b array, then the a array will
+    # be repeated until it is the appropriate size. Given a's construction,
+    # this nicely sets the diagonal to all ones.
     b.flat = a
     return b
 
@@ -840,11 +840,12 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     yinf = isinf(y)
     if (not xinf.any() and not yinf.any()):
         return d1.all()
-    d2 = (xinf != yinf)
     d3 = (x[xinf] == y[yinf])
     d4 = (~xinf & ~yinf)
-    if d3.size == 0:
-        return False
+    if d3.size < 2:
+        if d3.size==0:
+            return False
+        return d3
     if d3.all():
         return d1[d4].all() 
     else:
