@@ -860,7 +860,7 @@ class Configuration(object):
         assert not is_glob_pattern(d),`d`
 
         dist = self.get_distribution()
-        if dist is not None:
+        if dist is not None and dist.data_files is not None:
             data_files = dist.data_files
         else:
             data_files = self.data_files
@@ -957,7 +957,7 @@ class Configuration(object):
         assert not is_glob_pattern(d),`d,filepat`
 
         dist = self.get_distribution()
-        if dist is not None:
+        if dist is not None and dist.data_files is not None:
             data_files = dist.data_files
         else:
             data_files = self.data_files
