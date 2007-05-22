@@ -797,10 +797,13 @@ array(data = %(data)s,
         m = self._mask
         dout = self._data[i]
         if m is nomask:
-            if dout.size == 1:
+            try:
+                if dout.size == 1:
+                    return dout
+                else:
+                    return masked_array(dout, fill_value=self._fill_value)
+            except AttributeError:
                 return dout
-            else:
-                return masked_array(dout, fill_value=self._fill_value, copy=False)
         mi = m[i]
         if mi.size == 1:
             if mi:

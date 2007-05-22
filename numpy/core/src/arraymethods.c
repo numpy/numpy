@@ -653,14 +653,19 @@ array_cast(PyArrayObject *self, PyObject *args)
 			      &descr)) return NULL;
 
 	if (descr == self->descr) {
-		obj = _ARET(PyArray_NewCopy(self,0));
+		obj = _ARET(PyArray_NewCopy(self,NPY_ANYORDER));
 		Py_XDECREF(descr);
 		return obj;
 	}
 	if (descr->names != NULL) {
-		return PyArray_FromArray(self, descr, NPY_FORCECAST);
+                int flags;
+                flags = NPY_FORCECAST;
+                if (PyArray_ISFORTRAN(self)) {
+                        flags |= NPY_FORTRAN;
+                }
+		return PyArray_FromArray(self, descr, flags);
 	}
-	return PyArray_CastToType(self, descr, 0);
+	return PyArray_CastToType(self, descr, PyArray_ISFORTRAN(self));
 }
 
 /* default sub-type implementation */
