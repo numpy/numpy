@@ -1378,7 +1378,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                                 byte_swap_vector(destptr, length, 4);
 #else
                         /* need aligned data buffer */
-                        if (!PyArray_ISBEHAVED(base)) {
+                        if ((((intp)data) % descr->alignment) != 0) {
                                 buffer = _pya_malloc(itemsize);
                                 if (buffer == NULL)
                                         return PyErr_NoMemory();

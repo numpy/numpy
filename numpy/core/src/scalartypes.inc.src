@@ -158,6 +158,9 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
     where only a reference for flexible types is returned
 */
 
+/* This may not work right on narrow builds for NumPy unicode scalars.
+ */
+
 /*OBJECT_API
  Cast Scalar to c-type
 */
@@ -752,13 +755,7 @@ voidtype_dtypedescr_get(PyVoidScalarObject *self)
 static PyObject *
 gentype_data_get(PyObject *self)
 {
-        PyArray_Descr *typecode;
-        PyObject *ret;
-
-        typecode = PyArray_DescrFromScalar(self);
-        ret = PyBuffer_FromObject(self, 0, typecode->elsize);
-        Py_DECREF(typecode);
-        return ret;
+        return PyBuffer_FromObject(self, 0, Py_END_OF_BUFFER);
 }
 
 
@@ -767,9 +764,16 @@ gentype_itemsize_get(PyObject *self)
 {
         PyArray_Descr *typecode;
         PyObject *ret;
+        int elsize;
 
         typecode = PyArray_DescrFromScalar(self);
-        ret = PyInt_FromLong((long) typecode->elsize);
+        elsize = typecode->elsize;
+#ifndef Py_UNICODE_WIDE
+        if (typecode->type_num == NPY_UNICODE) {
+                elsize >>= 1;
+        }
+#endif        
+        ret = PyInt_FromLong((long) elsize);
         Py_DECREF(typecode);
         return ret;
 }
@@ -928,9 +932,11 @@ gentype_imag_get(PyObject *self)
         }
         else {
                 char *temp;
+                int elsize;
                 typecode = PyArray_DescrFromScalar(self);
-                temp = PyDataMem_NEW(typecode->elsize);
-                memset(temp, '\0', typecode->elsize);
+                elsize = typecode->elsize;
+                temp = PyDataMem_NEW(elsize);
+                memset(temp, '\0', elsize);
                 ret = PyArray_Scalar(temp, typecode, NULL);
                 PyDataMem_FREE(temp);
         }
@@ -1633,6 +1639,11 @@ gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
         numbytes = outcode->elsize;
         *ptrptr = (void *)scalar_value(self, outcode);
 
+#ifndef Py_UNICODE_WIDE
+        if (outcode->type_num == NPY_UNICODE) {
+                numbytes >>= 1;
+        }
+#endif
         Py_DECREF(outcode);
         return numbytes;
 }
@@ -1643,8 +1654,14 @@ gentype_getsegcount(PyObject *self, Py_ssize_t *lenp)
         PyArray_Descr *outcode;
 
         outcode = PyArray_DescrFromScalar(self);
-        if (lenp)
+        if (lenp) {
                 *lenp = outcode->elsize;
+#ifndef Py_UNICODE_WIDE                 
+                if (outcode->type_num == NPY_UNICODE) {
+                        *lenp >>= 1;
+                }
+#endif
+        }
         Py_DECREF(outcode);
         return 1;
 }
