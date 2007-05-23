@@ -883,6 +883,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 if (_numpy_internal == NULL) return NULL;
                 new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
                                                "OO", saved, order);
+                Py_DECREF(_numpy_internal);
                 if (new_name == NULL) return NULL;
                 newd = PyArray_DescrNew(saved);
                 newd->names = new_name;
@@ -928,6 +929,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 if (_numpy_internal == NULL) return NULL;
                 new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
                                                "OO", saved, order);
+                Py_DECREF(_numpy_internal);
                 if (new_name == NULL) return NULL;
                 newd = PyArray_DescrNew(saved);
                 newd->names = new_name;

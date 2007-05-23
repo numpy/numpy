@@ -26,6 +26,7 @@
         
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
+static PyObject *_internal_pname=NULL;
 
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
@@ -4866,6 +4867,7 @@ _convert_from_commastring(PyObject *obj, int align)
         if (_numpy_internal == NULL) return NULL;
         listobj = PyObject_CallMethod(_numpy_internal, "_commastring",
 				      "O", obj);
+        Py_DECREF(_numpy_internal);
 	if (!listobj) return NULL;
 	if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj)<1) {
 		PyErr_SetString(PyExc_RuntimeError, "_commastring is "	\
@@ -4929,12 +4931,14 @@ then it will be checked for conformity and used directly.
 static PyArray_Descr *
 _use_fields_dict(PyObject *obj, int align)
 {
-        PyObject *_numpy_internal;
+        PyObject *_numpy_internal, *res;
         _numpy_internal = PyImport_ImportModule("numpy.core._internal");
         if (_numpy_internal == NULL) return NULL;
-        return (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
-						    "_usefields",
-						    "Oi", obj, align);
+        res = (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
+                                                   "_usefields",
+                                                   "Oi", obj, align);
+        Py_DECREF(_numpy_internal);
+        return res;
 }
 
 static PyArray_Descr *

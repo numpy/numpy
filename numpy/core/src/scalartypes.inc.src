@@ -2671,6 +2671,7 @@ PyArray_FieldNames(PyObject *fields)
         _numpy_internal = PyImport_ImportModule("numpy.core._internal");
         if (_numpy_internal == NULL) return NULL;
         tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "O", fields);
+        Py_DECREF(_numpy_internal);
         if (tup == NULL) return NULL;
         ret = PyTuple_GET_ITEM(tup, 0);
         ret = PySequence_Tuple(ret);

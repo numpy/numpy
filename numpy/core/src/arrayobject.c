@@ -6132,11 +6132,14 @@ static PyObject *
 array_ctypes_get(PyArrayObject *self)
 {
         PyObject *_numpy_internal;
+        PyObject *ret;
         _numpy_internal = PyImport_ImportModule("numpy.core._internal");
         if (_numpy_internal == NULL) return NULL;
-        return PyObject_CallMethod(_numpy_internal, "_ctypes",
-                                   "ON", self,
-                                   PyLong_FromVoidPtr(self->data));
+        ret = PyObject_CallMethod(_numpy_internal, "_ctypes",
+                                  "ON", self,
+                                  PyLong_FromVoidPtr(self->data));
+        Py_DECREF(_numpy_internal);
+        return ret;
 }
 
 static PyObject *
@@ -10864,8 +10867,10 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
 
         _numpy_internal = PyImport_ImportModule("numpy.core._internal");
         if (_numpy_internal == NULL) return NULL;
-        return PyObject_CallMethod(_numpy_internal, "_array_descr",
-                                   "O", self);
+        res = PyObject_CallMethod(_numpy_internal, "_array_descr",
+                                  "O", self);
+        Py_DECREF(_numpy_internal);
+        return res;
 }
 
 /* returns 1 for a builtin type
