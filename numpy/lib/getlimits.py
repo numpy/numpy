@@ -1,7 +1,7 @@
 """ Machine limits for Float32 and Float64 and (long double) if available...
 """
 
-__all__ = ['finfo']
+__all__ = ['finfo','iinfo']
 
 from machar import MachAr
 import numpy.core.numeric as numeric
@@ -124,39 +124,29 @@ class iinfo:
 
     """
 
-    # Should be using dtypes as keys, but hash-function isn't yet implemented
-    _min_values = {'int8': -2**7,
-                   'int16': -2**15,
-                   'int32': -2**31,
-                   'int64': -2**63,
-                   'uint8': 0,
-                   'uint16': 0,
-                   'uint32': 0,
-                   'uint64': 0}
-
-    _max_values = {'int8': 2**7 - 1,
-                   'int16': 2**15 - 1,
-                   'int32': 2**31 - 1,
-                   'int64': 2**63 - 1,
-                   'uint8': 2**8 - 1,
-                   'uint16': 2**16 - 1,
-                   'uint32': 2**32 - 1,
-                   'uint64': 2**64 - 1}
-
     def __init__(self, type):
-        self.dtype = str(N.dtype(type))
-        if not (self.dtype in self._min_values and \
-                self.dtype in self._max_values):
+        self.dtype = N.dtype(type)
+        self.kind = self.dtype.kind
+        self.bits = self.dtype.itemsize * 8
+        if not self.kind in 'iu':
             raise ValueError("Invalid integer data type.")
 
     def min(self):
         """Minimum value of given dtype."""
-        return self._min_values[self.dtype]
+        if self.kind == 'u':
+            return 0
+        else:
+            return -(1 << (self.bits-1))
+
     min = property(min)
 
     def max(self):
         """Maximum value of given dtype."""
-        return self._max_values[self.dtype]
+        if self.kind == 'u':
+            return (1 << self.bits) - 1
+        else:
+            return (1 << (self.bits-1)) - 1
+
     max = property(max)
 
 if __name__ == '__main__':
