@@ -1378,13 +1378,13 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                                 byte_swap_vector(destptr, length, 4);
 #else
                         /* need aligned data buffer */
-                        if ((((intp)data) % descr->alignment) != 0) {
+                        if ((swap) || ((((intp)data) % descr->alignment) != 0)) {
                                 buffer = _pya_malloc(itemsize);
                                 if (buffer == NULL)
                                         return PyErr_NoMemory();
                                 alloc = 1;
                                 memcpy(buffer, data, itemsize);
-                                if (!PyArray_ISNOTSWAPPED(base)) {
+                                if (swap) {
                                         byte_swap_vector(buffer,
                                                          itemsize >> 2, 4);
                                 }
