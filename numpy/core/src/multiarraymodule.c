@@ -26,7 +26,6 @@
         
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
-static PyObject *_internal_pname=NULL;
 
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
@@ -4931,7 +4930,8 @@ then it will be checked for conformity and used directly.
 static PyArray_Descr *
 _use_fields_dict(PyObject *obj, int align)
 {
-        PyObject *_numpy_internal, *res;
+        PyObject *_numpy_internal;
+        PyArray_Descr *res;
         _numpy_internal = PyImport_ImportModule("numpy.core._internal");
         if (_numpy_internal == NULL) return NULL;
         res = (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
