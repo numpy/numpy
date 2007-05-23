@@ -124,10 +124,14 @@ class iinfo:
 
     """
 
+    _min_vals = {}
+    _max_vals = {}
+
     def __init__(self, type):
         self.dtype = N.dtype(type)
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
+	self.key = "%s%d" % (self.kind, self.bits)
         if not self.kind in 'iu':
             raise ValueError("Invalid integer data type.")
 
@@ -136,16 +140,26 @@ class iinfo:
         if self.kind == 'u':
             return 0
         else:
-            return -(1 << (self.bits-1))
+            try:
+                val = iinfo._min_vals[self.key]
+            except KeyError:
+                val = int(-(1L << (self.bits-1)))
+                iinfo._min_vals[self.key] = val
+            return val
 
     min = property(min)
 
     def max(self):
         """Maximum value of given dtype."""
-        if self.kind == 'u':
-            return (1 << self.bits) - 1
-        else:
-            return (1 << (self.bits-1)) - 1
+        try:
+            val = iinfo._max_vals[self.key]
+        except KeyError:
+            if self.kind == 'u':
+                val = int((1L << self.bits) - 1)
+            else:
+                val = int((1L << (self.bits-1)) - 1)
+            iinfo._max_vals[self.key] = val
+        return val
 
     max = property(max)
 
