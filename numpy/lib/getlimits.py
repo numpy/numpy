@@ -131,7 +131,7 @@ class iinfo:
         self.dtype = N.dtype(type)
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
-	self.key = "%s%d" % (self.kind, self.bits)
+        self.key = "%s%d" % (self.kind, self.bits)
         if not self.kind in 'iu':
             raise ValueError("Invalid integer data type.")
 
