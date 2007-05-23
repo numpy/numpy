@@ -6131,6 +6131,9 @@ array_dataptr_get(PyArrayObject *self)
 static PyObject *
 array_ctypes_get(PyArrayObject *self)
 {
+        PyObject *_numpy_internal;
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
         return PyObject_CallMethod(_numpy_internal, "_ctypes",
                                    "ON", self,
                                    PyLong_FromVoidPtr(self->data));
@@ -10844,6 +10847,7 @@ static PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
         PyObject *dobj, *res;
+        PyObject *_numpy_internal;
 
         if (self->names == NULL) {
                 /* get default */
@@ -10858,6 +10862,8 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
                 return res;
         }
 
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
         return PyObject_CallMethod(_numpy_internal, "_array_descr",
                                    "O", self);
 }
@@ -11636,12 +11642,6 @@ static PyTypeObject PyArrayDescr_Type = {
 
 
 /** Array Flags Object **/
-
-typedef struct PyArrayFlagsObject {
-        PyObject_HEAD
-        PyObject *arr;
-        int flags;
-} PyArrayFlagsObject;
 
 /*OBJECT_API
  Get New ArrayFlagsObject

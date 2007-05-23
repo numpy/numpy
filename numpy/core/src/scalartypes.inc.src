@@ -740,8 +740,12 @@ gentype_flags_get(PyObject *self)
 static PyObject *
 voidtype_flags_get(PyVoidScalarObject *self)
 {
-        return PyObject_CallMethod(_numpy_internal, "flagsobj", "Oii",
-                                   self, self->flags, 1);
+        PyObject *flagobj;
+        flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
+        if (flagobj == NULL) return NULL;
+        ((PyArrayFlagsObject *)flagobj)->arr = NULL;
+        ((PyArrayFlagsObject *)flagobj)->flags = self->flags;
+        return flagobj;
 }
 
 static PyObject *
@@ -2657,11 +2661,15 @@ PyArray_FieldNames(PyObject *fields)
 {
         PyObject *tup;
         PyObject *ret;
+        PyObject *_numpy_internal;
+
         if (!PyDict_Check(fields)) {
                 PyErr_SetString(PyExc_TypeError,
                                 "Fields must be a dictionary");
                 return NULL;
         }
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
         tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "O", fields);
         if (tup == NULL) return NULL;
         ret = PyTuple_GET_ITEM(tup, 0);

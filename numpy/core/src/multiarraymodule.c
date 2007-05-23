@@ -23,9 +23,9 @@
 #include "numpy/arrayobject.h"
 
 #define PyAO PyArrayObject
+        
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
-static PyObject *_numpy_internal=NULL; /* A Python module for callbacks */
 
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
@@ -4859,8 +4859,11 @@ _convert_from_commastring(PyObject *obj, int align)
 {
 	PyObject *listobj;
 	PyArray_Descr *res;
+        PyObject *_numpy_internal;
 
 	if (!PyString_Check(obj)) return NULL;
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
         listobj = PyObject_CallMethod(_numpy_internal, "_commastring",
 				      "O", obj);
 	if (!listobj) return NULL;
@@ -4926,6 +4929,9 @@ then it will be checked for conformity and used directly.
 static PyArray_Descr *
 _use_fields_dict(PyObject *obj, int align)
 {
+        PyObject *_numpy_internal;
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
         return (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
 						    "_usefields",
 						    "Oi", obj, align);
@@ -7583,9 +7589,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 	set_flaginfo(d);
 
 	if (set_typeinfo(d) != 0) goto err;
-
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal != NULL) return;
+        return;
 
  err:
 	if (!PyErr_Occurred()) {

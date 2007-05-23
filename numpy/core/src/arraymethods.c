@@ -872,12 +872,15 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (order == Py_None) order = NULL;
         if (order != NULL) {
                 PyObject *new_name;
+                PyObject *_numpy_internal;
                 saved = self->descr;
                 if (saved->names == NULL) {
                         PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                                         "order when the array has no fields.");
                         return NULL;
                 }
+                _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+                if (_numpy_internal == NULL) return NULL;
                 new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
                                                "OO", saved, order);
                 if (new_name == NULL) return NULL;
@@ -914,12 +917,15 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (order == Py_None) order = NULL;
         if (order != NULL) {
                 PyObject *new_name;
+                PyObject *_numpy_internal;
                 saved = self->descr;
                 if (saved->names == NULL) {
                         PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                                         "order when the array has no fields.");
                         return NULL;
                 }
+                _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+                if (_numpy_internal == NULL) return NULL;
                 new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
                                                "OO", saved, order);
                 if (new_name == NULL) return NULL;

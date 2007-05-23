@@ -1230,6 +1230,13 @@ typedef struct PyArrayObject {
 
 #define fortran fortran_        /* For some compilers */
 
+/* Array Flags Object */
+typedef struct PyArrayFlagsObject {
+        PyObject_HEAD
+        PyObject *arr;
+        int flags;
+} PyArrayFlagsObject;
+
 /* Mirrors buffer object to ptr */
 
 typedef struct {
