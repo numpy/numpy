@@ -658,6 +658,15 @@ class test_regression(NumpyTestCase):
         N.take(x,[0,2],axis=1,out=b)
         assert_array_equal(a,b)
 
+    def check_array_str_64bit(self, level=rlevel):
+        """Ticket #501"""
+        s = N.array([1, N.nan],dtype=N.float64)
+        errstate = N.seterr(all='raise')
+        try:
+            sstr = N.array_str(s)
+        finally:
+            N.seterr(**errstate)
+
     def check_frompyfunc_endian(self, level=rlevel):
         """Ticket #503"""
         from math import radians
