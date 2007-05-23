@@ -2,7 +2,6 @@
 #  that implements more complicated stuff.
 
 import re
-from multiarray import dtype, ndarray
 import sys
 
 if (sys.byteorder == 'little'):
@@ -11,6 +10,7 @@ else:
     _nbo = '>'
 
 def _makenames_list(adict):
+    from multiarray import dtype
     allfields = []
     fnames = adict.keys()
     for fname in fnames:
@@ -44,6 +44,7 @@ def _makenames_list(adict):
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
 def _usefields(adict, align):
+    from multiarray import dtype
     try:
         names = adict[-1]
     except KeyError:
@@ -109,6 +110,7 @@ def _array_descr(descriptor):
 # so don't remove the name here, or you'll
 # break backward compatibilty.
 def _reconstruct(subtype, shape, dtype):
+    from multiarray import ndarray
     return ndarray.__new__(subtype, shape, dtype)
 
 
@@ -193,6 +195,7 @@ def _commastring(astr):
     return result
 
 def _getintp_ctype():
+    from multiarray import dtype
     val = _getintp_ctype.cache
     if val is not None:
         return val
