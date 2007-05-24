@@ -184,7 +184,7 @@ def vstack(tup):
     """ Stack arrays in sequence vertically (row wise)
 
         Description:
-            Take a sequence of arrays and stack them veritcally
+            Take a sequence of arrays and stack them vertically
             to make a single array.  All arrays in the sequence
             must have the same shape along all but the first axis.
             vstack will rebuild arrays divided by vsplit.
