@@ -133,10 +133,10 @@ class PackageLoader:
 
     Usage:
 
-       This function is intended to shorten the need to import many of
+       This function is intended to shorten the need to import many
        subpackages, say of scipy, constantly with statements such as
 
-       import scipy.linalg, scipy.fftpack, scipy.etc...
+         import scipy.linalg, scipy.fftpack, scipy.etc...
 
        Instead, you can say:
 
@@ -154,18 +154,19 @@ class PackageLoader:
 
      Inputs:
 
-       - the names (one or more strings) of all the numpy modules one wishes to
-       load into the top-level namespace.
+       - the names (one or more strings) of all the numpy modules one
+         wishes to load into the top-level namespace.
 
      Optional keyword inputs:
 
        - verbose - integer specifying verbosity level [default: -1].
                    verbose=-1 will suspend also warnings.
-       - force   - when True, force reloading loaded packages [default: False].
+       - force   - when True, force reloading loaded packages
+                   [default: False].
        - postpone - when True, don't load packages [default: False]
 
-     If no input arguments are given, then all of scipy's subpackages are
-     imported.
+     If no input arguments are given, then all of scipy's subpackages
+     are imported.
 
      """
         frame = self.parent_frame
