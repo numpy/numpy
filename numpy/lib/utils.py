@@ -163,7 +163,7 @@ def may_share_memory(a, b):
 
 
 def who(vardict=None):
-    """Print the scipy arrays in the given dictionary (or globals() if None).
+    """Print the Numpy arrays in the given dictionary (or globals() if None).
     """
     if vardict is None:
         frame = sys._getframe().f_back
