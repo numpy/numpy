@@ -18,13 +18,13 @@ except NameError:
 
 from distutils.sysconfig import get_config_var, get_python_lib
 from distutils.fancy_getopt import FancyGetopt
-from distutils.errors import DistutilsModuleError,DistutilsArgError,\
-     DistutilsExecError,CompileError,LinkError,DistutilsPlatformError
+from distutils.errors import DistutilsModuleError, \
+     DistutilsExecError, CompileError, LinkError, DistutilsPlatformError
 from distutils.util import split_quoted
 
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
-from numpy.distutils.misc_util import is_string, is_sequence
+from numpy.distutils.misc_util import is_string
 from numpy.distutils.environment import EnvironmentConfig
 from numpy.distutils.exec_command import find_executable
 from distutils.spawn import _nt_quote_args
@@ -706,7 +706,7 @@ def _find_existing_fcompiler(compiler_types,
                 new_compiler = c.suggested_f90_compiler
                 if new_compiler:
                     log.warn('Trying %r compiler as suggested by %r '
-                             'compiler for f90 support.' % (compiler,
+                             'compiler for f90 support.' % (compiler_type,
                                                             new_compiler))
                     c = new_fcompiler(plat=platform, compiler=new_compiler)
                     c.customize(dist)
@@ -810,7 +810,6 @@ def show_fcompilers(dist=None):
         except (DistutilsModuleError, CompilerNotFound), e:
             log.debug("show_fcompilers: %s not found" % (compiler,))
             log.debug(repr(e))
-
 
         if v is None:
             compilers_na.append(("fcompiler="+compiler, None,

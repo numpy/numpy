@@ -11,7 +11,7 @@ from distutils.util import get_platform
 from distutils.errors import DistutilsError, DistutilsSetupError
 
 try:
-    from Pyrex.Compiler import Main
+    import Pyrex.Compiler
     have_pyrex = True
 except ImportError:
     have_pyrex = False
@@ -384,11 +384,11 @@ class build_src(build_ext.build_ext):
                     if have_pyrex:
                         log.info("pyrexc:> %s" % (target_file))
                         self.mkpath(target_dir)
-                        from Pyrex.Compiler import Main
-                        options = Main.CompilationOptions(
-                            defaults=Main.default_options,
+                        options = Pyrex.Compiler.Main.CompilationOptions(
+                            defaults=Pyrex.Compiler.Main.default_options,
                             output_file=target_file)
-                        pyrex_result = Main.compile(source, options=options)
+                        pyrex_result = Pyrex.Compiler.Main.compile(source,
+                                            options=options)
                         if pyrex_result.num_errors != 0:
                             raise DistutilsError,"%d errors while compiling %r with Pyrex" \
                                   % (pyrex_result.num_errors, source)

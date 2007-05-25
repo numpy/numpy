@@ -5,7 +5,6 @@ import sys
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command, find_executable
 from distutils import log
-from distutils.sysconfig import get_python_lib
 
 compilers = ['IBMFCompiler']
 
@@ -91,10 +90,7 @@ class IBMFCompiler(FCompiler):
         return ['-O5']
 
 if __name__ == '__main__':
-    from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    #compiler = new_fcompiler(compiler='ibm')
-    compiler = IbmFCompiler()
+    compiler = IBMFCompiler()
     compiler.customize()
     print compiler.get_version()

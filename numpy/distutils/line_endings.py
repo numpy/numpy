@@ -71,5 +71,4 @@ def unix2dos_dir(dir_name):
     return modified_files
 
 if __name__ == "__main__":
-    import sys
     dos2unix_dir(sys.argv[1])

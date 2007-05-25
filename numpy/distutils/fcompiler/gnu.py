@@ -6,7 +6,7 @@ import warnings
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import mingw32, msvc_runtime_library
+from numpy.distutils.misc_util import msvc_runtime_library
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -320,8 +320,6 @@ class Gnu95FCompiler(GnuFCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    #compiler = new_fcompiler(compiler='gnu')
     compiler = GnuFCompiler()
     compiler.customize()
     print compiler.get_version()

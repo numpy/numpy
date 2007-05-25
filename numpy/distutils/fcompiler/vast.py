@@ -1,7 +1,5 @@
 import os
-import sys
 
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler.gnu import GnuFCompiler
 
 compilers = ['VastFCompiler']

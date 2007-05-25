@@ -3,12 +3,10 @@ unixccompiler - can handle very long argument lists for ar.
 """
 
 import os
-import sys
 import new
 
-from distutils.errors import DistutilsExecError, LinkError, CompileError
+from distutils.errors import DistutilsExecError, CompileError
 from distutils.unixccompiler import *
-
 
 import log
 

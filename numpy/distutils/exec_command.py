@@ -49,7 +49,6 @@ Known bugs:
 __all__ = ['exec_command','find_executable']
 
 import os
-import re
 import sys
 import tempfile
 

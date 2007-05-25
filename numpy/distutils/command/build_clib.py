@@ -2,8 +2,10 @@
 """
 
 import os
+from glob import glob
 from distutils.command.build_clib import build_clib as old_build_clib
-from distutils.errors import DistutilsSetupError, DistutilsError
+from distutils.errors import DistutilsSetupError, DistutilsError, \
+     DistutilsFileError
 
 from numpy.distutils import log
 from distutils.dep_util import newer_group

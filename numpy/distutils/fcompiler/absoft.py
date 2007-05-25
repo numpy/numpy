@@ -7,7 +7,6 @@
 #   generated extension modules (works for f2py v2.45.241_1936 and up)
 
 import os
-import sys
 
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
