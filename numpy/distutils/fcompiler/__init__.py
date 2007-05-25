@@ -245,11 +245,11 @@ class FCompiler(CCompiler):
             return None
 
         f90 = set_exe('compiler_f90')
-        if not f90:
-            raise CompilerNotFound('f90')
+#        if not f90:
+#            raise CompilerNotFound('f90')
         f77 = set_exe('compiler_f77', f90=f90)
         if not f77:
-            raise CompilerNotFound('f90')
+            raise CompilerNotFound('f77')
         set_exe('compiler_fix', f90=f90)
 
         set_exe('linker_so', f77=f77, f90=f90)
@@ -273,8 +273,8 @@ class FCompiler(CCompiler):
                 f90 = self.executables.get('compiler_f90')
                 if f90 is not None:
                     f90 = f90[0]
-                if cmd==f90:
-                    cmd = self.compiler_f90[0]
+                    if cmd == f90:
+                        cmd = self.compiler_f90[0]
         return cmd
 
     def get_linker_so(self):
@@ -285,14 +285,14 @@ class FCompiler(CCompiler):
         ln = self.executables.get('linker_so')
         if ln is not None:
             ln = ln[0]
-            if ln==f77:
+            if ln == f77:
                 ln = self.compiler_f77[0]
             else:
                 f90 = self.executables.get('compiler_f90')
                 if f90 is not None:
                     f90 = f90[0]
-                if ln==f90:
-                    ln = self.compiler_f90[0]
+                    if ln == f90:
+                        ln = self.compiler_f90[0]
         return ln
 
     def get_linker_exe(self):
@@ -303,14 +303,14 @@ class FCompiler(CCompiler):
         ln = self.executables.get('linker_exe')
         if ln is not None:
             ln = ln[0]
-            if ln==f77:
+            if ln == f77:
                 ln = self.compiler_f77[0]
             else:
                 f90 = self.executables.get('compiler_f90')
                 if f90 is not None:
                     f90 = f90[0]
-                if ln==f90:
-                    ln = self.compiler_f90[0]
+                    if ln == f90:
+                        ln = self.compiler_f90[0]
         return ln
 
     def get_flags(self):
@@ -807,8 +807,9 @@ def show_fcompilers(dist=None):
             c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
-        except (DistutilsModuleError, CompilerNotFound):
+        except (DistutilsModuleError, CompilerNotFound), e:
             log.debug("show_fcompilers: %s not found" % (compiler,))
+            log.debug(repr(e))
 
 
         if v is None:
