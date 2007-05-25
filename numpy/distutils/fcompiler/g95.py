@@ -6,9 +6,12 @@ import sys
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 
-class G95FCompiler(FCompiler):
+compilers = ['G95FCompiler']
 
+class G95FCompiler(FCompiler):
     compiler_type = 'g95'
+    description = 'G95 Fortran Compiler'
+
 #    version_pattern = r'G95 \((GCC (?P<gccversion>[\d.]+)|.*?) \(g95!\) (?P<version>.*)\).*'
     # $ g95 --version
     # G95 (GCC 4.0.3 (g95!) May 22 2006)
@@ -17,13 +20,12 @@ class G95FCompiler(FCompiler):
     # $ g95 --version
     # G95 (GCC 4.0.3 (g95 0.90!) Aug 22 2006)
 
-
     executables = {
-        'version_cmd'  : ["g95", "--version"],
+        'version_cmd'  : ["<F90>", "--version"],
         'compiler_f77' : ["g95", "-ffixed-form"],
         'compiler_fix' : ["g95", "-ffixed-form"],
         'compiler_f90' : ["g95"],
-        'linker_so'    : ["g95","-shared"],
+        'linker_so'    : ["<F90>","-shared"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }

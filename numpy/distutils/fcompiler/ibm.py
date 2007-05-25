@@ -7,13 +7,16 @@ from numpy.distutils.exec_command import exec_command, find_executable
 from distutils import log
 from distutils.sysconfig import get_python_lib
 
-class IbmFCompiler(FCompiler):
+compilers = ['IBMFCompiler']
 
+class IBMFCompiler(FCompiler):
     compiler_type = 'ibm'
+    description = 'IBM XL Fortran Compiler'
     version_pattern =  r'(xlf\(1\)\s*|)IBM XL Fortran ((Advanced Edition |)Version |Enterprise Edition V)(?P<version>[^\s*]*)'
     #IBM XL Fortran Enterprise Edition V10.1 for AIX \nVersion: 10.01.0000.0004
+
     executables = {
-        'version_cmd'  : ["xlf","-qversion"],
+        'version_cmd'  : ["<F77>", "-qversion"],
         'compiler_f77' : ["xlf"],
         'compiler_fix' : ["xlf90", "-qfixed"],
         'compiler_f90' : ["xlf90"],
