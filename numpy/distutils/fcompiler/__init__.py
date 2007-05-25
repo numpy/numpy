@@ -651,7 +651,7 @@ class FCompiler(CCompiler):
     ## class FCompiler
 
 _default_compilers = (
-    # Platform mappings
+    # sys.platform mappings
     ('win32', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
     ('cygwin.*', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
     ('linux.*', ('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
@@ -660,7 +660,7 @@ _default_compilers = (
     ('sunos.*', ('sun','gnu','gnu95','g95')),
     ('irix.*', ('mips','gnu','gnu95',)),
     ('aix.*', ('ibm','gnu','gnu95',)),
-    # OS mappings
+    # os.name mappings
     ('posix', ('gnu','gnu95',)),
     ('nt', ('gnu','gnu95',)),
     ('mac', ('gnu','gnu95',)),
@@ -690,7 +690,8 @@ def load_all_fcompiler_classes():
                                                         klass,
                                                         klass.description)
 
-def _find_existing_fcompiler(compiler_types, osname=None, platform=None,
+def _find_existing_fcompiler(compiler_types,
+                             osname=None, platform=None,
                              requiref90=False):
     from numpy.distutils.core import get_distribution
     dist = get_distribution(always=True)
@@ -716,9 +717,9 @@ def _find_existing_fcompiler(compiler_types, osname=None, platform=None,
                 raise ValueError('%s does not support compiling f90 codes, '
                                  'skipping.' % (c.__class__.__name__))
         except DistutilsModuleError:
-            pass
+            log.debug("_find_existing_fcompiler: compiler_type='%s' raised DistutilsModuleError", compiler_type)
         except CompilerNotFound:
-            pass
+            log.debug("_find_existing_fcompiler: compiler_type='%s' not found", compiler_type)
         if v is not None:
             return compiler_type
     return None
@@ -802,13 +803,12 @@ def show_fcompilers(dist=None):
     for compiler in platform_compilers:
         v = None
         log.set_verbosity(-2)
-        log.set_verbosity(-2)
         try:
             c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
         except (DistutilsModuleError, CompilerNotFound):
-            pass
+            log.debug("show_fcompilers: %s not found" % (compiler,))
 
 
         if v is None:
