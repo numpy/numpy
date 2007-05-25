@@ -123,59 +123,47 @@ def test_splitcmdline():
 ############################################################
 
 def find_executable(exe, path=None):
-    """ Return full path of a executable.
+    """Return full path of a executable.
+
+    Symbolic links are not followed.
     """
     log.debug('find_executable(%r)' % exe)
     orig_exe = exe
+
     if path is None:
         path = os.environ.get('PATH',os.defpath)
     if os.name=='posix' and sys.version[:3]>'2.1':
         realpath = os.path.realpath
     else:
         realpath = lambda a:a
-    if exe[0]=='"':
+
+    if exe.startswith('"'):
         exe = exe[1:-1]
-    suffices = ['']
+
+    suffixes = ['']
     if os.name in ['nt','dos','os2']:
         fn,ext = os.path.splitext(exe)
-        extra_suffices = ['.exe','.com','.bat']
-        if ext.lower() not in extra_suffices:
-            suffices = extra_suffices
+        extra_suffixes = ['.exe','.com','.bat']
+        if ext.lower() not in extra_suffixes:
+            suffixes = extra_suffixes
+
     if os.path.isabs(exe):
         paths = ['']
     else:
-        paths = map(os.path.abspath, path.split(os.pathsep))
-        if 0 and os.name == 'nt':
-            new_paths = []
-            cygwin_paths = []
-            for path in paths:
-                d,p = os.path.splitdrive(path)
-                if p.lower().find('cygwin') >= 0:
-                    cygwin_paths.append(path)
-                else:
-                    new_paths.append(path)
-            paths = new_paths + cygwin_paths
+        paths = [ os.path.abspath(p) for p in path.split(os.pathsep) ]
+
     for path in paths:
-        fn = os.path.join(path,exe)
-        for s in suffices:
+        fn = os.path.join(path, exe)
+        for s in suffixes:
             f_ext = fn+s
             if not os.path.islink(f_ext):
-                # see comment below.
                 f_ext = realpath(f_ext)
-            if os.path.isfile(f_ext) and os.access(f_ext,os.X_OK):
+            if os.path.isfile(f_ext) and os.access(f_ext, os.X_OK):
                 log.debug('Found executable %s' % f_ext)
                 return f_ext
-    if os.path.islink(exe):
-        # Don't follow symbolic links. E.g. when using colorgcc then
-        # gcc -> /usr/bin/colorgcc
-        # g77 -> /usr/bin/colorgcc
-        pass
-    else:
-        exe = realpath(exe)
-    if not os.path.isfile(exe) or os.access(exe,os.X_OK):
-        log.warn('Could not locate executable %s' % orig_exe)
-        return orig_exe
-    return exe
+
+    log.warn('Could not locate executable %s' % orig_exe)
+    return None
 
 ############################################################
 
