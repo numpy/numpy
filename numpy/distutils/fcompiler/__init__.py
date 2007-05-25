@@ -120,16 +120,16 @@ class FCompiler(CCompiler):
 
     def get_version_cmd(self):
         """ Compiler command to print out version information. """
-        f77 = self.executables['compiler_f77']
+        f77 = self.executables.get('compiler_f77')
         if f77 is not None:
             f77 = f77[0]
-        cmd = self.executables['version_cmd']
+        cmd = self.executables.get('version_cmd')
         if cmd is not None:
             cmd = cmd[0]
             if cmd==f77:
                 cmd = self.compiler_f77[0]
             else:
-                f90 = self.executables['compiler_f90']
+                f90 = self.executables.get('compiler_f90')
                 if f90 is not None:
                     f90 = f90[0]
                 if cmd==f90:
@@ -141,13 +141,13 @@ class FCompiler(CCompiler):
         f77 = self.executables['compiler_f77']
         if f77 is not None:
             f77 = f77[0]
-        ln = self.executables['linker_so']
+        ln = self.executables.get('linker_so')
         if ln is not None:
             ln = ln[0]
             if ln==f77:
                 ln = self.compiler_f77[0]
             else:
-                f90 = self.executables['compiler_f90']
+                f90 = self.executables.get('compiler_f90')
                 if f90 is not None:
                     f90 = f90[0]
                 if ln==f90:
@@ -165,7 +165,7 @@ class FCompiler(CCompiler):
             if ln==f77:
                 ln = self.compiler_f77[0]
             else:
-                f90 = self.executables['compiler_f90']
+                f90 = self.executables.get('compiler_f90')
                 if f90 is not None:
                     f90 = f90[0]
                 if ln==f90:
@@ -177,17 +177,17 @@ class FCompiler(CCompiler):
         return [] + self.pic_flags
     def get_flags_version(self):
         """ List of compiler flags to print out version information. """
-        if self.executables['version_cmd']:
+        if self.executables.get('version_cmd'):
             return self.executables['version_cmd'][1:]
         return []
     def get_flags_f77(self):
         """ List of Fortran 77 specific flags. """
-        if self.executables['compiler_f77']:
+        if self.executables.get('compiler_f77'):
             return self.executables['compiler_f77'][1:]
         return []
     def get_flags_f90(self):
         """ List of Fortran 90 specific flags. """
-        if self.executables['compiler_f90']:
+        if self.executables.get('compiler_f90'):
             return self.executables['compiler_f90'][1:]
         return []
     def get_flags_free(self):
@@ -195,22 +195,22 @@ class FCompiler(CCompiler):
         return []
     def get_flags_fix(self):
         """ List of Fortran 90 fixed format specific flags. """
-        if self.executables['compiler_fix']:
+        if self.executables.get('compiler_fix'):
             return self.executables['compiler_fix'][1:]
         return []
     def get_flags_linker_so(self):
         """ List of linker flags to build a shared library. """
-        if self.executables['linker_so']:
+        if self.executables.get('linker_so'):
             return self.executables['linker_so'][1:]
         return []
     def get_flags_linker_exe(self):
         """ List of linker flags to build an executable. """
-        if self.executables['linker_exe']:
+        if self.executables.get('linker_exe'):
             return self.executables['linker_exe'][1:]
         return []
     def get_flags_ar(self):
         """ List of archiver flags. """
-        if self.executables['archiver']:
+        if self.executables.get('archiver'):
             return self.executables['archiver'][1:]
         return []
     def get_flags_opt(self):
