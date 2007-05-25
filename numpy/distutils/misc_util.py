@@ -65,7 +65,7 @@ def get_path_from_frame(frame, parent_path=None):
             # (likely we're building an egg)
             d = os.path.abspath('.')
             # hmm, should we use sys.argv[0] like in __builtin__ case?
- 
+
     if parent_path is not None:
         d = rel_path(d, parent_path)
 
@@ -219,17 +219,36 @@ def terminal_has_colors():
     return 0
 
 if terminal_has_colors():
-    def red_text(s): return '\x1b[31m%s\x1b[0m'%s
-    def green_text(s): return '\x1b[32m%s\x1b[0m'%s
-    def yellow_text(s): return '\x1b[33m%s\x1b[0m'%s
-    def blue_text(s): return '\x1b[34m%s\x1b[0m'%s
-    def cyan_text(s): return '\x1b[35m%s\x1b[0m'%s
+    _colour_codes = dict(black=0, red=1, green=2, yellow=3,
+                         blue=4, magenta=5, cyan=6, white=7)
+    def colour_text(s, fg=None, bg=None, bold=False):
+        seq = []
+        if bold:
+            seq.append('1')
+        if fg:
+            fgcode = 30 + _colour_codes.get(fg.lower(), 0)
+            seq.append(str(fgcode))
+        if bg:
+            bgcode = 40 + _colour_codes.get(fg.lower(), 7)
+            seq.append(str(bgcode))
+        if seq:
+            return '\x1b[%sm%s\x1b[0m' % (';'.join(seq), s)
+        else:
+            return s
 else:
-    def red_text(s): return s
-    def green_text(s): return s
-    def yellow_text(s): return s
-    def cyan_text(s): return s
-    def blue_text(s): return s
+    def colour_text(s, fg=None, bg=None):
+        return s
+
+def red_text(s):
+    return colour_text(s, 'red')
+def green_text(s):
+    return colour_text(s, 'green')
+def yellow_text(s):
+    return colour_text(s, 'yellow')
+def cyan_text(s):
+    return colour_text(s, 'cyan')
+def blue_text(s):
+    return colour_text(s, 'blue')
 
 #########################
 

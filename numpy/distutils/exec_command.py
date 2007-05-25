@@ -159,7 +159,7 @@ def find_executable(exe, path=None):
             if not os.path.islink(f_ext):
                 f_ext = realpath(f_ext)
             if os.path.isfile(f_ext) and os.access(f_ext, os.X_OK):
-                log.debug('Found executable %s' % f_ext)
+                log.good('Found executable %s' % f_ext)
                 return f_ext
 
     log.warn('Could not locate executable %s' % orig_exe)
