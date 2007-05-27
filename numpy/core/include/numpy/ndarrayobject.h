@@ -1923,23 +1923,23 @@ typedef struct {
    inline the constants inside a for loop making it a moot point
 */
 
-#define PyArray_GETPTR1(obj, i) (void *)(PyArray_BYTES(obj) +                 \
-                                         (i)*PyArray_STRIDES(obj)[0])
+#define PyArray_GETPTR1(obj, i) ((void *)(PyArray_BYTES(obj) +                \
+                                         (i)*PyArray_STRIDES(obj)[0]))
 
-#define PyArray_GETPTR2(obj, i, j) (void *)(PyArray_BYTES(obj) +              \
+#define PyArray_GETPTR2(obj, i, j) ((void *)(PyArray_BYTES(obj) +             \
                                             (i)*PyArray_STRIDES(obj)[0] +     \
-                                            (j)*PyArray_STRIDES(obj)[1])
+                                            (j)*PyArray_STRIDES(obj)[1]))
 
-#define PyArray_GETPTR3(obj, i, j, k) (void *)(PyArray_BYTES(obj) +           \
+#define PyArray_GETPTR3(obj, i, j, k) ((void *)(PyArray_BYTES(obj) +          \
                                             (i)*PyArray_STRIDES(obj)[0] +     \
                                             (j)*PyArray_STRIDES(obj)[1] +     \
-                                            (k)*PyArray_STRIDES(obj)[2])      \
+                                            (k)*PyArray_STRIDES(obj)[2]))     \
 
-#define PyArray_GETPTR4(obj, i, j, k, l) (void *)(PyArray_BYTES(obj) +        \
+#define PyArray_GETPTR4(obj, i, j, k, l) ((void *)(PyArray_BYTES(obj) +       \
                                             (i)*PyArray_STRIDES(obj)[0] +     \
                                             (j)*PyArray_STRIDES(obj)[1] +     \
                                             (k)*PyArray_STRIDES(obj)[2] +     \
-                                            (l)*PyArray_STRIDES(obj)[3])
+                                            (l)*PyArray_STRIDES(obj)[3]))
 
 #define PyArray_XDECREF_ERR(obj) \
         if (obj && (PyArray_FLAGS(obj) & NPY_UPDATEIFCOPY)) {                 \
