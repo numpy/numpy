@@ -64,7 +64,7 @@ Description: This program generates a Python C/API file (<modulename>module.c)
 
 Options:
 
-  --3g-numpy       Use numpy.f2py.lib tool, the 3rd generation of F2PY,
+  --g3-numpy       Use numpy.f2py.lib tool, the 3rd generation of F2PY,
                    with NumPy support.
   --2d-numpy       Use numpy.f2py tool with NumPy support. [DEFAULT]
   --2d-numeric     Use f2py2e tool with Numeric support.

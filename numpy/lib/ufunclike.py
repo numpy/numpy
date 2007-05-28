@@ -29,6 +29,7 @@ def isposinf(x, y=None):
     If y is an array, the result replaces the contents of y.
     """
     if y is None:
+        x = asarray(x)
         y = empty(x.shape, dtype=nx.bool_)
     umath.logical_and(isinf(x), ~signbit(x), y)
     return y
@@ -39,6 +40,7 @@ def isneginf(x, y=None):
     If y is an array, the result replaces the contents of y.
     """
     if y is None:
+        x = asarray(x)
         y = empty(x.shape, dtype=nx.bool_)
     umath.logical_and(isinf(x), signbit(x), y)
     return y

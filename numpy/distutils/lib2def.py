@@ -1,7 +1,6 @@
 import re
 import sys
 import os
-import string
 
 __doc__ = """This module generates a DEF file from the symbols in
 an MSVC-compiled DLL import library.  It correctly discriminates between
@@ -20,8 +19,6 @@ Last Update: April 30, 1999
 """
 
 __version__ = '0.1a'
-
-import sys
 
 py_ver = "%d%d" % tuple(sys.version_info[:2])
 

@@ -344,6 +344,7 @@ def _formatArray(a, format_function, rank, max_line_len,
 
 def _floatFormat(data, precision, suppress_small, sign = 0):
     exp_format = 0
+    errstate = _gen.seterr(all='ignore')
     non_zero = _uf.absolute(data.compress(_uf.not_equal(data, 0)))
     ##non_zero = _numeric_compress(data) ##
     if len(non_zero) == 0:
@@ -357,6 +358,7 @@ def _floatFormat(data, precision, suppress_small, sign = 0):
         if not suppress_small and (min_val < 0.0001
                                    or max_val/min_val > 1000.):
             exp_format = 1
+    _gen.seterr(**errstate)
     if exp_format:
         large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
         max_str_len = 8 + precision + large_exponent

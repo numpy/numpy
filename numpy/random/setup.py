@@ -42,9 +42,8 @@ int main(int argc, char *argv[])
 #ifdef _WIN32
     return 0;
 #else
-#error No _WIN32
+    return 1;
 #endif
-    return -1;
 }
 """
 

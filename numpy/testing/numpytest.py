@@ -195,7 +195,7 @@ class NumpyTestCase (unittest.TestCase):
 class ScipyTestCase(NumpyTestCase):
     def __init__(self, package=None):
         warnings.warn("ScipyTestCase is now called NumpyTestCase; please update your code",
-                         DeprecationWarning)
+                         DeprecationWarning, stacklevel=2)
         NumpyTestCase.__init__(self, package)
 
 
@@ -239,22 +239,22 @@ class NumpyTest:
 
     <package> is package name or its module object.
 
-    Package is supposed to contain a directory tests/
-    with test_*.py files where * refers to the names of submodules.
-    See .rename() method to redefine name mapping between test_*.py files
-    and names of submodules. Pattern test_*.py can be overwritten by
-    redefining .get_testfile() method.
+    Package is supposed to contain a directory tests/ with test_*.py
+    files where * refers to the names of submodules.  See .rename()
+    method to redefine name mapping between test_*.py files and names of
+    submodules. Pattern test_*.py can be overwritten by redefining
+    .get_testfile() method.
 
-    test_*.py files are supposed to define a classes, derived
-    from NumpyTestCase or unittest.TestCase, with methods having
-    names starting with test or bench or check. The names of TestCase
-    classes must have a prefix test. This can be overwritten by
-    redefining .check_testcase_name() method.
+    test_*.py files are supposed to define a classes, derived from
+    NumpyTestCase or unittest.TestCase, with methods having names
+    starting with test or bench or check. The names of TestCase classes
+    must have a prefix test. This can be overwritten by redefining
+    .check_testcase_name() method.
 
     And that is it! No need to implement test or test_suite functions
     in each .py file.
 
-    Also old styled test_suite(level=1) hooks are supported.
+    Old-style test_suite(level=1) hooks are also supported.
     """
     _check_testcase_name = re.compile(r'test.*').match
     def check_testcase_name(self, name):
@@ -293,9 +293,14 @@ class NumpyTest:
         self._rename_map = {}
 
     def rename(self, **kws):
-        """ Apply renaming submodule test file test_<name>.py to test_<newname>.py.
-        Usage: self.rename(name='newname') before calling self.test() method.
-        If 'newname' is None, then no tests will be executed for a given module.
+        """Apply renaming submodule test file test_<name>.py to
+        test_<newname>.py.
+        
+        Usage: self.rename(name='newname') before calling the
+        self.test() method.
+        
+        If 'newname' is None, then no tests will be executed for a given
+        module.
         """
         for k,v in kws.items():
             self._rename_map[k] = v
@@ -533,12 +538,12 @@ class NumpyTest:
           True            --- run all test files (like self.testall())
           False (default) --- only run test files associated with a module
 
-        It is assumed (when all=False) that package tests suite follows the
-        following convention: for each package module, there exists file
-        <packagepath>/tests/test_<modulename>.py that defines TestCase classes
-        (with names having prefix 'test_') with methods (with names having
-        prefixes 'check_' or 'bench_'); each of these methods are called when
-        running unit tests.
+        It is assumed (when all=False) that package tests suite follows
+        the following convention: for each package module, there exists
+        file <packagepath>/tests/test_<modulename>.py that defines
+        TestCase classes (with names having prefix 'test_') with methods
+        (with names having prefixes 'check_' or 'bench_'); each of these
+        methods are called when running unit tests.
         """
         if level is None: # Do nothing.
             return

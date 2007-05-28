@@ -4,6 +4,13 @@
 #include "numpy/libnumarray.h"
 #include <float.h>
 
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
+#include <fenv.h>
+#elif defined(__CYGWIN__)
+#include "numpy/fenv/fenv.h"
+#include "numpy/fenv/fenv.c"
+#endif
+
 static PyObject *pCfuncClass;
 static PyTypeObject CfuncType;
 static PyObject *pHandleErrorFunc;
@@ -225,11 +232,6 @@ static int int_dividebyzero_error(long value, long unused) {
 
 /* Likewise for Integer overflows */
 #if defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
-#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
-#include <fenv.h>
-#elif defined(__CYGWIN__)
-#include "numpy/fenv/fenv.c"
-#endif
 static int int_overflow_error(Float64 value) { /* For x86_64 */
 	feraiseexcept(FE_OVERFLOW);
 	return (int) value;
@@ -2938,11 +2940,6 @@ NA_checkFPErrors(void)
 }
 
 #elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
-#if defined(__GLIBC__) || defined(darwin) || defined(__MINGW32__)
-#include <fenv.h>
-#elif defined(__CYGWIN__)
-#include "numpy/fenv/fenv.h"
-#endif
 
 static int 
 NA_checkFPErrors(void)

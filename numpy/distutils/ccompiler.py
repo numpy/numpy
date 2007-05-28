@@ -259,6 +259,8 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
         version_cmd = self.version_cmd
     except AttributeError:
         return None
+    if not version_cmd or not version_cmd[0]:
+        return None
     cmd = ' '.join(version_cmd)
     try:
         matcher = self.version_match
@@ -278,9 +280,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
     version = None
     if status in ok_status:
         version = matcher(output)
-        if not version:
-            log.warn("Couldn't match compiler version for %r" % (output,))
-        else:
+        if version:
             version = LooseVersion(version)
     self.version = version
     return version
@@ -288,6 +288,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
 replace_method(CCompiler, 'get_version', CCompiler_get_version)
 
 def CCompiler_cxx_compiler(self):
+    if self.compiler_type=='msvc': return self
     cxx = copy(self)
     cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
     if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
@@ -340,7 +341,8 @@ def new_compiler (plat=None,
     try:
         __import__ (module_name)
     except ImportError, msg:
-        print msg,'in numpy.distutils, trying from distutils..'
+        log.info('%s in numpy.distutils; trying from distutils',
+                 str(msg))
         module_name = module_name[6:]
         try:
             __import__(module_name)

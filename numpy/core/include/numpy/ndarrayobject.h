@@ -1234,6 +1234,13 @@ typedef struct PyArrayObject {
 
 #define fortran fortran_        /* For some compilers */
 
+/* Array Flags Object */
+typedef struct PyArrayFlagsObject {
+        PyObject_HEAD
+        PyObject *arr;
+        int flags;
+} PyArrayFlagsObject;
+
 /* Mirrors buffer object to ptr */
 
 typedef struct {
@@ -1777,7 +1784,7 @@ typedef struct {
 
 /* This is the form of the struct that's returned pointed by the
    PyCObject attribute of an array __array_struct__. See
-   http://numeric.scipy.org/array_interface.html for the full
+   http://numpy.scipy.org/array_interface.shtml for the full
    documentation. */
 typedef struct {
     int two;              /* contains the integer 2 as a sanity check */

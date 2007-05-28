@@ -797,7 +797,13 @@ array(data = %(data)s,
         m = self._mask
         dout = self._data[i]
         if m is nomask:
-            return dout
+            try:
+                if dout.size == 1:
+                    return dout
+                else:
+                    return masked_array(dout, fill_value=self._fill_value)
+            except AttributeError:
+                return dout
         mi = m[i]
         if mi.size == 1:
             if mi:
@@ -806,16 +812,6 @@ array(data = %(data)s,
                 return dout
         else:
             return masked_array(dout, mi, fill_value=self._fill_value)
-
-    def __getslice__(self, i, j):
-        "Get slice described by i, j"
-        self.unshare_mask()
-        m = self._mask
-        dout = self._data[i:j]
-        if m is nomask:
-            return masked_array(dout, fill_value=self._fill_value)
-        else:
-            return masked_array(dout, mask = m[i:j], fill_value=self._fill_value)
 
 # --------
 # setitem and setslice notes
@@ -826,7 +822,7 @@ array(data = %(data)s,
         "Set item described by index. If value is masked, mask those locations."
         d = self._data
         if self is masked:
-            raise MAError, 'Cannot alter the masked element.'
+            raise MAError, 'Cannot alter masked elements.'
         if value is masked:
             if self._mask is nomask:
                 self._mask = make_mask_none(d.shape)
@@ -849,30 +845,6 @@ array(data = %(data)s,
             else:
                 self.unshare_mask()
             self._mask[index] = m
-
-    def __setslice__(self, i, j, value):
-        "Set slice i:j; if value is masked, mask those locations."
-        d = self._data
-        if self is masked:
-            raise MAError, "Cannot alter the 'masked' object."
-        if value is masked:
-            if self._mask is nomask:
-                self._mask = make_mask_none(d.shape)
-                self._shared_mask = False
-            self._mask[i:j] = True
-            return
-        m = getmask(value)
-        value = filled(value).astype(d.dtype)
-        d[i:j] = value
-        if m is nomask:
-            if self._mask is not nomask:
-                self.unshare_mask()
-                self._mask[i:j] = False
-        else:
-            if self._mask is nomask:
-                self._mask = make_mask_none(self._data.shape)
-                self._shared_mask = False
-            self._mask[i:j] = m
 
     def __nonzero__(self):
         """returns true if any element is non-zero or masked

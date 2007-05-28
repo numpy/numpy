@@ -49,15 +49,15 @@ Known bugs:
 __all__ = ['exec_command','find_executable']
 
 import os
-import re
 import sys
-import tempfile
 
-from numpy.distutils.misc_util import is_sequence
+from numpy.distutils.misc_util import is_sequence, make_temp_file
+from numpy.distutils import log
 
-############################################################
-
-from log import _global_log as log
+def temp_file_name():
+    fo, name = make_temp_file()
+    fo.close()
+    return name
 
 ############################################################
 
@@ -123,59 +123,47 @@ def test_splitcmdline():
 ############################################################
 
 def find_executable(exe, path=None):
-    """ Return full path of a executable.
+    """Return full path of a executable.
+
+    Symbolic links are not followed.
     """
     log.debug('find_executable(%r)' % exe)
     orig_exe = exe
+
     if path is None:
         path = os.environ.get('PATH',os.defpath)
     if os.name=='posix' and sys.version[:3]>'2.1':
         realpath = os.path.realpath
     else:
         realpath = lambda a:a
-    if exe[0]=='"':
+
+    if exe.startswith('"'):
         exe = exe[1:-1]
-    suffices = ['']
+
+    suffixes = ['']
     if os.name in ['nt','dos','os2']:
         fn,ext = os.path.splitext(exe)
-        extra_suffices = ['.exe','.com','.bat']
-        if ext.lower() not in extra_suffices:
-            suffices = extra_suffices
+        extra_suffixes = ['.exe','.com','.bat']
+        if ext.lower() not in extra_suffixes:
+            suffixes = extra_suffixes
+
     if os.path.isabs(exe):
         paths = ['']
     else:
-        paths = map(os.path.abspath, path.split(os.pathsep))
-        if 0 and os.name == 'nt':
-            new_paths = []
-            cygwin_paths = []
-            for path in paths:
-                d,p = os.path.splitdrive(path)
-                if p.lower().find('cygwin') >= 0:
-                    cygwin_paths.append(path)
-                else:
-                    new_paths.append(path)
-            paths = new_paths + cygwin_paths
+        paths = [ os.path.abspath(p) for p in path.split(os.pathsep) ]
+
     for path in paths:
-        fn = os.path.join(path,exe)
-        for s in suffices:
+        fn = os.path.join(path, exe)
+        for s in suffixes:
             f_ext = fn+s
             if not os.path.islink(f_ext):
-                # see comment below.
                 f_ext = realpath(f_ext)
-            if os.path.isfile(f_ext) and os.access(f_ext,os.X_OK):
-                log.debug('Found executable %s' % f_ext)
+            if os.path.isfile(f_ext) and os.access(f_ext, os.X_OK):
+                log.good('Found executable %s' % f_ext)
                 return f_ext
-    if os.path.islink(exe):
-        # Don't follow symbolic links. E.g. when using colorgcc then
-        # gcc -> /usr/bin/colorgcc
-        # g77 -> /usr/bin/colorgcc
-        pass
-    else:
-        exe = realpath(exe)
-    if not os.path.isfile(exe) or os.access(exe,os.X_OK):
-        log.warn('Could not locate executable %s' % orig_exe)
-        return orig_exe
-    return exe
+
+    log.warn('Could not locate executable %s' % orig_exe)
+    return None
 
 ############################################################
 
@@ -276,17 +264,17 @@ def _exec_command_posix( command,
     else:
         command_str = command
 
-    tmpfile = tempfile.mktemp()
+    tmpfile = temp_file_name()
     stsfile = None
     if use_tee:
-        stsfile = tempfile.mktemp()
+        stsfile = temp_file_name()
         filter = ''
         if use_tee == 2:
             filter = r'| tr -cd "\n" | tr "\n" "."; echo'
         command_posix = '( %s ; echo $? > %s ) 2>&1 | tee %s %s'\
                       % (command_str,stsfile,tmpfile,filter)
     else:
-        stsfile = tempfile.mktemp()
+        stsfile = temp_file_name()
         command_posix = '( %s ; echo $? > %s ) > %s 2>&1'\
                         % (command_str,stsfile,tmpfile)
         #command_posix = '( %s ) > %s 2>&1' % (command_str,tmpfile)
@@ -323,9 +311,9 @@ def _exec_command_python(command,
     log.debug('_exec_command_python(...)')
 
     python_exe = get_pythonexe()
-    cmdfile = tempfile.mktemp()
-    stsfile = tempfile.mktemp()
-    outfile = tempfile.mktemp()
+    cmdfile = temp_file_name()
+    stsfile = temp_file_name()
+    outfile = temp_file_name()
 
     f = open(cmdfile,'w')
     f.write('import os\n')
@@ -409,10 +397,10 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     so_dup = os.dup(so_fileno)
     se_dup = os.dup(se_fileno)
 
-    outfile = tempfile.mktemp()
+    outfile = temp_file_name()
     fout = open(outfile,'w')
     if using_command:
-        errfile = tempfile.mktemp()
+        errfile = temp_file_name()
         ferr = open(errfile,'w')
 
     log.debug('Running %s(%s,%r,%r,os.environ)' \
@@ -601,7 +589,7 @@ def test_posix(**kws):
 
 def test_execute_in(**kws):
     pythonexe = get_pythonexe()
-    tmpfile = tempfile.mktemp()
+    tmpfile = temp_file_name()
     fn = os.path.basename(tmpfile)
     tmpdir = os.path.dirname(tmpfile)
     f = open(tmpfile,'w')

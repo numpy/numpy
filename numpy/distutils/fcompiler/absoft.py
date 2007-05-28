@@ -7,15 +7,17 @@
 #   generated extension modules (works for f2py v2.45.241_1936 and up)
 
 import os
-import sys
 
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
 from numpy.distutils.misc_util import cyg2win32
 
+compilers = ['AbsoftFCompiler']
+
 class AbsoftFCompiler(FCompiler):
 
     compiler_type = 'absoft'
+    description = 'Absoft Corp Fortran Compiler'
     #version_pattern = r'FORTRAN 77 Compiler (?P<version>[^\s*,]*).*?Absoft Corp'
     version_pattern = r'(f90:.*?(Absoft Pro FORTRAN Version|FORTRAN 77 Compiler|Absoft Fortran Compiler Version|Copyright Absoft Corporation.*?Version))'+\
                        r' (?P<version>[^\s*,]*)(.*?Absoft Corp|)'
@@ -28,12 +30,11 @@ class AbsoftFCompiler(FCompiler):
     # Note that fink installs g77 as f77, so need to use f90 for detection.
 
     executables = {
-        'version_cmd'  : ["f90", "-V -c %(fname)s.f -o %(fname)s.o" \
-                          % {'fname':cyg2win32(dummy_fortran_file())}],
+        'version_cmd'  : ['<F90>', None],
         'compiler_f77' : ["f77"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],
-        'linker_so'    : ["f90"],
+        'linker_so'    : ["<F90>"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -43,6 +44,10 @@ class AbsoftFCompiler(FCompiler):
 
     module_dir_switch = None
     module_include_switch = '-p'
+
+    def get_flags_version(self):
+        f = cyg2win32(dummy_fortran_file())
+        return ['-V', '-c', f+'.f', '-o', f+'.o']
 
     def get_flags_linker_so(self):
         if os.name=='nt':

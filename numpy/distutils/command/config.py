@@ -7,6 +7,7 @@ import os, signal
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
+from distutils.file_util import copy_file
 from numpy.distutils.exec_command import exec_command
 
 LANG_EXT['f77'] = '.f'
@@ -14,21 +15,12 @@ LANG_EXT['f90'] = '.f90'
 
 class config(old_config):
     old_config.user_options += [
-        ('fcompiler=', None,
-         "specify the Fortran compiler type"),
+        ('fcompiler=', None, "specify the Fortran compiler type"),
         ]
 
     def initialize_options(self):
         self.fcompiler = None
         old_config.initialize_options(self)
-        return
-
-    def finalize_options(self):
-        old_config.finalize_options(self)
-        f = self.distribution.get_command_obj('config_fc')
-        self.set_undefined_options('config_fc',
-                                   ('fcompiler', 'fcompiler'))
-        return
 
     def _check_compiler (self):
         old_config._check_compiler(self)
@@ -39,7 +31,6 @@ class config(old_config):
             self.fcompiler.customize(self.distribution)
             self.fcompiler.customize_cmd(self)
             self.fcompiler.show_customization()
-        return
 
     def _wrap_method(self,mth,lang,args):
         from distutils.ccompiler import CompileError
@@ -62,6 +53,47 @@ class config(old_config):
     def _link (self, body,
                headers, include_dirs,
                libraries, library_dirs, lang):
+        if self.compiler.compiler_type=='msvc':
+            libraries = (libraries or [])[:]
+            library_dirs = (library_dirs or [])[:]
+            if lang in ['f77','f90']:
+                lang = 'c' # always use system linker when using MSVC compiler
+                if self.fcompiler:
+                    for d in self.fcompiler.library_dirs or []:
+                        # correct path when compiling in Cygwin but with
+                        # normal Win Python
+                        if d.startswith('/usr/lib'):
+                            s,o = exec_command(['cygpath', '-w', d],
+                                               use_tee=False)
+                            if not s: d = o
+                        library_dirs.append(d)
+                    for libname in self.fcompiler.libraries or []:
+                        if libname not in libraries:
+                            libraries.append(libname)
+            for libname in libraries:
+                if libname.startswith('msvc'): continue
+                fileexists = False
+                for libdir in library_dirs or []:
+                    libfile = os.path.join(libdir,'%s.lib' % (libname))
+                    if os.path.isfile(libfile):
+                        fileexists = True
+                        break
+                if fileexists: continue
+                # make g77-compiled static libs available to MSVC
+                fileexists = False
+                for libdir in library_dirs:
+                    libfile = os.path.join(libdir,'lib%s.a' % (libname))
+                    if os.path.isfile(libfile):
+                        # copy libname.a file to name.lib so that MSVC linker
+                        # can find it
+                        libfile2 = os.path.join(libdir,'%s.lib' % (libname))
+                        copy_file(libfile, libfile2)
+                        self.temp_files.append(libfile2)
+                        fileexists = True
+                        break
+                if fileexists: continue
+                log.warn('could not find library %r in directories %s' \
+                         % (libname, library_dirs))
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))

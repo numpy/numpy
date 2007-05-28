@@ -332,7 +332,7 @@ add_newdoc('numpy.core.multiarray','set_string_function',
 add_newdoc('numpy.core.multiarray','set_numeric_ops',
     """set_numeric_ops(op=func, ...)
 
-    Set some or all of the number methods for all array objects.  Don't
+    Set some or all of the number methods for all array objects.  Do not
     forget **dict can be used as the argument list.  Return the functions
     that were replaced, which can be stored and set later.
 
@@ -356,17 +356,36 @@ add_newdoc('numpy.core.multiarray','where',
 
 
 add_newdoc('numpy.core.multiarray','lexsort',
-    """lexsort(keys=, axis=-1) -> array of indices. argsort with list of keys.
+    """lexsort(keys=, axis=-1) -> array of indices. Argsort with list of keys.
 
-    Return an array of indices similar to argsort, except the sorting is
-    done using the provided sorting keys.  First the sort is done using
-    key[0], then the resulting list of indices is further manipulated by
-    sorting on key[1], and so forth. The result is a sort on multiple
-    keys.  If the keys represented columns of a spreadsheet, for example,
-    this would sort using multiple columns (the last key being used for the
-    primary sort order, the second-to-last key for the secondary sort order,
-    and so on).  The keys argument must be a sequence of things that can be
-    converted to arrays of the same shape.
+    Perform an indirect sort using a list of keys. The first key is sorted,
+    then the second, and so on through the list of keys. At each step the
+    previous order is preserved when equal keys are encountered. The result is
+    a sort on multiple keys.  If the keys represented columns of a spreadsheet,
+    for example, this would sort using multiple columns (the last key being
+    used for the primary sort order, the second-to-last key for the secondary
+    sort order, and so on).  The keys argument must be a sequence of things
+    that can be converted to arrays of the same shape.
+
+    :Parameters:
+
+        a : array type
+            Array containing values that the returned indices should sort.
+
+        axis : integer
+            Axis to be indirectly sorted. None indicates that the flattened
+            array should be used. Default is -1.
+
+    :Returns:
+
+        indices : integer array
+            Array of indices that sort the keys along the specified axis. The
+            array has the same shape as the keys.
+
+    :SeeAlso:
+
+      - argsort : indirect sort
+      - sort : inplace sort
 
     """)
 
@@ -650,23 +669,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     """a.argsort(axis=-1, kind='quicksort', order=None) -> indices
 
-    Return array of indices that sort a along the given axis.
+    Perform an indirect sort along the given axis using the algorithm specified
+    by the kind keyword. It returns an array of indices of the same shape as
+    'a' that index data along the given axis in sorted order.
 
-    Keyword arguments:
+    :Parameters:
 
-    axis  -- axis to be indirectly sorted (default -1)
-    kind  -- sorting algorithm (default 'quicksort')
-             Possible values: 'quicksort', 'mergesort', or 'heapsort'
-    order -- If a has fields defined, then the order keyword can be the
-             field name to sort on or a list (or tuple) of field names
-             to indicate the order that fields should be used to define
-             the sort.
+        axis : integer
+            Axis to be indirectly sorted. None indicates that the flattened
+            array should be used. Default is -1.
 
-    Returns: array of indices that sort a along the specified axis.
+        kind : string
+            Sorting algorithm to use. Possible values are 'quicksort',
+            'mergesort', or 'heapsort'. Default is 'quicksort'.
 
-    This method executes an indirect sort along the given axis using the
-    algorithm specified by the kind keyword. It returns an array of indices of
-    the same shape as 'a' that index data along the given axis in sorted order.
+        order : list type or None
+            When a is an array with fields defined, this argument specifies
+            which fields to compare first, second, etc.  Not all fields need be
+            specified.
+
+    :Returns:
+
+        indices : integer array
+            Array of indices that sort 'a' along the specified axis.
+
+    :SeeAlso:
+
+      - lexsort : indirect stable sort with multiple keys
+      - sort : inplace sort
+
+    :Notes:
+    ------
 
     The various sorts are characterized by average speed, worst case
     performance, need for work space, and whether they are stable. A stable
@@ -681,9 +714,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
-    All the sort algorithms make temporary copies of the data when the sort is
-    not along the last axis. Consequently, sorts along the last axis are faster
-    and use less space than sorts along other axis.
+    All the sort algorithms make temporary copies of the data when the sort is not
+    along the last axis. Consequently, sorts along the last axis are faster and use
+    less space than sorts along other axis.
 
     """))
 
@@ -771,7 +804,58 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('cumsum',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
-    """a.diagonal(offset=0, axis1=0, axis2=1)
+    """a.diagonal(offset=0, axis1=0, axis2=1) -> diagonals
+
+    If a is 2-d, return the diagonal of self with the given offset, i.e., the
+    collection of elements of the form a[i,i+offset]. If a is n-d with n > 2,
+    then the axes specified by axis1 and axis2 are used to determine the 2-d
+    subarray whose diagonal is returned. The shape of the resulting array can
+    be determined by removing axis1 and axis2 and appending an index to the
+    right equal to the size of the resulting diagonals.
+
+    :Parameters:
+        offset : integer
+            Offset of the diagonal from the main diagonal. Can be both positive
+            and negative. Defaults to main diagonal.
+        axis1 : integer
+            Axis to be used as the first axis of the 2-d subarrays from which
+            the diagonals should be taken. Defaults to first index.
+        axis2 : integer
+            Axis to be used as the second axis of the 2-d subarrays from which
+            the diagonals should be taken. Defaults to second index.
+
+    :Returns:
+        array_of_diagonals : same type as original array
+            If a is 2-d, then a 1-d array containing the diagonal is returned.
+            If a is n-d, n > 2, then an array of diagonals is returned.
+
+    :SeeAlso:
+        - diag : matlab workalike for 1-d and 2-d arrays.
+        - diagflat : creates diagonal arrays
+        - trace : sum along diagonals
+
+    Examples
+    --------
+
+    >>> a = arange(4).reshape(2,2)
+    >>> a
+    array([[0, 1],
+           [2, 3]])
+    >>> a.diagonal()
+    array([0, 3])
+    >>> a.diagonal(1)
+    array([1])
+
+    >>> a = arange(8).reshape(2,2,2)
+    >>> a
+    array([[[0, 1],
+            [2, 3]],
+
+           [[4, 5],
+            [6, 7]]])
+    >>> a.diagonal(0,-2,-1)
+    array([[0, 3],
+           [4, 7]])
 
     """))
 
@@ -810,7 +894,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('getfield',
     """a.getfield(dtype, offset) -> field of array as given type.
 
     Returns a field of the given array as a certain type. A field is a view of
-    the array's data with each itemsize determined by the given type and the
+    the array data with each itemsize determined by the given type and the
     offset into the current array.
 
     """))
@@ -832,15 +916,43 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
-    """a.mean(axis=None, dtype=None)
+    """a.mean(axis=None, dtype=None, out=None) -> mean
 
-      Average the array over the given axis.  If the axis is None,
-      average over all dimensions of the array.  Equivalent to
+    Returns the average of the array elements.  The average is taken over the
+    flattened array by default, otherwise over the specified axis.
 
-        a.sum(axis, dtype) / size(a, axis).
+    :Parameters:
 
-      The optional dtype argument is the data type for intermediate
-      calculations in the sum.
+        axis : integer
+            Axis along which the means are computed. The default is
+            to compute the standard deviation of the flattened array.
+
+        dtype : type
+            Type to use in computing the means. For arrays of
+            integer type the default is float32, for arrays of float types it
+            is the same as the array type.
+
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+    :Returns:
+
+        mean : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+
+        - var : variance
+        - std : standard deviation
+
+    Notes
+    -----
+
+        The mean is the sum of the elements along the axis divided by the
+        number of elements.
 
     """))
 
@@ -921,7 +1033,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
 
     Return a new array from this one.  The new array must have the same number
     of elements as self.  Also always returns a view or raises a ValueError if
-    that is impossible.;
+    that is impossible.
 
     """))
 
@@ -966,45 +1078,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
     """a.searchsorted(v, side='left') -> index array.
 
-    Required arguments:
-        v -- array of keys to be searched for in a.
+    Find the indices into a sorted array such that if the corresponding keys in
+    v were inserted before the indices the order of a would be preserved.  If
+    side='left', then the first such index is returned. If side='right', then
+    the last such index is returned. If there is no such index because the key
+    is out of bounds, then the length of a is returned, i.e., the key would
+    need to be appended. The returned index array has the same shape as v.
 
-    Keyword arguments:
-        side -- {'left', 'right'}, (default 'left').
+    :Parameters:
 
-    Returns:
-        index array with the same shape as keys.
+        v : array or list type
+            Array of keys to be searched for in a.
 
-    The array to be searched must be 1-D and is assumed to be sorted in
-    ascending order.
+        side : string
+            Possible values are : 'left', 'right'. Default is 'left'. Return
+            the first or last index where the key could be inserted.
 
-    The method call
+    :Returns:
 
-        a.searchsorted(v, side='left')
+        indices : integer array
+            The returned array has the same shape as v.
 
-    returns an index array with the same shape as v such that for each value i
-    in the index and the corresponding key in v the following holds:
+    :SeeAlso:
 
-           a[j] < key <= a[i] for all j < i,
+        - sort
+        - histogram
 
-    If such an index does not exist, a.size() is used. Consequently, i is the
-    index of the first item in 'a' that is >= key. If the key were to be
-    inserted into a in the slot before the index i, then the order of a would
-    be preserved and i would be the smallest index with that property.
+    :Notes:
+    -------
 
-    The method call
-
-        a.searchsorted(v, side='right')
-
-    returns an index array with the same shape as v such that for each value i
-    in the index and the corresponding key in v the following holds:
-
-           a[j] <= key < a[i] for all j < i,
-
-    If such an index does not exist, a.size() is used. Consequently, i is the
-    index of the first item in 'a' that is > key. If the key were to be
-    inserted into a in the slot before the index i, then the order of a would
-    be preserved and i would be the largest index with that property.
+        The array a must be 1-d and is assumed to be sorted in ascending order.
+        Searchsorted uses binary search to find the required insertion points.
 
     """))
 
@@ -1025,28 +1129,41 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     """a.sort(axis=-1, kind='quicksort', order=None) -> None.
 
-    Sort a along the given axis.
+    Perform an inplace sort along the given axis using the algorithm specified
+    by the kind keyword.
 
-    Keyword arguments:
+    :Parameters:
 
-    axis  -- axis to be sorted (default -1)
-    kind  -- sorting algorithm (default 'quicksort')
-             Possible values: 'quicksort', 'mergesort', or 'heapsort'.
-    order -- If a has fields defined, then the order keyword can be the
-             field name to sort on or a list (or tuple) of field names
-             to indicate the order that fields should be used to define
-             the sort.
+        axis : integer
+            Axis to be sorted along. None indicates that the flattened array
+            should be used. Default is -1.
 
-    Returns: None.
+        kind : string
+            Sorting algorithm to use. Possible values are 'quicksort',
+            'mergesort', or 'heapsort'. Default is 'quicksort'.
 
-    This method sorts 'a' in place along the given axis using the algorithm
-    specified by the kind keyword.
+        order : list type or None
+            When a is an array with fields defined, this argument specifies
+            which fields to compare first, second, etc.  Not all fields need be
+            specified.
 
-    The various sorts may characterized by average speed, worst case
+    :Returns:
+
+        None
+
+    :SeeAlso:
+
+      - argsort : indirect sort
+      - lexsort : indirect stable sort on multiple keys
+      - searchsorted : find keys in sorted array
+
+    :Notes:
+    ------
+
+    The various sorts are characterized by average speed, worst case
     performance, need for work space, and whether they are stable. A stable
-    sort keeps items with the same key in the same relative order and is most
-    useful when used with argsort where the key might differ from the items
-    being sorted. The three available algorithms have the following properties:
+    sort keeps items with the same key in the same relative order. The three
+    available algorithms have the following properties:
 
     |------------------------------------------------------|
     |    kind   | speed |  worst case | work space | stable|
@@ -1056,9 +1173,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
-    All the sort algorithms make temporary copies of the data when the sort is
-    not along the last axis. Consequently, sorts along the last axis are faster
-    and use less space than sorts along other axis.
+    All the sort algorithms make temporary copies of the data when the sort is not
+    along the last axis. Consequently, sorts along the last axis are faster and use
+    less space than sorts along other axis.
 
     """))
 
@@ -1072,15 +1189,44 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('squeeze',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     """a.std(axis=None, dtype=None, out=None) -> standard deviation.
 
-    The standard deviation isa measure of the spread of a
-    distribution.
+    Returns the standard deviation of the array elements, a measure of the
+    spread of a distribution. The standard deviation is computed for the
+    flattened array by default, otherwise over the specified axis.
 
-    The standard deviation is the square root of the average of the
-    squared deviations from the mean, i.e.
-        std = sqrt(mean((x - x.mean())**2,axis=0)).
+    :Parameters:
 
-    For multidimensional arrays, std is computed by default along the
-    first axis.
+        axis : integer
+            Axis along which the standard deviation is computed. The default is
+            to compute the standard deviation of the flattened array.
+
+        dtype : type
+            Type to use in computing the standard deviation. For arrays of
+            integer type the default is float32, for arrays of float types it
+            is the same as the array type.
+
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+    :Returns:
+
+        standard deviation : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+
+        - var : variance
+        - mean : average
+
+    Notes
+    -----
+
+      The standard deviation is the square root of the average of the squared
+      deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
+      computed standard deviation is biased, i.e., the mean is computed by
+      dividing by the number of elements, N, rather than by N-1.
 
     """))
 
@@ -1224,7 +1370,46 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
-    """a.var(axis=None, dtype=None)
+    """a.var(axis=None, dtype=None, out=None) -> variance
+
+    Returns the variance of the array elements, a measure of the spread of a
+    distribution.  The variance is computed for the flattened array by default,
+    otherwise over the specified axis.
+
+    :Parameters:
+
+        axis : integer
+            Axis along which the variance is computed. The default is to
+            compute the variance of the flattened array.
+
+        dtype : type
+            Type to use in computing the variance. For arrays of integer type
+            the default is float32, for arrays of float types it is the same as
+            the array type.
+
+        out : ndarray
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
+
+    :Returns:
+
+        variance : The return type varies, see above.
+            A new array holding the result is returned unless out is specified,
+            in which case a reference to out is returned.
+
+    :SeeAlso:
+
+        - std : standard deviation
+        - mean: average
+
+    Notes
+    -----
+
+      The variance is the average of the squared deviations from the mean, i.e.
+      var = mean((x - x.mean())**2).  The computed variance is biased, i.e.,
+      the mean is computed by dividing by the number of elements, N, rather
+      than by N-1.
 
     """))
 
@@ -1235,4 +1420,3 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     Type can be either a new sub-type object or a data-descriptor object
 
     """))
-

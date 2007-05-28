@@ -6,9 +6,8 @@ def configuration(parent_package='',top_path=None):
 
     config.add_data_files('numpy/')
 
-    # Configure fftpack_lite
     config.add_extension('_capi',
-                         sources=['_capi.c']
+                         sources=['_capi.c'],
                          )
 
     return config

@@ -1,16 +1,16 @@
-import os
-import sys
-
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 
-class MipsFCompiler(FCompiler):
+compilers = ['MIPSFCompiler']
+
+class MIPSFCompiler(FCompiler):
 
     compiler_type = 'mips'
+    description = 'MIPSpro Fortran Compiler'
     version_pattern =  r'MIPSpro Compilers: Version (?P<version>[^\s*,]*)'
 
     executables = {
-        'version_cmd'  : ["f90", "-version"],
+        'version_cmd'  : ["<F90>", "-version"],
         'compiler_f77' : ["f77", "-f77"],
         'compiler_fix' : ["f90", "-fixedform"],
         'compiler_f90' : ["f90"],

@@ -1,20 +1,20 @@
-import os
 import sys
-
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
+
+compilers = ['NAGFCompiler']
 
 class NAGFCompiler(FCompiler):
 
     compiler_type = 'nag'
+    description = 'NAGWare Fortran 95 Compiler'
     version_pattern =  r'NAGWare Fortran 95 compiler Release (?P<version>[^\s]*)'
 
     executables = {
-        'version_cmd'  : ["f95", "-V"],
+        'version_cmd'  : ["<F90>", "-V"],
         'compiler_f77' : ["f95", "-fixed"],
         'compiler_fix' : ["f95", "-fixed"],
         'compiler_f90' : ["f95"],
-        'linker_so'    : ["f95"],
+        'linker_so'    : ["<F90>"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }

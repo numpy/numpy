@@ -241,12 +241,137 @@ class matrix(N.ndarray):
         return N.ndarray.sum(self, axis, dtype, out)._align(axis)
 
     def mean(self, axis=None, out=None):
+        """Compute the mean along the specified axis.
+
+        Returns the average of the array elements.  The average is taken over
+        the flattened array by default, otherwise over the specified axis.
+
+        :Parameters:
+
+            axis : integer
+                Axis along which the means are computed. The default is
+                to compute the standard deviation of the flattened array.
+
+            dtype : type
+                Type to use in computing the means. For arrays of integer type
+                the default is float32, for arrays of float types it is the
+                same as the array type.
+
+            out : ndarray
+                Alternative output array in which to place the result. It must
+                have the same shape as the expected output but the type will be
+                cast if necessary.
+
+        :Returns:
+
+            mean : The return type varies, see above.
+                A new array holding the result is returned unless out is
+                specified, in which case a reference to out is returned.
+
+        :SeeAlso:
+
+            - var : variance
+            - std : standard deviation
+
+        Notes
+        -----
+
+            The mean is the sum of the elements along the axis divided by the
+            number of elements.
+
+        """
         return N.ndarray.mean(self, axis, out)._align(axis)
 
     def std(self, axis=None, dtype=None, out=None):
+        """Compute the standard deviation along the specified axis.
+
+        Returns the standard deviation of the array elements, a measure of the
+        spread of a distribution. The standard deviation is computed for the
+        flattened array by default, otherwise over the specified axis.
+
+        :Parameters:
+
+            axis : integer
+                Axis along which the standard deviation is computed. The
+                default is to compute the standard deviation of the flattened
+                array.
+
+            dtype : type
+                Type to use in computing the standard deviation. For arrays of
+                integer type the default is float32, for arrays of float types
+                it is the same as the array type.
+
+            out : ndarray
+                Alternative output array in which to place the result. It must
+                have the same shape as the expected output but the type will be
+                cast if necessary.
+
+        :Returns:
+
+            standard deviation : The return type varies, see above.
+                A new array holding the result is returned unless out is
+                specified, in which case a reference to out is returned.
+
+        :SeeAlso:
+
+            - var : variance
+            - mean : average
+
+        Notes
+        -----
+
+          The standard deviation is the square root of the average of the
+          squared deviations from the mean, i.e. var = sqrt(mean((x -
+          x.mean())**2)).  The computed standard deviation is biased, i.e., the
+          mean is computed by dividing by the number of elements, N, rather
+          than by N-1.
+
+        """
         return N.ndarray.std(self, axis, dtype, out)._align(axis)
 
     def var(self, axis=None, dtype=None, out=None):
+        """Compute the variance along the specified axis.
+
+        Returns the variance of the array elements, a measure of the spread of
+        a distribution.  The variance is computed for the flattened array by
+        default, otherwise over the specified axis.
+
+        :Parameters:
+
+            axis : integer
+                Axis along which the variance is computed. The default is to
+                compute the variance of the flattened array.
+
+            dtype : type
+                Type to use in computing the variance. For arrays of integer
+                type the default is float32, for arrays of float types it is
+                the same as the array type.
+
+            out : ndarray
+                Alternative output array in which to place the result. It must
+                have the same shape as the expected output but the type will be
+                cast if necessary.
+
+        :Returns:
+
+            variance : depends, see above
+                A new array holding the result is returned unless out is
+                specified, in which case a reference to out is returned.
+
+        :SeeAlso:
+
+            - std : standard deviation
+            - mean : average
+
+        Notes
+        -----
+
+          The variance is the average of the squared deviations from the mean,
+          i.e.  var = mean((x - x.mean())**2).  The computed variance is
+          biased, i.e., the mean is computed by dividing by the number of
+          elements, N, rather than by N-1.
+
+        """
         return N.ndarray.var(self, axis, dtype, out)._align(axis)
 
     def prod(self, axis=None, dtype=None, out=None):

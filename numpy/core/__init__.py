@@ -4,6 +4,7 @@ from numpy.version import version as __version__
 
 import multiarray
 import umath
+import _internal # for freeze programs
 import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
 import _sort

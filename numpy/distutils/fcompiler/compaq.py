@@ -4,12 +4,19 @@
 import os
 import sys
 
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
+
+compilers = ['CompaqFCompiler']
+if os.name != 'posix':
+    # Otherwise we'd get a false positive on posix systems with
+    # case-insensitive filesystems (like darwin), because we'll pick
+    # up /bin/df
+    compilers.append('CompaqVisualFCompiler')
 
 class CompaqFCompiler(FCompiler):
 
     compiler_type = 'compaq'
+    description = 'Compaq Fortran Compiler'
     version_pattern = r'Compaq Fortran (?P<version>[^\s]*).*'
 
     if sys.platform[:5]=='linux':
@@ -18,11 +25,11 @@ class CompaqFCompiler(FCompiler):
         fc_exe = 'f90'
 
     executables = {
-        'version_cmd'  : [fc_exe, "-version"],
+        'version_cmd'  : ['<F90>', "-version"],
         'compiler_f77' : [fc_exe, "-f77rtl","-fixed"],
         'compiler_fix' : [fc_exe, "-fixed"],
         'compiler_f90' : [fc_exe],
-        'linker_so'    : [fc_exe],
+        'linker_so'    : ['<F90>'],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -47,6 +54,7 @@ class CompaqFCompiler(FCompiler):
 class CompaqVisualFCompiler(FCompiler):
 
     compiler_type = 'compaqv'
+    description = 'DIGITAL or Compaq Visual Fortran Compiler'
     version_pattern = r'(DIGITAL|Compaq) Visual Fortran Optimizing Compiler'\
                       ' Version (?P<version>[^\s]*).*'
 
@@ -68,11 +76,11 @@ class CompaqVisualFCompiler(FCompiler):
         ar_exe = m.lib
 
     executables = {
-        'version_cmd'  : ['DF', "/what"],
-        'compiler_f77' : ['DF', "/f77rtl","/fixed"],
-        'compiler_fix' : ['DF', "/fixed"],
-        'compiler_f90' : ['DF'],
-        'linker_so'    : ['DF'],
+        'version_cmd'  : ['<F90>', "/what"],
+        'compiler_f77' : [fc_exe, "/f77rtl","/fixed"],
+        'compiler_fix' : [fc_exe, "/fixed"],
+        'compiler_f90' : [fc_exe],
+        'linker_so'    : ['<F90>'],
         'archiver'     : [ar_exe, "/OUT:"],
         'ranlib'       : None
         }

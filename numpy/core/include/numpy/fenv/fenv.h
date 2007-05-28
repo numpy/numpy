@@ -62,8 +62,8 @@ typedef	__uint16_t	fexcept_t;
 __BEGIN_DECLS
 
 /* Default floating-point environment */
-extern const fenv_t	__fe_dfl_env;
-#define	FE_DFL_ENV	(&__fe_dfl_env)
+extern const fenv_t	npy__fe_dfl_env;
+#define	FE_DFL_ENV	(&npy__fe_dfl_env)
 
 #define	__fldcw(__cw)		__asm __volatile("fldcw %0" : : "m" (__cw))
 #define	__fldenv(__env)		__asm __volatile("fldenv %0" : : "m" (__env))

@@ -1,13 +1,13 @@
 """ Machine limits for Float32 and Float64 and (long double) if available...
 """
 
-__all__ = ['finfo']
+__all__ = ['finfo','iinfo']
 
 from machar import MachAr
 import numpy.core.numeric as numeric
 import numpy.core.numerictypes as ntypes
 from numpy.core.numeric import array
-
+import numpy as N
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
@@ -21,6 +21,15 @@ _convert_to_float = {
     }
 
 class finfo(object):
+    """Machine limits for floating point types.
+
+    :Parameters:
+        dtype : floating point type or instance
+
+    :SeeAlso:
+      - numpy.lib.machar.MachAr
+
+    """
 
     _finfo_cache = {}
 
@@ -105,6 +114,54 @@ maxexp=%(maxexp)6s   max=     %(_str_max)s
 nexp  =%(nexp)6s   min=       -max
 ---------------------------------------------------------------------
 ''' % self.__dict__
+
+
+class iinfo:
+    """Limits for integer types.
+
+    :Parameters:
+        type : integer type or instance
+
+    """
+
+    _min_vals = {}
+    _max_vals = {}
+
+    def __init__(self, type):
+        self.dtype = N.dtype(type)
+        self.kind = self.dtype.kind
+        self.bits = self.dtype.itemsize * 8
+        self.key = "%s%d" % (self.kind, self.bits)
+        if not self.kind in 'iu':
+            raise ValueError("Invalid integer data type.")
+
+    def min(self):
+        """Minimum value of given dtype."""
+        if self.kind == 'u':
+            return 0
+        else:
+            try:
+                val = iinfo._min_vals[self.key]
+            except KeyError:
+                val = int(-(1L << (self.bits-1)))
+                iinfo._min_vals[self.key] = val
+            return val
+
+    min = property(min)
+
+    def max(self):
+        """Maximum value of given dtype."""
+        try:
+            val = iinfo._max_vals[self.key]
+        except KeyError:
+            if self.kind == 'u':
+                val = int((1L << self.bits) - 1)
+            else:
+                val = int((1L << (self.bits-1)) - 1)
+            iinfo._max_vals[self.key] = val
+        return val
+
+    max = property(max)
 
 if __name__ == '__main__':
     f = finfo(ntypes.single)

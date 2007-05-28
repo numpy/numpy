@@ -653,14 +653,19 @@ array_cast(PyArrayObject *self, PyObject *args)
 			      &descr)) return NULL;
 
 	if (descr == self->descr) {
-		obj = _ARET(PyArray_NewCopy(self,0));
+		obj = _ARET(PyArray_NewCopy(self,NPY_ANYORDER));
 		Py_XDECREF(descr);
 		return obj;
 	}
 	if (descr->names != NULL) {
-		return PyArray_FromArray(self, descr, NPY_FORCECAST);
+                int flags;
+                flags = NPY_FORCECAST;
+                if (PyArray_ISFORTRAN(self)) {
+                        flags |= NPY_FORTRAN;
+                }
+		return PyArray_FromArray(self, descr, flags);
 	}
-	return PyArray_CastToType(self, descr, 0);
+	return PyArray_CastToType(self, descr, PyArray_ISFORTRAN(self));
 }
 
 /* default sub-type implementation */
@@ -867,14 +872,18 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (order == Py_None) order = NULL;
         if (order != NULL) {
                 PyObject *new_name;
+                PyObject *_numpy_internal;
                 saved = self->descr;
                 if (saved->names == NULL) {
                         PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                                         "order when the array has no fields.");
                         return NULL;
                 }
+                _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+                if (_numpy_internal == NULL) return NULL;
                 new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
                                                "OO", saved, order);
+                Py_DECREF(_numpy_internal);
                 if (new_name == NULL) return NULL;
                 newd = PyArray_DescrNew(saved);
                 newd->names = new_name;
@@ -909,14 +918,18 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (order == Py_None) order = NULL;
         if (order != NULL) {
                 PyObject *new_name;
+                PyObject *_numpy_internal;
                 saved = self->descr;
                 if (saved->names == NULL) {
                         PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                                         "order when the array has no fields.");
                         return NULL;
                 }
+                _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+                if (_numpy_internal == NULL) return NULL;
                 new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
                                                "OO", saved, order);
+                Py_DECREF(_numpy_internal);
                 if (new_name == NULL) return NULL;
                 newd = PyArray_DescrNew(saved);
                 newd->names = new_name;

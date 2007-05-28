@@ -1107,7 +1107,7 @@ class lapack_src_info(system_info):
         self.set_info(**info)
 
 atlas_version_c_text = r'''
-/* This file is generated from numpy_distutils/system_info.py */
+/* This file is generated from numpy/distutils/system_info.py */
 void ATL_buildinfo(void);
 int main(void) {
   ATL_buildinfo();
@@ -1639,7 +1639,7 @@ class _pkg_config_info(system_info):
 
     def calc_info(self):
         config_exe = find_executable(self.get_config_exe())
-        if not os.path.isfile(config_exe):
+        if not config_exe:
             log.warn('File not found: %s. Cannot determine %s info.' \
                   % (config_exe, self.section))
             return

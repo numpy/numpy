@@ -23,11 +23,9 @@
 #include "numpy/arrayobject.h"
 
 #define PyAO PyArrayObject
+        
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
-static PyObject *_numpy_internal=NULL; /* A Python module for callbacks */
-static int _multiarray_module_loaded=0;
-
 
 static PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
@@ -4861,10 +4859,14 @@ _convert_from_commastring(PyObject *obj, int align)
 {
 	PyObject *listobj;
 	PyArray_Descr *res;
+        PyObject *_numpy_internal;
 
 	if (!PyString_Check(obj)) return NULL;
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
         listobj = PyObject_CallMethod(_numpy_internal, "_commastring",
 				      "O", obj);
+        Py_DECREF(_numpy_internal);
 	if (!listobj) return NULL;
 	if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj)<1) {
 		PyErr_SetString(PyExc_RuntimeError, "_commastring is "	\
@@ -4928,9 +4930,15 @@ then it will be checked for conformity and used directly.
 static PyArray_Descr *
 _use_fields_dict(PyObject *obj, int align)
 {
-        return (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
-						    "_usefields",
-						    "Oi", obj, align);
+        PyObject *_numpy_internal;
+        PyArray_Descr *res;
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
+        res = (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
+                                                   "_usefields",
+                                                   "Oi", obj, align);
+        Py_DECREF(_numpy_internal);
+        return res;
 }
 
 static PyArray_Descr *
@@ -6358,7 +6366,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
         }
 
         if (i < count) {
-                PyErr_SetString(PyExc_ValueError, "iteratable too short");
+                PyErr_SetString(PyExc_ValueError, "iterator too short");
                 goto done;
         }
 
@@ -6641,7 +6649,15 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 	double value;
 
 	*next = PyNumber_Subtract(stop, start);
-	if (!(*next)) return -1;
+	if (!(*next)) {
+                if (PyTuple_Check(stop)) {
+                        PyErr_Clear();
+                        PyErr_SetString(PyExc_TypeError, 
+                                        "arange: scalar arguments expected "\
+                                        "instead of a tuple.");
+                }
+                return -1;
+        }
 	val = PyNumber_TrueDivide(*next, step);
 	Py_DECREF(*next); *next=NULL;
 	if (!val) return -1;
@@ -7493,8 +7509,6 @@ PyMODINIT_FUNC initmultiarray(void) {
 	PyObject *m, *d, *s;
 	PyObject *c_api;
 
-	if (_multiarray_module_loaded) return;
-	_multiarray_module_loaded = 1;
 	/* Create the module and add the functions */
 	m = Py_InitModule("multiarray", array_module_methods);
 	if (!m) goto err;
@@ -7579,10 +7593,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 	set_flaginfo(d);
 
 	if (set_typeinfo(d) != 0) goto err;
-
-	_numpy_internal =						\
-		PyImport_ImportModule("numpy.core._internal");
-	if (_numpy_internal != NULL) return;
+        return;
 
  err:
 	if (!PyErr_Occurred()) {

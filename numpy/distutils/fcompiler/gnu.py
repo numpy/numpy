@@ -5,12 +5,14 @@ import warnings
 
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.exec_command import exec_command, find_executable
-from numpy.distutils.misc_util import mingw32, msvc_runtime_library
+from numpy.distutils.exec_command import exec_command
+from numpy.distutils.misc_util import msvc_runtime_library
+
+compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
 class GnuFCompiler(FCompiler):
-
     compiler_type = 'gnu'
+    description = 'GNU Fortran 77 compiler'
 
     def gnu_version_match(self, version_string):
         """Handle the different versions of GNU fortran compilers"""
@@ -44,22 +46,23 @@ class GnuFCompiler(FCompiler):
     #         GNU Fortran 0.5.25 20010319 (prerelease)
     # Redhat: GNU Fortran (GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5)) 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
 
+    possible_executables = ['g77', 'f77']
     executables = {
-        'version_cmd'  : ["g77", "--version"],
-        'compiler_f77' : ["g77", "-g", "-Wall","-fno-second-underscore"],
+        'version_cmd'  : [None, "--version"],
+        'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
         'compiler_f90' : None, # Use --fcompiler=gnu95 for f90 codes
         'compiler_fix' : None,
-        'linker_so'    : ["g77", "-g", "-Wall"],
+        'linker_so'    : [None, "-g", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
-        'linker_exe'   : ["g77", "-g", "-Wall"]
+        'linker_exe'   : [None, "-g", "-Wall"]
         }
     module_dir_switch = None
     module_include_switch = None
 
     # Cygwin: f771: warning: -fPIC ignored for target (all code is
     # position independent)
-    if os.name != 'nt' and sys.platform!='cygwin':
+    if os.name != 'nt' and sys.platform != 'cygwin':
         pic_flags = ['-fPIC']
 
     # use -mno-cygwin for g77 when Python is not Cygwin-Python
@@ -70,13 +73,6 @@ class GnuFCompiler(FCompiler):
     g2c = 'g2c'
 
     suggested_f90_compiler = 'gnu95'
-
-    def find_executables(self):
-        for fc_exe in [find_executable(c) for c in ['g77','f77']]:
-            if os.path.isfile(fc_exe):
-                break
-        for key in ['version_cmd', 'compiler_f77', 'linker_so', 'linker_exe']:
-            self.executables[key][0] = fc_exe
 
     #def get_linker_so(self):
     #    # win32 linking should be handled by standard linker
@@ -106,7 +102,7 @@ class GnuFCompiler(FCompiler):
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
-        if sys.platform[:5]=='sunos':
+        if sys.platform.startswith('sunos'):
             # SunOS often has dynamically loaded symbols defined in the
             # static library libg2c.a  The linker doesn't like this.  To
             # ignore the problem, use the -mimpure-text flag.  It isn't
@@ -178,13 +174,10 @@ class GnuFCompiler(FCompiler):
 
     def get_flags_arch(self):
         opt = []
-        if sys.platform=='darwin':
-            if os.name != 'posix':
-                # this should presumably correspond to Apple
-                if cpu.is_ppc():
-                    opt.append('-arch ppc')
-                elif cpu.is_i386():
-                    opt.append('-arch i386')
+        if sys.platform == 'darwin':
+            # Since Apple doesn't distribute a GNU Fortran compiler, we
+            # can't add -arch ppc or -arch i386, as only their version
+            # of the GNU compilers accepts those.
             for a in '601 602 603 603e 604 604e 620 630 740 7400 7450 750'\
                     '403 505 801 821 823 860'.split():
                 if getattr(cpu,'is_ppc%s'%a)():
@@ -224,6 +217,8 @@ class GnuFCompiler(FCompiler):
             elif cpu.is_Nocona():
                 march_opt = '-march=nocona'
             elif cpu.is_Core2():
+                march_opt = '-march=nocona'
+            elif cpu.is_Xeon() and cpu.is_64bit():
                 march_opt = '-march=nocona'
             elif cpu.is_Prescott():
                 march_opt = '-march=prescott'
@@ -274,8 +269,8 @@ class GnuFCompiler(FCompiler):
         return opt
 
 class Gnu95FCompiler(GnuFCompiler):
-
     compiler_type = 'gnu95'
+    description = 'GNU Fortran 95 compiler'
 
     def version_match(self, version_string):
         v = self.gnu_version_match(version_string)
@@ -291,17 +286,18 @@ class Gnu95FCompiler(GnuFCompiler):
     #       GNU Fortran 95 (GCC) 4.2.0 20060218 (experimental)
     #       GNU Fortran (GCC) 4.3.0 20070316 (experimental)
 
+    possible_executables = ['gfortran', 'f95']
     executables = {
-        'version_cmd'  : ["gfortran", "--version"],
-        'compiler_f77' : ["gfortran", "-Wall", "-ffixed-form",
+        'version_cmd'  : ["<F90>", "--version"],
+        'compiler_f77' : [None, "-Wall", "-ffixed-form",
                           "-fno-second-underscore"],
-        'compiler_f90' : ["gfortran", "-Wall", "-fno-second-underscore"],
-        'compiler_fix' : ["gfortran", "-Wall", "-ffixed-form",
+        'compiler_f90' : [None, "-Wall", "-fno-second-underscore"],
+        'compiler_fix' : [None, "-Wall", "-ffixed-form",
                           "-fno-second-underscore"],
-        'linker_so'    : ["gfortran", "-Wall"],
+        'linker_so'    : ["<F90>", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
-        'linker_exe'   : ["gfortran", "-Wall"]
+        'linker_exe'   : [None,"-Wall"]
         }
 
     # use -mno-cygwin flag for g77 when Python is not Cygwin-Python
@@ -315,14 +311,6 @@ class Gnu95FCompiler(GnuFCompiler):
 
     g2c = 'gfortran'
 
-    def find_executables(self):
-        for fc_exe in [find_executable(c) for c in ['gfortran','f95']]:
-            if os.path.isfile(fc_exe):
-                break
-        for key in ['version_cmd', 'compiler_f77', 'compiler_f90',
-                    'compiler_fix', 'linker_so', 'linker_exe']:
-            self.executables[key][0] = fc_exe
-
     def get_libraries(self):
         opt = GnuFCompiler.get_libraries(self)
         if sys.platform == 'darwin':
@@ -332,8 +320,9 @@ class Gnu95FCompiler(GnuFCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    #compiler = new_fcompiler(compiler='gnu')
     compiler = GnuFCompiler()
+    compiler.customize()
+    print compiler.get_version()
+    compiler = Gnu95FCompiler()
     compiler.customize()
     print compiler.get_version()

@@ -1378,13 +1378,13 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                                 byte_swap_vector(destptr, length, 4);
 #else
                         /* need aligned data buffer */
-                        if (!PyArray_ISBEHAVED(base)) {
+                        if ((swap) || ((((intp)data) % descr->alignment) != 0)) {
                                 buffer = _pya_malloc(itemsize);
                                 if (buffer == NULL)
                                         return PyErr_NoMemory();
                                 alloc = 1;
                                 memcpy(buffer, data, itemsize);
-                                if (!PyArray_ISNOTSWAPPED(base)) {
+                                if (swap) {
                                         byte_swap_vector(buffer,
                                                          itemsize >> 2, 4);
                                 }
@@ -6131,9 +6131,15 @@ array_dataptr_get(PyArrayObject *self)
 static PyObject *
 array_ctypes_get(PyArrayObject *self)
 {
-        return PyObject_CallMethod(_numpy_internal, "_ctypes",
-                                   "ON", self,
-                                   PyLong_FromVoidPtr(self->data));
+        PyObject *_numpy_internal;
+        PyObject *ret;
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
+        ret = PyObject_CallMethod(_numpy_internal, "_ctypes",
+                                  "ON", self,
+                                  PyLong_FromVoidPtr(self->data));
+        Py_DECREF(_numpy_internal);
+        return ret;
 }
 
 static PyObject *
@@ -6859,10 +6865,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 
         if ((nd == 0) || PyString_Check(s) ||           \
             PyUnicode_Check(s) || PyBuffer_Check(s)) {
-                if PyUnicode_Check(s)
-                        *itemsize = MAX(*itemsize, 4*n);
-                else
-                        *itemsize = MAX(*itemsize, n);
+                *itemsize = MAX(*itemsize, n);
                 return 0;
         }
         for (i=0; i<n; i++) {
@@ -6921,10 +6924,18 @@ _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
                 return mintype;
         }
 
+
         if (chktype->type_num > mintype->type_num)
                 outtype_num = chktype->type_num;
-        else
-                outtype_num = mintype->type_num;
+        else {
+                if (PyDataType_ISOBJECT(chktype) && \
+                    PyDataType_ISSTRING(mintype)) {
+                        return PyArray_DescrFromType(NPY_OBJECT);
+                }
+                else {
+                        outtype_num = mintype->type_num;
+                }
+        }
 
         save_num = outtype_num;
         while(outtype_num < PyArray_NTYPES &&
@@ -10839,6 +10850,7 @@ static PyObject *
 arraydescr_protocol_descr_get(PyArray_Descr *self)
 {
         PyObject *dobj, *res;
+        PyObject *_numpy_internal;
 
         if (self->names == NULL) {
                 /* get default */
@@ -10853,8 +10865,12 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
                 return res;
         }
 
-        return PyObject_CallMethod(_numpy_internal, "_array_descr",
-                                   "O", self);
+        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+        if (_numpy_internal == NULL) return NULL;
+        res = PyObject_CallMethod(_numpy_internal, "_array_descr",
+                                  "O", self);
+        Py_DECREF(_numpy_internal);
+        return res;
 }
 
 /* returns 1 for a builtin type
@@ -11631,12 +11647,6 @@ static PyTypeObject PyArrayDescr_Type = {
 
 
 /** Array Flags Object **/
-
-typedef struct PyArrayFlagsObject {
-        PyObject_HEAD
-        PyObject *arr;
-        int flags;
-} PyArrayFlagsObject;
 
 /*OBJECT_API
  Get New ArrayFlagsObject

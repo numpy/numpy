@@ -71,29 +71,41 @@ def iterable(y):
 def histogram(a, bins=10, range=None, normed=False):
     """Compute the histogram from a set of data.
 
-    :Parameters:
-      - `a` : array
-        The data to histogram. n-D arrays will be flattened.
-      - `bins` : int or sequence of floats, optional
-        If an int, then the number of equal-width bins in the given range.
-        Otherwise, a sequence of the lower bound of each bin.
-      - `range` : (float, float), optional
-        The lower and upper range of the bins. If not provided, then (a.min(),
-        a.max()) is used. Values outside of this range are allocated to the
-        closest bin.
-      - `normed` : bool, optional
-        If False, the result array will contain the number of samples in each bin.
-        If True, the result array is the value of the probability *density*
-        function at the bin normalized such that the *integral* over the range
-        is 1. Note that the sum of all of the histogram values will not usually
-        be 1; it is not a probability *mass* function.
+    Parameters:
 
-    :Returns:
-      - `hist` : array (n,)
-        The values of the histogram. See `normed` for a description of the
-        possible semantics.
-      - `lower_edges` : float array (n,)
-        The lower edges of each bin.
+        a : array
+            The data to histogram. n-D arrays will be flattened.
+
+        bins : int or sequence of floats
+            If an int, then the number of equal-width bins in the given range.
+            Otherwise, a sequence of the lower bound of each bin.
+
+        range : (float, float)
+            The lower and upper range of the bins. If not provided, then
+            (a.min(), a.max()) is used. Values outside of this range are
+            allocated to the closest bin.
+
+        normed : bool
+            If False, the result array will contain the number of samples in
+            each bin.  If True, the result array is the value of the
+            probability *density* function at the bin normalized such that the
+            *integral* over the range is 1. Note that the sum of all of the
+            histogram values will not usually be 1; it is not a probability
+            *mass* function.
+
+    Returns:
+
+        hist : array
+            The values of the histogram. See `normed` for a description of the
+            possible semantics.
+
+        lower_edges : float array
+            The lower edges of each bin.
+
+    SeeAlso:
+
+        histogramdd
+
     """
     a = asarray(a).ravel()
     if not iterable(bins):
@@ -120,38 +132,54 @@ def histogram(a, bins=10, range=None, normed=False):
         return n, bins
 
 def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
-    """histogramdd(sample, bins=10, range=None, normed=False, weights=None)                                                                
+    """histogramdd(sample, bins=10, range=None, normed=False, weights=None)
 
-    Return the D-dimensional histogram of the sample.
+    Return the N-dimensional histogram of the sample.
 
-    :Parameters:
-      - `sample` : A sequence of D arrays, or an NxD array. 
-      - `bins` : A sequence of edge arrays, a sequence of bin number, 
-                or a scalar (the number of bins for all dimensions.) 
-      - `range` : A sequence of lower and upper bin edges (default: [min, max]).
-      - `normed` : Boolean, if False, return the number of samples in each bin,
-                if True, returns the density.
-      - `weights` : An array of weights. The weights are normed only if normed is True. 
-             Should weights.sum() not equal N, the total bin count will 
-             not be equal to the number of samples.
+    Parameters:
 
-    :Return:
-      - `hist` : Histogram array.
-      - `edges` : List of arrays defining the bin edges. 
-    
+        sample : sequence or array
+            A sequence containing N arrays or an NxM array. Input data.
 
-    Example:
-      >>> x = random.randn(100,3)
-      >>> hist3d, edges = histogramdd(x, bins = (5, 6, 7))
+        bins : sequence or scalar
+            A sequence of edge arrays, a sequence of bin counts, or a scalar
+            which is the bin count for all dimensions. Default is 10.
 
-    :SeeAlso: histogram
+        range : sequence
+            A sequence of lower and upper bin edges. Default is [min, max].
+
+        normed : boolean
+            If False, return the number of samples in each bin, if True,
+            returns the density.
+
+        weights : array
+            Array of weights.  The weights are normed only if normed is True.
+            Should the sum of the weights not equal N, the total bin count will
+            not be equal to the number of samples.
+
+    Returns:
+
+        hist : array
+            Histogram array.
+
+        edges : list
+            List of arrays defining the lower bin edges.
+
+    SeeAlso:
+
+        histogram
+
+    Example
+
+        >>> x = random.randn(100,3)
+        >>> hist3d, edges = histogramdd(x, bins = (5, 6, 7))
 
     """
 
-    try: 
+    try:
         # Sample is an ND-array.
         N, D = sample.shape
-    except (AttributeError, ValueError): 
+    except (AttributeError, ValueError):
         # Sample is a sequence of 1D arrays.
         sample = atleast_2d(sample).T
         N, D = sample.shape
@@ -161,7 +189,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     dedges = D*[None]
     if weights is not None:
         weights = asarray(weights)
-    
+
     try:
         M = len(bins)
         if M != D:
@@ -172,13 +200,19 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Select range for each dimension
     # Used only if number of bins is given.
     if range is None:
-        smin = atleast_1d(sample.min(0))
-        smax = atleast_1d(sample.max(0))
+        smin = atleast_1d(array(sample.min(0), float))
+        smax = atleast_1d(array(sample.max(0), float))
     else:
         smin = zeros(D)
         smax = zeros(D)
         for i in arange(D):
             smin[i], smax[i] = range[i]
+
+    # Make sure the bins have a finite width.
+    for i in arange(len(smin)):
+        if smin[i] == smax[i]:
+            smin[i] = smin[i] - .5
+            smax[i] = smax[i] + .5
 
     # Create edge arrays
     for i in arange(D):
@@ -189,14 +223,14 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             edges[i] = asarray(bins[i], float)
             nbin[i] = len(edges[i])+1  # +1 for outlier bins
         dedges[i] = diff(edges[i])
-        
+
     nbin =  asarray(nbin)
-    
-    # Compute the bin number each sample falls into. 
+
+    # Compute the bin number each sample falls into.
     Ncount = {}
     for i in arange(D):
         Ncount[i] = digitize(sample[:,i], edges[i])
-    
+
     # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right
     # edge to be counted in the last bin, and not as an outlier.
@@ -206,7 +240,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         decimal = int(-log10(dedges[i].min())) +6
         # Find which points are on the rightmost edge.
         on_edge = where(around(sample[:,i], decimal) == around(edges[i][-1], decimal))[0]
-        # Shift these points one bin to the left. 
+        # Shift these points one bin to the left.
         Ncount[i][on_edge] -= 1
 
     # Flattened histogram matrix (1D)
@@ -238,7 +272,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Remove outliers (indices 0 and -1 for each dimension).
     core = D*[slice(1,-1)]
     hist = hist[core]
-    
+
     # Normalize if normed is True
     if normed:
         s = hist.sum()
@@ -252,9 +286,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
 
 def average(a, axis=None, weights=None, returned=False):
-    """average(a, axis=None weights=None, returned=False)
-
-    Average the array over the given axis.  If the axis is None,
+    """Average the array over the given axis.  If the axis is None,
     average over all dimensions of the array.  Equivalent to
     a.mean(axis) and to
 
@@ -386,39 +418,37 @@ def piecewise(x, condlist, funclist, *args, **kw):
     return y
 
 def select(condlist, choicelist, default=0):
-    """ Return an array composed of different elements of choicelist
+    """Return an array composed of different elements in choicelist,
     depending on the list of conditions.
 
-    condlist is a list of condition arrays containing ones or zeros
+    :Parameters:
+        condlist : list of N boolean arrays of length M
+            The conditions C_0 through C_(N-1) which determine
+            from which vector the output elements are taken.
+        choicelist : list of N arrays of length M
+            Th vectors V_0 through V_(N-1), from which the output
+            elements are chosen.
 
-    choicelist is a list of choice arrays (of the "same" size as the
-    arrays in condlist).  The result array has the "same" size as the
-    arrays in choicelist.  If condlist is [c0, ..., cN-1] then choicelist
-    must be of length N.  The elements of the choicelist can then be
-    represented as [v0, ..., vN-1]. The default choice if none of the
-    conditions are met is given as the default argument.
+    :Returns:
+        output : 1-dimensional array of length M
+            The output at position m is the m-th element of the first
+            vector V_n for which C_n[m] is non-zero.  Note that the
+            output depends on the order of conditions, since the
+            first satisfied condition is used.
 
-    The conditions are tested in order and the first one statisfied is
-    used to select the choice. In other words, the elements of the
-    output array are found from the following tree (notice the order of
-    the conditions matters):
+            Equivalent to:
 
-    if c0: v0
-    elif c1: v1
-    elif c2: v2
-    ...
-    elif cN-1: vN-1
-    else: default
-
-    Note that one of the condition arrays must be large enough to handle
-    the largest array in the choice list.
+                output = []
+                for m in range(M):
+                    output += [V[m] for V,C in zip(values,cond) if C[m]]
+                              or [default]
 
     """
     n = len(condlist)
     n2 = len(choicelist)
     if n2 != n:
         raise ValueError, "list of cases must be same length as list of conditions"
-    choicelist.insert(0, default)
+    choicelist = [default] + choicelist
     S = 0
     pfac = 1
     for k in range(1, n+1):
@@ -730,7 +760,7 @@ def place(arr, mask, vals):
 def nansum(a, axis=None):
     """Sum the array over the given axis, treating NaNs as 0.
     """
-    y = array(a)
+    y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = 0
     return y.sum(axis)
@@ -738,7 +768,7 @@ def nansum(a, axis=None):
 def nanmin(a, axis=None):
     """Find the minimium over the given axis, ignoring NaNs.
     """
-    y = array(a)
+    y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = _nx.inf
     return y.min(axis)
@@ -746,7 +776,7 @@ def nanmin(a, axis=None):
 def nanargmin(a, axis=None):
     """Find the indices of the minimium over the given axis ignoring NaNs.
     """
-    y = array(a)
+    y = array(a, subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = _nx.inf
     return y.argmin(axis)
@@ -754,7 +784,7 @@ def nanargmin(a, axis=None):
 def nanmax(a, axis=None):
     """Find the maximum over the given axis ignoring NaNs.
     """
-    y = array(a)
+    y = array(a, subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = -_nx.inf
     return y.max(axis)
@@ -762,7 +792,7 @@ def nanmax(a, axis=None):
 def nanargmax(a, axis=None):
     """Find the maximum over the given axis ignoring NaNs.
     """
-    y = array(a)
+    y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
         y[isnan(a)] = -_nx.inf
     return y.argmax(axis)
