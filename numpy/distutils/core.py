@@ -83,14 +83,6 @@ def _command_line_ok(_cache=[]):
     _cache.append(ok)
     return ok
 
-def _exit_interactive_session(_cache=[]):
-    if _cache:
-        return # been here
-    _cache.append(1)
-    print '-'*72
-    raw_input('Press ENTER to close the interactive session..')
-    print '='*72
-
 def get_distribution(always=False):
     dist = distutils.core._setup_distribution
     # XXX Hack to get numpy installable with easy_install.
@@ -107,15 +99,6 @@ def get_distribution(always=False):
     return dist
 
 def setup(**attr):
-
-    if len(sys.argv)<=1 and not attr.get('script_args',[]):
-        from interactive import interactive_sys_argv
-        import atexit
-        atexit.register(_exit_interactive_session)
-        sys.argv[:] = interactive_sys_argv(sys.argv)
-        if len(sys.argv)>1:
-            return setup(**attr)
-
     cmdclass = numpy_cmdclass.copy()
 
     new_attr = attr.copy()
