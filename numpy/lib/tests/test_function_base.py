@@ -64,6 +64,20 @@ class test_average(NumpyTestCase):
         desired = array([3.,4.,5.])
         assert_array_equal(actual, desired)
 
+class test_select(NumpyTestCase):
+    def check_basic(self):
+        choices = [array([1,2,3]),
+                   array([4,5,6]),
+                   array([7,8,9])]
+        conditions = [array([0,0,0]),
+                      array([0,1,0]),
+                      array([0,0,1])]
+        assert_array_equal(select(conditions,choices,default=15),
+                           [15,5,9])
+
+        assert_equal(len(choices),3)
+        assert_equal(len(conditions),3)
+
 class test_logspace(NumpyTestCase):
     def check_basic(self):
         y = logspace(0,6)
@@ -431,4 +445,4 @@ def compare_results(res,desired):
         assert_array_equal(res[i],desired[i])
 
 if __name__ == "__main__":
-    NumpyTest('numpy.lib.function_base').run()
+    NumpyTest().run()

@@ -286,9 +286,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
 
 def average(a, axis=None, weights=None, returned=False):
-    """average(a, axis=None weights=None, returned=False)
-
-    Average the array over the given axis.  If the axis is None,
+    """Average the array over the given axis.  If the axis is None,
     average over all dimensions of the array.  Equivalent to
     a.mean(axis) and to
 
@@ -452,7 +450,7 @@ def select(condlist, choicelist, default=0):
     n2 = len(choicelist)
     if n2 != n:
         raise ValueError, "list of cases must be same length as list of conditions"
-    choicelist.insert(0, default)
+    choicelist = [default] + choicelist
     S = 0
     pfac = 1
     for k in range(1, n+1):
