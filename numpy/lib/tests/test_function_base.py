@@ -65,6 +65,12 @@ class test_average(NumpyTestCase):
         assert_array_equal(actual, desired)
 
 class test_select(NumpyTestCase):
+    def _select(self,cond,values,default=0):
+        output = []
+        for m in range(len(cond)):
+            output += [V[m] for V,C in zip(values,cond) if C[m]] or [default]
+        return output
+
     def check_basic(self):
         choices = [array([1,2,3]),
                    array([4,5,6]),
@@ -73,7 +79,7 @@ class test_select(NumpyTestCase):
                       array([0,1,0]),
                       array([0,0,1])]
         assert_array_equal(select(conditions,choices,default=15),
-                           [15,5,9])
+                           self._select(conditions,choices,default=15))
 
         assert_equal(len(choices),3)
         assert_equal(len(conditions),3)

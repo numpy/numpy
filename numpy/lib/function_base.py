@@ -418,32 +418,30 @@ def piecewise(x, condlist, funclist, *args, **kw):
     return y
 
 def select(condlist, choicelist, default=0):
-    """ Return an array composed of different elements of choicelist
+    """Return an array composed of different elements in choicelist,
     depending on the list of conditions.
 
-    condlist is a list of condition arrays containing ones or zeros
+    :Parameters:
+        condlist : list of N boolean arrays of length M
+            The conditions C_0 through C_(N-1) which determine
+            from which vector the output elements are taken.
+        choicelist : list of N arrays of length M
+            Th vectors V_0 through V_(N-1), from which the output
+            elements are chosen.
 
-    choicelist is a list of choice arrays (of the "same" size as the
-    arrays in condlist).  The result array has the "same" size as the
-    arrays in choicelist.  If condlist is [c0, ..., cN-1] then choicelist
-    must be of length N.  The elements of the choicelist can then be
-    represented as [v0, ..., vN-1]. The default choice if none of the
-    conditions are met is given as the default argument.
+    :Returns:
+        output : 1-dimensional array of length M
+            The output at position m is the m-th element of the first
+            vector V_n for which C_n[m] is non-zero.  Note that the
+            output depends on the order of conditions, since the
+            first satisfied condition is used.
 
-    The conditions are tested in order and the first one statisfied is
-    used to select the choice. In other words, the elements of the
-    output array are found from the following tree (notice the order of
-    the conditions matters):
+            Equivalent to:
 
-    if c0: v0
-    elif c1: v1
-    elif c2: v2
-    ...
-    elif cN-1: vN-1
-    else: default
-
-    Note that one of the condition arrays must be large enough to handle
-    the largest array in the choice list.
+                output = []
+                for m in range(M):
+                    output += [V[m] for V,C in zip(values,cond) if C[m]]
+                              or [default]
 
     """
     n = len(condlist)
