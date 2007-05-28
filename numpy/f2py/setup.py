@@ -21,6 +21,7 @@ __version__ = "$Id: setup.py,v 1.32 2005/01/30 17:22:14 pearu Exp $"
 import os
 import sys
 from distutils.dep_util import newer
+from numpy.distutils import log
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
@@ -48,7 +49,7 @@ def configuration(parent_package='',top_path=None):
             f2py_exe = f2py_exe + '.py'
         target = os.path.join(build_dir,f2py_exe)
         if newer(__file__,target):
-            print 'Creating',target
+            log.info('Creating %s', target)
             f = open(target,'w')
             f.write('''\
 #!/usr/bin/env %s
@@ -83,7 +84,7 @@ main()
 
     config.add_scripts(generate_f2py_py)
 
-    print 'F2PY Version',config.get_version()
+    log.info('F2PY Version %s', config.get_version())
 
     return config
 
