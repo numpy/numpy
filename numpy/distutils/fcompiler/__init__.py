@@ -24,7 +24,7 @@ from distutils.util import split_quoted
 
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
-from numpy.distutils.misc_util import is_string
+from numpy.distutils.misc_util import is_string, make_temp_file
 from numpy.distutils.environment import EnvironmentConfig
 from numpy.distutils.exec_command import find_executable
 from distutils.spawn import _nt_quote_args
@@ -267,7 +267,7 @@ class FCompiler(CCompiler):
         cmd = self.executables.get('version_cmd')
         if cmd is not None:
             cmd = cmd[0]
-            if cmd==f77:
+            if cmd == f77:
                 cmd = self.compiler_f77[0]
             else:
                 f90 = self.executables.get('compiler_f90')
@@ -836,23 +836,13 @@ def show_fcompilers(dist=None):
         pretty_printer.print_help("Compilers not available on this platform:")
     print "For compiler details, run 'config_fc --verbose' setup command."
 
+
 def dummy_fortran_file():
-    import atexit
-    import tempfile
-    dummy_name = tempfile.mktemp()+'__dummy'
-    dummy = open(dummy_name+'.f','w')
-    dummy.write("      subroutine dummy()\n      end\n")
-    dummy.close()
-    def rm_file(name=dummy_name,log_threshold=log._global_log.threshold):
-        save_th = log._global_log.threshold
-        log.set_threshold(log_threshold)
-        try: os.remove(name+'.f'); log.debug('removed '+name+'.f')
-        except OSError: pass
-        try: os.remove(name+'.o'); log.debug('removed '+name+'.o')
-        except OSError: pass
-        log.set_threshold(save_th)
-    atexit.register(rm_file)
-    return dummy_name
+    fo, name = make_temp_file(suffix='.f')
+    fo.write("      subroutine dummy()\n      end\n")
+    fo.close()
+    return name[:-2]
+
 
 is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z',re.I).match
 _has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-',re.I).search

@@ -4,6 +4,7 @@ import sys
 
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command, find_executable
+from numpy.distutils.misc_util import make_temp_file
 from distutils import log
 
 compilers = ['IBMFCompiler']
@@ -65,15 +66,13 @@ class IBMFCompiler(FCompiler):
             opt.append('-bshared')
         version = self.get_version(ok_status=[0,40])
         if version is not None:
-            import tempfile
             if sys.platform.startswith('aix'):
                 xlf_cfg = '/etc/xlf.cfg'
             else:
                 xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
-            new_cfg = tempfile.mktemp()+'_xlf.cfg'
+            fo, new_cfg = make_temp_file(suffix='_xlf.cfg')
             log.info('Creating '+new_cfg)
             fi = open(xlf_cfg,'r')
-            fo = open(new_cfg,'w')
             crt1_match = re.compile(r'\s*crt\s*[=]\s*(?P<path>.*)/crt1.o').match
             for line in fi.readlines():
                 m = crt1_match(line)
