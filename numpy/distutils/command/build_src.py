@@ -224,7 +224,8 @@ class build_src(build_ext.build_ext):
         sources, h_files = self.filter_h_files(sources)
 
         if h_files:
-            print self.package,'- nothing done with h_files=',h_files
+            log.info('%s - nothing done with h_files = %s',
+                     self.package, h_files)
 
         #for f in h_files:
         #    self.distribution.headers.append((lib_name,f))
@@ -269,7 +270,8 @@ class build_src(build_ext.build_ext):
         sources, h_files = self.filter_h_files(sources)
 
         if h_files:
-            print package,'- nothing done with h_files=',h_files
+            log.info('%s - nothing done with h_files = %s',
+                     package, h_files)
         #for f in h_files:
         #    self.distribution.headers.append((package,f))
 

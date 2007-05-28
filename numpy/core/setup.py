@@ -2,6 +2,7 @@ import imp
 import os
 import sys
 from os.path import join
+from numpy.distutils import log
 from distutils.dep_util import newer
 
 FUNCTIONS_TO_CHECK = [
@@ -37,8 +38,7 @@ def configuration(parent_package='',top_path=None):
         target = join(build_dir,'config.h')
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
-            print 'Generating',target
-            #
+            log.info('Generating %s',target)
             tc = generate_testcode(target)
             from distutils import sysconfig
             python_include = sysconfig.get_python_inc()
@@ -145,7 +145,7 @@ def configuration(parent_package='',top_path=None):
             sys.path.insert(0, codegen_dir)
             try:
                 m = __import__(module_name)
-                print 'executing', script
+                log.info('executing %s', script)
                 h_file, c_file, doc_file = m.generate_api(build_dir)
             finally:
                 del sys.path[0]
