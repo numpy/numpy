@@ -24,7 +24,7 @@ class IntelFCompiler(FCompiler):
     possible_executables = ['ifort', 'ifc']
 
     executables = {
-        'version_cmd'  : None,
+        'version_cmd'  : ['<F77>', None],
         'compiler_f77' : [None,"-72","-w90","-w95"],
         'compiler_f90' : [None],
         'compiler_fix' : [None,"-FI"],
@@ -37,9 +37,9 @@ class IntelFCompiler(FCompiler):
     module_dir_switch = '-module ' # Don't remove ending space!
     module_include_switch = '-I'
 
-    def get_version_cmd(self):
+    def get_flags_version(self):
         f = dummy_fortran_file()
-        return ['<F77>', '-FI', '-V', '-c', f + '.f', '-o', f + '.o']
+        return ['-FI', '-V', '-c', f + '.f', '-o', f + '.o']
 
     def get_flags(self):
         opt = self.pic_flags + ["-cm"]
@@ -94,7 +94,7 @@ class IntelItaniumFCompiler(IntelFCompiler):
     possible_executables = ['ifort', 'efort', 'efc']
 
     executables = {
-        'version_cmd'  : None,
+        'version_cmd'  : ['<F77>', None],
         'compiler_f77' : [None,"-FI","-w90","-w95"],
         'compiler_fix' : [None,"-FI"],
         'compiler_f90' : [None],
@@ -112,7 +112,7 @@ class IntelEM64TFCompiler(IntelFCompiler):
     possible_executables = ['ifort', 'efort', 'efc']
 
     executables = {
-        'version_cmd'  : None,
+        'version_cmd'  : ['<F77>', None],
         'compiler_f77' : [None, "-FI", "-w90", "-w95"],
         'compiler_fix' : [None, "-FI"],
         'compiler_f90' : [None],
@@ -139,7 +139,7 @@ class IntelVisualFCompiler(FCompiler):
     possible_executables = ['ifl']
 
     executables = {
-        'version_cmd'  : None,
+        'version_cmd'  : ['<F77>', None],
         'compiler_f77' : [None,"-FI","-w90","-w95"],
         'compiler_fix' : [None,"-FI","-4L72","-w"],
         'compiler_f90' : [None],
@@ -154,9 +154,9 @@ class IntelVisualFCompiler(FCompiler):
     module_dir_switch = '/module:' #No space after /module:
     module_include_switch = '/I'
 
-    def get_version_cmd(self):
+    def get_flags_version(self):
         f = dummy_fortran_file()
-        return ['<F77>', '-FI', '-V', '-c', f + '.f', '-o', f + '.o']
+        return ['-FI', '-V', '-c', f + '.f', '-o', f + '.o']
 
     def get_flags(self):
         opt = ['/nologo','/MD','/nbs','/Qlowercase','/us']
@@ -195,7 +195,7 @@ class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
     ar_exe = IntelVisualFCompiler.ar_exe
 
     executables = {
-        'version_cmd'  : None,
+        'version_cmd'  : ['<F77>', None],
         'compiler_f77' : [None,"-FI","-w90","-w95"],
         'compiler_fix' : [None,"-FI","-4L72","-w"],
         'compiler_f90' : [None],
