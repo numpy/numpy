@@ -19,11 +19,4 @@ def configuration(parent_package='',top_path=None):
     return config
 
 if __name__ == '__main__':
-    # Remove current working directory from sys.path
-    # to avoid importing numpy.distutils as Python std. distutils:
-    import os, sys
-    for cwd in ['','.',os.getcwd()]:
-        while cwd in sys.path: sys.path.remove(cwd)
-
-    from numpy.distutils.core import setup
-    setup(configuration=configuration)
+    print 'This is the wrong setup.py file to run'
