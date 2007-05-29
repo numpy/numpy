@@ -24,15 +24,26 @@ from distutils.util import split_quoted
 
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
-from numpy.distutils.misc_util import is_string, make_temp_file
+from numpy.distutils.misc_util import is_string, is_sequence, make_temp_file
 from numpy.distutils.environment import EnvironmentConfig
-from numpy.distutils.exec_command import find_executable
+from numpy.distutils.exec_command import find_executable, splitcmdline
 from distutils.spawn import _nt_quote_args
 
 __metaclass__ = type
 
 class CompilerNotFound(Exception):
     pass
+
+def flaglist(s):
+    if is_string(s):
+        return splitcmdline(s)
+    else:
+        return s
+
+def str2bool(s):
+    if is_string(s):
+        return not (s == '0' or s.lower() == 'False')
+    return bool(s)
 
 class FCompiler(CCompiler):
     """Abstract base class to define the interface that must be implemented
@@ -67,51 +78,53 @@ class FCompiler(CCompiler):
 
     # These are the environment variables and distutils keys used.
     # Each configuration descripition is
-    # (<hook name>, <environment variable>, <key in distutils.cfg>)
+    # (<hook name>, <environment variable>, <key in distutils.cfg>, <convert>)
     # The hook names are handled by the self._environment_hook method.
     #  - names starting with 'self.' call methods in this class
     #  - names starting with 'exe.' return the key in the executables dict
-    #  - names like'flags.YYY' return self.get_flag_YYY()
+    #  - names like 'flags.YYY' return self.get_flag_YYY()
+    # convert is either None or a function to convert a string to the
+    # appropiate type used.
 
     distutils_vars = EnvironmentConfig(
-        noopt = (None, None, 'noopt'),
-        noarch = (None, None, 'noarch'),
-        debug = (None, None, 'debug'),
-        verbose = (None, None, 'verbose'),
+        noopt = (None, None, 'noopt', str2bool),
+        noarch = (None, None, 'noarch', str2bool),
+        debug = (None, None, 'debug', str2bool),
+        verbose = (None, None, 'verbose', str2bool),
     )
 
     command_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec'),
-        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec'),
-        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec'),
-        version_cmd = ('self.get_version_cmd', None, None),
-        linker_so = ('self.get_linker_so', 'LDSHARED', 'ldshared'),
-        linker_exe = ('self.get_linker_exe', 'LD', 'ld'),
-        archiver = (None, 'AR', 'ar'),
-        ranlib = (None, 'RANLIB', 'ranlib'),
+        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', None),
+        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None),
+        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None),
+        version_cmd = ('self.get_version_cmd', None, None, None),
+        linker_so = ('self.get_linker_so', 'LDSHARED', 'ldshared', None),
+        linker_exe = ('self.get_linker_exe', 'LD', 'ld', None),
+        archiver = (None, 'AR', 'ar', None),
+        ranlib = (None, 'RANLIB', 'ranlib', None),
     )
 
     flag_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        version = ('flags.version', None, None),
-        f77 = ('flags.f77', 'F77FLAGS', 'f77flags'),
-        f90 = ('flags.f90', 'F90FLAGS', 'f90flags'),
-        free = ('flags.free', 'FREEFLAGS', 'freeflags'),
-        fix = ('flags.fix', None, None),
-        opt = ('flags.opt', 'FOPT', 'opt'),
-        opt_f77 = ('flags.opt_f77', None, None),
-        opt_f90 = ('flags.opt_f90', None, None),
-        arch = ('flags.arch', 'FARCH', 'arch'),
-        arch_f77 = ('flags.arch_f77', None, None),
-        arch_f90 = ('flags.arch_f90', None, None),
-        debug = ('flags.debug', 'FDEBUG', None, None),
-        debug_f77 = ('flags.debug_f77', None, None),
-        debug_f90 = ('flags.debug_f90', None, None),
-        flags = ('self.get_flags', 'FFLAGS', 'fflags'),
-        linker_so = ('flags.linker_so', 'LDFLAGS', 'ldflags'),
-        linker_exe = ('flags.linker_exe', 'LDFLAGS', 'ldflags'),
-        ar = ('flags.ar', 'ARFLAGS', 'arflags'),
+        version = ('flags.version', None, None, None),
+        f77 = ('flags.f77', 'F77FLAGS', 'f77flags', flaglist),
+        f90 = ('flags.f90', 'F90FLAGS', 'f90flags', flaglist),
+        free = ('flags.free', 'FREEFLAGS', 'freeflags', flaglist),
+        fix = ('flags.fix', None, None, flaglist),
+        opt = ('flags.opt', 'FOPT', 'opt', flaglist),
+        opt_f77 = ('flags.opt_f77', None, None, flaglist),
+        opt_f90 = ('flags.opt_f90', None, None, flaglist),
+        arch = ('flags.arch', 'FARCH', 'arch', flaglist),
+        arch_f77 = ('flags.arch_f77', None, None, flaglist),
+        arch_f90 = ('flags.arch_f90', None, None, flaglist),
+        debug = ('flags.debug', 'FDEBUG', None, None, flaglist),
+        debug_f77 = ('flags.debug_f77', None, None, flaglist),
+        debug_f90 = ('flags.debug_f90', None, None, flaglist),
+        flags = ('self.get_flags', 'FFLAGS', 'fflags', flaglist),
+        linker_so = ('flags.linker_so', 'LDFLAGS', 'ldflags', flaglist),
+        linker_exe = ('flags.linker_exe', 'LDFLAGS', 'ldflags', flaglist),
+        ar = ('flags.ar', 'ARFLAGS', 'arflags', flaglist),
     )
 
     language_map = {'.f':'f77',

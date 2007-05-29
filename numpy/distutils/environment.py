@@ -28,12 +28,14 @@ class EnvironmentConfig:
         return var
 
     def _get_var(self, name, conf_desc):
-        hook, envvar, confvar = conf_desc
+        hook, envvar, confvar, convert = conf_desc
         var = self._hook_handler(name, hook)
         if envvar is not None:
             var = os.environ.get(envvar, var)
         if confvar is not None and self._conf:
             var = self._conf.get(confvar, (None, var))[1]
+        if convert is not None:
+            var = convert(var)
         return var
 
     def clone(self, hook_handler):
