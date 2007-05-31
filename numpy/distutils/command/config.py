@@ -28,7 +28,7 @@ class config(old_config):
         if not isinstance(self.fcompiler, FCompiler):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
                                            dry_run=self.dry_run, force=1)
-            if self.fcompiler is not None:
+            if self.fcompiler is not None and self.fcompiler.get_version():
                 self.fcompiler.customize(self.distribution)
                 self.fcompiler.customize_cmd(self)
                 self.fcompiler.show_customization()

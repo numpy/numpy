@@ -259,7 +259,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
         version_cmd = self.version_cmd
     except AttributeError:
         return None
-    if not version_cmd or not version_cmd[0]:
+    if not version_cmd or not version_cmd[0] or None in version_cmd:
         return None
     cmd = ' '.join(version_cmd)
     try:

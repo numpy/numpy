@@ -169,38 +169,44 @@ class build_ext (old_build_ext):
 
         # Initialize Fortran 77 compiler:
         if need_f77_compiler:
+            ctype = self.fcompiler
             self._f77_compiler = new_fcompiler(compiler=self.fcompiler,
                                                verbose=self.verbose,
                                                dry_run=self.dry_run,
                                                force=self.force,
                                                requiref90=False)
             fcompiler = self._f77_compiler
+            if fcompiler:
+                ctype = fcompiler.compiler_type
             if fcompiler and fcompiler.get_version():
                 fcompiler.customize(self.distribution)
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:
                 self.warn('f77_compiler=%s is not available.' %
-                          (fcompiler.compiler_type))
+                          (ctype))
                 self._f77_compiler = None
         else:
             self._f77_compiler = None
 
         # Initialize Fortran 90 compiler:
         if need_f90_compiler:
+            ctype = self.fcompiler
             self._f90_compiler = new_fcompiler(compiler=self.fcompiler,
                                                verbose=self.verbose,
                                                dry_run=self.dry_run,
                                                force=self.force,
                                                requiref90=True)
             fcompiler = self._f90_compiler
+            if fcompiler:
+                ctype = fcompiler.compiler_type
             if fcompiler and fcompiler.get_version():
                 fcompiler.customize(self.distribution)
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:
                 self.warn('f90_compiler=%s is not available.' %
-                          (fcompiler.compiler_type))
+                          (ctype))
                 self._f90_compiler = None
         else:
             self._f90_compiler = None
