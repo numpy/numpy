@@ -78,14 +78,15 @@ class build_clib(old_build_clib):
                                            dry_run=self.dry_run,
                                            force=self.force,
                                            requiref90='f90' in languages)
-            self.fcompiler.customize(self.distribution)
+            if self.compiler is not None:
+                self.fcompiler.customize(self.distribution)
 
-            libraries = self.libraries
-            self.libraries = None
-            self.fcompiler.customize_cmd(self)
-            self.libraries = libraries
+                libraries = self.libraries
+                self.libraries = None
+                self.fcompiler.customize_cmd(self)
+                self.libraries = libraries
 
-            self.fcompiler.show_customization()
+                self.fcompiler.show_customization()
 
         self.build_libraries(self.libraries)
 
@@ -143,10 +144,11 @@ class build_clib(old_build_clib):
                                           dry_run=self.dry_run,
                                           force=self.force,
                                           requiref90=requiref90)
-                dist = self.distribution
-                base_config_fc = dist.get_option_dict('config_fc').copy()
-                base_config_fc.update(config_fc)
-                fcompiler.customize(base_config_fc)
+                if fcompiler is not None:
+                    dist = self.distribution
+                    base_config_fc = dist.get_option_dict('config_fc').copy()
+                    base_config_fc.update(config_fc)
+                    fcompiler.customize(base_config_fc)
 
             # check availability of Fortran compilers
             if (f_sources or fmodule_sources) and fcompiler is None:

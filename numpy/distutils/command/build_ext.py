@@ -175,7 +175,7 @@ class build_ext (old_build_ext):
                                                force=self.force,
                                                requiref90=False)
             fcompiler = self._f77_compiler
-            if fcompiler.get_version():
+            if fcompiler and fcompiler.get_version():
                 fcompiler.customize(self.distribution)
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
@@ -194,7 +194,7 @@ class build_ext (old_build_ext):
                                                force=self.force,
                                                requiref90=True)
             fcompiler = self._f90_compiler
-            if fcompiler.get_version():
+            if fcompiler and fcompiler.get_version():
                 fcompiler.customize(self.distribution)
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
