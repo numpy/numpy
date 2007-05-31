@@ -1041,7 +1041,7 @@ class Configuration(object):
         """
         include_non_existing = kws.get('include_non_existing',True)
         return gpaths(paths,
-                      local_path = self.local_path,
+                      local_path = self.path_in_package,
                       include_non_existing=include_non_existing)
 
     def _fix_paths_dict(self,kw):
