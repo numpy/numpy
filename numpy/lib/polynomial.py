@@ -641,6 +641,9 @@ class poly1d(object):
         self.__dict__['coeffs'][ind] = val
         return
 
+    def __iter__(self):
+        return iter(self.coeffs)
+
     def integ(self, m=1, k=0):
         """Return the mth analytical integral of this polynomial.
         See the documentation for polyint.
