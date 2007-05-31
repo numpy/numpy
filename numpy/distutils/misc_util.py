@@ -588,11 +588,12 @@ class Configuration(object):
         #               defines a configuration() function.
         if top_path is None:
             top_path = self.local_path
+            self.local_path = ''
         if package_path is None:
             package_path = self.local_path
         elif os.path.isdir(njoin(self.local_path,package_path)):
             package_path = njoin(self.local_path,package_path)
-        if not os.path.isdir(package_path):
+        if not os.path.isdir(package_path or '.'):
             raise ValueError("%r is not a directory" % (package_path,))
         self.top_path = top_path
         self.package_path = package_path
