@@ -755,7 +755,7 @@ lapack_lite_zgeqrf(PyObject *self, PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"llOlOOll",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
+        TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
 /* check objects and convert to right storage order */
         TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zgeqrf"));
