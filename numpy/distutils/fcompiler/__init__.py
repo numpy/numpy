@@ -785,7 +785,8 @@ def new_fcompiler(plat=None,
             msg = msg + " with '%s' compiler." % compiler
             msg = msg + " Supported compilers are: %s)" \
                   % (','.join(fcompiler_class.keys()))
-        raise DistutilsPlatformError, msg
+        log.warn(msg)
+        return None
 
     compiler = klass(verbose=verbose, dry_run=dry_run, force=force)
     return compiler
