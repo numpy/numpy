@@ -207,7 +207,7 @@ class FCompiler(CCompiler):
     ## They are private to FCompiler class and may return unexpected
     ## results if used elsewhere. So, you have been warned..
 
-    def find_executables(self):
+    def find_executables(self,exe_cache = {}):
         """Go through the self.executables dictionary, and attempt to
         find and assign appropiate executables.
 
@@ -219,12 +219,13 @@ class FCompiler(CCompiler):
         or the Fortran 90 compiler executable is used, unless overridden
         by an environment setting.
         """
-        exe_cache = {}
+        if exe_cache: # been here
+            return
         def cached_find_executable(exe):
             if exe in exe_cache:
                 return exe_cache[exe]
             fc_exe = find_executable(exe)
-            exe_cache[exe] = fc_exe
+            exe_cache[exe] = exe_cache[fc_exe] = fc_exe
             return fc_exe
         def set_exe(exe_key, f77=None, f90=None):
             cmd = self.executables.get(exe_key, None)
