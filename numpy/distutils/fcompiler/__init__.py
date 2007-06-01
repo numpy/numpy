@@ -257,18 +257,23 @@ class FCompiler(CCompiler):
                     return fc_exe
             return None
 
+        ctype = self.compiler_type
         f90 = set_exe('compiler_f90')
-#        if not f90:
-#            raise CompilerNotFound('f90')
-        f77 = set_exe('compiler_f77', f90=f90)
-        if not f77:
-            raise CompilerNotFound('f77')
-        set_exe('compiler_fix', f90=f90)
+        if not f90:
+            f77 = set_exe('compiler_f77')
+            if f77:
+                log.warn('%s: no Fortran 90 compiler found' % ctype)
+            else:
+                raise CompilerNotFound('%s: f90 nor f77' % ctype)
+        else:
+            f77 = set_exe('compiler_f77', f90=f90)
+            if not f77:
+                log.warn('%s: no Fortran 77 compiler found' % ctype)
+            set_exe('compiler_fix', f90=f90)
 
         set_exe('linker_so', f77=f77, f90=f90)
         set_exe('linker_exe', f77=f77, f90=f90)
         set_exe('version_cmd', f77=f77, f90=f90)
-
         set_exe('archiver')
         set_exe('ranlib')
 
@@ -385,7 +390,7 @@ class FCompiler(CCompiler):
 
     ## Public methods:
 
-    def customize(self, dist):
+    def customize(self, dist = None):
         """Customize Fortran compiler.
 
         This method gets Fortran compiler specific information from

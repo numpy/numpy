@@ -255,11 +255,12 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
     """ Compiler version. Returns None if compiler is not available. """
     if not force and hasattr(self,'version'):
         return self.version
+    self.find_executables()
     try:
         version_cmd = self.version_cmd
     except AttributeError:
         return None
-    if not version_cmd or not version_cmd[0] or None in version_cmd:
+    if not version_cmd or not version_cmd[0]:
         return None
     cmd = ' '.join(version_cmd)
     try:
@@ -277,6 +278,7 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
             return version
 
     status, output = exec_command(cmd,use_tee=0)
+
     version = None
     if status in ok_status:
         version = matcher(output)
