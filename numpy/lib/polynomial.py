@@ -547,6 +547,12 @@ class poly1d(object):
     def __call__(self, val):
         return polyval(self.coeffs, val)
 
+    def __neg__(self):
+        return poly1d(-self.coeffs)
+
+    def __pos__(self):
+        return self
+
     def __mul__(self, other):
         if isscalar(other):
             return poly1d(self.coeffs * other)
