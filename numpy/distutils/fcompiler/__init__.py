@@ -177,6 +177,8 @@ class FCompiler(CCompiler):
     shared_lib_format = "%s%s"
     exe_extension = ""
 
+    _exe_cache = {}
+
     def __init__(self, *args, **kw):
         CCompiler.__init__(self, *args, **kw)
         self.distutils_vars = self.distutils_vars.clone(self._environment_hook)
@@ -207,7 +209,7 @@ class FCompiler(CCompiler):
     ## They are private to FCompiler class and may return unexpected
     ## results if used elsewhere. So, you have been warned..
 
-    def find_executables(self,exe_cache = {}):
+    def find_executables(self):
         """Go through the self.executables dictionary, and attempt to
         find and assign appropiate executables.
 
@@ -219,8 +221,7 @@ class FCompiler(CCompiler):
         or the Fortran 90 compiler executable is used, unless overridden
         by an environment setting.
         """
-        if exe_cache: # been here
-            return
+        exe_cache = self._exe_cache
         def cached_find_executable(exe):
             if exe in exe_cache:
                 return exe_cache[exe]
