@@ -52,6 +52,7 @@ class IntelFCompiler(FCompiler):
         return ['-O3','-unroll']
 
     def get_flags_arch(self):
+        v = self.get_version()
         opt = []
         if cpu.has_fdiv_bug():
             opt.append('-fdiv_check')
@@ -65,8 +66,25 @@ class IntelFCompiler(FCompiler):
             opt.append('-tpp5')
         elif cpu.is_PentiumIV() or cpu.is_Xeon():
             opt.extend(['-tpp7','-xW'])
-        if cpu.has_mmx() and not cpu.is_Xeon():
-            opt.append('-xM')
+        if v and v <= '7.1':
+            if cpu.has_mmx() and (cpu.is_PentiumII() or cpu.is_PentiumIII()):
+                opt.append('-xM')
+        elif v and v >= '8.0':
+            if cpu.is_PentiumIII():
+                opt.append('-xK')
+                if cpu.has_sse3():
+                    opt.extend(['-xP'])
+            elif cpu.is_PentiumIV():
+                opt.append('-xW')
+                if cpu.has_sse2():
+                    opt.append('-xN')
+            elif cpu.is_PentiumM():
+                opt.extend(['-xB'])
+            if (cpu.is_Xeon() or cpu.is_Core2() or cpu.is_Core2Extreme()) and cpu.getNCPUs()==2:
+                opt.extend(['-xT'])
+            if cpu.has_sse3() and (cpu.is_PentiumIV() or cpu.is_CoreDuo() or cpu.is_CoreSolo()):
+                opt.extend(['-xP'])
+
         if cpu.has_sse2():
             opt.append('-arch SSE2')
         elif cpu.has_sse():
