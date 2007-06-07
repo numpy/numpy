@@ -1,5 +1,7 @@
 import os,sys,re,time
 
+from numpy.testing.utils import jiffies, memusage
+
 def cmdline():
     m=re.compile(r'\A\d+\Z')
     args = []
@@ -11,38 +13,6 @@ def cmdline():
             args.append(a)
     f2py_opts = ' '.join(args)
     return repeat,f2py_opts
-
-if sys.platform[:5]=='linux':
-    def jiffies(_proc_pid_stat = '/proc/%s/stat'%(os.getpid()),
-                _load_time=time.time()):
-        """ Return number of jiffies (1/100ths of a second) that this
-        process has been scheduled in user mode. See man 5 proc. """
-        try:
-            f=open(_proc_pid_stat,'r')
-            l = f.readline().split(' ')
-            f.close()
-            return int(l[13])
-        except:
-            return int(100*(time.time()-_load_time))
-
-    def memusage(_proc_pid_stat = '/proc/%s/stat'%(os.getpid())):
-        """ Return virtual memory size in bytes of the running python.
-        """
-        try:
-            f=open(_proc_pid_stat,'r')
-            l = f.readline().split(' ')
-            f.close()
-            return int(l[22])
-        except:
-            return
-else:
-    def jiffies(_load_time=time.time()):
-        """ Return number of jiffies (1/100ths of a second) that this
-    process has been scheduled in user mode. [Emulation with time.time]. """
-        return int(100*(time.time()-_load_time))
-
-    def memusage():
-        pass
 
 def run(runtest,test_functions,repeat=1):
     l = [(t,repr(t.__doc__.split('\n')[1].strip())) for t in test_functions]
