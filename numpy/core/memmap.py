@@ -80,14 +80,12 @@ class memmap(ndarray):
         if obj is not None:
             if not isinstance(obj, memmap):
                 raise ValueError, "Cannot create a memmap array that way"
-            self._mmap = obj._mmap
-            self._offset = obj._offset
-            self._mode = obj._mode
-            self._size = obj._size
-            self._name = obj._name
+            # it would be nice to carry the along the _mmap name
+            #  but then we might have problems because self could close
+            #  it while obj is still holding it.  So, we don't do
+            #  anything at this point. 
         else:
             self._mmap = None
-        return
 
     def sync(self):
         self._mmap.flush()
