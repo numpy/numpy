@@ -425,7 +425,8 @@ class FCompiler(CCompiler):
         # methods may call self.get_version.
         vers_cmd = self.command_vars.version_cmd
         if vers_cmd:
-            vflags = self.flag_vars.version
+            vflags = self.get_flags_version()
+            assert None not in vflags,`vflags`
             self.set_executables(version_cmd=[vers_cmd]+vflags)
 
         f77flags = []
