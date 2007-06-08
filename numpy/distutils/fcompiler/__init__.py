@@ -42,7 +42,7 @@ def flaglist(s):
 
 def str2bool(s):
     if is_string(s):
-        return not (s == '0' or s.lower() == 'False')
+        return not (s == '0' or s.lower() == 'false')
     return bool(s)
 
 class FCompiler(CCompiler):
