@@ -92,12 +92,12 @@ if os.name=='nt' and sys.version[:3] > '2.3':
         finally:
             win32pdh.CloseQuery(hq)
 
-        def memusage(processName="python", instance=0):
-            # from win32pdhutil, part of the win32all package
-            import win32pdh
-            return GetPerformanceAttributes("Process", "Virtual Bytes",
-                                            processName, instance,
-                                            win32pdh.PDH_FMT_LONG, None)
+    def memusage(processName="python", instance=0):
+        # from win32pdhutil, part of the win32all package
+        import win32pdh
+        return GetPerformanceAttributes("Process", "Virtual Bytes",
+                                        processName, instance,
+                                        win32pdh.PDH_FMT_LONG, None)
 
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
                   verbose=True,
