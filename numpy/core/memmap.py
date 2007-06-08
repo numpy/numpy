@@ -81,6 +81,10 @@ class memmap(ndarray):
             if not isinstance(obj, memmap):
                 raise ValueError, "Cannot create a memmap array that way"
             self._mmap = obj._mmap
+            self._offset = obj._offset
+            self._mode = obj._mode
+            self._size = obj._size
+            self._name = obj._name
         else:
             self._mmap = None
         return
