@@ -118,7 +118,7 @@ class FCompiler(CCompiler):
         arch = ('flags.arch', 'FARCH', 'arch', flaglist),
         arch_f77 = ('flags.arch_f77', None, None, flaglist),
         arch_f90 = ('flags.arch_f90', None, None, flaglist),
-        debug = ('flags.debug', 'FDEBUG', None, None, flaglist),
+        debug = ('flags.debug', 'FDEBUG', 'fdebug', None, flaglist),
         debug_f77 = ('flags.debug_f77', None, None, flaglist),
         debug_f90 = ('flags.debug_f90', None, None, flaglist),
         flags = ('self.get_flags', 'FFLAGS', 'fflags', flaglist),
