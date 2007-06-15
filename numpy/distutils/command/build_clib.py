@@ -99,156 +99,159 @@ class build_clib(old_build_clib):
 
     def build_libraries(self, libraries):
         for (lib_name, build_info) in libraries:
-            # default compilers
-            compiler = self.compiler
-            fcompiler = self.fcompiler
+            self.build_a_library(build_info, lib_name, libraries)
 
-            sources = build_info.get('sources')
-            if sources is None or not is_sequence(sources):
-                raise DistutilsSetupError, \
-                      ("in 'libraries' option (library '%s'), " +
-                       "'sources' must be present and must be " +
-                       "a list of source filenames") % lib_name
-            sources = list(sources)
+    def build_a_library(self, build_info, lib_name, libraries):
+        # default compilers
+        compiler = self.compiler
+        fcompiler = self.fcompiler
 
-            c_sources, cxx_sources, f_sources, fmodule_sources \
-                       = filter_sources(sources)
-            requiref90 = not not fmodule_sources or \
-                         build_info.get('language','c')=='f90'
+        sources = build_info.get('sources')
+        if sources is None or not is_sequence(sources):
+            raise DistutilsSetupError, \
+                  ("in 'libraries' option (library '%s'), " +
+                   "'sources' must be present and must be " +
+                   "a list of source filenames") % lib_name
+        sources = list(sources)
 
-            # save source type information so that build_ext can use it.
-            source_languages = []
-            if c_sources: source_languages.append('c')
-            if cxx_sources: source_languages.append('c++')
-            if requiref90: source_languages.append('f90')
-            elif f_sources: source_languages.append('f77')
-            build_info['source_languages'] = source_languages
+        c_sources, cxx_sources, f_sources, fmodule_sources \
+                   = filter_sources(sources)
+        requiref90 = not not fmodule_sources or \
+                     build_info.get('language','c')=='f90'
 
-            lib_file = compiler.library_filename(lib_name,
-                                                 output_dir=self.build_clib)
-            depends = sources + build_info.get('depends',[])
-            if not (self.force or newer_group(depends, lib_file, 'newer')):
-                log.debug("skipping '%s' library (up-to-date)", lib_name)
-                continue
-            else:
-                log.info("building '%s' library", lib_name)
+        # save source type information so that build_ext can use it.
+        source_languages = []
+        if c_sources: source_languages.append('c')
+        if cxx_sources: source_languages.append('c++')
+        if requiref90: source_languages.append('f90')
+        elif f_sources: source_languages.append('f77')
+        build_info['source_languages'] = source_languages
 
-            config_fc = build_info.get('config_fc',{})
-            if fcompiler is not None and config_fc:
-                log.info('using additional config_fc from setup script '\
-                         'for fortran compiler: %s' \
-                         % (config_fc,))
-                from numpy.distutils.fcompiler import new_fcompiler
-                fcompiler = new_fcompiler(compiler=fcompiler.compiler_type,
-                                          verbose=self.verbose,
-                                          dry_run=self.dry_run,
-                                          force=self.force,
-                                          requiref90=requiref90)
-                if fcompiler is not None:
-                    dist = self.distribution
-                    base_config_fc = dist.get_option_dict('config_fc').copy()
-                    base_config_fc.update(config_fc)
-                    fcompiler.customize(base_config_fc)
+        lib_file = compiler.library_filename(lib_name,
+                                             output_dir=self.build_clib)
+        depends = sources + build_info.get('depends',[])
+        if not (self.force or newer_group(depends, lib_file, 'newer')):
+            log.debug("skipping '%s' library (up-to-date)", lib_name)
+            return
+        else:
+            log.info("building '%s' library", lib_name)
 
-            # check availability of Fortran compilers
-            if (f_sources or fmodule_sources) and fcompiler is None:
-                raise DistutilsError, "library %s has Fortran sources"\
-                      " but no Fortran compiler found" % (lib_name)
+        config_fc = build_info.get('config_fc',{})
+        if fcompiler is not None and config_fc:
+            log.info('using additional config_fc from setup script '\
+                     'for fortran compiler: %s' \
+                     % (config_fc,))
+            from numpy.distutils.fcompiler import new_fcompiler
+            fcompiler = new_fcompiler(compiler=fcompiler.compiler_type,
+                                      verbose=self.verbose,
+                                      dry_run=self.dry_run,
+                                      force=self.force,
+                                      requiref90=requiref90)
+            if fcompiler is not None:
+                dist = self.distribution
+                base_config_fc = dist.get_option_dict('config_fc').copy()
+                base_config_fc.update(config_fc)
+                fcompiler.customize(base_config_fc)
 
-            macros = build_info.get('macros')
-            include_dirs = build_info.get('include_dirs')
-            extra_postargs = build_info.get('extra_compiler_args') or []
+        # check availability of Fortran compilers
+        if (f_sources or fmodule_sources) and fcompiler is None:
+            raise DistutilsError, "library %s has Fortran sources"\
+                  " but no Fortran compiler found" % (lib_name)
 
-            # where compiled F90 module files are:
-            module_dirs = build_info.get('module_dirs') or []
-            module_build_dir = os.path.dirname(lib_file)
-            if requiref90: self.mkpath(module_build_dir)
+        macros = build_info.get('macros')
+        include_dirs = build_info.get('include_dirs')
+        extra_postargs = build_info.get('extra_compiler_args') or []
 
-            if compiler.compiler_type=='msvc':
-                # this hack works around the msvc compiler attributes
-                # problem, msvc uses its own convention :(
-                c_sources += cxx_sources
-                cxx_sources = []
+        # where compiled F90 module files are:
+        module_dirs = build_info.get('module_dirs') or []
+        module_build_dir = os.path.dirname(lib_file)
+        if requiref90: self.mkpath(module_build_dir)
 
-            objects = []
-            if c_sources:
-                log.info("compiling C sources")
-                objects = compiler.compile(c_sources,
-                                           output_dir=self.build_temp,
-                                           macros=macros,
-                                           include_dirs=include_dirs,
-                                           debug=self.debug,
-                                           extra_postargs=extra_postargs)
+        if compiler.compiler_type=='msvc':
+            # this hack works around the msvc compiler attributes
+            # problem, msvc uses its own convention :(
+            c_sources += cxx_sources
+            cxx_sources = []
 
-            if cxx_sources:
-                log.info("compiling C++ sources")
-                cxx_compiler = compiler.cxx_compiler()
-                cxx_objects = cxx_compiler.compile(cxx_sources,
-                                                   output_dir=self.build_temp,
-                                                   macros=macros,
-                                                   include_dirs=include_dirs,
-                                                   debug=self.debug,
-                                                   extra_postargs=extra_postargs)
-                objects.extend(cxx_objects)
+        objects = []
+        if c_sources:
+            log.info("compiling C sources")
+            objects = compiler.compile(c_sources,
+                                       output_dir=self.build_temp,
+                                       macros=macros,
+                                       include_dirs=include_dirs,
+                                       debug=self.debug,
+                                       extra_postargs=extra_postargs)
 
-            if f_sources or fmodule_sources:
-                extra_postargs = []
-                f_objects = []
+        if cxx_sources:
+            log.info("compiling C++ sources")
+            cxx_compiler = compiler.cxx_compiler()
+            cxx_objects = cxx_compiler.compile(cxx_sources,
+                                               output_dir=self.build_temp,
+                                               macros=macros,
+                                               include_dirs=include_dirs,
+                                               debug=self.debug,
+                                               extra_postargs=extra_postargs)
+            objects.extend(cxx_objects)
 
-                if requiref90:
-                    if fcompiler.module_dir_switch is None:
-                        existing_modules = glob('*.mod')
-                    extra_postargs += fcompiler.module_options(\
-                        module_dirs,module_build_dir)
+        if f_sources or fmodule_sources:
+            extra_postargs = []
+            f_objects = []
 
-                if fmodule_sources:
-                    log.info("compiling Fortran 90 module sources")
-                    f_objects += fcompiler.compile(fmodule_sources,
-                                                   output_dir=self.build_temp,
-                                                   macros=macros,
-                                                   include_dirs=include_dirs,
-                                                   debug=self.debug,
-                                                   extra_postargs=extra_postargs)
+            if requiref90:
+                if fcompiler.module_dir_switch is None:
+                    existing_modules = glob('*.mod')
+                extra_postargs += fcompiler.module_options(\
+                    module_dirs,module_build_dir)
 
-                if requiref90 and self.fcompiler.module_dir_switch is None:
-                    # move new compiled F90 module files to module_build_dir
-                    for f in glob('*.mod'):
-                        if f in existing_modules:
-                            continue
-                        t = os.path.join(module_build_dir, f)
-                        if os.path.abspath(f)==os.path.abspath(t):
-                            continue
-                        if os.path.isfile(t):
-                            os.remove(t)
-                        try:
-                            self.move_file(f, module_build_dir)
-                        except DistutilsFileError:
-                            log.warn('failed to move %r to %r' \
-                                     % (f, module_build_dir))
+            if fmodule_sources:
+                log.info("compiling Fortran 90 module sources")
+                f_objects += fcompiler.compile(fmodule_sources,
+                                               output_dir=self.build_temp,
+                                               macros=macros,
+                                               include_dirs=include_dirs,
+                                               debug=self.debug,
+                                               extra_postargs=extra_postargs)
 
-                if f_sources:
-                    log.info("compiling Fortran sources")
-                    f_objects += fcompiler.compile(f_sources,
-                                                   output_dir=self.build_temp,
-                                                   macros=macros,
-                                                   include_dirs=include_dirs,
-                                                   debug=self.debug,
-                                                   extra_postargs=extra_postargs)
-            else:
-                f_objects = []
+            if requiref90 and self.fcompiler.module_dir_switch is None:
+                # move new compiled F90 module files to module_build_dir
+                for f in glob('*.mod'):
+                    if f in existing_modules:
+                        continue
+                    t = os.path.join(module_build_dir, f)
+                    if os.path.abspath(f)==os.path.abspath(t):
+                        continue
+                    if os.path.isfile(t):
+                        os.remove(t)
+                    try:
+                        self.move_file(f, module_build_dir)
+                    except DistutilsFileError:
+                        log.warn('failed to move %r to %r' \
+                                 % (f, module_build_dir))
 
-            objects.extend(f_objects)
+            if f_sources:
+                log.info("compiling Fortran sources")
+                f_objects += fcompiler.compile(f_sources,
+                                               output_dir=self.build_temp,
+                                               macros=macros,
+                                               include_dirs=include_dirs,
+                                               debug=self.debug,
+                                               extra_postargs=extra_postargs)
+        else:
+            f_objects = []
 
-            # assume that default linker is suitable for
-            # linking Fortran object files
-            compiler.create_static_lib(objects, lib_name,
-                                       output_dir=self.build_clib,
-                                       debug=self.debug)
+        objects.extend(f_objects)
 
-            # fix library dependencies
-            clib_libraries = build_info.get('libraries',[])
-            for lname, binfo in libraries:
-                if lname in clib_libraries:
-                    clib_libraries.extend(binfo[1].get('libraries',[]))
-            if clib_libraries:
-                build_info['libraries'] = clib_libraries
+        # assume that default linker is suitable for
+        # linking Fortran object files
+        compiler.create_static_lib(objects, lib_name,
+                                   output_dir=self.build_clib,
+                                   debug=self.debug)
+
+        # fix library dependencies
+        clib_libraries = build_info.get('libraries',[])
+        for lname, binfo in libraries:
+            if lname in clib_libraries:
+                clib_libraries.extend(binfo[1].get('libraries',[]))
+        if clib_libraries:
+            build_info['libraries'] = clib_libraries
