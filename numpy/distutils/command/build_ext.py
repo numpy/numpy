@@ -178,8 +178,8 @@ class build_ext (old_build_ext):
             fcompiler = self._f77_compiler
             if fcompiler:
                 ctype = fcompiler.compiler_type
-            if fcompiler and fcompiler.get_version():
                 fcompiler.customize(self.distribution)
+            if fcompiler and fcompiler.get_version():
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:
@@ -200,8 +200,8 @@ class build_ext (old_build_ext):
             fcompiler = self._f90_compiler
             if fcompiler:
                 ctype = fcompiler.compiler_type
-            if fcompiler and fcompiler.get_version():
                 fcompiler.customize(self.distribution)
+            if fcompiler and fcompiler.get_version():
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:

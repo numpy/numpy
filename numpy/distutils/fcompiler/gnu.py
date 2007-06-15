@@ -297,7 +297,7 @@ class Gnu95FCompiler(GnuFCompiler):
         'linker_so'    : ["<F90>", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
-        'linker_exe'   : [None,"-Wall"]
+        'linker_exe'   : [None, "-Wall"]
         }
 
     # use -mno-cygwin flag for g77 when Python is not Cygwin-Python

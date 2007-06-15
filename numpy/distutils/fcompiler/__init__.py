@@ -2,6 +2,15 @@
 
 Contains FCompiler, an abstract base class that defines the interface
 for the numpy.distutils Fortran compiler abstraction model.
+
+Terminology:
+
+To be consistent, where the term 'executable' is used, it means the single
+file, like 'gcc', that is executed, and should be a string. In contrast,
+'command' means the entire command line, like ['gcc', '-c', 'file.c'], and
+should be a list.
+
+But note that FCompiler.executables is actually a dictionary of commands.
 """
 
 __all__ = ['FCompiler','new_fcompiler','show_fcompilers',
@@ -20,14 +29,14 @@ from distutils.sysconfig import get_config_var, get_python_lib
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError, \
      DistutilsExecError, CompileError, LinkError, DistutilsPlatformError
-from distutils.util import split_quoted
+from distutils.util import split_quoted, strtobool
+from distutils.spawn import _nt_quote_args
 
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
-from numpy.distutils.misc_util import is_string, is_sequence, make_temp_file
+from numpy.distutils.misc_util import is_string, all_strings, is_sequence, make_temp_file
 from numpy.distutils.environment import EnvironmentConfig
-from numpy.distutils.exec_command import find_executable, splitcmdline
-from distutils.spawn import _nt_quote_args
+from numpy.distutils.exec_command import find_executable
 
 __metaclass__ = type
 
@@ -36,14 +45,17 @@ class CompilerNotFound(Exception):
 
 def flaglist(s):
     if is_string(s):
-        return splitcmdline(s)
+        return split_quoted(s)
     else:
         return s
 
 def str2bool(s):
     if is_string(s):
-        return not (s == '0' or s.lower() == 'false')
+        return strtobool(s)
     return bool(s)
+
+def is_sequence_of_strings(seq):
+    return is_sequence(seq) and all_strings(seq)
 
 class FCompiler(CCompiler):
     """Abstract base class to define the interface that must be implemented
@@ -51,17 +63,17 @@ class FCompiler(CCompiler):
 
     Methods that subclasses may redefine:
 
-        find_executables(), get_version_cmd(), get_linker_so(), get_version()
+        update_executables(), find_executables(), get_version()
         get_flags(), get_flags_opt(), get_flags_arch(), get_flags_debug()
         get_flags_f77(), get_flags_opt_f77(), get_flags_arch_f77(),
         get_flags_debug_f77(), get_flags_f90(), get_flags_opt_f90(),
         get_flags_arch_f90(), get_flags_debug_f90(),
-        get_flags_fix(), get_flags_linker_so(), get_flags_version()
+        get_flags_fix(), get_flags_linker_so()
 
     DON'T call these methods (except get_version) after
     constructing a compiler instance or inside any other method.
-    All methods, except get_version_cmd() and get_flags_version(), may
-    call the get_version() method.
+    All methods, except update_executables() and find_executables(),
+    may call the get_version() method.
 
     After constructing a compiler instance, always call customize(dist=None)
     method that finalizes compiler construction and makes the following
@@ -98,16 +110,15 @@ class FCompiler(CCompiler):
         compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', None),
         compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None),
         compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None),
-        version_cmd = ('self.get_version_cmd', None, None, None),
-        linker_so = ('self.get_linker_so', 'LDSHARED', 'ldshared', None),
-        linker_exe = ('self.get_linker_exe', 'LD', 'ld', None),
+        version_cmd = ('exe.version_cmd', None, None, None),
+        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None),
+        linker_exe = ('exe.linker_exe', 'LD', 'ld', None),
         archiver = (None, 'AR', 'ar', None),
         ranlib = (None, 'RANLIB', 'ranlib', None),
     )
 
     flag_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        version = ('flags.version', None, None, None),
         f77 = ('flags.f77', 'F77FLAGS', 'f77flags', flaglist),
         f90 = ('flags.f90', 'F90FLAGS', 'f90flags', flaglist),
         free = ('flags.free', 'FREEFLAGS', 'freeflags', flaglist),
@@ -177,7 +188,16 @@ class FCompiler(CCompiler):
     shared_lib_format = "%s%s"
     exe_extension = ""
 
+    # If compiler does not support compiling Fortran 90 then it can
+    # suggest using another compiler. For example, gnu would suggest
+    # gnu95 compiler type when there are F90 sources.
+    suggested_f90_compiler = None
+
     _exe_cache = {}
+
+    _executable_keys = ['version_cmd', 'compiler_f77', 'compiler_f90',
+                        'compiler_fix', 'linker_so', 'linker_exe', 'archiver',
+                        'ranlib']
 
     def __init__(self, *args, **kw):
         CCompiler.__init__(self, *args, **kw)
@@ -185,11 +205,13 @@ class FCompiler(CCompiler):
         self.command_vars = self.command_vars.clone(self._environment_hook)
         self.flag_vars = self.flag_vars.clone(self._environment_hook)
         self.executables = self.executables.copy()
-        for e in ['version_cmd', 'compiler_f77', 'compiler_f90',
-                  'compiler_fix', 'linker_so', 'linker_exe', 'archiver',
-                  'ranlib']:
+        for e in self._executable_keys:
             if e not in self.executables:
                 self.executables[e] = None
+
+        # Some methods depend on .customize() being called first, so
+        # this keeps track of whether that's happened yet.
+        self._is_customised = False
 
     def __copy__(self):
         obj = new.instance(self.__class__, self.__dict__)
@@ -199,10 +221,40 @@ class FCompiler(CCompiler):
         obj.executables = obj.executables.copy()
         return obj
 
-    # If compiler does not support compiling Fortran 90 then it can
-    # suggest using another compiler. For example, gnu would suggest
-    # gnu95 compiler type when there are F90 sources.
-    suggested_f90_compiler = None
+    # Use properties for the attributes used by CCompiler. Setting them
+    # as attributes from the self.executables dictionary is error-prone,
+    # so we get them from there each time.
+    def _command_property(key):
+        def fget(self):
+            assert self._is_customised
+            return self.executables[key]
+        return property(fget=fget)
+    version_cmd = _command_property('version_cmd')
+    compiler_f77 = _command_property('compiler_f77')
+    compiler_f90 = _command_property('compiler_f90')
+    compiler_fix = _command_property('compiler_fix')
+    linker_so = _command_property('linker_so')
+    linker_exe = _command_property('linker_exe')
+    archiver = _command_property('archiver')
+    ranlib = _command_property('ranlib')
+
+    # Make our terminology consistent.
+    def set_executable(self, key, value):
+        self.set_command(key, value)
+
+    def set_commands(self, **kw):
+        for k, v in kw.items():
+            self.set_command(k, v)
+
+    def set_command(self, key, value):
+        if not key in self._executable_keys:
+            raise ValueError(
+                "unknown executable '%s' for class %s" %
+                (key, self.__class__.__name__))
+        if is_string(value):
+            value = split_quoted(value)
+        assert value is None or is_sequence_of_strings(value[1:]), (key, value)
+        self.executables[key] = value
 
     ######################################################################
     ## Methods that subclasses may redefine. But don't call these methods!
@@ -220,7 +272,10 @@ class FCompiler(CCompiler):
         Also, if the 0th element is "<F77>" or "<F90>", the Fortran 77
         or the Fortran 90 compiler executable is used, unless overridden
         by an environment setting.
+
+        Subclasses should call this if overriden.
         """
+        assert self._is_customised
         exe_cache = self._exe_cache
         def cached_find_executable(exe):
             if exe in exe_cache:
@@ -228,6 +283,11 @@ class FCompiler(CCompiler):
             fc_exe = find_executable(exe)
             exe_cache[exe] = exe_cache[fc_exe] = fc_exe
             return fc_exe
+        def verify_command_form(name, value):
+            if value is not None and not is_sequence_of_strings(value):
+                raise ValueError(
+                    "%s value %r is invalid in class %s" %
+                    (name, value, self.__class__.__name__))
         def set_exe(exe_key, f77=None, f90=None):
             cmd = self.executables.get(exe_key, None)
             if not cmd:
@@ -257,6 +317,7 @@ class FCompiler(CCompiler):
                 if fc_exe:
                     cmd[0] = fc_exe
                     return fc_exe
+            self.set_command(exe_key, None)
             return None
 
         ctype = self.compiler_type
@@ -279,94 +340,48 @@ class FCompiler(CCompiler):
         set_exe('archiver')
         set_exe('ranlib')
 
-    def get_version_cmd(self):
-        """Compiler command to print out version information."""
-        f77 = self.executables.get('compiler_f77')
-        if f77 is not None:
-            f77 = f77[0]
-        cmd = self.executables.get('version_cmd')
-        if cmd is not None:
-            cmd = cmd[0]
-            if cmd == f77:
-                cmd = self.compiler_f77[0]
-            else:
-                f90 = self.executables.get('compiler_f90')
-                if f90 is not None:
-                    f90 = f90[0]
-                    if cmd == f90:
-                        cmd = self.compiler_f90[0]
-        return cmd
+    def update_executables(elf):
+        """Called at the beginning of customisation. Subclasses should
+        override this if they need to set up the executables dictionary.
 
-    def get_linker_so(self):
-        """Linker command to build shared libraries."""
-        f77 = self.executables.get('compiler_f77')
-        if f77 is not None:
-            f77 = f77[0]
-        ln = self.executables.get('linker_so')
-        if ln is not None:
-            ln = ln[0]
-            if ln == f77:
-                ln = self.compiler_f77[0]
-            else:
-                f90 = self.executables.get('compiler_f90')
-                if f90 is not None:
-                    f90 = f90[0]
-                    if ln == f90:
-                        ln = self.compiler_f90[0]
-        return ln
-
-    def get_linker_exe(self):
-        """Linker command to build shared libraries."""
-        f77 = self.executables.get('compiler_f77')
-        if f77 is not None:
-            f77 = f77[0]
-        ln = self.executables.get('linker_exe')
-        if ln is not None:
-            ln = ln[0]
-            if ln == f77:
-                ln = self.compiler_f77[0]
-            else:
-                f90 = self.executables.get('compiler_f90')
-                if f90 is not None:
-                    f90 = f90[0]
-                    if ln == f90:
-                        ln = self.compiler_f90[0]
-        return ln
+        Note that self.find_executables() is run afterwards, so the
+        self.executables dictionary values can contain <F77> or <F90> as
+        the command, which will be replaced by the found F77 or F90
+        compiler.
+        """
+        pass
 
     def get_flags(self):
         """List of flags common to all compiler types."""
         return [] + self.pic_flags
 
-    def _get_executable_flags(self, key):
+    def _get_command_flags(self, key):
         cmd = self.executables.get(key, None)
         if cmd is None:
             return []
         return cmd[1:]
 
-    def get_flags_version(self):
-        """List of compiler flags to print out version information."""
-        return self._get_executable_flags('version_cmd')
     def get_flags_f77(self):
         """List of Fortran 77 specific flags."""
-        return self._get_executable_flags('compiler_f77')
+        return self._get_command_flags('compiler_f77')
     def get_flags_f90(self):
         """List of Fortran 90 specific flags."""
-        return self._get_executable_flags('compiler_f90')
+        return self._get_command_flags('compiler_f90')
     def get_flags_free(self):
         """List of Fortran 90 free format specific flags."""
         return []
     def get_flags_fix(self):
         """List of Fortran 90 fixed format specific flags."""
-        return self._get_executable_flags('compiler_fix')
+        return self._get_command_flags('compiler_fix')
     def get_flags_linker_so(self):
         """List of linker flags to build a shared library."""
-        return self._get_executable_flags('linker_so')
+        return self._get_command_flags('linker_so')
     def get_flags_linker_exe(self):
         """List of linker flags to build an executable."""
-        return self._get_executable_flags('linker_exe')
+        return self._get_command_flags('linker_exe')
     def get_flags_ar(self):
         """List of archiver flags. """
-        return self._get_executable_flags('archiver')
+        return self._get_command_flags('archiver')
     def get_flags_opt(self):
         """List of architecture independent compiler flags."""
         return []
@@ -388,6 +403,10 @@ class FCompiler(CCompiler):
         """List of compiler library directories."""
         return self.library_dirs[:]
 
+    def get_version(self, force=False, ok_status=[0]):
+        assert self._is_customised
+        return CCompiler.get_version(force=force, ok_status=ok_status)
+
     ############################################################
 
     ## Public methods:
@@ -404,30 +423,25 @@ class FCompiler(CCompiler):
         instance is needed for (iii) and (iv).
         """
         log.info('customize %s' % (self.__class__.__name__))
+
+        self._is_customised = True
+
         self.distutils_vars.use_distribution(dist)
         self.command_vars.use_distribution(dist)
         self.flag_vars.use_distribution(dist)
 
+        self.update_executables()
+
+        # find_executables takes care of setting the compiler commands,
+        # version_cmd, linker_so, linker_exe, ar, and ranlib
         self.find_executables()
 
         noopt = self.distutils_vars.get('noopt', False)
-        if 0: # change to `if 1:` when making release.
-            # Don't use architecture dependent compiler flags:
-            noarch = True
-        else:
-            noarch = self.distutils_vars.get('noarch', noopt)
+        noarch = self.distutils_vars.get('noarch', noopt)
         debug = self.distutils_vars.get('debug', False)
 
         f77 = self.command_vars.compiler_f77
         f90 = self.command_vars.compiler_f90
-
-        # Must set version_cmd before others as self.get_flags*
-        # methods may call self.get_version.
-        vers_cmd = self.command_vars.version_cmd
-        if vers_cmd:
-            vflags = self.get_flags_version()
-            assert None not in vflags,`vflags`
-            self.set_executables(version_cmd=[vers_cmd]+vflags)
 
         f77flags = []
         f90flags = []
@@ -445,23 +459,18 @@ class FCompiler(CCompiler):
             fixflags = self.flag_vars.fix + f90flags
 
         oflags, aflags, dflags = [], [], []
-        def to_list(flags):
-            if is_string(flags):
-                return [flags]
-            return flags
         # examine get_flags_<tag>_<compiler> for extra flags
         # only add them if the method is different from get_flags_<tag>
         def get_flags(tag, flags):
             # note that self.flag_vars.<tag> calls self.get_flags_<tag>()
-            flags.extend(to_list(getattr(self.flag_vars, tag)))
+            flags.extend(getattr(self.flag_vars, tag))
             this_get = getattr(self, 'get_flags_' + tag)
             for name, c, flagvar in [('f77', f77, f77flags),
                                      ('f90', f90, f90flags),
                                      ('f90', fix, fixflags)]:
                 t = '%s_%s' % (tag, name)
                 if c and this_get is not getattr(self, 'get_flags_' + t):
-                    flagvar.extend(to_list(getattr(self.flag_vars, t)))
-            return oflags
+                    flagvar.extend(getattr(self.flag_vars, t))
         if not noopt:
             get_flags('opt', oflags)
             if not noarch:
@@ -469,41 +478,36 @@ class FCompiler(CCompiler):
         if debug:
             get_flags('debug', dflags)
 
-        fflags = to_list(self.flag_vars.flags) + dflags + oflags + aflags
+        fflags = self.flag_vars.flags + dflags + oflags + aflags
 
         if f77:
-            self.set_executables(compiler_f77=[f77]+f77flags+fflags)
+            self.set_commands(compiler_f77=[f77]+f77flags+fflags)
         if f90:
-            self.set_executables(compiler_f90=[f90]+freeflags+f90flags+fflags)
+            self.set_commands(compiler_f90=[f90]+freeflags+f90flags+fflags)
         if fix:
-            self.set_executables(compiler_fix=[fix]+fixflags+fflags)
+            self.set_commands(compiler_fix=[fix]+fixflags+fflags)
+
 
         #XXX: Do we need LDSHARED->SOSHARED, LDFLAGS->SOFLAGS
-        linker_so = self.command_vars.linker_so
+        linker_so = self.linker_so
         if linker_so:
-            linker_so_flags = to_list(self.flag_vars.linker_so)
+            linker_so_flags = self.flag_vars.linker_so
             if sys.platform.startswith('aix'):
                 python_lib = get_python_lib(standard_lib=1)
                 ld_so_aix = os.path.join(python_lib, 'config', 'ld_so_aix')
                 python_exp = os.path.join(python_lib, 'config', 'python.exp')
-                linker_so = [ld_so_aix, linker_so, '-bI:'+python_exp]
-            else:
-                linker_so = [linker_so]
-            self.set_executables(linker_so=linker_so+linker_so_flags)
+                linker_so = [ld_so_aix] + linker_so + ['-bI:'+python_exp]
+            self.set_commands(linker_so=linker_so+linker_so_flags)
 
-        linker_exe = self.command_vars.linker_exe
+        linker_exe = self.linker_exe
         if linker_exe:
-            linker_exe_flags = to_list(self.flag_vars.linker_exe)
-            self.set_executables(linker_exe=[linker_exe]+linker_exe_flags)
+            linker_exe_flags = self.flag_vars.linker_exe
+            self.set_commands(linker_exe=linker_exe+linker_exe_flags)
 
         ar = self.command_vars.archiver
         if ar:
-            arflags = to_list(self.flag_vars.ar)
-            self.set_executables(archiver=[ar]+arflags)
-
-        ranlib = self.command_vars.ranlib
-        if ranlib:
-            self.set_executables(ranlib=[ranlib])
+            arflags = self.flag_vars.ar
+            self.set_commands(archiver=[ar]+arflags)
 
         self.set_library_dirs(self.get_library_dirs())
         self.set_libraries(self.get_libraries())
@@ -525,7 +529,6 @@ class FCompiler(CCompiler):
             if l[:4]=='  --':
                 l = '  ' + l[4:]
             print l
-        return
 
     ###################
 
@@ -572,8 +575,6 @@ class FCompiler(CCompiler):
             self.spawn(command,display=display)
         except DistutilsExecError, msg:
             raise CompileError, msg
-
-        return
 
     def module_options(self, module_dirs, module_build_dir):
         options = []
@@ -645,7 +646,6 @@ class FCompiler(CCompiler):
                 raise LinkError, msg
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
-        return
 
     def _environment_hook(self, name, hook_name):
         if hook_name is None:

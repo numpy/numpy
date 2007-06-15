@@ -174,8 +174,10 @@ def CCompiler_show_customization(self):
             if not attr:
                 continue
             log.info("compiler '%s' is set to %s" % (attrname,attr))
-    try: self.get_version()
-    except: pass
+    try:
+        self.get_version()
+    except:
+        pass
     if log._global_log.threshold<2:
         print '*'*80
         print self.__class__
@@ -251,8 +253,8 @@ def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
         return m.group(0)
     return matcher
 
-def CCompiler_get_version(self, force=0, ok_status=[0]):
-    """ Compiler version. Returns None if compiler is not available. """
+def CCompiler_get_version(self, force=False, ok_status=[0]):
+    """Compiler version. Returns None if compiler is not available."""
     if not force and hasattr(self,'version'):
         return self.version
     self.find_executables()

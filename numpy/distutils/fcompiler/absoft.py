@@ -30,7 +30,7 @@ class AbsoftFCompiler(FCompiler):
     # Note that fink installs g77 as f77, so need to use f90 for detection.
 
     executables = {
-        'version_cmd'  : ['<F90>', None],
+        'version_cmd'  : None,          # set by update_executables
         'compiler_f77' : ["f77"],
         'compiler_fix' : ["f90"],
         'compiler_f90' : ["f90"],
@@ -45,9 +45,10 @@ class AbsoftFCompiler(FCompiler):
     module_dir_switch = None
     module_include_switch = '-p'
 
-    def get_flags_version(self):
+    def update_executables(self):
         f = cyg2win32(dummy_fortran_file())
-        return ['-V', '-c', f+'.f', '-o', f+'.o']
+        self.executables['version_cmd'] = ['<F90>', '-V', '-c',
+                                           f+'.f', '-o', f+'.o']
 
     def get_flags_linker_so(self):
         if os.name=='nt':
