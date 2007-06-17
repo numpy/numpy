@@ -292,14 +292,14 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
       }
       else
       {
-	sprintf(s, "%d,", size[i]);                
+	sprintf(s, "%ld,", (long int)size[i]);                
       }    
       strcat(desired_dims,s);
     }
     len = strlen(desired_dims);
     desired_dims[len-1] = ']';
     for (i = 0; i < n; i++) {
-      sprintf(s, "%d,", array_size(ary,i));                            
+      sprintf(s, "%ld,", (long int)array_size(ary,i));                            
       strcat(actual_dims,s);
     }
     len = strlen(actual_dims);
