@@ -85,6 +85,10 @@ testing --> NumpyTest
 """
 
     def test(*args, **kw):
+        import os, sys
+        print 'Numpy is installed in %s' % (os.path.split(__file__)[0],)
+        print 'Numpy version %s' % (__version__,)
+        print 'Python version %s' % (sys.version.replace('\n', '',),)
         return NumpyTest().test(*args, **kw)
     test.__doc__ = NumpyTest.test.__doc__
 
