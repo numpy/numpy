@@ -376,7 +376,7 @@ def info(obj, output=sys.stdout, numpy=0):
     else:
         extra = ""
         tic = ""
-    print >> output, "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_), extra)
+    print >> output, "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra)
     print >> output, "byteorder: ",
     endian = obj.dtype.byteorder
     if endian in ['|','=']:
