@@ -687,5 +687,11 @@ class test_regression(NumpyTestCase):
         x = N.random.rand(*(2,)*16)
         y = x.transpose(range(16))
 
+    def check_string_mergesort(self, level=rlevel):
+        """Ticket #540"""
+        x = N.array(['a']*32)
+        assert_array_equal(x.argsort(kind='m'), N.arange(32))
+
+
 if __name__ == "__main__":
     NumpyTest().run()

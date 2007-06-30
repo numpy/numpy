@@ -367,7 +367,7 @@ add_newdoc('numpy.core.multiarray','lexsort',
     sort order, and so on).  The keys argument must be a sequence of things
     that can be converted to arrays of the same shape.
 
-    :Parameters:
+    Parameters:
 
         a : array type
             Array containing values that the returned indices should sort.
@@ -376,16 +376,16 @@ add_newdoc('numpy.core.multiarray','lexsort',
             Axis to be indirectly sorted. None indicates that the flattened
             array should be used. Default is -1.
 
-    :Returns:
+    Returns:
 
         indices : integer array
             Array of indices that sort the keys along the specified axis. The
             array has the same shape as the keys.
 
-    :SeeAlso:
+    SeeAlso:
 
-      - argsort : indirect sort
-      - sort : inplace sort
+        argsort : indirect sort
+        sort : inplace sort
 
     """)
 

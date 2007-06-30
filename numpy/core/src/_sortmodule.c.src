@@ -377,7 +377,7 @@ static void
                         *pi = *pj;
                 }
                 for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
-                        if (@comp@(v+(*pk)*len,v+(*pj)*len,len)<=0) {
+                        if (@comp@(v+(*pk)*len,v+(*pj)*len,len) <= 0) {
                                 *pm = *pk;
                                 ++pk;
                         }else{
@@ -393,8 +393,8 @@ static void
                 for(pi = pl + 1; pi <= pr; ++pi) {
                         vi = *pi;
                         vp = v + vi*len;
-                        for(pj = pi, pk = pi - 1;                       \
-			    pj > pl && (@comp@(vp, v+(*pk)*len,len)<=0); \
+                        for(pj = pi, pk = pi - 1;                        \
+			    pj > pl && (@comp@(vp, v+(*pk)*len,len) < 0);\
 			    --pj, --pk) {
                                 *pj = *pk;
                         }
