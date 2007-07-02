@@ -11,7 +11,7 @@ from distutils.util import get_platform
 from distutils.errors import DistutilsError, DistutilsSetupError
 
 try:
-    import Pyrex.Compiler
+    import Pyrex.Compiler.Main
     have_pyrex = True
 except ImportError:
     have_pyrex = False
