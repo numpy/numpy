@@ -35,42 +35,42 @@ Exported symbols include:
     float_, complex_,
     longfloat, clongfloat,
 
-    As part of the type-hierarchy:    xx -- is bit-width
+   As part of the type-hierarchy:    xx -- is bit-width
 
-     generic
-       bool_
-       number
-         integer
-           signedinteger   (intxx)
-             byte
-             short
-             intc
-             intp           int0
-             int_
-             longlong
-           unsignedinteger  (uintxx)
-             ubyte
-             ushort
-             uintc
-             uintp          uint0
-             uint_
-             ulonglong
-         floating           (floatxx)
-             single
-             float_  (double)
-             longfloat
-         complexfloating    (complexxx)
-             csingle
-             complex_ (cfloat, cdouble)
-             clongfloat
-
-       flexible
-         character
-           str_     (string_)
-           unicode_
-         void
-
-       object_ (not used much)
+   generic
+     +-> bool_
+     +-> number
+     |     integer
+     |     signedinteger   (intxx)
+     |     byte
+     |     short
+     |     intc
+     |     intp           int0
+     |     int_
+     |     longlong
+     +-> unsignedinteger  (uintxx)
+     |     ubyte
+     |     ushort
+     |     uintc
+     |     uintp          uint0
+     |     uint_
+     |     ulonglong
+     +-> inexact
+     |   +-> floating           (floatxx)
+     |   |     single
+     |   |     float_  (double)
+     |   |     longfloat
+     |   \-> complexfloating    (complexxx)
+     |         csingle
+     |         complex_ (cfloat, cdouble)
+     |         clongfloat
+     +-> flexible
+     |     character
+     |     str_     (string_)
+     |     unicode_
+     |     void
+     |
+     \-> object_ (not used much)
 
 $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 """
@@ -228,7 +228,7 @@ def _add_integer_aliases():
             sctypeDict[charname] = typeobj
             sctypeDict[ucharname] = utypeobj
             sctypeNA[Intname] = typeobj
-            sctypeNA[UIntname] = utypeobj            
+            sctypeNA[UIntname] = utypeobj
             sctypeNA[charname] = typeobj
             sctypeNA[ucharname] = utypeobj
         sctypeNA[typeobj] = Intname
