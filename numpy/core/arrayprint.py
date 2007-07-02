@@ -13,49 +13,13 @@ __docformat__ = 'restructuredtext'
 # and by Travis Oliphant  2005-8-22 for numpy
 
 import sys
-import numeric      as _gen
+import numeric      as _nc
 import numerictypes as _nt
-import umath        as _uf
+from umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from multiarray import format_longfloat
 from fromnumeric import ravel
-_nc = _gen
-
-# The following functions are emergency substitutes for numeric functions
-# which sometimes get broken during development.
 
 def product(x, y): return x*y
-
-def _maximum_reduce(arr):
-    maximum = arr[0]
-    for i in xrange(1, arr.nelements()):
-        if arr[i] > maximum: maximum = arr[i]
-    return maximum
-
-def _minimum_reduce(arr):
-    minimum = arr[0]
-    for i in xrange(1, arr.nelements()):
-        if arr[i] < minimum: minimum = arr[i]
-    return minimum
-
-def _numeric_compress(arr):
-    nonzero = 0
-    for i in xrange(arr.nelements()):
-        if arr[i] != 0: nonzero += 1
-    retarr = _nc.zeros((nonzero,))
-    nonzero = 0
-    for i in xrange(arr.nelements()):
-        if arr[i] != 0:
-            retarr[nonzero] = abs(arr[i])
-            nonzero += 1
-    return retarr
-
-_failsafe = 0
-if _failsafe:
-    max_reduce = _maximum_reduce
-    min_reduce = _minimum_reduce
-else:
-    max_reduce = _uf.maximum.reduce
-    min_reduce = _uf.minimum.reduce
 
 _summaryEdgeItems = 3     # repr N leading and trailing items of each dimension
 _summaryThreshold = 1000 # total items > triggers array summarization
@@ -63,10 +27,13 @@ _summaryThreshold = 1000 # total items > triggers array summarization
 _float_output_precision = 8
 _float_output_suppress_small = False
 _line_width = 75
+_nan_str = 'NaN'
+_inf_str = 'Inf'
 
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
-                     linewidth=None, suppress=None):
+                     linewidth=None, suppress=None,
+                     nanstr=None, infstr=None):
     """Set options associated with printing.
 
     :Parameters:
@@ -84,44 +51,58 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         suppress : bool
             Whether or not suppress printing of small floating point values
             using scientific notation (default False).
+        nanstr : string
+            String representation of floating point not-a-number (default nan).
+        infstr : string
+            String representation of floating point infinity (default inf).
     """
 
     global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
-           _line_width, _float_output_suppress_small
-    if (linewidth is not None):
+           _line_width, _float_output_suppress_small, _nan_str, _inf_str
+    if linewidth is not None:
         _line_width = linewidth
-    if (threshold is not None):
+    if threshold is not None:
         _summaryThreshold = threshold
-    if (edgeitems is not None):
+    if edgeitems is not None:
         _summaryEdgeItems = edgeitems
-    if (precision is not None):
+    if precision is not None:
         _float_output_precision = precision
-    if (suppress is not None):
+    if suppress is not None:
         _float_output_suppress_small = not not suppress
-    return
+    if nanstr is not None:
+        _nan_str = nanstr
+    if infstr is not None:
+        _inf_str = infstr
 
 def get_printoptions():
     """Return the current print options.
 
     :Returns:
-        precision : int
-        threshold : int
-        edgeitems : int
-        linewidth : int
-        suppress : bool
+        dictionary of current print options with keys
+        - precision : int
+        - threshold : int
+        - edgeitems : int
+        - linewidth : int
+        - suppress : bool
+        - nanstr : string
+        - infstr : string
 
     :SeeAlso:
      - set_printoptions : parameter descriptions
-
     """
-    return _float_output_precision, _summaryThreshold, _summaryEdgeItems, \
-           _line_width, _float_output_suppress_small
-
+    d = dict(precision=_float_output_precision,
+             threshold=_summaryThreshold,
+             edgeitems=_summaryEdgeItems,
+             linewidth=_line_width,
+             suppress=_float_output_suppress_small,
+             nanstr=_nan_str,
+             infstr=_inf_str)
+    return d
 
 def _leading_trailing(a):
     if a.ndim == 1:
         if len(a) > 2*_summaryEdgeItems:
-            b = _gen.concatenate((a[:_summaryEdgeItems],
+            b = _nc.concatenate((a[:_summaryEdgeItems],
                                      a[-_summaryEdgeItems:]))
         else:
             b = a
@@ -133,7 +114,7 @@ def _leading_trailing(a):
                 min(len(a), _summaryEdgeItems),0,-1)])
         else:
             l = [_leading_trailing(a[i]) for i in range(0, len(a))]
-        b = _gen.concatenate(tuple(l))
+        b = _nc.concatenate(tuple(l))
     return b
 
 def _boolFormatter(x):
@@ -168,33 +149,25 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             # make sure True and False line up.
             format_function = _boolFormatter
         elif issubclass(dtypeobj, _nt.integer):
-            max_str_len = max(len(str(max_reduce(data))),
-                              len(str(min_reduce(data))))
+            max_str_len = max(len(str(maximum.reduce(data))),
+                              len(str(mininum.reduce(data))))
             format = '%' + str(max_str_len) + 'd'
             format_function = lambda x: _formatInteger(x, format)
         elif issubclass(dtypeobj, _nt.floating):
             if issubclass(dtypeobj, _nt.longfloat):
                 format_function = _longfloatFormatter(precision)
             else:
-                format = _floatFormat(data, precision, suppress_small)
-                format_function = lambda x: _formatFloat(x, format)
+                format_function = FloatFormat(data, precision, suppress_small)
         elif issubclass(dtypeobj, _nt.complexfloating):
             if issubclass(dtypeobj, _nt.clongfloat):
                 format_function = _clongfloatFormatter(precision)
             else:
-                real_format = _floatFormat(
-                    data.real, precision, suppress_small, sign=0)
-                imag_format = _floatFormat(
-                    data.imag, precision, suppress_small, sign=1)
-                format_function = lambda x: \
-                              _formatComplex(x, real_format, imag_format)
+                format_function = ComplexFormat(data, precision, suppress_small)
         elif issubclass(dtypeobj, _nt.unicode_) or \
-             issubclass(dtypeobj, _nt.string_):
-            format = "%s"
-            format_function = lambda x: repr(x)
+                 issubclass(dtypeobj, _nt.string_):
+            format_function = repr
         else:
-            format = '%s'
-            format_function = lambda x: str(x)
+            format_function = str
 
     next_line_prefix = " " # skip over "["
     next_line_prefix += " "*len(prefix)                  # skip over array(
@@ -208,7 +181,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
 def _convert_arrays(obj):
     newtup = []
     for k in obj:
-        if isinstance(k, _gen.ndarray):
+        if isinstance(k, _nc.ndarray):
             k = k.tolist()
         elif isinstance(k, tuple):
             k = _convert_arrays(k)
@@ -342,109 +315,138 @@ def _formatArray(a, format_function, rank, max_line_len,
                           summary_insert).rstrip()+']\n'
     return s
 
-def _floatFormat(data, precision, suppress_small, sign = 0):
-    exp_format = 0
-    errstate = _gen.seterr(all='ignore')
-    non_zero = _uf.absolute(data.compress(_uf.not_equal(data, 0)))
-    ##non_zero = _numeric_compress(data) ##
-    if len(non_zero) == 0:
-        max_val = 0.
-        min_val = 0.
-    else:
-        max_val = max_reduce(non_zero)
-        min_val = min_reduce(non_zero)
-        if max_val >= 1.e8:
-            exp_format = 1
-        if not suppress_small and (min_val < 0.0001
-                                   or max_val/min_val > 1000.):
-            exp_format = 1
-    _gen.seterr(**errstate)
-    if exp_format:
-        large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
-        max_str_len = 8 + precision + large_exponent
-        if sign: format = '%+'
-        else: format = '%'
-        format = format + str(max_str_len) + '.' + str(precision) + 'e'
-        if large_exponent: format = format + '3'
-    else:
-        format = '%.' + str(precision) + 'f'
-        precision = min(precision, max([_digits(x, precision, format)
-                                        for x in data]))
-        max_str_len = len(str(int(max_val))) + precision + 2
-        if sign: format = '%#+'
-        else: format = '%#'
-        format = format + str(max_str_len) + '.' + str(precision) + 'f'
-    return format
+class FloatFormat(object):
+    def __init__(self, data, precision, suppress_small, sign=False):
+        self.precision = precision
+        self.suppress_small = suppress_small
+        self.sign = sign
+        self.exp_format = False
+        self.large_exponent = False
+        self.max_str_len = 0
+        self.fillFormat(data)
+
+    def fillFormat(self, data):
+        errstate = _nc.seterr(all='ignore')
+        try:
+            special = isnan(data) | isinf(data)
+            non_zero = absolute(data.compress(not_equal(data, 0) & ~special))
+            if len(non_zero) == 0:
+                max_val = 0.
+                min_val = 0.
+            else:
+                max_val = maximum.reduce(non_zero)
+                min_val = minimum.reduce(non_zero)
+                if max_val >= 1.e8:
+                    self.exp_format = True
+                if not self.suppress_small and (min_val < 0.0001
+                                           or max_val/min_val > 1000.):
+                    self.exp_format = True
+        finally:
+            _nc.seterr(**errstate)
+        if self.exp_format:
+            self.large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
+            self.max_str_len = 8 + self.precision
+            if self.large_exponent:
+                self.max_str_len += 1
+            if self.sign:
+                format = '%+'
+            else:
+                format = '%'
+            format = format + '%d.%de' % (self.max_str_len, self.precision)
+        else:
+            format = '%%.%df' % (self.precision,)
+            if len(non_zero):
+                precision = max([_digits(x, self.precision, format)
+                                 for x in non_zero])
+            else:
+                precision = 0
+            precision = min(self.precision, precision)
+            self.max_str_len = len(str(int(max_val))) + precision + 2
+            if _nc.any(special):
+                self.max_str_len = max(self.max_str_len,
+                                       len(_nan_str),
+                                       len(_inf_str)+1)
+            if self.sign:
+                format = '%#+'
+            else:
+                format = '%#'
+            format = format + '%d.%df' % (self.max_str_len, precision)
+        self.special_fmt = '%%%ds' % (self.max_str_len,)
+        self.format = format
+
+    def __call__(self, x, strip_zeros=True):
+        if isnan(x):
+            return self.special_fmt % (_nan_str,)
+        elif isinf(x):
+            if x > 0:
+                return self.special_fmt % (_inf_str,)
+            else:
+                return self.special_fmt % ('-' + _inf_str,)
+        s = self.format % x
+        if self.large_exponent:
+            # 3-digit exponent
+            expsign = s[-3]
+            if expsign == '+' or expsign == '-':
+                s = s[1:-2] + '0' + s[-2:]
+        elif self.exp_format:
+            # 2-digit exponent
+            if s[-3] == '0':
+                s = ' ' + s[:-3] + s[-2:]
+        elif strip_zeros:
+            z = s.rstrip('0')
+            s = z + ' '*(len(s)-len(z))
+        return s
+
 
 def _digits(x, precision, format):
     s = format % x
-    zeros = len(s)
-    while s[zeros-1] == '0': zeros = zeros-1
-    return precision-len(s)+zeros
+    z = s.rstrip('0')
+    return precision - len(s) + len(z)
 
 
 _MAXINT = sys.maxint
 _MININT = -sys.maxint-1
 def _formatInteger(x, format):
-    if (x < _MAXINT) and (x > _MININT):
+    if _MININT < x < _MAXINT:
         return format % x
     else:
         return "%s" % x
 
 def _longfloatFormatter(precision):
+    # XXX Have to add something to determine the width to use a la FloatFormat
+    # Right now, things won't line up properly
     def formatter(x):
+        if isnan(x):
+            return _nan_str
+        elif isinf(x):
+            if x > 0:
+                return _inf_str
+            else:
+                return '-' + _inf_str
         return format_longfloat(x, precision)
     return formatter
-
-def _formatFloat(x, format, strip_zeros = 1):
-    if format[-1] == '3':
-        # 3-digit exponent
-        format = format[:-1]
-        s = format % x
-        third = s[-3]
-        if third == '+' or third == '-':
-            s = s[1:-2] + '0' + s[-2:]
-    elif format[-1] == 'e':
-        # 2-digit exponent
-        s = format % x
-        if s[-3] == '0':
-            s = ' ' + s[:-3] + s[-2:]
-    elif format[-1] == 'f':
-        s = format % x
-        if strip_zeros:
-            zeros = len(s)
-            while s[zeros-1] == '0': zeros = zeros-1
-            s = s[:zeros] + (len(s)-zeros)*' '
-    else:
-        s = format % x
-    return s
 
 def _clongfloatFormatter(precision):
     def formatter(x):
         r = format_longfloat(x.real, precision)
         i = format_longfloat(x.imag, precision)
-        if x.imag < 0:
-            i = '-' + i
-        else:
-            i = '+' + i
-        return r + i + 'j'
+        return '%s+%sj' % (r, i)
     return formatter
 
-def _formatComplex(x, real_format, imag_format):
-    r = _formatFloat(x.real, real_format)
-    i = _formatFloat(x.imag, imag_format, 0)
-    if imag_format[-1] == 'f':
-        zeros = len(i)
-        while zeros > 2 and i[zeros-1] == '0': zeros = zeros-1
-        i = i[:zeros] + 'j' + (len(i)-zeros)*' '
-    else:
-        i = i + 'j'
-    return r + i
+class ComplexFormat(object):
+    def __init__(self, x, precision, suppress_small):
+        self.real_format = FloatFormat(x.real, precision, suppress_small)
+        self.imag_format = FloatFormat(x.imag, precision, suppress_small,
+                                       sign=True)
 
-def _formatGeneral(x):
-    return str(x) + ' '
+    def __call__(self, x):
+        r = self.real_format(x.real, strip_zeros=False)
+        i = self.imag_format(x.imag, strip_zeros=False)
+        if not self.imag_format.exp_format:
+            z = i.rstrip('0')
+            i = z + 'j' + ' '*(len(i)-len(z))
+        else:
+            i = i + 'j'
+        return r + i
 
-if __name__ == '__main__':
-    a = _nc.arange(10)
-    print array2string(a)
-    print array2string(_nc.array([[],[]]))
+## end
