@@ -150,7 +150,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
             format_function = _boolFormatter
         elif issubclass(dtypeobj, _nt.integer):
             max_str_len = max(len(str(maximum.reduce(data))),
-                              len(str(mininum.reduce(data))))
+                              len(str(minimum.reduce(data))))
             format = '%' + str(max_str_len) + 'd'
             format_function = lambda x: _formatInteger(x, format)
         elif issubclass(dtypeobj, _nt.floating):
