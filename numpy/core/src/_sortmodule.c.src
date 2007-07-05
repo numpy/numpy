@@ -31,376 +31,393 @@
 #define PYA_QS_STACK 100
 #define SMALL_QUICKSORT 15
 #define SMALL_MERGESORT 20
+#define SWAP(a,b) {SWAP_temp = (b); (b)=(a); (a) = SWAP_temp;}
 #define STDC_LT(a,b) ((a) < (b))
 #define STDC_LE(a,b) ((a) <= (b))
 #define STDC_EQ(a,b) ((a) == (b))
-#define SWAP(a,b) {SWAP_temp = (b); (b)=(a); (a) = SWAP_temp;}
 #define NUMC_LT(p,q) ((((p).real==(q).real) ? ((p).imag < (q).imag): ((p).real < (q).real)))
 #define NUMC_LE(p,q) ((((p).real==(q).real) ? ((p).imag <= (q).imag): ((p).real <= (q).real)))
 #define NUMC_EQ(p,q) (((p).real==(q).real) && ((p).imag == (q).imag))
+#define STRING_LT(pa, pb, len) (strncmp(pa, pb, len) < 0)
+#define STRING_LE(pa, pb, len) (strncmp(pa, pb, len) <= 0)
+#define STRING_EQ(pa, pb, len) (strncmp(pa, pb, len) == 0)
+#define UNICODE_LT(pa, pb, len) (PyArray_CompareUCS4(pa, pb, len) < 0)
+#define UNICODE_LE(pa, pb, len) (PyArray_CompareUCS4(pa, pb, len) <= 0)
+#define UNICODE_EQ(pa, pb, len) (PyArray_CompareUCS4(pa, pb, len) == 0)
+
 
 /**begin repeat
 #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE#
 #type=Bool,byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
 #lessthan=STDC_LT*14,NUMC_LT*3#
 #lessequal=STDC_LE*14,NUMC_LE*3#
- **/
+**/
 static int
 @TYPE@_quicksort(@type@ *start, intp num, void *unused)
 {
-	@type@ *pl = start;
-	@type@ *pr = start + num - 1;
-	@type@ vp, SWAP_temp;
-	@type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pt;
+    @type@ *pl = start;
+    @type@ *pr = start + num - 1;
+    @type@ vp, SWAP_temp;
+    @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pt;
 
-        for(;;) {
-                while ((pr - pl) > SMALL_QUICKSORT) {
-                        /* quicksort partition */
-                        pm = pl + ((pr - pl) >> 1);
-                        if (@lessthan@(*pm,*pl)) SWAP(*pm,*pl);
-                        if (@lessthan@(*pr,*pm)) SWAP(*pr,*pm);
-                        if (@lessthan@(*pm,*pl)) SWAP(*pm,*pl);
-                        vp = *pm;
-                        pi = pl;
-                        pj = pr - 1;
-                        SWAP(*pm,*pj);
-                        for(;;) {
-                                do ++pi; while (@lessthan@(*pi,vp));
-                                do --pj; while (@lessthan@(vp,*pj));
-                                if (pi >= pj)  break;
-                                SWAP(*pi,*pj);
-                        }
-                        SWAP(*pi,*(pr-1));
-                        /* push largest partition on stack */
-                        if (pi - pl < pr - pi) {
-                                *sptr++ = pi + 1;
-                                *sptr++ = pr;
-                                pr = pi - 1;
-                        }else{
-                                *sptr++ = pl;
-                                *sptr++ = pi - 1;
-                                pl = pi + 1;
-                        }
-                }
-                /* insertion sort */
-                for(pi = pl + 1; pi <= pr; ++pi) {
-                        vp = *pi;
-                        for(pj = pi, pt = pi - 1; \
-			    pj > pl && @lessthan@(vp, *pt);) {
-                                *pj-- = *pt--;
-                        }
-                        *pj = vp;
-                }
-                if (sptr == stack) break;
-                pr = *(--sptr);
-                pl = *(--sptr);
+    for(;;) {
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            if (@lessthan@(*pm,*pl)) SWAP(*pm,*pl);
+            if (@lessthan@(*pr,*pm)) SWAP(*pr,*pm);
+            if (@lessthan@(*pm,*pl)) SWAP(*pm,*pl);
+            vp = *pm;
+            pi = pl;
+            pj = pr - 1;
+            SWAP(*pm,*pj);
+            for(;;) {
+                do ++pi; while (@lessthan@(*pi,vp));
+                do --pj; while (@lessthan@(vp,*pj));
+                if (pi >= pj)  break;
+                SWAP(*pi,*pj);
+            }
+            SWAP(*pi,*(pr-1));
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
         }
-	return 0;
+
+        /* insertion sort */
+        for(pi = pl + 1; pi <= pr; ++pi) {
+            vp = *pi;
+            for(pj = pi, pt = pi - 1; pj > pl && @lessthan@(vp, *pt);) {
+                    *pj-- = *pt--;
+            }
+            *pj = vp;
+        }
+        if (sptr == stack) break;
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    return 0;
 }
 
 static int
 @TYPE@_aquicksort(@type@ *v, intp* tosort, intp num, void *unused)
 {
-	@type@ vp;
-	intp *pl, *pr, SWAP_temp;
-	intp *stack[PYA_QS_STACK], **sptr=stack, *pm, *pi, *pj, *pt, vi;
+    @type@ vp;
+    intp *pl, *pr, SWAP_temp;
+    intp *stack[PYA_QS_STACK], **sptr=stack, *pm, *pi, *pj, *pt, vi;
 
-	pl = tosort;
-	pr = tosort + num - 1;
+    pl = tosort;
+    pr = tosort + num - 1;
 
-        for(;;) {
-                while ((pr - pl) > SMALL_QUICKSORT) {
-                        /* quicksort partition */
-                        pm = pl + ((pr - pl) >> 1);
-                        if (@lessthan@(v[*pm],v[*pl])) SWAP(*pm,*pl);
-                        if (@lessthan@(v[*pr],v[*pm])) SWAP(*pr,*pm);
-                        if (@lessthan@(v[*pm],v[*pl])) SWAP(*pm,*pl);
-                        vp = v[*pm];
-                        pi = pl;
-                        pj = pr - 1;
-                        SWAP(*pm,*pj);
-                        for(;;) {
-                                do ++pi; while (@lessthan@(v[*pi],vp));
-                                do --pj; while (@lessthan@(vp,v[*pj]));
-                                if (pi >= pj)  break;
-                                SWAP(*pi,*pj);
-                        }
-                        SWAP(*pi,*(pr-1));
-                        /* push largest partition on stack */
-                        if (pi - pl < pr - pi) {
-                                *sptr++ = pi + 1;
-                                *sptr++ = pr;
-                                pr = pi - 1;
-                        }else{
-                                *sptr++ = pl;
-                                *sptr++ = pi - 1;
-                                pl = pi + 1;
-                        }
-                }
-                /* insertion sort */
-                for(pi = pl + 1; pi <= pr; ++pi) {
-                        vi = *pi;
-                        vp = v[vi];
-                        for(pj = pi, pt = pi - 1; \
-			    pj > pl && @lessthan@(vp, v[*pt]);)
-				{
-					*pj-- = *pt--;
-				}
-                        *pj = vi;
-                }
-                if (sptr == stack) break;
-                pr = *(--sptr);
-                pl = *(--sptr);
+    for(;;) {
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            if (@lessthan@(v[*pm],v[*pl])) SWAP(*pm,*pl);
+            if (@lessthan@(v[*pr],v[*pm])) SWAP(*pr,*pm);
+            if (@lessthan@(v[*pm],v[*pl])) SWAP(*pm,*pl);
+            vp = v[*pm];
+            pi = pl;
+            pj = pr - 1;
+            SWAP(*pm,*pj);
+            for(;;) {
+                do ++pi; while (@lessthan@(v[*pi],vp));
+                do --pj; while (@lessthan@(vp,v[*pj]));
+                if (pi >= pj)  break;
+                SWAP(*pi,*pj);
+            }
+            SWAP(*pi,*(pr-1));
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
         }
-	return 0;
+
+        /* insertion sort */
+        for(pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v[vi];
+            for(pj = pi, pt = pi - 1; pj > pl && @lessthan@(vp, v[*pt]);) {
+                *pj-- = *pt--;
+            }
+            *pj = vi;
+        }
+        if (sptr == stack) break;
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    return 0;
 }
 
 
 static int
 @TYPE@_heapsort(@type@ *start, intp n, void *unused)
 {
+    @type@ tmp, *a;
+    intp i,j,l;
 
-        @type@ tmp, *a;
-        intp i,j,l;
+    /* The array needs to be offset by one for heapsort indexing */
+    a = start - 1;
 
-        /* The array needs to be offset by one for heapsort indexing */
-	a = start - 1;
-
-        for (l = n>>1; l > 0; --l) {
-                tmp = a[l];
-                for (i = l, j = l<<1; j <= n;) {
-                        if (j < n && @lessthan@(a[j], a[j+1]))
-                                j += 1;
-                        if (@lessthan@(tmp, a[j])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
+    for (l = n>>1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @lessthan@(a[j], a[j+1]))
+                j += 1;
+            if (@lessthan@(tmp, a[j])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else
+                break;
         }
+        a[i] = tmp;
+    }
 
-        for (; n > 1;) {
-                tmp = a[n];
-                a[n] = a[1];
-                n -= 1;
-                for (i = 1, j = 2; j <= n;) {
-                        if (j < n && @lessthan@(a[j], a[j+1]))
-                                j++;
-                        if (@lessthan@(tmp, a[j])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @lessthan@(a[j], a[j+1]))
+                j++;
+            if (@lessthan@(tmp, a[j])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else
+                break;
         }
-	return 0;
+        a[i] = tmp;
+    }
+
+    return 0;
 }
 
 static int
 @TYPE@_aheapsort(@type@ *v, intp *tosort, intp n, void *unused)
 {
-	intp *a, i,j,l, tmp;
-	/* The arrays need to be offset by one for heapsort indexing */
-	a = tosort - 1;
+    intp *a, i,j,l, tmp;
+    /* The arrays need to be offset by one for heapsort indexing */
+    a = tosort - 1;
 
-        for (l = n>>1; l > 0; --l) {
-                tmp = a[l];
-                for (i = l, j = l<<1; j <= n;) {
-                        if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
-                                j += 1;
-                        if (@lessthan@(v[tmp], v[a[j]])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
+    for (l = n>>1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
+                j += 1;
+            if (@lessthan@(v[tmp], v[a[j]])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else
+                break;
         }
+        a[i] = tmp;
+    }
 
-        for (; n > 1;) {
-                tmp = a[n];
-                a[n] = a[1];
-                n -= 1;
-                for (i = 1, j = 2; j <= n;) {
-                        if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
-                                j++;
-                        if (@lessthan@(v[tmp], v[a[j]])) {
-                                a[i] = a[j];
-                                i = j;
-                                j += j;
-                        }else
-                                break;
-                }
-                a[i] = tmp;
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @lessthan@(v[a[j]], v[a[j+1]]))
+                j++;
+            if (@lessthan@(v[tmp], v[a[j]])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else
+                break;
         }
+        a[i] = tmp;
+    }
 
-	return 0;
+    return 0;
 }
 
 static void
 @TYPE@_mergesort0(@type@ *pl, @type@ *pr, @type@ *pw)
 {
-	@type@ vp, *pi, *pj, *pk, *pm;
+    @type@ vp, *pi, *pj, *pk, *pm;
 
-        if (pr - pl > SMALL_MERGESORT) {
-                /* merge sort */
-                pm = pl + ((pr - pl + 1)>>1);
-                @TYPE@_mergesort0(pl,pm-1,pw);
-                @TYPE@_mergesort0(pm,pr,pw);
-                for(pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
-                        *pi = *pj;
-                }
-                for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
-                        if (@lessequal@(*pk,*pj)) {
-                                *pm = *pk;
-                                ++pk;
-                        }else{
-                                *pm = *pj;
-                                ++pj;
-                        }
-                }
-                for(; pk < pi; ++pm, ++pk) {
-                        *pm = *pk;
-                }
-        }else{
-                /* insertion sort */
-                for(pi = pl + 1; pi <= pr; ++pi) {
-                        vp = *pi;
-                        for(pj = pi, pk = pi - 1;\
-			    pj > pl && @lessthan@(vp, *pk); --pj, --pk) {
-                                *pj = *pk;
-                        }
-                        *pj = vp;
-                }
+    if (pr - pl > SMALL_MERGESORT) {
+        /* merge sort */
+        pm = pl + ((pr - pl + 1)>>1);
+        @TYPE@_mergesort0(pl,pm-1,pw);
+        @TYPE@_mergesort0(pm,pr,pw);
+        for(pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
+            *pi = *pj;
         }
+        for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
+            if (@lessequal@(*pk,*pj)) {
+                *pm = *pk;
+                ++pk;
+            }
+            else {
+                *pm = *pj;
+                ++pj;
+            }
+        }
+        for(; pk < pi; ++pm, ++pk) {
+            *pm = *pk;
+        }
+    }
+    else {
+        /* insertion sort */
+        for(pi = pl + 1; pi <= pr; ++pi) {
+            vp = *pi;
+            for(pj = pi, pk = pi - 1; pj > pl && @lessthan@(vp, *pk); --pj, --pk) {
+                *pj = *pk;
+            }
+            *pj = vp;
+        }
+    }
 }
 
 static int
 @TYPE@_mergesort(@type@ *start, intp num, void *unused)
 {
-	@type@ *pl, *pr, *pw;
+    @type@ *pl, *pr, *pw;
 
-	pl = start; pr = pl + num - 1;
-	pw = (@type@ *) PyDataMem_NEW(((1+num/2))*sizeof(@type@));
+    pl = start; pr = pl + num - 1;
+    pw = (@type@ *) PyDataMem_NEW(((1+num/2))*sizeof(@type@));
 
-	if (!pw) {
-		PyErr_NoMemory();
-		return -1;
-	}
+    if (!pw) {
+        PyErr_NoMemory();
+        return -1;
+    }
 
-	@TYPE@_mergesort0(pl, pr, pw);
-	PyDataMem_FREE(pw);
-	return 0;
+    @TYPE@_mergesort0(pl, pr, pw);
+    PyDataMem_FREE(pw);
+
+    return 0;
 }
 
 static void
 @TYPE@_amergesort0(intp *pl, intp *pr, @type@ *v, intp *pw)
 {
-        @type@ vp;
-        intp vi, *pi, *pj, *pk, *pm;
+    @type@ vp;
+    intp vi, *pi, *pj, *pk, *pm;
 
-        if (pr - pl > SMALL_MERGESORT) {
-                /* merge sort */
-                pm = pl + ((pr - pl + 1)>>1);
-                @TYPE@_amergesort0(pl,pm-1,v,pw);
-                @TYPE@_amergesort0(pm,pr,v,pw);
-                for(pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
-                        *pi = *pj;
-                }
-                for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
-                        if (@lessequal@(v[*pk],v[*pj])) {
-                                *pm = *pk;
-                                ++pk;
-                        }else{
-                                *pm = *pj;
-                                ++pj;
-                        }
-                }
-                for(; pk < pi; ++pm, ++pk) {
-                        *pm = *pk;
-                }
-        }else{
-                /* insertion sort */
-                for(pi = pl + 1; pi <= pr; ++pi) {
-                        vi = *pi;
-                        vp = v[vi];
-                        for(pj = pi, pk = pi - 1;			\
-			    pj > pl && @lessthan@(vp, v[*pk]); --pj, --pk) {
-                                *pj = *pk;
-                        }
-                        *pj = vi;
-                }
+    if (pr - pl > SMALL_MERGESORT) {
+        /* merge sort */
+        pm = pl + ((pr - pl + 1)>>1);
+        @TYPE@_amergesort0(pl,pm-1,v,pw);
+        @TYPE@_amergesort0(pm,pr,v,pw);
+        for(pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
+            *pi = *pj;
         }
+        for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
+            if (@lessequal@(v[*pk],v[*pj])) {
+                *pm = *pk;
+                ++pk;
+            }
+            else {
+                *pm = *pj;
+                ++pj;
+            }
+        }
+        for(; pk < pi; ++pm, ++pk) {
+            *pm = *pk;
+        }
+    }
+    else {
+        /* insertion sort */
+        for(pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v[vi];
+            for(pj = pi, pk = pi - 1; pj > pl && @lessthan@(vp, v[*pk]); --pj, --pk) {
+                *pj = *pk;
+            }
+            *pj = vi;
+        }
+    }
 }
 
 static int
 @TYPE@_amergesort(@type@ *v, intp *tosort, intp num, void *unused)
 {
-	intp *pl, *pr, *pw;
+    intp *pl, *pr, *pw;
 
-	pl = tosort; pr = pl + num - 1;
-	pw = PyDimMem_NEW((1+num/2));
+    pl = tosort; pr = pl + num - 1;
+    pw = PyDimMem_NEW((1+num/2));
 
-	if (!pw) {
-		PyErr_NoMemory();
-		return -1;
-	}
+    if (!pw) {
+        PyErr_NoMemory();
+        return -1;
+    }
 
-	@TYPE@_amergesort0(pl, pr, v, pw);
-	PyDimMem_FREE(pw);
-	return 0;
+    @TYPE@_amergesort0(pl, pr, v, pw);
+    PyDimMem_FREE(pw);
+
+    return 0;
 }
 /**end repeat**/
 
 /**begin repeat
-#TYPE=STRING,UNICODE#
-#comp=strncmp,PyArray_CompareUCS4#
+#TYPE=STRING, UNICODE#
 #type=char, PyArray_UCS4#
-*/
+#lessthan=STRING_LT, UNICODE_LT#
+#lessequal=STRING_LE, UNICODE_LE#
+**/
 static void
 @TYPE@_amergesort0(intp *pl, intp *pr, @type@ *v, intp *pw, int len)
 {
-	@type@ *vp;
-        intp vi, *pi, *pj, *pk, *pm;
+    @type@ *vp;
+    intp vi, *pi, *pj, *pk, *pm;
 
-        if (pr - pl > SMALL_MERGESORT) {
-                /* merge sort */
-                pm = pl + ((pr - pl + 1)>>1);
-                @TYPE@_amergesort0(pl,pm-1,v,pw,len);
-                @TYPE@_amergesort0(pm,pr,v,pw,len);
-                for(pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
-                        *pi = *pj;
-                }
-                for(pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
-                        if (@comp@(v+(*pk)*len,v+(*pj)*len,len) <= 0) {
-                                *pm = *pk;
-                                ++pk;
-                        }else{
-                                *pm = *pj;
-                                ++pj;
-                        }
-                }
-                for(; pk < pi; ++pm, ++pk) {
-                        *pm = *pk;
-                }
-        }else{
-                /* insertion sort */
-                for(pi = pl + 1; pi <= pr; ++pi) {
-                        vi = *pi;
-                        vp = v + vi*len;
-                        for(pj = pi, pk = pi - 1;                        \
-			    pj > pl && (@comp@(vp, v+(*pk)*len,len) < 0);\
-			    --pj, --pk) {
-                                *pj = *pk;
-                        }
-                        *pj = vi;
-                }
+    if (pr - pl > SMALL_MERGESORT) {
+        /* merge sort */
+        pm = pl + ((pr - pl + 1)>>1);
+        @TYPE@_amergesort0(pl,pm-1,v,pw,len);
+        @TYPE@_amergesort0(pm,pr,v,pw,len);
+        for(pi = pw, pj = pl; pj < pm;) {
+            *pi++ = *pj++;
         }
+        for(pk = pw, pm = pl; pk < pi && pj <= pr;) {
+            if (@lessequal@(v + (*pk)*len, v + (*pj)*len, len)) {
+                *pm++ = *pk++;
+            } else {
+                *pm++ = *pj++;
+            }
+        }
+        while(pk < pi) {
+            *pm++ = *pk++;
+        }
+    } else {
+        /* insertion sort */
+        for(pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v + vi*len;
+            pj = pi;
+            pk = pi -1;
+            for(; pj > pl && @lessthan@(vp, v + (*pk)*len, len);) {
+                *pj-- = *pk--;
+            }
+            *pj = vi;
+        }
+    }
 }
 
 static int
@@ -417,12 +434,13 @@ static int
 	pw = PyDimMem_NEW((1+num/2));
 
 	if (!pw) {
-		PyErr_NoMemory();
-		return -1;
+            PyErr_NoMemory();
+            return -1;
 	}
 
 	@TYPE@_amergesort0(pl, pr, v, pw, chars);
 	PyDimMem_FREE(pw);
+
 	return 0;
 }
 /**end repeat**/
