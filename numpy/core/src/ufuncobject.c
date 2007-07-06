@@ -902,7 +902,6 @@ select_types(PyUFuncObject *self, int *arg_types,
                 ret = _find_matching_userloop(obj, arg_types, scalars,
                                               function, data, self->nargs,
                                               self->nin);
-                Py_DECREF(obj);
                 return ret;
 	}
 
