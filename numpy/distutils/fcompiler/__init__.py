@@ -149,6 +149,11 @@ class FCompiler(CCompiler):
                     }
     language_order = ['f90','f77']
 
+
+    # These will be set by the subclass
+
+    compiler_type = None
+    compiler_aliases = ()
     version_pattern = None
 
     possible_executables = []
@@ -162,6 +167,11 @@ class FCompiler(CCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : None,
         }
+
+    # If compiler does not support compiling Fortran 90 then it can
+    # suggest using another compiler. For example, gnu would suggest
+    # gnu95 compiler type when there are F90 sources.
+    suggested_f90_compiler = None
 
     compile_switch = "-c"
     object_switch = "-o "   # Ending space matters! It will be stripped
@@ -187,11 +197,6 @@ class FCompiler(CCompiler):
     static_lib_format = "lib%s%s" # or %s%s
     shared_lib_format = "%s%s"
     exe_extension = ""
-
-    # If compiler does not support compiling Fortran 90 then it can
-    # suggest using another compiler. For example, gnu would suggest
-    # gnu95 compiler type when there are F90 sources.
-    suggested_f90_compiler = None
 
     _exe_cache = {}
 
@@ -688,17 +693,19 @@ _default_compilers = (
     )
 
 fcompiler_class = None
+fcompiler_aliases = None
 
 def load_all_fcompiler_classes():
     """Cache all the FCompiler classes found in modules in the
     numpy.distutils.fcompiler package.
     """
     from glob import glob
-    global fcompiler_class
+    global fcompiler_class, fcompiler_aliases
     if fcompiler_class is not None:
         return
     pys = os.path.join(os.path.dirname(__file__), '*.py')
     fcompiler_class = {}
+    fcompiler_aliases = {}
     for fname in glob(pys):
         module_name, ext = os.path.splitext(os.path.basename(fname))
         module_name = 'numpy.distutils.fcompiler.' + module_name
@@ -707,9 +714,10 @@ def load_all_fcompiler_classes():
         if hasattr(module, 'compilers'):
             for cname in module.compilers:
                 klass = getattr(module, cname)
-                fcompiler_class[klass.compiler_type] = (klass.compiler_type,
-                                                        klass,
-                                                        klass.description)
+                desc = (klass.compiler_type, klass, klass.description)
+                fcompiler_class[klass.compiler_type] = desc
+                for alias in klass.compiler_aliases:
+                    fcompiler_aliases[alias] = desc
 
 def _find_existing_fcompiler(compiler_types,
                              osname=None, platform=None,
@@ -785,9 +793,11 @@ def new_fcompiler(plat=None,
         plat = os.name
     if compiler is None:
         compiler = get_default_fcompiler(plat, requiref90=requiref90)
-    try:
+    if compiler in fcompiler_class:
         module_name, klass, long_description = fcompiler_class[compiler]
-    except KeyError:
+    elif compiler in fcompiler_aliases:
+        module_name, klass, long_description = fcompiler_aliases[compiler]
+    else:
         msg = "don't know how to compile Fortran code on platform '%s'" % plat
         if compiler is not None:
             msg = msg + " with '%s' compiler." % compiler

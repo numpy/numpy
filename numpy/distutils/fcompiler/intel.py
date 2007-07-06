@@ -24,6 +24,7 @@ class BaseIntelFCompiler(FCompiler):
 class IntelFCompiler(BaseIntelFCompiler):
 
     compiler_type = 'intel'
+    compiler_aliases = ('ifort',)
     description = 'Intel Fortran Compiler for 32-bit apps'
     version_match = intel_version_match('32-bit|IA-32')
 
@@ -102,6 +103,7 @@ class IntelFCompiler(BaseIntelFCompiler):
 
 class IntelItaniumFCompiler(IntelFCompiler):
     compiler_type = 'intele'
+    compiler_aliases = ()
     description = 'Intel Fortran Compiler for Itanium apps'
 
     version_match = intel_version_match('Itanium')
@@ -125,6 +127,7 @@ class IntelItaniumFCompiler(IntelFCompiler):
 
 class IntelEM64TFCompiler(IntelFCompiler):
     compiler_type = 'intelem'
+    compiler_aliases = ()
     description = 'Intel Fortran Compiler for EM64T-based apps'
 
     version_match = intel_version_match('EM64T-based')

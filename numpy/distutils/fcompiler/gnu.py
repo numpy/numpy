@@ -12,6 +12,7 @@ compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
+    compiler_aliases = ('g77',)
     description = 'GNU Fortran 77 compiler'
 
     def gnu_version_match(self, version_string):
@@ -270,6 +271,7 @@ class GnuFCompiler(FCompiler):
 
 class Gnu95FCompiler(GnuFCompiler):
     compiler_type = 'gnu95'
+    compiler_aliases = ('gfortran',)
     description = 'GNU Fortran 95 compiler'
 
     def version_match(self, version_string):
