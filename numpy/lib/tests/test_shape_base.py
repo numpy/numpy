@@ -384,6 +384,11 @@ class test_tile(NumpyTestCase):
         assert_equal(tile(b,(2,2)),[[1,2,1,2],[3,4,3,4],
                                     [1,2,1,2],[3,4,3,4]])
 
+    def check_empty(self):
+        a = array([[[]]])
+        d = tile(a,(3,2,5)).shape
+        assert_equal(d,(3,2,0))
+
     def check_kroncompare(self):
         import numpy.random as nr
         reps=[(2,),(1,2),(2,1),(2,2),(2,3,2),(3,2)]

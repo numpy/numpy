@@ -620,7 +620,7 @@ def tile(A, reps):
     d = len(tup)
     c = _nx.array(A,copy=False,subok=True,ndmin=d)
     shape = list(c.shape)
-    n = c.size
+    n = max(c.size,1)
     if (d < c.ndim):
         tup = (1,)*(c.ndim-d) + tup
     for i, nrep in enumerate(tup):
@@ -629,5 +629,5 @@ def tile(A, reps):
         dim_in = shape[i]
         dim_out = dim_in*nrep
         shape[i] = dim_out
-        n /= dim_in
+        n /= max(dim_in,1)
     return c.reshape(shape)
