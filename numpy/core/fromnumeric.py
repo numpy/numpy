@@ -71,7 +71,8 @@ def take(a, indices, axis=None, out=None, mode='raise'):
       - `subarray` : array
 
     :See also:
-      numpy.ndarray.take() is the equivalent method.
+      - numpy.ndarray.take() : equivalent method
+
     """
     try:
         take = a.take
@@ -99,8 +100,9 @@ def reshape(a, newshape, order='C'):
         This will be a new view object if possible; otherwise, it will
         return a copy.
 
-    :See also:
-      numpy.ndarray.reshape() is the equivalent method.
+    :SeeAlso:
+      - numpy.ndarray.reshape() : Equivalent method.
+
     """
     try:
         reshape = a.reshape
@@ -136,18 +138,20 @@ def choose(a, choices, out=None, mode='raise'):
     :Returns:
       - `merged_array` : array
 
-    :See also:
-      numpy.ndarray.choose() is the equivalent method.
+    :SeeAlso:
+      - numpy.ndarray.choose() : equivalent method
 
-    :Example:
-      >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
-      ...   [20, 21, 22, 23], [30, 31, 32, 33]]
-      >>> choose([2, 3, 1, 0], choices)
-      array([20, 31, 12,  3])
-      >>> choose([2, 4, 1, 0], choices, mode='clip')
-      array([20, 31, 12,  3])
-      >>> choose([2, 4, 1, 0], choices, mode='wrap')
-      array([20,  1, 12,  3])
+    Examples
+    ---------
+
+    >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
+    ...   [20, 21, 22, 23], [30, 31, 32, 33]]
+    >>> choose([2, 3, 1, 0], choices)
+    array([20, 31, 12,  3])
+    >>> choose([2, 4, 1, 0], choices, mode='clip')
+    array([20, 31, 12,  3])
+    >>> choose([2, 4, 1, 0], choices, mode='wrap')
+    array([20,  1, 12,  3])
 
     """
     try:
@@ -174,14 +178,16 @@ def repeat(a, repeats, axis=None):
     :Returns:
       - `repeated_array` : array
 
-    :See also:
-      numpy.ndarray.repeat() is the equivalent method.
+    :SeeAlso:
+      - numpy.ndarray.repeat() : equivalent method
 
-    :Example:
-      >>> repeat([0, 1, 2], 2)
-      array([0, 0, 1, 1, 2, 2])
-      >>> repeat([0, 1, 2], [2, 3, 4])
-      array([0, 0, 1, 1, 1, 2, 2, 2, 2])
+    Examples
+    --------
+
+    >>> repeat([0, 1, 2], 2)
+    array([0, 0, 1, 1, 2, 2])
+    >>> repeat([0, 1, 2], [2, 3, 4])
+    array([0, 0, 1, 1, 1, 2, 2, 2, 2])
 
     """
     try:
@@ -192,22 +198,24 @@ def repeat(a, repeats, axis=None):
 
 
 def put (a, ind, v, mode='raise'):
-    """put(a, ind, v) results in a[n] = v[n] for all n in ind.  If v is
-    shorter than mask it will be repeated as necessary.  In particular v can
-    be a scalar or length 1 array.  The routine put is the equivalent of the
+    """Set a[n] = v[n] for all n in ind.  If v is shorter than mask it
+    will be repeated as necessary.  In particular v can be a scalar or
+    length 1 array.  The routine put is the equivalent of the
     following (although the loop is in C for speed):
 
         ind = array(indices, copy=False)
         v = array(values, copy=False).astype(a.dtype)
         for i in ind: a.flat[i] = v[i]
+
     a must be a contiguous numpy array.
+
     """
     return a.put(ind, v, mode)
 
 
 def swapaxes(a, axis1, axis2):
-    """swapaxes(a, axis1, axis2) returns array a with axis1 and axis2
-    interchanged.
+    """Return array a with axis1 and axis2 interchanged.
+
     """
     try:
         swapaxes = a.swapaxes
@@ -217,9 +225,10 @@ def swapaxes(a, axis1, axis2):
 
 
 def transpose(a, axes=None):
-    """transpose(a, axes=None) returns a view of the array with dimensions
-    permuted according to axes.  If axes is None (default) returns array
-    with dimensions reversed.
+    """Return a view of the array with dimensions permuted according
+    to axes.  If axes is None (default) returns array with dimensions
+    reversed.
+
     """
     try:
         transpose = a.transpose
@@ -231,64 +240,56 @@ def transpose(a, axes=None):
 def sort(a, axis=-1, kind='quicksort', order=None):
     """Return copy of 'a' sorted along the given axis.
 
-    *Description*
+    :Description:
 
     Perform an inplace sort along the given axis using the algorithm
     specified by the kind keyword.
 
-    *Parameters*:
-
-        a : array type
+    :Parameters:
+        a : array
             Array to be sorted.
-
         axis : integer
-            Axis to be sorted along. None indicates that the flattened
+            Axis along which to sort. None indicates that the flattened
             array should be used. Default is -1.
-
         kind : string
             Sorting algorithm to use. Possible values are 'quicksort',
             'mergesort', or 'heapsort'. Default is 'quicksort'.
-
         order : list type or None
             When a is an array with fields defined, this argument
             specifies which fields to compare first, second, etc.  Not
             all fields need be specified.
 
-    *Returns*:
+    :Returns:
+        sorted_array : array of same type as a
 
-        sorted_array : type is unchanged.
+    :SeeAlso:
+      - argsort : Indirect sort.
+      - lexsort : Indirect stable sort on multiple keys.
+      - searchsorted : Find keys in sorted array.
 
-    *SeeAlso*:
+    Notes
+    -----
 
-        argsort
-            Indirect sort
-        lexsort
-            Indirect stable sort on multiple keys
-        searchsorted
-            Find keys in sorted array
+    The various sorts are characterized by average speed, worst case
+    performance, need for work space, and whether they are stable. A
+    stable sort keeps items with the same key in the same relative
+    order. The three available algorithms have the following
+    properties:
 
-    *Notes*
+    +-----------+-------+-------------+------------+-------+
+    |    kind   | speed |  worst case | work space | stable|
+    +===========+=======+=============+============+=======+
+    | quicksort |   1   | O(n^2)      |     0      |   no  |
+    +-----------+-------+-------------+------------+-------+
+    | mergesort |   2   | O(n*log(n)) |    ~n/2    |   yes |
+    +-----------+-------+-------------+------------+-------+
+    | heapsort  |   3   | O(n*log(n)) |     0      |   no  |
+    +-----------+-------+-------------+------------+-------+
 
-        The various sorts are characterized by average speed, worst case
-        performance, need for work space, and whether they are stable. A
-        stable sort keeps items with the same key in the same relative
-        order. The three available algorithms have the following
-        properties:
-
-        +-----------+-------+-------------+------------+-------+
-        |    kind   | speed |  worst case | work space | stable|
-        +===========+=======+=============+============+=======+
-        | quicksort |   1   | O(n^2)      |     0      |   no  |
-        +-----------+-------+-------------+------------+-------+
-        | mergesort |   2   | O(n*log(n)) |    ~n/2    |   yes |
-        +-----------+-------+-------------+------------+-------+
-        | heapsort  |   3   | O(n*log(n)) |     0      |   no  |
-        +-----------+-------+-------------+------------+-------+
-
-        All the sort algorithms make temporary copies of the data when
-        the sort is not along the last axis. Consequently, sorts along
-        the last axis are faster and use less space than sorts along
-        other axis.
+    All the sort algorithms make temporary copies of the data when
+    the sort is not along the last axis. Consequently, sorts along
+    the last axis are faster and use less space than sorts along
+    other axis.
 
     """
     if axis is None:
@@ -303,65 +304,55 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 def argsort(a, axis=-1, kind='quicksort', order=None):
     """Returns array of indices that index 'a' in sorted order.
 
-    *Description*
-
     Perform an indirect sort along the given axis using the algorithm
     specified by the kind keyword. It returns an array of indices of the
     same shape as a that index data along the given axis in sorted order.
 
-    *Parameters*:
-
-        a : array type
-            Array containing values that the returned indices should
-            sort.
-
+    :Parameters:
+        a : array
+            Values that the returned indices should sort.
         axis : integer
             Axis to be indirectly sorted. None indicates that the
             flattened array should be used. Default is -1.
-
         kind : string
             Sorting algorithm to use. Possible values are 'quicksort',
             'mergesort', or 'heapsort'. Default is 'quicksort'.
-
         order : list type or None
             When a is an array with fields defined, this argument
             specifies which fields to compare first, second, etc.  Not
             all fields need be specified.
 
-    *Returns*:
-
+    :Returns:
         indices : integer array
             Array of indices that sort 'a' along the specified axis.
 
-    *SeeAlso*:
+    :SeeAlso:
+      - lexsort : Indirect stable sort with multiple keys.
+      - sort : Inplace sort.
 
-        lexsort
-            Indirect stable sort with multiple keys
-        sort
-            Inplace sort
+    Notes
+    -----
 
-    *Notes*
+    The various sorts are characterized by average speed, worst case
+    performance, need for work space, and whether they are stable. A
+    stable sort keeps items with the same key in the same relative
+    order. The three available algorithms have the following
+    properties:
 
-        The various sorts are characterized by average speed, worst case
-        performance, need for work space, and whether they are stable. A
-        stable sort keeps items with the same key in the same relative
-        order. The three available algorithms have the following
-        properties:
+    +-----------+-------+-------------+------------+-------+
+    |    kind   | speed |  worst case | work space | stable|
+    +===========+=======+=============+============+=======+
+    | quicksort |   1   | O(n^2)      |     0      |   no  |
+    +-----------+-------+-------------+------------+-------+
+    | mergesort |   2   | O(n*log(n)) |    ~n/2    |   yes |
+    +-----------+-------+-------------+------------+-------+
+    | heapsort  |   3   | O(n*log(n)) |     0      |   no  |
+    +-----------+-------+-------------+------------+-------+
 
-        +-----------+-------+-------------+------------+-------+
-        |    kind   | speed |  worst case | work space | stable|
-        +===========+=======+=============+============+=======+
-        | quicksort |   1   | O(n^2)      |     0      |   no  |
-        +-----------+-------+-------------+------------+-------+
-        | mergesort |   2   | O(n*log(n)) |    ~n/2    |   yes |
-        +-----------+-------+-------------+------------+-------+
-        | heapsort  |   3   | O(n*log(n)) |     0      |   no  |
-        +-----------+-------+-------------+------------+-------+
-
-        All the sort algorithms make temporary copies of the data when
-        the sort is not along the last axis. Consequently, sorts along
-        the last axis are faster and use less space than sorts along
-        other axis.
+    All the sort algorithms make temporary copies of the data when
+    the sort is not along the last axis. Consequently, sorts along
+    the last axis are faster and use less space than sorts along
+    other axis.
 
     """
     try:
@@ -372,8 +363,9 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
 
 def argmax(a, axis=None):
-    """argmax(a,axis=None) returns the indices to the maximum value of the
-    1-D arrays along the given axis.
+    """Return the indices to the maximum value of the 1-D arrays along
+    the given axis.
+
     """
     try:
         argmax = a.argmax
@@ -383,8 +375,9 @@ def argmax(a, axis=None):
 
 
 def argmin(a, axis=None):
-    """argmin(a,axis=None) returns the indices to the minimum value of the
-    1-D arrays along the given axis.
+    """Return the indices to the minimum value of the 1-D arrays along
+    the given axis.
+
     """
     try:
         argmin = a.argmin
@@ -394,50 +387,48 @@ def argmin(a, axis=None):
 
 
 def searchsorted(a, v, side='left'):
-    """Returns indices where keys in v should be inserted to maintain order.
+    """Return indices where keys in v should be inserted to maintain
+    order.
 
-    *Description*
+    Find the indices into a sorted array such that if the
+    corresponding keys in v were inserted before the indices the
+    order of a would be preserved.  If side='left', then the first
+    such index is returned. If side='right', then the last such index
+    is returned. If there is no such index because the key is out of
+    bounds, then the length of a is returned, i.e., the key would
+    need to be appended. The returned index array has the same shape
+    as v.
 
-        Find the indices into a sorted array such that if the
-        corresponding keys in v were inserted before the indices the
-        order of a would be preserved.  If side='left', then the first
-        such index is returned. If side='right', then the last such index
-        is returned. If there is no such index because the key is out of
-        bounds, then the length of a is returned, i.e., the key would
-        need to be appended. The returned index array has the same shape
-        as v.
-
-    *Parameters*:
-
-        a : array
-            1-d array sorted in ascending order.
-
+    :Parameters:
+        a : 1-d array
+            Array sorted in ascending order.
         v : array or list type
             Array of keys to be searched for in a.
-
         side : string
             Possible values are : 'left', 'right'. Default is 'left'.
             Return the first or last index where the key could be
             inserted.
 
-    *Returns*:
-
+    :Returns:
         indices : integer array
             Array of insertion points with the same shape as v.
 
-    *SeeAlso*:
+    :SeeAlso:
+      - sort : Inplace sort.
+      - histogram : Produce histogram from 1-d data.
 
-        sort
-            Inplace sort
-        histogram
-            Produce histogram from 1-d data
+    Notes
+    -----
 
+    The array a must be 1-d and is assumed to be sorted in ascending
+    order.  Searchsorted uses binary search to find the required
+    insertion points.
 
-    *Notes*
+    Examples
+    --------
 
-        The array a must be 1-d and is assumed to be sorted in ascending
-        order.  Searchsorted uses binary search to find the required
-        insertion points.
+    >>> searchsorted([1,2,3,4,5],[6,4,0])
+    array([5, 3, 0])
 
     """
     try:
@@ -448,12 +439,14 @@ def searchsorted(a, v, side='left'):
 
 
 def resize(a, new_shape):
-    """resize(a,new_shape) returns a new array with the specified shape.
-    The original array's total size can be any size. It fills the new
-    array with repeated copies of a.
+    """Return a new array with the specified shape.
 
-    Note that a.resize(new_shape) will fill array with 0's beyond current
-    definition of a.
+    The original array's total size can be any size.  The new array is
+    filled with repeated copies of a.
+
+    Note that a.resize(new_shape) will fill the array with 0's beyond
+    current definition of a.
+
     """
 
     if isinstance(new_shape, (int, nt.integer)):
@@ -480,7 +473,23 @@ def resize(a, new_shape):
 
 
 def squeeze(a):
-    "Returns a with any ones from the shape of a removed"
+    """Remove single-dimensional entries from the shape of a.
+
+    Examples
+    --------
+
+    >>> x = array([[[1,1,1],[2,2,2],[3,3,3]]])
+    >>> x
+    array([[[1, 1, 1],
+          [2, 2, 2],
+          [3, 3, 3]]])
+    >>> x.shape
+    (1, 3, 3)
+    >>> squeeze(x).shape
+    (3, 3)
+
+    """
+
     try:
         squeeze = a.squeeze
     except AttributeError:
@@ -489,89 +498,91 @@ def squeeze(a):
 
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
-    """Return specified diagonals. Uses first two indices by default.
-
-    *Description*
+    """Return specified diagonals.
 
     If a is 2-d, returns the diagonal of self with the given offset,
-    i.e., the collection of elements of the form a[i,i+offset]. If a is
-    n-d with n > 2, then the axes specified by axis1 and axis2 are used
-    to determine the 2-d subarray whose diagonal is returned. The shape
-    of the resulting array can be determined by removing axis1 and axis2
-    and appending an index to the right equal to the size of the
-    resulting diagonals.
+    i.e., the collection of elements of the form a[i,i+offset]. If a
+    has more than two dimensions, then the axes specified by axis1 and
+    axis2 are used to determine the 2-d subarray whose diagonal is
+    returned. The shape of the resulting array can be determined by
+    removing axis1 and axis2 and appending an index to the right equal
+    to the size of the resulting diagonals.
 
-    *Parameters*:
-
+    :Parameters:
         offset : integer
             Offset of the diagonal from the main diagonal. Can be both
             positive and negative. Defaults to main diagonal.
-
         axis1 : integer
             Axis to be used as the first axis of the 2-d subarrays from
             which the diagonals should be taken. Defaults to first axis.
-
         axis2 : integer
             Axis to be used as the second axis of the 2-d subarrays from
             which the diagonals should be taken. Defaults to second axis.
 
-    *Returns*:
+    :Returns:
+        array_of_diagonals : array of same type as a
+            If a is 2-d, a 1-d array containing the diagonal is
+            returned.  If a has larger dimensions, then an array of
+            diagonals is returned.
 
-        array_of_diagonals : type of original array
-            If a is 2-d, then a 1-d array containing the diagonal is
-            returned.
-            If a is n-d, n > 2, then an array of diagonals is returned.
+    :SeeAlso:
+      - diag : Matlab workalike for 1-d and 2-d arrays.
+      - diagflat : Create diagonal arrays.
+      - trace : Sum along diagonals.
 
-    *SeeAlso*:
+    Examples
+    --------
 
-        diag :
-            Matlab workalike for 1-d and 2-d arrays
-        diagflat :
-            creates diagonal arrays
-        trace :
-            sum along diagonals
+    >>> a = arange(4).reshape(2,2)
+    >>> a
+    array([[0, 1],
+           [2, 3]])
+    >>> a.diagonal()
+    array([0, 3])
+    >>> a.diagonal(1)
+    array([1])
 
-    *Examples*:
-
-        >>> a = arange(4).reshape(2,2)
-        >>> a
-        array([[0, 1],
-               [2, 3]])
-        >>> a.diagonal()
-        array([0, 3])
-        >>> a.diagonal(1)
-        array([1])
-
-        >>> a = arange(8).reshape(2,2,2)
-        >>> a
-        array([[[0, 1],
-                [2, 3]],
-               [[4, 5],
-                [6, 7]]])
-        >>> a.diagonal(0,-2,-1)
-        array([[0, 3],
-               [4, 7]])
+    >>> a = arange(8).reshape(2,2,2)
+    >>> a
+    array([[[0, 1],
+            [2, 3]],
+           [[4, 5],
+            [6, 7]]])
+    >>> a.diagonal(0,-2,-1)
+    array([[0, 3],
+           [4, 7]])
 
     """
     return asarray(a).diagonal(offset, axis1, axis2)
 
 
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
-    """trace(a,offset=0, axis1=0, axis2=1) returns the sum along diagonals
-    (defined by the last two dimenions) of the array.
+    """Return the sum along diagonals of the array.
+
     """
     return asarray(a).trace(offset, axis1, axis2, dtype, out)
 
 def ravel(m,order='C'):
-    """ravel(m) returns a 1d array corresponding to all the elements of
-    its argument.  The new array is a view of m if possible, otherwise it
-    is a copy.
+    """Return a 1d array with all the elements of m.  The new array is
+    a view of m if possible, otherwise it is a copy.
+
+    Examples
+    --------
+
+    >>> x = array([[1,2,3],[4,5,6]])
+    >>> x
+    array([[1, 2, 3],
+          [4, 5, 6]])
+    >>> ravel(x)
+    array([1, 2, 3, 4, 5, 6])
+
     """
     a = asarray(m)
     return a.ravel(order)
 
 def nonzero(a):
-    """nonzero(a) returns the indices of the elements of a which are not zero
+    """Return the indices of the elements of a which are not zero.
+
     """
     try:
         nonzero = a.nonzero
@@ -582,8 +593,16 @@ def nonzero(a):
     return res
 
 def shape(a):
-    """shape(a) returns the shape of a (as a function call which also
-    works on nested sequences).
+    """Return the shape of a.  This function can also be called on
+    nested sequences, e.g.
+
+    Examples
+    --------
+
+    >>> x = array([1,2,3])
+    >>> shape((x,x,x))
+    (3, 3)
+
     """
     try:
         result = a.shape
@@ -592,9 +611,11 @@ def shape(a):
     return result
 
 def compress(condition, m, axis=None, out=None):
-    """compress(condition, x, axis=None) = those elements of x corresponding
-    to those elements of condition that are "true".  condition must be the
-    same size as the given dimension of x."""
+    """Return m where condition is true.
+
+    Equivalent to m[condition].
+
+    """
     try:
         compress = m.compress
     except AttributeError:
@@ -602,9 +623,11 @@ def compress(condition, m, axis=None, out=None):
     return compress(condition, axis, out)
 
 def clip(m, m_min, m_max):
-    """clip(m, m_min, m_max) = every entry in m that is less than m_min is
-    replaced by m_min, and every entry greater than m_max is replaced by
-    m_max.
+    """Limit the values of m to [m_min, m_max].  Equivalent to
+
+    m[m < m_min] = m_min
+    m[m > m_max] = m_max
+
     """
     try:
         clip = m.clip
@@ -623,7 +646,9 @@ def sum(x, axis=None, dtype=None, out=None):
         ---------------------------------------------------
         bool, int8, int16, int32        int32
 
-    Examples:
+    Examples
+    --------
+
     >>> N.sum([0.5, 1.5])
     2.0
     >>> N.sum([0.5, 1.5], dtype=N.int32)
@@ -632,6 +657,7 @@ def sum(x, axis=None, dtype=None, out=None):
     6
     >>> N.sum([[0, 1], [0, 5]], axis=1)
     array([1, 5])
+
     """
     if isinstance(x, _gentype):
         res = _sum_(x)
@@ -646,7 +672,9 @@ def sum(x, axis=None, dtype=None, out=None):
     return sum(axis, dtype, out)
 
 def product (x, axis=None, dtype=None, out=None):
-    """Product of the array elements over the given axis."""
+    """Product of the array elements over the given axis.
+
+    """
     try:
         prod = x.prod
     except AttributeError:
@@ -654,7 +682,9 @@ def product (x, axis=None, dtype=None, out=None):
     return prod(axis, dtype, out)
 
 def sometrue (x, axis=None, out=None):
-    """Perform a logical_or over the given axis."""
+    """Perform a logical_or over the given axis.
+
+    """
     try:
         any = x.any
     except AttributeError:
@@ -662,7 +692,9 @@ def sometrue (x, axis=None, out=None):
     return any(axis, out)
 
 def alltrue (x, axis=None, out=None):
-    """Perform a logical_and over the given axis."""
+    """Perform a logical_and over the given axis.
+
+    """
     try:
         all = x.all
     except AttributeError:
@@ -670,7 +702,8 @@ def alltrue (x, axis=None, out=None):
     return all(axis, out)
 
 def any(x,axis=None, out=None):
-    """Return true if any elements of x are true:
+    """Return true if any elements of x are true.
+
     """
     try:
         any = x.any
@@ -680,6 +713,7 @@ def any(x,axis=None, out=None):
 
 def all(x,axis=None, out=None):
     """Return true if all elements of x are true:
+
     """
     try:
         all = x.all
@@ -688,7 +722,9 @@ def all(x,axis=None, out=None):
     return all(axis, out)
 
 def cumsum (x, axis=None, dtype=None, out=None):
-    """Sum the array over the given axis."""
+    """Sum the array over the given axis.
+
+    """
     try:
         cumsum = x.cumsum
     except AttributeError:
@@ -696,7 +732,9 @@ def cumsum (x, axis=None, dtype=None, out=None):
     return cumsum(axis, dtype, out)
 
 def cumproduct (x, axis=None, dtype=None, out=None):
-    """Sum the array over the given axis."""
+    """Return the cumulative product over the given axis.
+
+    """
     try:
         cumprod = x.cumprod
     except AttributeError:
@@ -704,7 +742,8 @@ def cumproduct (x, axis=None, dtype=None, out=None):
     return cumprod(axis, dtype, out)
 
 def ptp(a, axis=None, out=None):
-    """Return maximum - minimum along the the given dimension
+    """Return maximum - minimum along the the given dimension.
+
     """
     try:
         ptp = a.ptp
@@ -714,6 +753,7 @@ def ptp(a, axis=None, out=None):
 
 def amax(a, axis=None, out=None):
     """Return the maximum of 'a' along dimension axis.
+
     """
     try:
         amax = a.max
@@ -733,6 +773,7 @@ def amin(a, axis=None, out=None):
 def alen(a):
     """Return the length of a Python object interpreted as an array
     of at least 1 dimension.
+
     """
     try:
         return len(a)
@@ -740,7 +781,8 @@ def alen(a):
         return len(array(a,ndmin=1))
 
 def prod(a, axis=None, dtype=None, out=None):
-    """Return the product of the elements along the given axis
+    """Return the product of the elements along the given axis.
+
     """
     try:
         prod = a.prod
@@ -749,7 +791,8 @@ def prod(a, axis=None, dtype=None, out=None):
     return prod(axis, dtype, out)
 
 def cumprod(a, axis=None, dtype=None, out=None):
-    """Return the cumulative product of the elments along the given axis
+    """Return the cumulative product of the elements along the given axis.
+
     """
     try:
         cumprod = a.cumprod
@@ -758,22 +801,29 @@ def cumprod(a, axis=None, dtype=None, out=None):
     return cumprod(axis, dtype, out)
 
 def ndim(a):
-    try:
-        return a.ndim
-    except AttributeError:
-        return asarray(a).ndim
+    """Return the number of dimensions of a.
 
-def rank(a):
-    """Get the rank of sequence a (the number of dimensions, not a matrix rank)
-       The rank of a scalar is zero.
     """
     try:
         return a.ndim
     except AttributeError:
         return asarray(a).ndim
 
-def size (a, axis=None):
-    "Get the number of elements in sequence a, or along a certain axis."
+def rank(a):
+    """Return the rank of sequence a (the number of dimensions, not
+    the matrix rank).  The rank of a scalar is zero.
+
+    """
+    try:
+        return a.ndim
+    except AttributeError:
+        return asarray(a).ndim
+
+def size(a, axis=None):
+    """Return the number of elements in sequence a, or along a given axis.
+
+    """
+
     if axis is None:
         try:
             return a.size
@@ -786,27 +836,31 @@ def size (a, axis=None):
             return asarray(a).shape[axis]
 
 def round_(a, decimals=0, out=None):
-    """Returns reference to result. Copies a and rounds to 'decimals' places.
+    """Round a to the given number of decimals.
 
-    Keyword arguments:
-        decimals -- number of decimal places to round to (default 0).
-        out -- existing array to use for output (default copy of a).
+    The real and imaginary parts of complex numbers are rounded
+    separately.  Nothing is done if the input is an integer array with
+    decimals >= 0.
 
-    Returns:
-        Reference to out, where None specifies a copy of the original
-        array a.
+    :Parameters:
+        decimals : integer
+            Number of decimal places to round to (default 0). When
+            'decimals' is negative it specifies the number of
+            positions to the left of the decimal point.
+        out : array
+            Existing array to use for output (by default, make a
+            copy of a).
 
-    Round to the specified number of decimals. When 'decimals' is
-    negative it specifies the number of positions to the left of the
-    decimal point. The real and imaginary parts of complex numbers are
-    rounded separately.  Nothing is done if the array is not of float
-    type and 'decimals' is greater than or equal to 0.
+    :Returns:
+        out : array
+            May be used to specify a different array to hold the
+            result rather than the default 'a'. If the type of the
+            array specified by 'out' differs from that of 'a', the
+            result is cast to the new type, otherwise the original
+            type is kept. Floats round to floats by default.
 
-    The keyword 'out' may be used to specify a different array to hold
-    the result rather than the default 'a'. If the type of the array
-    specified by 'out' differs from that of 'a', the result is cast to
-    the new type, otherwise the original type is kept. Floats round to
-    floats by default.
+    Notes
+    -----
 
     Numpy rounds to even. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5
     round to 0.0, etc. Results may also be surprising due to the inexact
@@ -828,45 +882,37 @@ around = round_
 def mean(a, axis=None, dtype=None, out=None):
     """Compute the mean along the specified axis.
 
-    *Description*
+    Returns the average of the array elements.  The average is taken
+    over the flattened array by default, otherwise over the specified
+    axis.
 
-        Returns the average of the array elements.  The average is taken
-        over the flattened array by default, otherwise over the specified
-        axis.
-
-    *Parameters*:
-
+    :Parameters:
         axis : integer
             Axis along which the means are computed. The default is
             to compute the standard deviation of the flattened array.
-
         dtype : type
             Type to use in computing the means. For arrays of integer
             type the default is float32, for arrays of float types it is
             the same as the array type.
-
         out : ndarray
             Alternative output array in which to place the result. It
             must have the same shape as the expected output but the type
             will be cast if necessary.
 
-    *Returns*:
-
-        mean : The return type varies, see above.
+    :Returns:
+        mean : array (see dtype parameter above)
             A new array holding the result is returned unless out is
             specified, in which case a reference to out is returned.
 
-    *SeeAlso*:
+    :SeeAlso:
+      - var : Variance
+      - std : Standard deviation
 
-        var
-            Variance
-        std
-            Standard deviation
+    Notes
+    -----
 
-    *Notes*
-
-        The mean is the sum of the elements along the axis divided by the
-        number of elements.
+    The mean is the sum of the elements along the axis divided by the
+    number of elements.
 
     """
     try:
@@ -879,50 +925,42 @@ def mean(a, axis=None, dtype=None, out=None):
 def std(a, axis=None, dtype=None, out=None):
     """Compute the standard deviation along the specified axis.
 
-    *Description*
+    Returns the standard deviation of the array elements, a measure
+    of the spread of a distribution. The standard deviation is
+    computed for the flattened array by default, otherwise over the
+    specified axis.
 
-        Returns the standard deviation of the array elements, a measure
-        of the spread of a distribution. The standard deviation is
-        computed for the flattened array by default, otherwise over the
-        specified axis.
-
-    *Parameters*:
-
+    :Parameters:
         axis : integer
             Axis along which the standard deviation is computed. The
             default is to compute the standard deviation of the flattened
             array.
-
         dtype : type
             Type to use in computing the standard deviation. For arrays
             of integer type the default is float32, for arrays of float
             types it is the same as the array type.
-
         out : ndarray
             Alternative output array in which to place the result. It
             must have the same shape as the expected output but the type
             will be cast if necessary.
 
-    *Returns*:
-
+    :Returns:
         standard_deviation : The return type varies, see above.
             A new array holding the result is returned unless out is
             specified, in which case a reference to out is returned.
 
-    *SeeAlso*:
+    :SeeAlso:
+      - var : Variance
+      - mean : Average
 
-        var
-            Variance
-        mean
-            Average
+    Notes
+    -----
 
-    *Notes*
-
-        The standard deviation is the square root of the average of the
-        squared deviations from the mean, i.e. var = sqrt(mean((x -
-        x.mean())**2)).  The computed standard deviation is biased, i.e.,
-        the mean is computed by dividing by the number of elements, N,
-        rather than by N-1.
+    The standard deviation is the square root of the average of the
+    squared deviations from the mean, i.e. var = sqrt(mean((x -
+    x.mean())**2)).  The computed standard deviation is biased, i.e.,
+    the mean is computed by dividing by the number of elements, N,
+    rather than by N-1.
 
     """
     try:
@@ -935,47 +973,39 @@ def std(a, axis=None, dtype=None, out=None):
 def var(a, axis=None, dtype=None, out=None):
     """Compute the variance along the specified axis.
 
-    *Description*
+    Returns the variance of the array elements, a measure of the
+    spread of a distribution.  The variance is computed for the
+    flattened array by default, otherwise over the specified axis.
 
-        Returns the variance of the array elements, a measure of the
-        spread of a distribution.  The variance is computed for the
-        flattened array by default, otherwise over the specified axis.
-
-    *Parameters*:
-
+    :Parameters:
         axis : integer
             Axis along which the variance is computed. The default is to
             compute the variance of the flattened array.
-
         dtype : type
             Type to use in computing the variance. For arrays of integer
             type the default is float32, for arrays of float types it is
             the same as the array type.
-
         out : ndarray
             Alternative output array in which to place the result. It
             must have the same shape as the expected output but the type
             will be cast if necessary.
 
-    *Returns*:
-
-        variance : depends, see above
+    :Returns:
+        variance : array (see dtype parameter above)
             A new array holding the result is returned unless out is
             specified, in which case a reference to out is returned.
 
-    *SeeAlso*:
+    :SeeAlso:
+      - std : Standard deviation
+      - mean : Average
 
-        std
-            Standard deviation
-        mean
-            Average
+    Notes
+    -----
 
-    *Notes*
-
-        The variance is the average of the squared deviations from the
-        mean, i.e.  var = mean((x - x.mean())**2).  The computed variance
-        is biased, i.e., the mean is computed by dividing by the number
-        of elements, N, rather than by N-1.
+    The variance is the average of the squared deviations from the
+    mean, i.e.  var = mean((x - x.mean())**2).  The computed variance
+    is biased, i.e., the mean is computed by dividing by the number
+    of elements, N, rather than by N-1.
 
     """
     try:
