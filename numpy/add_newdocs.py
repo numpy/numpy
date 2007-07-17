@@ -343,11 +343,11 @@ add_newdoc('numpy.core.multiarray','where',
 
     The result is shaped like condition and has elements of x and y where
     condition is respectively true or false.  If x or y are not given,
-    then it is equivalent to condition.nonzero().
+    condition.nonzero() is returned.
 
     To group the indices by element, rather than dimension, use
 
-        transpose(where(condition, | x, y))
+        transpose(where(condition))
 
     instead. This always results in a 2d array, with a row of indices for
     each element that satisfies the condition.
