@@ -594,6 +594,11 @@ class test_regression(NumpyTestCase):
         v = N.vectorize(p)
         assert_valid_refcount(v)
 
+    def check_poly1d_nan_roots(self, level=rlevel):
+        """Ticket #396"""
+        p = N.poly1d([N.nan,N.nan,1], r=0)
+        self.failUnlessRaises(N.linalg.LinAlgError,getattr,p,"r")
+
     def check_refcount_vdot(self, level=rlevel):
         """Changeset #3443"""
         assert_valid_refcount(N.vdot)
