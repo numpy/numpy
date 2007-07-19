@@ -16,23 +16,25 @@ Overview
 
 The Fortran parser package is a Python implementation
 of Fortran 66/77/90/95/2003 language parser. The code
-is under NumPy SVN tree: `numpy/f2py/lib/parser/`.
-The Fortran language syntax rules are defined in `Fortran2003.py`,
+is under NumPy SVN tree: `numpy/f2py/lib/parser/`__.
+The Fortran language syntax rules are defined in `Fortran2003.py`__,
 the rules are taken from the following ISO/IEC 1539 working draft:
 http://j3-fortran.org/doc/2003_Committee_Draft/04-007.pdf.
 
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/Fortran2003.py
 
 Fortran parser package structure
 ================================
 
 `numpy.f2py.lib.parser` package contains the following files:
 
-api.py
-------
+api.py - public API for Fortran parser
+--------------------------------------
 
-Public API for Fortran parser.
+`This file`__ exposes `Statement` subclasses, `CHAR_BIT` constant, and a function `parse`.
 
-It exposes `Statement` subclasses, `CHAR_BIT` constant, and a function `parse`.
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/api.py
 
 Function `parse(<input>, ..)` parses, analyzes and returns a `Statement`
 tree of Fortran input. For example,
@@ -82,7 +84,9 @@ tree of Fortran input. For example,
 readfortran.py
 --------------
 
-This file contains tools for reading Fortran codes from file and string objects.
+`This file`__ contains tools for reading Fortran codes from file and string objects.
+
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/readfortran.py
 
 To read Fortran code from a file, use `FortranFileReader` class.
 `FortranFileReader` class is iterator over Fortran code lines
@@ -227,7 +231,9 @@ and the following methods:
 parsefortran.py
 ---------------
 
-This file contains code for parsing Fortran code from `FortranReaderBase` iterator.
+`This file`__ contains code for parsing Fortran code from `FortranReaderBase` iterator.
+
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/parsefortran.py
 
 `FortranParser` class holds the parser information while
 iterating over items returned by `FortranReaderBase` iterator.
@@ -248,8 +254,13 @@ For example,
             PRINT *, "a=", a
           END SUBROUTINE foo
 
-block_statements.py, base_classes.py, typedecl_statements.py, statements.py
----------------------------------------------------------------------------
+Files `block_statements.py`__, `base_classes.py`__, `typedecl_statements.py`__, `statements.py`__
+-------------------------------------------------------------------------------------------------
+
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/block_statements.py
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/base_classes.py
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/typedecl_statements.py
+__ http://projects.scipy.org/scipy/numpy/browser/trunk/numpy/f2py/lib/parser/statements.py
 
 The model for representing Fortran code statements consists of a tree of `Statement`
 classes defined in `base_classes.py`. There are two types of statements: one-line
