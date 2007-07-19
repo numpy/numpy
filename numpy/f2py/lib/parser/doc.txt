@@ -1,7 +1,26 @@
 .. -*- rest -*-
 
-Created: September 2006
-Author: Pearu Peterson <pearu.peterson@gmail.com>
+======================
+Fortran parser package
+======================
+
+:Author:
+  Pearu Peterson <pearu.peterson@gmail.com>
+:Created: September 2006
+
+
+.. contents:: Table of Contents
+
+Overview
+========
+
+The Fortran parser package is a Python implementation
+of Fortran 66/77/90/95/2003 language parser. The code
+is under NumPy SVN tree: `numpy/f2py/lib/parser/`.
+The Fortran language syntax rules are defined in `Fortran2003.py`,
+the rules are taken from the following ISO/IEC 1539 working draft:
+http://j3-fortran.org/doc/2003_Committee_Draft/04-007.pdf.
+
 
 Fortran parser package structure
 ================================
@@ -66,7 +85,6 @@ readfortran.py
 This file contains tools for reading Fortran codes from file and string objects.
 
 To read Fortran code from a file, use `FortranFileReader` class.
-
 `FortranFileReader` class is iterator over Fortran code lines
 and is derived from `FortranReaderBase` class.
 It automatically handles the line continuations and comments, as
