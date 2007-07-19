@@ -6,16 +6,16 @@ Author: Pearu Peterson <pearu.peterson@gmail.com>
 Fortran parser package structure
 ================================
 
-numpy.f2py.lib.parser package contains the following files:
+`numpy.f2py.lib.parser` package contains the following files:
 
 api.py
 ------
 
 Public API for Fortran parser.
 
-It exposes Statement classes, CHAR_BIT constant, and parse function.
+It exposes `Statement` subclasses, `CHAR_BIT` constant, and a function `parse`.
 
-Function parse(<input>, ..) parses, analyzes and returns Statement
+Function `parse(<input>, ..)` parses, analyzes and returns a `Statement`
 tree of Fortran input. For example,
 
 ::
@@ -63,14 +63,14 @@ tree of Fortran input. For example,
 readfortran.py
 --------------
 
-Tools for reading Fortran codes from file and string objects.
+This file contains tools for reading Fortran codes from file and string objects.
 
-To read Fortran code from a file, use FortranFileReader class.
+To read Fortran code from a file, use `FortranFileReader` class.
 
-FortranFileReader class is iterator over Fortran code lines
-as is derived from FortranReaderBase class.
-It automatically handles line continuations and comments as
-well as detects if Fortran file is in free or fixed format.
+`FortranFileReader` class is iterator over Fortran code lines
+and is derived from `FortranReaderBase` class.
+It automatically handles the line continuations and comments, as
+well as it detects if Fortran file is in the free or fixed format.
 
 For example,
 
@@ -88,31 +88,31 @@ For example,
   >>> reader.next()
   Line('integer i,incx,incy,ix,iy,m,mp1,n',(9, 9),'')
 
-FortranReaderBase.next() method may return Line, SyntaxErrorLine, Comment, MultiLine,
-SyntaxErrorMultiLine instances.
+Note that `FortranReaderBase.next()` method may return `Line`, `SyntaxErrorLine`, `Comment`, `MultiLine`,
+`SyntaxErrorMultiLine` instances.
 
-Line instance has the following attributes:
+`Line` instance has the following attributes:
 
-  * .line - contains Fortran code line
-  * .span - a 2-tuple containing the span of line numbers containing
+  * `.line` - contains Fortran code line
+  * `.span` - a 2-tuple containing the span of line numbers containing
     Fortran code in the original Fortran file
-  * .label - the label of Fortran code line
-  * .reader - the FortranReaderBase class instance
-  * .strline - if not None then contains Fortran code line with parenthesis
-    content and string literal constants saved in .strlinemap dictionary.
-  * .is_f2py_directive - True if line started with f2py directive comment.
+  * `.label` - the label of Fortran code line
+  * `.reader` - the `FortranReaderBase` class instance
+  * `.strline` - if it is not `None` then it contains Fortran code line with parenthesis
+    content and string literal constants saved in the `.strlinemap` dictionary.
+  * `.is_f2py_directive` - `True` if line starts with the f2py directive comment.
 
 and the following methods:
 
-  * .get_line() - returns .strline (also evalutes it if None). Also
-    handles Hollerith contstants in fixed F77 mode.
-  * .isempty()  - returns True if Fortran line contains no code.
-  * .copy(line=None, apply_map=False) - returns a Line instance
-    with given .span, .label, .reader information but line content
-    replaced with line (when not None) and applying .strlinemap
-    mapping (when apply_map is True).
-  * .apply_map(line) - apply .strlinemap mapping to line.
-  * .has_map() - returns True if .strlinemap mapping exists.
+  * `.get_line()` - returns `.strline` (also evalutes it if None). Also
+    handles Hollerith contstants in the fixed F77 mode.
+  * `.isempty()`  - returns `True` if Fortran line contains no code.
+  * `.copy(line=None, apply_map=False)` - returns a `Line` instance
+    with given `.span`, `.label`, `.reader` information but the line content
+    replaced with `line` (when not `None`) and applying `.strlinemap`
+    mapping (when `apply_map` is `True`).
+  * `.apply_map(line)` - apply `.strlinemap` mapping to line content.
+  * `.has_map()` - returns `True` if `.strlinemap` mapping exists.
 
 For example,
 
@@ -136,42 +136,42 @@ For example,
   >>> item.copy('if(F2PY_EXPR_TUPLE_4)pause',True)
   Line('if(n.le.0)pause',(11, 11),'')
 
-Comment instance has the following attributes:
+`Comment` instance has the following attributes:
 
-  * .comment - comment string
-  * .span - a 2-tuple containing the span of line numbers containing
+  * `.comment` - a comment string
+  * `.span` - a 2-tuple containing the span of line numbers containing
     Fortran comment in the original Fortran file
-  * .reader - the FortranReaderBase class instance
+  * `.reader` - the `FortranReaderBase` class instance
 
-and .isempty() method.
+and `.isempty()` method.
 
-MultiLine class represents multiline syntax in .pyf files::
+`MultiLine` class represents multiline syntax in the .pyf files::
 
   <prefix>'''<lines>'''<suffix>
 
-MultiLine instance has the following attributes:
+`MultiLine` instance has the following attributes:
 
-  * .prefix - the content of <prefix>
-  * .block - a list of lines
-  * .suffix - the content of <suffix>
-  * .span - a 2-tuple containing the span of line numbers containing
+  * `.prefix` - the content of `<prefix>`
+  * `.block` - a list of lines
+  * `.suffix` - the content of `<suffix>`
+  * `.span` - a 2-tuple containing the span of line numbers containing
     multiline syntax in the original Fortran file
-  * .reader - the FortranReaderBase class instance
+  * `.reader` - the `FortranReaderBase` class instance
 
-and .isempty() method.
+and `.isempty()` method.
 
-SyntaxErrorLine and SyntaxErrorMultiLine are like Line and MultiLine
+`SyntaxErrorLine` and `SyntaxErrorMultiLine` are like `Line` and `MultiLine`
 classes, respectively, with a functionality of issuing an error
-message to sys.stdout when constructing an instance of the corresponding
+message to `sys.stdout` when constructing an instance of the corresponding
 class.
 
-To read a Fortran code from a string, use FortranStringReader class::
+To read a Fortran code from a string, use `FortranStringReader` class::
 
   reader = FortranStringReader(<string>, <isfree>, <isstrict>)
 
 where the second and third arguments are used to specify the format
-of the given <string> content. When <isfree> and <isstrict> are both
-True, the content of a .pyf file is assumed. For example,
+of the given `<string>` content. When `<isfree>` and `<isstrict>` are both
+`True`, the content of a .pyf file is assumed. For example,
 
 ::
 
@@ -191,31 +191,31 @@ True, the content of a .pyf file is assumed. For example,
   >>> reader.next()
   Line('end',(5, 5),'')
 
-FortranReaderBase has the following attributes:
+`FortranReaderBase` has the following attributes:
 
-  * .source - a file-like object with .next() method to retrive 
+  * `.source` - a file-like object with `.next()` method to retrive 
     a source code line
-  * .source_lines - a list of read source lines
-  * .reader - a FortranReaderBase instance for reading files
+  * `.source_lines` - a list of read source lines
+  * `.reader` - a `FortranReaderBase` instance for reading files
     from INCLUDE statements.
-  * .include_dirs - a list of directories where INCLUDE files
-    are searched. Default is ['.'].
+  * `.include_dirs` - a list of directories where INCLUDE files
+    are searched. Default is `['.']`.
 
 and the following methods:
 
-  * .set_mode(isfree, isstrict) - set Fortran code format information
-  * .close_source() - called when .next() raises StopIteration exception.
+  * `.set_mode(isfree, isstrict)` - set Fortran code format information
+  * `.close_source()` - called when `.next()` raises `StopIteration` exception.
 
 parsefortran.py
 ---------------
 
-Parse Fortran code from FortranReaderBase iterator.
+This file contains code for parsing Fortran code from `FortranReaderBase` iterator.
 
-FortranParser class holds the parser information while
-iterating over items returned by FortranReaderBase iterator.
-The parsing information, collected when calling .parse() method,
-is saved in .block attribute as an instance
-of BeginSource class defined in block_statements.py file.
+`FortranParser` class holds the parser information while
+iterating over items returned by `FortranReaderBase` iterator.
+The parsing information, collected when calling `.parse()` method,
+is saved in `.block` attribute as an instance
+of `BeginSource` class defined in `block_statements.py` file.
 
 For example,
 
@@ -233,133 +233,134 @@ For example,
 block_statements.py, base_classes.py, typedecl_statements.py, statements.py
 ---------------------------------------------------------------------------
 
-The model for representing Fortran code statements consists of a tree of Statement
-classes defined in base_classes.py. There are two types of statements: one line
+The model for representing Fortran code statements consists of a tree of `Statement`
+classes defined in `base_classes.py`. There are two types of statements: one-line
 statements and block statements. Block statements consists of start and end
 statements, and content statements in between that can be of both types again.
 
-Statement instance has the following attributes:
+`Statement` instance has the following attributes:
 
-  * .parent  - it is either parent block-type statement or FortranParser instance.
-  * .item    - Line instance containing Fortran statement line information, see above.
-  * .isvalid - when False then processing this Statement instance will be skipped,
-    for example, when the content of .item does not match with
-    the Statement class.
-  * .ignore  - when True then the Statement instance will be ignored.
-  * .modes   - a list of Fortran format modes where the Statement instance is valid.
+  * `.parent`  - it is either parent block-type statement or `FortranParser` instance.
+  * `.item`    - a `Line` instance containing Fortran statement line information, see above.
+  * `.isvalid` - when `False` then processing this `Statement` instance will be skipped,
+    for example, when the content of `.item` does not match with
+    the `Statement` class.
+  * `.ignore`  - when `True` then the `Statement` instance will be ignored.
+  * `.modes`   - a list of Fortran format modes where the `Statement` instance is valid.
 
 and the following methods:
 
-  * .info(message), .warning(message), .error(message) - to spit messages to
-    sys.stderr stream.
-  * .get_variable(name) - get Variable instance by name that is defined in
+  * `.info(message)`, `.warning(message)`, `.error(message)` - to spit out messages to
+    `sys.stderr` stream.
+  * `.get_variable(name)` - get `Variable` instance by name that is defined in
     current namespace. If name is not defined, then the corresponding
-    Variable instance is created.
-  * .analyze() - calculate various information about the Statement, this information
-    is saved in .a attribute that is AttributeHolder instance.
+    `Variable` instance is created.
+  * `.analyze()` - calculate various information about the `Statement`, this information
+    is saved in `.a` attribute that is `AttributeHolder` instance.
 
-All statement classes are derived from Statement class. Block statements are
-derived from BeginStatement class and is assumed to end with EndStatement
-instance in .content attribute list. BeginStatement and EndStatement instances
+All statement classes are derived from the `Statement` class. Block statements are
+derived from the `BeginStatement` class and is assumed to end with an `EndStatement`
+instance in `.content` attribute list. `BeginStatement` and `EndStatement` instances
 have the following attributes:
 
-  * .name      - name of the block, blocks without names use line label
+  * `.name`      - name of the block, blocks without names use line label
     as the name.
-  * .blocktype - type of the block (derived from class name)
-  * .content   - a list of Statement (or Line) instances.
+  * `.blocktype` - type of the block (derived from class name)
+  * `.content`   - a list of `Statement` (or `Line`) instances.
 
 and the following methods:
 
-  * .__str__() - returns string representation of Fortran code.
+  * `.__str__()` - returns string representation of Fortran code.
 
 A number of statements may declare a variable that is used in other
-statement expressions. Variables are represented via Variable class
+statement expressions. Variables are represented via `Variable` class
 and its instances have the following attributes:
 
-  * .name      - name of the variable
-  * .typedecl  - type declaration
-  * .dimension - list of dimensions
-  * .bounds    - list of bounds
-  * .length    - length specs
-  * .attributes - list of attributes
-  * .bind      - list of bind information
-  * .intent    - list of intent information
-  * .check     - list of check expressions
-  * .init      - initial value of the variable
-  * .parent    - statement instance declaring the variable
-  * .parents   - list of statements that specify variable information
+  * `.name`      - name of the variable
+  * `.typedecl`  - type declaration
+  * `.dimension` - list of dimensions
+  * `.bounds`    - list of bounds
+  * `.length`    - length specs
+  * `.attributes` - list of attributes
+  * `.bind`      - list of bind information
+  * `.intent`    - list of intent information
+  * `.check`     - list of check expressions
+  * `.init`      - initial value of the variable
+  * `.parent`    - statement instance declaring the variable
+  * `.parents`   - list of statements that specify variable information
 
 and the following methods:
 
-  * .is_private()
-  * .is_public()
-  * .is_allocatable()
-  * .is_external()
-  * .is_intrinsic()
-  * .is_parameter()
-  * .is_optional()
-  * .is_required()
+  * `.is_private()`
+  * `.is_public()`
+  * `.is_allocatable()`
+  * `.is_external()`
+  * `.is_intrinsic()`
+  * `.is_parameter()`
+  * `.is_optional()`
+  * `.is_required()`
 
-The following type declaration statements are defined in typedecl_statements.py:
+The following type declaration statements are defined in `typedecl_statements.py`:
 
-  Integer, Real, DoublePrecision, Complex, DoubleComplex, Logical, 
-  Character, Byte, Type, Class
+  `Integer`, `Real`, `DoublePrecision`, `Complex`, `DoubleComplex`, `Logical`,
+  `Character`, `Byte`, `Type`, `Class`
 
 and they have the following attributes:
 
-  * .selector           - contains lenght and kind specs
-  * .entity_decls, .attrspec
+  * `.selector`           - contains lenght and kind specs
+  * `.entity_decls`, `.attrspec`
 
 and methods:
 
-  * .tostr() - return string representation of Fortran type declaration
-  * .astypedecl() - pure type declaration instance, it has no .entity_decls
-    and .attrspec.
-  * .analyze() - processes .entity_decls and .attsspec attributes and adds
-    Variable instance to .parent.a.variables dictionary.
+  * `.tostr()` - return string representation of Fortran type declaration
+  * `.astypedecl()` - pure type declaration instance, it has no `.entity_decls`
+    and `.attrspec`.
+  * `.analyze()` - processes `.entity_decls` and `.attrspec` attributes and adds
+    `Variable` instance to `.parent.a.variables` dictionary.
 
-The following block statements are defined in block_statements.py:
+The following block statements are defined in `block_statements.py`:
 
-  BeginSource, Module, PythonModule, Program, BlockData, Interface,
-  Subroutine, Function, Select, Where, Forall, IfThen, If, Do,
-  Associate, TypeDecl (Type), Enum
+  `BeginSource`, `Module`, `PythonModule`, `Program`, `BlockData`, `Interface`,
+  `Subroutine`, `Function`, `Select`, `Where`, `Forall`, `IfThen`, `If`, `Do`,
+  `Associate`, `TypeDecl (Type)`, `Enum`
 
 Block statement classes may have different properties which are declared via
 deriving them from the following classes:
 
-  HasImplicitStmt, HasUseStmt, HasVariables, HasTypeDecls,
-  HasAttributes, HasModuleProcedures, ProgramBlock
+  `HasImplicitStmt`, `HasUseStmt`, `HasVariables`, `HasTypeDecls`,
+  `HasAttributes`, `HasModuleProcedures`, `ProgramBlock`
 
-In summary, .a attribute may hold different information sets as follows:
+In summary, the `.a` attribute may hold different information sets as follows:
 
-  * BeginSource - .module, .external_subprogram, .blockdata
-  * Module - .attributes, .implicit_rules, .use, .use_provides, .variables,
-    .type_decls, .module_subprogram, .module_data
-  * PythonModule - .implicit_rules, .use, .use_provides
-  * Program - .attributes, .implicit_rules, .use, .use_provides
-  * BlockData - .implicit_rules, .use, .use_provides, .variables
-  * Interface - .implicit_rules, .use, .use_provides, .module_procedures
-  * Function, Subroutine - .implicit_rules, .attributes, .use, .use_statements,
-    .variables, .type_decls, .internal_subprogram
-  * TypeDecl - .variables, .attributes
+  * `BeginSource` - `.module`, `.external_subprogram`, `.blockdata`
+  * `Module` - `.attributes`, `.implicit_rules`, `.use`, `.use_provides`, `.variables`,
+    `.type_decls`, `.module_subprogram`, `.module_data`
+  * `PythonModule` - `.implicit_rules`, `.use`, `.use_provides`
+  * `Program` - `.attributes`, `.implicit_rules`, `.use`, `.use_provides`
+  * `BlockData` - `.implicit_rules`, `.use`, `.use_provides`, `.variables`
+  * `Interface` - `.implicit_rules`, `.use`, `.use_provides`, `.module_procedures`
+  * `Function`, `Subroutine` - `.implicit_rules`, `.attributes`, `.use`, `.use_statements`,
+    `.variables`, `.type_decls`, `.internal_subprogram`
+  * `TypeDecl` - `.variables`, `.attributes`
 
 Block statements have the following methods:
 
-  * .get_classes() - returns a list of Statement classes that are valid
+  * `.get_classes()` - returns a list of `Statement` classes that are valid
     as a content of given block statement.
 
 The following one line statements are defined:
 
-  Implicit, TypeDeclarationStatement derivatives (see above),
-  Assignment, PointerAssignment, Assign, Call, Goto, ComputedGoto,
-  AssignedGoto, Continue, Return, Stop, Print, Read, Write, Flush,
-  Wait, Contains, Allocate, Deallocate, ModuleProcedure, Access,
-  Public, Private, Close, Cycle, Backspace, Endfile, Reeinf, Open,
-  Format, Save, Data, Nullify, Use, Exit, Parameter, Equivalence,
-  Dimension, Target, Pointer, Protected, Volatile, Value, 
-  ArithmeticIf, Intrinsic, Inquire, Sequence, External, Namelist,
-  Common, Optional, Intent, Entry, Import, Forall,
-  SpecificBinding, GenericBinding, FinalBinding, Allocatable,
-  Asynchronous, Bind, Else, ElseIf, Case, Where, ElseWhere,
-  Enumerator, FortranName, Threadsafe, Depend, Check,
-  CallStatement, CallProtoArgument, Pause
+  `Implicit`, `TypeDeclarationStatement` derivatives (see above),
+  `Assignment`, `PointerAssignment`, `Assign`, `Call`, `Goto`, `ComputedGoto`,
+  `AssignedGoto`, `Continue`, `Return`, `Stop`, `Print`, `Read`, `Write`, `Flush`,
+  `Wait`, `Contains`, `Allocate`, `Deallocate`, `ModuleProcedure`, `Access`,
+  `Public`, `Private`, `Close`, `Cycle`, `Backspace`, `Endfile`, `Reeinf`, `Open`,
+  `Format`, `Save`, `Data`, `Nullify`, `Use`, `Exit`, `Parameter`, `Equivalence`,
+  `Dimension`, `Target`, `Pointer`, `Protected`, `Volatile`, `Value`,
+  `ArithmeticIf`, `Intrinsic`, `Inquire`, `Sequence`, `External`, `Namelist`,
+  `Common`, `Optional`, `Intent`, `Entry`, `Import`, `Forall`,
+  `SpecificBinding`, `GenericBinding`, `FinalBinding`, `Allocatable`,
+  `Asynchronous`, `Bind`, `Else`, `ElseIf`, `Case`, `Where`, `ElseWhere`,
+  `Enumerator`, `FortranName`, `Threadsafe`, `Depend`, `Check`,
+  `CallStatement`, `CallProtoArgument`, `Pause`
+
