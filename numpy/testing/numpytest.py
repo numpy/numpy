@@ -16,6 +16,7 @@ __all__ = ['set_package_path', 'set_local_path', 'restore_path',
 
 DEBUG=0
 from numpy.testing.utils import jiffies
+from numpy.distutils.exec_command import splitcmdline
 get_frame = sys._getframe
 
 class IgnoreException(Exception):
@@ -605,7 +606,7 @@ class NumpyTest:
         except ImportError:
             self.warn('Failed to import optparse module, ignoring.')
             return self.test()
-        usage = r'usage: %prog [-v <verbosity>] [-l <level>]'
+        usage = r'usage: %prog [-v <verbosity>] [-l <level>] [-s "<replacement of sys.argv[1:]>"]'
         parser = OptionParser(usage)
         parser.add_option("-v", "--verbosity",
                           action="store",
@@ -617,7 +618,14 @@ class NumpyTest:
                           dest="level",
                           default=1,
                           type='int')
+        parser.add_option("-s", "--sys-argv",
+                          action="store",
+                          dest="sys_argv",
+                          default='',
+                          type='string')
         (options, args) = parser.parse_args()
+        if options.sys_argv:
+            sys.argv[1:] = splitcmdline(options.sys_argv)
         self.test(options.level,options.verbosity)
         return
 
