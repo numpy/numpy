@@ -697,6 +697,11 @@ class test_regression(NumpyTestCase):
         x = N.array(['a']*32)
         assert_array_equal(x.argsort(kind='m'), N.arange(32))
 
+    def check_numeric_random(self, level=rlevel):
+        """Ticket #552"""
+        from numpy.oldnumeric.random_array import randint
+        randint(0,50,[2,3])
+
 
 if __name__ == "__main__":
     NumpyTest().run()
