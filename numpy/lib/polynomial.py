@@ -400,7 +400,7 @@ def polydiv(u, v):
     m = len(u) - 1
     n = len(v) - 1
     scale = 1. / v[0]
-    q = NX.zeros((m-n+1,), float)
+    q = NX.zeros((max(m-n+1,1),), float)
     r = u.copy()
     for k in range(0, m-n+1):
         d = scale * r[k]
