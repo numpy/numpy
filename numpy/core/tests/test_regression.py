@@ -702,6 +702,13 @@ class test_regression(NumpyTestCase):
         from numpy.oldnumeric.random_array import randint
         randint(0,50,[2,3])
 
+    def check_poly_eq(self, level=rlevel):
+        """Ticket #554"""
+        x = N.poly1d([1,2,3])
+        y = N.poly1d([3,4])
+        assert x != y
+        assert x == x
+
 
 if __name__ == "__main__":
     NumpyTest().run()

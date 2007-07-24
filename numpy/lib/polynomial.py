@@ -606,10 +606,10 @@ class poly1d(object):
             return polydiv(other, self)
 
     def __eq__(self, other):
-        return (self.coeffs == other.coeffs).all()
+        return NX.alltrue(self.coeffs == other.coeffs)
 
     def __ne__(self, other):
-        return (self.coeffs != other.coeffs).any()
+        return NX.any(self.coeffs != other.coeffs)
 
     def __setattr__(self, key, val):
         raise ValueError, "Attributes cannot be changed this way."
