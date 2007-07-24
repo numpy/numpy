@@ -5,6 +5,7 @@ import os
 import sys
 
 from numpy.distutils.fcompiler import FCompiler
+from distutils.errors import DistutilsPlatformError
 
 compilers = ['CompaqFCompiler']
 if os.name != 'posix':
@@ -69,11 +70,16 @@ class CompaqVisualFCompiler(FCompiler):
 
     ar_exe = 'lib.exe'
     fc_exe = 'DF'
+
     if sys.platform=='win32':
         from distutils.msvccompiler import MSVCCompiler
-        m = MSVCCompiler()
-        m.initialize()
-        ar_exe = m.lib
+
+        try:
+            m = MSVCCompiler()
+            m.initialize()
+            ar_exe = m.lib
+        except DistutilsPlatformError, msg:
+            print 'Ignoring %s (one should fix me in fcompiler/compaq.py)' % (msg)
 
     executables = {
         'version_cmd'  : ['<F90>', "/what"],

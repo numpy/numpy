@@ -123,7 +123,7 @@ def test_splitcmdline():
 ############################################################
 
 def find_executable(exe, path=None):
-    """Return full path of a executable.
+    """Return full path of a executable or None.
 
     Symbolic links are not followed.
     """
@@ -358,7 +358,6 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         use_shell = os.name=='posix'
     if use_tee is None:
         use_tee = os.name=='posix'
-
     using_command = 0
     if use_shell:
         # We use shell (unless use_shell==0) so that wildcards can be
@@ -380,7 +379,7 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         spawn_command = os.spawnvpe
     else:
         spawn_command = os.spawnve
-        argv[0] = find_executable(argv[0])
+        argv[0] = find_executable(argv[0]) or argv[0]
         if not os.path.isfile(argv[0]):
             log.warn('Executable %s does not exist' % (argv[0]))
             if os.name in ['nt','dos']:
