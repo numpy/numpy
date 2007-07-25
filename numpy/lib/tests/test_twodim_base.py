@@ -27,6 +27,8 @@ class test_eye(NumpyTestCase):
                                                 [0,1,0,0],
                                                 [0,0,1,0],
                                                 [0,0,0,1]],'f'))
+        assert_equal(eye(3) == 1, eye(3,dtype=bool))
+
     def check_diag(self):
         assert_equal(eye(4,k=1),array([[0,1,0,0],
                                        [0,0,1,0],
