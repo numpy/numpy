@@ -47,7 +47,8 @@ def eye(N, M=None, k=0, dtype=float):
     if M is None: M = N
     m = equal(subtract.outer(arange(N), arange(M)),-k)
     if m.dtype != dtype:
-        return m.astype(dtype)
+        m = m.astype(dtype)
+    return m
 
 def diag(v, k=0):
     """ returns a copy of the the k-th diagonal if v is a 2-d array
