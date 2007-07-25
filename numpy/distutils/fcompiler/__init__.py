@@ -30,7 +30,6 @@ from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError, \
      DistutilsExecError, CompileError, LinkError, DistutilsPlatformError
 from distutils.util import split_quoted, strtobool
-from distutils.spawn import _nt_quote_args
 
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
@@ -569,8 +568,6 @@ class FCompiler(CCompiler):
             log.info('using compile options from source: %r' \
                      % ' '.join(extra_flags))
 
-        if os.name == 'nt':
-            compiler = _nt_quote_args(compiler)
         command = compiler + cc_args + extra_flags + s_args + o_args \
                   + extra_postargs
 
@@ -642,8 +639,6 @@ class FCompiler(CCompiler):
                 linker = self.linker_exe[:]
             else:
                 linker = self.linker_so[:]
-            if os.name == 'nt':
-                linker = _nt_quote_args(linker)
             command = linker + ld_args
             try:
                 self.spawn(command)

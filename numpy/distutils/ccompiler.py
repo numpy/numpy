@@ -11,7 +11,6 @@ from distutils.version import LooseVersion
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32
-from distutils.spawn import _nt_quote_args
 
 # hack to set compiler optimizing options. Needs to integrated with something.
 import distutils.sysconfig
@@ -32,8 +31,6 @@ def CCompiler_spawn(self, cmd, display=None):
         if is_sequence(display):
             display = ' '.join(list(display))
     log.info(display)
-    if is_sequence(cmd) and os.name == 'nt':
-        cmd = _nt_quote_args(list(cmd))
     s,o = exec_command(cmd)
     if s:
         if is_sequence(cmd):
@@ -264,7 +261,6 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
         return None
     if not version_cmd or not version_cmd[0]:
         return None
-    cmd = ' '.join(version_cmd)
     try:
         matcher = self.version_match
     except AttributeError:
@@ -279,7 +275,7 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
             version = m.group('version')
             return version
 
-    status, output = exec_command(cmd,use_tee=0)
+    status, output = exec_command(version_cmd,use_tee=0)
 
     version = None
     if status in ok_status:

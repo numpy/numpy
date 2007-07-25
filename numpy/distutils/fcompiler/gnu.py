@@ -46,6 +46,7 @@ class GnuFCompiler(FCompiler):
     #         GNU Fortran (GCC) 3.3.3 (Debian 20040401)
     #         GNU Fortran 0.5.25 20010319 (prerelease)
     # Redhat: GNU Fortran (GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5)) 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
+    # GNU Fortran (GCC) 3.4.2 (mingw-special)
 
     possible_executables = ['g77', 'f77']
     executables = {
@@ -325,6 +326,11 @@ if __name__ == '__main__':
     compiler = GnuFCompiler()
     compiler.customize()
     print compiler.get_version()
-    compiler = Gnu95FCompiler()
-    compiler.customize()
-    print compiler.get_version()
+    raw_input('Press ENTER to continue...')
+    try:
+        compiler = Gnu95FCompiler()
+        compiler.customize()
+        print compiler.get_version()
+    except Exception, msg:
+        print msg
+    raw_input('Press ENTER to continue...')
