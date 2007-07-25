@@ -36,8 +36,12 @@ def CCompiler_spawn(self, cmd, display=None):
         if is_sequence(cmd):
             cmd = ' '.join(list(cmd))
         print o
+        if re.search('Too many open files', o):
+            msg = '\nTry rerunning setup command until build succeeds.'
+        else:
+            msg = ''
         raise DistutilsExecError,\
-              'Command "%s" failed with exit status %d' % (cmd, s)
+              'Command "%s" failed with exit status %d%s' % (cmd, s, msg)
 
 replace_method(CCompiler, 'spawn', CCompiler_spawn)
 
