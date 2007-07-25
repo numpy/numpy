@@ -151,7 +151,10 @@ class GnuFCompiler(FCompiler):
 
         if g2c is not None:
             opt.append(g2c)
-        if sys.platform == 'win32':
+        c_compiler = self.c_compiler
+        if sys.platform == 'win32' and c_compiler and \
+               c_compiler.compiler_type=='msvc':
+            # the following code is not needed (read: breaks) when using MinGW
             # in case want to link F77 compiled code with MSVC
             opt.append('gcc')
             runtime_lib = msvc_runtime_library()

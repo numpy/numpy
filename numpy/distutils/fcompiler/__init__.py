@@ -203,6 +203,10 @@ class FCompiler(CCompiler):
                         'compiler_fix', 'linker_so', 'linker_exe', 'archiver',
                         'ranlib']
 
+    # This will be set by new_fcompiler when called in
+    # command/{build_ext.py, build_clib.py, config.py} files.
+    c_compiler = None
+    
     def __init__(self, *args, **kw):
         CCompiler.__init__(self, *args, **kw)
         self.distutils_vars = self.distutils_vars.clone(self._environment_hook)
@@ -599,6 +603,8 @@ class FCompiler(CCompiler):
     def library_option(self, lib):
         return "-l" + lib
     def library_dir_option(self, dir):
+        if ' ' in dir and dir[0] not in '"\'':
+            return '-L"%s"' % (dir)
         return "-L" + dir
 
     def link(self, target_desc, objects,
@@ -716,13 +722,15 @@ def load_all_fcompiler_classes():
 
 def _find_existing_fcompiler(compiler_types,
                              osname=None, platform=None,
-                             requiref90=False):
+                             requiref90=False,
+                             c_compiler=None):
     from numpy.distutils.core import get_distribution
     dist = get_distribution(always=True)
     for compiler_type in compiler_types:
         v = None
         try:
-            c = new_fcompiler(plat=platform, compiler=compiler_type)
+            c = new_fcompiler(plat=platform, compiler=compiler_type,
+                              c_compiler=c_compiler)
             c.customize(dist)
             v = c.get_version()
             if requiref90 and c.compiler_f90 is None:
@@ -732,7 +740,8 @@ def _find_existing_fcompiler(compiler_types,
                     log.warn('Trying %r compiler as suggested by %r '
                              'compiler for f90 support.' % (compiler_type,
                                                             new_compiler))
-                    c = new_fcompiler(plat=platform, compiler=new_compiler)
+                    c = new_fcompiler(plat=platform, compiler=new_compiler,
+                                      c_compiler=c_compiler)
                     c.customize(dist)
                     v = c.get_version()
                     if v is not None:
@@ -763,7 +772,8 @@ def available_fcompilers_for_platform(osname=None, platform=None):
         matching_compiler_types.append('gnu')
     return matching_compiler_types
 
-def get_default_fcompiler(osname=None, platform=None, requiref90=False):
+def get_default_fcompiler(osname=None, platform=None, requiref90=False,
+                          c_compiler=None):
     """Determine the default Fortran compiler to use for the given
     platform."""
     matching_compiler_types = available_fcompilers_for_platform(osname,
@@ -771,7 +781,8 @@ def get_default_fcompiler(osname=None, platform=None, requiref90=False):
     compiler_type =  _find_existing_fcompiler(matching_compiler_types,
                                               osname=osname,
                                               platform=platform,
-                                              requiref90=requiref90)
+                                              requiref90=requiref90,
+                                              c_compiler=c_compiler)
     return compiler_type
 
 def new_fcompiler(plat=None,
@@ -779,7 +790,8 @@ def new_fcompiler(plat=None,
                   verbose=0,
                   dry_run=0,
                   force=0,
-                  requiref90=False):
+                  requiref90=False,
+                  c_compiler = None):
     """Generate an instance of some FCompiler subclass for the supplied
     platform/compiler combination.
     """
@@ -787,7 +799,8 @@ def new_fcompiler(plat=None,
     if plat is None:
         plat = os.name
     if compiler is None:
-        compiler = get_default_fcompiler(plat, requiref90=requiref90)
+        compiler = get_default_fcompiler(plat, requiref90=requiref90,
+                                         c_compiler=c_compiler)
     if compiler in fcompiler_class:
         module_name, klass, long_description = fcompiler_class[compiler]
     elif compiler in fcompiler_aliases:
@@ -802,6 +815,7 @@ def new_fcompiler(plat=None,
         return None
 
     compiler = klass(verbose=verbose, dry_run=dry_run, force=force)
+    compiler.c_compiler = c_compiler
     return compiler
 
 def show_fcompilers(dist=None):

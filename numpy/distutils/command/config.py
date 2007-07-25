@@ -27,7 +27,8 @@ class config(old_config):
         from numpy.distutils.fcompiler import FCompiler, new_fcompiler
         if not isinstance(self.fcompiler, FCompiler):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
-                                           dry_run=self.dry_run, force=1)
+                                           dry_run=self.dry_run, force=1,
+                                           c_compiler=self.compiler)
             if self.fcompiler is not None:
                 self.fcompiler.customize(self.distribution)
                 if self.fcompiler.get_version():

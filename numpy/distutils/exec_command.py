@@ -122,11 +122,16 @@ def test_splitcmdline():
 
 ############################################################
 
-def find_executable(exe, path=None):
+def find_executable(exe, path=None, _cache={}):
     """Return full path of a executable or None.
 
     Symbolic links are not followed.
     """
+    key = exe, path
+    try:
+        return _cache[key]
+    except KeyError:
+        pass
     log.debug('find_executable(%r)' % exe)
     orig_exe = exe
 
@@ -160,6 +165,7 @@ def find_executable(exe, path=None):
                 f_ext = realpath(f_ext)
             if os.path.isfile(f_ext) and os.access(f_ext, os.X_OK):
                 log.good('Found executable %s' % f_ext)
+                _cache[key] = f_ext
                 return f_ext
 
     log.warn('Could not locate executable %s' % orig_exe)

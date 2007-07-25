@@ -416,7 +416,8 @@ class system_info:
         if self.verbosity>0 and flag:
             for k,v in res.items():
                 v = str(v)
-                if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
+                if k in ['sources','libraries'] and len(v)>270:
+                    v = v[:120]+'...\n...\n...'+v[-120:]
                 log.info('    %s = %s', k, v)
             log.info('')
 
@@ -1394,6 +1395,7 @@ class blas_src_info(system_info):
         srotmg zdrot cdotu daxpy drotm idamax scopy sscal zdscal crotg
         dcabs1 drotmg isamax sdot sswap zrotg cscal dcopy dscal izamax
         snrm2 zaxpy zscal csrot ddot dswap sasum srot zcopy zswap
+        scabs1
         '''
         blas2 = '''
         cgbmv chpmv ctrsv dsymv dtrsv sspr2 strmv zhemv ztpmv cgemv
@@ -1412,6 +1414,7 @@ class blas_src_info(system_info):
         sources = [os.path.join(src_dir,f+'.f') \
                    for f in (blas1+blas2+blas3).split()]
         #XXX: should we check here actual existence of source files?
+        sources = [f for f in sources if os.path.isfile(f)]
         info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 

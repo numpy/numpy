@@ -77,7 +77,8 @@ class build_clib(old_build_clib):
                                            verbose=self.verbose,
                                            dry_run=self.dry_run,
                                            force=self.force,
-                                           requiref90='f90' in languages)
+                                           requiref90='f90' in languages,
+                                           c_compiler=self.compiler)
             if self.compiler is not None:
                 self.fcompiler.customize(self.distribution)
 
@@ -146,7 +147,8 @@ class build_clib(old_build_clib):
                                       verbose=self.verbose,
                                       dry_run=self.dry_run,
                                       force=self.force,
-                                      requiref90=requiref90)
+                                      requiref90=requiref90,
+                                      c_compiler=self.compiler)
             if fcompiler is not None:
                 dist = self.distribution
                 base_config_fc = dist.get_option_dict('config_fc').copy()
