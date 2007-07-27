@@ -30,7 +30,9 @@ def quote_args(args):
     args = list(args)
     for i in range(len(args)):
         a = args[i]
-        if ' ' in a and a[0] not in '"\'':
+        if is_sequence(a):
+            args[i] = quote_args(a)
+        elif ' ' in a and a[0] not in '"\'':
             args[i] = '"%s"' % (a)
     return args
 
@@ -327,6 +329,7 @@ def msvc_on_amd64():
     if os.environ.has_key('DISTUTILS_USE_SDK'):
         return
     # try to avoid _MSVCCompiler__root attribute error
+    print 'Forcing DISTUTILS_USE_SDK=1'
     os.environ['DISTUTILS_USE_SDK']='1'
     return
 
