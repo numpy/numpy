@@ -51,5 +51,16 @@ class test_power(NumpyTestCase):
             b = a ** 4
             assert b == 6765201, "error with %r: got %r" % (t,b)
 
+class test_conversion(NumpyTestCase):
+    def test_int_from_long(self):
+        l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
+        li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
+        for T in [None,N.float64,N.int64]:
+            a = N.array(l,dtype=T)
+            assert_equal(map(int,a), li)
+
+        a = N.array(l[:3],dtype=N.uint64)
+        assert_equal(map(int,a), li[:3])
+
 if __name__ == "__main__":
     NumpyTest().run()

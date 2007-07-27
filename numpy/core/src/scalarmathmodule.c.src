@@ -805,11 +805,35 @@ static int
 /**end repeat**/
 
 /**begin repeat
-   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*3#
-   #Name=(Byte,UByte,Short,UShort,Int,UInt,Long,ULong,LongLong,ULongLong,Float,Double,LongDouble,CFloat,CDouble,CLongDouble)*3#
-   #cmplx=(,,,,,,,,,,,,,.real,.real,.real)*3#
-   #which=int*16,long*16,float*16#
-   #func=PyInt_FromLong*16,(PyLong_FromLongLong, PyLong_FromUnsignedLongLong)*5,PyLong_FromDouble*6,PyFloat_FromDouble*16#
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
+   #Name=Byte,UByte,Short,UShort,Int,UInt,Long,ULong,LongLong,ULongLong,Float,Double,LongDouble,CFloat,CDouble,CLongDouble#
+   #cmplx=,,,,,,,,,,,,,.real,.real,.real#
+   #sign=(signed,unsigned)*5,,,,,,#
+   #ctype=long*8,PY_LONG_LONG*2,double*6#
+   #realtyp=0*10,1*6#
+   #func=(PyLong_FromLong,PyLong_FromUnsignedLong)*4,PyLong_FromLongLong,PyLong_FromUnsignedLongLong,PyLong_FromDouble*6#
+**/
+static PyObject *
+@name@_int(PyObject *obj)
+{
+    @sign@ @ctype@ x= PyArrayScalar_VAL(obj, @Name@)@cmplx@;
+#if @realtyp@
+    double ix;
+    modf(x, &ix);
+    x = ix;
+#endif
+    if(LONG_MIN < x && x < LONG_MAX) 
+      return PyInt_FromLong(x);
+    return @func@(x);
+}
+/**end repeat**/
+
+/**begin repeat
+   #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble)*2#
+   #Name=(Byte,UByte,Short,UShort,Int,UInt,Long,ULong,LongLong,ULongLong,Float,Double,LongDouble,CFloat,CDouble,CLongDouble)*2#
+   #cmplx=(,,,,,,,,,,,,,.real,.real,.real)*2#
+   #which=long*16,float*16#
+   #func=(PyLong_FromLongLong, PyLong_FromUnsignedLongLong)*5,PyLong_FromDouble*6,PyFloat_FromDouble*16#
 **/
 static PyObject *
 @name@_@which@(PyObject *obj)
