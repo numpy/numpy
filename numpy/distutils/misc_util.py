@@ -327,7 +327,7 @@ def msvc_on_amd64():
     if os.environ.has_key('DISTUTILS_USE_SDK'):
         return
     # try to avoid _MSVCCompiler__root attribute error
-    os.environ['DISTUTILS_USE_SDK']=1
+    os.environ['DISTUTILS_USE_SDK']='1'
     return
 
 msvc_on_amd64()
