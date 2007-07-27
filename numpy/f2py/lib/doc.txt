@@ -1,0 +1,60 @@
+.. -*- rest -*-
+
+=======================
+G3 F2PY library package 
+=======================
+
+:Author:
+  Pearu Peterson <pearu.peterson@gmail.com>
+:Created: July 2007
+
+.. contents:: Table of Contents
+
+Overview
+========
+
+The G3 F2PY library package contains tools to parse Fortran codes and
+construct Python C/API extension modules for wrapping Fortran
+programs. These tools are also suitable for implementing Fortran
+program translators or wrappers to any other programming language.  In
+fact, wrapping Fortran programs to Python would be one example of
+using these tools.
+
+Wrapping Fortran with Python
+============================
+
+There are two user interfaces to wrap Fortran programs with
+Python:
+
+  - the command line program `f2py` that scans Fortran files
+    given as command line arguments and builds extension modules
+    that can be used to call Fortran programs from Python.
+    The `f2py` program has four different ways of building
+    extension modules as specified with the following command
+    line flags:
+
+    - `--g3-numpy` --- create extension modules with NumPy array
+      support using the new tools from `the 3rd generation of F2PY`__.
+      This is a work-in-progress feature.
+
+    - `--2d-numpy` --- create extension modules with NumPy array
+      support using `the stable version of F2PY`__. This is default.
+
+    - `--2d-numeric` --- create extension modules with Numeric
+      array support using the old version of f2py2e. The f2py2e
+      package must be downloaded and installed separately from
+      the `f2py2e homepage`__.
+
+    - `--2d-numarray` --- create extension modules with Numarray
+      array support using the old version of f2py2e.
+
+    See the output of `f2py` for more information.
+
+__ http://projects.scipy.org/scipy/numpy/wiki/G3F2PY/
+__ http://www.scipy.org/F2py/
+__ http://cens.ioc.ee/projects/f2py2e/
+
+  - the function `compile()` that scans its string input containing
+    Fortran code and returns a list of imported extension modules
+    that can be used to call Fortran programs from Python.
+
