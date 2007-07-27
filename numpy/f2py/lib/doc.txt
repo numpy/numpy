@@ -20,11 +20,10 @@ program translators or wrappers to any other programming language.  In
 fact, wrapping Fortran programs to Python would be just one example of
 using these tools.
 
-Wrapping Fortran with Python
-============================
+Wrapping Fortran with Python - UI
+=================================
 
-There are two user interfaces to wrap Fortran programs with
-Python:
+There are two user interfaces to wrap Fortran programs with Python:
 
   - the command line program `f2py` that scans Fortran files
     given as command line arguments and builds extension modules
@@ -84,3 +83,157 @@ __ http://cens.ioc.ee/projects/f2py2e/
       >>> foo.hello()
        Hello!
       >>>
+
+Wrapping Fortran with Python - how it works?
+============================================
+
+The two users interfaces discussed above are implemented by functions
+`main(sys_argv=None)` and `compile(source, jobname='untitled',
+extra_args=[], source_ext=None, modulenames=None)` in file
+`numpy/f2py/lib/main.py`.  Both these functions call
+`build_extension(sys_argv, sources_only=False)` function that reads
+`sys_argv` list for files and options, constructs wrapper functions,
+creates a `numpy.distutils` style `setup.py` file, and finally runs
+it.
+
+`build_extension` options
+-------------------------
+
+The following options are defined that can be used as command line
+arguments to `f2py` or in `extra_args` list argument of the `compiler`
+function:
+
+  - `-m [<name>]` --- specify the name of a wrapper extension
+    module. Default is `untitled` or `unspecified` (if `<name>` part
+    is not specified).
+
+  - `--target-dir=<path>` --- specify the directory path where
+    extension modules are saved. Default is the current working
+    directory.
+
+  - `--build-dir=<path>` --- specify the directory path where
+    temporary files are created during the build process. Default is
+    `_g2f2py` or temporary directory (when `<path>` part is not
+    specified)).
+
+  - `-I<path>` --- specifies include directory path that is used for
+    finding Fortran 90 modules and when compiling sources.
+
+  - `-D<name>[=<value>]`, `-U<name>` --- defines or undefines CPP
+    macro used in compiling sources. See below for F2PY specific
+    macros.
+
+  - `-L<path>` --- specifies library directory path that is used in
+    linking extension modules.
+
+  - `-l<name>` --- specifies library that is used in linking extension
+    modules.
+
+  - `<filename>.(o|a|so|dll|dylib|sl)` --- specifies extra object
+    files used in linking extension modules.
+
+  - `<filename>`.pyf --- specifies signature file used for scanning
+    Fortran program signatures.
+
+  - `<filename>.(f|f90|F90|F)` --- specifies Fortran source files used
+    for scanning Fortran program signatures (in case no signature
+    files are specified). These sources will be compiled and linked
+    with extension modules.
+
+  - `<filename>.(c|cpp|C|CPP|c++)` --- specifies C/C++ source files
+    that will be compiled and linked with extension modules. Note that
+    if no signature file is specified then also C/C++ files are
+    scanned for Fortran program signatures. The Fortran program
+    signatures are assumed to be inside the C comment `/* f2py ... */`
+    block.
+
+  - `--fcompiler=<compiler name>` --- specifies Fortran compiler to be
+    used in compiling/linking the sources. See also `--help-fcompiler`
+    option.
+
+  - `--help-fcompiler` --- list Fortran compilers that are found in
+    the system, that are available or unavailable for the current
+    system. Then return without processing any other options.
+
+  - `--compiler=<compiler name>` --- specifies C/C++ compiler to be
+    used in compiling/linking the sources. See also `--help-compiler` 
+    option.
+
+  - `--help-compiler` --- list C/C++ compilers that are available 
+    for the current system. Then return without processing any other
+    options.
+
+Additional `f2py` command line options
+--------------------------------------
+
+Command line tool `f2py` uses the following additional command line
+options:
+
+  - `-c` --- specifies that F2PY should build extension
+    modules. Without this option F2PY just scans source files for
+    signatures and constructs extension module sources --- useful when
+    one needs to build extension modules manually (in Makefile, for
+    instance). See also `-h` option below.
+
+  - `-h <filename>` --- specifies the signature file name
+    where the results of scanning sources will be saved. With this
+    option F2PY just scans the sources but does not construct extension
+    modules sources --- useful when one needs to edit the signatures
+    of Fortran programs. If `<filename>` is `stdout` or `stderr` is
+    specified then the scanned signatures will be dumped to `stdout`
+    or `stderr` streams, respectively.
+
+  - `--help-link [<resouce name> ]...` --- list system resources as
+    defined in `numpy/distutils/system_info.py` and return.
+
+  - `--parse` --- specifies that F2PY should just parce the
+    source files and dump the results to `stdout` stream.
+    Useful for debugging F2PY parser.
+
+
+F2PY specific CPP macros
+------------------------
+
+F2PY may use the following CPP macros:
+
+  - `-DF2PY_DEBUG_PYOBJ_TOFROM` --- show debug messages from
+    `pyobj_(to|from)_<ctype>` functions.
+
+  - `-DPREPEND_FORTRAN`, `-DNO_APPEND_FORTRAN`, `-DUPPERCASE_FORTRAN`,
+    `-DUNDERSCORE_G77` --- specify how Fortran compiler mangles Fortran
+    symbol names that need to be accessed from C extension modules.
+    Usually one never needs to specify these macros as supported
+    Fortran compilers should always mangle the names to be lower-cased
+    and with exactly one underscore after the name.
+
+Options for `compile`
+---------------------
+
+The `compile` function has the following options:
+
+  - `source` --- a string containing Fortran code. To specify the
+    Fortran format of the `source` use the following header lines
+    in the `source` string:
+
+      - `C -*- f77 -*-` --- the string contains Fortran 77 code
+      - `! -*- f90 -*-` --- the string contains Fortran 90 code in
+        free format.
+      - `! -*- fix -*-` --- the string contains Fortran 90 code in
+        fixed format.
+      - `! -*- pyf -*-` --- the string contains Fortran signatures.
+
+  - `jobname='untitled'` --- a string specifing the name of an 
+    extension module
+
+  - `extra_args=[]` --- a list of `build_extension(..)` arguments,
+    see above.
+
+  - `source_ext=None` --- a string specifying the extension (`.f` or
+    `.f90`) of the file where `source` will be saved for further
+    processing. Default extension will be determined from the `source`
+    string.
+
+  - `modulenames=None` --- a list of module names that the build
+    process should create. `compile` function will try to import
+    these modules and return the corresponding module objects
+    as a list.
