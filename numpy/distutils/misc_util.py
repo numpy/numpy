@@ -21,7 +21,18 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_dependencies', 'is_local_src_dir', 'get_ext_source_files',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath','njoin',
-           'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language']
+           'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
+           'quote_args']
+
+def quote_args(args):
+    # don't used _nt_quote_args as it does not check if
+    # args items already have quotes.
+    args = list(args)
+    for i in range(len(args)):
+        a = args[i]
+        if ' ' in a and a[0] not in '"\'':
+            args[i] = '"%s"' % (a)
+    return args
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."

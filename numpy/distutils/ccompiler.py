@@ -10,7 +10,7 @@ from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32
+from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, quote_args
 
 # hack to set compiler optimizing options. Needs to integrated with something.
 import distutils.sysconfig
@@ -367,9 +367,10 @@ def new_compiler (plat=None,
 
 ccompiler.new_compiler = new_compiler
 
-
 _distutils_gen_lib_options = gen_lib_options
 def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
+    library_dirs = quote_args(library_dirs)
+    runtime_library_dirs = quote_args(runtime_library_dirs)
     r = _distutils_gen_lib_options(compiler, library_dirs,
                                    runtime_library_dirs, libraries)
     lib_opts = []

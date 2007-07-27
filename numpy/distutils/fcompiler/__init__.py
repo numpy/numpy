@@ -603,8 +603,6 @@ class FCompiler(CCompiler):
     def library_option(self, lib):
         return "-l" + lib
     def library_dir_option(self, dir):
-        if ' ' in dir and dir[0] not in '"\'':
-            return '-L"%s"' % (dir)
         return "-L" + dir
 
     def link(self, target_desc, objects,
