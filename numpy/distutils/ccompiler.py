@@ -10,7 +10,7 @@ from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, quote_args
+from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, quote_args, msvc_on_amd64
 
 # hack to set compiler optimizing options. Needs to integrated with something.
 import distutils.sysconfig
@@ -383,6 +383,11 @@ def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
     return lib_opts
 ccompiler.gen_lib_options = gen_lib_options
 
+_distutils_gen_preprocess_options = gen_preprocess_options
+def gen_preprocess_options (macros, include_dirs):
+    include_dirs = quote_args(include_dirs)
+    return _distutils_gen_preprocess_options(macros, include_dirs)
+ccompiler.gen_preprocess_options = gen_preprocess_options
 
 ##Fix distutils.util.split_quoted:
 import re,string
@@ -440,3 +445,6 @@ def split_quoted(s):
 
     return words
 ccompiler.split_quoted = split_quoted
+
+# define DISTUTILS_USE_SDK when necessary to workaround distutils/msvccompiler.py bug
+msvc_on_amd64()

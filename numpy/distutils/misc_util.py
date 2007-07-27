@@ -333,8 +333,6 @@ def msvc_on_amd64():
     os.environ['DISTUTILS_USE_SDK']='1'
     return
 
-msvc_on_amd64()
-
 #########################
 
 #XXX need support for .C that is also C++
