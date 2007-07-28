@@ -137,6 +137,12 @@ def configuration(parent_package='',top_path=None):
                         mathlibs.extend(value.split(','))
             target_f.close()
 
+        print 'File:',target
+        target_f = open(target)
+        print target.read()
+        target_f.close()
+        print 'EOF'
+
         ext.libraries.extend(mathlibs)
 
         incl_dir = os.path.dirname(target)
