@@ -92,8 +92,14 @@ static double atanh(double x)
 #undef sqrtf
 #endif
 float log1pf(float);
+#if defined(DISTUTILS_USE_SDK)
 DL_IMPORT(float) logf(float);
 DL_IMPORT(float) sqrtf(float);
+#else
+/* should these be extern?: */
+float logf(float);
+float sqrtf(float);
+#endif
 #ifdef acoshf
 #undef acoshf
 #endif
