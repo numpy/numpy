@@ -139,7 +139,7 @@ def configuration(parent_package='',top_path=None):
 
         print 'File:',target
         target_f = open(target)
-        print target.read()
+        print target_f.read()
         target_f.close()
         print 'EOF'
 
