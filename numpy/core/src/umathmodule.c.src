@@ -1607,6 +1607,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
 
 #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
 #typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+#styp=byte, byte, short, short, int, int, long, long, longlong, longlong, float, double, longdouble#
 */
  static void
 @TYPE@_negative(char **args, intp *dimensions, intp *steps, void *func)
@@ -1615,7 +1616,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
 	intp is1=steps[0],os=steps[1], n=dimensions[0];
 	char *i1=args[0], *op=args[1];
 	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op) = (@typ@) (- *((@typ@ *)i1));
+		*((@typ@ *)op) = (@typ@) (- (@styp@)*((@typ@ *)i1));
 	}
 }
 /**end repeat**/
