@@ -21,6 +21,32 @@ extern double modf (double, double *);
 #endif
 
 
+#if defined(DISTUTILS_USE_SDK)
+/* win32 on AMD64 build architecture */
+/* See also http://projects.scipy.org/scipy/numpy/ticket/164 */
+#ifndef HAVE_FABSF
+#ifdef fabsf
+#undef fabsf
+#endif
+static float fabsf(float x)
+{
+       return (float)fabs((double)(x));
+}
+#endif
+#ifndef HAVE_HYPOTF
+static float hypotf(float x, float y)
+{
+  return (float)hypot((float)(x), (float)(y));
+}
+#endif
+#ifndef HAVE_RINTF
+static float rintf(float x)
+{
+       return (float)rint((double) x);
+}
+#endif
+#endif
+
 #ifndef HAVE_INVERSE_HYPERBOLIC
 static double acosh(double x)
 {
