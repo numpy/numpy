@@ -1139,7 +1139,7 @@ static void
 		}
 		else {
 			*((@otyp@ *)op)=				\
-				*((@typ@ *)i1) / (double)*((@typ@ *)i2);
+				(double)*((@typ@ *)i1) / (double)*((@typ@ *)i2);
 		}
 	}
 }
