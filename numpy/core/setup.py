@@ -126,6 +126,11 @@ def configuration(parent_package='',top_path=None):
             if not nosmp:  # default is to use WITH_THREAD
                 target_f.write('#ifdef WITH_THREAD\n#define NPY_ALLOW_THREADS 1\n#else\n#define NPY_ALLOW_THREADS 0\n#endif\n')
             target_f.close()
+            print 'File:',target
+            target_f = open(target)
+            print target_f.read()
+            target_f.close()
+            print 'EOF'
         else:
             mathlibs = []
             target_f = open(target)
@@ -136,12 +141,6 @@ def configuration(parent_package='',top_path=None):
                     if value:
                         mathlibs.extend(value.split(','))
             target_f.close()
-
-        print 'File:',target
-        target_f = open(target)
-        print target_f.read()
-        target_f.close()
-        print 'EOF'
 
         ext.libraries.extend(mathlibs)
 

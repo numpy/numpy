@@ -66,8 +66,8 @@ static double atanh(double x)
 #undef sqrtf
 #endif
 float log1pf(float);
-float logf(float);
-float sqrtf(float);
+DL_IMPORT(float) logf(float);
+DL_IMPORT(float) sqrtf(float);
 #ifdef acoshf
 #undef acoshf
 #endif
