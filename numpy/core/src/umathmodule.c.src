@@ -1139,7 +1139,7 @@ static void
 		}
 		else {
 			*((@otyp@ *)op)=				\
-				(double)*((@typ@ *)i1) / (double)*((@typ@ *)i2);
+			  (@otyp@)((double)*((@typ@ *)i1) / (double)*((@typ@ *)i2));
 		}
 	}
 }
@@ -1381,8 +1381,8 @@ static void
 	@btyp@ x, y;
 
 	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		x = *((@typ@ *)i1);
-		y = *((@typ@ *)i2);
+		x = (@btyp@)*((@typ@ *)i1);
+		y = (@btyp@)*((@typ@ *)i2);
 		*((@typ@ *)op) = (@typ@) pow(x,y);
 	}
 }
