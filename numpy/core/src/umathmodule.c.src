@@ -1615,7 +1615,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
 	intp is1=steps[0],os=steps[1], n=dimensions[0];
 	char *i1=args[0], *op=args[1];
 	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op) = - *((@typ@ *)i1);
+		*((@typ@ *)op) = (@typ@) (- *((@typ@ *)i1));
 	}
 }
 /**end repeat**/
@@ -1647,6 +1647,7 @@ static void
 /**begin repeat
 #TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
 #typ=cfloat,cdouble,clongdouble#
+#rtyp=float,double,longdouble#
  */
 static void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
@@ -1658,7 +1659,7 @@ static void
 	for(i=0; i<n; i++, i1+=is1, op+=os) {
                 t1 = *((@typ@ *)i1);
 		(*((@typ@ *)op)).real = _SIGNC(t1);
-                (*((@typ@ *)op)).imag = 0;
+                (*((@typ@ *)op)).imag = (@rtyp@)0;
 	}
 }
 /**end repeat**/
