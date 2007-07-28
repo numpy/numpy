@@ -712,7 +712,7 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
                 }
         }
         else if PyString_Check(type_tup) {
-                int slen;
+                Py_ssize_t slen;
                 char *thestr;
                 slen = PyString_GET_SIZE(type_tup);
                 thestr = PyString_AS_STRING(type_tup);
@@ -1110,11 +1110,12 @@ _has_reflected_op(PyObject *op, char *name)
 
 #undef _GETATTR_
 
-static int
+static Py_ssize_t
 construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                  PyObject *typetup)
 {
-        int nargs, i;
+        Py_ssize_t nargs;
+        int i;
         int arg_types[NPY_MAXARGS];
 	PyArray_SCALARKIND scalars[NPY_MAXARGS];
         PyArray_SCALARKIND maxarrkind, maxsckind, new;
@@ -2953,7 +2954,8 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 static void
 _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
 {
-	int nargs, i;
+        Py_ssize_t nargs;
+	int i;
 	int np = 0;
 	double priority, maxpriority;
 	PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
