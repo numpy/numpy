@@ -36,13 +36,16 @@ static float fabsf(float x)
 #ifndef HAVE_HYPOTF
 static float hypotf(float x, float y)
 {
-  return (float)hypot((float)(x), (float)(y));
+  return (float)hypot((double)(x), (double)(y));
 }
 #endif
 #ifndef HAVE_RINTF
+#ifndef HAVE_RINT
+static double rint (double x);
+#endif
 static float rintf(float x)
 {
-       return (float)rint((double) x);
+       return (float)rint((double)(x));
 }
 #endif
 #endif
