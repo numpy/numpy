@@ -54,6 +54,12 @@ static float frexpf(float x, int * i);
        return (float)frexp((double)(x), i);
 }
 #endif
+#ifndef HAVE_LDEXPF
+static float ldexpf(float x, int i);
+{
+       return (float)ldexp((double)(x), i);
+}
+#endif
 #endif
 
 #ifndef HAVE_INVERSE_HYPERBOLIC
