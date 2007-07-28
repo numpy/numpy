@@ -105,6 +105,9 @@ def configuration(parent_package='',top_path=None):
             if sys.platform == 'win32':
                 moredefs.append('NPY_NO_SIGNAL')
 
+            if os.environ.get('DISTUTILS_USE_SDK'):
+                moredefs.append('DISTUTILS_USE_SDK')
+
             if sys.version[:3] < '2.4':
                 if config_cmd.check_func('strtod', decl=False,
                                          headers=['stdlib.h']):
