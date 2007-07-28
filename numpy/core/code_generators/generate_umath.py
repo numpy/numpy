@@ -568,7 +568,11 @@ def make_arrays(funcdict):
                 elif t.type == 'M':
                     datalist.append('(void *)"%s"' % t.func_data)
                 else:
-                    datalist.append('(void *)%s' % t.func_data)
+                    astr = '%s_data[%d] = (void *) %s;' % \
+                           (name, k, t.func_data)
+                    code2list.append(astr)
+                    datalist.append('(void *)NULL')
+                    #datalist.append('(void *)%s' % t.func_data)
                 sub += 1
             else:
                 datalist.append('(void *)NULL');
