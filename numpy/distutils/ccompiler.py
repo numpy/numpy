@@ -371,7 +371,6 @@ _distutils_gen_lib_options = gen_lib_options
 def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
     library_dirs = quote_args(library_dirs)
     runtime_library_dirs = quote_args(runtime_library_dirs)
-    print 'gen_lib_options:',library_dirs, runtime_library_dirs
     r = _distutils_gen_lib_options(compiler, library_dirs,
                                    runtime_library_dirs, libraries)
     lib_opts = []

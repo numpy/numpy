@@ -26,13 +26,11 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
 
 def quote_args(args):
     # don't used _nt_quote_args as it does not check if
-    # args items already have quotes.
+    # args items already have quotes or not.
     args = list(args)
     for i in range(len(args)):
         a = args[i]
-        if is_sequence(a):
-            args[i] = quote_args(a)
-        elif ' ' in a and a[0] not in '"\'':
+        if ' ' in a and a[0] not in '"\'':
             args[i] = '"%s"' % (a)
     return args
 
