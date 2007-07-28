@@ -60,6 +60,7 @@ static float ldexpf(float x, int i)
        return (float)ldexp((double)(x), i);
 }
 #endif
+DL_IMPORT(float) tanhf(float);
 #endif
 
 #ifndef HAVE_INVERSE_HYPERBOLIC
