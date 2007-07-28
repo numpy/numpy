@@ -66,7 +66,7 @@ static double atanh(double x)
 #undef sqrtf
 #endif
 float log1pf(float);
-#if defined(_MSC_VER)
+#if defined(MS_WIN64)
 float __cdecl logf(float);
 float __cdecl sqrtf(float);
 #else
