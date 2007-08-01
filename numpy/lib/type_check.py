@@ -46,7 +46,7 @@ def asfarray(a, dtype=_nx.float_):
     dtype = _nx.obj2sctype(dtype)
     if not issubclass(dtype, _nx.inexact):
         dtype = _nx.float_
-    return asanyarray(a,dtype=dtype)
+    return asarray(a,dtype=dtype)
 
 def real(val):
     """Return the real part of val.

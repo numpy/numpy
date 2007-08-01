@@ -270,5 +270,11 @@ class test_real_if_close(NumpyTestCase):
         b = real_if_close(a+1e-7j,tol=1e-6)
         assert_all(isrealobj(b))
 
+class test_array_conversion(NumpyTestCase):
+    def check_asfarray(self):
+        a = asfarray(array([1,2,3]))
+        assert_equal(a.__class__,ndarray)
+        assert issubdtype(a.dtype,float)
+
 if __name__ == "__main__":
     NumpyTest().run()
