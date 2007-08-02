@@ -247,7 +247,7 @@ def is_free_format(file):
         n = 0
         result = 1
     while n>0 and line:
-        if line[0]!='!':
+        if line[0]!='!' and line.strip():
             n -= 1
             if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-2:-1]=='&':
                 result = 1
