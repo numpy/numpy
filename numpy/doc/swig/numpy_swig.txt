@@ -318,13 +318,9 @@ Output Arrays
 -------------
 
 The ``numpy.i`` interface file does not support typemaps for output
-arrays, for several reasons.  First, C/C++ function return arguments
-do not have names, so signatures for ``%typemap(out)`` do not include
-names.  This means that if ``numpy.i`` supported them, they would
-apply to all pointer return arguments for the supported numeric
-types.  This seems too dangerous.  Second, C/C++ return arguments are
+arrays, for several reasons.  First, C/C++ return arguments are
 limited to a single value.  This prevents obtaining dimension
-information in a general way.  Third, arrays with hard-coded lengths
+information in a general way.  Second, arrays with hard-coded lengths
 are not permitted as return arguments.  In other words::
 
     double[3] newVector(double x, double y, double z);
