@@ -130,7 +130,7 @@ class IntelEM64TFCompiler(IntelFCompiler):
     compiler_aliases = ()
     description = 'Intel Fortran Compiler for EM64T-based apps'
 
-    version_match = intel_version_match('EM64T-based')
+    version_match = intel_version_match('EM64T-based|Intel\\(R\\) 64')
 
     possible_executables = ['ifort', 'efort', 'efc']
 
@@ -143,6 +143,14 @@ class IntelEM64TFCompiler(IntelFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+
+    def get_flags(self):
+        v = self.get_version()
+        if v >= '10.0':
+            # Use -fPIC instead of -KPIC.
+            return ['-fPIC', '-cm']
+        else:
+            return IntelFCompiler.get_flags(self)
 
     def get_flags_arch(self):
         opt = []
