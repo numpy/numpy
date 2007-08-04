@@ -18,11 +18,12 @@ tool for constructing and building Python extension modules.
 Hello example follows::
 
   >>> from numpy.f2py.lib.extgen import *
+  >>> m = ExtensionModule('foo')
   >>> f = PyCFunction('hello')
-  >>> f.add('printf("Hello!\\n");')
-  >>> m = ExtensionModule('foo', f)
+  >>> f += 'printf("Hello!\\n");'
+  >>> m += f
   >>> m.generate() # returns a string containing C source to extension module
-  >>> foo = m.build
+  >>> foo = m.build()
   >>> foo.hello()
   Hello!
   >>> 
@@ -137,6 +138,9 @@ Using `Container` class
   - `skip_suffix_when_empty=False`
   - `default=''`
   - `reverse=False`
+  - `use_indent=False`
+  - `use_firstline_indent=False`
+  - `indent_offset=0`
   - `user_defined_str=None`
 
 that can be used to change the behaviour of `Container.__str__()`
@@ -154,16 +158,24 @@ they are not equal then `ValueError` is raised, otherwise adding an
 item is ignored.
 
 
-Reference manual
-================
+Component classes
+=================
 
 ExtGen package defines the following extension module component classes:
 
-  - `ExtensionModule(<modulename>, *components, numpy=False, provides=..)`  ---
+  - `ExtensionModule(<modulename>, *components, numpy=False,
+    provides=.., title=.., description=..)`  ---
     represents an extension module,
     
-  - `PyCFunction(<name>, *components, provides=..)` ---
+  - `PyCFunction(<name>, *components, provides=.., title=.., description=..)` ---
     represents an extension function.
+
+  - `PyCArgument(<name>, *components, provides=.., input_intent=..,
+    output_intent=.., input_title=.., input_description=..,
+    output_title=, output_description=..)` --- represents an argument component for
+    `PyCFunction`. Keyword arguments `input_intent` and
+    `output_intent` may have values `'required'`, `'optional'`,
+    `'extra'`, `'hide'` and `'hide'`, `'return'`, respectively.
 
   - `CCode(*lines, provides=..)` --- represents any C code block or statement.
 

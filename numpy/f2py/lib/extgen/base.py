@@ -63,6 +63,11 @@ class Base(object):
     def __repr__(self):
         return '%s%s' % (self.__class__.__name__, `self._args`)
 
+    def __getattr__(self, attr):
+        if attr.startswith('container_'):
+            return self.get_container(attr[10:])
+        raise AttributeError('%s instance has no attribute %r' % (self.__class__.__name__, attr))
+
     def get_container(self, key):
         """ Return named container.
         
@@ -117,6 +122,11 @@ class Base(object):
         """
         # clean up containers
         self.containers = {}
+        for n in dir(self):
+            if n.startswith('container_') and isinstance(getattr(self, n), Container):
+                delattr(self, n)
+
+        # create containers
         for k,kwargs in self.container_options.items():
             self.containers[k] = Container(**kwargs)
 
@@ -201,7 +211,7 @@ class Base(object):
                 r.append('--- %s ---\n%s' % (k,v))
         return '\n'.join(r)
 
-    def evaluate(self, template):
+    def evaluate(self, template, **attrs):
         """
         Evaluate template using instance attributes and code
         idioms from containers.
@@ -213,17 +223,19 @@ class Base(object):
             v = getattr(self, n)
             if isinstance(v, str):
                 d[n] = v
+        d.update(attrs)
         for label, container in self.containers.items():
-            if container.use_indent is None:
+            if not container.use_indent:
                 continue
             replace_list = set(re.findall(r'[ ]*%\('+label+r'\)s', template))
             for s in replace_list:
-                old_indent = container.use_indent
-                container.use_indent = len(s) - len(s.lstrip())
+                old_indent = container.indent_offset
+                container.indent_offset = old_indent + len(s) - len(s.lstrip())
                 i = template.index(s)
                 template = template[:i] + str(container) + template[i+len(s):]
-                container.use_indent = old_indent
-        return re.sub(r'[ \t]*[<]KILLLINE[>]\n','', template % d)
+                container.indent_offset = old_indent
+        template = template % d
+        return re.sub(r'.*[<]KILLLINE[>].*\n','', template)
 
     _registered_components_map = {}
 
@@ -253,31 +265,44 @@ class Base(object):
             pass
         raise KeyError('no registered component provides %r' % (provides))
 
+    @property
+    def numpy_version(self):
+        import numpy
+        return numpy.__version__
     
 class Container(object):
     """
     Container of a list of named strings.
 
     >>> c = Container(separator=', ', prefix='"', suffix='"')
-    >>> c.add(1, 'hey')
-    >>> c.add(2, 'hoo')
-    >>> str(c)
-    '"hey, hoo"'
-    >>> c.add(1, 'hey')
-    >>> c.add(1, 'hey2')
+    >>> c.add('hey',1)
+    >>> c.add('hoo',2)
+    >>> print c
+    "hey, hoo"
+    >>> c.add('hey',1)
+    >>> c.add('hey2',1)
     Traceback (most recent call last):
     ...
     ValueError: Container item 1 exists with different value
+
+    >>> c2 = Container()
+    >>> c2.add('bar')
+    >>> c += c2
+    >>> print c
+    "hey, hoo, bar"
     
     """
     __metaclass__ = BaseMetaClass
 
-    def __init__(self, separator='\n', prefix='', suffix='',
+    def __init__(self,
+                 separator='\n', prefix='', suffix='',
                  skip_prefix_when_empty=False,
                  skip_suffix_when_empty=False,
                  default = '', reverse=False,
                  user_defined_str = None,
-                 use_indent = None,
+                 use_indent = False,
+                 indent_offset = 0,
+                 use_firstline_indent = False, # implies use_indent
                  ):
         self.list = []
         self.label_map = {}
@@ -290,7 +315,12 @@ class Container(object):
         self.default = default
         self.reverse = reverse
         self.user_str = user_defined_str
-        self.use_indent = use_indent
+        self.use_indent = use_indent or use_firstline_indent
+        self.indent_offset = indent_offset
+        self.use_firstline_indent = use_firstline_indent
+        
+    def __notzero__(self):
+        return bool(self.list)
 
     def has(self, label):
         return self.label_map.has_key(label)
@@ -298,14 +328,23 @@ class Container(object):
     def get(self, label):
         return self.list[self.label_map[label]]
 
-    def __iadd__(self, other):
-        self.add(other)
+    def __add__(self, other):
+        if isinstance(other, Container):
+            lst = [(i,l) for (l,i) in other.label_map.items()]
+            lst.sort()
+            for i,l in lst:
+                self.add(other.list[i], l)
+        else:
+            self.add(other)        
         return self
+    __iadd__ = __add__
 
     def add(self, content, label=None):
         """ Add content to container using label.
         If label is None, an unique label will be generated using time.time().
         """
+        if content is None:
+            return
         assert isinstance(content, str),`type(content)`
         if label is None:
             label = time.time()
@@ -326,6 +365,15 @@ class Container(object):
             if self.reverse:
                 l = l[:]
                 l.reverse()
+            if self.use_firstline_indent:
+                new_l = []
+                for l1 in l:
+                    lines = l1.split('\\n')
+                    i = len(lines[0]) - len(lines[0].lstrip())
+                    indent = i * ' '
+                    new_l.append(lines[0])
+                    new_l.extend([indent + l2 for l2 in lines[1:]])
+                l = new_l
             r = self.separator.join(l)
             r = self.prefix + r
             r = r + self.suffix
@@ -336,9 +384,30 @@ class Container(object):
             if not self.skip_suffix:
                 r = r + self.suffix
         if r and self.use_indent:
-            indent = self.use_indent * ' '
-            r = ''.join([indent + line for line in r.splitlines(True)])
+            lines = r.splitlines(True)
+            indent = self.indent_offset * ' '
+            r = ''.join([indent + line for line in lines])
         return r
+
+    def copy(self, mapping=None, **extra_options):
+        options = dict(separator=self.separator, prefix=self.prefix, suffix=self.suffix,
+                       skip_prefix_when_empty=self.skip_prefix,
+                       skip_suffix_when_empty=self.skip_suffix,
+                       default = self.default, reverse=self.reverse,
+                       user_defined_str = self.user_str,
+                       use_indent = self.use_indent,
+                       indent_offset = self.indent_offset
+                       )
+        options.update(extra_options)
+        cpy = Container(**options)
+        if mapping is None:
+            cpy += self
+        else:
+            lst = [(i,l) for (l,i) in self.label_map.items()]
+            lst.sort()
+            for i,l in lst:
+                cpy.add(mapping(other.list[i]), l)            
+        return cpy
 
 def _test():
     import doctest
