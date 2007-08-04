@@ -55,19 +55,19 @@ Creating an extension module is carried out by the following steps:
 - generate code by calling the `.generate()` method. 
 
 - compile and build an extension module using the generated code.
-  ExtGen provides a way to do it via accessing the `.build` attribute
-  of the `ExtensionModule` instance. Accessing this attribute
-  will generate extension module, compilers it and returns the
+  ExtGen provides a way to do it via `.build()` method
+  of the `ExtensionModule` instance. Calling this method
+  will generate extension module, compiles it and returns the
   corresponding extension module instance.
 
 These steps will be discussed in more detail below.
 
 The `.components` attribute is a list object that contains instances
-of `Base` subclasses (components). For instance, the `CAPIFunction` instance
+of `Base` subclasses (components). For instance, the `PyCFunction` instance
 defined in the Hello example above, is a component of
 `ExtensionModule` instances after calling `.add()` method. Similarly,
 the C statement `'printf("Hello!\\n");'` is a component of
-`CAPIFunction` instance after calling the `.add_execution()` method.
+`PyCFunction` instance after calling the `.add()` method.
 
 The `.template` attribute is a string containing an template
 to a code idiom. Such an template may contain string replacements
