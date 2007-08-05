@@ -1,136 +1,199 @@
 """
-Defines C type declaration templates:
+C types.
 
-  CTypeAlias(name, ctype)  --- typedef ctype name;
-  CTypeFunction(name, rtype, atype1, atype2,..) --- typedef rtype (*name)(atype1, atype2,...);
-  CTypeStruct(name, (name1,type1), (name2,type2), ...) --- typedef struct { type1 name1; type2 name2; .. } name;
-  CTypePtr(ctype) --- ctype *
-  CInt(), CLong(), ... --- int, long, ...
-  CPyObject()
 
-The instances of CTypeBase have the following public methods and properties:
-
-  - .asPtr()
-  - .declare(name)
 """
 
+__all__ = ['CType', 'CTypeAlias', 'CTypeFuncAlias', 'CTypePtr', 'CTypeStruct', 'CDecl']
 
-from base import Base
+from base import Component
 
-class CTypeBase(Base):
+class CTypeBase(Component):
 
-    def declare(self, name):
-        return '%s %s;' % (self.typename, name)
+    template = '%(name)s'
+    template_typedef = ''
+    default_container_label = '<IGNORE>'
+    default_component_class_name = 'CType'
+
+    @property
+    def provides(self):
+        return '%s_%s' % (self.__class__.__name__, self.name)
+
+    def initialize(self, name, *components):
+        self.name = name
+        map(self.add, components)
+
+    def update_containers(self):
+        self.container_TypeDef += self.evaluate(self.template_typedef)
 
     def __str__(self):
-        return self.typename
+        return self.name
 
-    def asPtr(self):
-        return CTypePtr(self)
+class _CatchTypeDef(Component): # for doctest
+    template = '%(TypeDef)s'
+    default_container_label = '<IGNORE>'
+    container_options = dict(TypeDef=dict(default=''))
+    def initialize(self, ctype):
+        self.add(ctype)
+
+class CType(CTypeBase):
+
+    """ CType(<name>)
+
+    Represents any predefined type in C.
+
+    >>> cint = CType('int')
+    >>> print cint
+    int
+    >>> _CatchTypeDef(cint).generate()
+    ''
+    """
+
+    def initialize(self, name):
+        self.name = name
+
+    def update_containers(self):
+        pass
 
 class CTypeAlias(CTypeBase):
 
-    def __new__(cls, typename, ctype):
-        obj = Base.__new__(cls)
-        assert isinstance(ctype, CTypeBase),`type(ctype)`
-        obj.add(typename, ctype)
-        return obj
+    """ CTypeAlias(<name>, <ctype>)
 
-    @property
-    def typename(self): return self.components[0][0]
-    @property
-    def ctype(self): return self.components[0][1]
+    >>> aint = CTypeAlias('aint', 'int')
+    >>> print aint
+    aint
+    >>> print _CatchTypeDef(aint).generate()
+    typedef int aint;
+    """
 
-    def local_generate(self, params=None):
-        container = self.get_container('TypeDef')
-        container.add(self.typename, 'typedef %s %s;' % (self.ctype, self.typename))
-        return self.declare(params)
+    template_typedef = 'typedef %(ctype_name)s %(name)s;'
 
+    def initialize(self, name, ctype):
+        self.name = name
+        if isinstance(ctype, str): ctype = CType(ctype)
+        self.ctype_name = ctype.name
+        self.add(ctype)
 
-class CTypeFunction(CTypeBase):
+class CTypeFuncAlias(CTypeBase):
 
-    def __new__(cls, typename, rctype, *arguments):
-        obj = Base.__new__(cls)
-        assert isinstance(rctype, CTypeBase),`type(rctype)`
-        obj.add(typename, rctype)
-        for i in range(len(arguments)):
-            a = arguments[i]
-            assert isinstance(a, CTypeBase),`type(a)`
-            obj.add('_a%i' % (i), a)
-        return obj
+    """
+    CTypeFuncAlias(<name>, <return ctype>, *(<argument ctypes>))
 
-    @property
-    def typename(self): return self.components[0][0]
-    @property
-    def rctype(self): return self.components[0][1]
-    @property
-    def arguments(self): return [v for n,v in self.components[1:]]
+    >>> ifunc = CTypeFuncAlias('ifunc', 'int')
+    >>> print ifunc
+    ifunc
+    >>> print _CatchTypeDef(ifunc).generate()
+    typedef int (*ifunc)(void);
+    >>> ifunc += 'double'
+    >>> print _CatchTypeDef(ifunc).generate()
+    typedef int (*ifunc)(double);
+    """
 
-    def local_generate(self, params=None):
-        container = self.get_container('TypeDef')
-        container.add(self.typename, 'typedef %s (*%s)(%s);' \
-                      % (self.rctype, self.typename,
-                         ', '.join([str(ctype) for ctype in self.arguments])))
-        return self.declare(params)
+    template_typedef = 'typedef %(RCType)s (*%(name)s)(%(ACType)s);'
+    container_options = dict(RCType = dict(default='void'),
+                             ACType = dict(default='void', separator=', '))
+    component_container_map = dict(CType = 'ACType')
+    default_component_class_name = 'CType'
 
-class CTypeStruct(CTypeBase):
-
-    def __new__(cls, typename, *components):
-        obj = Base.__new__(cls, typename)
-        for n,v in components:
-            assert isinstance(v,CTypeBase),`type(v)`
-            obj.add(n,v)
-        return obj
-
-    @property
-    def typename(self): return self._args[0]
-
-    def local_generate(self, params=None):
-        container = self.get_container('TypeDef')
-        decls = [ctype.declare(name) for name, ctype in self.components]
-        if decls:
-            d = 'typedef struct {\n  %s\n} %s;' % ('\n  '.join(decls),self.typename)
-        else:
-            d = 'typedef struct {} %s;' % (self.typename)
-        container.add(self.typename, d)
-        return self.declare(params)
+    def initialize(self, name, *components):
+        self.name = name
+        if components:
+            self.add(components[0], 'RCType')
+        map(self.add, components[1:])
 
 class CTypePtr(CTypeBase):
 
-    def __new__(cls, ctype):
-        obj = Base.__new__(cls)
-        assert isinstance(ctype, CTypeBase),`type(ctype)`
-        obj.add('*', ctype)
-        return obj
+    """
+    CTypePtr(<ctype>)
 
-    @property
-    def ctype(self): return self.components[0][1]
-    
-    @property
-    def typename(self):
-        return self.ctype.typename + '*'
+    >>> int_ptr = CTypePtr('int')
+    >>> print int_ptr
+    int_ptr
+    >>> print _CatchTypeDef(int_ptr).generate()
+    typedef int* int_ptr;
+    >>> int_ptr_ptr = CTypePtr(int_ptr)
+    >>> print int_ptr_ptr
+    int_ptr_ptr
+    >>> print _CatchTypeDef(int_ptr_ptr).generate()
+    typedef int* int_ptr;
+    typedef int_ptr* int_ptr_ptr;
+    """
 
-    def local_generate(self, params=None):
-        return self.declare(params)
+    template_typedef = 'typedef %(ctype_name)s* %(name)s;'
 
-class CTypeDefined(CTypeBase):
+    def initialize(self, ctype):
+        if isinstance(ctype, str): ctype = CType(ctype)
+        self.name = '%s_ptr' % (ctype)
+        self.ctype_name = ctype.name
+        self.add(ctype)
 
-    @property
-    def typename(self): return self._args[0]
+class CTypeStruct(CTypeBase):
 
-class CTypeIntrinsic(CTypeDefined):
+    """
+    CTypeStruct(<name>, *(<declarations>))
 
-    def __new__(cls, typename):
-        return Base.__new__(cls, typename)
+    >>> s = CTypeStruct('s', CDecl('int','a'))
+    >>> print s
+    s
+    >>> print _CatchTypeDef(s).generate()
+    typedef struct {
+      int a;
+    } s;
+    >>> s += CDecl(CTypeFuncAlias('ft'), 'f')
+    >>> print _CatchTypeDef(s).generate()
+    typedef void (*ft)(void);
+    typedef struct {
+      int a;
+      ft f;
+    } s;
 
-class CPyObject(CTypeDefined):
-    def __new__(cls):
-        return Base.__new__(cls, 'PyObject')
+    """
 
-class CInt(CTypeIntrinsic):
+    container_options = dict(Decl = dict(default='<KILLLINE>', use_indent=True))
+    default_component_class_name = None #'CDecl'
+    component_container_map = dict(CDecl='Decl')
 
-    def __new__(cls):
-        return Base.__new__(cls, 'int')
+    template_typedef = '''\
+typedef struct {
+  %(Decl)s
+} %(name)s;'''
+
+    def initialize(self, name, *components):
+        self.name = name
+        map(self.add, components)
+
+class CDecl(Component):
+
+    """
+    CDecl(<ctype>, *(<names with or without initialization>))
+
+    >>> ad = CDecl('int')
+    >>> ad.generate()
+    ''
+    >>> ad += 'a'
+    >>> print ad.generate()
+    int a;
+    >>> ad += 'b'
+    >>> print ad.generate()
+    int a, b;
+    >>> ad += 'c = 1'
+    >>> print ad.generate()
+    int a, b, c = 1;
+    """
+
+    template = '%(CTypeName)s %(Names)s;'
+    container_options = dict(Names=dict(default='<KILLLINE>', separator=', '),
+                             CTypeName=dict())
+    default_component_class_name = 'str'
+    component_container_map = dict(str = 'Names')
+
+    def initialize(self, ctype, *names):
+        if isinstance(ctype, str): ctype = CType(ctype)
+        self.add(ctype, 'CTypeName')
+        map(self.add, names)
+
+
+if 0:
 
     def local_generate(self, params=None):
         container = self.get_container('CAPICode')
@@ -154,3 +217,9 @@ static PyObject* pyobj_from_int(int* value) {
 
         return self.declare(params)
 
+def _test():
+    import doctest
+    doctest.testmod()
+    
+if __name__ == "__main__":
+    _test()

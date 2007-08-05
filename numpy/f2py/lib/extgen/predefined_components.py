@@ -1,8 +1,8 @@
 
-from base import Base
+from base import Component
 from c_code import CCode
 
-Base.register(
+Component.register(
 
     CCode('#include "Python.h"', provides='Python.h'),
 

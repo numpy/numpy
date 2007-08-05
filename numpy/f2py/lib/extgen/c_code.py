@@ -1,7 +1,7 @@
 
-from base import Base
+from base import Component
 
-class CCode(Base):
+class CCode(Component):
 
     """
     CCode(*lines, provides=..)
@@ -27,6 +27,6 @@ class CCode(Base):
             assert label is None,`label`
             self.lines.extend(component.lines)
         else:
-            Base.add(self, component. label)
+            Component.add(self, component. label)
 
         

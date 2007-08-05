@@ -1,7 +1,7 @@
 
-from base import Base
+from base import Component
 
-class PyCFunction(Base):
+class PyCFunction(Component):
 
     """
     PyCFunction(<name>, *components, provides=..,title=.., description=..)
@@ -66,27 +66,27 @@ class PyCFunction(Base):
 
         FuncTitle = dict(default='<KILLLINE>',prefix='"\\n\\n',suffix='"',separator='\\n"\n"  ',
                          skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                         use_firstline_indent=True),
+                         use_firstline_indent=True, replace_map={'\n':'\\n'}),
         FuncDescr = dict(default='<KILLLINE>',prefix='"\\n\\nDescription:\\n"\n"  ',
                          suffix='"',separator='\\n"\n"  ',
                          skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                         use_firstline_indent=True),
+                         use_firstline_indent=True, replace_map={'\n':'\\n'}),
         ReqArgsDoc = dict(default='<KILLLINE>', prefix='"\\n\\nRequired arguments:\\n"\n"  ',
                           separator='\\n"\n"  ', suffix='"',
                           skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                          use_firstline_indent=True),
+                          use_firstline_indent=True, replace_map={'\n':'\\n'}),
         OptArgsDoc = dict(default='<KILLLINE>', prefix='"\\n\\nOptional arguments:\\n"\n"  ',
                           separator='\\n"\n"  ', suffix='"',
                           skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                          use_firstline_indent=True),
+                          use_firstline_indent=True, replace_map={'\n':'\\n'}),
         ExtArgsDoc = dict(default='<KILLLINE>', prefix='"\\n\\nExtra optional arguments:\\n"\n"  ',
                           separator='\\n"\n"  ', suffix='"',
                           skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                          use_firstline_indent=True),
+                          use_firstline_indent=True, replace_map={'\n':'\\n'}),
         RetDoc = dict(default='"Return value:\\n  None\\n"', prefix='"\\n\\nReturn values:\\n"\n"  ',
                     separator='\\n"\n"  ', suffix='"',
                       skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                      use_firstline_indent=True),
+                      use_firstline_indent=True, replace_map={'\n':'\\n'}),
         
         Decl = dict(default='<KILLLINE>', use_indent=True),
         
@@ -155,10 +155,13 @@ static PyObject*
     def initialize(self, name, *components, **options):
         self.name = name
         self.pyc_name = 'pyc_function_'+name
-        self._provides = options.get('provides',
+        self._provides = options.pop('provides',
                                      '%s_%s' % (self.__class__.__name__, name))
-        self.title = options.get('title', None)
-        self.description = options.get('description', None)
+        self.title = options.pop('title', None)
+        self.description = options.pop('description', None)
+
+        if options: self.warning('%s unused options: %s\n' % (self.__class__.__name__, options))
+        
         map(self.add, components)
 
     def init_containers(self):
@@ -185,10 +188,10 @@ static PyObject*
         OptExtArgs += OptArgs + ExtArgs
         ModuleFuncDoc += evaluate('%(name)s(%(ReqArgs)s%(OptExtArgs)s) -> %(RetArgs)s')
         if self.title is not None:
-            FuncTitle += self.title.replace('\n','\\n')
-            ModuleFuncDoc += '  ' + self.title.replace('\n','\\n')
+            FuncTitle += self.title
+            ModuleFuncDoc += '  ' + self.title
         if self.description is not None:
-            FuncDescr += self.description.replace('\n','\\n')
+            FuncDescr += self.description
         return
 
     

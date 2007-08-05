@@ -1,7 +1,7 @@
 
-from base import Base
+from base import Component
 
-class ExtensionModule(Base):
+class ExtensionModule(Component):
 
     """
     ExtensionModule(<modulename>, *components, numpy=False, provides=..)
@@ -59,15 +59,15 @@ class ExtensionModule(Base):
         
         ModuleTitle = dict(default='<KILLLINE>',prefix='"\\n\\n',suffix='"',separator='\\n"\n"  ',
                            skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                           use_firstline_indent=True),
+                           use_firstline_indent=True, replace_map = {'\n':'\\n'}),
         ModuleDescr = dict(default='<KILLLINE>',prefix='"\\n\\nDescription:\\n"\n"  ',
                            suffix='"',separator='\\n"\n"  ',
                            skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                           use_firstline_indent=True),
+                           use_firstline_indent=True, replace_map={'\n':'\\n'}),
         ModuleFuncDoc = dict(default='<KILLLINE>', prefix='"\\n\\nFunctions:\\n"\n"  ',
                              separator='\\n"\n"  ', suffix='"',
                              skip_prefix_when_empty=True, skip_suffix_when_empty=True,
-                             use_firstline_indent=True),
+                             use_firstline_indent=True, replace_map={'\n':'\\n'}),
         )
     
     component_container_map = dict(PyCFunction = 'CAPICode')
@@ -131,30 +131,31 @@ capi_error:
 
     def initialize(self, modulename, *components, **options):
         self.modulename = modulename
-        self._provides = options.get('provides',
+        self._provides = options.pop('provides',
                                      '%s_%s' % (self.__class__.__name__, modulename))
-        # all Python extension modules require Python.h
-        self.add(Base.get('Python.h'), 'Header')
-        if options.get('numpy'):
-            self.add(Base.get('arrayobject.h'), 'Header')
-            self.add(Base.get('import_array'), 'ModuleInit')
 
-        self.title = options.get('title')
-        self.description = options.get('description')
-            
+        self.title = options.pop('title', None)
+        self.description = options.pop('description', None)
+
+        if options: self.warning('%s unused options: %s\n' % (self.__class__.__name__, options))
+
+        # all Python extension modules require Python.h
+        self.add(Component.get('Python.h'), 'Header')
+        if options.get('numpy'):
+            self.add(Component.get('arrayobject.h'), 'Header')
+            self.add(Component.get('import_array'), 'ModuleInit')
         map(self.add, components)
         return
 
     def update_containers(self):
         if self.title is not None:
-            self.container_ModuleTitle += self.title.replace('\n','\\n')
+            self.container_ModuleTitle += self.title
         if self.description is not None:
-            self.container_ModuleDescr += self.description.replace('\n','\\n')
+            self.container_ModuleDescr += self.description
 
     def build(self):
         import os
         import sys
-        import subprocess
         extfile = self.generate()
         srcfile = os.path.abspath('%smodule.c' % (self.modulename))
         f = open(srcfile, 'w')
@@ -181,8 +182,6 @@ if __name__ == '__main__':
         build_dir = '.'
         from numpy.distutils.exec_command import exec_command
         status, output = exec_command(setup_cmd)
-        #p = subprocess.Popen(setup_cmd, cwd=build_dir, shell=True, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        #sts = os.waitpid(p.pid, 0)
         if status:
             raise "Failed to build (status=%s)." % (`status`)
         exec 'import %s as m' % (modulename)

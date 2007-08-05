@@ -1,7 +1,7 @@
 
-from base import Base
+from base import Component
 
-class PyCArgument(Base):
+class PyCArgument(Component):
 
     """
     PyCArgument(<name>, *components, provides=..,
@@ -19,19 +19,23 @@ class PyCArgument(Base):
 
     def initialize(self, name, *components, **options):
         self.name = name
-        self._provides = options.get('provides',
+        self._provides = options.pop('provides',
                                      '%s_%s' % (self.__class__.__name__, name))
-        self.input_intent = options.get('input_intent','required') # 'optional', 'extra', 'hide'
-        self.output_intent = options.get('output_intent','hide')   # 'return'
-        self.input_title = options.get('input_title', None)
-        self.output_title = options.get('output_title', None)
-        self.input_description = options.get('input_description', None)
-        self.output_description = options.get('output_description', None)
+        self.input_intent = options.pop('input_intent','required') # 'optional', 'extra', 'hide'
+        self.output_intent = options.pop('output_intent','hide')   # 'return'
+        self.input_title = options.pop('input_title', None)
+        self.output_title = options.pop('output_title', None)
+        self.input_description = options.pop('input_description', None)
+        self.output_description = options.pop('output_description', None)
+
+        if options: self.warning('%s unused options: %s\n' % (self.__class__.__name__, options))
         
         map(self.add, components)
 
     def get_ctype(self):
-        # scan components for c types
+        for component, container_label in self.components:
+            if isinstance(component, Component.CTypeBase):
+                return component
         return
 
     def init_containers(self):

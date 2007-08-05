@@ -1,102 +1,58 @@
 """
 ExtGen --- Python Extension module Generator.
 
-Defines Base and Container classes.
+Defines Component and Container classes.
 """
 
 import re
 import sys
 import time
 
-class BaseMetaClass(type):
+class ComponentMetaClass(type):
 
     classnamespace = {}
 
     def __init__(cls,*args,**kws):
         n = cls.__name__
-        c = BaseMetaClass.classnamespace.get(n)
+        c = ComponentMetaClass.classnamespace.get(n)
         if c is None:
-            BaseMetaClass.classnamespace[n] = cls
+            ComponentMetaClass.classnamespace[n] = cls
         else:
             print 'Ignoring redefinition of %s: %s defined earlier than %s' % (n, c, cls)
         type.__init__(cls, *args, **kws)
 
     def __getattr__(cls, name):
-        try: return BaseMetaClass.classnamespace[name]
+        try: return ComponentMetaClass.classnamespace[name]
         except KeyError: pass
         raise AttributeError("'%s' object has no attribute '%s'"%
                              (cls.__name__, name))
 
-class Base(object):
+class Component(object): # XXX: rename Component to Component
 
-    __metaclass__ = BaseMetaClass
+    __metaclass__ = ComponentMetaClass
 
     container_options = dict()
     component_container_map = dict()
+    default_container_label = None
+    default_component_class_name = 'CCode'
     template = ''
 
     def __new__(cls, *args, **kws):
         obj = object.__new__(cls)
-        obj._args = args
         obj._provides = kws.get('provides', None)
         obj.parent = None
         obj.containers = {} # holds containers for named string lists
-        obj.components = [] # holds pairs (<Base subclass instance>, <container name or None>)
+        obj.components = [] # holds pairs (<Component subclass instance>, <container name or None>)
         obj.initialize(*args, **kws)    # initialize from constructor arguments
         return obj
 
-    def initialize(self, *args, **kws):
+    def initialize(self, *components, **options):
         """
         Set additional attributes, add components to instance, etc.
         """
         # self.myattr = ..
-        # map(self.add, args)
+        # map(self.add, components)
         return
-
-    @staticmethod
-    def warning(message):
-        print >> sys.stderr, 'extgen:',message
-    @staticmethod
-    def info(message):
-        print >> sys.stderr, message
-
-    def __repr__(self):
-        return '%s%s' % (self.__class__.__name__, `self._args`)
-
-    def __getattr__(self, attr):
-        if attr.startswith('container_'):
-            return self.get_container(attr[10:])
-        raise AttributeError('%s instance has no attribute %r' % (self.__class__.__name__, attr))
-
-    def get_container(self, key):
-        """ Return named container.
-        
-        Rules for returning containers:
-        (1) return local container if exists
-        (2) return parent container if exists
-        (3) create local container and return it with warning
-        """
-        # local container
-        try:
-            return self.containers[key]
-        except KeyError:
-            pass
-        
-        # parent container
-        parent = self.parent
-        while parent is not None:
-            try:
-                return parent.containers[key]
-            except KeyError:
-                parent = parent.parent
-                continue
-
-        # create local container
-        self.warning('Created container for %r with name %r, define it in'\
-                     ' .container_options mapping to get rid of this warning' \
-                     % (self.__class__.__name__, key))
-        c = self.containers[key] = Container()
-        return c
 
     @property
     def provides(self):
@@ -109,11 +65,56 @@ class Base(object):
             return '%s_%s' % (self.__class__.__name__, id(self))
         return self._provides
 
-    def get_templates(self):
+    @staticmethod
+    def warning(message):
+        print >> sys.stderr, 'extgen:',message
+    @staticmethod
+    def info(message):
+        print >> sys.stderr, message
+
+    def __repr__(self):
+        return '%s%s' % (self.__class__.__name__, `self.containers`)
+
+    def __getattr__(self, attr):
+        if attr.startswith('container_'): # convenience feature
+            return self.get_container(attr[10:])
+        raise AttributeError('%s instance has no attribute %r' % (self.__class__.__name__, attr))
+
+    def __add__(self, other): # convenience method
+        self.add(other)
+        return self
+    __iadd__ = __add__
+
+    @staticmethod
+    def _get_class_names(cls):
+        if not issubclass(cls, Component):
+            return [cls]
+        r = [cls]
+        for b in cls.__bases__:
+            r += Component._get_class_names(b)
+        return r
+        
+    def add(self, component, container_label=None):
         """
-        Return instance templates.
+        Append component and its target container label to components list.
         """
-        return self.template
+        if not isinstance(component, Component) and self.default_component_class_name!=component.__class__.__name__:
+            clsname = self.default_component_class_name
+            if clsname is not None:
+                component = getattr(Component, clsname)(component)
+            else:
+                raise ValueError('%s.add requires Component instance but got %r' \
+                                 % (self.__class__.__name__, component.__class__.__name__))
+        if container_label is None:
+            container_label = self.default_container_label
+            for n in self._get_class_names(component.__class__):
+                try:
+                    container_label = self.component_container_map[n.__name__]
+                    break
+                except KeyError:
+                    pass
+        self.components.append((component, container_label))
+        return
 
     def generate(self):
         """
@@ -135,10 +136,22 @@ class Base(object):
 
         # generate component code idioms
         for component, container_key in self.components:
+            if not isinstance(component, Component):
+                result = str(component)
+                if container_key == '<IGNORE>':
+                    pass
+                elif container_key is not None:
+                    self.get_container(container_key).add(result)
+                else:
+                    self.warning('%s: no container label specified for component %r'\
+                                 % (self.__class__.__name__,component))
+                continue
             old_parent = component.parent
             component.parent = self
             result = component.generate()
-            if container_key is not None:
+            if container_key == '<IGNORE>':
+                pass
+            elif container_key is not None:
                 if isinstance(container_key, tuple):
                     assert len(result)==len(container_key),`len(result),container_key`
                     results = result
@@ -151,8 +164,8 @@ class Base(object):
                     container = component.get_container(k)
                     container.add(r, component.provides)
             else:
-                self.warning('no label specified for component %r, ignoring its result'\
-                             % (component.provides))
+                self.warning('%s: no container label specified for component providing %r'\
+                                 % (self.__class__.__name__,component.provides))
             component.parent = old_parent
 
         # update code idioms
@@ -184,32 +197,41 @@ class Base(object):
         # container.add(<string>, label=None)
         return
 
-    def __iadd__(self, other):
-        """ Convenience add.
+    def get_container(self, name):
+        """ Return named container.
+        
+        Rules for returning containers:
+        (1) return local container if exists
+        (2) return parent container if exists
+        (3) create local container and return it with warning
         """
-        self.add(other)
-        return self
+        # local container
+        try:
+            return self.containers[name]
+        except KeyError:
+            pass
+        
+        # parent container
+        parent = self.parent
+        while parent is not None:
+            try:
+                return parent.containers[name]
+            except KeyError:
+                parent = parent.parent
+                continue
 
-    def add(self, component, container_label=None):
-        """
-        Append component and its target container label to components list.
-        """
-        if isinstance(component, str):
-            component = Base.CCode(component)
-        if container_label is None:
-            container_label = self.component_container_map.get(component.__class__.__name__, None)
-        assert isinstance(component, Base), `type(component)`
-        self.components.append((component, container_label))
+        # create local container
+        self.warning('Created container for %r with name %r, define it in'\
+                     ' .container_options mapping to get rid of this warning' \
+                     % (self.__class__.__name__, name))
+        c = self.containers[name] = Container()
+        return c
 
-    @property
-    def show(self):
-        # display the content of containers
-        self.generate()
-        r = [self.__class__.__name__]
-        for k, v in self.containers.items():
-            if v.list:
-                r.append('--- %s ---\n%s' % (k,v))
-        return '\n'.join(r)
+    def get_templates(self):
+        """
+        Return instance templates.
+        """
+        return self.template
 
     def evaluate(self, template, **attrs):
         """
@@ -235,7 +257,8 @@ class Base(object):
                 template = template[:i] + str(container) + template[i+len(s):]
                 container.indent_offset = old_indent
         template = template % d
-        return re.sub(r'.*[<]KILLLINE[>].*\n','', template)
+        return re.sub(r'.*[<]KILLLINE[>].*(\n|$)','', template)
+
 
     _registered_components_map = {}
 
@@ -245,11 +268,11 @@ class Base(object):
         Register components so that component classes can use
         predefined components via `.get(<provides>)` method.
         """
-        d = Base._registered_components_map
+        d = Component._registered_components_map
         for component in components:
             provides = component.provides
             if d.has_key(provides):
-                Base.warning('component that provides %r is already registered, ignoring.' % (provides))
+                Component.warning('component that provides %r is already registered, ignoring.' % (provides))
             else:
                 d[provides] = component
         return
@@ -260,7 +283,7 @@ class Base(object):
         Return predefined component with given provides property..
         """
         try:
-            return Base._registered_components_map[provides]
+            return Component._registered_components_map[provides]
         except KeyError:
             pass
         raise KeyError('no registered component provides %r' % (provides))
@@ -269,6 +292,7 @@ class Base(object):
     def numpy_version(self):
         import numpy
         return numpy.__version__
+
     
 class Container(object):
     """
@@ -292,7 +316,7 @@ class Container(object):
     "hey, hoo, bar"
     
     """
-    __metaclass__ = BaseMetaClass
+    __metaclass__ = ComponentMetaClass
 
     def __init__(self,
                  separator='\n', prefix='', suffix='',
@@ -303,6 +327,7 @@ class Container(object):
                  use_indent = False,
                  indent_offset = 0,
                  use_firstline_indent = False, # implies use_indent
+                 replace_map = {}
                  ):
         self.list = []
         self.label_map = {}
@@ -318,8 +343,9 @@ class Container(object):
         self.use_indent = use_indent or use_firstline_indent
         self.indent_offset = indent_offset
         self.use_firstline_indent = use_firstline_indent
+        self.replace_map = replace_map
         
-    def __notzero__(self):
+    def __nonzero__(self):
         return bool(self.list)
 
     def has(self, label):
@@ -353,6 +379,8 @@ class Container(object):
             if d!=content:
                 raise ValueError("Container item %r exists with different value" % (label))
             return
+        for old, new in self.replace_map.items():
+            content = content.replace(old, new)
         self.list.append(content)
         self.label_map[label] = len(self.list)-1
         return
@@ -396,7 +424,9 @@ class Container(object):
                        default = self.default, reverse=self.reverse,
                        user_defined_str = self.user_str,
                        use_indent = self.use_indent,
-                       indent_offset = self.indent_offset
+                       indent_offset = self.indent_offset,
+                       use_firstline_indent = self.use_firstline_indent,
+                       replace_map = self.replace_map
                        )
         options.update(extra_options)
         cpy = Container(**options)
