@@ -22,12 +22,26 @@ class CTypeBase(Component):
     def initialize(self, name, *components):
         self.name = name
         map(self.add, components)
-
+        return self
+    
     def update_containers(self):
         self.container_TypeDef += self.evaluate(self.template_typedef)
 
     def __str__(self):
         return self.name
+
+    def get_pyret_fmt(self, input_intent_hide = True):
+        if input_intent_hide: return 'O'
+        return 'N'
+
+    def get_pyret_arg(self, cname):
+        return cname
+
+    def get_pyarg_fmt(self):
+        return 'O'
+
+    def get_pyarg_arg(self, cname):
+        return '&%s' % (cname)
 
 class _CatchTypeDef(Component): # for doctest
     template = '%(TypeDef)s'
@@ -35,7 +49,8 @@ class _CatchTypeDef(Component): # for doctest
     container_options = dict(TypeDef=dict(default=''))
     def initialize(self, ctype):
         self.add(ctype)
-
+        return self
+    
 class CType(CTypeBase):
 
     """ CType(<name>)
@@ -50,8 +65,12 @@ class CType(CTypeBase):
     """
 
     def initialize(self, name):
+        try:
+            return Component.get(name)
+        except KeyError:
+            pass
         self.name = name
-
+        return self
     def update_containers(self):
         pass
 
@@ -73,7 +92,8 @@ class CTypeAlias(CTypeBase):
         if isinstance(ctype, str): ctype = CType(ctype)
         self.ctype_name = ctype.name
         self.add(ctype)
-
+        return self
+    
 class CTypeFuncAlias(CTypeBase):
 
     """
@@ -126,6 +146,7 @@ class CTypePtr(CTypeBase):
         self.name = '%s_ptr' % (ctype)
         self.ctype_name = ctype.name
         self.add(ctype)
+        return self
 
 class CTypeStruct(CTypeBase):
 
@@ -161,6 +182,7 @@ typedef struct {
     def initialize(self, name, *components):
         self.name = name
         map(self.add, components)
+        return self
 
 class CDecl(Component):
 
@@ -191,31 +213,40 @@ class CDecl(Component):
         if isinstance(ctype, str): ctype = CType(ctype)
         self.add(ctype, 'CTypeName')
         map(self.add, names)
+        return self
 
+class PyObjectPtr(CType):
+    name = provides = 'PyObject*'
+    def initialize(self): return self
+    def set_pyarg_decl(self, arg):
+        if arg.input_intent=='hide':
+            arg += CDecl(self, '%s = Py_None' % (arg.pycvar))
+        else:
+            arg += CDecl(self, '%s = NULL' % (arg.pycvar))
+    def get_pyarg_fmt(self, arg): return 'O'
+    def get_pyarg_obj(self, arg): return '&' + arg.pycvar
+    def get_pyret_fmt(self, arg):
+        if arg.input_intent=='hide':
+            return 'O'
+        return 'N'
+    def get_pyret_obj(self, arg): return arg.pycvar
 
-if 0:
+class CInt(CType):
+    name = provides = 'int'
+    def initialize(self): return self
+    def set_pyarg_decl(self, arg):
+        #arg += CDecl(Component.get('PyObject*'), '%s = NULL' % (arg.pycvar))
+        arg += CDecl(self, '%s = 0' % (arg.cvar))
+    def get_pyarg_fmt(self, arg): return 'i'
+    def get_pyarg_obj(self, arg): return '&' + arg.cvar
+    def get_pyret_fmt(self, arg): return 'i'
+    def get_pyret_obj(self, arg): return arg.cvar
 
-    def local_generate(self, params=None):
-        container = self.get_container('CAPICode')
-        code = '''\
-static int pyobj_to_int(PyObject *obj, int* value) {
-  int status = 1;
-  if (PyInt_Check(obj)) {
-    *value = PyInt_AS_LONG(obj);
-    status = 0;
-  }
-  return status;
-}
-'''
-        container.add('pyobj_to_int', code)
-        code = '''\
-static PyObject* pyobj_from_int(int* value) {
-  return PyInt_FromLong(*value);
-}
-'''
-        container.add('pyobj_from_int', code)
-
-        return self.declare(params)
+def register():
+    Component.register(
+        PyObjectPtr(),
+        CInt(),
+        )
 
 def _test():
     import doctest

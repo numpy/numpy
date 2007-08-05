@@ -4,7 +4,7 @@ from base import Component
 class PyCArgument(Component):
 
     """
-    PyCArgument(<name>, *components, provides=..,
+    PyCArgument(<name>, ctype, *components, provides=..,
                 input_intent = 'required' | 'optional' | 'extra' | 'hide',
                 output_intent = 'hide' | 'return',
                 input_title = None,
@@ -17,7 +17,9 @@ class PyCArgument(Component):
 
     template = '%(name)s'
 
-    def initialize(self, name, *components, **options):
+    component_container_map = dict(CDecl = 'Decl')
+
+    def initialize(self, name, ctype=None, *components, **options):
         self.name = name
         self._provides = options.pop('provides',
                                      '%s_%s' % (self.__class__.__name__, name))
@@ -31,23 +33,20 @@ class PyCArgument(Component):
         if options: self.warning('%s unused options: %s\n' % (self.__class__.__name__, options))
         
         map(self.add, components)
+        self.cvar = name
+        self.pycvar = name + '_pyc'
 
-    def get_ctype(self):
-        for component, container_label in self.components:
-            if isinstance(component, Component.CTypeBase):
-                return component
-        return
-
-    def init_containers(self):
-        ctype = self.get_ctype()
         if ctype is None:
-            self.cname = self.name
-        else:
-            self.cname = self.provides
+            ctype = Component.get('PyObject*')
+        self.ctype = ctype
+        ctype.set_pyarg_decl(self)
+        #self.add(ctype)
 
+        return self
+            
     def update_containers(self):
         evaluate = self.evaluate
-        ctype = self.get_ctype()
+        ctype = self.ctype
 
         # get containers
         ReqArgs = self.container_ReqArgs
@@ -58,8 +57,6 @@ class PyCArgument(Component):
         ReqArgsDoc = self.container_ReqArgsDoc
         OptArgsDoc = self.container_OptArgsDoc
         ExtArgsDoc = self.container_ExtArgsDoc
-
-        Decl = self.container_Decl
 
         ReqKWList = self.container_ReqKWList
         OptKWList = self.container_OptKWList
@@ -78,58 +75,50 @@ class PyCArgument(Component):
         RetObj = self.container_RetObj
 
         # update PyCFunction containers
-        Decl.add('PyObject* %s = NULL;' % (self.cname))
-        if ctype is not None:
-            Decl.add(ctype.declare(self.name))
-        
-        if ctype is None:
-            input_doc_title = '%s - %s' % (self.name, self.input_title)
-            output_doc_title = '%s - %s' % (self.name, self.output_title)
-            if self.input_description is not None:
-                input_doc_descr = '  %s' % (self.input_description.replace('\n','\\n'))
-            else:
-                input_doc_descr = None
-            if self.output_description is not None:
-                output_doc_descr = '  %s' % (self.output_description.replace('\n','\\n'))
-            else:
-                output_doc_descr = None
-            iopt = (self.name, '"%s"' % (self.name), 'O', '&%s' % (self.cname), input_doc_title, input_doc_descr)
-            ropt = (self.name, 'N', self.cname, output_doc_title, output_doc_descr)
+
+        input_doc_title = '%s - %s' % (self.name, self.input_title)
+        output_doc_title = '%s - %s' % (self.name, self.output_title)
+        if self.input_description is not None:
+            input_doc_descr = '  %s' % (self.input_description)
         else:
-            raise NotImplementedError('ctype=%r' % (ctype))
-            
+            input_doc_descr = None
+        if self.output_description is not None:
+            output_doc_descr = '  %s' % (self.output_description)
+        else:
+            output_doc_descr = None
+
         if self.input_intent=='required':
-            ReqArgs.add(iopt[0])
-            ReqKWList.add(iopt[1])
-            ReqPyArgFmt.add(iopt[2])
-            ReqPyArgObj.add(iopt[3])
-            ReqArgsDoc.add(iopt[4])
-            ReqArgsDoc.add(iopt[5])
+            ReqArgs += self.name
+            ReqKWList += '"' + self.name + '"'
+            ReqPyArgFmt += ctype.get_pyarg_fmt(self)
+            ReqPyArgObj += ctype.get_pyarg_obj(self)
+            ReqArgsDoc += input_doc_title
+            ReqArgsDoc += input_doc_descr
         elif self.input_intent=='optional':
-            OptArgs.add(iopt[0])
-            OptKWList.add(iopt[1])
-            OptPyArgFmt.add(iopt[2])
-            OptPyArgObj.add(iopt[3])
-            OptArgsDoc.add(iopt[4])
-            OptArgsDoc.add(iopt[5])
+            OptArgs += self.name
+            OptKWList += '"' + self.name + '"'
+            OptPyArgFmt += ctype.get_pyarg_fmt(self)
+            OptPyArgObj += ctype.get_pyarg_obj(self)
+            OptArgsDoc += input_doc_title
+            OptArgsDoc += input_doc_descr
         elif self.input_intent=='extra':
-            ExtArgs.add(iopt[0])
-            ExtKWList.add(iopt[1])
-            ExtPyArgFmt.add(iopt[2])
-            ExtPyArgObj.add(iopt[3])
-            ExtArgsDoc.add(iopt[4])
-            ExtArgsDoc.add(iopt[5])
+            ExtArgs += self.name
+            ExtKWList += '"' + self.name + '"'
+            ExtPyArgFmt += ctype.get_pyarg_fmt(self)
+            ExtPyArgObj += ctype.get_pyarg_obj(self)
+            ExtArgsDoc += input_doc_title
+            ExtArgsDoc += input_doc_descr
         elif self.input_intent=='hide':
-            ropt = (self.name, 'O', self.cname, output_doc_title, output_doc_descr)
+            pass
         else:
             raise NotImplementedError('input_intent=%r' % (self.input_intent))
             
         if self.output_intent=='return':
-            RetArgs.add(ropt[0])
-            RetFmt.add(ropt[1])
-            RetObj.add(ropt[2])
-            RetDoc.add(ropt[3])
-            RetDoc.add(ropt[4])
+            RetArgs += self.name
+            RetFmt += ctype.get_pyret_fmt(self)
+            RetObj += ctype.get_pyret_obj(self)
+            RetDoc += output_doc_title
+            RetDoc += output_doc_descr
         elif self.output_intent=='hide':
             pass
         else:

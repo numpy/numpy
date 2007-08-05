@@ -50,6 +50,8 @@ class PyCFunction(Component):
     <BLANKLINE>
       First line.
       2nd line.
+    >>> print foo.hello(1, 2)
+    (1, None)
     """
 
     container_options = dict(\
@@ -97,6 +99,7 @@ class PyCFunction(Component):
         ReqPyArgFmt = dict(separator=''),
         OptPyArgFmt = dict(separator=''),
         ExtPyArgFmt = dict(separator=''),
+        OptExtPyArgFmt = dict(separator='', prefix='|', skip_prefix_when_empty=True),
         
         ReqPyArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
         OptPyArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
@@ -115,7 +118,8 @@ class PyCFunction(Component):
         )
 
     component_container_map = dict(CCode = 'Exec',
-                                   PyCArgument = 'Args')
+                                   PyCArgument = 'Args',
+                                   CDecl = 'Decl')
 
     template = '''
 static char %(pyc_name)s_doc[] =
@@ -135,7 +139,7 @@ static PyObject*
   volatile int capi_success = 1;
   %(Decl)s
   static char *capi_kwlist[] = {%(ReqKWList)s%(OptKWList)s%(ExtKWList)sNULL};
-  if (PyArg_ParseTupleAndKeywords(pyc_args, pyc_keywds,"%(ReqPyArgFmt)s%(OptPyArgFmt)s%(ExtPyArgFmt)s",
+  if (PyArg_ParseTupleAndKeywords(pyc_args, pyc_keywds,"%(ReqPyArgFmt)s%(OptExtPyArgFmt)s",
                                   capi_kwlist%(ReqPyArgObj)s%(OptPyArgObj)s%(ExtPyArgObj)s)) {
     %(FromPyObj)s
     %(Exec)s
@@ -163,6 +167,7 @@ static PyObject*
         if options: self.warning('%s unused options: %s\n' % (self.__class__.__name__, options))
         
         map(self.add, components)
+        return self
 
     def init_containers(self):
         return
@@ -177,6 +182,9 @@ static PyObject*
         OptArgs = self.container_OptArgs
         ExtArgs = self.container_ExtArgs
         OptExtArgs = self.container_OptExtArgs
+        OptPyArgFmt = self.container_OptPyArgFmt
+        ExtPyArgFmt = self.container_ExtPyArgFmt
+        OptExtPyArgFmt = self.container_OptExtPyArgFmt
         ModuleMethod = self.container_ModuleMethod
         ModuleFuncDoc = self.container_ModuleFuncDoc
 
@@ -186,6 +194,7 @@ static PyObject*
 
         # update local containers:
         OptExtArgs += OptArgs + ExtArgs
+        OptExtPyArgFmt += OptPyArgFmt + ExtPyArgFmt
         ModuleFuncDoc += evaluate('%(name)s(%(ReqArgs)s%(OptExtArgs)s) -> %(RetArgs)s')
         if self.title is not None:
             FuncTitle += self.title

@@ -145,7 +145,7 @@ capi_error:
             self.add(Component.get('arrayobject.h'), 'Header')
             self.add(Component.get('import_array'), 'ModuleInit')
         map(self.add, components)
-        return
+        return self
 
     def update_containers(self):
         if self.title is not None:

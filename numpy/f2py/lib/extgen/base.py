@@ -43,7 +43,7 @@ class Component(object): # XXX: rename Component to Component
         obj.parent = None
         obj.containers = {} # holds containers for named string lists
         obj.components = [] # holds pairs (<Component subclass instance>, <container name or None>)
-        obj.initialize(*args, **kws)    # initialize from constructor arguments
+        obj = obj.initialize(*args, **kws)    # initialize from constructor arguments
         return obj
 
     def initialize(self, *components, **options):
@@ -52,7 +52,7 @@ class Component(object): # XXX: rename Component to Component
         """
         # self.myattr = ..
         # map(self.add, components)
-        return
+        return self
 
     @property
     def provides(self):
@@ -73,7 +73,7 @@ class Component(object): # XXX: rename Component to Component
         print >> sys.stderr, message
 
     def __repr__(self):
-        return '%s%s' % (self.__class__.__name__, `self.containers`)
+        return '%s(%s)' % (self.__class__.__name__, `self.containers`)
 
     def __getattr__(self, attr):
         if attr.startswith('container_'): # convenience feature

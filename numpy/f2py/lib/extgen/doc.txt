@@ -135,7 +135,8 @@ tasks:
   `.default_component_class_name`, `.template` attributes.
 
 - In `.initialize()` method one can process constructor options,
-  set new attributes and add predefined components.
+  set new attributes and add predefined components. It must
+  return a `Component` instance.
 
 - In `.init_containers()` and `.update_containers()` methods
   one may retrive containers from parents via `.get_container(<name>)`
@@ -298,3 +299,7 @@ using `Component.get(<provides>)` method:
 
 - `'import_array'` - code for importing numpy package to extension
   module.
+
+- `'int'` - C `int` type support
+
+- `'PyObject*'` - `PyObject*` type support

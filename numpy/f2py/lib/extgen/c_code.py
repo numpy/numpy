@@ -14,6 +14,7 @@ class CCode(Component):
     def initialize(self, *lines, **options):
         self.lines = []
         map(self.add, lines)
+        return self
 
     def update_containers(self):
         CCodeLines = self.get_container('CCodeLines')
