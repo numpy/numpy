@@ -82,5 +82,17 @@ class test_docs(NumpyTestCase):
     def check_roots(self):
         assert_array_equal(N.roots([1,0,0]), [0,0])
 
+    def check_str_leading_zeros(self):
+        p = N.poly1d([4,3,2,1])
+        p[3] = 0
+        assert_equal(str(p),
+                     "   2\n"
+                     "3 x + 2 x + 1")
+
+        p = N.poly1d([1,2])
+        p[0] = 0
+        p[1] = 0
+        assert_equal(str(p), " \n0")
+
 if __name__ == "__main__":
     NumpyTest().run()

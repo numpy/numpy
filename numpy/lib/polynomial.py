@@ -500,11 +500,15 @@ class poly1d(object):
         return self.order
 
     def __str__(self):
-        N = self.order
         thestr = "0"
         var = self.variable
-        for k in range(len(self.coeffs)):
-            coefstr ='%.4g' % abs(self.coeffs[k])
+
+        # Remove leading zeros
+        coeffs = self.coeffs[NX.logical_or.accumulate(self.coeffs != 0)]
+        N = len(coeffs)-1
+
+        for k in range(len(coeffs)):
+            coefstr ='%.4g' % abs(coeffs[k])
             if coefstr[-4:] == '0000':
                 coefstr = coefstr[:-5]
             power = (N-k)
@@ -533,11 +537,11 @@ class poly1d(object):
 
             if k > 0:
                 if newstr != '':
-                    if self.coeffs[k] < 0:
+                    if coeffs[k] < 0:
                         thestr = "%s - %s" % (thestr, newstr)
                     else:
                         thestr = "%s + %s" % (thestr, newstr)
-            elif (k == 0) and (newstr != '') and (self.coeffs[k] < 0):
+            elif (k == 0) and (newstr != '') and (coeffs[k] < 0):
                 thestr = "-%s" % (newstr,)
             else:
                 thestr = newstr
