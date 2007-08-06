@@ -37,9 +37,12 @@ class PyCArgument(Component):
         self.pycvar = name + '_pyc'
 
         if ctype is None:
-            ctype = Component.get('PyObject*')
+            ctype = Component.CTypePython(object)
+        else:
+            ctype = Component.CType(ctype)
         self.ctype = ctype
         ctype.set_pyarg_decl(self)
+        ctype.set_titles(self)
         #self.add(ctype)
 
         return self
@@ -48,34 +51,7 @@ class PyCArgument(Component):
         evaluate = self.evaluate
         ctype = self.ctype
 
-        # get containers
-        ReqArgs = self.container_ReqArgs
-        OptArgs = self.container_OptArgs
-        ExtArgs = self.container_ExtArgs
-        RetArgs = self.container_RetArgs
-
-        ReqArgsDoc = self.container_ReqArgsDoc
-        OptArgsDoc = self.container_OptArgsDoc
-        ExtArgsDoc = self.container_ExtArgsDoc
-
-        ReqKWList = self.container_ReqKWList
-        OptKWList = self.container_OptKWList
-        ExtKWList = self.container_ExtKWList
-
-        ReqPyArgFmt = self.container_ReqPyArgFmt
-        OptPyArgFmt = self.container_OptPyArgFmt
-        ExtPyArgFmt = self.container_ExtPyArgFmt
-
-        ReqPyArgObj = self.container_ReqPyArgObj
-        OptPyArgObj = self.container_OptPyArgObj
-        ExtPyArgObj = self.container_ExtPyArgObj
-
-        RetDoc = self.container_RetDoc
-        RetFmt = self.container_RetFmt
-        RetObj = self.container_RetObj
-
         # update PyCFunction containers
-
         input_doc_title = '%s - %s' % (self.name, self.input_title)
         output_doc_title = '%s - %s' % (self.name, self.output_title)
         if self.input_description is not None:
@@ -88,37 +64,37 @@ class PyCArgument(Component):
             output_doc_descr = None
 
         if self.input_intent=='required':
-            ReqArgs += self.name
-            ReqKWList += '"' + self.name + '"'
-            ReqPyArgFmt += ctype.get_pyarg_fmt(self)
-            ReqPyArgObj += ctype.get_pyarg_obj(self)
-            ReqArgsDoc += input_doc_title
-            ReqArgsDoc += input_doc_descr
+            self.container_ReqArgs += self.name
+            self.container_ReqKWList += '"' + self.name + '"'
+            self.container_ReqPyArgFmt += ctype.get_pyarg_fmt(self)
+            self.container_ReqPyArgObj += ctype.get_pyarg_obj(self)
+            self.container_ReqArgsDoc += input_doc_title
+            self.container_ReqArgsDoc += input_doc_descr
         elif self.input_intent=='optional':
-            OptArgs += self.name
-            OptKWList += '"' + self.name + '"'
-            OptPyArgFmt += ctype.get_pyarg_fmt(self)
-            OptPyArgObj += ctype.get_pyarg_obj(self)
-            OptArgsDoc += input_doc_title
-            OptArgsDoc += input_doc_descr
+            self.container_OptArgs += self.name
+            self.container_OptKWList += '"' + self.name + '"'
+            self.container_OptPyArgFmt += ctype.get_pyarg_fmt(self)
+            self.container_OptPyArgObj += ctype.get_pyarg_obj(self)
+            self.container_OptArgsDoc += input_doc_title
+            self.container_OptArgsDoc += input_doc_descr
         elif self.input_intent=='extra':
-            ExtArgs += self.name
-            ExtKWList += '"' + self.name + '"'
-            ExtPyArgFmt += ctype.get_pyarg_fmt(self)
-            ExtPyArgObj += ctype.get_pyarg_obj(self)
-            ExtArgsDoc += input_doc_title
-            ExtArgsDoc += input_doc_descr
+            self.container_ExtArgs += self.name
+            self.container_ExtKWList += '"' + self.name + '"'
+            self.container_ExtPyArgFmt += ctype.get_pyarg_fmt(self)
+            self.container_ExtPyArgObj += ctype.get_pyarg_obj(self)
+            self.container_ExtArgsDoc += input_doc_title
+            self.container_ExtArgsDoc += input_doc_descr
         elif self.input_intent=='hide':
             pass
         else:
             raise NotImplementedError('input_intent=%r' % (self.input_intent))
             
         if self.output_intent=='return':
-            RetArgs += self.name
-            RetFmt += ctype.get_pyret_fmt(self)
-            RetObj += ctype.get_pyret_obj(self)
-            RetDoc += output_doc_title
-            RetDoc += output_doc_descr
+            self.container_RetArgs += self.name
+            self.container_RetFmt += ctype.get_pyret_fmt(self)
+            self.container_RetObj += ctype.get_pyret_obj(self)
+            self.container_RetDoc += output_doc_title
+            self.container_RetDoc += output_doc_descr
         elif self.output_intent=='hide':
             pass
         else:

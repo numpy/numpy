@@ -98,6 +98,9 @@ class Component(object): # XXX: rename Component to Component
         """
         Append component and its target container label to components list.
         """
+        if isinstance(component, tuple) and len(component)==2 and isinstance(component[0], Component):
+            assert container_label is None, `container_label`
+            component, container_label = component
         if not isinstance(component, Component) and self.default_component_class_name!=component.__class__.__name__:
             clsname = self.default_component_class_name
             if clsname is not None:

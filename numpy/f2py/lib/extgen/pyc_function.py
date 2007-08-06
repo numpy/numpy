@@ -11,7 +11,7 @@ class PyCFunction(Component):
     >>> f = PyCFunction('hello', title='A function.', description='\\nFirst line.\\n2nd line.')
     >>> a1_in_doc = '''First line.\\nSecond line.'''
     >>> a1_out_doc = '''Single line.'''
-    >>> f += PyCArgument('a1',output_intent='return', input_title='a Python object',
+    >>> f += PyCArgument('a1',output_intent='return', input_title='anything',
     ...    input_description=a1_in_doc, output_description=a1_out_doc)
     >>> f += PyCArgument('c1',input_intent='extra')
     >>> f += PyCArgument('b1',input_intent='optional')
@@ -28,23 +28,23 @@ class PyCFunction(Component):
     A function.
     <BLANKLINE>
     Required arguments:
-      a1 - a Python object
+      a1 - a python object, anything
         First line.
         Second line.
-      a2 - None
+      a2 - a python object
     <BLANKLINE>
     Optional arguments:
-      b1 - None
-      b2 - None
+      b1 - a python object
+      b2 - a python object
     <BLANKLINE>
     Extra optional arguments:
-      c1 - None
-      c2 - None
+      c1 - a python object
+      c2 - a python object
     <BLANKLINE>
     Return values:
-      a1 - None
+      a1 - a python object
         Single line.
-      d2 - None
+      d2 - a python object
     <BLANKLINE>
     Description:
     <BLANKLINE>

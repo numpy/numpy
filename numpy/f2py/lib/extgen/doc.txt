@@ -286,6 +286,9 @@ ExtGen package defines the following extension module component classes:
   - `CDecl(<ctype>, *names)` --- represents `ctype name1, name2, ..;`
     declaration. Use `.add()` method to add more names.
 
+  -`CTypePython(<python type object or 'cell' or 'generator' or 'cobject'>)` 
+    --- represents python type object in C.
+
 
 Predefined components
 =====================
@@ -301,5 +304,3 @@ using `Component.get(<provides>)` method:
   module.
 
 - `'int'` - C `int` type support
-
-- `'PyObject*'` - `PyObject*` type support
