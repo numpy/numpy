@@ -266,7 +266,7 @@ ExtGen package defines the following extension module component classes:
   - `CCode(*lines, provides=..)` --- represents any C code block or
     statement component.
 
-  - `CType(<name>)` --- represents a predefined or intrinsic C type
+  - `CType(<name or python type obj>)` --- represents a predefined or intrinsic C type
     with a given name.
 
   - `CTypeAlias(<name>, <ctype>)` --- represents `typedef ctype name;`
@@ -286,7 +286,7 @@ ExtGen package defines the following extension module component classes:
   - `CDecl(<ctype>, *names)` --- represents `ctype name1, name2, ..;`
     declaration. Use `.add()` method to add more names.
 
-  -`CTypePython(<python type object or 'cell' or 'generator' or 'cobject'>)` 
+  - `CTypePython(<python type object or 'cell' or 'generator' or 'cobject' or 'instance'>)` 
     --- represents python type object in C.
 
 

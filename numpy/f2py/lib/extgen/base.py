@@ -54,6 +54,9 @@ class Component(object): # XXX: rename Component to Component
         # map(self.add, components)
         return self
 
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join([repr(c) for (c,l) in self.components]))
+
     @property
     def provides(self):
         """
@@ -71,9 +74,6 @@ class Component(object): # XXX: rename Component to Component
     @staticmethod
     def info(message):
         print >> sys.stderr, message
-
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, `self.containers`)
 
     def __getattr__(self, attr):
         if attr.startswith('container_'): # convenience feature

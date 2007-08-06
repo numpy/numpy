@@ -24,6 +24,9 @@ class CTypeBase(Component):
         self.name = name
         map(self.add, components)
         return self
+
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join([repr(self.name)]+[repr(c) for (c,l) in self.components]))
     
     def update_containers(self):
         self.container_TypeDef += self.evaluate(self.template_typedef)
@@ -31,18 +34,27 @@ class CTypeBase(Component):
     def __str__(self):
         return self.name
 
-    def get_pyret_fmt(self, input_intent_hide = True):
-        if input_intent_hide: return 'O'
-        return 'N'
-
-    def get_pyret_arg(self, cname):
-        return cname
-
-    def get_pyarg_fmt(self):
+    def set_pyarg_decl(self, arg):
+        if arg.input_intent=='return':
+            arg += CDecl(self, '%s = Py_None' % (arg.pycvar))
+        else:
+            arg += CDecl(self, '%s = NULL' % (arg.pycvar))
+        
+    def get_pyarg_fmt(self, arg):
+        if arg.input_intent=='hide': return None
         return 'O'
 
-    def get_pyarg_arg(self, cname):
-        return '&%s' % (cname)
+    def get_pyarg_obj(self, arg):
+        if arg.input_intent=='hide': return None
+        return '&' + arg.pycvar
+    
+    def get_pyret_fmt(self, arg):
+        if arg.output_intent=='hide': return None
+        return 'O'
+    
+    def get_pyret_obj(self, arg):
+        if arg.output_intent=='hide': return None
+        return arg.pycvar
 
 class _CatchTypeDef(Component): # for doctest
     template = '%(TypeDef)s'
@@ -68,7 +80,7 @@ class CType(CTypeBase):
     def initialize(self, name):
         if isinstance(name, CTypeBase):
             return name
-        if isinstance(name, type) or name in ['cell', 'generator', 'cobject']:
+        if isinstance(name, type) or name in ['cell', 'generator', 'cobject', 'instance']:
             return CTypePython(name)
         try:
             return Component.get(name)
@@ -77,6 +89,11 @@ class CType(CTypeBase):
         self.name = name
         return self
     def update_containers(self):
+        pass
+
+    def set_pyarg_decl(self, arg):
+        pass
+    def set_titles(self, arg):
         pass
 
 class CTypeAlias(CTypeBase):
@@ -247,81 +264,201 @@ class CTypePython(CTypeBase):
     >>> b.func(23, 23l, 1.2, 1+2j, 'hello', u'hei', (2,'a'), [-2], {3:4}, set([1,2]), 2, '15')
     (23, 23L, 1.2, (1+2j), 'hello', u'hei', (2, 'a'), [-2], {3: 4}, set([1, 2]), 2, '15')
 
-    #>>> print b.func.__doc__
-    
+    >>> print b.func.__doc__
+      func(i, l, f, c, s, u, t, lst, d, set, o1, o2) -> (i, l, f, c, s, u, t, lst, d, set, o1, o2)
+    <BLANKLINE>
+    Required arguments:
+      i - a python int object
+      l - a python long object
+      f - a python float object
+      c - a python complex object
+      s - a python str object
+      u - a python unicode object
+      t - a python tuple object
+      lst - a python list object
+      d - a python dict object
+      set - a python set object
+      o1 - a python object
+      o2 - a python object
+    <BLANKLINE>
+    Return values:
+      i - a python int object
+      l - a python long object
+      f - a python float object
+      c - a python complex object
+      s - a python str object
+      u - a python unicode object
+      t - a python tuple object
+      lst - a python list object
+      d - a python dict object
+      set - a python set object
+      o1 - a python object
+      o2 - a python object
+
+    >>> import numpy
+    >>> m = ExtensionModule('test_CTypePython_numpy')
+    >>> f = PyCFunction('func_int')
+    >>> f += PyCArgument('i1', numpy.int8, output_intent='return')
+    >>> f += PyCArgument('i2', numpy.int16, output_intent='return')
+    >>> f += PyCArgument('i3', numpy.int32, output_intent='return')
+    >>> f += PyCArgument('i4', numpy.int64, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_uint')
+    >>> f += PyCArgument('i1', numpy.uint8, output_intent='return')
+    >>> f += PyCArgument('i2', numpy.uint16, output_intent='return')
+    >>> f += PyCArgument('i3', numpy.uint32, output_intent='return')
+    >>> f += PyCArgument('i4', numpy.uint64, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_float')
+    >>> f += PyCArgument('f1', numpy.float32, output_intent='return')
+    >>> f += PyCArgument('f2', numpy.float64, output_intent='return')
+    >>> f += PyCArgument('f3', numpy.float128, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_complex')
+    >>> f += PyCArgument('c1', numpy.complex64, output_intent='return')
+    >>> f += PyCArgument('c2', numpy.complex128, output_intent='return')
+    >>> f += PyCArgument('c3', numpy.complex256, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_array')
+    >>> f += PyCArgument('a1', numpy.ndarray, output_intent='return')
+    >>> m += f
+    >>> #f = PyCFunction('func_c_int')
+    >>> #f += PyCArgument('i1', 'c_int', output_intent='return')
+    >>> #m += f
+    >>> b = m.build() #doctest: +ELLIPSIS
+    exec_command...
+    >>> b.func_int(numpy.int8(-2), numpy.int16(-3), numpy.int32(-4), numpy.int64(-5))
+    (-2, -3, -4, -5)
+    >>> b.func_uint(numpy.uint8(-1), numpy.uint16(-1), numpy.uint32(-1), numpy.uint64(-1))
+    (255, 65535, 4294967295, 18446744073709551615)
+    >>> b.func_float(numpy.float32(1.2),numpy.float64(1.2),numpy.float128(1.2))
+    (1.20000004768, 1.2, 1.19999999999999995559)
+    >>> b.func_complex(numpy.complex64(1+2j),numpy.complex128(1+2j),numpy.complex256(1+2j))
+    ((1+2j), (1+2j), (1.0+2.0j))
+    >>> b.func_array(numpy.array([1,2]))
+    array([1, 2])
+    >>> b.func_array(numpy.array(2))
+    array(2)
+    >>> b.func_array(2)
+    Traceback (most recent call last):
+    ...
+    TypeError: argument 1 must be numpy.ndarray, not int
+    >>> b.func_array(numpy.int8(2))
+    Traceback (most recent call last):
+    ...
+    TypeError: argument 1 must be numpy.ndarray, not numpy.int8
+    >>> #b.func_c_int(2)
     """
-    @property
-    def provides(self):
-        return self.typeobj_name
+
+    typeinfo_map = dict(
+        # <key>: (<type object in C>, <C type>, <PyArgFmt>)
+        int = ('PyInt_Type', 'PyIntObject*', 'O!'),
+        long = ('PyLong_Type', 'PyLongObject*', 'O!'),
+        float = ('PyFloat_Type', 'PyFloatObject*', 'O!'),
+        complex = ('PyComplex_Type', 'PyComplexObject*', 'O!'),
+        str = ('PyString_Type', 'PyStringObject*', 'S'),
+        unicode = ('PyUnicode_Type', 'PyUnicodeObject*', 'U'),
+        buffer = ('PyBuffer_Type', 'PyBufferObject*', 'O!'),
+        tuple = ('PyTuple_Type', 'PyTupleObject*', 'O!'),
+        list = ('PyList_Type', 'PyListObject*', 'O!'),
+        dict = ('PyDict_Type', 'PyDictObject*', 'O!'),
+        file = ('PyFile_Type', 'PyFileObject*', 'O!'),
+        instance = ('PyInstance_Type', 'PyObject*', 'O!'),
+        function = ('PyFunction_Type', 'PyFunctionObject*', 'O!'),
+        method = ('PyMethod_Type', 'PyObject*', 'O!'),
+        module = ('PyModule_Type', 'PyObject*', 'O!'),
+        iter = ('PySeqIter_Type', 'PyObject*', 'O!'),
+        property = ('PyProperty_Type', 'PyObject*', 'O!'),
+        slice = ('PySlice_Type', 'PyObject*', 'O!'),
+        cell = ('PyCell_Type', 'PyCellObject*', 'O!'),
+        generator = ('PyGen_Type', 'PyGenObject*', 'O!'),
+        set = ('PySet_Type', 'PySetObject*', 'O!'),
+        frozenset = ('PyFrozenSet_Type', 'PySetObject*', 'O!'),
+        cobject = (None, 'PyCObject*', 'O'),
+        type = ('PyType_Type', 'PyTypeObject*', 'O!'),
+        object = (None, 'PyObject*', 'O'),
+        numpy_ndarray = ('PyArray_Type', 'PyArrayObject*', 'O!'),
+        numpy_descr = ('PyArrayDescr_Type','PyArray_Descr', 'O!'),
+        numpy_ufunc = ('PyUFunc_Type', 'PyUFuncObject*', 'O!'),
+        numpy_iter = ('PyArrayIter_Type', 'PyArrayIterObject*', 'O!'),
+        numpy_multiiter = ('PyArrayMultiIter_Type', 'PyArrayMultiIterObject*', 'O!'),
+        numpy_int8 = ('PyInt8ArrType_Type', 'PyInt8ScalarObject*', 'O!'),
+        numpy_int16 = ('PyInt16ArrType_Type', 'PyInt16ScalarObject*', 'O!'),
+        numpy_int32 = ('PyInt32ArrType_Type', 'PyInt32ScalarObject*', 'O!'),
+        numpy_int64 = ('PyInt64ArrType_Type', 'PyInt64ScalarObject*', 'O!'),
+        numpy_int128 = ('PyInt128ArrType_Type', 'PyInt128ScalarObject*', 'O!'),
+        numpy_uint8 = ('PyUInt8ArrType_Type', 'PyUInt8ScalarObject*', 'O!'),
+        numpy_uint16 = ('PyUInt16ArrType_Type', 'PyUInt16ScalarObject*', 'O!'),
+        numpy_uint32 = ('PyUInt32ArrType_Type', 'PyUInt32ScalarObject*', 'O!'),
+        numpy_uint64 = ('PyUInt64ArrType_Type', 'PyUInt64ScalarObject*', 'O!'),
+        numpy_uint128 = ('PyUInt128ArrType_Type', 'PyUInt128ScalarObject*', 'O!'),
+        numpy_float16 = ('PyFloat16ArrType_Type', 'PyFloat16ScalarObject*', 'O!'),
+        numpy_float32 = ('PyFloat32ArrType_Type', 'PyFloat32ScalarObject*', 'O!'),
+        numpy_float64 = ('PyFloat64ArrType_Type', 'PyFloat64ScalarObject*', 'O!'),
+        numpy_float80 = ('PyFloat80ArrType_Type', 'PyFloat80ScalarObject*', 'O!'),
+        numpy_float96 = ('PyFloat96ArrType_Type', 'PyFloat96ScalarObject*', 'O!'),
+        numpy_float128 = ('PyFloat128ArrType_Type', 'PyFloat128ScalarObject*', 'O!'),
+        numpy_complex32 = ('PyComplex32ArrType_Type', 'PyComplex32ScalarObject*', 'O!'),
+        numpy_complex64 = ('PyComplex64ArrType_Type', 'PyComplex64ScalarObject*', 'O!'),
+        numpy_complex128 = ('PyComplex128ArrType_Type', 'PyComplex128ScalarObject*', 'O!'),
+        numpy_complex160 = ('PyComplex160ArrType_Type', 'PyComplex160ScalarObject*', 'O!'),
+        numpy_complex192 = ('PyComplex192ArrType_Type', 'PyComplex192ScalarObject*', 'O!'),
+        numpy_complex256 = ('PyComplex256ArrType_Type', 'PyComplex256ScalarObject*', 'O!'),
+        numeric_array = ('PyArray_Type', 'PyArrayObject*', 'O!'),
+        c_int = (None, 'int', 'i')
+        )
+    
     def initialize(self, typeobj):
+        m = self.typeinfo_map
+
+        key = None
         if isinstance(typeobj, type):
-            self.typeobj_name = typeobj.__name__
+            if typeobj.__module__=='__builtin__':
+                key = typeobj.__name__
+                if key=='array':
+                    key = 'numeric_array'
+            elif typeobj.__module__=='numpy':
+                key = 'numpy_' + typeobj.__name__
         elif isinstance(typeobj, str):
-            self.typeobj_name = typeobj
-        else:
-            raise ValueError('%s: unexpected input type %r' \
-                             % (self.__class__.__name__, type(typeobj)))
-        self.ctypeobj = dict(int='PyInt_Type',
-                             long='PyLong_Type',
-                             float='PyFloat_Type',
-                             complex='PyComplex_Type',
-                             str='PyString_Type',
-                             unicode='PyUnicode_Type',
-                             buffer='PyBuffer_Type',
-                             tuple='PyTuple_Type',
-                             list='PyList_Type',
-                             dict='PyDict_Type',
-                             file='PyFile_Type',
-                             instance='PyInstance_Type',
-                             function='PyFunction_Type',
-                             method='PyMethod_Type',
-                             module='PyModule_Type',
-                             iter='PySeqIter_Type',
-                             property='PyProperty_Type',
-                             slice='PySlice_Type',
-                             cell='PyCell_Type',
-                             generator='PyGen_Type',
-                             set='PySet_Type',
-                             frozenset='PyFrozenSet_Type',
-                             type='PyType_Type',
-                             ).get(self.typeobj_name)
-        pyctypes = dict(int='PyIntObject',
-                        long='PyLongObject',
-                        float='PyFloatObject',
-                        complex='PyComplexObject',
-                        str='PyStringObject',
-                        unicode='PyUnicodeObject',
-                        buffer='PyBufferObject',
-                        tuple='PyTupleObject',
-                        list='PyListObject',
-                        dict='PyDictObject',
-                        file='PyFileObject',
-                        instance='PyObject',
-                        function='PyFunctionObject',
-                        method='PyObject',
-                        module='PyObject',
-                        iter='PyObject',
-                        property='PyObject',
-                        slice='PyObject',
-                        cobject='PyCObject', # XXX: check key
-                        cell='PyCellObject',
-                        type='PyTypeObject',
-                        generator='PyGenObject',
-                        set='PySetObject',
-                        frozenset='PySetObject',
-                        object='PyObject',
-                        )
-        try:
-            self.name = pyctypes[self.typeobj_name] + '*'
+            key = typeobj
+            if key.startswith('numpy_'):
+                k = key[6:]
+                named_scalars = ['byte','short','int','long','longlong',
+                                 'ubyte','ushort','uint','ulong','ulonglong',
+                                 'intp','uintp',
+                                 'float_','double',
+                                 'longfloat','longdouble',
+                                 'complex_',
+                                 ]
+                if k in named_scalars:
+                    import numpy
+                    key = 'numpy_' + getattr(numpy, k).__name__
+
+        try: item = m[key]
         except KeyError:
             raise NotImplementedError('%s: need %s support' % (self.__class__.__name__, typeobj))
+
+        self.typeobj_name = key
+        self.ctypeobj = item[0]
+        self.name = item[1]
+        self.pyarg_fmt = item[2]            
+
+        if key.startswith('numpy_'):
+            self.add(Component.get('arrayobject.h'), 'Header')
+            self.add(Component.get('import_array'), 'ModuleInit')
+
+        if key.startswith('numeric_'):
+            raise NotImplementedError(self.__class__.__name__ + ': Numeric support')
         return self
 
     def set_titles(self, arg):
         if self.typeobj_name == 'object':
             tn = 'a python ' + self.typeobj_name
         else:
-            tn = 'a python ' + self.typeobj_name + ' object'
+            if self.typeobj_name.startswith('numpy_'):
+                tn = 'a numpy.' + self.typeobj_name[6:] + ' object'
+            else:
+                tn = 'a python ' + self.typeobj_name + ' object'
         if arg.input_intent!='hide':
             r = ''
             if arg.input_title: r = ', ' + arg.input_title
@@ -338,20 +475,16 @@ class CTypePython(CTypeBase):
             arg += CDecl(self, '%s = NULL' % (arg.pycvar))
 
     def get_pyarg_fmt(self, arg):
-        return dict(object='O', str='S', unicode='U', cobject='O'
-                    ).get(self.typeobj_name, 'O!') # XXX: check cobject
+        if arg.input_intent=='hide': return None
+        return self.pyarg_fmt
 
     def get_pyarg_obj(self, arg):
-        if self.typeobj_name in ['object', 'str', 'unicode', 'cobject']: # XXX: check cobject
-            return '&' + arg.pycvar
-        return '&%s, &%s' % (self.ctypeobj, arg.pycvar)
-    
-    def get_pyret_fmt(self, arg):
-        if arg.input_intent=='hide':
-            return 'O'
-        # return 'N' if arg is constructed inside PyCFunction
-        return 'O'
-    def get_pyret_obj(self, arg): return arg.pycvar
+        if arg.input_intent=='hide': return None
+        if self.pyarg_fmt=='O!':
+            return '&%s, &%s' % (self.ctypeobj, arg.pycvar)
+        return '&' + arg.pycvar
+
+
 
 
 class CInt(CType):
