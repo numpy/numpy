@@ -17,7 +17,7 @@ http://www.scipy.org.
 """
 
 try:
-    from __config__ import show as show_config
+    from numpy.__config__ import show as show_config
 except ImportError:
     show_config = None
 
