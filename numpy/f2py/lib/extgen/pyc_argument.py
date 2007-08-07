@@ -10,7 +10,8 @@ class PyCArgument(Component):
                 input_title = None,
                 output_title = None,
                 input_description = None,
-                output_description = None
+                output_description = None,
+                depends = []
                )
 
     """
@@ -29,21 +30,37 @@ class PyCArgument(Component):
         self.output_title = options.pop('output_title', None)
         self.input_description = options.pop('input_description', None)
         self.output_description = options.pop('output_description', None)
+        self.depends = options.pop('depends', [])
 
         if options: self.warning('%s unused options: %s\n' % (self.__class__.__name__, options))
         
         map(self.add, components)
+
         self.cvar = name
-        self.pycvar = name + '_pyc'
+        self.pycvar = None
+        self.retpycvar = None
 
         if ctype is None:
             ctype = Component.CTypePython(object)
         else:
             ctype = Component.CType(ctype)
         self.ctype = ctype
-        ctype.set_pyarg_decl(self)
+
+        if isinstance(ctype, Component.CTypePython):
+            if self.output_intent == 'return':
+                if self.input_intent=='hide':
+                    self.retpycvar = name
+                else:
+                    self.pycvar = name
+                    self.retpycvar = name + '_return'
+            elif self.input_intent!='hide':
+                self.pycvar = name
+        else:
+            self.pycvar = name + '_pyc'
+            self.retpycvar = name + '_pyc_r'
+
         ctype.set_titles(self)
-        #self.add(ctype)
+        ctype.set_Decl(self)
 
         return self
             

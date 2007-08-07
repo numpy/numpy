@@ -34,12 +34,6 @@ class CTypeBase(Component):
     def __str__(self):
         return self.name
 
-    def set_pyarg_decl(self, arg):
-        if arg.input_intent=='return':
-            arg += CDecl(self, '%s = Py_None' % (arg.pycvar))
-        else:
-            arg += CDecl(self, '%s = NULL' % (arg.pycvar))
-        
     def get_pyarg_fmt(self, arg):
         if arg.input_intent=='hide': return None
         return 'O'
@@ -49,12 +43,82 @@ class CTypeBase(Component):
         return '&' + arg.pycvar
     
     def get_pyret_fmt(self, arg):
-        if arg.output_intent=='hide': return None
-        return 'O'
+        if arg.output_intent=='return':
+            # set_converters ensures tha all return values a new references
+            return 'N'
+        return
     
     def get_pyret_obj(self, arg):
-        if arg.output_intent=='hide': return None
-        return arg.pycvar
+        if arg.output_intent=='return':
+            return arg.retpycvar
+        return
+
+    def set_Decl(self, arg):
+        if arg.input_intent!='hide':
+            arg += CDecl(self, '%s = NULL' % (arg.pycvar))
+
+        if arg.output_intent!='hide':
+            arg += CDecl(self, '%s = NULL' % (arg.retpycvar))
+
+    def set_converters(self, arg):
+        """
+        Notes for user:
+          if arg is intent(optional, in, out) and not specified
+          as function argument then function may created but
+          it must then have *new reference* (ie use Py_INCREF
+          unless it is a new reference already).
+        """
+        # this method is called from PyCFunction.update_containers(),
+        # note that self.parent is None put arg.parent is PyCFunction
+        # instance.
+        eval_a = arg.evaluate
+        FromPyObj = arg.container_FromPyObj
+        PyObjFrom = arg.container_PyObjFrom
+        if arg.output_intent=='return':
+            if arg.input_intent in ['optional', 'extra']:
+                FromPyObj += eval_a('''\
+if (!(%(pycvar)s==NULL)) {
+  /* make %(pycvar)r a new reference */
+  %(retpycvar)s = %(pycvar)s;
+  Py_INCREF((PyObject*)%(retpycvar)s);
+}
+''')
+                PyObjFrom += eval_a('''\
+if (%(retpycvar)s==NULL) {
+  /* %(pycvar)r was not specified */
+  if (%(pycvar)s==NULL) {
+    %(retpycvar)s = Py_None;
+    Py_INCREF((PyObject*)%(retpycvar)s);
+  } else {
+    %(retpycvar)s = %(pycvar)s;
+    /* %(pycvar)r must be a new reference or expect a core dump. */
+  }
+} elif (!(%(retpycvar)s == %(pycvar)s)) {
+  /* a new %(retpycvar)r was created, undoing %(pycvar)s new reference */
+  Py_DECREF((PyObject*)%(pycvar)s);
+}
+''')
+            elif arg.input_intent=='hide':
+                PyObjFrom += eval_a('''\
+if (%(retpycvar)s==NULL) {
+  %(retpycvar)s = Py_None;
+  Py_INCREF((PyObject*)%(retpycvar)s);
+} /* else %(retpycvar)r must be a new reference or expect a core dump. */
+''')
+            elif arg.input_intent=='required':
+                 FromPyObj += eval_a('''\
+/* make %(pycvar)r a new reference */
+%(retpycvar)s = %(pycvar)s;
+Py_INCREF((PyObject*)%(retpycvar)s);
+''')
+                 PyObjFrom += eval_a('''\
+if (!(%(retpycvar)s==%(pycvar)s)) {
+  /* a new %(retpycvar)r was created, undoing %(pycvar)r new reference */
+  /* %(retpycvar)r must be a new reference or expect a core dump. */
+  Py_DECREF((PyObject*)%(pycvar)s);
+}
+''')
+        return
 
 class _CatchTypeDef(Component): # for doctest
     template = '%(TypeDef)s'
@@ -405,7 +469,6 @@ class CTypePython(CTypeBase):
         numpy_complex192 = ('PyComplex192ArrType_Type', 'PyComplex192ScalarObject*', 'O!'),
         numpy_complex256 = ('PyComplex256ArrType_Type', 'PyComplex256ScalarObject*', 'O!'),
         numeric_array = ('PyArray_Type', 'PyArrayObject*', 'O!'),
-        c_int = (None, 'int', 'i')
         )
     
     def initialize(self, typeobj):
@@ -468,12 +531,6 @@ class CTypePython(CTypeBase):
             if arg.output_title: r = ', ' + arg.output_title
             arg.output_title = tn + r
 
-    def set_pyarg_decl(self, arg):
-        if arg.input_intent=='hide':
-            arg += CDecl(self, '%s = Py_None' % (arg.pycvar))
-        else:
-            arg += CDecl(self, '%s = NULL' % (arg.pycvar))
-
     def get_pyarg_fmt(self, arg):
         if arg.input_intent=='hide': return None
         return self.pyarg_fmt
@@ -490,9 +547,6 @@ class CTypePython(CTypeBase):
 class CInt(CType):
     name = provides = 'int'
     def initialize(self): return self
-    def set_pyarg_decl(self, arg):
-        #arg += CDecl(Component.get('PyObject*'), '%s = NULL' % (arg.pycvar))
-        arg += CDecl(self, '%s = 0' % (arg.cvar))
     def get_pyarg_fmt(self, arg): return 'i'
     def get_pyarg_obj(self, arg): return '&' + arg.cvar
     def get_pyret_fmt(self, arg): return 'i'

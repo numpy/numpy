@@ -19,7 +19,7 @@ class PyCFunction(Component):
     >>> f += PyCArgument('a2',input_intent='required')
     >>> f += PyCArgument('c2',input_intent='extra')
     >>> f += PyCArgument('b2',input_intent='optional')
-    >>> m = ExtensionModule('foo', f)
+    >>> m = ExtensionModule('test_PyCFunction', f)
     >>> foo = m.build() #doctest: +ELLIPSIS
     exec_command...
     >>> print foo.hello.__doc__
@@ -175,32 +175,57 @@ static PyObject*
     def update_containers(self):
         evaluate = self.evaluate
 
-        # get containers
-        FuncTitle = self.container_FuncTitle
-        FuncDescr = self.container_FuncDescr
-        ReqArgs = self.container_ReqArgs
-        OptArgs = self.container_OptArgs
-        ExtArgs = self.container_ExtArgs
-        OptExtArgs = self.container_OptExtArgs
-        OptPyArgFmt = self.container_OptPyArgFmt
-        ExtPyArgFmt = self.container_ExtPyArgFmt
-        OptExtPyArgFmt = self.container_OptExtPyArgFmt
-        ModuleMethod = self.container_ModuleMethod
-        ModuleFuncDoc = self.container_ModuleFuncDoc
-
         # update ExtensionModule containers:
         t = '{"%(name)s", (PyCFunction)%(pyc_name)s,\n METH_VARARGS | METH_KEYWORDS, %(pyc_name)s_doc}'
-        ModuleMethod.add(evaluate(t), self.name)
+        self.container_ModuleMethod.add(evaluate(t), self.name)
 
         # update local containers:
-        OptExtArgs += OptArgs + ExtArgs
-        OptExtPyArgFmt += OptPyArgFmt + ExtPyArgFmt
-        ModuleFuncDoc += evaluate('%(name)s(%(ReqArgs)s%(OptExtArgs)s) -> %(RetArgs)s')
+        self.container_OptExtArgs += self.container_OptArgs + self.container_ExtArgs
+        self.container_OptExtPyArgFmt += self.container_OptPyArgFmt + self.container_ExtPyArgFmt
+        self.container_ModuleFuncDoc += evaluate('%(name)s(%(ReqArgs)s%(OptExtArgs)s) -> %(RetArgs)s')
         if self.title is not None:
-            FuncTitle += self.title
-            ModuleFuncDoc += '  ' + self.title
+            self.container_FuncTitle += self.title
+            self.container_ModuleFuncDoc += '  ' + self.title
         if self.description is not None:
-            FuncDescr += self.description
+            self.container_FuncDescr += self.description
+
+        # resolve dependencies
+        sorted_arguments = []
+        sorted_names = []
+        comp_map = {}
+        dep_map = {}
+        for (c,l) in self.components:
+            if not isinstance(c, Component.PyCArgument):
+                continue
+            d = [n for n in c.depends if n not in sorted_names]
+            if not d:
+                sorted_arguments.append((c,l))
+                sorted_names.append(c.name)
+            else:
+                comp_map[c.name] = (c,l)
+                dep_map[c.name] = d
+
+        while dep_map:
+            dep_map_copy = dep_map.copy()
+            for name, deps in dep_map.items():
+                d = [n for n in deps if dep_map.has_key(n)]
+                if not d:
+                    sorted_arguments.append(comp_map[name])
+                    del dep_map[name]
+                else:
+                    dep_map[name] = d
+            if dep_map_copy==dep_map:
+                self.warnign('%s: detected cyclic dependencies in %r, incorrect behavior is expected.\n'\
+                             % (self.provides, dep_map))
+                sorted_arguments += dep_map.values()
+                break
+
+        for c, l in sorted_arguments:
+            old_parent = c.parent
+            c.parent = self
+            c.ctype.set_converters(c)
+            c.parent = old_parent
+        
         return
 
     
