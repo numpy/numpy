@@ -41,20 +41,29 @@ class PyCArgument(Component):
         self.retpycvar = None
 
         if ctype is None:
-            ctype = Component.CTypePython(object)
+            ctype = object
+        if isinstance(ctype,  Component.CTypeBase):
+            pass
+        elif isinstance(ctype, type) or Component.CTypePython.typeinfo_map.has_key(ctype):
+            ctype = Component.CTypePython(ctype)
         else:
             ctype = Component.CType(ctype)
         self.ctype = ctype
 
+        retfmt = ctype.get_pyret_fmt(self)
         if isinstance(ctype, Component.CTypePython):
-            if self.output_intent == 'return':
-                if self.input_intent=='hide':
-                    self.retpycvar = name
-                else:
+            if retfmt and retfmt in 'SON':
+                if self.output_intent == 'return':
+                    if self.input_intent=='hide':
+                        self.retpycvar = name
+                    else:
+                        self.pycvar = name
+                        self.retpycvar = name + '_return'
+                elif self.input_intent!='hide':
                     self.pycvar = name
-                    self.retpycvar = name + '_return'
-            elif self.input_intent!='hide':
+            else:
                 self.pycvar = name
+                self.retpycvar = name
         else:
             self.pycvar = name + '_pyc'
             self.retpycvar = name + '_pyc_r'
@@ -83,22 +92,22 @@ class PyCArgument(Component):
         if self.input_intent=='required':
             self.container_ReqArgs += self.name
             self.container_ReqKWList += '"' + self.name + '"'
-            self.container_ReqPyArgFmt += ctype.get_pyarg_fmt(self)
-            self.container_ReqPyArgObj += ctype.get_pyarg_obj(self)
+            self.container_ReqArgFmt += ctype.get_pyarg_fmt(self)
+            self.container_ReqArgObj += ctype.get_pyarg_obj(self)
             self.container_ReqArgsDoc += input_doc_title
             self.container_ReqArgsDoc += input_doc_descr
         elif self.input_intent=='optional':
             self.container_OptArgs += self.name
             self.container_OptKWList += '"' + self.name + '"'
-            self.container_OptPyArgFmt += ctype.get_pyarg_fmt(self)
-            self.container_OptPyArgObj += ctype.get_pyarg_obj(self)
+            self.container_OptArgFmt += ctype.get_pyarg_fmt(self)
+            self.container_OptArgObj += ctype.get_pyarg_obj(self)
             self.container_OptArgsDoc += input_doc_title
             self.container_OptArgsDoc += input_doc_descr
         elif self.input_intent=='extra':
             self.container_ExtArgs += self.name
             self.container_ExtKWList += '"' + self.name + '"'
-            self.container_ExtPyArgFmt += ctype.get_pyarg_fmt(self)
-            self.container_ExtPyArgObj += ctype.get_pyarg_obj(self)
+            self.container_ExtArgFmt += ctype.get_pyarg_fmt(self)
+            self.container_ExtArgObj += ctype.get_pyarg_obj(self)
             self.container_ExtArgsDoc += input_doc_title
             self.container_ExtArgsDoc += input_doc_descr
         elif self.input_intent=='hide':

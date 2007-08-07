@@ -96,14 +96,14 @@ class PyCFunction(Component):
         OptKWList = dict(separator=', ', suffix=', ', skip_suffix_when_empty=True),
         ExtKWList = dict(separator=', ', suffix=', ', skip_suffix_when_empty=True),
         
-        ReqPyArgFmt = dict(separator=''),
-        OptPyArgFmt = dict(separator=''),
-        ExtPyArgFmt = dict(separator=''),
-        OptExtPyArgFmt = dict(separator='', prefix='|', skip_prefix_when_empty=True),
+        ReqArgFmt = dict(separator=''),
+        OptArgFmt = dict(separator=''),
+        ExtArgFmt = dict(separator=''),
+        OptExtArgFmt = dict(separator='', prefix='|', skip_prefix_when_empty=True),
         
-        ReqPyArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
-        OptPyArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
-        ExtPyArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
+        ReqArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
+        OptArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
+        ExtArgObj = dict(separator=', ', prefix=', ', skip_prefix_when_empty=True),
         
         FromPyObj = dict(default='<KILLLINE>', use_indent=True),
         Exec = dict(default='<KILLLINE>', use_indent=True),
@@ -139,8 +139,8 @@ static PyObject*
   volatile int capi_success = 1;
   %(Decl)s
   static char *capi_kwlist[] = {%(ReqKWList)s%(OptKWList)s%(ExtKWList)sNULL};
-  if (PyArg_ParseTupleAndKeywords(pyc_args, pyc_keywds,"%(ReqPyArgFmt)s%(OptExtPyArgFmt)s",
-                                  capi_kwlist%(ReqPyArgObj)s%(OptPyArgObj)s%(ExtPyArgObj)s)) {
+  if (PyArg_ParseTupleAndKeywords(pyc_args, pyc_keywds,"%(ReqArgFmt)s%(OptExtArgFmt)s",
+                                  capi_kwlist%(ReqArgObj)s%(OptArgObj)s%(ExtArgObj)s)) {
     %(FromPyObj)s
     %(Exec)s
     capi_success = !PyErr_Occurred();
@@ -181,7 +181,7 @@ static PyObject*
 
         # update local containers:
         self.container_OptExtArgs += self.container_OptArgs + self.container_ExtArgs
-        self.container_OptExtPyArgFmt += self.container_OptPyArgFmt + self.container_ExtPyArgFmt
+        self.container_OptExtArgFmt += self.container_OptArgFmt + self.container_ExtArgFmt
         self.container_ModuleFuncDoc += evaluate('%(name)s(%(ReqArgs)s%(OptExtArgs)s) -> %(RetArgs)s')
         if self.title is not None:
             self.container_FuncTitle += self.title

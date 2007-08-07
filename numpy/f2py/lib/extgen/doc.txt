@@ -22,7 +22,7 @@ Hello example follows::
   >>> f = PyCFunction('hello')
   >>> f += 'printf("Hello!\\n");'
   >>> m += f
-  >>> print m.generate() # shows a string containing C source to extension module
+  >>> print m.generate() # shows a string containing C source to extension module, useful for debugging
   >>> foo = m.build()
   >>> foo.hello()
   Hello!
@@ -286,8 +286,10 @@ ExtGen package defines the following extension module component classes:
   - `CDecl(<ctype>, *names)` --- represents `ctype name1, name2, ..;`
     declaration. Use `.add()` method to add more names.
 
-  - `CTypePython(<python type object or 'cell' or 'generator' or 'cobject' or 'instance'>)` 
-    --- represents python type object in C.
+  - `CTypePython(<python type object or type name>)` 
+    --- represents python type object in C, see
+    `CTypePython.typeinfo_map.keys()` for supported type names
+    (there are over 70 supported types).
 
 
 Predefined components
@@ -303,4 +305,3 @@ using `Component.get(<provides>)` method:
 - `'import_array'` - code for importing numpy package to extension
   module.
 
-- `'int'` - C `int` type support
