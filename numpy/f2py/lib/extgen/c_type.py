@@ -52,7 +52,7 @@ class CTypeBase(Component):
     def set_Decl(self, arg):
         init_value = self.get_init_value(arg)
         if init_value:
-            init = '= %s' % (init_value)
+            init =  ' = %s' % (init_value)
         else:
             init = ''
         if arg.pycvar and arg.pycvar==arg.retpycvar:
@@ -462,77 +462,77 @@ class CTypePython(CTypeBase):
     """
 
     typeinfo_map = dict(
-        # <key>: (<type object in C>, <C type>, <ArgFmt>, RetFmt)
-        int = ('PyInt_Type', 'PyIntObject*', 'O!', 'N'),
-        long = ('PyLong_Type', 'PyLongObject*', 'O!', 'N'),
-        float = ('PyFloat_Type', 'PyFloatObject*', 'O!', 'N'),
-        complex = ('PyComplex_Type', 'PyComplexObject*', 'O!', 'N'),
-        str = ('PyString_Type', 'PyStringObject*', 'S', 'N'),
-        unicode = ('PyUnicode_Type', 'PyUnicodeObject*', 'U', 'N'),
-        buffer = ('PyBuffer_Type', 'PyBufferObject*', 'O!', 'N'),
-        tuple = ('PyTuple_Type', 'PyTupleObject*', 'O!', 'N'),
-        list = ('PyList_Type', 'PyListObject*', 'O!', 'N'),
-        dict = ('PyDict_Type', 'PyDictObject*', 'O!', 'N'),
-        file = ('PyFile_Type', 'PyFileObject*', 'O!', 'N'),
-        instance = ('PyInstance_Type', 'PyObject*', 'O!', 'N'),
-        function = ('PyFunction_Type', 'PyFunctionObject*', 'O!', 'N'),
-        method = ('PyMethod_Type', 'PyObject*', 'O!', 'N'),
-        module = ('PyModule_Type', 'PyObject*', 'O!', 'N'),
-        iter = ('PySeqIter_Type', 'PyObject*', 'O!', 'N'),
-        property = ('PyProperty_Type', 'PyObject*', 'O!', 'N'),
-        slice = ('PySlice_Type', 'PyObject*', 'O!', 'N'),
-        cell = ('PyCell_Type', 'PyCellObject*', 'O!', 'N'),
-        generator = ('PyGen_Type', 'PyGenObject*', 'O!', 'N'),
-        set = ('PySet_Type', 'PySetObject*', 'O!', 'N'),
-        frozenset = ('PyFrozenSet_Type', 'PySetObject*', 'O!', 'N'),
-        cobject = (None, 'PyCObject*', 'O', 'N'),
-        type = ('PyType_Type', 'PyTypeObject*', 'O!', 'N'),
-        object = (None, 'PyObject*', 'O', 'N'),
-        numpy_ndarray = ('PyArray_Type', 'PyArrayObject*', 'O!', 'N'),
-        numpy_descr = ('PyArrayDescr_Type','PyArray_Descr', 'O!', 'N'),
-        numpy_ufunc = ('PyUFunc_Type', 'PyUFuncObject*', 'O!', 'N'),
-        numpy_iter = ('PyArrayIter_Type', 'PyArrayIterObject*', 'O!', 'N'),
-        numpy_multiiter = ('PyArrayMultiIter_Type', 'PyArrayMultiIterObject*', 'O!', 'N'),
-        numpy_int8 = ('PyInt8ArrType_Type', 'PyInt8ScalarObject*', 'O!', 'N'),
-        numpy_int16 = ('PyInt16ArrType_Type', 'PyInt16ScalarObject*', 'O!', 'N'),
-        numpy_int32 = ('PyInt32ArrType_Type', 'PyInt32ScalarObject*', 'O!', 'N'),
-        numpy_int64 = ('PyInt64ArrType_Type', 'PyInt64ScalarObject*', 'O!', 'N'),
-        numpy_int128 = ('PyInt128ArrType_Type', 'PyInt128ScalarObject*', 'O!', 'N'),
-        numpy_uint8 = ('PyUInt8ArrType_Type', 'PyUInt8ScalarObject*', 'O!', 'N'),
-        numpy_uint16 = ('PyUInt16ArrType_Type', 'PyUInt16ScalarObject*', 'O!', 'N'),
-        numpy_uint32 = ('PyUInt32ArrType_Type', 'PyUInt32ScalarObject*', 'O!', 'N'),
-        numpy_uint64 = ('PyUInt64ArrType_Type', 'PyUInt64ScalarObject*', 'O!', 'N'),
-        numpy_uint128 = ('PyUInt128ArrType_Type', 'PyUInt128ScalarObject*', 'O!', 'N'),
-        numpy_float16 = ('PyFloat16ArrType_Type', 'PyFloat16ScalarObject*', 'O!', 'N'),
-        numpy_float32 = ('PyFloat32ArrType_Type', 'PyFloat32ScalarObject*', 'O!', 'N'),
-        numpy_float64 = ('PyFloat64ArrType_Type', 'PyFloat64ScalarObject*', 'O!', 'N'),
-        numpy_float80 = ('PyFloat80ArrType_Type', 'PyFloat80ScalarObject*', 'O!', 'N'),
-        numpy_float96 = ('PyFloat96ArrType_Type', 'PyFloat96ScalarObject*', 'O!', 'N'),
-        numpy_float128 = ('PyFloat128ArrType_Type', 'PyFloat128ScalarObject*', 'O!', 'N'),
-        numpy_complex32 = ('PyComplex32ArrType_Type', 'PyComplex32ScalarObject*', 'O!', 'N'),
-        numpy_complex64 = ('PyComplex64ArrType_Type', 'PyComplex64ScalarObject*', 'O!', 'N'),
-        numpy_complex128 = ('PyComplex128ArrType_Type', 'PyComplex128ScalarObject*', 'O!', 'N'),
-        numpy_complex160 = ('PyComplex160ArrType_Type', 'PyComplex160ScalarObject*', 'O!', 'N'),
-        numpy_complex192 = ('PyComplex192ArrType_Type', 'PyComplex192ScalarObject*', 'O!', 'N'),
-        numpy_complex256 = ('PyComplex256ArrType_Type', 'PyComplex256ScalarObject*', 'O!', 'N'),
-        numeric_array = ('PyArray_Type', 'PyArrayObject*', 'O!', 'N'),
-        c_char = (None, 'char', 'b', 'b'),
-        c_unsigned_char = (None, 'unsigned char', 'B', 'B'),
-        c_short = (None, 'short int', 'h', 'h'),
-        c_unsigned_short = (None, 'unsigned short int', 'H', 'H'),
-        c_int = (None,'int', 'i', 'i'),
-        c_unsigned_int = (None,'unsigned int', 'I', 'I'),
-        c_long = (None,'long', 'l', 'l'),
-        c_unsigned_long = (None,'unsigned long', 'k', 'k'),
-        c_long_long = (None,'PY_LONG_LONG', 'L', 'L'),
-        c_unsigned_long_long = (None,'unsigned PY_LONG_LONG', 'K', 'K'),        
-        c_Py_ssize_t = (None,'Py_ssize_t', 'n', 'n'),
-        c_char1 = (None,'char', 'c', 'c'),
-        c_float = (None,'float', 'f', 'f'),
-        c_double = (None,'double', 'd', 'd'),
-        c_Py_complex = (None,'Py_complex', 'D', 'D'),
-        c_const_char_ptr = (None,'const char *', 'z', 'z'),
-        c_Py_UNICODE = (None,'Py_UNICODE*','u','u'),
+        # <key>: (<type object in C>, <C type>, <ArgFmt>, <RetFmt>, <init value in C decl stmt>)
+        int = ('PyInt_Type', 'PyIntObject*', 'O!', 'N', 'NULL'),
+        long = ('PyLong_Type', 'PyLongObject*', 'O!', 'N', 'NULL'),
+        float = ('PyFloat_Type', 'PyFloatObject*', 'O!', 'N', 'NULL'),
+        complex = ('PyComplex_Type', 'PyComplexObject*', 'O!', 'N', 'NULL'),
+        str = ('PyString_Type', 'PyStringObject*', 'S', 'N', 'NULL'),
+        unicode = ('PyUnicode_Type', 'PyUnicodeObject*', 'U', 'N', 'NULL'),
+        buffer = ('PyBuffer_Type', 'PyBufferObject*', 'O!', 'N', 'NULL'),
+        tuple = ('PyTuple_Type', 'PyTupleObject*', 'O!', 'N', 'NULL'),
+        list = ('PyList_Type', 'PyListObject*', 'O!', 'N', 'NULL'),
+        dict = ('PyDict_Type', 'PyDictObject*', 'O!', 'N', 'NULL'),
+        file = ('PyFile_Type', 'PyFileObject*', 'O!', 'N', 'NULL'),
+        instance = ('PyInstance_Type', 'PyObject*', 'O!', 'N', 'NULL'),
+        function = ('PyFunction_Type', 'PyFunctionObject*', 'O!', 'N', 'NULL'),
+        method = ('PyMethod_Type', 'PyObject*', 'O!', 'N', 'NULL'),
+        module = ('PyModule_Type', 'PyObject*', 'O!', 'N', 'NULL'),
+        iter = ('PySeqIter_Type', 'PyObject*', 'O!', 'N', 'NULL'),
+        property = ('PyProperty_Type', 'PyObject*', 'O!', 'N', 'NULL'),
+        slice = ('PySlice_Type', 'PyObject*', 'O!', 'N', 'NULL'),
+        cell = ('PyCell_Type', 'PyCellObject*', 'O!', 'N', 'NULL'),
+        generator = ('PyGen_Type', 'PyGenObject*', 'O!', 'N', 'NULL'),
+        set = ('PySet_Type', 'PySetObject*', 'O!', 'N', 'NULL'),
+        frozenset = ('PyFrozenSet_Type', 'PySetObject*', 'O!', 'N', 'NULL'),
+        cobject = (None, 'PyCObject*', 'O', 'N', 'NULL'),
+        type = ('PyType_Type', 'PyTypeObject*', 'O!', 'N', 'NULL'),
+        object = (None, 'PyObject*', 'O', 'N', 'NULL'),
+        numpy_ndarray = ('PyArray_Type', 'PyArrayObject*', 'O!', 'N', 'NULL'),
+        numpy_descr = ('PyArrayDescr_Type','PyArray_Descr', 'O!', 'N', 'NULL'),
+        numpy_ufunc = ('PyUFunc_Type', 'PyUFuncObject*', 'O!', 'N', 'NULL'),
+        numpy_iter = ('PyArrayIter_Type', 'PyArrayIterObject*', 'O!', 'N', 'NULL'),
+        numpy_multiiter = ('PyArrayMultiIter_Type', 'PyArrayMultiIterObject*', 'O!', 'N', 'NULL'),
+        numpy_int8 = ('PyInt8ArrType_Type', 'PyInt8ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_int16 = ('PyInt16ArrType_Type', 'PyInt16ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_int32 = ('PyInt32ArrType_Type', 'PyInt32ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_int64 = ('PyInt64ArrType_Type', 'PyInt64ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_int128 = ('PyInt128ArrType_Type', 'PyInt128ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_uint8 = ('PyUInt8ArrType_Type', 'PyUInt8ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_uint16 = ('PyUInt16ArrType_Type', 'PyUInt16ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_uint32 = ('PyUInt32ArrType_Type', 'PyUInt32ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_uint64 = ('PyUInt64ArrType_Type', 'PyUInt64ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_uint128 = ('PyUInt128ArrType_Type', 'PyUInt128ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_float16 = ('PyFloat16ArrType_Type', 'PyFloat16ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_float32 = ('PyFloat32ArrType_Type', 'PyFloat32ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_float64 = ('PyFloat64ArrType_Type', 'PyFloat64ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_float80 = ('PyFloat80ArrType_Type', 'PyFloat80ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_float96 = ('PyFloat96ArrType_Type', 'PyFloat96ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_float128 = ('PyFloat128ArrType_Type', 'PyFloat128ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_complex32 = ('PyComplex32ArrType_Type', 'PyComplex32ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_complex64 = ('PyComplex64ArrType_Type', 'PyComplex64ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_complex128 = ('PyComplex128ArrType_Type', 'PyComplex128ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_complex160 = ('PyComplex160ArrType_Type', 'PyComplex160ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_complex192 = ('PyComplex192ArrType_Type', 'PyComplex192ScalarObject*', 'O!', 'N', 'NULL'),
+        numpy_complex256 = ('PyComplex256ArrType_Type', 'PyComplex256ScalarObject*', 'O!', 'N', 'NULL'),
+        numeric_array = ('PyArray_Type', 'PyArrayObject*', 'O!', 'N', 'NULL'),
+        c_char = (None, 'char', 'b', 'b', '0'),
+        c_unsigned_char = (None, 'unsigned char', 'B', 'B', '0'),
+        c_short = (None, 'short int', 'h', 'h', '0'),
+        c_unsigned_short = (None, 'unsigned short int', 'H', 'H', '0'),
+        c_int = (None,'int', 'i', 'i', '0'),
+        c_unsigned_int = (None,'unsigned int', 'I', 'I', '0'),
+        c_long = (None,'long', 'l', 'l', '0'),
+        c_unsigned_long = (None,'unsigned long', 'k', 'k', '0'),
+        c_long_long = (None,'PY_LONG_LONG', 'L', 'L', '0'),
+        c_unsigned_long_long = (None,'unsigned PY_LONG_LONG', 'K', 'K', '0'),        
+        c_Py_ssize_t = (None,'Py_ssize_t', 'n', 'n', '0'),
+        c_char1 = (None,'char', 'c', 'c', '"\\0"'),
+        c_float = (None,'float', 'f', 'f', '0.0'),
+        c_double = (None,'double', 'd', 'd', '0.0'),
+        c_Py_complex = (None,'Py_complex', 'D', 'D', '{0.0, 0.0}'),
+        c_const_char_ptr = (None,'const char *', 'z', 'z', 'NULL'),
+        c_Py_UNICODE = (None,'Py_UNICODE*','u','u', 'NULL'),
         )
     
     def initialize(self, typeobj):
@@ -570,7 +570,8 @@ class CTypePython(CTypeBase):
         self.name = item[1]
         self.pyarg_fmt = item[2]
         self.pyret_fmt = item[3]
-
+        self.cinit_value = item[4]
+        
         if key.startswith('numpy_'):
             self.add(Component.get('arrayobject.h'), 'Header')
             self.add(Component.get('import_array'), 'ModuleInit')
@@ -623,10 +624,7 @@ class CTypePython(CTypeBase):
         return
 
     def get_init_value(self, arg):
-        retfmt = self.get_pyarg_fmt(arg)
-        if retfmt and retfmt in 'SON':
-            return 'NULL'
-        return dict(c_int='0').get(self.name)
+        return self.cinit_value
 
 def register():
     Component.register(
