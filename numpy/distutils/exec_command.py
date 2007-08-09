@@ -196,7 +196,7 @@ def exec_command( command,
     The following special keyword arguments can be used:
       use_shell - execute `sh -c command`
       use_tee   - pipe the output of command through tee
-      execute_in - before command `cd execute_in` and after `cd -`.
+      execute_in - before run command `cd execute_in` and after `cd -`.
 
     On NT, DOS systems the returned status is correct for external commands.
     Wild cards will not work for non-posix systems or when use_shell=0.
