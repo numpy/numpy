@@ -40,6 +40,31 @@ def rel_path(path, parent_path):
         path = apath[len(pd)+1:]
     return path
 
+def get_path(mod_name, parent_path=None):
+    """ Return path of the module.
+
+    Returned path is relative to parent_path when given,
+    otherwise it is absolute path.
+    """
+    if mod_name == '__builtin__':
+        #builtin if/then added by Pearu for use in core.run_setup.
+        d = os.path.dirname(os.path.abspath(sys.argv[0]))
+    else:
+        __import__(mod_name)
+        mod = sys.modules[mod_name]
+        if hasattr(mod,'__file__'):
+            filename = mod.__file__
+            d = os.path.dirname(os.path.abspath(mod.__file__))
+        else:
+            # we're probably running setup.py as execfile("setup.py")
+            # (likely we're building an egg)
+            d = os.path.abspath('.')
+            # hmm, should we use sys.argv[0] like in __builtin__ case?
+
+    if parent_path is not None:
+        d = rel_path(d, parent_path)
+    return d or '.'
+
 def get_path_from_frame(frame, parent_path=None):
     """ Return path of the module given a frame object from the call stack.
 
