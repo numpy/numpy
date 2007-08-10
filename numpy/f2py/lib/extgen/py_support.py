@@ -76,6 +76,7 @@ extern \"C\" {
         self.description = options.pop('description', None)
 
         self = CSource.initialize(self, '%smodule.c' % (pyname), **options)
+        self.need_numpy_support = False
 
         self.cdecl = PyCModuleCDeclaration(pyname)
         self += self.cdecl
@@ -94,6 +95,22 @@ extern \"C\" {
                                          extmodulesrc = self.path)
         parent.init_py += 'import %s' % (self.pyname)        
 
+    def finalize(self):
+        if self.need_numpy_support:
+            self.add(CCode('''
+#define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
+#include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
+'''), 'CHeader')
+            self.main.add(CCode('''
+import_array();
+if (PyErr_Occurred()) {
+  PyErr_SetString(PyExc_ImportError, "failed to load NumPy array module.");
+  goto capi_error;
+}
+'''),'CBody')
+        CSource.finalize(self)
+
     def build(self, build_dir=None, clean_at_exit=None):
         """ build(build_dir=None, clean_at_exit=None)
         
@@ -106,11 +123,6 @@ extern \"C\" {
             packagename = 'extgen_' + str(hex(int(time.time()*10000000)))[2:]
             build_dir = os.path.join(tempfile.gettempdir(), packagename)
             clean_at_exit = True
-        if clean_at_exit:
-            import atexit
-            import shutil
-            atexit.register(lambda d=build_dir: shutil.rmtree(d))
-            self.info('directory %r will be removed at exit from python.' % (build_dir))
             
         setup = Component.SetupPy(build_dir)
         setup += self
@@ -118,15 +130,22 @@ extern \"C\" {
         if s:
             self.info('return status=%s' % (s))
             self.info(o)
-            raise RuntimeError('failed to build extension module %r' % (self.pyname))
+            raise RuntimeError('failed to build extension module %r,'\
+                               ' the build is located in %r directory'\
+                               % (self.pyname, build_dir))
+
+        if clean_at_exit:
+            import atexit
+            import shutil
+            atexit.register(lambda d=build_dir: shutil.rmtree(d))
+            self.info('directory %r will be removed at exit from python.' % (build_dir))
+
         sys.path.insert(0, os.path.dirname(build_dir))
         packagename = os.path.basename(build_dir)
         try:
             p = __import__(packagename)
-            #exec 'import %s as p' % (packagename)
             m = getattr(p, self.pyname)
         except:
-            self.info(sys.path)
             del sys.path[0]
             raise
         else:
@@ -469,6 +488,43 @@ PyObject*
         self.container_OptExtArg += self.container_OptArg + self.container_ExtArg
         self.container_OptExtArgFmt += self.container_OptArgFmt + self.container_ExtArgFmt
 
+        # resolve dependencies
+        sorted_arguments = []
+        sorted_names = []
+        comp_map = {}
+        dep_map = {}
+        for (c,l) in self.components:
+            if not isinstance(c, Component.PyCArgument):
+                continue
+            d = [n for n in c.depends if n not in sorted_names]
+            if not d:
+                sorted_arguments.append((c,l))
+                sorted_names.append(c.name)
+            else:
+                comp_map[c.name] = (c,l)
+                dep_map[c.name] = d
+
+        while dep_map:
+            dep_map_copy = dep_map.copy()
+            for name, deps in dep_map.items():
+                d = [n for n in deps if dep_map.has_key(n)]
+                if not d:
+                    sorted_arguments.append(comp_map[name])
+                    del dep_map[name]
+                else:
+                    dep_map[name] = d
+            if dep_map_copy==dep_map:
+                self.warnign('%s: detected cyclic dependencies in %r, incorrect behavior is expected.\n'\
+                             % (self.provides, dep_map))
+                sorted_arguments += dep_map.values()
+                break
+
+        for c, l in sorted_arguments:
+            old_parent = c.parent
+            c.parent = self
+            c.ctype.set_converters(c)
+            c.parent = old_parent
+
 
 class PyCArgument(Component):
 
@@ -583,7 +639,7 @@ class PyCArgument(Component):
             output_doc_descr = None
 
         # add components to parent:
-        parent += ctype.get_decl(self)
+        parent += ctype.get_decl(self, parent)
         if self.input_intent=='required':
             parent += ReqArg(self.name)
             parent.signature += ReqArg(self.name)
@@ -638,6 +694,145 @@ class PyCTypeSpec(CTypeSpec):
     PyCTypeSpec('object')
     >>> print s.generate()
     PyObject*
+
+    >>> from __init__ import *
+    >>> m = PyCModule('test_PyCTypeSpec')
+    >>> f = PyCFunction('func')
+    >>> f += PyCArgument('i', int, output_intent='return')
+    >>> f += PyCArgument('l', long, output_intent='return')
+    >>> f += PyCArgument('f', float, output_intent='return')
+    >>> f += PyCArgument('c', complex, output_intent='return')
+    >>> f += PyCArgument('s', str, output_intent='return')
+    >>> f += PyCArgument('u', unicode, output_intent='return')
+    >>> f += PyCArgument('t', tuple, output_intent='return')
+    >>> f += PyCArgument('lst', list, output_intent='return')
+    >>> f += PyCArgument('d', dict, output_intent='return')
+    >>> f += PyCArgument('set', set, output_intent='return')
+    >>> f += PyCArgument('o1', object, output_intent='return')
+    >>> f += PyCArgument('o2', object, output_intent='return')
+    >>> m += f
+    >>> b = m.build() #doctest: +ELLIPSIS
+    >>> b.func(23, 23l, 1.2, 1+2j, 'hello', u'hei', (2,'a'), [-2], {3:4}, set([1,2]), 2, '15')
+    (23, 23L, 1.2, (1+2j), 'hello', u'hei', (2, 'a'), [-2], {3: 4}, set([1, 2]), 2, '15')
+    >>> print b.func.__doc__
+      func(i, l, f, c, s, u, t, lst, d, set, o1, o2) -> (i, l, f, c, s, u, t, lst, d, set, o1, o2)
+    <BLANKLINE>
+    :Parameters:
+      i : a python int object
+      l : a python long object
+      f : a python float object
+      c : a python complex object
+      s : a python str object
+      u : a python unicode object
+      t : a python tuple object
+      lst : a python list object
+      d : a python dict object
+      set : a python set object
+      o1 : a python object
+      o2 : a python object
+    <BLANKLINE>
+    :Returns:
+      i : a python int object
+      l : a python long object
+      f : a python float object
+      c : a python complex object
+      s : a python str object
+      u : a python unicode object
+      t : a python tuple object
+      lst : a python list object
+      d : a python dict object
+      set : a python set object
+      o1 : a python object
+      o2 : a python object
+
+    >>> m = PyCModule('test_PyCTypeSpec_c')
+    >>> f = PyCFunction('func_c_int')
+    >>> f += PyCArgument('i1', 'c_char', output_intent='return')
+    >>> f += PyCArgument('i2', 'c_short', output_intent='return')
+    >>> f += PyCArgument('i3', 'c_int', output_intent='return')
+    >>> f += PyCArgument('i4', 'c_long', output_intent='return')
+    >>> f += PyCArgument('i5', 'c_long_long', output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_c_unsigned_int')
+    >>> f += PyCArgument('i1', 'c_unsigned_char', output_intent='return')
+    >>> f += PyCArgument('i2', 'c_unsigned_short', output_intent='return')
+    >>> f += PyCArgument('i3', 'c_unsigned_int', output_intent='return')
+    >>> f += PyCArgument('i4', 'c_unsigned_long', output_intent='return')
+    >>> f += PyCArgument('i5', 'c_unsigned_long_long', output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_c_float')
+    >>> f += PyCArgument('f1', 'c_float', output_intent='return')
+    >>> f += PyCArgument('f2', 'c_double', output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_c_complex')
+    >>> f += PyCArgument('c1', 'c_Py_complex', output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_c_string')
+    >>> f += PyCArgument('s1', 'c_const_char_ptr', output_intent='return')
+    >>> f += PyCArgument('s2', 'c_const_char_ptr', output_intent='return')
+    >>> f += PyCArgument('s3', 'c_Py_UNICODE', output_intent='return')
+    >>> f += PyCArgument('s4', 'c_char1', output_intent='return')
+    >>> m += f
+    >>> b = m.build()
+    >>> b.func_c_int(2,3,4,5,6)
+    (2, 3, 4, 5, 6L)
+    >>> b.func_c_unsigned_int(-1,-1,-1,-1,-1)
+    (255, 65535, 4294967295, 18446744073709551615L, 18446744073709551615L)
+    >>> b.func_c_float(1.2,1.2)
+    (1.2000000476837158, 1.2)
+    >>> b.func_c_complex(1+2j)
+    (1+2j)
+    >>> b.func_c_string('hei', None, u'tere', 'b')
+    ('hei', None, u'tere', 'b')
+
+    >>> import numpy
+    >>> m = PyCModule('test_PyCTypeSpec_numpy')
+    >>> f = PyCFunction('func_int')
+    >>> f += PyCArgument('i1', numpy.int8, output_intent='return')
+    >>> f += PyCArgument('i2', numpy.int16, output_intent='return')
+    >>> f += PyCArgument('i3', numpy.int32, output_intent='return')
+    >>> f += PyCArgument('i4', numpy.int64, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_uint')
+    >>> f += PyCArgument('i1', numpy.uint8, output_intent='return')
+    >>> f += PyCArgument('i2', numpy.uint16, output_intent='return')
+    >>> f += PyCArgument('i3', numpy.uint32, output_intent='return')
+    >>> f += PyCArgument('i4', numpy.uint64, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_float')
+    >>> f += PyCArgument('f1', numpy.float32, output_intent='return')
+    >>> f += PyCArgument('f2', numpy.float64, output_intent='return')
+    >>> f += PyCArgument('f3', numpy.float128, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_complex')
+    >>> f += PyCArgument('c1', numpy.complex64, output_intent='return')
+    >>> f += PyCArgument('c2', numpy.complex128, output_intent='return')
+    >>> f += PyCArgument('c3', numpy.complex256, output_intent='return')
+    >>> m += f
+    >>> f = PyCFunction('func_array')
+    >>> f += PyCArgument('a1', numpy.ndarray, output_intent='return')
+    >>> m += f
+    >>> b = m.build()
+    >>> b.func_int(numpy.int8(-2), numpy.int16(-3), numpy.int32(-4), numpy.int64(-5))
+    (-2, -3, -4, -5)
+    >>> b.func_uint(numpy.uint8(-1), numpy.uint16(-1), numpy.uint32(-1), numpy.uint64(-1))
+    (255, 65535, 4294967295, 18446744073709551615)
+    >>> b.func_float(numpy.float32(1.2),numpy.float64(1.2),numpy.float128(1.2))
+    (1.20000004768, 1.2, 1.19999999999999995559)
+    >>> b.func_complex(numpy.complex64(1+2j),numpy.complex128(1+2j),numpy.complex256(1+2j))
+    ((1+2j), (1+2j), (1.0+2.0j))
+    >>> b.func_array(numpy.array([1,2]))
+    array([1, 2])
+    >>> b.func_array(numpy.array(2))
+    array(2)
+    >>> b.func_array(2)
+    Traceback (most recent call last):
+    ...
+    TypeError: argument 1 must be numpy.ndarray, not int
+    >>> b.func_array(numpy.int8(2))
+    Traceback (most recent call last):
+    ...
+    TypeError: argument 1 must be numpy.ndarray, not numpy.int8
     """
 
     typeinfo_map = dict(
@@ -752,14 +947,20 @@ class PyCTypeSpec(CTypeSpec):
         self.arg_fmt = item[2]
         self.ret_fmt = item[3]
         self.cinit_value = item[4]
-        
-        #if key.startswith('numpy_'):
-        #    self.add(Component.get('arrayobject.h'), 'Header')
-        #    self.add(Component.get('import_array'), 'ModuleInit')
+
+        self.need_numpy_support = False
+        if key.startswith('numpy_'):
+            self.need_numpy_support = True
+            #self.add(Component.get('arrayobject.h'), 'CHeader')
+            #self.add(Component.get('import_array'), 'ModuleInit')
         if key.startswith('numeric_'):
             raise NotImplementedError(self.__class__.__name__ + ': Numeric support')
         
         return self
+
+    def finalize(self):
+        if self.need_numpy_support:
+            self.component_PyCModule.need_numpy_support = True
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, ', '.join([repr(self.typeobj_name)]+[repr(c) for (c,l) in self.components]))
@@ -810,20 +1011,90 @@ class PyCTypeSpec(CTypeSpec):
             if arg.output_title: r = ', ' + arg.output_title
             arg.output_title = tn + r
 
-    def get_decl(self, arg):
+    def get_decl(self, arg, func):
         init_value = self.get_init_value(arg)
         if init_value:
             init =  ' = %s' % (init_value)
         else:
             init = ''
         if arg.pycvar and arg.pycvar==arg.retpycvar:
-            return CDeclaration(self, '%s%s' % (arg.pycvar, init))
+            func += CDeclaration(self, '%s%s' % (arg.pycvar, init))
         else:
-            if arg.input_intent!='hide':
-                return CDeclaration(self, '%s%s' % (arg.pycvar, init))
-            if arg.output_intent!='hide':
-                return CDeclaration(self, '%s%s' % (arg.retpycvar, init))
+            if self.get_pyret_obj(arg) is None:
+                if self.get_pyret_obj(arg) is not None:
+                    func += CDeclaration(self, '%s%s' % (arg.pycvar, init))
+            elif self.get_pyarg_obj(arg) is not None:
+                func += CDeclaration(self, '%s%s' % (arg.pycvar, init))
+                func += CDeclaration(self,'%s%s' % (arg.retpycvar, init))
+            else:
+                func += CDeclaration(self, '%s%s' % (arg.retpycvar, init))
         return
+
+    def set_converters(self, arg):
+        """
+        Notes for user:
+          if arg is intent(optional, in, out) and not specified
+          as function argument then function may created but
+          it must then have *new reference* (ie use Py_INCREF
+          unless it is a new reference already).
+        """
+        # this method is called from PyCFunction.update_containers(),
+        # note that self.parent is None put arg.parent is PyCFunction
+        # instance.
+        eval_a = arg.evaluate
+        FromPyObj = arg.container_FromPyObj
+        PyObjFrom = arg.container_PyObjFrom
+
+        argfmt = self.get_pyarg_fmt(arg)
+        retfmt = self.get_pyret_fmt(arg)
+        if arg.output_intent=='return':
+            if arg.input_intent in ['optional', 'extra']:
+                if retfmt in 'SON':
+                    FromPyObj += eval_a('''\
+if (!(%(pycvar)s==NULL)) {
+  /* make %(pycvar)r a new reference */
+  %(retpycvar)s = %(pycvar)s;
+  Py_INCREF((PyObject*)%(retpycvar)s);
+}
+''')
+                    PyObjFrom += eval_a('''\
+if (%(retpycvar)s==NULL) {
+  /* %(pycvar)r was not specified */
+  if (%(pycvar)s==NULL) {
+    %(retpycvar)s = Py_None;
+    Py_INCREF((PyObject*)%(retpycvar)s);
+  } else {
+    %(retpycvar)s = %(pycvar)s;
+    /* %(pycvar)r must be a new reference or expect a core dump. */
+  }
+} elif (!(%(retpycvar)s == %(pycvar)s)) {
+  /* a new %(retpycvar)r was created, undoing %(pycvar)s new reference */
+  Py_DECREF((PyObject*)%(pycvar)s);
+}
+''')
+            elif arg.input_intent=='hide':
+                if retfmt in 'SON':
+                    PyObjFrom += eval_a('''\
+if (%(retpycvar)s==NULL) {
+  %(retpycvar)s = Py_None;
+  Py_INCREF((PyObject*)%(retpycvar)s);
+} /* else %(retpycvar)r must be a new reference or expect a core dump. */
+''')
+            elif arg.input_intent=='required':
+                if retfmt in 'SON':
+                    FromPyObj += eval_a('''\
+/* make %(pycvar)r a new reference */
+%(retpycvar)s = %(pycvar)s;
+Py_INCREF((PyObject*)%(retpycvar)s);
+''')
+                    PyObjFrom += eval_a('''\
+if (!(%(retpycvar)s==%(pycvar)s)) {
+  /* a new %(retpycvar)r was created, undoing %(pycvar)r new reference */
+  /* %(retpycvar)r must be a new reference or expect a core dump. */
+  Py_DECREF((PyObject*)%(pycvar)s);
+}
+''')
+
 
 def _test():
     import doctest

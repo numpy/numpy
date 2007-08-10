@@ -18,9 +18,25 @@ def write_files(container):
                 os.makedirs(d)
         s.append('  %s' % (filename))
         if not Component._generate_dry_run:
-            f = file(filename,'w')
-            f.write(content)
-            f.close()
+            overwrite = True
+            if os.path.isfile(filename):
+                overwrite = False
+                f = file(filename, 'r')
+                i = 0
+                for line in f:
+                    if 'is generated using ExtGen tool' in line:
+                        overwrite = True
+                        break
+                    i += 1
+                    if i>5: break
+                if not overwrite:
+                    s[-1] += ' - unknown file exists, skipping'
+                else:
+                    s[-1] += ' - extgen generated file exists, overwriting'
+            if overwrite:
+                f = file(filename,'w')
+                f.write(content)
+                f.close()
     return '\n'.join(s)
 
 
@@ -90,8 +106,13 @@ if __name__ == "__main__":
         cmd = [sys.executable,'setup.py'] + list(args)
         self.info('entering %r directory' % (self.path))
         self.info('executing command %r' % (' '.join(cmd)))
-        r = exec_command(cmd, execute_in=self.path, use_tee=False)
-        self.info('leaving %r directory' % (self.path))
+        try:
+            r = exec_command(cmd, execute_in=self.path, use_tee=False)
+        except:
+            self.info('leaving %r directory' % (self.path))
+            raise
+        else:
+            self.info('leaving %r directory' % (self.path))
         return r
 
     

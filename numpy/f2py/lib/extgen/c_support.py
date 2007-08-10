@@ -134,7 +134,7 @@ class CDeclaration(Component):
 class CArgument(CDeclaration):
 
     def initialize(self, name, ctype, **options):
-        return CDeclaration.initialize(ctype, name, **options)
+        return CDeclaration.initialize(self, ctype, name, **options)
 
 
 class CCode(Code):
@@ -149,7 +149,7 @@ class CFunction(Component):
     foo(void) {
     }
     >>> f += Keyword('static')
-    >>> f += CArgument('int', 'a')
+    >>> f += CArgument('a', 'int')
     >>> f += 'a = 2;'
     >>> print f.generate()
     static
@@ -157,7 +157,7 @@ class CFunction(Component):
     foo(int a) {
       a = 2;
     }
-    >>> f += CArgument('float', 'b')
+    >>> f += CArgument('b', 'float')
     >>> f += CDeclaration('float', 'c')
     >>> f += CDeclaration('float', CDeclarator('d','3.0'))
     >>> print f.generate()

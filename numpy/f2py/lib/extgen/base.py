@@ -183,17 +183,27 @@ class Component(object):
         Component._generate_dry_run = dry_run
         Component._running_generate_id += 1
         Component._running_generate = True
+        self._finalize()
         result = self._generate()
         Component._running_generate = False
         Component._generate_dry_run = old_dry_run
         return result
+
+    def _finalize(self):
+        # recursively finalize all components.
+        for component, container_key in self.components:
+            old_parent = component.parent
+            component.parent = self
+            component._finalize()
+            component.parent = old_parent
+        self.finalize()
 
     def _generate(self):
         """
         Generate code idioms (saved in containers) and
         return evaluated template strings.
         """
-        self.finalize()
+        #self.finalize()
         
         # clean up containers
         self.containers = {}
