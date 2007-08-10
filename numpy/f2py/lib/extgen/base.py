@@ -4,6 +4,7 @@ ExtGen --- Python Extension module Generator.
 Defines Component and Container classes.
 """
 
+import os
 import re
 import sys
 import time
@@ -12,14 +13,19 @@ class ComponentMetaClass(type):
 
     classnamespace = {}
 
-    def __init__(cls,*args,**kws):
+    def __new__(mcls, *args, **kws):
+        cls = type.__new__(mcls, *args, **kws)
         n = cls.__name__
         c = ComponentMetaClass.classnamespace.get(n)
         if c is None:
             ComponentMetaClass.classnamespace[n] = cls
         else:
-            print 'Ignoring redefinition of %s: %s defined earlier than %s' % (n, c, cls)
-        type.__init__(cls, *args, **kws)
+            if not c.__module__=='__main__':
+                sys.stderr.write('ComponentMetaClass: returning %s as %s\n'\
+                                 % (cls, c))
+            ComponentMetaClass.classnamespace[n] = c
+            cls = c
+        return cls
 
     def __getattr__(cls, name):
         try: return ComponentMetaClass.classnamespace[name]
@@ -27,14 +33,14 @@ class ComponentMetaClass(type):
         raise AttributeError("'%s' object has no attribute '%s'"%
                              (cls.__name__, name))
 
-class Component(object): # XXX: rename Component to Component
+class Component(object):
 
     __metaclass__ = ComponentMetaClass
 
     container_options = dict()
     component_container_map = dict()
     default_container_label = None
-    default_component_class_name = 'CCode'
+    default_component_class_name = 'Code'
     template = ''
 
     def __new__(cls, *args, **kws):
@@ -42,10 +48,24 @@ class Component(object): # XXX: rename Component to Component
         obj._provides = kws.get('provides', None)
         obj.parent = None
         obj.containers = {} # holds containers for named string lists
-        obj.components = [] # holds pairs (<Component subclass instance>, <container name or None>)
+        obj._components = [] # holds pairs (<Component subclass instance>, <container name or None>)
+        obj._generate_components = {} # temporary copy of components used for finalize and generate methods.
         obj = obj.initialize(*args, **kws)    # initialize from constructor arguments
         return obj
 
+    @property
+    def components(self):
+        if Component._running_generate:
+            try:
+                return self._generate_components[Component._running_generate_id]
+            except KeyError:
+                pass
+            while self._generate_components: # clean up old cache
+                self._generate_components.popitem()
+            self._generate_components[Component._running_generate_id] = l = list(self._components)
+            return l
+        return self._components
+        
     def initialize(self, *components, **options):
         """
         Set additional attributes, add components to instance, etc.
@@ -53,6 +73,12 @@ class Component(object): # XXX: rename Component to Component
         # self.myattr = ..
         # map(self.add, components)
         return self
+
+    def finalize(self):
+        """
+        Set components after all components are added.
+        """
+        return
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, ', '.join([repr(c) for (c,l) in self.components]))
@@ -70,6 +96,7 @@ class Component(object): # XXX: rename Component to Component
 
     @staticmethod
     def warning(message):
+        #raise RuntimeError('extgen:' + message)
         print >> sys.stderr, 'extgen:',message
     @staticmethod
     def info(message):
@@ -78,6 +105,8 @@ class Component(object): # XXX: rename Component to Component
     def __getattr__(self, attr):
         if attr.startswith('container_'): # convenience feature
             return self.get_container(attr[10:])
+        if attr.startswith('component_'): # convenience feature
+            return self.get_component(attr[10:])
         raise AttributeError('%s instance has no attribute %r' % (self.__class__.__name__, attr))
 
     def __add__(self, other): # convenience method
@@ -116,14 +145,56 @@ class Component(object): # XXX: rename Component to Component
                     break
                 except KeyError:
                     pass
+        if container_label is None:
+            container_label = component.__class__.__name__
         self.components.append((component, container_label))
+        component.update_parent(self)
         return
 
-    def generate(self):
+    def update_parent(self, parent):
+        pass
+
+    def get_path(self, *paths):
+        if not hasattr(self, 'path'):
+            if paths:
+                return os.path.join(*paths)
+            return ''
+        if not self.parent:
+            return os.path.join(*((self.path,) + paths))
+        return os.path.join(*((self.parent.get_path(), self.path)+paths))
+
+    def get_component(self, cls):
+        if isinstance(cls, str):
+            cls = getattr(Component, cls)
+        if isinstance(self, cls):
+            return self
+        if self.parent:
+            return self.parent.get_component(cls)
+        self.warning('could not find %r parent component %s, returning self'\
+                  % (self.__class__.__name__, cls.__name__))
+        return self
+
+    _running_generate = False
+    _running_generate_id = 0
+    _generate_dry_run = True
+
+    def generate(self, dry_run=True):
+        old_dry_run = Component._generate_dry_run
+        Component._generate_dry_run = dry_run
+        Component._running_generate_id += 1
+        Component._running_generate = True
+        result = self._generate()
+        Component._running_generate = False
+        Component._generate_dry_run = old_dry_run
+        return result
+
+    def _generate(self):
         """
         Generate code idioms (saved in containers) and
         return evaluated template strings.
         """
+        self.finalize()
+        
         # clean up containers
         self.containers = {}
         for n in dir(self):
@@ -151,7 +222,7 @@ class Component(object): # XXX: rename Component to Component
                 continue
             old_parent = component.parent
             component.parent = self
-            result = component.generate()
+            result = component._generate()
             if container_key == '<IGNORE>':
                 pass
             elif container_key is not None:
@@ -167,6 +238,7 @@ class Component(object): # XXX: rename Component to Component
                     container = component.get_container(k)
                     container.add(r, component.provides)
             else:
+                
                 self.warning('%s: no container label specified for component providing %r'\
                                  % (self.__class__.__name__,component.provides))
             component.parent = old_parent
@@ -181,7 +253,6 @@ class Component(object): # XXX: rename Component to Component
         else:
             assert isinstance(templates, (tuple, list)),`type(templates)`
             result = tuple(map(self.evaluate, templates))
-        
         return result
 
     def init_containers(self):
@@ -225,7 +296,7 @@ class Component(object): # XXX: rename Component to Component
 
         # create local container
         self.warning('Created container for %r with name %r, define it in'\
-                     ' .container_options mapping to get rid of this warning' \
+                     ' parent .container_options mapping to get rid of this warning' \
                      % (self.__class__.__name__, name))
         c = self.containers[name] = Container()
         return c
@@ -259,7 +330,10 @@ class Component(object): # XXX: rename Component to Component
                 i = template.index(s)
                 template = template[:i] + str(container) + template[i+len(s):]
                 container.indent_offset = old_indent
-        template = template % d
+        try:
+            template = template % d
+        except KeyError, msg:
+            raise KeyError('%s.container_options needs %s item' % (self.__class__.__name__, msg))
         return re.sub(r'.*[<]KILLLINE[>].*(\n|$)','', template)
 
 
@@ -330,7 +404,9 @@ class Container(object):
                  use_indent = False,
                  indent_offset = 0,
                  use_firstline_indent = False, # implies use_indent
-                 replace_map = {}
+                 replace_map = {},
+                 ignore_empty_content = False,
+                 skip_prefix_suffix_when_single = False
                  ):
         self.list = []
         self.label_map = {}
@@ -347,6 +423,8 @@ class Container(object):
         self.indent_offset = indent_offset
         self.use_firstline_indent = use_firstline_indent
         self.replace_map = replace_map
+        self.ignore_empty_content = ignore_empty_content
+        self.skip_prefix_suffix_when_single = skip_prefix_suffix_when_single
         
     def __nonzero__(self):
         return bool(self.list)
@@ -373,6 +451,8 @@ class Container(object):
         If label is None, an unique label will be generated using time.time().
         """
         if content is None:
+            return
+        if content=='' and self.ignore_empty_content:
             return
         assert isinstance(content, str),`type(content)`
         if label is None:
@@ -406,8 +486,9 @@ class Container(object):
                     new_l.extend([indent + l2 for l2 in lines[1:]])
                 l = new_l
             r = self.separator.join(l)
-            r = self.prefix + r
-            r = r + self.suffix
+            if not (len(self.list)==1 and self.skip_prefix_suffix_when_single):
+                r = self.prefix + r
+                r = r + self.suffix
         else:
             r = self.default
             if not self.skip_prefix:
@@ -429,7 +510,9 @@ class Container(object):
                        use_indent = self.use_indent,
                        indent_offset = self.indent_offset,
                        use_firstline_indent = self.use_firstline_indent,
-                       replace_map = self.replace_map
+                       replace_map = self.replace_map,
+                       ignore_empty_content = self.ignore_empty_content,
+                       skip_prefix_suffix_when_single = self.skip_prefix_suffix_when_single
                        )
         options.update(extra_options)
         cpy = Container(**options)

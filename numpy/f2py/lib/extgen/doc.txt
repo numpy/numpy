@@ -15,22 +15,251 @@ Introduction
 
 ExtGen is a pure Python package that provides a high-level
 tool for constructing and building Python extension modules.
-Hello example follows::
+Even an inexperienced user with no background on writing extension
+modules can build extension modules on fly when using ExtGen tool!
+
+Hello example follows
 
   >>> from numpy.f2py.lib.extgen import *
-  >>> m = ExtensionModule('foo')
-  >>> f = PyCFunction('hello')
-  >>> f += 'printf("Hello!\\n");'
-  >>> m += f
-  >>> print m.generate() # shows a string containing C source to extension module, useful for debugging
-  >>> foo = m.build()
-  >>> foo.hello()
+  >>> m = PyCModule('foo')         # define extension module component
+  >>> f = PyCFunction('hello')     # define function component
+  >>> f += 'printf("Hello!\\n");'  # put a C statement into function body
+  >>> m += f                       # add function to module
+  >>> print m.generate()           # shows a string containing C source to extension module
+                                   # useful for debugging
+  >>> foo = m.build()              # compile, build, and return extension module object
+  >>> foo.hello()                  # call function
   Hello!
-  >>> 
 
 
-Description of the ExtGen model
-===============================
+Users reference manual
+======================
+
+Writing a python extension module requires a knowledge of Pyhton C/API
+details and may take lots of effort to get your first extension module
+compile and working, even for a simple problem. See the `Simple Example`__
+in Python reference manual. ExtGen provides a high level tool for
+constructing extension modules by automatically taking care of the
+Pyhton C/API details while providing full control how an extension
+module is created. 
+
+__ http://docs.python.org/ext/
+
+Getting started
+---------------
+
+Creating the `Simple Example`__ with the help of ExtGen tool is really simple
+
+  >>> system = PyCFunction('system',
+                           PyCArgument('command', 'c_const_char_ptr'),
+                           PyCReturn('sts','c_int'))
+  >>> system += 'sts = system(command);'
+  >>> module = PyCModule('spam', system)
+  >>> spam = module.build()
+  >>> spam.system('pwd')
+  /home/pearu/svn/numpy/numpy/f2py/lib
+  0
+
+__ http://docs.python.org/ext/
+
+ExtGen generated modules have automatically generated documentation
+strings that accept also user input
+
+  >>> a = PyCArgument('command', 'c_const_char_ptr',
+                      input_description='a shell command string')
+  >>> r = PyCReturn('sts', 'c_int',
+                      output_description='status value returned by shell command')
+  >>> system = PyCFunction('system', title='Execute a shell command.')
+  >>> system += a                              # add argument component to function
+  >>> system += r                              # add return value component to function
+  >>> system += 'sts = system(command);'       # add C code to functon body
+  >>> module = PyCModule('spam', system)       # create module instance with function component
+  >>> spam = module.build()
+  >>> print spam.__doc__
+  This module 'spam' is generated with ExtGen from NumPy version 1.0.4.dev3744.
+  :Functions:
+    system(command) -> sts
+  >>> print spam.system.__doc__
+    system(command) -> sts  
+  Execute a shell command.
+  :Parameters:
+    command : a to C const char ptr convertable object
+      a shell command string
+  :Returns:
+    sts : a to C int convertable object
+      status value returned by shell command
+  >>>
+
+To see the source code that ExtGen generates, use `.generate()` method for any component instance
+
+  >>> print system.generate()
+  static
+  char pyc_function_system_doc[] = 
+  "  system(command) -> sts"
+  "\n\nExecute a shell command."
+  "\n\n:Parameters:\n"
+  "  command : a to C const char ptr convertable object\n"
+  "    a shell command string"
+  "\n\n:Returns:\n"
+  "  sts : a to C int convertable object\n"
+  "    status value returned by shell command"
+  ;
+  static
+  PyObject*
+  pyc_function_system(PyObject *pyc_self, PyObject *pyc_args, PyObject *pyc_keywds) {
+    PyObject * volatile pyc_buildvalue = NULL;
+    volatile int capi_success = 1;
+    const char * command = NULL;
+    int sts = 0;
+    static char *capi_kwlist[] = {"command", NULL};
+    if (PyArg_ParseTupleAndKeywords(pyc_args, pyc_keywds,"z",
+                                    capi_kwlist, &command)) {
+      sts = system(command);
+      capi_success = !PyErr_Occurred();
+      if (capi_success) {
+        pyc_buildvalue = Py_BuildValue("i", sts);
+      }
+    }
+    return pyc_buildvalue;
+  }
+  >>> print module.generate()   # prints full extension module source
+  ...
+
+Components
+----------
+
+All components are subclassed of `Component` base class that provides
+the following methods:
+
+- `.generate(self)` --- return a generated component string
+- `.add(self, component, container_label=None)` --- add subcomponent
+  to component instance. The `container_label` argument can be used to tell
+  `ExtGen` where this component should be used, see `Developers reference
+  manual` for more details, otherwise `EgtGen` figures that out by
+  looking at subcomponent class properties.
+- `.__add__(self, other)`, `.__iadd__(self, other)` --- shortcuts
+  for `self.add(other)` call.
+
+ExtGen provides the following Python C/API related components:
+
+- `SetupPy(<build directory>, *components)` --- generates a `setup.py` file
+  that is used to build extension modules to the given build directory.
+  It provides the following methods:
+
+  - `.execute(self, *args)` --- runs `python setup.py` command with given
+    arguments.
+
+  One can add `PyCModule` and `PySource` components to `SetupPy`.
+
+- `PyCModule(<modulename>, *components, title=..., description=...)` ---
+  represents python extension module source. It provides the following
+  methods:
+
+  - `.build(self, build_dir=None, clean_at_exit=None)` --- compilers,
+    builds, and returns extension module object.
+
+  One can add `PyCFunction` components to `PyCModule`.
+
+- `PyCFunction(<funcname>, *components, title=..., description=...)` ---
+  represents python extension module function source.
+
+  One can add `PyCArgument`, `PyCReturn`, `CCode` components to `PyCfunction`.
+  String components are converted `CCode` components by default.
+
+- `PyCArgument(<argname>, ctype=<expected C type>, **components, 
+  input_intent='required', input_title=..., input_description=...,
+  output_intent='hide', output_title=..., output_description=...,
+  title=..., description=...,
+  depends=<list of argument dependencies>)` --- represents argument
+  to python extension module function.
+
+  `ctype` is `PyCTypeSpec` component instance or string. In the latter case
+  it is converted to `PyCTypeSpec` component.
+
+- `PyCReturn(<retname>, ctype=<expected C type>, **components)` ---
+  same as `PyCArgument` but with `input_intent='hide'` and `output_intent='return'`
+  options set.
+
+- `PyCTypeSpec(<typeobj>)` --- represents variable type in a
+  python extension module. Over 70 types are supported:
+
+  >>> typenames = PyCTypeSpec.typeinfo_map.keys()
+  >>> typenames.sort()
+  >>> print ', '.join(typenames)
+  buffer, c_Py_UNICODE, c_Py_complex, c_Py_ssize_t, c_char, c_char1,
+  c_const_char_ptr, c_double, c_float, c_int, c_long, c_long_long,
+  c_short, c_unsigned_char, c_unsigned_int, c_unsigned_long,
+  c_unsigned_long_long, c_unsigned_short, cell, cobject, complex, dict,
+  file, float, frozenset, function, generator, instance, int, iter,
+  list, long, method, module, numeric_array, numpy_complex128,
+  numpy_complex160, numpy_complex192, numpy_complex256, numpy_complex32,
+  numpy_complex64, numpy_descr, numpy_float128, numpy_float16,
+  numpy_float32, numpy_float64, numpy_float80, numpy_float96,
+  numpy_int128, numpy_int16, numpy_int32, numpy_int64, numpy_int8,
+  numpy_iter, numpy_multiiter, numpy_ndarray, numpy_ufunc,
+  numpy_uint128, numpy_uint16, numpy_uint32, numpy_uint64, numpy_uint8,
+  object, property, set, slice, str, tuple, type, unicode
+
+  `typeobj` can be python type instance (e.g. `int`) or one of the string values
+  from the list of typenames above.
+
+- `PySource(<filename>, *components)`  --- represents pure python module file.
+
+  One can add `Code` components to `PySource`.
+
+ExtGen provides the following C related components:
+
+- `CSource` --- represents C file. Derived from `FileSource`.
+
+  One can add `CCode` components to `CSource`.
+  String input is converted to `CCode` component.  
+
+- `CHeader(<header filename>)`, `CStdHeader(<std header filename>)`. Derived from `Line`.
+
+- `CCode(*components)` --- represents any C code block. Derived from `Code`.
+
+- `CFunction(<funcname>, rctype=CTypeSpec('int'), *components)` --- represents
+  a C function.
+
+  One can add `CArgument`, `CDeclaration`, `CCode` components to `CFunction`.
+
+- `CDeclaration(<ctype>, *declarators)` --- represenets `<ctype> <declarators list>`
+  code idiom. `<ctype>` is `CTypeSpec` instance.
+
+  One can add `CDeclarator` components to `CDeclaration`.
+
+- `CArgument(<argument name>, <ctype>)` --- C function argument. Derived from `CDeclaration`.
+
+- `CTypeSpec(<typename>)` --- C type specifier. Derived from `Line`.
+
+- `CDeclarator(<name>, *initvalues, is_string=..., is_scalar=...)` --- represents
+  `<name> [= <initialzer>]` code idiom.
+
+  String input is converted to `CInitExpr` component.
+
+ExtGen provides the following general purpose components:
+
+- `Word(<word>)`
+
+  Nothing can be added to `Word`.
+
+- `Line(*strings)`
+
+  One can add `Line` component to `Line`.
+  String input is converted to `Line` component.
+
+- `Code(*lines)`
+
+  One can add `Line` and `Code` components to `Code`.
+  String input is converted to `Line` component.
+
+- `FileSource(<filename>, *components)`.
+
+  One can add `Line` and `Code` components to `FileSource`.
+  String input is converted to `Code` component.
+
+Developers reference manual
+===========================
 
 To extend ExtGen, one needs to understand the infrastructure of
 generating extension modules.
@@ -43,7 +272,7 @@ specified rules resulting actual code sources. ExtGen uses two steps
 for constructing code sources:
 
 - creating code components and adding them together to a parent
-  component. For example, the `ExtensionModule` instance in the
+  component. For example, the `PyCModule` instance in the
   hello example becomes a parent component to a `PyCFunction` instance
   after executing `m += f`.
 
@@ -52,7 +281,7 @@ for constructing code sources:
 
 One can iterate the above process as one wishes.
 
-The method `ExtensionModule.build()` is defined for convenience.
+The method `PyCModule.build()` is defined for convenience.
 It compiles the generated sources, builds an extension module,
 imports the resulting module to Python, and returns the module object.
 
@@ -78,6 +307,11 @@ following methods and attributes:
 
   - `.component_containe_map` is used to find `container_label`
     corresponding to `component` argument class.
+
+- `.update_parent(self, parent)` is called after `parent.add(self,..)`.
+
+- `.finalize(self)` is called after finishing adding new components
+  and before `.generate()` method call.
 
 - `.generate(self)` returns a source code string. It recursively
   processes all subcomponents, creates code containers, and
@@ -129,7 +363,8 @@ tasks:
 - A component class must have a base class `Component`.
 
 - A component class may redefine `.initialize()`,
-  `.init_containers()`, `.update_containers()`, `.get_templates()`
+  `.init_containers()`, `.add()`, `update_parent()`, 
+  `.update_containers()`, `.get_templates()`
   methods, `.provides()` property method and `.container_options`,
   `.component_container_map`, `.default_container_label`,
   `.default_component_class_name`, `.template` attributes.
@@ -157,43 +392,12 @@ tasks:
 - All classes derived from `Component` are available as
   `Component.<subclass name>`.
 
-Here follows a simplified version of `ExtensionModule.template`::
-
-  #include "Python.h"
-  
-  %(Header)s
-  %(TypeDef)s
-  %(Extern)s
-  %(CCode)s
-  %(CAPICode)s
-  %(ObjDecl)s
-  
-  static PyObject* extgen_module;
-  
-  static PyMethodDef extgen_module_methods[] = {
-    %(ModuleMethod)s
-    {NULL,NULL,0,NULL}
-  };
-  
-  PyMODINIT_FUNC init%(modulename)s(void) {
-    extgen_module = Py_InitModule("%(modulename)s", extgen_module_methods);
-    %(ModuleInit)s
-    return;
-  capi_error:
-    if (!PyErr_Occurred()) {
-      PyErr_SetString(PyExc_RuntimeError, "failed to initialize %(modulename)s module.");
-    }
-    return;
-  }
-
-Here formatting mapping keys `Header`, `TypeDef`, etc are the labels
-of containers which will be used in the templare evaluation.
 See `extgen/*.py` files for more examples how to redefine `Component`
 class methods and attributes.
 
 
 Using `Container` class
-=======================
+-----------------------
     
 `Container` class has the following optional arguments:
 
@@ -209,6 +413,8 @@ Using `Container` class
   - `indent_offset=0`
   - `user_defined_str=None`
   - `replace_map={}`
+  - `ignore_empty_content=False`
+  - `skip_prefix_suffix_when_single=False`
 
 that are used to enhance the behaviour of `Container.__str__()`
 method.  By default, `Container.__str__()` returns
@@ -241,67 +447,3 @@ in `.line[0]` is used. The `replace_map` is used to apply
 Full control over the `__str__()` method is obtained via
 defining `user_defined_str` that should be a callable object taking
 list as input and return a string.
-
-
-Component classes
-=================
-
-ExtGen package defines the following extension module component classes:
-
-  - `ExtensionModule(<modulename>, *components, numpy=False,
-    provides=.., title=.., description=..)`  ---
-    represents an extension module component. If `numpy` is `True` then
-    `NumPy` support will be added to an extension module.
-    
-  - `PyCFunction(<name>, *components, provides=.., title=.., description=..)` ---
-    represents an extension function component.
-
-  - `PyCArgument(<name>, *components, provides=.., input_intent=..,
-    output_intent=.., input_title=.., input_description=..,
-    output_title=, output_description=..)` --- represents an argument component for
-    `PyCFunction`. Keyword arguments `input_intent` and
-    `output_intent` may have values `'required'`, `'optional'`,
-    `'extra'`, `'hide'` and `'hide'`, `'return'`, respectively.
-
-  - `CCode(*lines, provides=..)` --- represents any C code block or
-    statement component.
-
-  - `CType(<name or python type obj>)` --- represents a predefined or intrinsic C type
-    with a given name.
-
-  - `CTypeAlias(<name>, <ctype>)` --- represents `typedef ctype name;`
-    declaration.
-
-  - `CTypeFuncAlias(<name>, <return ctype>, <argument ctypes>)` ---
-    represents `typedef rctype (*name)(actype1,..)` declaration.
-    Use `.add()` method to add more argument types.
-
-  - `CTypePtr(<ctype>)` --- represents `typedef ctype* ctype_ptr;`
-    declaration.
-
-  - `CTypeStruct(<name>, *declarations)` --- represents `typedef struct {
-    <declarations> } name;` declaration. Use `.add()` method to add
-    more declarations.
-
-  - `CDecl(<ctype>, *names)` --- represents `ctype name1, name2, ..;`
-    declaration. Use `.add()` method to add more names.
-
-  - `CTypePython(<python type object or type name>)` 
-    --- represents python type object in C, see
-    `CTypePython.typeinfo_map.keys()` for supported type names
-    (there are over 70 supported types).
-
-
-Predefined components
-=====================
-
-ExtGen defines the following components that can be retrived
-using `Component.get(<provides>)` method:
-
-- `'Python.h'` - include `Pyhton.h` header file.
-
-- `'arrayobject.h'` - include NumPy header files.
-
-- `'import_array'` - code for importing numpy package to extension
-  module.
-
