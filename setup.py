@@ -47,10 +47,9 @@ def configuration(parent_package='',top_path=None):
                        quiet=True)
     
     config.add_subpackage('numpy')
-        
-    config.add_data_files(('numpy','*.txt'))
-    config.add_data_files(('.','COMPATIBILITY'),('.','scipy_compatibility'),
-                           ('.','site.cfg.example'))
+
+    config.add_data_files(('numpy',['*.txt','COMPATIBILITY',
+                                    'scipy_compatibility']))
     
     config.get_version('numpy/version.py') # sets config.version
     
