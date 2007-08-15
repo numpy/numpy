@@ -41,7 +41,7 @@ string)::
 
     def rms(seq):
         """
-	rms: return the root mean square of a sequence
+        rms: return the root mean square of a sequence
         rms(numpy.ndarray) -> double
         rms(list) -> double
         rms(tuple) -> double
