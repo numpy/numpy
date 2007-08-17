@@ -5,8 +5,8 @@ from numpy.distutils.fcompiler.gnu import GnuFCompiler
 compilers = ['VastFCompiler']
 
 class VastFCompiler(GnuFCompiler):
-
     compiler_type = 'vast'
+    compiler_aliases = ()
     description = 'Pacific-Sierra Research Fortran 90 Compiler'
     version_pattern = r'\s*Pacific-Sierra Research vf90 '\
                       '(Personal|Professional)\s+(?P<version>[^\s]*)'

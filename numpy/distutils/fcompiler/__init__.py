@@ -98,6 +98,7 @@ class FCompiler(CCompiler):
     # appropiate type used.
 
     distutils_vars = EnvironmentConfig(
+        distutils_section='config_fc',
         noopt = (None, None, 'noopt', str2bool),
         noarch = (None, None, 'noarch', str2bool),
         debug = (None, None, 'debug', str2bool),
@@ -228,6 +229,9 @@ class FCompiler(CCompiler):
         obj.flag_vars = obj.flag_vars.clone(obj._environment_hook)
         obj.executables = obj.executables.copy()
         return obj
+
+    def copy(self):
+        return self.__copy__()
 
     # Use properties for the attributes used by CCompiler. Setting them
     # as attributes from the self.executables dictionary is error-prone,
@@ -424,7 +428,7 @@ class FCompiler(CCompiler):
 
         This method gets Fortran compiler specific information from
         (i) class definition, (ii) environment, (iii) distutils config
-        files, and (iv) command line.
+        files, and (iv) command line (later overrides earlier).
 
         This method should be always called after constructing a
         compiler instance. But not in __init__ because Distribution
@@ -716,6 +720,10 @@ def load_all_fcompiler_classes():
                 desc = (klass.compiler_type, klass, klass.description)
                 fcompiler_class[klass.compiler_type] = desc
                 for alias in klass.compiler_aliases:
+                    if alias in fcompiler_aliases:
+                        raise ValueError("alias %r defined for both %s and %s"
+                                         % (alias, klass.__name__,
+                                            fcompiler_aliases[alias][1].__name__))
                     fcompiler_aliases[alias] = desc
 
 def _find_existing_fcompiler(compiler_types,
