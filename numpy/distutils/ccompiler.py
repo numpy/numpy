@@ -121,28 +121,30 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
 replace_method(CCompiler, 'compile', CCompiler_compile)
 
-def CCompiler_customize_cmd(self, cmd):
+def CCompiler_customize_cmd(self, cmd, ignore=()):
     """ Customize compiler using distutils command.
     """
     log.info('customize %s using %s' % (self.__class__.__name__,
                                         cmd.__class__.__name__))
-    if getattr(cmd,'include_dirs',None) is not None:
+    def allow(attr):
+        return getattr(cmd, attr, None) is not None and attr not in ignore
+
+    if allow('include_dirs'):
         self.set_include_dirs(cmd.include_dirs)
-    if getattr(cmd,'define',None) is not None:
+    if allow('define'):
         for (name,value) in cmd.define:
             self.define_macro(name, value)
-    if getattr(cmd,'undef',None) is not None:
+    if allow('undef'):
         for macro in cmd.undef:
             self.undefine_macro(macro)
-    if getattr(cmd,'libraries',None) is not None:
+    if allow('libraries'):
         self.set_libraries(self.libraries + cmd.libraries)
-    if getattr(cmd,'library_dirs',None) is not None:
+    if allow('library_dirs'):
         self.set_library_dirs(self.library_dirs + cmd.library_dirs)
-    if getattr(cmd,'rpath',None) is not None:
+    if allow('rpath'):
         self.set_runtime_library_dirs(cmd.rpath)
-    if getattr(cmd,'link_objects',None) is not None:
+    if allow('link_objects'):
         self.set_link_objects(cmd.link_objects)
-    return
 
 replace_method(CCompiler, 'customize_cmd', CCompiler_customize_cmd)
 
