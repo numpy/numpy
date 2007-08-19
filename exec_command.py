@@ -49,15 +49,15 @@ Known bugs:
 __all__ = ['exec_command','find_executable']
 
 import os
-import re
 import sys
-import tempfile
 
-from numpy.distutils.misc_util import is_sequence
+from numpy.distutils.misc_util import is_sequence, make_temp_file
+from numpy.distutils import log
 
-############################################################
-
-from log import _global_log as log
+def temp_file_name():
+    fo, name = make_temp_file()
+    fo.close()
+    return name
 
 ############################################################
 
@@ -122,17 +122,22 @@ def test_splitcmdline():
 
 ############################################################
 
-def find_executable(exe, path=None):
-    """Return full path of a executable.
+def find_executable(exe, path=None, _cache={}):
+    """Return full path of a executable or None.
 
     Symbolic links are not followed.
     """
+    key = exe, path
+    try:
+        return _cache[key]
+    except KeyError:
+        pass
     log.debug('find_executable(%r)' % exe)
     orig_exe = exe
 
     if path is None:
         path = os.environ.get('PATH',os.defpath)
-    if os.name=='posix' and sys.version[:3]>'2.1':
+    if os.name=='posix':
         realpath = os.path.realpath
     else:
         realpath = lambda a:a
@@ -159,7 +164,8 @@ def find_executable(exe, path=None):
             if not os.path.islink(f_ext):
                 f_ext = realpath(f_ext)
             if os.path.isfile(f_ext) and os.access(f_ext, os.X_OK):
-                log.debug('Found executable %s' % f_ext)
+                log.good('Found executable %s' % f_ext)
+                _cache[key] = f_ext
                 return f_ext
 
     log.warn('Could not locate executable %s' % orig_exe)
@@ -190,7 +196,7 @@ def exec_command( command,
     The following special keyword arguments can be used:
       use_shell - execute `sh -c command`
       use_tee   - pipe the output of command through tee
-      execute_in - before command `cd execute_in` and after `cd -`.
+      execute_in - before run command `cd execute_in` and after `cd -`.
 
     On NT, DOS systems the returned status is correct for external commands.
     Wild cards will not work for non-posix systems or when use_shell=0.
@@ -264,17 +270,17 @@ def _exec_command_posix( command,
     else:
         command_str = command
 
-    tmpfile = tempfile.mktemp()
+    tmpfile = temp_file_name()
     stsfile = None
     if use_tee:
-        stsfile = tempfile.mktemp()
+        stsfile = temp_file_name()
         filter = ''
         if use_tee == 2:
             filter = r'| tr -cd "\n" | tr "\n" "."; echo'
         command_posix = '( %s ; echo $? > %s ) 2>&1 | tee %s %s'\
                       % (command_str,stsfile,tmpfile,filter)
     else:
-        stsfile = tempfile.mktemp()
+        stsfile = temp_file_name()
         command_posix = '( %s ; echo $? > %s ) > %s 2>&1'\
                         % (command_str,stsfile,tmpfile)
         #command_posix = '( %s ) > %s 2>&1' % (command_str,tmpfile)
@@ -311,9 +317,9 @@ def _exec_command_python(command,
     log.debug('_exec_command_python(...)')
 
     python_exe = get_pythonexe()
-    cmdfile = tempfile.mktemp()
-    stsfile = tempfile.mktemp()
-    outfile = tempfile.mktemp()
+    cmdfile = temp_file_name()
+    stsfile = temp_file_name()
+    outfile = temp_file_name()
 
     f = open(cmdfile,'w')
     f.write('import os\n')
@@ -358,7 +364,6 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         use_shell = os.name=='posix'
     if use_tee is None:
         use_tee = os.name=='posix'
-
     using_command = 0
     if use_shell:
         # We use shell (unless use_shell==0) so that wildcards can be
@@ -380,7 +385,7 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         spawn_command = os.spawnvpe
     else:
         spawn_command = os.spawnve
-        argv[0] = find_executable(argv[0])
+        argv[0] = find_executable(argv[0]) or argv[0]
         if not os.path.isfile(argv[0]):
             log.warn('Executable %s does not exist' % (argv[0]))
             if os.name in ['nt','dos']:
@@ -397,10 +402,10 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
     so_dup = os.dup(so_fileno)
     se_dup = os.dup(se_fileno)
 
-    outfile = tempfile.mktemp()
+    outfile = temp_file_name()
     fout = open(outfile,'w')
     if using_command:
-        errfile = tempfile.mktemp()
+        errfile = temp_file_name()
         ferr = open(errfile,'w')
 
     log.debug('Running %s(%s,%r,%r,os.environ)' \
@@ -589,7 +594,7 @@ def test_posix(**kws):
 
 def test_execute_in(**kws):
     pythonexe = get_pythonexe()
-    tmpfile = tempfile.mktemp()
+    tmpfile = temp_file_name()
     fn = os.path.basename(tmpfile)
     tmpdir = os.path.dirname(tmpfile)
     f = open(tmpfile,'w')

@@ -21,19 +21,9 @@ import distutils.core
 import distutils.dist
 
 from numpy.distutils.extension import Extension
-from numpy.distutils.command import config
-from numpy.distutils.command import build
-from numpy.distutils.command import build_py
-from numpy.distutils.command import config_compiler
-from numpy.distutils.command import build_ext
-from numpy.distutils.command import build_clib
-from numpy.distutils.command import build_src
-from numpy.distutils.command import build_scripts
-from numpy.distutils.command import sdist
-from numpy.distutils.command import install_data
-from numpy.distutils.command import install_headers
-from numpy.distutils.command import install
-from numpy.distutils.command import bdist_rpm
+from numpy.distutils.command import config, config_compiler, \
+     build, build_py, build_ext, build_clib, build_src, build_scripts, \
+     sdist, install_data, install_headers, install, bdist_rpm
 from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
@@ -73,7 +63,7 @@ def _dict_append(d, **kws):
         elif is_string(dv):
             d[k] = dv + v
         else:
-            raise TypeError,`type(dv)`
+            raise TypeError, repr(type(dv))
 
 def _command_line_ok(_cache=[]):
     """ Return True if command line does not contain any
@@ -93,14 +83,6 @@ def _command_line_ok(_cache=[]):
     _cache.append(ok)
     return ok
 
-def _exit_interactive_session(_cache=[]):
-    if _cache:
-        return # been here
-    _cache.append(1)
-    print '-'*72
-    raw_input('Press ENTER to close the interactive session..')
-    print '='*72
-
 def get_distribution(always=False):
     dist = distutils.core._setup_distribution
     # XXX Hack to get numpy installable with easy_install.
@@ -115,6 +97,14 @@ def get_distribution(always=False):
     if always and dist is None:
         dist = distutils.dist.Distribution()
     return dist
+
+def _exit_interactive_session(_cache=[]):
+    if _cache:
+        return # been here
+    _cache.append(1)
+    print '-'*72
+    raw_input('Press ENTER to close the interactive session..')
+    print '='*72
 
 def setup(**attr):
 

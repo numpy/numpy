@@ -10,8 +10,7 @@ from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32
-from distutils.spawn import _nt_quote_args
+from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, quote_args, msvc_on_amd64
 
 # hack to set compiler optimizing options. Needs to integrated with something.
 import distutils.sysconfig
@@ -32,15 +31,17 @@ def CCompiler_spawn(self, cmd, display=None):
         if is_sequence(display):
             display = ' '.join(list(display))
     log.info(display)
-    if is_sequence(cmd) and os.name == 'nt':
-        cmd = _nt_quote_args(list(cmd))
     s,o = exec_command(cmd)
     if s:
         if is_sequence(cmd):
             cmd = ' '.join(list(cmd))
         print o
+        if re.search('Too many open files', o):
+            msg = '\nTry rerunning setup command until build succeeds.'
+        else:
+            msg = ''
         raise DistutilsExecError,\
-              'Command "%s" failed with exit status %d' % (cmd, s)
+              'Command "%s" failed with exit status %d%s' % (cmd, s, msg)
 
 replace_method(CCompiler, 'spawn', CCompiler_spawn)
 
@@ -120,28 +121,30 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
 replace_method(CCompiler, 'compile', CCompiler_compile)
 
-def CCompiler_customize_cmd(self, cmd):
+def CCompiler_customize_cmd(self, cmd, ignore=()):
     """ Customize compiler using distutils command.
     """
     log.info('customize %s using %s' % (self.__class__.__name__,
                                         cmd.__class__.__name__))
-    if getattr(cmd,'include_dirs',None) is not None:
+    def allow(attr):
+        return getattr(cmd, attr, None) is not None and attr not in ignore
+
+    if allow('include_dirs'):
         self.set_include_dirs(cmd.include_dirs)
-    if getattr(cmd,'define',None) is not None:
+    if allow('define'):
         for (name,value) in cmd.define:
             self.define_macro(name, value)
-    if getattr(cmd,'undef',None) is not None:
+    if allow('undef'):
         for macro in cmd.undef:
             self.undefine_macro(macro)
-    if getattr(cmd,'libraries',None) is not None:
+    if allow('libraries'):
         self.set_libraries(self.libraries + cmd.libraries)
-    if getattr(cmd,'library_dirs',None) is not None:
+    if allow('library_dirs'):
         self.set_library_dirs(self.library_dirs + cmd.library_dirs)
-    if getattr(cmd,'rpath',None) is not None:
+    if allow('rpath'):
         self.set_runtime_library_dirs(cmd.rpath)
-    if getattr(cmd,'link_objects',None) is not None:
+    if allow('link_objects'):
         self.set_link_objects(cmd.link_objects)
-    return
 
 replace_method(CCompiler, 'customize_cmd', CCompiler_customize_cmd)
 
@@ -174,8 +177,10 @@ def CCompiler_show_customization(self):
             if not attr:
                 continue
             log.info("compiler '%s' is set to %s" % (attrname,attr))
-    try: self.get_version()
-    except: pass
+    try:
+        self.get_version()
+    except:
+        pass
     if log._global_log.threshold<2:
         print '*'*80
         print self.__class__
@@ -251,17 +256,17 @@ def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
         return m.group(0)
     return matcher
 
-def CCompiler_get_version(self, force=0, ok_status=[0]):
-    """ Compiler version. Returns None if compiler is not available. """
+def CCompiler_get_version(self, force=False, ok_status=[0]):
+    """Compiler version. Returns None if compiler is not available."""
     if not force and hasattr(self,'version'):
         return self.version
+    self.find_executables()
     try:
         version_cmd = self.version_cmd
     except AttributeError:
         return None
     if not version_cmd or not version_cmd[0]:
         return None
-    cmd = ' '.join(version_cmd)
     try:
         matcher = self.version_match
     except AttributeError:
@@ -276,7 +281,8 @@ def CCompiler_get_version(self, force=0, ok_status=[0]):
             version = m.group('version')
             return version
 
-    status, output = exec_command(cmd,use_tee=0)
+    status, output = exec_command(version_cmd,use_tee=0)
+
     version = None
     if status in ok_status:
         version = matcher(output)
@@ -363,9 +369,10 @@ def new_compiler (plat=None,
 
 ccompiler.new_compiler = new_compiler
 
-
 _distutils_gen_lib_options = gen_lib_options
 def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
+    library_dirs = quote_args(library_dirs)
+    runtime_library_dirs = quote_args(runtime_library_dirs)
     r = _distutils_gen_lib_options(compiler, library_dirs,
                                    runtime_library_dirs, libraries)
     lib_opts = []
@@ -377,6 +384,11 @@ def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
     return lib_opts
 ccompiler.gen_lib_options = gen_lib_options
 
+_distutils_gen_preprocess_options = gen_preprocess_options
+def gen_preprocess_options (macros, include_dirs):
+    include_dirs = quote_args(include_dirs)
+    return _distutils_gen_preprocess_options(macros, include_dirs)
+ccompiler.gen_preprocess_options = gen_preprocess_options
 
 ##Fix distutils.util.split_quoted:
 import re,string
@@ -434,3 +446,6 @@ def split_quoted(s):
 
     return words
 ccompiler.split_quoted = split_quoted
+
+# define DISTUTILS_USE_SDK when necessary to workaround distutils/msvccompiler.py bug
+msvc_on_amd64()

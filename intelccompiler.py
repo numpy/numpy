@@ -1,5 +1,4 @@
 
-import os
 from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.exec_command import find_executable
 

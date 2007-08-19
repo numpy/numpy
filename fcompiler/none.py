@@ -25,7 +25,6 @@ class NoneFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
     compiler = NoneFCompiler()
     compiler.customize()
     print compiler.get_version()

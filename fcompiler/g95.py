@@ -1,15 +1,10 @@
 # http://g95.sourceforge.net/
 
-import os
-import sys
-
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 
 compilers = ['G95FCompiler']
 
 class G95FCompiler(FCompiler):
-
     compiler_type = 'g95'
     description = 'G95 Fortran Compiler'
 
@@ -44,8 +39,6 @@ class G95FCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    #compiler = new_fcompiler(compiler='g95')
     compiler = G95FCompiler()
     compiler.customize()
     print compiler.get_version()

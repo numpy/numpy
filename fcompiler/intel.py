@@ -3,9 +3,6 @@
 # of intele
 # http://developer.intel.com/software/products/compilers/flin/
 
-import os
-import sys
-
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
@@ -16,24 +13,29 @@ compilers = ['IntelFCompiler', 'IntelVisualFCompiler',
 
 def intel_version_match(type):
     # Match against the important stuff in the version string
-    return simple_version_match(start=r'Intel.*?Fortran.*?%s.*?Version' % (type,))
+    return simple_version_match(start=r'Intel.*?Fortran.*?(?:%s).*?Version' % (type,))
 
-class IntelFCompiler(FCompiler):
+class BaseIntelFCompiler(FCompiler):
+    def update_executables(self):
+        f = dummy_fortran_file()
+        self.executables['version_cmd'] = ['<F77>', '-FI', '-V', '-c',
+                                           f + '.f', '-o', f + '.o']
+
+class IntelFCompiler(BaseIntelFCompiler):
 
     compiler_type = 'intel'
+    compiler_aliases = ('ifort',)
     description = 'Intel Fortran Compiler for 32-bit apps'
-    version_match = intel_version_match('32-bit')
-
+    version_match = intel_version_match('32-bit|IA-32')
 
     possible_executables = ['ifort', 'ifc']
 
     executables = {
-        'version_cmd'  : ["<F77>", "-FI -V -c %(fname)s.f -o %(fname)s.o" \
-                          % {'fname':dummy_fortran_file()}],
-        'compiler_f77' : [None,"-72","-w90","-w95"],
+        'version_cmd'  : None,          # set by update_executables
+        'compiler_f77' : [None, "-72", "-w90", "-w95"],
         'compiler_f90' : [None],
-        'compiler_fix' : [None,"-FI"],
-        'linker_so'    : ["<F90>","-shared"],
+        'compiler_fix' : [None, "-FI"],
+        'linker_so'    : ["<F90>", "-shared"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
@@ -53,6 +55,7 @@ class IntelFCompiler(FCompiler):
         return ['-O3','-unroll']
 
     def get_flags_arch(self):
+        v = self.get_version()
         opt = []
         if cpu.has_fdiv_bug():
             opt.append('-fdiv_check')
@@ -66,8 +69,25 @@ class IntelFCompiler(FCompiler):
             opt.append('-tpp5')
         elif cpu.is_PentiumIV() or cpu.is_Xeon():
             opt.extend(['-tpp7','-xW'])
-        if cpu.has_mmx() and not cpu.is_Xeon():
-            opt.append('-xM')
+        if v and v <= '7.1':
+            if cpu.has_mmx() and (cpu.is_PentiumII() or cpu.is_PentiumIII()):
+                opt.append('-xM')
+        elif v and v >= '8.0':
+            if cpu.is_PentiumIII():
+                opt.append('-xK')
+                if cpu.has_sse3():
+                    opt.extend(['-xP'])
+            elif cpu.is_PentiumIV():
+                opt.append('-xW')
+                if cpu.has_sse2():
+                    opt.append('-xN')
+            elif cpu.is_PentiumM():
+                opt.extend(['-xB'])
+            if (cpu.is_Xeon() or cpu.is_Core2() or cpu.is_Core2Extreme()) and cpu.getNCPUs()==2:
+                opt.extend(['-xT'])
+            if cpu.has_sse3() and (cpu.is_PentiumIV() or cpu.is_CoreDuo() or cpu.is_CoreSolo()):
+                opt.extend(['-xP'])
+
         if cpu.has_sse2():
             opt.append('-arch SSE2')
         elif cpu.has_sse():
@@ -83,22 +103,22 @@ class IntelFCompiler(FCompiler):
 
 class IntelItaniumFCompiler(IntelFCompiler):
     compiler_type = 'intele'
+    compiler_aliases = ()
     description = 'Intel Fortran Compiler for Itanium apps'
 
     version_match = intel_version_match('Itanium')
 
 #Intel(R) Fortran Itanium(R) Compiler for Itanium(R)-based applications
-#Version 9.1    Build 20060928 Package ID: l_fc_c_9.1.039
-#Copyright (C) 1985-2006 Intel Corporation.  All rights reserved.
+#Version 9.1    Build 20060928 Package ID: l_fc_c_9.1.039
+#Copyright (C) 1985-2006 Intel Corporation.  All rights reserved.
 #30 DAY EVALUATION LICENSE
 
     possible_executables = ['ifort', 'efort', 'efc']
 
     executables = {
-        'version_cmd'  : ['<F77>', "-FI -V -c %(fname)s.f -o %(fname)s.o" \
-                          % {'fname':dummy_fortran_file()}],
-        'compiler_f77' : [None,"-FI","-w90","-w95"],
-        'compiler_fix' : [None,"-FI"],
+        'version_cmd'  : None,
+        'compiler_f77' : [None, "-FI", "-w90", "-w95"],
+        'compiler_fix' : [None, "-FI"],
         'compiler_f90' : [None],
         'linker_so'    : ['<F90>', "-shared"],
         'archiver'     : ["ar", "-cr"],
@@ -107,15 +127,15 @@ class IntelItaniumFCompiler(IntelFCompiler):
 
 class IntelEM64TFCompiler(IntelFCompiler):
     compiler_type = 'intelem'
+    compiler_aliases = ()
     description = 'Intel Fortran Compiler for EM64T-based apps'
 
-    version_match = intel_version_match('EM64T-based')
+    version_match = intel_version_match('EM64T-based|Intel\\(R\\) 64')
 
     possible_executables = ['ifort', 'efort', 'efc']
 
     executables = {
-        'version_cmd'  : ['<F77>', "-FI -V -c %(fname)s.f -o %(fname)s.o" \
-                          % {'fname':dummy_fortran_file()}],
+        'version_cmd'  : None,
         'compiler_f77' : [None, "-FI", "-w90", "-w95"],
         'compiler_fix' : [None, "-FI"],
         'compiler_f90' : [None],
@@ -123,6 +143,14 @@ class IntelEM64TFCompiler(IntelFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
+
+    def get_flags(self):
+        v = self.get_version()
+        if v >= '10.0':
+            # Use -fPIC instead of -KPIC.
+            return ['-fPIC', '-cm']
+        else:
+            return IntelFCompiler.get_flags(self)
 
     def get_flags_arch(self):
         opt = []
@@ -133,21 +161,19 @@ class IntelEM64TFCompiler(IntelFCompiler):
 # Is there no difference in the version string between the above compilers
 # and the Visual compilers?
 
-class IntelVisualFCompiler(FCompiler):
+class IntelVisualFCompiler(BaseIntelFCompiler):
     compiler_type = 'intelv'
     description = 'Intel Visual Fortran Compiler for 32-bit apps'
-
-    version_match = intel_version_match('32-bit')
+    version_match = intel_version_match('32-bit|IA-32')
 
     ar_exe = 'lib.exe'
-    fc_exe = 'ifl'
+    possible_executables = ['ifl']
 
     executables = {
-        'version_cmd'  : ['<F77>', "-FI -V -c %(fname)s.f -o %(fname)s.o" \
-                          % {'fname':dummy_fortran_file()}],
-        'compiler_f77' : [fc_exe,"-FI","-w90","-w95"],
-        'compiler_fix' : [fc_exe,"-FI","-4L72","-w"],
-        'compiler_f90' : [fc_exe],
+        'version_cmd'  : None,
+        'compiler_f77' : [None,"-FI","-w90","-w95"],
+        'compiler_fix' : [None,"-FI","-4L72","-w"],
+        'compiler_f90' : [None],
         'linker_so'    : ['<F90>', "-shared"],
         'archiver'     : [ar_exe, "/verbose", "/OUT:"],
         'ranlib'       : None
@@ -192,15 +218,14 @@ class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
 
     version_match = intel_version_match('Itanium')
 
-    fc_exe = 'efl' # XXX this is a wild guess
+    possible_executables = ['efl'] # XXX this is a wild guess
     ar_exe = IntelVisualFCompiler.ar_exe
 
     executables = {
-        'version_cmd'  : ['<F77>', "-FI -V -c %(fname)s.f -o %(fname)s.o" \
-                          % {'fname':dummy_fortran_file()}],
-        'compiler_f77' : [fc_exe,"-FI","-w90","-w95"],
-        'compiler_fix' : [fc_exe,"-FI","-4L72","-w"],
-        'compiler_f90' : [fc_exe],
+        'version_cmd'  : None,
+        'compiler_f77' : [None,"-FI","-w90","-w95"],
+        'compiler_fix' : [None,"-FI","-4L72","-w"],
+        'compiler_f90' : [None],
         'linker_so'    : ['<F90>',"-shared"],
         'archiver'     : [ar_exe, "/verbose", "/OUT:"],
         'ranlib'       : None

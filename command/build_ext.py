@@ -84,10 +84,10 @@ class build_ext (old_build_ext):
         clibs = {}
         if build_clib is not None:
             for libname,build_info in build_clib.libraries or []:
-                if clibs.has_key(libname):
+                if clibs.has_key(libname) and clibs[libname]!=build_info:
                     log.warn('library %r defined more than once,'\
-                             ' overwriting build_info %r with %r.' \
-                             % (libname, clibs[libname], build_info))
+                             ' overwriting build_info\n%s... \nwith\n%s...' \
+                             % (libname, `clibs[libname]`[:300], `build_info`[:300]))
                 clibs[libname] = build_info
         # .. and distribution libraries:
         for libname,build_info in self.distribution.libraries or []:
@@ -169,38 +169,46 @@ class build_ext (old_build_ext):
 
         # Initialize Fortran 77 compiler:
         if need_f77_compiler:
+            ctype = self.fcompiler
             self._f77_compiler = new_fcompiler(compiler=self.fcompiler,
                                                verbose=self.verbose,
                                                dry_run=self.dry_run,
                                                force=self.force,
-                                               requiref90=False)
+                                               requiref90=False,
+                                               c_compiler=self.compiler)
             fcompiler = self._f77_compiler
-            if fcompiler.get_version():
+            if fcompiler:
+                ctype = fcompiler.compiler_type
                 fcompiler.customize(self.distribution)
+            if fcompiler and fcompiler.get_version():
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:
                 self.warn('f77_compiler=%s is not available.' %
-                          (fcompiler.compiler_type))
+                          (ctype))
                 self._f77_compiler = None
         else:
             self._f77_compiler = None
 
         # Initialize Fortran 90 compiler:
         if need_f90_compiler:
+            ctype = self.fcompiler
             self._f90_compiler = new_fcompiler(compiler=self.fcompiler,
                                                verbose=self.verbose,
                                                dry_run=self.dry_run,
                                                force=self.force,
-                                               requiref90=True)
+                                               requiref90=True,
+                                               c_compiler = self.compiler)
             fcompiler = self._f90_compiler
-            if fcompiler.get_version():
+            if fcompiler:
+                ctype = fcompiler.compiler_type
                 fcompiler.customize(self.distribution)
+            if fcompiler and fcompiler.get_version():
                 fcompiler.customize_cmd(self)
                 fcompiler.show_customization()
             else:
                 self.warn('f90_compiler=%s is not available.' %
-                          (fcompiler.compiler_type))
+                          (ctype))
                 self._f90_compiler = None
         else:
             self._f90_compiler = None

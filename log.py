@@ -4,7 +4,7 @@ import sys
 from distutils.log import *
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
-from misc_util import red_text, yellow_text, cyan_text, is_sequence, is_string
+from misc_util import red_text, yellow_text, cyan_text, green_text, is_sequence, is_string
 
 
 def _fix_args(args,flag=1):
@@ -22,18 +22,43 @@ class Log(old_Log):
             else:
                 print _global_color_map[level](msg)
             sys.stdout.flush()
+
+    def good(self, msg, *args):
+        """If we'd log WARN messages, log this message as a 'nice' anti-warn
+        message.
+        """
+        if WARN >= self.threshold:
+            if args:
+                print green_text(msg % _fix_args(args))
+            else:
+                print green_text(msg)
+            sys.stdout.flush()
 _global_log.__class__ = Log
 
-def set_verbosity(v):
+good = _global_log.good
+
+def set_threshold(level, force=False):
+    prev_level = _global_log.threshold
+    if prev_level > DEBUG or force:
+        # If we're running at DEBUG, don't change the threshold, as there's
+        # likely a good reason why we're running at this level.
+        _global_log.threshold = level
+        if level <= DEBUG:
+            info('set_threshold: setting thershold to DEBUG level, it can be changed only with force argument')
+    else:
+        info('set_threshold: not changing thershold from DEBUG level %s to %s' % (prev_level,level))
+    return prev_level
+
+def set_verbosity(v, force=False):
     prev_level = _global_log.threshold
     if v < 0:
-        set_threshold(ERROR)
+        set_threshold(ERROR, force)
     elif v == 0:
-        set_threshold(WARN)
+        set_threshold(WARN, force)
     elif v == 1:
-        set_threshold(INFO)
+        set_threshold(INFO, force)
     elif v >= 2:
-        set_threshold(DEBUG)
+        set_threshold(DEBUG, force)
     return {FATAL:-2,ERROR:-1,WARN:0,INFO:1,DEBUG:2}.get(prev_level,1)
 
 _global_color_map = {
@@ -44,4 +69,5 @@ _global_color_map = {
     FATAL:red_text
 }
 
-set_verbosity(1)
+# don't use INFO,.. flags in set_verbosity, these flags are for set_threshold.
+set_verbosity(0, force=True)

@@ -4,17 +4,17 @@ import sys
 
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command, find_executable
+from numpy.distutils.misc_util import make_temp_file
 from distutils import log
-from distutils.sysconfig import get_python_lib
 
 compilers = ['IBMFCompiler']
 
 class IBMFCompiler(FCompiler):
-
     compiler_type = 'ibm'
     description = 'IBM XL Fortran Compiler'
     version_pattern =  r'(xlf\(1\)\s*|)IBM XL Fortran ((Advanced Edition |)Version |Enterprise Edition V)(?P<version>[^\s*]*)'
     #IBM XL Fortran Enterprise Edition V10.1 for AIX \nVersion: 10.01.0000.0004
+
     executables = {
         'version_cmd'  : ["<F77>", "-qversion"],
         'compiler_f77' : ["xlf"],
@@ -66,15 +66,13 @@ class IBMFCompiler(FCompiler):
             opt.append('-bshared')
         version = self.get_version(ok_status=[0,40])
         if version is not None:
-            import tempfile
             if sys.platform.startswith('aix'):
                 xlf_cfg = '/etc/xlf.cfg'
             else:
                 xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
-            new_cfg = tempfile.mktemp()+'_xlf.cfg'
+            fo, new_cfg = make_temp_file(suffix='_xlf.cfg')
             log.info('Creating '+new_cfg)
             fi = open(xlf_cfg,'r')
-            fo = open(new_cfg,'w')
             crt1_match = re.compile(r'\s*crt\s*[=]\s*(?P<path>.*)/crt1.o').match
             for line in fi.readlines():
                 m = crt1_match(line)
@@ -91,10 +89,7 @@ class IBMFCompiler(FCompiler):
         return ['-O5']
 
 if __name__ == '__main__':
-    from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    #compiler = new_fcompiler(compiler='ibm')
-    compiler = IbmFCompiler()
+    compiler = IBMFCompiler()
     compiler.customize()
     print compiler.get_version()

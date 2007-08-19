@@ -416,7 +416,8 @@ class system_info:
         if self.verbosity>0 and flag:
             for k,v in res.items():
                 v = str(v)
-                if k=='sources' and len(v)>200: v = v[:60]+' ...\n... '+v[-60:]
+                if k in ['sources','libraries'] and len(v)>270:
+                    v = v[:120]+'...\n...\n...'+v[-120:]
                 log.info('    %s = %s', k, v)
             log.info('')
 
@@ -1030,9 +1031,12 @@ class lapack_src_info(system_info):
         if not src_dir:
             #XXX: Get sources from netlib. May be ask first.
             return
-        # The following is extracted from LAPACK-3.0/SRC/Makefile
+        # The following is extracted from LAPACK-3.0/SRC/Makefile.
+        # Added missing names from lapack-lite-3.1.1/SRC/Makefile
+        # while keeping removed names for Lapack-3.0 compatibility.
         allaux='''
         ilaenv ieeeck lsame lsamen xerbla
+        iparmq
         ''' # *.f
         laux = '''
         bdsdc bdsqr disna labad lacpy ladiv lae2 laebz laed0 laed1
@@ -1042,6 +1046,9 @@ class lapack_src_info(system_info):
         lasd5 lasd6 lasd7 lasd8 lasd9 lasda lasdq lasdt laset lasq1
         lasq2 lasq3 lasq4 lasq5 lasq6 lasr lasrt lassq lasv2 pttrf
         stebz stedc steqr sterf
+
+        larra larrc larrd larr larrk larrj larrr laneg laisnan isnan
+        lazq3 lazq4
         ''' # [s|d]*.f
         lasrc = '''
         gbbrd gbcon gbequ gbrfs gbsv gbsvx gbtf2 gbtrf gbtrs gebak
@@ -1065,6 +1072,8 @@ class lapack_src_info(system_info):
         tgexc tgsen tgsja tgsna tgsy2 tgsyl tpcon tprfs tptri tptrs
         trcon trevc trexc trrfs trsen trsna trsyl trti2 trtri trtrs
         tzrqf tzrzf
+        
+        lacn2 lahr2 stemr laqr0 laqr1 laqr2 laqr3 laqr4 laqr5
         ''' # [s|c|d|z]*.f
         sd_lasrc = '''
         laexc lag2 lagv2 laln2 lanv2 laqtr lasy2 opgtr opmtr org2l
@@ -1102,7 +1111,13 @@ class lapack_src_info(system_info):
                   + ['z%s.f'%f for f in (zlasrc).split()] \
                   + ['%s.f'%f for f in (allaux+oclasrc+ozlasrc).split()]
         sources = [os.path.join(src_dir,f) for f in sources]
-        #XXX: should we check here actual existence of source files?
+        # Lapack 3.1:
+        src_dir2 = os.path.join(src_dir,'..','INSTALL')
+        sources += [os.path.join(src_dir2,p+'lamch.f') for p in 'sdcz']
+        # Should we check here actual existence of source files?
+        # Yes, the file listing is different between 3.0 and 3.1
+        # versions.
+        sources = [f for f in sources if os.path.isfile(f)]
         info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 
@@ -1380,6 +1395,7 @@ class blas_src_info(system_info):
         srotmg zdrot cdotu daxpy drotm idamax scopy sscal zdscal crotg
         dcabs1 drotmg isamax sdot sswap zrotg cscal dcopy dscal izamax
         snrm2 zaxpy zscal csrot ddot dswap sasum srot zcopy zswap
+        scabs1
         '''
         blas2 = '''
         cgbmv chpmv ctrsv dsymv dtrsv sspr2 strmv zhemv ztpmv cgemv
@@ -1398,6 +1414,7 @@ class blas_src_info(system_info):
         sources = [os.path.join(src_dir,f+'.f') \
                    for f in (blas1+blas2+blas3).split()]
         #XXX: should we check here actual existence of source files?
+        sources = [f for f in sources if os.path.isfile(f)]
         info = {'sources':sources,'language':'f77'}
         self.set_info(**info)
 

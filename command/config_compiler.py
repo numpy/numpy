@@ -1,4 +1,3 @@
-import sys
 from distutils.core import Command
 from numpy.distutils import log
 

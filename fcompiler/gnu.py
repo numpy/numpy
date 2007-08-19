@@ -6,12 +6,13 @@ import warnings
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import mingw32, msvc_runtime_library
+from numpy.distutils.misc_util import msvc_runtime_library
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
+    compiler_aliases = ('g77',)
     description = 'GNU Fortran 77 compiler'
 
     def gnu_version_match(self, version_string):
@@ -45,11 +46,12 @@ class GnuFCompiler(FCompiler):
     #         GNU Fortran (GCC) 3.3.3 (Debian 20040401)
     #         GNU Fortran 0.5.25 20010319 (prerelease)
     # Redhat: GNU Fortran (GCC 3.2.2 20030222 (Red Hat Linux 3.2.2-5)) 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
+    # GNU Fortran (GCC) 3.4.2 (mingw-special)
 
     possible_executables = ['g77', 'f77']
     executables = {
         'version_cmd'  : [None, "--version"],
-        'compiler_f77' : [None, "-g", "-Wall","-fno-second-underscore"],
+        'compiler_f77' : [None, "-g", "-Wall", "-fno-second-underscore"],
         'compiler_f90' : None, # Use --fcompiler=gnu95 for f90 codes
         'compiler_fix' : None,
         'linker_so'    : [None, "-g", "-Wall"],
@@ -149,7 +151,10 @@ class GnuFCompiler(FCompiler):
 
         if g2c is not None:
             opt.append(g2c)
-        if sys.platform == 'win32':
+        c_compiler = self.c_compiler
+        if sys.platform == 'win32' and c_compiler and \
+               c_compiler.compiler_type=='msvc':
+            # the following code is not needed (read: breaks) when using MinGW
             # in case want to link F77 compiled code with MSVC
             opt.append('gcc')
             runtime_lib = msvc_runtime_library()
@@ -270,6 +275,7 @@ class GnuFCompiler(FCompiler):
 
 class Gnu95FCompiler(GnuFCompiler):
     compiler_type = 'gnu95'
+    compiler_aliases = ('gfortran',)
     description = 'GNU Fortran 95 compiler'
 
     def version_match(self, version_string):
@@ -297,7 +303,7 @@ class Gnu95FCompiler(GnuFCompiler):
         'linker_so'    : ["<F90>", "-Wall"],
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"],
-        'linker_exe'   : [None,"-Wall"]
+        'linker_exe'   : [None, "-Wall"]
         }
 
     # use -mno-cygwin flag for g77 when Python is not Cygwin-Python
@@ -320,11 +326,14 @@ class Gnu95FCompiler(GnuFCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    #compiler = new_fcompiler(compiler='gnu')
     compiler = GnuFCompiler()
     compiler.customize()
     print compiler.get_version()
-    compiler = Gnu95FCompiler()
-    compiler.customize()
-    print compiler.get_version()
+    raw_input('Press ENTER to continue...')
+    try:
+        compiler = Gnu95FCompiler()
+        compiler.customize()
+        print compiler.get_version()
+    except Exception, msg:
+        print msg
+    raw_input('Press ENTER to continue...')

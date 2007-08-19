@@ -1,7 +1,3 @@
-import os
-import sys
-
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler import FCompiler
 
 compilers = ['HPUXFCompiler']

@@ -1,14 +1,12 @@
 import os
-import sys
 
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.fcompiler.gnu import GnuFCompiler
 
 compilers = ['VastFCompiler']
 
 class VastFCompiler(GnuFCompiler):
-
     compiler_type = 'vast'
+    compiler_aliases = ()
     description = 'Pacific-Sierra Research Fortran 90 Compiler'
     version_pattern = r'\s*Pacific-Sierra Research vf90 '\
                       '(Personal|Professional)\s+(?P<version>[^\s]*)'
@@ -28,6 +26,9 @@ class VastFCompiler(GnuFCompiler):
         }
     module_dir_switch = None  #XXX Fix me
     module_include_switch = None #XXX Fix me
+
+    def find_executables(self):
+        pass
 
     def get_version_cmd(self):
         f90 = self.compiler_f90[0]
