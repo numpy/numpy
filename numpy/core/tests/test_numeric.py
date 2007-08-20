@@ -668,7 +668,62 @@ class test_clip(NumpyTestCase):
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a, ac)
 
-        
+class test_allclose_inf(ParametricTestCase):
+    rtol = 1e-5
+    atol = 1e-8
+
+    def tst_allclose(self,x,y):
+        assert allclose(x,y), "%s and %s not close" % (x,y)
+
+    def tst_not_allclose(self,x,y):
+        assert not allclose(x,y), "%s and %s shouldn't be close" % (x,y)
+
+    def testip_allclose(self):
+        """Parametric test factory."""
+        arr = array([100,1000])
+        aran = arange(125).reshape((5,5,5))
+
+        atol = self.atol
+        rtol = self.rtol
+
+        data = [([1,0], [1,0]),
+                ([atol], [0]),
+                ([1], [1+rtol+atol]),
+                (arr, arr + arr*rtol),
+                (arr, arr + arr*rtol + atol*2),
+                (aran, aran + aran*rtol),]
+
+        for (x,y) in data:
+            yield (self.tst_allclose,x,y)
+
+    def testip_not_allclose(self):
+        """Parametric test factory."""
+        aran = arange(125).reshape((5,5,5))
+
+        atol = self.atol
+        rtol = self.rtol
+
+        data = [([inf,0], [1,inf]),
+                ([inf,0], [1,0]),
+                ([inf,inf], [1,inf]),
+                ([inf,inf], [1,0]),
+                ([-inf, 0], [inf, 0]),
+                ([nan,0], [nan,0]),
+                ([atol*2], [0]),
+                ([1], [1+rtol+atol*2]),
+                (aran, aran + aran*atol + atol*2),
+                (array([inf,1]), array([0,inf]))]
+
+        for (x,y) in data:
+            yield (self.tst_not_allclose,x,y)
+
+    def test_no_parameter_modification(self):
+        x = array([inf,1])
+        y = array([0,inf])
+        allclose(x,y)
+        assert_array_equal(x,array([inf,1]))
+        assert_array_equal(y,array([0,inf]))
+
 import sys
 if sys.version_info[:2] >= (2, 5):
     set_local_path()

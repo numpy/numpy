@@ -835,21 +835,16 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     """
     x = array(a, copy=False)
     y = array(b, copy=False)
-    d1 = less_equal(absolute(x-y), atol + rtol * absolute(y))
     xinf = isinf(x)
-    yinf = isinf(y)
-    if (not xinf.any() and not yinf.any()):
-        return d1.all()
-    d3 = (x[xinf] == y[yinf])
-    d4 = (~xinf & ~yinf)
-    if d3.size < 2:
-        if d3.size==0:
-            return False
-        return d3
-    if d3.all():
-        return d1[d4].all() 
-    else:
+    if not all(xinf == isinf(y)):
         return False
+    if not any(xinf):
+        return all(less_equal(absolute(x-y), atol + rtol * absolute(y)))
+    if not all(x[xinf] == y[xinf]):
+        return False
+    x = x[~xinf]
+    y = y[~xinf]
+    return all(less_equal(absolute(x-y), atol + rtol * absolute(y)))
 
 def array_equal(a1, a2):
     try:
