@@ -75,6 +75,22 @@ class ParametricTestCase(unittest.TestCase):
 
         return ok
 
+    def set_testMethodDoc(self,doc):
+        self._testMethodDoc = doc
+        self._TestCase__testMethodDoc = doc
+
+    def get_testMethodDoc(self):
+        return self._testMethodDoc
+
+    testMethodDoc = property(fset=set_testMethodDoc, fget=get_testMethodDoc)
+
+    def get_testMethodName(self):
+        try:
+            return getattr(self,"_testMethodName")
+        except:
+            return getattr(self,"_TestCase__testMethodName")
+
+    testMethodName = property(fget=get_testMethodName)
 
     def run_test(self, testInfo,result):
         """Run one test with arguments"""
@@ -84,7 +100,7 @@ class ParametricTestCase(unittest.TestCase):
         # Reset the doc attribute to be the docstring of this particular test,
         # so that in error messages it prints the actual test's docstring and
         # not that of the test factory.
-        self._testMethodDoc = test.__doc__
+        self.testMethodDoc = test.__doc__
         result.startTest(self)
         try:
             try:
@@ -122,7 +138,7 @@ class ParametricTestCase(unittest.TestCase):
             result.addError(self, self._exc_info())
             return
 
-        saved_doc = self._testMethodDoc
+        saved_doc = self.testMethodDoc
 
         try:
             # Run all the tests specified
@@ -137,14 +153,14 @@ class ParametricTestCase(unittest.TestCase):
                 # stuff) to extract this information right away, the logic is
                 # hardcoded to pull it later, since unittest assumes it doesn't
                 # change.
-                self._testMethodDoc = test.__doc__
+                self.testMethodDoc = test.__doc__
                 result.startTest(self)
                 ok = self.exec_test(test,args,result)
                 if ok: result.addSuccess(self)
 
         finally:
             # Restore docstring info and run tearDown once only.
-            self._testMethodDoc = saved_doc
+            self.testMethodDoc = saved_doc
             try:
                 self.tearDown()
             except KeyboardInterrupt:
@@ -161,18 +177,13 @@ class ParametricTestCase(unittest.TestCase):
 
         if result is None: result = self.defaultTestResult()
 
-        try:
-            _testMethodName = getattr(self,"_testMethodName")
-        except:
-            _testMethodName = getattr(self,"_TestCase__testMethodName")
-
         # Independent tests: each gets its own setup/teardown
-        if _testMethodName.startswith(self._indepParTestPrefix):
-            for t in getattr(self,_testMethodName)():
+        if self.testMethodName.startswith(self._indepParTestPrefix):
+            for t in getattr(self,self.testMethodName)():
                 self.run_test(t,result)
         # Shared-state test: single setup/teardown for all
-        elif _testMethodName.startswith(self._shareParTestPrefix):
-            tests = getattr(self,_testMethodName,'runTest')()
+        elif self.testMethodName.startswith(self._shareParTestPrefix):
+            tests = getattr(self,self.testMethodName,'runTest')()
             self.run_tests(tests,result)
         # Normal unittest Test methods
         else:
@@ -192,7 +203,7 @@ if __name__ == '__main__':
         def setUp(self):
             self.counter += 1
             print 'setUp count: %2s for: %s' % (self.counter,
-                                                self._testMethodDoc)
+                                                self.testMethodDoc)
 
         #-------------------------------------------------------------------
         # A standard test method, just like in the unittest docs.
