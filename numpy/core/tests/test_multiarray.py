@@ -420,6 +420,29 @@ class test_clip(NumpyTestCase):
         y = rec['x'].clip(-0.3,0.5)
         self._check_range(y,-0.3,0.5)
 
+class test_putmask(ParametricTestCase):
+    def tst_basic(self,x,T,mask,val):
+        N.putmask(x,mask,val)
+        assert N.all(x[mask] == T(val))
+        assert x.dtype == T
+
+    def testip_types(self):
+        unchecked_types = [str,unicode,N.void,object]
+
+        x = N.random.random(1000)*100
+        mask = x < 40
+
+        tests = []
+        for val in [-100,0,15]:
+            for types in N.sctypes.itervalues():
+                tests.extend((self.tst_basic,x.copy().astype(T),T,mask,val)
+                             for T in types if T not in unchecked_types)
+        return tests
+
+    def test_mask_size(self):
+        self.failUnlessRaises(ValueError,N.putmask,
+                              N.array([1,2,3]),[True],5)
+
 # Import tests from unicode
 set_local_path()
 from test_unicode import *

@@ -1049,6 +1049,8 @@ typedef int (PyArray_ScalarKindFunc)(void *);
 
 typedef void (PyArray_FastClipFunc)(void *in, npy_intp n_in, void *min,
                                     void *max, void *out);
+typedef void (PyArray_FastPutmaskFunc)(void *in, void *mask, npy_intp n_in,
+                                    void *values, npy_intp nv);
 
 typedef struct {
         npy_intp *ptr;
@@ -1126,6 +1128,7 @@ typedef struct {
         int *cancastto;
 
         PyArray_FastClipFunc *fastclip;
+        PyArray_FastPutmaskFunc *fastputmask;
 } PyArray_ArrFuncs;
 
 #define NPY_ITEM_REFCOUNT   0x01  /* The item must be reference counted
@@ -1933,7 +1936,7 @@ typedef struct {
 #define PyArray_GETPTR3(obj, i, j, k) ((void *)(PyArray_BYTES(obj) +          \
                                             (i)*PyArray_STRIDES(obj)[0] +     \
                                             (j)*PyArray_STRIDES(obj)[1] +     \
-                                            (k)*PyArray_STRIDES(obj)[2])) 
+                                            (k)*PyArray_STRIDES(obj)[2]))
 
 #define PyArray_GETPTR4(obj, i, j, k, l) ((void *)(PyArray_BYTES(obj) +       \
                                             (i)*PyArray_STRIDES(obj)[0] +     \

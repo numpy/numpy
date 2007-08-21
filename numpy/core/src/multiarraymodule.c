@@ -23,7 +23,7 @@
 #include "numpy/arrayobject.h"
 
 #define PyAO PyArrayObject
-        
+
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 
@@ -68,7 +68,7 @@ _arraydescr_fromobj(PyObject *obj)
                 return NULL;
         }
         /* Understand ctypes structures --
-           bit-fields are not supported 
+           bit-fields are not supported
            automatically aligns */
         dtypedescr = PyObject_GetAttrString(obj, "_fields_");
         PyErr_Clear();
@@ -356,7 +356,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         Py_DECREF(out);
         if (ret_int) {
                 Py_INCREF(a->descr);
-                tmp = PyArray_CastToType((PyArrayObject *)ret, 
+                tmp = PyArray_CastToType((PyArrayObject *)ret,
                                          a->descr, PyArray_ISFORTRAN(a));
                 Py_DECREF(ret);
                 return tmp;
@@ -447,15 +447,15 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
 
 /* attempt to reshape an array without copying data
  *
- * This function should correctly handle all reshapes, including 
+ * This function should correctly handle all reshapes, including
  * axes of length 1. Zero strides should work but are untested.
  *
  * If a copy is needed, returns 0
- * If no copy is needed, returns 1 and fills newstrides 
+ * If no copy is needed, returns 1 and fills newstrides
  *     with appropriate strides
  *
  * The "fortran" argument describes how the array should be viewed
- * during the reshape, not how it is stored in memory (that 
+ * during the reshape, not how it is stored in memory (that
  * information is in self->strides).
  *
  * If some output dimensions have length 1, the strides assigned to
@@ -463,7 +463,7 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
  * stride of the next-fastest index.
  */
 static int
-_attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims, 
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
 			intp *newstrides, int fortran)
 {
 	int oldnd;
@@ -483,10 +483,10 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
 
 	/*
 	fprintf(stderr, "_attempt_nocopy_reshape( (");
-	for (oi=0; oi<oldnd; oi++) 
+	for (oi=0; oi<oldnd; oi++)
 		fprintf(stderr, "(%d,%d), ", olddims[oi], oldstrides[oi]);
 	fprintf(stderr, ") -> (");
-	for (ni=0; ni<newnd; ni++) 
+	for (ni=0; ni<newnd; ni++)
 		fprintf(stderr, "(%d,*), ", newdims[ni]);
 	fprintf(stderr, "), fortran=%d)\n", fortran);
 	*/
@@ -522,22 +522,22 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
 		for(ok=oi; ok<oj-1; ok++) {
 			if (fortran) {
 				if (oldstrides[ok+1] !=		\
-				    olddims[ok]*oldstrides[ok]) 
+				    olddims[ok]*oldstrides[ok])
 					return 0; /* not contiguous enough */
 			} else { /* C order */
 				if (oldstrides[ok] !=			\
-				    olddims[ok+1]*oldstrides[ok+1]) 
+				    olddims[ok+1]*oldstrides[ok+1])
 					return 0; /* not contiguous enough */
 			}
 		}
 
 		if (fortran) {
 			newstrides[ni]=oldstrides[oi];
-			for (nk=ni+1;nk<nj;nk++) 
+			for (nk=ni+1;nk<nj;nk++)
 				newstrides[nk]=newstrides[nk-1]*newdims[nk-1];
 		} else { /* C order */
 			newstrides[nj-1]=oldstrides[oj-1];
-			for (nk=nj-1;nk>ni;nk--) 
+			for (nk=nj-1;nk>ni;nk--)
 				newstrides[nk-1]=newstrides[nk]*newdims[nk];
 		}
 
@@ -548,10 +548,10 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
 
 	/*
 	fprintf(stderr, "success: _attempt_nocopy_reshape (");
-	for (oi=0; oi<oldnd; oi++) 
+	for (oi=0; oi<oldnd; oi++)
 		fprintf(stderr, "(%d,%d), ", olddims[oi], oldstrides[oi]);
 	fprintf(stderr, ") -> (");
-	for (ni=0; ni<newnd; ni++) 
+	for (ni=0; ni<newnd; ni++)
 		fprintf(stderr, "(%d,%d), ", newdims[ni], newstrides[ni]);
 	fprintf(stderr, ")\n");
 	*/
@@ -605,7 +605,7 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
 /* Returns a new array
    with the new shape from the data
    in the old array --- order-perspective depends on fortran argument.
-   copy-only-if-necessary 
+   copy-only-if-necessary
 */
 
 /*MULTIARRAY_API
@@ -642,8 +642,8 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	/* Returns a pointer to an appropriate strides array
 	   if all we are doing is inserting ones into the shape,
 	   or removing ones from the shape
-	   or doing a combination of the two  
-	   In this case we don't need to do anything but update strides and 
+	   or doing a combination of the two
+	   In this case we don't need to do anything but update strides and
 	   dimensions.	So, we can handle non single-segment cases.
 	*/
 	i=_check_ones(self, n, dimensions, newstrides);
@@ -652,22 +652,22 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 	flags = self->flags;
 
 	if (strides==NULL) { /* we are really re-shaping not just adding ones
-				to the shape somewhere */		 
-		
-		/* fix any -1 dimensions and check new-dimensions against 
+				to the shape somewhere */
+
+		/* fix any -1 dimensions and check new-dimensions against
 		   old size */
 		if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0)
 			return NULL;
 
 		/* sometimes we have to create a new copy of the array
 		   in order to get the right orientation and
-                   because we can't just re-use the buffer with the 
+                   because we can't just re-use the buffer with the
                    data in the order it is in.
 		*/
-		if (!(PyArray_ISONESEGMENT(self)) || 
-                    (((PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) && 
+		if (!(PyArray_ISONESEGMENT(self)) ||
+                    (((PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) &&
                        fortran == NPY_FORTRANORDER)
-                      || (PyArray_CHKFLAGS(self, NPY_FORTRAN) && 
+                      || (PyArray_CHKFLAGS(self, NPY_FORTRAN) &&
                           fortran == NPY_CORDER)) && (self->nd > 1))) {
 
 		    int success=0;
@@ -690,7 +690,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 		/* We always have to interpret the contiguous buffer correctly
 		 */
 
-		/* Make sure the flags argument is set. 
+		/* Make sure the flags argument is set.
 		*/
 		if (n > 1) {
 			if (fortran == NPY_FORTRANORDER) {
@@ -1139,7 +1139,7 @@ static PyObject *
 PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
 {
         PyArray_FastClipFunc *func;
-        int outgood=0, ingood=0;                
+        int outgood=0, ingood=0;
         PyArrayObject *maxa=NULL;
         PyArrayObject *mina=NULL;
         PyArrayObject *newout=NULL, *newin=NULL;
@@ -1147,7 +1147,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         PyObject *zero;
 
         func = self->descr->f->fastclip;
-        if (func == NULL || !PyArray_CheckAnyScalar(min) || 
+        if (func == NULL || !PyArray_CheckAnyScalar(min) ||
             !PyArray_CheckAnyScalar(max))
                 return _slow_array_clip(self, min, max, out);
 
@@ -1164,7 +1164,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
            KIND than the input array (and then find the
            type that matches both).
         */
-        if (PyArray_ScalarKind(newdescr->type_num, NULL) > 
+        if (PyArray_ScalarKind(newdescr->type_num, NULL) >
             PyArray_ScalarKind(self->descr->type_num, NULL)) {
                 indescr = _array_small_type(newdescr, self->descr);
                 func = indescr->f->fastclip;
@@ -1174,7 +1174,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                 Py_INCREF(indescr);
         }
         Py_DECREF(newdescr);
-        
+
         if (!PyDataType_ISNOTSWAPPED(indescr)) {
                 PyArray_Descr *descr2;
                 descr2 = PyArray_DescrNewByteorder(indescr, '=');
@@ -1184,19 +1184,19 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         }
 
         /* Convert max to an array */
-        maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0, 
+        maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0,
                                          NPY_DEFAULT, NULL);
         if (maxa == NULL) return NULL;
 
 
         /* If we are unsigned, then make sure min is not <0 */
-        /* This is to match the behavior of 
+        /* This is to match the behavior of
            _slow_array_clip
 
            We allow min and max to go beyond the limits
            for other data-types in which case they
            are interpreted as their modular counterparts.
-        */           
+        */
         if (PyArray_ISUNSIGNED(self)) {
                 int cmp;
                 zero = PyInt_FromLong(0);
@@ -1216,7 +1216,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 
         /* Convert min to an array */
         Py_INCREF(indescr);
-        mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0, 
+        mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0,
                                          NPY_DEFAULT, NULL);
         Py_DECREF(min);
         if (mina == NULL) goto fail;
@@ -1244,11 +1244,11 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* At this point, newin is a single-segment, aligned, and correct
            byte-order array of the correct type
 
-           if ingood == 0, then it is a copy, otherwise, 
+           if ingood == 0, then it is a copy, otherwise,
            it is the original input.
         */
 
-        /* If we have already made a copy of the data, then use 
+        /* If we have already made a copy of the data, then use
            that as the output array
         */
         if (out == NULL && !ingood) {
@@ -1258,10 +1258,10 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* Now, we know newin is a usable array for fastclip,
            we need to make sure the output array is available
            and usable */
-        if (out == NULL) { 
+        if (out == NULL) {
                 Py_INCREF(indescr);
                 out = (NPY_AO*)PyArray_NewFromDescr(self->ob_type,
-						    indescr, self->nd, 
+						    indescr, self->nd,
                                                     self->dimensions,
 						    NULL, NULL,
 						    PyArray_ISFORTRAN(self),
@@ -1274,8 +1274,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         if (out == newin) {
                 outgood = 1;
         }
-        if (!outgood && PyArray_ISONESEGMENT(out) && 
-            PyArray_CHKFLAGS(out, ALIGNED) && PyArray_ISNOTSWAPPED(out) &&  
+        if (!outgood && PyArray_ISONESEGMENT(out) &&
+            PyArray_CHKFLAGS(out, ALIGNED) && PyArray_ISNOTSWAPPED(out) &&
             PyArray_EquivTypes(out->descr, indescr)) {
                 outgood = 1;
         }
@@ -1284,9 +1284,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* Create one, now */
         if (!outgood) {
                 int oflags;
-                if (PyArray_ISFORTRAN(out)) 
+                if (PyArray_ISFORTRAN(out))
                         oflags = NPY_FARRAY;
-                else 
+                else
                         oflags = NPY_CARRAY;
                 oflags |= NPY_UPDATEIFCOPY | NPY_FORCECAST;
                 Py_INCREF(indescr);
@@ -1308,12 +1308,12 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         if (newout->data != newin->data) {
                 memcpy(newout->data, newin->data, PyArray_NBYTES(newin));
         }
-        
+
         /* Now we can call the fast-clip function */
 
         func(newin->data, PyArray_SIZE(newin), mina->data, maxa->data,
              newout->data);
-        
+
         /* Clean up temporary variables */
         Py_DECREF(mina);
         Py_DECREF(maxa);
@@ -1321,7 +1321,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* Copy back into out if out was not already a nice array. */
         Py_DECREF(newout);
         return (PyObject *)out;
-        
+
  fail:
         Py_XDECREF(maxa);
         Py_XDECREF(mina);
@@ -1339,11 +1339,11 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
 	if (PyArray_ISCOMPLEX(self)) {
                 if (out == NULL) {
-                        return PyArray_GenericUnaryFunction(self, 
+                        return PyArray_GenericUnaryFunction(self,
                                                             n_ops.conjugate);
                 }
                 else {
-                        return PyArray_GenericBinaryFunction(self, 
+                        return PyArray_GenericBinaryFunction(self,
                                                              (PyObject *)out,
                                                              n_ops.conjugate);
                 }
@@ -2114,7 +2114,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
                                 Py_DECREF(mps[i]);
                                 mps[i] = (PyArrayObject *)obj;
                         }
-                }                        
+                }
                 return mps;
         }
 
@@ -2186,7 +2186,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
                 if (mps[i] == NULL) goto fail;
 	}
 	Py_DECREF(intype);
- 	Py_XDECREF(stype);        
+ 	Py_XDECREF(stype);
 	return mps;
 
  fail:
@@ -2567,7 +2567,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
 	n = op->nd;
 	if ((n==0) || (PyArray_SIZE(op)==1)) return 0;
-        
+
 	if (axis < 0) axis += n;
 	if ((axis < 0) || (axis >= n)) {
 		PyErr_Format(PyExc_ValueError,
@@ -2667,7 +2667,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
         /* Creates new reference op2 */
 	if ((op2=(PyAO *)_check_axis(op, &axis, 0))==NULL) return NULL;
-        
+
 	/* Determine if we should use new algorithm or not */
 	if (op2->descr->f->argsort[which] != NULL) {
 		ret = (PyArrayObject *)_new_argsort(op2, axis, which);
@@ -2790,7 +2790,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 				     "merge sort not available for item %d", i);
 			goto fail;
 		}
-		if (!object && 
+		if (!object &&
                     PyDataType_FLAGCHK(mps[i]->descr, NPY_NEEDS_PYAPI))
                         object = 1;
 		its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis	\
@@ -2805,7 +2805,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 						   mps[0]->dimensions,
 						   PyArray_INTP,
 						   NULL, NULL, 0, 0, NULL);
-		
+
 		if (ret == NULL) goto fail;
 		*((intp *)(ret->data)) = 0;
 		goto finish;
@@ -3288,7 +3288,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 
 	nd = ap1->nd+ap2->nd-2;
         if (nd > NPY_MAXDIMS) {
-                PyErr_SetString(PyExc_ValueError, 
+                PyErr_SetString(PyExc_ValueError,
                                 "dot: too many dimensions in result");
                 goto fail;
         }
@@ -4047,8 +4047,8 @@ static PyObject *
 array_putmask(PyObject *module, PyObject *args, PyObject *kwds)
 {
 	PyObject *mask, *values;
-        PyObject *array; 
-        
+        PyObject *array;
+
 	static char *kwlist[] = {"arr", "mask", "values", NULL};
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!OO:putmask", kwlist,
@@ -4065,6 +4065,7 @@ array_putmask(PyObject *module, PyObject *args, PyObject *kwds)
 static PyObject *
 PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
+        PyArray_FastPutmaskFunc *func;
         PyArrayObject  *mask, *values;
         int i, chunk, ni, max_item, nv, tmp;
         char *src, *dest;
@@ -4075,8 +4076,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 
         if (!PyArray_Check(self)) {
                 PyErr_SetString(PyExc_TypeError,
-				"putmask: first argument must "\
-				"be an array");
+                                "putmask: first argument must "\
+                                 "be an array");
                 return NULL;
         }
         if (!PyArray_ISCONTIGUOUS(self)) {
@@ -4094,45 +4095,51 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         chunk = self->descr->elsize;
 
         mask = (PyArrayObject *)\
-		PyArray_FROM_OTF(mask0, PyArray_BOOL, CARRAY | FORCECAST);
-	if (mask == NULL) goto fail;
+                     PyArray_FROM_OTF(mask0, PyArray_BOOL, CARRAY | FORCECAST);
+        if (mask == NULL) goto fail;
         ni = PyArray_SIZE(mask);
         if (ni != max_item) {
                 PyErr_SetString(PyExc_ValueError,
-				"putmask: mask and data must be "\
-				"the same size");
+                        "putmask: mask and data must be "\
+                        "the same size");
                 goto fail;
         }
 
         values = (PyArrayObject *)\
-		PyArray_ContiguousFromAny(values0, self->descr->type_num, 0, 0);
-	if (values == NULL) goto fail;
-        nv = PyArray_SIZE(values);	 /* zero if null array */
+                PyArray_ContiguousFromAny(values0, self->descr->type_num, 0, 0);
+        if (values == NULL) goto fail;
+        nv = PyArray_SIZE(values);        /* zero if null array */
         if (nv <= 0) {
                 Py_XDECREF(values);
                 Py_XDECREF(mask);
                 Py_INCREF(Py_None);
                 return Py_None;
         }
-        if (nv > 0) {
-                if (PyDataType_REFCHK(self->descr)) {
-                        for(i=0; i<ni; i++) {
+        if (PyDataType_REFCHK(self->descr)) {
+                for(i=0; i<ni; i++) {
+                        tmp = ((Bool *)(mask->data))[i];
+                        if (tmp) {
                                 src = values->data + chunk * (i % nv);
+                                PyArray_Item_INCREF(src, self->descr);
+                                PyArray_Item_XDECREF(dest+i*chunk, self->descr);
+                                memmove(dest + i * chunk, src, chunk);
+                        }
+                }
+        }
+        else {
+                func = self->descr->f->fastputmask;
+                if (func == NULL) {
+                        for(i=0; i<ni; i++) {
                                 tmp = ((Bool *)(mask->data))[i];
                                 if (tmp) {
-					PyArray_Item_INCREF(src, self->descr);
-					PyArray_Item_XDECREF(dest+i*chunk, self->descr);
+                                        src = values->data + chunk * (i % nv);
                                         memmove(dest + i * chunk, src, chunk);
                                 }
-			}
+                        }
                 }
                 else {
-                        for(i=0; i<ni; i++) {
-                                src = values->data + chunk * (i % nv);
-                                tmp = ((Bool *)(mask->data))[i];
-                                if (tmp) memmove(dest + i * chunk, src, chunk);
-			}
-		}
+                        func(dest, mask->data, ni, values->data, nv);
+                }
         }
 
         Py_XDECREF(values);
@@ -4625,7 +4632,7 @@ _convert_from_tuple(PyObject *obj)
 					"invalid shape in fixed-type tuple.");
 			goto fail;
 		}
-		/* If (type, 1) was given, it is equivalent to type... 
+		/* If (type, 1) was given, it is equivalent to type...
                    or (type, ()) was given it is equivalent to type... */
 		if ((shape.len == 1 && shape.ptr[0] == 1 && PyNumber_Check(val)) || \
                     (shape.len == 0 && PyTuple_Check(val))) {
@@ -4763,7 +4770,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 	if (maxalign > 1) {
 		totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
 	}
-	if (align) new->alignment = maxalign;        
+	if (align) new->alignment = maxalign;
 	return new;
 
  fail:
@@ -5092,16 +5099,16 @@ _check_for_commastring(char *type, int len)
 
         /* Check for ints at start of string */
 	if ((type[0] >= '0' && type[0] <= '9') ||
-            ((len > 1) && _chk_byteorder(type[0]) && 
+            ((len > 1) && _chk_byteorder(type[0]) &&
              (type[1] >= '0' && type[1] <= '9')))
                 return 1;
 
         /* Check for empty tuple */
         if (((len > 1) && (type[0] == '(' && type[1] == ')')) ||
-            ((len > 3) && _chk_byteorder(type[0]) && 
+            ((len > 3) && _chk_byteorder(type[0]) &&
              (type[1] == '(' && type[2] == ')')))
                 return 1;
-             
+
         /* Check for presence of commas */
 	for (i=1;i<len;i++)
 		if (type[i] == ',') return 1;
@@ -5148,7 +5155,7 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
                                         "data-type-descriptor not understood");
                 }
                 return PY_FAIL;
-        } 
+        }
         return PY_SUCCEED;
 }
 
@@ -5177,7 +5184,7 @@ PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
                                         "data-type-descriptor not understood");
                 }
                 return PY_FAIL;
-        } 
+        }
         return PY_SUCCEED;
 }
 
@@ -5724,7 +5731,7 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 				"itemsize cannot be zero");
 		return NULL;
 	}
-        
+
 	if (PyDataType_FLAGCHK(typecode, NPY_ITEM_IS_POINTER)) {
 		if (obj == NULL) obj = Py_None;
 		dptr = &obj;
@@ -6652,7 +6659,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 	if (!(*next)) {
                 if (PyTuple_Check(stop)) {
                         PyErr_Clear();
-                        PyErr_SetString(PyExc_TypeError, 
+                        PyErr_SetString(PyExc_TypeError,
                                         "arange: scalar arguments expected "\
                                         "instead of a tuple.");
                 }
@@ -7089,10 +7096,10 @@ as_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
                 __except(1) {
                         err = 1;
                 }
-#else 
+#else
                 PyOS_sighandler_t _npy_sig_save;
                 _npy_sig_save = PyOS_setsig(SIGSEGV, _SigSegv_Handler);
-                
+
                 if (setjmp(_NPY_SIGSEGV_BUF) == 0) {
                         _test_code();
                 }
@@ -7102,10 +7109,10 @@ as_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
                 PyOS_setsig(SIGSEGV, _npy_sig_save);
 #endif
                 if (err) {
-                        PyErr_SetString(PyExc_ValueError, 
+                        PyErr_SetString(PyExc_ValueError,
                                         "cannot use memory location as " \
                                         "a buffer.");
-                        return NULL;                        
+                        return NULL;
                 }
         }
 
@@ -7493,7 +7500,7 @@ set_flaginfo(PyObject *d)
         _addnew(WRITEABLE, W);
         _addone(C_CONTIGUOUS);
         _addone(F_CONTIGUOUS);
-        
+
 #undef _addone
 #undef _addnew
 

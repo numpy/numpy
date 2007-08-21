@@ -312,9 +312,9 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         char *buffer;
 #endif
 
-        if (!PyString_Check(op) && !PyUnicode_Check(op) && 
+        if (!PyString_Check(op) && !PyUnicode_Check(op) &&
             PySequence_Check(op) && PySequence_Size(op) > 0) {
-                PyErr_SetString(PyExc_ValueError, 
+                PyErr_SetString(PyExc_ValueError,
                                 "setting an array element with a sequence");
                 return -1;
         }
@@ -360,9 +360,9 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         return 0;
 }
 
-/* STRING -- can handle both NULL-terminated and not NULL-terminated cases 
+/* STRING -- can handle both NULL-terminated and not NULL-terminated cases
              will truncate all ending NULLs in returned string.
-*/    
+*/
 static PyObject *
 STRING_getitem(char *ip, PyArrayObject *ap)
 {
@@ -384,7 +384,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 
         if (!PyString_Check(op) && !PyUnicode_Check(op) &&
             PySequence_Check(op) && PySequence_Size(op) > 0) {
-                PyErr_SetString(PyExc_ValueError, 
+                PyErr_SetString(PyExc_ValueError,
                                 "setting an array element with a sequence");
                 return -1;
         }
@@ -520,7 +520,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 
  finish:
         if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
-            PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {                
+            PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "tried to get void-array with object"
                                 " members as buffer.");
@@ -1104,15 +1104,15 @@ static void
                         memcpy(dst, src, n*sizeof(@type@));
                 }
                 else {
-                        _unaligned_strided_byte_copy(dst, dstride, src, 
-                                                     sstride, n, 
+                        _unaligned_strided_byte_copy(dst, dstride, src,
+                                                     sstride, n,
                                                      sizeof(@type@));
                 }
         }
 
         if (swap) {
                 _strided_byte_swap(dst, dstride, n, SIZEOF_@fsize@);
-                _strided_byte_swap(((char *)dst + SIZEOF_@fsize@), dstride, 
+                _strided_byte_swap(((char *)dst + SIZEOF_@fsize@), dstride,
                                    n, SIZEOF_@fsize@);
         }
 }
@@ -1306,7 +1306,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                                 arr->descr=descr;return;
                         }
                         arr->descr = new;
-                        new->f->copyswapn(dst+offset, dstride, 
+                        new->f->copyswapn(dst+offset, dstride,
                                           (src != NULL ? src+offset : NULL),
                                           sstride, n, swap, arr);
                 }
@@ -1315,7 +1315,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
         }
         if (swap && arr->descr->subarray != NULL) {
                 PyArray_Descr *descr, *new;
-                npy_intp num;                
+                npy_intp num;
                 npy_intp i;
                 int subitemsize;
                 char *dstptr, *srcptr;
@@ -1357,8 +1357,8 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                                 arr->descr=descr;return;
                         }
                         arr->descr = new;
-                        new->f->copyswap(dst+offset, 
-                                         (src != NULL ? src+offset : NULL), 
+                        new->f->copyswap(dst+offset,
+                                         (src != NULL ? src+offset : NULL),
                                          swap, arr);
                 }
                 arr->descr = descr;
@@ -1366,7 +1366,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         }
         if (swap && arr->descr->subarray != NULL) {
                 PyArray_Descr *descr, *new;
-                npy_intp num;                
+                npy_intp num;
                 int itemsize;
                 descr = arr->descr;
                 new = descr->subarray->base;
@@ -1668,7 +1668,7 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *ap)
                 if (ip1 == ip2) return 1;
                 if (ip1 == NULL) return -1;
                 return 1;
-        }                
+        }
         return PyObject_Compare(*ip1, *ip2);
 }
 
@@ -1700,9 +1700,9 @@ UNICODE_compare(register PyArray_UCS4 *ip1, register PyArray_UCS4 *ip2,
 
 /* If fields are defined, then compare on first field and if equal
    compare on second field.  Continue until done or comparison results
-   in not_equal. 
+   in not_equal.
 
-   Must align data passed on to sub-comparisons. 
+   Must align data passed on to sub-comparisons.
 */
 
 static int
@@ -1714,9 +1714,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         char *nip1, *nip2;
         int i, offset, res=0;
 
-        if (!PyArray_HASFIELDS(ap)) 
+        if (!PyArray_HASFIELDS(ap))
                 return STRING_compare(ip1, ip2, ap);
-        
+
         descr = ap->descr;
         /* Compare on the first-field.  If equal, then
            compare on the second-field, etc.
@@ -1743,7 +1743,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                             /* copy data to a buffer */
                                 nip2 = _pya_malloc(new->elsize);
                                 if (nip2 == NULL) {
-                                        if (nip1 != ip1+offset) 
+                                        if (nip1 != ip1+offset)
                                                 _pya_free(nip1);
                                         goto finish;
                                 }
@@ -2044,61 +2044,96 @@ static void
 
 
 
-/************************ 
- * Fast clip functions 
- *************************/ 
- 
-/**begin repeat 
-#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE# 
-#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble# 
-*/ 
+/************************
+ * Fast clip functions
+ *************************/
+
+/**begin repeat
+#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+*/
 static void
 @name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out)
-{ 
-        register npy_intp i; 
+{
+        register npy_intp i;
         @type@ max_val, min_val;
-        
+
         max_val = *max;
         min_val = *min;
-  
-        for (i = 0; i < ni; i++) {   
-                if (in[i] < min_val) { 
-                        out[i]   = min_val; 
-                } else if (in[i] > max_val) { 
-                        out[i]   = max_val; 
-                } 
-        } 
-        
-        return;
-} 
-/**end repeat**/ 
 
-/**begin repeat 
-#name=CFLOAT, CDOUBLE, CLONGDOUBLE# 
-#type= cfloat, cdouble, clongdouble# 
-*/ 
+        for (i = 0; i < ni; i++) {
+                if (in[i] < min_val) {
+                        out[i]   = min_val;
+                } else if (in[i] > max_val) {
+                        out[i]   = max_val;
+                }
+        }
+
+        return;
+}
+/**end repeat**/
+
+/**begin repeat
+#name=CFLOAT, CDOUBLE, CLONGDOUBLE#
+#type= cfloat, cdouble, clongdouble#
+*/
 static void
-@name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out) 
-{ 
-        register npy_intp i; 
+@name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out)
+{
+        register npy_intp i;
         @type@ max_val, min_val;
-        
+
         min_val = *min;
         max_val = *max;
 
-        for (i = 0; i < ni; i++) {   
-                if (PyArray_CLT(in[i], min_val)) { 
+        for (i = 0; i < ni; i++) {
+                if (PyArray_CLT(in[i], min_val)) {
                         out[i] = min_val;
-                } else if (PyArray_CGT(in[i], max_val)) { 
+                } else if (PyArray_CGT(in[i], max_val)) {
                         out[i] = max_val;
-                } 
-        }         
+                }
+        }
         return;
-} 
- 
-/**end repeat**/ 
+}
+
+/**end repeat**/
 
 #define OBJECT_fastclip NULL
+
+/************************
+ * Fast putmask functions
+ *************************/
+
+/**begin repeat
+#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble#
+*/
+static void
+@name@_fastputmask(@type@ *in, Bool *mask, intp ni, @type@ *vals, intp nv)
+{
+        register npy_intp i;
+        @type@ s_val;
+        if (nv == 1) {
+                s_val = *vals;
+                for (i = 0; i < ni; i++) {
+                        if (mask[i]) {
+                                in[i] = s_val;
+                        }
+                }
+        }
+        else {
+                for (i = 0; i < ni; i++) {
+                        if (mask[i]) {
+                                in[i] = vals[i%nv];
+                        }
+                }
+        }
+        return;
+}
+/**end repeat**/
+
+#define OBJECT_fastputmask NULL
+
 
 #define _ALIGN(type) offsetof(struct {char c; type v;},v)
 
@@ -2164,7 +2199,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_ScalarKindFunc*)NULL,
         NULL,
         NULL,
-        (PyArray_FastClipFunc *)NULL
+        (PyArray_FastClipFunc *)NULL,
+        (PyArray_FastPutmaskFunc *)NULL
 };
 
 static PyArray_Descr @from@_Descr = {
@@ -2241,7 +2277,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         (PyArray_ScalarKindFunc*)NULL,
         NULL,
         NULL,
-        (PyArray_FastClipFunc*)@from@_fastclip
+        (PyArray_FastClipFunc*)@from@_fastclip,
+        (PyArray_FastPutmaskFunc*)@from@_fastputmask
 };
 
 static PyArray_Descr @from@_Descr = {
