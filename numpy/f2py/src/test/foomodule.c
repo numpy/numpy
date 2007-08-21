@@ -28,116 +28,117 @@ static PyObject *foo_error;
 #endif
 #endif
 
-  /************* foo_bar *************/
-  static char doc_foo_bar[] = "\
+/************* foo_bar *************/
+static char doc_foo_bar[] = "\
 Function signature:\n\
   bar()\n\
 ";
-  static PyObject *foo_bar(PyObject *capi_self, PyObject *capi_args,
-			   PyObject *capi_keywds, void (*f2py_func)()) {
+static PyObject *foo_bar(PyObject *capi_self, PyObject *capi_args,
+                         PyObject *capi_keywds, void (*f2py_func)()) {
     PyObject *capi_buildvalue = NULL;
     static char *capi_kwlist[] = {NULL};
     if (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,\
-				     "|:foo.bar",\
-				     capi_kwlist))
-      goto capi_fail;
+                                     "|:foo.bar",\
+                                     capi_kwlist))
+        goto capi_fail;
     (*f2py_func)();
     capi_buildvalue = Py_BuildValue("");
-  capi_fail:
+ capi_fail:
     return capi_buildvalue;
-  }
-  /************ mod_init **************/
-  static PyObject *mod_init(PyObject *capi_self, PyObject *capi_args,
-			   PyObject *capi_keywds, void (*f2py_func)()) {
+}
+/************ mod_init **************/
+static PyObject *mod_init(PyObject *capi_self, PyObject *capi_args,
+                          PyObject *capi_keywds, void (*f2py_func)()) {
     PyObject *capi_buildvalue = NULL;
     static char *capi_kwlist[] = {NULL};
     if (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,\
-				     "|:mod.init",\
-				     capi_kwlist))
-      goto capi_fail;
+                                     "|:mod.init",\
+                                     capi_kwlist))
+        goto capi_fail;
     (*f2py_func)();
     capi_buildvalue = Py_BuildValue("");
-  capi_fail:
+ capi_fail:
     return capi_buildvalue;
-  }
+}
 
-  /* F90 module */
-  static FortranDataDef f2py_mod_def[] = {
+/* F90 module */
+static FortranDataDef f2py_mod_def[] = {
     {"a",0, {}, PyArray_INT},
     {"b",0, {}, PyArray_DOUBLE},
     {"c",1, {3}, PyArray_DOUBLE},
     {"d",1, {-1}, PyArray_DOUBLE},
     {"init",-1,{},0,NULL,(void *)mod_init},
     {NULL}
-  };
-  static void f2py_setup_mod(char *a,char *b,char *c,void (*d)(),char *init) {
+};
+static void f2py_setup_mod(char *a,char *b,char *c,void (*d)(),char *init) {
     f2py_mod_def[0].data = a;
     f2py_mod_def[1].data = b;
     f2py_mod_def[2].data = c;
     f2py_mod_def[3].func = d;
     f2py_mod_def[4].data = init;
-  }
-  extern void F_FUNC(f2pyinitmod,F2PYINITMOD)();
-  static void f2py_init_mod() {
-    F_FUNC(f2pyinitmod,F2PYINITMOD)(f2py_setup_mod);
-  }
+}
+extern void F_FUNC(f2pyinitmod,F2PYINITMOD)();
+                                           static void f2py_init_mod() {
+                                               F_FUNC(f2pyinitmod,F2PYINITMOD)(f2py_setup_mod);
+                                           }
 
-  /* COMMON block */
-  static FortranDataDef f2py_foodata_def[] = {
+/* COMMON block */
+static FortranDataDef f2py_foodata_def[] = {
     {"a",0, {}, PyArray_INT},
     {"b",0, {}, PyArray_DOUBLE},
     {"c",1, {3}, PyArray_DOUBLE},
     {NULL}
-  };
-  static void f2py_setup_foodata(char *a,char *b,char *c) {
+};
+static void f2py_setup_foodata(char *a,char *b,char *c) {
     f2py_foodata_def[0].data = a;
     f2py_foodata_def[1].data = b;
     f2py_foodata_def[2].data = c;
-  }
-  extern void F_FUNC(f2pyinitfoodata,F2PYINITFOODATA)();
-  static void f2py_init_foodata() {
-    F_FUNC(f2pyinitfoodata,F2PYINITFOODATA)(f2py_setup_foodata);
-  }
+}
+extern void F_FUNC(f2pyinitfoodata,F2PYINITFOODATA)();
+                                                   static void f2py_init_foodata() {
+                                                       F_FUNC(f2pyinitfoodata,F2PYINITFOODATA)(f2py_setup_foodata);
+                                                   }
 
-  /* Fortran routines (needs no initialization/setup function) */
-  extern void F_FUNC(bar,BAR)();
-  extern void F_FUNC(foo,FOO)();
-  static FortranDataDef f2py_routines_def[] = {
-    {"bar",-1, {}, 0, (char *)F_FUNC(bar,BAR),(void *)foo_bar,doc_foo_bar},
-    {"foo",-1, {}, 0, (char *)F_FUNC(foo,FOO),(void *)foo_bar,doc_foo_bar},
-    {NULL}
-  };
+/* Fortran routines (needs no initialization/setup function) */
+extern void F_FUNC(bar,BAR)();
+                           extern void F_FUNC(foo,FOO)();
+                                                      static FortranDataDef f2py_routines_def[] = {
+                                                          {"bar",-1, {}, 0, (char *)F_FUNC(bar,BAR),(void *)foo_bar,doc_foo_bar},
+                                                          {"foo",-1, {}, 0, (char *)F_FUNC(foo,FOO),(void *)foo_bar,doc_foo_bar},
+                                                          {NULL}
+                                                      };
 
 static PyMethodDef foo_module_methods[] = {
-/*eof method*/
-  {NULL,NULL}
+    /*eof method*/
+    {NULL,NULL}
 };
 
 void initfoo() {
-  int i;
-  PyObject *m, *d, *s;
-  PyTypeObject *t;
-  PyObject *f;
-  import_array();
-  
-  m = Py_InitModule("foo", foo_module_methods);
+    int i;
+    PyObject *m, *d, *s;
+    PyTypeObject *t;
+    PyObject *f;
+    import_array();
 
-  d = PyModule_GetDict(m);
-  s = PyString_FromString("This module 'foo' demonstrates the usage of fortranobject.");
-  PyDict_SetItemString(d, "__doc__", s);
+    m = Py_InitModule("foo", foo_module_methods);
 
-  /* Fortran objects: */
-  PyDict_SetItemString(d, "mod", PyFortranObject_New(f2py_mod_def,f2py_init_mod));
-  PyDict_SetItemString(d, "foodata", PyFortranObject_New(f2py_foodata_def,f2py_init_foodata));
-  for(i=0;f2py_routines_def[i].name!=NULL;i++)
-    PyDict_SetItemString(d, f2py_routines_def[i].name,
-			 PyFortranObject_NewAsAttr(&f2py_routines_def[i]));
+    d = PyModule_GetDict(m);
+    s = PyString_FromString("This module 'foo' demonstrates the usage of fortranobject.");
+    PyDict_SetItemString(d, "__doc__", s);
 
-  Py_DECREF(s);
-  
-  if (PyErr_Occurred())
-    Py_FatalError("can't initialize module foo");
+    /* Fortran objects: */
+    PyDict_SetItemString(d, "mod", PyFortranObject_New(f2py_mod_def,f2py_init_mod));
+    PyDict_SetItemString(d, "foodata", PyFortranObject_New(f2py_foodata_def,f2py_init_foodata));
+    for(i=0;f2py_routines_def[i].name!=NULL;i++)
+        PyDict_SetItemString(d, f2py_routines_def[i].name,
+                             PyFortranObject_NewAsAttr(&f2py_routines_def[i]));
+
+    Py_DECREF(s);
+
+    if (PyErr_Occurred())
+        Py_FatalError("can't initialize module foo");
 }
+
 #ifdef __CPLUSCPLUS__
 }
 #endif

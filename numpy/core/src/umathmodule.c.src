@@ -30,13 +30,13 @@ extern double modf (double, double *);
 #endif
 static float fabsf(float x)
 {
-       return (float)fabs((double)(x));
+    return (float)fabs((double)(x));
 }
 #endif
 #ifndef HAVE_HYPOTF
 static float hypotf(float x, float y)
 {
-  return (float)hypot((double)(x), (double)(y));
+    return (float)hypot((double)(x), (double)(y));
 }
 #endif
 #ifndef HAVE_RINTF
@@ -45,19 +45,19 @@ static double rint (double x);
 #endif
 static float rintf(float x)
 {
-       return (float)rint((double)(x));
+    return (float)rint((double)(x));
 }
 #endif
 #ifndef HAVE_FREXPF
 static float frexpf(float x, int * i)
 {
-       return (float)frexp((double)(x), i);
+    return (float)frexp((double)(x), i);
 }
 #endif
 #ifndef HAVE_LDEXPF
 static float ldexpf(float x, int i)
 {
-       return (float)ldexp((double)(x), i);
+    return (float)ldexp((double)(x), i);
 }
 #endif
 #define tanhf nc_tanhf
@@ -66,33 +66,33 @@ static float ldexpf(float x, int i)
 #ifndef HAVE_INVERSE_HYPERBOLIC
 static double acosh(double x)
 {
-	return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
+    return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 
 double log1p(double);
 static double asinh(double xx)
 {
-	double x, d;
-	int sign;
-	if (xx < 0.0) {
-		sign = -1;
-		x = -xx;
-	}
-	else {
-		sign = 1;
-		x = xx;
-	}
-	if (x > 1e8) {
-		d = x;
-	} else {
-		d = sqrt(x*x + 1);
-	}
-	return sign*log1p(x*(1.0 + x/(d+1)));
+    double x, d;
+    int sign;
+    if (xx < 0.0) {
+        sign = -1;
+        x = -xx;
+    }
+    else {
+        sign = 1;
+        x = xx;
+    }
+    if (x > 1e8) {
+        d = x;
+    } else {
+        d = sqrt(x*x + 1);
+    }
+    return sign*log1p(x*(1.0 + x/(d+1)));
 }
 
 static double atanh(double x)
 {
-	return 0.5*log1p(2.0*x/(1.0-x));
+    return 0.5*log1p(2.0*x/(1.0-x));
 }
 #endif
 
@@ -121,7 +121,7 @@ float sqrtf(float);
 #endif
 static float acoshf(float x)
 {
-	return 2*logf(sqrtf((x+1)/2)+sqrtf((x-1)/2));
+    return 2*logf(sqrtf((x+1)/2)+sqrtf((x-1)/2));
 }
 
 #ifdef asinhf
@@ -129,22 +129,22 @@ static float acoshf(float x)
 #endif
 static float asinhf(float xx)
 {
-	float x, d;
-	int sign;
-	if (xx < 0) {
-		sign = -1;
-		x = -xx;
-	}
-	else {
-		sign = 1;
-		x = xx;
-	}
-	if (x > 1e5) {
-		d = x;
-	} else {
-		d = sqrtf(x*x + 1);
-	}
-	return sign*log1pf(x*(1 + x/(d+1)));
+    float x, d;
+    int sign;
+    if (xx < 0) {
+        sign = -1;
+        x = -xx;
+    }
+    else {
+        sign = 1;
+        x = xx;
+    }
+    if (x > 1e5) {
+        d = x;
+    } else {
+        d = sqrtf(x*x + 1);
+    }
+    return sign*log1pf(x*(1 + x/(d+1)));
 }
 
 #ifdef atanhf
@@ -152,7 +152,7 @@ static float asinhf(float xx)
 #endif
 static float atanhf(float x)
 {
-	return log1pf(2*x/(1-x))/2;
+    return log1pf(2*x/(1-x))/2;
 }
 #else
 #ifdef acoshf
@@ -160,7 +160,7 @@ static float atanhf(float x)
 #endif
 static float acoshf(float x)
 {
-  return (float)acosh((double)(x));
+    return (float)acosh((double)(x));
 }
 
 #ifdef asinhf
@@ -168,7 +168,7 @@ static float acoshf(float x)
 #endif
 static float asinhf(float x)
 {
-  return (float)asinh((double)(x));
+    return (float)asinh((double)(x));
 }
 
 #ifdef atanhf
@@ -176,7 +176,7 @@ static float asinhf(float x)
 #endif
 static float atanhf(float x)
 {
-  return (float)atanh((double)(x));
+    return (float)atanh((double)(x));
 }
 #endif
 #endif
@@ -201,7 +201,7 @@ longdouble log1pl(longdouble);
 #endif
 static longdouble acoshl(longdouble x)
 {
-	return 2*logl(sqrtl((x+1.0)/2)+sqrtl((x-1.0)/2));
+    return 2*logl(sqrtl((x+1.0)/2)+sqrtl((x-1.0)/2));
 }
 
 #ifdef asinhl
@@ -209,22 +209,22 @@ static longdouble acoshl(longdouble x)
 #endif
 static longdouble asinhl(longdouble xx)
 {
-	longdouble x, d;
-	int sign;
-	if (xx < 0.0) {
-		sign = -1;
-		x = -xx;
-	}
-	else {
-		sign = 1;
-		x = xx;
-	}
-	if (x > 1e17) {
-		d = x;
-	} else {
-		d = sqrtl(x*x + 1);
-	}
-	return sign*log1pl(x*(1.0 + x/(d+1)));
+    longdouble x, d;
+    int sign;
+    if (xx < 0.0) {
+        sign = -1;
+        x = -xx;
+    }
+    else {
+        sign = 1;
+        x = xx;
+    }
+    if (x > 1e17) {
+        d = x;
+    } else {
+        d = sqrtl(x*x + 1);
+    }
+    return sign*log1pl(x*(1.0 + x/(d+1)));
 }
 
 #ifdef atanhl
@@ -232,7 +232,7 @@ static longdouble asinhl(longdouble xx)
 #endif
 static longdouble atanhl(longdouble x)
 {
-	return 0.5*log1pl(2.0*x/(1.0-x));
+    return 0.5*log1pl(2.0*x/(1.0-x));
 }
 
 #else
@@ -242,7 +242,7 @@ static longdouble atanhl(longdouble x)
 #endif
 static longdouble acoshl(longdouble x)
 {
-  return (longdouble)acosh((double)(x));
+    return (longdouble)acosh((double)(x));
 }
 
 #ifdef asinhl
@@ -250,7 +250,7 @@ static longdouble acoshl(longdouble x)
 #endif
 static longdouble asinhl(longdouble x)
 {
-  return (longdouble)asinh((double)(x));
+    return (longdouble)asinh((double)(x));
 }
 
 #ifdef atanhl
@@ -258,7 +258,7 @@ static longdouble asinhl(longdouble x)
 #endif
 static longdouble atanhl(longdouble x)
 {
-  return (longdouble)atanh((double)(x));
+    return (longdouble)atanh((double)(x));
 }
 
 #endif
@@ -272,21 +272,21 @@ extern double hypot(double, double);
 #else
 static double hypot(double x, double y)
 {
-	double yx;
+    double yx;
 
-	x = fabs(x);
-	y = fabs(y);
-	if (x < y) {
-		double temp = x;
-		x = y;
-		y = temp;
-	}
-	if (x == 0.)
-		return 0.;
-	else {
-		yx = y/x;
-		return x*sqrt(1.+yx*yx);
-	}
+    x = fabs(x);
+    y = fabs(y);
+    if (x < y) {
+        double temp = x;
+        x = y;
+        y = temp;
+    }
+    if (x == 0.)
+        return 0.;
+    else {
+        yx = y/x;
+        return x*sqrt(1.+yx*yx);
+    }
 }
 #endif
 
@@ -295,22 +295,22 @@ static double hypot(double x, double y)
 static double
 rint (double x)
 {
-	double y, r;
+    double y, r;
 
-	y = floor(x);
-	r = x - y;
+    y = floor(x);
+    r = x - y;
 
-	if (r > 0.5) goto rndup;
+    if (r > 0.5) goto rndup;
 
-	/* Round to nearest even */
-	if (r==0.5) {
-		r = y - 2.0*floor(0.5*y);
-		if (r==1.0) {
-		rndup:
-			y+=1.0;
-		}
-	}
-	return y;
+    /* Round to nearest even */
+    if (r==0.5) {
+        r = y - 2.0*floor(0.5*y);
+        if (r==1.0) {
+        rndup:
+            y+=1.0;
+        }
+    }
+    return y;
 }
 #endif
 
@@ -321,12 +321,12 @@ rint (double x)
 /* Define isnan, isinf, isfinite, signbit if needed */
 /* Use fpclassify if possible */
 /* isnan, isinf --
-       these will use macros and then fpclassify if available before
-       defaulting to a dumb convert-to-double version...
+   these will use macros and then fpclassify if available before
+   defaulting to a dumb convert-to-double version...
 
    isfinite -- define a macro if not already available
    signbit -- if macro available use it, otherwise define a function
-               and a dumb convert-to-double version for other types.
+   and a dumb convert-to-double version for other types.
 */
 
 #if defined(fpclassify)
@@ -417,67 +417,67 @@ rint (double x)
 /* First, the C functions that do the real work */
 
 /* if C99 extensions not available then define dummy functions that use the
- double versions for
+   double versions for
 
-  sin, cos, tan
-  sinh, cosh, tanh,
-  fabs, floor, ceil, fmod, sqrt, log10, log, exp, fabs
-  asin, acos, atan,
-  asinh, acosh, atanh
+   sin, cos, tan
+   sinh, cosh, tanh,
+   fabs, floor, ceil, fmod, sqrt, log10, log, exp, fabs
+   asin, acos, atan,
+   asinh, acosh, atanh
 
-  hypot, atan2, pow
+   hypot, atan2, pow
 */
 
 /**begin repeat
 
-#kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,rint)*2#
-#typ=longdouble*17, float*17#
-#c=l*17,f*17#
-#TYPE=LONGDOUBLE*17, FLOAT*17#
+   #kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,rint)*2#
+   #typ=longdouble*17, float*17#
+   #c=l*17,f*17#
+   #TYPE=LONGDOUBLE*17, FLOAT*17#
 */
 #ifndef HAVE_@TYPE@_FUNCS
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
 @typ@ @kind@@c@(@typ@ x) {
-	return (@typ@) @kind@((double)x);
+    return (@typ@) @kind@((double)x);
 }
 #endif
 /**end repeat**/
 
 /**begin repeat
 
-#kind=(atan2,hypot,pow,fmod)*2#
-#typ=longdouble*4, float*4#
-#c=l*4,f*4#
-#TYPE=LONGDOUBLE*4,FLOAT*4#
+   #kind=(atan2,hypot,pow,fmod)*2#
+   #typ=longdouble*4, float*4#
+   #c=l*4,f*4#
+   #TYPE=LONGDOUBLE*4,FLOAT*4#
 */
 #ifndef HAVE_@TYPE@_FUNCS
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
 @typ@ @kind@@c@(@typ@ x, @typ@ y) {
-	return (@typ@) @kind@((double)x, (double) y);
+    return (@typ@) @kind@((double)x, (double) y);
 }
 #endif
 /**end repeat**/
 
 /**begin repeat
-#kind=modf*2#
-#typ=longdouble, float#
-#c=l,f#
-#TYPE=LONGDOUBLE, FLOAT#
+   #kind=modf*2#
+   #typ=longdouble, float#
+   #c=l,f#
+   #TYPE=LONGDOUBLE, FLOAT#
 */
 #ifndef HAVE_@TYPE@_FUNCS
 #ifdef modf@c@
 #undef modf@c@
 #endif
 @typ@ modf@c@(@typ@ x, @typ@ *iptr) {
-        double nx, niptr, y;
-        nx = (double) x;
-        y = modf(nx, &niptr);
-        *iptr = (@typ@) niptr;
-        return (@typ@) y;
+    double nx, niptr, y;
+    nx = (double) x;
+    y = modf(nx, &niptr);
+    *iptr = (@typ@) niptr;
+    return (@typ@) y;
 }
 #endif
 /**end repeat**/
@@ -487,12 +487,12 @@ rint (double x)
 #ifndef HAVE_LOG1P
 double log1p(double x)
 {
-	double u = 1. + x;
-	if (u == 1.0) {
-		return x;
-	} else {
-		return log(u) * x / (u-1.);
-	}
+    double u = 1. + x;
+    if (u == 1.0) {
+        return x;
+    } else {
+        return log(u) * x / (u-1.);
+    }
 }
 #endif
 
@@ -502,12 +502,12 @@ double log1p(double x)
 #endif
 longdouble log1pl(longdouble x)
 {
-	longdouble u = 1. + x;
-	if (u == 1.0) {
-		return x;
-	} else {
-		return logl(u) * x / (u-1.);
-	}
+    longdouble u = 1. + x;
+    if (u == 1.0) {
+        return x;
+    } else {
+        return logl(u) * x / (u-1.);
+    }
 }
 #endif
 
@@ -517,26 +517,26 @@ longdouble log1pl(longdouble x)
 #endif
 float log1pf(float x)
 {
-	float u = 1 + x;
-	if (u == 1) {
-		return x;
-	} else {
-		return logf(u) * x / (u-1);
-	}
+    float u = 1 + x;
+    if (u == 1) {
+        return x;
+    } else {
+        return logf(u) * x / (u-1);
+    }
 }
 #endif
 
 #ifndef HAVE_EXPM1
 static double expm1(double x)
 {
-	double u = exp(x);
-	if (u == 1.0) {
-		return x;
-	} else if (u-1.0 == -1.0) {
-		return -1;
-	} else {
-		return (u-1.0) * x/log(u);
-	}
+    double u = exp(x);
+    if (u == 1.0) {
+        return x;
+    } else if (u-1.0 == -1.0) {
+        return -1;
+    } else {
+        return (u-1.0) * x/log(u);
+    }
 }
 #endif
 
@@ -546,14 +546,14 @@ static double expm1(double x)
 #endif
 static longdouble expm1l(longdouble x)
 {
-	longdouble u = expl(x);
-	if (u == 1.0) {
-		return x;
-	} else if (u-1.0 == -1.0) {
-		return -1;
-	} else {
-		return (u-1.0) * x/logl(u);
-	}
+    longdouble u = expl(x);
+    if (u == 1.0) {
+        return x;
+    } else if (u-1.0 == -1.0) {
+        return -1;
+    } else {
+        return (u-1.0) * x/logl(u);
+    }
 }
 #endif
 
@@ -563,14 +563,14 @@ static longdouble expm1l(longdouble x)
 #endif
 static float expm1f(float x)
 {
-	float u = expf(x);
-	if (u == 1) {
-		return x;
-	} else if (u-1 == -1) {
-		return -1;
-	} else {
-		return (u-1) * x/logf(u);
-	}
+    float u = expf(x);
+    if (u == 1) {
+        return x;
+    } else if (u-1 == -1) {
+        return -1;
+    } else {
+        return (u-1) * x/logf(u);
+    }
 }
 #endif
 
@@ -584,8 +584,8 @@ static float expm1f(float x)
 
 /**begin repeat
 
-#typ=float, double, longdouble#
-#c=f,,l#
+   #typ=float, double, longdouble#
+   #c=f,,l#
 */
 
 /* constants */
@@ -594,290 +594,290 @@ static c@typ@ nc_half@c@ = {0.5, 0.};
 static c@typ@ nc_i@c@ = {0., 1.};
 static c@typ@ nc_i2@c@ = {0., 0.5};
 /*
-static c@typ@ nc_mi@c@ = {0., -1.};
-static c@typ@ nc_pi2@c@ = {M_PI/2., 0.};
+  static c@typ@ nc_mi@c@ = {0., -1.};
+  static c@typ@ nc_pi2@c@ = {M_PI/2., 0.};
 */
 
 static void
 nc_sum@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-	r->real = a->real + b->real;
-	r->imag = a->imag + b->imag;
-	return;
+    r->real = a->real + b->real;
+    r->imag = a->imag + b->imag;
+    return;
 }
 
 static void
 nc_diff@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-	r->real = a->real - b->real;
-	r->imag = a->imag - b->imag;
-	return;
+    r->real = a->real - b->real;
+    r->imag = a->imag - b->imag;
+    return;
 }
 
 static void
 nc_neg@c@(c@typ@ *a, c@typ@ *r)
 {
-	r->real = -a->real;
-	r->imag = -a->imag;
-	return;
+    r->real = -a->real;
+    r->imag = -a->imag;
+    return;
 }
 
 static void
 nc_prod@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-	register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
-	r->real = ar*br - ai*bi;
-	r->imag = ar*bi + ai*br;
-	return;
+    register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+    r->real = ar*br - ai*bi;
+    r->imag = ar*bi + ai*br;
+    return;
 }
 
 static void
 nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
 
-	register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
-	register @typ@ d = br*br + bi*bi;
-	r->real = (ar*br + ai*bi)/d;
-	r->imag = (ai*br - ar*bi)/d;
-	return;
+    register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+    register @typ@ d = br*br + bi*bi;
+    r->real = (ar*br + ai*bi)/d;
+    r->imag = (ai*br - ar*bi)/d;
+    return;
 }
 
 static void
 nc_sqrt@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ s,d;
-	if (x->real == 0. && x->imag == 0.)
-		*r = *x;
-	else {
-		s = sqrt@c@((fabs@c@(x->real) + hypot@c@(x->real,x->imag))/2);
-		d = x->imag/(2*s);
-		if (x->real > 0) {
-			r->real = s;
-			r->imag = d;
-		}
-		else if (x->imag >= 0) {
-			r->real = d;
-			r->imag = s;
-		}
-		else {
-			r->real = -d;
-			r->imag = -s;
-		}
-	}
-	return;
+    @typ@ s,d;
+    if (x->real == 0. && x->imag == 0.)
+        *r = *x;
+    else {
+        s = sqrt@c@((fabs@c@(x->real) + hypot@c@(x->real,x->imag))/2);
+        d = x->imag/(2*s);
+        if (x->real > 0) {
+            r->real = s;
+            r->imag = d;
+        }
+        else if (x->imag >= 0) {
+            r->real = d;
+            r->imag = s;
+        }
+        else {
+            r->real = -d;
+            r->imag = -s;
+        }
+    }
+    return;
 }
 
 static void
 nc_rint@c@(c@typ@ *x, c@typ@ *r)
 {
-        r->real = rint@c@(x->real);
-        r->imag = rint@c@(x->imag);
+    r->real = rint@c@(x->real);
+    r->imag = rint@c@(x->imag);
 }
 
 static void
 nc_log@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ l = hypot@c@(x->real,x->imag);
-	r->imag = atan2@c@(x->imag, x->real);
-	r->real = log@c@(l);
-	return;
+    @typ@ l = hypot@c@(x->real,x->imag);
+    r->imag = atan2@c@(x->imag, x->real);
+    r->real = log@c@(l);
+    return;
 }
 
 static void
 nc_log1p@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ l = hypot@c@(x->real + 1,x->imag);
-	r->imag = atan2@c@(x->imag, x->real + 1);
-	r->real = log@c@(l);
-	return;
+    @typ@ l = hypot@c@(x->real + 1,x->imag);
+    r->imag = atan2@c@(x->imag, x->real + 1);
+    r->real = log@c@(l);
+    return;
 }
 
 static void
 nc_exp@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ a = exp@c@(x->real);
-	r->real = a*cos@c@(x->imag);
-	r->imag = a*sin@c@(x->imag);
-	return;
+    @typ@ a = exp@c@(x->real);
+    r->real = a*cos@c@(x->imag);
+    r->imag = a*sin@c@(x->imag);
+    return;
 }
 
 static void
 nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ a = exp@c@(x->real);
-	r->real = a*cos@c@(x->imag) - 1;
-	r->imag = a*sin@c@(x->imag);
-	return;
+    @typ@ a = exp@c@(x->real);
+    r->real = a*cos@c@(x->imag) - 1;
+    r->imag = a*sin@c@(x->imag);
+    return;
 }
 
 static void
 nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-        intp n;
-        @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+    intp n;
+    @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
 
-	if (br == 0. && bi == 0.) {
-		r->real = 1.;
-		r->imag = 0.;
-                return;
-	}
-	if (ar == 0. && ai == 0.) {
-		r->real = 0.;
-		r->imag = 0.;
-                return;
-	}
-        if (bi == 0 && (n=(intp)br) == br) {
-            if (n > -100 && n < 100) {
-                c@typ@ p, aa;
-                intp mask = 1;
-                if (n < 0) n = -n;
-                aa = nc_1@c@;
-                p.real = ar; p.imag = ai;
-                while (1) {
-                        if (n & mask)
-                            nc_prod@c@(&aa,&p,&aa);
-                        mask <<= 1;
-                        if (n < mask || mask <= 0) break;
-                        nc_prod@c@(&p,&p,&p);
-                }
-                r->real = aa.real; r->imag = aa.imag;
-                if (br < 0) nc_quot@c@(&nc_1@c@, r, r);
-                return;
-            }
-        }
-        /* complexobect.c uses an inline version of this formula
-           investigate whether this had better performance or accuracy */
-        nc_log@c@(a, r);
-        nc_prod@c@(r, b, r);
-        nc_exp@c@(r, r);
+    if (br == 0. && bi == 0.) {
+        r->real = 1.;
+        r->imag = 0.;
         return;
+    }
+    if (ar == 0. && ai == 0.) {
+        r->real = 0.;
+        r->imag = 0.;
+        return;
+    }
+    if (bi == 0 && (n=(intp)br) == br) {
+        if (n > -100 && n < 100) {
+            c@typ@ p, aa;
+            intp mask = 1;
+            if (n < 0) n = -n;
+            aa = nc_1@c@;
+            p.real = ar; p.imag = ai;
+            while (1) {
+                if (n & mask)
+                    nc_prod@c@(&aa,&p,&aa);
+                mask <<= 1;
+                if (n < mask || mask <= 0) break;
+                nc_prod@c@(&p,&p,&p);
+            }
+            r->real = aa.real; r->imag = aa.imag;
+            if (br < 0) nc_quot@c@(&nc_1@c@, r, r);
+            return;
+        }
+    }
+    /* complexobect.c uses an inline version of this formula
+       investigate whether this had better performance or accuracy */
+    nc_log@c@(a, r);
+    nc_prod@c@(r, b, r);
+    nc_exp@c@(r, r);
+    return;
 }
 
 
 static void
 nc_prodi@c@(c@typ@ *x, c@typ@ *r)
 {
-        @typ@ xr = x->real;
-        r->real = -x->imag;
-        r->imag = xr;
-        return;
+    @typ@ xr = x->real;
+    r->real = -x->imag;
+    r->imag = xr;
+    return;
 }
 
 
 static void
 nc_acos@c@(c@typ@ *x, c@typ@ *r)
 {
-	nc_prod@c@(x,x,r);
-	nc_diff@c@(&nc_1@c@, r, r);
-	nc_sqrt@c@(r, r);
-	nc_prodi@c@(r, r);
-	nc_sum@c@(x, r, r);
-	nc_log@c@(r, r);
-	nc_prodi@c@(r, r);
-	nc_neg@c@(r, r);
-	return;
-	/* return nc_neg(nc_prodi(nc_log(nc_sum(x,nc_prod(nc_i,
-	   nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))))));
-	*/
+    nc_prod@c@(x,x,r);
+    nc_diff@c@(&nc_1@c@, r, r);
+    nc_sqrt@c@(r, r);
+    nc_prodi@c@(r, r);
+    nc_sum@c@(x, r, r);
+    nc_log@c@(r, r);
+    nc_prodi@c@(r, r);
+    nc_neg@c@(r, r);
+    return;
+    /* return nc_neg(nc_prodi(nc_log(nc_sum(x,nc_prod(nc_i,
+       nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))))));
+    */
 }
 
 static void
 nc_acosh@c@(c@typ@ *x, c@typ@ *r)
 {
-	nc_prod@c@(x, x, r);
-	nc_diff@c@(&nc_1@c@, r, r);
-	nc_sqrt@c@(r, r);
-	nc_prodi@c@(r, r);
-	nc_sum@c@(x, r, r);
-	nc_log@c@(r, r);
-	return;
-	/*
-	  return nc_log(nc_sum(x,nc_prod(nc_i,
-	  nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))));
-	*/
+    nc_prod@c@(x, x, r);
+    nc_diff@c@(&nc_1@c@, r, r);
+    nc_sqrt@c@(r, r);
+    nc_prodi@c@(r, r);
+    nc_sum@c@(x, r, r);
+    nc_log@c@(r, r);
+    return;
+    /*
+      return nc_log(nc_sum(x,nc_prod(nc_i,
+      nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))));
+    */
 }
 
 static void
 nc_asin@c@(c@typ@ *x, c@typ@ *r)
 {
-	c@typ@ a, *pa=&a;
-	nc_prod@c@(x, x, r);
-	nc_diff@c@(&nc_1@c@, r, r);
-	nc_sqrt@c@(r, r);
-	nc_prodi@c@(x, pa);
-	nc_sum@c@(pa, r, r);
-	nc_log@c@(r, r);
-	nc_prodi@c@(r, r);
-	nc_neg@c@(r, r);
-	return;
-	/*
-	      return nc_neg(nc_prodi(nc_log(nc_sum(nc_prod(nc_i,x),
-	      nc_sqrt(nc_diff(nc_1,nc_prod(x,x)))))));
-	*/
+    c@typ@ a, *pa=&a;
+    nc_prod@c@(x, x, r);
+    nc_diff@c@(&nc_1@c@, r, r);
+    nc_sqrt@c@(r, r);
+    nc_prodi@c@(x, pa);
+    nc_sum@c@(pa, r, r);
+    nc_log@c@(r, r);
+    nc_prodi@c@(r, r);
+    nc_neg@c@(r, r);
+    return;
+    /*
+      return nc_neg(nc_prodi(nc_log(nc_sum(nc_prod(nc_i,x),
+      nc_sqrt(nc_diff(nc_1,nc_prod(x,x)))))));
+    */
 }
 
 
 static void
 nc_asinh@c@(c@typ@ *x, c@typ@ *r)
 {
-	nc_prod@c@(x, x, r);
-	nc_sum@c@(&nc_1@c@, r, r);
-	nc_sqrt@c@(r, r);
-	nc_diff@c@(r, x, r);
-	nc_log@c@(r, r);
-	nc_neg@c@(r, r);
-	return;
-	/*
-	  return nc_neg(nc_log(nc_diff(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x)));
-	*/
+    nc_prod@c@(x, x, r);
+    nc_sum@c@(&nc_1@c@, r, r);
+    nc_sqrt@c@(r, r);
+    nc_diff@c@(r, x, r);
+    nc_log@c@(r, r);
+    nc_neg@c@(r, r);
+    return;
+    /*
+      return nc_neg(nc_log(nc_diff(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x)));
+    */
 }
 
 static void
 nc_atan@c@(c@typ@ *x, c@typ@ *r)
 {
-	c@typ@ a, *pa=&a;
-	nc_diff@c@(&nc_i@c@, x, pa);
-	nc_sum@c@(&nc_i@c@, x, r);
-	nc_quot@c@(r, pa, r);
-	nc_log@c@(r,r);
-	nc_prod@c@(&nc_i2@c@, r, r);
-	return;
-	/*
-	  return nc_prod(nc_i2,nc_log(nc_quot(nc_sum(nc_i,x),nc_diff(nc_i,x))));
-	*/
+    c@typ@ a, *pa=&a;
+    nc_diff@c@(&nc_i@c@, x, pa);
+    nc_sum@c@(&nc_i@c@, x, r);
+    nc_quot@c@(r, pa, r);
+    nc_log@c@(r,r);
+    nc_prod@c@(&nc_i2@c@, r, r);
+    return;
+    /*
+      return nc_prod(nc_i2,nc_log(nc_quot(nc_sum(nc_i,x),nc_diff(nc_i,x))));
+    */
 }
 
 static void
 nc_atanh@c@(c@typ@ *x, c@typ@ *r)
 {
-	c@typ@ a, *pa=&a;
-	nc_diff@c@(&nc_1@c@, x, r);
-	nc_sum@c@(&nc_1@c@, x, pa);
-	nc_quot@c@(pa, r, r);
-	nc_log@c@(r, r);
-	nc_prod@c@(&nc_half@c@, r, r);
-	return;
-	/*
-	  return nc_prod(nc_half,nc_log(nc_quot(nc_sum(nc_1,x),nc_diff(nc_1,x))));
-	*/
+    c@typ@ a, *pa=&a;
+    nc_diff@c@(&nc_1@c@, x, r);
+    nc_sum@c@(&nc_1@c@, x, pa);
+    nc_quot@c@(pa, r, r);
+    nc_log@c@(r, r);
+    nc_prod@c@(&nc_half@c@, r, r);
+    return;
+    /*
+      return nc_prod(nc_half,nc_log(nc_quot(nc_sum(nc_1,x),nc_diff(nc_1,x))));
+    */
 }
 
 static void
 nc_cos@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ xr=x->real, xi=x->imag;
-	r->real = cos@c@(xr)*cosh@c@(xi);
-	r->imag = -sin@c@(xr)*sinh@c@(xi);
-	return;
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = cos@c@(xr)*cosh@c@(xi);
+    r->imag = -sin@c@(xr)*sinh@c@(xi);
+    return;
 }
 
 static void
 nc_cosh@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ xr=x->real, xi=x->imag;
-	r->real = cos@c@(xi)*cosh@c@(xr);
-	r->imag = sin@c@(xi)*sinh@c@(xr);
-	return;
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = cos@c@(xi)*cosh@c@(xr);
+    r->imag = sin@c@(xi)*sinh@c@(xr);
+    return;
 }
 
 
@@ -886,70 +886,70 @@ nc_cosh@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_log10@c@(c@typ@ *x, c@typ@ *r)
 {
-	nc_log@c@(x, r);
-	r->real *= (@typ@) M_LOG10_E;
-	r->imag *= (@typ@) M_LOG10_E;
-	return;
+    nc_log@c@(x, r);
+    r->real *= (@typ@) M_LOG10_E;
+    r->imag *= (@typ@) M_LOG10_E;
+    return;
 }
 
 static void
 nc_sin@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ xr=x->real, xi=x->imag;
-	r->real = sin@c@(xr)*cosh@c@(xi);
-	r->imag = cos@c@(xr)*sinh@c@(xi);
-	return;
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = sin@c@(xr)*cosh@c@(xi);
+    r->imag = cos@c@(xr)*sinh@c@(xi);
+    return;
 }
 
 static void
 nc_sinh@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ xr=x->real, xi=x->imag;
-	r->real = cos@c@(xi)*sinh@c@(xr);
-	r->imag = sin@c@(xi)*cosh@c@(xr);
-	return;
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = cos@c@(xi)*sinh@c@(xr);
+    r->imag = sin@c@(xi)*cosh@c@(xr);
+    return;
 }
 
 static void
 nc_tan@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ sr,cr,shi,chi;
-	@typ@ rs,is,rc,ic;
-	@typ@ d;
-	@typ@ xr=x->real, xi=x->imag;
-	sr = sin@c@(xr);
-	cr = cos@c@(xr);
-	shi = sinh@c@(xi);
-	chi = cosh@c@(xi);
-	rs = sr*chi;
-	is = cr*shi;
-	rc = cr*chi;
-	ic = -sr*shi;
-	d = rc*rc + ic*ic;
-	r->real = (rs*rc+is*ic)/d;
-	r->imag = (is*rc-rs*ic)/d;
-	return;
+    @typ@ sr,cr,shi,chi;
+    @typ@ rs,is,rc,ic;
+    @typ@ d;
+    @typ@ xr=x->real, xi=x->imag;
+    sr = sin@c@(xr);
+    cr = cos@c@(xr);
+    shi = sinh@c@(xi);
+    chi = cosh@c@(xi);
+    rs = sr*chi;
+    is = cr*shi;
+    rc = cr*chi;
+    ic = -sr*shi;
+    d = rc*rc + ic*ic;
+    r->real = (rs*rc+is*ic)/d;
+    r->imag = (is*rc-rs*ic)/d;
+    return;
 }
 
 static void
 nc_tanh@c@(c@typ@ *x, c@typ@ *r)
 {
-	@typ@ si,ci,shr,chr;
-	@typ@ rs,is,rc,ic;
-	@typ@ d;
-	@typ@ xr=x->real, xi=x->imag;
-	si = sin@c@(xi);
-	ci = cos@c@(xi);
-	shr = sinh@c@(xr);
-	chr = cosh@c@(xr);
-	rs = ci*shr;
-	is = si*chr;
-	rc = ci*chr;
-	ic = si*shr;
-	d = rc*rc + ic*ic;
-	r->real = (rs*rc+is*ic)/d;
-	r->imag = (is*rc-rs*ic)/d;
-	return;
+    @typ@ si,ci,shr,chr;
+    @typ@ rs,is,rc,ic;
+    @typ@ d;
+    @typ@ xr=x->real, xi=x->imag;
+    si = sin@c@(xi);
+    ci = cos@c@(xi);
+    shr = sinh@c@(xr);
+    chr = cosh@c@(xr);
+    rs = ci*shr;
+    is = si*chr;
+    rc = ci*chr;
+    ic = si*shr;
+    d = rc*rc + ic*ic;
+    r->real = (rs*rc+is*ic)/d;
+    r->imag = (is*rc-rs*ic)/d;
+    return;
 }
 
 /**end repeat**/
@@ -957,43 +957,43 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
 
 /**begin repeat
 
-#TYPE=(BOOL, BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*2#
-#OP=||, +*13, ^, -*13#
-#kind=add*14, subtract*14#
-#typ=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*2#
+   #TYPE=(BOOL, BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*2#
+   #OP=||, +*13, ^, -*13#
+   #kind=add*14, subtract*14#
+   #typ=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*2#
 */
 
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
+    }
 }
 
 /**end repeat**/
 
 /**begin repeat
 
-#TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*2#
-#OP=+*3,-*3#
-#kind=add*3,subtract*3#
-#typ=(float, double, longdouble)*2#
+   #TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*2#
+   #OP=+*3,-*3#
+   #kind=add*3,subtract*3#
+   #typ=(float, double, longdouble)*2#
 */
 
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		((@typ@ *)op)[0]=((@typ@ *)i1)[0] @OP@ ((@typ@ *)i2)[0];
-		((@typ@ *)op)[1]=((@typ@ *)i1)[1] @OP@ ((@typ@ *)i2)[1];
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        ((@typ@ *)op)[0]=((@typ@ *)i1)[0] @OP@ ((@typ@ *)i2)[0];
+        ((@typ@ *)op)[1]=((@typ@ *)i1)[1] @OP@ ((@typ@ *)i2)[1];
+    }
 }
 
 /**end repeat**/
@@ -1001,85 +1001,85 @@ static void
 
 static void
 BOOL_multiply(char **args, intp *dimensions, intp *steps, void *func) {
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((Bool *)op) = *((Bool *)i1) && *((Bool *)i2);
-	}
+    register intp i;
+    intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op) = *((Bool *)i1) && *((Bool *)i2);
+    }
 }
 
 /**begin repeat
 
-#TYP= BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#typ= byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble#
+   #TYP= BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+   #typ= byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble#
 */
 static void
 @TYP@_multiply(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op) = (*((@typ@ *)i1)) * (*((@typ@ *)i2));
-	}
+    register intp i;
+    intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((@typ@ *)op) = (*((@typ@ *)i1)) * (*((@typ@ *)i2));
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
-#TYP= CFLOAT, CDOUBLE, CLONGDOUBLE#
-#typ= float, double, longdouble#
-#c=f,,l#
+   #TYP= CFLOAT, CDOUBLE, CLONGDOUBLE#
+   #typ= float, double, longdouble#
+   #c=f,,l#
 */
 static void
 @TYP@_multiply(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-                register @typ@ ar=((c@typ@ *)i1)->real, \
-                        ai=((c@typ@ *)i1)->imag,        \
-                        br=((c@typ@ *)i2)->real,        \
-                        bi=((c@typ@ *)i2)->imag;
-                ((c@typ@ *)op)->real = ar*br - ai*bi;
-                ((c@typ@ *)op)->imag = ar*bi + ai*br;
-	}
+    register intp i;
+    intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        register @typ@ ar=((c@typ@ *)i1)->real, \
+            ai=((c@typ@ *)i1)->imag,        \
+            br=((c@typ@ *)i2)->real,        \
+            bi=((c@typ@ *)i2)->imag;
+        ((c@typ@ *)op)->real = ar*br - ai*bi;
+        ((c@typ@ *)op)->imag = ar*bi + ai*br;
+    }
 }
 
 static void
 @TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-                register @typ@ ar=((c@typ@ *)i1)->real, \
-                        ai=((c@typ@ *)i1)->imag,        \
-                        br=((c@typ@ *)i2)->real,        \
-                        bi=((c@typ@ *)i2)->imag;
-                register @typ@ d = br*br + bi*bi;
-                ((c@typ@ *)op)->real = (ar*br + ai*bi)/d;
-                ((c@typ@ *)op)->imag = (ai*br - ar*bi)/d;
-        }
+    register intp i;
+    intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        register @typ@ ar=((c@typ@ *)i1)->real, \
+            ai=((c@typ@ *)i1)->imag,        \
+            br=((c@typ@ *)i2)->real,        \
+            bi=((c@typ@ *)i2)->imag;
+        register @typ@ d = br*br + bi*bi;
+        ((c@typ@ *)op)->real = (ar*br + ai*bi)/d;
+        ((c@typ@ *)op)->imag = (ai*br - ar*bi)/d;
+    }
 }
 
 static void
 @TYP@_floor_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-        intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-                register @typ@ ar=((c@typ@ *)i1)->real,    \
-                        ai=((c@typ@ *)i1)->imag,           \
-                        br=((c@typ@ *)i2)->real,           \
-                        bi=((c@typ@ *)i2)->imag;
-                register @typ@ d = br*br + bi*bi;
-                ((c@typ@ *)op)->real = floor@c@((ar*br + ai*bi)/d);
-                ((c@typ@ *)op)->imag = 0;
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        register @typ@ ar=((c@typ@ *)i1)->real,    \
+            ai=((c@typ@ *)i1)->imag,           \
+            br=((c@typ@ *)i2)->real,           \
+            bi=((c@typ@ *)i2)->imag;
+        register @typ@ d = br*br + bi*bi;
+        ((c@typ@ *)op)->real = floor@c@((ar*br + ai*bi)/d);
+        ((c@typ@ *)op)->imag = 0;
+    }
 }
 
 #define @TYP@_true_divide @TYP@_divide
@@ -1087,74 +1087,74 @@ static void
 
 
 /**begin repeat
-#TYP=UBYTE,USHORT,UINT,ULONG,ULONGLONG#
-#typ=ubyte, ushort, uint, ulong, ulonglong#
+   #TYP=UBYTE,USHORT,UINT,ULONG,ULONGLONG#
+   #typ=ubyte, ushort, uint, ulong, ulonglong#
 */
 static void
 @TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		if (*((@typ@ *)i2)==0) {
-			generate_divbyzero_error();
-			*((@typ@ *)op)=0;
-		}
-		else {
-			*((@typ@ *)op)= *((@typ@ *)i1) / *((@typ@ *)i2);
-		}
-	}
+    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        if (*((@typ@ *)i2)==0) {
+            generate_divbyzero_error();
+            *((@typ@ *)op)=0;
+        }
+        else {
+            *((@typ@ *)op)= *((@typ@ *)i1) / *((@typ@ *)i2);
+        }
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
-#TYP=BYTE,SHORT,INT,LONG,LONGLONG#
-#typ=char, short, int, long, longlong#
+   #TYP=BYTE,SHORT,INT,LONG,LONGLONG#
+   #typ=char, short, int, long, longlong#
 */
 static void
 @TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-        @typ@ x, y, tmp;
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-                y = *((@typ@ *)i2);
-		if (y == 0) {
-			generate_divbyzero_error();
-			*((@typ@ *)op)=0;
-		}
-		else {
-                        x = *((@typ@ *)i1);
-                        tmp = x / y;
-                        if (((x > 0) != (y > 0)) && (x % y != 0)) tmp--;
-                        *((@typ@ *)op)= tmp;
-		}
-	}
+    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @typ@ x, y, tmp;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        y = *((@typ@ *)i2);
+        if (y == 0) {
+            generate_divbyzero_error();
+            *((@typ@ *)op)=0;
+        }
+        else {
+            x = *((@typ@ *)i1);
+            tmp = x / y;
+            if (((x > 0) != (y > 0)) && (x % y != 0)) tmp--;
+            *((@typ@ *)op)= tmp;
+        }
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
-#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
-#otyp=float*4, double*6#
+   #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+   #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+   #otyp=float*4, double*6#
 */
 static void
 @TYP@_true_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		if (*((@typ@ *)i2)==0) {
-			generate_divbyzero_error();
-			*((@otyp@ *)op)=0;
-		}
-		else {
-			*((@otyp@ *)op)=				\
-			  (@otyp@)((double)*((@typ@ *)i1) / (double)*((@typ@ *)i2));
-		}
-	}
+    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        if (*((@typ@ *)i2)==0) {
+            generate_divbyzero_error();
+            *((@otyp@ *)op)=0;
+        }
+        else {
+            *((@otyp@ *)op)=                                \
+                (@otyp@)((double)*((@typ@ *)i1) / (double)*((@typ@ *)i2));
+        }
+    }
 }
 #define @TYP@_floor_divide @TYP@_divide
 /**end repeat**/
@@ -1162,41 +1162,41 @@ static void
 
 
 /**begin repeat
-#TYP=FLOAT,DOUBLE,LONGDOUBLE#
-#typ=float,double,longdouble#
+   #TYP=FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=float,double,longdouble#
 */
 static void
 @TYP@_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op)=*((@typ@ *)i1) / *((@typ@ *)i2);
-	}
+    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((@typ@ *)op)=*((@typ@ *)i1) / *((@typ@ *)i2);
+    }
 }
 #define @TYP@_true_divide @TYP@_divide
 /**end repeat**/
 
 /**begin repeat
 
-#TYP=FLOAT,DOUBLE,LONGDOUBLE#
-#typ=float,double,longdouble#
-#c=f,,l#
+   #TYP=FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=float,double,longdouble#
+   #c=f,,l#
 */
 static void
 @TYP@_floor_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op)=floor@c@(*((@typ@ *)i1) / *((@typ@ *)i2));
-	}
+    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((@typ@ *)op)=floor@c@(*((@typ@ *)i1) / *((@typ@ *)i2));
+    }
 }
 /**end repeat**/
 
 /**begin repeat
-#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void
 @TYP@_square(char **args, intp *dimensions, intp *steps, void *data)
@@ -1212,8 +1212,8 @@ static void
 /**end repeat**/
 
 /**begin repeat
-#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=float, double, longdouble#
+   #TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+   #typ=float, double, longdouble#
 */
 static void
 @TYP@_square(char **args, intp *dimensions, intp *steps, void *data)
@@ -1242,8 +1242,8 @@ Py_square(PyObject *o)
 
 
 /**begin repeat
-#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void
 @TYP@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
@@ -1259,8 +1259,8 @@ static void
 /**end repeat**/
 
 /**begin repeat
-#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=float, double, longdouble#
+   #TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+   #typ=float, double, longdouble#
 */
 static void
 @TYP@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
@@ -1305,42 +1305,42 @@ Py_reciprocal(PyObject *o)
 static PyObject *
 _npy_ObjectMax(PyObject *i1, PyObject *i2)
 {
-        int cmp;
-        PyObject *res;
-        if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
-        
-        if (cmp >= 0) {
-                res = i1;
-        }
-        else {
-                res = i2;
-        }
-        Py_INCREF(res);
-        return res;
+    int cmp;
+    PyObject *res;
+    if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
+
+    if (cmp >= 0) {
+        res = i1;
+    }
+    else {
+        res = i2;
+    }
+    Py_INCREF(res);
+    return res;
 }
 
 static PyObject *
 _npy_ObjectMin(PyObject *i1, PyObject *i2)
 {
-        int cmp;
-        PyObject *res;
-        if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
-        
-        if (cmp <= 0) {
-                res = i1;
-        }
-        else {
-                res = i2;
-        }
-        Py_INCREF(res);
-        return res;
+    int cmp;
+    PyObject *res;
+    if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
+
+    if (cmp <= 0) {
+        res = i1;
+    }
+    else {
+        res = i2;
+    }
+    Py_INCREF(res);
+    return res;
 }
 
 /* ones_like is defined here because it's used for x**0 */
 
 /**begin repeat
-#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void
 @TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
@@ -1355,121 +1355,121 @@ static void
 /**end repeat**/
 
 /**begin repeat
-#TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=float, double, longdouble#
+   #TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
+   #typ=float, double, longdouble#
 */
 static void
 @TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
 {
-        intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
-        char *i1 = args[0], *op = args[1];
-        c@typ@ *y;
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    c@typ@ *y;
 
-        for (i = 0; i < n; i++, i1 += is1, op += os) {
-                y = (c@typ@ *)op;
-                y->real = 1.0;
-                y->imag = 0.0;
-        }
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        y = (c@typ@ *)op;
+        y->real = 1.0;
+        y->imag = 0.0;
+    }
 }
 /**end repeat**/
 
 static PyObject *
 Py_get_one(PyObject *o)
 {
-        return PyInt_FromLong(1);
+    return PyInt_FromLong(1);
 }
 
 
 /**begin repeat
-#TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-#typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
-#btyp=float*4, double*6#
+   #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+   #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+   #btyp=float*4, double*6#
 */
 static void
 @TYP@_power(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, is1=steps[0],is2=steps[1];
-	register intp os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	@btyp@ x, y;
+    register intp i, is1=steps[0],is2=steps[1];
+    register intp os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @btyp@ x, y;
 
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		x = (@btyp@)*((@typ@ *)i1);
-		y = (@btyp@)*((@typ@ *)i2);
-		*((@typ@ *)op) = (@typ@) pow(x,y);
-	}
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        x = (@btyp@)*((@typ@ *)i1);
+        y = (@btyp@)*((@typ@ *)i2);
+        *((@typ@ *)op) = (@typ@) pow(x,y);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
-#TYP=UBYTE, BYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-#typ=ubyte, char, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #TYP=UBYTE, BYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+   #typ=ubyte, char, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void
 @TYP@_conjugate(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, is1=steps[0], os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op)=*((@typ@ *)i1);
-	}
+    register intp i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@typ@ *)op)=*((@typ@ *)i1);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
 
-#TYP=CFLOAT, CDOUBLE, CLONGDOUBLE#
-#typ=float, double, longdouble#
+   #TYP=CFLOAT, CDOUBLE, CLONGDOUBLE#
+   #typ=float, double, longdouble#
 */
 static void
 @TYP@_conjugate(char **args, intp *dimensions, intp *steps, void *func) {
-	register intp i, is1=steps[0], os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
+    register intp i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
 
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		((@typ@ *)op)[0]=((@typ@ *)i1)[0];
-		((@typ@ *)op)[1]=-(((@typ@ *)i1)[1]);
-	}
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        ((@typ@ *)op)[0]=((@typ@ *)i1)[0];
+        ((@typ@ *)op)[1]=-(((@typ@ *)i1)[1]);
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
 
-#TYPE=BOOL,UBYTE,USHORT,UINT,ULONG,ULONGLONG#
-#typ=Bool, ubyte, ushort, uint, ulong, ulonglong#
+   #TYPE=BOOL,UBYTE,USHORT,UINT,ULONG,ULONGLONG#
+   #typ=Bool, ubyte, ushort, uint, ulong, ulonglong#
 */
 static void
 @TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, n;
-	intp is1=steps[0], os=steps[1];
-	char *i1=args[0], *op=args[1];
+    register intp i, n;
+    intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
 
     n=dimensions[0];
 
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op) = *((@typ@*)i1);
-	}
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@typ@ *)op) = *((@typ@*)i1);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
 
-#TYPE=BYTE,SHORT,INT,LONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=byte, short, int, long, longlong, float, double, longdouble#
+   #TYPE=BYTE,SHORT,INT,LONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=byte, short, int, long, longlong, float, double, longdouble#
 */
 static void
 @TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, n;
-	intp is1=steps[0], os=steps[1];
-	char *i1=args[0], *op=args[1];
+    register intp i, n;
+    intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
 
-	n=dimensions[0];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op) = *((@typ@ *)i1) < 0 ? -*((@typ@ *)i1) : *((@typ@ *)i1);
-	}
+    n=dimensions[0];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@typ@ *)op) = *((@typ@ *)i1) < 0 ? -*((@typ@ *)i1) : *((@typ@ *)i1);
+    }
 }
 /**end repeat**/
 
@@ -1481,118 +1481,118 @@ static void
 static void
 @TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i, n;
-	register intp is1=steps[0], os=steps[1];
-	char *i1=args[0], *op=args[1];
-	n=dimensions[0];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op) = (@typ@)sqrt@c@(((@typ@ *)i1)[0]*((@typ@ *)i1)[0] + ((@typ@ *)i1)[1]*((@typ@ *)i1)[1]);
-	}
+    register intp i, n;
+    register intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
+    n=dimensions[0];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@typ@ *)op) = (@typ@)sqrt@c@(((@typ@ *)i1)[0]*((@typ@ *)i1)[0] + ((@typ@ *)i1)[1]*((@typ@ *)i1)[1]);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
 
-#kind=greater, greater_equal, less, less_equal, equal, not_equal, logical_and, logical_or, bitwise_and, bitwise_or, bitwise_xor#
-#OP=>, >=, <, <=, ==, !=, &&, ||, &, |, ^#
+   #kind=greater, greater_equal, less, less_equal, equal, not_equal, logical_and, logical_or, bitwise_and, bitwise_or, bitwise_xor#
+   #OP=>, >=, <, <=, ==, !=, &&, ||, &, |, ^#
 **/
 static void
 BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	Bool in1, in2;
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		in1 = (*((Bool *)i1) != 0);
-		in2 = (*((Bool *)i2) != 0);
-		*((Bool *)op)= in1 @OP@ in2;
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    Bool in1, in2;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        in1 = (*((Bool *)i1) != 0);
+        in2 = (*((Bool *)i2) != 0);
+        *((Bool *)op)= in1 @OP@ in2;
+    }
 }
 /**end repeat**/
 
 /**begin repeat
 
-#TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
-#OP= >*13, >=*13, <*13, <=*13#
-#typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
-#kind= greater*13, greater_equal*13, less*13, less_equal*13#
+   #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
+   #OP= >*13, >=*13, <*13, <=*13#
+   #typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
+   #kind= greater*13, greater_equal*13, less*13, less_equal*13#
 */
 
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((Bool *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
-#TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*4#
-#OP= >*3, >=*3, <*3, <=*3#
-#typ=(cfloat, cdouble, clongdouble)*4#
-#kind= greater*3, greater_equal*3, less*3, less_equal*3#
+   #TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*4#
+   #OP= >*3, >=*3, <*3, <=*3#
+   #typ=(cfloat, cdouble, clongdouble)*4#
+   #kind= greater*3, greater_equal*3, less*3, less_equal*3#
 */
 
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		if (((@typ@ *)i1)->real == ((@typ@ *)i2)->real)
-			*((Bool *)op)=((@typ@ *)i1)->imag @OP@ \
-				((@typ@ *)i2)->imag;
-		else
-			*((Bool *)op)=((@typ@ *)i1)->real @OP@ \
-				((@typ@ *)i2)->real;
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        if (((@typ@ *)i1)->real == ((@typ@ *)i2)->real)
+            *((Bool *)op)=((@typ@ *)i1)->imag @OP@ \
+                ((@typ@ *)i2)->imag;
+        else
+            *((Bool *)op)=((@typ@ *)i1)->real @OP@ \
+                ((@typ@ *)i2)->real;
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
-#TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
-#typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
-#OP= ==*13, !=*13, &&*13, ||*13#
-#kind=equal*13, not_equal*13, logical_and*13, logical_or*13#
+   #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
+   #typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
+   #OP= ==*13, !=*13, &&*13, ||*13#
+   #kind=equal*13, not_equal*13, logical_and*13, logical_or*13#
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((Bool *)op) = *((@typ@ *)i1) @OP@ *((@typ@ *)i2);
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op) = *((@typ@ *)i1) @OP@ *((@typ@ *)i2);
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
 
-#TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*4#
-#typ=(float, double, longdouble)*4#
-#OP= ==*3, !=*3, &&*3, ||*3#
-#OP2= &&*3, ||*3, &&*3, ||*3#
-#kind=equal*3, not_equal*3, logical_and*3, logical_or*3#
+   #TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*4#
+   #typ=(float, double, longdouble)*4#
+   #OP= ==*3, !=*3, &&*3, ||*3#
+   #OP2= &&*3, ||*3, &&*3, ||*3#
+   #kind=equal*3, not_equal*3, logical_and*3, logical_or*3#
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((Bool *)op) = (*((@typ@ *)i1) @OP@ *((@typ@ *)i2)) @OP2@ (*((@typ@ *)i1+1) @OP@ *((@typ@ *)i2+1));
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op) = (*((@typ@ *)i1) @OP@ *((@typ@ *)i2)) @OP2@ (*((@typ@ *)i1+1) @OP@ *((@typ@ *)i2+1));
+    }
 }
 /**end repeat**/
 
@@ -1601,36 +1601,36 @@ static void
 
 /**begin repeat
 
-#kind=greater, greater_equal, less, less_equal, equal, not_equal#
-#op=GT, GE, LT, LE, EQ, NE#
+   #kind=greater, greater_equal, less, less_equal, equal, not_equal#
+   #op=GT, GE, LT, LE, EQ, NE#
 */
 static void
 OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
-	register intp i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((Bool *)op)=PyObject_RichCompareBool(*((PyObject **)i1),
-						       *((PyObject **)i2),
-						       Py_@op@);
-	}
+    register intp i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op)=PyObject_RichCompareBool(*((PyObject **)i1),
+                                               *((PyObject **)i2),
+                                               Py_@op@);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
 
-#TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-#styp=byte, byte, short, short, int, int, long, long, longlong, longlong, float, double, longdouble#
+   #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #styp=byte, byte, short, short, int, int, long, long, longlong, longlong, float, double, longdouble#
 */
- static void
+static void
 @TYPE@_negative(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op) = (@typ@) (- (@styp@)*((@typ@ *)i1));
-	}
+    register intp i;
+    intp is1=steps[0],os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@typ@ *)op) = (@typ@) (- (@styp@)*((@typ@ *)i1));
+    }
 }
 /**end repeat**/
 
@@ -1640,41 +1640,41 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
 #define _SIGN2(x) ((x) == 0 ? 0 : 1)
 #define _SIGNC(x) (((x).real > 0) ? 1 : ((x).real < 0 ? -1 : ((x).imag > 0 ? 1 : ((x).imag < 0) ? -1 : 0)))
 /**begin repeat
-#TYPE=BYTE,SHORT,INT,LONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE,UBYTE,USHORT,UINT,ULONG,ULONGLONG#
-#typ=byte,short,int,long,longlong,float,double,longdouble,ubyte,ushort,uint,ulong,ulonglong#
-#func=_SIGN1*8,_SIGN2*5#
- */
+   #TYPE=BYTE,SHORT,INT,LONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE,UBYTE,USHORT,UINT,ULONG,ULONGLONG#
+   #typ=byte,short,int,long,longlong,float,double,longdouble,ubyte,ushort,uint,ulong,ulonglong#
+   #func=_SIGN1*8,_SIGN2*5#
+*/
 static void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-        @typ@ t1;
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-                t1 = *((@typ@ *)i1);
-		*((@typ@ *)op) = (@typ@) @func@(t1);
-	}
+    register intp i;
+    intp is1=steps[0],os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    @typ@ t1;
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        t1 = *((@typ@ *)i1);
+        *((@typ@ *)op) = (@typ@) @func@(t1);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
-#TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=cfloat,cdouble,clongdouble#
-#rtyp=float,double,longdouble#
- */
+   #TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
+   #typ=cfloat,cdouble,clongdouble#
+   #rtyp=float,double,longdouble#
+*/
 static void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-        @typ@ t1;
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-                t1 = *((@typ@ *)i1);
-		(*((@typ@ *)op)).real = (@rtyp@)_SIGNC(t1);
-                (*((@typ@ *)op)).imag = (@rtyp@)0;
-	}
+    register intp i;
+    intp is1=steps[0],os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    @typ@ t1;
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        t1 = *((@typ@ *)i1);
+        (*((@typ@ *)op)).real = (@rtyp@)_SIGNC(t1);
+        (*((@typ@ *)op)).imag = (@rtyp@)0;
+    }
 }
 /**end repeat**/
 
@@ -1686,50 +1686,50 @@ static void
 static void
 OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-        PyObject *t1, *zero, *res;
-        zero = PyInt_FromLong(0);
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-                t1 = *((PyObject **)i1);
-                res = PyInt_FromLong((long) PyObject_Compare(t1, zero));
-		*((PyObject **)op) = res;
-	}
-        Py_DECREF(zero);
+    register intp i;
+    intp is1=steps[0],os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    PyObject *t1, *zero, *res;
+    zero = PyInt_FromLong(0);
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        t1 = *((PyObject **)i1);
+        res = PyInt_FromLong((long) PyObject_Compare(t1, zero));
+        *((PyObject **)op) = res;
+    }
+    Py_DECREF(zero);
 }
 
 
 /**begin repeat
-#TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 */
 static void
 @TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((Bool *)op) = ! *((@typ@ *)i1);
-	}
+    register intp i;
+    intp is1=steps[0],os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((Bool *)op) = ! *((@typ@ *)i1);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
-#TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=cfloat, cdouble, clongdouble#
+   #TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
+   #typ=cfloat, cdouble, clongdouble#
 */
 static void
 @TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((Bool *)op) = ! (((@typ@ *)i1)->real ||	\
-				   ((@typ@ *)i1)->imag);
-	}
+    register intp i;
+    intp is1=steps[0],os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((Bool *)op) = ! (((@typ@ *)i1)->real ||       \
+                           ((@typ@ *)i1)->imag);
+    }
 }
 /**end repeat**/
 
@@ -1737,128 +1737,128 @@ static void
 
 
 /**begin repeat
-#TYPE=BYTE,SHORT,INT,LONG,LONGLONG#
-#typ=byte, short, int, long, longlong#
-#c=f*2,,,l*1#
+   #TYPE=BYTE,SHORT,INT,LONG,LONGLONG#
+   #typ=byte, short, int, long, longlong#
+   #c=f*2,,,l*1#
 */
 static void
 @TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	register @typ@ ix,iy, tmp;
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		ix = *((@typ@ *)i1);
-		iy = *((@typ@ *)i2);
-		if (iy == 0 || ix == 0) {
-			if (iy == 0) generate_divbyzero_error();
-			*((@typ@ *)op) = 0;
-		}
-		else if ((ix > 0) == (iy > 0)) {
-			*((@typ@ *)op) = ix % iy;
-		}
-		else {  /* handle mixed case the way Python does */
-			tmp = ix % iy;
-			if (tmp) tmp += iy;
-			*((@typ@ *)op)= tmp;
-		}
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    register @typ@ ix,iy, tmp;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        ix = *((@typ@ *)i1);
+        iy = *((@typ@ *)i2);
+        if (iy == 0 || ix == 0) {
+            if (iy == 0) generate_divbyzero_error();
+            *((@typ@ *)op) = 0;
+        }
+        else if ((ix > 0) == (iy > 0)) {
+            *((@typ@ *)op) = ix % iy;
+        }
+        else {  /* handle mixed case the way Python does */
+            tmp = ix % iy;
+            if (tmp) tmp += iy;
+            *((@typ@ *)op)= tmp;
+        }
+    }
 }
 /**end repeat**/
 
 /**begin repeat
-#TYPE=UBYTE,USHORT,UINT,ULONG,ULONGLONG#
-#typ=ubyte, ushort, uint, ulong, ulonglong#
+   #TYPE=UBYTE,USHORT,UINT,ULONG,ULONGLONG#
+   #typ=ubyte, ushort, uint, ulong, ulonglong#
 */
 static void
 @TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	register @typ@ ix,iy;
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		ix = *((@typ@ *)i1);
-		iy = *((@typ@ *)i2);
-		if (iy == 0) {
-			generate_divbyzero_error();
-			*((@typ@ *)op) = 0;
-		}
-		*((@typ@ *)op) = ix % iy;
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    register @typ@ ix,iy;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        ix = *((@typ@ *)i1);
+        iy = *((@typ@ *)i2);
+        if (iy == 0) {
+            generate_divbyzero_error();
+            *((@typ@ *)op) = 0;
+        }
+        *((@typ@ *)op) = ix % iy;
+    }
 }
 /**end repeat**/
 
 /**begin repeat
-#TYPE=FLOAT,DOUBLE,LONGDOUBLE#
-#typ=float,double,longdouble#
-#c=f,,l#
+   #TYPE=FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=float,double,longdouble#
+   #c=f,,l#
 */
 static void
 @TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	@typ@ x, y, res;
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		x = *((@typ@ *)i1);
-		y = *((@typ@ *)i2);
-                res = fmod@c@(x, y);
-                if (res && ((y < 0) != (res < 0))) {
-                        res += y;
-                }
-                *((@typ@ *)op)= res;
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @typ@ x, y, res;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        x = *((@typ@ *)i1);
+        y = *((@typ@ *)i2);
+        res = fmod@c@(x, y);
+        if (res && ((y < 0) != (res < 0))) {
+            res += y;
+        }
+        *((@typ@ *)op)= res;
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
 
-#TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-#typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+   #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+   #typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
 */
 static void
 @TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	@typ@ x, y;
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		x = *((@typ@ *)i1);
-		y = *((@typ@ *)i2);
-		if (y == 0) {
-			generate_divbyzero_error();
-			*((@typ@ *)op) = 0;
-		}
-		else {
-			*((@typ@ *)op)= x % y;
-		}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @typ@ x, y;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        x = *((@typ@ *)i1);
+        y = *((@typ@ *)i2);
+        if (y == 0) {
+            generate_divbyzero_error();
+            *((@typ@ *)op) = 0;
+        }
+        else {
+            *((@typ@ *)op)= x % y;
+        }
 
-	}
+    }
 }
 /**end repeat**/
 
 /**begin repeat
 
-#TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG)*5#
-#typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong)*5#
-#OP= &*10, |*10, ^*10, <<*10, >>*10#
-#kind=bitwise_and*10, bitwise_or*10, bitwise_xor*10, left_shift*10, right_shift*10#
+   #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG)*5#
+   #typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong)*5#
+   #OP= &*10, |*10, ^*10, <<*10, >>*10#
+   #kind=bitwise_and*10, bitwise_or*10, bitwise_xor*10, left_shift*10, right_shift*10#
 
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	register char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    register char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
+    }
 }
 /**end repeat**/
 
@@ -1870,61 +1870,61 @@ static void
 static void
 @TYPE@_invert(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0], os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((@typ@ *)op) = ~ *((@typ@*)i1);
-	}
+    register intp i;
+    intp is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@typ@ *)op) = ~ *((@typ@*)i1);
+    }
 }
 /**end repeat**/
 
 static void
 BOOL_invert(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0], os=steps[1], n=dimensions[0];
-	char *i1=args[0], *op=args[1];
-	for(i=0; i<n; i++, i1+=is1, op+=os) {
-		*((Bool *)op) = (*((Bool *)i1) ? FALSE : TRUE);
-	}
+    register intp i;
+    intp is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((Bool *)op) = (*((Bool *)i1) ? FALSE : TRUE);
+    }
 }
 
 
 /**begin repeat
-#TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+   #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
+   #typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
 
 */
 static void
 @TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((Bool *)op)=(*((@typ@ *)i1) || *((@typ@ *)i2)) && !(*((@typ@ *)i1) && *((@typ@ *)i2));
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op)=(*((@typ@ *)i1) || *((@typ@ *)i2)) && !(*((@typ@ *)i1) && *((@typ@ *)i2));
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
-#TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
-#typ=cfloat, cdouble, clongdouble#
+   #TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
+   #typ=cfloat, cdouble, clongdouble#
 */
 static void
 @TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
 {
-	Bool p1, p2;
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		p1 = ((@typ@ *)i1)->real || ((@typ@ *)i1)->imag;
-		p2 = ((@typ@ *)i2)->real || ((@typ@ *)i2)->imag;
-		*((Bool *)op)= (p1 || p2) && !(p1 && p2);
-	}
+    Bool p1, p2;
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        p1 = ((@typ@ *)i1)->real || ((@typ@ *)i1)->imag;
+        p2 = ((@typ@ *)i2)->real || ((@typ@ *)i2)->imag;
+        *((Bool *)op)= (p1 || p2) && !(p1 && p2);
+    }
 }
 /**end repeat**/
 
@@ -1932,46 +1932,46 @@ static void
 
 /**begin repeat
 
-#TYPE=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*2#
-#OP= >*14, <*14#
-#typ=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*2#
-#kind= maximum*14, minimum*14#
+   #TYPE=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*2#
+   #OP= >*14, <*14#
+   #typ=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*2#
+   #kind= maximum*14, minimum*14#
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-		*((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2) ? *((@typ@ *)i1) : *((@typ@ *)i2);
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((@typ@ *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2) ? *((@typ@ *)i1) : *((@typ@ *)i2);
+    }
 }
 /**end repeat**/
 
 /**begin repeat
 
-#TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*2#
-#OP= >*3, <*3#
-#typ=(cfloat, cdouble, clongdouble)*2#
-#kind= maximum*3, minimum*3#
+   #TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*2#
+   #OP= >*3, <*3#
+   #typ=(cfloat, cdouble, clongdouble)*2#
+   #kind= maximum*3, minimum*3#
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-	register intp i;
-	intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-	char *i1=args[0], *i2=args[1], *op=args[2];
-        @typ@ *i1c, *i2c;
-	for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-                i1c = (@typ@ *)i1;
-                i2c = (@typ@ *)i2;
-                if ((i1c->real @OP@ i2c->real) ||                       \
-                    ((i1c->real==i2c->real) && (i1c->imag @OP@ i2c->imag)))
-                        memmove(op, i1, sizeof(@typ@));
-                else
-                        memmove(op, i2, sizeof(@typ@));
-	}
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @typ@ *i1c, *i2c;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        i1c = (@typ@ *)i1;
+        i2c = (@typ@ *)i2;
+        if ((i1c->real @OP@ i2c->real) ||                       \
+            ((i1c->real==i2c->real) && (i1c->imag @OP@ i2c->imag)))
+            memmove(op, i1, sizeof(@typ@));
+        else
+            memmove(op, i2, sizeof(@typ@));
+    }
 }
 /**end repeat**/
 
@@ -1979,41 +1979,41 @@ static void
 
 /*** isinf, isinf, isfinite, signbit ***/
 /**begin repeat
-#kind=isnan*3, isinf*3, isfinite*3, signbit*3#
-#TYPE=(FLOAT, DOUBLE, LONGDOUBLE)*4#
-#typ=(float, double, longdouble)*4#
-#c=(f,,l)*4#
+   #kind=isnan*3, isinf*3, isfinite*3, signbit*3#
+   #TYPE=(FLOAT, DOUBLE, LONGDOUBLE)*4#
+   #typ=(float, double, longdouble)*4#
+   #c=(f,,l)*4#
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-        register intp i;
-        intp is=steps[0], os=steps[1], n=dimensions[0];
-        char *ip=args[0], *op=args[1];
-        for(i=0; i<n; i++, ip+=is, op+=os) {
-                *((Bool *)op) = (Bool) (@kind@@c@(*((@typ@ *)ip)) != 0);
-        }
+    register intp i;
+    intp is=steps[0], os=steps[1], n=dimensions[0];
+    char *ip=args[0], *op=args[1];
+    for(i=0; i<n; i++, ip+=is, op+=os) {
+        *((Bool *)op) = (Bool) (@kind@@c@(*((@typ@ *)ip)) != 0);
+    }
 }
 /**end repeat**/
 
 
 /**begin repeat
-#kind=isnan*3, isinf*3, isfinite*3#
-#TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*3#
-#typ=(float, double, longdouble)*3#
-#c=(f,,l)*3#
-#OP=||*6,&&*3#
+   #kind=isnan*3, isinf*3, isfinite*3#
+   #TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*3#
+   #typ=(float, double, longdouble)*3#
+   #c=(f,,l)*3#
+   #OP=||*6,&&*3#
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-        register intp i;
-        intp is=steps[0], os=steps[1], n=dimensions[0];
-        char *ip=args[0], *op=args[1];
-        for(i=0; i<n; i++, ip+=is, op+=os) {
-                *((Bool *)op) = @kind@@c@(((@typ@ *)ip)[0]) @OP@        \
-                        @kind@@c@(((@typ@ *)ip)[1]);
-        }
+    register intp i;
+    intp is=steps[0], os=steps[1], n=dimensions[0];
+    char *ip=args[0], *op=args[1];
+    for(i=0; i<n; i++, ip+=is, op+=os) {
+        *((Bool *)op) = @kind@@c@(((@typ@ *)ip)[0]) @OP@        \
+            @kind@@c@(((@typ@ *)ip)[1]);
+    }
 }
 /**end repeat**/
 
@@ -2023,63 +2023,63 @@ static void
 /****** modf ****/
 
 /**begin repeat
-#TYPE=FLOAT, DOUBLE, LONGDOUBLE#
-#typ=float, double, longdouble#
-#c=f,,l#
+   #TYPE=FLOAT, DOUBLE, LONGDOUBLE#
+   #typ=float, double, longdouble#
+   #c=f,,l#
 */
 static void
 @TYPE@_modf(char **args, intp *dimensions, intp *steps, void *func)
 {
-        register intp i;
-        intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
-        char *i1=args[0], *op1=args[1], *op2=args[2];
-        @typ@ x1, y1, y2;
-        for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
-                x1 = *((@typ@ *)i1);
-                y1 = modf@c@(x1, &y2);
-                *((@typ@ *)op1) = y1;
-                *((@typ@ *)op2) = y2;
-        }
+    register intp i;
+    intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
+    char *i1=args[0], *op1=args[1], *op2=args[2];
+    @typ@ x1, y1, y2;
+    for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
+        x1 = *((@typ@ *)i1);
+        y1 = modf@c@(x1, &y2);
+        *((@typ@ *)op1) = y1;
+        *((@typ@ *)op2) = y2;
+    }
 }
 /**end repeat**/
 
 #define HAVE_DOUBLE_FUNCS
 /**begin repeat
-#TYPE=FLOAT, DOUBLE, LONGDOUBLE#
-#typ=float, double, longdouble#
-#c=f,,l#
+   #TYPE=FLOAT, DOUBLE, LONGDOUBLE#
+   #typ=float, double, longdouble#
+   #c=f,,l#
 */
 #ifdef HAVE_@TYPE@_FUNCS
 static void
 @TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *func)
 {
-        register intp i;
-        intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
-        char *i1=args[0], *op1=args[1], *op2=args[2];
-        @typ@ x1, y1;
-        int y2;
-        for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
-                x1 = *((@typ@ *)i1);
-                y1 = frexp@c@(x1, &y2);
-                *((@typ@ *)op1) = y1;
-                *((int *) op2) = y2;
-        }
+    register intp i;
+    intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
+    char *i1=args[0], *op1=args[1], *op2=args[2];
+    @typ@ x1, y1;
+    int y2;
+    for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
+        x1 = *((@typ@ *)i1);
+        y1 = frexp@c@(x1, &y2);
+        *((@typ@ *)op1) = y1;
+        *((int *) op2) = y2;
+    }
 }
 
 static void
 @TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *func)
 {
-        register intp i;
-        intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-        char *i1=args[0], *i2=args[1], *op=args[2];
-        @typ@ x1, y1;
-        int x2;
-        for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-                x1 = *((@typ@ *)i1);
-                x2 = *((int *)i2);
-                y1 = ldexp@c@(x1, x2);
-                *((@typ@ *)op) = y1;
-        }
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @typ@ x1, y1;
+    int x2;
+    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        x1 = *((@typ@ *)i1);
+        x2 = *((int *)i2);
+        y1 = ldexp@c@(x1, x2);
+        *((@typ@ *)op) = y1;
+    }
 }
 #endif
 /**end repeat**/
@@ -2088,43 +2088,43 @@ static void
 
 static PyUFuncGenericFunction frexp_functions[] = {
 #ifdef HAVE_FLOAT_FUNCS
-        FLOAT_frexp,
+    FLOAT_frexp,
 #endif
-        DOUBLE_frexp
+    DOUBLE_frexp
 #ifdef HAVE_LONGDOUBLE_FUNCS
-        ,LONGDOUBLE_frexp
+    ,LONGDOUBLE_frexp
 #endif
 };
 
 static void * blank3_data[] = { (void *)NULL, (void *)NULL, (void *)NULL};
 static char frexp_signatures[] = {
 #ifdef HAVE_FLOAT_FUNCS
-        PyArray_FLOAT, PyArray_FLOAT, PyArray_INT,
+    PyArray_FLOAT, PyArray_FLOAT, PyArray_INT,
 #endif
-        PyArray_DOUBLE, PyArray_DOUBLE, PyArray_INT
+    PyArray_DOUBLE, PyArray_DOUBLE, PyArray_INT
 #ifdef HAVE_LONGDOUBLE_FUNCS
-        ,PyArray_LONGDOUBLE, PyArray_LONGDOUBLE, PyArray_INT
+    ,PyArray_LONGDOUBLE, PyArray_LONGDOUBLE, PyArray_INT
 #endif
 };
 
 
 static PyUFuncGenericFunction ldexp_functions[] = {
 #ifdef HAVE_FLOAT_FUNCS
-        FLOAT_ldexp,
+    FLOAT_ldexp,
 #endif
-        DOUBLE_ldexp
+    DOUBLE_ldexp
 #ifdef HAVE_LONGDOUBLE_FUNCS
-        ,LONGDOUBLE_ldexp
+    ,LONGDOUBLE_ldexp
 #endif
 };
 
 static char ldexp_signatures[] = {
 #ifdef HAVE_FLOAT_FUNCS
-        PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
+    PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
 #endif
-        PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE
+    PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE
 #ifdef HAVE_LONGDOUBLE_FUNCS
-        ,PyArray_LONGDOUBLE, PyArray_INT, PyArray_LONGDOUBLE
+    ,PyArray_LONGDOUBLE, PyArray_INT, PyArray_LONGDOUBLE
 #endif
 };
 
@@ -2173,143 +2173,143 @@ pzero_init(void)
 
 static void
 InitOtherOperators(PyObject *dictionary) {
-        PyObject *f;
-        int num=1;
+    PyObject *f;
+    int num=1;
 
 #ifdef HAVE_LONGDOUBLE_FUNCS
-        num += 1;
+    num += 1;
 #endif
 #ifdef HAVE_FLOAT_FUNCS
-        num += 1;
+    num += 1;
 #endif
-        f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
-				    frexp_signatures, num,
-                                    1, 2, PyUFunc_None, "frexp",
-                                    "Split the number, x, into a normalized"\
-				    " fraction (y1) and exponent (y2)",0);
-        PyDict_SetItemString(dictionary, "frexp", f);
-        Py_DECREF(f);
+    f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
+                                frexp_signatures, num,
+                                1, 2, PyUFunc_None, "frexp",
+                                "Split the number, x, into a normalized"\
+                                " fraction (y1) and exponent (y2)",0);
+    PyDict_SetItemString(dictionary, "frexp", f);
+    Py_DECREF(f);
 
-        f = PyUFunc_FromFuncAndData(ldexp_functions, blank3_data, ldexp_signatures, num,
-                                    2, 1, PyUFunc_None, "ldexp",
-                                    "Compute y = x1 * 2**x2.",0);
-        PyDict_SetItemString(dictionary, "ldexp", f);
-        Py_DECREF(f);
-        return;
+    f = PyUFunc_FromFuncAndData(ldexp_functions, blank3_data, ldexp_signatures, num,
+                                2, 1, PyUFunc_None, "ldexp",
+                                "Compute y = x1 * 2**x2.",0);
+    PyDict_SetItemString(dictionary, "ldexp", f);
+    Py_DECREF(f);
+    return;
 }
 
 static struct PyMethodDef methods[] = {
-        {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
-         METH_VARARGS | METH_KEYWORDS, doc_frompyfunc},
-	{"seterrobj", (PyCFunction) ufunc_seterr,
-	 METH_VARARGS, NULL},
-	{"geterrobj", (PyCFunction) ufunc_geterr,
-	 METH_VARARGS, NULL},
-	{NULL,		NULL, 0}		/* sentinel */
+    {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
+     METH_VARARGS | METH_KEYWORDS, doc_frompyfunc},
+    {"seterrobj", (PyCFunction) ufunc_seterr,
+     METH_VARARGS, NULL},
+    {"geterrobj", (PyCFunction) ufunc_geterr,
+     METH_VARARGS, NULL},
+    {NULL,          NULL, 0}                /* sentinel */
 };
 
 PyMODINIT_FUNC initumath(void) {
-	PyObject *m, *d, *s, *s2, *c_api;
-	double pinf, pzero, mynan;
-        int UFUNC_FLOATING_POINT_SUPPORT = 1;
+    PyObject *m, *d, *s, *s2, *c_api;
+    double pinf, pzero, mynan;
+    int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
-        UFUNC_FLOATING_POINT_SUPPORT = 0;
+    UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
-	/* Create the module and add the functions */
-	m = Py_InitModule("umath", methods);
+    /* Create the module and add the functions */
+    m = Py_InitModule("umath", methods);
 
-	/* Import the array */
-	if (_import_array() < 0) {
-                if (!PyErr_Occurred()) {
-                        PyErr_SetString(PyExc_ImportError,
-                                        "umath failed: Could not import array core.");
-                }
-                return;
+    /* Import the array */
+    if (_import_array() < 0) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_ImportError,
+                            "umath failed: Could not import array core.");
         }
+        return;
+    }
 
-	/* Initialize the types */
-	if (PyType_Ready(&PyUFunc_Type) < 0)
-                return;
+    /* Initialize the types */
+    if (PyType_Ready(&PyUFunc_Type) < 0)
+        return;
 
-	/* Add some symbolic constants to the module */
-	d = PyModule_GetDict(m);
+    /* Add some symbolic constants to the module */
+    d = PyModule_GetDict(m);
 
-	c_api = PyCObject_FromVoidPtr((void *)PyUFunc_API, NULL);
-	if (PyErr_Occurred()) goto err;
-	PyDict_SetItemString(d, "_UFUNC_API", c_api);
-	Py_DECREF(c_api);
-	if (PyErr_Occurred()) goto err;
+    c_api = PyCObject_FromVoidPtr((void *)PyUFunc_API, NULL);
+    if (PyErr_Occurred()) goto err;
+    PyDict_SetItemString(d, "_UFUNC_API", c_api);
+    Py_DECREF(c_api);
+    if (PyErr_Occurred()) goto err;
 
-	s = PyString_FromString("0.4.0");
-	PyDict_SetItemString(d, "__version__", s);
-	Py_DECREF(s);
+    s = PyString_FromString("0.4.0");
+    PyDict_SetItemString(d, "__version__", s);
+    Py_DECREF(s);
 
-	/* Load the ufunc operators into the array module's namespace */
-	InitOperators(d);
+    /* Load the ufunc operators into the array module's namespace */
+    InitOperators(d);
 
-        InitOtherOperators(d);
+    InitOtherOperators(d);
 
-	PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(M_PI));
-	Py_DECREF(s);
-	PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
-	Py_DECREF(s);
+    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(M_PI));
+    Py_DECREF(s);
+    PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
+    Py_DECREF(s);
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
 #define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
 
-        ADDCONST(ERR_IGNORE);
-        ADDCONST(ERR_WARN);
-        ADDCONST(ERR_CALL);
-        ADDCONST(ERR_RAISE);
-        ADDCONST(ERR_PRINT);
-        ADDCONST(ERR_LOG);
-        ADDCONST(ERR_DEFAULT);
-        ADDCONST(ERR_DEFAULT2);
+    ADDCONST(ERR_IGNORE);
+    ADDCONST(ERR_WARN);
+    ADDCONST(ERR_CALL);
+    ADDCONST(ERR_RAISE);
+    ADDCONST(ERR_PRINT);
+    ADDCONST(ERR_LOG);
+    ADDCONST(ERR_DEFAULT);
+    ADDCONST(ERR_DEFAULT2);
 
-        ADDCONST(SHIFT_DIVIDEBYZERO);
-        ADDCONST(SHIFT_OVERFLOW);
-        ADDCONST(SHIFT_UNDERFLOW);
-        ADDCONST(SHIFT_INVALID);
+    ADDCONST(SHIFT_DIVIDEBYZERO);
+    ADDCONST(SHIFT_OVERFLOW);
+    ADDCONST(SHIFT_UNDERFLOW);
+    ADDCONST(SHIFT_INVALID);
 
-        ADDCONST(FPE_DIVIDEBYZERO);
-        ADDCONST(FPE_OVERFLOW);
-        ADDCONST(FPE_UNDERFLOW);
-        ADDCONST(FPE_INVALID);
+    ADDCONST(FPE_DIVIDEBYZERO);
+    ADDCONST(FPE_OVERFLOW);
+    ADDCONST(FPE_UNDERFLOW);
+    ADDCONST(FPE_INVALID);
 
-        ADDCONST(FLOATING_POINT_SUPPORT);
+    ADDCONST(FLOATING_POINT_SUPPORT);
 
-        ADDSCONST(PYVALS_NAME);
+    ADDSCONST(PYVALS_NAME);
 
 #undef ADDCONST
 #undef ADDSCONST
-        PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)PyArray_BUFSIZE);
+    PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)PyArray_BUFSIZE);
 
-        pinf = pinf_init();
-        pzero = pzero_init();
-        mynan = pinf / pinf;
+    pinf = pinf_init();
+    pzero = pzero_init();
+    mynan = pinf / pinf;
 
-        PyModule_AddObject(m, "PINF", PyFloat_FromDouble(pinf));
-        PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-pinf));
-        PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(pzero));
-        PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(-pzero));
-        PyModule_AddObject(m, "NAN", PyFloat_FromDouble(mynan));
+    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(pinf));
+    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-pinf));
+    PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(pzero));
+    PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(-pzero));
+    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(mynan));
 
-	s = PyDict_GetItemString(d, "conjugate");
-	s2 = PyDict_GetItemString(d, "remainder");
-	/* Setup the array object's numerical structures with appropriate
-	   ufuncs in d*/
-	PyArray_SetNumericOps(d);
+    s = PyDict_GetItemString(d, "conjugate");
+    s2 = PyDict_GetItemString(d, "remainder");
+    /* Setup the array object's numerical structures with appropriate
+       ufuncs in d*/
+    PyArray_SetNumericOps(d);
 
-	PyDict_SetItemString(d, "conj", s);
-	PyDict_SetItemString(d, "mod", s2);
+    PyDict_SetItemString(d, "conj", s);
+    PyDict_SetItemString(d, "mod", s2);
 
-	return;
+    return;
  err:
-	/* Check for errors */
-	if (!PyErr_Occurred()) {
-		PyErr_SetString(PyExc_RuntimeError,
-				"cannot load umath module.");
-	}
-	return;
+    /* Check for errors */
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load umath module.");
+    }
+    return;
 }

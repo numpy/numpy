@@ -41,10 +41,10 @@ static int ulonglong_overflow(ulonglong a, ulonglong b)
     /* *c = ((x + y)<<32) + w; */
 #if SIZEOF_LONGLONG == 64
     return z || (x>>32) || (y>>32) ||
-	(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 32);
+        (((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 32);
 #elif SIZEOF_LONGLONG == 128
     return z || (x>>64) || (y>>64) ||
-	(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 64);
+        (((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 64);
 #else
     return 0;
 #endif
@@ -90,10 +90,10 @@ static int slonglong_overflow(longlong a0, longlong b0)
 
 #if SIZEOF_LONGLONG == 64
     return z || (x>>31) || (y>>31) ||
-	(((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 31);
+        (((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 31);
 #elif SIZEOF_LONGLONG == 128
     return z || (x>>63) || (y>>63) ||
-	(((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 63);
+        (((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 63);
 #else
     return 0;
 #endif
@@ -103,16 +103,16 @@ static int slonglong_overflow(longlong a0, longlong b0)
 
 /* Basic operations:
 
-BINARY:
+   BINARY:
 
-add, subtract, multiply, divide, remainder, divmod, power,
-floor_divide, true_divide
+   add, subtract, multiply, divide, remainder, divmod, power,
+   floor_divide, true_divide
 
-lshift, rshift, and, or, xor (integers only)
+   lshift, rshift, and, or, xor (integers only)
 
-UNARY:
+   UNARY:
 
-negative, positive, absolute, nonzero, invert, int, long, float, oct, hex
+   negative, positive, absolute, nonzero, invert, int, long, float, oct, hex
 
 */
 
@@ -123,7 +123,7 @@ static void
 @name@_ctype_add(@name@ a, @name@ b, @name@ *out) {
     *out = a + b;
     if ((*out^a) >= 0 || (*out^b) >= 0)
-	return;
+        return;
     generate_overflow_error();
     return;
 }
@@ -131,7 +131,7 @@ static void
 @name@_ctype_subtract(@name@ a, @name@ b, @name@ *out) {
     *out = a - b;
     if ((*out^a) >= 0 || (*out^~b) >= 0)
-	return;
+        return;
     generate_overflow_error();
     return;
 }
@@ -143,7 +143,7 @@ static void
 @name@_ctype_add(@name@ a, @name@ b, @name@ *out) {
     *out = a + b;
     if (*out >= a && *out >= b)
-	return;
+        return;
     generate_overflow_error();
     return;
 }
@@ -179,7 +179,7 @@ static void
 #else
         if (temp > MAX_@NAME@)
 #endif
-	    generate_overflow_error();
+            generate_overflow_error();
     return;
 }
 #endif
@@ -195,7 +195,7 @@ static void
 @name@_ctype_multiply(@name@ a, @name@ b, @name@ *out) {
     *out = a * b;
     if (@char@longlong_overflow(a, b))
-	generate_overflow_error();
+        generate_overflow_error();
     return;
 }
 #endif
@@ -208,13 +208,13 @@ static void
 static void
 @name@_ctype_divide(@name@ a, @name@ b, @name@ *out) {
     if (b == 0) {
-	generate_divbyzero_error();
-	*out = 0;
+        generate_divbyzero_error();
+        *out = 0;
     }
 #if @neg@
     else if (b == -1 && a < 0 && a == -a) {
-	generate_overflow_error();
-	*out = a / b;
+        generate_overflow_error();
+        *out = a / b;
     }
 #endif
     else {
@@ -224,7 +224,7 @@ static void
         if (((a > 0) != (b > 0)) && (a % b != 0)) tmp--;
         *out = tmp;
 #else
-	*out = a / b;
+        *out = a / b;
 #endif
     }
 }
@@ -232,17 +232,17 @@ static void
 static void
 @name@_ctype_remainder(@name@ a, @name@ b, @name@ *out) {
     if (a == 0 || b == 0) {
-	if (b == 0) generate_divbyzero_error();
-	*out = 0;
+        if (b == 0) generate_divbyzero_error();
+        *out = 0;
         return;
     }
 #if @neg@
     else if ((a > 0) == (b > 0)) {
-	*out = a % b;
+        *out = a % b;
     }
     else { /* handled like Python does */
-	*out = a % b;
-	if (*out) *out += b;
+        *out = a % b;
+        if (*out) *out += b;
     }
 #else
     *out = a % b;
@@ -254,7 +254,7 @@ static void
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
    #otyp=float*4, double*6#
 **/
-#define @name@_ctype_true_divide(a, b, out)	\
+#define @name@_ctype_true_divide(a, b, out)     \
     *(out) = ((@otyp@) (a)) / ((@otyp@) (b));
 /**end repeat**/
 
@@ -276,9 +276,9 @@ static void
             if (temp == 0)
                 break; /* Avoid ix / 0 */
         }
-        b >>= 1;	/* Shift exponent down by 1 bit */
+        b >>= 1;        /* Shift exponent down by 1 bit */
         if (b==0) break;
-	/* Square the value of temp */
+        /* Square the value of temp */
         @name@_ctype_multiply(temp, temp, &mult);
         temp = mult;
     }
@@ -309,7 +309,7 @@ static @name@ (*_basic_@name@_fmod)(@name@, @name@);
 #define @name@_ctype_multiply(a, b, outp) *(outp) = a * b
 #define @name@_ctype_divide(a, b, outp) *(outp) = a / b
 #define @name@_ctype_true_divide @name@_ctype_divide
-#define @name@_ctype_floor_divide(a, b, outp) \
+#define @name@_ctype_floor_divide(a, b, outp)   \
     *(outp) = _basic_@name@_floor((a) / (b))
 /**end repeat**/
 
@@ -318,29 +318,29 @@ static @name@ (*_basic_@name@_fmod)(@name@, @name@);
    #rtype=float, double, longdouble#
    #c=f,,l#
 **/
-#define @name@_ctype_add(a, b, outp) do{	\
-    (outp)->real = (a).real + (b).real;		\
-    (outp)->imag = (a).imag + (b).imag;		\
+#define @name@_ctype_add(a, b, outp) do{        \
+    (outp)->real = (a).real + (b).real;         \
+    (outp)->imag = (a).imag + (b).imag;         \
     }while(0)
-#define @name@_ctype_subtract(a, b, outp) do{	\
-    (outp)->real = (a).real - (b).real;		\
-    (outp)->imag = (a).imag - (b).imag;		\
+#define @name@_ctype_subtract(a, b, outp) do{   \
+    (outp)->real = (a).real - (b).real;         \
+    (outp)->imag = (a).imag - (b).imag;         \
     }while(0)
-#define @name@_ctype_multiply(a, b, outp) do{			\
-    (outp)->real = (a).real * (b).real - (a).imag * (b).imag;	\
-    (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;	\
+#define @name@_ctype_multiply(a, b, outp) do{                   \
+    (outp)->real = (a).real * (b).real - (a).imag * (b).imag;   \
+    (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;   \
     }while(0)
-#define @name@_ctype_divide(a, b, outp) do{			\
-    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;		\
-    (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;	\
-    (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;	\
+#define @name@_ctype_divide(a, b, outp) do{                     \
+    @rtype@ d = (b).real*(b).real + (b).imag*(b).imag;          \
+    (outp)->real = ((a).real*(b).real + (a).imag*(b).imag)/d;   \
+    (outp)->imag = ((a).imag*(b).real - (a).real*(b).imag)/d;   \
     }while(0)
 #define @name@_ctype_true_divide @name@_ctype_divide
-#define @name@_ctype_floor_divide(a, b, outp) do {		\
-    (outp)->real = _basic_@rtype@_floor				\
-    (((a).real*(b).real + (a).imag*(b).imag) /			\
-     ((b).real*(b).real + (b).imag*(b).imag));			\
-    (outp)->imag = 0;						\
+#define @name@_ctype_floor_divide(a, b, outp) do {      \
+    (outp)->real = _basic_@rtype@_floor                 \
+    (((a).real*(b).real + (a).imag*(b).imag) /          \
+     ((b).real*(b).real + (b).imag*(b).imag));          \
+    (outp)->imag = 0;                                   \
     }while(0)
 /**end repeat**/
 
@@ -361,9 +361,9 @@ static void
 /**begin repeat
    #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
 **/
-#define @name@_ctype_divmod(a, b, out, out2) {	\
-    @name@_ctype_floor_divide(a, b, out);	\
-    @name@_ctype_remainder(a, b, out2);		\
+#define @name@_ctype_divmod(a, b, out, out2) {  \
+    @name@_ctype_floor_divide(a, b, out);       \
+    @name@_ctype_remainder(a, b, out2);         \
     }
 /**end repeat**/
 
@@ -474,16 +474,16 @@ static void
 
 /* The general strategy for commutative binary operators is to
 
-1) Convert the types to the common type if both are scalars (0 return)
-2) If both are not scalars use ufunc machinery (-2 return)
-3) If both are scalars but cannot be cast to the right type
-return NotImplmented (-1 return)
+   1) Convert the types to the common type if both are scalars (0 return)
+   2) If both are not scalars use ufunc machinery (-2 return)
+   3) If both are scalars but cannot be cast to the right type
+   return NotImplmented (-1 return)
 
-4) Perform the function on the C-type.
-5) If an error condition occurred, check to see
-what the current error-handling is and handle the error.
+   4) Perform the function on the C-type.
+   5) If an error condition occurred, check to see
+   what the current error-handling is and handle the error.
 
-6) Construct and return the output scalar.
+   6) Construct and return the output scalar.
 */
 
 
@@ -499,34 +499,34 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
     PyObject *temp;
 
     if (PyArray_IsScalar(a, @Name@)) {
-	*arg1 = PyArrayScalar_VAL(a, @Name@);
-	return 0;
+        *arg1 = PyArrayScalar_VAL(a, @Name@);
+        return 0;
     }
     else if (PyArray_IsScalar(a, Generic)) {
-	PyArray_Descr *descr1;
-	int ret;
-	if (!PyArray_IsScalar(a, Number)) return -1;
-	descr1 = PyArray_DescrFromTypeObject((PyObject *)(a->ob_type));
- 	if (PyArray_CanCastSafely(descr1->type_num, PyArray_@NAME@)) {
-	    PyArray_CastScalarDirect(a, descr1, arg1, PyArray_@NAME@);
-	    ret = 0;
-	}
-	else ret = -1;
-	Py_DECREF(descr1);
-	return ret;
+        PyArray_Descr *descr1;
+        int ret;
+        if (!PyArray_IsScalar(a, Number)) return -1;
+        descr1 = PyArray_DescrFromTypeObject((PyObject *)(a->ob_type));
+        if (PyArray_CanCastSafely(descr1->type_num, PyArray_@NAME@)) {
+            PyArray_CastScalarDirect(a, descr1, arg1, PyArray_@NAME@);
+            ret = 0;
+        }
+        else ret = -1;
+        Py_DECREF(descr1);
+        return ret;
     }
     else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-	int retval;
-	retval = _@name@_convert_to_ctype(temp, arg1);
-	Py_DECREF(temp);
-	return retval;
+        int retval;
+        retval = _@name@_convert_to_ctype(temp, arg1);
+        Py_DECREF(temp);
+        return retval;
     }
     return -2;
 }
 
 static int
 _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
-			   PyObject *b, @name@ *arg2)
+                           PyObject *b, @name@ *arg2)
 {
     int ret;
     ret = _@name@_convert_to_ctype(a, arg1);
@@ -568,10 +568,10 @@ static PyObject *
     case 0:
         break;
     case -1: /* one of them can't be cast safely
-		must be mixed-types*/
-	return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+                must be mixed-types*/
+        return PyArray_Type.tp_as_number->nb_@oper@(a,b);
     case -2: /* use default handling */
-	if (PyErr_Occurred()) return NULL;
+        if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
     }
 
@@ -591,14 +591,14 @@ static PyObject *
     /* Check status flag.  If it is set, then look up what to do */
     retstatus = PyUFunc_getfperr();
     if (retstatus) {
-	int bufsize, errmask;
-	PyObject *errobj;
-	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-				&errobj) < 0)
-	    return NULL;
+        int bufsize, errmask;
+        PyObject *errobj;
+        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
+                                &errobj) < 0)
+            return NULL;
         first = 1;
-	if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
-	    return NULL;
+        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
+            return NULL;
     }
 #endif
 
@@ -643,7 +643,7 @@ static PyObject *
 #if @cmplx@
     @name@ out = {0,0};
     @otyp@ out1;
-       out1.real = out.imag = 0;
+    out1.real = out.imag = 0;
 #else
     @name@ out = 0;
     @otyp@ out1=0;
@@ -653,10 +653,10 @@ static PyObject *
     case 0:
         break;
     case -1: /* can't cast both safely
-		mixed-types? */
-	return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+                mixed-types? */
+        return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
     case -2: /* use default handling */
-	if (PyErr_Occurred()) return NULL;
+        if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
     }
 
@@ -666,47 +666,47 @@ static PyObject *
     /* as a function call. */
 #if @cmplx@
     if (arg2.real == 0 && arg1.real == 0) {
-	out1.real = out.real = 1;
-	out1.imag = out.imag = 0;
+        out1.real = out.real = 1;
+        out1.imag = out.imag = 0;
     }
 #else
     if (arg2 == 0) {
-	out1 = out = 1;
+        out1 = out = 1;
     }
 #endif
 #if @isint@
     else if (arg2 < 0) {
-	@name@_ctype_power(arg1, -arg2, &out);
-	out1 = (@otyp@) (1.0 / out);
+        @name@_ctype_power(arg1, -arg2, &out);
+        out1 = (@otyp@) (1.0 / out);
     }
 #endif
     else {
-	@name@_ctype_power(arg1, arg2, &out);
+        @name@_ctype_power(arg1, arg2, &out);
     }
 
     /* Check status flag.  If it is set, then look up what to do */
     retstatus = PyUFunc_getfperr();
     if (retstatus) {
-	int bufsize, errmask;
-	PyObject *errobj;
-	if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-				&errobj) < 0)
-	    return NULL;
+        int bufsize, errmask;
+        PyObject *errobj;
+        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
+                                &errobj) < 0)
+            return NULL;
         first = 1;
-	if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
-	    return NULL;
+        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
+            return NULL;
     }
 
 #if @isint@
     if (arg2 < 0) {
-	ret = PyArrayScalar_New(@OName@);
-	if (ret==NULL) return NULL;
-	PyArrayScalar_ASSIGN(ret, @OName@, out1);
+        ret = PyArrayScalar_New(@OName@);
+        if (ret==NULL) return NULL;
+        PyArrayScalar_ASSIGN(ret, @OName@, out1);
     }
     else {
-	ret = PyArrayScalar_New(@Name@);
-	if (ret==NULL) return NULL;
-	PyArrayScalar_ASSIGN(ret, @Name@, out);
+        ret = PyArrayScalar_New(@Name@);
+        if (ret==NULL) return NULL;
+        PyArrayScalar_ASSIGN(ret, @Name@, out);
     }
 #else
     ret = PyArrayScalar_New(@Name@);
@@ -720,8 +720,8 @@ static PyObject *
 
 
 /**begin repeat
-#name=(cfloat,cdouble,clongdouble)*2#
-#oper=divmod*3,remainder*3#
+   #name=(cfloat,cdouble,clongdouble)*2#
+   #oper=divmod*3,remainder*3#
 **/
 #define @name@_@oper@ NULL
 /**end repeat**/
@@ -751,10 +751,10 @@ static PyObject *
     case 0:
         break;
     case -1: /* can't cast both safely use different add function */
-	Py_INCREF(Py_NotImplemented);
-	return Py_NotImplemented;
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     case -2: /* use default handling */
-	if (PyErr_Occurred()) return NULL;
+        if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_@oper@(a);
     }
 
@@ -771,7 +771,7 @@ static PyObject *
 /**end repeat**/
 
 /**begin repeat
-#name=float,double,longdouble,cfloat,cdouble,clongdouble#
+   #name=float,double,longdouble,cfloat,cdouble,clongdouble#
 **/
 #define @name@_invert NULL
 /**end repeat**/
@@ -787,7 +787,7 @@ static int
     @name@ arg1;
 
     if (_@name@_convert_to_ctype(a, &arg1) < 0) {
-	if (PyErr_Occurred()) return -1;
+        if (PyErr_Occurred()) return -1;
         return PyGenericArrType_Type.tp_as_number->nb_nonzero(a);
     }
 
@@ -822,8 +822,8 @@ static PyObject *
     modf(x, &ix);
     x = ix;
 #endif
-    if(LONG_MIN < x && x < LONG_MAX) 
-      return PyInt_FromLong(x);
+    if(LONG_MIN < x && x < LONG_MAX)
+        return PyInt_FromLong(x);
     return @func@(x);
 }
 /**end repeat**/
@@ -865,9 +865,9 @@ static PyObject *
    #op=<=,>=,<,>,==,!=#
 **/
 #define def_cmp_@oper@(arg1, arg2) (arg1 @op@ arg2)
-#define cmplx_cmp_@oper@(arg1, arg2) ((arg1.real == arg2.real) ?	\
-				      arg1.imag @op@ arg2.imag :	\
-				      arg1.real @op@ arg2.real)
+#define cmplx_cmp_@oper@(arg1, arg2) ((arg1.real == arg2.real) ?        \
+                                      arg1.imag @op@ arg2.imag :        \
+                                      arg1.real @op@ arg2.real)
 /**end repeat**/
 
 /**begin repeat
@@ -882,40 +882,40 @@ static PyObject*
 
     switch(_@name@_convert2_to_ctypes(self, &arg1, other, &arg2)) {
     case 0:
-	break;
+        break;
     case -1: /* can't cast both safely use different add function */
     case -2: /* use ufunc */
-	if (PyErr_Occurred()) return NULL;
-	return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
+        if (PyErr_Occurred()) return NULL;
+        return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
     }
 
     /* here we do the actual calculation with arg1 and arg2 */
     switch (cmp_op) {
     case Py_EQ:
-	out = @simp@_cmp_eq(arg1, arg2);
-	break;
+        out = @simp@_cmp_eq(arg1, arg2);
+        break;
     case Py_NE:
-	out = @simp@_cmp_ne(arg1, arg2);
-	break;
+        out = @simp@_cmp_ne(arg1, arg2);
+        break;
     case Py_LE:
-	out = @simp@_cmp_le(arg1, arg2);
-	break;
+        out = @simp@_cmp_le(arg1, arg2);
+        break;
     case Py_GE:
-	out = @simp@_cmp_ge(arg1, arg2);
-	break;
+        out = @simp@_cmp_ge(arg1, arg2);
+        break;
     case Py_LT:
-	out = @simp@_cmp_lt(arg1, arg2);
-	break;
+        out = @simp@_cmp_lt(arg1, arg2);
+        break;
     case Py_GT:
-	out = @simp@_cmp_gt(arg1, arg2);
-	break;
+        out = @simp@_cmp_gt(arg1, arg2);
+        break;
     }
 
     if (out) {
-	PyArrayScalar_RETURN_TRUE;
+        PyArrayScalar_RETURN_TRUE;
     }
     else {
-	PyArrayScalar_RETURN_FALSE;
+        PyArrayScalar_RETURN_FALSE;
     }
 }
 /**end repeat**/
@@ -1066,7 +1066,7 @@ get_functions(void)
     Py_DECREF(obj);
     return
 
-    ret = 0;
+        ret = 0;
  fail:
     Py_DECREF(mm);
     return ret;
@@ -1083,28 +1083,28 @@ alter_pyscalars(PyObject *dummy, PyObject *args)
     PyObject *obj;
     n = PyTuple_GET_SIZE(args);
     while(n--) {
-	obj = PyTuple_GET_ITEM(args, n);
-	if (obj == (PyObject *)(&PyInt_Type)) {
-	    PyInt_Type.tp_as_number = PyLongArrType_Type.tp_as_number;
-	    PyInt_Type.tp_compare = PyLongArrType_Type.tp_compare;
-	    PyInt_Type.tp_richcompare = PyLongArrType_Type.tp_richcompare;
-	}
-	else if (obj == (PyObject *)(&PyFloat_Type)) {
-	    PyFloat_Type.tp_as_number = PyDoubleArrType_Type.tp_as_number;
-	    PyFloat_Type.tp_compare = PyDoubleArrType_Type.tp_compare;
-	    PyFloat_Type.tp_richcompare = PyDoubleArrType_Type.tp_richcompare;
-	}
-	else if (obj == (PyObject *)(&PyComplex_Type)) {
-	    PyComplex_Type.tp_as_number = PyCDoubleArrType_Type.tp_as_number;
-	    PyComplex_Type.tp_compare = PyCDoubleArrType_Type.tp_compare;
-	    PyComplex_Type.tp_richcompare =		\
-		PyCDoubleArrType_Type.tp_richcompare;
-	}
-	else {
-	    PyErr_SetString(PyExc_ValueError,
-			    "arguments must be int, float, or complex");
-	    return NULL;
-	}
+        obj = PyTuple_GET_ITEM(args, n);
+        if (obj == (PyObject *)(&PyInt_Type)) {
+            PyInt_Type.tp_as_number = PyLongArrType_Type.tp_as_number;
+            PyInt_Type.tp_compare = PyLongArrType_Type.tp_compare;
+            PyInt_Type.tp_richcompare = PyLongArrType_Type.tp_richcompare;
+        }
+        else if (obj == (PyObject *)(&PyFloat_Type)) {
+            PyFloat_Type.tp_as_number = PyDoubleArrType_Type.tp_as_number;
+            PyFloat_Type.tp_compare = PyDoubleArrType_Type.tp_compare;
+            PyFloat_Type.tp_richcompare = PyDoubleArrType_Type.tp_richcompare;
+        }
+        else if (obj == (PyObject *)(&PyComplex_Type)) {
+            PyComplex_Type.tp_as_number = PyCDoubleArrType_Type.tp_as_number;
+            PyComplex_Type.tp_compare = PyCDoubleArrType_Type.tp_compare;
+            PyComplex_Type.tp_richcompare =             \
+                PyCDoubleArrType_Type.tp_richcompare;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                            "arguments must be int, float, or complex");
+            return NULL;
+        }
     }
     Py_INCREF(Py_None);
     return Py_None;
@@ -1118,27 +1118,27 @@ restore_pyscalars(PyObject *dummy, PyObject *args)
     PyObject *obj;
     n = PyTuple_GET_SIZE(args);
     while(n--) {
-	obj = PyTuple_GET_ITEM(args, n);
-	if (obj == (PyObject *)(&PyInt_Type)) {
-	    PyInt_Type.tp_as_number = saved_tables[0];
-	    PyInt_Type.tp_compare = saved_tables[1];
-	    PyInt_Type.tp_richcompare = saved_tables[2];
-	}
-	else if (obj == (PyObject *)(&PyFloat_Type)) {
-	    PyFloat_Type.tp_as_number = saved_tables[3];
-	    PyFloat_Type.tp_compare = saved_tables[4];
-	    PyFloat_Type.tp_richcompare = saved_tables[5];
-	}
-	else if (obj == (PyObject *)(&PyComplex_Type)) {
-	    PyComplex_Type.tp_as_number = saved_tables[6];
-	    PyComplex_Type.tp_compare = saved_tables[7];
-	    PyComplex_Type.tp_richcompare = saved_tables[8];
-	}
-	else {
-	    PyErr_SetString(PyExc_ValueError,
-			    "arguments must be int, float, or complex");
-	    return NULL;
-	}
+        obj = PyTuple_GET_ITEM(args, n);
+        if (obj == (PyObject *)(&PyInt_Type)) {
+            PyInt_Type.tp_as_number = saved_tables[0];
+            PyInt_Type.tp_compare = saved_tables[1];
+            PyInt_Type.tp_richcompare = saved_tables[2];
+        }
+        else if (obj == (PyObject *)(&PyFloat_Type)) {
+            PyFloat_Type.tp_as_number = saved_tables[3];
+            PyFloat_Type.tp_compare = saved_tables[4];
+            PyFloat_Type.tp_richcompare = saved_tables[5];
+        }
+        else if (obj == (PyObject *)(&PyComplex_Type)) {
+            PyComplex_Type.tp_as_number = saved_tables[6];
+            PyComplex_Type.tp_compare = saved_tables[7];
+            PyComplex_Type.tp_richcompare = saved_tables[8];
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                            "arguments must be int, float, or complex");
+            return NULL;
+        }
     }
     Py_INCREF(Py_None);
     return Py_None;
@@ -1152,27 +1152,27 @@ use_pythonmath(PyObject *dummy, PyObject *args)
     PyObject *obj;
     n = PyTuple_GET_SIZE(args);
     while(n--) {
-	obj = PyTuple_GET_ITEM(args, n);
-	if (obj == (PyObject *)(&PyInt_Type)) {
-	    PyLongArrType_Type.tp_as_number = saved_tables[0];
-	    PyLongArrType_Type.tp_compare = saved_tables[1];
-	    PyLongArrType_Type.tp_richcompare = saved_tables[2];
-	}
-	else if (obj == (PyObject *)(&PyFloat_Type)) {
-	    PyDoubleArrType_Type.tp_as_number = saved_tables[3];
-	    PyDoubleArrType_Type.tp_compare = saved_tables[4];
-	    PyDoubleArrType_Type.tp_richcompare = saved_tables[5];
-	}
-	else if (obj == (PyObject *)(&PyComplex_Type)) {
-	    PyCDoubleArrType_Type.tp_as_number = saved_tables[6];
-	    PyCDoubleArrType_Type.tp_compare = saved_tables[7];
-	    PyCDoubleArrType_Type.tp_richcompare = saved_tables[8];
-	}
-	else {
-	    PyErr_SetString(PyExc_ValueError,
-			    "arguments must be int, float, or complex");
-	    return NULL;
-	}
+        obj = PyTuple_GET_ITEM(args, n);
+        if (obj == (PyObject *)(&PyInt_Type)) {
+            PyLongArrType_Type.tp_as_number = saved_tables[0];
+            PyLongArrType_Type.tp_compare = saved_tables[1];
+            PyLongArrType_Type.tp_richcompare = saved_tables[2];
+        }
+        else if (obj == (PyObject *)(&PyFloat_Type)) {
+            PyDoubleArrType_Type.tp_as_number = saved_tables[3];
+            PyDoubleArrType_Type.tp_compare = saved_tables[4];
+            PyDoubleArrType_Type.tp_richcompare = saved_tables[5];
+        }
+        else if (obj == (PyObject *)(&PyComplex_Type)) {
+            PyCDoubleArrType_Type.tp_as_number = saved_tables[6];
+            PyCDoubleArrType_Type.tp_compare = saved_tables[7];
+            PyCDoubleArrType_Type.tp_richcompare = saved_tables[8];
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                            "arguments must be int, float, or complex");
+            return NULL;
+        }
     }
     Py_INCREF(Py_None);
     return Py_None;
@@ -1186,27 +1186,27 @@ use_scalarmath(PyObject *dummy, PyObject *args)
     PyObject *obj;
     n = PyTuple_GET_SIZE(args);
     while(n--) {
-	obj = PyTuple_GET_ITEM(args, n);
-	if (obj == (PyObject *)(&PyInt_Type)) {
-	    PyLongArrType_Type.tp_as_number = saved_tables_arrtype[0];
-	    PyLongArrType_Type.tp_compare = saved_tables_arrtype[1];
-	    PyLongArrType_Type.tp_richcompare = saved_tables_arrtype[2];
-	}
-	else if (obj == (PyObject *)(&PyFloat_Type)) {
-	    PyDoubleArrType_Type.tp_as_number = saved_tables_arrtype[3];
-	    PyDoubleArrType_Type.tp_compare = saved_tables_arrtype[4];
-	    PyDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[5];
-	}
-	else if (obj == (PyObject *)(&PyComplex_Type)) {
-	    PyCDoubleArrType_Type.tp_as_number = saved_tables_arrtype[6];
-	    PyCDoubleArrType_Type.tp_compare = saved_tables_arrtype[7];
-	    PyCDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[8];
-	}
-	else {
-	    PyErr_SetString(PyExc_ValueError,
-			    "arguments must be int, float, or complex");
-	    return NULL;
-	}
+        obj = PyTuple_GET_ITEM(args, n);
+        if (obj == (PyObject *)(&PyInt_Type)) {
+            PyLongArrType_Type.tp_as_number = saved_tables_arrtype[0];
+            PyLongArrType_Type.tp_compare = saved_tables_arrtype[1];
+            PyLongArrType_Type.tp_richcompare = saved_tables_arrtype[2];
+        }
+        else if (obj == (PyObject *)(&PyFloat_Type)) {
+            PyDoubleArrType_Type.tp_as_number = saved_tables_arrtype[3];
+            PyDoubleArrType_Type.tp_compare = saved_tables_arrtype[4];
+            PyDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[5];
+        }
+        else if (obj == (PyObject *)(&PyComplex_Type)) {
+            PyCDoubleArrType_Type.tp_as_number = saved_tables_arrtype[6];
+            PyCDoubleArrType_Type.tp_compare = saved_tables_arrtype[7];
+            PyCDoubleArrType_Type.tp_richcompare = saved_tables_arrtype[8];
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                            "arguments must be int, float, or complex");
+            return NULL;
+        }
     }
     Py_INCREF(Py_None);
     return Py_None;
