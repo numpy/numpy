@@ -85,5 +85,30 @@ class test_fromrecords(NumpyTestCase):
         assert_array_equal(ra['field'], [[5,5,5]])
         assert callable(ra.field)
 
+class test_record(NumpyTestCase):
+    def setUp(self):
+        self.data = rec.fromrecords([(1,2,3),(4,5,6)],
+                            dtype=[("col1", "<i4"),
+                                   ("col2", "<i4"),
+                                   ("col3", "<i4")])
+
+    def test_assignment1(self):
+        a = self.data
+        assert_equal(a.col1[0],1)
+        a[0].col1 = 0
+        assert_equal(a.col1[0],0)
+
+    def test_assignment2(self):
+        a = self.data
+        assert_equal(a.col1[0],1)
+        a.col1[0] = 0
+        assert_equal(a.col1[0],0)
+
+    def test_invalid_assignment(self):
+        a = self.data
+        def assign_invalid_column(x):
+            x[0].col5 = 1
+        self.failUnlessRaises(AttributeError,assign_invalid_column,a)
+
 if __name__ == "__main__":
     NumpyTest().run()

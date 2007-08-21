@@ -152,17 +152,16 @@ class record(nt.void):
     def __setattr__(self, attr, val):
         if attr in ['setfield', 'getfield', 'dtype']:
             raise AttributeError, "Cannot set '%s' attribute" % attr
-        try:
-            return nt.void.__setattr__(self, attr, val)
-        except AttributeError:
-            pass
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr, None)
         if res:
             return self.setfield(val, *res[:2])
         else:
-            raise AttributeError, "'record' object has no "\
-                  "attribute '%s'" % attr
+            if getattr(self,attr,None):
+                return nt.void.__setattr__(self, attr, val)
+            else:
+                raise AttributeError, "'record' object has no "\
+                      "attribute '%s'" % attr
 
     def pprint(self):
         # pretty-print all fields
