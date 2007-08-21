@@ -443,6 +443,18 @@ class test_putmask(ParametricTestCase):
         self.failUnlessRaises(ValueError,N.putmask,
                               N.array([1,2,3]),[True],5)
 
+    def test_record_array(self):
+        rec = N.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
+                      dtype=[('x', '<f8'), ('y', '<f8'), ('z', '<f8')])
+        N.putmask(rec['x'],[True,False],10)
+        assert_array_equal(rec['x'],[10,5])
+
+    def test_masked_array(self):
+        ## x = N.array([1,2,3])
+        ## z = N.ma.array(x,mask=[True,False,False])
+        ## N.putmask(z,[True,True,True],3)
+        pass
+
 # Import tests from unicode
 set_local_path()
 from test_unicode import *
