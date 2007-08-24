@@ -1646,12 +1646,21 @@ static formatdef general_table[] = {
     {'I',  sizeof(int),       4,  INT_ALIGN,      unpack_uint,       pack_uint},
     {'l',  sizeof(long),      4,  LONG_ALIGN,     unpack_long,       pack_long},
     {'L',  sizeof(long),      4,  LONG_ALIGN,     unpack_ulong,      pack_ulong},
+#ifdef HAVE_LONG_LONG
+    {'q',  sizeof(PY_LONG_LONG), 8, LONG_LONG_ALIGN, unpack_longlong, pack_longlong},
+    {'Q',  sizeof(PY_LONG_LONG), 8, LONG_LONG_ALIGN, unpack_ulonglong, pack_ulonglong},
+#else
     {'q',  0,                 8,  0,              unpack_longlong,   pack_longlong},
     {'Q',  0,                 8,  0,              unpack_ulonglong,  pack_ulonglong},
+#endif
     {'?',  sizeof(BOOL_TYPE), 1,  BOOL_ALIGN,     unpack_bool,       pack_bool},
     {'f',  sizeof(float),     4,  FLOAT_ALIGN,    unpack_float,      pack_float},
     {'d',  sizeof(double),    8,  DOUBLE_ALIGN,   unpack_double,     pack_double},
+#ifdef HAVE_LONG_DOUBLE
+    {'g',  sizeof(long double), 16, LONG_DOUBLE_ALIGN, unpack_longdouble, pack_longdouble},
+#else
     {'g',  0,                 16, 0,              unpack_longdouble, pack_longdouble},
+#endif
     {'Z',  0,                 0,  0,              unpack_cmplx,      pack_cmplx},
     {'&',  sizeof(void*),     -1, VOID_PTR_ALIGN, unpack_gptr,       pack_gptr},
     {'(',  0,                 -1, 0,              unpack_array,      pack_array},
@@ -1873,17 +1882,17 @@ s_unpack_internal(PyStructObject *soself, char *startfrom) {
 
        for (code = soself->s_codes; code->fmtdef != NULL; code++) {
                PyObject *v;
-               const formatdef *e = code->fmtdef;
+               const formatdef *entry = code->fmtdef;
                const char *res = startfrom + code->offset;
-               if (e->format == 's') {
+               if (entry->format == 's') {
                        v = PyString_FromStringAndSize(res, code->size);
-               } else if (e->format == 'p') {
+               } else if (entry->format == 'p') {
                        Py_ssize_t n = *(unsigned char*)res;
                        if (n >= code->size)
                                n = code->size - 1;
                        v = PyString_FromStringAndSize(res + 1, n);
                } else {
-                       v = e->unpack(res, e);
+                       v = entry->unpack(res, entry, code);
                }
                if (v == NULL)
                        goto fail;
@@ -1989,9 +1998,9 @@ s_pack_internal(PyStructObject *soself, PyObject *args, int offset, char* buf)
        for (code = soself->s_codes; code->fmtdef != NULL; code++) {
                Py_ssize_t n;
                PyObject *v = PyTuple_GET_ITEM(args, i++);
-               const formatdef *e = code->fmtdef;
+               const formatdef *entry = code->fmtdef;
                char *res = buf + code->offset;
-               if (e->format == 's') {
+               if (entry->format == 's') {
                        if (!PyString_Check(v)) {
                                PyErr_SetString(StructError,
                                                "argument for 's' must be a string");
@@ -2002,7 +2011,7 @@ s_pack_internal(PyStructObject *soself, PyObject *args, int offset, char* buf)
                                n = code->size;
                        if (n > 0)
                                memcpy(res, PyString_AS_STRING(v), n);
-               } else if (e->format == 'p') {
+               } else if (entry->format == 'p') {
                        if (!PyString_Check(v)) {
                                PyErr_SetString(StructError,
                                                "argument for 'p' must be a string");
@@ -2017,7 +2026,7 @@ s_pack_internal(PyStructObject *soself, PyObject *args, int offset, char* buf)
                                n = 255;
                        *res = Py_SAFE_DOWNCAST(n, Py_ssize_t, unsigned char);
                } else {
-                       if (e->pack(res, v, e) < 0) {
+                       if (entry->pack(res, v, entry, code) < 0) {
                                if (PyLong_Check(v) && PyErr_ExceptionMatches(PyExc_OverflowError))
                                        PyErr_SetString(StructError,
                                                        "long too large to convert to int");
@@ -2139,7 +2148,7 @@ s_get_size(PyStructObject *self, void *unused)
 }
 
 static PyObject *
-s_get_numcodes(PyStructObject *self, void *unused)
+s_get_len(PyStructObject *self, void *unused)
 {
        return PyInt_FromSsize_t(self->s_len);
 }
@@ -2168,8 +2177,7 @@ static PyGetSetDef s_getsetlist[] = {
 
 static
 PyTypeObject PyStructType = {
-       PyObject_HEAD_INIT(NULL)
-       0,
+       PyVarObject_HEAD_INIT(NULL, 0)
        "Struct",
        sizeof(PyStructObject),
        0,
@@ -2205,7 +2213,7 @@ PyTypeObject PyStructType = {
        0,                                      /* tp_descr_set */
        0,                                      /* tp_dictoffset */
        s_init,                         /* tp_init */
-       PType_GenericAlloc,            /* tp_alloc */
+       PyType_GenericAlloc,            /* tp_alloc */
        s_new,                          /* tp_new */
        PyObject_Del,           /* tp_free */
 };
@@ -2213,8 +2221,7 @@ PyTypeObject PyStructType = {
 
 static
 PyTypeObject PyFieldTupleType = {
-       PyObject_HEAD_INIT(NULL)
-       0,
+       PyVarObject_HEAD_INIT(NULL, 0)
        "fieldtuple",
        sizeof(PyFieldTupleObject),
        0,
@@ -2264,36 +2271,12 @@ init_struct(void)
        if (m == NULL)
                return;
 
-       /* fill in LONG_LONG and LONG_DOUBLE table-entries if needed */
-       {
-               const formatdef *entry;
-               const formatdef *table;
-
-               table = (const formatdef *)general_table;
-#ifdef HAVE_LONG_LONG
-
-               entry = getentry('q',table);
-               entry->size = sizeof(PY_LONG_LONG);
-               entry->alignment = LONG_LONG_ALIGN;
-
-               entry = getentry('Q',table);
-               entry->size = sizeof(PY_LONG_LONG);
-               entry->alignment = LONG_LONG_ALIGN;
-#endif
-
-#ifdef HAVE_LONG_DOUBLE
-               entry = getentry('g',table);
-               entry->size = sizeof(long double);
-               entry->alignment = LONG_DOUBLE_ALIGN;
-#endif
-       }
-
        Py_Type(&PyStructType) = &PyType_Type;
        if (PyType_Ready(&PyStructType) < 0)
                return;
 
        Py_Type(&PyFieldTupleType) = &PyType_Type;
-       if (PyType_Read(&PyFieldTupleType) < 0)
+       if (PyType_Ready(&PyFieldTupleType) < 0)
                return;
 
 #ifdef PY_STRUCT_OVERFLOW_MASKING
