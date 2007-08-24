@@ -1,4 +1,3 @@
-
 /* struct module -- pack values into and (out of) strings */
 
 /* New version supporting byte order, alignment and size options,
@@ -557,6 +556,48 @@ pack_char(char *p, PyObject *v, const formatdef *f, const formatcode *c)
        }
        *p = *PyString_AsString(v);
        return 0;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_ucs2(const char *p, const formatdef *f, const formatcode *c)
+{
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_ucs2(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    return 0;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_ucs4(const char *p, const formatdef *f, const formatcode *c)
+{
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_ucs4(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    return 0;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_longdouble(const char *p, const formatdef *f, const formatcode *c)
+{
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_longdouble(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    return 0;
 }
 
 
@@ -1214,7 +1255,7 @@ pack_ulong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                unsigned long x;
-               if (get_long(v, &x) < 0)
+               if (get_ulong(v, &x) < 0)
                        return _range_error(f, 1);
                memcpy(p, (char *)&x, sizeof x);
                return 0;
@@ -1340,13 +1381,13 @@ unpack_bool(const char *p, const formatdef *f, const formatcode *c)
        if F_IS_NATIVE(c) {
                BOOL_TYPE x;
                memcpy((char *)&x, p, sizeof x);
+	       return PyBool_FromLong(x != 0);
        }
        else {
                char x;
                memcpy((char *)&x, p, sizeof x);
+	       return PyBool_FromLong(x != 0);
        }
-       return PyBool_FromLong(x != 0);
-
 }
 
 
@@ -1399,7 +1440,7 @@ pack_float(char *p, PyObject *v, const formatdef *f, const formatcode *c)
                return 0;
        }
        else {
-               return _PyFloat_Pack4(x, (unsigned char *)p, F_IS_LE(c));
+               return _PyFloat_Pack4(xi, (unsigned char *)p, F_IS_LE(c));
        }
 }
 
@@ -1447,35 +1488,35 @@ pack_double(char *p, PyObject *v, const formatdef *f, const formatcode *c)
   used only in native mode (no flag set).
 */
 static formatdef general_table[] = {
-       {'x',   sizeof(char),      1,  0,                 NULL,              NULL},
-       {'t',   0,                 0,  0,                 unpack_bit,        pack_bit},
-       {'b',   sizeof(char),      1,  0,                 unpack_byte,       pack_byte},
-       {'B',   sizeof(char),      1,  0,                 unpack_ubyte,      pack_ubyte},
-       {'c',   sizeof(char),      1,  0,                 unpack_char,       pack_char},
-       {'u',   2,                 2,  0,                 unpack_ucs2,       pack_ucs2},
-       {'w',   4,                 4,  0,                 unpack_ucs4,       pack_ucs4},
-       {'s',   sizeof(char),      1,  0,                 NULL,              NULL},
-       {'p',   sizeof(char),      1,  0,                 NULL,              NULL},
-       {'h',   sizeof(short),     2,  SHORT_ALIGN,       unpack_short,      pack_short},
-       {'H',   sizeof(short),     2,  SHORT_ALIGN,       unpack_ushort,     pack_ushort},
-       {'i',   sizeof(int),       4,  INT_ALIGN,         unpack_int,        pack_int},
-       {'I',   sizeof(int),       4,  INT_ALIGN,         unpack_uint,       pack_uint},
-       {'l',   sizeof(long),      4,  LONG_ALIGN,        unpack_long,       pack_long},
-       {'L',   sizeof(long),      4,  LONG_ALIGN,        unpack_ulong,      pack_ulong},
-       {'q',   0,                 8,  0,                 unpack_longlong,   pack_longlong},
-       {'Q',   0,                 8,  0,                 unpack_ulonglong,  pack_ulonglong},
-       {'?',   sizeof(BOOL_TYPE), 1,  BOOL_ALIGN,        unpack_bool,       pack_bool},
-       {'f',   sizeof(float),     4,  FLOAT_ALIGN,       unpack_float,      pack_float},
-       {'d',   sizeof(double),    8,  DOUBLE_ALIGN,      unpack_double,     pack_double},
-       {'g',   0,                 16, 0,                 unpack_longdouble, pack_longdouble},
-       {'Z',   0,                 0,  0,                 unpack_cmplx,      pack_cmplx},
-       {'&',   sizeof(void*),     -1, VOID_PTR_ALIGN,    unpack_gptr,       pack_gptr},
-       {'(',   0,                 -1, 0,                 unpack_array,      pack_array},
-       {'P',   sizeof(void*),     -1, VOID_PTR_ALIGN,    unpack_void_ptr,   pack_void_ptr},
-       {'O',   sizeof(PyObject*), -1, VOID_PTR_ALIGN,    unpack_object_ptr, pack_object_ptr},
-       {'T',   0,                 -1, 0,                 unpack_struct,     pack_struct},
-       {'X',   sizeof(void*),     -1, VOID_PTR_ALIGN,    unpack_funcptr,    pack_funcptr},
-       {0}
+    {'x',  sizeof(char),      1,  0,              NULL,              NULL},
+    {'t',  0,                 0,  0,              unpack_bit,        pack_bit},
+    {'b',  sizeof(char),      1,  0,              unpack_byte,       pack_byte},
+    {'B',  sizeof(char),      1,  0,              unpack_ubyte,      pack_ubyte},
+    {'c',  sizeof(char),      1,  0,              unpack_char,       pack_char},
+    {'u',  2,                 2,  0,              unpack_ucs2,       pack_ucs2},
+    {'w',  4,                 4,  0,              unpack_ucs4,       pack_ucs4},
+    {'s',  sizeof(char),      1,  0,              NULL,              NULL},
+    {'p',  sizeof(char),      1,  0,              NULL,              NULL},
+    {'h',  sizeof(short),     2,  SHORT_ALIGN,    unpack_short,      pack_short},
+    {'H',  sizeof(short),     2,  SHORT_ALIGN,    unpack_ushort,     pack_ushort},
+    {'i',  sizeof(int),       4,  INT_ALIGN,      unpack_int,        pack_int},
+    {'I',  sizeof(int),       4,  INT_ALIGN,      unpack_uint,       pack_uint},
+    {'l',  sizeof(long),      4,  LONG_ALIGN,     unpack_long,       pack_long},
+    {'L',  sizeof(long),      4,  LONG_ALIGN,     unpack_ulong,      pack_ulong},
+    {'q',  0,                 8,  0,              unpack_longlong,   pack_longlong},
+    {'Q',  0,                 8,  0,              unpack_ulonglong,  pack_ulonglong},
+    {'?',  sizeof(BOOL_TYPE), 1,  BOOL_ALIGN,     unpack_bool,       pack_bool},
+    {'f',  sizeof(float),     4,  FLOAT_ALIGN,    unpack_float,      pack_float},
+    {'d',  sizeof(double),    8,  DOUBLE_ALIGN,   unpack_double,     pack_double},
+    {'g',  0,                 16, 0,              unpack_longdouble, pack_longdouble},
+    {'Z',  0,                 0,  0,              unpack_cmplx,      pack_cmplx},
+    {'&',  sizeof(void*),     -1, VOID_PTR_ALIGN, unpack_gptr,       pack_gptr},
+    {'(',  0,                 -1, 0,              unpack_array,      pack_array},
+    {'P',  sizeof(void*),     -1, VOID_PTR_ALIGN, unpack_void_ptr,   pack_void_ptr},
+    {'O',  sizeof(PyObject*), -1, VOID_PTR_ALIGN, unpack_object_ptr, pack_object_ptr},
+    {'T',  0,                 -1, 0,              unpack_struct,     pack_struct},
+    {'X',  sizeof(void*),     -1, VOID_PTR_ALIGN, unpack_funcptr,    pack_funcptr},
+    {0}
 };
 
 
