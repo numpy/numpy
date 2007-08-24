@@ -1860,7 +1860,7 @@ s_dealloc(PyStructObject *s)
                PyMem_FREE(s->s_codes);
        }
        Py_XDECREF(s->s_format);
-       s->ob_type->tp_free((PyObject *)s);
+       Py_Type(s)->tp_free((PyObject *)s);
 }
 
 static PyObject *
@@ -2288,11 +2288,11 @@ init_struct(void)
 #endif
        }
 
-       PyStructType.ob_type = &PyType_Type;
+       Py_Type(&PyStructType) = &PyType_Type;
        if (PyType_Ready(&PyStructType) < 0)
                return;
 
-       PyFieldTupleType.ob_type = &PyType_Type;
+       Py_Type(&PyFieldTupleType) = &PyType_Type;
        if (PyType_Read(&PyFieldTupleType) < 0)
                return;
 
