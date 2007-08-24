@@ -1699,28 +1699,28 @@ align(Py_ssize_t size, char c, const formatdef *e)
 static int
 prepare_s(PyStructObject *self)
 {
-       const formatdef *f;
-       const formatdef *e;
+       const formatdef *table;
+       const formatdef *entry;
        formatcode *codes;
 
-       const char *s;
+       const char *ptr_fmt_str;
        const char *fmt;
        char c;
        Py_ssize_t size, len, num, itemsize, x;
 
        fmt = PyString_AS_STRING(self->s_format);
 
-       f = whichtable((char **)&fmt);
+       table = general_table;
 
-       s = fmt;
+       ptr_fmt_str = fmt;
        size = 0;
        len = 0;
-       while ((c = *s++) != '\0') {
+       while ((c = *ptr_fmt_str++) != '\0') {
                if (isspace(Py_CHARMASK(c)))
                        continue;
                if ('0' <= c && c <= '9') {
                        num = c - '0';
-                       while ('0' <= (c = *s++) && c <= '9') {
+                       while ('0' <= (c = *ptr_fmt_str++) && c <= '9') {
                                x = num*10 + (c - '0');
                                if (x/10 != num) {
                                        PyErr_SetString(
@@ -1736,8 +1736,8 @@ prepare_s(PyStructObject *self)
                else
                        num = 1;
 
-               e = getentry(c, f);
-               if (e == NULL)
+               entry = getentry(c, table);
+               if (entry == NULL)
                        return -1;
 
                switch (c) {
@@ -1747,8 +1747,8 @@ prepare_s(PyStructObject *self)
                        default: len += num; break;
                }
 
-               itemsize = e->size;
-               size = align(size, c, e);
+               itemsize = entry->size;
+               size = align(size, c, entry);
                x = num * itemsize;
                size += x;
                if (x/itemsize != num || size < 0) {
@@ -1767,14 +1767,14 @@ prepare_s(PyStructObject *self)
        }
        self->s_codes = codes;
 
-       s = fmt;
+       ptr_fmt_str = fmt;
        size = 0;
-       while ((c = *s++) != '\0') {
+       while ((c = *ptr_fmt_str++) != '\0') {
                if (isspace(Py_CHARMASK(c)))
                        continue;
                if ('0' <= c && c <= '9') {
                        num = c - '0';
-                       while ('0' <= (c = *s++) && c <= '9')
+                       while ('0' <= (c = *ptr_fmt_str++) && c <= '9')
                                num = num*10 + (c - '0');
                        if (c == '\0')
                                break;
@@ -1782,13 +1782,13 @@ prepare_s(PyStructObject *self)
                else
                        num = 1;
 
-               e = getentry(c, f);
+               entry = getentry(c, table);
 
-               size = align(size, c, e);
+               size = align(size, c, entry);
                if (c == 's' || c == 'p') {
                        codes->offset = size;
                        codes->size = num;
-                       codes->fmtdef = e;
+                       codes->fmtdef = entry;
                        codes++;
                        size += num;
                } else if (c == 'x') {
@@ -1796,10 +1796,10 @@ prepare_s(PyStructObject *self)
                } else {
                        while (--num >= 0) {
                                codes->offset = size;
-                               codes->size = e->size;
-                               codes->fmtdef = e;
+                               codes->size = entry->size;
+                               codes->fmtdef = entry;
                                codes++;
-                               size += e->size;
+                               size += entry->size;
                        }
                }
        }
