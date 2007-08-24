@@ -484,14 +484,18 @@ _range_error(const formatdef *f, int is_unsigned)
 static PyObject *
 unpack_bit(const char *p, const formatdef *f, const formatcode *c)
 {
-       return NULL;
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_bit is not implemented.");
+    return NULL;
 }
 
 static int
 pack_bit(char *p, PyObject *obj, const struct _formatdef *f,
      const struct _formatcode *c)
 {
-       return 0;
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_bit is not implemented.");
+    return -1;
 }
 
 
@@ -562,6 +566,8 @@ pack_char(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 static PyObject *
 unpack_ucs2(const char *p, const formatdef *f, const formatcode *c)
 {
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_uc2 is not implemented.");
     return NULL;
 }
 
@@ -569,13 +575,17 @@ unpack_ucs2(const char *p, const formatdef *f, const formatcode *c)
 static int
 pack_ucs2(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
 {
-    return 0;
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_uc2 is not implemented.");
+    return -1;
 }
 
 /* XXX Function Stub */
 static PyObject *
 unpack_ucs4(const char *p, const formatdef *f, const formatcode *c)
 {
+    PyErr_SetString(PyExc_NotImplementedError, 
+                    "unpack_ucs4 is not implemented.");
     return NULL;
 }
 
@@ -583,21 +593,9 @@ unpack_ucs4(const char *p, const formatdef *f, const formatcode *c)
 static int
 pack_ucs4(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
 {
-    return 0;
-}
-
-/* XXX Function Stub */
-static PyObject *
-unpack_longdouble(const char *p, const formatdef *f, const formatcode *c)
-{
-    return NULL;
-}
-
-/* XXX Function Stub */
-static int
-pack_longdouble(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
-{
-    return 0;
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_ucs4 is not implemented.");
+    return -1;
 }
 
 
@@ -1476,6 +1474,151 @@ pack_double(char *p, PyObject *v, const formatdef *f, const formatcode *c)
        else {
                return _PyFloat_Pack8(x, (unsigned char *)p, F_IS_LE(c));
        }
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_longdouble(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError, 
+                    "unpack_longdouble is not implemented.");
+
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_longdouble(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_longdouble is not implemented.");
+    return -1;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_cmplx(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_cmplx is not implemented.");
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_cmplx(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_cmplx is not implemented.");
+    return -1;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_gptr(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_gptr is not implemented.");
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_gptr(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_gptr is not implemented.");
+    return -1;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_array(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_array is not implemented.");
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_array(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_array is not implemented.");
+    return -1;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_void_ptr(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_void_ptr is not implemented.");
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_void_ptr(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_void_ptr is not implemented.");
+    return -1;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_object_ptr(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_object_ptr is not implemented.");
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_object_ptr(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_object_ptr is not implemented.");
+    return -1;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_struct(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_struct is not implemented.");
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_struct(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_struct is not implemented.");
+    return -1;
+}
+
+/* XXX Function Stub */
+static PyObject *
+unpack_funcptr(const char *p, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "unpack_funcPtr is not implemented.");
+    return NULL;
+}
+
+/* XXX Function Stub */
+static int
+pack_funcptr(char *p, PyObject *obj, const formatdef *f, const formatcode *c)
+{
+    PyErr_SetString(PyExc_NotImplementedError,
+                    "pack_funcptr is not implemented.");
+    return -1;
 }
 
 
