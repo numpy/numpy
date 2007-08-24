@@ -52,28 +52,30 @@ static PyObject *pyint_zero = NULL;
 #define F_FUNCPTR 0x8000
 #define F_BITMASK 0x00FF  /* storage in FLAG for bit-offset */
 
-#define F_IS_NATIVE(c) ((((const _formatcode *)(c))->flags & (F_LE||F_BE))==0)
-#define F_IS_LE(c) ((((const _formatcode *)(c))->flags & F_LE) == F_LE)
-#define F_IS_BE(c) ((((const _formatcode *)(c))->flags & F_BE) == F_BE)
+/* Forward declarations */
+typedef struct _formatdef formatdef;
+typedef struct _formatcode formatcode;
 
-struct forward _formatcode;
+#define F_IS_NATIVE(c) ((((const formatcode *)(c))->flags & (F_LE||F_BE))==0)
+#define F_IS_LE(c) ((((const formatcode *)(c))->flags & F_LE) == F_LE)
+#define F_IS_BE(c) ((((const formatcode *)(c))->flags & F_BE) == F_BE)
 
 /* The translation function for each format character is table driven */
-typedef struct _formatdef {
+struct _formatdef {
        char format;
        Py_ssize_t size;
        Py_ssize_t stdsize;
        Py_ssize_t alignment;
        PyObject* (*unpack)(const char *,
-                           const struct _formatdef *,
-                           const struct _formatcode *);
+                           const formatdef *,
+                           const formatcode *);
        int (*pack)(char *, PyObject *,
-                   const struct _formatdef *,
-                   const struct _formatcode *);
-} formatdef;
+                   const formatdef *,
+                   const formatcode *);
+};
 
-typedef struct _formatcode {
-       const struct _formatdef *fmtdef;  /* format information */
+struct _formatcode {
+       const formatdef *fmtdef;  /* format information */
        Py_ssize_t offset;                /* offset into the data area
                                             relative to the start of
                                             this structure */
@@ -91,7 +93,7 @@ typedef struct _formatcode {
                in case of function pointer, the structure represents
                the function arguments (last one represents return type).
                */
-} formatcode;
+};
 
 /* This format code has extra fields for shape information  but it is
   binary compatible with the formatcode.
@@ -141,14 +143,14 @@ typedef struct { char c; long x; } st_long;
 typedef struct { char c; float x; } st_float;
 typedef struct { char c; double x; } st_double;
 typedef struct { char c; long double x;} st_longdouble;
-typedef struct { char c; void *x; } st_void_p;
+typedef struct { char c; void *x; } st_void_ptr;
 
 #define SHORT_ALIGN (sizeof(st_short) - sizeof(short))
 #define INT_ALIGN (sizeof(st_int) - sizeof(int))
 #define LONG_ALIGN (sizeof(st_long) - sizeof(long))
 #define FLOAT_ALIGN (sizeof(st_float) - sizeof(float))
 #define DOUBLE_ALIGN (sizeof(st_double) - sizeof(double))
-#define VOID_P_ALIGN (sizeof(st_void_p) - sizeof(void *))
+#define VOID_PTR_ALIGN (sizeof(st_void_ptr) - sizeof(void *))
 
 /* We can't support q and Q in native mode unless the compiler does;
   in std mode, they're 8 bytes on all platforms. */
@@ -212,30 +214,29 @@ get_pylong(PyObject *v)
 static int
 get_long(PyObject *v, long *p)
 {
-       long x = PyInt_AsLong(v);
-       if (x == -1 && PyErr_Occurred()) {
+    long x = PyInt_AsLong(v);
+    if (x == -1 && PyErr_Occurred()) {
 #ifdef PY_STRUCT_FLOAT_COERCE
-               if (PyFloat_Check(v)) {
-                       PyObject *o;
-                       int res;
-                       PyErr_Clear();
-                       if (PyErr_WarnEx(PyExc_DeprecationWarning, FLOAT_COERCE, 2) < 0)
-                               return -1;
-                       o = PyNumber_Int(v);
-                       if (o == NULL)
-                               return -1;
-                       res = get_long(o, p);
-                       Py_DECREF(o);
-                       return res;
-               }
+        if (PyFloat_Check(v)) {
+            PyObject *o;
+            int res;
+            PyErr_Clear();
+            if (PyErr_WarnEx(PyExc_DeprecationWarning, FLOAT_COERCE, 2) < 0)
+                return -1;
+            o = PyNumber_Int(v);
+            if (o == NULL)
+                return -1;
+            res = get_long(o, p);
+            Py_DECREF(o);
+            return res;
+        }
 #endif
-               if (PyErr_ExceptionMatches(PyExc_TypeError))
-                       PyErr_SetString(StructError,
-                                       "required argument is not an integer");
-               return -1;
-       }
-       *p = x;
-       return 0;
+        if (PyErr_ExceptionMatches(PyExc_TypeError))
+            PyErr_SetString(StructError, "required argument is not an integer");
+        return -1;
+    }
+    *p = x;
+    return 0;
 }
 
 
@@ -408,7 +409,7 @@ get_wrapped_ulong(PyObject *v, unsigned long *p)
 /* Floating point helpers */
 
 static PyObject *
-unpack_float(const char *p,  /* start of 4-byte string */
+unpack_float_internal(const char *p,  /* start of 4-byte string */
             int le)         /* true for little-endian, false for big-endian */
 {
        double x;
@@ -420,7 +421,7 @@ unpack_float(const char *p,  /* start of 4-byte string */
 }
 
 static PyObject *
-unpack_double(const char *p,  /* start of 8-byte string */
+unpack_double_internal(const char *p,  /* start of 8-byte string */
              int le)         /* true for little-endian, false for big-endian */
 {
        double x;
@@ -482,13 +483,13 @@ _range_error(const formatdef *f, int is_unsigned)
 }
 
 static PyObject *
-u_bit(const char *p, const formatdef *f, const formatcode *c)
+unpack_bit(const char *p, const formatdef *f, const formatcode *c)
 {
        return NULL;
 }
 
 static int
-p_bit(char *p, PyObject *obj, const struct _formatdef *f,
+pack_bit(char *p, PyObject *obj, const struct _formatdef *f,
      const struct _formatcode *c)
 {
        return 0;
@@ -496,13 +497,13 @@ p_bit(char *p, PyObject *obj, const struct _formatdef *f,
 
 
 static PyObject *
-u_byte(const char *p, const formatdef *f, const formatcode *c)
+unpack_byte(const char *p, const formatdef *f, const formatcode *c)
 {
        return PyInt_FromLong((long) *(signed char *)p);
 }
 
 static int
-p_byte(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_byte(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        long x;
        if (get_long(v, &x) < 0)
@@ -517,14 +518,14 @@ p_byte(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 }
 
 static PyObject *
-u_ubyte(const char *p, const formatdef *f, const formatcode *c)
+unpack_ubyte(const char *p, const formatdef *f, const formatcode *c)
 {
        return PyInt_FromLong((long) *(unsigned char *)p);
 }
 
 
 static int
-p_ubyte(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_ubyte(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        long x;
        if (get_long(v, &x) < 0)
@@ -540,14 +541,14 @@ p_ubyte(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_char(const char *p, const formatdef *f, const formatcode *c)
+unpack_char(const char *p, const formatdef *f, const formatcode *c)
 {
        return PyString_FromStringAndSize(p, 1);
 }
 
 
 static int
-p_char(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_char(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        if (!PyString_Check(v) || PyString_Size(v) != 1) {
                PyErr_SetString(StructError,
@@ -642,13 +643,13 @@ bu_ulonglong(const char *p, const formatdef *f)
 static PyObject *
 bu_float(const char *p, const formatdef *f)
 {
-       return unpack_float(p, 0);
+       return unpack_float_internal(p, 0);
 }
 
 static PyObject *
 bu_double(const char *p, const formatdef *f)
 {
-       return unpack_double(p, 0);
+       return unpack_double_internal(p, 0);
 }
 
 
@@ -736,13 +737,13 @@ lu_ulonglong(const char *p, const formatdef *f)
 static PyObject *
 lu_float(const char *p, const formatdef *f)
 {
-       return unpack_float(p, 1);
+       return unpack_float_internal(p, 1);
 }
 
 static PyObject *
 lu_double(const char *p, const formatdef *f)
 {
-       return unpack_double(p, 1);
+       return unpack_double_internal(p, 1);
 }
 
 
@@ -972,7 +973,7 @@ lp_double(char *p, PyObject *v, const formatdef *f)
 
 
 static PyObject *
-u_short(const char *p, const formatdef *f, const formatcode *c)
+unpack_short(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                short x;
@@ -989,7 +990,7 @@ u_short(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_short(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_short(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
 
        if F_IS_NATIVE(c) {
@@ -1017,7 +1018,7 @@ p_short(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_ushort(const char *p, const formatdef *f, const formatcode *c)
+unpack_ushort(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                unsigned short x;
@@ -1034,7 +1035,7 @@ u_ushort(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_ushort(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_ushort(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
 
        if F_IS_NATIVE(c) {
@@ -1061,7 +1062,7 @@ p_ushort(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 }
 
 static PyObject *
-u_int(const char *p, const formatdef *f, const formatcode *c)
+unpack_int(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                int x;
@@ -1078,7 +1079,7 @@ u_int(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_int(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_int(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                long x;
@@ -1105,7 +1106,7 @@ p_int(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_uint(const char *p, const formatdef *f, const formatcode *c)
+unpack_uint(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                unsigned int x;
@@ -1128,7 +1129,7 @@ u_uint(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_uint(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_uint(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
 
        if F_IS_NATIVE(c) {
@@ -1154,7 +1155,7 @@ p_uint(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_long(const char *p, const formatdef *f, const formatcode *c)
+unpack_long(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                long x;
@@ -1171,7 +1172,7 @@ u_long(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_long(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_long(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                long x;
@@ -1190,7 +1191,7 @@ p_long(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_ulong(const char *p, const formatdef *f, const formatcode *c)
+unpack_ulong(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                unsigned long x;
@@ -1209,9 +1210,8 @@ u_ulong(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_ulong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_ulong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
-
        if F_IS_NATIVE(c) {
                unsigned long x;
                if (get_long(v, &x) < 0)
@@ -1238,7 +1238,7 @@ _no_longlong(void)
 
 
 static PyObject *
-u_longlong(const char *p, const formatdef *f, const formatcode *c)
+unpack_longlong(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
 #ifdef HAVE_LONG_LONG
@@ -1262,7 +1262,7 @@ u_longlong(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_longlong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_longlong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
 #ifdef HAVE_LONG_LONG
@@ -1286,7 +1286,7 @@ p_longlong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_ulonglong(const char *p, const formatdef *f, const formatcode *c)
+unpack_ulonglong(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
 #ifdef HAVE_LONG_LONG
@@ -1310,7 +1310,7 @@ u_ulonglong(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_ulonglong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_ulonglong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
 
        if F_IS_NATIVE(c) {
@@ -1335,7 +1335,7 @@ p_ulonglong(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_bool(const char *p, const formatdef *f, const formatcode *c)
+unpack_bool(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                BOOL_TYPE x;
@@ -1351,7 +1351,7 @@ u_bool(const char *p, const formatdef *f, const formatcode *c)
 
 
 static int
-p_bool(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_bool(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                BOOL_TYPE y;
@@ -1369,7 +1369,7 @@ p_bool(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_float(const char *p, const formatdef *f, const formatcode *c)
+unpack_float(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                float x;
@@ -1377,13 +1377,13 @@ u_float(const char *p, const formatdef *f, const formatcode *c)
                return PyFloat_FromDouble((double)x);
        }
        else {
-               return unpack_float(p, F_IS_LE(c));
+               return unpack_float_internal(p, F_IS_LE(c));
        }
 }
 
 
 static int
-p_float(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_float(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        double xi;
 
@@ -1405,7 +1405,7 @@ p_float(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 
 
 static PyObject *
-u_double(const char *p, const formatdef *f, const formatcode *c)
+unpack_double(const char *p, const formatdef *f, const formatcode *c)
 {
        if F_IS_NATIVE(c) {
                double x;
@@ -1413,12 +1413,12 @@ u_double(const char *p, const formatdef *f, const formatcode *c)
                return PyFloat_FromDouble((double)x);
        }
        else {
-               return unpack_double(p, F_IS_LE(c));
+               return unpack_double_internal(p, F_IS_LE(c));
        }
 }
 
 static int
-p_double(char *p, PyObject *v, const formatdef *f, const formatcode *c)
+pack_double(char *p, PyObject *v, const formatdef *f, const formatcode *c)
 {
        double x;
 
@@ -1447,34 +1447,34 @@ p_double(char *p, PyObject *v, const formatdef *f, const formatcode *c)
   used only in native mode (no flag set).
 */
 static formatdef general_table[] = {
-       {'x',   sizeof(char),      1,  0,            NULL,         NULL},
-       {'t',   0,                 0,  0,            u_bit,        p_bit},
-       {'b',   sizeof(char),      1,  0,            u_byte,       p_byte},
-       {'B',   sizeof(char),      1,  0,            u_ubyte,      p_ubyte},
-       {'c',   sizeof(char),      1,  0,            u_char,       p_char},
-       {'u',   2,                 2,  0,            u_ucs2,       p_ucs2},
-       {'w',   4,                 4,  0,            u_ucs4,       p_ucs4},
-       {'s',   sizeof(char),      1,  0,            NULL,         NULL},
-       {'p',   sizeof(char),      1,  0,            NULL,         NULL},
-       {'h',   sizeof(short),     2,  SHORT_ALIGN,  u_short,      p_short},
-       {'H',   sizeof(short),     2,  SHORT_ALIGN,  u_ushort,     p_ushort},
-       {'i',   sizeof(int),       4,  INT_ALIGN,    u_int,        p_int},
-       {'I',   sizeof(int),       4,  INT_ALIGN,    u_uint,       p_uint},
-       {'l',   sizeof(long),      4,  LONG_ALIGN,   u_long,       p_long},
-       {'L',   sizeof(long),      4,  LONG_ALIGN,   u_ulong,      p_ulong},
-       {'q',   0,                 8,  0,            u_longlong,   p_longlong},
-       {'Q',   0,                 8,  0,            u_ulonglong,  p_ulonglong},
-       {'?',   sizeof(BOOL_TYPE), 1,  BOOL_ALIGN,   u_bool,       p_bool},
-       {'f',   sizeof(float),     4,  FLOAT_ALIGN,  u_float,      p_float},
-       {'d',   sizeof(double),    8,  DOUBLE_ALIGN, u_double,     p_double},
-       {'g',   0,                 16, 0,            u_longdouble, p_longdouble},
-       {'Z',   0,                 0,  0,            u_cmplx,      p_cmplx},
-       {'&',   sizeof(void*),     -1, VOID_P_ALIGN, u_gptr,       p_gptr},
-       {'(',   0,                 -1, 0,            u_array,      p_array},
-       {'P',   sizeof(void*),     -1, VOID_P_ALIGN, u_void_p,     p_void_p},
-       {'O',   sizeof(PyObject*), -1, VOID_P_ALIGN, u_object_p,   p_object_p},
-       {'T',   0,                 -1, 0,            u_struct,     p_struct},
-       {'X',   sizeof(void*),     -1, VOID_P_ALIGN, u_funcptr,    p_funcptr},
+       {'x',   sizeof(char),      1,  0,                 NULL,              NULL},
+       {'t',   0,                 0,  0,                 unpack_bit,        pack_bit},
+       {'b',   sizeof(char),      1,  0,                 unpack_byte,       pack_byte},
+       {'B',   sizeof(char),      1,  0,                 unpack_ubyte,      pack_ubyte},
+       {'c',   sizeof(char),      1,  0,                 unpack_char,       pack_char},
+       {'u',   2,                 2,  0,                 unpack_ucs2,       pack_ucs2},
+       {'w',   4,                 4,  0,                 unpack_ucs4,       pack_ucs4},
+       {'s',   sizeof(char),      1,  0,                 NULL,              NULL},
+       {'p',   sizeof(char),      1,  0,                 NULL,              NULL},
+       {'h',   sizeof(short),     2,  SHORT_ALIGN,       unpack_short,      pack_short},
+       {'H',   sizeof(short),     2,  SHORT_ALIGN,       unpack_ushort,     pack_ushort},
+       {'i',   sizeof(int),       4,  INT_ALIGN,         unpack_int,        pack_int},
+       {'I',   sizeof(int),       4,  INT_ALIGN,         unpack_uint,       pack_uint},
+       {'l',   sizeof(long),      4,  LONG_ALIGN,        unpack_long,       pack_long},
+       {'L',   sizeof(long),      4,  LONG_ALIGN,        unpack_ulong,      pack_ulong},
+       {'q',   0,                 8,  0,                 unpack_longlong,   pack_longlong},
+       {'Q',   0,                 8,  0,                 unpack_ulonglong,  pack_ulonglong},
+       {'?',   sizeof(BOOL_TYPE), 1,  BOOL_ALIGN,        unpack_bool,       pack_bool},
+       {'f',   sizeof(float),     4,  FLOAT_ALIGN,       unpack_float,      pack_float},
+       {'d',   sizeof(double),    8,  DOUBLE_ALIGN,      unpack_double,     pack_double},
+       {'g',   0,                 16, 0,                 unpack_longdouble, pack_longdouble},
+       {'Z',   0,                 0,  0,                 unpack_cmplx,      pack_cmplx},
+       {'&',   sizeof(void*),     -1, VOID_PTR_ALIGN,    unpack_gptr,       pack_gptr},
+       {'(',   0,                 -1, 0,                 unpack_array,      pack_array},
+       {'P',   sizeof(void*),     -1, VOID_PTR_ALIGN,    unpack_void_ptr,   pack_void_ptr},
+       {'O',   sizeof(PyObject*), -1, VOID_PTR_ALIGN,    unpack_object_ptr, pack_object_ptr},
+       {'T',   0,                 -1, 0,                 unpack_struct,     pack_struct},
+       {'X',   sizeof(void*),     -1, VOID_PTR_ALIGN,    unpack_funcptr,    pack_funcptr},
        {0}
 };
 
@@ -1484,13 +1484,13 @@ static formatdef general_table[] = {
 static const formatdef *
 getentry(int c, const formatdef *f)
 {
-       for (; f->format != '\0'; f++) {
-               if (f->format == c) {
-                       return f;
-               }
-       }
-       PyErr_SetString(StructError, "bad char in struct format");
-       return NULL;
+    for (; f->format != '\0'; f++) {
+        if (f->format == c) {
+            return f;
+        }
+    }
+    PyErr_SetString(StructError, "bad char in struct format");
+    return NULL;
 }
 
 
@@ -1499,14 +1499,14 @@ getentry(int c, const formatdef *f)
 static int
 align(Py_ssize_t size, char c, const formatdef *e)
 {
-       if (e->format == c) {
-               if (e->alignment) {
-                       size = ((size + e->alignment - 1)
-                               / e->alignment)
-                               * e->alignment;
-               }
-       }
-       return size;
+    if (e->format == c) {
+        if (e->alignment) {
+            size = ((size + e->alignment - 1)
+                    / e->alignment)
+                    * e->alignment;
+        }
+    }
+    return size;
 }
 
 
