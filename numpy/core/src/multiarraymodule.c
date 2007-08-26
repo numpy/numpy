@@ -4138,7 +4138,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
             }
         }
         else {
-            func(dest, mask->data, ni, values->data, nv);
+            func(dest, mask->data, ni, values->data, nv,
+                             !PyArray_ISNOTSWAPPED(self));
         }
     }
 

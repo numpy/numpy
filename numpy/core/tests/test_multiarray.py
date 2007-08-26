@@ -443,6 +443,14 @@ class test_putmask(ParametricTestCase):
         self.failUnlessRaises(ValueError,N.putmask,
                               N.array([1,2,3]),[True],5)
 
+    def tst_byteorder(self,dtype):
+        x = N.array([1,2,3],dtype)
+        N.putmask(x,[True,False,True],-1)
+        assert_array_equal(x,[-1,2,-1])
+
+    def testip_byteorder(self):
+        return ((self.tst_byteorder,dtype) for dtype in ('>i4','<i4'))
+
     def test_record_array(self):
 ##         Not supported yet
 ##
