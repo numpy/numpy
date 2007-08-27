@@ -1050,7 +1050,7 @@ typedef int (PyArray_ScalarKindFunc)(void *);
 typedef void (PyArray_FastClipFunc)(void *in, npy_intp n_in, void *min,
                                     void *max, void *out);
 typedef void (PyArray_FastPutmaskFunc)(void *in, void *mask, npy_intp n_in,
-                                       void *values, npy_intp nv, npy_intp swap);
+                                       void *values, npy_intp nv);
 
 typedef struct {
         npy_intp *ptr;

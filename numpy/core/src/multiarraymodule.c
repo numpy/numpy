@@ -4104,9 +4104,9 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                         "the same size");
         goto fail;
     }
-
+    Py_INCREF(self->descr);
     values = (PyArrayObject *)\
-        PyArray_ContiguousFromAny(values0, self->descr->type_num, 0, 0);
+        PyArray_FromAny(values0, self->descr, 0, 0, NPY_CARRAY, NULL);
     if (values == NULL) goto fail;
     nv = PyArray_SIZE(values);        /* zero if null array */
     if (nv <= 0) {
@@ -4138,8 +4138,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
             }
         }
         else {
-            func(dest, mask->data, ni, values->data, nv,
-                             !PyArray_ISNOTSWAPPED(self));
+            func(dest, mask->data, ni, values->data, nv);
         }
     }
 

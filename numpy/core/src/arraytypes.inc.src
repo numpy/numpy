@@ -2109,18 +2109,16 @@ static void
 #type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble#
 */
 static void
-@name@_fastputmask(@type@ *in, Bool *mask, intp ni, @type@ *vals, intp nv, int swap)
+@name@_fastputmask(@type@ *in, Bool *mask, intp ni, @type@ *vals, intp nv)
 {
         register npy_intp i;
         @type@ s_val;
-        int elsize = sizeof(@type@);
 
         if (nv == 1) {
                 s_val = *vals;
                 for (i = 0; i < ni; i++) {
                         if (mask[i]) {
                                 in[i] = s_val;
-                                if (swap) byte_swap_vector(in+i, 1, elsize);
                         }
                 }
         }
@@ -2128,7 +2126,6 @@ static void
                 for (i = 0; i < ni; i++) {
                         if (mask[i]) {
                                 in[i] = vals[i%nv];
-                                if (swap) byte_swap_vector(in+i, 1, elsize);
                         }
                 }
         }

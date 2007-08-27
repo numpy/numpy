@@ -404,7 +404,7 @@ class test_clip(NumpyTestCase):
         return x
 
     def check_basic(self):
-        for inplace in [False, True]: 
+        for inplace in [False, True]:
             self._clip_type('float',1024,-12.8,100.2, inplace=inplace)
             self._clip_type('float',1024,0,0, inplace=inplace)
 
@@ -452,13 +452,13 @@ class test_putmask(ParametricTestCase):
         return ((self.tst_byteorder,dtype) for dtype in ('>i4','<i4'))
 
     def test_record_array(self):
-##         Not supported yet
-##
-##         rec = N.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
-##                       dtype=[('x', '<f8'), ('y', '<f8'), ('z', '<f8')])
-##         N.putmask(rec['x'],[True,False],10)
-##         assert_array_equal(rec['x'],[10,5])
-        pass
+        # Note mixed byteorder.
+        rec = N.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
+                      dtype=[('x', '<f8'), ('y', '>f8'), ('z', '<f8')])
+        N.putmask(rec['x'],[True,False],10)
+        assert_array_equal(rec['x'],[10,5])
+        N.putmask(rec['y'],[True,False],10)
+        assert_array_equal(rec['y'],[10,4])
 
     def test_masked_array(self):
         ## x = N.array([1,2,3])
