@@ -262,11 +262,11 @@ if __name__ == '__main__':
             You must return an iterable (list or generator is fine) containing
             tuples with the actual method to be called as the first argument,
             and the arguments for that call later."""
-            return ((self.tstX,i) for i in range(5))
+            return [(self.tstX,i) for i in range(5)]
 
         def testip2(self):
             """Another independent parametric test factory"""
-            return ((self.tstY,i) for i in range(5))
+            return [(self.tstY,i) for i in range(5)]
 
         def testip3(self):
             """Test factory combining different subtests.
@@ -281,11 +281,11 @@ if __name__ == '__main__':
             A single setUp() call is made for all the tests returned by this
             method.
             """
-            return ((self.tstXX,i,i+1) for i in range(5))
+            return [(self.tstXX,i,i+1) for i in range(5)]
 
         def testsp2(self):
             """Another shared parametric test factory"""
-            return ((self.tstYY,i) for i in range(5))
+            return [(self.tstYY,i) for i in range(5)]
 
         def testsp3(self):
             """Another shared parametric test factory.
@@ -293,7 +293,7 @@ if __name__ == '__main__':
             This one simply calls the same test multiple times, without any
             arguments.  Note that you must still return tuples, even if there
             are no arguments."""
-            return ((self.tstZZ,) for i in range(10))
+            return [(self.tstZZ,) for i in range(10)]
 
 
     # This test class runs normally under unittest's default runner

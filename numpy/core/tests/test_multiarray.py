@@ -449,7 +449,7 @@ class test_putmask(ParametricTestCase):
         assert_array_equal(x,[-1,2,-1])
 
     def testip_byteorder(self):
-        return ((self.tst_byteorder,dtype) for dtype in ('>i4','<i4'))
+        return [(self.tst_byteorder,dtype) for dtype in ('>i4','<i4')]
 
     def test_record_array(self):
         # Note mixed byteorder.
