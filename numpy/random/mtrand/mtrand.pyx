@@ -1510,8 +1510,8 @@ cdef class RandomState:
         parr = <ndarray>PyArray_ContiguousFromObject(pvals, NPY_DOUBLE, 1, 1)
         pix = <double*>parr.data
 
-        if kahan_sum(pix, d-1) > 1.0:
-            raise ValueError("sum(pvals) > 1.0")
+        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
+            raise ValueError("sum(pvals[:-1]) > 1.0")
 
         if size is None:
             shape = (d,)

@@ -31,6 +31,7 @@ def configuration(parent_package='',top_path=None):
                         )
 
     config.add_data_files(('.', join('mtrand', 'randomkit.h')))
+    config.add_data_dir('tests')
 
     return config
 
