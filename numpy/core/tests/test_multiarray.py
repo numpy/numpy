@@ -435,8 +435,8 @@ class test_putmask(ParametricTestCase):
         tests = []
         for val in [-100,0,15]:
             for types in N.sctypes.itervalues():
-                tests.extend((self.tst_basic,x.copy().astype(T),T,mask,val)
-                             for T in types if T not in unchecked_types)
+                tests.extend([(self.tst_basic,x.copy().astype(T),T,mask,val)
+                              for T in types if T not in unchecked_types])
         return tests
 
     def test_mask_size(self):
