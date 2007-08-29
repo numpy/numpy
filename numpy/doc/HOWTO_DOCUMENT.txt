@@ -103,7 +103,7 @@
 __docformat__ = "restructuredtext en"
 
 
-def foo(var1, var2, long_var_name) :
+def foo(var1, var2, long_var_name='hi') :
     """One-line summary or signature.
 
     Several sentences providing an extended description. You can put
@@ -113,19 +113,24 @@ def foo(var1, var2, long_var_name) :
 
         var1 : type information
             Explanation
+
         var2 : type information
             Explanation
-        long_variable_name
-            Explanation
+
+        long_variable_name : {'hi', 'ho'}, optional
+            Choices in brackets, default first.
 
     *Returns*:
 
         named : type
             Explanation
+
         list
             Explanation
+
         of
             Explanation
+
         outputs
             even more explaining
 
@@ -133,14 +138,15 @@ def foo(var1, var2, long_var_name) :
 
         only_seldom_used_keywords : type
             Explanation
+
         common_parametrs_listed_above : type
             Explanation
 
     *See Also*:
 
-      `otherfunc` : relationship (optional)
+        `otherfunc` : relationship (optional)
 
-      `newfunc` : relationship (optional)
+        `newfunc` : relationship (optional)
 
     *Notes*
 
