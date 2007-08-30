@@ -585,11 +585,11 @@ class NumpyTest:
         old_displayhook = sys.displayhook
         sys.displayhook = sys.__displayhook__
         try:
-            runner.run(all_tests)
+            r = runner.run(all_tests)
         finally:
             sys.displayhook = old_displayhook
         sys.argv[1:] = old_sys_argv
-        return runner
+        return r
 
     def testall(self, level=1,verbosity=1):
         """ Run Numpy module test suite with level and verbosity.
@@ -646,10 +646,9 @@ class NumpyTest:
                           default=r'.*',
                           type='string')
         (options, args) = parser.parse_args()
-        self.test(options.level,options.verbosity,
-                  sys_argv=splitcmdline(options.sys_argv or ''),
-                  testcase_pattern=options.testcase_pattern)
-        return
+        return self.test(options.level,options.verbosity,
+                         sys_argv=splitcmdline(options.sys_argv or ''),
+                         testcase_pattern=options.testcase_pattern)
 
     def warn(self, message):
         from numpy.distutils.misc_util import yellow_text
