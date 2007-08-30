@@ -414,9 +414,13 @@ class NumpyTest:
                 suite = obj(mthname)
                 if getattr(suite,'isrunnable',lambda mthname:1)(mthname):
                     suite_list.append(suite)
+        matched_suite_list = [suite for suite in suite_list \
+                              if self.testcase_match(suite.id()\
+                                                     .replace('__main__.',''))]
         if verbosity>=0:
-            self.info('  Found %s tests for %s' % (len(suite_list), module_name))
-        return suite_list
+            self.info('  Found %s/%s tests for %s' \
+                      % (len(matched_suite_list), len(suite_list), module_name))
+        return matched_suite_list
 
     def _test_suite_from_modules(self, this_package, level, verbosity):
         package_name = this_package.__name__
@@ -519,7 +523,8 @@ class NumpyTest:
         all_tests = unittest.TestSuite(suite_list)
         return all_tests
 
-    def test(self, level=1, verbosity=1, all=False):
+    def test(self, level=1, verbosity=1, all=False, sys_argv=[],
+             testcase_pattern='.*'):
         """Run Numpy module test suite with level and verbosity.
 
         level:
@@ -539,6 +544,11 @@ class NumpyTest:
           True            --- run all test files (like self.testall())
           False (default) --- only run test files associated with a module
 
+        sys_argv          --- replacement of sys.argv[1:] during running
+                              tests.
+
+        testcase_pattern  --- run only tests that match given pattern.
+
         It is assumed (when all=False) that package tests suite follows
         the following convention: for each package module, there exists
         file <packagepath>/tests/test_<modulename>.py that defines
@@ -554,6 +564,8 @@ class NumpyTest:
         else:
             this_package = self.package
 
+        self.testcase_match = re.compile(testcase_pattern).match
+
         if all:
             all_tests = self._test_suite_from_all_tests(this_package,
                                                         level, verbosity)
@@ -565,6 +577,8 @@ class NumpyTest:
             return all_tests
 
         runner = unittest.TextTestRunner(verbosity=verbosity)
+        old_sys_argv = sys.argv[1:]
+        sys.argv[1:] = sys_argv
         # Use the builtin displayhook. If the tests are being run
         # under IPython (for instance), any doctest test suites will
         # fail otherwise.
@@ -574,6 +588,7 @@ class NumpyTest:
             runner.run(all_tests)
         finally:
             sys.displayhook = old_displayhook
+        sys.argv[1:] = old_sys_argv
         return runner
 
     def testall(self, level=1,verbosity=1):
@@ -606,7 +621,9 @@ class NumpyTest:
         except ImportError:
             self.warn('Failed to import optparse module, ignoring.')
             return self.test()
-        usage = r'usage: %prog [-v <verbosity>] [-l <level>] [-s "<replacement of sys.argv[1:]>"]'
+        usage = r'usage: %prog [-v <verbosity>] [-l <level>]'\
+                r' [-s "<replacement of sys.argv[1:]>"]'\
+                r' [-t "<testcase pattern>"]'
         parser = OptionParser(usage)
         parser.add_option("-v", "--verbosity",
                           action="store",
@@ -623,10 +640,15 @@ class NumpyTest:
                           dest="sys_argv",
                           default='',
                           type='string')
+        parser.add_option("-t", "--testcase-pattern",
+                          action="store",
+                          dest="testcase_pattern",
+                          default=r'.*',
+                          type='string')
         (options, args) = parser.parse_args()
-        if options.sys_argv:
-            sys.argv[1:] = splitcmdline(options.sys_argv)
-        self.test(options.level,options.verbosity)
+        self.test(options.level,options.verbosity,
+                  sys_argv=splitcmdline(options.sys_argv or ''),
+                  testcase_pattern=options.testcase_pattern)
         return
 
     def warn(self, message):
