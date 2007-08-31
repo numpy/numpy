@@ -4,10 +4,12 @@ Utility function to facilitate testing.
 
 import os
 import sys
+import re
+import difflib
 import operator
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
-           'assert_array_equal', 'assert_array_less',
+           'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'jiffies', 'memusage', 'rand',
            'runstring']
 
@@ -236,3 +238,35 @@ def assert_array_less(x, y, err_msg='', verbose=True):
 
 def runstring(astr, dict):
     exec astr in dict
+
+def assert_string_equal(actual, desired):
+    assert isinstance(actual, str),`type(actual)`
+    assert isinstance(desired, str),`type(desired)`
+    if re.match(r'\A'+desired+r'\Z', actual, re.M): return
+    diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
+    diff_list = []
+    while diff:
+        d1 = diff.pop(0)
+        if d1.startswith('  '):
+            continue
+        if d1.startswith('- '):
+            l = [d1]
+            d2 = diff.pop(0)
+            if d2.startswith('? '):
+                l.append(d2)
+                d2 = diff.pop(0)
+            assert d2.startswith('+ '),`d2`
+            l.append(d2)
+            d3 = diff.pop(0)
+            if d3.startswith('? '):
+                l.append(d3)
+            else:
+                diff.insert(0, d3)
+            if re.match(r'\A'+d2[2:]+r'\Z', d1[2:]):
+                continue
+            diff_list.extend(l)
+            continue
+        assert False, `d1`
+    if not diff_list: return
+    msg = 'Differences in strings:\n%s' % (''.join(diff_list)).rstrip()
+    assert actual==desired, msg
