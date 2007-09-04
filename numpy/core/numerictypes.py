@@ -61,9 +61,9 @@ Exported symbols include:
      |   |     float_  (double)
      |   |     longfloat
      |   \-> complexfloating    (complexxx)
-     |         csingle
+     |         csingle  (singlecomplex)
      |         complex_ (cfloat, cdouble)
-     |         clongfloat
+     |         clongfloat (longcomplex)
      +-> flexible
      |     character
      |     str_     (string_)
@@ -250,6 +250,7 @@ def _set_up_aliases():
                   ('int0', 'intp'),
                   ('uint0', 'uintp'),
                   ('single', 'float'),
+                  ('singlecomplex', 'cfloat'),
                   ('csingle', 'cfloat'),
                   ('float_', 'double'),
                   ('intc', 'int'),
@@ -259,6 +260,7 @@ def _set_up_aliases():
                   ('cfloat', 'cdouble'),
                   ('longfloat', 'longdouble'),
                   ('clongfloat', 'clongdouble'),
+                  ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
                   ('unicode_', 'unicode'),
                   ('str_', 'string'),
