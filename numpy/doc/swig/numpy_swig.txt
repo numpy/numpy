@@ -1,6 +1,6 @@
-========================================
-numpy.i: a SWIG Interface File for NumPy
-========================================
+==========================================
+ numpy.i: a SWIG Interface File for NumPy
+==========================================
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
@@ -652,6 +652,10 @@ arguments).  The recommended solution is the following::
     %apply (int DIM1, double* IN_ARRAY1) {(int len1, double* vec1),
                                           (int len2, double* vec2)}
     %rename (dot) my_dot;
+    %exception my_dot {
+        $action
+	if (PyErr_Occurred()) SWIG_fail;
+    }
     %inline %{
     double my_dot(int len1, double* vec1, int len2, double* vec2) {
         if (len1 != len2) {
@@ -671,6 +675,17 @@ dot;`` directive, placed after the ``%rename`` and before the
 ``%include`` directives.  Or, if the function in question is a class
 method, you will want to use ``%extend`` rather than ``%inline`` in
 addition to ``%ignore``.
+
+**A note on error handling:** Note that ``my_dot`` returns a
+``double`` but that it can also raise a `python`_ error.  The
+resulting wrapper function will return a `python`_ float
+representation of 0.0 when the vector lengths do not match.  Since
+this is not ``NULL``, the `python`_ interpreter will not know to check
+for an error.  For this reason, we add the ``%exception`` directive
+above for ``my_dot`` to get the behavior we want (note that
+``$action`` is a macro that gets expanded to a valid call to
+``my_dot``).  In general, you will probably want to write a `SWIG`_
+macro to perform this task.
 
 Other Situations
 ----------------
