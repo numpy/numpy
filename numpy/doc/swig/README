@@ -7,9 +7,30 @@ and C++ code that uses C arrays and the python module NumPy.  It is
 ultimately hoped that numpy.i will be included as part of the SWIG
 distribution.
 
-In the spirit of "writing your tests first", I will begin by
-describing the tests, as they are a good example of what we are trying
-to do with numpy.i.  The files related to testing are::
+Documentation
+-------------
+Documentation for how to use numpy.i is in the doc directory.  The
+primary source file here is numpy_swig.txt, a restructured text file
+that documents how to use numpy.i.  The Makefile in doc allows for the
+conversion of numpy_swig.txt to HTML (if you have docutils installed)
+and to PDF (if you have docutils and latex/pdftex installed).  This
+should not be necessary, however, as numpy_swig.html and
+numpy_swig.pdf are stored in the repository.
+
+The same is true for a file called doc/testing.txt, which describes
+the testing system used here.
+
+If you have the prerequisites installed and wish to build the HTML and
+PDF documentation, this can be achieved by calling::
+
+    $ make doc
+
+from the shell.
+
+Testing
+-------
+The tests are a good example of what we are trying to do with numpy.i.
+The files related to testing are are in the test subdirectory::
 
     Vector.h
     Vector.cxx
@@ -106,16 +127,4 @@ PDF documentation (with make targets "tex" and "pdf").
 
 To build and run the test code, simply execute from the shell::
 
-    $ make
     $ make test
-
-================================================================================
-
-ToDo
-----
-
-  * Add ARGOUT typemaps that assume the function allocates the buffers
-    internally.
-
-  * Add "naked" typemaps for argument lists that do not specify
-    dimensions.

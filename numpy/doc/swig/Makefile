@@ -1,62 +1,36 @@
-# SWIG
-INTERFACES = Vector.i Matrix.i Tensor.i
-WRAPPERS   = $(INTERFACES:.i=_wrap.cxx)
-PROXIES    = $(INTERFACES:.i=.py      )
-
-# ReStructured Text
-RST2HTML = rst2html.py
-RST2LATEX = rst2latex.py
-RFLAGS = --generator --time
-HTML_FLAGS = --no-xml-declaration
-LATEX_FLAGS =
-LATEX = pdflatex
-
-# Web pages that need to be made
-WEB_PAGES = numpy_swig.html testing.html
-
-# LaTeX files that need to be made
-LATEX_FILES = numpy_swig.tex testing.tex
-
-# PDF files that need to be made
-PDF_FILES = numpy_swig.pdf testing.pdf
-
 # List all of the subdirectories here for recursive make
-SUBDIRS = 
+SUBDIRS = test doc
 
-all: $(WRAPPERS) Vector.cxx Vector.h Matrix.cxx Matrix.h Tensor.cxx Tensor.h
-	./setup.py build
+# Default target
+.PHONY : default
+default:
+	@echo "There is no default make target for this Makefile"
+	@echo "Valid make targets are:"
+	@echo "    test           - Compile and run tests of numpy.i"
+	@echo "    doc            - Generate numpy.i documentation"
+	@echo "    all            - make test + doc"
+	@echo "    clean          - Remove generated files recursively"
 
-test: all
-	testVector.py
-	testMatrix.py
-	testTensor.py
+# Target all
+.PHONY : all
+all: $(SUBDIRS)
 
-doc: html pdf
+# Target test
+.PHONY : test
+test:
+	cd $@ && make $@
 
-%_wrap.cxx: %.i %.h numpy.i
-	swig -c++ -python $<
+# Target doc
+.PHONY : doc
+doc:
+	cd $@ && make
 
-html: $(WEB_PAGES)
-
-%.html: %.txt
-	$(RST2HTML) $(RFLAGS) $(HTML_FLAGS) $< $@
-
-tex: $(LATEX_FILES)
-
-%.tex: %.txt
-	$(RST2LATEX) $(RFLAGS) $(LATEX_FLAGS) $< $@
-
-pdf: $(PDF_FILES)
-
-%.pdf: %.tex
-	$(LATEX) $<
-	$(LATEX) $<
-
+# Target clean
+.PHONY : clean
 clean:
-	$(RM) -r build
-	$(RM) $(WRAPPERS)
-	$(RM) $(PROXIES)
-	$(RM) $(LATEX_FILES)
-	$(RM) *.pyc *.aux *.dvi *.log *.out *~
-
-.PHONY : all test doc html tex pdf clean
+	@for dir in $(SUBDIRS); do                \
+	    echo ;                                \
+	    echo Running \'make clean\' in $$dir; \
+	    cd $$dir && make clean && cd ..;      \
+	done;                                     \
+	echo

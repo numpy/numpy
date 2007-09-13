@@ -7,7 +7,7 @@
 %}
 
 // Get the NumPy typemaps
-%include "numpy.i"
+%include "../numpy.i"
 
 %init %{
   import_array();
