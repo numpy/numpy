@@ -459,7 +459,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DATA_TYPE IN_ARRAY1[ANY])
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
@@ -482,7 +483,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
@@ -505,7 +507,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DATA_TYPE IN_ARRAY2[ANY][ANY])
@@ -527,7 +530,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
@@ -551,7 +555,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
@@ -575,7 +580,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
@@ -597,7 +603,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2,
@@ -623,7 +630,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, 
@@ -649,7 +657,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 %typemap(freearg)
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
 {
-  if (is_new_object$argnum && array$argnum) Py_DECREF(array$argnum);
+  if (is_new_object$argnum && array$argnum)
+    { Py_DECREF(array$argnum); }
 }
 
 /***************************/
