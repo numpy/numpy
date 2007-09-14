@@ -112,7 +112,7 @@ def reshape(a, newshape, order='C'):
 
     *See Also*:
 
-        `numpy.ndarray.reshape` : Equivalent method.
+        `ndarray.reshape` : Equivalent method.
 
     """
     try:
@@ -156,7 +156,7 @@ def choose(a, choices, out=None, mode='raise'):
 
     *See Also*:
 
-        `numpy.ndarray.choose` : equivalent method
+        `ndarray.choose` : equivalent method
 
     *Examples*
 
@@ -200,7 +200,7 @@ def repeat(a, repeats, axis=None):
 
     *See Also*:
 
-        `numpy.ndarray.repeat` : equivalent method
+        `ndarray.repeat` : equivalent method
 
     *Examples*
 
@@ -844,7 +844,7 @@ def sum(a, axis=None, dtype=None, out=None):
         a : array_type
 
         axis : {None, integer}
-            Axis over which the sums are taken. If None is used, then the sum is
+            Axis over which the sum is taken. If None is used, then the sum is
             over all the array elements.
 
         dtype : {None, dtype}, optional
@@ -860,20 +860,24 @@ def sum(a, axis=None, dtype=None, out=None):
 
     *Returns*:
 
-        Sum along specified axis : {array, scalar}, type as explained above.
+        Sum along specified axis : {array, scalar}, type as above.
             If the sum is along an axis, then an array is returned whose shape
             is the same as a with the specified axis removed. For 1d arrays or
             dtype=None, the result is a 0d array.
 
+    *See Also*:
+
+        `ndarray.sum` : equivalent method
+
     *Examples*
 
-        >>> N.sum([0.5, 1.5])
+        >>> sum([0.5, 1.5])
         2.0
-        >>> N.sum([0.5, 1.5], dtype=N.int32)
+        >>> sum([0.5, 1.5], dtype=N.int32)
         1
-        >>> N.sum([[0, 1], [0, 5]])
+        >>> sum([[0, 1], [0, 5]])
         6
-        >>> N.sum([[0, 1], [0, 5]], axis=1)
+        >>> sum([[0, 1], [0, 5]], axis=1)
         array([1, 5])
 
     """
@@ -893,7 +897,47 @@ def sum(a, axis=None, dtype=None, out=None):
 def product (a, axis=None, dtype=None, out=None):
     """Product of the array elements over the given axis.
 
-    Blah, Blah.
+    *Parameters*:
+
+        a : array_type
+
+        axis : {None, integer}
+            Axis over which the product is taken. If None is used, then the
+            product is over all the array elements.
+
+        dtype : {None, dtype}, optional
+            Determines the type of the returned array and of the accumulator
+            where the elements are multiplied. If dtype has the value None and a
+            is of integer type of precision less than the default platform
+            integer precision, then the default integer precision is used.
+            Otherwise, the precision is the same as that of a.
+
+        out : {None, array}, optional
+            Array into which the product can be placed. It's type is preserved and
+            it must be of the right shape to hold the output.
+
+    *Returns*:
+
+        product along specified axis : {array, scalar}, type as above.
+            If the product is along an axis, then an array is returned whose shape
+            is the same as a with the specified axis removed. For 1d arrays or
+            dtype=None, the result is a 0d array.
+
+    *See Also*:
+
+        `ndarray.prod` : equivalent method
+
+    *Examples*
+
+        >>> product([1.,2.])
+        2.0
+        >>> product([1.,2.], dtype=int32)
+        2
+        >>> product([[1.,2.],[3.,4.]])
+        24.0
+        >>> product([[1.,2.],[3.,4.]], axis=1)
+        array([  2.,  12.])
+
 
     """
     try:
@@ -906,7 +950,9 @@ def product (a, axis=None, dtype=None, out=None):
 def sometrue (a, axis=None, out=None):
     """Perform a logical_or over the given axis.
 
-    Blah, Blah.
+    *See Also*:
+
+        `ndarray.any` : equivalent method
 
     """
     try:
@@ -919,7 +965,11 @@ def sometrue (a, axis=None, out=None):
 def alltrue (a, axis=None, out=None):
     """Perform a logical_and over the given axis.
 
-    Blah, Blah.
+    *See Also*:
+
+        `ndarray.all` : equivalent method
+
+        `all` : equivalent function
 
     """
     try:
@@ -932,7 +982,9 @@ def alltrue (a, axis=None, out=None):
 def any(a,axis=None, out=None):
     """Return true if any elements of x are true.
 
-    Blah, Blah.
+    *See Also*:
+
+        `ndarray.any` : equivalent method
 
     """
     try:
@@ -945,7 +997,11 @@ def any(a,axis=None, out=None):
 def all(a,axis=None, out=None):
     """Return true if all elements of x are true:
 
-    Blah, Blah.
+    *See Also*:
+
+        `ndarray.all` : equivalent method
+
+        `alltrue` : equivalent function
 
     """
     try:
@@ -1062,7 +1118,37 @@ def cumprod(a, axis=None, dtype=None, out=None):
 def ndim(a):
     """Return the number of dimensions of a.
 
-    Blah, Blah.
+    If a is not already an array, a conversion is attempted. Scalars are zero
+    dimensional.
+
+    *Parameters*:
+
+        a : array_like
+            Array_like object whose dimensions are counted.
+
+    *Returns*:
+
+        number of dimensions : int
+            Just so.
+
+    *See Also*:
+
+        `rank` : equivalent function.
+
+        `ndarray.ndim` : equivalent method
+
+        `shape` : dimensions of array
+
+        `ndarray.shape` : dimensions of array
+
+    *Examples*
+
+        >>> ndim([[1,2,3],[4,5,6]])
+        2
+        >>> ndim(array([[1,2,3],[4,5,6]]))
+        2
+        >>> ndim(1)
+        0
 
     """
     try:
@@ -1072,10 +1158,40 @@ def ndim(a):
 
 
 def rank(a):
-    """Return the rank of sequence a (the number of dimensions, not
-    the matrix rank).  The rank of a scalar is zero.
+    """Return the number of dimensions of a.
 
-    Blah, Blah.
+    In old Numeric, rank was the term used for the number of dimensions. If a is
+    not already an array, a conversion is attempted. Scalars are zero
+    dimensional.
+
+    *Parameters*:
+
+        a : array_like
+            Array_like object whose dimensions are counted.
+
+    *Returns*:
+
+        number of dimensions : int
+            Just so.
+
+    *See Also*:
+
+        `ndim` : equivalent function
+
+        `ndarray.ndim` : equivalent method
+
+        `shape` : dimensions of array
+
+        `ndarray.shape` : dimensions of array
+
+    *Examples*
+
+        >>> rank([[1,2,3],[4,5,6]])
+        2
+        >>> rank(array([[1,2,3],[4,5,6]]))
+        2
+        >>> rank(1)
+        0
 
     """
     try:
@@ -1085,12 +1201,39 @@ def rank(a):
 
 
 def size(a, axis=None):
-    """Return the number of elements in sequence a, or along a given axis.
+    """Return the number of elements along given axis.
 
-    Blah, Blah.
+    *Parameters*:
+
+        a : array_like
+            If a is not an array, a conversion is attempted.
+        axis : {None, int}, optional
+            Axis along which elements are counted. None means all elements.
+
+    *Returns*:
+
+        element count : int
+            Count of elements.
+
+    *See Also*:
+
+        `shape` : dimensions of array
+
+        `ndarray.shape` : dimensions of array
+
+        `ndarray.size` : number of elements in array
+
+    *Examples*
+
+        >>> a = array([[1,2,3],[4,5,6]])
+        >>> size(a)
+        6
+        >>> size(a,1)
+        3
+        >>> size(a,0)
+        2
 
     """
-
     if axis is None:
         try:
             return a.size
@@ -1103,13 +1246,15 @@ def size(a, axis=None):
             return asarray(a).shape[axis]
 
 
-def round_(a, decimals=0, out=None):
+def around(a, decimals=0, out=None):
     """Round a to the given number of decimals.
 
     The real and imaginary parts of complex numbers are rounded separately.
     Nothing is done if the input is an integer array with decimals >= 0.
 
     *Parameters*:
+
+        a : array_like
 
         decimals : {0, int}, optional
             Number of decimal places to round to. When decimals is negative it
@@ -1128,7 +1273,56 @@ def round_(a, decimals=0, out=None):
 
     *See Also*:
 
-        `around` : alias of this function
+        `round_` : equivalent function
+
+        `ndarray.round` : equivalent method
+
+    *Notes*
+
+        Numpy rounds to even. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round
+        to 0.0, etc. Results may also be surprising due to the inexact
+        representation of decimal fractions in IEEE floating point and the
+        errors introduced in scaling the numbers when decimals is something
+        other than 0.
+
+    """
+    try:
+        round = a.round
+    except AttributeError:
+        return _wrapit(a, 'round', decimals, out)
+    return round(decimals, out)
+
+
+def round_(a, decimals=0, out=None):
+    """Round a to the given number of decimals.
+
+    The real and imaginary parts of complex numbers are rounded separately.
+    Nothing is done if the input is an integer array with decimals >= 0.
+
+    *Parameters*:
+
+        a : array_like
+
+        decimals : {0, int}, optional
+            Number of decimal places to round to. When decimals is negative it
+            specifies the number of positions to the left of the decimal point.
+        out : {None, array}, optional
+            Existing array to use for output (by default, make a copy of a).
+
+    *Returns*:
+
+        out : array
+            May be used to specify a different array to hold the result rather
+            than the default a. If the type of the array specified by 'out'
+            differs from that of a, the result is cast to the new type,
+            otherwise the original type is kept. Floats round to floats by
+            default.
+
+    *See Also*:
+
+        `around` : equivalent function
+
+        `ndarray.round` : equivalent method
 
     *Notes*
 
@@ -1273,7 +1467,7 @@ def var(a, axis=None, dtype=None, out=None):
 
         `mean` : Average
 
-    *Notes*:
+    *Notes*
 
         The variance is the average of the squared deviations from the mean,
         i.e.  var = mean((x - x.mean())**2).  The computed variance is biased,
@@ -1286,8 +1480,3 @@ def var(a, axis=None, dtype=None, out=None):
     except AttributeError:
         return _wrapit(a, 'var', axis, dtype, out)
     return var(axis, dtype, out)
-
-# functions that are now aliases
-
-around = round_
-
