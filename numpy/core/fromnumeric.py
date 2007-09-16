@@ -52,18 +52,14 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
         a : array
             The source array
-
         indices : int array
             The indices of the values to extract.
-
         axis : {None, int}, optional
             The axis over which to select values. None signifies that the
             operation should be performed over the flattened array.
-
         out : {None, array}, optional
             If provided, the result will be inserted into this array. It should
             be of the appropriate shape and dtype.
-
         mode : {'raise', 'wrap', 'clip'}, optional
             Specifies how out-of-bounds indices will behave.
             'raise' -- raise an error
@@ -95,11 +91,9 @@ def reshape(a, newshape, order='C'):
 
         a : array
             Array to be reshaped.
-
         newshape : shape tuple or int
            The new shape should be compatible with the original shape. If an
            integer, then the result will be a 1D array of that length.
-
         order : {'C', 'FORTRAN'}, optional
             Determines whether the array data should be viewed as in C
             (row-major) order or FORTRAN (column-major) order.
@@ -135,15 +129,12 @@ def choose(a, choices, out=None, mode='raise'):
         a : int array
             This array must contain integers in [0, n-1], where n is the number
             of choices.
-
         choices : sequence of arrays
             Each of the choice arrays should have the same shape as the index
             array.
-
         out : array, optional
             If provided, the result will be inserted into this array. It should
             be of the appropriate shape and dtype
-
         mode : {'raise', 'wrap', 'clip'}, optional
             Specifies how out-of-bounds indices will behave.
             'raise' : raise an error
@@ -182,14 +173,13 @@ def repeat(a, repeats, axis=None):
 
     *Parameters*:
 
-        a : array
-
-        repeats : int or int array
+        a : {array_like}
+            Blah.
+        repeats : {integer, integer_array}
             The number of repetitions for each element. If a plain integer, then
             it is applied to all elements. If an array, it needs to be of the
             same length as the chosen axis.
-
-        axis : {None, int}, optional
+        axis : {None, integer}, optional
             The axis along which to repeat values. If None, then this function
             will operated on the flattened array `a` and return a similarly flat
             result.
@@ -271,14 +261,11 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
         a : array
             Array to be sorted.
-
         axis : {None, int} optional
             Axis along which to sort. None indicates that the flattened
             array should be used.
-
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm to use.
-
         order : {None, list type}, optional
             When a is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
@@ -340,14 +327,11 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
         a : array
             Array to be sorted.
-
         axis : {None, int} optional
             Axis along which to sort. None indicates that the flattened
             array should be used.
-
         kind : {'quicksort', 'mergesort', 'heapsort'}, optional
             Sorting algorithm to use.
-
         order : {None, list type}, optional
             When a is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
@@ -355,7 +339,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
     *Returns*:
 
-        indices : integer array
+        index_array : {integer_array}
             Array of indices that sort 'a' along the specified axis.
 
     *See Also*:
@@ -400,16 +384,15 @@ def argmax(a, axis=None):
 
     *Parameters*:
 
-        a : array
+        a : {array_like}
             Array to look in.
-
         axis : {None, integer}
             If None, the index is into the flattened array, otherwise along
             the specified axis
 
     *Returns*:
 
-        Array of indices
+        index_array : {integer_array}
 
     *Examples*
 
@@ -434,16 +417,15 @@ def argmin(a, axis=None):
 
     *Parameters*:
 
-        a : array
+        a : {array_like}
             Array to look in.
-
         axis : {None, integer}
             If None, the index is into the flattened array, otherwise along
             the specified axis
 
     *Returns*:
 
-        Array of indices
+        index_array : {integer_array}
 
     *Examples*
 
@@ -477,10 +459,8 @@ def searchsorted(a, v, side='left'):
 
         a : 1-d array
             Array must be sorted in ascending order.
-
         v : array or list type
             Array of keys to be searched for in a.
-
         side : {'left', 'right'}, optional
             If 'left', the index of the first location where the key could be
             inserted is found, if 'right', the index of the last such element is
@@ -528,21 +508,20 @@ def resize(a, new_shape):
 
     *Parameters*:
 
-        a : array_like
+        a : {array_like}
             Array to be reshaped.
 
-        new_shape : tuple
-            Shape of the new array.
+        new_shape : {tuple}
+            Shape of reshaped array.
 
     *Returns*:
 
-        new_array : array
+        reshaped_array : {array}
             The new array is formed from the data in the old array, repeated if
             necessary to fill out the required number of elements, with the new
             shape.
 
     """
-
     if isinstance(new_shape, (int, nt.integer)):
         new_shape = (new_shape,)
     a = ravel(a)
@@ -601,17 +580,14 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
 
     *Parameters*:
 
-        a : array_like
+        a : {array_like}
             Array from whis the diagonals are taken.
-
         offset : {0, integer}, optional
             Offset of the diagonal from the main diagonal. Can be both positive
             and negative. Defaults to main diagonal.
-
         axis1 : {0, integer}, optional
             Axis to be used as the first axis of the 2-d subarrays from which
             the diagonals should be taken. Defaults to first axis.
-
         axis2 : {1, integer}, optional
             Axis to be used as the second axis of the 2-d subarrays from which
             the diagonals should be taken. Defaults to second axis.
@@ -669,28 +645,23 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
 
     *Parameters*:
 
-        a : array_like
+        a : {array_like}
             Array from whis the diagonals are taken.
-
         offset : {0, integer}, optional
             Offset of the diagonal from the main diagonal. Can be both positive
             and negative. Defaults to main diagonal.
-
         axis1 : {0, integer}, optional
             Axis to be used as the first axis of the 2-d subarrays from which
             the diagonals should be taken. Defaults to first axis.
-
         axis2 : {1, integer}, optional
             Axis to be used as the second axis of the 2-d subarrays from which
             the diagonals should be taken. Defaults to second axis.
-
         dtype : {None, dtype}, optional
             Determines the type of the returned array and of the accumulator
             where the elements are summed. If dtype has the value None and a is
             of integer type of precision less than the default integer
             precision, then the default integer precision is used. Otherwise,
             the precision is the same as that of a.
-
         out : {None, array}, optional
             Array into which the sum can be placed. It's type is preserved and
             it must be of the right shape to hold the output.
@@ -722,7 +693,7 @@ def ravel(a, order='C'):
 
     *Parameters*:
 
-        a : array_like
+        a : {array_like}
 
         order : {'C','F'}, optional
             If order is 'C' the elements are taken in row major order. If order
@@ -730,7 +701,7 @@ def ravel(a, order='C'):
 
     *Returns*:
 
-        1d array of the elements of a.
+        1d_array : {array}
 
     *See Also*:
 
@@ -756,11 +727,11 @@ def nonzero(a):
 
     *Parameters*:
 
-        a : array_like
+        a : {array_like}
 
     *Returns*:
 
-        Tuple of arrays of indices.
+        tuple_of_arrays : {tuple}
 
     *Examples*
 
@@ -786,11 +757,13 @@ def shape(a):
 
     *Parameters*:
 
-        a : array type
+        a : {array_like}
+            Array whose shape is desired. If a is not an array, a conversion is
+            attempted.
 
     *Returns*:
 
-        tuple of integers :
+        tuple_of_integers :
             The elements of the tuple are the length of the corresponding array
             dimension.
 
@@ -841,29 +814,28 @@ def sum(a, axis=None, dtype=None, out=None):
 
     *Parameters*:
 
-        a : array_type
-
+        a : {array_type}
+            Array containing elements whose sum is desired. If a is not an array, a
+            conversion is attempted.
         axis : {None, integer}
             Axis over which the sum is taken. If None is used, then the sum is
             over all the array elements.
-
         dtype : {None, dtype}, optional
             Determines the type of the returned array and of the accumulator
-            where the elements are summed. If dtype has the value None and a is
-            of integer type of precision less than the default platform integer
-            precision, then the default integer precision is used. Otherwise,
-            the precision is the same as that of a.
-
+            where the elements are summed. If dtype has the value None and the
+            type of a is an integer type of precision less than the default
+            platform integer, then the default platform integer precision is
+            used.  Otherwise, the dtype is the same as that of a.
         out : {None, array}, optional
             Array into which the sum can be placed. It's type is preserved and
             it must be of the right shape to hold the output.
 
     *Returns*:
 
-        Sum along specified axis : {array, scalar}, type as above.
-            If the sum is along an axis, then an array is returned whose shape
-            is the same as a with the specified axis removed. For 1d arrays or
-            dtype=None, the result is a 0d array.
+        sum_along_axis : {array, scalar}, see dtype parameter above.
+            Returns an array whose shape is the same as a with the specified
+            axis removed. Returns a 0d array when a is 1d or dtype=None.
+            Returns a reference to the specified output array if specified.
 
     *See Also*:
 
@@ -899,29 +871,29 @@ def product (a, axis=None, dtype=None, out=None):
 
     *Parameters*:
 
-        a : array_type
-
+        a : {array_like}
+            Array containing elements whose product is desired. If a is not an array, a
+            conversion is attempted.
         axis : {None, integer}
             Axis over which the product is taken. If None is used, then the
             product is over all the array elements.
-
         dtype : {None, dtype}, optional
             Determines the type of the returned array and of the accumulator
-            where the elements are multiplied. If dtype has the value None and a
-            is of integer type of precision less than the default platform
-            integer precision, then the default integer precision is used.
-            Otherwise, the precision is the same as that of a.
-
+            where the elements are multiplied. If dtype has the value None and
+            the type of a is an integer type of precision less than the default
+            platform integer, then the default platform integer precision is
+            used.  Otherwise, the dtype is the same as that of a.
         out : {None, array}, optional
-            Array into which the product can be placed. It's type is preserved and
-            it must be of the right shape to hold the output.
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
 
     *Returns*:
 
-        product along specified axis : {array, scalar}, type as above.
-            If the product is along an axis, then an array is returned whose shape
-            is the same as a with the specified axis removed. For 1d arrays or
-            dtype=None, the result is a 0d array.
+        product_along_axis : {array, scalar}, see dtype parameter above.
+            Returns an array whose shape is the same as a with the specified
+            axis removed. Returns a 0d array when a is 1d or dtype=None.
+            Returns a reference to the specified output array if specified.
 
     *See Also*:
 
@@ -1123,13 +1095,14 @@ def ndim(a):
 
     *Parameters*:
 
-        a : array_like
-            Array_like object whose dimensions are counted.
+        a : {array_like}
+            Array whose number of dimensions are desired. If a is not an array, a
+            conversion is attempted.
 
     *Returns*:
 
-        number of dimensions : int
-            Just so.
+        number_of_dimensions : {integer}
+            Returns the number of dimensions.
 
     *See Also*:
 
@@ -1166,13 +1139,14 @@ def rank(a):
 
     *Parameters*:
 
-        a : array_like
-            Array_like object whose dimensions are counted.
+        a : {array_like}
+            Array whose number of dimensions is desired. If a is not an array, a
+            conversion is attempted.
 
     *Returns*:
 
-        number of dimensions : int
-            Just so.
+        number_of_dimensions : {integer}
+            Returns the number of dimensions.
 
     *See Also*:
 
@@ -1205,15 +1179,17 @@ def size(a, axis=None):
 
     *Parameters*:
 
-        a : array_like
-            If a is not an array, a conversion is attempted.
-        axis : {None, int}, optional
-            Axis along which elements are counted. None means all elements.
+        a : {array_like}
+            Array whose axis size is desired. If a is not an array, a conversion
+            is attempted.
+        axis : {None, integer}, optional
+            Axis along which the elements are counted. None means all elements
+            in the array.
 
     *Returns*:
 
-        element count : int
-            Count of elements.
+        element_count : {integer}
+            Count of elements along specified axis.
 
     *See Also*:
 
@@ -1249,27 +1225,30 @@ def size(a, axis=None):
 def around(a, decimals=0, out=None):
     """Round a to the given number of decimals.
 
-    The real and imaginary parts of complex numbers are rounded separately.
-    Nothing is done if the input is an integer array with decimals >= 0.
+    The real and imaginary parts of complex numbers are rounded separately. The
+    result of rounding a float is a float so the type must be cast if integers
+    are desired.  Nothing is done if the input is an integer array and the
+    decimals parameter has a value >= 0.
 
     *Parameters*:
 
-        a : array_like
-
+        a : {array_like}
+            Array containing numbers whose rounded values are desired. If a is
+            not an array, a conversion is attempted.
         decimals : {0, int}, optional
             Number of decimal places to round to. When decimals is negative it
             specifies the number of positions to the left of the decimal point.
         out : {None, array}, optional
-            Existing array to use for output (by default, make a copy of a).
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary. Numpy rounds floats to floats by default.
 
-    *Returns*:
+        *Returns*:
 
-        out : array
-            May be used to specify a different array to hold the result rather
-            than the default a. If the type of the array specified by 'out'
-            differs from that of a, the result is cast to the new type,
-            otherwise the original type is kept. Floats round to floats by
-            default.
+        rounded_array : {array}
+            If out=None, returns a new array of the same type as a containing
+            the rounded values, otherwise a reference to the output array is
+            returned.
 
     *See Also*:
 
@@ -1282,8 +1261,16 @@ def around(a, decimals=0, out=None):
         Numpy rounds to even. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round
         to 0.0, etc. Results may also be surprising due to the inexact
         representation of decimal fractions in IEEE floating point and the
-        errors introduced in scaling the numbers when decimals is something
-        other than 0.
+        errors introduced when scaling by powers of ten.
+
+    *Examples*
+
+        >>> around([.5, 1.5, 2.5, 3.5, 4.5])
+        array([ 0.,  2.,  2.,  4.,  4.])
+        >>> around([1,2,3,11], decimals=1)
+        array([ 1,  2,  3, 11])
+        >>> around([1,2,3,11], decimals=-1)
+        array([ 0,  0,  0, 10])
 
     """
     try:
@@ -1296,27 +1283,30 @@ def around(a, decimals=0, out=None):
 def round_(a, decimals=0, out=None):
     """Round a to the given number of decimals.
 
-    The real and imaginary parts of complex numbers are rounded separately.
-    Nothing is done if the input is an integer array with decimals >= 0.
+    The real and imaginary parts of complex numbers are rounded separately. The
+    result of rounding a float is a float so the type must be cast if integers
+    are desired.  Nothing is done if the input is an integer array and the
+    decimals parameter has a value >= 0.
 
     *Parameters*:
 
-        a : array_like
-
-        decimals : {0, int}, optional
+        a : {array_like}
+            Array containing numbers whose rounded values are desired. If a is
+            not an array, a conversion is attempted.
+        decimals : {0, integer}, optional
             Number of decimal places to round to. When decimals is negative it
             specifies the number of positions to the left of the decimal point.
         out : {None, array}, optional
-            Existing array to use for output (by default, make a copy of a).
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
 
     *Returns*:
 
-        out : array
-            May be used to specify a different array to hold the result rather
-            than the default a. If the type of the array specified by 'out'
-            differs from that of a, the result is cast to the new type,
-            otherwise the original type is kept. Floats round to floats by
-            default.
+        rounded_array : {array}
+            If out=None, returns a new array of the same type as a containing
+            the rounded values, otherwise a reference to the output array is
+            returned.
 
     *See Also*:
 
@@ -1329,8 +1319,16 @@ def round_(a, decimals=0, out=None):
         Numpy rounds to even. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round
         to 0.0, etc. Results may also be surprising due to the inexact
         representation of decimal fractions in IEEE floating point and the
-        errors introduced in scaling the numbers when decimals is something
-        other than 0.
+        errors introduced when scaling by powers of ten.
+
+    *Examples*
+
+        >>> round_([.5, 1.5, 2.5, 3.5, 4.5])
+        array([ 0.,  2.,  2.,  4.,  4.])
+        >>> round_([1,2,3,11], decimals=1)
+        array([ 1,  2,  3, 11])
+        >>> round_([1,2,3,11], decimals=-1)
+        array([ 0,  0,  0, 10])
 
     """
     try:
@@ -1345,27 +1343,30 @@ def mean(a, axis=None, dtype=None, out=None):
 
     Returns the average of the array elements.  The average is taken
     over the flattened array by default, otherwise over the specified
-    axis.
+    axis. The dtype returned for integer type arrays is float
 
     *Parameters*:
 
-        axis : integer
+        a : {array_like}
+            Array containing numbers whose mean is desired. If a is not an
+            array, a conversion is attempted.
+        axis : {None, integer}, optional
             Axis along which the means are computed. The default is to compute
             the standard deviation of the flattened array.
-        dtype : type
+        dtype : {None, dtype}, optional
             Type to use in computing the means. For arrays of integer type the
             default is float32, for arrays of float types it is the same as the
             array type.
-        out : ndarray
+        out : {None, array}, optional
             Alternative output array in which to place the result. It must have
             the same shape as the expected output but the type will be cast if
             necessary.
 
     *Returns*:
 
-        mean : array (see dtype parameter above)
-            A new array holding the result is returned unless out is specified,
-            in which case a reference to out is returned.
+        mean : {array, scalar}, see dtype parameter above
+            If out=None, returns a new array containing the mean values,
+            otherwise a reference to the output array is returned.
 
     *See Also*:
 
@@ -1377,6 +1378,16 @@ def mean(a, axis=None, dtype=None, out=None):
 
         The mean is the sum of the elements along the axis divided by the number
         of elements.
+
+    *Examples*
+
+        >>> a = array([[1,2],[3,4]])
+        >>> mean(a)
+        2.5
+        >>> mean(a,0)
+        array([ 2.,  3.])
+        >>> mean(a,1)
+        array([ 1.5,  3.5])
 
     """
     try:
@@ -1395,23 +1406,26 @@ def std(a, axis=None, dtype=None, out=None):
 
     *Parameters*:
 
-        axis : integer
+        a : {array_like}
+            Array containing numbers whose standard deviation is desired. If a
+            is not an array, a conversion is attempted.
+        axis : {None, integer}, optional
             Axis along which the standard deviation is computed. The default is
             to compute the standard deviation of the flattened array.
-        dtype : type
+        dtype : {None, dtype}, optional
             Type to use in computing the standard deviation. For arrays of
             integer type the default is float32, for arrays of float types it is
             the same as the array type.
-        out : ndarray
+        out : {None, array}, optional
             Alternative output array in which to place the result. It must have
             the same shape as the expected output but the type will be cast if
             necessary.
 
     *Returns*:
 
-        standard_deviation : The return type varies, see above.
-            A new array holding the result is returned unless out is specified,
-            in which case a reference to out is returned.
+        standard_deviation : {array, scalar}, see dtype parameter above.
+            If out=None, returns a new array containing the standard deviation,
+            otherwise a reference to the output array is returned.
 
     *See Also*:
 
@@ -1419,12 +1433,22 @@ def std(a, axis=None, dtype=None, out=None):
 
         `mean` : Average
 
-    *Notes*:
+    *Notes*
 
         The standard deviation is the square root of the average of the squared
         deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
         computed standard deviation is biased, i.e., the mean is computed by
         dividing by the number of elements, N, rather than by N-1.
+
+    *Examples*
+
+        >>> a = array([[1,2],[3,4]])
+        >>> std(a)
+        1.1180339887498949
+        >>> std(a,0)
+        array([ 1.,  1.])
+        >>> std(a,1)
+        array([ 0.5,  0.5])
 
     """
     try:
@@ -1438,28 +1462,31 @@ def var(a, axis=None, dtype=None, out=None):
     """Compute the variance along the specified axis.
 
     Returns the variance of the array elements, a measure of the spread of a
-    distribution.  The variance is computed for the flattened array by default,
+    distribution. The variance is computed for the flattened array by default,
     otherwise over the specified axis.
 
     *Parameters*:
 
-        axis : integer
+        a : {array_like}
+            Array containing numbers whose variance is desired. If a is not an
+            array, a conversion is attempted.
+        axis : {None, integer}, optional
             Axis along which the variance is computed. The default is to compute
             the variance of the flattened array.
-        dtype : type
+        dtype : {None, dtype}, optional
             Type to use in computing the variance. For arrays of integer type
             the default is float32, for arrays of float types it is the same as
             the array type.
-        out : ndarray
+        out : {None, array}, optional
             Alternative output array in which to place the result. It must have
             the same shape as the expected output but the type will be cast if
             necessary.
 
     *Returns*:
 
-        variance : array (see dtype parameter above)
-            A new array holding the result is returned unless out is specified,
-            in which case a reference to out is returned.
+        variance : {array, scalar}, see dtype parameter above
+            If out=None, returns a new array containing the variance, otherwise
+            a reference to the output array is returned.
 
     *See Also*:
 
@@ -1473,6 +1500,16 @@ def var(a, axis=None, dtype=None, out=None):
         i.e.  var = mean((x - x.mean())**2).  The computed variance is biased,
         i.e., the mean is computed by dividing by the number of elements, N,
         rather than by N-1.
+
+    *Examples*
+
+        >>> a = array([[1,2],[3,4]])
+        >>> var(a)
+        1.25
+        >>> var(a,0)
+        array([ 1.,  1.])
+        >>> var(a,1)
+        array([ 0.25,  0.25])
 
     """
     try:
