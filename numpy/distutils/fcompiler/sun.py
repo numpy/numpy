@@ -42,6 +42,7 @@ class SunFCompiler(FCompiler):
         opt = []
         opt.extend(['fsu','sunmath'])
         if not sys.platform[:5] == 'linux':
+            # Those are solaris specific libs
             opt.extend(['mvec', 'f77compat'])
         return opt
 
