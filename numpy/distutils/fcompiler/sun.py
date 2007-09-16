@@ -1,3 +1,5 @@
+import sys
+
 from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler
 
@@ -38,7 +40,9 @@ class SunFCompiler(FCompiler):
         return ['-xtarget=generic']
     def get_libraries(self):
         opt = []
-        opt.extend(['fsu','sunmath','mvec','f77compat'])
+        opt.extend(['fsu','sunmath'])
+        if not sys.platform[:5] == 'linux':
+            opt.extend(['mvec', 'f77compat'])
         return opt
 
 if __name__ == '__main__':

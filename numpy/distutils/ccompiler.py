@@ -313,6 +313,10 @@ compiler_class['intele'] = ('intelccompiler','IntelItaniumCCompiler',
                            "Intel C Itanium Compiler for Itanium-based applications")
 ccompiler._default_compilers += (('linux.*','intel'),('linux.*','intele'))
 
+compiler_class['sun'] = ('sunccompiler','SunCCompiler',
+                           "Sun Studio C Compiler for Linux")
+ccompiler._default_compilers += (('linux.*','sun'),)
+
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
                                  "Mingw32 port of GNU C Compiler for Win32"\
