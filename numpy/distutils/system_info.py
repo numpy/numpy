@@ -209,6 +209,9 @@ def get_info(name,notfound_action=0):
           'mkl':mkl_info,
           'lapack_mkl':lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl':blas_mkl_info,          # use blas_opt instead
+          'sunperf':sunperf_info,
+          'lapack_sunperf':lapack_sunperf_info,      # use lapack_opt instead
+          'blas_sunperf':blas_sunperf_info,          # use blas_opt instead
           'x11':x11_info,
           'fft_opt':fft_opt_info,
           'fftw':fftw_info,
@@ -838,6 +841,92 @@ class lapack_mkl_info(mkl_info):
 class blas_mkl_info(mkl_info):
     pass
 
+#======================
+# Sunperf system info. 
+#======================
+
+# This is intended to work on solaris (sparc and x86) and
+# linux (x86 only).
+class sunperf_info(system_info):
+    section = 'sunperf'
+    dir_env_var = 'SUNPERF'
+    _lib_sunperf = ['sunperf', 'fsu', 'mtsk']
+
+    def get_sunperf_rootdir(self):
+        sunperfroot = os.environ.get('SUNPERF',None)
+        if sunperfroot is not None:
+            return sunperfroot
+        else:
+            print ("You have to set sunperf root dir with"\
+                   "env var SUNPERF for now, sorry")
+            return None
+        #paths = os.environ.get('LD_LIBRARY_PATH','').split(os.pathsep)
+        #ld_so_conf = '/etc/ld.so.conf'
+        #if os.path.isfile(ld_so_conf):
+        #    for d in open(ld_so_conf,'r').readlines():
+        #        d = d.strip()
+        #        if d: paths.append(d)
+        #intel_mkl_dirs = []
+        #for path in paths:
+        #    path_atoms = path.split(os.sep)
+        #    for m in path_atoms:
+        #        if m.startswith('mkl'):
+        #            d = os.sep.join(path_atoms[:path_atoms.index(m)+2])
+        #            intel_mkl_dirs.append(d)
+        #            break
+        #for d in paths:
+        #    dirs = glob(os.path.join(d,'mkl','*')) + glob(os.path.join(d,'mkl*'))
+        #    for d in dirs:
+        #        if os.path.isdir(os.path.join(d,'lib')):
+        #            return d
+        #return None
+
+    def __init__(self):
+        sunperfroot = self.get_sunperf_rootdir()
+        if sunperfroot is None:
+            system_info.__init__(self)
+        else:
+            from cpuinfo import cpu
+            # XXX we really just want to detect whereas we are on x86...
+            if cpu._is_AMD() or cpu._is_Intel():
+                if cpu.is_64bits():
+                    print "amd64 version of sunperf"
+                elif cpu.has_sse2(): 
+                    print "SSE2 version of sunperf"
+                else:
+                    print "generic x86 version of sunperf"
+            else:
+                "No x86 detected"
+            system_info.__init__(self,
+                                 default_lib_dirs = 
+                                    [os.path.join(sunperfroot, 'lib')],
+                                 default_include_dirs = 
+                                    [os.path.join(sunperfroot, 'include')])
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        incl_dirs = self.get_include_dirs()
+        sunperf_libs = self.get_libs('sunperf_libs',self._lib_sunperf)
+        sunperf = None
+        for d in lib_dirs:
+            sunperf = self.check_libs2(d,sunperf_libs)
+            if sunperf is not None:
+                break
+        if sunperf is None:
+            return
+        info = {}
+        dict_append(info,**sunperf)
+        dict_append(info,
+                    define_macros=[('SCIPY_SUNPERF_H',None)],
+                    include_dirs = incl_dirs)
+        self.set_info(**info)
+
+class blas_sunperf_info(sunperf_info):
+    pass
+
+class lapack_sunperf_info(sunperf_info):
+    pass
+
 class atlas_info(system_info):
     section = 'atlas'
     dir_env_var = 'ATLAS'
@@ -1207,6 +1296,11 @@ class lapack_opt_info(system_info):
             self.set_info(**lapack_mkl_info)
             return
 
+        lapack_sunperf_info = get_info('lapack_sunperf')
+        if lapack_sunperf_info:
+            self.set_info(**lapack_sunperf_info)
+            return
+
         atlas_info = get_info('atlas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas')
@@ -1308,6 +1402,12 @@ class blas_opt_info(system_info):
             self.set_info(**blas_mkl_info)
             return
 
+        blas_sunperf_info = get_info('blas_sunperf')
+        if blas_sunperf_info:
+            self.set_info(**blas_sunperf_info)
+            return
+
+        print "blablas:"
         atlas_info = get_info('atlas_blas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
