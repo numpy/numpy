@@ -850,7 +850,8 @@ class blas_mkl_info(mkl_info):
 class sunperf_info(system_info):
     section = 'sunperf'
     dir_env_var = 'SUNPERF'
-    _lib_sunperf = ['sunperf', 'fsu', 'mtsk']
+    _lib_sunperf = ['sunperf', 'fsu', 'fui']
+    _lib_sunperf_suplink = ['mtsk']
 
     def get_sunperf_rootdir(self):
         sunperfroot = os.environ.get('SUNPERF',None)
@@ -887,19 +888,20 @@ class sunperf_info(system_info):
             system_info.__init__(self)
         else:
             from cpuinfo import cpu
-            # XXX we really just want to detect whereas we are on x86...
-            if cpu._is_AMD() or cpu._is_Intel():
-                if cpu.is_64bits():
-                    print "amd64 version of sunperf"
-                elif cpu.has_sse2(): 
-                    print "SSE2 version of sunperf"
-                else:
-                    print "generic x86 version of sunperf"
-            else:
-                "No x86 detected"
+            ## # XXX we really just want to detect whereas we are on x86...
+            ## if cpu._is_AMD() or cpu._is_Intel():
+            ##     if cpu.is_64bits():
+            ##         print "amd64 version of sunperf"
+            ##     elif cpu.has_sse2(): 
+            ##         print "SSE2 version of sunperf"
+            ##     else:
+            ##         print "generic x86 version of sunperf"
+            ## else:
+            ##     "No x86 detected"
             system_info.__init__(self,
                                  default_lib_dirs = 
-                                    [os.path.join(sunperfroot, 'lib')],
+                                    [os.path.join(sunperfroot, 'lib'),
+                                    os.path.join(sunperfroot, 'rtlibs')],
                                  default_include_dirs = 
                                     [os.path.join(sunperfroot, 'include')])
 
@@ -916,6 +918,19 @@ class sunperf_info(system_info):
             return
         info = {}
         dict_append(info,**sunperf)
+
+	# Look for mtsk: we basically assume that mtsk is here once sunperf is
+	# detected.
+        mtsk = None
+        for d in lib_dirs:
+            mtsk = self.check_libs2(d,self._lib_sunperf_suplink)
+            if mtsk is not None:
+                break
+        if mtsk is None:
+            return
+        dict_append(info,**mtsk)
+
+	# Now, the info is complete
         dict_append(info,
                     define_macros=[('SCIPY_SUNPERF_H',None)],
                     include_dirs = incl_dirs)
