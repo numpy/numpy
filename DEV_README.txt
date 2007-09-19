@@ -1,4 +1,3 @@
-
 Thank you for your willingness to help make NumPy the best array system
 available.
 
@@ -12,4 +11,3 @@ numpy-discussions@scipy.org before anything is done.
 
 Please add meaningful comments when you check changes in.  These comments
 form the basis of the change-log.
-
