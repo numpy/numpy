@@ -575,7 +575,7 @@ def get_frame(level=0):
 class Configuration(object):
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
-                  'libraries', 'headers', 'scripts', 'py_modules']
+                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_scripts']
     _dict_keys = ['package_dir']
     _extra_keys = ['name', 'version']
 
@@ -1165,6 +1165,27 @@ class Configuration(object):
         if dist is not None:
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a library '+ name)
+
+    def add_sconscript(self, sconscript,
+                       subpackage_path=None,
+                       standalone = False):
+        """Add a list of sconscript to configuration.
+        """
+        #print "%s: adding %s" % (__file__, sconscript)
+        if standalone:
+            parent_name = None
+        else:
+            parent_name = self.name
+
+        dist = self.get_distribution()
+        fullsconsname = self.paths(sconscript)
+        
+        if dist is not None:
+            dist.scons_scripts.extend(fullsconsname)
+            self.warn('distutils distribution has been initialized,'\
+                      ' it may be too late to add a subpackage '+ subpackage_name)
+        else:
+            self.scons_scripts.extend(fullsconsname)
 
     def add_scripts(self,*files):
         """Add scripts to configuration.

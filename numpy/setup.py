@@ -4,6 +4,7 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('numpy',parent_package,top_path)
     config.add_subpackage('distutils')
+    config.add_subpackage('scons_fake')
     config.add_subpackage('testing')
     config.add_subpackage('f2py')
     config.add_subpackage('core')
