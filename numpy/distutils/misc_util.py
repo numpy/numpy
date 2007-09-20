@@ -321,7 +321,10 @@ def msvc_runtime_library():
 def msvc_on_amd64():
     if not (sys.platform=='win32' or os.name=='nt'):
         return
-    from distutils.msvccompiler import get_build_architecture
+    try:  # get_build_architecture is only on Python 2.5
+        from distutils.msvccompiler import get_build_architecture
+    except ImportError:
+        return
     if get_build_architecture() != 'AMD64':
         return
     if os.environ.has_key('DISTUTILS_USE_SDK'):
