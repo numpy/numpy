@@ -23,7 +23,7 @@ import distutils.dist
 from numpy.distutils.extension import Extension
 from numpy.distutils.command import config, config_compiler, \
      build, build_py, build_ext, build_clib, build_src, build_scripts, \
-     sdist, install_data, install_headers, install, bdist_rpm
+     sdist, install_data, install_headers, install, bdist_rpm, scons
 from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
@@ -36,6 +36,7 @@ numpy_cmdclass = {'build':            build.build,
                   'build_py':         build_py.build_py,
                   'build_clib':       build_clib.build_clib,
                   'sdist':            sdist.sdist,
+                  'scons':            scons.scons,
                   'install_data':     install_data.install_data,
                   'install_headers':  install_headers.install_headers,
                   'install':          install.install,

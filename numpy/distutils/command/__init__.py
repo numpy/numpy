@@ -27,5 +27,6 @@ __all__ = ['build',
            'install_data',
            'install_headers',
            'bdist_rpm',
+           'scons',
            'sdist',
           ] + distutils_all
