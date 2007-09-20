@@ -287,6 +287,7 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
         Py_DECREF(amask);
         Py_DECREF(avals);
         PyDataMem_FREE(zero);
+        Py_DECREF(ainput);
         Py_INCREF(Py_None);
         return Py_None;
     }
