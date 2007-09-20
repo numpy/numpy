@@ -36,9 +36,9 @@ def rot90(m, k=1):
         raise ValueError, "Input must >= 2-d."
     k = k % 4
     if k == 0: return m
-    elif k == 1: return fliplr(m).transpose()
+    elif k == 1: return fliplr(m).swapaxes(0,1)
     elif k == 2: return fliplr(flipud(m))
-    else: return fliplr(m.transpose())  # k==3
+    else: return fliplr(m.swapaxes(0,1))  # k==3
 
 def eye(N, M=None, k=0, dtype=float):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones,
