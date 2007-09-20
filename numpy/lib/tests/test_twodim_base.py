@@ -133,6 +133,9 @@ class test_rot90(NumpyTestCase):
         for k in range(0,13,4):
             assert_equal(rot90(a,k=k),b4)
 
+    def check_axes(self):
+        a = ones((50,40,3))
+        assert_equal(rot90(a).shape,(40,50,3))
 
 class test_histogram2d(NumpyTestCase):
     def check_simple(self):
