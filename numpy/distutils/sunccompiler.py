@@ -1,11 +1,13 @@
 """Sun studio compiler (both solaris and linux)."""
+import sys
+
 from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.exec_command import find_executable
 
 class SunCCompiler(UnixCCompiler):
     """ A modified Sun compiler compatible with an gcc built Python. """
     compiler_type = 'sun'
-    if platform[:5] == 'linux':
+    if sys.platform[:5] == 'linux':
         # Use suncc instead of cc, because it makes it more obvious to follow
         # what's going on when several compilers are available on linux.
         cc_exe = 'suncc'
