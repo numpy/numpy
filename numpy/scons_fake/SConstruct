@@ -1,3 +1,19 @@
-env = Environment()
+# vim:syntax=python
+import os.path
 
-env.Library('foo', source = ['foo.c'])
+env = Environment()
+src_prefix = ARGUMENTS.get('src_prefix', '')
+obj_prefix = ARGUMENTS.get('obj_prefix', '')
+lib_prefix = ARGUMENTS.get('lib_prefix', '')
+
+source = ['foo.c']
+object = ['foo']
+if len(src_prefix):
+    source = [os.path.join(src_prefix, i) for i in source]
+if len(src_prefix):
+    object = [os.path.join(obj_prefix, i) for i in object]
+
+onodes = []
+for i in range(len(source)):
+    onodes.append(env.SharedObject(object[i], source = [source[i]]))
+env.SharedLibrary(os.path.join(lib_prefix, 'foo'), onodes)
