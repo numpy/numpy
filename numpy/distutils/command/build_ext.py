@@ -295,6 +295,8 @@ class build_ext (old_build_ext):
                   "but no C++ linker found, using default linker" % (ext.name))
 
         kws = {'depends':ext.depends}
+        print "===================================="
+        print "tmp build dir is %s" % self.build_temp
         output_dir = self.build_temp
 
         include_dirs = ext.include_dirs + get_numpy_include_dirs()

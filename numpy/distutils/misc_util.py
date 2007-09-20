@@ -1178,6 +1178,8 @@ class Configuration(object):
             parent_name = self.name
 
         dist = self.get_distribution()
+        # Convert the sconscript name to a relative filename (relative from top
+        # setup.py's directory)
         fullsconsname = self.paths(sconscript)
         
         if dist is not None:

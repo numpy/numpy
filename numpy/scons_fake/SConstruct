@@ -1,0 +1,3 @@
+env = Environment()
+
+env.Library('foo', source = ['foo.c'])
