@@ -919,18 +919,19 @@ class sunperf_info(system_info):
         info = {}
         dict_append(info,**sunperf)
 
-	# Look for mtsk: we basically assume that mtsk is here once sunperf is
-	# detected.
-        mtsk = None
-        for d in lib_dirs:
-            mtsk = self.check_libs2(d,self._lib_sunperf_suplink)
-            if mtsk is not None:
-                break
-        if mtsk is None:
-            return
-        dict_append(info,**mtsk)
+        # Look for mtsk: we basically assume that mtsk is here once sunperf is
+        # detected. There is no need for mtsk for Solaris ?
+        if sys.platform[:5] == 'linux':
+            mtsk = None
+            for d in lib_dirs:
+                mtsk = self.check_libs2(d,self._lib_sunperf_suplink)
+                if mtsk is not None:
+                    break
+            if mtsk is None:
+                return
+            dict_append(info,**mtsk)
 
-	# Now, the info is complete
+        # Now, the info is complete
         dict_append(info,
                     define_macros=[('SCIPY_SUNPERF_H',None)],
                     include_dirs = incl_dirs)
