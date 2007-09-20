@@ -716,6 +716,9 @@ class test_regression(NumpyTestCase):
         assert x != y
         assert x == x
 
+    def check_mem_insert(self, level=rlevel):
+        """Ticket #572"""
+        N.lib.place(1,1,1)
 
 if __name__ == "__main__":
     NumpyTest().run()
