@@ -699,7 +699,7 @@ class test_regression(NumpyTestCase):
 
     def check_argmax_byteorder(self, level=rlevel):
         """Ticket #546"""
-        a = arange(3, dtype='>f')
+        a = N.arange(3, dtype='>f')
         assert a[a.argmax()] == a.max()
 
     def check_numeric_random(self, level=rlevel):
