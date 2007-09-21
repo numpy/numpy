@@ -3675,9 +3675,11 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         op = ap;
     }
 
+    /* Will get native-byte order contiguous copy. 
+     */
     ap = (PyArrayObject *)\
-        PyArray_ContiguousFromAny((PyObject *)op,
-                                  PyArray_NOTYPE, 1, 0);
+        PyArray_ContiguousFromAny((PyObject *)op, 
+				  op->descr->type_num, 1, 0);
 
     Py_DECREF(op);
     if (ap == NULL) return NULL;
@@ -3693,7 +3695,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     if (m == 0) {
         PyErr_SetString(MultiArrayError,
                         "attempt to get argmax/argmin "\
-                        "of an empty sequence??");
+                        "of an empty sequence");
         goto fail;
     }
 
@@ -3719,7 +3721,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     NPY_BEGIN_THREADS_DESCR(ap->descr)
-        n = PyArray_SIZE(ap)/m;
+    n = PyArray_SIZE(ap)/m;
     rptr = (intp *)rp->data;
     for (ip = ap->data, i=0; i<n; i++, ip+=elsize*m) {
         arg_func(ip, m, rptr, ap);
@@ -3727,7 +3729,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
     NPY_END_THREADS_DESCR(ap->descr)
 
-        Py_DECREF(ap);
+    Py_DECREF(ap);
     if (copyret) {
         PyArrayObject *obj;
         obj = (PyArrayObject *)rp->base;
