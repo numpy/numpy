@@ -90,8 +90,14 @@ class memmap(ndarray):
     def close(self):
         if (self.base is self._mmap):
             self._mmap.close()
+        else:
+            raise ValueError, "Cannot close a memmap that is being used " \
+                  "by another object."
 
     def __del__(self):
         if self._mmap is not None:
             self._mmap.flush()
-            self.close()
+            try:
+                self.close()
+            except:
+                pass
