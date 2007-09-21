@@ -85,19 +85,20 @@ class memmap(ndarray):
             self._mmap = None
 
     def sync(self):
-        self._mmap.flush()
+        if self._mmap is not None:
+            self._mmap.flush()
 
     def close(self):
         if (self.base is self._mmap):
             self._mmap.close()
-        else:
+        elif self._mmap is not None:
             raise ValueError, "Cannot close a memmap that is being used " \
                   "by another object."
 
     def __del__(self):
-        if self._mmap is not None:
-            self._mmap.flush()
-            try:
-                self.close()
-            except:
-                pass
+        self.sync()
+        try:
+            self.close()
+        except ValueError:
+            pass            
+        
