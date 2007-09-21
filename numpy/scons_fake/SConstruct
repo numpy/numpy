@@ -1,19 +1,37 @@
 # vim:syntax=python
+from os.path import join as pjoin
 import os.path
 
-env = Environment()
-src_prefix = ARGUMENTS.get('src_prefix', '')
-obj_prefix = ARGUMENTS.get('obj_prefix', '')
-lib_prefix = ARGUMENTS.get('lib_prefix', '')
+opts = Options()
+opts.Add('pkg_name', 'name of the package (including parent package if any)', '')
+opts.Add('build_prefix', 'build prefix (NOT including the package name)', pjoin('build', 'scons'))
+opts.Add('distutils_libdir', 'build dir for libraries of distutils (NOT including the package name)', pjoin('build', 'lib'))
+
+#pkg_name = 'scons_fake'
+#build_prefix = pjoin('build', 'scons')
+#build_dir = pjoin(build_prefix, pkg_name)
+env = Environment(options = opts)
+env.AppendUnique(build_dir = pjoin(env['build_prefix'], env['pkg_name'].replace('.', os.path.sep)))
+env.AppendUnique(distutils_installdir = pjoin(env['distutils_libdir'], env['pkg_name'].replace('.', os.path.sep)))
+
+def NumpySharedLibrary(env, target, source, *args, **kw):
+    source = [pjoin(env['build_dir'], i) for i in source]
+    # XXX: why target is a list ? It is always true ?
+    lib = env.SharedLibrary("$build_dir/%s" % target[0], source, *args, **kw)
+
+    inst_lib = env.Install("$distutils_installdir", lib)
+    return lib, inst_lib
+
+env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
+BuildDir(env['build_dir'], '.')
 
 source = ['foo.c']
-object = ['foo']
-if len(src_prefix):
-    source = [os.path.join(src_prefix, i) for i in source]
-if len(src_prefix):
-    object = [os.path.join(obj_prefix, i) for i in object]
-
-onodes = []
-for i in range(len(source)):
-    onodes.append(env.SharedObject(object[i], source = [source[i]]))
-env.SharedLibrary(os.path.join(lib_prefix, 'foo'), onodes)
+#if len(build_dir) > 0:
+#    source = [pjoin(build_dir, i) for i in source]
+#if len(src_prefix):
+#    object = [pjoin(obj_prefix, i) for i in object]
+#
+#onodes = []
+#for i in range(len(source)):
+#    onodes.append(env.SharedObject(object[i], source = [source[i]]))
+env.NumpySharedLibrary('foo', source)

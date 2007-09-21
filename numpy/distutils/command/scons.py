@@ -42,6 +42,7 @@ class scons(old_build_py):
             cmd += ' src_prefix=%s ' % os.path.dirname(i)
             cmd += ' obj_prefix=%s ' % os.path.join(self.build_temp, os.path.dirname(i))
             cmd += ' lib_prefix=%s ' % os.path.join(self.build_lib, os.path.dirname(i))
+            print cmd
             st = os.system(cmd)
             if st:
                 print "status is %d" % st
