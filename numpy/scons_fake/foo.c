@@ -1,4 +1,6 @@
+#include <stdio.h>
+
 int foo(void)
 {
-        return 0;
+        printf("hello\n");
 }
