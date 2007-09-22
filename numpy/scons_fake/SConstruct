@@ -9,4 +9,5 @@ config.CheckLib('c', 'printf')
 config.Finish()
 
 source = ['foo.c']
+env.AppendUnique(CPPDEFINES = 'WIN32')
 env.NumpyCTypes('foo', source)
