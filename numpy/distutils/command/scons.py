@@ -1,5 +1,6 @@
 import os
 import os.path
+from os.path import join as pjoin, dirname as pdirname
 
 #from distutils.core import build_py as old_build_py
 from distutils.command.build_ext import build_ext as old_build_py
@@ -32,17 +33,10 @@ class scons(old_build_py):
         # does not return a failure (status is 0). We have to detect this from
         # distutils (this cannot work for recursive scons builds...)
         for i in self.scons_scripts:
-            #print "For sconscript %s" % i
-            #print "\tbuild dir (object files) is %s" % \
-            #    os.path.join(self.build_temp, os.path.dirname(i))
-            #print "\ttarget dir (.so files) is %s" % \
-            #    os.path.join(self.build_lib, os.path.dirname(i))
-            #print "Basename for %s is %s" % (i, os.path.dirname(i))
             cmd = "scons -f " + i + ' -I. '
-            cmd += ' src_prefix=%s ' % os.path.dirname(i)
-            cmd += ' obj_prefix=%s ' % os.path.join(self.build_temp, os.path.dirname(i))
-            cmd += ' lib_prefix=%s ' % os.path.join(self.build_lib, os.path.dirname(i))
-            print cmd
+            cmd += ' src_dir=%s ' % pdirname(i)
+            cmd += ' distutils_libdir=%s ' % pjoin(self.build_lib, pdirname(i))
+            #print cmd
             st = os.system(cmd)
             if st:
                 print "status is %d" % st
