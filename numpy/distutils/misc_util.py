@@ -22,7 +22,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath','njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args']
+           'quote_args', 'get_build_architecture']
 
 def quote_args(args):
     # don't used _nt_quote_args as it does not check if
@@ -320,10 +320,6 @@ def msvc_runtime_library():
 
 def msvc_on_amd64():
     if not (sys.platform=='win32' or os.name=='nt'):
-        return
-    try:  # get_build_architecture is only on Python 2.5
-        from distutils.msvccompiler import get_build_architecture
-    except ImportError:
         return
     if get_build_architecture() != 'AMD64':
         return
@@ -1514,3 +1510,20 @@ def show():
 
     f.close()
     return target
+
+if sys.version[:3] >= '2.5':
+    from distutils.msvccompiler import get_build_architecture
+else:
+    #copied from python 2.5.1 distutils/msvccompiler.py
+    def get_build_architecture():
+        """Return the processor architecture.
+        
+        Possible results are "Intel", "Itanium", or "AMD64".
+        """
+        
+        prefix = " bit ("
+        i = string.find(sys.version, prefix)
+        if i == -1:
+            return "Intel"
+        j = string.find(sys.version, ")", i)
+        return sys.version[i+len(prefix):j]
