@@ -18,11 +18,11 @@ def NumpySharedLibrary(env, target, source, *args, **kw):
 def NumpyCTypes(env, target, source, *args, **kw):
     source = [pjoin(env['build_dir'], i) for i in source]
     # XXX: why target is a list ? It is always true ?
-    lib = env.SharedLibrary("$build_dir/%s" % target[0], source, *args, **kw)
+    # XXX: handle cases where SHLIBPREFIX is in args
+    lib = env.SharedLibrary("$build_dir/%s" % target[0], source, SHLIBPREFIX = '', *args, **kw)
     lib = [i for i in lib if not (str(i).endswith('.exp') or str(i).endswith('.lib')) ]
     inst_lib = env.Install("$distutils_installdir", lib)
     return lib, inst_lib
-
 
 def GetNumpyOptions(args):
     """Call this with args=ARGUMENTS to take into account command line args."""
