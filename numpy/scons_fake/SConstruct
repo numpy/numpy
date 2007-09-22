@@ -9,4 +9,4 @@ config.CheckLib('c', 'printf')
 config.Finish()
 
 source = ['foo.c']
-env.NumpySharedLibrary('foo', source)
+env.NumpyCTypes('foo', source)
