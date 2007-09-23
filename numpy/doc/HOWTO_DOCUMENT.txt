@@ -27,46 +27,45 @@ A maximum line width of 79 is suggested, as this will allow the docstrings to
 display on standard terminals. This convention is a bit old and traces back
 to IBM punchcard days, but still seems to be the standard.
 
-Using Epydoc
-------------
 
-1) You can run epydoc on this file like so:
+Sections
+--------
 
-$ epydoc HOWTO_DOCUMENT.txt
+The proposed sections of the docstring are:
+ 1. '''Short summary:''' A one-line summary not using variable names or the
+function name (unless a C-function).
+ 1. '''Extended summary:''' A few sentences giving an extended description.
+ 1. '''Parameters:'''
+ 1. '''Returns:'''
+ 1. '''Other parameters:''' An optional section used to describe little used
+parameters so that functions with a large number of keyword argument can still
+be well documented without cluttering the main parameters' list.
+ 1. '''See also:''' An optional section used to refer the reader to other
+related !SciPy code.  This section can be extremely useful, but needs to be
+used with caution.  It can be difficult to maintain and if not used
+judiciously this section can quickly loose its usefulness. For example if a
+function points the reader to each and every other function in the same
+package, it becomes pointless and creates a bunch of similar-looking text that
+will likely get ignored by the reader.  In general, you might want to only
+include references to code that has a very close relationship to the current
+function (e.g., {{{trapz()}}} and {{{cumtrapz()}}}) or if the code you point
+to provides additional information in its docstring that gives more insight
+into what the current function is actually doing.
+ 1. '''Notes:''' An optional section that provides additional information
+about the code possibly including a discussion or presentation of the
+algorithm. This section may include mathematical equations possibly written in
+[http://www.latex-project.org/ LaTeX].
+ 1. '''Examples:''' An optional section for examples using the
+[http://www.python.org/doc/lib/module-doctest.html doctest] format.  It can
+provide an inline mini-tutorial as well as additional regression testing.
+While optional, this section is strongly encouraged.
 
-The output will be in a directory named html in the same directory as this
-document and may be viewed by loading the index.html file into your browser.
-
-2) The developmental version of epydoc, version 3.0 beta or later, is
-suggested as it is faster and produces better looking output. Epydoc can be
-downloaded from http://epydoc.sourceforge.net/
-
-3) The appearance of some elements can be changed in the epydoc.css
-style sheet. The list headings, i.e. *Parameters*:, are emphasized text, so
-their appearance is controlled by the definition of the <em>
-tag. For instance, to make them bold, insert
-
-em     {font-weight: bold;}
-
-The variables' types are in a span of class rst-classifier, hence can be
-changed by inserting something like:
-
-span.rst-classifier     {font-weight: normal;}
-
-4) The first line of the signature should **not** copy the signature unless
-the function is written in C, in which case it is mandatory.  If the function
-signature is generic (uses *args or **kwds), then a function signature may be
-included
-
-5) Use optional in the "type" field for parameters that are non-keyword
-optional for C-functions.
-
-6) The Other Parameters section is for functions taking a lot of keywords
+The Other Parameters section is for functions taking a lot of keywords
 which are not always used or neeeded and whose description would clutter then
 main purpose of the function. (Comment by Chuck : I think this should be
 rarely used, if at all)
 
-7) The See Also section can list additional related functions.  The purpose
+The See Also section can list additional related functions.  The purpose
 of this section is to direct users to other functions they may not be aware
 of or have easy means to discover (i.e. by looking at the docstring of the
 module).  Thus, repeating functions that are in the same module is not useful
@@ -79,13 +78,14 @@ docstrings for this function may be useful to include here.
 9) The Examples section is strongly encouraged.  The examples can provide a
 mini-tutorial as well as additional regression testing. (Comment by Chuck:
 blank lines in the numpy output, for instance in multidimensional arrays,
-will break doctest.) You can run the tests by doing
+will break doctest.) You can run the tests by doing::
 
->>> import doctest
->>> doctest.testfile('HOWTO_DOCUMENT.txt')
+  >>> import doctest
+  >>> doctest.testfile('HOWTO_DOCUMENT.txt')
 
 
-Common reST concepts:
+Common reST concepts
+--------------------
 
 A reST-documented module should define
 
@@ -110,3 +110,36 @@ http://docutils.sourceforge.net/docs/user/rst/demo.txt
 An example follows. Line spacing and indentation are significant and should
 be carefully followed.
 
+Using Epydoc
+------------
+
+You can run epydoc on this file like so::
+
+  $ epydoc HOWTO_DOCUMENT.txt
+
+The output will be in a directory named html in the same directory as this
+document and may be viewed by loading the index.html file into your browser.
+
+The developmental version of epydoc, version 3.0 beta or later, is
+suggested as it is faster and produces better looking output. Epydoc can be
+downloaded from http://epydoc.sourceforge.net/
+
+The appearance of some elements can be changed in the epydoc.css
+style sheet. The list headings, i.e. *Parameters*:, are emphasized text, so
+their appearance is controlled by the definition of the <em>
+tag. For instance, to make them bold, insert::
+
+  em     {font-weight: bold;}
+
+The variables' types are in a span of class rst-classifier, hence can be
+changed by inserting something like::
+
+  span.rst-classifier     {font-weight: normal;}
+
+The first line of the signature should **not** copy the signature unless
+the function is written in C, in which case it is mandatory.  If the function
+signature is generic (uses *args or **kwds), then a function signature may be
+included.
+
+Use optional in the "type" field for parameters that are non-keyword
+optional for C-functions.
