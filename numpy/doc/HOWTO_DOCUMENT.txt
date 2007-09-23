@@ -112,9 +112,9 @@ output. New paragraphs are marked with blank line.
 Use *italics*, **bold**, and ``courier`` if needed in any explanations (but
 not for variable names and doctest code or multi-line code)
 
-Use :lm:`eqn` for in-line math in latex format (remember to use the
-raw-format for your text string or escape any '\' symbols). Use :m:`eqn` for
-non-latex math.
+Use ``:lm:`eqn``` for in-line math in latex format (remember to use the
+raw-format for your text string or escape any '\' symbols). Use ``:m:`eqn```
+for non-latex math.
 
 A more extensive example of reST markup can be found here:
 http://docutils.sourceforge.net/docs/user/rst/demo.txt
@@ -154,3 +154,4 @@ included.
 
 Use optional in the "type" field for parameters that are non-keyword
 optional for C-functions.
+
