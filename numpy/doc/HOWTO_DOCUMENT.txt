@@ -121,10 +121,10 @@ http://docutils.sourceforge.net/docs/user/rst/demo.txt
 Line spacing and indentation are significant and should
 be carefully followed.
 
-Here is a short example in plain text:
-http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py
-Here is the rendered version of that file:
-http://www.scipy.org/scipy/numpy/wiki/RenderedExample
+Here is a short example module in
+`plain text <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
+and
+`rendered <http://www.scipy.org/scipy/numpy/wiki/RenderedExample>`__
 
 
 Using Epydoc
