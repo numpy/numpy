@@ -159,7 +159,7 @@ Example
 Here is a short example module in
 `plain text <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
 and
-`rendered <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/html/index.html>`__
+`rendered <http://www.scipy.org/doc/example>`__
 
 To try this yourself, simply download the example.py::
 
