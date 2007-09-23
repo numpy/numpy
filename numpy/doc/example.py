@@ -9,7 +9,15 @@ a line by itself, preferably preceeded by a blank line.
 
 """
 
+import os                      # standard library imports first
+
+import numpy as np             # related third party imports next
+import scipy as sp             # imports should be at the top of the module
+import matplotlib as mpl       # imports should usually be on separate lines
+
+
 __docformat__ = "restructuredtext en"
+__all__ = [foo, newfunc, otherfunc]]
 
 
 def foo(var1, var2, long_var_name='hi') :
@@ -67,6 +75,7 @@ def foo(var1, var2, long_var_name='hi') :
         [4, 5, 6]
 
     """
+
     pass
 
 
@@ -76,6 +85,7 @@ def newfunc() :
     I never saw a purple cow.
 
     """
+
     pass
 
 
@@ -85,5 +95,6 @@ def otherfunc() :
     I never hope to see one.
 
     """
+
     pass
 
