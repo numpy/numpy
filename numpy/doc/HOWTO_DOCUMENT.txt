@@ -127,7 +127,7 @@ Using Epydoc
 ------------
 
 
-Currently we recommend that you build eydoc from the trunk:
+Currently we recommend that you build eydoc from the trunk::
 
   svn co https://epydoc.svn.sourceforge.net/svnroot/epydoc/trunk/epydoc epydoc
   cd epydoc/src
