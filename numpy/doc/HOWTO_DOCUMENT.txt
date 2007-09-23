@@ -121,25 +121,18 @@ http://docutils.sourceforge.net/docs/user/rst/demo.txt
 Line spacing and indentation are significant and should
 be carefully followed.
 
-Here is a short example module in
-`plain text <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
-and
-`rendered <http://www.scipy.org/scipy/numpy/wiki/RenderedExample>`__
 
 
 Using Epydoc
 ------------
 
-You can run epydoc on this file like so::
 
-  $ epydoc HOWTO_DOCUMENT.txt
+Currently we recommend that you build eydoc from the trunk:
 
-The output will be in a directory named html in the same directory as this
-document and may be viewed by loading the index.html file into your browser.
-
-The developmental version of epydoc, version 3.0 beta or later, is
-suggested as it is faster and produces better looking output. Epydoc can be
-downloaded from http://epydoc.sourceforge.net/
+  svn co https://epydoc.svn.sourceforge.net/svnroot/epydoc/trunk/epydoc
+epydoc
+  cd epydoc/src
+  sudo python setup.py install
 
 The appearance of some elements can be changed in the epydoc.css
 style sheet. The list headings, i.e. *Parameters*:, are emphasized text, so
@@ -161,3 +154,21 @@ may be included.
 Use optional in the "type" field for parameters that are non-keyword
 optional for C-functions.
 
+Example
+-------
+
+Here is a short example module in
+`plain text <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
+and
+`rendered <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/html/index.html>`__
+
+To try this yourself, simply download the example.py::
+
+  svn co http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py .
+
+You can run epydoc on this file like so::
+
+  $ epydoc example.txt
+
+The output will be in a directory named html in the same directory as this
+document and may be viewed by loading the index.html file into your browser.

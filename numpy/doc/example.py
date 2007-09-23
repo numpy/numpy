@@ -17,7 +17,6 @@ import matplotlib as mpl       # imports should usually be on separate lines
 
 
 __docformat__ = "restructuredtext en"
-__all__ = [foo, newfunc, otherfunc]]
 
 
 def foo(var1, var2, long_var_name='hi') :
