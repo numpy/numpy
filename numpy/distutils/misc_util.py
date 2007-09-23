@@ -5,6 +5,7 @@ import imp
 import copy
 import glob
 import atexit
+import string
 import tempfile
 
 try:
@@ -1520,7 +1521,6 @@ else:
         
         Possible results are "Intel", "Itanium", or "AMD64".
         """
-        
         prefix = " bit ("
         i = string.find(sys.version, prefix)
         if i == -1:
