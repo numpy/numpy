@@ -7,6 +7,8 @@ How-to document NumPy/SciPy
 Overview
 --------
 
+(`epydoc <http://epydoc.sourceforge.net/>`__)
+
 It is desireable that both NumPy and SciPy follow a convention for docstrings
 that provide for some consistency while also allowing epydoc to produce
 nicely-formatted reference guides. However, such a convention has not yet

@@ -57,6 +57,7 @@ def foo(var1, var2, long_var_name='hi') :
         Notes about the implementation algorithm (if needed).
 
         This can have multiple paragraphs as can all sections.
+
     *Examples*
 
         examples in doctest format
