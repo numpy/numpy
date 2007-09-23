@@ -37,14 +37,15 @@ The proposed sections of the docstring are:
 A one-line summary not using variable names or the function name (unless a
 C-function).
 
-1. **Extended summary:**
+2. **Extended summary:**
 A few sentences giving an extended description.
 
-1. '''Parameters:'''
+3. **Parameters:**
 
-1. '''Returns:'''
+4. **Returns:**'
 
-1. '''Other parameters:''' An optional section used to describe little used
+5. **Other parameters:**
+An optional section used to describe little used
 parameters so that functions with a large number of keyword argument can still
 be well documented without cluttering the main parameters' list.
 
@@ -53,7 +54,7 @@ which are not always used or neeeded and whose description would clutter then
 main purpose of the function. (Comment by Chuck : I think this should be
 rarely used, if at all)
 
-1. '''See also:''' An optional section used to refer the reader to other
+6. **See also:** An optional section used to refer the reader to other
 related !SciPy code.  This section can be extremely useful, but needs to be
 used with caution.  It can be difficult to maintain and if not used
 judiciously this section can quickly loose its usefulness. For example if a
@@ -65,17 +66,6 @@ function (e.g., {{{trapz()}}} and {{{cumtrapz()}}}) or if the code you point
 to provides additional information in its docstring that gives more insight
 into what the current function is actually doing.
 
-1. '''Notes:''' An optional section that provides additional information
-about the code possibly including a discussion or presentation of the
-algorithm. This section may include mathematical equations possibly written in
-[http://www.latex-project.org/ LaTeX].
-
-1. '''Examples:''' An optional section for examples using the
-[http://www.python.org/doc/lib/module-doctest.html doctest] format.  It can
-provide an inline mini-tutorial as well as additional regression testing.
-While optional, this section is strongly encouraged.
-
-
 The See Also section can list additional related functions.  The purpose
 of this section is to direct users to other functions they may not be aware
 of or have easy means to discover (i.e. by looking at the docstring of the
@@ -84,9 +74,19 @@ and can create a cluttered document.  Please use judgement when listing
 additional functions.  Routines that provide additional information in their
 docstrings for this function may be useful to include here.
 
-8) The Notes section can contain algorithmic information if that is useful.
+7. **Notes:** An optional section that provides additional information
+about the code possibly including a discussion or presentation of the
+algorithm. This section may include mathematical equations possibly written in
+[http://www.latex-project.org/ LaTeX].
 
-9) The Examples section is strongly encouraged.  The examples can provide a
+The Notes section can contain algorithmic information if that is useful.
+
+8. **Examples:** An optional section for examples using the
+[http://www.python.org/doc/lib/module-doctest.html doctest] format.  It can
+provide an inline mini-tutorial as well as additional regression testing.
+While optional, this section is strongly encouraged.
+
+The Examples section is strongly encouraged.  The examples can provide a
 mini-tutorial as well as additional regression testing. (Comment by Chuck:
 blank lines in the numpy output, for instance in multidimensional arrays,
 will break doctest.) You can run the tests by doing::
