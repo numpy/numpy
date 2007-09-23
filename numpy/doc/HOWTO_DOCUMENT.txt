@@ -8,7 +8,7 @@ Overview
 --------
 
 (`epydoc <http://epydoc.sourceforge.net/>`__)
-`epydoc <http://epydoc.sourceforge.net/>`
+`epydoc <http://epydoc.sourceforge.net/>`__
 
 It is desireable that both NumPy and SciPy follow a convention for docstrings
 that provide for some consistency while also allowing epydoc to produce
