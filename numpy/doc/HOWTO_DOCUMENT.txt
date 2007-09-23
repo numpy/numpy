@@ -32,15 +32,28 @@ Sections
 --------
 
 The proposed sections of the docstring are:
- 1. '''Short summary:''' A one-line summary not using variable names or the
-function name (unless a C-function).
- 1. '''Extended summary:''' A few sentences giving an extended description.
- 1. '''Parameters:'''
- 1. '''Returns:'''
- 1. '''Other parameters:''' An optional section used to describe little used
+
+1. **Short summary:**
+A one-line summary not using variable names or the function name (unless a
+C-function).
+
+1. **Extended summary:**
+A few sentences giving an extended description.
+
+1. '''Parameters:'''
+
+1. '''Returns:'''
+
+1. '''Other parameters:''' An optional section used to describe little used
 parameters so that functions with a large number of keyword argument can still
 be well documented without cluttering the main parameters' list.
- 1. '''See also:''' An optional section used to refer the reader to other
+
+The Other Parameters section is for functions taking a lot of keywords
+which are not always used or neeeded and whose description would clutter then
+main purpose of the function. (Comment by Chuck : I think this should be
+rarely used, if at all)
+
+1. '''See also:''' An optional section used to refer the reader to other
 related !SciPy code.  This section can be extremely useful, but needs to be
 used with caution.  It can be difficult to maintain and if not used
 judiciously this section can quickly loose its usefulness. For example if a
@@ -51,19 +64,17 @@ include references to code that has a very close relationship to the current
 function (e.g., {{{trapz()}}} and {{{cumtrapz()}}}) or if the code you point
 to provides additional information in its docstring that gives more insight
 into what the current function is actually doing.
- 1. '''Notes:''' An optional section that provides additional information
+
+1. '''Notes:''' An optional section that provides additional information
 about the code possibly including a discussion or presentation of the
 algorithm. This section may include mathematical equations possibly written in
 [http://www.latex-project.org/ LaTeX].
- 1. '''Examples:''' An optional section for examples using the
+
+1. '''Examples:''' An optional section for examples using the
 [http://www.python.org/doc/lib/module-doctest.html doctest] format.  It can
 provide an inline mini-tutorial as well as additional regression testing.
 While optional, this section is strongly encouraged.
 
-The Other Parameters section is for functions taking a lot of keywords
-which are not always used or neeeded and whose description would clutter then
-main purpose of the function. (Comment by Chuck : I think this should be
-rarely used, if at all)
 
 The See Also section can list additional related functions.  The purpose
 of this section is to direct users to other functions they may not be aware
