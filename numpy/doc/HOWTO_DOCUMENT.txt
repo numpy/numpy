@@ -102,7 +102,7 @@ A reST-documented module should define::
   __docformat__ = 'restructuredtext en'
 
 at the top level in accordance with
-`PEP 258 http://www.python.org/dev/peps/pep-0258>`__.  Note that the
+`PEP 258 <http://www.python.org/dev/peps/pep-0258>`__.  Note that the
 __docformat__ variable in a package's __init__.py file does not apply to
 objects defined in subpackages and submodules.
 
