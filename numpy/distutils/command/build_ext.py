@@ -390,8 +390,6 @@ class build_ext (old_build_ext):
         else:
             kws = {}
 
-        log.debug('DEBUG: linker=%s,library_dirs=%s,ext.runtime_library_dirs=%s' % (linker, library_dirs, ext.runtime_library_dirs))
-
         linker(objects, ext_filename,
                libraries=libraries,
                library_dirs=library_dirs,

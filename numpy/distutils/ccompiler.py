@@ -381,7 +381,6 @@ def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
             lib_opts.extend(list(i))
         else:
             lib_opts.append(i)
-    log.info('DEBUG:'+`lib_opts, library_dirs, runtime_library_dirs`)
     return lib_opts
 ccompiler.gen_lib_options = gen_lib_options
 
