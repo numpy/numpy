@@ -1513,7 +1513,9 @@ def show():
     return target
 
 if sys.version[:3] >= '2.5':
-    from distutils.msvccompiler import get_build_architecture
+    def get_build_architecture():
+        from distutils.msvccompiler import get_build_architecture
+        return get_build_architecture()
 else:
     #copied from python 2.5.1 distutils/msvccompiler.py
     def get_build_architecture():
