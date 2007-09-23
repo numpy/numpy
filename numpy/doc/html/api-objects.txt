@@ -1,4 +1,0 @@
-example	example-module.html
-example.otherfunc	example-module.html#otherfunc
-example.foo	example-module.html#foo
-example.newfunc	example-module.html#newfunc
