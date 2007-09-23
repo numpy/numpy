@@ -98,7 +98,7 @@ will break doctest.) You can run the tests by doing::
 Common reST concepts
 --------------------
 
-A reST-documented module should define
+A reST-documented module should define::
 
   __docformat__ = 'restructuredtext en'
 
@@ -118,8 +118,14 @@ for non-latex math.
 
 A more extensive example of reST markup can be found here:
 http://docutils.sourceforge.net/docs/user/rst/demo.txt
-An example follows. Line spacing and indentation are significant and should
+Line spacing and indentation are significant and should
 be carefully followed.
+
+Here is a short example in plain text:
+http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py
+Here is the rendered version of that file:
+http://www.scipy.org/scipy/numpy/wiki/RenderedExample
+
 
 Using Epydoc
 ------------
@@ -149,8 +155,8 @@ changed by inserting something like::
 
 The first line of the signature should **not** copy the signature unless
 the function is written in C, in which case it is mandatory.  If the function
-signature is generic (uses *args or **kwds), then a function signature may be
-included.
+signature is generic (uses ``*args`` or ``**kwds``), then a function signature
+may be included.
 
 Use optional in the "type" field for parameters that are non-keyword
 optional for C-functions.
