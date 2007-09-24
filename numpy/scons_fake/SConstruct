@@ -1,12 +1,13 @@
 # vim:syntax=python
-from numpy.distutils.scons import GetNumpyEnvironment
+from numpy.distutils.scons import GetNumpyEnvironment, NumpyCheckLib
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
-config = env.Configure()
+config = env.Configure(custom_tests = {'NumpyCheckLib' : NumpyCheckLib})
 config.CheckHeader('stdio.h')
 config.CheckLib('c', 'printf')
-config.CheckLib('sndfile', 'sf_open')
+#config.NumpyCheckLib('sndfile', 'sndfile', 'sf_open')
+config.NumpyCheckLib('bmeps', 'bmeps')
 config.Finish()
 
 source = ['foo.c']

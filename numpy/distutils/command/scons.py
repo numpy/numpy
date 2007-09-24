@@ -9,13 +9,14 @@ from numpy.distutils.exec_command import find_executable
 
 def dist2sconscc(compiler):
     """This converts the name passed to distutils to scons name convention (C
-    compiler).
+    compiler). The argument should be a CCompiler instance.
 
     Example:
-        --compiler=intel -> icc."""
-    # Geez, why does distutils has no common way to get the compiler name...
+        --compiler=intel -> intelc"""
     if compiler.compiler_type == 'msvc':
         return 'msvc'
+    elif compiler.compiler_type == 'intel':
+        return 'intelc'
     else:
         return compiler.compiler[0]
 
