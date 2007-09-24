@@ -697,6 +697,11 @@ class test_regression(NumpyTestCase):
         x = N.array(['a']*32)
         assert_array_equal(x.argsort(kind='m'), N.arange(32))
 
+    def check_argmax_byteorder(self, level=rlevel):
+        """Ticket #546"""
+        a = N.arange(3, dtype='>f')
+        assert a[a.argmax()] == a.max()
+
     def check_numeric_random(self, level=rlevel):
         """Ticket #552"""
         from numpy.oldnumeric.random_array import randint
@@ -715,6 +720,10 @@ class test_regression(NumpyTestCase):
         y = N.poly1d([3,4])
         assert x != y
         assert x == x
+
+    def check_mem_insert(self, level=rlevel):
+        """Ticket #572"""
+        N.lib.place(1,1,1)
 
 
 if __name__ == "__main__":

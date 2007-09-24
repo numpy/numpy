@@ -20,7 +20,7 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
         maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        isfinite
+        isfinite, size
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
 
@@ -125,6 +125,11 @@ def _assertFinite(*arrays):
     for a in arrays:
         if not (isfinite(a).all()):
             raise LinAlgError, "Array must not contain infs or NaNs"
+
+def _assertNonEmpty(*arrays):
+    for a in arrays:
+        if size(a) == 0:
+            raise LinAlgError("Arrays cannot be empty")
 
 # Linear equations
 
@@ -718,6 +723,7 @@ def svd(a, full_matrices=1, compute_uv=1):
     """
     a, wrap = _makearray(a)
     _assertRank2(a)
+    _assertNonEmpty(a)
     m, n = a.shape
     t, result_t = _commonType(a)
     real_t = _linalgRealType(t)
@@ -783,6 +789,7 @@ def pinv(a, rcond=1e-15 ):
     rcond of the largest.
     """
     a, wrap = _makearray(a)
+    _assertNonEmpty(a)
     a = a.conjugate()
     u, s, vt = svd(a, 0)
     m = u.shape[0]

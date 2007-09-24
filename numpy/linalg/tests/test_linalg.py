@@ -4,7 +4,7 @@
 from numpy.testing import *
 set_package_path()
 from numpy import array, single, double, csingle, cdouble, dot, identity, \
-        multiply
+        multiply, atleast_2d
 from numpy import linalg
 restore_path()
 
@@ -36,6 +36,15 @@ class LinalgTestCase(NumpyTestCase):
         a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=cdouble)
         b = array([2.+1j, 1.+2j], dtype=cdouble)
         self.do(a, b)
+
+    def check_empty(self):
+        a = atleast_2d(array([], dtype = double))
+        b = atleast_2d(array([], dtype = double))
+        try:
+            self.do(a, b)
+            raise AssertionError("%s should fail with empty matrices", self.__name__[5:])
+        except linalg.LinAlgError, e:
+            pass
 
 class test_solve(LinalgTestCase):
     def do(self, a, b):

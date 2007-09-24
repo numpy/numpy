@@ -80,20 +80,25 @@ class memmap(ndarray):
         if obj is not None:
             if not isinstance(obj, memmap):
                 raise ValueError, "Cannot create a memmap array that way"
-            # it would be nice to carry the along the _mmap name
-            #  but then we might have problems because self could close
-            #  it while obj is still holding it.  So, we don't do
-            #  anything at this point. 
+            self._mmap = obj._mmap
         else:
             self._mmap = None
 
     def sync(self):
-        self._mmap.flush()
-
-    def close(self):
-        self._mmap.close()
-
-    def __del__(self):
         if self._mmap is not None:
             self._mmap.flush()
-            del self._mmap
+
+    def close(self):
+        if (self.base is self._mmap):
+            self._mmap.close()
+        elif self._mmap is not None:
+            raise ValueError, "Cannot close a memmap that is being used " \
+                  "by another object."
+
+    def __del__(self):
+        self.sync()
+        try:
+            self.close()
+        except ValueError:
+            pass            
+        
