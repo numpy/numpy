@@ -1,6 +1,6 @@
-from numpy.ctypeslib import load_library
+from foo_py import foo
 
-_FOO = load_library("foo", __file__)
-def foo():
-    _FOO.foo()
-    
+__all__ = ['foo']
+def test(level=1, verbosity=1):
+    from numpy.testing import NumpyTest
+    return NumpyTest().test(level, verbosity)

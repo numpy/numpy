@@ -33,15 +33,10 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.system_info import get_info
     config = Configuration('scons_fake',parent_package,top_path)
 
-    ## print "==================================================="
-    ## print "parent package is %s, top path %s" % (parent_package, top_path)
-    ## print "THIS package is %s" % config.name
-    ## print "THIS package path is %s" % config.package_path
-    #print get_object_names(['foo.c'])
-
     #config.add_library('_fortran_foo',
     #                   sources=['foo.f'])
     config.add_sconscript('SConstruct')
+    config.add_data_dir('tests')
     return config
 
 if __name__ == '__main__':

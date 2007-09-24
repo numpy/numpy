@@ -44,6 +44,7 @@ else:
     import fft
     import random
     import ctypeslib
+    import scons_fake
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
