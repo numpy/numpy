@@ -6,6 +6,7 @@ env = GetNumpyEnvironment(ARGUMENTS)
 config = env.Configure()
 config.CheckHeader('stdio.h')
 config.CheckLib('c', 'printf')
+config.CheckLib('sndfile', 'sf_open')
 config.Finish()
 
 source = ['foo.c']

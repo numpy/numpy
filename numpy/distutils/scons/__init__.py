@@ -92,8 +92,35 @@ def GetNumpyEnvironment(args):
     Help(opts.GenerateHelpText(env))
 
     #print "setup.cfg abspath is %s" % pjoin(env['src_dir'], 'setup.cfg')
+    find_config_file()
     return env
 
 def find_config_file(name = 'site.cfg'):
-    # According to system_info in 
-    pass
+    import ConfigParser
+
+    from numpy.distutils.system_info import default_lib_dirs
+    from numpy.distutils.system_info import default_include_dirs
+    from numpy.distutils.system_info import default_src_dirs
+    from numpy.distutils.system_info import get_standard_file
+
+    section = 'DEFAULT'
+    defaults = {}
+    defaults['libraries'] = ''
+    defaults['library_dirs'] = os.pathsep.join(default_lib_dirs)
+    defaults['include_dirs'] = os.pathsep.join(default_include_dirs)
+    defaults['src_dirs'] = os.pathsep.join(default_src_dirs)
+    cp = ConfigParser.ConfigParser(defaults)
+    files = []
+    files.extend(get_standard_file('.numpy-site.cfg'))
+    files.extend(get_standard_file('site.cfg'))
+
+    def parse_config_files():
+        cp.read(files)
+        if not cp.has_section(section):
+            cp.add_section(section)
+
+    parse_config_files()
+    #print cp.sections()
+    #print dir(cp)
+    #print cp.get.__doc__
+    print cp.get('sndfile', 'include_dirs')
