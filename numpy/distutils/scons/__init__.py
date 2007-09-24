@@ -6,7 +6,8 @@ from SCons.Tool import Tool
 from SCons.Environment import Environment
 from SCons.Script import BuildDir, Help
 
-from SCons.Errors import EnvironmentError
+# XXX: all this should be put in another files eventually once it is getting in
+# shape
 
 def NumpySharedLibrary(env, target, source, *args, **kw):
     """This builder is the same than SharedLibrary, except for the fact that it
@@ -51,6 +52,7 @@ def GetNumpyOptions(args):
 
     # Add compiler related info
     opts.Add('cc_opt', 'name of C compiler', '')
+    opts.Add('cc_opt_path', 'path of the C compiler set in cc_opt', '')
     return opts
 
 def GetNumpyEnvironment(args):
@@ -68,9 +70,13 @@ def GetNumpyEnvironment(args):
         try:
             t = Tool(env['cc_opt'])
             t(env) 
+            if len(env['cc_opt_path']) > 0:
+                # XXX: what is the right way to add one directory in the PATH ?
+                env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
         except EnvironmentError, e:
             # scons could not understand cc_opt (bad name ?)
-            raise AssertionError(e)
+            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
+                                 str(e))
 
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
@@ -85,8 +91,9 @@ def GetNumpyEnvironment(args):
     # Generate help (if calling scons directly during debugging, this could be useful)
     Help(opts.GenerateHelpText(env))
 
-    print "setup.cfg abspath is %s" % pjoin(env['src_dir'], 'setup.cfg')
+    #print "setup.cfg abspath is %s" % pjoin(env['src_dir'], 'setup.cfg')
     return env
 
 def find_config_file(name = 'site.cfg'):
     # According to system_info in 
+    pass

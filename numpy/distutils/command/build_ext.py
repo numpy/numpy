@@ -77,12 +77,14 @@ class build_ext (old_build_ext):
                                      dry_run=self.dry_run,
                                      force=self.force)
         print "self.compiler is %s, this gives us %s" % (compiler_type, self.compiler)
-        self.compiler.customize(self.distribution)
-        self.compiler.customize_cmd(self)
-        self.compiler.show_customization()
-
-        print "======================"
         print self.compiler.compiler
+        self.compiler.customize(self.distribution)
+        print self.compiler.compiler
+        self.compiler.customize_cmd(self)
+        print self.compiler.compiler
+        self.compiler.show_customization()
+        print self.compiler.compiler
+
         # Create mapping of libraries built by build_clib:
         clibs = {}
         if build_clib is not None:
