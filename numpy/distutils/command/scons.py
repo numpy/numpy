@@ -82,7 +82,8 @@ class scons(old_build_ext):
         # there is a size limitation ? What is the standard solution in thise
         # case ?
         for i in self.scons_scripts:
-            cmd = "scons -f " + i + ' -I. '
+            cmd = "PYTHONPATH=$PYTHONPATH "
+            cmd += "scons -f " + i + ' -I. '
             cmd += ' src_dir=%s ' % pdirname(i)
             cmd += ' distutils_libdir=%s ' % pjoin(self.build_lib, pdirname(i))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)

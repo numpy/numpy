@@ -8,6 +8,7 @@ config.CheckHeader('stdio.h')
 config.CheckLib('c', 'printf')
 #config.NumpyCheckLib('sndfile', 'sndfile', 'sf_open')
 config.NumpyCheckLib('bmeps', 'bmeps')
+config.NumpyCheckLib('atlas', ['atlas', 'f77blas', 'cblas'])
 config.Finish()
 
 source = ['foo.c']

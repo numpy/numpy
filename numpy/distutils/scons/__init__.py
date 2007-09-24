@@ -6,7 +6,7 @@ from SCons.Options import Options
 from SCons.Tool import Tool
 from SCons.Environment import Environment
 from SCons.Script import BuildDir, Help
-#from SCons.Util import BuildDir, Help
+from SCons.Util import is_List
 
 # XXX: all this should be put in another files eventually once it is getting in
 # shape
@@ -121,6 +121,11 @@ def _get_empty(dict, key):
     except KeyError, e:
         return []
 
+def cfgentry2list(entry):
+    """This convert one entry in a section of .cfg file to something usable in
+    scons."""
+    pass
+
 def NumpyCheckLib(context, section, libs, symbol = None):
     #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # This is really preliminary, and needs a lot of love before being in good
@@ -135,6 +140,11 @@ int main(int argc, char** argv)
 {
     return 0;
 }"""
+
+    # Make sure libs is a list of libs:
+    if not is_List(libs):
+        libs = [libs]
+
     config = context.env['NUMPYCONFIG']
     context.Message('Checking for library %s...' % libs)
     if config.has_section(section):
@@ -145,12 +155,9 @@ int main(int argc, char** argv)
             newLIBPATH = config.get(section, 'library_dirs') 
             newCPPPATH = config.get(section, 'include_dirs') 
             newLIBS = config.get(section, 'libraries') 
-            lastLIBPATH = _get_empty(context.env, 'LIBPATH')
-            lastLIBS = _get_empty(context.env, 'LIBS')
-            lastCPPPATH = _get_empty(context.env, 'CPPPATH')
-            # TODO: convert newLIBS to a list of libraries
-            # TODO: is library always a string, or can be a list ?
-            context.env.Append(LIBS = [libs], LIBPATH = [newLIBPATH])
+            lastLIBPATH = _get_empty(context.env,'LIBPATH')
+            lastLIBS = _get_empty(context.env,'LIBS')
+            lastCPPPATH = _get_empty(context.env,'CPPPATH')
             res = context.TryLink(src, extension)
             if not res:
                 context.env.Replace(LIBS = lastLIBS, 
@@ -162,14 +169,10 @@ int main(int argc, char** argv)
             print "+++++++++++++++++++++++++++++++"
             res = 0
     else:
-        lastLIBPATH = _get_empty(context.env, 'LIBPATH')
-        lastCPPPATH = _get_empty(context.env, 'CPPPATH')
-        lastLIBS = context.AppendLIBS([libs])
+        lastLIBS = context.AppendLIBS(libs)
         res = context.TryLink(src, extension)
         if not res:
-            context.env.Replace(LIBS = lastLIBS, 
-                                LIBPATH = lastLIBPATH, 
-                                CPPPATH = lastCPPPATH)
+            context.env.Replace(LIBS = lastLIBS) 
     return context.Result(res)
 
 def get_config():
