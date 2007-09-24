@@ -25,7 +25,9 @@ def get_compiler_executable(compiler):
     (the actual executable."""
     # Geez, why does distutils has no common way to get the compiler name...
     if compiler.compiler_type == 'msvc':
-        return compiler.cc
+        # this is harcoded in distutils... A bit cleaner way would be to
+        # initialize the compiler instance, but this may be costly
+        return 'cl.exe' 
     else:
         return compiler.compiler[0]
 
