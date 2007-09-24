@@ -245,6 +245,11 @@ typedef struct _loop1d_info {
 
 #include <float.h>
 
+  /* Clear the floating point exception default of Borland C++ */
+#if defined(__BORLANDC__)
+#define UFUNC_NOFPE _control87(MCW_EM, MCW_EM);
+#endif
+
 #define UFUNC_CHECK_STATUS(ret) {		 \
 	int fpstatus = (int) _clearfp();			\
 									\
@@ -356,6 +361,11 @@ static void generate_overflow_error(void) {
         return;
 	return;
 }
+#endif
+
+  /* Make sure it gets defined if it isn't already */
+#ifndef UFUNC_NOFPE
+#define UFUNC_NOFPE
 #endif
 
 

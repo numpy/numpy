@@ -339,18 +339,30 @@ add_newdoc('numpy.core.multiarray','set_numeric_ops',
     """)
 
 add_newdoc('numpy.core.multiarray','where',
-    """where(condition, | x, y)
+    """where(condition, x, y) or where(condition)
 
-    The result is shaped like condition and has elements of x and y where
-    condition is respectively true or false.  If x or y are not given,
-    condition.nonzero() is returned.
+    Return elements from `x` or `y`, depending on `condition`.
 
-    To group the indices by element, rather than dimension, use
+    *Parameters*:
+        condition : array of bool
+            When True, yield x, otherwise yield y.
+        x,y : 1-dimensional arrays
+            Values from which to choose.
 
-        transpose(where(condition))
+    *Notes*
+        This is equivalent to
 
-    instead. This always results in a 2d array, with a row of indices for
-    each element that satisfies the condition.
+            [xv if c else yv for (c,xv,yv) in zip(condition,x,y)]
+
+        The result is shaped like `condition` and has elements of `x`
+        or `y` where `condition` is respectively True or False.
+
+        In the special case, where only `condition` is given, the
+        tuple condition.nonzero() is returned, instead.
+
+    *Examples*
+        >>> where([True,False,True],[1,2,3],[4,5,6])
+        array([1, 5, 3])
 
     """)
 

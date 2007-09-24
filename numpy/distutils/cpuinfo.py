@@ -524,7 +524,6 @@ class win32_cpuinfo(cpuinfo_base):
                     break
                 else:
                     pnum+=1
-                    print proc
                     info.append({"Processor":proc})
                     phnd=_winreg.OpenKey(chnd,proc)
                     pidx=0
