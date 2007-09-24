@@ -3,6 +3,7 @@ from numpy.distutils.scons import GetNumpyEnvironment
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
+config = env.Configure()
 config.CheckHeader('stdio.h')
 config.CheckLib('c', 'printf')
 config.Finish()

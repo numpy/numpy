@@ -364,6 +364,8 @@ def new_compiler (plat=None,
               ("can't compile C/C++ code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name)
     compiler = klass(None, dry_run, force)
+    #print "!!!!!!!!!!!!!!!!!!!!!"
+    #print "compiler class is %s, module_name is %s, compiler %s" % (klass, module_name, compiler.cc_exe)
     log.debug('new_compiler returns %s' % (klass))
     return compiler
 
