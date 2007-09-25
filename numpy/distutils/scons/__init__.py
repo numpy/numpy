@@ -117,17 +117,18 @@ def GetNumpyEnvironment(args):
         t(env)
 
     # =====================================================
-    # Adding default tools for the one we do not customize:
-    for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, 
-            DEF_FORTRAN_COMPILERS]:
-        t = FindTool(i, env) or i[0]
-        Tool(t)(env)
-
+    # Adding default tools for the one we do not customize: mingw is special according to scons, don;t ask me why, but this does not work as expected for this tool.
+    if not env['cc_opt'] == 'mingw':
+        for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, 
+                  DEF_FORTRAN_COMPILERS]:
+            t = FindTool(i, env) or i[0]
+            Tool(t)(env)
+			
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)
 
-    print env.Dump('TOOLS')
-    print Environment().Dump('TOOLS')
+    #print env.Dump('TOOLS')
+    #print Environment().Dump('TOOLS')
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
     env['BUILDERS']['NumpyCTypes'] = NumpyCTypes
