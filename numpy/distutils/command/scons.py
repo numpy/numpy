@@ -3,7 +3,7 @@ import os.path
 from os.path import join as pjoin, dirname as pdirname
 
 #from distutils.core import build_py as old_build_py
-from distutils.errors import DistutilsExecError
+from distutils.errors import DistutilsExecError, DistutilsSetupError
 from numpy.distutils.command.build_ext import build_ext as old_build_ext
 from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.exec_command import find_executable
@@ -62,7 +62,10 @@ def get_tool_path(compiler):
     """Given a distutils.ccompiler.CCompiler class, returns the path of the
     toolset related to C compilation."""
     fullpath_exec = find_executable(get_compiler_executable(compiler))
-    fullpath = pdirname(fullpath_exec)
+    if fullpath_exec:
+        fullpath = pdirname(fullpath_exec)
+    else:
+        raise DistutilsSetupError("Could not find compiler executable info for scons")
     return fullpath
 
 class scons(old_build_ext):
@@ -89,6 +92,7 @@ class scons(old_build_ext):
         # full path, and add the path to the env['PATH'] variable in env
         # instance (this is done in numpy.distutils.scons module).
         compiler_type = self.compiler
+        print compiler_type
         from distutils.ccompiler import new_compiler
         self.compiler = new_compiler(compiler=compiler_type,
                                      verbose=self.verbose,
