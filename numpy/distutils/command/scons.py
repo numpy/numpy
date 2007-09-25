@@ -3,6 +3,7 @@ import os.path
 from os.path import join as pjoin, dirname as pdirname
 
 #from distutils.core import build_py as old_build_py
+from distutils.errors import DistutilsExecError
 from numpy.distutils.command.build_ext import build_ext as old_build_ext
 from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.exec_command import find_executable
@@ -127,3 +128,4 @@ class scons(old_build_ext):
             st = os.system(cmd)
             if st:
                 print "status is %d" % st
+                raise DistutilsExecError("Error while executing scons (see above)")
