@@ -79,14 +79,9 @@ class build_ext (old_build_ext):
                                      verbose=self.verbose,
                                      dry_run=self.dry_run,
                                      force=self.force)
-        print "self.compiler is %s, this gives us %s" % (compiler_type, self.compiler)
-        print self.compiler.compiler
         self.compiler.customize(self.distribution)
-        print self.compiler.compiler
         self.compiler.customize_cmd(self)
-        print self.compiler.compiler
         self.compiler.show_customization()
-        print self.compiler.compiler
 
         # Create mapping of libraries built by build_clib:
         clibs = {}
@@ -303,8 +298,6 @@ class build_ext (old_build_ext):
                   "but no C++ linker found, using default linker" % (ext.name))
 
         kws = {'depends':ext.depends}
-        print "===================================="
-        print "tmp build dir is %s" % self.build_temp
         output_dir = self.build_temp
 
         include_dirs = ext.include_dirs + get_numpy_include_dirs()
