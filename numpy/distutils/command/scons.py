@@ -12,6 +12,22 @@ def get_scons_local_path():
     import numpy.distutils
     return pjoin(pdirname(numpy.distutils.__file__), 'scons-local')
 
+def get_python_exec_invoc():
+    """This returns the python executable from which this file is invocated."""
+    # Do we  need to take into account the PYTHONPATH, in a cross platform way,
+    # that is the string returned can be executed directly on supported
+    # platforms, and the sys.path of the executed python should be the same
+    # than the caller ? This may not be necessary, since os.system is said to
+    # take into accound os.environ. This actually also works for my way of
+    # using "local python", using the alias facility of bash.
+    import sys
+    #print dir(sys)
+    return sys.executable
+    #try:
+    #    pypath = os.environ['PYTHONPATH']
+    #except KeyError:
+    #    pypath = None
+
 def dist2sconscc(compiler):
     """This converts the name passed to distutils to scons name convention (C
     compiler). The argument should be a CCompiler instance.
@@ -85,6 +101,7 @@ class scons(old_build_ext):
 
         print "++++++++++++++++++++++++++++++++++++++++"
         print get_scons_local_path()
+        print get_python_exec_invoc()
         print "++++++++++++++++++++++++++++++++++++++++"
 
     def run(self):
@@ -98,7 +115,8 @@ class scons(old_build_ext):
 
         # XXX: does this work everywhere in all situations ? This assumes
         # scons.py is executable.
-        scons_exec = '"' + pjoin(get_scons_local_path(), 'scons.py') + '"'
+        scons_exec = get_python_exec_invoc()
+        scons_exec += ' "' + pjoin(get_scons_local_path(), 'scons.py') + '"'
         for i in self.scons_scripts:
             cmd = scons_exec + " -f " + i + ' -I. '
             cmd += ' src_dir=%s ' % pdirname(i)

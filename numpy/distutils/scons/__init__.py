@@ -4,11 +4,22 @@ import ConfigParser
 import sys
 
 from SCons.Options import Options
-from SCons.Tool import Tool
+from SCons.Tool import Tool, FindTool, FindAllTools
 from SCons.Environment import Environment
 from SCons.Script import BuildDir, Help
 from SCons.Util import is_List
 
+from default import tool_list
+
+def pyplat2sconsplat():
+    # XXX: should see how env['PLATFORM'] is defined
+    if sys.platform[:5] == 'linux':
+        return 'posix'
+    else:
+        return sys.platform
+
+DEF_LINKERS, DEF_C_COMPILERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, \
+DEF_FORTRAN_COMPILERS, DEF_ARS, DEF_OTHER_TOOLS = tool_list(pyplat2sconsplat())
 # XXX: all this should be put in another files eventually once it is getting in
 # shape
 
@@ -64,7 +75,7 @@ def GetNumpyEnvironment(args):
     # some different behaviour than just Environment instances...
     opts = GetNumpyOptions(args)
     # We set tools to an empty list, to be sure that the custom options are
-    # given first. At the end, we add the default tool.
+    # given first. We have to 
     env = Environment(options = opts, tools = [])
 
     # Setting dirs according to command line options
@@ -72,7 +83,9 @@ def GetNumpyEnvironment(args):
     env.AppendUnique(distutils_installdir = pjoin(env['distutils_libdir'], 
                                                   env['pkg_name']))
 
+    # ===============================================
     # Setting tools according to command line options
+
     # XXX: how to handle tools which are not in standard location ? Is adding
     # the full path of the compiler enough ? (I am sure some compilers also
     # need LD_LIBRARY_SHARED and other variables to be set, too....)
@@ -81,7 +94,7 @@ def GetNumpyEnvironment(args):
             if len(env['cc_opt_path']) > 0:
                 if env['cc_opt'] == 'intelc':
                     # Intel Compiler SCons.Tool has a special way to set the
-                    # path, so we use this one instead of changing
+                    # path, o we use this one instead of changing
                     # env['ENV']['PATH'].
                     t = Tool(env['cc_opt'], 
                              topdir = os.path.split(env['cc_opt_path'])[0])
@@ -91,22 +104,30 @@ def GetNumpyEnvironment(args):
                     # PATH ? (may not work on windows).
                     t = Tool(env['cc_opt'])
                     t(env) 
-		    #env.Tool(env['cc_opt'])
-		    if sys.platform == 'win32':
-		        env['ENV']['PATH'] += ';%s' % env['cc_opt_path']
-		    else:
-		        env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
-            else:
-                t = Tool(env['cc_opt'])
-                t(env) 
+                    if sys.platform == 'win32':
+                        env['ENV']['PATH'] += ';%s' % env['cc_opt_path']
+                    else:
+                        env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
         except EnvironmentError, e:
             # scons could not understand cc_opt (bad name ?)
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
                                  str(e))
+    else:
+        t = Tool(FindTool(DEF_C_COMPILERS))
+        t(env)
 
-    #print env.Dump('TOOLS')
-    #t = Tool('default')
-    #t(env)
+    # =====================================================
+    # Adding default tools for the one we do not customize:
+    for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, 
+            DEF_FORTRAN_COMPILERS]:
+        t = FindTool(i, env) or i[0]
+        Tool(t)(env)
+
+    for t in FindAllTools(DEF_OTHER_TOOLS, env):
+        Tool(t)(env)
+
+    print env.Dump('TOOLS')
+    print Environment().Dump('TOOLS')
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
     env['BUILDERS']['NumpyCTypes'] = NumpyCTypes
