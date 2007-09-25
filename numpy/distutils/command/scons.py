@@ -52,6 +52,8 @@ def get_compiler_executable(compiler):
         # this is harcoded in distutils... A bit cleaner way would be to
         # initialize the compiler instance and then get compiler.cc, but this
         # may be costly: we really just want a string.
+        #compiler.initialize()
+        #print compiler.cc
         return 'cl.exe' 
     else:
         return compiler.compiler[0]
@@ -93,7 +95,10 @@ class scons(old_build_ext):
                                      dry_run=self.dry_run,
                                      force=self.force)
         self.compiler.customize(self.distribution)
-
+		
+		# This initialization seems necessary, sometimes, for find_executable to work...
+        self.compiler.initialize()
+		
         #print "++++++++++++++++++++++++++++++++++++++++"
         #print "self.compiler is %s, this gives us scons tool %s" % (compiler_type, 
         #                                                 dist2sconscc(self.compiler))
@@ -120,10 +125,10 @@ class scons(old_build_ext):
         scons_exec += ' "' + pjoin(get_scons_local_path(), 'scons.py') + '"'
         for i in self.scons_scripts:
             cmd = scons_exec + " -f " + i + ' -I. '
-            cmd += ' src_dir=%s ' % pdirname(i)
-            cmd += ' distutils_libdir=%s ' % pjoin(self.build_lib, pdirname(i))
+            cmd += ' src_dir="%s" ' % pdirname(i)
+            cmd += ' distutils_libdir="%s" ' % pjoin(self.build_lib, pdirname(i))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
-            cmd += ' cc_opt_path=%s ' % get_tool_path(self.compiler)
+            cmd += ' cc_opt_path="%s" ' % get_tool_path(self.compiler)
             print cmd
             st = os.system(cmd)
             if st:

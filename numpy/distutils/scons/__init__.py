@@ -129,7 +129,7 @@ def GetNumpyEnvironment(args):
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)
 
-    print env.Dump()
+    #print env.Dump()
     #print Environment().Dump('TOOLS')
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
