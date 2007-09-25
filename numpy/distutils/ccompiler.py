@@ -384,6 +384,14 @@ def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
     return lib_opts
 ccompiler.gen_lib_options = gen_lib_options
 
+# Also fix up the various compiler modules, which do
+# from distutils.ccompiler import gen_lib_options
+# Don't bother with mwerks, as we don't support Classic Mac.
+for _cc in ['bcpp', 'cygwinc', 'emxc', 'unixc']:
+    _m = __import__('distutils.'+_cc+'compiler')
+    setattr(getattr(_m, _cc+'compiler'), 'gen_lib_options',
+            gen_lib_options)
+
 _distutils_gen_preprocess_options = gen_preprocess_options
 def gen_preprocess_options (macros, include_dirs):
     include_dirs = quote_args(include_dirs)
