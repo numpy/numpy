@@ -7,6 +7,11 @@ from numpy.distutils.command.build_ext import build_ext as old_build_ext
 from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.exec_command import find_executable
 
+def get_scons_local_path():
+    """This returns the full path where scons.py for scons-local is located."""
+    import numpy.distutils
+    return pjoin(pdirname(numpy.distutils.__file__), 'scons-local')
+
 def dist2sconscc(compiler):
     """This converts the name passed to distutils to scons name convention (C
     compiler). The argument should be a CCompiler instance.
@@ -26,7 +31,8 @@ def get_compiler_executable(compiler):
     # Geez, why does distutils has no common way to get the compiler name...
     if compiler.compiler_type == 'msvc':
         # this is harcoded in distutils... A bit cleaner way would be to
-        # initialize the compiler instance, but this may be costly
+        # initialize the compiler instance and then get compiler.cc, but this
+        # may be costly: we really just want a string.
         return 'cl.exe' 
     else:
         return compiler.compiler[0]
@@ -75,6 +81,10 @@ class scons(old_build_ext):
         #print get_tool_path(self.compiler)
         #print "++++++++++++++++++++++++++++++++++++++++"
 
+        print "++++++++++++++++++++++++++++++++++++++++"
+        print get_scons_local_path()
+        print "++++++++++++++++++++++++++++++++++++++++"
+
     def run(self):
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
@@ -83,8 +93,12 @@ class scons(old_build_ext):
         # XXX: passing everything at command line may cause some trouble where
         # there is a size limitation ? What is the standard solution in thise
         # case ?
+
+        # XXX: does this work everywhere in all situations ? This assumes
+        # scons.py is executable.
+        scons_exec = pjoin(get_scons_local_path(), 'scons.py')
         for i in self.scons_scripts:
-            cmd = "scons -f " + i + ' -I. '
+            cmd = scons_exec + " -f " + i + ' -I. '
             cmd += ' src_dir=%s ' % pdirname(i)
             cmd += ' distutils_libdir=%s ' % pjoin(self.build_lib, pdirname(i))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
