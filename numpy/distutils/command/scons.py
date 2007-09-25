@@ -97,7 +97,8 @@ class scons(old_build_ext):
         self.compiler.customize(self.distribution)
 		
 		# This initialization seems necessary, sometimes, for find_executable to work...
-        self.compiler.initialize()
+        if hasattr(self.compiler, 'initialize'):
+            self.compiler.initialize()
 		
         #print "++++++++++++++++++++++++++++++++++++++++"
         #print "self.compiler is %s, this gives us scons tool %s" % (compiler_type, 
