@@ -1,6 +1,7 @@
 from os.path import join as pjoin
 import os.path
 import ConfigParser
+import sys
 
 from SCons.Options import Options
 from SCons.Tool import Tool
@@ -62,7 +63,9 @@ def GetNumpyEnvironment(args):
     # XXX: I would prefer subclassing Environment, because we really expect
     # some different behaviour than just Environment instances...
     opts = GetNumpyOptions(args)
-    env = Environment(options = opts)
+    # We set tools to an empty list, to be sure that the custom options are
+    # given first. At the end, we add the default tool.
+    env = Environment(options = opts, tools = [])
 
     # Setting dirs according to command line options
     env.AppendUnique(build_dir = pjoin(env['build_prefix']))
@@ -86,7 +89,13 @@ def GetNumpyEnvironment(args):
                 else:
                     # XXX: what is the right way to add one directory in the
                     # PATH ? (may not work on windows).
-                    env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
+                    t = Tool(env['cc_opt'])
+                    t(env) 
+		    #env.Tool(env['cc_opt'])
+		    if sys.platform == 'win32':
+		        env['ENV']['PATH'] += ';%s' % env['cc_opt_path']
+		    else:
+		        env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
             else:
                 t = Tool(env['cc_opt'])
                 t(env) 
@@ -95,6 +104,9 @@ def GetNumpyEnvironment(args):
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
                                  str(e))
 
+    #print env.Dump('TOOLS')
+    #t = Tool('default')
+    #t(env)
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
     env['BUILDERS']['NumpyCTypes'] = NumpyCTypes

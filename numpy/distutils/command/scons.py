@@ -22,6 +22,8 @@ def dist2sconscc(compiler):
         return 'msvc'
     elif compiler.compiler_type == 'intel':
         return 'intelc'
+    elif compiler.compiler_type == 'mingw32':
+        return 'mingw'
     else:
         return compiler.compiler[0]
 
@@ -96,7 +98,7 @@ class scons(old_build_ext):
 
         # XXX: does this work everywhere in all situations ? This assumes
         # scons.py is executable.
-        scons_exec = pjoin(get_scons_local_path(), 'scons.py')
+        scons_exec = '"' + pjoin(get_scons_local_path(), 'scons.py') + '"'
         for i in self.scons_scripts:
             cmd = scons_exec + " -f " + i + ' -I. '
             cmd += ' src_dir=%s ' % pdirname(i)
