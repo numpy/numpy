@@ -131,6 +131,7 @@ def NumpyCheckLib(context, section, libs, symbol = None):
     # This is really preliminary, and needs a lot of love before being in good
     # shape !!!!!
     #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # XXX: handle env var
 
     # XXX: handle extension in arg list
     extension = '.c'
