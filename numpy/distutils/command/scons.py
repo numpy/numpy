@@ -134,7 +134,7 @@ class scons(old_build_ext):
         # XXX: does this work everywhere in all situations ? This assumes
         # scons.py is executable.
         scons_exec = get_python_exec_invoc()
-        scons_exec += protect_path(pjoin(get_scons_local_path(), 'scons.py'))
+        scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for i in self.scons_scripts:
             cmd = scons_exec + " -f " + i + ' -I. '
             cmd += ' src_dir="%s" ' % pdirname(i)
