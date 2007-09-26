@@ -68,6 +68,11 @@ def get_tool_path(compiler):
         raise DistutilsSetupError("Could not find compiler executable info for scons")
     return fullpath
 
+def protect_path(path):
+    """Convert path (given as a string) to something the shell will have no
+    problem to understand (space, etc... problems)."""
+    # XXX: to this correctly, this is totally bogus for now.
+    return '"' + path + '"'
 class scons(old_build_ext):
     description = "Scons builder"
     #user_options = []
@@ -127,15 +132,15 @@ class scons(old_build_ext):
         # XXX: does this work everywhere in all situations ? This assumes
         # scons.py is executable.
         scons_exec = get_python_exec_invoc()
-        scons_exec += ' "' + pjoin(get_scons_local_path(), 'scons.py') + '"'
+        scons_exec += protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for i in self.scons_scripts:
             cmd = scons_exec + " -f " + i + ' -I. '
             cmd += ' src_dir="%s" ' % pdirname(i)
-            cmd += ' distutils_libdir="%s" ' % pjoin(self.build_lib, pdirname(i))
+            cmd += ' distutils_libdir="%s" ' % protect_path(pjoin(self.build_lib, pdirname(i)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
-            cmd += ' cc_opt_path="%s" ' % get_tool_path(self.compiler)
+            cmd += ' cc_opt_path="%s" ' % protect_path(get_tool_path(self.compiler))
             print cmd
             st = os.system(cmd)
             if st:
                 print "status is %d" % st
-                raise DistutilsExecError("Error while executing scons (see above)")
+                raise DistutilsExecError("Error while executing scons command %s (see above)" % cmd)
