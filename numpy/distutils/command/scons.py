@@ -71,8 +71,10 @@ def get_tool_path(compiler):
 def protect_path(path):
     """Convert path (given as a string) to something the shell will have no
     problem to understand (space, etc... problems)."""
-    # XXX: to this correctly, this is totally bogus for now.
+    # XXX: to this correctly, this is totally bogus for now (does not check for
+    # already quoted path, for example.
     return '"' + path + '"'
+
 class scons(old_build_ext):
     description = "Scons builder"
     #user_options = []
@@ -136,9 +138,9 @@ class scons(old_build_ext):
         for i in self.scons_scripts:
             cmd = scons_exec + " -f " + i + ' -I. '
             cmd += ' src_dir="%s" ' % pdirname(i)
-            cmd += ' distutils_libdir="%s" ' % protect_path(pjoin(self.build_lib, pdirname(i)))
+            cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib, pdirname(i)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
-            cmd += ' cc_opt_path="%s" ' % protect_path(get_tool_path(self.compiler))
+            cmd += ' cc_opt_path=%s ' % protect_path(get_tool_path(self.compiler))
             print cmd
             st = os.system(cmd)
             if st:
