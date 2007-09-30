@@ -396,19 +396,20 @@ class masked_binary_operation:
                 m = make_mask(m, copy=1)
                 m.shape = (1,)
         if m is nomask:
-            return masked_array (self.f.reduce (t, axis))
+            t = self.f.reduce(t, axis)
         else:
             t = masked_array (t, m)
             # XXX: "or t.dtype" below is a workaround for what appears
             # XXX: to be a bug in reduce.
-            t = self.f.reduce(filled(t, self.filly), axis, dtype=dtype or t.dtype)
+            t = self.f.reduce(filled(t, self.filly), axis,
+                              dtype=dtype or t.dtype)
             m = umath.logical_and.reduce(m, axis)
-            if isinstance(t, ndarray):
-                return masked_array(t, m, get_fill_value(target))
-            elif m:
-                return masked
-            else:
-                return t
+        if isinstance(t, ndarray):
+            return masked_array(t, m, get_fill_value(target))
+        elif m:
+            return masked
+        else:
+            return t
 
     def outer (self, a, b):
         "Return the function applied to the outer product of a and b."
