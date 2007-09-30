@@ -5,7 +5,7 @@
 from numpy.testing import *
 set_package_path()
 from numpy import arange, rot90, add, fliplr, flipud, zeros, ones, eye, \
-     array, diag, histogram2d
+     array, diag, histogram2d, tri
 import numpy as np
 restore_path()
 
@@ -160,7 +160,7 @@ class test_histogram2d(NumpyTestCase):
         assert_array_equal(H, eye(10,10))
         assert_array_equal(xedges, np.linspace(0,9,11))
         assert_array_equal(yedges, np.linspace(0,9,11))
-        
+
     def check_asym(self):
         x = array([1, 1, 2, 3, 4, 4, 4, 5])
         y = array([1, 3, 2, 0, 1, 2, 3, 4])
@@ -187,6 +187,14 @@ class test_histogram2d(NumpyTestCase):
         r = rand(100)+1.
         H, xed, yed = histogram2d(r, r, (4, 5), range=([0,1], [0,1]))
         assert_array_equal(H, 0)
-        
+
+class test_tri(NumpyTestCase):
+    def test_dtype(self):
+        out = array([[1,0,0],
+                     [1,1,0],
+                     [1,1,1]])
+        assert_array_equal(tri(3),out)
+        assert_array_equal(tri(3,dtype=bool),out.astype(bool))
+
 if __name__ == "__main__":
     NumpyTest().run()
