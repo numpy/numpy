@@ -237,10 +237,13 @@ class GnuFCompiler(FCompiler):
                 march_opt = '-march=pentium2'
 
         if gnu_ver >= '3.4':
+            # Actually, I think these all do the same things
             if cpu.is_Opteron():
                 march_opt = '-march=opteron'
             elif cpu.is_Athlon64():
                 march_opt = '-march=athlon64'
+            elif cpu.is_AMD64():
+                march_opt = '-march=k8'
 
         if gnu_ver >= '3.4.4':
             if cpu.is_PentiumM():
