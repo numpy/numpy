@@ -13,7 +13,7 @@ In general, we follow the standard Python style conventions as described here:
 
 Additional PEPs of interest regarding documentation of code:
  * `Docstring Processing System Framework
-     <http://www.python.org/peps/pep-0256.html>`__
+<http://www.python.org/peps/pep-0256.html>`__
  * `Docutils Design Specification
      <http://www.python.org/peps/pep-0258.html>`__
 
