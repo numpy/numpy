@@ -12,8 +12,10 @@ In general, we follow the standard Python style conventions as described here:
  * `Docstring Conventions <http://www.python.org/peps/pep-0257.html>`__
 
 Additional PEPs of interest regarding documentation of code:
- * Docstring Processing System Framework <http://www.python.org/peps/pep-0256.html>`__
- * Docutils Design Specification <http://www.python.org/peps/pep-0258.html>`__
+ * `Docstring Processing System Framework
+     <http://www.python.org/peps/pep-0256.html>`__
+ * `Docutils Design Specification
+     <http://www.python.org/peps/pep-0258.html>`__
 
 Use a code checker:
  * `pylint <http://www.logilab.org/857>`__
