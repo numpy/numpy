@@ -21,9 +21,10 @@ __version__ = "$Id: cpuinfo.py,v 1.1 2005/04/09 19:29:34 pearu Exp $"
 
 __all__ = ['cpu']
 
-import sys,string,re,types
+import sys, re, types
+import commands
 
-class cpuinfo_base:
+class cpuinfo_base(object):
     """Holds CPU information and provides methods for requiring
     the availability of various CPU features.
     """
@@ -60,18 +61,17 @@ class linux_cpuinfo(cpuinfo_base):
         info = []
         try:
             for line in open('/proc/cpuinfo').readlines():
-                name_value = map(string.strip,string.split(line,':',1))
+                name_value = [s.strip() for s in line.split(':', 1)]
                 if len(name_value)!=2:
                     continue
                 name,value = name_value
                 if not info or info[-1].has_key(name): # next processor
                     info.append({})
                 info[-1][name] = value
-            import commands
             status,output = commands.getstatusoutput('uname -m')
             if not status:
                 if not info: info.append({})
-                info[-1]['uname_m'] = string.strip(output)
+                info[-1]['uname_m'] = output.strip()
         except:
             print sys.exc_value,'(ignoring)'
         self.__class__.info = info
@@ -257,12 +257,11 @@ class irix_cpuinfo(cpuinfo_base):
             return
         info = []
         try:
-            import commands
             status,output = commands.getstatusoutput('sysconf')
             if status not in [0,256]:
                 return
             for line in output.split('\n'):
-                name_value = map(string.strip,string.split(line,' ',1))
+                name_value = [s.strip() for s in line.split(' ', 1)]
                 if len(name_value)!=2:
                     continue
                 name,value = name_value
@@ -330,21 +329,20 @@ class darwin_cpuinfo(cpuinfo_base):
             return
         info = []
         try:
-            import commands
             status,output = commands.getstatusoutput('arch')
             if not status:
                 if not info: info.append({})
-                info[-1]['arch'] = string.strip(output)
+                info[-1]['arch'] = output.strip()
             status,output = commands.getstatusoutput('machine')
             if not status:
                 if not info: info.append({})
-                info[-1]['machine'] = string.strip(output)
+                info[-1]['machine'] = output.strip()
             status,output = commands.getstatusoutput('sysctl hw')
             if not status:
                 if not info: info.append({})
                 d = {}
-                for l in string.split(output,'\n'):
-                    l = map(string.strip,string.split(l, '='))
+                for l in output.splitlines():
+                    l = [s.strip() for s in l.split('=')]
                     if len(l)==2:
                         d[l[0]]=l[1]
                 info[-1]['sysctl_hw'] = d
@@ -396,40 +394,44 @@ class sunos_cpuinfo(cpuinfo_base):
             return
         info = []
         try:
-            import commands
             status,output = commands.getstatusoutput('arch')
             if not status:
-                if not info: info.append({})
-                info[-1]['arch'] = string.strip(output)
+                if not info:
+                    info.append({})
+                info[-1]['arch'] = output.strip()
             status,output = commands.getstatusoutput('mach')
             if not status:
-                if not info: info.append({})
-                info[-1]['mach'] = string.strip(output)
+                if not info:
+                    info.append({})
+                info[-1]['mach'] = output.strip()
             status,output = commands.getstatusoutput('uname -i')
             if not status:
-                if not info: info.append({})
-                info[-1]['uname_i'] = string.strip(output)
+                if not info:
+                    info.append({})
+                info[-1]['uname_i'] = output.strip()
             status,output = commands.getstatusoutput('uname -X')
             if not status:
                 if not info: info.append({})
                 d = {}
-                for l in string.split(output,'\n'):
-                    l = map(string.strip,string.split(l, '='))
+                for l in output.splitlines():
+                    l = [s.strip() for s in l.split('=')]
                     if len(l)==2:
                         d[l[0]]=l[1]
                 info[-1]['uname_X'] = d
             status,output = commands.getstatusoutput('isainfo -b')
             if not status:
-                if not info: info.append({})
-                info[-1]['isainfo_b'] = string.strip(output)
+                if not info:
+                    info.append({})
+                info[-1]['isainfo_b'] = output.strip()
             status,output = commands.getstatusoutput('isainfo -n')
             if not status:
-                if not info: info.append({})
-                info[-1]['isainfo_n'] = string.strip(output)
+                if not info:
+                    info.append({})
+                info[-1]['isainfo_n'] = output.strip()
             status,output = commands.getstatusoutput('psrinfo -v 0')
             if not status:
                 if not info: info.append({})
-                for l in string.split(output,'\n'):
+                for l in output.splitlines():
                     m = re.match(r'\s*The (?P<p>[\w\d]+) processor operates at',l)
                     if m:
                         info[-1]['processor'] = m.group('p')
