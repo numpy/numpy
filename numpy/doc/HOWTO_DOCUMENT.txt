@@ -1,11 +1,25 @@
-=================================
-A Guide to NumPy/SciPy Docstrings
-=================================
+====================================
+A Guide to NumPy/SciPy Documentation
+====================================
 
 .. Contents::
 
 Overview
 --------
+In general, we follow the standard Python style conventions as described here:
+ * `Style Guide for C Code <http://www.python.org/peps/pep-0007.html>`__
+ * `Style Guide for Python Code <http://www.python.org/peps/pep-0008.html>`__
+ * `Docstring Conventions <http://www.python.org/peps/pep-0257.html>`__
+
+Additional PEPs of interest regarding documentation of code:
+ * Docstring Processing System Framework <http://www.python.org/peps/pep-0256.html>`__
+ * Docutils Design Specification <http://www.python.org/peps/pep-0258.html>`__
+
+Use a code checker:
+ * `pylint <http://www.logilab.org/857>`__
+
+Docstring Standard
+------------------
 
 A documentation string (docstring) is a string that describes a module,
 function, class, or method definition.  The docstring is a special attribute
