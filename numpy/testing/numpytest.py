@@ -257,7 +257,7 @@ class NumpyTest:
 
     Old-style test_suite(level=1) hooks are also supported.
     """
-    _check_testcase_name = re.compile(r'test.*').match
+    _check_testcase_name = re.compile(r'test.*|Test.*').match
     def check_testcase_name(self, name):
         """ Return True if name matches TestCase class.
         """
