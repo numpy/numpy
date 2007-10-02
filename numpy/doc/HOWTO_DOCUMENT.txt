@@ -177,6 +177,15 @@ may be included.
 Use optional in the "type" field for parameters that are non-keyword
 optional for C-functions.
 
+Epydoc depends on Docutils for reStructuredText parsing.  You can download
+Docutils from the 
+`Docutils sourceforge page. <http://docutils.sourceforge.net/>`__
+You may also be able to use a package manager like yum to install a 
+current version::
+
+  $ sudo yum install python-docutils
+
+
 Example
 -------
 
