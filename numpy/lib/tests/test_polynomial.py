@@ -76,7 +76,7 @@ poly1d([ 2.])
 from numpy.testing import *
 import numpy as N
 
-class test_docs(NumpyTestCase):
+class TestDocs(NumpyTestCase):
     def check_doctests(self): return self.rundocs()
 
     def check_roots(self):

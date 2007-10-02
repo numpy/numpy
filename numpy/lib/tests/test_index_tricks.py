@@ -3,7 +3,7 @@ set_package_path()
 from numpy import array, ones, r_, mgrid
 restore_path()
 
-class test_grid(NumpyTestCase):
+class TestGrid(NumpyTestCase):
     def check_basic(self):
         a = mgrid[-1:1:10j]
         b = mgrid[-1:1:0.1]
@@ -28,7 +28,7 @@ class test_grid(NumpyTestCase):
         assert_array_almost_equal(d[0,1,:]-d[0,0,:], 0.1*ones(20,'d'),11)
         assert_array_almost_equal(d[1,:,1]-d[1,:,0], 0.2*ones(20,'d'),11)
 
-class test_concatenator(NumpyTestCase):
+class TestConcatenator(NumpyTestCase):
     def check_1d(self):
         assert_array_equal(r_[1,2,3,4,5,6],array([1,2,3,4,5,6]))
         b = ones(5)

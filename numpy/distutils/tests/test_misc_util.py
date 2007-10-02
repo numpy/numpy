@@ -8,7 +8,7 @@ from os.path import join, sep
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
-class test_appendpath(NumpyTestCase):
+class TestAppendpath(NumpyTestCase):
 
     def check_1(self):
         assert_equal(appendpath('prefix','name'),join('prefix','name'))
@@ -32,7 +32,7 @@ class test_appendpath(NumpyTestCase):
         assert_equal(appendpath('/prefix/sub/sub2','/prefix/sub/sup/name'),
                      ajoin('prefix','sub','sub2','sup','name'))
 
-class test_minrelpath(NumpyTestCase):
+class TestMinrelpath(NumpyTestCase):
 
     def check_1(self):
         import os
@@ -47,7 +47,7 @@ class test_minrelpath(NumpyTestCase):
         assert_equal(minrelpath(n('.././..')),n('../..'))
         assert_equal(minrelpath(n('aa/bb/.././../dd')),n('dd'))
 
-class test_gpaths(NumpyTestCase):
+class TestGpaths(NumpyTestCase):
 
     def check_gpaths(self):
         local_path = minrelpath(os.path.join(os.path.dirname(__file__),'..'))

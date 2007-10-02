@@ -21,7 +21,7 @@ gfortran_version_strings = [
     ('GNU Fortran (GCC) 4.3.0 20070316 (experimental)', '4.3.0'),
 ]
 
-class test_g77_versions(NumpyTestCase):
+class TestG77Versions(NumpyTestCase):
     def test_g77_version(self):
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu')
         for vs, version in g77_version_strings:
@@ -34,7 +34,7 @@ class test_g77_versions(NumpyTestCase):
             v = fc.version_match(vs)
             assert v is None, (vs, v)
 
-class test_gortran_versions(NumpyTestCase):
+class TestGortranVersions(NumpyTestCase):
     def test_gfortran_version(self):
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
         for vs, version in gfortran_version_strings:

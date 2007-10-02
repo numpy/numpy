@@ -5,7 +5,7 @@ from numpy.lib import *
 from numpy.core import *
 restore_path()
 
-class test_apply_along_axis(NumpyTestCase):
+class TestApplyAlongAxis(NumpyTestCase):
     def check_simple(self):
         a = ones((20,10),'d')
         assert_array_equal(apply_along_axis(len,0,a),len(a)*ones(shape(a)[1]))
@@ -17,7 +17,7 @@ class test_apply_along_axis(NumpyTestCase):
         a = arange(27).reshape((3,3,3))
         assert_array_equal(apply_along_axis(sum,0,a), [[27,30,33],[36,39,42],[45,48,51]])
 
-class test_array_split(NumpyTestCase):
+class TestArraySplit(NumpyTestCase):
     def check_integer_0_split(self):
         a = arange(10)
         try:
@@ -120,7 +120,7 @@ class test_array_split(NumpyTestCase):
                    array([]),array([])]
         compare_results(res,desired)
 
-class test_split(NumpyTestCase):
+class TestSplit(NumpyTestCase):
     """* This function is essentially the same as array_split,
          except that it test if splitting will result in an
          equal split.  Only test for this case.
@@ -139,7 +139,7 @@ class test_split(NumpyTestCase):
         except ValueError:
             pass
 
-class test_atleast_1d(NumpyTestCase):
+class TestAtleast1d(NumpyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=map(atleast_1d,[a,b])
@@ -170,7 +170,7 @@ class test_atleast_1d(NumpyTestCase):
         assert(atleast_1d(3.0).shape == (1,))
         assert(atleast_1d([[2,3],[4,5]]).shape == (2,2))
 
-class test_atleast_2d(NumpyTestCase):
+class TestAtleast2d(NumpyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=map(atleast_2d,[a,b])
@@ -199,7 +199,7 @@ class test_atleast_2d(NumpyTestCase):
         assert(atleast_2d([3j,1]).shape == (1,2))
         assert(atleast_2d([[[3,1],[4,5]],[[3,5],[1,2]]]).shape == (2,2,2))
 
-class test_atleast_3d(NumpyTestCase):
+class TestAtleast3d(NumpyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=map(atleast_3d,[a,b])
@@ -222,7 +222,7 @@ class test_atleast_3d(NumpyTestCase):
         desired = [a,b]
         assert_array_equal(res,desired)
 
-class test_hstack(NumpyTestCase):
+class TestHstack(NumpyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=hstack([a,b])
@@ -239,7 +239,7 @@ class test_hstack(NumpyTestCase):
         desired = array([[1,1],[2,2]])
         assert_array_equal(res,desired)
 
-class test_vstack(NumpyTestCase):
+class TestVstack(NumpyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=vstack([a,b])
@@ -261,7 +261,7 @@ class test_vstack(NumpyTestCase):
         desired = array([[1,2],[1,2]])
         assert_array_equal(res,desired)
 
-class test_dstack(NumpyTestCase):
+class TestDstack(NumpyTestCase):
     def check_0D_array(self):
         a = array(1); b = array(2);
         res=dstack([a,b])
@@ -286,7 +286,7 @@ class test_dstack(NumpyTestCase):
 """ array_split has more comprehensive test of splitting.
     only do simple test on hsplit, vsplit, and dsplit
 """
-class test_hsplit(NumpyTestCase):
+class TestHsplit(NumpyTestCase):
     """ only testing for integer splits.
     """
     def check_0D_array(self):
@@ -308,7 +308,7 @@ class test_hsplit(NumpyTestCase):
         desired = [array([[1,2],[1,2]]),array([[3,4],[3,4]])]
         compare_results(res,desired)
 
-class test_vsplit(NumpyTestCase):
+class TestVsplit(NumpyTestCase):
     """ only testing for integer splits.
     """
     def check_1D_array(self):
@@ -325,7 +325,7 @@ class test_vsplit(NumpyTestCase):
         desired = [array([[1,2,3,4]]),array([[1,2,3,4]])]
         compare_results(res,desired)
 
-class test_dsplit(NumpyTestCase):
+class TestDsplit(NumpyTestCase):
     """ only testing for integer splits.
     """
     def check_2D_array(self):
@@ -346,7 +346,7 @@ class test_dsplit(NumpyTestCase):
                    array([[[3,4],[3,4]],[[3,4],[3,4]]])]
         compare_results(res,desired)
 
-class test_squeeze(NumpyTestCase):
+class TestSqueeze(NumpyTestCase):
     def check_basic(self):
         a = rand(20,10,10,1,1)
         b = rand(20,1,10,1,20)
@@ -355,7 +355,7 @@ class test_squeeze(NumpyTestCase):
         assert_array_equal(squeeze(b),reshape(b,(20,10,20)))
         assert_array_equal(squeeze(c),reshape(c,(20,10)))
 
-class test_kron(NumpyTestCase):
+class TestKron(NumpyTestCase):
     def check_return_type(self):
         a = ones([2,2])
         m = asmatrix(a)
@@ -372,7 +372,7 @@ class test_kron(NumpyTestCase):
         assert_equal(type(kron(ma,a)), myarray)
 
 
-class test_tile(NumpyTestCase):
+class TestTile(NumpyTestCase):
     def check_basic(self):
         a = array([0,1,2])
         b = [[1,2],[3,4]]

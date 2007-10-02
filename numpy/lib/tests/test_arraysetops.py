@@ -11,7 +11,7 @@ restore_path()
 
 ##################################################
 
-class test_aso(NumpyTestCase):
+class TestAso(NumpyTestCase):
     ##
     # 03.11.2005, c
     def check_unique1d( self ):

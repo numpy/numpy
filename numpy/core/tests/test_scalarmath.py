@@ -12,7 +12,7 @@ types = [N.bool_, N.byte, N.ubyte, N.short, N.ushort, N.intc, N.uintc,
 
 # This compares scalarmath against ufuncs.
 
-class test_types(NumpyTestCase):
+class TestTypes(NumpyTestCase):
     def check_types(self, level=1):
         for atype in types:
             a = atype(1)
@@ -38,7 +38,7 @@ class test_types(NumpyTestCase):
             b = atype([1,2,3])
             assert_equal(a,b)
 
-class test_power(NumpyTestCase):
+class TestPower(NumpyTestCase):
     def check_small_types(self):
         for t in [N.int8, N.int16]:
             a = t(3)
@@ -51,7 +51,7 @@ class test_power(NumpyTestCase):
             b = a ** 4
             assert b == 6765201, "error with %r: got %r" % (t,b)
 
-class test_conversion(NumpyTestCase):
+class TestConversion(NumpyTestCase):
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]

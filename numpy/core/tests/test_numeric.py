@@ -31,7 +31,7 @@ class Vec:
         return "Vec("+repr(self.array.tolist())+")"
     __str__=__repr__
 
-class test_dot(NumpyTestCase):
+class TestDot(NumpyTestCase):
     def setUp(self):
         self.A = rand(10,8)
         self.b1 = rand(8,1)
@@ -141,7 +141,7 @@ class test_dot(NumpyTestCase):
         assert_equal(zeros[1].array, zeros_test[1].array)
 
 
-class test_bool_scalar(NumpyTestCase):
+class TestBoolScalar(NumpyTestCase):
     def test_logical(self):
         f = False_
         t = True_
@@ -174,7 +174,7 @@ class test_bool_scalar(NumpyTestCase):
         self.failUnless((f ^ f) is f)
 
 
-class test_seterr(NumpyTestCase):
+class TestSeterr(NumpyTestCase):
     def test_set(self):
         err = seterr()
         old = seterr(divide='warn')
@@ -198,7 +198,7 @@ class test_seterr(NumpyTestCase):
         array([1.]) / array([0.])
 
 
-class test_fromiter(NumpyTestCase):
+class TestFromiter(NumpyTestCase):
 
     def makegen(self):
         for x in xrange(24):
@@ -232,7 +232,7 @@ class test_fromiter(NumpyTestCase):
         self.failUnless(alltrue(a == expected,axis=0))
         self.failUnless(alltrue(a20 == expected[:20],axis=0))
 
-class test_index(NumpyTestCase):
+class TestIndex(NumpyTestCase):
     def test_boolean(self):
         a = rand(3,5,8)
         V = rand(5,8)
@@ -241,7 +241,7 @@ class test_index(NumpyTestCase):
         V[g1,g2] = -V[g1,g2]
         assert (array([a[0][V>0],a[1][V>0],a[2][V>0]]) == a[:,V>0]).all()
 
-class test_binary_repr(NumpyTestCase):
+class TestBinaryRepr(NumpyTestCase):
     def test_zero(self):
         assert_equal(binary_repr(0),'0')
 
@@ -260,7 +260,7 @@ def assert_array_strict_equal(x, y):
     assert x.dtype.isnative == y.dtype.isnative
 
 
-class test_clip(NumpyTestCase):
+class TestClip(NumpyTestCase):
     def setUp(self):
         self.nr = 5
         self.nc = 3

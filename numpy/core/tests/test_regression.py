@@ -22,7 +22,7 @@ def assert_valid_refcount(op):
 
     assert(sys.getrefcount(i) >= rc)
 
-class test_regression(NumpyTestCase):
+class TestRegression(NumpyTestCase):
     def check_invalid_round(self,level=rlevel):
         """Ticket #3"""
         v = 4.7599999999999998

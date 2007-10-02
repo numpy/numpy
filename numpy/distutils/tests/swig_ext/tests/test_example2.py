@@ -4,7 +4,7 @@ set_package_path()
 from swig_ext import example2
 restore_path()
 
-class test_example2(NumpyTestCase):
+class TestExample2(NumpyTestCase):
 
     def check_zoo(self):
         z = example2.Zoo()
