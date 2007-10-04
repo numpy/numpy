@@ -34,39 +34,37 @@ Requirements for SciPy packages
 '''''''''''''''''''''''''''''''
 
 SciPy consists of Python packages, called SciPy packages, that are
-available to Python users via ``scipy`` name space. Each SciPy package
-may contain other SciPy packages. And so on. So, SciPy directory tree
-is a tree of packages with arbitrary depth and width. Any SciPy
-package may depend on NumPy packages but the dependence on other
+available to Python users via the ``scipy`` namespace. Each SciPy package
+may contain other SciPy packages. And so on. Therefore, the SciPy 
+directory tree is a tree of packages with arbitrary depth and width. 
+Any SciPy package may depend on NumPy packages but the dependence on other
 SciPy packages should be kept minimal or zero.
 
-A SciPy package contains in addition to its sources, the following
+A SciPy package contains, in addition to its sources, the following
 files and directories:
 
-  ``setup.py`` --- building script
-  ``info.py``  --- contains documentation and import flags
-  ``__init__.py`` --- package initializer
-  ``tests/`` --- directory of unittests
+  + ``setup.py`` --- building script
+  + ``info.py``  --- contains documentation and import flags
+  + ``__init__.py`` --- package initializer
+  + ``tests/`` --- directory of unittests
 
-Their contents will be described below.
+Their contents are described below.
 
 The ``setup.py`` file
 '''''''''''''''''''''
 
-In order to add a Python package to SciPy, its building script (the
-``setup.py`` file) must meet certain requirements. The minimal and the
-most important one is that it must define a function
-``configuration(parent_package='',top_path=None)`` that returns a
-dictionary suitable for passing to ``numpy.distutils.core.setup(..)``
-function. In order to simplify the construction of such an distionary,
-``numpy.distutils.misc_util`` provides a class ``Configuration``, the
-usage of will be described below.
+In order to add a Python package to SciPy, its build script (``setup.py``) 
+must meet certain requirements. The most important requirement is that the 
+package define a ``configuration(parent_package='',top_path=None)`` function 
+which returns a dictionary suitable for passing to 
+``numpy.distutils.core.setup(..)``. To simplify the construction of 
+this dictionary, ``numpy.distutils.misc_util`` provides the 
+``Configuration`` class, described below.
 
 SciPy pure Python package example
 ---------------------------------
 
-Here follows a minimal example for a pure Python SciPy package
-``setup.py`` file that will be explained in detail below::
+Below is an example of a minimal ``setup.py`` file for a pure Scipy package::
 
   #!/usr/bin/env python
   def configuration(parent_package='',top_path=None):
@@ -79,16 +77,15 @@ Here follows a minimal example for a pure Python SciPy package
       #setup(**configuration(top_path='').todict())
       setup(configuration=configuration)
 
-The first argument ``parent_package`` of the main configuration
-function will contain a name of the parent SciPy package and the
-second argument ``top_path`` contains the name of the directory where
-the main ``setup.py`` script is located. Both arguments should be
-passed to the ``Configuration`` constructor after the name of the
-current package.
+The arguments of the ``configuration`` function specifiy the name of
+parent SciPy package (``parent_package``) and the directory location
+of the main ``setup.py`` script (``top_path``).  These arguments, 
+along with the name of the current package, should be passed to the
+``Configuration`` constructor.
 
-The ``Configuration`` constructor has also fourth optional argument,
+The ``Configuration`` constructor has a fourth optional argument,
 ``package_path``, that can be used when package files are located in
-some other location than the directory of the ``setup.py`` file. 
+a different location than the directory of the ``setup.py`` file. 
 
 Remaining ``Configuration`` arguments are all keyword arguments that will
 be used to initialize attributes of ``Configuration``
@@ -122,7 +119,7 @@ in writing setup scripts:
 ``Configuration`` instance methods
 ----------------------------------
 
-+ ``config.todict()`` --- returns configuration distionary suitable for
++ ``config.todict()`` --- returns configuration dictionary suitable for
   passing to ``numpy.distutils.core.setup(..)`` function.
 
 + ``config.paths(*paths) --- applies ``glob.glob(..)`` to items of
@@ -409,12 +406,12 @@ Useful functions in ``numpy.distutils.misc_util``
 The ``info.py`` file
 ''''''''''''''''''''
 
-Scipy package import hooks assume that each Scipy package contains
-``info.py`` file that contains overall documentation about the package
-and some variables defining the order of package imports, dependence
+Scipy package import hooks assume that each package contains a
+``info.py`` file.  This file contains overall documentation about the package
+and variables defining the order of package imports, dependency
 relations between packages, etc.
 
-The following information will be looked in the ``info.py`` file:
+On import, the following information will be looked for in ``info.py``:
 
 __doc__
   The documentation string of the package.
@@ -444,15 +441,14 @@ postpone_import
 The ``__init__.py`` file
 ''''''''''''''''''''''''
 
-To speed up the import time as well as to minimize memory usage, numpy
-uses ppimport hooks to transparently postpone importing large modules
-that might not be used during the Scipy usage session. But in order to
-have an access to the documentation of all Scipy packages, including 
-of the postponed packages, the documentation string of a package (that would
-usually reside in ``__init__.py`` file) should be copied also
-to ``info.py`` file.
+To speed up the import time and minimize memory usage, numpy
+uses ``ppimport`` hooks to transparently postpone importing large modules,
+which might not be used during the Scipy session. In order to
+have access to the documentation of all Scipy packages, including 
+postponed packages, the docstring from ``info.py`` is imported
+into ``__init__.py``.
 
-So, the header a typical ``__init__.py`` file is::
+The header of a typical ``__init__.py`` is::
 
   #
   # Package ... - ...
