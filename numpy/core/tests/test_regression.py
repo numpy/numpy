@@ -725,6 +725,13 @@ class TestRegression(NumpyTestCase):
         """Ticket #572"""
         N.lib.place(1,1,1)
 
+    def check_dot_negative_stride(self, level=rlevel):
+        """Ticket #588"""
+        x = N.array([[1,5,25,125.,625]])
+        y = N.array([[20.],[160.],[640.],[1280.],[1024.]])
+        z = y[::-1].copy()
+        y2 = y[::-1]
+        assert_equal(N.dot(x,z),N.dot(x,y2))
 
 if __name__ == "__main__":
     NumpyTest().run()

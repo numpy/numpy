@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
-           'copy', 'iterable', #'base_repr', 'binary_repr',
+           'copy', 'iterable', 
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
            'unique', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
