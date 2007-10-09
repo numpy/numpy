@@ -46,12 +46,14 @@ def dist2sconscc(compiler):
 
 def get_compiler_executable(compiler):
     """For any give CCompiler instance, this gives us the name of C compiler
-    (the actual executable."""
+    (the actual executable)."""
     # Geez, why does distutils has no common way to get the compiler name...
     if compiler.compiler_type == 'msvc':
         # this is harcoded in distutils... A bit cleaner way would be to
         # initialize the compiler instance and then get compiler.cc, but this
         # may be costly: we really just want a string.
+        # XXX: we need to initialize the compiler anyway, so do not use
+        # hardcoded string
         #compiler.initialize()
         #print compiler.cc
         return 'cl.exe' 
@@ -76,6 +78,9 @@ def protect_path(path):
     return '"' + path + '"'
 
 class scons(old_build_ext):
+    # XXX: I really do not like the way distutils add attributes "on the fly".
+    # We should eally avoid that and remove all the code which does it before
+    # release.
     description = "Scons builder"
     #user_options = []
     user_options = [('fcompiler=', None, "specify the Fortran compiler type"),
@@ -90,6 +95,8 @@ class scons(old_build_ext):
         if self.distribution.has_scons_scripts():
             print "Got it: scons scripts are %s" % self.distribution.scons_scripts
             self.scons_scripts = self.distribution.scons_scripts
+        else:
+            self.scons_scripts = []
 
         # Try to get the same compiler than the ones used by distutils: this is
         # non trivial because distutils and scons have totally different
@@ -111,16 +118,18 @@ class scons(old_build_ext):
         if hasattr(self.compiler, 'initialize'):
             self.compiler.initialize()
 		
-        #print "++++++++++++++++++++++++++++++++++++++++"
-        #print "self.compiler is %s, this gives us scons tool %s" % (compiler_type, 
-        #                                                 dist2sconscc(self.compiler))
-        #print get_tool_path(self.compiler)
-        #print "++++++++++++++++++++++++++++++++++++++++"
+        # XXX: debug, remove
+        if self.scons_scripts:
+            #print "++++++++++++++++++++++++++++++++++++++++"
+            #print "self.compiler is %s, this gives us scons tool %s" % (compiler_type, 
+            #                                                 dist2sconscc(self.compiler))
+            #print get_tool_path(self.compiler)
+            #print "++++++++++++++++++++++++++++++++++++++++"
 
-        print "++++++++++++++++++++++++++++++++++++++++"
-        print get_scons_local_path()
-        print get_python_exec_invoc()
-        print "++++++++++++++++++++++++++++++++++++++++"
+            print "++++++++++++++++++++++++++++++++++++++++"
+            print get_scons_local_path()
+            print get_python_exec_invoc()
+            print "++++++++++++++++++++++++++++++++++++++++"
 
     def run(self):
         # XXX: when a scons script is missing, scons only prints warnings, and
