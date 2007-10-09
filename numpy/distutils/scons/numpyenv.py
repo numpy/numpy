@@ -1,4 +1,5 @@
 # Last Changed: .
+import os.path
 from os.path import join as pjoin
 import sys
 
@@ -99,6 +100,10 @@ def GetNumpyEnvironment(args):
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)
 
+    try:
+        env['ENV']['HOME'] = os.environ['HOME']
+    except KeyError:
+        pass
     #print env.Dump()
     #print Environment().Dump('TOOLS')
     # Adding custom builder
