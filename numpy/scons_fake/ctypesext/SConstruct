@@ -3,15 +3,7 @@ from numpy.distutils.scons import GetNumpyEnvironment, NumpyCheckLib
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
-config = env.Configure(custom_tests = {'NumpyCheckLib' : NumpyCheckLib})
-config.CheckHeader('stdio.h')
-config.CheckLib('c', 'printf')
-config.NumpyCheckLib(libs = 'sndfile', symbols = 'sf_open', section = 'sndfile')
-config.Finish()
-
-source = ['foo.c']
 import sys
 if sys.platform == 'win32':
     env.AppendUnique(CPPDEFINES = 'WIN32')
-env.NumpyCtypes('foo', source)
-env.NumpyPythonExtension('spam', 'hellomodule.c')
+env.NumpyCtypes('foo', source = ['foo.c'])
