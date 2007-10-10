@@ -87,6 +87,7 @@ def GetNumpyEnvironment(args):
                     t(env) 
                 else:
                     if is_cc_suncc(pjoin(env['cc_opt_path'], env['cc_opt'])):
+                        print "++ overwriting cc to suncc ++"
                         env['cc_opt'] == 'suncc'
                     # XXX: what is the right way to add one directory in the
                     # PATH ? (may not work on windows).
