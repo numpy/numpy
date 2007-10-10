@@ -26,21 +26,21 @@ DEF_FORTRAN_COMPILERS, DEF_ARS, DEF_OTHER_TOOLS = tool_list(pyplat2sconsplat())
 def is_cc_suncc(fullpath):
     """Return true if the compiler is suncc."""
     # I wish there was a better way: we launch suncc -V, read the output, and
-    # returns true if this succeeds and Sun is found in the output.
+    # returns true if Sun is found in the output. We cannot check the status code, because
     
-    print "Testing suncc..."
     import os
     import re
-    suncc = re.compile('[Ss][Uu][Nn]')
+    suncc = re.compile('Sun C')
     # Redirect stderr to stdout
-    cmd = fullpath + ' -V 2>1'
+    cmd = fullpath + ' -V 2>&1'
+    print "Testing suncc with command %s..." % cmd
     out = os.popen(cmd)
     cnt = out.read()
     print "content is %s" % cnt
     st = out.close()
     print "st is %d" % st
 
-    return st == 0 and suncc.search(cnt)
+    return suncc.search(cnt)
 
 def GetNumpyOptions(args):
     """Call this with args=ARGUMENTS to take into account command line args."""

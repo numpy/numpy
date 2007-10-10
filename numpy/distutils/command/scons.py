@@ -114,7 +114,7 @@ class scons(old_build_ext):
                                      force=self.force)
         self.compiler.customize(self.distribution)
 		
-		# This initialization seems necessary, sometimes, for find_executable to work...
+	# This initialization seems necessary, sometimes, for find_executable to work...
         if hasattr(self.compiler, 'initialize'):
             self.compiler.initialize()
 		
@@ -140,8 +140,6 @@ class scons(old_build_ext):
         # there is a size limitation ? What is the standard solution in thise
         # case ?
 
-        # XXX: does this work everywhere in all situations ? This assumes
-        # scons.py is executable.
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for i in self.scons_scripts:
@@ -150,7 +148,6 @@ class scons(old_build_ext):
             cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib, pdirname(i)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
             cmd += ' cc_opt_path=%s ' % protect_path(get_tool_path(self.compiler))
-            print cmd
             st = os.system(cmd)
             if st:
                 print "status is %d" % st
