@@ -14,9 +14,11 @@ from libinfo import get_config
 from extension_scons import PythonExtension
 
 def pyplat2sconsplat():
-    # XXX: should see how env['PLATFORM'] is defined
+    # XXX: should see how env['PLATFORM'] is defined, make this a dictionary 
     if sys.platform[:5] == 'linux':
         return 'posix'
+    elif sys.platform[:5] == 'sunos':
+        return 'sunos'
     else:
         return sys.platform
 
@@ -124,7 +126,6 @@ def GetNumpyEnvironment(args):
         env['ENV']['HOME'] = os.environ['HOME']
     except KeyError:
         pass
-    print env.Dump('TOOLS')
     #print Environment().Dump('TOOLS')
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
