@@ -27,6 +27,8 @@ def is_cc_suncc(fullpath):
     """Return true if the compiler is suncc."""
     # I wish there was a better way: we launch suncc -V, read the output, and
     # returns true if this succeeds and Sun is found in the output.
+    
+    print "Testing suncc..."
     import os
     import re
     suncc = re.compile('[Ss][Uu][Nn]')
@@ -34,7 +36,9 @@ def is_cc_suncc(fullpath):
     cmd = fullpath + ' -V 2>1'
     out = os.popen(cmd)
     cnt = out.read()
+    print "content is %s" % cnt
     st = out.close()
+    print "st is %d" % st
 
     return st == 0 and suncc.search(cnt)
 
