@@ -36,7 +36,7 @@ def is_cc_suncc(fullpath):
     cnt = out.read()
     st = out.close()
 
-    return not(st) and suncc.search(cnt)
+    return st == 0 and suncc.search(cnt)
 
 def GetNumpyOptions(args):
     """Call this with args=ARGUMENTS to take into account command line args."""
