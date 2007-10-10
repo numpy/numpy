@@ -23,6 +23,21 @@ def pyplat2sconsplat():
 DEF_LINKERS, DEF_C_COMPILERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, \
 DEF_FORTRAN_COMPILERS, DEF_ARS, DEF_OTHER_TOOLS = tool_list(pyplat2sconsplat())
 
+def is_cc_suncc(fullpath):
+    """Return true if the compiler is suncc."""
+    # I wish there was a better way: we launch suncc -V, read the output, and
+    # returns true if this succeeds and Sun is found in the output.
+    import os
+    import re
+    suncc = re.compile('[Ss][Uu][Nn]')
+    # Redirect stderr to stdout
+    cmd = fullpath + ' -V 2>1'
+    out = os.popen(cmd)
+    cnt = out.read()
+    st = out.close()
+
+    return not(st) and suncc.search(cnt)
+
 def GetNumpyOptions(args):
     """Call this with args=ARGUMENTS to take into account command line args."""
     opts = Options(None, args)
@@ -71,6 +86,8 @@ def GetNumpyEnvironment(args):
                              topdir = os.path.split(env['cc_opt_path'])[0])
                     t(env) 
                 else:
+                    if is_cc_suncc(pjoin(env['cc_opt_path'], env['cc_opt'])):
+                        env['cc_opt'] == 'suncc'
                     # XXX: what is the right way to add one directory in the
                     # PATH ? (may not work on windows).
                     t = Tool(env['cc_opt'])
