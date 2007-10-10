@@ -33,9 +33,14 @@ def PythonExtension(env, target, source, *args, **kw):
             # XXX: We add the path where to find python2.5.lib (or any other
             # version, of course). This seems to be necessary for MS compilers.
             env.AppendUnique(LIBPATH = get_pythonlib_dir())
+    elif sys.platform == "darwin":
+        pyext = '.so' #env['LDMODULESUFFIX']
+	print pyext
+	# XXX: When those should be used ? (which version of Mac OS X ?)
+	LINKFLAGS += ' -undefined dynamic_lookup '
     else:
         pyext = env['SHLIBSUFFIX']
-    wrap = env.SharedLibrary(target, source, SHLIBPREFIX = '', 
-                             SHLIBSUFFIX = pyext, LINKFLAGS = LINKFLAGS, 
+    wrap = env.LoadableModule(target, source, SHLIBPREFIX = '', 
+                             LDMODULESUFFIX = pyext, LINKFLAGS = LINKFLAGS, 
                              CPPPATH = CPPPATH, *args, **kw)
     return wrap
