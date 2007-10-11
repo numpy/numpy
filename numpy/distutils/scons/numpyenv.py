@@ -3,6 +3,8 @@ import os.path
 from os.path import join as pjoin
 import sys
 
+from distutils.sysconfig import get_config_vars
+
 from SCons.Options import Options
 from SCons.Environment import Environment
 from SCons.Tool import Tool, FindTool, FindAllTools
@@ -65,9 +67,13 @@ def GetNumpyEnvironment(args):
     # XXX: I would prefer subclassing Environment, because we really expect
     # some different behaviour than just Environment instances...
     opts = GetNumpyOptions(args)
+
+    # Get the python extension suffix
+    pyextsuffix = get_config_vars('SO')
+
     # We set tools to an empty list, to be sure that the custom options are
     # given first. We have to 
-    env = Environment(options = opts, tools = [])
+    env = Environment(options = opts, tools = [], PYEXTSUFFIX = pyextsuffix)
 
     # Setting dirs according to command line options
     env.AppendUnique(build_dir = pjoin(env['build_prefix']))
@@ -126,7 +132,7 @@ def GetNumpyEnvironment(args):
         env['ENV']['HOME'] = os.environ['HOME']
     except KeyError:
         pass
-    #print Environment().Dump('TOOLS')
+    #print Environment().Dump()
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
     env['BUILDERS']['NumpyCtypes'] = NumpyCtypes

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Oct 09 04:00 PM 2007 J
+# Last Change: Thu Oct 11 12:00 PM 2007 J
 
 # Module for support to build python extension. scons specific code goes here.
 import sys
@@ -18,14 +18,14 @@ def PythonExtension(env, target, source, *args, **kw):
         LINKFLAGS = deepcopy(env['LINKFLAGS'])
     else:
         LINKFLAGS = []
+
     if env.has_key('CPPPPATH'):
         CPPPATH = deepcopy(env['CPPPATH'])
     else:
         CPPPATH = []
+
     CPPPATH.append(get_python_inc())
     if sys.platform == 'win32': 
-        # XXX: pyext should definitely not be set here
-        pyext = '.pyd'
         if built_with_mstools(env):
             # # XXX is the export necessary ? (this seems to work wo)
             # LINKFLAGS += " /EXPORT:init%s " % target[0]
@@ -34,13 +34,11 @@ def PythonExtension(env, target, source, *args, **kw):
             # version, of course). This seems to be necessary for MS compilers.
             env.AppendUnique(LIBPATH = get_pythonlib_dir())
     elif sys.platform == "darwin":
-        pyext = '.so' #env['LDMODULESUFFIX']
-	print pyext
-	# XXX: When those should be used ? (which version of Mac OS X ?)
-	LINKFLAGS += ' -undefined dynamic_lookup '
-    else:
-        pyext = env['SHLIBSUFFIX']
+        # XXX: When those should be used ? (which version of Mac OS X ?)
+        LINKFLAGS += ' -undefined dynamic_lookup '
+
+    # Use LoadableModule because of Mac OS X
     wrap = env.LoadableModule(target, source, SHLIBPREFIX = '', 
-                             LDMODULESUFFIX = pyext, LINKFLAGS = LINKFLAGS, 
+                             LDMODULESUFFIX = "$PYEXTSUFFIX", LINKFLAGS = LINKFLAGS, 
                              CPPPATH = CPPPATH, *args, **kw)
     return wrap
