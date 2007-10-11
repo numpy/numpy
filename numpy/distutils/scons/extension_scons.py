@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 11 12:00 PM 2007 J
+# Last Change: Thu Oct 11 03:00 PM 2007 J
 
 # Module for support to build python extension. scons specific code goes here.
 import sys
@@ -27,9 +27,6 @@ def PythonExtension(env, target, source, *args, **kw):
     CPPPATH.append(get_python_inc())
     if sys.platform == 'win32': 
         if built_with_mstools(env):
-            # # XXX is the export necessary ? (this seems to work wo)
-            # LINKFLAGS += " /EXPORT:init%s " % target[0]
-
             # XXX: We add the path where to find python2.5.lib (or any other
             # version, of course). This seems to be necessary for MS compilers.
             env.AppendUnique(LIBPATH = get_pythonlib_dir())
@@ -39,6 +36,6 @@ def PythonExtension(env, target, source, *args, **kw):
 
     # Use LoadableModule because of Mac OS X
     wrap = env.LoadableModule(target, source, SHLIBPREFIX = '', 
-                             LDMODULESUFFIX = "$PYEXTSUFFIX", LINKFLAGS = LINKFLAGS, 
+                             LDMODULESUFFIX = '$PYEXTSUFFIX', LINKFLAGS = LINKFLAGS, 
                              CPPPATH = CPPPATH, *args, **kw)
     return wrap

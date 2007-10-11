@@ -69,6 +69,9 @@ def GetNumpyEnvironment(args):
     opts = GetNumpyOptions(args)
 
     # Get the python extension suffix
+    # XXX this should be defined somewhere else. Is there a way to reliably get
+    # all the necessary informations specific to python extensions (linkflags,
+    # etc...) dynamically ?
     pyextsuffix = get_config_vars('SO')
 
     # We set tools to an empty list, to be sure that the custom options are

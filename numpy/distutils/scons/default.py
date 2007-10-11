@@ -1,3 +1,8 @@
+#! /usr/bin/env python
+# Last Change: Thu Oct 11 04:00 PM 2007 J
+
+# This is a copy of scons/Tools/__init__.py, because scons does not offer any
+# public api for this
 def tool_list(platform):
     """platform should be the value returned by enbv['PLATFORM'], not
     sys.platform !!!!."""
