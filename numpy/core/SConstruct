@@ -1,0 +1,11 @@
+# vim:syntax=python
+from numpy.distutils.scons import GetNumpyEnvironment
+
+# Function to check:
+mfuncs = ['expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
+          'isnan', 'isinf', 'rint']
+env = GetNumpyEnvironment(ARGUMENTS)
+config = env.NumpyConfigure(config_h = 'sconfig.h')
+for i in mfuncs:
+    config.CheckFunc(i)
+config.Finish()

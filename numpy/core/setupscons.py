@@ -33,6 +33,7 @@ def configuration(parent_package='',top_path=None):
                                      ('.py','U',1))
 
     header_dir = 'include/numpy' # this is relative to config.path_in_package
+    config.add_sconscript('SConstruct')
 
     def generate_config_h(ext, build_dir):
         target = join(build_dir,'config.h')
