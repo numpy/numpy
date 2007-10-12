@@ -128,7 +128,6 @@ class scons(old_build_ext):
             # XXX: This is inefficient... (use join instead)
             cmd = scons_exec + " -Q -f " + i + ' -I. '
             cmd += ' src_dir="%s" ' % pdirname(i)
-            #cmd += ' pkg_name="%s" ' % pdirname(i)
             cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib,
                                                                 pdirname(i)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
