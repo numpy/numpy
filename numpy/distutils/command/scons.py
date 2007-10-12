@@ -76,6 +76,7 @@ class scons(old_build_ext):
     # XXX: I really do not like the way distutils add attributes "on the fly".
     # We should eally avoid that and remove all the code which does it before
     # release.
+    # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
     #user_options = []
     user_options = [('fcompiler=', None, "specify the Fortran compiler type"),
@@ -124,12 +125,16 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for i in self.scons_scripts:
+            # XXX: This is inefficient... (use join instead)
             cmd = scons_exec + " -Q -f " + i + ' -I. '
             cmd += ' src_dir="%s" ' % pdirname(i)
-            cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib, pdirname(i)))
+            #cmd += ' pkg_name="%s" ' % pdirname(i)
+            cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib,
+                                                                pdirname(i)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
             cmd += ' cc_opt_path=%s ' % protect_path(get_tool_path(self.compiler))
             st = os.system(cmd)
             if st:
                 print "status is %d" % st
-                raise DistutilsExecError("Error while executing scons command %s (see above)" % cmd)
+                raise DistutilsExecError("Error while executing scons command "\
+                                         "%s (see above)" % cmd)

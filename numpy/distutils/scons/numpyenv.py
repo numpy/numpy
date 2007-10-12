@@ -79,7 +79,7 @@ def GetNumpyEnvironment(args):
     env = Environment(options = opts, tools = [], PYEXTSUFFIX = pyextsuffix)
 
     # Setting dirs according to command line options
-    env.AppendUnique(build_dir = pjoin(env['build_prefix']))
+    env.AppendUnique(build_dir = pjoin(env['build_prefix'], env['src_dir']))
     env.AppendUnique(distutils_installdir = pjoin(env['distutils_libdir'], 
                                                   env['pkg_name']))
 
