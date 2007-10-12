@@ -1,11 +1,54 @@
+# Last Change: Fri Oct 12 07:00 PM 2007 J
 # vim:syntax=python
+import os
 from numpy.distutils.scons import GetNumpyEnvironment
 
-# Function to check:
-mfuncs = ['expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
-          'isnan', 'isinf', 'rint']
 env = GetNumpyEnvironment(ARGUMENTS)
-config = env.NumpyConfigure(config_h = 'sconfig.h')
-for i in mfuncs:
-    config.CheckFunc(i)
+config = env.NumpyConfigure()
+
+#--------------------------------
+# Checking SMP and thread options
+#--------------------------------
+# TODO
+
+#----------------------
+# Checking signal stuff
+#----------------------
+# TODO
+
+#------------------------------------------
+# Checking the mathlib and its capabilities
+#------------------------------------------
+# Function to check:
+mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
+    ('expf', 'HAVE_FLOAT_FUNCS'),
+    ('log1p', 'HAVE_LOG1P'),
+    ('expm1', 'HAVE_EXPM1'),
+    ('asinh', 'HAVE_INVERSE_HYPERBOLIC'),
+    ('atanhf', 'HAVE_INVERSE_HYPERBOLIC_FLOAT'),
+    ('atanhl', 'HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE'),
+    ('isnan', 'HAVE_ISNAN'),
+    ('isinf', 'HAVE_ISINF'),
+    ('rint', 'HAVE_RINT'),
+    ]
+
+# TODO: getting the math lib automatically ? Having a list ?
+mathlib = os.environ.get('MATHLIB')
+if mathlib: 
+    # XXX: prepend it ?
+    mlib = mathlib
+else:
+    mlib = 'm'
+for f in mfuncs:
+    st = config.CheckLib(mlib, f[0])
+    if st:
+        env.Append(CPPDEFINES = {f[1]: 1})
+
+#--------------
+# Checking Blas
+#--------------
+# TODO
+
 config.Finish()
+
+#print env.Dump('CPPDEFINES')

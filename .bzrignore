@@ -1,5 +1,2 @@
-.sconf_temp
-.sconsign.dblite
 build
-config.log
 numpy/distutils/scons-local/scons-local-0.97.0d20070918.tar.gz

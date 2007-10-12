@@ -126,7 +126,7 @@ class scons(old_build_ext):
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for i in self.scons_scripts:
             # XXX: This is inefficient... (use join instead)
-            cmd = scons_exec + " -Q -f " + i + ' -I. '
+            cmd = scons_exec + " -f " + i + ' -I. '
             cmd += ' src_dir="%s" ' % pdirname(i)
             cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib,
                                                                 pdirname(i)))
