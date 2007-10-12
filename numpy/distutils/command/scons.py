@@ -22,12 +22,7 @@ def get_python_exec_invoc():
     # take into accound os.environ. This actually also works for my way of
     # using "local python", using the alias facility of bash.
     import sys
-    #print dir(sys)
     return sys.executable
-    #try:
-    #    pypath = os.environ['PYTHONPATH']
-    #except KeyError:
-    #    pypath = None
 
 def dist2sconscc(compiler):
     """This converts the name passed to distutils to scons name convention (C
@@ -74,7 +69,7 @@ def protect_path(path):
     """Convert path (given as a string) to something the shell will have no
     problem to understand (space, etc... problems)."""
     # XXX: to this correctly, this is totally bogus for now (does not check for
-    # already quoted path, for example.
+    # already quoted path, for example).
     return '"' + path + '"'
 
 class scons(old_build_ext):
@@ -93,7 +88,7 @@ class scons(old_build_ext):
     def finalize_options(self):
         old_build_ext.finalize_options(self)
         if self.distribution.has_scons_scripts():
-            print "Got it: scons scripts are %s" % self.distribution.scons_scripts
+            #print "Got it: scons scripts are %s" % self.distribution.scons_scripts
             self.scons_scripts = self.distribution.scons_scripts
         else:
             self.scons_scripts = []
@@ -106,7 +101,6 @@ class scons(old_build_ext):
         # full path, and add the path to the env['PATH'] variable in env
         # instance (this is done in numpy.distutils.scons module).
         compiler_type = self.compiler
-        print compiler_type
         from distutils.ccompiler import new_compiler
         self.compiler = new_compiler(compiler=compiler_type,
                                      verbose=self.verbose,
@@ -114,23 +108,10 @@ class scons(old_build_ext):
                                      force=self.force)
         self.compiler.customize(self.distribution)
 		
-	# This initialization seems necessary, sometimes, for find_executable to work...
+        # This initialization seems necessary, sometimes, for find_executable to work...
         if hasattr(self.compiler, 'initialize'):
             self.compiler.initialize()
 		
-        # XXX: debug, remove
-        if self.scons_scripts:
-            #print "++++++++++++++++++++++++++++++++++++++++"
-            #print "self.compiler is %s, this gives us scons tool %s" % (compiler_type, 
-            #                                                 dist2sconscc(self.compiler))
-            #print get_tool_path(self.compiler)
-            #print "++++++++++++++++++++++++++++++++++++++++"
-
-            print "++++++++++++++++++++++++++++++++++++++++"
-            print get_scons_local_path()
-            print get_python_exec_invoc()
-            print "++++++++++++++++++++++++++++++++++++++++"
-
     def run(self):
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
@@ -143,7 +124,7 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for i in self.scons_scripts:
-            cmd = scons_exec + " -f " + i + ' -I. '
+            cmd = scons_exec + " -Q -f " + i + ' -I. '
             cmd += ' src_dir="%s" ' % pdirname(i)
             cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib, pdirname(i)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
