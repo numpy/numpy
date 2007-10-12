@@ -1,6 +1,6 @@
 # Last Changed: .
 import os.path
-from os.path import join as pjoin
+from os.path import join as pjoin, dirname as pdirname
 import sys
 
 from distutils.sysconfig import get_config_vars
@@ -117,6 +117,24 @@ def GetNumpyEnvironment(args):
     else:
         t = Tool(FindTool(DEF_C_COMPILERS))
         t(env)
+
+    # XXX: Really, we should use our own subclass of Environment, instead of
+    # adding Numpy* functions !
+
+    # Put config code in separate dir for each subpackage
+    from utils import curry
+    NumpyConfigure = curry(env.Configure, conf_dir = pjoin(env['build_dir'], '.sconf'))
+    env.NumpyConfigure = NumpyConfigure
+    # XXX: Huge, ungly hack ! SConsign needs an absolute path or a path
+    # relative to where the SConstruct file is. We have to find the path of
+    # the build dir relative to the src_dir: we add n .., where n is the number
+    # of occureant of the path separator in the src dir.
+    def get_build_relative_src(srcdir, builddir):
+        n = srcdir.count(os.sep) + 1
+        return pjoin(os.sep.join([r'..' for i in range(n)]), builddir)
+    env.SConsignFile(pjoin(get_build_relative_src(env['src_dir'], 
+                                                  env['build_dir']),
+                           '.sconsign.dblite'))
 
     # ========================================================================
     # Adding default tools for the one we do not customize: mingw is special
