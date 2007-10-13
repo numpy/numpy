@@ -19,7 +19,7 @@ def PythonExtension(env, target, source, *args, **kw):
     else:
         LINKFLAGS = []
 
-    if env.has_key('CPPPPATH'):
+    if env.has_key('CPPPATH'):
         CPPPATH = deepcopy(env['CPPPATH'])
     else:
         CPPPATH = []
