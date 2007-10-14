@@ -1,15 +1,44 @@
 # Last Change: Fri Oct 12 07:00 PM 2007 J
 # vim:syntax=python
 import os
+from os.path import join as pjoin
+import sys
+
 from numpy.distutils.scons import GetNumpyEnvironment
 
 env = GetNumpyEnvironment(ARGUMENTS)
-config = env.NumpyConfigure()
 
 #--------------------------------
 # Checking SMP and thread options
 #--------------------------------
-# TODO
+# Python 2.3 causes a segfault when
+#  trying to re-acquire the thread-state
+#  which is done in error-handling
+#  ufunc code.  NPY_ALLOW_C_API and friends
+#  cause the segfault. So, we disable threading
+#  for now.
+if sys.version[:5] < '2.4.2':
+    nosmp = 1
+else:
+    # Perhaps a fancier check is in order here.
+    #  so that threads are only enabled if there
+    #  are actually multiple CPUS? -- but
+    #  threaded code can be nice even on a single
+    #  CPU so that long-calculating code doesn't
+    #  block.
+    try:
+        nosmp = os.environ['NPY_NOSMP']
+        nosmp = 1
+    except KeyError:
+        nosmp = 0
+
+config = env.NumpyConfigure()
+
+# TODO: check python extension can be built (in root or here ?)
+
+#--------------------------------
+# Checking configuration
+#--------------------------------
 
 #----------------------
 # Checking signal stuff
@@ -51,4 +80,26 @@ for f in mfuncs:
 
 config.Finish()
 
-#print env.Dump('CPPDEFINES')
+#--------------------------
+# Generating multiarray API
+#--------------------------
+# TODO:
+from scons_support import do_generate_api, generate_api_emitter
+
+bld = Builder(action = do_generate_api, emitter = generate_api_emitter)
+env.Append(BUILDERS = {'GenerateApi' : bld})
+from os.path import join as pjoin
+multiarray_api = env.GenerateApi(pjoin(env['build_dir'], '__multiarray_api'), 
+    [pjoin(env['src_dir'], 'code_generators', 'array_api_order.txt'),
+    pjoin(env['src_dir'], 'code_generators', 'multiarray_api_order.txt')])
+
+config_header = env.Command(pjoin(env['build_dir'], 'config.h'), 
+                            pjoin(env['src_dir'], 'config.h.in'), 'cp $SOURCE $TARGET')
+# Build multiarray
+env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
+multiarray_src = [
+    pjoin('src','scalartypes.inc.src'),
+    pjoin('src','arraytypes.inc.src'),
+    pjoin('src', 'multiarraymodule.c'),
+]
+#multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
