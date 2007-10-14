@@ -5,7 +5,7 @@ from os.path import join as pjoin
 import sys
 
 from numpy.distutils.scons import get_python_inc
-from numpy.distutils.scons import GetNumpyEnvironment, CheckSizeof
+from numpy.distutils.scons import GetNumpyEnvironment, CheckTypeSize
 
 import SCons.Util
 
@@ -19,7 +19,7 @@ def generate_config_header(target, source, env):
         if value == 1:
             return "#define %s\n\n" % define
         elif value == 0:
-            return "#under %s\n\n" % define
+            return "#undef %s\n\n" % define
         elif SCons.Util.is_String(value):
             return "#define %s %s\n\n" % (define, value)
     t.writelines([write_symbol(i[0], i[1]) for i in sym])
@@ -65,7 +65,7 @@ else:
     config_sym.append(('NPY_ALLOW_THREADS', '1'))
 
 env.Append(CPPPATH = [get_python_inc()])
-config = env.NumpyConfigure(custom_tests = {'CheckSizeof' : CheckSizeof})
+config = env.NumpyConfigure(custom_tests = {'CheckTypeSize' : CheckTypeSize})
 
 # TODO: check python extension can be built (in root or here ?)
 
@@ -75,7 +75,7 @@ config = env.NumpyConfigure(custom_tests = {'CheckSizeof' : CheckSizeof})
 def check_type(type, include = None):
     # XXX: handle space in type string
     # Implement type size info in CheckSizeof
-    if config.CheckSizeof(type, include = include):
+    if config.CheckTypeSize(type, includes = include):
         config_sym.append(('SIZEOF_%s' % type.upper(), 1))
     else:
         config_sym.append(('SIZEOF_%s' % type.upper(), 0))
