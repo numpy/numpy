@@ -6,6 +6,33 @@ import sys
 
 from numpy.distutils.scons import GetNumpyEnvironment
 
+import SCons.Util
+
+def generate_config_header(target, source, env):
+    t = open(str(target[0]), 'w')
+    if not env.has_key('config_h_gen'):
+        # XXX
+        assert 0 == 1
+    sym = env['config_h_gen']
+    def write_symbol(define, value):
+        if value == 1:
+            return "#define %s\n\n" % define
+        elif value == 0:
+            return "#under %s\n\n" % define
+        elif SCons.Util.is_String(value):
+            return "#define %s %s\n\n" % (define, value)
+    t.writelines([write_symbol(i[0], i[1]) for i in sym])
+    t.write('\n')
+    t.close()
+
+    return 0
+
+# Convention: list of tuples (definition, value). value:
+# - 0: #undef definition
+# - 1: #define definition
+# - string: #define definition value
+config_sym = []
+
 env = GetNumpyEnvironment(ARGUMENTS)
 
 #--------------------------------
@@ -31,14 +58,24 @@ else:
         nosmp = 1
     except KeyError:
         nosmp = 0
+if nosmp:
+    config_sym.append(('NPY_ALLOW_THREADS', '0'))
+else:
+    config_sym.append(('NPY_ALLOW_THREADS', '1'))
 
 config = env.NumpyConfigure()
 
 # TODO: check python extension can be built (in root or here ?)
 
-#--------------------------------
+#---------------
+# Checking Types
+#---------------
+st = config.CheckType('short')
+print st
+
+#-----------------------
 # Checking configuration
-#--------------------------------
+#-----------------------
 
 #----------------------
 # Checking signal stuff
@@ -68,10 +105,13 @@ if mathlib:
     mlib = mathlib
 else:
     mlib = 'm'
+config_sym.append(('MATHLIB', str(mlib)))
 for f in mfuncs:
     st = config.CheckLib(mlib, f[0])
     if st:
-        env.Append(CPPDEFINES = {f[1]: 1})
+        config_sym.append((f[1], 1))
+    else:
+        config_sym.append((f[1], 0))
 
 #--------------
 # Checking Blas
@@ -83,9 +123,9 @@ config.Finish()
 #--------------------------
 # Generating multiarray API
 #--------------------------
-# TODO:
 from scons_support import do_generate_api, generate_api_emitter
 
+# XXX: put the builder in scons support lib.
 bld = Builder(action = do_generate_api, emitter = generate_api_emitter)
 env.Append(BUILDERS = {'GenerateApi' : bld})
 from os.path import join as pjoin
@@ -93,13 +133,41 @@ multiarray_api = env.GenerateApi(pjoin(env['build_dir'], '__multiarray_api'),
     [pjoin(env['src_dir'], 'code_generators', 'array_api_order.txt'),
     pjoin(env['src_dir'], 'code_generators', 'multiarray_api_order.txt')])
 
-config_header = env.Command(pjoin(env['build_dir'], 'config.h'), 
-                            pjoin(env['src_dir'], 'config.h.in'), 'cp $SOURCE $TARGET')
+# Take into account the change in config_sym (using emitter, see SubstDic
+# example in scons wiki) ?
+env['config_h_gen'] = config_sym
+bld = Builder(action = generate_config_header)
+env.Append(BUILDERS = {'GenerateConfigHeader' : bld})
+config_header = env.GenerateConfigHeader(pjoin(env['build_dir'], 'config.h'), [])
+
+# Builder to generate .inc from .inc.src
+from numpy.distutils.from_template import process_file
+def do_generate_from_template(targetfile, sourcefile, env):
+    t = open(targetfile, 'w')
+    string = process_file(sourcefile)
+    t.close()
+    return 0
+
+def generate_from_template(target, source, env):
+    for t, s in zip(target, source):
+        do_generate_from_template(str(t), str(s), env)
+
+def generate_from_template_emitter(target, source, env):
+    base, ext = SCons.Util.splitext(str(target[0]))
+    t = base + '.inc'
+    return ([t], source)
+    
+bld = Builder(action = generate_from_template, emitter = generate_from_template_emitter)
+env.Append(BUILDERS = {'FromTemplate' : bld})
+
+scalartypes_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'scalartypes'), 
+                                   pjoin(env['src_dir'], 'src', 'scalartypes.inc.src'))
+arraytypes_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'arraytypes'), 
+                                   pjoin(env['src_dir'], 'src', 'arraytypes.inc.src'))
+
 # Build multiarray
 env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
 multiarray_src = [
-    pjoin('src','scalartypes.inc.src'),
-    pjoin('src','arraytypes.inc.src'),
     pjoin('src', 'multiarraymodule.c'),
 ]
 #multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
