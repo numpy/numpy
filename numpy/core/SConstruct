@@ -113,6 +113,7 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
     ]
 
 # TODO: getting the math lib automatically ? Having a list ?
+# TODO: test for broken m lib
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
     # XXX: prepend it ?
@@ -183,6 +184,8 @@ scalartypes_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'scalartypes')
 arraytypes_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'arraytypes'), 
                                    pjoin(env['src_dir'], 'src', 'arraytypes.inc.src'))
 
+# XXX
+env.Append(CCFLAGS = "-W -Wall -Wextra -O2")
 # Build multiarray
 env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
 multiarray_src = [
@@ -198,5 +201,5 @@ sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
 # Build umath module
 umathmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'umathmodule'), 
                                    pjoin(env['src_dir'], 'src', 'umathmodule.c.src'))
-sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
+#sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
 
