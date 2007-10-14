@@ -1,7 +1,7 @@
 # Last Change: Fri Oct 12 07:00 PM 2007 J
 # vim:syntax=python
 import os
-from os.path import join as pjoin
+from os.path import join as pjoin, basename as pbasename, dirname as pdirname
 import sys
 
 from numpy.distutils.scons import get_python_inc
@@ -73,15 +73,15 @@ config = env.NumpyConfigure(custom_tests = {'CheckTypeSize' : CheckTypeSize})
 # Checking Types
 #---------------
 def check_type(type, include = None):
-    # XXX: handle space in type string
-    # Implement type size info in CheckSizeof
-    if config.CheckTypeSize(type, includes = include):
-        config_sym.append(('SIZEOF_%s' % type.upper(), 1))
+    st = config.CheckTypeSize(type, includes = include)
+    type = type.replace(' ', '_')
+    if st:
+        config_sym.append(('SIZEOF_%s' % type.upper(), '%d' % st))
     else:
         config_sym.append(('SIZEOF_%s' % type.upper(), 0))
 check_type('short')
 check_type('int')
-check_type('long')
+#check_type('long')
 check_type('float')
 check_type('double')
 check_type('long double')
@@ -155,10 +155,14 @@ env.Append(BUILDERS = {'GenerateConfigHeader' : bld})
 config_header = env.GenerateConfigHeader(pjoin(env['build_dir'], 'config.h'), [])
 
 # Builder to generate .inc from .inc.src
-from numpy.distutils.from_template import process_file
+from numpy.distutils.conv_template import process_str
 def do_generate_from_template(targetfile, sourcefile, env):
     t = open(targetfile, 'w')
-    string = process_file(sourcefile)
+    s = open(sourcefile, 'r')
+    allstr = s.read()
+    s.close()
+    writestr = process_str(allstr)
+    t.write(writestr)
     t.close()
     return 0
 
@@ -167,8 +171,8 @@ def generate_from_template(target, source, env):
         do_generate_from_template(str(t), str(s), env)
 
 def generate_from_template_emitter(target, source, env):
-    base, ext = SCons.Util.splitext(str(target[0]))
-    t = base + '.inc'
+    base, ext = SCons.Util.splitext(pbasename(str(source[0])))
+    t = pjoin(pdirname(str(target[0])), base)
     return ([t], source)
     
 bld = Builder(action = generate_from_template, emitter = generate_from_template_emitter)
@@ -184,4 +188,15 @@ env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
 multiarray_src = [
     pjoin('src', 'multiarraymodule.c'),
 ]
-#multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
+multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
+
+# Build sort module
+sortmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', '_sortmodule'), 
+                                   pjoin(env['src_dir'], 'src', '_sortmodule.c.src'))
+sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
+
+# Build umath module
+umathmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'umathmodule'), 
+                                   pjoin(env['src_dir'], 'src', 'umathmodule.c.src'))
+sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
+
