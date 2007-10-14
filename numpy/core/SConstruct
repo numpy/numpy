@@ -4,7 +4,8 @@ import os
 from os.path import join as pjoin
 import sys
 
-from numpy.distutils.scons import GetNumpyEnvironment
+from numpy.distutils.scons import get_python_inc
+from numpy.distutils.scons import GetNumpyEnvironment, CheckSizeof
 
 import SCons.Util
 
@@ -63,15 +64,28 @@ if nosmp:
 else:
     config_sym.append(('NPY_ALLOW_THREADS', '1'))
 
-config = env.NumpyConfigure()
+env.Append(CPPPATH = [get_python_inc()])
+config = env.NumpyConfigure(custom_tests = {'CheckSizeof' : CheckSizeof})
 
 # TODO: check python extension can be built (in root or here ?)
 
 #---------------
 # Checking Types
 #---------------
-st = config.CheckType('short')
-print st
+def check_type(type, include = None):
+    # XXX: handle space in type string
+    # Implement type size info in CheckSizeof
+    if config.CheckSizeof(type, include = include):
+        config_sym.append(('SIZEOF_%s' % type.upper(), 1))
+    else:
+        config_sym.append(('SIZEOF_%s' % type.upper(), 0))
+check_type('short')
+check_type('int')
+check_type('long')
+check_type('float')
+check_type('double')
+check_type('long double')
+check_type('Py_intptr_t', include = ["Python.h"])
 
 #-----------------------
 # Checking configuration
