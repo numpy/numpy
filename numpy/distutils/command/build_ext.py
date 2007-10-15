@@ -62,9 +62,6 @@ class build_ext (old_build_ext):
         else:
             build_clib = None
 
-        # Make sure that scons based extensions are complete.
-        self.run_command('scons')
-
         # Not including C libraries to the list of
         # extension libraries automatically to prevent
         # bogus linking commands. Extensions must

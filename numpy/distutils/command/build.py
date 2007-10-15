@@ -32,3 +32,9 @@ class build(old_build):
         if build_scripts is None:
             self.build_scripts = os.path.join(self.build_base,
                                               'scripts' + plat_specifier)
+
+    def run(self):
+        # Make sure that scons based extensions are complete.
+        self.run_command('scons')
+
+        old_build.run()
