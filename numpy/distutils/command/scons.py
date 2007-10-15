@@ -131,8 +131,6 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for sconscript, pre_hook, post_hook in self.scons_scripts:
-            if post_hook:
-                post_hook()
             # XXX: This is inefficient... (use join instead)
             cmd = scons_exec + " -f " + sconscript + ' -I. '
             if self.jobs:
@@ -147,3 +145,5 @@ class scons(old_build_ext):
                 print "status is %d" % st
                 raise DistutilsExecError("Error while executing scons command "\
                                          "%s (see above)" % cmd)
+            if post_hook:
+                post_hook()
