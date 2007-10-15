@@ -1,5 +1,9 @@
-from code_generators.generate_array_api import types, h_template, c_template
-from code_generators.generate_ufunc_api import h_template, c_template
+from code_generators.generate_array_api import \
+        types, h_template as multiarray_h_template, \
+        c_template as multiarray_c_template
+from code_generators.generate_ufunc_api import \
+        h_template as ufunc_h_template, \
+        c_template as ufunc_c_template
 import code_generators.genapi as genapi
 
 import SCons.Errors
@@ -55,13 +59,13 @@ def do_generate_api(target, source, env):
 
     # Write to header
     fid = open(h_file, 'w')
-    s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
+    s = multiarray_h_template % ('\n'.join(module_list), '\n'.join(extension_list))
     fid.write(s)
     fid.close()
 
     # Write to c-code
     fid = open(c_file, 'w')
-    s = c_template % '\n'.join(init_list)
+    s = multiarray_c_template % '\n'.join(init_list)
     fid.write(s)
     fid.close()
 
@@ -126,13 +130,13 @@ def do_generate_ufunc_api(target, source, env):
 
     # Write to header
     fid = open(h_file, 'w')
-    s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
+    s = ufunc_h_template % ('\n'.join(module_list), '\n'.join(extension_list))
     fid.write(s)
     fid.close()
 
     # Write to c-code
     fid = open(c_file, 'w')
-    s = c_template % '\n'.join(init_list)
+    s = ufunc_c_template % '\n'.join(init_list)
     fid.write(s)
     fid.close()
 
