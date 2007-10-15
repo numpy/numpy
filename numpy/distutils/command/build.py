@@ -37,4 +37,4 @@ class build(old_build):
         # Make sure that scons based extensions are complete.
         self.run_command('scons')
 
-        old_build.run()
+        old_build.run(self)
