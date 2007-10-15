@@ -9,7 +9,9 @@ def configuration(parent_package='',top_path=None):
         if top_path is None:
             libs = get_mathlibs()
         else:
-            path = join(split(build_dir)[0],'core')
+            #path = join(split(build_dir)[0],'core')
+            # XXX
+            path = join(config.get_scons_build_dir(), 'numpy','core')
             libs = get_mathlibs(path)
         tc = testcode_wincrypt()
         if config_cmd.try_run(tc):
