@@ -32,7 +32,7 @@ def configuration(parent_package='',top_path=None):
         # between scons and distutils, and set the options at one single
         # location.
         h_file = join(scons_build_dir, local_dir, '__multiarray_api.h')
-        t_file = join(scons_build_dir, local_dir, '__multiarray_api.txt')
+        t_file = join(scons_build_dir, local_dir, 'multiarray_api.txt')
         config.add_data_files((header_dir, h_file),
                               (header_dir, t_file))
 
@@ -42,7 +42,7 @@ def configuration(parent_package='',top_path=None):
         # between scons and distutils, and set the options at one single
         # location.
         h_file = join(scons_build_dir, local_dir, '__ufunc_api.h')
-        t_file = join(scons_build_dir, local_dir, '__ufunc_api.txt')
+        t_file = join(scons_build_dir, local_dir, 'ufunc_api.txt')
         config.add_data_files((header_dir, h_file),
                               (header_dir, t_file))
 
@@ -76,16 +76,6 @@ def configuration(parent_package='',top_path=None):
     config.make_svn_version_py()
 
     return config
-
-def testcode_mathlib():
-    return """\
-/* check whether libm is broken */
-#include <math.h>
-int main(int argc, char *argv[])
-{
-  return exp(-720.) > 1.0;  /* typically an IEEE denormal */
-}
-"""
 
 if __name__=='__main__':
     from numpy.distutils.core import setup

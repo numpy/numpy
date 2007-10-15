@@ -1,8 +1,9 @@
-# Last Change: Mon Oct 15 05:00 PM 2007 J
+# Last Change: Mon Oct 15 07:00 PM 2007 J
 # vim:syntax=python
 import os
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
 import sys
+from copy import deepcopy
 
 from numpy.distutils.scons import get_python_inc
 from numpy.distutils.scons import GetNumpyEnvironment, CheckTypeSize
@@ -73,8 +74,37 @@ else:
 #else:
 #    config_sym.append(('NPY_ALLOW_THREADS', '1'))
 
+def CheckBrokenMathlib(context, mathlib):
+    src = """
+/* check whether libm is broken */
+#include <math.h>
+int main(int argc, char *argv[])
+{
+  return exp(-720.) > 1.0;  /* typically an IEEE denormal */
+}
+"""
+
+    try:
+        oldLIBS = deepcopy(context.env['LIBS'])
+    except:
+        oldLIBS = []
+
+    try:
+        context.Message("Checking if math lib %s is broken ... " % mathlib)
+        context.env.AppendUnique(LIBS = mathlib)
+        st = context.TryRun(src, '.c')
+    finally:
+        env['LIBS'] = oldLIBS
+
+    if st[0]:
+        context.Result(' not broken !')
+    else:
+        context.Result(' broken ! (output is %s)' % st[1])
+    return st[0]
+
 env.Append(CPPPATH = [get_python_inc()])
-config = env.NumpyConfigure(custom_tests = {'CheckTypeSize' : CheckTypeSize})
+config = env.NumpyConfigure(custom_tests = {'CheckTypeSize' : CheckTypeSize,
+    'CheckBrokenMathlib' : CheckBrokenMathlib})
 
 # TODO: check python extension can be built (in root or here ?)
 
@@ -146,6 +176,9 @@ def check_lib(f, autoadd = 0):
 check_lib(mfuncs[0], autoadd = 1)
 for f in mfuncs[1:]:
     check_lib(f)
+
+# What are we supposed to do if the math lib is broken ?
+config.CheckBrokenMathlib(mlib)
 
 #--------------
 # Checking Blas
@@ -236,14 +269,14 @@ scalarmathmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src',
 umath = env.GenerateUmath(pjoin(env['build_dir'], '__umath_generated'), 
         pjoin(env['src_dir'], 'code_generators', 'generate_umath.py'))
 
-multiarray_api = env.GenerateApi(pjoin(env['build_dir'], '__multiarray_api'), 
+multiarray_api = env.GenerateApi(pjoin(env['build_dir'], 'multiarray_api'), 
     [pjoin(env['src_dir'], 'code_generators', 'array_api_order.txt'),
     pjoin(env['src_dir'], 'code_generators', 'multiarray_api_order.txt')])
-ufunc_api = env.GenerateUfuncApi(pjoin(env['build_dir'], '__ufunc_api'), 
+ufunc_api = env.GenerateUfuncApi(pjoin(env['build_dir'], 'ufunc_api'), 
     pjoin(env['src_dir'], 'code_generators', 'ufunc_api_order.txt'))
 
 # XXX
-#env.Append(CCFLAGS = "-Wall -O2")
+env.Append(CCFLAGS = "-Wall -O2")
 
 #-----------------
 # Build multiarray
