@@ -84,13 +84,13 @@ class scons(old_build_ext):
     # release.
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
-    #user_options = []
-    user_options = [('fcompiler=', None, "specify the Fortran compiler type"),
-                    ('compiler=', None, "specify the C compiler type")]
+    user_options = old_build_ext.user_options + [
+                ('jobs=', None, 
+                 "specify number of worker threads when executing scons"),]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
-        pass
+        self.jobs = None
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
@@ -135,6 +135,8 @@ class scons(old_build_ext):
                 post_hook()
             # XXX: This is inefficient... (use join instead)
             cmd = scons_exec + " -f " + sconscript + ' -I. '
+            if self.jobs:
+                cmd += " --jobs=%d " % int(self.jobs)
             cmd += ' src_dir="%s" ' % pdirname(sconscript)
             cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib,
                                                                 pdirname(sconscript)))
