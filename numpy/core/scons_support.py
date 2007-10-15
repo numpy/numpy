@@ -1,8 +1,11 @@
 from code_generators.generate_array_api import types, h_template, c_template
+from code_generators.generate_ufunc_api import h_template, c_template
 import code_generators.genapi as genapi
 
 import SCons.Errors
 
+# XXX: better refactor code_generators.generate* functions, and use them
+# directly
 def do_generate_api(target, source, env):
     """source has to be a sequence of OBJECT, MULTIARRAY txt files."""
     h_file = str(target[0])
@@ -95,3 +98,54 @@ def generate_api_emitter(target, source, env):
     txt = base + '.txt'
     t = [h, c, txt]
     return (t, source)
+
+def do_generate_ufunc_api(target, source, env):
+    """source has to be a txt file."""
+    h_file = str(target[0])
+    c_file = str(target[1])
+    d_file = str(target[2])
+
+    targets = (h_file, c_file, d_file)
+
+    UFUNC_API_ORDER = str(source[0])
+    ufunc_api_list = genapi.get_api_functions('UFUNC_API', UFUNC_API_ORDER)
+
+    # API fixes for __arrayobject_api.h
+
+    fixed = 1
+    nummulti = len(ufunc_api_list)
+    numtotal = fixed + nummulti
+
+    module_list = []
+    extension_list = []
+    init_list = []
+
+    # set up object API
+    genapi.add_api_list(fixed, 'PyUFunc_API', ufunc_api_list,
+                        module_list, extension_list, init_list)
+
+    # Write to header
+    fid = open(h_file, 'w')
+    s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
+    fid.write(s)
+    fid.close()
+
+    # Write to c-code
+    fid = open(c_file, 'w')
+    s = c_template % '\n'.join(init_list)
+    fid.write(s)
+    fid.close()
+
+    # Write to documentation
+    fid = open(d_file, 'w')
+    fid.write('''
+=================
+Numpy Ufunc C-API
+=================
+''')
+    for func in ufunc_api_list:
+        fid.write(func.to_ReST())
+        fid.write('\n\n')
+    fid.close()
+
+    return 0

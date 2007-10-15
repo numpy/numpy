@@ -203,18 +203,6 @@ def configuration(parent_package='',top_path=None):
     if sys.platform == 'cygwin':
         config.add_data_dir('include/numpy/fenv')
 
-    #config.add_extension('multiarray',
-    #                     sources = [join('src','multiarraymodule.c'),
-    #                                generate_config_h,
-    #                                generate_array_api,
-    #                                join('src','scalartypes.inc.src'),
-    #                                join('src','arraytypes.inc.src'),
-    #                                join(codegen_dir,'generate_array_api.py'),
-    #                                join('*.py')
-    #                                ],
-    #                     depends = deps,
-    #                     )
-
     config.add_extension('umath',
                          sources = [generate_config_h,
                                     join('src','umathmodule.c.src'),
@@ -228,13 +216,6 @@ def configuration(parent_package='',top_path=None):
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
                          )
-
-    #config.add_extension('_sort',
-    #                     sources=[join('src','_sortmodule.c.src'),
-    #                              generate_config_h,
-    #                              generate_array_api,
-    #                              ],
-    #                     )
 
     config.add_extension('scalarmath',
                          sources=[join('src','scalarmathmodule.c.src'),

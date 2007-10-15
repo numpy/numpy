@@ -138,7 +138,7 @@ config.Finish()
 #--------------------------
 # Generating multiarray API
 #--------------------------
-from scons_support import do_generate_api, generate_api_emitter
+from scons_support import do_generate_api, generate_api_emitter, do_generate_ufunc_api
 
 # XXX: put the builder in scons support lib.
 bld = Builder(action = do_generate_api, emitter = generate_api_emitter)
@@ -185,21 +185,46 @@ arraytypes_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'arraytypes'),
                                    pjoin(env['src_dir'], 'src', 'arraytypes.inc.src'))
 
 # XXX
-env.Append(CCFLAGS = "-W -Wall -Wextra -O2")
+#env.Append(CCFLAGS = "-W -Wall")
 # Build multiarray
 env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
 multiarray_src = [
     pjoin('src', 'multiarraymodule.c'),
 ]
-multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
+#multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
 
 # Build sort module
 sortmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', '_sortmodule'), 
                                    pjoin(env['src_dir'], 'src', '_sortmodule.c.src'))
-sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
-
-# Build umath module
-umathmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'umathmodule'), 
-                                   pjoin(env['src_dir'], 'src', 'umathmodule.c.src'))
 #sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
 
+# Build umath module
+def do_generate_umath(targetfile, sourcefile, env):
+    t = open(targetfile, 'w')
+    from code_generators import generate_umath
+    code = generate_umath.make_code(generate_umath.defdict, generate_umath.__file__)
+    t.write(code)
+    t.close()
+
+def generate_umath(target, source, env):
+    for t, s in zip(target, source):
+        do_generate_umath(str(t), str(s), env)
+
+def generate_umath_emitter(target, source, env):
+    t = str(target[0]) + '.c'
+    return ([t], source)
+    
+bld = Builder(action = generate_umath, emitter = generate_umath_emitter)
+env.Append(BUILDERS = {'GenerateUmath' : bld})
+
+bld = Builder(action = do_generate_ufunc_api, emitter = generate_api_emitter)
+env.Append(BUILDERS = {'GenerateUfuncApi' : bld})
+
+ufunc_api = env.GenerateUfuncApi(pjoin(env['build_dir'], '__ufunc_api'), 
+    pjoin(env['src_dir'], 'code_generators', 'ufunc_api_order.txt'))
+
+umathmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'umathmodule'), 
+                                   pjoin(env['src_dir'], 'src', 'umathmodule.c.src'))
+umath = env.GenerateUmath(pjoin(env['build_dir'], '__umath_generated'), 
+        pjoin(env['src_dir'], 'code_generators', 'generate_umath.py'))
+umathmodule = env.NumpyPythonExtension('umathmodule', source = umathmodule_src)
