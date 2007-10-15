@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 12 07:00 PM 2007 J
+# Last Change: Mon Oct 15 02:00 PM 2007 J
 # vim:syntax=python
 import os
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
@@ -23,6 +23,15 @@ def generate_config_header(target, source, env):
         elif SCons.Util.is_String(value):
             return "#define %s %s\n\n" % (define, value)
     t.writelines([write_symbol(i[0], i[1]) for i in sym])
+    # XXX: do something about this: a config.h really should not have #ifdef,
+    # only #define. 
+    t.writelines("""
+#ifdef WITH_THREAD
+#define NPY_ALLOW_THREADS 1
+#else
+#define NPY_ALLOW_THREADS 0
+#endif
+""")
     t.write('\n')
     t.close()
 
@@ -59,10 +68,10 @@ else:
         nosmp = 1
     except KeyError:
         nosmp = 0
-if nosmp:
-    config_sym.append(('NPY_ALLOW_THREADS', '0'))
-else:
-    config_sym.append(('NPY_ALLOW_THREADS', '1'))
+#if nosmp:
+#    config_sym.append(('NPY_ALLOW_THREADS', '0'))
+#else:
+#    config_sym.append(('NPY_ALLOW_THREADS', '1'))
 
 env.Append(CPPPATH = [get_python_inc()])
 config = env.NumpyConfigure(custom_tests = {'CheckTypeSize' : CheckTypeSize})
@@ -86,6 +95,7 @@ check_type('float')
 check_type('double')
 check_type('long double')
 check_type('Py_intptr_t', include = ["Python.h"])
+check_type('PY_LONG_LONG', include = ["Python.h"])
 
 #-----------------------
 # Checking configuration
@@ -114,6 +124,8 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
 
 # TODO: getting the math lib automatically ? Having a list ?
 # TODO: test for broken m lib
+# TODO: do not add the lib everytime... (autoadd option)
+# TODO: checklib vs checkfunc ?
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
     # XXX: prepend it ?
@@ -121,12 +133,14 @@ if mathlib:
 else:
     mlib = 'm'
 config_sym.append(('MATHLIB', str(mlib)))
-for f in mfuncs:
+def check_lib(f):
     st = config.CheckLib(mlib, f[0])
     if st:
         config_sym.append((f[1], 1))
     else:
         config_sym.append((f[1], 0))
+for f in mfuncs:
+    check_lib(f)
 
 #--------------
 # Checking Blas
@@ -191,12 +205,12 @@ env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
 multiarray_src = [
     pjoin('src', 'multiarraymodule.c'),
 ]
-#multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
+multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
 
 # Build sort module
 sortmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', '_sortmodule'), 
                                    pjoin(env['src_dir'], 'src', '_sortmodule.c.src'))
-#sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
+sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
 
 # Build umath module
 def do_generate_umath(targetfile, sourcefile, env):
