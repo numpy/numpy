@@ -133,13 +133,18 @@ if mathlib:
 else:
     mlib = 'm'
 config_sym.append(('MATHLIB', str(mlib)))
-def check_lib(f):
-    st = config.CheckLib(mlib, f[0])
+def check_lib(f, autoadd = 0):
+    """Check that f is available in mlib, and add the symbol appropriately.
+
+    f is expected to be a tuble (symbol, cpp define)."""
+    st = config.CheckLib(mlib, f[0], autoadd = autoadd)
     if st:
         config_sym.append((f[1], 1))
     else:
         config_sym.append((f[1], 0))
-for f in mfuncs:
+
+check_lib(mfuncs[0], autoadd = 1)
+for f in mfuncs[1:]:
     check_lib(f)
 
 #--------------
