@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     if st[0]:
         context.Result(' not broken !')
     else:
-        context.Result(' broken ! (output is %s)' % st[1])
+        context.Result(' broken !')
     return st[0]
 
 env.Append(CPPPATH = [get_python_inc()])
@@ -153,8 +153,6 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
     ]
 
 # TODO: getting the math lib automatically ? Having a list ?
-# TODO: test for broken m lib
-# TODO: do not add the lib everytime... (autoadd option)
 # TODO: checklib vs checkfunc ?
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
@@ -177,7 +175,7 @@ check_lib(mfuncs[0], autoadd = 1)
 for f in mfuncs[1:]:
     check_lib(f)
 
-# What are we supposed to do if the math lib is broken ?
+# XXX: What are we supposed to do if the math lib is broken ?
 config.CheckBrokenMathlib(mlib)
 
 #--------------
