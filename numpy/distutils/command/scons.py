@@ -8,6 +8,12 @@ from numpy.distutils.command.build_ext import build_ext as old_build_ext
 from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.exec_command import find_executable
 
+def get_scons_build_dir():
+    """Return the top path where everything produced by scons will be put.
+    
+    The path is relative to the top setup.py"""
+    return pjoin('build', 'scons')
+
 def get_scons_local_path():
     """This returns the full path where scons.py for scons-local is located."""
     import numpy.distutils
@@ -124,12 +130,14 @@ class scons(old_build_ext):
 
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
-        for i in self.scons_scripts:
+        for sconscript, pre_hook, post_hook in self.scons_scripts:
+            if post_hook:
+                post_hook()
             # XXX: This is inefficient... (use join instead)
-            cmd = scons_exec + " -f " + i + ' -I. '
-            cmd += ' src_dir="%s" ' % pdirname(i)
+            cmd = scons_exec + " -f " + sconscript + ' -I. '
+            cmd += ' src_dir="%s" ' % pdirname(sconscript)
             cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib,
-                                                                pdirname(i)))
+                                                                pdirname(sconscript)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
             cmd += ' cc_opt_path=%s ' % protect_path(get_tool_path(self.compiler))
             st = os.system(cmd)

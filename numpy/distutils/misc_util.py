@@ -1171,9 +1171,13 @@ class Configuration(object):
 
     def add_sconscript(self, sconscript,
                        subpackage_path=None,
-                       standalone = False):
-        """Add a list of sconscript to configuration.
-        """
+                       standalone = False,
+                       pre_hook = None,
+                       post_hook = None):
+        """Add a sconscript to configuration.
+
+        pre_hook and post hook should be sequences of callable, which will be
+        use before and after executing scons. """
         #print "%s: adding %s" % (__file__, sconscript)
         if standalone:
             parent_name = None
@@ -1183,14 +1187,14 @@ class Configuration(object):
         dist = self.get_distribution()
         # Convert the sconscript name to a relative filename (relative from top
         # setup.py's directory)
-        fullsconsname = self.paths(sconscript)
+        fullsconsname = self.paths(sconscript)[0]
         
         if dist is not None:
-            dist.scons_scripts.extend(fullsconsname)
+            dist.scons_scripts.extend((fullsconsname, pre_hook, post_hook))
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a subpackage '+ subpackage_name)
         else:
-            self.scons_scripts.extend(fullsconsname)
+            self.scons_scripts.append((fullsconsname, pre_hook, post_hook))
 
     def add_scripts(self,*files):
         """Add scripts to configuration.
@@ -1255,6 +1259,10 @@ class Configuration(object):
         cmd = get_cmd('build')
         cmd.ensure_finalized()
         return cmd.build_temp
+
+    def get_scons_build_dir(self):
+        from command.scons import get_scons_build_dir
+        return get_scons_build_dir()
 
     def have_f77c(self):
         """Check for availability of Fortran 77 compiler.

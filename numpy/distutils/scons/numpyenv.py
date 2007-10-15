@@ -10,6 +10,8 @@ from SCons.Environment import Environment
 from SCons.Tool import Tool, FindTool, FindAllTools
 from SCons.Script import BuildDir, Help
 
+from numpy.distutils.command.scons import get_scons_build_dir
+
 from default import tool_list
 from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
 from libinfo import get_config
@@ -52,7 +54,7 @@ def GetNumpyOptions(args):
     opts.Add('pkg_name', 'name of the package (including parent package if any)', '')
     opts.Add('src_dir', 'src dir relative to top called', '.')
     opts.Add('build_prefix', 'build prefix (NOT including the package name)', 
-             pjoin('build', 'scons'))
+             get_scons_build_dir())
     opts.Add('distutils_libdir', 
              'build dir for libraries of distutils (NOT including the package name)', 
              pjoin('build', 'lib'))
