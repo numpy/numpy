@@ -1,4 +1,4 @@
-# Last Change: Mon Oct 15 07:00 PM 2007 J
+# Last Change: Tue Oct 16 02:00 PM 2007 J
 # vim:syntax=python
 import os
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
@@ -274,7 +274,7 @@ ufunc_api = env.GenerateUfuncApi(pjoin(env['build_dir'], 'ufunc_api'),
     pjoin(env['src_dir'], 'code_generators', 'ufunc_api_order.txt'))
 
 # XXX
-env.Append(CCFLAGS = "-Wall -O2")
+#env.Append(CCFLAGS = "-Wall -O2")
 
 #-----------------
 # Build multiarray

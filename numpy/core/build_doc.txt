@@ -1,0 +1,66 @@
+.. Last Change: Tue Oct 16 02:00 PM 2007 J
+.. vim:syntax=rest
+
+This is some info I (David Cournapeau) have gathered so far on the
+configuration and build of numpy.core
+
+Configuration header
+====================
+
+This is the most subtle issue: it is easy to mess things up here, and is
+difficult to detect. The problem here is that a config.h should normaly only
+contain #define, no #ifdef and so on. The ifdef should be handled somewhere
+else, really.
+
+Thread config
+-------------
+
+Python API defines a WITH_THREAD variable which says whether we should use
+thread or not ourselves. Should implements a test, and defines NPY_ALLOW_THREAD
+accordingly. Value depends on:
+        - WITH_THREAD (Python.h header)
+        - NPY_NOSMP (env variable)
+
+win32 specific
+--------------
+
+NPY_NO_SIGNAL: seems to depend only on platform (win32).
+DISTUTILS_USE_SDK: for AMD64 arch on windows only ?
+
+Mathlib
+-------
+
+List of libs sequence for math lib.
+        - is tested against denormal problems
+If no working found: setup fails
+If working: MATHLIB defines to the mathlib.
+
+PyOS_ascii_strtod
+-----------------
+
+?
+
+Multiarray and ufunc api generators:
+====================================
+
+multiarray api -> in generate_array_api.py. The function should be redefined
+such as it takes source files, and output a target. This can be done quite
+easily. 
+
+XXX: A better thing would be to merge the code for multiarray and ufunc
+generators, but this looks difficult without breaking anything in non obvious
+ways.
+
+umath generator:
+================
+
+XXX: How is this different than API generators above ?
+
+From template (*.src) builders
+==============================
+
+The generator code resides in distutils.
+
+!!!! FROM_TEMPLATE AND CONV_TEMPLATE ARE DIFFERENT (C vs Fortran) !!!!!
+
+Those should be easy to wrap in a builder function.
