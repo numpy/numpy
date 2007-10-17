@@ -733,5 +733,12 @@ class TestRegression(NumpyTestCase):
         y2 = y[::-1]
         assert_equal(N.dot(x,z),N.dot(x,y2))
 
+    def check_object_casting(self, level=rlevel):
+        def rs():
+            x = N.ones([484,286])
+            y = N.zeros([484,286])
+            x |= y
+        self.failUnlessRaises(TypeError,rs)
+
 if __name__ == "__main__":
     NumpyTest().run()

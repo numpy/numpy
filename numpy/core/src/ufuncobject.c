@@ -1344,7 +1344,8 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             loop->meth = BUFFER_UFUNCLOOP;
             loop->needbuffer[i] = 1;
         }
-        if (!loop->obj && mps[i]->descr->type_num == PyArray_OBJECT) {
+        if (!loop->obj && ((mps[i]->descr->type_num == PyArray_OBJECT) ||
+			   (arg_types[i] == PyArray_OBJECT))) {
             loop->obj = 1;
         }
     }
@@ -1486,7 +1487,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 
         /* compute the element size */
         for (i=0; i<self->nargs;i++) {
-            if (!loop->needbuffer) continue;
+            if (!loop->needbuffer[i]) continue;
             if (arg_types[i] != mps[i]->descr->type_num) {
                 descr = PyArray_DescrFromType(arg_types[i]);
                 if (loop->steps[i])
@@ -1913,6 +1914,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
                         }
                         /* cast to the other buffer if necessary */
                         if (loop->cast[i]) {
+			    /* fprintf(stderr, "casting... %d, %p %p\n", i, buffer[i]); */
                             loop->cast[i](buffer[i],
                                           castbuf[i],
                                           (intp) datasize[i],
@@ -1926,6 +1928,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
                     for (i=self->nin; i<self->nargs; i++) {
                         if (!needbuffer[i]) continue;
                         if (loop->cast[i]) {
+			    /* fprintf(stderr, "casting back... %d, %p", i, castbuf[i]); */
                             loop->cast[i](castbuf[i],
                                           buffer[i],
                                           (intp) datasize[i],
