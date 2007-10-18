@@ -1,4 +1,4 @@
-# Last Change: Thu Oct 18 04:00 PM 2007 J
+# Last Change: Thu Oct 18 05:00 PM 2007 J
 # vim:syntax=python
 import os
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
@@ -8,17 +8,19 @@ from copy import deepcopy
 from numpy.distutils.scons import get_python_inc
 from numpy.distutils.scons import GetNumpyEnvironment, CheckTypeSize
 
+import SCons.Node
+
 def generate_config_header(target, source, env):
     t = open(str(target[0]), 'w')
-    if not env.has_key('config_h_gen'):
+    if not env.has_key('CONFIG_H_GEN'):
         # XXX
         assert 0 == 1
-    sym = env['config_h_gen']
+    sym = env['CONFIG_H_GEN']
     def write_symbol(define, value):
         if value == 1:
             return "#define %s\n\n" % define
         elif value == 0:
-            return r"/* #undef %s */\n\n" % define
+            return "/* #undef %s */\n\n" % define
         else:
             return "#define %s %s\n\n" % (define, value)
     t.writelines([write_symbol(i[0], i[1]) for i in sym])
@@ -31,6 +33,13 @@ def generate_config_header(target, source, env):
     target_f.close()
     print 'EOF'
     return 0
+
+def generate_config_header_emitter(target, source, env):
+    """Add dependency from config list  CONFIG_H_GEN to target.  Returns
+    original target, source tuple unchanged.  """
+    d = deepcopy(env['CONFIG_H_GEN']) # copy it
+    Depends(target, SCons.Node.Python.Value(d))
+    return target, source
 
 def define_no_smp():
     """Returns True if we should define NPY_NOSMP, False otherwise."""
@@ -157,6 +166,7 @@ if mathlib:
 else:
     mlib = 'm'
 config_sym.append(('MATHLIB', str(mlib)))
+
 def check_lib(f, autoadd = 0):
     """Check that f is available in mlib, and add the symbol appropriately.
 
@@ -171,8 +181,10 @@ check_lib(mfuncs[0], autoadd = 1)
 for f in mfuncs[1:]:
     check_lib(f)
 
-# XXX: What are we supposed to do if the math lib is broken ?
-config.CheckBrokenMathlib(mlib)
+if not config.CheckBrokenMathlib(mlib):
+    raise SCons.Errors.UserError("Your mathlib looks broken: chose another "\
+                                 "one using the MATHLIB env variable, eg "\
+                                 "MATHLIB=m")
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
@@ -211,6 +223,8 @@ include_dir = 'include/numpy'
 env.SubstInFile(pjoin(env['build_dir'], 'numpyconfig.h'), 
                 pjoin(env['src_dir'], include_dir, 'numpyconfig.h.in'))
 
+env['CONFIG_H_GEN'] = config_sym
+
 #---------------------------
 # Builder for generated code
 #---------------------------
@@ -231,22 +245,20 @@ template_bld = Builder(action = generate_from_template,
 umath_bld = Builder(action = generate_umath, 
                     emitter = generate_umath_emitter)
 
+config_h_bld = Builder(action = generate_config_header, 
+                       emitter = generate_config_header_emitter)
+
 env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
                        'GenerateUfuncApi' : ufunc_api_gen_bld,
                        'GenerateFromTemplate' : template_bld,
-                       'GenerateUmath' : umath_bld})
-
-from os.path import join as pjoin
-
-# Take into account the change in config_sym (using emitter, see SubstDic
-# example in scons wiki) ?
-env['config_h_gen'] = config_sym
-bld = Builder(action = generate_config_header)
-env.Append(BUILDERS = {'GenerateConfigHeader' : bld})
+                       'GenerateUmath' : umath_bld,
+                       'GenerateConfigHeader' : config_h_bld})
 
 #------------------------
 # Generate generated code
 #------------------------
+from os.path import join as pjoin
+
 config_header = env.GenerateConfigHeader(pjoin(env['build_dir'], 'config.h'), [])
 
 scalartypes_src = env.GenerateFromTemplate(
