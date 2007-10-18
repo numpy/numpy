@@ -5,6 +5,7 @@
 #define _UMATHMODULE
 #include "numpy/ufuncobject.h"
 #include "abstract.h"
+#include "config.h"
 #include <math.h>
 
 /* A whole slew of basic math functions are provided originally

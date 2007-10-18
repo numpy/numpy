@@ -159,6 +159,39 @@ def configuration(parent_package='',top_path=None):
         config.add_data_files((header_dir,target))
         return target
 
+    def generate_numpyconfig_h(ext, build_dir):
+        """Depends on config.h: generate_config_h has to be called before !"""
+        target = join(build_dir,'numpyconfig.h')
+        if newer(__file__,target):
+            config_cmd = config.get_config_cmd()
+            log.info('Generating %s',target)
+            testcode = generate_numpyconfig_code(target)
+
+            from distutils import sysconfig
+            python_include = sysconfig.get_python_inc()
+            python_h = join(python_include, 'Python.h')
+            if not os.path.isfile(python_h):
+                raise SystemError,\
+                      "Non-existing %s. Perhaps you need to install"\
+                      " python-dev|python-devel." % (python_h)
+
+            config.numpy_include_dirs
+            result = config_cmd.try_run(testcode, 
+                                include_dirs = [python_include] + \
+                                                       config.numpy_include_dirs,
+                                        library_dirs = default_lib_dirs)
+
+            if not result:
+                raise SystemError,"Failed to generate numpy configuration. "\
+                      "See previous error messages for more information."
+
+            print 'File: %s' % target
+            target_f = open(target)
+            print target_f.read()
+            target_f.close()
+            print 'EOF'
+        return target
+                                
     def generate_api_func(module_name):
         def generate_api(ext, build_dir):
             script = join(codegen_dir, module_name + '.py')
@@ -213,6 +246,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('multiarray',
                          sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,
+                                    generate_numpyconfig_h,
                                     generate_array_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
@@ -224,6 +258,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('umath',
                          sources = [generate_config_h,
+                                    generate_numpyconfig_h,
                                     join('src','umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
@@ -239,6 +274,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_sort',
                          sources=[join('src','_sortmodule.c.src'),
                                   generate_config_h,
+                                  generate_numpyconfig_h,
                                   generate_array_api,
                                   ],
                          )
@@ -246,6 +282,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('scalarmath',
                          sources=[join('src','scalarmathmodule.c.src'),
                                   generate_config_h,
+                                  generate_numpyconfig_h,
                                   generate_array_api,
                                   generate_ufunc_api],
                          )
