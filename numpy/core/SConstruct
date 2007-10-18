@@ -1,4 +1,4 @@
-# Last Change: Thu Oct 18 03:00 PM 2007 J
+# Last Change: Thu Oct 18 04:00 PM 2007 J
 # vim:syntax=python
 import os
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
@@ -7,8 +7,6 @@ from copy import deepcopy
 
 from numpy.distutils.scons import get_python_inc
 from numpy.distutils.scons import GetNumpyEnvironment, CheckTypeSize
-
-import SCons.Util
 
 def generate_config_header(target, source, env):
     t = open(str(target[0]), 'w')
@@ -21,7 +19,7 @@ def generate_config_header(target, source, env):
             return "#define %s\n\n" % define
         elif value == 0:
             return r"/* #undef %s */\n\n" % define
-        elif SCons.Util.is_String(value):
+        else:
             return "#define %s %s\n\n" % (define, value)
     t.writelines([write_symbol(i[0], i[1]) for i in sym])
     t.write('\n')
@@ -196,6 +194,10 @@ else:
 
 config.Finish()
 
+#==========
+#  Build
+#==========
+
 #---------------------------------------
 # Generate the public configuration file
 #---------------------------------------
@@ -212,11 +214,28 @@ env.SubstInFile(pjoin(env['build_dir'], 'numpyconfig.h'),
 #---------------------------
 # Builder for generated code
 #---------------------------
-from scons_support import do_generate_api, generate_api_emitter, do_generate_ufunc_api
+from scons_support import do_generate_array_api, do_generate_ufunc_api, \
+                        generate_api_emitter,\
+                        generate_from_template, generate_from_template_emitter, \
+                        generate_umath, generate_umath_emitter
 
-# XXX: put the builder in scons support lib.
-bld = Builder(action = do_generate_api, emitter = generate_api_emitter)
-env.Append(BUILDERS = {'GenerateApi' : bld})
+array_api_gen_bld = Builder(action = do_generate_array_api, 
+                            emitter = generate_api_emitter)
+
+ufunc_api_gen_bld = Builder(action = do_generate_ufunc_api, 
+                            emitter = generate_api_emitter)
+
+template_bld = Builder(action = generate_from_template, 
+                       emitter = generate_from_template_emitter)
+
+umath_bld = Builder(action = generate_umath, 
+                    emitter = generate_umath_emitter)
+
+env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
+                       'GenerateUfuncApi' : ufunc_api_gen_bld,
+                       'GenerateFromTemplate' : template_bld,
+                       'GenerateUmath' : umath_bld})
+
 from os.path import join as pjoin
 
 # Take into account the change in config_sym (using emitter, see SubstDic
@@ -225,88 +244,55 @@ env['config_h_gen'] = config_sym
 bld = Builder(action = generate_config_header)
 env.Append(BUILDERS = {'GenerateConfigHeader' : bld})
 
-# Builder to generate .inc from .inc.src
-from numpy.distutils.conv_template import process_str
-def do_generate_from_template(targetfile, sourcefile, env):
-    t = open(targetfile, 'w')
-    s = open(sourcefile, 'r')
-    allstr = s.read()
-    s.close()
-    writestr = process_str(allstr)
-    t.write(writestr)
-    t.close()
-    return 0
-
-def generate_from_template(target, source, env):
-    for t, s in zip(target, source):
-        do_generate_from_template(str(t), str(s), env)
-
-def generate_from_template_emitter(target, source, env):
-    base, ext = SCons.Util.splitext(pbasename(str(source[0])))
-    t = pjoin(pdirname(str(target[0])), base)
-    return ([t], source)
-    
-def do_generate_umath(targetfile, sourcefile, env):
-    t = open(targetfile, 'w')
-    from code_generators import generate_umath
-    code = generate_umath.make_code(generate_umath.defdict, generate_umath.__file__)
-    t.write(code)
-    t.close()
-
-def generate_umath(target, source, env):
-    for t, s in zip(target, source):
-        do_generate_umath(str(t), str(s), env)
-
-def generate_umath_emitter(target, source, env):
-    t = str(target[0]) + '.c'
-    return ([t], source)
-    
-bld = Builder(action = generate_umath, emitter = generate_umath_emitter)
-env.Append(BUILDERS = {'GenerateUmath' : bld})
-
-bld = Builder(action = do_generate_ufunc_api, emitter = generate_api_emitter)
-env.Append(BUILDERS = {'GenerateUfuncApi' : bld})
-
-bld = Builder(action = generate_from_template, emitter = generate_from_template_emitter)
-env.Append(BUILDERS = {'FromTemplate' : bld})
-
 #------------------------
 # Generate generated code
 #------------------------
 config_header = env.GenerateConfigHeader(pjoin(env['build_dir'], 'config.h'), [])
 
-scalartypes_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'scalartypes'), 
-                                   pjoin(env['src_dir'], 'src', 'scalartypes.inc.src'))
-arraytypes_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'arraytypes'), 
-                                   pjoin(env['src_dir'], 'src', 'arraytypes.inc.src'))
-sortmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', '_sortmodule'), 
-                                   pjoin(env['src_dir'], 'src', '_sortmodule.c.src'))
-umathmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 'umathmodule'), 
-                                   pjoin(env['src_dir'], 'src', 'umathmodule.c.src'))
-scalarmathmodule_src = env.FromTemplate(pjoin(env['build_dir'], 'src', 
-                                              'scalarmathmodule'), 
-                                        pjoin(env['src_dir'], 'src', 
-                                              'scalarmathmodule.c.src'))
+scalartypes_src = env.GenerateFromTemplate(
+                    pjoin(env['build_dir'], 'src', 'scalartypes'), 
+                    pjoin(env['src_dir'], 'src', 'scalartypes.inc.src'))
 
-umath = env.GenerateUmath(pjoin(env['build_dir'], '__umath_generated'), 
-        pjoin(env['src_dir'], 'code_generators', 'generate_umath.py'))
+arraytypes_src = env.GenerateFromTemplate(
+                    pjoin(env['build_dir'], 'src', 'arraytypes'), 
+                    pjoin(env['src_dir'], 'src', 'arraytypes.inc.src'))
 
-multiarray_api = env.GenerateApi(pjoin(env['build_dir'], 'multiarray_api'), 
-    [pjoin(env['src_dir'], 'code_generators', 'array_api_order.txt'),
-    pjoin(env['src_dir'], 'code_generators', 'multiarray_api_order.txt')])
-ufunc_api = env.GenerateUfuncApi(pjoin(env['build_dir'], 'ufunc_api'), 
-    pjoin(env['src_dir'], 'code_generators', 'ufunc_api_order.txt'))
+sortmodule_src = env.GenerateFromTemplate(
+                    pjoin(env['build_dir'], 'src', '_sortmodule'), 
+                    pjoin(env['src_dir'], 'src', '_sortmodule.c.src'))
+
+umathmodule_src = env.GenerateFromTemplate(
+                    pjoin(env['build_dir'], 'src', 'umathmodule'), 
+                    pjoin(env['src_dir'], 'src', 'umathmodule.c.src'))
+
+scalarmathmodule_src = env.GenerateFromTemplate(
+                    pjoin(env['build_dir'], 'src', 'scalarmathmodule'), 
+                    pjoin(env['src_dir'], 'src', 'scalarmathmodule.c.src'))
+
+umath = env.GenerateUmath(
+            pjoin(env['build_dir'], '__umath_generated'), 
+            pjoin(env['src_dir'], 'code_generators', 'generate_umath.py'))
+
+multiarray_api = env.GenerateMultiarrayApi(
+                        pjoin(env['build_dir'], 'multiarray_api'), 
+                        [ pjoin(env['src_dir'], 'code_generators', 
+                                'array_api_order.txt'),
+                          pjoin(env['src_dir'], 'code_generators', 
+                                'multiarray_api_order.txt')])
+
+ufunc_api = env.GenerateUfuncApi(
+                    pjoin(env['build_dir'], 'ufunc_api'), 
+                    pjoin(env['src_dir'], 'code_generators', 'ufunc_api_order.txt'))
 
 # XXX
 env.Append(CCFLAGS = "-Wall -fno-strict-aliasing")
 
+env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
+
 #-----------------
 # Build multiarray
 #-----------------
-env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
-multiarray_src = [
-    pjoin('src', 'multiarraymodule.c'),
-]
+multiarray_src = [pjoin('src', 'multiarraymodule.c')]
 multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
 
 #------------------
