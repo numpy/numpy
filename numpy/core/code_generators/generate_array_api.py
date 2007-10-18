@@ -1,9 +1,6 @@
 import os
 import genapi
 
-OBJECT_API_ORDER = 'array_api_order.txt'
-MULTIARRAY_API_ORDER = 'multiarray_api_order.txt'
-
 types = ['Generic','Number','Integer','SignedInteger','UnsignedInteger',
          'Inexact',
          'Floating', 'ComplexFloating', 'Flexible', 'Character',
@@ -122,22 +119,30 @@ void *PyArray_API[] = {
 """
 
 def generate_api(output_dir, force=False):
-    header_file = os.path.join(output_dir, '__multiarray_api.h')
-    c_file = os.path.join(output_dir,'__multiarray_api.c')
-    doc_file = os.path.join(output_dir, 'multiarray_api.txt')
+    basename = 'multiarray_api'
 
-    targets = (header_file, c_file, doc_file)
-    if (not force
-            and not genapi.should_rebuild(targets,
-                                          [OBJECT_API_ORDER,
-                                           MULTIARRAY_API_ORDER,
-                                           __file__])):
+    h_file = os.path.join(output_dir, '__%s.h' % basename)
+    c_file = os.path.join(output_dir, '__%s.c' % basename)
+    d_file = os.path.join(output_dir, '%s.txt' % basename)
+    targets = (h_file, c_file, d_file)
+    sources = ['array_api_order.txt',  'multiarray_api_order.txt']
+
+    if (not force and not genapi.should_rebuild(targets, sources + [__file__])):
         return targets
+    else:
+        do_generate_api(targets, sources)
+
+    return targets
+
+def do_generate_api(targets, sources):
+    header_file = targets[0]
+    c_file = targets[1]
+    doc_file = targets[2]
 
     objectapi_list = genapi.get_api_functions('OBJECT_API',
-                                              OBJECT_API_ORDER)
+                                              sources[0])
     multiapi_list = genapi.get_api_functions('MULTIARRAY_API',
-                                             MULTIARRAY_API_ORDER)
+                                             sources[1])
     # API fixes for __arrayobject_api.h
 
     fixed = 10
