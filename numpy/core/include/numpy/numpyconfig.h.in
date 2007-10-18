@@ -1,0 +1,21 @@
+#define NPY_SIZEOF_SHORT        @SIZEOF_SHORT@
+#define NPY_SIZEOF_INT          @SIZEOF_INT@
+#define NPY_SIZEOF_LONG         @SIZEOF_LONG@
+#define NPY_SIZEOF_FLOAT        @SIZEOF_FLOAT@
+#define NPY_SIZEOF_DOUBLE       @SIZEOF_DOUBLE@
+#define NPY_SIZEOF_LONGDOUBLE   @SIZEOF_LONG_DOUBLE@
+#define NPY_SIZEOF_PY_INTPTR_T  @SIZEOF_PY_INTPTR_T@
+
+#define NPY_NOSMP        @NPY_NOSMP@
+
+/* Conditionally define them */
+/* XXX: this has to be done outside config files !!!! */
+#ifdef PY_LONG_LONG
+        #define NPY_SIZEOF_LONGLONG @SIZEOF_PY_LONG_LONG@
+        #define NPY_SIZEOF_PY_LONG_LONG @SIZEOF_PY_LONG_LONG@
+#endif
+
+#ifndef CHAR_BIT
+        #error Configuration for undefined CHAR_BIT is not supported, contact the maintainter
+        #define CHAR_BIT      @CHAR_BIT@
+#endif

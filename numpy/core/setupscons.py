@@ -24,6 +24,17 @@ def configuration(parent_package='',top_path=None):
         incl_dir = os.path.dirname(target)
         if incl_dir not in config.numpy_include_dirs:
             config.numpy_include_dirs.append(incl_dir)
+        #config.add_data_files((header_dir, target)) 
+
+    def add_numpyconfig_header():
+        scons_build_dir = config.get_scons_build_dir()
+        # XXX: I really have to think about how to communicate path info
+        # between scons and distutils, and set the options at one single
+        # location.
+        target = join(scons_build_dir, local_dir, 'numpyconfig.h')
+        incl_dir = os.path.dirname(target)
+        if incl_dir not in config.numpy_include_dirs:
+            config.numpy_include_dirs.append(incl_dir)
         config.add_data_files((header_dir, target)) 
 
     def add_array_api():
@@ -48,6 +59,7 @@ def configuration(parent_package='',top_path=None):
 
     def add_generated_files():
         add_config_header()
+        add_numpyconfig_header()
         add_array_api()
         add_ufunc_api()
 

@@ -1,4 +1,4 @@
-# Last Change: Thu Oct 18 02:00 PM 2007 J
+# Last Change: Thu Oct 18 03:00 PM 2007 J
 # vim:syntax=python
 import os
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
@@ -20,50 +20,46 @@ def generate_config_header(target, source, env):
         if value == 1:
             return "#define %s\n\n" % define
         elif value == 0:
-            return "#undef %s\n\n" % define
+            return r"/* #undef %s */\n\n" % define
         elif SCons.Util.is_String(value):
             return "#define %s %s\n\n" % (define, value)
     t.writelines([write_symbol(i[0], i[1]) for i in sym])
     t.write('\n')
     t.close()
 
+    print 'File: %s' % target[0]
+    target_f = open(str(target[0]))
+    print target_f.read()
+    target_f.close()
+    print 'EOF'
     return 0
 
-# Convention: list of tuples (definition, value). value:
-# - 0: #undef definition
-# - 1: #define definition
-# - string: #define definition value
-config_sym = []
-
-env = GetNumpyEnvironment(ARGUMENTS)
-
-#--------------------------------
-# Checking SMP and thread options
-#--------------------------------
-# Python 2.3 causes a segfault when
-#  trying to re-acquire the thread-state
-#  which is done in error-handling
-#  ufunc code.  NPY_ALLOW_C_API and friends
-#  cause the segfault. So, we disable threading
-#  for now.
-if sys.version[:5] < '2.4.2':
-    nosmp = 1
-else:
-    # Perhaps a fancier check is in order here.
-    #  so that threads are only enabled if there
-    #  are actually multiple CPUS? -- but
-    #  threaded code can be nice even on a single
-    #  CPU so that long-calculating code doesn't
-    #  block.
-    try:
-        nosmp = os.environ['NPY_NOSMP']
+def define_no_smp():
+    """Returns True if we should define NPY_NOSMP, False otherwise."""
+    #--------------------------------
+    # Checking SMP and thread options
+    #--------------------------------
+    # Python 2.3 causes a segfault when
+    #  trying to re-acquire the thread-state
+    #  which is done in error-handling
+    #  ufunc code.  NPY_ALLOW_C_API and friends
+    #  cause the segfault. So, we disable threading
+    #  for now.
+    if sys.version[:5] < '2.4.2':
         nosmp = 1
-    except KeyError:
-        nosmp = 0
-if nosmp:
-    config_sym.append(('NPY_NOSMP', '0'))
-else:
-    config_sym.append(('NPY_NOSMP', '1'))
+    else:
+        # Perhaps a fancier check is in order here.
+        #  so that threads are only enabled if there
+        #  are actually multiple CPUS? -- but
+        #  threaded code can be nice even on a single
+        #  CPU so that long-calculating code doesn't
+        #  block.
+        try:
+            nosmp = os.environ['NPY_NOSMP']
+            nosmp = 1
+        except KeyError:
+            nosmp = 0
+    return nosmp == 1
 
 def CheckBrokenMathlib(context, mathlib):
     src = """
@@ -93,11 +89,20 @@ int main(int argc, char *argv[])
         context.Result(' broken !')
     return st[0]
 
+env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
+
+#=======================
+# Starting Configuration
+#=======================
 config = env.NumpyConfigure(custom_tests = {'CheckTypeSize' : CheckTypeSize,
     'CheckBrokenMathlib' : CheckBrokenMathlib})
 
-# TODO: check python extension can be built (in root or here ?)
+# Convention: list of tuples (definition, value). value:
+# - 0: #undef definition
+# - 1: #define definition
+# - string: #define definition value
+config_sym = []
 
 #---------------
 # Checking Types
@@ -111,12 +116,14 @@ def check_type(type, include = None):
         config_sym.append(('SIZEOF_%s' % type.upper(), 0))
 check_type('short')
 check_type('int')
-#check_type('long')
+check_type('long')
 check_type('float')
 check_type('double')
 check_type('long double')
 check_type('Py_intptr_t', include = ["Python.h"])
 check_type('PY_LONG_LONG', include = ["Python.h"])
+
+# TODO: check python extension can be built (in root or here ?)
 
 #-----------------------
 # Checking configuration
@@ -177,12 +184,30 @@ if sys.version[:3] < '2.4':
     if config.CheckFunc('strtod'):
         config_sym.append('PyOS_ascii_strtod', 'strtod')
 
+if define_no_smp():
+    config_sym.append(('NPY_NOSMP', '1'))
+else:
+    config_sym.append(('NPY_NOSMP', '0'))
+
 #--------------
 # Checking Blas
 #--------------
 # TODO
 
 config.Finish()
+
+#---------------------------------------
+# Generate the public configuration file
+#---------------------------------------
+config_dict = {}
+# XXX: this is ugly, make the API for config.h and numpyconfig.h similar
+for key, value in config_sym:
+    config_dict['@%s@' % key] = str(value)
+env['SUBST_DICT'] = config_dict
+
+include_dir = 'include/numpy'
+env.SubstInFile(pjoin(env['build_dir'], 'numpyconfig.h'), 
+                pjoin(env['src_dir'], include_dir, 'numpyconfig.h.in'))
 
 #---------------------------
 # Builder for generated code
@@ -273,7 +298,7 @@ ufunc_api = env.GenerateUfuncApi(pjoin(env['build_dir'], 'ufunc_api'),
     pjoin(env['src_dir'], 'code_generators', 'ufunc_api_order.txt'))
 
 # XXX
-#env.Append(CCFLAGS = "-Wall -O2")
+env.Append(CCFLAGS = "-Wall -fno-strict-aliasing")
 
 #-----------------
 # Build multiarray
