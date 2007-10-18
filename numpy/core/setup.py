@@ -73,8 +73,7 @@ def configuration(parent_package='',top_path=None):
                     nosmp = 1
                 except KeyError:
                     nosmp = 0
-            if nosmp: moredefs = [('NPY_ALLOW_THREADS', '0')]
-            else: moredefs = []
+            moredefs = []
             #
             mathlibs = []
             tc = testcode_mathlib()
@@ -123,8 +122,12 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
-            if not nosmp:  # default is to use WITH_THREAD
-                target_f.write('#ifdef WITH_THREAD\n#define NPY_ALLOW_THREADS 1\n#else\n#define NPY_ALLOW_THREADS 0\n#endif\n')
+            # Define NPY_NOSMP to 1 if explicitely requested, or if we cannot
+            # support thread support reliably
+            if nosmp:
+                target_f.write('#define NPY_NOSMP 1\n')
+            else:
+                target_f.write('#define NPY_NOSMP 0\n')
             target_f.close()
             print 'File:',target
             target_f = open(target)
