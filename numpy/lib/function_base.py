@@ -941,7 +941,7 @@ class vectorize(object):
             self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
 
         # Convert to object arrays first
-        newargs = [asarray(arg,dtype=object) for arg in args]
+        newargs = [asanyarray(arg,dtype=object) for arg in args]
         if self.nout == 1:
             _res = array(self.ufunc(*newargs),copy=False).astype(self.otypes[0])
         else:
