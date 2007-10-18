@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 11 04:00 PM 2007 J
+# Last Change: Thu Oct 18 05:00 PM 2007 J
 
 # This is a copy of scons/Tools/__init__.py, because scons does not offer any
 # public api for this

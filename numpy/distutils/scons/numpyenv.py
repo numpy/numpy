@@ -159,6 +159,11 @@ def GetNumpyEnvironment(args):
         env['ENV']['HOME'] = os.environ['HOME']
     except KeyError:
         pass
+
+    # XXX: think about how to handle optimizations per compiler
+    if env['CC'] == 'gcc':
+        env.Append(CCFLAGS = "-Wall -Wstrict-prototypes -fno-strict-aliasing -O3 -g")
+
     #print Environment().Dump()
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
@@ -180,4 +185,3 @@ def GetNumpyEnvironment(args):
     env['NUMPYCONFIG'] = config
 
     return env
-
