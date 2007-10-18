@@ -1,4 +1,4 @@
-# Last Change: Tue Oct 16 02:00 PM 2007 J
+# Last Change: Thu Oct 18 02:00 PM 2007 J
 # vim:syntax=python
 import os
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
@@ -24,15 +24,6 @@ def generate_config_header(target, source, env):
         elif SCons.Util.is_String(value):
             return "#define %s %s\n\n" % (define, value)
     t.writelines([write_symbol(i[0], i[1]) for i in sym])
-    # XXX: do something about this: a config.h really should not have #ifdef,
-    # only #define. 
-    t.writelines("""
-#ifdef WITH_THREAD
-#define NPY_ALLOW_THREADS 1
-#else
-#define NPY_ALLOW_THREADS 0
-#endif
-""")
     t.write('\n')
     t.close()
 
@@ -69,10 +60,10 @@ else:
         nosmp = 1
     except KeyError:
         nosmp = 0
-#if nosmp:
-#    config_sym.append(('NPY_ALLOW_THREADS', '0'))
-#else:
-#    config_sym.append(('NPY_ALLOW_THREADS', '1'))
+if nosmp:
+    config_sym.append(('NPY_NOSMP', '0'))
+else:
+    config_sym.append(('NPY_NOSMP', '1'))
 
 def CheckBrokenMathlib(context, mathlib):
     src = """
@@ -177,6 +168,14 @@ for f in mfuncs[1:]:
 
 # XXX: What are we supposed to do if the math lib is broken ?
 config.CheckBrokenMathlib(mlib)
+
+#-------------------------------------------------------
+# Define the function PyOS_ascii_strod if not available
+#-------------------------------------------------------
+# XXX: would be better to check for PyOS_ascii_strod instead of version
+if sys.version[:3] < '2.4':
+    if config.CheckFunc('strtod'):
+        config_sym.append('PyOS_ascii_strtod', 'strtod')
 
 #--------------
 # Checking Blas
