@@ -1,4 +1,4 @@
-# Last Change: Thu Oct 18 06:00 PM 2007 J
+# Last Change: Fri Oct 19 08:00 AM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -107,7 +107,7 @@ if not config.CheckBrokenMathlib(mlib):
 # XXX: would be better to check for PyOS_ascii_strod instead of version
 if sys.version[:3] < '2.4':
     if config.CheckFunc('strtod'):
-        config_sym.append('PyOS_ascii_strtod', 'strtod')
+        config_sym.append(('PyOS_ascii_strtod', 'strtod'))
 
 if define_no_smp():
     config_sym.append(('NPY_NOSMP', '1'))
