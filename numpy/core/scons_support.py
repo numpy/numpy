@@ -116,7 +116,7 @@ def generate_config_header(target, source, env):
 def generate_config_header_emitter(target, source, env):
     """Add dependency from config list  CONFIG_H_GEN to target.  Returns
     original target, source tuple unchanged.  """
-    from SCons.Script import *
+    from SCons.Script import Depends
     d = deepcopy(env['CONFIG_H_GEN']) # copy it
     Depends(target, SCons.Node.Python.Value(d))
     return target, source
