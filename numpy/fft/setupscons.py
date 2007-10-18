@@ -4,14 +4,8 @@ def configuration(parent_package = '', top_path = None):
 
     config.add_data_dir('tests')
 
-    print "!!!!!! %s !!!!!!!!!" % get_numpy_include_dirs()
-
     # Configure fftpack_lite
     config.add_sconscript('SConstruct')
-    config.add_extension('fftpack_lite',
-                         sources=['fftpack_litemodule.c', 'fftpack.c']
-                         )
-
 
     return config
 
