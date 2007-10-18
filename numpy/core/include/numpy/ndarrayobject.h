@@ -20,7 +20,6 @@ extern "C" CONFUSE_EMACS
         #define NPY_ALLOW_THREADS 1
 #else
         #define NPY_ALLOW_THREADS 0
-        #error FLOUPI
 #endif
 
 /* There are several places in the code where an array of dimensions is
