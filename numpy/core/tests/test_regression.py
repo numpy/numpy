@@ -726,5 +726,12 @@ class test_regression(NumpyTestCase):
         N.lib.place(1,1,1)
 
 
+    def check_object_casting(self, level=rlevel):
+        def rs():
+            x = N.ones([484,286])
+            y = N.zeros([484,286])
+            x |= y
+        self.failUnlessRaises(TypeError,rs)
+
 if __name__ == "__main__":
     NumpyTest().run()
