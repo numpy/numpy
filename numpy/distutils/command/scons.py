@@ -7,6 +7,7 @@ from distutils.errors import DistutilsExecError, DistutilsSetupError
 from numpy.distutils.command.build_ext import build_ext as old_build_ext
 from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.exec_command import find_executable
+from numpy.distutils import log
 
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
@@ -29,6 +30,13 @@ def get_python_exec_invoc():
     # using "local python", using the alias facility of bash.
     import sys
     return sys.executable
+
+def dirl_to_str(dirlist):
+    """Given a list of directories, returns a string where the paths are
+    concatenated by the path separator.
+
+    example: ['foo/bar', 'bar/foo'] will return 'foo/bar:bar/foo'."""
+    return os.pathsep.join(dirlist)
 
 def dist2sconscc(compiler):
     """This converts the name passed to distutils to scons name convention (C
@@ -132,6 +140,7 @@ class scons(old_build_ext):
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
         for sconscript, pre_hook, post_hook in self.scons_scripts:
             # XXX: This is inefficient... (use join instead)
+            from numpy.distutils.misc_util import get_numpy_include_dirs
             cmd = scons_exec + " -f " + sconscript + ' -I. '
             if self.jobs:
                 cmd += " --jobs=%d " % int(self.jobs)
@@ -140,6 +149,8 @@ class scons(old_build_ext):
                                                                 pdirname(sconscript)))
             cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
             cmd += ' cc_opt_path=%s ' % protect_path(get_tool_path(self.compiler))
+            cmd += ' include_bootstrap=%s ' % dirl_to_str(get_numpy_include_dirs())
+            log.info("Executing scons command: %s ", cmd)
             st = os.system(cmd)
             if st:
                 print "status is %d" % st
