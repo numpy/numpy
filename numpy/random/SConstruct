@@ -1,0 +1,27 @@
+# Last Change: Thu Oct 18 10:00 PM 2007 J
+# vim:syntax=python
+import os
+
+from numpy.distutils.misc_util import get_numpy_include_dirs
+from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths
+
+env = GetNumpyEnvironment(ARGUMENTS)
+env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+mathlib = os.environ.get('MATHLIB')
+if mathlib: 
+    # XXX: prepend it ?
+    mlib = mathlib
+else:
+    mlib = 'm'
+env.Append(LIBS = mlib)
+
+import sys
+if sys.platform == 'win32':
+    assert 0 == 1, 'FIXME: support Advapi32 detection for win32 in mtrand'
+
+sources = [os.path.join('mtrand', x) for x in 
+           ['mtrand.c', 'randomkit.c', 'initarray.c', 'distributions.c']]
+
+# XXX: Pyrex dependency
+mtrand = env.NumpyPythonExtension('mtrand', source = sources)

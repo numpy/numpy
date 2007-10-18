@@ -4,34 +4,7 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
     config = Configuration('random',parent_package,top_path)
 
-    def generate_libraries(ext, build_dir):
-        config_cmd = config.get_config_cmd()
-        if top_path is None:
-            libs = get_mathlibs()
-        else:
-            #path = join(split(build_dir)[0],'core')
-            # XXX
-            path = join(config.get_scons_build_dir(), 'numpy','core')
-            libs = get_mathlibs(path)
-        tc = testcode_wincrypt()
-        if config_cmd.try_run(tc):
-            libs.append('Advapi32')
-        ext.libraries.extend(libs)
-        return None
-
-    libs = []
-    # Configure mtrand
-    config.add_extension('mtrand',
-                         sources=[join('mtrand', x) for x in
-                                  ['mtrand.c', 'randomkit.c', 'initarray.c',
-                                   'distributions.c']]+[generate_libraries],
-                         libraries=libs,
-                         depends = [join('mtrand','*.h'),
-                                    join('mtrand','*.pyx'),
-                                    join('mtrand','*.pxi'),
-                                    ]
-                        )
-
+    config.add_sconscript('SConstruct')
     config.add_data_files(('.', join('mtrand', 'randomkit.h')))
     config.add_data_dir('tests')
 
