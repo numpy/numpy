@@ -8,8 +8,6 @@ from copy import deepcopy
 from numpy.distutils.scons import get_python_inc
 from numpy.distutils.scons import GetNumpyEnvironment, CheckTypeSize
 
-import SCons.Node
-
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     generate_config_header, generate_config_header_emitter
 
