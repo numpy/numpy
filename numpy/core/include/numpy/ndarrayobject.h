@@ -1282,7 +1282,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
    and WRITEABLE. */
 #define NPY_ENSURECOPY    0x0020
 
-/* Make sure the returned array is an ndarray or a bigndarray */
+/* Make sure the returned array is a base-class ndarray */
 #define NPY_ENSUREARRAY   0x0040
 
 /* Make sure that the strides are in units of the element size

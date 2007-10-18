@@ -914,6 +914,7 @@ class vectorize(object):
                 raise ValueError, "mismatch between python function inputs"\
                       " and received arguments"
 
+        # we need a new ufunc if this is being called with more arguments.
         if (self.lastcallargs != nargs):
             self.lastcallargs = nargs
             self.ufunc = None
@@ -935,14 +936,17 @@ class vectorize(object):
                     otypes.append(asarray(theout[k]).dtype.char)
                 self.otypes = ''.join(otypes)
 
+        # Create ufunc if not already created
         if (self.ufunc is None):
             self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
 
+        # Convert to object arrays first
+        newargs = [asarray(arg,dtype=object) for arg in args]
         if self.nout == 1:
-            _res = array(self.ufunc(*args),copy=False).astype(self.otypes[0])
+            _res = array(self.ufunc(*newargs),copy=False).astype(self.otypes[0])
         else:
             _res = tuple([array(x,copy=False).astype(c) \
-                          for x, c in zip(self.ufunc(*args), self.otypes)])
+                          for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
 
 def cov(m, y=None, rowvar=1, bias=0):
