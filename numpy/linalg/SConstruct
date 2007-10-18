@@ -1,0 +1,12 @@
+# Last Change: Thu Oct 18 09:00 PM 2007 J
+# vim:syntax=python
+from numpy.distutils.misc_util import get_numpy_include_dirs
+from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths
+
+env = GetNumpyEnvironment(ARGUMENTS)
+env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+sources = ['lapack_litemodule.c', 'zlapack_lite.c', 'dlapack_lite.c',
+          'blas_lite.c', 'dlamch.c', 'f2c_lite.c']
+lapack_lite = env.NumpyPythonExtension('lapack_lite', source = sources)
+            
