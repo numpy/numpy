@@ -16,6 +16,7 @@ from default import tool_list
 from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
 from libinfo import get_config
 from extension_scons import PythonExtension
+from tools.substinfile import TOOL_SUBST
 
 def pyplat2sconsplat():
     # XXX: should see how env['PLATFORM'] is defined, make this a dictionary 
@@ -79,6 +80,9 @@ def GetNumpyEnvironment(args):
     # We set tools to an empty list, to be sure that the custom options are
     # given first. We have to 
     env = Environment(options = opts, tools = [], PYEXTSUFFIX = pyextsuffix)
+
+    # Add the file substitution tool
+    TOOL_SUBST(env)
 
     # Setting dirs according to command line options
     env.AppendUnique(build_dir = pjoin(env['build_prefix'], env['src_dir']))
