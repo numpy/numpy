@@ -920,7 +920,7 @@ typedef enum {
 typedef Py_intptr_t npy_intp;
 typedef Py_uintptr_t npy_uintp;
 #define NPY_SIZEOF_INTP NPY_SIZEOF_PY_INTPTR_T
-#define NPY_SIZEOF_UINTP NPY_NPY_SIZEOF_PY_INTPTR_T
+#define NPY_SIZEOF_UINTP NPY_SIZEOF_PY_INTPTR_T
 
 #ifdef constchar
 #undef constchar
@@ -950,7 +950,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MIN_INTP NPY_MIN_INT
         #define NPY_MAX_UINTP NPY_MAX_UINT
         #define NPY_INTP_FMT "d"
-#elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG
+#elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONG
         #define NPY_INTP NPY_LONG
         #define NPY_UINTP NPY_ULONG
         #define PyIntpArrType_Type PyLongArrType_Type
