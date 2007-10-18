@@ -88,7 +88,18 @@ typedef unsigned char npy_bool;
 #define NPY_FALSE 0
 #define NPY_TRUE 1
 
-#if SIZEOF_LONG_DOUBLE==SIZEOF_DOUBLE
+#define NPY_SIZEOF_LONG SIZEOF_LONG
+#define NPY_SIZEOF_INT SIZEOF_INT
+#define NPY_SIZEOF_SHORT SIZEOF_SHORT
+#define NPY_SIZEOF_FLOAT SIZEOF_FLOAT
+#define NPY_SIZEOF_DOUBLE SIZEOF_DOUBLE
+#define NPY_SIZEOF_LONGDOUBLE SIZEOF_LONG_DOUBLE
+#define NPY_SIZEOF_LONGLONG SIZEOF_LONG_LONG
+
+#define NPY_SIZEOF_PY_LONG_LONG SIZEOF_PY_LONG_LONG
+#define NPY_SIZEOF_PY_INTPTR_T SIZEOF_PY_INTPTR_T
+
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
         typedef double npy_longdouble;
         #define NPY_LONGDOUBLE_FMT "g"
 #else
@@ -287,22 +298,15 @@ typedef enum {
 #define NPY_MAX_ULONG  ULONG_MAX
 
 
-#define NPY_SIZEOF_LONG SIZEOF_LONG
-#define NPY_SIZEOF_INT SIZEOF_INT
-#define NPY_SIZEOF_SHORT SIZEOF_SHORT
-#define NPY_SIZEOF_FLOAT SIZEOF_FLOAT
-#define NPY_SIZEOF_DOUBLE SIZEOF_DOUBLE
-#define NPY_SIZEOF_LONGDOUBLE SIZEOF_LONG_DOUBLE
-#define NPY_SIZEOF_LONGLONG SIZEOF_LONG_LONG
 #define NPY_BITSOF_BOOL (sizeof(npy_bool)*CHAR_BIT)
 #define NPY_BITSOF_CHAR CHAR_BIT
-#define NPY_BITSOF_SHORT (SIZEOF_SHORT*CHAR_BIT)
-#define NPY_BITSOF_INT (SIZEOF_INT*CHAR_BIT)
-#define NPY_BITSOF_LONG (SIZEOF_LONG*CHAR_BIT)
-#define NPY_BITSOF_LONGLONG (NPY_SIZEOF_LONGLONG*CHAR_BIT)
-#define NPY_BITSOF_FLOAT (SIZEOF_FLOAT*CHAR_BIT)
-#define NPY_BITSOF_DOUBLE (SIZEOF_DOUBLE*CHAR_BIT)
-#define NPY_BITSOF_LONGDOUBLE (NPY_SIZEOF_LONGDOUBLE*CHAR_BIT)
+#define NPY_BITSOF_SHORT (NPY_SIZEOF_SHORT * CHAR_BIT)
+#define NPY_BITSOF_INT (NPY_SIZEOF_INT * CHAR_BIT)
+#define NPY_BITSOF_LONG (NPY_SIZEOF_LONG * CHAR_BIT)
+#define NPY_BITSOF_LONGLONG (NPY_SIZEOF_LONGLONG * CHAR_BIT)
+#define NPY_BITSOF_FLOAT (NPY_SIZEOF_FLOAT * CHAR_BIT)
+#define NPY_BITSOF_DOUBLE (NPY_SIZEOF_DOUBLE * CHAR_BIT)
+#define NPY_BITSOF_LONGDOUBLE (NPY_SIZEOF_LONGDOUBLE * CHAR_BIT)
 
 #if NPY_BITSOF_LONG == 8
 #define NPY_INT8 NPY_LONG
@@ -926,8 +930,8 @@ typedef enum {
  * platform.  Py_intptr_t, Py_uintptr_t are defined in pyport.h. */
 typedef Py_intptr_t npy_intp;
 typedef Py_uintptr_t npy_uintp;
-#define NPY_SIZEOF_INTP SIZEOF_PY_INTPTR_T
-#define NPY_SIZEOF_UINTP SIZEOF_PY_INTPTR_T
+#define NPY_SIZEOF_INTP NPY_SIZEOF_PY_INTPTR_T
+#define NPY_SIZEOF_UINTP NPY_NPY_SIZEOF_PY_INTPTR_T
 
 #ifdef constchar
 #undef constchar
@@ -948,7 +952,7 @@ typedef Py_uintptr_t npy_uintp;
 #define constchar char
 #endif
 
-#if SIZEOF_PY_INTPTR_T == SIZEOF_INT
+#if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT
         #define NPY_UINTP NPY_UINT
         #define PyIntpArrType_Type PyIntArrType_Type
@@ -957,7 +961,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MIN_INTP NPY_MIN_INT
         #define NPY_MAX_UINTP NPY_MAX_UINT
         #define NPY_INTP_FMT "d"
-#elif SIZEOF_PY_INTPTR_T == SIZEOF_LONG
+#elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG
         #define NPY_INTP NPY_LONG
         #define NPY_UINTP NPY_ULONG
         #define PyIntpArrType_Type PyLongArrType_Type
@@ -966,7 +970,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MIN_INTP MIN_LONG
         #define NPY_MAX_UINTP NPY_MAX_ULONG
         #define NPY_INTP_FMT "ld"
-#elif defined(PY_LONG_LONG) && (SIZEOF_PY_INTPTR_T == SIZEOF_LONG_LONG)
+#elif defined(PY_LONG_LONG) && (NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG)
         #define NPY_INTP NPY_LONGLONG
         #define NPY_UINTP NPY_ULONGLONG
         #define PyIntpArrType_Type PyLongLongArrType_Type
@@ -1902,7 +1906,7 @@ typedef struct {
 
 #define PyArray_REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define NPY_REFCOUNT PyArray_REFCOUNT
-#define NPY_MAX_ELSIZE (2*SIZEOF_LONGDOUBLE)
+#define NPY_MAX_ELSIZE (2 * NPY_SIZEOF_LONGDOUBLE)
 
 #define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)             \
         PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
