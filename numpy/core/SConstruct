@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 19 08:00 AM 2007 J
+# Last Change: Fri Oct 19 10:00 AM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -172,6 +172,9 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 #------------------------
 # Generate generated code
 #------------------------
+# XXX: the use of env['build_dir'] and env['src_dir'] are really ugly. Will
+# have to think about how removing them (using hierarchical scons and dir
+# option ?)
 from os.path import join as pjoin
 
 config_header = env.GenerateConfigHeader(pjoin(env['build_dir'], 'config.h'), [])
@@ -239,4 +242,6 @@ scalarmathmodule = env.NumpyPythonExtension('scalarmathmodule',
 # Build _dotblas module
 #----------------------
 dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
-dotblas = env.NumpyPythonExtension('_dotblas', source = dotblas_src)
+blasenv = env.Copy()
+blasenv.Append(CPPPATH = pjoin(env['src_dir'], 'blasdot'))
+dotblas = blasenv.NumpyPythonExtension('_dotblas', source = dotblas_src)
