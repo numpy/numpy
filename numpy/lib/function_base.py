@@ -952,9 +952,10 @@ class vectorize(object):
         # Convert to object arrays first
         newargs = [asanyarray(arg,dtype=object) for arg in args]
         if self.nout == 1:
-            _res = array(self.ufunc(*newargs),copy=False).astype(self.otypes[0])
+            _res = array(self.ufunc(*newargs),copy=False,
+                         subok=True).astype(self.otypes[0])
         else:
-            _res = tuple([array(x,copy=False).astype(c) \
+            _res = tuple([array(x,copy=False,subok=True).astype(c) \
                           for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
 
