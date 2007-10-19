@@ -390,6 +390,8 @@ int main(int argc, char **argv)
 def generate_numpyconfig_code(target):
     """Return the source code as a string of the code to generate the
     numpyconfig header file."""
+    if sys.platform == 'win32':
+        target = target.replace('\\','\\\\')
     # Config symbols to prepend
     prepends = [('NPY_SIZEOF_SHORT', 'SIZEOF_SHORT'),
             ('NPY_SIZEOF_INT', 'SIZEOF_INT'),
