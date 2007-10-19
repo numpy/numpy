@@ -422,6 +422,102 @@ return 0;
 
     return ret
 
+def CheckTypeSize(context, type_name, header = None, language = None, expect = None):
+    """This check can be used to get the size of a given type, or to check whether
+    the type is of expected size.
+
+    Arguments:
+        - type : str
+            the type to check
+        - includes : sequence
+            list of headers to include in the test code before testing the type
+        - language : str
+            'C' or 'C++'
+        - expect : int
+            if given, will test wether the type has the given number of bytes.
+            If not given, will automatically find the size.
+
+        Returns:
+            status : int
+                0 if the check failed, or the found size of the type if the check succeeded."""
+    
+    # Include "confdefs.h" first, so that the header can use HAVE_HEADER_H.
+    if context.headerfilename:
+        includetext = '#include "%s"' % context.headerfilename
+    else:
+        includetext = ''
+
+    if not header:
+        header = ""
+
+    lang, suffix, msg = _lang2suffix(language)
+    if msg:
+        context.Display("Cannot check for %s type: %s\n" % (type_name, msg))
+        return msg
+
+    src = includetext + header 
+    if not expect is None:
+        # Only check if the given size is the right one
+        context.Display('Checking %s is %d bytes... ' % (type_name, expect))
+
+        # test code taken from autoconf: this is a pretty clever hack to find that
+        # a type is of a given size using only compilation. This speeds things up
+        # quite a bit compared to straightforward code using TryRun
+        src += r"""
+typedef %s scons_check_type;
+
+int main()
+{
+    static int test_array[1 - 2 * !(((long int) (sizeof(scons_check_type))) == %d)];
+    test_array[0] = 0;
+
+    return 0;
+}
+"""
+
+        # XXX: Try* vs CompileProg ?
+        st = context.TryCompile(src % (type_name, expect), suffix)
+        if st:
+            _Have(context, "SIZEOF_" + type_name, str(expect))
+            context.Display("yes\n")
+            return expect
+        else:
+            context.Display("no\n")
+            _LogFailed(context, src, st)
+            return 0
+    else:
+        # Only check if the given size is the right one
+        context.Message('Checking size of %s ... ' % type_name)
+
+        # We have to be careful with the program we wish to test here since
+        # compilation will be attempted using the current environment's flags.
+        # So make sure that the program will compile without any warning. For
+        # example using: 'int main(int argc, char** argv)' will fail with the
+        # '-Wall -Werror' flags since the variables argc and argv would not be
+        # used in the program...
+        #
+        src += """
+#include <stdlib.h>
+#include <stdio.h>
+int main() {
+    printf("%d", (int)sizeof(""" + type_name + """));
+    return 0;
+}
+    """
+        ret = context.TryRun(src, suffix)
+        st = ret[0]
+        try:
+            size = int(ret[1])
+            _Have(context, "SIZEOF_" + type_name, str(size))
+            context.Display("%d\n" % size)
+        except ValueError:
+            size = 0
+            _LogFailed(context, src, st)
+            context.Display(" Failed !\n")
+        if st:
+            return size
+        else:
+            return 0
 #
 # END OF PUBLIC FUNCTIONS
 #

@@ -6,7 +6,7 @@ from os.path import join as pjoin, basename as pbasename, dirname as pdirname
 from copy import deepcopy
 
 from numpy.distutils.scons import get_python_inc
-from numpy.distutils.scons import GetNumpyEnvironment, CheckTypeSize
+from numpy.distutils.scons import GetNumpyEnvironment
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     generate_config_header, generate_config_header_emitter
@@ -17,8 +17,7 @@ env.Append(CPPPATH = [get_python_inc()])
 #=======================
 # Starting Configuration
 #=======================
-config = env.NumpyConfigure(custom_tests = {'CheckTypeSize' : CheckTypeSize,
-    'CheckBrokenMathlib' : CheckBrokenMathlib})
+config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib})
 
 # Convention: list of tuples (definition, value). value:
 # - 0: #undef definition
@@ -42,8 +41,8 @@ check_type('long')
 check_type('float')
 check_type('double')
 check_type('long double')
-check_type('Py_intptr_t', include = ["Python.h"])
-check_type('PY_LONG_LONG', include = ["Python.h"])
+check_type('Py_intptr_t', include = r"#include <Python.h>\n")
+check_type('PY_LONG_LONG', include = r"#include <Python.h>\n")
 
 # TODO: check python extension can be built (in root or here ?)
 
@@ -123,8 +122,8 @@ config.Finish()
 
 try:
     config_file = open('config.log')
-    for i in  config_file.readlines():
-        print i
+    #for i in  config_file.readlines():
+    #    print i
 except:
     pass
 #==========

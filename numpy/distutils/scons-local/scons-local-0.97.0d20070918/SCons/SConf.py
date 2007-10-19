@@ -395,6 +395,7 @@ class SConf:
         default_tests = {
                  'CheckFunc'          : CheckFunc,
                  'CheckType'          : CheckType,
+                 'CheckTypeSize'      : CheckTypeSize,
                  'CheckHeader'        : CheckHeader,
                  'CheckCHeader'       : CheckCHeader,
                  'CheckCXXHeader'     : CheckCXXHeader,
@@ -825,6 +826,13 @@ def CheckType(context, type_name, includes = "", language = None):
                                         header = includes, language = language)
     context.did_show_result = 1
     return not res
+
+def CheckTypeSize(context, type_name, includes = "", language = None, expect = None):
+    res = SCons.Conftest.CheckTypeSize(context, type_name,
+                                       header = includes, language = language, 
+                                       expect = expect)
+    context.did_show_result = 1
+    return res
 
 def createIncludesFromHeaders(headers, leaveLast, include_quotes = '""'):
     # used by CheckHeader and CheckLibWithHeader to produce C - #include
