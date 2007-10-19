@@ -950,12 +950,12 @@ class vectorize(object):
             self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
 
         # Convert to object arrays first
-        newargs = [asanyarray(arg,dtype=object) for arg in args]
+        newargs = [array(arg,copy=False,subok=True,dtype=object) for arg in args]
         if self.nout == 1:
             _res = array(self.ufunc(*newargs),copy=False,
-                         subok=True).astype(self.otypes[0])
+                         subok=True,dtype=self.otypes[0])
         else:
-            _res = tuple([array(x,copy=False,subok=True).astype(c) \
+            _res = tuple([array(x,copy=False,subok=True,dtype=c) \
                           for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
 
