@@ -52,10 +52,10 @@ def rsplit(s, sep, max = -1):
 def _rsplit(s, sep, max):
     """Equivalent of rsplit, but works on 2.3."""
     l = s.split(sep)
-    if max < 0:
-        return l[-len(l):]
-    elif max == 0:
+    if len(l) < 2 or max == 0:
         return [s]
+    elif max < 0:
+        return l[-len(l):]
     else:
         st = sep.join(l[0:-max])
         return [st] + l[-max:]
@@ -84,3 +84,7 @@ if __name__ == '__main__':
     assert a1.rsplit('.', 0) == _rsplit(a1, '.', 0)
 
     assert a1.rsplit('.', 2) == _rsplit(a1, '.', 2)
+
+    a2 = 'floupi'
+    assert a2.rsplit('.') ==  _rsplit(a2, '.', -1)
+    assert a2.rsplit('.', 1) == _rsplit(a2, '.', 1)
