@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 19 10:00 AM 2007 J
+# Last Change: Fri Oct 19 07:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -121,6 +121,12 @@ else:
 
 config.Finish()
 
+try:
+    config_file = open('config.log')
+    for i in  config_file.readlines():
+        print i
+except:
+    pass
 #==========
 #  Build
 #==========
