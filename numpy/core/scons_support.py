@@ -10,7 +10,7 @@ from code_generators.generate_ufunc_api import \
      do_generate_api as nowrap_do_generate_ufunc_api
 
 from numpy.distutils.conv_template import process_str
-from numpy.distutils.scons.utils import rsplit
+from numpy.distutils.scons.utils import _rsplit as rsplit
 
 import SCons.Node
 
