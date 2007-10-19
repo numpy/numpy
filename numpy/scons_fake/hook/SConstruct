@@ -2,4 +2,4 @@
 from numpy.distutils.scons import GetNumpyEnvironment
 
 env = GetNumpyEnvironment(ARGUMENTS)
-env.NumpySharedLibrary('hello', 'hello.c')
+env.NumpyCtypes('hello', 'hello.c')
