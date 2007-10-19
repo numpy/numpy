@@ -53,7 +53,6 @@ class Component(object):
         obj = obj.initialize(*args, **kws)    # initialize from constructor arguments
         return obj
 
-    @property
     def components(self):
         if Component._running_generate:
             try:
@@ -65,6 +64,7 @@ class Component(object):
             self._generate_components[Component._running_generate_id] = l = list(self._components)
             return l
         return self._components
+    components = property(components)
         
     def initialize(self, *components, **options):
         """
@@ -83,7 +83,6 @@ class Component(object):
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, ', '.join([repr(c) for (c,l) in self.components]))
 
-    @property
     def provides(self):
         """
         Return a code idiom name that the current class defines.
@@ -93,14 +92,16 @@ class Component(object):
         if self._provides is None:
             return '%s_%s' % (self.__class__.__name__, id(self))
         return self._provides
+    provides = property(provides)
 
-    @staticmethod
     def warning(message):
         #raise RuntimeError('extgen:' + message)
         print >> sys.stderr, 'extgen:',message
-    @staticmethod
+    warning = staticmethod(warning)
+
     def info(message):
         print >> sys.stderr, message
+    info = staticmethod(info)
 
     def __getattr__(self, attr):
         if attr.startswith('container_'): # convenience feature
@@ -114,7 +115,6 @@ class Component(object):
         return self
     __iadd__ = __add__
 
-    @staticmethod
     def _get_class_names(cls):
         if not issubclass(cls, Component):
             return [cls]
@@ -122,7 +122,8 @@ class Component(object):
         for b in cls.__bases__:
             r += Component._get_class_names(b)
         return r
-        
+    _get_class_names = staticmethod(_get_class_names)
+    
     def add(self, component, container_label=None):
         """
         Append component and its target container label to components list.
@@ -349,7 +350,6 @@ class Component(object):
 
     _registered_components_map = {}
 
-    @staticmethod
     def register(*components):
         """
         Register components so that component classes can use
@@ -363,8 +363,8 @@ class Component(object):
             else:
                 d[provides] = component
         return
+    register = staticmethod(register)
 
-    @staticmethod
     def get(provides):
         """
         Return predefined component with given provides property..
@@ -374,12 +374,12 @@ class Component(object):
         except KeyError:
             pass
         raise KeyError('no registered component provides %r' % (provides))
+    get = staticmethod(get)
 
-    @property
     def numpy_version(self):
         import numpy
         return numpy.__version__
-
+    numpy_version = property(numpy_version)
     
 class Container(object):
     """
