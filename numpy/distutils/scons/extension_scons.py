@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 11 03:00 PM 2007 J
+# Last Change: Fri Oct 19 11:00 AM 2007 J
 
 # Module for support to build python extension. scons specific code goes here.
 import sys
@@ -36,6 +36,8 @@ def PythonExtension(env, target, source, *args, **kw):
 
     # Use LoadableModule because of Mac OS X
     wrap = env.LoadableModule(target, source, SHLIBPREFIX = '', 
-                             LDMODULESUFFIX = '$PYEXTSUFFIX', LINKFLAGS = LINKFLAGS, 
-                             CPPPATH = CPPPATH, *args, **kw)
+                              LDMODULESUFFIX = '$PYEXTSUFFIX', 
+                              SHLIBSUFFIX = '$PYEXTSUFFIX', 
+                              LINKFLAGS = LINKFLAGS, 
+                              CPPPATH = CPPPATH, *args, **kw)
     return wrap
