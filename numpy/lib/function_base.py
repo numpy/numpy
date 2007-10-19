@@ -108,6 +108,12 @@ def histogram(a, bins=10, range=None, normed=False):
 
     """
     a = asarray(a).ravel()
+
+    if (range is not None):
+        mn, mx = range
+        if (mn > mx):
+            raise AttributeError, 'max must be larger than min in range parameter.'
+
     if not iterable(bins):
         if range is None:
             range = (a.min(), a.max())
@@ -116,6 +122,9 @@ def histogram(a, bins=10, range=None, normed=False):
             mn -= 0.5
             mx += 0.5
         bins = linspace(mn, mx, bins, endpoint=False)
+    else:
+        if(any(bins[1:]-bins[:-1] < 0)):
+            raise AttributeError, 'bins must increase monotonically.'
 
     # best block size probably depends on processor cache size
     block = 65536
