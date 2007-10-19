@@ -1,0 +1,9 @@
+# Last Change: Fri Oct 19 09:00 AM 2007 J
+# vim:syntax=python
+from numpy.distutils.misc_util import get_numpy_include_dirs
+from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths
+
+env = GetNumpyEnvironment(ARGUMENTS)
+env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+_capi = env.NumpyPythonExtension('_capi', source = ['_capi.c'])
