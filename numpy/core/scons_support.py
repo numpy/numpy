@@ -10,11 +10,12 @@ from code_generators.generate_ufunc_api import \
      do_generate_api as nowrap_do_generate_ufunc_api
 
 from numpy.distutils.conv_template import process_str
+from numpy.distutils.scons.utils import rsplit
 
 import SCons.Node
 
 def split_ext(string):
-    sp = string.rsplit('.', 1)
+    sp = rsplit(string, '.', 1)
     if len(sp) == 1:
         return (sp[0], '')
     else:
