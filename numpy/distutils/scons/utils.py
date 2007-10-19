@@ -42,6 +42,24 @@ def get_empty(dict, key):
     except KeyError, e:
         return []
 
+def rsplit(s, sep, max = -1):
+    """Equivalent of rsplit, but works on 2.3."""
+    try:
+        return s.rsplit(sep, max)
+    except AttributeError:
+        return _rsplit(s, sep, max)
+
+def _rsplit(s, sep, max):
+    """Equivalent of rsplit, but works on 2.3."""
+    l = s.split(sep)
+    if max < 0:
+        return l[-len(l):]
+    elif max == 0:
+        return [s]
+    else:
+        st = sep.join(l[0:-max])
+        return [st] + l[-max:]
+
 class curry:
     def __init__(self, fun, *args, **kwargs):
         self.fun = fun
@@ -56,3 +74,13 @@ class curry:
             kw = kwargs or self.kwargs
 
         return self.fun(*(self.pending + args), **kw)
+
+if __name__ == '__main__':
+    a1 = 'a.b.c'
+    assert a1.split('.', -1) == a1.rsplit('.', -1) == _rsplit(a1, '.', -1)
+
+    assert a1.rsplit('.', 1) == _rsplit(a1, '.', 1)
+
+    assert a1.rsplit('.', 0) == _rsplit(a1, '.', 0)
+
+    assert a1.rsplit('.', 2) == _rsplit(a1, '.', 2)
