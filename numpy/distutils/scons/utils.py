@@ -75,6 +75,27 @@ class curry:
 
         return self.fun(*(self.pending + args), **kw)
 
+import types
+# Don't "from types import ..." these because we need to get at the
+# types module later to look for UnicodeType.
+DictType        = types.DictType
+InstanceType    = types.InstanceType
+ListType        = types.ListType
+StringType      = types.StringType
+TupleType       = types.TupleType
+if hasattr(types, 'UnicodeType'):
+    UnicodeType = types.UnicodeType
+    def isstring(obj):
+        t = type(obj)
+        return t is StringType \
+            or t is UnicodeType \
+            or (t is InstanceType and isinstance(obj, UserString))
+else:
+    def isstring(obj):
+        t = type(obj)
+        return t is StringType \
+            or (t is InstanceType and isinstance(obj, UserString))
+
 if __name__ == '__main__':
     a1 = 'a.b.c'
     assert a1.split('.', -1) == a1.rsplit('.', -1) == _rsplit(a1, '.', -1)
