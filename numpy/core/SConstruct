@@ -120,6 +120,13 @@ if define_no_smp():
 else:
     config_sym.append(('NPY_NOSMP', '0'))
 
+# XXX: this is ugly
+if sys.platform=='win32' or os.name=='nt':
+    from distutils.msvccompiler import get_build_architecture
+    a = get_build_architecture()
+    print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
+    if a == 'AMD64':
+        moredefs.append(('DISTUTILS_USE_SDK', 1))
 #--------------
 # Checking Blas
 #--------------
