@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 19 07:00 PM 2007 J
+# Last Change: Sat Oct 20 06:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -243,10 +243,10 @@ umathmodule = env.NumpyPythonExtension('umathmodule', source = umathmodule_src)
 scalarmathmodule = env.NumpyPythonExtension('scalarmathmodule', 
                                             source = scalarmathmodule_src)
 
-#----------------------
-# Build _dotblas module
-#----------------------
-dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
-blasenv = env.Copy()
-blasenv.Append(CPPPATH = pjoin(env['src_dir'], 'blasdot'))
-dotblas = blasenv.NumpyPythonExtension('_dotblas', source = dotblas_src)
+# #----------------------
+# # Build _dotblas module
+# #----------------------
+# dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
+# blasenv = env.Copy()
+# blasenv.Append(CPPPATH = pjoin(env['src_dir'], 'blasdot'))
+# dotblas = blasenv.NumpyPythonExtension('_dotblas', source = dotblas_src)

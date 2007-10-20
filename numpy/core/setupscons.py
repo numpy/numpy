@@ -74,16 +74,6 @@ def configuration(parent_package='',top_path=None):
     if sys.platform == 'cygwin':
         config.add_data_dir('include/numpy/fenv')
 
-    # # Configure blasdot
-    # blas_info = get_info('blas_opt',0)
-    # #blas_info = {}
-    # def get_dotblas_sources(ext, build_dir):
-    #     if blas_info:
-    #         if ('NO_ATLAS_INFO',1) in blas_info.get('define_macros',[]):
-    #             return None # dotblas needs ATLAS, Fortran compiled blas will not be sufficient.
-    #         return ext.depends[:1]
-    #     return None # no extension module will be built
-
     config.add_data_dir('tests')
     config.make_svn_version_py()
 
