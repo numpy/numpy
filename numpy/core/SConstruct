@@ -76,7 +76,7 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
 
 # TODO: getting the math lib automatically ? Having a list ?
 # TODO: checklib vs checkfunc ?
-mlibs = [[], ['cpml']]
+mlibs = [[], ['m'], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
     # XXX: prepend it
@@ -91,7 +91,7 @@ if not st:
     raise SCons.Errors.UserError("No usable mathlib was found: chose another "\
                                  "one using the MATHLIB env variable, eg "\
                                  "MATHLIB=m")
-config_sym.append(('MATHLIB', str(mlib)))
+config_sym.append(('MATHLIB', mlib))
 
 def check_lib(f, autoadd = 0):
     """Check that f is available in mlib, and add the symbol appropriately.

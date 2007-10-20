@@ -10,7 +10,7 @@ from code_generators.generate_ufunc_api import \
      do_generate_api as nowrap_do_generate_ufunc_api
 
 from numpy.distutils.conv_template import process_str
-from numpy.distutils.scons.utils import _rsplit as rsplit
+from numpy.distutils.scons.utils import _rsplit as rsplit, isstring
 
 import SCons.Node
 
@@ -101,8 +101,10 @@ def generate_config_header(target, source, env):
             return "#define %s\n\n" % define
         elif value == 0:
             return "/* #undef %s */\n\n" % define
-        else:
+        elif isstring(value):
             return "#define %s %s\n\n" % (define, value)
+        else:
+            return "#define %s %s\n\n" % (define, ' '.join(value))
     t.writelines([write_symbol(i[0], i[1]) for i in sym])
     t.write('\n')
     t.close()
