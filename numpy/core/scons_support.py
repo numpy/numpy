@@ -125,6 +125,33 @@ def generate_config_header_emitter(target, source, env):
 #-----------------------------------------
 # Other functions related to configuration
 #-----------------------------------------
+def CheckMathlib(context, mathlib):
+    src = """
+/* check whether exp can be found with current link/compile options */
+#include <math.h>
+int main(int argc, char *argv[])
+{
+    double a = exp(0);
+}
+"""
+    try:
+        oldLIBS = deepcopy(context.env['LIBS'])
+    except:
+        oldLIBS = []
+
+    try:
+        context.Message("Checking if math lib %s defines exp ... " % mathlib)
+        context.env.AppendUnique(LIBS = mathlib)
+        st = context.TryLink(src, '.c')
+    finally:
+        context.env['LIBS'] = oldLIBS
+
+    if st:
+        context.Result(' Yes')
+    else:
+        context.Result(' No ')
+    return st
+
 def CheckBrokenMathlib(context, mathlib):
     src = """
 /* check whether libm is broken */
@@ -141,16 +168,16 @@ int main(int argc, char *argv[])
         oldLIBS = []
 
     try:
-        context.Message("Checking if math lib %s is broken ... " % mathlib)
+        context.Message("Checking if math lib %s is usable for numpy ... " % mathlib)
         context.env.AppendUnique(LIBS = mathlib)
         st = context.TryRun(src, '.c')
     finally:
         context.env['LIBS'] = oldLIBS
 
     if st[0]:
-        context.Result(' not broken !')
+        context.Result(' Yes !')
     else:
-        context.Result(' broken !')
+        context.Result(' No !')
     return st[0]
 
 def define_no_smp():

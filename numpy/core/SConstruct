@@ -9,7 +9,8 @@ from numpy.distutils.scons import get_python_inc
 from numpy.distutils.scons import GetNumpyEnvironment
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
-    generate_config_header, generate_config_header_emitter
+    generate_config_header, generate_config_header_emitter, \
+    CheckMathlib
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
@@ -17,7 +18,9 @@ env.Append(CPPPATH = [get_python_inc()])
 #=======================
 # Starting Configuration
 #=======================
-config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib})
+# XXX: separate env for configuration
+config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
+    'CheckMathlib' : CheckMathlib})
 
 # Convention: list of tuples (definition, value). value:
 # - 0: #undef definition
@@ -73,12 +76,21 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
 
 # TODO: getting the math lib automatically ? Having a list ?
 # TODO: checklib vs checkfunc ?
+mlibs = [[], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
-    # XXX: prepend it ?
-    mlib = mathlib
-else:
-    mlib = 'm'
+    # XXX: prepend it
+    mlibs.insert(0, mathlib)
+for mlib in mlibs:
+    st = config.CheckBrokenMathlib(mlib)
+    if st:
+        break
+
+if not st:
+    import SCons
+    raise SCons.Errors.UserError("No usable mathlib was found: chose another "\
+                                 "one using the MATHLIB env variable, eg "\
+                                 "MATHLIB=m")
 config_sym.append(('MATHLIB', str(mlib)))
 
 def check_lib(f, autoadd = 0):
@@ -94,11 +106,6 @@ def check_lib(f, autoadd = 0):
 check_lib(mfuncs[0], autoadd = 1)
 for f in mfuncs[1:]:
     check_lib(f)
-
-if not config.CheckBrokenMathlib(mlib):
-    raise SCons.Errors.UserError("Your mathlib looks broken: chose another "\
-                                 "one using the MATHLIB env variable, eg "\
-                                 "MATHLIB=m")
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
