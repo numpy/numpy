@@ -252,12 +252,12 @@ sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
 #-------------------
 # Build umath module
 #-------------------
-umathmodule = env.NumpyPythonExtension('umathmodule', source = umathmodule_src)
+umathmodule = env.NumpyPythonExtension('umath', source = umathmodule_src)
 
 #------------------------
 # Build scalarmath module
 #------------------------
-scalarmathmodule = env.NumpyPythonExtension('scalarmathmodule', 
+scalarmathmodule = env.NumpyPythonExtension('scalarmath', 
                                             source = scalarmathmodule_src)
 
 # #----------------------

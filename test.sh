@@ -1,4 +1,4 @@
-PREFIX=/usr/media/src/src/dsp/numpy/numpy.scons/
+PREFIX=$PWD
 rm -rf $PREFIX/build
 rm -rf $PREFIX/tmp
 python setup.py scons --jobs=4
