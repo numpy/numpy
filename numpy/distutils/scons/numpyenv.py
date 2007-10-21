@@ -135,6 +135,7 @@ def GetNumpyEnvironment(args):
     from utils import curry
     NumpyConfigure = curry(env.Configure, conf_dir = pjoin(env['build_dir'], '.sconf'))
     env.NumpyConfigure = NumpyConfigure
+
     # XXX: Huge, ugly hack ! SConsign needs an absolute path or a path
     # relative to where the SConstruct file is. We have to find the path of
     # the build dir relative to the src_dir: we add n .., where n is the number

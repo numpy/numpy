@@ -1,11 +1,11 @@
-# Last Change: Sat Oct 20 06:00 PM 2007 J
+# Last Change: Sun Oct 21 09:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
 from copy import deepcopy
 
-from numpy.distutils.scons import get_python_inc
+from numpy.distutils.scons import get_python_inc, get_pythonlib_dir
 from numpy.distutils.scons import GetNumpyEnvironment
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
@@ -14,6 +14,8 @@ from scons_support import CheckBrokenMathlib, define_no_smp, \
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
+if os.name == 'nt':
+    env.AppendUnique(LIBPATH = [get_pythonlib_dir()])
 
 #=======================
 # Starting Configuration
@@ -38,6 +40,7 @@ def check_type(type, include = None):
         config_sym.append(('SIZEOF_%s' % type.upper(), '%d' % st))
     else:
         config_sym.append(('SIZEOF_%s' % type.upper(), 0))
+
 check_type('short')
 check_type('int')
 check_type('long')
