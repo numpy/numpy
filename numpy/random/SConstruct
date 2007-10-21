@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
 
+# On windows, see if we should use Advapi32
 if os.name == 'nt':
     config = env.NumpyConfigure(custom_tests = {'CheckWincrypt' : CheckWincrypt})
     if config.CheckWincrypt:
