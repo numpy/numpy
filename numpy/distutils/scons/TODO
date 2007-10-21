@@ -19,6 +19,7 @@ Implementation details:
       g77, gfortran (1st priority), MS and Intel (2d priority), others (3rd:
       sun, aix, etc...)
     - Refactor code for API generation (numpy/core/code_generators)
+    - Problems of per packages things (config.log, sconsign files, etc....)
 
 Documentation:
     - scons / distutils integration

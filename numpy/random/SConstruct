@@ -1,24 +1,39 @@
-# Last Change: Thu Oct 18 10:00 PM 2007 J
+# Last Change: Sun Oct 21 10:00 PM 2007 J
 # vim:syntax=python
 import os
 
 from numpy.distutils.misc_util import get_numpy_include_dirs
 from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths
 
+def CheckWincrypt(context):
+    from copy import deepcopy
+    src = """\
+/* check to see if _WIN32 is defined */
+int main(int argc, char *argv[])
+{
+#ifdef _WIN32
+    return 0;
+#else
+    return 1;
+#endif
+}
+"""
+
+    context.Message("Checking if using wincrypt ... ")
+    st = context.env.TryRun(src, '.C')
+    if st[0] == 0:
+        context.Result('No')
+    else:
+        context.Result('Yes')
+    return st[0]
+    
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
 
-mathlib = os.environ.get('MATHLIB')
-if mathlib: 
-    # XXX: prepend it ?
-    mlib = mathlib
-else:
-    mlib = 'm'
-env.Append(LIBS = mlib)
-
-import sys
-if sys.platform == 'win32':
-    assert 0 == 1, 'FIXME: support Advapi32 detection for win32 in mtrand'
+if os.name == 'nt':
+    config = env.NumpyConfigure(custom_tests = {'CheckWincrypt' : CheckWincrypt})
+    if config.CheckWincrypt:
+        config.env.AppendUnique(LIBS = 'Advapi32')
 
 sources = [os.path.join('mtrand', x) for x in 
            ['mtrand.c', 'randomkit.c', 'initarray.c', 'distributions.c']]
