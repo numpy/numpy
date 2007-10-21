@@ -1,5 +1,6 @@
 Checker:
     - improve CheckTypeSize for upstream integration
+    - improve BrokenMathlib and Mathlib in core, and make them available to everyone
     - improve Fortran runtime detection for upstream integration
     - improve Fortran mangling and dummy main detection for upstream
       integration
