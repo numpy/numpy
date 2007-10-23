@@ -4,6 +4,7 @@ Checker:
     - improve Fortran runtime detection for upstream integration
     - improve Fortran mangling and dummy main detection for upstream
       integration
+    - Cblas checker
     - Blas/Lapack check
     - Atlas check
 
