@@ -1,4 +1,4 @@
-# Last Change: Sun Oct 21 09:00 PM 2007 J
+# Last Change: Tue Oct 23 04:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -137,12 +137,6 @@ if sys.platform=='win32' or os.name=='nt':
 
 config.Finish()
 
-try:
-    config_file = open('config.log')
-    #for i in  config_file.readlines():
-    #    print i
-except:
-    pass
 #==========
 #  Build
 #==========
