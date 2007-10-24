@@ -25,7 +25,7 @@ int main(int argc, char** argv)
 }\n """
 
 def _CheckLib(context, libs, symbols, header, language, section, siteconfig, 
-              libpath, cpppath):
+              libpath, cpppath, verbose):
     """Implementation for checking a list of symbols, with libs.
     
     Assumes that libs, symbol, header, libpath and cpppath are sequences (list
@@ -92,7 +92,7 @@ def _CheckLib(context, libs, symbols, header, language, section, siteconfig,
 
 
 def NumpyCheckLib(context, libs, symbols = None, header = None, 
-                  language = None, section = None, siteconfig = None, name = None):
+                  language = None, section = None, siteconfig = None, name = None, verbose = None):
     """Check for symbol in libs. 
     
     This is the general purpose replacement for numpy.distutils.system_info. It
@@ -119,7 +119,8 @@ def NumpyCheckLib(context, libs, symbols = None, header = None,
     #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     env = context.env
 
-    # XXX: would be nice for each extension to add an option to command line.
+    # XXX: would be nice for each extension to add an option to
+    # command line.
     # XXX: handle env var
     # XXX: handle language
     if language:
@@ -145,13 +146,14 @@ def NumpyCheckLib(context, libs, symbols = None, header = None,
     libpath = None
     cpppath = None
     res = _CheckLib(context, libs, symbols, header, language, section,
-                    siteconfig, libpath, cpppath, )
+                    siteconfig, libpath, cpppath, verbose)
     context.Result(res)
     return res
 
 def _check_lib_section(context, siteconfig, section, src, libs, libpath, cpppath):
-    # Convention: if an option is found in site.cfg for the given section, it
-    # takes precedence on the arguments libs, libpath, cpppath.
+    # Convention: if an option is found in site.cfg for the given
+    # section, it takes precedence on the arguments libs, libpath,
+    # cpppath.
     res = 1
     try:
         newLIBPATH = get_paths(siteconfig.get(section, 'library_dirs'))
