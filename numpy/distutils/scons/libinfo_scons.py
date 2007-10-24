@@ -30,13 +30,16 @@ def _CheckLib(context, libs, symbols, header, language, section, siteconfig,
     
     Assumes that libs, symbol, header, libpath and cpppath are sequences (list
     or tuples). DO NOT USE DIRECTLY IN SCONSCRIPT !!!"""
-    # XXX: sanitize API for section/siteconfig option: if sectionis not given,
+    # XXX: sanitize API for section/siteconfig option: if section is not given,
     # can we just say to ignore the sitecfg ?
     if not siteconfig:
         siteconfig, cfgfiles = get_config()
 
     def get_descr():
-        descr = siteconfig.items(section)
+        try:
+            descr = siteconfig.items(section)
+        except ConfigParser.NoSectionError:
+            descr = ""
         sdescr = ""
         for i in descr:
             sdescr += str(i) + '\n'
@@ -66,9 +69,9 @@ def _CheckLib(context, libs, symbols, header, language, section, siteconfig,
     # recommended in C++ portability guide of mozilla for nested comments,
     # which may happen here). This is also the most robust, since it seems
     # unlikely to have any #endif somewhere in the return value of get_descr.
-    #src += "#if 0\n"
-    #src += get_descr()
-    #src += "\n#endif\n"
+    src += "#if 0\n"
+    src += get_descr()
+    src += "\n#endif\n"
 
     # XXX: handle autoadd
     # XXX: handle extension 
