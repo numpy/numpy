@@ -101,6 +101,7 @@ def CheckATLAS(context, atl_dir):
                                   cblas_src, libs, libpath, [], [])
 
 def CheckCBLAS(context):
+    cflags = []
     linkflags = []
     libs = []
     headers = []
@@ -129,4 +130,4 @@ def CheckCBLAS(context):
         libs.append('cblas')
 
     return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
-                                  libs, [], linkflags, [])
+                                  libs, [], linkflags, cflags)
