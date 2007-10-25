@@ -97,6 +97,7 @@ def CheckATLAS(context, atl_dir):
 
 def CheckCBLAS(context):
     cflags = []
+    libs = []
     if sys.platform == 'darwin':
         # According to
         # http://developer.apple.com/hardwaredrivers/ve/vector_libraries.html:
@@ -112,9 +113,10 @@ def CheckCBLAS(context):
         else:
             is_intel = 0
             cflags.append('-faltivec')
+        # TODO: we should have a small test code to test Accelerate vs veclib
         cflags.append('-framework Accelerate')
     else:
-        libs = ['cblas']
+        libs.append('cblas')
 
     return _check_include_and_run(context, 'CBLAS', [], [], cblas_src,
                                   libs, [], [], cflags)
