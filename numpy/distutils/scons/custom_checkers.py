@@ -101,7 +101,7 @@ def CheckATLAS(context, atl_dir):
                                   cblas_src, libs, libpath, [], [])
 
 def CheckCBLAS(context):
-    cflags = []
+    linkflags = []
     libs = []
     headers = []
     if sys.platform == 'darwin':
@@ -121,12 +121,12 @@ def CheckCBLAS(context):
             cflags.append('-faltivec')
         # TODO: we should have a small test code to test Accelerate vs veclib
         # XXX: This double append is not good, any other way ?
-        cflags.append('-framework')
-        cflags.append('Accelerate')
+        linkflags.append('-framework')
+        linkflags.append('Accelerate')
         headers.append('Accelerate/Accelerate.h')
     else:
         headers.append('cblas.h')
         libs.append('cblas')
 
     return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
-                                  libs, [], [], cflags)
+                                  libs, [], linkflags, [])
