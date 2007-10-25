@@ -1,4 +1,4 @@
-# Last Change: Tue Oct 23 04:00 PM 2007 J
+# Last Change: Thu Oct 25 02:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -8,6 +8,7 @@ from copy import deepcopy
 from numpy.distutils.scons import get_python_inc, get_pythonlib_dir
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons import NumpyCheckLib
+from numpy.distutils.scons.custom_checkers import CheckCBLAS, CheckMKL, CheckATLAS
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     generate_config_header, generate_config_header_emitter, \
@@ -24,6 +25,9 @@ if os.name == 'nt':
 # XXX: separate env for configuration
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
     'CheckMathlib' : CheckMathlib, 
+    'CheckMKL' : CheckMKL, 
+    'CheckATLAS' : CheckATLAS, 
+    'CheckCBLAS' : CheckCBLAS, 
     'NumpyCheckLib' : NumpyCheckLib})
 
 # Convention: list of tuples (definition, value). value:
@@ -137,8 +141,11 @@ if sys.platform=='win32' or os.name=='nt':
 # Checking Blas
 #--------------
 # TODO
-config.NumpyCheckLib(libs = ['cblas'], symbols = ['cblas_dgemm'])
-config.NumpyCheckLib(libs = ['blas'], symbols = ['cblas_dgemm'])
+if config.CheckCBLAS():
+    build_blasdot = 1
+else:
+    build_blasdot = 0
+#config.CheckMKL('/home/david/opt/intel/mkl/9.1.023/', '32')
 
 config.Finish()
 
@@ -259,10 +266,11 @@ umathmodule = env.NumpyPythonExtension('umath', source = umathmodule_src)
 scalarmathmodule = env.NumpyPythonExtension('scalarmath', 
                                             source = scalarmathmodule_src)
 
-# #----------------------
-# # Build _dotblas module
-# #----------------------
-# dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
-# blasenv = env.Copy()
-# blasenv.Append(CPPPATH = pjoin(env['src_dir'], 'blasdot'))
-# dotblas = blasenv.NumpyPythonExtension('_dotblas', source = dotblas_src)
+#----------------------
+# Build _dotblas module
+#----------------------
+if build_blasdot:
+    dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
+    blasenv = env.Copy()
+    blasenv.Append(CPPPATH = pjoin(env['src_dir'], 'blasdot'))
+    dotblas = blasenv.NumpyPythonExtension('_dotblas', source = dotblas_src)
