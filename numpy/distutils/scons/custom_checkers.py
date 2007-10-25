@@ -32,7 +32,11 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs, libpa
     oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
     env.Append(CPPPATH = cpppath)
     # XXX: handle context
-    src = '\n'.join(headers)
+    hcode = ['#include <%s>' % h for h in headers]
+    # HACK: we add cpppath in the command of the source, to add dependency of
+    # the check on the cpppath.
+    hcode.extend(['#if 0', '%s' % cpppath, '#endif'])
+    src = '\n'.join(hcode)
 
     ret = context.TryCompile(src, '.c')
     if not ret:
@@ -48,7 +52,10 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs, libpa
     env.Append(LIBS = libs)
     env.Append(RPATH = libpath)
 
-    ret = context.TryLink(run_src, '.c')
+    # HACK: we add libpath and libs at the end of the source as a comment, to
+    # add dependency of the check on those.
+    src = '\n'.join([run_src, '#if 0', '%s' % libpath, '%s' % libs, '#endif'])
+    ret = context.TryLink(src, '.c')
     if not ret:
         env.Replace(LIBS = oldLIBS)
         env.Replace(LIBPATH = oldLIBPATH)
@@ -59,3 +66,13 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs, libpa
     context.Result(ret)
     return ret
      
+def CheckMKL(context, mkl_dir, nb):
+    """mkl_lib is the root path of MKL (the one which contains include, lib,
+    etc...). nb is 32, 64, emt, etc..."""
+
+    libs = ['mkl']
+    cpppath = os.path.join(mkl_dir, 'include')
+    libpath = os.path.join(mkl_dir, 'lib', nb)
+
+    return _check_include_and_run(context, 'MKL', cpppath, ['mkl.h'],
+                                  cblas_src, libs, libpath)
