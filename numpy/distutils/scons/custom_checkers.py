@@ -119,7 +119,7 @@ def CheckCBLAS(context):
         # TODO: we should have a small test code to test Accelerate vs veclib
         # XXX: This double append is not good, any other way ?
         cflags.append('-framework')
-        clfags.append('Accelerate')
+        cflags.append('Accelerate')
     else:
         libs.append('cblas')
 
