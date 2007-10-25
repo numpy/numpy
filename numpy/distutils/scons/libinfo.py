@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 05 02:00 PM 2007 J
+# Last Change: Thu Oct 25 01:00 PM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). KEEP THIS INDEPENDANT OF SCONS !
@@ -51,7 +51,8 @@ def get_config():
 def parse_config_param(var):
     """Given var, the output of ConfirParser.get(section, name), returns a list
     of each item of its content."""
-    pass
+    varl = var.split(',')
+    return [i.strip() for i in varl]
 
 def get_paths(var):
     """Given var, the output of ConfirParser.get(section, name), returns a list

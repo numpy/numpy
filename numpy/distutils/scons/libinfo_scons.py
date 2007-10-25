@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Oct 09 04:00 PM 2007 J
+# Last Change: Thu Oct 25 01:00 PM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). scons dependant code.
@@ -8,7 +8,7 @@ from copy import deepcopy
 
 from SCons.Util import is_List
 
-from libinfo import get_config, get_paths
+from libinfo import get_config, get_paths, parse_config_param
 from utils import get_empty
 
 _SYMBOL_DEF_STR = """
@@ -155,6 +155,8 @@ def _check_lib_section(context, siteconfig, section, src, libs, libpath, cpppath
     # section, it takes precedence on the arguments libs, libpath,
     # cpppath.
     res = 1
+
+    # XXX: refactor this mess
     try:
         newLIBPATH = get_paths(siteconfig.get(section, 'library_dirs'))
     except ConfigParser.NoSectionError, e:
@@ -172,7 +174,7 @@ def _check_lib_section(context, siteconfig, section, src, libs, libpath, cpppath
             newCPPPATH = []
 
     try:
-        newLIBS = siteconfig.get(section, 'libraries') 
+        newLIBS = parse_config_param(siteconfig.get(section, 'libraries'))
     except ConfigParser.NoSectionError, e:
         if libs:
             newLIBS = libs
