@@ -1,14 +1,17 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 25 02:00 PM 2007 J
+# Last Change: Thu Oct 25 04:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
+import sys
 import os.path
 from copy import deepcopy
+from distutils.util import get_platform
 
 from libinfo_scons import NumpyCheckLib
 from testcode_snippets import cblas_sgemm as cblas_src
 
-def _check_include_and_run(context, name, cpppath, headers, run_src, libs, libpath):
+def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
+                           libpath, linkflags, cflags):
     """This is a basic implementation for generic "test include and run"
     testers.
     
@@ -24,7 +27,8 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs, libpa
         - headers: list of headers
         - run_src: the code for the run test
         - libs: list of libraries to link
-        - libpath: list of library path."""
+        - libpath: list of library path.
+        - linkflags: list of link flags to add."""
     context.Message('Checking for %s ... ' % name)
     env = context.env
 
@@ -80,7 +84,7 @@ def CheckMKL(context, mkl_dir, nb):
     libpath = os.path.join(mkl_dir, 'lib', nb)
 
     return _check_include_and_run(context, 'MKL', cpppath, ['mkl.h'],
-                                  cblas_src, libs, libpath)
+                                  cblas_src, libs, libpath, [], [])
 
 def CheckATLAS(context, atl_dir):
     """atl_dir is the root path of ATLAS (the one which contains libatlas)."""
@@ -89,10 +93,28 @@ def CheckATLAS(context, atl_dir):
     libpath = atl_dir
 
     return _check_include_and_run(context, 'ATLAS', None, ['atlas_enum.h'],
-                                  cblas_src, libs, libpath)
+                                  cblas_src, libs, libpath, [], [])
 
 def CheckCBLAS(context):
-    libs = ['cblas']
+    cflags = []
+    if sys.platform == 'darwin':
+        # According to
+        # http://developer.apple.com/hardwaredrivers/ve/vector_libraries.html:
+        #
+        #   This page contains a continually expanding set of vector libraries
+        #   that are available to the AltiVec programmer through the Accelerate
+        #   framework on MacOS X.3, Panther. On earlier versions of MacOS X,
+        #   these were available in vecLib.framework. The currently available
+        #   libraries are described below.
+        if get_platform()[-4:] == 'i386':
+            is_intel = 1
+            cflags.append('-msse3')
+        else:
+            is_intel = 0
+            cflags.append('-faltivec')
+        cflags.append('-framework Accelerate')
+    else:
+        libs = ['cblas']
 
     return _check_include_and_run(context, 'CBLAS', [], [], cblas_src,
-                                  libs, [])
+                                  libs, [], [], cflags)
