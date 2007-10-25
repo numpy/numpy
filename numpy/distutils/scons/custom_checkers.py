@@ -117,7 +117,9 @@ def CheckCBLAS(context):
             is_intel = 0
             cflags.append('-faltivec')
         # TODO: we should have a small test code to test Accelerate vs veclib
-        cflags.append('-framework Accelerate')
+        # XXX: This double append is not good, any other way ?
+        cflags.append('-framework')
+        clfags.append('Accelerate')
     else:
         libs.append('cblas')
 
