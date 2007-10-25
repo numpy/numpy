@@ -1,4 +1,4 @@
-# Last Change: Thu Oct 25 02:00 PM 2007 J
+# Last Change: Thu Oct 25 04:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -148,6 +148,11 @@ else:
 #config.CheckMKL('/home/david/opt/intel/mkl/9.1.023/', '32')
 
 config.Finish()
+config_f = open('config.log', 'r')
+print "++++++++++ config.log dump ++++++++++++++++++"
+for i in config_f:
+    print i.strip('\n')
+print "+++++++++++++++++++++++++++++++++++++++++++++"
 
 #==========
 #  Build
