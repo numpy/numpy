@@ -66,7 +66,9 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
 
     # HACK: we add libpath and libs at the end of the source as a comment, to
     # add dependency of the check on those.
-    src = '\n'.join([run_src, '#if 0', '%s' % libpath, '%s' % libs, '#endif'])
+    src = '\n'.join(['#include <%s>' % h for h in headers] +\
+                    [run_src, '#if 0', '%s' % libpath, 
+                     '%s' % headers, '%s' % libs, '#endif'])
     ret = context.TryLink(src, '.c')
     if not ret:
         env.Replace(LIBS = oldLIBS)
@@ -95,12 +97,13 @@ def CheckATLAS(context, atl_dir):
     libs = ['atlas', 'f77blas', 'cblas']
     libpath = atl_dir
 
-    return _check_include_and_run(context, 'ATLAS', None, ['atlas_enum.h'],
+    return _check_include_and_run(context, 'ATLAS', None, ['atlas_enum.h', 'cblas.h'],
                                   cblas_src, libs, libpath, [], [])
 
 def CheckCBLAS(context):
     cflags = []
     libs = []
+    headers = []
     if sys.platform == 'darwin':
         # According to
         # http://developer.apple.com/hardwaredrivers/ve/vector_libraries.html:
@@ -120,8 +123,10 @@ def CheckCBLAS(context):
         # XXX: This double append is not good, any other way ?
         cflags.append('-framework')
         cflags.append('Accelerate')
+        headers.append('Accelerate/Accelerate.h')
     else:
+        headers.append('cblas.h')
         libs.append('cblas')
 
-    return _check_include_and_run(context, 'CBLAS', [], [], cblas_src,
+    return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
                                   libs, [], [], cflags)

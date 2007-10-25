@@ -7,7 +7,6 @@
 
 # Check whether CBLAS sgemm works
 cblas_sgemm = """
-#include <cblas.h>
 
 int
 main (void)
