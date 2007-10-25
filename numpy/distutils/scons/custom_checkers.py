@@ -36,7 +36,9 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
     # Check headers are available
     #----------------------------
     oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
+    oldCFLAGS = (env.has_key('CFLAGS') and deepcopy(env['CFLAGS'])) or []
     env.Append(CPPPATH = cpppath)
+    env.Append(CFLAGS = cflags)
     # XXX: handle context
     hcode = ['#include <%s>' % h for h in headers]
     # HACK: we add cpppath in the command of the source, to add dependency of
@@ -47,6 +49,7 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
     ret = context.TryCompile(src, '.c')
     if not ret:
         env.Replace(CPPPATH = oldCPPPATH)
+        env.Replace(CFLAGS = oldCFLAGS)
         context.Result('Failed: %s include not found' % name)
         return 0
 
