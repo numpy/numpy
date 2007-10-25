@@ -7,6 +7,7 @@ import os.path
 from copy import deepcopy
 from distutils.util import get_platform
 
+from libinfo import get_config, get_paths, parse_config_param
 from libinfo_scons import NumpyCheckLib
 from testcode_snippets import cblas_sgemm as cblas_src
 
@@ -104,33 +105,62 @@ def CheckATLAS(context, atl_dir):
                                   cblas_src, libs, libpath, [], [])
 
 def CheckCBLAS(context):
-    cflags = []
-    linkflags = []
-    libs = []
-    headers = []
-    if sys.platform == 'darwin':
-        # According to
-        # http://developer.apple.com/hardwaredrivers/ve/vector_libraries.html:
-        #
-        #   This page contains a continually expanding set of vector libraries
-        #   that are available to the AltiVec programmer through the Accelerate
-        #   framework on MacOS X.3, Panther. On earlier versions of MacOS X,
-        #   these were available in vecLib.framework. The currently available
-        #   libraries are described below.
-        if get_platform()[-4:] == 'i386':
-            is_intel = 1
-            cflags.append('-msse3')
-        else:
-            is_intel = 0
-            cflags.append('-faltivec')
-        # TODO: we should have a small test code to test Accelerate vs veclib
-        # XXX: This double append is not good, any other way ?
-        linkflags.append('-framework')
-        linkflags.append('Accelerate')
-        headers.append('Accelerate/Accelerate.h')
+
+    # If section cblas is in site.cfg, use those options. Otherwise, use default
+    section = "cblas"
+    siteconfig, cfgfiles = get_config()
+    if siteconfig.has_section('cblas'):
+        import warnings
+        import ConfigParser
+        warnings.warn('FIXME: site.cfg not support yet')
+        try:
+            libpath = get_paths(siteconfig.get(section, 'library_dirs'))
+        except ConfigParser.NoSectionError, e:
+            libpath = []
+
+        try:
+            cpppath = get_paths(siteconfig.get(section, 'include_dirs'))
+        except ConfigParser.NoSectionError, e:
+            cpppath = []
+
+        try:
+            libs = parse_config_param(siteconfig.get(section, 'libraries'))
+        except ConfigParser.NoSectionError, e:
+            libs = []
+        headers = ['cblas.h']
+        linkflags = []
+        cflags = []
     else:
-        headers.append('cblas.h')
-        libs.append('cblas')
+        cflags = []
+        linkflags = []
+        libs = []
+        libpath = []
+        headers = []
+        if sys.platform == 'darwin':
+            # According to
+            # http://developer.apple.com/hardwaredrivers/ve/vector_libraries.html:
+            #
+            #   This page contains a continually expanding set of vector libraries
+            #   that are available to the AltiVec programmer through the Accelerate
+            #   framework on MacOS X.3, Panther. On earlier versions of MacOS X,
+            #   these were available in vecLib.framework. The currently available
+            #   libraries are described below.
+
+            #if get_platform()[-4:] == 'i386':
+            #    is_intel = 1
+            #    cflags.append('-msse3')
+            #else:
+            #    is_intel = 0
+            #    cflags.append('-faltivec')
+
+            # TODO: we should have a small test code to test Accelerate vs veclib
+            # XXX: This double append is not good, any other way ?
+            linkflags.append('-framework')
+            linkflags.append('Accelerate')
+            headers.append('Accelerate/Accelerate.h')
+        else:
+            headers.append('cblas.h')
+            libs.append('cblas')
 
     return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
-                                  libs, [], linkflags, cflags)
+                                  libs, libpath, linkflags, cflags)
