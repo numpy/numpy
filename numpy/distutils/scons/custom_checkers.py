@@ -28,14 +28,16 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs, libpa
     context.Message('Checking for %s ... ' % name)
     env = context.env
 
+    #----------------------------
     # Check headers are available
+    #----------------------------
     oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
     env.Append(CPPPATH = cpppath)
     # XXX: handle context
     hcode = ['#include <%s>' % h for h in headers]
     # HACK: we add cpppath in the command of the source, to add dependency of
     # the check on the cpppath.
-    hcode.extend(['#if 0', '%s' % cpppath, '#endif'])
+    hcode.extend(['#if 0', '%s' % cpppath, '#endif\n'])
     src = '\n'.join(hcode)
 
     ret = context.TryCompile(src, '.c')
@@ -44,9 +46,12 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs, libpa
         context.Result('Failed: %s include not found' % name)
         return 0
 
-    # Check a simple cblas example works
+    #------------------------------
+    # Check a simple example works
+    #------------------------------
     oldLIBPATH = (env.has_key('LIBPATH') and deepcopy(env['LIBPATH'])) or []
     oldLIBS = (env.has_key('LIBS') and deepcopy(env['LIBS'])) or []
+    # XXX: RPATH, drawbacks using it ?
     oldRPATH = (env.has_key('RPATH') and deepcopy(env['RPATH'])) or []
     env.Append(LIBPATH = libpath)
     env.Append(LIBS = libs)
@@ -76,3 +81,18 @@ def CheckMKL(context, mkl_dir, nb):
 
     return _check_include_and_run(context, 'MKL', cpppath, ['mkl.h'],
                                   cblas_src, libs, libpath)
+
+def CheckATLAS(context, atl_dir):
+    """atl_dir is the root path of ATLAS (the one which contains libatlas)."""
+
+    libs = ['atlas', 'f77blas', 'cblas']
+    libpath = atl_dir
+
+    return _check_include_and_run(context, 'ATLAS', None, ['atlas_enum.h'],
+                                  cblas_src, libs, libpath)
+
+def CheckCBLAS(context):
+    libs = ['cblas']
+
+    return _check_include_and_run(context, 'CBLAS', [], [], cblas_src,
+                                  libs, [])
