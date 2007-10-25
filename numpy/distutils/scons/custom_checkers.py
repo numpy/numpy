@@ -60,9 +60,11 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
     oldLIBS = (env.has_key('LIBS') and deepcopy(env['LIBS'])) or []
     # XXX: RPATH, drawbacks using it ?
     oldRPATH = (env.has_key('RPATH') and deepcopy(env['RPATH'])) or []
+    oldLINKFLAGS = (env.has_key('LINKFLAGS') and deepcopy(env['LINKFLAGS'])) or []
     env.Append(LIBPATH = libpath)
     env.Append(LIBS = libs)
     env.Append(RPATH = libpath)
+    env.Append(LINKFLAGS = linkflags)
 
     # HACK: we add libpath and libs at the end of the source as a comment, to
     # add dependency of the check on those.
@@ -74,6 +76,7 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
         env.Replace(LIBS = oldLIBS)
         env.Replace(LIBPATH = oldLIBPATH)
         env.Replace(RPATH = oldRPATH)
+        env.Replace(LINKFLAGS = oldLINKFLAGS)
         context.Result('Failed: %s test could not be linked and run' % name)
         return 0
 
