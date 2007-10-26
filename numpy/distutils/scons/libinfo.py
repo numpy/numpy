@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 25 01:00 PM 2007 J
+# Last Change: Fri Oct 26 11:00 AM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). KEEP THIS INDEPENDANT OF SCONS !
@@ -60,6 +60,31 @@ def get_paths(var):
     
     Example: if var is foo:bar, it will return ['foo', 'bar'] on posix."""
     return var.split(os.pathsep)
+
+def get_config_from_section(siteconfig, section):
+    """For the given siteconfig and section, return the found information.
+    
+    Returns a tuple (info, found), where:
+        info : tuple (cpppath, libs, libpath), containing a list of path or libraries
+        found: 1 if the section was found, 0 otherwise."""
+    if siteconfig.has_section(section):
+        try:
+            libpath = get_paths(siteconfig.get(section, 'library_dirs'))
+        except ConfigParser.NoSectionError, e:
+            libpath = []
+
+        try:
+            cpppath = get_paths(siteconfig.get(section, 'include_dirs'))
+        except ConfigParser.NoSectionError, e:
+            cpppath = []
+
+        try:
+            libs = parse_config_param(siteconfig.get(section, 'libraries'))
+        except ConfigParser.NoSectionError, e:
+            libs = []
+        return (cpppath, libs, libpath), 1
+    else:
+        return ([], [], []), 0
 
 if __name__ == '__main__':
     pass

@@ -1,4 +1,4 @@
-# Last Change: Thu Oct 25 04:00 PM 2007 J
+# Last Change: Fri Oct 26 11:00 AM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -88,7 +88,6 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
 mlibs = [[], ['m'], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
-    # XXX: prepend it
     mlibs.insert(0, mathlib)
 for mlib in mlibs:
     st = config.CheckBrokenMathlib(mlib)
@@ -99,7 +98,7 @@ if not st:
     import SCons
     raise SCons.Errors.UserError("No usable mathlib was found: chose another "\
                                  "one using the MATHLIB env variable, eg "\
-                                 "MATHLIB=m")
+                                 "'MATHLIB=m python setup.py build'")
 config_sym.append(('MATHLIB', mlib))
 
 def check_lib(f, autoadd = 0):
@@ -145,7 +144,6 @@ if config.CheckCBLAS():
     build_blasdot = 1
 else:
     build_blasdot = 0
-#config.CheckMKL('/home/david/opt/intel/mkl/9.1.023/', '32')
 
 config.Finish()
 config_f = open('config.log', 'r')

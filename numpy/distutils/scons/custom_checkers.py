@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 25 04:00 PM 2007 J
+# Last Change: Fri Oct 26 11:00 AM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -7,7 +7,7 @@ import os.path
 from copy import deepcopy
 from distutils.util import get_platform
 
-from libinfo import get_config, get_paths, parse_config_param
+from libinfo import get_config, get_config_from_section
 from libinfo_scons import NumpyCheckLib
 from testcode_snippets import cblas_sgemm as cblas_src
 
@@ -104,29 +104,22 @@ def CheckATLAS(context, atl_dir):
     return _check_include_and_run(context, 'ATLAS', None, ['atlas_enum.h', 'cblas.h'],
                                   cblas_src, libs, libpath, [], [])
 
+def CheckAccelerate(context):
+    """Checker for Accelerate framework (on Mac OS X >= 10.3)."""
+
+    linkflags = ['-framework', 'Accelerate']
+
+    return _check_include_and_run(context, 'FRAMEWORK: Accelerate', None, 
+                                  ['Accelerate/Accelerate.h'], cblas_src, [], 
+                                  [], linkflags, [])
+
 def CheckCBLAS(context):
 
     # If section cblas is in site.cfg, use those options. Otherwise, use default
     section = "cblas"
     siteconfig, cfgfiles = get_config()
-    if siteconfig.has_section('cblas'):
-        import warnings
-        import ConfigParser
-        warnings.warn('FIXME: site.cfg not support yet')
-        try:
-            libpath = get_paths(siteconfig.get(section, 'library_dirs'))
-        except ConfigParser.NoSectionError, e:
-            libpath = []
-
-        try:
-            cpppath = get_paths(siteconfig.get(section, 'include_dirs'))
-        except ConfigParser.NoSectionError, e:
-            cpppath = []
-
-        try:
-            libs = parse_config_param(siteconfig.get(section, 'libraries'))
-        except ConfigParser.NoSectionError, e:
-            libs = []
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if found:
         headers = ['cblas.h']
         linkflags = []
         cflags = []
