@@ -12,7 +12,7 @@ from libinfo_scons import NumpyCheckLib
 from testcode_snippets import cblas_sgemm as cblas_src
 
 def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
-                           libpath, linkflags, cflags):
+                           libpath, linkflags, cflags, autoadd = 1):
     """This is a basic implementation for generic "test include and run"
     testers.
     
@@ -73,11 +73,14 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
                     [run_src, '#if 0', '%s' % libpath, 
                      '%s' % headers, '%s' % libs, '#endif'])
     ret = context.TryLink(src, '.c')
-    if not ret:
+    if (not ret or not autoadd):
+        # If test failed or autoadd = 0, restore everything
         env.Replace(LIBS = oldLIBS)
         env.Replace(LIBPATH = oldLIBPATH)
         env.Replace(RPATH = oldRPATH)
         env.Replace(LINKFLAGS = oldLINKFLAGS)
+
+    if not ret:
         context.Result('Failed: %s test could not be linked and run' % name)
         return 0
 
@@ -93,27 +96,36 @@ def CheckMKL(context, mkl_dir, nb):
     libpath = os.path.join(mkl_dir, 'lib', nb)
 
     return _check_include_and_run(context, 'MKL', cpppath, ['mkl.h'],
-                                  cblas_src, libs, libpath, [], [])
+                                  cblas_src, libs, libpath, [], [], autoadd)
 
-def CheckATLAS(context, atl_dir):
-    """atl_dir is the root path of ATLAS (the one which contains libatlas)."""
+def CheckMKL2(context, autoadd = 1):
+    section = "mkl"
+    siteconfig, cfgfiles = get_config()
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    headers = ['mkl.h']
+
+    return _check_include_and_run(context, 'MKL', cpppath, headers,
+                                  cblas_src, libs, libpath, [], [], autoadd)
+
+def CheckATLAS(context, autoadd = 1):
+    """Check whether ATLAS is usable in C."""
 
     libs = ['atlas', 'f77blas', 'cblas']
-    libpath = atl_dir
+    libpath = []
 
     return _check_include_and_run(context, 'ATLAS', None, ['atlas_enum.h', 'cblas.h'],
-                                  cblas_src, libs, libpath, [], [])
+                                  cblas_src, libs, libpath, [], [], autoadd)
 
-def CheckAccelerate(context):
+def CheckAccelerate(context, autoadd = 1):
     """Checker for Accelerate framework (on Mac OS X >= 10.3)."""
 
     linkflags = ['-framework', 'Accelerate']
 
     return _check_include_and_run(context, 'FRAMEWORK: Accelerate', None, 
                                   ['Accelerate/Accelerate.h'], cblas_src, [], 
-                                  [], linkflags, [])
+                                  [], linkflags, [], autoadd)
 
-def CheckCBLAS(context):
+def CheckCBLAS(context, autoadd = 1):
 
     # If section cblas is in site.cfg, use those options. Otherwise, use default
     section = "cblas"
@@ -156,4 +168,4 @@ def CheckCBLAS(context):
             libs.append('cblas')
 
     return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
-                                  libs, libpath, linkflags, cflags)
+                                  libs, libpath, linkflags, cflags, autoadd)
