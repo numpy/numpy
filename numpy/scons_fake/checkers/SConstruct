@@ -1,0 +1,22 @@
+# vim:syntax=python
+from numpy.distutils.scons import GetNumpyEnvironment, CheckATLAS, \
+                                  CheckAccelerate, CheckMKL2, CheckCBLAS
+
+env = GetNumpyEnvironment(ARGUMENTS)
+
+config = env.NumpyConfigure(custom_tests = 
+    {'CheckATLAS' : CheckATLAS,
+    'CheckMKL' : CheckMKL2,
+    'CheckAccelerate' : CheckAccelerate,
+    'CheckCBLAS' : CheckCBLAS})
+
+config.CheckATLAS(autoadd = 0)
+config.CheckMKL(autoadd = 0)
+config.CheckAccelerate(autoadd = 0)
+
+config.Finish()
+
+if env.has_key('LIBS'):
+    print env.Dump('LIBS')
+else:
+    print "No LIBS in env"
