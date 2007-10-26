@@ -5,6 +5,7 @@ from custom_checkers import CheckMKL, CheckATLAS, CheckCBLAS, \
         CheckAccelerate, CheckMKL, CheckSunperf
 from extension import get_python_inc, get_pythonlib_dir
 from utils import isstring
+import fortran
 
 def test(level=1, verbosity=1):
     from numpy.testing import NumpyTest

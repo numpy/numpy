@@ -7,6 +7,12 @@ Thread model: posix
 gcc version 3.4.6 (Ubuntu 3.4.6-6ubuntu1)
  /usr/lib/gcc/i486-linux-gnu/3.4.6/collect2 --eh-frame-hdr -m elf_i386 -dynamic-linker /lib/ld-linux.so.2 -o empty /usr/lib/gcc/i486-linux-gnu/3.4.6/../../../../lib/crt1.o /usr/lib/gcc/i486-linux-gnu/3.4.6/../../../../lib/crti.o /usr/lib/gcc/i486-linux-gnu/3.4.6/crtbegin.o -L/usr/lib/gcc/i486-linux-gnu/3.4.6 -L/usr/lib/gcc/i486-linux-gnu/3.4.6 -L/usr/lib/gcc/i486-linux-gnu/3.4.6/../../../../lib -L/usr/lib/gcc/i486-linux-gnu/3.4.6/../../.. -L/lib/../lib -L/usr/lib/../lib empty.o -lfrtbegin -lg2c -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/i486-linux-gnu/3.4.6/crtend.o /usr/lib/gcc/i486-linux-gnu/3.4.6/../../../../lib/crtn.o"""
 
+g77_link_expected = ['-L/usr/lib/gcc/i486-linux-gnu/3.4.6',
+        '-L/usr/lib/gcc/i486-linux-gnu/3.4.6',
+        '-L/usr/lib/gcc/i486-linux-gnu/3.4.6/../../../../lib',
+        '-L/usr/lib/gcc/i486-linux-gnu/3.4.6/../../..', '-L/lib/../lib',
+        '-L/usr/lib/../lib', '-lfrtbegin', '-lg2c', '-lm']
+
 gfortran_link_output = """
 Driving: gfortran -v -o hello hello.o -lgfortranbegin -lgfortran -lm -shared-libgcc
 Using built-in specs.
@@ -15,6 +21,12 @@ Configured with: ../src/configure -v --enable-languages=c,c++,fortran,objc,obj-c
 Thread model: posix
 gcc version 4.2.1 (Ubuntu 4.2.1-5ubuntu4)
  /usr/lib/gcc/i486-linux-gnu/4.2.1/collect2 --eh-frame-hdr -m elf_i386 --hash-style=both -dynamic-linker /lib/ld-linux.so.2 -o hello /usr/lib/gcc/i486-linux-gnu/4.2.1/../../../../lib/crt1.o /usr/lib/gcc/i486-linux-gnu/4.2.1/../../../../lib/crti.o /usr/lib/gcc/i486-linux-gnu/4.2.1/crtbegin.o -L/usr/lib/gcc/i486-linux-gnu/4.2.1 -L/usr/lib/gcc/i486-linux-gnu/4.2.1 -L/usr/lib/gcc/i486-linux-gnu/4.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/i486-linux-gnu/4.2.1/../../.. hello.o -lgfortranbegin -lgfortran -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/i486-linux-gnu/4.2.1/crtend.o /usr/lib/gcc/i486-linux-gnu/4.2.1/../../../../lib/crtn.o"""
+
+gfortran_link_expected = ['-L/usr/lib/gcc/i486-linux-gnu/4.2.1',
+        '-L/usr/lib/gcc/i486-linux-gnu/4.2.1',
+        '-L/usr/lib/gcc/i486-linux-gnu/4.2.1/../../../../lib', '-L/lib/../lib',
+        '-L/usr/lib/../lib', '-L/usr/lib/gcc/i486-linux-gnu/4.2.1/../../..',
+        '-lgfortranbegin', '-lgfortran', '-lm']
 
 sunfort_v12_link_output = """
 NOTICE: Invoking /home/david/opt/sun/sunstudio12/bin/f90 -f77 -ftrap=%none -c empty.f
@@ -29,9 +41,22 @@ NOTICE: Invoking /home/david/opt/sun/sunstudio12/bin/f90 -f77 -ftrap=%none -c em
      MAIN hello:
 """
 
+sunfort_v12_link_expected = ['-R/home/david/opt/sun/sunstudio12/lib:'\
+        '/opt/sun/sunstudio12/lib:/home/david/opt/sun/lib/rtlibs:'\
+        '/opt/sun/lib/rtlibs', '-L/home/david/opt/sun/sunstudio12/lib',
+        '-L/home/david/opt/sun/sunstudio12/rtlibs',
+        '-L/home/david/opt/sun/sunstudio12/prod/lib', '-L/lib', '-L/usr/lib',
+        '-lfui', '-lfai', '-lfsu', '-lmtsk', '-lpthread', '-lm']
+
 ifort_v10_link_output = """
 ld    /usr/lib/gcc/i486-linux-gnu/4.1.3/../../../crt1.o /usr/lib/gcc/i486-linux-gnu/4.1.3/../../../crti.o /usr/lib/gcc/i486-linux-gnu/4.1.3/crtbegin.o --eh-frame-hdr -dynamic-linker /lib/ld-linux.so.2 -m elf_i386 -o a.out /home/david/opt/intel/fc/10.0.023//lib/for_main.o empty.o -L/home/david/opt/intel/fc/10.0.023//lib -L/usr/lib/gcc/i486-linux-gnu/4.1.3/ -L/usr/lib/gcc/i486-linux-gnu/4.1.3/../../../ -Bstatic -lifport -lifcore -limf -Bdynamic -lm -Bstatic -lipgo -lirc -Bdynamic -lc -lgcc_s -lgcc -Bstatic -lirc_s -Bdynamic -ldl -lc /usr/lib/gcc/i486-linux-gnu/4.1.3/crtend.o /usr/lib/gcc/i486-linux-gnu/4.1.3/../../../crtn.o
 """
+
+ifort_v10_link_expected = ['-L/home/david/opt/intel/fc/10.0.023//lib',
+        '-L/usr/lib/gcc/i486-linux-gnu/4.1.3/',
+        '-L/usr/lib/gcc/i486-linux-gnu/4.1.3/../../../', '-lifport',
+        '-lifcore', '-limf', '-lm', '-lipgo', '-lirc', '-lirc_s', '-ldl']
+
 def generate_output(fcomp, verbose):
     import os
     os.system('%s -c %s &> /dev/null ' % (fcomp, 'empty.f'))
