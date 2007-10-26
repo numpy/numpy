@@ -1,8 +1,5 @@
 from os.path import join as pjoin
 
-from SCons.Environment import Environment
-import SCons.Util
-
 def NumpySharedLibrary(env, target, source, *args, **kw):
     """This builder is the same than SharedLibrary, except for the fact that it
     takes into account build dir info passed by distutils, and put the target at
@@ -18,6 +15,7 @@ def NumpyPythonExtension(env, target, source, *args, **kw):
     """This builder is the same than PythonExtension, except for the fact that it
     takes into account build dir info passed by distutils, and put the target at
     the right location in distutils build directory for correct installation."""
+    import SCons.Util
     newsource = []
     for i in source:
         if SCons.Util.is_String(i):

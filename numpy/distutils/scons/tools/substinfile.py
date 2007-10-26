@@ -1,9 +1,6 @@
-# Last Change: Thu Oct 18 03:00 PM 2007 J
+# Last Change: Fri Oct 26 04:00 PM 2007 J
 
 import re
-import SCons.Action
-from SCons.Builder import Builder
-from SCons.Script import Depends
 
 def TOOL_SUBST(env):
     """Adds SubstInFile builder, which substitutes the keys->values of SUBST_DICT
@@ -15,6 +12,10 @@ def TOOL_SUBST(env):
     If there's more than one source and more than one target, each target gets
     substituted from the corresponding source.
     """
+    import SCons.Action
+    from SCons.Builder import Builder
+    from SCons.Script import Depends
+
     env.Append(TOOLS = 'SUBST')
     def do_subst_in_file(targetfile, sourcefile, dict):
         """Replace all instances of the keys of dict with their values.

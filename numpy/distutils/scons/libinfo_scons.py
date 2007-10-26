@@ -1,12 +1,10 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 25 01:00 PM 2007 J
+# Last Change: Fri Oct 26 04:00 PM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). scons dependant code.
 import ConfigParser
 from copy import deepcopy
-
-from SCons.Util import is_List
 
 from libinfo import get_config, get_paths, parse_config_param
 from utils import get_empty
@@ -117,6 +115,8 @@ def NumpyCheckLib(context, libs, symbols = None, header = None,
     # 
     # This needs testing, too.
     #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    from SCons.Util import is_List
+
     env = context.env
 
     # XXX: would be nice for each extension to add an option to

@@ -1,9 +1,10 @@
-#! Last Change: Tue Oct 23 08:00 PM 2007 J
+#! Last Change: Fri Oct 26 03:00 PM 2007 J
 
 # This module defines some functions/classes useful for testing fortran-related
 # features (name mangling, F77/C runtime, etc...).
 
 # KEEP THIS INDEPENDENT OF SCONS, PLEASE !!!
+# All this module is total crap, refactor it + needs testing
 
 import sys
 import re
@@ -11,6 +12,8 @@ import re
 GCC_DRIVER_LINE = re.compile('^Driving:')
 POSIX_STATIC_EXT = re.compile('\S+\.a')
 POSIX_LIB_FLAGS = re.compile('-l\S+')
+MERGE_SPACE_R1 = re.compile('^-[LRuYz]$')
+
 
 def _check_link_verbose_posix(lines):
     """Returns true if useful link options can be found in output.
@@ -31,14 +34,12 @@ def check_link_verbose(lines):
     else:
         return _check_link_verbose_posix(lines)
 
-merge_space_r1 = re.compile('^-[LRuYz]$')
-
 def merge_space(line):
     """matcher should be a callable, line a list of tokens."""
     nline = []
     for i in range(len(line)):
         ##print "hoho is %s" % line[i]
-        if merge_space_r1.match(line[i]):
+        if MERGE_SPACE_R1.match(line[i]):
             ##print '%s matched !' % line[i]
             merged = [line[i]]
             if not (line[i+1][0] == '-'):

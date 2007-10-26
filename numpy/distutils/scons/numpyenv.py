@@ -5,18 +5,14 @@ import sys
 
 from distutils.sysconfig import get_config_vars
 
-from SCons.Options import Options
-from SCons.Environment import Environment
-from SCons.Tool import Tool, FindTool, FindAllTools
-from SCons.Script import BuildDir, Help
-
 from numpy.distutils.command.scons import get_scons_build_dir
 
 from default import tool_list
 from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
 from libinfo import get_config
 from extension_scons import PythonExtension
-from tools.substinfile import TOOL_SUBST
+
+from numpy.distutils.scons.tools.substinfile import TOOL_SUBST
 
 def pyplat2sconsplat():
     # XXX: should see how env['PLATFORM'] is defined, make this a dictionary 
@@ -50,6 +46,8 @@ def is_cc_suncc(fullpath):
 
 def GetNumpyOptions(args):
     """Call this with args=ARGUMENTS to take into account command line args."""
+    from SCons.Options import Options
+
     opts = Options(None, args)
     # Add directories related info
     opts.Add('pkg_name', 'name of the package (including parent package if any)', '')
@@ -71,6 +69,10 @@ def GetNumpyOptions(args):
 
 def GetNumpyEnvironment(args):
     """Call this with args = ARGUMENTS."""
+    from SCons.Environment import Environment
+    from SCons.Tool import Tool, FindTool, FindAllTools
+    from SCons.Script import BuildDir, Help
+
     # XXX: I would prefer subclassing Environment, because we really expect
     # some different behaviour than just Environment instances...
     opts = GetNumpyOptions(args)
