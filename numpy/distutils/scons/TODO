@@ -1,15 +1,15 @@
 Before True milestone:
     - improve CheckTypeSize for upstream integration
-    - improve BrokenMathlib and Mathlib in core, and make them available to everyone
-    - Cblas checker: works for atlas and mkl
-    - Atlas check
-    - Mkl check
+    - improve BrokenMathlib and Mathlib in core, and make them available to
+      everyone
+    - show_config implementation : how to do it ?
 
 Checker:
     - improve Fortran runtime detection for upstream integration
     - improve Fortran mangling and dummy main detection for upstream
       integration
-    - Blas/Lapack check
+    - How to build meta-checkers from simple checkers (for example, BLAS with
+      MKL, ATLAS, Sunperf, etc...) ?
 
 Builder:
     - Get a PythonExtension builder independant of distutils for upstream
@@ -23,8 +23,9 @@ Implementation details:
     - Default optim, warn and link flags for python extension on at least gcc,
       g77, gfortran (1st priority), MS and Intel (2d priority), others (3rd:
       sun, aix, etc...)
-    - Refactor code for API generation (numpy/core/code_generators)
-    - Problems of per packages things (config.log, sconsign files, etc....)
+    - Refactor code for API generation (numpy/core/code_generators) -> Mostly done
+    - Problems of per packages things (config.log, sconsign files, etc....) ->
+      Done !
 
 Documentation:
     - scons / distutils integration
