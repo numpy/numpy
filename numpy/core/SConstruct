@@ -17,6 +17,9 @@ from scons_support import CheckBrokenMathlib, define_no_smp, \
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
 if os.name == 'nt':
+    # NT needs the pythonlib to run any code importing Python.h, including
+    # simple code using only typedef and so on, so we need it for configuration
+    # checks
     env.AppendUnique(LIBPATH = [get_pythonlib_dir()])
 
 #=======================
@@ -25,8 +28,6 @@ if os.name == 'nt':
 # XXX: separate env for configuration
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
     'CheckMathlib' : CheckMathlib, 
-    'CheckMKL' : CheckMKL, 
-    'CheckATLAS' : CheckATLAS, 
     'CheckCBLAS' : CheckCBLAS, 
     'NumpyCheckLib' : NumpyCheckLib})
 
@@ -83,7 +84,6 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
     ('rint', 'HAVE_RINT'),
     ]
 
-# TODO: getting the math lib automatically ? Having a list ?
 # TODO: checklib vs checkfunc ?
 mlibs = [[], ['m'], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
