@@ -184,7 +184,7 @@ def GetNumpyEnvironment(args):
     # according to scons, don't ask me why, but this does not work as expected
     # for this tool.
     if not env['cc_opt'] == 'mingw':
-        for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS]:
+        for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, DEF_ARS]:
             t = FindTool(i, env) or i[0]
             Tool(t)(env)
 			
