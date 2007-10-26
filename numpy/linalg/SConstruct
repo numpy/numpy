@@ -1,10 +1,17 @@
-# Last Change: Thu Oct 18 09:00 PM 2007 J
+# Last Change: Fri Oct 26 05:00 PM 2007 J
 # vim:syntax=python
 from numpy.distutils.misc_util import get_numpy_include_dirs
 from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths
+from numpy.distutils.scons import CheckF77Mangling
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+config = env.NumpyConfigure(custom_tests = 
+    {'CheckF77Mangling' : CheckF77Mangling})
+
+config.CheckF77Mangling()
+config.Finish()
 
 sources = ['lapack_litemodule.c', 'zlapack_lite.c', 'dlapack_lite.c',
           'blas_lite.c', 'dlamch.c', 'f2c_lite.c']

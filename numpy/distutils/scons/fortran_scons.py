@@ -1,4 +1,4 @@
-# Last Change: Tue Oct 09 04:00 PM 2007 J
+# Last Change: Fri Oct 26 06:00 PM 2007 J
 import os
 import sys
 import string
@@ -222,6 +222,8 @@ int my_main() {
 
 def CheckF77Mangling(context):
     env = context.env
+    if not env.has_key('F77_DUMMY_MAIN'):
+        CheckF77DummyMain(context)
     context.Message('Checking %s name mangling - ' % env['F77'])
     res, mangler, u, du, c = _CheckFMangling(context, 'F77', env['F77_DUMMY_MAIN'], '.f')
     if res:
