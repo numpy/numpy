@@ -39,7 +39,7 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
    It converts up to ucs4len characters of UCS2
 
    It returns the number of characters converted which can
-   be less than ucslen if there are surrogate pairs in ucs2.
+   be less than ucs2len if there are surrogate pairs in ucs2.
 
    The return value is the actual size of the used part of the ucs4 buffer.
 */

@@ -5710,6 +5710,9 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
     return ret;
 }
 
+/* This function is needed for supporting Pickles of 
+   numpy scalar objects.
+*/
 static PyObject *
 array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
 {

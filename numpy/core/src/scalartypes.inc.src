@@ -1271,9 +1271,41 @@ gentype_reduce(PyObject *self, PyObject *args)
                                  Py_BuildValue("NO", obj, mod));
         }
         else {
+#ifndef Py_UNICODE_WIDE
+	  /* We need to expand the buffer so that we always write
+	     UCS4 to disk for pickle of unicode scalars.
+
+	     This could be in a unicode_reduce function, but 
+	     that would require re-factoring.
+	  */
+		int alloc=0;
+		char *tmp;
+		int newlen;
+
+		if (PyArray_IsScalar(self, Unicode)) {
+			tmp = _pya_malloc(buflen*2);
+			if (tmp == NULL) {
+				Py_DECREF(ret);
+				return Py_NoMemory();
+			}
+			alloc = 1;
+			newlen = PyUCS2Buffer_AsUCS4((Py_UNICODE *)buffer,
+						     (PyArray_UCS4 *)tmp,
+						     buflen / 2, buflen / 2);
+			buflen = newlen*4;
+			buffer = tmp;
+		}
+#endif
                 mod = PyString_FromStringAndSize(buffer, buflen);
+		if (mod == NULL) {
+			Py_DECREF(ret);
+			return Py_NoMemory();
+		}
                 PyTuple_SET_ITEM(ret, 1,
                                  Py_BuildValue("NN", obj, mod));
+#ifndef Py_UNICODE_WIDE
+		if (alloc) _pya_free(buffer);
+#endif
         }
         return ret;
 }
