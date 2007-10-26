@@ -131,9 +131,11 @@ def GetNumpyEnvironment(args):
     # XXX: Really, we should use our own subclass of Environment, instead of
     # adding Numpy* functions !
 
-    # Put config code in separate dir for each subpackage
+    # Put config code and log in separate dir for each subpackage
     from utils import curry
-    NumpyConfigure = curry(env.Configure, conf_dir = pjoin(env['build_dir'], '.sconf'))
+    NumpyConfigure = curry(env.Configure, 
+                           conf_dir = pjoin(env['build_dir'], '.sconf'), 
+                           log_file = pjoin(env['build_dir'], 'config.log'))
     env.NumpyConfigure = NumpyConfigure
 
     # XXX: Huge, ugly hack ! SConsign needs an absolute path or a path
