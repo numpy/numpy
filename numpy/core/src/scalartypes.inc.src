@@ -1299,13 +1299,17 @@ gentype_reduce(PyObject *self, PyObject *args)
                 mod = PyString_FromStringAndSize(buffer, buflen);
 		if (mod == NULL) {
 			Py_DECREF(ret);
+#ifndef Py_UNICODE_WIDE
 			ret = NULL;
 			goto fail;
+#else
+			return NULL;
+#endif
 		}
                 PyTuple_SET_ITEM(ret, 1,
                                  Py_BuildValue("NN", obj, mod));
-	fail:
 #ifndef Py_UNICODE_WIDE
+	fail:
 		if (alloc) _pya_free((char *)buffer);
 #endif
         }
