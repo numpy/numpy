@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 26 02:00 PM 2007 J
+# Last Change: Fri Oct 26 09:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -9,7 +9,10 @@ from distutils.util import get_platform
 
 from libinfo import get_config, get_config_from_section
 from libinfo_scons import NumpyCheckLib
-from testcode_snippets import cblas_sgemm as cblas_src, c_sgemm as sunperf_src
+from testcode_snippets import cblas_sgemm as cblas_src, \
+        c_sgemm as sunperf_src, lapack_sgesv
+
+from fortran_scons import CheckF77Mangling, CheckF77Clib
 
 def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
                            libpath, linkflags, cflags, autoadd = 1):
@@ -38,8 +41,8 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
     #----------------------------
     oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
     oldCFLAGS = (env.has_key('CFLAGS') and deepcopy(env['CFLAGS'])) or []
-    env.Append(CPPPATH = cpppath)
-    env.Append(CFLAGS = cflags)
+    env.AppendUnique(CPPPATH = cpppath)
+    env.AppendUnique(CFLAGS = cflags)
     # XXX: handle context
     hcode = ['#include <%s>' % h for h in headers]
     # HACK: we add cpppath in the command of the source, to add dependency of
@@ -62,10 +65,10 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
     # XXX: RPATH, drawbacks using it ?
     oldRPATH = (env.has_key('RPATH') and deepcopy(env['RPATH'])) or []
     oldLINKFLAGS = (env.has_key('LINKFLAGS') and deepcopy(env['LINKFLAGS'])) or []
-    env.Append(LIBPATH = libpath)
-    env.Append(LIBS = libs)
-    env.Append(RPATH = libpath)
-    env.Append(LINKFLAGS = linkflags)
+    env.AppendUnique(LIBPATH = libpath)
+    env.AppendUnique(LIBS = libs)
+    env.AppendUnique(RPATH = libpath)
+    env.AppendUnique(LINKFLAGS = linkflags)
 
     # HACK: we add libpath and libs at the end of the source as a comment, to
     # add dependency of the check on those.
@@ -103,6 +106,9 @@ def CheckMKL(context, autoadd = 1):
     section = "mkl"
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if not found:
+        # XXX: find exact options to use for the MKL
+        libs.extend(['lapack', 'mkl', 'guide', 'm'])
     headers = ['mkl.h']
 
     return _check_include_and_run(context, 'MKL', cpppath, headers,
@@ -194,3 +200,52 @@ def CheckCBLAS(context, autoadd = 1):
                 return st
             st = CheckSunperf(context, autoadd)
             return st
+
+def CheckLAPACK(context, autoadd = 1):
+    # XXX: this whole thing is ugly. Think more about how to combine checkers
+    # in 'meta checker' like this.
+    if sys.platform == 'nt':
+        import warnings
+        warning.warn('FIXME: LAPACK checks not implemented yet on win32')
+        return 0
+    else:
+        # Get fortran stuff
+        if not CheckF77Mangling(context):
+            return 0
+        if not CheckF77Clib(context):
+            return 0
+
+        env = context.env
+
+        # Get the mangled name of our test function
+        sgesv_string = env['F77_NAME_MANGLER']('sgesv')
+        test_src = lapack_sgesv % sgesv_string
+
+        # Check MKL
+        st = CheckMKL(context, autoadd)
+        if st:
+            fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
+            fdict['LIBS'].append('lapack')
+            if env.has_key('LIBS'):
+                fdict['LIBS'].extend(context.env['LIBS'])
+            if env.has_key('LIBPATH'):
+                fdict['LIBPATH'].extend(context.env['LIBPATH'])
+            st =_check_include_and_run(context, 'LAPACK (MKL)', [], [],
+                    test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+            return st
+
+        # Check ATLAS
+        st = CheckATLAS(context, autoadd)
+        if st:
+            fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
+            fdict['LIBS'].append('lapack')
+            if env.has_key('LIBS'):
+                fdict['LIBS'].extend(context.env['LIBS'])
+            if env.has_key('LIBPATH'):
+                fdict['LIBPATH'].extend(context.env['LIBPATH'])
+            st =_check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
+                    test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+            # XXX: Check complete LAPACK or not
+            return st
+
+    return 0

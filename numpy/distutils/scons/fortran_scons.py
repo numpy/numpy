@@ -221,6 +221,10 @@ int my_main() {
     return result, mangler, u, du, c
 
 def CheckF77Mangling(context):
+    """Find mangling of the F77 compiler.
+    
+    If sucessfull, env['F77_NAME_MANGLER'] is a function which given the C
+    name, returns the F77 name as seen by the linker."""
     env = context.env
     if not env.has_key('F77_DUMMY_MAIN'):
         CheckF77DummyMain(context)
