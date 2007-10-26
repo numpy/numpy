@@ -1286,7 +1286,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 			tmp = _pya_malloc(buflen*2);
 			if (tmp == NULL) {
 				Py_DECREF(ret);
-				return Py_NoMemory();
+				return PyErr_NoMemory();
 			}
 			alloc = 1;
 			newlen = PyUCS2Buffer_AsUCS4((Py_UNICODE *)buffer,
@@ -1299,12 +1299,14 @@ gentype_reduce(PyObject *self, PyObject *args)
                 mod = PyString_FromStringAndSize(buffer, buflen);
 		if (mod == NULL) {
 			Py_DECREF(ret);
-			return Py_NoMemory();
+			ret = NULL;
+			goto fail;
 		}
                 PyTuple_SET_ITEM(ret, 1,
                                  Py_BuildValue("NN", obj, mod));
+	fail:
 #ifndef Py_UNICODE_WIDE
-		if (alloc) _pya_free(buffer);
+		if (alloc) _pya_free((char *)buffer);
 #endif
         }
         return ret;
