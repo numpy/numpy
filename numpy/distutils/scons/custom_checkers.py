@@ -9,7 +9,7 @@ from distutils.util import get_platform
 
 from libinfo import get_config, get_config_from_section
 from libinfo_scons import NumpyCheckLib
-from testcode_snippets import cblas_sgemm as cblas_src
+from testcode_snippets import cblas_sgemm as cblas_src, c_sgemm as sunperf_src
 
 def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
                            libpath, linkflags, cflags, autoadd = 1):
@@ -99,6 +99,7 @@ def CheckMKL(context, mkl_dir, nb):
                                   cblas_src, libs, libpath, [], [], autoadd)
 
 def CheckMKL2(context, autoadd = 1):
+    """Check MKL is usable using a simple cblas example."""
     section = "mkl"
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
@@ -124,6 +125,17 @@ def CheckAccelerate(context, autoadd = 1):
     return _check_include_and_run(context, 'FRAMEWORK: Accelerate', None, 
                                   ['Accelerate/Accelerate.h'], cblas_src, [], 
                                   [], linkflags, [], autoadd)
+
+def CheckSunperf(context, autoadd = 1):
+    """Checker for sunperf using a simple sunperf example"""
+
+    # XXX: Other options needed ?
+    linkflags = ['-xlic_lib=sunperf']
+    cflags = ['-dalign']
+
+    return _check_include_and_run(context, 'sunperf', None, 
+                                  ['sunperf.h'], sunperf_src, [], 
+                                  [], linkflags, cflags, autoadd)
 
 def CheckCBLAS(context, autoadd = 1):
 

@@ -1,6 +1,7 @@
 # vim:syntax=python
 from numpy.distutils.scons import GetNumpyEnvironment, CheckATLAS, \
-                                  CheckAccelerate, CheckMKL2, CheckCBLAS
+                                  CheckAccelerate, CheckMKL2, CheckCBLAS, \
+				  CheckSunperf
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
@@ -8,11 +9,14 @@ config = env.NumpyConfigure(custom_tests =
     {'CheckATLAS' : CheckATLAS,
     'CheckMKL' : CheckMKL2,
     'CheckAccelerate' : CheckAccelerate,
+    'CheckSunperf' : CheckSunperf,
     'CheckCBLAS' : CheckCBLAS})
 
 config.CheckATLAS(autoadd = 0)
 config.CheckMKL(autoadd = 0)
 config.CheckAccelerate(autoadd = 0)
+config.CheckSunperf(autoadd = 0)
+config.CheckCBLAS(autoadd = 0)
 
 config.Finish()
 
