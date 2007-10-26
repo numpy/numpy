@@ -65,6 +65,10 @@ def GetNumpyOptions(args):
     # Add compiler related info
     opts.Add('cc_opt', 'name of C compiler', '')
     opts.Add('cc_opt_path', 'path of the C compiler set in cc_opt', '')
+
+    opts.Add('f77_opt', 'name of F77 compiler', '')
+    opts.Add('f77_opt_path', 'path of the F77 compiler set in cc_opt', '')
+
     return opts
 
 def GetNumpyEnvironment(args):
@@ -130,6 +134,29 @@ def GetNumpyEnvironment(args):
         t = Tool(FindTool(DEF_C_COMPILERS))
         t(env)
 
+    # F77 compiler
+    if len(env['f77_opt']) > 0:
+        try:
+            if len(env['f77_opt_path']) > 0:
+                # XXX: what is the right way to add one directory in the
+                # PATH ? (may not work on windows).
+                t = Tool(env['f77_opt'])
+                t(env) 
+                if sys.platform == 'win32':
+                    env['ENV']['PATH'] += ';%s' % env['f77_opt_path']
+                else:
+                    env['ENV']['PATH'] += ':%s' % env['f77_opt_path']
+        except EnvironmentError, e:
+            # scons could not understand cc_opt (bad name ?)
+            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
+                                 str(e))
+    else:
+        t = Tool(FindTool(DEF_FORTRAN_COMPILERS))
+        t(env)
+
+    # XXX: really have to understand how fortran compilers work in scons...
+    env['F77'] = env['_FORTRAND']
+
     # XXX: Really, we should use our own subclass of Environment, instead of
     # adding Numpy* functions !
 
@@ -157,8 +184,7 @@ def GetNumpyEnvironment(args):
     # according to scons, don't ask me why, but this does not work as expected
     # for this tool.
     if not env['cc_opt'] == 'mingw':
-        for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, 
-                  DEF_FORTRAN_COMPILERS]:
+        for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS]:
             t = FindTool(i, env) or i[0]
             Tool(t)(env)
 			
