@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 26 11:00 AM 2007 J
+# Last Change: Fri Oct 26 02:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -87,18 +87,18 @@ def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
     context.Result(ret)
     return ret
      
-def CheckMKL(context, mkl_dir, nb):
-    """mkl_lib is the root path of MKL (the one which contains include, lib,
-    etc...). nb is 32, 64, emt, etc..."""
+#def CheckMKL(context, mkl_dir, nb):
+#    """mkl_lib is the root path of MKL (the one which contains include, lib,
+#    etc...). nb is 32, 64, emt, etc..."""
+#
+#    libs = ['mkl']
+#    cpppath = os.path.join(mkl_dir, 'include')
+#    libpath = os.path.join(mkl_dir, 'lib', nb)
+#
+#    return _check_include_and_run(context, 'MKL', cpppath, ['mkl.h'],
+#                                  cblas_src, libs, libpath, [], [], autoadd)
 
-    libs = ['mkl']
-    cpppath = os.path.join(mkl_dir, 'include')
-    libpath = os.path.join(mkl_dir, 'lib', nb)
-
-    return _check_include_and_run(context, 'MKL', cpppath, ['mkl.h'],
-                                  cblas_src, libs, libpath, [], [], autoadd)
-
-def CheckMKL2(context, autoadd = 1):
+def CheckMKL(context, autoadd = 1):
     """Check MKL is usable using a simple cblas example."""
     section = "mkl"
     siteconfig, cfgfiles = get_config()
@@ -118,12 +118,39 @@ def CheckATLAS(context, autoadd = 1):
                                   cblas_src, libs, libpath, [], [], autoadd)
 
 def CheckAccelerate(context, autoadd = 1):
-    """Checker for Accelerate framework (on Mac OS X >= 10.3)."""
+    """Checker for Accelerate framework (on Mac OS X >= 10.3). Only test from
+    C."""
+    # According to
+    # http://developer.apple.com/hardwaredrivers/ve/vector_libraries.html:
+    #
+    #   This page contains a continually expanding set of vector libraries
+    #   that are available to the AltiVec programmer through the Accelerate
+    #   framework on MacOS X.3, Panther. On earlier versions of MacOS X,
+    #   these were available in vecLib.framework. The currently available
+    #   libraries are described below.
 
+    #XXX: get_platform does not seem to work...
+    #if get_platform()[-4:] == 'i386':
+    #    is_intel = 1
+    #    cflags.append('-msse3')
+    #else:
+    #    is_intel = 0
+    #    cflags.append('-faltivec')
+
+    # XXX: This double append is not good, any other way ?
     linkflags = ['-framework', 'Accelerate']
 
     return _check_include_and_run(context, 'FRAMEWORK: Accelerate', None, 
                                   ['Accelerate/Accelerate.h'], cblas_src, [], 
+                                  [], linkflags, [], autoadd)
+
+def CheckVeclib(context, autoadd = 1):
+    """Checker for Veclib framework (on Mac OS X < 10.3)."""
+    # XXX: This double append is not good, any other way ?
+    linkflags = ['-framework', 'vecLib']
+
+    return _check_include_and_run(context, 'FRAMEWORK: veclib', None, 
+                                  ['vecLib/vecLib.h'], cblas_src, [], 
                                   [], linkflags, [], autoadd)
 
 def CheckSunperf(context, autoadd = 1):
@@ -147,37 +174,23 @@ def CheckCBLAS(context, autoadd = 1):
         headers = ['cblas.h']
         linkflags = []
         cflags = []
+        return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
+                                      libs, libpath, linkflags, cflags, autoadd)
     else:
-        cflags = []
-        linkflags = []
-        libs = []
-        libpath = []
-        headers = []
         if sys.platform == 'darwin':
-            # According to
-            # http://developer.apple.com/hardwaredrivers/ve/vector_libraries.html:
-            #
-            #   This page contains a continually expanding set of vector libraries
-            #   that are available to the AltiVec programmer through the Accelerate
-            #   framework on MacOS X.3, Panther. On earlier versions of MacOS X,
-            #   these were available in vecLib.framework. The currently available
-            #   libraries are described below.
-
-            #if get_platform()[-4:] == 'i386':
-            #    is_intel = 1
-            #    cflags.append('-msse3')
-            #else:
-            #    is_intel = 0
-            #    cflags.append('-faltivec')
-
-            # TODO: we should have a small test code to test Accelerate vs veclib
-            # XXX: This double append is not good, any other way ?
-            linkflags.append('-framework')
-            linkflags.append('Accelerate')
-            headers.append('Accelerate/Accelerate.h')
+            st = CheckAccelerate(context, autoadd)
+            if st:
+                return st
+            st = CheckVeclib(context, autoadd)
+            return st
+            
         else:
-            headers.append('cblas.h')
-            libs.append('cblas')
-
-    return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
-                                  libs, libpath, linkflags, cflags, autoadd)
+            # Check MKL, then ATLAS, then Sunperf
+            st = CheckMKL(context, autoadd)
+            if st:
+                return st
+            st = CheckATLAS(context, autoadd)
+            if st:
+                return st
+            st = CheckSunperf(context, autoadd)
+            return st

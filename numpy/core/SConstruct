@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 26 11:00 AM 2007 J
+# Last Change: Fri Oct 26 02:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -146,11 +146,11 @@ else:
     build_blasdot = 0
 
 config.Finish()
-config_f = open('config.log', 'r')
-print "++++++++++ config.log dump ++++++++++++++++++"
-for i in config_f:
-    print i.strip('\n')
-print "+++++++++++++++++++++++++++++++++++++++++++++"
+#config_f = open('config.log', 'r')
+#print "++++++++++ config.log dump ++++++++++++++++++"
+#for i in config_f:
+#    print i.strip('\n')
+#print "+++++++++++++++++++++++++++++++++++++++++++++"
 
 #==========
 #  Build
