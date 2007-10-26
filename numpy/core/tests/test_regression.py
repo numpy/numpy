@@ -740,5 +740,13 @@ class TestRegression(NumpyTestCase):
             x |= y
         self.failUnlessRaises(TypeError,rs)
 
+    def check_unicode_scalar(self, level=rlevel):
+        """Ticket #600"""
+        import cPickle
+        x = N.array(["DROND", "DROND1"], dtype="U6")
+        el = x[1]
+        new = cPickle.loads(cPickle.dumps(el))
+        assert_equal(new, el)
+
 if __name__ == "__main__":
     NumpyTest().run()
