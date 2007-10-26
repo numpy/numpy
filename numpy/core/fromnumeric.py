@@ -35,7 +35,7 @@ def _wrapit(obj, method, *args, **kwds):
     except AttributeError:
         wrap = None
     result = getattr(asarray(obj),method)(*args, **kwds)
-    if wrap and isinstance(result, mu.ndarray):
+    if wrap:
         if not isinstance(result, mu.ndarray):
             result = asarray(result)
         result = wrap(result)
