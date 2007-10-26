@@ -118,3 +118,10 @@
 #[djbfft]
 #include_dirs = /usr/local/djbfft/include
 #library_dirs = /usr/local/djbfft/lib
+
+# MKL Library (Intel Math Kernel Library, including blas and lapack)
+# ------------------------------------------------------------------
+#[mkl]
+#libraries = mkl, guide
+#include_dirs = /home/david/opt/intel/mkl/9.1.023/include
+#library_dirs = /home/david/opt/intel/mkl/9.1.023/lib/32
