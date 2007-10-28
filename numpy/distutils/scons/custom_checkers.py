@@ -249,3 +249,21 @@ def CheckLAPACK(context, autoadd = 1):
             return st
 
     return 0
+
+def CheckNetlibBLAS(context):
+    # XXX: support site.cfg
+    # Get fortran mangling
+    if not CheckF77Mangling(context):
+        return 0
+
+    env = context.env
+    test_func_name = env['F77_NAME_MANGLER']('dgemm')
+
+def CheckNetlibLAPACK(context):
+    # XXX: support site.cfg
+    # Get fortran mangling
+    if not CheckF77Mangling(context):
+        return 0
+
+    env = context.env
+    test_func_name = env['F77_NAME_MANGLER']('dpotri')
