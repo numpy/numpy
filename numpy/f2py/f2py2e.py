@@ -18,7 +18,12 @@ __version__ = "$Revision: 1.90 $"[10:-1]
 import __version__
 f2py_version = __version__.version
 
-import sys,os,string,pprint,shutil,types,re
+import sys
+import os
+import pprint
+import shutil
+import types
+import re
 errmess=sys.stderr.write
 #outmess=sys.stdout.write
 show=pprint.pprint
@@ -301,7 +306,7 @@ def buildmodules(list):
     ret = {}
     for i in range(len(mnames)):
         if isusedby.has_key(mnames[i]):
-            outmess('\tSkipping module "%s" which is used by %s.\n'%(mnames[i],string.join(map(lambda s:'"%s"'%s,isusedby[mnames[i]]),',')))
+            outmess('\tSkipping module "%s" which is used by %s.\n'%(mnames[i],','.join(map(lambda s:'"%s"'%s,isusedby[mnames[i]]))))
         else:
             um=[]
             if modules[i].has_key('use'):
@@ -341,10 +346,10 @@ def run_main(comline_list):
                 if not isusedby.has_key(u): isusedby[u]=[]
                 isusedby[u].append(postlist[i]['name'])
     for i in range(len(postlist)):
-        if postlist[i]['block']=='python module' and string.find(postlist[i]['name'],'__user__')<0:
+        if postlist[i]['block']=='python module' and '__user__' in postlist[i]['name']:
             if isusedby.has_key(postlist[i]['name']):
                 #if not quiet:
-                outmess('Skipping Makefile build for module "%s" which is used by %s\n'%(postlist[i]['name'],string.join(map(lambda s:'"%s"'%s,isusedby[postlist[i]['name']]),',')))
+                outmess('Skipping Makefile build for module "%s" which is used by %s\n'%(postlist[i]['name'],','.join(map(lambda s:'"%s"'%s,isusedby[postlist[i]['name']]))))
     if options.has_key('signsfile'):
         if options['verbose']>1:
             outmess('Stopping. Edit the signature file and then run f2py on the signature file: ')
@@ -375,7 +380,7 @@ def filter_files(prefix,suffix,files,remove_prefix=None):
         ind = len(prefix)
     else:
         ind = 0
-    for file in map(string.strip,files):
+    for file in [x.strip() for x in files]:
         if match(file): filtered.append(file[ind:])
         else: rest.append(file)
     return filtered,rest
@@ -485,7 +490,7 @@ def run_compile():
     using_numarray = 0
     using_numeric = 0
     for i in range(len(define_macros)):
-        name_value = string.split(define_macros[i],'=',1)
+        name_value = define_macros[i].split('=',1)
         if len(name_value)==1:
             name_value.append(None)
         if len(name_value)==2:

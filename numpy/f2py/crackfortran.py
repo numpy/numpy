@@ -15,6 +15,7 @@ Pearu Peterson
 __version__ = "$Revision: 1.177 $"[10:-1]
 
 import __version__
+import string
 f2py_version = __version__.version
 
 """
@@ -143,7 +144,13 @@ f2py_version = __version__.version
      The above may be solved by creating appropriate preprocessor program, for example.
 """
 #
-import sys,string,fileinput,re,pprint,os,copy
+import sys
+import string
+import fileinput
+import re
+import pprint
+import os
+import copy
 from auxfuncs import *
 
 # Global flags:
@@ -222,7 +229,7 @@ def undo_rmbadname1(name):
 def undo_rmbadname(names): return map(undo_rmbadname1,names)
 
 def getextension(name):
-    i=string.rfind(name,'.')
+    i=name.rfind('.')
     if i==-1: return ''
     if '\\' in name[i:]: return ''
     if '/' in name[i:]: return ''
@@ -307,7 +314,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                     %(`currentfilename`,sourcecodeform,
                       strictf77 and ',strict' or ''))
 
-        l=string.expandtabs(l).replace('\xa0',' ')
+        l=l.expandtabs().replace('\xa0',' ')
         while not l=='':                       # Get rid of newline characters
             if l[-1] not in "\n\r\f": break
             l=l[:-1]
@@ -316,17 +323,17 @@ def readfortrancode(ffile,dowithline=show,istop=1):
             if r:
                 l=r.group('line')+' ' # Strip comments starting with `!'
                 rl=r.group('rest')
-                if string.lower(rl[:4])=='f2py': # f2py directive
+                if rl[:4].lower()=='f2py': # f2py directive
                     l = l + 4*' '
                     r=commentline.match(rl[4:])
                     if r: l=l+r('line')
                     else: l = l + rl[4:]
-        if string.strip(l)=='': # Skip empty line
+        if l.strip()=='': # Skip empty line
             cont=0
             continue
         if sourcecodeform=='fix':
             if l[0] in ['*','c','!','C','#']:
-                if string.lower(l[1:5])=='f2py': # f2py directive
+                if l[1:5].lower()=='f2py': # f2py directive
                     l='     '+l[5:]
                 else: # Skip comment line
                     cont=0
@@ -352,14 +359,14 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                         origfinalline=''
                     else:
                         l='     '+l[5:] # clean up line beginning from possible digits.
-                        if localdolowercase: finalline=string.lower(ll)
+                        if localdolowercase: finalline=ll.lower()
                         else: finalline=ll
                         origfinalline=ll
                         ll=l
                     cont=(r is not None)
                 else:
                     l='     '+l[5:] # clean up line beginning from possible digits.
-                    if localdolowercase: finalline=string.lower(ll)
+                    if localdolowercase: finalline=ll.lower()
                     else: finalline=ll
                     origfinalline =ll
                     ll=l
@@ -383,7 +390,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                 finalline=''
                 origfinalline=''
             else:
-                if localdolowercase: finalline=string.lower(ll)
+                if localdolowercase: finalline=ll.lower()
                 else: finalline=ll
                 origfinalline =ll
                 ll=l
@@ -411,7 +418,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
             dowithline(finalline)
         l1=ll
     if localdolowercase:
-        finalline=string.lower(ll)
+        finalline=ll.lower()
     else: finalline=ll
     origfinalline = ll
     filepositiontext='Line #%d in %s:"%s"\n\t' % (fin.filelineno()-1,currentfilename,l1)
@@ -482,11 +489,11 @@ multilinepattern = re.compile(r"\s*(?P<before>''')(?P<this>.*?)(?P<after>''')\s*
 
 def _simplifyargs(argsline):
     a = []
-    for n in string.split(markoutercomma(argsline),'@,@'):
+    for n in markoutercomma(argsline).split('@,@'):
         for r in '(),':
-            n = string.replace(n,r,'_')
+            n = n.replace(r,'_')
         a.append(n)
-    return string.join(a,',')
+    return ','.join(a)
 
 crackline_re_1 = re.compile(r'\s*(?P<result>\b[a-z]+[\w]*\b)\s*[=].*',re.I)
 def crackline(line,reset=0):
@@ -650,7 +657,7 @@ def markoutercomma(line,comma=','):
     assert not f,`f,line,l,cc`
     return l
 def unmarkouterparen(line):
-    r = string.replace(string.replace(line,'@(@','('),'@)@',')')
+    r = line.replace('@(@','(').replace('@)@',')')
     return r
 def appenddecl(decl,decl2,force=1):
     if not decl: decl={}
@@ -706,7 +713,7 @@ def analyzeline(m,case,line):
         previous_context = None
     if expectbegin and case not in ['begin','call','callfun','type'] \
        and not skipemptyends and groupcounter<1:
-        newname=string.split(os.path.basename(currentfilename),'.')[0]
+        newname=os.path.basename(currentfilename).split('.')[0]
         outmess('analyzeline: no group yet. Creating program group with name "%s".\n'%newname)
         gotnextfile=0
         groupcounter=groupcounter+1
@@ -734,7 +741,7 @@ def analyzeline(m,case,line):
                 outmess('analyzeline: No name/args pattern found for line.\n')
 
         previous_context = (block,name,groupcounter)
-        if args: args=rmbadname(map(string.strip,string.split(markoutercomma(args),'@,@')))
+        if args: args=rmbadname([x.strip() for x in markoutercomma(args).split('@,@')])
         else: args=[]
         if '' in args:
             while '' in args:
@@ -851,7 +858,7 @@ def analyzeline(m,case,line):
         name,args,result=_resolvenameargspattern(m.group('after'))
         if name is not None:
             if args:
-                args=rmbadname(map(string.strip,string.split(markoutercomma(args),'@,@')))
+                args=rmbadname([x.strip() for x in markoutercomma(args).strip('@,@')])
             else: args=[]
             assert result is None,`result`
             groupcache[groupcounter]['entry'][name] = args
@@ -864,22 +871,22 @@ def analyzeline(m,case,line):
     elif case in ['dimension','intent','optional','required','external','public','private','intrisic']:
         edecl=groupcache[groupcounter]['vars']
         ll=m.group('after').strip()
-        i=string.find(ll,'::')
+        i=ll.find('::')
         if i<0 and case=='intent':
-            i=string.find(markouterparen(ll),'@)@')-2
+            i=markouterparen(ll).find('@)@')-2
             ll=ll[:i+1]+'::'+ll[i+1:]
-            i=string.find(ll,'::')
+            i=ll.find('::')
             if ll[i:]=='::' and groupcache[groupcounter].has_key('args'):
                 outmess('All arguments will have attribute %s%s\n'%(m.group('this'),ll[:i]))
-                ll = ll + string.join(groupcache[groupcounter]['args'],',')
+                ll = ll + ','.join(groupcache[groupcounter]['args'])
         if i<0:i=0;pl=''
-        else: pl=string.strip(ll[:i]);ll=ll[i+2:]
-        ch = string.split(markoutercomma(pl),'@,@')
+        else: pl=ll[:i].strip();ll=ll[i+2:]
+        ch = markoutercomma(pl).split('@,@')
         if len(ch)>1:
             pl = ch[0]
             outmess('analyzeline: cannot handle multiple attributes without type specification. Ignoring %r.\n' % (','.join(ch[1:])))
         last_name = None
-        for e in map(string.strip,string.split(markoutercomma(ll),'@,@')):
+        for e in [x.strip() for x in markoutercomma(ll).split('@,@')]:
             m1=namepattern.match(e)
             if not m1:
                 if case in ['public','private']: k=''
@@ -896,8 +903,7 @@ def analyzeline(m,case,line):
                 if _intentcallbackpattern.match(ap):
                     if k not in groupcache[groupcounter]['args']:
                         if groupcounter>1 and \
-                               string.find(groupcache[groupcounter-2]['name'],
-                                           '__user__')==-1:
+                               '__user__' in groupcache[groupcounter-2]['name']:
                             outmess('analyzeline: appending intent(callback) %s'\
                                     ' to %s arguments\n' % (k,groupcache[groupcounter]['name']))
                             groupcache[groupcounter]['args'].append(k)
@@ -923,11 +929,11 @@ def analyzeline(m,case,line):
             previous_context = ('variable',last_name,groupcounter)
     elif case=='parameter':
         edecl=groupcache[groupcounter]['vars']
-        ll=string.strip(m.group('after'))[1:-1]
+        ll=m.group('after').strip()[1:-1]
         last_name = None
-        for e in string.split(markoutercomma(ll),'@,@'):
+        for e in markoutercomma(ll).split('@,@'):
             try:
-                k,initexpr=map(string.strip,string.split(e,'='))
+                k,initexpr=[x.strip() for x in e.split('=')]
             except:
                 outmess('analyzeline: could not extract name,expr in parameter statement "%s" of "%s"\n'%(e,ll));continue
             params = get_parameters(edecl)
@@ -942,7 +948,7 @@ def analyzeline(m,case,line):
                     for m in real16pattern.finditer(initexpr):
                         tt[m.start():m.end()] = list(\
                             initexpr[m.start():m.end()].lower().replace('d', 'e'))
-                    initexpr = "".join(tt)
+                    initexpr = ''.join(tt)
                 elif t.get('typespec')=='complex':
                     initexpr = initexpr[1:].lower().replace('d','e').\
                                replace(',','+1j*(')
@@ -961,7 +967,7 @@ def analyzeline(m,case,line):
         if last_name is not None:
             previous_context = ('variable',last_name,groupcounter)
     elif case=='implicit':
-        if string.lower(string.strip(m.group('after')))=='none':
+        if m.group('after').strip().lower()=='none':
             groupcache[groupcounter]['implicit']=None
         elif m.group('after'):
             if groupcache[groupcounter].has_key('implicit'):
@@ -970,7 +976,7 @@ def analyzeline(m,case,line):
             if impl is None:
                 outmess('analyzeline: Overwriting earlier "implicit none" statement.\n')
                 impl={}
-            for e in string.split(markoutercomma(m.group('after')),'@,@'):
+            for e in markoutercomma(m.group('after')).split('@,@'):
                 decl={}
                 m1=re.match(r'\s*(?P<this>.*?)\s*(\(\s*(?P<after>[a-z-, ]+)\s*\)\s*|)\Z',e,re.I)
                 if not m1:
@@ -986,12 +992,12 @@ def analyzeline(m,case,line):
                 decl['typename']=typename
                 for k in decl.keys():
                     if not decl[k]: del decl[k]
-                for r in string.split(markoutercomma(m1.group('after')),'@,@'):
+                for r in markoutercomma(m1.group('after')).split('@,@'):
                     if '-' in r:
-                        try: begc,endc=map(string.strip,string.split(r,'-'))
+                        try: begc,endc=[x.strip() for x in r.split('-')]
                         except:
                             outmess('analyzeline: expected "<char>-<char>" instead of "%s" in range list of implicit statement\n'%r);continue
-                    else: begc=endc=string.strip(r)
+                    else: begc=endc=r.strip()
                     if not len(begc)==len(endc)==1:
                         outmess('analyzeline: expected "<char>-<char>" instead of "%s" in range list of implicit statement (2)\n'%r);continue
                     for o in range(ord(begc),ord(endc)+1):
@@ -1024,7 +1030,7 @@ def analyzeline(m,case,line):
             vars=groupcache[groupcounter]['vars']
         last_name = None
         for l in ll:
-            l=map(string.strip,l)
+            l=[x.strip() for x in l]
             if l[0][0]==',':l[0]=l[0][1:]
             if l[0][0]=='(':
                 outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n'%l[0])
@@ -1033,7 +1039,7 @@ def analyzeline(m,case,line):
             #    #outmess('analyzeline: ignoring this data statement.\n')
             #    continue
             i=0;j=0;llen=len(l[1])
-            for v in rmbadname(map(string.strip,string.split(markoutercomma(l[0]),'@,@'))):
+            for v in rmbadname([x.strip() for x in markoutercomma(l[0]).split('@,@')]):
                 if v[0]=='(':
                     outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n'%v)
                     # XXX: subsequent init expressions may get wrong values.
@@ -1056,20 +1062,20 @@ def analyzeline(m,case,line):
         if last_name is not None:
             previous_context = ('variable',last_name,groupcounter)
     elif case=='common':
-        line=string.strip(m.group('after'))
+        line=m.group('after').strip()
         if not line[0]=='/':line='//'+line
         cl=[]
         f=0;bn='';ol=''
         for c in line:
             if c=='/':f=f+1;continue
             if f>=3:
-                bn = string.strip(bn)
+                bn = bn.strip()
                 if not bn: bn='_BLNK_'
                 cl.append([bn,ol])
                 f=f-2;bn='';ol=''
             if f%2: bn=bn+c
             else: ol=ol+c
-        bn = string.strip(bn)
+        bn = bn.strip()
         if not bn: bn='_BLNK_'
         cl.append([bn,ol])
         commonkey={}
@@ -1080,7 +1086,7 @@ def analyzeline(m,case,line):
                 outmess('analyzeline: previously defined common block encountered. Skipping.\n')
                 continue
             commonkey[c[0]]=[]
-            for i in map(string.strip,string.split(markoutercomma(c[1]),'@,@')):
+            for i in [x.strip() for x in markoutercomma(c[1]).split('@,@')]:
                 if i: commonkey[c[0]].append(i)
         groupcache[groupcounter]['common']=commonkey
         previous_context = ('common',bn,groupcounter)
@@ -1095,12 +1101,12 @@ def analyzeline(m,case,line):
             if mm.has_key('list') and mm['list'] is not None:
                 if mm.has_key('notonly') and mm['notonly'] is None:isonly=1
                 groupcache[groupcounter]['use'][name]['only']=isonly
-                ll=map(string.strip,string.split(mm['list'],','))
+                ll=[x.strip() for x in mm['list'].split(',')]
                 rl={}
                 for l in ll:
                     if '=' in l:
                         m2=re.match(r'\A\s*(?P<local>\b[\w]+\b)\s*=\s*>\s*(?P<use>\b[\w]+\b)\s*\Z',l,re.I)
-                        if m2: rl[string.strip(m2.group('local'))]=string.strip(m2.group('use'))
+                        if m2: rl[m2.group('local').strip()]=m2.group('use').strip()
                         else:
                             outmess('analyzeline: Not local=>use pattern found in %s\n'%`l`)
                     else:
@@ -1151,7 +1157,7 @@ def cracktypespec0(typespec,ll):
     attr=None
     if re.match(r'double\s*complex',typespec,re.I): typespec='double complex'
     elif re.match(r'double\s*precision',typespec,re.I): typespec='double precision'
-    else: typespec=string.lower(string.strip(typespec))
+    else: typespec=typespec.strip().lower()
     m1=selectpattern.match(markouterparen(ll))
     if not m1:
         outmess('cracktypespec0: no kind/char_selector pattern found for line.\n')
@@ -1161,9 +1167,9 @@ def cracktypespec0(typespec,ll):
     if typespec in ['complex','integer','logical','real','character','type']:
         selector=d['this']
         ll=d['after']
-    i=string.find(ll,'::')
+    i=ll.find('::')
     if i>=0:
-        attr=string.strip(ll[:i])
+        attr=ll[:i].strip()
         ll=ll[i+2:]
     return typespec,selector,attr,ll
 #####
@@ -1173,7 +1179,7 @@ charselector=re.compile(r'\s*(\((?P<lenkind>.*)\)|[*]\s*(?P<charlen>.*))\s*\Z',r
 lenkindpattern=re.compile(r'\s*(kind\s*=\s*(?P<kind>.*?)\s*(@,@\s*len\s*=\s*(?P<len>.*)|)|(len\s*=\s*|)(?P<len2>.*?)\s*(@,@\s*(kind\s*=\s*|)(?P<kind2>.*)|))\s*\Z',re.I)
 lenarraypattern=re.compile(r'\s*(@\(@\s*(?!/)\s*(?P<array>.*?)\s*@\)@\s*[*]\s*(?P<len>.*?)|([*]\s*(?P<len2>.*?)|)\s*(@\(@\s*(?!/)\s*(?P<array2>.*?)\s*@\)@|))\s*(=\s*(?P<init>.*?)|(@\(@|)/\s*(?P<init2>.*?)\s*/(@\)@|)|)\s*\Z',re.I)
 def removespaces(expr):
-    expr=string.strip(expr)
+    expr=expr.strip()
     if len(expr)<=1: return expr
     expr2=expr[0]
     for i in range(1,len(expr)-1):
@@ -1203,21 +1209,21 @@ def updatevars(typespec,selector,attrspec,entitydecl):
     last_name = None
     kindselect,charselect,typename=cracktypespec(typespec,selector)
     if attrspec:
-        attrspec=map(string.strip,string.split(markoutercomma(attrspec),'@,@'))
+        attrspec=[x.strip() for x in markoutercomma(attrspec).split('@,@')]
         l = []
         c = re.compile(r'(?P<start>[a-zA-Z]+)')
         for a in attrspec:
             m = c.match(a)
             if m:
-                s = string.lower(m.group('start'))
+                s = m.group('start').lower()
                 a = s + a[len(s):]
             l.append(a)
         attrspec = l
-    el=map(string.strip,string.split(markoutercomma(entitydecl),'@,@'))
+    el=[x.strip() for x in markoutercomma(entitydecl).split('@,@')]
     el1=[]
     for e in el:
-        for e1 in map(string.strip,string.split(markoutercomma(removespaces(markinnerspaces(e)),comma=' '),'@ @')):
-            if e1: el1.append(string.replace(e1,'@_@',' '))
+        for e1 in [x.strip() for x in markoutercomma(removespaces(markinnerspaces(e)),comma=' ').split('@ @')]:
+            if e1: el1.append(e1.replace('@_@',' '))
     for e in el1:
         m=namepattern.match(e)
         if not m:
@@ -1430,7 +1436,7 @@ def get_useparameters(block, param_map=None):
     if not usedict:
         return param_map
     for usename,mapping in usedict.items():
-        usename = string.lower(usename)
+        usename = usename.lower()
         if not f90modulevars.has_key(usename):
             continue
         mvars = f90modulevars[usename]
@@ -1594,7 +1600,7 @@ def sortvarnames(vars):
             if i>n:
                 errmess('sortvarnames: failed to compute dependencies because'
                         ' of cyclic dependencies between '
-                        +string.join(dep,', ')+'\n')
+                        +', '.join(dep)+'\n')
                 indep = indep + dep
                 break
         else:
@@ -1615,16 +1621,16 @@ def analyzecommon(block):
             if m:
                 dims=[]
                 if m.group('dims'):
-                    dims=map(string.strip,string.split(markoutercomma(m.group('dims')),'@,@'))
-                n=string.strip(m.group('name'))
+                    dims=[x.strip() for x in markoutercomma(m.group('dims')).split('@,@')]
+                n=m.group('name').strip()
                 if block['vars'].has_key(n):
                     if block['vars'][n].has_key('attrspec'):
-                        block['vars'][n]['attrspec'].append('dimension(%s)'%(string.join(dims,',')))
+                        block['vars'][n]['attrspec'].append('dimension(%s)'%(','.join(dims)))
                     else:
-                        block['vars'][n]['attrspec']=['dimension(%s)'%(string.join(dims,','))]
+                        block['vars'][n]['attrspec']=['dimension(%s)'%(','.join(dims))]
                 else:
                     if dims:
-                        block['vars'][n]={'attrspec':['dimension(%s)'%(string.join(dims,','))]}
+                        block['vars'][n]={'attrspec':['dimension(%s)'%(','.join(dims))]}
                     else: block['vars'][n]={}
                 if n not in commonvars: commonvars.append(n)
             else:
@@ -1657,7 +1663,7 @@ def analyzebody(block,args,tab=''):
         if b['block']=='interface' and not b['body']:
             if not b.has_key('f2pyenhancements'):
                 continue
-        if string.replace(b['block'],' ','')=='pythonmodule':
+        if b['block'].replace(' ','')=='pythonmodule':
             usermodules.append(b)
         else:
             if b['block']=='module':
@@ -1926,7 +1932,7 @@ def get_parameters(vars, global_params={}):
                 for m in real16pattern.finditer(v):
                     tt[m.start():m.end()] = list(\
                             v[m.start():m.end()].lower().replace('d', 'e'))
-                v = string.join(tt,'')
+                v = ''.join(tt)
             if iscomplex(vars[n]):
                 if v[0]=='(' and v[-1]==')':
                     l = markoutercomma(v[1:-1]).split('@,@')
@@ -1939,7 +1945,7 @@ def get_parameters(vars, global_params={}):
                 outmess('get_parameters: got "%s" on %s\n' % (msg,`v`))
             if isstring(vars[n]) and type(params[n]) is type(0):
                 params[n] = chr(params[n])
-            nl = string.lower(n)
+            nl = n.lower()
             if nl!=n:
                 params[nl] = params[n]
         else:
@@ -2011,7 +2017,7 @@ def analyzevars(block):
         if not vars[n].has_key('typespec'):
             if not(vars[n].has_key('attrspec') and 'external' in vars[n]['attrspec']):
                 if implicitrules:
-                    ln0 = string.lower(n[0])
+                    ln0 = n[0].lower()
                     for k in implicitrules[ln0].keys():
                         if k=='typespec' and implicitrules[ln0][k]=='undefined':
                             continue
@@ -2048,39 +2054,39 @@ def analyzevars(block):
             vars[n]['attrspec']=[]
             dim,intent,depend,check,note=None,None,None,None,None
             for a in attr:
-                if a[:9]=='dimension': dim=(string.strip(a[9:]))[1:-1]
-                elif a[:6]=='intent': intent=(string.strip(a[6:]))[1:-1]
-                elif a[:6]=='depend': depend=(string.strip(a[6:]))[1:-1]
-                elif a[:5]=='check': check=(string.strip(a[5:]))[1:-1]
-                elif a[:4]=='note': note=(string.strip(a[4:]))[1:-1]
+                if a[:9]=='dimension': dim=(a[9:].strip())[1:-1]
+                elif a[:6]=='intent': intent=(a[6:].strip())[1:-1]
+                elif a[:6]=='depend': depend=(a[6:].strip())[1:-1]
+                elif a[:5]=='check': check=(a[5:].strip())[1:-1]
+                elif a[:4]=='note': note=(a[4:].strip())[1:-1]
                 else: vars[n]=setattrspec(vars[n],a)
                 if intent:
                     if not vars[n].has_key('intent'): vars[n]['intent']=[]
-                    for c in map(string.strip,string.split(markoutercomma(intent),'@,@')):
+                    for c in [x.strip() for x in markoutercomma(intent).split('@,@')]:
                         if not c in vars[n]['intent']:
                             vars[n]['intent'].append(c)
                     intent=None
                 if note:
-                    note=string.replace(note,'\\n\\n','\n\n')
-                    note=string.replace(note,'\\n ','\n')
+                    note=note.replace('\\n\\n','\n\n')
+                    note=note.replace('\\n ','\n')
                     if not vars[n].has_key('note'): vars[n]['note']=[note]
                     else: vars[n]['note'].append(note)
                     note=None
                 if depend is not None:
                     if not vars[n].has_key('depend'): vars[n]['depend']=[]
-                    for c in rmbadname(map(string.strip,string.split(markoutercomma(depend),'@,@'))):
+                    for c in rmbadname([x.strip() for x in markoutercomma(depend).split('@,@')]):
                         if c not in vars[n]['depend']:
                             vars[n]['depend'].append(c)
                     depend=None
                 if check is not None:
                     if not vars[n].has_key('check'): vars[n]['check']=[]
-                    for c in map(string.strip,string.split(markoutercomma(check),'@,@')):
+                    for c in [x.strip() for x in markoutercomma(check).split('@,@')]:
                         if not c in vars[n]['check']:
                             vars[n]['check'].append(c)
                     check=None
             if dim and not vars[n].has_key('dimension'):
                 vars[n]['dimension']=[]
-                for d in rmbadname(map(string.strip,string.split(markoutercomma(dim),'@,@'))):
+                for d in rmbadname([x.strip() for x in markoutercomma(dim).split('@,@')]):
                     star = '*'
                     if d==':': star=':'
                     if params.has_key(d):
@@ -2093,7 +2099,7 @@ def analyzevars(block):
                     if d==star:
                         dl = [star]
                     else:
-                        dl=string.split(markoutercomma(d,':'),'@:@')
+                        dl=markoutercomma(d,':').split('@:@')
                     if len(dl)==2 and '*' in dl: # e.g. dimension(5:*)
                         dl = ['*']
                         d = '*'
@@ -2153,7 +2159,7 @@ def analyzevars(block):
                         if vars[d].has_key('attrspec'):
                             for aa in vars[d]['attrspec']:
                                 if aa[:6]=='depend':
-                                    ddeps=ddeps+string.split((string.strip(aa[6:]))[1:-1],',')
+                                    ddeps += aa[6:].strip()[1:-1].split(',')
                         if vars[d].has_key('depend'):
                             ddeps=ddeps+vars[d]['depend']
                     i=i+1
@@ -2223,9 +2229,9 @@ def analyzevars(block):
                     vars[n]=appenddecl(vars[n],vars[block['result']])
                 if block.has_key('prefix'):
                     pr=block['prefix']; ispure=0; isrec=1
-                    pr1=string.replace(pr,'pure','')
+                    pr1=pr.replace('pure','')
                     ispure=(not pr==pr1)
-                    pr=string.replace(pr1,'recursive','')
+                    pr=pr1.replace('recursive','')
                     isrec=(not pr==pr1)
                     m=typespattern[0].match(pr)
                     if m:
@@ -2332,7 +2338,7 @@ def _ensure_exprdict(r):
 def determineexprtype(expr,vars,rules={}):
     if vars.has_key(expr):
         return _ensure_exprdict(vars[expr])
-    expr=string.strip(expr)
+    expr=expr.strip()
     if determineexprtype_re_1.match(expr):
         return {'typespec':'complex'}
     m=determineexprtype_re_2.match(expr)
@@ -2346,7 +2352,7 @@ def determineexprtype(expr,vars,rules={}):
             outmess('determineexprtype: selected kind types not supported (%s)\n'%`expr`)
         return {'typespec':'real'}
     for op in ['+','-','*','/']:
-        for e in map(string.strip,string.split(markoutercomma(expr,comma=op),'@'+op+'@')):
+        for e in [x.strip() for x in markoutercomma(expr,comma=op).split('@'+op+'@')]:
             if vars.has_key(e):
                 return _ensure_exprdict(vars[e])
     t={}
@@ -2391,7 +2397,7 @@ def crack2fortrangen(block,tab='\n'):
         vars = block['vars']
         al = [a for a in block['args'] if not isintent_callback(vars[a])]
         if block['block']=='function' or al:
-            args='(%s)'%string.join(al,',')
+            args='(%s)'%','.join(al)
     f2pyenhancements = ''
     if block.has_key('f2pyenhancements'):
         for k in block['f2pyenhancements'].keys():
@@ -2402,7 +2408,7 @@ def crack2fortrangen(block,tab='\n'):
     if intent_lst:
         f2pyenhancements = '%s%sintent(%s) %s'%\
                            (f2pyenhancements,tab+tabchar,
-                            string.join(intent_lst,','),name)
+                            ','.join(intent_lst),name)
     use=''
     if block.has_key('use'):
         use=use2fortran(block['use'],tab+tabchar)
@@ -2425,7 +2431,7 @@ def crack2fortrangen(block,tab='\n'):
         entry_stmts = ''
         for k,i in block['entry'].items():
             entry_stmts = '%s%sentry %s(%s)' \
-                          % (entry_stmts,tab+tabchar,k,string.join(i,','))
+                          % (entry_stmts,tab+tabchar,k,','.join(i))
         body = body + entry_stmts
     if blocktype=='block data' and name=='_BLOCK_DATA_':
         name = ''
@@ -2435,9 +2441,9 @@ def common2fortran(common,tab=''):
     ret=''
     for k in common.keys():
         if k=='_BLNK_':
-            ret='%s%scommon %s'%(ret,tab,string.join(common[k],','))
+            ret='%s%scommon %s'%(ret,tab,','.join(common[k]))
         else:
-            ret='%s%scommon /%s/ %s'%(ret,tab,k,string.join(common[k],','))
+            ret='%s%scommon /%s/ %s'%(ret,tab,k,','.join(common[k]))
     return ret
 def use2fortran(use,tab=''):
     ret=''
@@ -2546,23 +2552,23 @@ def vars2fortran(block,vars,args,tab=''):
                 if l not in ['external']:
                     attr.append(l)
             if attr:
-                vardef='%s %s'%(vardef,string.join(attr,','))
+                vardef='%s %s'%(vardef,','.join(attr))
                 c=','
         if vars[a].has_key('dimension'):
 #             if not isintent_c(vars[a]):
 #                 vars[a]['dimension'].reverse()
-            vardef='%s%sdimension(%s)'%(vardef,c,string.join(vars[a]['dimension'],','))
+            vardef='%s%sdimension(%s)'%(vardef,c,','.join(vars[a]['dimension']))
             c=','
         if vars[a].has_key('intent'):
             lst = true_intent_list(vars[a])
             if lst:
-                vardef='%s%sintent(%s)'%(vardef,c,string.join(lst,','))
+                vardef='%s%sintent(%s)'%(vardef,c,','.join(lst))
             c=','
         if vars[a].has_key('check'):
-            vardef='%s%scheck(%s)'%(vardef,c,string.join(vars[a]['check'],','))
+            vardef='%s%scheck(%s)'%(vardef,c,','.join(vars[a]['check']))
             c=','
         if vars[a].has_key('depend'):
-            vardef='%s%sdepend(%s)'%(vardef,c,string.join(vars[a]['depend'],','))
+            vardef='%s%sdepend(%s)'%(vardef,c,','.join(vars[a]['depend']))
             c=','
         if vars[a].has_key('='):
             v = vars[a]['=']

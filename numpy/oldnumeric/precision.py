@@ -7,8 +7,8 @@ __all__ = ['Character', 'Complex', 'Float',
            'PrecisionError', 'PyObject', 'Int', 'UInt',
            'UnsignedInteger', 'string', 'typecodes', 'zeros']
 
-import string
 from functions import zeros
+import string   # for backwards compatibility
 
 typecodes = {'Character':'c', 'Integer':'bhil', 'UnsignedInteger':'BHI', 'Float':'fd', 'Complex':'FD'}
 

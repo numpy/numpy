@@ -19,7 +19,10 @@ import __version__
 f2py_version = __version__.version
 
 import pprint
-import sys,string,time,types,os
+import sys
+import time
+import types
+import os
 import cfuncs
 
 
@@ -254,13 +257,13 @@ def l_and(*f):
     for i in range(len(f)):
         l='%s,f%d=f[%d]'%(l,i,i)
         l2.append('f%d(v)'%(i))
-    return eval('%s:%s'%(l,string.join(l2,' and ')))
+    return eval('%s:%s'%(l,' and '.join(l2)))
 def l_or(*f):
     l,l2='lambda v',[]
     for i in range(len(f)):
         l='%s,f%d=f[%d]'%(l,i,i)
         l2.append('f%d(v)'%(i))
-    return eval('%s:%s'%(l,string.join(l2,' or ')))
+    return eval('%s:%s'%(l,' or '.join(l2)))
 def l_not(f):
     return eval('lambda v,f=f:not f(v)')
 
@@ -340,7 +343,7 @@ def getcallprotoargument(rout,cb_map={}):
                 arg_types2.append('size_t')
         arg_types.append(ctype)
 
-    proto_args = string.join(arg_types+arg_types2,',')
+    proto_args = ','.join(arg_types+arg_types2)
     if not proto_args:
         proto_args = 'void'
     #print proto_args
@@ -411,9 +414,9 @@ def replace(str,dict,defaultsep=''):
         else:
             sep=defaultsep
         if type(dict[k])==types.ListType:
-            str=string.replace(str,'#%s#'%(k),string.join(flatlist(dict[k]),sep))
+            str=str.replace('#%s#'%(k),sep.join(flatlist(dict[k])))
         else:
-            str=string.replace(str,'#%s#'%(k),dict[k])
+            str=str.replace('#%s#'%(k),dict[k])
     return str
 
 def dictappend(rd,ar):

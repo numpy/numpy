@@ -1,9 +1,8 @@
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
+import sys
 import numeric as N
 from numeric import concatenate, isscalar, binary_repr
-import string as str_
-import sys
 
 # make translation table
 _table = [None]*256
@@ -11,8 +10,7 @@ for k in range(256):
     _table[k] = chr(k)
 _table = ''.join(_table)
 
-_numchars = str_.digits + ".-+jeEL"
-del str_
+_numchars = '0123456789.-+jeEL'
 _todelete = []
 for k in _table:
     if k not in _numchars:

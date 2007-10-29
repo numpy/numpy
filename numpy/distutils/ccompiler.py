@@ -400,7 +400,8 @@ def gen_preprocess_options (macros, include_dirs):
 ccompiler.gen_preprocess_options = gen_preprocess_options
 
 ##Fix distutils.util.split_quoted:
-import re,string
+import re
+import string
 _wordchars_re = re.compile(r'[^\\\'\"%s ]*' % string.whitespace)
 _squote_re = re.compile(r"'(?:[^'\\]|\\.)*'")
 _dquote_re = re.compile(r'"(?:[^"\\]|\\.)*"')

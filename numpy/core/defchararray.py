@@ -1,7 +1,7 @@
+import sys
 from numerictypes import string_, unicode_, integer, object_
 from numeric import ndarray, broadcast, empty, compare_chararrays
 from numeric import array as narray
-import sys
 
 __all__ = ['chararray']
 

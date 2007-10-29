@@ -17,8 +17,12 @@ __version__ = "$Revision: 1.16 $"[10:-1]
 
 f2py_version='See `f2py -v`'
 
-import pprint,copy
-import sys,string,time,types,copy
+import pprint
+import copy
+import sys
+import time
+import types
+import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
@@ -69,7 +73,7 @@ def var2fixfortran(vars,a,fa=None,f90mode=None):
 
     vardef='%s %s'%(vardef,fa)
     if vars[a].has_key('dimension'):
-        vardef='%s(%s)'%(vardef,string.join(vars[a]['dimension'],','))
+        vardef='%s(%s)'%(vardef,','.join(vars[a]['dimension']))
     return vardef
 
 def createfuncwrapper(rout,signature=0):
@@ -98,12 +102,12 @@ def createfuncwrapper(rout,signature=0):
         if charselect.get('*','')=='(*)':
             charselect['*'] = '10'
     if f90mode:
-        sargs = string.join(args,', ')
+        sargs = ', '.join(args)
         add('subroutine f2pywrap_%s_%s (%s)'%(rout['modulename'],name,sargs))
         if not signature:
             add('use %s, only : %s'%(rout['modulename'],fortranname))
     else:
-        add('subroutine f2pywrap%s (%s)'%(name,string.join(args,', ')))
+        add('subroutine f2pywrap%s (%s)'%(name,', '.join(args)))
         add('external %s'%(fortranname))
         #if not return_char_star:
         l = l + ', '+fortranname
@@ -126,9 +130,9 @@ def createfuncwrapper(rout,signature=0):
 
     if not signature:
         if islogicalfunction(rout):
-            add('%s = .not.(.not.%s(%s))'%(newname,fortranname,string.join(args,', ')))
+            add('%s = .not.(.not.%s(%s))'%(newname,fortranname,', '.join(args)))
         else:
-            add('%s = %s(%s)'%(newname,fortranname,string.join(args,', ')))
+            add('%s = %s(%s)'%(newname,fortranname,', '.join(args)))
     if f90mode:
         add('end subroutine f2pywrap_%s_%s'%(rout['modulename'],name))
     else:

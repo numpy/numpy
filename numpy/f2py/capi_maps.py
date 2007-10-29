@@ -16,7 +16,9 @@ __version__ = "$Revision: 1.60 $"[10:-1]
 import __version__
 f2py_version = __version__.version
 
-import string,copy,re,os
+import copy
+import re
+import os
 from auxfuncs import *
 from crackfortran import markoutercomma
 import cb_rules
@@ -170,8 +172,8 @@ if os.path.isfile('.f2py_f2cmap'):
         f.close()
         for k,d1 in d.items():
             for k1 in d1.keys():
-                d1[string.lower(k1)] = d1[k1]
-            d[string.lower(k)] = d[k]
+                d1[k1.lower()] = d1[k1]
+            d[k.lower()] = d[k]
         for k in d.keys():
             if not f2cmap_all.has_key(k): f2cmap_all[k]={}
             for k1 in d[k].keys():
@@ -217,8 +219,8 @@ def getctype(var):
         else: errmess('getctype: function %s has no return value?!\n'%a)
     elif issubroutine(var):
         return ctype
-    elif var.has_key('typespec') and f2cmap_all.has_key(string.lower(var['typespec'])):
-        typespec = string.lower(var['typespec'])
+    elif var.has_key('typespec') and f2cmap_all.has_key(var['typespec'].lower()):
+        typespec = var['typespec'].upper()
         f2cmap=f2cmap_all[typespec]
         ctype=f2cmap[''] # default type
         if var.has_key('kindselector'):
@@ -279,10 +281,10 @@ def getarrdims(a,var,verbose=0):
 #         if not isintent_c(var):
 #             var['dimension'].reverse()
         dim=copy.copy(var['dimension'])
-        ret['size']=string.join(dim,'*')
+        ret['size']='*'.join(dim)
         try: ret['size']=`eval(ret['size'])`
         except: pass
-        ret['dims']=string.join(dim,',')
+        ret['dims']=','.join(dim)
         ret['rank']=`len(dim)`
         ret['rank*[-1]']=`len(dim)*[-1]`[1:-1]
         for i in range(len(dim)): # solve dim for dependecies
@@ -359,13 +361,13 @@ def getpydocsign(a,var):
         rank=`len(dim)`
         sig='%s :%s %s rank-%s array(\'%s\') with bounds (%s)'%(a,init,opt,rank,
                                              c2pycode_map[ctype],
-                                             string.join(dim,','))
+                                             ','.join(dim))
         if a==out_a:
             sigout='%s : rank-%s array(\'%s\') with bounds (%s)'\
-                    %(a,rank,c2pycode_map[ctype],string.join(dim,','))
+                    %(a,rank,c2pycode_map[ctype],','.join(dim))
         else:
             sigout='%s : rank-%s array(\'%s\') with bounds (%s) and %s storage'\
-                    %(out_a,rank,c2pycode_map[ctype],string.join(dim,','),a)
+                    %(out_a,rank,c2pycode_map[ctype],','.join(dim),a)
     elif isexternal(var):
         ua=''
         if lcb_map.has_key(a) and lcb2_map.has_key(lcb_map[a]) and lcb2_map[lcb_map[a]].has_key('argname'):
@@ -389,7 +391,7 @@ def getarrdocsign(a,var):
         rank=`len(dim)`
         sig='%s : rank-%s array(\'%s\') with bounds (%s)'%(a,rank,
                                                            c2pycode_map[ctype],
-                                                           string.join(dim,','))
+                                                           ','.join(dim))
     return sig
 
 def getinit(a,var):
@@ -404,7 +406,7 @@ def getinit(a,var):
             try:
                 v = var["="]
                 if ',' in v:
-                    ret['init.r'],ret['init.i']=string.split(markoutercomma(v[1:-1]),'@,@')
+                    ret['init.r'],ret['init.i']=markoutercomma(v[1:-1]).split('@,@')
                 else:
                     v = eval(v,{},{})
                     ret['init.r'],ret['init.i']=str(v.real),str(v.imag)
@@ -414,7 +416,7 @@ def getinit(a,var):
         elif isstring(var):
             if not init: init,showinit='""',"''"
             if init[0]=="'":
-                init='"%s"'%(string.replace(init[1:-1],'"','\\"'))
+                init='"%s"'%(init[1:-1].replace('"','\\"'))
             if init[0]=='"': showinit="'%s'"%(init[1:-1])
     return init,showinit
 
@@ -440,7 +442,7 @@ def sign2map(a,var):
         if f(var): intent_flags.append('F2PY_%s'%s)
     if intent_flags:
         #XXX: Evaluate intent_flags here.
-        ret['intent'] = string.join(intent_flags,'|')
+        ret['intent'] = '|'.join(intent_flags)
     else:
         ret['intent'] = 'F2PY_INTENT_IN'
     if isarray(var): ret['varrformat']='N'
@@ -449,7 +451,7 @@ def sign2map(a,var):
     else: ret['varrformat']='O'
     ret['init'],ret['showinit']=getinit(a,var)
     if hasinitvalue(var) and iscomplex(var) and not isarray(var):
-        ret['init.r'],ret['init.i'] = string.split(markoutercomma(ret['init'][1:-1]),'@,@')
+        ret['init.r'],ret['init.i'] = markoutercomma(ret['init'][1:-1]).split('@,@')
     if isexternal(var):
         ret['cbnamekey']=a
         if lcb_map.has_key(a):
@@ -491,14 +493,14 @@ def sign2map(a,var):
         if isarray(var):
 #             if not isintent_c(var):
 #                 var['dimension'].reverse()
-            ddim=string.join(map(lambda x,y:'%s|%s'%(x,y),var['dimension'],dim),',')
+            ddim=','.join(map(lambda x,y:'%s|%s'%(x,y),var['dimension'],dim))
             rl.append('dims(%s)'%ddim)
 #             if not isintent_c(var):
 #                 var['dimension'].reverse()
         if isexternal(var):
-            ret['vardebuginfo']='debug-capi:%s=>%s:%s'%(a,ret['cbname'],string.join(rl,','))
+            ret['vardebuginfo']='debug-capi:%s=>%s:%s'%(a,ret['cbname'],','.join(rl))
         else:
-            ret['vardebuginfo']='debug-capi:%s %s=%s:%s'%(ret['ctype'],a,ret['showinit'],string.join(rl,','))
+            ret['vardebuginfo']='debug-capi:%s %s=%s:%s'%(ret['ctype'],a,ret['showinit'],','.join(rl))
         if isscalar(var):
             if cformat_map.has_key(ret['ctype']):
                 ret['vardebugshowvalue']='debug-capi:%s=%s'%(a,cformat_map[ret['ctype']])
@@ -526,13 +528,13 @@ def routsign2map(rout):
     name = rout['name']
     fname = getfortranname(rout)
     ret={'name':name,
-         'texname':string.replace(name,'_','\\_'),
-         'name_lower':string.lower(name),
-         'NAME':string.upper(name),
+         'texname':name.replace('_','\\_'),
+         'name_lower':name.lower(),
+         'NAME':name.upper(),
          'begintitle':gentitle(name),
          'endtitle':gentitle('end of %s'%name),
          'fortranname':fname,
-         'FORTRANNAME':string.upper(fname),
+         'FORTRANNAME':fname.upper(),
          'callstatement':getcallstatement(rout) or '',
          'usercode':getusercode(rout) or '',
          'usercode1':getusercode1(rout) or '',
@@ -595,12 +597,12 @@ def modsign2map(m):
     """
     if ismodule(m):
         ret={'f90modulename':m['name'],
-             'F90MODULENAME':string.upper(m['name']),
-             'texf90modulename':string.replace(m['name'],'_','\\_')}
+             'F90MODULENAME':m['name'].upper(),
+             'texf90modulename':m['name'].replace('_','\\_')}
     else:
         ret={'modulename':m['name'],
-             'MODULENAME':string.upper(m['name']),
-             'texmodulename':string.replace(m['name'],'_','\\_')}
+             'MODULENAME':m['name'].upper(),
+             'texmodulename':m['name'].replace('_','\\_')}
     ret['restdoc'] = getrestdoc(m) or []
     if hasnote(m):
         ret['note']=m['note']

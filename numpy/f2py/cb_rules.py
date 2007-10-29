@@ -20,7 +20,10 @@ f2py_version = __version__.version
 
 
 import pprint
-import sys,string,time,types,copy
+import sys
+import time
+import types
+import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
@@ -484,8 +487,8 @@ def buildcallback(rout,um):
                                    {'docsign':rd['docsign'],
                                     'docsignopt':optargs,
                                     })
-    rd['latexdocsignature']=string.replace(rd['docsignature'],'_','\\_')
-    rd['latexdocsignature']=string.replace(rd['latexdocsignature'],',',', ')
+    rd['latexdocsignature']=rd['docsignature'].replace('_','\\_')
+    rd['latexdocsignature']=rd['latexdocsignature'].replace(',',', ')
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:

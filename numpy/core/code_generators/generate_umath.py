@@ -1,4 +1,3 @@
-import string
 import re
 
 Zero = "PyUFunc_Zero"
@@ -484,7 +483,7 @@ defdict = {
 
 def indent(st,spaces):
     indention = ' '*spaces
-    indented = indention + string.replace(st,'\n','\n'+indention)
+    indented = indention + st.replace('\n','\n'+indention)
     # trim off any trailing spaces
     indented = re.sub(r' +$',r'',indented)
     return indented
