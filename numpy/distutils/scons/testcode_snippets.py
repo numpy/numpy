@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 26 08:00 PM 2007 J
+# Last Change: Mon Oct 29 12:00 PM 2007 J
 
 # This module should contains useful test code (as strings). They are mainly
 # useful for checkers who need to run the tests (to check the mere presence of

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 26 09:00 PM 2007 J
+# Last Change: Mon Oct 29 01:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -7,7 +7,7 @@ import os.path
 from copy import deepcopy
 from distutils.util import get_platform
 
-from libinfo import get_config, get_config_from_section
+from libinfo import get_config, get_config_from_section, get_func_link_src
 from libinfo_scons import NumpyCheckLib
 from testcode_snippets import cblas_sgemm as cblas_src, \
         c_sgemm as sunperf_src, lapack_sgesv
@@ -210,6 +210,7 @@ def CheckLAPACK(context, autoadd = 1):
         return 0
     else:
         # Get fortran stuff
+        # XXX: do not check if env variables are already here
         if not CheckF77Mangling(context):
             return 0
         if not CheckF77Clib(context):
@@ -250,20 +251,60 @@ def CheckLAPACK(context, autoadd = 1):
 
     return 0
 
-def CheckNetlibBLAS(context):
+def _my_try_link(context, src, libs, libpath, autoadd = 0):
+    """Try to link the given text in src with libs and libpath."""
+    env = context.env
+
+    oldLIBS = (env.has_key('LIBS') and deepcopy(env['LIBS'])) or []
+    oldLIBPATH = (env.has_key('LIBPATH') and deepcopy(env['LIBPATH'])) or []
+
+    ret = 0
+    try:
+        env.AppendUnique(LIBS = libs, LIBPATH = libpath)
+        ret = context.TryLink(src, '.c')
+    finally:
+        if not ret or not autoadd:
+            env.Replace(LIBS = oldLIBS, LIBPATH = oldLIBPATH)
+
+    return ret
+
+def CheckGenericBLAS(context):
     # XXX: support site.cfg
-    # Get fortran mangling
-    if not CheckF77Mangling(context):
-        return 0
+    libs = ['blas']
+    libpath = []
 
     env = context.env
+    # Get fortran mangling
+    if not env.has_key('F77_NAME_MANGLER'):
+        if not CheckF77Mangling(context):
+            return 0
+
     test_func_name = env['F77_NAME_MANGLER']('dgemm')
 
-def CheckNetlibLAPACK(context):
+    src = get_func_link_src(test_func_name)
+    context.Message("Checking for Generic BLAS... ")
+    st =  _my_try_link(context, src, libs, libpath, 0)
+    context.Result(st)
+
+    return st
+
+def CheckGenericLAPACK(context):
     # XXX: support site.cfg
-    # Get fortran mangling
-    if not CheckF77Mangling(context):
-        return 0
+    libs = ['lapack']
+    libpath = []
 
     env = context.env
+    # Get fortran mangling
+    if not env.has_key('F77_NAME_MANGLER'):
+        if not CheckF77Mangling(context):
+            return 0
+
     test_func_name = env['F77_NAME_MANGLER']('dpotri')
+
+    src = get_func_link_src(test_func_name)
+    context.Message("Checking for Generic LAPACK... ")
+    st =  _my_try_link(context, src, libs, libpath, 0)
+    context.Result(st)
+
+    return st
+

@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 26 02:00 PM 2007 J
+# Last Change: Mon Oct 29 01:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -8,7 +8,7 @@ from copy import deepcopy
 from numpy.distutils.scons import get_python_inc, get_pythonlib_dir
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons import NumpyCheckLib
-from numpy.distutils.scons.custom_checkers import CheckCBLAS, CheckMKL, CheckATLAS
+from numpy.distutils.scons.custom_checkers import CheckCBLAS, CheckMKL, CheckATLAS, CheckGenericBLAS, CheckGenericLAPACK
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     generate_config_header, generate_config_header_emitter, \
@@ -29,6 +29,8 @@ if os.name == 'nt':
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
     'CheckMathlib' : CheckMathlib, 
     'CheckCBLAS' : CheckCBLAS, 
+    'CheckGenericBLAS' : CheckGenericBLAS, 
+    'CheckGenericLAPACK' : CheckGenericLAPACK, 
     'NumpyCheckLib' : NumpyCheckLib})
 
 # Convention: list of tuples (definition, value). value:
@@ -139,6 +141,9 @@ if sys.platform=='win32' or os.name=='nt':
 #--------------
 # Checking Blas
 #--------------
+config.CheckGenericBLAS()
+config.CheckGenericLAPACK()
+
 # TODO
 if config.CheckCBLAS():
     build_blasdot = 1

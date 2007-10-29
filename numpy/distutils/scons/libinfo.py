@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 26 11:00 AM 2007 J
+# Last Change: Mon Oct 29 12:00 PM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). KEEP THIS INDEPENDANT OF SCONS !
@@ -85,6 +85,32 @@ def get_config_from_section(siteconfig, section):
         return (cpppath, libs, libpath), 1
     else:
         return ([], [], []), 0
+
+def get_func_link_src(func, includes = None):
+    """Given a function, return the source code to compile and link to
+    test for this symbol.
+    
+    includes is a list of (optional) headers"""
+    src = []
+    if includes:
+        src.extend([r'#include <%s>\n' for h in includes])
+
+    src.append(r"""
+#undef %(func)s
+
+#ifdef __cplusplus
+extern "C"
+#endif
+char %(func)s ();
+
+int
+main ()
+{
+    return %(func)s();
+}
+""" % {'func' : func})
+
+    return '\n'.join(src)
 
 if __name__ == '__main__':
     pass
