@@ -3197,7 +3197,7 @@ ufunc_geterr(PyObject *dummy, PyObject *args)
 static int
 ufunc_update_use_defaults(void)
 {
-    PyObject *errobj;
+    PyObject *errobj=NULL;
     int errmask, bufsize;
     int res;
 
@@ -3206,7 +3206,7 @@ ufunc_update_use_defaults(void)
                               &errobj);
     PyUFunc_NUM_NODEFAULTS -= 1;
 
-    if (res < 0) return -1;
+    if (res < 0) {Py_XDECREF(errobj); return -1;}
 
     if ((errmask != UFUNC_ERR_DEFAULT) ||           \
         (bufsize != PyArray_BUFSIZE) ||             \
@@ -3216,6 +3216,7 @@ ufunc_update_use_defaults(void)
     else if (PyUFunc_NUM_NODEFAULTS > 0) {
         PyUFunc_NUM_NODEFAULTS -= 1;
     }
+    Py_XDECREF(errobj);
     return 0;
 }
 #endif
