@@ -1,0 +1,60 @@
+.. Last Change: .
+.. vim:syntax=rest
+
+numpy.distutils.scons is basically an extension of numpy.distutils to use scons
+for building extensions instead of distutils. Some of the advantages:
+
+    - fine grained control of compilation environement (compiler options,
+      etc...)
+    - ability to build shared, static libraries in a cross platform manner
+    - ability to build standard C python extension and Ctypes-based extensions
+      in a cross platform manner
+    - support library for high level system capabilities cheks, including
+      availability of MKL, ATLAS, etc... and more generic framework to build
+      your own, cross platform checks (think autoconf, but with python instead
+      of M4)
+
+How does it work ?
+==================
+
+The basic scheme is easy: 
+
+    - an add_sconscript function has been added to
+      numpy.distutils.Configuration. When called, this registers the sconscript
+      given as an argument.
+    - a scons command has been added as a distutils command. When called
+      through python setup.py scons, scons is called for every SConscript
+      registered by add_sconscript function (numpy/distutils/command/scons.py)
+    - In the SConscript files, basic environments are obtained from the factory
+      numpy.distutils.scons.GetNumpyEnvironment. Those objects are true scons
+      Environment, but correctly initialized with basic tools (C and fortran
+      compilers, etc...), python and numpy specific builders (to build python
+      extension, etc...), and some information necessary for scons <-> distutils
+      interoperability.
+    - As in standard scons, code is built using builders. However, for
+      interoperability with distutils, special builders are provided to put any
+      generated code in seperate directories, install built code in directories where
+      distutils will find them (for install command), etc...
+
+While not the most efficient (scons is launched as a new process for every
+package registering a SConscript), this enables truly independant packages.
+Basic build parameters (compiler, build directories, etc...) are passed to
+scons through command lines argument, but generally, you don't need to
+understand how exactly to use it.
+
+Distutils <-> scons interoperability
+====================================
+
+Once you get an Environment instance from GetNumpyEnvironment, you can use any
+facility provided by scons. However, following the distutils tradition, some
+special facilities are provided to avoid cluttering the source tree, and
+putting any generated files (object code, libraries, etc...) inside a separate
+build directory. Special builders which take care of the gory details are
+provided. They are prefixed by Numpy to differentiate them from the standard
+scons builders. For example, NumpySharedLibrary will builds a shared library
+with the same api than scons' SharedLibrary, but will take care of setting
+build directories, and install the built code in directories where distutils
+will find them for later installation.
+
+For now, builders to build Ctypes extensions, shared libraries and python
+extensions are provided.
