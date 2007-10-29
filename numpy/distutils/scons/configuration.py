@@ -32,3 +32,8 @@ def add_info(env, name, opt):
 def write_info(env):
     print "File is %s" % env['NUMPY_PKG_CONFIG_FILE']
     print "Info is %s" % env['NUMPY_PKG_CONFIG']
+    f = open(env['NUMPY_PKG_CONFIG_FILE'], 'w')
+    f.writelines("config = %s" % str(env['NUMPY_PKG_CONFIG']))
+    f.close()
+
+
