@@ -42,7 +42,7 @@ module test_module_module_ext
       type(rat) a
       print*,"In bar,a=",a
     end subroutine bar
-end module test_module_module_ext 
+end module test_module_module_ext
 '''
 
 m,m2 = compile(fortran_code, modulenames=['test_module_module_ext',

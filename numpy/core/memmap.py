@@ -100,5 +100,4 @@ class memmap(ndarray):
         try:
             self.close()
         except ValueError:
-            pass            
-        
+            pass

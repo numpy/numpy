@@ -207,7 +207,7 @@ class FCompiler(CCompiler):
     # This will be set by new_fcompiler when called in
     # command/{build_ext.py, build_clib.py, config.py} files.
     c_compiler = None
-    
+
     def __init__(self, *args, **kw):
         CCompiler.__init__(self, *args, **kw)
         self.distutils_vars = self.distutils_vars.clone(self._environment_hook)

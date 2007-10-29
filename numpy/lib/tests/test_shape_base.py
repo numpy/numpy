@@ -410,4 +410,3 @@ def compare_results(res,desired):
 
 if __name__ == "__main__":
     NumpyTest().run()
- 

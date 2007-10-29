@@ -116,7 +116,7 @@ class build_src(build_ext.build_ext):
             self.swig_cpp = build_ext.swig_cpp
         for c in ['swig','swig_opt']:
             o = '--'+c.replace('_','-')
-            v = getattr(build_ext,c,None) 
+            v = getattr(build_ext,c,None)
             if v:
                 if getattr(self,c):
                     log.warn('both build_src and build_ext define %s option' % (o))

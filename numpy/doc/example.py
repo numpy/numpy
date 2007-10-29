@@ -96,4 +96,3 @@ def otherfunc() :
     """
 
     pass
-

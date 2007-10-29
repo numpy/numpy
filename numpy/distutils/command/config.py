@@ -156,4 +156,3 @@ class config(old_config):
 
         self._clean()
         return exitcode, output
-

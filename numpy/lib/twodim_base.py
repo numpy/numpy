@@ -143,7 +143,7 @@ def vander(x, N=None):
         X[:,i] = x**(N-i-1)
     return X
 
-    
+
 def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
     """histogram2d(x,y, bins=10, range=None, normed=False) -> H, xedges, yedges
 
@@ -151,27 +151,27 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
 
     :Parameters:
       - `x,y` : Sample arrays (1D).
-      - `bins` : Number of bins -or- [nbin x, nbin y] -or- 
+      - `bins` : Number of bins -or- [nbin x, nbin y] -or-
              [bin edges] -or- [x bin edges, y bin edges].
       - `range` : A sequence of lower and upper bin edges (default: [min, max]).
       - `normed` : Boolean, if False, return the number of samples in each bin,
                 if True, returns the density.
-      - `weights` : An array of weights. The weights are normed only if normed 
+      - `weights` : An array of weights. The weights are normed only if normed
                 is True. Should weights.sum() not equal N, the total bin count \
                 will not be equal to the number of samples.
-    
+
     :Return:
       - `hist` :    Histogram array.
-      - `xedges, yedges` : Arrays defining the bin edges. 
-    
+      - `xedges, yedges` : Arrays defining the bin edges.
+
     Example:
       >>> x = random.randn(100,2)
       >>> hist2d, xedges, yedges = histogram2d(x, bins = (6, 7))
-    
+
     :SeeAlso: histogramdd
     """
     from numpy import histogramdd
-    
+
     try:
         N = len(bins)
     except TypeError:

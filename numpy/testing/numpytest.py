@@ -296,10 +296,10 @@ class NumpyTest:
     def rename(self, **kws):
         """Apply renaming submodule test file test_<name>.py to
         test_<newname>.py.
-        
+
         Usage: self.rename(name='newname') before calling the
         self.test() method.
-        
+
         If 'newname' is None, then no tests will be executed for a given
         module.
         """

@@ -125,7 +125,7 @@ class nd_grid(object):
                   [2],
                   [3],
                   [4]]), array([[0, 1, 2, 3, 4]])]
-           
+
     """
     def __init__(self, sparse=False):
         self.sparse = sparse
@@ -319,7 +319,7 @@ class r_class(concatenator):
         For example:
         >>> r_[array([1,2,3]), 0, 0, array([4,5,6])]
         array([1, 2, 3, 0, 0, 4, 5, 6])
-        
+
     """
     def __init__(self):
         concatenator.__init__(self, 0)

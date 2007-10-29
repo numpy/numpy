@@ -217,7 +217,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
                                     + self.compiler[1:]
         else:
             if hasattr(self,'compiler'):
-                 log.warn("#### %s #######" % (self.compiler,))
+                log.warn("#### %s #######" % (self.compiler,))
             log.warn('Missing compiler_cxx fix for '+self.__class__.__name__)
     return
 

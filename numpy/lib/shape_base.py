@@ -299,7 +299,7 @@ def dstack(tup):
                [[2, 3]],
         <BLANKLINE>
                [[3, 4]]])
-        
+
     """
     return _nx.concatenate(map(atleast_3d,tup),2)
 

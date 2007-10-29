@@ -177,7 +177,7 @@ class CFunction(Component):
   %(CDeclaration)s
   %(CBody)s
 }'''
-    
+
     container_options = dict(
         CArgument = dict(separator=', ', default='void'),
         CDeclaration = dict(default='<KILLLINE>', use_indent=True, ignore_empty_content=True,
@@ -215,7 +215,7 @@ class CHeader(CLine):
     >>> h = CHeader('noddy.h')
     >>> print h.generate()
     #include "noddy.h"
-    
+
     """
     template = '#include "%(line)s"'
 
@@ -288,6 +288,6 @@ extern \"C\" {
 def _test():
     import doctest
     doctest.testmod()
-    
+
 if __name__ == "__main__":
     _test()

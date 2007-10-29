@@ -275,13 +275,13 @@ class TestClip(NumpyTestCase):
         # use slow-clip
         selector = less(a, m)+2*greater(a, M)
         return selector.choose((a, m, M), out=out)
-    
+
     # Handy functions
     def _generate_data(self, n, m):
         return randn(n, m)
 
     def _generate_data_complex(self, n, m):
-        return randn(n, m) + 1.j *rand(n, m) 
+        return randn(n, m) + 1.j *rand(n, m)
 
     def _generate_flt_data(self, n, m):
         return (randn(n, m)).astype(float32)
@@ -320,7 +320,7 @@ class TestClip(NumpyTestCase):
     def test_simple_int(self):
         """Test native int input with scalar min/max."""
         a   = self._generate_int_data(self.nr, self.nc)
-        a   = a.astype(int) 
+        a   = a.astype(int)
         m   = -2
         M   = 4
         ac  = self.fastclip(a, m, M)
@@ -484,7 +484,7 @@ class TestClip(NumpyTestCase):
     def test_type_cast_02(self):
         "Test native int32 input with int32 scalar min/max."
         a   = self._generate_int_data(self.nr, self.nc)
-        a   = a.astype(int32) 
+        a   = a.astype(int32)
         m   = -2
         M   = 4
         ac  = self.fastclip(a, m, M)
@@ -507,7 +507,7 @@ class TestClip(NumpyTestCase):
         M   = float32(4)
         act = self.fastclip(a,m,M)
         ac  = self.clip(a,m,M)
-        assert_array_strict_equal(ac, act)        
+        assert_array_strict_equal(ac, act)
 
     def test_type_cast_04(self):
         "Test native int32 with double arrays min/max."

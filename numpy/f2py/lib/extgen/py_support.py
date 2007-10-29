@@ -80,7 +80,7 @@ extern \"C\" {
 
         self.cdecl = PyCModuleCDeclaration(pyname)
         self += self.cdecl
-        
+
         self.main = PyCModuleInitFunction(pyname)
         self += self.main
         map(self.add, components)
@@ -93,7 +93,7 @@ extern \"C\" {
     def update_SetupPy(self, parent):
         parent.setup_py += self.evaluate('    config.add_extension(%(pyname)r, sources = ["%(extmodulesrc)s"])',
                                          extmodulesrc = self.path)
-        parent.init_py += 'import %s' % (self.pyname)        
+        parent.init_py += 'import %s' % (self.pyname)
 
     def finalize(self):
         if self.need_numpy_support:
@@ -113,7 +113,7 @@ if (PyErr_Occurred()) {
 
     def build(self, build_dir=None, clean_at_exit=None):
         """ build(build_dir=None, clean_at_exit=None)
-        
+
         A convenience function to build, import, an return
         an extension module object.
         """
@@ -123,7 +123,7 @@ if (PyErr_Occurred()) {
             packagename = 'extgen_' + str(hex(int(time.time()*10000000)))[2:]
             build_dir = os.path.join(tempfile.gettempdir(), packagename)
             clean_at_exit = True
-            
+
         setup = Component.SetupPy(build_dir)
         setup += self
         s,o = setup.execute('build_ext','--inplace')
@@ -185,7 +185,7 @@ char extgen_module_doc[] =
         )
 
     default_component_class_name = 'Line'
-    
+
     def initialize(self, pyname):
         self.pyname = pyname
         return self
@@ -225,8 +225,8 @@ class PyCModuleInitFunction(CFunction):
       }
       return;
     }
-    """    
-    
+    """
+
     template = '''\
 %(CSpecifier)s
 %(CTypeSpec)s
@@ -320,7 +320,7 @@ class FunctionSignature(Component):
         map(self.add, components)
         return self
     def update_containers(self):
-        self.container_OptExtArg += self.container_OptArg + self.container_ExtArg    
+        self.container_OptExtArg += self.container_OptArg + self.container_ExtArg
 
 class PyCFunction(CFunction):
 
@@ -329,7 +329,7 @@ class PyCFunction(CFunction):
     >>> f = PyCFunction('foo')
     >>> print f.generate()
     static
-    char pyc_function_foo_doc[] = 
+    char pyc_function_foo_doc[] =
     \"  foo() -> None\"
     \"\\n\\n:Returns:\\n  None\"
     ;
@@ -366,7 +366,7 @@ class PyCFunction(CFunction):
 
     template = '''\
 static
-char %(name)s_doc[] = 
+char %(name)s_doc[] =
 "  %(FunctionSignature)s"
 %(Title)s
 %(Description)s
@@ -399,7 +399,7 @@ PyObject*
 }'''
 
     container_options = CFunction.container_options.copy()
-    
+
     container_options.update(\
 
         TMP = dict(),
@@ -429,13 +429,13 @@ PyObject*
         ReqKWList = ReqKWList.parent_container_options,
         OptKWList = OptKWList.parent_container_options,
         ExtKWList = ExtKWList.parent_container_options,
-        
+
         ReqArgFmt = ReqArgFmt.parent_container_options,
         OptArgFmt = OptArgFmt.parent_container_options,
         ExtArgFmt = ExtArgFmt.parent_container_options,
         OptExtArgFmt = OptExtArgFmt.ExtArgFmt.parent_container_options,
         RetArgFmt = ExtArgFmt.parent_container_options,
-        
+
         ReqArgObj = ReqArgObj.parent_container_options,
         OptArgObj = OptArgObj.parent_container_options,
         ExtArgObj = ExtArgObj.parent_container_options,
@@ -443,7 +443,7 @@ PyObject*
 
         FromPyObj = CCode.parent_container_options,
         PyObjFrom = CCode.parent_container_options,
-        
+
         CleanPyObjFrom = dict(default='<KILLLINE>', reverse=True, use_indent=True, ignore_empty_content=True),
         CleanCBody = dict(default='<KILLLINE>', reverse=True, use_indent=True, ignore_empty_content=True),
         CleanFromPyObj = dict(default='<KILLLINE>', reverse=True, use_indent=True, ignore_empty_content=True),
@@ -457,7 +457,7 @@ PyObject*
         PyCArgument = 'TMP',
         CCode = 'CBody',
         )
-    
+
     def initialize(self, pyname, *components, **options):
         self.pyname = pyname
         self.title = options.pop('title', None)
@@ -483,7 +483,7 @@ PyObject*
         t = '  {"%(pyname)s", (PyCFunction)%(name)s, METH_VARARGS | METH_KEYWORDS, %(name)s_doc}'
         parent.cdecl.add(self.evaluate(t),'PyMethodDef')
         parent.cdecl.add(self.signature,'FunctionSignature')
-        
+
     def update_containers(self):
         self.container_OptExtArg += self.container_OptArg + self.container_ExtArg
         self.container_OptExtArgFmt += self.container_OptArgFmt + self.container_ExtArgFmt
@@ -585,7 +585,7 @@ class PyCArgument(Component):
                 if self.output_description is None:
                     self.output_description = description
         if options: self.warning('%s unused options: %s\n' % (self.__class__.__name__, options))
-        
+
         self.name = name
         self.ctype = ctype = PyCTypeSpec(ctype)
         self += ctype
@@ -613,8 +613,8 @@ class PyCArgument(Component):
             self.retpycvar = name + '_pyc_r'
 
         ctype.set_titles(self)
-        
-        map(self.add, components)        
+
+        map(self.add, components)
         return self
 
     def __repr__(self):
@@ -668,7 +668,7 @@ class PyCArgument(Component):
             pass
         else:
             raise NotImplementedError('input_intent=%r' % (self.input_intent))
-            
+
         if self.output_intent=='return':
             parent += RetArg(self.name)
             parent.signature += RetArg(self.name)
@@ -679,11 +679,11 @@ class PyCArgument(Component):
         elif self.output_intent=='hide':
             pass
         else:
-            raise NotImplementedError('output_intent=%r' % (self.output_intent))        
+            raise NotImplementedError('output_intent=%r' % (self.output_intent))
 
 class PyCReturn(PyCArgument):
 
-    def initialize(self, name, ctype = object, *components, **options):    
+    def initialize(self, name, ctype = object, *components, **options):
         return PyCArgument(name, ctype, input_intent='hide', output_intent='return', *components, **options)
 
 class PyCTypeSpec(CTypeSpec):
@@ -898,7 +898,7 @@ class PyCTypeSpec(CTypeSpec):
         c_long = (None,'long', 'l', 'l', '0'),
         c_unsigned_long = (None,'unsigned long', 'k', 'k', '0'),
         c_long_long = (None,'PY_LONG_LONG', 'L', 'L', '0'),
-        c_unsigned_long_long = (None,'unsigned PY_LONG_LONG', 'K', 'K', '0'),        
+        c_unsigned_long_long = (None,'unsigned PY_LONG_LONG', 'K', 'K', '0'),
         c_Py_ssize_t = (None,'Py_ssize_t', 'n', 'n', '0'),
         c_char1 = (None,'char', 'c', 'c', '"\\0"'),
         c_float = (None,'float', 'f', 'f', '0.0'),
@@ -911,7 +911,7 @@ class PyCTypeSpec(CTypeSpec):
     def initialize(self, typeobj):
         if isinstance(typeobj, self.__class__):
             return typeobj
-        
+
         m = self.typeinfo_map
 
         key = None
@@ -955,7 +955,7 @@ class PyCTypeSpec(CTypeSpec):
             #self.add(Component.get('import_array'), 'ModuleInit')
         if key.startswith('numeric_'):
             raise NotImplementedError(self.__class__.__name__ + ': Numeric support')
-        
+
         return self
 
     def finalize(self):
@@ -1099,6 +1099,6 @@ if (!(%(retpycvar)s==%(pycvar)s)) {
 def _test():
     import doctest
     doctest.testmod()
-    
+
 if __name__ == "__main__":
     _test()

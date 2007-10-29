@@ -1519,7 +1519,7 @@ else:
     #copied from python 2.5.1 distutils/msvccompiler.py
     def get_build_architecture():
         """Return the processor architecture.
-        
+
         Possible results are "Intel", "Itanium", or "AMD64".
         """
         prefix = " bit ("

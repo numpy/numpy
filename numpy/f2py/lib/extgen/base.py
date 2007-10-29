@@ -65,7 +65,7 @@ class Component(object):
             return l
         return self._components
     components = property(components)
-        
+
     def initialize(self, *components, **options):
         """
         Set additional attributes, add components to instance, etc.
@@ -86,7 +86,7 @@ class Component(object):
     def provides(self):
         """
         Return a code idiom name that the current class defines.
-        
+
         Used in avoiding redefinitions of functions and variables.
         """
         if self._provides is None:
@@ -123,7 +123,7 @@ class Component(object):
             r += Component._get_class_names(b)
         return r
     _get_class_names = staticmethod(_get_class_names)
-    
+
     def add(self, component, container_label=None):
         """
         Append component and its target container label to components list.
@@ -205,7 +205,7 @@ class Component(object):
         return evaluated template strings.
         """
         #self.finalize()
-        
+
         # clean up containers
         self.containers = {}
         for n in dir(self):
@@ -249,7 +249,7 @@ class Component(object):
                     container = component.get_container(k)
                     container.add(r, component.provides)
             else:
-                
+
                 self.warning('%s: no container label specified for component providing %r'\
                                  % (self.__class__.__name__,component.provides))
             component.parent = old_parent
@@ -284,7 +284,7 @@ class Component(object):
 
     def get_container(self, name):
         """ Return named container.
-        
+
         Rules for returning containers:
         (1) return local container if exists
         (2) return parent container if exists
@@ -295,7 +295,7 @@ class Component(object):
             return self.containers[name]
         except KeyError:
             pass
-        
+
         # parent container
         parent = self.parent
         while parent is not None:
@@ -380,7 +380,7 @@ class Component(object):
         import numpy
         return numpy.__version__
     numpy_version = property(numpy_version)
-    
+
 class Container(object):
     """
     Container of a list of named strings.
@@ -401,7 +401,7 @@ class Container(object):
     >>> c += c2
     >>> print c
     "hey, hoo, bar"
-    
+
     """
     __metaclass__ = ComponentMetaClass
 
@@ -435,7 +435,7 @@ class Container(object):
         self.replace_map = replace_map
         self.ignore_empty_content = ignore_empty_content
         self.skip_prefix_suffix_when_single = skip_prefix_suffix_when_single
-        
+
     def __nonzero__(self):
         return bool(self.list)
 
@@ -452,7 +452,7 @@ class Container(object):
             for i,l in lst:
                 self.add(other.list[i], l)
         else:
-            self.add(other)        
+            self.add(other)
         return self
     __iadd__ = __add__
 
@@ -532,12 +532,12 @@ class Container(object):
             lst = [(i,l) for (l,i) in self.label_map.items()]
             lst.sort()
             for i,l in lst:
-                cpy.add(mapping(other.list[i]), l)            
+                cpy.add(mapping(other.list[i]), l)
         return cpy
 
 def _test():
     import doctest
     doctest.testmod()
-    
+
 if __name__ == "__main__":
     _test()

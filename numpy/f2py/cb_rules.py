@@ -293,7 +293,7 @@ cb_arg_rules=[
     },
     'strarglens':{isstring:',int #varname#_cb_len'}, # untested with multiple args
     'strarglens_td':{isstring:',int'}, # untested with multiple args
-    'strarglens_nm':{isstring:',#varname#_cb_len'}, # untested with multiple args 
+    'strarglens_nm':{isstring:',#varname#_cb_len'}, # untested with multiple args
      },
     { # Scalars
     'decl':{l_not(isintent_c):'\t#ctype# #varname#=(*#varname#_cb_capi);'},

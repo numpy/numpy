@@ -45,12 +45,12 @@ def configuration(parent_package='',top_path=None):
                        assume_default_configuration=True,
                        delegate_options_to_subpackages=True,
                        quiet=True)
-    
+
     config.add_subpackage('numpy')
-        
+
     config.add_data_files(('numpy','*.txt'),
                           ('numpy','COMPATIBILITY'),
-                          ('numpy','scipy_compatibility'), 
+                          ('numpy','scipy_compatibility'),
                           ('numpy','site.cfg.example'))
 
     config.get_version('numpy/version.py') # sets config.version
@@ -79,7 +79,7 @@ def setup_package():
             classifiers=filter(None, CLASSIFIERS.split('\n')),
             author = "Travis E. Oliphant, et.al.",
             author_email = "oliphant@ee.byu.edu",
-            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],            
+            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
             configuration=configuration )
     finally:
         del sys.path[0]
