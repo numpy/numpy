@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 29 12:00 PM 2007 J
+# Last Change: Mon Oct 29 03:00 PM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). KEEP THIS INDEPENDANT OF SCONS !
@@ -9,6 +9,7 @@ import ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, \
     default_include_dirs, default_src_dirs, get_standard_file
 
+# Think about a cache mechanism, to avoid reparsing the config file everytime.
 def get_config():
     """ This tries to read .cfg files in several locations, and merge its
     information into a ConfigParser object for the first found file.

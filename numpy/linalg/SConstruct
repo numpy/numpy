@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 26 09:00 PM 2007 J
+# Last Change: Mon Oct 29 03:00 PM 2007 J
 # vim:syntax=python
 from numpy.distutils.misc_util import get_numpy_include_dirs, get_mathlibs
 from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths
@@ -10,6 +10,8 @@ env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
 config = env.NumpyConfigure(custom_tests = 
     {'CheckLAPACK' : CheckLAPACK})
 
+use_lapack = config.CheckLAPACK()
+
 # XXX: this is ugly, better find the mathlibs with a checker 
 for i in scons_get_paths(env['include_bootstrap']):
     try:
@@ -19,7 +21,6 @@ for i in scons_get_paths(env['include_bootstrap']):
         pass
 env.AppendUnique(LIBS = mlib)
 
-use_lapack = config.CheckLAPACK()
 config.Finish()
 
 sources = ['lapack_litemodule.c']

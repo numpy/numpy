@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 29 01:00 PM 2007 J
+# Last Change: Mon Oct 29 03:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -209,21 +209,22 @@ def CheckLAPACK(context, autoadd = 1):
         warning.warn('FIXME: LAPACK checks not implemented yet on win32')
         return 0
     else:
-        # Get fortran stuff
-        # XXX: do not check if env variables are already here
-        if not CheckF77Mangling(context):
-            return 0
-        if not CheckF77Clib(context):
-            return 0
-
         env = context.env
+
+        # Get fortran stuff
+        if not env.has_key('F77_NAME_MANGLER'):
+            if not CheckF77Mangling(context):
+                return 0
+        if not env.has_key('F77_LDFLAGS'):
+            if not CheckF77Clib(context):
+                return 0
 
         # Get the mangled name of our test function
         sgesv_string = env['F77_NAME_MANGLER']('sgesv')
         test_src = lapack_sgesv % sgesv_string
 
         # Check MKL
-        st = CheckMKL(context, autoadd)
+        st = CheckMKL(context, autoadd = 1)
         if st:
             fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
             fdict['LIBS'].append('lapack')
@@ -236,7 +237,7 @@ def CheckLAPACK(context, autoadd = 1):
             return st
 
         # Check ATLAS
-        st = CheckATLAS(context, autoadd)
+        st = CheckATLAS(context, autoadd = 1)
         if st:
             fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
             fdict['LIBS'].append('lapack')
@@ -268,10 +269,14 @@ def _my_try_link(context, src, libs, libpath, autoadd = 0):
 
     return ret
 
-def CheckGenericBLAS(context):
-    # XXX: support site.cfg
-    libs = ['blas']
-    libpath = []
+def CheckGenericBLAS(context, autoadd = 1, section = 'blas'):
+    """Check whether a BLAS library can be found.
+
+    Use site.cfg if found."""
+    siteconfig, cfgfiles = get_config()
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if not found:
+        libs.extend(['blas'])
 
     env = context.env
     # Get fortran mangling
@@ -280,18 +285,27 @@ def CheckGenericBLAS(context):
             return 0
 
     test_func_name = env['F77_NAME_MANGLER']('dgemm')
-
     src = get_func_link_src(test_func_name)
+
     context.Message("Checking for Generic BLAS... ")
-    st =  _my_try_link(context, src, libs, libpath, 0)
+
+    st =  _my_try_link(context, src, libs, libpath, autoadd)
+    if st:
+        env['F77_BLAS_LIBS'] = libs
+        env['F77_BLAS_LIBPATH'] = libpath
+
     context.Result(st)
 
     return st
 
-def CheckGenericLAPACK(context):
-    # XXX: support site.cfg
-    libs = ['lapack']
-    libpath = []
+def CheckGenericLAPACK(context, autoadd = 1, section = 'lapack'):
+    """Check whether a LAPACK library can be found.
+
+    Use site.cfg if found."""
+    siteconfig, cfgfiles = get_config()
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if not found:
+        libs.extend(['lapack'])
 
     env = context.env
     # Get fortran mangling
@@ -300,11 +314,15 @@ def CheckGenericLAPACK(context):
             return 0
 
     test_func_name = env['F77_NAME_MANGLER']('dpotri')
-
     src = get_func_link_src(test_func_name)
+
     context.Message("Checking for Generic LAPACK... ")
-    st =  _my_try_link(context, src, libs, libpath, 0)
+
+    st =  _my_try_link(context, src, libs, libpath, autoadd)
+    if st:
+        env['F77_LAPACK_LIBS'] = libs
+        env['F77_LAPACK_LIBPATH'] = libpath
+
     context.Result(st)
 
     return st
-
