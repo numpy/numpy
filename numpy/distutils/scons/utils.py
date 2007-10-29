@@ -1,3 +1,9 @@
+#! /usr/bin/env python
+# Last Change: Mon Oct 29 07:00 PM 2007 J
+
+# This module defines various utilities used throughout the scons support
+# library.
+
 import os
 import re
 
