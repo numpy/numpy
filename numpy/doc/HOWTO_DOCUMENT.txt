@@ -17,6 +17,7 @@ Additional PEPs of interest regarding documentation of code:
 
 Use a code checker:
  * `pylint <http://www.logilab.org/857>`__
+ * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`__
 
 Docstring Standard
 ------------------
