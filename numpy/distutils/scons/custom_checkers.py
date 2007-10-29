@@ -293,7 +293,7 @@ def _my_try_link(context, src, libs, libpath, autoadd = 0):
 def CheckGenericBLAS(context, autoadd = 1, section = 'blas'):
     """Check whether a BLAS library can be found.
 
-    Use site.cfg if found."""
+    Use site.cfg if found (section given by section argument)."""
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
     if not found:
@@ -322,7 +322,7 @@ def CheckGenericBLAS(context, autoadd = 1, section = 'blas'):
 def CheckGenericLAPACK(context, autoadd = 1, section = 'lapack'):
     """Check whether a LAPACK library can be found.
 
-    Use site.cfg if found."""
+    Use site.cfg if found (section given by section argument)."""
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
     if not found:
