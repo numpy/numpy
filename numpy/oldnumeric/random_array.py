@@ -117,7 +117,7 @@ def gamma(a, r, shape=[]):
 def F(dfn, dfd, shape=[]):
     """F(dfn, dfd) or F(dfn, dfd, [n, m, ...]) returns array of F distributed random numbers with dfn degrees of freedom in the numerator and dfd degrees of freedom in the denominator."""
     if shape == []:
-        shape == None
+        shape = None
     return mt.f(dfn, dfd, shape)
 
 def noncentral_F(dfn, dfd, nconc, shape=[]):
