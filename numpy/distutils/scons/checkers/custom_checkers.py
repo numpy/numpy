@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 29 06:00 PM 2007 J
+# Last Change: Mon Oct 29 07:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -7,14 +7,13 @@ import os.path
 from copy import deepcopy
 from distutils.util import get_platform
 
-from libinfo import get_config, get_config_from_section, get_func_link_src
-from libinfo_scons import NumpyCheckLib
-from testcode_snippets import cblas_sgemm as cblas_src, \
+from numpy.distutils.scons.libinfo import get_config_from_section, get_config
+from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
         c_sgemm as sunperf_src, lapack_sgesv
 
-from fortran_scons import CheckF77Mangling, CheckF77Clib
+from numpy.distutils.scons.fortran_scons import CheckF77Mangling, CheckF77Clib
 
-from configuration import opt_info, add_info
+from numpy.distutils.scons.configuration import opt_info, add_info
 
 def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
                            libpath, linkflags, cflags, autoadd = 1):

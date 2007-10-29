@@ -9,8 +9,6 @@ Checker:
     - improve Fortran runtime detection for upstream integration
     - improve Fortran mangling and dummy main detection for upstream
       integration
-    - Netlib BLAS and LAPACK checkers with site.cfg overriding
-    - Generic BLAS and LAPACK checker with site.cfg overriding
 
 Builder:
     - Get a PythonExtension builder independant of distutils for upstream
