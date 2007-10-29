@@ -473,24 +473,24 @@ if HasUInt64:
         }
 else:
     _MaximumType = {
-    Bool :  Int64,
-
-    Int8  : Int64,
-    Int16 : Int64,
-    Int32 : Int64,
-    Int64 : Int64,
-
-    UInt8  : Int64,
-    UInt16 : Int64,
-    UInt32 : Int64,
-    UInt8  : Int64,
-
-    Float32 : Float64,
-    Float64 : Float64,
-
-    Complex32 : Complex64,
-    Complex64 : Complex64
-    }
+        Bool :  Int64,
+     
+        Int8  : Int64,
+        Int16 : Int64,
+        Int32 : Int64,
+        Int64 : Int64,
+     
+        UInt8  : Int64,
+        UInt16 : Int64,
+        UInt32 : Int64,
+        UInt8  : Int64,
+     
+        Float32 : Float64,
+        Float64 : Float64,
+     
+        Complex32 : Complex64,
+        Complex64 : Complex64
+        }
 
 def MaximumType(t):
     """returns the type of highest precision of the same general kind as 't'"""
