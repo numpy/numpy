@@ -220,7 +220,7 @@ def getctype(var):
     elif issubroutine(var):
         return ctype
     elif var.has_key('typespec') and f2cmap_all.has_key(var['typespec'].lower()):
-        typespec = var['typespec'].upper()
+        typespec = var['typespec'].lower()
         f2cmap=f2cmap_all[typespec]
         ctype=f2cmap[''] # default type
         if var.has_key('kindselector'):
