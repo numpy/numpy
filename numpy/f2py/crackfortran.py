@@ -1494,7 +1494,7 @@ def postcrack(block,args=None,tab=''):
         for g in block:
             setmesstext(g)
             g=postcrack(g,tab=tab+'\t')
-            if g.has_key('name') and string.find(g['name'],'__user__')>=0: # sort user routines to appear first
+            if g.has_key('name') and '__user__' in g['name']: # sort user routines to appear first
                 uret.append(g)
             else:
                 gret.append(g)
@@ -1518,7 +1518,7 @@ def postcrack(block,args=None,tab=''):
     if block.has_key('use'):
         useblock=block['use']
         for k in useblock.keys():
-            if string.find(k,'__user__')>=0:
+            if '__user__' in k:
                 userisdefined.append(k)
 ##                 if useblock[k].has_key('map'):
 ##                     for n in useblock[k]['map'].values():

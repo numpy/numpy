@@ -207,7 +207,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
         except (AttributeError, ValueError):
             pass
 
-        if hasattr(self,'compiler') and self.compiler[0].find('cc')>=0:
+        if hasattr(self,'compiler') and 'cc' in self.compiler[0]:
             if not self.compiler_cxx:
                 if self.compiler[0].startswith('gcc'):
                     a, b = 'gcc', 'g++'

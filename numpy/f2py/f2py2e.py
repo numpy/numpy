@@ -289,7 +289,7 @@ def buildmodules(list):
     outmess('Building modules...\n')
     modules,mnames,isusedby=[],[],{}
     for i in range(len(list)):
-        if string.find(list[i]['name'],'__user__')>=0:
+        if '__user__' in list[i]['name']:
             cb_rules.buildcallbacks(list[i])
         else:
             if list[i].has_key('use'):

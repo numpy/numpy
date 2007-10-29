@@ -92,7 +92,7 @@ def get_distribution(always=False):
     # We can't use isinstance, as the DistributionWithoutHelpCommands
     # class is local to a function in setuptools.command.easy_install
     if dist is not None and \
-            repr(dist).find('DistributionWithoutHelpCommands') != -1:
+            'DistributionWithoutHelpCommands' in repr(dist):
         dist = None
     if always and dist is None:
         dist = distutils.dist.Distribution()
