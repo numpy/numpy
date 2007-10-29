@@ -1,4 +1,4 @@
-# Last Change: Mon Oct 29 03:00 PM 2007 J
+# Last Change: Mon Oct 29 06:00 PM 2007 J
 # vim:syntax=python
 from numpy.distutils.misc_util import get_numpy_include_dirs, get_mathlibs
 from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths

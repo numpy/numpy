@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 29 03:00 PM 2007 J
+# Last Change: Mon Oct 29 06:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -13,6 +13,8 @@ from testcode_snippets import cblas_sgemm as cblas_src, \
         c_sgemm as sunperf_src, lapack_sgesv
 
 from fortran_scons import CheckF77Mangling, CheckF77Clib
+
+from configuration import opt_info, add_info
 
 def _check_include_and_run(context, name, cpppath, headers, run_src, libs,
                            libpath, linkflags, cflags, autoadd = 1):
@@ -171,6 +173,7 @@ def CheckSunperf(context, autoadd = 1):
                                   [], linkflags, cflags, autoadd)
 
 def CheckCBLAS(context, autoadd = 1):
+    env = context.env
 
     # If section cblas is in site.cfg, use those options. Otherwise, use default
     section = "cblas"
@@ -180,26 +183,42 @@ def CheckCBLAS(context, autoadd = 1):
         headers = ['cblas.h']
         linkflags = []
         cflags = []
-        return _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
+        st = _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
                                       libs, libpath, linkflags, cflags, autoadd)
+        if st:
+            add_info(env, 'cblas', opt_info('cblas', site = 1))
+            return st
     else:
         if sys.platform == 'darwin':
             st = CheckAccelerate(context, autoadd)
             if st:
+                add_info(env, 'cblas', opt_info('Accelerate'))
                 return st
             st = CheckVeclib(context, autoadd)
-            return st
+            if st:
+                add_info(env, 'cblas', opt_info('vecLib'))
+                return st
+
+            add_info(env, 'cblas', opt_info(''))
+            return 0
             
         else:
             # Check MKL, then ATLAS, then Sunperf
             st = CheckMKL(context, autoadd)
             if st:
+                add_info(env, 'cblas', opt_info('mkl'))
                 return st
             st = CheckATLAS(context, autoadd)
             if st:
+                add_info(env, 'cblas', opt_info('atlas'))
                 return st
             st = CheckSunperf(context, autoadd)
-            return st
+            if st:
+                add_info(env, 'cblas', opt_info('sunperf'))
+                return st
+
+            add_info(env, 'cblas', opt_info(''))
+            return 0
 
 def CheckLAPACK(context, autoadd = 1):
     # XXX: this whole thing is ugly. Think more about how to combine checkers
@@ -234,6 +253,7 @@ def CheckLAPACK(context, autoadd = 1):
                 fdict['LIBPATH'].extend(context.env['LIBPATH'])
             st =_check_include_and_run(context, 'LAPACK (MKL)', [], [],
                     test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+            add_info(env, 'lapack', opt_info('mkl'))
             return st
 
         # Check ATLAS
@@ -247,6 +267,7 @@ def CheckLAPACK(context, autoadd = 1):
                 fdict['LIBPATH'].extend(context.env['LIBPATH'])
             st =_check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
                     test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+            add_info(env, 'lapack', opt_info('atlas'))
             # XXX: Check complete LAPACK or not
             return st
 

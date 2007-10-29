@@ -1,4 +1,4 @@
-# Last Change: Mon Oct 29 03:00 PM 2007 J
+# Last Change: Mon Oct 29 06:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -9,6 +9,7 @@ from numpy.distutils.scons import get_python_inc, get_pythonlib_dir
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons import NumpyCheckLib
 from numpy.distutils.scons.custom_checkers import CheckCBLAS, CheckMKL, CheckATLAS, CheckGenericBLAS, CheckGenericLAPACK
+from numpy.distutils.scons.configuration import write_info
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     generate_config_header, generate_config_header_emitter, \

@@ -200,7 +200,6 @@ def GetNumpyEnvironment(args):
     if env['CC'] == 'gcc':
         env.Append(CCFLAGS = "-Wall -Wstrict-prototypes -fno-strict-aliasing -O3 -g")
 
-    #print Environment().Dump()
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
     env['BUILDERS']['NumpyCtypes'] = NumpyCtypes
@@ -218,6 +217,10 @@ def GetNumpyEnvironment(args):
 
     # Getting the config options from *.cfg files
     config = get_config()
-    env['NUMPYCONFIG'] = config
+    env['NUMPY_SITE_CONFIG'] = config
+
+    # This will be used to keep configuration information on a per package basis
+    env['NUMPY_PKG_CONFIG'] = {}
+    env['NUMPY_PKG_CONFIG_FILE'] = pjoin(env['build_dir'], '__configres.py')
 
     return env
