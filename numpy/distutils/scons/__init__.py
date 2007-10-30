@@ -1,9 +1,7 @@
 from numpyenv import GetNumpyEnvironment, GetNumpyOptions
 from libinfo_scons import NumpyCheckLib
 from libinfo import get_paths as scons_get_paths
-from checkers.custom_checkers import CheckMKL, CheckATLAS, CheckCBLAS, \
-        CheckAccelerate, CheckMKL, CheckSunperf, CheckLAPACK, \
-        CheckGenericBLAS, CheckGenericLAPACK
+from checkers import CheckCBLAS, CheckLAPACK
 from extension import get_python_inc, get_pythonlib_dir
 from utils import isstring
 from fortran_scons import CheckF77Verbose, CheckF77Clib, CheckF77Mangling

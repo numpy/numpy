@@ -1,26 +1,33 @@
 # vim:syntax=python
-from numpy.distutils.scons import GetNumpyEnvironment, CheckATLAS, \
-                                  CheckAccelerate, CheckMKL, CheckCBLAS, \
-				  CheckSunperf
+from numpy.distutils.scons import GetNumpyEnvironment
+from numpy.distutils.scons.checkers.perflib import \
+        CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf
 
 env = GetNumpyEnvironment(ARGUMENTS)
+
+import os
+try:
+    os.environ['DEBUG_SCONS_CHECK']
+    do_check = 1
+except KeyError:
+    do_check = 0
 
 config = env.NumpyConfigure(custom_tests = 
     {'CheckATLAS' : CheckATLAS,
     'CheckMKL' : CheckMKL,
     'CheckAccelerate' : CheckAccelerate,
-    'CheckSunperf' : CheckSunperf,
-    'CheckCBLAS' : CheckCBLAS})
+    'CheckSunperf' : CheckSunperf})
 
-#config.CheckATLAS(autoadd = 0)
-#config.CheckMKL(autoadd = 0)
-#config.CheckAccelerate(autoadd = 0)
-#config.CheckSunperf(autoadd = 0)
-#config.CheckCBLAS(autoadd = 0)
+if do_check:
+    config.CheckATLAS(autoadd = 0)
+    config.CheckMKL(autoadd = 0)
+    config.CheckAccelerate(autoadd = 0)
+    config.CheckSunperf(autoadd = 0)
+
+    if env.has_key('LIBS'):
+        print env.Dump('LIBS')
+    else:
+        print "No LIBS in env"
 
 config.Finish()
 
-if env.has_key('LIBS'):
-    print env.Dump('LIBS')
-else:
-    print "No LIBS in env"

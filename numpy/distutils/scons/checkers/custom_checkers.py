@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Oct 30 05:00 PM 2007 J
+# Last Change: Tue Oct 30 07:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -14,6 +14,9 @@ from numpy.distutils.scons.fortran_scons import CheckF77Mangling, CheckF77Clib
 
 from numpy.distutils.scons.configuration import opt_info, add_info
 
+from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
+from support import check_include_and_run
+
 def CheckCBLAS(context, autoadd = 1):
     env = context.env
 
@@ -25,7 +28,7 @@ def CheckCBLAS(context, autoadd = 1):
         headers = ['cblas.h']
         linkflags = []
         cflags = []
-        st = _check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
+        st = check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
                                       libs, libpath, linkflags, cflags, autoadd)
         if st:
             add_info(env, 'cblas', opt_info('cblas', site = 1))
@@ -93,7 +96,7 @@ def CheckLAPACK(context, autoadd = 1):
                 fdict['LIBS'].extend(context.env['LIBS'])
             if env.has_key('LIBPATH'):
                 fdict['LIBPATH'].extend(context.env['LIBPATH'])
-            st =_check_include_and_run(context, 'LAPACK (MKL)', [], [],
+            st = check_include_and_run(context, 'LAPACK (MKL)', [], [],
                     test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
             add_info(env, 'lapack', opt_info('mkl'))
             return st
@@ -107,7 +110,7 @@ def CheckLAPACK(context, autoadd = 1):
                 fdict['LIBS'].extend(context.env['LIBS'])
             if env.has_key('LIBPATH'):
                 fdict['LIBPATH'].extend(context.env['LIBPATH'])
-            st =_check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
+            st = check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
                     test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
             add_info(env, 'lapack', opt_info('atlas'))
             # XXX: Check complete LAPACK or not
