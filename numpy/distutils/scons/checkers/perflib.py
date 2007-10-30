@@ -62,11 +62,16 @@ def CheckMKL(context, autoadd = 1):
 def _CheckATLASVersion(context):
     pass
 
-def CheckATLAS2(context, autoadd = 1):
+def CheckATLAS2(context, check_version = 1, autoadd = 1):
     """Check whether ATLAS is usable in C."""
     opts = CheckOptions(libs = ['atlas'])
 
     context.Message("Checking ATLAS ... ")
+
+    env = context.env
+    env.AppendUnique(LIBS = 'atlas')
+
+    # Check whether the library is available
     version_code = """
 void ATL_buildinfo(void);
 int main(void) {
@@ -74,8 +79,6 @@ int main(void) {
   return 0;
 }
 """
-    env = context.env
-    env.AppendUnique(LIBS = 'atlas')
     if not context.TryLink(version_code, '.c'):
         return "blas blas"
 

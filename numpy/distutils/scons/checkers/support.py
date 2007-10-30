@@ -38,6 +38,33 @@ class CheckOptions:
         else:
             self.linkflags = []
 
+def _check_headers(context, cpppath, cflags, headers):
+    """Try to compile code including the given headers."""
+    env = context.env
+
+    #----------------------------
+    # Check headers are available
+    #----------------------------
+    oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
+    oldCFLAGS = (env.has_key('CFLAGS') and deepcopy(env['CFLAGS'])) or []
+    env.AppendUnique(CPPPATH = cpppath)
+    env.AppendUnique(CFLAGS = cflags)
+    # XXX: handle context
+    hcode = ['#include <%s>' % h for h in headers]
+
+    # HACK: we add cpppath in the command of the source, to add dependency of
+    # the check on the cpppath.
+    hcode.extend(['#if 0', '%s' % cpppath, '#endif\n'])
+    src = '\n'.join(hcode)
+
+    ret = context.TryCompile(src, '.c')
+    if not ret:
+        env.Replace(CPPPATH = oldCPPPATH)
+        env.Replace(CFLAGS = oldCFLAGS)
+        return 0
+
+    return ret
+
 def check_include_and_run(context, name, cpppath, headers, run_src, libs,
                           libpath, linkflags, cflags, autoadd = 1):
     """This is a basic implementation for generic "test include and run"
@@ -57,29 +84,31 @@ def check_include_and_run(context, name, cpppath, headers, run_src, libs,
         - libs: list of libraries to link
         - libpath: list of library path.
         - linkflags: list of link flags to add."""
+
     context.Message('Checking for %s ... ' % name)
     env = context.env
 
-    #----------------------------
-    # Check headers are available
-    #----------------------------
-    oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
-    oldCFLAGS = (env.has_key('CFLAGS') and deepcopy(env['CFLAGS'])) or []
-    env.AppendUnique(CPPPATH = cpppath)
-    env.AppendUnique(CFLAGS = cflags)
-    # XXX: handle context
-    hcode = ['#include <%s>' % h for h in headers]
-    # HACK: we add cpppath in the command of the source, to add dependency of
-    # the check on the cpppath.
-    hcode.extend(['#if 0', '%s' % cpppath, '#endif\n'])
-    src = '\n'.join(hcode)
+    # #----------------------------
+    # # Check headers are available
+    # #----------------------------
+    # oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
+    # oldCFLAGS = (env.has_key('CFLAGS') and deepcopy(env['CFLAGS'])) or []
+    # env.AppendUnique(CPPPATH = cpppath)
+    # env.AppendUnique(CFLAGS = cflags)
+    # # XXX: handle context
+    # hcode = ['#include <%s>' % h for h in headers]
+    # # HACK: we add cpppath in the command of the source, to add dependency of
+    # # the check on the cpppath.
+    # hcode.extend(['#if 0', '%s' % cpppath, '#endif\n'])
+    # src = '\n'.join(hcode)
 
-    ret = context.TryCompile(src, '.c')
-    if not ret:
-        env.Replace(CPPPATH = oldCPPPATH)
-        env.Replace(CFLAGS = oldCFLAGS)
-        context.Result('Failed: %s include not found' % name)
-        return 0
+    # ret = context.TryCompile(src, '.c')
+    # if not ret:
+    #     env.Replace(CPPPATH = oldCPPPATH)
+    #     env.Replace(CFLAGS = oldCFLAGS)
+    #     context.Result('Failed: %s include not found' % name)
+    #     return 0
+    ret = _check_headers(context, cpppath, cflags, headers)
 
     #------------------------------
     # Check a simple example works
@@ -114,3 +143,6 @@ def check_include_and_run(context, name, cpppath, headers, run_src, libs,
     context.Result(ret)
     return ret
      
+def check_lib(context, library = None, symbols = None, headers = None, language = 'C'):
+    if language is not 'C':
+        raise NotImplementedError('FIXME: support languages')
