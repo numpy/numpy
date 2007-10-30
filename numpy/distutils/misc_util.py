@@ -575,7 +575,7 @@ def get_frame(level=0):
 class Configuration(object):
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
-                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_scripts']
+                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_data']
     _dict_keys = ['package_dir']
     _extra_keys = ['name', 'version']
 
@@ -1173,7 +1173,8 @@ class Configuration(object):
                        subpackage_path=None,
                        standalone = False,
                        pre_hook = None,
-                       post_hook = None):
+                       post_hook = None,
+                       source_files = None):
         """Add a sconscript to configuration.
 
         pre_hook and post hook should be sequences of callable, which will be
@@ -1188,13 +1189,21 @@ class Configuration(object):
         # Convert the sconscript name to a relative filename (relative from top
         # setup.py's directory)
         fullsconsname = self.paths(sconscript)[0]
-        
+        if source_files:
+            full_source_files = [self.paths(i)[0] for i in source_files]
+
         if dist is not None:
-            dist.scons_scripts.extend((fullsconsname, pre_hook, post_hook))
+            dist.scons_data.append((fullsconsname, 
+                                    pre_hook, 
+                                    post_hook,
+                                    source_files))
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a subpackage '+ subpackage_name)
         else:
-            self.scons_scripts.append((fullsconsname, pre_hook, post_hook))
+            self.scons_data.append((fullsconsname, 
+                                    pre_hook, 
+                                    post_hook,
+                                    source_files))
 
     def add_scripts(self,*files):
         """Add scripts to configuration.

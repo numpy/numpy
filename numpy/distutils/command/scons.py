@@ -140,9 +140,11 @@ class scons(old_build_ext):
         old_build_ext.finalize_options(self)
         if self.distribution.has_scons_scripts():
             #print "Got it: scons scripts are %s" % self.distribution.scons_scripts
-            self.scons_scripts = self.distribution.scons_scripts
+            self.sconscripts = self.distribution.get_scons_scripts()
+            self.post_hooks = self.distribution.get_scons_post_hooks()
         else:
-            self.scons_scripts = []
+            self.sconscripts = []
+            self.post_hooks = []
 
         # Try to get the same compiler than the ones used by distutils: this is
         # non trivial because distutils and scons have totally different
@@ -183,7 +185,9 @@ class scons(old_build_ext):
 
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
-        for sconscript, pre_hook, post_hook in self.scons_scripts:
+
+        # XXX handle pre hoook
+        for sconscript, post_hook in zip(self.sconscripts, self.post_hooks):
             # XXX: This is inefficient... (use join instead)
             from numpy.distutils.misc_util import get_numpy_include_dirs
             cmd = scons_exec + " -f " + sconscript + ' -I. '
