@@ -1,9 +1,8 @@
-import imp
 import os
 import sys
-from os.path import join
+import glob
+from os.path import join, basename
 from numpy.distutils import log
-from distutils.dep_util import newer
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
@@ -13,6 +12,24 @@ def configuration(parent_package='',top_path=None):
     local_dir = config.local_path
 
     header_dir = 'include/numpy' # this is relative to config.path_in_package
+
+    config.add_subpackage('code_generators')
+
+    # List of files to register to numpy.distutils
+    dot_blas_src = [join('blasdot', '_dotblas.c'),
+                    join('blasdot', 'cblas.h')]
+    api_definition = [join('code_generators', 'array_api_order.txt'),
+                      join('code_generators', 'multiarray_api_order.txt'),
+                      join('code_generators', 'ufunc_api_order.txt')]
+    core_src = [join('src', basename(i)) for i in glob.glob(join(local_dir,
+                                                                'src', 
+                                                                '*.c'))]
+    core_src += [join('src', basename(i)) for i in glob.glob(join(local_dir,
+                                                                 'src', 
+                                                                 '*.src'))]
+
+    source_files = dot_blas_src + api_definition + core_src + \
+                   [join(header_dir, 'numpyconfig.h.in')]
 
     # Add generated files to distutils...
     def add_config_header():
@@ -24,7 +41,6 @@ def configuration(parent_package='',top_path=None):
         incl_dir = os.path.dirname(target)
         if incl_dir not in config.numpy_include_dirs:
             config.numpy_include_dirs.append(incl_dir)
-        #config.add_data_files((header_dir, target)) 
 
     def add_numpyconfig_header():
         scons_build_dir = config.get_scons_build_dir()
@@ -63,7 +79,9 @@ def configuration(parent_package='',top_path=None):
         add_array_api()
         add_ufunc_api()
 
-    config.add_sconscript('SConstruct', post_hook = add_generated_files)
+    config.add_sconscript('SConstruct', 
+                          post_hook = add_generated_files,
+                          source_files = source_files)
 
     config.add_data_files('include/numpy/*.h')
     config.add_include_dirs('src')
