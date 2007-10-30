@@ -2,7 +2,7 @@
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
-    config = Configuration('numpy',parent_package,top_path, setup_name = 'setupscons.py')
+    config = Configuration('numpy',parent_package,top_path)
     config.add_subpackage('distutils')
     config.add_subpackage('scons_fake')
     config.add_subpackage('testing')
@@ -16,11 +16,6 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('random')
     config.add_data_dir('doc')
     config.add_data_dir('tests')
-    # The following empty extension is done on purpose to fool distutils, and
-    # process as usual, even if we do not build any extension (because we use
-    # scons instead).
-    # !! DO NOT REMOVE THIS !!
-    config.add_extension('', sources = [])
     config.make_config_py() # installs __config__.py
     return config
 
