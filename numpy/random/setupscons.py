@@ -1,10 +1,22 @@
+import glob
 from os.path import join, split
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
     config = Configuration('random',parent_package,top_path)
 
-    config.add_sconscript('SConstruct')
+    source_files = [join('mtrand', i) for i in ['mtrand.c', 
+                                                'mtrand.pxi',
+                                                'numpy.pyx',
+                                                'randomkit.c', 
+                                                'randomkit.h', 
+                                                'Python.pxi', 
+                                                'initarray.c',
+                                                'initarray.h',
+                                                'distributions.c',
+                                                'distributions.h',
+                                                ]]
+    config.add_sconscript('SConstruct', source_files = source_files)
     config.add_data_files(('.', join('mtrand', 'randomkit.h')))
     config.add_data_dir('tests')
 

@@ -1189,6 +1189,9 @@ class Configuration(object):
         # Convert the sconscript name to a relative filename (relative from top
         # setup.py's directory)
         fullsconsname = self.paths(sconscript)[0]
+
+        # XXX: Think about a way to automatically register source files from
+        # scons...
         full_source_files = []
         if source_files:
             full_source_files.extend([self.paths(i)[0] for i in source_files])

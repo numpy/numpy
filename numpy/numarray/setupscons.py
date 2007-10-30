@@ -5,7 +5,7 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('numarray',parent_package,top_path)
 
     config.add_data_files('numpy/')
-    config.add_sconscript('SConstruct')
+    config.add_sconscript('SConstruct', source_files = ['_capi.c'])
 
     return config
 
