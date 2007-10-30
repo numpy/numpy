@@ -13,7 +13,6 @@ class NumpyDistribution(Distribution):
         return bool(self.scons_data)
 
     def get_scons_scripts(self):
-        print self.scons_data
         return [i[0] for i in self.scons_data]
 
     def get_scons_pre_hooks(self):

@@ -25,6 +25,16 @@ class sdist(old_sdist):
             self.filelist.extend(headers)
 
         if dist.has_scons_scripts():
+            # Add SConscripts files
             self.filelist.extend(dist.get_scons_scripts())
+            
+            # Add related sources files added through source_files argument of
+            # Configuration.add_sconscript
+            scons_sources = []
+            for pkg_sources in dist.get_scons_sources():
+                if pkg_sources:
+                    scons_sources.extend(pkg_sources)
+
+            self.filelist.extend(scons_sources)
 
         return

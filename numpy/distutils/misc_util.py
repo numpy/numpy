@@ -1189,21 +1189,22 @@ class Configuration(object):
         # Convert the sconscript name to a relative filename (relative from top
         # setup.py's directory)
         fullsconsname = self.paths(sconscript)[0]
+        full_source_files = []
         if source_files:
-            full_source_files = [self.paths(i)[0] for i in source_files]
+            full_source_files.extend([self.paths(i)[0] for i in source_files])
 
         if dist is not None:
             dist.scons_data.append((fullsconsname, 
                                     pre_hook, 
                                     post_hook,
-                                    source_files))
+                                    full_source_files))
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a subpackage '+ subpackage_name)
         else:
             self.scons_data.append((fullsconsname, 
                                     pre_hook, 
                                     post_hook,
-                                    source_files))
+                                    full_source_files))
 
     def add_scripts(self,*files):
         """Add scripts to configuration.
