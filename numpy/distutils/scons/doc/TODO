@@ -1,6 +1,4 @@
 Before second alpha (in order of priority):
-    - support sdist: how to add files to distutils distribution ? ~ 2 hours
-    - support sdist: examples and numpy (~ 1 hour)
     - show_config implementation : show libs, libpath and cpppath for each
       configuration (~ 2-3 hours)
     - BLAS, CBLAS and LAPACK meta checkers: overridable, support at least
