@@ -1,5 +1,5 @@
 PREFIX=$PWD
-SVNVER=4342
+SVNVER=`svn info | grep "Revision: [0-9]*" | tr -d \  | cut -f2 -d:`
 rm -rf $PREFIX/build
 rm -rf $PREFIX/dist
 python setup.py sdist
