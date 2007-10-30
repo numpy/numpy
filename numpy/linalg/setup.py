@@ -6,9 +6,23 @@ def configuration(parent_package='',top_path=None):
 
     config.add_data_dir('tests')
 
-    print "### Warning:  Using unoptimized lapack ###"
+    # Configure lapack_lite
+    lapack_info = get_info('lapack_opt',0)
+    def get_lapack_lite_sources(ext, build_dir):
+        if not lapack_info:
+            print "### Warning:  Using unoptimized lapack ###"
+            return ext.depends[:-1]
+        else:
+            return ext.depends[:1]
 
-    config.add_sconscript('SConstruct')
+    config.add_extension('lapack_lite',
+                         sources = [get_lapack_lite_sources],
+                         depends=  ['lapack_litemodule.c',
+                                   'zlapack_lite.c', 'dlapack_lite.c',
+                                   'blas_lite.c', 'dlamch.c',
+                                   'f2c_lite.c','f2c.h'],
+                         extra_info = lapack_info
+                         )
 
     return config
 
