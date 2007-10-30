@@ -1,4 +1,4 @@
-.. Last Change: .
+.. Last Change: Tue Oct 30 12:00 PM 2007 J
 .. vim:syntax=rest
 
 numpy.distutils.scons is basically an extension of numpy.distutils to use scons
@@ -10,9 +10,9 @@ for building extensions instead of distutils. Some of the advantages:
     - ability to build standard C python extension and Ctypes-based extensions
       in a cross platform manner
     - support library for high level system capabilities cheks, including
-      availability of MKL, ATLAS, etc... and more generic framework to build
-      your own, cross platform checks (think autoconf, but with python instead
-      of M4)
+      availability of MKL, ATLAS, etc. and more generic framework to build your
+      own, cross platform checks (think autoconf, but using python instead of
+      M4)
 
 How does it work ?
 ==================
@@ -33,14 +33,24 @@ The basic scheme is easy:
       interoperability.
     - As in standard scons, code is built using builders. However, for
       interoperability with distutils, special builders are provided to put any
-      generated code in seperate directories, install built code in directories where
-      distutils will find them (for install command), etc...
+      generated code in seperate directories, install built code in directories
+      where distutils will find them (for install command), etc...
 
 While not the most efficient (scons is launched as a new process for every
 package registering a SConscript), this enables truly independant packages.
 Basic build parameters (compiler, build directories, etc...) are passed to
 scons through command lines argument, but generally, you don't need to
 understand how exactly to use it.
+
+Pro of per module scons call:
+    - independant configuration and build
+    - simplicity
+
+Cons:
+    - communication between scons and distutils is cumbersome (since they are
+      in different processes). Passing info from distutils -> scons is doable,
+      since scons is always called at the same point from distutils, but the
+      contrary is more difficult. 
 
 Distutils <-> scons interoperability
 ====================================
@@ -57,4 +67,6 @@ build directories, and install the built code in directories where distutils
 will find them for later installation.
 
 For now, builders to build Ctypes extensions, shared libraries and python
-extensions are provided.
+extensions are provided. I don't think static builders are necessary, since the
+code is unusable for any python extension, hence not really making sense for
+our usage.
