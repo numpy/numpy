@@ -1,9 +1,42 @@
 #! /usr/bin/env python
-# Last Change: Tue Oct 30 05:00 PM 2007 J
+# Last Change: Tue Oct 30 09:00 PM 2007 J
 
 # This module defines some helper functions, to be used by high level checkers
 
 from copy import deepcopy
+
+class CheckOptions:
+    def __init__(self, cpppath = None, headers = None, cflags = None, 
+                 libpath = None, libs = None, linkflags = None):
+        if cpppath:
+            self.cpppath = cpppath
+        else:
+            self.cpppath = []
+
+        if headers:
+            self.headers = headers
+        else:
+            self.headers = []
+
+        if cflags:
+            self.cflags = cflags
+        else:
+            self.cflags = []
+
+        if libpath:
+            self.libpath = libpath
+        else:
+            self.libpath = []
+
+        if libs:
+            self.libs = libs
+        else:
+            self.libs = []
+
+        if linkflags:
+            self.linkflags = linkflags
+        else:
+            self.linkflags = []
 
 def check_include_and_run(context, name, cpppath, headers, run_src, libs,
                           libpath, linkflags, cflags, autoadd = 1):
