@@ -1,11 +1,27 @@
-Before True milestone:
+Before second alpha (in order of priority):
+    - support sdist: how to add files to distutils distribution ? ~ 2 hours
+    - support sdist: examples and numpy (~ 1 hour)
+    - show_config implementation : show libs, libpath and cpppath for each
+      configuration (~ 2-3 hours)
+    - BLAS, CBLAS and LAPACK meta checkers: overridable, support at least
+      ATLAS, Accelerate, and MKL (~ 2-3 hours)
+    - Basic warn, debug and optim flags : at least gcc+linux, mingw, VS, gcc+mac
+      os x, and posix ? (~ 2 hours).
+
+Before first beta:
+    - f2py and scipy interoperability: N hours
+
+Design questions:
     - improve BrokenMathlib and Mathlib in core, and make them available to
       everyone
-    - show_config implementation : how to do it ?
     - How to build meta-checkers from simple checkers (for example, BLAS with
       MKL, ATLAS, Sunperf, etc...) ?
+    - How to gather informations from checkers for config info ?
+    - How to provide a usable framework for checks (+ doc)
+    - overriding compilation flags: env variables, site.cfg ? (autotools
+      convention ?)
 
-Checker:
+Code cleaning:
     - improve Fortran runtime detection for upstream integration
     - improve Fortran mangling and dummy main detection for upstream
       integration
@@ -19,12 +35,13 @@ Builder:
     - Generic FromTemplate builder (with dep tracking)
 
 Implementation details:
-    - Default optim, warn and link flags for python extension on at least gcc,
-      g77, gfortran (1st priority), MS and Intel (2d priority), others (3rd:
-      sun, aix, etc...)
     - Refactor code for API generation (numpy/core/code_generators) -> Mostly done
+    - Refactor code organization in numpy/distutils/scons
+
+Tests:
+    - What can be tested ?
 
 Documentation:
-    - scons / distutils integration
-    - global design (BuildDir, directories, etc...)
-    - package developers documentation
+    - scons / distutils integration, global design (BuildDir, directories, etc...)
+    - use cases: package developers (examples, etc...), numpy developers,
+      building numpy with scons, etc...
