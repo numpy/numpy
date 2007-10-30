@@ -61,7 +61,8 @@ def dist2sconsfc(compiler):
     Example:
         --fcompiler=intel -> ifort on linux, ifl on windows"""
     if compiler.compiler_type == 'intel':
-        return 'intelc'
+        raise NotImplementedError('FIXME: intel fortran compiler name ?')
+        #return 'intelc'
     elif compiler.compiler_type == 'gnu':
         return 'g77'
     elif compiler.compiler_type == 'gnu95':
@@ -122,8 +123,8 @@ def protect_path(path):
     return '"' + path + '"'
 
 class scons(old_build_ext):
-    # XXX: I really do not like the way distutils add attributes "on the fly".
-    # We should eally avoid that and remove all the code which does it before
+    # XXX: I really do not like the way distutils overuses monkey patch. We
+    # should eally avoid that and remove all the code which does it before
     # release.
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"

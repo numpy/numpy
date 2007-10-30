@@ -24,4 +24,7 @@ class sdist(old_sdist):
                 else: headers.append(h[1])
             self.filelist.extend(headers)
 
+        if dist.has_scons_scripts():
+            self.filelist.extend(dist.get_scons_scripts())
+
         return

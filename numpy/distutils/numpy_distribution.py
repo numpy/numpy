@@ -7,3 +7,6 @@ class NumpyDistribution(Distribution):
 
     def has_scons_scripts(self):
         return bool(self.scons_scripts)
+
+    def get_scons_scripts(self):
+        return [i[0] for i in self.scons_scripts]
