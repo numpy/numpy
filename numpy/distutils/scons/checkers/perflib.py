@@ -71,7 +71,9 @@ def CheckATLAS2(context, check_version = 1, autoadd = 1):
     env = context.env
     env.AppendUnique(LIBS = 'atlas')
 
-    # Check whether the library is available
+    # Check whether the library is available (CheckLib-like checker)
+
+    # Check version if requested
     version_code = """
 void ATL_buildinfo(void);
 int main(void) {
