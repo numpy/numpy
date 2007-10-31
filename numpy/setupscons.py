@@ -21,7 +21,7 @@ def configuration(parent_package='',top_path=None):
     # scons instead).
     # !! DO NOT REMOVE THIS !!
     config.add_extension('', sources = [])
-    config.make_config_py() # installs __config__.py
+    config.scons_make_config_py() # installs __config__.py
     return config
 
 if __name__ == '__main__':

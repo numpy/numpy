@@ -4,16 +4,14 @@ import os
 
 def add_info(env, name, opt):
     cfg = env['NUMPY_PKG_CONFIG']
-    cfg[name] = opt
+    cfg[name] = str(opt)
 
 def write_info(env):
     print "File is %s" % env['NUMPY_PKG_CONFIG_FILE']
     print "Info is %s" % env['NUMPY_PKG_CONFIG']
     dir = os.path.dirname(env['NUMPY_PKG_CONFIG_FILE'])
     if not os.path.exists(dir):
-        os.makedirs()
+        os.makedirs(dir)
     f = open(env['NUMPY_PKG_CONFIG_FILE'], 'w')
     f.writelines("config = %s" % str(env['NUMPY_PKG_CONFIG']))
     f.close()
-
-
