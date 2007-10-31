@@ -27,8 +27,8 @@ if do_check:
     st, opts = config.CheckMKL(autoadd = 0)
     if st:
         print opts
-    config.CheckAccelerate(autoadd = 0)
-    config.CheckSunperf(autoadd = 0)
+   # config.CheckAccelerate(autoadd = 0)
+   # config.CheckSunperf(autoadd = 0)
 
     if env.has_key('LIBS'):
         print env.Dump('LIBS')

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Oct 30 09:00 PM 2007 J
+# Last Change: Wed Oct 31 06:00 PM 2007 J
 
 # This module defines some helper functions, to be used by high level checkers
 
@@ -9,17 +9,18 @@ _arg2env = {'cpppath' : 'CPPPATH',
             'cflags' : 'CFLAGS',
             'libpath' : 'LIBPATH',
             'libs' : 'LIBS',
-            'linkflags' : 'LINKFLAGS'}
+            'linkflags' : 'LINKFLAGS',
+            'rpath' : 'RPATH'}
 
-def save_set(env, opts):
+def save_and_set(env, opts):
     """keys given as config opts args."""
     saved_keys = {}
-    keys = opts.keys()
+    keys = opts.data.keys()
     for k in keys:
         saved_keys[k] = (env.has_key(_arg2env[k]) and\
                          deepcopy(env[_arg2env[k]])) or\
                         []
-    kw = zip([_arg2env[k] for k in keys], [opts[k] for k in keys])
+    kw = zip([_arg2env[k] for k in keys], [opts.data[k] for k in keys])
     kw = dict(kw)
     env.AppendUnique(**kw)
     return saved_keys
@@ -30,6 +31,78 @@ def restore(env, saved_keys):
              [saved_keys[k] for k in keys])
     kw = dict(kw)
     env.Replace(**kw)
+
+def check_symbol(context, headers, sym, extra = r''):
+    # XXX: add dep vars in code
+    #code = [r'#include <%s>' %h for h in headers]
+    code = []
+    code.append(r'''
+#undef %(func)s
+#ifdef __cplusplus
+extern "C" 
+#endif
+char %(func)s();
+
+int main()
+{
+return %(func)s();
+return 0;
+}
+''' % {'func' : sym})
+    code.append(extra)
+    return context.TryLink('\n'.join(code), '.c')
+
+class ConfigOpts:
+    _keys = ['cpppath', 'cflags', 'libpath', 'libs', 'linkflags', 'rpath']
+    def __init__(self, cpppath = None, cflags = None, libpath = None, libs = None, 
+                 linkflags = None, rpath = None):
+        data = {}
+
+        if not cpppath:
+            data['cpppath'] = []
+        else:
+            data['cpppath'] = cpppath
+
+        if not cflags:
+            data['cflags'] = []
+        else:
+            data['cflags'] = cflags
+
+        if not libpath:
+            data['libpath'] = []
+        else:
+            data['libpath'] = libpath
+
+        if not libs:
+            data['libs'] = []
+        else:
+            data['libs'] = libs
+
+        if not linkflags:
+            data['linkflags'] = []
+        else:
+            data['linkflags'] = linkflags
+
+        if not rpath:
+            data['rpath'] = []
+        else:
+            data['rpath'] = rpath
+
+        self.data = data
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __setitem__(self, key, item):
+        self.data[key] = item
+
+    def __repr__(self):
+        msg = [r'%s : %s' % (k, i) for k, i in self.data.items()]
+        return '\n'.join(msg)
+
+class ConfigRes():
+    def __init__(self, cfgopts, version, origin):
+        pass
 
 def check_include_and_run(context, name, cpppath, headers, run_src, libs,
                           libpath, linkflags, cflags, autoadd = 1):
