@@ -5,7 +5,8 @@ import sys
 
 from distutils.sysconfig import get_config_vars
 
-from numpy.distutils.command.scons import get_scons_build_dir
+from numpy.distutils.misc_util import get_scons_build_dir, get_scons_configres_dir,\
+    get_scons_configres_filename
 
 from default import tool_list
 from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
@@ -221,6 +222,7 @@ def GetNumpyEnvironment(args):
 
     # This will be used to keep configuration information on a per package basis
     env['NUMPY_PKG_CONFIG'] = {}
-    env['NUMPY_PKG_CONFIG_FILE'] = pjoin(env['build_dir'], '__configres.py')
+    env['NUMPY_PKG_CONFIG_FILE'] = pjoin(get_scons_configres_dir(), env['src_dir'], 
+                                         get_scons_configres_filename())
 
     return env

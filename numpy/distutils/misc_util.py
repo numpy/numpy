@@ -1277,6 +1277,10 @@ class Configuration(object):
         from command.scons import get_scons_build_dir
         return get_scons_build_dir()
 
+    def add_configres(self):
+        file = os.path.join(get_scons_configres_dir(), self.local_path, 
+                            get_scons_configres_filename())
+
     def have_f77c(self):
         """Check for availability of Fortran 77 compiler.
         Use it inside source generating function to ensure that
@@ -1472,6 +1476,26 @@ def get_numpy_include_dirs():
         include_dirs = [ numpy.get_include() ]
     # else running numpy/core/setup.py
     return include_dirs
+
+#########################
+
+def get_scons_build_dir():
+    """Return the top path where everything produced by scons will be put.
+    
+    The path is relative to the top setup.py"""
+    return os.path.join('build', 'scons')
+
+def get_scons_configres_dir():
+    """Return the top path where everything produced by scons will be put.
+    
+    The path is relative to the top setup.py"""
+    return os.path.join('build', 'scons-configres')
+
+def get_scons_configres_filename():
+    """Return the top path where everything produced by scons will be put.
+    
+    The path is relative to the top setup.py"""
+    return '__configres.py'
 
 #########################
 

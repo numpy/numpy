@@ -146,6 +146,7 @@ else:
     build_blasdot = 0
 
 config.Finish()
+write_info(env)
 
 #==========
 #  Build

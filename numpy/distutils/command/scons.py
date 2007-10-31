@@ -8,13 +8,8 @@ from numpy.distutils.command.build_ext import build_ext as old_build_ext
 from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import find_executable
+from numpy.distutils.misc_util import get_scons_build_dir
 from numpy.distutils import log
-
-def get_scons_build_dir():
-    """Return the top path where everything produced by scons will be put.
-    
-    The path is relative to the top setup.py"""
-    return pjoin('build', 'scons')
 
 def get_scons_local_path():
     """This returns the full path where scons.py for scons-local is located."""
