@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Oct 30 07:00 PM 2007 J
+# Last Change: Wed Oct 31 07:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -49,7 +49,7 @@ def CheckCBLAS(context, autoadd = 1):
             
         else:
             # Check MKL, then ATLAS, then Sunperf
-            st = CheckMKL(context, autoadd)
+            st, opts = CheckMKL(context, autoadd)
             if st:
                 add_info(env, 'cblas', opt_info('mkl'))
                 return st

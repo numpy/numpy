@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Oct 31 06:00 PM 2007 J
+# Last Change: Wed Oct 31 07:00 PM 2007 J
 
 # This module defines some helper functions, to be used by high level checkers
 
@@ -10,7 +10,8 @@ _arg2env = {'cpppath' : 'CPPPATH',
             'libpath' : 'LIBPATH',
             'libs' : 'LIBS',
             'linkflags' : 'LINKFLAGS',
-            'rpath' : 'RPATH'}
+            'rpath' : 'RPATH',
+            'frameworks' : 'FRAMEWORKS'}
 
 def save_and_set(env, opts):
     """keys given as config opts args."""
@@ -53,9 +54,11 @@ return 0;
     return context.TryLink('\n'.join(code), '.c')
 
 class ConfigOpts:
-    _keys = ['cpppath', 'cflags', 'libpath', 'libs', 'linkflags', 'rpath']
+    # Any added key should be added as an argument to __init__ 
+    _keys = ['cpppath', 'cflags', 'libpath', 'libs', 'linkflags', 'rpath',
+             'frameworks']
     def __init__(self, cpppath = None, cflags = None, libpath = None, libs = None, 
-                 linkflags = None, rpath = None):
+                 linkflags = None, rpath = None, frameworks = None):
         data = {}
 
         if not cpppath:
@@ -88,6 +91,11 @@ class ConfigOpts:
         else:
             data['rpath'] = rpath
 
+        if not frameworks:
+            data['frameworks'] = []
+        else:
+            data['frameworks'] = frameworks
+
         self.data = data
 
     def __getitem__(self, key):
@@ -101,8 +109,29 @@ class ConfigOpts:
         return '\n'.join(msg)
 
 class ConfigRes():
-    def __init__(self, cfgopts, version, origin):
-        pass
+    def __init__(self, cfgopts, origin, version = None):
+        self.data = cfgopts.data
+        self.origin = origin
+        self.version = version
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __setitem__(self, key, item):
+        self.data[key] = item
+
+    def is_customized(self):
+        return bool(self.origin)
+
+    def __repr__(self):
+        if self.is_customized():
+            msg = ['Customized items site.cfg:']
+        else:
+            msg = ['Using default configuration:']
+
+        msg += ['\t%s : %s' % (k, i) for k, i in self.data.items() if len(i) > 0]
+        msg += ['Version is : %s' % self.version]
+        return '\n'.join(msg)
 
 def check_include_and_run(context, name, cpppath, headers, run_src, libs,
                           libpath, linkflags, cflags, autoadd = 1):

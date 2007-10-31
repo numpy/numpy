@@ -1,7 +1,7 @@
 # vim:syntax=python
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons.checkers.perflib import \
-        CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf, CheckATLAS2
+        CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
@@ -14,21 +14,21 @@ except KeyError:
 
 config = env.NumpyConfigure(custom_tests = 
     {'CheckATLAS' : CheckATLAS,
-    'CheckATLAS2' : CheckATLAS2,
     'CheckMKL' : CheckMKL,
     'CheckAccelerate' : CheckAccelerate,
     'CheckSunperf' : CheckSunperf})
 
 if do_check:
-    #config.CheckATLAS(autoadd = 0)
-    st, opts = config.CheckATLAS2(autoadd = 0)
+    st, opts = config.CheckATLAS(autoadd = 0)
     if st:
         print opts
     st, opts = config.CheckMKL(autoadd = 0)
     if st:
         print opts
-   # config.CheckAccelerate(autoadd = 0)
-   # config.CheckSunperf(autoadd = 0)
+    st, opts = config.CheckAccelerate(autoadd = 0)
+    if st:
+        print opts
+    st, opts = config.CheckSunperf(autoadd = 0)
 
     if env.has_key('LIBS'):
         print env.Dump('LIBS')
