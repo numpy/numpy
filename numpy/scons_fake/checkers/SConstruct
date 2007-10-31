@@ -21,8 +21,12 @@ config = env.NumpyConfigure(custom_tests =
 
 if do_check:
     #config.CheckATLAS(autoadd = 0)
-    config.CheckATLAS2(autoadd = 0)
-    config.CheckMKL(autoadd = 0)
+    st, opts = config.CheckATLAS2(autoadd = 0)
+    if st:
+        print opts
+    st, opts = config.CheckMKL(autoadd = 0)
+    if st:
+        print opts
     config.CheckAccelerate(autoadd = 0)
     config.CheckSunperf(autoadd = 0)
 

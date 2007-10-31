@@ -5,93 +5,31 @@
 
 from copy import deepcopy
 
-class CheckOptions:
-    def __init__(self, cpppath = None, headers = None, cflags = None, 
-                 libpath = None, libs = None, linkflags = None):
-        if cpppath:
-            self.cpppath = cpppath
-        else:
-            self.cpppath = []
+_arg2env = {'cpppath' : 'CPPPATH',
+            'cflags' : 'CFLAGS',
+            'libpath' : 'LIBPATH',
+            'libs' : 'LIBS',
+            'linkflags' : 'LINKFLAGS'}
 
-        if headers:
-            self.headers = headers
-        else:
-            self.headers = []
+def save_set(env, opts):
+    """keys given as config opts args."""
+    saved_keys = {}
+    keys = opts.keys()
+    for k in keys:
+        saved_keys[k] = (env.has_key(_arg2env[k]) and\
+                         deepcopy(env[_arg2env[k]])) or\
+                        []
+    kw = zip([_arg2env[k] for k in keys], [opts[k] for k in keys])
+    kw = dict(kw)
+    env.AppendUnique(**kw)
+    return saved_keys
 
-        if cflags:
-            self.cflags = cflags
-        else:
-            self.cflags = []
-
-        if libpath:
-            self.libpath = libpath
-        else:
-            self.libpath = []
-
-        if libs:
-            self.libs = libs
-        else:
-            self.libs = []
-
-        if linkflags:
-            self.linkflags = linkflags
-        else:
-            self.linkflags = []
-
-def _check_headers(context, cpppath, cflags, headers, autoadd):
-    """Try to compile code including the given headers."""
-    env = context.env
-
-    #----------------------------
-    # Check headers are available
-    #----------------------------
-    oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []
-    oldCFLAGS = (env.has_key('CFLAGS') and deepcopy(env['CFLAGS'])) or []
-    env.AppendUnique(CPPPATH = cpppath)
-    env.AppendUnique(CFLAGS = cflags)
-    # XXX: handle context
-    hcode = ['#include <%s>' % h for h in headers]
-
-    # HACK: we add cpppath in the command of the source, to add dependency of
-    # the check on the cpppath.
-    hcode.extend(['#if 0', '%s' % cpppath, '#endif\n'])
-    src = '\n'.join(hcode)
-
-    ret = context.TryCompile(src, '.c')
-    if ret == 0 or autoadd == 0:
-        env.Replace(CPPPATH = oldCPPPATH)
-        env.Replace(CFLAGS = oldCFLAGS)
-        return 0
-
-    return ret
-
-def _check_libs(context, cpppath, headers, cflags, libpath, libs, linkflags, autoadd):
-    raise NotImplementedError("FIXME")
-    #------------------------------
-    # Check a simple example works
-    #------------------------------
-    oldLIBPATH = (env.has_key('LIBPATH') and deepcopy(env['LIBPATH'])) or []
-    oldLIBS = (env.has_key('LIBS') and deepcopy(env['LIBS'])) or []
-    oldLINKFLAGS = (env.has_key('LINKFLAGS') and deepcopy(env['LINKFLAGS'])) or []
-    # # XXX: RPATH, drawbacks using it ?
-    # oldRPATH = (env.has_key('RPATH') and deepcopy(env['RPATH'])) or []
-    env.AppendUnique(LIBPATH = libpath)
-    env.AppendUnique(LIBS = libs)
-    #env.AppendUnique(RPATH = libpath)
-    env.AppendUnique(LINKFLAGS = linkflags)
-
-    # HACK: we add libpath and libs at the end of the source as a comment, to
-    # add dependency of the check on those.
-    src = '\n'.join(['#include <%s>' % h for h in headers] +\
-                    [run_src, '#if 0', '%s' % libpath, 
-                     '%s' % headers, '%s' % libs, '#endif'])
-    ret = context.TryLink(src, '.c')
-    if (not ret or not autoadd):
-        # If test failed or autoadd = 0, restore everything
-        env.Replace(LIBS = oldLIBS)
-        env.Replace(LIBPATH = oldLIBPATH)
-        env.Replace(RPATH = oldRPATH)
-        env.Replace(LINKFLAGS = oldLINKFLAGS)
+def restore(env, saved_keys):
+    keys = saved_keys.keys()
+    kw = zip([_arg2env[k] for k in keys], 
+             [saved_keys[k] for k in keys])
+    kw = dict(kw)
+    env.Replace(**kw)
 
 def check_include_and_run(context, name, cpppath, headers, run_src, libs,
                           libpath, linkflags, cflags, autoadd = 1):
@@ -152,7 +90,3 @@ def check_include_and_run(context, name, cpppath, headers, run_src, libs,
 
     context.Result(ret)
     return ret
-     
-def check_lib(context, library = None, symbols = None, headers = None, language = 'C'):
-    if language is not 'C':
-        raise NotImplementedError('FIXME: support non-C languages')

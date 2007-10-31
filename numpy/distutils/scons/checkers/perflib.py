@@ -37,6 +37,10 @@ from support import check_include_and_run, CheckOptions
 #     printf("Major version:          %d\n",ver.MajorVersion);
 #     printf("Minor version:          %d\n",ver.MinorVersion);
 #     printf("Build number:           %d\n",ver.BuildNumber);
+#     printf("Full version: %d.%d.%d\n", 
+#            ver.MajorVersion,
+#            ver.MinorVersion,
+#            ver.BuildNumber);
 #     printf("Product status:         %s\n",ver.ProductStatus);
 #     printf("Build:                  %s\n",ver.Build);
 #     printf("Processor optimization: %s\n",ver.Processor);
@@ -45,48 +49,206 @@ from support import check_include_and_run, CheckOptions
 # }
 # """
 
-def CheckMKL(context, autoadd = 1):
-    """Check MKL is usable using a simple cblas example."""
+# def CheckMKL(context, autoadd = 1):
+#     """Check MKL is usable using a simple cblas example."""
+#     section = "mkl"
+#     siteconfig, cfgfiles = get_config()
+#     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+#     if not found:
+#         # XXX: find exact options to use for the MKL
+#         libs.extend(['mkl', 'guide', 'm'])
+# 
+#     headers = ['mkl.h']
+# 
+#     return check_include_and_run(context, 'MKL', cpppath, headers,
+#                                   cblas_src, libs, libpath, [], [], autoadd)
+
+def _CheckATLASVersion(context):
+    pass
+
+from support import save_set, restore
+import re
+
+def CheckMKL(context, check_version = 1, autoadd = 1):
+    """Check whether mkl is usable in C."""
+    context.Message("Checking MKL ... ")
+
+    # XXX: take into account siteconfig
     section = "mkl"
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
     if not found:
         # XXX: find exact options to use for the MKL
         libs.extend(['mkl', 'guide', 'm'])
+    opts = {'cpppath' : cpppath, 'libpath' : libpath, 'libs' : libs} 
 
+    env = context.env
+    test_funcs = ['MKLGetVersion']
     headers = ['mkl.h']
 
-    return check_include_and_run(context, 'MKL', cpppath, headers,
-                                  cblas_src, libs, libpath, [], [], autoadd)
+    # Check whether the header is available (CheckHeader-like checker)
+    saved = save_set(env, opts)
+    try:
+        # XXX: add dep vars in code
+        src = '\n'.join([r'#include <%s>\n' % h for h in headers])
+        st = context.TryCompile(src, '.c')
+    finally:
+        restore(env, saved)
 
-def _CheckATLASVersion(context):
-    pass
+    if not st:
+        context.Result('Failed (could not check header(s))')
+        return st
+
+    # Check whether the library is available (CheckLib-like checker)
+    saved = save_set(env, opts)
+    try:
+        for sym in test_funcs:
+            # XXX: add dep vars in code
+            st = check_symbol(context, headers, sym)
+            if not st:
+                break
+    finally:
+        if st == 0 or autoadd == 0:
+            restore(env, saved)
+        
+    if not st:
+        context.Result('Failed (could not check symbol %s)' % sym)
+        return st
+        
+    context.Result(st)
+
+    # Check version if requested
+    if check_version:
+        saved = save_set(env, opts)
+        version_code = """
+#include <stdio.h>
+#include <mkl.h>
+
+int main(void)
+{
+    MKLVersion ver;
+    MKLGetVersion(&ver);
+
+    printf("Full version: %d.%d.%d\n", ver.MajorVersion,
+           ver.MinorVersion,
+           ver.BuildNumber);
+
+    return 0;
+}
+"""
+
+        try:
+            vst, out = context.TryRun(version_code, '.c')
+        finally:
+            restore(env, saved)
+
+        if not vst:
+            version = r'?.?.? (could not get version)'
+        else:
+            m = re.search(
+                    r'Full version: (\d+[.]\d+[.]\d+)',
+                    out)
+            if m:
+                version = m.group('version')
+            else:
+                version = r'?.?.? (could not get version)'
+        opts['version'] = version
+
+    return st, opts
+
+def check_symbol(context, headers, sym, extra = r''):
+    # XXX: add dep vars in code
+    code = [r'#include <%s>' %h for h in headers]
+    code.append(r'''
+#undef %(func)s
+#ifdef __cplusplus
+extern "C" 
+#endif
+char %(func)s();
+
+int main()
+{
+return %(func)s();
+return 0;
+}
+''' % {'func' : sym})
+    code.append(extra)
+    return context.TryLink('\n'.join(code), '.c')
 
 def CheckATLAS2(context, check_version = 1, autoadd = 1):
     """Check whether ATLAS is usable in C."""
-    opts = CheckOptions(libs = ['atlas'])
-
     context.Message("Checking ATLAS ... ")
 
+    section = "atlas"
+    siteconfig, cfgfiles = get_config()
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if not found:
+        libs.extend(['atlas'])
+    opts = {'cpppath' : cpppath, 'libpath' : libpath, 'libs' : libs}
+
     env = context.env
-    env.AppendUnique(LIBS = 'atlas')
+    test_funcs = ['ATL_sgemm']
+    headers = ['atlas_enum.h']
+
+    # Check whether the header is available (CheckHeader-like checker)
+    saved = save_set(env, opts)
+    try:
+        # XXX: add dep vars in code
+        src = '\n'.join([r'#include <%s>\n' % h for h in headers])
+        st = context.TryCompile(src, '.c')
+    finally:
+        restore(env, saved)
+
+    if not st:
+        context.Result('Failed (could not check header(s))')
+        return st
 
     # Check whether the library is available (CheckLib-like checker)
+    saved = save_set(env, opts)
+    try:
+        for sym in test_funcs:
+            # XXX: add dep vars in code
+            st = check_symbol(context, headers, sym)
+            if not st:
+                break
+    finally:
+        if st == 0 or autoadd == 0:
+            restore(env, saved)
+        
+    if not st:
+        context.Result('Failed (could not check symbol %s)' % sym)
+        return st
+        
+    context.Result(st)
 
     # Check version if requested
-    version_code = """
+    if check_version:
+        saved = save_set(env, opts)
+        version_code = """
 void ATL_buildinfo(void);
 int main(void) {
   ATL_buildinfo();
   return 0;
 }
 """
-    if not context.TryLink(version_code, '.c'):
-        return "blas blas"
+        try:
+            vst, out = context.TryRun(version_code, '.c')
+        finally:
+            restore(env, saved)
 
-    st, out = context.TryRun(version_code, '.c')
-    context.Result(st)
-    return st
+        if not vst:
+            version = r'?.?.? (could not get version)'
+        else:
+            m = re.search(
+                    r'ATLAS version (?P<version>\d+[.]\d+[.]\d+)',
+                    out)
+            if m:
+                version = m.group('version')
+            else:
+                version = r'?.?.? (could not get version)'
+        opts['version'] = version
+
+    return st, opts
 
 def CheckATLAS(context, autoadd = 1):
     """Check whether ATLAS is usable in C."""
