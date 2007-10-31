@@ -12,7 +12,7 @@ from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
 
 from numpy.distutils.scons.fortran_scons import CheckF77Mangling, CheckF77Clib
 
-from numpy.distutils.scons.configuration import opt_info, add_info
+from numpy.distutils.scons.configuration import add_info
 
 from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
 from support import check_include_and_run
@@ -25,6 +25,8 @@ def CheckCBLAS(context, autoadd = 1):
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
     if found:
+        raise NotImplementedError("FIXME: siteconfig for cblas")
+        # XXX: adapt this to libperf refactor
         headers = ['cblas.h']
         linkflags = []
         cflags = []
@@ -35,86 +37,100 @@ def CheckCBLAS(context, autoadd = 1):
             return st
     else:
         if sys.platform == 'darwin':
-            st = CheckAccelerate(context, autoadd)
+            st, opts = CheckAccelerate(context, autoadd)
             if st:
-                add_info(env, 'cblas', opt_info('Accelerate'))
+                add_info(env, 'cblas', opts)
                 return st
-            st = CheckVeclib(context, autoadd)
-            if st:
-                add_info(env, 'cblas', opt_info('vecLib'))
-                return st
+            #st, opts = CheckVeclib(context, autoadd)
+            #if st:
+            #    add_info(env, 'cblas', opt_info('vecLib'))
+            #    return st
 
-            add_info(env, 'cblas', opt_info(''))
+            add_info(env, 'cblas', 'Def numpy implementation used')
             return 0
             
         else:
             # Check MKL, then ATLAS, then Sunperf
             st, opts = CheckMKL(context, autoadd)
             if st:
-                add_info(env, 'cblas', opt_info('mkl'))
+                add_info(env, 'cblas', opts)
                 return st
-            st = CheckATLAS(context, autoadd)
+            st, opts = CheckATLAS(context, autoadd)
             if st:
-                add_info(env, 'cblas', opt_info('atlas'))
+                add_info(env, 'cblas', opts)
                 return st
-            st = CheckSunperf(context, autoadd)
+            st, opts = CheckSunperf(context, autoadd)
             if st:
-                add_info(env, 'cblas', opt_info('sunperf'))
+                add_info(env, 'cblas', opts)
                 return st
 
-            add_info(env, 'cblas', opt_info(''))
+            add_info(env, 'cblas', 'Def numpy implementation used')
             return 0
 
 def CheckLAPACK(context, autoadd = 1):
-    # XXX: this whole thing is ugly. Think more about how to combine checkers
-    # in 'meta checker' like this.
-    if sys.platform == 'nt':
-        import warnings
-        warning.warn('FIXME: LAPACK checks not implemented yet on win32')
-        return 0
+    # If section lapack is in site.cfg, use those options. Otherwise, use default
+    section = "lapack"
+    siteconfig, cfgfiles = get_config()
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if found:
+        raise NotImplementedError("FIXME: siteconfig for lapack")
+        # XXX: adapt this to libperf refactor
+        headers = ['cblas.h']
+        linkflags = []
+        cflags = []
+        st = check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
+                                      libs, libpath, linkflags, cflags, autoadd)
+        if st:
+            add_info(env, 'cblas', opt_info('cblas', site = 1))
+            return st
     else:
-        env = context.env
+        if sys.platform == 'nt':
+            import warnings
+            warning.warn('FIXME: LAPACK checks not implemented yet on win32')
+            return 0
+        else:
+            env = context.env
 
-        # Get fortran stuff
-        if not env.has_key('F77_NAME_MANGLER'):
-            if not CheckF77Mangling(context):
-                return 0
-        if not env.has_key('F77_LDFLAGS'):
-            if not CheckF77Clib(context):
-                return 0
+            # Get fortran stuff
+            if not env.has_key('F77_NAME_MANGLER'):
+                if not CheckF77Mangling(context):
+                    return 0
+            if not env.has_key('F77_LDFLAGS'):
+                if not CheckF77Clib(context):
+                    return 0
 
-        # Get the mangled name of our test function
-        sgesv_string = env['F77_NAME_MANGLER']('sgesv')
-        test_src = lapack_sgesv % sgesv_string
+            # Get the mangled name of our test function
+            sgesv_string = env['F77_NAME_MANGLER']('sgesv')
+            test_src = lapack_sgesv % sgesv_string
 
-        # Check MKL
-        st = CheckMKL(context, autoadd = 1)
-        if st:
-            fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
-            fdict['LIBS'].append('lapack')
-            if env.has_key('LIBS'):
-                fdict['LIBS'].extend(context.env['LIBS'])
-            if env.has_key('LIBPATH'):
-                fdict['LIBPATH'].extend(context.env['LIBPATH'])
-            st = check_include_and_run(context, 'LAPACK (MKL)', [], [],
-                    test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
-            add_info(env, 'lapack', opt_info('mkl'))
-            return st
+            # Check MKL
+            st, opts = CheckMKL(context, autoadd = 1)
+            if st:
+                fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
+                fdict['LIBS'].append('lapack')
+                if env.has_key('LIBS'):
+                    fdict['LIBS'].extend(context.env['LIBS'])
+                if env.has_key('LIBPATH'):
+                    fdict['LIBPATH'].extend(context.env['LIBPATH'])
+                st = check_include_and_run(context, 'LAPACK (MKL)', [], [],
+                        test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+                add_info(env, 'lapack', opts)
+                return st
 
-        # Check ATLAS
-        st = CheckATLAS(context, autoadd = 1)
-        if st:
-            fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
-            fdict['LIBS'].append('lapack')
-            if env.has_key('LIBS'):
-                fdict['LIBS'].extend(context.env['LIBS'])
-            if env.has_key('LIBPATH'):
-                fdict['LIBPATH'].extend(context.env['LIBPATH'])
-            st = check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
-                    test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
-            add_info(env, 'lapack', opt_info('atlas'))
-            # XXX: Check complete LAPACK or not
-            return st
+            # Check ATLAS
+            st, opts = CheckATLAS(context, autoadd = 1)
+            if st:
+                fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
+                fdict['LIBS'].append('lapack')
+                if env.has_key('LIBS'):
+                    fdict['LIBS'].extend(context.env['LIBS'])
+                if env.has_key('LIBPATH'):
+                    fdict['LIBPATH'].extend(context.env['LIBPATH'])
+                st = check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
+                        test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+                add_info(env, 'lapack', opts)
+                # XXX: Check complete LAPACK or not
+                return st
 
     return 0
 

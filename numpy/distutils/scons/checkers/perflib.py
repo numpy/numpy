@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Oct 31 07:00 PM 2007 J
+# Last Change: Wed Oct 31 08:00 PM 2007 J
 
 # This module defines checkers for performances libs providing standard API,
 # such as MKL (Intel), ATLAS, Sunperf (solaris and linux), Accelerate (Mac OS
@@ -34,6 +34,8 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
         opts = ConfigOpts(cpppath = cpppath, libpath = libpath, libs = libs)
     else:
         opts = defopts
+
+    opts['rpath'] = opts['libpath']
 
     env = context.env
 
@@ -86,7 +88,7 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
 
     return st, cfgres
 
-def _check_mkl_version(env, opts):
+def _mkl_version_checker(env, opts):
     version_code = r"""
 #include <stdio.h>
 #include <mkl.h>

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Oct 31 07:00 PM 2007 J
+# Last Change: Wed Oct 31 08:00 PM 2007 J
 
 # This module defines some helper functions, to be used by high level checkers
 
@@ -133,6 +133,36 @@ class ConfigRes():
         msg += ['Version is : %s' % self.version]
         return '\n'.join(msg)
 
+    def __str__(self):
+        return self.__repr__()
+
+def _check_headers(context, cpppath, cflags, headers, autoadd):          
+    """Try to compile code including the given headers."""       
+    env = context.env        
+         
+    #----------------------------        
+    # Check headers are available        
+    #----------------------------        
+    oldCPPPATH = (env.has_key('CPPPATH') and deepcopy(env['CPPPATH'])) or []         
+    oldCFLAGS = (env.has_key('CFLAGS') and deepcopy(env['CFLAGS'])) or []        
+    env.AppendUnique(CPPPATH = cpppath)          
+    env.AppendUnique(CFLAGS = cflags)        
+    # XXX: handle context        
+    hcode = ['#include <%s>' % h for h in headers]       
+         
+    # HACK: we add cpppath in the command of the source, to add dependency of        
+    # the check on the cpppath.          
+    hcode.extend(['#if 0', '%s' % cpppath, '#endif\n'])          
+    src = '\n'.join(hcode)       
+         
+    ret = context.TryCompile(src, '.c')          
+    if ret == 0 or autoadd == 0:         
+        env.Replace(CPPPATH = oldCPPPATH)        
+        env.Replace(CFLAGS = oldCFLAGS)          
+        return 0         
+        
+    return ret 
+
 def check_include_and_run(context, name, cpppath, headers, run_src, libs,
                           libpath, linkflags, cflags, autoadd = 1):
     """This is a basic implementation for generic "test include and run"
@@ -156,7 +186,7 @@ def check_include_and_run(context, name, cpppath, headers, run_src, libs,
     context.Message('Checking for %s ... ' % name)
     env = context.env
 
-    ret = _check_headers(context, cpppath, cflags, headers)
+    ret = _check_headers(context, cpppath, cflags, headers, autoadd)
     if not ret:
          context.Result('Failed: %s include not found' % name)
 
