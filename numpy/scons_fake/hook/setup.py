@@ -6,7 +6,7 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('hook',parent_package,top_path)
 
     def foo():
-        print "foo"
+        print "scons hook test: foo"
     config.add_sconscript('SConstruct', post_hook = foo)
     return config
 
