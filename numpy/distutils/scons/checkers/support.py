@@ -109,7 +109,8 @@ class ConfigOpts:
         return '\n'.join(msg)
 
 class ConfigRes():
-    def __init__(self, cfgopts, origin, version = None):
+    def __init__(self, name, cfgopts, origin, version = None):
+        self.name = name
         self.data = cfgopts.data
         self.origin = origin
         self.version = version
@@ -124,13 +125,14 @@ class ConfigRes():
         return bool(self.origin)
 
     def __repr__(self):
+        msg = ['Using %s' % self.name]
         if self.is_customized():
-            msg = ['Customized items site.cfg:']
+            msg += [  'Customized items site.cfg:']
         else:
-            msg = ['Using default configuration:']
+            msg += ['  Using default configuration:']
 
-        msg += ['\t%s : %s' % (k, i) for k, i in self.data.items() if len(i) > 0]
-        msg += ['Version is : %s' % self.version]
+        msg += ['  %s : %s' % (k, i) for k, i in self.data.items() if len(i) > 0]
+        msg += ['  Version is : %s' % self.version]
         return '\n'.join(msg)
 
     def __str__(self):

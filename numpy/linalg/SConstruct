@@ -3,6 +3,7 @@
 from numpy.distutils.misc_util import get_numpy_include_dirs, get_mathlibs
 from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths
 from numpy.distutils.scons import CheckLAPACK
+from numpy.distutils.scons.configuration import write_info
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
@@ -22,6 +23,7 @@ for i in scons_get_paths(env['include_bootstrap']):
 env.AppendUnique(LIBS = mlib)
 
 config.Finish()
+write_info(env)
 
 sources = ['lapack_litemodule.c']
 if not use_lapack:

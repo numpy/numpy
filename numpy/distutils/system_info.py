@@ -853,6 +853,7 @@ class atlas_info(system_info):
 
     def get_paths(self, section, key):
         pre_dirs = system_info.get_paths(self, section, key)
+        print "pre dirs is %s" % pre_dirs
         dirs = []
         for d in pre_dirs:
             dirs.extend(self.combine_paths(d,['atlas*','ATLAS*',

@@ -114,7 +114,8 @@ def CheckLAPACK(context, autoadd = 1):
                     fdict['LIBPATH'].extend(context.env['LIBPATH'])
                 st = check_include_and_run(context, 'LAPACK (MKL)', [], [],
                         test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
-                add_info(env, 'lapack', opts)
+                if st:
+                    add_info(env, 'lapack', opts)
                 return st
 
             # Check ATLAS
@@ -128,8 +129,10 @@ def CheckLAPACK(context, autoadd = 1):
                     fdict['LIBPATH'].extend(context.env['LIBPATH'])
                 st = check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
                         test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
-                add_info(env, 'lapack', opts)
-                # XXX: Check complete LAPACK or not
+                if st:
+                    add_info(env, 'lapack', opts)
+                # XXX: Check complete LAPACK or not. (Checking for not
+                # implemented lapack symbols ?)
                 return st
 
     return 0

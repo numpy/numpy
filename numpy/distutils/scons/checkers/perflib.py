@@ -8,7 +8,9 @@
 # Generally, you don't use those directly: they are used in 'meta' checkers,
 # such as BLAS, CBLAS, LAPACK checkers.
 import re
+from os.path import join as pjoin
 
+from numpy.distutils.system_info import default_lib_dirs
 from numpy.distutils.scons.libinfo import get_config_from_section, get_config
 from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
         c_sgemm as sunperf_src, lapack_sgesv
@@ -51,7 +53,7 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     if not st:
         context.Result('Failed (could not check header(s) : check config.log '\
                        'in %s for more details)' % env['build_dir'])
-        return st, ConfigRes(opts, found)
+        return st, ConfigRes(name, opts, found)
 
     # Check whether the library is available (CheckLib-like checker)
     saved = save_and_set(env, opts)
@@ -68,7 +70,7 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     if not st:
         context.Result('Failed (could not check symbol %s : check config.log '\
                        'in %s for more details))' % (sym, env['build_dir']))
-        return st, ConfigRes(opts, found)
+        return st, ConfigRes(name, opts, found)
         
     context.Result(st)
 
@@ -82,9 +84,9 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
                 version = 'Unknown (checking version failed)'
         else:
             version = 'Unkown (not implemented)'
-        cfgres = ConfigRes(opts, found, version)
+        cfgres = ConfigRes(name, opts, found, version)
     else:
-        cfgres = ConfigRes(opts, found, version = 'Not checked')
+        cfgres = ConfigRes(name, opts, found, version = 'Not checked')
 
     return st, cfgres
 
@@ -160,7 +162,9 @@ def CheckATLAS(context, autoadd = 1, check_version = 0):
     """Check whether ATLAS is usable in C."""
     name    = 'ATLAS'
     section = 'atlas'
-    defopts = ConfigOpts(libs = ['atlas'])
+    defopts = ConfigOpts(libs = ['atlas'], 
+                         libpath = [pjoin(i, 'atlas') for i in 
+                                    default_lib_dirs])
     headers = ['atlas_enum.h']
     funcs   = ['ATL_sgemm']
     

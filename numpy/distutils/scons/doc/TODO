@@ -1,8 +1,4 @@
 Before second alpha (in order of priority):
-    - show_config implementation : show libs, libpath and cpppath for each
-      configuration (~ 2-3 hours)
-    - BLAS, CBLAS and LAPACK meta checkers: overridable, support at least
-      ATLAS, Accelerate, and MKL (~ 2-3 hours)
     - Basic warn, debug and optim flags : at least gcc+linux, mingw, VS, gcc+mac
       os x, and posix ? (~ 2 hours).
 
@@ -12,9 +8,6 @@ Before first beta:
 Design questions:
     - improve BrokenMathlib and Mathlib in core, and make them available to
       everyone
-    - How to build meta-checkers from simple checkers (for example, BLAS with
-      MKL, ATLAS, Sunperf, etc...) ?
-    - How to gather informations from checkers for config info ?
     - How to provide a usable framework for checks (+ doc)
     - overriding compilation flags: env variables, site.cfg ? (autotools
       convention ?)
