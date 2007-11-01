@@ -10,6 +10,7 @@ from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.misc_util import get_scons_build_dir
 from numpy.distutils import log
+from numpy.distutils.misc_util import get_numpy_include_dirs
 
 def get_scons_local_path():
     """This returns the full path where scons.py for scons-local is located."""
@@ -123,22 +124,27 @@ class scons(old_build_ext):
     # release.
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
-    user_options = old_build_ext.user_options + [
-                ('jobs=', None, 
-                 "specify number of worker threads when executing scons"),]
+    user_options = old_build_ext.user_options + \
+            [('jobs=', None, 
+              "specify number of worker threads when executing scons"),
+             ('silent=', None, 'specify whether scons output should be silent '\
+                               '(1), super silent (2) or not (0, default)')]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.jobs = None
+        self.silent = 0
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
         if self.distribution.has_scons_scripts():
             #print "Got it: scons scripts are %s" % self.distribution.scons_scripts
             self.sconscripts = self.distribution.get_scons_scripts()
+            self.pre_hooks = self.distribution.get_scons_pre_hooks()
             self.post_hooks = self.distribution.get_scons_post_hooks()
         else:
             self.sconscripts = []
+            self.pre_hooks = []
             self.post_hooks = []
 
         # Try to get the same compiler than the ones used by distutils: this is
@@ -181,28 +187,35 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
 
-        # XXX handle pre hoook
-        for sconscript, post_hook in zip(self.sconscripts, self.post_hooks):
-            # XXX: This is inefficient... (use join instead)
-            from numpy.distutils.misc_util import get_numpy_include_dirs
-            cmd = scons_exec + " -f " + sconscript + ' -I. '
+        for sconscript, pre_hook, post_hook in zip(self.sconscripts,
+                                                   self.pre_hooks, self.post_hooks):
+            if pre_hook:
+                pre_hook()
+
+            cmd = [scons_exec, "-f", sconscript, '-I.']
             if self.jobs:
-                cmd += " --jobs=%d " % int(self.jobs)
-            cmd += ' src_dir="%s" ' % pdirname(sconscript)
-            cmd += ' distutils_libdir=%s ' % protect_path(pjoin(self.build_lib,
-                                                                pdirname(sconscript)))
-            cmd += ' cc_opt=%s ' % dist2sconscc(self.compiler)
-            cmd += ' cc_opt_path=%s ' % protect_path(get_tool_path(self.compiler))
+                cmd.append(" --jobs=%d" % int(self.jobs))
+            cmd.append('src_dir="%s"' % pdirname(sconscript))
+            cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
+                                                                pdirname(sconscript))))
+            cmd.append('cc_opt=%s' % dist2sconscc(self.compiler))
+            cmd.append('cc_opt_path=%s' % protect_path(get_tool_path(self.compiler)))
 
-            cmd += ' f77_opt=%s ' % dist2sconsfc(self.fcompiler)
-            cmd += ' f77_opt_path=%s ' % protect_path(get_f77_tool_path(self.fcompiler))
+            cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
+            cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
 
-            cmd += ' include_bootstrap=%s ' % dirl_to_str(get_numpy_include_dirs())
-            log.info("Executing scons command: %s ", cmd)
-            st = os.system(cmd)
+            cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs()))
+            if self.silent:
+                if int(self.silent) == 1:
+                    cmd.append('-Q')
+                elif int(self.silent) == 2:
+                    cmd.append('-s')
+            cmdstr = ' '.join(cmd)
+            log.info("Executing scons command: %s ", cmdstr)
+            st = os.system(cmdstr)
             if st:
                 print "status is %d" % st
                 raise DistutilsExecError("Error while executing scons command "\
-                                         "%s (see above)" % cmd)
+                                         "%s (see above)" % cmdstr)
             if post_hook:
                 post_hook()
