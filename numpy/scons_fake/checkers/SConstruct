@@ -18,6 +18,7 @@ config = env.NumpyConfigure(custom_tests =
     'CheckAccelerate' : CheckAccelerate,
     'CheckSunperf' : CheckSunperf})
 
+do_check = 1
 if do_check:
     st, opts = config.CheckATLAS(autoadd = 0)
     if st:
