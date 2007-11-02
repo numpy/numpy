@@ -1,5 +1,6 @@
 #! /usr/bin/env python
-# Last Change: Fri Nov 02 04:00 PM 2007 J
+# Last Change: Fri Nov 02 05:00 PM 2007 J
+import sys
 
 # This is a copy of scons/Tools/__init__.py, because scons does not offer any
 # public api for this
@@ -85,8 +86,11 @@ def tool_list(platform):
 # Handling compiler configuration: only flags which change how to build object
 # files. Nothing related to linking, search path, etc... should be given here.
 # Basically, limit yourself to optimization/debug/warning flags.
+
+# XXX: customization from site.cfg or other ?
 class CompilerConfig:
-    def __init__(self, optim = None, warn = None, debug = None, debug_symbol = None):
+    def __init__(self, optim = None, warn = None, debug = None, debug_symbol =
+                 None, thread = None):
         # XXX: several level of optimizations ?
         self.optim = optim
         # XXX: several level of warnings ?
@@ -95,24 +99,37 @@ class CompilerConfig:
         self.debug_symbol = debug_symbol
         # To enable friendly debugging
         self.debug = debug
-
-    def get_optims(self, level):
-        pass
-
-    def get_warn(self, level):
-        pass
+        # XXX
+        self.thread = thread
 
     def get_flags_dict(self):
         return {'NUMPY_OPTIM_CFLAGS' : self.optim,
                 'NUMPY_WARN_CFLAGS' : self.warn,
+                'NUMPY_THREAD_CFLAGS' : self.thread,
                 'NUMPY_DEBUG_CFLAGS' : self.debug,
                 'NUMPY_DEBUG_SYMBOL_CFLAGS' : self.debug_symbol}
 
+# It seems that scons consider any option with space in it as a multi option,
+# which breaks command line options. So just don't put space.
 def get_cc_config(name):
     if name == 'gcc':
         cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing', '-DNDEBUG'],
                              warn = ['-Wall', '-Wstrict-prototypes'],
-                             debug_symbol = ['-g'])
+                             debug_symbol = ['-g'], 
+                             thread = ['-pthread'])
+    elif name == 'intelc':
+        if sys.platform[:5] == 'win32':
+            raise NotImplementedError('FIXME: intel compiler on windows not '\
+                                      ' supported yet')
+            
+        cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing', '-DNDEBUG'],
+                             warn = ['-Wall', '-Wstrict-prototypes'],
+                             debug_symbol = ['-g'],
+                             thread = ['-pthread'])
+    elif name == 'msvc':
+        cfg = CompilerConfig(optim = ['/Ox', '/DNDEBUG'],
+                             warn = ['/W3', '/Wall'],
+                             thread = ['/MD', '/GX'])
     else:
         cfg = CompilerConfig()
 

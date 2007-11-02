@@ -80,7 +80,8 @@ def customize_cc(name, env):
 def GetNumpyEnvironment(args):
     env = _GetNumpyEnvironment(args)
     env.AppendUnique(CFLAGS  = env['NUMPY_WARN_CFLAGS'] + env['NUMPY_OPTIM_CFLAGS'] +\
-                               env['NUMPY_DEBUG_SYMBOL_CFLAGS'])
+                               env['NUMPY_DEBUG_SYMBOL_CFLAGS'] +\
+                               env['NUMPY_THREAD_CFLAGS'])
     return env
 
 def _GetNumpyEnvironment(args):
