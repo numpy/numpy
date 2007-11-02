@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Oct 18 05:00 PM 2007 J
+# Last Change: Fri Nov 02 04:00 PM 2007 J
 
 # This is a copy of scons/Tools/__init__.py, because scons does not offer any
 # public api for this
@@ -81,3 +81,39 @@ def tool_list(platform):
             'tar', 'tex', 'yacc', 'zip']
     return linkers, c_compilers, cxx_compilers, assemblers, fortran_compilers, \
            ars, other_tools
+
+# Handling compiler configuration: only flags which change how to build object
+# files. Nothing related to linking, search path, etc... should be given here.
+# Basically, limit yourself to optimization/debug/warning flags.
+class CompilerConfig:
+    def __init__(self, optim = None, warn = None, debug = None, debug_symbol = None):
+        # XXX: several level of optimizations ?
+        self.optim = optim
+        # XXX: several level of warnings ?
+        self.warn = warn
+        # To enable putting debugging info in binaries
+        self.debug_symbol = debug_symbol
+        # To enable friendly debugging
+        self.debug = debug
+
+    def get_optims(self, level):
+        pass
+
+    def get_warn(self, level):
+        pass
+
+    def get_flags_dict(self):
+        return {'NUMPY_OPTIM_CFLAGS' : self.optim,
+                'NUMPY_WARN_CFLAGS' : self.warn,
+                'NUMPY_DEBUG_CFLAGS' : self.debug,
+                'NUMPY_DEBUG_SYMBOL_CFLAGS' : self.debug_symbol}
+
+def get_cc_config(name):
+    if name == 'gcc':
+        cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing', '-DNDEBUG'],
+                             warn = ['-Wall', '-Wstrict-prototypes'],
+                             debug_symbol = ['-g'])
+    else:
+        cfg = CompilerConfig()
+
+    return cfg

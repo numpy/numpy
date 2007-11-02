@@ -8,7 +8,7 @@ from distutils.sysconfig import get_config_vars
 from numpy.distutils.misc_util import get_scons_build_dir, get_scons_configres_dir,\
     get_scons_configres_filename
 
-from default import tool_list
+from default import tool_list, get_cc_config
 from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
 from libinfo import get_config
 from extension_scons import PythonExtension
@@ -72,7 +72,18 @@ def GetNumpyOptions(args):
 
     return opts
 
+def customize_cc(name, env):
+    """Customize env options related to the given tool."""
+    cfg = get_cc_config(name)
+    env.AppendUnique(**cfg.get_flags_dict())
+
 def GetNumpyEnvironment(args):
+    env = _GetNumpyEnvironment(args)
+    env.AppendUnique(CFLAGS  = env['NUMPY_WARN_CFLAGS'] + env['NUMPY_OPTIM_CFLAGS'] +\
+                               env['NUMPY_DEBUG_SYMBOL_CFLAGS'])
+    return env
+
+def _GetNumpyEnvironment(args):
     """Call this with args = ARGUMENTS."""
     from SCons.Environment import Environment
     from SCons.Tool import Tool, FindTool, FindAllTools
@@ -116,6 +127,7 @@ def GetNumpyEnvironment(args):
                     t = Tool(env['cc_opt'], 
                              topdir = os.path.split(env['cc_opt_path'])[0])
                     t(env) 
+                    customize_cc(t.name, env)
                 else:
                     if is_cc_suncc(pjoin(env['cc_opt_path'], env['cc_opt'])):
                         env['cc_opt'] = 'suncc'
@@ -123,6 +135,7 @@ def GetNumpyEnvironment(args):
                     # PATH ? (may not work on windows).
                     t = Tool(env['cc_opt'])
                     t(env) 
+                    customize_cc(t.name, env)
                     if sys.platform == 'win32':
                         env['ENV']['PATH'] += ';%s' % env['cc_opt_path']
                     else:
@@ -134,6 +147,7 @@ def GetNumpyEnvironment(args):
     else:
         t = Tool(FindTool(DEF_C_COMPILERS))
         t(env)
+        customize_cc(t.name, env)
 
     # F77 compiler
     if len(env['f77_opt']) > 0:
@@ -196,10 +210,6 @@ def GetNumpyEnvironment(args):
         env['ENV']['HOME'] = os.environ['HOME']
     except KeyError:
         pass
-
-    # XXX: think about how to handle optimizations per compiler
-    if env['CC'] == 'gcc':
-        env.Append(CCFLAGS = "-Wall -Wstrict-prototypes -fno-strict-aliasing -O3 -g")
 
     # Adding custom builder
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
