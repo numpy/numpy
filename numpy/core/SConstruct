@@ -1,4 +1,4 @@
-# Last Change: Tue Oct 30 07:00 PM 2007 J
+# Last Change: Fri Nov 02 06:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -55,8 +55,8 @@ check_type('long')
 check_type('float')
 check_type('double')
 check_type('long double')
-check_type('Py_intptr_t', include = r"#include <Python.h>\n")
-check_type('PY_LONG_LONG', include = r"#include <Python.h>\n")
+check_type('Py_intptr_t', include = "#include <Python.h>\n")
+check_type('PY_LONG_LONG', include = "#include <Python.h>\n")
 
 # TODO: check python extension can be built (in root or here ?)
 

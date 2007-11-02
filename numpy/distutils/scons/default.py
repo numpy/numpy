@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Nov 02 05:00 PM 2007 J
+# Last Change: Fri Nov 02 06:00 PM 2007 J
 import sys
 
 # This is a copy of scons/Tools/__init__.py, because scons does not offer any
@@ -90,7 +90,7 @@ def tool_list(platform):
 # XXX: customization from site.cfg or other ?
 class CompilerConfig:
     def __init__(self, optim = None, warn = None, debug = None, debug_symbol =
-                 None, thread = None):
+                 None, thread = None, extra = None):
         # XXX: several level of optimizations ?
         self.optim = optim
         # XXX: several level of warnings ?
@@ -101,13 +101,20 @@ class CompilerConfig:
         self.debug = debug
         # XXX
         self.thread = thread
+        # XXX
+        self.extra = extra
 
     def get_flags_dict(self):
-        return {'NUMPY_OPTIM_CFLAGS' : self.optim,
+        d = {'NUMPY_OPTIM_CFLAGS' : self.optim,
                 'NUMPY_WARN_CFLAGS' : self.warn,
                 'NUMPY_THREAD_CFLAGS' : self.thread,
+                'NUMPY_EXTRA_CFLAGS' : self.debug,
                 'NUMPY_DEBUG_CFLAGS' : self.debug,
                 'NUMPY_DEBUG_SYMBOL_CFLAGS' : self.debug_symbol}
+        for k, v in d.items():
+            if v is None:
+                d[k] = []
+        return d
 
 # It seems that scons consider any option with space in it as a multi option,
 # which breaks command line options. So just don't put space.
@@ -116,7 +123,7 @@ def get_cc_config(name):
         cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing', '-DNDEBUG'],
                              warn = ['-Wall', '-Wstrict-prototypes'],
                              debug_symbol = ['-g'], 
-                             thread = ['-pthread'])
+                             thread = [])
     elif name == 'intelc':
         if sys.platform[:5] == 'win32':
             raise NotImplementedError('FIXME: intel compiler on windows not '\
@@ -127,9 +134,32 @@ def get_cc_config(name):
                              debug_symbol = ['-g'],
                              thread = ['-pthread'])
     elif name == 'msvc':
+        # XXX: distutils part of customization:
+        # if self.__arch == "Intel":
+        #     self.compile_options = [ '/nologo', '/Ox', '/MD', '/W3', '/GX' , '/DNDEBUG']
+        #     self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3', '/GX', '/Z7', '/D_DEBUG']
+        # else:
+        #     # Win64
+        #     self.compile_options = [ '/nologo', '/Ox', '/MD', '/W3', '/GS-' ,
+        #     '/DNDEBUG']
+        #     self.compile_options_debug = ['/nologo', '/Od', '/MDd', '/W3', '/GS-',
+        #     '/Z7', '/D_DEBUG']
+        # 
+        # self.ldflags_shared = ['/DLL', '/nologo', '/INCREMENTAL:NO']
+        # if self.__version >= 7:
+        #     self.ldflags_shared_debug = [
+        #     '/DLL', '/nologo', '/INCREMENTAL:no', '/DEBUG'
+        #     ]
+        # else:
+        #     self.ldflags_shared_debug = [
+        #     '/DLL', '/nologo', '/INCREMENTAL:no', '/pdb:None', '/DEBUG'
+        #             ]
+        # self.ldflags_static = [ '/nologo']
+
         cfg = CompilerConfig(optim = ['/Ox', '/DNDEBUG'],
                              warn = ['/W3', '/Wall'],
-                             thread = ['/MD', '/GX'])
+                             thread = ['/MD', '/GX'], 
+                             extra = ['/nologo'])
     else:
         cfg = CompilerConfig()
 
