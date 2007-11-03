@@ -35,7 +35,35 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
 
     Return num evenly spaced samples from start to stop.  If
     endpoint is True, the last sample is stop. If retstep is
-    True then return the step value used.
+    True then return (seq, step_value), where step_value used.
+
+    :Parameters:
+        start : {float}
+            The value the sequence starts at.
+        stop : {float}
+            The value the sequence stops at. If ``endpoint`` is false, then
+            this is not included in the sequence. Otherwise it is
+            guaranteed to be the last value.
+        num : {integer}
+            Number of samples to generate. Default is 50.
+        endpoint : {boolean}
+            If true, ``stop`` is the last sample. Otherwise, it is not
+            included. Default is true.
+        retstep : {boolean}
+            If true, return ``(samples, step)``, where ``step`` is the
+            spacing used in generating the samples.
+
+    :Returns:
+        samples : {array}
+            ``num`` equally spaced samples from the range [start, stop]
+            or [start, stop).
+        step : {float} (Only if ``retstep`` is true)
+            Size of spacing between samples.
+
+    :See Also:
+        `arange` : Similiar to linspace, however, when used with
+            a float endpoint, that endpoint may or may not be included.
+        `logspace`
     """
     num = int(num)
     if num <= 0:
