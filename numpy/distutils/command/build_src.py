@@ -1,4 +1,4 @@
-""" Build swig, f2py, weave, sources.
+""" Build swig, f2py, pyrex sources.
 """
 
 import os
@@ -376,34 +376,42 @@ class build_src(build_ext.build_ext):
         for source in sources:
             (base, ext) = os.path.splitext(source)
             if ext == '.pyx':
-                if self.inplace or not have_pyrex:
-                    target_dir = os.path.dirname(base)
-                else:
-                    target_dir = appendpath(self.build_src, os.path.dirname(base))
-                target_file = os.path.join(target_dir, ext_name + '.c')
-                depends = [source] + extension.depends
-                if (self.force or newer_group(depends, target_file, 'newer')):
-                    if have_pyrex:
-                        log.info("pyrexc:> %s" % (target_file))
-                        self.mkpath(target_dir)
-                        options = Pyrex.Compiler.Main.CompilationOptions(
-                            defaults=Pyrex.Compiler.Main.default_options,
-                            output_file=target_file)
-                        pyrex_result = Pyrex.Compiler.Main.compile(source,
-                                            options=options)
-                        if pyrex_result.num_errors != 0:
-                            raise DistutilsError,"%d errors while compiling %r with Pyrex" \
-                                  % (pyrex_result.num_errors, source)
-                    elif os.path.isfile(target_file):
-                        log.warn("Pyrex required for compiling %r but not available,"\
-                                 " using old target %r"\
-                                 % (source, target_file))
-                    else:
-                        raise DistutilsError,"Pyrex required for compiling %r but not available" % (source)
+                target_file = self.generate_a_pyrex_source(base, ext_name,
+                                                           source,
+                                                           extension)
                 new_sources.append(target_file)
             else:
                 new_sources.append(source)
         return new_sources
+
+    def generate_a_pyrex_source(self, base, ext_name, source, extension):
+        if self.inplace or not have_pyrex:
+            target_dir = os.path.dirname(base)
+        else:
+            target_dir = appendpath(self.build_src, os.path.dirname(base))
+        target_file = os.path.join(target_dir, ext_name + '.c')
+        depends = [source] + extension.depends
+        if self.force or newer_group(depends, target_file, 'newer'):
+            if have_pyrex:
+                log.info("pyrexc:> %s" % (target_file))
+                self.mkpath(target_dir)
+                options = Pyrex.Compiler.Main.CompilationOptions(
+                    defaults=Pyrex.Compiler.Main.default_options,
+                    include_path=extension.include_dirs,
+                    output_file=target_file)
+                pyrex_result = Pyrex.Compiler.Main.compile(source,
+                                                           options=options)
+                if pyrex_result.num_errors != 0:
+                    raise DistutilsError,"%d errors while compiling %r with Pyrex" \
+                          % (pyrex_result.num_errors, source)
+            elif os.path.isfile(target_file):
+                log.warn("Pyrex required for compiling %r but not available,"\
+                         " using old target %r"\
+                         % (source, target_file))
+            else:
+                raise DistutilsError("Pyrex required for compiling %r"\
+                                     " but notavailable" % (source,))
+        return target_file
 
     def f2py_sources(self, sources, extension):
         new_sources = []
