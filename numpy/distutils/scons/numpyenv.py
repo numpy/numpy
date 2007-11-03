@@ -225,7 +225,6 @@ def _GetNumpyEnvironment(args):
     else:
         BuildDir(env['build_dir'], '.')
 
-    env['CC'] = 'tcc'
     # Generate help (if calling scons directly during debugging, this could be useful)
     Help(opts.GenerateHelpText(env))
 
