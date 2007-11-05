@@ -63,7 +63,7 @@ def dist2sconsfc(compiler):
         return 'g77'
     elif compiler.compiler_type == 'gnu95':
         # XXX ?
-        return 'f95'
+        return 'gfortran'
     else:
         return compiler.compiler_type
 

@@ -157,7 +157,7 @@ def _GetNumpyEnvironment(args):
             if len(env['f77_opt_path']) > 0:
                 # XXX: what is the right way to add one directory in the
                 # PATH ? (may not work on windows).
-                t = Tool(env['f77_opt'])
+                t = Tool(env['f77_opt'], toolpath = ['numpy/distutils/scons/tools'])
                 t(env) 
                 if sys.platform == 'win32':
                     env['ENV']['PATH'] += ';%s' % env['f77_opt_path']
