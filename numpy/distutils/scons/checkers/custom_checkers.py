@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Oct 31 07:00 PM 2007 J
+# Last Change: Mon Nov 05 07:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -75,19 +75,18 @@ def CheckLAPACK(context, autoadd = 1):
     if found:
         raise NotImplementedError("FIXME: siteconfig for lapack")
         # XXX: adapt this to libperf refactor
-        headers = ['cblas.h']
-        linkflags = []
-        cflags = []
-        st = check_include_and_run(context, 'CBLAS', [], headers, cblas_src,
-                                      libs, libpath, linkflags, cflags, autoadd)
-        if st:
-            add_info(env, 'cblas', opt_info('cblas', site = 1))
-            return st
     else:
         if sys.platform == 'nt':
             import warnings
             warning.warn('FIXME: LAPACK checks not implemented yet on win32')
             return 0
+        if sys.platform == 'darwin':
+            st, opts = CheckAccelerate(context, autoadd)
+            if st:
+                if st:
+                    add_info(env, 'lapack: Accelerate', opts)
+                return st
+
         else:
             env = context.env
 
@@ -98,6 +97,9 @@ def CheckLAPACK(context, autoadd = 1):
             if not env.has_key('F77_LDFLAGS'):
                 if not CheckF77Clib(context):
                     return 0
+
+            # XXX: all the code below is a mess, refactor it with new code from
+            # support module.
 
             # Get the mangled name of our test function
             sgesv_string = env['F77_NAME_MANGLER']('sgesv')
