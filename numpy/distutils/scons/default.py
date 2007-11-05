@@ -166,6 +166,9 @@ def get_cc_config(name):
                              thread = ['/MD', '/GX'], 
                              extra = ['/nologo'])
     else:
-        cfg = CompilerConfig()
+        # For not yet supported compiler, just put everything in optims from
+        # distutils
+        cfg = CompilerConfig(optims =
+                distutils.sysconfig.get_config_vars('CFLAGS'))
 
     return cfg
