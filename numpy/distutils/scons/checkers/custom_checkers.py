@@ -68,6 +68,8 @@ def CheckCBLAS(context, autoadd = 1):
             return 0
 
 def CheckLAPACK(context, autoadd = 1):
+    env = context.env
+
     # If section lapack is in site.cfg, use those options. Otherwise, use default
     section = "lapack"
     siteconfig, cfgfiles = get_config()
@@ -88,8 +90,6 @@ def CheckLAPACK(context, autoadd = 1):
                 return st
 
         else:
-            env = context.env
-
             # Get fortran stuff
             if not env.has_key('F77_NAME_MANGLER'):
                 if not CheckF77Mangling(context):
