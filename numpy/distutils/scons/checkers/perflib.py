@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Oct 31 08:00 PM 2007 J
+# Last Change: Mon Nov 05 07:00 PM 2007 J
 
 # This module defines checkers for performances libs providing standard API,
 # such as MKL (Intel), ATLAS, Sunperf (solaris and linux), Accelerate (Mac OS
@@ -8,6 +8,7 @@
 # Generally, you don't use those directly: they are used in 'meta' checkers,
 # such as BLAS, CBLAS, LAPACK checkers.
 import re
+import os
 from os.path import join as pjoin
 
 from numpy.distutils.system_info import default_lib_dirs
@@ -28,6 +29,13 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     
     See CheckATLAS or CheckMKL for examples."""
     context.Message("Checking %s ... " % name)
+
+    try:
+        value = os.environ[name]
+        if value == 'None':
+            return context.Result('Disabled from env through var %s !' % name), {}
+    except KeyError:
+        pass
 
     # Get site.cfg customization if any
     siteconfig, cfgfiles = get_config()
@@ -200,7 +208,7 @@ def CheckAccelerate(context, autoadd = 1, check_version = 0):
     return _check(context, name, section, defopts, headers, funcs,
                   check_version, None, autoadd)
 
-def CheckVeclib(context, autoadd = 1):
+def CheckVeclib(context, autoadd = 1, check_version = 0):
     """Checker for Veclib framework (on Mac OS X < 10.3)."""
     name    = 'Framework: Accelerate'
     # XXX: does it make sense to customize mac os X frameworks ?

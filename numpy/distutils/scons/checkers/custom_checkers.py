@@ -41,10 +41,10 @@ def CheckCBLAS(context, autoadd = 1):
             if st:
                 add_info(env, 'cblas', opts)
                 return st
-            #st, opts = CheckVeclib(context, autoadd)
-            #if st:
-            #    add_info(env, 'cblas', opt_info('vecLib'))
-            #    return st
+            st, opts = CheckVeclib(context, autoadd)
+            if st:
+                add_info(env, 'cblas', opt_info('vecLib'))
+                return st
 
             add_info(env, 'cblas', 'Def numpy implementation used')
             return 0
@@ -87,6 +87,11 @@ def CheckLAPACK(context, autoadd = 1):
             if st:
                 if st:
                     add_info(env, 'lapack: Accelerate', opts)
+                return st
+            st, opts = CheckAccelerate(context, autoadd)
+            if st:
+                if st:
+                    add_info(env, 'lapack: vecLib', opts)
                 return st
 
         else:
