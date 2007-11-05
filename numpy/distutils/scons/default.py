@@ -1,6 +1,7 @@
 #! /usr/bin/env python
-# Last Change: Fri Nov 02 06:00 PM 2007 J
+# Last Change: Mon Nov 05 06:00 PM 2007 J
 import sys
+import distutils.sysconfig
 
 # This is a copy of scons/Tools/__init__.py, because scons does not offer any
 # public api for this
@@ -120,10 +121,14 @@ class CompilerConfig:
 # which breaks command line options. So just don't put space.
 def get_cc_config(name):
     if name == 'gcc':
+        if distutils.sysconfig.get_config_vars('LDFLAGS')[0].find('-pthread'):
+            thread = ['-pthread']
+        else:
+            thread = []
         cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing', '-DNDEBUG'],
                              warn = ['-Wall', '-Wstrict-prototypes'],
                              debug_symbol = ['-g'], 
-                             thread = [])
+                             thread = thread)
     elif name == 'intelc':
         if sys.platform[:5] == 'win32':
             raise NotImplementedError('FIXME: intel compiler on windows not '\
