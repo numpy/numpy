@@ -1,4 +1,0 @@
-Changed names and behaviors in limits
-Changed usage of types
-Moved around some names
-Moved scimath functions to numpy.math
