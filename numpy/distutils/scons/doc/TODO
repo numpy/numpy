@@ -1,6 +1,9 @@
 Before second alpha (in order of priority):
-    - Basic warn, debug and optim flags : at least gcc+linux, mingw, VS, gcc+mac
-      os x, and posix ? (~ 2 hours).
+    - CheckHeader and CheckLib ala scons, with site.cfg support.
+    - Finish refactorization of perflib and custom checkers: check with
+      test_snippets in meta checkers, make meta-checkers overridable through
+      site.cfg
+    - f2py: supports the macro in doc/FORTRAN
 
 Before first beta:
     - f2py and scipy interoperability: N hours
@@ -27,7 +30,6 @@ Builder:
 
 Implementation details:
     - Refactor code for API generation (numpy/core/code_generators) -> Mostly done
-    - Refactor code organization in numpy/distutils/scons
 
 Tests:
     - What can be tested ?

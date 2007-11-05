@@ -1,0 +1,33 @@
+Mon, 05 Nov 2007 19:44:07 +0900 (2nd alpha)
+User-visible Changes:
+	* numpy/distutils/scons/checkers 
+	Perflib checkers (MKL, ATLAS, etc...) can be disabled by using
+	NAME=None at the environment, and overriden through site.cfg
+
+	* numpy/distutils/scons/checkers 
+	LAPACK checker now checks Accelerate and vecLib on Darwin (Mac OS X)
+
+	* numpy/distutils/scons/checkers 
+	CBLAS checker supports ATLAS, MKL, Sunperf, and Accelerate/vecLib
+	frameworks.
+
+	* numpy/distutils/scons/fortrahn 
+	Fortran checkers for name mangling and link options for C/Fortran
+	interop added
+
+	* Basic documentation on wiki
+
+	* sdist command now works
+
+	* show_config knows show meaningful informations (per package
+	configuration).
+
+Internal changes:
+	* Compilation options are now found from a CompilerConfig object, for
+	easier customization.
+
+	* Heavy refactorization of perflib checkers; most of the code is now
+	shared by all of them.
+
+	* Configuration options for libraries checkers is now passed through
+	configuration object
