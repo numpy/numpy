@@ -173,7 +173,8 @@ class scons(old_build_ext):
                                        verbose = self.verbose,
                                        dry_run = self.dry_run,
                                        force = self.force)
-        self.fcompiler.customize(self.distribution)
+	if self.fcompiler is not None:
+	    self.fcompiler.customize(self.distribution)
 
     def run(self):
         # XXX: when a scons script is missing, scons only prints warnings, and
@@ -201,8 +202,9 @@ class scons(old_build_ext):
             cmd.append('cc_opt=%s' % dist2sconscc(self.compiler))
             cmd.append('cc_opt_path=%s' % protect_path(get_tool_path(self.compiler)))
 
-            cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
-            cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
+	    if self.fcompiler:
+                cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
+                cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
 
             cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs()))
             if self.silent:

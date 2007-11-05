@@ -167,12 +167,12 @@ def _GetNumpyEnvironment(args):
             # scons could not understand cc_opt (bad name ?)
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
                                  str(e))
+        # XXX: really have to understand how fortran compilers work in scons...
+        env['F77'] = env['_FORTRAND']
     else:
-        t = Tool(FindTool(DEF_FORTRAN_COMPILERS))
-        t(env)
-
-    # XXX: really have to understand how fortran compilers work in scons...
-    env['F77'] = env['_FORTRAND']
+	raise NotImplementedError('FIXME: Support for env wo fcompiler not tested yet !')
+        #t = Tool(FindTool(DEF_FORTRAN_COMPILERS))
+        #t(env)
 
     # XXX: Really, we should use our own subclass of Environment, instead of
     # adding Numpy* functions !
