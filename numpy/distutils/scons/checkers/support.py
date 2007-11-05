@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Wed Oct 31 08:00 PM 2007 J
+# Last Change: Mon Nov 05 05:00 PM 2007 J
 
 # This module defines some helper functions, to be used by high level checkers
 
@@ -108,7 +108,7 @@ class ConfigOpts:
         msg = [r'%s : %s' % (k, i) for k, i in self.data.items()]
         return '\n'.join(msg)
 
-class ConfigRes():
+class ConfigRes:
     def __init__(self, name, cfgopts, origin, version = None):
         self.name = name
         self.data = cfgopts.data

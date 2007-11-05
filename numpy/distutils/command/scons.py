@@ -62,10 +62,10 @@ def dist2sconsfc(compiler):
     elif compiler.compiler_type == 'gnu':
         return 'g77'
     elif compiler.compiler_type == 'gnu95':
-        # XXX ?
         return 'gfortran'
     else:
-        return compiler.compiler_type
+        # XXX: Just give up for now, and use generic fortran compiler
+        return 'fortran'
 
 def get_compiler_executable(compiler):
     """For any give CCompiler instance, this gives us the name of C compiler
