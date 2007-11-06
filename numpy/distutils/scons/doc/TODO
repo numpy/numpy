@@ -1,13 +1,9 @@
 Before second alpha (in order of priority):
     - CheckHeader and CheckLib ala scons, with site.cfg support.
-    - Finish refactorization of perflib and custom checkers: check with
-      test_snippets in meta checkers, make meta-checkers overridable through
-      site.cfg
-    - f2py: supports the macro in doc/FORTRAN
     - support environments wo fortran compilers
 
 Before first beta:
-    - f2py and scipy interoperability: N hours
+    - f2py and scipy interoperability: N hours ?
 
 Design questions:
     - improve BrokenMathlib and Mathlib in core, and make them available to

@@ -1,3 +1,14 @@
+Tue, 06 Nov 2007 16:48:51 +0900
+User-visible Changes:
+	* LAPACK and CBLAS checkers are now overridable from site.cfg
+
+	* CheckF77Mangling and CheckF90Mangling define variables
+	NO_APPEND_FORTRAN, UPPERCASE_FORTRAN and UNDERSCORE_G77 (prepended by
+	F77_ or F90_ accordingly, e.g. F77_NO_APPEND_FORTRAN). PREPEND not
+	supported yet.
+
+	* Basic design explained in doc/DESIGN
+
 Mon, 05 Nov 2007 19:44:07 +0900 (2nd alpha)
 User-visible Changes:
 	* numpy/distutils/scons/checkers 

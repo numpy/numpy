@@ -1,4 +1,4 @@
-# Last Change: Fri Nov 02 05:00 PM 2007 J
+# Last Change: Tue Nov 06 05:00 PM 2007 J
 import os
 import sys
 import string
@@ -159,6 +159,8 @@ def CheckF90DummyMain(context):
 
 # Fortran name mangling
 def _CheckFMangling(context, fc, dummym, ext):
+    # XXX: rewrite this in a more straightfoward manner, and support prepending
+    # underscore
     subr = """
       subroutine foobar()
       return
@@ -220,6 +222,23 @@ int my_main() {
         env.Replace(LIBS = savedLIBS)
     return result, mangler, u, du, c
 
+def _set_mangling_var(context, u, du, case, type = 'F77'):
+    env = context.env
+    if du == '_':
+         env['%s_UNDERSCORE_G77' % type] = 1
+    else:
+         env['%s_UNDERSCORE_G77' % type] = 0
+
+    if u == '_':
+         env['%s_NO_APPEND_FORTRAN' % type] = 0
+    else:
+         env['%s_NO_APPEND_FORTRAN' % type] = 1
+
+    if case == 'upper':
+        env['%s_UPERCASE_FORTRAN' % type] = 1
+    else:
+        env['%s_UPERCASE_FORTRAN' % type] = 0
+
 def CheckF77Mangling(context):
     """Find mangling of the F77 compiler.
     
@@ -235,6 +254,7 @@ def CheckF77Mangling(context):
     if res:
         context.Result("'%s', '%s', %s-case." % (u, du, c))
         env['F77_NAME_MANGLER'] = mangler
+        _set_mangling_var(context, u, du, c, 'F77')
     else:
         context.Result("all variants failed.")
     return res
@@ -246,6 +266,7 @@ def CheckF90Mangling(context):
     if res:
         context.Result("'%s', '%s', %s-case." % (u, du, c))
         env['F90_NAME_MANGLER'] = mangler
+        _set_mangling_var(context, u, du, c, 'F90')
     else:
         context.Result("all variants failed.")
     return res

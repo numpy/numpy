@@ -1,4 +1,4 @@
-.. Last Change: Tue Oct 30 12:00 PM 2007 J
+.. Last Change: Tue Nov 06 05:00 PM 2007 J
 .. vim:syntax=rest
 
 numpy.distutils.scons is basically an extension of numpy.distutils to use scons
@@ -70,3 +70,71 @@ For now, builders to build Ctypes extensions, shared libraries and python
 extensions are provided. I don't think static builders are necessary, since the
 code is unusable for any python extension, hence not really making sense for
 our usage.
+
+Global design
+=============
+
+For now, distutils.scons consists in mainly 5 parts: 
+    - the core part: numpyenv.py, default.py, utils.py, libinfo.py and
+      libinfo_scons.py
+    - custom builders: custom_builder.py, extension.py, extension_scons.py
+    - fortran support: fortran.py and fortran_scons.py.     
+    - custom checkers: checker submodule
+    - additional tools: tools submodule
+
+Only the core is really necessary for basic scons use (that is code which does
+not need BLAS/LAPACK or fortran support). Most of the other parts are necessary
+for advanced only projects, which mix fortran/C code, etc...
+
+Core
+----
+
+This makes interop with distutils possible. Some small parts are also parts of
+numpy.distutils. Parts which communicate directly with distutils are kept to a
+bare minimum, to avoid problems when setuptools will be better supported.  The
+core main function is GetNumpyEnvironment, which is what user will use in
+SConscripts to get environments.
+
+A function NumpyCheckLib is also provided, to check libraries ala autoconf
+(that is by trying to link a give library with a given list of symbols). The
+function is designed to behave exactly like CheckLib, except that is also
+supports being overridable by site.cfg and env var (ala system_info).
+
+custom builders
+---------------
+
+For now, only building C based and Ctypes-based is supported (SWIG and Pyrex
+will be next). Only the function whose names are prepended by Numpy should be
+used (those take care of build dir configuration and so on). Those are
+effectively scons builders.
+
+When you implement a new generic builder, please follow the separation: a part
+which has nothing to do with numpy, and a part based on the former to take care
+of build dir configuration. This enables upstream integration of some code.
+
+fortran support
+---------------
+
+This consists mainly in checkers usable from scons for mangling, link options
+for Fortran/C interop, etc...
+
+custom_checkers
+---------------
+
+This submodule defines some code for custom checkers. This is where performance
+libraries checks are implemented, as well as meta-checkers. The idea is that
+perflib defines functions to check for one performance library (say ATLAS,
+MKL), and that checkers in checkers/custom_checkers.py are 'meta' checkers
+based on perflib checkers. This makes meta-checkers easy to build on existing code.
+
+Most of the code for perflib checkers is generic enough so that writing a new
+one is easy (generally, a few lines of code). Those checkers can also
+optionally find version information if you implement the version_check
+function.
+
+Tools
+-----
+
+For now, it implements a gfortran tool (not yet supported by upstream scons),
+and a substinfile tool which is useful to generated a configuration file from a
+python dictionary (think config.h.in -> config.h).
