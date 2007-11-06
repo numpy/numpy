@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 29 12:00 PM 2007 J
+# Last Change: Tue Nov 06 04:00 PM 2007 J
 
 # This module should contains useful test code (as strings). They are mainly
 # useful for checkers who need to run the tests (to check the mere presence of
@@ -7,7 +7,14 @@
 
 # Check whether CBLAS sgemm works
 cblas_sgemm = r"""
+enum CBLAS_ORDER {CblasRowMajor=101, CblasColMajor=102};
+enum CBLAS_TRANSPOSE {CblasNoTrans=111, CblasTrans=112, CblasConjTrans=113};
 
+void cblas_sgemm(const enum CBLAS_ORDER Order, const enum CBLAS_TRANSPOSE TransA,
+                 const enum CBLAS_TRANSPOSE TransB, const int M, const int N,
+                 const int K, const float alpha, const float *A,
+                 const int lda, const float *B, const int ldb,
+                 const float beta, float *C, const int ldc);
 int
 main (void)
 {
