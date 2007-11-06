@@ -1,9 +1,9 @@
 Before second alpha (in order of priority):
     - CheckHeader and CheckLib ala scons, with site.cfg support.
-    - support environments wo fortran compilers
 
 Before first beta:
     - f2py and scipy interoperability: N hours ?
+    - support environments wo fortran compilers
 
 Design questions:
     - improve BrokenMathlib and Mathlib in core, and make them available to

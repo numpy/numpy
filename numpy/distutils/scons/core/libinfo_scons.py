@@ -1,10 +1,15 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 26 04:00 PM 2007 J
+# Last Change: Tue Nov 06 07:00 PM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). scons dependant code.
 import ConfigParser
 from copy import deepcopy
+
+import os
+from numpy.distutils.scons.core.libinfo import get_config_from_section, get_config
+from numpy.distutils.scons.checkers.support import ConfigOpts, save_and_set, \
+                                                   restore, check_symbol
 
 from libinfo import get_config, get_paths, parse_config_param
 from utils import get_empty
@@ -22,106 +27,16 @@ int main(int argc, char** argv)
     return 0;
 }\n """
 
-def _CheckLib(context, libs, symbols, header, language, section, siteconfig, 
-              libpath, cpppath, verbose):
-    """Implementation for checking a list of symbols, with libs.
-    
-    Assumes that libs, symbol, header, libpath and cpppath are sequences (list
-    or tuples). DO NOT USE DIRECTLY IN SCONSCRIPT !!!"""
-    # XXX: sanitize API for section/siteconfig option: if section is not given,
-    # can we just say to ignore the sitecfg ?
-    if not siteconfig:
-        siteconfig, cfgfiles = get_config()
+def NumpyCheckLibAndHeader(context, libs, symbols = None, headers = None,
+        language = None, section = None, name = None,
+        autoadd = 1):
+    # XXX: would be nice for each extension to add an option to
+    # command line.
 
-    def get_descr():
-        try:
-            descr = siteconfig.items(section)
-        except ConfigParser.NoSectionError:
-            descr = ""
-        sdescr = ""
-        for i in descr:
-            sdescr += str(i) + '\n'
-        return sdescr
-        
-    # Generate the source string of the conftest
-    src = ""
-    callstr = ""
-
-    if symbols:
-        for s in symbols:
-            # XXX: should put undef here (ala autoconf)
-            src += _SYMBOL_DEF_STR % s
-            callstr += "%s();" % s
-
-    src += _MAIN_CALL_CENTER % callstr
-    # HUGE HACK: we want this test to depend on site.cfg files obviously, since
-    # a change in them can change the libraries tested. But Depends does not
-    # seem to work in configuration context, and I don't see any simple way to
-    # have the same functionality. So I put the configuration we got from
-    # get_config into the source code, such as a change in site.cfg will change
-    # the source file, and thus taken into account to decide whether to rebuild
-    # from tjhe SconfTaskMaster point of view.
-
-    # XXX: I put the content between #if 0 / #endif, which is the most portable
-    # way I am aware of for multilines comments in C and C++ (this is also
-    # recommended in C++ portability guide of mozilla for nested comments,
-    # which may happen here). This is also the most robust, since it seems
-    # unlikely to have any #endif somewhere in the return value of get_descr.
-    src += "#if 0\n"
-    src += get_descr()
-    src += "\n#endif\n"
-
-    # XXX: handle autoadd
-    # XXX: handle extension 
-    extension = '.c'
-
-    if section and siteconfig:
-        #print "Checking %s from section %s" % (libs[0], section)
-        res = _check_lib_section(context, siteconfig, section, src, libs,
-                                 libpath, cpppath)
-    else:
-        oldLIBS = context.env.has_key('LIBS') and deepcopy(context.env['LIBS'])
-        context.env.Append(LIBS = libs)
-        res = context.TryLink(src, '.c')
-        if not res:
-            context.env.Replace(LIBS = oldLIBS) 
-
-    return res
-
-
-def NumpyCheckLib(context, libs, symbols = None, header = None, 
-                  language = None, section = None, siteconfig = None, name = None, verbose = None):
-    """Check for symbol in libs. 
-    
-    This is the general purpose replacement for numpy.distutils.system_info. It
-    uses the options in siteconfig so that search path can be overwritten in
-    *.cfg files (using section given by section argument). If siteconfig is
-    None, it does uses get_config function to get the configuration, which
-    gives the old numpy.distutils behaviour to get options.
-
-    
-    Convention: if the section has *dirs parameters, it will use them all in
-    one pass, e.g if library_dirs is ['/usr/local/lib', '/usr/local/mylib'], it
-    will try to link the given libraries by appending both directories to the
-    LIBPATH."""
-    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # This is really preliminary, and needs a lot of love before being in good
-    # shape !!!!!
-    #
-    # Biggest problem: how to show information about found libraries ? Since
-    # they are found implicitely through build tools (compiler and linker), we
-    # can not give explicit information. IMHO (David Cournapeau), it is better
-    # to find them implicitely because it is much more robust. But for the info...
-    # 
-    # This needs testing, too.
-    #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     from SCons.Util import is_List
 
     env = context.env
 
-    # XXX: would be nice for each extension to add an option to
-    # command line.
-    # XXX: handle env var
     # XXX: handle language
     if language:
         raise NotImplementedError("FIXME: language selection not implemented yet !")
@@ -131,66 +46,78 @@ def NumpyCheckLib(context, libs, symbols = None, header = None,
         libs = [libs]
     if symbols and not is_List(symbols):
         symbols = [symbols]
+    if headers and not is_List(headers):
+        headers = [headers]
 
     if not name:
         name = libs[0]
 
+    # Get site.cfg customization if any
+    siteconfig, cfgfiles = get_config()
+    (cus_cpppath, cus_libs, cus_libpath), found = \
+        get_config_from_section(siteconfig, section)
+    if found:
+        opts = ConfigOpts(cpppath = cus_cpppath, libpath = cus_libpath, 
+                          libs = cus_libs)
+        # XXX: fix this
+        if len(cus_libs) == 1 and len(cus_libs[0]) == 0:
+            opts['libs'] = libs
+    else:
+        opts = ConfigOpts(libs = libs)
+    
     # Display message
     if symbols:
         sbstr = ', '.join(symbols)
-        context.Message('Checking for symbol(s) %s in %s... ' % (sbstr, name))
+        msg = 'Checking for symbol(s) %s in %s... ' % (sbstr, name)
+        if found:
+            msg += '(customized from site.cfg) '
     else:
-        context.Message('Checking for %s... ' % name)
+        msg = 'Checking for %s... ' % name
+        if found:
+            msg += '(customized from site.cfg) '
+    context.Message(msg)
 
-    # Call the implementation
-    libpath = None
-    cpppath = None
-    res = _CheckLib(context, libs, symbols, header, language, section,
-                    siteconfig, libpath, cpppath, verbose)
-    context.Result(res)
-    return res
-
-def _check_lib_section(context, siteconfig, section, src, libs, libpath, cpppath):
-    # Convention: if an option is found in site.cfg for the given
-    # section, it takes precedence on the arguments libs, libpath,
-    # cpppath.
-    res = 1
-
-    # XXX: refactor this mess
+    # Disable from environment if name=None is in it
     try:
-        newLIBPATH = get_paths(siteconfig.get(section, 'library_dirs'))
-    except ConfigParser.NoSectionError, e:
-        if libpath:
-            newLIBPATH = libpath
-        else:
-            newLIBPATH = []
+        value = os.environ[name]
+        if value == 'None':
+            return context.Result('Disabled from env through var %s !' % name), {}
+    except KeyError:
+        pass
 
+    # Check whether the header is available (CheckHeader-like checker)
+    saved = save_and_set(env, opts)
     try:
-        newCPPPATH = get_paths(siteconfig.get(section, 'include_dirs'))
-    except ConfigParser.NoSectionError, e:
-        if cpppath:
-            newCPPPATH = cpppath
-        else:
-            newCPPPATH = []
+        src_code = [r'#include <%s>' % h for h in headers]
+        src_code.extend([r'#if 0', str(opts), r'#endif', '\n'])
+        src = '\n'.join(src_code)
+        st = context.TryCompile(src, '.c')
+    finally:
+        restore(env, saved)
 
+    if not st:
+        context.Result('Failed (could not check header(s) : check config.log '\
+                       'in %s for more details)' % env['build_dir'])
+        return st
+
+    # Check whether the library is available (CheckLib-like checker)
+    saved = save_and_set(env, opts)
     try:
-        newLIBS = parse_config_param(siteconfig.get(section, 'libraries'))
-    except ConfigParser.NoSectionError, e:
-        if libs:
-            newLIBS = libs
-        else:
-            newLIBS = []
-
-    lastLIBPATH = get_empty(context.env,'LIBPATH')
-    lastLIBS = get_empty(context.env,'LIBS')
-    lastCPPPATH = get_empty(context.env,'CPPPATH')
-    context.env.Append(LIBPATH = newLIBPATH)
-    context.env.Append(LIBS = newLIBS)
-    context.env.Append(CPPPATH = newCPPPATH)
-    res *= context.TryLink(src, '.c')
-    if not res:
-        context.env.Replace(LIBS = lastLIBS, 
-                            LIBPATH = lastLIBPATH, 
-                            CPPPATH = lastCPPPATH)
-
-    return res
+        for sym in symbols:
+            # Add opts at the end of the source code to force dependency of
+            # check from options.
+            extra = [r'#if 0', str(opts), r'#endif', '\n']
+            st = check_symbol(context, None, sym, '\n'.join(extra))
+            if not st:
+                break
+    finally:
+        if st == 0 or autoadd == 0:
+            restore(env, saved)
+        
+    if not st:
+        context.Result('Failed (could not check symbol %s : check config.log '\
+                       'in %s for more details))' % (sym, env['build_dir']))
+        return st
+        
+    context.Result(st)
+    return st

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 29 03:00 PM 2007 J
+# Last Change: Tue Nov 06 06:00 PM 2007 J
 
 # Module for support to look for external code (replacement of
 # numpy.distutils.system_info). KEEP THIS INDEPENDANT OF SCONS !
@@ -71,17 +71,17 @@ def get_config_from_section(siteconfig, section):
     if siteconfig.has_section(section):
         try:
             libpath = get_paths(siteconfig.get(section, 'library_dirs'))
-        except ConfigParser.NoSectionError, e:
+        except ConfigParser.NoOptionError, e:
             libpath = []
 
         try:
             cpppath = get_paths(siteconfig.get(section, 'include_dirs'))
-        except ConfigParser.NoSectionError, e:
+        except ConfigParser.NoOptionError, e:
             cpppath = []
 
         try:
             libs = parse_config_param(siteconfig.get(section, 'libraries'))
-        except ConfigParser.NoSectionError, e:
+        except ConfigParser.NoOptionError, e:
             libs = []
         return (cpppath, libs, libpath), 1
     else:

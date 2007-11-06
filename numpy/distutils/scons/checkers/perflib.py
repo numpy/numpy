@@ -42,6 +42,8 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
     if found:
         opts = ConfigOpts(cpppath = cpppath, libpath = libpath, libs = libs)
+        if len(libs) == 1 and len(libs[0]) == 0:
+            opts['libs'] = defopts['libs']
     else:
         opts = defopts
 
@@ -52,8 +54,9 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     # Check whether the header is available (CheckHeader-like checker)
     saved = save_and_set(env, opts)
     try:
-        # XXX: add dep vars in code
-        src = '\n'.join([r'#include <%s>' % h for h in headers_to_check])
+        src_code = [r'#include <%s>' % h for h in headers_to_check]
+        src_code.extend([r'#if 0', str(opts), r'#endif', '\n'])
+        src = '\n'.join(src_code)
         st = context.TryCompile(src, '.c')
     finally:
         restore(env, saved)
@@ -67,8 +70,8 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     saved = save_and_set(env, opts)
     try:
         for sym in funcs_to_check:
-            # XXX: add dep vars in code
-            st = check_symbol(context, headers_to_check, sym)
+            extra = [r'#if 0', str(opts), r'#endif', '\n']
+            st = check_symbol(context, headers_to_check, sym, '\n'.join(extra))
             if not st:
                 break
     finally:

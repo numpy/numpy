@@ -1,9 +1,9 @@
 # vim:syntax=python
-from numpy.distutils.scons import GetNumpyEnvironment, NumpyCheckLib
+from numpy.distutils.scons import GetNumpyEnvironment, NumpyCheckLibAndHeader
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
-config = env.NumpyConfigure(custom_tests = {'NumpyCheckLib' : NumpyCheckLib})
-if not config.NumpyCheckLib('sndfile', 'sf_open', section = 'sndfile'):
+config = env.NumpyConfigure(custom_tests = {'NumpyCheckLibAndHeader' : NumpyCheckLibAndHeader})
+if not config.NumpyCheckLibAndHeader('sndfile', 'sf_open', 'sndfile.h', section = 'sndfile'):
     print "sndfile not found, this package cannot work without sndfile !"
 config.Finish()

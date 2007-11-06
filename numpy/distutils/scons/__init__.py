@@ -1,5 +1,5 @@
 from core.numpyenv import GetNumpyEnvironment, GetNumpyOptions
-from core.libinfo_scons import NumpyCheckLib
+from core.libinfo_scons import NumpyCheckLibAndHeader
 from core.libinfo import get_paths as scons_get_paths
 from core.extension import get_python_inc, get_pythonlib_dir
 from core.utils import isstring, rsplit
