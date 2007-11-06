@@ -50,7 +50,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckAccelerate(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (Accelerate Framework)', 
-                                           res.cfgopts, ['cblas.h'], cblas_src, autoadd)
+                                           res.cfgopts, ['Accelerate/Accelerate.h'], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
@@ -58,7 +58,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckVeclib(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (vecLib Framework)', 
-                                           res.cfgopts, ['cblas.h'], cblas_src, autoadd)
+                                           res.cfgopts, ['vecLib/vecLib.h'], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
