@@ -1,4 +1,4 @@
-# Last Change: Fri Nov 02 06:00 PM 2007 J
+# Last Change: Tue Nov 06 07:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -7,7 +7,6 @@ from copy import deepcopy
 
 from numpy.distutils.scons import get_python_inc, get_pythonlib_dir
 from numpy.distutils.scons import GetNumpyEnvironment
-from numpy.distutils.scons import NumpyCheckLib
 from numpy.distutils.scons import CheckCBLAS 
 from numpy.distutils.scons.configuration import write_info
 
@@ -29,8 +28,7 @@ if os.name == 'nt':
 # XXX: separate env for configuration
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
     'CheckMathlib' : CheckMathlib, 
-    'CheckCBLAS' : CheckCBLAS, 
-    'NumpyCheckLib' : NumpyCheckLib})
+    'CheckCBLAS' : CheckCBLAS})
 
 # Convention: list of tuples (definition, value). value:
 # - 0: #undef definition
