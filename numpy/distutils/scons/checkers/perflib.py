@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Nov 05 07:00 PM 2007 J
+# Last Change: Tue Nov 06 01:00 PM 2007 J
 
 # This module defines checkers for performances libs providing standard API,
 # such as MKL (Intel), ATLAS, Sunperf (solaris and linux), Accelerate (Mac OS
@@ -53,7 +53,7 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     saved = save_and_set(env, opts)
     try:
         # XXX: add dep vars in code
-        src = '\n'.join([r'#include <%s>\n' % h for h in headers_to_check])
+        src = '\n'.join([r'#include <%s>' % h for h in headers_to_check])
         st = context.TryCompile(src, '.c')
     finally:
         restore(env, saved)
