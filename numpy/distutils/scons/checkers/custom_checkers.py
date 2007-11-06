@@ -1,12 +1,12 @@
 #! /usr/bin/env python
-# Last Change: Tue Nov 06 04:00 PM 2007 J
+# Last Change: Tue Nov 06 06:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
 import os.path
 from distutils.util import get_platform
 
-from numpy.distutils.scons.libinfo import get_config_from_section, get_config
+from numpy.distutils.scons.core.libinfo import get_config_from_section, get_config
 from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
         c_sgemm as sunperf_src, lapack_sgesv
 

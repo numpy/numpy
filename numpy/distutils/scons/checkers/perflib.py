@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Nov 06 01:00 PM 2007 J
+# Last Change: Tue Nov 06 06:00 PM 2007 J
 
 # This module defines checkers for performances libs providing standard API,
 # such as MKL (Intel), ATLAS, Sunperf (solaris and linux), Accelerate (Mac OS
@@ -12,7 +12,7 @@ import os
 from os.path import join as pjoin
 
 from numpy.distutils.system_info import default_lib_dirs
-from numpy.distutils.scons.libinfo import get_config_from_section, get_config
+from numpy.distutils.scons.core.libinfo import get_config_from_section, get_config
 from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
         c_sgemm as sunperf_src, lapack_sgesv
 

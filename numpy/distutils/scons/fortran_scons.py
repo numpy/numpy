@@ -1,4 +1,4 @@
-# Last Change: Tue Nov 06 05:00 PM 2007 J
+# Last Change: Tue Nov 06 06:00 PM 2007 J
 import os
 import sys
 import string
@@ -6,7 +6,7 @@ import string
 from os.path import basename, join as pjoin, dirname
 from copy import deepcopy
 
-from utils import popen_wrapper
+from numpy.distutils.scons.core.utils import popen_wrapper
 from fortran import parse_f77link, check_link_verbose
 
 #-----------------

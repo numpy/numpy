@@ -1,9 +1,10 @@
-from numpyenv import GetNumpyEnvironment, GetNumpyOptions
-from libinfo_scons import NumpyCheckLib
-from libinfo import get_paths as scons_get_paths
+from core.numpyenv import GetNumpyEnvironment, GetNumpyOptions
+from core.libinfo_scons import NumpyCheckLib
+from core.libinfo import get_paths as scons_get_paths
+from core.extension import get_python_inc, get_pythonlib_dir
+from core.utils import isstring, rsplit
+
 from checkers import CheckCBLAS, CheckLAPACK
-from extension import get_python_inc, get_pythonlib_dir
-from utils import isstring
 from fortran_scons import CheckF77Verbose, CheckF77Clib, CheckF77Mangling
 
 def test(level=1, verbosity=1):
