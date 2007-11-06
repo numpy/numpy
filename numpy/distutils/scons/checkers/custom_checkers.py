@@ -50,7 +50,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckAccelerate(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (Accelerate Framework)', 
-                                           res.cfgopts, ['Accelerate/Accelerate.h'], cblas_src, autoadd)
+                                           res.cfgopts, [], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
@@ -58,7 +58,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckVeclib(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (vecLib Framework)', 
-                                           res.cfgopts, ['vecLib/vecLib.h'], cblas_src, autoadd)
+                                           res.cfgopts, [], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
@@ -72,7 +72,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckMKL(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (MKL)', res.cfgopts,
-                                           ['mkl.h'], cblas_src, autoadd)
+                                           [], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
@@ -81,7 +81,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckATLAS(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (ATLAS)', res.cfgopts,
-                                           ['cblas.h'], cblas_src, autoadd)
+                                           [], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
@@ -90,7 +90,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckSunperf(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (Sunperf)', res.cfgopts,
-                                           ['sunperf.h'], cblas_src, autoadd)
+                                           [], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
