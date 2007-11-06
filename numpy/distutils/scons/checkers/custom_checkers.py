@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Nov 05 07:00 PM 2007 J
+# Last Change: Tue Nov 06 01:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -18,6 +18,15 @@ from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
 from support import check_include_and_run
 
 def CheckCBLAS(context, autoadd = 1):
+    """This checker tries to find optimized library for cblas.
+
+    This test is pretty strong: it first detects an optimized library, and then
+    tests that a simple cblas program can be run using this lib.
+    
+    It looks for the following libs:
+        - Mac OS X: Accelerate, and then vecLib.
+        - Others: MKL, then ATLAS, then Sunperf."""
+    # XXX: rpath vs LD_LIBRARY_PATH ?
     env = context.env
 
     # If section cblas is in site.cfg, use those options. Otherwise, use default
@@ -37,31 +46,52 @@ def CheckCBLAS(context, autoadd = 1):
             return st
     else:
         if sys.platform == 'darwin':
-            st, opts = CheckAccelerate(context, autoadd)
+            st, res = CheckAccelerate(context, autoadd)
             if st:
-                add_info(env, 'cblas', opts)
+                st = check_include_and_run(context, 'CBLAS (Accelerate Framework)', 
+                                           res.cfgopts, ['cblas.h'], cblas_src, autoadd)
+                if st:
+                    add_info(env, 'cblas', res)
                 return st
-            st, opts = CheckVeclib(context, autoadd)
+
+            st, res = CheckVeclib(context, autoadd)
             if st:
-                add_info(env, 'cblas', opt_info('vecLib'))
+                st = check_include_and_run(context, 'CBLAS (vecLib Framework)', 
+                                           res.cfgopts, ['cblas.h'], cblas_src, autoadd)
+                if st:
+                    add_info(env, 'cblas', res)
                 return st
 
             add_info(env, 'cblas', 'Def numpy implementation used')
             return 0
             
         else:
-            # Check MKL, then ATLAS, then Sunperf
-            st, opts = CheckMKL(context, autoadd)
+            # XXX: think about how to share headers info between checkers ?
+            # Check MKL
+            st, res = CheckMKL(context, autoadd)
             if st:
-                add_info(env, 'cblas', opts)
+                st = check_include_and_run(context, 'CBLAS (MKL)', res.cfgopts,
+                                           [], cblas_src, autoadd)
+                if st:
+                    add_info(env, 'cblas', res)
                 return st
-            st, opts = CheckATLAS(context, autoadd)
+
+            # Check ATLAS
+            st, res = CheckATLAS(context, autoadd)
             if st:
-                add_info(env, 'cblas', opts)
+                st = check_include_and_run(context, 'CBLAS (ATLAS)', res.cfgopts,
+                                           ['cblas.h'], cblas_src, autoadd)
+                if st:
+                    add_info(env, 'cblas', res)
                 return st
-            st, opts = CheckSunperf(context, autoadd)
+
+            # Check Sunperf
+            st, res = CheckSunperf(context, autoadd)
             if st:
-                add_info(env, 'cblas', opts)
+                st = check_include_and_run(context, 'CBLAS (Sunperf)', res.cfgopts,
+                                           ['sunperf.h'], cblas_src, autoadd)
+                if st:
+                    add_info(env, 'cblas', res)
                 return st
 
             add_info(env, 'cblas', 'Def numpy implementation used')

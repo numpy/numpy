@@ -1,10 +1,12 @@
 #! /usr/bin/env python
-# Last Change: Mon Nov 05 05:00 PM 2007 J
+# Last Change: Tue Nov 06 01:00 PM 2007 J
 
 # This module defines some helper functions, to be used by high level checkers
 
 from copy import deepcopy
 
+# Tools to save and restore environments construction variables (the ones often
+# altered for configuration tests)
 _arg2env = {'cpppath' : 'CPPPATH',
             'cflags' : 'CFLAGS',
             'libpath' : 'LIBPATH',
@@ -32,26 +34,6 @@ def restore(env, saved_keys):
              [saved_keys[k] for k in keys])
     kw = dict(kw)
     env.Replace(**kw)
-
-def check_symbol(context, headers, sym, extra = r''):
-    # XXX: add dep vars in code
-    #code = [r'#include <%s>' %h for h in headers]
-    code = []
-    code.append(r'''
-#undef %(func)s
-#ifdef __cplusplus
-extern "C" 
-#endif
-char %(func)s();
-
-int main()
-{
-return %(func)s();
-return 0;
-}
-''' % {'func' : sym})
-    code.append(extra)
-    return context.TryLink('\n'.join(code), '.c')
 
 class ConfigOpts:
     # Any added key should be added as an argument to __init__ 
@@ -108,18 +90,39 @@ class ConfigOpts:
         msg = [r'%s : %s' % (k, i) for k, i in self.data.items()]
         return '\n'.join(msg)
 
+# Implementation function to check symbol in a library
+def check_symbol(context, headers, sym, extra = r''):
+    # XXX: add dep vars in code
+    #code = [r'#include <%s>' %h for h in headers]
+    code = []
+    code.append(r'''
+#undef %(func)s
+#ifdef __cplusplus
+extern "C" 
+#endif
+char %(func)s();
+
+int main()
+{
+return %(func)s();
+return 0;
+}
+''' % {'func' : sym})
+    code.append(extra)
+    return context.TryLink('\n'.join(code), '.c')
+
 class ConfigRes:
     def __init__(self, name, cfgopts, origin, version = None):
         self.name = name
-        self.data = cfgopts.data
+        self.cfgopts = cfgopts
         self.origin = origin
         self.version = version
 
     def __getitem__(self, key):
-        return self.data[key]
+        return self.cfgopts.data[key]
 
     def __setitem__(self, key, item):
-        self.data[key] = item
+        self.cfgopts.data[key] = item
 
     def is_customized(self):
         return bool(self.origin)
@@ -131,7 +134,7 @@ class ConfigRes:
         else:
             msg += ['  Using default configuration:']
 
-        msg += ['  %s : %s' % (k, i) for k, i in self.data.items() if len(i) > 0]
+        msg += ['  %s : %s' % (k, i) for k, i in self.cfgopts.data.items() if len(i) > 0]
         msg += ['  Version is : %s' % self.version]
         return '\n'.join(msg)
 
@@ -161,12 +164,10 @@ def _check_headers(context, cpppath, cflags, headers, autoadd):
     if ret == 0 or autoadd == 0:         
         env.Replace(CPPPATH = oldCPPPATH)        
         env.Replace(CFLAGS = oldCFLAGS)          
-        return 0         
         
     return ret 
 
-def check_include_and_run(context, name, cpppath, headers, run_src, libs,
-                          libpath, linkflags, cflags, autoadd = 1):
+def check_include_and_run(context, name, opts, headers, run_src, autoadd = 1):
     """This is a basic implementation for generic "test include and run"
     testers.
     
@@ -188,35 +189,28 @@ def check_include_and_run(context, name, cpppath, headers, run_src, libs,
     context.Message('Checking for %s ... ' % name)
     env = context.env
 
-    ret = _check_headers(context, cpppath, cflags, headers, autoadd)
+    ret = _check_headers(context, opts['cpppath'], opts['cflags'], headers, 
+                         autoadd)
     if not ret:
-         context.Result('Failed: %s include not found' % name)
+        context.Result('Failed: %s include not found' % name)
+        return 0
 
     #------------------------------
     # Check a simple example works
     #------------------------------
-    oldLIBPATH = (env.has_key('LIBPATH') and deepcopy(env['LIBPATH'])) or []
-    oldLIBS = (env.has_key('LIBS') and deepcopy(env['LIBS'])) or []
-    # XXX: RPATH, drawbacks using it ?
-    oldRPATH = (env.has_key('RPATH') and deepcopy(env['RPATH'])) or []
-    oldLINKFLAGS = (env.has_key('LINKFLAGS') and deepcopy(env['LINKFLAGS'])) or []
-    env.AppendUnique(LIBPATH = libpath)
-    env.AppendUnique(LIBS = libs)
-    env.AppendUnique(RPATH = libpath)
-    env.AppendUnique(LINKFLAGS = linkflags)
-
-    # HACK: we add libpath and libs at the end of the source as a comment, to
-    # add dependency of the check on those.
-    src = '\n'.join(['#include <%s>' % h for h in headers] +\
-                    [run_src, '#if 0', '%s' % libpath, 
-                     '%s' % headers, '%s' % libs, '#endif'])
-    ret = context.TryLink(src, '.c')
-    if (not ret or not autoadd):
-        # If test failed or autoadd = 0, restore everything
-        env.Replace(LIBS = oldLIBS)
-        env.Replace(LIBPATH = oldLIBPATH)
-        env.Replace(RPATH = oldRPATH)
-        env.Replace(LINKFLAGS = oldLINKFLAGS)
+    saved = save_and_set(env, opts)
+    try:
+        # XXX: reenable this
+        ## HACK: we add libpath and libs at the end of the source as a comment, to
+        ## add dependency of the check on those.
+        #src = '\n'.join(['#include <%s>' % h for h in headers] +\
+        #                [run_src, '#if 0', '%s' % libpath, 
+        #                 '%s' % headers, '%s' % libs, '#endif'])
+        ret = context.TryRun(src, '.c')
+    except:
+        if (not ret or not autoadd):
+            # If test failed or autoadd is disabled, restore everything
+            restore(env, saved)
 
     if not ret:
         context.Result('Failed: %s test could not be linked and run' % name)

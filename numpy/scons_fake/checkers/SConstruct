@@ -2,6 +2,7 @@
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons.checkers.perflib import \
         CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf
+from numpy.distutils.scons.checkers.custom_checkers import CheckCBLAS
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
@@ -16,6 +17,7 @@ config = env.NumpyConfigure(custom_tests =
     {'CheckATLAS' : CheckATLAS,
     'CheckMKL' : CheckMKL,
     'CheckAccelerate' : CheckAccelerate,
+    'CheckCBLAS' : CheckCBLAS,
     'CheckSunperf' : CheckSunperf})
 
 do_check = 1
@@ -30,9 +32,12 @@ if do_check:
     if st:
         print opts
     st, opts = config.CheckSunperf(autoadd = 0)
+    if st:
+        print opts
+    st = config.CheckCBLAS(autoadd = 0)
 
     if env.has_key('LIBS'):
-        print env.Dump('LIBS')
+        print "LIBS of env is %s" % env.Dump('LIBS')
     else:
         print "No LIBS in env"
 
