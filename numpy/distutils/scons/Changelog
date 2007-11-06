@@ -1,5 +1,9 @@
 Tue, 06 Nov 2007 16:48:51 +0900
 User-visible Changes:
+	* NumpyCheckLibAndHeader checker. This can be used as a generic
+	checker for simple checks (list of libraries/headers/symbols to
+	check).
+
 	* LAPACK and CBLAS checkers are now overridable from site.cfg
 
 	* CheckF77Mangling and CheckF90Mangling define variables

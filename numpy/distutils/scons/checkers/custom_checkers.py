@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Nov 06 06:00 PM 2007 J
+# Last Change: Tue Nov 06 08:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -80,6 +80,7 @@ def CheckCBLAS(context, autoadd = 1):
             # Check ATLAS
             st, res = CheckATLAS(context, autoadd)
             if st:
+                res.cfgopts['libs'].insert(0, 'blas')
                 st = check_include_and_run(context, 'CBLAS (ATLAS)', res.cfgopts,
                                            [], cblas_src, autoadd)
                 if st:
@@ -176,8 +177,9 @@ def CheckLAPACK(context, autoadd = 1):
                 return st
 
             # Check ATLAS
-            st, opts = CheckATLAS(context, autoadd = 1)
+            st, res = CheckATLAS(context, autoadd = 1)
             if st:
+                res.cfgopts['libs'].insert(0, 'lapack')
                 st = check_include_and_run(context, 'LAPACK (ATLAS)', res.cfgopts,
                                            [], test_src, autoadd)
                 if st:

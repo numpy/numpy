@@ -9,10 +9,11 @@ env = GetNumpyEnvironment(ARGUMENTS)
 
 import os
 try:
-    os.environ['DEBUG_SCONS_CHECK']
-    do_check = 1
+    val = os.environ['DEBUG_SCONS_CHECK']
+    do_check = val
 except KeyError:
-    do_check = 0
+    do_check = 1
+print "do_check is %s" % do_check
 
 config = env.NumpyConfigure(custom_tests = 
     {'CheckATLAS' : CheckATLAS,
@@ -23,8 +24,7 @@ config = env.NumpyConfigure(custom_tests =
     'CheckF77Mangling' : CheckF77Mangling,
     'CheckSunperf' : CheckSunperf})
 
-do_check = 1
-if do_check:
+if do_check == 1:
     st, opts = config.CheckATLAS(autoadd = 0)
     st, opts = config.CheckMKL(autoadd = 0)
     st, opts = config.CheckAccelerate(autoadd = 0)
