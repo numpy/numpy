@@ -200,14 +200,12 @@ def check_include_and_run(context, name, opts, headers, run_src, autoadd = 1):
     #------------------------------
     saved = save_and_set(env, opts)
     try:
-        # XXX: reenable this
-        ## HACK: we add libpath and libs at the end of the source as a comment, to
-        ## add dependency of the check on those.
-        #src = '\n'.join(['#include <%s>' % h for h in headers] +\
-        #                [run_src, '#if 0', '%s' % libpath, 
-        #                 '%s' % headers, '%s' % libs, '#endif'])
-        ret = context.TryRun(src, '.c')
-    except:
+        # HACK: we add libpath and libs at the end of the source as a comment, to
+        # add dependency of the check on those.
+        src = '\n'.join([r'#include <%s>' % h for h in headers] +\
+                        [run_src, r'#if  0', r'%s' % str(opts), r'#endif', '\n'])
+        ret, out = context.TryRun(src, '.c')
+    finally:
         if (not ret or not autoadd):
             # If test failed or autoadd is disabled, restore everything
             restore(env, saved)

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Nov 06 01:00 PM 2007 J
+# Last Change: Tue Nov 06 02:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -17,6 +17,9 @@ from numpy.distutils.scons.configuration import add_info
 from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
 from support import check_include_and_run
 
+# XXX: many perlib can be used from both C and F (Atlas being a notable
+# exception for LAPACK). So shall we make the difference between BLAS, CBLAS,
+# LAPACK and CLAPACK ? How to test for fortran ?
 def CheckCBLAS(context, autoadd = 1):
     """This checker tries to find optimized library for cblas.
 
@@ -71,7 +74,7 @@ def CheckCBLAS(context, autoadd = 1):
             st, res = CheckMKL(context, autoadd)
             if st:
                 st = check_include_and_run(context, 'CBLAS (MKL)', res.cfgopts,
-                                           [], cblas_src, autoadd)
+                                           ['mkl.h'], cblas_src, autoadd)
                 if st:
                     add_info(env, 'cblas', res)
                 return st
@@ -98,6 +101,14 @@ def CheckCBLAS(context, autoadd = 1):
             return 0
 
 def CheckLAPACK(context, autoadd = 1):
+    """This checker tries to find optimized library for lapack.
+
+    This test is pretty strong: it first detects an optimized library, and then
+    tests that a simple cblas program can be run using this lib.
+    
+    It looks for the following libs:
+        - Mac OS X: Accelerate, and then vecLib.
+        - Others: MKL, then ATLAS."""
     env = context.env
 
     # If section lapack is in site.cfg, use those options. Otherwise, use default
@@ -112,6 +123,7 @@ def CheckLAPACK(context, autoadd = 1):
             import warnings
             warning.warn('FIXME: LAPACK checks not implemented yet on win32')
             return 0
+
         if sys.platform == 'darwin':
             st, opts = CheckAccelerate(context, autoadd)
             if st:
@@ -125,7 +137,7 @@ def CheckLAPACK(context, autoadd = 1):
                 return st
 
         else:
-            # Get fortran stuff
+            # Get fortran stuff (See XXX at the top on F77 vs C)
             if not env.has_key('F77_NAME_MANGLER'):
                 if not CheckF77Mangling(context):
                     return 0
@@ -133,41 +145,28 @@ def CheckLAPACK(context, autoadd = 1):
                 if not CheckF77Clib(context):
                     return 0
 
-            # XXX: all the code below is a mess, refactor it with new code from
-            # support module.
-
             # Get the mangled name of our test function
             sgesv_string = env['F77_NAME_MANGLER']('sgesv')
             test_src = lapack_sgesv % sgesv_string
 
             # Check MKL
-            st, opts = CheckMKL(context, autoadd = 1)
+            st, res = CheckMKL(context, autoadd)
             if st:
-                fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
-                fdict['LIBS'].append('lapack')
-                if env.has_key('LIBS'):
-                    fdict['LIBS'].extend(context.env['LIBS'])
-                if env.has_key('LIBPATH'):
-                    fdict['LIBPATH'].extend(context.env['LIBPATH'])
-                st = check_include_and_run(context, 'LAPACK (MKL)', [], [],
-                        test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+                # Intel recommends linking lapack before mkl, guide and co
+                res.cfgopts['libs'].insert(0, 'lapack')
+                st = check_include_and_run(context, 'LAPACK (MKL)', res.cfgopts,
+                                           [], test_src, autoadd)
                 if st:
-                    add_info(env, 'lapack', opts)
+                    add_info(env, 'lapack', res)
                 return st
 
             # Check ATLAS
             st, opts = CheckATLAS(context, autoadd = 1)
             if st:
-                fdict = env.ParseFlags(context.env['F77_LDFLAGS'])
-                fdict['LIBS'].append('lapack')
-                if env.has_key('LIBS'):
-                    fdict['LIBS'].extend(context.env['LIBS'])
-                if env.has_key('LIBPATH'):
-                    fdict['LIBPATH'].extend(context.env['LIBPATH'])
-                st = check_include_and_run(context, 'LAPACK (ATLAS)', [], [],
-                        test_src, fdict['LIBS'], fdict['LIBPATH'], [], [], autoadd = 1)
+                st = check_include_and_run(context, 'LAPACK (ATLAS)', res.cfgopts,
+                                           [], test_src, autoadd)
                 if st:
-                    add_info(env, 'lapack', opts)
+                    add_info(env, 'lapack', res)
                 # XXX: Check complete LAPACK or not. (Checking for not
                 # implemented lapack symbols ?)
                 return st
