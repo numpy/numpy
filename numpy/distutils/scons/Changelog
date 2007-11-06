@@ -1,5 +1,9 @@
 Tue, 06 Nov 2007 16:48:51 +0900
 User-visible Changes:
+	* CBLAS and LAPACK checkers now both handles MKL, ATLAS,
+	Accelerate/vecLib frameworks (Mac OS X only) and Sunperf (Solaris
+	only).
+
 	* NumpyCheckLibAndHeader checker. This can be used as a generic
 	checker for simple checks (list of libraries/headers/symbols to
 	check).
