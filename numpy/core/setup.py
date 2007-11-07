@@ -105,7 +105,7 @@ def configuration(parent_package='',top_path=None):
             if sys.platform == 'win32':
                 moredefs.append('NPY_NO_SIGNAL')
 
-            if sys.platform=='win32' or os.name=='nt':
+            if sys.version[:3] > '2.4' and (sys.platform=='win32' or os.name=='nt'):
                 from distutils.msvccompiler import get_build_architecture
                 a = get_build_architecture()
                 print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
