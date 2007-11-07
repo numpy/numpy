@@ -87,14 +87,14 @@ def CheckCBLAS(context, autoadd = 1):
                     add_info(env, 'cblas', res)
                 return st
 
-            # # Check Sunperf
-            # st, res = CheckSunperf(context, autoadd)
-            # if st:
-            #     st = check_include_and_run(context, 'CBLAS (Sunperf)', res.cfgopts,
-            #                                [], cblas_src, autoadd)
-            #     if st:
-            #         add_info(env, 'cblas', res)
-            #     return st
+            # Check Sunperf
+            st, res = CheckSunperf(context, autoadd)
+            if st:
+                st = check_include_and_run(context, 'CBLAS (Sunperf)', res.cfgopts,
+                                           [], cblas_src, autoadd)
+                if st:
+                    add_info(env, 'cblas', res)
+                return st
 
             add_info(env, 'cblas', 'Def numpy implementation used')
             return 0
