@@ -168,7 +168,7 @@ def get_cc_config(name):
     else:
         # For not yet supported compiler, just put everything in optims from
         # distutils
-        cfg = CompilerConfig(optims =
+        cfg = CompilerConfig(optim =
                 distutils.sysconfig.get_config_vars('CFLAGS'))
 
     return cfg
