@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Nov 05 06:00 PM 2007 J
+# Last Change: Thu Nov 08 06:00 PM 2007 J
 import sys
 import distutils.sysconfig
 
@@ -89,6 +89,9 @@ def tool_list(platform):
 # Basically, limit yourself to optimization/debug/warning flags.
 
 # XXX: customization from site.cfg or other ?
+# XXX: cache this between different scons calls (would need to move outside
+# scons invocation, and in distutils scons command....)
+
 class CompilerConfig:
     def __init__(self, optim = None, warn = None, debug = None, debug_symbol =
                  None, thread = None, extra = None):
@@ -120,6 +123,7 @@ class CompilerConfig:
 # It seems that scons consider any option with space in it as a multi option,
 # which breaks command line options. So just don't put space.
 def get_cc_config(name):
+    # name is the scons name for the tool
     if name == 'gcc':
         if distutils.sysconfig.get_config_vars('LDFLAGS')[0].find('-pthread'):
             thread = ['-pthread']
@@ -165,6 +169,9 @@ def get_cc_config(name):
                              warn = ['/W3', '/Wall'],
                              thread = ['/MD', '/GX'], 
                              extra = ['/nologo'])
+    elif name == 'mingw':
+        cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing'],
+                             warn = ['-Wall', '-Wstrict-prototypes'])
     else:
         # For not yet supported compiler, just put everything in optims from
         # distutils

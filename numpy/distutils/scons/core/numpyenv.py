@@ -207,10 +207,13 @@ def _GetNumpyEnvironment(args):
             Tool(t)(env)
     else:
         try:
-	    t = FindTool(['g++'], env)
-	    env['LINK'] = t
-	except EnvironmentError:
-	    raise RuntimeError('g++ not found: this is necessary with mingw32 to build numpy !') 
+            t = FindTool(['g++'], env)
+            env['LINK'] = t
+        except EnvironmentError:
+            raise RuntimeError('g++ not found: this is necessary with mingw32 '\
+                               'to build numpy !') 
+        # XXX: is this really the right place ?
+        env.AppendUnique(CFLAGS = '-mno-cygwin')
 			
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)

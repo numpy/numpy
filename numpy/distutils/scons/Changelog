@@ -1,4 +1,17 @@
+Thu, 08 Nov 2007 17:55:17 +0900
+
+User-visible Changes:
+	* numpy.scons can now built numpy on windows with mingw
+
+Wed, 07 Nov 2007 20:45:00 +0900 (3rd alpha)
+
+User-visible Changes:
+	* Sunperf hack to get linker options, because -xlic_lib does not seem
+	to work for shared libraries. I hope it works now.
+
+
 Tue, 06 Nov 2007 16:48:51 +0900
+
 User-visible Changes:
 	* CBLAS and LAPACK checkers now both handles MKL, ATLAS,
 	Accelerate/vecLib frameworks (Mac OS X only) and Sunperf (Solaris
@@ -18,6 +31,7 @@ User-visible Changes:
 	* Basic design explained in doc/DESIGN
 
 Mon, 05 Nov 2007 19:44:07 +0900 (2nd alpha)
+
 User-visible Changes:
 	* numpy/distutils/scons/checkers 
 	Perflib checkers (MKL, ATLAS, etc...) can be disabled by using
