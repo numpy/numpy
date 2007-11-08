@@ -188,4 +188,14 @@ def CheckLAPACK(context, autoadd = 1):
                 # implemented lapack symbols ?)
                 return st
 
+            # Check Sunperf
+            st, res = CheckSunperf(context, autoadd)
+            if st:
+                st = check_include_and_run(context, 'LAPACK (Sunperf)', res.cfgopts,
+                                           [], test_src, autoadd)
+                if st:
+                    add_info(env, 'lapack', res)
+                return st
+
+    add_info(env, 'lapack', 'Def numpy implementation used')
     return 0
