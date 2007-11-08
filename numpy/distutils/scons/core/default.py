@@ -165,8 +165,10 @@ def get_cc_config(name):
         #             ]
         # self.ldflags_static = [ '/nologo']
 
-        cfg = CompilerConfig(optim = ['/Ox', '/DNDEBUG'],
-                             warn = ['/W3', '/Wall'],
+        cfg = CompilerConfig(#optim = ['/Ox', '/DNDEBUG'],
+			     #/Wall is too strong, huge amount of warnings....
+                             #warn = ['/W3', '/Wall'],
+                             warn = ['/W3'],
                              thread = ['/MD', '/GX'], 
                              extra = ['/nologo'])
     elif name == 'mingw':

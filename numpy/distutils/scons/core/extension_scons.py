@@ -13,7 +13,7 @@ from extension import get_pythonlib_dir, get_python_inc
 def built_with_mstools(env):
     """Return True if built with MS tools (compiler + linker)."""
     # Handle case where MSVS is found, but mingw is used
-    return env.has_key('MSVS') and not built_with_mingw
+    return env.has_key('MSVS') and not built_with_mingw(env)
 
 def built_with_mingw(env):
     """Return true if built with mingw compiler."""
@@ -35,7 +35,8 @@ def get_pythonlib_name(debug = 0):
 
 def PythonExtension(env, target, source, *args, **kw):
     # XXX Check args and kw
-    # XXX: Some things should not be set here...
+    # XXX: Some things should not be set here... Actually, this whole
+    # thing is a mess.
     if env.has_key('LINKFLAGS'):
         LINKFLAGS = deepcopy(env['LINKFLAGS'])
     else:
@@ -79,6 +80,8 @@ def PythonExtension(env, target, source, *args, **kw):
     elif sys.platform == "darwin":
         # XXX: When those should be used ? (which version of Mac OS X ?)
         LINKFLAGS += ' -undefined dynamic_lookup '
+    else:
+	pass
 
     # Use LoadableModule because of Mac OS X
     # ... but scons has a bug (#issue 1669) with mingw and Loadable
