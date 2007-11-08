@@ -89,7 +89,6 @@ class build_ext (old_build_ext):
                              ' overwriting build_info\n%s... \nwith\n%s...' \
                              % (libname, `clibs[libname]`[:300], `build_info`[:300]))
                 clibs[libname] = build_info
-        local_clibs = clibs.copy()
         # .. and distribution libraries:
         for libname,build_info in self.distribution.libraries or []:
             if clibs.has_key(libname):
@@ -113,11 +112,7 @@ class build_ext (old_build_ext):
                     for m in binfo.get('macros',[]):
                         if m not in macros:
                             macros.append(m)
-                if libname in local_clibs:
-                    c = self.compiler
-                    outname = c.library_filename(libname,
-                                                 output_dir=self.build_temp)
-                    ext.depends.append(outname)
+
                 for l in clibs.get(libname,{}).get('source_languages',[]):
                     ext_languages.add(l)
             if c_libs:
