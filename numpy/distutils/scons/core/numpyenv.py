@@ -90,6 +90,7 @@ def _GetNumpyEnvironment(args):
     from SCons.Environment import Environment
     from SCons.Tool import Tool, FindTool, FindAllTools
     from SCons.Script import BuildDir, Help
+    from SCons.Errors import EnvironmentError
 
     # XXX: I would prefer subclassing Environment, because we really expect
     # some different behaviour than just Environment instances...
@@ -204,6 +205,12 @@ def _GetNumpyEnvironment(args):
         for i in [DEF_LINKERS, DEF_CXX_COMPILERS, DEF_ASSEMBLERS, DEF_ARS]:
             t = FindTool(i, env) or i[0]
             Tool(t)(env)
+    else:
+        try:
+	    t = FindTool(['g++'], env)
+	    env['LINK'] = t
+	except EnvironmentError:
+	    raise RuntimeError('g++ not found: this is necessary with mingw32 to build numpy !') 
 			
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)
@@ -214,6 +221,7 @@ def _GetNumpyEnvironment(args):
         pass
 
     # Adding custom builder
+    # XXX: Put them into tools ?
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
     env['BUILDERS']['NumpyCtypes'] = NumpyCtypes
     env['BUILDERS']['PythonExtension'] = PythonExtension
