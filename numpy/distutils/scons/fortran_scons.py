@@ -74,9 +74,9 @@ def CheckF90DryRun(context):
 def CheckF77Clib(context):
     """This tries to get Fortran runtime facilities necessary at link stage,
     and put the relevant flags in env['F77_LDFLAGS']."""
-    if sys.platform[:5] == 'win32':
-        raise Exception("FIXME: This is not tested on windows.... No chance "\
-                        "of working if using visual Intel")
+    #if sys.platform[:5] == 'win32':
+    #    raise Exception("FIXME: This is not tested on windows.... No chance "\
+    #                    "of working if using visual Intel")
     fcompiler = 'F77'
     # TODO: check that F77 exists, and can be run
     if not context.env.has_key(fcompiler):
