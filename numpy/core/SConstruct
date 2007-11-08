@@ -104,7 +104,7 @@ def check_lib(f, autoadd = 0):
     """Check that f is available in mlib, and add the symbol appropriately.
 
     f is expected to be a tuble (symbol, cpp define)."""
-    st = config.CheckLib(mlib, f[0], autoadd = autoadd)
+    st = config.CheckLibWithHeader(mlib, 'math.h', language = 'C', call = '%s;' % f[0], autoadd = autoadd)
     if st:
         config_sym.append((f[1], 1))
     else:
