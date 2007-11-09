@@ -174,6 +174,9 @@ def get_cc_config(name):
     elif name == 'mingw':
         cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing'],
                              warn = ['-Wall', '-Wstrict-prototypes'])
+    elif name == 'suncc':
+        cfg = CompilerConfig(optim = ['-fast'],
+			     debug_symbol = ['-g'])
     else:
         # For not yet supported compiler, just put everything in optims from
         # distutils
