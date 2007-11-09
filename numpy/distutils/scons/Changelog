@@ -1,3 +1,9 @@
+Fri, 09 Nov 2007 18:22:44 +0900
+
+User-visible Changes:
+	* CPU optimized sunperf (sse, etc...) can now be picked up if correct
+	compilation flags are given.
+
 Thu, 08 Nov 2007 17:55:17 +0900
 
 User-visible Changes:
