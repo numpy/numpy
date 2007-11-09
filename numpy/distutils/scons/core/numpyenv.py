@@ -83,6 +83,7 @@ def GetNumpyEnvironment(args):
                                env['NUMPY_DEBUG_SYMBOL_CFLAGS'] +\
                                env['NUMPY_EXTRA_CFLAGS'] +\
                                env['NUMPY_THREAD_CFLAGS'])
+    env.AppendUnique(LINKFLAGS = env['NUMPY_OPTIM_LDFLAGS'])
     return env
 
 def _GetNumpyEnvironment(args):

@@ -94,7 +94,7 @@ def tool_list(platform):
 
 class CompilerConfig:
     def __init__(self, optim = None, warn = None, debug = None, debug_symbol =
-                 None, thread = None, extra = None):
+                 None, thread = None, extra = None, link_optim = None):
         # XXX: several level of optimizations ?
         self.optim = optim
         # XXX: several level of warnings ?
@@ -107,9 +107,12 @@ class CompilerConfig:
         self.thread = thread
         # XXX
         self.extra = extra
+        # XXX
+        self.link_optim = link_optim
 
     def get_flags_dict(self):
         d = {'NUMPY_OPTIM_CFLAGS' : self.optim,
+             'NUMPY_OPTIM_LDFLAGS' : self.link_optim,
                 'NUMPY_WARN_CFLAGS' : self.warn,
                 'NUMPY_THREAD_CFLAGS' : self.thread,
                 'NUMPY_EXTRA_CFLAGS' : self.debug,
@@ -175,8 +178,14 @@ def get_cc_config(name):
         cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing'],
                              warn = ['-Wall', '-Wstrict-prototypes'])
     elif name == 'suncc':
+	# -xtarget and co (-xarch, etc...) should be put in link_optim and
+	# optim for optimal performances.  If you do not need the package to be
+	# redistributable, using -xtarget=native is a good choice. See man cc
+	# for more info.
+	# XXX: detect this automatically ?
         cfg = CompilerConfig(optim = ['-fast'],
-			     debug_symbol = ['-g'])
+			     debug_symbol = ['-g'], 
+			     link_optim = [])
     else:
         # For not yet supported compiler, just put everything in optims from
         # distutils
