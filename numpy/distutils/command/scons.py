@@ -2,8 +2,9 @@ import os
 import os.path
 from os.path import join as pjoin, dirname as pdirname
 
-#from distutils.core import build_py as old_build_py
+from distutils.errors import DistutilsPlatformError
 from distutils.errors import DistutilsExecError, DistutilsSetupError
+
 from numpy.distutils.command.build_ext import build_ext as old_build_ext
 from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.fcompiler import FCompiler
@@ -35,20 +36,20 @@ def dirl_to_str(dirlist):
     example: ['foo/bar', 'bar/foo'] will return 'foo/bar:bar/foo'."""
     return os.pathsep.join(dirlist)
 
-def dist2sconscc(compiler):
+def dist2sconscc(compiler_type):
     """This converts the name passed to distutils to scons name convention (C
-    compiler). The argument should be a CCompiler instance.
+    compiler). 
 
     Example:
         --compiler=intel -> intelc"""
-    if compiler.compiler_type == 'msvc':
+    if compiler_type == 'msvc':
         return 'msvc'
-    elif compiler.compiler_type == 'intel':
+    elif compiler_type == 'intel':
         return 'intelc'
-    elif compiler.compiler_type == 'mingw32':
+    elif compiler_type == 'mingw32':
         return 'mingw'
     else:
-        return compiler.compiler[0]
+        return compiler_type
 
 def dist2sconsfc(compiler):
     """This converts the name passed to distutils to scons name convention
@@ -134,11 +135,14 @@ class scons(old_build_ext):
         old_build_ext.initialize_options(self)
         self.jobs = None
         self.silent = 0
+ 	# If true, we bypass distutils to find the c compiler altogether. This
+ 	# is to be used in desperate cases (like incompatible visual studio
+ 	# version).
+ 	self._bypass_distutils_cc = False
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
         if self.distribution.has_scons_scripts():
-            #print "Got it: scons scripts are %s" % self.distribution.scons_scripts
             self.sconscripts = self.distribution.get_scons_scripts()
             self.pre_hooks = self.distribution.get_scons_pre_hooks()
             self.post_hooks = self.distribution.get_scons_post_hooks()
@@ -154,18 +158,27 @@ class scons(old_build_ext):
         # got the c compiler used, we use numpy.distutils function to get the
         # full path, and add the path to the env['PATH'] variable in env
         # instance (this is done in numpy.distutils.scons module).
+
+	# XXX: The logic to bypass distutils is ... not so logic.
         compiler_type = self.compiler
+	if compiler_type == 'msvc':
+	    self._bypass_distutils_cc = True
         from numpy.distutils.ccompiler import new_compiler
-        self.compiler = new_compiler(compiler=compiler_type,
-                                     verbose=self.verbose,
-                                     dry_run=self.dry_run,
-                                     force=self.force)
-        self.compiler.customize(self.distribution)
-		
-        # This initialization seems necessary, sometimes, for find_executable to work...
-        if hasattr(self.compiler, 'initialize'):
-            self.compiler.initialize()
-		
+ 	try:
+            self.compiler = new_compiler(compiler=compiler_type,
+                                      verbose=self.verbose,
+                                      dry_run=self.dry_run,
+                                      force=self.force)
+ 	    self.compiler.customize(self.distribution)
+ 	    # This initialization seems necessary, sometimes, for find_executable to work...
+ 	    if hasattr(self.compiler, 'initialize'):
+ 		self.compiler.initialize()
+ 	except DistutilsPlatformError, e:
+	    if not self._bypass_distutils_cc: 
+ 	        raise e
+	    else:
+		self.compiler = compiler_type
+ 		
         # We do the same for the fortran compiler
         fcompiler_type = self.fcompiler
         from numpy.distutils.fcompiler import new_fcompiler
@@ -199,8 +212,13 @@ class scons(old_build_ext):
             cmd.append('src_dir="%s"' % pdirname(sconscript))
             cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
                                                                 pdirname(sconscript))))
-            cmd.append('cc_opt=%s' % dist2sconscc(self.compiler))
-            cmd.append('cc_opt_path=%s' % protect_path(get_tool_path(self.compiler)))
+
+	    if not self._bypass_distutils_cc:
+                cmd.append('cc_opt=%s' % dist2sconscc(self.compiler.compiler_type))
+                cmd.append('cc_opt_path=%s' % protect_path(get_tool_path(self.compiler)))
+	    else:
+                cmd.append('cc_opt=%s' % dist2sconscc(self.compiler))
+
 
 	    if self.fcompiler:
                 cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
