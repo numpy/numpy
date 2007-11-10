@@ -12,8 +12,7 @@ from extension import get_pythonlib_dir, get_python_inc
 
 def built_with_mstools(env):
     """Return True if built with MS tools (compiler + linker)."""
-    # Handle case where MSVS is found, but mingw is used
-    return env.has_key('MSVS') and not built_with_mingw(env)
+    return env['cc_opt'] == 'msvc'
 
 def built_with_mingw(env):
     """Return true if built with mingw compiler."""

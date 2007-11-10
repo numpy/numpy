@@ -3,6 +3,7 @@ import os.path
 from os.path import join as pjoin, dirname as pdirname
 import sys
 
+import re
 from distutils.sysconfig import get_config_vars
 
 from numpy.distutils.misc_util import get_scons_build_dir, get_scons_configres_dir,\
@@ -11,7 +12,7 @@ from numpy.distutils.misc_util import get_scons_build_dir, get_scons_configres_d
 from default import tool_list, get_cc_config
 from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
 from libinfo import get_config
-from extension_scons import PythonExtension
+from extension_scons import PythonExtension, built_with_mstools
 
 from numpy.distutils.scons.tools.substinfile import TOOL_SUBST
 
@@ -35,7 +36,6 @@ def is_cc_suncc(fullpath):
     # while returning success (0).
     
     import os
-    import re
     suncc = re.compile('Sun C')
     # Redirect stderr to stdout
     cmd = fullpath + ' -V 2>&1'
@@ -44,6 +44,19 @@ def is_cc_suncc(fullpath):
     st = out.close()
 
     return suncc.search(cnt)
+
+def get_vs_version(env):
+    try:
+         version = env['MSVS']['VERSION']
+	 m = re.compile("([0-9]).([0-9])").match(version)
+	 if m:
+	     major = int(m.group(1))
+	     minor = int(m.group(2))
+	     return (major, minor)
+	 else:
+ 	     raise RuntimeError("FIXME: failed to parse VS version")
+    except KeyError:
+	 raise RuntimeError("Could not get VS version !")
 
 def GetNumpyOptions(args):
     """Call this with args=ARGUMENTS to take into account command line args."""
@@ -76,6 +89,21 @@ def customize_cc(name, env):
     """Customize env options related to the given tool."""
     cfg = get_cc_config(name)
     env.AppendUnique(**cfg.get_flags_dict())
+
+def finalize_env(env):
+    if built_with_mstools(env):
+        major, minor = get_vs_version(env)
+	# For VS 8 and above (VS 2005), use manifest for DLL
+	if major >= 8:
+	    env['LINKCOM'] = [env['LINKCOM'], 
+			      'mt.exe -nologo -manifest ${TARGET}.manifest '\
+			      '-outputresource:$TARGET;1']
+	    env['SHLINKCOM'] = [env['SHLINKCOM'], 
+			        'mt.exe -nologo -manifest ${TARGET}.manifest '\
+			        '-outputresource:$TARGET;2']
+	    env['LDMODULECOM'] = [env['LDMODULECOM'], 
+			        'mt.exe -nologo -manifest ${TARGET}.manifest '\
+			        '-outputresource:$TARGET;2']
 
 def GetNumpyEnvironment(args):
     env = _GetNumpyEnvironment(args)
@@ -117,6 +145,8 @@ def _GetNumpyEnvironment(args):
 
     # ===============================================
     # Setting tools according to command line options
+    if not env['ENV'].has_key('PATH'):
+	env['ENV']['PATH'] = []
 
     # XXX: how to handle tools which are not in standard location ? Is adding
     # the full path of the compiler enough ? (I am sure some compilers also
@@ -144,6 +174,12 @@ def _GetNumpyEnvironment(args):
                         env['ENV']['PATH'] += ';%s' % env['cc_opt_path']
                     else:
                         env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
+	    else:
+		# Do not care about PATH info because none given from scons
+		# distutils command
+                t = Tool(env['cc_opt'])
+                t(env) 
+                customize_cc(t.name, env)
         except EnvironmentError, e:
             # scons could not understand cc_opt (bad name ?)
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
@@ -218,6 +254,8 @@ def _GetNumpyEnvironment(args):
 			
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)
+
+    finalize_env(env)
 
     try:
         env['ENV']['HOME'] = os.environ['HOME']
