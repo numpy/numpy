@@ -109,6 +109,12 @@ def CheckF77Clib(context):
 
 # If need a dummy main
 def _CheckFDummyMain(context, fcomp):
+    if not context.env.has_key(fcomp):
+        context.Message('No %s compiler defined: cannot check dummy main ')
+        return 0
+    else:
+        context.Message('Checking if %s needs dummy main - ' % context.env[fcomp])
+
     fcn_tmpl = """
 int %s() { return 0; }
 """
@@ -136,7 +142,6 @@ int %s() { return 0; }
 
 # XXX: refactor those by using function templates
 def CheckF77DummyMain(context):
-    context.Message('Checking if %s needs dummy main - ' % context.env['F77'])
     res, m = _CheckFDummyMain(context, 'F77')
     if res:
         context.Result("%s." % str(m))
@@ -147,7 +152,6 @@ def CheckF77DummyMain(context):
     return res
 
 def CheckF90DummyMain(context):
-    context.Message('Checking if %s needs dummy main - ' % context.env['F90'])
     res, m = _CheckFDummyMain(context, 'F90')
     if res:
         context.Result("%s." % str(m))
