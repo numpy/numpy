@@ -208,9 +208,13 @@ def _GetNumpyEnvironment(args):
         # XXX: really have to understand how fortran compilers work in scons...
         env['F77'] = env['_FORTRAND']
     else:
-	raise NotImplementedError('FIXME: Support for env wo fcompiler not tested yet !')
-        #t = Tool(FindTool(DEF_FORTRAN_COMPILERS))
-        #t(env)
+	#raise NotImplementedError('FIXME: Support for env wo fcompiler not tested yet !')
+	def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
+	if def_fcompiler:
+		t = Tool(def_fcompiler)
+		t(env)
+        else:
+		print "========== NO FORTRAN COMPILER FOUND ==========="
 
     # XXX: Really, we should use our own subclass of Environment, instead of
     # adding Numpy* functions !
