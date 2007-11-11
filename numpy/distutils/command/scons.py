@@ -36,12 +36,13 @@ def dirl_to_str(dirlist):
     example: ['foo/bar', 'bar/foo'] will return 'foo/bar:bar/foo'."""
     return os.pathsep.join(dirlist)
 
-def dist2sconscc(compiler_type):
+def dist2sconscc(compiler):
     """This converts the name passed to distutils to scons name convention (C
-    compiler). 
+    compiler). compiler should be a CCompiler instance.
 
     Example:
         --compiler=intel -> intelc"""
+    compiler_type = compiler.compiler_type
     if compiler_type == 'msvc':
         return 'msvc'
     elif compiler_type == 'intel':
@@ -49,7 +50,7 @@ def dist2sconscc(compiler_type):
     elif compiler_type == 'mingw32':
         return 'mingw'
     else:
-        return compiler_type
+        return compiler.compiler[0]
 
 def dist2sconsfc(compiler):
     """This converts the name passed to distutils to scons name convention
@@ -135,10 +136,13 @@ class scons(old_build_ext):
         old_build_ext.initialize_options(self)
         self.jobs = None
         self.silent = 0
- 	# If true, we bypass distutils to find the c compiler altogether. This
- 	# is to be used in desperate cases (like incompatible visual studio
- 	# version).
- 	self._bypass_distutils_cc = False
+        # If true, we bypass distutils to find the c compiler altogether. This
+        # is to be used in desperate cases (like incompatible visual studio
+        # version).
+        self._bypass_distutils_cc = False
+        self.scons_compiler = None
+        self.scons_compiler_path = None
+        self.scons_fcompiler = None
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
@@ -159,25 +163,27 @@ class scons(old_build_ext):
         # full path, and add the path to the env['PATH'] variable in env
         # instance (this is done in numpy.distutils.scons module).
 
-	# XXX: The logic to bypass distutils is ... not so logic.
+        # XXX: The logic to bypass distutils is ... not so logic.
         compiler_type = self.compiler
-	if compiler_type == 'msvc':
-	    self._bypass_distutils_cc = True
+        if compiler_type == 'msvc':
+            self._bypass_distutils_cc = True
         from numpy.distutils.ccompiler import new_compiler
- 	try:
-            self.compiler = new_compiler(compiler=compiler_type,
+        try:
+            distutils_compiler = new_compiler(compiler=compiler_type,
                                       verbose=self.verbose,
                                       dry_run=self.dry_run,
                                       force=self.force)
- 	    self.compiler.customize(self.distribution)
- 	    # This initialization seems necessary, sometimes, for find_executable to work...
- 	    if hasattr(self.compiler, 'initialize'):
- 		self.compiler.initialize()
- 	except DistutilsPlatformError, e:
-	    if not self._bypass_distutils_cc: 
- 	        raise e
-	    else:
-		self.compiler = compiler_type
+            distutils_compiler.customize(self.distribution)
+            # This initialization seems necessary, sometimes, for find_executable to work...
+            if hasattr(distutils_compiler, 'initialize'):
+                distutils_compiler.initialize()
+            self.scons_compiler = dist2sconscc(distutils_compiler)
+            self.scons_compiler_path = protect_path(get_tool_path(distutils_compiler))
+        except DistutilsPlatformError, e:
+            if not self._bypass_distutils_cc: 
+                raise e
+            else:
+                self.scons_compiler = compiler_type
  		
         # We do the same for the fortran compiler
         fcompiler_type = self.fcompiler
@@ -186,8 +192,8 @@ class scons(old_build_ext):
                                        verbose = self.verbose,
                                        dry_run = self.dry_run,
                                        force = self.force)
-	if self.fcompiler is not None:
-	    self.fcompiler.customize(self.distribution)
+        if self.fcompiler is not None:
+            self.fcompiler.customize(self.distribution)
 
     def run(self):
         # XXX: when a scons script is missing, scons only prints warnings, and
@@ -213,14 +219,14 @@ class scons(old_build_ext):
             cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
                                                                 pdirname(sconscript))))
 
-	    if not self._bypass_distutils_cc:
-                cmd.append('cc_opt=%s' % dist2sconscc(self.compiler.compiler_type))
-                cmd.append('cc_opt_path=%s' % protect_path(get_tool_path(self.compiler)))
-	    else:
-                cmd.append('cc_opt=%s' % dist2sconscc(self.compiler))
+            if not self._bypass_distutils_cc:
+                cmd.append('cc_opt=%s' % self.scons_compiler)
+                cmd.append('cc_opt_path=%s' % self.scons_compiler_path)
+            else:
+                cmd.append('cc_opt=%s' % self.scons_compiler)
 
 
-	    if self.fcompiler:
+            if self.fcompiler:
                 cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
                 cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
 

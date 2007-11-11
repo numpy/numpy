@@ -7,7 +7,9 @@ User-visible Changes:
 Thu, 08 Nov 2007 17:55:17 +0900
 
 User-visible Changes:
-	* numpy.scons can now built numpy on windows with mingw
+	* numpy.scons can now build numpy on windows with mingw.
+	 
+	* sunperf works on solaris express, both blas/lapack.
 
 Wed, 07 Nov 2007 20:45:00 +0900 (3rd alpha)
 
