@@ -110,8 +110,8 @@ def CheckF77Clib(context):
 # If need a dummy main
 def _CheckFDummyMain(context, fcomp):
     if not context.env.has_key(fcomp):
-        context.Message('No %s compiler defined: cannot check dummy main ')
-        return 0
+        context.Message('Checking dummy main: no %s compiler defined: cannot check dummy main ' % fcomp)
+        return 0, None
     else:
         context.Message('Checking if %s needs dummy main - ' % context.env[fcomp])
 

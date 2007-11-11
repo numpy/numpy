@@ -156,9 +156,11 @@ def CheckLAPACK(context, autoadd = 1):
             # Get fortran stuff (See XXX at the top on F77 vs C)
             if not env.has_key('F77_NAME_MANGLER'):
                 if not CheckF77Mangling(context):
+		    add_info(env, 'lapack', 'Def numpy implementation used')
                     return 0
             if not env.has_key('F77_LDFLAGS'):
                 if not CheckF77Clib(context):
+		    add_info(env, 'lapack', 'Def numpy implementation used')
                     return 0
 
             # Get the mangled name of our test function
