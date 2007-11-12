@@ -7,6 +7,7 @@
 
 import sys
 import re
+import os
 
 GCC_DRIVER_LINE = re.compile('^Driving:')
 POSIX_STATIC_EXT = re.compile('\S+\.a')
@@ -14,8 +15,14 @@ POSIX_LIB_FLAGS = re.compile('-l\S+')
 MERGE_SPACE_R1 = re.compile('^-[LRuYz]$')
 
 # linkflags which match those are ignored
-LINKFLAGS_IGNORED = [r'-lang*', r'-lcrt[a-zA-Z0-9]*\.o', r'-lc', r'-lgcc*',
-                     r'-lSystem', r'-libmil', r'-LIST:*', r'-LNO:*', r'-lfrt*', r'-luser32', r'-lkernel32', r'-ladvapi32', r'-lmsvcrt', r'-lshell32', r'-lmingw', r'-lmoldname']
+LINKFLAGS_IGNORED = [r'-lang*', r'-lcrt[a-zA-Z0-9]*\.o', r'-lc', r'-lSystem', r'-libmil', r'-LIST:*', r'-LNO:*']
+if os.name == 'nt':
+    LINKFLAGS_IGNORED.extend([r'-lfrt*', r'-luser32',
+	    r'-lkernel32', r'-ladvapi32', r'-lmsvcrt',
+	    r'-lshell32', r'-lmingw', r'-lmoldname'])
+else:
+    LINKFLAGS_IGNORED.append(r'-lgcc*')
+
 RLINKFLAGS_IGNORED = [re.compile(i) for i in LINKFLAGS_IGNORED]
 
 # linkflags which match those are the one we are interested in

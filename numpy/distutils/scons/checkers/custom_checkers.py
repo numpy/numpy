@@ -4,15 +4,16 @@
 # Module for custom, common checkers for numpy (and scipy)
 import sys
 import os.path
+from copy import deepcopy
 from distutils.util import get_platform
 
 from numpy.distutils.scons.core.libinfo import get_config_from_section, get_config
 from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
         c_sgemm as sunperf_src, lapack_sgesv
-
 from numpy.distutils.scons.fortran_scons import CheckF77Mangling, CheckF77Clib
-
 from numpy.distutils.scons.configuration import add_info
+from numpy.distutils.scons.core.utils import rsplit
+from numpy.distutils.scons.core.extension_scons import built_with_mstools, built_with_mingw
 
 from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
 from support import check_include_and_run, ConfigOpts, ConfigRes
@@ -115,8 +116,11 @@ def CheckLAPACK(context, autoadd = 1):
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
     if found:
+	# XXX: handle def library names correctly
+	if len(libs) == 1 and len(libs[0]) == 0:
+	    libs = ['lapack', 'blas']
         cfg = ConfigOpts(cpppath = cpppath, libs = libs, libpath = libpath,
-                         rpath = libpath)
+                         rpath = deepcopy(libpath))
 
         if not env.has_key('F77_NAME_MANGLER'):
             if not CheckF77Mangling(context):
@@ -129,17 +133,25 @@ def CheckLAPACK(context, autoadd = 1):
         sgesv_string = env['F77_NAME_MANGLER']('sgesv')
         test_src = lapack_sgesv % sgesv_string
 
-        st = check_include_and_run(context, 'LAPACK (from site.cfg) ', cfg,
+	# fortrancfg is used to merge info from fortran checks and site.cfg
+	fortrancfg = deepcopy(cfg)
+	if not built_with_mstools(env):
+		fortrancfg['linkflags'].append(env['F77_LDFLAGS'])
+	else:
+	    # XXX: do this the right way (abstract a minimal posix -> MS flags
+	    # convertor)
+	    for i in env['F77_LDFLAGS'].split(' '):
+		if i.startswith('-L'):
+		    fortrancfg['libpath'].append(i[2:])
+		elif i.startswith('-l'):
+		    fortrancfg['linkflags'].append('lib%s.a' % i[2:])
+
+        st = check_include_and_run(context, 'LAPACK (from site.cfg) ', fortrancfg,
                                   [], test_src, autoadd)
         if st:
             add_info(env, 'lapack', ConfigRes('lapack', cfg, found))
         return st
     else:
-        if sys.platform == 'nt':
-            import warnings
-            warning.warn('FIXME: LAPACK checks not implemented yet on win32')
-            return 0
-
         if sys.platform == 'darwin':
             st, opts = CheckAccelerate(context, autoadd)
             if st:
