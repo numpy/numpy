@@ -36,7 +36,7 @@ def gnu_to_ms_link(linkflags):
     newflags = []
     for flag in linkflags:
         if flag.startswith('-L'):
-            newflags.append('/LIBPATH:i[2:]')
+            newflags.append('/LIBPATH:%s' i[2:])
         elif flag.startswith('-l'):
             newflags.append('lib%s.a' % i[2:])
     return newflags
