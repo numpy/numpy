@@ -93,17 +93,17 @@ def customize_cc(name, env):
 def finalize_env(env):
     if built_with_mstools(env):
         major, minor = get_vs_version(env)
-	# For VS 8 and above (VS 2005), use manifest for DLL
-	if major >= 8:
-	    env['LINKCOM'] = [env['LINKCOM'], 
-			      'mt.exe -nologo -manifest ${TARGET}.manifest '\
-			      '-outputresource:$TARGET;1']
-	    env['SHLINKCOM'] = [env['SHLINKCOM'], 
-			        'mt.exe -nologo -manifest ${TARGET}.manifest '\
-			        '-outputresource:$TARGET;2']
-	    env['LDMODULECOM'] = [env['LDMODULECOM'], 
-			        'mt.exe -nologo -manifest ${TARGET}.manifest '\
-			        '-outputresource:$TARGET;2']
+        # For VS 8 and above (VS 2005), use manifest for DLL
+        if major >= 8:
+            env['LINKCOM'] = [env['LINKCOM'], 
+                      'mt.exe -nologo -manifest ${TARGET}.manifest '\
+                      '-outputresource:$TARGET;1']
+            env['SHLINKCOM'] = [env['SHLINKCOM'], 
+                        'mt.exe -nologo -manifest ${TARGET}.manifest '\
+                        '-outputresource:$TARGET;2']
+            env['LDMODULECOM'] = [env['LDMODULECOM'], 
+                        'mt.exe -nologo -manifest ${TARGET}.manifest '\
+                        '-outputresource:$TARGET;2']
 
 def GetNumpyEnvironment(args):
     env = _GetNumpyEnvironment(args)
@@ -146,7 +146,7 @@ def _GetNumpyEnvironment(args):
     # ===============================================
     # Setting tools according to command line options
     if not env['ENV'].has_key('PATH'):
-	env['ENV']['PATH'] = []
+        env['ENV']['PATH'] = []
 
     # XXX: how to handle tools which are not in standard location ? Is adding
     # the full path of the compiler enough ? (I am sure some compilers also
@@ -174,9 +174,9 @@ def _GetNumpyEnvironment(args):
                         env['ENV']['PATH'] += ';%s' % env['cc_opt_path']
                     else:
                         env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
-	    else:
-		# Do not care about PATH info because none given from scons
-		# distutils command
+            else:
+                # Do not care about PATH info because none given from scons
+                # distutils command
                 t = Tool(env['cc_opt'])
                 t(env) 
                 customize_cc(t.name, env)
@@ -208,13 +208,12 @@ def _GetNumpyEnvironment(args):
         # XXX: really have to understand how fortran compilers work in scons...
         env['F77'] = env['_FORTRAND']
     else:
-	#raise NotImplementedError('FIXME: Support for env wo fcompiler not tested yet !')
-	def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
-	if def_fcompiler:
-		t = Tool(def_fcompiler)
-		t(env)
+        def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
+        if def_fcompiler:
+            t = Tool(def_fcompiler)
+            t(env)
         else:
-		print "========== NO FORTRAN COMPILER FOUND ==========="
+            print "========== NO FORTRAN COMPILER FOUND ==========="
 
     # XXX: Really, we should use our own subclass of Environment, instead of
     # adding Numpy* functions !

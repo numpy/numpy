@@ -1,3 +1,16 @@
+Sat, 11 Nov 2007 19:35:54 +0900
+
+User-visible Changes:
+	* numpy.scons can now be used when no F77 is found. In perticular, the
+	CheckF77* funcs fail graciously when no F77 are found.
+
+Sat, 10 Nov 2007 19:35:54 +0900
+
+User-visible Changes:
+	* VS 2005 can now be used, modulo a small modification in the
+	numpy.distutils.command.build_ext (rename the run method, and add a
+	dummy run instead).
+
 Fri, 09 Nov 2007 18:22:44 +0900
 
 User-visible Changes:

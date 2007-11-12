@@ -1,4 +1,4 @@
-# Last Change: Tue Nov 06 06:00 PM 2007 J
+# Last Change: Mon Nov 12 07:00 PM 2007 J
 import os
 import sys
 import string
@@ -357,30 +357,29 @@ def _build_empty_program(context, fcomp):
         return 0
 
     if res:
-	if not built_with_mstools(context.env):
-	    res, cnt = _build_empty_program_posix(context, fcomp)
-	else:
-	    res, cnt = _build_empty_program_ms(context, fcomp)
+        if not built_with_mstools(context.env):
+            res, cnt = _build_empty_program_posix(context, fcomp)
+        else:
+            res, cnt = _build_empty_program_ms(context, fcomp)
             
     return res, cnt
 
 def _build_empty_program_ms(context, fcomp):
-	# MS tools and g77/gfortran semantics are totally
-	# difference, so we cannot just compile a program
-	# replacing MS linker by g77/gfortran as we can for
-	# all other platforms. 
-        slast = str(context.lastTarget)
-        dir = dirname(slast)
-        test_prog = pjoin(dir, basename(slast).split('.')[0])
+    # MS tools and g77/gfortran semantics are totally different, so we cannot
+    # just compile a program replacing MS linker by g77/gfortran as we can for
+    # all other platforms. 
+    slast = str(context.lastTarget)
+    dir = dirname(slast)
+    test_prog = pjoin(dir, basename(slast).split('.')[0])
 	cmd = context.env.subst("$%s -v -o $TARGET $SOURCES" % fcomp, 
-                                    target = context.env.File(test_prog),
-                                    source = context.lastTarget)
+                            target = context.env.File(test_prog),
+                            source = context.lastTarget)
 
-        st, out = popen_wrapper(cmd, merge = True)
-        if st:
-            res = 0
-        else:
-            res = 1
+    st, out = popen_wrapper(cmd, merge = True)
+    if st:
+        res = 0
+    else:
+        res = 1
 	cnt = out.split('\n')
 	return res, cnt
 

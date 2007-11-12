@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Oct 19 11:00 AM 2007 J
+# Last Change: Mon Nov 12 07:00 PM 2007 J
 
 # Module for support to build python extension. scons specific code goes here.
 import sys
@@ -10,6 +10,9 @@ from numpy.distutils.misc_util import msvc_runtime_library
 
 from extension import get_pythonlib_dir, get_python_inc
 
+# Those built_* are not good: we should have a better way to get the real type
+# of compiler instead of being based on names (to support things like colorgcc,
+# gcc-4.2, etc...). Fortunately, we mostly need this on MS platform.
 def built_with_mstools(env):
     """Return True if built with MS tools (compiler + linker)."""
     return env['cc_opt'] == 'msvc'
@@ -17,6 +20,10 @@ def built_with_mstools(env):
 def built_with_mingw(env):
     """Return true if built with mingw compiler."""
     return env['cc_opt'] == 'mingw'
+
+def built_with_gnu_f77(env):
+    """Return true if f77 compiler is gnu (g77, gfortran, etc...)."""
+    return env['f77_opt'] == 'g77' or env['f77_opt'] == 'gfortran'
 
 def get_pythonlib_name(debug = 0):
     """Return the name of python library (necessary to link on NT with

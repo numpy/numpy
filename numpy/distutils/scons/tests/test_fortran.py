@@ -1,14 +1,15 @@
-#! Last Change: Fri Oct 26 04:00 PM 2007 J
+#! Last Change: Mon Nov 12 03:00 PM 2007 J
 
 from numpy.testing import NumpyTestCase, set_package_path, restore_path, set_local_path
 
-set_package_path()
-from scons.fortran import parse_f77link
+set_local_path('..')
+from fortran import parse_f77link
 restore_path()
 
 set_local_path()
 from fortran_output import g77_link_output, gfortran_link_output, \
         sunfort_v12_link_output, ifort_v10_link_output, \
+        mingw_g77_link_output, \
         g77_link_expected, gfortran_link_expected, \
         sunfort_v12_link_expected, ifort_v10_link_expected
 restore_path()
@@ -39,6 +40,10 @@ class test_CheckF77Verbose(NumpyTestCase):
     def test_intel_win(self):
         """Parsing ifort link output on win32."""
         print "FIXME: testing verbose output of win32 intel fortran"
+
+    def test_mingw_g77(self):
+        """Parsing mingw g77 link output on win32 (native, i.e. no cygwin)"""
+        print parse_f77link(mingw_g77_link_output.split('\n'))
 
 if __name__ == '__main__':
     from numpy.testing import NumpyTest
