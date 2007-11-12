@@ -119,11 +119,11 @@ def _CheckFDummyMain(context, fcomp):
 
     env = context.env
     if not built_with_mstools(context.env):
-	    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
-	    try:
+        savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
+        try:
             env['LINK'] = env[fcomp]
             res, m =_dummy_main_imp(context)
-	    finally:
+        finally:
             env.Replace(LINK = savedLINK)
     else:
         # Using MS tools (Visual studio) with fortran compiler 
@@ -135,11 +135,11 @@ def _CheckFDummyMain(context, fcomp):
         # fortran compiler). So we have to bypass scons commands, and use our
         # own: since this is only used for configuration, it should not matter
         # much.
-	    savedLINKCOM = env.has_key('LINKCOM') and deepcopy(env['LINKCOM']) or []
-	    try:
+        savedLINKCOM = env.has_key('LINKCOM') and deepcopy(env['LINKCOM']) or []
+        try:
             env['LINKCOM'] = "$F77 -o $TARGET $SOURCES"
             res, m = _dummy_main_imp(context)
-	    finally:
+        finally:
             env.Replace(LINKCOM = savedLINKCOM)
 
     return res, m
@@ -148,21 +148,21 @@ def _dummy_main_imp(context):
     fcn_tmpl = """
 int %s() { return 0; }
 """
-	mains = ["MAIN__", "__MAIN", "_MAIN", "MAIN_"]
-	mains.extend([string.lower(m) for m in mains])
-	mains.insert(0, "")
-	mains.append("MAIN")
-	mains.append("main")
-	for m in mains:
-	    prog = fcn_tmpl % "dummy"
-	    if m:
+    mains = ["MAIN__", "__MAIN", "_MAIN", "MAIN_"]
+    mains.extend([string.lower(m) for m in mains])
+    mains.insert(0, "")
+    mains.append("MAIN")
+    mains.append("main")
+    for m in mains:
+        prog = fcn_tmpl % "dummy"
+        if m:
             prog = fcn_tmpl % m + prog
-	    result = context.TryLink(prog, '.c')
-	    if result:
+        result = context.TryLink(prog, '.c')
+        if result:
             if not m:
                 m = None
             break
-	return result, m
+    return result, m
 
 # XXX: refactor those by using function templates
 def CheckF77DummyMain(context):
@@ -192,25 +192,25 @@ def _CheckFMangling(context, fc, dummym, ext):
     env = context.env
     # TODO: if does not exist, call the function to get the F77_DUMMY_MAIN
     if not built_with_mstools(env):
-	    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
-	    savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
-	    try:
+        savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
+        savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
+        try:
             env['LINK'] = env[fc]
             result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
-	    finally:
+        finally:
             env.Replace(LINK = savedLINK)
             env.Replace(LIBS = savedLIBS)
     else:
-	    # XXX: instead of recreating our own build commands, can we use the
-	    # ones from scons ? (defined in Tools directory)
-	    savedLINKCOM = env.has_key('LINKCOM') and deepcopy(env['LINKCOM']) or []
-	    savedLIBLINKPREFFIX = env.has_key('LIBLINKPREFFIX') and deepcopy(env['LIBLINKPREFFIX']) or []
-	    savedLIBLINKSUFFIX = env.has_key('LIBLINKSUFFIX') and deepcopy(env['LIBLINKSUFFIX']) or []
-	    savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
-	    try:
+        # XXX: instead of recreating our own build commands, can we use the
+        # ones from scons ? (defined in Tools directory)
+        savedLINKCOM = env.has_key('LINKCOM') and deepcopy(env['LINKCOM']) or []
+        savedLIBLINKPREFFIX = env.has_key('LIBLINKPREFFIX') and deepcopy(env['LIBLINKPREFFIX']) or []
+        savedLIBLINKSUFFIX = env.has_key('LIBLINKSUFFIX') and deepcopy(env['LIBLINKSUFFIX']) or []
+        savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
+        try:
             env['LINKCOM'] = '$%s -o $TARGET $SOURCES $_LIBFLAGS' % fc
             result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
- 	    finally:
+        finally:
             env.Replace(LINKCOM = savedLINKCOM)
             env.Replace(LIBS = savedLIBS)
             env.Replace(LIBLINKPREFFIX = savedLIBLINKPREFFIX)
@@ -270,7 +270,7 @@ def _check_f_mangling_imp(context, fc, m, ext):
             result = mangler = u = du = c = None
             break
 
-	return result, mangler, u, du, c
+    return result, mangler, u, du, c
 
 def _set_mangling_var(context, u, du, case, type = 'F77'):
     env = context.env
@@ -373,7 +373,7 @@ def _build_empty_program_ms(context, fcomp):
     slast = str(context.lastTarget)
     dir = dirname(slast)
     test_prog = pjoin(dir, basename(slast).split('.')[0])
-	cmd = context.env.subst("$%s -v -o $TARGET $SOURCES" % fcomp, 
+    cmd = context.env.subst("$%s -v -o $TARGET $SOURCES" % fcomp, 
                             target = context.env.File(test_prog),
                             source = context.lastTarget)
 
@@ -382,15 +382,15 @@ def _build_empty_program_ms(context, fcomp):
         res = 0
     else:
         res = 1
-	cnt = out.split('\n')
-	return res, cnt
+    cnt = out.split('\n')
+    return res, cnt
 
 def _build_empty_program_posix(context, fcomp):
     oldLINK = context.env['LINK']
     # XXX: get the fortran compiler
     context.env['LINK'] = '$' + fcomp
     res = 0
-	cnt = ''
+    cnt = ''
     try:
         # We always want to do this build, and we do not want scons cache
         # to interfer. So we build a command executed directly through our
@@ -413,7 +413,7 @@ def _build_empty_program_posix(context, fcomp):
     finally:
         context.env['LINK'] = oldLINK
 
-	return res, cnt
+    return res, cnt
 
 # Helper to generate combinations of lists
 def _RecursiveGenerator(*sets):
