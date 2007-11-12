@@ -57,6 +57,9 @@ ifort_v10_link_expected = ['-L/home/david/opt/intel/fc/10.0.023//lib',
         '-L/usr/lib/gcc/i486-linux-gnu/4.1.3/../../../', '-lifport',
         '-lifcore', '-limf', '-lm', '-lipgo', '-lirc', '-lirc_s', '-ldl']
 
+mingw_g77_link_output = """
+['Driving: g77 -v -o build\\scons\\numpy\\scons_fake\\checkers\\.sconf\\conftest_0 build\\scons\\numpy\\scons_fake\\checkers\\.sconf\\conftest_0.obj -lfrtbegin -lg2c', 'Reading specs from c:/MINGW/bin/../lib/gcc/mingw32/3.4.5/specs', 'Configured with: ../gcc-3.4.5/configure --with-gcc --with-gnu-ld --with-gnu-as --host=mingw32 --target=mingw32 --prefix=/mingw --enable-threads --disable-nls --enable-languages=c,c++,f77,ada,objc,java --disable-win32-registry --disable-shared --enable-sjlj-exceptions --enable-libgcj --disable-java-awt --without-x --enable-java-gc=boehm --disable-libgcj-debug --enable-interpreter --enable-hash-synchronization --enable-libstdcxx-debug', 'Thread model: win32', 'gcc version 3.4.5 (mingw special)', ' c:/MINGW/bin/../libexec/gcc/mingw32/3.4.5/collect2.exe -Bdynamic -o build\\scons\\numpy\\scons_fake\\checkers\\.sconf\\conftest_0.exe /mingw/lib/crt2.o c:/MINGW/bin/../lib/gcc/mingw32/3.4.5/crtbegin.o -Lc:/MINGW/bin/../lib/gcc/mingw32/3.4.5 -Lc:/MINGW/bin/../lib/gcc -L/mingw/lib/gcc/mingw32/3.4.5 -Lc:/MINGW/bin/../lib/gcc/mingw32/3.4.5/../../../../mingw32/lib -L/mingw/lib/gcc/mingw32/3.4.5/../../../../mingw32/lib -L/mingw/lib -Lc:/MINGW/bin/../lib/gcc/mingw32/3.4.5/../../.. -L/mingw/lib/gcc/mingw32/3.4.5/../../.. build\\scons\\numpy\\scons_fake\\checkers\\.sconf\\conftest_0.obj -lfrtbegin -lg2c -lmingw32 -lgcc -lmoldname -lmingwex -lmsvcrt -luser32 -lkernel32 -ladvapi32 -lshell32 -lmingw32 -lgcc -lmoldname -lmingwex -lmsvcrt c:/MINGW/bin/../lib/gcc/mingw32/3.4.5/crtend.o', '']"""
+
 def generate_output(fcomp, verbose):
     import os
     os.system('%s -c %s &> /dev/null ' % (fcomp, 'empty.f'))

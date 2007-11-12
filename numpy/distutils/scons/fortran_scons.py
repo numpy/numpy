@@ -110,36 +110,58 @@ def CheckF77Clib(context):
 
 # If need a dummy main
 def _CheckFDummyMain(context, fcomp):
+    # Check whether the Fortran runtime needs a dummy main.
     if not context.env.has_key(fcomp):
         context.Message('Checking dummy main: no %s compiler defined: cannot check dummy main ' % fcomp)
         return 0, None
     else:
         context.Message('Checking if %s needs dummy main - ' % context.env[fcomp])
 
-    fcn_tmpl = """
+    env = context.env
+    if not built_with_mstools(context.env):
+	    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
+	    try:
+		env['LINK'] = env[fcomp]
+		res, m =_dummy_main_imp(context)
+	    finally:
+		env.Replace(LINK = savedLINK)
+    else:
+            # Using MS tools (Visual studio) with fortran compiler
+	    # XXX: this has to be dirty... As scons is using visual studio, it
+	    # uses the related convention (prefix names for libraries, etc...).
+	    # Here, we want to compile object code with cl.exe, but link with
+	    # the fortran compiler which may be totally different than cl.exe
+	    # (think gnu fortran compiler). So we have to bypass scons
+	    # commands, and use our own: since this is only used for
+	    # configuration, it should not matter much.
+	    savedLINKCOM = env.has_key('LINKCOM') and deepcopy(env['LINKCOM']) or []
+	    try:
+		env['LINKCOM'] = "$F77 -o $TARGET $SOURCES"
+		res, m = _dummy_main_imp(context)
+	    finally:
+		env.Replace(LINKCOM = savedLINKCOM)
+
+    return res, m
+
+def _dummy_main_imp(context):
+    	fcn_tmpl = """
 int %s() { return 0; }
 """
-    env = context.env
-    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
-    try:
-        env['LINK'] = env[fcomp]
-        mains = ["MAIN__", "__MAIN", "_MAIN", "MAIN_"]
-        mains.extend([string.lower(m) for m in mains])
-        mains.insert(0, "")
-        mains.append("MAIN")
-        mains.append("main")
-        for m in mains:
-            prog = fcn_tmpl % "dummy"
-            if m:
-                prog = fcn_tmpl % m + prog
-            result = context.TryLink(prog, '.c')
-            if result:
-                if not m:
-                    m = None
-                break
-    finally:
-        env.Replace(LINK = savedLINK)
-    return result, m
+	mains = ["MAIN__", "__MAIN", "_MAIN", "MAIN_"]
+	mains.extend([string.lower(m) for m in mains])
+	mains.insert(0, "")
+	mains.append("MAIN")
+	mains.append("main")
+	for m in mains:
+	    prog = fcn_tmpl % "dummy"
+	    if m:
+		prog = fcn_tmpl % m + prog
+	    result = context.TryLink(prog, '.c')
+	    if result:
+		if not m:
+		    m = None
+		break
+	return result, m
 
 # XXX: refactor those by using function templates
 def CheckF77DummyMain(context):
@@ -333,15 +355,13 @@ def _build_empty_program_ms(context, fcomp):
                                     target = context.env.File(test_prog),
                                     source = context.lastTarget)
 
-	print cmd
         st, out = popen_wrapper(cmd, merge = True)
         if st:
             res = 0
         else:
             res = 1
-        cnt = out.split('\n')
-	print cnt
-	raise "YATA"
+	cnt = out.split('\n')
+	return res, cnt
 
 def _build_empty_program_posix(context, fcomp):
         oldLINK = context.env['LINK']
