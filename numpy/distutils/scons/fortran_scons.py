@@ -7,8 +7,9 @@ from os.path import basename, join as pjoin, dirname
 from copy import deepcopy
 
 from numpy.distutils.scons.core.utils import popen_wrapper
-from numpy.distutils.scons.core.extension_scons import built_with_mstools, built_with_mingw
-from fortran import parse_f77link, check_link_verbose
+from numpy.distutils.scons.core.extension_scons import built_with_mstools, \
+    built_with_mingw, built_with_gnu_f77
+from fortran import parse_f77link, check_link_verbose, gnu_to_ms_link
 
 #-----------------
 # Public functions
@@ -75,11 +76,8 @@ def CheckF90DryRun(context):
 def CheckF77Clib(context):
     """This tries to get Fortran runtime facilities necessary at link stage,
     and put the relevant flags in env['F77_LDFLAGS']."""
-    #if sys.platform[:5] == 'win32':
-    #    raise Exception("FIXME: This is not tested on windows.... No chance "\
-    #                    "of working if using visual Intel")
     fcompiler = 'F77'
-    # TODO: check that F77 exists, and can be run
+
     if not context.env.has_key(fcompiler):
         raise Exception("F77 should be set before calling CheckF77Clib !")
 
@@ -101,6 +99,8 @@ def CheckF77Clib(context):
 
     if res == 1:
         final_flags = parse_f77link(cnt)
+        if built_with_mstools(env) and built_with_gnu_f77(env):
+            final_flags = gnu_to_ms_link(final_flags)
         env.Append(F77_LDFLAGS = ' '.join(final_flags))
         context.Result(env['F77_LDFLAGS'])
     else:
@@ -121,30 +121,31 @@ def _CheckFDummyMain(context, fcomp):
     if not built_with_mstools(context.env):
 	    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
 	    try:
-		env['LINK'] = env[fcomp]
-		res, m =_dummy_main_imp(context)
+            env['LINK'] = env[fcomp]
+            res, m =_dummy_main_imp(context)
 	    finally:
-		env.Replace(LINK = savedLINK)
+            env.Replace(LINK = savedLINK)
     else:
-            # Using MS tools (Visual studio) with fortran compiler
-	    # XXX: this has to be dirty... As scons is using visual studio, it
-	    # uses the related convention (prefix names for libraries, etc...).
-	    # Here, we want to compile object code with cl.exe, but link with
-	    # the fortran compiler which may be totally different than cl.exe
-	    # (think gnu fortran compiler). So we have to bypass scons
-	    # commands, and use our own: since this is only used for
-	    # configuration, it should not matter much.
+        # Using MS tools (Visual studio) with fortran compiler 
+        
+        # XXX: this has to be dirty... As scons is using visual studio, it uses
+        # the related convention (prefix names for libraries, etc...).  Here,
+        # we want to compile object code with cl.exe, but link with the fortran
+        # compiler which may be totally different than cl.exe (think gnu
+        # fortran compiler). So we have to bypass scons commands, and use our
+        # own: since this is only used for configuration, it should not matter
+        # much.
 	    savedLINKCOM = env.has_key('LINKCOM') and deepcopy(env['LINKCOM']) or []
 	    try:
-		env['LINKCOM'] = "$F77 -o $TARGET $SOURCES"
-		res, m = _dummy_main_imp(context)
+            env['LINKCOM'] = "$F77 -o $TARGET $SOURCES"
+            res, m = _dummy_main_imp(context)
 	    finally:
-		env.Replace(LINKCOM = savedLINKCOM)
+            env.Replace(LINKCOM = savedLINKCOM)
 
     return res, m
 
 def _dummy_main_imp(context):
-    	fcn_tmpl = """
+    fcn_tmpl = """
 int %s() { return 0; }
 """
 	mains = ["MAIN__", "__MAIN", "_MAIN", "MAIN_"]
@@ -155,12 +156,12 @@ int %s() { return 0; }
 	for m in mains:
 	    prog = fcn_tmpl % "dummy"
 	    if m:
-		prog = fcn_tmpl % m + prog
+            prog = fcn_tmpl % m + prog
 	    result = context.TryLink(prog, '.c')
 	    if result:
-		if not m:
-		    m = None
-		break
+            if not m:
+                m = None
+            break
 	return result, m
 
 # XXX: refactor those by using function templates
@@ -194,11 +195,11 @@ def _CheckFMangling(context, fc, dummym, ext):
 	    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
 	    savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
 	    try:
-		env['LINK'] = env[fc]
-		result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
+            env['LINK'] = env[fc]
+            result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
 	    finally:
-		env.Replace(LINK = savedLINK)
-		env.Replace(LIBS = savedLIBS)
+            env.Replace(LINK = savedLINK)
+            env.Replace(LIBS = savedLIBS)
     else:
 	    # XXX: instead of recreating our own build commands, can we use the
 	    # ones from scons ? (defined in Tools directory)
@@ -207,18 +208,19 @@ def _CheckFMangling(context, fc, dummym, ext):
 	    savedLIBLINKSUFFIX = env.has_key('LIBLINKSUFFIX') and deepcopy(env['LIBLINKSUFFIX']) or []
 	    savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
 	    try:
-		env['LINKCOM'] = '$%s -o $TARGET $SOURCES $_LIBFLAGS' % fc
-		result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
+            env['LINKCOM'] = '$%s -o $TARGET $SOURCES $_LIBFLAGS' % fc
+            result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
  	    finally:
-		env.Replace(LINKCOM = savedLINKCOM)
-		env.Replace(LIBS = savedLIBS)
-		env.Replace(LIBLINKPREFFIX = savedLIBLINKPREFFIX)
-		env.Replace(LIBLINKSUFFIX = savedLIBLINKSUFFIX)
+            env.Replace(LINKCOM = savedLINKCOM)
+            env.Replace(LIBS = savedLIBS)
+            env.Replace(LIBLINKPREFFIX = savedLIBLINKPREFFIX)
+            env.Replace(LIBLINKSUFFIX = savedLIBLINKSUFFIX)
+
     return result, mangler, u, du, c
 
 def _check_f_mangling_imp(context, fc, m, ext):
-    	env = context.env
-    	subr = """
+    env = context.env
+    subr = """
       subroutine foobar()
       return
       end
@@ -226,47 +228,47 @@ def _check_f_mangling_imp(context, fc, m, ext):
       return
       end
 """
-    	main_tmpl = """
-int %s() { return 1; }
+    main_tmpl = """
+      int %s() { return 1; }
 """
-    	prog_tmpl = """
-void %s(void);
-void %s(void);
-int my_main() {
-    %s();
-    %s();
-    return 0;
-}
+    prog_tmpl = """
+      void %s(void);
+      void %s(void);
+      int my_main() {
+      %s();
+      %s();
+      return 0;
+      }
 """
-        # variants:
-        #   lower-case, no underscore, no double underscore: foobar, foo_bar
-        #   ...
-        #   upper-case, underscore, double underscore: FOOBAR_, FOO_BAR__
-        context.TryCompile(subr, ext)
-        obj = context.lastTarget
-        env.Append(LIBS = env.StaticLibrary(obj))
-        under = ['', '_']
-        doubleunder = ['', '_']
-        casefcn = ["lower", "upper"]
-        gen = _RecursiveGenerator(under, doubleunder, casefcn)
-        while True:
-            try:
-                u, du, c = gen.next()
-                def make_mangler(u, du, c):
-                    return lambda n: getattr(string, c)(n) +\
-                                     u + (n.find('_') != -1 and du or '')
-                mangler = make_mangler(u, du, c)
-                foobar = mangler("foobar")
-                foo_bar = mangler("foo_bar")
-                prog = prog_tmpl % (foobar, foo_bar, foobar, foo_bar)
-                if m:
-                    prog = main_tmpl % m + prog
-                result = context.TryLink(prog, '.c')
-                if result:
-                    break
-            except StopIteration:
-                result = mangler = u = du = c = None
+    # variants:
+    #   lower-case, no underscore, no double underscore: foobar, foo_bar
+    #   ...
+    #   upper-case, underscore, double underscore: FOOBAR_, FOO_BAR__
+    context.TryCompile(subr, ext)
+    obj = context.lastTarget
+    env.Append(LIBS = env.StaticLibrary(obj))
+    under = ['', '_']
+    doubleunder = ['', '_']
+    casefcn = ["lower", "upper"]
+    gen = _RecursiveGenerator(under, doubleunder, casefcn)
+    while True:
+        try:
+            u, du, c = gen.next()
+            def make_mangler(u, du, c):
+                return lambda n: getattr(string, c)(n) +\
+                                 u + (n.find('_') != -1 and du or '')
+            mangler = make_mangler(u, du, c)
+            foobar = mangler("foobar")
+            foo_bar = mangler("foo_bar")
+            prog = prog_tmpl % (foobar, foo_bar, foobar, foo_bar)
+            if m:
+                prog = main_tmpl % m + prog
+            result = context.TryLink(prog, '.c')
+            if result:
                 break
+        except StopIteration:
+            result = mangler = u = du = c = None
+            break
 
 	return result, mangler, u, du, c
 
@@ -384,32 +386,32 @@ def _build_empty_program_ms(context, fcomp):
 	return res, cnt
 
 def _build_empty_program_posix(context, fcomp):
-        oldLINK = context.env['LINK']
-        # XXX: get the fortran compiler
-        context.env['LINK'] = '$' + fcomp
-        res = 0
+    oldLINK = context.env['LINK']
+    # XXX: get the fortran compiler
+    context.env['LINK'] = '$' + fcomp
+    res = 0
 	cnt = ''
-        try:
-            # We always want to do this build, and we do not want scons cache
-            # to interfer. So we build a command executed directly through our
-            # popen_wrapper, which output is captured.
+    try:
+        # We always want to do this build, and we do not want scons cache
+        # to interfer. So we build a command executed directly through our
+        # popen_wrapper, which output is captured.
 
-            # XXX: does this scheme to get the program name always work ? Can
-            # we use Scons to get the target name from the object name ?
-            slast = str(context.lastTarget)
-            dir = dirname(slast)
-            test_prog = pjoin(dir, basename(slast).split('.')[0])
-            cmd = context.env.subst('$LINKCOM', 
-                                    target = context.env.File(test_prog),
-                                    source = context.lastTarget)
-            st, out = popen_wrapper(cmd, merge = True)
-            if st:
-                res = 0
-            else:
-                res = 1
-            cnt = out.split('\n')
-        finally:
-            context.env['LINK'] = oldLINK
+        # XXX: does this scheme to get the program name always work ? Can
+        # we use Scons to get the target name from the object name ?
+        slast = str(context.lastTarget)
+        dir = dirname(slast)
+        test_prog = pjoin(dir, basename(slast).split('.')[0])
+        cmd = context.env.subst('$LINKCOM', 
+                                target = context.env.File(test_prog),
+                                source = context.lastTarget)
+        st, out = popen_wrapper(cmd, merge = True)
+        if st:
+            res = 0
+        else:
+            res = 1
+        cnt = out.split('\n')
+    finally:
+        context.env['LINK'] = oldLINK
 
 	return res, cnt
 

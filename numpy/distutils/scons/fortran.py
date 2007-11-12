@@ -1,4 +1,4 @@
-#! Last Change: Fri Oct 26 04:00 PM 2007 J
+#! Last Change: Mon Nov 12 07:00 PM 2007 J
 
 # This module defines some functions/classes useful for testing fortran-related
 # features (name mangling, F77/C runtime, etc...).
@@ -28,6 +28,17 @@ RLINKFLAGS_IGNORED = [re.compile(i) for i in LINKFLAGS_IGNORED]
 # linkflags which match those are the one we are interested in
 LINKFLAGS_INTERESTING = [r'-[lLR][a-zA-Z0-9]*']
 RLINKFLAGS_INTERESTING = [re.compile(i) for i in LINKFLAGS_INTERESTING]
+
+def gnu_to_ms_link(linkflags):
+    # XXX: This is bogus. Instead of manually playing with those flags, we
+    # should use scons facilities, but this is not so easy because we want to
+    # use posix environment and MS environment at the same time
+    newflags = []
+    for flag in linkflags:
+        if flag.startswith('-L'):
+            newflags.append('/LIBPATH:i[2:]')
+        elif flag.startswith('-l'):
+            newflags.append('lib%s.a' % i[2:])
 
 def _check_link_verbose_posix(lines):
     """Returns true if useful link options can be found in output.

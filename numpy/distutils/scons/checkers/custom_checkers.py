@@ -135,16 +135,7 @@ def CheckLAPACK(context, autoadd = 1):
 
         # fortrancfg is used to merge info from fortran checks and site.cfg
         fortrancfg = deepcopy(cfg)
-        if not built_with_mstools(env):
-            fortrancfg['linkflags'].append(env['F77_LDFLAGS'])
-        else:
-            # XXX: do this the right way (abstract a minimal posix -> MS flags
-            # convertor)
-            for i in env['F77_LDFLAGS'].split(' '):
-            if i.startswith('-L'):
-                fortrancfg['libpath'].append(i[2:])
-            elif i.startswith('-l'):
-                fortrancfg['linkflags'].append('lib%s.a' % i[2:])
+        fortrancfg['linkflags'].append(env['F77_LDFLAGS'])
 
         st = check_include_and_run(context, 'LAPACK (from site.cfg) ', fortrancfg,
                                   [], test_src, autoadd)
