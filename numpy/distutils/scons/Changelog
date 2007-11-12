@@ -1,3 +1,10 @@
+Mon, 12 Nov 2007 19:57:24 +0900
+
+	* g77 and MS visual studio can now be used together. CheckF77Mangler,
+	CheckF77Clib and CheckF77DummyMain supports this configuration, and
+	using NETLIB BLAS/LAPACK compiled by g77 in visual C++ built numpy
+	works.
+
 Sat, 11 Nov 2007 19:35:54 +0900
 
 User-visible Changes:

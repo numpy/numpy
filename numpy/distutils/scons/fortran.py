@@ -32,7 +32,8 @@ RLINKFLAGS_INTERESTING = [re.compile(i) for i in LINKFLAGS_INTERESTING]
 def gnu_to_ms_link(linkflags):
     # XXX: This is bogus. Instead of manually playing with those flags, we
     # should use scons facilities, but this is not so easy because we want to
-    # use posix environment and MS environment at the same time
+    # use posix environment and MS environment at the same time. If we need it
+    # at several places, we will have to think on a better way.
     newflags = []
     for flag in linkflags:
         if flag.startswith('-L'):
