@@ -122,6 +122,8 @@ def CheckLAPACK(context, autoadd = 1):
         cfg = ConfigOpts(cpppath = cpppath, libs = libs, libpath = libpath,
                          rpath = deepcopy(libpath))
 
+	# XXX: How to know whether we need fortran or not
+	# ?
         if not env.has_key('F77_NAME_MANGLER'):
             if not CheckF77Mangling(context):
                 return 0
@@ -135,7 +137,7 @@ def CheckLAPACK(context, autoadd = 1):
 
         # fortrancfg is used to merge info from fortran checks and site.cfg
         fortrancfg = deepcopy(cfg)
-        fortrancfg['linkflags'].append(env['F77_LDFLAGS'])
+        fortrancfg['linkflags'].extend(env['F77_LDFLAGS'])
 
         st = check_include_and_run(context, 'LAPACK (from site.cfg) ', fortrancfg,
                                   [], test_src, autoadd)

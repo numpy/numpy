@@ -101,8 +101,10 @@ def CheckF77Clib(context):
         final_flags = parse_f77link(cnt)
         if built_with_mstools(env) and built_with_gnu_f77(env):
             final_flags = gnu_to_ms_link(final_flags)
-        env.Append(F77_LDFLAGS = ' '.join(final_flags))
-        context.Result(env['F77_LDFLAGS'])
+	    print final_flags
+        #env.Append(F77_LDFLAGS = ' '.join(final_flags))
+        env['F77_LDFLAGS'] = final_flags
+        context.Result(str(env['F77_LDFLAGS']))
     else:
         context.Result('Failed !')
 

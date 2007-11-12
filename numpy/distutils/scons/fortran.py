@@ -36,9 +36,9 @@ def gnu_to_ms_link(linkflags):
     newflags = []
     for flag in linkflags:
         if flag.startswith('-L'):
-            newflags.append('/LIBPATH:%s' % i[2:])
+            newflags.append(r'/LIBPATH:%s' % flag[2:])
         elif flag.startswith('-l'):
-            newflags.append('lib%s.a' % i[2:])
+            newflags.append(r'lib%s.a' % flag[2:])
     return newflags
 
 def _check_link_verbose_posix(lines):
