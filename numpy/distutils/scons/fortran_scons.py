@@ -7,6 +7,7 @@ from os.path import basename, join as pjoin, dirname
 from copy import deepcopy
 
 from numpy.distutils.scons.core.utils import popen_wrapper
+from numpy.distutils.scons.core.extension_scons import built_with_mstools, built_with_mingw
 from fortran import parse_f77link, check_link_verbose
 
 #-----------------
@@ -311,11 +312,43 @@ def _build_empty_program(context, fcomp):
     else:
         raise RuntimeError("fcomp %s not implemented..." % fcomp)
         return 0
+
     if res:
+	if not built_with_mstools(context.env):
+	    res, cnt = _build_empty_program_posix(context, fcomp)
+	else:
+	    res, cnt = _build_empty_program_ms(context, fcomp)
+            
+    return res, cnt
+
+def _build_empty_program_ms(context, fcomp):
+	# MS tools and g77/gfortran semantics are totally
+	# difference, so we cannot just compile a program
+	# replacing MS linker by g77/gfortran as we can for
+	# all other platforms. 
+        slast = str(context.lastTarget)
+        dir = dirname(slast)
+        test_prog = pjoin(dir, basename(slast).split('.')[0])
+	cmd = context.env.subst("$%s -v -o $TARGET $SOURCES" % fcomp, 
+                                    target = context.env.File(test_prog),
+                                    source = context.lastTarget)
+
+	print cmd
+        st, out = popen_wrapper(cmd, merge = True)
+        if st:
+            res = 0
+        else:
+            res = 1
+        cnt = out.split('\n')
+	print cnt
+	raise "YATA"
+
+def _build_empty_program_posix(context, fcomp):
         oldLINK = context.env['LINK']
         # XXX: get the fortran compiler
         context.env['LINK'] = '$' + fcomp
         res = 0
+	cnt = ''
         try:
             # We always want to do this build, and we do not want scons cache
             # to interfer. So we build a command executed directly through our
@@ -337,8 +370,8 @@ def _build_empty_program(context, fcomp):
             cnt = out.split('\n')
         finally:
             context.env['LINK'] = oldLINK
-            
-    return res, cnt
+
+	return res, cnt
 
 # Helper to generate combinations of lists
 def _RecursiveGenerator(*sets):
