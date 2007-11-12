@@ -188,7 +188,37 @@ def CheckF90DummyMain(context):
 def _CheckFMangling(context, fc, dummym, ext):
     # XXX: rewrite this in a more straightfoward manner, and support prepending
     # underscore
-    subr = """
+    env = context.env
+    # TODO: if does not exist, call the function to get the F77_DUMMY_MAIN
+    if not built_with_mstools(env):
+	    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
+	    savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
+	    try:
+		env['LINK'] = env[fc]
+		result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
+	    finally:
+		env.Replace(LINK = savedLINK)
+		env.Replace(LIBS = savedLIBS)
+    else:
+	    # XXX: instead of recreating our own build commands, can we use the
+	    # ones from scons ? (defined in Tools directory)
+	    savedLINKCOM = env.has_key('LINKCOM') and deepcopy(env['LINKCOM']) or []
+	    savedLIBLINKPREFFIX = env.has_key('LIBLINKPREFFIX') and deepcopy(env['LIBLINKPREFFIX']) or []
+	    savedLIBLINKSUFFIX = env.has_key('LIBLINKSUFFIX') and deepcopy(env['LIBLINKSUFFIX']) or []
+	    savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
+	    try:
+		env['LINKCOM'] = '$%s -o $TARGET $SOURCES $_LIBFLAGS' % fc
+		result, mangler, u, du, c = _check_f_mangling_imp(context, fc, dummym, ext)
+ 	    finally:
+		env.Replace(LINKCOM = savedLINKCOM)
+		env.Replace(LIBS = savedLIBS)
+		env.Replace(LIBLINKPREFFIX = savedLIBLINKPREFFIX)
+		env.Replace(LIBLINKSUFFIX = savedLIBLINKSUFFIX)
+    return result, mangler, u, du, c
+
+def _check_f_mangling_imp(context, fc, m, ext):
+    	env = context.env
+    	subr = """
       subroutine foobar()
       return
       end
@@ -196,10 +226,10 @@ def _CheckFMangling(context, fc, dummym, ext):
       return
       end
 """
-    main_tmpl = """
+    	main_tmpl = """
 int %s() { return 1; }
 """
-    prog_tmpl = """
+    	prog_tmpl = """
 void %s(void);
 void %s(void);
 int my_main() {
@@ -208,13 +238,6 @@ int my_main() {
     return 0;
 }
 """
-    env = context.env
-    savedLINK = env.has_key('LINK') and deepcopy(env['LINK']) or []
-    savedLIBS = env.has_key('LIBS') and deepcopy(env['LIBS']) or []
-    # TODO: if does not exist, call the function to get the F77_DUMMY_MAIN
-    m = dummym
-    try:
-        env['LINK'] = env[fc]
         # variants:
         #   lower-case, no underscore, no double underscore: foobar, foo_bar
         #   ...
@@ -244,10 +267,8 @@ int my_main() {
             except StopIteration:
                 result = mangler = u = du = c = None
                 break
-    finally:
-        env.Replace(LINK = savedLINK)
-        env.Replace(LIBS = savedLIBS)
-    return result, mangler, u, du, c
+
+	return result, mangler, u, du, c
 
 def _set_mangling_var(context, u, du, case, type = 'F77'):
     env = context.env
