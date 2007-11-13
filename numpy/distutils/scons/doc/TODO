@@ -1,21 +1,11 @@
 Before first beta:
-    - rewrite CheckLibAndHeader to reuse save/restore thing from checkers
-    - fortran / VS interaction: look at build_ext of numpy.distutils, need hack
-      to make this works
     - f2py and scipy interoperability: N hours ?
-    - support environments wo fortran compilers
 
 Design questions:
     - improve BrokenMathlib and Mathlib in core, and make them available to
       everyone
-    - How to provide a usable framework for checks (+ doc)
     - overriding compilation flags: env variables, site.cfg ? (autotools
       convention ?)
-
-Code cleaning:
-    - improve Fortran runtime detection for upstream integration
-    - improve Fortran mangling and dummy main detection for upstream
-      integration
 
 Builder:
     - Get a PythonExtension builder independant of distutils for upstream
@@ -25,14 +15,15 @@ Builder:
     - Generic Api builders (with dep tracking)
     - Generic FromTemplate builder (with dep tracking)
 
-Implementation details:
-    - Refactor code for API generation (numpy/core/code_generators) -> Mostly done
-
 Tests:
     - What can be tested ?
 
 Fortran:
     - Rewrite verbose output parser using shlex for quote handling
+    - improve Fortran runtime detection for upstream integration
+    - improve Fortran mangling and dummy main detection for upstream
+      integration
+
 
 Documentation:
     - scons / distutils integration, global design (BuildDir, directories, etc...)

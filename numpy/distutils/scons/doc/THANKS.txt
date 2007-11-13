@@ -1,0 +1,4 @@
+I would like to thank the following people:
+        - Stefan Van der Walt for help with numpy build bot.
+        - Matthieu Brucher for his windows expertise and Visual studio testing.
+        - Raphael Langella for access to a solaris box.
