@@ -8,7 +8,9 @@
 
 #define NPY_NOSMP        @NPY_NOSMP@
 
-/* Conditionally define them */
+/* XXX: this has really nothing to do in a config file... */
+#define NPY_MATHLIB      @MATHLIB@
+
 /* XXX: this has to be done outside config files !!!! */
 #ifdef PY_LONG_LONG
         #define NPY_SIZEOF_LONGLONG @SIZEOF_PY_LONG_LONG@

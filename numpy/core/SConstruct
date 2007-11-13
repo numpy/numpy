@@ -96,7 +96,8 @@ if not st:
     raise SCons.Errors.UserError("No usable mathlib was found: chose another "\
                                  "one using the MATHLIB env variable, eg "\
                                  "'MATHLIB=m python setup.py build'")
-config_sym.append(('MATHLIB', mlib))
+# XXX: this is ugly: mathlib has nothing to do in a public header file
+config_sym.append(('MATHLIB', ','.join(mlib)))
 
 def check_lib(f, autoadd = 0):
     """Check that f is available in mlib, and add the symbol appropriately.
