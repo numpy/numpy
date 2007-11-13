@@ -1,3 +1,8 @@
+#! Last Change: Tue Nov 13 08:00 PM 2007 J
+
+__docstring__ = """Code to support special facilities to scons which are only
+useful for numpy.core, hence not put into numpy.distutils.scons"""
+
 import sys
 import os
 

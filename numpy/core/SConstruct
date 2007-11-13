@@ -1,4 +1,4 @@
-# Last Change: Tue Nov 06 07:00 PM 2007 J
+# Last Change: Tue Nov 13 08:00 PM 2007 J
 # vim:syntax=python
 import os
 import sys
@@ -11,8 +11,7 @@ from numpy.distutils.scons import CheckCBLAS
 from numpy.distutils.scons.configuration import write_info
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
-    generate_config_header, generate_config_header_emitter, \
-    CheckMathlib
+    generate_config_header, generate_config_header_emitter
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
@@ -27,7 +26,6 @@ if os.name == 'nt':
 #=======================
 # XXX: separate env for configuration
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
-    'CheckMathlib' : CheckMathlib, 
     'CheckCBLAS' : CheckCBLAS})
 
 # Convention: list of tuples (definition, value). value:
