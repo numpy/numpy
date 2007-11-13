@@ -230,7 +230,9 @@ def _GetNumpyEnvironment(args):
     # the build dir relative to the src_dir: we add n .., where n is the number
     # of occureant of the path separator in the src dir.
     def get_build_relative_src(srcdir, builddir):
-        n = srcdir.count(os.sep) + 1
+        n = srcdir.count(os.sep)
+        if len(srcdir):
+            n += 1
         return pjoin(os.sep.join([os.pardir for i in range(n)]), builddir)
     sconsign = pjoin(get_build_relative_src(env['src_dir'], 
                                             env['build_dir']),
