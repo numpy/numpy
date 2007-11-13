@@ -1,19 +1,12 @@
-Before first beta:
-    - f2py and scipy interoperability: N hours ?
-
-Design questions:
-    - improve BrokenMathlib and Mathlib in core, and make them available to
-      everyone
-    - overriding compilation flags: env variables, site.cfg ? (autotools
-      convention ?)
+Things to implement / problems to solve:
+    - f2py interoperability ?
+    - fortran compiler optimization / option (underscore and so on)
 
 Builder:
     - Get a PythonExtension builder independant of distutils for upstream
       integration
     - Get a CtypesExtension builder independant of distutils for upstream
       integration
-    - Generic Api builders (with dep tracking)
-    - Generic FromTemplate builder (with dep tracking)
 
 Tests:
     - What can be tested ?
@@ -24,6 +17,11 @@ Fortran:
     - improve Fortran mangling and dummy main detection for upstream
       integration
 
+Not so important things:
+    - improve BrokenMathlib and Mathlib in core, and make them available to
+      everyone
+    - Generic Api builders (with dep tracking)
+    - Generic FromTemplate builder (with dep tracking)
 
 Documentation:
     - scons / distutils integration, global design (BuildDir, directories, etc...)
