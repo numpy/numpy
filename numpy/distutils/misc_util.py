@@ -113,11 +113,11 @@ def njoin(*path):
     return minrelpath(joined)
 
 def get_mathlibs(path=None):
-    """Return the MATHLIB line from config.h
+    """Return the MATHLIB line from numpyconfig.h
     """
     if path is None:
         path = os.path.join(get_numpy_include_dirs()[0], 'numpy')
-    config_file = os.path.join(path,'config.h')
+    config_file = os.path.join(path,'numpyconfig.h')
     fid = open(config_file)
     mathlibs = []
     s = '#define MATHLIB'
