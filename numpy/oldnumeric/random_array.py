@@ -81,13 +81,13 @@ def multivariate_normal(mean, cov, shape=[]):
     """multivariate_normal(mean, cov) or multivariate_normal(mean, cov, [m, n, ...])
     returns an array containing multivariate normally distributed random numbers
     with specified mean and covariance.
-    
+
     mean must be a 1 dimensional array. cov must be a square two dimensional
     array with the same number of rows and columns as mean has elements.
-    
+
     The first form returns a single 1-D array containing a multivariate
     normal.
-    
+
     The second form returns an array of shape (m, n, ..., cov.shape[0]).
     In this case, output[i,j,...,:] is a 1-D array containing a multivariate
     normal."""
@@ -117,7 +117,7 @@ def gamma(a, r, shape=[]):
 def F(dfn, dfd, shape=[]):
     """F(dfn, dfd) or F(dfn, dfd, [n, m, ...]) returns array of F distributed random numbers with dfn degrees of freedom in the numerator and dfd degrees of freedom in the denominator."""
     if shape == []:
-        shape == None
+        shape = None
     return mt.f(dfn, dfd, shape)
 
 def noncentral_F(dfn, dfd, nconc, shape=[]):

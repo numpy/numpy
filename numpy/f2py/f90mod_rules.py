@@ -18,7 +18,10 @@ __version__ = "$Revision: 1.27 $"[10:-1]
 f2py_version='See `f2py -v`'
 
 import pprint
-import sys,string,time,types,copy
+import sys
+import time
+import types
+import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
@@ -107,7 +110,7 @@ def buildhooks(pymod):
                 mfargs.append(n)
         outmess('\t\tConstructing F90 module support for "%s"...\n'%(m['name']))
         if onlyvars:
-            outmess('\t\t  Variables: %s\n'%(string.join(onlyvars)))
+            outmess('\t\t  Variables: %s\n'%(' '.join(onlyvars)))
         chooks=['']
         def cadd(line,s=chooks): s[0] = '%s\n%s'%(s[0],line)
         ihooks=['']
@@ -118,7 +121,7 @@ def buildhooks(pymod):
         dadd('\\subsection{Fortran 90/95 module \\texttt{%s}}\n'%(m['name']))
         if hasnote(m):
             note = m['note']
-            if type(note) is type([]): note=string.join(note,'\n')
+            if type(note) is type([]): note='\n'.join(note)
             dadd(note)
         if onlyvars:
             dadd('\\begin{description}')
@@ -128,8 +131,8 @@ def buildhooks(pymod):
             ct = capi_maps.getctype(var)
             at = capi_maps.c2capi_map[ct]
             dm = capi_maps.getarrdims(n,var)
-            dms = string.strip(string.replace(dm['dims'],'*','-1'))
-            dms = string.strip(string.replace(dms,':','-1'))
+            dms = dm['dims'].replace('*','-1').strip()
+            dms = dms.replace(':','-1').strip()
             if not dms: dms='-1'
             use_fgetdims2 = fgetdims2
             if isstringarray(var):
@@ -144,7 +147,7 @@ def buildhooks(pymod):
             dadd('\\item[]{{}\\verb@%s@{}}'%(capi_maps.getarrdocsign(n,var)))
             if hasnote(var):
                 note = var['note']
-                if type(note) is type([]): note=string.join(note,'\n')
+                if type(note) is type([]): note='\n'.join(note)
                 dadd('--- %s'%(note))
             if isallocatable(var):
                 fargs.append('f2py_%s_getdims_%s'%(m['name'],n))
@@ -157,7 +160,7 @@ def buildhooks(pymod):
                 fadd('integer flag\n')
                 fhooks[0]=fhooks[0]+fgetdims1
                 dms = eval('range(1,%s+1)'%(dm['rank']))
-                fadd(' allocate(d(%s))\n'%(string.join(map(lambda i:'s(%s)'%i,dms),',')))
+                fadd(' allocate(d(%s))\n'%(','.join(map(lambda i:'s(%s)'%i,dms))))
                 fhooks[0]=fhooks[0]+use_fgetdims2
                 fadd('end subroutine %s'%(fargs[-1]))
             else:
@@ -197,16 +200,16 @@ def buildhooks(pymod):
                 iadd('\tf2py_%s_def[i_f2py++].data = %s;'%(m['name'],b['name']))
         cadd('\t{NULL}\n};\n')
         iadd('}')
-        ihooks[0]='static void f2py_setup_%s(%s) {\n\tint i_f2py=0;%s'%(m['name'],string.join(sargs,','),ihooks[0])
+        ihooks[0]='static void f2py_setup_%s(%s) {\n\tint i_f2py=0;%s'%(m['name'],','.join(sargs),ihooks[0])
         if '_' in m['name']:
             F_FUNC='F_FUNC_US'
         else:
             F_FUNC='F_FUNC'
         iadd('extern void %s(f2pyinit%s,F2PYINIT%s)(void (*)(%s));'\
-             %(F_FUNC,m['name'],string.upper(m['name']),string.join(sargsp,',')))
+             %(F_FUNC,m['name'],m['name'].upper(),','.join(sargsp)))
         iadd('static void f2py_init_%s(void) {'%(m['name']))
         iadd('\t%s(f2pyinit%s,F2PYINIT%s)(f2py_setup_%s);'\
-             %(F_FUNC,m['name'],string.upper(m['name']),m['name']))
+             %(F_FUNC,m['name'],m['name'].upper(),m['name']))
         iadd('}\n')
         ret['f90modhooks']=ret['f90modhooks']+chooks+ihooks
         ret['initf90modhooks']=['\tPyDict_SetItemString(d, "%s", PyFortranObject_New(f2py_%s_def,f2py_init_%s));'%(m['name'],m['name'],m['name'])]+ret['initf90modhooks']
@@ -217,20 +220,20 @@ def buildhooks(pymod):
             for a in undo_rmbadname(mfargs):
                 fadd('use %s, only : %s'%(m['name'],a))
         if ifargs:
-            fadd(string.join(['interface']+ifargs))
+            fadd(' '.join(['interface']+ifargs))
             fadd('end interface')
         fadd('external f2pysetupfunc')
         if efargs:
             for a in undo_rmbadname(efargs):
                 fadd('external %s'%(a))
-        fadd('call f2pysetupfunc(%s)'%(string.join(undo_rmbadname(fargs),',')))
+        fadd('call f2pysetupfunc(%s)'%(','.join(undo_rmbadname(fargs))))
         fadd('end subroutine f2pyinit%s\n'%(m['name']))
 
-        dadd(string.replace(string.join(ret['latexdoc'],'\n'),r'\subsection{',r'\subsubsection{'))
+        dadd('\n'.join(ret['latexdoc']).replace(r'\subsection{',r'\subsubsection{'))
 
         ret['latexdoc']=[]
         ret['docs'].append('"\t%s --- %s"'%(m['name'],
-                                            string.join(undo_rmbadname(modobjs),',')))
+                                            ','.join(undo_rmbadname(modobjs))))
 
     ret['routine_defs']=''
     ret['doc']=[]

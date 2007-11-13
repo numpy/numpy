@@ -2,7 +2,6 @@
 
 __all__ = ['UserArray', 'squeeze', 'Matrix', 'asarray', 'dot', 'k', 'Numeric', 'LinearAlgebra', 'identity', 'multiply', 'types', 'string']
 
-import string
 import types
 from user_array import UserArray, asarray
 import numpy.oldnumeric as Numeric
@@ -17,7 +16,7 @@ for k in range(256):
     _table[k] = chr(k)
 _table = ''.join(_table)
 
-_numchars = string.digits + ".-+jeEL"
+_numchars = '0123456789.-+jeEL'
 _todelete = []
 for k in _table:
     if k not in _numchars:

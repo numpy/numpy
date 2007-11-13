@@ -658,8 +658,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     dtype - the data-type of the resulting array.  If this is a
     record data-type, the the resulting array will be 1-d and each row will
     be interpreted as an element of the array. The number of columns
-    used must match the number of fields in the data-type in this case. 
-    
+    used must match the number of fields in the data-type in this case.
+
     comments - the character used to indicate the start of a comment
     in the file
 
@@ -699,21 +699,21 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     dtype = multiarray.dtype(dtype)
     defconv = _getconv(dtype)
-    converterseq = None    
+    converterseq = None
     if converters is None:
         converters = {}
         if dtype.names is not None:
             converterseq = [_getconv(dtype.fields[name][0]) \
                             for name in dtype.names]
-            
+
     for i,line in enumerate(fh):
         if i<skiprows: continue
         line = line[:line.find(comments)].strip()
         if not len(line): continue
         vals = line.split(delimiter)
         if converterseq is None:
-           converterseq = [converters.get(j,defconv) \
-                           for j in xrange(len(vals))]
+            converterseq = [converters.get(j,defconv) \
+                            for j in xrange(len(vals))]
         if usecols is not None:
             row = [converterseq[j](vals[j]) for j in usecols]
         else:
@@ -730,7 +730,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     else:  return X
 
 
-# adjust so that fmt can change across columns if desired. 
+# adjust so that fmt can change across columns if desired.
 
 def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     """
@@ -776,7 +776,7 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
         X.shape = origShape
 
 
-    
+
 
 
 
@@ -894,10 +894,10 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     >>> seterr(over='raise') # doctest: +SKIP
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
-    
+
     >>> seterr(all='warn', over='raise') # doctest: +SKIP
     {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
-    
+
     >>> int16(32000) * int16(3) # doctest: +SKIP
     Traceback (most recent call last):
           File "<stdin>", line 1, in ?

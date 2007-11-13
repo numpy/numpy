@@ -4,7 +4,7 @@ import numpy.core;reload(numpy.core)
 from numpy.core import *
 restore_path()
 
-class test_ctor(NumpyTestCase):
+class TestCtor(NumpyTestCase):
     def check_basic(self):
         A = array([[1,2],[3,4]])
         mA = matrix(A)
@@ -23,7 +23,7 @@ class test_ctor(NumpyTestCase):
         mvec = matrix(vec)
         assert mvec.shape == (1,5)
 
-class test_properties(NumpyTestCase):
+class TestProperties(NumpyTestCase):
     def check_sum(self):
         """Test whether matrix.sum(axis=1) preserves orientation.
         Fails in NumPy <= 0.9.6.2127.
@@ -91,7 +91,7 @@ class test_properties(NumpyTestCase):
         assert A.sum() == matrix(2)
         assert A.mean() == matrix(0.5)
 
-class test_casting(NumpyTestCase):
+class TestCasting(NumpyTestCase):
     def check_basic(self):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
@@ -109,7 +109,7 @@ class test_casting(NumpyTestCase):
         assert mC.dtype.type == complex128
         assert all(mA != mB)
 
-class test_algebra(NumpyTestCase):
+class TestAlgebra(NumpyTestCase):
     def check_basic(self):
         import numpy.linalg as linalg
 
@@ -132,7 +132,7 @@ class test_algebra(NumpyTestCase):
         assert allclose((mA + mA).A, (A + A))
         assert allclose((3*mA).A, (3*A))
 
-class test_matrix_return(NumpyTestCase):
+class TestMatrixReturn(NumpyTestCase):
     def check_instance_methods(self):
         a = matrix([1.0], dtype='f8')
         methodargs = {
@@ -171,7 +171,7 @@ class test_matrix_return(NumpyTestCase):
         assert type(c) is matrix
         assert type(d) is matrix
 
-class test_indexing(NumpyTestCase):
+class TestIndexing(NumpyTestCase):
     def check_basic(self):
         x = asmatrix(zeros((3,2),float))
         y = zeros((3,1),float)

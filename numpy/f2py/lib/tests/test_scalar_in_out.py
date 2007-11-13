@@ -104,7 +104,7 @@ m, = compile(fortran_code, 'test_scalar_in_out_ext', source_ext = '.f')
 
 from numpy import *
 
-class test_m(NumpyTestCase):
+class TestM(NumpyTestCase):
 
     def check_foo_integer1(self, level=1):
         i = int8(2)

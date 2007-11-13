@@ -34,7 +34,7 @@ def parse(cls, line, label='',
         return r
     raise ValueError, 'parsing %r with %s pattern failed' % (line, cls.__name__)
 
-class test_Statements(NumpyTestCase):
+class TestStatements(NumpyTestCase):
 
     def check_assignment(self):
         assert_equal(parse(Assignment,'a=b'), 'a = b')

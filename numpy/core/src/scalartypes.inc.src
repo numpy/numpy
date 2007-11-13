@@ -282,10 +282,9 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
         if (outcode == NULL) return r;
 
         if (outcode->type_num == typecode->type_num) {
-                if (!PyTypeNum_ISEXTENDED(typecode->type_num))
+                if (!PyTypeNum_ISEXTENDED(typecode->type_num) || 
+	             (outcode->elsize == typecode->elsize))
                         return r;
-                if (outcode->elsize == typecode->elsize);
-                return r;
         }
 
         /* cast if necessary to desired output typecode */
@@ -1271,9 +1270,47 @@ gentype_reduce(PyObject *self, PyObject *args)
                                  Py_BuildValue("NO", obj, mod));
         }
         else {
+#ifndef Py_UNICODE_WIDE
+	  /* We need to expand the buffer so that we always write
+	     UCS4 to disk for pickle of unicode scalars.
+
+	     This could be in a unicode_reduce function, but 
+	     that would require re-factoring.
+	  */
+		int alloc=0;
+		char *tmp;
+		int newlen;
+
+		if (PyArray_IsScalar(self, Unicode)) {
+			tmp = _pya_malloc(buflen*2);
+			if (tmp == NULL) {
+				Py_DECREF(ret);
+				return PyErr_NoMemory();
+			}
+			alloc = 1;
+			newlen = PyUCS2Buffer_AsUCS4((Py_UNICODE *)buffer,
+						     (PyArray_UCS4 *)tmp,
+						     buflen / 2, buflen / 2);
+			buflen = newlen*4;
+			buffer = tmp;
+		}
+#endif
                 mod = PyString_FromStringAndSize(buffer, buflen);
+		if (mod == NULL) {
+			Py_DECREF(ret);
+#ifndef Py_UNICODE_WIDE
+			ret = NULL;
+			goto fail;
+#else
+			return NULL;
+#endif
+		}
                 PyTuple_SET_ITEM(ret, 1,
                                  Py_BuildValue("NN", obj, mod));
+#ifndef Py_UNICODE_WIDE
+	fail:
+		if (alloc) _pya_free((char *)buffer);
+#endif
         }
         return ret;
 }

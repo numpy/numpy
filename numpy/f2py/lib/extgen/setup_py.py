@@ -51,7 +51,7 @@ class SetupPy(Component):
     >>> import SetupPy_doctest as mypackage
     >>> print mypackage.foo.__doc__ #doctest: +ELLIPSIS
     This module 'foo' is generated with ExtGen from NumPy version...
-    
+
     """
     template_setup_py_start = '''\
 def configuration(parent_package='', top_path = ''):
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
         self += init_py
         self += setup_py
-        
+
         map(self.add, components)
 
         return self
@@ -115,10 +115,10 @@ if __name__ == "__main__":
             self.info('leaving %r directory' % (self.path))
         return r
 
-    
+
 def _test():
     import doctest
     doctest.testmod()
-    
+
 if __name__ == "__main__":
     _test()

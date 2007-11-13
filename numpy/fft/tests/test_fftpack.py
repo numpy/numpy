@@ -4,7 +4,7 @@ set_package_path()
 from numpy.fft import *
 restore_path()
 
-class test_fftshift(NumpyTestCase):
+class TestFFTShift(NumpyTestCase):
     def check_fft_n(self):
         self.failUnlessRaises(ValueError,fft,[1,2,3],0)
 

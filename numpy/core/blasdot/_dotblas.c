@@ -20,7 +20,8 @@ FLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int nb = strideb / sizeof(float);
 
     if ((sizeof(float) * na == stridea) &&
-	(sizeof(float) * nb == strideb))
+	(sizeof(float) * nb == strideb) &&
+	(na >= 0) && (nb >= 0))
 	    *((float *)res) = cblas_sdot((int)n, (float *)a, na, (float *)b, nb);
 
     else
@@ -35,7 +36,8 @@ DOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int nb = strideb / sizeof(double);
 
     if ((sizeof(double) * na == stridea) &&
-	(sizeof(double) * nb == strideb))
+	(sizeof(double) * nb == strideb) &&
+	(na >= 0) && (nb >= 0))
 	    *((double *)res) = cblas_ddot((int)n, (double *)a, na, (double *)b, nb);
     else
 	    oldFunctions[PyArray_DOUBLE](a, stridea, b, strideb, res, n, tmp);
@@ -50,7 +52,8 @@ CFLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int nb = strideb / sizeof(cfloat);
 
     if ((sizeof(cfloat) * na == stridea) &&
-	(sizeof(cfloat) * nb == strideb))
+	(sizeof(cfloat) * nb == strideb) &&
+	(na >= 0) && (nb >= 0))
 	    cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
     else
 	    oldFunctions[PyArray_CFLOAT](a, stridea, b, strideb, res, n, tmp);
@@ -64,7 +67,8 @@ CDOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
     register int nb = strideb / sizeof(cdouble);
 
     if ((sizeof(cdouble) * na == stridea) &&
-	(sizeof(cdouble) * nb == strideb))
+	(sizeof(cdouble) * nb == strideb) &&
+	(na >= 0) && (nb >= 0))
 	    cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb, (double *)res);
     else
 	    oldFunctions[PyArray_CDOUBLE](a, stridea, b, strideb, res, n, tmp);
@@ -172,6 +176,21 @@ _select_matrix_shape(PyArrayObject *array)
 }
 
 
+static int
+_bad_strides(PyArrayObject *ap)
+{
+    register int itemsize = PyArray_ITEMSIZE(ap);
+    register int i, N=PyArray_NDIM(ap);
+    register intp *strides = PyArray_STRIDES(ap);
+
+    for (i=0; i<N; i++) {
+	if ((strides[i] < 0) || (strides[i] % itemsize) != 0) 
+	    return 1;
+    }
+
+    return 0;  
+}
+
 static char doc_matrixproduct[] = "dot(a,b)\nReturns the dot product of a and b for arrays of floating point types.\nLike the generic numpy equivalent the product sum is over\nthe last dimension of a and the second-to-last dimension of b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
@@ -216,8 +235,10 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED, NULL);
     if (ap2 == NULL) goto fail;
 
+
     if ((ap1->nd > 2) || (ap2->nd > 2)) {
-	/* This function doesn't handle dimensions greater than 2 -- other
+	/* This function doesn't handle dimensions greater than 2 
+	   (or negative striding)  -- other
 	   than to ensure the dot function is altered
 	*/
 	if (!altered) {
@@ -235,13 +256,13 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 	return PyArray_Return(ret);
     }
 
-    if (!PyArray_ElementStrides((PyObject *)ap1)) {
+    if (_bad_strides(ap1)) {
 	    op1 = PyArray_NewCopy(ap1, PyArray_ANYORDER);
 	    Py_DECREF(ap1);
 	    ap1 = (PyArrayObject *)op1;
 	    if (ap1 == NULL) goto fail;
     }
-    if (!PyArray_ElementStrides((PyObject *)ap2)) {
+    if (_bad_strides(ap2)) {
 	    op2 = PyArray_NewCopy(ap2, PyArray_ANYORDER);
 	    Py_DECREF(ap2);
 	    ap2 = (PyArrayObject *)op2;

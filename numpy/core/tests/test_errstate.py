@@ -14,7 +14,7 @@ from numpy.testing import *
 
 
 
-class test_errstate(NumpyTestCase):
+class TestErrstate(NumpyTestCase):
 
 
     def test_invalid(self):

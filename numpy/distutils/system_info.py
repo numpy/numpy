@@ -143,7 +143,18 @@ else:
                             '/opt/include', '/usr/include',
                             '/opt/local/include', '/sw/include']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
-    default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
+
+    try:
+        platform = os.uname()
+        bit64 = platform[-1].endswith('64')
+    except:
+        bit64 = False
+
+    if bit64:
+        default_x11_lib_dirs = ['/usr/lib64']
+    else:
+        default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
+
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
 
@@ -830,7 +841,7 @@ class lapack_mkl_info(mkl_info):
             lapack_libs = self.get_libs('lapack_libs',['mkl_lapack'])
         else:
             lapack_libs = self.get_libs('lapack_libs',['mkl_lapack32','mkl_lapack64'])
-            
+
         info = {'libraries': lapack_libs}
         dict_append(info,**mkl)
         self.set_info(**info)
@@ -1073,7 +1084,7 @@ class lapack_src_info(system_info):
         tgexc tgsen tgsja tgsna tgsy2 tgsyl tpcon tprfs tptri tptrs
         trcon trevc trexc trrfs trsen trsna trsyl trti2 trtri trtrs
         tzrqf tzrzf
-        
+
         lacn2 lahr2 stemr laqr0 laqr1 laqr2 laqr3 laqr4 laqr5
         ''' # [s|c|d|z]*.f
         sd_lasrc = '''

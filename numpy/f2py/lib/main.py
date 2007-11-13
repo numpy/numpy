@@ -418,7 +418,7 @@ def build_extension(sys_argv, sources_only = False):
                                     '--build-clib',build_dir_clib_clib,
                                     ]
     temp_dirs = [build_dir_ext_temp, build_dir_clib_temp, build_dir_clib_clib]
-        
+
     if fc_flags:
         new_sys_argv += ['config_fc'] + fc_flags
     sys.argv[:] = new_sys_argv
@@ -492,7 +492,7 @@ def compile(source,
     if source_ext is None:
         reader = get_reader(source)
         source_ext = {'free90':'.f90','fix90':'.f90','fix77':'.f','pyf':'.pyf'}[reader.mode]
-        
+
     if modulenames is None:
         modulenames = jobname,
     if os.path.isdir(tmpdir):

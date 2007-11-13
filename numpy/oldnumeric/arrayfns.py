@@ -94,5 +94,3 @@ def to_corners(arr, nv, nvsum):
 
 def construct3(mask, itype):
     raise NotImplementedError
-
-

@@ -104,7 +104,7 @@ class FileSource(Component):
       Line = 'Content',
       Code = 'Content',
     )
-    
+
     def initialize(self, path, *components, **options):
         self.path = path
         map(self.add, components)
@@ -121,6 +121,6 @@ class FileSource(Component):
 def _test():
     import doctest
     doctest.testmod()
-    
+
 if __name__ == "__main__":
     _test()

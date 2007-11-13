@@ -5,7 +5,7 @@ import numpy.core.umath as ncu
 from numpy import zeros, ndarray, array, choose
 restore_path()
 
-class test_division(NumpyTestCase):
+class TestDivision(NumpyTestCase):
     def check_division_int(self):
         # int division should return the floor of the result, a la Python
         x = array([5, 10, 90, 100, -5, -10, -90, -100, -120])
@@ -13,7 +13,7 @@ class test_division(NumpyTestCase):
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
-class test_power(NumpyTestCase):
+class TestPower(NumpyTestCase):
     def check_power_float(self):
         x = array([1., 2., 3.])
         assert_equal(x**0, [1., 1., 1.])
@@ -38,30 +38,30 @@ class test_power(NumpyTestCase):
         assert_almost_equal(x**14, [-76443+16124j, 23161315+58317492j,
                                     5583548873 +  2465133864j])
 
-class test_log1p(NumpyTestCase):
+class TestLog1p(NumpyTestCase):
     def check_log1p(self):
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))
         assert_almost_equal(ncu.log1p(1e-6), ncu.log(1+1e-6))
 
-class test_expm1(NumpyTestCase):
+class TestExpm1(NumpyTestCase):
     def check_expm1(self):
         assert_almost_equal(ncu.expm1(0.2), ncu.exp(0.2)-1)
         assert_almost_equal(ncu.expm1(1e-6), ncu.exp(1e-6)-1)
 
-class test_maximum(NumpyTestCase):
+class TestMaximum(NumpyTestCase):
     def check_reduce_complex(self):
         assert_equal(maximum.reduce([1,2j]),1)
         assert_equal(maximum.reduce([1+3j,2j]),1+3j)
 
-class test_minimum(NumpyTestCase):
+class TestMinimum(NumpyTestCase):
     def check_reduce_complex(self):
         assert_equal(minimum.reduce([1,2j]),2j)
 
-class test_floating_point(NumpyTestCase):
+class TestFloatingPoint(NumpyTestCase):
     def check_floating_point(self):
         assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)
 
-class test_special_methods(NumpyTestCase):
+class TestSpecialMethods(NumpyTestCase):
     def test_wrap(self):
         class with_wrap(object):
             def __array__(self):
@@ -163,7 +163,7 @@ class test_special_methods(NumpyTestCase):
         assert_equal(maximum(a, B()), 0)
         assert_equal(maximum(a, C()), 0)
 
-class test_choose(NumpyTestCase):
+class TestChoose(NumpyTestCase):
     def test_mixed(self):
         c = array([True,True])
         a = array([True,True])
@@ -183,7 +183,7 @@ class _test_complex_real(NumpyTestCase):
             assert_almost_equal(fun(self.x),cr.real)
             assert_almost_equal(0, cr.imag)
 
-class test_choose(NumpyTestCase):
+class TestChoose(NumpyTestCase):
     def test_attributes(self):
         add = ncu.add
         assert_equal(add.__name__, 'add')

@@ -5,7 +5,7 @@
 from numpy.testing import *
 set_package_path()
 from numpy import arange, rot90, add, fliplr, flipud, zeros, ones, eye, \
-     array, diag, histogram2d
+     array, diag, histogram2d, tri
 import numpy as np
 restore_path()
 
@@ -17,7 +17,7 @@ def get_mat(n):
     data = add.outer(data,data)
     return data
 
-class test_eye(NumpyTestCase):
+class TestEye(NumpyTestCase):
     def check_basic(self):
         assert_equal(eye(4),array([[1,0,0,0],
                                    [0,1,0,0],
@@ -55,7 +55,7 @@ class test_eye(NumpyTestCase):
                                           [1,0,0],
                                           [0,1,0]]))
 
-class test_diag(NumpyTestCase):
+class TestDiag(NumpyTestCase):
     def check_vector(self):
         vals = (100*arange(5)).astype('l')
         b = zeros((5,5))
@@ -84,7 +84,7 @@ class test_diag(NumpyTestCase):
             b[k] = vals[k+2,k]
         assert_equal(diag(vals,-2),b[:3])
 
-class test_fliplr(NumpyTestCase):
+class TestFliplr(NumpyTestCase):
     def check_basic(self):
         self.failUnlessRaises(ValueError, fliplr, ones(4))
         a = get_mat(4)
@@ -96,7 +96,7 @@ class test_fliplr(NumpyTestCase):
              [5,4,3]]
         assert_equal(fliplr(a),b)
 
-class test_flipud(NumpyTestCase):
+class TestFlipud(NumpyTestCase):
     def check_basic(self):
         a = get_mat(4)
         b = a[::-1,:]
@@ -107,7 +107,7 @@ class test_flipud(NumpyTestCase):
              [0,1,2]]
         assert_equal(flipud(a),b)
 
-class test_rot90(NumpyTestCase):
+class TestRot90(NumpyTestCase):
     def check_basic(self):
         self.failUnlessRaises(ValueError, rot90, ones(4))
 
@@ -137,7 +137,7 @@ class test_rot90(NumpyTestCase):
         a = ones((50,40,3))
         assert_equal(rot90(a).shape,(40,50,3))
 
-class test_histogram2d(NumpyTestCase):
+class TestHistogram2d(NumpyTestCase):
     def check_simple(self):
         x = array([ 0.41702200,  0.72032449,  0.00011437481, 0.302332573,  0.146755891])
         y = array([ 0.09233859,  0.18626021,  0.34556073,  0.39676747,  0.53881673])
@@ -160,7 +160,7 @@ class test_histogram2d(NumpyTestCase):
         assert_array_equal(H, eye(10,10))
         assert_array_equal(xedges, np.linspace(0,9,11))
         assert_array_equal(yedges, np.linspace(0,9,11))
-        
+
     def check_asym(self):
         x = array([1, 1, 2, 3, 4, 4, 4, 5])
         y = array([1, 3, 2, 0, 1, 2, 3, 4])
@@ -187,6 +187,14 @@ class test_histogram2d(NumpyTestCase):
         r = rand(100)+1.
         H, xed, yed = histogram2d(r, r, (4, 5), range=([0,1], [0,1]))
         assert_array_equal(H, 0)
-        
+
+class TestTri(NumpyTestCase):
+    def test_dtype(self):
+        out = array([[1,0,0],
+                     [1,1,0],
+                     [1,1,1]])
+        assert_array_equal(tri(3),out)
+        assert_array_equal(tri(3,dtype=bool),out.astype(bool))
+
 if __name__ == "__main__":
     NumpyTest().run()

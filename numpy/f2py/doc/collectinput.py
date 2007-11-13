@@ -22,7 +22,11 @@ Usage:
 __version__ = "0.0"
 
 stdoutflag=0
-import sys,os,string,fileinput,re,commands
+import sys
+import os
+import fileinput
+import re
+import commands
 
 try: fn=sys.argv[2]
 except:
@@ -46,7 +50,7 @@ for l in fileinput.input(fi):
         l=l[:m.end()-1]
     m=input.match(l)
     if m:
-        l=string.strip(l)
+        l=l.strip()
         if l[-1]=='}': l=l[:-1]
         i=m.end()-2
         sys.stderr.write('>>>>>>')

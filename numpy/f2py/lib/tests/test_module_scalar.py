@@ -40,7 +40,7 @@ m, = compile(fortran_code, modulenames = ['test_module_scalar_ext'])
 
 from numpy import *
 
-class test_m(NumpyTestCase):
+class TestM(NumpyTestCase):
 
     def check_foo_simple(self, level=1):
         foo = m.foo

@@ -4,7 +4,7 @@ import numpy as N
 from numpy.ctypeslib import ndpointer
 restore_path()
 
-class test_ndpointer(NumpyTestCase):
+class TestNdpointer(NumpyTestCase):
     def check_dtype(self):
         dt = N.intc
         p = ndpointer(dtype=dt)

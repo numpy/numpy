@@ -8,7 +8,6 @@ Examples:
 
 import os
 import sys
-import string
 import f2py2e
 from Numeric import array
 
@@ -19,7 +18,7 @@ def build(f2py_opts):
         d,b=os.path.split(sys.argv[0])
         files = ['foo.f','foo_fixed.f90','foo_free.f90']
         files = [os.path.join(d,f) for f in files]
-        files = string.join(files)
+        files = ' '.join(files)
         args = ' -c -m mixed_f77_f90 %s %s'%(files,f2py_opts)
         c = '%s -c "import f2py2e;f2py2e.main()" %s' %(sys.executable,args)
         s = os.system(c)

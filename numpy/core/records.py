@@ -375,7 +375,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    chararray(['dbe', 'de'], 
+    chararray(['dbe', 'de'],
           dtype='|S3')
     >>> import cPickle
     >>> print cPickle.loads(cPickle.dumps(r))

@@ -40,12 +40,12 @@ def eye(n,M=None, k=0, dtype=float):
 
 def rand(*args):
     if isinstance(args[0], tuple):
-       args = args[0]
+        args = args[0]
     return asmatrix(N.random.rand(*args))
 
 def randn(*args):
     if isinstance(args[0], tuple):
-       args = args[0]
+        args = args[0]
     return asmatrix(N.random.randn(*args))
 
 def repmat(a, m, n):

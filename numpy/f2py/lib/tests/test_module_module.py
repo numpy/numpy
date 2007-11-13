@@ -42,7 +42,7 @@ module test_module_module_ext
       type(rat) a
       print*,"In bar,a=",a
     end subroutine bar
-end module test_module_module_ext 
+end module test_module_module_ext
 '''
 
 m,m2 = compile(fortran_code, modulenames=['test_module_module_ext',
@@ -51,7 +51,7 @@ m,m2 = compile(fortran_code, modulenames=['test_module_module_ext',
 
 from numpy import *
 
-class test_m(NumpyTestCase):
+class TestM(NumpyTestCase):
 
     def check_foo_simple(self, level=1):
         foo = m.foo

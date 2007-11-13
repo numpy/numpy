@@ -14,7 +14,7 @@ from numpy import pi
 def random(size):
     return rand(*size)
 
-class test_fftshift(NumpyTestCase):
+class TestFFTShift(NumpyTestCase):
 
     def check_definition(self):
         x = [0,1,2,3,4,-4,-3,-2,-1]
@@ -31,7 +31,7 @@ class test_fftshift(NumpyTestCase):
             x = random((n,))
             assert_array_almost_equal(ifftshift(fftshift(x)),x)
 
-class test_fftfreq(NumpyTestCase):
+class TestFFTFreq(NumpyTestCase):
 
     def check_definition(self):
         x = [0,1,2,3,4,-4,-3,-2,-1]

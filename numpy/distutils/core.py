@@ -94,30 +94,30 @@ def get_distribution(always=False):
     # We can't use isinstance, as the DistributionWithoutHelpCommands
     # class is local to a function in setuptools.command.easy_install
     if dist is not None and \
-            repr(dist).find('DistributionWithoutHelpCommands') != -1:
+            'DistributionWithoutHelpCommands' in repr(dist):
         raise NotImplementedError("setuptools not supported yet for numpy.scons branch")
         dist = None
     if always and dist is None:
         dist = NumpyDistribution()
     return dist
 
-def _exit_interactive_session(_cache=[]): 
-    if _cache: 
-        return # been here 
-    _cache.append(1) 
-    print '-'*72 
-    raw_input('Press ENTER to close the interactive session..') 
-    print '='*72 
+def _exit_interactive_session(_cache=[]):
+    if _cache:
+        return # been here
+    _cache.append(1)
+    print '-'*72
+    raw_input('Press ENTER to close the interactive session..')
+    print '='*72
 
 def setup(**attr):
 
-    if len(sys.argv)<=1 and not attr.get('script_args',[]): 
-        from interactive import interactive_sys_argv 
-        import atexit 
-        atexit.register(_exit_interactive_session) 
-        sys.argv[:] = interactive_sys_argv(sys.argv) 
-        if len(sys.argv)>1: 
-            return setup(**attr) 
+    if len(sys.argv)<=1 and not attr.get('script_args',[]):
+        from interactive import interactive_sys_argv
+        import atexit
+        atexit.register(_exit_interactive_session)
+        sys.argv[:] = interactive_sys_argv(sys.argv)
+        if len(sys.argv)>1:
+            return setup(**attr)
 
     cmdclass = numpy_cmdclass.copy()
 

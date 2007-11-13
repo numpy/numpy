@@ -4,7 +4,7 @@ set_package_path()
 from swig_ext import example
 restore_path()
 
-class test_example(NumpyTestCase):
+class TestExample(NumpyTestCase):
 
     def check_fact(self):
         assert_equal(example.fact(10),3628800)

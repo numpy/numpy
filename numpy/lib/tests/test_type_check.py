@@ -10,7 +10,7 @@ restore_path()
 def assert_all(x):
     assert(all(x)), x
 
-class test_mintypecode(NumpyTestCase):
+class TestMintypecode(NumpyTestCase):
 
     def check_default_1(self):
         for itype in '1bcsuwil':
@@ -59,7 +59,7 @@ class test_mintypecode(NumpyTestCase):
         #assert_equal(mintypecode('idF',savespace=1),'F')
         assert_equal(mintypecode('idD'),'D')
 
-class test_isscalar(NumpyTestCase):
+class TestIsscalar(NumpyTestCase):
     def check_basic(self):
         assert(isscalar(3))
         assert(not isscalar([3]))
@@ -68,7 +68,7 @@ class test_isscalar(NumpyTestCase):
         assert(isscalar(10L))
         assert(isscalar(4.0))
 
-class test_real(NumpyTestCase):
+class TestReal(NumpyTestCase):
     def check_real(self):
         y = rand(10,)
         assert_array_equal(y,real(y))
@@ -77,7 +77,7 @@ class test_real(NumpyTestCase):
         y = rand(10,)+1j*rand(10,)
         assert_array_equal(y.real,real(y))
 
-class test_imag(NumpyTestCase):
+class TestImag(NumpyTestCase):
     def check_real(self):
         y = rand(10,)
         assert_array_equal(0,imag(y))
@@ -86,7 +86,7 @@ class test_imag(NumpyTestCase):
         y = rand(10,)+1j*rand(10,)
         assert_array_equal(y.imag,imag(y))
 
-class test_iscomplex(NumpyTestCase):
+class TestIscomplex(NumpyTestCase):
     def check_fail(self):
         z = array([-1,0,1])
         res = iscomplex(z)
@@ -96,7 +96,7 @@ class test_iscomplex(NumpyTestCase):
         res = iscomplex(z)
         assert_array_equal(res,[1,0,0])
 
-class test_isreal(NumpyTestCase):
+class TestIsreal(NumpyTestCase):
     def check_pass(self):
         z = array([-1,0,1j])
         res = isreal(z)
@@ -106,21 +106,21 @@ class test_isreal(NumpyTestCase):
         res = isreal(z)
         assert_array_equal(res,[0,1,1])
 
-class test_iscomplexobj(NumpyTestCase):
+class TestIscomplexobj(NumpyTestCase):
     def check_basic(self):
         z = array([-1,0,1])
         assert(not iscomplexobj(z))
         z = array([-1j,0,-1])
         assert(iscomplexobj(z))
 
-class test_isrealobj(NumpyTestCase):
+class TestIsrealobj(NumpyTestCase):
     def check_basic(self):
         z = array([-1,0,1])
         assert(isrealobj(z))
         z = array([-1j,0,-1])
         assert(not isrealobj(z))
 
-class test_isnan(NumpyTestCase):
+class TestIsnan(NumpyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isnan(z) == 0
@@ -148,7 +148,7 @@ class test_isnan(NumpyTestCase):
         assert_all(isnan(array(0+0j)/0.) == 1)
         seterr(**olderr)
 
-class test_isfinite(NumpyTestCase):
+class TestIsfinite(NumpyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isfinite(z) == 1
@@ -176,7 +176,7 @@ class test_isfinite(NumpyTestCase):
         assert_all(isfinite(array(1+1j)/0.) == 0)
         seterr(**olderr)
 
-class test_isinf(NumpyTestCase):
+class TestIsinf(NumpyTestCase):
     def check_goodvalues(self):
         z = array((-1.,0.,1.))
         res = isinf(z) == 0
@@ -205,7 +205,7 @@ class test_isinf(NumpyTestCase):
     #    assert_all(isinf(log(-1.)) == 0)
     #    assert_all(isnan(log(-1.)) == 1)
 
-class test_isposinf(NumpyTestCase):
+class TestIsposinf(NumpyTestCase):
     def check_generic(self):
         olderr = seterr(divide='ignore', invalid='ignore')
         vals = isposinf(array((-1.,0,1))/0.)
@@ -214,7 +214,7 @@ class test_isposinf(NumpyTestCase):
         assert(vals[1] == 0)
         assert(vals[2] == 1)
 
-class test_isneginf(NumpyTestCase):
+class TestIsneginf(NumpyTestCase):
     def check_generic(self):
         olderr = seterr(divide='ignore', invalid='ignore')
         vals = isneginf(array((-1.,0,1))/0.)
@@ -223,7 +223,7 @@ class test_isneginf(NumpyTestCase):
         assert(vals[1] == 0)
         assert(vals[2] == 0)
 
-class test_nan_to_num(NumpyTestCase):
+class TestNanToNum(NumpyTestCase):
     def check_generic(self):
         olderr = seterr(divide='ignore', invalid='ignore')
         vals = nan_to_num(array((-1.,0,1))/0.)
@@ -259,7 +259,7 @@ class test_nan_to_num(NumpyTestCase):
         #assert_all(vals.real < -1e10) and assert_all(isfinite(vals))
 
 
-class test_real_if_close(NumpyTestCase):
+class TestRealIfClose(NumpyTestCase):
     def check_basic(self):
         a = rand(10)
         b = real_if_close(a+1e-15j)
@@ -270,7 +270,7 @@ class test_real_if_close(NumpyTestCase):
         b = real_if_close(a+1e-7j,tol=1e-6)
         assert_all(isrealobj(b))
 
-class test_array_conversion(NumpyTestCase):
+class TestArrayConversion(NumpyTestCase):
     def check_asfarray(self):
         a = asfarray(array([1,2,3]))
         assert_equal(a.__class__,ndarray)

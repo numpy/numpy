@@ -7,7 +7,7 @@ from numpy.lib import *
 from numpy.core import *
 del sys.path[0]
 
-class test_any(NumpyTestCase):
+class TestAny(NumpyTestCase):
     def check_basic(self):
         y1 = [0,0,1,0]
         y2 = [0,0,0,0]
@@ -22,7 +22,7 @@ class test_any(NumpyTestCase):
         assert_array_equal(sometrue(y1,axis=0),[1,1,0])
         assert_array_equal(sometrue(y1,axis=1),[0,1,1])
 
-class test_all(NumpyTestCase):
+class TestAll(NumpyTestCase):
     def check_basic(self):
         y1 = [0,1,1,0]
         y2 = [0,0,0,0]
@@ -38,7 +38,7 @@ class test_all(NumpyTestCase):
         assert_array_equal(alltrue(y1,axis=0),[0,0,1])
         assert_array_equal(alltrue(y1,axis=1),[0,0,1])
 
-class test_average(NumpyTestCase):
+class TestAverage(NumpyTestCase):
     def check_basic(self):
         y1 = array([1,2,3])
         assert(average(y1,axis=0) == 2.)
@@ -64,7 +64,7 @@ class test_average(NumpyTestCase):
         desired = array([3.,4.,5.])
         assert_array_equal(actual, desired)
 
-class test_select(NumpyTestCase):
+class TestSelect(NumpyTestCase):
     def _select(self,cond,values,default=0):
         output = []
         for m in range(len(cond)):
@@ -84,7 +84,7 @@ class test_select(NumpyTestCase):
         assert_equal(len(choices),3)
         assert_equal(len(conditions),3)
 
-class test_logspace(NumpyTestCase):
+class TestLogspace(NumpyTestCase):
     def check_basic(self):
         y = logspace(0,6)
         assert(len(y)==50)
@@ -95,7 +95,7 @@ class test_logspace(NumpyTestCase):
         y = logspace(0,6,num=7)
         assert_array_equal(y,[1,10,100,1e3,1e4,1e5,1e6])
 
-class test_linspace(NumpyTestCase):
+class TestLinspace(NumpyTestCase):
     def check_basic(self):
         y = linspace(0,10)
         assert(len(y)==50)
@@ -120,14 +120,14 @@ class test_linspace(NumpyTestCase):
         assert_equal(t1, t2)
         assert_equal(t2, t3)
 
-class test_insert(NumpyTestCase):
+class TestInsert(NumpyTestCase):
     def check_basic(self):
         a = [1,2,3]
         assert_equal(insert(a,0,1), [1,1,2,3])
         assert_equal(insert(a,3,1), [1,2,3,1])
         assert_equal(insert(a,[1,1,1],[1,2,3]), [1,1,2,3,2,3])
 
-class test_amax(NumpyTestCase):
+class TestAmax(NumpyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(amax(a),10.0)
@@ -137,7 +137,7 @@ class test_amax(NumpyTestCase):
         assert_equal(amax(b,axis=0),[8.0,10.0,9.0])
         assert_equal(amax(b,axis=1),[9.0,10.0,8.0])
 
-class test_amin(NumpyTestCase):
+class TestAmin(NumpyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(amin(a),-5.0)
@@ -147,7 +147,7 @@ class test_amin(NumpyTestCase):
         assert_equal(amin(b,axis=0),[3.0,3.0,2.0])
         assert_equal(amin(b,axis=1),[3.0,4.0,2.0])
 
-class test_ptp(NumpyTestCase):
+class TestPtp(NumpyTestCase):
     def check_basic(self):
         a = [3,4,5,10,-3,-5,6.0]
         assert_equal(ptp(a,axis=0),15.0)
@@ -157,7 +157,7 @@ class test_ptp(NumpyTestCase):
         assert_equal(ptp(b,axis=0),[5.0,7.0,7.0])
         assert_equal(ptp(b,axis=-1),[6.0,6.0,6.0])
 
-class test_cumsum(NumpyTestCase):
+class TestCumsum(NumpyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -173,7 +173,7 @@ class test_cumsum(NumpyTestCase):
                                       [5,11,18,27],
                                       [10,13,17,22]],ctype))
 
-class test_prod(NumpyTestCase):
+class TestProd(NumpyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -191,7 +191,7 @@ class test_prod(NumpyTestCase):
                                    array([50,36,84,180],ctype))
                 assert_array_equal(prod(a2,axis=-1),array([24, 1890, 600],ctype))
 
-class test_cumprod(NumpyTestCase):
+class TestCumprod(NumpyTestCase):
     def check_basic(self):
         ba = [1,2,10,11,6,5,4]
         ba2 = [[1,2,3,4],[5,6,7,9],[10,3,4,5]]
@@ -216,7 +216,7 @@ class test_cumprod(NumpyTestCase):
                                           [ 5, 30, 210, 1890],
                                           [10, 30, 120,  600]],ctype))
 
-class test_diff(NumpyTestCase):
+class TestDiff(NumpyTestCase):
     def check_basic(self):
         x = [1,4,6,7,12]
         out = array([3,2,1,5])
@@ -237,7 +237,7 @@ class test_diff(NumpyTestCase):
         assert_array_equal(diff(x,axis=0),out3)
         assert_array_equal(diff(x,n=2,axis=0),out4)
 
-class test_angle(NumpyTestCase):
+class TestAngle(NumpyTestCase):
     def check_basic(self):
         x = [1+3j,sqrt(2)/2.0+1j*sqrt(2)/2,1,1j,-1,-1j,1-3j,-1+3j]
         y = angle(x)
@@ -248,7 +248,7 @@ class test_angle(NumpyTestCase):
         assert_array_almost_equal(y,yo,11)
         assert_array_almost_equal(z,zo,11)
 
-class test_trim_zeros(NumpyTestCase):
+class TestTrimZeros(NumpyTestCase):
     """ only testing for integer splits.
     """
     def check_basic(self):
@@ -265,7 +265,7 @@ class test_trim_zeros(NumpyTestCase):
         assert_array_equal(res,array([1,0,2,3,0,4]))
 
 
-class test_extins(NumpyTestCase):
+class TestExtins(NumpyTestCase):
     def check_basic(self):
         a = array([1,3,2,1,2,3,3])
         b = extract(a>1,a)
@@ -283,7 +283,7 @@ class test_extins(NumpyTestCase):
         place(a,mask,c)
         assert_array_equal(a,ac)
 
-class test_vectorize(NumpyTestCase):
+class TestVectorize(NumpyTestCase):
     def check_simple(self):
         def addsubtract(a,b):
             if a > b:
@@ -308,7 +308,7 @@ class test_vectorize(NumpyTestCase):
         y = f(x)
         assert_array_equal(y, x)
 
-class test_digitize(NumpyTestCase):
+class TestDigitize(NumpyTestCase):
     def check_forward(self):
         x = arange(-6,5)
         bins = arange(-5,5)
@@ -324,7 +324,7 @@ class test_digitize(NumpyTestCase):
         bin = linspace(x.min(), x.max(), 10)
         assert all(digitize(x,bin) != 0)
 
-class test_unwrap(NumpyTestCase):
+class TestUnwrap(NumpyTestCase):
     def check_simple(self):
                 #check that unwrap removes jumps greather that 2*pi
         assert_array_equal(unwrap([1,1+2*pi]),[1,1])
@@ -332,7 +332,7 @@ class test_unwrap(NumpyTestCase):
         assert(all(diff(unwrap(rand(10)*100))<pi))
 
 
-class test_filterwindows(NumpyTestCase):
+class TestFilterwindows(NumpyTestCase):
     def check_hanning(self):
         #check symmetry
         w=hanning(10)
@@ -362,20 +362,20 @@ class test_filterwindows(NumpyTestCase):
         assert_almost_equal(sum(w,axis=0),3.7800,4)
 
 
-class test_trapz(NumpyTestCase):
+class TestTrapz(NumpyTestCase):
     def check_simple(self):
         r=trapz(exp(-1.0/2*(arange(-10,10,.1))**2)/sqrt(2*pi),dx=0.1)
         #check integral of normal equals 1
         assert_almost_equal(sum(r,axis=0),1,7)
 
-class test_sinc(NumpyTestCase):
+class TestSinc(NumpyTestCase):
     def check_simple(self):
         assert(sinc(0)==1)
         w=sinc(linspace(-1,1,100))
         #check symmetry
         assert_array_almost_equal(w,flipud(w),7)
 
-class test_histogram(NumpyTestCase):
+class TestHistogram(NumpyTestCase):
     def check_simple(self):
         n=100
         v=rand(n)
@@ -386,7 +386,7 @@ class test_histogram(NumpyTestCase):
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))
 
-class test_histogramdd(NumpyTestCase):
+class TestHistogramdd(NumpyTestCase):
     def check_simple(self):
         x = array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5], \
         [.5, .5, 1.5], [.5, 1.5, 2.5], [.5, 2.5, 2.5]])
@@ -436,7 +436,7 @@ class test_histogramdd(NumpyTestCase):
         hist, edges = histogramdd(x, bins=2)
         assert_array_equal(edges[0],array([-0.5,  0. ,  0.5]))
 
-class test_unique(NumpyTestCase):
+class TestUnique(NumpyTestCase):
     def check_simple(self):
         x = array([4,3,2,1,1,2,3,4, 0])
         assert(all(unique(x) == [0,1,2,3,4]))

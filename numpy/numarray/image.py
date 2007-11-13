@@ -12,4 +12,3 @@ http://svn.scipy.org/svn/scipy/trunk/Lib/stsci or by downloading and
 installing all of SciPy from http://www.scipy.org.
 """
         raise ImportError(msg)
-

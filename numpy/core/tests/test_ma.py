@@ -13,7 +13,7 @@ def eq(v,w, msg=''):
 %s"""% (msg, str(v), str(w))
     return result
 
-class test_ma(NumpyTestCase):
+class TestMa(NumpyTestCase):
     def __init__(self, *args, **kwds):
         NumpyTestCase.__init__(self, *args, **kwds)
         self.setUp()
@@ -647,7 +647,7 @@ class test_ma(NumpyTestCase):
         self.failUnlessEqual(b[0].shape, ())
         self.failUnlessEqual(b[1].shape, ())
 
-class test_ufuncs(NumpyTestCase):
+class TestUfuncs(NumpyTestCase):
     def setUp(self):
         self.d = (array([1.0, 0, -1, pi/2]*2, mask=[0,1]+[0]*6),
                   array([1.0, 0, -1, pi/2]*2, mask=[1,0]+[0]*6),)
@@ -714,7 +714,7 @@ class test_ufuncs(NumpyTestCase):
             self.failUnless(eq(nonzero(x), [0]))
 
 
-class test_array_methods(NumpyTestCase):
+class TestArrayMethods(NumpyTestCase):
 
     def setUp(self):
         x = numpy.array([ 8.375,  7.545,  8.828,  8.5  ,  1.757,  5.928,

@@ -6,7 +6,7 @@ import numpy.core;reload(numpy.core)
 from numpy.core import *
 restore_path()
 
-class test_fromrecords(NumpyTestCase):
+class TestFromrecords(NumpyTestCase):
     def check_fromrecords(self):
         r = rec.fromrecords([[456,'dbe',1.2],[2,'de',1.3]],names='col1,col2,col3')
         assert_equal(r[0].item(),(456, 'dbe', 1.2))
@@ -85,7 +85,7 @@ class test_fromrecords(NumpyTestCase):
         assert_array_equal(ra['field'], [[5,5,5]])
         assert callable(ra.field)
 
-class test_record(NumpyTestCase):
+class TestRecord(NumpyTestCase):
     def setUp(self):
         self.data = rec.fromrecords([(1,2,3),(4,5,6)],
                             dtype=[("col1", "<i4"),

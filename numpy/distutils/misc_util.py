@@ -116,7 +116,7 @@ def get_mathlibs(path=None):
     """Return the MATHLIB line from config.h
     """
     if path is None:
-        path = get_numpy_include_dirs()[0]
+        path = os.path.join(get_numpy_include_dirs()[0], 'numpy')
     config_file = os.path.join(path,'config.h')
     fid = open(config_file)
     mathlibs = []

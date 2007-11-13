@@ -257,7 +257,7 @@ class NumpyTest:
 
     Old-style test_suite(level=1) hooks are also supported.
     """
-    _check_testcase_name = re.compile(r'test.*').match
+    _check_testcase_name = re.compile(r'test.*|Test.*').match
     def check_testcase_name(self, name):
         """ Return True if name matches TestCase class.
         """
@@ -296,10 +296,10 @@ class NumpyTest:
     def rename(self, **kws):
         """Apply renaming submodule test file test_<name>.py to
         test_<newname>.py.
-        
+
         Usage: self.rename(name='newname') before calling the
         self.test() method.
-        
+
         If 'newname' is None, then no tests will be executed for a given
         module.
         """

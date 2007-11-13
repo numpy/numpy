@@ -273,4 +273,3 @@ if __name__ == '__main__':
     writefo = open(outfilename, 'w')
     writefo.write(source)
     writefo.close()
-

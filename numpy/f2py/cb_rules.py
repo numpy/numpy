@@ -20,7 +20,10 @@ f2py_version = __version__.version
 
 
 import pprint
-import sys,string,time,types,copy
+import sys
+import time
+import types
+import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
@@ -290,7 +293,7 @@ cb_arg_rules=[
     },
     'strarglens':{isstring:',int #varname#_cb_len'}, # untested with multiple args
     'strarglens_td':{isstring:',int'}, # untested with multiple args
-    'strarglens_nm':{isstring:',#varname#_cb_len'}, # untested with multiple args 
+    'strarglens_nm':{isstring:',#varname#_cb_len'}, # untested with multiple args
      },
     { # Scalars
     'decl':{l_not(isintent_c):'\t#ctype# #varname#=(*#varname#_cb_capi);'},
@@ -484,8 +487,8 @@ def buildcallback(rout,um):
                                    {'docsign':rd['docsign'],
                                     'docsignopt':optargs,
                                     })
-    rd['latexdocsignature']=string.replace(rd['docsignature'],'_','\\_')
-    rd['latexdocsignature']=string.replace(rd['latexdocsignature'],',',', ')
+    rd['latexdocsignature']=rd['docsignature'].replace('_','\\_')
+    rd['latexdocsignature']=rd['latexdocsignature'].replace(',',', ')
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:

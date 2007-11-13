@@ -20,7 +20,10 @@ __version__ = "$Revision: 1.3 $"[10:-1]
 f2py_version='See `f2py -v`'
 
 import pprint
-import sys,string,time,types,copy
+import sys
+import time
+import types
+import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
@@ -88,10 +91,10 @@ def buildusevar(name,realname,vars,usemodulename):
     ret={}
     vrd={'name':name,
          'realname':realname,
-         'REALNAME':string.upper(realname),
+         'REALNAME':realname.upper(),
          'usemodulename':usemodulename,
-         'USEMODULENAME':string.upper(usemodulename),
-         'texname':string.replace(name,'_','\\_'),
+         'USEMODULENAME':usemodulename.upper(),
+         'texname':name.replace('_','\\_'),
          'begintitle':gentitle('%s=>%s'%(name,realname)),
          'endtitle':gentitle('end of %s=>%s'%(name,realname)),
          'apiname':'#modulename#_use_%s_from_%s'%(realname,usemodulename)
@@ -99,7 +102,7 @@ def buildusevar(name,realname,vars,usemodulename):
     nummap={0:'Ro',1:'Ri',2:'Rii',3:'Riii',4:'Riv',5:'Rv',6:'Rvi',7:'Rvii',8:'Rviii',9:'Rix'}
     vrd['texnamename']=name
     for i in nummap.keys():
-        vrd['texnamename']=string.replace(vrd['texnamename'],`i`,nummap[i])
+        vrd['texnamename']=vrd['texnamename'].replace(`i`,nummap[i])
     if hasnote(vars[realname]): vrd['note']=vars[realname]['note']
     rd=dictappend({},vrd)
     var=vars[realname]

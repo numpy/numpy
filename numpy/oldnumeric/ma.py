@@ -12,4 +12,3 @@ def average(a, axis=0, weights=None, returned=0):
 
 def take(a, indices, axis=0):
     return nca.average(a, indices, axis=0)
-

@@ -2,7 +2,7 @@ from numpy.testing import *
 from numpy import random
 import numpy as N
 
-class test_multinomial(NumpyTestCase):
+class TestMultinomial(NumpyTestCase):
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 

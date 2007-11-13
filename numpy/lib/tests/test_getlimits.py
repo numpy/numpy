@@ -11,31 +11,31 @@ restore_path()
 
 ##################################################
 
-class test_python_float(NumpyTestCase):
+class TestPythonFloat(NumpyTestCase):
     def check_singleton(self):
         ftype = finfo(float)
         ftype2 = finfo(float)
         assert_equal(id(ftype),id(ftype2))
 
-class test_single(NumpyTestCase):
+class TestSingle(NumpyTestCase):
     def check_singleton(self):
         ftype = finfo(single)
         ftype2 = finfo(single)
         assert_equal(id(ftype),id(ftype2))
 
-class test_double(NumpyTestCase):
+class TestDouble(NumpyTestCase):
     def check_singleton(self):
         ftype = finfo(double)
         ftype2 = finfo(double)
         assert_equal(id(ftype),id(ftype2))
 
-class test_longdouble(NumpyTestCase):
+class TestLongdouble(NumpyTestCase):
     def check_singleton(self,level=2):
         ftype = finfo(longdouble)
         ftype2 = finfo(longdouble)
         assert_equal(id(ftype),id(ftype2))
 
-class test_iinfo(NumpyTestCase):
+class TestIinfo(NumpyTestCase):
     def check_basic(self):
         dts = zip(['i1', 'i2', 'i4', 'i8',
                    'u1', 'u2', 'u4', 'u8'],

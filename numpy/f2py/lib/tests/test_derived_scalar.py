@@ -42,7 +42,7 @@ m, = compile(fortran_code, 'test_derived_scalar_ext')
 
 from numpy import *
 
-class test_m(NumpyTestCase):
+class TestM(NumpyTestCase):
 
     def check_foo_simple(self, level=1):
         a = m.myt(2)

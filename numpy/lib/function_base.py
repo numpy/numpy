@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['logspace', 'linspace',
            'select', 'piecewise', 'trim_zeros',
-           'copy', 'iterable', #'base_repr', 'binary_repr',
+           'copy', 'iterable',
            'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'disp',
            'unique', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
            'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
@@ -35,7 +35,35 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
 
     Return num evenly spaced samples from start to stop.  If
     endpoint is True, the last sample is stop. If retstep is
-    True then return the step value used.
+    True then return (seq, step_value), where step_value used.
+
+    :Parameters:
+        start : {float}
+            The value the sequence starts at.
+        stop : {float}
+            The value the sequence stops at. If ``endpoint`` is false, then
+            this is not included in the sequence. Otherwise it is
+            guaranteed to be the last value.
+        num : {integer}
+            Number of samples to generate. Default is 50.
+        endpoint : {boolean}
+            If true, ``stop`` is the last sample. Otherwise, it is not
+            included. Default is true.
+        retstep : {boolean}
+            If true, return ``(samples, step)``, where ``step`` is the
+            spacing used in generating the samples.
+
+    :Returns:
+        samples : {array}
+            ``num`` equally spaced samples from the range [start, stop]
+            or [start, stop).
+        step : {float} (Only if ``retstep`` is true)
+            Size of spacing between samples.
+
+    :See Also:
+        `arange` : Similiar to linspace, however, when used with
+            a float endpoint, that endpoint may or may not be included.
+        `logspace`
     """
     num = int(num)
     if num <= 0:
@@ -108,6 +136,12 @@ def histogram(a, bins=10, range=None, normed=False):
 
     """
     a = asarray(a).ravel()
+
+    if (range is not None):
+        mn, mx = range
+        if (mn > mx):
+            raise AttributeError, 'max must be larger than min in range parameter.'
+
     if not iterable(bins):
         if range is None:
             range = (a.min(), a.max())
@@ -116,6 +150,9 @@ def histogram(a, bins=10, range=None, normed=False):
             mn -= 0.5
             mx += 0.5
         bins = linspace(mn, mx, bins, endpoint=False)
+    else:
+        if(any(bins[1:]-bins[:-1] < 0)):
+            raise AttributeError, 'bins must increase monotonically.'
 
     # best block size probably depends on processor cache size
     block = 65536
@@ -914,6 +951,7 @@ class vectorize(object):
                 raise ValueError, "mismatch between python function inputs"\
                       " and received arguments"
 
+        # we need a new ufunc if this is being called with more arguments.
         if (self.lastcallargs != nargs):
             self.lastcallargs = nargs
             self.ufunc = None
@@ -935,14 +973,18 @@ class vectorize(object):
                     otypes.append(asarray(theout[k]).dtype.char)
                 self.otypes = ''.join(otypes)
 
+        # Create ufunc if not already created
         if (self.ufunc is None):
             self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
 
+        # Convert to object arrays first
+        newargs = [array(arg,copy=False,subok=True,dtype=object) for arg in args]
         if self.nout == 1:
-            _res = array(self.ufunc(*args),copy=False).astype(self.otypes[0])
+            _res = array(self.ufunc(*newargs),copy=False,
+                         subok=True,dtype=self.otypes[0])
         else:
-            _res = tuple([array(x,copy=False).astype(c) \
-                          for x, c in zip(self.ufunc(*args), self.otypes)])
+            _res = tuple([array(x,copy=False,subok=True,dtype=c) \
+                          for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
 
 def cov(m, y=None, rowvar=1, bias=0):

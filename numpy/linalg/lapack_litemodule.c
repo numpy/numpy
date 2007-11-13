@@ -765,7 +765,7 @@ lapack_lite_zgeqrf(PyObject *self, PyObject *args)
         lapack_lite_status__ = \
         FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work), &lwork, &info);
 
-        return Py_BuildValue("{s:l,s:l,s:l,s:l,s:l,s:l}","zgeqrf_",lapack_lite_status__,"m",m,"n",n,"lda",lda,"lwork",lwork,"info",info);
+        return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","zgeqrf_",lapack_lite_status__,"m",m,"n",n,"lda",lda,"lwork",lwork,"info",info);
 }
 
 
