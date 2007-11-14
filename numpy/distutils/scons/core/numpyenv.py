@@ -145,8 +145,9 @@ def _GetNumpyEnvironment(args):
 
     # ===============================================
     # Setting tools according to command line options
-    if not env['ENV'].has_key('PATH'):
-        env['ENV']['PATH'] = []
+
+    # List of supplemental paths to take into account
+    path_list = []
 
     # XXX: how to handle tools which are not in standard location ? Is adding
     # the full path of the compiler enough ? (I am sure some compilers also
@@ -170,10 +171,7 @@ def _GetNumpyEnvironment(args):
                     t = Tool(env['cc_opt'])
                     t(env) 
                     customize_cc(t.name, env)
-                    if sys.platform == 'win32':
-                        env['ENV']['PATH'] += ';%s' % env['cc_opt_path']
-                    else:
-                        env['ENV']['PATH'] += ':%s' % env['cc_opt_path']
+                    path_list.append(env['cc_opt_path'])
             else:
                 # Do not care about PATH info because none given from scons
                 # distutils command
@@ -197,10 +195,7 @@ def _GetNumpyEnvironment(args):
                 # PATH ? (may not work on windows).
                 t = Tool(env['f77_opt'], toolpath = ['numpy/distutils/scons/tools'])
                 t(env) 
-                if sys.platform == 'win32':
-                    env['ENV']['PATH'] += ';%s' % env['f77_opt_path']
-                else:
-                    env['ENV']['PATH'] += ':%s' % env['f77_opt_path']
+                path_list.append(env['f77_opt_path'])
         except EnvironmentError, e:
             # scons could not understand cc_opt (bad name ?)
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
@@ -215,6 +210,12 @@ def _GetNumpyEnvironment(args):
         else:
             print "========== NO FORTRAN COMPILER FOUND ==========="
 
+    if not env['ENV'].has_key('PATH'):
+        env['ENV']['PATH'] = os.pathsep.join(path_list)
+    else:
+        env['ENV']['PATH'] = os.pathsep.join(path_list + env['ENV']['PATH'].split(os.pathsep))
+
+    print env['ENV']['PATH']
     # XXX: Really, we should use our own subclass of Environment, instead of
     # adding Numpy* functions !
 
