@@ -114,6 +114,69 @@ def GetNumpyEnvironment(args):
     env.AppendUnique(LINKFLAGS = env['NUMPY_OPTIM_LDFLAGS'])
     return env
 
+def initialize_cc(env, path_list):
+    # XXX: how to handle tools which are not in standard location ? Is adding
+    # the full path of the compiler enough ? (I am sure some compilers also
+    # need LD_LIBRARY_SHARED and other variables to be set, too....)
+    from SCons.Tool import Tool
+
+    if len(env['cc_opt']) > 0:
+        try:
+            if len(env['cc_opt_path']) > 0:
+                if env['cc_opt'] == 'intelc':
+                    # Intel Compiler SCons.Tool has a special way to set the
+                    # path, so we use this one instead of changing
+                    # env['ENV']['PATH'].
+                    t = Tool(env['cc_opt'], 
+                             topdir = os.path.split(env['cc_opt_path'])[0])
+                    t(env) 
+                    customize_cc(t.name, env)
+                else:
+                    if is_cc_suncc(pjoin(env['cc_opt_path'], env['cc_opt'])):
+                        env['cc_opt'] = 'suncc'
+                    t = Tool(env['cc_opt'])
+                    t(env) 
+                    customize_cc(t.name, env)
+                    path_list.append(env['cc_opt_path'])
+            else:
+                # Do not care about PATH info because none given from scons
+                # distutils command
+                t = Tool(env['cc_opt'])
+                t(env) 
+                customize_cc(t.name, env)
+        except EnvironmentError, e:
+            # scons could not understand cc_opt (bad name ?)
+            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
+                                 str(e))
+    else:
+        t = Tool(FindTool(DEF_C_COMPILERS))
+        t(env)
+        customize_cc(t.name, env)
+
+def initialize_f77(env, path_list):
+    from SCons.Tool import Tool
+
+    # F77 compiler
+    if len(env['f77_opt']) > 0:
+        try:
+            if len(env['f77_opt_path']) > 0:
+                t = Tool(env['f77_opt'], toolpath = ['numpy/distutils/scons/tools'])
+                t(env) 
+                path_list.append(env['f77_opt_path'])
+        except EnvironmentError, e:
+            # scons could not understand cc_opt (bad name ?)
+            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
+                                 str(e))
+        # XXX: really have to understand how fortran compilers work in scons...
+        env['F77'] = env['_FORTRAND']
+    else:
+        def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
+        if def_fcompiler:
+            t = Tool(def_fcompiler)
+            t(env)
+        else:
+            print "========== NO FORTRAN COMPILER FOUND ==========="
+
 def _GetNumpyEnvironment(args):
     """Call this with args = ARGUMENTS."""
     from SCons.Environment import Environment
@@ -143,104 +206,19 @@ def _GetNumpyEnvironment(args):
     env.AppendUnique(distutils_installdir = pjoin(env['distutils_libdir'], 
                                                   env['pkg_name']))
 
-    # ===============================================
+    #------------------------------------------------
     # Setting tools according to command line options
+    #------------------------------------------------
 
     # List of supplemental paths to take into account
     path_list = []
 
-    # XXX: how to handle tools which are not in standard location ? Is adding
-    # the full path of the compiler enough ? (I am sure some compilers also
-    # need LD_LIBRARY_SHARED and other variables to be set, too....)
-    if len(env['cc_opt']) > 0:
-        try:
-            if len(env['cc_opt_path']) > 0:
-                if env['cc_opt'] == 'intelc':
-                    # Intel Compiler SCons.Tool has a special way to set the
-                    # path, o we use this one instead of changing
-                    # env['ENV']['PATH'].
-                    t = Tool(env['cc_opt'], 
-                             topdir = os.path.split(env['cc_opt_path'])[0])
-                    t(env) 
-                    customize_cc(t.name, env)
-                else:
-                    if is_cc_suncc(pjoin(env['cc_opt_path'], env['cc_opt'])):
-                        env['cc_opt'] = 'suncc'
-                    # XXX: what is the right way to add one directory in the
-                    # PATH ? (may not work on windows).
-                    t = Tool(env['cc_opt'])
-                    t(env) 
-                    customize_cc(t.name, env)
-                    path_list.append(env['cc_opt_path'])
-            else:
-                # Do not care about PATH info because none given from scons
-                # distutils command
-                t = Tool(env['cc_opt'])
-                t(env) 
-                customize_cc(t.name, env)
-        except EnvironmentError, e:
-            # scons could not understand cc_opt (bad name ?)
-            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
-                                 str(e))
-    else:
-        t = Tool(FindTool(DEF_C_COMPILERS))
-        t(env)
-        customize_cc(t.name, env)
+    # Initialize CC tool from distutils info
+    initialize_cc(env, path_list)
 
-    # F77 compiler
-    if len(env['f77_opt']) > 0:
-        try:
-            if len(env['f77_opt_path']) > 0:
-                # XXX: what is the right way to add one directory in the
-                # PATH ? (may not work on windows).
-                t = Tool(env['f77_opt'], toolpath = ['numpy/distutils/scons/tools'])
-                t(env) 
-                path_list.append(env['f77_opt_path'])
-        except EnvironmentError, e:
-            # scons could not understand cc_opt (bad name ?)
-            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
-                                 str(e))
-        # XXX: really have to understand how fortran compilers work in scons...
-        env['F77'] = env['_FORTRAND']
-    else:
-        def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
-        if def_fcompiler:
-            t = Tool(def_fcompiler)
-            t(env)
-        else:
-            print "========== NO FORTRAN COMPILER FOUND ==========="
+    # Initialize F77 tool from distutils info
+    initialize_f77(env, path_list)
 
-    if not env['ENV'].has_key('PATH'):
-        env['ENV']['PATH'] = os.pathsep.join(path_list)
-    else:
-        env['ENV']['PATH'] = os.pathsep.join(path_list + env['ENV']['PATH'].split(os.pathsep))
-
-    print env['ENV']['PATH']
-    # XXX: Really, we should use our own subclass of Environment, instead of
-    # adding Numpy* functions !
-
-    # Put config code and log in separate dir for each subpackage
-    from utils import curry
-    NumpyConfigure = curry(env.Configure, 
-                           conf_dir = pjoin(env['build_dir'], '.sconf'), 
-                           log_file = pjoin(env['build_dir'], 'config.log'))
-    env.NumpyConfigure = NumpyConfigure
-
-    # XXX: Huge, ugly hack ! SConsign needs an absolute path or a path
-    # relative to where the SConstruct file is. We have to find the path of
-    # the build dir relative to the src_dir: we add n .., where n is the number
-    # of occureant of the path separator in the src dir.
-    def get_build_relative_src(srcdir, builddir):
-        n = srcdir.count(os.sep)
-        if len(srcdir) > 0 and not srcdir == '.':
-            n += 1
-        return pjoin(os.sep.join([os.pardir for i in range(n)]), builddir)
-    sconsign = pjoin(get_build_relative_src(env['src_dir'], 
-                                            env['build_dir']),
-                     '.sconsign.dblite')
-    env.SConsignFile(sconsign)
-
-    # ========================================================================
     # Adding default tools for the one we do not customize: mingw is special
     # according to scons, don't ask me why, but this does not work as expected
     # for this tool.
@@ -263,6 +241,43 @@ def _GetNumpyEnvironment(args):
 
     finalize_env(env)
 
+    # Add the tool paths in the environment
+    if not env['ENV'].has_key('PATH'):
+        env['ENV']['PATH'] = os.pathsep.join(path_list)
+    else:
+        env['ENV']['PATH'] = os.pathsep.join(path_list + env['ENV']['PATH'].split(os.pathsep))
+
+    # XXX: Really, we should use our own subclass of Environment, instead of
+    # adding Numpy* functions !
+
+    #---------------
+    #     Misc
+    #---------------
+
+    # Put config code and log in separate dir for each subpackage
+    from utils import curry
+    NumpyConfigure = curry(env.Configure, 
+                           conf_dir = pjoin(env['build_dir'], '.sconf'), 
+                           log_file = pjoin(env['build_dir'], 'config.log'))
+    env.NumpyConfigure = NumpyConfigure
+
+    # XXX: Huge, ugly hack ! SConsign needs an absolute path or a path relative
+    # to where the SConstruct file is. We have to find the path of the build
+    # dir relative to the src_dir: we add n .., where n is the number of
+    # occurances of the path separator in the src dir.
+    def get_build_relative_src(srcdir, builddir):
+        n = srcdir.count(os.sep)
+        if len(srcdir) > 0 and not srcdir == '.':
+            n += 1
+        return pjoin(os.sep.join([os.pardir for i in range(n)]), builddir)
+
+    sconsign = pjoin(get_build_relative_src(env['src_dir'], 
+                                            env['build_dir']),
+                     '.sconsign.dblite')
+    env.SConsignFile(sconsign)
+
+    # Add HOME in the environment: some tools seem to require it (Intel
+    # compiler, for licenses stuff)
     try:
         env['ENV']['HOME'] = os.environ['HOME']
     except KeyError:
