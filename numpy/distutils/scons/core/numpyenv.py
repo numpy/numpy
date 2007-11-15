@@ -14,7 +14,10 @@ from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtensio
 from libinfo import get_config
 from extension_scons import PythonExtension, built_with_mstools
 
+import numpy.distutils.scons.tools
 from numpy.distutils.scons.tools.substinfile import TOOL_SUBST
+
+__all__ = ['GetNumpyEnvironment']
 
 def pyplat2sconsplat():
     # XXX: should see how env['PLATFORM'] is defined, make this a dictionary 
@@ -118,7 +121,7 @@ def initialize_cc(env, path_list):
     # XXX: how to handle tools which are not in standard location ? Is adding
     # the full path of the compiler enough ? (I am sure some compilers also
     # need LD_LIBRARY_SHARED and other variables to be set, too....)
-    from SCons.Tool import Tool
+    from SCons.Tool import Tool, FindTool
 
     if len(env['cc_opt']) > 0:
         try:
@@ -149,14 +152,13 @@ def initialize_cc(env, path_list):
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
                                  str(e))
     else:
-        t = Tool(FindTool(DEF_C_COMPILERS))
+        t = Tool(FindTool(DEF_C_COMPILERS, env))
         t(env)
         customize_cc(t.name, env)
 
 def initialize_f77(env, path_list):
-    from SCons.Tool import Tool
+    from SCons.Tool import Tool, FindTool
 
-    # F77 compiler
     if len(env['f77_opt']) > 0:
         try:
             if len(env['f77_opt_path']) > 0:
@@ -238,6 +240,9 @@ def _GetNumpyEnvironment(args):
 			
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)
+
+    t = Tool('f2py', toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+    t(env)
 
     finalize_env(env)
 
