@@ -1,0 +1,8 @@
+# vim:syntax=python
+from numpy.distutils.scons import GetNumpyEnvironment
+from numpy.distutils.misc_util import get_numpy_include_dirs
+
+env = GetNumpyEnvironment(ARGUMENTS)
+
+env.Append(CPPPATH = get_numpy_include_dirs())
+env.NumpyPythonExtension('spam', source = ['spam.pyf'])
