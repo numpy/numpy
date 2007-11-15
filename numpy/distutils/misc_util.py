@@ -1203,11 +1203,17 @@ class Configuration(object):
                                     full_source_files))
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a subpackage '+ subpackage_name)
+            # XXX: we add a fake extension, to correctly initialize some
+            # options in distutils command.
+            dist.add_extension('', sources = [])
         else:
             self.scons_data.append((fullsconsname, 
                                     pre_hook, 
                                     post_hook,
                                     full_source_files))
+            # XXX: we add a fake extension, to correctly initialize some
+            # options in distutils command.
+            self.add_extension('', sources = [])
 
     def add_scripts(self,*files):
         """Add scripts to configuration.
