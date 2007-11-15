@@ -150,10 +150,12 @@ class scons(old_build_ext):
             self.sconscripts = self.distribution.get_scons_scripts()
             self.pre_hooks = self.distribution.get_scons_pre_hooks()
             self.post_hooks = self.distribution.get_scons_post_hooks()
+            self.pkg_names = self.distribution.get_scons_parent_names()
         else:
             self.sconscripts = []
             self.pre_hooks = []
             self.post_hooks = []
+            self.pkg_names = []
 
         # Try to get the same compiler than the ones used by distutils: this is
         # non trivial because distutils and scons have totally different
@@ -207,8 +209,9 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
 
-        for sconscript, pre_hook, post_hook in zip(self.sconscripts,
-                                                   self.pre_hooks, self.post_hooks):
+        for sconscript, pre_hook, post_hook, pkg_name in zip(self.sconscripts,
+                                                   self.pre_hooks, self.post_hooks,
+                                                   self.pkg_names):
             if pre_hook:
                 pre_hook()
 
@@ -216,6 +219,7 @@ class scons(old_build_ext):
             if self.jobs:
                 cmd.append(" --jobs=%d" % int(self.jobs))
             cmd.append('src_dir="%s"' % pdirname(sconscript))
+            cmd.append('pkg_name="%s"' % pkg_name)
             cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
                                                                 pdirname(sconscript))))
 

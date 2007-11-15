@@ -24,3 +24,5 @@ class NumpyDistribution(Distribution):
     def get_scons_sources(self):
         return [i[3] for i in self.scons_data]
 
+    def get_scons_parent_names(self):
+        return [i[4] for i in self.scons_data]

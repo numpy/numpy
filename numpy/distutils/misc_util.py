@@ -1200,7 +1200,8 @@ class Configuration(object):
             dist.scons_data.append((fullsconsname, 
                                     pre_hook, 
                                     post_hook,
-                                    full_source_files))
+                                    full_source_files,
+                                    parent_name))
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a subpackage '+ subpackage_name)
             # XXX: we add a fake extension, to correctly initialize some
@@ -1210,7 +1211,8 @@ class Configuration(object):
             self.scons_data.append((fullsconsname, 
                                     pre_hook, 
                                     post_hook,
-                                    full_source_files))
+                                    full_source_files,
+                                    parent_name))
             # XXX: we add a fake extension, to correctly initialize some
             # options in distutils command.
             self.add_extension('', sources = [])

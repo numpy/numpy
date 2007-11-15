@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Nov 12 07:00 PM 2007 J
+# Last Change: Thu Nov 15 07:00 PM 2007 J
 
 # Module for support to build python extension. scons specific code goes here.
 import sys
@@ -87,7 +87,7 @@ def PythonExtension(env, target, source, *args, **kw):
         # XXX: When those should be used ? (which version of Mac OS X ?)
         LINKFLAGS += ' -undefined dynamic_lookup '
     else:
-	pass
+        pass
 
     # Use LoadableModule because of Mac OS X
     # ... but scons has a bug (#issue 1669) with mingw and Loadable
