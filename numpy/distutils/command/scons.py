@@ -220,8 +220,9 @@ class scons(old_build_ext):
                 cmd.append(" --jobs=%d" % int(self.jobs))
             cmd.append('src_dir="%s"' % pdirname(sconscript))
             cmd.append('pkg_name="%s"' % pkg_name)
-            cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
-                                                                pdirname(sconscript))))
+            #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
+            #                                                    pdirname(sconscript))))
+            cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib)))
 
             if not self._bypass_distutils_cc:
                 cmd.append('cc_opt=%s' % self.scons_compiler)

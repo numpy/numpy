@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Oct 29 07:00 PM 2007 J
+# Last Change: Fri Nov 16 01:00 PM 2007 J
 
 # This module defines various utilities used throughout the scons support
 # library.
@@ -38,6 +38,12 @@ def popen_wrapper(cmd, merge = False):
         status = 0
 
     return status, out
+
+def pkg_to_path(pkg_name):
+    """Given a python package name, returns its path from the root.
+
+    Example: numpy.core becomes numpy/core."""
+    return os.sep.join(pkg_name.split('.'))
 
 def get_empty(dict, key):
     """Assuming dict is a dictionary with lists as values, returns an empty

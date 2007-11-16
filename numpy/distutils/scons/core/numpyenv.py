@@ -13,6 +13,7 @@ from default import tool_list, get_cc_config
 from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
 from libinfo import get_config
 from extension_scons import PythonExtension, built_with_mstools
+from utils import pkg_to_path
 
 import numpy.distutils.scons.tools
 from numpy.distutils.scons.tools.substinfile import TOOL_SUBST
@@ -206,7 +207,7 @@ def _GetNumpyEnvironment(args):
     # Setting dirs according to command line options
     env.AppendUnique(build_dir = pjoin(env['build_prefix'], env['src_dir']))
     env.AppendUnique(distutils_installdir = pjoin(env['distutils_libdir'], 
-                                                  env['pkg_name']))
+                                                  pkg_to_path(env['pkg_name'])))
 
     #------------------------------------------------
     # Setting tools according to command line options
