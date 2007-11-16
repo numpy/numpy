@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Nov 16 05:00 PM 2007 J
+# Last Change: Fri Nov 16 06:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -104,18 +104,12 @@ def CheckF77BLAS(context, autoadd = 1):
     # XXX: rpath vs LD_LIBRARY_PATH ?
     env = context.env
 
-
     # Get Fortran things we need
     if not env.has_key('F77_NAME_MANGLER'):
         if not CheckF77Mangling(context):
             return 0
     func_name = env['F77_NAME_MANGLER']('sgemm')
     test_src = c_sgemm2 % {'func' : func_name}
-
-    #if not env.has_key('F77_LDFLAGS'):
-    #    if not CheckF77Clib(context):
-    #        return 0
-
 
     def check(func, name, suplibs):
         st, res = func(context, autoadd)
@@ -142,7 +136,14 @@ def CheckF77BLAS(context, autoadd = 1):
         return st
     else:
         if sys.platform == 'darwin':
-            return 0
+            # Check Accelerate
+            st = check(CheckAccelerate, 'Accelerate Framework', [])
+            if st:
+                return st
+
+            st = check(CheckVeclib, 'vecLib Framework', [])
+            if st:
+                return st
         else:
             # Check MKL
             st = check(CheckMKL, 'MKL', [])
@@ -159,7 +160,9 @@ def CheckF77BLAS(context, autoadd = 1):
             if st:
                 return st
 
-            return 0
+    # XXX: Use default values for blas
+
+    return 0
 
 def CheckF77LAPACK(context, autoadd = 1):
     """This checker tries to find optimized library for F77 lapack.
@@ -232,12 +235,12 @@ def CheckF77LAPACK(context, autoadd = 1):
                 return st
 
             # Check ATLAS
-            st = check(CheckMKL, 'ATLAS', ['lapack'])
+            st = check(CheckATLAS, 'ATLAS', ['lapack'])
             if st:
                 return st
 
             # Check Sunperf
-            st = check(CheckMKL, 'Sunperf', ['lapack'])
+            st = check(CheckSunperf, 'Sunperf', ['lapack'])
             if st:
                 return st
 
