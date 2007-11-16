@@ -2,7 +2,8 @@
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons.checkers.perflib import \
         CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf
-from numpy.distutils.scons.checkers.custom_checkers import CheckCBLAS, CheckLAPACK
+from numpy.distutils.scons.checkers.custom_checkers import CheckCBLAS, \
+        CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK
 from numpy.distutils.scons import CheckF77Mangling
 
 env = GetNumpyEnvironment(ARGUMENTS)
@@ -20,8 +21,10 @@ config = env.NumpyConfigure(custom_tests =
     'CheckMKL' : CheckMKL,
     'CheckAccelerate' : CheckAccelerate,
     'CheckCBLAS' : CheckCBLAS,
-    'CheckLAPACK' : CheckLAPACK,
     'CheckF77Mangling' : CheckF77Mangling,
+    'CheckF77BLAS' : CheckF77BLAS,
+    'CheckF77LAPACK' : CheckF77LAPACK,
+    'CheckCLAPACK' : CheckCLAPACK,
     'CheckSunperf' : CheckSunperf})
 
 if do_check == 1:
@@ -29,8 +32,10 @@ if do_check == 1:
     st, opts = config.CheckMKL(autoadd = 0)
     st, opts = config.CheckAccelerate(autoadd = 0)
     st, opts = config.CheckSunperf(autoadd = 0)
+    st = config.CheckF77BLAS(autoadd = 0)
     st = config.CheckCBLAS(autoadd = 0)
-    st = config.CheckLAPACK(autoadd = 0)
+    st = config.CheckF77LAPACK(autoadd = 0)
+    st = config.CheckCLAPACK(autoadd = 0)
     st = config.CheckF77Mangling()
 
     if env.has_key('LIBS'):

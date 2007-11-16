@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Nov 12 07:00 PM 2007 J
+# Last Change: Fri Nov 16 05:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -9,7 +9,7 @@ from distutils.util import get_platform
 
 from numpy.distutils.scons.core.libinfo import get_config_from_section, get_config
 from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
-        c_sgemm as sunperf_src, lapack_sgesv
+        c_sgemm as sunperf_src, lapack_sgesv, blas_sgemm, c_sgemm2
 from numpy.distutils.scons.fortran_scons import CheckF77Mangling, CheckF77Clib
 from numpy.distutils.scons.configuration import add_info
 from numpy.distutils.scons.core.utils import rsplit
@@ -34,6 +34,17 @@ def CheckCBLAS(context, autoadd = 1):
     # XXX: rpath vs LD_LIBRARY_PATH ?
     env = context.env
 
+    def check(func, name, suplibs):
+        st, res = func(context, autoadd)
+        if st:
+            for lib in suplibs:
+                res.cfgopts['libs'].insert(0, lib)
+            st = check_include_and_run(context, 'CBLAS (%s)' % name, 
+                                       res.cfgopts, [], cblas_src, autoadd)
+            if st:
+                add_info(env, 'cblas', res)
+            return st
+
     # If section cblas is in site.cfg, use those options. Otherwise, use default
     section = "cblas"
     siteconfig, cfgfiles = get_config()
@@ -48,20 +59,13 @@ def CheckCBLAS(context, autoadd = 1):
         return st
     else:
         if sys.platform == 'darwin':
-            st, res = CheckAccelerate(context, autoadd)
+            # Check Accelerate
+            st = check(CheckAccelerate, 'Accelerate Framework', [])
             if st:
-                st = check_include_and_run(context, 'CBLAS (Accelerate Framework)', 
-                                           res.cfgopts, [], cblas_src, autoadd)
-                if st:
-                    add_info(env, 'cblas', res)
                 return st
 
-            st, res = CheckVeclib(context, autoadd)
+            st = check(CheckVeclib, 'vecLib Framework', [])
             if st:
-                st = check_include_and_run(context, 'CBLAS (vecLib Framework)', 
-                                           res.cfgopts, [], cblas_src, autoadd)
-                if st:
-                    add_info(env, 'cblas', res)
                 return st
 
             add_info(env, 'cblas', 'Def numpy implementation used')
@@ -69,38 +73,178 @@ def CheckCBLAS(context, autoadd = 1):
             
         else:
             # XXX: think about how to share headers info between checkers ?
+
             # Check MKL
-            st, res = CheckMKL(context, autoadd)
+            st = check(CheckMKL, 'MKL', [])
             if st:
-                st = check_include_and_run(context, 'CBLAS (MKL)', res.cfgopts,
-                                           [], cblas_src, autoadd)
-                if st:
-                    add_info(env, 'cblas', res)
                 return st
 
             # Check ATLAS
-            st, res = CheckATLAS(context, autoadd)
+            st = check(CheckATLAS, 'ATLAS', ['blas'])
             if st:
-                res.cfgopts['libs'].insert(0, 'blas')
-                st = check_include_and_run(context, 'CBLAS (ATLAS)', res.cfgopts,
-                                           [], cblas_src, autoadd)
-                if st:
-                    add_info(env, 'cblas', res)
                 return st
 
             # Check Sunperf
-            st, res = CheckSunperf(context, autoadd)
+            st = check(CheckSunperf, 'Sunperf', [])
             if st:
-                st = check_include_and_run(context, 'CBLAS (Sunperf)', res.cfgopts,
-                                           [], cblas_src, autoadd)
-                if st:
-                    add_info(env, 'cblas', res)
                 return st
 
             add_info(env, 'cblas', 'Def numpy implementation used')
             return 0
 
-def CheckLAPACK(context, autoadd = 1):
+def CheckF77BLAS(context, autoadd = 1):
+    """This checker tries to find optimized library for blas (fortran F77).
+
+    This test is pretty strong: it first detects an optimized library, and then
+    tests that a simple blas program (in C) can be run using this (F77) lib.
+    
+    It looks for the following libs:
+        - Mac OS X: Accelerate, and then vecLib.
+        - Others: MKL, then ATLAS, then Sunperf."""
+    # XXX: rpath vs LD_LIBRARY_PATH ?
+    env = context.env
+
+
+    # Get Fortran things we need
+    if not env.has_key('F77_NAME_MANGLER'):
+        if not CheckF77Mangling(context):
+            return 0
+    func_name = env['F77_NAME_MANGLER']('sgemm')
+    test_src = c_sgemm2 % {'func' : func_name}
+
+    #if not env.has_key('F77_LDFLAGS'):
+    #    if not CheckF77Clib(context):
+    #        return 0
+
+
+    def check(func, name, suplibs):
+        st, res = func(context, autoadd)
+        if st:
+            for lib in suplibs:
+                res.cfgopts['libs'].insert(0, lib)
+            st = check_include_and_run(context, 'BLAS (%s)' % name, res.cfgopts,
+                    [], test_src, autoadd)
+            if st:
+                add_info(env, 'blas', res)
+            return st
+
+    # If section blas is in site.cfg, use those options. Otherwise, use default
+    section = "blas"
+    siteconfig, cfgfiles = get_config()
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if found:
+        cfg = ConfigOpts(cpppath = cpppath, libs = libs, libpath = libpath,
+                         rpath = libpath)
+        st = check_include_and_run(context, 'BLAS (from site.cfg) ', cfg,
+                                  [], test_src, autoadd)
+        if st:
+            add_info(env, 'blas', ConfigRes('blas', cfg, found))
+        return st
+    else:
+        if sys.platform == 'darwin':
+            return 0
+        else:
+            # Check MKL
+            st = check(CheckMKL, 'MKL', [])
+            if st:
+                return st
+
+            # Check ATLAS
+            st = check(CheckATLAS, 'ATLAS', ['f77blas'])
+            if st:
+                return st
+
+            # Check Sunperf
+            st = check(CheckSunperf, 'Sunperf', [])
+            if st:
+                return st
+
+            return 0
+
+def CheckF77LAPACK(context, autoadd = 1):
+    """This checker tries to find optimized library for F77 lapack.
+
+    This test is pretty strong: it first detects an optimized library, and then
+    tests that a simple (C) program can be run using this (F77) lib.
+    
+    It looks for the following libs:
+        - Mac OS X: Accelerate, and then vecLib.
+        - Others: MKL, then ATLAS."""
+    env = context.env
+
+    if not env.has_key('F77_NAME_MANGLER'):
+        if not CheckF77Mangling(context):
+            add_info(env, 'lapack', 'Def numpy implementation used')
+            return 0
+    
+    # Get the mangled name of our test function
+    sgesv_string = env['F77_NAME_MANGLER']('sgesv')
+    test_src = lapack_sgesv % sgesv_string
+
+    def check(func, name, suplibs):
+        st, res = func(context, autoadd)
+        if st:
+            for lib in suplibs:
+                res.cfgopts['libs'].insert(0, lib)
+            st = check_include_and_run(context, 'LAPACK (%s)' % name, res.cfgopts,
+                                       [], test_src, autoadd)
+            if st:
+                add_info(env, 'lapack', res)
+            return st
+
+    # If section lapack is in site.cfg, use those options. Otherwise, use default
+    section = "lapack"
+    siteconfig, cfgfiles = get_config()
+    (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
+    if found:
+        # XXX: handle def library names correctly
+        if len(libs) == 1 and len(libs[0]) == 0:
+            libs = ['lapack', 'blas']
+        cfg = ConfigOpts(cpppath = cpppath, libs = libs, libpath = libpath,
+                         rpath = deepcopy(libpath))
+
+        # fortrancfg is used to merge info from fortran checks and site.cfg
+        fortrancfg = deepcopy(cfg)
+        fortrancfg['linkflags'].extend(env['F77_LDFLAGS'])
+
+        st = check_include_and_run(context, 'LAPACK (from site.cfg) ', fortrancfg,
+                                  [], test_src, autoadd)
+        if st:
+            add_info(env, 'lapack', ConfigRes('lapack', cfg, found))
+        return st
+    else:
+        if sys.platform == 'darwin':
+            st = check(CheckAccelerate, 'Accelerate Framework', [])
+            if st:
+                return st
+
+            st = check(CheckVeclib, 'vecLib Framework', [])
+            if st:
+                return st
+
+            add_info(env, 'lapack: def numpy implementation', opts)
+            return 0
+        else:
+            # Check MKL
+            # XXX: handle different versions of mkl (with different names)
+            st = check(CheckMKL, 'MKL', ['lapack'])
+            if st:
+                return st
+
+            # Check ATLAS
+            st = check(CheckMKL, 'ATLAS', ['lapack'])
+            if st:
+                return st
+
+            # Check Sunperf
+            st = check(CheckMKL, 'Sunperf', ['lapack'])
+            if st:
+                return st
+
+    add_info(env, 'lapack', 'Def numpy implementation used')
+    return 0
+
+def CheckCLAPACK(context, autoadd = 1):
     """This checker tries to find optimized library for lapack.
 
     This test is pretty strong: it first detects an optimized library, and then
@@ -109,6 +253,9 @@ def CheckLAPACK(context, autoadd = 1):
     It looks for the following libs:
         - Mac OS X: Accelerate, and then vecLib.
         - Others: MKL, then ATLAS."""
+    context.Message('Checking CLAPACK ...')
+    context.Result('FIXME: not implemented yet')
+    return 0
     env = context.env
 
     # If section lapack is in site.cfg, use those options. Otherwise, use default
@@ -122,8 +269,8 @@ def CheckLAPACK(context, autoadd = 1):
         cfg = ConfigOpts(cpppath = cpppath, libs = libs, libpath = libpath,
                          rpath = deepcopy(libpath))
 
-	# XXX: How to know whether we need fortran or not
-	# ?
+        # XXX: How to know whether we need fortran or not
+        # ?
         if not env.has_key('F77_NAME_MANGLER'):
             if not CheckF77Mangling(context):
                 return 0

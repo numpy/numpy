@@ -1,18 +1,18 @@
-# Last Change: Tue Nov 13 11:00 PM 2007 J
+# Last Change: Fri Nov 16 05:00 PM 2007 J
 # vim:syntax=python
 import os.path
 
 from numpy.distutils.misc_util import get_numpy_include_dirs, get_mathlibs
 from numpy.distutils.scons import GetNumpyEnvironment, scons_get_paths, \
                                   scons_get_mathlib
-from numpy.distutils.scons import CheckLAPACK
+from numpy.distutils.scons import CheckF77LAPACK
 from numpy.distutils.scons.configuration import write_info
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
 
 config = env.NumpyConfigure(custom_tests = 
-    {'CheckLAPACK' : CheckLAPACK})
+    {'CheckLAPACK' : CheckF77LAPACK})
 
 use_lapack = config.CheckLAPACK()
 

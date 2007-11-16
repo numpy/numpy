@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Nov 06 01:00 PM 2007 J
+# Last Change: Fri Nov 16 04:00 PM 2007 J
 
 # This module defines some helper functions, to be used by high level checkers
 
@@ -205,6 +205,40 @@ def check_include_and_run(context, name, opts, headers, run_src, autoadd = 1):
         src = '\n'.join([r'#include <%s>' % h for h in headers] +\
                         [run_src, r'#if  0', r'%s' % str(opts), r'#endif', '\n'])
         ret, out = context.TryRun(src, '.c')
+    finally:
+        if (not ret or not autoadd):
+            # If test failed or autoadd is disabled, restore everything
+            restore(env, saved)
+
+    if not ret:
+        context.Result('Failed: %s test could not be linked and run' % name)
+        return 0
+
+    context.Result(ret)
+    return ret
+
+def check_run_f77(context, name, opts, run_src, autoadd = 1):
+    """This is a basic implementation for generic "run" testers.
+    
+    For example, for library foo, which implements function do_foo
+        - test that the given source code can be compiled. The source code
+          should contain a simple program with the function.
+          
+    Arguments:
+        - name: name of the library."""
+
+    context.Message('Checking for %s ... ' % name)
+    env = context.env
+
+    #------------------------------
+    # Check a simple example works
+    #------------------------------
+    saved = save_and_set(env, opts)
+    try:
+        # HACK: we add libpath and libs at the end of the source as a comment, to
+        # add dependency of the check on those.
+        src = '\n'.join([run_src] + [r'* %s' % s for s in str(opts).split('\n')])
+        ret, out = context.TryRun(src, '.f')
     finally:
         if (not ret or not autoadd):
             # If test failed or autoadd is disabled, restore everything

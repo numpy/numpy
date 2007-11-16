@@ -4,7 +4,7 @@ from core.libinfo import get_paths as scons_get_paths
 from core.extension import get_python_inc, get_pythonlib_dir
 from core.utils import isstring, rsplit
 
-from checkers import CheckCBLAS, CheckLAPACK
+from checkers import CheckCBLAS, CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK
 from fortran_scons import CheckF77Verbose, CheckF77Clib, CheckF77Mangling
 
 # XXX: this is ugly, better find the mathlibs with a checker 

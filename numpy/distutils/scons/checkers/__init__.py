@@ -1,1 +1,1 @@
-from custom_checkers import CheckLAPACK, CheckCBLAS
+from custom_checkers import CheckCLAPACK, CheckCBLAS, CheckF77BLAS, CheckF77LAPACK
