@@ -48,8 +48,17 @@ def _pyf2c(target, source, env):
 
     # Copy source files for f2py generated modules in the build dir
     build_dir = os.path.dirname(target_file_names[0])
-    shutil.copy(source_c, build_dir)
-    shutil.copy(source_h, build_dir)
+
+    # XXX: blah
+    if build_dir == '':
+        build_dir = '.'
+
+    try:
+        shutil.copy(source_c, build_dir)
+        shutil.copy(source_h, build_dir)
+    except IOError, e:
+        msg = "Error while copying fortran source files (error was %s)" % str(e)
+        raise IOError(msg)
 
     # Generate the source file from pyf description
     haha = numpy.f2py.run_main(['--build-dir', build_dir,
