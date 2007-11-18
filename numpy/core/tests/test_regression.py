@@ -762,6 +762,12 @@ class TestRegression(NumpyTestCase):
         def ia(x,s): x[(s>0)]=1.0
         self.failUnlessRaises(ValueError,ia,x,s)
 
+    def check_mem_scalar_indexing(self, level=rlevel):
+        """Ticket #603"""
+        x = N.array([0],dtype=float)
+        index = N.array(0,dtype=N.int32)
+        x[index]
+
 
 if __name__ == "__main__":
     NumpyTest().run()

@@ -3045,8 +3045,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op))
             noellipses = FALSE;
         else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
-                 (PyArray_Check(op) && (PyArray_DIMS(op)==0) &&
-                  PyArray_ISBOOL(op)))
+                 (PyArray_Check(op) && (PyArray_DIMS(op)==0)))
             noellipses = FALSE;
         else if (PySequence_Check(op)) {
             int n, i;
