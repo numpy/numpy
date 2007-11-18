@@ -748,5 +748,13 @@ class TestRegression(NumpyTestCase):
         new = cPickle.loads(cPickle.dumps(el))
         assert_equal(new, el)
 
+    def check_arange_non_native_dtype(self, level=rlevel):
+        """Ticket #616"""
+        for T in ('>f4','<f4'):
+            dt = N.dtype(T)
+            assert_equal(N.arange(0,dtype=dt).dtype,dt)
+            assert_equal(N.arange(0.5,dtype=dt).dtype,dt)
+            assert_equal(N.arange(5,dtype=dt).dtype,dt)
+
 if __name__ == "__main__":
     NumpyTest().run()

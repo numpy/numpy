@@ -6806,6 +6806,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
     if (PyErr_Occurred()) goto fail;
 
+ finish:
     if (swap) {
         PyObject *new;
         new = PyArray_Byteswap((PyArrayObject *)range, 1);
@@ -6814,7 +6815,6 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         PyArray_DESCR(range) = dtype;  /* steals the reference */
     }
 
- finish:
     Py_DECREF(start);
     Py_DECREF(step);
     Py_DECREF(next);
