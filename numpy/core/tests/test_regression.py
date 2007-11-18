@@ -756,5 +756,12 @@ class TestRegression(NumpyTestCase):
             assert_equal(N.arange(0.5,dtype=dt).dtype,dt)
             assert_equal(N.arange(5,dtype=dt).dtype,dt)
 
+    def check_bool_indexing_invalid_nr_elements(self, level=rlevel):
+        s = N.ones(10,dtype=float)
+        x = N.array((15,),dtype=float)
+        def ia(x,s): x[(s>0)]=1.0
+        self.failUnlessRaises(ValueError,ia,x,s)
+
+
 if __name__ == "__main__":
     NumpyTest().run()
