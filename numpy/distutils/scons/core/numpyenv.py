@@ -243,7 +243,11 @@ def _GetNumpyEnvironment(args):
         Tool(t)(env)
 
     t = Tool('f2py', toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
-    t(env)
+    try:
+        t(env)
+    except Exception, e:
+        pass
+        #print "===== BOOTSTRAPPING, f2py scons tool not available (%s) =====" % e
 
     finalize_env(env)
 
