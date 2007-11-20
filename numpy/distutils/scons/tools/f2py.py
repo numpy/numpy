@@ -82,7 +82,7 @@ def _pyf2c(target, source, env):
     #print "ST is %s" % st
     try:
         #print " STARTING %s" % basename
-        st = numpy.f2py.run_main([source_file_names[0], '--build-dir', build_dir])
+        st = numpy.f2py.run_main(env['F2PYOPTIONS'] + [source_file_names[0], '--build-dir', build_dir])
         if not os.path.exists(wrapper):
             #print "++++++++++++++++++++++++++++++++"
             f = open(wrapper, 'w')
