@@ -35,6 +35,7 @@ def NumpyCtypes(env, target, source, *args, **kw):
 
     In particular, it does not install .exp/.lib files on windows. """
     source = [pjoin(env['build_dir'], i) for i in source]
+
     # XXX: why target is a list ? It is always true ?
     # XXX: handle cases where SHLIBPREFIX is in args
     lib = env.SharedLibrary("$build_dir/%s" % target[0], 
@@ -46,3 +47,26 @@ def NumpyCtypes(env, target, source, *args, **kw):
     inst_lib = env.Install("$distutils_installdir", lib)
     return lib, inst_lib
 
+def NumpyFromCTemplate(env, target, source, *args, **kw):
+    source = [pjoin(env['build_dir'], i) for i in source]
+
+    # XXX: why target is a list ? It is always true ?
+    # XXX: handle cases where SHLIBPREFIX is in args
+    src = env.FromCTemplate("$build_dir/%s" % target[0], 
+                            source, *args, **kw)
+
+    #inst_src = env.Install("$distutils_installdir", src)
+    #return src, inst_src
+    return src
+
+def NumpyFromFTemplate(env, target, source, *args, **kw):
+    source = [pjoin(env['build_dir'], i) for i in source]
+
+    # XXX: why target is a list ? It is always true ?
+    # XXX: handle cases where SHLIBPREFIX is in args
+    src = env.FromFTemplate("$build_dir/%s" % target[0], 
+                            source, *args, **kw)
+
+    #inst_src = env.Install("$distutils_installdir", src)
+    #return src, inst_src
+    return src

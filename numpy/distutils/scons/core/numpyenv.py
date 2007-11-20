@@ -186,6 +186,7 @@ def _GetNumpyEnvironment(args):
     from SCons.Tool import Tool, FindTool, FindAllTools
     from SCons.Script import BuildDir, Help
     from SCons.Errors import EnvironmentError
+    from SCons.Builder import Builder
 
     # XXX: I would prefer subclassing Environment, because we really expect
     # some different behaviour than just Environment instances...
@@ -250,19 +251,21 @@ def _GetNumpyEnvironment(args):
         pass
         #print "===== BOOTSTRAPPING, f2py scons tool not available (%s) =====" % e
 
-    t = Tool('npyctpl', 
-             toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
-    try:
-        t(env)
-    except Exception, e:
-        pass
+    # XXX: understand how registration of source files work before reenabling those
 
-    t = Tool('npyftpl', 
-             toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
-    try:
-        t(env)
-    except Exception, e:
-        pass
+    # t = Tool('npyctpl', 
+    #          toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+    # try:
+    #     t(env)
+    # except Exception, e:
+    #     pass
+
+    # t = Tool('npyftpl', 
+    #          toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+    # try:
+    #     t(env)
+    # except Exception, e:
+    #     pass
 
     finalize_env(env)
 
@@ -309,11 +312,28 @@ def _GetNumpyEnvironment(args):
         pass
 
     # Adding custom builder
+
     # XXX: Put them into tools ?
     env['BUILDERS']['NumpySharedLibrary'] = NumpySharedLibrary
     env['BUILDERS']['NumpyCtypes'] = NumpyCtypes
     env['BUILDERS']['PythonExtension'] = PythonExtension
     env['BUILDERS']['NumpyPythonExtension'] = NumpyPythonExtension
+
+    from template_generators import generate_from_c_template, \
+                                    generate_from_f_template, \
+                                    generate_from_template_emitter
+
+    env['BUILDERS']['FromCTemplate'] = Builder(
+                action = generate_from_c_template, 
+                emitter = generate_from_template_emitter)
+
+    env['BUILDERS']['FromFTemplate'] = Builder(
+                action = generate_from_f_template, 
+                emitter = generate_from_template_emitter)
+
+    from custom_builders import NumpyFromCTemplate, NumpyFromFTemplate
+    env['BUILDERS']['NumpyFromCTemplate'] = NumpyFromCTemplate
+    env['BUILDERS']['NumpyFromFTemplate'] = NumpyFromFTemplate
 
     # Setting build directory according to command line option
     if len(env['src_dir']) > 0:

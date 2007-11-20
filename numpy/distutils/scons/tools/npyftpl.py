@@ -1,7 +1,7 @@
-"""npyctpl Tool
+"""npyftpl Tool
 
-Tool-specific initialization for npyctpl, a tool to generate C source file from
-.c.src files.
+Tool-specific initialization for npyftpl, a tool to generate fortran/f2py
+source file from .xxx.src where xxx is f, f90 or pyf.
 
 There normally shouldn't be any need to import this module directly.
 It will usually be imported through the generic SCons.Tool.Tool()
@@ -9,15 +9,15 @@ selection method.
 
 """
 
-from os.path import basename as pbasename, splitext, join as pjoin, dirname as pdirname
-#import re
+from os.path import basename as pbasename, splitext, join as pjoin, \
+                    dirname as pdirname
 
 import SCons.Action
 #import SCons.Defaults
 import SCons.Scanner
 import SCons.Tool
 
-from numpy.distutils.conv_template import process_str
+from numpy.distutils.from_template import process_str
 
 # XXX: this is general and can be used outside numpy.core.
 def _do_generate_from_template(targetfile, sourcefile, env):
@@ -42,19 +42,19 @@ def _generate_from_template_emitter(target, source, env):
     
 def generate(env):
     """Add Builders and construction variables for npytpl to an Environment."""
-    c_file, cxx_file = SCons.Tool.createCFileBuilders(env)
+    f_file = SCons.Builder.Builder(action = {}, emitter = {}, suffix = {None: ['.f']})
 
-    c_file.add_action('.c.src', SCons.Action.Action(_generate_from_template))
-    c_file.add_emitter('.c.src', _generate_from_template_emitter)
+    f_file.add_action('.f.src', SCons.Action.Action(_generate_from_template))
+    f_file.add_emitter('.f.src', _generate_from_template_emitter)
 
-    env['NPYCTPLOPTIONS']     = SCons.Util.CLVar('')
+    env['NPYFTPLOPTIONS']     = SCons.Util.CLVar('')
 
 def exists(env):
     try:
-        import numpy.distutils.conv_template
+        import numpy.distutils.from_template
         st = 1
     except ImportError, e:
-        print "Warning : npyctpl tool not found, error was %s" % e
+        print "Warning : npyftpl tool not found, error was %s" % e
         st = 0
 
     return st
