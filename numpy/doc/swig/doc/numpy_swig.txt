@@ -779,7 +779,7 @@ as `SWIG`_ and the predecessors of `NumPy`_, Numeric and numarray).
 The effort to standardize this work into ``numpy.i`` began at the 2005
 `SciPy <http://scipy.org>`_ Conference with a conversation between
 Fernando Perez and myself.  Fernando collected helper functions and
-typemaps from Michael Hunter, Anna Omelchenko and Michael Sanner.
-Sebastian Hasse has also provided additional error checking and use
-cases.  The work of these contributors has made this end result
-possible.
+typemaps from Eric Jones, Michael Hunter, Anna Omelchenko and Michael
+Sanner.  Sebastian Hasse has also provided additional error checking
+and use cases.  The work of these contributors has made this end
+result possible.
