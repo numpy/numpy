@@ -1,6 +1,6 @@
 # Last Changed: .
 import os.path
-from os.path import join as pjoin, dirname as pdirname
+from os.path import join as pjoin, dirname as pdirname, basename as pbasename
 import sys
 
 import re
@@ -48,6 +48,10 @@ def is_cc_suncc(fullpath):
     st = out.close()
 
     return suncc.search(cnt)
+
+def is_f77_gnu(fullpath):
+    # XXX
+    return pbasename(fullpath) == 'g77' or pbasename(fullpath) == 'gfortran'
 
 def get_vs_version(env):
     try:
@@ -170,8 +174,6 @@ def initialize_f77(env, path_list):
             # scons could not understand cc_opt (bad name ?)
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
                                  str(e))
-        # XXX: really have to understand how fortran compilers work in scons...
-        env['F77'] = env['_FORTRAND']
     else:
         def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
         if def_fcompiler:
@@ -179,6 +181,12 @@ def initialize_f77(env, path_list):
             t(env)
         else:
             print "========== NO FORTRAN COMPILER FOUND ==========="
+
+    # XXX: really have to understand how fortran compilers work in scons...
+    env['F77'] = env['_FORTRAND']
+
+    if is_f77_gnu(env['F77']):
+        env.AppendUnique(SHF77FLAGS = '-fno-second-underscore')
 
 def _GetNumpyEnvironment(args):
     """Call this with args = ARGUMENTS."""
