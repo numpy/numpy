@@ -242,19 +242,27 @@ def _GetNumpyEnvironment(args):
     for t in FindAllTools(DEF_OTHER_TOOLS, env):
         Tool(t)(env)
 
+    # Add our own, custom tools (f2py, from_template, etc...)
     t = Tool('f2py', toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
     try:
         t(env)
     except Exception, e:
         pass
         #print "===== BOOTSTRAPPING, f2py scons tool not available (%s) =====" % e
-    t = Tool('npytpl', 
+
+    t = Tool('npyctpl', 
              toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
     try:
         t(env)
     except Exception, e:
         pass
-        #print "===== BOOTSTRAPPING, f2py scons tool not available (%s) =====" % e
+
+    t = Tool('npyftpl', 
+             toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+    try:
+        t(env)
+    except Exception, e:
+        pass
 
     finalize_env(env)
 
