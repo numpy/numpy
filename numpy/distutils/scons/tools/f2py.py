@@ -33,12 +33,16 @@ def _f2pyEmitter(target, source, env):
     build_dir = os.path.dirname(str(target[0]))
     target.append(SCons.Node.FS.default_fs.Entry(
         os.path.join(build_dir, _mangle_fortranobject(str(target[0]), 'fortranobject.c'))))
-    basename = os.path.splitext(os.path.basename(str(target[0])))
-    basename = basename[0]
-    basename = basename.split('module')[0]
-    target.append(SCons.Node.FS.default_fs.Entry(
-        os.path.join(build_dir, '%s-f2pywrappers.f' % basename)))
+    if _is_pyf(str(source[0])):
+        basename = os.path.splitext(os.path.basename(str(target[0])))
+        basename = basename[0]
+        basename = basename.split('module')[0]
+        target.append(SCons.Node.FS.default_fs.Entry(
+            os.path.join(build_dir, '%s-f2pywrappers.f' % basename)))
     return (target, source)
+
+def _is_pyf(source_file):
+    return os.path.splitext(source_file)[1] == '.pyf'
 
 def _pyf2c(target, source, env):
     from SCons.Script import Touch
@@ -53,10 +57,6 @@ def _pyf2c(target, source, env):
     # Get source files necessary for f2py generated modules
     d = os.path.dirname(numpy.f2py.__file__)
     source_c = os.path.join(d,'src','fortranobject.c')
-
-    # XXX: scons has a way to force buidler to only use one source file
-    if len(source_file_names) > 1:
-        raise NotImplementedError("FIXME: multiple source files")
 
     # Copy source files for f2py generated modules in the build dir
     build_dir = os.path.dirname(target_file_names[0])
@@ -73,29 +73,28 @@ def _pyf2c(target, source, env):
         raise IOError(msg)
 
     basename = os.path.basename(str(target[0]).split('module')[0])
-    wrapper = os.path.join(build_dir, '%s-f2pywrappers.f' % basename)
 
-    # Generate the source file from pyf description
-    # XXX: lock does not work...
-    #l = Lock()
-    #st = l.acquire()
-    #print "ST is %s" % st
-    try:
-        #print " STARTING %s" % basename
-        st = numpy.f2py.run_main(env['F2PYOPTIONS'] + [source_file_names[0], '--build-dir', build_dir])
+    if _is_pyf(source_file_names[0]):
+        # XXX: scons has a way to force buidler to only use one source file
+        if len(source_file_names) > 1:
+            raise NotImplementedError("FIXME: multiple source files")
+        
+        wrapper = os.path.join(build_dir, '%s-f2pywrappers.f' % basename)
+
+        cmd = env['F2PYOPTIONS'] + [source_file_names[0], '--build-dir', build_dir]
+        st = numpy.f2py.run_main(cmd)
+
         if not os.path.exists(wrapper):
-            #print "++++++++++++++++++++++++++++++++"
             f = open(wrapper, 'w')
             f.close()
-        else:
-            pass
-            #print "--------------------------------"
-        #print " FINISHED %s" % basename
-    finally:
-        #l.release()
-        pass
+    else:
+        cmd = env['F2PYOPTIONS'] + source_file_names + ['--build-dir', build_dir]
+        # fortran files, we need to give the module name
+        cmd.extend(['--lower', '-m', basename])
+        st = numpy.f2py.run_main(cmd)
 
     return 0
+
 
 def generate(env):
     """Add Builders and construction variables for swig to an Environment."""
@@ -118,6 +117,10 @@ def generate(env):
     expr = '(<)include_file=(\S+)>'
     scanner = SCons.Scanner.ClassicCPP("F2PYScan", ".pyf", "F2PYPATH", expr)
     env.Append(SCANNERS = scanner)
+
+    env['BUILDERS']['F2PY'] = SCons.Builder.Builder(action = _pyf2c, 
+                                                    emitter = _f2pyEmitter,
+                                                    suffix = _f2pySuffixEmitter)
 
 _MINC = re.compile(r'<include_file=(\S+)>')                                              
 def _pyf_scanner(node, env, path):
