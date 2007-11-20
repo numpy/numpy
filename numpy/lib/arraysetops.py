@@ -1,7 +1,7 @@
 """
 Set operations for 1D numeric arrays based on sorting.
 
-Contains:
+:Contains:
   ediff1d,
   unique1d,
   intersect1d,
@@ -10,6 +10,8 @@ Contains:
   setmember1d,
   union1d,
   setdiff1d
+
+:Notes:
 
 All functions work best with integer numerical arrays on input (e.g. indices).
 For floating point arrays, innacurate results may appear due to usual round-off
@@ -25,10 +27,10 @@ numpy.unique() - it should be the same.
 
 To do: Optionally return indices analogously to unique1d for all functions.
 
-Author: Robert Cimrman
-
 created:       01.11.2005
 last revision: 07.01.2007
+
+:Author: Robert Cimrman
 """
 __all__ = ['ediff1d', 'unique1d', 'intersect1d', 'intersect1d_nu', 'setxor1d',
            'setmember1d', 'union1d', 'setdiff1d']
