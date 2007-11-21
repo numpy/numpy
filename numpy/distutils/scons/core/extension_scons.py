@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 15 07:00 PM 2007 J
+# Last Change: Wed Nov 21 08:00 PM 2007 J
 
 # Module for support to build python extension. scons specific code goes here.
 import sys
@@ -40,28 +40,24 @@ def get_pythonlib_name(debug = 0):
 
 
 def PythonExtension(env, target, source, *args, **kw):
-    # XXX Check args and kw
     # XXX: Some things should not be set here... Actually, this whole
     # thing is a mess.
-    if env.has_key('LINKFLAGS'):
-        LINKFLAGS = deepcopy(env['LINKFLAGS'])
-    else:
-        LINKFLAGS = []
 
-    if env.has_key('CPPPATH'):
-        CPPPATH = deepcopy(env['CPPPATH'])
-    else:
-        CPPPATH = []
+    def floupi(key):
+        if env.has_key(key):
+            narg = deepcopy(env[key])
+        else:
+            narg = []
 
-    if env.has_key('LIBPATH'):
-        LIBPATH = deepcopy(env['LIBPATH'])
-    else:
-        LIBPATH = []
+        if kw.has_key(key):
+            narg.append(kw.pop(key))
 
-    if env.has_key('LIBS'):
-        LIBS = deepcopy(env['LIBS'])
-    else:
-        LIBS = []
+        return narg
+
+    LINKFLAGS = floupi('LINKFLAGS')
+    CPPPATH = floupi('CPPPATH')
+    LIBPATH = floupi('LIBPATH')
+    LIBS = floupi('LIBS')
 
     CPPPATH.append(get_python_inc())
     if sys.platform == 'win32': 
@@ -69,20 +65,19 @@ def PythonExtension(env, target, source, *args, **kw):
             # XXX: We add the path where to find python lib (or any other
             # version, of course). This seems to be necessary for MS compilers.
             #env.AppendUnique(LIBPATH = get_pythonlib_dir())
-	    LIBPATH.append(get_pythonlib_dir())
+            LIBPATH.append(get_pythonlib_dir())
     	elif built_with_mingw(env):
-	    # XXX: this part should be moved elsewhere (mingw abstraction
-	    # for python)
+            # XXX: this part should be moved elsewhere (mingw abstraction
+            # for python)
 
-	    # This is copied from mingw32ccompiler.py in numpy.distutils
-	    # (not supported by distutils.)
+            # This is copied from mingw32ccompiler.py in numpy.distutils
+            # (not supported by distutils.)
 
-	    # Include the appropiate MSVC runtime library if Python was
-	    # built with MSVC >= 7.0 (MinGW standard is msvcrt)
+            # Include the appropiate MSVC runtime library if Python was
+            # built with MSVC >= 7.0 (MinGW standard is msvcrt)
             py_runtime_library = msvc_runtime_library()
-	    LIBPATH.append(get_pythonlib_dir())
-	    LIBS.extend([get_pythonlib_name(), py_runtime_library])
-
+            LIBPATH.append(get_pythonlib_dir())
+            LIBS.extend([get_pythonlib_name(), py_runtime_library])
     elif sys.platform == "darwin":
         # XXX: When those should be used ? (which version of Mac OS X ?)
         LINKFLAGS += ' -undefined dynamic_lookup '
@@ -99,8 +94,7 @@ def PythonExtension(env, target, source, *args, **kw):
                                  LINKFLAGS = LINKFLAGS, 
                                  LIBS = LIBS, 
                                  LIBPATH = LIBPATH, 
-                                 CPPPATH = CPPPATH, 
-				 *args, **kw)
+                                 CPPPATH = CPPPATH, *args, **kw)
     else:
         wrap = env.LoadableModule(target, source, SHLIBPREFIX = '', 
                                   LDMODULESUFFIX = '$PYEXTSUFFIX', 

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 08 06:00 PM 2007 J
+# Last Change: Tue Nov 20 07:00 PM 2007 J
 import sys
 import distutils.sysconfig
 
@@ -193,3 +193,10 @@ def get_cc_config(name):
                 distutils.sysconfig.get_config_vars('CFLAGS'))
 
     return cfg
+
+import numpy.distutils.fcompiler as _FC
+
+def get_f77_config(name):
+    # name is the scons name for the tool
+    if name == 'g77':
+        cfg = CompilerConfig(optim = ['-O2']) 

@@ -28,6 +28,17 @@ def NumpyPythonExtension(env, target, source, *args, **kw):
     inst_lib = env.Install("$distutils_installdir", lib)
     return lib, inst_lib
 	
+def NumpyStaticExtLibrary(env, target, source, *args, **kw):
+    """This builder is the same than StaticExtLibrary, except for the fact that it
+    takes into account build dir info passed by distutils, and put the target at
+    the right location in distutils build directory for correct installation."""
+    newsource = [pjoin(env['build_dir'], i) for i in source]
+    # XXX: why target is a list ? It is always true ?
+    lib = env.StaticExtLibrary("$build_dir/%s" % target[0], newsource, *args, **kw)
+
+    inst_lib = env.Install("$distutils_installdir", lib)
+    return lib, inst_lib
+	
 	
 def NumpyCtypes(env, target, source, *args, **kw):
     """This builder is essentially the same than SharedLibrary, but should be

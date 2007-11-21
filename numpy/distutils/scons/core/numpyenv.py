@@ -10,7 +10,8 @@ from numpy.distutils.misc_util import get_scons_build_dir, get_scons_configres_d
     get_scons_configres_filename
 
 from default import tool_list, get_cc_config
-from custom_builders import NumpySharedLibrary, NumpyCtypes, NumpyPythonExtension
+from custom_builders import NumpySharedLibrary, NumpyCtypes, \
+            NumpyPythonExtension, NumpyStaticExtLibrary
 from libinfo import get_config
 from extension_scons import PythonExtension, built_with_mstools
 from utils import pkg_to_path
@@ -337,7 +338,8 @@ def _GetNumpyEnvironment(args):
     env['BUILDERS']['NumpyFromCTemplate'] = NumpyFromCTemplate
     env['BUILDERS']['NumpyFromFTemplate'] = NumpyFromFTemplate
 
-    createStaticExtLibBuilder(env)
+    createStaticExtLibraryBuilder(env)
+    env['BUILDERS']['NumpyStaticExtLibrary'] = NumpyStaticExtLibrary
 
     # Setting build directory according to command line option
     if len(env['src_dir']) > 0:
@@ -359,11 +361,12 @@ def _GetNumpyEnvironment(args):
 
     return env
 
-def createStaticExtLibBuilder(env):
+def createStaticExtLibraryBuilder(env):
     """This is a utility function that creates the StaticExtLibrary Builder in
     an Environment if it is not there already.
 
     If it is already there, we return the existing one."""
+    import SCons.Action
 
     try:
         static_extlib = env['BUILDERS']['StaticExtLibrary']
