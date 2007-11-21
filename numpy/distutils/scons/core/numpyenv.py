@@ -50,21 +50,21 @@ def is_cc_suncc(fullpath):
     return suncc.search(cnt)
 
 def is_f77_gnu(fullpath):
-    # XXX
+    # XXX: do this properly
     return pbasename(fullpath) == 'g77' or pbasename(fullpath) == 'gfortran'
 
 def get_vs_version(env):
     try:
-         version = env['MSVS']['VERSION']
-	 m = re.compile("([0-9]).([0-9])").match(version)
-	 if m:
-	     major = int(m.group(1))
-	     minor = int(m.group(2))
-	     return (major, minor)
-	 else:
- 	     raise RuntimeError("FIXME: failed to parse VS version")
+        version = env['MSVS']['VERSION']
+        m = re.compile("([0-9]).([0-9])").match(version)
+        if m:
+            major = int(m.group(1))
+            minor = int(m.group(2))
+            return (major, minor)
+        else:
+            raise RuntimeError("FIXME: failed to parse VS version")
     except KeyError:
-	 raise RuntimeError("Could not get VS version !")
+	    raise RuntimeError("Could not get VS version !")
 
 def GetNumpyOptions(args):
     """Call this with args=ARGUMENTS to take into account command line args."""
