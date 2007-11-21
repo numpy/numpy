@@ -115,7 +115,8 @@ def finalize_env(env):
 
 def GetNumpyEnvironment(args):
     env = _GetNumpyEnvironment(args)
-    env.AppendUnique(CFLAGS  = env['NUMPY_WARN_CFLAGS'] + env['NUMPY_OPTIM_CFLAGS'] +\
+    env.AppendUnique(CFLAGS  = env['NUMPY_WARN_CFLAGS'] +\
+                               env['NUMPY_OPTIM_CFLAGS'] +\
                                env['NUMPY_DEBUG_SYMBOL_CFLAGS'] +\
                                env['NUMPY_EXTRA_CFLAGS'] +\
                                env['NUMPY_THREAD_CFLAGS'])
@@ -123,9 +124,6 @@ def GetNumpyEnvironment(args):
     return env
 
 def initialize_cc(env, path_list):
-    # XXX: how to handle tools which are not in standard location ? Is adding
-    # the full path of the compiler enough ? (I am sure some compilers also
-    # need LD_LIBRARY_SHARED and other variables to be set, too....)
     from SCons.Tool import Tool, FindTool
 
     if len(env['cc_opt']) > 0:
@@ -186,7 +184,9 @@ def initialize_f77(env, path_list):
     env['F77'] = env['_FORTRAND']
 
     if is_f77_gnu(env['F77']):
-        env.AppendUnique(SHF77FLAGS = '-fno-second-underscore')
+        # XXX: this has nothing to do here !
+        env.AppendUnique(SHF77FLAGS = ['-fno-second-underscore'])
+        env.AppendUnique(SHF77FLAGS = ['-fPIC'])
 
 def _GetNumpyEnvironment(args):
     """Call this with args = ARGUMENTS."""
@@ -263,17 +263,11 @@ def _GetNumpyEnvironment(args):
 
     # t = Tool('npyctpl', 
     #          toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
-    # try:
-    #     t(env)
-    # except Exception, e:
-    #     pass
+    # t(env)
 
     # t = Tool('npyftpl', 
     #          toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
-    # try:
-    #     t(env)
-    # except Exception, e:
-    #     pass
+    # t(env)
 
     finalize_env(env)
 
