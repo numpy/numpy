@@ -337,6 +337,8 @@ def _GetNumpyEnvironment(args):
     env['BUILDERS']['NumpyFromCTemplate'] = NumpyFromCTemplate
     env['BUILDERS']['NumpyFromFTemplate'] = NumpyFromFTemplate
 
+    createStaticExtLibBuilder(env)
+
     # Setting build directory according to command line option
     if len(env['src_dir']) > 0:
         BuildDir(env['build_dir'], env['src_dir'])
@@ -356,3 +358,27 @@ def _GetNumpyEnvironment(args):
                                          get_scons_configres_filename())
 
     return env
+
+def createStaticExtLibBuilder(env):
+    """This is a utility function that creates the StaticExtLibrary Builder in
+    an Environment if it is not there already.
+
+    If it is already there, we return the existing one."""
+
+    try:
+        static_extlib = env['BUILDERS']['StaticExtLibrary']
+    except KeyError:
+        action_list = [ SCons.Action.Action("$ARCOM", "$ARCOMSTR") ]
+        if env.Detect('ranlib'):
+            ranlib_action = SCons.Action.Action("$RANLIBCOM", "$RANLIBCOMSTR")
+            action_list.append(ranlib_action)
+
+    static_extlib = SCons.Builder.Builder(action = action_list,
+                                          emitter = '$LIBEMITTER',
+                                          prefix = '$LIBPREFIX',
+                                          suffix = '$LIBSUFFIX',
+                                          src_suffix = '$OBJSUFFIX',
+                                          src_builder = 'SharedObject')
+
+    env['BUILDERS']['StaticExtLibrary'] = static_extlib
+    return static_extlib
