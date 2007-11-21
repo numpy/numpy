@@ -113,11 +113,11 @@ class CompilerConfig:
     def get_flags_dict(self):
         d = {'NUMPY_OPTIM_CFLAGS' : self.optim,
              'NUMPY_OPTIM_LDFLAGS' : self.link_optim,
-                'NUMPY_WARN_CFLAGS' : self.warn,
-                'NUMPY_THREAD_CFLAGS' : self.thread,
-                'NUMPY_EXTRA_CFLAGS' : self.debug,
-                'NUMPY_DEBUG_CFLAGS' : self.debug,
-                'NUMPY_DEBUG_SYMBOL_CFLAGS' : self.debug_symbol}
+             'NUMPY_WARN_CFLAGS' : self.warn,
+             'NUMPY_THREAD_CFLAGS' : self.thread,
+             'NUMPY_EXTRA_CFLAGS' : self.debug,
+             'NUMPY_DEBUG_CFLAGS' : self.debug,
+             'NUMPY_DEBUG_SYMBOL_CFLAGS' : self.debug_symbol}
         for k, v in d.items():
             if v is None:
                 d[k] = []
@@ -178,14 +178,14 @@ def get_cc_config(name):
         cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing'],
                              warn = ['-Wall', '-Wstrict-prototypes'])
     elif name == 'suncc':
-	# -xtarget and co (-xarch, etc...) should be put in link_optim and
-	# optim for optimal performances.  If you do not need the package to be
-	# redistributable, using -xtarget=native is a good choice. See man cc
-	# for more info.
-	# XXX: detect this automatically ?
+        # -xtarget and co (-xarch, etc...) should be put in link_optim and
+        # optim for optimal performances.  If you do not need the package to be
+        # redistributable, using -xtarget=native is a good choice. See man cc
+        # for more info.
+        # XXX: detect this automatically ?
         cfg = CompilerConfig(optim = ['-fast'],
-			     debug_symbol = ['-g'], 
-			     link_optim = [])
+			                 debug_symbol = ['-g'], 
+			                 link_optim = [])
     else:
         # For not yet supported compiler, just put everything in optims from
         # distutils
