@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Fri Nov 16 06:00 PM 2007 J
+# Last Change: Thu Nov 22 04:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -23,15 +23,8 @@ from support import check_include_and_run, ConfigOpts, ConfigRes
 # LAPACK and CLAPACK ? How to test for fortran ?
 
 def CheckCBLAS(context, autoadd = 1):
-    """This checker tries to find optimized library for cblas.
-
-    This test is pretty strong: it first detects an optimized library, and then
-    tests that a simple cblas program can be run using this lib.
-    
-    It looks for the following libs:
-        - Mac OS X: Accelerate, and then vecLib.
-        - Others: MKL, then ATLAS, then Sunperf."""
-    # XXX: rpath vs LD_LIBRARY_PATH ?
+    """This checker tries to find optimized library for cblas."""
+    libname = 'cblas'
     env = context.env
 
     def check(func, name, suplibs):
@@ -42,7 +35,7 @@ def CheckCBLAS(context, autoadd = 1):
             st = check_include_and_run(context, 'CBLAS (%s)' % name, 
                                        res.cfgopts, [], cblas_src, autoadd)
             if st:
-                add_info(env, 'cblas', res)
+                add_info(env, libname, res)
             return st
 
     # If section cblas is in site.cfg, use those options. Otherwise, use default
@@ -55,25 +48,17 @@ def CheckCBLAS(context, autoadd = 1):
         st = check_include_and_run(context, 'CBLAS (from site.cfg) ', cfg,
                                   [], cblas_src, autoadd)
         if st:
-            add_info(env, 'cblas', ConfigRes('cblas', cfg, found))
-        return st
+            add_info(env, libname, ConfigRes('Generic CBLAS', cfg, found))
+            return st
     else:
         if sys.platform == 'darwin':
-            # Check Accelerate
             st = check(CheckAccelerate, 'Accelerate Framework', [])
             if st:
                 return st
-
             st = check(CheckVeclib, 'vecLib Framework', [])
             if st:
                 return st
-
-            add_info(env, 'cblas', 'Def numpy implementation used')
-            return 0
-            
         else:
-            # XXX: think about how to share headers info between checkers ?
-
             # Check MKL
             st = check(CheckMKL, 'MKL', [])
             if st:
@@ -89,25 +74,20 @@ def CheckCBLAS(context, autoadd = 1):
             if st:
                 return st
 
-            add_info(env, 'cblas', 'Def numpy implementation used')
-            return 0
+    add_info(env, libname, None)
+    return 0
 
 def CheckF77BLAS(context, autoadd = 1):
-    """This checker tries to find optimized library for blas (fortran F77).
-
-    This test is pretty strong: it first detects an optimized library, and then
-    tests that a simple blas program (in C) can be run using this (F77) lib.
-    
-    It looks for the following libs:
-        - Mac OS X: Accelerate, and then vecLib.
-        - Others: MKL, then ATLAS, then Sunperf."""
-    # XXX: rpath vs LD_LIBRARY_PATH ?
+    """This checker tries to find optimized library for blas (fortran F77)."""
+    libname = 'blas'
     env = context.env
 
     # Get Fortran things we need
     if not env.has_key('F77_NAME_MANGLER'):
         if not CheckF77Mangling(context):
+            add_info(env, libname, None)
             return 0
+
     func_name = env['F77_NAME_MANGLER']('sgemm')
     test_src = c_sgemm2 % {'func' : func_name}
 
@@ -119,7 +99,7 @@ def CheckF77BLAS(context, autoadd = 1):
             st = check_include_and_run(context, 'BLAS (%s)' % name, res.cfgopts,
                     [], test_src, autoadd)
             if st:
-                add_info(env, 'blas', res)
+                add_info(env, libname, res)
             return st
 
     # If section blas is in site.cfg, use those options. Otherwise, use default
@@ -132,8 +112,8 @@ def CheckF77BLAS(context, autoadd = 1):
         st = check_include_and_run(context, 'BLAS (from site.cfg) ', cfg,
                                   [], test_src, autoadd)
         if st:
-            add_info(env, 'blas', ConfigRes('blas', cfg, found))
-        return st
+            add_info(env, libname, ConfigRes('Generic BLAS', cfg, found))
+            return st
     else:
         if sys.platform == 'darwin':
             # Check Accelerate
@@ -160,8 +140,7 @@ def CheckF77BLAS(context, autoadd = 1):
             if st:
                 return st
 
-    # XXX: Use default values for blas
-
+    add_info(env, libname, None)
     return 0
 
 def CheckF77LAPACK(context, autoadd = 1):
@@ -173,11 +152,12 @@ def CheckF77LAPACK(context, autoadd = 1):
     It looks for the following libs:
         - Mac OS X: Accelerate, and then vecLib.
         - Others: MKL, then ATLAS."""
+    libname = 'lapack'
     env = context.env
 
     if not env.has_key('F77_NAME_MANGLER'):
         if not CheckF77Mangling(context):
-            add_info(env, 'lapack', 'Def numpy implementation used')
+            add_info(env, 'lapack', None)
             return 0
     
     # Get the mangled name of our test function
@@ -185,6 +165,8 @@ def CheckF77LAPACK(context, autoadd = 1):
     test_src = lapack_sgesv % sgesv_string
 
     def check(func, name, suplibs):
+        # func is the perflib checker, name the printed name for the check, and
+        # suplibs a list of libraries to link in addition.
         st, res = func(context, autoadd)
         if st:
             for lib in suplibs:
@@ -192,7 +174,7 @@ def CheckF77LAPACK(context, autoadd = 1):
             st = check_include_and_run(context, 'LAPACK (%s)' % name, res.cfgopts,
                                        [], test_src, autoadd)
             if st:
-                add_info(env, 'lapack', res)
+                add_info(env, libname, res)
             return st
 
     # If section lapack is in site.cfg, use those options. Otherwise, use default
@@ -213,8 +195,8 @@ def CheckF77LAPACK(context, autoadd = 1):
         st = check_include_and_run(context, 'LAPACK (from site.cfg) ', fortrancfg,
                                   [], test_src, autoadd)
         if st:
-            add_info(env, 'lapack', ConfigRes('lapack', cfg, found))
-        return st
+            add_info(env, libname, ConfigRes('Generic LAPACK', cfg, found))
+            return st
     else:
         if sys.platform == 'darwin':
             st = check(CheckAccelerate, 'Accelerate Framework', [])
@@ -224,9 +206,6 @@ def CheckF77LAPACK(context, autoadd = 1):
             st = check(CheckVeclib, 'vecLib Framework', [])
             if st:
                 return st
-
-            add_info(env, 'lapack: def numpy implementation', opts)
-            return 0
         else:
             # Check MKL
             # XXX: handle different versions of mkl (with different names)
@@ -244,7 +223,7 @@ def CheckF77LAPACK(context, autoadd = 1):
             if st:
                 return st
 
-    add_info(env, 'lapack', 'Def numpy implementation used')
+    add_info(env, libname, None)
     return 0
 
 def CheckCLAPACK(context, autoadd = 1):
@@ -259,6 +238,7 @@ def CheckCLAPACK(context, autoadd = 1):
     context.Message('Checking CLAPACK ...')
     context.Result('FIXME: not implemented yet')
     return 0
+    libname = 'clapack'
     env = context.env
 
     # If section lapack is in site.cfg, use those options. Otherwise, use default
@@ -292,30 +272,30 @@ def CheckCLAPACK(context, autoadd = 1):
         st = check_include_and_run(context, 'LAPACK (from site.cfg) ', fortrancfg,
                                   [], test_src, autoadd)
         if st:
-            add_info(env, 'lapack', ConfigRes('lapack', cfg, found))
+            add_info(env, libname, ConfigRes('Generic CLAPACK', cfg, found))
         return st
     else:
         if sys.platform == 'darwin':
             st, opts = CheckAccelerate(context, autoadd)
             if st:
                 if st:
-                    add_info(env, 'lapack: Accelerate', opts)
+                    add_info(env, libname, opts)
                 return st
             st, opts = CheckAccelerate(context, autoadd)
             if st:
                 if st:
-                    add_info(env, 'lapack: vecLib', opts)
+                    add_info(env, libname, opts)
                 return st
 
         else:
             # Get fortran stuff (See XXX at the top on F77 vs C)
             if not env.has_key('F77_NAME_MANGLER'):
                 if not CheckF77Mangling(context):
-		    add_info(env, 'lapack', 'Def numpy implementation used')
+                    add_info(env, libname, None)
                     return 0
             if not env.has_key('F77_LDFLAGS'):
                 if not CheckF77Clib(context):
-		    add_info(env, 'lapack', 'Def numpy implementation used')
+                    add_info(env, libname, None)
                     return 0
 
             # Get the mangled name of our test function
@@ -330,7 +310,7 @@ def CheckCLAPACK(context, autoadd = 1):
                 st = check_include_and_run(context, 'LAPACK (MKL)', res.cfgopts,
                                            [], test_src, autoadd)
                 if st:
-                    add_info(env, 'lapack', res)
+                    add_info(env, libname, res)
                 return st
 
             # Check ATLAS
@@ -340,7 +320,7 @@ def CheckCLAPACK(context, autoadd = 1):
                 st = check_include_and_run(context, 'LAPACK (ATLAS)', res.cfgopts,
                                            [], test_src, autoadd)
                 if st:
-                    add_info(env, 'lapack', res)
+                    add_info(env, libname, res)
                 # XXX: Check complete LAPACK or not. (Checking for not
                 # implemented lapack symbols ?)
                 return st
@@ -351,8 +331,8 @@ def CheckCLAPACK(context, autoadd = 1):
                 st = check_include_and_run(context, 'LAPACK (Sunperf)', res.cfgopts,
                                            [], test_src, autoadd)
                 if st:
-                    add_info(env, 'lapack', res)
+                    add_info(env, libname, res)
                 return st
 
-    add_info(env, 'lapack', 'Def numpy implementation used')
+    add_info(env, libname, None)
     return 0
