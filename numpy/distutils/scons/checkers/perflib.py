@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Nov 06 06:00 PM 2007 J
+# Last Change: Thu Nov 22 01:00 PM 2007 J
 
 # This module defines checkers for performances libs providing standard API,
 # such as MKL (Intel), ATLAS, Sunperf (solaris and linux), Accelerate (Mac OS
@@ -244,7 +244,8 @@ def CheckSunperf(context, autoadd = 1, check_version = 0):
                 check_version, None, autoadd)
 
     if not st:
-	return st, res
+        return st, res
+
     # We are not done: the option -xlic_lib=sunperf is not used by the linked
     # for shared libraries, I have no idea why. So if the test is succesfull,
     # we need more work to get the link options necessary to make the damn
@@ -261,7 +262,7 @@ def CheckSunperf(context, autoadd = 1, check_version = 0):
         restore(env, saved)
 
     if not res:
-	return context.Result('Failed !'), res
+        return context.Result('Failed !'), res
 
     saved = save_and_set(env, opts)
     env.Append(LINKFLAGS = '-#')
