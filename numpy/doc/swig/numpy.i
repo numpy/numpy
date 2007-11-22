@@ -318,8 +318,8 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
 
 /* %numpy_typemaps() macro
  *
- * This macro defines a family of typemaps that allow pure input C
- * arguments of the form
+ * This macro defines a family of 23 typemaps that allow C arguments
+ * of the form
  *
  *     (DATA_TYPE IN_ARRAY1[ANY])
  *     (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
@@ -329,6 +329,10 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *     (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  *     (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
  *
+ *     (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
+ *     (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
+ *     (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
+ *
  *     (DATA_TYPE INPLACE_ARRAY1[ANY])
  *     (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
  *     (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
@@ -337,11 +341,17 @@ int require_size(PyArrayObject* ary, npy_intp* size, int n) {
  *     (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  *     (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_ARRAY2)
  *
+ *     (DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY])
+ *     (DATA_TYPE* INPLACE_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
+ *     (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* INPLACE_ARRAY3)
+ *
  *     (DATA_TYPE ARGOUT_ARRAY1[ANY])
  *     (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
  *     (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
  *
  *     (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
+ *
+ *     (DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY])
  *
  * where "DATA_TYPE" is any type supported by the NumPy module, and
  * "DIM_TYPE" is any int-like type suitable for specifying dimensions.
