@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 22 04:00 PM 2007 J
+# Last Change: Thu Nov 22 05:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -22,13 +22,13 @@ from support import check_include_and_run, ConfigOpts, ConfigRes
 # exception for LAPACK). So shall we make the difference between BLAS, CBLAS,
 # LAPACK and CLAPACK ? How to test for fortran ?
 
-def CheckCBLAS(context, autoadd = 1):
+def CheckCBLAS(context, autoadd = 1, check_version = 0):
     """This checker tries to find optimized library for cblas."""
     libname = 'cblas'
     env = context.env
 
     def check(func, name, suplibs):
-        st, res = func(context, autoadd)
+        st, res = func(context, autoadd, check_version)
         if st:
             for lib in suplibs:
                 res.cfgopts['libs'].insert(0, lib)
@@ -77,7 +77,7 @@ def CheckCBLAS(context, autoadd = 1):
     add_info(env, libname, None)
     return 0
 
-def CheckF77BLAS(context, autoadd = 1):
+def CheckF77BLAS(context, autoadd = 1, check_version = 0):
     """This checker tries to find optimized library for blas (fortran F77)."""
     libname = 'blas'
     env = context.env
@@ -92,7 +92,7 @@ def CheckF77BLAS(context, autoadd = 1):
     test_src = c_sgemm2 % {'func' : func_name}
 
     def check(func, name, suplibs):
-        st, res = func(context, autoadd)
+        st, res = func(context, autoadd, check_version)
         if st:
             for lib in suplibs:
                 res.cfgopts['libs'].insert(0, lib)
@@ -143,7 +143,7 @@ def CheckF77BLAS(context, autoadd = 1):
     add_info(env, libname, None)
     return 0
 
-def CheckF77LAPACK(context, autoadd = 1):
+def CheckF77LAPACK(context, autoadd = 1, check_version = 0):
     """This checker tries to find optimized library for F77 lapack.
 
     This test is pretty strong: it first detects an optimized library, and then
@@ -167,7 +167,7 @@ def CheckF77LAPACK(context, autoadd = 1):
     def check(func, name, suplibs):
         # func is the perflib checker, name the printed name for the check, and
         # suplibs a list of libraries to link in addition.
-        st, res = func(context, autoadd)
+        st, res = func(context, autoadd, check_version)
         if st:
             for lib in suplibs:
                 res.cfgopts['libs'].insert(0, lib)
@@ -226,7 +226,7 @@ def CheckF77LAPACK(context, autoadd = 1):
     add_info(env, libname, None)
     return 0
 
-def CheckCLAPACK(context, autoadd = 1):
+def CheckCLAPACK(context, autoadd = 1, check_version = 0):
     """This checker tries to find optimized library for lapack.
 
     This test is pretty strong: it first detects an optimized library, and then

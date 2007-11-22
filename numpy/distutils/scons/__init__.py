@@ -6,6 +6,7 @@ from core.utils import isstring, rsplit
 
 from checkers import CheckCBLAS, CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK, \
                      IsMKL, IsATLAS, IsVeclib, IsAccelerate, IsSunperf
+from checkers.perflib import GetATLASVersion, GetMKLVersion
 
 from fortran_scons import CheckF77Verbose, CheckF77Clib, CheckF77Mangling
 

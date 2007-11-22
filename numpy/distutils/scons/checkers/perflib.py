@@ -93,6 +93,24 @@ class IsFactory:
     def get_func(self):
         return self.func
 
+class GetVersionFactory:
+    def __init__(self, name):
+        """Name should be one key of _CONFIG."""
+        try:
+            _CONFIG[name]
+        except KeyError, e:
+            raise RuntimeError("name %s is unknown")
+
+        def f(env, libname):
+            if env['NUMPY_PKG_CONFIG'][libname] is None:
+                return 'No version info'
+            else:
+                return env['NUMPY_PKG_CONFIG'][libname].version
+        self.func = f
+
+    def get_func(self):
+        return self.func
+
 #------------------------
 # Generic functionalities
 #------------------------
@@ -166,7 +184,7 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
     # Check version if requested
     if check_version:
         if version_checker:
-            vst, v = version_checker(env, opts)
+            vst, v = version_checker(context, opts)
             if vst:
                 version = v
             else:
@@ -182,7 +200,8 @@ def _check(context, name, section, defopts, headers_to_check, funcs_to_check,
 #--------------
 # MKL checker
 #--------------
-def _mkl_version_checker(env, opts):
+def _mkl_version_checker(context, opts):
+    env = context.env
     version_code = r"""
 #include <stdio.h>
 #include <mkl.h>
@@ -207,8 +226,10 @@ return 0;
     finally:
         restore(env, saved)
 
-    if vst and re.search(r'Full version: (\d+[.]\d+[.]\d+)', out):
-        version = m.group(1)
+    if vst:
+        m = re.search(r'Full version: (\d+[.]\d+[.]\d+)', out)
+        if m:
+            version = m.group(1)
     else:
         version = ''
 
@@ -221,11 +242,13 @@ def CheckMKL(context, autoadd = 1, check_version = 0):
                   cfg.funcs, check_version, _mkl_version_checker, autoadd)
 
 IsMKL = IsFactory('MKL').get_func()
+GetMKLVersion = GetVersionFactory('MKL').get_func()
 
 #---------------
 # ATLAS Checker
 #---------------
-def _atlas_version_checker(env, opts):
+def _atlas_version_checker(context, opts):
+    env = context.env
     version_code = """
 void ATL_buildinfo(void);
 int main(void) {
@@ -259,6 +282,7 @@ def CheckATLAS(context, autoadd = 1, check_version = 0):
                   cfg.funcs, check_version, _atlas_version_checker, autoadd)
 
 IsATLAS = IsFactory('ATLAS').get_func()
+GetATLASVersion = GetVersionFactory('ATLAS').get_func()
 
 #------------------------------
 # Mac OS X Frameworks checkers
