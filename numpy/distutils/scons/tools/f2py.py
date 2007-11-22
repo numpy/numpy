@@ -45,8 +45,6 @@ def _is_pyf(source_file):
     return os.path.splitext(source_file)[1] == '.pyf'
 
 def _pyf2c(target, source, env):
-    from SCons.Script import Touch
-    from threading import Lock
     import numpy.f2py
     import shutil
 
@@ -118,7 +116,7 @@ def generate(env):
     scanner = SCons.Scanner.ClassicCPP("F2PYScan", ".pyf", "F2PYPATH", expr)
     env.Append(SCANNERS = scanner)
 
-    env['BUILDERS']['F2PY'] = SCons.Builder.Builder(action = _pyf2c, 
+    env['BUILDERS']['F2py'] = SCons.Builder.Builder(action = _pyf2c, 
                                                     emitter = _f2pyEmitter,
                                                     suffix = _f2pySuffixEmitter)
 
