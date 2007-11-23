@@ -598,9 +598,9 @@ cdef class RandomState:
         diff = hi - lo - 1
         if diff < 0:
             raise ValueError("low >= high")
-    
+
         if size is None:
-            return rk_interval(diff, self.internal_state) + lo
+            return <long>rk_interval(diff, self.internal_state) + lo
         else:
             array = <ndarray>_sp.empty(size, int)
             length = PyArray_SIZE(array)
