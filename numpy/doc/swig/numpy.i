@@ -59,14 +59,14 @@
 {
 /* Macros to extract array attributes.
  */
-#define is_array(a)            ((a) && PyArray_Check((PyArrayObject *)a))
-#define array_type(a)          (int)(PyArray_TYPE(a))
-#define array_numdims(a)       (((PyArrayObject *)a)->nd)
-#define array_dimensions(a)    (((PyArrayObject *)a)->dimensions)
-#define array_size(a,i)        (((PyArrayObject *)a)->dimensions[i])
-#define array_data(a)          (((PyArrayObject *)a)->data)
-#define array_is_contiguous(a) (PyArray_ISCONTIGUOUS(a))
-#define array_is_native(a)     (PyArray_ISNOTSWAPPED(a))
+%#define is_array(a)            ((a) && PyArray_Check((PyArrayObject *)a))
+%#define array_type(a)          (int)(PyArray_TYPE(a))
+%#define array_numdims(a)       (((PyArrayObject *)a)->nd)
+%#define array_dimensions(a)    (((PyArrayObject *)a)->dimensions)
+%#define array_size(a,i)        (((PyArrayObject *)a)->dimensions[i])
+%#define array_data(a)          (((PyArrayObject *)a)->data)
+%#define array_is_contiguous(a) (PyArray_ISCONTIGUOUS(a))
+%#define array_is_native(a)     (PyArray_ISNOTSWAPPED(a))
 }
 
 /**********************************************************************/
