@@ -375,6 +375,14 @@
   }
 }
 
+/* Combine all NumPy fragments into one for convenience */
+%fragment("NumPy_Fragments", "header",
+	  fragment="NumPy_Backward_Compatibility",
+	  fragment="NumPy_Macros",
+	  fragment="NumPy_Utilities",
+	  fragment="NumPy_Object_to_Array",
+	  fragment="NumPy_Array_Requirements") { }
+
 /* End John Hunter translation (with modifications by Bill Spotz)
  */
 
@@ -521,7 +529,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE IN_ARRAY1[ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -548,7 +556,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -576,7 +584,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -604,7 +612,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -631,7 +639,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -660,7 +668,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -689,7 +697,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -717,7 +725,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -748,7 +756,7 @@
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
@@ -783,7 +791,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE INPLACE_ARRAY1[ANY])
   (PyArrayObject* array=NULL)
 {
@@ -804,7 +812,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
   (PyArrayObject* array=NULL, int i=1)
 {
@@ -826,7 +834,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
   (PyArrayObject* array=NULL, int i=0)
 {
@@ -848,7 +856,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
   (PyArrayObject* array=NULL)
 {
@@ -869,7 +877,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
   (PyArrayObject* array=NULL)
 {
@@ -891,7 +899,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_ARRAY2)
   (PyArrayObject* array=NULL)
 {
@@ -913,7 +921,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY])
   (PyArrayObject* array=NULL)
 {
@@ -935,7 +943,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
   (PyArrayObject* array=NULL)
 {
@@ -959,7 +967,7 @@
 						 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Object_to_Array,NumPy_Array_Requirements")
+	 fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* INPLACE_ARRAY3)
   (PyArrayObject* array=NULL)
 {
@@ -996,7 +1004,7 @@
 /* Typemap suite for (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
  */
 %typemap(in,numinputs=1,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Macros,NumPy_Utilities")
+	 fragment="NumPy_Fragments")
   (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
   (PyObject * array = NULL)
 {
@@ -1023,7 +1031,7 @@
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
  */
 %typemap(in,numinputs=1,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Macros,NumPy_Utilities")
+	 fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
   (PyObject * array = NULL)
 {
