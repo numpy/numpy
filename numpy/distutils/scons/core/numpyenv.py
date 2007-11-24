@@ -196,6 +196,7 @@ def _GetNumpyEnvironment(args):
     from SCons.Script import BuildDir, Help
     from SCons.Errors import EnvironmentError
     from SCons.Builder import Builder
+    from SCons.Scanner import Scanner
 
     # XXX: I would prefer subclassing Environment, because we really expect
     # some different behaviour than just Environment instances...
@@ -324,15 +325,20 @@ def _GetNumpyEnvironment(args):
 
     from template_generators import generate_from_c_template, \
                                     generate_from_f_template, \
-                                    generate_from_template_emitter
+                                    generate_from_template_emitter, \
+                                    generate_from_template_scanner
 
+    tpl_scanner = Scanner(function = generate_from_template_scanner, 
+                          skeys = ['.src'])
     env['BUILDERS']['FromCTemplate'] = Builder(
                 action = generate_from_c_template, 
-                emitter = generate_from_template_emitter)
+                emitter = generate_from_template_emitter,
+                source_scanner = tpl_scanner)
 
     env['BUILDERS']['FromFTemplate'] = Builder(
                 action = generate_from_f_template, 
-                emitter = generate_from_template_emitter)
+                emitter = generate_from_template_emitter,
+                source_scanner = tpl_scanner)
 
     from custom_builders import NumpyFromCTemplate, NumpyFromFTemplate
     env['BUILDERS']['NumpyFromCTemplate'] = NumpyFromCTemplate

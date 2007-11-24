@@ -17,7 +17,7 @@ import SCons.Action
 import SCons.Scanner
 import SCons.Tool
 
-from numpy.distutils.from_template import process_str
+from numpy.distutils.from_template import process_file
 
 # XXX: this is general and can be used outside numpy.core.
 def _do_generate_from_template(targetfile, sourcefile, env):
@@ -25,7 +25,7 @@ def _do_generate_from_template(targetfile, sourcefile, env):
     s = open(sourcefile, 'r')
     allstr = s.read()
     s.close()
-    writestr = process_str(allstr)
+    writestr = process_file(allstr)
     t.write(writestr)
     t.close()
     return 0
