@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 22 05:00 PM 2007 J
+# Last Change: Sat Nov 24 12:00 PM 2007 J
 
 # This module defines checkers for performances libs providing standard API,
 # such as MKL (Intel), ATLAS, Sunperf (solaris and linux), Accelerate (Mac OS
@@ -102,7 +102,8 @@ class GetVersionFactory:
             raise RuntimeError("name %s is unknown")
 
         def f(env, libname):
-            if env['NUMPY_PKG_CONFIG'][libname] is None:
+            if env['NUMPY_PKG_CONFIG'][libname] is None or \
+               not env['NUMPY_PKG_CONFIG'][libname].name == _CONFIG[name].name:
                 return 'No version info'
             else:
                 return env['NUMPY_PKG_CONFIG'][libname].version

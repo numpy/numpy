@@ -2,7 +2,7 @@
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons.checkers.perflib import \
         CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf,\
-        IsMKL, IsATLAS, IsAccelerate, GetATLASVersion
+        IsMKL, IsATLAS, IsAccelerate, GetATLASVersion, GetMKLVersion
 from numpy.distutils.scons.checkers.custom_checkers import CheckCBLAS, \
         CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK
 from numpy.distutils.scons import CheckF77Mangling
@@ -33,16 +33,17 @@ if do_check == 1:
     st, opts = config.CheckMKL(autoadd = 0)
     st, opts = config.CheckAccelerate(autoadd = 0)
     st, opts = config.CheckSunperf(autoadd = 0)
-    st = config.CheckF77BLAS(autoadd = 0)
+    st = config.CheckF77BLAS(autoadd = 0, check_version = True)
     st = config.CheckCBLAS(autoadd = 0)
     st = config.CheckF77LAPACK(autoadd = 0)
     st = config.CheckCLAPACK(autoadd = 0)
     st = config.CheckF77Mangling()
 
-    print "Is blas MKL ? %s" % IsMKL(env, 'blas')
-    print "Is cblas MKL ? %s" % IsMKL(env, 'cblas')
-    print "Is blas ATLAS ? %s" % IsATLAS(env, 'blas')
-    print "Is cblas ATLAS ? %s" % IsATLAS(env, 'cblas')
+    if IsMKL(env, 'blas'):
+        print "blas is MKL (%s)" % GetMKLVersion(env, 'blas')
+
+    if IsATLAS(env, 'blas'):
+        print "blas is ATLAS (%s)" % GetATLASVersion(env, 'blas')
 
     if env.has_key('LIBS'):
         print "LIBS of env is %s" % env.Dump('LIBS')
