@@ -155,7 +155,8 @@
  */
 
 %fragment(SWIG_AsVal_frag(unsigned long),"header",
-	  fragment="SWIG_CanCastAsInteger")
+	  fragment="SWIG_CanCastAsInteger",
+	  fragment="NumPy_Backward_Compatibility")
 {
   SWIGINTERN int
   SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val) 
