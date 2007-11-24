@@ -72,6 +72,7 @@ def _pyf2c(target, source, env):
 
     basename = os.path.basename(str(target[0]).split('module')[0])
 
+    # XXX: handle F2PYOPTIONS being a string instead of a list
     if _is_pyf(source_file_names[0]):
         # XXX: scons has a way to force buidler to only use one source file
         if len(source_file_names) > 1:
