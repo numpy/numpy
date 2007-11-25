@@ -35,7 +35,6 @@ def generate_from_template_emitter(target, source, env):
     
 _INCLUDE_RE = re.compile(r"include\s*['\"](\S+)['\"]", re.M)
 
-def generate_from_template_scanner(node, env, path, arg):
-    print "SCANNING, YO !"
+def generate_from_template_scanner(node, env, path, arg = None):
     cnt = node.get_contents()
     return _INCLUDE_RE.findall(cnt)
