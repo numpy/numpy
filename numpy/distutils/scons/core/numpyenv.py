@@ -286,6 +286,15 @@ def _GetNumpyEnvironment(args):
     #     Misc
     #---------------
 
+    # We sometimes need to put link flags at the really end of the command line, so we add a construction variable for it
+    env['LINKFLAGSEND'] = []
+    env['SHLINKFLAGSEND'] = ['$LINKFLAGSEND']
+    env['LDMODULEFLAGSEND'] = []
+
+    env['LINKCOM'] = '%s $LINKFLAGSEND' % env['LINKCOM']
+    env['SHLINKCOM'] = '%s $SHLINKFLAGSEND' % env['SHLINKCOM']
+    env['LDMODULECOM'] = '%s $LDMODULEFLAGSEND' % env['LDMODULECOM']
+
     # Put config code and log in separate dir for each subpackage
     from utils import curry
     NumpyConfigure = curry(env.Configure, 
