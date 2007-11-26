@@ -219,7 +219,7 @@ def CheckF77LAPACK(context, autoadd = 1, check_version = 0):
                 return st
 
             # Check Sunperf
-            st = check(CheckSunperf, 'Sunperf', ['lapack'])
+            st = check(CheckSunperf, 'Sunperf', [])
             if st:
                 return st
 

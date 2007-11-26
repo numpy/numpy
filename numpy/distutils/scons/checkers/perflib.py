@@ -333,7 +333,7 @@ from numpy.distutils.scons.testcode_snippets import cblas_sgemm
 
 def CheckSunperf(context, autoadd = 1, check_version = 0):
     """Checker for sunperf."""
-    cfg = _CONFIG['vecLib']
+    cfg = _CONFIG['Sunperf']
     
     st, res = _check(context, cfg.name, cfg.section, cfg.defopts, cfg.headers,
                      cfg.funcs, check_version, None, autoadd)
@@ -383,7 +383,7 @@ def CheckSunperf(context, autoadd = 1, check_version = 0):
         pa = floupi(out)
         for k, v in pa.items():
     	    opts[k].extend(deepcopy(v))
-        res = ConfigRes(name, opts, res.is_customized())
+        res = ConfigRes(cfg.name, opts, res.is_customized())
 	context.Result('Succeeded !')
     else:
         st = 0
