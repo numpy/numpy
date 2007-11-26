@@ -50,6 +50,13 @@ def is_cc_suncc(fullpath):
 
     return suncc.search(cnt)
 
+def _glob(env, path):
+    """glob function to handle src_dir issues."""
+    import glob
+    rdir = pdirname(path)
+    files = glob.glob(pjoin(env['src_dir'], path))
+    return [pjoin(rdir, pbasename(f)) for f in files]
+
 def is_f77_gnu(fullpath):
     # XXX: do this properly
     return pbasename(fullpath) == 'g77' or pbasename(fullpath) == 'gfortran'
@@ -301,6 +308,7 @@ def _GetNumpyEnvironment(args):
                            conf_dir = pjoin(env['build_dir'], '.sconf'), 
                            log_file = pjoin(env['build_dir'], 'config.log'))
     env.NumpyConfigure = NumpyConfigure
+    env.NumpyGlob = curry(_glob, env)
 
     # XXX: Huge, ugly hack ! SConsign needs an absolute path or a path relative
     # to where the SConstruct file is. We have to find the path of the build
