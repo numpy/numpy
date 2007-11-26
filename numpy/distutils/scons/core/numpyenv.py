@@ -173,7 +173,8 @@ def initialize_f77(env, path_list):
     if len(env['f77_opt']) > 0:
         try:
             if len(env['f77_opt_path']) > 0:
-                t = Tool(env['f77_opt'], toolpath = ['numpy/distutils/scons/tools'])
+                t = Tool(env['f77_opt'], toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+
                 t(env) 
                 path_list.append(env['f77_opt_path'])
         except EnvironmentError, e:
@@ -262,6 +263,7 @@ def _GetNumpyEnvironment(args):
 
     # Add our own, custom tools (f2py, from_template, etc...)
     t = Tool('f2py', toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+
     try:
         t(env)
     except Exception, e:

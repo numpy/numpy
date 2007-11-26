@@ -1,6 +1,11 @@
 Things to implement / problems to solve:
+    - Make 'real' python extension builders
     - f2py interoperability ?
     - fortran compiler optimization / option (underscore and so on)
+
+F2py:
+    - Numpy version to handle build dir issues
+    - Difference between .f and .pyf:
 
 Builder:
     - Get a PythonExtension builder independant of distutils for upstream

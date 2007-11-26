@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Nov 20 07:00 PM 2007 J
+# Last Change: Mon Nov 26 05:00 PM 2007 J
 import sys
 import distutils.sysconfig
 
@@ -141,7 +141,7 @@ def get_cc_config(name):
             raise NotImplementedError('FIXME: intel compiler on windows not '\
                                       ' supported yet')
             
-        cfg = CompilerConfig(optim = ['-O2', '-fno-strict-aliasing', '-DNDEBUG'],
+        cfg = CompilerConfig(optim = ['-O2', '-fomit-frame-pointer', '-fno-strict-aliasing', '-DNDEBUG'],
                              warn = ['-Wall', '-Wstrict-prototypes'],
                              debug_symbol = ['-g'],
                              thread = ['-pthread'])

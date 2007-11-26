@@ -59,8 +59,8 @@ def dist2sconsfc(compiler):
     Example:
         --fcompiler=intel -> ifort on linux, ifl on windows"""
     if compiler.compiler_type == 'intel':
-        raise NotImplementedError('FIXME: intel fortran compiler name ?')
-        #return 'intelc'
+        #raise NotImplementedError('FIXME: intel fortran compiler name ?')
+        return 'ifort'
     elif compiler.compiler_type == 'gnu':
         return 'g77'
     elif compiler.compiler_type == 'gnu95':
