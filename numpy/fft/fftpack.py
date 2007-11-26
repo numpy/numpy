@@ -35,9 +35,11 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
              work_function=fftpack.cfftf, fft_cache = _fft_cache ):
     a = asarray(a)
 
-    if n == None: n = a.shape[axis]
+    if n is None:
+        n = a.shape[axis]
 
-    if n < 1: raise ValueError("Invalid number of FFT data points (%d) specified." % n)
+    if n < 1:
+        raise ValueError("Invalid number of FFT data points (%d) specified." % n)
 
     try:
         wsave = fft_cache[n]
@@ -110,7 +112,7 @@ def ifft(a, n=None, axis=-1):
     different n's."""
 
     a = asarray(a).astype(complex)
-    if n == None:
+    if n is None:
         n = shape(a)[axis]
     return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
 
@@ -155,7 +157,7 @@ def irfft(a, n=None, axis=-1):
     within numerical accuracy."""
 
     a = asarray(a).astype(complex)
-    if n == None:
+    if n is None:
         n = (shape(a)[axis] - 1) * 2
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
                     _real_fft_cache) / n
@@ -174,7 +176,7 @@ def hfft(a, n=None, axis=-1):
     within numerical accuracy."""
 
     a = asarray(a).astype(complex)
-    if n == None:
+    if n is None:
         n = (shape(a)[axis] - 1) * 2
     return irfft(conjugate(a), n, axis) * n
 
@@ -192,7 +194,7 @@ def ihfft(a, n=None, axis=-1):
     within numerical accuracy."""
 
     a = asarray(a).astype(float)
-    if n == None:
+    if n is None:
         n = shape(a)[axis]
     return conjugate(rfft(a, n, axis))/n
 
@@ -200,14 +202,14 @@ def ihfft(a, n=None, axis=-1):
 def _cook_nd_args(a, s=None, axes=None, invreal=0):
     if s is None:
         shapeless = 1
-        if axes == None:
+        if axes is None:
             s = list(a.shape)
         else:
             s = take(a.shape, axes)
     else:
         shapeless = 0
     s = list(s)
-    if axes == None:
+    if axes is None:
         axes = range(-len(s), 0)
     if len(s) != len(axes):
         raise ValueError, "Shape and axes have different lengths."
