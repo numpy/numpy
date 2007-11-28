@@ -875,11 +875,11 @@ class Use(Statement):
 
     def analyze(self):
         use = self.parent.a.use
-        if use.has_key(self.name):
+        if self.name in use:
             return
 
         modules = self.top.a.module
-        if not modules.has_key(self.name):
+        if self.name not in modules:
             fn = None
             for d in self.reader.include_dirs:
                 fn = get_module_file(self.name, d)
@@ -896,7 +896,7 @@ class Use(Statement):
                 parser.analyze()
                 modules.update(parser.block.a.module)
 
-        if not modules.has_key(self.name):
+        if self.name not in modules:
             self.warning('no information about the module %r in use statement' % (self.name))
             return
 

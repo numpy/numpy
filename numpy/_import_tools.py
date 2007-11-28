@@ -21,7 +21,7 @@ class PackageLoader:
         if isinstance(parent_path, str):
             parent_path = [parent_path]
         self.parent_path = parent_path
-        if not frame.f_locals.has_key('__all__'):
+        if '__all__' not in frame.f_locals:
             exec('__all__ = []',frame.f_globals,frame.f_locals)
         self.parent_export_names = eval('__all__',frame.f_globals,frame.f_locals)
 
@@ -77,7 +77,7 @@ class PackageLoader:
                                   % (package_name,':'.join(self.parent_path), msg))
 
         for package_name,info_file in info_files:
-            if info_modules.has_key(package_name):
+            if package_name in info_modules:
                 continue
             fullname = self.parent_name +'.'+ package_name
             if info_file[-1]=='c':
@@ -119,7 +119,7 @@ class PackageLoader:
 
         while depend_dict:
             for name, lst in depend_dict.items():
-                new_lst = [n for n in lst if depend_dict.has_key(n)]
+                new_lst = [n for n in lst if n in depend_dict]
                 if not new_lst:
                     package_names.append(name)
                     del depend_dict[name]
@@ -225,7 +225,7 @@ class PackageLoader:
                 if verbose!=-1:
                     old_objects = {}
                     for s in symbols:
-                        if frame.f_locals.has_key(s):
+                        if s in frame.f_locals:
                             old_objects[s] = frame.f_locals[s]
 
                 cmdstr = 'from '+package_name+' import '+symbol
@@ -325,7 +325,7 @@ class PackageLoader:
             global_symbols = getattr(info_module,'global_symbols',[])
             fullname = self.parent_name +'.'+ package_name
             note = ''
-            if not sys.modules.has_key(fullname):
+            if fullname not in sys.modules:
                 note = ' [*]'
             titles.append((fullname,self._get_doc_title(info_module) + note))
             if global_symbols:

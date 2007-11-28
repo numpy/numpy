@@ -61,15 +61,15 @@ def buildusevars(m,r):
     outmess('\t\tBuilding use variable hooks for module "%s" (feature only for F90/F95)...\n'%(m['name']))
     varsmap={}
     revmap={}
-    if r.has_key('map'):
+    if 'map' in r:
         for k in r['map'].keys():
-            if revmap.has_key(r['map'][k]):
+            if r['map'][k] in revmap:
                 outmess('\t\t\tVariable "%s<=%s" is already mapped by "%s". Skipping.\n'%(r['map'][k],k,revmap[r['map'][k]]))
             else:
                 revmap[r['map'][k]]=k
-    if r.has_key('only') and r['only']:
+    if 'only' in r and r['only']:
         for v in r['map'].keys():
-            if m['vars'].has_key(r['map'][v]):
+            if r['map'][v] in m['vars']:
 
                 if revmap[r['map'][v]]==v:
                     varsmap[v]=r['map'][v]
@@ -79,7 +79,7 @@ def buildusevars(m,r):
                 outmess('\t\t\tNo definition for variable "%s=>%s". Skipping.\n'%(v,r['map'][v]))
     else:
         for v in m['vars'].keys():
-            if revmap.has_key(v):
+            if v in revmap:
                 varsmap[v]=revmap[v]
             else:
                 varsmap[v]=v

@@ -358,7 +358,7 @@ class Component(object):
         d = Component._registered_components_map
         for component in components:
             provides = component.provides
-            if d.has_key(provides):
+            if provides in d:
                 Component.warning('component that provides %r is already registered, ignoring.' % (provides))
             else:
                 d[provides] = component
@@ -440,7 +440,7 @@ class Container(object):
         return bool(self.list)
 
     def has(self, label):
-        return self.label_map.has_key(label)
+        return label in self.label_map
 
     def get(self, label):
         return self.list[self.label_map[label]]

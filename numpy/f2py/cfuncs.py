@@ -1067,28 +1067,39 @@ def append_needs(need,flag=1):
             append_needs(n,flag)
     elif type(need)==types.StringType:
         if not need: return
-        if includes0.has_key(need): n = 'includes0'
-        elif includes.has_key(need): n = 'includes'
-        elif typedefs.has_key(need): n = 'typedefs'
-        elif typedefs_generated.has_key(need): n = 'typedefs_generated'
-        elif cppmacros.has_key(need): n = 'cppmacros'
-        elif cfuncs.has_key(need): n = 'cfuncs'
-        elif callbacks.has_key(need): n = 'callbacks'
-        elif f90modhooks.has_key(need): n = 'f90modhooks'
-        elif commonhooks.has_key(need): n = 'commonhooks'
+        if need in includes0:
+            n = 'includes0'
+        elif need in includes:
+            n = 'includes'
+        elif need in typedefs:
+            n = 'typedefs'
+        elif need in typedefs_generated:
+            n = 'typedefs_generated'
+        elif need in cppmacros:
+            n = 'cppmacros'
+        elif need in cfuncs:
+            n = 'cfuncs'
+        elif need in callbacks:
+            n = 'callbacks'
+        elif need in f90modhooks:
+            n = 'f90modhooks'
+        elif need in commonhooks:
+            n = 'commonhooks'
         else:
             errmess('append_needs: unknown need %s\n'%(`need`))
             return
         if need in outneeds[n]: return
         if flag:
             tmp={}
-            if needs.has_key(need):
+            if need in needs:
                 for nn in needs[need]:
                     t=append_needs(nn,0)
                     if type(t)==types.DictType:
                         for nnn in t.keys():
-                            if tmp.has_key(nnn): tmp[nnn]=tmp[nnn]+t[nnn]
-                            else: tmp[nnn]=t[nnn]
+                            if nnn in tmp:
+                                tmp[nnn]=tmp[nnn]+t[nnn]
+                            else:
+                                tmp[nnn]=t[nnn]
             for nn in tmp.keys():
                 for nnn in tmp[nn]:
                     if nnn not in outneeds[nn]:
@@ -1096,14 +1107,17 @@ def append_needs(need,flag=1):
             outneeds[n].append(need)
         else:
             tmp={}
-            if needs.has_key(need):
+            if need in needs:
                 for nn in needs[need]:
                     t=append_needs(nn,flag)
                     if type(t)==types.DictType:
                         for nnn in t.keys():
-                            if tmp.has_key(nnn): tmp[nnn]=t[nnn]+tmp[nnn]
-                            else: tmp[nnn]=t[nnn]
-            if not tmp.has_key(n): tmp[n]=[]
+                            if nnn in tmp:
+                                tmp[nnn]=t[nnn]+tmp[nnn]
+                            else:
+                                tmp[nnn]=t[nnn]
+            if n not in tmp:
+                tmp[n]=[]
             tmp[n].append(need)
             return tmp
     else:
@@ -1116,7 +1130,7 @@ def get_needs():
         out=[]
         saveout=copy.copy(outneeds[n])
         while len(outneeds[n])>0:
-            if not needs.has_key(outneeds[n][0]):
+            if outneeds[n][0] not in needs:
                 out.append(outneeds[n][0])
                 del outneeds[n][0]
             else:
@@ -1136,6 +1150,7 @@ def get_needs():
                 out=out+saveout
                 break
             saveout=copy.copy(outneeds[n])
-        if out==[]: out=[n]
+        if out==[]:
+            out=[n]
         res[n]=out
     return res

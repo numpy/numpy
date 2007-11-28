@@ -31,7 +31,7 @@ class FortranParser:
         Use .parse() method for parsing, parsing result is saved in .block attribute.
         """
         self.reader = reader
-        if self.cache.has_key(reader.id):
+        if reader.id in self.cache:
             parser = self.cache[reader.id]
             self.block = parser.block
             self.is_analyzed = parser.is_analyzed

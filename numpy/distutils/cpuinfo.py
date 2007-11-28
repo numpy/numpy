@@ -104,7 +104,7 @@ class LinuxCPUInfo(CPUInfoBase):
                 if len(name_value) != 2:
                     continue
                 name, value = name_value
-                if not info or info[-1].has_key(name): # next processor
+                if not info or name in info[-1]: # next processor
                     info.append({})
                 info[-1][name] = value
             fo.close()

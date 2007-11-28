@@ -130,7 +130,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         assert isinstance(actual, dict), repr(type(actual))
         assert_equal(len(actual),len(desired),err_msg,verbose)
         for k,i in desired.items():
-            assert actual.has_key(k), repr(k)
+            assert k in actual, repr(k)
             assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg), verbose)
         return
     if isinstance(desired, (list,tuple)) and isinstance(actual, (list,tuple)):

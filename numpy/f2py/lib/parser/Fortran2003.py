@@ -5825,11 +5825,12 @@ for clsname in dir():
 if 1: # Optimize subclass tree:
 
     def _rpl_list(clsname):
-        if not Base_classes.has_key(clsname):
+        if clsname not in Base_classes:
             print 'Not implemented:',clsname
             return [] # remove this code when all classes are implemented
         cls = Base_classes[clsname]
-        if cls.__dict__.has_key('match'): return [clsname]
+        if 'match' in cls.__dict__:
+            return [clsname]
         l = []
         for n in getattr(cls,'subclass_names',[]):
             l1 = _rpl_list(n)
@@ -5862,7 +5863,7 @@ for clsname, cls in Base_classes.items():
     except KeyError:
         Base.subclasses[clsname] = l = []
     for n in subclass_names:
-        if Base_classes.has_key(n):
+        if n in Base_classes:
             l.append(Base_classes[n])
         else:
             print '%s not implemented needed by %s' % (n,clsname)
@@ -5882,7 +5883,7 @@ if 1:
             if n not in subclasses_names:
                 print '%s needs to be added to %s subclass_name list' % (n,cls.__name__)
         for n in use_names + subclass_names:
-            if not Base_classes.has_key(n):
+            if n not in Base_classes:
                 print '%s not defined used by %s' % (n, cls.__name__)
 
 

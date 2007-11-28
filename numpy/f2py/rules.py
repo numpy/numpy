@@ -1105,7 +1105,7 @@ def buildmodule(m,um):
             errmess('buildmodule: Could not found the body of interfaced routine "%s". Skipping.\n'%(n))
             continue
         nb_list = [nb]
-        if nb.has_key('entry'):
+        if 'entry' in nb:
             for k,a in nb['entry'].items():
                 nb1 = copy.deepcopy(nb)
                 del nb1['entry']
@@ -1146,22 +1146,32 @@ def buildmodule(m,um):
         code[n]=[]
         for k in needs[n]:
             c=''
-            if cfuncs.includes0.has_key(k): c=cfuncs.includes0[k]
-            elif cfuncs.includes.has_key(k): c=cfuncs.includes[k]
-            elif cfuncs.userincludes.has_key(k): c=cfuncs.userincludes[k]
-            elif cfuncs.typedefs.has_key(k): c=cfuncs.typedefs[k]
-            elif cfuncs.typedefs_generated.has_key(k):
+            if k in cfuncs.includes0:
+                c=cfuncs.includes0[k]
+            elif k in cfuncs.includes:
+                c=cfuncs.includes[k]
+            elif k in cfuncs.userincludes:
+                c=cfuncs.userincludes[k]
+            elif k in cfuncs.typedefs:
+                c=cfuncs.typedefs[k]
+            elif k in cfuncs.typedefs_generated:
                 c=cfuncs.typedefs_generated[k]
-            elif cfuncs.cppmacros.has_key(k): c=cfuncs.cppmacros[k]
-            elif cfuncs.cfuncs.has_key(k): c=cfuncs.cfuncs[k]
-            elif cfuncs.callbacks.has_key(k): c=cfuncs.callbacks[k]
-            elif cfuncs.f90modhooks.has_key(k): c=cfuncs.f90modhooks[k]
-            elif cfuncs.commonhooks.has_key(k): c=cfuncs.commonhooks[k]
-            else: errmess('buildmodule: unknown need %s.\n'%(`k`));continue
+            elif k in cfuncs.cppmacros:
+                c=cfuncs.cppmacros[k]
+            elif k in cfuncs.cfuncs:
+                c=cfuncs.cfuncs[k]
+            elif k in cfuncs.callbacks:
+                c=cfuncs.callbacks[k]
+            elif k in cfuncs.f90modhooks:
+                c=cfuncs.f90modhooks[k]
+            elif k in cfuncs.commonhooks:
+                c=cfuncs.commonhooks[k]
+            else:
+                errmess('buildmodule: unknown need %s.\n'%(`k`));continue
             code[n].append(c)
     mod_rules.append(code)
     for r in mod_rules:
-        if (r.has_key('_check') and r['_check'](m)) or (not r.has_key('_check')):
+        if ('_check' in r and r['_check'](m)) or ('_check' not in r):
             ar=applyrules(r,vrd,m)
             rd=dictappend(rd,ar)
     ar=applyrules(module_rules,rd)
@@ -1185,10 +1195,10 @@ def buildmodule(m,um):
         ret['ltx'] = fn
         f=open(fn,'w')
         f.write('%% This file is auto-generated with f2py (version:%s)\n'%(f2py_version))
-        if not options.has_key('shortlatex'):
+        if 'shortlatex' not in options:
             f.write('\\documentclass{article}\n\\usepackage{a4wide}\n\\begin{document}\n\\tableofcontents\n\n')
         f.write('\n'.join(ar['latexdoc']))
-        if not options.has_key('shortlatex'):
+        if 'shortlatex' not in options:
             f.write('\\end{document}')
         f.close()
         outmess('\tDocumentation is saved to file "%s/%smodule.tex"\n'%(options['buildpath'],vrd['modulename']))
@@ -1252,7 +1262,7 @@ def buildapi(rout):
     vrd=routsign2map(rout)
     rd=dictappend({},vrd)
     for r in rout_rules:
-        if (r.has_key('_check') and r['_check'](rout)) or (not r.has_key('_check')):
+        if ('_check' in r and r['_check'](rout)) or ('_check' not in r):
             ar=applyrules(r,vrd,rout)
             rd=dictappend(rd,ar)
 
@@ -1275,11 +1285,13 @@ def buildapi(rout):
             else: vrd['nth']='hidden'
         savevrd[a]=vrd
         for r in _rules:
-            if r.has_key('_depend'): continue
-            if (r.has_key('_check') and r['_check'](var[a])) or (not r.has_key('_check')):
+            if '_depend' in r:
+                continue
+            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
                 ar=applyrules(r,vrd,var[a])
                 rd=dictappend(rd,ar)
-                if r.has_key('_break'): break
+                if '_break' in r:
+                    break
     for a in depargs:
         if isintent_aux(var[a]):
             _rules = aux_rules
@@ -1287,12 +1299,14 @@ def buildapi(rout):
             _rules = arg_rules
         vrd=savevrd[a]
         for r in _rules:
-            if not r.has_key('_depend'): continue
-            if (r.has_key('_check') and r['_check'](var[a])) or (not r.has_key('_check')):
+            if '_depend' not in r:
+                continue
+            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
                 ar=applyrules(r,vrd,var[a])
                 rd=dictappend(rd,ar)
-                if r.has_key('_break'): break
-        if var[a].has_key('check'):
+                if '_break' in r:
+                    break
+        if 'check' in var[a]:
             for c in var[a]['check']:
                 vrd['check']=c
                 ar=applyrules(check_rules,vrd,var[a])
@@ -1329,10 +1343,10 @@ def buildapi(rout):
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:
-        if rd.has_key(k) and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==types.ListType:
             rd['docstrsigns']=rd['docstrsigns']+rd[k]
         k='latex'+k
-        if rd.has_key(k) and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==types.ListType:
             rd['latexdocstrsigns']=rd['latexdocstrsigns']+rd[k][0:1]+\
                                     ['\\begin{description}']+rd[k][1:]+\
                                     ['\\end{description}']

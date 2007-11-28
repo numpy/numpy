@@ -159,7 +159,7 @@ class TestMatrixReturn(NumpyTestCase):
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)
-                if methodargs.has_key(attrib):
+                if attrib in methodargs:
                     args = methodargs[attrib]
                 else:
                     args = ()

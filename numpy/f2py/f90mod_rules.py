@@ -136,7 +136,7 @@ def buildhooks(pymod):
             if not dms: dms='-1'
             use_fgetdims2 = fgetdims2
             if isstringarray(var):
-                if var.has_key('charselector') and var['charselector'].has_key('len'):
+                if 'charselector' in var and 'len' in var['charselector']:
                     cadd('\t{"%s",%s,{{%s,%s}},%s},'\
                          %(undo_rmbadname1(n),dm['rank'],dms,var['charselector']['len'],at))
                     use_fgetdims2 = fgetdims2_sa
@@ -186,7 +186,7 @@ def buildhooks(pymod):
                 else:
                     fargs.append(b['name'])
                     mfargs.append(fargs[-1])
-                    #if options.has_key('--external-modroutines') and options['--external-modroutines']:
+                    #if '--external-modroutines' in options and options['--external-modroutines']:
                     #    outmess('\t\t\tapplying --external-modroutines for %s\n'%(b['name']))
                     #     efargs.append(fargs[-1])
                 api['externroutines']=[]

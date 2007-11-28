@@ -31,26 +31,26 @@ from auxfuncs import *
 def var2fixfortran(vars,a,fa=None,f90mode=None):
     if fa is None:
         fa = a
-    if not vars.has_key(a):
+    if a not in vars:
         show(vars)
         outmess('var2fixfortran: No definition for argument "%s".\n'%a)
         return ''
-    if not vars[a].has_key('typespec'):
+    if 'typespec' not in vars[a]:
         show(vars[a])
         outmess('var2fixfortran: No typespec for argument "%s".\n'%a)
         return ''
     vardef=vars[a]['typespec']
-    if vardef=='type' and vars[a].has_key('typename'):
+    if vardef=='type' and 'typename' in vars[a]:
         vardef='%s(%s)'%(vardef,vars[a]['typename'])
     selector={}
     lk = ''
-    if vars[a].has_key('kindselector'):
+    if 'kindselector' in vars[a]:
         selector=vars[a]['kindselector']
         lk = 'kind'
-    elif vars[a].has_key('charselector'):
+    elif 'charselector' in vars[a]:
         selector=vars[a]['charselector']
         lk = 'len'
-    if selector.has_key('*'):
+    if '*' in selector:
         if f90mode:
             if selector['*'] in ['*',':','(*)']:
                 vardef='%s(len=*)'%(vardef)
@@ -62,17 +62,17 @@ def var2fixfortran(vars,a,fa=None,f90mode=None):
             else:
                 vardef='%s*%s'%(vardef,selector['*'])
     else:
-        if selector.has_key('len'):
+        if 'len' in selector:
             vardef='%s(len=%s'%(vardef,selector['len'])
-            if selector.has_key('kind'):
+            if 'kind' in selector:
                 vardef='%s,kind=%s)'%(vardef,selector['kind'])
             else:
                 vardef='%s)'%(vardef)
-        elif selector.has_key('kind'):
+        elif 'kind' in selector:
             vardef='%s(kind=%s)'%(vardef,selector['kind'])
 
     vardef='%s %s'%(vardef,fa)
-    if vars[a].has_key('dimension'):
+    if 'dimension' in vars[a]:
         vardef='%s(%s)'%(vardef,','.join(vars[a]['dimension']))
     return vardef
 
@@ -86,7 +86,7 @@ def createfuncwrapper(rout,signature=0):
     f90mode = ismoduleroutine(rout)
     newname = '%sf2pywrap'%(name)
     vars = rout['vars']
-    if not vars.has_key(newname):
+    if newname not in vars:
         vars[newname] = vars[name]
         args = [newname]+rout['args'][1:]
     else:
@@ -150,12 +150,13 @@ def assubr(rout):
     rout = copy.copy(rout)
     fname = name
     rname = fname
-    if rout.has_key('result'):
+    if 'result' in rout:
         rname = rout['result']
         rout['vars'][fname]=rout['vars'][rname]
     fvar = rout['vars'][fname]
     if not isintent_out(fvar):
-        if not fvar.has_key('intent'): fvar['intent']=[]
+        if 'intent' not in fvar:
+            fvar['intent']=[]
         fvar['intent'].append('out')
         flag=1
         for i in fvar['intent']:
