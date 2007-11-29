@@ -118,3 +118,12 @@
 #[djbfft]
 #include_dirs = /usr/local/djbfft/include
 #library_dirs = /usr/local/djbfft/lib
+ 
+ 
+# MKL
+#----
+# For recent (9.0.21, for example) mkl, you need to change the names of the
+# lapack library. Assuming you installed the mkl in /opt, for a 32 bits cpu:
+# [mkl]
+# library_dirs = /opt/intel/mkl/9.1.023/lib/32/
+# lapack_libs = mkl_lapack
