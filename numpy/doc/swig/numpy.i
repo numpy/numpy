@@ -9,14 +9,6 @@
 #include <numpy/arrayobject.h>
 %}
 
-/* The following code originally appeared in
- * enthought/kiva/agg/src/numeric.i written by Eric Jones.  It was
- * translated from C++ to C by John Hunter.  Bill Spotz has modified
- * it slightly to fix some minor bugs, upgrade from Numeric to numpy
- * (all versions), add some comments and functionality, and convert
- * from direct code insertion to SWIG fragments.
- */
-
 /**********************************************************************/
 
 %fragment("NumPy_Backward_Compatibility", "header")
@@ -72,6 +64,14 @@
 }
 
 /**********************************************************************/
+
+/* The following code originally appeared in
+ * enthought/kiva/agg/src/numeric.i written by Eric Jones.  It was
+ * translated from C++ to C by John Hunter.  Bill Spotz has modified
+ * it to fix some minor bugs, upgrade from Numeric to numpy (all
+ * versions), add some comments and functionality, and convert from
+ * direct code insertion to SWIG fragments.
+ */
 
 %fragment("NumPy_Macros", "header")
 {
@@ -406,7 +406,7 @@
 
 /* %numpy_typemaps() macro
  *
- * This macro defines a family of 23 typemaps that allow C arguments
+ * This macro defines a family of 29 typemaps that allow C arguments
  * of the form
  *
  *     (DATA_TYPE IN_ARRAY1[ANY])
@@ -441,95 +441,53 @@
  *
  *     (DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY])
  *
+ *     (DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1)
+ *     (DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1)
+ *
+ *     (DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)
+ *     (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2)
+ *
+ *     (DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
+ *     (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)
+ *
  * where "DATA_TYPE" is any type supported by the NumPy module, and
  * "DIM_TYPE" is any int-like type suitable for specifying dimensions.
  * In python, the dimensions will not need to be specified (except for
  * the "DATA_TYPE* ARGOUT_ARRAY1" typemaps).  The IN_ARRAYs can be a
  * numpy array or any sequence that can be converted to a numpy array
  * of the specified type.  The INPLACE_ARRAYs must be numpy arrays of
- * the appropriate type.  The ARGOUT_ARRAYs will be returned as numpy
- * arrays of the appropriate type.
+ * the appropriate type.  The ARGOUT_ARRAYs will be returned as new
+ * numpy arrays of the appropriate type.
  *
  * These typemaps can be applied to existing functions using the
- * %apply directive:
- *
- *     %apply (double IN_ARRAY1[ANY]) {(double vector[ANY])};
- *     double length(double vector[3]);
+ * %apply directive.  For example:
  *
  *     %apply (double* IN_ARRAY1, int DIM1) {(double* series, int length)};
  *     double prod(double* series, int length);
  *
- *     %apply (int DIM1, double* IN_ARRAY1) {(int length, double* series)}
- *     double sum(int length, double* series)
+ *     %apply (int DIM1, int DIM2, double* INPLACE_ARRAY2)
+ *           {(int rows, int cols, double* matrix        )};
+ *     void floor(int rows, int cols, double* matrix, double f);
  *
- *     %apply (double IN_ARRAY2[ANY][ANY]) {(double matrix[2][2])};
- *     double det(double matrix[2][2]);
- *
- *     %apply (double* IN_ARRAY2, int DIM1, int DIM2) {(double* matrix, int rows, int cols)};
- *     double max(double* matrix, int rows, int cols);
- *
- *     %apply (int DIM1, int DIM2, double* IN_ARRAY2) {(int rows, int cols, double* matrix)}
- *     double min(int length, double* series)
- *
- *     %apply (double INPLACE_ARRAY1[ANY]) {(double vector[3])};
- *     void reverse(double vector[3]);
- *
- *     %apply (double* INPLACE_ARRAY1, int DIM1) {(double* series, int length)};
- *     void ones(double* series, int length);
- *
- *     %apply (int DIM1, double* INPLACE_ARRAY1) {(int length, double* series)}
- *     double zeros(int length, double* series)
- *
- *     %apply (double INPLACE_ARRAY2[ANY][ANY]) {(double matrix[3][3])};
- *     void scale(double matrix[3][3]);
- *
- *     %apply (double* INPLACE_ARRAY2, int DIM1, int DIM2) {(double* matrix, int rows, int cols)};
- *     void floor(double* matrix, int rows, int cols);
- *
- *     %apply (int DIM1, int DIM2, double* INPLACE_ARRAY2) {(int rows, int cols, double* matrix)};
- *     void ceil(int rows, int cols, double* matrix);
- *
- *     %apply (double IN_ARRAY1[ANY]    ) {(double vector[ANY])};
- *     %apply (double ARGOUT_ARRAY1[ANY]) {(double even[    3])};
- *     %apply (double ARGOUT_ARRAY1[ANY]) {(double odd[     3])};
- *     void eoSplit(double vector[3], double even[3], double odd[3]);
- *
- *     %apply (double* ARGOUT_ARRAY1, int DIM1) {(double* twoVec, int size)};
- *     void twos(double* twoVec, int size);
- *
- *     %apply (int DIM1, double* ARGOUT_ARRAY1) {(int size, double* threeVec)};
- *     void threes(int size, double* threeVec);
- *
- *     %apply (double IN_ARRAY2[ANY][ANY])     {(double matrix[2][2])};
- *     %apply (double ARGOUT_ARRAY2[ANY][ANY]) {(double upper[ 3][3])};
- *     %apply (double ARGOUT_ARRAY2[ANY][ANY]) {(double lower[ 3][3])};
- *     void luSplit(double matrix[3][3], double upper[3][3], double lower[3][3]);
+ *     %apply (double IN_ARRAY3[ANY][ANY][ANY])
+ *           {(double tensor[2][2][2]         )};
+ *     %apply (double ARGOUT_ARRAY3[ANY][ANY][ANY])
+ *           {(double low[2][2][2]                )};
+ *     %apply (double ARGOUT_ARRAY3[ANY][ANY][ANY])
+ *           {(double upp[2][2][2]                )};
+ *     void luSplit(double tensor[2][2][2],
+ *                  double low[2][2][2],
+ *                  double upp[2][2][2]    );
  *
  * or directly with
  *
- *     double length(double IN_ARRAY1[ANY]);
  *     double prod(double* IN_ARRAY1, int DIM1);
- *     double sum( int DIM1, double* IN_ARRAY1)
  *
- *     double det(double IN_ARRAY2[ANY][ANY]);
- *     double max(double* IN_ARRAY2, int DIM1, int DIM2);
- *     double min(int DIM1, int DIM2, double* IN_ARRAY2)
+ *     void floor(int DIM1, int DIM2, double* INPLACE_ARRAY2, double f);
  *
- *     void reverse(double INPLACE_ARRAY1[ANY]);
- *     void ones( double* INPLACE_ARRAY1, int DIM1);
- *     void zeros(int DIM1, double* INPLACE_ARRAY1)
- *
- *     void scale(double INPLACE_ARRAY2[ANY][ANY]);
- *     void floor(double* INPLACE_ARRAY2, int DIM1, int DIM2, double floor);
- *     void ceil( int DIM1, int DIM2, double* INPLACE_ARRAY2, double ceil );
- *
- *     void eoSplit(double IN_ARRAY1[ANY], double ARGOUT_ARRAY1[ANY],
- *                  double ARGOUT_ARRAY1[ANY]);
- *     void twos(double* ARGOUT_ARRAY1, int DIM1)
- *     void threes(int DIM1, double* ARGOUT_ARRAY1)
- *
- *     void luSplit(double IN_ARRAY2[ANY][ANY], double ARGOUT_ARRAY2[ANY][ANY],
- *                  double ARGOUT_ARRAY2[ANY][ANY]);
+ *     void luSplit(double IN_ARRAY3[ANY][ANY][ANY],
+ *                  double ARGOUT_ARRAY3[ANY][ANY][ANY],
+ *                  double ARGOUT_ARRAY3[ANY][ANY][ANY]);
  */
 
 %define %numpy_typemaps(DATA_TYPE, DATA_TYPECODE, DIM_TYPE)
@@ -1107,8 +1065,140 @@
   $result = SWIG_Python_AppendOutput($result,array$argnum);
 }
 
-%enddef    /* %numpy_typemaps() macro */
+/*****************************/
+/* Argoutview Array Typemaps */
+/*****************************/
 
+/* Typemap suite for (DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1)
+ */
+%typemap(in,numinputs=0)
+  (DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1    )
+  (DATA_TYPE*  data_temp        , DIM_TYPE  dim_temp)
+{
+  $1 = &data_temp;
+  $2 = &dim_temp;
+}
+%typemap(argout,
+	 fragment="NumPy_Backward_Compatibility")
+  (DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1)
+  (PyObject* array = NULL)
+{
+  npy_intp dims[1] = { *$2 };
+  array = PyArray_SimpleNewFromData(1, dims, DATA_TYPECODE, (void*)(*$1));
+  if (!array) SWIG_fail;
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+/* Typemap suite for (DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1)
+ */
+%typemap(in,numinputs=0)
+  (DIM_TYPE* DIM1    , DATA_TYPE** ARGOUTVIEW_ARRAY1)
+  (DIM_TYPE  dim_temp, DATA_TYPE*  data_temp        )
+{
+  $1 = &dim_temp;
+  $2 = &data_temp;
+}
+%typemap(argout,
+	 fragment="NumPy_Backward_Compatibility")
+  (DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1)
+  (PyObject* array = NULL)
+{
+  npy_intp dims[1] = { *$1 };
+  array = PyArray_SimpleNewFromData(1, dims, DATA_TYPECODE, (void*)(*$2));
+  if (!array) SWIG_fail;
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+/* Typemap suite for (DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)
+ */
+%typemap(in,numinputs=0)
+  (DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1     , DIM_TYPE* DIM2     )
+  (DATA_TYPE*  data_temp        , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
+{
+  $1 = &data_temp;
+  $2 = &dim1_temp;
+  $3 = &dim2_temp;
+}
+%typemap(argout,
+	 fragment="NumPy_Backward_Compatibility")
+  (DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)
+  (PyObject* array = NULL)
+{
+  npy_intp dims[2] = { *$2, *$3 };
+  array = PyArray_SimpleNewFromData(2, dims, DATA_TYPECODE, (void*)(*$1));
+  if (!array) SWIG_fail;
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+/* Typemap suite for (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2)
+ */
+%typemap(in,numinputs=0)
+  (DIM_TYPE* DIM1     , DIM_TYPE* DIM2     , DATA_TYPE** ARGOUTVIEW_ARRAY2)
+  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp        )
+{
+  $1 = &dim1_temp;
+  $2 = &dim2_temp;
+  $3 = &data_temp;
+}
+%typemap(argout,
+	 fragment="NumPy_Backward_Compatibility")
+  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2)
+  (PyObject* array = NULL)
+{
+  npy_intp dims[2] = { *$1, *$2 };
+  array = PyArray_SimpleNewFromData(2, dims, DATA_TYPECODE, (void*)(*$3));
+  if (!array) SWIG_fail;
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+/* Typemap suite for (DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2,
+                      DIM_TYPE* DIM3)
+ */
+%typemap(in,numinputs=0)
+  (DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
+  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
+{
+  $1 = &data_temp;
+  $2 = &dim1_temp;
+  $3 = &dim2_temp;
+  $4 = &dim3_temp;
+}
+%typemap(argout,
+	 fragment="NumPy_Backward_Compatibility")
+  (DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
+  (PyObject* array = NULL)
+{
+  npy_intp dims[3] = { *$2, *$3, *$4 };
+  array = PyArray_SimpleNewFromData(3, dims, DATA_TYPECODE, (void*)(*$1));
+  if (!array) SWIG_fail;
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+/* Typemap suite for (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3,
+                      DATA_TYPE** ARGOUTVIEW_ARRAY3)
+ */
+%typemap(in,numinputs=0)
+  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp)
+{
+  $1 = &dim1_temp;
+  $2 = &dim2_temp;
+  $3 = &dim3_temp;
+  $4 = &data_temp;
+}
+%typemap(argout,
+	 fragment="NumPy_Backward_Compatibility")
+  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)
+  (PyObject* array = NULL)
+{
+  npy_intp dims[3] = { *$1, *$2, *$3 };
+  array = PyArray_SimpleNewFromData(3, dims, DATA_TYPECODE, (void*)(*$3));
+  if (!array) SWIG_fail;
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+%enddef    /* %numpy_typemaps() macro */
+/* *************************************************************** */
 
 /* Concrete instances of the %numpy_typemaps() macro: Each invocation
  * below applies all of the typemaps above to the specified data type.
@@ -1129,26 +1219,26 @@
 /* ***************************************************************
  * The follow macro expansion does not work, because C++ bool is 4
  * bytes and NPY_BOOL is 1 byte
- */
-/*%numpy_typemaps(bool, NPY_BOOL, int)
+ *
+ *    %numpy_typemaps(bool, NPY_BOOL, int)
  */
 
 /* ***************************************************************
  * On my Mac, I get the following warning for this macro expansion:
  * 'swig/python detected a memory leak of type 'long double *', no destructor found.'
- */
-/*%numpy_typemaps(long double, NPY_LONGDOUBLE, int)
+ *
+ *    %numpy_typemaps(long double, NPY_LONGDOUBLE, int)
  */
 
 /* ***************************************************************
- * Swig complains about a syntax error for the following macros
+ * Swig complains about a syntax error for the following macro
  * expansions:
- */
-/*%numpy_typemaps(complex float,  NPY_CFLOAT , int)
- */
-/*%numpy_typemaps(complex double, NPY_CDOUBLE, int)
- */
-/*%numpy_typemaps(complex long double, NPY_CLONGDOUBLE)
+ *
+ *    %numpy_typemaps(complex float,  NPY_CFLOAT , int)
+ *
+ *    %numpy_typemaps(complex double, NPY_CDOUBLE, int)
+ *
+ *    %numpy_typemaps(complex long double, NPY_CLONGDOUBLE, int)
  */
 
 #endif /* SWIGPYTHON */

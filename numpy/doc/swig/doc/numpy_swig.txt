@@ -4,7 +4,7 @@
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
-:Date:        22 November, 2007
+:Date:        29 November, 2007
 
 .. contents::
 
@@ -314,6 +314,36 @@ or 3D.  This because of a quirk with the `SWIG`_ typemap syntax and
 cannot be avoided.  Note that for these types of 1D typemaps, the
 `python`_ function will take a single argument representing ``DIM1``.
 
+Argoutview Arrays
+-----------------
+
+Argoutview arrays are for when your C code provides you with a view of
+its internal data and does not require any memory to be allocated by
+the user.  This can be dangerous.  There is almost no way to guarantee
+that the internal data from the C code will remain in existence for
+the entire lifetime of the `NumPy`_ array that encapsulates it.  If
+the user destroys the object that provides the view of the data before
+destroying the `NumPy`_ array, then using that array my result in bad
+memory references or segmentation faults.  Nevertheless, there are
+situations, working with large data sets, where you simply have no
+other choice.
+
+The C code to be wrapped for argoutview arrays are characterized by
+pointers: pointers to the dimensions and double pointers to the data,
+so that these values can be passed back to the user.  The argoutview
+typemap signatures are therefore
+
+  * ``( DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1 )``
+  * ``( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1 )``
+  * ``( DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )``
+  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2 )``
+  * ``( DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)``
+
+Note that arrays with hard-coded dimensions are not supported.  Thes
+have to be allocated ahead of time, which defeats the purpose of the
+typemap.
+
 Output Arrays
 -------------
 
@@ -402,7 +432,7 @@ to pass this to a `SWIG`_-wrapped C/C++ function that expects an
 array scalar as an integer.  (Often, this does in fact work -- it
 depends on whether `NumPy`_ recognizes the integer type you are using
 as inheriting from the `python`_ integer type on the platform you are
-using.  Often, this means that code that works on a 32-bit machine
+using.  Sometimes, this means that code that works on a 32-bit machine
 will fail on a 64-bit machine.)
 
 If you get a `python`_ error that looks like the following::
@@ -413,7 +443,7 @@ and the argument you are passing is an integer extracted from a
 `NumPy`_ array, then you have stumbled upon this problem.  The
 solution is to modify the `SWIG`_ type conversion system to accept
 `Numpy`_ array scalars in addition to the standard integer types.
-Fortunately, this capabilitiy has been provided to you.  Simply copy
+Fortunately, this capabilitiy has been provided for you.  Simply copy
 the file::
 
     pyfragments.swg
@@ -449,7 +479,16 @@ Helper Functions
 
 The ``numpy.i`` file containes several macros and routines that it
 uses internally to build its typemaps.  However, these functions may
-be useful elsewhere in your interface file.
+be useful elsewhere in your interface file.  These macros and routines
+are implemented as fragments, as described briefly in the previous
+section.  If you try to use one or more of the following macros or
+functions, but your compiler complains that it does not recognize the
+symbol, then you need to force these fragments to appear in your code
+using::
+
+    %fragment("NumPy_Fragments");
+
+in your `SWIG`_ interface file.
 
 Macros
 ------
@@ -806,12 +845,12 @@ between `NumPy`_ arrays and C arrays:
     ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
     ``unsigned long long``, ``float`` and ``double``.
 
-  * That support 23 different argument signatures for each data type,
+  * That support 29 different argument signatures for each data type,
     including:
 
     + One-dimensional, two-dimensional and three-dimensional arrays.
 
-    + Input-only, in-place, and argout behavior.
+    + Input-only, in-place, argout and argoutview behavior.
 
     + Hard-coded dimensions, data-buffer-then-dimensions
       specification, and dimensions-then-data-buffer specification.
@@ -820,11 +859,11 @@ The ``numpy.i`` interface file also provides additional tools for
 wrapper developers, including:
 
   * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
-    implementing the 23 argument signatures for the user's choice of
+    implementing the 29 argument signatures for the user's choice of
     (1) C data type, (2) `NumPy`_ data type (assuming they match), and
     (3) dimension type.
 
-  * Seven C macros and eleven C functions that can be used to write
+  * Eight C macros and twelve C functions that can be used to write
     specialized typemaps, extensions, or inlined functions that handle
     cases not covered by the provided typemaps.
 
@@ -837,6 +876,6 @@ The effort to standardize this work into ``numpy.i`` began at the 2005
 `SciPy <http://scipy.org>`_ Conference with a conversation between
 Fernando Perez and myself.  Fernando collected helper functions and
 typemaps from Eric Jones, Michael Hunter, Anna Omelchenko and Michael
-Sanner.  Sebastian Hasse has also provided additional error checking
-and use cases.  The work of these contributors has made this end
-result possible.
+Sanner.  Sebastian Hasse and Georg Holzmann have also provided
+additional error checking and use cases.  The work of these
+contributors has made this end result possible.

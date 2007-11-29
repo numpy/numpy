@@ -5,7 +5,7 @@
 <meta name="generator" content="Docutils 0.4: http://docutils.sourceforge.net/" />
 <title>numpy.i: a SWIG Interface File for NumPy</title>
 <meta name="author" content="Bill Spotz" />
-<meta name="date" content="22 November, 2007" />
+<meta name="date" content="29 November, 2007" />
 <style type="text/css">
 
 /*
@@ -302,7 +302,7 @@ ul.auto-toc {
 <tr class="field"><th class="docinfo-name">Institution:</th><td class="field-body">Sandia National Laboratories</td>
 </tr>
 <tr><th class="docinfo-name">Date:</th>
-<td>22 November, 2007</td></tr>
+<td>29 November, 2007</td></tr>
 </tbody>
 </table>
 <div class="contents topic">
@@ -314,28 +314,29 @@ ul.auto-toc {
 <li><a class="reference" href="#input-arrays" id="id4" name="id4">Input Arrays</a></li>
 <li><a class="reference" href="#in-place-arrays" id="id5" name="id5">In-Place Arrays</a></li>
 <li><a class="reference" href="#argout-arrays" id="id6" name="id6">Argout Arrays</a></li>
-<li><a class="reference" href="#output-arrays" id="id7" name="id7">Output Arrays</a></li>
-<li><a class="reference" href="#other-common-types-bool" id="id8" name="id8">Other Common Types: bool</a></li>
-<li><a class="reference" href="#other-common-types-complex" id="id9" name="id9">Other Common Types: complex</a></li>
+<li><a class="reference" href="#argoutview-arrays" id="id7" name="id7">Argoutview Arrays</a></li>
+<li><a class="reference" href="#output-arrays" id="id8" name="id8">Output Arrays</a></li>
+<li><a class="reference" href="#other-common-types-bool" id="id9" name="id9">Other Common Types: bool</a></li>
+<li><a class="reference" href="#other-common-types-complex" id="id10" name="id10">Other Common Types: complex</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#numpy-array-scalars-and-swig" id="id10" name="id10">NumPy Array Scalars and SWIG</a><ul>
-<li><a class="reference" href="#why-is-there-a-second-file" id="id11" name="id11">Why is There a Second File?</a></li>
+<li><a class="reference" href="#numpy-array-scalars-and-swig" id="id11" name="id11">NumPy Array Scalars and SWIG</a><ul>
+<li><a class="reference" href="#why-is-there-a-second-file" id="id12" name="id12">Why is There a Second File?</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#helper-functions" id="id12" name="id12">Helper Functions</a><ul>
-<li><a class="reference" href="#macros" id="id13" name="id13">Macros</a></li>
-<li><a class="reference" href="#routines" id="id14" name="id14">Routines</a></li>
+<li><a class="reference" href="#helper-functions" id="id13" name="id13">Helper Functions</a><ul>
+<li><a class="reference" href="#macros" id="id14" name="id14">Macros</a></li>
+<li><a class="reference" href="#routines" id="id15" name="id15">Routines</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#beyond-the-provided-typemaps" id="id15" name="id15">Beyond the Provided Typemaps</a><ul>
-<li><a class="reference" href="#a-common-example" id="id16" name="id16">A Common Example</a></li>
-<li><a class="reference" href="#other-situations" id="id17" name="id17">Other Situations</a></li>
-<li><a class="reference" href="#a-final-note" id="id18" name="id18">A Final Note</a></li>
+<li><a class="reference" href="#beyond-the-provided-typemaps" id="id16" name="id16">Beyond the Provided Typemaps</a><ul>
+<li><a class="reference" href="#a-common-example" id="id17" name="id17">A Common Example</a></li>
+<li><a class="reference" href="#other-situations" id="id18" name="id18">Other Situations</a></li>
+<li><a class="reference" href="#a-final-note" id="id19" name="id19">A Final Note</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#summary" id="id19" name="id19">Summary</a></li>
-<li><a class="reference" href="#acknowledgements" id="id20" name="id20">Acknowledgements</a></li>
+<li><a class="reference" href="#summary" id="id20" name="id20">Summary</a></li>
+<li><a class="reference" href="#acknowledgements" id="id21" name="id21">Acknowledgements</a></li>
 </ul>
 </div>
 <div class="section">
@@ -636,7 +637,37 @@ cannot be avoided.  Note that for these types of 1D typemaps, the
 <a class="reference" href="http://www.python.org">python</a> function will take a single argument representing <tt class="docutils literal"><span class="pre">DIM1</span></tt>.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id7" id="output-arrays" name="output-arrays">Output Arrays</a></h2>
+<h2><a class="toc-backref" href="#id7" id="argoutview-arrays" name="argoutview-arrays">Argoutview Arrays</a></h2>
+<p>Argoutview arrays are for when your C code provides you with a view of
+its internal data and does not require any memory to be allocated by
+the user.  This can be dangerous.  There is almost no way to guarantee
+that the internal data from the C code will remain in existence for
+the entire lifetime of the <a class="reference" href="http://numpy.scipy.org">NumPy</a> array that encapsulates it.  If
+the user destroys the object that provides the view of the data before
+destroying the <a class="reference" href="http://numpy.scipy.org">NumPy</a> array, then using that array my result in bad
+memory references or segmentation faults.  Nevertheless, there are
+situations, working with large data sets, where you simply have no
+other choice.</p>
+<p>The C code to be wrapped for argoutview arrays are characterized by
+pointers: pointers to the dimensions and double pointers to the data,
+so that these values can be passed back to the user.  The argoutview
+typemap signatures are therefore</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">(</span> <span class="pre">DATA_TYPE**</span> <span class="pre">ARGOUTVIEW_ARRAY1,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM1</span> <span class="pre">)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM1,</span> <span class="pre">DATA_TYPE**</span> <span class="pre">ARGOUTVIEW_ARRAY1</span> <span class="pre">)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(</span> <span class="pre">DATA_TYPE**</span> <span class="pre">ARGOUTVIEW_ARRAY2,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM1,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM2</span> <span class="pre">)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM1,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM2,</span> <span class="pre">DATA_TYPE**</span> <span class="pre">ARGOUTVIEW_ARRAY2</span> <span class="pre">)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(</span> <span class="pre">DATA_TYPE**</span> <span class="pre">ARGOUTVIEW_ARRAY3,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM1,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM2,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM3)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">(</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM1,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM2,</span> <span class="pre">DIM_TYPE*</span> <span class="pre">DIM3,</span> <span class="pre">DATA_TYPE**</span> <span class="pre">ARGOUTVIEW_ARRAY3)</span></tt></li>
+</ul>
+</blockquote>
+<p>Note that arrays with hard-coded dimensions are not supported.  Thes
+have to be allocated ahead of time, which defeats the purpose of the
+typemap.</p>
+</div>
+<div class="section">
+<h2><a class="toc-backref" href="#id8" id="output-arrays" name="output-arrays">Output Arrays</a></h2>
 <p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> interface file does not support typemaps for output
 arrays, for several reasons.  First, C/C++ return arguments are
 limited to a single value.  This prevents obtaining dimension
@@ -656,7 +687,7 @@ function to be wrapped, either with <tt class="docutils literal"><span class="pr
 methods or <tt class="docutils literal"><span class="pre">%ignore</span></tt> and <tt class="docutils literal"><span class="pre">%rename</span></tt> for the case of functions.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id8" id="other-common-types-bool" name="other-common-types-bool">Other Common Types: bool</a></h2>
+<h2><a class="toc-backref" href="#id9" id="other-common-types-bool" name="other-common-types-bool">Other Common Types: bool</a></h2>
 <p>Note that C++ type <tt class="docutils literal"><span class="pre">bool</span></tt> is not supported in the list in the
 <a class="reference" href="#available-typemaps">Available Typemaps</a> section.  NumPy bools are a single byte, while
 the C++ <tt class="docutils literal"><span class="pre">bool</span></tt> is four bytes (at least on my system).  Therefore:</p>
@@ -673,7 +704,7 @@ expansion:</p>
 but <a class="reference" href="#in-place-arrays">In-Place Arrays</a> might fail type-checking.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id9" id="other-common-types-complex" name="other-common-types-complex">Other Common Types: complex</a></h2>
+<h2><a class="toc-backref" href="#id10" id="other-common-types-complex" name="other-common-types-complex">Other Common Types: complex</a></h2>
 <p>Typemap conversions for complex floating-point types is also not
 supported automatically.  This is because <a class="reference" href="http://www.python.org">python</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> are
 written in C, which does not have native complex types.  Both
@@ -707,7 +738,7 @@ work.</p>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id10" id="numpy-array-scalars-and-swig" name="numpy-array-scalars-and-swig">NumPy Array Scalars and SWIG</a></h1>
+<h1><a class="toc-backref" href="#id11" id="numpy-array-scalars-and-swig" name="numpy-array-scalars-and-swig">NumPy Array Scalars and SWIG</a></h1>
 <p><a class="reference" href="http://www.swig.org">SWIG</a> has sophisticated type checking for numerical types.  For
 example, if your C/C++ routine expects an integer as input, the code
 generated by <a class="reference" href="http://www.swig.org">SWIG</a> will check for both <a class="reference" href="http://www.python.org">python</a> integers and
@@ -720,7 +751,7 @@ to pass this to a <a class="reference" href="http://www.swig.org">SWIG</a>-wrapp
 array scalar as an integer.  (Often, this does in fact work -- it
 depends on whether <a class="reference" href="http://numpy.scipy.org">NumPy</a> recognizes the integer type you are using
 as inheriting from the <a class="reference" href="http://www.python.org">python</a> integer type on the platform you are
-using.  Often, this means that code that works on a 32-bit machine
+using.  Sometimes, this means that code that works on a 32-bit machine
 will fail on a 64-bit machine.)</p>
 <p>If you get a <a class="reference" href="http://www.python.org">python</a> error that looks like the following:</p>
 <pre class="literal-block">
@@ -730,7 +761,7 @@ TypeError: in method 'MyClass_MyMethod', argument 2 of type 'int'
 <a class="reference" href="http://numpy.scipy.org">NumPy</a> array, then you have stumbled upon this problem.  The
 solution is to modify the <a class="reference" href="http://www.swig.org">SWIG</a> type conversion system to accept
 <a class="reference" href="http://numpy.scipy.org">Numpy</a> array scalars in addition to the standard integer types.
-Fortunately, this capabilitiy has been provided to you.  Simply copy
+Fortunately, this capabilitiy has been provided for you.  Simply copy
 the file:</p>
 <pre class="literal-block">
 pyfragments.swg
@@ -739,7 +770,7 @@ pyfragments.swg
 be fixed.  It is suggested that you do this anyway, as it only
 increases the capabilities of your <a class="reference" href="http://www.python.org">python</a> interface.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id11" id="why-is-there-a-second-file" name="why-is-there-a-second-file">Why is There a Second File?</a></h2>
+<h2><a class="toc-backref" href="#id12" id="why-is-there-a-second-file" name="why-is-there-a-second-file">Why is There a Second File?</a></h2>
 <p>The <a class="reference" href="http://www.swig.org">SWIG</a> type checking and conversion system is a complicated
 combination of C macros, <a class="reference" href="http://www.swig.org">SWIG</a> macros, <a class="reference" href="http://www.swig.org">SWIG</a> typemaps and <a class="reference" href="http://www.swig.org">SWIG</a>
 fragments.  Fragments are a way to conditionally insert code into your
@@ -760,12 +791,21 @@ in <tt class="docutils literal"><span class="pre">numpy.i</span></tt>, they woul
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id12" id="helper-functions" name="helper-functions">Helper Functions</a></h1>
+<h1><a class="toc-backref" href="#id13" id="helper-functions" name="helper-functions">Helper Functions</a></h1>
 <p>The <tt class="docutils literal"><span class="pre">numpy.i</span></tt> file containes several macros and routines that it
 uses internally to build its typemaps.  However, these functions may
-be useful elsewhere in your interface file.</p>
+be useful elsewhere in your interface file.  These macros and routines
+are implemented as fragments, as described briefly in the previous
+section.  If you try to use one or more of the following macros or
+functions, but your compiler complains that it does not recognize the
+symbol, then you need to force these fragments to appear in your code
+using:</p>
+<pre class="literal-block">
+%fragment(&quot;NumPy_Fragments&quot;);
+</pre>
+<p>in your <a class="reference" href="http://www.swig.org">SWIG</a> interface file.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id13" id="macros" name="macros">Macros</a></h2>
+<h2><a class="toc-backref" href="#id14" id="macros" name="macros">Macros</a></h2>
 <blockquote>
 <dl class="docutils">
 <dt><strong>is_array(a)</strong></dt>
@@ -797,7 +837,7 @@ order.  Equivalent to <tt class="docutils literal"><span class="pre">(PyArray_IS
 </blockquote>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id14" id="routines" name="routines">Routines</a></h2>
+<h2><a class="toc-backref" href="#id15" id="routines" name="routines">Routines</a></h2>
 <blockquote>
 <p><strong>pytype_string()</strong></p>
 <blockquote>
@@ -957,11 +997,11 @@ string and return 0.</p>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id15" id="beyond-the-provided-typemaps" name="beyond-the-provided-typemaps">Beyond the Provided Typemaps</a></h1>
+<h1><a class="toc-backref" href="#id16" id="beyond-the-provided-typemaps" name="beyond-the-provided-typemaps">Beyond the Provided Typemaps</a></h1>
 <p>There are many C or C++ array/<a class="reference" href="http://numpy.scipy.org">NumPy</a> array situations not covered by
 a simple <tt class="docutils literal"><span class="pre">%include</span> <span class="pre">&quot;numpy.i&quot;</span></tt> and subsequent <tt class="docutils literal"><span class="pre">%apply</span></tt> directives.</p>
 <div class="section">
-<h2><a class="toc-backref" href="#id16" id="a-common-example" name="a-common-example">A Common Example</a></h2>
+<h2><a class="toc-backref" href="#id17" id="a-common-example" name="a-common-example">A Common Example</a></h2>
 <p>Consider a reasonable prototype for a dot product function:</p>
 <pre class="literal-block">
 double dot(int len, double* vec1, double* vec2);
@@ -1017,7 +1057,7 @@ above for <tt class="docutils literal"><span class="pre">my_dot</span></tt> to g
 macro to perform this task.</p>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id17" id="other-situations" name="other-situations">Other Situations</a></h2>
+<h2><a class="toc-backref" href="#id18" id="other-situations" name="other-situations">Other Situations</a></h2>
 <p>There are other wrapping situations in which <tt class="docutils literal"><span class="pre">numpy.i</span></tt> may be
 helpful when you encounter them.</p>
 <blockquote>
@@ -1054,7 +1094,7 @@ developers of <tt class="docutils literal"><span class="pre">numpy.i</span></tt>
 </blockquote>
 </div>
 <div class="section">
-<h2><a class="toc-backref" href="#id18" id="a-final-note" name="a-final-note">A Final Note</a></h2>
+<h2><a class="toc-backref" href="#id19" id="a-final-note" name="a-final-note">A Final Note</a></h2>
 <p>When you use the <tt class="docutils literal"><span class="pre">%apply</span></tt> directive, as is usually necessary to use
 <tt class="docutils literal"><span class="pre">numpy.i</span></tt>, it will remain in effect until you tell <a class="reference" href="http://www.swig.org">SWIG</a> that it
 shouldn't be.  If the arguments to the functions or methods that you
@@ -1072,7 +1112,7 @@ where you want them, and then clear them after you are done.</p>
 </div>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id19" id="summary" name="summary">Summary</a></h1>
+<h1><a class="toc-backref" href="#id20" id="summary" name="summary">Summary</a></h1>
 <p>Out of the box, <tt class="docutils literal"><span class="pre">numpy.i</span></tt> provides typemaps that support conversion
 between <a class="reference" href="http://numpy.scipy.org">NumPy</a> arrays and C arrays:</p>
 <blockquote>
@@ -1081,10 +1121,10 @@ between <a class="reference" href="http://numpy.scipy.org">NumPy</a> arrays and 
 <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">char</span></tt>, <tt class="docutils literal"><span class="pre">short</span></tt>, <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">short</span></tt>, <tt class="docutils literal"><span class="pre">int</span></tt>,
 <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span></tt>, <tt class="docutils literal"><span class="pre">long</span></tt>, <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span></tt>, <tt class="docutils literal"><span class="pre">long</span> <span class="pre">long</span></tt>,
 <tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">long</span></tt>, <tt class="docutils literal"><span class="pre">float</span></tt> and <tt class="docutils literal"><span class="pre">double</span></tt>.</li>
-<li>That support 23 different argument signatures for each data type,
+<li>That support 29 different argument signatures for each data type,
 including:<ul>
 <li>One-dimensional, two-dimensional and three-dimensional arrays.</li>
-<li>Input-only, in-place, and argout behavior.</li>
+<li>Input-only, in-place, argout and argoutview behavior.</li>
 <li>Hard-coded dimensions, data-buffer-then-dimensions
 specification, and dimensions-then-data-buffer specification.</li>
 </ul>
@@ -1096,31 +1136,31 @@ wrapper developers, including:</p>
 <blockquote>
 <ul class="simple">
 <li>A <a class="reference" href="http://www.swig.org">SWIG</a> macro (<tt class="docutils literal"><span class="pre">%numpy_typemaps</span></tt>) with three arguments for
-implementing the 23 argument signatures for the user's choice of
+implementing the 29 argument signatures for the user's choice of
 (1) C data type, (2) <a class="reference" href="http://numpy.scipy.org">NumPy</a> data type (assuming they match), and
 (3) dimension type.</li>
-<li>Seven C macros and eleven C functions that can be used to write
+<li>Eight C macros and twelve C functions that can be used to write
 specialized typemaps, extensions, or inlined functions that handle
 cases not covered by the provided typemaps.</li>
 </ul>
 </blockquote>
 </div>
 <div class="section">
-<h1><a class="toc-backref" href="#id20" id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
+<h1><a class="toc-backref" href="#id21" id="acknowledgements" name="acknowledgements">Acknowledgements</a></h1>
 <p>Many people have worked to glue <a class="reference" href="http://www.swig.org">SWIG</a> and <a class="reference" href="http://numpy.scipy.org">NumPy</a> together (as well
 as <a class="reference" href="http://www.swig.org">SWIG</a> and the predecessors of <a class="reference" href="http://numpy.scipy.org">NumPy</a>, Numeric and numarray).
 The effort to standardize this work into <tt class="docutils literal"><span class="pre">numpy.i</span></tt> began at the 2005
 <a class="reference" href="http://scipy.org">SciPy</a> Conference with a conversation between
 Fernando Perez and myself.  Fernando collected helper functions and
 typemaps from Eric Jones, Michael Hunter, Anna Omelchenko and Michael
-Sanner.  Sebastian Hasse has also provided additional error checking
-and use cases.  The work of these contributors has made this end
-result possible.</p>
+Sanner.  Sebastian Hasse and Georg Holzmann have also provided
+additional error checking and use cases.  The work of these
+contributors has made this end result possible.</p>
 </div>
 </div>
 <div class="footer">
 <hr class="footer" />
-Generated on: 2007-11-22 18:34 UTC.
+Generated on: 2007-11-29 19:48 UTC.
 Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
 
 </div>
