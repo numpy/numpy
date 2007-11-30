@@ -25,19 +25,19 @@ Is it an array, and if so what is its length?  Is it input-only?
 Output-only?  Input-output?  `SWIG`_ cannot determine these details,
 and does not attempt to do so.
 
-Making an educated guess, humans can conclude that this is probably a
-routine that takes an input-only array of length ``n`` of ``double``
-values called ``seq`` and returns the root mean square.  The default
-behavior of `SWIG`_, however, will be to create a wrapper function
-that compiles, but is nearly impossible to use from the scripting
-language in the way the C routine was intended.
+If we designed ``rms``, we probably made it a routine that takes an
+input-only array of length ``n`` of ``double`` values called ``seq``
+and returns the root mean square.  The default behavior of `SWIG`_,
+however, will be to create a wrapper function that compiles, but is
+nearly impossible to use from the scripting language in the way the C
+routine was intended.
 
 For `python <http://www.python.org>`_, the preferred way of handling
 contiguous (or technically, *strided*) blocks of homogeneous data is
 with the module `NumPy <http://numpy.scipy.org>`_, which provides full
-object-oriented access to arrays of data.  Therefore, the most logical
-`python`_ interface for the ``rms`` function would be (including doc
-string)::
+object-oriented access to multidimensial arrays of data.  Therefore,
+the most logical `python`_ interface for the ``rms`` function would be
+(including doc string)::
 
     def rms(seq):
         """
@@ -236,7 +236,12 @@ dimension types:
   * ``double``
 
 In the following descriptions, we reference a generic ``DATA_TYPE``, which
-could be any of the C data types listed above.
+could be any of the C data types listed above, and ``DIM_TYPE`` which
+should be one of the many types of integers.
+
+The typemap signatures are largely differentiated on the name given to
+the buffer pointer.  Names with ``FARRAY`` are for FORTRAN-ordered
+arrays, and names with ``ARRAY`` are for C-ordered (or 1D arrays).
 
 Input Arrays
 ------------
@@ -247,15 +252,27 @@ routine but are not altered in-place or returned to the user.  The
 sequence (such as a list) that can be converted to the requested type
 of array.  The input array signatures are
 
+1D:
+
   * ``(	DATA_TYPE IN_ARRAY1[ANY] )``
-  * ``(	DATA_TYPE* IN_ARRAY1,  int DIM1 )``
-  * ``(	int DIM1,  DATA_TYPE* IN_ARRAY1 )``
+  * ``(	DATA_TYPE* IN_ARRAY1, int DIM1 )``
+  * ``(	int DIM1, DATA_TYPE* IN_ARRAY1 )``
+
+2D:
+
   * ``(	DATA_TYPE IN_ARRAY2[ANY][ANY] )``
-  * ``(	DATA_TYPE* IN_ARRAY2,  int DIM1,  int DIM2 )``
-  * ``(	int DIM1,  int DIM2,  DATA_TYPE* IN_ARRAY2 )``
+  * ``(	DATA_TYPE* IN_ARRAY2, int DIM1, int DIM2 )``
+  * ``(	int DIM1, int DIM2, DATA_TYPE* IN_ARRAY2 )``
+  * ``(	DATA_TYPE* IN_FARRAY2, int DIM1, int DIM2 )``
+  * ``(	int DIM1, int DIM2, DATA_TYPE* IN_FARRAY2 )``
+
+3D:
+
   * ``(	DATA_TYPE IN_ARRAY3[ANY][ANY][ANY] )``
-  * ``(	DATA_TYPE* IN_ARRAY3,  int DIM1,  int DIM2,  int DIM3 )``
-  * ``(	int DIM1,  int DIM2,  int DIM3,  DATA_TYPE* IN_ARRAY3 )``
+  * ``(	DATA_TYPE* IN_ARRAY3, int DIM1, int DIM2, int DIM3 )``
+  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_ARRAY3 )``
+  * ``(	DATA_TYPE* IN_FARRAY3, int DIM1, int DIM2, int DIM3 )``
+  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_FARRAY3 )``
 
 The first signature listed, ``( DATA_TYPE IN_ARRAY[ANY] )`` is for
 one-dimensional arrays with hard-coded dimensions.  Likewise,
@@ -271,15 +288,27 @@ function returns are significant.  The provided `python`_ argument
 must therefore be a `NumPy`_ array of the required type.  The in-place
 signatures are
 
+1D:
+
   * ``(	DATA_TYPE INPLACE_ARRAY1[ANY] )``
-  * ``(	DATA_TYPE* INPLACE_ARRAY1,  int DIM1 )``
-  * ``(	int DIM1,  DATA_TYPE* INPLACE_ARRAY1 )``
+  * ``(	DATA_TYPE* INPLACE_ARRAY1, int DIM1 )``
+  * ``(	int DIM1, DATA_TYPE* INPLACE_ARRAY1 )``
+
+2D:
+
   * ``(	DATA_TYPE INPLACE_ARRAY2[ANY][ANY] )``
-  * ``(	DATA_TYPE* INPLACE_ARRAY2,  int DIM1,  int DIM2 )``
-  * ``(	int DIM1,  int DIM2,  DATA_TYPE* INPLACE_ARRAY2 )``
+  * ``(	DATA_TYPE* INPLACE_ARRAY2, int DIM1, int DIM2 )``
+  * ``(	int DIM1, int DIM2, DATA_TYPE* INPLACE_ARRAY2 )``
+  * ``(	DATA_TYPE* INPLACE_FARRAY2, int DIM1, int DIM2 )``
+  * ``(	int DIM1, int DIM2, DATA_TYPE* INPLACE_FARRAY2 )``
+
+3D:
+
   * ``(	DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY] )``
-  * ``(	DATA_TYPE* INPLACE_ARRAY3,  int DIM1,  int DIM2,  int DIM3 )``
-  * ``(	int DIM1,  int DIM2,  int DIM3,  DATA_TYPE* INPLACE_ARRAY3 )``
+  * ``(	DATA_TYPE* INPLACE_ARRAY3, int DIM1, int DIM2, int DIM3 )``
+  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_ARRAY3 )``
+  * ``(	DATA_TYPE* INPLACE_FARRAY3, int DIM1, int DIM2, int DIM3 )``
+  * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_FARRAY3 )``
 
 These typemaps now check to make sure that the ``INPLACE_ARRAY``
 arguments use native byte ordering.  If not, an exception is raised.
@@ -298,10 +327,18 @@ return argument, they are packed into a tuple or list, depending on
 the version of `python`_.  The `python`_ user does not pass these
 arrays in, they simply get returned.  The argout signatures are
 
+1D:
+
   * ``(	DATA_TYPE ARGOUT_ARRAY1[ANY] )``
-  * ``(	DATA_TYPE* ARGOUT_ARRAY1,  int DIM1 )``
-  * ``(	int DIM1,  DATA_TYPE* ARGOUT_ARRAY1 )``
+  * ``(	DATA_TYPE* ARGOUT_ARRAY1, int DIM1 )``
+  * ``(	int DIM1, DATA_TYPE* ARGOUT_ARRAY1 )``
+
+2D:
+
   * ``(	DATA_TYPE ARGOUT_ARRAY2[ANY][ANY] )``
+
+3D:
+
   * ``(	DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY] )``
 
 These are typically used in situations where in C/C++, you would
@@ -333,16 +370,29 @@ pointers: pointers to the dimensions and double pointers to the data,
 so that these values can be passed back to the user.  The argoutview
 typemap signatures are therefore
 
+1D:
+
   * ``( DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1 )``
   * ``( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1 )``
+  * ``( DATA_TYPE** ARGOUTVIEW_FARRAY1, DIM_TYPE* DIM1 )``
+  * ``( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_FARRAY1 )``
+
+2D:
+
   * ``( DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )``
   * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2 )``
+  * ``( DATA_TYPE** ARGOUTVIEW_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2 )``
+  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_FARRAY2 )``
+
+3D:
+
   * ``( DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
   * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)``
+  * ``( DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+  * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_FARRAY3)``
 
-Note that arrays with hard-coded dimensions are not supported.  Thes
-have to be allocated ahead of time, which defeats the purpose of the
-typemap.
+Note that arrays with hard-coded dimensions are not supported.  These
+cannot follow the double pointer signatures of these typemaps.
 
 Output Arrays
 -------------
@@ -480,11 +530,11 @@ Helper Functions
 The ``numpy.i`` file containes several macros and routines that it
 uses internally to build its typemaps.  However, these functions may
 be useful elsewhere in your interface file.  These macros and routines
-are implemented as fragments, as described briefly in the previous
-section.  If you try to use one or more of the following macros or
-functions, but your compiler complains that it does not recognize the
-symbol, then you need to force these fragments to appear in your code
-using::
+are implemented as fragments, which are described briefly in the
+previous section.  If you try to use one or more of the following
+macros or functions, but your compiler complains that it does not
+recognize the symbol, then you need to force these fragments to appear
+in your code using::
 
     %fragment("NumPy_Fragments");
 
@@ -525,6 +575,9 @@ Macros
   **array_is_native(a)**
     Evaluates as true if the data buffer of ``a`` uses native byte
     order.  Equivalent to ``(PyArray_ISNOTSWAPPED(a))``.
+
+  **array_is_fortran(a)**
+    Evaluates as true if ``a`` is FORTRAN ordered.
 
 Routines
 --------
@@ -719,6 +772,19 @@ Routines
     string and return 0.
 
 
+  **require_fortran()**
+
+    Return type: ``int``
+
+    Arguments:
+
+    * ``PyArrayObject* ary``, a `NumPy`_ array.
+
+    Require the given ``PyArrayObject`` to to be FORTRAN ordered.  If
+    the the ``PyArrayObject`` is already FORTRAN ordered, do nothing.
+    Else, set the FORTRAN ordering flag and recompute the strides.
+
+
 Beyond the Provided Typemaps
 ============================
 
@@ -845,7 +911,7 @@ between `NumPy`_ arrays and C arrays:
     ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
     ``unsigned long long``, ``float`` and ``double``.
 
-  * That support 29 different argument signatures for each data type,
+  * That support 41 different argument signatures for each data type,
     including:
 
     + One-dimensional, two-dimensional and three-dimensional arrays.
@@ -855,15 +921,18 @@ between `NumPy`_ arrays and C arrays:
     + Hard-coded dimensions, data-buffer-then-dimensions
       specification, and dimensions-then-data-buffer specification.
 
+    + Both C-ordering ("last dimension fastest") or FORTRAN-ordering
+      ("first dimension fastest") support for 2D and 3D arrays.
+
 The ``numpy.i`` interface file also provides additional tools for
 wrapper developers, including:
 
   * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
-    implementing the 29 argument signatures for the user's choice of
+    implementing the 41 argument signatures for the user's choice of
     (1) C data type, (2) `NumPy`_ data type (assuming they match), and
     (3) dimension type.
 
-  * Eight C macros and twelve C functions that can be used to write
+  * Nine C macros and 13 C functions that can be used to write
     specialized typemaps, extensions, or inlined functions that handle
     cases not covered by the provided typemaps.
 

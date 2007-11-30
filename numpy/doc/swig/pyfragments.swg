@@ -1,3 +1,4 @@
+/*-*- C -*-*/
 /**********************************************************************/
 
 /* For numpy versions prior to 1.0, the names of certain data types
@@ -55,6 +56,8 @@
 %#define NPY_MAX_ULONGLONG MAX_ULONGLONG
 %#define NPY_MAX_INTP      MAX_INTP
 %#define NPY_MIN_INTP      MIN_INTP
+
+%#define NPY_F_CONTIGUOUS  F_CONTIGUOUS
 %#endif
 }
 

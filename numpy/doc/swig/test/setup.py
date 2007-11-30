@@ -21,6 +21,13 @@ _Array = Extension("_Array",
                    include_dirs = [numpy_include],
                    )
 
+# Farray extension module
+_Farray = Extension("_Farray",
+                    ["Farray_wrap.cxx",
+                     "Farray.cxx"],
+                    include_dirs = [numpy_include],
+                    )
+
 # _Vector extension module
 _Vector = Extension("_Vector",
                     ["Vector_wrap.cxx",
@@ -46,6 +53,6 @@ _Tensor = Extension("_Tensor",
 setup(name        = "NumpyTypemapTests",
       description = "Functions that work on arrays",
       author      = "Bill Spotz",
-      py_modules  = ["Array", "Vector", "Matrix", "Tensor"],
-      ext_modules = [_Array , _Vector , _Matrix , _Tensor ]
+      py_modules  = ["Array", "Farray", "Vector", "Matrix", "Tensor"],
+      ext_modules = [_Array , _Farray , _Vector , _Matrix , _Tensor ]
       )
