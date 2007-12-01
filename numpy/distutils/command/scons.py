@@ -197,6 +197,17 @@ class scons(old_build_ext):
         if self.fcompiler is not None:
             self.fcompiler.customize(self.distribution)
 
+	# C++ compiler
+        cxxcompiler = new_compiler(compiler = compiler_type,
+                                   verbose = self.verbose,
+                                   dry_run = self.dry_run,
+                                   force = self.force)
+	if cxxcompiler is not None:
+	    cxxcompiler.customize(self.distribution, need_cxx = 1)
+	    cxxcompiler.customize_cmd(self)
+	    self.cxxcompiler = cxxcompiler.cxx_compiler()
+	    #print self.cxxcompiler.compiler_cxx[0]
+
     def run(self):
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
