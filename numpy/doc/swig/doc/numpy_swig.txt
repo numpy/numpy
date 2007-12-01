@@ -325,7 +325,9 @@ and return the sequence.  This is what the argout typemaps do.  If a
 wrapped function that uses these argout typemaps has more than one
 return argument, they are packed into a tuple or list, depending on
 the version of `python`_.  The `python`_ user does not pass these
-arrays in, they simply get returned.  The argout signatures are
+arrays in, they simply get returned.  For the case where a dimension
+is specified, the python user must provide that dimension as an
+argument.  The argout signatures are
 
 1D:
 
@@ -347,7 +349,7 @@ array(s) values.  In `python`_, the arrays are allocated for you and
 returned as new array objects.
 
 Note that we support ``DATA_TYPE*`` argout typemaps in 1D, but not 2D
-or 3D.  This because of a quirk with the `SWIG`_ typemap syntax and
+or 3D.  This is because of a quirk with the `SWIG`_ typemap syntax and
 cannot be avoided.  Note that for these types of 1D typemaps, the
 `python`_ function will take a single argument representing ``DIM1``.
 
