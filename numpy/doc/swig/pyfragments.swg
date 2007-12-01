@@ -57,6 +57,7 @@
 %#define NPY_MAX_INTP      MAX_INTP
 %#define NPY_MIN_INTP      MIN_INTP
 
+%#define NPY_FARRAY        FARRAY
 %#define NPY_F_CONTIGUOUS  F_CONTIGUOUS
 %#endif
 }

@@ -4,7 +4,7 @@
 
 :Author:      Bill Spotz
 :Institution: Sandia National Laboratories
-:Date:        29 November, 2007
+:Date:        1 December, 2007
 
 .. contents::
 
@@ -374,8 +374,6 @@ typemap signatures are therefore
 
   * ``( DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1 )``
   * ``( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1 )``
-  * ``( DATA_TYPE** ARGOUTVIEW_FARRAY1, DIM_TYPE* DIM1 )``
-  * ``( DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_FARRAY1 )``
 
 2D:
 
