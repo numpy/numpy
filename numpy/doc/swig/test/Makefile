@@ -11,9 +11,9 @@ all: $(WRAPPERS) Vector.cxx Vector.h Matrix.cxx Matrix.h Tensor.cxx Tensor.h
 # Test target: run the tests
 .PHONY : test
 test: all
-	testVector.py
-	testMatrix.py
-	testTensor.py
+	python testVector.py
+	python testMatrix.py
+	python testTensor.py
 
 # Rule: %.i -> %_wrap.cxx
 %_wrap.cxx: %.i %.h ../numpy.i
