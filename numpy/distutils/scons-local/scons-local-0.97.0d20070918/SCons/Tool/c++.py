@@ -71,8 +71,10 @@ def generate(env):
         shared_obj.add_emitter(suffix, SCons.Defaults.SharedObjectEmitter)
 
     SCons.Tool.cc.add_common_cc_variables(env)
+
+    cxx = env.Detect(compilers)
         
-    env['CXX']        = 'c++'
+    env['CXX']        = cxx
     env['CXXFLAGS']   = SCons.Util.CLVar('$CCFLAGS')
     env['CXXCOM']     = '$CXX -o $TARGET -c $CXXFLAGS $_CCCOMCOM $SOURCES'
     env['SHCXX']      = '$CXX'
