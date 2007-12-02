@@ -379,7 +379,7 @@ class NumpyTest:
         test_dir_module = parent_module_name+'.tests'
         test_module_name = test_dir_module+'.'+test_module_name
 
-        if not sys.modules.has_key(test_dir_module):
+        if test_dir_module not in sys.modules:
             sys.modules[test_dir_module] = imp.new_module(test_dir_module)
 
         old_sys_path = sys.path[:]
@@ -463,7 +463,8 @@ class NumpyTest:
             d = os.path.join(d, 'tests')
             if not os.path.isdir(d):
                 continue
-            if test_dirs_names.has_key(d): continue
+            if d in test_dirs_names:
+                continue
             test_dir_module = '.'.join(name.split('.')[:-1]+['tests'])
             test_dirs_names[d] = test_dir_module
 
@@ -477,7 +478,7 @@ class NumpyTest:
         for test_dir in test_dirs:
             test_dir_module = test_dirs_names[test_dir]
 
-            if not sys.modules.has_key(test_dir_module):
+            if test_dir_module not in sys.modules:
                 sys.modules[test_dir_module] = imp.new_module(test_dir_module)
 
             for fn in os.listdir(test_dir):

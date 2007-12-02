@@ -165,7 +165,7 @@ class _ModuleProxy(object):
         return False
 
 def _loadmodule(module):
-    if not sys.modules.has_key(module):
+    if module not in sys.modules:
         modules = module.split(".")
         s = ""
         for i in range(len(modules)):

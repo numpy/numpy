@@ -52,7 +52,7 @@ if have_setuptools:
 
 def _dict_append(d, **kws):
     for k,v in kws.items():
-        if not d.has_key(k):
+        if k not in d:
             d[k] = v
             continue
         dv = d[k]
@@ -122,11 +122,11 @@ def setup(**attr):
     cmdclass = numpy_cmdclass.copy()
 
     new_attr = attr.copy()
-    if new_attr.has_key('cmdclass'):
+    if 'cmdclass' in new_attr:
         cmdclass.update(new_attr['cmdclass'])
     new_attr['cmdclass'] = cmdclass
 
-    if new_attr.has_key('configuration'):
+    if 'configuration' in new_attr:
         # To avoid calling configuration if there are any errors
         # or help request in command in the line.
         configuration = new_attr.pop('configuration')
@@ -166,14 +166,14 @@ def setup(**attr):
                                 "library %r" % (item,))
         ext.libraries = new_libraries
     if libraries:
-        if not new_attr.has_key('libraries'):
+        if 'libraries' not in new_attr:
             new_attr['libraries'] = []
         for item in libraries:
             _check_append_library(new_attr['libraries'], item)
 
     # sources in ext_modules or libraries may contain header files
-    if (new_attr.has_key('ext_modules') or new_attr.has_key('libraries')) \
-       and not new_attr.has_key('headers'):
+    if ('ext_modules' in new_attr or 'libraries' in new_attr) \
+       and 'headers' not in new_attr:
         new_attr['headers'] = []
 
     # Use our custom NumpyDistribution class instead of distutils' one

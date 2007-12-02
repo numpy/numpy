@@ -1,3 +1,5 @@
+/*-*- C -*-*/
+
 /**********************************************************************/
 
 /* For numpy versions prior to 1.0, the names of certain data types
@@ -55,6 +57,9 @@
 %#define NPY_MAX_ULONGLONG MAX_ULONGLONG
 %#define NPY_MAX_INTP      MAX_INTP
 %#define NPY_MIN_INTP      MIN_INTP
+
+%#define NPY_FARRAY        FARRAY
+%#define NPY_F_CONTIGUOUS  F_CONTIGUOUS
 %#endif
 }
 
@@ -67,11 +72,12 @@
 
 %fragment(SWIG_AsVal_frag(long), "header",
 	  fragment="SWIG_CanCastAsInteger",
-	  fragment="NumPy_Backward_Compatibility")
+          fragment="NumPy_Backward_Compatibility")
 {
   SWIGINTERN int
   SWIG_AsVal_dec(long)(PyObject * obj, long * val)
   {
+    static PyArray_Descr * longDescr = PyArray_DescrNewFromType(NPY_LONG);
     if (PyInt_Check(obj)) {
       if (val) *val = PyInt_AsLong(obj);
       return SWIG_OK;
@@ -104,67 +110,11 @@
       }
     }
 %#endif
-    if (!PyArray_CheckScalar(obj)) return SWIG_TypeError;
-    int dataType = PyArray_TYPE(obj);
-    switch (dataType)
-    {
-      case NPY_BYTE:
-      {
-	char data = *((char*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, long);
-	break;
-      }
-      case NPY_UBYTE:
-      {
-	unsigned char data = *((unsigned char*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, long);
-	break;
-      }
-      case NPY_SHORT:
-      {
-	short data = *((short*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, long);
-	break;
-      }
-      case NPY_USHORT:
-      {
-	unsigned short data = *((unsigned short*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, long);
-	break;
-      }
-      case NPY_INT:
-      {
-	int data = *((int*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, long);
-	break;
-      }
-      case NPY_UINT:
-      {
-	unsigned int data = *((unsigned int*)PyArray_DATA(obj));
-	if (data > NPY_MAX_LONG) return SWIG_OverflowError;
-	if (val) *val = %numeric_cast(data, long);
-	break;
-      }
-      case NPY_LONG:
-      {
-	*val = *((long*)PyArray_DATA(obj));
-	break;
-      }
-      case NPY_ULONG:
-      {
-	unsigned long data = *((unsigned long*)PyArray_DATA(obj));
-	if (data > NPY_MAX_LONG) return SWIG_OverflowError;
-	if (val) *val = %numeric_cast(data, long);
-	break;
-      }
-      default:
-	return SWIG_TypeError;
-    }
+    if (!PyArray_IsScalar(obj,Integer)) return SWIG_TypeError;
+    PyArray_CastScalarToCtype(obj, (void*)val, longDescr);
     return SWIG_OK;
   }
 }
-
-
 
 
 /* Override the SWIG_AsVal_frag(unsigned long) fragment so that it
@@ -174,11 +124,12 @@
 
 %fragment(SWIG_AsVal_frag(unsigned long),"header",
 	  fragment="SWIG_CanCastAsInteger",
-	  fragment="NumPy_Backward_Compatibility")
+          fragment="NumPy_Backward_Compatibility")
 {
   SWIGINTERN int
   SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val) 
   {
+    static PyArray_Descr * ulongDescr = PyArray_DescrNewFromType(NPY_ULONG);
     if (PyInt_Check(obj)) {
       long v = PyInt_AsLong(obj);
       if (v >= 0) {
@@ -216,64 +167,8 @@
       }
     }
 %#endif
-    if (!PyArray_CheckScalar(obj)) return SWIG_TypeError;
-    int dataType = PyArray_TYPE(obj);
-    switch (dataType)
-    {
-      case NPY_BYTE:
-      {
-	char data = *((char*)PyArray_DATA(obj));
-	if (data < 0) return SWIG_OverflowError;
-	if (val) *val = %numeric_cast(data, unsigned long);
-	break;
-      }
-      case NPY_UBYTE:
-      {
-	unsigned char data = *((unsigned char*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, unsigned long);
-	break;
-      }
-      case NPY_SHORT:
-      {
-	short data = *((short*)PyArray_DATA(obj));
-	if (data < 0) return SWIG_OverflowError;
-	if (val) *val = %numeric_cast(data, unsigned long);
-	break;
-      }
-      case NPY_USHORT:
-      {
-	unsigned short data = *((unsigned short*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, unsigned long);
-	break;
-      }
-      case NPY_INT:
-      {
-	int data = *((int*)PyArray_DATA(obj));
-	if (data < 0) return SWIG_OverflowError;
-	if (val) *val = %numeric_cast(data, unsigned long);
-	break;
-      }
-      case NPY_UINT:
-      {
-	unsigned int data = *((unsigned int*)PyArray_DATA(obj));
-	if (val) *val = %numeric_cast(data, unsigned long);
-	break;
-      }
-      case NPY_LONG:
-      {
-	long data = *((long*)PyArray_DATA(obj));
-	if (data < 0) return SWIG_OverflowError;
-	if (val) *val = %numeric_cast(data, unsigned long);
-	break;
-      }
-      case NPY_ULONG:
-      {
-	*val = *((unsigned long*)PyArray_DATA(obj));
-	break;
-      }
-      default:
-	return SWIG_TypeError;
-    }
+    if (!PyArray_IsScalar(obj,Integer)) return SWIG_TypeError;
+    PyArray_CastScalarToCtype(obj, (void*)val, ulongDescr);
     return SWIG_OK;
   }
 }

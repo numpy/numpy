@@ -202,7 +202,7 @@ class build_src(build_ext.build_ext):
                 if source is None:
                     continue
                 modules = [(package, module_base, source)]
-                if not self.py_modules_dict.has_key(package):
+                if package not in self.py_modules_dict:
                     self.py_modules_dict[package] = []
                 self.py_modules_dict[package] += modules
             else:
@@ -259,7 +259,7 @@ class build_src(build_ext.build_ext):
 
         sources, py_files = self.filter_py_files(sources)
 
-        if not self.py_modules_dict.has_key(package):
+        if package not in self.py_modules_dict:
             self.py_modules_dict[package] = []
         modules = []
         for f in py_files:
@@ -292,7 +292,7 @@ class build_src(build_ext.build_ext):
         else:
             if is_sequence(extension):
                 name = extension[0]
-            #    if not extension[1].has_key('include_dirs'):
+            #    if 'include_dirs' not in extension[1]:
             #        extension[1]['include_dirs'] = []
             #    incl_dirs = extension[1]['include_dirs']
             else:

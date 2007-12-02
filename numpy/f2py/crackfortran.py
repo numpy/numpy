@@ -214,14 +214,14 @@ for n in ['int','double','float','char','short','long','void','case','while',
     badnames[n]=n+'_bn'
     invbadnames[n+'_bn']=n
 def rmbadname1(name):
-    if badnames.has_key(name):
+    if name in badnames:
         errmess('rmbadname1: Replacing "%s" with "%s".\n'%(name,badnames[name]))
         return badnames[name]
     return name
 def rmbadname(names): return map(rmbadname1,names)
 
 def undo_rmbadname1(name):
-    if invbadnames.has_key(name):
+    if name in invbadnames:
         errmess('undo_rmbadname1: Replacing "%s" with "%s".\n'\
                 %(name,invbadnames[name]))
         return invbadnames[name]
@@ -568,11 +568,12 @@ def crackline(line,reset=0):
     if not m:
         re_1 = crackline_re_1
         if 0<=skipblocksuntil<=groupcounter:return
-        if groupcache[groupcounter].has_key('externals'):
+        if 'externals' in groupcache[groupcounter]:
             for name in groupcache[groupcounter]['externals']:
-                if invbadnames.has_key(name):
+                if name in invbadnames:
                     name=invbadnames[name]
-                if groupcache[groupcounter].has_key('interfaced') and name in groupcache[groupcounter]['interfaced']: continue
+                if 'interfaced' in groupcache[groupcounter] and name in groupcache[groupcounter]['interfaced']:
+                    continue
                 m1=re.match(r'(?P<before>[^"]*)\b%s\b\s*@\(@(?P<args>[^@]*)@\)@.*\Z'%name,markouterparen(line),re.I)
                 if m1:
                     m2 = re_1.match(m1.group('before'))
@@ -665,7 +666,8 @@ def appenddecl(decl,decl2,force=1):
     if decl is decl2: return decl
     for k in decl2.keys():
         if k=='typespec':
-            if force or not decl.has_key(k): decl[k]=decl2[k]
+            if force or k not in decl:
+                decl[k]=decl2[k]
         elif k=='attrspec':
             for l in decl2[k]:
                 decl=setattrspec(decl,l,force)
@@ -674,7 +676,8 @@ def appenddecl(decl,decl2,force=1):
         elif k=='charselector':
             decl=setcharselector(decl,decl2[k],force)
         elif k in ['=','typename']:
-            if force or not decl.has_key(k): decl[k]=decl2[k]
+            if force or k not in decl:
+                decl[k]=decl2[k]
         elif k=='note':
             pass
         elif k in ['intent','check','dimension','optional','required']:
@@ -754,12 +757,15 @@ def analyzeline(m,case,line):
 
         if case in ['call','callfun']:
             needinterface=1
-            if not groupcache[groupcounter].has_key('args'): return
+            if 'args' not in groupcache[groupcounter]:
+                return
             if name not in groupcache[groupcounter]['args']:
                 return
             for it in grouplist[groupcounter]:
-                if it['name']==name: return
-            if name in groupcache[groupcounter]['interfaced']: return
+                if it['name']==name:
+                    return
+            if name in groupcache[groupcounter]['interfaced']:
+                return
             block={'call':'subroutine','callfun':'function'}[case]
         if f77modulename and neededmodule==-1 and groupcounter<=1:
             neededmodule=groupcounter+2
@@ -834,7 +840,7 @@ def analyzeline(m,case,line):
             try: groupcache[groupcounter]['vars'][name]=appenddecl(groupcache[groupcounter]['vars'][name],groupcache[groupcounter-2]['vars'][''])
             except: pass
             if case=='callfun': # return type
-                if result and groupcache[groupcounter]['vars'].has_key(result):
+                if result and result in groupcache[groupcounter]['vars']:
                     if not name==result:
                         groupcache[groupcounter]['vars'][name]=appenddecl(groupcache[groupcounter]['vars'][name],groupcache[groupcounter]['vars'][result])
             #if groupcounter>1: # name is interfaced
@@ -876,7 +882,7 @@ def analyzeline(m,case,line):
             i=markouterparen(ll).find('@)@')-2
             ll=ll[:i+1]+'::'+ll[i+1:]
             i=ll.find('::')
-            if ll[i:]=='::' and groupcache[groupcounter].has_key('args'):
+            if ll[i:]=='::' and 'args' in groupcache[groupcounter]:
                 outmess('All arguments will have attribute %s%s\n'%(m.group('this'),ll[:i]))
                 ll = ll + ','.join(groupcache[groupcounter]['args'])
         if i<0:i=0;pl=''
@@ -896,8 +902,10 @@ def analyzeline(m,case,line):
                     continue
             else:
                 k=rmbadname1(m1.group('name'))
-            if not edecl.has_key(k): edecl[k]={}
-            if case=='dimension': ap=case+m1.group('after')
+            if k not in edecl:
+                edecl[k]={}
+            if case=='dimension':
+                ap=case+m1.group('after')
             if case=='intent':
                 ap=m.group('this')+pl
                 if _intentcallbackpattern.match(ap):
@@ -910,9 +918,12 @@ def analyzeline(m,case,line):
                     else:
                         errmess('analyzeline: intent(callback) %s is already'\
                                 ' in argument list' % (k))
-            if case in ['optional','required','public','external','private','intrisic']: ap=case
-            if edecl[k].has_key('attrspec'): edecl[k]['attrspec'].append(ap)
-            else: edecl[k]['attrspec']=[ap]
+            if case in ['optional','required','public','external','private','intrisic']:
+                ap=case
+            if 'attrspec' in edecl[k]:
+                edecl[k]['attrspec'].append(ap)
+            else:
+                edecl[k]['attrspec']=[ap]
             if case=='external':
                 if groupcache[groupcounter]['block']=='program':
                     outmess('analyzeline: ignoring program arguments\n')
@@ -920,7 +931,7 @@ def analyzeline(m,case,line):
                 if k not in groupcache[groupcounter]['args']:
                     #outmess('analyzeline: ignoring external %s (not in arguments list)\n'%(`k`))
                     continue
-                if not groupcache[groupcounter].has_key('externals'):
+                if 'externals' not in groupcache[groupcounter]:
                     groupcache[groupcounter]['externals']=[]
                 groupcache[groupcounter]['externals'].append(k)
             last_name = k
@@ -938,8 +949,9 @@ def analyzeline(m,case,line):
                 outmess('analyzeline: could not extract name,expr in parameter statement "%s" of "%s"\n'%(e,ll));continue
             params = get_parameters(edecl)
             k=rmbadname1(k)
-            if not edecl.has_key(k): edecl[k]={}
-            if edecl[k].has_key('=') and (not edecl[k]['=']==initexpr):
+            if k not in edecl:
+                edecl[k]={}
+            if '=' in edecl[k] and (not edecl[k]['=']==initexpr):
                 outmess('analyzeline: Overwriting the value of parameter "%s" ("%s") with "%s".\n'%(k,edecl[k]['='],initexpr))
             t = determineexprtype(initexpr,params)
             if t:
@@ -959,7 +971,7 @@ def analyzeline(m,case,line):
                         % (initexpr, msg))
                 continue
             edecl[k]['='] = repr(v)
-            if edecl[k].has_key('attrspec'):
+            if 'attrspec' in edecl[k]:
                 edecl[k]['attrspec'].append('parameter')
             else: edecl[k]['attrspec']=['parameter']
             last_name = k
@@ -970,7 +982,7 @@ def analyzeline(m,case,line):
         if m.group('after').strip().lower()=='none':
             groupcache[groupcounter]['implicit']=None
         elif m.group('after'):
-            if groupcache[groupcounter].has_key('implicit'):
+            if 'implicit' in groupcache[groupcounter]:
                 impl=groupcache[groupcounter]['implicit']
             else: impl={}
             if impl is None:
@@ -1026,7 +1038,7 @@ def analyzeline(m,case,line):
                 dl = dl[1:].strip()
             ll.append([dl,il])
         vars={}
-        if groupcache[groupcounter].has_key('vars'):
+        if 'vars' in groupcache[groupcounter]:
             vars=groupcache[groupcounter]['vars']
         last_name = None
         for l in ll:
@@ -1051,9 +1063,9 @@ def analyzeline(m,case,line):
                     i=i+1
                 i=i+1
                 #v,l[1][j:i-1]=name,initvalue
-                if not vars.has_key(v):
+                if v not in vars:
                     vars[v]={}
-                if vars[v].has_key('=') and not vars[v]['=']==l[1][j:i-1]:
+                if '=' in vars[v] and not vars[v]['=']==l[1][j:i-1]:
                     outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n'%(v,vars[v]['='],l[1][j:i-1]))
                 vars[v]['=']=l[1][j:i-1]
                 j=i
@@ -1079,10 +1091,10 @@ def analyzeline(m,case,line):
         if not bn: bn='_BLNK_'
         cl.append([bn,ol])
         commonkey={}
-        if groupcache[groupcounter].has_key('common'):
+        if 'common' in groupcache[groupcounter]:
             commonkey=groupcache[groupcounter]['common']
         for c in cl:
-            if commonkey.has_key(c[0]):
+            if c[0] in commonkey:
                 outmess('analyzeline: previously defined common block encountered. Skipping.\n')
                 continue
             commonkey[c[0]]=[]
@@ -1094,12 +1106,14 @@ def analyzeline(m,case,line):
         m1=re.match(r'\A\s*(?P<name>\b[\w]+\b)\s*((,(\s*\bonly\b\s*:|(?P<notonly>))\s*(?P<list>.*))|)\s*\Z',m.group('after'),re.I)
         if m1:
             mm=m1.groupdict()
-            if not groupcache[groupcounter].has_key('use'): groupcache[groupcounter]['use']={}
+            if 'use' not in groupcache[groupcounter]:
+                groupcache[groupcounter]['use']={}
             name=m1.group('name')
             groupcache[groupcounter]['use'][name]={}
             isonly=0
-            if mm.has_key('list') and mm['list'] is not None:
-                if mm.has_key('notonly') and mm['notonly'] is None:isonly=1
+            if 'list' in mm and mm['list'] is not None:
+                if 'notonly' in mm and mm['notonly'] is None:
+                    isonly=1
                 groupcache[groupcounter]['use'][name]['only']=isonly
                 ll=[x.strip() for x in mm['list'].split(',')]
                 rl={}
@@ -1119,10 +1133,10 @@ def analyzeline(m,case,line):
             print m.groupdict()
             outmess('analyzeline: Could not crack the use statement.\n')
     elif case in ['f2pyenhancements']:
-        if not groupcache[groupcounter].has_key ('f2pyenhancements'):
+        if 'f2pyenhancements' not in groupcache[groupcounter]:
             groupcache[groupcounter]['f2pyenhancements'] = {}
         d = groupcache[groupcounter]['f2pyenhancements']
-        if m.group('this')=='usercode' and d.has_key('usercode'):
+        if m.group('this')=='usercode' and 'usercode' in d:
             if type(d['usercode']) is type(''):
                 d['usercode'] = [d['usercode']]
             d['usercode'].append(m.group('after'))
@@ -1144,10 +1158,10 @@ def analyzeline(m,case,line):
             outmess('analyzeline: No code implemented for line.\n')
 
 def appendmultiline(group, context_name,ml):
-    if not group.has_key('f2pymultilines'):
+    if 'f2pymultilines' not in group:
         group['f2pymultilines'] = {}
     d = group['f2pymultilines']
-    if not d.has_key(context_name):
+    if context_name not in d:
         d[context_name] = []
     d[context_name].append(ml)
     return
@@ -1231,36 +1245,36 @@ def updatevars(typespec,selector,attrspec,entitydecl):
             continue
         ename=rmbadname1(m.group('name'))
         edecl={}
-        if groupcache[groupcounter]['vars'].has_key(ename):
+        if ename in groupcache[groupcounter]['vars']:
             edecl=groupcache[groupcounter]['vars'][ename].copy()
-            has_typespec = edecl.has_key('typespec')
-            if not has_typespec:
+            not_has_typespec = 'typespec' not in edecl
+            if not_has_typespec:
                 edecl['typespec']=typespec
             elif typespec and (not typespec==edecl['typespec']):
                 outmess('updatevars: attempt to change the type of "%s" ("%s") to "%s". Ignoring.\n' % (ename,edecl['typespec'],typespec))
-            if not edecl.has_key('kindselector'):
+            if 'kindselector' not in edecl:
                 edecl['kindselector']=copy.copy(kindselect)
             elif kindselect:
                 for k in kindselect.keys():
-                    if edecl['kindselector'].has_key(k) and (not kindselect[k]==edecl['kindselector'][k]):
+                    if k in edecl['kindselector'] and (not kindselect[k]==edecl['kindselector'][k]):
                         outmess('updatevars: attempt to change the kindselector "%s" of "%s" ("%s") to "%s". Ignoring.\n' % (k,ename,edecl['kindselector'][k],kindselect[k]))
                     else: edecl['kindselector'][k]=copy.copy(kindselect[k])
-            if not edecl.has_key('charselector') and charselect:
-                if not has_typespec:
+            if 'charselector' not in edecl and charselect:
+                if not_has_typespec:
                     edecl['charselector']=charselect
                 else:
                     errmess('updatevars:%s: attempt to change empty charselector to %r. Ignoring.\n' \
                             %(ename,charselect))
             elif charselect:
                 for k in charselect.keys():
-                    if edecl['charselector'].has_key(k) and (not charselect[k]==edecl['charselector'][k]):
+                    if k in edecl['charselector'] and (not charselect[k]==edecl['charselector'][k]):
                         outmess('updatevars: attempt to change the charselector "%s" of "%s" ("%s") to "%s". Ignoring.\n' % (k,ename,edecl['charselector'][k],charselect[k]))
                     else: edecl['charselector'][k]=copy.copy(charselect[k])
-            if not edecl.has_key('typename'):
+            if 'typename' not in edecl:
                 edecl['typename']=typename
             elif typename and (not edecl['typename']==typename):
                 outmess('updatevars: attempt to change the typename of "%s" ("%s") to "%s". Ignoring.\n' % (ename,edecl['typename'],typename))
-            if not edecl.has_key('attrspec'):
+            if 'attrspec' not in edecl:
                 edecl['attrspec']=copy.copy(attrspec)
             elif attrspec:
                 for a in attrspec:
@@ -1281,7 +1295,7 @@ def updatevars(typespec,selector,attrspec,entitydecl):
                 for k in d1.keys():
                     if d1[k] is not None: d1[k]=unmarkouterparen(d1[k])
                     else: del d1[k]
-                if d1.has_key('len') and d1.has_key('array'):
+                if 'len' in d1 and 'array' in d1:
                     if d1['len']=='':
                         d1['len']=d1['array']
                         del d1['array']
@@ -1289,9 +1303,9 @@ def updatevars(typespec,selector,attrspec,entitydecl):
                         d1['array']=d1['array']+','+d1['len']
                         del d1['len']
                         errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n'%(typespec,e,typespec,ename,d1['array']))
-                if d1.has_key('array'):
+                if 'array' in d1:
                     dm = 'dimension(%s)'%d1['array']
-                    if not edecl.has_key('attrspec') or (not edecl['attrspec']):
+                    if 'attrspec' not in edecl or (not edecl['attrspec']):
                         edecl['attrspec']=[dm]
                     else:
                         edecl['attrspec'].append(dm)
@@ -1302,26 +1316,29 @@ def updatevars(typespec,selector,attrspec,entitydecl):
                                         % (ename,dm1,dm))
                                 break
 
-                if d1.has_key('len'):
+                if 'len' in d1:
                     if typespec in ['complex','integer','logical','real']:
-                        if (not edecl.has_key('kindselector')) or (not edecl['kindselector']):
+                        if ('kindselector' not in edecl) or (not edecl['kindselector']):
                             edecl['kindselector']={}
                         edecl['kindselector']['*']=d1['len']
                     elif typespec == 'character':
-                        if (not edecl.has_key('charselector')) or (not edecl['charselector']): edecl['charselector']={}
-                        if edecl['charselector'].has_key('len'): del edecl['charselector']['len']
+                        if ('charselector' not in edecl) or (not edecl['charselector']):
+                            edecl['charselector']={}
+                        if 'len' in edecl['charselector']:
+                            del edecl['charselector']['len']
                         edecl['charselector']['*']=d1['len']
-                if d1.has_key('init'):
-                    if edecl.has_key('=') and (not edecl['=']==d1['init']):
+                if 'init' in d1:
+                    if '=' in edecl and (not edecl['=']==d1['init']):
                         outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (ename,edecl['='],d1['init']))
                     else:
                         edecl['=']=d1['init']
             else:
                 outmess('updatevars: could not crack entity declaration "%s". Ignoring.\n'%(ename+m.group('after')))
         for k in edecl.keys():
-            if not edecl[k]: del edecl[k]
+            if not edecl[k]:
+                del edecl[k]
         groupcache[groupcounter]['vars'][ename]=edecl
-        if groupcache[groupcounter].has_key('varnames'):
+        if 'varnames' in groupcache[groupcounter]:
             groupcache[groupcounter]['varnames'].append(ename)
         last_name = ename
     return last_name
@@ -1373,9 +1390,11 @@ def cracktypespec(typespec,selector):
     return kindselect,charselect,typename
 ######
 def setattrspec(decl,attr,force=0):
-    if not decl: decl={}
-    if not attr: return decl
-    if not decl.has_key('attrspec'):
+    if not decl:
+        decl={}
+    if not attr:
+        return decl
+    if 'attrspec' not in decl:
         decl['attrspec']=[attr]
         return decl
     if force: decl['attrspec'].append(attr)
@@ -1391,40 +1410,52 @@ def setattrspec(decl,attr,force=0):
     else:
         decl['attrspec'].append(attr)
     return decl
+
 def setkindselector(decl,sel,force=0):
-    if not decl: decl={}
-    if not sel: return decl
-    if not decl.has_key('kindselector'):
+    if not decl:
+        decl={}
+    if not sel:
+        return decl
+    if 'kindselector' not in decl:
         decl['kindselector']=sel
         return decl
     for k in sel.keys():
-        if force or not decl['kindselector'].has_key(k):
+        if force or k not in decl['kindselector']:
             decl['kindselector'][k]=sel[k]
     return decl
+
 def setcharselector(decl,sel,force=0):
-    if not decl: decl={}
-    if not sel: return decl
-    if not decl.has_key('charselector'):
+    if not decl:
+        decl={}
+    if not sel:
+        return decl
+    if 'charselector' not in decl:
         decl['charselector']=sel
         return decl
     for k in sel.keys():
-        if force or not decl['charselector'].has_key(k):
+        if force or k not in decl['charselector']:
             decl['charselector'][k]=sel[k]
     return decl
+
 def getblockname(block,unknown='unknown'):
-    if block.has_key('name'): return block['name']
+    if 'name' in block:
+        return block['name']
     return unknown
+
 ###### post processing
+
 def setmesstext(block):
     global filepositiontext
-    try: filepositiontext='In: %s:%s\n'%(block['from'],block['name'])
-    except: pass
+    try:
+        filepositiontext='In: %s:%s\n'%(block['from'],block['name'])
+    except:
+        pass
 
 def get_usedict(block):
     usedict = {}
-    if block.has_key('parent_block'):
+    if 'parent_block' in block:
         usedict = get_usedict(block['parent_block'])
-    if block.has_key('use'):
+    if 'use' in block:
         usedict.update(block['use'])
     return usedict
 
@@ -1437,7 +1468,7 @@ def get_useparameters(block, param_map=None):
         return param_map
     for usename,mapping in usedict.items():
         usename = usename.lower()
-        if not f90modulevars.has_key(usename):
+        if usename not in f90modulevars:
             continue
         mvars = f90modulevars[usename]
         params = get_parameters(mvars)
@@ -1447,7 +1478,7 @@ def get_useparameters(block, param_map=None):
         if mapping:
             errmess('get_useparameters: mapping for %s not impl.' % (mapping))
         for k,v in params.items():
-            if param_map.has_key(k):
+            if k in param_map:
                 outmess('get_useparameters: overriding parameter %s with'\
                         ' value from module %s' % (`k`,`usename`))
             param_map[k] = v
@@ -1469,15 +1500,15 @@ def postcrack2(block,tab='',param_map=None):
     if param_map is None:
         param_map = get_useparameters(block)
 
-    if param_map is not None and block.has_key('vars'):
+    if param_map is not None and 'vars' in block:
         vars = block['vars']
         for n in vars.keys():
             var = vars[n]
-            if var.has_key('kindselector'):
+            if 'kindselector' in var:
                 kind = var['kindselector']
-                if kind.has_key('kind'):
+                if 'kind' in kind:
                     val = kind['kind']
-                    if param_map.has_key(val):
+                    if val in param_map:
                         kind['kind'] = param_map[val]
     new_body = []
     for b in block['body']:
@@ -1500,44 +1531,48 @@ def postcrack(block,args=None,tab=''):
         for g in block:
             setmesstext(g)
             g=postcrack(g,tab=tab+'\t')
-            if g.has_key('name') and '__user__' in g['name']: # sort user routines to appear first
+            if 'name' in g and '__user__' in g['name']: # sort user routines to appear first
                 uret.append(g)
             else:
                 gret.append(g)
         return uret+gret
     setmesstext(block)
-    if (not type(block)==types.DictType) and not block.has_key('block'):
+    if (not type(block)==types.DictType) and 'block' not in block:
         raise 'postcrack: Expected block dictionary instead of ',block
-    if block.has_key('name') and not block['name']=='unknown_interface':
+    if 'name' in block and not block['name']=='unknown_interface':
         outmess('%sBlock: %s\n'%(tab,block['name']),0)
     blocktype=block['block']
     block=analyzeargs(block)
     block=analyzecommon(block)
     block['vars']=analyzevars(block)
     block['sortvars']=sortvarnames(block['vars'])
-    if block.has_key('args') and block['args']:
+    if 'args' in block and block['args']:
         args=block['args']
     block['body']=analyzebody(block,args,tab=tab)
 
     userisdefined=[]
 ##     fromuser = []
-    if block.has_key('use'):
+    if 'use' in block:
         useblock=block['use']
         for k in useblock.keys():
             if '__user__' in k:
                 userisdefined.append(k)
-##                 if useblock[k].has_key('map'):
+##                 if 'map' in useblock[k]:
 ##                     for n in useblock[k]['map'].values():
 ##                         if n not in fromuser: fromuser.append(n)
     else: useblock={}
     name=''
-    if block.has_key('name'):name=block['name']
-    if block.has_key('externals') and block['externals']:# and not userisdefined: # Build a __user__ module
+    if 'name' in block:
+        name=block['name']
+    if 'externals' in block and block['externals']:# and not userisdefined: # Build a __user__ module
         interfaced=[]
-        if block.has_key('interfaced'): interfaced=block['interfaced']
+        if 'interfaced' in block:
+            interfaced=block['interfaced']
         mvars=copy.copy(block['vars'])
-        if name: mname=name+'__user__routines'
-        else: mname='unknown__user__routines'
+        if name:
+            mname=name+'__user__routines'
+        else:
+            mname='unknown__user__routines'
         if mname in userisdefined:
             i=1
             while '%s_%i'%(mname,i) in userisdefined: i=i+1
@@ -1556,7 +1591,7 @@ def postcrack(block,args=None,tab=''):
                         i=-1
                         for bb in b['body']:
                             i=i+1
-                            if bb.has_key('name') and bb['name']==e:
+                            if 'name' in bb and bb['name']==e:
                                 edef=copy.copy(bb)
                                 del b['body'][i]
                                 break
@@ -1566,7 +1601,7 @@ def postcrack(block,args=None,tab=''):
                             break
                 interface['body'].append(edef)
             else:
-                if mvars.has_key(e) and not isexternal(mvars[e]):
+                if e in mvars and not isexternal(mvars[e]):
                     interface['vars'][e]=mvars[e]
         if interface['vars'] or interface['body']:
             block['interfaced']=interfaced
@@ -1581,7 +1616,7 @@ def sortvarnames(vars):
     indep = []
     dep = []
     for v in vars.keys():
-        if vars[v].has_key('depend') and vars[v]['depend']:
+        if 'depend' in vars[v] and vars[v]['depend']:
             dep.append(v)
             #print '%s depends on %s'%(v,vars[v]['depend'])
         else: indep.append(v)
@@ -1623,8 +1658,8 @@ def analyzecommon(block):
                 if m.group('dims'):
                     dims=[x.strip() for x in markoutercomma(m.group('dims')).split('@,@')]
                 n=m.group('name').strip()
-                if block['vars'].has_key(n):
-                    if block['vars'][n].has_key('attrspec'):
+                if n in block['vars']:
+                    if 'attrspec' in block['vars'][n]:
                         block['vars'][n]['attrspec'].append('dimension(%s)'%(','.join(dims)))
                     else:
                         block['vars'][n]['attrspec']=['dimension(%s)'%(','.join(dims))]
@@ -1638,11 +1673,12 @@ def analyzecommon(block):
                 errmess('analyzecommon: failed to extract "<name>[(<dims>)]" from "%s" in common /%s/.\n'%(e,k))
             comvars.append(n)
         block['common'][k]=comvars
-    if not block.has_key('commonvars'):
+    if 'commonvars' not in block:
         block['commonvars']=commonvars
     else:
         block['commonvars']=block['commonvars']+commonvars
     return block
+
 def analyzebody(block,args,tab=''):
     global usermodules,skipfuncs,onlyfuncs,f90modulevars
     setmesstext(block)
@@ -1661,7 +1697,7 @@ def analyzebody(block,args,tab=''):
         else: as_=args
         b=postcrack(b,as_,tab=tab+'\t')
         if b['block']=='interface' and not b['body']:
-            if not b.has_key('f2pyenhancements'):
+            if 'f2pyenhancements' not in b:
                 continue
         if b['block'].replace(' ','')=='pythonmodule':
             usermodules.append(b)
@@ -1670,11 +1706,12 @@ def analyzebody(block,args,tab=''):
                 f90modulevars[b['name']] = b['vars']
             body.append(b)
     return body
+
 def buildimplicitrules(block):
     setmesstext(block)
     implicitrules=defaultimplicitrules
     attrrules={}
-    if block.has_key('implicit'):
+    if 'implicit' in block:
         if block['implicit'] is None:
             implicitrules=None
             if verbose>1:
@@ -1834,12 +1871,12 @@ def getarrlen(dl,args,star='*'):
 word_pattern = re.compile(r'\b[a-z][\w$]*\b',re.I)
 
 def _get_depend_dict(name, vars, deps):
-    if vars.has_key(name):
+    if name in vars:
         words = vars[name].get('depend',[])
 
-        if vars[name].has_key('=') and not isstring(vars[name]):
+        if '=' in vars[name] and not isstring(vars[name]):
             for word in word_pattern.findall(vars[name]['=']):
-                if word not in words and vars.has_key(word):
+                if word not in words and word not in vars:
                     words.append(word)
         for word in words[:]:
             for w in deps.get(word,[]) \
@@ -1870,13 +1907,13 @@ def get_sorted_names(vars):
             del depend_dict[name]
     while depend_dict:
         for name, lst in depend_dict.items():
-            new_lst = [n for n in lst if depend_dict.has_key(n)]
+            new_lst = [n for n in lst if n in depend_dict]
             if not new_lst:
                 names.append(name)
                 del depend_dict[name]
             else:
                 depend_dict[name] = new_lst
-    return [name for name in names if vars.has_key(name)]
+    return [name for name in names if name in vars]
 
 def _kind_func(string):
     #XXX: return something sensible.
@@ -1904,16 +1941,16 @@ def get_parameters(vars, global_params={}):
     for name,func in [('kind',_kind_func),
                       ('selected_int_kind',_selected_int_kind_func),
                       ]:
-        if not g_params.has_key(name):
+        if name not in g_params:
             g_params[name] = func
     param_names = []
     for n in get_sorted_names(vars):
-        if vars[n].has_key('attrspec') and 'parameter' in vars[n]['attrspec']:
+        if 'attrspec' in vars[n] and 'parameter' in vars[n]['attrspec']:
             param_names.append(n)
     kind_re = re.compile(r'\bkind\s*\(\s*(?P<value>.*)\s*\)',re.I)
     selected_int_kind_re = re.compile(r'\bselected_int_kind\s*\(\s*(?P<value>.*)\s*\)',re.I)
     for n in param_names:
-        if vars[n].has_key('='):
+        if '=' in vars[n]:
             v = vars[n]['=']
             if islogical(vars[n]):
                 v = v.lower()
@@ -1978,11 +2015,11 @@ def analyzevars(block):
     setmesstext(block)
     implicitrules,attrrules=buildimplicitrules(block)
     vars=copy.copy(block['vars'])
-    if block['block']=='function' and not vars.has_key(block['name']):
+    if block['block']=='function' and block['name'] not in vars:
         vars[block['name']]={}
-    if block['vars'].has_key(''):
+    if '' in block['vars']:
         del vars['']
-        if block['vars'][''].has_key('attrspec'):
+        if 'attrspec' in block['vars']['']:
             gen=block['vars']['']['attrspec']
             for n in vars.keys():
                 for k in ['public','private']:
@@ -2014,14 +2051,14 @@ def analyzevars(block):
     for n in svars:
         if n[0] in attrrules.keys():
             vars[n]=setattrspec(vars[n],attrrules[n[0]])
-        if not vars[n].has_key('typespec'):
-            if not(vars[n].has_key('attrspec') and 'external' in vars[n]['attrspec']):
+        if 'typespec' not in vars[n]:
+            if not('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
                 if implicitrules:
                     ln0 = n[0].lower()
                     for k in implicitrules[ln0].keys():
                         if k=='typespec' and implicitrules[ln0][k]=='undefined':
                             continue
-                        if not vars[n].has_key(k):
+                        if k not in vars[n]:
                             vars[n][k]=implicitrules[ln0][k]
                         elif k=='attrspec':
                             for l in implicitrules[ln0][k]:
@@ -2029,8 +2066,8 @@ def analyzevars(block):
                 elif n in block['args']:
                     outmess('analyzevars: typespec of variable %s is not defined in routine %s.\n'%(`n`,block['name']))
 
-        if vars[n].has_key('charselector'):
-            if vars[n]['charselector'].has_key('len'):
+        if 'charselector' in vars[n]:
+            if 'len' in vars[n]['charselector']:
                 l = vars[n]['charselector']['len']
                 try:
                     l = str(eval(l,{},params))
@@ -2038,8 +2075,8 @@ def analyzevars(block):
                     pass
                 vars[n]['charselector']['len'] = l
 
-        if vars[n].has_key('kindselector'):
-            if vars[n]['kindselector'].has_key('kind'):
+        if 'kindselector' in vars[n]:
+            if 'kind' in vars[n]['kindselector']:
                 l = vars[n]['kindselector']['kind']
                 try:
                     l = str(eval(l,{},params))
@@ -2048,7 +2085,7 @@ def analyzevars(block):
                 vars[n]['kindselector']['kind'] = l
 
         savelindims = {}
-        if vars[n].has_key('attrspec'):
+        if 'attrspec' in vars[n]:
             attr=vars[n]['attrspec']
             attr.reverse()
             vars[n]['attrspec']=[]
@@ -2061,7 +2098,8 @@ def analyzevars(block):
                 elif a[:4]=='note': note=(a[4:].strip())[1:-1]
                 else: vars[n]=setattrspec(vars[n],a)
                 if intent:
-                    if not vars[n].has_key('intent'): vars[n]['intent']=[]
+                    if 'intent' not in vars[n]:
+                        vars[n]['intent']=[]
                     for c in [x.strip() for x in markoutercomma(intent).split('@,@')]:
                         if not c in vars[n]['intent']:
                             vars[n]['intent'].append(c)
@@ -2069,27 +2107,32 @@ def analyzevars(block):
                 if note:
                     note=note.replace('\\n\\n','\n\n')
                     note=note.replace('\\n ','\n')
-                    if not vars[n].has_key('note'): vars[n]['note']=[note]
-                    else: vars[n]['note'].append(note)
+                    if 'note' not in vars[n]:
+                        vars[n]['note']=[note]
+                    else:
+                        vars[n]['note'].append(note)
                     note=None
                 if depend is not None:
-                    if not vars[n].has_key('depend'): vars[n]['depend']=[]
+                    if 'depend' not in vars[n]:
+                        vars[n]['depend']=[]
                     for c in rmbadname([x.strip() for x in markoutercomma(depend).split('@,@')]):
                         if c not in vars[n]['depend']:
                             vars[n]['depend'].append(c)
                     depend=None
                 if check is not None:
-                    if not vars[n].has_key('check'): vars[n]['check']=[]
+                    if 'check' not in vars[n]:
+                        vars[n]['check']=[]
                     for c in [x.strip() for x in markoutercomma(check).split('@,@')]:
                         if not c in vars[n]['check']:
                             vars[n]['check'].append(c)
                     check=None
-            if dim and not vars[n].has_key('dimension'):
+            if dim and 'dimension' not in vars[n]:
                 vars[n]['dimension']=[]
                 for d in rmbadname([x.strip() for x in markoutercomma(dim).split('@,@')]):
                     star = '*'
-                    if d==':': star=':'
-                    if params.has_key(d):
+                    if d==':':
+                        star=':'
+                    if d in params:
                         d = str(params[d])
                     for p in params.keys():
                         m = re.match(r'(?P<before>.*?)\b'+p+r'\b(?P<after>.*)',d,re.I)
@@ -2110,15 +2153,15 @@ def analyzevars(block):
                         if di and di[-4:] == '/(1)': di = di[:-4]
                         if v: savelindims[d] = v,di
                     vars[n]['dimension'].append(d)
-        if vars[n].has_key('dimension'):
+        if 'dimension' in vars[n]:
             if isintent_c(vars[n]):
                 shape_macro = 'shape'
             else:
                 shape_macro = 'shape'#'fshape'
             if isstringarray(vars[n]):
-                if vars[n].has_key('charselector'):
+                if 'charselector' in vars[n]:
                     d = vars[n]['charselector']
-                    if d.has_key('*'):
+                    if '*' in d:
                         d = d['*']
                         errmess('analyzevars: character array "character*%s %s(%s)" is considered as "character %s(%s)"; "intent(c)" is forced.\n'\
                                 %(d,n,
@@ -2126,17 +2169,18 @@ def analyzevars(block):
                                   n,','.join(vars[n]['dimension']+[d])))
                         vars[n]['dimension'].append(d)
                         del vars[n]['charselector']
-                        if not vars[n].has_key('intent'):
+                        if 'intent' not in vars[n]:
                             vars[n]['intent'] = []
                         if 'c' not in vars[n]['intent']:
                             vars[n]['intent'].append('c')
                     else:
                         errmess("analyzevars: charselector=%r unhandled." % (d))
-        if not vars[n].has_key('check') and block.has_key('args') and n in block['args']:
-            flag=not vars[n].has_key('depend')
-            if flag: vars[n]['depend']=[]
+        if 'check' not in vars[n] and 'args' in block and n in block['args']:
+            flag = 'depend' not in vars[n]
+            if flag:
+                vars[n]['depend']=[]
             vars[n]['check']=[]
-            if vars[n].has_key('dimension'):
+            if 'dimension' in vars[n]:
                 #/----< no check
                 #vars[n]['check'].append('rank(%s)==%s'%(n,len(vars[n]['dimension'])))
                 i=-1; ni=len(vars[n]['dimension'])
@@ -2145,40 +2189,42 @@ def analyzevars(block):
                     ad=''
                     pd=''
                     #origd = d
-                    if not vars.has_key(d):
-                        if savelindims.has_key(d):
+                    if d not in vars:
+                        if d in savelindims:
                             pd,ad='(',savelindims[d][1]
                             d = savelindims[d][0]
                         else:
                             for r in block['args']:
                             #for r in block['vars'].keys():
-                                if not vars.has_key(r): continue
+                                if r not in vars:
+                                    continue
                                 if re.match(r'.*?\b'+r+r'\b',d,re.I):
                                     ddeps.append(r)
-                    if vars.has_key(d):
-                        if vars[d].has_key('attrspec'):
+                    if d in vars:
+                        if 'attrspec' in vars[d]:
                             for aa in vars[d]['attrspec']:
                                 if aa[:6]=='depend':
                                     ddeps += aa[6:].strip()[1:-1].split(',')
-                        if vars[d].has_key('depend'):
+                        if 'depend' in vars[d]:
                             ddeps=ddeps+vars[d]['depend']
                     i=i+1
-                    if vars.has_key(d) and (not vars[d].has_key('depend')) \
-                       and (not vars[d].has_key('=')) and (d not in vars[n]['depend']) \
-                       and l_or(isintent_in,isintent_inout,isintent_inplace)(vars[n]):
+                    if d in vars and ('depend' not in vars[d]) \
+                       and ('=' not in vars[d]) and (d not in vars[n]['depend']) \
+                       and l_or(isintent_in, isintent_inout, isintent_inplace)(vars[n]):
                         vars[d]['depend']=[n]
                         if ni>1:
                             vars[d]['=']='%s%s(%s,%s)%s'% (pd,shape_macro,n,i,ad)
                         else:
                             vars[d]['=']='%slen(%s)%s'% (pd,n,ad)
                         #  /---< no check
-                        if 1 and not vars[d].has_key('check'):
+                        if 1 and 'check' not in vars[d]:
                             if ni>1:
                                 vars[d]['check']=['%s%s(%s,%i)%s==%s'\
                                                   %(pd,shape_macro,n,i,ad,d)]
                             else:
                                 vars[d]['check']=['%slen(%s)%s>=%s'%(pd,n,ad,d)]
-                        if not vars[d].has_key('attrspec'): vars[d]['attrspec']=['optional']
+                        if 'attrspec' not in vars[d]:
+                            vars[d]['attrspec']=['optional']
                         if ('optional' not in vars[d]['attrspec']) and\
                            ('required' not in vars[d]['attrspec']):
                             vars[d]['attrspec'].append('optional')
@@ -2187,32 +2233,35 @@ def analyzevars(block):
                         #if ni>1: vars[n]['check'].append('shape(%s,%i)==%s'%(n,i,d))
                         #else: vars[n]['check'].append('len(%s)>=%s'%(n,d))
                         if flag:
-                            if vars.has_key(d):
+                            if d in vars:
                                 if n not in ddeps:
                                     vars[n]['depend'].append(d)
                             else:
                                 vars[n]['depend'] = vars[n]['depend'] + ddeps
             elif isstring(vars[n]):
                 length='1'
-                if vars[n].has_key('charselector'):
-                    if vars[n]['charselector'].has_key('*'):
+                if 'charselector' in vars[n]:
+                    if '*' in vars[n]['charselector']:
                         length = _eval_length(vars[n]['charselector']['*'],
                                               params)
                         vars[n]['charselector']['*']=length
-                    elif vars[n]['charselector'].has_key('len'):
+                    elif 'len' in vars[n]['charselector']:
                         length = _eval_length(vars[n]['charselector']['len'],
                                               params)
                         del vars[n]['charselector']['len']
                         vars[n]['charselector']['*']=length
 
-            if not vars[n]['check']: del vars[n]['check']
-            if flag and not vars[n]['depend']: del vars[n]['depend']
-        if vars[n].has_key('='):
-            if not vars[n].has_key('attrspec'): vars[n]['attrspec']=[]
+            if not vars[n]['check']:
+                del vars[n]['check']
+            if flag and not vars[n]['depend']:
+                del vars[n]['depend']
+        if '=' in vars[n]:
+            if 'attrspec' not in vars[n]:
+                vars[n]['attrspec']=[]
             if ('optional' not in vars[n]['attrspec']) and \
                ('required' not in vars[n]['attrspec']):
                 vars[n]['attrspec'].append('optional')
-            if not vars[n].has_key('depend'):
+            if 'depend' not in vars[n]:
                 vars[n]['depend']=[]
                 for v,m in dep_matches.items():
                     if m(vars[n]['=']): vars[n]['depend'].append(v)
@@ -2222,12 +2271,12 @@ def analyzevars(block):
 
     for n in vars.keys():
         if n==block['name']: # n is block name
-            if vars[n].has_key('note'):
+            if 'note' in vars[n]:
                 block['note']=vars[n]['note']
             if block['block']=='function':
-                if block.has_key('result') and vars.has_key(block['result']):
+                if 'result' in block and block['result'] in vars:
                     vars[n]=appenddecl(vars[n],vars[block['result']])
-                if block.has_key('prefix'):
+                if 'prefix' in block:
                     pr=block['prefix']; ispure=0; isrec=1
                     pr1=pr.replace('pure','')
                     ispure=(not pr==pr1)
@@ -2239,7 +2288,7 @@ def analyzevars(block):
                         kindselect,charselect,typename=cracktypespec(typespec,selector)
                         vars[n]['typespec']=typespec
                         if kindselect:
-                            if kindselect.has_key('kind'):
+                            if 'kind' in kindselect:
                                 try:
                                     kindselect['kind'] = eval(kindselect['kind'],{},params)
                                 except:
@@ -2252,27 +2301,27 @@ def analyzevars(block):
                     else:
                         outmess('analyzevars: prefix (%s) were not used\n'%`block['prefix']`)
     if not block['block'] in ['module','pythonmodule','python module','block data']:
-        if block.has_key('commonvars'):
+        if 'commonvars' in block:
             neededvars=copy.copy(block['args']+block['commonvars'])
         else:
             neededvars=copy.copy(block['args'])
         for n in vars.keys():
             if l_or(isintent_callback,isintent_aux)(vars[n]):
                 neededvars.append(n)
-        if block.has_key('entry'):
+        if 'entry' in block:
             neededvars.extend(block['entry'].keys())
             for k in block['entry'].keys():
                 for n in block['entry'][k]:
                     if n not in neededvars:
                         neededvars.append(n)
         if block['block']=='function':
-            if block.has_key('result'):
+            if 'result' in block:
                 neededvars.append(block['result'])
             else:
                 neededvars.append(block['name'])
         if block['block'] in ['subroutine','function']:
             name = block['name']
-            if vars.has_key(name) and vars[name].has_key('intent'):
+            if name in vars and 'intent' in vars[name]:
                 block['intent'] = vars[name]['intent']
         if block['block'] == 'type':
             neededvars.extend(vars.keys())
@@ -2280,11 +2329,13 @@ def analyzevars(block):
             if n not in neededvars:
                 del vars[n]
     return vars
+
 analyzeargs_re_1 = re.compile(r'\A[a-z]+[\w$]*\Z',re.I)
 def analyzeargs(block):
     setmesstext(block)
     implicitrules,attrrules=buildimplicitrules(block)
-    if not block.has_key('args'): block['args']=[]
+    if 'args' not in block:
+        block['args']=[]
     args=[]
     re_1 = analyzeargs_re_1
     for a in block['args']:
@@ -2297,29 +2348,32 @@ def analyzeargs(block):
             if na[-1]=='_': na=na+'e'
             else: na=na+'_e'
             a=na
-            while block['vars'].has_key(a) or a in block['args']: a=a+'r'
+            while a in block['vars'] or a in block['args']:
+                a=a+'r'
             block['vars'][a]=at
         args.append(a)
-        if not block['vars'].has_key(a):
+        if a not in block['vars']:
             block['vars'][a]={}
-        if block.has_key('externals') and a in block['externals']+block['interfaced']:
+        if 'externals' in block and a in block['externals']+block['interfaced']:
             block['vars'][a]=setattrspec(block['vars'][a],'external')
     block['args']=args
 
-    if block.has_key('entry'):
+    if 'entry' in block:
         for k,args1 in block['entry'].items():
             for a in args1:
-                if not block['vars'].has_key(a):
+                if a not in block['vars']:
                     block['vars'][a]={}
 
     for b in block['body']:
         if b['name'] in args:
-            if not block.has_key('externals'): block['externals']=[]
+            if 'externals' not in block:
+                block['externals']=[]
             if b['name'] not in block['externals']:
                 block['externals'].append(b['name'])
-    if block.has_key('result') and not block['vars'].has_key(block['result']):
+    if 'result' in block and block['result'] not in block['vars']:
         block['vars'][block['result']]={}
     return block
+
 determineexprtype_re_1 = re.compile(r'\A\(.+?[,].+?\)\Z',re.I)
 determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(P<name>[\w]+)|)\Z',re.I)
 determineexprtype_re_3 = re.compile(r'\A[+-]?[\d.]+[\d+-de.]*(_(P<name>[\w]+)|)\Z',re.I)
@@ -2336,24 +2390,24 @@ def _ensure_exprdict(r):
     return r
 
 def determineexprtype(expr,vars,rules={}):
-    if vars.has_key(expr):
+    if expr in vars:
         return _ensure_exprdict(vars[expr])
     expr=expr.strip()
     if determineexprtype_re_1.match(expr):
         return {'typespec':'complex'}
     m=determineexprtype_re_2.match(expr)
     if m:
-        if m.groupdict().has_key('name') and m.group('name'):
+        if 'name' in m.groupdict() and m.group('name'):
             outmess('determineexprtype: selected kind types not supported (%s)\n'%`expr`)
         return {'typespec':'integer'}
     m = determineexprtype_re_3.match(expr)
     if m:
-        if m.groupdict().has_key('name') and m.group('name'):
+        if 'name' in m.groupdict() and m.group('name'):
             outmess('determineexprtype: selected kind types not supported (%s)\n'%`expr`)
         return {'typespec':'real'}
     for op in ['+','-','*','/']:
         for e in [x.strip() for x in markoutercomma(expr,comma=op).split('@'+op+'@')]:
-            if vars.has_key(e):
+            if e in vars:
                 return _ensure_exprdict(vars[e])
     t={}
     if determineexprtype_re_4.match(expr): # in parenthesis
@@ -2363,15 +2417,17 @@ def determineexprtype(expr,vars,rules={}):
         if m:
             rn=m.group('name')
             t=determineexprtype(m.group('name'),vars,rules)
-            if t and t.has_key('attrspec'): del t['attrspec']
+            if t and 'attrspec' in t:
+                del t['attrspec']
             if not t:
-                if rules.has_key(rn[0]):
+                if rn[0] in rules:
                     return _ensure_exprdict(rules[rn[0]])
     if expr[0] in '\'"':
         return {'typespec':'character','charselector':{'*':'*'}}
     if not t:
         outmess('determineexprtype: could not determine expressions (%s) type.\n'%(`expr`))
     return t
+
 ######
 def crack2fortrangen(block,tab='\n'):
     global skipfuncs, onlyfuncs
@@ -2392,14 +2448,15 @@ def crack2fortrangen(block,tab='\n'):
     blocktype=block['block']
     if blocktype=='program': return ''
     al=[]
-    if block.has_key('name'): name=block['name']
-    if block.has_key('args'):
+    if 'name' in block:
+        name=block['name']
+    if 'args' in block:
         vars = block['vars']
         al = [a for a in block['args'] if not isintent_callback(vars[a])]
         if block['block']=='function' or al:
             args='(%s)'%','.join(al)
     f2pyenhancements = ''
-    if block.has_key('f2pyenhancements'):
+    if 'f2pyenhancements' in block:
         for k in block['f2pyenhancements'].keys():
             f2pyenhancements = '%s%s%s %s'%(f2pyenhancements,tab+tabchar,k,block['f2pyenhancements'][k])
     intent_lst = block.get('intent',[])[:]
@@ -2410,24 +2467,25 @@ def crack2fortrangen(block,tab='\n'):
                            (f2pyenhancements,tab+tabchar,
                             ','.join(intent_lst),name)
     use=''
-    if block.has_key('use'):
+    if 'use' in block:
         use=use2fortran(block['use'],tab+tabchar)
     common=''
-    if block.has_key('common'):
+    if 'common' in block:
         common=common2fortran(block['common'],tab+tabchar)
     if name=='unknown_interface': name=''
     result=''
-    if block.has_key('result'):
+    if 'result' in block:
         result=' result (%s)'%block['result']
         if block['result'] not in al:
             al.append(block['result'])
-    #if block.has_key('prefix'): prefix=block['prefix']+' '
+    #if 'prefix' in block:
+    #    prefix=block['prefix']+' '
     body=crack2fortrangen(block['body'],tab+tabchar)
     vars=vars2fortran(block,block['vars'],al,tab+tabchar)
     mess=''
-    if block.has_key('from'):
+    if 'from' in block:
         mess='! in %s'%block['from']
-    if block.has_key('entry'):
+    if 'entry' in block:
         entry_stmts = ''
         for k,i in block['entry'].items():
             entry_stmts = '%s%sentry %s(%s)' \
@@ -2437,6 +2495,7 @@ def crack2fortrangen(block,tab='\n'):
         name = ''
     ret='%s%s%s %s%s%s %s%s%s%s%s%s%send %s %s'%(tab,prefix,blocktype,name,args,result,mess,f2pyenhancements,use,vars,common,body,tab,blocktype,name)
     return ret
+
 def common2fortran(common,tab=''):
     ret=''
     for k in common.keys():
@@ -2445,6 +2504,7 @@ def common2fortran(common,tab=''):
         else:
             ret='%s%scommon /%s/ %s'%(ret,tab,k,','.join(common[k]))
     return ret
+
 def use2fortran(use,tab=''):
     ret=''
     for m in use.keys():
@@ -2452,9 +2512,9 @@ def use2fortran(use,tab=''):
         if use[m]=={}:
             if ret and ret[-1]==',': ret=ret[:-1]
             continue
-        if use[m].has_key('only') and use[m]['only']:
+        if 'only' in use[m] and use[m]['only']:
             ret='%s,only:'%(ret)
-        if use[m].has_key('map') and use[m]['map']:
+        if 'map' in use[m] and use[m]['map']:
             c=' '
             for k in use[m]['map'].keys():
                 if k==use[m]['map'][k]:
@@ -2463,6 +2523,7 @@ def use2fortran(use,tab=''):
                     ret='%s%s%s=>%s'%(ret,c,k,use[m]['map'][k]); c=','
         if ret and ret[-1]==',': ret=ret[:-1]
     return ret
+
 def true_intent_list(var):
     lst = var['intent']
     ret = []
@@ -2474,6 +2535,7 @@ def true_intent_list(var):
         if c:
             ret.append(intent)
     return ret
+
 def vars2fortran(block,vars,args,tab=''):
     """
     TODO:
@@ -2484,41 +2546,47 @@ def vars2fortran(block,vars,args,tab=''):
     ret=''
     nout=[]
     for a in args:
-        if block['vars'].has_key(a): nout.append(a)
-    if block.has_key('commonvars'):
+        if a in block['vars']:
+            nout.append(a)
+    if 'commonvars' in block:
         for a in block['commonvars']:
-            if vars.has_key(a):
-                if a not in nout: nout.append(a)
-            else: errmess('vars2fortran: Confused?!: "%s" is not defined in vars.\n'%a)
-    if block.has_key('varnames'):
+            if a in vars:
+                if a not in nout:
+                    nout.append(a)
+            else:
+                errmess('vars2fortran: Confused?!: "%s" is not defined in vars.\n'%a)
+    if 'varnames' in block:
         nout.extend(block['varnames'])
     for a in vars.keys():
-        if a not in nout: nout.append(a)
+        if a not in nout:
+            nout.append(a)
     for a in nout:
-        if vars[a].has_key('depend'):
+        if 'depend' in vars[a]:
             for d in vars[a]['depend']:
-                if vars.has_key(d) and vars[d].has_key('depend') and a in vars[d]['depend']:
+                if d in vars and 'depend' in vars[d] and a in vars[d]['depend']:
                     errmess('vars2fortran: Warning: cross-dependence between variables "%s" and "%s"\n'%(a,d))
-        if block.has_key('externals') and a in block['externals']:
+        if 'externals' in block and a in block['externals']:
             if isintent_callback(vars[a]):
                 ret='%s%sintent(callback) %s'%(ret,tab,a)
             ret='%s%sexternal %s'%(ret,tab,a)
             if isoptional(vars[a]):
                 ret='%s%soptional %s'%(ret,tab,a)
-            if vars.has_key(a) and not vars[a].has_key('typespec'):
+            if a in vars and 'typespec' not in vars[a]:
                 continue
             cont=1
             for b in block['body']:
-                if a==b['name'] and b['block']=='function': cont=0;break
-            if cont: continue
-        if not vars.has_key(a):
+                if a==b['name'] and b['block']=='function':
+                    cont=0;break
+            if cont:
+                continue
+        if a not in vars:
             show(vars)
             outmess('vars2fortran: No definition for argument "%s".\n'%a)
             continue
         if a==block['name'] and not block['block']=='function':
             continue
-        if not vars[a].has_key('typespec'):
-            if vars[a].has_key('attrspec') and 'external' in vars[a]['attrspec']:
+        if 'typespec' not in vars[a]:
+            if 'attrspec' in vars[a] and 'external' in vars[a]['attrspec']:
                 if a in args:
                     ret='%s%sexternal %s'%(ret,tab,a)
                 continue
@@ -2526,27 +2594,29 @@ def vars2fortran(block,vars,args,tab=''):
             outmess('vars2fortran: No typespec for argument "%s".\n'%a)
             continue
         vardef=vars[a]['typespec']
-        if vardef=='type' and vars[a].has_key('typename'):
+        if vardef=='type' and 'typename' in vars[a]:
             vardef='%s(%s)'%(vardef,vars[a]['typename'])
         selector={}
-        if vars[a].has_key('kindselector'): selector=vars[a]['kindselector']
-        elif vars[a].has_key('charselector'): selector=vars[a]['charselector']
-        if selector.has_key('*'):
+        if 'kindselector' in vars[a]:
+            selector=vars[a]['kindselector']
+        elif 'charselector' in vars[a]:
+            selector=vars[a]['charselector']
+        if '*' in selector:
             if selector['*'] in ['*',':']:
                 vardef='%s*(%s)'%(vardef,selector['*'])
             else:
                 vardef='%s*%s'%(vardef,selector['*'])
         else:
-            if selector.has_key('len'):
+            if 'len' in selector:
                 vardef='%s(len=%s'%(vardef,selector['len'])
-                if selector.has_key('kind'):
+                if 'kind' in selector:
                     vardef='%s,kind=%s)'%(vardef,selector['kind'])
                 else:
                     vardef='%s)'%(vardef)
-            elif selector.has_key('kind'):
+            elif 'kind' in selector:
                 vardef='%s(kind=%s)'%(vardef,selector['kind'])
         c=' '
-        if vars[a].has_key('attrspec'):
+        if 'attrspec' in vars[a]:
             attr=[]
             for l in vars[a]['attrspec']:
                 if l not in ['external']:
@@ -2554,23 +2624,23 @@ def vars2fortran(block,vars,args,tab=''):
             if attr:
                 vardef='%s %s'%(vardef,','.join(attr))
                 c=','
-        if vars[a].has_key('dimension'):
+        if 'dimension' in vars[a]:
 #             if not isintent_c(vars[a]):
 #                 vars[a]['dimension'].reverse()
             vardef='%s%sdimension(%s)'%(vardef,c,','.join(vars[a]['dimension']))
             c=','
-        if vars[a].has_key('intent'):
+        if 'intent' in vars[a]:
             lst = true_intent_list(vars[a])
             if lst:
                 vardef='%s%sintent(%s)'%(vardef,c,','.join(lst))
             c=','
-        if vars[a].has_key('check'):
+        if 'check' in vars[a]:
             vardef='%s%scheck(%s)'%(vardef,c,','.join(vars[a]['check']))
             c=','
-        if vars[a].has_key('depend'):
+        if 'depend' in vars[a]:
             vardef='%s%sdepend(%s)'%(vardef,c,','.join(vars[a]['depend']))
             c=','
-        if vars[a].has_key('='):
+        if '=' in vars[a]:
             v = vars[a]['=']
             if vars[a]['typespec'] in ['complex','double complex']:
                 try:
@@ -2595,6 +2665,7 @@ def crackfortran(files):
     outmess('Post-processing (stage 2)...\n',0)
     postlist=postcrack2(postlist)
     return usermodules+postlist
+
 def crack2fortran(block):
     global f2py_version
     pyf=crack2fortrangen(block)+'\n'

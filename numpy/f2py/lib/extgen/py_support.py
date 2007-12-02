@@ -507,7 +507,7 @@ PyObject*
         while dep_map:
             dep_map_copy = dep_map.copy()
             for name, deps in dep_map.items():
-                d = [n for n in deps if dep_map.has_key(n)]
+                d = [n for n in deps if n in dep_map]
                 if not d:
                     sorted_arguments.append(comp_map[name])
                     del dep_map[name]

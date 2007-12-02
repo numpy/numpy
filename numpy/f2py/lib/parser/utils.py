@@ -113,7 +113,7 @@ def filter_stmts(content, classes):
 
 
 def get_module_files(directory, _cache={}):
-    if _cache.has_key(directory):
+    if directory in _cache:
         return _cache[directory]
     module_line = re.compile(r'(\A|^)module\s+(?P<name>\w+)\s*(!.*|)$',re.I | re.M)
     d = {}
@@ -121,7 +121,7 @@ def get_module_files(directory, _cache={}):
         f = open(fn,'r')
         for name in module_line.findall(f.read()):
             name = name[1]
-            if d.has_key(name):
+            if name in d:
                 print d[name],'already defines',name
                 continue
             d[name] = fn

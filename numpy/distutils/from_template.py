@@ -149,11 +149,11 @@ def expand_sub(substr,names):
     base_rule = None
     rules = {}
     for r in template_re.findall(substr):
-        if not rules.has_key(r):
+        if r not in rules:
             thelist = lnames.get(r,names.get(r,None))
             if thelist is None:
                 raise ValueError,'No replicates found for <%s>' % (r)
-            if not names.has_key(r) and not thelist.startswith('_'):
+            if r not in names and not thelist.startswith('_'):
                 names[r] = thelist
             rule = [i.replace('@comma@',',') for i in thelist.split(',')]
             num = len(rule)

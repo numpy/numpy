@@ -36,7 +36,7 @@ class HasImplicitStmt:
         if implicit_rules is None:
             raise AnalyzeError,'Implicit rules mapping is null while getting %r type' % (name)
         l = name[0].lower()
-        if implicit_rules.has_key(l):
+        if l in implicit_rules:
             return implicit_rules[l]
         # default rules:
         if l in 'ijklmn':
@@ -60,7 +60,7 @@ class HasImplicitStmt:
             if c.startswith('default'):
                 continue
             st = t.tostr()
-            if items.has_key(st):
+            if st in items:
                 items[st].append(c)
             else:
                 items[st] = [c]
@@ -116,7 +116,7 @@ class HasVariables:
 
     def get_variable_by_name(self, name):
         variables = self.a.variables
-        if variables.has_key(name):
+        if name in variables:
             var = variables[name]
         else:
             var = variables[name] = Variable(self, name)
@@ -316,7 +316,7 @@ class Module(BeginStatement, HasAttributes,
         #module_provides = self.a.module_provides
         #for name, var in self.a.variables.items():
         #    if var.is_public():
-        #        if module_provides.has_key(name):
+        #        if name in module_provides:
         #            self.warning('module data object name conflict with %s, overriding.' % (name))
         #        module_provides[name] = var
 
@@ -477,12 +477,12 @@ class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
         if content:
             self.show_message('Not analyzed content: %s' % content)
 
-        if self.parent.a.variables.has_key(self.name):
+        if self.name in self.parent.a.variables:
             var = self.parent.a.variables.pop(self.name)
             self.update_attributes(var.attributes)
 
         parent_interface = self.parent.get_interface()
-        if parent_interface.has_key(self.name):
+        if self.name in parent_interface:
             p = parent_interface[self.name]
             last = p.content.pop()
             assert isinstance(last,EndInterface),`last.__class__`
@@ -576,7 +576,7 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
 
         variables = self.a.variables
         for a in self.args:
-            assert not variables.has_key(a)
+            assert a not in variables
             assert is_name(a)
             variables[a] = Variable(self, a)
 
@@ -604,7 +604,7 @@ class SubProgramStatement(BeginStatement, ProgramBlock,
         #parent_provides = self.parent.get_provides()
         #if parent_provides is not None:
         #    if self.is_public():
-        #        if parent_provides.has_key(self.name):
+        #        if self.name in parent_provides:
         #            self.warning('module subprogram name conflict with %s, overriding.' % (self.name))
         #        parent_provides[self.name] = self
 
@@ -1081,7 +1081,7 @@ class Type(BeginStatement, HasVariables, HasAttributes, AccessSpecs):
         #parent_provides = self.parent.get_provides()
         #if parent_provides is not None:
         #    if self.is_public():
-        #        if parent_provides.has_key(self.name):
+        #        if self.name in parent_provides:
         #            self.warning('type declaration name conflict with %s, overriding.' % (self.name))
         #        parent_provides[self.name] = self
 

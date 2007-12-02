@@ -80,13 +80,13 @@ _tObject    = 14
 def IsType(rep):
     """Determines whether the given object or string, 'rep', represents
     a numarray type."""
-    return isinstance(rep, NumericType) or typeDict.has_key(rep)
+    return isinstance(rep, NumericType) or rep in typeDict
 
 def _register(name, type, force=0):
     """Register the type object.  Raise an exception if it is already registered
     unless force is true.
     """
-    if typeDict.has_key(name) and not force:
+    if name in typeDict and not force:
         raise ValueError("Type %s has already been registered" % name)
     typeDict[name] = type
     return type
@@ -104,7 +104,7 @@ class NumericType(object):
         particular type parameterization,  i.e. the second time you try to
         create "Int32",  you get the original Int32, not a new one.
         """
-        if typeDict.has_key(name):
+        if name in typeDict:
             self = typeDict[name]
             if self.bytes != bytes or self.default != default or \
                    self.typeno != typeno:

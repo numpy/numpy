@@ -426,7 +426,7 @@ def buildcallback(rout,um):
     rd=dictappend({},vrd)
     cb_map[um].append([rout['name'],rd['name']])
     for r in cb_rout_rules:
-        if (r.has_key('_check') and r['_check'](rout)) or (not r.has_key('_check')):
+        if ('_check' in r and r['_check'](rout)) or ('_check' not in r):
             ar=applyrules(r,vrd,rout)
             rd=dictappend(rd,ar)
     savevrd={}
@@ -434,31 +434,40 @@ def buildcallback(rout,um):
         vrd=capi_maps.cb_sign2map(a,var[a])
         savevrd[a]=vrd
         for r in cb_arg_rules:
-            if r.has_key('_depend'): continue
-            if r.has_key('_optional') and isoptional(var[a]): continue
-            if (r.has_key('_check') and r['_check'](var[a])) or (not r.has_key('_check')):
+            if '_depend' in r:
+                continue
+            if '_optional' in r and isoptional(var[a]):
+                continue
+            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
                 ar=applyrules(r,vrd,var[a])
                 rd=dictappend(rd,ar)
-                if r.has_key('_break'): break
+                if '_break' in r:
+                    break
     for a in args:
         vrd=savevrd[a]
         for r in cb_arg_rules:
-            if r.has_key('_depend'): continue
-            if (not r.has_key('_optional')) or (r.has_key('_optional') and isrequired(var[a])): continue
-            if (r.has_key('_check') and r['_check'](var[a])) or (not r.has_key('_check')):
+            if '_depend' in r:
+                continue
+            if ('_optional' not in r) or ('_optional' in r and isrequired(var[a])):
+                continue
+            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
                 ar=applyrules(r,vrd,var[a])
                 rd=dictappend(rd,ar)
-                if r.has_key('_break'): break
+                if '_break' in r:
+                    break
     for a in depargs:
         vrd=savevrd[a]
         for r in cb_arg_rules:
-            if not r.has_key('_depend'): continue
-            if r.has_key('_optional'): continue
-            if (r.has_key('_check') and r['_check'](var[a])) or (not r.has_key('_check')):
+            if '_depend' not in r:
+                continue
+            if '_optional' in r:
+                continue
+            if ('_check' in r and r['_check'](var[a])) or ('_check' not in r):
                 ar=applyrules(r,vrd,var[a])
                 rd=dictappend(rd,ar)
-                if r.has_key('_break'): break
-    if rd.has_key('args') and rd.has_key('optargs'):
+                if '_break' in r:
+                    break
+    if 'args' in rd and 'optargs' in rd:
         if type(rd['optargs'])==type([]):
             rd['optargs']=rd['optargs']+["""
 #ifndef F2PY_CB_RETURNCOMPLEX
@@ -492,14 +501,14 @@ def buildcallback(rout,um):
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:
-        if rd.has_key(k) and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==types.ListType:
             rd['docstrsigns']=rd['docstrsigns']+rd[k]
         k='latex'+k
-        if rd.has_key(k) and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==types.ListType:
             rd['latexdocstrsigns']=rd['latexdocstrsigns']+rd[k][0:1]+\
                                     ['\\begin{description}']+rd[k][1:]+\
                                     ['\\end{description}']
-    if not rd.has_key('args'):
+    if 'args' not in rd:
         rd['args']=''
         rd['args_td']=''
         rd['args_nm']=''
@@ -511,7 +520,7 @@ def buildcallback(rout,um):
     if type(ar['need'])==types.StringType:
         ar['need']=[ar['need']]
 
-    if rd.has_key('need'):
+    if 'need' in rd:
         for t in cfuncs.typedefs.keys():
             if t in rd['need']:
                 ar['need'].append(t)
