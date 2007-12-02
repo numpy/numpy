@@ -69,6 +69,15 @@ def dist2sconsfc(compiler):
         # XXX: Just give up for now, and use generic fortran compiler
         return 'fortran'
 
+def dist2sconscxx(compiler):
+    """This converts the name passed to distutils to scons name convention
+    (C++ compiler). The argument should be a Compiler instance."""
+    if compiler.compiler_type == 'gnu':
+        return 'g++'
+    else:
+        return 'c++'
+    return compiler.compiler_cxx[0]
+
 def get_compiler_executable(compiler):
     """For any give CCompiler instance, this gives us the name of C compiler
     (the actual executable).
@@ -92,6 +101,24 @@ def get_f77_compiler_executable(compiler):
     (the actual executable)."""
     return compiler.compiler_f77[0]
 
+def get_cxxcompiler_executable(compiler):
+    """For any give CCompiler instance, this gives us the name of CXX compiler
+    (the actual executable).
+    
+    NOTE: does NOT work with FCompiler instances."""
+    # Geez, why does distutils has no common way to get the compiler name...
+    if compiler.compiler_type == 'msvc':
+        # this is harcoded in distutils... A bit cleaner way would be to
+        # initialize the compiler instance and then get compiler.cc, but this
+        # may be costly: we really just want a string.
+        # XXX: we need to initialize the compiler anyway, so do not use
+        # hardcoded string
+        #compiler.initialize()
+        #print compiler.cc
+        return 'cl.exe' 
+    else:
+        return compiler.compiler_cxx[0]
+
 def get_tool_path(compiler):
     """Given a distutils.ccompiler.CCompiler class, returns the path of the
     toolset related to C compilation."""
@@ -111,6 +138,16 @@ def get_f77_tool_path(compiler):
     else:
         raise DistutilsSetupError("Could not find F77 compiler executable "\
                 "info for scons")
+    return fullpath
+
+def get_cxx_tool_path(compiler):
+    """Given a distutils.ccompiler.CCompiler class, returns the path of the
+    toolset related to C compilation."""
+    fullpath_exec = find_executable(get_cxxcompiler_executable(compiler))
+    if fullpath_exec:
+        fullpath = pdirname(fullpath_exec)
+    else:
+        raise DistutilsSetupError("Could not find compiler executable info for scons")
     return fullpath
 
 def protect_path(path):
@@ -245,6 +282,10 @@ class scons(old_build_ext):
             if self.fcompiler:
                 cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
                 cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
+
+            if self.cxxcompiler:
+                cmd.append('cxx_opt=%s' % dist2sconscxx(self.cxxcompiler))
+                cmd.append('cxx_opt_path=%s' % protect_path(get_cxx_tool_path(self.cxxcompiler)))
 
             cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs()))
             if self.silent:

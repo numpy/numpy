@@ -99,6 +99,9 @@ def GetNumpyOptions(args):
     opts.Add('f77_opt', 'name of F77 compiler', '')
     opts.Add('f77_opt_path', 'path of the F77 compiler set in cc_opt', '')
 
+    opts.Add('cxx_opt', 'name of C compiler', '')
+    opts.Add('cxx_opt_path', 'path of the C compiler set in cc_opt', '')
+
     return opts
 
 def customize_cc(name, env):
@@ -197,6 +200,27 @@ def initialize_f77(env, path_list):
         env.AppendUnique(SHF77FLAGS = ['-fno-second-underscore'])
         env.AppendUnique(SHF77FLAGS = ['-fPIC'])
 
+def initialize_cxx(env, path_list):
+    from SCons.Tool import Tool, FindTool
+
+    if len(env['cxx_opt']) > 0:
+        try:
+            if len(env['cxx_opt_path']) > 0:
+                t = Tool(env['cxx_opt'], toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+                t(env) 
+                path_list.append(env['cxx_opt_path'])
+        except EnvironmentError, e:
+            # scons could not understand cxx_opt (bad name ?)
+            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
+                                 str(e))
+    else:
+        def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
+        if def_fcompiler:
+            t = Tool(def_fcompiler)
+            t(env)
+        else:
+            print "========== NO CXX COMPILER FOUND ==========="
+
 def _GetNumpyEnvironment(args):
     """Call this with args = ARGUMENTS."""
     from SCons.Environment import Environment
@@ -240,6 +264,9 @@ def _GetNumpyEnvironment(args):
 
     # Initialize F77 tool from distutils info
     initialize_f77(env, path_list)
+
+    # Initialize CXX tool from distutils info
+    initialize_cxx(env, path_list)
 
     # Adding default tools for the one we do not customize: mingw is special
     # according to scons, don't ask me why, but this does not work as expected
