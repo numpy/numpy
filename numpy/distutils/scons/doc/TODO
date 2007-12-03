@@ -1,3 +1,15 @@
+Remaining things:
+    - CLAPACK: check old atlas
+    - FFT checker
+    - check windows
+    - Add CPPPDEFINES in perflib checkers 
+    - Fortran optimizations flags
+    - Control cflags and f77flags from env
+    - umfpack checker
+    - finish scipy
+    - handle inplace
+    - doc
+
 Things to implement / problems to solve:
     - Make 'real' python extension builders
     - f2py interoperability ?
