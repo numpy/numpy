@@ -742,7 +742,7 @@ long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample)
         if (K == 0) break;
     }
     Z = (long)(d2 - Y);
-    if (bad > good) Z = sample - Z;
+    if (good > bad) Z = sample - Z;
     return Z;
 }
 
@@ -795,7 +795,7 @@ long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
     }
     
     /* this is a correction to HRUA* by Ivan Frohne in rv.py */
-    if (bad > good) Z = m - Z;
+    if (good > bad) Z = m - Z;
     
     /* another fix from rv.py to allow sample to exceed popsize/2 */
     if (m < sample) Z = bad - Z;
