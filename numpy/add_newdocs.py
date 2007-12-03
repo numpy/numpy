@@ -379,25 +379,35 @@ add_newdoc('numpy.core.multiarray','lexsort',
     sort order, and so on).  The keys argument must be a sequence of things
     that can be converted to arrays of the same shape.
 
-    Parameters:
+    *Parameters*:
 
-        a : array type
+        keys : (k,N) array or tuple of (N,) sequences
             Array containing values that the returned indices should sort.
 
         axis : integer
-            Axis to be indirectly sorted. None indicates that the flattened
-            array should be used. Default is -1.
+            Axis to be indirectly sorted.  Default is -1 (i.e. last axis).
 
-    Returns:
+    *Returns*:
 
-        indices : integer array
-            Array of indices that sort the keys along the specified axis. The
-            array has the same shape as the keys.
+        indices : (N,) integer array
+            Array of indices that sort the keys along the specified axis.
 
-    SeeAlso:
+    *See Also*:
 
-        argsort : indirect sort
-        sort : inplace sort
+        `argsort` : indirect sort
+        `sort` : inplace sort
+
+    *Examples*
+
+        >>> a = [1,5,1,4,3,6,7]
+        >>> b = [9,4,0,4,0,4,3]
+        >>> ind = lexsort((b,a))
+        >>> print ind
+        [2 0 4 3 1 5 6]
+        >>> print take(a,ind)
+        [1 1 3 4 5 6 7]
+        >>> print take(b,ind)
+        [0 9 0 4 4 4 3]
 
     """)
 

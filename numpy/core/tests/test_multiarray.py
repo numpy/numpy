@@ -3,6 +3,8 @@ from numpy.core import *
 from numpy import random
 import numpy as N
 
+import tempfile
+
 class TestFlags(NumpyTestCase):
     def setUp(self):
         self.a = arange(10)
@@ -420,7 +422,7 @@ class TestClip(NumpyTestCase):
         y = rec['x'].clip(-0.3,0.5)
         self._check_range(y,-0.3,0.5)
 
-class test_putmask(ParametricTestCase):
+class TestPutmask(ParametricTestCase):
     def tst_basic(self,x,T,mask,val):
         N.putmask(x,mask,val)
         assert N.all(x[mask] == T(val))
@@ -466,10 +468,74 @@ class test_putmask(ParametricTestCase):
         ## N.putmask(z,[True,True,True],3)
         pass
 
-# Import tests from unicode
+class TestLexsort(NumpyTestCase):
+    def test_basic(self):
+        a = [1,2,1,3,1,5]
+        b = [0,4,5,6,2,3]
+        idx = N.lexsort((b,a))
+        expected_idx = N.array([0,4,2,1,3,5])
+        assert_array_equal(idx,expected_idx)
+
+        x = N.vstack((b,a))
+        idx = N.lexsort(x)
+        assert_array_equal(idx,expected_idx)
+
+        assert_array_equal(x[1][idx],N.sort(x[1]))
+
+class TestFromToFile(NumpyTestCase):
+    def setUp(self):
+        shape = (4,7)
+        rand = N.random.random
+
+        self.x = rand(shape) + rand(shape).astype(N.complex)*1j
+        self.dtype = N.complex
+
+    def test_file(self):
+        f = tempfile.TemporaryFile()
+        self.x.tofile(f)
+        f.seek(0)
+        y = N.fromfile(f,dtype=self.dtype)
+        assert_array_equal(y,self.x.flat)
+
+    def test_filename(self):
+        filename = tempfile.mktemp()
+        f = open(filename,'wb')
+        self.x.tofile(f)
+        f.close()
+        y = N.fromfile(filename,dtype=self.dtype)
+        assert_array_equal(y,self.x.flat)
+
+class TestFromBuffer(ParametricTestCase):
+    def tst_basic(self,buffer,expected,kwargs):
+        assert_array_equal(N.frombuffer(buffer,**kwargs),expected)
+
+    def testip_basic(self):
+        tests = []
+        for byteorder in ['<','>']:
+            for dtype in [float,int,N.complex]:
+                dt = N.dtype(dtype).newbyteorder(byteorder)
+                x = (N.random.random((4,7))*5).astype(dt)
+                buf = x.tostring()
+                tests.append((self.tst_basic,buf,x.flat,{'dtype':dt}))
+        return tests
+
+class TestResize(NumpyTestCase):
+    def test_basic(self):
+        x = N.eye(3)
+        x.resize((5,5))
+        assert_array_equal(x.flat[:9],N.eye(3).flat)
+        assert_array_equal(x[9:].flat,0)
+
+    def test_check_reference(self):
+        x = N.eye(3)
+        y = x
+        self.failUnlessRaises(ValueError,x.resize,(5,1))
+
+# Import tests without matching module names
 set_local_path()
 from test_unicode import *
 from test_regression import *
+from test_ufunc import *
 restore_path()
 
 if __name__ == "__main__":
