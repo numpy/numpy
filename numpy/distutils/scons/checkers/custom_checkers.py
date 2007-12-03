@@ -9,7 +9,8 @@ from distutils.util import get_platform
 
 from numpy.distutils.scons.core.libinfo import get_config_from_section, get_config
 from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
-        c_sgemm as sunperf_src, lapack_sgesv, blas_sgemm, c_sgemm2
+        c_sgemm as sunperf_src, lapack_sgesv, blas_sgemm, c_sgemm2, \
+        clapack_sgesv as clapack_src
 from numpy.distutils.scons.fortran_scons import CheckF77Mangling, CheckF77Clib
 from numpy.distutils.scons.configuration import add_info
 from numpy.distutils.scons.core.utils import rsplit
@@ -235,103 +236,34 @@ def CheckCLAPACK(context, autoadd = 1, check_version = 0):
     It looks for the following libs:
         - Mac OS X: Accelerate, and then vecLib.
         - Others: MKL, then ATLAS."""
-    context.Message('Checking CLAPACK ...')
-    context.Result('FIXME: not implemented yet')
-    return 0
     libname = 'clapack'
     env = context.env
 
+    def check(func, name, suplibs):
+        st, res = func(context, autoadd, check_version)
+        if st:
+            for lib in suplibs:
+                res.cfgopts['libs'].insert(0, lib)
+            st = check_include_and_run(context, 'CLAPACK (%s)' % name, 
+                                       res.cfgopts, [], clapack_src, autoadd)
+            if st:
+                add_info(env, libname, res)
+            return st
+
     # If section lapack is in site.cfg, use those options. Otherwise, use default
-    section = "lapack"
+    section = "clapack"
     siteconfig, cfgfiles = get_config()
     (cpppath, libs, libpath), found = get_config_from_section(siteconfig, section)
     if found:
-        # XXX: handle def library names correctly
-        if len(libs) == 1 and len(libs[0]) == 0:
-            libs = ['lapack', 'blas']
-        cfg = ConfigOpts(cpppath = cpppath, libs = libs, libpath = libpath,
-                         rpath = deepcopy(libpath))
-
-        # XXX: How to know whether we need fortran or not
-        # ?
-        if not env.has_key('F77_NAME_MANGLER'):
-            if not CheckF77Mangling(context):
-                return 0
-        if not env.has_key('F77_LDFLAGS'):
-            if not CheckF77Clib(context):
-                return 0
-
-        # Get the mangled name of our test function
-        sgesv_string = env['F77_NAME_MANGLER']('sgesv')
-        test_src = lapack_sgesv % sgesv_string
-
-        # fortrancfg is used to merge info from fortran checks and site.cfg
-        fortrancfg = deepcopy(cfg)
-        fortrancfg['linkflags'].extend(env['F77_LDFLAGS'])
-
-        st = check_include_and_run(context, 'LAPACK (from site.cfg) ', fortrancfg,
-                                  [], test_src, autoadd)
-        if st:
-            add_info(env, libname, ConfigRes('Generic CLAPACK', cfg, found))
-        return st
+        # XXX: handle section
+        pass
     else:
         if sys.platform == 'darwin':
-            st, opts = CheckAccelerate(context, autoadd)
-            if st:
-                if st:
-                    add_info(env, libname, opts)
-                return st
-            st, opts = CheckAccelerate(context, autoadd)
-            if st:
-                if st:
-                    add_info(env, libname, opts)
-                return st
-
+            pass
         else:
-            # Get fortran stuff (See XXX at the top on F77 vs C)
-            if not env.has_key('F77_NAME_MANGLER'):
-                if not CheckF77Mangling(context):
-                    add_info(env, libname, None)
-                    return 0
-            if not env.has_key('F77_LDFLAGS'):
-                if not CheckF77Clib(context):
-                    add_info(env, libname, None)
-                    return 0
-
-            # Get the mangled name of our test function
-            sgesv_string = env['F77_NAME_MANGLER']('sgesv')
-            test_src = lapack_sgesv % sgesv_string
-
-            # Check MKL
-            st, res = CheckMKL(context, autoadd)
-            if st:
-                # Intel recommends linking lapack before mkl, guide and co
-                res.cfgopts['libs'].insert(0, 'lapack')
-                st = check_include_and_run(context, 'LAPACK (MKL)', res.cfgopts,
-                                           [], test_src, autoadd)
-                if st:
-                    add_info(env, libname, res)
-                return st
-
             # Check ATLAS
-            st, res = CheckATLAS(context, autoadd = 1)
+            st = check(CheckATLAS, 'ATLAS', ['lapack_atlas'])
             if st:
-                res.cfgopts['libs'].insert(0, 'lapack')
-                st = check_include_and_run(context, 'LAPACK (ATLAS)', res.cfgopts,
-                                           [], test_src, autoadd)
-                if st:
-                    add_info(env, libname, res)
-                # XXX: Check complete LAPACK or not. (Checking for not
-                # implemented lapack symbols ?)
-                return st
-
-            # Check Sunperf
-            st, res = CheckSunperf(context, autoadd)
-            if st:
-                st = check_include_and_run(context, 'LAPACK (Sunperf)', res.cfgopts,
-                                           [], test_src, autoadd)
-                if st:
-                    add_info(env, libname, res)
                 return st
 
     add_info(env, libname, None)

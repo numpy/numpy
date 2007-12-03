@@ -171,5 +171,49 @@ main (void)
 }
 """
 
+# Code which try clapack_sgesv 
+clapack_sgesv = r"""
+enum CBLAS_ORDER {CblasRowMajor=101, CblasColMajor=102};
+
+int clapack_sgesv(const enum CBLAS_ORDER Order, const int N, const int NRHS,
+                  float *A, const int lda, int *ipiv,
+                  float *B, const int ldb);
+
+int compare(float A[], float B[], int sz)
+{
+        int i;
+
+        for(i = 0; i < sz; ++i) {
+                if ( (A[i] - B[i] > 0.01) || (A[i] - B[i] < -0.01)) {
+                        return -1;
+                }
+        }
+        return 0;
+}
+
+int main(void)
+{
+    int n = 2;
+    int nrhs = 2;
+    int lda = 2;
+    float A[] = { 1, 2, 3, 4};
+    int st;
+
+    int ldb = 2;
+    float B[] = { 1, 0, 0, 1};
+    float X[] = { -2, 1.5, 1, -0.5};
+
+    int ipov[] = {0, 0};
+    int info;
+
+    /* Compute X in A * X = B */
+    info = clapack_sgesv(CblasRowMajor, n, nrhs, A, lda, ipov, B, ldb);
+
+    st = compare(B, X, 4);
+    return st;
+}
+"""
+
+# Check whether calling
 if __name__ == '__main__':
     pass
