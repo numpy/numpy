@@ -3,6 +3,8 @@
 # of intele
 # http://developer.intel.com/software/products/compilers/flin/
 
+import sys
+
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
@@ -105,6 +107,14 @@ class IntelFCompiler(BaseIntelFCompiler):
         v = self.get_version()
         if v and v >= '8.0':
             opt.append('-nofor_main')
+        if sys.platform == 'darwin':
+            # Here, it's -dynamiclib
+            try:
+                idx = opt.index('-shared')
+                opt.remove('-shared')
+            except ValueError:
+                idx = 0
+            opt[idx:idx] = ['-dynamiclib', 'Wl,-undefined,dynamic_lookup']
         return opt
 
 class IntelItaniumFCompiler(IntelFCompiler):
