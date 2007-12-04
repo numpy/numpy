@@ -50,6 +50,9 @@ def is_cc_suncc(fullpath):
 
     return suncc.search(cnt)
 
+def get_local_toolpath():
+    return os.path.dirname(numpy.distutils.scons.tools.__file__)
+
 def _glob(env, path):
     """glob function to handle src_dir issues."""
     import glob
@@ -199,7 +202,7 @@ def initialize_f77(env, path_list):
     if len(env['f77_opt']) > 0:
         try:
             if len(env['f77_opt_path']) > 0:
-                t = Tool(env['f77_opt'], toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+                t = Tool(env['f77_opt'], toolpath = [get_local_toolpath()])
 
                 t(env) 
                 path_list.append(env['f77_opt_path'])
@@ -211,7 +214,7 @@ def initialize_f77(env, path_list):
     else:
         def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
         if def_fcompiler:
-            t = Tool(def_fcompiler)
+            t = Tool(def_fcompiler, toolpath = [get_local_toolpath()])
             t(env)
             customize_f77(t.name, env)
         else:
@@ -231,7 +234,7 @@ def initialize_cxx(env, path_list):
     if len(env['cxx_opt']) > 0:
         try:
             if len(env['cxx_opt_path']) > 0:
-                t = Tool(env['cxx_opt'], toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+                t = Tool(env['cxx_opt'], toolpath = [get_local_toolpath()])
                 t(env) 
                 path_list.append(env['cxx_opt_path'])
         except EnvironmentError, e:
@@ -241,7 +244,7 @@ def initialize_cxx(env, path_list):
     else:
         def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
         if def_fcompiler:
-            t = Tool(def_fcompiler)
+            t = Tool(def_fcompiler, toolpath = [get_local_toolpath()])
             t(env)
         else:
             print "========== NO CXX COMPILER FOUND ==========="
@@ -303,7 +306,7 @@ def _GetNumpyEnvironment(args):
     else:
         try:
             t = FindTool(['g++'], env)
-            env['LINK'] = t
+            #env['LINK'] = None
         except EnvironmentError:
             raise RuntimeError('g++ not found: this is necessary with mingw32 '\
                                'to build numpy !') 
@@ -314,7 +317,7 @@ def _GetNumpyEnvironment(args):
         Tool(t)(env)
 
     # Add our own, custom tools (f2py, from_template, etc...)
-    t = Tool('f2py', toolpath = [os.path.dirname(numpy.distutils.scons.tools.__file__)])
+    t = Tool('f2py', toolpath = [get_local_toolpath()])
 
     try:
         t(env)
