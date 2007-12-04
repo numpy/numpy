@@ -228,7 +228,8 @@ import numpy.distutils.fcompiler as _FC
 def get_f77_config(name):
     # name is the scons name for the tool
     if name == 'g77' or name == 'gfortran':
-        if distutils.sysconfig.get_config_vars('LDFLAGS')[0].find('-pthread'):
+	dist_ldflags = distutils.sysconfig.get_config_vars('LDFLAGS')[0]
+	if dist_ldflags and dist_ldflags.find('-pthread'):
             thread = ['-pthread']
         else:
             thread = []
