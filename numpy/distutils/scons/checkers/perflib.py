@@ -9,6 +9,7 @@
 # such as BLAS, CBLAS, LAPACK checkers.
 import re
 from copy import deepcopy
+from os.path import join as pjoin
 
 from numpy.distutils.scons.core.libinfo import get_config_from_section, get_config
 from numpy.distutils.scons.testcode_snippets import cblas_sgemm as cblas_src, \
