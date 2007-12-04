@@ -225,8 +225,8 @@ def initialize_f77(env, path_list):
 
     if is_f77_gnu(env['F77']):
         # XXX: this has nothing to do here !
-        env.AppendUnique(SHF77FLAGS = ['-fno-second-underscore'])
-        env.AppendUnique(SHF77FLAGS = ['-fPIC'])
+        env.AppendUnique(SHFORTRANFLAGS = ['-fno-second-underscore'])
+        env.AppendUnique(SHFORTRANFLAGS = ['-fPIC'])
 
 def initialize_cxx(env, path_list):
     from SCons.Tool import Tool, FindTool
