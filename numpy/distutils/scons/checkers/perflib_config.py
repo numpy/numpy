@@ -41,6 +41,12 @@ class PerflibConfig:
 # Perflib specific configuration and helpers
 #-------------------------------------------
 CONFIG = {
+        'GenericBlas': PerflibConfig('BLAS', 'blas', 
+                                    ConfigOpts(libs = ['blas']),
+                                    [], []),
+        'GenericLapack': PerflibConfig('LAPACK', 'lapack', 
+                                      ConfigOpts(libs = ['lapack']),
+                                      [], []),
         'MKL': PerflibConfig('MKL', 'mkl', ConfigOpts(libs = ['mkl', 'guide', 'm']),
                              ['mkl.h'], ['MKLGetVersion']),
         'ATLAS': PerflibConfig('ATLAS', 'atlas', 

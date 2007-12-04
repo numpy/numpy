@@ -16,7 +16,7 @@ from numpy.distutils.scons.configuration import add_info
 from numpy.distutils.scons.core.utils import rsplit
 from numpy.distutils.scons.core.extension_scons import built_with_mstools, built_with_mingw
 
-from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
+from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate, CONFIG
 from support import check_include_and_run, ConfigOpts, ConfigRes
 
 def CheckCBLAS(context, autoadd = 1, check_version = 0):
@@ -137,6 +137,21 @@ def CheckF77BLAS(context, autoadd = 1, check_version = 0):
             if st:
                 return st
 
+    def check_generic_blas():
+        name = 'Generic'
+        cfg = CONFIG['GenericBlas']
+        res = ConfigRes(name, cfg.defopts, 0)
+        st = check_include_and_run(context, 'BLAS (%s)' % name, res.cfgopts,
+                                   [], test_src, autoadd)
+        if st:
+            add_info(env, libname, res)
+        return st
+
+    # Check generic blas last
+    st = check_generic_blas()
+    if st:
+        return st
+
     add_info(env, libname, None)
     return 0
 
@@ -219,6 +234,21 @@ def CheckF77LAPACK(context, autoadd = 1, check_version = 0):
             st = check(CheckSunperf, 'Sunperf', [])
             if st:
                 return st
+
+    def check_generic_lapack():
+        name = 'Generic'
+        cfg = CONFIG['GenericLapack']
+        res = ConfigRes(name, cfg.defopts, 0)
+        st = check_include_and_run(context, 'LAPACK (%s)' % name, res.cfgopts,
+                                   [], test_src, autoadd)
+        if st:
+            add_info(env, libname, res)
+        return st
+
+    # Check generic blas last
+    st = check_generic_lapack()
+    if st:
+        return st
 
     add_info(env, libname, None)
     return 0
