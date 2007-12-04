@@ -16,6 +16,8 @@ from numpy.distutils.scons.configuration import add_info
 from perflib import CheckMKL, CheckFFTW3, CheckFFTW2
 from support import check_include_and_run, ConfigOpts, ConfigRes
 
+__all__ = ['CheckFFT']
+
 def CheckFFT(context, autoadd = 1, check_version = 0):
     """This checker tries to find optimized library for fft"""
     libname = 'fft'

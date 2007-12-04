@@ -5,7 +5,8 @@ from core.extension import get_python_inc, get_pythonlib_dir
 from core.utils import isstring, rsplit
 
 from checkers import CheckCBLAS, CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK, \
-                     IsMKL, IsATLAS, IsVeclib, IsAccelerate, IsSunperf
+                     IsMKL, IsATLAS, IsVeclib, IsAccelerate, IsSunperf,\
+                     IsFFTW3, IsFFTW2
 from checkers import CheckFFT
 from checkers.perflib import GetATLASVersion, GetMKLVersion
 
