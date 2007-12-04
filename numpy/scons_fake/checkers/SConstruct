@@ -3,9 +3,10 @@ from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons.checkers.perflib import \
         CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf,\
         IsMKL, IsATLAS, IsAccelerate, GetATLASVersion, GetMKLVersion,\
-        CheckFFTW3, CheckFFTW2
+        CheckFFTW3, CheckFFTW2, IsFFTW3, IsFFTW2
 from numpy.distutils.scons import CheckCBLAS, \
-        CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK
+        CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK,\
+        CheckFFT
 from numpy.distutils.scons import CheckF77Mangling
 
 env = GetNumpyEnvironment(ARGUMENTS)
@@ -29,7 +30,8 @@ config = env.NumpyConfigure(custom_tests =
     'CheckCLAPACK' : CheckCLAPACK,
     'CheckSunperf' : CheckSunperf,
     'CheckFFTW3' : CheckFFTW3,
-    'CheckFFTW2' : CheckFFTW2})
+    'CheckFFTW2' : CheckFFTW2,
+    'CheckFFT' : CheckFFT})
 
 if do_check == 1:
     st, opts = config.CheckATLAS(autoadd = 0)
@@ -43,12 +45,22 @@ if do_check == 1:
     st = config.CheckF77LAPACK(autoadd = 0)
     st = config.CheckCLAPACK(autoadd = 0)
     st = config.CheckF77Mangling()
+    st = config.CheckFFT(autoadd = 0)
 
     if IsMKL(env, 'blas'):
         print "blas is MKL (%s)" % GetMKLVersion(env, 'blas')
 
     if IsATLAS(env, 'blas'):
         print "blas is ATLAS (%s)" % GetATLASVersion(env, 'blas')
+
+    if IsFFTW3(env, 'fft'):
+        print "fft is fftw3"
+    elif IsFFTW2(env, 'fft'):
+        print "fft is fftw2"
+    elif IsMKL(env, 'fft'):
+        print "fft is MKL"
+    else:
+        print "fft ?"
 
     if env.has_key('LIBS'):
         print "LIBS of env is %s" % env.Dump('LIBS')

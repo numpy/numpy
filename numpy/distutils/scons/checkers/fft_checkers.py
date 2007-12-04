@@ -12,14 +12,9 @@ from distutils.util import get_platform
 #         c_sgemm as sunperf_src, lapack_sgesv, blas_sgemm, c_sgemm2, \
 #         clapack_sgesv as clapack_src
 # from numpy.distutils.scons.fortran_scons import CheckF77Mangling, CheckF77Clib
-# from numpy.distutils.scons.configuration import add_info
-# from numpy.distutils.scons.core.utils import rsplit
-# from numpy.distutils.scons.core.extension_scons import built_with_mstools, built_with_mingw
-# 
-# from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
-# from support import check_include_and_run, ConfigOpts, ConfigRes
-
-#GetFFTW3Version = GetVersionFactory('FFTW3').get_func()
+from numpy.distutils.scons.configuration import add_info
+from perflib import CheckMKL, CheckFFTW3, CheckFFTW2
+from support import check_include_and_run, ConfigOpts, ConfigRes
 
 def CheckFFT(context, autoadd = 1, check_version = 0):
     """This checker tries to find optimized library for fft"""
@@ -28,14 +23,13 @@ def CheckFFT(context, autoadd = 1, check_version = 0):
 
     def check(func, name, suplibs):
         st, res = func(context, autoadd, check_version)
+        # XXX: check for fft code ?
         if st:
             for lib in suplibs:
-                res.cfgopts['libs'].insert(0, lib)
-            st = check_include_and_run(context, 'FFT (%s)' % name, 
-                                       res.cfgopts, [], cblas_src, autoadd)
-            if st:
-                add_info(env, libname, res)
-            return st
+                res.cfgopts['libs'].append(lib)
+            add_info(env, libname, res)
+
+        return st
 
     # Check MKL
     st = check(CheckMKL, 'MKL', [])
@@ -48,7 +42,7 @@ def CheckFFT(context, autoadd = 1, check_version = 0):
         return st
 
     # Check fftw2
-    st = check(CheckSunperf, 'fftw2', ['fftw'])
+    st = check(CheckFFTW2, 'fftw2', ['fftw'])
     if st:
         return st
 
