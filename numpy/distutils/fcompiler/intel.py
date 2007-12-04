@@ -3,6 +3,8 @@
 # of intele
 # http://developer.intel.com/software/products/compilers/flin/
 
+import sys
+
 from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
@@ -40,12 +42,18 @@ class IntelFCompiler(BaseIntelFCompiler):
         'ranlib'       : ["ranlib"]
         }
 
-    pic_flags = ['-KPIC']
+    pic_flags = ['-fPIC']
     module_dir_switch = '-module ' # Don't remove ending space!
     module_include_switch = '-I'
 
     def get_flags(self):
-        opt = self.pic_flags + ["-cm"]
+        v = self.get_version()
+        if v >= '10.0':
+            # Use -fPIC instead of -KPIC.
+            pic_flags = ['-fPIC']
+        else:
+            pic_flags = ['-KPIC']
+        opt = pic_flags + ["-cm"]
         return opt
 
     def get_flags_free(self):
@@ -99,6 +107,14 @@ class IntelFCompiler(BaseIntelFCompiler):
         v = self.get_version()
         if v and v >= '8.0':
             opt.append('-nofor_main')
+        if sys.platform == 'darwin':
+            # Here, it's -dynamiclib
+            try:
+                idx = opt.index('-shared')
+                opt.remove('-shared')
+            except ValueError:
+                idx = 0
+            opt[idx:idx] = ['-dynamiclib', '-Wl,-undefined,dynamic_lookup']
         return opt
 
 class IntelItaniumFCompiler(IntelFCompiler):
@@ -143,14 +159,6 @@ class IntelEM64TFCompiler(IntelFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
-
-    def get_flags(self):
-        v = self.get_version()
-        if v >= '10.0':
-            # Use -fPIC instead of -KPIC.
-            return ['-fPIC', '-cm']
-        else:
-            return IntelFCompiler.get_flags(self)
 
     def get_flags_arch(self):
         opt = []
