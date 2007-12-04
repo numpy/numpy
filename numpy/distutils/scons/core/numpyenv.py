@@ -9,7 +9,7 @@ from distutils.sysconfig import get_config_vars
 from numpy.distutils.misc_util import get_scons_build_dir, get_scons_configres_dir,\
     get_scons_configres_filename
 
-from default import tool_list, get_cc_config
+from default import tool_list, get_cc_config, get_f77_config
 from custom_builders import NumpySharedLibrary, NumpyCtypes, \
             NumpyPythonExtension, NumpyStaticExtLibrary
 from libinfo import get_config
@@ -105,8 +105,13 @@ def GetNumpyOptions(args):
     return opts
 
 def customize_cc(name, env):
-    """Customize env options related to the given tool."""
+    """Customize env options related to the given tool (C compiler)."""
     cfg = get_cc_config(name)
+    env.AppendUnique(**cfg.get_flags_dict())
+
+def customize_f77(name, env):
+    """Customize env options related to the given tool (F77 compiler)."""
+    cfg = get_f77_config(name)
     env.AppendUnique(**cfg.get_flags_dict())
 
 def finalize_env(env):
@@ -126,12 +131,30 @@ def finalize_env(env):
 
 def GetNumpyEnvironment(args):
     env = _GetNumpyEnvironment(args)
-    env.AppendUnique(CFLAGS  = env['NUMPY_WARN_CFLAGS'] +\
-                               env['NUMPY_OPTIM_CFLAGS'] +\
-                               env['NUMPY_DEBUG_SYMBOL_CFLAGS'] +\
-                               env['NUMPY_EXTRA_CFLAGS'] +\
-                               env['NUMPY_THREAD_CFLAGS'])
+
+    # Apply optim and warn flags considering context
+    if 'CFLAGS' in os.environ:
+        env.Append(CFLAGS = "%s" % os.environ['CFLAGS'])
+        env.AppendUnique(CFLAGS = env['NUMPY_EXTRA_CFLAGS'] +
+                                  env['NUMPY_THREAD_CFLAGS'])
+    else:
+        env.AppendUnique(CFLAGS  = env['NUMPY_WARN_CFLAGS'] +\
+                                   env['NUMPY_OPTIM_CFLAGS'] +\
+                                   env['NUMPY_DEBUG_SYMBOL_CFLAGS'] +\
+                                   env['NUMPY_EXTRA_CFLAGS'] +\
+                                   env['NUMPY_THREAD_CFLAGS'])
     env.AppendUnique(LINKFLAGS = env['NUMPY_OPTIM_LDFLAGS'])
+
+    if 'FFLAGS' in os.environ:
+        env.Append(SHFORTRANFLAGS = "%s" % os.environ['FFLAGS'])
+        env.AppendUnique(SHFORTRANFLAGS = env['NUMPY_EXTRA_FFLAGS'] +
+                                        env['NUMPY_THREAD_FFLAGS'])
+    else:
+        env.AppendUnique(SHFORTRANFLAGS  = env['NUMPY_WARN_FFLAGS'] +
+                                         env['NUMPY_OPTIM_FFLAGS'] +
+                                         env['NUMPY_DEBUG_SYMBOL_FFLAGS'] +
+                                         env['NUMPY_EXTRA_FFLAGS'] +
+                                         env['NUMPY_THREAD_FFLAGS'])
     return env
 
 def initialize_cc(env, path_list):
@@ -180,6 +203,7 @@ def initialize_f77(env, path_list):
 
                 t(env) 
                 path_list.append(env['f77_opt_path'])
+                customize_f77(t.name, env)
         except EnvironmentError, e:
             # scons could not understand cc_opt (bad name ?)
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
@@ -189,6 +213,7 @@ def initialize_f77(env, path_list):
         if def_fcompiler:
             t = Tool(def_fcompiler)
             t(env)
+            customize_f77(t.name, env)
         else:
             print "========== NO FORTRAN COMPILER FOUND ==========="
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Mon Nov 26 05:00 PM 2007 J
+# Last Change: Tue Dec 04 04:00 PM 2007 J
 import sys
 import distutils.sysconfig
 
@@ -123,6 +123,34 @@ class CompilerConfig:
                 d[k] = []
         return d
 
+class FCompilerConfig:
+    def __init__(self, optim = None, warn = None, debug = None, debug_symbol =
+                 None, thread = None, extra = None):
+        # XXX: several level of optimizations ?
+        self.optim = optim
+        # XXX: several level of warnings ?
+        self.warn = warn
+        # To enable putting debugging info in binaries
+        self.debug_symbol = debug_symbol
+        # To enable friendly debugging
+        self.debug = debug
+        # XXX
+        self.thread = thread
+        # XXX
+        self.extra = extra
+
+    def get_flags_dict(self):
+        d = {'NUMPY_OPTIM_FFLAGS' : self.optim,
+             'NUMPY_WARN_FFLAGS' : self.warn,
+             'NUMPY_THREAD_FFLAGS' : self.thread,
+             'NUMPY_DEBUG_FFLAGS' : self.debug,
+             'NUMPY_EXTRA_FFLAGS' : self.extra,
+             'NUMPY_DEBUG_SYMBOL_FFLAGS' : self.debug_symbol}
+        for k, v in d.items():
+            if v is None:
+                d[k] = []
+        return d
+
 # It seems that scons consider any option with space in it as a multi option,
 # which breaks command line options. So just don't put space.
 def get_cc_config(name):
@@ -196,7 +224,19 @@ def get_cc_config(name):
 
 import numpy.distutils.fcompiler as _FC
 
+# XXX: handle F77, F90 and co ?
 def get_f77_config(name):
     # name is the scons name for the tool
-    if name == 'g77':
-        cfg = CompilerConfig(optim = ['-O2']) 
+    if name == 'g77' or name == 'gfortran':
+        if distutils.sysconfig.get_config_vars('LDFLAGS')[0].find('-pthread'):
+            thread = ['-pthread']
+        else:
+            thread = []
+        cfg = FCompilerConfig(optim = ['-O2', '-fno-strict-aliasing', '-DNDEBUG'],
+                              warn = ['-Wall'],
+                              debug_symbol = ['-g'], 
+                              thread = thread)
+    else:
+        cfg = FCompilerConfig()
+
+    return cfg

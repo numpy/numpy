@@ -1,12 +1,11 @@
 Remaining things:
-    - CLAPACK: check old atlas
-    - FFT checker
+    - Add NETLIB blas and lapack
     - check windows
-    - Add CPPPDEFINES in perflib checkers 
-    - Fortran optimizations flags
-    - Control cflags and f77flags from env
     - umfpack checker
     - finish scipy
+    - Add CPPPDEFINES in perflib checkers 
+    - CXX optimizations flags + Control cxxflags from env
+    - CLAPACK: check old atlas
     - handle inplace
     - doc
 

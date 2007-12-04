@@ -1,3 +1,16 @@
+Tue, 04 Dec 2007 16:32:20 +0900 (1st beta)
+
+User-visible changes:
+	* sunperf now works for numpy and scipy
+	* cflags and fflags are overridable from the command line
+
+Implemenation changes:
+	* BLAS, LAPACK, CBLAS and CLAPACK checkers implemented for scipy
+	* FFT checker implemented
+	* F2py tool added
+	* sub packages now build correctly
+	* Static library builder, handling correctly pic related flags
+
 Mon, 12 Nov 2007 19:57:24 +0900
 
 	* g77 and MS visual studio can now be used together. CheckF77Mangler,
