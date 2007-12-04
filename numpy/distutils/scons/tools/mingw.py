@@ -64,6 +64,7 @@ def shlib_generator(target, source, env, for_signature):
     def_target = env.FindIxes(target, 'WINDOWSDEFPREFIX', 'WINDOWSDEFSUFFIX')
     if def_target: cmd.append('-Wl,--output-def,'+def_target.get_string(for_signature))
 
+    cmd.extend(['$SHLINKFLAGSEND'])
     return [cmd]
 
 def shlib_emitter(target, source, env):

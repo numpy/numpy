@@ -170,21 +170,21 @@ def initialize_cc(env, path_list):
                     # Intel Compiler SCons.Tool has a special way to set the
                     # path, so we use this one instead of changing
                     # env['ENV']['PATH'].
-                    t = Tool(env['cc_opt'], 
+                    t = Tool(env['cc_opt'], toolpath = [get_local_toolpath()], 
                              topdir = os.path.split(env['cc_opt_path'])[0])
                     t(env) 
                     customize_cc(t.name, env)
                 else:
                     if is_cc_suncc(pjoin(env['cc_opt_path'], env['cc_opt'])):
                         env['cc_opt'] = 'suncc'
-                    t = Tool(env['cc_opt'])
+                    t = Tool(env['cc_opt'], toolpath = [get_local_toolpath()])
                     t(env) 
                     customize_cc(t.name, env)
                     path_list.append(env['cc_opt_path'])
             else:
                 # Do not care about PATH info because none given from scons
                 # distutils command
-                t = Tool(env['cc_opt'])
+                t = Tool(env['cc_opt'], toolpath = [get_local_toolpath()])
                 t(env) 
                 customize_cc(t.name, env)
         except EnvironmentError, e:
@@ -192,7 +192,7 @@ def initialize_cc(env, path_list):
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
                                  str(e))
     else:
-        t = Tool(FindTool(DEF_C_COMPILERS, env))
+        t = Tool(FindTool(DEF_C_COMPILERS, env), toolpath = [get_local_toolpath()])
         t(env)
         customize_cc(t.name, env)
 
@@ -355,9 +355,12 @@ def _GetNumpyEnvironment(args):
     env['SHLINKFLAGSEND'] = ['$LINKFLAGSEND']
     env['LDMODULEFLAGSEND'] = []
 
-    env['LINKCOM'] = '%s $LINKFLAGSEND' % env['LINKCOM']
-    env['SHLINKCOM'] = '%s $SHLINKFLAGSEND' % env['SHLINKCOM']
-    env['LDMODULECOM'] = '%s $LDMODULEFLAGSEND' % env['LDMODULECOM']
+    
+    # For mingw tools, we do it in our custom mingw scons tool
+    if not env['cc_opt'] == 'mingw':
+        env['LINKCOM'] = '%s $LINKFLAGSEND' % env['LINKCOM']
+        env['SHLINKCOM'] = '%s $SHLINKFLAGSEND' % env['SHLINKCOM']
+        env['LDMODULECOM'] = '%s $LDMODULEFLAGSEND' % env['LDMODULECOM']
 
     # Put config code and log in separate dir for each subpackage
     from utils import curry
