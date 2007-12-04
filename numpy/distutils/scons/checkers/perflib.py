@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Tue Dec 04 02:00 PM 2007 J
+# Last Change: Tue Dec 04 03:00 PM 2007 J
 
 # This module defines checkers for performances libs providing standard API,
 # such as MKL (Intel), ATLAS, Sunperf (solaris and linux), Accelerate (Mac OS
@@ -259,3 +259,24 @@ def floupi(out):
     return keep
 
 IsSunperf = IsFactory('Sunperf').get_func()
+
+#--------------------
+# FFT related perflib
+#--------------------
+def CheckFFTW3(context, autoadd = 1, check_version = 0):
+    """This checker tries to find fftw3."""
+    cfg = CONFIG['FFTW3']
+    
+    return _check(context, cfg.name, cfg.section, cfg.defopts, cfg.headers,
+                  cfg.funcs, check_version, _mkl_version_checker, autoadd)
+
+IsFFTW3 = IsFactory('FFTW3').get_func()
+
+def CheckFFTW2(context, autoadd = 1, check_version = 0):
+    """This checker tries to find fftw2."""
+    cfg = CONFIG['FFTW2']
+    
+    return _check(context, cfg.name, cfg.section, cfg.defopts, cfg.headers,
+                  cfg.funcs, check_version, _mkl_version_checker, autoadd)
+
+IsFFTW2 = IsFactory('FFTW2').get_func()

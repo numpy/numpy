@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Last Change: Thu Nov 22 05:00 PM 2007 J
+# Last Change: Tue Dec 04 03:00 PM 2007 J
 
 # Module for custom, common checkers for numpy (and scipy)
 import sys
@@ -18,10 +18,6 @@ from numpy.distutils.scons.core.extension_scons import built_with_mstools, built
 
 from perflib import CheckMKL, CheckATLAS, CheckSunperf, CheckAccelerate
 from support import check_include_and_run, ConfigOpts, ConfigRes
-
-# XXX: many perlib can be used from both C and F (Atlas being a notable
-# exception for LAPACK). So shall we make the difference between BLAS, CBLAS,
-# LAPACK and CLAPACK ? How to test for fortran ?
 
 def CheckCBLAS(context, autoadd = 1, check_version = 0):
     """This checker tries to find optimized library for cblas."""

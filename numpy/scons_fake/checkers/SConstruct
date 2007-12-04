@@ -2,7 +2,8 @@
 from numpy.distutils.scons import GetNumpyEnvironment
 from numpy.distutils.scons.checkers.perflib import \
         CheckATLAS, CheckAccelerate, CheckMKL, CheckSunperf,\
-        IsMKL, IsATLAS, IsAccelerate, GetATLASVersion, GetMKLVersion
+        IsMKL, IsATLAS, IsAccelerate, GetATLASVersion, GetMKLVersion,\
+        CheckFFTW3, CheckFFTW2
 from numpy.distutils.scons import CheckCBLAS, \
         CheckCLAPACK, CheckF77BLAS, CheckF77LAPACK
 from numpy.distutils.scons import CheckF77Mangling
@@ -26,13 +27,17 @@ config = env.NumpyConfigure(custom_tests =
     'CheckF77BLAS' : CheckF77BLAS,
     'CheckF77LAPACK' : CheckF77LAPACK,
     'CheckCLAPACK' : CheckCLAPACK,
-    'CheckSunperf' : CheckSunperf})
+    'CheckSunperf' : CheckSunperf,
+    'CheckFFTW3' : CheckFFTW3,
+    'CheckFFTW2' : CheckFFTW2})
 
 if do_check == 1:
     st, opts = config.CheckATLAS(autoadd = 0)
     st, opts = config.CheckMKL(autoadd = 0)
     st, opts = config.CheckAccelerate(autoadd = 0)
     st, opts = config.CheckSunperf(autoadd = 0)
+    st, opts = config.CheckFFTW2(autoadd = 0)
+    st, opts = config.CheckFFTW3(autoadd = 0)
     st = config.CheckF77BLAS(autoadd = 0, check_version = True)
     st = config.CheckCBLAS(autoadd = 0)
     st = config.CheckF77LAPACK(autoadd = 0)
