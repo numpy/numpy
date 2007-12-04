@@ -40,12 +40,18 @@ class IntelFCompiler(BaseIntelFCompiler):
         'ranlib'       : ["ranlib"]
         }
 
-    pic_flags = ['-KPIC']
+    pic_flags = ['-fPIC']
     module_dir_switch = '-module ' # Don't remove ending space!
     module_include_switch = '-I'
 
     def get_flags(self):
-        opt = self.pic_flags + ["-cm"]
+        v = self.get_version()
+        if v >= '10.0':
+            # Use -fPIC instead of -KPIC.
+            pic_flags = ['-fPIC']
+        else:
+            pic_flags = ['-KPIC']
+        opt = pic_flags + ["-cm"]
         return opt
 
     def get_flags_free(self):
@@ -143,14 +149,6 @@ class IntelEM64TFCompiler(IntelFCompiler):
         'archiver'     : ["ar", "-cr"],
         'ranlib'       : ["ranlib"]
         }
-
-    def get_flags(self):
-        v = self.get_version()
-        if v >= '10.0':
-            # Use -fPIC instead of -KPIC.
-            return ['-fPIC', '-cm']
-        else:
-            return IntelFCompiler.get_flags(self)
 
     def get_flags_arch(self):
         opt = []
