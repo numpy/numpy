@@ -149,15 +149,18 @@ def GetNumpyEnvironment(args):
     env.AppendUnique(LINKFLAGS = env['NUMPY_OPTIM_LDFLAGS'])
 
     if 'FFLAGS' in os.environ:
-        env.Append(SHFORTRANFLAGS = "%s" % os.environ['FFLAGS'])
-        env.AppendUnique(SHFORTRANFLAGS = env['NUMPY_EXTRA_FFLAGS'] +
-                                        env['NUMPY_THREAD_FFLAGS'])
+        env.Append(F77FLAGS = "%s" % os.environ['FFLAGS'])
+        env.AppendUnique(F77FLAGS = env['NUMPY_EXTRA_FFLAGS'] +
+                                    env['NUMPY_THREAD_FFLAGS'])
     else:
-        env.AppendUnique(SHFORTRANFLAGS  = env['NUMPY_WARN_FFLAGS'] +
-                                         env['NUMPY_OPTIM_FFLAGS'] +
-                                         env['NUMPY_DEBUG_SYMBOL_FFLAGS'] +
-                                         env['NUMPY_EXTRA_FFLAGS'] +
-                                         env['NUMPY_THREAD_FFLAGS'])
+        env.AppendUnique(F77FLAGS  = env['NUMPY_WARN_FFLAGS'] +
+                                     env['NUMPY_OPTIM_FFLAGS'] +
+                                     env['NUMPY_DEBUG_SYMBOL_FFLAGS'] +
+                                     env['NUMPY_EXTRA_FFLAGS'] +
+                                     env['NUMPY_THREAD_FFLAGS'])
+    #print env.Dump('F77')
+    #print env.Dump('F77FLAGS')
+    #print env.Dump('SHF77FLAGS')
     return env
 
 def initialize_cc(env, path_list):
@@ -208,9 +211,9 @@ def initialize_f77(env, path_list):
                 path_list.append(env['f77_opt_path'])
                 customize_f77(t.name, env)
         except EnvironmentError, e:
-            # scons could not understand cc_opt (bad name ?)
-            raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
-                                 str(e))
+            # scons could not understand fc_opt (bad name ?)
+            raise AssertionError("SCONS: Could not initialize fortran tool ? "\
+                                 "Error is %s" % str(e))
     else:
         def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
         if def_fcompiler:
@@ -221,12 +224,16 @@ def initialize_f77(env, path_list):
             print "========== NO FORTRAN COMPILER FOUND ==========="
 
     # XXX: really have to understand how fortran compilers work in scons...
-    env['F77'] = env['_FORTRAND']
+    if not env.has_key('F77'):
+        env['F77'] = env.subst('$_FORTRANG')
+    if not env.has_key('F77FLAGS'):
+        env['F77FLAGS'] = env.subst('$_FORTRANFLAGSG')
+    if not env.has_key('SHF77FLAGS'):
+        env['SHF77FLAGS'] = env.subst('$_SHFORTRANFLAGSG')
 
     if is_f77_gnu(env['F77']):
         # XXX: this has nothing to do here !
-        env.AppendUnique(SHFORTRANFLAGS = ['-fno-second-underscore'])
-        env.AppendUnique(SHFORTRANFLAGS = ['-fPIC'])
+        env.AppendUnique(F77FLAGS = ['-fno-second-underscore'])
 
 def initialize_cxx(env, path_list):
     from SCons.Tool import Tool, FindTool

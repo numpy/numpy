@@ -1,7 +1,6 @@
-"""SCons.Tool.gfortran
+"""engine.SCons.Tool.g77
 
-Tool-specific initialization for gfortran, the GNU Fortran 95/Fortran 2003
-compiler.
+Tool-specific initialization for g77.
 
 There normally shouldn't be any need to import this module directly.
 It will usually be imported through the generic SCons.Tool.Tool()
@@ -34,34 +33,23 @@ selection method.
 
 __revision__ = "__FILE__ __REVISION__ __DATE__ __DEVELOPER__"
 
-import string
-
 import SCons.Defaults
 
-import fortran
+import f77
+
+compilers = ['g77', 'f77']
 
 def generate(env):
-    """Add Builders and construction variables for gfortran to an
-    Environment."""
-    fortran.generate(env)
+    """Add Builders and construction variables for g77 to an Environment."""
+    f77.generate(env)
 
-    # which one is the good one ? ifort uses _FORTRAND, ifl FORTRAN, aixf77 F77
-    # ...
-    #env['_FORTRAND'] = 'gfortran'
-    env['FORTRAN'] = 'gfortran'
-
-    # XXX does this need to be set too ?
-    #env['SHFORTRAN'] = 'gfortran'
-
+    g77exec = env.Detect(compilers) or 'g77'
+    env['F77'] = g77exec
+    env['SHF77'] = g77exec
     if env['PLATFORM'] in ['cygwin', 'win32']:
-        env['SHFORTRANFLAGS'] = SCons.Util.CLVar('$FORTRANFLAGS')
+        env['SHF77FLAGS'] = SCons.Util.CLVar('$F77FLAGS')
     else:
-        env['SHFORTRANFLAGS'] = SCons.Util.CLVar('$FORTRANFLAGS -fPIC')
-
-    # XXX; Link problems: we need to add -lgfortran somewhere...
-
-    print env.subst('$_FORTRANG')
-    print env.subst('$_SHFORTRANFLAGSG')
+        env['SHF77FLAGS'] = SCons.Util.CLVar('$F77FLAGS -fPIC')
 
 def exists(env):
-    return env.Detect('gfortran')
+    return env.Detect(compilers)
