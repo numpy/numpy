@@ -389,7 +389,7 @@ long rk_binomial_inversion(rk_state *state, long n, double p)
         state->q = q = 1.0 - p;
         state->r = qn = exp(n * log(q));
         state->c = np = n*p;
-        state->m = bound = min(n, np + 10.0*sqrt(np));
+        state->m = bound = min(n, np + 10.0*sqrt(np*q + 1));
     } else
     {
         q = state->q;
