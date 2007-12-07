@@ -1,4 +1,5 @@
 # Last Changed: .
+import os
 import os.path
 from os.path import join as pjoin, dirname as pdirname, basename as pbasename
 import sys
@@ -40,7 +41,6 @@ def is_cc_suncc(fullpath):
     # code, because the compiler does not seem to have a way to do nothing
     # while returning success (0).
     
-    import os
     suncc = re.compile('Sun C')
     # Redirect stderr to stdout
     cmd = fullpath + ' -V 2>&1'
@@ -50,8 +50,18 @@ def is_cc_suncc(fullpath):
 
     return suncc.search(cnt)
 
-def get_local_toolpath():
-    return os.path.dirname(numpy.distutils.scons.tools.__file__)
+def get_local_toolpaths():
+    return [os.path.dirname(numpy.distutils.scons.tools.__file__)]
+
+def get_custom_toolpaths(env):
+    return env['scons_tool_path'].split(os.pathsep)
+
+def get_additional_toolpaths(env):
+    toolp = []
+    # Put custom toolpath FIRST !
+    toolp.extend(get_custom_toolpaths(env))
+    toolp.extend(get_local_toolpaths())
+    return toolp
 
 def _glob(env, path):
     """glob function to handle src_dir issues."""
@@ -82,6 +92,12 @@ def GetNumpyOptions(args):
     from SCons.Options import Options
 
     opts = Options(None, args)
+
+    opts.Add('scons_tool_path', 
+             'comma-separated list of directories to look '\
+             'for tools (take precedence over internal ones)', 
+             '')
+
     # Add directories related info
     opts.Add('pkg_name', 'name of the package (including parent package if any)', '')
     opts.Add('src_dir', 'src dir relative to top called', '.')
@@ -181,21 +197,21 @@ def initialize_cc(env, path_list):
                     # Intel Compiler SCons.Tool has a special way to set the
                     # path, so we use this one instead of changing
                     # env['ENV']['PATH'].
-                    t = Tool(env['cc_opt'], toolpath = [get_local_toolpath()], 
+                    t = Tool(env['cc_opt'], toolpath = get_additional_toolpaths(env), 
                              topdir = os.path.split(env['cc_opt_path'])[0])
                     t(env) 
                     customize_cc(t.name, env)
                 else:
                     if is_cc_suncc(pjoin(env['cc_opt_path'], env['cc_opt'])):
                         env['cc_opt'] = 'suncc'
-                    t = Tool(env['cc_opt'], toolpath = [get_local_toolpath()])
+                    t = Tool(env['cc_opt'], toolpath = get_additional_toolpaths(env))
                     t(env) 
                     customize_cc(t.name, env)
                     path_list.append(env['cc_opt_path'])
             else:
                 # Do not care about PATH info because none given from scons
                 # distutils command
-                t = Tool(env['cc_opt'], toolpath = [get_local_toolpath()])
+                t = Tool(env['cc_opt'], toolpath = get_additional_toolpaths(env))
                 t(env) 
                 customize_cc(t.name, env)
         except EnvironmentError, e:
@@ -203,7 +219,7 @@ def initialize_cc(env, path_list):
             raise AssertionError("SCONS: Could not initialize tool ? Error is %s" % \
                                  str(e))
     else:
-        t = Tool(FindTool(DEF_C_COMPILERS, env), toolpath = [get_local_toolpath()])
+        t = Tool(FindTool(DEF_C_COMPILERS, env), toolpath = get_additional_toolpaths(env))
         t(env)
         customize_cc(t.name, env)
 
@@ -213,7 +229,7 @@ def initialize_f77(env, path_list):
     if len(env['f77_opt']) > 0:
         try:
             if len(env['f77_opt_path']) > 0:
-                t = Tool(env['f77_opt'], toolpath = [get_local_toolpath()])
+                t = Tool(env['f77_opt'], toolpath = get_additional_toolpaths(env))
                 t(env) 
                 path_list.append(env['f77_opt_path'])
                 customize_f77(t.name, env)
@@ -224,7 +240,7 @@ def initialize_f77(env, path_list):
     else:
         def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
         if def_fcompiler:
-            t = Tool(def_fcompiler, toolpath = [get_local_toolpath()])
+            t = Tool(def_fcompiler, toolpath = get_additional_toolpaths(env))
             t(env)
             customize_f77(t.name, env)
         else:
@@ -255,7 +271,7 @@ def initialize_cxx(env, path_list):
     if len(env['cxx_opt']) > 0:
         try:
             if len(env['cxx_opt_path']) > 0:
-                t = Tool(env['cxx_opt'], toolpath = [get_local_toolpath()])
+                t = Tool(env['cxx_opt'], toolpath = get_additional_toolpaths(env))
                 t(env) 
                 path_list.append(env['cxx_opt_path'])
         except EnvironmentError, e:
@@ -265,7 +281,7 @@ def initialize_cxx(env, path_list):
     else:
         def_fcompiler =  FindTool(DEF_FORTRAN_COMPILERS, env)
         if def_fcompiler:
-            t = Tool(def_fcompiler, toolpath = [get_local_toolpath()])
+            t = Tool(def_fcompiler, toolpath = get_additional_toolpaths(env))
             t(env)
         else:
             print "========== NO CXX COMPILER FOUND ==========="
@@ -338,7 +354,7 @@ def _GetNumpyEnvironment(args):
         Tool(t)(env)
 
     # Add our own, custom tools (f2py, from_template, etc...)
-    t = Tool('f2py', toolpath = [get_local_toolpath()])
+    t = Tool('f2py', toolpath = get_additional_toolpaths(env))
 
     try:
         t(env)
