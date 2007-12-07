@@ -50,9 +50,9 @@ compilers = ['f95', 'f90', 'f77']
 #  rely on the c pre-processor, some (like cvf, ivf) have their own
 #  pre-processor technology and use intermediary suffixes (.i90)
 #
-FortranSuffixes = [".f", ".for", ".ftn", ]
+FortranSuffixes = [".for", ".ftn", ]
 FortranPPSuffixes = ['.fpp', '.FPP']
-upper_case = [".F", ".FOR", ".FTN"]
+upper_case = [".FOR", ".FTN"]
 if SCons.Util.case_sensitive_suffixes('.f', '.F'):
     FortranPPSuffixes.extend(upper_case)
 else:

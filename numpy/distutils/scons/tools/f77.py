@@ -42,7 +42,7 @@ import fortran
 compilers = ['f77']
 
 #
-F77Suffixes = ['.f77']
+F77Suffixes = ['.f77', '.f']
 F77PPSuffixes = []
 if SCons.Util.case_sensitive_suffixes('.f77', '.F77'):
     F77PPSuffixes.append('.F77')
