@@ -158,14 +158,13 @@ def protect_path(path):
     return '"' + path + '"'
 
 class scons(old_build_ext):
-    # XXX: I really do not like the way distutils overuses monkey patch. We
-    # should eally avoid that and remove all the code which does it before
-    # release.
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
     user_options = old_build_ext.user_options + \
             [('jobs=', None, 
               "specify number of worker threads when executing scons"),
+             ('scons-tool-path=', None, 'specify additional path '\
+                                    '(absolute) to look for scons tools'),
              ('silent=', None, 'specify whether scons output should be silent '\
                                '(1), super silent (2) or not (0, default)')]
 
@@ -173,6 +172,7 @@ class scons(old_build_ext):
         old_build_ext.initialize_options(self)
         self.jobs = None
         self.silent = 0
+        self.scons_tool_path = ''
         # If true, we bypass distutils to find the c compiler altogether. This
         # is to be used in desperate cases (like incompatible visual studio
         # version).
@@ -224,7 +224,7 @@ class scons(old_build_ext):
             else:
                 self.scons_compiler = compiler_type
  		
-        # We do the same for the fortran compiler
+        # We do the same for the fortran compiler ...
         fcompiler_type = self.fcompiler
         from numpy.distutils.fcompiler import new_fcompiler
         self.fcompiler = new_fcompiler(compiler = fcompiler_type,
@@ -234,16 +234,16 @@ class scons(old_build_ext):
         if self.fcompiler is not None:
             self.fcompiler.customize(self.distribution)
 
-	# C++ compiler
+        # And the C++ compiler
         cxxcompiler = new_compiler(compiler = compiler_type,
                                    verbose = self.verbose,
                                    dry_run = self.dry_run,
                                    force = self.force)
-	if cxxcompiler is not None:
-	    cxxcompiler.customize(self.distribution, need_cxx = 1)
-	    cxxcompiler.customize_cmd(self)
-	    self.cxxcompiler = cxxcompiler.cxx_compiler()
-	    #print self.cxxcompiler.compiler_cxx[0]
+        if cxxcompiler is not None:
+            cxxcompiler.customize(self.distribution, need_cxx = 1)
+            cxxcompiler.customize_cmd(self)
+            self.cxxcompiler = cxxcompiler.cxx_compiler()
+            #print self.cxxcompiler.compiler_cxx[0]
 
     def run(self):
         # XXX: when a scons script is missing, scons only prints warnings, and
@@ -266,6 +266,7 @@ class scons(old_build_ext):
             cmd = [scons_exec, "-f", sconscript, '-I.']
             if self.jobs:
                 cmd.append(" --jobs=%d" % int(self.jobs))
+            cmd.append('scons_tool_path="%s"' % self.scons_tool_path)
             cmd.append('src_dir="%s"' % pdirname(sconscript))
             cmd.append('pkg_name="%s"' % pkg_name)
             #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
