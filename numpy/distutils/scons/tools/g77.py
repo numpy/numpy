@@ -51,5 +51,12 @@ def generate(env):
     else:
         env['SHF77FLAGS'] = SCons.Util.CLVar('$F77FLAGS -fPIC')
 
+    env['FORTRAN'] = g77exec
+    env['SHFORTRAN'] = g77exec
+    if env['PLATFORM'] in ['cygwin', 'win32']:
+        env['SHFORTRANFLAGS'] = SCons.Util.CLVar('$FORTRANFLAGS')
+    else:
+        env['SHFORTRANFLAGS'] = SCons.Util.CLVar('$FORTRANFLAGS -fPIC')
+
 def exists(env):
     return env.Detect(compilers)

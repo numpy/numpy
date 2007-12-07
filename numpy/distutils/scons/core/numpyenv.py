@@ -135,6 +135,9 @@ def finalize_env(env):
 def GetNumpyEnvironment(args):
     env = _GetNumpyEnvironment(args)
 
+    #------------------------------
+    # C compiler last customization
+    #------------------------------
     # Apply optim and warn flags considering context
     if 'CFLAGS' in os.environ:
         env.Append(CFLAGS = "%s" % os.environ['CFLAGS'])
@@ -148,6 +151,11 @@ def GetNumpyEnvironment(args):
                                    env['NUMPY_THREAD_CFLAGS'])
     env.AppendUnique(LINKFLAGS = env['NUMPY_OPTIM_LDFLAGS'])
 
+    #--------------------------------
+    # F77 compiler last customization
+    #--------------------------------
+    # XXX: For now, only handle F77 case, but will have to think about multiple
+    # fortran standard at some points ?
     if 'FFLAGS' in os.environ:
         env.Append(F77FLAGS = "%s" % os.environ['FFLAGS'])
         env.AppendUnique(F77FLAGS = env['NUMPY_EXTRA_FFLAGS'] +
@@ -206,7 +214,6 @@ def initialize_f77(env, path_list):
         try:
             if len(env['f77_opt_path']) > 0:
                 t = Tool(env['f77_opt'], toolpath = [get_local_toolpath()])
-
                 t(env) 
                 path_list.append(env['f77_opt_path'])
                 customize_f77(t.name, env)
@@ -223,7 +230,14 @@ def initialize_f77(env, path_list):
         else:
             print "========== NO FORTRAN COMPILER FOUND ==========="
 
-    # XXX: really have to understand how fortran compilers work in scons...
+    # scons handles fortran tools in a really convoluted way which does not
+    # much make sense to me. Depending on the tool, different set of
+    # construction variables are defined. As long as this is not fixed or
+    # better understood, I do the following:
+    #   - if F77* variables do not exist, define them
+    #   - the only guaranteed variables for fortran are the list generators, so
+    #   use them through env.subst to get any compiler, and set F77* to them if
+    #   they are not already defined.
     if not env.has_key('F77'):
         env['F77'] = env.subst('$_FORTRANG')
     if not env.has_key('F77FLAGS'):
