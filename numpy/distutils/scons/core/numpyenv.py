@@ -268,7 +268,7 @@ def initialize_f77(env, path_list):
     if not env.has_key('F77FLAGS'):
         env['F77FLAGS'] = env.subst('$_FORTRANFLAGSG')
     if not env.has_key('SHF77FLAGS'):
-        env['SHF77FLAGS'] = env.subst('$_SHFORTRANFLAGSG')
+        env['SHF77FLAGS'] = '$F77FLAGS %s' % env.subst('$_SHFORTRANFLAGSG')
 
 def initialize_cxx(env, path_list):
     from SCons.Tool import Tool, FindTool
@@ -392,12 +392,12 @@ def _GetNumpyEnvironment(args):
     #     Misc
     #---------------
 
-    # We sometimes need to put link flags at the really end of the command line, so we add a construction variable for it
+    # We sometimes need to put link flags at the really end of the command
+    # line, so we add a construction variable for it
     env['LINKFLAGSEND'] = []
     env['SHLINKFLAGSEND'] = ['$LINKFLAGSEND']
     env['LDMODULEFLAGSEND'] = []
 
-    
     # For mingw tools, we do it in our custom mingw scons tool
     if not env['cc_opt'] == 'mingw':
         env['LINKCOM'] = '%s $LINKFLAGSEND' % env['LINKCOM']
