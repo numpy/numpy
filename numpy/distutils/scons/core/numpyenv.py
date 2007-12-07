@@ -256,6 +256,8 @@ def initialize_f77(env, path_list):
     #   they are not already defined.
     if not env.has_key('F77'):
         env['F77'] = env.subst('$_FORTRANG')
+        # Basic safeguard against buggy fortran tools ...
+        assert len(env['F77']) > 0
     if not env.has_key('F77FLAGS'):
         env['F77FLAGS'] = env.subst('$_FORTRANFLAGSG')
     if not env.has_key('SHF77FLAGS'):
