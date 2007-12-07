@@ -14,7 +14,8 @@ from default import tool_list, get_cc_config, get_f77_config
 from custom_builders import NumpySharedLibrary, NumpyCtypes, \
             NumpyPythonExtension, NumpyStaticExtLibrary
 from libinfo import get_config
-from extension_scons import PythonExtension, built_with_mstools
+from extension_scons import PythonExtension, built_with_mstools, \
+                            createStaticExtLibraryBuilder
 from utils import pkg_to_path
 
 import numpy.distutils.scons.tools
@@ -134,6 +135,9 @@ def customize_f77(name, env):
     env.AppendUnique(**cfg.get_flags_dict())
 
 def finalize_env(env):
+    """Call this at the really end of the numpy environment initialization."""
+    # This will customize some things, to cope with some idiosyncraties with
+    # some tools, and are too specific to be in tools.
     if built_with_mstools(env):
         major, minor = get_vs_version(env)
         # For VS 8 and above (VS 2005), use manifest for DLL
@@ -147,6 +151,9 @@ def finalize_env(env):
             env['LDMODULECOM'] = [env['LDMODULECOM'], 
                         'mt.exe -nologo -manifest ${TARGET}.manifest '\
                         '-outputresource:$TARGET;2']
+
+    if is_f77_gnu(env['F77']):
+        env.AppendUnique(F77FLAGS = ['-fno-second-underscore'])
 
 def GetNumpyEnvironment(args):
     env = _GetNumpyEnvironment(args)
@@ -262,10 +269,6 @@ def initialize_f77(env, path_list):
         env['F77FLAGS'] = env.subst('$_FORTRANFLAGSG')
     if not env.has_key('SHF77FLAGS'):
         env['SHF77FLAGS'] = env.subst('$_SHFORTRANFLAGSG')
-
-    if is_f77_gnu(env['F77']):
-        # XXX: this has nothing to do here !
-        env.AppendUnique(F77FLAGS = ['-fno-second-underscore'])
 
 def initialize_cxx(env, path_list):
     from SCons.Tool import Tool, FindTool
@@ -482,28 +485,3 @@ def _GetNumpyEnvironment(args):
                                          get_scons_configres_filename())
 
     return env
-
-def createStaticExtLibraryBuilder(env):
-    """This is a utility function that creates the StaticExtLibrary Builder in
-    an Environment if it is not there already.
-
-    If it is already there, we return the existing one."""
-    import SCons.Action
-
-    try:
-        static_extlib = env['BUILDERS']['StaticExtLibrary']
-    except KeyError:
-        action_list = [ SCons.Action.Action("$ARCOM", "$ARCOMSTR") ]
-        if env.Detect('ranlib'):
-            ranlib_action = SCons.Action.Action("$RANLIBCOM", "$RANLIBCOMSTR")
-            action_list.append(ranlib_action)
-
-    static_extlib = SCons.Builder.Builder(action = action_list,
-                                          emitter = '$LIBEMITTER',
-                                          prefix = '$LIBPREFIX',
-                                          suffix = '$LIBSUFFIX',
-                                          src_suffix = '$OBJSUFFIX',
-                                          src_builder = 'SharedObject')
-
-    env['BUILDERS']['StaticExtLibrary'] = static_extlib
-    return static_extlib
