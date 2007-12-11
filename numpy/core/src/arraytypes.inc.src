@@ -2061,8 +2061,28 @@ static void
         register npy_intp i;
         @type@ max_val, min_val;
 
-        max_val = *max;
-        min_val = *min;
+	if (max != NULL)
+		max_val = *max;
+	if (min != NULL)
+		min_val = *min;
+
+	if (max == NULL) {
+		for (i = 0; i < ni; i++) {
+			if (in[i] < min_val) {
+				out[i] = min_val;
+			}
+		}
+		return;
+	}
+
+	if (min == NULL) {
+		for (i = 0; i < ni; i++) {
+			if (in[i] > max_val) {
+				out[i] = max_val;
+			}
+		}
+		return;
+	}
 
         for (i = 0; i < ni; i++) {
                 if (in[i] < min_val) {
@@ -2085,9 +2105,32 @@ static void
 {
         register npy_intp i;
         @type@ max_val, min_val;
-
+	
         min_val = *min;
         max_val = *max;
+
+	if (max != NULL)
+		max_val = *max;
+	if (min != NULL)
+		min_val = *min;
+
+	if (max == NULL) {
+		for (i = 0; i < ni; i++) {
+			if (PyArray_CLT(in[i],min_val)) {
+				out[i] = min_val;
+			}
+		}
+		return;
+	}
+
+	if (min == NULL) {
+		for (i = 0; i < ni; i++) {
+			if (PyArray_CGT(in[i], max_val)) {
+				out[i] = max_val;
+			}
+		}
+		return;
+	}
 
         for (i = 0; i < ni; i++) {
                 if (PyArray_CLT(in[i], min_val)) {
