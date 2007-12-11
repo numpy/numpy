@@ -1099,49 +1099,40 @@ PyArray_Nonzero(PyArrayObject *self)
 }
 
 static PyObject *
+_GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out, 
+			  PyObject *op)
+{
+    if (out == NULL)
+	return PyObject_CallFunction(op, "OO", m1, m2);
+    else 
+	return PyObject_CallFunction(op, "OOO", m1, m2, out);
+}
+
+static PyObject *
 _slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *out)
 {
-    PyObject *selector=NULL, *newtup=NULL, *ret=NULL;
-    PyObject *res1=NULL, *res2=NULL, *res3=NULL;
-    PyObject *two;
+    PyObject *res1=NULL, *res2=NULL;
 
     if (max != NULL) {
-	res1 = PyArray_GenericBinaryFunction(self, max, n_ops.greater);
+	res1 = _GenericBinaryOutFunction(self, max, out, n_ops.minimum);
 	if (res1 == NULL) return NULL;
     }
+    else {
+	res1 = (PyObject *)self;
+	Py_INCREF(res1);
+    }
+
     if (min != NULL) {
-	res2 = PyArray_GenericBinaryFunction(self, min, n_ops.less);
+	res2 = _GenericBinaryOutFunction((PyArrayObject *)res1, 
+					 min, out, n_ops.maximum);
 	if (res2 == NULL) {Py_XDECREF(res1); return NULL;}
     }
-
-    if (max == NULL) {
-	selector = res2; /* Steal the reference */
-	newtup = Py_BuildValue("(OO)", (PyObject *)self, min);
-    }
-    else if (min == NULL) {
-	selector = res1; /* Steal the reference */
-	newtup = Py_BuildValue("(OO)", (PyObject *)self, max);	
-    }
     else {
-	two = PyInt_FromLong((long)2);
-	res3 = PyNumber_Multiply(two, res1);
-	Py_DECREF(two);
-	Py_DECREF(res1);
-	if (res3 == NULL) return NULL;
-	selector = PyArray_EnsureAnyArray(PyNumber_Add(res2, res3));
-	Py_DECREF(res2);
-	Py_DECREF(res3);
-	if (selector == NULL) return NULL;
-
-	newtup = Py_BuildValue("(OOO)", (PyObject *)self, min, max);
+	res2 = res1;
+	Py_INCREF(res2);
     }
-
-    if (newtup == NULL) {Py_DECREF(selector); return NULL;}
-	
-    ret = PyArray_Choose((PyAO *)selector, newtup, out, NPY_RAISE);
-    Py_DECREF(selector);
-    Py_DECREF(newtup);
-    return ret;
+    Py_DECREF(res1);    
+    return res2;
 }
 
 /*MULTIARRAY_API
