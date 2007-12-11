@@ -85,6 +85,11 @@ def CheckF77BLAS(context, autoadd = 1, check_version = 0):
             add_info(env, libname, None)
             return 0
 
+    if not env.has_key('F77_LDFLAGS'):
+        if not CheckF77Clib(context):
+            add_info(env, 'lapack', None)
+            return 0
+
     func_name = env['F77_NAME_MANGLER']('sgemm')
     test_src = c_sgemm2 % {'func' : func_name}
 
@@ -169,6 +174,11 @@ def CheckF77LAPACK(context, autoadd = 1, check_version = 0):
 
     if not env.has_key('F77_NAME_MANGLER'):
         if not CheckF77Mangling(context):
+            add_info(env, 'lapack', None)
+            return 0
+    
+    if not env.has_key('F77_LDFLAGS'):
+        if not CheckF77Clib(context):
             add_info(env, 'lapack', None)
             return 0
     
