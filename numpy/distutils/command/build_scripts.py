@@ -37,6 +37,10 @@ class build_scripts(old_build_scripts):
             return
 
         self.scripts = self.generate_scripts(self.scripts)
+        # Now make sure that the distribution object has this list of scripts.
+        # setuptools' develop command requires that this be a list of filenames,
+        # not functions.
+        self.distribution.scripts = self.scripts
 
         return old_build_scripts.run(self)
 
