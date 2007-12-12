@@ -42,6 +42,27 @@ def gnu_to_ms_link(linkflags):
             newflags.append(r'lib%s.a' % flag[2:])
     return newflags
 
+def get_g2c_libs(libs, libpaths):
+    """Given a list of libraries and libpaths, return the fullpath of the
+    libraries.
+
+    Only works on windows platform, for windows convention (should be used only
+    for gcc<-> VS interop."""  
+    g2c_support = []
+    def _get_lib(lib, libpaths):
+        for path in libpaths:
+            fullname = os.path.join(path, 'lib%s.a' % lib)
+            if os.path.exists(fullname):
+                return fullname
+        return ''
+
+    for lib in libs:
+        fname = _get_lib(lib, libpaths)     
+        if len(fname) > 0:
+            g2c_support.append(fname)
+            
+    return g2c_support 
+
 def _check_link_verbose_posix(lines):
     """Returns true if useful link options can be found in output.
 

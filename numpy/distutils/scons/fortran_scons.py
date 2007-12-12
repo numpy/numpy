@@ -100,8 +100,11 @@ def CheckF77Clib(context):
     if res == 1:
         final_flags = parse_f77link(cnt)
         if built_with_mstools(env) and built_with_gnu_f77(env):
-            final_flags = gnu_to_ms_link(final_flags)
-	    print final_flags
+            from fortran import get_g2c_libs
+            #final_flags = gnu_to_ms_link(final_flags)
+            parsed = env.ParseFlags(final_flags)
+            final_flags = gnu_g2c_libs(parsed['LIBS'], parsed['LIBPATH'])
+            print final_flags
         #env.Append(F77_LDFLAGS = ' '.join(final_flags))
         env['F77_LDFLAGS'] = final_flags
         context.Result(str(env['F77_LDFLAGS']))
