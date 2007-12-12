@@ -6,7 +6,7 @@ if 'setuptools' in sys.modules:
     have_setuptools = True
     from setuptools import setup as old_setup
     # easy_install imports math, it may be picked up from cwd
-    from setuptools.command import develop, easy_install
+    from setuptools.command import easy_install
     try:
         # very old versions of setuptools don't have this
         from setuptools.command import bdist_egg
@@ -42,7 +42,9 @@ numpy_cmdclass = {'build':            build.build,
                   'bdist_rpm':        bdist_rpm.bdist_rpm,
                   }
 if have_setuptools:
-    from numpy.distutils.command import egg_info
+    # Use our own versions of develop and egg_info to ensure that build_src is
+    # handled appropriately.
+    from numpy.distutils.command import develop, egg_info
     numpy_cmdclass['bdist_egg'] = bdist_egg.bdist_egg
     numpy_cmdclass['develop'] = develop.develop
     numpy_cmdclass['easy_install'] = easy_install.easy_install
