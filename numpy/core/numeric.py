@@ -565,7 +565,7 @@ def binary_repr(num, width=None):
             # replace num with its 2-complement
             num = 2**width + num
     elif num == 0:
-        return '0'
+        return '0'*(width or 1)
     ostr = hex(num)
     bin = ''.join([_lkup[ch] for ch in ostr[2:]])
     bin = bin.lstrip('0')
