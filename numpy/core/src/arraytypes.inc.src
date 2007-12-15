@@ -2059,7 +2059,7 @@ static void
 @name@_fastclip(@type@ *in, intp ni, @type@ *min, @type@ *max, @type@ *out)
 {
         register npy_intp i;
-        @type@ max_val, min_val;
+        @type@ max_val = 0, min_val = 0;
 
 	if (max != NULL)
 		max_val = *max;
