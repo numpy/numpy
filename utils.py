@@ -90,7 +90,7 @@ def deprecate(func, oldname, newname):
         return func(*args, **kwds)
     newfunc = _set_function_name(newfunc, oldname)
     doc = func.__doc__
-    depdoc = '%s is DEPRECATED in numpy: use %s instead' % (oldname, newname,)
+    depdoc = '%s is DEPRECATED: use %s instead' % (oldname, newname,)
     if doc is None:
         doc = depdoc
     else:
