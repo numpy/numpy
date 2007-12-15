@@ -17,7 +17,7 @@ class Benchmark(dict):
             modules = [module]
 
         for m in modules:
-            setup_str = 'import %s; import %s as N; ' % (m,m) \
+            setup_str = 'import %s; import %s as np; ' % (m,m) \
                         + setup_str
             self.module_test[m] = Timer(test_str, setup_str)
 
