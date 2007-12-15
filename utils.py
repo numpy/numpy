@@ -7,7 +7,8 @@ from numpy.core.multiarray import dtype as _dtype
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
-           'issubdtype', 'deprecate', 'get_numarray_include',
+           'issubdtype', 'deprecate', 'deprecate_with_doc',
+           'get_numarray_include',
            'get_include', 'info', 'source', 'who',
            'byte_bounds', 'may_share_memory']
 
@@ -82,15 +83,22 @@ else:
         func.__name__ = name
         return func
 
-def deprecate(func, oldname, newname):
+def deprecate(func, oldname=None, newname=None):
     import warnings
+    if oldname is None:
+        oldname = func.func_name
+    if newname is None:
+        str1 = "%s is deprecated" % (oldname,)
+        depdoc = "%s is DEPRECATED!" % (oldname,)
+    else:
+        str1 = "%s is deprecated, use %s" % (oldname, newname),
+        depdoc = '%s is DEPRECATED! -- use %s instead' % (oldname, newname,)
+        
     def newfunc(*args,**kwds):
-        warnings.warn("%s is deprecated, use %s" % (oldname, newname),
-                      DeprecationWarning)
+        warnings.warn(str1, DeprecationWarning)
         return func(*args, **kwds)
     newfunc = _set_function_name(newfunc, oldname)
     doc = func.__doc__
-    depdoc = '%s is DEPRECATED: use %s instead' % (oldname, newname,)
     if doc is None:
         doc = depdoc
     else:
@@ -103,6 +111,13 @@ def deprecate(func, oldname, newname):
     else:
         newfunc.__dict__.update(d)
     return newfunc
+
+def deprecate_with_doc(somestr):
+    def _decorator(func):
+        newfunc = deprecate(func)
+        newfunc.__doc__ += "\n" + somestr
+        return newfunc
+    return _decorator
 
 get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 
