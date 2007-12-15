@@ -84,6 +84,15 @@ else:
         return func
 
 def deprecate(func, oldname=None, newname=None):
+    """Deprecate old functions.
+    Issues a DeprecationWarning, adds warning to oldname's docstring,
+    rebinds oldname.__name__ and returns new function object.
+
+    Example:
+    oldfunc = deprecate(newfunc, 'oldfunc', 'newfunc')
+
+    """
+
     import warnings
     if oldname is None:
         oldname = func.func_name
@@ -113,6 +122,17 @@ def deprecate(func, oldname=None, newname=None):
     return newfunc
 
 def deprecate_with_doc(somestr):
+    """Decorator to deprecate functions and provide detailed documentation
+    with 'somestr' that is added to the functions docstring.
+
+    Example:
+    depmsg = 'function numpy.lib.foo has been merged into numpy.lib.io.foobar'
+    @deprecate_with_doc(depmsg)
+    def foo():
+        pass
+
+    """
+
     def _decorator(func):
         newfunc = deprecate(func)
         newfunc.__doc__ += "\n" + somestr
