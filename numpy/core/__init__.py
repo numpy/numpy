@@ -11,7 +11,6 @@ import _sort
 from numeric import *
 from fromnumeric import *
 from defmatrix import *
-import ma
 import defchararray as char
 import records as rec
 from records import *
@@ -24,7 +23,7 @@ from fromnumeric import amax as max, amin as min, \
      round_ as round
 from numeric import absolute as abs
 
-__all__ = ['char','rec','memmap','ma']
+__all__ = ['char','rec','memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
 __all__ += defmatrix.__all__

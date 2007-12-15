@@ -18,11 +18,11 @@ from numpy.testing import NumpyTest, NumpyTestCase
 from numpy.testing.utils import build_err_msg
 from numpy import array as narray
 
-import maskedarray.testutils
-from maskedarray.testutils import *
+import numpy.ma.testutils
+from numpy.ma.testutils import *
 
-import maskedarray.core as coremodule
-from maskedarray.core import *
+import numpy.ma.core as coremodule
+from numpy.ma.core import *
 
 pi = numpy.pi
 
@@ -734,19 +734,6 @@ class TestMA(NumpyTestCase):
         assert_equal(dma_2.mask, dma_1.mask)
         dma_3 = MaskedArray(dma_1, mask=[1,0,0,0]*6)
         fail_if_equal(dma_3.mask, dma_1.mask)
-
-    def check_backwards(self):
-        "Tests backward compatibility with numpy.core.ma"
-        import numpy.core.ma as nma
-        x = nma.arange(5)
-        x[2] = nma.masked
-        X = masked_array(x, mask=x._mask)
-        assert_equal(X._mask, x.mask)
-        assert_equal(X._data, x._data)
-        X = masked_array(x)
-        assert_equal(X._data, x._data)
-        assert_equal(X._mask, x.mask)
-        assert_equal(getmask(x), [0,0,1,0,0])
 
     def check_pickling(self):
         "Tests pickling"

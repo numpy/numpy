@@ -15,13 +15,13 @@ import numpy as N
 from numpy.testing import NumpyTest, NumpyTestCase
 from numpy.testing.utils import build_err_msg
 
-import maskedarray.testutils
-from maskedarray.testutils import *
+import numpy.ma.testutils
+from numpy.ma.testutils import *
 
-import maskedarray.core
-from maskedarray.core import *
-import maskedarray.extras
-from maskedarray.extras import *
+import numpy.ma.core
+from numpy.ma.core import *
+import numpy.ma.extras
+from numpy.ma.extras import *
 
 class TestAverage(NumpyTestCase):
     "Several tests of average. Why so many ? Good point..."

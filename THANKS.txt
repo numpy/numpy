@@ -35,3 +35,4 @@ Albert Strasheim for documentation, bug-fixes, regression tests and
 Stefan van der Walt for documentation, bug-fixes and regression-tests.
 Andrew Straw for help with http://www.scipy.org, documentation, and testing. 
 David Cournapeau for documentation, bug-fixes, and code contributions including fast_clipping.
+Pierre Gerard-Marchant for his rewrite of the masked array functionality.

@@ -17,16 +17,17 @@ import numpy.core.fromnumeric  as fromnumeric
 from numpy.testing import NumpyTest, NumpyTestCase
 from numpy.testing.utils import build_err_msg
 
-import maskedarray.testutils
-from maskedarray.testutils import *
+import numpy.ma.testutils
+from numpy.ma.testutils import *
 
-import maskedarray
-from maskedarray import masked_array, masked, nomask
+import numpy.ma
+from numpy.ma import masked_array, masked, nomask
 
-#import maskedarray.mrecords
-#from maskedarray.mrecords import mrecarray, fromarrays, fromtextfile, fromrecords
-import maskedarray.mrecords
-from maskedarray.mrecords import MaskedRecords, \
+#import numpy.ma.mrecords
+#from numpy.ma.mrecords import mrecarray, fromarrays, fromtextfile, fromrecords
+
+import numpy.ma.mrecords
+from numpy.ma.mrecords import MaskedRecords, \
     fromarrays, fromtextfile, fromrecords, addfield
 
 #..............................................................................
@@ -39,7 +40,7 @@ class TestMRecords(NumpyTestCase):
     def setup(self):
         "Generic setup"
         d = N.arange(5)
-        m = maskedarray.make_mask([1,0,0,1,1])
+        m = numpy.ma.make_mask([1,0,0,1,1])
         base_d = N.r_[d,d[::-1]].reshape(2,-1).T
         base_m = N.r_[[m, m[::-1]]].T
         base = masked_array(base_d, mask=base_m)

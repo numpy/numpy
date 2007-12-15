@@ -110,11 +110,11 @@ class TestRegression(NumpyTestCase):
 
     def check_masked_array(self,level=rlevel):
         """Ticket #61"""
-        x = N.core.ma.array(1,mask=[1])
+        x = N.ma.array(1,mask=[1])
 
     def check_mem_masked_where(self,level=rlevel):
         """Ticket #62"""
-        from numpy.core.ma import masked_where, MaskType
+        from numpy.ma import masked_where, MaskType
         a = N.zeros((1,1))
         b = N.zeros(a.shape, MaskType)
         c = masked_where(b,a)

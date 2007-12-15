@@ -65,7 +65,7 @@ import cPickle
 import operator
 #
 import numpy
-from numpy import bool_, complex_, float_, int_, object_, str_
+from numpy.core import bool_, complex_, float_, int_, object_, str_
 
 import numpy.core.umath as umath
 import numpy.core.fromnumeric  as fromnumeric

@@ -12,20 +12,20 @@ __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 import numpy
 
-import maskedarray
-from maskedarray import masked, masked_array
+import numpy.ma
+from numpy.ma import masked, masked_array
 
-import maskedarray.testutils
-from maskedarray.testutils import *
+import numpy.ma.testutils
+from numpy.ma.testutils import *
 
-from maskedarray.mstats import *
+from numpy.ma.mstats import *
 
 #..............................................................................
 class TestQuantiles(NumpyTestCase):
     "Base test class for MaskedArrays."
     def __init__(self, *args, **kwds):
         NumpyTestCase.__init__(self, *args, **kwds)
-        self.a = maskedarray.arange(1,101)
+        self.a = numpy.ma.arange(1,101)
     #
     def test_1d_nomask(self):
         "Test quantiles 1D - w/o mask."
@@ -65,21 +65,21 @@ class TestQuantiles(NumpyTestCase):
     def test_2d_nomask(self):
         "Test quantiles 2D - w/o mask."
         a = self.a
-        b = maskedarray.resize(a, (100,100))
+        b = numpy.ma.resize(a, (100,100))
         assert_almost_equal(mquantiles(b), [25.45, 50.5, 75.55])
-        assert_almost_equal(mquantiles(b, axis=0), maskedarray.resize(a,(3,100)))
+        assert_almost_equal(mquantiles(b, axis=0), numpy.ma.resize(a,(3,100)))
         assert_almost_equal(mquantiles(b, axis=1),
-                            maskedarray.resize([25.45, 50.5, 75.55], (100,3)))
+                            numpy.ma.resize([25.45, 50.5, 75.55], (100,3)))
     #
     def test_2d_mask(self):
         "Test quantiles 2D - w/ mask."
         a = self.a
         a[1::2] = masked
-        b = maskedarray.resize(a, (100,100))
+        b = numpy.ma.resize(a, (100,100))
         assert_almost_equal(mquantiles(b), [25., 50., 75.])
-        assert_almost_equal(mquantiles(b, axis=0), maskedarray.resize(a,(3,100)))
+        assert_almost_equal(mquantiles(b, axis=0), numpy.ma.resize(a,(3,100)))
         assert_almost_equal(mquantiles(b, axis=1),
-                            maskedarray.resize([24.9, 50., 75.1], (100,3)))
+                            numpy.ma.resize([24.9, 50., 75.1], (100,3)))
 
 class TestMedian(NumpyTestCase):
     def __init__(self, *args, **kwds):
@@ -101,12 +101,12 @@ class TestMedian(NumpyTestCase):
 
     def test_3d(self):
         "Tests median w/ 3D"
-        x = maskedarray.arange(24).reshape(3,4,2)
+        x = numpy.ma.arange(24).reshape(3,4,2)
         x[x%3==0] = masked
         assert_equal(mmedian(x,0), [[12,9],[6,15],[12,9],[18,15]])
         x.shape = (4,3,2)
         assert_equal(mmedian(x,0),[[99,10],[11,99],[13,14]])
-        x = maskedarray.arange(24).reshape(4,3,2)
+        x = numpy.ma.arange(24).reshape(4,3,2)
         x[x%5==0] = masked
         assert_equal(mmedian(x,0), [[12,10],[8,9],[16,17]])
 
@@ -118,7 +118,7 @@ class TestTrimming(NumpyTestCase):
     #
     def test_trim(self):
         "Tests trimming."
-        x = maskedarray.arange(100)
+        x = numpy.ma.arange(100)
         assert_equal(trim_both(x).count(), 60)
         assert_equal(trim_tail(x,tail='r').count(), 80)
         x[50:70] = masked

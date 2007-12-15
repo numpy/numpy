@@ -12,16 +12,16 @@ __date__     = '$Date: 2007-10-04 15:31:14 -0400 (Thu, 04 Oct 2007) $'
 
 import numpy
 
-import maskedarray
-from maskedarray import masked, masked_array
+import numpy.ma
+from numpy.ma import masked, masked_array
 
-import maskedarray.mstats
-from maskedarray.mstats import *
-import maskedarray.morestats
-from maskedarray.morestats import *
+import numpy.ma.mstats
+from numpy.ma.mstats import *
+import numpy.ma.morestats
+from numpy.ma.morestats import *
 
-import maskedarray.testutils
-from maskedarray.testutils import *
+import numpy.ma.testutils
+from numpy.ma.testutils import *
 
 
 class TestMisc(NumpyTestCase):

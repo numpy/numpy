@@ -15,11 +15,11 @@ import numpy.core.numeric as numeric
 
 from numpy.testing import NumpyTest, NumpyTestCase
 
-import maskedarray.testutils
-from maskedarray.testutils import *
+import numpy.ma.testutils
+from numpy.ma.testutils import *
 
-import maskedarray.core as coremodule
-from maskedarray.core import *
+import numpy.ma.core as coremodule
+from numpy.ma.core import *
 
 
 class SubArray(N.ndarray):
