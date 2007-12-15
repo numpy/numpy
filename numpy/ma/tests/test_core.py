@@ -11,6 +11,7 @@ __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 import types
+import warnings
 
 import numpy
 import numpy.core.fromnumeric  as fromnumeric
@@ -679,7 +680,10 @@ class TestMA(NumpyTestCase):
         assert_equal(1, int(array([[[1]]])))
         assert_equal(1.0, float(array([[1]])))
         self.failUnlessRaises(ValueError, float, array([1,1]))
+
+        warnings.simplefilter('ignore',UserWarning)
         assert numpy.isnan(float(array([1],mask=[1])))
+        warnings.simplefilter('default',UserWarning)
 #TODO: Check how bool works...
 #TODO:        self.failUnless(bool(array([0,1])))
 #TODO:        self.failUnless(bool(array([0,0],mask=[0,1])))
