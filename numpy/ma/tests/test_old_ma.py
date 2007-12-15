@@ -1,6 +1,6 @@
 import numpy
 import types, time
-from numpy.core.ma import *
+from numpy.ma import *
 from numpy.core.numerictypes import float32
 from numpy.testing import NumpyTestCase, NumpyTest
 pi = numpy.pi
@@ -250,16 +250,16 @@ class TestMa(NumpyTestCase):
 
         x1 = numpy.arange(5)
         y1 = array(x1, mask=m)
-        self.failUnless( y1.raw_data() is not x1)
-        self.failUnless( allequal(x1,y1.raw_data()))
+        self.failUnless( y1.data is not x1)
+        self.failUnless( allequal(x1,y1.data))
         self.failUnless( y1.mask is m)
 
         y1a = array(y1, copy=0)
-        self.failUnless( y1a.raw_data() is y1.raw_data())
+        self.failUnless( y1a.data is y1.data)
         self.failUnless( y1a.mask is y1.mask)
 
         y2 = array(x1, mask=m, copy=0)
-        self.failUnless( y2.raw_data() is x1)
+        self.failUnless( y2.data is x1)
         self.failUnless( y2.mask is m)
         self.failUnless( y2[2] is masked)
         y2[2]=9
@@ -490,9 +490,9 @@ class TestMa(NumpyTestCase):
         x = arange(10).astype(float32)
         xm = arange(10)
         xm[2] = masked
-        id1 = id(x.raw_data())
+        id1 = id(x.data)
         x += 1.
-        assert id1 == id(x.raw_data())
+        assert id1 == id(x.data)
         assert eq(x, y+1.)
 
     def check_testPickle(self):
@@ -869,5 +869,5 @@ def testinplace(x):
 testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    NumpyTest('numpy.core.ma').run()
+    NumpyTest('numpy.ma').run()
     #timingTest()

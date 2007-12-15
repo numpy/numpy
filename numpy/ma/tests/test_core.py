@@ -27,6 +27,8 @@ from numpy.ma.core import *
 
 pi = numpy.pi
 
+from test_old_ma import *
+
 #..............................................................................
 class TestMA(NumpyTestCase):
     "Base test class for MaskedArrays."
