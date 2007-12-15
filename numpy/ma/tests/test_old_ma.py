@@ -229,7 +229,7 @@ class TestMa(NumpyTestCase):
         x2 = masked_values(x1, 3.0)
         assert eq(x1,x2)
         assert allequal(array([0,0,0,1,0],MaskType), x2.mask)
-        assert eq(3.0, x2.fill_value())
+        assert eq(3.0, x2.fill_value)
         x1 = array([1,'hello',2,3],object)
         x2 = numpy.array([1,'hello',2,3],object)
         s1 = x1[1]
@@ -295,13 +295,13 @@ class TestMa(NumpyTestCase):
         self.failUnless( eq(x, [0,10,2,-1,40]))
 
         x = array(d, mask = m)
-        x.put([-1,100,200])
+        x.put([0,1,2],[-1,100,200])
         self.failUnless( eq(x, [-1,100,200,0,0]))
         self.failUnless( x[3] is masked)
         self.failUnless( x[4] is masked)
 
         x = array(d, mask = m)
-        x.putmask([30,40])
+        numpy.putmask(x,[30,40])
         self.failUnless( eq(x, [0,1,2,30,40]))
         self.failUnless( x.mask is nomask)
 
@@ -309,16 +309,16 @@ class TestMa(NumpyTestCase):
         y = x.compressed()
         z = array(x, mask = m)
         z.put(y)
-        assert eq (x, z)
+        assert eq(x, z)
 
     def check_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
         i = numpy.nonzero(m)[0]
         putmask(xm, m, z)
-        assert take(xm, i,axis=0) == z
+        assert all(take(xm, i, axis=0) == z)
         put(ym, i, zm)
-        assert take(ym, i,axis=0) == zm
+        assert take(ym, i, axis=0) == zm
 
     def check_testOddFeatures(self):
         "Test of other odd features"
