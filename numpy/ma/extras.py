@@ -40,7 +40,7 @@ import numpy.lib.function_base as function_base
 
 #...............................................................................
 def issequence(seq):
-    """Returns True if the argument is a sequence (ndarray, list or tuple)."""
+    """Is seq a sequence (ndarray, list or tuple)?"""
     if isinstance(seq, ndarray):
         return True
     elif isinstance(seq, tuple):
@@ -50,31 +50,35 @@ def issequence(seq):
     return False
 
 def count_masked(arr, axis=None):
-    """Counts the number of masked elements along the given axis.
+    """Count the number of masked elements along the given axis.
 
-*Parameters*:
-    axis : {integer}, optional
-        Axis along which to count.
-        If None (default), a flattened version of the array is used.
+    *Parameters*:
+        axis : {integer}, optional
+            Axis along which to count.
+            If None (default), a flattened version of the array is used.
+
     """
     m = getmaskarray(arr)
     return m.sum(axis)
 
 def masked_all(shape, dtype=float_):
-    """Returns an empty masked array of the given shape and dtype,
+    """Return an empty masked array of the given shape and dtype,
     where all the data are masked.
 
-*Parameters*:
-    dtype : {dtype}, optional
-        Data type of the output.
+    *Parameters*:
+        dtype : {dtype}, optional
+            Data type of the output.
+
     """
     a = masked_array(numeric.empty(shape, dtype),
                      mask=numeric.ones(shape, bool_))
     return a
 
 def masked_all_like(arr):
-    """Returns an empty masked array of the same shape and dtype as the array `a`,
-    where all the data are masked."""
+    """Return an empty masked array of the same shape and dtype as
+    the array `a`, where all the data are masked.
+
+    """
     a = masked_array(numeric.empty_like(arr),
                      mask=numeric.ones(arr.shape, bool_))
     return a
@@ -83,21 +87,22 @@ def masked_all_like(arr):
 #---- --- New methods ---
 #####--------------------------------------------------------------------------
 def varu(a, axis=None, dtype=None):
-    """Returns an unbiased estimate of the variance.
+    """Return an unbiased estimate of the variance.
     i.e. var = sum((x - x.mean())**2)/(size(x,axis)-1)
 
-*Parameters*:
-    axis : {integer}, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
-    dtype : {dtype}, optional
-        Datatype for the intermediary computation. If not given, the current dtype
-        is used instead.
+    *Parameters*:
+        axis : {integer}, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not given,
+            the current dtype is used instead.
 
-*Notes*:
-    The value returned is an unbiased estimate of the true variance.
-    For the (less standard) biased estimate, use var.
-        """
+    *Notes*:
+        The value returned is an unbiased estimate of the true variance.
+        For the (less standard) biased estimate, use var.
+
+    """
     a = asarray(a)
     cnt = a.count(axis=axis)
     anom = a.anom(axis=axis, dtype=dtype)
@@ -112,22 +117,24 @@ def varu(a, axis=None, dtype=None):
 #                          fill_value=a._fill_value)
 
 def stdu(a, axis=None, dtype=None):
-    """Returns an unbiased estimate of the standard deviation.
-    The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e. stdu = sqrt(varu(x)).
+    """Return an unbiased estimate of the standard deviation.  The
+    standard deviation is the square root of the average of the
+    squared deviations from the mean, i.e. stdu = sqrt(varu(x)).
 
-*Parameters*:
-    axis : {integer}, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
-    dtype : {dtype}, optional
-        Datatype for the intermediary computation.
-        If not given, the current dtype is used instead.
+    *Parameters*:
+        axis : {integer}, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation.
+            If not given, the current dtype is used instead.
 
-*Notes*:
-    The value returned is an unbiased estimate of the true standard deviation.
-    For the (less standard) biased estimate, use std.
-        """
+    *Notes*:
+        The value returned is an unbiased estimate of the true
+        standard deviation.  For the biased estimate,
+        use std.
+
+    """
     a = asarray(a)
     dvar = a.varu(axis,dtype)
     if axis is None:
@@ -194,7 +201,7 @@ hsplit = _fromnxfunction('hsplit')
 #----
 #####--------------------------------------------------------------------------
 def flatten_inplace(seq):
-    """Flattens a sequence in place."""
+    """Flatten a sequence in place."""
     k = 0
     while (k != len(seq)):
         while hasattr(seq[k],'__iter__'):
@@ -204,9 +211,9 @@ def flatten_inplace(seq):
 
 
 def apply_along_axis(func1d,axis,arr,*args,**kwargs):
-    """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
-        and arr is an N-d array.  i varies so as to apply the function
-        along the given axis for each 1-d subarray in arr.
+    """Execute func1d(arr[i],*args) where func1d takes 1-D arrays and
+    arr is an N-d array.  i varies so as to apply the function along
+    the given axis for each 1-d subarray in arr.
     """
     arr = core.array(arr, copy=False, subok=True)
     nd = arr.ndim
@@ -290,21 +297,23 @@ def apply_along_axis(func1d,axis,arr,*args,**kwargs):
         result.fill_value = core.default_fill_value(result)
     return result
 
-def average (a, axis=None, weights=None, returned=False):
-    """Averages the array over the given axis.
+def average(a, axis=None, weights=None, returned=False):
+    """Average the array over the given axis.
 
-*Parameters*:
-    axis : {integer}, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
-    weights : {sequence}, optional
-        Sequence of weights.
-        The weights must have the shape of a, or be 1D with length the size of a
-        along the given axis.
-        If no weights are given, weights are assumed to be 1.
-    returned : {boolean}
-        Flag indicating whether a tuple (result, sum of weights/counts) should be
-        returned as output (True), or just the result (False).
+    *Parameters*:
+        axis : {integer}, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        weights : {sequence}, optional
+            Sequence of weights.
+            The weights must have the shape of a, or be 1D with length
+            the size of a along the given axis.
+            If no weights are given, weights are assumed to be 1.
+        returned : {boolean}
+            Flag indicating whether a tuple (result, sum of
+            weights/counts) should be returned as output (True), or
+            just the result (False).
+
     """
     a = asarray(a)
     mask = a.mask
@@ -399,15 +408,17 @@ def average (a, axis=None, weights=None, returned=False):
 
 #..............................................................................
 def compress_rowcols(x, axis=None):
-    """Suppresses the rows and/or columns of a 2D array that contains masked values.
+    """Suppress the rows and/or columns of a 2D array that contains
+    masked values.
 
     The suppression behavior is selected with the `axis`parameter.
         - If axis is None, rows and columns are suppressed.
         - If axis is 0, only rows are suppressed.
         - If axis is 1 or -1, only columns are suppressed.
 
-*Returns*:
-    compressed_array : a ndarray.
+    *Returns*:
+        compressed_array : an ndarray.
+
     """
     x = asarray(x)
     if x.ndim != 2:
@@ -431,20 +442,28 @@ def compress_rowcols(x, axis=None):
     return x._data[idxr][:,idxc]
 
 def compress_rows(a):
-    """Suppresses whole rows of a 2D array that contain masked values."""
+    """Suppress whole rows of a 2D array that contain masked values.
+
+    """
     return compress_rowcols(a,0)
 
 def compress_cols(a):
-    """Suppresses whole columnss of a 2D array that contain masked values."""
+    """Suppress whole columnss of a 2D array that contain masked values.
+
+    """
     return compress_rowcols(a,1)
 
 def mask_rowcols(a, axis=None):
-    """Masks whole rows and/or columns of a 2D array that contain masked values.
-    The masking behavior is selected with the `axis`parameter.
+    """Mask whole rows and/or columns of a 2D array that contain
+    masked values.  The masking behavior is selected with the
+    `axis`parameter.
+
         - If axis is None, rows and columns are masked.
         - If axis is 0, only rows are masked.
         - If axis is 1 or -1, only columns are masked.
+
     Returns a *pure* ndarray.
+
     """
     a = asarray(a)
     if a.ndim != 2:
@@ -462,28 +481,35 @@ def mask_rowcols(a, axis=None):
     return a
 
 def mask_rows(a, axis=None):
-    """Masks whole rows of a 2D array that contain masked values."""
+    """Mask whole rows of a 2D array that contain masked values.
+
+    """
     return mask_rowcols(a, 0)
 
 def mask_cols(a, axis=None):
-    """Masks whole columns of a 2D array that contain masked values."""
+    """Mask whole columns of a 2D array that contain masked values.
+
+    """
     return mask_rowcols(a, 1)
 
 
 def dot(a,b, strict=False):
-    """Returns the dot product of two 2D masked arrays a and b.
+    """Return the dot product of two 2D masked arrays a and b.
 
-    Like the generic numpy equivalent, the product sum is over the last dimension
-    of a and the second-to-last dimension of b.
-    If strict is True, masked values are propagated: if a masked value appears
-    in a row or column, the whole row or column is considered masked.
+    Like the generic numpy equivalent, the product sum is over the
+    last dimension of a and the second-to-last dimension of b.  If
+    strict is True, masked values are propagated: if a masked value
+    appears in a row or column, the whole row or column is considered
+    masked.
 
-*Parameters*:
-    strict : {boolean}
-        Whether masked data are propagated (True) or set to 0 for the computation.
+    *Parameters*:
+        strict : {boolean}
+            Whether masked data are propagated (True) or set to 0 for
+            the computation.
 
-*Note*:
-    The first argument is not conjugated.
+    *Note*:
+        The first argument is not conjugated.
+
     """
     #TODO: Works only with 2D arrays. There should be a way to get it to run with higher dimension
     if strict and (a.ndim == 2) and (b.ndim == 2):
@@ -499,22 +525,23 @@ def dot(a,b, strict=False):
 
 #...............................................................................
 def mediff1d(array, to_end=None, to_begin=None):
-    """Returns the differences between consecutive elements of an array, possibly with
-    prefixed and/or appended values.
+    """Return the differences between consecutive elements of an
+    array, possibly with prefixed and/or appended values.
 
-*Parameters*:
-    array : {array}
-        Input array,  will be flattened before the difference is taken.
-    to_end : {number}, optional
-        If provided, this number will be tacked onto the end of the returned
-        differences.
-    to_begin : {number}, optional
-        If provided, this number will be taked onto the beginning of the
-        returned differences.
+    *Parameters*:
+        array : {array}
+            Input array,  will be flattened before the difference is taken.
+        to_end : {number}, optional
+            If provided, this number will be tacked onto the end of the returned
+            differences.
+        to_begin : {number}, optional
+            If provided, this number will be taked onto the beginning of the
+            returned differences.
 
-*Returns*:
-      ed : {array}
-        The differences. Loosely, this will be (ary[1:] - ary[:-1]).
+    *Returns*:
+          ed : {array}
+            The differences. Loosely, this will be (ary[1:] - ary[:-1]).
+
     """
     a = masked_array(array, copy=True)
     if a.ndim > 1:
@@ -569,7 +596,9 @@ def mediff1d(array, to_end=None, to_begin=None):
 #####--------------------------------------------------------------------------
 
 class mconcatenator(concatenator):
-    """Translates slice objects to concatenation along an axis."""
+    """Translate slice objects to concatenation along an axis.
+
+    """
 
     def __init__(self, axis=0):
         concatenator.__init__(self, axis, matrix=False)
@@ -626,11 +655,12 @@ class mconcatenator(concatenator):
         return self._retval(res)
 
 class mr_class(mconcatenator):
-    """Translates slice objects to concatenation along the first axis.
+    """Translate slice objects to concatenation along the first axis.
 
-        For example:
+    For example:
         >>> mr_[array([1,2,3]), 0, 0, array([4,5,6])]
         array([1, 2, 3, 0, 0, 4, 5, 6])
+
     """
     def __init__(self):
         mconcatenator.__init__(self, 0)
@@ -642,8 +672,9 @@ mr_ = mr_class()
 #####--------------------------------------------------------------------------
 
 def flatnotmasked_edges(a):
-    """Finds the indices of the first and last not masked values in a 1D masked array.
-    If all values are masked, returns None.
+    """Find the indices of the first and last not masked values in a
+    1D masked array.  If all values are masked, returns None.
+
     """
     m = getmask(a)
     if m is nomask or not numpy.any(m):
@@ -655,11 +686,13 @@ def flatnotmasked_edges(a):
         return None
 
 def notmasked_edges(a, axis=None):
-    """Finds the indices of the first and last not masked values along the given
-    axis in a masked array.
-    If all values are masked, returns None.
-    Otherwise, returns a list of 2 tuples, corresponding to the indices of the
-    first and last unmasked values respectively.
+    """Find the indices of the first and last not masked values along
+    the given axis in a masked array.
+
+    If all values are masked, return None.  Otherwise, return a list
+    of 2 tuples, corresponding to the indices of the first and last
+    unmasked values respectively.
+
     """
     a = asarray(a)
     if axis is None or a.ndim == 1:
@@ -670,8 +703,10 @@ def notmasked_edges(a, axis=None):
             tuple([idx[i].max(axis).compressed() for i in range(a.ndim)]),]
 
 def flatnotmasked_contiguous(a):
-    """Finds contiguous unmasked data in a flattened masked array.
-    Returns a sorted sequence of slices (start index, end index).
+    """Find contiguous unmasked data in a flattened masked array.
+
+    Return a sorted sequence of slices (start index, end index).
+
     """
     m = getmask(a)
     if m is nomask:
@@ -688,9 +723,13 @@ def flatnotmasked_contiguous(a):
     return result
 
 def notmasked_contiguous(a, axis=None):
-    """Finds contiguous unmasked data in a masked array along the given axis.
-    Returns a sorted sequence of slices (start index, end index).
+    """Find contiguous unmasked data in a masked array along the given
+    axis.
+
+    Return a sorted sequence of slices (start index, end index).
+
     Note: Only accepts 2D arrays at most.
+
     """
     a = asarray(a)
     nd = a.ndim
