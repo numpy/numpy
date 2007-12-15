@@ -4,7 +4,7 @@ __all__ = ['savetxt', 'loadtxt',
            'save', 'load',
            'DataFile']
 
-from cPickle import load as _cload, loads
+from cPickle import load as _cload, loads, dump as _cdump, dumps as _cdumps
 from _datasource import DataFile
 _file = file
 
@@ -22,11 +22,59 @@ def load(file):
     --------
     result - array or tuple of arrays stored in the file.  If file contains 
              pickle data, then whatever is stored in the pickle is returned.
-
     """
     if isinstance(file, type("")):
         file = _file(file,"rb")
-    return _cload(file)
+    # Code to distinguish from pickle and NumPy binary
+
+    # if pickle:
+        return _cload(file)
+
+def dumps(*args):
+    """Dump an array or multiple arrays to a pickle string
+    """
+    return _cdumps(args, protocol=2)
+
+def dump(file, *args):
+    """Dump an array or multiple arrays to a pickle file. 
+
+    Multiple arrays are placed in a tuple before pickling.  
+    The file can be a string or an open file-like object.
+
+    Example:
+    --------
+    import numpy as np
+    ...
+    np.dump('myfile.pkl', a, b, c)
+    a,b,c = np.load('myfile.pkl')
+    """
+    if isinstance(file, type("")):
+        file = _file(file, "wb")
+    _cdump(args, file, protocol=2)
+
+def save(file, *args):
+    """Save an array or multiple arrays to a binary file.
+
+    If the file is a string with a .pkl extension, then the binary file
+    is a pickle file.  Otherwise, the file is saved as a numpy, binary file.
+    The file can be a string or an open file-like object.
+    
+    Example:
+    --------
+    import numpy as np
+    ...
+    np.dump('myfile.npy', a, b, c)
+    a,b,c = np.load('myfile.npy')
+    """
+    
+    if issinstance(file, type("")):
+        if file.endswith('.pkl'):
+            return dump(file, *args)
+        file = _file(file, "wb")
+
+    # code to save to numpy binary here...
+
+    
 
 # Adapted from matplotlib
 
@@ -59,7 +107,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     fname can be a filename or a file handle.  Support for gzipped files is
     automatic, if the filename ends in .gz
 
-    See scipy.loadmat to read and write matfiles.
+    See scipy.io.loadmat to read and write matfiles.
 
     Example usage:
 
