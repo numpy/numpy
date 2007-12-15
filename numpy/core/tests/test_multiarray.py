@@ -422,6 +422,15 @@ class TestClip(NumpyTestCase):
         y = rec['x'].clip(-0.3,0.5)
         self._check_range(y,-0.3,0.5)
 
+    def check_max_or_min(self):
+        val = N.array([0,1,2,3,4,5,6,7])
+        x = val.clip(3)
+        assert N.all(x >= 3)
+        x = val.clip(min=3)
+        assert N.all(x >= 3)
+        x = val.clip(max=4)
+        assert N.all(x <= 4)
+
 class TestPutmask(ParametricTestCase):
     def tst_basic(self,x,T,mask,val):
         N.putmask(x,mask,val)

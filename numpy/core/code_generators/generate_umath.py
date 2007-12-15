@@ -5,6 +5,16 @@ One = "PyUFunc_One"
 None_ = "PyUFunc_None"
 
 class TypeDescription(object):
+    """Type signature for a ufunc
+
+    Attributes
+    ----------
+
+    type: character representing the type
+    func_data:
+    in_:
+    out:
+    """
     def __init__(self, type, f=None, in_=None, out=None):
         self.type = type
         self.func_data = f
@@ -55,6 +65,17 @@ def TD(types, f=None, in_=None, out=None):
     return tds
 
 class Ufunc(object):
+    """Description of a ufunc.
+
+    Attributes
+    ----------
+
+    nin: number of input arguments
+    nout: number of output arguments
+    identity: identity element for a two-argument function
+    docstring: docstring for the ufunc
+    type_descriptions: list of TypeDescription objects
+    """
     def __init__(self, nin, nout, identity, docstring,
                  *type_descriptions):
         self.nin = nin
@@ -69,7 +90,7 @@ class Ufunc(object):
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
 
-#each entry in defdict is
+#each entry in defdict is a Ufunc object.
 
 #name: [string of chars for which it is defined,
 #       string of characters using func interface,
@@ -303,6 +324,16 @@ defdict = {
           'computes x1 >> x2 (x1 shifted to right by x2 bits) elementwise.',
           TD(ints),
           TD(O, f='PyNumber_Rshift'),
+          ),
+'degrees' :
+    Ufunc(1, 1, None,
+          'converts angle from radians to degrees',
+          TD(fltsM, f='degrees'),
+          ),
+'radians' :
+    Ufunc(1, 1, None,
+          'converts angle from degrees to radians',
+          TD(fltsM, f='radians'),
           ),
 'arccos' :
     Ufunc(1, 1, None,

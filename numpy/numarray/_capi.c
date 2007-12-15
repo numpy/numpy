@@ -4,7 +4,11 @@
 #include "numpy/libnumarray.h"
 #include <float.h>
 
-#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__)
+#if (defined(__unix__) || defined(unix)) && !defined(USG)
+#include <sys/param.h>
+#endif
+
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__) || (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
 #include <fenv.h>
 #elif defined(__CYGWIN__)
 #include "numpy/fenv/fenv.h"
@@ -231,7 +235,7 @@ static int int_dividebyzero_error(long value, long unused) {
 }
 
 /* Likewise for Integer overflows */
-#if defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) || (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
 static int int_overflow_error(Float64 value) { /* For x86_64 */
 	feraiseexcept(FE_OVERFLOW);
 	return (int) value;
@@ -2939,7 +2943,7 @@ NA_checkFPErrors(void)
 	return retstatus;
 }
 
-#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__)
+#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) || (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
 
 static int 
 NA_checkFPErrors(void)

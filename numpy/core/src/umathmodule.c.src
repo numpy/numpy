@@ -414,6 +414,25 @@ rint (double x)
 #define isfinitef(x) (!(isinff((x)) || isnanf((x))))
 #define isfinitel(x) (!(isinfl((x)) || isnanl((x))))
 
+float degreesf(float x) {
+    return x * (float)(180.0/M_PI);
+}
+double degrees(double x) {
+    return x * (180.0/M_PI);
+}
+longdouble degreesl(longdouble x) {
+    return x * (180.0L/M_PI);
+}
+
+float radiansf(float x) {
+    return x * (float)(M_PI/180.0);
+}
+double radians(double x) {
+    return x * (M_PI/180.0);
+}
+longdouble radiansl(longdouble x) {
+    return x * (M_PI/180.0L);
+}
 
 /* First, the C functions that do the real work */
 

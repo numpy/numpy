@@ -2,7 +2,7 @@ from numpy.testing import *
 set_package_path()
 from numpy.core.umath import minimum, maximum, exp
 import numpy.core.umath as ncu
-from numpy import zeros, ndarray, array, choose
+from numpy import zeros, ndarray, array, choose, pi
 restore_path()
 
 class TestDivision(NumpyTestCase):
@@ -60,6 +60,16 @@ class TestMinimum(NumpyTestCase):
 class TestFloatingPoint(NumpyTestCase):
     def check_floating_point(self):
         assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)
+
+def TestDegrees(NumpyTestCase):
+    def check_degrees(self):
+        assert_almost_equal(ncu.degrees(pi), 180.0)
+        assert_almost_equal(ncu.degrees(-0.5*pi), -90.0)
+
+def TestRadians(NumpyTestCase):
+    def check_radians(self):
+        assert_almost_equal(ncu.radians(180.0), pi)
+        assert_almost_equal(ncu.degrees(-90.0), -0.5*pi)
 
 class TestSpecialMethods(NumpyTestCase):
     def test_wrap(self):
