@@ -216,5 +216,4 @@ def assert_mask_equal(m1, m2):
     assert_array_equal(m1, m2)
 
 if __name__ == '__main__':
-    a = 12
-    assert_equal(a, masked)
+    pass

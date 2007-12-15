@@ -21,10 +21,10 @@ from numpy import array as narray
 import numpy.core.numeric as numeric
 from numpy.core.numeric import concatenate
 
-import maskedarray as MA
-from maskedarray.core import masked, nomask, MaskedArray, masked_array
-from maskedarray.extras import apply_along_axis, dot
-from maskedarray.mstats import trim_both, trimmed_stde, mquantiles, mmedian, stde_median
+import numpy.ma as MA
+from numpy.ma.core import masked, nomask, MaskedArray, masked_array
+from numpy.ma.extras import apply_along_axis, dot
+from numpy.ma.mstats import trim_both, trimmed_stde, mquantiles, mmedian, stde_median
 
 from scipy.stats.distributions import norm, beta, t, binom
 from scipy.stats.morestats import find_repeats
@@ -373,7 +373,7 @@ set to the average rank of the unmasked values if use_missing is True.
 if __name__ == '__main__':
 
     if 0:
-        from maskedarray.testutils import assert_almost_equal
+        from numpy.ma.testutils import assert_almost_equal
         data = [0.706560797,0.727229578,0.990399276,0.927065621,0.158953014,
             0.887764025,0.239407086,0.349638551,0.972791145,0.149789972,
             0.936947700,0.132359948,0.046041972,0.641675031,0.945530547,

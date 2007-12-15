@@ -28,10 +28,10 @@ ndarray = numeric.ndarray
 _byteorderconv = numpy.core.records._byteorderconv
 _typestr = ntypes._typestr
 
-import maskedarray
-from maskedarray import MaskedArray, masked, nomask, masked_array,\
+import numpy.ma
+from numpy.ma import MaskedArray, masked, nomask, masked_array,\
     make_mask, mask_or, getmask, getmaskarray, filled
-from maskedarray.core import default_fill_value, masked_print_option
+from numpy.ma.core import default_fill_value, masked_print_option
 
 import warnings
 
@@ -693,10 +693,10 @@ set to 'fi', where `i` is the number of existing fields.
 ################################################################################
 if __name__ == '__main__':
     import numpy as N
-    from maskedarray.testutils import assert_equal
+    from numpy.ma.testutils import assert_equal
     if 1:
         d = N.arange(5)
-        m = maskedarray.make_mask([1,0,0,1,1])
+        m = numpy.ma.make_mask([1,0,0,1,1])
         base_d = N.r_[d,d[::-1]].reshape(2,-1).T
         base_m = N.r_[[m, m[::-1]]].T
         base = masked_array(base_d, mask=base_m).T

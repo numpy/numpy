@@ -2920,7 +2920,7 @@ def loads(strg):
 ###############################################################################
 
 if __name__ == '__main__':
-    from maskedarray.testutils import assert_equal, assert_almost_equal
+    from numpy.ma.testutils import assert_equal, assert_almost_equal
 
     # Small arrays ..................................
     xs = numpy.random.uniform(-1,1,6).reshape(2,3)

@@ -19,9 +19,9 @@ from numpy import array as narray
 import numpy.core.numeric as numeric
 from numpy.core.numeric import concatenate
 
-import maskedarray
-from maskedarray.core import masked, nomask, MaskedArray, masked_array
-from maskedarray.extras import apply_along_axis, dot
+import numpy.ma
+from numpy.ma.core import masked, nomask, MaskedArray, masked_array
+from numpy.ma.extras import apply_along_axis, dot
 
 __all__ = ['cov','meppf','plotting_positions','meppf','mmedian','mquantiles',
            'stde_median','trim_tail','trim_both','trimmed_mean','trimmed_stde',
@@ -422,12 +422,12 @@ on the dataset 'data'.
 
 ################################################################################
 if __name__ == '__main__':
-    from maskedarray.testutils import assert_almost_equal
+    from numpy.ma.testutils import assert_almost_equal
     if 1:
-        a = maskedarray.arange(1,101)
+        a = numpy.ma.arange(1,101)
         a[1::2] = masked
-        b = maskedarray.resize(a, (100,100))
+        b = numpy.ma.resize(a, (100,100))
         assert_almost_equal(mquantiles(b), [25., 50., 75.])
-        assert_almost_equal(mquantiles(b, axis=0), maskedarray.resize(a,(3,100)))
+        assert_almost_equal(mquantiles(b, axis=0), numpy.ma.resize(a,(3,100)))
         assert_almost_equal(mquantiles(b, axis=1),
-                            maskedarray.resize([24.9, 50., 75.1], (100,3)))
+                            numpy.ma.resize([24.9, 50., 75.1], (100,3)))

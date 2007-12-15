@@ -714,7 +714,7 @@ def notmasked_contiguous(a, axis=None):
 if __name__ == '__main__':
     #
     import numpy as N
-    from maskedarray.testutils import assert_equal
+    from numpy.ma.testutils import assert_equal
     if 1:
         b = ones(5)
         m = [1,0,0,0,0]

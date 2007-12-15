@@ -431,31 +431,27 @@ if __name__ == '__main__':
     setup_base = "from __main__ import moduletester \n"\
                  "import numpy\n" \
                  "tester = moduletester(module)\n"
-    setup_old = "import numpy.core.ma as module\n"+setup_base
-    setup_new = "import maskedarray.core_ini as module\n"+setup_base
-    setup_cur = "import maskedarray.core as module\n"+setup_base
-#    setup_alt = "import maskedarray.core_alt as module\n"+setup_base
-#    setup_tmp = "import maskedarray.core_tmp as module\n"+setup_base
+#    setup_new = "import numpy.ma.core_ini as module\n"+setup_base
+    setup_cur = "import numpy.ma.core as module\n"+setup_base
+#    setup_alt = "import numpy.ma.core_alt as module\n"+setup_base
+#    setup_tmp = "import numpy.ma.core_tmp as module\n"+setup_base
 
     (nrepeat, nloop) = (10, 10)
 
     if 1:
         for i in range(1,8):
             func = 'tester.test_%i()' % i
-            old = timeit.Timer(func, setup_old).repeat(nrepeat, nloop*10)
-            new = timeit.Timer(func, setup_new).repeat(nrepeat, nloop*10)
+#            new = timeit.Timer(func, setup_new).repeat(nrepeat, nloop*10)
             cur = timeit.Timer(func, setup_cur).repeat(nrepeat, nloop*10)
 #            alt = timeit.Timer(func, setup_alt).repeat(nrepeat, nloop*10)
 #            tmp = timeit.Timer(func, setup_tmp).repeat(nrepeat, nloop*10)
-            old = numpy.sort(old)
-            new = numpy.sort(new)
+#            new = numpy.sort(new)
             cur = numpy.sort(cur)
 #            alt = numpy.sort(alt)
 #            tmp = numpy.sort(tmp)
             print "#%i" % i +50*'.'
             print eval("moduletester.test_%i.__doc__" % i)
-            print "numpy.core.ma: %.3f - %.3f" % (old[0], old[1])
-            print "core_ini     : %.3f - %.3f" % (new[0], new[1])
+#            print "core_ini     : %.3f - %.3f" % (new[0], new[1])
             print "core_current : %.3f - %.3f" % (cur[0], cur[1])
 #            print "core_alt     : %.3f - %.3f" % (alt[0], alt[1])
 #            print "core_tmp     : %.3f - %.3f" % (tmp[0], tmp[1])
