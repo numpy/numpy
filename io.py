@@ -1,10 +1,9 @@
 
 __all__ = ['savetxt', 'loadtxt',
            'loads', 'load',
-           'save', 'savez',
+           'save',
            'DataSource',
-           'unpackbits',
-           'packbits']
+          ]
 
 import numpy as np
 

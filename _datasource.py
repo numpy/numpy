@@ -42,20 +42,6 @@ from shutil import rmtree
 from urllib2 import urlopen, URLError
 from urlparse import urlparse
 
-import warnings
-
-# datasource has been used for a while in the NIPY project for analyzing
-# large fmri imaging files hosted over a network.  Data would be fetched
-# via URLs, cached locally and analyzed. Under these conditions the code
-# worked well, however it needs to be documented, tested and reviewed
-# before being fully exposed to SciPy.  We hope to do this before the
-# 0.7 release.
-_api_warning = "The datasource API will be changing frequently before \
-the 0.7 release as the code is ported from the NIPY project to SciPy. \
-Some of the current public interface may become private during the port! \
-Use this module minimally, if at all, until it is stabilized."
-
-warnings.warn(_api_warning)
 
 # TODO: .zip support, .tar support?
 _file_openers = {".gz":gzip.open, ".bz2":bz2.BZ2File, None:file}
