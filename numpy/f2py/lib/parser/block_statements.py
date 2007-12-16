@@ -417,7 +417,7 @@ class EndInterface(EndStatement):
     match = re.compile(r'end\s*interface\s*\w*\Z', re.I).match
     blocktype = 'interface'
 
-class Interface(BeginStatement, HasImplicitStmt, HasUseStmt,
+class Interface(BeginStatement, HasAttributes, HasImplicitStmt, HasUseStmt,
                 HasModuleProcedures, AccessSpecs
                 ):
     """
