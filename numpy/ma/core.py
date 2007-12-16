@@ -1187,7 +1187,7 @@ class MaskedArray(numeric.ndarray):
     #..................................
     def __array_wrap__(self, obj, context=None):
         """Special hook for ufuncs.
-Wraps the numpy array and sets the mask according to context.
+        Wraps the numpy array and sets the mask according to context.
         """
         result = obj.view(type(self))
         result._update_from(self)

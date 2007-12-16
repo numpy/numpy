@@ -300,17 +300,6 @@ class TestMa(NumpyTestCase):
         self.failUnless( x[3] is masked)
         self.failUnless( x[4] is masked)
 
-        x = array(d, mask = m)
-        numpy.putmask(x,[30,40])
-        self.failUnless( eq(x, [0,1,2,30,40]))
-        self.failUnless( x.mask is nomask)
-
-        x = array(d, mask = m)
-        y = x.compressed()
-        z = array(x, mask = m)
-        z.put(y)
-        assert eq(x, z)
-
     def check_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
@@ -638,7 +627,7 @@ class TestMa(NumpyTestCase):
 
     def check_testAPI(self):
         self.failIf([m for m in dir(numpy.ndarray)
-                     if m not in dir(array) and not m.startswith('_')])
+                     if m not in dir(MaskedArray) and not m.startswith('_')])
 
     def check_testSingleElementSubscript(self):
         a = array([1,3,2])
