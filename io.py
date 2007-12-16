@@ -2,12 +2,14 @@
 __all__ = ['savetxt', 'loadtxt',
            'loads', 'load',
            'save', 'savez',
-           'DataFile',
+           'DataSource',
            'unpackbits',
            'packbits']
 
+import numpy as np
+
 from cPickle import load as _cload, loads
-from _datasource import DataFile
+from _datasource import DataSource
 _file = file
 
 def load(file):
@@ -64,13 +66,13 @@ def save(file, arr):
 
 def _getconv(dtype):
     typ = dtype.type
-    if issubclass(typ, bool_):
+    if issubclass(typ, np.bool_):
         return lambda x: bool(int(x))
-    if issubclass(typ, integer):
+    if issubclass(typ, np.integer):
         return int
-    elif issubclass(typ, floating):
+    elif issubclass(typ, np.floating):
         return float
-    elif issubclass(typ, complex):
+    elif issubclass(typ, np.complex):
         return complex
     else:
         return str
@@ -147,7 +149,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         raise ValueError('fname must be a string or file handle')
     X = []
 
-    dtype = multiarray.dtype(dtype)
+    dtype = np.dtype(dtype)
     defconv = _getconv(dtype)
     converterseq = None
     if converters is None:
@@ -172,7 +174,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
             row = tuple(row)
         X.append(row)
 
-    X = array(X, dtype)
+    X = np.array(X, dtype)
     r,c = X.shape
     if r==1 or c==1:
         X.shape = max([r,c]),
@@ -214,7 +216,7 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
         raise ValueError('fname must be a string or file handle')
 
 
-    X = asarray(X)
+    X = np.asarray(X)
     origShape = None
     if len(X.shape)==1:
         origShape = X.shape
