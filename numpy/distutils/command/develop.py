@@ -12,4 +12,6 @@ class develop(old_develop):
         self.reinitialize_command('build_src', inplace=1)
         # Make sure scripts are built.
         self.run_command('build_scripts')
+        # Make sure scons exts are built.
+        self.run_command('scons')
         old_develop.install_for_development(self)
