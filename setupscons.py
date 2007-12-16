@@ -51,7 +51,9 @@ def configuration(parent_package='',top_path=None):
     config.add_data_files(('numpy','*.txt'),
                           ('numpy','COMPATIBILITY'),
                           ('numpy','scipy_compatibility'), 
-                          ('numpy','site.cfg.example'))
+                          ('numpy','site.cfg.example'),
+                          ('numpy','setup.py'),
+                          ('numpy','setupegg.py'))
 
     config.get_version('numpy/version.py') # sets config.version
 

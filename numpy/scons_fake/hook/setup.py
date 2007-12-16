@@ -7,7 +7,7 @@ def configuration(parent_package='',top_path=None):
 
     def foo():
         print "scons hook test: foo"
-    config.add_sconscript('SConstruct', post_hook = foo)
+    config.add_sconscript('SConstruct', post_hook = foo, source_files = ['hello.c'])
     return config
 
 if __name__ == '__main__':
