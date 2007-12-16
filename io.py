@@ -1,10 +1,12 @@
 
-__all__ = ['savetxt', 'loadtxt', 
-           'dump', 'dumps', 'loads', 
-           'save', 'load',
-           'DataFile']
+__all__ = ['savetxt', 'loadtxt',
+           'loads', 'load',
+           'save', 'savez',
+           'DataFile',
+           'unpackbits',
+           'packbits']
 
-from cPickle import load as _cload, loads, dump as _cdump, dumps as _cdumps
+from cPickle import load as _cload, loads
 from _datasource import DataFile
 _file = file
 
@@ -30,48 +32,30 @@ def load(file):
     # if pickle:
         return _cload(file)
 
-def dumps(*args):
-    """Dump an array or multiple arrays to a pickle string
-    """
-    return _cdumps(args, protocol=2)
 
-def dump(file, *args):
-    """Dump an array or multiple arrays to a pickle file. 
 
-    Multiple arrays are placed in a tuple before pickling.  
-    The file can be a string or an open file-like object.
+class _bagobj(object):
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+class _npz_obj(dict):
+    pass
+
+def save(file, arr):
+    """Save an array to a binary file (specified as a string or file-like object).
+
+    If the file is a string, then if it does not have the .npy extension, it is appended
+        and a file open. 
+
+    Data is saved to the open file in NumPy-array format
 
     Example:
     --------
     import numpy as np
     ...
-    np.dump('myfile.pkl', a, b, c)
-    a,b,c = np.load('myfile.pkl')
-    """
-    if isinstance(file, type("")):
-        file = _file(file, "wb")
-    _cdump(args, file, protocol=2)
-
-def save(file, *args):
-    """Save an array or multiple arrays to a binary file.
-
-    If the file is a string with a .pkl extension, then the binary file
-    is a pickle file.  Otherwise, the file is saved as a numpy, binary file.
-    The file can be a string or an open file-like object.
-    
-    Example:
-    --------
-    import numpy as np
-    ...
-    np.dump('myfile.npy', a, b, c)
-    a,b,c = np.load('myfile.npy')
-    """
-    
-    if issinstance(file, type("")):
-        if file.endswith('.pkl'):
-            return dump(file, *args)
-        file = _file(file, "wb")
-
+    np.save('myfile', a)
+    a = np.load('myfile.npy')
+    """    
     # code to save to numpy binary here...
 
     

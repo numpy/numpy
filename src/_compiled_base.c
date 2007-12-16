@@ -526,6 +526,225 @@ arr_add_docstring(PyObject *dummy, PyObject *args)
     return Py_None;
 }
 
+
+static char packbits_doc[] = 
+"out = numpy.packbits(myarray)\n\n"
+"  myarray = an array whose (assumed binary) elements you want to\n"
+"             pack into bits (must be of integer type)\n\n"
+"   This routine packs the elements of a binary-valued dataset into a\n"
+"   1-D NumPy array of type uint8 ('B') whose bits correspond to\n"
+"   the logical (0 or nonzero) value of the input elements. \n\n"
+"   If myarray has more dimensions than 2 it packs each slice (the last\n"
+"   2 dimensions --- rows*columns) separately.  The number of elements\n"
+"   per slice (rows*columns) is then important to know to be able to unpack\n"
+"   the data later.\n\n"
+"     Example:\n"
+"     >>> a = array([[[1,0,1],\n"
+"     ...             [0,1,0]],\n"
+"     ...            [[1,1,0],\n"
+"     ...             [0,0,1]]])\n"
+"     >>> b = numpy.packbits(a)\n"
+"     >>> b\n"
+"     array([168, 196], 'b')\n\n"
+"     Note that 168 = 128 + 32 + 8\n"
+"               196 = 128 + 64 + 4";
+
+static char unpackbits_doc[] = 
+"out = numpy.unpackbits(myarray, elements_per_slice {, out_type} )\n\n"
+"     myarray =        Array of integer type whose least\n"
+"                      significant byte is a bit-field for the\n"
+"                      resulting output array.\n\n"
+"     elements_per_slice = Necessary for interpretation of myarray.\n"
+"                          This is how many elements in the\n "
+"                         rows*columns of original packed structure.\n\nOPTIONAL\n"
+"     out_type =       The type of output array to populate with 1's\n"
+"                      and 0's.  Must be an integer type.\n\n\nThe output array\n"
+"                      will be a 1-D array of 1's and zero's";
+
+
+/*  PACKBITS
+
+
+    This function packs binary (0 or 1) 1-bit per pixel images
+        into bytes for writing to disk. 
+
+*/
+
+void packbits(
+	      char	In[],
+              int       element_size,  /* in bytes */
+	      char	Out[],
+              int       total_elements,
+              int       els_per_slice
+	     )
+{
+  char          build;
+  int           i,index,slice,slices,out_bytes;
+  int           maxi, remain, nonzero, j;
+  char          *outptr,*inptr;
+
+  outptr = Out;                          /* pointer to output buffer */
+  inptr  = In;                           /* pointer to input buffer */
+  slices = total_elements/els_per_slice;
+  out_bytes = ceil( (float) els_per_slice / 8);     /* number of bytes in each slice */
+  remain = els_per_slice % 8;                      /* uneven bits */
+  if (remain == 0) remain = 8;           /* */
+  /*  printf("Start: %d %d %d %d %d\n",inM,MN,slices,out_bytes,remain);
+   */
+  for (slice = 0; slice < slices; slice++) {
+    for (index = 0; index < out_bytes; index++) {
+      build = 0;
+      maxi = (index != out_bytes - 1 ? 8 : remain);
+      for (i = 0; i < maxi ; i++) {
+        build <<= 1;                 /* shift bits left one bit */
+        nonzero = 0;
+        for (j = 0; j < element_size; j++)  /* determine if this number is non-zero */
+          nonzero += (*(inptr++) != 0);
+        build += (nonzero > 0);                   /* add to this bit if the input value is non-zero */
+      }
+      if (index == out_bytes - 1) build <<= (8-remain);
+      /*      printf("Here: %d %d %d %d\n",build,slice,index,maxi); 
+       */
+      *(outptr++) = build;
+    }
+  }
+  return;
+}
+
+
+void unpackbits(
+		char    In[],
+		int     in_element_size,
+	        char    Out[],
+                int     element_size,
+	        int     total_elements,
+                int     els_per_slice
+               )
+{
+  unsigned char mask;
+  int           i,index,slice,slices,out_bytes;
+  int           maxi, remain;
+  char          *outptr,*inptr;
+
+  outptr = Out;
+  inptr  = In;
+  if (PyArray_ISNBO(PyArray_BIG)) {
+    outptr += (element_size - 1);
+    inptr  += (in_element_size - 1);
+  }
+  slices = total_elements / els_per_slice;
+  out_bytes = ceil( (float) els_per_slice / 8);
+  remain = els_per_slice % 8;
+  if (remain == 0) remain = 8;
+  /*  printf("Start: %d %d %d %d %d\n",inM,MN,slices,out_bytes,remain);
+   */
+  for (slice = 0; slice < slices; slice++) {
+    for (index = 0; index < out_bytes; index++) {
+      maxi = (index != out_bytes - 1 ? 8 : remain);
+      mask = 128;
+      for (i = 0; i < maxi ; i++) {
+        *outptr = ((mask & (unsigned char)(*inptr)) > 0);
+        outptr += element_size;
+        mask >>= 1;
+      }
+      /*      printf("Here: %d %d %d %d\n",build,slice,index,maxi); 
+       */
+      inptr += in_element_size;
+    }
+  }
+  return;
+}
+
+static PyObject *
+numpyio_pack(PyObject *self, PyObject *args)  /* args: in */
+{
+  PyArrayObject *arr = NULL, *out = NULL;
+  PyObject *obj;
+  int      els_per_slice;
+  int      out_size;
+  int      type;
+
+  if (!PyArg_ParseTuple( args, "O" , &obj))
+    return NULL;
+  
+  type = PyArray_ObjectType(obj,0);
+  if ((arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,type,0,0)) == NULL)
+    return NULL;
+
+  if (!PyArray_ISINTEGER(arr))
+    PYSETERROR("Expecting an input array of integer data type");
+
+  /* Get size information from input array and make a 1-D output array of bytes */
+
+  els_per_slice = PyArray_DIM(arr, PyArray_NDIM(arr)-1);
+  if (PyArray_NDIM(arr) > 1) 
+    els_per_slice =  els_per_slice * PyArray_DIM(arr, PyArray_NDIM(arr)-2);
+  
+  out_size = (PyArray_SIZE(arr)/els_per_slice)*ceil ( (float) els_per_slice / 8);
+
+  if ((out = (PyArrayObject *)PyArray_FromDims(1,&out_size,PyArray_UBYTE))==NULL) {
+      goto fail;
+  }
+  
+  packbits(PyArray_DATA(arr),PyArray_ITEMSIZE(arr),PyArray_DATA(out),
+	   PyArray_SIZE(arr), els_per_slice);
+
+  Py_DECREF(arr);
+  return out;
+
+ fail:
+  Py_XDECREF(arr);
+  return NULL;
+
+}
+
+static PyObject *
+numpyio_unpack(PyObject *self, PyObject *args)  /* args: in, out_type */
+{
+  PyArrayObject *arr = NULL, *out=NULL;
+  PyObject *obj;
+  int      els_per_slice, arrsize;
+  int      out_size;
+
+  if (!PyArg_ParseTuple( args, "Oi|c" , &obj, &els_per_slice, &out_type))
+    return NULL;
+  
+  if (els_per_slice < 1)
+    PYSETERROR("Second argument is elements_per_slice and it must be >= 1");
+
+  if ((arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,NPY_UBYTE,0,0)) == NULL)
+    return NULL;
+
+  arrsize = PyArray_SIZE(arr);
+
+  if ((arrsize % (int) (ceil( (float) els_per_slice / 8))) != 0)
+    PYSETERROR("That cannot be the number of elements per slice for this array size");
+
+  if (!PyArray_ISINTEGER(arr))
+    PYSETERROR("Can only unpack arrays that are of integer type");
+
+  /* Make an 1-D output array of type out_type */
+
+  out_size = els_per_slice * arrsize / ceil( (float) els_per_slice / 8);
+
+  if ((out = (PyArrayObject *)PyArray_FromDims(1,&out_size,out_type))==NULL)
+      goto fail;
+
+  if (out->descr->type_num > PyArray_LONG) {
+    PYSETERROR("Can only unpack bits into integer type.");
+  }
+  
+  unpackbits(arr->data,arr->descr->elsize,out->data,out->descr->elsize,out_size,els_per_slice);
+
+  Py_DECREF(arr);
+  return PyArray_Return(out);
+
+ fail:
+  Py_XDECREF(out);
+  Py_XDECREF(arr);
+  return NULL;
+}
+
 static struct PyMethodDef methods[] = {
     {"_insert",  (PyCFunction)arr_insert, METH_VARARGS | METH_KEYWORDS,
      arr_insert__doc__},
@@ -537,6 +756,8 @@ static struct PyMethodDef methods[] = {
      NULL},
     {"add_docstring", (PyCFunction)arr_add_docstring, METH_VARARGS,
      NULL},
+    {"packbits",  numpyio_pack,       1, packbits_doc},
+    {"unpackbits", numpyio_unpack,     1, unpackbits_doc},
     {NULL, NULL}    /* sentinel */
 };
 

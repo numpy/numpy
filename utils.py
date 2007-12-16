@@ -106,6 +106,7 @@ def deprecate(func, oldname=None, newname=None):
     def newfunc(*args,**kwds):
         warnings.warn(str1, DeprecationWarning)
         return func(*args, **kwds)
+
     newfunc = _set_function_name(newfunc, oldname)
     doc = func.__doc__
     if doc is None:
