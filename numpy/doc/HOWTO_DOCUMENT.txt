@@ -19,9 +19,10 @@ Use a code checker:
  * `pylint <http://www.logilab.org/857>`__
  * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`__
 
-Common import standards:
- * import numpy as np
- * import scipy as sp
+Common import standards::
+
+   import numpy as np
+   import scipy as sp
 
 Docstring Standard
 ------------------
