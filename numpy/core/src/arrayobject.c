@@ -3139,16 +3139,7 @@ array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 static Py_ssize_t
 array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
 {
-    if (self->descr->type_num == PyArray_STRING || \
-        self->descr->type_num == PyArray_UNICODE || \
-        self->descr->elsize == 1)
-        return array_getreadbuf(self, segment, (void **) ptrptr);
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                        "non-character (or 8-bit) array cannot be "\
-                        "interpreted as character buffer");
-        return -1;
-    }
+    return array_getreadbuf(self, segment, (void **) ptrptr);
 }
 
 static PyBufferProcs array_as_buffer = {
