@@ -6,8 +6,8 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('random',parent_package,top_path)
 
     source_files = [join('mtrand', i) for i in ['mtrand.c', 
-                                                'mtrand.pxi',
-                                                'numpy.pyx',
+                                                'mtrand.pyx',
+                                                'numpy.pxi',
                                                 'randomkit.c', 
                                                 'randomkit.h', 
                                                 'Python.pxi', 
