@@ -1691,6 +1691,12 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
     return 0;
 }
 
+
+/* XXX: FIXME --- add ordering argument to 
+   Allow Fortran ordering on write
+   This will need the addition of a Fortran-order iterator.
+ */
+
 /*OBJECT_API
   To File
 */
