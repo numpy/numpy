@@ -768,6 +768,8 @@ class TestRegression(NumpyTestCase):
         index = N.array(0,dtype=N.int32)
         x[index]
 
+    def check_binary_repr_0_width(self, level=rlevel):
+        assert_equal(N.binary_repr(0,width=3),'000')
 
 if __name__ == "__main__":
     NumpyTest().run()
