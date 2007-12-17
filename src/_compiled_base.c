@@ -9,6 +9,9 @@ static PyObject *ErrorObject;
             goto fail;}                                 \
     }
 
+#define PYSETERROR(message) \
+{ PyErr_SetString(ErrorObject, message); goto fail; }
+
 static intp
 incr_slot_ (double x, double *bins, intp lbins)
 {
