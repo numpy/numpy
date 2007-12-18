@@ -1,4 +1,5 @@
 /* -*- c -*- */
+#include "config.h"
 
 static longlong
 MyPyLong_AsLongLong(PyObject *vv)
