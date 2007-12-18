@@ -435,6 +435,21 @@ int main()
     testcode.append(tmpcode % ('NPY_SIZEOF_LONGLONG', 'SIZEOF_LONG_LONG',
                                'NPY_SIZEOF_PY_LONG_LONG', 'SIZEOF_PY_LONG_LONG'))
 
+    testcode.append(r"""
+#ifndef CHAR_BIT
+          {
+             unsigned char var = 2;
+             int i = 0;
+             while (var >= 2) {
+                     var = var << 1;
+                     i++;
+             }
+             fprintf(f,"#define CHAR_BIT %d\n", i+1);
+          }
+#else
+          fprintf(f, "/* #define CHAR_BIT %d */\n", CHAR_BIT);
+#endif""")
+
     testcode.append("""
     fclose(f);
 
