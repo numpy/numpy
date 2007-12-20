@@ -78,7 +78,7 @@ import warnings
 
 
 MaskType = bool_
-nomask = MaskType(0)
+nomask = narray(False)
 
 divide_tolerance = 1.e-35
 numpy.seterr(all='ignore')
@@ -1171,7 +1171,7 @@ class MaskedArray(numeric.ndarray):
         return
     #........................
     def __array_finalize__(self,obj):
-        """Finalizes the masked array.
+        """Finalize the masked array.
         """
         # Get main attributes .........
         self._mask = getattr(obj, '_mask', nomask)
@@ -1183,6 +1183,7 @@ class MaskedArray(numeric.ndarray):
         # Finalize the mask ...........
         if self._mask is not nomask:
             self._mask.shape = self.shape
+#        self._data = self.view(self._baseclass)
         return
     #..................................
     def __array_wrap__(self, obj, context=None):
@@ -2798,13 +2799,38 @@ def putmask(a, mask, values): #, mode='raise'):
     If values is not the same size of a and mask then it will repeat
     as necessary.  This gives different behavior than
     a[mask] = values.
+    
+    Note: Using a masked array as values will NOT transform a ndarray in
+          a maskedarray.
 
     """
     # We can't use 'frommethod', the order of arguments is different
-    try:
-        return a.putmask(values, mask)
-    except AttributeError:
-        return numpy.putmask(narray(a, copy=False), mask, values)
+#    try:
+#        return a.putmask(values, mask)
+#    except AttributeError:
+#        return numpy.putmask(narray(a, copy=False), mask, values)
+    if not isinstance(a, MaskedArray):
+        a = a.view(MaskedArray)
+    (valdata, valmask) = (getdata(values), getmask(values))
+    if getmask(a) is nomask:
+        if valmask is not nomask:
+            a._sharedmask = True
+            a.mask = numpy.zeros(a.shape, dtype=bool_)
+            numpy.putmask(a._mask, mask, valmask)
+#            m = numpy.zeros(a.shape, dtype=bool_)
+#            numpy.putmask(m, mask, valmask)
+#            a = masked_array(a, copy=False, subok=True, mask=m)
+    elif a._hardmask:
+        if valmask is not nomask:
+            m = a._mask.copy()
+            numpy.putmask(m, mask, valmask)
+            a.mask |= m
+    else:
+        if valmask is nomask:
+            valmask = getmaskarray(values)
+        numpy.putmask(a._mask, mask, valmask)
+    numpy.putmask(a._data, mask, valdata)
+    return
 
 def transpose(a,axes=None):
     """Return a view of the array with dimensions permuted according to axes,
@@ -3142,63 +3168,41 @@ def loads(strg):
     return cPickle.loads(strg)
 
 
+
+
 ###############################################################################
-
+#
 if __name__ == '__main__':
-    from numpy.ma.testutils import assert_equal, assert_almost_equal
-
-    # Small arrays ..................................
-    xs = numpy.random.uniform(-1,1,6).reshape(2,3)
-    ys = numpy.random.uniform(-1,1,6).reshape(2,3)
-    zs = xs + 1j * ys
-    m1 = [[True, False, False], [False, False, True]]
-    m2 = [[True, False, True], [False, False, True]]
-    nmxs = numpy.ma.array(xs, mask=m1)
-    nmys = numpy.ma.array(ys, mask=m2)
-    nmzs = numpy.ma.array(zs, mask=m1)
-    mmxs = array(xs, mask=m1)
-    mmys = array(ys, mask=m2)
-    mmzs = array(zs, mask=m1)
-    # Big arrays ....................................
-    xl = numpy.random.uniform(-1,1,100*100).reshape(100,100)
-    yl = numpy.random.uniform(-1,1,100*100).reshape(100,100)
-    zl = xl + 1j * yl
-    maskx = xl > 0.8
-    masky = yl < -0.8
-    nmxl = numpy.ma.array(xl, mask=maskx)
-    nmyl = numpy.ma.array(yl, mask=masky)
-    nmzl = numpy.ma.array(zl, mask=maskx)
-    mmxl = array(xl, mask=maskx, shrink=True)
-    mmyl = array(yl, mask=masky, shrink=True)
-    mmzl = array(zl, mask=maskx, shrink=True)
-    #
-    z = empty(3,)
-    mmys.all(0, out=z)
+    from maskedarray.testutils import assert_equal, assert_almost_equal
 
     if 1:
-        x = numpy.array([[ 0.13,  0.26,  0.90],
-                     [ 0.28,  0.33,  0.63],
-                     [ 0.31,  0.87,  0.70]])
-        m = numpy.array([[ True, False, False],
-                     [False, False, False],
-                     [True,  True, False]], dtype=numpy.bool_)
-        mx = masked_array(x, mask=m)
-        xbig = numpy.array([[False, False,  True],
-                        [False, False,  True],
-                        [False,  True,  True]], dtype=numpy.bool_)
-        mxbig = (mx > 0.5)
-        mxsmall = (mx < 0.5)
-        #
-        assert (mxbig.all()==False)
-        assert (mxbig.any()==True)
-        assert_equal(mxbig.all(0),[False, False, True])
-        assert_equal(mxbig.all(1), [False, False, True])
-        assert_equal(mxbig.any(0),[False, False, True])
-        assert_equal(mxbig.any(1), [True, True, True])
-
+        x = array([1,2,3,4,5,6])
+        mx = array(x, mask=[0,0,0,1,1,1])
+        mask = [0,0,1,0,0,1]
     if 1:
-        xx = array([1+10j,20+2j], mask=[1,0])
-        assert_equal(xx.imag,[10,2])
-        assert_equal(xx.imag.filled(), [1e+20,2])
-        assert_equal(xx.real,[1,20])
-        assert_equal(xx.real.filled(), [1e+20,20])
+        # w/o mask, w/o masked values
+        xx = x.copy()
+        putmask(xx, mask, 99)
+        assert_equal(xx, [1,2,99,4,5,99])
+        # w/ mask, w/o masked values
+        mxx = mx.copy()
+        putmask(mxx, mask, 99)
+        assert_equal(mxx._data, [1,2,99,4,5,99])
+        assert_equal(mxx._mask, [0,0,0,1,1,0])
+        # w/o mask, w/ masked values
+        values = array([10,20,30,40,50,60],mask=[1,1,1,0,0,0])
+        xx = x.copy()
+        putmask(xx, mask, values)
+        assert_equal(xx._data, [1,2,30,4,5,60])
+        assert_equal(xx._mask, [0,0,1,0,0,0])
+        # w/ mask, w/ masked values
+        mxx = mx.copy()
+        putmask(mxx, mask, values)
+        assert_equal(mxx._data, [1,2,30,4,5,60])
+        assert_equal(mxx._mask, [0,0,1,1,1,0])
+        # w/ mask, w/ masked values + hardmask
+        mxx = mx.copy()
+        mxx.harden_mask()
+        putmask(mxx, mask, values)
+        assert_equal(mxx, [1,2,30,4,5,60])
+

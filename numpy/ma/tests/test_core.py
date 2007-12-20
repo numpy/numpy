@@ -1303,6 +1303,38 @@ class TestArrayMethods(NumpyTestCase):
         data = masked_array([[1]], mask=True)
         assert(data.squeeze() is masked)
 
+    def check_putmask(self):
+        x = numpy.arange(6)+1
+        mx = array(x, mask=[0,0,0,1,1,1])
+        mask = [0,0,1,0,0,1]
+
+        # w/o mask, w/o masked values
+        xx = x.copy()
+        putmask(xx, mask, 99)
+        assert_equal(xx, [1,2,99,4,5,99])
+        # w/ mask, w/o masked values
+        mxx = mx.copy()
+        putmask(mxx, mask, 99)
+        assert_equal(mxx._data, [1,2,99,4,5,99])
+        assert_equal(mxx._mask, [0,0,0,1,1,0])
+        # w/o mask, w/ masked values
+        values = array([10,20,30,40,50,60],mask=[1,1,1,0,0,0])
+        xx = x.copy()
+        putmask(xx, mask, values)
+        assert_equal(xx._data, [1,2,30,4,5,60])
+        assert_equal(xx._mask, [0,0,1,0,0,0])
+        # w/ mask, w/ masked values
+        mxx = mx.copy()
+        putmask(mxx, mask, values)
+        assert_equal(mxx._data, [1,2,30,4,5,60])
+        assert_equal(mxx._mask, [0,0,1,1,1,0])
+        # w/ mask, w/ masked values + hardmask
+        mxx = mx.copy()
+        mxx.harden_mask()
+        putmask(mxx, mask, values)
+        assert_equal(mxx, [1,2,30,4,5,60])
+
+
 #..............................................................................
 
 ###############################################################################
