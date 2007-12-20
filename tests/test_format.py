@@ -276,6 +276,9 @@ Test the header writing.
 
 
 from cStringIO import StringIO
+import os
+import shutil
+import tempfile
 
 from nose.tools import raises
 
@@ -283,6 +286,20 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from numpy.lib import format
+
+
+tempdir = None
+
+# Module-level setup.
+def setup_module():
+    global tempdir
+    tempdir = tempfile.mkdtemp()
+
+def teardown_module():
+    global tempdir
+    if tempdir is not None and os.path.isdir(tempdir):
+        shutil.rmtree(tempdir)
+        tempdir = None
 
 
 # Generate some basic arrays to test with.
@@ -395,12 +412,49 @@ def roundtrip(arr):
     arr2 = format.read_array(f2)
     return arr2
 
+def assert_equal(o1, o2):
+    assert o1 == o2
+
 
 def test_roundtrip():
     for arr in basic_arrays + record_arrays:
-        print repr(arr)
         arr2 = roundtrip(arr)
         yield assert_array_equal, arr, arr2
+
+def test_memmap_roundtrip():
+    for arr in basic_arrays + record_arrays:
+        if arr.dtype.hasobject:
+            # Skip these since they can't be mmap'ed.
+            continue
+        # Write it out normally and through mmap.
+        nfn = os.path.join(tempdir, 'normal.npy')
+        mfn = os.path.join(tempdir, 'memmap.npy')
+        fp = open(nfn, 'wb')
+        try:
+            format.write_array(fp, arr)
+        finally:
+            fp.close()
+
+        fortran_order = (arr.flags.f_contiguous and not arr.flags.c_contiguous)
+        ma = format.open_memmap(mfn, mode='w+', dtype=arr.dtype,
+            shape=arr.shape, fortran_order=fortran_order)
+        ma[...] = arr
+        del ma
+
+        # Check that both of these files' contents are the same.
+        fp = open(nfn, 'rb')
+        normal_bytes = fp.read()
+        fp.close()
+        fp = open(mfn, 'rb')
+        memmap_bytes = fp.read()
+        fp.close()
+        yield assert_equal, normal_bytes, memmap_bytes
+
+        # Check that reading the file using memmap works.
+        ma = format.open_memmap(nfn, mode='r')
+        yield assert_array_equal, ma, arr
+        del ma
+
 
 def test_write_version_1_0():
     f = StringIO()

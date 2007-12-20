@@ -1,6 +1,13 @@
 """ Define a simple format for saving numpy arrays to disk with the full
 information about them.
 
+WARNING: THE FORMAT IS CURRENTLY UNSTABLE. DO NOT STORE CRITICAL DATA WITH IT.
+         While this code is in an SVN branch, the format may change without
+         notice, without backwards compatibility, and without changing the
+         format's version number. When the code moves into the trunk the format
+         will be stabilized, the version number will increment as changes occur,
+         and backwards compatibility with older versions will be maintained.
+
 Format Version 1.0
 ------------------
 
@@ -13,8 +20,8 @@ The next 1 byte is an unsigned byte: the minor version number of the file
 format, e.g. \\x00. Note: the version of the file format is not tied to the
 version of the numpy package.
 
-The next 2 bytes form an unsigned short int: the length of the header data
-HEADER_LEN.
+The next 2 bytes form a little-endian unsigned short int: the length of the
+header data HEADER_LEN.
 
 The next HEADER_LEN bytes form the header data describing the array's format. It
 is an ASCII string which contains a Python literal expression of a dictionary.
@@ -116,13 +123,18 @@ def dtype_to_descr(dtype):
     else:
         return dtype.str
 
-def write_array_header_1_0(fp, array):
-    """ Write the header for an array using the 1.0 format.
+def header_data_from_array_1_0(array):
+    """ Get the dictionary of header metadata from a numpy.ndarray.
 
     Parameters
     ----------
-    fp : filelike object
     array : numpy.ndarray
+
+    Returns
+    -------
+    d : dict
+        This has the appropriate entries for writing its string representation
+        to the header of the file.
     """
     d = {}
     d['shape'] = array.shape
@@ -137,7 +149,18 @@ def write_array_header_1_0(fp, array):
         d['fortran_order'] = False
 
     d['descr'] = dtype_to_descr(array.dtype)
+    return d
 
+def write_array_header_1_0(fp, d):
+    """ Write the header for an array using the 1.0 format.
+
+    Parameters
+    ----------
+    fp : filelike object
+    d : dict
+        This has the appropriate entries for writing its string representation
+        to the header of the file.
+    """
     header = pprint.pformat(d)
     # Pad the header with spaces and a final newline such that the magic string,
     # the header-length short and the header are aligned on a 16-byte boundary.
@@ -239,7 +262,7 @@ def write_array(fp, array, version=(1,0)):
     if version != (1, 0):
         raise ValueError("we only support format version (1,0), not %s" % (version,))
     fp.write(magic(*version))
-    write_array_header_1_0(fp, array)
+    write_array_header_1_0(fp, header_data_from_array_1_0(array))
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data directly.
         # Instead, we will pickle it out with version 2 of the pickle protocol.
@@ -303,4 +326,87 @@ def read_array(fp):
             array.shape = shape
 
     return array
+
+
+def open_memmap(filename, mode='r+', dtype=None, shape=None,
+    fortran_order=False, version=(1,0)):
+    """ Open a .npy file as a memory-mapped array.
+
+    Parameters
+    ----------
+    filename : str
+    mode : str, optional
+        The mode to open the file with. In addition to the standard file modes,
+        'c' is also accepted to mean "copy on write".
+    dtype : dtype, optional
+    shape : tuple of int, optional
+    fortran_order : bool, optional
+        If the mode is a "write" mode, then the file will be created using this
+        dtype, shape, and contiguity.
+    version : tuple of int (major, minor)
+        If the mode is a "write" mode, then this is the version of the file
+        format used to create the file.
+
+    Returns
+    -------
+    marray : numpy.memmap
+
+    Raises
+    ------
+    ValueError if the data or the mode is invalid.
+    IOError if the file is not found or cannot be opened correctly.
+    """
+    if 'w' in mode:
+        # We are creating the file, not reading it.
+        # Check if we ought to create the file.
+        if version != (1, 0):
+            raise ValueError("only support version (1,0) of file format, not %r" % (version,))
+        # Ensure that the given dtype is an authentic dtype object rather than
+        # just something that can be interpreted as a dtype object.
+        dtype = numpy.dtype(dtype)
+        if dtype.hasobject:
+            raise ValueError("the dtype includes Python objects; the array cannot be memory-mapped")
+        d = dict(
+            descr=dtype_to_descr(dtype),
+            fortran_order=fortran_order,
+            shape=shape,
+        )
+        # If we got here, then it should be safe to create the file.
+        fp = open(filename, mode+'b')
+        try:
+            fp.write(magic(*version))
+            write_array_header_1_0(fp, d)
+            offset = fp.tell()
+        finally:
+            fp.close()
+    else:
+        # Read the header of the file first.
+        fp = open(filename, 'rb')
+        try:
+            version = read_magic(fp)
+            if version != (1, 0):
+                raise ValueError("only support version (1,0) of file format, not %r" % (version,))
+            shape, fortran_order, dtype = read_array_header_1_0(fp)
+            if dtype.hasobject:
+                raise ValueError("the dtype includes Python objects; the array cannot be memory-mapped")
+            offset = fp.tell()
+        finally:
+            fp.close()
+
+    if fortran_order:
+        order = 'F'
+    else:
+        order = 'C'
+
+    # We need to change a write-only mode to a read-write mode since we've
+    # already written data to the file.
+    if mode == 'w+':
+        mode = 'r+'
+
+    marray = numpy.memmap(filename, dtype=dtype, shape=shape, order=order,
+        mode=mode, offset=offset)
+
+    return marray
+
+
 
