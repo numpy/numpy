@@ -304,10 +304,8 @@ class TestMa(NumpyTestCase):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
         i = numpy.nonzero(m)[0]
-        putmask(xm, m, z)
-        assert all(take(xm, i, axis=0) == z)
         put(ym, i, zm)
-        assert take(ym, i, axis=0) == zm
+        assert all(take(ym, i, axis=0) == zm)
 
     def check_testOddFeatures(self):
         "Test of other odd features"
@@ -584,11 +582,8 @@ class TestMa(NumpyTestCase):
         self.assertEqual(1, int(array([[[1]]])))
         self.assertEqual(1.0, float(array([[1]])))
         self.failUnlessRaises(ValueError, float, array([1,1]))
-        self.failUnlessRaises(MAError, float, array([1],mask=[1]))
-        self.failUnless(bool(array([0,1])))
-        self.failUnless(bool(array([0,0],mask=[0,1])))
-        self.failIf(bool(array([0,0])))
-        self.failIf(bool(array([0,0],mask=[0,0])))
+        self.failUnlessRaises(ValueError, bool, array([0,1]))
+        self.failUnlessRaises(ValueError, bool, array([0,0],mask=[0,1]))
 
     def check_testScalarArithmetic(self):
         xm = array(0, mask=1)

@@ -29,6 +29,18 @@ pi = numpy.pi
 
 from test_old_ma import *
 
+class TestNoMask(NumpyTestCase):
+    def test_no_inplace(self):
+        x = nomask
+        def iadd(x):
+            x += 1
+        self.failUnlessRaises(ValueError,iadd,x)
+
+    def test_no_copy(self):
+        x = nomask
+        y = x.copy()
+        assert x is y
+
 #..............................................................................
 class TestMA(NumpyTestCase):
     "Base test class for MaskedArrays."
@@ -1304,10 +1316,9 @@ class TestArrayMethods(NumpyTestCase):
         assert(data.squeeze() is masked)
 
     def check_putmask(self):
-        x = numpy.arange(6)+1
+        x = arange(6)+1
         mx = array(x, mask=[0,0,0,1,1,1])
         mask = [0,0,1,0,0,1]
-
         # w/o mask, w/o masked values
         xx = x.copy()
         putmask(xx, mask, 99)

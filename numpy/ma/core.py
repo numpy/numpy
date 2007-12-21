@@ -76,13 +76,25 @@ from numpy import expand_dims as n_expand_dims
 from numpy import array as narray
 import warnings
 
+class NoMask(ndarray):
+    def __new__(subtype):
+        narray(False)
+        return narray(False).view(subtype)
+
+    def no_op(self,*args,**kwargs):
+        return self
+
+    def __array_finalize__(self,obj):
+        obj.flags['WRITEABLE'] = False
+
+    def copy(self):
+        return self
 
 MaskType = bool_
-nomask = narray(False)
+nomask = NoMask()
 
 divide_tolerance = 1.e-35
 numpy.seterr(all='ignore')
-
 
 
 #####--------------------------------------------------------------------------
