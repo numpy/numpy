@@ -586,6 +586,7 @@ class Configuration(object):
                  top_path=None,
                  package_path=None,
                  caller_level=1,
+                 setup_name='setup.py',
                  **attrs):
         """Construct configuration instance of a package.
 
@@ -673,6 +674,8 @@ class Configuration(object):
         if isinstance(caller_instance, self.__class__):
             if caller_instance.options['delegate_options_to_subpackages']:
                 self.set_options(**caller_instance.options)
+
+        self.setup_name = setup_name
 
     def todict(self):
         """Return configuration distionary suitable for passing
@@ -795,7 +798,7 @@ class Configuration(object):
         else:
             subpackage_path = njoin([subpackage_path] + l[:-1])
             subpackage_path = self.paths([subpackage_path])[0]
-        setup_py = njoin(subpackage_path, 'setup.py')
+        setup_py = njoin(subpackage_path, self.setup_name)
         if not self.options['ignore_setup_xxx_py']:
             if not os.path.isfile(setup_py):
                 setup_py = njoin(subpackage_path,
