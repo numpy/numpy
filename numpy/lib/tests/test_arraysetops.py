@@ -145,6 +145,10 @@ class TestAso(NumpyTestCase):
 
         assert_array_equal([], setdiff1d([],[]))
 
+    def check_setdiff1d_char_array(self):
+        a = numpy.array(['a','b','c'])
+        b = numpy.array(['a','b','s'])
+        assert_array_equal(setdiff1d(a,b),numpy.array(['c']))
 
     ##
     # 03.11.2005, c
