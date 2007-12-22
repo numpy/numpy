@@ -39,19 +39,6 @@ def configuration(parent_package='',top_path=None):
 
     header_dir = 'include/numpy' # this is relative to config.path_in_package
 
-    def generate_declaration_test(symbol, includes):
-        main_src = """
-int main()
-{
-#ifndef %s
-    (void) %s;
-#endif
-    ;
-    return 0;
-}""" % (symbol, symbol)
-    
-        return "\n".join([includes, main_src])
-
     def generate_config_h(ext, build_dir):
         target = join(build_dir,'config.h')
         if newer(__file__,target):
@@ -70,12 +57,6 @@ int main()
             if not result:
                 raise SystemError,"Failed to test configuration. "\
                       "See previous error messages for more information."
-
-            def test_declaration(symbol, includes = ""):
-                code = generate_declaration_test(symbol, includes)
-                result = config_cmd.try_run(code, include_dirs = [python_include],
-                                            library_dirs = default_lib_dirs)
-                return result
 
             # Python 2.3 causes a segfault when
             #  trying to re-acquire the thread-state
