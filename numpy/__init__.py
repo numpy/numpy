@@ -94,7 +94,7 @@ testing --> NumpyTest
 
     import add_newdocs
 
-    __all__.extend(['add_newdocs','test'])
+    __all__.extend(['add_newdocs'])
 
     if __doc__ is not None:
         __doc__ += """
