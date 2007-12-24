@@ -131,7 +131,8 @@ class NumpyTestCase (unittest.TestCase):
         return 0.01*elapsed
 
     def __call__(self, result=None):
-        if result is None:
+        if result is None or not hasattr(result, 'errors') \
+                or not hasattr(result, 'stream'):
             return unittest.TestCase.__call__(self, result)
 
         nof_errors = len(result.errors)
