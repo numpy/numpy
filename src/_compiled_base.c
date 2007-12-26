@@ -531,34 +531,33 @@ arr_add_docstring(PyObject *dummy, PyObject *args)
 
 
 static char packbits_doc[] = 
-"out = numpy.packbits(myarray)\n\n"
-"  myarray : an integer type array whose elements should be packed to bits\n\n"
-"   This routine packs the elements of a binary-valued dataset into a\n"
-"   NumPy array of type uint8 ('B') whose bits correspond to\n"
-"   the logical (0 or nonzero) value of the input elements. \n\n"
-"   If myarray has more dimensions than 2 it packs the last 2 dimensions separately.\n"
-"   The output array is N-1 for N>=2 and N for N<2). \n"
-"     Example:\n"
-"     >>> a = array([[[1,0,1],\n"
-"     ...             [0,1,0]],\n"
-"     ...            [[1,1,0],\n"
-"     ...             [0,0,1]]])\n"
-"     >>> b = numpy.packbits(a)\n"
-"     >>> b\n"
-"     array([[168],[196]], dtype=uint8)\n\n"
-"     Note that 168 = 128 + 32 + 8\n"
-"               196 = 128 + 64 + 4";
+  "out = numpy.packbits(myarray, axis=None)\n\n"
+  "  myarray : an integer type array whose elements should be packed to bits\n\n"
+  "   This routine packs the elements of a binary-valued dataset into a\n"
+  "   NumPy array of type uint8 ('B') whose bits correspond to\n"
+  "   the logical (0 or nonzero) value of the input elements.\n" 
+  "   The dimension over-which bit-packing is done is given by axis.\n"
+  "   The shape of the output has the same number of dimensions as the input\n"
+  "   (unless axis is None, in which case the output is 1-d).\n"
+  "\n"
+  "     Example:\n"
+  "     >>> a = array([[[1,0,1],\n"
+  "     ...             [0,1,0]],\n"
+  "     ...            [[1,1,0],\n"
+  "     ...             [0,0,1]]])\n"
+  "     >>> b = numpy.packbits(a,axis=-1)\n"
+  "     >>> b\n"
+  "     array([[[160],[64]],[[192],[32]]], dtype=uint8)\n\n"
+  "     Note that 160 = 128 + 32\n"
+  "               192 = 128 + 64\n";
 
 static char unpackbits_doc[] = 
-"out = numpy.unpackbits(myarray, {out_shape}))\n\n"
-"     myarray - array of uint8 type representing a bit-field\n"
-"        that should be unpacked into a boolean output array\n\n"
-" OPTIONAL\n"
-"     out_shape - The shape of the resulting output.  This must be given\n"
-"        in order to return the original unpacked boolean input\n"
-"        (allowing a round-trip through packbits and unpackbits). Otherwise\n"
-"        the output shape will be the same as the input shape in all but the\n"
-"        last dimension which will be expanded by a factor of 8.";
+  "out = numpy.unpackbits(myarray, axis=None)\n\n"
+  "     myarray - array of uint8 type where each element represents a bit-field\n"
+  "        that should be unpacked into a boolean output array\n\n"
+  "        The shape of the output array is either 1-d (if axis is None) or\n"
+  "        the same shape as the input array with unpacking done along the\n"
+  "        axis specified.";
 
 /*  PACKBITS
 
@@ -567,26 +566,36 @@ static char unpackbits_doc[] =
 
 */
 
-void packbits(
+static void 
+_packbits(
 	      char	In[],
               int       element_size,  /* in bytes */
+	      npy_intp  in_N,
 	      char	Out[],
-              int       total_elements
+              npy_intp  out_N
 	     )
 {
   char          build;
-  int           i,index,out_bytes;
+  int           i, index;
+  npy_intp      out_Nm1;
   int           maxi, remain, nonzero, j;
   char          *outptr,*inptr;
 
   outptr = Out;                          /* pointer to output buffer */
   inptr  = In;                           /* pointer to input buffer */
-  out_bytes = ceil( (float) total_elements / 8);     /* number of bytes in each slice */
-  remain = total_elements % 8;                      /* uneven bits */
+
+  /* Loop through the elements of In */
+  /* Determine whether or not it is nonzero.
+     Yes: set correspdoning bit (and adjust build value)
+     No:  move on     
+  /* Every 8th value, set the value of build and increment the outptr */
+
+  remain = in_N % 8;                      /* uneven bits */
   if (remain == 0) remain = 8;
-  for (index = 0; index < out_bytes; index++) {
+  out_Nm1 = out_N - 1;
+  for (index = 0; index < out_N; index++) {
     build = 0;
-    maxi = (index != out_bytes - 1 ? 8 : remain);
+    maxi = (index != out_Nm1 ? 8 : remain);
     for (i = 0; i < maxi ; i++) {
       build <<= 1;                        /* shift bits left one bit */
       nonzero = 0;
@@ -594,7 +603,7 @@ void packbits(
 	nonzero += (*(inptr++) != 0);
       build += (nonzero != 0);             /* add to this bit if the input value is non-zero */
     }
-    if (index == out_bytes - 1) build <<= (8-remain);
+    if (index == out_Nm1) build <<= (8-remain);
     /*      printf("Here: %d %d %d %d\n",build,slice,index,maxi); 
      */
     *(outptr++) = build;
@@ -603,31 +612,33 @@ void packbits(
 }
 
 
-void unpackbits(
-		char     In[],
-	        npy_bool Out[],
-	        int      total_elements
+static void 
+_unpackbits(
+		char      In[],
+		int       el_size,  /* unused */
+		npy_intp  in_N,
+	        char      Out[],
+	        npy_intp  out_N
                )
 {
   unsigned char mask;
   int           i,index;
   int           maxi, remain;
-  npy_intp      out_bytes;
-  char          *inptr;
-  npy_bool      *outptr;
+  npy_intp      out_Nm1;
+  char          *inptr, *outptr;
 
   outptr = Out;
   inptr  = In;
-  out_bytes = ceil( (float) total_elements / 8);
-  remain = total_elements % 8;
+  remain = in_N % 8;
   if (remain == 0) remain = 8;
   /*  printf("Start: %d %d %d %d %d\n",inM,MN,slices,out_bytes,remain);
    */
-  for (index = 0; index < out_bytes; index++) {
-    maxi = (index != out_bytes - 1 ? 8 : remain);
-    mask = 128;
+  out_Nm1 = out_N - 1;
+  for (index = 0; index < out_N; index++) {
+    maxi = (index != out_Nm1 ? 8 : remain);
+    mask = (1 << 7);
     for (i = 0; i < maxi ; i++) {
-      *outptr++ = ((mask & (unsigned char)(*inptr)) > 0);
+      *outptr++ = ((mask & (unsigned char)(*inptr)) != 0);
       mask >>= 1;
     }
     inptr++;
@@ -636,68 +647,147 @@ void unpackbits(
 }
 
 static PyObject *
-numpyio_pack(PyObject *self, PyObject *args)  /* args: in */
+pack_or_unpack_bits(PyObject *input, int axis, int unpack)
 {
-  PyArrayObject *arr = NULL, *out = NULL;
-  PyObject *obj;
-  int      type;
-  int      nd;
-  npy_intp outsize;
+  PyArrayObject *inp;
+  PyObject *new=NULL;
+  PyObject *out=NULL;
+  npy_intp outdims[MAX_DIMS];
+  int i;
+  void (*thefunc)(char *, int, npy_intp, char *, npy_intp);
+  PyArrayIterObject *it, *ot;
 
-  if (!PyArg_ParseTuple( args, "O" , &obj))
-    return NULL;
-  
-  type = PyArray_ObjectType(obj,0);
-  if ((arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,type,0,0)) == NULL)
-    return NULL;
+  inp = (PyArrayObject *)PyArray_FROM_O(input);
 
-  if (!PyArray_ISINTEGER(arr))
-    PYSETERROR("Expecting an input array of integer data type");
+  if (inp == NULL) return NULL;
 
-  outsize = ceil( (float) PyArray_SIZE(arr) / 8);
-  
-  if ((out = (PyArrayObject *)PyArray_SimpleNew(1,&outsize,PyArray_UBYTE))==NULL) {
-      goto fail;
+  if (unpack) {
+    if (PyArray_TYPE(inp) != NPY_UBYTE)
+      PYSETERROR("Expecting an input array of unsigned byte data type");
   }
-  
-  packbits(PyArray_DATA(arr),PyArray_ITEMSIZE(arr),PyArray_DATA(out),
-	   PyArray_SIZE(arr));
-
-  Py_DECREF(arr);
-  return (PyObject *)out;
-
- fail:
-  Py_XDECREF(arr);
-  return NULL;
-}
-
-static PyObject *
-numpyio_unpack(PyObject *self, PyObject *args)  /* args: in, out_type */
-{
-  PyArrayObject *arr = NULL, *out=NULL;
-  PyObject *obj, *out_shape=NULL;
-  npy_intp out_size;
-
-  if (!PyArg_ParseTuple( args, "O" , &obj, &out_shape))
-    return NULL;
-
-  if ((arr = (PyArrayObject *)PyArray_ContiguousFromObject(obj,NPY_UBYTE,1,1)) == NULL)
-    return NULL;
-
-  out_size = PyArray_SIZE(arr)*8;
-  if ((out = (PyArrayObject *)PyArray_SimpleNew(1,&out_size,NPY_BOOL))==NULL)
-      goto fail;
+  else {
+    if (!PyArray_ISINTEGER(inp))
+      PYSETERROR("Expecting an input array of integer data type");
+  }
  
-  unpackbits(PyArray_DATA(arr),PyArray_DATA(out),
-	     PyArray_SIZE(out));
+  new = PyArray_CheckAxis(inp, &axis, NPY_CARRAY);
+  Py_DECREF(inp);
+  if (new == NULL) return NULL;
 
-  Py_DECREF(arr);
+  /* Handle zero-dim array separately */
+  if (PyArray_SIZE(new) == 0) {
+    return PyArray_Copy((PyArrayObject *)new);
+  }
+
+  if (PyArray_NDIM(new) == 0) {    
+    if (unpack) {
+      /* Handle 0-d array by converting it to a 1-d array */
+      PyObject *temp;
+      PyArray_Dims newdim = {NULL, 1};
+      npy_intp shape=1;
+      newdim.ptr = &shape;
+      temp = PyArray_Newshape((PyArrayObject *)new, &newdim, NPY_CORDER);
+      if (temp == NULL) goto fail;
+      Py_DECREF(new);
+      new = temp;
+    }
+    else {
+      ubyte *optr, *iptr;
+      out = PyArray_New(new->ob_type, 0, NULL, NPY_UBYTE,
+			NULL, NULL, 0, 0, NULL);
+      if (out == NULL) goto fail;
+      optr = PyArray_DATA(out);
+      iptr = PyArray_DATA(new);
+      *optr = 0;
+      for (i=0; i<PyArray_ITEMSIZE(new); i++) {
+	if (*iptr != 0) {
+	  *optr = 1;
+	  break;
+	}
+	iptr++;
+      }
+      goto finish;
+    }
+  }
+
+
+  /* Setup output shape */
+  for (i=0; i<PyArray_NDIM(new); i++) {
+    outdims[i] = PyArray_DIM(new, i);
+  }
+
+  if (unpack) {
+    /* Multiply axis dimension by 8 */
+    outdims[axis] <<= 3;
+    thefunc = _unpackbits;
+  }
+  else {
+    /* Divide axis dimension by 8 */
+    /* 8 -> 1, 9 -> 2, 16 -> 2, 17 -> 3 etc.. */
+    outdims[axis] = ((outdims[axis] - 1) >> 3) + 1;
+    thefunc = _packbits;
+  }
+
+  /* Create output array */
+  out = PyArray_New(new->ob_type, PyArray_NDIM(new), outdims, PyArray_UBYTE,
+		    NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
+  if (out == NULL) goto fail;
+  
+  /* Setup iterators to iterate over all but given axis */
+  it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
+  ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
+  if (it == NULL || ot == NULL) {
+    Py_XDECREF(it);
+    Py_XDECREF(ot);
+    goto fail;
+  }
+
+  while(PyArray_ITER_NOTDONE(it)) {
+    thefunc(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new), 
+	    PyArray_DIM(new, axis),
+	    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis));
+    PyArray_ITER_NEXT(it);
+    PyArray_ITER_NEXT(ot);	      
+  }
+  Py_DECREF(it);
+  Py_DECREF(ot);
+
+ finish:
+  Py_DECREF(new);
   return out;
 
  fail:
+  Py_XDECREF(new);
   Py_XDECREF(out);
-  Py_XDECREF(arr);
-  return NULL;
+  return NULL;  
+}
+
+
+
+static PyObject *
+io_pack(PyObject *self, PyObject *args, PyObject *kwds)  
+{
+  PyObject *obj;
+  int axis=NPY_MAXDIMS;
+  static char *kwlist[] = {"in", "axis", NULL};
+
+  if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist, 
+				    &obj, PyArray_AxisConverter, &axis))
+    return NULL;
+  return pack_or_unpack_bits(obj, axis, 0);  
+}
+
+static PyObject *
+io_unpack(PyObject *self, PyObject *args, PyObject *kwds)  
+{
+  PyObject *obj;
+  int axis=NPY_MAXDIMS;
+  static char *kwlist[] = {"in", "axis", NULL};
+
+  if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist,
+				    &obj, PyArray_AxisConverter, &axis))
+    return NULL;
+  return pack_or_unpack_bits(obj, axis, 1);  
 }
 
 static struct PyMethodDef methods[] = {
@@ -711,8 +801,10 @@ static struct PyMethodDef methods[] = {
      NULL},
     {"add_docstring", (PyCFunction)arr_add_docstring, METH_VARARGS,
      NULL},
-    {"packbits",  numpyio_pack,       1, packbits_doc},
-    {"unpackbits", numpyio_unpack,     1, unpackbits_doc},
+    {"packbits",  (PyCFunction)io_pack,       METH_VARARGS | METH_KEYWORDS, 
+     packbits_doc},
+    {"unpackbits", (PyCFunction)io_unpack,     METH_VARARGS | METH_KEYWORDS, 
+     unpackbits_doc},
     {NULL, NULL}    /* sentinel */
 };
 

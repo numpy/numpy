@@ -1,7 +1,7 @@
 
 __all__ = ['savetxt', 'loadtxt',
            'loads', 'load',
-           'save',
+           'save', 'packbits', 'unpackbits',
            'DataSource',
           ]
 
@@ -9,6 +9,8 @@ import numpy as np
 
 from cPickle import load as _cload, loads
 from _datasource import DataSource
+from _compiled_base import packbits, unpackbits
+
 _file = file
 
 def load(file):
