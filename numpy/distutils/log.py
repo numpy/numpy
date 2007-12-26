@@ -18,9 +18,13 @@ class Log(old_Log):
     def _log(self, level, msg, args):
         if level >= self.threshold:
             if args:
-                print _global_color_map[level](msg % _fix_args(args))
-            else:
-                print _global_color_map[level](msg)
+                msg = msg % _fix_args(args)
+            if 0:
+                if msg.startswith('copying ') and msg.find(' -> ') != -1:
+                    return
+                if msg.startswith('byte-compiling '):
+                    return
+            print _global_color_map[level](msg)
             sys.stdout.flush()
 
     def good(self, msg, *args):
