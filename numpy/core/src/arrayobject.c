@@ -4832,8 +4832,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     return result;
 }
 
+
+/*MULTIARRAY_API
+  PyArray_CheckAxis
+*/
 static PyObject *
-_check_axis(PyArrayObject *arr, int *axis, int flags)
+PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 {
     PyObject *temp1, *temp2;
     int n = arr->nd;
@@ -4874,6 +4878,8 @@ _check_axis(PyArrayObject *arr, int *axis, int flags)
     }
     return temp2;
 }
+
+#define _check_axis PyArray_CheckAxis
 
 #include "arraymethods.c"
 

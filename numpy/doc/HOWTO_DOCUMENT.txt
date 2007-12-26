@@ -17,6 +17,7 @@ Additional PEPs of interest regarding documentation of code:
 
 Use a code checker:
  * `pylint <http://www.logilab.org/857>`__
+ * `pyflakes` easy_install pyflakes
  * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`__
 
 Common import standards::
@@ -32,7 +33,8 @@ function, class, or method definition.  The docstring is a special attribute
 of the object (``object.__doc__``) and, for consistency, is surrounded by
 triple double quotes.
 
-It is highly desireable that both NumPy and SciPy_ follow a common
+It is highly desireable that both NumPy and SciPy_ and scikits to 
+follow a common
 convention for docstrings that provide for consistency while also
 allowing epydoc_ to produce nicely-formatted reference guides.  This
 document describes the current community consensus for this standard.
