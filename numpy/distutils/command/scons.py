@@ -32,8 +32,8 @@ def get_scons_configres_filename():
 
 def get_scons_local_path():
     """This returns the full path where scons.py for scons-local is located."""
-    import numpy.distutils
-    return pjoin(pdirname(numpy.distutils.__file__), 'scons-local')
+    from numscons import get_scons_path
+    return get_scons_path()
 
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""
@@ -263,6 +263,13 @@ class scons(old_build_ext):
             #print self.cxxcompiler.compiler_cxx[0]
 
     def run(self):
+        if len(self.sconscripts) > 0:
+            try:
+                import numscons
+            except ImportError, e:
+                raise RuntimeError("importing numscons failed (error was %s), using " \
+                                   "scons within distutils is not possible without "
+                                   "this package " % str(e))
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
         # distutils (this cannot work for recursive scons builds...)
