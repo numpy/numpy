@@ -2231,7 +2231,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     return NULL;
 }
 
-
 /*MULTIARRAY_API
  */
 static PyObject *
