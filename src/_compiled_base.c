@@ -568,11 +568,13 @@ static char unpackbits_doc[] =
 
 static void 
 _packbits(
-	      char	In[],
+	      void 	*In,
               int       element_size,  /* in bytes */
 	      npy_intp  in_N,
-	      char	Out[],
-              npy_intp  out_N
+	      npy_intp  in_stride,
+	      void	*Out,
+              npy_intp  out_N,
+	      npy_intp  out_stride
 	     )
 {
   char          build;
@@ -601,12 +603,14 @@ _packbits(
       nonzero = 0;
       for (j = 0; j < element_size; j++)  /* determine if this number is non-zero */
 	nonzero += (*(inptr++) != 0);
+      inptr += (in_stride - element_size); /* advance to next input */
       build += (nonzero != 0);             /* add to this bit if the input value is non-zero */
     }
     if (index == out_Nm1) build <<= (8-remain);
     /*      printf("Here: %d %d %d %d\n",build,slice,index,maxi); 
      */
-    *(outptr++) = build;
+    *outptr = build;
+    outptr += out_stride;
   }
   return;
 }
@@ -614,34 +618,31 @@ _packbits(
 
 static void 
 _unpackbits(
-		char      In[],
+		void      *In,
 		int       el_size,  /* unused */
 		npy_intp  in_N,
-	        char      Out[],
-	        npy_intp  out_N
+		npy_intp  in_stride,
+	        void      *Out,
+	        npy_intp  out_N,
+		npy_intp  out_stride
                )
 {
   unsigned char mask;
   int           i,index;
-  int           maxi, remain;
-  npy_intp      out_Nm1;
   char          *inptr, *outptr;
 
+  /* Loop through the elements of out
+   */
   outptr = Out;
   inptr  = In;
-  remain = in_N % 8;
-  if (remain == 0) remain = 8;
-  /*  printf("Start: %d %d %d %d %d\n",inM,MN,slices,out_bytes,remain);
-   */
-  out_Nm1 = out_N - 1;
-  for (index = 0; index < out_N; index++) {
-    maxi = (index != out_Nm1 ? 8 : remain);
-    mask = (1 << 7);
-    for (i = 0; i < maxi ; i++) {
-      *outptr++ = ((mask & (unsigned char)(*inptr)) != 0);
+  for (index = 0; index < in_N; index++) {
+    mask = 128;
+    for (i = 0; i < 8 ; i++) {
+      *outptr = ((mask & (unsigned char)(*inptr)) != 0);
+      outptr += out_stride;
       mask >>= 1;
     }
-    inptr++;
+    inptr += in_stride;
   }
   return;
 }
@@ -654,7 +655,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
   PyObject *out=NULL;
   npy_intp outdims[MAX_DIMS];
   int i;
-  void (*thefunc)(char *, int, npy_intp, char *, npy_intp);
+  void (*thefunc)(void *, int, npy_intp, npy_intp, void *, npy_intp, npy_intp);
   PyArrayIterObject *it, *ot;
 
   inp = (PyArrayObject *)PyArray_FROM_O(input);
@@ -670,7 +671,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
       PYSETERROR("Expecting an input array of integer data type");
   }
  
-  new = PyArray_CheckAxis(inp, &axis, NPY_CARRAY);
+  new = PyArray_CheckAxis(inp, &axis, 0);
   Py_DECREF(inp);
   if (new == NULL) return NULL;
 
@@ -744,8 +745,9 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
 
   while(PyArray_ITER_NOTDONE(it)) {
     thefunc(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new), 
-	    PyArray_DIM(new, axis),
-	    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis));
+	    PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
+	    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis), 
+	    PyArray_STRIDE(out, axis));
     PyArray_ITER_NEXT(it);
     PyArray_ITER_NEXT(ot);	      
   }
