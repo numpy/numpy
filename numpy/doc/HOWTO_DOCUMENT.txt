@@ -208,7 +208,7 @@ To try this yourself, simply download the example.py::
 
 Then, run epydoc::
 
-  $ epydoc example.txt
+  $ epydoc example.py
 
 The output is placed in ``./html``, and may be viewed by loading the
 ``index.html`` file into your browser.
