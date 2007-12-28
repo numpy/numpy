@@ -1,7 +1,7 @@
 
 __all__ = ['savetxt', 'loadtxt',
            'load', 'loads',
-           'save', 'savez', 
+           'save', 'savez',
            'packbits', 'unpackbits',
            'DataSource',
           ]
@@ -14,16 +14,23 @@ from _compiled_base import packbits, unpackbits
 
 _file = file
 
+class _bagobj(object):
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+class _npz_obj(dict):
+    pass
+
 def load(file):
     """Load a binary file.
 
-    Read a binary file (either a pickle or a binary NumPy array file .npy) and
-    return the resulting arrays. 
+    Read a binary file (either a pickle, or a binary .npy/.npz file) and
+    return the result.
 
     Parameters
     ----------
     file : file-like object or string
-        the file to read
+        the file to read.  It must support seek and read methods
 
     Returns
     -------
@@ -31,25 +38,27 @@ def load(file):
         data stored in the file. 
         If file contains pickle data, then whatever is stored in the pickle is returned.
         If the file is .npy file than an array is returned.  
-        If the file is .npz file than a dictionary-like object is returned which returns the
-           an array for each name in the file.
+        If the file is .npz file than a dictionary-like object is returned which has a
+        key:name, value:array pair for every name in the file.
     """
     if isinstance(file, type("")):
-        file = _file(file,"rb")
-    # Code to distinguish from pickle and NumPy binary
+        fid = _file(file,"rb")
+    else:
+        fid = file
+    # Code to distinguish from NumPy binary files and pickles.
     #
+    magic = fid.read(6)
+    fid.seek(-6,1) # back-up
+    if magic == 'PK\x03\x04':  # zip-file (assume .npz)
+        return _zip_load(fid)
+    elif magic == '\x93NUMPY': # .npy file
+        return _npy_load(fid)
+    else:  # Try a pickle
+        try: 
+            return _cload(fid)
+        except:
+            raise IOError, "Failure to interpret file %s as a pickle" % repr(file)
 
-    # if pickle:
-        return _cload(file)
-
-
-
-class _bagobj(object):
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
-
-class _npz_obj(dict):
-    pass
 
 def save(file, arr):
     """Save an array to a binary file (specified as a string or file-like object).
