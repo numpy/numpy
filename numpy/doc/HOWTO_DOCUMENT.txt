@@ -43,29 +43,27 @@ If you have suggestions for improvements, post them on the
 
 Our docstring standard uses `reST
 <http://docutils.sourceforge.net/rst.html>`__ syntax and is rendered
-using epydoc_. The markup in this proposal is as basic as possible
-and, in particular, avoids the use of epydoc consolidated fields. This
-is both because there are a limited number of such fields, inadequate
-to our current needs, and because epydoc moves the fields to the end
-of the documentation, messing up the ordering.  Standard definition
-lists are used instead.  Likewise, epydoc moves headings and have an
-unwelcome size in the default style sheet, therefore they are also
-avoided.
+using something like epydoc_ (+ a pre-processor which understands the
+particular documentation style we are using).  The markup in this
+proposal is as basic as possible which still looks reasonable when the
+text is just printed.  In particular, it avoids too much cruft in the
+reST syntax and other epydoc_-isms.    
 
+The guiding principle is that human readers of the text itself are
+given precedence over contorting the docstring so that epydoc_
+produces nice output.  In order to improve the rendered output we
+should work on making pre-processor tools to assist epydoc_ or another
+similar tool, rather than making human readers conform to a particular
+computer-imposed style.
 
 Status
 ------
 
-We are currently trying to:
+We are currently trying to convert existing docstrings to the new
+format and write them for those that currently lack docstrings.
 
-1. Agree on docstring standards.
-
-2. Work with Ed loper to ensure that epydoc_ provides the functionality
-   we need.
-
-3. Convert existing docstrings to the new format and write them for
-   those that currently lack docstrings.
-
+We are also trying to improve the rendered output either using a
+pre-processor to epydoc or another tool similar to epydoc.
 
 Sections
 --------
@@ -109,7 +107,7 @@ The proposed sections of the docstring are:
    An optional section for examples, using the `doctest
    <http://www.python.org/doc/lib/module-doctest.html>`__ format.  It
    can provide an inline mini-tutorial as well as additional
-   regression testing.  While optional, this section is strongly
+   regression testing.  While optional, this section is very strongly
    encouraged. You can run the tests by doing::
 
      >>> import doctest
@@ -129,15 +127,6 @@ The proposed sections of the docstring are:
 
 Common reST concepts
 --------------------
-
-A reST-documented module should define::
-
-  __docformat__ = 'restructuredtext en'
-
-at the top level in accordance with `PEP 258
-<http://www.python.org/dev/peps/pep-0258>`__.  Note that the
-``__docformat__`` variable in a package's ``__init__.py`` file does
-not apply to objects defined in subpackages and submodules.
 
 For paragraphs, indentation is significant and indicates indentation in the
 output. New paragraphs are marked with blank line.
@@ -166,8 +155,9 @@ Currently, we recommend that you build epydoc from the trunk::
   sudo python setup.py install
 
 The appearance of some elements can be changed in the epydoc.css
-style sheet. The list headings, i.e. *Parameters*:, are emphasized text, so
-their appearance is controlled by the definition of the <em>
+style sheet. 
+
+Emphasized text appearance can be controlled by the definition of the <em>
 tag. For instance, to make them bold, insert::
 
   em     {font-weight: bold;}
@@ -211,7 +201,7 @@ Then, run epydoc::
   $ epydoc example.py
 
 The output is placed in ``./html``, and may be viewed by loading the
-``index.html`` file into your browser.
+``index.html`` file into your browser.   
 
 This document itself was written in ReStructuredText, and may be converted to
 HTML using::
