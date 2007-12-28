@@ -43,10 +43,40 @@ def find_duplicate(list):
     return dup
 
 class format_parser:
+    """Class to convert formats, names, titles description to a dtype
+
+    After constructing the format_parser object, the dtype attribute is 
+      the converted data-type.
+    
+    dtype = format_parser(formats, names, titles).dtype
+
+    Parameters
+    ----------
+    formats : string or list
+        comma-separated format descriptions --- 'f8, i4, a5'
+        list of format description strings --- ['f8', 'i4', 'a5']
+    names : string or (list or tuple of strings)
+        comma-separated field names --- 'col1, col2, col3'
+        list or tuple of field names
+    titles : sequence
+        sequence of title strings or unicode        
+    aligned : bool
+        align the fields by padding as the C-compiler would
+    byteorder : 
+        If specified, all the fields will be changed to the 
+        provided byteorder.  Otherwise, the default byteorder is
+        used.
+
+    Returns
+    -------
+    object
+        A Python object whose dtype attribute is a data-type. 
+    """
     def __init__(self, formats, names, titles, aligned=False, byteorder=None):
         self._parseFormats(formats, aligned)
         self._setfieldnames(names, titles)
         self._createdescr(byteorder)
+        self.dtype = self._descr
 
     def _parseFormats(self, formats, aligned=0):
         """ Parse the field formats """
@@ -115,6 +145,8 @@ class format_parser:
         self._descr = descr
 
 class record(nt.void):
+    """A data-type scalar that allows field access as attribute lookup.
+    """
     def __repr__(self):
         return self.__str__()
 
@@ -182,6 +214,29 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 class recarray(ndarray):
+    """recarray(shape, dtype=None, buf=None, **kwds)
+
+    Subclass of ndarray that allows field access using attribute lookup.
+
+    Parameters
+    ----------
+    shape : tuple
+        shape of record array
+    dtype : data-type or None
+        The desired data-type.  If this is None, then the data-type is determined
+        by the *formats*, *names*, *titles*, *aligned*, and *byteorder* keywords.
+    buf : [buffer] or None
+        If this is None, then a new array is created of the given shape and data-type
+        If this is an object exposing the buffer interface, then the array will 
+        use the memory from an existing buffer.  In this case, the *offset* and 
+        *strides* keywords can also be used. 
+
+    See Also
+    --------
+    format_parser : determine a data-type from formats, names, titles
+    record : fundamental data-type for recarray
+
+    """
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
                 byteorder=None, aligned=False):

@@ -40,10 +40,11 @@ BUFSIZE = multiarray.BUFSIZE
 
 # from Fernando Perez's IPython
 def zeros_like(a):
-    """Return an array of zeros of the shape and typecode of a.
+    """Return an array of zeros of the shape and data-type of a.
 
     If you don't explicitly need the array to be zeroed, you should instead
-    use empty_like(), which is faster as it only allocates memory."""
+    use empty_like(), which is faster as it only allocates memory.
+    """
     try:
         return zeros(a.shape, a.dtype, a.flags.fnc)
     except AttributeError:
@@ -58,7 +59,7 @@ def zeros_like(a):
         return res
 
 def empty_like(a):
-    """Return an empty (uninitialized) array of the shape and typecode of a.
+    """Return an empty (uninitialized) array of the shape and data-type of a.
 
     Note that this does NOT initialize the returned array.  If you require
     your array to be initialized, you should use zeros_like().
@@ -147,6 +148,29 @@ def asfortranarray(a, dtype=None):
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
 def require(a, dtype=None, requirements=None):
+    """Return an ndarray of the provided type that satisfies requirements.
+    
+    This function is useful to be sure that an array with the correct flags
+    is returned for passing to compiled code (perhaps through ctypes).
+
+    Parameters
+    ----------
+     a : array-like
+       The object to be converted to a type-and-requirement satisfying array
+     dtype : data-type
+       The required data-type (None is the default data-type -- float64)
+     requirements : list of strings
+       The requirements list can be any of the 
+       'ENSUREARRAY' ('E')  - ensure that  a base-class ndarray
+       'F_CONTIGUOUS' ('F') - ensure a Fortran-contiguous array
+       'C_CONTIGUOUS' ('C') - ensure a C-contiguous array
+       'ALIGNED' ('A')      - ensure a data-type aligned array
+       'WRITEABLE' ('W')    - ensure a writeable array
+       'OWNDATA' ('O')      - ensure an array that owns its own data
+
+       The returned array will be guaranteed to have the listed requirements
+       by making a copy if needed. 
+    """
     if requirements is None:
         requirements = []
     else:
@@ -252,11 +276,13 @@ def vdot(a, b):
 try:
     # importing this changes the dot function for basic 4 types
     # to blas-optimized versions.
-    from _dotblas import dot, vdot, inner, alterdot, restoredot
+    from _dotblas import dot, vdot, inner, alterdot, restoredot    
 except ImportError:
     def alterdot():
+        "Does Nothing"
         pass
     def restoredot():
+        "Does Nothing"
         pass
 
 
@@ -847,6 +873,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     return all(less_equal(absolute(x-y), atol + rtol * absolute(y)))
 
 def array_equal(a1, a2):
+    """Returns True if a1 and a2 have identical shapes
+    and all elements equal and False otherwise.
+    """
     try:
         a1, a2 = asarray(a1), asarray(a2)
     except:
@@ -856,6 +885,10 @@ def array_equal(a1, a2):
     return logical_and.reduce(equal(a1,a2).ravel())
 
 def array_equiv(a1, a2):
+    """Returns True if a1 and a2 are shape consistent
+    (mutually broadcastable) and have all elements equal and False
+    otherwise.
+    """
     try:
         a1, a2 = asarray(a1), asarray(a2)
     except:

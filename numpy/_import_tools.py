@@ -131,8 +131,6 @@ class PackageLoader:
     def __call__(self,*packages, **options):
         """Load one or more packages into parent package top-level namespace.
 
-    Usage:
-
        This function is intended to shorten the need to import many
        subpackages, say of scipy, constantly with statements such as
 
@@ -152,21 +150,18 @@ class PackageLoader:
        If a name which doesn't exist in scipy's namespace is
        given, a warning is shown.
 
-     Inputs:
-
-       - the names (one or more strings) of all the numpy modules one
-         wishes to load into the top-level namespace.
-
-     Optional keyword inputs:
-
-       - verbose - integer specifying verbosity level [default: -1].
-                   verbose=-1 will suspend also warnings.
-       - force   - when True, force reloading loaded packages
-                   [default: False].
-       - postpone - when True, don't load packages [default: False]
-
-     If no input arguments are given, then all of scipy's subpackages
-     are imported.
+       Parameters
+       ----------
+        *packges : arg-tuple 
+             the names (one or more strings) of all the modules one
+             wishes to load into the top-level namespace.
+        verbose= : integer 
+             verbosity level [default: -1].
+             verbose=-1 will suspend also warnings.
+        force= : bool
+             when True, force reloading loaded packages [default: False].
+        postpone= : bool
+             when True, don't load packages [default: False]
 
      """
         frame = self.parent_frame

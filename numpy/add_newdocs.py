@@ -1,3 +1,7 @@
+# This is only meant to add docs to
+#  objects defined in C-extension modules.
+# The purpose is to allow easier editing of the
+#  docstrings without requiring a re-compile. 
 from lib import add_newdoc
 
 add_newdoc('numpy.core','dtype',
@@ -132,30 +136,37 @@ add_newdoc('numpy.core.multiarray','array',
 
     Return an array from object with the specified date-type.
 
-    Inputs:
-      object - an array, any object exposing the array interface, any
-                object whose __array__ method returns an array, or any
-                (nested) sequence.
-      dtype  - The desired data-type for the array.  If not given, then
-                the type will be determined as the minimum type required
-                to hold the objects in the sequence.  This argument can only
-                be used to 'upcast' the array.  For downcasting, use the
-                .astype(t) method.
-      copy   - If true, then force a copy.  Otherwise a copy will only occur
-                if __array__ returns a copy, obj is a nested sequence, or
-                a copy is needed to satisfy any of the other requirements
-      order  - Specify the order of the array.  If order is 'C', then the
-                array will be in C-contiguous order (last-index varies the
-                fastest).  If order is 'FORTRAN', then the returned array
-                will be in Fortran-contiguous order (first-index varies the
-                fastest).  If order is None, then the returned array may
-                be in either C-, or Fortran-contiguous order or even
-                discontiguous.
-      subok  - If True, then sub-classes will be passed-through, otherwise
-                the returned array will be forced to be a base-class array
-      ndmin  - Specifies the minimum number of dimensions that the resulting
-                array should have.  1's will be pre-pended to the shape as
-                needed to meet this requirement.
+    Parameters
+    ----------
+    object : array-like
+        an array, any object exposing the array interface, any
+        object whose __array__ method returns an array, or any
+        (nested) sequence.
+    dtype : data-type
+        The desired data-type for the array.  If not given, then
+        the type will be determined as the minimum type required
+        to hold the objects in the sequence.  This argument can only
+        be used to 'upcast' the array.  For downcasting, use the
+        .astype(t) method.
+    copy : bool
+        If true, then force a copy.  Otherwise a copy will only occur
+        if __array__ returns a copy, obj is a nested sequence, or
+        a copy is needed to satisfy any of the other requirements
+    order : {'C', 'F', 'A' (None)}
+        Specify the order of the array.  If order is 'C', then the
+        array will be in C-contiguous order (last-index varies the
+        fastest).  If order is 'FORTRAN', then the returned array
+        will be in Fortran-contiguous order (first-index varies the
+        fastest).  If order is None, then the returned array may
+        be in either C-, or Fortran-contiguous order or even
+        discontiguous.
+    subok : bool
+        If True, then sub-classes will be passed-through, otherwise
+        the returned array will be forced to be a base-class array
+    ndmin : int
+        Specifies the minimum number of dimensions that the resulting
+        array should have.  1's will be pre-pended to the shape as
+        needed to meet this requirement.
 
     """)
 
@@ -220,13 +231,16 @@ add_newdoc('numpy.core.multiarray','fromiter',
 add_newdoc('numpy.core.multiarray','fromfile',
     """fromfile(file=, dtype=float, count=-1, sep='') -> array.
 
-    Required arguments:
-        file -- open file object or string containing file name.
-
-    Keyword arguments:
-        dtype -- type and order of the returned array (default float)
-        count -- number of items to input (default all)
-        sep -- separater between items if file is a text file (default "")
+    Parameters
+    ----------
+    file : file or string
+        open file object or string containing file name.
+    dtype : data-type
+        data type of the returned array
+    count : int 
+        number of items to read (-1 mean 'all')
+    sep : string
+        separater between items if file is a text file (default "")
 
     Return an array of the given data type from a text or binary file. The
     'file' argument can be an open file or a string with the name of a file to
@@ -235,7 +249,6 @@ add_newdoc('numpy.core.multiarray','fromfile',
     read binary data from the file using the specified dtype, otherwise it gives
     the separator between elements in a text file. The 'dtype' value is also
     used to determine the size and order of the items in binary files.
-
 
     Data written using the tofile() method can be conveniently recovered using
     this function.
@@ -268,8 +281,8 @@ add_newdoc('numpy.core.multiarray','concatenate',
     The tuple of sequences (a1, a2, ...) are joined along the given axis
     (default is the first one) into a single numpy array.
 
-    Example:
-
+    Examples
+    --------
     >>> concatenate( ([0,1,2], [5,6,7]) )
     array([0, 1, 2, 5, 6, 7])
 
@@ -343,26 +356,29 @@ add_newdoc('numpy.core.multiarray','where',
 
     Return elements from `x` or `y`, depending on `condition`.
 
-    *Parameters*:
-        condition : array of bool
-            When True, yield x, otherwise yield y.
-        x,y : 1-dimensional arrays
-            Values from which to choose.
+    Parameters
+    ----------
+    condition : array of bool
+        When True, yield x, otherwise yield y.
+    x,y : 1-dimensional arrays
+        Values from which to choose.
 
-    *Notes*
-        This is equivalent to
+    Notes
+    -----
+    This is equivalent to
 
-            [xv if c else yv for (c,xv,yv) in zip(condition,x,y)]
+        [xv if c else yv for (c,xv,yv) in zip(condition,x,y)]
 
-        The result is shaped like `condition` and has elements of `x`
-        or `y` where `condition` is respectively True or False.
+    The result is shaped like `condition` and has elements of `x`
+    or `y` where `condition` is respectively True or False.
 
-        In the special case, where only `condition` is given, the
-        tuple condition.nonzero() is returned, instead.
+    In the special case, where only `condition` is given, the
+    tuple condition.nonzero() is returned, instead.
 
-    *Examples*
-        >>> where([True,False,True],[1,2,3],[4,5,6])
-        array([1, 5, 3])
+    Examples
+    --------
+    >>> where([True,False,True],[1,2,3],[4,5,6])
+    array([1, 5, 3])
 
     """)
 
@@ -379,35 +395,35 @@ add_newdoc('numpy.core.multiarray','lexsort',
     sort order, and so on).  The keys argument must be a sequence of things
     that can be converted to arrays of the same shape.
 
-    *Parameters*:
+    Parameters
+    ----------
+    keys : (k,N) array or tuple of (N,) sequences
+        Array containing values that the returned indices should sort.
 
-        keys : (k,N) array or tuple of (N,) sequences
-            Array containing values that the returned indices should sort.
+    axis : integer
+        Axis to be indirectly sorted.  Default is -1 (i.e. last axis).
 
-        axis : integer
-            Axis to be indirectly sorted.  Default is -1 (i.e. last axis).
+    Returns
+    -------
+    indices : (N,) integer array
+        Array of indices that sort the keys along the specified axis.
 
-    *Returns*:
+    See Also
+    --------
+    argsort : indirect sort
+    sort : inplace sort
 
-        indices : (N,) integer array
-            Array of indices that sort the keys along the specified axis.
-
-    *See Also*:
-
-        `argsort` : indirect sort
-        `sort` : inplace sort
-
-    *Examples*
-
-        >>> a = [1,5,1,4,3,6,7]
-        >>> b = [9,4,0,4,0,4,3]
-        >>> ind = lexsort((b,a))
-        >>> print ind
-        [2 0 4 3 1 5 6]
-        >>> print take(a,ind)
-        [1 1 3 4 5 6 7]
-        >>> print take(b,ind)
-        [0 9 0 4 4 4 3]
+    Examples
+    --------
+    >>> a = [1,5,1,4,3,6,7]
+    >>> b = [9,4,0,4,0,4,3]
+    >>> ind = lexsort((b,a))
+    >>> print ind
+    [2 0 4 3 1 5 6]
+    >>> print take(a,ind)
+    [1 1 3 4 5 6 7]
+    >>> print take(b,ind)
+    [0 9 0 4 4 4 3]
 
     """)
 
@@ -623,12 +639,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
 
     Return a copy of the array.
 
-    Argument:
-        order -- Order of returned copy (default 'C')
-            If order is 'C' (False) then the result is contiguous (default).
-            If order is 'Fortran' (True) then the result has fortran order.
-            If order is 'Any' (None) then the result has fortran order
-            only if m is already in fortran order.;
+    Parameters
+    ----------
+    order : {'C', 'F', 'A'}
+        If order is 'C' (False) then the result is contiguous (default).
+        If order is 'Fortran' (True) then the result has fortran order.
+        If order is 'Any' (None) then the result has fortran order
+        only if m is already in fortran order.;
 
     """))
 
@@ -650,16 +667,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__reduce__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
-    """a.__setstate__(version, shape, typecode, isfortran, rawdata)
+    """a.__setstate__(version, shape, dtype, isfortran, rawdata)
 
     For unpickling.
 
-    Arguments:
-        version -- optional pickle version. If omitted defaults to 0.
-        shape -- a tuple giving the shape
-        typecode -- a typecode
-        isFortran --  a bool stating if Fortran or no
-        rawdata -- a binary string with the data (or a list if Object array)
+    Parameters
+    ----------
+    version : int
+        optional pickle version. If omitted defaults to 0.
+    shape : tuple
+    dtype : data-type
+    isFortran : bool
+    rawdata : string or list
+        a binary string with the data (or a list if 'a' is an object array)
 
     """))
 
@@ -695,33 +715,31 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     by the kind keyword. It returns an array of indices of the same shape as
     'a' that index data along the given axis in sorted order.
 
-    :Parameters:
+    Parameters
+    ----------
+    axis : integer
+        Axis to be indirectly sorted. None indicates that the flattened
+        array should be used. Default is -1.
+    kind : string
+        Sorting algorithm to use. Possible values are 'quicksort',
+        'mergesort', or 'heapsort'. Default is 'quicksort'.
+    order : list type or None
+        When a is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  Not all fields need be
+        specified.
 
-        axis : integer
-            Axis to be indirectly sorted. None indicates that the flattened
-            array should be used. Default is -1.
+    Returns
+    -------
+    indices : integer array
+        Array of indices that sort 'a' along the specified axis.
 
-        kind : string
-            Sorting algorithm to use. Possible values are 'quicksort',
-            'mergesort', or 'heapsort'. Default is 'quicksort'.
+    SeeAlso
+    -------
+    lexsort : indirect stable sort with multiple keys
+    sort : inplace sort
 
-        order : list type or None
-            When a is an array with fields defined, this argument specifies
-            which fields to compare first, second, etc.  Not all fields need be
-            specified.
-
-    :Returns:
-
-        indices : integer array
-            Array of indices that sort 'a' along the specified axis.
-
-    :SeeAlso:
-
-      - lexsort : indirect stable sort with multiple keys
-      - sort : inplace sort
-
-    :Notes:
-    ------
+    Notes
+    -----
 
     The various sorts are characterized by average speed, worst case
     performance, need for work space, and whether they are stable. A stable
@@ -803,12 +821,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
 
     Return a copy of the array.
 
-    Argument:
-        order -- Order of returned copy (default 'C')
-            If order is 'C' (False) then the result is contiguous (default).
-            If order is 'Fortran' (True) then the result has fortran order.
-            If order is 'Any' (None) then the result has fortran order
-            only if m is already in fortran order.;
+    Parameters
+    ----------
+    order : Order of returned copy (default 'C')
+        If order is 'C' (False) then the result is contiguous (default).
+        If order is 'Fortran' (True) then the result has fortran order.
+        If order is 'Any' (None) then the result has fortran order
+        only if m is already in fortran order.;
 
     """))
 
@@ -835,30 +854,32 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
     be determined by removing axis1 and axis2 and appending an index to the
     right equal to the size of the resulting diagonals.
 
-    :Parameters:
-        offset : integer
-            Offset of the diagonal from the main diagonal. Can be both positive
-            and negative. Defaults to main diagonal.
-        axis1 : integer
-            Axis to be used as the first axis of the 2-d subarrays from which
-            the diagonals should be taken. Defaults to first index.
-        axis2 : integer
-            Axis to be used as the second axis of the 2-d subarrays from which
-            the diagonals should be taken. Defaults to second index.
+    Parameters
+    ----------
+    offset : integer
+        Offset of the diagonal from the main diagonal. Can be both positive
+        and negative. Defaults to main diagonal.
+    axis1 : integer
+        Axis to be used as the first axis of the 2-d subarrays from which
+        the diagonals should be taken. Defaults to first index.
+    axis2 : integer
+        Axis to be used as the second axis of the 2-d subarrays from which
+        the diagonals should be taken. Defaults to second index.
 
-    :Returns:
-        array_of_diagonals : same type as original array
-            If a is 2-d, then a 1-d array containing the diagonal is returned.
-            If a is n-d, n > 2, then an array of diagonals is returned.
+    Returns
+    -------
+    array_of_diagonals : same type as original array
+        If a is 2-d, then a 1-d array containing the diagonal is returned.
+        If a is n-d, n > 2, then an array of diagonals is returned.
 
-    :SeeAlso:
-        - diag : matlab workalike for 1-d and 2-d arrays.
-        - diagflat : creates diagonal arrays
-        - trace : sum along diagonals
+    SeeAlso
+    -------
+    diag : matlab workalike for 1-d and 2-d arrays.
+    diagflat : creates diagonal arrays
+    trace : sum along diagonals
 
     Examples
     --------
-
     >>> a = arange(4).reshape(2,2)
     >>> a
     array([[0, 1],
@@ -943,38 +964,35 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
     Returns the average of the array elements.  The average is taken over the
     flattened array by default, otherwise over the specified axis.
 
-    :Parameters:
+    Parameters
+    ----------
+    axis : integer
+        Axis along which the means are computed. The default is
+        to compute the standard deviation of the flattened array.
+    dtype : type
+        Type to use in computing the means. For arrays of
+        integer type the default is float32, for arrays of float types it
+        is the same as the array type.
+    out : ndarray
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
 
-        axis : integer
-            Axis along which the means are computed. The default is
-            to compute the standard deviation of the flattened array.
+    Returns
+    -------
+    mean : The return type varies, see above.
+        A new array holding the result is returned unless out is specified,
+        in which case a reference to out is returned.
 
-        dtype : type
-            Type to use in computing the means. For arrays of
-            integer type the default is float32, for arrays of float types it
-            is the same as the array type.
-
-        out : ndarray
-            Alternative output array in which to place the result. It must have
-            the same shape as the expected output but the type will be cast if
-            necessary.
-
-    :Returns:
-
-        mean : The return type varies, see above.
-            A new array holding the result is returned unless out is specified,
-            in which case a reference to out is returned.
-
-    :SeeAlso:
-
-        - var : variance
-        - std : standard deviation
+    SeeAlso
+    -------
+    var : variance
+    std : standard deviation
 
     Notes
     -----
-
-        The mean is the sum of the elements along the axis divided by the
-        number of elements.
+    The mean is the sum of the elements along the axis divided by the
+    number of elements.
 
     """))
 
@@ -1070,14 +1088,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
-    """a.round(decimals=0, out=None) -> out (a). Rounds to 'decimals' places.
+    """a.round(decimals=0, out=None) -> out (new). Rounds to 'decimals' places.
 
-    Keyword arguments:
-        decimals -- number of decimals to round to (default 0). May be negative.
-        out -- existing array to use for output (default a).
+    Parameters
+    ----------
+    decimals : integer
+        number of decimals to round to. May be negative.
+    out : existing array to use for output (default new array).
 
-    Return:
-        Reference to out, where None specifies the original array a.
+    Returns
+    -------
+    Reference to out, where None specifies a new array.
 
     Round to the specified number of decimals. When 'decimals' is negative it
     specifies the number of positions to the left of the decimal point. The
@@ -1085,9 +1106,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
     is done if the array is not of float type and 'decimals' is >= 0.
 
     The keyword 'out' may be used to specify a different array to hold the
-    result rather than the default 'a'. If the type of the array specified by
-    'out' differs from that of 'a', the result is cast to the new type,
-    otherwise the original type is kept. Floats round to floats by default.
+    result rather than the default new array. If the type of the array 
+    specified by 'out' differs from that of 'a', the result is cast to the 
+    new type, otherwise the original type is kept. Floats round to floats
+    by default.
 
     Numpy rounds to even. Thus 1.5 and 2.5 round to 2.0, -0.5 and 0.5 round to
     0.0, etc. Results may also be surprising due to the inexact representation
@@ -1107,31 +1129,28 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
     is out of bounds, then the length of a is returned, i.e., the key would
     need to be appended. The returned index array has the same shape as v.
 
-    :Parameters:
+    Parameters
+    ----------
+    v : array or list type
+        Array of keys to be searched for in a.
+    side : string
+        Possible values are : 'left', 'right'. Default is 'left'. Return
+        the first or last index where the key could be inserted.
 
-        v : array or list type
-            Array of keys to be searched for in a.
-
-        side : string
-            Possible values are : 'left', 'right'. Default is 'left'. Return
-            the first or last index where the key could be inserted.
-
-    :Returns:
-
-        indices : integer array
-            The returned array has the same shape as v.
-
-    :SeeAlso:
-
-        - sort
-        - histogram
-
-    :Notes:
+    Returns
     -------
+    indices : integer array
+        The returned array has the same shape as v.
 
-        The array a must be 1-d and is assumed to be sorted in ascending order.
-        Searchsorted uses binary search to find the required insertion points.
+    SeeAlso
+    -------
+    sort
+    histogram
 
+    Notes
+    -----
+    The array a must be 1-d and is assumed to be sorted in ascending order.
+    Searchsorted uses binary search to find the required insertion points.
     """))
 
 
@@ -1154,33 +1173,27 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     Perform an inplace sort along the given axis using the algorithm specified
     by the kind keyword.
 
-    :Parameters:
+    Parameters
+    ----------
+    axis : integer
+        Axis to be sorted along. None indicates that the flattened array
+        should be used. Default is -1.
+    kind : string
+        Sorting algorithm to use. Possible values are 'quicksort',
+        'mergesort', or 'heapsort'. Default is 'quicksort'.
+    order : list type or None
+        When a is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  Not all fields need be
+        specified.
 
-        axis : integer
-            Axis to be sorted along. None indicates that the flattened array
-            should be used. Default is -1.
+    SeeAlso
+    -------
+    argsort : indirect sort
+    lexsort : indirect stable sort on multiple keys
+    searchsorted : find keys in sorted array
 
-        kind : string
-            Sorting algorithm to use. Possible values are 'quicksort',
-            'mergesort', or 'heapsort'. Default is 'quicksort'.
-
-        order : list type or None
-            When a is an array with fields defined, this argument specifies
-            which fields to compare first, second, etc.  Not all fields need be
-            specified.
-
-    :Returns:
-
-        None
-
-    :SeeAlso:
-
-      - argsort : indirect sort
-      - lexsort : indirect stable sort on multiple keys
-      - searchsorted : find keys in sorted array
-
-    :Notes:
-    ------
+    Notes
+    -----
 
     The various sorts are characterized by average speed, worst case
     performance, need for work space, and whether they are stable. A stable
@@ -1195,10 +1208,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
-    All the sort algorithms make temporary copies of the data when the sort is not
-    along the last axis. Consequently, sorts along the last axis are faster and use
-    less space than sorts along other axis.
-
+    All the sort algorithms make temporary copies of the data when the sort is 
+    not along the last axis. Consequently, sorts along the last axis are faster
+    and use less space than sorts along other axis.
     """))
 
 
@@ -1215,40 +1227,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     spread of a distribution. The standard deviation is computed for the
     flattened array by default, otherwise over the specified axis.
 
-    :Parameters:
+    Parameters
+    ----------
+    axis : integer
+        Axis along which the standard deviation is computed. The default is
+        to compute the standard deviation of the flattened array.
+    dtype : type
+        Type to use in computing the standard deviation. For arrays of
+        integer type the default is float32, for arrays of float types it
+        is the same as the array type.
+    out : ndarray
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
 
-        axis : integer
-            Axis along which the standard deviation is computed. The default is
-            to compute the standard deviation of the flattened array.
+    Returns
+    -------
+    standard deviation : The return type varies, see above.
+        A new array holding the result is returned unless out is specified,
+        in which case a reference to out is returned.
 
-        dtype : type
-            Type to use in computing the standard deviation. For arrays of
-            integer type the default is float32, for arrays of float types it
-            is the same as the array type.
-
-        out : ndarray
-            Alternative output array in which to place the result. It must have
-            the same shape as the expected output but the type will be cast if
-            necessary.
-
-    :Returns:
-
-        standard deviation : The return type varies, see above.
-            A new array holding the result is returned unless out is specified,
-            in which case a reference to out is returned.
-
-    :SeeAlso:
-
-        - var : variance
-        - mean : average
+    SeeAlso
+    -------
+    var : variance
+    mean : average
 
     Notes
     -----
-
-      The standard deviation is the square root of the average of the squared
-      deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
-      computed standard deviation is biased, i.e., the mean is computed by
-      dividing by the number of elements, N, rather than by N-1.
+    The standard deviation is the square root of the average of the squared
+    deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
+    computed standard deviation is biased, i.e., the mean is computed by
+    dividing by the number of elements, N, rather than by N-1.
 
     """))
 
@@ -1270,8 +1279,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
 
     Warning: The arithmetic is modular and no error is raised on overflow.
 
-    Examples:
-
+    Examples
+    --------
     >>> array([0.5, 1.5]).sum()
     2.0
     >>> array([0.5, 1.5]).sum(dtype=int32)
@@ -1282,7 +1291,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
     array([1, 5])
     >>> ones(128, dtype=int8).sum(dtype=int8) # overflow!
     -128
-
     """))
 
 
@@ -1304,12 +1312,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('take',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     """a.tofile(fid, sep="", format="%s") -> None. Write the data to a file.
 
-    Required arguments:
-        file -- an open file object or a string containing a filename
-
-    Keyword arguments:
-        sep -- separator for text output. Write binary if empty (default "")
-        format -- format string for text file output (default "%s")
+    Parameters
+    ----------
+    fid : file or string
+        an open file object or a string containing a filename
+    sep : string
+        separation for text output.  Write binary if this is empty.
+    format : string
+        format string for text file output
 
     A convenience function for quick storage of array data. Information on
     endianess and precision is lost, so this method is not a good choice for
@@ -1341,8 +1351,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
     """a.tostring(order='C') -> raw copy of array data as a Python string.
 
-    Keyword arguments:
-        order -- order of the data item in the copy {"C","F","A"} (default "C")
+    Parameters
+    ----------
+    order : {'C', 'F', 'A', None}
+        order of the data item in the copy
 
     Construct a Python string containing the raw bytes in the array. The order
     of the data in arrays with ndim > 1 is specified by the 'order' keyword and
@@ -1373,7 +1385,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
     array, this is the usual matrix transpose. If axes are given,
     they describe how the axes are permuted.
 
-    Example:
+    Examples
+    --------
     >>> a = array([[1,2],[3,4]])
     >>> a
     array([[1, 2],
@@ -1398,40 +1411,37 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
     distribution.  The variance is computed for the flattened array by default,
     otherwise over the specified axis.
 
-    :Parameters:
+    Parameters
+    ----------
+    axis : integer
+        Axis along which the variance is computed. The default is to
+        compute the variance of the flattened array.
+    dtype : data-type
+        Type to use in computing the variance. For arrays of integer type
+        the default is float32, for arrays of float types it is the same as
+        the array type.
+    out : ndarray
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
 
-        axis : integer
-            Axis along which the variance is computed. The default is to
-            compute the variance of the flattened array.
+    Returns
+    -------
+    variance : The return type varies, see above.
+        A new array holding the result is returned unless out is specified,
+        in which case a reference to out is returned.
 
-        dtype : type
-            Type to use in computing the variance. For arrays of integer type
-            the default is float32, for arrays of float types it is the same as
-            the array type.
-
-        out : ndarray
-            Alternative output array in which to place the result. It must have
-            the same shape as the expected output but the type will be cast if
-            necessary.
-
-    :Returns:
-
-        variance : The return type varies, see above.
-            A new array holding the result is returned unless out is specified,
-            in which case a reference to out is returned.
-
-    :SeeAlso:
-
-        - std : standard deviation
-        - mean: average
+    SeeAlso
+    -------
+    std : standard deviation
+    mean: average
 
     Notes
     -----
-
-      The variance is the average of the squared deviations from the mean, i.e.
-      var = mean((x - x.mean())**2).  The computed variance is biased, i.e.,
-      the mean is computed by dividing by the number of elements, N, rather
-      than by N-1.
+    The variance is the average of the squared deviations from the mean, i.e.
+    var = mean((x - x.mean())**2).  The computed variance is biased, i.e.,
+    the mean is computed by dividing by the number of elements, N, rather
+    than by N-1.
 
     """))
 

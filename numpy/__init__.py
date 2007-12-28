@@ -1,4 +1,4 @@
-"""\
+"""
 NumPy
 ==========
 
@@ -7,11 +7,11 @@ the book "Guide to NumPy" at
 
   http://www.trelgol.com
 
-It is being distributed for a fee for only a few years to
+It is being distributed for a fee until Oct. 2010 to
 cover some of the costs of development.  After the restriction period
 it will also be freely available.
 
-Additional documentation is available in the docstrings and at
+Documentation is available in the docstrings and at
 
 http://www.scipy.org.
 """
@@ -34,6 +34,7 @@ else:
         loader = PackageLoader(infunc=True)
         return loader(*packages, **options)
 
+    pkgload.__doc__ = PackageLoader.__call__.__doc__
     import testing
     from testing import ScipyTest, NumpyTest
     import core
@@ -79,8 +80,8 @@ distutils --- Enhancements to distutils with support for
 
 Global symbols from subpackages
 -------------------------------
-core    --> *
-lib     --> *
+core    --> * (use numpy.* not numpy.core.*)
+lib     --> * (use numpy.* not numpy.lib.*)
 testing --> NumpyTest
 """
 
