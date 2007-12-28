@@ -848,7 +848,7 @@ PyMODINIT_FUNC init_compiled_base(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-    ErrorObject = PyString_FromString("numpy.lib._compiled_base.error");
+    ErrorObject = PyString_FromString("numpy.lib.error");
     PyDict_SetItemString(d, "error", ErrorObject);
     Py_DECREF(ErrorObject);
 

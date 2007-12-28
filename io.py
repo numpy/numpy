@@ -1,7 +1,8 @@
 
 __all__ = ['savetxt', 'loadtxt',
-           'loads', 'load',
-           'save', 'packbits', 'unpackbits',
+           'load', 'loads',
+           'save', 'savez', 
+           'packbits', 'unpackbits',
            'DataSource',
           ]
 
@@ -19,18 +20,24 @@ def load(file):
     Read a binary file (either a pickle or a binary NumPy array file .npy) and
     return the resulting arrays. 
 
-    Parameters:
-    -----------
-    file - the file to read. This can be a string, or any file-like object
+    Parameters
+    ----------
+    file : file-like object or string
+        the file to read
 
-    Returns:
-    --------
-    result - array or tuple of arrays stored in the file.  If file contains 
-             pickle data, then whatever is stored in the pickle is returned.
+    Returns
+    -------
+    result : array, tuple, dict, etc.
+        data stored in the file. 
+        If file contains pickle data, then whatever is stored in the pickle is returned.
+        If the file is .npy file than an array is returned.  
+        If the file is .npz file than a dictionary-like object is returned which returns the
+           an array for each name in the file.
     """
     if isinstance(file, type("")):
         file = _file(file,"rb")
     # Code to distinguish from pickle and NumPy binary
+    #
 
     # if pickle:
         return _cload(file)
