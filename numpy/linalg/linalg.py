@@ -405,7 +405,7 @@ def qr(a, mode='full'):
     R : double or complex array, shape (K, N)
 
     mode = 'economic'
-    A2 : double or complex array, shape (N, M)
+    A2 : double or complex array, shape (M, N)
         The diagonal and the upper triangle of A2 contains R,
         while the rest of the matrix is undefined.
 
@@ -592,7 +592,7 @@ def eigvalsh(a, UPLO='L'):
     a : array, shape (M, M)
         A complex or real matrix whose eigenvalues and eigenvectors
         will be computed.
-    UPLO : string
+    UPLO : {'L', 'U'}
         Specifies whether the pertinent array data is taken from the upper
         or lower triangular part of a. Possible values are 'L', and 'U' for
         upper and lower respectively. Default is 'L'.
@@ -781,7 +781,7 @@ def eigh(a, UPLO='L'):
     a : array, shape (M, M)
         A complex Hermitian or symmetric real matrix whose eigenvalues
         and eigenvectors will be computed.
-    UPLO : string
+    UPLO : {'L', 'U'}
         Specifies whether the pertinent array date is taken from the upper
         or lower triangular part of a. Possible values are 'L', and 'U'.
         Default is 'L'.
@@ -863,29 +863,49 @@ def svd(a, full_matrices=1, compute_uv=1):
     """Singular Value Decomposition.
 
     Factorizes the matrix a into two unitary matrices U and Vh and
-    a diagonal matrix S of singular values (real, non-negative) such that
-    a == U S Vh
+    an 1d-array s of singular values (real, non-negative) such that
+    a == U S Vh  if S is an suitably shaped matrix of zeros whose
+    main diagonal is s.
     
     Parameters
     ----------
     a : array, shape (M, N)
         Matrix to decompose
     full_matrices : boolean
-        If true,  U, S, Vh are shaped (M,M), (M,N), (N,N)
-        If false, the shapes are      (M,K), (K,K), (K,N) where K = min(M,N)
+        If true,  U, Vh are shaped  (M,M), (N,N)
+        If false, the shapes are    (M,K), (K,N) where K = min(M,N)
     compute_uv : boolean
-        Whether to compute also U, V in addition to S
+        Whether to compute also U, Vh in addition to s
     
     Returns
     -------
     U:  array, shape (M,M) or (M,K) depending on full_matrices
-    S:  array, shape (M,N) or (K,K) depending on full_matrices
+    s:  array, shape (K,)
+        The singular values, sorted so that s[i] >= s[i+1]
+        K = min(M, N)
     Vh: array, shape (N,N) or (K,N) depending on full_matrices
     
-    For compute_uv = False, only S is returned.
+    For compute_uv = False, only s is returned.
 
     Raises LinAlgError if SVD computation does not converge
 
+    Examples
+    --------
+    >>> a = random.randn(9, 6) + 1j*random.randn(9, 6)
+    >>> U, s, Vh = linalg.svd(a)
+    >>> U.shape, Vh.shape, s.shape
+    ((9, 9), (6, 6), (6,))
+    
+    >>> U, s, Vh = linalg.svd(a, full_matrices=False)
+    >>> U.shape, Vh.shape, s.shape
+    ((9, 6), (6, 6), (6,))
+    >>> S = diag(s)
+    >>> allclose(a, dot(U, dot(S, Vh)))
+    True
+    
+    >>> s2 = linalg.svd(a, compute_uv=False)
+    >>> allclose(s, s2)
+    True
     """
     a, wrap = _makearray(a)
     _assertRank2(a)
@@ -966,8 +986,6 @@ def pinv(a, rcond=1e-15 ):
     Returns
     -------
     B : array, shape (N, M)
-        For M >= N, B is the left pseudoinverse of a, and
-        for M < N the right pseudoinverse
     
     Raises LinAlgError if SVD computation does not converge
 
