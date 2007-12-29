@@ -1,14 +1,12 @@
 from numpy.testing import *
-set_package_path()
 import numpy.core.umath as ncu
 from numpy import array
-import numpy as N
-restore_path()
+import numpy as np
 
-types = [N.bool_, N.byte, N.ubyte, N.short, N.ushort, N.intc, N.uintc,
-         N.int_, N.uint, N.longlong, N.ulonglong,
-         N.single, N.double, N.longdouble, N.csingle,
-         N.cdouble, N.clongdouble]
+types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
+         np.int_, np.uint, np.longlong, np.ulonglong,
+         np.single, np.double, np.longdouble, np.csingle,
+         np.cdouble, np.clongdouble]
 
 # This compares scalarmath against ufuncs.
 
@@ -40,13 +38,13 @@ class TestTypes(NumpyTestCase):
 
 class TestPower(NumpyTestCase):
     def check_small_types(self):
-        for t in [N.int8, N.int16]:
+        for t in [np.int8, np.int16]:
             a = t(3)
             b = a ** 4
             assert b == 81, "error with %r: got %r" % (t,b)
 
     def check_large_types(self):
-        for t in [N.int32, N.int64, N.float32, N.float64, N.longdouble]:
+        for t in [np.int32, np.int64, np.float32, np.float64, np.longdouble]:
             a = t(51)
             b = a ** 4
             assert b == 6765201, "error with %r: got %r" % (t,b)
@@ -55,11 +53,11 @@ class TestConversion(NumpyTestCase):
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
-        for T in [None,N.float64,N.int64]:
-            a = N.array(l,dtype=T)
+        for T in [None, np.float64, np.int64]:
+            a = np.array(l,dtype=T)
             assert_equal(map(int,a), li)
 
-        a = N.array(l[:3],dtype=N.uint64)
+        a = np.array(l[:3], dtype=np.uint64)
         assert_equal(map(int,a), li[:3])
 
 #class TestRepr(NumpyTestCase):

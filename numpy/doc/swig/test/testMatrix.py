@@ -7,8 +7,8 @@ import sys
 import unittest
 
 # Import NumPy
-import numpy as N
-major, minor = [ int(d) for d in N.__version__.split(".")[:2] ]
+import numpy as np
+major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
 if major == 0: BadListError = TypeError
 else:          BadListError = ValueError
 
@@ -131,7 +131,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function"
         print >>sys.stderr, self.typeStr, "... ",
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],self.typeCode)
+        matrix = np.array([[1,2,3],[2,1,2],[3,2,1]],self.typeCode)
         scale(matrix,4)
         self.assertEquals((matrix == [[4,8,12],[8,4,8],[12,8,4]]).all(), True)
 
@@ -140,7 +140,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = N.array([1,2,2,1],self.typeCode)
+        matrix = np.array([1,2,2,1],self.typeCode)
         self.assertRaises(TypeError, scale, matrix)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
@@ -148,7 +148,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function with wrong size"
         print >>sys.stderr, self.typeStr, "... ",
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = N.array([[1,2],[2,1]],self.typeCode)
+        matrix = np.array([[1,2],[2,1]],self.typeCode)
         self.assertRaises(TypeError, scale, matrix)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
@@ -156,7 +156,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test scale function with wrong type"
         print >>sys.stderr, self.typeStr, "... ",
         scale = Matrix.__dict__[self.typeStr + "Scale"]
-        matrix = N.array([[1,2,3],[2,1,2],[3,2,1]],'c')
+        matrix = np.array([[1,2,3],[2,1,2],[3,2,1]],'c')
         self.assertRaises(TypeError, scale, matrix)
 
     # Test (type INPLACE_ARRAY2[ANY][ANY]) typemap
@@ -172,16 +172,16 @@ class MatrixTestCase(unittest.TestCase):
         "Test floor function"
         print >>sys.stderr, self.typeStr, "... ",
         floor = Matrix.__dict__[self.typeStr + "Floor"]
-        matrix = N.array([[6,7],[8,9]],self.typeCode)
+        matrix = np.array([[6,7],[8,9]],self.typeCode)
         floor(matrix,7)
-        N.testing.assert_array_equal(matrix, N.array([[7,7],[8,9]]))
+        np.testing.assert_array_equal(matrix, np.array([[7,7],[8,9]]))
 
     # Test (type* INPLACE_ARRAY2, int DIM1, int DIM2) typemap
     def testFloorWrongDim(self):
         "Test floor function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         floor = Matrix.__dict__[self.typeStr + "Floor"]
-        matrix = N.array([6,7,8,9],self.typeCode)
+        matrix = np.array([6,7,8,9],self.typeCode)
         self.assertRaises(TypeError, floor, matrix)
 
     # Test (type* INPLACE_ARRAY2, int DIM1, int DIM2) typemap
@@ -189,7 +189,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test floor function with wrong type"
         print >>sys.stderr, self.typeStr, "... ",
         floor = Matrix.__dict__[self.typeStr + "Floor"]
-        matrix = N.array([[6,7], [8,9]],'c')
+        matrix = np.array([[6,7], [8,9]],'c')
         self.assertRaises(TypeError, floor, matrix)
 
     # Test (type* INPLACE_ARRAY2, int DIM1, int DIM2) typemap
@@ -205,16 +205,16 @@ class MatrixTestCase(unittest.TestCase):
         "Test ceil function"
         print >>sys.stderr, self.typeStr, "... ",
         ceil = Matrix.__dict__[self.typeStr + "Ceil"]
-        matrix = N.array([[1,2],[3,4]],self.typeCode)
+        matrix = np.array([[1,2],[3,4]],self.typeCode)
         ceil(matrix,3)
-        N.testing.assert_array_equal(matrix, N.array([[1,2],[3,3]]))
+        np.testing.assert_array_equal(matrix, np.array([[1,2],[3,3]]))
 
     # Test (int DIM1, int DIM2, type* INPLACE_ARRAY2) typemap
     def testCeilWrongDim(self):
         "Test ceil function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         ceil = Matrix.__dict__[self.typeStr + "Ceil"]
-        matrix = N.array([1,2,3,4],self.typeCode)
+        matrix = np.array([1,2,3,4],self.typeCode)
         self.assertRaises(TypeError, ceil, matrix)
 
     # Test (int DIM1, int DIM2, type* INPLACE_ARRAY2) typemap
@@ -222,7 +222,7 @@ class MatrixTestCase(unittest.TestCase):
         "Test ceil function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         ceil = Matrix.__dict__[self.typeStr + "Ceil"]
-        matrix = N.array([[1,2], [3,4]],'c')
+        matrix = np.array([[1,2], [3,4]],'c')
         self.assertRaises(TypeError, ceil, matrix)
 
     # Test (int DIM1, int DIM2, type* INPLACE_ARRAY2) typemap
@@ -359,7 +359,7 @@ if __name__ == "__main__":
 
     # Execute the test suite
     print "Testing 2D Functions of Module Matrix"
-    print "NumPy version", N.__version__
+    print "NumPy version", np.__version__
     print
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(len(result.errors) + len(result.failures))

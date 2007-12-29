@@ -1,6 +1,6 @@
 from numpy.testing import *
 from numpy import random
-import numpy as N
+import numpy as np
 
 class TestMultinomial(NumpyTestCase):
     def test_basic(self):
@@ -12,8 +12,8 @@ class TestMultinomial(NumpyTestCase):
     def test_int_negative_interval(self):
         assert -5 <= random.randint(-5,-1) < -1
         x = random.randint(-5,-1,5)
-        assert N.all(-5 <= x)
-        assert N.all(x < -1)
+        assert np.all(-5 <= x)
+        assert np.all(x < -1)
 
 if __name__ == "__main__":
     NumpyTest().run()

@@ -1,21 +1,21 @@
 __all__ = ['oldtype2dtype', 'convtypecode', 'convtypecode2', 'oldtypecodes']
 
-import numpy as N
+import numpy as np
 
-oldtype2dtype = {'1': N.dtype(N.byte),
-                 's': N.dtype(N.short),
-#                 'i': N.dtype(N.intc),
-#                 'l': N.dtype(int),
-#                 'b': N.dtype(N.ubyte),
-                 'w': N.dtype(N.ushort),
-                 'u': N.dtype(N.uintc),
-#                 'f': N.dtype(N.single),
-#                 'd': N.dtype(float),
-#                 'F': N.dtype(N.csingle),
-#                 'D': N.dtype(complex),
-#                 'O': N.dtype(object),
-#                 'c': N.dtype('c'),
-                 None:N.dtype(int)
+oldtype2dtype = {'1': np.dtype(np.byte),
+                 's': np.dtype(np.short),
+#                 'i': np.dtype(np.intc),
+#                 'l': np.dtype(int),
+#                 'b': np.dtype(np.ubyte),
+                 'w': np.dtype(np.ushort),
+                 'u': np.dtype(np.uintc),
+#                 'f': np.dtype(np.single),
+#                 'd': np.dtype(float),
+#                 'F': np.dtype(np.csingle),
+#                 'D': np.dtype(complex),
+#                 'O': np.dtype(object),
+#                 'c': np.dtype('c'),
+                 None: np.dtype(int)
     }
 
 # converts typecode=None to int
@@ -24,7 +24,7 @@ def convtypecode(typecode, dtype=None):
         try:
             return oldtype2dtype[typecode]
         except:
-            return N.dtype(typecode)
+            return np.dtype(typecode)
     else:
         return dtype
 
@@ -38,7 +38,7 @@ def convtypecode2(typecode, dtype=None):
             try:
                 return oldtype2dtype[typecode]
             except:
-                return N.dtype(typecode)
+                return np.dtype(typecode)
     else:
         return dtype
 
@@ -50,7 +50,7 @@ _changedtypes = {'B': 'b',
 
 class _oldtypecodes(dict):
     def __getitem__(self, obj):
-        char = N.dtype(obj).char
+        char = np.dtype(obj).char
         try:
             return _changedtypes[char]
         except KeyError:

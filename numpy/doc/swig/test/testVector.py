@@ -7,8 +7,8 @@ import sys
 import unittest
 
 # Import NumPy
-import numpy as N
-major, minor = [ int(d) for d in N.__version__.split(".")[:2] ]
+import numpy as np
+major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
 if major == 0: BadListError = TypeError
 else:          BadListError = ValueError
 
@@ -123,7 +123,7 @@ class VectorTestCase(unittest.TestCase):
         "Test reverse function"
         print >>sys.stderr, self.typeStr, "... ",
         reverse = Vector.__dict__[self.typeStr + "Reverse"]
-        vector = N.array([1,2,4],self.typeCode)
+        vector = np.array([1,2,4],self.typeCode)
         reverse(vector)
         self.assertEquals((vector == [4,2,1]).all(), True)
 
@@ -132,7 +132,7 @@ class VectorTestCase(unittest.TestCase):
         "Test reverse function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         reverse = Vector.__dict__[self.typeStr + "Reverse"]
-        vector = N.array([[1,2], [3,4]],self.typeCode)
+        vector = np.array([[1,2], [3,4]],self.typeCode)
         self.assertRaises(TypeError, reverse, vector)
 
     # Test the (type INPLACE_ARRAY1[ANY]) typemap
@@ -140,7 +140,7 @@ class VectorTestCase(unittest.TestCase):
         "Test reverse function with wrong size"
         print >>sys.stderr, self.typeStr, "... ",
         reverse = Vector.__dict__[self.typeStr + "Reverse"]
-        vector = N.array([9,8,7,6,5,4],self.typeCode)
+        vector = np.array([9,8,7,6,5,4],self.typeCode)
         self.assertRaises(TypeError, reverse, vector)
 
     # Test the (type INPLACE_ARRAY1[ANY]) typemap
@@ -148,7 +148,7 @@ class VectorTestCase(unittest.TestCase):
         "Test reverse function with wrong type"
         print >>sys.stderr, self.typeStr, "... ",
         reverse = Vector.__dict__[self.typeStr + "Reverse"]
-        vector = N.array([1,2,4],'c')
+        vector = np.array([1,2,4],'c')
         self.assertRaises(TypeError, reverse, vector)
 
     # Test the (type INPLACE_ARRAY1[ANY]) typemap
@@ -163,16 +163,16 @@ class VectorTestCase(unittest.TestCase):
         "Test ones function"
         print >>sys.stderr, self.typeStr, "... ",
         ones = Vector.__dict__[self.typeStr + "Ones"]
-        vector = N.zeros(5,self.typeCode)
+        vector = np.zeros(5,self.typeCode)
         ones(vector)
-        N.testing.assert_array_equal(vector, N.array([1,1,1,1,1]))
+        np.testing.assert_array_equal(vector, np.array([1,1,1,1,1]))
 
     # Test the (type* INPLACE_ARRAY1, int DIM1) typemap
     def testOnesWrongDim(self):
         "Test ones function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         ones = Vector.__dict__[self.typeStr + "Ones"]
-        vector = N.zeros((5,5),self.typeCode)
+        vector = np.zeros((5,5),self.typeCode)
         self.assertRaises(TypeError, ones, vector)
 
     # Test the (type* INPLACE_ARRAY1, int DIM1) typemap
@@ -180,7 +180,7 @@ class VectorTestCase(unittest.TestCase):
         "Test ones function with wrong type"
         print >>sys.stderr, self.typeStr, "... ",
         ones = Vector.__dict__[self.typeStr + "Ones"]
-        vector = N.zeros((5,5),'c')
+        vector = np.zeros((5,5),'c')
         self.assertRaises(TypeError, ones, vector)
 
     # Test the (type* INPLACE_ARRAY1, int DIM1) typemap
@@ -195,16 +195,16 @@ class VectorTestCase(unittest.TestCase):
         "Test zeros function"
         print >>sys.stderr, self.typeStr, "... ",
         zeros = Vector.__dict__[self.typeStr + "Zeros"]
-        vector = N.ones(5,self.typeCode)
+        vector = np.ones(5,self.typeCode)
         zeros(vector)
-        N.testing.assert_array_equal(vector, N.array([0,0,0,0,0]))
+        np.testing.assert_array_equal(vector, np.array([0,0,0,0,0]))
 
     # Test the (int DIM1, type* INPLACE_ARRAY1) typemap
     def testZerosWrongDim(self):
         "Test zeros function with wrong dimensions"
         print >>sys.stderr, self.typeStr, "... ",
         zeros = Vector.__dict__[self.typeStr + "Zeros"]
-        vector = N.ones((5,5),self.typeCode)
+        vector = np.ones((5,5),self.typeCode)
         self.assertRaises(TypeError, zeros, vector)
 
     # Test the (int DIM1, type* INPLACE_ARRAY1) typemap
@@ -212,7 +212,7 @@ class VectorTestCase(unittest.TestCase):
         "Test zeros function with wrong type"
         print >>sys.stderr, self.typeStr, "... ",
         zeros = Vector.__dict__[self.typeStr + "Zeros"]
-        vector = N.ones(6,'c')
+        vector = np.ones(6,'c')
         self.assertRaises(TypeError, zeros, vector)
 
     # Test the (int DIM1, type* INPLACE_ARRAY1) typemap
@@ -378,7 +378,7 @@ if __name__ == "__main__":
 
     # Execute the test suite
     print "Testing 1D Functions of Module Vector"
-    print "NumPy version", N.__version__
+    print "NumPy version", np.__version__
     print
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(len(result.errors) + len(result.failures))
