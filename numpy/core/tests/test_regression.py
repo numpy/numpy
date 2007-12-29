@@ -4,7 +4,7 @@ import pickle
 import sys
 
 set_local_path()
-import numpy as N
+import numpy as np
 restore_path()
 
 rlevel = 1
@@ -30,11 +30,11 @@ class TestRegression(NumpyTestCase):
 
     def check_mem_empty(self,level=rlevel):
         """Ticket #7"""
-        N.empty((1,),dtype=[('x',N.int64)])
+        np.empty((1,),dtype=[('x',N.int64)])
 
     def check_pickle_transposed(self,level=rlevel):
         """Ticket #16"""
-        a = N.transpose(N.array([[2,9],[7,0],[3,8]]))
+        a = np.transpose(N.array([[2,9],[7,0],[3,8]]))
         f = StringIO()
         pickle.dump(a,f)
         f.seek(0)
@@ -44,45 +44,46 @@ class TestRegression(NumpyTestCase):
 
     def check_masked_array_create(self,level=rlevel):
         """Ticket #17"""
-        x = N.ma.masked_array([0,1,2,3,0,4,5,6],mask=[0,0,0,1,1,1,0,0])
+        x = np.ma.masked_array([0,1,2,3,0,4,5,6],mask=[0,0,0,1,1,1,0,0])
+from data_store import load, save, create_module, create_shelf
         assert_array_equal(N.ma.nonzero(x),[[1,2,6,7]])
 
     def check_poly1d(self,level=rlevel):
         """Ticket #28"""
-        assert_equal(N.poly1d([1]) - N.poly1d([1,0]),
-                     N.poly1d([-1,1]))
+        assert_equal(np.poly1d([1]) - np.poly1d([1,0]),
+                     np.poly1d([-1,1]))
 
     def check_typeNA(self,level=rlevel):
         """Ticket #31"""
-        assert_equal(N.typeNA[N.int64],'Int64')
-        assert_equal(N.typeNA[N.uint64],'UInt64')
+        assert_equal(np.typeNA[np.int64],'Int64')
+        assert_equal(np.typeNA[np.uint64],'UInt64')
 
     def check_dtype_names(self,level=rlevel):
         """Ticket #35"""
-        dt = N.dtype([(('name','label'),N.int32,3)])
+        dt = np.dtype([(('name','label'),np.int32,3)])
 
     def check_reduce(self,level=rlevel):
         """Ticket #40"""
-        assert_almost_equal(N.add.reduce([1.,.5],dtype=None), 1.5)
+        assert_almost_equal(np.add.reduce([1.,.5],dtype=None), 1.5)
 
     def check_zeros_order(self,level=rlevel):
         """Ticket #43"""
-        N.zeros([3], int, 'C')
-        N.zeros([3], order='C')
-        N.zeros([3], int, order='C')
+        np.zeros([3], int, 'C')
+        np.zeros([3], order='C')
+        np.zeros([3], int, order='C')
 
     def check_sort_bigendian(self,level=rlevel):
         """Ticket #47"""
-        a = N.linspace(0, 10, 11)
+        a = np.linspace(0, 10, 11)
         c = a.astype(N.dtype('<f8'))
         c.sort()
         assert_array_almost_equal(c, a)
 
     def check_negative_nd_indexing(self,level=rlevel):
         """Ticket #49"""
-        c = N.arange(125).reshape((5,5,5))
-        origidx = N.array([-1, 0, 1])
-        idx = N.array(origidx)
+        c = np.arange(125).reshape((5,5,5))
+        origidx = np.array([-1, 0, 1])
+        idx = np.array(origidx)
         c[idx]
         assert_array_equal(idx, origidx)
 
@@ -90,15 +91,15 @@ class TestRegression(NumpyTestCase):
         """Ticket #50"""
         import tempfile
         f = StringIO()
-        ca = N.char.array(N.arange(1000,1010),itemsize=4)
+        ca = np.char.array(N.arange(1000,1010),itemsize=4)
         ca.dump(f)
         f.seek(0)
-        ca = N.load(f)
+        ca = np.load(f)
         f.close()
 
     def check_noncontiguous_fill(self,level=rlevel):
         """Ticket #58."""
-        a = N.zeros((5,3))
+        a = np.zeros((5,3))
         b = a[:,:2,]
         def rs():
             b.shape = (10,)
@@ -106,17 +107,17 @@ class TestRegression(NumpyTestCase):
 
     def check_bool(self,level=rlevel):
         """Ticket #60"""
-        x = N.bool_(1)
+        x = np.bool_(1)
 
     def check_masked_array(self,level=rlevel):
         """Ticket #61"""
-        x = N.core.ma.array(1,mask=[1])
+        x = np.core.ma.array(1,mask=[1])
 
     def check_mem_masked_where(self,level=rlevel):
         """Ticket #62"""
         from numpy.core.ma import masked_where, MaskType
-        a = N.zeros((1,1))
-        b = N.zeros(a.shape, MaskType)
+        a = np.zeros((1,1))
+        b = np.zeros(a.shape, MaskType)
         c = masked_where(b,a)
         a-c
 
@@ -124,33 +125,33 @@ class TestRegression(NumpyTestCase):
         """Ticket #64"""
         descr = [('x', [('y', [('z', 'c16', (2,)),]),]),]
         buffer = ((([6j,4j],),),)
-        h = N.array(buffer, dtype=descr)
+        h = np.array(buffer, dtype=descr)
         h['x']['y']['z']
 
     def check_indexing2(self,level=rlevel):
         """Ticket #65"""
         descr = [('x', 'i4', (2,))]
         buffer = ([3,2],)
-        h = N.array(buffer, dtype=descr)
+        h = np.array(buffer, dtype=descr)
         h['x']
 
     def check_round(self,level=rlevel):
         """Ticket #67"""
-        x = N.array([1+2j])
+        x = np.array([1+2j])
         assert_almost_equal(x**(-1), [1/(1+2j)])
 
     def check_kron_matrix(self,level=rlevel):
         """Ticket #71"""
-        x = N.matrix('[1 0; 1 0]')
+        x = np.matrix('[1 0; 1 0]')
         assert_equal(type(N.kron(x,x)),type(x))
 
     def check_scalar_compare(self,level=rlevel):
         """Ticket #72"""
-        a = N.array(['test', 'auto'])
-        assert_array_equal(a == 'auto', N.array([False,True]))
+        a = np.array(['test', 'auto'])
+        assert_array_equal(a == 'auto', np.array([False,True]))
         self.assert_(a[1] == 'auto')
         self.assert_(a[0] != 'auto')
-        b = N.linspace(0, 10, 11)
+        b = np.linspace(0, 10, 11)
         self.assert_(b != 'auto')
         self.assert_(b[0] != 'auto')
 
@@ -158,26 +159,26 @@ class TestRegression(NumpyTestCase):
         """Ticket #79"""
         ulen = 1
         ucs_value = u'\U0010FFFF'
-        ua = N.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
+        ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
         ua2 = ua.newbyteorder()
 
     def check_matrix_std_argmax(self,level=rlevel):
         """Ticket #83"""
-        x = N.asmatrix(N.random.uniform(0,1,(3,3)))
+        x = np.asmatrix(N.random.uniform(0,1,(3,3)))
         self.assertEqual(x.std().shape, ())
         self.assertEqual(x.argmax().shape, ())
 
     def check_object_array_fill(self,level=rlevel):
         """Ticket #86"""
-        x = N.zeros(1, 'O')
+        x = np.zeros(1, 'O')
         x.fill([])
 
     def check_cov_parameters(self,level=rlevel):
         """Ticket #91"""
-        x = N.random.random((3,3))
+        x = np.random.random((3,3))
         y = x.copy()
-        N.cov(x,rowvar=1)
-        N.cov(y,rowvar=0)
+        np.cov(x,rowvar=1)
+        np.cov(y,rowvar=0)
         assert_array_equal(x,y)
 
     def check_mem_dtype_align(self,level=rlevel):
@@ -188,13 +189,13 @@ class TestRegression(NumpyTestCase):
     def check_mem_digitize(self,level=rlevel):
         """Ticket #95"""
         for i in range(100):
-            N.digitize([1,2,3,4],[1,3])
-            N.digitize([0,1,2,3,4],[1,3])
+            np.digitize([1,2,3,4],[1,3])
+            np.digitize([0,1,2,3,4],[1,3])
 
     def check_intp(self,level=rlevel):
         """Ticket #99"""
-        i_width = N.int_(0).nbytes*2 - 1
-        N.intp('0x' + 'f'*i_width,16)
+        i_width = np.int_(0).nbytes*2 - 1
+        np.intp('0x' + 'f'*i_width,16)
         self.failUnlessRaises(OverflowError,N.intp,'0x' + 'f'*(i_width+1),16)
         self.failUnlessRaises(ValueError,N.intp,'0x1',32)
         assert_equal(255,N.intp('0xFF',16))
@@ -202,10 +203,10 @@ class TestRegression(NumpyTestCase):
 
     def check_endian_bool_indexing(self,level=rlevel):
         """Ticket #105"""
-        a = N.arange(10.,dtype='>f8')
-        b = N.arange(10.,dtype='<f8')
-        xa = N.where((a>2) & (a<6))
-        xb = N.where((b>2) & (b<6))
+        a = np.arange(10.,dtype='>f8')
+        b = np.arange(10.,dtype='<f8')
+        xa = np.where((a>2) & (a<6))
+        xb = np.where((b>2) & (b<6))
         ya = ((a>2) & (a<6))
         yb = ((b>2) & (b<6))
         assert_array_almost_equal(xa,ya.nonzero())
@@ -215,35 +216,35 @@ class TestRegression(NumpyTestCase):
 
     def check_mem_dot(self,level=rlevel):
         """Ticket #106"""
-        x = N.random.randn(0,1)
-        y = N.random.randn(10,1)
-        z = N.dot(x, N.transpose(y))
+        x = np.random.randn(0,1)
+        y = np.random.randn(10,1)
+        z = np.dot(x, np.transpose(y))
 
     def check_arange_endian(self,level=rlevel):
         """Ticket #111"""
-        ref = N.arange(10)
-        x = N.arange(10,dtype='<f8')
+        ref = np.arange(10)
+        x = np.arange(10,dtype='<f8')
         assert_array_equal(ref,x)
-        x = N.arange(10,dtype='>f8')
+        x = np.arange(10,dtype='>f8')
         assert_array_equal(ref,x)
 
 #    Longfloat support is not consistent enough across
 #     platforms for this test to be meaningful.
 #    def check_longfloat_repr(self,level=rlevel):
 #        """Ticket #112"""
-#        if N.longfloat(0).itemsize > 8:
-#            a = N.exp(N.array([1000],dtype=N.longfloat))
+#        if np.longfloat(0).itemsize > 8:
+#            a = np.exp(N.array([1000],dtype=N.longfloat))
 #            assert(str(a)[1:9] == str(a[0])[:8])
 
     def check_argmax(self,level=rlevel):
         """Ticket #119"""
-        a = N.random.normal(0,1,(4,5,6,7,8))
+        a = np.random.normal(0,1,(4,5,6,7,8))
         for i in xrange(a.ndim):
             aargmax = a.argmax(i)
 
     def check_matrix_properties(self,level=rlevel):
         """Ticket #125"""
-        a = N.matrix([1.0],dtype=float)
+        a = np.matrix([1.0],dtype=float)
         assert(type(a.real) is N.matrix)
         assert(type(a.imag) is N.matrix)
         c,d = N.matrix([0.0]).nonzero()

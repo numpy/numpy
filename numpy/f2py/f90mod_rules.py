@@ -17,17 +17,15 @@ __version__ = "$Revision: 1.27 $"[10:-1]
 
 f2py_version='See `f2py -v`'
 
-import pprint
-import sys
+import pprint.pprint as show
+import sys.stderr.write as errmess
+import sys.stdout.write as outmess
 import time
 import types
 import copy
-errmess=sys.stderr.write
-outmess=sys.stdout.write
-show=pprint.pprint
 
 from auxfuncs import *
-import numpy as N
+import numpy as np
 import capi_maps
 import cfuncs
 import rules
@@ -61,7 +59,7 @@ fgetdims1 = """\
             deallocate(d)
          end if
       end if
-      if ((.not.allocated(d)).and.(s(1).ge.1)) then""" % N.intp().itemsize
+      if ((.not.allocated(d)).and.(s(1).ge.1)) then""" % np.intp().itemsize
 
 fgetdims2="""\
       end if
