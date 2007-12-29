@@ -7,6 +7,11 @@ __all__ = ['savetxt', 'loadtxt',
           ]
 
 import numpy as np
+import format
+import zipfile
+import cStringIO
+import tempfile
+import os
 
 from cPickle import load as _cload, loads
 from _datasource import DataSource
@@ -14,14 +19,53 @@ from _compiled_base import packbits, unpackbits
 
 _file = file
 
-class _bagobj(object):
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
+class BagObj(object):
+    """A simple class that converts attribute lookups to 
+    getitems on the class passed in. 
+    """
+    def __init__(self, obj):
+        self._obj = obj
+    def __getattribute__(self, key):
+        try:
+            return object.__getattribute__(self, '_obj')[key]
+        except KeyError:
+            raise AttributeError, key
 
-class _npz_obj(dict):
-    pass
+class NpzFile(object):
+    """A dictionary-like object with lazy-loading of files in the zipped 
+    archive provided on construction. 
 
-def load(file):
+    The arrays and file strings are lazily loaded on either
+    getitem access using obj['key'] or attribute lookup using obj.f.key
+
+    A list of all files can be obtained .names and the ZipFile object
+    itself using .zip
+    """
+    def __init__(self, fid):
+        _zip = zipfile.ZipFile(fid)
+        self.names = _zip.namelist()
+        self.zip = _zip
+        self.f = BagObj(self)
+    def __getitem__(self, key):
+        # FIXME: This seems like it will copy strings around
+        #   more than is strictly necessary.  The zipfile 
+        #   will read the string and then
+        #   the format.read_array will copy the string
+        #   to another place in memory. 
+        #   It would be better if the zipfile could read 
+        #   (or at least uncompress) the data
+        #   directly into the array memory. 
+        if key in self.names:
+            bytes = self.zip.read(key)
+            if bytes.startswith(format.MAGIC_PREFIX):
+                value = cStringIO.StringIO(bytes)
+                return format.read_array(value)
+            else:
+                return bytes
+        else:
+            raise KeyError, "%s is not a file in the archive" % key
+
+def load(file, memmap=False):
     """Load a binary file.
 
     Read a binary file (either a pickle, or a binary .npy/.npz file) and
@@ -31,53 +75,108 @@ def load(file):
     ----------
     file : file-like object or string
         the file to read.  It must support seek and read methods
+    memmap : bool
+        If true, then memory-map the .npy file or unzip the .npz file into
+           a temporary directory and memory-map each component
+        This has no effect for a pickle. 
 
     Returns
     -------
     result : array, tuple, dict, etc.
         data stored in the file. 
         If file contains pickle data, then whatever is stored in the pickle is returned.
-        If the file is .npy file than an array is returned.  
-        If the file is .npz file than a dictionary-like object is returned which has a
-        key:name, value:array pair for every name in the file.
+        If the file is .npy file, then an array is returned.  
+        If the file is .npz file, then a dictionary-like object is returned which has a
+          filename:array key:value pair for every file in the zip.
     """
     if isinstance(file, type("")):
         fid = _file(file,"rb")
     else:
         fid = file
+
+    if memmap:
+        raise NotImplementedError
     # Code to distinguish from NumPy binary files and pickles.
     #
-    magic = fid.read(6)
-    fid.seek(-6,1) # back-up
-    if magic == 'PK\x03\x04':  # zip-file (assume .npz)
-        return _zip_load(fid)
-    elif magic == '\x93NUMPY': # .npy file
-        return _npy_load(fid)
+    _ZIP_PREFIX = 'PK\x03\x04'
+    N = len(format.MAGIC_PREFIX)
+    magic = fid.read(N)
+    fid.seek(-N,1) # back-up
+    if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
+        return NpzFile(fid)
+    elif magic == format.MAGIC_PREFIX: # .npy file
+        return format.read_array(fid)
     else:  # Try a pickle
         try: 
             return _cload(fid)
         except:
-            raise IOError, "Failure to interpret file %s as a pickle" % repr(file)
-
+            raise IOError, \
+                "Failed to interpret file %s as a pickle" % repr(file)
 
 def save(file, arr):
-    """Save an array to a binary file (specified as a string or file-like object).
+    """Save an array to a binary file (a string or file-like object).
 
-    If the file is a string, then if it does not have the .npy extension, it is appended
-        and a file open. 
+    If the file is a string, then if it does not have the .npy extension, 
+        it is appended and a file open. 
 
     Data is saved to the open file in NumPy-array format
 
-    Example:
+    Examples
     --------
     import numpy as np
     ...
     np.save('myfile', a)
     a = np.load('myfile.npy')
     """    
-    # code to save to numpy binary here...
+    if isinstance(file, str):
+        if not file.endswith('.npy'):
+            file = file + '.npy'
+        fid = open(file, "wb")
+    else:
+        fid = file
 
+    arr = np.asanyarray(arr)
+    format.write_array(fid, arr)
+
+def savez(file, *args, **kwds):
+    """Save several arrays into an .npz file format which is a zipped-archive
+    of arrays
     
+    If keyword arguments are given, then filenames are taken from the keywords. 
+    If arguments are passed in with no keywords, then stored file names are 
+    arr_0, arr_1, etc.  
+    """
+
+    if isinstance(file, str):
+        if not file.endswith('.npz'):
+            file = file + '.npz'        
+
+    namedict = kwds
+    for i, val in enumerate(args):
+        key = 'arr_%d' % i
+        if key in namedict.keys():
+            raise ValueError, "Cannot use un-named variables and keyword %s" % key
+        namedict[key] = val
+
+    zip = zipfile.ZipFile(file, mode="w")
+
+    # Place to write temporary .npy files
+    #  before storing them in the zip
+    direc = tempfile.gettempdir()
+    todel = []
+
+    for key, val in namedict.iteritems():
+        fname = key + '.npy'
+        filename = os.path.join(direc, fname)
+        todel.append(filename)
+        fid = open(filename,'wb')
+        format.write_array(fid, np.asanyarray(val))
+        fid.close()
+        zip.write(filename, arcname=fname)
+        
+    zip.close()
+    for name in todel:
+        os.remove(name)
 
 # Adapted from matplotlib
 
