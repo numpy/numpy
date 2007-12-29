@@ -515,12 +515,12 @@ class TestFromToFile(NumpyTestCase):
 
 class TestFromBuffer(ParametricTestCase):
     def tst_basic(self,buffer,expected,kwargs):
-        assert_array_equal(N.frombuffer(buffer,**kwargs),expected)
+        assert_array_equal(np.frombuffer(buffer,**kwargs),expected)
 
     def testip_basic(self):
         tests = []
         for byteorder in ['<','>']:
-            for dtype in [float,int,N.complex]:
+            for dtype in [float,int,np.complex]:
                 dt = np.dtype(dtype).newbyteorder(byteorder)
                 x = (np.random.random((4,7))*5).astype(dt)
                 buf = x.tostring()
@@ -531,7 +531,7 @@ class TestResize(NumpyTestCase):
     def test_basic(self):
         x = np.eye(3)
         x.resize((5,5))
-        assert_array_equal(x.flat[:9],N.eye(3).flat)
+        assert_array_equal(x.flat[:9],np.eye(3).flat)
         assert_array_equal(x[9:].flat,0)
 
     def test_check_reference(self):
