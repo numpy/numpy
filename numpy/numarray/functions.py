@@ -36,7 +36,7 @@ __all__ += ['vdot', 'dot', 'matrixmultiply', 'ravel', 'indices',
             'togglebyteorder'
             ]
 
-import copy,
+import copy
 import copy_reg
 import types
 import os
