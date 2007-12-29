@@ -492,4 +492,4 @@ def togglebyteorder(self):
     self.dtype=self.dtype.newbyteorder()
 
 def average(a, axis=0, weights=None, returned=0):
-    return = np.average(a, axis, weights, returned)
+    return np.average(a, axis, weights, returned)
