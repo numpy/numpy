@@ -3,8 +3,7 @@ __all__ = ['savetxt', 'loadtxt',
            'load', 'loads',
            'save', 'savez',
            'packbits', 'unpackbits',
-           'DataSource',
-          ]
+           'DataSource']
 
 import numpy as np
 import format
@@ -38,14 +37,21 @@ class NpzFile(object):
     The arrays and file strings are lazily loaded on either
     getitem access using obj['key'] or attribute lookup using obj.f.key
 
-    A list of all files can be obtained .names and the ZipFile object
-    itself using .zip
+    A list of all files (without .npy) extensions can be obtained
+    with .files and the ZipFile object itself using .zip
     """
     def __init__(self, fid):
         _zip = zipfile.ZipFile(fid)
-        self.names = _zip.namelist()
+        self._files = _zip.namelist()
+        self.files = []
+        for x in self._files:
+            if x.endswith('.npy'):
+                self.files.append(x[:-4])
+            else:
+                self.files.append(x)
         self.zip = _zip
         self.f = BagObj(self)
+
     def __getitem__(self, key):
         # FIXME: This seems like it will copy strings around
         #   more than is strictly necessary.  The zipfile 
@@ -55,7 +61,13 @@ class NpzFile(object):
         #   It would be better if the zipfile could read 
         #   (or at least uncompress) the data
         #   directly into the array memory. 
-        if key in self.names:
+        member = 0
+        if key in self._files:
+            member = 1
+        elif key in self.files:
+            member = 1
+            key += '.npy'
+        if member:
             bytes = self.zip.read(key)
             if bytes.startswith(format.MAGIC_PREFIX):
                 value = cStringIO.StringIO(bytes)
@@ -96,8 +108,8 @@ def load(file, memmap=False):
 
     if memmap:
         raise NotImplementedError
+
     # Code to distinguish from NumPy binary files and pickles.
-    #
     _ZIP_PREFIX = 'PK\x03\x04'
     N = len(format.MAGIC_PREFIX)
     magic = fid.read(N)
