@@ -89,7 +89,11 @@ The proposed sections of the docstring are:
    functions with a large number of keyword argument can still be well
    documented without cluttering the main parameters' list.
 
-6. **See also:**
+6. **Raises:**
+   An optional section detailing which errors get raised under what
+   conditions. 
+
+7. **See also:**
    An optional section used to refer to related code.  This section
    can be very useful, but should be used judiciously.  The goal is to
    direct users to other functions they may not be aware of, or have
@@ -97,13 +101,13 @@ The proposed sections of the docstring are:
    example).  Routines whose docstrings further explain parameters
    used by this function are good candidates.
 
-7. **Notes:**
+8. **Notes:**
    An optional section that provides additional information about the
    code, possibly including a discussion of the algorithm. This
    section may include mathematical equations, possibly written in
    `LaTeX <http://www.latex-project.org/>`__.
 
-8. **Examples:**
+9. **Examples:**
    An optional section for examples, using the `doctest
    <http://www.python.org/doc/lib/module-doctest.html>`__ format.  It
    can provide an inline mini-tutorial as well as additional
