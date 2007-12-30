@@ -499,7 +499,14 @@ class TestFromToFile(NumpyTestCase):
         self.dtype = np.complex
 
     def test_file(self):
-        f = tempfile.TemporaryFile()
+        # Python under Windows does not believe that TemporaryFile
+        # is an open file
+        if sys.platform.startswith('win'):
+            filename = tempfile.mktemp()
+            f = open(filename,'wb')
+        else:
+            f = tempfile.TemporaryFile()
+
         self.x.tofile(f)
         f.seek(0)
         y = np.fromfile(f,dtype=self.dtype)
