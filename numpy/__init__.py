@@ -16,16 +16,20 @@ Documentation is available in the docstrings and at
 http://www.scipy.org.
 """
 
+# We first need to detect if we're being called as part of the numpy setup
+# procedure itself in a reliable manner.
 try:
-    from numpy.__config__ import show as show_config
-except ImportError:
-    show_config = None
+    __NUMPY_SETUP__
+except NameError:
+    __NUMPY_SETUP__ = False
 
-if show_config is None:
+
+if __NUMPY_SETUP__:
     import sys as _sys
     print >> _sys.stderr, 'Running from numpy source directory.'
     del _sys
 else:
+    from numpy.__config__ import show as show_config
     from version import version as __version__
 
     from _import_tools import PackageLoader

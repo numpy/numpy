@@ -15,6 +15,7 @@ basic linear algebra and random number generation.
 
 DOCLINES = __doc__.split("\n")
 
+import __builtin__
 import os
 import sys
 
@@ -36,6 +37,12 @@ Operating System :: MacOS
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
 if os.path.exists('MANIFEST'): os.remove('MANIFEST')
+
+# This is a bit hackish: we are setting a global variable so that the main
+# numpy __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.  While ugly, it's
+# a lot more robust than what was previously being used.
+__builtin__.__NUMPY_SETUP__ = True
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
