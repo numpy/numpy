@@ -1452,3 +1452,31 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     Type can be either a new sub-type object or a data-descriptor object
 
     """))
+
+add_newdoc('numpy.core.umath','geterrobj',
+           """geterrobj()
+
+           Used internally by `geterr`.
+
+           Returns
+           -------
+           errobj : list
+               Internal numpy buffer size, error mask, error callback function.
+
+           """)
+
+add_newdoc('numpy.core.umath','seterrobj',
+           """seterrobj()
+
+           Used internally by `seterr`.
+
+           Parameters
+           ----------
+           errobj : list
+               [buffer_size, error_mask, callback_func]
+
+           See Also
+           --------
+           seterrcall
+
+           """)
