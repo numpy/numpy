@@ -508,6 +508,7 @@ class TestFromToFile(NumpyTestCase):
             f = tempfile.TemporaryFile()
 
         self.x.tofile(f)
+        f.flush()
         f.seek(0)
         y = np.fromfile(f,dtype=self.dtype)
         assert_array_equal(y,self.x.flat)
