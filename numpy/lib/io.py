@@ -96,10 +96,15 @@ def load(file, memmap=False):
     -------
     result : array, tuple, dict, etc.
         data stored in the file. 
-        If file contains pickle data, then whatever is stored in the pickle is returned.
+        If file contains pickle data, then whatever is stored in the pickle is
+          returned.
         If the file is .npy file, then an array is returned.  
-        If the file is .npz file, then a dictionary-like object is returned which has a
-          filename:array key:value pair for every file in the zip.
+        If the file is .npz file, then a dictionary-like object is returned 
+          which has a filename:array key:value pair for every file in the zip.
+
+    Raises
+    ------
+    IOError 
     """
     if isinstance(file, type("")):
         fid = _file(file,"rb")

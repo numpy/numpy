@@ -96,13 +96,16 @@ def deprecate(func, oldname=None, newname=None):
 
     import warnings
     if oldname is None:
-        oldname = func.func_name
+        try:
+            oldname = func.func_name
+        except AttributeError:
+            oldname = func.__name__
     if newname is None:
         str1 = "%s is deprecated" % (oldname,)
-        depdoc = "%s is DEPRECATED!" % (oldname,)
+        depdoc = "%s is DEPRECATED!!" % (oldname,)
     else:
         str1 = "%s is deprecated, use %s" % (oldname, newname),
-        depdoc = '%s is DEPRECATED! -- use %s instead' % (oldname, newname,)
+        depdoc = '%s is DEPRECATED!! -- use %s instead' % (oldname, newname,)
         
     def newfunc(*args,**kwds):
         warnings.warn(str1, DeprecationWarning)
@@ -113,7 +116,7 @@ def deprecate(func, oldname=None, newname=None):
     if doc is None:
         doc = depdoc
     else:
-        doc = '\n'.join([depdoc, doc])
+        doc = '\n\n'.join([depdoc, doc])
     newfunc.__doc__ = doc
     try:
         d = func.__dict__
@@ -128,7 +131,7 @@ def deprecate_with_doc(somestr):
     with 'somestr' that is added to the functions docstring.
 
     Example:
-    depmsg = 'function numpy.lib.foo has been merged into numpy.lib.io.foobar'
+    depmsg = 'function scipy.foo has been merged into numpy.foobar'
     @deprecate_with_doc(depmsg)
     def foo():
         pass
