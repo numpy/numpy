@@ -7,7 +7,7 @@ from machar import MachAr
 import numpy.core.numeric as numeric
 import numpy.core.numerictypes as ntypes
 from numpy.core.numeric import array
-import numpy as N
+import numpy as np
 
 def _frz(a):
     """fix rank-0 --> rank-1"""
@@ -128,7 +128,7 @@ class iinfo:
     _max_vals = {}
 
     def __init__(self, type):
-        self.dtype = N.dtype(type)
+        self.dtype = np.dtype(type)
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)

@@ -201,9 +201,13 @@ def setmember1d( ar1, ar2 ):
       numpy.lib.arraysetops has a number of other functions for performing set
       operations on arrays.
     """
-    zlike = nm.zeros_like
+    ar1 = nm.asarray( ar1 )
+    ar2 = nm.asarray( ar2 )
     ar = nm.concatenate( (ar1, ar2 ) )
-    tt = nm.concatenate( (zlike( ar1 ), zlike( ar2 ) + 1) )
+    b1 = nm.zeros( ar1.shape, dtype = nm.int8 )
+    b2 = nm.ones( ar2.shape, dtype = nm.int8 )
+    tt = nm.concatenate( (b1, b2) )
+        
     # We need this to be a stable sort, so always use 'mergesort' here. The
     # values from the first array should always come before the values from the
     # second array.
@@ -212,7 +216,6 @@ def setmember1d( ar1, ar2 ):
     aux2 = tt[perm]
 #    flag = ediff1d( aux, 1 ) == 0
     flag = nm.concatenate( (aux[1:] == aux[:-1], [False] ) )
-
     ii = nm.where( flag * aux2 )[0]
     aux = perm[ii+1]
     perm[ii+1] = perm[ii]
