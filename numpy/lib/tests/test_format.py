@@ -280,10 +280,8 @@ import os
 import shutil
 import tempfile
 
-from nose.tools import raises
-
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, raises
 
 from numpy.lib import format
 
