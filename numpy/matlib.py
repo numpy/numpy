@@ -1,6 +1,7 @@
 import numpy as np
-from numpy import ndarray, array
 from numpy.core.defmatrix import matrix, asmatrix
+# need * as we're copying the numpy namespace
+from numpy import *
 
 __version__ = np.__version__
 
