@@ -574,7 +574,7 @@ def get_frame(level=0):
 class Configuration(object):
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
-                  'libraries', 'headers', 'scripts', 'py_modules']
+                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_data']
     _dict_keys = ['package_dir']
     _extra_keys = ['name', 'version']
 
@@ -1164,6 +1164,50 @@ class Configuration(object):
         if dist is not None:
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a library '+ name)
+
+    def add_sconscript(self, sconscript, subpackage_path=None,
+                       standalone = False, pre_hook = None,
+                       post_hook = None, source_files = None):
+        """Add a sconscript to configuration.
+
+        pre_hook and post hook should be sequences of callable, which will be
+        use before and after executing scons. """
+        if standalone:
+            parent_name = None
+        else:
+            parent_name = self.name
+
+        dist = self.get_distribution()
+        # Convert the sconscript name to a relative filename (relative from top
+        # setup.py's directory)
+        fullsconsname = self.paths(sconscript)[0]
+
+        # XXX: Think about a way to automatically register source files from
+        # scons...
+        full_source_files = []
+        if source_files:
+            full_source_files.extend([self.paths(i)[0] for i in source_files])
+
+        if dist is not None:
+            dist.scons_data.append((fullsconsname, 
+                                    pre_hook, 
+                                    post_hook,
+                                    full_source_files,
+                                    parent_name))
+            self.warn('distutils distribution has been initialized,'\
+                      ' it may be too late to add a subpackage '+ subpackage_name)
+            # XXX: we add a fake extension, to correctly initialize some
+            # options in distutils command.
+            dist.add_extension('', sources = [])
+        else:
+            self.scons_data.append((fullsconsname, 
+                                    pre_hook, 
+                                    post_hook,
+                                    full_source_files,
+                                    parent_name))
+            # XXX: we add a fake extension, to correctly initialize some
+            # options in distutils command.
+            self.add_extension('', sources = [])
 
     def add_scripts(self,*files):
         """Add scripts to configuration.
