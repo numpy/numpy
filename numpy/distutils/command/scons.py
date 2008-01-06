@@ -16,19 +16,22 @@ def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
     
     The path is relative to the top setup.py"""
-    return os.path.join('build', 'scons')
+    from numscons import get_scons_build_dir
+    return get_scons_build_dir()
 
 def get_scons_configres_dir():
     """Return the top path where everything produced by scons will be put.
     
     The path is relative to the top setup.py"""
-    return os.path.join('build', 'scons-configres')
+    from numscons import get_scons_configres_dir
+    return get_scons_configres_dir()
 
 def get_scons_configres_filename():
     """Return the top path where everything produced by scons will be put.
     
     The path is relative to the top setup.py"""
-    return '__configres.py'
+    from numscons import get_scons_configres_filename
+    return get_scons_configres_filename()
 
 def get_scons_local_path():
     """This returns the full path where scons.py for scons-local is located."""
