@@ -2,7 +2,10 @@ import os
 import sys
 import glob
 from os.path import join, basename
+
 from numpy.distutils import log
+
+from numscons import get_scons_build_dir
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
@@ -33,7 +36,7 @@ def configuration(parent_package='',top_path=None):
 
     # Add generated files to distutils...
     def add_config_header():
-        scons_build_dir = config.get_scons_build_dir()
+        scons_build_dir = get_scons_build_dir()
         # XXX: I really have to think about how to communicate path info
         # between scons and distutils, and set the options at one single
         # location.
@@ -43,7 +46,7 @@ def configuration(parent_package='',top_path=None):
             config.numpy_include_dirs.append(incl_dir)
 
     def add_numpyconfig_header():
-        scons_build_dir = config.get_scons_build_dir()
+        scons_build_dir = get_scons_build_dir()
         # XXX: I really have to think about how to communicate path info
         # between scons and distutils, and set the options at one single
         # location.
@@ -54,7 +57,7 @@ def configuration(parent_package='',top_path=None):
         config.add_data_files((header_dir, target)) 
 
     def add_array_api():
-        scons_build_dir = config.get_scons_build_dir()
+        scons_build_dir = get_scons_build_dir()
         # XXX: I really have to think about how to communicate path info
         # between scons and distutils, and set the options at one single
         # location.
@@ -64,7 +67,7 @@ def configuration(parent_package='',top_path=None):
                               (header_dir, t_file))
 
     def add_ufunc_api():
-        scons_build_dir = config.get_scons_build_dir()
+        scons_build_dir = get_scons_build_dir()
         # XXX: I really have to think about how to communicate path info
         # between scons and distutils, and set the options at one single
         # location.
