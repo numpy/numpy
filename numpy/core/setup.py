@@ -18,6 +18,11 @@ FUNCTIONS_TO_CHECK = [
     ('rint', 'HAVE_RINT'),
     ]
 
+def is_npy_no_signal():
+    """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
+    header."""
+    return sys.platform == 'win32'
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -53,12 +58,12 @@ def configuration(parent_package='',top_path=None):
                 raise SystemError,"Failed to test configuration. "\
                       "See previous error messages for more information."
 
-                # Python 2.3 causes a segfault when
-                #  trying to re-acquire the thread-state
-                #  which is done in error-handling
-                #  ufunc code.  NPY_ALLOW_C_API and friends
-                #  cause the segfault. So, we disable threading
-                #  for now.
+            # Python 2.3 causes a segfault when
+            #  trying to re-acquire the thread-state
+            #  which is done in error-handling
+            #  ufunc code.  NPY_ALLOW_C_API and friends
+            #  cause the segfault. So, we disable threading
+            #  for now.
             if sys.version[:5] < '2.4.2':
                 nosmp = 1
             else:
@@ -73,8 +78,7 @@ def configuration(parent_package='',top_path=None):
                     nosmp = 1
                 except KeyError:
                     nosmp = 0
-            if nosmp: moredefs = [('NPY_ALLOW_THREADS', '0')]
-            else: moredefs = []
+            moredefs = []
             #
             mathlibs = []
             tc = testcode_mathlib()
@@ -102,7 +106,7 @@ def configuration(parent_package='',top_path=None):
                 if check_func(func_name):
                     moredefs.append(defsymbol)
 
-            if sys.platform == 'win32':
+            if is_npy_no_signal():
                 moredefs.append('NPY_NO_SIGNAL')
 
             if sys.platform=='win32' or os.name=='nt':
@@ -123,8 +127,12 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
-            if not nosmp:  # default is to use WITH_THREAD
-                target_f.write('#ifdef WITH_THREAD\n#define NPY_ALLOW_THREADS 1\n#else\n#define NPY_ALLOW_THREADS 0\n#endif\n')
+            # Define NPY_NOSMP to 1 if explicitely requested, or if we cannot
+            # support thread support reliably
+            if nosmp:
+                target_f.write('#define NPY_NOSMP 1\n')
+            else:
+                target_f.write('#define NPY_NOSMP 0\n')
             target_f.close()
             print 'File:',target
             target_f = open(target)
@@ -151,6 +159,39 @@ def configuration(parent_package='',top_path=None):
         config.add_data_files((header_dir,target))
         return target
 
+    def generate_numpyconfig_h(ext, build_dir):
+        """Depends on config.h: generate_config_h has to be called before !"""
+        target = join(build_dir,'numpyconfig.h')
+        if newer(__file__,target):
+            config_cmd = config.get_config_cmd()
+            log.info('Generating %s',target)
+            testcode = generate_numpyconfig_code(target)
+
+            from distutils import sysconfig
+            python_include = sysconfig.get_python_inc()
+            python_h = join(python_include, 'Python.h')
+            if not os.path.isfile(python_h):
+                raise SystemError,\
+                      "Non-existing %s. Perhaps you need to install"\
+                      " python-dev|python-devel." % (python_h)
+
+            config.numpy_include_dirs
+            result = config_cmd.try_run(testcode, 
+                                include_dirs = [python_include] + \
+                                                       config.numpy_include_dirs,
+                                        library_dirs = default_lib_dirs)
+
+            if not result:
+                raise SystemError,"Failed to generate numpy configuration. "\
+                      "See previous error messages for more information."
+
+            print 'File: %s' % target
+            target_f = open(target)
+            print target_f.read()
+            target_f.close()
+            print 'EOF'
+        return target
+                                
     def generate_api_func(module_name):
         def generate_api(ext, build_dir):
             script = join(codegen_dir, module_name + '.py')
@@ -205,6 +246,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('multiarray',
                          sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,
+                                    generate_numpyconfig_h,
                                     generate_array_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
@@ -216,6 +258,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('umath',
                          sources = [generate_config_h,
+                                    generate_numpyconfig_h,
                                     join('src','umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
@@ -231,6 +274,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_sort',
                          sources=[join('src','_sortmodule.c.src'),
                                   generate_config_h,
+                                  generate_numpyconfig_h,
                                   generate_array_api,
                                   ],
                          )
@@ -238,6 +282,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('scalarmath',
                          sources=[join('src','scalarmathmodule.c.src'),
                                   generate_config_h,
+                                  generate_numpyconfig_h,
                                   generate_array_api,
                                   generate_ufunc_api],
                          )
@@ -341,6 +386,79 @@ int main(int argc, char **argv)
 ''')
     testcode = '\n'.join(testcode)
     return testcode
+
+def generate_numpyconfig_code(target):
+    """Return the source code as a string of the code to generate the
+    numpyconfig header file."""
+    if sys.platform == 'win32':
+        target = target.replace('\\','\\\\')
+    # Config symbols to prepend
+    prepends = [('NPY_SIZEOF_SHORT', 'SIZEOF_SHORT'),
+            ('NPY_SIZEOF_INT', 'SIZEOF_INT'),
+            ('NPY_SIZEOF_LONG', 'SIZEOF_LONG'),
+            ('NPY_SIZEOF_FLOAT', 'SIZEOF_FLOAT'),
+            ('NPY_SIZEOF_DOUBLE', 'SIZEOF_DOUBLE'),
+            ('NPY_SIZEOF_LONGDOUBLE', 'SIZEOF_LONG_DOUBLE'),
+            ('NPY_SIZEOF_PY_INTPTR_T', 'SIZEOF_PY_INTPTR_T'),
+            ('NPY_NOSMP', 'NPY_NOSMP'),]
+
+    testcode = ["""
+#include <Python.h>
+#include "config.h"
+
+int main()
+{   
+    FILE* f;
+   
+    f = fopen("%s", "w");
+    if (f == NULL) {
+        return -1;
+    }
+""" % target]
+
+    testcode.append(r"""
+    fprintf(f, "/*\n * This file is generated by %s. DO NOT EDIT \n */\n");
+""" % __file__)
+
+    # Prepend NPY_ to any SIZEOF defines
+    testcode.extend([r'    fprintf(f, "#define ' + i + r' %%d \n", %s);' % j for i, j in prepends])
+
+    # Conditionally define NPY_NO_SIGNAL
+    if is_npy_no_signal():
+        testcode.append(r'    fprintf(f, "\n#define NPY_NO_SIGNAL\n");')
+
+    tmpcode = r"""
+    #ifdef PY_LONG_LONG
+        fprintf(f, "\n#define %s %%d \n", %s);
+        fprintf(f, "#define %s %%d \n", %s);
+    #else
+        fprintf(f, "/* PY_LONG_LONG not defined  */ \n");
+    #endif"""
+    testcode.append(tmpcode % ('NPY_SIZEOF_LONGLONG', 'SIZEOF_LONG_LONG',
+                               'NPY_SIZEOF_PY_LONG_LONG', 'SIZEOF_PY_LONG_LONG'))
+
+    testcode.append(r"""
+#ifndef CHAR_BIT
+          {
+             unsigned char var = 2;
+             int i = 0;
+             while (var >= 2) {
+                     var = var << 1;
+                     i++;
+             }
+             fprintf(f,"#define CHAR_BIT %d\n", i+1);
+          }
+#else
+          fprintf(f, "/* #define CHAR_BIT %d */\n", CHAR_BIT);
+#endif""")
+
+    testcode.append("""
+    fclose(f);
+
+    return 0;
+}
+""")
+    return "\n".join(testcode)
 
 if __name__=='__main__':
     from numpy.distutils.core import setup
