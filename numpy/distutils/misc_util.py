@@ -1441,6 +1441,12 @@ class Configuration(object):
         """
         self.py_modules.append((self.name,name,generate_config_py))
 
+    def scons_make_config_py(self, name = '__config__'):
+        """Generate package __config__.py file containing system_info
+        information used during building the package.
+        """
+        self.py_modules.append((self.name, name, scons_generate_config_py))
+
     def get_info(self,*names):
         """Get resources information.
         """
