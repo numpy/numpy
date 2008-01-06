@@ -21,6 +21,7 @@ import distutils.core
 import distutils.dist
 
 from numpy.distutils.extension import Extension
+from numpy.distutils.numpy_distribution import NumpyDistribution
 from numpy.distutils.command import config, config_compiler, \
      build, build_py, build_ext, build_clib, build_src, build_scripts, \
      sdist, install_data, install_headers, install, bdist_rpm
@@ -95,9 +96,10 @@ def get_distribution(always=False):
     # class is local to a function in setuptools.command.easy_install
     if dist is not None and \
             'DistributionWithoutHelpCommands' in repr(dist):
+        raise NotImplementedError("setuptools not supported yet for numpy.scons branch")
         dist = None
     if always and dist is None:
-        dist = distutils.dist.Distribution()
+        dist = NumpyDistribution()
     return dist
 
 def _exit_interactive_session(_cache=[]):
@@ -174,6 +176,9 @@ def setup(**attr):
     if ('ext_modules' in new_attr or 'libraries' in new_attr) \
        and 'headers' not in new_attr:
         new_attr['headers'] = []
+
+    # Use our custom NumpyDistribution class instead of distutils' one
+    new_attr['distclass'] = NumpyDistribution
 
     return old_setup(**new_attr)
 
