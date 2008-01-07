@@ -863,6 +863,7 @@ gentype_interface_get(PyObject *self)
         arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr == NULL) return NULL;
         inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
+	if (inter != NULL) PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
         Py_DECREF(arr);
         return inter;
 }
