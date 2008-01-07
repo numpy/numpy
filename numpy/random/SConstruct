@@ -1,0 +1,50 @@
+# Last Change: Tue Nov 13 11:00 PM 2007 J
+# vim:syntax=python
+import os
+
+import __builtin__
+__builtin__.__NUMPY_SETUP__ = True
+
+from numpy.distutils.misc_util import get_numpy_include_dirs, get_mathlibs
+from numscons import GetNumpyEnvironment, scons_get_paths, \
+                                  scons_get_mathlib
+
+def CheckWincrypt(context):
+    from copy import deepcopy
+    src = """\
+/* check to see if _WIN32 is defined */
+int main(int argc, char *argv[])
+{
+#ifdef _WIN32
+    return 0;
+#else
+    return 1;
+#endif
+}
+"""
+
+    context.Message("Checking if using wincrypt ... ")
+    st = context.env.TryRun(src, '.C')
+    if st[0] == 0:
+        context.Result('No')
+    else:
+        context.Result('Yes')
+    return st[0]
+    
+env = GetNumpyEnvironment(ARGUMENTS)
+env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+mlib = scons_get_mathlib(env)
+env.AppendUnique(LIBS = mlib)
+
+# On windows, see if we should use Advapi32
+if os.name == 'nt':
+    config = env.NumpyConfigure(custom_tests = {'CheckWincrypt' : CheckWincrypt})
+    if config.CheckWincrypt:
+        config.env.AppendUnique(LIBS = 'Advapi32')
+
+sources = [os.path.join('mtrand', x) for x in 
+           ['mtrand.c', 'randomkit.c', 'initarray.c', 'distributions.c']]
+
+# XXX: Pyrex dependency
+mtrand = env.NumpyPythonExtension('mtrand', source = sources)
