@@ -1491,6 +1491,7 @@ def scons_generate_config_py(target):
         config['py_modules'].append((packagename, '__config__',generate_config_py))
     """
     from distutils.dir_util import mkpath
+    from numscons import get_scons_configres_dir, get_scons_configres_filename
     import imp
     d = {}
     mkpath(os.path.dirname(target))
