@@ -9,7 +9,7 @@ from numpy.distutils.misc_util import get_numpy_include_dirs, get_mathlibs
 from numscons import GetNumpyEnvironment, scons_get_paths, \
                      scons_get_mathlib
 from numscons import CheckF77LAPACK
-from numscons.configuration import write_info
+from numscons import write_info
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))

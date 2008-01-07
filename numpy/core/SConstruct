@@ -8,7 +8,7 @@ from copy import deepcopy
 from numscons import get_python_inc, get_pythonlib_dir
 from numscons import GetNumpyEnvironment
 from numscons import CheckCBLAS 
-from numscons.configuration import write_info
+from numscons import write_info
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     generate_config_header, generate_config_header_emitter
