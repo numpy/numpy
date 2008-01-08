@@ -1,4 +1,4 @@
-# Last Change: Tue Jan 08 10:00 PM 2008 J
+# Last Change: Wed Jan 09 12:00 AM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -57,17 +57,17 @@ for type in ('Py_intptr_t', 'PY_LONG_LONG'):
 # Checking signal stuff
 #----------------------
 if is_npy_no_signal():
-    config_sym.append(('NPY_NOSMP', '1'))
+    numpyconfig_sym.append(('NPY_NOSMP', '1'))
     config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
 
 #---------------------
 # Checking SMP option
 #---------------------
 if define_no_smp():
-    config_sym.append(('NPY_NOSMP', '1'))
+    numpyconfig_sym.append(('NPY_NOSMP', '1'))
     config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
 else:
-    config_sym.append(('NPY_NOSMP', '0'))
+    numpyconfig_sym.append(('NPY_NOSMP', '0'))
     config.Define('NPY_NOSMP', 0, "define to 1 to disable SMP support ")
 
 #----------------------
@@ -81,7 +81,7 @@ if mathlib:
 mlib = check_mlibs(config, mlibs)
 
 # XXX: this is ugly: mathlib has nothing to do in a public header file
-config_sym.append(('MATHLIB', ','.join(mlib)))
+numpyconfig_sym.append(('MATHLIB', ','.join(mlib)))
 
 #----------------------------------
 # Checking the math funcs available
