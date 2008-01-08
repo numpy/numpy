@@ -32,7 +32,7 @@ config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMa
 # - 0: #undef definition
 # - 1: #define definition
 # - string: #define definition value
-config_sym = []
+numpyconfig_sym = []
 
 #---------------
 # Checking Types
@@ -41,24 +41,15 @@ def check_type(type, include = None):
     st = config.CheckTypeSize(type, includes = include)
     type = type.replace(' ', '_')
     if st:
-        config_sym.append(('SIZEOF_%s' % type.upper(), '%d' % st))
+        numpyconfig_sym.append(('SIZEOF_%s' % type.upper(), '%d' % st))
     else:
-        config_sym.append(('SIZEOF_%s' % type.upper(), 0))
+        numpyconfig_sym.append(('SIZEOF_%s' % type.upper(), 0))
 
-check_type('short')
-check_type('int')
-check_type('long')
-check_type('float')
-check_type('double')
-check_type('long double')
-check_type('Py_intptr_t', include = "#include <Python.h>\n")
-check_type('PY_LONG_LONG', include = "#include <Python.h>\n")
+for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
+    check_type(type)
 
-# TODO: check python extension can be built (in root or here ?)
-
-#-----------------------
-# Checking configuration
-#-----------------------
+for type in ('Py_intptr_t', 'PY_LONG_LONG'):
+    check_type(type, include = "#include <Python.h>\n")
 
 #----------------------
 # Checking signal stuff
@@ -67,17 +58,19 @@ if is_npy_no_signal():
     config_sym.append(('NPY_NOSMP', '1'))
     config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
 
-#------------------------------------------
-# Checking the mathlib and its capabilities
-#------------------------------------------
-# Function to check:
-mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
-          'isnan', 'isinf', 'rint')
+#---------------------
+# Checking SMP option
+#---------------------
+if define_no_smp():
+    config_sym.append(('NPY_NOSMP', '1'))
+    config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
+else:
+    config_sym.append(('NPY_NOSMP', '0'))
+    config.Define('NPY_NOSMP', 0, "define to 1 to disable SMP support ")
 
-# Set value to 1 for each defined function (in math lib)
-mfuncs_defined = dict([(f, 0) for f in mfuncs])
-
-# TODO: checklib vs checkfunc ?
+#----------------------
+# Checking the mathlib 
+#----------------------
 mlibs = [[], ['m'], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
@@ -88,15 +81,22 @@ mlib = check_mlibs(config, mlibs)
 # XXX: this is ugly: mathlib has nothing to do in a public header file
 config_sym.append(('MATHLIB', ','.join(mlib)))
 
+#----------------------------------
+# Checking the math funcs available
+#----------------------------------
+# Function to check:
+mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
+          'isnan', 'isinf', 'rint')
+
+# Set value to 1 for each defined function (in math lib)
+mfuncs_defined = dict([(f, 0) for f in mfuncs])
+
+# TODO: checklib vs checkfunc ?
 def check_func(f):
     """Check that f is available in mlib, and add the symbol appropriately.
 
     f is expected to be a tuble (symbol, cpp define)."""
     st = config.CheckFunc(f, language = 'C')
-    if st:
-        config_sym.append((f, 1))
-    else:
-        config_sym.append((f, 0))
     mfuncs_defined[f] = 1
 
 for f in mfuncs:
@@ -128,30 +128,18 @@ if not config.CheckDeclaration('PyOS_ascii_strtod',
                       "Define to a function to use as a replacement for "\
                       "PyOS_ascii_strtod if not available in python header")
 
-# XXX: would be better to check for PyOS_ascii_strod instead of version
-if sys.version[:3] < '2.4':
-    if config.CheckFunc('strtod'):
-        config_sym.append(('PyOS_ascii_strtod', 'strtod'))
-
-if define_no_smp():
-    config_sym.append(('NPY_NOSMP', '1'))
-    config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
-else:
-    config_sym.append(('NPY_NOSMP', '0'))
-    config.Define('NPY_NOSMP', 0, "define to 1 to disable SMP support ")
-
+#------------------------------------
+# DISTUTILS Hack on AMD64 on windows
+#------------------------------------
 # XXX: this is ugly
-distutils_use_sdk = 0
 if sys.platform=='win32' or os.name=='nt':
     from distutils.msvccompiler import get_build_architecture
     a = get_build_architecture()
     print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
     if a == 'AMD64':
         distutils_use_sdk = 1
-if distutils_use_sdk:
-    moredefs.append('DISTUTILS_USE_SDK')
-    config.Define('DISTUTILS_USE_SDK', distutils_use_sdk, 
-                  "define to 1 to disable SMP support ")
+        config.Define('DISTUTILS_USE_SDK', distutils_use_sdk, 
+                      "define to 1 to disable SMP support ")
 
 #--------------
 # Checking Blas
@@ -173,7 +161,7 @@ write_info(env)
 #---------------------------------------
 config_dict = {}
 # XXX: this is ugly, make the API for config.h and numpyconfig.h similar
-for key, value in config_sym:
+for key, value in numpyconfig_sym:
     config_dict['@%s@' % key] = str(value)
 env['SUBST_DICT'] = config_dict
 
@@ -181,7 +169,7 @@ include_dir = 'include/numpy'
 env.SubstInFile(pjoin(env['build_dir'], 'numpyconfig.h'), 
                 pjoin(env['src_dir'], include_dir, 'numpyconfig.h.in'))
 
-env['CONFIG_H_GEN'] = config_sym
+env['CONFIG_H_GEN'] = numpyconfig_sym
 
 #---------------------------
 # Builder for generated code
