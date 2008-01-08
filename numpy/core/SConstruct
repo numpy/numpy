@@ -1,4 +1,4 @@
-# Last Change: Sun Jan 06 10:00 PM 2008 J
+# Last Change: Tue Jan 08 09:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -11,7 +11,8 @@ from numscons import CheckCBLAS
 from numscons import write_info
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
-    generate_config_header, generate_config_header_emitter
+    generate_config_header, generate_config_header_emitter, \
+    check_mlib, check_mlibs
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
@@ -26,7 +27,7 @@ if os.name == 'nt':
 #=======================
 # XXX: separate env for configuration
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
-    'CheckCBLAS' : CheckCBLAS})
+    'CheckCBLAS' : CheckCBLAS}, config_h = 'scons_config.h')
 
 # Convention: list of tuples (definition, value). value:
 # - 0: #undef definition
@@ -86,16 +87,9 @@ mlibs = [[], ['m'], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
 if mathlib: 
     mlibs.insert(0, mathlib)
-for mlib in mlibs:
-    st = config.CheckBrokenMathlib(mlib)
-    if st:
-        break
 
-if not st:
-    import SCons
-    raise SCons.Errors.UserError("No usable mathlib was found: chose another "\
-                                 "one using the MATHLIB env variable, eg "\
-                                 "'MATHLIB=m python setup.py build'")
+mlib = check_mlibs(config, mlibs)
+
 # XXX: this is ugly: mathlib has nothing to do in a public header file
 config_sym.append(('MATHLIB', ','.join(mlib)))
 
@@ -103,7 +97,7 @@ def check_lib(f, autoadd = 0):
     """Check that f is available in mlib, and add the symbol appropriately.
 
     f is expected to be a tuble (symbol, cpp define)."""
-    st = config.CheckLibWithHeader(mlib, 'math.h', language = 'C', call = '%s;' % f[0], autoadd = autoadd)
+    st = config.CheckFunc(f[0], language = 'C')
     if st:
         config_sym.append((f[1], 1))
     else:

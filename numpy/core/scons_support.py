@@ -1,4 +1,4 @@
-#! Last Change: Sun Jan 06 09:00 PM 2008 J
+#! Last Change: Tue Jan 08 08:00 PM 2008 J
 
 __docstring__ = """Code to support special facilities to scons which are only
 useful for numpy.core, hence not put into numpy.distutils.scons"""
@@ -18,6 +18,7 @@ from numscons.numdist import process_c_str as process_str
 from numscons.core.utils import rsplit, isstring
 
 import SCons.Node
+import SCons
 
 def split_ext(string):
     sp = rsplit(string, '.', 1)
@@ -159,6 +160,31 @@ int main(int argc, char *argv[])
     else:
         context.Result(' No !')
     return st[0]
+
+def check_mlib(config, mlib):
+    """Return 1 if mlib is available and usable by numpy, 0 otherwise.
+
+    mlib can be a string (one library), or a list of libraries."""
+    # Check the libraries in mlib are linkable
+    if len(mlib) > 0:
+        # XXX: put an autoadd argument to 0 here and add an autoadd argument to
+        # CheckBroekenMathlib (otherwise we may add bogus libraries, the ones
+        # which do not path the CheckBrokenMathlib test).
+        st = config.CheckLib(mlib)
+        if not st:
+            return 0
+    # Check the mlib is usable by numpy
+    return config.CheckBrokenMathlib(mlib)
+
+def check_mlibs(config, mlibs):
+    for mlib in mlibs:
+        if check_mlib(config, mlib):
+            return mlib
+
+    # No mlib was found.
+    raise SCons.Errors.UserError("No usable mathlib was found: chose another "\
+                                 "one using the MATHLIB env variable, eg "\
+                                 "'MATHLIB=m python setup.py build'")
 
 def define_no_smp():
     """Returns True if we should define NPY_NOSMP, False otherwise."""
