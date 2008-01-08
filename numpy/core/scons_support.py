@@ -1,4 +1,4 @@
-#! Last Change: Tue Jan 08 08:00 PM 2008 J
+#! Last Change: Tue Jan 08 10:00 PM 2008 J
 
 __docstring__ = """Code to support special facilities to scons which are only
 useful for numpy.core, hence not put into numpy.distutils.scons"""
@@ -185,6 +185,12 @@ def check_mlibs(config, mlibs):
     raise SCons.Errors.UserError("No usable mathlib was found: chose another "\
                                  "one using the MATHLIB env variable, eg "\
                                  "'MATHLIB=m python setup.py build'")
+
+
+def is_npy_no_signal():
+    """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
+    header."""
+    return sys.platform == 'win32'
 
 def define_no_smp():
     """Returns True if we should define NPY_NOSMP, False otherwise."""

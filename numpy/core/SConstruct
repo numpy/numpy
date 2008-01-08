@@ -12,7 +12,7 @@ from numscons import write_info
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     generate_config_header, generate_config_header_emitter, \
-    check_mlib, check_mlibs
+    check_mlib, check_mlibs, is_npy_no_signal
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
@@ -27,7 +27,7 @@ if os.name == 'nt':
 #=======================
 # XXX: separate env for configuration
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
-    'CheckCBLAS' : CheckCBLAS}, config_h = 'scons_config.h')
+    'CheckCBLAS' : CheckCBLAS}, config_h = pjoin(env['build_dir'], 'config.h'))
 
 # Convention: list of tuples (definition, value). value:
 # - 0: #undef definition
@@ -64,7 +64,9 @@ check_type('PY_LONG_LONG', include = "#include <Python.h>\n")
 #----------------------
 # Checking signal stuff
 #----------------------
-# TODO
+if is_npy_no_signal():
+    config_sym.append(('NPY_NOSMP', '1'))
+    config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
 
 #------------------------------------------
 # Checking the mathlib and its capabilities
@@ -157,9 +159,9 @@ if sys.platform=='win32' or os.name=='nt':
     if a == 'AMD64':
         distutils_use_sdk = 1
 if distutils_use_sdk:
-    moredefs.append(('DISTUTILS_USE_SDK', 1))
-config.Define('DISTUTILS_USE_SDK', distutils_use_sdk, 
-              "define to 1 to disable SMP support ")
+    moredefs.append('DISTUTILS_USE_SDK')
+    config.Define('DISTUTILS_USE_SDK', distutils_use_sdk, 
+                  "define to 1 to disable SMP support ")
 
 #--------------
 # Checking Blas
@@ -228,7 +230,7 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 # option ?)
 from os.path import join as pjoin
 
-config_header = env.GenerateConfigHeader(pjoin(env['build_dir'], 'config.h'), [])
+#config_header = env.GenerateConfigHeader(pjoin(env['build_dir'], 'config.h'), [])
 
 scalartypes_src = env.GenerateFromTemplate(
                     pjoin(env['build_dir'], 'src', 'scalartypes'), 
