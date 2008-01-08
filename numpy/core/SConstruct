@@ -110,6 +110,13 @@ for f in mfuncs[1:]:
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
 #-------------------------------------------------------
+if not config.CheckDeclaration('PyOS_ascii_strtod', 
+                               includes = "#include <Python.h>"):
+    if config.CheckFunc('strtod'):
+        config.Define('PyOS_ascii_strtod', 'strtod', 
+                      "Define to a function to use as a replacement for "\
+                      "PyOS_ascii_strtod if not available in python header")
+
 # XXX: would be better to check for PyOS_ascii_strod instead of version
 if sys.version[:3] < '2.4':
     if config.CheckFunc('strtod'):
