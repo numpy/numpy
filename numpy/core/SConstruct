@@ -71,20 +71,11 @@ if is_npy_no_signal():
 # Checking the mathlib and its capabilities
 #------------------------------------------
 # Function to check:
-mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
-    ('expf', 'HAVE_FLOAT_FUNCS'),
-    ('log1p', 'HAVE_LOG1P'),
-    ('expm1', 'HAVE_EXPM1'),
-    ('asinh', 'HAVE_INVERSE_HYPERBOLIC'),
-    ('atanhf', 'HAVE_INVERSE_HYPERBOLIC_FLOAT'),
-    ('atanhl', 'HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE'),
-    ('isnan', 'HAVE_ISNAN'),
-    ('isinf', 'HAVE_ISINF'),
-    ('rint', 'HAVE_RINT'),
-    ]
+mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
+          'isnan', 'isinf', 'rint')
 
 # Set value to 1 for each defined function (in math lib)
-mfuncs_defined = dict([(f[0], 0) for f in mfuncs])
+mfuncs_defined = dict([(f, 0) for f in mfuncs])
 
 # TODO: checklib vs checkfunc ?
 mlibs = [[], ['m'], ['cpml']]
@@ -101,12 +92,12 @@ def check_func(f):
     """Check that f is available in mlib, and add the symbol appropriately.
 
     f is expected to be a tuble (symbol, cpp define)."""
-    st = config.CheckFunc(f[0], language = 'C')
+    st = config.CheckFunc(f, language = 'C')
     if st:
-        config_sym.append((f[1], 1))
+        config_sym.append((f, 1))
     else:
-        config_sym.append((f[1], 0))
-    mfuncs_defined[f[0]] = 1
+        config_sym.append((f, 0))
+    mfuncs_defined[f] = 1
 
 for f in mfuncs:
     check_func(f)
