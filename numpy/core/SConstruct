@@ -1,4 +1,4 @@
-# Last Change: Tue Jan 08 09:00 PM 2008 J
+# Last Change: Tue Jan 08 10:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -93,7 +93,7 @@ mlib = check_mlibs(config, mlibs)
 # XXX: this is ugly: mathlib has nothing to do in a public header file
 config_sym.append(('MATHLIB', ','.join(mlib)))
 
-def check_lib(f, autoadd = 0):
+def check_func(f):
     """Check that f is available in mlib, and add the symbol appropriately.
 
     f is expected to be a tuble (symbol, cpp define)."""
@@ -103,9 +103,8 @@ def check_lib(f, autoadd = 0):
     else:
         config_sym.append((f[1], 0))
 
-check_lib(mfuncs[0], autoadd = 1)
-for f in mfuncs[1:]:
-    check_lib(f)
+for f in mfuncs:
+    check_func(f)
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
@@ -124,16 +123,23 @@ if sys.version[:3] < '2.4':
 
 if define_no_smp():
     config_sym.append(('NPY_NOSMP', '1'))
+    config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
 else:
     config_sym.append(('NPY_NOSMP', '0'))
+    config.Define('NPY_NOSMP', 0, "define to 1 to disable SMP support ")
 
 # XXX: this is ugly
+distutils_use_sdk = 0
 if sys.platform=='win32' or os.name=='nt':
     from distutils.msvccompiler import get_build_architecture
     a = get_build_architecture()
     print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
     if a == 'AMD64':
-        moredefs.append(('DISTUTILS_USE_SDK', 1))
+        distutils_use_sdk = 1
+if distutils_use_sdk:
+    moredefs.append(('DISTUTILS_USE_SDK', 1))
+config.Define('DISTUTILS_USE_SDK', distutils_use_sdk, 
+              "define to 1 to disable SMP support ")
 
 #--------------
 # Checking Blas
