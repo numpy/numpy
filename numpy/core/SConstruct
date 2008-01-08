@@ -63,12 +63,9 @@ if is_npy_no_signal():
 #---------------------
 # Checking SMP option
 #---------------------
-if define_no_smp():
-    numpyconfig_sym.append(('NPY_NOSMP', '1'))
-    config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
-else:
-    numpyconfig_sym.append(('NPY_NOSMP', '0'))
-    config.Define('NPY_NOSMP', 0, "define to 1 to disable SMP support ")
+st = define_no_smp():
+numpyconfig_sym.append(('NPY_NOSMP', st))
+config.Define('NPY_NOSMP', st, "define to 1 to disable SMP support ")
 
 #----------------------
 # Checking the mathlib 
