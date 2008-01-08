@@ -82,6 +82,9 @@ mfuncs = [('expl', 'HAVE_LONGDOUBLE_FUNCS'),
     ('rint', 'HAVE_RINT'),
     ]
 
+# Set value to 1 for each defined function (in math lib)
+mfuncs_defined = dict([(f[0], 0) for f in mfuncs])
+
 # TODO: checklib vs checkfunc ?
 mlibs = [[], ['m'], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
@@ -102,9 +105,26 @@ def check_func(f):
         config_sym.append((f[1], 1))
     else:
         config_sym.append((f[1], 0))
+    mfuncs_defined[f[0]] = 1
 
 for f in mfuncs:
     check_func(f)
+
+if mfuncs_defined['expl'] == 1:
+    config.Define('HAVE_LONGDOUBLE_FUNCS', 1, 
+                  'Define to 1 if long double funcs are available')
+if mfuncs_defined['expf'] == 1:
+    config.Define('HAVE_FLOAT_FUNCS', 1, 
+                  'Define to 1 if long double funcs are available')
+if mfuncs_defined['asinh'] == 1:
+    config.Define('HAVE_INVERSE_HYPERBOLIC', 1, 
+                  'Define to 1 if inverse hyperbolic funcs are available')
+if mfuncs_defined['atanhf'] == 1:
+    config.Define('HAVE_INVERSE_HYPERBOLIC_FLOAT', 1, 
+                  'Define to 1 if inverse hyperbolic float funcs are available')
+if mfuncs_defined['atanhl'] == 1:
+    config.Define('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE', 1, 
+                  'Define to 1 if inverse hyperbolic long double funcs are available')
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
