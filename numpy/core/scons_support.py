@@ -1,7 +1,7 @@
 #! Last Change: Tue Jan 08 10:00 PM 2008 J
 
-__docstring__ = """Code to support special facilities to scons which are only
-useful for numpy.core, hence not put into numpy.distutils.scons"""
+"""Code to support special facilities to scons which are only useful for
+numpy.core, hence not put into numpy.distutils.scons"""
 
 import sys
 import os
@@ -181,4 +181,3 @@ def define_no_smp():
         except KeyError:
             nosmp = 0
     return nosmp == 1
-

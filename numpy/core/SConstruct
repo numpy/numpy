@@ -24,10 +24,12 @@ if os.name == 'nt':
 #=======================
 # Starting Configuration
 #=======================
-# XXX: separate env for configuration
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
     'CheckCBLAS' : CheckCBLAS}, config_h = pjoin(env['build_dir'], 'config.h'))
 
+# numpyconfig_sym will keep the values of some configuration variables, the one
+# needed for the public numpy API.
+ 
 # Convention: list of tuples (definition, value). value:
 # - 0: #undef definition
 # - 1: #define definition
