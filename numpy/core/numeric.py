@@ -667,7 +667,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     fname can be a filename or a file handle.  Support for gzipped files is
     automatic, if the filename ends in .gz
 
-    See scipy.loadmat to read and write matfiles.
+    See scipy.io.loadmat to read and write matfiles.
 
     Example usage:
 
