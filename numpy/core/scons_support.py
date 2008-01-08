@@ -93,43 +93,6 @@ def generate_umath_emitter(target, source, env):
     t = str(target[0]) + '.c'
     return ([t], source)
     
-#-------------------
-# Generate config.h 
-#-------------------
-def generate_config_header(target, source, env):
-    t = open(str(target[0]), 'w')
-    if not env.has_key('CONFIG_H_GEN'):
-        # XXX
-        assert 0 == 1
-    sym = env['CONFIG_H_GEN']
-    def write_symbol(define, value):
-        if value == 1:
-            return "#define %s\n\n" % define
-        elif value == 0:
-            return "/* #undef %s */\n\n" % define
-        elif isstring(value):
-            return "#define %s %s\n\n" % (define, value)
-        else:
-            return "#define %s %s\n\n" % (define, ','.join(value))
-    t.writelines([write_symbol(i[0], i[1]) for i in sym])
-    t.write('\n')
-    t.close()
-
-    print 'File: %s' % target[0]
-    target_f = open(str(target[0]))
-    print target_f.read()
-    target_f.close()
-    print 'EOF'
-    return 0
-
-def generate_config_header_emitter(target, source, env):
-    """Add dependency from config list  CONFIG_H_GEN to target.  Returns
-    original target, source tuple unchanged.  """
-    from SCons.Script import Depends
-    d = deepcopy(env['CONFIG_H_GEN']) # copy it
-    Depends(target, SCons.Node.Python.Value(d))
-    return target, source
-
 #-----------------------------------------
 # Other functions related to configuration
 #-----------------------------------------
