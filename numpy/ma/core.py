@@ -14,47 +14,42 @@ Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: core.py 3639 2007-12-13 03:39:17Z pierregm $
 """
-__author__ = "Pierre GF Gerard-Marchant ($Author: pierregm $)"
-__version__ = '1.0'
-__revision__ = "$Revision: 3639 $"
-__date__     = '$Date: 2007-12-13 05:39:17 +0200 (Thu, 13 Dec 2007) $'
-
+__author__ = "Pierre GF Gerard-Marchant"
 __docformat__ = "restructuredtext en"
 
 __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'bool_', 'complex_', 'float_', 'int_', 'object_',
            'abs', 'absolute', 'add', 'all', 'allclose', 'allequal', 'alltrue',
-               'amax', 'amin', 'anom', 'anomalies', 'any', 'arange',
-               'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2',
-               'arctanh', 'argmax', 'argmin', 'argsort', 'around',
-               'array', 'asarray','asanyarray',
+           'amax', 'amin', 'anom', 'anomalies', 'any', 'arange',
+           'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2',
+           'arctanh', 'argmax', 'argmin', 'argsort', 'around',
+           'array', 'asarray','asanyarray',
            'bitwise_and', 'bitwise_or', 'bitwise_xor',
            'ceil', 'choose', 'compressed', 'concatenate', 'conjugate',
-               'cos', 'cosh', 'count',
+           'cos', 'cosh', 'count',
            'default_fill_value', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp',
            'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
            'getmask', 'getmaskarray', 'greater', 'greater_equal', 'hypot',
            'ids', 'inner', 'innerproduct',
-               'isMA', 'isMaskedArray', 'is_mask', 'is_masked', 'isarray',
+           'isMA', 'isMaskedArray', 'is_mask', 'is_masked', 'isarray',
            'left_shift', 'less', 'less_equal', 'load', 'loads', 'log', 'log10',
-               'logical_and', 'logical_not', 'logical_or', 'logical_xor',
+           'logical_and', 'logical_not', 'logical_or', 'logical_xor',
            'make_mask', 'make_mask_none', 'mask_or', 'masked',
-               'masked_array', 'masked_equal', 'masked_greater',
-               'masked_greater_equal', 'masked_inside', 'masked_less',
-               'masked_less_equal', 'masked_not_equal', 'masked_object',
-               'masked_outside', 'masked_print_option', 'masked_singleton',
-               'masked_values', 'masked_where', 'max', 'maximum', 'mean', 'min',
-               'minimum', 'multiply',
+           'masked_array', 'masked_equal', 'masked_greater',
+           'masked_greater_equal', 'masked_inside', 'masked_less',
+           'masked_less_equal', 'masked_not_equal', 'masked_object',
+           'masked_outside', 'masked_print_option', 'masked_singleton',
+           'masked_values', 'masked_where', 'max', 'maximum', 'mean', 'min',
+           'minimum', 'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
            'power', 'product', 'ptp', 'put', 'putmask',
            'rank', 'ravel', 'remainder', 'repeat', 'reshape', 'resize',
-               'right_shift', 'round_',
+           'right_shift', 'round_',
            'shape', 'sin', 'sinh', 'size', 'sometrue', 'sort', 'sqrt', 'std',
-               'subtract', 'sum', 'swapaxes',
+           'subtract', 'sum', 'swapaxes',
            'take', 'tan', 'tanh', 'transpose', 'true_divide',
            'var', 'where',
            'zeros']
@@ -63,7 +58,7 @@ import sys
 import types
 import cPickle
 import operator
-#
+
 import numpy
 from numpy.core import bool_, complex_, float_, int_, object_, str_
 
@@ -76,22 +71,9 @@ from numpy import expand_dims as n_expand_dims
 from numpy import array as narray
 import warnings
 
-class NoMask(ndarray):
-    def __new__(subtype):
-        narray(False)
-        return narray(False).view(subtype)
-
-    def no_op(self,*args,**kwargs):
-        return self
-
-    def __array_finalize__(self,obj):
-        obj.flags['WRITEABLE'] = False
-
-    def copy(self):
-        return self
 
 MaskType = bool_
-nomask = NoMask()
+nomask = MaskType(0)
 
 divide_tolerance = 1.e-35
 numpy.seterr(all='ignore')
@@ -417,8 +399,10 @@ class _MaskedUnaryOperation:
     #
     def __call__ (self, a, *args, **kwargs):
         "Execute the call behavior."
+        #
         m = getmask(a)
         d1 = get_data(a)
+        #        
         if self.domain is not None:
             dm = narray(self.domain(d1), copy=False)
             m = numpy.logical_or(m, dm)
@@ -429,14 +413,17 @@ class _MaskedUnaryOperation:
         # Take care of the masked singletong first ...
         if not m.ndim and m:
             return masked
-        # Get the result..............................
+        # Get the result class .......................
         if isinstance(a, MaskedArray):
-            result = self.f(d1, *args, **kwargs).view(type(a))
+            subtype = type(a)
         else:
-            result = self.f(d1, *args, **kwargs).view(MaskedArray)
+            subtype = MaskedArray
+        # Get the result  as a view of the subtype ...
+        result = self.f(d1, *args, **kwargs).view(subtype)
         # Fix the mask if we don't have a scalar
         if result.ndim > 0:
             result._mask = m
+            result._update_from(a)
         return result
     #
     def __str__ (self):
@@ -475,6 +462,10 @@ class _MaskedBinaryOperation:
             if m is not nomask:
                 result._mask = make_mask_none(result.shape)
                 result._mask.flat = m
+            if isinstance(a,MaskedArray):
+                result._update_from(a)
+            if isinstance(b,MaskedArray):
+                result._update_from(b)
         elif m:
             return masked
         return result
@@ -586,6 +577,10 @@ class _DomainedBinaryOperation:
         result =  self.f(d1, d2).view(get_masked_subclass(a,b))
         if result.ndim > 0:
             result._mask = m
+            if isinstance(a,MaskedArray):
+                result._update_from(a)
+            if isinstance(b,MaskedArray):
+                result._update_from(b)
         return result
 
     def __str__ (self):
@@ -1020,7 +1015,6 @@ class _arraymethod(object):
         cls = type(self.obj)
         result = getattr(data, methodname)(*args, **params).view(cls)
         result._update_from(self.obj)
-        #result._shrinkmask = self.obj._shrinkmask
         if result.ndim:
             if not self._onmask:
                 result.__setmask__(mask)
@@ -1064,7 +1058,7 @@ class MaskedArray(numeric.ndarray):
 
     Construction:
         x = MaskedArray(data, mask=nomask, dtype=None, copy=True,
-        fill_value=None, mask = nomask, fill_value=None, shrink=True)
+        fill_value=None, keep_mask=True, hard_mask=False, shrink=True)
 
     *Parameters*:
         data : {var}
@@ -1080,6 +1074,11 @@ class MaskedArray(numeric.ndarray):
         copy : {boolean}
             Whether to copy the input data (True), or to use a
             reference instead.  Note: data are NOT copied by default.
+        subok : {True, boolean}
+            Whether to return a subclass of MaskedArray (if possible)
+            or a plain MaskedArray.
+        ndmin : {0, int}
+            Minimum number of dimensions
         fill_value : {var}
             Value used to fill in the masked values when necessary. If
             None, a default based on the datatype is used.
@@ -1089,9 +1088,9 @@ class MaskedArray(numeric.ndarray):
         hard_mask : {False, boolean}
             Whether to use a hard mask or not. With a hard mask,
             masked values cannot be unmasked.
-        subok : {True, boolean}
-            Whether or not to return a subclass of MaskedArray (if
-            possible) or a plain MaskedArray.
+        shrink : {True, boolean}
+            Whether to force compression of an empty mask.
+        
 
     """
 
@@ -1101,8 +1100,9 @@ class MaskedArray(numeric.ndarray):
     _baseclass =  numeric.ndarray
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
-                fill_value=None, keep_mask=True, hard_mask=False, flag=None,
-                subok=True, **options):
+                subok=True, ndmin=0, fill_value=None, 
+                keep_mask=True, hard_mask=False, flag=None,shrink=True, 
+                **options):
         """Create a new masked array from scratch.
 
         Note: you can also create an array with the .view(MaskedArray)
@@ -1114,7 +1114,7 @@ class MaskedArray(numeric.ndarray):
                           DeprecationWarning)
             shrink = flag
         # Process data............
-        _data = narray(data, dtype=dtype, copy=copy, subok=True)
+        _data = narray(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
         _basedict = getattr(data, '_basedict', getattr(data, '__dict__', None))
         if not isinstance(data, MaskedArray) or not subok:
@@ -1128,7 +1128,10 @@ class MaskedArray(numeric.ndarray):
         # Process mask ...........
         if mask is nomask:
             if not keep_mask:
-                _data._mask = nomask
+                if shrink:
+                    _data._mask = nomask
+                else:
+                    _data._mask = make_mask_none(_data)
             if copy:
                 _data._mask = _data._mask.copy()
                 _data._sharedmask = False
@@ -1183,7 +1186,7 @@ class MaskedArray(numeric.ndarray):
         return
     #........................
     def __array_finalize__(self,obj):
-        """Finalize the masked array.
+        """Finalizes the masked array.
         """
         # Get main attributes .........
         self._mask = getattr(obj, '_mask', nomask)
@@ -1195,7 +1198,6 @@ class MaskedArray(numeric.ndarray):
         # Finalize the mask ...........
         if self._mask is not nomask:
             self._mask.shape = self.shape
-#        self._data = self.view(self._baseclass)
         return
     #..................................
     def __array_wrap__(self, obj, context=None):
@@ -1266,7 +1268,10 @@ class MaskedArray(numeric.ndarray):
             dout._update_from(self)
             # Update the mask if needed
             if m is not nomask:
-                dout._mask = ndarray.__getitem__(m, indx).reshape(dout.shape)
+                if isinstance(indx, basestring):
+                    dout._mask = m.reshape(dout.shape)
+                else:
+                    dout._mask = ndarray.__getitem__(m, indx).reshape(dout.shape)
 #               Note: Don't try to check for m.any(), that'll take too long...
 #                mask = ndarray.__getitem__(m, indx).reshape(dout.shape)
 #                if self._shrinkmask and not m.any():
@@ -1287,6 +1292,10 @@ class MaskedArray(numeric.ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
+        if isinstance(indx, basestring):
+            ndarray.__setitem__(self._data,indx, getdata(value))
+            warnings.warn("The mask is NOT affected!")
+            return
         #....
         if value is masked:
             m = self._mask
@@ -1794,6 +1803,8 @@ masked_%(name)s(data = %(data)s,
     #............................................
     def ids (self):
         """Return the addresses of the data and mask areas."""
+        if self._mask is nomask:
+            return (self.ctypes.data, id(nomask))        
         return (self.ctypes.data, self._mask.ctypes.data)
     #............................................
     def all(self, axis=None, out=None):
@@ -2282,7 +2293,10 @@ masked_%(name)s(data = %(data)s,
             mask = umath.logical_and.reduce(mask.flat)
         else:
             mask = umath.logical_and.reduce(mask, axis=axis)
-        # Get the fil value ...........
+        # Skip if all masked ..........
+        if not mask.ndim and mask:
+            return masked
+        # Get the fill value ...........
         if fill_value is None:
             fill_value = minimum_fill_value(self)
         # Get the data ................
@@ -2290,6 +2304,13 @@ masked_%(name)s(data = %(data)s,
         if result.ndim > 0:
             result._mask = mask
         return result
+    
+    def mini(self, axis=None):    
+        if axis is None:
+            return minimum(self)
+        else:
+            return minimum.reduce(self, axis)
+    
     #........................
     def max(self, axis=None, fill_value=None):
         """Return the maximum/a along the given axis.
@@ -2315,6 +2336,9 @@ masked_%(name)s(data = %(data)s,
             mask = umath.logical_and.reduce(mask.flat)
         else:
             mask = umath.logical_and.reduce(mask, axis=axis)
+        # Skip if all masked ..........
+        if not mask.ndim and mask:
+            return masked
         # Get the fill value ..........
         if fill_value is None:
             fill_value = maximum_fill_value(self)
@@ -2469,10 +2493,13 @@ masked = masked_singleton
 
 masked_array = MaskedArray
 
-def array(data, dtype=None, copy=False, order=False, mask=nomask, subok=True,
-          keep_mask=True, hard_mask=False, fill_value=None, shrink=True):
-    """array(data, dtype=None, copy=True, order=False, mask=nomask,
-             keep_mask=True, shrink=True, fill_value=None)
+def array(data, dtype=None, copy=False, order=False, 
+          mask=nomask, fill_value=None, 
+          keep_mask=True, hard_mask=False, shrink=True, subok=True, ndmin=0, 
+          ):
+    """array(data, dtype=None, copy=False, order=False, mask=nomask,
+             fill_value=None, keep_mask=True, hard_mask=False, shrink=True,
+             subok=True, ndmin=0)
 
     Acts as shortcut to MaskedArray, with options in a different order
     for convenience.  And backwards compatibility...
@@ -2481,7 +2508,7 @@ def array(data, dtype=None, copy=False, order=False, mask=nomask, subok=True,
     #TODO: we should try to put 'order' somwehere
     return MaskedArray(data, mask=mask, dtype=dtype, copy=copy, subok=subok,
                        keep_mask=keep_mask, hard_mask=hard_mask,
-                       fill_value=fill_value)
+                       fill_value=fill_value, ndmin=ndmin, shrink=shrink)
 array.__doc__ = masked_array.__doc__
 
 def is_masked(x):
@@ -2745,8 +2772,9 @@ def concatenate(arrays, axis=0):
         return data
     # OK, so we have to concatenate the masks
     dm = numpy.concatenate([getmaskarray(a) for a in arrays], axis)
-    shrink = numpy.logical_or.reduce([getattr(a,'_shrinkmask',True) for a in arrays])
-    if shrink and not dm.any():
+#    shrink = numpy.logical_or.reduce([getattr(a,'_shrinkmask',True) for a in arrays])
+#    if shrink and not dm.any():
+    if not dm.any():
         data._mask = nomask
     else:
         data._mask = dm.reshape(d.shape)
@@ -3178,43 +3206,4 @@ def load(F):
 def loads(strg):
     "Load a pickle from the current string."""
     return cPickle.loads(strg)
-
-
-
-
-###############################################################################
-#
-if __name__ == '__main__':
-    from maskedarray.testutils import assert_equal, assert_almost_equal
-
-    if 1:
-        x = array([1,2,3,4,5,6])
-        mx = array(x, mask=[0,0,0,1,1,1])
-        mask = [0,0,1,0,0,1]
-    if 1:
-        # w/o mask, w/o masked values
-        xx = x.copy()
-        putmask(xx, mask, 99)
-        assert_equal(xx, [1,2,99,4,5,99])
-        # w/ mask, w/o masked values
-        mxx = mx.copy()
-        putmask(mxx, mask, 99)
-        assert_equal(mxx._data, [1,2,99,4,5,99])
-        assert_equal(mxx._mask, [0,0,0,1,1,0])
-        # w/o mask, w/ masked values
-        values = array([10,20,30,40,50,60],mask=[1,1,1,0,0,0])
-        xx = x.copy()
-        putmask(xx, mask, values)
-        assert_equal(xx._data, [1,2,30,4,5,60])
-        assert_equal(xx._mask, [0,0,1,0,0,0])
-        # w/ mask, w/ masked values
-        mxx = mx.copy()
-        putmask(mxx, mask, values)
-        assert_equal(mxx._data, [1,2,30,4,5,60])
-        assert_equal(mxx._mask, [0,0,1,1,1,0])
-        # w/ mask, w/ masked values + hardmask
-        mxx = mx.copy()
-        mxx.harden_mask()
-        putmask(mxx, mask, values)
-        assert_equal(mxx, [1,2,30,4,5,60])
 
