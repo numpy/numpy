@@ -2769,6 +2769,7 @@ def concatenate(arrays, axis=0):
     for x in arrays:
         if getmask(x) is not nomask:
             break
+    else:
         return data
     # OK, so we have to concatenate the masks
     dm = numpy.concatenate([getmaskarray(a) for a in arrays], axis)

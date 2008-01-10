@@ -1366,6 +1366,18 @@ class TestArrayMethods(NumpyTestCase):
         x[1] = masked
         x['f'] = 17
 
+    def test_concat(self):
+         x=zeros(2)
+         y=array(ones(2),mask=[False,True])
+
+         z = concatenate((x,y))
+         assert_array_equal(z,[0,0,1,1])
+         assert_array_equal(z.mask,[False,False,False,True])
+
+         z = concatenate((y,x))
+         assert_array_equal(z,[1,1,0,0])
+         assert_array_equal(z.mask,[False,True,False,False])
+
 
 #..............................................................................
 
