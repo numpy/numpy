@@ -35,9 +35,9 @@ restore_path()
 class TestNoMask(NumpyTestCase):
     def test_no_inplace(self):
         x = nomask
-        def iadd(x):
-            x += 1
-        self.failUnlessRaises(ValueError,iadd,x)
+        y = x
+        x += 1
+        assert x != y
 
     def test_no_copy(self):
         x = nomask
