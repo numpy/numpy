@@ -23,6 +23,31 @@ def is_npy_no_signal():
     header."""
     return sys.platform == 'win32'
 
+def is_npy_no_smp():
+    """Return True if the NPY_NO_SMP symbol must be defined in public
+    header (when SMP support cannot be reliably enabled)."""
+    # Python 2.3 causes a segfault when
+    #  trying to re-acquire the thread-state
+    #  which is done in error-handling
+    #  ufunc code.  NPY_ALLOW_C_API and friends
+    #  cause the segfault. So, we disable threading
+    #  for now.
+    if sys.version[:5] < '2.4.2':
+        nosmp = 1
+    else:
+        # Perhaps a fancier check is in order here.
+        #  so that threads are only enabled if there
+        #  are actually multiple CPUS? -- but
+        #  threaded code can be nice even on a single
+        #  CPU so that long-calculating code doesn't
+        #  block.
+        try:
+            nosmp = os.environ['NPY_NOSMP']
+            nosmp = 1
+        except KeyError:
+            nosmp = 0
+    return nosmp == 1
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -58,26 +83,6 @@ def configuration(parent_package='',top_path=None):
                 raise SystemError,"Failed to test configuration. "\
                       "See previous error messages for more information."
 
-            # Python 2.3 causes a segfault when
-            #  trying to re-acquire the thread-state
-            #  which is done in error-handling
-            #  ufunc code.  NPY_ALLOW_C_API and friends
-            #  cause the segfault. So, we disable threading
-            #  for now.
-            if sys.version[:5] < '2.4.2':
-                nosmp = 1
-            else:
-                # Perhaps a fancier check is in order here.
-                #  so that threads are only enabled if there
-                #  are actually multiple CPUS? -- but
-                #  threaded code can be nice even on a single
-                #  CPU so that long-calculating code doesn't
-                #  block.
-                try:
-                    nosmp = os.environ['NPY_NOSMP']
-                    nosmp = 1
-                except KeyError:
-                    nosmp = 0
             moredefs = []
             #
             mathlibs = []
@@ -127,12 +132,6 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
-            # Define NPY_NOSMP to 1 if explicitely requested, or if we cannot
-            # support thread support reliably
-            if nosmp:
-                target_f.write('#define NPY_NOSMP 1\n')
-            else:
-                target_f.write('#define NPY_NOSMP 0\n')
             target_f.close()
             print 'File:',target
             target_f = open(target)
@@ -399,8 +398,7 @@ def generate_numpyconfig_code(target):
             ('NPY_SIZEOF_FLOAT', 'SIZEOF_FLOAT'),
             ('NPY_SIZEOF_DOUBLE', 'SIZEOF_DOUBLE'),
             ('NPY_SIZEOF_LONGDOUBLE', 'SIZEOF_LONG_DOUBLE'),
-            ('NPY_SIZEOF_PY_INTPTR_T', 'SIZEOF_PY_INTPTR_T'),
-            ('NPY_NOSMP', 'NPY_NOSMP'),]
+            ('NPY_SIZEOF_PY_INTPTR_T', 'SIZEOF_PY_INTPTR_T')]
 
     testcode = ["""
 #include <Python.h>
@@ -426,6 +424,13 @@ int main()
     # Conditionally define NPY_NO_SIGNAL
     if is_npy_no_signal():
         testcode.append(r'    fprintf(f, "\n#define NPY_NO_SIGNAL\n");')
+
+    # Define NPY_NOSMP to 1 if explicitely requested, or if we cannot
+    # support thread support reliably
+    if is_npy_no_smp():
+        target_f.write('#define NPY_NO_SMP 1\n')
+    else:
+        target_f.write('#define NPY_NO_SMP 0\n')
 
     tmpcode = r"""
     #ifdef PY_LONG_LONG

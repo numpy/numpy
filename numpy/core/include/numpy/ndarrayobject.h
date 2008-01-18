@@ -16,7 +16,7 @@ extern "C" CONFUSE_EMACS
 #include "numpyconfig.h"
 
 /* Only use thread if configured in config and python supports it */
-#if defined WITH_THREAD && !NPY_NOSMP
+#if defined WITH_THREAD && !NPY_NO_SMP
         #define NPY_ALLOW_THREADS 1
 #else
         #define NPY_ALLOW_THREADS 0
