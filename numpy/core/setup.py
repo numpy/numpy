@@ -428,9 +428,9 @@ int main()
     # Define NPY_NOSMP to 1 if explicitely requested, or if we cannot
     # support thread support reliably
     if is_npy_no_smp():
-        target_f.write('#define NPY_NO_SMP 1\n')
+        targetcode.append(r'#define NPY_NO_SMP 1')
     else:
-        target_f.write('#define NPY_NO_SMP 0\n')
+        targetcode.write(r'#define NPY_NO_SMP 0')
 
     tmpcode = r"""
     #ifdef PY_LONG_LONG
