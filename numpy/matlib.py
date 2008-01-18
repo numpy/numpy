@@ -1,11 +1,11 @@
+import numpy as np
 from numpy.core.defmatrix import matrix, asmatrix
-from numpy import ndarray, array
-import numpy as N
+# need * as we're copying the numpy namespace
 from numpy import *
 
-__version__ = N.__version__
+__version__ = np.__version__
 
-__all__ = N.__all__[:] # copy numpy namespace
+__all__ = np.__all__[:] # copy numpy namespace
 __all__ += ['rand', 'randn', 'repmat']
 
 def empty(shape, dtype=None, order='C'):
@@ -36,17 +36,17 @@ def identity(n,dtype=None):
     return b
 
 def eye(n,M=None, k=0, dtype=float):
-    return asmatrix(N.eye(n,M,k,dtype))
+    return asmatrix(np.eye(n,M,k,dtype))
 
 def rand(*args):
     if isinstance(args[0], tuple):
         args = args[0]
-    return asmatrix(N.random.rand(*args))
+    return asmatrix(np.random.rand(*args))
 
 def randn(*args):
     if isinstance(args[0], tuple):
         args = args[0]
-    return asmatrix(N.random.randn(*args))
+    return asmatrix(np.random.randn(*args))
 
 def repmat(a, m, n):
     """Repeat a 0-d to 2-d array mxn times

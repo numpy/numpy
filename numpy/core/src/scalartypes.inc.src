@@ -547,14 +547,19 @@ gentype_repr(PyObject *self)
         Py_DECREF(arr);
         return ret;
 }
+/**begin repeat
 
+#name=float, double, longdouble#
+#NAME=FLOAT, DOUBLE, LONGDOUBLE#
+#PREFIX=NPY_,NPY_,#
+*/
 static void
-format_longdouble(char *buf, size_t buflen, longdouble val,
+format_@name@(char *buf, size_t buflen, @name@ val,
                   unsigned int precision)
 {
         char *cp;
 
-        PyOS_snprintf(buf, buflen, "%.*" LONGDOUBLE_FMT, precision, val);
+        PyOS_snprintf(buf, buflen, "%.*" @PREFIX@@NAME@_FMT, precision, val);
         cp = buf;
         if (*cp == '-')
                 cp++;
@@ -568,6 +573,7 @@ format_longdouble(char *buf, size_t buflen, longdouble val,
                 *cp++ = '\0';
         }
 }
+/**end repeat**/
 
 /* over-ride repr and str of array-scalar strings and unicode to
    remove NULL bytes and then call the corresponding functions
@@ -602,42 +608,57 @@ static PyObject *
 }
 /**end repeat**/
 
-
+/* These values are finfo.precision + 2 */
+#define FLOATPREC_REPR 8
+#define DOUBLEPREC_REPR 17
 
 #if SIZEOF_LONGDOUBLE == SIZEOF_DOUBLE
-#define PREC_REPR 17
-#define PREC_STR 17
-#else
-#define PREC_REPR 21
-#define PREC_STR 21
+#define LONGDOUBLEPREC_REPR DOUBLEPREC_REPR
+#define LONGDOUBLEPREC_STR DOUBLEPREC_REPR
+#else /* More than probably needed on Intel FP */
+#define LONGDOUBLEPREC_REPR 22
+#define LONGDOUBLEPREC_STR 22
 #endif
 
+/* floattype_repr */
+/**begin repeat
+
+#name=float, double, longdouble#
+#Name=Float, Double, LongDouble#
+#NAME=FLOAT, DOUBLE, LONGDOUBLE#
+*/
 static PyObject *
-longdoubletype_repr(PyObject *self)
+@name@type_repr(PyObject *self)
 {
         static char buf[100];
-        format_longdouble(buf, sizeof(buf),
-                          ((PyLongDoubleScalarObject *)self)->obval, PREC_REPR);
+        format_@name@(buf, sizeof(buf),
+                          ((Py@Name@ScalarObject *)self)->obval, @NAME@PREC_REPR);
         return PyString_FromString(buf);
 }
 
 static PyObject *
-clongdoubletype_repr(PyObject *self)
+c@name@type_repr(PyObject *self)
 {
         static char buf1[100];
         static char buf2[100];
         static char buf3[202];
-        clongdouble x;
-        x = ((PyCLongDoubleScalarObject *)self)->obval;
-        format_longdouble(buf1, sizeof(buf1), x.real, PREC_REPR);
-        format_longdouble(buf2, sizeof(buf2), x.imag, PREC_REPR);
+        c@name@ x;
+        x = ((PyC@Name@ScalarObject *)self)->obval;
+        format_@name@(buf1, sizeof(buf1), x.real, @NAME@PREC_REPR);
+        format_@name@(buf2, sizeof(buf2), x.imag, @NAME@PREC_REPR);
 
         snprintf(buf3, sizeof(buf3), "(%s+%sj)", buf1, buf2);
         return PyString_FromString(buf3);
 }
+/**end repeat**/
 
-#define longdoubletype_str longdoubletype_repr
-#define clongdoubletype_str clongdoubletype_repr
+/**begin repeat
+
+#name=float, double, longdouble#
+*/
+#define @name@type_str @name@type_repr
+#define c@name@type_str c@name@type_repr
+/**end repeat**/
 
 /** Could improve this with a PyLong_FromLongDouble(longdouble ldval)
     but this would need some more work...
@@ -842,6 +863,7 @@ gentype_interface_get(PyObject *self)
         arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr == NULL) return NULL;
         inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
+	if (inter != NULL) PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
         Py_DECREF(arr);
         return inter;
 }
@@ -2536,6 +2558,16 @@ ComplexFloating, Flexible, Character#
         /* We won't be inheriting from Python Int type. */
         PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
 #endif
+
+        /**begin repeat
+#name=repr, str#
+        */
+        PyFloatArrType_Type.tp_@name@ = floattype_@name@;
+        PyCFloatArrType_Type.tp_@name@ = cfloattype_@name@;
+
+        PyDoubleArrType_Type.tp_@name@ = doubletype_@name@;
+        PyCDoubleArrType_Type.tp_@name@  = cdoubletype_@name@;
+        /**end repeat**/
 
         /* These need to be coded specially because getitem does not
            return a normal Python type

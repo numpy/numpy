@@ -15,6 +15,7 @@ from getlimits import *
 #import convertcode
 from utils import *
 from arraysetops import *
+from io import *
 import math
 
 __all__ = ['emath','math']
@@ -29,6 +30,7 @@ __all__ += machar.__all__
 __all__ += getlimits.__all__
 __all__ += utils.__all__
 __all__ += arraysetops.__all__
+__all__ += io.__all__
 
 def test(level=1, verbosity=1):
     from numpy.testing import NumpyTest

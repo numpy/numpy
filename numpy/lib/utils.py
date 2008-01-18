@@ -1,3 +1,4 @@
+import compiler
 import os
 import sys
 import inspect
@@ -7,9 +8,10 @@ from numpy.core.multiarray import dtype as _dtype
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
-           'issubdtype', 'deprecate', 'get_numarray_include',
+           'issubdtype', 'deprecate', 'deprecate_with_doc',
+           'get_numarray_include',
            'get_include', 'info', 'source', 'who',
-           'byte_bounds', 'may_share_memory']
+           'byte_bounds', 'may_share_memory', 'safe_eval']
 
 def issubclass_(arg1, arg2):
     try:
@@ -82,19 +84,39 @@ else:
         func.__name__ = name
         return func
 
-def deprecate(func, oldname, newname):
+def deprecate(func, oldname=None, newname=None):
+    """Deprecate old functions.
+    Issues a DeprecationWarning, adds warning to oldname's docstring,
+    rebinds oldname.__name__ and returns new function object.
+
+    Example:
+    oldfunc = deprecate(newfunc, 'oldfunc', 'newfunc')
+
+    """
+
     import warnings
+    if oldname is None:
+        try:
+            oldname = func.func_name
+        except AttributeError:
+            oldname = func.__name__
+    if newname is None:
+        str1 = "%s is deprecated" % (oldname,)
+        depdoc = "%s is DEPRECATED!!" % (oldname,)
+    else:
+        str1 = "%s is deprecated, use %s" % (oldname, newname),
+        depdoc = '%s is DEPRECATED!! -- use %s instead' % (oldname, newname,)
+        
     def newfunc(*args,**kwds):
-        warnings.warn("%s is deprecated, use %s" % (oldname, newname),
-                      DeprecationWarning)
+        warnings.warn(str1, DeprecationWarning)
         return func(*args, **kwds)
+
     newfunc = _set_function_name(newfunc, oldname)
     doc = func.__doc__
-    depdoc = '%s is DEPRECATED in numpy: use %s instead' % (oldname, newname,)
     if doc is None:
         doc = depdoc
     else:
-        doc = '\n'.join([depdoc, doc])
+        doc = '\n\n'.join([depdoc, doc])
     newfunc.__doc__ = doc
     try:
         d = func.__dict__
@@ -103,6 +125,24 @@ def deprecate(func, oldname, newname):
     else:
         newfunc.__dict__.update(d)
     return newfunc
+
+def deprecate_with_doc(somestr):
+    """Decorator to deprecate functions and provide detailed documentation
+    with 'somestr' that is added to the functions docstring.
+
+    Example:
+    depmsg = 'function scipy.foo has been merged into numpy.foobar'
+    @deprecate_with_doc(depmsg)
+    def foo():
+        pass
+
+    """
+
+    def _decorator(func):
+        newfunc = deprecate(func)
+        newfunc.__doc__ += "\n" + somestr
+        return newfunc
+    return _decorator
 
 get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 
@@ -430,3 +470,113 @@ def source(object, output=sys.stdout):
         print >> output,  inspect.getsource(object)
     except:
         print >> output,  "Not available for this object."
+
+#-----------------------------------------------------------------------------
+
+# The following SafeEval class and company are adapted from Michael Spencer's
+# ASPN Python Cookbook recipe:
+#   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/364469
+# Accordingly it is mostly Copyright 2006 by Michael Spencer.
+# The recipe, like most of the other ASPN Python Cookbook recipes was made
+# available under the Python license.
+#   http://www.python.org/license
+
+# It has been modified to:
+#   * handle unary -/+
+#   * support True/False/None
+#   * raise SyntaxError instead of a custom exception.
+
+class SafeEval(object):
+    
+    def visit(self, node, **kw):
+        cls = node.__class__
+        meth = getattr(self,'visit'+cls.__name__,self.default)
+        return meth(node, **kw)
+            
+    def default(self, node, **kw):
+        raise SyntaxError("Unsupported source construct: %s" % node.__class__)
+            
+    def visitExpression(self, node, **kw):
+        for child in node.getChildNodes():
+            return self.visit(child, **kw)
+    
+    def visitConst(self, node, **kw):
+        return node.value
+
+    def visitDict(self, node,**kw):
+        return dict([(self.visit(k),self.visit(v)) for k,v in node.items])
+        
+    def visitTuple(self, node, **kw):
+        return tuple([self.visit(i) for i in node.nodes])
+        
+    def visitList(self, node, **kw):
+        return [self.visit(i) for i in node.nodes]
+
+    def visitUnaryAdd(self, node, **kw):
+        return +self.visit(node.getChildNodes()[0])
+
+    def visitUnarySub(self, node, **kw):
+        return -self.visit(node.getChildNodes()[0])
+
+    def visitName(self, node, **kw):
+        if node.name == 'False':
+            return False
+        elif node.name == 'True':
+            return True
+        elif node.name == 'None':
+            return None
+        else:
+            raise SyntaxError("Unknown name: %s" % node.name)
+
+def safe_eval(source):
+    """ Evaluate a string containing a Python literal expression without
+    allowing the execution of arbitrary non-literal code.
+
+    Parameters
+    ----------
+    source : str
+
+    Returns
+    -------
+    obj : object
+
+    Raises
+    ------
+    SyntaxError if the code is invalid Python expression syntax or if it
+    contains non-literal code.
+
+    Examples
+    --------
+    >>> from numpy.lib.utils import safe_eval
+    >>> safe_eval('1')
+    1
+    >>> safe_eval('[1, 2, 3]')
+    [1, 2, 3]
+    >>> safe_eval('{"foo": ("bar", 10.0)}')
+    {'foo': ('bar', 10.0)}
+    >>> safe_eval('import os')
+    Traceback (most recent call last):
+      ...
+    SyntaxError: invalid syntax
+    >>> safe_eval('open("/home/user/.ssh/id_dsa").read()')
+    Traceback (most recent call last):
+      ...
+    SyntaxError: Unsupported source construct: compiler.ast.CallFunc
+    >>> safe_eval('dict')
+    Traceback (most recent call last):
+      ...
+    SyntaxError: Unknown name: dict
+    """
+    walker = SafeEval()
+    try:
+        ast = compiler.parse(source, "eval")
+    except SyntaxError, err:
+        raise
+    try:
+        return walker.visit(ast)
+    except SyntaxError, err:
+        raise
+
+#-----------------------------------------------------------------------------
+
+

@@ -4,6 +4,7 @@ import sys
 import imp
 import glob
 import types
+import shlex
 import unittest
 import traceback
 import warnings
@@ -16,7 +17,6 @@ __all__ = ['set_package_path', 'set_local_path', 'restore_path',
 
 DEBUG=0
 from numpy.testing.utils import jiffies
-from numpy.distutils.exec_command import splitcmdline
 get_frame = sys._getframe
 
 class IgnoreException(Exception):
@@ -131,7 +131,8 @@ class NumpyTestCase (unittest.TestCase):
         return 0.01*elapsed
 
     def __call__(self, result=None):
-        if result is None:
+        if result is None or not hasattr(result, 'errors') \
+                or not hasattr(result, 'stream'):
             return unittest.TestCase.__call__(self, result)
 
         nof_errors = len(result.errors)
@@ -648,7 +649,7 @@ class NumpyTest:
                           type='string')
         (options, args) = parser.parse_args()
         return self.test(options.level,options.verbosity,
-                         sys_argv=splitcmdline(options.sys_argv or ''),
+                         sys_argv=shlex.split(options.sys_argv or ''),
                          testcase_pattern=options.testcase_pattern)
 
     def warn(self, message):

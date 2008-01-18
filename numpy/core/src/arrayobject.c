@@ -1691,6 +1691,12 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
     return 0;
 }
 
+
+/* XXX: FIXME --- add ordering argument to 
+   Allow Fortran ordering on write
+   This will need the addition of a Fortran-order iterator.
+ */
+
 /*OBJECT_API
   To File
 */
@@ -3139,16 +3145,7 @@ array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 static Py_ssize_t
 array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
 {
-    if (self->descr->type_num == PyArray_STRING || \
-        self->descr->type_num == PyArray_UNICODE || \
-        self->descr->elsize == 1)
-        return array_getreadbuf(self, segment, (void **) ptrptr);
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                        "non-character (or 8-bit) array cannot be "\
-                        "interpreted as character buffer");
-        return -1;
-    }
+    return array_getreadbuf(self, segment, (void **) ptrptr);
 }
 
 static PyBufferProcs array_as_buffer = {
@@ -4835,8 +4832,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     return result;
 }
 
+
+/*MULTIARRAY_API
+  PyArray_CheckAxis
+*/
 static PyObject *
-_check_axis(PyArrayObject *arr, int *axis, int flags)
+PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
 {
     PyObject *temp1, *temp2;
     int n = arr->nd;
@@ -4877,6 +4878,8 @@ _check_axis(PyArrayObject *arr, int *axis, int flags)
     }
     return temp2;
 }
+
+#define _check_axis PyArray_CheckAxis
 
 #include "arraymethods.c"
 

@@ -36,8 +36,13 @@ __all__ += ['vdot', 'dot', 'matrixmultiply', 'ravel', 'indices',
             'togglebyteorder'
             ]
 
-import copy, copy_reg, types
-import os, sys, math, operator
+import copy
+import copy_reg
+import types
+import os
+import sys
+import math
+import operator
 
 from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
      allclose, any, around, argsort, array_equal, array_equiv,\
@@ -45,7 +50,7 @@ from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
      diagonal, e, pi, indices, inner as innerproduct, nonzero, \
      outer as outerproduct, kron as kroneckerproduct, lexsort, putmask, rank, \
      resize, searchsorted, shape, size, sort, swapaxes, trace, transpose
-import numpy as N
+import numpy as np
 
 from numerictypes import typefrom
 
@@ -62,46 +67,46 @@ def type2dtype(typecode, type, dtype, use_default=True):
     if dtype is None:
         if type is None:
             if use_default or typecode is not None:
-                dtype = N.dtype(typecode)
+                dtype = np.dtype(typecode)
         else:
-            dtype = N.dtype(type)
+            dtype = np.dtype(type)
     if use_default and dtype is None:
-        dtype = N.dtype('int')
+        dtype = np.dtype('int')
     return dtype
 
 def fromfunction(shape, dimensions, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, 1)
-    return N.fromfunction(shape, dimensions, dtype=dtype)
+    return np.fromfunction(shape, dimensions, dtype=dtype)
 def ones(shape, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, 1)
-    return N.ones(shape, dtype)
+    return np.ones(shape, dtype)
 
 def zeros(shape, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, 1)
-    return N.zeros(shape, dtype)
+    return np.zeros(shape, dtype)
 
 def where(condition, x=None, y=None, out=None):
     if x is None and y is None:
-        arr = N.where(condition)
+        arr = np.where(condition)
     else:
-        arr = N.where(condition, x, y)
+        arr = np.where(condition, x, y)
     if out is not None:
         out[...] = arr
         return out
     return arr
 
 def indices(shape, type=None):
-    return N.indices(shape, type)
+    return np.indices(shape, type)
 
 def arange(a1, a2=None, stride=1, type=None, shape=None,
            typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, 0)
-    return N.arange(a1, a2, stride, dtype)
+    return np.arange(a1, a2, stride, dtype)
 
 arrayrange = arange
 
 def alltrue(x, axis=0):
-    return N.alltrue(x, axis)
+    return np.alltrue(x, axis)
 
 def and_(a, b):
     """Same as a & b
@@ -113,7 +118,7 @@ def divide_remainder(a, b):
     return (a/b,a%b)
 
 def around(array, digits=0, output=None):
-    ret = N.around(array, digits, output)
+    ret = np.around(array, digits, output)
     if output is None:
         return ret
     return
@@ -123,14 +128,14 @@ def array2list(arr):
 
 
 def choose(selector, population, outarr=None, clipmode=RAISE):
-    a = N.asarray(selector)
+    a = np.asarray(selector)
     ret = a.choose(population, out=outarr, mode=clipmode)
     if outarr is None:
         return ret
     return
 
 def compress(condition, a, axis=0):
-    return N.compress(condition, a, axis)
+    return np.compress(condition, a, axis)
 
 # only returns a view
 def explicit_type(a):
@@ -180,7 +185,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     if -1 not in shape:
         if sizing != STRICT:
             raise ValueError("sizing must be STRICT if size complete")
-        arr = N.empty(shape, dtype)
+        arr = np.empty(shape, dtype)
         bytesleft=arr.nbytes
         bytesread=0
         while(bytesleft > _BLOCKSIZE):
@@ -208,7 +213,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     ##file whose size may be determined before allocation, should be
     ##quick -- only one allocation will be needed.
 
-    recsize = dtype.itemsize * N.product([i for i in shape if i != -1])
+    recsize = dtype.itemsize * np.product([i for i in shape if i != -1])
     blocksize = max(_BLOCKSIZE/recsize, 1)*recsize
 
     ##try to estimate file size
@@ -222,7 +227,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     else:
         initsize=max(1,(endpos-curpos)/recsize)*recsize
 
-    buf = N.newbuffer(initsize)
+    buf = np.newbuffer(initsize)
 
     bytesread=0
     while 1:
@@ -260,9 +265,9 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     uidx = shape.index(-1)
     shape[uidx]=len(buf) / recsize
 
-    a = N.ndarray(shape=shape, dtype=type, buffer=buf)
+    a = np.ndarray(shape=shape, dtype=type, buffer=buf)
     if a.dtype.char == '?':
-        N.not_equal(a, 0, a)
+        np.not_equal(a, 0, a)
     return a
 
 def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
@@ -270,8 +275,8 @@ def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
     if shape is None:
         count = -1
     else:
-        count = N.product(shape)
-    res = N.fromstring(datastring, dtype=dtype, count=count)
+        count = np.product(shape)
+    res = np.fromstring(datastring, dtype=dtype, count=count)
     if shape is not None:
         res.shape = shape
     return res
@@ -280,7 +285,7 @@ def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
 # check_overflow is ignored
 def fromlist(seq, type=None, shape=None, check_overflow=0, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, False)
-    return N.array(seq, dtype)
+    return np.array(seq, dtype)
 
 def array(sequence=None, typecode=None, copy=1, savespace=0,
           type=None, shape=None, dtype=None):
@@ -290,21 +295,21 @@ def array(sequence=None, typecode=None, copy=1, savespace=0,
             return None
         if dtype is None:
             dtype = 'l'
-        return N.empty(shape, dtype)
+        return np.empty(shape, dtype)
     if isinstance(sequence, file):
         return fromfile(sequence, dtype=dtype, shape=shape)
     if isinstance(sequence, str):
         return fromstring(sequence, dtype=dtype, shape=shape)
     if isinstance(sequence, buffer):
-        arr = N.frombuffer(sequence, dtype=dtype)
+        arr = np.frombuffer(sequence, dtype=dtype)
     else:
-        arr = N.array(sequence, dtype, copy=copy)
+        arr = np.array(sequence, dtype, copy=copy)
     if shape is not None:
         arr.shape = shape
     return arr
 
 def asarray(seq, type=None, typecode=None, dtype=None):
-    if isinstance(seq, N.ndarray) and type is None and \
+    if isinstance(seq, np.ndarray) and type is None and \
            typecode is None and dtype is None:
         return seq
     return array(seq, type=type, typecode=typecode, copy=0, dtype=dtype)
@@ -328,10 +333,10 @@ def getShape(shape, *args):
             shape = (shape, ) + args
         else:
             shape = tuple(shape)
-        dummy = N.array(shape)
-        if not issubclass(dummy.dtype.type, N.integer):
+        dummy = np.array(shape)
+        if not issubclass(dummy.dtype.type, np.integer):
             raise TypeError
-        if len(dummy) > N.MAXDIMS:
+        if len(dummy) > np.MAXDIMS:
             raise TypeError
     except:
         raise TypeError("Shape must be a sequence of integers")
@@ -340,7 +345,7 @@ def getShape(shape, *args):
 
 def identity(n, type=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, True)
-    return N.identity(n, dtype)
+    return np.identity(n, dtype)
 
 def info(obj, output=sys.stdout, numpy=0):
     if numpy:
@@ -396,7 +401,7 @@ def info(obj, output=sys.stdout, numpy=0):
 
 #clipmode is ignored if axis is not 0 and array is not 1d
 def put(array, indices, values, axis=0, clipmode=RAISE):
-    if not isinstance(array, N.ndarray):
+    if not isinstance(array, np.ndarray):
         raise TypeError("put only works on subclass of ndarray")
     work = asarray(array)
     if axis == 0:
@@ -404,7 +409,7 @@ def put(array, indices, values, axis=0, clipmode=RAISE):
             work.put(indices, values, clipmode)
         else:
             work[indices] = values
-    elif isinstance(axis, (int, long, N.integer)):
+    elif isinstance(axis, (int, long, np.integer)):
         work = work.swapaxes(0, axis)
         work[indices] = values
         work = work.swapaxes(0, axis)
@@ -418,13 +423,13 @@ def put(array, indices, values, axis=0, clipmode=RAISE):
         work = work.transpose(axis)
 
 def repeat(array, repeats, axis=0):
-    return N.repeat(array, repeats, axis)
+    return np.repeat(array, repeats, axis)
 
 
 def reshape(array, shape, *args):
     if len(args) > 0:
         shape = (shape,) + args
-    return N.reshape(array, shape)
+    return np.reshape(array, shape)
 
 
 import warnings as _warnings
@@ -434,12 +439,12 @@ def round(*args, **keys):
     return around(*args, **keys)
 
 def sometrue(array, axis=0):
-    return N.sometrue(array, axis)
+    return np.sometrue(array, axis)
 
 #clipmode is ignored if axis is not an integer
 def take(array, indices, axis=0, outarr=None, clipmode=RAISE):
-    array = N.asarray(array)
-    if isinstance(axis, (int, long, N.integer)):
+    array = np.asarray(array)
+    if isinstance(axis, (int, long, np.integer)):
         res = array.take(indices, axis, outarr, clipmode)
         if outarr is None:
             return res
@@ -457,34 +462,34 @@ def take(array, indices, axis=0, outarr=None, clipmode=RAISE):
         return
 
 def tensormultiply(a1, a2):
-    a1, a2 = N.asarray(a1), N.asarray(a2)
+    a1, a2 = np.asarray(a1), np.asarray(a2)
     if (a1.shape[-1] != a2.shape[0]):
         raise ValueError("Unmatched dimensions")
     shape = a1.shape[:-1] + a2.shape[1:]
-    return N.reshape(dot(N.reshape(a1, (-1, a1.shape[-1])),
-                         N.reshape(a2, (a2.shape[0],-1))),
+    return np.reshape(dot(N.reshape(a1, (-1, a1.shape[-1])),
+                         np.reshape(a2, (a2.shape[0],-1))),
                      shape)
 
 def cumsum(a1, axis=0, out=None, type=None, dim=0):
-    return N.asarray(a1).cumsum(axis,dtype=type,out=out)
+    return np.asarray(a1).cumsum(axis,dtype=type,out=out)
 
 def cumproduct(a1, axis=0, out=None, type=None, dim=0):
-    return N.asarray(a1).cumprod(axis,dtype=type,out=out)
+    return np.asarray(a1).cumprod(axis,dtype=type,out=out)
 
 def argmax(x, axis=-1):
-    return N.argmax(x, axis)
+    return np.argmax(x, axis)
 
 def argmin(x, axis=-1):
-    return N.argmin(x, axis)
+    return np.argmin(x, axis)
 
 def newobj(self, type):
     if type is None:
-        return N.empty_like(self)
+        return np.empty_like(self)
     else:
-        return N.empty(self.shape, type)
+        return np.empty(self.shape, type)
 
 def togglebyteorder(self):
     self.dtype=self.dtype.newbyteorder()
 
 def average(a, axis=0, weights=None, returned=0):
-    return N.average(a, axis, weights, returned)
+    return np.average(a, axis, weights, returned)

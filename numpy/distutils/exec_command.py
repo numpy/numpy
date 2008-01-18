@@ -11,7 +11,6 @@ takes keyword arguments for (re-)defining environment variables.
 Provides functions:
   exec_command  --- execute command in a specified directory and
                     in the modified environment.
-  splitcmdline  --- inverse of ' '.join(argv)
   find_executable --- locate a command using info from environment
                     variable PATH. Equivalent to posix `which`
                     command.
@@ -50,6 +49,7 @@ __all__ = ['exec_command','find_executable']
 
 import os
 import sys
+import shlex
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
@@ -58,8 +58,6 @@ def temp_file_name():
     fo, name = make_temp_file()
     fo.close()
     return name
-
-############################################################
 
 def get_pythonexe():
     pythonexe = sys.executable
@@ -70,57 +68,11 @@ def get_pythonexe():
         assert os.path.isfile(pythonexe), '%r is not a file' % (pythonexe,)
     return pythonexe
 
-############################################################
-
 def splitcmdline(line):
-    """ Inverse of ' '.join(sys.argv).
-    """
-    log.debug('splitcmdline(%r)' % (line))
-    lst = []
-    flag = 0
-    s,pc,cc = '','',''
-    for nc in line+' ':
-        if flag==0:
-            flag = (pc != '\\' and \
-                     ((cc=='"' and 1) or (cc=="'" and 2) or \
-                       (cc==' ' and pc!=' ' and -2))) or flag
-        elif flag==1:
-            flag = (cc=='"' and pc!='\\' and nc==' ' and -1) or flag
-        elif flag==2:
-            flag = (cc=="'" and pc!='\\' and nc==' ' and -1) or flag
-        if flag!=-2:
-            s += cc
-        if flag<0:
-            flag = 0
-            s = s.strip()
-            if s:
-                lst.append(s)
-                s = ''
-        pc,cc = cc,nc
-    else:
-        s = s.strip()
-        if s:
-            lst.append(s)
-    log.debug('splitcmdline -> %r' % (lst))
-    return lst
-
-def test_splitcmdline():
-    l = splitcmdline('a   b  cc')
-    assert l==['a','b','cc'], repr(l)
-    l = splitcmdline('a')
-    assert l==['a'], repr(l)
-    l = splitcmdline('a "  b  cc"')
-    assert l==['a','"  b  cc"'], repr(l)
-    l = splitcmdline('"a bcc"  -h')
-    assert l==['"a bcc"','-h'], repr(l)
-    l = splitcmdline(r'"\"a \" bcc" -h')
-    assert l==[r'"\"a \" bcc"','-h'], repr(l)
-    l = splitcmdline(" 'a bcc'  -h")
-    assert l==["'a bcc'",'-h'], repr(l)
-    l = splitcmdline(r"'\'a \' bcc' -h")
-    assert l==[r"'\'a \' bcc'",'-h'], repr(l)
-
-############################################################
+    import warnings
+    warnings.warn('splitcmdline is deprecated; use shlex.split',
+                  DeprecationWarning)
+    return shlex.split(line)
 
 def find_executable(exe, path=None, _cache={}):
     """Return full path of a executable or None.
@@ -379,7 +331,7 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
         if is_sequence(command):
             argv = command[:]
         else:
-            argv = splitcmdline(command)
+            argv = shlex.split(command)
 
     if hasattr(os,'spawnvpe'):
         spawn_command = os.spawnvpe
@@ -632,7 +584,6 @@ else:
 
 if __name__ == "__main__":
 
-    test_splitcmdline()
     test(use_tee=0)
     test(use_tee=1)
     test_execute_in(use_tee=0)

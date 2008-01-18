@@ -50,7 +50,7 @@ Proposed sys.argv = %s
     """ % (ccompiler, fcompiler, argv)
 
 
-from exec_command import splitcmdline
+import shlex
 
 def edit_argv(*args):
     argv = args[0]
@@ -62,7 +62,7 @@ def edit_argv(*args):
     except EOFError:
         return
     if s:
-        argv[1:] = splitcmdline(s)
+        argv[1:] = shlex.split(s)
     return
 
 def interactive_sys_argv(argv):

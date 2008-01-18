@@ -7,8 +7,8 @@ import sys
 import unittest
 
 # Import NumPy
-import numpy as N
-major, minor = [ int(d) for d in N.__version__.split(".")[:2] ]
+import numpy as np
+major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
 if major == 0: BadListError = TypeError
 else:          BadListError = ValueError
 
@@ -136,7 +136,7 @@ class FarrayTestCase(unittest.TestCase):
             for j in range(self.ncols):
                 self.array[i,j] = i+j
         a = self.array.view()
-        self.failUnless(isinstance(a, N.ndarray))
+        self.failUnless(isinstance(a, np.ndarray))
         self.failUnless(a.flags.f_contiguous)
         for i in range(self.nrows):
             for j in range(self.ncols):
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     # Execute the test suite
     print "Testing Classes of Module Farray"
-    print "NumPy version", N.__version__
+    print "NumPy version", np.__version__
     print
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(len(result.errors) + len(result.failures))

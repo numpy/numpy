@@ -399,7 +399,6 @@ Useful functions in ``numpy.distutils.misc_util``
 ---------------------------------------
 
 + ``get_pythonexe()``
-+ ``splitcmdline(line)``
 + ``find_executable(exe, path=None)``
 + ``exec_command( command, execute_in='', use_shell=None, use_tee=None, **env )``
 

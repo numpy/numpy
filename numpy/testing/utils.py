@@ -11,7 +11,7 @@ import operator
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'jiffies', 'memusage', 'rand',
-           'runstring']
+           'runstring', 'raises']
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -270,3 +270,37 @@ def assert_string_equal(actual, desired):
     if not diff_list: return
     msg = 'Differences in strings:\n%s' % (''.join(diff_list)).rstrip()
     assert actual==desired, msg
+
+# Ripped from nose.tools
+def raises(*exceptions):
+    """Test must raise one of expected exceptions to pass.
+
+    Example use::
+
+      @raises(TypeError, ValueError)
+      def test_raises_type_error():
+          raise TypeError("This test passes")
+
+      @raises(Exception):
+      def test_that_fails_by_passing():
+          pass
+
+    If you want to test many assertions about exceptions in a single test,
+    you may want to use `assert_raises` instead.
+    """
+    valid = ' or '.join([e.__name__ for e in exceptions])
+    def decorate(func):
+        name = func.__name__
+        def newfunc(*arg, **kw):
+            try:
+                func(*arg, **kw)
+            except exceptions:
+                pass
+            except:
+                raise
+            else:
+                message = "%s() did not raise %s" % (name, valid)
+                raise AssertionError(message)
+        newfunc = make_decorator(func)(newfunc)
+        return newfunc
+    return decorate

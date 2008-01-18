@@ -1,5 +1,3 @@
-## Automatically adapted for numpy Sep 19, 2005 by convertcode.py
-
 __all__ = ['unravel_index',
            'mgrid',
            'ogrid',
@@ -48,7 +46,7 @@ def unravel_index(x,dims):
     # Reverse
     # [dcb,dc,d,1]
     dim_prod = _nx.cumprod([1] + list(dims)[:0:-1])[::-1]
-    # Indeces become [x/dcb % a, x/dc % b, x/d % c, x/1 % d]
+    # Indices become [x/dcb % a, x/dc % b, x/d % c, x/1 % d]
     return tuple(x/dim_prod % dims)
 
 def ix_(*args):
@@ -193,7 +191,7 @@ class nd_grid(object):
 mgrid = nd_grid(sparse=False)
 ogrid = nd_grid(sparse=True)
 
-class concatenator(object):
+class AxisConcatenator(object):
     """Translates slice objects to concatenation along an axis.
     """
     def _retval(self, res):
@@ -313,26 +311,30 @@ class concatenator(object):
 # etc. because otherwise we couldn't get the doc string to come out right
 # in help(r_)
 
-class r_class(concatenator):
+class RClass(AxisConcatenator):
     """Translates slice objects to concatenation along the first axis.
 
-        For example:
-        >>> r_[array([1,2,3]), 0, 0, array([4,5,6])]
-        array([1, 2, 3, 0, 0, 4, 5, 6])
+    For example:
+    >>> r_[array([1,2,3]), 0, 0, array([4,5,6])]
+    array([1, 2, 3, 0, 0, 4, 5, 6])
 
     """
     def __init__(self):
-        concatenator.__init__(self, 0)
+        AxisConcatenator.__init__(self, 0)
 
-r_ = r_class()
+r_ = RClass()
 
-class c_class(concatenator):
+class CClass(AxisConcatenator):
     """Translates slice objects to concatenation along the second axis.
+
+    For example:
+    >>> c_[array([[1,2,3]]), 0, 0, array([[4,5,6]])]
+    array([1, 2, 3, 0, 0, 4, 5, 6])
     """
     def __init__(self):
-        concatenator.__init__(self, -1, ndmin=2, trans1d=0)
+        AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
 
-c_ = c_class()
+c_ = CClass()
 
 class ndenumerate(object):
     """
@@ -423,7 +425,7 @@ class ndindex(object):
 #
 #
 
-class _index_expression_class(object):
+class IndexExpression(object):
     """
     A nicer way to build up index tuples for arrays.
 
@@ -451,7 +453,7 @@ class _index_expression_class(object):
             stop = None
         return self[start:stop:None]
 
-index_exp = _index_expression_class(1)
-s_ = _index_expression_class(0)
+index_exp = IndexExpression(maketuple=True)
+s_ = IndexExpression(maketuple=False)
 
 # End contribution from Konrad.

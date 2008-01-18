@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import shlex
 
 from distutils.command import build_ext
 from distutils.dep_util import newer_group, newer
@@ -24,7 +25,6 @@ from numpy.distutils.misc_util import fortran_ext_match, \
      appendpath, is_string, is_sequence
 from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
-from numpy.distutils.exec_command import splitcmdline
 
 class build_src(build_ext.build_ext):
 
@@ -94,7 +94,7 @@ class build_src(build_ext.build_ext):
         if self.f2py_opts is None:
             self.f2py_opts = []
         else:
-            self.f2py_opts = splitcmdline(self.f2py_opts)
+            self.f2py_opts = shlex.split(self.f2py_opts)
 
         if self.swigflags:
             if self.swig_opts:
@@ -106,7 +106,7 @@ class build_src(build_ext.build_ext):
         if self.swig_opts is None:
             self.swig_opts = []
         else:
-            self.swig_opts = splitcmdline(self.swig_opts)
+            self.swig_opts = shlex.split(self.swig_opts)
 
         # use options from build_ext command
         build_ext = self.get_finalized_command('build_ext')

@@ -7,10 +7,12 @@ import sys
 import unittest
 
 # Import NumPy
-import numpy as N
-major, minor = [ int(d) for d in N.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+import numpy as np
+major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 # Add the distutils-generated build directory to the python search path and then
 # import the extension module
@@ -38,7 +40,7 @@ class Array1TestCase(unittest.TestCase):
 
     def testConstructor2(self):
         "Test Array1 array constructor"
-        na = N.arange(self.length)
+        na = np.arange(self.length)
         aa = Array.Array1(na)
         self.failUnless(isinstance(aa, Array.Array1))
 
@@ -68,7 +70,7 @@ class Array1TestCase(unittest.TestCase):
 
     def testResize1(self):
         "Test Array1 resize method, array"
-        a = N.zeros((2*self.length,), dtype='l')
+        a = np.zeros((2*self.length,), dtype='l')
         self.array1.resize(a)
         self.failUnless(len(self.array1) == len(a))
 
@@ -114,7 +116,7 @@ class Array1TestCase(unittest.TestCase):
         "Test Array1 view method"
         for i in range(self.array1.length()): self.array1[i] = i+1
         a = self.array1.view()
-        self.failUnless(isinstance(a, N.ndarray))
+        self.failUnless(isinstance(a, np.ndarray))
         self.failUnless(len(a) == self.length)
         self.failUnless((a == [1,2,3,4,5]).all())
 
@@ -139,7 +141,7 @@ class Array2TestCase(unittest.TestCase):
 
     def testConstructor2(self):
         "Test Array2 array constructor"
-        na = N.zeros((3,4), dtype="l")
+        na = np.zeros((3,4), dtype="l")
         aa = Array.Array2(na)
         self.failUnless(isinstance(aa, Array.Array2))
 
@@ -180,7 +182,7 @@ class Array2TestCase(unittest.TestCase):
 
     #def testResize1(self):
     #    "Test Array2 resize method, array"
-    #    a = N.zeros((2*self.nrows, 2*self.ncols), dtype='l')
+    #    a = np.zeros((2*self.nrows, 2*self.ncols), dtype='l')
     #    self.array2.resize(a)
     #    self.failUnless(len(self.array2) == len(a))
 
@@ -197,7 +199,7 @@ class Array2TestCase(unittest.TestCase):
         m = self.nrows
         n = self.ncols
         array1 = [ ]
-        a = N.arange(n, dtype="l")
+        a = np.arange(n, dtype="l")
         for i in range(m):
             array1.append(Array.Array1(i*a))
         for i in range(m):
@@ -265,7 +267,7 @@ class Array2TestCase(unittest.TestCase):
     def testView(self):
         "Test Array2 view method"
         a = self.array2.view()
-        self.failUnless(isinstance(a, N.ndarray))
+        self.failUnless(isinstance(a, np.ndarray))
         self.failUnless(len(a) == self.nrows)
 
 ######################################################################
@@ -279,7 +281,7 @@ if __name__ == "__main__":
 
     # Execute the test suite
     print "Testing Classes of Module Array"
-    print "NumPy version", N.__version__
+    print "NumPy version", np.__version__
     print
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(len(result.errors) + len(result.failures))

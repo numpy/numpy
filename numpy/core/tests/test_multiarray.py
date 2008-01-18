@@ -1,9 +1,8 @@
+import tempfile
+
+import numpy as np
 from numpy.testing import *
 from numpy.core import *
-from numpy import random
-import numpy as N
-
-import tempfile
 
 class TestFlags(NumpyTestCase):
     def setUp(self):
@@ -357,7 +356,7 @@ class TestStringCompare(NumpyTestCase):
 
 class TestArgmax(NumpyTestCase):
     def check_all(self):
-        a = random.normal(0,1,(4,5,6,7,8))
+        a = np.random.normal(0,1,(4,5,6,7,8))
         for i in xrange(a.ndim):
             amax = a.max(i)
             aargmax = a.argmax(i)
@@ -373,8 +372,8 @@ class TestNewaxis(NumpyTestCase):
 
 class TestClip(NumpyTestCase):
     def _check_range(self,x,cmin,cmax):
-        assert N.all(x >= cmin)
-        assert N.all(x <= cmax)
+        assert np.all(x >= cmin)
+        assert np.all(x <= cmax)
 
     def _clip_type(self,type_group,array_max,
                    clip_min,clip_max,inplace=False,
@@ -384,16 +383,16 @@ class TestClip(NumpyTestCase):
         if expected_max is None:
             expected_max = clip_max
 
-        for T in N.sctypes[type_group]:
+        for T in np.sctypes[type_group]:
             if sys.byteorder == 'little':
                 byte_orders = ['=','>']
             else:
                 byte_orders = ['<','=']
 
             for byteorder in byte_orders:
-                dtype = N.dtype(T).newbyteorder(byteorder)
+                dtype = np.dtype(T).newbyteorder(byteorder)
 
-                x = (N.random.random(1000) * array_max).astype(dtype)
+                x = (np.random.random(1000) * array_max).astype(dtype)
                 if inplace:
                     x.clip(clip_min,clip_max,x)
                 else:
@@ -417,46 +416,46 @@ class TestClip(NumpyTestCase):
             x = self._clip_type('uint',1024,0,0, inplace=inplace)
 
     def check_record_array(self):
-        rec = N.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
+        rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
                       dtype=[('x', '<f8'), ('y', '<f8'), ('z', '<f8')])
         y = rec['x'].clip(-0.3,0.5)
         self._check_range(y,-0.3,0.5)
 
     def check_max_or_min(self):
-        val = N.array([0,1,2,3,4,5,6,7])
+        val = np.array([0,1,2,3,4,5,6,7])
         x = val.clip(3)
-        assert N.all(x >= 3)
+        assert np.all(x >= 3)
         x = val.clip(min=3)
-        assert N.all(x >= 3)
+        assert np.all(x >= 3)
         x = val.clip(max=4)
-        assert N.all(x <= 4)
+        assert np.all(x <= 4)
 
 class TestPutmask(ParametricTestCase):
     def tst_basic(self,x,T,mask,val):
-        N.putmask(x,mask,val)
-        assert N.all(x[mask] == T(val))
+        np.putmask(x,mask,val)
+        assert np.all(x[mask] == T(val))
         assert x.dtype == T
 
     def testip_types(self):
-        unchecked_types = [str,unicode,N.void,object]
+        unchecked_types = [str, unicode, np.void, object]
 
-        x = N.random.random(1000)*100
+        x = np.random.random(1000)*100
         mask = x < 40
 
         tests = []
         for val in [-100,0,15]:
-            for types in N.sctypes.itervalues():
+            for types in np.sctypes.itervalues():
                 tests.extend([(self.tst_basic,x.copy().astype(T),T,mask,val)
                               for T in types if T not in unchecked_types])
         return tests
 
     def test_mask_size(self):
-        self.failUnlessRaises(ValueError,N.putmask,
-                              N.array([1,2,3]),[True],5)
+        self.failUnlessRaises(ValueError, np.putmask,
+                              np.array([1,2,3]), [True], 5)
 
     def tst_byteorder(self,dtype):
-        x = N.array([1,2,3],dtype)
-        N.putmask(x,[True,False,True],-1)
+        x = np.array([1,2,3],dtype)
+        np.putmask(x,[True,False,True],-1)
         assert_array_equal(x,[-1,2,-1])
 
     def testip_byteorder(self):
@@ -464,46 +463,54 @@ class TestPutmask(ParametricTestCase):
 
     def test_record_array(self):
         # Note mixed byteorder.
-        rec = N.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
+        rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
                       dtype=[('x', '<f8'), ('y', '>f8'), ('z', '<f8')])
-        N.putmask(rec['x'],[True,False],10)
+        np.putmask(rec['x'],[True,False],10)
         assert_array_equal(rec['x'],[10,5])
-        N.putmask(rec['y'],[True,False],10)
+        np.putmask(rec['y'],[True,False],10)
         assert_array_equal(rec['y'],[10,4])
 
     def test_masked_array(self):
-        ## x = N.array([1,2,3])
-        ## z = N.ma.array(x,mask=[True,False,False])
-        ## N.putmask(z,[True,True,True],3)
+        ## x = np.array([1,2,3])
+        ## z = np.ma.array(x,mask=[True,False,False])
+        ## np.putmask(z,[True,True,True],3)
         pass
 
 class TestLexsort(NumpyTestCase):
     def test_basic(self):
         a = [1,2,1,3,1,5]
         b = [0,4,5,6,2,3]
-        idx = N.lexsort((b,a))
-        expected_idx = N.array([0,4,2,1,3,5])
+        idx = np.lexsort((b,a))
+        expected_idx = np.array([0,4,2,1,3,5])
         assert_array_equal(idx,expected_idx)
 
-        x = N.vstack((b,a))
-        idx = N.lexsort(x)
+        x = np.vstack((b,a))
+        idx = np.lexsort(x)
         assert_array_equal(idx,expected_idx)
 
-        assert_array_equal(x[1][idx],N.sort(x[1]))
+        assert_array_equal(x[1][idx],np.sort(x[1]))
 
 class TestFromToFile(NumpyTestCase):
     def setUp(self):
         shape = (4,7)
-        rand = N.random.random
+        rand = np.random.random
 
-        self.x = rand(shape) + rand(shape).astype(N.complex)*1j
-        self.dtype = N.complex
+        self.x = rand(shape) + rand(shape).astype(np.complex)*1j
+        self.dtype = np.complex
 
     def test_file(self):
-        f = tempfile.TemporaryFile()
+        # Python under Windows does not believe that TemporaryFile
+        # is an open file
+        if sys.platform.startswith('win'):
+            filename = tempfile.mktemp()
+            f = open(filename,'wb')
+        else:
+            f = tempfile.TemporaryFile()
+
         self.x.tofile(f)
+        f.flush()
         f.seek(0)
-        y = N.fromfile(f,dtype=self.dtype)
+        y = np.fromfile(f,dtype=self.dtype)
         assert_array_equal(y,self.x.flat)
 
     def test_filename(self):
@@ -511,32 +518,32 @@ class TestFromToFile(NumpyTestCase):
         f = open(filename,'wb')
         self.x.tofile(f)
         f.close()
-        y = N.fromfile(filename,dtype=self.dtype)
+        y = np.fromfile(filename,dtype=self.dtype)
         assert_array_equal(y,self.x.flat)
 
 class TestFromBuffer(ParametricTestCase):
     def tst_basic(self,buffer,expected,kwargs):
-        assert_array_equal(N.frombuffer(buffer,**kwargs),expected)
+        assert_array_equal(np.frombuffer(buffer,**kwargs),expected)
 
     def testip_basic(self):
         tests = []
         for byteorder in ['<','>']:
-            for dtype in [float,int,N.complex]:
-                dt = N.dtype(dtype).newbyteorder(byteorder)
-                x = (N.random.random((4,7))*5).astype(dt)
+            for dtype in [float,int,np.complex]:
+                dt = np.dtype(dtype).newbyteorder(byteorder)
+                x = (np.random.random((4,7))*5).astype(dt)
                 buf = x.tostring()
                 tests.append((self.tst_basic,buf,x.flat,{'dtype':dt}))
         return tests
 
 class TestResize(NumpyTestCase):
     def test_basic(self):
-        x = N.eye(3)
+        x = np.eye(3)
         x.resize((5,5))
-        assert_array_equal(x.flat[:9],N.eye(3).flat)
+        assert_array_equal(x.flat[:9],np.eye(3).flat)
         assert_array_equal(x[9:].flat,0)
 
     def test_check_reference(self):
-        x = N.eye(3)
+        x = np.eye(3)
         y = x
         self.failUnlessRaises(ValueError,x.resize,(5,1))
 
