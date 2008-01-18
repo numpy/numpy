@@ -7268,7 +7268,7 @@ compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 
-#ifndef NPY_NO_SIGNAL
+#ifndef __NPY_PRIVATE_NO_SIGNAL
 
 SIGJMP_BUF _NPY_SIGINT_BUF;
 

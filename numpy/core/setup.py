@@ -107,7 +107,7 @@ def configuration(parent_package='',top_path=None):
                     moredefs.append(defsymbol)
 
             if is_npy_no_signal():
-                moredefs.append('NPY_NO_SIGNAL')
+                moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
 
             if sys.platform=='win32' or os.name=='nt':
                 from distutils.msvccompiler import get_build_architecture
