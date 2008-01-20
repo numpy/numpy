@@ -35,7 +35,7 @@ from numpy.core.numeric import ndarray
 from numpy.core.numeric import array as nxarray
 from numpy.core.fromnumeric import asarray as nxasarray
 
-from numpy.lib.index_tricks import concatenator
+from numpy.lib.index_tricks import AxisConcatenator
 import numpy.lib.function_base as function_base
 
 #...............................................................................
@@ -595,13 +595,13 @@ def mediff1d(array, to_end=None, to_begin=None):
 #---- --- Concatenation helpers ---
 #####--------------------------------------------------------------------------
 
-class mconcatenator(concatenator):
+class MAxisConcatenator(AxisConcatenator):
     """Translate slice objects to concatenation along an axis.
 
     """
 
     def __init__(self, axis=0):
-        concatenator.__init__(self, axis, matrix=False)
+        AxisConcatenator.__init__(self, axis, matrix=False)
 
     def __getitem__(self,key):
         if isinstance(key, str):
@@ -654,7 +654,7 @@ class mconcatenator(concatenator):
         res = concatenate(tuple(objs),axis=self.axis)
         return self._retval(res)
 
-class mr_class(mconcatenator):
+class mr_class(MAxisConcatenator):
     """Translate slice objects to concatenation along the first axis.
 
     For example:
@@ -663,7 +663,7 @@ class mr_class(mconcatenator):
 
     """
     def __init__(self):
-        mconcatenator.__init__(self, 0)
+        MAxisConcatenator.__init__(self, 0)
 
 mr_ = mr_class()
 
