@@ -57,8 +57,8 @@ for type in ('Py_intptr_t', 'PY_LONG_LONG'):
 # Checking signal stuff
 #----------------------
 if is_npy_no_signal():
-    numpyconfig_sym.append(('NPY_NOSMP', '1'))
-    config.Define('NPY_NOSMP', 1, "define to 1 to disable SMP support ")
+    numpyconfig_sym.append(('NPY_NO_SIGNAL', ''))
+    config.Define('__NPY_PRIVATE_NO_SIGNAL', comment = "define to 1 to disable SMP support ")
 
 #---------------------
 # Checking SMP option
