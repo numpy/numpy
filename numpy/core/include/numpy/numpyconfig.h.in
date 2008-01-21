@@ -13,10 +13,8 @@
 #define NPY_MATHLIB      @MATHLIB@
 
 /* XXX: this has to be done outside config files !!!! */
-#ifdef PY_LONG_LONG
-        #define NPY_SIZEOF_LONGLONG @SIZEOF_PY_LONG_LONG@
-        #define NPY_SIZEOF_PY_LONG_LONG @SIZEOF_PY_LONG_LONG@
-#endif
+@DEFINE_NPY_SIZEOF_LONGLONG@
+@DEFINE_NPY_SIZEOF_PY_LONG_LONG@
 
 #ifndef CHAR_BIT
         #error Configuration for undefined CHAR_BIT is not supported, contact the maintainter

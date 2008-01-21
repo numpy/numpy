@@ -50,9 +50,18 @@ def check_type(type, include = None):
 for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
     check_type(type)
 
-for type in ('Py_intptr_t', 'PY_LONG_LONG'):
+for type in ('Py_intptr_t',):
     check_type(type, include = "#include <Python.h>\n")
 
+# We check declaration AND type because that's how distutils does it.
+if config.CheckDeclaration('PY_LONG_LONG', includes = '#include <Python.h>\n'):
+    st = config.CheckTypeSize('PY_LONG_LONG', includes = '#include <Python.h>\n')
+    assert not st == 0
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', '#define NPY_SIZEOF_LONGLONG %d' % st))
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG', '#define NPY_SIZEOF_PY_LONG_LONG %d' % st))
+else:
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', ''))
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG', ''))
 #----------------------
 # Checking signal stuff
 #----------------------
