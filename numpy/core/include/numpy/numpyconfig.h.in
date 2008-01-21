@@ -12,6 +12,5 @@
 /* XXX: this has really nothing to do in a config file... */
 #define NPY_MATHLIB      @MATHLIB@
 
-/* XXX: this has to be done outside config files !!!! */
 @DEFINE_NPY_SIZEOF_LONGLONG@
 @DEFINE_NPY_SIZEOF_PY_LONG_LONG@
