@@ -15,8 +15,3 @@
 /* XXX: this has to be done outside config files !!!! */
 @DEFINE_NPY_SIZEOF_LONGLONG@
 @DEFINE_NPY_SIZEOF_PY_LONG_LONG@
-
-#ifndef CHAR_BIT
-        #error Configuration for undefined CHAR_BIT is not supported, contact the maintainter
-        #define CHAR_BIT      @CHAR_BIT@
-#endif

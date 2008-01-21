@@ -62,6 +62,9 @@ if config.CheckDeclaration('PY_LONG_LONG', includes = '#include <Python.h>\n'):
 else:
     numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', ''))
     numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG', ''))
+
+if not config.CheckDeclaration('CHAR_BIT', includes= '#include <Python.h>\n'):
+    raise RuntimeError("Config wo CHAR_BIT is not supported with scons: please contact the maintainer (cdavid)")
 #----------------------
 # Checking signal stuff
 #----------------------
