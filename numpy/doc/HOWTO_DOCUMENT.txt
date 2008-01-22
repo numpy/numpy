@@ -4,9 +4,7 @@ A Guide to NumPy/SciPy Documentation
 
 .. Contents::
 
-.. Attention:: This document is slightly out of date.  During the December 2007 sprint, Travis Oliphant made some changes to the NumPy/SciPy docstring standard.  The changes are relatively minor, but it no longer follows the epydoc/restructured text standards.  This means that currently it isn't possible to render the docstrings as desired.  Travis has committed to writing something to render the docstrings.  At that point, we will update this document to correspond with the new standard.  For now, just refer to:
-
-`example.py <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
+.. Attention:: This document is slightly out of date.  During the December 2007 sprint, Travis Oliphant made some changes to the NumPy/SciPy docstring standard.  The changes are relatively minor, but the standard no longer follows the epydoc/restructured text standards.  The changes brings our docstring standard more in line with the ETS standard; in addition, it also conserves horizontal real-estate and arguably looks better when printed as plain text.  Unfortunately, these changes mean that currently it isn't possible to render the docstrings as desired.  Travis has committed to writing something to render the docstrings.  At that point, we will update this document to correspond with the new standard.  For now, just refer to: `example.py <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
 
 Overview
 --------
