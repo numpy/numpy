@@ -2,13 +2,8 @@
 Defines a class of record arrays supporting masked arrays.
 
 :author: Pierre Gerard-Marchant
-:contact: pierregm_at_uga_dot_edu
-:version: $Id: mrecords.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 """
-__author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
-__version__ = '1.0'
-__revision__ = "$Revision: 3473 $"
-__date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
+__author__ = "Pierre GF Gerard-Marchant"
 
 import sys
 import types
@@ -249,7 +244,7 @@ The fieldname base is either `_data` or `_mask`."""
         _localdict = self.__dict__
         _data = self._data
         # We want a field ........
-        if isinstance(indx, str):
+        if isinstance(indx, basestring):
             obj = _data[indx].view(MaskedArray)
             obj._set_mask(_localdict['_fieldmask'][indx])
             # Force to nomask if the mask is empty

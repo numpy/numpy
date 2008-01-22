@@ -178,6 +178,26 @@ def maximum_fill_value(obj):
     else:
         raise TypeError, 'Unsuitable type for calculating minimum.'
 
+
+def _check_fill_value(fill_value, dtype):
+    descr = numpy.dtype(dtype).descr
+    if fill_value is None:
+        if len(descr) > 1:
+            fill_value = [default_fill_value(numeric.dtype(d[1]))
+                          for d in descr]
+        else:
+            fill_value = default_fill_value(dtype)
+    else:
+        fval = numpy.resize(narray(fill_value,copy=False,dtype=object_),
+                            len(descr))
+        if len(descr) > 1:
+            fill_value = [numpy.asarray(f).astype(d[1]).item()
+                          for (f,d) in zip(fval, descr)]
+        else:
+            fill_value = narray(fval, copy=False, dtype=dtype).item()
+    return fill_value
+
+
 def set_fill_value(a, fill_value):
     """Set the filling value of a, if a is a masked array.  Otherwise,
     do nothing.
@@ -187,7 +207,7 @@ def set_fill_value(a, fill_value):
 
     """
     if isinstance(a, MaskedArray):
-        a.set_fill_value(fill_value)
+        a._fill_value = _check_fill_value(fill_value, a.dtype)
     return
 
 def get_fill_value(a):
@@ -211,6 +231,7 @@ def common_fill_value(a, b):
     if t1 == t2:
         return t1
     return None
+
 
 #####--------------------------------------------------------------------------
 def filled(a, value = None):
@@ -402,7 +423,7 @@ class _MaskedUnaryOperation:
         #
         m = getmask(a)
         d1 = get_data(a)
-        #        
+        #
         if self.domain is not None:
             dm = narray(self.domain(d1), copy=False)
             m = numpy.logical_or(m, dm)
@@ -1090,7 +1111,7 @@ class MaskedArray(numeric.ndarray):
             masked values cannot be unmasked.
         shrink : {True, boolean}
             Whether to force compression of an empty mask.
-        
+
 
     """
 
@@ -1100,8 +1121,8 @@ class MaskedArray(numeric.ndarray):
     _baseclass =  numeric.ndarray
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
-                subok=True, ndmin=0, fill_value=None, 
-                keep_mask=True, hard_mask=False, flag=None,shrink=True, 
+                subok=True, ndmin=0, fill_value=None,
+                keep_mask=True, hard_mask=False, flag=None,shrink=True,
                 **options):
         """Create a new masked array from scratch.
 
@@ -1162,11 +1183,7 @@ class MaskedArray(numeric.ndarray):
                     _data._sharedmask = False
 
         # Update fill_value.......
-        if fill_value is None:
-            _data._fill_value = getattr(data, '_fill_value',
-                                        default_fill_value(_data))
-        else:
-            _data._fill_value = fill_value
+        _data._fill_value = _check_fill_value(fill_value, _data.dtype)
         # Process extra options ..
         _data._hardmask = hard_mask
         _data._baseclass = _baseclass
@@ -1210,7 +1227,7 @@ class MaskedArray(numeric.ndarray):
         if context is not None:
             result._mask = result._mask.copy()
             (func, args, _) = context
-            m = reduce(mask_or, [getmask(arg) for arg in args])
+            m = reduce(mask_or, [getmaskarray(arg) for arg in args])
             # Get the domain mask................
             domain = ufunc_domain.get(func, None)
             if domain is not None:
@@ -1266,6 +1283,10 @@ class MaskedArray(numeric.ndarray):
             dout = dout.view(type(self))
             # Inherit attributes from self
             dout._update_from(self)
+            # Check the fill_value ....
+            if isinstance(indx, basestring):
+                fvindx = list(self.dtype.names).index(indx)
+                dout._fill_value = self._fill_value[fvindx]
             # Update the mask if needed
             if m is not nomask:
                 if isinstance(indx, basestring):
@@ -1459,9 +1480,7 @@ class MaskedArray(numeric.ndarray):
         If value is None, use a default based on the data type.
 
         """
-        if value is None:
-            value = default_fill_value(self)
-        self._fill_value = value
+        self._fill_value = _check_fill_value(value,self.dtype)
 
     fill_value = property(fget=get_fill_value, fset=set_fill_value,
                           doc="Filling value.")
@@ -1804,7 +1823,7 @@ masked_%(name)s(data = %(data)s,
     def ids (self):
         """Return the addresses of the data and mask areas."""
         if self._mask is nomask:
-            return (self.ctypes.data, id(nomask))        
+            return (self.ctypes.data, id(nomask))
         return (self.ctypes.data, self._mask.ctypes.data)
     #............................................
     def all(self, axis=None, out=None):
@@ -2304,13 +2323,13 @@ masked_%(name)s(data = %(data)s,
         if result.ndim > 0:
             result._mask = mask
         return result
-    
-    def mini(self, axis=None):    
+
+    def mini(self, axis=None):
         if axis is None:
             return minimum(self)
         else:
             return minimum.reduce(self, axis)
-    
+
     #........................
     def max(self, axis=None, fill_value=None):
         """Return the maximum/a along the given axis.
@@ -2493,9 +2512,9 @@ masked = masked_singleton
 
 masked_array = MaskedArray
 
-def array(data, dtype=None, copy=False, order=False, 
-          mask=nomask, fill_value=None, 
-          keep_mask=True, hard_mask=False, shrink=True, subok=True, ndmin=0, 
+def array(data, dtype=None, copy=False, order=False,
+          mask=nomask, fill_value=None,
+          keep_mask=True, hard_mask=False, shrink=True, subok=True, ndmin=0,
           ):
     """array(data, dtype=None, copy=False, order=False, mask=nomask,
              fill_value=None, keep_mask=True, hard_mask=False, shrink=True,
@@ -2840,7 +2859,7 @@ def putmask(a, mask, values): #, mode='raise'):
     If values is not the same size of a and mask then it will repeat
     as necessary.  This gives different behavior than
     a[mask] = values.
-    
+
     Note: Using a masked array as values will NOT transform a ndarray in
           a maskedarray.
 
@@ -3207,4 +3226,3 @@ def load(F):
 def loads(strg):
     "Load a pickle from the current string."""
     return cPickle.loads(strg)
-

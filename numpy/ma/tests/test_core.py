@@ -3,12 +3,8 @@
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: test_core.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 """
-__author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
-__version__ = '1.0'
-__revision__ = "$Revision: 3473 $"
-__date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
+__author__ = "Pierre GF Gerard-Marchant"
 
 import types
 import warnings
@@ -31,18 +27,6 @@ pi = numpy.pi
 set_local_path()
 from test_old_ma import *
 restore_path()
-
-class TestNoMask(NumpyTestCase):
-    def test_no_inplace(self):
-        x = nomask
-        y = x
-        x += 1
-        assert x != y
-
-    def test_no_copy(self):
-        x = nomask
-        y = x.copy()
-        assert x is y
 
 #..............................................................................
 class TestMA(NumpyTestCase):
@@ -352,6 +336,11 @@ class TestMA(NumpyTestCase):
         assert(xm[0].ptp() is masked)
         assert(xm[0].ptp(0) is masked)
         assert(xm[0].ptp(-1) is masked)
+        #
+        x = array([1,2,3], mask=True)
+        assert(x.min() is masked)
+        assert(x.max() is masked)
+        assert(x.ptp() is masked)
     #........................
     def test_addsumprod (self):
         "Tests add, sum, product."
@@ -390,6 +379,16 @@ class TestMA(NumpyTestCase):
         xmym = concatenate((xm,ym),1)
         assert_equal(numpy.concatenate((x,y),1), xmym)
         assert_equal(numpy.concatenate((xm.mask,ym.mask),1), xmym._mask)
+        #
+        x=zeros(2)
+        y=array(ones(2),mask=[False,True])
+        z = concatenate((x,y))
+        assert_array_equal(z,[0,0,1,1])
+        assert_array_equal(z.mask,[False,False,False,True])
+        z = concatenate((y,x))
+        assert_array_equal(z,[1,1,0,0])
+        assert_array_equal(z.mask,[False,True,False,False])
+
     #........................
     def test_indexing(self):
         "Tests conversions and indexing"
@@ -774,10 +773,27 @@ class TestMA(NumpyTestCase):
         assert(isinstance(a_pickled._data,numpy.matrix))
     #
     def test_fillvalue(self):
-        "Check that we don't lose the fill_value"
+        "Having fun with the fill_value"
         data = masked_array([1,2,3],fill_value=-999)
         series = data[[0,2,1]]
         assert_equal(series._fill_value, data._fill_value)
+        #
+        mtype = [('f',float_),('s','|S3')]
+        x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
+        x.fill_value=999
+        assert_equal(x.fill_value,[999.,'999'])
+        assert_equal(x['f'].fill_value, 999)
+        assert_equal(x['s'].fill_value, '999')
+        #
+        x.fill_value=(9,'???')
+        assert_equal(x.fill_value, (9,'???'))
+        assert_equal(x['f'].fill_value, 9)
+        assert_equal(x['s'].fill_value, '???')
+        #
+        x = array([1,2,3.1])
+        x.fill_value = 999
+        assert_equal(numpy.asarray(x.fill_value).dtype, float_)
+        assert_equal(x.fill_value, 999.)
     #
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
@@ -793,6 +809,7 @@ class TestMA(NumpyTestCase):
         assert_equal(data_fixed._mask, [1., 0., 1.])
     #
     def test_imag_real(self):
+        "Check complex"
         xx = array([1+10j,20+2j], mask=[1,0])
         assert_equal(xx.imag,[10,2])
         assert_equal(xx.imag.filled(), [1e+20,2])
@@ -800,6 +817,29 @@ class TestMA(NumpyTestCase):
         assert_equal(xx.real,[1,20])
         assert_equal(xx.real.filled(), [1e+20,20])
         assert_equal(xx.real.dtype, xx._data.real.dtype)
+    #
+    def test_ndmin(self):
+        "Check the use of ndmin"
+        x = array([1,2,3],mask=[1,0,0], ndmin=2)
+        assert_equal(x.shape,(1,3))
+        assert_equal(x._data,[[1,2,3]])
+        assert_equal(x._mask,[[1,0,0]])
+    #
+    def test_record(self):
+        "Check record access"
+        mtype = [('f',float_),('s','|S3')]
+        x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
+        x[1] = masked
+        #
+        (xf, xs) = (x['f'], x['s'])
+        assert_equal(xf.data, [1,2,numpy.pi])
+        assert_equal(xf.mask, [0,1,0])
+        assert_equal(xf.dtype, float_)
+        assert_equal(xs.data, ['a', 'b', 'pi'])
+        assert_equal(xs.mask, [0,1,0])
+        assert_equal(xs.dtype, '|S3')
+    #
+
 
 #...............................................................................
 
@@ -1347,36 +1387,6 @@ class TestArrayMethods(NumpyTestCase):
         mxx.harden_mask()
         putmask(mxx, mask, values)
         assert_equal(mxx, [1,2,30,4,5,60])
-
-    def test_ndmin(self):
-        x = array([1,2,3],mask=[1,0,0], ndmin=2)
-        assert_equal(x.shape,(1,3))
-        assert_equal(x._data,[[1,2,3]])
-        assert_equal(x._mask,[[1,0,0]])
-
-    def test_sumprod_masked(self):
-        x = masked_array([1,2,3], mask=True)
-        z = x.min()
-        assert(x.sum() is masked)
-        assert(x.prod() is masked)
-
-    def test_fancy_dtype(self):
-        mtype = [('f',float_),('s','|S3')]
-        x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
-        x[1] = masked
-        x['f'] = 17
-
-    def test_concat(self):
-         x=zeros(2)
-         y=array(ones(2),mask=[False,True])
-
-         z = concatenate((x,y))
-         assert_array_equal(z,[0,0,1,1])
-         assert_array_equal(z.mask,[False,False,False,True])
-
-         z = concatenate((y,x))
-         assert_array_equal(z,[1,1,0,0])
-         assert_array_equal(z.mask,[False,True,False,False])
 
 
 #..............................................................................
