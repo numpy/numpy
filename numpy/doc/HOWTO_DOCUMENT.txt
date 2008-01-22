@@ -160,6 +160,11 @@ Currently, we recommend that you build epydoc from the trunk::
   cd epydoc/src
   sudo python setup.py install
 
+Since we use reST-formatted docstrings instead of the epytext markup, you will
+need to include the following line near the top of your module::
+
+    __docformat__ = "restructuredtext en"
+
 The appearance of some elements can be changed in the epydoc.css
 style sheet. 
 
