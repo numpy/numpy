@@ -1492,7 +1492,6 @@ def scons_generate_config_py(target):
     """
     from distutils.dir_util import mkpath
     from numscons import get_scons_configres_dir, get_scons_configres_filename
-    import imp
     d = {}
     mkpath(os.path.dirname(target))
     f = open(target, 'w')
@@ -1508,9 +1507,8 @@ def scons_generate_config_py(target):
             pkg_name = '.'.join(root[len(confdir)+1:].split(os.sep))
             fid = open(file, 'r')
             try:
-                config_mod = imp.load_module(pkg_name, fid, confilename,
-                                             ('.py', 'U', 1))
-                d[pkg_name] = config_mod.config
+                cnt = fid.read()
+                d[pkg_name] = eval(cnt)
             finally:
                 fid.close()
     # d is a dictionary whose keys are package names, and values the
