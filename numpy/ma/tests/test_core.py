@@ -1388,6 +1388,12 @@ class TestArrayMethods(NumpyTestCase):
         putmask(mxx, mask, values)
         assert_equal(mxx, [1,2,30,4,5,60])
 
+    def test_compress(self):
+        a = array([1,2,3],mask=[True,False,False])
+        b = compress(a,a<3)
+        assert_equal(b,[1,2])
+        assert_equal(b.mask,[True,False])
+
 
 #..............................................................................
 

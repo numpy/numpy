@@ -26,8 +26,8 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'arctanh', 'argmax', 'argmin', 'argsort', 'around',
            'array', 'asarray','asanyarray',
            'bitwise_and', 'bitwise_or', 'bitwise_xor',
-           'ceil', 'choose', 'compressed', 'concatenate', 'conjugate',
-           'cos', 'cosh', 'count',
+           'ceil', 'choose', 'compress', 'compressed', 'concatenate',
+           'conjugate', 'cos', 'cosh', 'count',
            'default_fill_value', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp',
            'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
@@ -3098,6 +3098,12 @@ def choose (indices, t, out=None, mode='raise'):
     m = numpy.choose(c, masks)
     m = make_mask(mask_or(m, getmask(indices)), copy=0, shrink=True)
     return masked_array(d, mask=m)
+
+def compress(a, condition):
+    """Return a where condition is True.
+
+    """
+    return a[condition]
 
 def round_(a, decimals=0, out=None):
     """Return a copy of a, rounded to 'decimals' places.
