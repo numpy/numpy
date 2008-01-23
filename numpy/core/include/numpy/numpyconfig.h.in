@@ -6,7 +6,7 @@
 #define NPY_SIZEOF_LONGDOUBLE   @SIZEOF_LONG_DOUBLE@
 #define NPY_SIZEOF_PY_INTPTR_T  @SIZEOF_PY_INTPTR_T@
 
-#define NPY_NO_SIGNAL    @NPY_NO_SIGNAL@
+@DEFINE_NPY_NO_SIGNAL@
 #define NPY_NO_SMP       @NPY_NO_SMP@
 
 /* XXX: this has really nothing to do in a config file... */

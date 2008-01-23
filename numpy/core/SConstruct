@@ -1,4 +1,4 @@
-# Last Change: Sun Jan 13 04:00 PM 2008 J
+# Last Change: Wed Jan 23 08:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -70,8 +70,10 @@ if not config.CheckDeclaration('CHAR_BIT', includes= '#include <Python.h>\n'):
 # Checking signal stuff
 #----------------------
 if is_npy_no_signal():
-    numpyconfig_sym.append(('NPY_NO_SIGNAL', ''))
+    numpyconfig_sym.append(('DEFINE_NPY_NO_SIGNAL', '#define NPY_NO_SIGNAL\n'))
     config.Define('__NPY_PRIVATE_NO_SIGNAL', comment = "define to 1 to disable SMP support ")
+else:
+    numpyconfig_sym.append(('DEFINE_NPY_NO_SIGNAL', ''))
 
 #---------------------
 # Checking SMP option
