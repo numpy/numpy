@@ -38,6 +38,9 @@ else:
         loader = PackageLoader(infunc=True)
         return loader(*packages, **options)
 
+    import add_newdocs
+    __all__ = ['add_newdocs',]
+
     pkgload.__doc__ = PackageLoader.__call__.__doc__
     import testing
     from testing import ScipyTest, NumpyTest
@@ -57,11 +60,11 @@ else:
          object, unicode, str
     from core import round, abs, max, min
 
-    __all__ = ['__version__', 'pkgload', 'PackageLoader',
-               'ScipyTest', 'NumpyTest', 'show_config']
-    __all__ += core.__all__
-    __all__ += lib.__all__
-    __all__ += ['linalg', 'fft', 'random', 'ctypeslib']
+    __all__.extend(['__version__', 'pkgload', 'PackageLoader',
+               'ScipyTest', 'NumpyTest', 'show_config'])
+    __all__.extend(core.__all__)
+    __all__.extend(lib.__all__)
+    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib'])
 
     if __doc__ is not None:
         __doc__ += """
@@ -97,10 +100,6 @@ testing --> NumpyTest
         print 'Python version %s' % (sys.version.replace('\n', '',),)
         return NumpyTest().test(*args, **kw)
     test.__doc__ = NumpyTest.test.__doc__
-
-    import add_newdocs
-
-    __all__.extend(['add_newdocs'])
 
     if __doc__ is not None:
         __doc__ += """
