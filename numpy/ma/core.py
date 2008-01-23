@@ -78,6 +78,8 @@ nomask = MaskType(0)
 divide_tolerance = 1.e-35
 numpy.seterr(all='ignore')
 
+def doc_note(note):
+    return "\nNotes\n-----\n%s" % note
 
 #####--------------------------------------------------------------------------
 #---- --- Exceptions ---
@@ -202,8 +204,9 @@ def set_fill_value(a, fill_value):
     """Set the filling value of a, if a is a masked array.  Otherwise,
     do nothing.
 
-    *Returns*:
-        None
+    Returns
+    -------
+    None
 
     """
     if isinstance(a, MaskedArray):
@@ -239,15 +242,17 @@ def filled(a, value = None):
     value is None, get_fill_value(a) is used instead.  If a is already
     a ndarray, a itself is returned.
 
-    *Parameters*:
-        a : {var}
-            An input object.
-        value : {var}, optional
-            Filling value. If not given, the output of
-            get_fill_value(a) is used instead.
+    Parameters
+    ----------
+    a : maskedarray or array_like
+        An input object.
+    value : {var}, optional
+        Filling value. If not given, the output of get_fill_value(a)
+        is used instead.
 
-    *Returns*:
-        A ndarray.
+    Returns
+    -------
+    a : array_like
 
     """
     if hasattr(a, 'filled'):
@@ -285,12 +290,13 @@ def get_masked_subclass(*arrays):
 def get_data(a, subok=True):
     """Return the _data part of a (if any), or a as a ndarray.
 
-    *Parameters* :
-        a : {ndarray}
-            A ndarray or a subclass of.
-        subok : {boolean}
-            Whether to force the output to a 'pure' ndarray (False) or
-            to return a subclass of ndarray if approriate (True).
+    Parameters
+    ----------
+    a : array_like
+        A ndarray or a subclass of.
+    subok : bool
+        Whether to force the output to a 'pure' ndarray (False) or to
+        return a subclass of ndarray if approriate (True).
 
     """
     data = getattr(a, '_data', numpy.array(a, subok=subok))
@@ -305,17 +311,19 @@ def fix_invalid(a, copy=True, fill_value=None):
 
     Note that a copy is performed by default (just in case...).
 
-    *Parameters*:
-        a : {ndarray}
-            A (subclass of) ndarray.
-        copy : {boolean}
-            Whether to use a copy of a (True) or to fix a in place (False).
-        fill_value : {var}, optional
-            Value used for fixing invalid data.
-            If not given, the output of get_fill_value(a) is used instead.
+    Parameters
+    ----------
+    a : array_like
+        A (subclass of) ndarray.
+    copy : bool
+        Whether to use a copy of a (True) or to fix a in place (False).
+    fill_value : {var}, optional
+        Value used for fixing invalid data.  If not given, the output
+        of get_fill_value(a) is used instead.
 
-    *Returns* :
-        MaskedArray object
+    Returns
+    -------
+    b : MaskedArray
 
     """
     a = masked_array(a, copy=copy, subok=True)
@@ -398,10 +406,13 @@ class _MaskedUnaryOperation:
     """Defines masked version of unary operations, where invalid
     values are pre-masked.
 
-    *Parameters*:
-        f : function.
-        fill : Default filling value *[0]*.
-        domain : Default domain *[None]*.
+    Parameters
+    ----------
+    f : callable
+    fill :
+        Default filling value (0).
+    domain :
+        Default domain (None).
 
     """
     def __init__ (self, mufunc, fill=0, domain=None):
@@ -455,11 +466,15 @@ class _MaskedBinaryOperation:
     """Define masked version of binary operations, where invalid
     values are pre-masked.
 
-    *Parameters*:
-        f : function.
-        fillx : Default filling value for the first argument *[0]*.
-        filly : Default filling value for the second argument *[0]*.
-        domain : Default domain *[None]*.
+    Parameters
+    ----------
+    f : callable
+    fillx :
+        Default filling value for the first argument (0).
+    filly :
+        Default filling value for the second argument (0).
+    domain :
+        Default domain (None).
 
     """
     def __init__ (self, mbfunc, fillx=0, filly=0):
@@ -560,11 +575,12 @@ class _DomainedBinaryOperation:
 
     They have no reduce, outer or accumulate.
 
-    *Parameters*:
-        f : function.
-        domain : Default domain.
-        fillx : Default filling value for the first argument *[0]*.
-        filly : Default filling value for the second argument *[0]*.
+    Parameters
+    ----------
+    f : function.
+    domain : Default domain.
+    fillx : Default filling value for the first argument (0).
+    filly : Default filling value for the second argument (0).
 
     """
     def __init__ (self, dbfunc, domain, fillx=0, filly=0):
@@ -720,13 +736,14 @@ def make_mask(m, copy=False, shrink=True, flag=None):
     The function can accept any sequence of integers or nomask.  Does
     not check that contents must be 0s and 1s.
 
-    *Parameters*:
-        m : {ndarray}
-            Potential mask.
-        copy : {boolean}
-            Whether to return a copy of m (True) or m itself (False).
-        shrink : {boolean}
-            Whether to shrink m to nomask if all its values are False.
+    Parameters
+    ----------
+    m : array_like
+        Potential mask.
+    copy : bool
+        Whether to return a copy of m (True) or m itself (False).
+    shrink : bool
+        Whether to shrink m to nomask if all its values are False.
 
     """
     if flag is not None:
@@ -755,9 +772,10 @@ def make_mask(m, copy=False, shrink=True, flag=None):
 def make_mask_none(s):
     """Return a mask of shape s, filled with False.
 
-    *Parameters*:
-        s : {tuple}
-            A tuple indicating the shape of the final mask.
+    Parameters
+    ----------
+    s : tuple
+        A tuple indicating the shape of the final mask.
 
     """
     result = numeric.zeros(s, dtype=MaskType)
@@ -770,15 +788,16 @@ def mask_or (m1, m2, copy=False, shrink=True):
     nomask as False.  The result may equal m1 or m2 if the other is
     nomask.
 
-    *Parameters*:
-        m1 : {ndarray}
-            First mask.
-        m2 : {ndarray}
-            Second mask
-        copy : {boolean}
-            Whether to return a copy.
-        shrink : {boolean}
-            Whether to shrink m to nomask if all its values are False.
+    Parameters
+    ----------
+    m1 : array_like
+        First mask.
+    m2 : array_like
+        Second mask
+    copy : bool
+        Whether to return a copy.
+    shrink : bool
+        Whether to shrink m to nomask if all its values are False.
 
      """
     if m1 is nomask:
@@ -797,13 +816,14 @@ def masked_where(condition, a, copy=True):
 
     Masked values of a or condition are kept.
 
-    *Parameters*:
-        condition : {ndarray}
-            Masking condition.
-        a : {ndarray}
-            Array to mask.
-        copy : {boolean}
-            Whether to return a copy of a (True) or modify a in place.
+    Parameters
+    ----------
+    condition : array_like
+        Masking condition.
+    a : array_like
+        Array to mask.
+    copy : bool
+        Whether to return a copy of a (True) or modify a in place.
 
     """
     cond = filled(condition,1)
@@ -854,8 +874,9 @@ def masked_inside(x, v1, v2, copy=True):
     the interval [v1,v2] (v1 <= x <= v2).  The boundaries v1 and v2
     can be given in either order.
 
-    *Note*:
-        The array x is prefilled with its filling value.
+    Notes
+    -----
+    The array x is prefilled with its filling value.
 
     """
     if v2 < v1:
@@ -869,8 +890,9 @@ def masked_outside(x, v1, v2, copy=True):
     the interval [v1,v2] (x < v1)|(x > v2).  The boundaries v1 and v2
     can be given in either order.
 
-    *Note*:
-        The array x is prefilled with its filling value.
+    Notes
+    -----
+    The array x is prefilled with its filling value.
 
     """
     if v2 < v1:
@@ -886,8 +908,9 @@ def masked_object(x, value, copy=True):
     This function is suitable only for object arrays: for floating
     point, please use ``masked_values`` instead.
 
-    *Notes*:
-        The mask is set to `nomask` if posible.
+    Notes
+    -----
+    The mask is set to `nomask` if posible.
 
     """
     if isMaskedArray(x):
@@ -908,17 +931,18 @@ def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True):
     Suitable only for floating points. For integers, please use
     ``masked_equal``.  The mask is set to nomask if posible.
 
-    *Parameters*:
-        x : {ndarray}
-            Array to fill.
-        value : {float}
-            Masking value.
-        rtol : {float}
-            Tolerance parameter.
-        atol : {float}, *[1e-8]*
-            Tolerance parameter.
-        copy : {boolean}
-            Whether to return a copy of x.
+    Parameters
+    ----------
+    x : array_like
+        Array to fill.
+    value : float
+        Masking value.
+    rtol : float
+        Tolerance parameter.
+    atol : float
+        Tolerance parameter (1e-8).
+    copy : bool
+        Whether to return a copy of x.
 
     """
     abs = umath.absolute
@@ -1002,14 +1026,15 @@ class _arraymethod(object):
     on the initial mask. Otherwise, the new mask is just a reference
     to the initial mask.
 
-    *Parameters*:
-        _name : String
-            Name of the function to apply on data.
-        _onmask : {boolean} *[True]*
-            Whether the mask must be processed also (True) or left
-            alone (False).
-        obj : Object
-            The object calling the arraymethod
+    Parameters
+    ----------
+    _name : String
+        Name of the function to apply on data.
+    _onmask : bool
+        Whether the mask must be processed also (True) or left
+        alone (False). Default: True.
+    obj : Object
+        The object calling the arraymethod.
 
     """
     def __init__(self, funcname, onmask=True):
@@ -1081,37 +1106,37 @@ class MaskedArray(numeric.ndarray):
         x = MaskedArray(data, mask=nomask, dtype=None, copy=True,
         fill_value=None, keep_mask=True, hard_mask=False, shrink=True)
 
-    *Parameters*:
-        data : {var}
-            Input data.
-        mask : {nomask, sequence}
-            Mask.  Must be convertible to an array of booleans with
-            the same shape as data: True indicates a masked (eg.,
-            invalid) data.
-        dtype : {dtype}
-            Data type of the output. If None, the type of the data
-            argument is used.  If dtype is not None and different from
-            data.dtype, a copy is performed.
-        copy : {boolean}
-            Whether to copy the input data (True), or to use a
-            reference instead.  Note: data are NOT copied by default.
-        subok : {True, boolean}
-            Whether to return a subclass of MaskedArray (if possible)
-            or a plain MaskedArray.
-        ndmin : {0, int}
-            Minimum number of dimensions
-        fill_value : {var}
-            Value used to fill in the masked values when necessary. If
-            None, a default based on the datatype is used.
-        keep_mask : {True, boolean}
-            Whether to combine mask with the mask of the input data,
-            if any (True), or to use only mask for the output (False).
-        hard_mask : {False, boolean}
-            Whether to use a hard mask or not. With a hard mask,
-            masked values cannot be unmasked.
-        shrink : {True, boolean}
-            Whether to force compression of an empty mask.
-
+    Parameters
+    ----------
+    data : {var}
+        Input data.
+    mask : {nomask, sequence}
+        Mask.  Must be convertible to an array of booleans with
+        the same shape as data: True indicates a masked (eg.,
+        invalid) data.
+    dtype : dtype
+        Data type of the output. If None, the type of the data
+        argument is used.  If dtype is not None and different from
+        data.dtype, a copy is performed.
+    copy : bool
+        Whether to copy the input data (True), or to use a
+        reference instead.  Note: data are NOT copied by default.
+    subok : {True, boolean}
+        Whether to return a subclass of MaskedArray (if possible)
+        or a plain MaskedArray.
+    ndmin : {0, int}
+        Minimum number of dimensions
+    fill_value : {var}
+        Value used to fill in the masked values when necessary. If
+        None, a default based on the datatype is used.
+    keep_mask : {True, boolean}
+        Whether to combine mask with the mask of the input data,
+        if any (True), or to use only mask for the output (False).
+    hard_mask : {False, boolean}
+        Whether to use a hard mask or not. With a hard mask,
+        masked values cannot be unmasked.
+    shrink : {True, boolean}
+        Whether to force compression of an empty mask.
 
     """
 
@@ -1491,16 +1516,18 @@ class MaskedArray(numeric.ndarray):
 
         If fill_value is None, self.fill_value is used instead.
 
-        *Note*:
-            + Subclassing is preserved
-            + The result is NOT a MaskedArray !
+        Notes
+        -----
+        + Subclassing is preserved
+        + The result is NOT a MaskedArray !
 
-        *Examples*:
-            >>> x = array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
-            >>> x.filled()
-            array([1,2,-999,4,-999])
-            >>> type(x.filled())
-            <type 'numpy.ndarray'>
+        Examples
+        --------
+        >>> x = array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
+        >>> x.filled()
+        array([1,2,-999,4,-999])
+        >>> type(x.filled())
+        <type 'numpy.ndarray'>
 
         """
         m = self._mask
@@ -1703,15 +1730,17 @@ masked_%(name)s(data = %(data)s,
         """Count the non-masked elements of the array along the given
         axis.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to count the non-masked elements. If
-                not given, all the non masked elements are counted.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to count the non-masked elements. If
+            not given, all the non masked elements are counted.
 
-        *Returns*:
-             A masked array where the mask is True where all data are
-             masked.  If axis is None, returns either a scalar ot the
-             masked singleton if all values are masked.
+        Returns
+        -------
+        A masked array where the mask is True where all data are
+        masked.  If axis is None, returns either a scalar ot the
+        masked singleton if all values are masked.
 
         """
         m = self._mask
@@ -1752,12 +1781,14 @@ masked_%(name)s(data = %(data)s,
     def reshape (self, *s):
         """Reshape the array to shape s.
 
-        *Returns*:
-            A new masked array.
+        Returns
+        -------
+        A new masked array.
 
-        *Notes:
-            If you want to modify the shape in place, please use
-            ``a.shape = s``
+        Notes
+        -----
+        If you want to modify the shape in place, please use
+        ``a.shape = s``
 
         """
         result = self._data.reshape(*s).view(type(self))
@@ -1773,8 +1804,9 @@ masked_%(name)s(data = %(data)s,
         The array must own its own memory and not be referenced by
         other arrays.
 
-        *Returns*:
-            None.
+        Returns
+        -------
+        None.
 
         """
         try:
@@ -1831,8 +1863,9 @@ masked_%(name)s(data = %(data)s,
         False otherwise.  Masked values are considered as True during
         computation.
 
-        *Parameters*
-            axis : {integer}, optional
+        Parameter
+        ----------
+            axis : int, optional
                 Axis along which the operation is performed.  If None,
                 the operation is performed on a flatten array
             out : {MaskedArray}, optional
@@ -1840,13 +1873,14 @@ masked_%(name)s(data = %(data)s,
                 a valid MaskedArray of the same shape as the output of
                 self._data.all(axis).
 
-        *Returns*
-            A masked array, where the mask is True if all data along
-            the axis are masked.
+        Returns            A masked array, where the mask is True if all data along
+        -------
+        the axis are masked.
 
-        *Notes*
-            An exception is raised if ``out`` is not None and not of
-            the same type as self.
+        Notes
+        -----
+        An exception is raised if ``out`` is not None and not of the
+        same type as self.
 
         """
         if out is None:
@@ -1871,8 +1905,9 @@ masked_%(name)s(data = %(data)s,
         Returns False if all entries are False.
         Masked values are considered as True during computation.
 
-        *Parameters*
-            axis : {integer}, optional
+        Parameter
+        ----------
+            axis : int, optional
                 Axis along which the operation is performed.
                 If None, the operation is performed on a flatten array
             out : {MaskedArray}, optional
@@ -1880,13 +1915,14 @@ masked_%(name)s(data = %(data)s,
                 a valid MaskedArray of the same shape as the output of
                 self._data.all(axis).
 
-        *Returns*
-            A masked array, where the mask is True if all data along
-            the axis are masked.
+        Returns            A masked array, where the mask is True if all data along
+        -------
+        the axis are masked.
 
-        *Notes*
-            An exception is raised if ``out`` is not None and not of
-            the same type as self.
+        Notes
+        -----
+        An exception is raised if ``out`` is not None and not of the
+        same type as self.
 
         """
         if out is None:
@@ -1943,13 +1979,14 @@ masked_%(name)s(data = %(data)s,
 
         Masked elements are set to 0 internally.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation. If not given,
-                the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not given,
+            the current dtype is used instead.
 
         """
         if self._mask is nomask:
@@ -1969,13 +2006,14 @@ masked_%(name)s(data = %(data)s,
 
         Masked values are set to 0 internally.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation. If not
-                given, the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not
+            given, the current dtype is used instead.
 
         """
         result = self.filled(0).cumsum(axis=axis, dtype=dtype).view(type(self))
@@ -1988,13 +2026,14 @@ masked_%(name)s(data = %(data)s,
 
         Masked elements are set to 1 internally.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation. If not
-                given, the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not
+            given, the current dtype is used instead.
 
         """
         if self._mask is nomask:
@@ -2016,13 +2055,14 @@ masked_%(name)s(data = %(data)s,
 
         Masked values are set to 1 internally.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation. If not
-                given, the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not
+            given, the current dtype is used instead.
 
         """
         result = self.filled(1).cumprod(axis=axis, dtype=dtype).view(type(self))
@@ -2034,13 +2074,14 @@ masked_%(name)s(data = %(data)s,
 
         a.sum(axis, dtype) / a.size(axis).
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation. If not
-                given, the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not
+            given, the current dtype is used instead.
 
         """
         if self._mask is nomask:
@@ -2054,13 +2095,14 @@ masked_%(name)s(data = %(data)s,
         """Return the anomalies (deviations from the average) along
         the given axis.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation. If not
-                given, the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not
+            given, the current dtype is used instead.
 
         """
         m = self.mean(axis, dtype)
@@ -2075,18 +2117,19 @@ masked_%(name)s(data = %(data)s,
         The variance is the average of the squared deviations from the
         mean, i.e. var = mean((x - x.mean())**2).
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation. If not
-                given, the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation. If not
+            given, the current dtype is used instead.
 
-        *Notes*:
-            The value returned is a biased estimate of the true
-            variance.  For the (more standard) unbiased estimate, use
-            varu.
+        Notes
+        -----
+        The value returned is a biased estimate of the true variance.
+        For the (more standard) unbiased estimate, use varu.
 
         """
         if self._mask is nomask:
@@ -2111,18 +2154,20 @@ masked_%(name)s(data = %(data)s,
 
         std = sqrt(mean((x - x.mean())**2)).
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            dtype : {dtype}, optional
-                Datatype for the intermediary computation.
-                If not given, the current dtype is used instead.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        dtype : {dtype}, optional
+            Datatype for the intermediary computation.
+            If not given, the current dtype is used instead.
 
-        *Notes*:
-            The value returned is a biased estimate of the true
-            standard deviation.  For the more standard unbiased
-            estimate, use stdu.
+        Notes
+        -----
+        The value returned is a biased estimate of the true
+        standard deviation.  For the more standard unbiased
+        estimate, use stdu.
 
         """
         dvar = self.var(axis,dtype)
@@ -2137,41 +2182,43 @@ masked_%(name)s(data = %(data)s,
         specified axis.  Masked values are filled beforehand to
         fill_value.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis to be indirectly sorted.
-                If not given, uses a flatten version of the array.
-            fill_value : {var}
-                Value used to fill in the masked values.
-                If not given, self.fill_value is used instead.
-            kind : {string}
-                Sorting algorithm (default 'quicksort')
-                Possible values: 'quicksort', 'mergesort', or 'heapsort'
+        Parameters
+        ----------
+        axis : int, optional
+            Axis to be indirectly sorted.
+            If not given, uses a flatten version of the array.
+        fill_value : {var}
+            Value used to fill in the masked values.
+            If not given, self.fill_value is used instead.
+        kind : {string}
+            Sorting algorithm (default 'quicksort')
+            Possible values: 'quicksort', 'mergesort', or 'heapsort'
 
-        *Notes*:
-            This method executes an indirect sort along the given axis
-            using the algorithm specified by the kind keyword. It
-            returns an array of indices of the same shape as 'a' that
-            index data along the given axis in sorted order.
+        Notes
+        -----
+        This method executes an indirect sort along the given axis
+        using the algorithm specified by the kind keyword. It returns
+        an array of indices of the same shape as 'a' that index data
+        along the given axis in sorted order.
 
-            The various sorts are characterized by average speed,
-            worst case performance need for work space, and whether
-            they are stable.  A stable sort keeps items with the same
-            key in the same relative order. The three available
-            algorithms have the following properties:
+        The various sorts are characterized by average speed, worst
+        case performance need for work space, and whether they are
+        stable.  A stable sort keeps items with the same key in the
+        same relative order. The three available algorithms have the
+        following properties:
 
-            |------------------------------------------------------|
-            |    kind   | speed |  worst case | work space | stable|
-            |------------------------------------------------------|
-            |'quicksort'|   1   | O(n^2)      |     0      |   no  |
-            |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
-            |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
-            |------------------------------------------------------|
+        |------------------------------------------------------|
+        |    kind   | speed |  worst case | work space | stable|
+        |------------------------------------------------------|
+        |'quicksort'|   1   | O(n^2)      |     0      |   no  |
+        |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
+        |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
+        |------------------------------------------------------|
 
-            All the sort algorithms make temporary copies of the data
-            when the sort is not along the last axis. Consequently,
-            sorts along the last axis are faster and use less space
-            than sorts along other axis.
+        All the sort algorithms make temporary copies of the data when
+        the sort is not along the last axis. Consequently, sorts along
+        the last axis are faster and use less space than sorts along
+        other axis.
 
         """
         if fill_value is None:
@@ -2185,13 +2232,14 @@ masked_%(name)s(data = %(data)s,
 
         Masked values are treated as if they had the value fill_value.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            fill_value : {var}, optional
-                Value used to fill in the masked values.  If None, the
-                output of minimum_fill_value(self._data) is used.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        fill_value : {var}, optional
+            Value used to fill in the masked values.  If None, the
+            output of minimum_fill_value(self._data) is used.
 
         """
         if fill_value is None:
@@ -2205,8 +2253,9 @@ masked_%(name)s(data = %(data)s,
 
         Masked values are treated as if they had the value fill_value.
 
-    *Parameters*:
-        axis : {integer}, optional
+        Parameters
+        ----------
+        axis : int, optional
             Axis along which to perform the operation.
             If None, applies to a flattened version of the array.
         fill_value : {var}, optional
@@ -2223,50 +2272,53 @@ masked_%(name)s(data = %(data)s,
              endwith=True, fill_value=None):
         """Sort along the given axis.
 
-        *Parameters*:
-            axis : {integer}
-                Axis to be indirectly sorted.
-            kind : {string}
-                Sorting algorithm (default 'quicksort')
-                Possible values: 'quicksort', 'mergesort', or 'heapsort'.
-            order : {var}
-                If a has fields defined, then the order keyword can be
-                the field name to sort on or a list (or tuple) of
-                field names to indicate the order that fields should
-                be used to define the sort.
-            fill_value : {var}
-                Value used to fill in the masked values.  If None, use
-                the the output of minimum_fill_value().
-            endwith : {boolean}
-                Whether missing values (if any) should be forced in
-                the upper indices (at the end of the array) (True) or
-                lower indices (at the beginning).
+        Parameters
+        ----------
+        axis : int
+            Axis to be indirectly sorted.
+        kind : {string}
+            Sorting algorithm (default 'quicksort')
+            Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+        order : {var}
+            If a has fields defined, then the order keyword can be
+            the field name to sort on or a list (or tuple) of
+            field names to indicate the order that fields should
+            be used to define the sort.
+        fill_value : {var}
+            Value used to fill in the masked values.  If None, use
+            the the output of minimum_fill_value().
+        endwith : bool
+            Whether missing values (if any) should be forced in
+            the upper indices (at the end of the array) (True) or
+            lower indices (at the beginning).
 
-        *Returns*:
-            When used as method, returns None.
+        Returns
+        -------
+        When used as method, returns None.
             When used as a function, returns an array.
 
-        *Notes*:
-            This method sorts 'a' in place along the given axis using
-            the algorithm specified by the kind keyword.
+        Notes
+        -----
+        This method sorts 'a' in place along the given axis using
+        the algorithm specified by the kind keyword.
 
-            The various sorts may characterized by average speed,
-            worst case performance need for work space, and whether
-            they are stable.  A stable sort keeps items with the same
-            key in the same relative order and is most useful when
-            used w/ argsort where the key might differ from the items
-            being sorted.  The three available algorithms have the
-            following properties:
+        The various sorts may characterized by average speed,
+        worst case performance need for work space, and whether
+        they are stable.  A stable sort keeps items with the same
+        key in the same relative order and is most useful when
+        used w/ argsort where the key might differ from the items
+        being sorted.  The three available algorithms have the
+        following properties:
 
-            |------------------------------------------------------|
-            |    kind   | speed |  worst case | work space | stable|
-            |------------------------------------------------------|
-            |'quicksort'|   1   | O(n^2)      |     0      |   no  |
-            |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
-            |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
-            |------------------------------------------------------|
+        |------------------------------------------------------|
+        |    kind   | speed |  worst case | work space | stable|
+        |------------------------------------------------------|
+        |'quicksort'|   1   | O(n^2)      |     0      |   no  |
+        |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
+        |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
+        |------------------------------------------------------|
 
-    """
+        """
         if self._mask is nomask:
             ndarray.sort(self,axis=axis, kind=kind, order=order)
         else:
@@ -2292,13 +2344,14 @@ masked_%(name)s(data = %(data)s,
 
         Masked values are filled with fill_value.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            fill_value : {var}, optional
-                Value used to fill in the masked values.
-                If None, use the the output of minimum_fill_value().
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        fill_value : {var}, optional
+            Value used to fill in the masked values.
+            If None, use the the output of minimum_fill_value().
 
     """
         mask = self._mask
@@ -2336,13 +2389,14 @@ masked_%(name)s(data = %(data)s,
 
         Masked values are filled with fill_value.
 
-*Parameters*:
-    axis : {integer}, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
-    fill_value : {var}, optional
-        Value used to fill in the masked values.
-        If None, use the the output of maximum_fill_value().
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        fill_value : {var}, optional
+            Value used to fill in the masked values.
+            If None, use the the output of maximum_fill_value().
         """
         mask = self._mask
         # Check all/nothing case ......
@@ -2370,14 +2424,15 @@ masked_%(name)s(data = %(data)s,
     def ptp(self, axis=None, fill_value=None):
         """Return the visible data range (max-min) along the given axis.
 
-        *Parameters*:
-            axis : {integer}, optional
-                Axis along which to perform the operation.
-                If None, applies to a flattened version of the array.
-            fill_value : {var}, optional
-                Value used to fill in the masked values.  If None, the
-                maximum uses the maximum default, the minimum uses the
-                minimum default.
+        Parameters
+        ----------
+        axis : int, optional
+            Axis along which to perform the operation.
+            If None, applies to a flattened version of the array.
+        fill_value : {var}, optional
+            Value used to fill in the masked values.  If None, the
+            maximum uses the maximum default, the minimum uses the
+            minimum default.
 
         """
         return self.max(axis, fill_value) - self.min(axis, fill_value)
@@ -2429,18 +2484,19 @@ masked_%(name)s(data = %(data)s,
         """Return a copy of array data as a Python string containing the raw
         bytes in the array.
 
-        *Parameters*:
-            fill_value : {var}, optional
-                Value used to fill in the masked values.
-                If None, uses self.fill_value instead.
-            order : {string}
-                Order of the data item in the copy {"C","F","A"}.
-                "C"       -- C order (row major)
-                "Fortran" -- Fortran order (column major)
-                "Any"     -- Current order of array.
-                None      -- Same as "Any"
+        Parameters
+        ----------
+        fill_value : {var}, optional
+            Value used to fill in the masked values.
+            If None, uses self.fill_value instead.
+        order : {string}
+            Order of the data item in the copy {"C","F","A"}.
+            "C"       -- C order (row major)
+            "Fortran" -- Fortran order (column major)
+            "Any"     -- Current order of array.
+            None      -- Same as "Any"
 
-    """
+        """
         return self.filled(fill_value).tostring(order=order)
     #--------------------------------------------
     # Pickling
@@ -2650,7 +2706,8 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 class _frommethod:
     """Define functions from existing MaskedArray methods.
 
-    *Parameters*:
+    Parameters
+    ----------
         _methodname : string
             Name of the method to transform.
 
@@ -2961,14 +3018,15 @@ def where (condition, x=None, y=None):
     neither x nor y are given, returns a tuple of indices where
     condition is True (a la condition.nonzero()).
 
-    *Parameters*:
-        condition : {var}
-            The condition to meet. Must be convertible to an integer
-            array.
-        x : {var}, optional
-            Values of the output when the condition is met
-        y : {var}, optional
-            Values of the output when the condition is not met.
+    Parameters
+    ----------
+    condition : {var}
+        The condition to meet. Must be convertible to an integer
+        array.
+    x : {var}, optional
+        Values of the output when the condition is met
+    y : {var}, optional
+        Values of the output when the condition is not met.
 
     """
     if x is None and y is None:
@@ -3050,16 +3108,18 @@ def round_(a, decimals=0, out=None):
     array is not of float type and 'decimals' is greater than or equal
     to 0.
 
-    *Parameters*:
-        decimals : {integer}
-            Number of decimals to round to. May be negative.
-        out : {ndarray}
-            Existing array to use for output.
-            If not given, returns a default copy of a.
+    Parameters
+    ----------
+    decimals : int
+        Number of decimals to round to. May be negative.
+    out : array_like
+        Existing array to use for output.
+        If not given, returns a default copy of a.
 
-    *Notes*:
-        If out is given and does not have a mask attribute, the mask
-        of a is lost!
+    Notes
+    -----
+    If out is given and does not have a mask attribute, the mask of a
+    is lost!
 
     """
     if out is None:
@@ -3091,7 +3151,7 @@ def inner(a, b):
         fb.shape = (1,)
     return numpy.inner(fa, fb).view(MaskedArray)
 inner.__doc__ = numpy.inner.__doc__
-inner.__doc__ += "\n*Notes*:\n    Masked values are replaced by 0."
+inner.__doc__ += doc_note("Masked values are replaced by 0.")
 innerproduct = inner
 
 def outer(a, b):
@@ -3108,7 +3168,7 @@ def outer(a, b):
     m = make_mask(1-numeric.outer(1-ma, 1-mb), copy=0)
     return masked_array(d, mask=m)
 outer.__doc__ = numpy.outer.__doc__
-outer.__doc__ += "\n*Notes*:\n    Masked values are replaced by 0."
+outer.__doc__ += doc_note("Masked values are replaced by 0.")
 outerproduct = outer
 
 def allequal (a, b, fill_value=True):
