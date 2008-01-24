@@ -1390,26 +1390,33 @@ class TestArrayMethods(NumpyTestCase):
 
     def test_compress(self):
         "test compress"
-        a = masked_array([10, 20, 30, 40], fill_value=9999)
-        condition = (a > 15) & (a < 35)
-        assert_equal(a.compress(condition),[20,30])
+        a = masked_array([1., 2., 3., 4., 5.], fill_value=9999)
+        condition = (a > 1.5) & (a < 3.5)
+        assert_equal(a.compress(condition),[2.,3.])
         #
-        a[1] = masked
+        a[[2,3]] = masked
         b = a.compress(condition)
-        assert_equal(b._data,[20,30])
-        assert_equal(b._mask,[1,0])
+        assert_equal(b._data,[2.,3.])
+        assert_equal(b._mask,[0,1])
         assert_equal(b.fill_value,9999)
+        assert_equal(b,a[condition])
+        #
+        condition = (a<4.)
+        b = a.compress(condition)
+        assert_equal(b._data,[1.,2.,3.])
+        assert_equal(b._mask,[0,0,1])
+        assert_equal(b.fill_value,9999)
+        assert_equal(b,a[condition])
         #
         a = masked_array([[10,20,30],[40,50,60]], mask=[[0,0,1],[1,0,0]])
         b = a.compress(a.ravel() >= 22)
-        assert_equal(b._data, [50, 60])
-        assert_equal(b._mask, [0,0])
+        assert_equal(b._data, [30, 40, 50, 60])
+        assert_equal(b._mask, [1,1,0,0])
         #
         x = numpy.array([3,1,2])
         b = a.compress(x >= 2, axis=1)    
         assert_equal(b._data, [[10,30],[40,60]])
         assert_equal(b._mask, [[0,1],[1,0]])
-
 
 
 #..............................................................................
