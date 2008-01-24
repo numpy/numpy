@@ -31,7 +31,8 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'default_fill_value', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp',
            'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
-           'getmask', 'getmaskarray', 'greater', 'greater_equal', 'hypot',
+           'getdata','getmask', 'getmaskarray', 'greater', 'greater_equal', 
+           'hypot',
            'ids', 'inner', 'innerproduct',
            'isMA', 'isMaskedArray', 'is_mask', 'is_masked', 'isarray',
            'left_shift', 'less', 'less_equal', 'load', 'loads', 'log', 'log10',
@@ -3099,11 +3100,35 @@ def choose (indices, t, out=None, mode='raise'):
     m = make_mask(mask_or(m, getmask(indices)), copy=0, shrink=True)
     return masked_array(d, mask=m)
 
-def compress(a, condition):
+def compress(a, condition, axis=None, out=None):
     """Return a where condition is True.
+    If condition is a MaskedArray, missing values are considered as False.
+    
+    Returns
+    -------
+    A MaskedArray object.
+    
+    Notes
+    -----
+    Please note the difference with compressed() ! 
+    The output of compress has a mask, the output of compressed does not.
 
     """
-    return a[condition]
+    # Get the basic components
+    (_data, _mask) = (getdata(a), getmask(a))
+    # Get the type of output
+    if isinstance(a, MaskedArray):
+        _view = type(a)
+    else:
+        _view = MaskedArray
+    # Make sure the condition has no missing values
+    condition = filled(condition, False)
+    #
+    _new = ndarray.compress(_data, condition, axis=axis, out=out).view(_view)
+    _new._update_from(a)
+    if _mask is not nomask:
+        _new._mask = _mask.compress(condition, axis=axis)
+    return _new
 
 def round_(a, decimals=0, out=None):
     """Return a copy of a, rounded to 'decimals' places.
