@@ -3121,7 +3121,8 @@ def compress(a, condition, axis=None, out=None):
         _view = type(a)
     else:
         _view = MaskedArray
-    condition = condition.view(ndarray)
+    # Force the condition to a regular ndarray (forget the missing values...)
+    condition = numpy.array(condition, copy=False, subok=False)
     #
     _new = ndarray.compress(_data, condition, axis=axis, out=out).view(_view)
     _new._update_from(a)
