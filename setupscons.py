@@ -44,6 +44,14 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # a lot more robust than what was previously being used.
 __builtin__.__NUMPY_SETUP__ = True
 
+from distutils.errors import DistutilsError
+try:
+    import numscons
+except ImportError, e:
+    msg = ["You cannot build numpy with scons without the numscons package "]
+    msg.append("(Failure was: %s)" % e)
+    raise DistutilsError('\n'.join(msg))
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
 
