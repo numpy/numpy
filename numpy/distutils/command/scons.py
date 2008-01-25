@@ -273,6 +273,9 @@ class scons(old_build_ext):
                 raise RuntimeError("importing numscons failed (error was %s), using " \
                                    "scons within distutils is not possible without "
                                    "this package " % str(e))
+        else:
+            # nothing to do, just leave it here.
+            return
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
         # distutils (this cannot work for recursive scons builds...)
