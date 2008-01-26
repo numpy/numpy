@@ -44,6 +44,9 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # a lot more robust than what was previously being used.
 __builtin__.__NUMPY_SETUP__ = True
 
+# DO NOT REMOVE numpy.distutils IMPORT ! This is necessary for numpy.distutils'
+# monkey patching to work.
+import numpy.distutils
 from distutils.errors import DistutilsError
 try:
     import numscons
