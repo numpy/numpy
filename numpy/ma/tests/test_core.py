@@ -1417,6 +1417,22 @@ class TestArrayMethods(NumpyTestCase):
         b = a.compress(x >= 2, axis=1)    
         assert_equal(b._data, [[10,30],[40,60]])
         assert_equal(b._mask, [[0,1],[1,0]])
+    #
+    def test_empty(self):
+        "Tests empty/like"
+        datatype = [('a',int_),('b',float_),('c','|S8')]
+        a = masked_array([(1,1.1,'1.1'),(2,2.2,'2.2'),(3,3.3,'3.3')],
+                         dtype=datatype)
+        assert_equal(len(a.fill_value), len(datatype))
+        #
+        b = empty_like(a)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+        #
+        b = empty(len(a), dtype=datatype)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+        print "test_empty passed!"
 
 
 #..............................................................................

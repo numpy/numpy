@@ -1497,7 +1497,7 @@ class MaskedArray(numeric.ndarray):
 
         """
         if self._fill_value is None:
-            self._fill_value = default_fill_value(self)
+            self._fill_value = _check_fill_value(None, self.dtype)
         return self._fill_value
 
     def set_fill_value(self, value=None):
@@ -1569,6 +1569,32 @@ class MaskedArray(numeric.ndarray):
 #        if not self._shrinkmask:
 #            data._mask = numpy.zeros(data.shape, dtype=MaskType)
         return data
+    
+    
+    def compress(self, condition, axis=None, out=None):
+        """Return a where condition is True.
+        If condition is a MaskedArray, missing values are considered as False.
+        
+        Returns
+        -------
+        A MaskedArray object.
+        
+        Notes
+        -----
+        Please note the difference with compressed() ! 
+        The output of compress has a mask, the output of compressed does not.
+    
+        """
+        # Get the basic components
+        (_data, _mask) = (self._data, self._mask)
+        # Force the condition to a regular ndarray (forget the missing values...)
+        condition = narray(condition, copy=False, subok=False)
+        #
+        _new = _data.compress(condition, axis=axis, out=out).view(type(self))
+        _new._update_from(self)
+        if _mask is not nomask:
+            _new._mask = _mask.compress(condition, axis=axis)
+        return _new
 
     #............................................
     def __str__(self):
@@ -2449,7 +2475,6 @@ masked_%(name)s(data = %(data)s,
     T = property(fget=lambda self:self.transpose())
     swapaxes = _arraymethod('swapaxes')
     clip = _arraymethod('clip', onmask=False)
-    compress = _arraymethod('compress')
     copy = _arraymethod('copy')
     squeeze = _arraymethod('squeeze')
     #--------------------------------------------
@@ -2756,6 +2781,7 @@ sum = _frommethod('sum')
 swapaxes = _frommethod('swapaxes')
 take = _frommethod('take')
 var = _frommethod('var')
+compress = _frommethod('compress')
 
 #..............................................................................
 def power(a, b, third=None):
@@ -3099,36 +3125,6 @@ def choose (indices, t, out=None, mode='raise'):
     m = numpy.choose(c, masks)
     m = make_mask(mask_or(m, getmask(indices)), copy=0, shrink=True)
     return masked_array(d, mask=m)
-
-def compress(a, condition, axis=None, out=None):
-    """Return a where condition is True.
-    If condition is a MaskedArray, missing values are considered as False.
-    
-    Returns
-    -------
-    A MaskedArray object.
-    
-    Notes
-    -----
-    Please note the difference with compressed() ! 
-    The output of compress has a mask, the output of compressed does not.
-
-    """
-    # Get the basic components
-    (_data, _mask) = (getdata(a), getmask(a))
-    # Get the type of output
-    if isinstance(a, MaskedArray):
-        _view = type(a)
-    else:
-        _view = MaskedArray
-    # Force the condition to a regular ndarray (forget the missing values...)
-    condition = numpy.array(condition, copy=False, subok=False)
-    #
-    _new = ndarray.compress(_data, condition, axis=axis, out=out).view(_view)
-    _new._update_from(a)
-    if _mask is not nomask:
-        _new._mask = _mask.compress(condition, axis=axis)
-    return _new
 
 def round_(a, decimals=0, out=None):
     """Return a copy of a, rounded to 'decimals' places.
