@@ -934,7 +934,7 @@ static int
 {
         @btype@ result;
 
-        result = PyOS_strto@func@(str, endptr, 0);
+        result = PyOS_strto@func@(str, endptr, 10);
         *ip = (@type@) result;
         return 0;
 }
