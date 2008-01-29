@@ -771,5 +771,9 @@ class TestRegression(NumpyTestCase):
     def check_binary_repr_0_width(self, level=rlevel):
         assert_equal(np.binary_repr(0,width=3),'000')
 
+    def check_fromstring(self, level=rlevel):
+        assert_equal(np.fromstring("12:09:09", dtype=int, sep=":"),
+                     [12,9,9])
+
 if __name__ == "__main__":
     NumpyTest().run()
