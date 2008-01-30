@@ -1312,7 +1312,7 @@ class MaskedArray(numeric.ndarray):
             # Check the fill_value ....
             if isinstance(indx, basestring):
                 fvindx = list(self.dtype.names).index(indx)
-                dout._fill_value = self._fill_value[fvindx]
+                dout._fill_value = self.fill_value[fvindx]
             # Update the mask if needed
             if m is not nomask:
                 if isinstance(indx, basestring):
@@ -2574,7 +2574,7 @@ def _mareconstruct(subtype, baseclass, baseshape, basetype,):
     """
     _data = ndarray.__new__(baseclass, baseshape, basetype)
     _mask = ndarray.__new__(ndarray, baseshape, 'b1')
-    return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype, shrink=False)
+    return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
 #MaskedArray.__dump__ = dump
 #MaskedArray.__dumps__ = dumps
 
@@ -2635,6 +2635,7 @@ class _extrema_operation(object):
     #.........
     def reduce(self, target, axis=None):
         "Reduce target along the given axis."
+        target = narray(target, copy=False, subok=True)
         m = getmask(target)
         if axis is not None:
             kargs = { 'axis' : axis }
