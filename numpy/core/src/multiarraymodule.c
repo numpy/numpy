@@ -3066,7 +3066,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     PyArrayObject *ap2=NULL;
     PyArrayObject *ret=NULL;
     PyArray_Descr *dtype;
-    int typenum = 0;
 
     NPY_BEGIN_THREADS_DEF
 
