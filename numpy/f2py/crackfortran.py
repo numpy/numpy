@@ -791,7 +791,7 @@ def analyzeline(m,case,line):
             grouplist[groupcounter]=[]
         if needinterface:
             if verbose>1:
-                outmess('analyzeline: Creating additional interface block.\n',0)
+                outmess('analyzeline: Creating additional interface block (groupcounter=%s).\n' % (groupcounter),0)
             groupname[groupcounter]='interface'
             groupcache[groupcounter]['block']='interface'
             groupcache[groupcounter]['name']='unknown_interface'
@@ -892,6 +892,7 @@ def analyzeline(m,case,line):
             pl = ch[0]
             outmess('analyzeline: cannot handle multiple attributes without type specification. Ignoring %r.\n' % (','.join(ch[1:])))
         last_name = None
+
         for e in [x.strip() for x in markoutercomma(ll).split('@,@')]:
             m1=namepattern.match(e)
             if not m1:
@@ -910,11 +911,14 @@ def analyzeline(m,case,line):
                 ap=m.group('this')+pl
                 if _intentcallbackpattern.match(ap):
                     if k not in groupcache[groupcounter]['args']:
-                        if groupcounter>1 and \
-                               '__user__' in groupcache[groupcounter-2]['name']:
+                        if groupcounter>1:
                             outmess('analyzeline: appending intent(callback) %s'\
                                     ' to %s arguments\n' % (k,groupcache[groupcounter]['name']))
+                            if '__user__' not in groupcache[groupcounter-2]['name']:
+                                outmess('analyzeline: missing __user__ module (could be nothing)\n')
                             groupcache[groupcounter]['args'].append(k)
+                        else:
+                            errmess('analyzeline: intent(callback) %s is ignored' % (k))
                     else:
                         errmess('analyzeline: intent(callback) %s is already'\
                                 ' in argument list' % (k))
