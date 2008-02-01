@@ -775,5 +775,10 @@ class TestRegression(NumpyTestCase):
         assert_equal(np.fromstring("12:09:09", dtype=int, sep=":"),
                      [12,9,9])
 
+    def check_searchsorted_variable_length(self, level=rlevel):
+        x = np.array(['a','aa','b'])
+        y = np.array(['d','e'])
+        assert_equal(x.searchsorted(y), [3,3])
+
 if __name__ == "__main__":
     NumpyTest().run()
