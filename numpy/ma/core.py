@@ -191,8 +191,8 @@ def _check_fill_value(fill_value, dtype):
         else:
             fill_value = default_fill_value(dtype)
     else:
-        fval = numpy.resize(narray(fill_value,copy=False,dtype=object_),
-                            len(descr))
+        fill_value = narray(fill_value).tolist() 
+        fval = numpy.resize(fill_value, len(descr))
         if len(descr) > 1:
             fill_value = [numpy.asarray(f).astype(d[1]).item()
                           for (f,d) in zip(fval, descr)]
@@ -2491,15 +2491,23 @@ masked_%(name)s(data = %(data)s,
         if fill_value is not None:
             return self.filled(fill_value).tolist()
         result = self.filled().tolist()
-        if self._mask is nomask:
+        # Set temps to save time when dealing w/ mrecarrays...
+        _mask = self._mask
+        if _mask is nomask:
             return result
-        if self.ndim == 0:
-            return [None]
-        elif self.ndim == 1:
-            maskedidx = self._mask.nonzero()[0].tolist()
-            [operator.setitem(result,i,None) for i in maskedidx]
+        nbdims = self.ndim
+        dtypesize = len(self.dtype)
+        if nbdims == 0:
+            return tuple([None]*dtypesize)
+        elif nbdims == 1:
+            maskedidx = _mask.nonzero()[0].tolist()
+            if dtypesize:
+                nodata = tuple([None]*dtypesize)
+            else:
+                nodata = None
+            [operator.setitem(result,i,nodata) for i in maskedidx]
         else:
-            for idx in zip(*[i.tolist() for i in self._mask.nonzero()]):
+            for idx in zip(*[i.tolist() for i in _mask.nonzero()]):
                 tmp = result
                 for i in idx[:-1]:
                     tmp = tmp[i]

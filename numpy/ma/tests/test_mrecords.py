@@ -1,33 +1,35 @@
 # pylint: disable-msg=W0611, W0612, W0511,R0201
-"""Tests suite for mrecarray.
+"""Tests suite for mrecords.
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: test_mrecords.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 """
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
-__version__ = '1.0'
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 import types
 
 import numpy as N
-import numpy.core.fromnumeric  as fromnumeric
+from numpy import recarray, bool_, int_, float_
+from numpy import array as narray
+from numpy.core.records import fromrecords as recfromrecords
+from numpy.core.records import fromarrays as recfromarrays
+import numpy.core.fromnumeric  as fromnumeric_
 from numpy.testing import NumpyTest, NumpyTestCase
 from numpy.testing.utils import build_err_msg
 
 import numpy.ma.testutils
-from numpy.ma.testutils import *
+from numpy.ma.testutils import assert_equal, assert_equal_records
 
 import numpy.ma
-from numpy.ma import masked_array, masked, nomask
+from numpy.ma import masked_array, masked, nomask, getdata, getmaskarray
 
 #import numpy.ma.mrecords
 #from numpy.ma.mrecords import mrecarray, fromarrays, fromtextfile, fromrecords
 
 import numpy.ma.mrecords
-from numpy.ma.mrecords import MaskedRecords, \
+from numpy.ma.mrecords import MaskedRecords, mrecarray,\
     fromarrays, fromtextfile, fromrecords, addfield
 
 #..............................................................................
@@ -39,111 +41,275 @@ class TestMRecords(NumpyTestCase):
 
     def setup(self):
         "Generic setup"
-        d = N.arange(5)
-        m = numpy.ma.make_mask([1,0,0,1,1])
-        base_d = N.r_[d,d[::-1]].reshape(2,-1).T
-        base_m = N.r_[[m, m[::-1]]].T
-        base = masked_array(base_d, mask=base_m)
-        mrecord = fromarrays(base.T, dtype=[('a',N.float_),('b',N.float_)])
-        self.data = [d, m, mrecord]
+        ilist = [1,2,3,4,5]
+        flist = [1.1,2.2,3.3,4.4,5.5]
+        slist = ['one','two','three','four','five']
+        ddtype = [('a',int_),('b',float_),('c','|S8')]
+        mask = [0,1,0,0,1]
+        self.base = masked_array(zip(ilist,flist,slist), mask=mask, dtype=ddtype)
+        
+    def test_byview(self):
+        "Test creation by view"
+        base = self.base
+        mbase = base.view(mrecarray)
+        assert_equal(mbase._mask, base._mask)
+        assert isinstance(mbase._data, recarray)
+        assert_equal_records(mbase._data, base._data.view(recarray))
+        for field in ('a','b','c'):
+            assert_equal(base[field], mbase[field])
+        assert_equal_records(mbase.view(mrecarray), mbase)
 
     def test_get(self):
         "Tests fields retrieval"
-        [d, m, mrec] = self.data
-        mrec = mrec.copy()
-        assert_equal(mrec.a, masked_array(d,mask=m))
-        assert_equal(mrec.b, masked_array(d[::-1],mask=m[::-1]))
-        assert((mrec._fieldmask == N.core.records.fromarrays([m, m[::-1]], dtype=mrec._fieldmask.dtype)).all())
-        assert_equal(mrec._mask, N.r_[[m,m[::-1]]].all(0))
-        assert_equal(mrec.a[1], mrec[1].a)
-        #
-        assert(isinstance(mrec[:2], MaskedRecords))
-        assert_equal(mrec[:2]['a'], d[:2])
+        base = self.base.copy()
+        mbase = base.view(mrecarray)
+        # As fields..........
+        for field in ('a','b','c'):
+            assert_equal(getattr(mbase,field), mbase[field])
+            assert_equal(base[field], mbase[field])
+        # as elements .......
+        mbase_first = mbase[0]
+        assert isinstance(mbase_first, mrecarray)
+        assert_equal(mbase_first.dtype, mbase.dtype)
+        assert_equal(mbase_first.tolist(), (1,1.1,'one'))
+        assert_equal(mbase_first.mask, nomask)
+        assert_equal(mbase_first._fieldmask.item(), (False, False, False))
+        assert_equal(mbase_first['a'], mbase['a'][0])
+        mbase_last = mbase[-1]        
+        assert isinstance(mbase_last, mrecarray)
+        assert_equal(mbase_last.dtype, mbase.dtype)
+        assert_equal(mbase_last.tolist(), (None,None,None))
+        assert_equal(mbase_last.mask, True)
+        assert_equal(mbase_last._fieldmask.item(), (True, True, True))
+        assert_equal(mbase_last['a'], mbase['a'][-1])
+        assert (mbase_last['a'] is masked)
+        # as slice ..........
+        mbase_sl = mbase[:2]
+        assert isinstance(mbase_sl, mrecarray)
+        assert_equal(mbase_sl.dtype, mbase.dtype)
+        assert_equal(mbase_sl._mask, [0,1])
+        assert_equal_records(mbase_sl, base[:2].view(mrecarray))
+        for field in ('a','b','c'):
+            assert_equal(getattr(mbase_sl,field), base[:2][field])
 
-    def test_set(self):
-        "Tests setting fields/attributes."
-        [d, m, mrecord] = self.data
-        mrecord.a._data[:] = 5
-        assert_equal(mrecord['a']._data, [5,5,5,5,5])
-        mrecord.a = 1
-        assert_equal(mrecord['a']._data, [1]*5)
-        assert_equal(getmaskarray(mrecord['a']), [0]*5)
-        mrecord.b = masked
-        assert_equal(mrecord.b.mask, [1]*5)
-        assert_equal(getmaskarray(mrecord['b']), [1]*5)
-        mrecord._mask = masked
-        assert_equal(getmaskarray(mrecord['b']), [1]*5)
-        assert_equal(mrecord['a']._mask, mrecord['b']._mask)
-        mrecord._mask = nomask
-        assert_equal(getmaskarray(mrecord['b']), [0]*5)
-        assert_equal(mrecord['a']._mask, mrecord['b']._mask)
+    def test_set_fields(self):
+        "Tests setting fields."        
+        base = self.base.copy()
+        mbase = base.view(mrecarray)
+        mbase = mbase.copy()
+        mbase.fill_value = (999999,1e20,'N/A')
+        # Change the data, the mask should be conserved
+        mbase.a._data[:] = 5
+        assert_equal(mbase['a']._data, [5,5,5,5,5])
+        assert_equal(mbase['a']._mask, [0,1,0,0,1])
+        # Change the elements, and the mask will follow
+        mbase.a = 1
+        assert_equal(mbase['a']._data, [1]*5)
+        assert_equal(getmaskarray(mbase['a']), [0]*5)
+        assert_equal(mbase._mask, [False]*5)
+        assert_equal(mbase._fieldmask.tolist(), 
+                     narray([(0,0,0),(0,1,1),(0,0,0),(0,0,0),(0,1,1)],
+                            dtype=bool_))
+        # Set a field to mask ........................
+        mbase.c = masked
+        assert_equal(mbase.c.mask, [1]*5)
+        assert_equal(getmaskarray(mbase['c']), [1]*5)
+        assert_equal(getdata(mbase['c']), ['N/A']*5)
+        assert_equal(mbase._fieldmask.tolist(), 
+                     narray([(0,0,1),(0,1,1),(0,0,1),(0,0,1),(0,1,1)],
+                            dtype=bool_))
+        # Set fields by slices .......................
+        mbase = base.view(mrecarray).copy()
+        mbase.a[3:] = 5
+        assert_equal(mbase.a, [1,2,3,5,5])
+        assert_equal(mbase.a._mask, [0,1,0,0,0])
+        mbase.b[3:] = masked
+        assert_equal(mbase.b, base['b'])
+        assert_equal(mbase.b._mask, [0,1,0,1,1])
+    #
+    def test_set_mask(self):
+        base = self.base.copy()
+        mbase = base.view(mrecarray)
+        # Set the mask to True .......................
+        mbase._mask = masked
+        assert_equal(getmaskarray(mbase['b']), [1]*5)
+        assert_equal(mbase['a']._mask, mbase['b']._mask)
+        assert_equal(mbase['a']._mask, mbase['c']._mask)
+        assert_equal(mbase._fieldmask.tolist(), 
+                     narray([(1,1,1)]*5,
+                            dtype=bool_))
+        # Delete the mask ............................
+        mbase._mask = nomask
+        assert_equal(getmaskarray(mbase['c']), [0]*5)
+        assert_equal(mbase._fieldmask.tolist(), 
+                     narray([(0,0,0)]*5,
+                            dtype=bool_))
+    #
+    def test_set_elements(self):
+        base = self.base.copy()
+        mbase = base.view(mrecarray)
+        # Set an element to mask .....................
+        mbase[-2] = masked
+        assert_equal(mbase._fieldmask.tolist(),
+                     narray([(0,0,0),(1,1,1),(0,0,0),(1,1,1),(1,1,1)],
+                             dtype=bool_))
+        assert_equal(mbase._mask, [0,1,0,1,1])
+        # Set slices .................................
+        mbase = base.view(mrecarray).copy()
+        mbase[:2] = 5
+        assert_equal(mbase.a._data, [5,5,3,4,5])
+        assert_equal(mbase.a._mask, [0,0,0,0,1])
+        assert_equal(mbase.b._data, [5.,5.,3.3,4.4,5.5])
+        assert_equal(mbase.b._mask, [0,0,0,0,1])
+        assert_equal(mbase.c._data, ['5','5','three','four','five'])
+        assert_equal(mbase.b._mask, [0,0,0,0,1])
         #
-    def test_setfields(self):
-        "Tests setting fields."
-        [d, m, mrecord] = self.data
-        mrecord.a[3:] = 5
-        assert_equal(mrecord.a, [0,1,2,5,5])
-        assert_equal(mrecord.a._mask, [1,0,0,0,0])
-        #
-        mrecord.b[3:] = masked
-        assert_equal(mrecord.b, [4,3,2,1,0])
-        assert_equal(mrecord.b._mask, [1,1,0,1,1])
-
-    def test_setslices(self):
-        "Tests setting slices."
-        [d, m, mrec] = self.data
-        mrec[:2] = 5
-        assert_equal(mrec.a._data, [5,5,2,3,4])
-        assert_equal(mrec.b._data, [5,5,2,1,0])
-        assert_equal(mrec.a._mask, [0,0,0,1,1])
-        assert_equal(mrec.b._mask, [0,0,0,0,1])
-        #
-        mrec[:2] = masked
-        assert_equal(mrec._mask, [1,1,0,0,1])
-        mrec[-2] = masked
-        assert_equal(mrec._mask, [1,1,0,1,1])
-        #
+        mbase = base.view(mrecarray).copy()
+        mbase[:2] = masked
+        assert_equal(mbase.a._data, [1,2,3,4,5])
+        assert_equal(mbase.a._mask, [1,1,0,0,1])
+        assert_equal(mbase.b._data, [1.1,2.2,3.3,4.4,5.5])
+        assert_equal(mbase.b._mask, [1,1,0,0,1])
+        assert_equal(mbase.c._data, ['one','two','three','four','five'])
+        assert_equal(mbase.b._mask, [1,1,0,0,1])
+    #
     def test_setslices_hardmask(self):
         "Tests setting slices w/ hardmask."
-        [d, m, mrec] = self.data
-        mrec.harden_mask()
-        mrec[-2:] = 5
-        assert_equal(mrec.a._data, [0,1,2,3,4])
-        assert_equal(mrec.b._data, [4,3,2,5,0])
-        assert_equal(mrec.a._mask, [1,0,0,1,1])
-        assert_equal(mrec.b._mask, [1,1,0,0,1])
+        base = self.base.copy()
+        mbase = base.view(mrecarray)
+        mbase.harden_mask()
+        mbase[-2:] = 5
+        assert_equal(mbase.a._data, [1,2,3,5,5])
+        assert_equal(mbase.b._data, [1.1,2.2,3.3,5,5.5])
+        assert_equal(mbase.c._data, ['one','two','three','5','five'])
+        assert_equal(mbase.a._mask, [0,1,0,0,1])
+        assert_equal(mbase.b._mask, mbase.a._mask)
+        assert_equal(mbase.b._mask, mbase.c._mask)
 
     def test_hardmask(self):
         "Test hardmask"
-        [d, m, mrec] = self.data
-        mrec = mrec.copy()
-        mrec.harden_mask()
-        assert(mrec._hardmask)
-        mrec._mask = nomask
-        assert_equal(mrec._mask, N.r_[[m,m[::-1]]].all(0))
-        mrec.soften_mask()
-        assert(not mrec._hardmask)
-        mrec._mask = nomask
-        assert(mrec['b']._mask is nomask)
-        assert_equal(mrec['a']._mask,mrec['b']._mask)
+        base = self.base.copy()
+        mbase = base.view(mrecarray)
+        mbase.harden_mask()
+        assert(mbase._hardmask)
+        mbase._mask = nomask
+        assert_equal(mbase._mask, [0,1,0,0,1])
+        mbase.soften_mask()
+        assert(not mbase._hardmask)
+        mbase._mask = nomask
+        assert(mbase['b']._mask is nomask)
+        assert_equal(mbase['a']._mask,mbase['b']._mask)
+    #
+    def test_pickling(self):
+        "Test pickling"
+        import cPickle
+        base = self.base.copy()
+        mrec = base.view(mrecarray)
+        _ = cPickle.dumps(mrec)
+        mrec_ = cPickle.loads(_)
+        assert_equal(mrec_.dtype, mrec.dtype)
+        assert_equal_records(mrec_._data, mrec._data)
+        assert_equal(mrec_._mask, mrec._mask)
+        assert_equal_records(mrec_._fieldmask, mrec._fieldmask)
+    #
+    def test_filled(self):
+        "Test filling the array"
+        _a = masked_array([1,2,3],mask=[0,0,1],dtype=int_)
+        _b = masked_array([1.1,2.2,3.3],mask=[0,0,1],dtype=float_)
+        _c = masked_array(['one','two','three'],mask=[0,0,1],dtype='|S8')
+        ddtype = [('a',int_),('b',float_),('c','|S8')]
+        mrec = fromarrays([_a,_b,_c], dtype=ddtype, 
+                          fill_value=(99999,99999.,'N/A')) 
+        mrecfilled = mrec.filled()
+        assert_equal(mrecfilled['a'], narray((1,2,99999), dtype=int_))
+        assert_equal(mrecfilled['b'], narray((1.1,2.2,99999.), dtype=float_))
+        assert_equal(mrecfilled['c'], narray(('one','two','N/A'), dtype='|S8'))
+    #
+    def test_tolist(self):
+        "Test tolist."
+        _a = masked_array([1,2,3],mask=[0,0,1],dtype=int_)
+        _b = masked_array([1.1,2.2,3.3],mask=[0,0,1],dtype=float_)
+        _c = masked_array(['one','two','three'],mask=[1,0,0],dtype='|S8')
+        ddtype = [('a',int_),('b',float_),('c','|S8')]
+        mrec = fromarrays([_a,_b,_c], dtype=ddtype, 
+                          fill_value=(99999,99999.,'N/A')) 
+        #
+        assert_equal(mrec.tolist(),
+                     [(1,1.1,None),(2,2.2,'two'),(None,None,'three')])
 
+################################################################################
+class TestMRecordsImport(NumpyTestCase):
+    "Base test class for MaskedArrays."
+    def __init__(self, *args, **kwds):
+        NumpyTestCase.__init__(self, *args, **kwds)
+        self.setup()
+
+    def setup(self):
+        "Generic setup"
+        _a = masked_array([1,2,3],mask=[0,0,1],dtype=int_)
+        _b = masked_array([1.1,2.2,3.3],mask=[0,0,1],dtype=float_)
+        _c = masked_array(['one','two','three'],mask=[0,0,1],dtype='|S8')
+        ddtype = [('a',int_),('b',float_),('c','|S8')]
+        mrec = fromarrays([_a,_b,_c], dtype=ddtype, 
+                          fill_value=(99999,99999.,'N/A')) 
+        nrec = recfromarrays((_a.data,_b.data,_c.data), dtype=ddtype)
+        self.data = (mrec, nrec, ddtype)
+        
+    def test_fromarrays(self):
+        _a = masked_array([1,2,3],mask=[0,0,1],dtype=int_)
+        _b = masked_array([1.1,2.2,3.3],mask=[0,0,1],dtype=float_)
+        _c = masked_array(['one','two','three'],mask=[0,0,1],dtype='|S8')
+        (mrec, nrec, _) = self.data
+        for (f,l) in zip(('a','b','c'),(_a,_b,_c)):
+            assert_equal(getattr(mrec,f)._mask, l._mask)
+        
+        
     def test_fromrecords(self):
-        "Test from recarray."
-        [d, m, mrec] = self.data
-        nrec = N.core.records.fromarrays(N.r_[[d,d[::-1]]],
-                                         dtype=[('a',N.float_),('b',N.float_)])
-        #....................
-        mrecfr = fromrecords(nrec)
-        assert_equal(mrecfr.a, mrec.a)
-        assert_equal(mrecfr.dtype, mrec.dtype)
-        #....................
-        tmp = mrec[::-1] #.tolist()
-        mrecfr = fromrecords(tmp)
-        assert_equal(mrecfr.a, mrec.a[::-1])
-        #....................
-        mrecfr = fromrecords(nrec.tolist(), names=nrec.dtype.names)
-        assert_equal(mrecfr.a, mrec.a)
-        assert_equal(mrecfr.dtype, mrec.dtype)
+        "Test construction from records."
+        (mrec, nrec, ddtype) = self.data
+        #......
+        palist = [(1, 'abc', 3.7000002861022949, 0),
+                  (2, 'xy', 6.6999998092651367, 1),
+                  (0, ' ', 0.40000000596046448, 0)]
+        pa = recfromrecords(palist, names='c1, c2, c3, c4')
+        mpa = fromrecords(palist, names='c1, c2, c3, c4')
+        assert_equal_records(pa,mpa)
+        #.....
+        _mrec = fromrecords(nrec)
+        assert_equal(_mrec.dtype, mrec.dtype)
+        for field in _mrec.dtype.names:
+            assert_equal(getattr(_mrec, field), getattr(mrec._data, field)) 
+        #
+        _mrec = fromrecords(nrec.tolist(), names='c1,c2,c3')
+        assert_equal(_mrec.dtype, [('c1',int_),('c2',float_),('c3','|S5')])
+        for (f,n) in zip(('c1','c2','c3'), ('a','b','c')):
+            assert_equal(getattr(_mrec,f), getattr(mrec._data, n))
+        #
+        _mrec = fromrecords(mrec)
+        assert_equal(_mrec.dtype, mrec.dtype)
+        assert_equal_records(_mrec._data, mrec.filled())
+        assert_equal_records(_mrec._fieldmask, mrec._fieldmask)
+            
+    def test_fromrecords_wmask(self):
+        "Tests construction from records w/ mask."
+        (mrec, nrec, ddtype) = self.data
+        #
+        _mrec = fromrecords(nrec.tolist(), dtype=ddtype, mask=[0,1,0,])
+        assert_equal_records(_mrec._data, mrec._data)
+        assert_equal(_mrec._fieldmask.tolist(), [(0,0,0),(1,1,1),(0,0,0)])
+        #
+        _mrec = fromrecords(nrec.tolist(), dtype=ddtype, mask=True)
+        assert_equal_records(_mrec._data, mrec._data)
+        assert_equal(_mrec._fieldmask.tolist(), [(1,1,1),(1,1,1),(1,1,1)])
+        #
+        _mrec = fromrecords(nrec.tolist(), dtype=ddtype, mask=mrec._fieldmask)
+        assert_equal_records(_mrec._data, mrec._data)
+        assert_equal(_mrec._fieldmask.tolist(), mrec._fieldmask.tolist())
+        #
+        _mrec = fromrecords(nrec.tolist(), dtype=ddtype, 
+                            mask=mrec._fieldmask.tolist())
+        assert_equal_records(_mrec._data, mrec._data)
+        assert_equal(_mrec._fieldmask.tolist(), mrec._fieldmask.tolist())
 
     def test_fromtextfile(self):
         "Tests reading from a text file."
@@ -170,10 +336,11 @@ class TestMRecords(NumpyTestCase):
 
     def test_addfield(self):
         "Tests addfield"
-        [d, m, mrec] = self.data
-        mrec = addfield(mrec, masked_array(d+10, mask=m[::-1]))
-        assert_equal(mrec.f2, d+10)
-        assert_equal(mrec.f2._mask, m[::-1])
+        (mrec, nrec, ddtype) = self.data
+        (d,m) = ([100,200,300], [1,0,0])
+        mrec = addfield(mrec, masked_array(d, mask=m))
+        assert_equal(mrec.f3, d)
+        assert_equal(mrec.f3._mask, m)
 
 ###############################################################################
 #------------------------------------------------------------------------------

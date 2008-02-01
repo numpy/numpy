@@ -1347,6 +1347,15 @@ class TestArrayMethods(NumpyTestCase):
         assert_equal(xlist[0],[0,None,2,3])
         assert_equal(xlist[1],[4,5,6,7])
         assert_equal(xlist[2],[8,9,None,11])
+        # Make sure a masked record is output as a tuple of None
+        x = array(zip([1,2,3],
+                      [1.1,2.2,3.3],
+                      ['one','two','thr']),
+                  dtype=[('a',int_),('b',float_),('c','|S8')])
+        x[-1] = masked
+        assert_equal(x.tolist(), [(1,1.1,'one'),(2,2.2,'two'),(None,None,None)])
+        
+
 
     def test_squeeze(self):
         "Check squeeze"
