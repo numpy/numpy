@@ -174,15 +174,16 @@ class TestMA(NumpyTestCase):
         xm /= arange(10)
         assert_equal(xm, ones((10,)))
 
+        warnings.simplefilter('ignore', DeprecationWarning)
         x = arange(10).astype(float_)
         xm = arange(10)
         xm[2] = masked
-#        id1 = id(x.raw_data())
         id1 = x.raw_data().ctypes.data
         x += 1.
-#        assert id1 == id(x.raw_data())
         assert (id1 == x.raw_data().ctypes.data)
         assert_equal(x, y+1.)
+        warnings.simplefilter('default', DeprecationWarning)
+
         # addition w/ array
         x = arange(10, dtype=float_)
         xm = arange(10, dtype=float_)
@@ -449,6 +450,7 @@ class TestMA(NumpyTestCase):
         m3 = make_mask(m, copy=1)
         assert(m is not m3)
 
+        warnings.simplefilter('ignore', DeprecationWarning)
         x1 = numpy.arange(5)
         y1 = array(x1, mask=m)
         #assert( y1._data is x1)
@@ -456,6 +458,7 @@ class TestMA(NumpyTestCase):
         assert( allequal(x1,y1.raw_data()))
         #assert( y1.mask is m)
         assert_equal(y1._mask.__array_interface__, m.__array_interface__)
+        warnings.simplefilter('default', DeprecationWarning)
 
         y1a = array(y1)
         #assert( y1a.raw_data() is y1.raw_data())
