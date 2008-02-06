@@ -1441,7 +1441,6 @@ class TestArrayMethods(NumpyTestCase):
         b = empty(len(a), dtype=datatype)
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
-        print "test_empty passed!"
 
 
 #..............................................................................
