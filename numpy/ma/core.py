@@ -258,7 +258,8 @@ def filled(a, value = None):
     """
     if hasattr(a, 'filled'):
         return a.filled(value)
-    elif isinstance(a, ndarray): # and a.flags['CONTIGUOUS']:
+    elif isinstance(a, ndarray): 
+        # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
         return a
     elif isinstance(a, dict):
         return narray(a, 'O')
@@ -441,7 +442,8 @@ class _MaskedUnaryOperation:
             m = numpy.logical_or(m, dm)
             # The following two lines control the domain filling methods.
             d1 = d1.copy()
-#            d1[dm] = self.fill
+            # We could use smart indexing : d1[dm] = self.fill ...
+            # ... but numpy.putmask looks more efficient, despite the copy.
             numpy.putmask(d1, dm, self.fill)
         # Take care of the masked singletong first ...
         if not m.ndim and m:
@@ -549,7 +551,8 @@ class _MaskedBinaryOperation:
         if (not m.ndim) and m:
             return masked
         rcls = get_masked_subclass(a,b)
-#        d = self.f.outer(filled(a, self.fillx), filled(b, self.filly)).view(rcls)
+        # We could fill the arguments first, butis it useful ?
+        # d = self.f.outer(filled(a, self.fillx), filled(b, self.filly)).view(rcls)
         d = self.f.outer(getdata(a), getdata(b)).view(rcls)
         if d.ndim > 0:
             d._mask = m
@@ -864,11 +867,12 @@ def masked_equal(x, value, copy=True):
     floating point, consider `masked_values(x, value)` instead.
 
     """
+    # An alternative implementation relies on filling first: probably not needed.
+    # d = filled(x, 0)
+    # c = umath.equal(d, value)
+    # m = mask_or(c, getmask(x))
+    # return array(d, mask=m, copy=copy)
     return masked_where((x == value), x, copy=copy)
-#    d = filled(x, 0)
-#    c = umath.equal(d, value)
-#    m = mask_or(c, getmask(x))
-#    return array(d, mask=m, copy=copy)
 
 def masked_inside(x, v1, v2, copy=True):
     """Shortcut to masked_where, where condition is True for x inside
@@ -970,7 +974,7 @@ def masked_invalid(a, copy=True):
     else:
         cls = MaskedArray
     result = a.view(cls)
-    result._mask = cond
+    result._mask = condition
     return result
 
 
@@ -1336,6 +1340,7 @@ class MaskedArray(numeric.ndarray):
         """
         if self is masked:
             raise MAError, 'Cannot alter the masked element.'
+        # This test is useful, but we should keep things light...
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
@@ -1401,6 +1406,8 @@ class MaskedArray(numeric.ndarray):
         """
         if mask is not nomask:
             mask = narray(mask, copy=copy, dtype=MaskType)
+            # We could try to check whether shrinking is needed..
+            # ... but we would waste some precious time
 #            if self._shrinkmask and not mask.any():
 #                mask = nomask
         if self._mask is nomask:
@@ -1425,8 +1432,9 @@ class MaskedArray(numeric.ndarray):
         """Return the current mask.
 
         """
-        return self._mask
+        # We could try to force a reshape, but that wouldn't work in some cases.
 #        return self._mask.reshape(self.shape)
+        return self._mask
     mask = property(fget=_get_mask, fset=__setmask__, doc="Mask")
     #............................................
     def harden_mask(self):
@@ -1566,8 +1574,6 @@ class MaskedArray(numeric.ndarray):
         data._update_from(self)
         if self._mask is not nomask:
             data = data[numpy.logical_not(ndarray.ravel(self._mask))]
-#        if not self._shrinkmask:
-#            data._mask = numpy.zeros(data.shape, dtype=MaskType)
         return data
     
     
@@ -1730,7 +1736,6 @@ masked_%(name)s(data = %(data)s,
         if self._mask is not nomask:
             warnings.warn("Warning: converting a masked element to nan.")
             return numpy.nan
-            #raise MAError, 'Cannot convert masked element to a Python float.'
         return float(self.item())
 
     def __int__(self):
@@ -1793,7 +1798,7 @@ masked_%(name)s(data = %(data)s,
             return masked_array(n1 - n2)
     #............................................
     flatten = _arraymethod('flatten')
-#    ravel = _arraymethod('ravel')
+    #
     def ravel(self):
         """Returns a 1D version of self, as a view."""
         r = ndarray.ravel(self._data).view(type(self))
@@ -1803,6 +1808,7 @@ masked_%(name)s(data = %(data)s,
         else:
             r._mask = nomask
         return r
+    #
     repeat = _arraymethod('repeat')
     #
     def reshape (self, *s):
@@ -1958,7 +1964,8 @@ masked_%(name)s(data = %(data)s,
                 d.__setmask__(self._mask.all(axis))
             return d
         elif type(out) is not type(self):
-            raise TypeError("The external array should have a type %s (got %s instead)" %\
+            raise TypeError("The external array should have a type %s "\
+                            "(got %s instead)" %\
                             (type(self), type(out)))
         self.filled(False).any(axis=axis, out=out)
         if out.ndim:
@@ -2011,7 +2018,7 @@ masked_%(name)s(data = %(data)s,
         axis : int, optional
             Axis along which to perform the operation.
             If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
+        dtype : dtype, optional
             Datatype for the intermediary computation. If not given,
             the current dtype is used instead.
 
@@ -2464,13 +2471,10 @@ masked_%(name)s(data = %(data)s,
         """
         return self.max(axis, fill_value) - self.min(axis, fill_value)
 
-
     # Array methods ---------------------------------------
-#    conj = conjugate = _arraymethod('conjugate')
     copy = _arraymethod('copy')
     diagonal = _arraymethod('diagonal')
     take = _arraymethod('take')
-#    ravel = _arraymethod('ravel')
     transpose = _arraymethod('transpose')
     T = property(fget=lambda self:self.transpose())
     swapaxes = _arraymethod('swapaxes')
@@ -2583,9 +2587,6 @@ def _mareconstruct(subtype, baseclass, baseshape, basetype,):
     _data = ndarray.__new__(baseclass, baseshape, basetype)
     _mask = ndarray.__new__(ndarray, baseshape, 'b1')
     return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
-#MaskedArray.__dump__ = dump
-#MaskedArray.__dumps__ = dumps
-
 
 
 #####--------------------------------------------------------------------------
@@ -2597,6 +2598,7 @@ def isMaskedArray(x):
 isarray = isMaskedArray
 isMA = isMaskedArray  #backward compatibility
 # We define the masked singleton as a float for higher precedence...
+# Note that it can be tricky sometimes w/ type comparison
 masked_singleton = MaskedArray(0, dtype=float_, mask=True)
 masked = masked_singleton
 
@@ -2885,6 +2887,8 @@ def concatenate(arrays, axis=0):
         return data
     # OK, so we have to concatenate the masks
     dm = numpy.concatenate([getmaskarray(a) for a in arrays], axis)
+    # If we decide to keep a '_shrinkmask' option, we want to check that ...
+    # ... all of them are True, and then check for dm.any()
 #    shrink = numpy.logical_or.reduce([getattr(a,'_shrinkmask',True) for a in arrays])
 #    if shrink and not dm.any():
     if not dm.any():
@@ -2958,10 +2962,6 @@ def putmask(a, mask, values): #, mode='raise'):
 
     """
     # We can't use 'frommethod', the order of arguments is different
-#    try:
-#        return a.putmask(values, mask)
-#    except AttributeError:
-#        return numpy.putmask(narray(a, copy=False), mask, values)
     if not isinstance(a, MaskedArray):
         a = a.view(MaskedArray)
     (valdata, valmask) = (getdata(values), getmask(values))
@@ -2970,9 +2970,6 @@ def putmask(a, mask, values): #, mode='raise'):
             a._sharedmask = True
             a.mask = numpy.zeros(a.shape, dtype=bool_)
             numpy.putmask(a._mask, mask, valmask)
-#            m = numpy.zeros(a.shape, dtype=bool_)
-#            numpy.putmask(m, mask, valmask)
-#            a = masked_array(a, copy=False, subok=True, mask=m)
     elif a._hardmask:
         if valmask is not nomask:
             m = a._mask.copy()
@@ -3094,22 +3091,6 @@ def where (condition, x=None, y=None):
     if not d._mask.any():
         d._mask = nomask
     return d
-#    # Get the data as a (subclass of) MaskedArray
-#    xv = getdata(x)
-#    yv = getdata(y)
-#    d = numpy.choose(fc, (yv, xv)).view(MaskedArray)
-#    # Get the mask ....................
-#    xm = getmask(x)
-#    ym = getmask(y)
-#    d.mask = numpy.choose(fc, (ym, xm)) | getmask(condition)
-#    # Fix the dtype if one of the values was masked, to prevent an upload to float
-#    if y is masked:
-#        ndtype = xv.dtype
-#    elif x is masked:
-#        ndtype = yv.dtype
-#    else:
-#        ndtype = d.dtype
-#    return d.astype(ndtype)
 
 def choose (indices, t, out=None, mode='raise'):
     "Return array shaped like indices with elements chosen from t"
@@ -3322,3 +3303,5 @@ def load(F):
 def loads(strg):
     "Load a pickle from the current string."""
     return cPickle.loads(strg)
+
+################################################################################
