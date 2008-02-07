@@ -255,11 +255,9 @@ class TestMa(NumpyTestCase):
         self.failUnless( y1.mask is m)
 
         y1a = array(y1, copy=0)
-        self.failUnless( y1a.data is y1.data)
         self.failUnless( y1a.mask is y1.mask)
 
         y2 = array(x1, mask=m, copy=0)
-        self.failUnless( y2.data is x1)
         self.failUnless( y2.mask is m)
         self.failUnless( y2[2] is masked)
         y2[2]=9

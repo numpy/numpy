@@ -501,13 +501,9 @@ class TestMA(NumpyTestCase):
         x = masked_array([1,2,3], mask=[0,1,0])
         # Copy is False by default
         y = masked_array(x)
-#        assert_equal(id(y._data), id(x._data))
-#        assert_equal(id(y._mask), id(x._mask))
         assert_equal(y._data.ctypes.data, x._data.ctypes.data)
         assert_equal(y._mask.ctypes.data, x._mask.ctypes.data)
         y = masked_array(x, copy=True)
-#        assert_not_equal(id(y._data), id(x._data))
-#        assert_not_equal(id(y._mask), id(x._mask))
         assert_not_equal(y._data.ctypes.data, x._data.ctypes.data)
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
     #........................
@@ -1357,7 +1353,6 @@ class TestArrayMethods(NumpyTestCase):
                   dtype=[('a',int_),('b',float_),('c','|S8')])
         x[-1] = masked
         assert_equal(x.tolist(), [(1,1.1,'one'),(2,2.2,'two'),(None,None,None)])
-        
 
 
     def test_squeeze(self):
@@ -1426,7 +1421,7 @@ class TestArrayMethods(NumpyTestCase):
         assert_equal(b._mask, [1,1,0,0])
         #
         x = numpy.array([3,1,2])
-        b = a.compress(x >= 2, axis=1)    
+        b = a.compress(x >= 2, axis=1)
         assert_equal(b._data, [[10,30],[40,60]])
         assert_equal(b._mask, [[0,1],[1,0]])
     #
