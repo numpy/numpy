@@ -216,6 +216,7 @@ add_newdoc('numpy.core.multiarray','fromstring',
     size is determined by the size of string.  If sep is not empty then the
     string is interpreted in ASCII mode and converted to the desired number type
     using sep as the separator between elements (extra whitespace is ignored).
+    ASCII integer conversions are base-10; octal and hex are not supported.
 
     """)
 

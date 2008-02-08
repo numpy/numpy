@@ -694,18 +694,20 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
         npy_intp new_size = 1;
         int free_axe = -1;
         int i;
+        npy_intp d;
         /* Fill dims where -1 or 0; check dimensions; calc new_size; */
         for(i=0;i<arr->nd;++i) {
+            d = arr->dimensions[i];
             if (dims[i] >= 0) {
-                if (dims[i]!=arr->dimensions[i]) {
+                if (d>1 && dims[i]!=d) {
                     fprintf(stderr,"%d-th dimension must be fixed to %" NPY_INTP_FMT
                             " but got %" NPY_INTP_FMT "\n",
-                            i,dims[i], arr->dimensions[i]);
+                            i,dims[i], d);
                     return 1;
                 }
                 if (!dims[i]) dims[i] = 1;
             } else {
-                dims[i] = arr->dimensions[i] ? arr->dimensions[i] : 1;
+                dims[i] = d ? d : 1;
             }
             new_size *= dims[i];
         }
@@ -724,16 +726,17 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
             new_size *= dims[free_axe];
         }
         if (new_size != arr_size) {
-            fprintf(stderr,"confused: new_size=%" NPY_INTP_FMT
-                    ", arr_size=%" NPY_INTP_FMT " (maybe too many free"
+            fprintf(stderr,"unexpected array size: new_size=%" NPY_INTP_FMT
+                    ", got array with arr_size=%" NPY_INTP_FMT " (maybe too many free"
                     " indices)\n", new_size,arr_size);
             return 1;
         }
     } else if (rank==arr->nd) {
+        npy_intp new_size = 1;
         int i;
         npy_intp d;
         for (i=0; i<rank; ++i) {
-            d = arr->dimensions[i];
+	    d = arr->dimensions[i];
             if (dims[i]>=0) {
                 if (d > 1 && d!=dims[i]) {
                     fprintf(stderr,"%d-th dimension must be fixed to %" NPY_INTP_FMT
@@ -743,6 +746,12 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
                 }
                 if (!dims[i]) dims[i] = 1;
             } else dims[i] = d;
+            new_size *= dims[i];
+        }
+        if (new_size != arr_size) {
+            fprintf(stderr,"unexpected array size: new_size=%" NPY_INTP_FMT
+                    ", got array with arr_size=%" NPY_INTP_FMT "\n", new_size,arr_size);
+            return 1;
         }
     } else { /* [[1,2]] -> [[1],[2]] */
         int i,j;
@@ -782,7 +791,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,npy_intp *d
         }
         for (i=0,size=1;i<rank;++i) size *= dims[i];
         if (size != arr_size) {
-            fprintf(stderr,"confused: size=%" NPY_INTP_FMT ", arr_size=%" NPY_INTP_FMT
+            fprintf(stderr,"unexpected array size: size=%" NPY_INTP_FMT ", arr_size=%" NPY_INTP_FMT
                     ", rank=%d, effrank=%d, arr.nd=%d, dims=[",
                     size,arr_size,rank,effrank,arr->nd);
             for (i=0;i<rank;++i) fprintf(stderr," %" NPY_INTP_FMT,dims[i]);

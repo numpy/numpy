@@ -151,6 +151,7 @@ def histogram(a, bins=10, range=None, normed=False):
             mx += 0.5
         bins = linspace(mn, mx, bins, endpoint=False)
     else:
+        bins = asarray(bins)
         if(any(bins[1:]-bins[:-1] < 0)):
             raise AttributeError, 'bins must increase monotonically.'
 

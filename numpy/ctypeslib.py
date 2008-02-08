@@ -1,8 +1,8 @@
 __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
-           'c_intp']
+           'c_intp', 'as_ctypes', 'as_array']
 
 import sys, os
-from numpy import integer, ndarray, dtype as _dtype, deprecate
+from numpy import integer, ndarray, dtype as _dtype, deprecate, array
 from numpy.core.multiarray import _flagdict, flagsobj
 
 try:
@@ -15,6 +15,8 @@ if ctypes is None:
         raise ImportError, "ctypes is not available."
     ctypes_load_library = _dummy
     load_library = _dummy
+    as_ctypes = _dummy
+    as_array = _dummy
     from numpy import intp as c_intp
 else:
     import numpy.core._internal as nic
@@ -159,6 +161,118 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                   "_flags_" : num})
     _pointer_type_cache[dtype] = klass
     return klass
+
+if ctypes is not None:
+    ct = ctypes
+    ################################################################
+    # simple types
+
+    # maps the numpy typecodes like '<f8' to simple ctypes types like
+    # c_double. Filled in by prep_simple.
+    _typecodes = {}
+
+    def prep_simple(simple_type, typestr):
+        """Given a ctypes simple type, construct and attach an
+        __array_interface__ property to it if it does not yet have one.
+        """
+        try: simple_type.__array_interface__
+        except AttributeError: pass
+        else: return
+
+        _typecodes[typestr] = simple_type
+
+        def __array_interface__(self):
+            return {'descr': [('', typestr)],
+                    '__ref': self,
+                    'strides': None,
+                    'shape': (),
+                    'version': 3,
+                    'typestr': typestr,
+                    'data': (ct.addressof(self), False),
+                    }
+
+        simple_type.__array_interface__ = property(__array_interface__)
+
+    if sys.byteorder == "little":
+        TYPESTR = "<%c%d"
+    else:
+        TYPESTR = ">%c%d"
+
+    simple_types = [
+        ((ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong), "i"),
+        ((ct.c_ubyte, ct.c_ushort, ct.c_uint, ct.c_ulong, ct.c_ulonglong), "u"),
+        ((ct.c_float, ct.c_double), "f"),
+    ]
+
+    # Prep that numerical ctypes types:
+    for types, code in simple_types:
+        for tp in types:
+            prep_simple(tp, TYPESTR % (code, ct.sizeof(tp)))
+
+    ################################################################
+    # array types
+
+    _ARRAY_TYPE = type(ct.c_int * 1)
+
+    def prep_array(array_type):
+        """Given a ctypes array type, construct and attach an
+        __array_interface__ property to it if it does not yet have one.
+        """
+        try: array_type.__array_interface__
+        except AttributeError: pass
+        else: return
+
+        shape = []
+        ob = array_type
+        while type(ob) == _ARRAY_TYPE:
+            shape.append(ob._length_)
+            ob = ob._type_
+        shape = tuple(shape)
+        ai = ob().__array_interface__
+        descr = ai['descr']
+        typestr = ai['typestr']
+
+        def __array_interface__(self):
+            return {'descr': descr,
+                    '__ref': self,
+                    'strides': None,
+                    'shape': shape,
+                    'version': 3,
+                    'typestr': typestr,
+                    'data': (ct.addressof(self), False),
+                    }
+
+        array_type.__array_interface__ = property(__array_interface__)
+
+    ################################################################
+    # public functions
+
+    def as_array(obj):
+        """Create a numpy array from a ctypes array.  The numpy array
+        shares the memory with the ctypes object."""
+        tp = type(obj)
+        try: tp.__array_interface__
+        except AttributeError: prep_array(tp)
+        return array(obj, copy=False)
+
+    def as_ctypes(obj):
+        """Create and return a ctypes object from a numpy array.  Actually
+        anything that exposes the __array_interface__ is accepted."""
+        ai = obj.__array_interface__
+        if ai["strides"]:
+            raise TypeError("strided arrays not supported")
+        if ai["version"] != 3:
+            raise TypeError("only __array_interface__ version 3 supported")
+        addr, readonly = ai["data"]
+        if readonly:
+            raise TypeError("readonly arrays unsupported")
+        tp = _typecodes[ai["typestr"]]
+        for dim in ai["shape"][::-1]:
+            tp = tp * dim
+        result = tp.from_address(addr)
+        result.__keep = ai
+        return result
+
 
 def test(level=1, verbosity=1):
     from numpy.testing import NumpyTest

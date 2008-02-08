@@ -8,6 +8,9 @@ extend over multiple lines, the closing three quotation marks must be on
 a line by itself, preferably preceeded by a blank line.
 
 """
+# Make sure this line is here such that epydoc 3 can parse the docstrings for
+# auto-generated documentation.
+__docformat__ = "restructuredtext en"
 
 import os                      # standard library imports first
 
