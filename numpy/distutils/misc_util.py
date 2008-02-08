@@ -112,11 +112,11 @@ def njoin(*path):
     return minrelpath(joined)
 
 def get_mathlibs(path=None):
-    """Return the MATHLIB line from config.h
+    """Return the MATHLIB line from numpyconfig.h
     """
     if path is None:
         path = os.path.join(get_numpy_include_dirs()[0], 'numpy')
-    config_file = os.path.join(path,'config.h')
+    config_file = os.path.join(path,'numpyconfig.h')
     fid = open(config_file)
     mathlibs = []
     s = '#define MATHLIB'
@@ -574,7 +574,7 @@ def get_frame(level=0):
 class Configuration(object):
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
-                  'libraries', 'headers', 'scripts', 'py_modules']
+                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_data']
     _dict_keys = ['package_dir']
     _extra_keys = ['name', 'version']
 
@@ -586,6 +586,7 @@ class Configuration(object):
                  top_path=None,
                  package_path=None,
                  caller_level=1,
+                 setup_name='setup.py',
                  **attrs):
         """Construct configuration instance of a package.
 
@@ -673,6 +674,8 @@ class Configuration(object):
         if isinstance(caller_instance, self.__class__):
             if caller_instance.options['delegate_options_to_subpackages']:
                 self.set_options(**caller_instance.options)
+
+        self.setup_name = setup_name
 
     def todict(self):
         """Return configuration distionary suitable for passing
@@ -795,7 +798,7 @@ class Configuration(object):
         else:
             subpackage_path = njoin([subpackage_path] + l[:-1])
             subpackage_path = self.paths([subpackage_path])[0]
-        setup_py = njoin(subpackage_path, 'setup.py')
+        setup_py = njoin(subpackage_path, self.setup_name)
         if not self.options['ignore_setup_xxx_py']:
             if not os.path.isfile(setup_py):
                 setup_py = njoin(subpackage_path,
@@ -1165,6 +1168,55 @@ class Configuration(object):
             self.warn('distutils distribution has been initialized,'\
                       ' it may be too late to add a library '+ name)
 
+    def add_sconscript(self, sconscript, subpackage_path=None,
+                       standalone = False, pre_hook = None,
+                       post_hook = None, source_files = None):
+        """Add a sconscript to configuration.
+
+        pre_hook and post hook should be sequences of callable, which will be
+        use before and after executing scons. """
+        if standalone:
+            parent_name = None
+        else:
+            parent_name = self.name
+
+        dist = self.get_distribution()
+        # Convert the sconscript name to a relative filename (relative from top
+        # setup.py's directory)
+        fullsconsname = self.paths(sconscript)[0]
+
+        # XXX: Think about a way to automatically register source files from
+        # scons...
+        full_source_files = []
+        if source_files:
+            full_source_files.extend([self.paths(i)[0] for i in source_files])
+
+        if dist is not None:
+            dist.scons_data.append((fullsconsname, 
+                                    pre_hook, 
+                                    post_hook,
+                                    full_source_files,
+                                    parent_name))
+            self.warn('distutils distribution has been initialized,'\
+                      ' it may be too late to add a subpackage '+ subpackage_name)
+            # XXX: we add a fake extension, to correctly initialize some
+            # options in distutils command.
+            dist.add_extension('', sources = [])
+        else:
+            self.scons_data.append((fullsconsname, 
+                                    pre_hook, 
+                                    post_hook,
+                                    full_source_files,
+                                    parent_name))
+            # XXX: we add a fake extension, to correctly initialize some
+            # options in distutils command.
+            self.add_extension('', sources = [])
+
+    def add_configres(self):
+        from numscons import get_scons_configres_dir, get_scons_configres_filename
+        file = os.path.join(get_scons_configres_dir(), self.local_path, 
+                            get_scons_configres_filename())
+
     def add_scripts(self,*files):
         """Add scripts to configuration.
         """
@@ -1394,6 +1446,12 @@ class Configuration(object):
         """
         self.py_modules.append((self.name,name,generate_config_py))
 
+    def scons_make_config_py(self, name = '__config__'):
+        """Generate package __config__.py file containing system_info
+        information used during building the package.
+        """
+        self.py_modules.append((self.name, name, scons_generate_config_py))
+
     def get_info(self,*names):
         """Get resources information.
         """
@@ -1424,6 +1482,50 @@ def get_numpy_include_dirs():
         include_dirs = [ numpy.get_include() ]
     # else running numpy/core/setup.py
     return include_dirs
+
+def scons_generate_config_py(target):
+    """generate config.py file containing system_info information
+    used during building the package.
+
+    usage:
+        config['py_modules'].append((packagename, '__config__',generate_config_py))
+    """
+    from distutils.dir_util import mkpath
+    from numscons import get_scons_configres_dir, get_scons_configres_filename
+    d = {}
+    mkpath(os.path.dirname(target))
+    f = open(target, 'w')
+    f.write('# this file is generated by %s\n' % (os.path.abspath(sys.argv[0])))
+    f.write('# it contains system_info results at the time of building this package.\n')
+    f.write('__all__ = ["show"]\n\n')
+    confdir = get_scons_configres_dir()
+    confilename = get_scons_configres_filename()
+    for root, dirs, files in os.walk(confdir):
+        if files:
+            file = os.path.join(root, confilename)
+            assert root.startswith(confdir)
+            pkg_name = '.'.join(root[len(confdir)+1:].split(os.sep))
+            fid = open(file, 'r')
+            try:
+                cnt = fid.read()
+                d[pkg_name] = eval(cnt)
+            finally:
+                fid.close()
+    # d is a dictionary whose keys are package names, and values the
+    # corresponding configuration. Each configuration is itself a dictionary
+    # (lib : libinfo)
+    f.write('_config = %s\n' % d)
+    f.write(r'''
+def show():
+    for pkg, config in _config.items():
+        print "package %s configuration:" % pkg
+        for lib, libc in config.items():
+            print '    %s' % lib
+            for line in libc.split('\n'):
+                print '\t%s' % line
+    ''')
+    f.close()
+    return target
 
 #########################
 

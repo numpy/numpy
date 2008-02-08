@@ -1,0 +1,16 @@
+#define NPY_SIZEOF_SHORT        @SIZEOF_SHORT@
+#define NPY_SIZEOF_INT          @SIZEOF_INT@
+#define NPY_SIZEOF_LONG         @SIZEOF_LONG@
+#define NPY_SIZEOF_FLOAT        @SIZEOF_FLOAT@
+#define NPY_SIZEOF_DOUBLE       @SIZEOF_DOUBLE@
+#define NPY_SIZEOF_LONGDOUBLE   @SIZEOF_LONG_DOUBLE@
+#define NPY_SIZEOF_PY_INTPTR_T  @SIZEOF_PY_INTPTR_T@
+
+@DEFINE_NPY_NO_SIGNAL@
+#define NPY_NO_SMP       @NPY_NO_SMP@
+
+/* XXX: this has really nothing to do in a config file... */
+#define NPY_MATHLIB      @MATHLIB@
+
+@DEFINE_NPY_SIZEOF_LONGLONG@
+@DEFINE_NPY_SIZEOF_PY_LONG_LONG@

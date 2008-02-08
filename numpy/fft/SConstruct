@@ -1,0 +1,13 @@
+# Last Change: Thu Oct 18 09:00 PM 2007 J
+# vim:syntax=python
+import __builtin__
+__builtin__.__NUMPY_SETUP__ = True
+from numpy.distutils.misc_util import get_numpy_include_dirs
+from numscons import GetNumpyEnvironment, scons_get_paths
+
+env = GetNumpyEnvironment(ARGUMENTS)
+env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+fftpack_lite = env.NumpyPythonExtension('fftpack_lite', 
+                                        source = ['fftpack_litemodule.c', 
+                                                  'fftpack.c'])

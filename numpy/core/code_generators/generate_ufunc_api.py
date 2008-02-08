@@ -1,8 +1,6 @@
 import os
 import genapi
 
-UFUNC_API_ORDER = 'ufunc_api_order.txt'
-
 h_template = r"""
 #ifdef _UMATHMODULE
 
@@ -72,17 +70,28 @@ void *PyUFunc_API[] = {
 """
 
 def generate_api(output_dir, force=False):
-    header_file = os.path.join(output_dir, '__ufunc_api.h')
-    c_file = os.path.join(output_dir, '__ufunc_api.c')
-    doc_file = os.path.join(output_dir, 'ufunc_api.txt')
+    basename = 'ufunc_api'
+    
+    h_file = os.path.join(output_dir, '__%s.h' % basename)
+    c_file = os.path.join(output_dir, '__%s.c' % basename)
+    d_file = os.path.join(output_dir, '%s.txt' % basename)
+    targets = (h_file, c_file, d_file)
 
-    targets = (header_file, c_file, doc_file)
-    if (not force
-            and not genapi.should_rebuild(targets,
-                                          [UFUNC_API_ORDER, __file__])):
+    sources = ['ufunc_api_order.txt']
+
+    if (not force and not genapi.should_rebuild(targets, sources + [__file__])):
         return targets
+    else:
+        do_generate_api(targets, sources)
 
-    ufunc_api_list = genapi.get_api_functions('UFUNC_API', UFUNC_API_ORDER)
+    return targets
+
+def do_generate_api(targets, sources):
+    header_file = targets[0]
+    c_file = targets[1]
+    doc_file = targets[2]
+
+    ufunc_api_list = genapi.get_api_functions('UFUNC_API', sources[0])
 
     # API fixes for __arrayobject_api.h
 

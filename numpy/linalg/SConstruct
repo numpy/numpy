@@ -1,0 +1,33 @@
+# Last Change: Fri Nov 16 05:00 PM 2007 J
+# vim:syntax=python
+import os.path
+
+import __builtin__
+__builtin__.__NUMPY_SETUP__ = True
+
+from numpy.distutils.misc_util import get_numpy_include_dirs, get_mathlibs
+from numscons import GetNumpyEnvironment, scons_get_paths, \
+                     scons_get_mathlib
+from numscons import CheckF77LAPACK
+from numscons import write_info
+
+env = GetNumpyEnvironment(ARGUMENTS)
+env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+config = env.NumpyConfigure(custom_tests = 
+    {'CheckLAPACK' : CheckF77LAPACK})
+
+use_lapack = config.CheckLAPACK()
+
+mlib = scons_get_mathlib(env)
+env.AppendUnique(LIBS = mlib)
+
+config.Finish()
+write_info(env)
+
+sources = ['lapack_litemodule.c']
+if not use_lapack:
+    sources.extend(['zlapack_lite.c', 'dlapack_lite.c', 'blas_lite.c',
+                    'dlamch.c', 'f2c_lite.c'])
+lapack_lite = env.NumpyPythonExtension('lapack_lite', source = sources)
+            
