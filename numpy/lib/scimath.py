@@ -93,7 +93,7 @@ def _fix_real_lt_zero(x):
     """Convert `x` to complex if it has real, negative components.
 
     Otherwise, output is just the array version of the input (via asarray).
-    
+
     Parameters
     ----------
     x : array_like
@@ -119,7 +119,7 @@ def _fix_int_lt_zero(x):
     """Convert `x` to double if it has real, negative components.
 
     Otherwise, output is just the array version of the input (via asarray).
-    
+
     Parameters
     ----------
     x : array_like
@@ -145,7 +145,7 @@ def _fix_real_abs_gt_1(x):
     """Convert `x` to complex if it has real components x_i with abs(x_i)>1.
 
     Otherwise, output is just the array version of the input (via asarray).
-    
+
     Parameters
     ----------
     x : array_like
@@ -203,7 +203,7 @@ def log(x):
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
-    
+
     Parameters
     ----------
     x : array_like
@@ -221,7 +221,7 @@ def log(x):
 
     Negative arguments are correctly handled (recall that for negative
     arguments, the identity exp(log(z))==z does not hold anymore):
-    
+
     >>> log(-math.exp(1)) == (1+1j*math.pi)
     True
     """
@@ -233,7 +233,7 @@ def log10(x):
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
-    
+
     Parameters
     ----------
     x : array_like
@@ -263,7 +263,7 @@ def logn(n, x):
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
-    
+
     Parameters
     ----------
     x : array_like
@@ -293,7 +293,7 @@ def log2(x):
 
     If x contains negative inputs, the answer is computed and returned in the
     complex domain.
-    
+
     Parameters
     ----------
     x : array_like
@@ -307,7 +307,7 @@ def log2(x):
 
     (We set the printing precision so the example can be auto-tested)
     >>> import numpy as np; np.set_printoptions(precision=4)
-    
+
     >>> log2([4,8])
     array([ 2.,  3.])
 
@@ -323,7 +323,7 @@ def power(x, p):
     If x contains negative values, it is converted to the complex domain.
 
     If p contains negative values, it is converted to floating point.
-    
+
     Parameters
     ----------
     x : array_like
@@ -332,7 +332,7 @@ def power(x, p):
     Returns
     -------
     array_like
-    
+
     Examples
     --------
     (We set the printing precision so the example can be auto-tested)
@@ -357,7 +357,7 @@ def arccos(x):
     For real x with abs(x)<=1, this returns the principal value.
 
     If abs(x)>1, the complex arccos() is computed.
-    
+
     Parameters
     ----------
     x : array_like
@@ -385,7 +385,7 @@ def arcsin(x):
     For real x with abs(x)<=1, this returns the principal value.
 
     If abs(x)>1, the complex arcsin() is computed.
-    
+
     Parameters
     ----------
     x : array_like
@@ -414,7 +414,7 @@ def arctanh(x):
     For real x with abs(x)<=1, this returns the principal value.
 
     If abs(x)>1, the complex arctanh() is computed.
-    
+
     Parameters
     ----------
     x : array_like

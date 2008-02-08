@@ -46,4 +46,3 @@ print "Numeric: ", numeric_timer.repeat(3,100)
 print "Numarray: ", numarray_timer.repeat(3,100)
 print "Python: ", python_timer.repeat(3,100)
 print "Optimized: ", numpy_timer3.repeat(3,100)
-

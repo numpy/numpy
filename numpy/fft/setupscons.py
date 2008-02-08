@@ -4,7 +4,7 @@ def configuration(parent_package = '', top_path = None):
 
     config.add_data_dir('tests')
 
-    config.add_sconscript('SConstruct', 
+    config.add_sconscript('SConstruct',
                           source_files = ['fftpack_litemodule.c', 'fftpack.c',
                                           'fftpack.h'])
 

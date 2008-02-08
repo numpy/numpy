@@ -71,7 +71,7 @@ void *PyUFunc_API[] = {
 
 def generate_api(output_dir, force=False):
     basename = 'ufunc_api'
-    
+
     h_file = os.path.join(output_dir, '__%s.h' % basename)
     c_file = os.path.join(output_dir, '__%s.c' % basename)
     d_file = os.path.join(output_dir, '%s.txt' % basename)

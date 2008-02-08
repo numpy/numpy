@@ -5,7 +5,7 @@ def configuration(parent_package='',top_path=None):
 
     config = Configuration('lib',parent_package,top_path)
 
-    config.add_sconscript('SConstruct', 
+    config.add_sconscript('SConstruct',
                           source_files = [join('src', '_compiled_base.c')])
     config.add_data_dir('tests')
 

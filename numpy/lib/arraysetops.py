@@ -207,7 +207,7 @@ def setmember1d( ar1, ar2 ):
     b1 = nm.zeros( ar1.shape, dtype = nm.int8 )
     b2 = nm.ones( ar2.shape, dtype = nm.int8 )
     tt = nm.concatenate( (b1, b2) )
-        
+
     # We need this to be a stable sort, so always use 'mergesort' here. The
     # values from the first array should always come before the values from the
     # second array.

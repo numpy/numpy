@@ -1,7 +1,7 @@
 # This is only meant to add docs to
 #  objects defined in C-extension modules.
 # The purpose is to allow easier editing of the
-#  docstrings without requiring a re-compile. 
+#  docstrings without requiring a re-compile.
 from lib import add_newdoc
 
 add_newdoc('numpy.core','dtype',
@@ -238,7 +238,7 @@ add_newdoc('numpy.core.multiarray','fromfile',
         open file object or string containing file name.
     dtype : data-type
         data type of the returned array
-    count : int 
+    count : int
         number of items to read (-1 mean 'all')
     sep : string
         separater between items if file is a text file (default "")
@@ -1107,8 +1107,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
     is done if the array is not of float type and 'decimals' is >= 0.
 
     The keyword 'out' may be used to specify a different array to hold the
-    result rather than the default new array. If the type of the array 
-    specified by 'out' differs from that of 'a', the result is cast to the 
+    result rather than the default new array. If the type of the array
+    specified by 'out' differs from that of 'a', the result is cast to the
     new type, otherwise the original type is kept. Floats round to floats
     by default.
 
@@ -1209,7 +1209,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
     |------------------------------------------------------|
 
-    All the sort algorithms make temporary copies of the data when the sort is 
+    All the sort algorithms make temporary copies of the data when the sort is
     not along the last axis. Consequently, sorts along the last axis are faster
     and use less space than sorts along other axis.
     """))

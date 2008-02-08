@@ -53,7 +53,7 @@ def foo(var1, var2, long_var_name='hi') :
         Explanation
 
     See Also
-    --------    
+    --------
     otherfunc : relationship (optional)
     newfunc : relationship (optional)
 

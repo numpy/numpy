@@ -14,21 +14,21 @@ from numpy.distutils.misc_util import get_numpy_include_dirs
 
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
-    
+
     The path is relative to the top setup.py"""
     from numscons import get_scons_build_dir
     return get_scons_build_dir()
 
 def get_scons_configres_dir():
     """Return the top path where everything produced by scons will be put.
-    
+
     The path is relative to the top setup.py"""
     from numscons import get_scons_configres_dir
     return get_scons_configres_dir()
 
 def get_scons_configres_filename():
     """Return the top path where everything produced by scons will be put.
-    
+
     The path is relative to the top setup.py"""
     from numscons import get_scons_configres_filename
     return get_scons_configres_filename()
@@ -101,7 +101,7 @@ def dist2sconscxx(compiler):
 def get_compiler_executable(compiler):
     """For any give CCompiler instance, this gives us the name of C compiler
     (the actual executable).
-    
+
     NOTE: does NOT work with FCompiler instances."""
     # Geez, why does distutils has no common way to get the compiler name...
     if compiler.compiler_type == 'msvc':
@@ -112,7 +112,7 @@ def get_compiler_executable(compiler):
         # hardcoded string
         #compiler.initialize()
         #print compiler.cc
-        return 'cl.exe' 
+        return 'cl.exe'
     else:
         return compiler.compiler[0]
 
@@ -124,7 +124,7 @@ def get_f77_compiler_executable(compiler):
 def get_cxxcompiler_executable(compiler):
     """For any give CCompiler instance, this gives us the name of CXX compiler
     (the actual executable).
-    
+
     NOTE: does NOT work with FCompiler instances."""
     # Geez, why does distutils has no common way to get the compiler name...
     if compiler.compiler_type == 'msvc':
@@ -135,7 +135,7 @@ def get_cxxcompiler_executable(compiler):
         # hardcoded string
         #compiler.initialize()
         #print compiler.cc
-        return 'cl.exe' 
+        return 'cl.exe'
     else:
         return compiler.compiler_cxx[0]
 
@@ -181,7 +181,7 @@ class scons(old_build_ext):
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
     user_options = old_build_ext.user_options + \
-            [('jobs=', None, 
+            [('jobs=', None,
               "specify number of worker threads when executing scons"),
              ('scons-tool-path=', None, 'specify additional path '\
                                     '(absolute) to look for scons tools'),
@@ -239,11 +239,11 @@ class scons(old_build_ext):
             self.scons_compiler = dist2sconscc(distutils_compiler)
             self.scons_compiler_path = protect_path(get_tool_path(distutils_compiler))
         except DistutilsPlatformError, e:
-            if not self._bypass_distutils_cc: 
+            if not self._bypass_distutils_cc:
                 raise e
             else:
                 self.scons_compiler = compiler_type
- 		
+
         # We do the same for the fortran compiler ...
         fcompiler_type = self.fcompiler
         from numpy.distutils.fcompiler import new_fcompiler

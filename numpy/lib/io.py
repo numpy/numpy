@@ -19,8 +19,8 @@ from _compiled_base import packbits, unpackbits
 _file = file
 
 class BagObj(object):
-    """A simple class that converts attribute lookups to 
-    getitems on the class passed in. 
+    """A simple class that converts attribute lookups to
+    getitems on the class passed in.
     """
     def __init__(self, obj):
         self._obj = obj
@@ -31,8 +31,8 @@ class BagObj(object):
             raise AttributeError, key
 
 class NpzFile(object):
-    """A dictionary-like object with lazy-loading of files in the zipped 
-    archive provided on construction. 
+    """A dictionary-like object with lazy-loading of files in the zipped
+    archive provided on construction.
 
     The arrays and file strings are lazily loaded on either
     getitem access using obj['key'] or attribute lookup using obj.f.key
@@ -54,13 +54,13 @@ class NpzFile(object):
 
     def __getitem__(self, key):
         # FIXME: This seems like it will copy strings around
-        #   more than is strictly necessary.  The zipfile 
+        #   more than is strictly necessary.  The zipfile
         #   will read the string and then
         #   the format.read_array will copy the string
-        #   to another place in memory. 
-        #   It would be better if the zipfile could read 
+        #   to another place in memory.
+        #   It would be better if the zipfile could read
         #   (or at least uncompress) the data
-        #   directly into the array memory. 
+        #   directly into the array memory.
         member = 0
         if key in self._files:
             member = 1
@@ -90,21 +90,21 @@ def load(file, memmap=False):
     memmap : bool
         If true, then memory-map the .npy file or unzip the .npz file into
            a temporary directory and memory-map each component
-        This has no effect for a pickle. 
+        This has no effect for a pickle.
 
     Returns
     -------
     result : array, tuple, dict, etc.
-        data stored in the file. 
+        data stored in the file.
         If file contains pickle data, then whatever is stored in the pickle is
           returned.
-        If the file is .npy file, then an array is returned.  
-        If the file is .npz file, then a dictionary-like object is returned 
+        If the file is .npy file, then an array is returned.
+        If the file is .npz file, then a dictionary-like object is returned
           which has a filename:array key:value pair for every file in the zip.
 
     Raises
     ------
-    IOError 
+    IOError
     """
     if isinstance(file, type("")):
         fid = _file(file,"rb")
@@ -124,7 +124,7 @@ def load(file, memmap=False):
     elif magic == format.MAGIC_PREFIX: # .npy file
         return format.read_array(fid)
     else:  # Try a pickle
-        try: 
+        try:
             return _cload(fid)
         except:
             raise IOError, \
@@ -133,8 +133,8 @@ def load(file, memmap=False):
 def save(file, arr):
     """Save an array to a binary file (a string or file-like object).
 
-    If the file is a string, then if it does not have the .npy extension, 
-        it is appended and a file open. 
+    If the file is a string, then if it does not have the .npy extension,
+        it is appended and a file open.
 
     Data is saved to the open file in NumPy-array format
 
@@ -144,7 +144,7 @@ def save(file, arr):
     ...
     np.save('myfile', a)
     a = np.load('myfile.npy')
-    """    
+    """
     if isinstance(file, str):
         if not file.endswith('.npy'):
             file = file + '.npy'
@@ -158,15 +158,15 @@ def save(file, arr):
 def savez(file, *args, **kwds):
     """Save several arrays into an .npz file format which is a zipped-archive
     of arrays
-    
-    If keyword arguments are given, then filenames are taken from the keywords. 
-    If arguments are passed in with no keywords, then stored file names are 
-    arr_0, arr_1, etc.  
+
+    If keyword arguments are given, then filenames are taken from the keywords.
+    If arguments are passed in with no keywords, then stored file names are
+    arr_0, arr_1, etc.
     """
 
     if isinstance(file, str):
         if not file.endswith('.npz'):
-            file = file + '.npz'        
+            file = file + '.npz'
 
     namedict = kwds
     for i, val in enumerate(args):
@@ -190,7 +190,7 @@ def savez(file, *args, **kwds):
         format.write_array(fid, np.asanyarray(val))
         fid.close()
         zip.write(filename, arcname=fname)
-        
+
     zip.close()
     for name in todel:
         os.remove(name)
@@ -359,7 +359,3 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
     if origShape is not None:
         X.shape = origShape
-
-
-
-

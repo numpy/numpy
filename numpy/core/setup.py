@@ -175,7 +175,7 @@ def configuration(parent_package='',top_path=None):
                       " python-dev|python-devel." % (python_h)
 
             config.numpy_include_dirs
-            result = config_cmd.try_run(testcode, 
+            result = config_cmd.try_run(testcode,
                                 include_dirs = [python_include] + \
                                                        config.numpy_include_dirs,
                                         library_dirs = default_lib_dirs)
@@ -190,7 +190,7 @@ def configuration(parent_package='',top_path=None):
             target_f.close()
             print 'EOF'
         return target
-                                
+
     def generate_api_func(module_name):
         def generate_api(ext, build_dir):
             script = join(codegen_dir, module_name + '.py')
@@ -405,9 +405,9 @@ def generate_numpyconfig_code(target):
 #include "config.h"
 
 int main()
-{   
+{
     FILE* f;
-   
+
     f = fopen("%s", "w");
     if (f == NULL) {
         return -1;

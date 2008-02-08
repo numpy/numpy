@@ -51,16 +51,16 @@ def asmatrix(data, dtype=None):
 class matrix(N.ndarray):
     """mat = matrix(data, dtype=None, copy=True)
 
-    Returns a matrix from an array-like object, or a string of 
+    Returns a matrix from an array-like object, or a string of
     data.  A matrix is a specialized 2-d array that retains
     it's 2-d nature through operations and where '*' means matrix
-    multiplication and '**' means matrix power. 
+    multiplication and '**' means matrix power.
 
     Parameters
     ----------
     data : array-like or string
-       If data is a string, then interpret the string as a matrix 
-         with commas or spaces separating columns and semicolons 
+       If data is a string, then interpret the string as a matrix
+         with commas or spaces separating columns and semicolons
          separating rows.
        If data is array-like than convert the array to a matrix.
     dtype : data-type
@@ -273,7 +273,7 @@ class matrix(N.ndarray):
         the flattened array by default, otherwise over the specified axis.
 
         Parameters
-        ----------        
+        ----------
         axis : integer
             Axis along which the means are computed. The default is
             to compute the standard deviation of the flattened array.
@@ -289,7 +289,7 @@ class matrix(N.ndarray):
             cast if necessary.
 
         Returns
-        -------        
+        -------
         mean : The return type varies, see above.
             A new array holding the result is returned unless out is
             specified, in which case a reference to out is returned.
@@ -342,7 +342,7 @@ class matrix(N.ndarray):
         mean : average
 
         Notes
-        ----- 
+        -----
         The standard deviation is the square root of the
         average of the squared deviations from the mean, i.e. var =
         sqrt(mean((x - x.mean())**2)).  The computed standard
@@ -362,7 +362,7 @@ class matrix(N.ndarray):
         ----------
         axis : integer
             Axis along which the variance is computed. The default is to
-            compute the variance of the flattened array.            
+            compute the variance of the flattened array.
         dtype : data-type
             Type to use in computing the variance. For arrays of integer
             type the default is float32, for arrays of float types it is

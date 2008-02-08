@@ -227,7 +227,7 @@ def read_array_header_1_0(fp):
         raise ValueError("Header does not contain the correct keys: %r" % (keys,))
 
     # Sanity-check the values.
-    if (not isinstance(d['shape'], tuple) or 
+    if (not isinstance(d['shape'], tuple) or
         not numpy.all([isinstance(x, int) for x in d['shape']])):
         raise ValueError("shape is not valid: %r" % (d['shape'],))
     if not isinstance(d['fortran_order'], bool):
@@ -407,6 +407,3 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         mode=mode, offset=offset)
 
     return marray
-
-
-

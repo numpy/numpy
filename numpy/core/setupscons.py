@@ -25,10 +25,10 @@ def configuration(parent_package='',top_path=None):
                       join('code_generators', 'multiarray_api_order.txt'),
                       join('code_generators', 'ufunc_api_order.txt')]
     core_src = [join('src', basename(i)) for i in glob.glob(join(local_dir,
-                                                                'src', 
+                                                                'src',
                                                                 '*.c'))]
     core_src += [join('src', basename(i)) for i in glob.glob(join(local_dir,
-                                                                 'src', 
+                                                                 'src',
                                                                  '*.src'))]
 
     source_files = dot_blas_src + api_definition + core_src + \
@@ -54,7 +54,7 @@ def configuration(parent_package='',top_path=None):
         incl_dir = os.path.dirname(target)
         if incl_dir not in config.numpy_include_dirs:
             config.numpy_include_dirs.append(incl_dir)
-        config.add_data_files((header_dir, target)) 
+        config.add_data_files((header_dir, target))
 
     def add_array_api():
         scons_build_dir = get_scons_build_dir()
@@ -83,7 +83,7 @@ def configuration(parent_package='',top_path=None):
         add_ufunc_api()
         config.add_configres()
 
-    config.add_sconscript('SConstruct', 
+    config.add_sconscript('SConstruct',
                           post_hook = add_generated_files,
                           source_files = source_files)
 

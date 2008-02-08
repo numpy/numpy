@@ -149,7 +149,7 @@ def asfortranarray(a, dtype=None):
 
 def require(a, dtype=None, requirements=None):
     """Return an ndarray of the provided type that satisfies requirements.
-    
+
     This function is useful to be sure that an array with the correct flags
     is returned for passing to compiled code (perhaps through ctypes).
 
@@ -160,7 +160,7 @@ def require(a, dtype=None, requirements=None):
      dtype : data-type
        The required data-type (None is the default data-type -- float64)
      requirements : list of strings
-       The requirements list can be any of the 
+       The requirements list can be any of the
        'ENSUREARRAY' ('E')  - ensure that  a base-class ndarray
        'F_CONTIGUOUS' ('F') - ensure a Fortran-contiguous array
        'C_CONTIGUOUS' ('C') - ensure a C-contiguous array
@@ -169,7 +169,7 @@ def require(a, dtype=None, requirements=None):
        'OWNDATA' ('O')      - ensure an array that owns its own data
 
        The returned array will be guaranteed to have the listed requirements
-       by making a copy if needed. 
+       by making a copy if needed.
     """
     if requirements is None:
         requirements = []
@@ -276,7 +276,7 @@ def vdot(a, b):
 try:
     # importing this changes the dot function for basic 4 types
     # to blas-optimized versions.
-    from _dotblas import dot, vdot, inner, alterdot, restoredot    
+    from _dotblas import dot, vdot, inner, alterdot, restoredot
 except ImportError:
     def alterdot():
         "Does Nothing"

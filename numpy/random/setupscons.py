@@ -5,12 +5,12 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
     config = Configuration('random',parent_package,top_path)
 
-    source_files = [join('mtrand', i) for i in ['mtrand.c', 
+    source_files = [join('mtrand', i) for i in ['mtrand.c',
                                                 'mtrand.pyx',
                                                 'numpy.pxi',
-                                                'randomkit.c', 
-                                                'randomkit.h', 
-                                                'Python.pxi', 
+                                                'randomkit.c',
+                                                'randomkit.h',
+                                                'Python.pxi',
                                                 'initarray.c',
                                                 'initarray.h',
                                                 'distributions.c',

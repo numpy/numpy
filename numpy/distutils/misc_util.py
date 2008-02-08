@@ -1192,8 +1192,8 @@ class Configuration(object):
             full_source_files.extend([self.paths(i)[0] for i in source_files])
 
         if dist is not None:
-            dist.scons_data.append((fullsconsname, 
-                                    pre_hook, 
+            dist.scons_data.append((fullsconsname,
+                                    pre_hook,
                                     post_hook,
                                     full_source_files,
                                     parent_name))
@@ -1203,8 +1203,8 @@ class Configuration(object):
             # options in distutils command.
             dist.add_extension('', sources = [])
         else:
-            self.scons_data.append((fullsconsname, 
-                                    pre_hook, 
+            self.scons_data.append((fullsconsname,
+                                    pre_hook,
                                     post_hook,
                                     full_source_files,
                                     parent_name))
@@ -1214,7 +1214,7 @@ class Configuration(object):
 
     def add_configres(self):
         from numscons import get_scons_configres_dir, get_scons_configres_filename
-        file = os.path.join(get_scons_configres_dir(), self.local_path, 
+        file = os.path.join(get_scons_configres_dir(), self.local_path,
                             get_scons_configres_filename())
 
     def add_scripts(self,*files):

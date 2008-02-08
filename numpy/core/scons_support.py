@@ -30,12 +30,12 @@ def split_ext(string):
 # Ufunc and multiarray API generators
 #------------------------------------
 def do_generate_array_api(target, source, env):
-    nowrap_do_generate_array_api([str(i) for i in target], 
+    nowrap_do_generate_array_api([str(i) for i in target],
                                  [str(i) for i in source])
     return 0
 
 def do_generate_ufunc_api(target, source, env):
-    nowrap_do_generate_ufunc_api([str(i) for i in target], 
+    nowrap_do_generate_ufunc_api([str(i) for i in target],
                                  [str(i) for i in source])
     return 0
 
@@ -74,7 +74,7 @@ def generate_from_template_emitter(target, source, env):
     base, ext = split_ext(pbasename(str(source[0])))
     t = pjoin(pdirname(str(target[0])), base)
     return ([t], source)
-    
+
 #----------------
 # umath generator
 #----------------
@@ -92,7 +92,7 @@ def generate_umath(target, source, env):
 def generate_umath_emitter(target, source, env):
     t = str(target[0]) + '.c'
     return ([t], source)
-    
+
 #-----------------------------------------
 # Other functions related to configuration
 #-----------------------------------------

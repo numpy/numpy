@@ -6,7 +6,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_data_dir('tests')
 
-    config.add_sconscript('SConstruct', 
+    config.add_sconscript('SConstruct',
                           source_files = ['lapack_litemodule.c',
                                           'zlapack_lite.c', 'dlapack_lite.c',
                                           'blas_lite.c', 'dlamch.c',
