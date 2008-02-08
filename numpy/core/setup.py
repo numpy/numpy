@@ -189,6 +189,7 @@ def configuration(parent_package='',top_path=None):
             print target_f.read()
             target_f.close()
             print 'EOF'
+        config.add_data_files((header_dir, target))
         return target
 
     def generate_api_func(module_name):
