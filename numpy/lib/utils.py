@@ -106,7 +106,7 @@ def deprecate(func, oldname=None, newname=None):
     else:
         str1 = "%s is deprecated, use %s" % (oldname, newname),
         depdoc = '%s is DEPRECATED!! -- use %s instead' % (oldname, newname,)
-        
+
     def newfunc(*args,**kwds):
         warnings.warn(str1, DeprecationWarning)
         return func(*args, **kwds)
@@ -487,28 +487,28 @@ def source(object, output=sys.stdout):
 #   * raise SyntaxError instead of a custom exception.
 
 class SafeEval(object):
-    
+
     def visit(self, node, **kw):
         cls = node.__class__
         meth = getattr(self,'visit'+cls.__name__,self.default)
         return meth(node, **kw)
-            
+
     def default(self, node, **kw):
         raise SyntaxError("Unsupported source construct: %s" % node.__class__)
-            
+
     def visitExpression(self, node, **kw):
         for child in node.getChildNodes():
             return self.visit(child, **kw)
-    
+
     def visitConst(self, node, **kw):
         return node.value
 
     def visitDict(self, node,**kw):
         return dict([(self.visit(k),self.visit(v)) for k,v in node.items])
-        
+
     def visitTuple(self, node, **kw):
         return tuple([self.visit(i) for i in node.nodes])
-        
+
     def visitList(self, node, **kw):
         return [self.visit(i) for i in node.nodes]
 
@@ -578,5 +578,3 @@ def safe_eval(source):
         raise
 
 #-----------------------------------------------------------------------------
-
-

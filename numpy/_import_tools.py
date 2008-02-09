@@ -152,10 +152,10 @@ class PackageLoader:
 
        Parameters
        ----------
-        *packges : arg-tuple 
+        *packges : arg-tuple
              the names (one or more strings) of all the modules one
              wishes to load into the top-level namespace.
-        verbose= : integer 
+        verbose= : integer
              verbosity level [default: -1].
              verbose=-1 will suspend also warnings.
         force= : bool

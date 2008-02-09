@@ -21,9 +21,9 @@ Set up:
     ...     np.complex128,
     ...     object,
     ... ]
-    >>> 
+    >>>
     >>> basic_arrays = []
-    >>> 
+    >>>
     >>> for scalar in scalars:
     ...     for endian in '<>':
     ...         dtype = np.dtype(scalar).newbyteorder(endian)
@@ -36,20 +36,20 @@ Set up:
     ...             basic.reshape((3,5)).T,
     ...             basic.reshape((3,5))[::-1,::2],
     ...         ])
-    ... 
-    >>> 
+    ...
+    >>>
     >>> Pdescr = [
     ...     ('x', 'i4', (2,)),
     ...     ('y', 'f8', (2, 2)),
     ...     ('z', 'u1')]
-    >>> 
-    >>> 
+    >>>
+    >>>
     >>> PbufferT = [
     ...     ([3,2], [[6.,4.],[6.,4.]], 8),
     ...     ([4,3], [[7.,5.],[7.,5.]], 9),
     ...     ]
-    >>> 
-    >>> 
+    >>>
+    >>>
     >>> Ndescr = [
     ...     ('x', 'i4', (2,)),
     ...     ('Info', [
@@ -68,14 +68,14 @@ Set up:
     ...         ('Value', 'c16')]),
     ...     ('y', 'f8', (2, 2)),
     ...     ('z', 'u1')]
-    >>> 
-    >>> 
+    >>>
+    >>>
     >>> NbufferT = [
     ...     ([3,2], (6j, 6., ('nn', [6j,4j], [6.,4.], [1,2]), 'NN', True), 'cc', ('NN', 6j), [[6.,4.],[6.,4.]], 8),
     ...     ([4,3], (7j, 7., ('oo', [7j,5j], [7.,5.], [2,1]), 'OO', False), 'dd', ('OO', 7j), [[7.,5.],[7.,5.]], 9),
     ...     ]
-    >>> 
-    >>> 
+    >>>
+    >>>
     >>> record_arrays = [
     ...     np.array(PbufferT, dtype=np.dtype(Pdescr).newbyteorder('<')),
     ...     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('<')),
@@ -111,7 +111,7 @@ Test the header writing.
     ...     f = StringIO()
     ...     format.write_array_header_1_0(f, arr)
     ...     print repr(f.getvalue())
-    ... 
+    ...
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': (0,)}              \n"
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': ()}                \n"
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': (15,)}             \n"
@@ -506,5 +506,3 @@ def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = StringIO(magic)
         yield raises(ValueError)(format.read_array), f
-
-

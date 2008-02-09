@@ -3065,23 +3065,25 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     PyArrayObject *ap1=NULL;
     PyArrayObject *ap2=NULL;
     PyArrayObject *ret=NULL;
-    int typenum = 0;
+    PyArray_Descr *dtype;
 
     NPY_BEGIN_THREADS_DEF
 
-        typenum = PyArray_ObjectType((PyObject *)op1, 0);
-    typenum = PyArray_ObjectType(op2, typenum);
-
+    dtype = PyArray_DescrFromObject((PyObject *)op2, op1->descr);
+    
     /* need ap1 as contiguous array and of right type */
-    ap1 = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op1,
-                                                     typenum,
-                                                     1, 1);
-    if (ap1 == NULL)
+    Py_INCREF(dtype);
+    ap1 = (PyArrayObject *)PyArray_FromAny((PyObject *)op1, dtype, 
+					   1, 1, NPY_DEFAULT, NULL);
+
+    if (ap1 == NULL) {
+        Py_DECREF(dtype);
         return NULL;
+    }
 
     /* need ap2 as contiguous array and of right type */
-    ap2 = (PyArrayObject *)PyArray_ContiguousFromAny(op2, typenum,
-                                                     0, 0);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, NPY_DEFAULT, NULL);
+
     if (ap2 == NULL)
         goto fail;
 
@@ -7267,7 +7269,7 @@ compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 
-#ifndef NPY_NO_SIGNAL
+#ifndef __NPY_PRIVATE_NO_SIGNAL
 
 SIGJMP_BUF _NPY_SIGINT_BUF;
 

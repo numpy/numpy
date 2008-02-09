@@ -45,9 +45,9 @@ def find_duplicate(list):
 class format_parser:
     """Class to convert formats, names, titles description to a dtype
 
-    After constructing the format_parser object, the dtype attribute is 
+    After constructing the format_parser object, the dtype attribute is
       the converted data-type.
-    
+
     dtype = format_parser(formats, names, titles).dtype
 
     Parameters
@@ -59,18 +59,18 @@ class format_parser:
         comma-separated field names --- 'col1, col2, col3'
         list or tuple of field names
     titles : sequence
-        sequence of title strings or unicode        
+        sequence of title strings or unicode
     aligned : bool
         align the fields by padding as the C-compiler would
-    byteorder : 
-        If specified, all the fields will be changed to the 
+    byteorder :
+        If specified, all the fields will be changed to the
         provided byteorder.  Otherwise, the default byteorder is
         used.
 
     Returns
     -------
     object
-        A Python object whose dtype attribute is a data-type. 
+        A Python object whose dtype attribute is a data-type.
     """
     def __init__(self, formats, names, titles, aligned=False, byteorder=None):
         self._parseFormats(formats, aligned)
@@ -227,9 +227,9 @@ class recarray(ndarray):
         by the *formats*, *names*, *titles*, *aligned*, and *byteorder* keywords.
     buf : [buffer] or None
         If this is None, then a new array is created of the given shape and data-type
-        If this is an object exposing the buffer interface, then the array will 
-        use the memory from an existing buffer.  In this case, the *offset* and 
-        *strides* keywords can also be used. 
+        If this is an object exposing the buffer interface, then the array will
+        use the memory from an existing buffer.  In this case, the *offset* and
+        *strides* keywords can also be used.
 
     See Also
     --------

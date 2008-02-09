@@ -101,6 +101,21 @@ class config(old_config):
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
 
+    def check_decl(self, symbol,
+                   headers=None, include_dirs=None):
+        self._check_compiler()
+        body = """
+int main()
+{
+#ifndef %s
+    (void) %s;
+#endif
+    ;
+    return 0;
+}""" % (symbol, symbol)
+
+        return self.try_compile(body, headers, include_dirs)
+
     def check_func(self, func,
                    headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
