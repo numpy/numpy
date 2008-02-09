@@ -155,7 +155,6 @@ def configuration(parent_package='',top_path=None):
         if incl_dir not in config.numpy_include_dirs:
             config.numpy_include_dirs.append(incl_dir)
 
-        config.add_data_files((header_dir,target))
         return target
 
     def generate_numpyconfig_h(ext, build_dir):
