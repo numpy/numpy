@@ -1,6 +1,6 @@
 import numpy
 import types, time
-from numpy.core.ma import *
+from numpy.ma import *
 from numpy.core.numerictypes import float32
 from numpy.testing import NumpyTestCase, NumpyTest
 pi = numpy.pi
@@ -229,7 +229,7 @@ class TestMa(NumpyTestCase):
         x2 = masked_values(x1, 3.0)
         assert eq(x1,x2)
         assert allequal(array([0,0,0,1,0],MaskType), x2.mask)
-        assert eq(3.0, x2.fill_value())
+        assert eq(3.0, x2.fill_value)
         x1 = array([1,'hello',2,3],object)
         x2 = numpy.array([1,'hello',2,3],object)
         s1 = x1[1]
@@ -250,16 +250,14 @@ class TestMa(NumpyTestCase):
 
         x1 = numpy.arange(5)
         y1 = array(x1, mask=m)
-        self.failUnless( y1.raw_data() is not x1)
-        self.failUnless( allequal(x1,y1.raw_data()))
+        self.failUnless( y1.data is not x1)
+        self.failUnless( allequal(x1,y1.data))
         self.failUnless( y1.mask is m)
 
         y1a = array(y1, copy=0)
-        self.failUnless( y1a.raw_data() is y1.raw_data())
         self.failUnless( y1a.mask is y1.mask)
 
         y2 = array(x1, mask=m, copy=0)
-        self.failUnless( y2.raw_data() is x1)
         self.failUnless( y2.mask is m)
         self.failUnless( y2[2] is masked)
         y2[2]=9
@@ -295,30 +293,17 @@ class TestMa(NumpyTestCase):
         self.failUnless( eq(x, [0,10,2,-1,40]))
 
         x = array(d, mask = m)
-        x.put([-1,100,200])
+        x.put([0,1,2],[-1,100,200])
         self.failUnless( eq(x, [-1,100,200,0,0]))
         self.failUnless( x[3] is masked)
         self.failUnless( x[4] is masked)
-
-        x = array(d, mask = m)
-        x.putmask([30,40])
-        self.failUnless( eq(x, [0,1,2,30,40]))
-        self.failUnless( x.mask is nomask)
-
-        x = array(d, mask = m)
-        y = x.compressed()
-        z = array(x, mask = m)
-        z.put(y)
-        assert eq (x, z)
 
     def check_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
         i = numpy.nonzero(m)[0]
-        putmask(xm, m, z)
-        assert take(xm, i,axis=0) == z
         put(ym, i, zm)
-        assert take(ym, i,axis=0) == zm
+        assert all(take(ym, i, axis=0) == zm)
 
     def check_testOddFeatures(self):
         "Test of other odd features"
@@ -490,9 +475,9 @@ class TestMa(NumpyTestCase):
         x = arange(10).astype(float32)
         xm = arange(10)
         xm[2] = masked
-        id1 = id(x.raw_data())
+        id1 = id(x.data)
         x += 1.
-        assert id1 == id(x.raw_data())
+        assert id1 == id(x.data)
         assert eq(x, y+1.)
 
     def check_testPickle(self):
@@ -595,11 +580,8 @@ class TestMa(NumpyTestCase):
         self.assertEqual(1, int(array([[[1]]])))
         self.assertEqual(1.0, float(array([[1]])))
         self.failUnlessRaises(ValueError, float, array([1,1]))
-        self.failUnlessRaises(MAError, float, array([1],mask=[1]))
-        self.failUnless(bool(array([0,1])))
-        self.failUnless(bool(array([0,0],mask=[0,1])))
-        self.failIf(bool(array([0,0])))
-        self.failIf(bool(array([0,0],mask=[0,0])))
+        self.failUnlessRaises(ValueError, bool, array([0,1]))
+        self.failUnlessRaises(ValueError, bool, array([0,0],mask=[0,1]))
 
     def check_testScalarArithmetic(self):
         xm = array(0, mask=1)
@@ -638,7 +620,7 @@ class TestMa(NumpyTestCase):
 
     def check_testAPI(self):
         self.failIf([m for m in dir(numpy.ndarray)
-                     if m not in dir(array) and not m.startswith('_')])
+                     if m not in dir(MaskedArray) and not m.startswith('_')])
 
     def check_testSingleElementSubscript(self):
         a = array([1,3,2])
@@ -869,5 +851,5 @@ def testinplace(x):
 testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    NumpyTest('numpy.core.ma').run()
+    NumpyTest('numpy.ma').run()
     #timingTest()
