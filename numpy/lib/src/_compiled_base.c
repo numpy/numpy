@@ -344,12 +344,14 @@ arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
 static npy_intp
 binary_search(double dval, double dlist [], npy_intp len)
 {
-    /* binary_search accepts three arguments: a numeric value and
+    /*
+     * binary_search accepts three arguments: a numeric value and
      * a numeric array and its length. It assumes that the array is sorted in
      * increasing order. It returns the index of the array's
      * largest element which is <= the value. It will return -1 if
-     * the value is less than the least element of the array. */
-    /* self is not used */
+     * the value is less than the least element of the array.
+     * self is not used
+     */
     npy_intp bottom , top , middle, result;
 
     if (dval < dlist [0])
@@ -530,12 +532,12 @@ arr_add_docstring(PyObject *dummy, PyObject *args)
 }
 
 
-static char packbits_doc[] = 
+static char packbits_doc[] =
   "out = numpy.packbits(myarray, axis=None)\n\n"
   "  myarray : an integer type array whose elements should be packed to bits\n\n"
   "   This routine packs the elements of a binary-valued dataset into a\n"
   "   NumPy array of type uint8 ('B') whose bits correspond to\n"
-  "   the logical (0 or nonzero) value of the input elements.\n" 
+  "   the logical (0 or nonzero) value of the input elements.\n"
   "   The dimension over-which bit-packing is done is given by axis.\n"
   "   The shape of the output has the same number of dimensions as the input\n"
   "   (unless axis is None, in which case the output is 1-d).\n"
@@ -551,7 +553,7 @@ static char packbits_doc[] =
   "     Note that 160 = 128 + 32\n"
   "               192 = 128 + 64\n";
 
-static char unpackbits_doc[] = 
+static char unpackbits_doc[] =
   "out = numpy.unpackbits(myarray, axis=None)\n\n"
   "     myarray - array of uint8 type where each element represents a bit-field\n"
   "        that should be unpacked into a boolean output array\n\n"
@@ -566,7 +568,7 @@ static char unpackbits_doc[] =
 
 */
 
-static void 
+static void
 _packbits(
 	      void 	*In,
               int       element_size,  /* in bytes */
@@ -586,11 +588,13 @@ _packbits(
   outptr = Out;                          /* pointer to output buffer */
   inptr  = In;                           /* pointer to input buffer */
 
-  /* Loop through the elements of In */
-  /* Determine whether or not it is nonzero.
-     Yes: set correspdoning bit (and adjust build value)
-     No:  move on     
-  /* Every 8th value, set the value of build and increment the outptr */
+  /*
+   * Loop through the elements of In
+   * Determine whether or not it is nonzero.
+   *  Yes: set correspdoning bit (and adjust build value)
+   *  No:  move on
+   * Every 8th value, set the value of build and increment the outptr
+   */
 
   remain = in_N % 8;                      /* uneven bits */
   if (remain == 0) remain = 8;
@@ -607,7 +611,7 @@ _packbits(
       build += (nonzero != 0);             /* add to this bit if the input value is non-zero */
     }
     if (index == out_Nm1) build <<= (8-remain);
-    /*      printf("Here: %d %d %d %d\n",build,slice,index,maxi); 
+    /*      printf("Here: %d %d %d %d\n",build,slice,index,maxi);
      */
     *outptr = build;
     outptr += out_stride;
@@ -616,7 +620,7 @@ _packbits(
 }
 
 
-static void 
+static void
 _unpackbits(
 		void      *In,
 		int       el_size,  /* unused */
@@ -670,7 +674,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     if (!PyArray_ISINTEGER(inp))
       PYSETERROR("Expecting an input array of integer data type");
   }
- 
+
   new = PyArray_CheckAxis(inp, &axis, 0);
   Py_DECREF(inp);
   if (new == NULL) return NULL;
@@ -680,7 +684,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     return PyArray_Copy((PyArrayObject *)new);
   }
 
-  if (PyArray_NDIM(new) == 0) {    
+  if (PyArray_NDIM(new) == 0) {
     if (unpack) {
       /* Handle 0-d array by converting it to a 1-d array */
       PyObject *temp;
@@ -733,7 +737,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
   out = PyArray_New(new->ob_type, PyArray_NDIM(new), outdims, PyArray_UBYTE,
 		    NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
   if (out == NULL) goto fail;
-  
+
   /* Setup iterators to iterate over all but given axis */
   it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
   ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
@@ -744,12 +748,12 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
   }
 
   while(PyArray_ITER_NOTDONE(it)) {
-    thefunc(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new), 
+    thefunc(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new),
 	    PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
-	    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis), 
+	    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis),
 	    PyArray_STRIDE(out, axis));
     PyArray_ITER_NEXT(it);
-    PyArray_ITER_NEXT(ot);	      
+    PyArray_ITER_NEXT(ot);
   }
   Py_DECREF(it);
   Py_DECREF(ot);
@@ -761,26 +765,13 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
  fail:
   Py_XDECREF(new);
   Py_XDECREF(out);
-  return NULL;  
+  return NULL;
 }
 
 
 
 static PyObject *
-io_pack(PyObject *self, PyObject *args, PyObject *kwds)  
-{
-  PyObject *obj;
-  int axis=NPY_MAXDIMS;
-  static char *kwlist[] = {"in", "axis", NULL};
-
-  if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist, 
-				    &obj, PyArray_AxisConverter, &axis))
-    return NULL;
-  return pack_or_unpack_bits(obj, axis, 0);  
-}
-
-static PyObject *
-io_unpack(PyObject *self, PyObject *args, PyObject *kwds)  
+io_pack(PyObject *self, PyObject *args, PyObject *kwds)
 {
   PyObject *obj;
   int axis=NPY_MAXDIMS;
@@ -789,7 +780,20 @@ io_unpack(PyObject *self, PyObject *args, PyObject *kwds)
   if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist,
 				    &obj, PyArray_AxisConverter, &axis))
     return NULL;
-  return pack_or_unpack_bits(obj, axis, 1);  
+  return pack_or_unpack_bits(obj, axis, 0);
+}
+
+static PyObject *
+io_unpack(PyObject *self, PyObject *args, PyObject *kwds)
+{
+  PyObject *obj;
+  int axis=NPY_MAXDIMS;
+  static char *kwlist[] = {"in", "axis", NULL};
+
+  if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&" , kwlist,
+				    &obj, PyArray_AxisConverter, &axis))
+    return NULL;
+  return pack_or_unpack_bits(obj, axis, 1);
 }
 
 static struct PyMethodDef methods[] = {
@@ -803,9 +807,9 @@ static struct PyMethodDef methods[] = {
      NULL},
     {"add_docstring", (PyCFunction)arr_add_docstring, METH_VARARGS,
      NULL},
-    {"packbits",  (PyCFunction)io_pack,       METH_VARARGS | METH_KEYWORDS, 
+    {"packbits",  (PyCFunction)io_pack,       METH_VARARGS | METH_KEYWORDS,
      packbits_doc},
-    {"unpackbits", (PyCFunction)io_unpack,     METH_VARARGS | METH_KEYWORDS, 
+    {"unpackbits", (PyCFunction)io_unpack,     METH_VARARGS | METH_KEYWORDS,
      unpackbits_doc},
     {NULL, NULL}    /* sentinel */
 };
