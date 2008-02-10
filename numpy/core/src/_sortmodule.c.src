@@ -38,13 +38,45 @@
 #define NUMC_LT(p,q) ((((p).real==(q).real) ? ((p).imag < (q).imag): ((p).real < (q).real)))
 #define NUMC_LE(p,q) ((((p).real==(q).real) ? ((p).imag <= (q).imag): ((p).real <= (q).real)))
 #define NUMC_EQ(p,q) (((p).real==(q).real) && ((p).imag == (q).imag))
-#define STRING_LT(pa, pb, len) (strncmp(pa, pb, len) < 0)
-#define STRING_LE(pa, pb, len) (strncmp(pa, pb, len) <= 0)
-#define STRING_EQ(pa, pb, len) (strncmp(pa, pb, len) == 0)
-#define UNICODE_LT(pa, pb, len) (PyArray_CompareUCS4(pa, pb, len) < 0)
-#define UNICODE_LE(pa, pb, len) (PyArray_CompareUCS4(pa, pb, len) <= 0)
-#define UNICODE_EQ(pa, pb, len) (PyArray_CompareUCS4(pa, pb, len) == 0)
+#define STRING_LT(pa, pb, len) (compare_string(pa, pb, len) < 0)
+#define STRING_LE(pa, pb, len) (compare_string(pa, pb, len) <= 0)
+#define STRING_EQ(pa, pb, len) (compare_string(pa, pb, len) == 0)
+#define STRING_SWAP(pa, pb, n) {int i; for(i = 0; i < n; ++i) SWAP(pa[i], pb[i]);}
+#define STRING_COPY(pa, pb, n) {int i; for(i = 0; i < n; ++i) pa[i] = pb[i];}
+#define UNICODE_LT(pa, pb, len) (compare_ucs4(pa, pb, len) < 0)
+#define UNICODE_LE(pa, pb, len) (compare_ucs4(pa, pb, len) <= 0)
+#define UNICODE_EQ(pa, pb, len) (compare_ucs4(pa, pb, len) == 0)
 
+#include <stdio.h>
+
+static int inline
+compare_string(char *s1, char *s2, size_t len)
+{
+    const unsigned char *c1 = (unsigned char *)s1;
+    const unsigned char *c2 = (unsigned char *)s2;
+    size_t i;
+
+    for(i = 0; i < len; ++i) {
+        if (c1[i] != c2[i]) {
+            return (c1[i] > c2[i]) ? 1 : -1;
+        }
+    }
+    return 0;
+}
+
+
+static int inline
+compare_ucs4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+{
+    size_t i;
+
+    for(i = 0; i < len; ++i) {
+        if (s1[i] != s2[i]) {
+            return (s1[i] > s2[i]) ? 1 : -1;
+        }
+    }
+    return 0;
+}
 
 /**begin repeat
    #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE#
