@@ -780,5 +780,17 @@ class TestRegression(NumpyTestCase):
         y = np.array(['d','e'])
         assert_equal(x.searchsorted(y), [3,3])
 
+    def check_string_argsort_with_zeros(self, level=rlevel):
+        """Check argsort for strings containing zeros."""
+        x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
+        assert_array_equal(x.argsort(kind='m'), np.array([1,0]))
+        assert_array_equal(x.argsort(kind='q'), np.array([1,0]))
+
+    def check_string_sort_with_zeros(self, level=rlevel):
+        """Check sort for strings containing zeros."""
+        x = np.fromstring("\x00\x02\x00\x01", dtype="|S2")
+        y = np.fromstring("\x00\x01\x00\x02", dtype="|S2")
+        assert_array_equal(np.sort(x, kind="q"), y)
+
 if __name__ == "__main__":
     NumpyTest().run()
