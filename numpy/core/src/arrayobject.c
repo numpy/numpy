@@ -4280,6 +4280,24 @@ PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, register size_t len)
     return 0;
 }
 
+/*
+ */
+static int
+PyArray_CompareString(char *s1, char *s2, size_t len)
+{
+    const unsigned char *c1 = (unsigned char *)s1;
+    const unsigned char *c2 = (unsigned char *)s2;
+    size_t i;
+
+    for(i = 0; i < len; ++i) {
+        if (c1[i] != c2[i]) {
+            return (c1[i] > c2[i]) ? 1 : -1;
+        }
+    }
+    return 0;
+}
+
+
 /* This also handles possibly mis-aligned data */
 /* Compare s1 and s2 which are not necessarily NULL-terminated.
    s1 is of length len1
