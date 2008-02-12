@@ -1470,7 +1470,7 @@ cdef class RandomState:
         # Create a matrix of independent standard normally distributed random
         # numbers. The matrix has rows with the same length as mean and as
         # many rows are necessary to form a matrix of shape final_shape.
-        x = standard_normal(_sp.multiply.reduce(final_shape))
+        x = self.standard_normal(_sp.multiply.reduce(final_shape))
         x.shape = (_sp.multiply.reduce(final_shape[0:len(final_shape)-1]),
                    mean.shape[0])
         # Transform matrix of standard normals into matrix where each row
