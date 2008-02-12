@@ -250,6 +250,174 @@ class TestMethods(NumpyTestCase):
         self.failUnlessRaises(ValueError, lambda: a.transpose(0,0))
         self.failUnlessRaises(ValueError, lambda: a.transpose(0,1,2))
 
+    def check_sort(self):
+        # all c scalar sorts use the same code with different types
+        # so it suffices to run a quick check with one type. The number
+        # of sorted items must be greater than ~50 to check the actual
+        # algorithm because quick and merge sort fall over to insertion
+        # sort for small arrays.
+        a = np.arange(100)
+        b = a[::-1].copy()
+        for kind in ['q','m','h'] :
+            msg = "scalar sort, kind=%s" % kind
+            c = a.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+        # test complex sorts. These use the same code as the scalars
+        # but the compare fuction differs.
+        ai = a*1j + 1
+        bi = b*1j + 1
+        for kind in ['q','m','h'] :
+            msg = "complex sort, real part == 1, kind=%s" % kind
+            c = ai.copy();
+            c.sort(kind=kind)
+            assert_equal(c, ai, msg)
+            c = bi.copy();
+            c.sort(kind=kind)
+            assert_equal(c, ai, msg)
+        ai = a + 1j
+        bi = b + 1j
+        for kind in ['q','m','h'] :
+            msg = "complex sort, imag part == 1, kind=%s" % kind
+            c = ai.copy();
+            c.sort(kind=kind)
+            assert_equal(c, ai, msg)
+            c = bi.copy();
+            c.sort(kind=kind)
+            assert_equal(c, ai, msg)
+
+        # test string sorts. Only quicksort is available at this time.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(100)])
+        b = a[::-1].copy()
+        for kind in ['q'] :
+            msg = "string sort, kind=%s" % kind
+            c = a.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+        # test unicode sort. Only quicksort is available at this time.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
+        b = a[::-1].copy()
+        for kind in ['q'] :
+            msg = "unicode sort, kind=%s" % kind
+            c = a.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+        # todo, check object array sorts.
+
+        # check axis handling. This should be the same for all type
+        # specific sorts, so we only check it for one type and one kind
+        a = np.array([[3,2],[1,0]])
+        b = np.array([[1,0],[3,2]])
+        c = np.array([[2,3],[0,1]])
+        d = a.copy()
+        d.sort(axis=0)
+        assert_equal(d, b, "test sort with axis=0")
+        d = a.copy()
+        d.sort(axis=1)
+        assert_equal(d, c, "test sort with axis=1")
+        d = a.copy()
+        d.sort()
+        assert_equal(d, c, "test sort with default axis")
+        # using None is known fail at this point
+        # d = a.copy()
+        # d.sort(axis=None)
+        #assert_equal(d, c, "test sort with axis=None")
+
+    def check_argsort(self):
+        # all c scalar argsorts use the same code with different types
+        # so it suffices to run a quick check with one type. The number
+        # of sorted items must be greater than ~50 to check the actual
+        # algorithm because quick and merge sort fall over to insertion
+        # sort for small arrays.
+        a = np.arange(100)
+        b = a[::-1].copy()
+        for kind in ['q','m','h'] :
+            msg = "scalar argsort, kind=%s" % kind
+            assert_equal(a.copy().argsort(kind=kind), a, msg)
+            assert_equal(b.copy().argsort(kind=kind), b, msg)
+
+        # test complex argsorts. These use the same code as the scalars
+        # but the compare fuction differs.
+        ai = a*1j + 1
+        bi = b*1j + 1
+        for kind in ['q','m','h'] :
+            msg = "complex argsort, kind=%s" % kind
+            assert_equal(ai.copy().argsort(kind=kind), a, msg)
+            assert_equal(bi.copy().argsort(kind=kind), b, msg)
+        ai = a + 1j
+        bi = b + 1j
+        for kind in ['q','m','h'] :
+            msg = "complex argsort, kind=%s" % kind
+            assert_equal(ai.copy().argsort(kind=kind), a, msg)
+            assert_equal(bi.copy().argsort(kind=kind), b, msg)
+
+        # test string argsorts. Only quick and merge sort are
+        # available at this time.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(100)])
+        b = a[::-1].copy()
+        r = arange(100)
+        rr = r[::-1].copy()
+        for kind in ['q', 'm'] :
+            msg = "string argsort, kind=%s" % kind
+            assert_equal(a.copy().argsort(kind=kind), r, msg)
+            assert_equal(b.copy().argsort(kind=kind), rr, msg)
+
+        # test unicode argsorts. Only quick and merge sort are
+        # available at this time.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
+        b = a[::-1].copy()
+        r = arange(100)
+        rr = r[::-1].copy()
+        for kind in ['q', 'm'] :
+            msg = "unicode argsort, kind=%s" % kind
+            assert_equal(a.copy().argsort(kind=kind), r, msg)
+            assert_equal(b.copy().argsort(kind=kind), rr, msg)
+
+        # todo, check object array argsorts.
+
+        # check axis handling. This should be the same for all type
+        # specific argsorts, so we only check it for one type and one kind
+        a = np.array([[3,2],[1,0]])
+        b = np.array([[1,1],[0,0]])
+        c = np.array([[1,0],[1,0]])
+        assert_equal(a.copy().argsort(axis=0), b)
+        assert_equal(a.copy().argsort(axis=1), c)
+        assert_equal(a.copy().argsort(), c)
+        # using None is known fail at this point
+        #assert_equal(a.copy().argsort(axis=None, c)
+
+        # check that stable argsorts are stable
+        r = np.arange(100)
+        # scalars
+        a = np.zeros(100)
+        assert_equal(a.argsort(kind='m'), r)
+        # complex
+        a = np.zeros(100, dtype=np.complex)
+        assert_equal(a.argsort(kind='m'), r)
+        # string
+        a = np.array(['aaaaaaaaa' for i in range(100)])
+        assert_equal(a.argsort(kind='m'), r)
+        # unicode
+        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
+        assert_equal(a.argsort(kind='m'), r)
+
+
 class TestSubscripting(NumpyTestCase):
     def check_test_zero_rank(self):
         x = array([1,2,3])
