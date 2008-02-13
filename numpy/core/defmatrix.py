@@ -266,7 +266,7 @@ class matrix(N.ndarray):
         """
         return N.ndarray.sum(self, axis, dtype, out)._align(axis)
 
-    def mean(self, axis=None, out=None):
+    def mean(self, axis=None, dtype=None, out=None):
         """Compute the mean along the specified axis.
 
         Returns the average of the array elements.  The average is taken over
@@ -304,7 +304,7 @@ class matrix(N.ndarray):
         The mean is the sum of the elements along the axis divided by the
         number of elements.
         """
-        return N.ndarray.mean(self, axis, out)._align(axis)
+        return N.ndarray.mean(self, axis, dtype, out)._align(axis)
 
     def std(self, axis=None, dtype=None, out=None):
         """Compute the standard deviation along the specified axis.

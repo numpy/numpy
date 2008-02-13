@@ -20,7 +20,7 @@ from numpy.core.numeric import ScalarType, dot, where, newaxis, intp, \
      integer, isscalar
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp, log10
-from numpy.core.fromnumeric import ravel, nonzero, choose, sort
+from numpy.core.fromnumeric import ravel, nonzero, choose, sort, mean
 from numpy.core.numerictypes import typecodes
 from numpy.lib.shape_base import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
