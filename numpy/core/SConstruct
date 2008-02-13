@@ -20,6 +20,7 @@ if os.name == 'nt':
     # simple code using only typedef and so on, so we need it for configuration
     # checks
     env.AppendUnique(LIBPATH = [get_pythonlib_dir()])
+print env["CPPPATH"]
 
 #=======================
 # Starting Configuration
@@ -39,6 +40,11 @@ numpyconfig_sym = []
 #---------------
 # Checking Types
 #---------------
+if not config.CheckHeader("Python.h"):
+    raise RuntimeError("Error: Python.h header is not found (or cannot be "
+"compiled). On linux, check that you have python-dev/python-devel packages. On"
+" windows, check \ that you have the platform SDK.")
+
 def check_type(type, include = None):
     st = config.CheckTypeSize(type, includes = include)
     type = type.replace(' ', '_')
