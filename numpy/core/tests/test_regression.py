@@ -792,5 +792,15 @@ class TestRegression(NumpyTestCase):
         y = np.fromstring("\x00\x01\x00\x02", dtype="|S2")
         assert_array_equal(np.sort(x, kind="q"), y)
 
+    def check_copy_detection_zero_dim(self, level=rlevel):
+        """Ticket #658"""
+        np.indices((0,3,4)).T.reshape(-1,3)
+
+    def check_flat_byteorder(self, level=rlevel):
+       """Ticket #657"""
+       x = np.arange(10)
+       assert_array_equal(x.astype('>i4'),x.astype('<i4').flat[:])
+       assert_array_equal(x.astype('>i4').flat[:],x.astype('<i4'))
+
 if __name__ == "__main__":
     NumpyTest().run()
