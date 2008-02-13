@@ -1245,7 +1245,7 @@ def median(a, axis=0, out=None, overwrite_input=False):
     Examples
     --------
     >>> import numpy as np
-    >>> # import numpy median as median
+    >>> from numpy import median
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
