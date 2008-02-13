@@ -1197,15 +1197,97 @@ def msort(a):
     b.sort(0)
     return b
 
-def median(m):
-    """median(m) returns a median of m along the first dimension of m.
+def median(a, axis=0, out=None, overwrite_input=False):
+    """Compute the median along the specified axis.
+
+    Returns the median of the array elements.  The median is taken
+    over the first axis of the array by default, otherwise over
+    the specified axis.
+
+    Parameters
+    ----------
+    axis : {int, None}, optional
+        Axis along which the medians are computed. The default is to
+        compute the median along the first dimension.  axis=None
+        returns the median of the flattened array
+
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary.
+
+    overwrite_input : {False, True}, optional
+       If True, then allow use of memory of input array (a) for
+       calculations. The input array will be modified by the call to
+       median. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False
+
+    Returns
+    -------
+    median : ndarray.
+        A new array holding the result is returned unless out is
+        specified, in which case a reference to out is returned.
+        Return datatype is float64 for ints and floats smaller than
+        float64, or the input datatype otherwise.
+
+    SeeAlso
+    -------
+    mean
+
+    Notes
+    -----
+    Given a vector V length N, the median of V is the middle value of
+    a sorted copy of V (Vs) - i.e. Vs[(N-1)/2], when N is odd. It is
+    the mean of the two middle values of Vs, when N is even.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> # import numpy median as median
+    >>> a = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
+    >>> median(a)
+    array([ 6.5,  4.5,  2.5])
+    >>> median(a, axis=None)
+    3.5
+    >>> median(a, axis=1)
+    array([ 7.,  2.])
+    >>> m = median(a)
+    >>> out = np.zeros_like(m)
+    >>> median(a, out=m)
+    array([ 6.5,  4.5,  2.5])
+    >>> m
+    array([ 6.5,  4.5,  2.5])
+    >>> median(a, axis=1, overwrite_input=True)
+    array([ 7.,  2.])
+    >>> a # modified, undefined, sorted in this case
+    array([[ 4,  7, 10],
+           [ 1,  2,  3]])
     """
-    sorted = msort(m)
-    index = int(sorted.shape[0]/2)
-    if sorted.shape[0] % 2 == 1:
-        return sorted[index]
+    if overwrite_input:
+        if axis is None:
+            a.ravel.sort()
+        else:
+            a.sort(axis=axis)
+        sorted = a
     else:
-        return (sorted[index-1]+sorted[index])/2.0
+        sorted = sort(a, axis=axis)
+    if axis is None:
+        axis = 0
+    indexer = [slice(None)] * sorted.ndim
+    index = int(sorted.shape[axis]/2)
+    if sorted.shape[axis] % 2 == 1:
+        # index with slice to allow mean (below) to work
+        indexer[axis] = slice(index, index+1)
+    else:
+        indexer[axis] = slice(index-1, index+1)
+    # Use mean in odd and even case to coerce data type
+    # and check, use out array.
+    return mean(sorted[indexer], axis=axis, out=out)
 
 def trapz(y, x=None, dx=1.0, axis=-1):
     """Integrate y(x) using samples along the given axis and the composite
