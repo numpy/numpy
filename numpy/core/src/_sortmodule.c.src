@@ -520,10 +520,57 @@ static int
 
 
 static int
+@TYPE@_heapsort(@type@ *start, intp n, PyArrayObject *arr)
+{
+    size_t len = arr->descr->elsize/sizeof(@type@);
+    @type@ *tmp = malloc(arr->descr->elsize);
+    @type@ *a = start - len;
+    intp i,j,l;
+
+    for (l = n>>1; l > 0; --l) {
+        @copy@(tmp, a + l*len, len);
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @lessthan@(a + j*len, a + (j+1)*len, len))
+                j += 1;
+            if (@lessthan@(tmp, a + j*len, len)) {
+                @copy@(a + i*len, a + j*len, len);
+                i = j;
+                j += j;
+            }
+            else
+                break;
+        }
+        @copy@(a + i*len, tmp, len);
+    }
+
+    for (; n > 1;) {
+        @copy@(tmp, a + n*len, len);
+        @copy@(a + n*len, a + len, len);
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @lessthan@(a + j*len, a + (j+1)*len, len))
+                j++;
+            if (@lessthan@(tmp, a + j*len, len)) {
+                @copy@(a + i*len, a + j*len, len);
+                i = j;
+                j += j;
+            }
+            else
+                break;
+        }
+        @copy@(a + i*len, tmp, len);
+    }
+
+    free(tmp);
+    return 0;
+}
+
+
+static int
 @TYPE@_aheapsort(@type@ *v, intp *tosort, intp n, PyArrayObject *arr)
 {
-    intp *a, i,j,l, tmp;
     size_t len = arr->descr->elsize/sizeof(@type@);
+    intp *a, i,j,l, tmp;
 
     /* The array needs to be offset by one for heapsort indexing */
     a = tosort - 1;
@@ -569,13 +616,13 @@ static int
 static int
 @TYPE@_aquicksort(@type@ *v, intp* tosort, intp num, PyArrayObject *arr)
 {
+    size_t len = arr->descr->elsize/sizeof(@type@);
     @type@ *vp;
     intp *pl = tosort;
     intp *pr = tosort + num - 1;
     intp *stack[PYA_QS_STACK];
     intp **sptr=stack;
     intp *pm, *pi, *pj, *pk, vi, SWAP_temp;
-    size_t len = arr->descr->elsize/sizeof(@type@);
 
     for(;;) {
         while ((pr - pl) > SMALL_QUICKSORT) {
@@ -725,6 +772,8 @@ add_sortfuncs(void)
         (PyArray_ArgSortFunc *)STRING_aheapsort;
     descr->f->sort[PyArray_QUICKSORT] = \
         (PyArray_SortFunc *)STRING_quicksort;
+    descr->f->sort[PyArray_HEAPSORT] = \
+        (PyArray_SortFunc *)STRING_heapsort;
 
     descr = PyArray_DescrFromType(PyArray_UNICODE);
     descr->f->argsort[PyArray_MERGESORT] = \
@@ -735,6 +784,8 @@ add_sortfuncs(void)
         (PyArray_ArgSortFunc *)UNICODE_aheapsort;
     descr->f->sort[PyArray_QUICKSORT] = \
         (PyArray_SortFunc *)UNICODE_quicksort;
+    descr->f->sort[PyArray_HEAPSORT] = \
+        (PyArray_SortFunc *)UNICODE_heapsort;
 }
 
 static struct PyMethodDef methods[] = {

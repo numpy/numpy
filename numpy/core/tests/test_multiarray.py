@@ -290,11 +290,11 @@ class TestMethods(NumpyTestCase):
             c.sort(kind=kind)
             assert_equal(c, ai, msg)
 
-        # test string sorts. Only quicksort is available at this time.
+        # test string sorts. Only quick and heap sort are available.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(100)])
         b = a[::-1].copy()
-        for kind in ['q'] :
+        for kind in ['q', 'h'] :
             msg = "string sort, kind=%s" % kind
             c = a.copy();
             c.sort(kind=kind)
@@ -303,11 +303,11 @@ class TestMethods(NumpyTestCase):
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test unicode sort. Only quicksort is available at this time.
+        # test unicode sort. Only quick and heap sort are available.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
         b = a[::-1].copy()
-        for kind in ['q'] :
+        for kind in ['q', 'h'] :
             msg = "unicode sort, kind=%s" % kind
             c = a.copy();
             c.sort(kind=kind)
