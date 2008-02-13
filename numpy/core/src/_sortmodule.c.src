@@ -520,6 +520,53 @@ static int
 
 
 static int
+@TYPE@_aheapsort(@type@ *v, intp *tosort, intp n, PyArrayObject *arr)
+{
+    intp *a, i,j,l, tmp;
+    size_t len = arr->descr->elsize/sizeof(@type@);
+
+    /* The array needs to be offset by one for heapsort indexing */
+    a = tosort - 1;
+
+    for (l = n>>1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @lessthan@(v + a[j]*len, v + a[j+1]*len, len))
+                j += 1;
+            if (@lessthan@(v + tmp*len, v + a[j]*len, len)) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else
+                break;
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @lessthan@(v + a[j]*len, v + a[j+1]*len, len))
+                j++;
+            if (@lessthan@(v + tmp*len, v + a[j]*len, len)) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else
+                break;
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
+
+
+static int
 @TYPE@_aquicksort(@type@ *v, intp* tosort, intp num, PyArrayObject *arr)
 {
     @type@ *vp;
@@ -674,6 +721,8 @@ add_sortfuncs(void)
         (PyArray_ArgSortFunc *)STRING_amergesort;
     descr->f->argsort[PyArray_QUICKSORT] = \
         (PyArray_ArgSortFunc *)STRING_aquicksort;
+    descr->f->argsort[PyArray_HEAPSORT] = \
+        (PyArray_ArgSortFunc *)STRING_aheapsort;
     descr->f->sort[PyArray_QUICKSORT] = \
         (PyArray_SortFunc *)STRING_quicksort;
 
@@ -682,6 +731,8 @@ add_sortfuncs(void)
         (PyArray_ArgSortFunc *)UNICODE_amergesort;
     descr->f->argsort[PyArray_QUICKSORT] = \
         (PyArray_ArgSortFunc *)UNICODE_aquicksort;
+    descr->f->argsort[PyArray_HEAPSORT] = \
+        (PyArray_ArgSortFunc *)UNICODE_aheapsort;
     descr->f->sort[PyArray_QUICKSORT] = \
         (PyArray_SortFunc *)UNICODE_quicksort;
 }

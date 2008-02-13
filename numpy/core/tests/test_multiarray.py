@@ -365,26 +365,24 @@ class TestMethods(NumpyTestCase):
             assert_equal(ai.copy().argsort(kind=kind), a, msg)
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
 
-        # test string argsorts. Only quick and merge sort are
-        # available at this time.
+        # test string argsorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(100)])
         b = a[::-1].copy()
         r = arange(100)
         rr = r[::-1].copy()
-        for kind in ['q', 'm'] :
+        for kind in ['q', 'm', 'h'] :
             msg = "string argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
-        # test unicode argsorts. Only quick and merge sort are
-        # available at this time.
+        # test unicode argsorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
         b = a[::-1].copy()
         r = arange(100)
         rr = r[::-1].copy()
-        for kind in ['q', 'm'] :
+        for kind in ['q', 'm', 'h'] :
             msg = "unicode argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
