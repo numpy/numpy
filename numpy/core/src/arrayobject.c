@@ -9283,10 +9283,9 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
                                  0, (PyObject *)self->ao);
         if (r==NULL) goto fail;
         dptr = PyArray_DATA(r);
-        swap = !PyArray_ISNOTSWAPPED(self->ao);
         copyswap = PyArray_DESCR(r)->f->copyswap;
         while(n_steps--) {
-            copyswap(dptr, self->dataptr, swap, r);
+            copyswap(dptr, self->dataptr, 0, r);
             start += step_size;
             PyArray_ITER_GOTO1D(self, start)
                 dptr += size;

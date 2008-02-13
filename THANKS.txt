@@ -3,7 +3,7 @@ Jim Hugunin, Paul Dubois, Konrad Hinsen, David Ascher, and many others for
     Numeric on which the code is based.
 Perry Greenfield, J Todd Miller, Rick White, Paul Barrett for Numarray
     which gave much inspiration and showed the way forward.
-Paul Dubois for Masked Arrays
+Paul Dubois for original Masked Arrays
 Pearu Peterson for f2py and numpy.distutils and help with code organization
 Robert Kern for mtrand, bug fixes, help with distutils, code organization, 
     and much more. 
@@ -34,5 +34,5 @@ Albert Strasheim for documentation, bug-fixes, regression tests and
     Valgrind expertise.
 Stefan van der Walt for documentation, bug-fixes and regression-tests.
 Andrew Straw for help with http://www.scipy.org, documentation, and testing. 
-David Cournapeau for documentation, bug-fixes, and code contributions including fast_clipping.
+David Cournapeau for scons build support, doc-and-bug fixes, and code contributions including fast_clipping.
 Pierre Gerard-Marchant for his rewrite of the masked array functionality.
