@@ -2388,13 +2388,13 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_SortFunc *sort;
     BEGIN_THREADS_DEF
 
-        it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
+    it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     swap = !PyArray_ISNOTSWAPPED(op);
     if (it == NULL) return -1;
 
     NPY_BEGIN_THREADS_DESCR(op->descr)
 
-        sort = op->descr->f->sort[which];
+    sort = op->descr->f->sort[which];
     size = it->size;
     N = op->dimensions[axis];
     elsize = op->descr->elsize;
@@ -2454,7 +2454,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_ArgSortFunc *argsort;
     BEGIN_THREADS_DEF
 
-        ret = PyArray_New(op->ob_type, op->nd,
+    ret = PyArray_New(op->ob_type, op->nd,
                           op->dimensions, PyArray_INTP,
                           NULL, NULL, 0, 0, (PyObject *)op);
     if (ret == NULL) return NULL;
@@ -2467,7 +2467,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
     NPY_BEGIN_THREADS_DESCR(op->descr)
 
-        argsort = op->descr->f->argsort[which];
+    argsort = op->descr->f->argsort[which];
     size = it->size;
     N = op->dimensions[axis];
     elsize = op->descr->elsize;
