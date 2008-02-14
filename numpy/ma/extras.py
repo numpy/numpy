@@ -219,6 +219,20 @@ def apply_along_axis(func1d,axis,arr,*args,**kwargs):
     """Execute func1d(arr[i],*args) where func1d takes 1-D arrays and
     arr is an N-d array.  i varies so as to apply the function along
     the given axis for each 1-d subarray in arr.
+    
+    Parameters
+    ----------
+        func1d : function
+            The 1D function to apply on the given axis.
+        axis : int
+            Axis along which to apply the function.
+        arr : ndarray
+            Array on which the function is applied.
+        args : list
+            Additional input parameters to func1d.
+        kwargs : dictionary
+            Additional optional parameters to func1d.
+    
     """
     arr = core.array(arr, copy=False, subok=True)
     nd = arr.ndim
@@ -542,6 +556,7 @@ def dot(a,b, strict=False):
     Notes
     -----
         The first argument is not conjugated.
+        The function works only with 2D arrays at most.
 
     """
     #TODO: Works only with 2D arrays. There should be a way to get it to run with higher dimension

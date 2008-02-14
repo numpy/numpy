@@ -4,6 +4,52 @@
 API changes in the new masked array implementation
 ==================================================
 
+Masked arrays are subclasses of ndarray
+---------------------------------------
+
+Contrary to the original implementation, masked arrays are now regular ndarrays::
+
+  >>> x = masked_array([1,2,3],mask=[0,0,1])
+  >>> print isinstance(x, numpy.ndarray)
+  True
+
+
+``_data`` returns a view of the masked array
+--------------------------------------------
+
+Masked arrays are composed of a ``_data`` part and a ``_mask``. Accessing the
+``_data`` part will return a regular ndarray or any of its subclass, depending
+on the initial data::
+
+  >>> x = masked_array(numpy.matrix([[1,2],[3,4]]),mask=[[0,0],[0,1]])
+  >>> print x._data
+  [[1 2]
+   [3 4]]
+  >>> print type(x._data)
+  <class 'numpy.core.defmatrix.matrix'>
+
+
+In practice, ``_data`` is implemented as a property, not as an attribute.
+Therefore, you cannot access it directly, and some simple tests such as the
+following one will fail::
+
+  >>>x._data is x._data
+  False
+
+
+``filled(x)`` can return a subclass of ndarray
+-------------
+The function ``filled(a)`` returns an array of the same type as ``a._data``::
+
+  >>> x = masked_array(numpy.matrix([[1,2],[3,4]]),mask=[[0,0],[0,1]])
+  >>> y = filled(x)
+  >>> print type(y)
+  <class 'numpy.core.defmatrix.matrix'>
+  >>> print y
+  matrix([[     1,      2],
+          [     3, 999999]])
+
+
 ``put``, ``putmask`` behave like their ndarray counterparts
 -----------------------------------------------------------
 
@@ -65,4 +111,28 @@ converted to booleans:
   Traceback (most recent call last):
     File "<stdin>", line 1, in <module>
   ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+
+
+==================================
+New features (non exhaustive list)
+==================================
+
+``mr_``
+-------
+
+``mr_`` mimics the behavior of ``r_`` for masked arrays::
+
+``anom``
+--------
+
+The ``anom`` method returns the deviations from the average (anomalies).
+
+``varu`` and ``stdu``
+---------------------
+
+These methods return unbiased estimates of the variance and standard deviation
+respectively. An unbiased estimate is obtained by dividing the sum of the
+squared anomalies by ``n-1`` instead of ``n`` for the biased estimates, where
+``n`` is the number of unmasked elements along the given axis.
+
 
