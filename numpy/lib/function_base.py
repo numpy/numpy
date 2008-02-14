@@ -1262,18 +1262,22 @@ def median(a, axis=0, out=None, overwrite_input=False):
     array([ 6.5,  4.5,  2.5])
     >>> m
     array([ 6.5,  4.5,  2.5])
-    >>> median(a, axis=1, overwrite_input=True)
+    >>> b = a.copy()
+    >>> median(b, axis=1, overwrite_input=True)
     array([ 7.,  2.])
-    >>> a # modified, undefined, sorted in this case
-    array([[ 4,  7, 10],
-           [ 1,  2,  3]])
+    >>> assert not np.all(a==b)
+    >>> b = a.copy()
+    >>> median(b, axis=None, overwrite_input=True)
+    3.5
+    >>> assert not np.all(a==b)
     """
     if overwrite_input:
         if axis is None:
-            a.ravel.sort()
+            sorted = a.ravel()
+            sorted.sort()
         else:
             a.sort(axis=axis)
-        sorted = a
+            sorted = a
     else:
         sorted = sort(a, axis=axis)
     if axis is None:
