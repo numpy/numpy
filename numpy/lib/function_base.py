@@ -303,7 +303,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Shape into a proper matrix
     hist = hist.reshape(sort(nbin))
     for i in arange(nbin.size):
-        j = ni[i]
+        j = ni.argsort()[i]
         hist = hist.swapaxes(i,j)
         ni[i],ni[j] = ni[j],ni[i]
 
@@ -320,6 +320,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             hist = hist / dedges[i].reshape(shape)
         hist /= s
 
+    if (hist.shape != nbin-2).any():
+        raise 'Internal Shape Error'
     return hist, edges
 
 
