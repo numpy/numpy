@@ -1358,7 +1358,7 @@ class MaskedArray(numeric.ndarray):
             self._sharedmask = False
             return
         #....
-        dval = getdata(value).astype(self.dtype)
+        dval = narray(value, copy=False, dtype=self.dtype)
         valmask = getmask(value)
         if self._mask is nomask:
             if valmask is not nomask:
@@ -3305,3 +3305,15 @@ def loads(strg):
     return cPickle.loads(strg)
 
 ################################################################################
+
+if 1:
+    from testutils import assert_equal
+    if 1:
+        mtype = [('f',float_),('s','|S3')]
+        x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
+        x[0] = (10,'A')
+        (xf, xs) = (x['f'], x['s'])
+        assert_equal(xf.data, [10,2,numpy.pi])
+        assert_equal(xf.dtype, float_)
+        assert_equal(xs.data, ['A', 'b', 'pi'])
+        assert_equal(xs.dtype, '|S3')

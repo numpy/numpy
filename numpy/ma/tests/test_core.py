@@ -838,6 +838,17 @@ class TestMA(NumpyTestCase):
         assert_equal(xs.mask, [0,1,0])
         assert_equal(xs.dtype, '|S3')
     #
+    def test_set_records(self):
+        "Check setting an element of a record)"
+        mtype = [('f',float_),('s','|S3')]
+        x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
+        x[0] = (10,'A')
+        (xf, xs) = (x['f'], x['s'])
+        assert_equal(xf.data, [10,2,numpy.pi])
+        assert_equal(xf.dtype, float_)
+        assert_equal(xs.data, ['A', 'b', 'pi'])
+        assert_equal(xs.dtype, '|S3')
+        
 
 
 #...............................................................................
