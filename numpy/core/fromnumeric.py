@@ -174,7 +174,7 @@ def repeat(a, repeats, axis=None):
     *Parameters*:
 
         a : {array_like}
-            Blah.
+            Input array.
         repeats : {integer, integer_array}
             The number of repetitions for each element. If a plain integer, then
             it is applied to all elements. If an array, it needs to be of the
@@ -226,8 +226,6 @@ def put (a, ind, v, mode='raise'):
 
 def swapaxes(a, axis1, axis2):
     """Return array a with axis1 and axis2 interchanged.
-
-    Blah, Blah.
 
     """
     try:
@@ -986,8 +984,6 @@ def all(a,axis=None, out=None):
 def cumsum (a, axis=None, dtype=None, out=None):
     """Sum the array over the given axis.
 
-    Blah, Blah.
-
     """
     try:
         cumsum = a.cumsum
@@ -998,8 +994,6 @@ def cumsum (a, axis=None, dtype=None, out=None):
 
 def cumproduct (a, axis=None, dtype=None, out=None):
     """Return the cumulative product over the given axis.
-
-    Blah, Blah.
 
     """
     try:
@@ -1012,8 +1006,6 @@ def cumproduct (a, axis=None, dtype=None, out=None):
 def ptp(a, axis=None, out=None):
     """Return maximum - minimum along the the given dimension.
 
-    Blah, Blah.
-
     """
     try:
         ptp = a.ptp
@@ -1025,8 +1017,6 @@ def ptp(a, axis=None, out=None):
 def amax(a, axis=None, out=None):
     """Return the maximum of 'a' along dimension axis.
 
-    Blah, Blah.
-
     """
     try:
         amax = a.max
@@ -1037,8 +1027,6 @@ def amax(a, axis=None, out=None):
 
 def amin(a, axis=None, out=None):
     """Return the minimum of a along dimension axis.
-
-    Blah, Blah.
 
     """
     try:
@@ -1052,8 +1040,6 @@ def alen(a):
     """Return the length of a Python object interpreted as an array
     of at least 1 dimension.
 
-    Blah, Blah.
-
     """
     try:
         return len(a)
@@ -1063,8 +1049,6 @@ def alen(a):
 
 def prod(a, axis=None, dtype=None, out=None):
     """Return the product of the elements along the given axis.
-
-    Blah, Blah.
 
     """
     try:
@@ -1076,8 +1060,6 @@ def prod(a, axis=None, dtype=None, out=None):
 
 def cumprod(a, axis=None, dtype=None, out=None):
     """Return the cumulative product of the elements along the given axis.
-
-    Blah, Blah.
 
     """
     try:
