@@ -1208,6 +1208,8 @@ def median(a, axis=0, out=None, overwrite_input=False):
 
     Parameters
     ----------
+    a : array-like
+        Input array or object that can be converted to an array
     axis : {int, None}, optional
         Axis along which the medians are computed. The default is to
         compute the median along the first dimension.  axis=None
@@ -1234,7 +1236,7 @@ def median(a, axis=0, out=None, overwrite_input=False):
         Return datatype is float64 for ints and floats smaller than
         float64, or the input datatype otherwise.
 
-    SeeAlso
+    See Also
     -------
     mean
 
@@ -1273,6 +1275,7 @@ def median(a, axis=0, out=None, overwrite_input=False):
     3.5
     >>> assert not np.all(a==b)
     """
+    a = asanyarray(a)
     if overwrite_input:
         if axis is None:
             sorted = a.ravel()

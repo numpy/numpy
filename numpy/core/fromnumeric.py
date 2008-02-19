@@ -1061,6 +1061,33 @@ def prod(a, axis=None, dtype=None, out=None):
 def cumprod(a, axis=None, dtype=None, out=None):
     """Return the cumulative product of the elements along the given axis.
 
+    The cumulative product is taken over the flattened array by
+    default, otherwise over the specified axis.
+
+    Parameters
+    ----------
+    a : array-like
+        Input array or object that can be converted to an array
+    axis : {None, -1, int}, optional
+        Axis along which the product is computed. The default
+        (``axis``= None) is to compute over the flattened array.
+    dtype : type, optional
+        Type to use in computing the cumulative product. For arrays of
+        integer type the default is int64 for signed ints and uint64
+        for unsigned. For arrays of float types it is the same as the
+        array type. 
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary.
+
+    Returns
+    -------
+    cumprod : ndarray.
+        A new array holding the result is returned unless out is
+        specified, in which case a reference to out is returned.
+        Return datatype is ``dtype`` if specified, otherwise int64 for
+        ints, uint64 for uints, or the input datatype otherwise.
     """
     try:
         cumprod = a.cumprod
