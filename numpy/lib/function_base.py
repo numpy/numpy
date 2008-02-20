@@ -15,7 +15,7 @@ __all__ = ['logspace', 'linspace',
 import types
 import numpy.core.numeric as _nx
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
-     asarray, asanyarray, empty, empty_like, asanyarray, ndarray, around
+     asarray, asanyarray, empty, empty_like, ndarray, around
 from numpy.core.numeric import ScalarType, dot, where, newaxis, intp, \
      integer, isscalar
 from numpy.core.umath import pi, multiply, add, arctan2,  \
@@ -152,7 +152,7 @@ def histogram(a, bins=10, range=None, normed=False):
         bins = linspace(mn, mx, bins, endpoint=False)
     else:
         bins = asarray(bins)
-        if(any(bins[1:]-bins[:-1] < 0)):
+        if (bins[1:]-bins[:-1] < 0).any():
             raise AttributeError, 'bins must increase monotonically.'
 
     # best block size probably depends on processor cache size
