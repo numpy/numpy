@@ -54,8 +54,8 @@ class memmap(ndarray):
     Methods
     -------
     close : close the memmap file
-    sync : flush any changes in memory to file on disk
-        When you delete a memmap object, sync is called first to write
+    flush : flush any changes in memory to file on disk
+        When you delete a memmap object, flush is called first to write
         changes to disk before removing the object.
 
     Returns
