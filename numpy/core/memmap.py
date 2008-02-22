@@ -1,6 +1,7 @@
 __all__ = ['memmap']
 
 import mmap
+import warnings
 from numeric import uint8, ndarray, dtype
 
 dtypedescr = dtype
@@ -206,10 +207,15 @@ class memmap(ndarray):
         else:
             self._mmap = None
 
-    def sync(self):
+    def flush(self):
         """Flush any changes in the array to the file on disk."""
         if self._mmap is not None:
             self._mmap.flush()
+
+    def sync(self):
+        """Flush any changes in the array to the file on disk."""
+        warnings.warn("Use ``flush``.", DeprecationWarning)
+        self.flush()
 
     def close(self):
         """Close the memmap file."""
@@ -220,7 +226,7 @@ class memmap(ndarray):
                   "by another object."
 
     def __del__(self):
-        self.sync()
+        self.flush()
         try:
             self.close()
         except ValueError:

@@ -1,9 +1,10 @@
-
 from tempfile import NamedTemporaryFile
 
 from numpy.core import memmap
 from numpy import arange, allclose
 from numpy.testing import *
+
+import warnings
 
 class TestMemmap(NumpyTestCase):
     def setUp(self):
@@ -14,14 +15,24 @@ class TestMemmap(NumpyTestCase):
         self.data.resize(self.shape)
 
     def test_RoundTrip(self):
-        fp = memmap(self.tmpfp.name, dtype=self.dtype, mode='w+', 
+        fp = memmap(self.tmpfp.name, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         fp[:] = self.data[:]
         del fp
-        newfp = memmap(self.tmpfp.name, dtype=self.dtype, mode='r', 
+        newfp = memmap(self.tmpfp.name, dtype=self.dtype, mode='r',
                        shape=self.shape)
         assert allclose(self.data, newfp)
         assert_array_equal(self.data, newfp)
+
+    def test_flush(self):
+        fp = memmap(self.tmpfp.name, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
+        fp[:] = self.data[:]
+        fp.flush()
+
+        warnings.simplefilter('ignore', DeprecationWarning)
+        fp.sync()
+        warnings.simplefilter('default', DeprecationWarning)
 
 if __name__ == '__main__':
     NumpyTest().run()
