@@ -375,7 +375,7 @@ def average(a, axis=None, weights=None, returned=False):
                 n = add.reduce(a*w, axis)
                 d = add.reduce(w, axis)
             elif wsh == (ash[axis],):
-                ni = ash[axis]
+                ni = len(ash)
                 r = [newaxis]*ni
                 r[axis] = slice(None, None, 1)
                 w1 = eval("w["+repr(tuple(r))+"]*ones(ash, float)")
