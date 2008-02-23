@@ -378,9 +378,9 @@ def average(a, axis=None, weights=None, returned=False):
                 ni = len(ash)
                 r = [newaxis]*ni
                 r[axis] = slice(None, None, 1)
-                w1 = eval("w["+repr(tuple(r))+"]*ones(ash, float)")
-                n = add.reduce(a*w1, axis)
-                d = add.reduce(w1, axis)
+                r = tuple(r)
+                n = add.reduce(a*w[r], axis)
+                d = add.reduce(w, axis)
             else:
                 raise ValueError, 'averaging weights have wrong shape'
 
