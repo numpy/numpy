@@ -1226,7 +1226,8 @@ def median(a, axis=0, out=None, overwrite_input=False):
        median. This will save memory when you do not need to preserve
        the contents of the input array. Treat the input as undefined,
        but it will probably be fully or partially sorted. Default is
-       False
+       False. Note that, if overwrite_input is true, and the input
+       is not already an ndarray, an error will be raised.
 
     Returns
     -------
@@ -1275,7 +1276,6 @@ def median(a, axis=0, out=None, overwrite_input=False):
     3.5
     >>> assert not np.all(a==b)
     """
-    a = asanyarray(a)
     if overwrite_input:
         if axis is None:
             sorted = a.ravel()
