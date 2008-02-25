@@ -2490,7 +2490,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     return 0;
 }
 
-int
+static int
 count_new_axes_0d(PyObject *tuple)
 {
     int i, argument_count;
@@ -2706,14 +2706,12 @@ array_subscript(PyArrayObject *self, PyObject *op)
         return NULL;
     }
 
+    if (op == Py_Ellipsis) {
+	Py_INCREF(self);
+	return (PyObject *)self;
+    }
+
     if (self->nd == 0) {
-        if (op == Py_Ellipsis) {
-            /* XXX: This leads to a small inconsistency
-               XXX: with the nd>0 case where (x[...] is x)
-               XXX: is false for nd>0 case. */
-            Py_INCREF(self);
-            return (PyObject *)self;
-        }
         if (op == Py_None)
             return add_new_axes_0d(self, 1);
         if (PyTuple_Check(op)) {
@@ -2726,9 +2724,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
             return add_new_axes_0d(self, nd);
         }
         /* Allow Boolean mask selection also */
-        if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
-            (PyArray_Check(op) && (PyArray_DIMS(op)==0) &&
-             PyArray_ISBOOL(op))) {
+        if ((PyArray_Check(op) && (PyArray_DIMS(op)==0) &&
+	     PyArray_ISBOOL(op))) {
             if (PyObject_IsTrue(op)) {
                 Py_INCREF(self);
                 return (PyObject *)self;
@@ -3051,7 +3048,8 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op))
             noellipses = FALSE;
         else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
-                 (PyArray_Check(op) && (PyArray_DIMS(op)==0)))
+                 (PyArray_Check(op) && (PyArray_DIMS(op)==0) &&
+		  PyArray_ISBOOL(op)))
             noellipses = FALSE;
         else if (PySequence_Check(op)) {
             int n, i;
@@ -9212,7 +9210,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     char *dptr;
     int size;
     PyObject *obj = NULL;
-    int swap;
     PyArray_CopySwapFunc *copyswap;
 
     if (ind == Py_Ellipsis) {

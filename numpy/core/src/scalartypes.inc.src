@@ -2373,6 +2373,54 @@ static PyTypeObject PyObjectArrType_Type = {
         0,                                        /* tp_flags */
 };
 
+
+static PyObject *
+add_new_axes_0d(PyArrayObject *,  int);
+
+static int 
+count_new_axes_0d(PyObject *);
+
+static PyObject *
+gen_arrtype_subscript(PyObject *self, PyObject *key)
+{
+	/* Only [...], [...,<???>], [<???>, ...],
+	   is allowed for indexing a scalar
+	   
+	   These return a new N-d array with a copy of
+	   the data where N is the number of None's in <???>.
+
+	 */
+	PyObject *res, *ret;
+	int N;
+
+	if (key == Py_Ellipsis || key == Py_None ||
+	    PyTuple_Check(key)) {
+		res = PyArray_FromScalar(self, NULL);
+	}
+	else {
+		PyErr_SetString(PyExc_IndexError, 
+				"invalid index to scalar variable.");
+		return NULL;
+	}
+
+	if (key == Py_Ellipsis) 
+		return res;
+
+	if (key == Py_None) {
+		ret = add_new_axes_0d((PyArrayObject *)res, 1);
+		Py_DECREF(res);
+		return ret;
+	}
+	/* Must be a Tuple */
+	
+	N = count_new_axes_0d(key);
+	if (N < 0) return NULL;
+	ret = add_new_axes_0d((PyArrayObject *)res, N);
+	Py_DECREF(res);
+	return ret;
+}
+
+
 /**begin repeat
 #name=bool, string, unicode, void#
 #NAME=Bool, String, Unicode, Void#
@@ -2417,6 +2465,14 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 
 #undef _THIS_SIZE
 /**end repeat**/
+
+
+static PyMappingMethods gentype_as_mapping = {
+	NULL,
+        (binaryfunc)gen_arrtype_subscript,
+        NULL
+};
+
 
 /**begin repeat
 #NAME=CFloat, CDouble, CLongDouble#
@@ -2475,7 +2531,6 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 /**end repeat**/
 
 
-
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
 
@@ -2486,6 +2541,7 @@ initialize_numeric_types(void)
         PyGenericArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
         PyGenericArrType_Type.tp_as_number = &gentype_as_number;
         PyGenericArrType_Type.tp_as_buffer = &gentype_as_buffer;
+        PyGenericArrType_Type.tp_as_mapping = &gentype_as_mapping;
         PyGenericArrType_Type.tp_flags = BASEFLAGS;
         PyGenericArrType_Type.tp_methods = gentype_methods;
         PyGenericArrType_Type.tp_getset = gentype_getsets;
