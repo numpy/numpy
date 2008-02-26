@@ -3032,6 +3032,11 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 
     mp = (PyArrayObject *)array_subscript(self, op);
 
+    /* mp could be a scalar if op is not an Int, Scalar, Long or other Index
+       object and still convertable to an integer (so that the code goes to 
+       array_subscript_simple).  So, this cast is a bit dangerous..
+    */
+
     /* The following is just a copy of PyArray_Return with an
        additional logic in the nd == 0 case.
     */
@@ -3043,14 +3048,15 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         return NULL;
     }
 
-    if (mp->nd == 0) {
+    if (PyArray_Check(mp) && mp->nd == 0) {
         Bool noellipses = TRUE;
         if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op))
             noellipses = FALSE;
         else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
                  (PyArray_Check(op) && (PyArray_DIMS(op)==0) &&
-		  PyArray_ISBOOL(op)))
-            noellipses = FALSE;
+		  PyArray_ISBOOL(op))) {
+	    noellipses = FALSE;
+	}
         else if (PySequence_Check(op)) {
             int n, i;
             PyObject *temp;
