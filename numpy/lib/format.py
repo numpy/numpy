@@ -1,12 +1,13 @@
 """ Define a simple format for saving numpy arrays to disk with the full
 information about them.
 
-WARNING: Due to limitations in the string representation of dtypes, some
-complicated nested structures will not be faithfully recorded in the file. We
-are working on a fix for this. This fix will not require a change in the file
-format. The arrays with complicated structures can still be saved, but the
-correct dtype will have to be restored by using the
-`loadedarray.view(correct_dtype)` method.
+WARNING: Due to limitations in the interpretation of structured dtypes, dtypes
+with fields with empty names will have the names replaced by 'f0', 'f1', etc.
+Such arrays will not round-trip through the format entirely accurately. The data
+is intact; only the field names will differ. We are working on a fix for this.
+This fix will not require a change in the file format. The arrays with such
+structures can still be saved and restored, and the correct dtype may be
+restored by using the `loadedarray.view(correct_dtype)` method.
 
 Format Version 1.0
 ------------------
