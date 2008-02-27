@@ -758,7 +758,12 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
         sptr = aligned;
     }
     else sptr = src->data;
-    if (PyArray_ISALIGNED(dest)) {
+    /* FIXME: This should check for a flag on the data-type
+       that states whether or not it is variable length.
+       Because the ISFLEXIBLE check is hard-coded to the 
+       built-in data-types.
+     */ 
+    if (PyArray_ISALIGNED(dest) && !PyArray_ISFLEXIBLE(dest)) {
         myfunc = _strided_byte_copy;
     }
     else if (usecopy) {
