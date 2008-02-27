@@ -1,12 +1,12 @@
 """ Define a simple format for saving numpy arrays to disk with the full
 information about them.
 
-WARNING: THE FORMAT IS CURRENTLY UNSTABLE. DO NOT STORE CRITICAL DATA WITH IT.
-         While this code is in an SVN branch, the format may change without
-         notice, without backwards compatibility, and without changing the
-         format's version number. When the code moves into the trunk the format
-         will be stabilized, the version number will increment as changes occur,
-         and backwards compatibility with older versions will be maintained.
+WARNING: Due to limitations in the string representation of dtypes, some
+complicated nested structures will not be faithfully recorded in the file. We
+are working on a fix for this. This fix will not require a change in the file
+format. The arrays with complicated structures can still be saved, but the
+correct dtype will have to be restored by using the
+`loadedarray.view(correct_dtype)` method.
 
 Format Version 1.0
 ------------------
@@ -42,7 +42,9 @@ The dictionary contains three keys:
         The shape of the array.
 
 For repeatability and readability, this dictionary is formatted using
-pprint.pformat() so the keys are in alphabetic order.
+pprint.pformat() so the keys are in alphabetic order. This is for convenience
+only. A writer SHOULD implement this if possible. A reader MUST NOT depend on
+this.
 
 Following the header comes the array data. If the dtype contains Python objects
 (i.e. dtype.hasobject is True), then the data is a Python pickle of the array.
