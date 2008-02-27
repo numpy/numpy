@@ -79,7 +79,12 @@ def _usefields(adict, align):
 def _array_descr(descriptor):
     fields = descriptor.fields
     if fields is None:
-        return descriptor.str
+        subdtype = descriptor.subdtype
+        if subdtype is None:
+            return descriptor.str
+        else:
+            return (_array_descr(subdtype[0]), subdtype[1])
+
 
     names = descriptor.names
     ordered_fields = [fields[x] + (x,) for x in names]
