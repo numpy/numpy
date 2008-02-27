@@ -293,7 +293,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     for i,line in enumerate(fh):
         if i<skiprows: continue
-        line = line[:line.find(comments)].strip()
+        comment_start = line.find(comments)
+        if comment_start > 0:
+            line = line[:comments_start].strip()
+        else:
+            line = line.strip()
         if not len(line): continue
         vals = line.split(delimiter)
         if converterseq is None:
