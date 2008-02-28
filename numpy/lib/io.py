@@ -295,7 +295,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         if i<skiprows: continue
         comment_start = line.find(comments)
         if comment_start > 0:
-            line = line[:comments_start].strip()
+            line = line[:comment_start].strip()
         else:
             line = line.strip()
         if not len(line): continue
