@@ -6,8 +6,7 @@ Discrete Fourier Transforms - helper.py
 __all__ = ['fftshift','ifftshift','fftfreq']
 
 from numpy.core import asarray, concatenate, arange, take, \
-    integer
-from numpy import hstack
+    integer, empty
 import types
 
 def fftshift(x,axes=None):
@@ -63,4 +62,12 @@ def fftfreq(n,d=1.0):
       f = [0,1,...,(n-1)/2,-(n-1)/2,...,-1]/(d*n)   if n is odd
     """
     assert isinstance(n,types.IntType) or isinstance(n, integer)
-    return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
+    val = 1.0/(n*d)
+    results = empty(n, int)
+    N = (n-1)//2 + 1
+    p1 = arange(0,N,dtype=int)
+    results[:N] = p1
+    p2 = arange(-(n//2),0,dtype=int)
+    results[N:] = p2
+    return results * val
+    #return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
