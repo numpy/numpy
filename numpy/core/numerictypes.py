@@ -87,6 +87,98 @@ import types as _types
 # as numerictypes.bool, etc.
 from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
+
+# String-handling utilities to avoid locale-dependence.
+
+import string
+LOWER_TABLE = string.maketrans(string.ascii_uppercase, string.ascii_lowercase)
+UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+
+def english_lower(s):
+    """ Apply English case rules to convert ASCII strings to all lower case.
+
+    This is an internal utility function to replace calls to str.lower() such
+    that we can avoid changing behavior with changing locales. In particular,
+    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
+    both lowercase and uppercase. Thus, "I".lower() != "i" in a "tr" locale.
+
+    Parameters
+    ----------
+    s : str
+
+    Returns
+    -------
+    lowered : str
+
+    Examples
+    --------
+    >>> from numpy.lib.utils import english_lower
+    >>> english_lower('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
+    'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'
+    >>> english_upper('')
+    ''
+    """
+    lowered = s.translate(LOWER_TABLE)
+    return lowered
+
+def english_upper(s):
+    """ Apply English case rules to convert ASCII strings to all upper case.
+
+    This is an internal utility function to replace calls to str.upper() such
+    that we can avoid changing behavior with changing locales. In particular,
+    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
+    both lowercase and uppercase. Thus, "i".upper() != "I" in a "tr" locale.
+
+    Parameters
+    ----------
+    s : str
+
+    Returns
+    -------
+    uppered : str
+
+    Examples
+    --------
+    >>> from numpy.lib.utils import english_upper
+    >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
+    >>> english_upper('')
+    ''
+    """
+    uppered = s.translate(UPPER_TABLE)
+    return uppered
+
+def english_capitalize(s):
+    """ Apply English case rules to convert the first character of an ASCII
+    string to upper case.
+
+    This is an internal utility function to replace calls to str.capitalize()
+    such that we can avoid changing behavior with changing locales.
+
+    Parameters
+    ----------
+    s : str
+
+    Returns
+    -------
+    capitalized : str
+
+    Examples
+    --------
+    >>> from numpy.lib.utils import english_capitalize
+    >>> english_capitalize('int8')
+    'Int8'
+    >>> english_capitalize('Int8')
+    'Int8'
+    >>> english_capitalize('')
+    ''
+    """
+    if s:
+        return english_upper(s[0]) + s[1:]
+    else:
+        return s
+
+
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
 sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
 allTypes = {}      # Collect the types we will add to the module here
@@ -114,7 +206,7 @@ def bitname(obj):
             newname = name[:-1]
         else:
             newname = name
-        info = typeinfo[newname.upper()]
+        info = typeinfo[english_upper(newname)]
         assert(info[-1] == obj)  # sanity check
         bits = info[2]
 
@@ -149,7 +241,7 @@ def bitname(obj):
 
 def _add_types():
     for a in typeinfo.keys():
-        name = a.lower()
+        name = english_lower(a)
         if isinstance(typeinfo[a], tuple):
             typeobj = typeinfo[a][-1]
 
@@ -165,7 +257,7 @@ _add_types()
 
 def _add_aliases():
     for a in typeinfo.keys():
-        name = a.lower()
+        name = english_lower(a)
         if not isinstance(typeinfo[a], tuple):
             continue
         typeobj = typeinfo[a][-1]
@@ -179,12 +271,12 @@ def _add_aliases():
                 allTypes[myname] = typeobj
                 sctypeDict[myname] = typeobj
                 if base == 'complex':
-                    na_name = '%s%d' % (base.capitalize(), bit/2)
+                    na_name = '%s%d' % (english_capitalize(base), bit/2)
                 elif base == 'bool':
-                    na_name = base.capitalize()
+                    na_name = english_capitalize(base)
                     sctypeDict[na_name] = typeobj
                 else:
-                    na_name = "%s%d" % (base.capitalize(), bit)
+                    na_name = "%s%d" % (english_capitalize(base), bit)
                     sctypeDict[na_name] = typeobj
                 sctypeNA[na_name] = typeobj
                 sctypeDict[na_name] = typeobj

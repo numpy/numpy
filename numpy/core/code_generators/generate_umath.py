@@ -562,6 +562,39 @@ chartotype2 = {'f': 'ff_f',
 # 2) fill in functions and data in InitOperators
 # 3) add function.
 
+# String-handling utilities to avoid locale-dependence.
+
+import string
+UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+
+def english_upper(s):
+    """ Apply English case rules to convert ASCII strings to all upper case.
+
+    This is an internal utility function to replace calls to str.upper() such
+    that we can avoid changing behavior with changing locales. In particular,
+    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
+    both lowercase and uppercase. Thus, "i".upper() != "I" in a "tr" locale.
+
+    Parameters
+    ----------
+    s : str
+
+    Returns
+    -------
+    uppered : str
+
+    Examples
+    --------
+    >>> from numpy.lib.utils import english_upper
+    >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
+    >>> english_upper('')
+    ''
+    """
+    uppered = s.translate(UPPER_TABLE)
+    return uppered
+
+
 def make_arrays(funcdict):
     # functions array contains an entry for every type implemented
     #   NULL should be placed where PyUfunc_ style function will be filled in later
@@ -606,11 +639,11 @@ def make_arrays(funcdict):
                 sub += 1
             else:
                 datalist.append('(void *)NULL');
-                tname = chartoname[t.type].upper()
+                tname = english_upper(chartoname[t.type])
                 funclist.append('%s_%s' % (tname, name))
 
             for x in t.in_ + t.out:
-                siglist.append('PyArray_%s' % (chartoname[x].upper(),))
+                siglist.append('PyArray_%s' % (english_upper(chartoname[x]),))
 
             k += 1
 
