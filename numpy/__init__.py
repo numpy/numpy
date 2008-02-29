@@ -1,19 +1,14 @@
 """
 NumPy
 ==========
-
-You can support the development of NumPy and SciPy by purchasing
-the book "Guide to NumPy" at
-
-  http://www.trelgol.com
-
-It is being distributed for a fee until Oct. 2010 to
-cover some of the costs of development.  After the restriction period
-it will also be freely available.
+Provides 
+   1) An array object of arbitrary homogeneous items
+   2) Fast mathematical operations over arrays
+   3) Linear Algebra, Fourier Transforms, Random Number Generation
 
 Documentation is available in the docstrings and at
 
-http://www.scipy.org.
+http://www.scipy.org
 """
 
 # We first need to detect if we're being called as part of the numpy setup
