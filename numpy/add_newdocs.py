@@ -4,6 +4,61 @@
 #  docstrings without requiring a re-compile.
 from lib import add_newdoc
 
+add_newdoc('numpy.core', 'dtype',
+"""Create a data type.
+
+A numpy array is homogeneous, and contains elements described by a
+dtype.  A dtype can be constructed from different combinations of
+fundamental numeric types, as illustrated below.
+
+Examples
+--------
+
+Using array-scalar type:
+>>> dtype(int16)
+dtype('int16')
+
+Record, one field name 'f1', containing int16:
+>>> dtype([('f1', int16)])
+dtype([('f1', '<i2')])
+
+Record, one field named 'f1', in itself containing a record with one field:
+>>> dtype([('f1', [('f1', int16)])])
+dtype([('f1', [('f1', '<i2')])])
+
+Record, two fields: the first field contains an unsigned int, the
+second an int32:
+>>> dtype([('f1', uint), ('f2', int32)])
+dtype([('f1', '<u4'), ('f2', '<i4')])
+
+Using array-protocol type strings:
+>>> dtype([('a','f8'),('b','S10')])
+dtype([('a', '<f8'), ('b', '|S10')])
+
+Using comma-separated field formats.  The shape is (2,3):
+>>> dtype("i4, (2,3)f8")
+dtype([('f0', '<i4'), ('f1', '<f8', (2, 3))])
+
+Using tuples.  ``int`` is a fixed type, 3 the field's shape.  ``void``
+is a flexible type, here of size 10:
+>>> dtype([('hello',(int,3)),('world',void,10)])
+dtype([('hello', '<i4', 3), ('world', '|V10')])
+
+Subdivide ``int16`` into 2 ``int8``'s, called x and y.  0 and 1 are
+the offsets in bytes:
+>>> dtype((int16, {'x':(int8,0), 'y':(int8,1)}))
+dtype(('<i2', [('x', '|i1'), ('y', '|i1')]))
+
+Using dictionaries.  Two fields named 'gender' and 'age':
+>>> dtype({'names':['gender','age'], 'formats':['S1',uint8]})
+dtype([('gender', '|S1'), ('age', '|u1')])
+
+Offsets in bytes, here 0 and 25:
+>>> dtype({'surname':('S25',0),'age':(uint8,25)})
+dtype([('surname', '|S25'), ('age', '|u1')])
+
+""")
+
 add_newdoc('numpy.core','dtype',
            [('fields', "Fields of the data-type or None if no fields"),
             ('names', "Names of fields or None if no fields"),
