@@ -68,5 +68,13 @@ class TestConversion(NumpyTestCase):
 #            val2 = eval(val_repr)
 #            assert_equal( val, val2 )
 
+class TestIndexing(NumpyTestCase):
+    def test_basic(self):
+        for t in types:
+            value = t(1)
+            x = value
+            assert_array_equal(x[...],value)
+            assert_array_equal(x[()],value)
+
 if __name__ == "__main__":
     NumpyTest().run()
