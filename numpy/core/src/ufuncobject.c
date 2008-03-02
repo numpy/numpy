@@ -674,7 +674,6 @@ _find_matching_userloop(PyObject *obj, int *arg_types,
         }
         funcdata = funcdata->next;
     }
-    PyErr_SetString(PyExc_TypeError, _types_msg);
     return -1;
 }
 
@@ -866,11 +865,13 @@ select_types(PyUFuncObject *self, int *arg_types,
     int i, j;
     char start_type;
     int userdef=-1;
+    int userdef_ind=-1;
 
     if (self->userloops) {
         for (i=0; i<self->nin; i++) {
             if (PyTypeNum_ISUSERDEF(arg_types[i])) {
                 userdef = arg_types[i];
+		userdef_ind = i;
                 break;
             }
         }
@@ -882,25 +883,30 @@ select_types(PyUFuncObject *self, int *arg_types,
 
     if (userdef > 0) {
         PyObject *key, *obj;
-        int ret;
+        int ret=-1;
         obj = NULL;
-        key = PyInt_FromLong((long) userdef);
-        if (key == NULL) return -1;
-        obj = PyDict_GetItem(self->userloops, key);
-        Py_DECREF(key);
-        if (obj == NULL) {
-            PyErr_SetString(PyExc_TypeError,
-                            "user-defined type used in ufunc" \
-                            " with no registered loops");
-            return -1;
-        }
-        /* extract the correct function
-           data and argtypes
-        */
-        ret = _find_matching_userloop(obj, arg_types, scalars,
-                                      function, data, self->nargs,
-                                      self->nin);
-        return ret;
+	/* Look through all the registered loops for all the user-defined
+	   types to find a match. 
+	 */
+	while (ret == -1) {
+	    if (userdef_ind >= self->nin) break;
+	    userdef = arg_types[userdef_ind++];
+	    if (!(PyTypeNum_ISUSERDEF(userdef))) continue;
+	    key = PyInt_FromLong((long) userdef);
+	    if (key == NULL) return -1;
+	    obj = PyDict_GetItem(self->userloops, key);
+	    Py_DECREF(key);
+	    if (obj == NULL) continue;
+	    /* extract the correct function
+	       data and argtypes for this user-defined type.
+	    */
+	    ret = _find_matching_userloop(obj, arg_types, scalars,
+					  function, data, self->nargs,
+					  self->nin);
+	}
+	if (ret == 0) return ret;
+	PyErr_SetString(PyExc_TypeError, _types_msg);
+	return ret;
     }
 
     start_type = arg_types[0];
