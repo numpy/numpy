@@ -10785,7 +10785,6 @@ static PyMemberDef arraydescr_members[] = {
     {"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
     {"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
     {"flags", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
-    {"names", T_OBJECT, offsetof(PyArray_Descr, names), RO, NULL},
     {NULL},
 };
 
@@ -10980,6 +10979,70 @@ arraydescr_hasobject_get(PyArray_Descr *self)
     return res;
 }
 
+static PyObject *
+arraydescr_names_get(PyArray_Descr *self)
+{
+    if (self->names == NULL) {
+	Py_INCREF(Py_None);
+	return Py_None;
+    }
+    Py_INCREF(self->names);
+    return self->names;
+}
+
+static int
+arraydescr_names_set(PyArray_Descr *self, PyObject *val)
+{
+    int N = 0;
+    int i;
+    PyObject *new_names;
+    if (self->names == NULL) {
+	PyErr_SetString(PyExc_ValueError, "there are no fields defined");
+	return -1;	   
+    }
+
+    N = PyTuple_GET_SIZE(self->names);
+    if (!PySequence_Check(val) || PyObject_Size((PyObject *)val) != N) {
+	PyErr_Format(PyExc_ValueError, "must replace all names at once" \
+		     " with a sequence of length %d", N, N);
+	return -1;
+    }
+    /* Make sure all entries are strings */
+    for (i=0; i<N; i++) {
+	PyObject *item;
+	int valid=1;
+	item = PySequence_GetItem(val, i);
+	valid = PyString_Check(item);
+	Py_DECREF(item);
+	if (!valid) {
+	    PyErr_Format(PyExc_ValueError, 
+			 "item #%d of names is of type %s and not string", 
+			 i, item->ob_type->tp_name);
+	    return -1;
+	}
+    }
+    /* Update dictionary keys in fields */
+    new_names = PySequence_Tuple(val); 
+
+    for (i=0; i<N; i++) {
+	PyObject *key;
+	PyObject *item;
+	PyObject *new_key;
+	key = PyTuple_GET_ITEM(self->names, i);
+	/* Borrowed reference to item */
+	item = PyDict_GetItem(self->fields, key);
+	new_key = PyTuple_GET_ITEM(new_names, i);
+	PyDict_SetItem(self->fields, new_key, item);
+	PyDict_DelItem(self->fields, key);	
+    }
+
+    /* Replace names */
+    Py_DECREF(self->names);
+    self->names = new_names;
+        
+    return 0;
+}
+
 static PyGetSetDef arraydescr_getsets[] = {
     {"subdtype",
      (getter)arraydescr_subdescr_get,
@@ -11008,6 +11071,10 @@ static PyGetSetDef arraydescr_getsets[] = {
     {"fields",
      (getter)arraydescr_fields_get,
      NULL, NULL},
+    {"names",
+     (getter)arraydescr_names_get,
+     (setter)arraydescr_names_set,
+     NULL},
     {"hasobject",
      (getter)arraydescr_hasobject_get,
      NULL, NULL},
