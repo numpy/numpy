@@ -199,13 +199,9 @@ class memmap(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if obj is not None:
-            if hasattr(obj, '_mmap'):
-                self._mmap = obj._mmap
-            else:
-                raise ValueError, 'Cannot create a memmap from object %s'%obj
-        else:
-            self._mmap = None
+        self._mmap = None
+        if obj is not None and hasattr(obj, '_mmap'):
+            self._mmap = obj._mmap
 
     def flush(self):
         """Flush any changes in the array to the file on disk."""
@@ -219,7 +215,7 @@ class memmap(ndarray):
 
     def close(self):
         """Close the memmap file."""
-        if (self.base is self._mmap):
+        if self.base is self._mmap:
             self._mmap.close()
         elif self._mmap is not None:
             raise ValueError, "Cannot close a memmap that is being used " \
