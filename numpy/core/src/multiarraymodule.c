@@ -6308,14 +6308,15 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
                               NULL);
     }
     if (((intp) nread) < num) {
-	int mem_nread;
         fprintf(stderr, "%ld items requested but only %ld read\n",
                 (long) num, (long) nread);
 	/* Make sure realloc is > 0 */
-	mem_nread = NPY_MAX(nread, 1);
 	tmp = PyDataMem_RENEW(ret->data,
-			      mem_nread * ret->descr->elsize);
-        if (tmp == NULL) {
+			      NPY_MAX(nread,1) * ret->descr->elsize);
+	/* FIXME: This should not raise a memory error when nread == 0
+	   We should return an empty array or at least raise an  EOF Error.
+	 */
+        if ((tmp == NULL) || (nread == 0)) {
 	    Py_DECREF(ret);
 	    return PyErr_NoMemory();	    
 	}
