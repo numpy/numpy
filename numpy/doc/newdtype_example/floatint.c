@@ -24,7 +24,7 @@ static PyArray_ArrFuncs _PyFloatInt_Funcs;
 
 #define _ALIGN(type) offsetof(struct {char c; type v;},v)
 
-/* Need to inherit from scalar type... */
+/* The scalar-type */
 
 static PyArray_Descr _PyFloatInt_Dtype = {
     PyObject_HEAD_INIT(NULL)
@@ -98,8 +98,8 @@ static PyArray_Descr * _register_dtype(void)
 {
     int userval;
     PyArray_InitArrFuncs(&_PyFloatInt_Funcs); 
-    /* Add copyswap, copyswapn,
-       nonzero, getitem, setitem, cast */
+    /* Add copyswap,
+       nonzero, getitem, setitem*/
     _PyFloatInt_Funcs.copyswap = twoint_copyswap;
     _PyFloatInt_Funcs.getitem = (PyArray_GetItemFunc *)twoint_getitem;
     _PyFloatInt_Funcs.setitem = (PyArray_SetItemFunc *)twoint_setitem; 
@@ -113,7 +113,7 @@ static PyArray_Descr * _register_dtype(void)
 /* Initialization function for the module (*must* be called init<name>) */
 
 PyMODINIT_FUNC initfloatint(void) {
-    PyObject *m, *d, *s;
+    PyObject *m, *d;
     PyArray_Descr *dtype;
 
     /* Create the module and add the functions */
@@ -130,7 +130,17 @@ PyMODINIT_FUNC initfloatint(void) {
 
     if (PyType_Ready(&PyFloat_Type) < 0) return;
     PyFloatInt_Type.tp_base = &PyFloat_Type;
+    /* This is only needed because we are sub-typing the
+       Float type and must pre-set some function pointers
+       to get PyType_Ready to fill in the rest.
+     */
+    PyFloatInt_Type.tp_alloc = PyType_GenericAlloc;
+    PyFloatInt_Type.tp_new = PyFloat_Type.tp_new;
+    PyFloatInt_Type.tp_dealloc = PyFloat_Type.tp_dealloc;
+    PyFloatInt_Type.tp_free = PyObject_Del;
     if (PyType_Ready(&PyFloatInt_Type) < 0) return;
+    /* End specific code */
+    
 
     dtype = _register_dtype();
     Py_XINCREF(dtype);
