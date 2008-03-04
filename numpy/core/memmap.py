@@ -200,7 +200,7 @@ class memmap(ndarray):
 
     def __array_finalize__(self, obj):
         self._mmap = None
-        if obj is not None and hasattr(obj, '_mmap'):
+        if hasattr(obj, '_mmap'):
             self._mmap = obj._mmap
 
     def flush(self):
@@ -213,17 +213,22 @@ class memmap(ndarray):
         warnings.warn("Use ``flush``.", DeprecationWarning)
         self.flush()
 
-    def close(self):
-        """Close the memmap file."""
+    def _close(self):
+        """Close the memmap file.  Only do this when deleting the object."""
         if self.base is self._mmap:
             self._mmap.close()
         elif self._mmap is not None:
             raise ValueError, "Cannot close a memmap that is being used " \
                   "by another object."
 
+    def close(self):
+        """Close the memmap file. Does nothing."""
+        warnings.warn("``close`` is deprecated on memmap arrays.  Use del",
+                      DeprecationWarning)
+
     def __del__(self):
         self.flush()
         try:
-            self.close()
+            self._close()
         except ValueError:
             pass
