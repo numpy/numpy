@@ -713,6 +713,12 @@ class TestResize(NumpyTestCase):
         y = x
         self.failUnlessRaises(ValueError,x.resize,(5,1))
 
+class TestRecord(NumpyTestCase):
+    def test_field_rename(self):
+        dt = np.dtype([('f',float),('i',int)])
+        dt.names = ['p','q']
+        assert_equal(dt.names,['p','q'])
+
 # Import tests without matching module names
 set_local_path()
 from test_unicode import *
