@@ -53,11 +53,7 @@ MyPyLong_AsUnsignedLongLong(PyObject *vv)
         ret = PyLong_AsUnsignedLongLong(vv);
         if (PyErr_Occurred()) {
                 PyErr_Clear();
-                longlong new = PyLong_AsLongLong(vv);
-                if (!PyErr_Occurred() && new < 0)
-                        ret = (ulonglong) new;
-                else
-                        ret = NPY_MAX_ULONGLONG;
+                ret = (ulonglong) PyLong_AsLongLong(vv);
         }
         Py_DECREF(vv);
         return ret;
