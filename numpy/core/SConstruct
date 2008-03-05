@@ -1,4 +1,4 @@
-# Last Change: Wed Jan 23 08:00 PM 2008 J
+# Last Change: Wed Mar 05 02:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -20,7 +20,6 @@ if os.name == 'nt':
     # simple code using only typedef and so on, so we need it for configuration
     # checks
     env.AppendUnique(LIBPATH = [get_pythonlib_dir()])
-print env["CPPPATH"]
 
 #=======================
 # Starting Configuration
