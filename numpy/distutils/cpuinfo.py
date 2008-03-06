@@ -18,6 +18,7 @@ import sys, re, types
 import os
 import commands
 import warnings
+import platform
 
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:
@@ -80,8 +81,16 @@ class CPUInfoBase(object):
     def _getNCPUs(self):
         return 1
 
+    def __get_nbits(self):
+        abits = platform.architecture()[0]
+        nbits = re.compile('(\d+)bit').search(abits).group(1)
+        return nbits
+
     def _is_32bit(self):
-        return not self.is_64bit()
+        return self.__get_nbits() == '32'
+
+    def _is_64bit(self):
+        return self.__get_nbits() == '64'
 
 class LinuxCPUInfo(CPUInfoBase):
 
@@ -271,20 +280,6 @@ class LinuxCPUInfo(CPUInfoBase):
     def _has_3dnowext(self):
         return re.match(r'.*?\b3dnowext\b',self.info[0]['flags']) is not None
 
-    def _is_64bit(self):
-        if self.is_Alpha():
-            return True
-        if self.info[0].get('clflush size','')=='64':
-            return True
-        if self.info[0].get('uname_m','')=='x86_64':
-            return True
-        if self.info[0].get('arch','')=='IA-64':
-            return True
-        return False
-
-    def _is_32bit(self):
-        return not self.is_64bit()
-
 class IRIXCPUInfo(CPUInfoBase):
     info = None
 
@@ -411,11 +406,6 @@ class SunOSCPUInfo(CPUInfoBase):
         self.__class__.info = info
 
     def _not_impl(self): pass
-
-    def _is_32bit(self):
-        return self.info['isainfo_b']=='32'
-    def _is_64bit(self):
-        return self.info['isainfo_b']=='64'
 
     def _is_i386(self):
         return self.info['isainfo_n']=='i386'
