@@ -2145,7 +2145,7 @@ masked_%(name)s(data = %(data)s,
         else:
             return (self - expand_dims(m,axis))
 
-    def var(self, axis=None, dtype=None):
+    def var(self, axis=None, dtype=None, ddof=0):
         """Return the variance, a measure of the spread of a distribution.
 
         The variance is the average of the squared deviations from the
@@ -2168,9 +2168,10 @@ masked_%(name)s(data = %(data)s,
         """
         if self._mask is nomask:
             # TODO: Do we keep super, or var _data and take a view ?
-            return super(MaskedArray, self).var(axis=axis, dtype=dtype)
+            return super(MaskedArray, self).var(axis=axis, dtype=dtype, 
+                                                ddof=ddof)
         else:
-            cnt = self.count(axis=axis)
+            cnt = self.count(axis=axis)-ddof
             danom = self.anom(axis=axis, dtype=dtype)
             danom *= danom
             dvar = narray(danom.sum(axis) / cnt).view(type(self))
@@ -2179,7 +2180,7 @@ masked_%(name)s(data = %(data)s,
             dvar._update_from(self)
             return dvar
 
-    def std(self, axis=None, dtype=None):
+    def std(self, axis=None, dtype=None, ddof=0):
         """Return the standard deviation, a measure of the spread of a
         distribution.
 
@@ -2204,7 +2205,7 @@ masked_%(name)s(data = %(data)s,
         estimate, use stdu.
 
         """
-        dvar = self.var(axis,dtype)
+        dvar = self.var(axis,dtype,ddof=ddof)
         if axis is not None or dvar is not masked:
             dvar = sqrt(dvar)
         return dvar

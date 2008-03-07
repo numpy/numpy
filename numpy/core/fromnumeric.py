@@ -1631,7 +1631,7 @@ def mean(a, axis=None, dtype=None, out=None):
     return mean(axis, dtype, out)
 
 
-def std(a, axis=None, dtype=None, out=None):
+def std(a, axis=None, dtype=None, out=None, ddof=0):
     """Compute the standard deviation along the specified axis.
 
     Returns the standard deviation of the array elements, a measure of the
@@ -1654,6 +1654,9 @@ def std(a, axis=None, dtype=None, out=None):
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type will be cast if
         necessary.
+    ddof : {0, integer}
+        Means Delta Degrees of Freedom.  The divisor used in calculations
+        is N-ddof.
 
     Returns
     -------
@@ -1670,8 +1673,8 @@ def std(a, axis=None, dtype=None, out=None):
     -----
     The standard deviation is the square root of the average of the squared
     deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
-    computed standard deviation is biased, i.e., the mean is computed by
-    dividing by the number of elements, N, rather than by N-1.
+    computed standard deviation is computed by dividing by the number of 
+    elements, N-ddof.
 
     Examples
     --------
@@ -1687,11 +1690,11 @@ def std(a, axis=None, dtype=None, out=None):
     try:
         std = a.std
     except AttributeError:
-        return _wrapit(a, 'std', axis, dtype, out)
-    return std(axis, dtype, out)
+        return _wrapit(a, 'std', axis, dtype, out, ddof)
+    return std(axis, dtype, out, ddof)
 
 
-def var(a, axis=None, dtype=None, out=None):
+def var(a, axis=None, dtype=None, out=None, ddof=0):
     """Compute the variance along the specified axis.
 
     Returns the variance of the array elements, a measure of the spread of a
@@ -1714,6 +1717,9 @@ def var(a, axis=None, dtype=None, out=None):
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type will be cast if
         necessary.
+    ddof : {0, integer},
+        Means Delta Degrees of Freedom.  The divisor used in calculation is
+        N - ddof.
 
     Returns
     -------
@@ -1747,5 +1753,5 @@ def var(a, axis=None, dtype=None, out=None):
     try:
         var = a.var
     except AttributeError:
-        return _wrapit(a, 'var', axis, dtype, out)
-    return var(axis, dtype, out)
+        return _wrapit(a, 'var', axis, dtype, out, ddof)
+    return var(axis, dtype, out, ddof)

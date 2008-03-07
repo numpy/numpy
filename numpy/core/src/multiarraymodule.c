@@ -832,7 +832,14 @@ PyArray_Mean(PyArrayObject *self, int axis, int rtype, PyArrayObject *out)
 */
 static PyObject *
 PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
-            int variance)
+	    int variance)
+{
+    return __New_PyArray_Std(self, axis, rtype, out, variance, 0);
+}
+
+static PyObject *
+__New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
+		  int variance, int num)
 {
     PyObject *obj1=NULL, *obj2=NULL, *new=NULL;
     PyObject *ret=NULL, *newshape=NULL;
@@ -876,6 +883,7 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 
     n = PyArray_DIM(new,axis);
     Py_DECREF(new);
+    n = (n-num);
     if (n==0) n=1;
     obj2 = PyFloat_FromDouble(1.0/((double )n));
     if (obj2 == NULL) {Py_DECREF(obj1); return NULL;}

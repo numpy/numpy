@@ -1554,23 +1554,27 @@ array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
+__New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
+		  int variance, int num);
+static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis=MAX_DIMS;
     PyArray_Descr *dtype=NULL;
     PyArrayObject *out=NULL;
     int num;
-    static char *kwlist[] = {"axis", "dtype", "out", NULL};
+    int ddof = 0;
+    static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
                                      PyArray_AxisConverter,
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out)) return NULL;
+                                     &out, &ddof)) return NULL;
 
     num = _get_type_num_double(self->descr, dtype);
-    return PyArray_Std(self, axis, num, out, 0);
+    return __New_PyArray_Std(self, axis, num, out, 0, ddof);
 }
 
 
@@ -1581,17 +1585,18 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyArray_Descr *dtype=NULL;
     PyArrayObject *out=NULL;
     int num;
-    static char *kwlist[] = {"axis", "dtype", "out", NULL};
+    int ddof = 0;
+    static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
                                      PyArray_AxisConverter,
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out)) return NULL;
+                                     &out, &ddof)) return NULL;
 
     num = _get_type_num_double(self->descr, dtype);
-    return PyArray_Std(self, axis, num, out, 1);
+    return __New_PyArray_Std(self, axis, num, out, 1, ddof);
 }
 
 
