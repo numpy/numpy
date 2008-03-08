@@ -199,9 +199,10 @@ class memmap(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        self._mmap = None
         if hasattr(obj, '_mmap'):
             self._mmap = obj._mmap
+        else:
+            self._mmap = None
 
     def flush(self):
         """Flush any changes in the array to the file on disk."""
@@ -217,9 +218,18 @@ class memmap(ndarray):
         """Close the memmap file.  Only do this when deleting the object."""
         if self.base is self._mmap:
             self._mmap.close()
-        elif self._mmap is not None:
-            raise ValueError, "Cannot close a memmap that is being used " \
-                  "by another object."
+            self._mmap = None
+
+        # DEV NOTE: This error is raised on the deletion of each row
+        # in a view of this memmap.  Python traps exceptions in
+        # __del__ and prints them to stderr.  Suppressing this for now
+        # until memmap code is cleaned up and and better tested for
+        # numpy v1.1 Objects that do not have a python mmap instance
+        # as their base data array, should not do anything in the
+        # close anyway.
+        #elif self._mmap is not None:
+            #raise ValueError, "Cannot close a memmap that is being used " \
+            #      "by another object."
 
     def close(self):
         """Close the memmap file. Does nothing."""
@@ -227,8 +237,14 @@ class memmap(ndarray):
                       DeprecationWarning)
 
     def __del__(self):
-        self.flush()
-        try:
-            self._close()
-        except ValueError:
-            pass
+        if self._mmap is not None:
+            try:
+                # First run tell() to see whether file is open
+                self._mmap.tell()
+            except ValueError:
+                pass
+            else:
+                # flush any changes to disk, even if it's a view
+                self.flush()
+                self._close()
+
