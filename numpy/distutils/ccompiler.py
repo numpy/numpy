@@ -390,8 +390,7 @@ ccompiler.gen_lib_options = gen_lib_options
 for _cc in ['msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
     _m = sys.modules.get('distutils.'+_cc+'compiler')
     if _m is not None:
-        setattr(getattr(_m, _cc+'compiler'), 'gen_lib_options',
-                gen_lib_options)
+        setattr(_m, 'gen_lib_options', gen_lib_options)
 
 _distutils_gen_preprocess_options = gen_preprocess_options
 def gen_preprocess_options (macros, include_dirs):
