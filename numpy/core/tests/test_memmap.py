@@ -1,4 +1,5 @@
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, mktemp
+import os
 
 from numpy.core import memmap
 from numpy import arange, allclose
@@ -28,12 +29,11 @@ class TestMemmap(NumpyTestCase):
         assert_array_equal(self.data, newfp)
 
     def test_open_with_filename(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+        tmpname = mktemp('','mmap')
+        fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         fp[:] = self.data[:]
-
-        memmap(self.tmpfp.name, dtype=self.dtype, mode='r',
-               shape=self.shape)
+        os.unlink(tmpname)
 
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
