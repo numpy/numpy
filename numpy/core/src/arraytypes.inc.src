@@ -1,6 +1,7 @@
 /* -*- c -*- */
 #include "config.h"
 
+
 static longlong
 MyPyLong_AsLongLong(PyObject *vv)
 {
@@ -9,33 +10,47 @@ MyPyLong_AsLongLong(PyObject *vv)
         if (!PyLong_Check(vv)) {
                 PyObject *mylong;
                 mylong = PyNumber_Long(vv);
-                if (mylong == NULL) return (longlong) -1;
+                if (mylong == NULL) {
+                    return (longlong) -1;
+                }
                 vv = mylong;
         }
-        else Py_INCREF(vv);
+        else {
+            Py_INCREF(vv);
+        }
 
         ret = PyLong_AsLongLong(vv);
         Py_DECREF(vv);
         return ret;
 }
 
+
 static ulong
 MyPyLong_AsUnsignedLong(PyObject *vv)
 {
-        longlong val;
+        ulong ret;
 
         if (!PyLong_Check(vv)) {
                 PyObject *mylong;
                 mylong = PyNumber_Long(vv);
-                if (mylong == NULL) return (ulong) -1;
+                if (mylong == NULL) {
+                    return (ulong) -1;
+                }
                 vv = mylong;
         }
-        else Py_INCREF(vv);
+        else {
+            Py_INCREF(vv);
+        }
 
-        val = PyLong_AsLongLong(vv);
+        ret = PyLong_AsUnsignedLong(vv);
+        if (PyErr_Occurred()) {
+                PyErr_Clear();
+                ret = (ulong) PyLong_AsLong(vv);
+        }
         Py_DECREF(vv);
-        return (ulong) val;
+        return ret;
 }
+
 
 static ulonglong
 MyPyLong_AsUnsignedLongLong(PyObject *vv)
@@ -45,10 +60,14 @@ MyPyLong_AsUnsignedLongLong(PyObject *vv)
         if (!PyLong_Check(vv)) {
                 PyObject *mylong;
                 mylong = PyNumber_Long(vv);
-                if (mylong == NULL) return (ulonglong) -1;
+                if (mylong == NULL) {
+                    return (ulonglong) -1;
+                }
                 vv = mylong;
         }
-        else Py_INCREF(vv);
+        else {
+            Py_INCREF(vv);
+        }
 
         ret = PyLong_AsUnsignedLongLong(vv);
         if (PyErr_Occurred()) {
@@ -82,6 +101,7 @@ _getNAN(void) {
         return nan;
 #endif
 }
+
 
 static double
 MyPyFloat_AsDouble(PyObject *obj)
