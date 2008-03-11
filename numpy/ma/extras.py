@@ -756,7 +756,7 @@ def flatnotmasked_contiguous(a):
         return None
     result = []
     for k, group in groupby(enumerate(unmasked), lambda (i,x):i-x):
-        tmp = numpy.fromiter((g[1] for g in group), int_)
+        tmp = numpy.array([g[1] for g in group], int_)
 #        result.append((tmp.size, tuple(tmp[[0,-1]])))
         result.append( slice(tmp[0],tmp[-1]) )
     result.sort()
