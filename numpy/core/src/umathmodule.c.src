@@ -1489,6 +1489,7 @@ static void
     n=dimensions[0];
     for(i=0; i<n; i++, i1+=is1, op+=os) {
         *((@typ@ *)op) = *((@typ@ *)i1) < 0 ? -*((@typ@ *)i1) : *((@typ@ *)i1);
+        *((@typ@ *)op) += 0; // clear sign-bit
     }
 }
 /**end repeat**/
