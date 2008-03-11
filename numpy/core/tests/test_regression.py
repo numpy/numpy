@@ -802,7 +802,7 @@ class TestRegression(NumpyTestCase):
        assert_array_equal(x.astype('>i4'),x.astype('<i4').flat[:])
        assert_array_equal(x.astype('>i4').flat[:],x.astype('<i4'))
 
-    def check_MyPyLong_AsUnsignedLongLong(self, level=rlevel) :
+    def check_uint64_from_negative(self, level=rlevel) :
         assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
 
 if __name__ == "__main__":
