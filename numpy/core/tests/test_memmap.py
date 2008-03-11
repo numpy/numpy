@@ -14,18 +14,29 @@ class TestMemmap(NumpyTestCase):
         self.data = arange(12, dtype=self.dtype)
         self.data.resize(self.shape)
 
-    def test_RoundTrip(self):
-        fp = memmap(self.tmpfp.name, dtype=self.dtype, mode='w+',
+    def test_roundtrip(self):
+        # Write data to file
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         fp[:] = self.data[:]
-        del fp
-        newfp = memmap(self.tmpfp.name, dtype=self.dtype, mode='r',
+        del fp # Test __del__ machinery, which handles cleanup
+
+        # Read data back from file
+        newfp = memmap(self.tmpfp, dtype=self.dtype, mode='r',
                        shape=self.shape)
         assert allclose(self.data, newfp)
         assert_array_equal(self.data, newfp)
 
+    def test_open_with_filename(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                       shape=self.shape)
+        fp[:] = self.data[:]
+
+        memmap(self.tmpfp.name, dtype=self.dtype, mode='r',
+               shape=self.shape)
+
     def test_flush(self):
-        fp = memmap(self.tmpfp.name, dtype=self.dtype, mode='w+',
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         fp[:] = self.data[:]
         fp.flush()

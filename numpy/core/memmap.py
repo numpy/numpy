@@ -25,8 +25,9 @@ class memmap(ndarray):
 
     Parameters
     ----------
-    name : filename
-        The file name to be used as the array data buffer.
+    filename : string or file-like object
+        The file name or file object to be used as the array data
+        buffer.
     dtype : data-type, optional
         The data-type used to interpret the file contents.
         Default is uint8
@@ -138,7 +139,7 @@ class memmap(ndarray):
     """
 
     __array_priority__ = -100.0
-    def __new__(subtype, name, dtype=uint8, mode='r+', offset=0,
+    def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
                 shape=None, order='C'):
         try:
             mode = mode_equivalents[mode]
@@ -147,7 +148,10 @@ class memmap(ndarray):
                 raise ValueError("mode must be one of %s" % \
                                  (valid_filemodes + mode_equivalents.keys()))
 
-        fid = file(name, (mode == 'c' and 'r' or mode)+'b')
+        if hasattr(filename,'read'):
+            fid = filename
+        else:
+            fid = file(filename, (mode == 'c' and 'r' or mode)+'b')
 
         if (mode == 'w+') and shape is None:
             raise ValueError, "shape must be given"
@@ -194,8 +198,7 @@ class memmap(ndarray):
         self._offset = offset
         self._mode = mode
         self._size = size
-        self._name = name
-        fid.close()
+        self._name = filename
         return self
 
     def __array_finalize__(self, obj):
