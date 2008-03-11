@@ -805,5 +805,9 @@ class TestRegression(NumpyTestCase):
     def check_uint64_from_negative(self, level=rlevel) :
         assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
 
+    def check_sign_bit(self, level=rlevel):
+        x = np.array([0,-0.0,0])
+        assert_equal(str(np.abs(x)),'[ 0.  0.  0.]')
+
 if __name__ == "__main__":
     NumpyTest().run()
