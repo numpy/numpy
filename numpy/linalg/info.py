@@ -8,7 +8,8 @@ Linear algebra basics:
 - solve           Solve a linear system of equations
 - det             Determinant of a square matrix
 - lstsq           Solve linear least-squares problem
-- pinv            Pseudo-inverse (Moore-Penrose) using lstsq
+- pinv            Pseudo-inverse (Moore-Penrose) calculated using a singular
+                  value decomposition
 
 Eigenvalues and decompositions:
 
