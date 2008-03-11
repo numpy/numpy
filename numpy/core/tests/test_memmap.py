@@ -33,6 +33,7 @@ class TestMemmap(NumpyTestCase):
         fp = memmap(tmpname, dtype=self.dtype, mode='w+',
                        shape=self.shape)
         fp[:] = self.data[:]
+        del fp
         os.unlink(tmpname)
 
     def test_flush(self):
