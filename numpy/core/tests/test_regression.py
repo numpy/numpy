@@ -809,5 +809,10 @@ class TestRegression(NumpyTestCase):
         x = np.array([0,-0.0,0])
         assert_equal(str(np.abs(x)),'[ 0.  0.  0.]')
 
+    def check_flat_index_byteswap(self, level=rlevel):
+        for dt in (np.dtype('<i4'),np.dtype('>i4')):
+            x = np.array([-1,0,1],dtype=dt)
+            assert_equal(x.flat[0].dtype, x[0].dtype)
+
 if __name__ == "__main__":
     NumpyTest().run()
