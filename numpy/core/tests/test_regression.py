@@ -814,5 +814,9 @@ class TestRegression(NumpyTestCase):
             x = np.array([-1,0,1],dtype=dt)
             assert_equal(x.flat[0].dtype, x[0].dtype)
 
+    def check_copy_detection_corner_case(self, level=rlevel):
+        """Ticket #658"""
+        np.indices((0,3,4)).T.reshape(-1,3)
+
 if __name__ == "__main__":
     NumpyTest().run()
