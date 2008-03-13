@@ -24,7 +24,13 @@ if __NUMPY_SETUP__:
     print >> _sys.stderr, 'Running from numpy source directory.'
     del _sys
 else:
-    from numpy.__config__ import show as show_config
+    try:
+        from numpy.__config__ import show as show_config
+    except ImportError, e:
+        msg = """Error importing numpy: you should not try to import numpy from
+        its source directory; please exit the numpy source tree, and relaunch
+        your python intepreter from there."""
+        raise ImportError(msg)
     from version import version as __version__
 
     from _import_tools import PackageLoader
