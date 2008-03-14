@@ -382,7 +382,8 @@ class TestHistogram(NumpyTestCase):
         (a,b)=histogram(v)
         #check if the sum of the bins equals the number of samples
         assert(sum(a,axis=0)==n)
-        #check that the bin counts are evenly spaced when the data is from a linear function
+        #check that the bin counts are evenly spaced when the data is from a 
+        # linear function
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))
 
@@ -391,17 +392,21 @@ class TestHistogramdd(NumpyTestCase):
         x = array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5], \
         [.5, .5, 1.5], [.5, 1.5, 2.5], [.5, 2.5, 2.5]])
         H, edges = histogramdd(x, (2,3,3), range = [[-1,1], [0,3], [0,3]])
-        answer = asarray([[[0,1,0], [0,0,1], [1,0,0]], [[0,1,0], [0,0,1], [0,0,1]]])
+        answer = asarray([[[0,1,0], [0,0,1], [1,0,0]], [[0,1,0], [0,0,1], 
+            [0,0,1]]])
         assert_array_equal(H,answer)
         # Check normalization
         ed = [[-2,0,2], [0,1,2,3], [0,1,2,3]]
         H, edges = histogramdd(x, bins = ed, normed = True)
         assert(all(H == answer/12.))
         # Check that H has the correct shape.
-        H, edges = histogramdd(x, (2,3,4), range = [[-1,1], [0,3], [0,4]], normed=True)
-        answer = asarray([[[0,1,0,0], [0,0,1,0], [1,0,0,0]], [[0,1,0,0], [0,0,1,0], [0,0,1,0]]])
+        H, edges = histogramdd(x, (2,3,4), range = [[-1,1], [0,3], [0,4]], 
+            normed=True)
+        answer = asarray([[[0,1,0,0], [0,0,1,0], [1,0,0,0]], [[0,1,0,0], 
+            [0,0,1,0], [0,0,1,0]]])
         assert_array_almost_equal(H, answer/6., 4)
-        # Check that a sequence of arrays is accepted and H has the correct shape.
+        # Check that a sequence of arrays is accepted and H has the correct 
+        # shape.
         z = [squeeze(y) for y in split(x,3,axis=1)]
         H, edges = histogramdd(z, bins=(4,3,2),range=[[-2,2], [0,3], [0,2]])
         answer = asarray([[[0,0],[0,0],[0,0]],
@@ -415,10 +420,28 @@ class TestHistogramdd(NumpyTestCase):
         H,edges = histogramdd([arange(5), arange(5), arange(5)], 5)
         assert_array_equal(H, Z)
 
-    def check_shape(self):
-        x = rand(100,3)
-        hist3d, edges = histogramdd(x, bins = (5, 7, 6))
-        assert_array_equal(hist3d.shape, (5,7,6))
+    def check_shape_3d(self):
+        # All possible permutations for bins of different lengths in 3D.
+        bins = ((5, 4, 6), (6, 4, 5), (5, 6, 4), (4, 6, 5), (6, 5, 4), 
+            (4, 5, 6))
+        r = rand(10,3)
+        for b in bins:
+            H, edges = histogramdd(r, b)
+            assert(H.shape == b)
+
+    def check_shape_4d(self):
+        # All possible permutations for bins of different lengths in 4D.
+        bins = ((7, 4, 5, 6), (4, 5, 7, 6), (5, 6, 4, 7), (7, 6, 5, 4), 
+            (5, 7, 6, 4), (4, 6, 7, 5), (6, 5, 7, 4), (7, 5, 4, 6), 
+            (7, 4, 6, 5), (6, 4, 7, 5), (6, 7, 5, 4), (4, 6, 5, 7), 
+            (4, 7, 5, 6), (5, 4, 6, 7), (5, 7, 4, 6), (6, 7, 4, 5), 
+            (6, 5, 4, 7), (4, 7, 6, 5), (4, 5, 6, 7), (7, 6, 4, 5), 
+            (5, 4, 7, 6), (5, 6, 7, 4), (6, 4, 5, 7), (7, 5, 6, 4))
+
+        r = rand(10,4)
+        for b in bins:
+            H, edges = histogramdd(r, b)
+            assert(H.shape == b)
 
     def check_weights(self):
         v = rand(100,2)
