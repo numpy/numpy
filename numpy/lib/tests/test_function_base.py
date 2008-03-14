@@ -63,6 +63,20 @@ class TestAverage(NumpyTestCase):
         actual = average(y1,weights=[1,2],axis=0)
         desired = array([3.,4.,5.])
         assert_array_equal(actual, desired)
+        
+    def check_shape(self):
+        y = array([[1,2,3],
+                    [4,5,6]])
+
+        w2 = [[0,0,1],[0,0,1]]
+        desired = array([3., 6.])
+        assert_array_equal(average(y, weights=w2, axis=1), desired)
+        
+        w1 = [0,0,1]
+        desired = array([3., 6.])
+        assert_array_equal(average(y, weights=w1, axis=1), desired)
+        
+
 
 class TestSelect(NumpyTestCase):
     def _select(self,cond,values,default=0):
