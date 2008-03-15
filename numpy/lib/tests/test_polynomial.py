@@ -94,5 +94,20 @@ class TestDocs(NumpyTestCase):
         p[1] = 0
         assert_equal(str(p), " \n0")
 
+    def check_polyfit(self) :
+        c = np.array([3., 2., 1.])
+        x = np.linspace(0,2,5)
+        y = np.polyval(c,x)
+        # check 1D case
+        assert_almost_equal(c, np.polyfit(x,y,2))
+        # check 2D (n,1) case
+        y = y[:,np.newaxis]
+        c = c[:,np.newaxis]
+        assert_almost_equal(c, np.polyfit(x,y,2))
+        # check 2D (n,2) case
+        yy = np.concatenate((y,y), axis=1)
+        cc = np.concatenate((c,c), axis=1)
+        assert_almost_equal(cc, np.polyfit(x,yy,2))
+
 if __name__ == "__main__":
     NumpyTest().run()
