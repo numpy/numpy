@@ -193,7 +193,6 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     Parameters
     ----------
-
     x : array_like
         1D vector of sample points.
     y : array_like
@@ -213,17 +212,15 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     Returns
     -------
-
     coefficients, [residuals, rank, singular_values, rcond] : variable
         When full=False, only the coefficients are returned, running down the
-        appropriate colume when y is a 2D array. When full=True, the rank of
-        the scaled Vandermonde matrix, it's effective rank in light of the rcond
+        appropriate colume when y is a 2D array. When full=True, the rank of the
+        scaled Vandermonde matrix, it's effective rank in light of the rcond
         value, its singular values, and the specified value of rcond are also
         returned.
 
     Warns
     -----
-
     RankWarning : if rank is reduced and not full output
         The warnings can be turned off by:
         >>> import numpy as np
@@ -233,37 +230,35 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     See Also
     --------
-    
     polyval : computes polynomial values.
 
     Notes
     -----
-    
     If X is a the Vandermonde Matrix computed from x (see
     http://mathworld.wolfram.com/VandermondeMatrix.html), then the
     polynomial least squares solution is given by the 'p' in
 
-      X*p = y
+        X*p = y
 
     where X.shape is a matrix of dimensions (len(x), deg + 1), p is a vector of
     dimensions (deg + 1, 1), and y is a vector of dimensions (len(x), 1).
 
     This equation can be solved as
 
-      p = (XT*X)^-1 * XT * y
+        p = (XT*X)^-1 * XT * y
 
     where XT is the transpose of X and -1 denotes the inverse. However, this
     method is susceptible to rounding errors and generally the singular value
-    decomposition of the matrix X is preferred and that is what is done here. The singular
-    value method takes a paramenter, 'rcond', which sets a limit on the
-    relative size of the smallest singular value to be used in solving the
-    equation. This may result in lowering the rank of the Vandermonde matrix,
-    in which case a RankWarning is issued. If polyfit issues a RankWarning, try
-    a fit of lower degree or replace x by x - x.mean(), both of which will
+    decomposition of the matrix X is preferred and that is what is done here.
+    The singular value method takes a paramenter, 'rcond', which sets a limit on
+    the relative size of the smallest singular value to be used in solving the
+    equation. This may result in lowering the rank of the Vandermonde matrix, in
+    which case a RankWarning is issued. If polyfit issues a RankWarning, try a
+    fit of lower degree or replace x by x - x.mean(), both of which will
     generally improve the condition number. The routine already normalizes the
     vector x by its maximum absolute value to help in this regard. The rcond
-    parameter can be set to a value smaller than its default, but the
-    resulting fit may be spurious. The current default value of rcond is len(x)*eps, where
+    parameter can be set to a value smaller than its default, but the resulting
+    fit may be spurious. The current default value of rcond is len(x)*eps, where
     eps is the relative precision of the floating type being used, generally
     around 1e-7 and 2e-16 for IEEE single and double precision respectively.
     This value of rcond is fairly conservative but works pretty well when x -
@@ -272,18 +267,16 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     DISCLAIMER: Power series fits are full of pitfalls for the unwary once the
     degree of the fit becomes large or the interval of sample points is badly
-    centered. The problem is that the powers x**n are generally a poor
-    basis for the polynomial functions on the sample interval, resulting in a
-    Vandermonde matrix is ill conditioned and coefficients sensitive to rounding
-    erros. The computation of the polynomial
-    values will also sensitive to rounding errors. Consequently, the quality of
-    the polynomial fit
-    should be checked against the data whenever the condition number is large.
-    The quality of polynomial fits *can not* be taken for granted. If all
-    you want to do is draw a smooth curve through the y values and polyfit is
-    not doing the job, try centering the sample range or look into
-    scipy.interpolate, which includes some nice spline fitting functions that
-    may be of use.
+    centered. The problem is that the powers x**n are generally a poor basis for
+    the polynomial functions on the sample interval, resulting in a Vandermonde
+    matrix is ill conditioned and coefficients sensitive to rounding erros. The
+    computation of the polynomial values will also sensitive to rounding errors.
+    Consequently, the quality of the polynomial fit should be checked against
+    the data whenever the condition number is large.  The quality of polynomial
+    fits *can not* be taken for granted. If all you want to do is draw a smooth
+    curve through the y values and polyfit is not doing the job, try centering
+    the sample range or look into scipy.interpolate, which includes some nice
+    spline fitting functions that may be of use.
 
     For more info, see
     http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
@@ -344,19 +337,37 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
 
 def polyval(p, x):
-    """Evaluate the polynomial p at x.  If x is a polynomial then composition.
+    """Evaluate the polynomial p at x.
 
-    Description:
+    If p is of length N, this function returns the value:
 
-      If p is of length N, this function returns the value:
-      p[0]*(x**N-1) + p[1]*(x**N-2) + ... + p[N-2]*x + p[N-1]
+        p[0]*(x**N-1) + p[1]*(x**N-2) + ... + p[N-2]*x + p[N-1]
 
-      x can be a sequence and p(x) will be returned for all elements of x.
-      or x can be another polynomial and the composite polynomial p(x) will be
-      returned.
+    If x is a sequence then p(x) will be returned for all elements of x. If x is
+    another polynomial then the composite polynomial p(x) will be returned.
 
-      Notice:  This can produce inaccurate results for polynomials with
-      significant variability. Use carefully.
+    Parameters
+    ----------
+    p : {array_like, poly1d}
+        1D array of polynomial coefficients from highest degree to zero or an
+        instance of poly1d.
+    x : {array_like, poly1d}
+        A number, a 1D array of numbers, or an instance of poly1d.
+
+    Returns
+    -------
+    values : {array, poly1d}
+        If either p or x is an instance of poly1d, then an instance of poly1d is
+        returned, otherwise a 1D array is returned. In the case where x is a
+        poly1d, the result is the composition of the two polynomials, i.e.,
+        substitution is used.
+
+    Notes
+    -----
+    Horners method is used to evaluate the polynomial. Even so, for polynomial
+    if high degree the values may be inaccurate due to rounding errors. Use
+    carefully.
+
     """
     p = NX.asarray(p)
     if isinstance(x, poly1d):
