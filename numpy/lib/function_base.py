@@ -368,7 +368,7 @@ def average(a, axis=None, weights=None, returned=False):
     ZeroDivisionError
         Results when all weights are zero.if appropriate. The version in MA
         does not, it returns masked values.
-    ValueError
+    TypeError
         Results when both an axis and weights are specified and the weights are
         not an 1D array.
 
@@ -399,7 +399,7 @@ def average(a, axis=None, weights=None, returned=False):
         wgt = np.array(weights, dtype=a.dtype, copy=0)
         scl = wgt.sum()
         if axis is not None and wgt.ndim != 1 :
-            raise ValueError, 'Weights must be 1D when axis is specified'
+            raise TypeError, 'Weights must be 1D when axis is specified'
         if scl == 0.0:
             raise ZeroDivisionError, "Weights sum to zero, can't be normalized"
 
