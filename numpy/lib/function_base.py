@@ -359,7 +359,7 @@ def average(a, axis=None, weights=None, returned=False):
         Returns the average along the specified axis by default. When returned
         is True, the returns a tuple with the average as the first element and
         the sum of the weights as the second element. The return type is
-        double if a is of integer type, otherwise it is of the same type as a.
+        Float if a is of integer type, otherwise it is of the same type as a.
         When returned, sum_of_weights is a scalar with the same type as the
         average.
 
@@ -368,55 +368,51 @@ def average(a, axis=None, weights=None, returned=False):
     ZeroDivisionError
         Results when all weights are zero.if appropriate. The version in MA
         does not, it returns masked values.
+    ValueError
+        Results when both an axis and weights are specified and the weights are
+        not an 1D array.
 
     Notes
     -----
-
     The default behavior is equivalent to
 
-        a.sum(axis) / size(a, axis) .
+        a.mean(axis).
 
     If weights are given, and axis=None, then the result is equivalent to
 
-        sum(a * weights) / sum(weights),
+        sum(a * weights) / (a.size/weights.size)*sum(weights)),
 
     In the case when the axis is not the default, then the result is equivalent
-    to
+    to weights broadcast over the specified axis, then
 
-        tensordot(weights, a, (0,axis))/weights.sum()
-
-    size of a in the given axis. Integer weights are converted to Float.  Not
-    specifying weights is equivalent to specifying weights that are all 1.
-
-    If 'returned' is True, return a tuple: the result and the sum of the weights
-    or count of values. These are both scalars.
+        sum(a * weights)/sum(weights)
 
     """
-    # convert a to array and compatible floating type.
-    a = np.asarray(a) + 0.0
-    if axis is None :
-        if weights is None:
-            scl = a.dtype.type(a.size)
-            tot = a.sum()
-        else :
-            wgt = np.asarray(weights, dtype=a.dtype)
-            scl = wgt.sum()
-            tot = np.multiply(a,wgt).sum()
-    else:
-        if weights is None:
-            scl = a.dtype.type(a.shape[axis])
-            tot = a.sum(axis)
-        else :
-            wgt = np.array(weights, copy=False, dtype=a.dtype, ndmin=1)
-            scl = wgt.sum()
-            tot = np.tensordot(wgt, a, (0,axis))
+    if not isinstance(a, np.matrix) :
+        a = np.asarray(a)
 
-    if scl == 0.0:
-        raise ZeroDivisionError, 'zero denominator in average()'
+    if weights is None :
+        avg = a.mean(axis)
+        scl = avg.dtype.type(a.size/avg.size)
+    else :
+        a = a + 0.0
+        wgt = np.array(weights, dtype=a.dtype, copy=0)
+        scl = wgt.sum()
+        if axis is not None and wgt.ndim != 1 :
+            raise ValueError, 'Weights must be 1D when axis is specified'
+        if scl == 0.0:
+            raise ZeroDivisionError, "Weights sum to zero, can't be normalized"
+
+        if axis is None :
+            scl = scl*(a.size/wgt.size)
+        else:
+            wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1,axis)
+        avg = np.multiply(a,wgt).sum(axis)/scl
+
     if returned:
-        return tot/scl, scl
+        return avg, scl
     else:
-        return tot/scl
+        return avg
 
 def asarray_chkfinite(a):
     """Like asarray, but check that no NaNs or Infs are present.
