@@ -30,19 +30,29 @@ else:
             warnings.warn("All features of ctypes interface may not work " \
                           "with ctypes < 1.0.1")
         if '.' not in libname:
+            # Try to load library with platform-specific name, otherwise
+            # default to libname.so.  Sometimes, .so files are built
+            # erroneously on non-linux platforms.
+            libname_ext = ['%s.so' % libname]
             if sys.platform == 'win32':
-                libname = '%s.dll' % libname
+                libname_ext.insert(0, '%s.dll' % libname)
             elif sys.platform == 'darwin':
-                libname = '%s.dylib' % libname
-            else:
-                libname = '%s.so' % libname
+                libname_ext.insert(0, '%s.dylib' % libname)
+
         loader_path = os.path.abspath(loader_path)
         if not os.path.isdir(loader_path):
             libdir = os.path.dirname(loader_path)
         else:
             libdir = loader_path
-        libpath = os.path.join(libdir, libname)
-        return ctypes.cdll[libpath]
+
+        for ln in libname_ext:
+            try:
+                libpath = os.path.join(libdir, ln)
+                return ctypes.cdll[libpath]
+            except OSError, e:
+                pass
+
+        raise e
 
     ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
                                     'load_library')

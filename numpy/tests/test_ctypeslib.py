@@ -1,6 +1,11 @@
 import numpy as np
-from numpy.ctypeslib import ndpointer
+from numpy.ctypeslib import ndpointer, load_library
 from numpy.testing import *
+
+class TestLoadLibrary(NumpyTestCase):
+    def check_basic(self):
+        cdll = load_library('multiarray',
+                            np.core.multiarray.__file__)
 
 class TestNdpointer(NumpyTestCase):
     def check_dtype(self):
