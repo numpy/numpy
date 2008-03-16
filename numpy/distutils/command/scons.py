@@ -325,7 +325,7 @@ class scons(old_build_ext):
                 elif int(self.silent) == 2:
                     cmd.append('-s')
             cmdstr = ' '.join(cmd)
-            log.info("Executing scons command: %s ", cmdstr)
+            log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
             st = os.system(cmdstr)
             if st:
                 print "status is %d" % st
