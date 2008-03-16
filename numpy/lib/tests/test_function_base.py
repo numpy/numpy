@@ -50,31 +50,30 @@ class TestAverage(NumpyTestCase):
         y4 = ones((4,4))
         y4[0,1] = 0
         y4[1,0] = 2
-        assert_array_equal(y4.mean(0), average(y4, 0))
-        assert_array_equal(y4.mean(1), average(y4, 1))
+        assert_almost_equal(y4.mean(0), average(y4, 0))
+        assert_almost_equal(y4.mean(1), average(y4, 1))
 
         y5 = rand(5,5)
-        assert_array_equal(y5.mean(0), average(y5, 0))
-        assert_array_equal(y5.mean(1), average(y5, 1))
+        assert_almost_equal(y5.mean(0), average(y5, 0))
+        assert_almost_equal(y5.mean(1), average(y5, 1))
 
     def check_weighted(self):
-        y1 = array([[1,2,3],
-                    [4,5,6]])
+        y1 = array([[1,2,3],[4,5,6]])
         actual = average(y1,weights=[1,2],axis=0)
         desired = array([3.,4.,5.])
-        assert_array_equal(actual, desired)
+        assert_almost_equal(actual, desired)
         
     def check_shape(self):
-        y = array([[1,2,3],
-                    [4,5,6]])
+        y = array([[1,2,3],[4,5,6]])
 
-        w2 = [[0,0,1],[0,0,1]]
-        desired = array([3., 6.])
-        assert_array_equal(average(y, weights=w2, axis=1), desired)
+        # this is not a valid test as documented in average. Should it be?
+        #w2 = [[0,0,1],[0,0,1]]
+        #desired = array([3., 6.])
+        #assert_array_equal(average(y, weights=w2, axis=1), desired)
         
         w1 = [0,0,1]
         desired = array([3., 6.])
-        assert_array_equal(average(y, weights=w1, axis=1), desired)
+        assert_almost_equal(average(y, weights=w1, axis=1), desired)
         
 
 

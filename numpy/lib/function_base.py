@@ -27,6 +27,7 @@ from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize, bincount, interp
 from arraysetops import setdiff1d
+import numpy as np
 
 #end Fernando's utilities
 
@@ -326,71 +327,96 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
 
 def average(a, axis=None, weights=None, returned=False):
-    """Average the array over the given axis.  If the axis is None,
-    average over all dimensions of the array.  Equivalent to
-    a.mean(axis) and to
+    """Average the array over the given axis.
+    
+    Average over the specified axis using the given weights. The average is
+    taken over all array elements by default. The default values of the
+    weights is one. When the weights are given, then they must be
+    broadcastable to the shape of a when the average is taken over all
+    elements, otherwise they must fill a 1D array of the same length as the
+    axis.
 
-      a.sum(axis) / size(a, axis)
+    Parameters
+    ----------
+    a : array_like
+        Array containing data to be averaged.
+    axis : {None, integer}, optional
+        Axis to be averaged over. If axis is None, the the average is taken
+        over all elements in the array.
+    weights : {None, array_like}, optional
+        A weighted average is formed using the given weights. If weights=None
+        then all weights are taken to be one. If axis=None, the the shape of
+        the weights must be broadcastable to the shape of a, other wise
+        weights must be 1D and of the same length as the specified axis.
+    returned :{False, boolean}, optional
+        When true, then a tuple (average, sum_of_weights) is returned,
+        otherwise just the average. If the weights are all one the sum of the
+        weights will also be the number of elements averaged over.
 
-    If weights are given, result is:
-        sum(a * weights,axis) / sum(weights,axis),
-    where the weights must have a's shape or be 1D with length the
-    size of a in the given axis. Integer weights are converted to
-    Float.  Not specifying weights is equivalent to specifying
-    weights that are all 1.
+    Returns
+    -------
+    average, [sum_of_weights] : {array_type, double}
+        Returns the average along the specified axis by default. When returned
+        is True, the returns a tuple with the average as the first element and
+        the sum of the weights as the second element. The return type is
+        double if a is of integer type, otherwise it is of the same type as a.
+        When returned, sum_of_weights is a scalar with the same type as the
+        average.
 
-    If 'returned' is True, return a tuple: the result and the sum of
-    the weights or count of values. The shape of these two results
-    will be the same.
+    Exceptions
+    ----------
+    ZeroDivisionError
+        Results when all weights are zero.if appropriate. The version in MA
+        does not, it returns masked values.
 
-    Raises ZeroDivisionError if appropriate.  (The version in MA does
-    not -- it returns masked values).
+    Notes
+    -----
+
+    The default behavior is equivalent to
+
+        a.sum(axis) / size(a, axis) .
+
+    If weights are given, and axis=None, then the result is equivalent to
+
+        sum(a * weights) / sum(weights),
+
+    In the case when the axis is not the default, then the result is equivalent
+    to
+
+        tensordot(weights, a, (0,axis))/weights.sum()
+
+    size of a in the given axis. Integer weights are converted to Float.  Not
+    specifying weights is equivalent to specifying weights that are all 1.
+
+    If 'returned' is True, return a tuple: the result and the sum of the weights
+    or count of values. These are both scalars.
 
     """
-    if axis is None:
-        a = array(a).ravel()
+    # convert a to array and compatible floating type.
+    a = np.asarray(a) + 0.0
+    if axis is None :
         if weights is None:
-            n = add.reduce(a)
-            d = len(a) * 1.0
-        else:
-            w = array(weights).ravel() * 1.0
-            n = add.reduce(multiply(a, w))
-            d = add.reduce(w)
+            scl = a.dtype.type(a.size)
+            tot = a.sum()
+        else :
+            wgt = np.asarray(weights, dtype=a.dtype)
+            scl = wgt.sum()
+            tot = np.multiply(a,wgt).sum()
     else:
-        a = array(a)
-        ash = a.shape
-        if ash == ():
-            a.shape = (1,)
         if weights is None:
-            n = add.reduce(a, axis)
-            d = ash[axis] * 1.0
-            if returned:
-                d = ones(n.shape) * d
-        else:
-            w = array(weights, copy=False) * 1.0
-            wsh = w.shape
-            if wsh == ():
-                wsh = (1,)
-            if wsh == ash:
-                n = add.reduce(a*w, axis)
-                d = add.reduce(w, axis)
-            elif wsh == (ash[axis],):
-                ni = len(ash)
-                r = [newaxis]*ni
-                r[axis] = slice(None, None, 1)
-                r = tuple(r)
-                n = add.reduce(a*w[r], axis)
-                d = add.reduce(w, axis)
-            else:
-                raise ValueError, 'averaging weights have wrong shape'
+            scl = a.dtype.type(a.shape[axis])
+            tot = a.sum(axis)
+        else :
+            wgt = np.array(weights, copy=False, dtype=a.dtype, ndmin=1)
+            scl = wgt.sum()
+            tot = np.tensordot(wgt, a, (0,axis))
 
-    if not isinstance(d, ndarray):
-        if d == 0.0:
-            raise ZeroDivisionError, 'zero denominator in average()'
+    if scl == 0.0:
+        raise ZeroDivisionError, 'zero denominator in average()'
     if returned:
-        return n/d, d
+        return tot/scl, scl
     else:
-        return n/d
+        return tot/scl
 
 def asarray_chkfinite(a):
     """Like asarray, but check that no NaNs or Infs are present.
