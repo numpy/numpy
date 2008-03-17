@@ -338,8 +338,8 @@ PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
         x.real = ((longdouble *)ip1)[0];
         x.imag = ((longdouble *)ip1)[1];
         ((ClongdoubleUnaryFunc *)func)(&x, &res);
-        ((double *)op)[0] = res.real;
-        ((double *)op)[1] = res.imag;
+        ((longdouble *)op)[0] = res.real;
+        ((longdouble *)op)[1] = res.imag;
     }
 }
 
