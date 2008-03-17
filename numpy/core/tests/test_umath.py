@@ -3,6 +3,7 @@ set_package_path()
 from numpy.core.umath import minimum, maximum, exp
 import numpy.core.umath as ncu
 from numpy import zeros, ndarray, array, choose, pi
+import numpy as np
 restore_path()
 
 class TestDivision(NumpyTestCase):
@@ -72,7 +73,7 @@ def TestRadians(NumpyTestCase):
         assert_almost_equal(ncu.degrees(-90.0), -0.5*pi)
 
 class TestSpecialMethods(NumpyTestCase):
-    def test_wrap(self):
+    def check_wrap(self):
         class with_wrap(object):
             def __array__(self):
                 return zeros(1)
@@ -91,7 +92,7 @@ class TestSpecialMethods(NumpyTestCase):
         assert_equal(args[1], a)
         self.failUnlessEqual(i, 0)
 
-    def test_old_wrap(self):
+    def check_old_wrap(self):
         class with_wrap(object):
             def __array__(self):
                 return zeros(1)
@@ -103,7 +104,7 @@ class TestSpecialMethods(NumpyTestCase):
         x = minimum(a, a)
         assert_equal(x.arr, zeros(1))
 
-    def test_priority(self):
+    def check_priority(self):
         class A(object):
             def __array__(self):
                 return zeros(1)
@@ -141,7 +142,7 @@ class TestSpecialMethods(NumpyTestCase):
         self.failUnless(type(exp(b) is B))
         self.failUnless(type(exp(c) is C))
 
-    def test_failing_wrap(self):
+    def check_failing_wrap(self):
         class A(object):
             def __array__(self):
                 return zeros(1)
@@ -150,7 +151,7 @@ class TestSpecialMethods(NumpyTestCase):
         a = A()
         self.failUnlessRaises(RuntimeError, maximum, a, a)
 
-    def test_array_with_context(self):
+    def check_array_with_context(self):
         class A(object):
             def __array__(self, dtype=None, context=None):
                 func, args, i = context
@@ -174,27 +175,40 @@ class TestSpecialMethods(NumpyTestCase):
         assert_equal(maximum(a, C()), 0)
 
 class TestChoose(NumpyTestCase):
-    def test_mixed(self):
+    def check_mixed(self):
         c = array([True,True])
         a = array([True,True])
         assert_equal(choose(c, (a, 1)), array([1,1]))
 
 
-class _test_complex_real(NumpyTestCase):
-    def setUp(self):
-        self.x = 0.52
-        self.z = self.x+0j
-        self.funcs = ['arcsin', 'arccos', 'arctan', 'arcsinh', 'arccosh',
-                      'arctanh', 'sin', 'cos', 'tan', 'exp', 'log', 'sqrt',
-                      'log10']
-    def test_it(self):
-        for fun in self.funcs:
-            cr = fun(self.z)
-            assert_almost_equal(fun(self.x),cr.real)
-            assert_almost_equal(0, cr.imag)
+class TestComplexFunctions(NumpyTestCase):
+    funcs = [np.arcsin , np.arccos , np.arctan, np.arcsinh, np.arccosh,
+             np.arctanh, np.sin    , np.cos   , np.tan    , np.exp,
+             np.log    , np.sqrt   , np.log10]
+
+    def check_it(self):
+        for f in self.funcs:
+            if f is np.arccosh :
+                x = 1.5
+            else :
+                x = .5
+            fr = f(x)
+            fz = f(np.complex(x))
+            assert_almost_equal(fr, fz.real, err_msg='real part %s'%f)
+            assert_almost_equal(0., fz.imag, err_msg='imag part %s'%f)
+
+    def check_precisions_consistent(self) :
+        z = 1 + 1j
+        for f in self.funcs :
+            fcf = f(np.csingle(z))
+            fcd  = f(np.cdouble(z))
+            fcl = f(np.clongdouble(z))
+            assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s'%f)
+            assert_almost_equal(fcf, fcl, decimal=6, err_msg='fch-fcl %s'%f)
+
 
 class TestChoose(NumpyTestCase):
-    def test_attributes(self):
+    def check_attributes(self):
         add = ncu.add
         assert_equal(add.__name__, 'add')
         assert_equal(add.__doc__, 'y = add(x1,x2) adds the arguments elementwise.')
