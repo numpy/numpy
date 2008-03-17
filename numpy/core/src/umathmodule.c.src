@@ -805,15 +805,14 @@ static void
 nc_acosh@c@(c@typ@ *x, c@typ@ *r)
 {
     nc_prod@c@(x, x, r);
-    nc_diff@c@(&nc_1@c@, r, r);
+    nc_diff@c@(r, &nc_1@c@, r);
     nc_sqrt@c@(r, r);
-    nc_prodi@c@(r, r);
     nc_sum@c@(x, r, r);
     nc_log@c@(r, r);
     return;
     /*
-      return nc_log(nc_sum(x,nc_prod(nc_i,
-      nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))));
+      return nc_log(nc_sum(x,
+      nc_sqrt(nc_diff(nc_prod(x,x),nc_1))));
     */
 }
 
