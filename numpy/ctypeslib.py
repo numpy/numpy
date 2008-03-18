@@ -31,9 +31,9 @@ else:
                           "with ctypes < 1.0.1")
         if '.' not in libname:
             # Try to load library with platform-specific name, otherwise
-            # default to libname.so.  Sometimes, .so files are built
+            # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
-            libname_ext = ['%s.so' % libname]
+            libname_ext = ['%s.so' % libname, '%s.pyd' % libname]
             if sys.platform == 'win32':
                 libname_ext.insert(0, '%s.dll' % libname)
             elif sys.platform == 'darwin':
