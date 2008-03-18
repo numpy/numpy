@@ -39,11 +39,11 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'logical_and', 'logical_not', 'logical_or', 'logical_xor',
            'make_mask', 'make_mask_none', 'mask_or', 'masked',
            'masked_array', 'masked_equal', 'masked_greater',
-           'masked_greater_equal', 'masked_inside', 'masked_less',
-           'masked_less_equal', 'masked_not_equal', 'masked_object',
-           'masked_outside', 'masked_print_option', 'masked_singleton',
-           'masked_values', 'masked_where', 'max', 'maximum', 'mean', 'min',
-           'minimum', 'multiply',
+           'masked_greater_equal', 'masked_inside', 'masked_invalid',
+           'masked_less','masked_less_equal', 'masked_not_equal', 
+           'masked_object','masked_outside', 'masked_print_option', 
+           'masked_singleton','masked_values', 'masked_where', 'max', 'maximum', 
+           'mean', 'min', 'minimum', 'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
            'power', 'product', 'ptp', 'put', 'putmask',
@@ -830,7 +830,7 @@ def masked_where(condition, a, copy=True):
         Whether to return a copy of a (True) or modify a in place.
 
     """
-    cond = filled(condition,1)
+    cond = make_mask(condition)
     a = narray(a, copy=copy, subok=True)
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
@@ -967,7 +967,7 @@ def masked_invalid(a, copy=True):
 
     """
     a = narray(a, copy=copy, subok=True)
-    condition = (numpy.isnan(a) | numpy.isinf(a))
+    condition = ~(numpy.isfinite(a))
     if hasattr(a, '_mask'):
         condition = mask_or(condition, a._mask)
         cls = type(a)
@@ -1306,7 +1306,7 @@ class MaskedArray(numeric.ndarray):
         m = self._mask
         if not getattr(dout,'ndim', False):
             # Just a scalar............
-            if m is not nomask and m[indx]:
+            if (not m.ndim and not m) or m[indx]:
                 return masked
         else:
             # Force dout to MA ........
@@ -2103,7 +2103,7 @@ masked_%(name)s(data = %(data)s,
         result.__setmask__(self.mask)
         return result
 
-    def mean(self, axis=None, dtype=None):
+    def mean(self, axis=None, dtype=None, out=None):
         """Average the array over the given axis.  Equivalent to
 
         a.sum(axis, dtype) / a.size(axis).
@@ -2119,11 +2119,14 @@ masked_%(name)s(data = %(data)s,
 
         """
         if self._mask is nomask:
-            return super(MaskedArray, self).mean(axis=axis, dtype=dtype)
+            result = super(MaskedArray, self).mean(axis=axis, dtype=dtype)
         else:
             dsum = self.sum(axis=axis, dtype=dtype)
             cnt = self.count(axis=axis)
-            return dsum*1./cnt
+            result = dsum*1./cnt
+        if out is not None:
+            out.flat = result.ravel()
+        return result
 
     def anom(self, axis=None, dtype=None):
         """Return the anomalies (deviations from the average) along
@@ -3307,14 +3310,3 @@ def loads(strg):
 
 ################################################################################
 
-if 1:
-    from testutils import assert_equal
-    if 1:
-        mtype = [('f',float_),('s','|S3')]
-        x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
-        x[0] = (10,'A')
-        (xf, xs) = (x['f'], x['s'])
-        assert_equal(xf.data, [10,2,numpy.pi])
-        assert_equal(xf.dtype, float_)
-        assert_equal(xs.data, ['A', 'b', 'pi'])
-        assert_equal(xs.dtype, '|S3')

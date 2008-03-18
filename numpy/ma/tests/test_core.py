@@ -1451,8 +1451,17 @@ class TestArrayMethods(NumpyTestCase):
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
 
-
 #..............................................................................
+
+class TestMiscFunctions(NumpyTestCase):
+    "Test class for miscellaneous functions."
+    #
+    def test_masked_where(self):
+        x = [1,2]
+        y = masked_where(False,x)
+        assert_equal(y,[1,2])
+        assert_equal(y[1],2)
+
 
 ###############################################################################
 #------------------------------------------------------------------------------
