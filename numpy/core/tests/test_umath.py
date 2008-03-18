@@ -194,8 +194,8 @@ class TestComplexFunctions(NumpyTestCase):
                 x = .5
             fr = f(x)
             fz = f(np.complex(x))
-            assert_almost_equal(fr, fz.real, err_msg='real part %s'%f)
-            assert_almost_equal(0., fz.imag, err_msg='imag part %s'%f)
+            assert_almost_equal(fz.real, fr, err_msg='real part %s'%f)
+            assert_almost_equal(fz.imag, 0., err_msg='imag part %s'%f)
 
     def check_precisions_consistent(self) :
         z = 1 + 1j
@@ -204,7 +204,7 @@ class TestComplexFunctions(NumpyTestCase):
             fcd  = f(np.cdouble(z))
             fcl = f(np.clongdouble(z))
             assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s'%f)
-            assert_almost_equal(fcf, fcl, decimal=6, err_msg='fch-fcl %s'%f)
+            assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s'%f)
 
 
 class TestChoose(NumpyTestCase):
