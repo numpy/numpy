@@ -662,22 +662,20 @@ class TestFromToFile(NumpyTestCase):
         rand = np.random.random
 
         self.x = rand(shape) + rand(shape).astype(np.complex)*1j
-        self.dtype = np.complex
+        self.dtype = self.x.dtype
 
     def test_file(self):
-        # Python under Windows does not believe that TemporaryFile
-        # is an open file
-        if sys.platform.startswith('win'):
-            filename = tempfile.mktemp()
-            f = open(filename,'wb')
-        else:
-            f = tempfile.TemporaryFile()
-
-        self.x.tofile(f)
-        f.flush()
-        f.seek(0)
-        y = np.fromfile(f,dtype=self.dtype)
-        assert_array_equal(y,self.x.flat)
+        # Test disabled on Windows, since the tempfile does not flush
+        # properly.  The test ensures that both filenames and file
+        # objects are accepted in tofile and fromfile, so as long as
+        # it runs on at least one platform, we should be ok.
+        if not sys.platform.startswith('win'):
+            tmp_file = tempfile.NamedTemporaryFile('wb',
+                                                   prefix='numpy_tofromfile')
+            self.x.tofile(tmp_file.file)
+            tmp_file.flush()
+            y = np.fromfile(tmp_file.name,dtype=self.dtype)
+            assert_array_equal(y,self.x.flat)
 
     def test_filename(self):
         filename = tempfile.mktemp()
