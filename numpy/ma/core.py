@@ -1306,7 +1306,7 @@ class MaskedArray(numeric.ndarray):
         m = self._mask
         if not getattr(dout,'ndim', False):
             # Just a scalar............
-            if (not m.ndim and not m) or m[indx]:
+            if m is not nomask and m[indx]:
                 return masked
         else:
             # Force dout to MA ........
