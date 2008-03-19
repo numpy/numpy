@@ -83,14 +83,14 @@ static PyObject *
 arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
 {
     /* arr_bincount is registered as bincount.
-     * arr_bincount accepts one or two arguments. The first is an array of
+     * bincount accepts one or two arguments. The first is an array of
      * non-negative integers and the second, if present, is an array of
      * weights, which must be promotable to double.  Call these arguments list
-     * and weight. Both must be one- dimensional. len (weight) == len(list)
+     * and weight. Both must be one-dimensional with len(weight) == len(list)
      * If weight is not present:
-     *   arr_bincount(self,list)[i] is the number of occurrences of i in list.
+     *   bincount(list)[i] is the number of occurrences of i in list.
      * If weight is present:
-     *   arr_bincount(self,list, weight)[i] is the sum of all weight[j]
+     *   bincount(self,list, weight)[i] is the sum of all weight[j]
      * where list [j] == i.
      * Self is not used.
      */
@@ -111,7 +111,7 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
     mxi = mxx (numbers, len) ;
     mni = mnx (numbers, len) ;
     Py_Assert(numbers[mni] >= 0,
-              "irst argument of bincount must be non-negative");
+              "The first argument of bincount must be non-negative");
     ans_size = numbers [mxi] + 1 ;
     type = PyArray_DescrFromType(PyArray_INTP);
     if (weight == Py_None) {
@@ -125,8 +125,8 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
         Py_Try(wts = PyArray_ContiguousFromAny(weight,
                                                PyArray_DOUBLE, 1, 1));
         weights = (double *)PyArray_DATA (wts);
-        Py_Assert(PyArray_SIZE(wts) == len, "bincount: length of weights " \
-                  "does not match that of list");
+        Py_Assert(PyArray_SIZE(wts) == len,
+                "bincount: length of weights does not match that of list");
         type = PyArray_DescrFromType(PyArray_DOUBLE);
         Py_Try(ans = PyArray_Zeros(1, &ans_size, type, 0));
         dans = (double *)PyArray_DATA (ans);
