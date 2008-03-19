@@ -63,19 +63,19 @@ The file 'site.cfg' is looked for in
 
 The first one found is used to get system configuration options The
 format is that used by ConfigParser (i.e., Windows .INI style). The
-section DEFAULT has options that are the default for each section. The
+section ALL has options that are the default for each section. The
 available sections are fftw, atlas, and x11. Appropiate defaults are
 used if nothing is specified.
 
 The order of finding the locations of resources is the following:
  1. environment variable
  2. section in site.cfg
- 3. DEFAULT section in site.cfg
+ 3. ALL section in site.cfg
 Only the first complete match is returned.
 
 Example:
 ----------
-[DEFAULT]
+[ALL]
 library_dirs = /usr/lib:/usr/local/lib:/opt/lib
 include_dirs = /usr/include:/usr/local/include:/opt/include
 src_dirs = /usr/local/src:/opt/src
@@ -337,7 +337,7 @@ class system_info:
 
     """ get_info() is the only public method. Don't use others.
     """
-    section = 'DEFAULT'
+    section = 'ALL'
     dir_env_var = None
     search_static_first = 0 # XXX: disabled by default, may disappear in
                             # future unless it is proved to be useful.
@@ -474,7 +474,7 @@ class system_info:
                             if os.path.isdir(d1):
                                 ds2.append(d1)
                 dirs = ds2 + dirs
-        default_dirs = self.cp.get('DEFAULT', key).split(os.pathsep)
+        default_dirs = self.cp.get(self.section, key).split(os.pathsep)
         dirs.extend(default_dirs)
         ret = []
         for d in dirs:
