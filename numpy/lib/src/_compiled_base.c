@@ -82,17 +82,18 @@ mnx (intp *i , intp len)
 static PyObject *
 arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    /* histogram accepts one or two arguments. The first is an array
-     * of non-negative integers and the second, if present, is an
-     * array of weights, which must be promotable to double.
-     * Call these arguments list and weight. Both must be one-
-     * dimensional. len (weight) == len(list)
+    /* arr_bincount is registered as bincount.
+     * arr_bincount accepts one or two arguments. The first is an array of
+     * non-negative integers and the second, if present, is an array of
+     * weights, which must be promotable to double.  Call these arguments list
+     * and weight. Both must be one- dimensional. len (weight) == len(list)
      * If weight is not present:
-     *   histogram (list) [i] is the number of occurrences of i in list.
+     *   arr_bincount(self,list)[i] is the number of occurrences of i in list.
      * If weight is present:
-     *   histogram (list, weight) [i] is the sum of all weight [j]
-     * where list [j] == i.                                              */
-    /* self is not used */
+     *   arr_bincount(self,list, weight)[i] is the sum of all weight[j]
+     * where list [j] == i.
+     * Self is not used.
+     */
     PyArray_Descr *type;
     PyObject *list = NULL, *weight=Py_None ;
     PyObject *lst=NULL, *ans=NULL, *wts=NULL;
@@ -149,11 +150,11 @@ static PyObject *
 arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
 {
     /* digitize (x, bins) returns an array of python integers the same
-       length of x. The values i returned are such that
-       bins [i - 1] <= x < bins [i] if bins is monotonically increasing,
-       or bins [i - 1] > x >= bins [i] if bins is monotonically decreasing.
-       Beyond the bounds of bins, returns either i = 0 or i = len (bins)
-       as appropriate.                                                      */
+       length of x. The values i returned are such that bins [i - 1] <= x <
+       bins [i] if bins is monotonically increasing, or bins [i - 1] > x >=
+       bins [i] if bins is monotonically decreasing.  Beyond the bounds of
+       bins, returns either i = 0 or i = len (bins) as appropriate.
+    */
     /* self is not used */
     PyObject *ox, *obins ;
     PyObject *ax=NULL, *abins=NULL, *aret=NULL;
