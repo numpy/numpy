@@ -327,66 +327,50 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
 
 def average(a, axis=None, weights=None, returned=False):
-    """Average the array over the given axis.
+    """Return the weighted average of array a over the given axis.
+       
     
-    Average over the specified axis using the given weights. The average is
-    taken over all array elements by default. The default values of the
-    weights is one. When the weights are given, then they must be
-    broadcastable to the shape of a when the average is taken over all
-    elements, otherwise they must fill a 1D array of the same length as the
-    axis.
-
     Parameters
     ----------
     a : array_like
-        Array containing data to be averaged.
+        Data to be averaged.
     axis : {None, integer}, optional
-        Axis to be averaged over. If axis is None, the the average is taken
-        over all elements in the array.
+        Axis along which to average a. If None, averaging is done over the 
+        entire array irrespective of its shape. 
     weights : {None, array_like}, optional
-        A weighted average is formed using the given weights. If weights=None
-        then all weights are taken to be one. If axis=None, the the shape of
-        the weights must be broadcastable to the shape of a, other wise
-        weights must be 1D and of the same length as the specified axis.
+        The importance each datum has in the computation of the 
+        average. The weights array can either be 1D, in which case  its length 
+        must be the size of a along the given axis, or of the same shape as a. 
+        If weights=None, all data are assumed to have weight equal to one. 
     returned :{False, boolean}, optional
-        When true, then a tuple (average, sum_of_weights) is returned,
-        otherwise just the average. If the weights are all one the sum of the
-        weights will also be the number of elements averaged over.
+        If True, the tuple (average, sum_of_weights) is returned,
+        otherwise only the average is returmed. Note that if weights=None, then 
+        the sum of the weights is also the number of elements averaged over.
 
     Returns
     -------
     average, [sum_of_weights] : {array_type, double}
-        Returns the average along the specified axis by default. When returned
-        is True, the returns a tuple with the average as the first element and
-        the sum of the weights as the second element. The return type is
-        Float if a is of integer type, otherwise it is of the same type as a.
-        When returned, sum_of_weights is a scalar with the same type as the
-        average.
+        Return the average along the specified axis. When returned is True, 
+        return a tuple with the average as the first element and the sum 
+        of the weights as the second element. The return type is Float if a is 
+        of integer type, otherwise it is of the same type as a.
+        sum_of_weights is has the same type as the average.
 
+    
+    Example
+    -------
+      >>> average(range(1,11), weights=range(10,0,-1))
+      4.0
+    
     Exceptions
     ----------
     ZeroDivisionError
-        Results when all weights are zero.if appropriate. The version in MA
-        does not, it returns masked values.
+        Raised when all weights along axis are zero. See numpy.ma.average for a 
+        version robust to this type of error. 
     TypeError
-        Results when both an axis and weights are specified and the weights are
-        not an 1D array.
-
-    Notes
-    -----
-    The default behavior is equivalent to
-
-        a.mean(axis).
-
-    If weights are given, and axis=None, then the result is equivalent to
-
-        sum(a * weights) / (a.size/weights.size)*sum(weights)),
-
-    In the case when the axis is not the default, then the result is equivalent
-    to weights broadcast over the specified axis, then
-
-        sum(a * weights)/sum(weights)
-
+        Raised when the length of 1D weights is not the same as the shape of a 
+        along axis. 
+    
     """
     if not isinstance(a, np.matrix) :
         a = np.asarray(a)
@@ -397,19 +381,27 @@ def average(a, axis=None, weights=None, returned=False):
     else :
         a = a + 0.0
         wgt = np.array(weights, dtype=a.dtype, copy=0)
-        scl = wgt.sum()
-        if axis is not None and wgt.ndim != 1 :
-            raise TypeError, 'Weights must be 1D when axis is specified'
-        if scl == 0.0:
+
+        # Sanity checks
+        if a.shape != wgt.shape :
+            if axis is None :
+                raise TypeError, "Axis must be specified when shapes of a and weights differ."
+            if wgt.ndim != 1 :
+                raise TypeError, "1D weights expected when shapes of a and weights differ."
+            if wgt.shape[0] != a.shape[axis] :
+                raise ValueError, "Length of weights not compatible with specified axis."
+    
+            # setup wgt to broadcast along axis
+            wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1,axis)
+
+        scl = wgt.sum(axis=axis)
+        if (scl == 0.0).any():
             raise ZeroDivisionError, "Weights sum to zero, can't be normalized"
 
-        if axis is None :
-            scl = scl*(a.size/wgt.size)
-        else:
-            wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1,axis)
         avg = np.multiply(a,wgt).sum(axis)/scl
 
     if returned:
+        scl = np.multiply(avg,0) + scl
         return avg, scl
     else:
         return avg

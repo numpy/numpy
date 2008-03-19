@@ -57,25 +57,63 @@ class TestAverage(NumpyTestCase):
         assert_almost_equal(y5.mean(0), average(y5, 0))
         assert_almost_equal(y5.mean(1), average(y5, 1))
 
-    def check_weighted(self):
+        y6 = matrix(rand(5,5))
+        assert_array_equal(y6.mean(0), average(y6,0)) 
+               
+    def check_weights(self):
+        y = arange(10)
+        w = arange(10)
+        assert_almost_equal(average(y, weights=w), (arange(10)**2).sum()*1./arange(10).sum())
+    
         y1 = array([[1,2,3],[4,5,6]])
-        actual = average(y1,weights=[1,2],axis=0)
+        w0 = [1,2]
+        actual = average(y1,weights=w0,axis=0)
         desired = array([3.,4.,5.])
         assert_almost_equal(actual, desired)
         
-    def check_shape(self):
-        y = array([[1,2,3],[4,5,6]])
-
-        # this is not a valid test as documented in average. Should it be?
-        #w2 = [[0,0,1],[0,0,1]]
-        #desired = array([3., 6.])
-        #assert_array_equal(average(y, weights=w2, axis=1), desired)
         
         w1 = [0,0,1]
         desired = array([3., 6.])
-        assert_almost_equal(average(y, weights=w1, axis=1), desired)
-        
+        assert_almost_equal(average(y1, weights=w1, axis=1), desired)
 
+        # This should raise an error. Can we test for that ?
+        # assert_equal(average(y1, weights=w1), 9./2.)
+        
+    
+        # 2D Case
+        w2 = [[0,0,1],[0,0,2]]
+        desired = array([3., 6.])
+        assert_array_equal(average(y1, weights=w2, axis=1), desired)
+        
+        assert_equal(average(y1, weights=w2), 5.)
+        
+        
+    def check_returned(self):
+        y = array([[1,2,3],[4,5,6]])
+
+        # No weights
+        avg, scl = average(y, returned=True)
+        assert_equal(scl, 6.)
+
+        avg, scl = average(y, 0, returned=True)
+        assert_array_equal(scl, array([2.,2.,2.]))
+        
+        avg, scl = average(y, 1, returned=True)
+        assert_array_equal(scl, array([3.,3.]))
+        
+        # With weights
+        w0 = [1,2]
+        avg, scl = average(y, weights=w0, axis=0, returned=True)
+        assert_array_equal(scl, array([3., 3., 3.]))
+        
+        w1 = [1,2,3]
+        avg, scl = average(y, weights=w1, axis=1, returned=True)
+        assert_array_equal(scl, array([6., 6.]))
+        
+        w2 = [[0,0,1],[1,2,3]]
+        avg, scl = average(y, weights=w2, axis=1, returned=True)
+        assert_array_equal(scl, array([1.,6.]))
+    
 
 class TestSelect(NumpyTestCase):
     def _select(self,cond,values,default=0):
