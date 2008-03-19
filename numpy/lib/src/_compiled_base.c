@@ -111,7 +111,7 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
     mxi = mxx (numbers, len) ;
     mni = mnx (numbers, len) ;
     Py_Assert(numbers[mni] >= 0,
-              "The first argument of bincount must be non-negative");
+              "bincount: first argument of bincount must be non-negative");
     ans_size = numbers [mxi] + 1 ;
     type = PyArray_DescrFromType(PyArray_INTP);
     if (weight == Py_None) {
