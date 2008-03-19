@@ -197,8 +197,8 @@ class TestRegression(NumpyTestCase):
         np.intp('0x' + 'f'*i_width,16)
         self.failUnlessRaises(OverflowError,np.intp,'0x' + 'f'*(i_width+1),16)
         self.failUnlessRaises(ValueError,np.intp,'0x1',32)
-        assert_equal(255,np.intp('0xFF',16))
-        assert_equal(1024,np.intp(1024))
+        assert_equal(255,np.long('0xFF',16))
+        assert_equal(1024,np.long(1024))
 
     def check_endian_bool_indexing(self,level=rlevel):
         """Ticket #105"""
