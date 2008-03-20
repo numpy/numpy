@@ -818,5 +818,11 @@ class TestRegression(NumpyTestCase):
         """Ticket #658"""
         np.indices((0,3,4)).T.reshape(-1,3)
 
+    def check_mem_deallocation_leak(self, level=rlevel):
+        """Ticket #562"""
+        a = np.zeros(5,dtype=float)
+        b = np.array(a,dtype=float)
+        del a, b
+
 if __name__ == "__main__":
     NumpyTest().run()

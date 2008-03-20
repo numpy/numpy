@@ -5663,7 +5663,6 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
                 ret = PyArray_NewCopy((PyArrayObject*)op,
                                       order);
                 if (oldtype == type) goto finish;
-                Py_INCREF(oldtype);
                 Py_DECREF(PyArray_DESCR(ret));
                 PyArray_DESCR(ret) = oldtype;
                 goto finish;
@@ -5691,6 +5690,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
     ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL);
 
  finish:
+    Py_XDECREF(oldtype);
     if (!ret || (nd=PyArray_NDIM(ret)) >= ndmin) return ret;
     /* create a new array from the same data with ones in the shape */
     /* steals a reference to ret */
