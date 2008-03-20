@@ -83,6 +83,22 @@ def diag(v, k=0):
         raise ValueError, "Input must be 1- or 2-d."
 
 def diagflat(v,k=0):
+    """Return a 2D array whose k'th diagonal is a flattened v and all other 
+    elements are zero. 
+    
+    Examples
+    --------
+      >>> diagflat([[1,2],[3,4]]])
+      array([[1, 0, 0, 0],
+             [0, 2, 0, 0],
+             [0, 0, 3, 0],
+             [0, 0, 0, 4]])
+      
+      >>> diagflat([1,2], 1)
+      array([[0, 1, 0],
+             [0, 0, 2], 
+             [0, 0, 0]])
+    """ 
     try:
         wrap = v.__array_wrap__
     except AttributeError:
