@@ -824,5 +824,106 @@ class TestRegression(NumpyTestCase):
         b = np.array(a,dtype=float)
         del a, b
 
+    def check_object_array_refcounting(self):
+        """Ticket #633"""
+        if not hasattr(sys, 'getrefcount'):
+            return
+        
+        # NB. this is probably CPython-specific
+        
+        cnt = sys.getrefcount
+        
+        a = object()
+        b = object()
+        c = object()
+
+        cnt0_a = cnt(a)
+        cnt0_b = cnt(b)
+        cnt0_c = cnt(c)
+        
+        # -- 0d -> 1d broadcasted slice assignment
+        
+        arr = np.zeros(5, dtype=np.object_)
+        
+        arr[:] = a
+        assert cnt(a) == cnt0_a + 5
+        
+        arr[:] = b
+        assert cnt(a) == cnt0_a
+        assert cnt(b) == cnt0_b + 5
+        
+        arr[:2] = c
+        assert cnt(b) == cnt0_b + 3
+        assert cnt(c) == cnt0_c + 2
+
+        del arr
+        
+        # -- 1d -> 2d broadcasted slice assignment
+        
+        arr  = np.zeros((5, 2), dtype=np.object_)
+        arr0 = np.zeros(2, dtype=np.object_)
+
+        arr0[0] = a
+        assert cnt(a) == cnt0_a + 1
+        arr0[1] = b
+        assert cnt(b) == cnt0_b + 1
+
+        arr[:,:] = arr0
+        assert cnt(a) == cnt0_a + 6
+        assert cnt(b) == cnt0_b + 6
+
+        arr[:,0] = None
+        assert cnt(a) == cnt0_a + 1
+
+        del arr, arr0
+
+        # -- 2d copying + flattening
+        
+        arr  = np.zeros((5, 2), dtype=np.object_)
+
+        arr[:,0] = a
+        arr[:,1] = b
+        assert cnt(a) == cnt0_a + 5
+        assert cnt(b) == cnt0_b + 5
+
+        arr2 = arr.copy()
+        assert cnt(a) == cnt0_a + 10
+        assert cnt(b) == cnt0_b + 10
+
+        arr2 = arr[:,0].copy()
+        assert cnt(a) == cnt0_a + 10
+        assert cnt(b) == cnt0_b + 5
+
+        arr2 = arr.flatten()
+        assert cnt(a) == cnt0_a + 10
+        assert cnt(b) == cnt0_b + 10
+
+        del arr, arr2
+
+        # -- concatenate, repeat, take, choose
+
+        arr1 = np.zeros((5, 1), dtype=np.object_)
+        arr2 = np.zeros((5, 1), dtype=np.object_)
+
+        arr1[...] = a
+        arr2[...] = b
+        assert cnt(a) == cnt0_a + 5
+        assert cnt(b) == cnt0_b + 5
+
+        arr3 = np.concatenate((arr1, arr2))
+        assert cnt(a) == cnt0_a + 5 + 5
+        assert cnt(b) == cnt0_b + 5 + 5
+
+        arr3 = arr1.repeat(3, axis=0)
+        assert cnt(a) == cnt0_a + 5 + 3*5
+
+        arr3 = arr1.take([1,2,3], axis=0)
+        assert cnt(a) == cnt0_a + 5 + 3
+
+        x = np.array([[0],[1],[0],[1],[1]], int)
+        arr3 = x.choose(arr1, arr2)
+        assert cnt(a) == cnt0_a + 5 + 2
+        assert cnt(b) == cnt0_b + 5 + 3
+        
 if __name__ == "__main__":
     NumpyTest().run()
