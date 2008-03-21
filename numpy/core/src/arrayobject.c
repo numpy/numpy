@@ -784,6 +784,7 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
             dstride = nbytes;
 
         /* Refcount note: src and dest may have different sizes */
+        PyArray_INCREF(src);
         PyArray_XDECREF(dest);
 
         NPY_BEGIN_THREADS
@@ -794,7 +795,8 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
 
         NPY_END_THREADS
 
-	PyArray_INCREF(dest);
+        PyArray_INCREF(dest);
+        PyArray_XDECREF(src);
     }
     else {
         PyArrayIterObject *dit;
@@ -803,8 +805,8 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
             PyArray_IterAllButAxis((PyObject *)dest, &axis);
         if (dit == NULL) goto finish;
         /* Refcount note: src and dest may have different sizes */
+        PyArray_INCREF(src);
         PyArray_XDECREF(dest);
-
         NPY_BEGIN_THREADS
             while(dit->index < dit->size) {
                 myfunc(dit->dataptr, PyArray_STRIDE(dest, axis),
@@ -817,9 +819,9 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
                 PyArray_ITER_NEXT(dit);
             }
         NPY_END_THREADS
-
-	PyArray_INCREF(dest);
-	Py_DECREF(dit);
+        PyArray_INCREF(dest);
+        PyArray_XDECREF(src);
+        Py_DECREF(dit);
     }
     retval = 0;
  finish:
@@ -843,12 +845,13 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
 
 
     if (PyArray_NDIM(src) == 0) {
-	PyArray_XDECREF((PyArrayObject *)dst);
-	NPY_BEGIN_THREADS
-	memcpy(PyArray_BYTES(dst), PyArray_BYTES(src),
-	       PyArray_ITEMSIZE(src));
+        /* Refcount note: src and dst have the same size */
+        PyArray_INCREF((PyArrayObject *)src);
+        PyArray_XDECREF((PyArrayObject *)dst);
+        NPY_BEGIN_THREADS
+        memcpy(PyArray_BYTES(dst), PyArray_BYTES(src),
+               PyArray_ITEMSIZE(src));
         NPY_END_THREADS
-	PyArray_INCREF((PyArrayObject *)dst);
         return 0;
     }
 
@@ -873,18 +876,18 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     elsize = PyArray_ITEMSIZE(dst);
     nbytes = elsize * PyArray_DIM(src, axis);
     
+    /* Refcount note: src and dst have the same size */
+    PyArray_INCREF((PyArrayObject *)src);
     PyArray_XDECREF((PyArrayObject *)dst);
     NPY_BEGIN_THREADS
-        while(it->index < it->size) {
-            myfunc(dptr, elsize, it->dataptr,
-                   PyArray_STRIDE(src,axis),
-                   PyArray_DIM(src,axis), elsize);
-            dptr += nbytes;
-            PyArray_ITER_NEXT(it);
-        }
+    while(it->index < it->size) {
+        myfunc(dptr, elsize, it->dataptr,
+               PyArray_STRIDE(src,axis),
+               PyArray_DIM(src,axis), elsize);
+        dptr += nbytes;
+        PyArray_ITER_NEXT(it);
+    }
     NPY_END_THREADS
-
-    PyArray_INCREF((PyArrayObject *)dst);
 
     Py_DECREF(it);
     return 0;
@@ -915,26 +918,26 @@ _copy_from_same_shape(PyArrayObject *dest, PyArrayObject *src,
     }
     elsize = PyArray_ITEMSIZE(dest);
 
+    /* Refcount note: src and dst have the same size */
+    PyArray_INCREF(src);
     PyArray_XDECREF(dest);
 
     NPY_BEGIN_THREADS
-        while(dit->index < dit->size) {
-            /* strided copy of elsize bytes */
-            myfunc(dit->dataptr, dest->strides[maxaxis],
-                   sit->dataptr, src->strides[maxaxis],
-                   maxdim, elsize);
-            if (swap) {
-                _strided_byte_swap(dit->dataptr,
-                                   dest->strides[maxaxis],
-                                   dest->dimensions[maxaxis],
-                                   elsize);
-            }
-            PyArray_ITER_NEXT(dit);
-            PyArray_ITER_NEXT(sit);
+    while(dit->index < dit->size) {
+        /* strided copy of elsize bytes */
+        myfunc(dit->dataptr, dest->strides[maxaxis],
+               sit->dataptr, src->strides[maxaxis],
+               maxdim, elsize);
+        if (swap) {
+            _strided_byte_swap(dit->dataptr,
+                               dest->strides[maxaxis],
+                               dest->dimensions[maxaxis],
+                               elsize);
         }
+        PyArray_ITER_NEXT(dit);
+        PyArray_ITER_NEXT(sit);
+    }
     NPY_END_THREADS
-
-    PyArray_INCREF(dest);
 
     Py_DECREF(sit);
     Py_DECREF(dit);
@@ -951,7 +954,7 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
     int maxaxis; intp maxdim;
     NPY_BEGIN_THREADS_DEF
 
-        elsize = PyArray_ITEMSIZE(dest);
+    elsize = PyArray_ITEMSIZE(dest);
     multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, dest, src);
     if (multi == NULL) return -1;
 
@@ -965,10 +968,11 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
 
     maxaxis = PyArray_RemoveSmallest(multi);
     if (maxaxis < 0) { /* copy 1 0-d array to another */
+        /* Refcount note: src and dst have the same size */
+        PyArray_INCREF(src);
         PyArray_XDECREF(dest);
         memcpy(dest->data, src->data, elsize);
         if (swap) byte_swap_vector(dest->data, 1, elsize);
-        PyArray_INCREF(dest);
         return 0;
     }
     maxdim = multi->dimensions[maxaxis];
@@ -976,25 +980,28 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
     /* Increment the source and decrement the destination
        reference counts
     */
+    /* Refcount note: src and dest may have different sizes */
+    PyArray_INCREF(src);
     PyArray_XDECREF(dest);
 
     NPY_BEGIN_THREADS
-        while(multi->index < multi->size) {
-            myfunc(multi->iters[0]->dataptr,
-                   multi->iters[0]->strides[maxaxis],
-                   multi->iters[1]->dataptr,
-                   multi->iters[1]->strides[maxaxis],
-                   maxdim, elsize);
-            if (swap) {
-                _strided_byte_swap(multi->iters[0]->dataptr,
-                                   multi->iters[0]->strides[maxaxis],
-                                   maxdim, elsize);
-            }
-            PyArray_MultiIter_NEXT(multi);
+    while(multi->index < multi->size) {
+        myfunc(multi->iters[0]->dataptr,
+               multi->iters[0]->strides[maxaxis],
+               multi->iters[1]->dataptr,
+               multi->iters[1]->strides[maxaxis],
+               maxdim, elsize);
+        if (swap) {
+            _strided_byte_swap(multi->iters[0]->dataptr,
+                               multi->iters[0]->strides[maxaxis],
+                               maxdim, elsize);
         }
+        PyArray_MultiIter_NEXT(multi);
+    }
     NPY_END_THREADS
 
     PyArray_INCREF(dest);
+    PyArray_XDECREF(src);
     
     Py_DECREF(multi);
     return 0;
@@ -1036,15 +1043,16 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
                       (PyArray_ISFARRAY_RO(src) && PyArray_ISFARRAY(dest)));
 
     if (simple) {
+        /* Refcount note: src and dest have the same size */
+        PyArray_INCREF(src);
         PyArray_XDECREF(dest);
         NPY_BEGIN_THREADS
-            if (usecopy)
-                memcpy(dest->data, src->data, PyArray_NBYTES(dest));
-            else
-                memmove(dest->data, src->data, PyArray_NBYTES(dest));
-        NPY_END_THREADS       
-	PyArray_INCREF(dest);
-	return 0;
+        if (usecopy)
+            memcpy(dest->data, src->data, PyArray_NBYTES(dest));
+        else
+            memmove(dest->data, src->data, PyArray_NBYTES(dest));
+        NPY_END_THREADS
+        return 0;
     }
 
     swap = PyArray_ISNOTSWAPPED(dest) != PyArray_ISNOTSWAPPED(src);
@@ -1109,12 +1117,12 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
 
     if (simple) {
         /* Refcount note: src and dest have the same size */
+        PyArray_INCREF(src);
         PyArray_XDECREF(dest);
         NPY_BEGIN_THREADS
-            memcpy(dest->data, src->data, PyArray_NBYTES(dest));
+        memcpy(dest->data, src->data, PyArray_NBYTES(dest));
         NPY_END_THREADS
-        PyArray_INCREF(dest);
-	return 0;
+        return 0;
     }
 
     if (PyArray_SAMESHAPE(dest, src)) {
@@ -1135,6 +1143,8 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
     isrc = (PyArrayIterObject *)PyArray_IterNew((PyObject *)src);
     if (isrc == NULL) {Py_DECREF(idest); return -1;}
     elsize = dest->descr->elsize;
+    /* Refcount note: src and dest have the same size */
+    PyArray_INCREF(src);
     PyArray_XDECREF(dest);
     NPY_BEGIN_THREADS
         while(idest->index < idest->size) {
@@ -1143,7 +1153,6 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
             PyArray_ITER_NEXT(isrc);
         }
     NPY_END_THREADS
-    PyArray_INCREF(dest);
     Py_DECREF(idest);
     Py_DECREF(isrc);
     return 0;
