@@ -79,7 +79,7 @@ class build_clib(old_build_clib):
                                            force=self.force,
                                            requiref90='f90' in languages,
                                            c_compiler=self.compiler)
-            if self.compiler is not None:
+            if self.fcompiler is not None:
                 self.fcompiler.customize(self.distribution)
 
                 libraries = self.libraries
