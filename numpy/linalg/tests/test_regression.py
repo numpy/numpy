@@ -3,7 +3,8 @@
 
 from numpy.testing import *
 set_package_path()
-from numpy import linalg, arange, float64, array
+import numpy as np
+from numpy import linalg, arange, float64, array, dot, transpose
 restore_path()
 
 rlevel = 1
@@ -40,6 +41,16 @@ class TestRegression(NumpyTestCase):
          
         vals, vecs = linalg.eigh(cov)
         assert_array_almost_equal(vals, rvals)
+
+    def test_svd_build(self, level = rlevel):
+        """Ticket 627."""
+        a = array([[ 0., 1.], [ 1., 1.], [ 2., 1.], [ 3., 1.]])
+        m, n = a.shape
+        u, s, vh = linalg.svd(a)
+
+        b = dot(transpose(u[:, n:]), a)
+
+        assert_array_almost_equal(b, np.zeros((2, 2)))
 
 if __name__ == '__main__':
     NumpyTest().run()
