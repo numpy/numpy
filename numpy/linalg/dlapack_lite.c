@@ -1,3 +1,5 @@
+#define MAXITERLOOPS 100
+
 /*
 NOTE: This is generated code. Look in Misc/lapack_lite for information on
       remaking this file.
@@ -10560,7 +10562,7 @@ L120:
 
 	iter = niter + 1;
 
-	for (niter = iter; niter <= 30; ++niter) {
+	for (niter = iter; niter <= MAXITERLOOPS; ++niter) {
 
 /*           Test for convergence */
 
@@ -10965,7 +10967,7 @@ L120:
 
 	iter = niter + 1;
 
-	for (niter = iter; niter <= 30; ++niter) {
+	for (niter = iter; niter <= MAXITERLOOPS; ++niter) {
 
 /*           Test for convergence */
 
@@ -11524,7 +11526,7 @@ L250:
 
     iter = niter + 1;
 
-    for (niter = iter; niter <= 20; ++niter) {
+    for (niter = iter; niter <= MAXITERLOOPS; ++niter) {
 
 	if (*orgati) {
 	    temp1 = dscale[1] - *tau;
@@ -21090,6 +21092,7 @@ L100:
 
 } /* dlasd3_ */
 
+
 /* Subroutine */ int dlasd4_(integer *n, integer *i__, doublereal *d__,
 	doublereal *z__, doublereal *delta, doublereal *rho, doublereal *
 	sigma, doublereal *work, integer *info)
@@ -21460,7 +21463,7 @@ L100:
 
 	iter = niter + 1;
 
-	for (niter = iter; niter <= 20; ++niter) {
+	for (niter = iter; niter <= MAXITERLOOPS; ++niter) {
 
 /*           Test for convergence */
 
@@ -21899,7 +21902,7 @@ L100:
 
 	iter = niter + 1;
 
-	for (niter = iter; niter <= 20; ++niter) {
+	for (niter = iter; niter <= MAXITERLOOPS; ++niter) {
 
 /*           Test for convergence */
 
