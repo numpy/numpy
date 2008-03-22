@@ -726,6 +726,11 @@ class TestRegression(NumpyTestCase):
         for l in np.arange(4):
             np.random.seed(l)
 
+     def check_mem_deallocation_leak(self, level=rlevel):
+        """Ticket #562"""
+        a = np.zeros(5,dtype=float)
+        b = np.array(a,dtype=float)
+        del a, b
 
     def check_mem_insert(self, level=rlevel):
         """Ticket #572"""
@@ -827,12 +832,6 @@ class TestRegression(NumpyTestCase):
     def check_copy_detection_corner_case(self, level=rlevel):
         """Ticket #658"""
         np.indices((0,3,4)).T.reshape(-1,3)
-
-    def check_mem_deallocation_leak(self, level=rlevel):
-        """Ticket #562"""
-        a = np.zeros(5,dtype=float)
-        b = np.array(a,dtype=float)
-        del a, b
 
     def check_object_array_refcounting(self, level=rlevel):
         """Ticket #633"""
