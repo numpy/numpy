@@ -511,7 +511,7 @@ cdef class RandomState:
             errcode = rk_randomseed(self.internal_state)
         elif type(seed) is int:
             rk_seed(seed, self.internal_state)
-        elif (PyArray_IsScalar(seed, Integer)):
+        elif isinstance(seed, _sp.integer):
             iseed = int(seed)
             rk_seed(iseed, self.internal_state)
         else:
