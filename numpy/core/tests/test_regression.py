@@ -935,6 +935,15 @@ class TestRegression(NumpyTestCase):
         assert cnt(a) == cnt0_a + 5 + 2
         assert cnt(b) == cnt0_b + 5 + 3
 
+    def check_mem_custom_float_to_array(self, level=rlevel):
+        """Ticket 702"""
+        class MyFloat:
+            def __float__(self):
+                return 1
+
+        tmp = np.atleast_1d([MyFloat()])
+        tmp2 = tmp.astype(float)
+
     def check_object_array_refcount_self_assign(self, level=rlevel):
         """Ticket #711"""
         class VictimObject(object):
