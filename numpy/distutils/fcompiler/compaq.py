@@ -8,7 +8,7 @@ from numpy.distutils.fcompiler import FCompiler
 from distutils.errors import DistutilsPlatformError
 
 compilers = ['CompaqFCompiler']
-if os.name != 'posix':
+if os.name != 'posix' or sys.platform[:6] == 'cygwin' :
     # Otherwise we'd get a false positive on posix systems with
     # case-insensitive filesystems (like darwin), because we'll pick
     # up /bin/df
