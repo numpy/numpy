@@ -726,7 +726,7 @@ class TestRegression(NumpyTestCase):
         for l in np.arange(4):
             np.random.seed(l)
 
-     def check_mem_deallocation_leak(self, level=rlevel):
+    def check_mem_deallocation_leak(self, level=rlevel):
         """Ticket #562"""
         a = np.zeros(5,dtype=float)
         b = np.array(a,dtype=float)
