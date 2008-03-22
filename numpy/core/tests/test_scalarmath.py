@@ -76,5 +76,36 @@ class TestIndexing(NumpyTestCase):
             assert_array_equal(x[...],value)
             assert_array_equal(x[()],value)
 
+class TestRepr(NumpyTestCase):
+    def check_float_repr(self):
+        from numpy import nan, inf
+        for t in [np.float32, np.float64, np.longdouble]:
+            finfo=np.finfo(t)
+            last_fraction_bit_idx = finfo.nexp + finfo.nmant
+            last_exponent_bit_idx = finfo.nexp
+            storage_bytes = np.dtype(t).itemsize*8
+            for which in ['small denorm','small norm']: # could add some more types here
+                # Values from http://en.wikipedia.org/wiki/IEEE_754
+                constr = array([0x00]*storage_bytes,dtype=np.uint8)
+                if which == 'small denorm':
+                    byte = last_fraction_bit_idx // 8
+                    bytebit = 7-(last_fraction_bit_idx % 8)
+                    constr[byte] = 1<<bytebit
+                elif which == 'small norm':
+                    byte = last_exponent_bit_idx // 8
+                    bytebit = 7-(last_exponent_bit_idx % 8)
+                    constr[byte] = 1<<bytebit
+                else:
+                    raise ValueError('hmm')
+                val = constr.view(t)[0]
+                val_repr = repr(val)
+                val2 = t(eval(val_repr))
+                if t == np.longdouble:
+                    # Skip longdouble - the eval() statement goes
+                    # through a Python float, which will lose
+                    # precision
+                    continue
+                assert_equal( val, val2 )
+
 if __name__ == "__main__":
     NumpyTest().run()
