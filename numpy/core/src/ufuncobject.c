@@ -3440,7 +3440,7 @@ typedef struct {
 static int
 cmp_arg_types(int *arg1, int *arg2, int n)
 {
-    while (n--) {
+    for (;n>0; n--, arg1++, arg2++) {
         if (PyArray_EquivTypenums(*arg1, *arg2)) continue;
         if (PyArray_CanCastSafely(*arg1, *arg2))
             return -1;
