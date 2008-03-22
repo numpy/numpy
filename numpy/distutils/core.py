@@ -97,7 +97,7 @@ def get_distribution(always=False):
     # class is local to a function in setuptools.command.easy_install
     if dist is not None and \
             'DistributionWithoutHelpCommands' in repr(dist):
-        raise NotImplementedError("setuptools not supported yet for numpy.scons branch")
+        #raise NotImplementedError("setuptools not supported yet for numpy.scons branch")
         dist = None
     if always and dist is None:
         dist = NumpyDistribution()
