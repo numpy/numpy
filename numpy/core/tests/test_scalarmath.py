@@ -105,7 +105,7 @@ class TestRepr(NumpyTestCase):
                     # through a Python float, which will lose
                     # precision
                     continue
-                if not (val == 0 and val2 < 1e-100):
+                if not (val2 == 0 and val < 1e-100):
                     assert_equal(val, val2)
 
 if __name__ == "__main__":
