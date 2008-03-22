@@ -6401,7 +6401,11 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
     if (iter == NULL) goto done;
 
     elcount = (count < 0) ? 0 : count;
-    elsize = dtype->elsize;
+    if ((elsize=dtype->elsize) == 0) {
+        PyErr_SetString(PyExc_ValueError, "Must specify length "\
+                        "when using variable-size data-type.");
+        goto done;                        
+    }
 
     /* We would need to alter the memory RENEW code to decrement any
        reference counts before throwing away any memory.
