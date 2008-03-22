@@ -511,6 +511,9 @@ cdef class RandomState:
             errcode = rk_randomseed(self.internal_state)
         elif type(seed) is int:
             rk_seed(seed, self.internal_state)
+        elif (PyArray_IsScalar(seed, Integer)):
+            iseed = int(seed)
+            rk_seed(iseed, self.internal_state)
         else:
             obj = <ndarray>PyArray_ContiguousFromObject(seed, NPY_LONG, 1, 1)
             init_by_array(self.internal_state, <unsigned long *>(obj.data),

@@ -130,4 +130,6 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_IterNew(object arr)
     void PyArray_ITER_NEXT(flatiter it)
 
+    int PyArray_IsScalar(object obj, void* cls)
+
     void import_array()
