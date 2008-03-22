@@ -231,7 +231,11 @@ class LinuxCPUInfo(CPUInfoBase):
         return self.is_PentiumIV() and self.has_sse3()
 
     def _is_Nocona(self):
-        return self.is_64bit() and self.is_PentiumIV()
+        return self.is_Intel() \
+               and (self.info[0]['cpu family'] == '6' \
+                    or self.info[0]['cpu family'] == '15' ) \
+               and self.has_sse3() \
+               and re.match(r'.*?\blm\b',self.info[0]['flags']) is not None
 
     def _is_Core2(self):
         return self.is_64bit() and self.is_Intel() and \
