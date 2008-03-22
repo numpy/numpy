@@ -11,15 +11,12 @@ __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
-__all__ = [
-'apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d', 'average',
-'vstack', 'hstack', 'dstack', 'row_stack', 'column_stack',
-'compress_rowcols', 'compress_rows', 'compress_cols', 'count_masked',
-'dot', 'hsplit',
-'mask_rowcols','mask_rows','mask_cols','masked_all','masked_all_like',
-'mediff1d', 'mr_',
-'notmasked_edges','notmasked_contiguous',
-'stdu', 'varu',
+__all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d', 
+           'average', 'vstack', 'hstack', 'dstack', 'row_stack', 'column_stack',
+           'compress_rowcols', 'compress_rows', 'compress_cols', 'count_masked',
+           'dot', 'hsplit', 'mask_rowcols','mask_rows','mask_cols','masked_all',
+           'masked_all_like', 'mediff1d', 'median', 'mr_', 'notmasked_edges',
+           'notmasked_contiguous', 'stdu', 'varu',
            ]
 
 from itertools import groupby
@@ -411,6 +408,84 @@ def average(a, axis=None, weights=None, returned=False):
         return result, d
     else:
         return result
+
+
+
+def median(a, axis=0, out=None, overwrite_input=False):
+    """Compute the median along the specified axis.
+
+    Returns the median of the array elements.  The median is taken
+    over the first axis of the array by default, otherwise over
+    the specified axis.
+
+    Parameters
+    ----------
+    a : array-like
+        Input array or object that can be converted to an array
+    axis : {int, None}, optional
+        Axis along which the medians are computed. The default is to
+        compute the median along the first dimension.  axis=None
+        returns the median of the flattened array
+
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary.
+
+    overwrite_input : {False, True}, optional
+       If True, then allow use of memory of input array (a) for
+       calculations. The input array will be modified by the call to
+       median. This will save memory when you do not need to preserve
+       the contents of the input array. Treat the input as undefined,
+       but it will probably be fully or partially sorted. Default is
+       False. Note that, if overwrite_input is true, and the input
+       is not already an ndarray, an error will be raised.
+
+    Returns
+    -------
+    median : ndarray.
+        A new array holding the result is returned unless out is
+        specified, in which case a reference to out is returned.
+        Return datatype is float64 for ints and floats smaller than
+        float64, or the input datatype otherwise.
+
+    See Also
+    -------
+    mean
+
+    Notes
+    -----
+    Given a vector V length N, the median of V is the middle value of
+    a sorted copy of V (Vs) - i.e. Vs[(N-1)/2], when N is odd. It is
+    the mean of the two middle values of Vs, when N is even.
+
+    """
+    def _median1D(data):
+        counts = filled(count(data,axis),0)
+        (idx,rmd) = divmod(counts, 2)
+        if rmd:
+            choice = slice(idx,idx+1)
+        else:
+            choice = slice(idx-1,idx+1)
+        return data[choice].mean(0)
+    # 
+    if overwrite_input:
+        if axis is None:
+            sorted = a.ravel()
+            sorted.sort()
+        else:
+            a.sort(axis=axis)
+            sorted = a
+    else:
+        sorted = sort(a, axis=axis)
+    if axis is None:
+        result = _median1D(sorted)
+    else:
+        result = apply_along_axis(_median1D, axis, sorted)
+    return result
+ 
+
+
 
 #..............................................................................
 def compress_rowcols(x, axis=None):

@@ -2856,7 +2856,10 @@ argmin.__doc__ = MaskedArray.argmax.__doc__
 
 def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
-    a = narray(a, copy=False, subok=True)
+    a = narray(a, copy=True, subok=True)
+    if axis is None:
+        a = a.flatten()
+        axis = 0        
     if fill_value is None:
         if endwith:
             filler = minimum_fill_value(a)

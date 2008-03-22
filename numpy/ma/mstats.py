@@ -13,7 +13,7 @@ __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 
 import numpy
-from numpy import bool_, float_, int_, \
+from numpy import bool_, float_, int_, ndarray, \
     sqrt
 from numpy import array as narray
 import numpy.core.numeric as numeric
@@ -21,9 +21,9 @@ from numpy.core.numeric import concatenate
 
 import numpy.ma
 from numpy.ma.core import masked, nomask, MaskedArray, masked_array
-from numpy.ma.extras import apply_along_axis, dot
+from numpy.ma.extras import apply_along_axis, dot, median as mmedian
 
-__all__ = ['cov','meppf','plotting_positions','meppf','mmedian','mquantiles',
+__all__ = ['cov','meppf','plotting_positions','meppf','mquantiles',
            'stde_median','trim_tail','trim_both','trimmed_mean','trimmed_stde',
            'winsorize']
 
@@ -350,24 +350,6 @@ Parameters
     return masked_array(plpos, mask=data._mask)
 
 meppf = plotting_positions
-
-
-def mmedian(data, axis=None):
-    """Returns the median of data along the given axis. 
-
-    Missing data are discarded.
-
-    """
-    def _median1D(data):
-        x = numpy.sort(data.compressed())
-        if x.size == 0:
-            return masked
-        return numpy.median(x)
-    data = masked_array(data, subok=True, copy=True)
-    if axis is None:
-        return _median1D(data)
-    else:
-        return apply_along_axis(_median1D, axis, data)
 
 
 def cov(x, y=None, rowvar=True, bias=False, strict=False):

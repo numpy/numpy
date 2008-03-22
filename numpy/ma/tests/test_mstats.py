@@ -19,6 +19,7 @@ import numpy.ma.testutils
 from numpy.ma.testutils import *
 
 from numpy.ma.mstats import *
+from numpy.ma import median
 
 #..............................................................................
 class TestQuantiles(NumpyTestCase):
@@ -96,19 +97,19 @@ class TestMedian(NumpyTestCase):
         for i in range(1,p):
             numpy.random.shuffle(idx)
             z[:,i] = x[idx]
-        assert_equal(mmedian(z[:,0]), 0)
-        assert_equal(mmedian(z), numpy.zeros((p,)))
+        assert_equal(median(z[:,0]), 0)
+        assert_equal(median(z), numpy.zeros((p,)))
 
     def test_3d(self):
         "Tests median w/ 3D"
         x = numpy.ma.arange(24).reshape(3,4,2)
         x[x%3==0] = masked
-        assert_equal(mmedian(x,0), [[12,9],[6,15],[12,9],[18,15]])
+        assert_equal(median(x,0), [[12,9],[6,15],[12,9],[18,15]])
         x.shape = (4,3,2)
-        assert_equal(mmedian(x,0),[[99,10],[11,99],[13,14]])
+        assert_equal(median(x,0),[[99,10],[11,99],[13,14]])
         x = numpy.ma.arange(24).reshape(4,3,2)
         x[x%5==0] = masked
-        assert_equal(mmedian(x,0), [[12,10],[8,9],[16,17]])
+        assert_equal(median(x,0), [[12,10],[8,9],[16,17]])
 
 #..............................................................................
 class TestTrimming(NumpyTestCase):

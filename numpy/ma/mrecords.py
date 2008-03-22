@@ -163,8 +163,13 @@ class MaskedRecords(MaskedArray, object):
         _fieldmask = getattr(obj, '_fieldmask', None)
         if _fieldmask is None:
             mdescr = [(n,'|b1') for (n,_) in self.dtype.descr]
-            _fieldmask = numpy.empty(self.shape, dtype=mdescr).view(recarray)
-            _fieldmask.flat = tuple([False]*len(mdescr))
+            _mask = getattr(obj, '_mask', nomask)
+            if _mask is nomask:
+                _fieldmask = numpy.empty(self.shape, dtype=mdescr).view(recarray)
+                _fieldmask.flat = tuple([False]*len(mdescr))
+            else:
+                _fieldmask = narray([tuple([m]*len(mdescr)) for m in _mask],
+                                    dtype=mdescr).view(recarray)
         # Update some of the attributes
         attrdict = dict(_fieldmask=_fieldmask,
                         _hardmask=getattr(obj,'_hardmask',False),
@@ -181,7 +186,7 @@ class MaskedRecords(MaskedArray, object):
     #......................................................
     def _getdata(self):
         "Returns the data as a recarray."
-        return self.view(recarray)
+        return ndarray.view(self,recarray)
     _data = property(fget=_getdata)
     #......................................................
     def __setmask__(self, mask):
@@ -469,7 +474,7 @@ The fieldname base is either `_data` or `_mask`."""
         result = narray(self.filled().tolist(), dtype=object)
         mask = narray(self._fieldmask.tolist())
         result[mask] = None
-        return [tuple(r) for r in result]
+        return result.tolist()
     #--------------------------------------------
     # Pickling
     def __getstate__(self):
@@ -787,5 +792,30 @@ set to 'fi', where `i` is the number of existing fields.
     return newdata
 
 ###############################################################################
-
-        
+#
+#if 1:
+#    from numpy.ma.testutils import assert_equal
+#    if 1:
+#        ilist = [1,2,3,4,5]
+#        flist = [1.1,2.2,3.3,4.4,5.5]
+#        slist = ['one','two','three','four','five']
+#        ddtype = [('a',int_),('b',float_),('c','|S8')]
+#        mask = [0,1,0,0,1]
+#        self_base = masked_array(zip(ilist,flist,slist), mask=mask, dtype=ddtype)
+#    if 1:
+#        base = self_base.copy()
+#        mbase = base.view(mrecarray)
+#        mbase = mbase.copy()
+#        mbase.fill_value = (999999,1e20,'N/A')
+#        
+#        print mbase.a
+#        
+#        # Change the data, the mask should be conserved
+#        mbase.a._data[:] = 5
+#        assert_equal(mbase['a']._data, [5,5,5,5,5])
+#        assert_equal(mbase['a']._mask, [0,1,0,0,1])
+#        #
+#        z = mbase.a
+#        print z.tolist()
+#        z = base[:2]
+#        print z.view(mrecarray)

@@ -23,8 +23,8 @@ from numpy.core.numeric import concatenate
 
 import numpy.ma as MA
 from numpy.ma.core import masked, nomask, MaskedArray, masked_array
-from numpy.ma.extras import apply_along_axis, dot
-from numpy.ma.mstats import trim_both, trimmed_stde, mquantiles, mmedian, stde_median
+from numpy.ma.extras import apply_along_axis, dot, median
+from numpy.ma.mstats import trim_both, trimmed_stde, mquantiles, stde_median
 
 from scipy.stats.distributions import norm, beta, t, binom
 from scipy.stats.morestats import find_repeats
@@ -328,7 +328,7 @@ Returns
     A (p,) array of comparison values.
 
     """
-    (med_1, med_2) = (mmedian(group_1, axis=axis), mmedian(group_2, axis=axis))
+    (med_1, med_2) = (median(group_1, axis=axis), median(group_2, axis=axis))
     (std_1, std_2) = (stde_median(group_1, axis=axis),
                       stde_median(group_2, axis=axis))
     W = abs(med_1 - med_2) / sqrt(std_1**2 + std_2**2)
