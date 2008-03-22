@@ -721,6 +721,12 @@ class TestRegression(NumpyTestCase):
         assert x != y
         assert x == x
 
+    def check_rand_seed(self, level=rlevel):
+        """Ticket #555"""
+        for l in np.arange(4):
+            np.random.seed(l)
+
+
     def check_mem_insert(self, level=rlevel):
         """Ticket #572"""
         np.lib.place(1,1,1)
@@ -828,7 +834,7 @@ class TestRegression(NumpyTestCase):
         b = np.array(a,dtype=float)
         del a, b
 
-    def check_object_array_refcounting(self):
+    def check_object_array_refcounting(self, level=rlevel):
         """Ticket #633"""
         if not hasattr(sys, 'getrefcount'):
             return
@@ -929,7 +935,7 @@ class TestRegression(NumpyTestCase):
         assert cnt(a) == cnt0_a + 5 + 2
         assert cnt(b) == cnt0_b + 5 + 3
 
-    def check_object_array_refcount_self_assign(self):
+    def check_object_array_refcount_self_assign(self, level=rlevel):
         """Ticket #711"""
         class VictimObject(object):
             deleted = False
