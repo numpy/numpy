@@ -807,6 +807,12 @@ class TestRegression(NumpyTestCase):
         y = np.fromstring("\x00\x01\x00\x02", dtype="|S2")
         assert_array_equal(np.sort(x, kind="q"), y)
 
+    def check_hist_bins_as_list(self, level=rlevel):
+        """Ticket #632"""
+        hist,edges = np.histogram([1,2,3,4],[1,2])
+        assert_array_equal(hist,[1,3])
+        assert_array_equal(edges,[1,2])
+
     def check_copy_detection_zero_dim(self, level=rlevel):
         """Ticket #658"""
         np.indices((0,3,4)).T.reshape(-1,3)
