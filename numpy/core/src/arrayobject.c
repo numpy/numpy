@@ -7773,7 +7773,7 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 
     NPY_BEGIN_THREADS_DEF
 
-        if (mpsize == 0) return 0;
+    if (mpsize == 0) return 0;
     if (!PyArray_ISWRITEABLE(out)) {
         PyErr_SetString(PyExc_ValueError,
                         "output array is not writeable");
@@ -7800,7 +7800,8 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
         if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
             NPY_END_THREADS   }
 #endif
-        if (!PyArray_ISNUMBER(mp) && PyErr_Occurred()) return -1;
+        if (PyErr_Occurred()) return -1;
+        return 0;
     }
 
     /* If the input or output is OBJECT, STRING, UNICODE, or VOID */
