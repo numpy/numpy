@@ -1748,6 +1748,16 @@ typedef struct {
 #define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
 #define PyArray_HASFIELDS(obj) PyDataType_HASFIELDS(PyArray_DESCR(obj))
 
+    /* FIXME: This should check for a flag on the data-type
+       that states whether or not it is variable length.
+       Because the ISFLEXIBLE check is hard-coded to the
+       built-in data-types.  
+     */
+#define PyArray_ISVARIABLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
+
+#define PyArray_SAFEALIGNEDCOPY(obj) (PyArray_ISALIGNED(obj) && !PyArray_ISVARIABLE(obj))
+
+
 #define NPY_LITTLE '<'
 #define NPY_BIG '>'
 #define NPY_NATIVE '='
