@@ -924,6 +924,21 @@ class TestRegression(NumpyTestCase):
         arr3 = x.choose(arr1, arr2)
         assert cnt(a) == cnt0_a + 5 + 2
         assert cnt(b) == cnt0_b + 5 + 3
+
+    def check_object_array_refcount_self_assign(self):
+        """Ticket #711"""
+        class VictimObject(object):
+            deleted = False
+            def __del__(self):
+                self.deleted = True
+        d = VictimObject()
+        arr = np.zeros(5, dtype=np.object_)
+        arr[:] = d
+        del d
+        arr[:] = arr # refcount of 'd' might hit zero here
+        assert not arr[0].deleted
+        arr[:] = arr # trying to induce a segfault by doing it again...
+        assert not arr[0].deleted
         
 if __name__ == "__main__":
     NumpyTest().run()
