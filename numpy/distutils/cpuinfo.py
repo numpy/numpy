@@ -272,7 +272,7 @@ class LinuxCPUInfo(CPUInfoBase):
         return re.match(r'.*?\bsse2\b',self.info[0]['flags']) is not None
 
     def _has_sse3(self):
-        return re.match(r'.*?\bsse3\b',self.info[0]['flags']) is not None
+        return re.match(r'.*?\bsss?e3\b',self.info[0]['flags']) is not None 
 
     def _has_3dnow(self):
         return re.match(r'.*?\b3dnow\b',self.info[0]['flags']) is not None
