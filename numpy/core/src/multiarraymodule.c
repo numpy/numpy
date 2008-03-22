@@ -5633,8 +5633,11 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
                                     PyArray_BoolConverter, &copy,
                                     PyArray_OrderConverter, &order,
                                     PyArray_BoolConverter, &subok,
-                                    &ndmin))
-        return NULL;
+                                    &ndmin)) {
+            Py_XDECREF(type);
+            return NULL;
+    }
+            
 
     /* fast exit if simple call */
     if ((subok && PyArray_Check(op)) ||
@@ -5688,9 +5691,11 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
 
     flags |= NPY_FORCECAST;
 
+    Py_XINCREF(type);
     ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL);
 
  finish:
+    Py_XDECREF(type);
     if (!ret || (nd=PyArray_NDIM(ret)) >= ndmin) return ret;
     /* create a new array from the same data with ones in the shape */
     /* steals a reference to ret */
@@ -5748,8 +5753,9 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
     return ret;
 
  fail:
+    Py_XDECREF(typecode);
     PyDimMem_FREE(shape.ptr);
-    return ret;
+    return NULL;
 }
 
 /* This function is needed for supporting Pickles of 
@@ -5876,6 +5882,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
     return ret;
 
  fail:
+    Py_XDECREF(typecode);
     PyDimMem_FREE(shape.ptr);
     return ret;
 }
@@ -6217,6 +6224,7 @@ array_fromstring(PyObject *ignored, PyObject *args, PyObject *keywds)
                                      &data, &s,
                                      PyArray_DescrConverter, &descr,
                                      &nin, &sep)) {
+        Py_XDECREF(descr);
         return NULL;
     }
 
@@ -6350,10 +6358,9 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
                                      &file,
                                      PyArray_DescrConverter, &type,
                                      &nin, &sep)) {
+        Py_XDECREF(type);
         return NULL;
     }
-
-    if (type == NULL) type = PyArray_DescrFromType(PyArray_DEFAULT);
 
     if (PyString_Check(file) || PyUnicode_Check(file)) {
         file = PyObject_CallFunction((PyObject *)&PyFile_Type,
@@ -6363,6 +6370,7 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
     else {
         Py_INCREF(file);
     }
+
     fp = PyFile_AsFile(file);
     if (fp == NULL) {
         PyErr_SetString(PyExc_IOError,
@@ -6370,6 +6378,9 @@ array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
         Py_DECREF(file);
         return NULL;
     }
+
+    if (type == NULL) type = PyArray_DescrFromType(PyArray_DEFAULT);
+
     ret = PyArray_FromFile(fp, type, (intp) nin, sep);
     Py_DECREF(file);
     return ret;
@@ -6480,6 +6491,7 @@ array_fromiter(PyObject *ignored, PyObject *args, PyObject *keywds)
                                      &iter,
                                      PyArray_DescrConverter, &descr,
                                      &nin)) {
+        Py_XDECREF(descr);
         return NULL;
     }
 
@@ -6598,6 +6610,7 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
                                      &obj,
                                      PyArray_DescrConverter, &type,
                                      &nin, &offset)) {
+        Py_XDECREF(type);
         return NULL;
     }
     if (type==NULL)
@@ -6882,8 +6895,10 @@ array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
     if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&", kwd, &o_start,
                                     &o_stop, &o_step,
                                     PyArray_DescrConverter2,
-                                    &typecode))
+                                    &typecode)) {
+        Py_XDECREF(typecode);
         return NULL;
+    }
 
     return PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
 }
@@ -7059,23 +7074,28 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
     PyArray_Descr *d1=NULL;
     PyArray_Descr *d2=NULL;
     Bool ret;
-    PyObject *retobj;
+    PyObject *retobj=NULL;
     static char *kwlist[] = {"from", "to", NULL};
 
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&", kwlist,
                                     PyArray_DescrConverter, &d1,
-                                    PyArray_DescrConverter, &d2))
-        return NULL;
+                                    PyArray_DescrConverter, &d2)) {
+        goto finish;
+    }
     if (d1 == NULL || d2 == NULL) {
         PyErr_SetString(PyExc_TypeError,
                         "did not understand one of the types; " \
                         "'None' not accepted");
-        return NULL;
+        goto finish;
     }
 
     ret = PyArray_CanCastTo(d1, d2);
     retobj = (ret ? Py_True : Py_False);
     Py_INCREF(retobj);
+
+ finish:    
+    Py_XDECREF(d1);
+    Py_XDECREF(d2);
     return retobj;
 }
 

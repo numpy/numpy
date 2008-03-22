@@ -2832,10 +2832,13 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
                                         PyArray_DescrConverter2,
                                         &otype,
                                         PyArray_OutputConverter,
-                                        &out)) return NULL;
+                                        &out)) {
+            Py_XDECREF(otype);
+            return NULL;
+        }
         indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype,
                                                    1, 1, CARRAY, NULL);
-        if (indices == NULL) return NULL;
+        if (indices == NULL) {Py_XDECREF(otype); return NULL;}
     }
     else {
         if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&O&", kwlist1,
@@ -2843,7 +2846,10 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
                                         PyArray_DescrConverter2,
                                         &otype,
                                         PyArray_OutputConverter,
-                                        &out)) return NULL;
+                                        &out)) {
+            Py_XDECREF(otype);
+            return NULL;
+        }
     }
 
     /* Ensure input is an array */
@@ -2861,6 +2867,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     if (mp->nd == 0) {
         PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
                      _reduce_type[operation]);
+        Py_XDECREF(otype);
         Py_DECREF(mp);
         return NULL;
     }
@@ -2871,6 +2878,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         PyErr_Format(PyExc_TypeError,
                      "cannot perform %s with flexible type",
                      _reduce_type[operation]);
+        Py_XDECREF(otype);
         Py_DECREF(mp);
         return NULL;
     }
@@ -2878,6 +2886,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     if (axis < 0) axis += mp->nd;
     if (axis < 0 || axis >= mp->nd) {
         PyErr_SetString(PyExc_ValueError, "axis not in array");
+        Py_XDECREF(otype);
         Py_DECREF(mp);
         return NULL;
     }

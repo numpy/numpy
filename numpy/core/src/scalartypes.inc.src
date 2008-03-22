@@ -1075,7 +1075,10 @@ gentype_getarray(PyObject *scalar, PyObject *args)
         PyObject *ret;
 
         if (!PyArg_ParseTuple(args, "|O&", &PyArray_DescrConverter,
-                              &outcode)) return NULL;
+                              &outcode)) {
+                Py_XDECREF(outcode);
+                return NULL;
+        }
         ret = PyArray_FromScalar(scalar, outcode);
         return ret;
 }
@@ -1214,7 +1217,7 @@ gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
-        PyArray_Descr *typecode;
+        PyArray_Descr *typecode=NULL;
         int offset = 0;
         PyObject *value, *src;
         int mysize;
@@ -1229,7 +1232,10 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
                                          &value,
                                          PyArray_DescrConverter,
-                                         &typecode, &offset)) return NULL;
+                                         &typecode, &offset)) {
+                Py_XDECREF(typecode);
+                return NULL;
+        }
 
         mysize = self->ob_size;
 
@@ -1250,6 +1256,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
                 temp = (PyObject **)dptr;
                 Py_XDECREF(*temp);
                 memcpy(temp, &value, sizeof(PyObject *));
+                Py_DECREF(typecode);
         }
         else {
                 /* Copy data from value to correct place in dptr */

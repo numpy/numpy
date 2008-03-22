@@ -255,13 +255,16 @@ static PyObject *
 array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
 
-    PyArray_Descr *dtype;
+    PyArray_Descr *dtype=NULL;
     int offset = 0;
     static char *kwlist[] = {"dtype", "offset", 0};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|i", kwlist,
                                      PyArray_DescrConverter,
-                                     &dtype, &offset)) return NULL;
+                                     &dtype, &offset)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
     return PyArray_GetField(self, dtype, offset);
 }
@@ -302,14 +305,17 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 static PyObject *
 array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_Descr *dtype;
+    PyArray_Descr *dtype=NULL;
     int offset = 0;
     PyObject *value;
     static char *kwlist[] = {"value", "dtype", "offset", 0};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
                                      &value, PyArray_DescrConverter,
-                                     &dtype, &offset)) return NULL;
+                                     &dtype, &offset)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
     if (PyArray_SetField(self, dtype, offset, value) < 0)
         return NULL;
@@ -649,7 +655,10 @@ array_cast(PyArrayObject *self, PyObject *args)
     PyObject *obj;
 
     if (!PyArg_ParseTuple(args, "O&", PyArray_DescrConverter,
-                          &descr)) return NULL;
+                          &descr)) {
+        Py_XDECREF(descr);
+        return NULL;
+    }
 
     if (descr == self->descr) {
         obj = _ARET(PyArray_NewCopy(self,NPY_ANYORDER));
@@ -709,7 +718,10 @@ array_getarray(PyArrayObject *self, PyObject *args)
     PyObject *ret;
 
     if (!PyArg_ParseTuple(args, "|O&", PyArray_DescrConverter,
-                          &newtype)) return NULL;
+                          &newtype)) {
+        Py_XDECREF(newtype);
+        return NULL;
+    }
 
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
@@ -1437,9 +1449,13 @@ array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out)) return NULL;
+                                     &out)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
     num = _get_type_num_double(self->descr, dtype);
+    Py_XDECREF(dtype);
     return PyArray_Mean(self, axis, num, out);
 }
 
@@ -1449,6 +1465,7 @@ array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int axis=MAX_DIMS;
     PyArray_Descr *dtype=NULL;
     PyArrayObject *out=NULL;
+    int rtype;
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
@@ -1456,9 +1473,14 @@ array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out)) return NULL;
+                                     &out)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
-    return PyArray_Sum(self, axis, _CHKTYPENUM(dtype), out);
+    rtype = _CHKTYPENUM(dtype);
+    Py_XDECREF(dtype);
+    return PyArray_Sum(self, axis, rtype, out);
 }
 
 
@@ -1468,6 +1490,7 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int axis=MAX_DIMS;
     PyArray_Descr *dtype=NULL;
     PyArrayObject *out=NULL;
+    int rtype;
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
@@ -1475,9 +1498,14 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out)) return NULL;
+                                     &out)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
-    return PyArray_CumSum(self, axis, _CHKTYPENUM(dtype), out);
+    rtype = _CHKTYPENUM(dtype);
+    Py_XDECREF(dtype);
+    return PyArray_CumSum(self, axis, rtype, out);
 }
 
 static PyObject *
@@ -1486,6 +1514,7 @@ array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int axis=MAX_DIMS;
     PyArray_Descr *dtype=NULL;
     PyArrayObject *out=NULL;
+    int rtype;
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
@@ -1493,9 +1522,14 @@ array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out)) return NULL;
+                                     &out)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
-    return PyArray_Prod(self, axis, _CHKTYPENUM(dtype), out);
+    rtype = _CHKTYPENUM(dtype);
+    Py_XDECREF(dtype);
+    return PyArray_Prod(self, axis, rtype, out);
 }
 
 static PyObject *
@@ -1504,6 +1538,7 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int axis=MAX_DIMS;
     PyArray_Descr *dtype=NULL;
     PyArrayObject *out=NULL;
+    int rtype;
     static char *kwlist[] = {"axis", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
@@ -1511,9 +1546,14 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out)) return NULL;
+                                     &out)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
-    return PyArray_CumProd(self, axis, _CHKTYPENUM(dtype), out);
+    rtype = _CHKTYPENUM(dtype);
+    Py_XDECREF(dtype);
+    return PyArray_CumProd(self, axis, rtype, out);
 }
 
 
@@ -1571,9 +1611,13 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out, &ddof)) return NULL;
+                                     &out, &ddof)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    }
 
     num = _get_type_num_double(self->descr, dtype);
+    Py_XDECREF(dtype);
     return __New_PyArray_Std(self, axis, num, out, 0, ddof);
 }
 
@@ -1593,9 +1637,13 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis, PyArray_DescrConverter2,
                                      &dtype,
                                      PyArray_OutputConverter,
-                                     &out, &ddof)) return NULL;
+                                     &out, &ddof)) {
+        Py_XDECREF(dtype);
+        return NULL;
+    } 
 
     num = _get_type_num_double(self->descr, dtype);
+    Py_XDECREF(dtype);
     return __New_PyArray_Std(self, axis, num, out, 1, ddof);
 }
 
@@ -1633,16 +1681,22 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int axis1=0, axis2=1, offset=0;
     PyArray_Descr *dtype=NULL;
     PyArrayObject *out=NULL;
+    int rtype;
     static char *kwlist[] = {"offset", "axis1", "axis2", "dtype", "out", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iiiO&O&", kwlist,
                                      &offset, &axis1, &axis2,
                                      PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out))
+                                     PyArray_OutputConverter, &out)) {
+        Py_XDECREF(dtype);
         return NULL;
+    }
+
+    rtype = _CHKTYPENUM(dtype);
+    Py_XDECREF(dtype);
 
     return _ARET(PyArray_Trace(self, offset, axis1, axis2,
-                               _CHKTYPENUM(dtype), out));
+                               rtype, out));
 }
 
 #undef _CHKTYPENUM
