@@ -4,8 +4,13 @@ from numpy.testing import *
 
 class TestLoadLibrary(NumpyTestCase):
     def check_basic(self):
-        cdll = load_library('multiarray',
-                            np.core.multiarray.__file__)
+        try:
+            cdll = load_library('multiarray',
+                                np.core.multiarray.__file__)
+        except ImportError, e:
+            msg = "ctypes is not available on this python: skipping the test" \
+                  " (import error was: %s)" % str(e)
+            print msg
 
 class TestNdpointer(NumpyTestCase):
     def check_dtype(self):
