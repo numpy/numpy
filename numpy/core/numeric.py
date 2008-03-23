@@ -12,7 +12,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'ufunc',
            'array_repr', 'array_str', 'set_string_function',
            'little_endian', 'require',
            'fromiter', 'array_equal', 'array_equiv',
-           'indices', 'fromfunction', 
+           'indices', 'fromfunction',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
            'ones', 'identity', 'allclose', 'compare_chararrays', 'putmask',
            'seterr', 'geterr', 'setbufsize', 'getbufsize',
@@ -211,6 +211,13 @@ def argwhere(a):
     """Return a 2-d array of shape N x a.ndim where each row
     is a sequence of indices into a.  This sequence must be
     converted to a tuple in order to be used to index into a.
+
+    >>> from numpy import ones, argwhere
+    >>> argwhere(ones((2, 2)))
+    array([[0, 0],
+           [0, 1],
+           [1, 0],
+           [1, 1]])
     """
     return asarray(a.nonzero()).T
 
@@ -218,6 +225,12 @@ def flatnonzero(a):
     """Return indicies that are not-zero in flattened version of a
 
     Equivalent to a.ravel().nonzero()[0]
+
+    >>> from numpy import arange, flatnonzero
+    >>> arange(-2, 3)
+    array([-2, -1,  0,  1,  2])
+    >>> flatnonzero(arange(-2, 3))
+    array([0, 1, 3, 4])
     """
     return a.ravel().nonzero()[0]
 
@@ -369,6 +382,12 @@ def tensordot(a, b, axes=2):
 def roll(a, shift, axis=None):
     """Roll the elements in the array by 'shift' positions along
     the given axis.
+
+    >>> from numpy import roll
+    >>> arange(10)
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> roll(arange(10), 2)
+    array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7])
     """
     a = asanyarray(a)
     if axis is None:
@@ -388,11 +407,14 @@ def roll(a, shift, axis=None):
 def rollaxis(a, axis, start=0):
     """Return transposed array so that axis is rolled before start.
 
-    if a.shape is (3,4,5,6)
-    rollaxis(a, 3, 1).shape is (3,6,4,5)
-    rollaxis(a, 2, 0).shape is (5,3,4,6)
-    rollaxis(a, 1, 3).shape is (3,5,4,6)
-    rollaxis(a, 1, 4).shape is (3,5,6,4)
+    >>> from numpy import ones, rollaxis
+    >>> a = ones((3,4,5,6))
+    >>> rollaxis(a, 3, 1).shape
+    (3, 6, 4, 5)
+    >>> rollaxis(a, 2, 0).shape
+    (5, 3, 4, 6)
+    >>> rollaxis(a, 1, 4).shape
+    (3, 5, 6, 4)
     """
     n = a.ndim
     if axis < 0:
