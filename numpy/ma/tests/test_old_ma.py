@@ -475,9 +475,7 @@ class TestMa(NumpyTestCase):
         x = arange(10).astype(float32)
         xm = arange(10)
         xm[2] = masked
-        id1 = id(x.data)
         x += 1.
-        assert id1 == id(x.data)
         assert eq(x, y+1.)
 
     def check_testPickle(self):
