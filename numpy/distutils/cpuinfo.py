@@ -234,7 +234,7 @@ class LinuxCPUInfo(CPUInfoBase):
         return self.is_Intel() \
                and (self.info[0]['cpu family'] == '6' \
                     or self.info[0]['cpu family'] == '15' ) \
-               and self.has_sse3() \
+               and (self.has_sse3() and not self.has_ssse3())\
                and re.match(r'.*?\blm\b',self.info[0]['flags']) is not None
 
     def _is_Core2(self):
