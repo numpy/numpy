@@ -31,12 +31,12 @@ from array_printer import array2string
 
 class Unpickler(pickle.Unpickler):
     def __init__(self, *args, **kwds):
-        raise NotImplemented
+        raise NotImplementedError
     def load_array(self):
-        raise NotImplemented
+        raise NotImplementedError
 
 class Pickler(pickle.Pickler):
     def __init__(self, *args, **kwds):
-        raise NotImplemented
+        raise NotImplementedError
     def save_array(self, object):
-        raise NotImplemented
+        raise NotImplementedError
