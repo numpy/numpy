@@ -964,6 +964,11 @@ class TestRegression(NumpyTestCase):
         arr[:] = arr # trying to induce a segfault by doing it again...
         assert not arr[0].deleted
 
+    def check_mem_fromiter_invalid_dtype_string(self, level=rlevel):
+        x = [1,2,3]
+        self.failUnlessRaises(ValueError,
+                              np.fromiter, [xi for xi in x], dtype='S')
+
 
 if __name__ == "__main__":
     NumpyTest().run()
