@@ -81,7 +81,7 @@ def _LoadArray(fp):
     typecode = ln[0][0]
     endian = ln[0][1]
     itemsize = int(ln[0][2:])
-    shape = [int(x) for x in ln[1:])
+    shape = [int(x) for x in ln[1:]]
     sz = itemsize
     for val in shape:
         sz *= val
