@@ -831,6 +831,7 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
 */
 int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     PyArrayIterObject *it;
+    PyObject *orig_src;
     void (*myfunc)(char *, intp, char *, intp, intp, int);
     char *dptr;
     int axis;
@@ -839,6 +840,7 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     NPY_BEGIN_THREADS_DEF
 
 
+    orig_src = src;
     if (PyArray_NDIM(src) == 0) {
         /* Refcount note: src and dst have the same size */
         PyArray_INCREF((PyArrayObject *)src);
@@ -850,15 +852,19 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
         return 0;
     }
 
+    axis = PyArray_NDIM(src)-1;
+
     if (order == PyArray_FORTRANORDER) {
-        axis = 0;
-    }
-    else {
-        axis = PyArray_NDIM(src)-1;
+	if (PyArray_NDIM(src) <= 2) axis = 0;
+	/* fall back to a more general method */
+	else src = PyArray_Transpose((PyArrayObject *)orig_src, NULL);
     }
 
     it = (PyArrayIterObject *)PyArray_IterAllButAxis(src, &axis);
-    if (it == NULL) return -1;
+    if (it == NULL) {
+	if (src != orig_src) Py_DECREF(src);
+	return -1;
+    }
 
     if (PyArray_SAFEALIGNEDCOPY(src)) {
         myfunc = _strided_byte_copy;
@@ -884,6 +890,7 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     }
     NPY_END_THREADS
 
+    if (src != orig_src) Py_DECREF(src);
     Py_DECREF(it);
     return 0;
 }

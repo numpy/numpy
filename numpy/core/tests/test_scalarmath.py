@@ -48,7 +48,7 @@ class TestPower(NumpyTestCase):
             a = t(51)
             b = a ** 4
             msg = "error with %r: got %r" % (t,b)
-            if issubdtype(t, np.integer):
+            if np.issubdtype(t, np.integer):
                 assert b == 6765201, msg
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)

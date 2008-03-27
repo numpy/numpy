@@ -415,6 +415,19 @@ class TestMethods(NumpyTestCase):
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
 
+    def check_flatten(self):
+        x0 = np.array([[1,2,3],[4,5,6]], np.int32)
+        x1 = np.array([[[1,2],[3,4]],[[5,6],[7,8]]], np.int32)
+        y0 = np.array([1,2,3,4,5,6], np.int32)
+        y0f = np.array([1,4,2,5,3,6], np.int32)
+        y1 = np.array([1,2,3,4,5,6,7,8], np.int32)
+        y1f = np.array([1,5,3,7,2,6,4,8], np.int32)
+        assert_equal(x0.flatten(), y0)
+        assert_equal(x0.flatten('F'), y0f)
+        assert_equal(x0.flatten('F'), x0.T.flatten())
+        assert_equal(x1.flatten(), y1)
+        assert_equal(x1.flatten('F'), y1f)
+        assert_equal(x1.flatten('F'), x1.T.flatten())
 
 class TestSubscripting(NumpyTestCase):
     def check_test_zero_rank(self):
