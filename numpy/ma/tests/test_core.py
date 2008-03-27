@@ -1461,6 +1461,21 @@ class TestMiscFunctions(NumpyTestCase):
         y = masked_where(False,x)
         assert_equal(y,[1,2])
         assert_equal(y[1],2)
+    #
+    def test_round(self):
+        a = array([1.23456, 2.34567, 3.45678, 4.56789, 5.67890],
+                  mask=[0,1,0,0,0])
+        assert_equal(a.round(), [1., 2., 3., 5., 6.])
+        assert_equal(a.round(1), [1.2, 2.3, 3.5, 4.6, 5.7])
+        assert_equal(a.round(3), [1.235, 2.346, 3.457, 4.568, 5.679])
+        b = empty_like(a)
+        a.round(out=b)
+        assert_equal(b, [1., 2., 3., 5., 6.])
+    #
+    def test_identity(self):
+        a = identity(5)
+        assert(isinstance(a, MaskedArray))
+        assert_equal(a, numpy.identity(5))
 
 
 ###############################################################################
