@@ -21,11 +21,11 @@ from numpy.core.numeric import ScalarType, dot, where, newaxis, intp, \
 from numpy.core.umath import pi, multiply, add, arctan2,  \
      frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp, log10
 from numpy.core.fromnumeric import ravel, nonzero, choose, sort, mean
-from numpy.core.numerictypes import typecodes
+from numpy.core.numerictypes import typecodes, number
 from numpy.lib.shape_base import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
-from _compiled_base import digitize, bincount, interp
+from _compiled_base import digitize, bincount, interp as compiled_interp
 from arraysetops import setdiff1d
 import numpy as np
 
@@ -677,24 +677,24 @@ raise a TypeError
 except RuntimeError:
     pass
 
-try:
-    add_docstring(interp,
-r"""interp(x, xp, fp, left=None, right=None)
 
-Return the value of a piecewise-linear function at each value in x.
+def interp(x, xp, fp, left=None, right=None):
+    """Return the value of a piecewise-linear function at each value in x.
 
-The piecewise-linear function, f, is defined by the known data-points fp=f(xp).
-The xp points must be sorted in increasing order but this is not checked.
-
-For values of x < xp[0] return the value given by left.  If left is None, then
-return fp[0].
-For values of x > xp[-1] return the value given by right. If right is None, then
-return fp[-1].
-"""
-                  )
-except RuntimeError:
-    pass
-
+    The piecewise-linear function, f, is defined by the known data-points 
+    fp=f(xp). The xp points must be sorted in increasing order but this is 
+    not checked.
+    
+    For values of x < xp[0] return the value given by left.  If left is None, 
+    then return fp[0].
+    For values of x > xp[-1] return the value given by right. If right is 
+    None, then return fp[-1].
+    """
+    if isinstance(x, (float, int, number)):
+        return compiled_interp([x], xp, fp, left, right).item()
+    else:
+        return compiled_interp(x, xp, fp, left, right)
+    
 
 def angle(z, deg=0):
     """Return the angle of the complex argument z.
