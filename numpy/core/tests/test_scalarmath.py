@@ -47,7 +47,11 @@ class TestPower(NumpyTestCase):
         for t in [np.int32, np.int64, np.float32, np.float64, np.longdouble]:
             a = t(51)
             b = a ** 4
-            assert b == 6765201, "error with %r: got %r" % (t,b)
+            msg = "error with %r: got %r" % (t,b)
+            if issubdtype(t, np.integer):
+                assert b == 6765201, msg
+            else:
+                assert_almost_equal(b, 6765201, err_msg=msg)
 
 class TestConversion(NumpyTestCase):
     def test_int_from_long(self):
