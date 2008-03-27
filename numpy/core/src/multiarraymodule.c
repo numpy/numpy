@@ -841,7 +841,7 @@ static PyObject *
 __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 		  int variance, int num)
 {
-    PyObject *obj1=NULL, *obj2=NULL, *new=NULL;
+    PyObject *obj1=NULL, *obj2=NULL, *obj3=NULL, *new=NULL;
     PyObject *ret=NULL, *newshape=NULL;
     int i, n;
     intp val;
@@ -870,14 +870,43 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 
     /* Compute x * x */
+    if (PyArray_ISCOMPLEX(obj1)) {
+	obj3 = PyArray_Conjugate((PyAO *)obj1, NULL);
+    }
+    else {
+	obj3 = obj1;
+	Py_INCREF(obj1);
+    }
+    if (obj3 == NULL) {Py_DECREF(new); return NULL;}
     obj2 = PyArray_EnsureArray                                      \
-        (PyArray_GenericBinaryFunction((PyAO *)obj1, obj1, n_ops.multiply));
+        (PyArray_GenericBinaryFunction((PyAO *)obj1, obj3, n_ops.multiply));
     Py_DECREF(obj1);
+    Py_DECREF(obj3);
     if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 
+    if (PyArray_ISCOMPLEX(obj2)) {
+	obj3 = PyObject_GetAttrString(obj2, "real");
+	switch(rtype) {
+	case NPY_CDOUBLE:
+	    rtype = NPY_DOUBLE;
+	    break;
+	case NPY_CFLOAT:
+	    rtype = NPY_FLOAT;
+	    break;
+	case NPY_CLONGDOUBLE:
+	    rtype = NPY_LONGDOUBLE;
+	    break;
+	}
+    }
+    else {
+	obj3 = obj2;
+	Py_INCREF(obj2);
+    }
+    if (obj3 == NULL) {Py_DECREF(new); return NULL;}
     /* Compute add.reduce(x*x,axis) */
-    obj1 = PyArray_GenericReduceFunction((PyAO *)obj2, n_ops.add,
+    obj1 = PyArray_GenericReduceFunction((PyAO *)obj3, n_ops.add,
                                          axis, rtype, NULL);
+    Py_DECREF(obj3);
     Py_DECREF(obj2);
     if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 
