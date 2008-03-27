@@ -3358,14 +3358,3 @@ identity = _convert2ma('identity')
 indices = numpy.indices
 
 ###############################################################################
-if 1:
-    if 1:
-        a = array([1.23456, 2.34567, 3.45678, 4.56789, 5.67890],
-                  mask=[0,1,0,0,0])
-        assert(all(a.round() == array([1., 2., 3., 5., 6.])))
-        assert(all(a.round(1) == array([1.2, 2.3, 3.5, 4.6, 5.7])))
-        assert(all(a.round(3) == array([1.235, 2.346, 3.457, 4.568, 5.679])))
-        b = empty_like(a)
-        a.round(out=b)
-        assert(all(b == array([1., 2., 3., 5., 6.])))
-    print "OK"
