@@ -969,6 +969,12 @@ class TestRegression(NumpyTestCase):
         self.failUnlessRaises(ValueError,
                               np.fromiter, [xi for xi in x], dtype='S')
 
+    def check_reduce_big_object_array(self, level=rlevel):
+        """Ticket #713"""
+        oldsize = np.setbufsize(10*16)
+        a = np.array([None]*161, object)
+        assert not np.any(a)
+        np.setbufsize(oldsize)
 
 if __name__ == "__main__":
     NumpyTest().run()
