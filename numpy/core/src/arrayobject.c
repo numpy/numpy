@@ -862,7 +862,7 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
 
     it = (PyArrayIterObject *)PyArray_IterAllButAxis(src, &axis);
     if (it == NULL) {
-	if (src != orig_src) Py_DECREF(src);
+        if (src != orig_src) {Py_DECREF(src);}
 	return -1;
     }
 
@@ -890,7 +890,7 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     }
     NPY_END_THREADS
 
-    if (src != orig_src) Py_DECREF(src);
+    if (src != orig_src) {Py_DECREF(src);}
     Py_DECREF(it);
     return 0;
 }

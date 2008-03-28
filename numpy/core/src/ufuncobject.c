@@ -2425,8 +2425,9 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                                             NULL);
                     loop->cast(loop->buffer, loop->castbuf,
                                1, NULL, NULL);
-                    if (loop->obj)
-                        Py_INCREF(*((PyObject **)loop->castbuf));
+                    if (loop->obj) {
+                        Py_XINCREF(*((PyObject **)loop->castbuf));
+                    }
                     memcpy(loop->bufptr[0], loop->castbuf,
                            loop->outsize);
                 }
@@ -2570,8 +2571,9 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                                             NULL);
                     loop->cast(loop->buffer, loop->castbuf,
                                1, NULL, NULL);
-                    if (loop->obj)
-                        Py_INCREF(*((PyObject **)loop->castbuf));
+                    if (loop->obj) {
+                        Py_XINCREF(*((PyObject **)loop->castbuf));
+                    }
                     memcpy(loop->bufptr[0], loop->castbuf,
                            loop->outsize);
                 }
@@ -2693,8 +2695,9 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
                 for (i=0; i<nn; i++) {
                     loop->bufptr[1] = loop->it->dataptr +   \
                         (*ptr)*loop->instrides;
-                    if (loop->obj)
-                        Py_INCREF(*((PyObject **)loop->bufptr[1]));
+                    if (loop->obj) {
+                        Py_XINCREF(*((PyObject **)loop->bufptr[1]));
+                    }
                     memcpy(loop->bufptr[0], loop->bufptr[1],
                            loop->outsize);
                     mm = (i==nn-1 ? arr->dimensions[axis]-*ptr : \
@@ -2723,8 +2726,9 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
             while(loop->index < loop->size) {
                 ptr = (intp *)ind->data;
                 for (i=0; i<nn; i++) {
-                    if (loop->obj)
-                        Py_INCREF(*((PyObject **)loop->idptr));
+                    if (loop->obj) {
+                        Py_XINCREF(*((PyObject **)loop->idptr));
+                    }
                     memcpy(loop->bufptr[0], loop->idptr,
                            loop->outsize);
                     n = 0;
