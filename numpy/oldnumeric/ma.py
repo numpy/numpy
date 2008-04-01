@@ -2201,7 +2201,7 @@ def _min(a, axis=None, out=None):
         return minimum.reduce(a, axis)
 array.min = _m(_min)
 del _min
-array.mean = _m(average)
+array.mean = _m(new_average)
 array.nbytes = property(_m(not_implemented))
 array.newbyteorder = _m(not_implemented)
 array.nonzero = _m(nonzero)
@@ -2210,7 +2210,7 @@ array.prod = _m(product)
 def _ptp(a,axis=None,out=None):
     return a.max(axis,out)-a.min(axis)
 array.ptp = _m(_ptp)
-array.repeat = _m(repeat)
+array.repeat = _m(new_repeat)
 array.resize = _m(resize)
 array.searchsorted = _m(not_implemented)
 array.setfield = _m(not_implemented)
@@ -2232,7 +2232,7 @@ def _swapaxes(self,axis1,axis2):
     return MaskedArray(data = self.data.swapaxes(axis1, axis2),
                        mask = self.mask.swapaxes(axis1, axis2))
 array.swapaxes = _m(_swapaxes)
-array.take = _m(take)
+array.take = _m(new_take)
 array.tofile = _m(not_implemented)
 array.trace = _m(trace)
 array.transpose = _m(transpose)
