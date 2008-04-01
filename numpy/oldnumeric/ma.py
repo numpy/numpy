@@ -10,12 +10,12 @@ Adapted for numpy_core 2005 by Travis Oliphant and
 """
 import types, sys
 
-import umath
-import fromnumeric
-from numeric import newaxis, ndarray, inf
-from fromnumeric import amax, amin
-from numerictypes import bool_, typecodes
-import numeric
+import numpy.core.umath as umath
+import numpy.core.fromnumeric as fromnumeric
+from numpy.core.numeric import newaxis, ndarray, inf
+from numpy.core.fromnumeric import amax, amin
+from numpy.core.numerictypes import bool_, typecodes
+import numpy.core.numeric as numeric
 import warnings
 
 # Ufunc domain lookup for __array_wrap__
