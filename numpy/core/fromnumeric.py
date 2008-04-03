@@ -1578,7 +1578,7 @@ def mean(a, axis=None, dtype=None, out=None):
 
     Returns the average of the array elements.  The average is taken
     over the flattened array by default, otherwise over the specified
-    axis. The dtype returned for integer type arrays is float
+    axis. The dtype returned for integer type arrays is float.
 
     Parameters
     ----------
@@ -1587,9 +1587,9 @@ def mean(a, axis=None, dtype=None, out=None):
         array, a conversion is attempted.
     axis : {None, integer}, optional
         Axis along which the means are computed. The default is to compute
-        the standard deviation of the flattened array.
+        the mean of the flattened array.
     dtype : {None, dtype}, optional
-        Type to use in computing the means. For arrays of integer type the
+        Type to use in computing the mean. For arrays of integer type the
         default is float32, for arrays of float types it is the same as the
         array type.
     out : {None, array}, optional
@@ -1605,8 +1605,7 @@ def mean(a, axis=None, dtype=None, out=None):
 
     See Also
     --------
-    var : Variance
-    std : Standard deviation
+    average : Weighted average
 
     Notes
     -----
