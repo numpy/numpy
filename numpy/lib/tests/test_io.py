@@ -16,6 +16,13 @@ class Testsavetxt(NumpyTestCase):
         c.seek(0)
         assert(c.readlines(), ['1 2\n', '3 4\n'])
         
+    def test_1D(self):
+        a = np.array([1,2,3,4], int)
+        c = StringIO.StringIO()
+        np.savetxt(c, a, fmt='%d')
+        c.seek(0)
+        assert(c.readlines(), ['1\n', '2\n', '3\n', '4\n'])
+    
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', '<i4'), ('y', '<i4')])
         c = StringIO.StringIO()
@@ -48,5 +55,13 @@ class Testloadtxt(NumpyTestCase):
         a = np.array([[1,2],[3,4]], float)
         assert_array_equal(x, a)
         
+    def test_1D(self):
+        c = StringIO.StringIO()
+        c.write('1\n2\n3\n4\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int)
+        a = np.array([1,2,3,4], int)
+        assert_array_equal(x, a)
+    
 if __name__ == "__main__":
     NumpyTest().run()

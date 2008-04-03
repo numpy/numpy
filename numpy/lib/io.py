@@ -353,7 +353,7 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
     X = np.asarray(X)
     origShape = None
-    if len(X.shape)==1 and not hasattr(X.dtype, 'names'):
+    if len(X.shape)==1 and X.dtype.names is None:
         origShape = X.shape
         X.shape = len(X), 1
     for row in X:
