@@ -312,9 +312,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         X.append(row)
 
     X = np.array(X, dtype)
-    r,c = X.shape
-    if r==1 or c==1:
-        X.shape = max([r,c]),
+    X = np.squeeze(X)
     if unpack: return X.T
     else:  return X
 
@@ -355,7 +353,7 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
     X = np.asarray(X)
     origShape = None
-    if len(X.shape)==1:
+    if len(X.shape)==1 and not hasattr(X.dtype, 'names'):
         origShape = X.shape
         X.shape = len(X), 1
     for row in X:
