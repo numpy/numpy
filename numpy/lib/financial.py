@@ -1,8 +1,10 @@
 # Some simple financial calculations
+#  patterned after spreadsheet computations.
 from numpy import log, where
 import numpy as np
 
-__all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate', 'irr', 'npv']
+__all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate', 'irr', 'npv', 
+           'mirr']
 
 _when_to_num = {'end':0, 'begin':1,
                 'e':0, 'b':1,
@@ -148,4 +150,27 @@ def npv(rate, values):
     values = np.asarray(values)
     return (values / (1+rate)**np.arange(1,len(values)+1)).sum(axis=0)
 
+def mirr(values, finance_rate, reinvest_rate):
+    """Modified internal rate of return
+    
+    Parameters
+    ----------
+    values:
+        Cash flows (must contain at least one positive and one negative value)
+        or nan is returned.
+    finance_rate : 
+        Interest rate paid on the cash flows
+    reinvest_rate : 
+        Interest rate received on the cash flows upon reinvestment
+    """
 
+    values = np.asarray(values)
+    pos = values > 0
+    neg = values < 0
+    if not (pos.size > 0 and neg.size > 0):
+        return np.nan
+    
+    n = pos.size + neg.size
+    numer = -npv(reinvest_rate, values[pos])*((1+reinvest_rate)**n)
+    denom = npv(finance_rate, values[neg])*(1+finance_rate)
+    return (numer / denom)**(1.0/(n-1)) - 1
