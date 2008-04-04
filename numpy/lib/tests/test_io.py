@@ -41,6 +41,16 @@ class Testloadtxt(NumpyTestCase):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', '<i4'), ('y', '<i4')])
         assert_array_equal(x, a)
         
+        d = StringIO.StringIO()
+        d.write('M 64.0 75.0\nF 25.0 60.0')
+        d.seek(0)
+
+        mydescriptor = {'names': ('gender','age','weight'), 'formats': ('S1',
+                                'i4', 'f4')}
+        b = np.array([('M',    64.0, 75.0),('F', 25.0, 60.0)], dtype=mydescriptor)
+        y = np.loadtxt(d, dtype=mydescriptor)
+        assert_array_equal(y, b)
+        
     def test_array(self):
         c = StringIO.StringIO()
         c.write('1 2\n3 4')

@@ -203,7 +203,7 @@ def _getconv(dtype):
     if issubclass(typ, np.bool_):
         return lambda x: bool(int(x))
     if issubclass(typ, np.integer):
-        return int
+        return lambda x: int(float(x))
     elif issubclass(typ, np.floating):
         return float
     elif issubclass(typ, np.complex):
