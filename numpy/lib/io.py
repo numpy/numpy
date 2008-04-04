@@ -3,6 +3,7 @@ __all__ = ['savetxt', 'loadtxt',
            'load', 'loads',
            'save', 'savez',
            'packbits', 'unpackbits',
+           'fromregex',
            'DataSource']
 
 import numpy as np
@@ -361,3 +362,24 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
     if origShape is not None:
         X.shape = origShape
+
+import re
+def fromregex(file, regexp, **kwds):
+    """Construct a record array from a text file, using regular-expressions parsing.
+    
+    Groups in the regular exespression are converted to fields. 
+    """
+    if not hasattr(file, "read"):
+        file = open(file,'r')
+    if not hasattr(regexp, 'match'):
+        regexp = re.compile(regexp)
+
+    seq = regexp.findall(file.read())
+    dtypelist = []
+    for key, value in kwds.values():
+        dtypelist.append((key, value))
+    format = np.dtype(dtypelist)
+    output = array(seq, dtype=format)
+    return output
+    
+    
