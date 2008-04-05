@@ -79,6 +79,7 @@ class TestIndexing(NumpyTestCase):
             x = value
             assert_array_equal(x[...],value)
             assert_array_equal(x[()],value)
+            assert_equal(x[None,...].shape,(1,))
 
 class TestRepr(NumpyTestCase):
     def check_float_repr(self):
