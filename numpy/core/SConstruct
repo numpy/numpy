@@ -292,6 +292,6 @@ scalarmathmodule = env.NumpyPythonExtension('scalarmath',
 #----------------------
 if build_blasdot:
     dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
-    blasenv = env.Copy()
+    blasenv = env.Clone()
     blasenv.Append(CPPPATH = pjoin(env['src_dir'], 'blasdot'))
     dotblas = blasenv.NumpyPythonExtension('_dotblas', source = dotblas_src)
