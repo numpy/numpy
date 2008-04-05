@@ -9,6 +9,10 @@ from numscons import get_python_inc, get_pythonlib_dir
 from numscons import GetNumpyEnvironment
 from numscons import CheckCBLAS 
 from numscons import write_info
+try:
+    from numscons import distutils_dirs_emitter
+except ImportError:
+    raise ImportError("You need numscons >= 0.5.2")
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     check_mlib, check_mlibs, is_npy_no_signal
@@ -204,16 +208,19 @@ from scons_support import do_generate_array_api, do_generate_ufunc_api, \
                         generate_umath, generate_umath_emitter
 
 array_api_gen_bld = Builder(action = do_generate_array_api, 
-                            emitter = generate_api_emitter)
+                            emitter = [generate_api_emitter,
+                                       distutils_dirs_emitter])
 
 ufunc_api_gen_bld = Builder(action = do_generate_ufunc_api, 
-                            emitter = generate_api_emitter)
+                            emitter = [generate_api_emitter,
+                                       distutils_dirs_emitter])
 
 template_bld = Builder(action = generate_from_template, 
-                       emitter = generate_from_template_emitter)
+                       emitter = [generate_from_template_emitter,
+                                  distutils_dirs_emitter])
 
 umath_bld = Builder(action = generate_umath, 
-                    emitter = generate_umath_emitter)
+                    emitter = [generate_umath_emitter, distutils_dirs_emitter])
 
 env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
                        'GenerateUfuncApi' : ufunc_api_gen_bld,
@@ -223,45 +230,36 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 #------------------------
 # Generate generated code
 #------------------------
-# XXX: the use of env['build_dir'] and env['src_dir'] are really ugly. Will
-# have to think about how removing them (using hierarchical scons and dir
-# option ?)
 from os.path import join as pjoin
 
-scalartypes_src = env.GenerateFromTemplate(
-                    pjoin(env['build_dir'], 'src', 'scalartypes'), 
-                    pjoin(env['src_dir'], 'src', 'scalartypes.inc.src'))
+scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes'), 
+                    pjoin('src', 'scalartypes.inc.src'))
 
 arraytypes_src = env.GenerateFromTemplate(
-                    pjoin(env['build_dir'], 'src', 'arraytypes'), 
-                    pjoin(env['src_dir'], 'src', 'arraytypes.inc.src'))
+                    pjoin('src', 'arraytypes'), 
+                    pjoin('src', 'arraytypes.inc.src'))
 
 sortmodule_src = env.GenerateFromTemplate(
-                    pjoin(env['build_dir'], 'src', '_sortmodule'), 
-                    pjoin(env['src_dir'], 'src', '_sortmodule.c.src'))
+                    pjoin('src', '_sortmodule'), 
+                    pjoin('src', '_sortmodule.c.src'))
 
 umathmodule_src = env.GenerateFromTemplate(
-                    pjoin(env['build_dir'], 'src', 'umathmodule'), 
-                    pjoin(env['src_dir'], 'src', 'umathmodule.c.src'))
+                    pjoin('src', 'umathmodule'), 
+                    pjoin('src', 'umathmodule.c.src'))
 
 scalarmathmodule_src = env.GenerateFromTemplate(
-                    pjoin(env['build_dir'], 'src', 'scalarmathmodule'), 
-                    pjoin(env['src_dir'], 'src', 'scalarmathmodule.c.src'))
+                    pjoin('src', 'scalarmathmodule'), 
+                    pjoin('src', 'scalarmathmodule.c.src'))
 
-umath = env.GenerateUmath(
-            pjoin(env['build_dir'], '__umath_generated'), 
-            pjoin(env['src_dir'], 'code_generators', 'generate_umath.py'))
+umath = env.GenerateUmath('__umath_generated',
+                          pjoin('code_generators', 'generate_umath.py'))
 
-multiarray_api = env.GenerateMultiarrayApi(
-                        pjoin(env['build_dir'], 'multiarray_api'), 
-                        [ pjoin(env['src_dir'], 'code_generators', 
-                                'array_api_order.txt'),
-                          pjoin(env['src_dir'], 'code_generators', 
-                                'multiarray_api_order.txt')])
+multiarray_api = env.GenerateMultiarrayApi('multiarray_api', 
+                        [ pjoin('code_generators', 'array_api_order.txt'),
+                          pjoin('code_generators', 'multiarray_api_order.txt')])
 
-ufunc_api = env.GenerateUfuncApi(
-                    pjoin(env['build_dir'], 'ufunc_api'), 
-                    pjoin(env['src_dir'], 'code_generators', 'ufunc_api_order.txt'))
+ufunc_api = env.GenerateUfuncApi('ufunc_api', 
+                    pjoin('code_generators', 'ufunc_api_order.txt'))
 
 env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
 
