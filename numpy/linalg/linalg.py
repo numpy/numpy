@@ -9,7 +9,7 @@ dgeev, zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf,
 zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 """
 
-__all__ = ['solve', 'tensorsolve', 'tensorinv',
+__all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv',
            'inv', 'cholesky',
            'eigvals',
            'eigvalsh', 'pinv',
@@ -26,6 +26,7 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         isfinite, size
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
+from numpy.core.defmatrix import matrix_power
 
 fortran_int = intc
 
@@ -133,6 +134,7 @@ def _assertNonEmpty(*arrays):
     for a in arrays:
         if size(a) == 0:
             raise LinAlgError("Arrays cannot be empty")
+
 
 # Linear equations
 
@@ -325,6 +327,7 @@ def inv(a):
     """
     a, wrap = _makearray(a)
     return wrap(solve(a, identity(a.shape[0], dtype=a.dtype)))
+
 
 # Cholesky decomposition
 
@@ -1052,6 +1055,7 @@ def det(a):
         return 0.0
     sign = add.reduce(pivots != arange(1, n+1)) % 2
     return (1.-2.*sign)*multiply.reduce(diagonal(a), axis=-1)
+
 
 # Linear Least Squares
 
