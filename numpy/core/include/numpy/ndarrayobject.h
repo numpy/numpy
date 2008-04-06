@@ -1830,9 +1830,7 @@ typedef struct {
 
 #define PyArray_DescrCheck(op) ((op)->ob_type == &PyArrayDescr_Type)
 
-#define PyArray_Check(op) ((op)->ob_type == &PyArray_Type ||                  \
-                           PyObject_TypeCheck(op, &PyArray_Type))
-
+#define PyArray_Check(op) PyObject_TypeCheck(op, &PyArray_Type)
 #define PyArray_CheckExact(op) ((op)->ob_type == &PyArray_Type)
 
 #define PyArray_HasArrayInterfaceType(op, type, context, out)                 \
