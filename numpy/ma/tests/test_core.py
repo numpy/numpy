@@ -1009,6 +1009,8 @@ class TestArrayMethods(NumpyTestCase):
         assert_equal(mXX.var(axis=3).shape,XX.var(axis=3).shape)
         assert_equal(mX.var().shape,X.var().shape)
         (mXvar0,mXvar1) = (mX.var(axis=0), mX.var(axis=1))
+        assert_almost_equal(mX.var(axis=None,ddof=2),mX.compressed().var(ddof=2))
+        assert_almost_equal(mX.std(axis=None,ddof=2),mX.compressed().std(ddof=2))
         for k in range(6):
             assert_almost_equal(mXvar1[k],mX[k].compressed().var())
             assert_almost_equal(mXvar0[k],mX[:,k].compressed().var())

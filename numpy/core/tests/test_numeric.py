@@ -724,6 +724,21 @@ class test_allclose_inf(ParametricTestCase):
         assert_array_equal(x,array([inf,1]))
         assert_array_equal(y,array([0,inf]))
 
+class TestStdVar(NumpyTestCase):
+    def setUp(self):
+        self.A = array([1,-1,1,-1])
+        self.real_var = 1
+
+    def test_basic(self):
+        assert_almost_equal(var(self.A),self.real_var)
+        assert_almost_equal(std(self.A)**2,self.real_var)
+    def test_ddof1(self):
+        assert_almost_equal(var(self.A,ddof=1),self.real_var*len(self.A)/float(len(self.A)-1))
+        assert_almost_equal(std(self.A,ddof=1)**2,self.real_var*len(self.A)/float(len(self.A)-1))
+    def test_ddof2(self):
+        assert_almost_equal(var(self.A,ddof=2),self.real_var*len(self.A)/float(len(self.A)-2))
+        assert_almost_equal(std(self.A,ddof=2)**2,self.real_var*len(self.A)/float(len(self.A)-2))
+
 import sys
 if sys.version_info[:2] >= (2, 5):
     set_local_path()
