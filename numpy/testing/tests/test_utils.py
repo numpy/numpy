@@ -17,14 +17,41 @@ class TestEqual:
             raise AssertionError("a and b are found equal but are not")
 
     def test_array_rank1_eq(self):
-        """Test two equal array are found equal."""
+        """Test two equal array of rank 1 are found equal."""
         a = N.array([1, 2])
         b = N.array([1, 2])
 
         self._test_equal(a, b)
 
     def test_array_rank1_noteq(self):
+        """Test two different array of rank 1 are found not equal."""
         a = N.array([1, 2])
         b = N.array([2, 2])
 
         self._test_not_equal(a, b)
+
+    def test_array_rank2_eq(self):
+        """Test two equal array of rank 2 are found equal."""
+        a = N.array([[1, 2], [3, 4]])
+        b = N.array([[1, 2], [3, 4]])
+
+        self._test_equal(a, b)
+
+    def test_array_diffshape(self):
+        """Test two arrays with different shapes are found not equal."""
+        a = N.array([1, 2])
+        b = N.array([[1, 2], [1, 2]])
+
+        self._test_not_equal(a, b)
+
+    def test_string_arrays(self):
+        """Test two arrays with different shapes are found not equal."""
+        a = N.array(['floupi', 'floupa'])
+        b = N.array(['floupi', 'floupa'])
+
+        self._test_equal(a, b)
+
+        c = N.array(['floupipi', 'floupa'])
+
+        self._test_not_equal(c, b)
+
