@@ -1671,9 +1671,11 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e. var = sqrt(mean((x - x.mean())**2)).  The
-    computed standard deviation is computed by dividing by the number of 
-    elements, N-ddof.
+    deviations from the mean, i.e. var = sqrt(mean(abs(x - x.mean())**2)).  
+    The computed standard deviation is computed by dividing by the number of 
+    elements, N-ddof. The option ddof defaults to zero, that is, a 
+    biased estimate. Note that for complex numbers std takes the absolute 
+    value before squaring, so that the result is always real and nonnegative.
 
     Examples
     --------
@@ -1734,9 +1736,10 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     Notes
     -----
     The variance is the average of the squared deviations from the mean,
-    i.e.  var = mean((x - x.mean())**2).  The computed variance is biased,
+    i.e.  var = mean(abs(x - x.mean())**2).  The computed variance is biased,
     i.e., the mean is computed by dividing by the number of elements, N,
-    rather than by N-1.
+    rather than by N-1. Note that for complex numbers the absolute value is
+    taken before squaring, so that the result is always real and nonnegative.
 
     Examples
     --------

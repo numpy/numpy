@@ -739,6 +739,13 @@ class TestStdVar(NumpyTestCase):
         assert_almost_equal(var(self.A,ddof=2),self.real_var*len(self.A)/float(len(self.A)-2))
         assert_almost_equal(std(self.A,ddof=2)**2,self.real_var*len(self.A)/float(len(self.A)-2))
 
+class TestStdVarComplex(NumpyTestCase):
+    def test_basic(self):
+        A = array([1,1.j,-1,-1.j])
+        real_var = 1
+        assert_almost_equal(var(A),real_var)
+        assert_almost_equal(std(A)**2,real_var)
+
 import sys
 if sys.version_info[:2] >= (2, 5):
     set_local_path()

@@ -350,7 +350,7 @@ class matrix(N.ndarray):
         """
         return N.ndarray.mean(self, axis, dtype, out)._align(axis)
 
-    def std(self, axis=None, dtype=None, out=None):
+    def std(self, axis=None, dtype=None, out=None, ddof=0):
         """Compute the standard deviation along the specified axis.
 
         Returns the standard deviation of the array elements, a measure of the
@@ -363,16 +363,17 @@ class matrix(N.ndarray):
             Axis along which the standard deviation is computed. The
             default is to compute the standard deviation of the flattened
             array.
-
         dtype : type
             Type to use in computing the standard deviation. For arrays of
             integer type the default is float32, for arrays of float types
             it is the same as the array type.
-
         out : ndarray
             Alternative output array in which to place the result. It must
             have the same shape as the expected output but the type will be
             cast if necessary.
+        ddof : {0, integer}
+            Means Delta Degrees of Freedom.  The divisor used in calculations
+            is N-ddof.
 
         Returns
         -------
@@ -389,13 +390,17 @@ class matrix(N.ndarray):
         -----
         The standard deviation is the square root of the
         average of the squared deviations from the mean, i.e. var =
-        sqrt(mean((x - x.mean())**2)).  The computed standard
-        deviation is biased, i.e., the mean is computed by dividing by
-        the number of elements, N, rather than by N-1.
-        """
-        return N.ndarray.std(self, axis, dtype, out)._align(axis)
+        sqrt(mean(abs(x - x.mean())**2)).  The computed standard 
+        deviation is computed by dividing by the number of elements, 
+        N-ddof. The option ddof defaults to zero, that is, a biased 
+        estimate. Note that for complex numbers std takes the absolute 
+        value before squaring, so that the result is always real 
+        and nonnegative.
 
-    def var(self, axis=None, dtype=None, out=None):
+        """
+        return N.ndarray.std(self, axis, dtype, out, ddof)._align(axis)
+
+    def var(self, axis=None, dtype=None, out=None, ddof=0):
         """Compute the variance along the specified axis.
 
         Returns the variance of the array elements, a measure of the spread of
@@ -415,6 +420,9 @@ class matrix(N.ndarray):
             Alternative output array in which to place the result. It must
             have the same shape as the expected output but the type will be
             cast if necessary.
+        ddof : {0, integer}
+            Means Delta Degrees of Freedom.  The divisor used in calculations
+            is N-ddof.
 
         Returns
         -------
@@ -431,9 +439,12 @@ class matrix(N.ndarray):
         -----
 
         The variance is the average of the squared deviations from the
-        mean, i.e.  var = mean((x - x.mean())**2).  The computed
-        variance is biased, i.e., the mean is computed by dividing by
-        the number of elements, N, rather than by N-1.
+        mean, i.e.  var = mean(abs(x - x.mean())**2).  The mean is 
+        computed by dividing by N-ddof, where N is the number of elements. 
+        The argument ddof defaults to zero; for an unbiased estimate 
+        supply ddof=1. Note that for complex numbers the absolute value 
+        is taken before squaring, so that the result is always real 
+        and nonnegative.
         """
         return N.ndarray.var(self, axis, dtype, out)._align(axis)
 

@@ -2153,7 +2153,7 @@ masked_%(name)s(data = %(data)s,
         """Return the variance, a measure of the spread of a distribution.
 
         The variance is the average of the squared deviations from the
-        mean, i.e. var = mean((x - x.mean())**2).
+        mean, i.e. var = mean(abs(x - x.mean())**2).
 
         Parameters
         ----------
@@ -2166,8 +2166,11 @@ masked_%(name)s(data = %(data)s,
 
         Notes
         -----
-        The value returned is a biased estimate of the true variance.
-        For the (more standard) unbiased estimate, use varu.
+        The value returned is by default a biased estimate of the 
+        true variance, since the mean is computed by dividing by N-ddof.
+        For the (more standard) unbiased estimate, use ddof=1 or call varu.
+        Note that for complex numbers the absolute value is taken before 
+        squaring, so that the result is always real and nonnegative.
 
         """
         if self._mask is nomask:
@@ -2191,7 +2194,7 @@ masked_%(name)s(data = %(data)s,
         The standard deviation is the square root of the average of
         the squared deviations from the mean, i.e.
 
-        std = sqrt(mean((x - x.mean())**2)).
+        std = sqrt(mean(abs(x - x.mean())**2)).
 
         Parameters
         ----------
@@ -2204,10 +2207,12 @@ masked_%(name)s(data = %(data)s,
 
         Notes
         -----
-        The value returned is a biased estimate of the true
-        standard deviation.  For the more standard unbiased
-        estimate, use stdu.
-
+        The value returned is by default a biased estimate of the 
+        true standard deviation, since the mean is computed by dividing 
+        by N-ddof.  For the more standard unbiased estimate, use ddof=1 
+        or call stdu. Note that for complex numbers the absolute value
+        is taken before squaring, so that the result is always real
+        and nonnegative.
         """
         dvar = self.var(axis,dtype,ddof=ddof)
         if axis is not None or dvar is not masked:
