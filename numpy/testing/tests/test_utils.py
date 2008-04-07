@@ -44,6 +44,13 @@ class TestEqual:
 
         self._test_not_equal(a, b)
 
+    def test_nan_array(self):
+        """Test two arrays with different shapes are found not equal."""
+        a = N.array([1, 2])
+        b = N.array([[1, 2], [1, 2]])
+
+        self._test_not_equal(a, b)
+
     def test_string_arrays(self):
         """Test two arrays with different shapes are found not equal."""
         a = N.array(['floupi', 'floupa'])
@@ -52,6 +59,21 @@ class TestEqual:
         self._test_equal(a, b)
 
         c = N.array(['floupipi', 'floupa'])
+
+        self._test_not_equal(c, b)
+
+    def test_recarrays(self):
+        """Test record arrays."""
+        a = N.empty(2, [('floupi', N.float), ('floupa', N.float)])
+        a['floupi'] = [1, 2]
+        a['floupa'] = [1, 2]
+        b = a.copy()
+
+        self._test_equal(a, b)
+
+        c = N.empty(2, [('floupipi', N.float), ('floupa', N.float)])
+        c['floupipi'] = a['floupi'].copy()
+        c['floupa'] = a['floupa'].copy()
 
         self._test_not_equal(c, b)
 
