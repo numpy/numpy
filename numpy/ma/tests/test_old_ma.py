@@ -156,7 +156,7 @@ class TestMa(NumpyTestCase):
         self.assertEqual(1, count(1))
         self.failUnless (eq(0, array(1,mask=[1])))
         ott=ott.reshape((2,2))
-        assert isMaskedArray(count(ott,0))
+        assert isinstance(count(ott,0),numpy.ndarray)
         assert isinstance(count(ott), types.IntType)
         self.failUnless (eq(3, count(ott)))
         assert getmask(count(ott,0)) is nomask

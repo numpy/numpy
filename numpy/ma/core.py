@@ -1796,7 +1796,7 @@ masked_%(name)s(data = %(data)s,
         if axis is None:
             return (n1-n2)
         else:
-            return masked_array(n1 - n2)
+            return narray(n1 - n2)
     #............................................
     flatten = _arraymethod('flatten')
     #
@@ -2168,7 +2168,7 @@ masked_%(name)s(data = %(data)s,
         -----
         The value returned is by default a biased estimate of the 
         true variance, since the mean is computed by dividing by N-ddof.
-        For the (more standard) unbiased estimate, use ddof=1 or call varu.
+        For the (more standard) unbiased estimate, use ddof=1 or.
         Note that for complex numbers the absolute value is taken before 
         squaring, so that the result is always real and nonnegative.
 
@@ -2209,10 +2209,9 @@ masked_%(name)s(data = %(data)s,
         -----
         The value returned is by default a biased estimate of the 
         true standard deviation, since the mean is computed by dividing 
-        by N-ddof.  For the more standard unbiased estimate, use ddof=1 
-        or call stdu. Note that for complex numbers the absolute value
-        is taken before squaring, so that the result is always real
-        and nonnegative.
+        by N-ddof.  For the more standard unbiased estimate, use ddof=1. 
+        Note that for complex numbers the absolute value is taken before 
+        squaring, so that the result is always real and nonnegative.
         """
         dvar = self.var(axis,dtype,ddof=ddof)
         if axis is not None or dvar is not masked:
@@ -2899,7 +2898,7 @@ sort.__doc__ = MaskedArray.sort.__doc__
 def compressed(x):
     """Return a 1-D array of all the non-masked data."""
     if getmask(x) is nomask:
-        return x
+        return numpy.asanyarray(x)
     else:
         return x.compressed()
 

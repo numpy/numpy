@@ -148,7 +148,7 @@ class TestTrimming(NumpyTestCase):
         "Tests the Winsorization of the data."
         data = masked_array([ 77, 87, 88,114,151,210,219,246,253,262,
                              296,299,306,376,428,515,666,1310,2611])
-        assert_almost_equal(winsorize(data).varu(), 21551.4, 1)
+        assert_almost_equal(winsorize(data).var(ddof=1), 21551.4, 1)
         data[5] = masked
         winsorized = winsorize(data)
         assert_equal(winsorized.mask, data.mask)

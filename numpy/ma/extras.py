@@ -12,11 +12,18 @@ __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d', 
-           'average', 'vstack', 'hstack', 'dstack', 'row_stack', 'column_stack',
-           'compress_rowcols', 'compress_rows', 'compress_cols', 'count_masked',
-           'dot', 'hsplit', 'mask_rowcols','mask_rows','mask_cols','masked_all',
-           'masked_all_like', 'mediff1d', 'median', 'mr_', 'notmasked_edges',
-           'notmasked_contiguous', 'stdu', 'varu',
+           'average', 
+           'column_stack','compress_cols','compress_rowcols', 'compress_rows',
+           'count_masked',
+           'dot','dstack',
+           'expand_dims',
+           'flatnotmasked_contiguous','flatnotmasked_edges', 
+           'hsplit','hstack', 
+           'mask_cols','mask_rowcols','mask_rows','masked_all','masked_all_like',
+           'median','mediff1d','mr_', 
+           'notmasked_contiguous','notmasked_edges', 
+           'row_stack', 
+           'vstack',
            ]
 
 from itertools import groupby
@@ -82,75 +89,6 @@ def masked_all_like(arr):
                      mask=numeric.ones(arr.shape, bool_))
     return a
 
-#####--------------------------------------------------------------------------
-#---- --- New methods ---
-#####--------------------------------------------------------------------------
-def varu(a, axis=None, dtype=None):
-    """Return an unbiased estimate of the variance.
-    i.e. var = sum((x - x.mean())**2)/(size(x,axis)-1)
-
-    Parameters
-    ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
-            Datatype for the intermediary computation. If not given,
-            the current dtype is used instead.
-
-    Notes
-    -----
-        The value returned is an unbiased estimate of the true variance.
-        For the (less standard) biased estimate, use var.
-
-    """
-    a = asarray(a)
-    cnt = a.count(axis=axis)
-    anom = a.anom(axis=axis, dtype=dtype)
-    anom *= anom
-    dvar = anom.sum(axis) / (cnt-1)
-    if axis is None:
-        return dvar
-    dvar.__setmask__(mask_or(a._mask.all(axis), (cnt==1)))
-    return dvar
-#    return a.__class__(dvar,
-#                          mask=mask_or(a._mask.all(axis), (cnt==1)),
-#                          fill_value=a._fill_value)
-
-def stdu(a, axis=None, dtype=None):
-    """Return an unbiased estimate of the standard deviation.  The
-    standard deviation is the square root of the average of the
-    squared deviations from the mean, i.e. stdu = sqrt(varu(x)).
-
-    Parameters
-    ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : dtype, optional
-            Datatype for the intermediary computation.
-            If not given, the current dtype is used instead.
-
-    Notes
-    -----
-        The value returned is an unbiased estimate of the true
-        standard deviation.  For the biased estimate,
-        use std.
-
-    """
-    a = asarray(a)
-    dvar = a.varu(axis,dtype)
-    if axis is None:
-        if dvar is masked:
-            return masked
-        else:
-            # Should we use umath.sqrt instead ?
-            return sqrt(dvar)
-    return sqrt(dvar)
-
-
-MaskedArray.stdu = stdu
-MaskedArray.varu = varu
 
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
@@ -198,6 +136,17 @@ column_stack = _fromnxfunction('column_stack')
 dstack = _fromnxfunction('dstack')
 
 hsplit = _fromnxfunction('hsplit')
+
+def expand_dims(a, axis):
+    """Expands the shape of a by including newaxis before axis.
+    """
+    if not isinstance(a, MaskedArray):
+        return numpy.expand_dims(a,axis)
+    elif getmask(a) is nomask:
+        return numpy.expand_dims(a,axis).view(MaskedArray)
+    m = getmaskarray(a)
+    return masked_array(numpy.expand_dims(a,axis),
+                        mask=numpy.expand_dims(m,axis))
 
 #####--------------------------------------------------------------------------
 #----
@@ -875,3 +824,6 @@ def notmasked_contiguous(a, axis=None):
     return result
 
 ################################################################################
+testmathworks = fix_invalid([1.165 , 0.6268, 0.0751, 0.3516, -0.6965, 
+                                        numpy.nan])
+expand_dims(testmathworks.mean(0),0)

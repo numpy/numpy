@@ -201,7 +201,7 @@ def trimmed_stde(data, proportiontocut=0.2, axis=None):
         "Returns the standard error of the trimmed mean for a 1D input data."
         winsorized = winsorize(data)
         nsize = winsorized.count()
-        winstd = winsorized.stdu()
+        winstd = winsorized.std(ddof=1)
         return winstd / ((1-2*trim) * numpy.sqrt(nsize))
     #........................
     data = masked_array(data, copy=False, subok=True)

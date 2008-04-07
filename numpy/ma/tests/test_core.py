@@ -292,7 +292,7 @@ class TestMA(NumpyTestCase):
         assert_equal(1, count(1))
         assert_equal(0, array(1,mask=[1]))
         ott = ott.reshape((2,2))
-        assert isMaskedArray(count(ott,0))
+        assert isinstance(count(ott,0), ndarray)
         assert isinstance(count(ott), types.IntType)
         assert_equal(3, count(ott))
         assert getmask(count(ott,0)) is nomask
