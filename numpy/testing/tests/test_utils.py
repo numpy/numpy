@@ -95,3 +95,22 @@ class TestEqual:
         # Test strings
         for t in ['S1', 'U1']:
             foo(t)
+
+    def test_generic_rank3(self):
+        """Test rank 3 array for all dtypes."""
+        def foo(t):
+            a = N.empty((4, 2, 3), t)
+            a.fill(1)
+            b = a.copy()
+            c = a.copy()
+            c.fill(0)
+            self._test_equal(a, b)
+            self._test_not_equal(c, b)
+
+        # Test numeric types and object
+        for t in '?bhilqpBHILQPfdgFDG':
+            foo(t)
+
+        # Test strings
+        for t in ['S1', 'U1']:
+            foo(t)
