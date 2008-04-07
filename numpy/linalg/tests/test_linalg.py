@@ -148,6 +148,10 @@ class TestMatrixPower(ParametricTestCase):
         self.assertRaises(numpy.linalg.linalg.LinAlgError,
                 lambda: matrix_power(self.noninv,-1))
 
+class TestBoolPower(NumpyTestCase):
+    def check_square(self):
+        A = array([[True,False],[True,True]])
+        assert_equal(matrix_power(A,2),A)
 
 if __name__ == '__main__':
     NumpyTest().run()
