@@ -68,7 +68,7 @@ import numpy.core.umath as umath
 import numpy.core.fromnumeric  as fromnumeric
 import numpy.core.numeric as numeric
 import numpy.core.numerictypes as ntypes
-from numpy import bool_, dtype, typecodes, amax, amin, ndarray
+from numpy import bool_, dtype, typecodes, amax, amin, ndarray, iscomplexobj
 from numpy import expand_dims as n_expand_dims
 from numpy import array as narray
 import warnings
@@ -2180,7 +2180,10 @@ masked_%(name)s(data = %(data)s,
         else:
             cnt = self.count(axis=axis)-ddof
             danom = self.anom(axis=axis, dtype=dtype)
-            danom *= danom
+            if iscomplexobj(self):
+                danom = umath.absolute(danom)**2
+            else:
+                danom *= danom
             dvar = narray(danom.sum(axis) / cnt).view(type(self))
             if axis is not None:
                 dvar._mask = mask_or(self._mask.all(axis), (cnt==1))
