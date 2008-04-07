@@ -186,7 +186,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header=''):
-    from numpy.core import asarray, isnan
+    from numpy.core import asarray, isnan, any
     x = asarray(x)
     y = asarray(y)
     try:
@@ -199,7 +199,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'))
             assert cond, msg
-        if isnan(x) or isnan(y):
+        if any(isnan(x)) or any(isnan(y)):
             # Handling nan: we first check that x and y have the nan at the
             # same locations, and then we mask the nan and do the comparison as
             # usual.
