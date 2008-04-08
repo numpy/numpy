@@ -139,11 +139,13 @@ array([[[ 32.58497782,  38.57048452],
 """
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
+    total = pmt(rate, nper, pv, fv, when)
+    # Now, compute the nth step in the amortization
     raise NotImplementedError
-
 
 def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
-    raise NotImplementedError
+    total = pmt(rate, nper, pv, fv, when)
+    return total - ipmt(rate, per, nper, pv, fv, when)
 
 def pv(rate, nper, pmt, fv=0.0, when='end'):
     """Number of periods found by solving the equation
