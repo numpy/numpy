@@ -127,12 +127,4 @@ New features (non exhaustive list)
 
 The ``anom`` method returns the deviations from the average (anomalies).
 
-``varu`` and ``stdu``
----------------------
-
-These methods return unbiased estimates of the variance and standard deviation
-respectively. An unbiased estimate is obtained by dividing the sum of the
-squared anomalies by ``n-1`` instead of ``n`` for the biased estimates, where
-``n`` is the number of unmasked elements along the given axis.
-
 

@@ -40,7 +40,7 @@ else:
         return loader(*packages, **options)
 
     import add_newdocs
-    __all__ = ['add_newdocs',]
+    __all__ = ['add_newdocs']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
     import testing

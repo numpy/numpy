@@ -74,7 +74,6 @@ This list is non-exhaustive...
 
  * the *mr_* function mimics *r_* for masked arrays.
  * the *anom* method returns the anomalies (deviations from the average)
- * the *stdu* and *varu* return unbiased estimates of the standard deviation and variance, respectively.
 
 Using the new package with numpy.core.ma
 ----------------------------------------

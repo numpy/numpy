@@ -1,5 +1,5 @@
 """
-from numpy.lib.financial import *
+from numpy import *
 
 >>> rate(10,0,-3500,10000)
 0.11069085371426901
