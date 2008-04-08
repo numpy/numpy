@@ -4,7 +4,7 @@
 from numpy.testing import *
 set_package_path()
 from numpy import array, single, double, csingle, cdouble, dot, identity, \
-        multiply, atleast_2d
+        multiply, atleast_2d, inf
 from numpy import linalg
 from linalg import matrix_power
 restore_path()
@@ -72,6 +72,21 @@ class TestSVD(LinalgTestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
         assert_almost_equal(a, dot(u*s, vt))
+
+class TestCondSVD(LinalgTestCase):
+    def do(self, a, b):
+        s = linalg.svd(a, compute_uv=False)
+        old_assert_almost_equal(s[0]/s[-1], linalg.cond(a), decimal=5)
+
+class TestCond2(LinalgTestCase):
+    def do(self, a, b):
+        s = linalg.svd(a, compute_uv=False)
+        old_assert_almost_equal(s[0]/s[-1], linalg.cond(a,2), decimal=5)
+
+class TestCondInf(NumpyTestCase):
+    def test(self):
+        A = array([[1.,0,0],[0,-2.,0],[0,0,3.]])
+        assert_almost_equal(linalg.cond(A,inf),3.)
 
 class TestPinv(LinalgTestCase):
     def do(self, a, b):

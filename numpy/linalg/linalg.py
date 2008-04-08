@@ -16,6 +16,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv',
            'det', 'svd',
            'eig', 'eigh','lstsq', 'norm',
            'qr',
+           'cond',
            'LinAlgError'
            ]
 
@@ -967,6 +968,43 @@ def svd(a, full_matrices=1, compute_uv=1):
         return wrap(u), s, wrap(vt)
     else:
         return s
+
+def cond(x,p=None):
+    """Compute the condition number of a matrix.
+
+    The condition number of x is the norm of x times the norm 
+    of the inverse of x.  The norm can be the usual L2 
+    (root-of-sum-of-squares) norm or a number of other matrix norms.
+
+    Parameters
+    ----------
+    x : array, shape (M, N)
+        The matrix whose condition number is sought.
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}
+        Order of the norm:
+
+        p      norm for matrices           
+        =====  ============================
+        None   2-norm, computed directly using the SVD
+        'fro'  Frobenius norm             
+        inf    max(sum(abs(x), axis=1))   
+        -inf   min(sum(abs(x), axis=1))    
+        1      max(sum(abs(x), axis=0))     
+        -1     min(sum(abs(x), axis=0))     
+        2      2-norm (largest sing. value) 
+        -2     smallest singular value      
+        =====  ============================
+
+    Returns
+    -------
+    c : float
+        The condition number of the matrix. May be infinite.
+    """
+    if p is None:
+        s = svd(x,compute_uv=False)
+        return s[0]/s[-1]
+    else:
+        return norm(x,p)*norm(inv(x),p)
 
 # Generalized inverse
 
