@@ -1,14 +1,17 @@
 import numpy as N
 from numpy.testing.utils import *
 
-class TestEqual:
+class _GenericTest:
+    def __init__(self, assert_func):
+        self._assert_func = assert_func
+
     def _test_equal(self, a, b):
-        assert_array_equal(a, b)
+        self._assert_func(a, b)
 
     def _test_not_equal(self, a, b):
         passed = False
         try:
-            assert_array_equal(a, b)
+            self._assert_func(a, b)
             passed = True
         except AssertionError:
             pass
@@ -44,38 +47,9 @@ class TestEqual:
 
         self._test_not_equal(a, b)
 
-    def test_nan_array(self):
-        """Test two arrays with different shapes are found not equal."""
-        a = N.array([1, 2])
-        b = N.array([[1, 2], [1, 2]])
-
-        self._test_not_equal(a, b)
-
-    def test_string_arrays(self):
-        """Test two arrays with different shapes are found not equal."""
-        a = N.array(['floupi', 'floupa'])
-        b = N.array(['floupi', 'floupa'])
-
-        self._test_equal(a, b)
-
-        c = N.array(['floupipi', 'floupa'])
-
-        self._test_not_equal(c, b)
-
-    def test_recarrays(self):
-        """Test record arrays."""
-        a = N.empty(2, [('floupi', N.float), ('floupa', N.float)])
-        a['floupi'] = [1, 2]
-        a['floupa'] = [1, 2]
-        b = a.copy()
-
-        self._test_equal(a, b)
-
-        c = N.empty(2, [('floupipi', N.float), ('floupa', N.float)])
-        c['floupipi'] = a['floupi'].copy()
-        c['floupa'] = a['floupa'].copy()
-
-        self._test_not_equal(c, b)
+class TestEqual(_GenericTest):
+    def __init__(self):
+        _GenericTest.__init__(self, assert_array_equal)
 
     def test_generic_rank1(self):
         """Test rank 1 array for all dtypes."""
@@ -114,3 +88,41 @@ class TestEqual:
         # Test strings
         for t in ['S1', 'U1']:
             foo(t)
+
+    def test_nan_array(self):
+        """Test two arrays with different shapes are found not equal."""
+        a = N.array([1, 2])
+        b = N.array([[1, 2], [1, 2]])
+
+        self._test_not_equal(a, b)
+
+    def test_string_arrays(self):
+        """Test two arrays with different shapes are found not equal."""
+        a = N.array(['floupi', 'floupa'])
+        b = N.array(['floupi', 'floupa'])
+
+        self._test_equal(a, b)
+
+        c = N.array(['floupipi', 'floupa'])
+
+        self._test_not_equal(c, b)
+
+    def test_recarrays(self):
+        """Test record arrays."""
+        a = N.empty(2, [('floupi', N.float), ('floupa', N.float)])
+        a['floupi'] = [1, 2]
+        a['floupa'] = [1, 2]
+        b = a.copy()
+
+        self._test_equal(a, b)
+
+        c = N.empty(2, [('floupipi', N.float), ('floupa', N.float)])
+        c['floupipi'] = a['floupi'].copy()
+        c['floupa'] = a['floupa'].copy()
+
+        self._test_not_equal(c, b)
+
+
+class TestAlmostEqual(_GenericTest):
+    def __init__(self):
+        _GenericTest.__init__(self, assert_array_almost_equal)
