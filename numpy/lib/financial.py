@@ -1,5 +1,10 @@
 # Some simple financial calculations
 #  patterned after spreadsheet computations.
+
+# There is some complexity in each function
+#  so that the functions behave like ufuncs with 
+#  broadcasting and being able to be called with scalars
+#  or arrays (or other sequences). 
 import numpy as np
 
 __all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate', 
@@ -125,8 +130,12 @@ So, over 64 months would be required to pay off the loan.
 The same analysis could be done with several different interest rates and/or
     payments and/or total amounts to produce an entire table.
 
->>> nper(*(ogrid[0.06/12:0.071/12:0.005/12, -100:-201:50, 6000:8000:1000]))
+>>> nper(*(ogrid[0.06/12:0.071/12:0.01/12, -200:-99:100, 6000:7001:1000]))
+array([[[ 32.58497782,  38.57048452],
+        [ 71.51317802,  86.37179563]],
 
+       [[ 33.07413144,  39.26244268],
+        [ 74.06368256,  90.22989997]]])
 """
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
