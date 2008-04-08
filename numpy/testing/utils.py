@@ -216,8 +216,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             except AssertionError:
                 msg = build_err_msg([x, y],
                                     err_msg
-                                    + '\n(x and y nan location mismatch %s, '
-                                    + '%s mismatch)' % (xnanid, ynanid),
+                                    + '\n(x and y nan location mismatch %s, ' \
+                                    '%s mismatch)' % (xnanid, ynanid),
                                     verbose=verbose, header=header,
                                     names=('x', 'y'))
             val = comparison(x[~xnanid], y[~ynanid])

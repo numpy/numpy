@@ -90,11 +90,14 @@ class TestEqual(_GenericTest):
             foo(t)
 
     def test_nan_array(self):
-        """Test two arrays with different shapes are found not equal."""
-        a = N.array([1, 2])
-        b = N.array([[1, 2], [1, 2]])
+        """Test arrays with nan values in them."""
+        a = N.array([1, 2, N.nan])
+        b = N.array([1, 2, N.nan])
 
-        self._test_not_equal(a, b)
+        self._test_equal(a, b)
+
+        c = N.array([1, 2, 3])
+        self._test_not_equal(c, b)
 
     def test_string_arrays(self):
         """Test two arrays with different shapes are found not equal."""
