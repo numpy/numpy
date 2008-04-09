@@ -15,5 +15,28 @@ class TestMultinomial(NumpyTestCase):
         assert np.all(-5 <= x)
         assert np.all(x < -1)
 
+
+class TestSetState(NumpyTestCase):
+    def setUp(self):
+        self.seed = 1234567890
+        self.prng = random.RandomState(self.seed)
+        self.state = self.prng.get_state()
+
+    def test_basic(self):
+        old = self.prng.tomaxint(16)
+        self.prng.set_state(self.state)
+        new = self.prng.tomaxint(16)
+        assert np.all(old == new)
+
+    def test_gaussian_reset(self):
+        """ Make sure the cached every-other-Gaussian is reset.
+        """
+        old = self.prng.standard_normal(size=3)
+        self.prng.set_state(self.state)
+        new = self.prng.standard_normal(size=3)
+        assert np.all(old == new)
+
+
+
 if __name__ == "__main__":
     NumpyTest().run()

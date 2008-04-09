@@ -37,6 +37,7 @@ cdef extern from "randomkit.h":
     ctypedef struct rk_state:
         unsigned long key[624]
         int pos
+        int has_gauss
 
     ctypedef enum rk_error:
         RK_NOERR = 0
@@ -552,6 +553,7 @@ cdef class RandomState:
             raise ValueError("state must be 624 longs")
         memcpy(<void*>(self.internal_state.key), <void*>(obj.data), 624*sizeof(long))
         self.internal_state.pos = pos
+        self.internal_state.has_gauss = 0
     
     # Pickling support:
     def __getstate__(self):
