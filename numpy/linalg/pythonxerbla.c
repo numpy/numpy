@@ -16,10 +16,6 @@
 	info: Number of the invalid parameter.
 */
 
-extern int dgesv_(int *n, int *nrhs,
-                         double a[], int *lda, int ipiv[],
-                         double b[], int *ldb, int *info);
-
 int xerbla_(char *srname, integer *info)
 {
 	const char* format = "On entry to %.*s" \
