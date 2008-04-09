@@ -72,6 +72,24 @@ class Testloadtxt(NumpyTestCase):
         x = np.loadtxt(c, dtype=int)
         a = np.array([1,2,3,4], int)
         assert_array_equal(x, a)
+        
+        c = StringIO.StringIO()
+        c.write('1,2,3,4\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',')
+        a = np.array([1,2,3,4], int)
+        assert_array_equal(x, a)
+        
+        
+    def test_missing(self):
+        c = StringIO.StringIO()
+        c.write('1,2,3,,5\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', \
+            converters={3:lambda s: int(s or -999)})
+        a = np.array([1,2,3,-999,5], int)
+        assert_array_equal(x, a)
+        
     
 if __name__ == "__main__":
     NumpyTest().run()
