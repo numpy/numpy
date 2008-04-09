@@ -3066,7 +3066,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             if ((vals[i] < 0) || (vals[i] >= self->dimensions[i])) {
                 PyErr_Format(PyExc_IndexError,
                              "index (%"INTP_FMT") out of range "\
-                             "(0<=index<=%"INTP_FMT") in dimension %d",
+                             "(0<=index<%"INTP_FMT") in dimension %d",
                              vals[i], self->dimensions[i], i);
                 return NULL;
             }
@@ -10139,7 +10139,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             if (indval < 0 || indval >= dimsize) {
                 PyErr_Format(PyExc_IndexError,
                              "index (%d) out of range "\
-                             "(0<=index<=%d) in dimension %d",
+                             "(0<=index<%d) in dimension %d",
                              (int) indval, (int) (dimsize-1),
                              mit->iteraxes[i]);
                 goto fail;
