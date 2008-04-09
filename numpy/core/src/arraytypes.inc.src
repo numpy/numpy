@@ -106,6 +106,19 @@ _getNAN(void) {
 static double
 MyPyFloat_AsDouble(PyObject *obj)
 {
+        PyObject *tmp;
+        double d;
+        if (PyString_Check(obj)) {
+                tmp = PyFloat_FromString(obj, 0);
+                if (tmp) {
+                        d = PyFloat_AsDouble(tmp);
+                        Py_DECREF(tmp);
+                        return d;
+                }
+                else {
+                        return _getNAN();
+                }
+        }
         if (obj == Py_None) return _getNAN();
         return PyFloat_AsDouble(obj);
 }
