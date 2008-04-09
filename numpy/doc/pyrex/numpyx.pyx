@@ -1,4 +1,8 @@
 # -*- Mode: Python -*-  Not really, but close enough
+"""WARNING: this code is deprecated and slated for removal soon.  See the
+doc/cython directory for the replacement, which uses Cython (the actively
+maintained version of Pyrex).
+"""
 
 cimport c_python
 cimport c_numpy
