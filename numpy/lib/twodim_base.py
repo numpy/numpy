@@ -145,11 +145,10 @@ def triu(m, k=0):
 # borrowed from John Hunter and matplotlib
 def vander(x, N=None):
     """
-    X = vander(x,N=None)
+    Generate the Vandermonde matrix of vector x.
 
-    The Vandermonde matrix of vector x.  The i-th column of X is the
-    the i-th power of x.  N is the maximum power to compute; if N is
-    None it defaults to len(x).
+    The i-th column of X is the the (N-i)-1-th power of x.  N is the
+    maximum power to compute; if N is None it defaults to len(x).
 
     """
     x = asarray(x)
