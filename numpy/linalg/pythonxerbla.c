@@ -18,7 +18,7 @@
 
 int xerbla_(char *srname, integer *info)
 {
-	const char* format = "On entry to %.*s" \
+        char* format = "On entry to %.*s"			\
 		" parameter number %d had an illegal value";
 	char buf[60 + 6 + 4]; /* 6 for name, 4 for param. num. */
 	
