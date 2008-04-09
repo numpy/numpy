@@ -148,16 +148,36 @@ def isint1array(var):
     and get_kind(var)=='1'
 
 def isunsigned_chararray(var):
-    return isarray(var) and var.get('typespec')=='integer' and get_kind(var)=='-1'
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='-1'
 
 def isunsigned_shortarray(var):
-    return isarray(var) and var.get('typespec')=='integer' and get_kind(var)=='-2'
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='-2'
 
 def isunsignedarray(var):
-    return isarray(var) and var.get('typespec')=='integer' and get_kind(var)=='-4'
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='-4'
 
 def isunsigned_long_longarray(var):
-    return isarray(var) and var.get('typespec')=='integer' and get_kind(var)=='-8'
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='-8'
+
+def issigned_chararray(var):
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='1'
+
+def issigned_shortarray(var):
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='2'
+
+def issigned_array(var):
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='4'
+
+def issigned_long_longarray(var):
+    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+           and get_kind(var)=='8'
 
 def isallocatable(var):
     return 'attrspec' in var and 'allocatable' in var['attrspec']

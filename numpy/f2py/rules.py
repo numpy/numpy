@@ -517,12 +517,17 @@ rout_rules=[
 ################ Rules for arguments ##################
 
 typedef_need_dict = {islong_long:'long_long',
-            islong_double:'long_double',
-            islong_complex:'complex_long_double',
-            isunsigned_char:'unsigned_char',
-            isunsigned_short:'unsigned_short',
-            isunsigned:'unsigned',
-            isunsigned_long_long:'unsigned_long_long'}
+                     islong_double:'long_double',
+                     islong_complex:'complex_long_double',
+                     isunsigned_char:'unsigned_char',
+                     isunsigned_short:'unsigned_short',
+                     isunsigned:'unsigned',
+                     isunsigned_long_long:'unsigned_long_long',
+                     isunsigned_chararray:'unsigned_char',
+                     isunsigned_shortarray:'unsigned_short',
+                     isunsigned_long_longarray:'unsigned_long_long',
+                     issigned_long_longarray:'long_long',
+                     }
 
 aux_rules=[
     {
