@@ -38,6 +38,7 @@ cdef extern from "randomkit.h":
         unsigned long key[624]
         int pos
         int has_gauss
+        double gauss
 
     ctypedef enum rk_error:
         RK_NOERR = 0
@@ -523,16 +524,22 @@ cdef class RandomState:
     def get_state(self):
         """Return a tuple representing the internal state of the generator.
 
-        get_state() -> ('MT19937', int key[624], int pos)
+        get_state() -> ('MT19937', int key[624], int pos, int has_gauss, float cached_gaussian)
         """
         cdef ndarray state "arrayObject_state"
         state = <ndarray>_sp.empty(624, _sp.uint)
         memcpy(<void*>(state.data), <void*>(self.internal_state.key), 624*sizeof(long))
         state = <ndarray>_sp.asarray(state, _sp.uint32)
-        return ('MT19937', state, self.internal_state.pos)
+        return ('MT19937', state, self.internal_state.pos,
+            self.internal_state.has_gauss, self.internal_state.gauss)
 
     def set_state(self, state):
         """Set the state from a tuple.
+
+        state = ('MT19937', int key[624], int pos, int has_gauss, float cached_gaussian)
+
+        For backwards compatibility, the following form is also accepted
+        although it is missing some information about the cached Gaussian value.
 
         state = ('MT19937', int key[624], int pos)
 
@@ -543,7 +550,12 @@ cdef class RandomState:
         algorithm_name = state[0]
         if algorithm_name != 'MT19937':
             raise ValueError("algorithm must be 'MT19937'")
-        key, pos = state[1:]
+        key, pos = state[1:3]
+        if len(state) == 3:
+            has_gauss = 0
+            cached_gaussian = 0.0
+        else:
+            has_gauss, cached_gaussian = state[3:5]
         try:
             obj = <ndarray>PyArray_ContiguousFromObject(key, NPY_ULONG, 1, 1)
         except TypeError:
@@ -553,7 +565,8 @@ cdef class RandomState:
             raise ValueError("state must be 624 longs")
         memcpy(<void*>(self.internal_state.key), <void*>(obj.data), 624*sizeof(long))
         self.internal_state.pos = pos
-        self.internal_state.has_gauss = 0
+        self.internal_state.has_gauss = has_gauss
+        self.internal_state.gauss = cached_gaussian
     
     # Pickling support:
     def __getstate__(self):

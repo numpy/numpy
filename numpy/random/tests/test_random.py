@@ -36,6 +36,29 @@ class TestSetState(NumpyTestCase):
         new = self.prng.standard_normal(size=3)
         assert np.all(old == new)
 
+    def test_gaussian_reset_in_media_res(self):
+        """ When the state is saved with a cached Gaussian, make sure the cached
+        Gaussian is restored.
+        """
+        self.prng.standard_normal()
+        state = self.prng.get_state()
+        old = self.prng.standard_normal(size=3)
+        self.prng.set_state(state)
+        new = self.prng.standard_normal(size=3)
+        assert np.all(old == new)
+
+    def test_backwards_compatibility(self):
+        """ Make sure we can accept old state tuples that do not have the cached
+        Gaussian value.
+        """
+        old_state = self.state[:-2]
+        x1 = self.prng.standard_normal(size=16)
+        self.prng.set_state(old_state)
+        x2 = self.prng.standard_normal(size=16)
+        self.prng.set_state(self.state)
+        x3 = self.prng.standard_normal(size=16)
+        assert np.all(x1 == x2)
+        assert np.all(x1 == x3)
 
 
 if __name__ == "__main__":
