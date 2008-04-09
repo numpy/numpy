@@ -976,5 +976,10 @@ class TestRegression(NumpyTestCase):
         assert not np.any(a)
         np.setbufsize(oldsize)
 
+    def check_mem_0d_array_index(self, level=rlevel):
+        """Ticket #714"""
+        np.zeros(10)[np.array(0)]
+
+
 if __name__ == "__main__":
     NumpyTest().run()
