@@ -4306,7 +4306,8 @@ logical lsame_(char *ca, char *cb)
     return ret_val;
 } /* lsame_ */
 
-/* Subroutine */ int xerbla_(char *srname, integer *info)
+/* Using xerbla_ from pythonxerbla.c */
+/* Subroutine */ int xerbla_DISABLE(char *srname, integer *info)
 {
     /* Format strings */
     static char fmt_9999[] = "(\002 ** On entry to \002,a6,\002 parameter nu"

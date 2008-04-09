@@ -13,14 +13,15 @@ def configuration(parent_package='',top_path=None):
             print "### Warning:  Using unoptimized lapack ###"
             return ext.depends[:-1]
         else:
-            return ext.depends[:1]
+            return ext.depends[:2]
 
     config.add_extension('lapack_lite',
                          sources = [get_lapack_lite_sources],
                          depends=  ['lapack_litemodule.c',
-                                   'zlapack_lite.c', 'dlapack_lite.c',
-                                   'blas_lite.c', 'dlamch.c',
-                                   'f2c_lite.c','f2c.h'],
+                                    'pythonxerbla.c',
+                                    'zlapack_lite.c', 'dlapack_lite.c',
+                                    'blas_lite.c', 'dlamch.c',
+                                    'f2c_lite.c','f2c.h'],
                          extra_info = lapack_info
                          )
 
