@@ -37,26 +37,33 @@ MAXDIMS = multiarray.MAXDIMS
 ALLOW_THREADS = multiarray.ALLOW_THREADS
 BUFSIZE = multiarray.BUFSIZE
 
+ndarray = multiarray.ndarray
+flatiter = multiarray.flatiter
+broadcast = multiarray.broadcast
+dtype = multiarray.dtype
+ufunc = type(sin)
 
-# from Fernando Perez's IPython
+
+# originally from Fernando Perez's IPython
 def zeros_like(a):
     """Return an array of zeros of the shape and data-type of a.
 
     If you don't explicitly need the array to be zeroed, you should instead
-    use empty_like(), which is faster as it only allocates memory.
+    use empty_like(), which is a bit faster as it only allocates memory.
     """
-    try:
-        return zeros(a.shape, a.dtype, a.flags.fnc)
-    except AttributeError:
-        try:
-            wrap = a.__array_wrap__
-        except AttributeError:
-            wrap = None
-        a = asarray(a)
-        res = zeros(a.shape, a.dtype)
-        if wrap:
-            res = wrap(res)
+    if isinstance(a, ndarray):
+        res = ndarray.__new__(type(a), a.shape, a.dtype, order=a.flags.fnc)
+        res.fill(0)
         return res
+    try:
+        wrap = a.__array_wrap__
+    except AttributeError:
+        wrap = None
+    a = asarray(a)
+    res = zeros(a.shape, a.dtype)
+    if wrap:
+        res = wrap(res)
+    return res
 
 def empty_like(a):
     """Return an empty (uninitialized) array of the shape and data-type of a.
@@ -65,18 +72,18 @@ def empty_like(a):
     your array to be initialized, you should use zeros_like().
 
     """
-    try:
-        return empty(a.shape, a.dtype, a.flags.fnc)
-    except AttributeError:
-        try:
-            wrap = a.__array_wrap__
-        except AttributeError:
-            wrap = None
-        a = asarray(a)
-        res = empty(a.shape, a.dtype)
-        if wrap:
-            res = wrap(res)
+    if isinstance(a, ndarray):
+        res = ndarray.__new__(type(a), a.shape, a.dtype, order=a.flags.fnc)
         return res
+    try:
+        wrap = a.__array_wrap__
+    except AttributeError:
+        wrap = None
+    a = asarray(a)
+    res = empty(a.shape, a.dtype)
+    if wrap:
+        res = wrap(res)
+    return res
 
 # end Fernando's utilities
 
@@ -98,11 +105,6 @@ extend_all(numerictypes)
 
 newaxis = None
 
-ndarray = multiarray.ndarray
-flatiter = multiarray.flatiter
-broadcast = multiarray.broadcast
-dtype = multiarray.dtype
-ufunc = type(sin)
 
 arange = multiarray.arange
 array = multiarray.array
