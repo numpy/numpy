@@ -980,6 +980,15 @@ class TestRegression(NumpyTestCase):
         """Ticket #714"""
         np.zeros(10)[np.array(0)]
 
+    def check_floats_from_string(self, level=rlevel):
+        """Ticket #640, floats from string"""
+        fsingle = np.single('1.234')
+        fdouble = np.double('1.234')
+        flongdouble = np.longdouble('1.234')
+        assert_almost_equal(fsingle, 1.234)
+        assert_almost_equal(fdouble, 1.234)
+        assert_almost_equal(flongdouble, 1.234)
+
 
 if __name__ == "__main__":
     NumpyTest().run()
