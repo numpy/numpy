@@ -224,51 +224,49 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     The data must be regular, same number of values in every row
 
-    fname can be a filename or a file handle.  Support for gzipped files is
-    automatic, if the filename ends in .gz
+    Parameters
+    ----------
+    fname : filename or a file handle.  
+      Support for gzipped files is automatic, if the filename ends in .gz
 
-    See scipy.io.loadmat to read and write matfiles.
+    dtype : data-type 
+      Data type of the resulting array.  If this is a record data-type, the 
+      resulting array will be 1-d and each row will be interpreted as an 
+      element of the array. The number of columns used must match the number 
+      of fields in the data-type in this case.
 
-    Example usage:
+    comments : str 
+      The character used to indicate the start of a comment in the file.
 
-      X = loadtxt('test.dat')  # data in two columns
-      t = X[:,0]
-      y = X[:,1]
+    delimiter : str
+      A string-like character used to separate values in the file. If delimiter 
+      is unspecified or none, any whitespace string is a separator.
 
-    Alternatively, you can do the same with "unpack"; see below
+    converters : {}
+      A dictionary mapping column number to a function that will convert that 
+      column to a float.  Eg, if column 0 is a date string: 
+      converters={0:datestr2num}. Converters can also be used to provide 
+      a default value for missing data: converters={3:lambda s: float(s or 0)}. 
+    
+    skiprows : int
+      The number of rows from the top to skip.
 
-      X = loadtxt('test.dat')    # a matrix of data
-      x = loadtxt('test.dat')    # a single column of data
+    usecols : sequence
+      A sequence of integer column indexes to extract where 0 is the first 
+      column, eg. usecols=(1,4,5) will extract the 2nd, 5th and 6th columns.
 
+    unpack : bool
+      If True, will transpose the matrix allowing you to unpack into named 
+      arguments on the left hand side.
 
-    dtype - the data-type of the resulting array.  If this is a
-    record data-type, the the resulting array will be 1-d and each row will
-    be interpreted as an element of the array. The number of columns
-    used must match the number of fields in the data-type in this case.
-
-    comments - the character used to indicate the start of a comment
-    in the file
-
-    delimiter is a string-like character used to seperate values in the
-    file. If delimiter is unspecified or none, any whitespace string is
-    a separator.
-
-    converters, if not None, is a dictionary mapping column number to
-    a function that will convert that column to a float.  Eg, if
-    column 0 is a date string: converters={0:datestr2num}
-
-    skiprows is the number of rows from the top to skip
-
-    usecols, if not None, is a sequence of integer column indexes to
-    extract where 0 is the first column, eg usecols=(1,4,5) to extract
-    just the 2nd, 5th and 6th columns
-
-    unpack, if True, will transpose the matrix allowing you to unpack
-    into named arguments on the left hand side
-
-        t,y = load('test.dat', unpack=True) # for  two column data
-        x,y,z = load('somefile.dat', usecols=(3,5,7), unpack=True)
-
+    Examples
+    --------
+      >>> X = loadtxt('test.dat')  # data in two columns
+      >>> x,y,z = load('somefile.dat', usecols=(3,5,7), unpack=True)
+      >>> r = np.loadtxt('record.dat', dtype={'names':('gender','age','weight'),
+                'formats': ('S1','i4', 'f4')})
+    
+    SeeAlso: scipy.io.loadmat to read and write matfiles.            
     """
 
     if _string_like(fname):
