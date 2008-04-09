@@ -18,9 +18,9 @@
 
 int xerbla_(char *srname, integer *info)
 {
-        char* format = "On entry to %.*s"			\
+        char format[] = "On entry to %.*s"			\
 		" parameter number %d had an illegal value";
-	char buf[60 + 6 + 4]; /* 6 for name, 4 for param. num. */
+	char buf[70]; /* 6 for name, 4 for param. num. */
 	
 	int len = 0; /* length of subroutine name*/
 	while( len<6 && srname[len]!='\0' )
