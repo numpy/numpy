@@ -7,7 +7,7 @@ def configuration(parent_package='',top_path=None):
     config.add_data_dir('tests')
 
     # Configure lapack_lite
-    lapack_info = get_info('lapack_opt',0)
+    lapack_info = get_info('lapack_opt',0) # and {}
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
             print "### Warning:  Using unoptimized lapack ###"
