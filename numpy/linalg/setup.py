@@ -13,6 +13,9 @@ def configuration(parent_package='',top_path=None):
             print "### Warning:  Using unoptimized lapack ###"
             return ext.depends[:-1]
         else:
+            if sys.platform=='win32':
+                print "### Warning:  pythonxerbla.c is disabled ###"
+                return ext.depends[:1]
             return ext.depends[:2]
 
     config.add_extension('lapack_lite',
