@@ -102,20 +102,21 @@ def interactive_sys_argv(argv):
     while 1:
         show_tasks(argv,c_compiler_name, f_compiler_name)
         try:
-            task = raw_input('Choose a task (^D to quit, Enter to continue with setup): ').lower()
+            task = raw_input('Choose a task (^D to quit, Enter to continue with setup): ')
         except EOFError:
             print
             task = 'quit'
+        ltask = task.lower()
         if task=='': break
-        if task=='quit': sys.exit()
-        task_func = task_dict.get(task,None)
+        if ltask=='quit': sys.exit()
+        task_func = task_dict.get(ltask,None)
         if task_func is None:
-            if task[0]=='c':
+            if ltask[0]=='c':
                 c_compiler_name = task[1:]
                 if c_compiler_name=='none':
                     c_compiler_name = None
                 continue
-            if task[0]=='f':
+            if ltask[0]=='f':
                 f_compiler_name = task[1:]
                 if f_compiler_name=='none':
                     f_compiler_name = None
