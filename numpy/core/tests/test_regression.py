@@ -989,6 +989,16 @@ class TestRegression(NumpyTestCase):
         assert_almost_equal(fdouble, 1.234)
         assert_almost_equal(flongdouble, 1.234)
 
+    def check_complex_dtype_printing(self, level=rlevel):
+        dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
+                                ('rtile', '>f4', (64, 36))], (3,)),
+                       ('bottom', [('bleft', ('>f4', (8, 64)), (1,)),
+                                   ('bright', '>f4', (8, 36))])])
+        assert_equal(str(dt),
+                     "[('top', [('tiles', ('>f4', (64, 64)), (1,)), "
+                     "('rtile', '>f4', (64, 36))], (3,)), "
+                     "('bottom', [('bleft', ('>f4', (8, 64)), (1,)), "
+                     "('bright', '>f4', (8, 36))])]")
 
 if __name__ == "__main__":
     NumpyTest().run()
