@@ -864,7 +864,7 @@ def analyzeline(m,case,line):
         name,args,result=_resolvenameargspattern(m.group('after'))
         if name is not None:
             if args:
-                args=rmbadname([x.strip() for x in markoutercomma(args).strip('@,@')])
+                args=rmbadname([x.strip() for x in markoutercomma(args).split('@,@')])
             else: args=[]
             assert result is None,`result`
             groupcache[groupcounter]['entry'][name] = args
