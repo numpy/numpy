@@ -551,7 +551,7 @@ gentype_repr(PyObject *self)
 
 #name=float, double, longdouble#
 #NAME=FLOAT, DOUBLE, LONGDOUBLE#
-#PREFIX=NPY_,NPY_,#
+#PREFIX=NPY_,NPY_,NPY_#
 */
 static void
 format_@name@(char *buf, size_t buflen, @name@ val,
