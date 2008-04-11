@@ -78,7 +78,7 @@ $Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
-           'maximum_sctype', 'issctype', 'typecodes']
+           'maximum_sctype', 'issctype', 'typecodes', 'find_common_type']
 
 from numpy.core.multiarray import typeinfo, ndarray, array, empty, dtype
 import types as _types
@@ -566,7 +566,7 @@ for key in allTypes:
 
 del key
 
-typecodes = {'Character':'S1',
+typecodes = {'Character':'c',
              'Integer':'bhilqp',
              'UnsignedInteger':'BHILQP',
              'Float':'fdg',
@@ -578,3 +578,69 @@ typecodes = {'Character':'S1',
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
 typeNA = sctypeNA
+
+_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O']
+
+__test_types = typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
+__len_test_types = len(__test_types)
+
+# Keep incrementing until a common type both can be coerced to
+#  is found.  Otherwise, return None
+def _find_common_coerce(a, b):
+    if a > b:
+        return a
+    try:
+        thisind = __test_types.index(a.char)
+    except ValueError:
+        return None
+    while thisind < __len_test_types:
+        newdtype = dtype(__test_types[thisind])
+        if newdtype >= b and newdtype >= a:
+            return newdtype
+        thisind += 1
+    return None
+    
+
+def find_common_type(array_types, scalar_types):
+    """Determine common type following standard coercion rules
+
+    Parameters
+    ----------
+    array_types : sequence
+        A list of dtype convertible objects representing arrays
+    scalar_types : sequence
+        A list of dtype convertible objects representing scalars
+        
+    Returns
+    -------
+    datatype : dtype
+        The common data-type which is the maximum of the array_types
+        ignoring the scalar_types unless the maximum of the scalar_types
+        is of a different kind. 
+
+        If the kinds is not understood, then None is returned.
+    """
+    array_types = [dtype(x) for x in array_types]
+    scalar_types = [dtype(x) for x in scalar_types]
+
+    if len(scalar_types) == 0:
+        if len(array_types) == 0:
+            return None
+        else:
+            return max(array_types)
+    if len(array_types) == 0:
+        return max(scalar_types)
+
+    maxa = max(array_types)
+    maxsc = max(scalar_types)
+
+    try:
+        index_a = _kind_list.index(maxa.kind)
+        index_sc = _kind_list.index(maxsc.kind)
+    except ValueError:
+        return None
+    
+    if index_sc > index_a:
+        return _find_common_coerce(maxsc,maxa)
+    else:
+        return maxa

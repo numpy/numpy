@@ -338,5 +338,27 @@ class TestEmptyField(NumpyTestCase):
         assert(a['int'].shape == (5,0))
         assert(a['float'].shape == (5,2))
 
+class TestCommonType(NumpyTestCase):
+    def check_scalar_loses1(self):
+        res = numpy.find_common_type(['f4','f4','i4'],['f8'])
+        assert(res == 'f4')
+    def check_scalar_loses2(self):
+        res = numpy.find_common_type(['f4','f4'],['i8'])
+        assert(res == 'f4')
+    def check_scalar_wins(self):
+        res = numpy.find_common_type(['f4','f4','i4'],['c8'])
+        assert(res == 'c8')
+    def check_scalar_wins2(self):
+        res = numpy.find_common_type(['u4','i4','i4'],['f4'])
+        assert(res == 'f8')
+    def check_scalar_wins3(self): # doesn't go up to 'f16' on purpose
+        res = numpy.find_common_type(['u8','i8','i8'],['f8'])
+        assert(res == 'f8')
+
+        
+
+        
+        
+
 if __name__ == "__main__":
     NumpyTest().run()
