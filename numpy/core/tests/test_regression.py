@@ -750,14 +750,15 @@ class TestRegression(NumpyTestCase):
 
     def check_object_casting_debug(self, level=rlevel):
         def rs():
-            x = 1.0
-            x |= 1.0
+            x = np.ones([484,286])
+            y = np.zeros([484,286])
+            x |= y
         rs()
         self.failUnlessRaises(TypeError,rs)
 
     def check_object_casting(self, level=rlevel):
         def rs():
-            x = 1.0 | 2.0
+            x = np.ones([484,286])
             y = np.zeros([484,286])
             x |= y
         self.failUnlessRaises(TypeError,rs)
