@@ -1000,8 +1000,6 @@ class TestRegression(NumpyTestCase):
                      "('bottom', [('bleft', ('>f4', (8, 64)), (1,)), "
                      "('bright', '>f4', (8, 36))])]")
 
-    def check_longdouble_repr_precision(self, level=rlevel) :
-        assert  '1.2339999999999999858' ==  repr(np.longdouble(1.234))
 
 if __name__ == "__main__":
     NumpyTest().run()
