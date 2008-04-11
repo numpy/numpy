@@ -39,6 +39,10 @@ class TestConcatenator(NumpyTestCase):
         g = r_[10.1, 1:10]
         assert(g.dtype == 'f8')
 
+    def check_more_mixed_type(self):
+        g = r_[-10.1, array([1]), array([2,3,4]), 10.0]
+        assert(g.dtype == 'f8')
+
     def check_2d(self):
         b = rand(5,5)
         c = rand(5,5)
