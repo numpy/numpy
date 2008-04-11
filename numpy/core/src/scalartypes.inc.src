@@ -610,15 +610,48 @@ static PyObject *
 
 /* These values are finfo.precision + 2 */
 #define FLOATPREC_REPR 8
+#define FLOATPREC_STR 6
 #define DOUBLEPREC_REPR 17
-
+#define DOUBLEPREC_STR 12
 #if SIZEOF_LONGDOUBLE == SIZEOF_DOUBLE
 #define LONGDOUBLEPREC_REPR DOUBLEPREC_REPR
-#define LONGDOUBLEPREC_STR DOUBLEPREC_REPR
+#define LONGDOUBLEPREC_STR DOUBLEPREC_STR
 #else /* More than probably needed on Intel FP */
-#define LONGDOUBLEPREC_REPR 22
-#define LONGDOUBLEPREC_STR 22
+#define LONGDOUBLEPREC_REPR 20
+#define LONGDOUBLEPREC_STR 12
 #endif
+
+/* floattype_str */
+/**begin repeat
+
+#name=float, double, longdouble#
+#Name=Float, Double, LongDouble#
+#NAME=FLOAT, DOUBLE, LONGDOUBLE#
+*/
+static PyObject *
+@name@type_str(PyObject *self)
+{
+        static char buf[100];
+        format_@name@(buf, sizeof(buf),
+                          ((Py@Name@ScalarObject *)self)->obval, @NAME@PREC_STR);
+        return PyString_FromString(buf);
+}
+
+static PyObject *
+c@name@type_str(PyObject *self)
+{
+        static char buf1[100];
+        static char buf2[100];
+        static char buf3[202];
+        c@name@ x;
+        x = ((PyC@Name@ScalarObject *)self)->obval;
+        format_@name@(buf1, sizeof(buf1), x.real, @NAME@PREC_STR);
+        format_@name@(buf2, sizeof(buf2), x.imag, @NAME@PREC_STR);
+
+        snprintf(buf3, sizeof(buf3), "(%s+%sj)", buf1, buf2);
+        return PyString_FromString(buf3);
+}
+/**end repeat**/
 
 /* floattype_repr */
 /**begin repeat
@@ -652,13 +685,6 @@ c@name@type_repr(PyObject *self)
 }
 /**end repeat**/
 
-/**begin repeat
-
-#name=float, double, longdouble#
-*/
-#define @name@type_str @name@type_repr
-#define c@name@type_str c@name@type_repr
-/**end repeat**/
 
 /** Could improve this with a PyLong_FromLongDouble(longdouble ldval)
     but this would need some more work...
