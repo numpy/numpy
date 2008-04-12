@@ -362,22 +362,44 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
         X.shape = origShape
 
 import re
-def fromregex(file, regexp, **kwds):
+def fromregex(file, regexp, dtype):
     """Construct a record array from a text file, using regular-expressions parsing.
     
-    Groups in the regular exespression are converted to fields. 
+    Array is constructed from all matches of the regular expression
+    in the file. Groups in the regular expression are converted to fields.
+
+    Parameters
+    ----------
+    file : str or file
+        File name or file object to read
+    regexp : str or regexp
+        Regular expression to use to parse the file
+    dtype : dtype or dtype list
+        Dtype for the record array
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> f = open('test.dat', 'w')
+    >>> f.write("1312 foo\n1534  bar\n 444   qux")
+    >>> f.close()
+    >>> np.fromregex('test.dat', r"(\d+)\s+(...)", [('num', np.int64), ('key', 'S3')])
+    array([(1312L, 'foo'), (1534L, 'bar'), (444L, 'qux')], 
+          dtype=[('num', '<i8'), ('key', '|S3')])
+
     """
     if not hasattr(file, "read"):
         file = open(file,'r')
     if not hasattr(regexp, 'match'):
         regexp = re.compile(regexp)
-
+    if not isinstance(dtype, np.dtype):
+        dtype = np.dtype(dtype)
+    
     seq = regexp.findall(file.read())
-    dtypelist = []
-    for key, value in kwds.values():
-        dtypelist.append((key, value))
-    format = np.dtype(dtypelist)
-    output = array(seq, dtype=format)
+    if seq and not isinstance(seq[0], tuple):
+        # make sure np.array doesn't interpret strings as binary data
+        # by always producing a list of tuples
+        seq = [(x,) for x in seq]
+    output = np.array(seq, dtype=dtype)
     return output
-    
-    
+
