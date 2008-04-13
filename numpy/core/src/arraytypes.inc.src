@@ -87,7 +87,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 
 #TYP=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,LONG,UINT,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE#
 #func1=PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2, PyLong_FromLongLong, PyLong_FromUnsignedLongLong, PyFloat_FromDouble*2#
-#func2=PyObject_IsTrue, PyInt_AsLong*6, MyPyLong_AsUnsignedLong*2, MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, MyPyFloat_AsDouble*2#
+#func2=PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2, MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, MyPyFloat_AsDouble*2#
 #typ=Bool, byte, ubyte, short, ushort, int, long, uint, ulong, longlong, ulonglong, float, double#
 #typ1=long*7, ulong*2, longlong, ulonglong, float, double#
 #kind=Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong, LongLong, ULongLong, Float, Double#
