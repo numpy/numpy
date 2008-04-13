@@ -185,8 +185,8 @@ class scons(old_build_ext):
               "specify number of worker threads when executing scons"),
              ('scons-tool-path=', None, 'specify additional path '\
                                     '(absolute) to look for scons tools'),
-             ('silent=', None, 'specify whether scons output should be silent '\
-                               '(1), super silent (2) or not (0, default)')]
+             ('silent=', None, 'specify whether scons output should less verbose'\
+                               '(1), silent (2), super silent (3) or not (0, default)')]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
@@ -320,10 +320,11 @@ class scons(old_build_ext):
 
             cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs()))
             if self.silent:
-                if int(self.silent) == 1:
+                if int(self.silent) == 2:
                     cmd.append('-Q')
-                elif int(self.silent) == 2:
+                elif int(self.silent) == 3:
                     cmd.append('-s')
+            cmd.append('silent=%d' % int(self.silent))
             cmdstr = ' '.join(cmd)
             log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
             st = os.system(cmdstr)
