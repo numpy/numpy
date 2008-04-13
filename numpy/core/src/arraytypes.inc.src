@@ -1,84 +1,6 @@
 /* -*- c -*- */
 #include "config.h"
 
-
-static longlong
-MyPyLong_AsLongLong(PyObject *obj)
-{
-    longlong ret;
-
-    if (!PyLong_Check(obj)) {
-        PyObject *mylong;
-        mylong = PyNumber_Long(obj);
-        if (mylong == NULL) {
-            return (longlong) -1;
-        }
-        obj = mylong;
-    }
-    else {
-        Py_INCREF(obj);
-    }
-
-    ret = PyLong_AsLongLong(obj);
-    Py_DECREF(obj);
-    return ret;
-}
-
-
-static ulong
-MyPyLong_AsUnsignedLong(PyObject *obj)
-{
-    ulong ret;
-
-    if (!PyLong_Check(obj)) {
-        PyObject *mylong;
-        mylong = PyNumber_Long(obj);
-        if (mylong == NULL) {
-            return (ulong) -1;
-        }
-        obj = mylong;
-    }
-    else {
-        Py_INCREF(obj);
-    }
-
-    ret = PyLong_AsUnsignedLong(obj);
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
-        ret = (ulong) PyLong_AsLong(obj);
-    }
-    Py_DECREF(obj);
-    return ret;
-}
-
-
-static ulonglong
-MyPyLong_AsUnsignedLongLong(PyObject *obj)
-{
-    ulonglong ret;
-
-    if (!PyLong_Check(obj)) {
-        PyObject *mylong;
-        mylong = PyNumber_Long(obj);
-        if (mylong == NULL) {
-            return (ulonglong) -1;
-        }
-        obj = mylong;
-    }
-    else {
-        Py_INCREF(obj);
-    }
-
-    ret = PyLong_AsUnsignedLongLong(obj);
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
-        ret = (ulonglong) PyLong_AsLongLong(obj);
-    }
-    Py_DECREF(obj);
-    return ret;
-}
-
-
 static double
 _getNAN(void) {
 #ifdef NAN
@@ -106,21 +28,57 @@ _getNAN(void) {
 static double
 MyPyFloat_AsDouble(PyObject *obj)
 {
-    if (PyString_Check(obj)) {
-        PyObject *tmp = PyFloat_FromString(obj, 0);
-        if (tmp) {
-            double d = PyFloat_AsDouble(tmp);
-            Py_DECREF(tmp);
-            return d;
-        }
-        else {
-            return _getNAN();
-        }
-    }
-    if (obj == Py_None)
+    double ret = 0;
+    PyObject *num = PyNumber_Float(obj);
+
+    if (num == NULL) {
         return _getNAN();
-    return PyFloat_AsDouble(obj);
+    }
+    ret = PyFloat_AsDouble(num);
+    Py_DECREF(num);
+    return ret;
 }
+
+
+/**begin repeat
+#type=long,longlong#
+#Type=Long,LongLong#
+*/
+
+static @type@
+MyPyLong_As@Type@ (PyObject *obj)
+{
+    @type@ ret;
+    PyObject *num = PyNumber_Long(obj);
+
+    if (num == NULL) {
+        return -1;
+    }
+    ret = PyLong_As@Type@(num);
+    Py_DECREF(num);
+    return ret;
+}
+
+
+static u@type@
+MyPyLong_AsUnsigned@Type@ (PyObject *obj)
+{
+    u@type@ ret;
+    PyObject *num = PyNumber_Long(obj);
+
+    if (num == NULL) {
+        return -1;
+    }
+    ret = PyLong_AsUnsigned@Type@(num);
+    if (PyErr_Occurred()) {
+        PyErr_Clear();
+        ret = PyLong_As@Type@(num);
+    }
+    Py_DECREF(num);
+    return ret;
+}
+
+/**end repeat**/
 
 
 /****************** getitem and setitem **********************/
