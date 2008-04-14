@@ -824,6 +824,3 @@ def notmasked_contiguous(a, axis=None):
     return result
 
 ################################################################################
-testmathworks = fix_invalid([1.165 , 0.6268, 0.0751, 0.3516, -0.6965, 
-                                        numpy.nan])
-expand_dims(testmathworks.mean(0),0)

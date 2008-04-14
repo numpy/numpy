@@ -330,7 +330,10 @@ def fix_invalid(a, copy=True, fill_value=None):
 
     """
     a = masked_array(a, copy=copy, subok=True)
-    invalid = (numpy.isnan(a._data) | numpy.isinf(a._data))
+    #invalid = (numpy.isnan(a._data) | numpy.isinf(a._data))
+    invalid = numpy.logical_not(numpy.isfinite(a._data))
+    if not invalid.any():
+        return a
     a._mask |= invalid
     if fill_value is None:
         fill_value = a.fill_value
@@ -1224,7 +1227,7 @@ class MaskedArray(numeric.ndarray):
     def _update_from(self, obj):
         """Copies some attributes of obj to self.
         """
-        self._hardmask = getattr(obj, '_hardmask', self._defaulthardmask)
+        self._hardmask = getattr(obj, '_hardmask', False)
         self._sharedmask = getattr(obj, '_sharedmask', False)
         if obj is not None:
             self._baseclass = getattr(obj, '_baseclass', type(obj))
