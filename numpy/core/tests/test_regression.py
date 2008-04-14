@@ -1000,6 +1000,19 @@ class TestRegression(NumpyTestCase):
                      "('bottom', [('bleft', ('>f4', (8, 64)), (1,)), "
                      "('bright', '>f4', (8, 36))])]")
 
+    def check_nonnative_endian_fill(self, level=rlevel):
+        """ Non-native endian arrays were incorrectly filled with scalars before
+        r5034.
+        """
+        if sys.byteorder == 'little':
+            dtype = np.dtype('>i4')
+        else:
+            dtype = np.dtype('<i4')
+        x = np.empty([1], dtype=dtype)
+        x.fill(1)
+        assert_equal(x, np.array([1], dtype=dtype))
+
+
 
 if __name__ == "__main__":
     NumpyTest().run()
