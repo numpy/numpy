@@ -5816,7 +5816,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         newarr = PyArray_FromAny(obj, descr, 0,0, ALIGNED, NULL);
         if (newarr == NULL) return -1;
         fromptr = PyArray_DATA(newarr);
-        swap=!PyArray_ISNOTSWAPPED(arr);
+        swap = (PyArray_ISNOTSWAPPED(arr) != PyArray_ISNOTSWAPPED(newarr));
     }
     size=PyArray_SIZE(arr);
     copyswap = arr->descr->f->copyswap;
