@@ -258,7 +258,7 @@ def terminal_has_colors():
 
 if terminal_has_colors():
     _colour_codes = dict(black=0, red=1, green=2, yellow=3,
-                         blue=4, magenta=5, cyan=6, white=7)
+                         blue=4, magenta=5, cyan=6, white=7, default=9)
     def colour_text(s, fg=None, bg=None, bold=False):
         seq = []
         if bold:
@@ -277,6 +277,8 @@ else:
     def colour_text(s, fg=None, bg=None):
         return s
 
+def default_text(s):
+    return colour_text(s, 'default')
 def red_text(s):
     return colour_text(s, 'red')
 def green_text(s):

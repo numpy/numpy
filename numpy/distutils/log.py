@@ -4,7 +4,7 @@ import sys
 from distutils.log import *
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
-from misc_util import red_text, yellow_text, cyan_text, green_text, is_sequence, is_string
+from misc_util import red_text, default_text, cyan_text, green_text, is_sequence, is_string
 
 
 def _fix_args(args,flag=1):
@@ -67,7 +67,7 @@ def set_verbosity(v, force=False):
 
 _global_color_map = {
     DEBUG:cyan_text,
-    INFO:yellow_text,
+    INFO:default_text,
     WARN:red_text,
     ERROR:red_text,
     FATAL:red_text
