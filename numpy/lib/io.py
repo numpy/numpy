@@ -323,19 +323,52 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     Save the data in X to file fname using fmt string to convert the
     data to strings
 
-    fname can be a filename or a file handle.  If the filename ends in .gz,
-    the file is automatically saved in compressed gzip format.  The load()
-    command understands gzipped files transparently.
-
-    Example usage:
-
-    save('test.out', X)         # X is an array
-    save('test1.out', (x,y,z))  # x,y,z equal sized 1D arrays
-    save('test2.out', x)        # x is 1D
-    save('test3.out', x, fmt='%1.4e')  # use exponential notation
-
-    delimiter is used to separate the fields, eg delimiter ',' for
-    comma-separated values
+    Parameters
+    ----------
+    fname : filename or a file handle
+      If the filename ends in .gz, the file is automatically saved in 
+      compressed gzip format.  The load() command understands gzipped files 
+      transparently.
+    X : array or sequence
+      Data to write to file.
+    fmt : string 
+      A format string %[flags][width][.precision]specifier. See notes below for 
+      a description of some common flags and specifiers.
+    delimiter : str
+      Character separating columns.
+  
+    Examples
+    --------
+      >>> savetxt('test.out', x, delimiter=',')         # X is an array
+      >>> savetxt('test.out', (x,y,z))     # x,y,z equal sized 1D arrays
+      >>> savetxt('test.out', x, fmt='%1.4e')  # use exponential notation      
+    
+    Notes on fmt
+    ------------
+    flags:
+      - : left justify
+      + : Forces to preceed result with + or -.
+      0 : Left pad the number with zeros instead of space (see width).
+    width:
+      Minimum number of characters to be printed. The value is not truncated.
+    precision:
+      For integer specifiers (eg. d,i,o,x), the minimum number of digits.
+      For e, E and f specifiers, the number of digits to print after the decimal
+      point.
+      For g and G, the maximum number of significant digits.
+      For s, the maximum number of characters. 
+    specifiers:
+      c : character
+      d or i : signed decimal integer
+      e or E : scientific notation with e or E. 
+      f : decimal floating point
+      g,G : use the shorter of e,E or f
+      o : signed octal
+      s : string of characters
+      u : unsigned decimal integer
+      x,X : unsigned hexadecimal integer
+      
+    This is not an exhaustive specification. 
     """
 
     if _string_like(fname):
