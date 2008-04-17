@@ -8,7 +8,6 @@ __all__ = ['savetxt', 'loadtxt',
 
 import numpy as np
 import format
-import zipfile
 import cStringIO
 import tempfile
 import os
@@ -42,6 +41,9 @@ class NpzFile(object):
     with .files and the ZipFile object itself using .zip
     """
     def __init__(self, fid):
+        # Import is postponed to here since zipfile depends on gzip, an optional
+        # component of the so-called standard library.
+        import zipfile
         _zip = zipfile.ZipFile(fid)
         self._files = _zip.namelist()
         self.files = []
@@ -164,6 +166,10 @@ def savez(file, *args, **kwds):
     If arguments are passed in with no keywords, then stored file names are
     arr_0, arr_1, etc.
     """
+
+    # Import is postponed to here since zipfile depends on gzip, an optional
+    # component of the so-called standard library.
+    import zipfile
 
     if isinstance(file, str):
         if not file.endswith('.npz'):

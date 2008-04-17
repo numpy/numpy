@@ -34,17 +34,24 @@ Example:
 
 __docformat__ = "restructuredtext en"
 
-import bz2
-import gzip
 import os
 import tempfile
 from shutil import rmtree
 from urllib2 import urlopen, URLError
 from urlparse import urlparse
 
-
 # TODO: .zip support, .tar support?
-_file_openers = {".gz":gzip.open, ".bz2":bz2.BZ2File, None:file}
+_file_openers = {None: open}
+try:
+    import bz2
+    _file_openers[".bz2"] = bz2.BZ2File
+except ImportError:
+    pass
+try:
+    import gzip
+    _file_openers[".gz"] = gzip.open
+except ImportError:
+    pass
 
 
 def open(path, mode='r', destpath=os.curdir):

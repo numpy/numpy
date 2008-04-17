@@ -1,6 +1,4 @@
 
-import bz2
-import gzip
 import os
 import sys
 import struct
@@ -90,6 +88,13 @@ class TestDataSourceOpen(NumpyTestCase):
         self.assertRaises(IOError, self.ds.open, invalid_file)
 
     def test_ValidGzipFile(self):
+        try:
+            import gzip
+        except ImportError:
+            # We don't have the bz2 capabilities to test.
+            # FIXME: when we start using nose, raise a SkipTest rather than
+            # passing the test.
+            return
         # Test datasource's internal file_opener for Gzip files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.gz')
         fp = gzip.open(filepath, 'w')
@@ -101,6 +106,13 @@ class TestDataSourceOpen(NumpyTestCase):
         self.assertEqual(magic_line, result)
 
     def test_ValidBz2File(self):
+        try:
+            import bz2
+        except ImportError:
+            # We don't have the bz2 capabilities to test.
+            # FIXME: when we start using nose, raise a SkipTest rather than
+            # passing the test.
+            return
         # Test datasource's internal file_opener for BZip2 files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
         fp = bz2.BZ2File(filepath, 'w')
