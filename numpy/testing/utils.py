@@ -294,36 +294,33 @@ def assert_string_equal(actual, desired):
     msg = 'Differences in strings:\n%s' % (''.join(diff_list)).rstrip()
     assert actual==desired, msg
 
-# Ripped from nose.tools
+
 def raises(*exceptions):
-    """Test must raise one of expected exceptions to pass.
-
-    Example use::
-
-      @raises(TypeError, ValueError)
-      def test_raises_type_error():
-          raise TypeError("This test passes")
-
-      @raises(Exception):
-      def test_that_fails_by_passing():
-          pass
-
-    If you want to test many assertions about exceptions in a single test,
-    you may want to use `assert_raises` instead.
+    """ Assert that a test function raises one of the specified exceptions to
+    pass.
     """
-    valid = ' or '.join([e.__name__ for e in exceptions])
-    def decorate(func):
-        name = func.__name__
-        def newfunc(*arg, **kw):
+    # FIXME: when we transition to nose, just use its implementation. It's
+    # better.
+    def deco(function):
+        def f2(*args, **kwds):
             try:
-                func(*arg, **kw)
+                function(*args, **kwds)
             except exceptions:
                 pass
             except:
+                # Anything else.
                 raise
             else:
-                message = "%s() did not raise %s" % (name, valid)
-                raise AssertionError(message)
-        newfunc = make_decorator(func)(newfunc)
-        return newfunc
-    return decorate
+                raise AssertionError('%s() did not raise one of (%s)' % 
+                    (function.__name__, ', '.join([e.__name__ for e in exceptions])))
+        try:
+            f2.__name__ = function.__name__
+        except TypeError:
+            # Python 2.3 does not permit this.
+            pass
+        f2.__dict__ = function.__dict__
+        f2.__doc__ = function.__doc__
+        f2.__module__ = function.__module__
+        return f2
+
+    return deco
