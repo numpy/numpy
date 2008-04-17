@@ -219,31 +219,31 @@ class TestZeroRank(NumpyTestCase):
 
 class TestScalarIndexing(NumpyTestCase):
     def setUp(self):
-        self.d = array([0,1])[0], 
+        self.d = array([0,1])[0]
 
     def check_ellipsis_subscript(self):
-        a, = self.d
+        a = self.d
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(a[...].shape,())
 
     def check_empty_subscript(self):
-        a, = self.d
+        a = self.d
         self.failUnlessEqual(a[()], 0)
         self.failUnlessEqual(a[()].shape,())
 
     def check_invalid_subscript(self):
-        a, = self.d
+        a = self.d
         self.failUnlessRaises(IndexError, lambda x: x[0], a)
         self.failUnlessRaises(IndexError, lambda x: x[array([], int)], a)
 
     def check_invalid_subscript_assignment(self):
-        a, = self.d
+        a = self.d
         def assign(x, i, v):
             x[i] = v
         self.failUnlessRaises(TypeError, assign, a, 0, 42)
 
     def check_newaxis(self):
-        a, = self.d
+        a = self.d
         self.failUnlessEqual(a[newaxis].shape, (1,))
         self.failUnlessEqual(a[..., newaxis].shape, (1,))
         self.failUnlessEqual(a[newaxis, ...].shape, (1,))
@@ -254,7 +254,7 @@ class TestScalarIndexing(NumpyTestCase):
         self.failUnlessEqual(a[(newaxis,)*10].shape, (1,)*10)
 
     def check_invalid_newaxis(self):
-        a, = self.d
+        a = self.d
         def subscript(x, i): x[i]
         self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
         self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
