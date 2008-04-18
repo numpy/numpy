@@ -38,8 +38,8 @@ Exported symbols include:
    As part of the type-hierarchy:    xx -- is bit-width
 
    generic
-     +-> bool_
-     +-> number
+     +-> bool_                                  (kind=b)
+     +-> number                                 (kind=i)
      |     integer
      |     signedinteger   (intxx)
      |     byte
@@ -48,7 +48,7 @@ Exported symbols include:
      |     intp           int0
      |     int_
      |     longlong
-     +-> unsignedinteger  (uintxx)
+     +-> unsignedinteger  (uintxx)              (kind=u)
      |     ubyte
      |     ushort
      |     uintc
@@ -56,23 +56,21 @@ Exported symbols include:
      |     uint_
      |     ulonglong
      +-> inexact
-     |   +-> floating           (floatxx)
+     |   +-> floating           (floatxx)       (kind=f)
      |   |     single
      |   |     float_  (double)
      |   |     longfloat
-     |   \-> complexfloating    (complexxx)
+     |   \-> complexfloating    (complexxx)     (kind=c)
      |         csingle  (singlecomplex)
      |         complex_ (cfloat, cdouble)
      |         clongfloat (longcomplex)
      +-> flexible
      |     character
-     |     str_     (string_)
-     |     unicode_
-     |     void
+     |     str_     (string_)                   (kind=S)
+     |     unicode_                             (kind=U)
+     |     void                                 (kind=V)
      |
-     \-> object_ (not used much)
-
-$Id: numerictypes.py,v 1.17 2005/09/09 22:20:06 teoliphant Exp $
+     \-> object_ (not used much)                (kind=O)
 """
 
 # we add more at the bottom
@@ -579,6 +577,15 @@ typecodes = {'Character':'c',
 typeDict = sctypeDict
 typeNA = sctypeNA
 
+# b -> boolean
+# u -> unsigned integer
+# i -> signed integer
+# f -> floating point
+# c -> complex
+# S -> string
+# U -> Unicode string
+# V -> record
+# O -> Python object
 _kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O']
 
 __test_types = typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
