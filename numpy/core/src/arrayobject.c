@@ -876,7 +876,7 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     dptr = PyArray_BYTES(dst);
     elsize = PyArray_ITEMSIZE(dst);
     nbytes = elsize * PyArray_DIM(src, axis);
-    
+
     /* Refcount note: src and dst have the same size */
     PyArray_INCREF((PyArrayObject *)src);
     PyArray_XDECREF((PyArrayObject *)dst);
@@ -1004,7 +1004,7 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
 
     PyArray_INCREF(dest);
     PyArray_XDECREF(src);
-    
+
     Py_DECREF(multi);
     return 0;
 }
@@ -1558,7 +1558,7 @@ _default_copyswapn(void *dst, npy_intp dstride, void *src,
     PyArray_CopySwapFunc *copyswap;
     char *dstptr = dst;
     char *srcptr = src;
-    
+
     copyswap = PyArray_DESCR(arr)->f->copyswap;
 
     for (i=0; i<n; i++) {
@@ -1738,7 +1738,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
 }
 
 
-/* XXX: FIXME --- add ordering argument to 
+/* XXX: FIXME --- add ordering argument to
    Allow Fortran ordering on write
    This will need the addition of a Fortran-order iterator.
  */
@@ -3079,7 +3079,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
     mp = (PyArrayObject *)array_subscript(self, op);
 
     /* mp could be a scalar if op is not an Int, Scalar, Long or other Index
-       object and still convertable to an integer (so that the code goes to 
+       object and still convertable to an integer (so that the code goes to
        array_subscript_simple).  So, this cast is a bit dangerous..
     */
 
@@ -3257,7 +3257,7 @@ typedef struct {
         *conjugate;
 } NumericOps;
 
-static NumericOps n_ops; /* NB: static objects inlitialized to zero */
+static NumericOps n_ops; /* NB: static objects initialized to zero */
 
 /* Dictionary can contain any of the numeric operations, by name.
    Those not present will not be changed
@@ -3985,11 +3985,11 @@ array_index(PyArrayObject *v)
 
 
 static PyNumberMethods array_as_number = {
-    (binaryfunc)array_add,              /*nb_add*/
+    (binaryfunc)array_add,                      /*nb_add*/
     (binaryfunc)array_subtract,                 /*nb_subtract*/
     (binaryfunc)array_multiply,                 /*nb_multiply*/
     (binaryfunc)array_divide,                   /*nb_divide*/
-    (binaryfunc)array_remainder,               /*nb_remainder*/
+    (binaryfunc)array_remainder,                /*nb_remainder*/
     (binaryfunc)array_divmod,                   /*nb_divmod*/
     (ternaryfunc)array_power,                   /*nb_power*/
     (unaryfunc)array_negative,                  /*nb_neg*/
@@ -3997,39 +3997,39 @@ static PyNumberMethods array_as_number = {
     (unaryfunc)array_absolute,                  /*(unaryfunc)array_abs,*/
     (inquiry)_array_nonzero,                    /*nb_nonzero*/
     (unaryfunc)array_invert,                    /*nb_invert*/
-    (binaryfunc)array_left_shift,       /*nb_lshift*/
-    (binaryfunc)array_right_shift,      /*nb_rshift*/
-    (binaryfunc)array_bitwise_and,      /*nb_and*/
-    (binaryfunc)array_bitwise_xor,      /*nb_xor*/
-    (binaryfunc)array_bitwise_or,       /*nb_or*/
-    0,                                  /*nb_coerce*/
-    (unaryfunc)array_int,               /*nb_int*/
-    (unaryfunc)array_long,              /*nb_long*/
-    (unaryfunc)array_float,             /*nb_float*/
-    (unaryfunc)array_oct,               /*nb_oct*/
-    (unaryfunc)array_hex,               /*nb_hex*/
+    (binaryfunc)array_left_shift,               /*nb_lshift*/
+    (binaryfunc)array_right_shift,              /*nb_rshift*/
+    (binaryfunc)array_bitwise_and,              /*nb_and*/
+    (binaryfunc)array_bitwise_xor,              /*nb_xor*/
+    (binaryfunc)array_bitwise_or,               /*nb_or*/
+    0,                                          /*nb_coerce*/
+    (unaryfunc)array_int,                       /*nb_int*/
+    (unaryfunc)array_long,                      /*nb_long*/
+    (unaryfunc)array_float,                     /*nb_float*/
+    (unaryfunc)array_oct,                       /*nb_oct*/
+    (unaryfunc)array_hex,                       /*nb_hex*/
 
     /*This code adds augmented assignment functionality*/
     /*that was made available in Python 2.0*/
-    (binaryfunc)array_inplace_add,      /*inplace_add*/
+    (binaryfunc)array_inplace_add,              /*inplace_add*/
     (binaryfunc)array_inplace_subtract,         /*inplace_subtract*/
     (binaryfunc)array_inplace_multiply,         /*inplace_multiply*/
     (binaryfunc)array_inplace_divide,           /*inplace_divide*/
-    (binaryfunc)array_inplace_remainder,    /*inplace_remainder*/
+    (binaryfunc)array_inplace_remainder,        /*inplace_remainder*/
     (ternaryfunc)array_inplace_power,           /*inplace_power*/
-    (binaryfunc)array_inplace_left_shift,   /*inplace_lshift*/
-    (binaryfunc)array_inplace_right_shift,  /*inplace_rshift*/
-    (binaryfunc)array_inplace_bitwise_and,  /*inplace_and*/
-    (binaryfunc)array_inplace_bitwise_xor,  /*inplace_xor*/
-    (binaryfunc)array_inplace_bitwise_or,   /*inplace_or*/
+    (binaryfunc)array_inplace_left_shift,       /*inplace_lshift*/
+    (binaryfunc)array_inplace_right_shift,      /*inplace_rshift*/
+    (binaryfunc)array_inplace_bitwise_and,      /*inplace_and*/
+    (binaryfunc)array_inplace_bitwise_xor,      /*inplace_xor*/
+    (binaryfunc)array_inplace_bitwise_or,       /*inplace_or*/
 
-    (binaryfunc)array_floor_divide,      /*nb_floor_divide*/
-    (binaryfunc)array_true_divide,       /*nb_true_divide*/
-    (binaryfunc)array_inplace_floor_divide,  /*nb_inplace_floor_divide*/
-    (binaryfunc)array_inplace_true_divide,   /*nb_inplace_true_divide*/
+    (binaryfunc)array_floor_divide,             /*nb_floor_divide*/
+    (binaryfunc)array_true_divide,              /*nb_true_divide*/
+    (binaryfunc)array_inplace_floor_divide,     /*nb_inplace_floor_divide*/
+    (binaryfunc)array_inplace_true_divide,      /*nb_inplace_true_divide*/
 
 #if PY_VERSION_HEX >= 0x02050000
-    (unaryfunc)array_index,                /* nb_index */
+    (unaryfunc)array_index,                     /* nb_index */
 #endif
 
 };
@@ -4131,27 +4131,27 @@ array_contains(PyArrayObject *self, PyObject *el)
 
 static PySequenceMethods array_as_sequence = {
 #if PY_VERSION_HEX >= 0x02050000
-    (lenfunc)array_length,          /*sq_length*/
-    (binaryfunc)NULL,               /* sq_concat is handled by nb_add*/
+    (lenfunc)array_length,                  /*sq_length*/
+    (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
     (ssizeargfunc)NULL,
     (ssizeargfunc)array_item_nice,
     (ssizessizeargfunc)array_slice,
-    (ssizeobjargproc)array_ass_item,               /*sq_ass_item*/
+    (ssizeobjargproc)array_ass_item,        /*sq_ass_item*/
     (ssizessizeobjargproc)array_ass_slice,  /*sq_ass_slice*/
-    (objobjproc) array_contains,           /* sq_contains */
-    (binaryfunc) NULL,                  /* sg_inplace_concat */
+    (objobjproc) array_contains,            /*sq_contains */
+    (binaryfunc) NULL,                      /*sg_inplace_concat */
     (ssizeargfunc)NULL,
 #else
-    (inquiry)array_length,          /*sq_length*/
-    (binaryfunc)NULL, /* sq_concat is handled by nb_add*/
-    (intargfunc)NULL, /* sq_repeat is handled nb_multiply*/
+    (inquiry)array_length,                  /*sq_length*/
+    (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
+    (intargfunc)NULL,                       /*sq_repeat is handled nb_multiply*/
     (intargfunc)array_item_nice,            /*sq_item*/
     (intintargfunc)array_slice,             /*sq_slice*/
-    (intobjargproc)array_ass_item,         /*sq_ass_item*/
+    (intobjargproc)array_ass_item,          /*sq_ass_item*/
     (intintobjargproc)array_ass_slice,      /*sq_ass_slice*/
-    (objobjproc) array_contains,           /* sq_contains */
-    (binaryfunc) NULL,                  /* sg_inplace_concat */
-    (intargfunc) NULL         /* sg_inplace_repeat */
+    (objobjproc) array_contains,            /*sq_contains */
+    (binaryfunc) NULL,                      /*sg_inplace_concat */
+    (intargfunc) NULL                       /*sg_inplace_repeat */
 #endif
 };
 
@@ -6807,63 +6807,63 @@ array_alloc(PyTypeObject *type, Py_ssize_t nitems)
 
 static PyTypeObject PyArray_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                        /*ob_size*/
-    "numpy.ndarray",                          /*tp_name*/
-    sizeof(PyArrayObject),                    /*tp_basicsize*/
-    0,                                        /*tp_itemsize*/
+    0,                                          /*ob_size*/
+    "numpy.ndarray",                            /*tp_name*/
+    sizeof(PyArrayObject),                      /*tp_basicsize*/
+    0,                                          /*tp_itemsize*/
     /* methods */
-    (destructor)array_dealloc,                /*tp_dealloc  */
-    (printfunc)NULL,                          /*tp_print*/
-    0,                                        /*tp_getattr*/
-    0,                                        /*tp_setattr*/
-    (cmpfunc)0,                       /*tp_compare*/
-    (reprfunc)array_repr,                     /*tp_repr*/
-    &array_as_number,                         /*tp_as_number*/
-    &array_as_sequence,                       /*tp_as_sequence*/
-    &array_as_mapping,                        /*tp_as_mapping*/
-    (hashfunc)0,                              /*tp_hash*/
-    (ternaryfunc)0,                           /*tp_call*/
-    (reprfunc)array_str,              /*tp_str*/
+    (destructor)array_dealloc,                  /*tp_dealloc  */
+    (printfunc)NULL,                            /*tp_print*/
+    0,                                          /*tp_getattr*/
+    0,                                          /*tp_setattr*/
+    (cmpfunc)0,                                 /*tp_compare*/
+    (reprfunc)array_repr,                       /*tp_repr*/
+    &array_as_number,                           /*tp_as_number*/
+    &array_as_sequence,                         /*tp_as_sequence*/
+    &array_as_mapping,                          /*tp_as_mapping*/
+    (hashfunc)0,                                /*tp_hash*/
+    (ternaryfunc)0,                             /*tp_call*/
+    (reprfunc)array_str,                        /*tp_str*/
 
-    (getattrofunc)0,                          /*tp_getattro*/
-    (setattrofunc)0,                          /*tp_setattro*/
-    &array_as_buffer,                         /*tp_as_buffer*/
+    (getattrofunc)0,                            /*tp_getattro*/
+    (setattrofunc)0,                            /*tp_setattro*/
+    &array_as_buffer,                           /*tp_as_buffer*/
     (Py_TPFLAGS_DEFAULT
      | Py_TPFLAGS_BASETYPE
-     | Py_TPFLAGS_CHECKTYPES),                /*tp_flags*/
+     | Py_TPFLAGS_CHECKTYPES),                  /*tp_flags*/
     /*Documentation string */
-    0,                                        /*tp_doc*/
+    0,                                          /*tp_doc*/
 
-    (traverseproc)0,                          /*tp_traverse */
-    (inquiry)0,                               /*tp_clear */
-    (richcmpfunc)array_richcompare,           /*tp_richcompare */
-    offsetof(PyArrayObject, weakreflist),     /*tp_weaklistoffset */
+    (traverseproc)0,                            /*tp_traverse */
+    (inquiry)0,                                 /*tp_clear */
+    (richcmpfunc)array_richcompare,             /*tp_richcompare */
+    offsetof(PyArrayObject, weakreflist),       /*tp_weaklistoffset */
 
     /* Iterator support (use standard) */
 
-    (getiterfunc)array_iter,                  /* tp_iter */
-    (iternextfunc)0,                          /* tp_iternext */
+    (getiterfunc)array_iter,                    /* tp_iter */
+    (iternextfunc)0,                            /* tp_iternext */
 
     /* Sub-classing (new-style object) support */
 
-    array_methods,                            /* tp_methods */
-    0,                                        /* tp_members */
-    array_getsetlist,                         /* tp_getset */
-    0,                                        /* tp_base */
-    0,                                        /* tp_dict */
-    0,                                        /* tp_descr_get */
-    0,                                        /* tp_descr_set */
-    0,                                        /* tp_dictoffset */
-    (initproc)0,                              /* tp_init */
-    array_alloc,                              /* tp_alloc */
-    (newfunc)array_new,                       /* tp_new */
-    0,                                        /* tp_free */
-    0,                                        /* tp_is_gc */
-    0,                                        /* tp_bases */
-    0,                                        /* tp_mro */
-    0,                                        /* tp_cache */
-    0,                                        /* tp_subclasses */
-    0                                         /* tp_weaklist */
+    array_methods,                              /* tp_methods */
+    0,                                          /* tp_members */
+    array_getsetlist,                           /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)0,                                /* tp_init */
+    array_alloc,                                /* tp_alloc */
+    (newfunc)array_new,                         /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0                                           /* tp_weaklist */
 };
 
 /* The rest of this code is to build the right kind of array from a python */
@@ -11040,7 +11040,7 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     PyObject *new_names;
     if (self->names == NULL) {
 	PyErr_SetString(PyExc_ValueError, "there are no fields defined");
-	return -1;	   
+	return -1;
     }
 
     N = PyTuple_GET_SIZE(self->names);
@@ -11057,14 +11057,14 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
 	valid = PyString_Check(item);
 	Py_DECREF(item);
 	if (!valid) {
-	    PyErr_Format(PyExc_ValueError, 
-			 "item #%d of names is of type %s and not string", 
+	    PyErr_Format(PyExc_ValueError,
+			 "item #%d of names is of type %s and not string",
 			 i, item->ob_type->tp_name);
 	    return -1;
 	}
     }
     /* Update dictionary keys in fields */
-    new_names = PySequence_Tuple(val); 
+    new_names = PySequence_Tuple(val);
 
     for (i=0; i<N; i++) {
 	PyObject *key;
@@ -11075,13 +11075,13 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
 	item = PyDict_GetItem(self->fields, key);
 	new_key = PyTuple_GET_ITEM(new_names, i);
 	PyDict_SetItem(self->fields, new_key, item);
-	PyDict_DelItem(self->fields, key);	
+	PyDict_DelItem(self->fields, key);
     }
 
     /* Replace names */
     Py_DECREF(self->names);
     self->names = new_names;
-        
+
     return 0;
 }
 
