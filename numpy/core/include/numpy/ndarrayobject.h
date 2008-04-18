@@ -1052,6 +1052,10 @@ typedef void (PyArray_FastClipFunc)(void *in, npy_intp n_in, void *min,
                                     void *max, void *out);
 typedef void (PyArray_FastPutmaskFunc)(void *in, void *mask, npy_intp n_in,
                                        void *values, npy_intp nv);
+typedef int  (PyArray_FastTakeFunc)(void *dest, void *src, npy_intp *indarray,
+                                       npy_intp nindarray, npy_intp n_outer,
+                                       npy_intp m_middle, npy_intp nelem,
+                                       NPY_CLIPMODE clipmode);
 
 typedef struct {
         npy_intp *ptr;
@@ -1130,6 +1134,7 @@ typedef struct {
 
         PyArray_FastClipFunc *fastclip;
         PyArray_FastPutmaskFunc *fastputmask;
+        PyArray_FastTakeFunc *fasttake;
 } PyArray_ArrFuncs;
 
 #define NPY_ITEM_REFCOUNT   0x01  /* The item must be reference counted
@@ -1752,7 +1757,7 @@ typedef struct {
     /* FIXME: This should check for a flag on the data-type
        that states whether or not it is variable length.
        Because the ISFLEXIBLE check is hard-coded to the
-       built-in data-types.  
+       built-in data-types.
      */
 #define PyArray_ISVARIABLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
 

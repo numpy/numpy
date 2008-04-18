@@ -1136,12 +1136,12 @@ PyArray_Nonzero(PyArrayObject *self)
 }
 
 static PyObject *
-_GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out, 
+_GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out,
 			  PyObject *op)
 {
     if (out == NULL)
 	return PyObject_CallFunction(op, "OO", m1, m2);
-    else 
+    else
 	return PyObject_CallFunction(op, "OOO", m1, m2, out);
 }
 
@@ -1160,7 +1160,7 @@ _slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObjec
     }
 
     if (min != NULL) {
-	res2 = _GenericBinaryOutFunction((PyArrayObject *)res1, 
+	res2 = _GenericBinaryOutFunction((PyArrayObject *)res1,
 					 min, out, n_ops.maximum);
 	if (res2 == NULL) {Py_XDECREF(res1); return NULL;}
     }
@@ -1168,7 +1168,7 @@ _slow_array_clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObjec
 	res2 = res1;
 	Py_INCREF(res2);
     }
-    Py_DECREF(res1);    
+    Py_DECREF(res1);
     return res2;
 }
 
@@ -1214,7 +1214,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     else {
 	newdescr = indescr; /* Steal the reference */
     }
-	
+
 
     /* Use the scalar descriptor only if it is of a bigger
        KIND than the input array (and then find the
@@ -1284,7 +1284,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 	Py_DECREF(min);
 	if (mina == NULL) goto fail;
     }
-	
+
 
     /* Check to see if input is single-segment, aligned,
        and in native byteorder */
@@ -1380,7 +1380,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 	min_data = mina->data;
     if (maxa != NULL)
 	max_data = maxa->data;
-	
+
     func(newin->data, PyArray_SIZE(newin), min_data, max_data,
          newout->data);
 
@@ -3107,10 +3107,10 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     NPY_BEGIN_THREADS_DEF
 
     dtype = PyArray_DescrFromObject((PyObject *)op2, op1->descr);
-    
+
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
-    ap1 = (PyArrayObject *)PyArray_FromAny((PyObject *)op1, dtype, 
+    ap1 = (PyArrayObject *)PyArray_FromAny((PyObject *)op1, dtype,
 					   1, 1, NPY_DEFAULT, NULL);
 
     if (ap1 == NULL) {
@@ -3746,10 +3746,10 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         op = ap;
     }
 
-    /* Will get native-byte order contiguous copy. 
+    /* Will get native-byte order contiguous copy.
      */
     ap = (PyArrayObject *)\
-        PyArray_ContiguousFromAny((PyObject *)op, 
+        PyArray_ContiguousFromAny((PyObject *)op,
                                   op->descr->type_num, 1, 0);
 
     Py_DECREF(op);
@@ -3824,11 +3824,13 @@ static PyObject *
 PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *ret, NPY_CLIPMODE clipmode)
 {
+    PyArray_FastTakeFunc *func;
     PyArrayObject *self, *indices;
-    intp nd, i, j, n, m, max_item, tmp, chunk;
+    intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
     intp shape[MAX_DIMS];
     char *src, *dest;
     int copyret=0;
+    int err;
 
     indices = NULL;
     self = (PyAO *)_check_axis(self0, &axis, CARRAY);
@@ -3892,9 +3894,13 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     }
 
     max_item = self->dimensions[axis];
+    nelem = chunk;
     chunk = chunk * ret->descr->elsize;
     src = self->data;
     dest = ret->data;
+
+    func = self->descr->f->fasttake;
+    if (func == NULL) {
 
     switch(clipmode) {
     case NPY_RAISE:
@@ -3942,6 +3948,12 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             src += chunk*max_item;
         }
         break;
+    }
+    }
+    else {
+        err = func(dest, src, (intp *)(indices->data),
+                    max_item, n, m, nelem, clipmode);
+        if (err) goto fail;
     }
 
     PyArray_INCREF(ret);
@@ -5666,7 +5678,7 @@ _array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
             Py_XDECREF(type);
             return NULL;
     }
-            
+
 
     /* fast exit if simple call */
     if ((subok && PyArray_Check(op)) ||
@@ -5787,7 +5799,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
     return NULL;
 }
 
-/* This function is needed for supporting Pickles of 
+/* This function is needed for supporting Pickles of
    numpy scalar objects.
 */
 static PyObject *
@@ -6363,7 +6375,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
 	 */
         if ((tmp == NULL) || (nread == 0)) {
 	    Py_DECREF(ret);
-	    return PyErr_NoMemory();	    
+	    return PyErr_NoMemory();
 	}
 	ret->data = tmp;
         PyArray_DIM(ret,0) = nread;
@@ -6433,7 +6445,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
     if ((elsize=dtype->elsize) == 0) {
         PyErr_SetString(PyExc_ValueError, "Must specify length "\
                         "when using variable-size data-type.");
-        goto done;                        
+        goto done;
     }
 
     /* We would need to alter the memory RENEW code to decrement any
@@ -7126,7 +7138,7 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
     retobj = (ret ? Py_True : Py_False);
     Py_INCREF(retobj);
 
- finish:    
+ finish:
     Py_XDECREF(d1);
     Py_XDECREF(d2);
     return retobj;

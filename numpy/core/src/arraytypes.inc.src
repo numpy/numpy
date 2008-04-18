@@ -2179,6 +2179,89 @@ static void
 #define OBJECT_fastputmask NULL
 
 
+
+/************************
+ * Fast take functions
+ *************************/
+
+/**begin repeat
+#name=BOOL,BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,CFLOAT, CDOUBLE, CLONGDOUBLE#
+#type= Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble,cfloat, cdouble, clongdouble#
+*/
+static int
+@name@_fasttake(@type@ *dest, @type@ *src, intp *indarray,
+                    intp nindarray, intp n_outer,
+                    intp m_middle, intp nelem,
+                    NPY_CLIPMODE clipmode)
+{
+    intp i, j, k, tmp;
+
+    switch(clipmode) {
+    case NPY_RAISE:
+        for(i=0; i<n_outer; i++) {
+            for(j=0; j<m_middle; j++) {
+                tmp = indarray[j];
+                if (tmp < 0) tmp = tmp+nindarray;
+                if ((tmp < 0) || (tmp >= nindarray)) {
+                    PyErr_SetString(PyExc_IndexError,
+                                    "index out of range "\
+                                    "for array");
+                    return 1;
+                }
+                if (nelem == 1) *dest++ = *(src+tmp);
+                else {
+                    for(k=0; k<nelem; k++) {
+                        *dest++ = *(src+tmp*nelem+k);
+                    }
+                }
+            }
+            src += nelem*nindarray;
+        }
+        break;
+    case NPY_WRAP:
+        for(i=0; i<n_outer; i++) {
+            for(j=0; j<m_middle; j++) {
+                tmp = indarray[j];
+                if (tmp < 0) while (tmp < 0) tmp += nindarray;
+                else if (tmp >= nindarray)
+                    while (tmp >= nindarray)
+                        tmp -= nindarray;
+                if (nelem == 1) *dest++ = *(src+tmp);
+                else {
+                    for(k=0; k<nelem; k++) {
+                        *dest++ = *(src+tmp*nelem+k);
+                    }
+                }
+            }
+            src += nelem*nindarray;
+        }
+        break;
+    case NPY_CLIP:
+        for(i=0; i<n_outer; i++) {
+            for(j=0; j<m_middle; j++) {
+                tmp = indarray[j];
+                if (tmp < 0)
+                    tmp = 0;
+                else if (tmp >= nindarray)
+                    tmp = nindarray-1;
+                if (nelem == 1) *dest++ = *(src+tmp);
+                else {
+                    for(k=0; k<nelem; k++) {
+                        *dest++ = *(src+tmp*nelem+k);
+                    }
+                }
+            }
+            src += nelem*nindarray;
+        }
+        break;
+    }
+    return 0;
+}
+/**end repeat**/
+
+#define OBJECT_fasttake NULL
+
+
 #define _ALIGN(type) offsetof(struct {char c; type v;},v)
 
 /* Disable harmless compiler warning "4116: unnamed type definition in
@@ -2244,7 +2327,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     NULL,
     (PyArray_FastClipFunc *)NULL,
-    (PyArray_FastPutmaskFunc *)NULL
+    (PyArray_FastPutmaskFunc *)NULL,
+    (PyArray_FastTakeFunc *)NULL
 };
 
 static PyArray_Descr @from@_Descr = {
@@ -2322,7 +2406,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     NULL,
     (PyArray_FastClipFunc*)@from@_fastclip,
-    (PyArray_FastPutmaskFunc*)@from@_fastputmask
+    (PyArray_FastPutmaskFunc*)@from@_fastputmask,
+    (PyArray_FastTakeFunc*)@from@_fasttake
 };
 
 static PyArray_Descr @from@_Descr = {

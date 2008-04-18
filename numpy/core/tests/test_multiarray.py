@@ -699,6 +699,56 @@ class TestPutmask(ParametricTestCase):
         ## np.putmask(z,[True,True,True],3)
         pass
 
+class TestTake(ParametricTestCase):
+    def tst_basic(self,x):
+        ind = range(x.shape[0])
+        assert_array_equal(x.take(ind, axis=0), x)
+
+    def testip_types(self):
+        unchecked_types = [str, unicode, np.void, object]
+
+        x = np.random.random(24)*100
+        x.shape = 2,3,4
+        tests = []
+        for types in np.sctypes.itervalues():
+            tests.extend([(self.tst_basic,x.copy().astype(T))
+                          for T in types if T not in unchecked_types])
+        return tests
+
+    def test_raise(self):
+        x = np.random.random(24)*100
+        x.shape = 2,3,4
+        self.failUnlessRaises(IndexError, x.take, [0,1,2], axis=0)
+        self.failUnlessRaises(IndexError, x.take, [-3], axis=0)
+        assert_array_equal(x.take([-1], axis=0)[0], x[1])
+
+    def test_clip(self):
+        x = np.random.random(24)*100
+        x.shape = 2,3,4
+        assert_array_equal(x.take([-1], axis=0, mode='clip')[0], x[0])
+        assert_array_equal(x.take([2], axis=0, mode='clip')[0], x[1])
+
+    def test_wrap(self):
+        x = np.random.random(24)*100
+        x.shape = 2,3,4
+        assert_array_equal(x.take([-1], axis=0, mode='wrap')[0], x[1])
+        assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
+        assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
+
+    def tst_byteorder(self,dtype):
+        x = np.array([1,2,3],dtype)
+        assert_array_equal(x.take([0,2,1]),[1,3,2])
+
+    def testip_byteorder(self):
+        return [(self.tst_byteorder,dtype) for dtype in ('>i4','<i4')]
+
+    def test_record_array(self):
+        # Note mixed byteorder.
+        rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
+                      dtype=[('x', '<f8'), ('y', '>f8'), ('z', '<f8')])
+        rec1 = rec.take([1])
+        assert rec1['x'] == 5.0 and rec1['y'] == 4.0
+
 class TestLexsort(NumpyTestCase):
     def test_basic(self):
         a = [1,2,1,3,1,5]
