@@ -29,6 +29,9 @@ http_file = 'index.html'
 http_fakepath = 'http://fake.abc.web/site/'
 http_fakefile = 'fake.txt'
 
+malicious_files = ['/etc/shadow', '../../shadow',
+                   '..\\system.dat', 'c:\\windows\\system.dat']
+
 magic_line = 'three is the magic number'
 
 
@@ -165,7 +168,8 @@ class TestDataSourceAbspath(NumpyTestCase):
 
     def test_ValidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(valid_httpurl())
-        local_path = os.path.join(self.tmpdir, netloc, upath.strip(os.sep))
+        local_path = os.path.join(self.tmpdir, netloc,
+                                  upath.strip(os.sep).strip('/'))
         self.assertEqual(local_path, self.ds.abspath(valid_httpurl()))
 
     def test_ValidFile(self):
@@ -178,7 +182,8 @@ class TestDataSourceAbspath(NumpyTestCase):
 
     def test_InvalidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(invalid_httpurl())
-        invalidhttp = os.path.join(self.tmpdir, netloc, upath.strip(os.sep))
+        invalidhttp = os.path.join(self.tmpdir, netloc,
+                                   upath.strip(os.sep).strip('/'))
         self.assertNotEqual(invalidhttp, self.ds.abspath(valid_httpurl()))
 
     def test_InvalidFile(self):
@@ -190,8 +195,34 @@ class TestDataSourceAbspath(NumpyTestCase):
         # Test filename with complete path
         self.assertNotEqual(invalidfile, self.ds.abspath(tmpfile))
 
+    def test_sandboxing(self):
+        tmpfile = valid_textfile(self.tmpdir)
+        tmpfilename = os.path.split(tmpfile)[-1]
 
-class TestRespositoryAbspath(NumpyTestCase):
+        tmp_path = lambda x: os.path.abspath(self.ds.abspath(x))
+        
+        assert tmp_path(valid_httpurl()).startswith(self.tmpdir)
+        assert tmp_path(invalid_httpurl()).startswith(self.tmpdir)
+        assert tmp_path(tmpfile).startswith(self.tmpdir)
+        assert tmp_path(tmpfilename).startswith(self.tmpdir)
+        for fn in malicious_files:
+            assert tmp_path(http_path+fn).startswith(self.tmpdir)
+            assert tmp_path(fn).startswith(self.tmpdir)
+    
+    def test_windows_os_sep(self):
+        orig_os_sep = os.sep
+        try:
+            os.sep = '\\'
+            self.test_ValidHTTP()
+            self.test_ValidFile()
+            self.test_InvalidHTTP()
+            self.test_InvalidFile()
+            self.test_sandboxing()
+        finally:
+            os.sep = orig_os_sep
+
+
+class TestRepositoryAbspath(NumpyTestCase):
     def setUp(self):
         self.tmpdir = mkdtemp()
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
@@ -203,9 +234,25 @@ class TestRespositoryAbspath(NumpyTestCase):
     def test_ValidHTTP(self):
         scheme, netloc, upath, pms, qry, frg = urlparse(valid_httpurl())
         local_path = os.path.join(self.repos._destpath, netloc, \
-                                  upath.strip(os.sep))
+                                  upath.strip(os.sep).strip('/'))
         filepath = self.repos.abspath(valid_httpfile())
         self.assertEqual(local_path, filepath)
+
+    def test_sandboxing(self):
+        tmp_path = lambda x: os.path.abspath(self.repos.abspath(x))
+        assert tmp_path(valid_httpfile()).startswith(self.tmpdir)
+        for fn in malicious_files:
+            assert tmp_path(http_path+fn).startswith(self.tmpdir)
+            assert tmp_path(fn).startswith(self.tmpdir)
+        
+    def test_windows_os_sep(self):
+        orig_os_sep = os.sep
+        try:
+            os.sep = '\\'
+            self.test_ValidHTTP()
+            self.test_sandboxing()
+        finally:
+            os.sep = orig_os_sep
 
 
 class TestRepositoryExists(NumpyTestCase):

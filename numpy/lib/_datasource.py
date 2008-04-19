@@ -287,7 +287,22 @@ class DataSource (object):
         if len(splitpath) > 1:
             path = splitpath[1]
         scheme, netloc, upath, uparams, uquery, ufrag = urlparse(path)
-        return os.path.join(self._destpath, netloc, upath.strip(os.sep))
+        netloc = self._sanitize_relative_path(netloc)
+        upath = self._sanitize_relative_path(upath)
+        return os.path.join(self._destpath, netloc, upath)
+
+    def _sanitize_relative_path(self, path):
+        """Return a sanitised relative path for which
+        os.path.abspath(os.path.join(base, path)).startswith(base)
+        """
+        last = None
+        path = os.path.normpath(path)
+        while path != last:
+            last = path
+            # Note: os.path.join treats '/' as os.sep
+            path = path.lstrip(os.sep).lstrip('/')
+            path = path.lstrip(os.pardir).lstrip('..')
+        return path
 
     def exists(self, path):
         """Test if ``path`` exists.
