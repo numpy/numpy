@@ -297,12 +297,12 @@ class DataSource (object):
         """
         last = None
         path = os.path.normpath(path)
-        drive, path = os.path.splitdrive(path) # for Windows
         while path != last:
             last = path
             # Note: os.path.join treats '/' as os.sep on Windows
             path = path.lstrip(os.sep).lstrip('/')
             path = path.lstrip(os.pardir).lstrip('..')
+            drive, path = os.path.splitdrive(path) # for Windows
         return path
 
     def exists(self, path):

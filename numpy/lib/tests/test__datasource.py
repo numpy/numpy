@@ -159,7 +159,7 @@ class TestDataSourceExists(NumpyTestCase):
 
 class TestDataSourceAbspath(NumpyTestCase):
     def setUp(self):
-        self.tmpdir = mkdtemp()
+        self.tmpdir = os.path.abspath(mkdtemp())
         self.ds = datasource.DataSource(self.tmpdir)
 
     def tearDown(self):
@@ -224,7 +224,7 @@ class TestDataSourceAbspath(NumpyTestCase):
 
 class TestRepositoryAbspath(NumpyTestCase):
     def setUp(self):
-        self.tmpdir = mkdtemp()
+        self.tmpdir = os.path.abspath(mkdtemp())
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
 
     def tearDown(self):
