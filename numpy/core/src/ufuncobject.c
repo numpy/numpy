@@ -234,7 +234,7 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
         x1 = *((PyObject **)ip1);
         x2 = *((PyObject **)ip2);
         if ((x1 == NULL) || (x2 == NULL)) {
-            goto done;
+            return;
         }
         if ( (void *) func == (void *) PyNumber_Power) {
             tmp = ((ternaryfunc)func)(x1, x2, Py_None);
@@ -243,13 +243,11 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
             tmp = ((binaryfunc)func)(x1, x2);
         }
         if (PyErr_Occurred()) {
-            goto done;
+            return;
         }
         Py_XDECREF(*((PyObject **)op));
         *((PyObject **)op) = tmp;
     }
-done:
-    return;
 }
 
 /*UFUNC_API*/
@@ -263,33 +261,20 @@ PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
     char *ip1 = args[0];
     char *ip2 = args[1];
     char *op = args[2];
+    char *meth = (char *)func;
     intp i;
-    PyObject *tmp, *meth, *arglist, *x1, *x2;
 
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
-        x1 = *(PyObject **)ip1;
-        x2 = *(PyObject **)ip2;
-        if ((x1 == NULL) || (x2 == NULL)) {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        PyObject **out = (PyObject **)op;
+        PyObject *ret = PyObject_CallMethod(in1, meth, "(O)", in2);
+
+        if (ret == NULL) {
             return;
         }
-        meth = PyObject_GetAttrString(x1, (char *)func);
-        if (meth != NULL) {
-            arglist = PyTuple_New(1);
-            if (arglist == NULL) {
-                Py_DECREF(meth);
-                return;
-            }
-            Py_INCREF(x2);
-            PyTuple_SET_ITEM(arglist, 0, x2);
-            tmp = PyEval_CallObject(meth, arglist);
-            Py_DECREF(arglist);
-            Py_DECREF(meth);
-            if ((tmp==NULL) || PyErr_Occurred()) {
-                return;
-            }
-            Py_XDECREF(*((PyObject **)op));
-            *((PyObject **)op) = tmp;
-        }
+        Py_XDECREF(*out);
+        *out = ret;
     }
 }
 
@@ -487,30 +472,19 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
     intp is2 = steps[1];
     char *ip1 = args[0];
     char *op = args[1];
+    char *meth = (char *)func;
     intp i;
-    PyObject *tmp, *meth, *arglist, *x1;
 
     for(i = 0; i < n; i++, ip1 += is1, op += is2) {
-        x1 = *(PyObject **)ip1;
-        if (x1 == NULL) {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject **out = (PyObject **)op;
+        PyObject *ret = PyObject_CallMethod(in1, meth, NULL);
+
+        if (ret == NULL) {
             return;
         }
-        meth = PyObject_GetAttrString(x1, (char *)func);
-        if (meth != NULL) {
-            arglist = PyTuple_New(0);
-            if (arglist == NULL) {
-                Py_DECREF(meth);
-                return;
-            }
-            tmp = PyEval_CallObject(meth, arglist);
-            Py_DECREF(arglist);
-            Py_DECREF(meth);
-            if ((tmp==NULL) || PyErr_Occurred()) {
-                return;
-            }
-            Py_XDECREF(*((PyObject **)op));
-            *((PyObject **)op) = tmp;
-        }
+        Py_XDECREF(*out);
+        *out = ret;
     }
 }
 
