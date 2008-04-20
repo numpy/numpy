@@ -81,7 +81,7 @@ class TestUfunc(NumpyTestCase):
         msg = "PyUFunc_G_G"
         x = np.zeros(10, dtype=np.clongdouble)[0::2]
         assert_almost_equal(fone(x), fone_val, err_msg=msg)
- 
+
         # check binary PyUFunc_ff_f.
         msg = "PyUFunc_ff_f"
         x = np.ones(10, dtype=np.single)[0::2]
@@ -106,14 +106,14 @@ class TestUfunc(NumpyTestCase):
         msg = "PyUFunc_GG_G"
         x = np.ones(10, dtype=np.clongdouble)[0::2]
         assert_almost_equal(ftwo(x,x), ftwo_val, err_msg=msg)
- 
+
         # class to use in testing object method loops
         class foo :
             def logical_not(self) :
                 return np.bool_(1)
             def logical_and(self, obj) :
                 return np.bool_(1)
- 
+
         # check unary PyUFunc_O_0
         msg = "PyUFunc_O_O"
         x = np.ones(10, dtype=np.object)[0::2]
@@ -121,9 +121,10 @@ class TestUfunc(NumpyTestCase):
         # check unary PyUFunc_O_0_method
         msg = "PyUFunc_O_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        x[...] = foo()
+        for i in range(len(x)) :
+            x[i] = foo()
         #assert np.all(np.logical_not(x) == True), msg
- 
+
         # check binary PyUFunc_OO_0
         msg = "PyUFunc_OO_O"
         x = np.ones(10, dtype=np.object)[0::2]
@@ -131,9 +132,10 @@ class TestUfunc(NumpyTestCase):
         # check binary PyUFunc_OO_0_method
         msg = "PyUFunc_OO_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        x[...] = foo()
+        for i in range(len(x)) :
+            x[i] = foo()
         #assert np.all(np.logical_and(x,x) == 1), msg
- 
+
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
 
