@@ -324,7 +324,7 @@ class TestApplyAlongAxis(NumpyTestCase):
             return b[1]
         xa = apply_along_axis(myfunc,2,a)
         assert_equal(xa,[[1,4],[7,10]])
-        
+
 class TestMedian(NumpyTestCase):
     def __init__(self, *args, **kwds):
         NumpyTestCase.__init__(self, *args, **kwds)
@@ -333,7 +333,7 @@ class TestMedian(NumpyTestCase):
         "Tests median w/ 2D"
         (n,p) = (101,30)
         x = masked_array(numpy.linspace(-1.,1.,n),)
-        x[:10] = x[-10:] = masked       
+        x[:10] = x[-10:] = masked
         z = masked_array(numpy.empty((n,p), dtype=numpy.float_))
         z[:,0] = x[:]
         idx = numpy.arange(len(x))
@@ -352,8 +352,8 @@ class TestMedian(NumpyTestCase):
         assert_equal(median(x,0),[[99,10],[11,99],[13,14]])
         x = numpy.ma.arange(24).reshape(4,3,2)
         x[x%5==0] = masked
-        assert_equal(median(x,0), [[12,10],[8,9],[16,17]])        
-        
+        assert_equal(median(x,0), [[12,10],[8,9],[16,17]])
+
 
 ###############################################################################
 #------------------------------------------------------------------------------

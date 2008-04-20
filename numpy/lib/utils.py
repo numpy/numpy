@@ -512,7 +512,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False):
     if not whats: return
 
     for name, (docstring, kind, index) in cache.iteritems():
-        if kind in ('module', 'object'): 
+        if kind in ('module', 'object'):
             # don't show modules or objects
             continue
         ok = True
@@ -528,7 +528,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False):
     # XXX: this is full Harrison-Stetson heuristics now,
     # XXX: it probably could be improved
 
-    kind_relevance = {'func': 1000, 'class': 1000, 
+    kind_relevance = {'func': 1000, 'class': 1000,
                       'module': -1000, 'object': -1000}
 
     def relevance(name, docstr, kind, index):
@@ -597,7 +597,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
     cache : dict {obj_full_name: (docstring, kind, index), ...}
         Docstring cache for the module, either cached one (regenerate=False)
         or newly generated.
-        
+
     """
     global _lookfor_caches
 
@@ -623,7 +623,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
 
         index += 1
         kind = "object"
-       
+
         if inspect.ismodule(item):
             kind = "module"
             try:
@@ -649,13 +649,13 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                 stack.append(("%s.%s" % (name, n), v))
         elif callable(item):
             kind = "func"
-        
+
         doc = inspect.getdoc(item)
         if doc is not None:
             cache[name] = (doc, kind, index)
 
     return cache
- 
+
 #-----------------------------------------------------------------------------
 
 # The following SafeEval class and company are adapted from Michael Spencer's

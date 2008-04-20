@@ -355,10 +355,10 @@ class TestCommonType(NumpyTestCase):
         res = numpy.find_common_type(['u8','i8','i8'],['f8'])
         assert(res == 'f8')
 
-        
 
-        
-        
+
+
+
 
 if __name__ == "__main__":
     NumpyTest().run()

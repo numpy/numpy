@@ -390,11 +390,11 @@ class matrix(N.ndarray):
         -----
         The standard deviation is the square root of the
         average of the squared deviations from the mean, i.e. var =
-        sqrt(mean(abs(x - x.mean())**2)).  The computed standard 
-        deviation is computed by dividing by the number of elements, 
-        N-ddof. The option ddof defaults to zero, that is, a biased 
-        estimate. Note that for complex numbers std takes the absolute 
-        value before squaring, so that the result is always real 
+        sqrt(mean(abs(x - x.mean())**2)).  The computed standard
+        deviation is computed by dividing by the number of elements,
+        N-ddof. The option ddof defaults to zero, that is, a biased
+        estimate. Note that for complex numbers std takes the absolute
+        value before squaring, so that the result is always real
         and nonnegative.
 
         """
@@ -439,11 +439,11 @@ class matrix(N.ndarray):
         -----
 
         The variance is the average of the squared deviations from the
-        mean, i.e.  var = mean(abs(x - x.mean())**2).  The mean is 
-        computed by dividing by N-ddof, where N is the number of elements. 
-        The argument ddof defaults to zero; for an unbiased estimate 
-        supply ddof=1. Note that for complex numbers the absolute value 
-        is taken before squaring, so that the result is always real 
+        mean, i.e.  var = mean(abs(x - x.mean())**2).  The mean is
+        computed by dividing by N-ddof, where N is the number of elements.
+        The argument ddof defaults to zero; for an unbiased estimate
+        supply ddof=1. Note that for complex numbers the absolute value
+        is taken before squaring, so that the result is always real
         and nonnegative.
         """
         return N.ndarray.var(self, axis, dtype, out)._align(axis)

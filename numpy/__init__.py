@@ -1,7 +1,7 @@
 """
 NumPy
 ==========
-Provides 
+Provides
    1) An array object of arbitrary homogeneous items
    2) Fast mathematical operations over arrays
    3) Linear Algebra, Fourier Transforms, Random Number Generation

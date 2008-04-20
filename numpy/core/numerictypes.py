@@ -606,7 +606,7 @@ def _find_common_coerce(a, b):
             return newdtype
         thisind += 1
     return None
-    
+
 
 def find_common_type(array_types, scalar_types):
     """Determine common type following standard coercion rules
@@ -617,13 +617,13 @@ def find_common_type(array_types, scalar_types):
         A list of dtype convertible objects representing arrays
     scalar_types : sequence
         A list of dtype convertible objects representing scalars
-        
+
     Returns
     -------
     datatype : dtype
         The common data-type which is the maximum of the array_types
         ignoring the scalar_types unless the maximum of the scalar_types
-        is of a different kind. 
+        is of a different kind.
 
         If the kinds is not understood, then None is returned.
     """
@@ -646,7 +646,7 @@ def find_common_type(array_types, scalar_types):
         index_sc = _kind_list.index(maxsc.kind)
     except ValueError:
         return None
-    
+
     if index_sc > index_a:
         return _find_common_coerce(maxsc,maxa)
     else:

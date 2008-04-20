@@ -28,6 +28,6 @@ class TestRegression(NumpyTestCase):
         tested = np.polyfit(x, y, 4)
         assert_array_almost_equal(ref, tested)
 
-        
+
 if __name__ == "__main__":
     NumpyTest().run()

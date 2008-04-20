@@ -33,9 +33,9 @@ __all__ = ['cov','meppf','plotting_positions','meppf','mquantiles',
 
 def winsorize(data, alpha=0.2):
     """Returns a Winsorized version of the input array.
-    
-    The (alpha/2.) lowest values are set to the (alpha/2.)th percentile, 
-    and the (alpha/2.) highest values are set to the (1-alpha/2.)th 
+
+    The (alpha/2.) lowest values are set to the (alpha/2.)th percentile,
+    and the (alpha/2.) highest values are set to the (1-alpha/2.)th
     percentile.
     Masked values are skipped.
 
@@ -44,7 +44,7 @@ def winsorize(data, alpha=0.2):
         data : ndarray
             Input data to Winsorize. The data is first flattened.
         alpha : float
-            Percentage of total Winsorization: alpha/2. on the left, 
+            Percentage of total Winsorization: alpha/2. on the left,
             alpha/2. on the right
 
     """
@@ -57,8 +57,8 @@ def winsorize(data, alpha=0.2):
 
 #..............................................................................
 def trim_both(data, proportiontocut=0.2, axis=None):
-    """Trims the data by masking the int(trim*n) smallest and int(trim*n) 
-    largest values of data along the given axis, where n is the number 
+    """Trims the data by masking the int(trim*n) smallest and int(trim*n)
+    largest values of data along the given axis, where n is the number
     of unmasked values.
 
     Parameters
@@ -66,11 +66,11 @@ def trim_both(data, proportiontocut=0.2, axis=None):
         data : ndarray
             Data to trim.
         proportiontocut : float
-            Percentage of trimming. If n is the number of unmasked values 
+            Percentage of trimming. If n is the number of unmasked values
             before trimming, the number of values after trimming is:
                 (1-2*trim)*n.
         axis : int
-            Axis along which to perform the trimming. 
+            Axis along which to perform the trimming.
             If None, the input array is first flattened.
 
     Notes
@@ -99,7 +99,7 @@ def trim_both(data, proportiontocut=0.2, axis=None):
 
 #..............................................................................
 def trim_tail(data, proportiontocut=0.2, tail='left', axis=None):
-    """Trims the data by masking int(trim*n) values from ONE tail of the 
+    """Trims the data by masking int(trim*n) values from ONE tail of the
     data along the given axis, where n is the number of unmasked values.
 
     Parameters
@@ -107,16 +107,16 @@ def trim_tail(data, proportiontocut=0.2, tail='left', axis=None):
         data : ndarray
             Data to trim.
         proportiontocut : float
-            Percentage of trimming. If n is the number of unmasked values 
-            before trimming, the number of values after trimming is 
+            Percentage of trimming. If n is the number of unmasked values
+            before trimming, the number of values after trimming is
             (1-trim)*n.
         tail : string
-            Trimming direction, in ('left', 'right'). 
-            If left, the ``proportiontocut`` lowest values are set to the 
-            corresponding percentile. If right, the ``proportiontocut`` 
+            Trimming direction, in ('left', 'right').
+            If left, the ``proportiontocut`` lowest values are set to the
+            corresponding percentile. If right, the ``proportiontocut``
             highest values are used instead.
         axis : int
-            Axis along which to perform the trimming. 
+            Axis along which to perform the trimming.
             If None, the input array is first flattened.
 
     Notes
@@ -158,7 +158,7 @@ def trim_tail(data, proportiontocut=0.2, tail='left', axis=None):
 
 #..............................................................................
 def trimmed_mean(data, proportiontocut=0.2, axis=None):
-    """Returns the trimmed mean of the data along the given axis. 
+    """Returns the trimmed mean of the data along the given axis.
     Trimming is performed on both ends of the distribution.
 
     Parameters
@@ -169,7 +169,7 @@ def trimmed_mean(data, proportiontocut=0.2, axis=None):
             Proportion of the data to cut from each side of the data .
             As a result, (2*proportiontocut*n) values are actually trimmed.
         axis : int
-            Axis along which to perform the trimming. 
+            Axis along which to perform the trimming.
             If None, the input array is first flattened.
 
     """
@@ -188,7 +188,7 @@ def trimmed_stde(data, proportiontocut=0.2, axis=None):
             Proportion of the data to cut from each side of the data .
             As a result, (2*proportiontocut*n) values are actually trimmed.
         axis : int
-            Axis along which to perform the trimming. 
+            Axis along which to perform the trimming.
             If None, the input array is first flattened.
 
     Notes
@@ -222,7 +222,7 @@ median along the given axis.
         data : ndarray
             Data to trim.
         axis : int
-            Axis along which to perform the trimming. 
+            Axis along which to perform the trimming.
             If None, the input array is first flattened.
 
     """

@@ -972,8 +972,8 @@ def svd(a, full_matrices=1, compute_uv=1):
 def cond(x,p=None):
     """Compute the condition number of a matrix.
 
-    The condition number of x is the norm of x times the norm 
-    of the inverse of x.  The norm can be the usual L2 
+    The condition number of x is the norm of x times the norm
+    of the inverse of x.  The norm can be the usual L2
     (root-of-sum-of-squares) norm or a number of other matrix norms.
 
     Parameters
@@ -983,16 +983,16 @@ def cond(x,p=None):
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}
         Order of the norm:
 
-        p      norm for matrices           
+        p      norm for matrices
         =====  ============================
         None   2-norm, computed directly using the SVD
-        'fro'  Frobenius norm             
-        inf    max(sum(abs(x), axis=1))   
-        -inf   min(sum(abs(x), axis=1))    
-        1      max(sum(abs(x), axis=0))     
-        -1     min(sum(abs(x), axis=0))     
-        2      2-norm (largest sing. value) 
-        -2     smallest singular value      
+        'fro'  Frobenius norm
+        inf    max(sum(abs(x), axis=1))
+        -inf   min(sum(abs(x), axis=1))
+        1      max(sum(abs(x), axis=0))
+        -1     min(sum(abs(x), axis=0))
+        2      2-norm (largest sing. value)
+        -2     smallest singular value
         =====  ============================
 
     Returns

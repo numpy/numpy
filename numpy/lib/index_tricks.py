@@ -294,7 +294,7 @@ class AxisConcatenator(object):
             objs.append(newobj)
             if not scalar and isinstance(newobj, _nx.ndarray):
                 arraytypes.append(newobj.dtype)
-                
+
         #  Esure that scalars won't up-cast unless warranted
         final_dtype = find_common_type(arraytypes, scalartypes)
         if final_dtype is not None:

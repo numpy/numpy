@@ -88,7 +88,7 @@ def _LoadArray(fp):
     dstr = fp.read(sz)
     m = mu.fromstring(dstr, typeconv.convtypecode(typecode))
     m.shape = shape
-    
+
     if (LittleEndian and endian == 'B') or (not LittleEndian and endian == 'L'):
         return m.byteswap(True)
     else:
@@ -97,10 +97,10 @@ def _LoadArray(fp):
 import pickle, copy
 class Unpickler(pickle.Unpickler):
     def load_array(self):
-        self.stack.append(_LoadArray(self))    
+        self.stack.append(_LoadArray(self))
 
     dispatch = copy.copy(pickle.Unpickler.dispatch)
-    dispatch['A'] = load_array    
+    dispatch['A'] = load_array
 
 class Pickler(pickle.Pickler):
     def __init__(self, *args, **kwds):

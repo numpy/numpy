@@ -200,7 +200,7 @@ class TestDataSourceAbspath(NumpyTestCase):
         tmpfilename = os.path.split(tmpfile)[-1]
 
         tmp_path = lambda x: os.path.abspath(self.ds.abspath(x))
-        
+
         assert tmp_path(valid_httpurl()).startswith(self.tmpdir)
         assert tmp_path(invalid_httpurl()).startswith(self.tmpdir)
         assert tmp_path(tmpfile).startswith(self.tmpdir)
@@ -208,7 +208,7 @@ class TestDataSourceAbspath(NumpyTestCase):
         for fn in malicious_files:
             assert tmp_path(http_path+fn).startswith(self.tmpdir)
             assert tmp_path(fn).startswith(self.tmpdir)
-    
+
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
         try:
@@ -244,7 +244,7 @@ class TestRepositoryAbspath(NumpyTestCase):
         for fn in malicious_files:
             assert tmp_path(http_path+fn).startswith(self.tmpdir)
             assert tmp_path(fn).startswith(self.tmpdir)
-        
+
     def test_windows_os_sep(self):
         orig_os_sep = os.sep
         try:

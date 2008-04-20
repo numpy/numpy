@@ -20,7 +20,7 @@ class memmap(ndarray):
 
     Memory-mapped files are used for accessing small segments of large files
     on disk, without reading the entire file into memory.  Numpy's memmaps are
-    array-like objects.  This differs from python's mmap module which are 
+    array-like objects.  This differs from python's mmap module which are
     file-like objects.
 
     Parameters
@@ -250,4 +250,3 @@ class memmap(ndarray):
                 # flush any changes to disk, even if it's a view
                 self.flush()
                 self._close()
-

@@ -328,49 +328,49 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
 def average(a, axis=None, weights=None, returned=False):
     """Return the weighted average of array a over the given axis.
-       
-    
+
+
     Parameters
     ----------
     a : array_like
         Data to be averaged.
     axis : {None, integer}, optional
-        Axis along which to average a. If None, averaging is done over the 
-        entire array irrespective of its shape. 
+        Axis along which to average a. If None, averaging is done over the
+        entire array irrespective of its shape.
     weights : {None, array_like}, optional
-        The importance each datum has in the computation of the 
-        average. The weights array can either be 1D, in which case  its length 
-        must be the size of a along the given axis, or of the same shape as a. 
-        If weights=None, all data are assumed to have weight equal to one. 
+        The importance each datum has in the computation of the
+        average. The weights array can either be 1D, in which case  its length
+        must be the size of a along the given axis, or of the same shape as a.
+        If weights=None, all data are assumed to have weight equal to one.
     returned :{False, boolean}, optional
         If True, the tuple (average, sum_of_weights) is returned,
-        otherwise only the average is returmed. Note that if weights=None, then 
+        otherwise only the average is returmed. Note that if weights=None, then
         the sum of the weights is also the number of elements averaged over.
 
     Returns
     -------
     average, [sum_of_weights] : {array_type, double}
-        Return the average along the specified axis. When returned is True, 
-        return a tuple with the average as the first element and the sum 
-        of the weights as the second element. The return type is Float if a is 
+        Return the average along the specified axis. When returned is True,
+        return a tuple with the average as the first element and the sum
+        of the weights as the second element. The return type is Float if a is
         of integer type, otherwise it is of the same type as a.
         sum_of_weights is has the same type as the average.
 
-    
+
     Example
     -------
       >>> average(range(1,11), weights=range(10,0,-1))
       4.0
-    
+
     Exceptions
     ----------
     ZeroDivisionError
-        Raised when all weights along axis are zero. See numpy.ma.average for a 
-        version robust to this type of error. 
+        Raised when all weights along axis are zero. See numpy.ma.average for a
+        version robust to this type of error.
     TypeError
-        Raised when the length of 1D weights is not the same as the shape of a 
-        along axis. 
-    
+        Raised when the length of 1D weights is not the same as the shape of a
+        along axis.
+
     """
     if not isinstance(a, np.matrix) :
         a = np.asarray(a)
@@ -390,7 +390,7 @@ def average(a, axis=None, weights=None, returned=False):
                 raise TypeError, "1D weights expected when shapes of a and weights differ."
             if wgt.shape[0] != a.shape[axis] :
                 raise ValueError, "Length of weights not compatible with specified axis."
-    
+
             # setup wgt to broadcast along axis
             wgt = np.array(wgt, copy=0, ndmin=a.ndim).swapaxes(-1,axis)
 
@@ -681,20 +681,20 @@ except RuntimeError:
 def interp(x, xp, fp, left=None, right=None):
     """Return the value of a piecewise-linear function at each value in x.
 
-    The piecewise-linear function, f, is defined by the known data-points 
-    fp=f(xp). The xp points must be sorted in increasing order but this is 
+    The piecewise-linear function, f, is defined by the known data-points
+    fp=f(xp). The xp points must be sorted in increasing order but this is
     not checked.
-    
-    For values of x < xp[0] return the value given by left.  If left is None, 
+
+    For values of x < xp[0] return the value given by left.  If left is None,
     then return fp[0].
-    For values of x > xp[-1] return the value given by right. If right is 
+    For values of x > xp[-1] return the value given by right. If right is
     None, then return fp[-1].
     """
     if isinstance(x, (float, int, number)):
         return compiled_interp([x], xp, fp, left, right).item()
     else:
         return compiled_interp(x, xp, fp, left, right)
-    
+
 
 def angle(z, deg=0):
     """Return the angle of the complex argument z.

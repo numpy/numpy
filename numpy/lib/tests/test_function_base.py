@@ -58,36 +58,36 @@ class TestAverage(NumpyTestCase):
         assert_almost_equal(y5.mean(1), average(y5, 1))
 
         y6 = matrix(rand(5,5))
-        assert_array_equal(y6.mean(0), average(y6,0)) 
-               
+        assert_array_equal(y6.mean(0), average(y6,0))
+
     def check_weights(self):
         y = arange(10)
         w = arange(10)
         assert_almost_equal(average(y, weights=w), (arange(10)**2).sum()*1./arange(10).sum())
-    
+
         y1 = array([[1,2,3],[4,5,6]])
         w0 = [1,2]
         actual = average(y1,weights=w0,axis=0)
         desired = array([3.,4.,5.])
         assert_almost_equal(actual, desired)
-        
-        
+
+
         w1 = [0,0,1]
         desired = array([3., 6.])
         assert_almost_equal(average(y1, weights=w1, axis=1), desired)
 
         # This should raise an error. Can we test for that ?
         # assert_equal(average(y1, weights=w1), 9./2.)
-        
-    
+
+
         # 2D Case
         w2 = [[0,0,1],[0,0,2]]
         desired = array([3., 6.])
         assert_array_equal(average(y1, weights=w2, axis=1), desired)
-        
+
         assert_equal(average(y1, weights=w2), 5.)
-        
-        
+
+
     def check_returned(self):
         y = array([[1,2,3],[4,5,6]])
 
@@ -97,23 +97,23 @@ class TestAverage(NumpyTestCase):
 
         avg, scl = average(y, 0, returned=True)
         assert_array_equal(scl, array([2.,2.,2.]))
-        
+
         avg, scl = average(y, 1, returned=True)
         assert_array_equal(scl, array([3.,3.]))
-        
+
         # With weights
         w0 = [1,2]
         avg, scl = average(y, weights=w0, axis=0, returned=True)
         assert_array_equal(scl, array([3., 3., 3.]))
-        
+
         w1 = [1,2,3]
         avg, scl = average(y, weights=w1, axis=1, returned=True)
         assert_array_equal(scl, array([6., 6.]))
-        
+
         w2 = [[0,0,1],[1,2,3]]
         avg, scl = average(y, weights=w2, axis=1, returned=True)
         assert_array_equal(scl, array([1.,6.]))
-    
+
 
 class TestSelect(NumpyTestCase):
     def _select(self,cond,values,default=0):
@@ -433,7 +433,7 @@ class TestHistogram(NumpyTestCase):
         (a,b)=histogram(v)
         #check if the sum of the bins equals the number of samples
         assert(sum(a,axis=0)==n)
-        #check that the bin counts are evenly spaced when the data is from a 
+        #check that the bin counts are evenly spaced when the data is from a
         # linear function
         (a,b)=histogram(linspace(0,10,100))
         assert(all(a==10))
@@ -443,7 +443,7 @@ class TestHistogramdd(NumpyTestCase):
         x = array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5], \
         [.5, .5, 1.5], [.5, 1.5, 2.5], [.5, 2.5, 2.5]])
         H, edges = histogramdd(x, (2,3,3), range = [[-1,1], [0,3], [0,3]])
-        answer = asarray([[[0,1,0], [0,0,1], [1,0,0]], [[0,1,0], [0,0,1], 
+        answer = asarray([[[0,1,0], [0,0,1], [1,0,0]], [[0,1,0], [0,0,1],
             [0,0,1]]])
         assert_array_equal(H,answer)
         # Check normalization
@@ -451,12 +451,12 @@ class TestHistogramdd(NumpyTestCase):
         H, edges = histogramdd(x, bins = ed, normed = True)
         assert(all(H == answer/12.))
         # Check that H has the correct shape.
-        H, edges = histogramdd(x, (2,3,4), range = [[-1,1], [0,3], [0,4]], 
+        H, edges = histogramdd(x, (2,3,4), range = [[-1,1], [0,3], [0,4]],
             normed=True)
-        answer = asarray([[[0,1,0,0], [0,0,1,0], [1,0,0,0]], [[0,1,0,0], 
+        answer = asarray([[[0,1,0,0], [0,0,1,0], [1,0,0,0]], [[0,1,0,0],
             [0,0,1,0], [0,0,1,0]]])
         assert_array_almost_equal(H, answer/6., 4)
-        # Check that a sequence of arrays is accepted and H has the correct 
+        # Check that a sequence of arrays is accepted and H has the correct
         # shape.
         z = [squeeze(y) for y in split(x,3,axis=1)]
         H, edges = histogramdd(z, bins=(4,3,2),range=[[-2,2], [0,3], [0,2]])
@@ -473,7 +473,7 @@ class TestHistogramdd(NumpyTestCase):
 
     def check_shape_3d(self):
         # All possible permutations for bins of different lengths in 3D.
-        bins = ((5, 4, 6), (6, 4, 5), (5, 6, 4), (4, 6, 5), (6, 5, 4), 
+        bins = ((5, 4, 6), (6, 4, 5), (5, 6, 4), (4, 6, 5), (6, 5, 4),
             (4, 5, 6))
         r = rand(10,3)
         for b in bins:
@@ -482,11 +482,11 @@ class TestHistogramdd(NumpyTestCase):
 
     def check_shape_4d(self):
         # All possible permutations for bins of different lengths in 4D.
-        bins = ((7, 4, 5, 6), (4, 5, 7, 6), (5, 6, 4, 7), (7, 6, 5, 4), 
-            (5, 7, 6, 4), (4, 6, 7, 5), (6, 5, 7, 4), (7, 5, 4, 6), 
-            (7, 4, 6, 5), (6, 4, 7, 5), (6, 7, 5, 4), (4, 6, 5, 7), 
-            (4, 7, 5, 6), (5, 4, 6, 7), (5, 7, 4, 6), (6, 7, 4, 5), 
-            (6, 5, 4, 7), (4, 7, 6, 5), (4, 5, 6, 7), (7, 6, 4, 5), 
+        bins = ((7, 4, 5, 6), (4, 5, 7, 6), (5, 6, 4, 7), (7, 6, 5, 4),
+            (5, 7, 6, 4), (4, 6, 7, 5), (6, 5, 7, 4), (7, 5, 4, 6),
+            (7, 4, 6, 5), (6, 4, 7, 5), (6, 7, 5, 4), (4, 6, 5, 7),
+            (4, 7, 5, 6), (5, 4, 6, 7), (5, 7, 4, 6), (6, 7, 4, 5),
+            (6, 5, 4, 7), (4, 7, 6, 5), (4, 5, 6, 7), (7, 6, 4, 5),
             (5, 4, 7, 6), (5, 6, 7, 4), (6, 4, 5, 7), (7, 5, 6, 4))
 
         r = rand(10,4)

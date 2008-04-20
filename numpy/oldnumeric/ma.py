@@ -2265,5 +2265,3 @@ def average(a, axis=0, weights=None, returned=0):
 
 def take(a, indices, axis=0):
     return new_take(a, indices, axis)
-
-

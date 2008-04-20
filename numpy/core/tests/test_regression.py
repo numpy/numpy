@@ -818,10 +818,10 @@ class TestRegression(NumpyTestCase):
         np.indices((0,3,4)).T.reshape(-1,3)
 
     def check_flat_byteorder(self, level=rlevel):
-       """Ticket #657"""
-       x = np.arange(10)
-       assert_array_equal(x.astype('>i4'),x.astype('<i4').flat[:])
-       assert_array_equal(x.astype('>i4').flat[:],x.astype('<i4'))
+        """Ticket #657"""
+        x = np.arange(10)
+        assert_array_equal(x.astype('>i4'),x.astype('<i4').flat[:])
+        assert_array_equal(x.astype('>i4').flat[:],x.astype('<i4'))
 
     def check_uint64_from_negative(self, level=rlevel) :
         assert_equal(np.uint64(-2), np.uint64(18446744073709551614))

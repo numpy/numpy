@@ -2,12 +2,12 @@
 #  patterned after spreadsheet computations.
 
 # There is some complexity in each function
-#  so that the functions behave like ufuncs with 
+#  so that the functions behave like ufuncs with
 #  broadcasting and being able to be called with scalars
-#  or arrays (or other sequences). 
+#  or arrays (or other sequences).
 import numpy as np
 
-__all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate', 
+__all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate',
            'irr', 'npv', 'mirr']
 
 _when_to_num = {'end':0, 'begin':1,
@@ -19,7 +19,7 @@ _when_to_num = {'end':0, 'begin':1,
 
 eqstr = """
 
-                  nper       / (1 + rate*when) \   /        nper   \  
+                  nper       / (1 + rate*when) \   /        nper   \
   fv + pv*(1+rate)    + pmt*|-------------------|*| (1+rate)    - 1 | = 0
                              \     rate        /   \               /
 
@@ -28,23 +28,23 @@ eqstr = """
 where (all can be scalars or sequences)
 
     Parameters
-    ---------- 
-    rate : 
+    ----------
+    rate :
         Rate of interest (per period)
-    nper : 
+    nper :
         Number of compounding periods
-    pmt : 
-        Payment 
+    pmt :
+        Payment
     pv :
         Present value
     fv :
-        Future value 
-    when : 
+        Future value
+    when :
         When payments are due ('begin' (1) or 'end' (0))
-                                                                   
+
 """
 
-def _convert_when(when):    
+def _convert_when(when):
     try:
         return _when_to_num[when]
     except KeyError:
@@ -85,19 +85,19 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     temp = (1+rate)**nper
     miter = np.broadcast(rate, nper, pv, fv, when)
     zer = np.zeros(miter.shape)
-    fact = np.where(rate==zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer) 
+    fact = np.where(rate==zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
     return -(fv + pv*temp) / fact
 pmt.__doc__ += eqstr + """
 Example
 -------
 
-What would the monthly payment need to be to pay off a $200,000 loan in 15 
+What would the monthly payment need to be to pay off a $200,000 loan in 15
   years at an annual interest rate of 7.5%?
 
 >>> pmt(0.075/12, 12*15, 200000)
 -1854.0247200054619
 
-In order to pay-off (i.e. have a future-value of 0) the $200,000 obtained 
+In order to pay-off (i.e. have a future-value of 0) the $200,000 obtained
   today, a monthly payment of $1,854.02 would be required.
 """
 
@@ -160,19 +160,19 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
 pv.__doc__ += eqstr
 
 # Computed with Sage
-#  (y + (r + 1)^n*x + p*((r + 1)^n - 1)*(r*w + 1)/r)/(n*(r + 1)^(n - 1)*x - p*((r + 1)^n - 1)*(r*w + 1)/r^2 + n*p*(r + 1)^(n - 1)*(r*w + 1)/r + p*((r + 1)^n - 1)*w/r)    
+#  (y + (r + 1)^n*x + p*((r + 1)^n - 1)*(r*w + 1)/r)/(n*(r + 1)^(n - 1)*x - p*((r + 1)^n - 1)*(r*w + 1)/r^2 + n*p*(r + 1)^(n - 1)*(r*w + 1)/r + p*((r + 1)^n - 1)*w/r)
 
 def _g_div_gp(r, n, p, x, y, w):
     t1 = (r+1)**n
     t2 = (r+1)**(n-1)
     return (y + t1*x + p*(t1 - 1)*(r*w + 1)/r)/(n*t2*x - p*(t1 - 1)*(r*w + 1)/(r**2) + n*p*t2*(r*w + 1)/r + p*(t1 - 1)*w/r)
 
-# Use Newton's iteration until the change is less than 1e-6 
+# Use Newton's iteration until the change is less than 1e-6
 #  for all values or a maximum of 100 iterations is reached.
-#  Newton's rule is 
-#  r_{n+1} = r_{n} - g(r_n)/g'(r_n) 
+#  Newton's rule is
+#  r_{n+1} = r_{n} - g(r_n)/g'(r_n)
 #     where
-#  g(r) is the formula 
+#  g(r) is the formula
 #  g'(r) is the derivative with respect to r.
 def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
     """Number of periods found by solving the equation
@@ -194,7 +194,7 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
     else:
         return rn
 rate.__doc__ += eqstr
-    
+
 def irr(values):
     """Internal Rate of Return
 
@@ -212,7 +212,7 @@ def irr(values):
     if rate.size == 1:
         rate = rate.item()
     return rate
-    
+
 def npv(rate, values):
     """Net Present Value
 
@@ -223,15 +223,15 @@ def npv(rate, values):
 
 def mirr(values, finance_rate, reinvest_rate):
     """Modified internal rate of return
-    
+
     Parameters
     ----------
     values:
         Cash flows (must contain at least one positive and one negative value)
         or nan is returned.
-    finance_rate : 
+    finance_rate :
         Interest rate paid on the cash flows
-    reinvest_rate : 
+    reinvest_rate :
         Interest rate received on the cash flows upon reinvestment
     """
 
@@ -240,7 +240,7 @@ def mirr(values, finance_rate, reinvest_rate):
     neg = values < 0
     if not (pos.size > 0 and neg.size > 0):
         return np.nan
-    
+
     n = pos.size + neg.size
     numer = -npv(reinvest_rate, values[pos])*((1+reinvest_rate)**n)
     denom = npv(finance_rate, values[neg])*(1+finance_rate)

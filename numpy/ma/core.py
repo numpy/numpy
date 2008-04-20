@@ -26,13 +26,13 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'arctanh', 'argmax', 'argmin', 'argsort', 'around',
            'array', 'asarray','asanyarray',
            'bitwise_and', 'bitwise_or', 'bitwise_xor',
-           'ceil', 'choose', 'common_fill_value', 'compress', 'compressed', 
+           'ceil', 'choose', 'common_fill_value', 'compress', 'compressed',
            'concatenate', 'conjugate', 'cos', 'cosh', 'count',
            'default_fill_value', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp',
            'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
            'frombuffer', 'fromfunction',
-           'getdata','getmask', 'getmaskarray', 'greater', 'greater_equal', 
+           'getdata','getmask', 'getmaskarray', 'greater', 'greater_equal',
            'hypot',
            'identity', 'ids', 'indices', 'inner', 'innerproduct',
            'isMA', 'isMaskedArray', 'is_mask', 'is_masked', 'isarray',
@@ -41,16 +41,16 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'make_mask', 'make_mask_none', 'mask_or', 'masked',
            'masked_array', 'masked_equal', 'masked_greater',
            'masked_greater_equal', 'masked_inside', 'masked_invalid',
-           'masked_less','masked_less_equal', 'masked_not_equal', 
-           'masked_object','masked_outside', 'masked_print_option', 
-           'masked_singleton','masked_values', 'masked_where', 'max', 'maximum', 
+           'masked_less','masked_less_equal', 'masked_not_equal',
+           'masked_object','masked_outside', 'masked_print_option',
+           'masked_singleton','masked_values', 'masked_where', 'max', 'maximum',
            'mean', 'min', 'minimum', 'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
            'power', 'product', 'ptp', 'put', 'putmask',
            'rank', 'ravel', 'remainder', 'repeat', 'reshape', 'resize',
            'right_shift', 'round_',
-           'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'sometrue', 'sort', 
+           'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'sometrue', 'sort',
            'sqrt', 'std', 'subtract', 'sum', 'swapaxes',
            'take', 'tan', 'tanh', 'transpose', 'true_divide',
            'var', 'where',
@@ -192,7 +192,7 @@ def _check_fill_value(fill_value, dtype):
         else:
             fill_value = default_fill_value(dtype)
     else:
-        fill_value = narray(fill_value).tolist() 
+        fill_value = narray(fill_value).tolist()
         fval = numpy.resize(fill_value, len(descr))
         if len(descr) > 1:
             fill_value = [numpy.asarray(f).astype(d[1]).item()
@@ -259,7 +259,7 @@ def filled(a, value = None):
     """
     if hasattr(a, 'filled'):
         return a.filled(value)
-    elif isinstance(a, ndarray): 
+    elif isinstance(a, ndarray):
         # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
         return a
     elif isinstance(a, dict):
@@ -1579,21 +1579,21 @@ class MaskedArray(numeric.ndarray):
         if self._mask is not nomask:
             data = data[numpy.logical_not(ndarray.ravel(self._mask))]
         return data
-    
-    
+
+
     def compress(self, condition, axis=None, out=None):
         """Return a where condition is True.
         If condition is a MaskedArray, missing values are considered as False.
-        
+
         Returns
         -------
         A MaskedArray object.
-        
+
         Notes
         -----
-        Please note the difference with compressed() ! 
+        Please note the difference with compressed() !
         The output of compress has a mask, the output of compressed does not.
-    
+
         """
         # Get the basic components
         (_data, _mask) = (self._data, self._mask)
@@ -2169,16 +2169,16 @@ masked_%(name)s(data = %(data)s,
 
         Notes
         -----
-        The value returned is by default a biased estimate of the 
+        The value returned is by default a biased estimate of the
         true variance, since the mean is computed by dividing by N-ddof.
         For the (more standard) unbiased estimate, use ddof=1 or.
-        Note that for complex numbers the absolute value is taken before 
+        Note that for complex numbers the absolute value is taken before
         squaring, so that the result is always real and nonnegative.
 
         """
         if self._mask is nomask:
             # TODO: Do we keep super, or var _data and take a view ?
-            return super(MaskedArray, self).var(axis=axis, dtype=dtype, 
+            return super(MaskedArray, self).var(axis=axis, dtype=dtype,
                                                 ddof=ddof)
         else:
             cnt = self.count(axis=axis)-ddof
@@ -2213,17 +2213,17 @@ masked_%(name)s(data = %(data)s,
 
         Notes
         -----
-        The value returned is by default a biased estimate of the 
-        true standard deviation, since the mean is computed by dividing 
-        by N-ddof.  For the more standard unbiased estimate, use ddof=1. 
-        Note that for complex numbers the absolute value is taken before 
+        The value returned is by default a biased estimate of the
+        true standard deviation, since the mean is computed by dividing
+        by N-ddof.  For the more standard unbiased estimate, use ddof=1.
+        Note that for complex numbers the absolute value is taken before
         squaring, so that the result is always real and nonnegative.
         """
         dvar = self.var(axis,dtype,ddof=ddof)
         if axis is not None or dvar is not masked:
             dvar = sqrt(dvar)
         return dvar
-    
+
     #............................................
     def round(self, decimals=0, out=None):
         result = self._data.round(decimals).view(type(self))
@@ -2564,7 +2564,7 @@ masked_%(name)s(data = %(data)s,
     #........................
     def tofile(self, fid, sep="", format="%s"):
         raise NotImplementedError("Not implemented yet, sorry...")
-        
+
     #--------------------------------------------
     # Pickling
     def __getstate__(self):
@@ -2886,7 +2886,7 @@ def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None
     a = narray(a, copy=True, subok=True)
     if axis is None:
         a = a.flatten()
-        axis = 0        
+        axis = 0
     if fill_value is None:
         if endwith:
             filler = minimum_fill_value(a)

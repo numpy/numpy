@@ -848,7 +848,7 @@ class TestMA(NumpyTestCase):
         assert_equal(xf.dtype, float_)
         assert_equal(xs.data, ['A', 'b', 'pi'])
         assert_equal(xs.dtype, '|S3')
-        
+
 
 
 #...............................................................................

@@ -59,7 +59,7 @@ Returns
 Notes
 -----
     The function is restricted to 2D arrays.
-    
+
     """
     def _hd_1D(data,prob,var):
         "Computes the HD quantiles for a 1D array. Returns nan for invalid data."
@@ -114,7 +114,7 @@ Parameters
         Axis along which to compute the quantiles. If None, use a flattened array.
     var : boolean
         Whether to return the variance of the estimate.
-        
+
     """
     result = hdquantiles(data,[0.5], axis=axis, var=var)
     return result.squeeze()
@@ -137,7 +137,7 @@ Parameters
 Notes
 -----
     The function is restricted to 2D arrays.
-    
+
     """
     def _hdsd_1D(data,prob):
         "Computes the std error for 1D arrays."
@@ -192,7 +192,7 @@ Parameters
         Confidence level of the intervals.
     axis : int
         Axis along which to cut. If None, uses a flattened version of the input.
-    
+
     """
     data = masked_array(data, copy=False)
     trimmed = trim_both(data, proportiontocut=proportiontocut, axis=axis)
@@ -215,7 +215,7 @@ Parameters
         Sequence of quantiles to compute.
     axis : int
         Axis along which to compute the quantiles. If None, use a flattened array.
-    
+
     """
     def _mjci_1D(data, p):
         data = data.compressed()
@@ -345,7 +345,7 @@ def rank_data(data, axis=None, use_missing=False):
     along the given axis.
 
     If some values are tied, their rank is averaged.
-    If some values are masked, their rank is set to 0 if use_missing is False, 
+    If some values are masked, their rank is set to 0 if use_missing is False,
     or set to the average rank of the unmasked values if use_missing is True.
 
     Parameters
@@ -353,8 +353,8 @@ def rank_data(data, axis=None, use_missing=False):
         data : sequence
             Input data. The data is transformed to a masked array
         axis : integer
-            Axis along which to perform the ranking. 
-            If None, the array is first flattened. An exception is raised if 
+            Axis along which to perform the ranking.
+            If None, the array is first flattened. An exception is raised if
             the axis is specified for arrays with a dimension larger than 2
         use_missing : boolean
             Whether the masked values have a rank of 0 (False) or equal to the

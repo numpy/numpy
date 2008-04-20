@@ -11,18 +11,18 @@ __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
-__all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d', 
-           'average', 
+__all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
+           'average',
            'column_stack','compress_cols','compress_rowcols', 'compress_rows',
            'count_masked',
            'dot','dstack',
            'expand_dims',
-           'flatnotmasked_contiguous','flatnotmasked_edges', 
-           'hsplit','hstack', 
+           'flatnotmasked_contiguous','flatnotmasked_edges',
+           'hsplit','hstack',
            'mask_cols','mask_rowcols','mask_rows','masked_all','masked_all_like',
-           'median','mediff1d','mr_', 
-           'notmasked_contiguous','notmasked_edges', 
-           'row_stack', 
+           'median','mediff1d','mr_',
+           'notmasked_contiguous','notmasked_edges',
+           'row_stack',
            'vstack',
            ]
 
@@ -262,7 +262,7 @@ def average(a, axis=None, weights=None, returned=False):
             the size of a along the given axis.
             If no weights are given, weights are assumed to be 1.
         returned : bool
-            Flag indicating whether a tuple (result, sum of weights/counts) 
+            Flag indicating whether a tuple (result, sum of weights/counts)
             should be returned as output (True), or just the result (False).
 
     """
@@ -417,7 +417,7 @@ def median(a, axis=0, out=None, overwrite_input=False):
         else:
             choice = slice(idx-1,idx+1)
         return data[choice].mean(0)
-    # 
+    #
     if overwrite_input:
         if axis is None:
             sorted = a.ravel()
@@ -432,7 +432,7 @@ def median(a, axis=0, out=None, overwrite_input=False):
     else:
         result = apply_along_axis(_median1D, axis, sorted)
     return result
- 
+
 
 
 
@@ -445,7 +445,7 @@ def compress_rowcols(x, axis=None):
         - If axis is None, rows and columns are suppressed.
         - If axis is 0, only rows are suppressed.
         - If axis is 1 or -1, only columns are suppressed.
-        
+
     Parameters
     ----------
         axis : int, optional
@@ -504,7 +504,7 @@ def mask_rowcols(a, axis=None):
         axis : int, optional
             Axis along which to perform the operation.
             If None, applies to a flattened version of the array.
-            
+
     Returns
     -------
          a *pure* ndarray.
@@ -795,7 +795,7 @@ def notmasked_contiguous(a, axis=None):
         axis : int, optional
             Axis along which to perform the operation.
             If None, applies to a flattened version of the array.
-            
+
     Returns
     -------
         a sorted sequence of slices (start index, end index).

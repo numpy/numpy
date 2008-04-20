@@ -311,7 +311,7 @@ def raises(*exceptions):
                 # Anything else.
                 raise
             else:
-                raise AssertionError('%s() did not raise one of (%s)' % 
+                raise AssertionError('%s() did not raise one of (%s)' %
                     (function.__name__, ', '.join([e.__name__ for e in exceptions])))
         try:
             f2.__name__ = function.__name__

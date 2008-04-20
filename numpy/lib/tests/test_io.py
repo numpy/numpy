@@ -38,8 +38,8 @@ class TestSaveTxt(NumpyTestCase):
         np.savetxt(c, a, delimiter=',', fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), ['1,2\n', '3,4\n'])
-        
-        
+
+
 ##    def test_format(self):
 ##        a = np.array([(1, 2), (3, 4)])
 ##        c = StringIO.StringIO()
@@ -47,21 +47,21 @@ class TestSaveTxt(NumpyTestCase):
 ##        np.savetxt(c, a, fmt=['%02d', '%3.1f'])
 ##        c.seek(0)
 ##        assert_equal(c.readlines(), ['01 2.0\n', '03 4.0\n'])
-##        
+##
 ##        # A single multiformat string
 ##        c = StringIO.StringIO()
 ##        np.savetxt(c, a, fmt='%02d : %3.1f')
 ##        c.seek(0)
 ##        lines = c.readlines()
 ##        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
-##        
+##
 ##        # Specify delimiter, should be overiden
 ##        c = StringIO.StringIO()
 ##        np.savetxt(c, a, fmt='%02d : %3.1f', delimiter=',')
 ##        c.seek(0)
 ##        lines = c.readlines()
 ##        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
-        
+
 
 class TestLoadTxt(NumpyTestCase):
     def test_record(self):
@@ -122,7 +122,7 @@ class TestLoadTxt(NumpyTestCase):
             converters={3:lambda s: int(s or -999)})
         a = np.array([1,2,3,-999,5], int)
         assert_array_equal(x, a)
-        
+
     def test_comments(self):
         c = StringIO.StringIO()
         c.write('# comment\n1,2,3,5\n')
@@ -131,7 +131,7 @@ class TestLoadTxt(NumpyTestCase):
             comments='#')
         a = np.array([1,2,3,5], int)
         assert_array_equal(x, a)
-        
+
     def test_skiprows(self):
         c = StringIO.StringIO()
         c.write('comment\n1,2,3,5\n')
@@ -140,7 +140,7 @@ class TestLoadTxt(NumpyTestCase):
             skiprows=1)
         a = np.array([1,2,3,5], int)
         assert_array_equal(x, a)
-        
+
         c = StringIO.StringIO()
         c.write('# comment\n1,2,3,5\n')
         c.seek(0)
@@ -148,7 +148,7 @@ class TestLoadTxt(NumpyTestCase):
             skiprows=1)
         a = np.array([1,2,3,5], int)
         assert_array_equal(x, a)
-        
+
     def test_usecols(self):
         a =np.array( [[1,2],[3,4]], float)
         c = StringIO.StringIO()
@@ -156,14 +156,14 @@ class TestLoadTxt(NumpyTestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=(1,))
         assert_array_equal(x, a[:,1])
-        
+
         a =np.array( [[1,2,3],[3,4,5]], float)
         c = StringIO.StringIO()
         np.savetxt(c, a)
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=(1,2))
         assert_array_equal(x, a[:,1:])
-        
+
 
 class Testfromregex(NumpyTestCase):
     def test_record(self):

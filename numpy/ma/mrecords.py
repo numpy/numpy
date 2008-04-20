@@ -142,7 +142,7 @@ class MaskedRecords(MaskedArray, object):
                     msg = "Mask and data not compatible: data size is %i, "+\
                           "mask size is %i."
                     raise MAError(msg % (nd, nm))
-                copy = True        
+                copy = True
             if not keep_mask:
                 self.__setmask__(mask)
                 self._sharedmask = True
@@ -214,7 +214,7 @@ class MaskedRecords(MaskedArray, object):
     def _getmask(self):
         """Return the mask of the mrecord.
     A record is masked when all the fields are masked.
-        
+
         """
         if self.size > 1:
             return self._fieldmask.view((bool_, len(self.dtype))).all(1)
@@ -415,7 +415,7 @@ The fieldname base is either `_data` or `_mask`."""
         return ndarray.view(self, obj)
     #......................................................
     def filled(self, fill_value=None):
-        """Returns an array of the same class as the _data part, where masked 
+        """Returns an array of the same class as the _data part, where masked
     values are filled with fill_value.
     If fill_value is None, self.fill_value is used instead.
 
@@ -487,11 +487,11 @@ The fieldname base is either `_data` or `_mask`."""
                  self._fieldmask.tostring(),
                  self._fill_value,
                  )
-        return state  
+        return state
     #
     def __setstate__(self, state):
-        """Restore the internal state of the masked array, for pickling purposes.  
-    ``state`` is typically the output of the ``__getstate__`` output, and is a 
+        """Restore the internal state of the masked array, for pickling purposes.
+    ``state`` is typically the output of the ``__getstate__`` output, and is a
     5-tuple:
 
         - class name
@@ -570,8 +570,8 @@ def fromarrays(arraylist, dtype=None, shape=None, formats=None,
     """
     datalist = [getdata(x) for x in arraylist]
     masklist = [getmaskarray(x) for x in arraylist]
-    _array = recfromarrays(datalist, 
-                           dtype=dtype, shape=shape, formats=formats, 
+    _array = recfromarrays(datalist,
+                           dtype=dtype, shape=shape, formats=formats,
                            names=names, titles=titles, aligned=aligned,
                            byteorder=byteorder).view(mrecarray)
     _array._fieldmask[:] = zip(*masklist)
@@ -629,8 +629,8 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         if dtype is None:
             dtype = reclist.dtype
         reclist = reclist.tolist()
-    mrec = recfromrecords(reclist, dtype=dtype, shape=shape, formats=formats, 
-                          names=names, titles=titles, 
+    mrec = recfromrecords(reclist, dtype=dtype, shape=shape, formats=formats,
+                          names=names, titles=titles,
                           aligned=aligned, byteorder=byteorder).view(mrecarray)
     # Set the fill_value if needed
     if fill_value is not None:
@@ -805,5 +805,3 @@ if 1:
         import cPickle
         _ = cPickle.dumps(mbase)
         mrec_ = cPickle.loads(_)
-        
-        

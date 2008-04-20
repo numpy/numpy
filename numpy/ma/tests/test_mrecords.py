@@ -41,7 +41,7 @@ class TestMRecords(NumpyTestCase):
         ddtype = [('a',int),('b',float),('c','|S8')]
         mask = [0,1,0,0,1]
         self.base = ma.array(zip(ilist,flist,slist), mask=mask, dtype=ddtype)
-        
+
     def test_byview(self):
         "Test creation by view"
         base = self.base
@@ -69,7 +69,7 @@ class TestMRecords(NumpyTestCase):
         assert_equal(mbase_first.mask, nomask)
         assert_equal(mbase_first._fieldmask.item(), (False, False, False))
         assert_equal(mbase_first['a'], mbase['a'][0])
-        mbase_last = mbase[-1]        
+        mbase_last = mbase[-1]
         assert isinstance(mbase_last, mrecarray)
         assert_equal(mbase_last.dtype, mbase.dtype)
         assert_equal(mbase_last.tolist(), (None,None,None))
@@ -87,7 +87,7 @@ class TestMRecords(NumpyTestCase):
             assert_equal(getattr(mbase_sl,field), base[:2][field])
 
     def test_set_fields(self):
-        "Tests setting fields."        
+        "Tests setting fields."
         base = self.base.copy()
         mbase = base.view(mrecarray)
         mbase = mbase.copy()
@@ -101,7 +101,7 @@ class TestMRecords(NumpyTestCase):
         assert_equal(mbase['a']._data, [1]*5)
         assert_equal(ma.getmaskarray(mbase['a']), [0]*5)
         assert_equal(mbase._mask, [False]*5)
-        assert_equal(mbase._fieldmask.tolist(), 
+        assert_equal(mbase._fieldmask.tolist(),
                      np.array([(0,0,0),(0,1,1),(0,0,0),(0,0,0),(0,1,1)],
                               dtype=bool))
         # Set a field to mask ........................
@@ -109,7 +109,7 @@ class TestMRecords(NumpyTestCase):
         assert_equal(mbase.c.mask, [1]*5)
         assert_equal(ma.getmaskarray(mbase['c']), [1]*5)
         assert_equal(ma.getdata(mbase['c']), ['N/A']*5)
-        assert_equal(mbase._fieldmask.tolist(), 
+        assert_equal(mbase._fieldmask.tolist(),
                      np.array([(0,0,1),(0,1,1),(0,0,1),(0,0,1),(0,1,1)],
                               dtype=bool))
         # Set fields by slices .......................
@@ -129,12 +129,12 @@ class TestMRecords(NumpyTestCase):
         assert_equal(ma.getmaskarray(mbase['b']), [1]*5)
         assert_equal(mbase['a']._mask, mbase['b']._mask)
         assert_equal(mbase['a']._mask, mbase['c']._mask)
-        assert_equal(mbase._fieldmask.tolist(), 
+        assert_equal(mbase._fieldmask.tolist(),
                      np.array([(1,1,1)]*5, dtype=bool))
         # Delete the mask ............................
         mbase._mask = nomask
         assert_equal(ma.getmaskarray(mbase['c']), [0]*5)
-        assert_equal(mbase._fieldmask.tolist(), 
+        assert_equal(mbase._fieldmask.tolist(),
                      np.array([(0,0,0)]*5, dtype=bool))
     #
     def test_set_mask_fromarray(self):
@@ -154,7 +154,7 @@ class TestMRecords(NumpyTestCase):
     def test_set_mask_fromfields(self):
         mbase = self.base.copy().view(mrecarray)
         #
-        nmask = np.array([(0,1,0),(0,1,0),(1,0,1),(1,0,1),(0,0,0)], 
+        nmask = np.array([(0,1,0),(0,1,0),(1,0,1),(1,0,1),(0,0,0)],
                          dtype=[('a',bool),('b',bool),('c',bool)])
         mbase.mask = nmask
         assert_equal(mbase.a.mask, [0,0,1,1,0])
@@ -240,8 +240,8 @@ class TestMRecords(NumpyTestCase):
         _b = ma.array([1.1,2.2,3.3],mask=[0,0,1],dtype=float)
         _c = ma.array(['one','two','three'],mask=[0,0,1],dtype='|S8')
         ddtype = [('a',int),('b',float),('c','|S8')]
-        mrec = fromarrays([_a,_b,_c], dtype=ddtype, 
-                          fill_value=(99999,99999.,'N/A')) 
+        mrec = fromarrays([_a,_b,_c], dtype=ddtype,
+                          fill_value=(99999,99999.,'N/A'))
         mrecfilled = mrec.filled()
         assert_equal(mrecfilled['a'], np.array((1,2,99999), dtype=int))
         assert_equal(mrecfilled['b'], np.array((1.1,2.2,99999.), dtype=float))
@@ -253,8 +253,8 @@ class TestMRecords(NumpyTestCase):
         _b = ma.array([1.1,2.2,3.3],mask=[0,0,1],dtype=float)
         _c = ma.array(['one','two','three'],mask=[1,0,0],dtype='|S8')
         ddtype = [('a',int),('b',float),('c','|S8')]
-        mrec = fromarrays([_a,_b,_c], dtype=ddtype, 
-                          fill_value=(99999,99999.,'N/A')) 
+        mrec = fromarrays([_a,_b,_c], dtype=ddtype,
+                          fill_value=(99999,99999.,'N/A'))
         #
         assert_equal(mrec.tolist(),
                      [(1,1.1,None),(2,2.2,'two'),(None,None,'three')])
@@ -272,11 +272,11 @@ class TestMRecordsImport(NumpyTestCase):
         _b = ma.array([1.1,2.2,3.3],mask=[0,0,1],dtype=float)
         _c = ma.array(['one','two','three'],mask=[0,0,1],dtype='|S8')
         ddtype = [('a',int),('b',float),('c','|S8')]
-        mrec = fromarrays([_a,_b,_c], dtype=ddtype, 
-                          fill_value=(99999,99999.,'N/A')) 
+        mrec = fromarrays([_a,_b,_c], dtype=ddtype,
+                          fill_value=(99999,99999.,'N/A'))
         nrec = recfromarrays((_a.data,_b.data,_c.data), dtype=ddtype)
         self.data = (mrec, nrec, ddtype)
-        
+
     def test_fromarrays(self):
         _a = ma.array([1,2,3],mask=[0,0,1],dtype=int)
         _b = ma.array([1.1,2.2,3.3],mask=[0,0,1],dtype=float)
@@ -284,8 +284,8 @@ class TestMRecordsImport(NumpyTestCase):
         (mrec, nrec, _) = self.data
         for (f,l) in zip(('a','b','c'),(_a,_b,_c)):
             assert_equal(getattr(mrec,f)._mask, l._mask)
-        
-        
+
+
     def test_fromrecords(self):
         "Test construction from records."
         (mrec, nrec, ddtype) = self.data
@@ -300,7 +300,7 @@ class TestMRecordsImport(NumpyTestCase):
         _mrec = fromrecords(nrec)
         assert_equal(_mrec.dtype, mrec.dtype)
         for field in _mrec.dtype.names:
-            assert_equal(getattr(_mrec, field), getattr(mrec._data, field)) 
+            assert_equal(getattr(_mrec, field), getattr(mrec._data, field))
         #
         _mrec = fromrecords(nrec.tolist(), names='c1,c2,c3')
         assert_equal(_mrec.dtype, [('c1',int),('c2',float),('c3','|S5')])
@@ -311,7 +311,7 @@ class TestMRecordsImport(NumpyTestCase):
         assert_equal(_mrec.dtype, mrec.dtype)
         assert_equal_records(_mrec._data, mrec.filled())
         assert_equal_records(_mrec._fieldmask, mrec._fieldmask)
-            
+
     def test_fromrecords_wmask(self):
         "Tests construction from records w/ mask."
         (mrec, nrec, ddtype) = self.data
@@ -328,7 +328,7 @@ class TestMRecordsImport(NumpyTestCase):
         assert_equal_records(_mrec._data, mrec._data)
         assert_equal(_mrec._fieldmask.tolist(), mrec._fieldmask.tolist())
         #
-        _mrec = fromrecords(nrec.tolist(), dtype=ddtype, 
+        _mrec = fromrecords(nrec.tolist(), dtype=ddtype,
                             mask=mrec._fieldmask.tolist())
         assert_equal_records(_mrec._data, mrec._data)
         assert_equal(_mrec._fieldmask.tolist(), mrec._fieldmask.tolist())
