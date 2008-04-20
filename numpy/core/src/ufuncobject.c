@@ -1,28 +1,28 @@
 /*
-  Python Universal Functions Object -- Math for all types, plus fast
-  arrays math
-
-  Full description
-
-  This supports mathematical (and Boolean) functions on arrays and other python
-  objects.  Math on large arrays of basic C types is rather efficient.
-
-  Travis E. Oliphant  2005, 2006 oliphant@ee.byu.edu (oliphant.travis@ieee.org)
-  Brigham Young University
-
-  based on the
-
-  Original Implementation:
-  Copyright (c) 1995, 1996, 1997 Jim Hugunin, hugunin@mit.edu
-
-  with inspiration and code from
-  Numarray
-  Space Science Telescope Institute
-  J. Todd Miller
-  Perry Greenfield
-  Rick White
-
-*/
+ * Python Universal Functions Object -- Math for all types, plus fast
+ * arrays math
+ *
+ * Full description
+ *
+ * This supports mathematical (and Boolean) functions on arrays and other python
+ * objects.  Math on large arrays of basic C types is rather efficient.
+ *
+ * Travis E. Oliphant  2005, 2006 oliphant@ee.byu.edu (oliphant.travis@ieee.org)
+ * Brigham Young University
+ *
+ * based on the
+ *
+ * Original Implementation:
+ * Copyright (c) 1995, 1996, 1997 Jim Hugunin, hugunin@mit.edu
+ *
+ * with inspiration and code from
+ * Numarray
+ * Space Science Telescope Institute
+ * J. Todd Miller
+ * Perry Greenfield
+ * Rick White
+ *
+ */
 
 
 typedef double (DoubleBinaryFunc)(double x, double y);
@@ -40,12 +40,17 @@ typedef void (ClongdoubleBinaryFunc)(clongdouble *x, clongdouble *y, \
 static void
 PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, n=dimensions[0];
-    register intp is1=steps[0],is2=steps[1],os=steps[2];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
-        *(float *)op = (float)((DoubleBinaryFunc *)func) \
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
+        *(float *)op = (float)((DoubleBinaryFunc *)func)
             ((double)*(float *)ip1, (double)*(float *)ip2);
     }
 }
@@ -54,12 +59,17 @@ PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, n=dimensions[0];
-    register intp is1=steps[0],is2=steps[1],os=steps[2];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
 
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
         *(float *)op = ((FloatBinaryFunc *)func)(*(float *)ip1,
                                                  *(float *)ip2);
     }
@@ -69,13 +79,18 @@ PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, n=dimensions[0];
-    register intp is1=steps[0],is2=steps[1],os=steps[2];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
 
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
-        *(double *)op = ((DoubleBinaryFunc *)func)\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
+        *(double *)op = ((DoubleBinaryFunc *)func)
             (*(double *)ip1, *(double *)ip2);
     }
 }
@@ -84,12 +99,17 @@ PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, n=dimensions[0];
-    register intp is1=steps[0],is2=steps[1],os=steps[2];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
-        *(longdouble *)op = \
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
+        *(longdouble *)op =
             ((LongdoubleBinaryFunc *)func)(*(longdouble *)ip1,
                                            *(longdouble *)ip2);
     }
@@ -100,13 +120,21 @@ PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i,n=dimensions[0],is1=steps[0],is2=steps[1],os=steps[2];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
     cdouble x, y, r;
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
-        x.real = ((float *)ip1)[0]; x.imag = ((float *)ip1)[1];
-        y.real = ((float *)ip2)[0]; y.imag = ((float *)ip2)[1];
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
+        x.real = ((float *)ip1)[0];
+        x.imag = ((float *)ip1)[1];
+        y.real = ((float *)ip2)[0];
+        y.imag = ((float *)ip2)[1];
         ((CdoubleBinaryFunc *)func)(&x, &y, &r);
         ((float *)op)[0] = (float)r.real;
         ((float *)op)[1] = (float)r.imag;
@@ -117,13 +145,21 @@ PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
     cdouble x,y,r;
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
-        x.real = ((double *)ip1)[0]; x.imag = ((double *)ip1)[1];
-        y.real = ((double *)ip2)[0]; y.imag = ((double *)ip2)[1];
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
+        x.real = ((double *)ip1)[0];
+        x.imag = ((double *)ip1)[1];
+        y.real = ((double *)ip2)[0];
+        y.imag = ((double *)ip2)[1];
         ((CdoubleBinaryFunc *)func)(&x, &y, &r);
         ((double *)op)[0] = r.real;
         ((double *)op)[1] = r.imag;
@@ -134,13 +170,21 @@ PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
     cfloat x,y,r;
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
-        x.real = ((float *)ip1)[0]; x.imag = ((float *)ip1)[1];
-        y.real = ((float *)ip2)[0]; y.imag = ((float *)ip2)[1];
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
+        x.real = ((float *)ip1)[0];
+        x.imag = ((float *)ip1)[1];
+        y.real = ((float *)ip2)[0];
+        y.imag = ((float *)ip2)[1];
         ((CfloatBinaryFunc *)func)(&x, &y, &r);
         ((float *)op)[0] = r.real;
         ((float *)op)[1] = r.imag;
@@ -151,11 +195,17 @@ PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
     clongdouble x,y,r;
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
         x.real = ((longdouble *)ip1)[0];
         x.imag = ((longdouble *)ip1)[1];
         y.real = ((longdouble *)ip2)[0];
@@ -170,25 +220,35 @@ PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, is1=steps[0],is2=steps[1],os=steps[2], \
-        n=dimensions[0];
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
-    PyObject *tmp;
-    PyObject *x1, *x2;
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
+    PyObject *tmp, *x1, *x2;
 
-    for(i=0; i<n; i++, ip1+=is1, ip2+=is2, op+=os) {
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
         x1 = *((PyObject **)ip1);
         x2 = *((PyObject **)ip2);
-        if ((x1 == NULL) || (x2 == NULL)) goto done;
-        if ( (void *) func == (void *) PyNumber_Power)
+        if ((x1 == NULL) || (x2 == NULL)) {
+            goto done;
+        }
+        if ( (void *) func == (void *) PyNumber_Power) {
             tmp = ((ternaryfunc)func)(x1, x2, Py_None);
-        else
+        }
+        else {
             tmp = ((binaryfunc)func)(x1, x2);
-        if (PyErr_Occurred()) goto done;
+        }
+        if (PyErr_Occurred()) {
+            goto done;
+        }
         Py_XDECREF(*((PyObject **)op));
         *((PyObject **)op) = tmp;
     }
- done:
+done:
     return;
 }
 
@@ -196,34 +256,41 @@ PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i, is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    intp os = steps[2];
+    char *ip1 = args[0];
+    char *ip2 = args[1];
+    char *op = args[2];
+    intp i;
     PyObject *tmp, *meth, *arglist, *x1, *x2;
-    char *ip1=args[0], *ip2=args[1], *op=args[2];
 
-    for(i=0; i<n; i++, ip1 += is1, ip2 += is2, op += os) {
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os) {
         x1 = *(PyObject **)ip1;
         x2 = *(PyObject **)ip2;
-        if ((x1 == NULL) || (x2 == NULL)) goto done;
+        if ((x1 == NULL) || (x2 == NULL)) {
+            return;
+        }
         meth = PyObject_GetAttrString(x1, (char *)func);
         if (meth != NULL) {
             arglist = PyTuple_New(1);
             if (arglist == NULL) {
                 Py_DECREF(meth);
-                goto done;
+                return;
             }
             Py_INCREF(x2);
             PyTuple_SET_ITEM(arglist, 0, x2);
             tmp = PyEval_CallObject(meth, arglist);
             Py_DECREF(arglist);
             Py_DECREF(meth);
-            if ((tmp==NULL) || PyErr_Occurred()) goto done;
+            if ((tmp==NULL) || PyErr_Occurred()) {
+                return;
+            }
             Py_XDECREF(*((PyObject **)op));
             *((PyObject **)op) = tmp;
         }
     }
- done:
-    return;
-
 }
 
 typedef double DoubleUnaryFunc(double x);
@@ -237,9 +304,14 @@ typedef void ClongdoubleUnaryFunc(clongdouble *x, clongdouble *res);
 static void
 PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i, n=dimensions[0];
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         *(float *)op = (float)((DoubleUnaryFunc *)func)((double)*(float *)ip1);
     }
 }
@@ -248,9 +320,14 @@ PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
 {
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
     intp i;
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         *(double *)op = ((DoubleUnaryFunc *)func)(*(double *)ip1);
     }
 }
@@ -259,10 +336,14 @@ PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i;
-    intp n=dimensions[0];
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         *(float *)op = ((FloatUnaryFunc *)func)(*(float *)ip1);
     }
 }
@@ -271,10 +352,14 @@ PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i;
-    intp n=dimensions[0];
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         *(longdouble *)op = ((LongdoubleUnaryFunc *)func)\
             (*(longdouble *)ip1);
     }
@@ -285,11 +370,17 @@ PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i; cdouble x, res;
-    intp n=dimensions[0];
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<n; i++, ip1+=steps[0], op+=steps[1]) {
-        x.real = ((float *)ip1)[0]; x.imag = ((float *)ip1)[1];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+    cdouble x, res;
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
+        x.real = ((float *)ip1)[0];
+        x.imag = ((float *)ip1)[1];
         ((CdoubleUnaryFunc *)func)(&x, &res);
         ((float *)op)[0] = (float)res.real;
         ((float *)op)[1] = (float)res.imag;
@@ -300,9 +391,15 @@ PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i; cfloat x, res;
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+    cfloat x, res;
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         x.real = ((float *)ip1)[0];
         x.imag = ((float *)ip1)[1];
         ((CfloatUnaryFunc *)func)(&x, &res);
@@ -316,9 +413,15 @@ PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i; cdouble x, res;
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+    cdouble x, res;
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         x.real = ((double *)ip1)[0];
         x.imag = ((double *)ip1)[1];
         ((CdoubleUnaryFunc *)func)(&x, &res);
@@ -332,9 +435,15 @@ PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i; clongdouble x, res;
-    char *ip1=args[0], *op=args[1];
-    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+    clongdouble x, res;
+
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         x.real = ((longdouble *)ip1)[0];
         x.imag = ((longdouble *)ip1)[1];
         ((ClongdoubleUnaryFunc *)func)(&x, &res);
@@ -347,55 +456,69 @@ PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i; PyObject *tmp, *x1;
-    char *ip1=args[0], *op=args[1];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+    PyObject *tmp, *x1;
 
-    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         x1 = *(PyObject **)ip1;
-        if (x1 == NULL) goto done;
+        if (x1 == NULL) {
+            return;
+        }
         tmp = ((unaryfunc)func)(x1);
-        if ((tmp==NULL) || PyErr_Occurred()) goto done;
+        if ((tmp==NULL) || PyErr_Occurred()) {
+            return;
+        }
         Py_XDECREF(*((PyObject **)op));
         *((PyObject **)op) = tmp;
     }
- done:
-    return;
 }
 
 /*UFUNC_API*/
 static void
 PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i; PyObject *tmp, *meth, *arglist, *x1;
-    char *ip1=args[0], *op=args[1];
+    intp n = dimensions[0];
+    intp is1 = steps[0];
+    intp is2 = steps[1];
+    char *ip1 = args[0];
+    char *op = args[1];
+    intp i;
+    PyObject *tmp, *meth, *arglist, *x1;
 
-    for(i=0; i<*dimensions; i++, ip1+=steps[0], op+=steps[1]) {
+    for(i = 0; i < n; i++, ip1 += is1, op += is2) {
         x1 = *(PyObject **)ip1;
-        if (x1 == NULL) goto done;
+        if (x1 == NULL) {
+            return;
+        }
         meth = PyObject_GetAttrString(x1, (char *)func);
         if (meth != NULL) {
             arglist = PyTuple_New(0);
             if (arglist == NULL) {
                 Py_DECREF(meth);
-                goto done;
+                return;
             }
             tmp = PyEval_CallObject(meth, arglist);
             Py_DECREF(arglist);
             Py_DECREF(meth);
-            if ((tmp==NULL) || PyErr_Occurred()) goto done;
+            if ((tmp==NULL) || PyErr_Occurred()) {
+                return;
+            }
             Py_XDECREF(*((PyObject **)op));
             *((PyObject **)op) = tmp;
         }
     }
- done:
-    return;
-
 }
 
 
-/* a general-purpose ufunc that deals with general-purpose Python callable.
-   func is a structure with nin, nout, and a Python callable function
-*/
+/*
+ * A general-purpose ufunc that deals with general-purpose Python callable.
+ * func is a structure with nin, nout, and a Python callable function
+ */
 
 /*UFUNC_API*/
 static void
@@ -413,40 +536,50 @@ PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
 
     ntot = nin+nout;
 
-    for (j=0; j < ntot; j++) ptrs[j] = args[j];
-    for(i=0; i<n; i++) {
+    for (j = 0; j < ntot; j++) {
+        ptrs[j] = args[j];
+    }
+    for(i = 0; i < n; i++) {
         arglist = PyTuple_New(nin);
-        if (arglist == NULL) return;
-        for (j=0; j < nin; j++) {
+        if (arglist == NULL) {
+            return;
+        }
+        for (j = 0; j < nin; j++) {
             in = *((PyObject **)ptrs[j]);
-            if (in == NULL) {Py_DECREF(arglist); return;}
+            if (in == NULL) {
+                Py_DECREF(arglist);
+                return;
+            }
             PyTuple_SET_ITEM(arglist, j, in);
             Py_INCREF(in);
         }
         result = PyEval_CallObject(tocall, arglist);
         Py_DECREF(arglist);
-        if (result == NULL) return;
+        if (result == NULL) {
+            return;
+        }
         if PyTuple_Check(result) {
-                if (nout != PyTuple_Size(result)) {
-                    Py_DECREF(result);
-                    return;
-                }
-                for (j=0; j < nout; j++) {
-                    op = (PyObject **)ptrs[j+nin];
-                    Py_XDECREF(*op);
-                    *op = PyTuple_GET_ITEM(result, j);
-                    Py_INCREF(*op);
-                }
+            if (nout != PyTuple_Size(result)) {
                 Py_DECREF(result);
+                return;
             }
+            for (j = 0; j < nout; j++) {
+                op = (PyObject **)ptrs[j+nin];
+                Py_XDECREF(*op);
+                *op = PyTuple_GET_ITEM(result, j);
+                Py_INCREF(*op);
+            }
+            Py_DECREF(result);
+        }
         else {
             op = (PyObject **)ptrs[nin];
             Py_XDECREF(*op);
             *op = result;
         }
-        for (j=0; j < ntot; j++) ptrs[j] += steps[j];
+        for (j = 0; j < ntot; j++) {
+            ptrs[j] += steps[j];
+        }
     }
-    return;
 }
 
 
