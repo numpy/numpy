@@ -789,19 +789,4 @@ set to 'fi', where `i` is the number of existing fields.
     return newdata
 
 ###############################################################################
-#
-if 1:
-    import numpy.ma as ma
-    from numpy.ma.testutils import *
-    if 1:
-        ilist = [1,2,3,4,5]
-        flist = [1.1,2.2,3.3,4.4,5.5]
-        slist = ['one','two','three','four','five']
-        ddtype = [('a',int),('b',float),('c','|S8')]
-        mask = [0,1,0,0,1]
-        self_base = ma.array(zip(ilist,flist,slist), mask=mask, dtype=ddtype)
-    if 1:
-        mbase = self_base.copy().view(mrecarray)
-        import cPickle
-        _ = cPickle.dumps(mbase)
-        mrec_ = cPickle.loads(_)
+

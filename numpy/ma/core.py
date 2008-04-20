@@ -1363,17 +1363,22 @@ class MaskedArray(numeric.ndarray):
             return
         #....
         dval = narray(value, copy=False, dtype=self.dtype)
-        valmask = getmask(value)
+        valmask = getmask(value)        
         if self._mask is nomask:
+            # Set the data, then the mask
+            ndarray.__setitem__(self._data,indx,dval)
             if valmask is not nomask:
                 self._mask = numpy.zeros(self.shape, dtype=MaskType)
                 self._mask[indx] = valmask
         elif not self._hardmask:
             # Unshare the mask if necessary to avoid propagation
             self.unshare_mask()
+            # Set the data, then the mask
+            ndarray.__setitem__(self._data,indx,dval)
             self._mask[indx] = valmask
         elif hasattr(indx, 'dtype') and (indx.dtype==bool_):
             indx = indx * umath.logical_not(self._mask)
+            ndarray.__setitem__(self._data,indx,dval)
         else:
             mindx = mask_or(self._mask[indx], valmask, copy=True)
             dindx = self._data[indx]
@@ -1381,10 +1386,8 @@ class MaskedArray(numeric.ndarray):
                 dindx[~mindx] = dval
             elif mindx is nomask:
                 dindx = dval
-            dval = dindx
+            ndarray.__setitem__(self._data,indx,dindx)
             self._mask[indx] = mindx
-        # Set data ..........
-        ndarray.__setitem__(self._data,indx,dval)
     #............................................
     def __getslice__(self, i, j):
         """x.__getslice__(i, j) <==> x[i:j]
@@ -2228,6 +2231,7 @@ masked_%(name)s(data = %(data)s,
     def round(self, decimals=0, out=None):
         result = self._data.round(decimals).view(type(self))
         result._mask = self._mask
+        result._update_from(self)
         if out is None:
             return result
         out[:] = result
@@ -3174,13 +3178,7 @@ def round_(a, decimals=0, out=None):
 
     """
     if out is None:
-        result = numpy.round_(getdata(a), decimals, out)
-        if isinstance(a,MaskedArray):
-            result = result.view(type(a))
-            result._mask = a._mask
-        else:
-            result = result.view(MaskedArray)
-        return result
+        return numpy.round_(a, decimals, out)
     else:
         numpy.round_(getdata(a), decimals, out)
         if hasattr(out, '_mask'):

@@ -609,6 +609,14 @@ class TestMA(NumpyTestCase):
     #........................
     def test_oddfeatures_3(self):
         """Tests some generic features."""
+        atest = array([10], mask=True)
+        btest = array([20])
+        idx = atest.mask
+        atest[idx] = btest[idx]
+        assert_equal(atest,[20])
+    #........................
+    def test_oddfeatures_4(self):
+        """Tests some generic features."""
         atest = ones((10,10,10), dtype=float_)
         btest = zeros(atest.shape, MaskType)
         ctest = masked_where(btest,atest)
