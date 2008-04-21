@@ -326,7 +326,10 @@ class scons(old_build_ext):
                     cmd.append('-s')
             cmd.append('silent=%d' % int(self.silent))
             cmdstr = ' '.join(cmd)
-            log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
+            if int(self.silent) < 1:
+                log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
+            else:
+                log.info("Executing scons command for pkg %s", pkg_name)
             st = os.system(cmdstr)
             if st:
                 print "status is %d" % st
