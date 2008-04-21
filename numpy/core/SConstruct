@@ -1,4 +1,4 @@
-# Last Change: Wed Mar 05 02:00 PM 2008 J
+# Last Change: Mon Apr 21 07:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -123,9 +123,9 @@ def check_func(f):
     if st:
         st = config.CheckFunc(f, language = 'C')
     if st:
-	mfuncs_defined[f] = 1
+        mfuncs_defined[f] = 1
     else:
-	mfuncs_defined[f] = 0
+        mfuncs_defined[f] = 0
 
 for f in mfuncs:
     check_func(f)
