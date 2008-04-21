@@ -1,4 +1,4 @@
-#! Last Change: Tue Jan 08 10:00 PM 2008 J
+#! Last Change: Mon Apr 21 07:00 PM 2008 J
 
 """Code to support special facilities to scons which are only useful for
 numpy.core, hence not put into numpy.distutils.scons"""
@@ -16,9 +16,15 @@ from code_generators.generate_ufunc_api import \
 
 from numscons.numdist import process_c_str as process_str
 from numscons.core.utils import rsplit, isstring
+try:
+    from numscons import distutils_dirs_emitter
+except ImportError:
+    raise ImportError("You need numscons >= 0.5.2")
 
 import SCons.Node
 import SCons
+from SCons.Builder import Builder
+from SCons.Action import Action
 
 def split_ext(string):
     sp = rsplit(string, '.', 1)
@@ -181,3 +187,18 @@ def define_no_smp():
         except KeyError:
             nosmp = 0
     return nosmp == 1
+
+array_api_gen_bld = Builder(action = Action(do_generate_array_api, '$ARRAPIGENCOMSTR'), 
+                            emitter = [generate_api_emitter,
+                                       distutils_dirs_emitter])
+
+ufunc_api_gen_bld = Builder(action = Action(do_generate_ufunc_api, '$UFUNCAPIGENCOMSTR'), 
+                            emitter = [generate_api_emitter,
+                                       distutils_dirs_emitter])
+
+template_bld = Builder(action = Action(generate_from_template, '$TEMPLATECOMSTR'), 
+                       emitter = [generate_from_template_emitter,
+                                  distutils_dirs_emitter])
+
+umath_bld = Builder(action = Action(generate_umath, '$UMATHCOMSTR'), 
+                    emitter = [generate_umath_emitter, distutils_dirs_emitter])

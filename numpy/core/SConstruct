@@ -9,13 +9,12 @@ from numscons import get_python_inc, get_pythonlib_dir
 from numscons import GetNumpyEnvironment
 from numscons import CheckCBLAS 
 from numscons import write_info
-try:
-    from numscons import distutils_dirs_emitter
-except ImportError:
-    raise ImportError("You need numscons >= 0.5.2")
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
     check_mlib, check_mlibs, is_npy_no_signal
+from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
+                          umath_bld
+
 
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = [get_python_inc()])
@@ -212,26 +211,6 @@ env['CONFIG_H_GEN'] = numpyconfig_sym
 #---------------------------
 # Builder for generated code
 #---------------------------
-from scons_support import do_generate_array_api, do_generate_ufunc_api, \
-                        generate_api_emitter,\
-                        generate_from_template, generate_from_template_emitter, \
-                        generate_umath, generate_umath_emitter
-
-array_api_gen_bld = Builder(action = do_generate_array_api, 
-                            emitter = [generate_api_emitter,
-                                       distutils_dirs_emitter])
-
-ufunc_api_gen_bld = Builder(action = do_generate_ufunc_api, 
-                            emitter = [generate_api_emitter,
-                                       distutils_dirs_emitter])
-
-template_bld = Builder(action = generate_from_template, 
-                       emitter = [generate_from_template_emitter,
-                                  distutils_dirs_emitter])
-
-umath_bld = Builder(action = generate_umath, 
-                    emitter = [generate_umath_emitter, distutils_dirs_emitter])
-
 env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
                        'GenerateUfuncApi' : ufunc_api_gen_bld,
                        'GenerateFromTemplate' : template_bld,
@@ -240,17 +219,12 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 #------------------------
 # Generate generated code
 #------------------------
-from os.path import join as pjoin
-
 scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.inc.src'))
-
 arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.inc.src'))
-
 sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
-
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umathmodule.c.src'))
-
-scalarmathmodule_src = env.GenerateFromTemplate(pjoin('src', 'scalarmathmodule.c.src'))
+scalarmathmodule_src = env.GenerateFromTemplate(
+                            pjoin('src', 'scalarmathmodule.c.src'))
 
 umath = env.GenerateUmath('__umath_generated',
                           pjoin('code_generators', 'generate_umath.py'))
