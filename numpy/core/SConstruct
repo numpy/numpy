@@ -64,23 +64,29 @@ for type in ('Py_intptr_t',):
 
 # We check declaration AND type because that's how distutils does it.
 if config.CheckDeclaration('PY_LONG_LONG', includes = '#include <Python.h>\n'):
-    st = config.CheckTypeSize('PY_LONG_LONG', includes = '#include <Python.h>\n')
+    st = config.CheckTypeSize('PY_LONG_LONG', 
+                              includes = '#include <Python.h>\n')
     assert not st == 0
-    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', '#define NPY_SIZEOF_LONGLONG %d' % st))
-    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG', '#define NPY_SIZEOF_PY_LONG_LONG %d' % st))
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', 
+                            '#define NPY_SIZEOF_LONGLONG %d' % st))
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG', 
+                            '#define NPY_SIZEOF_PY_LONG_LONG %d' % st))
 else:
     numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', ''))
     numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG', ''))
 
 if not config.CheckDeclaration('CHAR_BIT', includes= '#include <Python.h>\n'):
-    raise RuntimeError("Config wo CHAR_BIT is not supported with scons: please contact the maintainer (cdavid)")
+    raise RuntimeError(\
+"""Config wo CHAR_BIT is not supported with scons: please contact the
+maintainer (cdavid)""")
 
 #----------------------
 # Checking signal stuff
 #----------------------
 if is_npy_no_signal():
     numpyconfig_sym.append(('DEFINE_NPY_NO_SIGNAL', '#define NPY_NO_SIGNAL\n'))
-    config.Define('__NPY_PRIVATE_NO_SIGNAL', comment = "define to 1 to disable SMP support ")
+    config.Define('__NPY_PRIVATE_NO_SIGNAL', 
+                  comment = "define to 1 to disable SMP support ")
 else:
     numpyconfig_sym.append(('DEFINE_NPY_NO_SIGNAL', ''))
 
@@ -138,13 +144,16 @@ if mfuncs_defined['expf'] == 1:
                   comment = 'Define to 1 if long double funcs are available')
 if mfuncs_defined['asinh'] == 1:
     config.Define('HAVE_INVERSE_HYPERBOLIC',
-                  comment = 'Define to 1 if inverse hyperbolic funcs are available')
+                  comment = 'Define to 1 if inverse hyperbolic funcs are '\
+                            'available')
 if mfuncs_defined['atanhf'] == 1:
     config.Define('HAVE_INVERSE_HYPERBOLIC_FLOAT',
-                  comment = 'Define to 1 if inverse hyperbolic float funcs are available')
+                  comment = 'Define to 1 if inverse hyperbolic float funcs '\
+                            'are available')
 if mfuncs_defined['atanhl'] == 1:
     config.Define('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE',
-                  comment = 'Define to 1 if inverse hyperbolic long double funcs are available')
+                  comment = 'Define to 1 if inverse hyperbolic long double '\
+                            'funcs are available')
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
@@ -163,7 +172,8 @@ if not config.CheckDeclaration('PyOS_ascii_strtod',
 if sys.platform=='win32' or os.name=='nt':
     from distutils.msvccompiler import get_build_architecture
     a = get_build_architecture()
-    print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
+    print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % \
+          (a, os.name, sys.platform)
     if a == 'AMD64':
         distutils_use_sdk = 1
         config.Define('DISTUTILS_USE_SDK', distutils_use_sdk, 
@@ -232,24 +242,15 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 #------------------------
 from os.path import join as pjoin
 
-scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes'), 
-                    pjoin('src', 'scalartypes.inc.src'))
+scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.inc.src'))
 
-arraytypes_src = env.GenerateFromTemplate(
-                    pjoin('src', 'arraytypes'), 
-                    pjoin('src', 'arraytypes.inc.src'))
+arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.inc.src'))
 
-sortmodule_src = env.GenerateFromTemplate(
-                    pjoin('src', '_sortmodule'), 
-                    pjoin('src', '_sortmodule.c.src'))
+sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
 
-umathmodule_src = env.GenerateFromTemplate(
-                    pjoin('src', 'umathmodule'), 
-                    pjoin('src', 'umathmodule.c.src'))
+umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umathmodule.c.src'))
 
-scalarmathmodule_src = env.GenerateFromTemplate(
-                    pjoin('src', 'scalarmathmodule'), 
-                    pjoin('src', 'scalarmathmodule.c.src'))
+scalarmathmodule_src = env.GenerateFromTemplate(pjoin('src', 'scalarmathmodule.c.src'))
 
 umath = env.GenerateUmath('__umath_generated',
                           pjoin('code_generators', 'generate_umath.py'))
