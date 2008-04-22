@@ -101,6 +101,29 @@ class Ufunc(object):
 #       output specification (optional)
 #       ]
 
+chartoname = {'?': 'bool',
+              'b': 'byte',
+              'B': 'ubyte',
+              'h': 'short',
+              'H': 'ushort',
+              'i': 'int',
+              'I': 'uint',
+              'l': 'long',
+              'L': 'ulong',
+              'q': 'longlong',
+              'Q': 'ulonglong',
+              'f': 'float',
+              'd': 'double',
+              'g': 'longdouble',
+              'F': 'cfloat',
+              'D': 'cdouble',
+              'G': 'clongdouble',
+              'O': 'OBJECT',
+              # M is like O, but calls a method of the object instead
+              # of a function
+              'M': 'OBJECT',
+              }
+
 all = '?bBhHiIlLqQfdgFDGO'
 O = 'O'
 M = 'M'
@@ -518,27 +541,6 @@ def indent(st,spaces):
     # trim off any trailing spaces
     indented = re.sub(r' +$',r'',indented)
     return indented
-
-chartoname = {'?': 'bool',
-              'b': 'byte',
-              'B': 'ubyte',
-              'h': 'short',
-              'H': 'ushort',
-              'i': 'int',
-              'I': 'uint',
-              'l': 'long',
-              'L': 'ulong',
-              'q': 'longlong',
-              'Q': 'ulonglong',
-              'f': 'float',
-              'd': 'double',
-              'g': 'longdouble',
-              'F': 'cfloat',
-              'D': 'cdouble',
-              'G': 'clongdouble',
-              'O': 'OBJECT',
-              'M': 'OBJECT',
-              }
 
 chartotype1 = {'f': 'f_f',
                'd': 'd_d',
