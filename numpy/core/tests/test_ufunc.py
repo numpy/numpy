@@ -52,6 +52,14 @@ class TestUfunc(NumpyTestCase):
         just looked at the signatures registered in the build directory to find
         relevant functions.
 
+        Fixme, currently untested:
+
+            PyUFunc_ff_f_As_dd_d
+            PyUFunc_FF_F_As_DD_D
+            PyUFunc_f_f_As_d_d
+            PyUFunc_F_F_As_D_D
+            PyUFunc_On_Om
+
         """
         fone = np.exp
         ftwo = lambda x,y : x**y
@@ -123,7 +131,7 @@ class TestUfunc(NumpyTestCase):
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        #assert np.all(np.logical_not(x) == True), msg
+        assert np.all(np.logical_not(x) == True), msg
 
         # check binary PyUFunc_OO_0
         msg = "PyUFunc_OO_O"
@@ -134,7 +142,7 @@ class TestUfunc(NumpyTestCase):
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        #assert np.all(np.logical_and(x,x) == 1), msg
+        assert np.all(np.logical_and(x,x) == 1), msg
 
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
