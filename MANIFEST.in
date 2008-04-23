@@ -5,3 +5,10 @@
 #
 include MANIFEST.in
 include LICENSE.txt
+include setupscons.py
+include setupegg.py
+# Adding scons build relateed files not found by distutils
+include numpy/core/code_generators/__init__.py
+include numpy/core/include/numpy/numpyconfig.h.in
+include numpy/core/include
+recursive-include numpy/ SConstruct
