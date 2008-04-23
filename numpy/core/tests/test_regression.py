@@ -1012,6 +1012,9 @@ class TestRegression(NumpyTestCase):
         x.fill(1)
         assert_equal(x, np.array([1], dtype=dtype))
 
+    def check_asfarray_none(self, level=rlevel):
+        """Test for changeset r5065"""
+        assert_array_equal(np.array([np.nan]), np.asfarray([None]))
 
 
 if __name__ == "__main__":
