@@ -1740,14 +1740,20 @@ masked_%(name)s(data = %(data)s,
     #............................................
     def __float__(self):
         "Convert to float."
-        if self._mask is not nomask:
+        if self.size > 1:
+            raise TypeError,\
+                   "Only length-1 arrays can be converted to Python scalars"
+        elif self._mask:
             warnings.warn("Warning: converting a masked element to nan.")
             return numpy.nan
         return float(self.item())
 
     def __int__(self):
         "Convert to int."
-        if self._mask is not nomask:
+        if self.size > 1:
+            raise TypeError,\
+                   "Only length-1 arrays can be converted to Python scalars"
+        elif self._mask:
             raise MAError, 'Cannot convert masked element to a Python int.'
         return int(self.item())
     #............................................
@@ -3366,3 +3372,4 @@ identity = _convert2ma('identity')
 indices = numpy.indices
 
 ###############################################################################
+        

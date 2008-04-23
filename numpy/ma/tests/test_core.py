@@ -702,16 +702,19 @@ class TestMA(NumpyTestCase):
         assert_equal(1.0, float(array(1)))
         assert_equal(1, int(array([[[1]]])))
         assert_equal(1.0, float(array([[1]])))
-        self.failUnlessRaises(ValueError, float, array([1,1]))
+        self.assertRaises(TypeError, float, array([1,1]))
 
         warnings.simplefilter('ignore',UserWarning)
         assert numpy.isnan(float(array([1],mask=[1])))
         warnings.simplefilter('default',UserWarning)
-#TODO: Check how bool works...
-#TODO:        self.failUnless(bool(array([0,1])))
-#TODO:        self.failUnless(bool(array([0,0],mask=[0,1])))
-#TODO:        self.failIf(bool(array([0,0])))
-#TODO:        self.failIf(bool(array([0,0],mask=[0,0])))
+        #
+        a = array([1,2,3],mask=[1,0,0])
+        self.assertRaises(TypeError, lambda:float(a))
+        assert_equal(float(a[-1]), 3.)
+        assert(numpy.isnan(float(a[0])))
+        self.assertRaises(TypeError, int, a)
+        assert_equal(int(a[-1]), 3)
+        self.assertRaises(MAError, lambda:int(a[0]))
     #........................
     def test_arraymethods(self):
         "Tests some MaskedArray methods."

@@ -577,7 +577,7 @@ class TestMa(NumpyTestCase):
         self.assertEqual(1.0, float(array(1)))
         self.assertEqual(1, int(array([[[1]]])))
         self.assertEqual(1.0, float(array([[1]])))
-        self.failUnlessRaises(ValueError, float, array([1,1]))
+        self.failUnlessRaises(TypeError, float, array([1,1]))
         self.failUnlessRaises(ValueError, bool, array([0,1]))
         self.failUnlessRaises(ValueError, bool, array([0,0],mask=[0,1]))
 
