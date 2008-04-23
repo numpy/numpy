@@ -92,10 +92,6 @@ def dist2sconsfc(compiler):
 def dist2sconscxx(compiler):
     """This converts the name passed to distutils to scons name convention
     (C++ compiler). The argument should be a Compiler instance."""
-    if compiler.compiler_type == 'gnu':
-        return 'g++'
-    else:
-        return 'c++'
     return compiler.compiler_cxx[0]
 
 def get_compiler_executable(compiler):
@@ -329,7 +325,7 @@ class scons(old_build_ext):
             if int(self.silent) < 1:
                 log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
             else:
-                log.info("Executing scons command for pkg %s", pkg_name)
+                log.info("======== Executing scons command for pkg %s =========", pkg_name)
             st = os.system(cmdstr)
             if st:
                 print "status is %d" % st
