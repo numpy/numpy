@@ -29,8 +29,12 @@ static double
 MyPyFloat_AsDouble(PyObject *obj)
 {
     double ret = 0;
-    PyObject *num = PyNumber_Float(obj);
+    PyObject *num;
 
+    if (obj == Py_None) {
+        return _getNAN();
+    }
+    num = PyNumber_Float(obj);
     if (num == NULL) {
         return _getNAN();
     }
