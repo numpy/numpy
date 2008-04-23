@@ -224,6 +224,14 @@ class matrix(N.ndarray):
 
     def __getitem__(self, index):
         self._getitem = True
+
+        # If indexing by scalar, check whether we are indexing into
+        # a vector, and then return the corresponding element
+        if N.isscalar(index) and (1 in self.shape):
+            index = [index,index]
+            index[list(self.shape).index(1)] = 0
+            index = tuple(index)
+
         try:
             out = N.ndarray.__getitem__(self, index)
         finally:
@@ -253,7 +261,6 @@ class matrix(N.ndarray):
         for val in shp:
             if (val > 1): truend += 1
         return truend
-
 
     def __mul__(self, other):
         if isinstance(other,(N.ndarray, list, tuple)) :

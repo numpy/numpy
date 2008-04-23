@@ -179,6 +179,17 @@ class TestIndexing(NumpyTestCase):
         x[:,1] = y>0.5
         assert_equal(x, [[0,1],[0,0],[0,0]])
 
+    def check_vector_element(self):
+        x = matrix([[1,2,3],[4,5,6]])
+        assert_equal(x[0][0],1)
+        assert_equal(x[0].shape,(1,3))
+        assert_equal(x[:,0].shape,(2,1))
+
+        x = matrix(0)
+        assert_equal(x[0,0],0)
+        assert_equal(x[0],0)
+        assert_equal(x[:,0].shape,x.shape)
+
 
 if __name__ == "__main__":
     NumpyTest().run()
