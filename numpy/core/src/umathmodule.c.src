@@ -1,5 +1,10 @@
 /* -*- c -*- */
 
+/*
+ *****************************************************************************
+ **                            INCLUDES                                     **
+ *****************************************************************************
+ */
 #include "Python.h"
 #include "numpy/noprefix.h"
 #define _UMATHMODULE
@@ -7,6 +12,12 @@
 #include "abstract.h"
 #include "config.h"
 #include <math.h>
+
+/*
+ *****************************************************************************
+ **                     BASIC MATH FUNCTIONS                                **
+ *****************************************************************************
+ */
 
 /* A whole slew of basic math functions are provided originally
    by Konrad Hinsen. */
@@ -455,6 +466,7 @@ longdouble radiansl(longdouble x) {
    #c=l*17,f*17#
    #TYPE=LONGDOUBLE*17, FLOAT*17#
 */
+
 #ifndef HAVE_@TYPE@_FUNCS
 #ifdef @kind@@c@
 #undef @kind@@c@
@@ -594,6 +606,12 @@ static float expm1f(float x)
 }
 #endif
 
+
+/*
+ *****************************************************************************
+ **                           COMPLEX FUNCTIONS                             **
+ *****************************************************************************
+ */
 
 
 /* Don't pass structures between functions (only pointers) because how
@@ -975,6 +993,12 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
 }
 
 /**end repeat**/
+
+/*
+ *****************************************************************************
+ **                             UFUNC LOOPS                                 **
+ *****************************************************************************
+ */
 
 
 /**begin repeat
