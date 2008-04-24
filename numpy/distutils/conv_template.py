@@ -160,9 +160,8 @@ def parse_loop_header(loophead) :
         if nsub is None :
             nsub = size
         elif nsub != size :
-            print name
-            print vals
-            raise ValueError, "Mismatch in number to replace"
+            msg = "Mismatch in number: %s - %s" % (name, vals)
+            raise ValueError, msg
         names.append((name,vals))
 
     # generate list of dictionaries, one for each template iteration
@@ -176,12 +175,19 @@ def parse_loop_header(loophead) :
 
 replace_re = re.compile(r"@([\w]+)@")
 def parse_string(astr, env, level, line) :
+    lineno = "#line %d\n" % line
+
     # local function for string replacement, uses env
     def replace(match):
         name = match.group(1)
-        return env[name]
+        try :
+            val = env[name]
+        except KeyError, e :
+            msg = '%s: %s'%(lineno, e)
+            raise KeyError, msg
+        return val
 
-    code = []
+    code = [lineno]
     struct = parse_structure(astr, level)
     if struct :
         # recurse over inner loops
@@ -193,19 +199,23 @@ def parse_string(astr, env, level, line) :
             text = astr[sub[1]:sub[2]]
             oldend = sub[3]
             newline = line + sub[4]
-            envlist = parse_loop_header(head)
-            code.append(pref)
+            code.append(replace_re.sub(replace, pref))
+            try :
+                envlist = parse_loop_header(head)
+            except ValueError, e :
+                msg = "%s: %s" % (lineno, e)
+                raise ValueError, msg
             for newenv in envlist :
                 newenv.update(env)
                 newcode = parse_string(text, newenv, newlevel, newline)
                 code.extend(newcode)
-        code.append(astr[oldend:])       
+        suff = astr[oldend:]
+        code.append(replace_re.sub(replace, suff))
     else :
         # replace keys
-        lineno = "#line %d\n" % line
-        newcode = replace_re.sub(replace, astr)
-        code.append(''.join((lineno, newcode , '\n')))
-    return code
+        code.append(replace_re.sub(replace, astr))
+    code.append('\n')
+    return ''.join(code)
 
 def process_str(astr):
     code = [header]
