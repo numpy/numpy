@@ -621,74 +621,49 @@ static PyObject *
 #define LONGDOUBLEPREC_STR 12
 #endif
 
-/* floattype_str */
+/*
+ * float type str and repr
+ */
 /**begin repeat
-
-#name=float, double, longdouble#
-#Name=Float, Double, LongDouble#
-#NAME=FLOAT, DOUBLE, LONGDOUBLE#
-*/
+ * #name=float, double, longdouble#
+ * #Name=Float, Double, LongDouble#
+ * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
+ */
+/**begin repeat1
+ * #kind = str, repr#
+ * #KIND = STR, REPR#
+ */
 static PyObject *
-@name@type_str(PyObject *self)
+@name@type_@kind@(PyObject *self)
 {
         static char buf[100];
         format_@name@(buf, sizeof(buf),
-                          ((Py@Name@ScalarObject *)self)->obval, @NAME@PREC_STR);
+                          ((Py@Name@ScalarObject *)self)->obval, @NAME@PREC_@KIND@);
         return PyString_FromString(buf);
 }
 
 static PyObject *
-c@name@type_str(PyObject *self)
+c@name@type_@kind@(PyObject *self)
 {
         static char buf1[100];
         static char buf2[100];
         static char buf3[202];
         c@name@ x;
         x = ((PyC@Name@ScalarObject *)self)->obval;
-        format_@name@(buf1, sizeof(buf1), x.real, @NAME@PREC_STR);
-        format_@name@(buf2, sizeof(buf2), x.imag, @NAME@PREC_STR);
+        format_@name@(buf1, sizeof(buf1), x.real, @NAME@PREC_@KIND@);
+        format_@name@(buf2, sizeof(buf2), x.imag, @NAME@PREC_@KIND@);
 
         snprintf(buf3, sizeof(buf3), "(%s+%sj)", buf1, buf2);
         return PyString_FromString(buf3);
 }
-/**end repeat**/
-
-/* floattype_repr */
-/**begin repeat
-
-#name=float, double, longdouble#
-#Name=Float, Double, LongDouble#
-#NAME=FLOAT, DOUBLE, LONGDOUBLE#
-*/
-static PyObject *
-@name@type_repr(PyObject *self)
-{
-        static char buf[100];
-        format_@name@(buf, sizeof(buf),
-                          ((Py@Name@ScalarObject *)self)->obval, @NAME@PREC_REPR);
-        return PyString_FromString(buf);
-}
-
-static PyObject *
-c@name@type_repr(PyObject *self)
-{
-        static char buf1[100];
-        static char buf2[100];
-        static char buf3[202];
-        c@name@ x;
-        x = ((PyC@Name@ScalarObject *)self)->obval;
-        format_@name@(buf1, sizeof(buf1), x.real, @NAME@PREC_REPR);
-        format_@name@(buf2, sizeof(buf2), x.imag, @NAME@PREC_REPR);
-
-        snprintf(buf3, sizeof(buf3), "(%s+%sj)", buf1, buf2);
-        return PyString_FromString(buf3);
-}
+/**end repeat1**/
 /**end repeat**/
 
 
-/** Could improve this with a PyLong_FromLongDouble(longdouble ldval)
-    but this would need some more work...
-**/
+/*
+ * Could improve this with a PyLong_FromLongDouble(longdouble ldval)
+ * but this would need some more work...
+ */
 
 /**begin repeat
 
@@ -2385,7 +2360,7 @@ object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
 static PyTypeObject PyObjectArrType_Type = {
         PyObject_HEAD_INIT(NULL)
         0,                                        /*ob_size*/
-        "numpy.object_",                           /*tp_name*/
+        "numpy.object_",                          /*tp_name*/
         sizeof(PyObjectScalarObject),             /*tp_basicsize*/
         0,                                        /* tp_itemsize */
         (destructor)object_arrtype_dealloc,       /* tp_dealloc */
@@ -2400,8 +2375,8 @@ static PyTypeObject PyObjectArrType_Type = {
         0,                                        /* tp_hash */
         (ternaryfunc)object_arrtype_call,         /* tp_call */
         0,                                        /* tp_str */
-        (getattrofunc)object_arrtype_getattro,     /* tp_getattro */
-        (setattrofunc)object_arrtype_setattro,     /* tp_setattro */
+        (getattrofunc)object_arrtype_getattro,    /* tp_getattro */
+        (setattrofunc)object_arrtype_setattro,    /* tp_setattro */
         &object_arrtype_as_buffer,                /* tp_as_buffer */
         0,                                        /* tp_flags */
 };
@@ -2410,7 +2385,7 @@ static PyTypeObject PyObjectArrType_Type = {
 static PyObject *
 add_new_axes_0d(PyArrayObject *,  int);
 
-static int 
+static int
 count_new_axes_0d(PyObject *);
 
 static PyObject *
@@ -2418,7 +2393,7 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 {
 	/* Only [...], [...,<???>], [<???>, ...],
 	   is allowed for indexing a scalar
-	   
+
 	   These return a new N-d array with a copy of
 	   the data where N is the number of None's in <???>.
 
@@ -2536,27 +2511,27 @@ static PyMappingMethods gentype_as_mapping = {
 #endif
 static PyTypeObject Py@NAME@ArrType_Type = {
         PyObject_HEAD_INIT(NULL)
-        0,                                          /*ob_size*/
-        "numpy.@name@" _THIS_SIZE1, /*tp_name*/
-        sizeof(Py@NAME@ScalarObject),             /*tp_basicsize*/
-        0,                         /*tp_itemsize*/
-        0,                         /*tp_dealloc*/
-        0,                         /*tp_print*/
-        0,                         /*tp_getattr*/
-        0,                         /*tp_setattr*/
-        0,                         /*tp_compare*/
-        0,                         /*tp_repr*/
-        0,                         /*tp_as_number*/
-        0,                         /*tp_as_sequence*/
-        0,                         /*tp_as_mapping*/
-        0,                         /*tp_hash */
-        0,                         /*tp_call*/
-        0,                         /*tp_str*/
-        0,                         /*tp_getattro*/
-        0,                         /*tp_setattro*/
-        0,                         /*tp_as_buffer*/
-        Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-        "Composed of two " _THIS_SIZE2 " bit floats",           /* tp_doc */
+        0,                                              /*ob_size*/
+        "numpy.@name@" _THIS_SIZE1,                     /*tp_name*/
+        sizeof(Py@NAME@ScalarObject),                   /*tp_basicsize*/
+        0,                                              /*tp_itemsize*/
+        0,                                              /*tp_dealloc*/
+        0,                                              /*tp_print*/
+        0,                                              /*tp_getattr*/
+        0,                                              /*tp_setattr*/
+        0,                                              /*tp_compare*/
+        0,                                              /*tp_repr*/
+        0,                                              /*tp_as_number*/
+        0,                                              /*tp_as_sequence*/
+        0,                                              /*tp_as_mapping*/
+        0,                                              /*tp_hash */
+        0,                                              /*tp_call*/
+        0,                                              /*tp_str*/
+        0,                                              /*tp_getattro*/
+        0,                                              /*tp_setattro*/
+        0,                                              /*tp_as_buffer*/
+        Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
+        "Composed of two " _THIS_SIZE2 " bit floats",   /* tp_doc */
 };
 #undef _THIS_SIZE1
 #undef _THIS_SIZE2
@@ -2649,8 +2624,8 @@ ComplexFloating, Flexible, Character#
 #endif
 
         /**begin repeat
-#name=repr, str#
-        */
+         *#name = repr, str#
+         */
         PyFloatArrType_Type.tp_@name@ = floattype_@name@;
         PyCFloatArrType_Type.tp_@name@ = cfloattype_@name@;
 
