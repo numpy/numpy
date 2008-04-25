@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import *
 from numpy.core import *
 
+
 class TestFlags(NumpyTestCase):
     def setUp(self):
         self.a = arange(10)
@@ -267,6 +268,14 @@ class TestCreation(NumpyTestCase):
             def __array__(self, dtype=None):
                 pass
         self.failUnlessRaises(ValueError, array, x())
+
+    def check_from_string(self) :
+        types = np.typecodes['AllInteger'] + np.typecodes['Float']
+        nstr = ['123','123']
+        result = array([123, 123], dtype=int)
+        for type in types :
+            msg = 'String conversion for %s' % type
+            assert_equal(array(nstr, dtype=type), result, err_msg=msg)
 
 class TestBool(NumpyTestCase):
     def check_test_interning(self):
