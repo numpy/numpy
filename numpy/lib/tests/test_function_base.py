@@ -428,6 +428,8 @@ class TestSinc(NumpyTestCase):
         assert_array_almost_equal(w,flipud(w),7)
 
 class TestHistogram(NumpyTestCase):
+    import warnings
+    warnings.simplefilter('ignore', FutureWarning)
     def check_simple(self):
         n=100
         v=rand(n)
