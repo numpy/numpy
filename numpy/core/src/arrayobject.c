@@ -4173,36 +4173,44 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
 
     if (nd == 0) {
 
-        if ((op = descr->f->getitem(data, self)) == NULL) return -1;
+        if ((op = descr->f->getitem(data, self)) == NULL) {
+            return -1;
+        }
         sp = PyObject_Repr(op);
-        if (sp == NULL) {Py_DECREF(op); return -1;}
+        if (sp == NULL) {
+            Py_DECREF(op);
+            return -1;
+        }
         ostring = PyString_AsString(sp);
         N = PyString_Size(sp)*sizeof(char);
         *n += N;
         CHECK_MEMORY
-            memmove(*string+(*n-N), ostring, N);
+            memmove(*string + (*n - N), ostring, N);
         Py_DECREF(sp);
         Py_DECREF(op);
         return 0;
-    } else {
+    }
+    else {
         CHECK_MEMORY
             (*string)[*n] = '[';
         *n += 1;
-        for(i=0; i<dimensions[0]; i++) {
+        for(i = 0; i < dimensions[0]; i++) {
             if (dump_data(string, n, max_n,
-                          data+(*strides)*i,
-                          nd-1, dimensions+1,
-                          strides+1, self) < 0)
+                          data + (*strides)*i,
+                          nd - 1, dimensions + 1,
+                          strides + 1, self) < 0) {
                 return -1;
+            }
             CHECK_MEMORY
-                if (i<dimensions[0]-1) {
+                if (i < dimensions[0] - 1) {
                     (*string)[*n] = ',';
                     (*string)[*n+1] = ' ';
                     *n += 2;
                 }
         }
         CHECK_MEMORY
-            (*string)[*n] = ']'; *n += 1;
+            (*string)[*n] = ']';
+            *n += 1;
         return 0;
     }
 
@@ -4233,7 +4241,8 @@ array_repr_builtin(PyArrayObject *self, int repr)
     if (dump_data(&string, &n, &max_n, self->data,
                   self->nd, self->dimensions,
                   self->strides, self) < 0) {
-        _pya_free(string); return NULL;
+        _pya_free(string);
+        return NULL;
     }
 
     if (repr) {
