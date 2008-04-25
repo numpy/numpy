@@ -237,18 +237,18 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
         else:
             ntype = weights.dtype
         n = np.zeros(bins.shape, ntype)
-        
+
         block = 65536
         if weights is None:
-            for i in xrange(0, a.size, block):
-                sa = sort(a[:block])
+            for i in arange(0, len(a), block):
+                sa = sort(a[i:i+block])
                 n += np.r_[sa.searchsorted(bins[:-1], 'left'), \
                     sa.searchsorted(bins[-1], 'right')]
         else:
             zero = array(0, dtype=ntype)
-            for i in xrange(0, a.size, block):
-                tmp_a = a[:block]
-                tmp_w = weights[:block]
+            for i in arange(0, len(a), block):
+                tmp_a = a[i:i+block]
+                tmp_w = weights[i:i+block]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index] 
