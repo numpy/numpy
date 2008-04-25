@@ -7479,11 +7479,8 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 
     check_it = (typecode->type != PyArray_CHARLTR);
 
-    stop_at_string = ((type == PyArray_OBJECT) ||
-                      (type == PyArray_STRING &&
-                       typecode->type == PyArray_STRINGLTR) ||
-                      (type == PyArray_UNICODE) ||
-                      (type == PyArray_VOID));
+    stop_at_string = (type != PyArray_STRING) ||
+                     (typecode->type == PyArray_STRINGLTR);
 
     stop_at_tuple = (type == PyArray_VOID && (typecode->names       \
                                               || typecode->subarray));
@@ -8613,7 +8610,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         else if (newtype->type_num == PyArray_OBJECT) {
             isobject = 1;
         }
-        if (PySequence_Check(op)) {
+        if (!PyString_Check(op) && PySequence_Check(op)) {
             PyObject *thiserr = NULL;
 
             /* necessary but not sufficient */
