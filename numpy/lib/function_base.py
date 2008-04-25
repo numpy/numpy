@@ -11,6 +11,7 @@ __all__ = ['logspace', 'linspace',
            'add_docstring', 'meshgrid', 'delete', 'insert', 'append',
            'interp'
            ]
+import warnings
 
 import types
 import numpy.core.numeric as _nx
@@ -97,78 +98,173 @@ def iterable(y):
     except: return 0
     return 1
 
-def histogram(a, bins=10, range=None, normed=False):
+def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
     """Compute the histogram from a set of data.
 
-    Parameters:
+    Parameters
+    ----------
 
-        a : array
-            The data to histogram. n-D arrays will be flattened.
+    a : array
+      The data to histogram. 
 
-        bins : int or sequence of floats
-            If an int, then the number of equal-width bins in the given range.
-            Otherwise, a sequence of the lower bound of each bin.
+    bins : int or sequence
+      If an int, then the number of equal-width bins in the given range.
+      If new=True, bins can also be the bin edges, allowing for non-constant
+      bin widths.
 
-        range : (float, float)
-            The lower and upper range of the bins. If not provided, then
-            (a.min(), a.max()) is used. Values outside of this range are
-            allocated to the closest bin.
+    range : (float, float)
+      The lower and upper range of the bins. If not provided, then
+      range is simply (a.min(), a.max()). Using new=False, lower than range
+      are ignored, and values higher than range are tallied in the rightmost 
+      bin. Using new=True, both lower and upper outliers are ignored. 
 
-        normed : bool
-            If False, the result array will contain the number of samples in
-            each bin.  If True, the result array is the value of the
-            probability *density* function at the bin normalized such that the
-            *integral* over the range is 1. Note that the sum of all of the
-            histogram values will not usually be 1; it is not a probability
-            *mass* function.
+    normed : bool
+      If False, the result array will contain the number of samples in
+      each bin.  If True, the result array is the value of the
+      probability *density* function at the bin normalized such that the
+      *integral* over the range is 1. Note that the sum of all of the
+      histogram values will not usually be 1; it is not a probability
+      *mass* function.
 
-    Returns:
+    weights : array
+      An array of weights, the same shape as a. If normed is False, the 
+      histogram is computed by summing the weights of the values falling into
+      each bin. If normed is True, the weights are normalized, so that the 
+      integral of the density over the range is 1. This option is only 
+      available with new=True.
+         
+    new : bool
+       Compatibility argument to transition from the old version (v1.1) to 
+       the new version (v1.2). 
+    
+ 
+    Return
+    ------
+    hist : array
+        The values of the histogram. See `normed` and `weights` for a 
+        description of the possible semantics.
 
-        hist : array
-            The values of the histogram. See `normed` for a description of the
-            possible semantics.
-
-        lower_edges : float array
-            The lower edges of each bin.
+    bin_edges : float array
+        With new=False, return the left bin edges (length(hist)).
+        With new=True, return the bin edges (length(hist)+1). 
 
     SeeAlso:
 
         histogramdd
 
     """
-    a = asarray(a).ravel()
+    # Old behavior
+    if new is False:
+        warnings.warn("""
+        The semantics of histogram will be modified in 
+        release 1.2 to improve outlier handling. The new behavior can be 
+        obtained using new=True. Note that the new version accepts/returns 
+        the bin edges instead of the left bin edges. 
+        Please read the docstring for more information.""", FutureWarning)
+        a = asarray(a).ravel()
 
-    if (range is not None):
-        mn, mx = range
-        if (mn > mx):
-            raise AttributeError, 'max must be larger than min in range parameter.'
+        if (range is not None):
+            mn, mx = range
+            if (mn > mx):
+                raise AttributeError, \
+                    'max must be larger than min in range parameter.'
+    
+        if not iterable(bins):
+            if range is None:
+                range = (a.min(), a.max())
+            else:
+                warnings.warn("""Outliers handling will change in version 1.2.  
+                    Please read the docstring for details.""", FutureWarning)
+            mn, mx = [mi+0.0 for mi in range]
+            if mn == mx:
+                mn -= 0.5
+                mx += 0.5
+            bins = linspace(mn, mx, bins, endpoint=False)
+        else:
+            raise ValueError, 'Use new=True to pass bin edges explicitly.'
+            
+        if weights is not None:
+            raise ValueError, 'weights are only available with new=True.'
+            
+        # best block size probably depends on processor cache size
+        block = 65536
+        n = sort(a[:block]).searchsorted(bins)
+        for i in xrange(block, a.size, block):
+            n += sort(a[i:i+block]).searchsorted(bins)
+        n = concatenate([n, [len(a)]])
+        n = n[1:]-n[:-1]
+    
+        if normed:
+            db = bins[1] - bins[0]
+            return 1.0/(a.size*db) * n, bins
+        else:
+            return n, bins
 
-    if not iterable(bins):
-        if range is None:
-            range = (a.min(), a.max())
-        mn, mx = [mi+0.0 for mi in range]
-        if mn == mx:
-            mn -= 0.5
-            mx += 0.5
-        bins = linspace(mn, mx, bins, endpoint=False)
-    else:
-        bins = asarray(bins)
-        if (bins[1:]-bins[:-1] < 0).any():
-            raise AttributeError, 'bins must increase monotonically.'
-
-    # best block size probably depends on processor cache size
-    block = 65536
-    n = sort(a[:block]).searchsorted(bins)
-    for i in xrange(block, a.size, block):
-        n += sort(a[i:i+block]).searchsorted(bins)
-    n = concatenate([n, [len(a)]])
-    n = n[1:]-n[:-1]
-
-    if normed:
-        db = bins[1] - bins[0]
-        return 1.0/(a.size*db) * n, bins
-    else:
-        return n, bins
+    
+    
+    # New behavior
+    elif new is True:
+        a = asarray(a)
+        if weights is not None:
+            weights = asarray(weights)
+            if np.any(weights.shape != a.shape):
+                raise ValueError, 'weights should have the same shape as a.'
+            weights = weights.ravel()
+        a =  a.ravel()
+            
+        if (range is not None):
+            mn, mx = range
+            if (mn > mx):
+                raise AttributeError, \
+                    'max must be larger than min in range parameter.'
+    
+        if not iterable(bins):
+            if range is None:
+                range = (a.min(), a.max())
+            mn, mx = [mi+0.0 for mi in range]
+            if mn == mx:
+                mn -= 0.5
+                mx += 0.5
+            bins = linspace(mn, mx, bins+1, endpoint=True)
+        else:
+            bins = asarray(bins)
+            if (np.diff(bins) < 0).any():
+                raise AttributeError, 'bins must increase monotonically.'
+    
+        # Histogram is an integer or a float array depending on the weights.
+        if weights is None:
+            ntype = int
+        else:
+            ntype = weights.dtype
+        n = np.zeros(bins.shape, ntype)
+        
+        block = 65536
+        if weights is None:
+            for i in xrange(0, a.size, block):
+                sa = sort(a[:block])
+                n += np.r_[sa.searchsorted(bins[:-1], 'left'), \
+                    sa.searchsorted(bins[-1], 'right')]
+        else:
+            zero = array(0, dtype=ntype)
+            for i in xrange(0, a.size, block):
+                tmp_a = a[:block]
+                tmp_w = weights[:block]
+                sorting_index = np.argsort(tmp_a)
+                sa = tmp_a[sorting_index]
+                sw = tmp_w[sorting_index] 
+                cw = np.concatenate(([zero,], sw.cumsum()))
+                bin_index = np.r_[sa.searchsorted(bins[:-1], 'left'), \
+                    sa.searchsorted(bins[-1], 'right')]
+                n += cw[bin_index]
+            
+        n = np.diff(n)
+       
+        if normed is False:
+            return n, bins
+        elif normed is True:
+            db = array(np.diff(bins), float)
+            return n/(n*db).sum(), bins
+        
 
 def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     """histogramdd(sample, bins=10, range=None, normed=False, weights=None)
