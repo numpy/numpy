@@ -173,15 +173,25 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
             if range is None:
                 range = (a.min(), a.max())
             else:
-                warnings.warn("""Outliers handling will change in version 1.2.  
-                    Please read the docstring for details.""", FutureWarning)
+                warnings.warn("""
+                Outliers handling will change in version 1.2.  
+                Please read the docstring for details.""", FutureWarning)
             mn, mx = [mi+0.0 for mi in range]
             if mn == mx:
                 mn -= 0.5
                 mx += 0.5
             bins = linspace(mn, mx, bins, endpoint=False)
         else:
-            raise ValueError, 'Use new=True to pass bin edges explicitly.'
+            if normed: 
+                raise ValueError, 'Use new=True to pass bin edges explicitly.'
+            warnings.warn("""
+            The semantic for bins will change in version 1.2. 
+            The bins will become the bin edges, instead of the left bin edges.
+            """, FutureWarning)
+            bins = asarray(bins)
+            if (np.diff(bins) < 0).any():
+                raise AttributeError, 'bins must increase monotonically.'
+            
             
         if weights is not None:
             raise ValueError, 'weights are only available with new=True.'
