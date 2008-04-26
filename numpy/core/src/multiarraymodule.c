@@ -2423,15 +2423,14 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     int elsize;
     intp astride;
     PyArray_SortFunc *sort;
-    BEGIN_THREADS_DEF;
+    BEGIN_THREADS_DEF
 
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     swap = !PyArray_ISNOTSWAPPED(op);
-    if (it == NULL) {
-        return -1;
-    }
+    if (it == NULL) return -1;
 
-    NPY_BEGIN_THREADS_DESCR(op->descr);
+    NPY_BEGIN_THREADS_DESCR(op->descr)
+
     sort = op->descr->f->sort[which];
     size = it->size;
     N = op->dimensions[axis];
@@ -2447,16 +2446,12 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         while (size--) {
             _unaligned_strided_byte_copy(buffer, (intp) elsize, it->dataptr,
                                          astride, N, elsize);
-            if (swap) {
-                _strided_byte_swap(buffer, (intp) elsize, N, elsize);
-            }
+            if (swap) _strided_byte_swap(buffer, (intp) elsize, N, elsize);
             if (sort(buffer, N, op) < 0) {
-                PyDataMem_FREE(buffer);
-                goto fail;
+                PyDataMem_FREE(buffer); goto fail;
             }
-            if (swap) {
-                _strided_byte_swap(buffer, (intp) elsize, N, elsize);
-            }
+            if (swap) _strided_byte_swap(buffer, (intp) elsize, N, elsize);
+
             _unaligned_strided_byte_copy(it->dataptr, astride, buffer,
                                          (intp) elsize, N, elsize);
             PyArray_ITER_NEXT(it);
@@ -2465,20 +2460,20 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
     else {
         while (size--) {
-            if (sort(it->dataptr, N, op) < 0) {
-                goto fail;
-            }
+            if (sort(it->dataptr, N, op) < 0) goto fail;
             PyArray_ITER_NEXT(it);
         }
     }
 
-    NPY_END_THREADS_DESCR(op->descr);
-    Py_DECREF(it);
+    NPY_END_THREADS_DESCR(op->descr)
+
+        Py_DECREF(it);
     return 0;
 
  fail:
-    NPY_END_THREADS;
-    Py_DECREF(it);
+    END_THREADS
+
+        Py_DECREF(it);
     return 0;
 }
 
@@ -2494,7 +2489,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     int elsize, swap;
     intp astride, rstride, *iptr;
     PyArray_ArgSortFunc *argsort;
-    BEGIN_THREADS_DEF;
+    BEGIN_THREADS_DEF
 
     ret = PyArray_New(op->ob_type, op->nd,
                           op->dimensions, PyArray_INTP,
@@ -2507,7 +2502,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
     swap = !PyArray_ISNOTSWAPPED(op);
 
-    NPY_BEGIN_THREADS_DESCR(op->descr);
+    NPY_BEGIN_THREADS_DESCR(op->descr)
 
     argsort = op->descr->f->argsort[which];
     size = it->size;
@@ -2553,17 +2548,17 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         }
     }
 
-    NPY_END_THREADS_DESCR(op->descr);
+    NPY_END_THREADS_DESCR(op->descr)
 
-    Py_DECREF(it);
+        Py_DECREF(it);
     Py_DECREF(rit);
     return ret;
 
  fail:
 
-    NPY_END_THREADS;
+    END_THREADS
 
-    Py_DECREF(ret);
+        Py_DECREF(ret);
     Py_XDECREF(it);
     Py_XDECREF(rit);
     return NULL;
@@ -2830,7 +2825,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     int object=0;
     PyArray_ArgSortFunc *argsort;
 
-    NPY_BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS_DEF
 
         if (!PySequence_Check(sort_keys) || \
             ((n=PySequence_Size(sort_keys)) <= 0)) {
@@ -2902,9 +2897,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         PyArray_IterAllButAxis((PyObject *)ret, &axis);
     if (rit == NULL) goto fail;
 
-    if (!object) {
-        NPY_BEGIN_THREADS;
-    }
+    if (!object) {NPY_BEGIN_THREADS}
 
     size = rit->size;
     N = mps[0]->dimensions[axis];
@@ -2968,9 +2961,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         }
     }
 
-    if (!object) {
-        NPY_END_THREADS;
-    }
+    if (!object) {NPY_END_THREADS}
 
  finish:
     for (i=0; i<n; i++) {Py_XDECREF(mps[i]); Py_XDECREF(its[i]);}
@@ -2980,7 +2971,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     return (PyObject *)ret;
 
  fail:
-    NPY_END_THREADS;
+    NPY_END_THREADS
 
         Py_XDECREF(rit);
     Py_XDECREF(ret);
@@ -3112,7 +3103,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     PyArrayObject *ap2=NULL;
     PyArrayObject *ret=NULL;
     PyArray_Descr *dtype;
-    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_DEF
 
     dtype = PyArray_DescrFromObject((PyObject *)op2, op1->descr);
 
@@ -3147,15 +3139,15 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     }
 
     if (side == NPY_SEARCHLEFT) {
-        NPY_BEGIN_THREADS_DESCR(ap2->descr);
-        local_search_left(ap1, ap2, ret);
-        NPY_END_THREADS_DESCR(ap2->descr);
-    }
+        NPY_BEGIN_THREADS_DESCR(ap2->descr)
+            local_search_left(ap1, ap2, ret);
+        NPY_END_THREADS_DESCR(ap2->descr)
+            }
     else if (side == NPY_SEARCHRIGHT) {
-        NPY_BEGIN_THREADS_DESCR(ap2->descr);
-        local_search_right(ap1, ap2, ret);
-        NPY_END_THREADS_DESCR(ap2->descr);
-    }
+        NPY_BEGIN_THREADS_DESCR(ap2->descr)
+            local_search_right(ap1, ap2, ret);
+        NPY_END_THREADS_DESCR(ap2->descr)
+            }
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     return (PyObject *)ret;
@@ -3217,7 +3209,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     PyArray_DotFunc *dot;
     PyArray_Descr *typec;
 
-    NPY_BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS_DEF
 
         typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
@@ -3282,7 +3274,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     it2 = (PyArrayIterObject *)\
         PyArray_IterAllButAxis((PyObject *)ap2, &axis);
 
-    NPY_BEGIN_THREADS_DESCR(ap2->descr);
+    NPY_BEGIN_THREADS_DESCR(ap2->descr)
         while(1) {
             while(it2->index < it2->size) {
                 dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
@@ -3293,7 +3285,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
             if (it1->index >= it1->size) break;
             PyArray_ITER_RESET(it2);
         }
-    NPY_END_THREADS_DESCR(ap2->descr);
+    NPY_END_THREADS_DESCR(ap2->descr)
         Py_DECREF(it1);
     Py_DECREF(it2);
 
@@ -3328,7 +3320,8 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     intp dimensions[MAX_DIMS];
     PyArray_DotFunc *dot;
     PyArray_Descr *typec;
-    NPY_BEGIN_THREADS_DEF;
+
+    NPY_BEGIN_THREADS_DEF
 
         typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
@@ -3417,7 +3410,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     it2 = (PyArrayIterObject *)\
         PyArray_IterAllButAxis((PyObject *)ap2, &matchDim);
 
-    NPY_BEGIN_THREADS_DESCR(ap2->descr);
+    NPY_BEGIN_THREADS_DESCR(ap2->descr)
         while(1) {
             while(it2->index < it2->size) {
                 dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
@@ -3428,7 +3421,7 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
             if (it1->index >= it1->size) break;
             PyArray_ITER_RESET(it2);
         }
-    NPY_END_THREADS_DESCR(ap2->descr);
+    NPY_END_THREADS_DESCR(ap2->descr)
         Py_DECREF(it1);
     Py_DECREF(it2);
     if (PyErr_Occurred()) goto fail;  /* only for OBJECT arrays */
@@ -3489,7 +3482,7 @@ PyArray_CopyAndTranspose(PyObject *op)
         return NULL;
     }
     /* do 2-d loop */
-    NPY_BEGIN_ALLOW_THREADS;
+    NPY_BEGIN_ALLOW_THREADS
         optr = PyArray_DATA(ret);
     str2 = elsize*dims[0];
     for (i=0; i<dims[0]; i++) {
@@ -3501,7 +3494,7 @@ PyArray_CopyAndTranspose(PyObject *op)
             iptr += str2;
         }
     }
-    NPY_END_ALLOW_THREADS;
+    NPY_END_ALLOW_THREADS
         Py_DECREF(arr);
     return ret;
 }
@@ -3521,7 +3514,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     PyArray_DotFunc *dot;
     PyArray_Descr *typec;
 
-    NPY_BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS_DEF
 
         typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
@@ -3577,7 +3570,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         goto fail;
     }
 
-    NPY_BEGIN_THREADS_DESCR(ret->descr);
+    NPY_BEGIN_THREADS_DESCR(ret->descr)
 
         is1 = ap1->strides[0]; is2 = ap2->strides[0];
     op = ret->data; os = ret->descr->elsize;
@@ -3601,7 +3594,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         ip1 += is1;
         op += os;
     }
-    NPY_END_THREADS_DESCR(ret->descr);
+    NPY_END_THREADS_DESCR(ret->descr)
 
         if (PyErr_Occurred()) goto fail;
     Py_DECREF(ap1);
@@ -3729,7 +3722,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     int elsize;
     int copyret=0;
 
-    NPY_BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS_DEF
 
         if ((ap=(PyAO *)_check_axis(op, &axis, 0))==NULL) return NULL;
 
@@ -3798,14 +3791,14 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         if (rp != out) copyret = 1;
     }
 
-    NPY_BEGIN_THREADS_DESCR(ap->descr);
+    NPY_BEGIN_THREADS_DESCR(ap->descr)
     n = PyArray_SIZE(ap)/m;
     rptr = (intp *)rp->data;
     for (ip = ap->data, i=0; i<n; i++, ip+=elsize*m) {
         arg_func(ip, m, rptr, ap);
         rptr += 1;
     }
-    NPY_END_THREADS_DESCR(ap->descr);
+    NPY_END_THREADS_DESCR(ap->descr)
 
     Py_DECREF(ap);
     if (copyret) {
@@ -7400,16 +7393,14 @@ test_interrupt(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "|i", &kind)) return NULL;
 
     if (kind) {
-        NPY_BEGIN_ALLOW_THREADS;
-        while (a>=0) {
-            if ((a % 1000 == 0) &&
-                 PyOS_InterruptOccurred()) {
-                break;
+        Py_BEGIN_ALLOW_THREADS
+            while (a>=0) {
+                if ((a % 1000 == 0) &&
+                    PyOS_InterruptOccurred()) break;
+                a+=1;
             }
-            a+=1;
-        }
-        NPY_END_ALLOW_THREADS;
-    }
+        Py_END_ALLOW_THREADS
+            }
     else {
 
         NPY_SIGINT_ON
