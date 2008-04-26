@@ -1137,22 +1137,25 @@ typedef struct {
         PyArray_FastTakeFunc *fasttake;
 } PyArray_ArrFuncs;
 
-/* The item must be reference counted when it is inserted or extracted. */
-#define NPY_ITEM_REFCOUNT   0x01
-/* Same as needing REFCOUNT */
-#define NPY_ITEM_HASOBJECT  0x01
-/* Convert to list for pickling */
-#define NPY_LIST_PICKLE     0x02
-/* The item is a POINTER  */
-#define NPY_ITEM_IS_POINTER 0x04
-/* memory needs to be initialized for this data-type */
-#define NPY_NEEDS_INIT      0x08
-/* operations need Python C-API so don't give-up thread. */
-#define NPY_NEEDS_PYAPI     0x10
-/* Use f.getitem when extracting elements of this data-type */
-#define NPY_USE_GETITEM     0x20
-/* Use f.setitem when setting creating 0-d array from this data-type.*/
-#define NPY_USE_SETITEM     0x40
+#define NPY_ITEM_REFCOUNT   0x01  /* The item must be reference counted
+                                     when it is inserted or extracted. */
+#define NPY_ITEM_HASOBJECT  0x01  /* Same as needing REFCOUNT */
+
+#define NPY_LIST_PICKLE     0x02  /* Convert to list for pickling */
+#define NPY_ITEM_IS_POINTER 0x04  /* The item is a POINTER  */
+
+#define NPY_NEEDS_INIT      0x08  /* memory needs to be initialized
+                                     for this data-type */
+
+#define NPY_NEEDS_PYAPI     0x10  /* operations need Python C-API
+                                     so don't give-up thread. */
+
+#define NPY_USE_GETITEM     0x20  /* Use f.getitem when extracting elements
+                                     of this data-type */
+
+#define NPY_USE_SETITEM     0x40  /* Use f.setitem when setting creating
+                                     0-d array from this data-type.
+                                  */
 /* define NPY_IS_COMPLEX */
 
 /* These are inherited for global data-type if any data-types in the field
@@ -1369,15 +1372,15 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_END_ALLOW_THREADS Py_END_ALLOW_THREADS
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS _save = PyEval_SaveThread();
-#define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
+#define NPY_END_THREADS   if (_save) PyEval_RestoreThread(_save);
 
 #define NPY_BEGIN_THREADS_DESCR(dtype)                          \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
-                NPY_BEGIN_THREADS;} while (0);
+        if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+                NPY_BEGIN_THREADS
 
 #define NPY_END_THREADS_DESCR(dtype)                            \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
-                NPY_END_THREADS; } while (0);
+        if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+                NPY_END_THREADS
 
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
 #define NPY_ALLOW_C_API      __save__ = PyGILState_Ensure();
