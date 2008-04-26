@@ -120,11 +120,10 @@ def choose(a, choices, out=None, mode='raise'):
     """Use an index array to construct a new array from a set of
     choices.
 
-    Given an array of integers in {0, 1, ..., n-1} and a set of n
-    choice arrays, this function will create a new array that merges
-    each of the choice arrays.  Where a value in `a` is i, then the
-    new array will have the value that choices[i] contains in the same
-    place.
+    Given an array of integers and a set of n choice arrays, this function
+    will create a new array that merges each of the choice arrays.  Where a
+    value in `a` is i, then the new array will have the value that
+    choices[i] contains in the same place.
 
     Parameters
     ----------
@@ -132,8 +131,8 @@ def choose(a, choices, out=None, mode='raise'):
         This array must contain integers in [0, n-1], where n is the number
         of choices.
     choices : sequence of arrays
-        Each of the choice arrays should have the same shape as the index
-        array.
+        Choice arrays. The index array and all of the choices should be
+        broadcastable to the same shape.
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype
@@ -198,10 +197,16 @@ def repeat(a, repeats, axis=None):
 
     Examples
     --------
-    >>> repeat([0, 1, 2], 2)
-    array([0, 0, 1, 1, 2, 2])
-    >>> repeat([0, 1, 2], [2, 3, 4])
-    array([0, 0, 1, 1, 1, 2, 2, 2, 2])
+    >>> x = array([[1,2],[3,4]])
+    >>> repeat(x, 2)
+    array([1, 1, 2, 2, 3, 3, 4, 4])
+    >>> repeat(x, 3, axis=1)
+    array([[1, 1, 1, 2, 2, 2],
+           [3, 3, 3, 4, 4, 4]])
+    >>> repeat(x, [1, 2], axis=0)
+    array([[1, 2],
+           [3, 4],
+           [3, 4]])
 
     """
     try:
@@ -212,7 +217,8 @@ def repeat(a, repeats, axis=None):
 
 
 def put(a, ind, v, mode='raise'):
-    """Set a[n] = v[n] for all n in ind.
+    """Set a.flat[n] = v[n] for all n in ind.
+    If v is shorter than ind, it will repeat.
 
     Parameters
     ----------
@@ -619,10 +625,6 @@ def squeeze(a):
     Examples
     --------
     >>> x = array([[[1,1,1],[2,2,2],[3,3,3]]])
-    >>> x
-    array([[[1, 1, 1],
-          [2, 2, 2],
-          [3, 3, 3]]])
     >>> x.shape
     (1, 3, 3)
     >>> squeeze(x).shape
@@ -955,6 +957,13 @@ def sum(a, axis=None, dtype=None, out=None):
     6
     >>> sum([[0, 1], [0, 5]], axis=1)
     array([1, 5])
+    >>> ones(128, dtype=int8).sum(dtype=int8) # overflow!
+    -128
+
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
 
     """
     if isinstance(a, _gentype):
@@ -1014,6 +1023,10 @@ def product (a, axis=None, dtype=None, out=None):
     >>> product([[1.,2.],[3.,4.]], axis=1)
     array([  2.,  12.])
 
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
 
     """
     try:
@@ -1143,7 +1156,7 @@ def cumsum (a, axis=None, dtype=None, out=None):
     a : array-like
         Input array or object that can be converted to an array.
     axis : {None, -1, int}, optional
-        Axis along which the product is computed. The default
+        Axis along which the sum is computed. The default
         (``axis``= None) is to compute over the flattened array.
     dtype : {None, dtype}, optional
         Determines the type of the returned array and of the accumulator
@@ -1161,6 +1174,11 @@ def cumsum (a, axis=None, dtype=None, out=None):
     cumsum : ndarray.
         A new array holding the result is returned unless ``out`` is
         specified, in which case a reference to ``out`` is returned.
+
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
 
     """
     try:
@@ -1374,6 +1392,11 @@ def prod(a, axis=None, dtype=None, out=None):
     >>> prod([[1.,2.],[3.,4.]], axis=1)
     array([  2.,  12.])
 
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
+
     """
     try:
         prod = a.prod
@@ -1411,6 +1434,11 @@ def cumprod(a, axis=None, dtype=None, out=None):
     cumprod : ndarray.
         A new array holding the result is returned unless out is
         specified, in which case a reference to out is returned.
+
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
 
     """
     try:
