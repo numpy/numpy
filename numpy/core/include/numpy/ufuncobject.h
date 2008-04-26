@@ -174,8 +174,8 @@ typedef struct {
 
 
 #if NPY_ALLOW_THREADS
-#define NPY_LOOP_BEGIN_THREADS if (!(loop->obj)) {_save = PyEval_SaveThread();}
-#define NPY_LOOP_END_THREADS   if (!(loop->obj)) {PyEval_RestoreThread(_save);}
+#define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj)) _save = PyEval_SaveThread();} while (0)
+#define NPY_LOOP_END_THREADS   do {if (!(loop->obj)) PyEval_RestoreThread(_save);} while (0)
 #else
 #define NPY_LOOP_BEGIN_THREADS
 #define NPY_LOOP_END_THREADS
@@ -213,12 +213,12 @@ typedef struct _loop1d_info {
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
 #define UFUNC_CHECK_ERROR(arg)                                          \
-	if (((arg)->obj && PyErr_Occurred()) ||                         \
+	do {if (((arg)->obj && PyErr_Occurred()) ||                         \
             ((arg)->errormask &&                                        \
              PyUFunc_checkfperr((arg)->errormask,                       \
                                 (arg)->errobj,                          \
                                 &(arg)->first)))                        \
-		goto fail
+		goto fail;} while (0)
 
 /* This code checks the IEEE status flags in a platform-dependent way */
 /* Adapted from Numarray  */
