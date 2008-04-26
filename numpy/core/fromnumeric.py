@@ -102,7 +102,7 @@ def reshape(a, newshape, order='C'):
     -------
     reshaped_array : array
         This will be a new view object if possible; otherwise, it will
-        return a copy.
+        be a copy.
 
     See Also
     --------
@@ -194,10 +194,10 @@ def repeat(a, repeats, axis=None):
     See Also
     --------
     ndarray.repeat : equivalent method
+    tile : tile an array
 
     Examples
     --------
-
     >>> repeat([0, 1, 2], 2)
     array([0, 0, 1, 1, 2, 2])
     >>> repeat([0, 1, 2], [2, 3, 4])
@@ -222,6 +222,11 @@ def put(a, ind, v, mode='raise'):
         Target indices, interpreted as integers.
     v : array_like
         Values to place in `a` at target indices.
+    mode : {'raise', 'wrap', 'clip'}, optional
+        Specifies how out-of-bounds indices will behave.
+        'raise' -- raise an error
+        'wrap' -- wrap around
+        'clip' -- clip to the range
 
     Notes
     -----
@@ -235,7 +240,6 @@ def put(a, ind, v, mode='raise'):
 
     Examples
     --------
-
     >>> x = np.arange(5)
     >>> np.put(x,[0,2,4],[-1,-2,-3])
     >>> print x
@@ -246,8 +250,8 @@ def put(a, ind, v, mode='raise'):
 
 
 def swapaxes(a, axis1, axis2):
-    """Return array a with axis1 and axis2 interchanged.
-
+    """Return a view of array a with axis1 and axis2 interchanged.
+    
     Parameters
     ----------
     a : array_like
@@ -259,7 +263,6 @@ def swapaxes(a, axis1, axis2):
 
     Examples
     --------
-
     >>> x = np.array([[1,2,3]])
     >>> np.swapaxes(x,0,1)
     array([[1],
@@ -360,15 +363,13 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     order. The three available algorithms have the following
     properties:
 
-    +-----------+-------+-------------+------------+-------+
-    |    kind   | speed |  worst case | work space | stable|
-    +===========+=======+=============+============+=======+
-    | quicksort |   1   | O(n^2)      |     0      |   no  |
-    +-----------+-------+-------------+------------+-------+
-    | mergesort |   2   | O(n*log(n)) |    ~n/2    |   yes |
-    +-----------+-------+-------------+------------+-------+
-    | heapsort  |   3   | O(n*log(n)) |     0      |   no  |
-    +-----------+-------+-------------+------------+-------+
+    =========== ======= ============= ============ ======= 
+       kind      speed   worst case    work space  stable
+    =========== ======= ============= ============ ======= 
+    'quicksort'    1     O(n^2)            0          no  
+    'mergesort'    2     O(n*log(n))      ~n/2        yes 
+    'heapsort'     3     O(n*log(n))       0          no  
+    =========== ======= ============= ============ ======= 
 
     All the sort algorithms make temporary copies of the data when
     the sort is not along the last axis. Consequently, sorts along
@@ -705,8 +706,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     dimensions, then the axes specified by axis1 and axis2 are used to determine
     the 2-d subarray whose trace is returned. The shape of the resulting
     array can be determined by removing axis1 and axis2 and appending an index
-    to the right equal to the size of the resulting diagonals. Arrays of integer
-    type are summed
+    to the right equal to the size of the resulting diagonals.
 
     Parameters
     ----------
@@ -750,7 +750,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     return asarray(a).trace(offset, axis1, axis2, dtype, out)
 
 def ravel(a, order='C'):
-    """Return a 1d array containing the elements of a.
+    """Return a 1d array containing the elements of a (copy only if needed).
 
     Returns the elements of a as a 1d array. The elements in the new array
     are taken in the order specified by the order keyword. The new array is
@@ -847,10 +847,38 @@ def shape(a):
 
 
 def compress(condition, a, axis=None, out=None):
-    """Return a where condition is true.
+    """Return selected slices of an array along given axis.
 
-    Equivalent to a[condition].
+    Parameters
+    ----------
+    condition : {array}
+        Boolean 1-d array selecting which entries to return. If len(condition)
+        is less than the size of a along the axis, then output is truncated
+        to length of condition array.
+    a : {array_type}
+        Array from which to extract a part.
+    axis : {None, integer}
+        Axis along which to take slices. If None, work on the flattened array.
+    out : array, optional
+        Output array.  Its type is preserved and it must be of the right
+        shape to hold the output.
 
+    Returns
+    -------
+    compressed_array : array
+        A copy of a, without the slices along axis for which condition is false.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.compress([0, 1], a, axis=0)
+    array([[3, 4]])
+    >>> np.compress([1], a, axis=1)
+    array([[1],
+           [3]])
+    >>> np.compress([0,1,1], a)
+    array([2, 3])
+    
     """
     try:
         compress = a.compress
@@ -860,11 +888,23 @@ def compress(condition, a, axis=None, out=None):
 
 
 def clip(a, a_min, a_max):
-    """Limit the values of a to [a_min, a_max].  Equivalent to
+    """Return an array whose values are limited to [a_min, a_max].
 
-    a[a < a_min] = a_min
-    a[a > a_max] = a_max
+    Parameters
+    ----------
+    a : {array_type}
+        Array containing elements to clip.
+    a_min
+        Minimum value
+    a_max
+        Maximum value
 
+    Returns
+    -------
+    sum_along_axis : {array}
+        A new array whose elements are same as for a, but values
+        < a_min are replaced with a_min, and > a_max with a_max.
+    
     """
     try:
         clip = a.clip
@@ -874,7 +914,7 @@ def clip(a, a_min, a_max):
 
 
 def sum(a, axis=None, dtype=None, out=None):
-    """Sum the array over the given axis.
+    """Return the sum of the array elements over the given axis
 
     Parameters
     ----------
@@ -931,7 +971,7 @@ def sum(a, axis=None, dtype=None, out=None):
 
 
 def product (a, axis=None, dtype=None, out=None):
-    """Product of the array elements over the given axis.
+    """Return the product of the array elements over the given axis
 
     Parameters
     ----------
@@ -984,8 +1024,21 @@ def product (a, axis=None, dtype=None, out=None):
 
 
 def sometrue (a, axis=None, out=None):
-    """Perform a logical_or over the given axis.
+    """Check if any of the elements of `a` are true.
 
+    Performs a logical_or over the given axis and returns the result
+
+    Parameters
+    ----------
+    a : {array_like}
+        Array on which to operate
+    axis : {None, integer}
+        Axis to perform the operation over.
+        If None, perform over flattened array.
+    out : {None, array}, optional
+        Array into which the product can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.
+    
     See Also
     --------
     ndarray.any : equivalent method
@@ -999,12 +1052,23 @@ def sometrue (a, axis=None, out=None):
 
 
 def alltrue (a, axis=None, out=None):
-    """Perform a logical_and over the given axis.
+    """Check if all of the elements of `a` are true.
 
+    Performs a logical_and over the given axis and returns the result
+
+    Parameters
+    ----------
+    a : {array_like}
+    axis : {None, integer}
+        Axis to perform the operation over.
+        If None, perform over flattened array.
+    out : {None, array}, optional
+        Array into which the product can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.
+    
     See Also
     --------
     ndarray.all : equivalent method
-    all : equivalent function
 
     """
     try:
@@ -1015,8 +1079,20 @@ def alltrue (a, axis=None, out=None):
 
 
 def any(a,axis=None, out=None):
-    """Return true if any elements of x are true.
+    """Check if any of the elements of `a` are true.
+    
+    Performs a logical_or over the given axis and returns the result
 
+    Parameters
+    ----------
+    a : {array_like}
+    axis : {None, integer}
+        Axis to perform the operation over.
+        If None, perform over flattened array and return a scalar.
+    out : {None, array}, optional
+        Array into which the product can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.
+    
     See Also
     --------
     ndarray.any : equivalent method
@@ -1030,12 +1106,23 @@ def any(a,axis=None, out=None):
 
 
 def all(a,axis=None, out=None):
-    """Return true if all elements of x are true:
+    """Check if all of the elements of `a` are true.
+    
+    Performs a logical_and over the given axis and returns the result
 
+    Parameters
+    ----------
+    a : {array_like}
+    axis : {None, integer}
+        Axis to perform the operation over.
+        If None, perform over flattened array.
+    out : {None, array}, optional
+        Array into which the product can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.
+    
     See Also
     --------
     ndarray.all : equivalent method
-    alltrue : equivalent function
 
     """
     try:
