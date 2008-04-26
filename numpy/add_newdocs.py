@@ -1914,7 +1914,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
     -------
     sum_along_axis : {array, scalar}, see dtype parameter above.
         Returns an array whose shape is the same as a with the specified
-        axis removed. Returns a 0d array when a is 1d or dtype=None.
+        axis removed. Returns a 0d array when a is 1d or axis=None.
         Returns a reference to the specified output array if specified.
 
     See Also
@@ -2037,7 +2037,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
         An open file object or a string containing a filename.
     sep : string
         Separator between array items for text output.
-        If "" (empty), a binary file is written, equivalenty to
+        If "" (empty), a binary file is written, equivalently to
         file.write(a.tostring()).
     format : string
         Format string for text file output.
