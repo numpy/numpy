@@ -728,7 +728,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         precision, then the default integer precision is used. Otherwise,
         the precision is the same as that of a.
     out : {None, array}, optional
-        Array into which the sum can be placed. It's type is preserved and
+        Array into which the sum can be placed. Its type is preserved and
         it must be of the right shape to hold the output.
 
     Returns
@@ -931,14 +931,14 @@ def sum(a, axis=None, dtype=None, out=None):
         platform integer, then the default platform integer precision is
         used.  Otherwise, the dtype is the same as that of a.
     out : {None, array}, optional
-        Array into which the sum can be placed. It's type is preserved and
+        Array into which the sum can be placed. Its type is preserved and
         it must be of the right shape to hold the output.
 
     Returns
     -------
     sum_along_axis : {array, scalar}, see dtype parameter above.
         Returns an array whose shape is the same as a with the specified
-        axis removed. Returns a 0d array when a is 1d or dtype=None.
+        axis removed. Returns a 0d array when a is 1d or axis=None.
         Returns a reference to the specified output array if specified.
 
     See Also
@@ -996,7 +996,7 @@ def product (a, axis=None, dtype=None, out=None):
     -------
     product_along_axis : {array, scalar}, see dtype parameter above.
         Returns an array whose shape is the same as a with the specified
-        axis removed. Returns a 0d array when a is 1d or dtype=None.
+        axis removed. Returns a 0d array when a is 1d or axis=None.
         Returns a reference to the specified output array if specified.
 
     See Also
@@ -1145,11 +1145,12 @@ def cumsum (a, axis=None, dtype=None, out=None):
     axis : {None, -1, int}, optional
         Axis along which the product is computed. The default
         (``axis``= None) is to compute over the flattened array.
-    dtype : type, optional
-        Type to use in computing the cumulative sum. For arrays of
-        integer type the default is int64 for signed ints and uint64
-        for unsigned. For arrays of float types it is the same as the
-        array type.
+    dtype : {None, dtype}, optional
+        Determines the type of the returned array and of the accumulator
+        where the elements are summed. If dtype has the value None and
+        the type of a is an integer type of precision less than the default
+        platform integer, then the default platform integer precision is
+        used.  Otherwise, the dtype is the same as that of a.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
@@ -1160,8 +1161,6 @@ def cumsum (a, axis=None, dtype=None, out=None):
     cumsum : ndarray.
         A new array holding the result is returned unless ``out`` is
         specified, in which case a reference to ``out`` is returned.
-        Return datatype is ``dtype`` if specified, otherwise int64 for
-        ints, uint64 for uints, or the input datatype otherwise.
 
     """
     try:
@@ -1332,45 +1331,48 @@ def alen(a):
 
 
 def prod(a, axis=None, dtype=None, out=None):
-    """Return the product of the elements along the given axis.
+    """Return the product of the array elements over the given axis
 
     Parameters
     ----------
-    a : array-like
-        Input array.
-    axis : {None, int}, optional
-        Axis along which the product is computed. By default, ``axis``
-        is None and the flattened input is used.
-    dtype : type, optional
-        Type to use in computing the product. For arrays of
-        integer type the default is int64 for signed ints and uint64
-        for unsigned. For arrays of float types it is the same as the
-        array type.
-    out : ndarray, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output
-        but the type will be cast if necessary.
+    a : {array_like}
+        Array containing elements whose product is desired. If a is not an array, a
+        conversion is attempted.
+    axis : {None, integer}
+        Axis over which the product is taken. If None is used, then the
+        product is over all the array elements.
+    dtype : {None, dtype}, optional
+        Determines the type of the returned array and of the accumulator
+        where the elements are multiplied. If dtype has the value None and
+        the type of a is an integer type of precision less than the default
+        platform integer, then the default platform integer precision is
+        used.  Otherwise, the dtype is the same as that of a.
+    out : {None, array}, optional
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
 
     Returns
     -------
-    prod : ndarray.
-        A new array holding the result is returned unless out is
-        specified, in which case a reference to out is returned.
-        Return datatype is ``dtype`` if specified, otherwise int64 for
-        ints, uint64 for uints, or the input datatype otherwise.
+    product_along_axis : {array, scalar}, see dtype parameter above.
+        Returns an array whose shape is the same as a with the specified
+        axis removed. Returns a 0d array when a is 1d or axis=None.
+        Returns a reference to the specified output array if specified.
+
+    See Also
+    --------
+    ndarray.prod : equivalent method
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2)) + 1
-    >>> x
-    array([[1, 2],
-           [3, 4]])
-    >>> np.prod(x)
-    24
-    >>> np.prod(x,0)
-    array([3, 8])
-    >>> np.prod(x,1)
-    array([ 2, 12])
+    >>> prod([1.,2.])
+    2.0
+    >>> prod([1.,2.], dtype=int32)
+    2
+    >>> prod([[1.,2.],[3.,4.]])
+    24.0
+    >>> prod([[1.,2.],[3.,4.]], axis=1)
+    array([  2.,  12.])
 
     """
     try:
@@ -1393,11 +1395,12 @@ def cumprod(a, axis=None, dtype=None, out=None):
     axis : {None, -1, int}, optional
         Axis along which the product is computed. The default
         (``axis``= None) is to compute over the flattened array.
-    dtype : type, optional
-        Type to use in computing the cumulative product. For arrays of
-        integer type the default is int64 for signed ints and uint64
-        for unsigned. For arrays of float types it is the same as the
-        array type.
+    dtype : {None, dtype}, optional
+        Determines the type of the returned array and of the accumulator
+        where the elements are multiplied. If dtype has the value None and
+        the type of a is an integer type of precision less than the default
+        platform integer, then the default platform integer precision is
+        used.  Otherwise, the dtype is the same as that of a.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
@@ -1408,8 +1411,6 @@ def cumprod(a, axis=None, dtype=None, out=None):
     cumprod : ndarray.
         A new array holding the result is returned unless out is
         specified, in which case a reference to out is returned.
-        Return datatype is ``dtype`` if specified, otherwise int64 for
-        ints, uint64 for uints, or the input datatype otherwise.
 
     """
     try:
