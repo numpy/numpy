@@ -766,8 +766,7 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
     int numcopies, nbytes;
     void (*myfunc)(char *, intp, char *, intp, intp, int);
     int retval=-1;
-
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
     numcopies = PyArray_SIZE(dest);
     if (numcopies < 1) {
@@ -785,7 +784,9 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
         usecopy = 1;
         sptr = aligned;
     }
-    else sptr = src->data;
+    else {
+        sptr = src->data;
+    }
     if (PyArray_SAFEALIGNEDCOPY(dest)) {
         myfunc = _strided_byte_copy;
     }
@@ -809,15 +810,12 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
         /* Refcount note: src and dest may have different sizes */
         PyArray_INCREF(src);
         PyArray_XDECREF(dest);
-
-        NPY_BEGIN_THREADS
-
+        NPY_BEGIN_THREADS;
         myfunc(dptr, dstride, sptr, 0, numcopies, (int) nbytes);
-        if (swap)
+        if (swap) {
             _strided_byte_swap(dptr, dstride, numcopies, (int) nbytes);
-
-        NPY_END_THREADS
-
+        }
+        NPY_END_THREADS;
         PyArray_INCREF(dest);
         PyArray_XDECREF(src);
     }
@@ -825,25 +823,26 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
         PyArrayIterObject *dit;
         int axis=-1;
         dit = (PyArrayIterObject *)\
-            PyArray_IterAllButAxis((PyObject *)dest, &axis);
+              PyArray_IterAllButAxis((PyObject *)dest, &axis);
         if (dit == NULL) {
             goto finish;
         }
         /* Refcount note: src and dest may have different sizes */
         PyArray_INCREF(src);
         PyArray_XDECREF(dest);
-        NPY_BEGIN_THREADS
-            while(dit->index < dit->size) {
-                myfunc(dit->dataptr, PyArray_STRIDE(dest, axis),
-                       sptr, 0,
-                       PyArray_DIM(dest, axis), nbytes);
-                if (swap)
-                    _strided_byte_swap(dit->dataptr,
-                                       PyArray_STRIDE(dest, axis),
-                                       PyArray_DIM(dest, axis), nbytes);
-                PyArray_ITER_NEXT(dit);
+        NPY_BEGIN_THREADS;
+        while(dit->index < dit->size) {
+            myfunc(dit->dataptr, PyArray_STRIDE(dest, axis),
+                    sptr, 0,
+                    PyArray_DIM(dest, axis), nbytes);
+            if (swap) {
+                _strided_byte_swap(dit->dataptr,
+                        PyArray_STRIDE(dest, axis),
+                        PyArray_DIM(dest, axis), nbytes);
             }
-        NPY_END_THREADS
+            PyArray_ITER_NEXT(dit);
+        }
+        NPY_END_THREADS;
         PyArray_INCREF(dest);
         PyArray_XDECREF(src);
         Py_DECREF(dit);
@@ -851,16 +850,21 @@ _copy_from0d(PyArrayObject *dest, PyArrayObject *src, int usecopy, int swap)
     retval = 0;
 
 finish:
-    if (aligned != NULL) free(aligned);
+    if (aligned != NULL) {
+        free(aligned);
+    }
     return retval;
 }
 
-/* Special-case of PyArray_CopyInto when dst is 1-d
-   and contiguous (and aligned).
-   PyArray_CopyInto requires broadcastable arrays while
-   this one is a flattening operation...
-*/
-int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
+/*
+ * Special-case of PyArray_CopyInto when dst is 1-d
+ * and contiguous (and aligned).
+ * PyArray_CopyInto requires broadcastable arrays while
+ * this one is a flattening operation...
+ */
+int
+_flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order)
+{
     PyArrayIterObject *it;
     PyObject *orig_src;
     void (*myfunc)(char *, intp, char *, intp, intp, int);
@@ -868,7 +872,7 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     int axis;
     int elsize;
     intp nbytes;
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
 
     orig_src = src;
@@ -876,25 +880,31 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
         /* Refcount note: src and dst have the same size */
         PyArray_INCREF((PyArrayObject *)src);
         PyArray_XDECREF((PyArrayObject *)dst);
-        NPY_BEGIN_THREADS
+        NPY_BEGIN_THREADS;
         memcpy(PyArray_BYTES(dst), PyArray_BYTES(src),
-               PyArray_ITEMSIZE(src));
-        NPY_END_THREADS
+                PyArray_ITEMSIZE(src));
+        NPY_END_THREADS;
         return 0;
     }
 
     axis = PyArray_NDIM(src)-1;
 
     if (order == PyArray_FORTRANORDER) {
-	if (PyArray_NDIM(src) <= 2) axis = 0;
-	/* fall back to a more general method */
-	else src = PyArray_Transpose((PyArrayObject *)orig_src, NULL);
+        if (PyArray_NDIM(src) <= 2) {
+            axis = 0;
+        }
+        /* fall back to a more general method */
+        else {
+            src = PyArray_Transpose((PyArrayObject *)orig_src, NULL);
+        }
     }
 
     it = (PyArrayIterObject *)PyArray_IterAllButAxis(src, &axis);
     if (it == NULL) {
-        if (src != orig_src) {Py_DECREF(src);}
-	return -1;
+        if (src != orig_src) {
+            Py_DECREF(src);
+        }
+        return -1;
     }
 
     if (PyArray_SAFEALIGNEDCOPY(src)) {
@@ -911,17 +921,19 @@ int _flat_copyinto(PyObject *dst, PyObject *src, NPY_ORDER order) {
     /* Refcount note: src and dst have the same size */
     PyArray_INCREF((PyArrayObject *)src);
     PyArray_XDECREF((PyArrayObject *)dst);
-    NPY_BEGIN_THREADS
+    NPY_BEGIN_THREADS;
     while(it->index < it->size) {
         myfunc(dptr, elsize, it->dataptr,
-               PyArray_STRIDE(src,axis),
-               PyArray_DIM(src,axis), elsize);
+                PyArray_STRIDE(src,axis),
+                PyArray_DIM(src,axis), elsize);
         dptr += nbytes;
         PyArray_ITER_NEXT(it);
     }
-    NPY_END_THREADS
+    NPY_END_THREADS;
 
-    if (src != orig_src) {Py_DECREF(src);}
+    if (src != orig_src) {
+        Py_DECREF(src);
+    }
     Py_DECREF(it);
     return 0;
 }
@@ -935,11 +947,11 @@ _copy_from_same_shape(PyArrayObject *dest, PyArrayObject *src,
     int maxaxis=-1, elsize;
     intp maxdim;
     PyArrayIterObject *dit, *sit;
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
-        dit = (PyArrayIterObject *)                                     \
+    dit = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)dest, &maxaxis);
-    sit = (PyArrayIterObject *)                                     \
+    sit = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)src, &maxaxis);
 
     maxdim = dest->dimensions[maxaxis];
@@ -955,22 +967,22 @@ _copy_from_same_shape(PyArrayObject *dest, PyArrayObject *src,
     PyArray_INCREF(src);
     PyArray_XDECREF(dest);
 
-    NPY_BEGIN_THREADS
+    NPY_BEGIN_THREADS;
     while(dit->index < dit->size) {
         /* strided copy of elsize bytes */
         myfunc(dit->dataptr, dest->strides[maxaxis],
-               sit->dataptr, src->strides[maxaxis],
-               maxdim, elsize);
+                sit->dataptr, src->strides[maxaxis],
+                maxdim, elsize);
         if (swap) {
             _strided_byte_swap(dit->dataptr,
-                               dest->strides[maxaxis],
-                               dest->dimensions[maxaxis],
-                               elsize);
+                    dest->strides[maxaxis],
+                    dest->dimensions[maxaxis],
+                    elsize);
         }
         PyArray_ITER_NEXT(dit);
         PyArray_ITER_NEXT(sit);
     }
-    NPY_END_THREADS
+    NPY_END_THREADS;
 
     Py_DECREF(sit);
     Py_DECREF(dit);
@@ -985,7 +997,7 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
     int elsize;
     PyArrayMultiIterObject *multi;
     int maxaxis; intp maxdim;
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
     elsize = PyArray_ITEMSIZE(dest);
     multi = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, dest, src);
@@ -995,45 +1007,52 @@ _broadcast_copy(PyArrayObject *dest, PyArrayObject *src,
 
     if (multi->size != PyArray_SIZE(dest)) {
         PyErr_SetString(PyExc_ValueError,
-                        "array dimensions are not "\
-                        "compatible for copy");
+                "array dimensions are not "\
+                "compatible for copy");
         Py_DECREF(multi);
         return -1;
     }
 
     maxaxis = PyArray_RemoveSmallest(multi);
-    if (maxaxis < 0) { /* copy 1 0-d array to another */
-        /* Refcount note: src and dst have the same size */
+    if (maxaxis < 0) {
+        /*
+         * copy 1 0-d array to another
+         * Refcount note: src and dst have the same size
+         */
         PyArray_INCREF(src);
         PyArray_XDECREF(dest);
         memcpy(dest->data, src->data, elsize);
-        if (swap) byte_swap_vector(dest->data, 1, elsize);
+        if (swap) {
+            byte_swap_vector(dest->data, 1, elsize);
+        }
         return 0;
     }
     maxdim = multi->dimensions[maxaxis];
 
-    /* Increment the source and decrement the destination
-       reference counts
-    */
-    /* Refcount note: src and dest may have different sizes */
+    /*
+     * Increment the source and decrement the destination
+     * reference counts
+     *
+     * Refcount note: src and dest may have different sizes
+     */
     PyArray_INCREF(src);
     PyArray_XDECREF(dest);
 
-    NPY_BEGIN_THREADS
+    NPY_BEGIN_THREADS;
     while(multi->index < multi->size) {
         myfunc(multi->iters[0]->dataptr,
-               multi->iters[0]->strides[maxaxis],
-               multi->iters[1]->dataptr,
-               multi->iters[1]->strides[maxaxis],
-               maxdim, elsize);
+                multi->iters[0]->strides[maxaxis],
+                multi->iters[1]->dataptr,
+                multi->iters[1]->strides[maxaxis],
+                maxdim, elsize);
         if (swap) {
             _strided_byte_swap(multi->iters[0]->dataptr,
-                               multi->iters[0]->strides[maxaxis],
-                               maxdim, elsize);
+                    multi->iters[0]->strides[maxaxis],
+                    maxdim, elsize);
         }
         PyArray_MultiIter_NEXT(multi);
     }
-    NPY_END_THREADS
+    NPY_END_THREADS;
 
     PyArray_INCREF(dest);
     PyArray_XDECREF(src);
@@ -1060,33 +1079,33 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
     void (*myfunc)(char *, intp, char *, intp, intp, int);
     int simple;
     int same;
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
 
-        if (!PyArray_EquivArrTypes(dest, src)) {
-            return PyArray_CastTo(dest, src);
-        }
-
+    if (!PyArray_EquivArrTypes(dest, src)) {
+        return PyArray_CastTo(dest, src);
+    }
     if (!PyArray_ISWRITEABLE(dest)) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot write to array");
+                "cannot write to array");
         return -1;
     }
-
     same = PyArray_SAMESHAPE(dest, src);
     simple = same && ((PyArray_ISCARRAY_RO(src) && PyArray_ISCARRAY(dest)) ||
-                      (PyArray_ISFARRAY_RO(src) && PyArray_ISFARRAY(dest)));
+            (PyArray_ISFARRAY_RO(src) && PyArray_ISFARRAY(dest)));
 
     if (simple) {
         /* Refcount note: src and dest have the same size */
         PyArray_INCREF(src);
         PyArray_XDECREF(dest);
-        NPY_BEGIN_THREADS
-        if (usecopy)
+        NPY_BEGIN_THREADS;
+        if (usecopy) {
             memcpy(dest->data, src->data, PyArray_NBYTES(dest));
-        else
+        }
+        else {
             memmove(dest->data, src->data, PyArray_NBYTES(dest));
-        NPY_END_THREADS
+        }
+        NPY_END_THREADS;
         return 0;
     }
 
@@ -1105,10 +1124,10 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
     else {
         myfunc = _unaligned_strided_byte_move;
     }
-
-    /* Could combine these because _broadcasted_copy would work as well.
-       But, same-shape copying is so common we want to speed it up.
-    */
+    /*
+     * Could combine these because _broadcasted_copy would work as well.
+     * But, same-shape copying is so common we want to speed it up.
+     */
     if (same) {
         return _copy_from_same_shape(dest, src, myfunc, swap);
     }
@@ -1118,50 +1137,48 @@ _array_copy_into(PyArrayObject *dest, PyArrayObject *src, int usecopy)
 }
 
 /*OBJECT_API
-  Copy an Array into another array -- memory must not overlap
-  Does not require src and dest to have "broadcastable" shapes
-  (only the same number of elements).
-*/
+ * Copy an Array into another array -- memory must not overlap
+ * Does not require src and dest to have "broadcastable" shapes
+ * (only the same number of elements).
+ */
 static int
 PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
 {
     int elsize, simple;
     PyArrayIterObject *idest, *isrc;
     void (*myfunc)(char *, intp, char *, intp, intp, int);
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
-        if (!PyArray_EquivArrTypes(dest, src)) {
-            return PyArray_CastAnyTo(dest, src);
-        }
-
+    if (!PyArray_EquivArrTypes(dest, src)) {
+        return PyArray_CastAnyTo(dest, src);
+    }
     if (!PyArray_ISWRITEABLE(dest)) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot write to array");
+                "cannot write to array");
         return -1;
     }
-
     if (PyArray_SIZE(dest) != PyArray_SIZE(src)) {
         PyErr_SetString(PyExc_ValueError,
-                        "arrays must have the same number of elements"
-                        " for copy");
+                "arrays must have the same number of elements"
+                " for copy");
         return -1;
     }
 
     simple = ((PyArray_ISCARRAY_RO(src) && PyArray_ISCARRAY(dest)) ||
-              (PyArray_ISFARRAY_RO(src) && PyArray_ISFARRAY(dest)));
-
+            (PyArray_ISFARRAY_RO(src) && PyArray_ISFARRAY(dest)));
     if (simple) {
         /* Refcount note: src and dest have the same size */
         PyArray_INCREF(src);
         PyArray_XDECREF(dest);
-        NPY_BEGIN_THREADS
+        NPY_BEGIN_THREADS;
         memcpy(dest->data, src->data, PyArray_NBYTES(dest));
-        NPY_END_THREADS
+        NPY_END_THREADS;
         return 0;
     }
 
     if (PyArray_SAMESHAPE(dest, src)) {
         int swap;
+
         if (PyArray_SAFEALIGNEDCOPY(dest) && PyArray_SAFEALIGNEDCOPY(src)) {
             myfunc = _strided_byte_copy;
         }
@@ -1186,21 +1203,21 @@ PyArray_CopyAnyInto(PyArrayObject *dest, PyArrayObject *src)
     /* Refcount note: src and dest have the same size */
     PyArray_INCREF(src);
     PyArray_XDECREF(dest);
-    NPY_BEGIN_THREADS
-        while(idest->index < idest->size) {
-            memcpy(idest->dataptr, isrc->dataptr, elsize);
-            PyArray_ITER_NEXT(idest);
-            PyArray_ITER_NEXT(isrc);
-        }
-    NPY_END_THREADS
+    NPY_BEGIN_THREADS;
+    while(idest->index < idest->size) {
+        memcpy(idest->dataptr, isrc->dataptr, elsize);
+        PyArray_ITER_NEXT(idest);
+        PyArray_ITER_NEXT(isrc);
+    }
+    NPY_END_THREADS;
     Py_DECREF(idest);
     Py_DECREF(isrc);
     return 0;
 }
 
 /*OBJECT_API
-  Copy an Array into another array -- memory must not overlap.
-*/
+ * Copy an Array into another array -- memory must not overlap.
+ */
 static int
 PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 {
@@ -1209,8 +1226,8 @@ PyArray_CopyInto(PyArrayObject *dest, PyArrayObject *src)
 
 
 /*OBJECT_API
-  Move the memory of one array into another.
-*/
+ * Move the memory of one array into another.
+ */
 static int
 PyArray_MoveInto(PyArrayObject *dest, PyArrayObject *src)
 {
@@ -1226,9 +1243,10 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
     PyObject *r;
     int ret;
 
-    /* Special code to mimic Numeric behavior for
-       character arrays.
-    */
+    /*
+     * Special code to mimic Numeric behavior for
+     * character arrays.
+     */
     if (dest->descr->type == PyArray_CHARLTR && dest->nd > 0 \
         && PyString_Check(src_object)) {
         int n_new, n_old;
@@ -1805,100 +1823,126 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     PyObject *obj, *strobj, *tupobj;
 
     n3 = (sep ? strlen((const char *)sep) : 0);
-    if (n3 == 0) { /* binary data */
+    if (n3 == 0) {
+        /* binary data */
         if (PyDataType_FLAGCHK(self->descr, NPY_LIST_PICKLE)) {
             PyErr_SetString(PyExc_ValueError, "cannot write " \
-                            "object arrays to a file in "   \
-                            "binary mode");
+                    "object arrays to a file in "   \
+                    "binary mode");
             return -1;
         }
 
         if (PyArray_ISCONTIGUOUS(self)) {
             size = PyArray_SIZE(self);
-            NPY_BEGIN_ALLOW_THREADS
-                n=fwrite((const void *)self->data,
-                         (size_t) self->descr->elsize,
-                         (size_t) size, fp);
-            NPY_END_ALLOW_THREADS
-                if (n < size) {
-                    PyErr_Format(PyExc_ValueError,
-                                 "%ld requested and %ld written",
-                                 (long) size, (long) n);
-                    return -1;
-                }
+            NPY_BEGIN_ALLOW_THREADS;
+            n = fwrite((const void *)self->data,
+                    (size_t) self->descr->elsize,
+                    (size_t) size, fp);
+            NPY_END_ALLOW_THREADS;
+            if (n < size) {
+                PyErr_Format(PyExc_ValueError,
+                        "%ld requested and %ld written",
+                        (long) size, (long) n);
+                return -1;
+            }
         }
         else {
-            NPY_BEGIN_THREADS_DEF
+            NPY_BEGIN_THREADS_DEF;
 
-                it=(PyArrayIterObject *)                        \
+            it = (PyArrayIterObject *)
                 PyArray_IterNew((PyObject *)self);
-            NPY_BEGIN_THREADS
-                while(it->index < it->size) {
-                    if (fwrite((const void *)it->dataptr,
-                               (size_t) self->descr->elsize,
-                               1, fp) < 1) {
-                        NPY_END_THREADS
-                            PyErr_Format(PyExc_IOError,
-                                         "problem writing element"\
-                                         " %d to file",
-                                         (int)it->index);
-                        Py_DECREF(it);
-                        return -1;
-                    }
-                    PyArray_ITER_NEXT(it);
+            NPY_BEGIN_THREADS;
+            while(it->index < it->size) {
+                if (fwrite((const void *)it->dataptr,
+                            (size_t) self->descr->elsize,
+                            1, fp) < 1) {
+                    NPY_END_THREADS;
+                    PyErr_Format(PyExc_IOError,
+                            "problem writing element"\
+                            " %d to file",
+                            (int)it->index);
+                    Py_DECREF(it);
+                    return -1;
                 }
-            NPY_END_THREADS
-                Py_DECREF(it);
+                PyArray_ITER_NEXT(it);
+            }
+            NPY_END_THREADS;
+            Py_DECREF(it);
         }
     }
-    else {  /* text data */
+    else {
+        /*
+         * text data
+         */
 
-        it=(PyArrayIterObject *)                                \
+        it = (PyArrayIterObject *)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         while(it->index < it->size) {
             obj = self->descr->f->getitem(it->dataptr, self);
-            if (obj == NULL) {Py_DECREF(it); return -1;}
-            if (n4 == 0) { /* standard writing */
+            if (obj == NULL) {
+                Py_DECREF(it);
+                return -1;
+            }
+            if (n4 == 0) {
+                /*
+                 * standard writing
+                 */
                 strobj = PyObject_Str(obj);
                 Py_DECREF(obj);
-                if (strobj == NULL) {Py_DECREF(it); return -1;}
+                if (strobj == NULL) {
+                    Py_DECREF(it);
+                    return -1;
+                }
             }
-            else { /* use format string */
+            else {
+                /*
+                 * use format string
+                 */
                 tupobj = PyTuple_New(1);
-                if (tupobj == NULL) {Py_DECREF(it); return -1;}
+                if (tupobj == NULL) {
+                    Py_DECREF(it);
+                    return -1;
+                }
                 PyTuple_SET_ITEM(tupobj,0,obj);
                 obj = PyString_FromString((const char *)format);
-                if (obj == NULL) {Py_DECREF(tupobj);
-                    Py_DECREF(it); return -1;}
+                if (obj == NULL) {
+                    Py_DECREF(tupobj);
+                    Py_DECREF(it);
+                    return -1;
+                }
                 strobj = PyString_Format(obj, tupobj);
                 Py_DECREF(obj);
                 Py_DECREF(tupobj);
-                if (strobj == NULL) {Py_DECREF(it); return -1;}
-            }
-            NPY_BEGIN_ALLOW_THREADS
-                n=fwrite(PyString_AS_STRING(strobj), 1,
-                         n2=PyString_GET_SIZE(strobj), fp);
-            NPY_END_ALLOW_THREADS
-                if (n < n2) {
-                    PyErr_Format(PyExc_IOError,
-                                 "problem writing element %d"\
-                                 " to file",
-                                 (int) it->index);
-                    Py_DECREF(strobj);
+                if (strobj == NULL) {
                     Py_DECREF(it);
                     return -1;
                 }
+            }
+            NPY_BEGIN_ALLOW_THREADS;
+            n = fwrite(PyString_AS_STRING(strobj), 1,
+                    n2=PyString_GET_SIZE(strobj), fp);
+            NPY_END_ALLOW_THREADS;
+            if (n < n2) {
+                PyErr_Format(PyExc_IOError,
+                        "problem writing element %d"\
+                        " to file",
+                        (int) it->index);
+                Py_DECREF(strobj);
+                Py_DECREF(it);
+                return -1;
+            }
             /* write separator for all but last one */
-            if (it->index != it->size-1)
+            if (it->index != it->size-1) {
                 if (fwrite(sep, 1, n3, fp) < n3) {
                     PyErr_Format(PyExc_IOError,
-                                 "problem writing "\
-                                 "separator to file");
+                            "problem writing "\
+                            "separator to file");
                     Py_DECREF(strobj);
                     Py_DECREF(it);
                     return -1;
                 }
+            }
             Py_DECREF(strobj);
             PyArray_ITER_NEXT(it);
         }
@@ -1908,8 +1952,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 }
 
 /*OBJECT_API
-  To List
-*/
+ * To List
+ */
 static PyObject *
 PyArray_ToList(PyArrayObject *self)
 {
@@ -1917,15 +1961,16 @@ PyArray_ToList(PyArrayObject *self)
     PyArrayObject *v;
     intp sz, i;
 
-    if (!PyArray_Check(self)) return (PyObject *)self;
-
-    if (self->nd == 0)
+    if (!PyArray_Check(self)) {
+        return (PyObject *)self;
+    }
+    if (self->nd == 0) {
         return self->descr->f->getitem(self->data,self);
+    }
 
     sz = self->dimensions[0];
     lp = PyList_New(sz);
-
-    for(i=0; i<sz; i++) {
+    for(i = 0; i < sz; i++) {
         v=(PyArrayObject *)array_big_item(self, i);
         if (v->nd >= self->nd) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -1938,7 +1983,6 @@ PyArray_ToList(PyArrayObject *self)
         PyList_SetItem(lp, i, PyArray_ToList(v));
         Py_DECREF(v);
     }
-
     return lp;
 }
 
@@ -7803,8 +7847,7 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
     char *buffers[2];
     PyArray_CopySwapNFunc *ocopyfunc, *icopyfunc;
     char *obptr;
-
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
     delsize = PyArray_ITEMSIZE(out);
     selsize = PyArray_ITEMSIZE(in);
@@ -7815,8 +7858,8 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 
     if (multi->size != PyArray_SIZE(out)) {
         PyErr_SetString(PyExc_ValueError,
-                        "array dimensions are not "\
-                        "compatible for copy");
+                "array dimensions are not "\
+                "compatible for copy");
         Py_DECREF(multi);
         return -1;
     }
@@ -7824,7 +7867,8 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
     icopyfunc = in->descr->f->copyswapn;
     ocopyfunc = out->descr->f->copyswapn;
     maxaxis = PyArray_RemoveSmallest(multi);
-    if (maxaxis < 0) { /* cast 1 0-d array to another */
+    if (maxaxis < 0) {
+        /* cast 1 0-d array to another */
         N = 1;
         maxdim = 1;
         ostrides = delsize;
@@ -7857,24 +7901,24 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
 
 #if NPY_ALLOW_THREADS
     if (PyArray_ISNUMBER(in) && PyArray_ISNUMBER(out)) {
-        NPY_BEGIN_THREADS
+        NPY_BEGIN_THREADS;
     }
 #endif
 
     while(multi->index < multi->size) {
         _strided_buffered_cast(multi->iters[0]->dataptr,
-                               ostrides,
-                               delsize, oswap, ocopyfunc,
-                               multi->iters[1]->dataptr,
-                               istrides,
-                               selsize, iswap, icopyfunc,
-                               maxdim, buffers, N,
-                               castfunc, out, in);
+                ostrides,
+                delsize, oswap, ocopyfunc,
+                multi->iters[1]->dataptr,
+                istrides,
+                selsize, iswap, icopyfunc,
+                maxdim, buffers, N,
+                castfunc, out, in);
         PyArray_MultiIter_NEXT(multi);
     }
 #if NPY_ALLOW_THREADS
     if (PyArray_ISNUMBER(in) && PyArray_ISNUMBER(out)) {
-        NPY_END_THREADS
+        NPY_END_THREADS;
     }
 #endif
     Py_DECREF(multi);
@@ -7895,38 +7939,38 @@ _broadcast_cast(PyArrayObject *out, PyArrayObject *in,
     if (PyErr_Occurred()) {
         return -1;
     }
+
     return 0;
 }
 
 
 
-/* Must be broadcastable.
-   This code is very similar to PyArray_CopyInto/PyArray_MoveInto
-   except casting is done --- PyArray_BUFSIZE is used
-   as the size of the casting buffer.
-*/
+/*
+ * Must be broadcastable.
+ * This code is very similar to PyArray_CopyInto/PyArray_MoveInto
+ * except casting is done --- PyArray_BUFSIZE is used
+ * as the size of the casting buffer.
+ */
 
 /*OBJECT_API
-  Cast to an already created array.
-*/
+ * Cast to an already created array.
+ */
 static int
 PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
 {
-
     int simple;
     int same;
     PyArray_VectorUnaryFunc *castfunc=NULL;
     int mpsize = PyArray_SIZE(mp);
     int iswap, oswap;
-
-    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS_DEF;
 
     if (mpsize == 0) {
         return 0;
     }
     if (!PyArray_ISWRITEABLE(out)) {
         PyErr_SetString(PyExc_ValueError,
-                        "output array is not writeable");
+                "output array is not writeable");
         return -1;
     }
 
@@ -7935,23 +7979,20 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
         return -1;
     }
 
-
     same = PyArray_SAMESHAPE(out, mp);
     simple = same && ((PyArray_ISCARRAY_RO(mp) && PyArray_ISCARRAY(out)) ||
-                      (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
-
+            (PyArray_ISFARRAY_RO(mp) && PyArray_ISFARRAY(out)));
     if (simple) {
-
 #if NPY_ALLOW_THREADS
         if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
-            NPY_BEGIN_THREADS
+            NPY_BEGIN_THREADS;
         }
 #endif
         castfunc(mp->data, out->data, mpsize, mp, out);
 
 #if NPY_ALLOW_THREADS
         if (PyArray_ISNUMBER(mp) && PyArray_ISNUMBER(out)) {
-            NPY_END_THREADS
+            NPY_END_THREADS;
         }
 #endif
         if (PyErr_Occurred()) {
@@ -7960,12 +8001,13 @@ PyArray_CastTo(PyArrayObject *out, PyArrayObject *mp)
         return 0;
     }
 
-    /* If the input or output is OBJECT, STRING, UNICODE, or VOID */
-    /*  then getitem and setitem are used for the cast */
-    /*  and byteswapping is handled by those methods */
-
+    /*
+     * If the input or output is OBJECT, STRING, UNICODE, or VOID
+     *  then getitem and setitem are used for the cast
+     *  and byteswapping is handled by those methods
+     */
     if (PyArray_ISFLEXIBLE(mp) || PyArray_ISOBJECT(mp) || PyArray_ISOBJECT(out) ||
-        PyArray_ISFLEXIBLE(out)) {
+            PyArray_ISFLEXIBLE(out)) {
         iswap = oswap = 0;
     }
     else {
@@ -7999,9 +8041,11 @@ _bufferedcast(PyArrayObject *out, PyArrayObject *in,
     in_csn = in->descr->f->copyswap;
     out_csn = out->descr->f->copyswap;
 
-    /* If the input or output is STRING, UNICODE, or VOID */
-    /*  then getitem and setitem are used for the cast */
-    /*  and byteswapping is handled by those methods */
+    /*
+     * If the input or output is STRING, UNICODE, or VOID
+     * then getitem and setitem are used for the cast
+     *  and byteswapping is handled by those methods
+     */
 
     inswap = !(PyArray_ISFLEXIBLE(in) || PyArray_ISNOTSWAPPED(in));
 
