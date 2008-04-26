@@ -892,7 +892,7 @@ def clip(a, a_min, a_max):
 
     Parameters
     ----------
-    a : {array_type}
+    a : {array_like}
         Array containing elements to clip.
     a_min
         Minimum value
@@ -901,7 +901,7 @@ def clip(a, a_min, a_max):
 
     Returns
     -------
-    sum_along_axis : {array}
+    clipped_array : {array}
         A new array whose elements are same as for a, but values
         < a_min are replaced with a_min, and > a_max with a_max.
     
@@ -1115,7 +1115,7 @@ def all(a,axis=None, out=None):
     a : {array_like}
     axis : {None, integer}
         Axis to perform the operation over.
-        If None, perform over flattened array.
+        If None, perform over flattened array and return a scalar.
     out : {None, array}, optional
         Array into which the product can be placed. Its type is preserved
         and it must be of the right shape to hold the output.
