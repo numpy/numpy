@@ -1147,10 +1147,10 @@ def lstsq(a, b, rcond=-1):
 
     """
     import math
-    a = _makearray(a)
+    a, _ = _makearray(a)
     b, wrap = _makearray(b)
-    one_eq = len(b.shape) == 1
-    if one_eq:
+    is_1d = len(b.shape) == 1
+    if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
     m  = a.shape[0]
@@ -1199,7 +1199,7 @@ def lstsq(a, b, rcond=-1):
     if results['info'] > 0:
         raise LinAlgError, 'SVD did not converge in Linear Least Squares'
     resids = array([], t)
-    if one_eq:
+    if is_1d:
         x = array(ravel(bstar)[:n], dtype=result_t, copy=True)
         if results['rank'] == n and m > n:
             resids = array([sum((ravel(bstar)[n:])**2)], dtype=result_t)

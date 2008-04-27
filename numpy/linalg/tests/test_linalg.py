@@ -144,7 +144,7 @@ class TestLstsq(LinalgTestCase):
         x, residuals, rank, sv = linalg.lstsq(a, b)
         assert_almost_equal(b, dot(a, x))
         assert_equal(rank, asarray(a).shape[0])
-        assert_almost_equal(sv, s)
+        assert_almost_equal(sv, sv.__array_wrap__(s))
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
         assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
         assert imply(isinstance(b, matrix), isinstance(sv, matrix))
