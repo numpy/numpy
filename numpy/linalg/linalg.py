@@ -27,7 +27,7 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         isfinite, size
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
-from numpy.core.defmatrix import matrix_power
+from numpy.core.defmatrix import matrix_power, matrix
 
 fortran_int = intc
 
@@ -983,7 +983,7 @@ def svd(a, full_matrices=1, compute_uv=1):
     else:
         return wrap(s)
 
-def cond(x,p=None):
+def cond(x, p=None):
     """Compute the condition number of a matrix.
 
     The condition number of x is the norm of x times the norm
@@ -1014,6 +1014,7 @@ def cond(x,p=None):
     c : float
         The condition number of the matrix. May be infinite.
     """
+    x = asarray(x) # in case we have a matrix
     if p is None:
         s = svd(x,compute_uv=False)
         return s[0]/s[-1]
@@ -1146,7 +1147,7 @@ def lstsq(a, b, rcond=-1):
 
     """
     import math
-    a = asarray(a)
+    a = _makearray(a)
     b, wrap = _makearray(b)
     one_eq = len(b.shape) == 1
     if one_eq:

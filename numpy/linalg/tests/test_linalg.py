@@ -3,13 +3,19 @@
 
 from numpy.testing import *
 set_package_path()
-from numpy import array, single, double, csingle, cdouble, dot, identity, \
-        multiply, atleast_2d, inf, asarray
+from numpy import array, single, double, csingle, cdouble, dot, identity
+from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
 from linalg import matrix_power
 restore_path()
 
+def ifthen(a, b):
+    return not a or b
+
 old_assert_almost_equal = assert_almost_equal
+def imply(a, b):
+    return not a or b
+
 def assert_almost_equal(a, b, **kw):
     if asarray(a).dtype.type in (single, csingle):
         decimal = 6
@@ -52,41 +58,63 @@ class LinalgTestCase(NumpyTestCase):
         b = [2, 1]
         self.do(a,b)
 
+    def check_matrix_b_only(self):
+        """Check that matrix type is preserved."""
+        a = array([[1.,2.], [3.,4.]])
+        b = matrix([2., 1.]).T
+        self.do(a, b)
+
+    def check_matrix_a_and_b(self):
+        """Check that matrix type is preserved."""
+        a = matrix([[1.,2.], [3.,4.]])
+        b = matrix([2., 1.]).T
+        self.do(a, b)
+
 
 class TestSolve(LinalgTestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot(a, x))
+        assert imply(isinstance(b, matrix), isinstance(x, matrix))
 
 class TestInv(LinalgTestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
+        assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
 
 class TestEigvals(LinalgTestCase):
     def do(self, a, b):
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
+        assert imply(isinstance(a, matrix), isinstance(ev, matrix))
 
 class TestEig(LinalgTestCase):
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
-        assert_almost_equal(dot(a, evectors), evectors*evalues)
+        assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
+        assert imply(isinstance(a, matrix), isinstance(evalues, matrix))
+        assert imply(isinstance(a, matrix), isinstance(evectors, matrix))
 
 class TestSVD(LinalgTestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
-        assert_almost_equal(a, dot(u*s, vt))
+        assert_almost_equal(a, dot(multiply(u, s), vt))
+        assert imply(isinstance(a, matrix), isinstance(u, matrix))
+        assert imply(isinstance(a, matrix), isinstance(s, matrix))
+        assert imply(isinstance(a, matrix), isinstance(vt, matrix))
 
 class TestCondSVD(LinalgTestCase):
     def do(self, a, b):
-        s = linalg.svd(a, compute_uv=False)
+        c = asarray(a) # a might be a matrix
+        s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a), decimal=5)
 
 class TestCond2(LinalgTestCase):
     def do(self, a, b):
-        s = linalg.svd(a, compute_uv=False)
+        c = asarray(a) # a might be a matrix
+        s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a,2), decimal=5)
 
 class TestCondInf(NumpyTestCase):
@@ -98,6 +126,7 @@ class TestPinv(LinalgTestCase):
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
         assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
+        assert imply(isinstance(a, matrix), isinstance(a_ginv, matrix))
 
 class TestDet(LinalgTestCase):
     def do(self, a, b):
@@ -116,6 +145,9 @@ class TestLstsq(LinalgTestCase):
         assert_almost_equal(b, dot(a, x))
         assert_equal(rank, asarray(a).shape[0])
         assert_almost_equal(sv, s)
+        assert imply(isinstance(b, matrix), isinstance(x, matrix))
+        assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
+        assert imply(isinstance(b, matrix), isinstance(sv, matrix))
 
 class TestMatrixPower(ParametricTestCase):
     R90 = array([[0,1],[-1,0]])
