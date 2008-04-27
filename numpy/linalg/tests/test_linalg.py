@@ -4,14 +4,14 @@
 from numpy.testing import *
 set_package_path()
 from numpy import array, single, double, csingle, cdouble, dot, identity, \
-        multiply, atleast_2d, inf
+        multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from linalg import matrix_power
 restore_path()
 
 old_assert_almost_equal = assert_almost_equal
 def assert_almost_equal(a, b, **kw):
-    if a.dtype.type in (single, csingle):
+    if asarray(a).dtype.type in (single, csingle):
         decimal = 6
     else:
         decimal = 12
@@ -47,6 +47,12 @@ class LinalgTestCase(NumpyTestCase):
         except linalg.LinAlgError, e:
             pass
 
+    def check_nonarray(self):
+        a = [[1,2], [3,4]]
+        b = [2, 1]
+        self.do(a,b)
+
+
 class TestSolve(LinalgTestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
@@ -55,7 +61,7 @@ class TestSolve(LinalgTestCase):
 class TestInv(LinalgTestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
-        assert_almost_equal(dot(a, a_inv), identity(a.shape[0]))
+        assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
 
 class TestEigvals(LinalgTestCase):
     def do(self, a, b):
@@ -91,15 +97,15 @@ class TestCondInf(NumpyTestCase):
 class TestPinv(LinalgTestCase):
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
-        assert_almost_equal(dot(a, a_ginv), identity(a.shape[0]))
+        assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
 
 class TestDet(LinalgTestCase):
     def do(self, a, b):
         d = linalg.det(a)
-        if a.dtype.type in (single, double):
-            ad = a.astype(double)
+        if asarray(a).dtype.type in (single, double):
+            ad = asarray(a).astype(double)
         else:
-            ad = a.astype(cdouble)
+            ad = asarray(a).astype(cdouble)
         ev = linalg.eigvals(ad)
         assert_almost_equal(d, multiply.reduce(ev))
 
@@ -108,7 +114,7 @@ class TestLstsq(LinalgTestCase):
         u, s, vt = linalg.svd(a, 0)
         x, residuals, rank, sv = linalg.lstsq(a, b)
         assert_almost_equal(b, dot(a, x))
-        assert_equal(rank, a.shape[0])
+        assert_equal(rank, asarray(a).shape[0])
         assert_almost_equal(sv, s)
 
 class TestMatrixPower(ParametricTestCase):
