@@ -55,7 +55,7 @@
 # This is a good place to add general library and include directories like
 # /usr/local/{lib,include}
 #
-#[ALL]
+#[DEFAULT]
 #library_dirs = /usr/local/lib
 #include_dirs = /usr/local/include
 
