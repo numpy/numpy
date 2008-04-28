@@ -39,28 +39,27 @@ class TestSaveTxt(NumpyTestCase):
         c.seek(0)
         assert_equal(c.readlines(), ['1,2\n', '3,4\n'])
 
+    def test_format(self):
+        a = np.array([(1, 2), (3, 4)])
+        c = StringIO.StringIO()
+        # Sequence of formats
+        np.savetxt(c, a, fmt=['%02d', '%3.1f'])
+        c.seek(0)
+        assert_equal(c.readlines(), ['01 2.0\n', '03 4.0\n'])
 
-##    def test_format(self):
-##        a = np.array([(1, 2), (3, 4)])
-##        c = StringIO.StringIO()
-##        # Sequence of formats
-##        np.savetxt(c, a, fmt=['%02d', '%3.1f'])
-##        c.seek(0)
-##        assert_equal(c.readlines(), ['01 2.0\n', '03 4.0\n'])
-##
-##        # A single multiformat string
-##        c = StringIO.StringIO()
-##        np.savetxt(c, a, fmt='%02d : %3.1f')
-##        c.seek(0)
-##        lines = c.readlines()
-##        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
-##
-##        # Specify delimiter, should be overiden
-##        c = StringIO.StringIO()
-##        np.savetxt(c, a, fmt='%02d : %3.1f', delimiter=',')
-##        c.seek(0)
-##        lines = c.readlines()
-##        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
+        # A single multiformat string
+        c = StringIO.StringIO()
+        np.savetxt(c, a, fmt='%02d : %3.1f')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
+
+        # Specify delimiter, should be overiden
+        c = StringIO.StringIO()
+        np.savetxt(c, a, fmt='%02d : %3.1f', delimiter=',')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
 
 
 class TestLoadTxt(NumpyTestCase):

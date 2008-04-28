@@ -1,4 +1,3 @@
-
 __all__ = ['savetxt', 'loadtxt',
            'load', 'loads',
            'save', 'savez',
@@ -322,7 +321,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     else:  return X
 
 
-# adjust so that fmt can change across columns if desired.
 
 def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     """
@@ -332,49 +330,55 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     Parameters
     ----------
     fname : filename or a file handle
-      If the filename ends in .gz, the file is automatically saved in
-      compressed gzip format.  The load() command understands gzipped files
-      transparently.
+        If the filename ends in .gz, the file is automatically saved in
+        compressed gzip format.  The load() command understands gzipped
+        files transparently.
     X : array or sequence
-      Data to write to file.
-    fmt : string
-      A format string %[flags][width][.precision]specifier. See notes below for
-      a description of some common flags and specifiers.
+        Data to write to file.
+    fmt : string or sequence of strings
+        A single format (%10.5f), a sequence of formats, or a
+        multi-format string, e.g. 'Iteration %d -- %10.5f', in which
+        case delimiter is ignored.
     delimiter : str
-      Character separating columns.
+        Character separating columns.
 
     Examples
     --------
-      >>> savetxt('test.out', x, delimiter=',')         # X is an array
-      >>> savetxt('test.out', (x,y,z))     # x,y,z equal sized 1D arrays
-      >>> savetxt('test.out', x, fmt='%1.4e')  # use exponential notation
+    >>> savetxt('test.out', x, delimiter=',') # X is an array
+    >>> savetxt('test.out', (x,y,z)) # x,y,z equal sized 1D arrays
+    >>> savetxt('test.out', x, fmt='%1.4e') # use exponential notation
 
     Notes on fmt
     ------------
     flags:
-      - : left justify
-      + : Forces to preceed result with + or -.
-      0 : Left pad the number with zeros instead of space (see width).
+        - : left justify
+        + : Forces to preceed result with + or -.
+        0 : Left pad the number with zeros instead of space (see width).
+
     width:
-      Minimum number of characters to be printed. The value is not truncated.
+        Minimum number of characters to be printed. The value is not truncated.
+
     precision:
-      For integer specifiers (eg. d,i,o,x), the minimum number of digits.
-      For e, E and f specifiers, the number of digits to print after the decimal
-      point.
-      For g and G, the maximum number of significant digits.
-      For s, the maximum number of characters.
+        - For integer specifiers (eg. d,i,o,x), the minimum number of
+          digits.
+        - For e, E and f specifiers, the number of digits to print
+          after the decimal point.
+        - For g and G, the maximum number of significant digits.
+        - For s, the maximum number of charac ters.
+
     specifiers:
-      c : character
-      d or i : signed decimal integer
-      e or E : scientific notation with e or E.
-      f : decimal floating point
-      g,G : use the shorter of e,E or f
-      o : signed octal
-      s : string of characters
-      u : unsigned decimal integer
-      x,X : unsigned hexadecimal integer
+        c : character
+        d or i : signed decimal integer
+        e or E : scientific notation with e or E.
+        f : decimal floating point
+        g,G : use the shorter of e,E or f
+        o : signed octal
+        s : string of characters
+        u : unsigned decimal integer
+        x,X : unsigned hexadecimal integer
 
     This is not an exhaustive specification.
+
     """
 
     if _string_like(fname):
@@ -388,17 +392,33 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     else:
         raise ValueError('fname must be a string or file handle')
 
-
     X = np.asarray(X)
-    origShape = None
-    if len(X.shape)==1 and X.dtype.names is None:
-        origShape = X.shape
-        X.shape = len(X), 1
-    for row in X:
-        fh.write(delimiter.join([fmt%val for val in row]) + '\n')
+    if X.ndim == 1:
+        if X.dtype.names is None:
+            X = np.atleast_2d(X).T
+            ncol = 1
+        else:
+            ncol = len(X.dtype.descr)
+    else:
+        ncol = X.shape[1]
 
-    if origShape is not None:
-        X.shape = origShape
+    # Fmt can be a string with multiple insertion points or a list of formats.
+    # E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
+    if type(fmt) in (list, tuple):
+        if len(fmt) != ncol:
+            raise AttributeError, 'fmt has wrong shape.  '+ str(fmt)
+        format = delimiter.join(fmt)
+    elif type(fmt) is str:
+        if fmt.count('%') == 1:
+            fmt = [fmt,]*ncol
+            format = delimiter.join(fmt)
+        elif fmt.count('%') != ncol:
+            raise AttributeError, 'fmt has wrong number of % formats.  ' + fmt
+        else:
+            format = fmt
+
+    for row in X:
+        fh.write(format%tuple(row) + '\n')
 
 import re
 def fromregex(file, regexp, dtype):
