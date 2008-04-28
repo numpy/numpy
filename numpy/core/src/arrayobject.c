@@ -19,10 +19,11 @@
   Space Science Telescope Institute
   (J. Todd Miller, Perry Greenfield, Rick White)
 */
+/*#include <stdio.h>*/
 
 /*OBJECT_API
-  Get Priority from object
-*/
+ * Get Priority from object
+ */
 static double
 PyArray_GetPriority(PyObject *obj, double default_)
 {
@@ -6998,22 +6999,30 @@ static PyTypeObject PyArray_Type = {
 static int
 discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
 {
-    int d=0;
+    int d = 0;
     PyObject *e;
 
-    if(max < 1) return -1;
-
-    if(! PySequence_Check(s) || PyInstance_Check(s) || \
-       PySequence_Length(s) < 0) {
-        PyErr_Clear(); return 0;
+    if(max < 1) {
+        return -1;
     }
-    if (PyArray_Check(s))
+    if(!PySequence_Check(s) || PyInstance_Check(s) ||
+            PySequence_Length(s) < 0) {
+        PyErr_Clear();
+        return 0;
+    }
+    if (PyArray_Check(s)) {
         return PyArray_NDIM(s);
-    if (PyArray_IsScalar(s, Generic)) return 0;
-    if (PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s))
+    }
+    if (PyArray_IsScalar(s, Generic)) {
+        return 0;
+    }
+    if (PyString_Check(s) || PyBuffer_Check(s) || PyUnicode_Check(s)) {
         return stop_at_string ? 0:1;
-    if (stop_at_tuple && PyTuple_Check(s)) return 0;
-    if ((e=PyObject_GetAttrString(s, "__array_struct__")) != NULL) {
+    }
+    if (stop_at_tuple && PyTuple_Check(s)) {
+        return 0;
+    }
+    if ((e = PyObject_GetAttrString(s, "__array_struct__")) != NULL) {
         d = -1;
         if (PyCObject_Check(e)) {
             PyArrayInterface *inter;
@@ -7023,28 +7032,40 @@ discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
             }
         }
         Py_DECREF(e);
-        if (d > -1) return d;
+        if (d > -1) {
+            return d;
+        }
     }
-    else PyErr_Clear();
+    else {
+        PyErr_Clear();
+    }
     if ((e=PyObject_GetAttrString(s, "__array_interface__")) != NULL) {
         d = -1;
         if (PyDict_Check(e)) {
             PyObject *new;
             new = PyDict_GetItemString(e, "shape");
-            if (new && PyTuple_Check(new))
+            if (new && PyTuple_Check(new)) {
                 d = PyTuple_GET_SIZE(new);
+            }
         }
         Py_DECREF(e);
-        if (d>-1) return d;
+        if (d>-1) {
+            return d;
+        }
     }
     else PyErr_Clear();
 
-    if (PySequence_Length(s) == 0)
+    if (PySequence_Length(s) == 0) {
         return 1;
-    if ((e=PySequence_GetItem(s,0)) == NULL) return -1;
-    if(e!=s) {
-        d=discover_depth(e, max-1, stop_at_string, stop_at_tuple);
-        if(d >= 0) d++;
+    }
+    if ((e=PySequence_GetItem(s,0)) == NULL) {
+        return -1;
+    }
+    if (e != s) {
+        d = discover_depth(e, max-1, stop_at_string, stop_at_tuple);
+        if (d >= 0) {
+            d++;
+        }
     }
     Py_DECREF(e);
     return d;
@@ -7058,24 +7079,28 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 
     n = PyObject_Length(s);
 
-    if ((nd == 0) || PyString_Check(s) ||           \
-        PyUnicode_Check(s) || PyBuffer_Check(s)) {
+    if ((nd == 0) || PyString_Check(s) ||
+            PyUnicode_Check(s) || PyBuffer_Check(s)) {
         *itemsize = MAX(*itemsize, n);
         return 0;
     }
-    for(i=0; i<n; i++) {
-        if ((e=PySequence_GetItem(s,i))==NULL) return -1;
-        r=discover_itemsize(e,nd-1,itemsize);
+    for(i = 0; i < n; i++) {
+        if ((e = PySequence_GetItem(s,i))==NULL) {
+            return -1;
+        }
+        r = discover_itemsize(e,nd-1,itemsize);
         Py_DECREF(e);
-        if (r == -1) return -1;
+        if (r == -1) {
+            return -1;
+        }
     }
     return 0;
 }
 
-/* Take an arbitrary object known to represent
-   an array of ndim nd, and determine the size in each dimension
-*/
-
+/*
+ * Take an arbitrary object known to represent
+ * an array of ndim nd, and determine the size in each dimension
+ */
 static int
 discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
 {
@@ -7084,30 +7109,42 @@ discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
 
     n=PyObject_Length(s);
     *d = n;
-    if(*d < 0) return -1;
-    if(nd <= 1) return 0;
+    if (*d < 0) {
+        return -1;
+    }
+    if (nd <= 1) {
+        return 0;
+    }
     n_lower = 0;
-    for(i=0; i<n; i++) {
-        if ((e=PySequence_GetItem(s,i)) == NULL) return -1;
-        r=discover_dimensions(e,nd-1,d+1,check_it);
+    for(i = 0; i < n; i++) {
+        if ((e = PySequence_GetItem(s,i)) == NULL) {
+            return -1;
+        }
+        r = discover_dimensions(e, nd - 1, d + 1, check_it);
         Py_DECREF(e);
 
-        if (r == -1) return -1;
+        if (r == -1) {
+            return -1;
+        }
         if (check_it && n_lower != 0 && n_lower != d[1]) {
             PyErr_SetString(PyExc_ValueError,
                             "inconsistent shape in sequence");
             return -1;
         }
-        if (d[1] > n_lower) n_lower = d[1];
+        if (d[1] > n_lower) {
+            n_lower = d[1];
+        }
     }
     d[1] = n_lower;
 
     return 0;
 }
 
-/* new reference */
-/* doesn't alter refcount of chktype or mintype ---
-   unless one of them is returned */
+/*
+ * new reference
+ * doesn't alter refcount of chktype or mintype ---
+ * unless one of them is returned
+ */
 static PyArray_Descr *
 _array_small_type(PyArray_Descr *chktype, PyArray_Descr* mintype)
 {
@@ -7596,6 +7633,7 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
 {
     PyArrayObject *r;
     int nd;
+    int err;
     intp d[MAX_DIMS];
     int stop_at_string;
     int stop_at_tuple;
@@ -7611,43 +7649,41 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
     stop_at_tuple = (type == PyArray_VOID && (typecode->names       \
                                               || typecode->subarray));
 
-    if (!((nd=discover_depth(s, MAX_DIMS+1, stop_at_string,
-                             stop_at_tuple)) > 0)) {
-        if (nd==0) {
-            return Array_FromPyScalar(s, typecode);
-        }
+    nd = discover_depth(s, MAX_DIMS + 1, stop_at_string, stop_at_tuple);
+    if (nd == 0) {
+        return Array_FromPyScalar(s, typecode);
+    }
+    else if (nd < 0) {
         PyErr_SetString(PyExc_ValueError,
-                        "invalid input sequence");
+                "invalid input sequence");
         goto fail;
     }
-
     if (max_depth && PyTypeNum_ISOBJECT(type) && (nd > max_depth)) {
         nd = max_depth;
     }
-
-    if ((max_depth && nd > max_depth) ||    \
-        (min_depth && nd < min_depth)) {
+    if ((max_depth && nd > max_depth) || (min_depth && nd < min_depth)) {
         PyErr_SetString(PyExc_ValueError,
-                        "invalid number of dimensions");
+                "invalid number of dimensions");
         goto fail;
     }
 
-    if(discover_dimensions(s,nd,d, check_it) == -1) {
+    err = discover_dimensions(s, nd, d, check_it);
+    if (err == -1) {
         goto fail;
     }
-    if (typecode->type == PyArray_CHARLTR && nd > 0 && d[nd-1]==1) {
-        nd = nd-1;
+    if (typecode->type == PyArray_CHARLTR && nd > 0 && d[nd - 1] == 1) {
+        nd = nd - 1;
     }
 
     if (itemsize == 0 && PyTypeNum_ISEXTENDED(type)) {
-        if (discover_itemsize(s, nd, &itemsize) == -1) {
+        err = discover_itemsize(s, nd, &itemsize);
+        if (err == -1) {
             goto fail;
         }
         if (type == PyArray_UNICODE) {
-            itemsize*=4;
+            itemsize *= 4;
         }
     }
-
     if (itemsize != typecode->elsize) {
         PyArray_DESCR_REPLACE(typecode);
         typecode->elsize = itemsize;
@@ -7657,11 +7693,12 @@ Array_FromSequence(PyObject *s, PyArray_Descr *typecode, int fortran,
                                              nd, d,
                                              NULL, NULL,
                                              fortran, NULL);
-
     if (!r) {
         return NULL;
     }
-    if(Assign_Array(r,s) == -1) {
+
+    err = Assign_Array(r,s);
+    if (err == -1) {
         Py_DECREF(r);
         return NULL;
     }
