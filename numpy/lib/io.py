@@ -393,32 +393,38 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
         raise ValueError('fname must be a string or file handle')
 
     X = np.asarray(X)
+
+    # Handle 1-dimensional arrays
     if X.ndim == 1:
+        # Common case -- 1d array of numbers
         if X.dtype.names is None:
             X = np.atleast_2d(X).T
             ncol = 1
+
+        # Complex dtype -- each field indicates a separate column
         else:
             ncol = len(X.dtype.descr)
     else:
         ncol = X.shape[1]
 
-    # Fmt can be a string with multiple insertion points or a list of formats.
+    # `fmt` can be a string with multiple insertion points or a list of formats.
     # E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
     if type(fmt) in (list, tuple):
         if len(fmt) != ncol:
-            raise AttributeError, 'fmt has wrong shape.  '+ str(fmt)
+            raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
         format = delimiter.join(fmt)
     elif type(fmt) is str:
         if fmt.count('%') == 1:
             fmt = [fmt,]*ncol
             format = delimiter.join(fmt)
         elif fmt.count('%') != ncol:
-            raise AttributeError, 'fmt has wrong number of % formats.  ' + fmt
+            raise AttributeError('fmt has wrong number of %% formats.  %s'
+                                 % fmt)
         else:
             format = fmt
 
     for row in X:
-        fh.write(format%tuple(row) + '\n')
+        fh.write(format % tuple(row) + '\n')
 
 import re
 def fromregex(file, regexp, dtype):
