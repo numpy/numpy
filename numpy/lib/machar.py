@@ -8,6 +8,7 @@ floating-point arithmetic system
 __all__ = ['MachAr']
 
 from numpy.core.fromnumeric import any
+from numpy.core.numeric import seterr
 
 # Need to speed this up...especially for longfloat
 
@@ -58,6 +59,15 @@ class MachAr(object):
           float_to_str - convert array float to str
           title        - description of used floating point numbers
         """
+        # We ignore all errors here because we are purposely triggering
+        # underflow to detect the properties of the runninng arch.
+        saverrstate = seterr(under='ignore')
+        try:
+            self._do_init(float_conv, int_conv, float_to_float, float_to_str, title)
+        finally:
+            seterr(**saverrstate)
+
+    def _do_init(self, float_conv, int_conv, float_to_float, float_to_str, title):
         max_iterN = 10000
         msg = "Did not converge after %d tries with %s"
         one = float_conv(1)
