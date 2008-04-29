@@ -594,7 +594,7 @@ def eigvals(a):
             result_t = _complexType(result_t)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return wrap(w.astype(result_t))
+    return w.astype(result_t)
 
 
 def eigvalsh(a, UPLO='L'):
@@ -673,7 +673,7 @@ def eigvalsh(a, UPLO='L'):
                                  iwork, liwork, 0)
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
-    return wrap(w.astype(result_t))
+    return w.astype(result_t)
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -786,7 +786,7 @@ def eig(a):
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
     vt = v.transpose().astype(result_t)
-    return wrap(w.astype(result_t)), wrap(vt)
+    return w.astype(result_t), wrap(vt)
 
 
 def eigh(a, UPLO='L'):
@@ -872,7 +872,7 @@ def eigh(a, UPLO='L'):
     if results['info'] > 0:
         raise LinAlgError, 'Eigenvalues did not converge'
     at = a.transpose().astype(result_t)
-    return wrap(w.astype(_realType(result_t))), wrap(at)
+    return w.astype(_realType(result_t)), wrap(at)
 
 
 # Singular value decomposition
@@ -979,9 +979,9 @@ def svd(a, full_matrices=1, compute_uv=1):
     if compute_uv:
         u = u.transpose().astype(result_t)
         vt = vt.transpose().astype(result_t)
-        return wrap(u), wrap(s), wrap(vt)
+        return wrap(u), s, wrap(vt)
     else:
-        return wrap(s)
+        return s
 
 def cond(x, p=None):
     """Compute the condition number of a matrix.
@@ -1208,7 +1208,7 @@ def lstsq(a, b, rcond=-1):
         if results['rank'] == n and m > n:
             resids = sum((transpose(bstar)[n:,:])**2, axis=0).astype(result_t)
     st = s[:min(n, m)].copy().astype(_realType(result_t))
-    return wrap(x), wrap(resids), results['rank'], wrap(st)
+    return wrap(x), wrap(resids), results['rank'], st
 
 def norm(x, ord=None):
     """Matrix or vector norm.

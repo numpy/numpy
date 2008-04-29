@@ -88,13 +88,11 @@ class TestEigvals(LinalgTestCase):
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
-        assert imply(isinstance(a, matrix), isinstance(ev, matrix))
 
 class TestEig(LinalgTestCase):
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
-        assert imply(isinstance(a, matrix), isinstance(evalues, matrix))
         assert imply(isinstance(a, matrix), isinstance(evectors, matrix))
 
 class TestSVD(LinalgTestCase):
@@ -102,7 +100,6 @@ class TestSVD(LinalgTestCase):
         u, s, vt = linalg.svd(a, 0)
         assert_almost_equal(a, dot(multiply(u, s), vt))
         assert imply(isinstance(a, matrix), isinstance(u, matrix))
-        assert imply(isinstance(a, matrix), isinstance(s, matrix))
         assert imply(isinstance(a, matrix), isinstance(vt, matrix))
 
 class TestCondSVD(LinalgTestCase):
@@ -147,7 +144,6 @@ class TestLstsq(LinalgTestCase):
         assert_almost_equal(sv, sv.__array_wrap__(s))
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
         assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
-        assert imply(isinstance(b, matrix), isinstance(sv, matrix))
 
 class TestMatrixPower(ParametricTestCase):
     R90 = array([[0,1],[-1,0]])
