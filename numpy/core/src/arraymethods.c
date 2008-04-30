@@ -101,12 +101,14 @@ array_squeeze(PyArrayObject *self, PyObject *args)
 }
 
 static PyObject *
-array_view(PyArrayObject *self, PyObject *args)
+array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *otype=NULL;
     PyArray_Descr *type=NULL;
 
-    if (!PyArg_ParseTuple(args, "|O", &otype)) return NULL;
+    static char *kwlist[] = {"dtype", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &otype))
+        return NULL;
 
     if (otype) {
         if (PyType_Check(otype) &&                      \
@@ -1994,7 +1996,7 @@ static PyMethodDef array_methods[] = {
     {"var", (PyCFunction)array_variance,
          METH_VARARGS | METH_KEYWORDS, NULL},
     {"view", (PyCFunction)array_view,
-         METH_VARARGS, NULL},
+         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL}           /* sentinel */
 };
 

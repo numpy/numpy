@@ -2198,15 +2198,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
-    """a.view(type)
+    """a.view(dtype=None)
 
     New view of array with the same data.
 
     Parameters
     ----------
-    type
-        Either a new sub-type object or a data-descriptor object
-    
+    dtype : sub-type or data-descriptor
+        Data-type of the returned view.
+
     """))
 
 add_newdoc('numpy.core.umath','geterrobj',
