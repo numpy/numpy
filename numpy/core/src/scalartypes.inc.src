@@ -15,16 +15,15 @@ static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
 
 /**begin repeat
 
-#name=number, integer, signedinteger, unsignedinteger, inexact, floating, complexfloating, flexible,
-character#
+#name=number, integer, signedinteger, unsignedinteger, inexact, floating, complexfloating, flexible, character#
 #NAME=Number, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, ComplexFloating, Flexible, Character#
 */
 
 static PyTypeObject Py@NAME@ArrType_Type = {
         PyObject_HEAD_INIT(NULL)
-        0,                                        /*ob_size*/
+        0,                                /*ob_size*/
         "numpy.@name@",                   /*tp_name*/
-        sizeof(PyObject),                         /*tp_basicsize*/
+        sizeof(PyObject),                 /*tp_basicsize*/
 };
 /**end repeat**/
 
@@ -69,7 +68,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 
         /* Must be a user-defined type --- check to see which
            scalar it inherits from. */
-        
+
 #define _CHK(cls) (PyObject_IsInstance(scalar, \
                                        (PyObject *)&Py##cls##ArrType_Type))
 #define _OBJ(lt) &(((Py##lt##ScalarObject *)scalar)->obval)
@@ -112,14 +111,14 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
                 if _CHK(Void) return ((PyVoidScalarObject *)scalar)->obval;
         }
         else _IFCASE(Object);
-        
+
 
         /* Use the alignment flag to figure out where the data begins
            after a PyObject_HEAD
         */
         memloc = (intp)scalar;
         memloc += sizeof(PyObject);
-        /* now round-up to the nearest alignment value 
+        /* now round-up to the nearest alignment value
          */
         align = descr->alignment;
         if (align > 1) memloc = ((memloc + align - 1)/align)*align;
@@ -260,9 +259,9 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
                 }
                 goto finish;
         }
-        
+
         memptr = scalar_value(scalar, typecode);
-        
+
 #ifndef Py_UNICODE_WIDE
         if (typecode->type_num == PyArray_UNICODE) {
                 PyUCS2Buffer_AsUCS4((Py_UNICODE *)memptr,
@@ -282,7 +281,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
         if (outcode == NULL) return r;
 
         if (outcode->type_num == typecode->type_num) {
-                if (!PyTypeNum_ISEXTENDED(typecode->type_num) || 
+                if (!PyTypeNum_ISEXTENDED(typecode->type_num) ||
 	             (outcode->elsize == typecode->elsize))
                         return r;
         }
@@ -797,7 +796,7 @@ gentype_itemsize_get(PyObject *self)
         if (typecode->type_num == NPY_UNICODE) {
                 elsize >>= 1;
         }
-#endif        
+#endif
         ret = PyInt_FromLong((long) elsize);
         Py_DECREF(typecode);
         return ret;
@@ -1304,7 +1303,7 @@ gentype_reduce(PyObject *self, PyObject *args)
 	  /* We need to expand the buffer so that we always write
 	     UCS4 to disk for pickle of unicode scalars.
 
-	     This could be in a unicode_reduce function, but 
+	     This could be in a unicode_reduce function, but
 	     that would require re-factoring.
 	  */
 		int alloc=0;
@@ -1727,7 +1726,7 @@ gentype_getsegcount(PyObject *self, Py_ssize_t *lenp)
         outcode = PyArray_DescrFromScalar(self);
         if (lenp) {
                 *lenp = outcode->elsize;
-#ifndef Py_UNICODE_WIDE                 
+#ifndef Py_UNICODE_WIDE
                 if (outcode->type_num == NPY_UNICODE) {
                         *lenp >>= 1;
                 }
@@ -1861,7 +1860,7 @@ static PyObject *
         else itemsize = 0;
         obj = type->tp_alloc(type, itemsize);
         if (obj == NULL) {Py_DECREF(robj); return NULL;}
-        if (typecode==NULL) 
+        if (typecode==NULL)
                 typecode = PyArray_DescrFromType(PyArray_@TYPE@);
         dest = scalar_value(obj, typecode);
         src = scalar_value(robj, typecode);
@@ -2406,12 +2405,12 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 		res = PyArray_FromScalar(self, NULL);
 	}
 	else {
-		PyErr_SetString(PyExc_IndexError, 
+		PyErr_SetString(PyExc_IndexError,
 				"invalid index to scalar variable.");
 		return NULL;
 	}
 
-	if (key == Py_Ellipsis) 
+	if (key == Py_Ellipsis)
 		return res;
 
 	if (key == Py_None) {
@@ -2420,7 +2419,7 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 		return ret;
 	}
 	/* Must be a Tuple */
-	
+
 	N = count_new_axes_0d(key);
 	if (N < 0) return NULL;
 	ret = add_new_axes_0d((PyArrayObject *)res, N);
