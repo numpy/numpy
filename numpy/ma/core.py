@@ -613,9 +613,8 @@ class _DomainedBinaryOperation:
         t = narray(self.domain(d1, d2), copy=False)
         if t.any(None):
             mb = mask_or(mb, t)
-            # The following two lines control the domain filling
-            d2 = d2.copy()
-            numpy.putmask(d2, t, self.filly)
+            # The following line controls the domain filling
+            d2 = numpy.where(t,self.filly,d2)
         m = mask_or(ma, mb)
         if (not m.ndim) and m:
             return masked

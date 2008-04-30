@@ -257,6 +257,10 @@ class TestMA(NumpyTestCase):
         x = array(0, mask=0)
         assert_equal(x.filled().ctypes.data, x.ctypes.data)
         assert_equal(str(xm), str(masked_print_option))
+        # Make sure we don't lose the shape in some circumstances
+        xm = array((0,0))/0.
+        assert_equal(xm.shape,(2,))
+        assert_equal(xm.mask,[1,1])        
     #.........................
     def test_basic_ufuncs (self):
         "Test various functions such as sin, cos."
