@@ -3458,6 +3458,7 @@ PyArray_CopyAndTranspose(PyObject *op)
 
     /* make sure it is well-behaved */
     arr = PyArray_FromAny(op, NULL, 0, 0, CARRAY, NULL);
+    if (arr == NULL) return NULL;
     nd = PyArray_NDIM(arr);
     if (nd == 1) {     /* we will give in to old behavior */
         ret = PyArray_Copy((PyArrayObject *)arr);
@@ -3488,7 +3489,7 @@ PyArray_CopyAndTranspose(PyObject *op)
     }
     /* do 2-d loop */
     NPY_BEGIN_ALLOW_THREADS;
-        optr = PyArray_DATA(ret);
+    optr = PyArray_DATA(ret);
     str2 = elsize*dims[0];
     for (i=0; i<dims[0]; i++) {
         iptr = PyArray_BYTES(arr) + i*elsize;
@@ -3500,7 +3501,7 @@ PyArray_CopyAndTranspose(PyObject *op)
         }
     }
     NPY_END_ALLOW_THREADS;
-        Py_DECREF(arr);
+    Py_DECREF(arr);
     return ret;
 }
 
