@@ -118,14 +118,14 @@
    */
   char* typecode_string(int typecode) {
     static char* type_names[25] = {"bool", "byte", "unsigned byte",
-				   "short", "unsigned short", "int",
-				   "unsigned int", "long", "unsigned long",
-				   "long long", "unsigned long long",
-				   "float", "double", "long double",
-				   "complex float", "complex double",
-				   "complex long double", "object",
-				   "string", "unicode", "void", "ntypes",
-				   "notype", "char", "unknown"};
+                                   "short", "unsigned short", "int",
+                                   "unsigned int", "long", "unsigned long",
+                                   "long long", "unsigned long long",
+                                   "float", "double", "long double",
+                                   "complex float", "complex double",
+                                   "complex long double", "object",
+                                   "string", "unicode", "void", "ntypes",
+                                   "notype", "char", "unknown"};
     return typecode < 24 ? type_names[typecode] : type_names[24];
   }
 
@@ -141,9 +141,9 @@
 /**********************************************************************/
 
 %fragment("NumPy_Object_to_Array", "header",
-	  fragment="NumPy_Backward_Compatibility",
-	  fragment="NumPy_Macros",
-	  fragment="NumPy_Utilities")
+          fragment="NumPy_Backward_Compatibility",
+          fragment="NumPy_Macros",
+          fragment="NumPy_Utilities")
 {
   /* Given a PyObject pointer, cast it to a PyArrayObject pointer if
    * legal.  If not, set the python error string appropriately and
@@ -153,7 +153,7 @@
   {
     PyArrayObject* ary = NULL;
     if (is_array(input) && (typecode == NPY_NOTYPE ||
-			    PyArray_EquivTypenums(array_type(input), typecode)))
+                            PyArray_EquivTypenums(array_type(input), typecode)))
     {
       ary = (PyArrayObject*) input;
     }
@@ -162,8 +162,8 @@
       char* desired_type = typecode_string(typecode);
       char* actual_type  = typecode_string(array_type(input));
       PyErr_Format(PyExc_TypeError,
-		   "Array of type '%s' required.  Array of type '%s' given",
-		   desired_type, actual_type);
+                   "Array of type '%s' required.  Array of type '%s' given",
+                   desired_type, actual_type);
       ary = NULL;
     }
     else
@@ -171,8 +171,8 @@
       char * desired_type = typecode_string(typecode);
       char * actual_type  = pytype_string(input);
       PyErr_Format(PyExc_TypeError,
-		   "Array of type '%s' required.  A '%s' was given",
-		   desired_type, actual_type);
+                   "Array of type '%s' required.  A '%s' was given",
+                   desired_type, actual_type);
       ary = NULL;
     }
     return ary;
@@ -184,12 +184,12 @@
    * the routine returns NULL.
    */
   PyArrayObject* obj_to_array_allow_conversion(PyObject* input, int typecode,
-					       int* is_new_object)
+                                               int* is_new_object)
   {
     PyArrayObject* ary = NULL;
     PyObject* py_obj;
     if (is_array(input) && (typecode == NPY_NOTYPE ||
-			    PyArray_EquivTypenums(array_type(input),typecode)))
+                            PyArray_EquivTypenums(array_type(input),typecode)))
     {
       ary = (PyArrayObject*) input;
       *is_new_object = 0;
@@ -210,7 +210,7 @@
    * flag it as a new object and return the pointer.
    */
   PyArrayObject* make_contiguous(PyArrayObject* ary, int* is_new_object,
-				 int min_dims, int max_dims)
+                                 int min_dims, int max_dims)
   {
     PyArrayObject* result;
     if (array_is_contiguous(ary))
@@ -221,9 +221,9 @@
     else
     {
       result = (PyArrayObject*) PyArray_ContiguousFromObject((PyObject*)ary,
-							     array_type(ary),
-							     min_dims,
-							     max_dims);
+                                                             array_type(ary),
+                                                             min_dims,
+                                                             max_dims);
       *is_new_object = 1;
     }
     return result;
@@ -235,20 +235,20 @@
    * will be set.
    */
   PyArrayObject* obj_to_array_contiguous_allow_conversion(PyObject* input,
-							  int typecode,
-							  int* is_new_object)
+                                                          int typecode,
+                                                          int* is_new_object)
   {
     int is_new1 = 0;
     int is_new2 = 0;
     PyArrayObject* ary2;
     PyArrayObject* ary1 = obj_to_array_allow_conversion(input, typecode,
-							&is_new1);
+                                                        &is_new1);
     if (ary1)
     {
       ary2 = make_contiguous(ary1, &is_new2, 0, 0);
       if ( is_new1 && is_new2)
       {
-	Py_DECREF(ary1);
+        Py_DECREF(ary1);
       }
       ary1 = ary2;
     }
@@ -260,8 +260,8 @@
 /**********************************************************************/
 
 %fragment("NumPy_Array_Requirements", "header",
-	  fragment="NumPy_Backward_Compatibility",
-	  fragment="NumPy_Macros")
+          fragment="NumPy_Backward_Compatibility",
+          fragment="NumPy_Macros")
 {
   /* Test whether a python object is contiguous.  If array is
    * contiguous, return 1.  Otherwise, set the python error string and
@@ -273,7 +273,7 @@
     if (!array_is_contiguous(ary))
     {
       PyErr_SetString(PyExc_TypeError,
-		      "Array must be contiguous.  A non-contiguous array was given");
+                      "Array must be contiguous.  A non-contiguous array was given");
       contiguous = 0;
     }
     return contiguous;
@@ -289,8 +289,8 @@
     if (!array_is_native(ary))
     {
       PyErr_SetString(PyExc_TypeError,
-		      "Array must have native byteorder.  "
-		      "A byte-swapped array was given");
+                      "Array must have native byteorder.  "
+                      "A byte-swapped array was given");
       native = 0;
     }
     return native;
@@ -306,8 +306,8 @@
     if (array_numdims(ary) != exact_dimensions)
     {
       PyErr_Format(PyExc_TypeError,
-		   "Array must have %d dimensions.  Given array has %d dimensions",
-		   exact_dimensions, array_numdims(ary));
+                   "Array must have %d dimensions.  Given array has %d dimensions",
+                   exact_dimensions, array_numdims(ary));
       success = 0;
     }
     return success;
@@ -328,21 +328,21 @@
     {
       if (array_numdims(ary) == exact_dimensions[i])
       {
-	success = 1;
+        success = 1;
       }
     }
     if (!success)
     {
       for (i = 0; i < n-1; i++)
       {
-	sprintf(s, "%d, ", exact_dimensions[i]);
-	strcat(dims_str,s);
+        sprintf(s, "%d, ", exact_dimensions[i]);
+        strcat(dims_str,s);
       }
       sprintf(s, " or %d", exact_dimensions[n-1]);
       strcat(dims_str,s);
       PyErr_Format(PyExc_TypeError,
-		   "Array must have %s dimensions.  Given array has %d dimensions",
-		   dims_str, array_numdims(ary));
+                   "Array must have %s dimensions.  Given array has %d dimensions",
+                   dims_str, array_numdims(ary));
     }
     return success;
   }
@@ -363,35 +363,35 @@
     {
       if (size[i] != -1 &&  size[i] != array_size(ary,i))
       {
-	success = 0;
+        success = 0;
       }
     }
     if (!success)
     {
       for (i = 0; i < n; i++)
       {
-	if (size[i] == -1)
-	{
-	  sprintf(s, "*,");
-	}
-	else
-	{
-	  sprintf(s, "%ld,", (long int)size[i]);
-	}
-	strcat(desired_dims,s);
+        if (size[i] == -1)
+        {
+          sprintf(s, "*,");
+        }
+        else
+        {
+          sprintf(s, "%ld,", (long int)size[i]);
+        }
+        strcat(desired_dims,s);
       }
       len = strlen(desired_dims);
       desired_dims[len-1] = ']';
       for (i = 0; i < n; i++)
       {
-	sprintf(s, "%ld,", (long int)array_size(ary,i));
-	strcat(actual_dims,s);
+        sprintf(s, "%ld,", (long int)array_size(ary,i));
+        strcat(actual_dims,s);
       }
       len = strlen(actual_dims);
       actual_dims[len-1] = ']';
       PyErr_Format(PyExc_TypeError,
-		   "Array must have shape of %s.  Given array has shape of %s",
-		   desired_dims, actual_dims);
+                   "Array must have shape of %s.  Given array has shape of %s",
+                   desired_dims, actual_dims);
     }
     return success;
   }
@@ -418,11 +418,11 @@
 
 /* Combine all NumPy fragments into one for convenience */
 %fragment("NumPy_Fragments", "header",
-	  fragment="NumPy_Backward_Compatibility",
-	  fragment="NumPy_Macros",
-	  fragment="NumPy_Utilities",
-	  fragment="NumPy_Object_to_Array",
-	  fragment="NumPy_Array_Requirements") { }
+          fragment="NumPy_Backward_Compatibility",
+          fragment="NumPy_Macros",
+          fragment="NumPy_Utilities",
+          fragment="NumPy_Object_to_Array",
+          fragment="NumPy_Array_Requirements") { }
 
 /* End John Hunter translation (with modifications by Bill Spotz)
  */
@@ -537,19 +537,19 @@
 /* Typemap suite for (DATA_TYPE IN_ARRAY1[ANY])
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE IN_ARRAY1[ANY])
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE IN_ARRAY1[ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[1] = { $1_dim0 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 1) ||
       !require_size(array, size, 1)) SWIG_fail;
   $1 = ($1_ltype) array_data(array);
@@ -564,19 +564,19 @@
 /* Typemap suite for (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* IN_ARRAY1, DIM_TYPE DIM1)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[1] = { -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 1) ||
       !require_size(array, size, 1)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
@@ -592,19 +592,19 @@
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DATA_TYPE* IN_ARRAY1)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[1] = {-1};
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 1) ||
       !require_size(array, size, 1)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
@@ -620,19 +620,19 @@
 /* Typemap suite for (DATA_TYPE IN_ARRAY2[ANY][ANY])
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE IN_ARRAY2[ANY][ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[2] = { $1_dim0, $1_dim1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 2) ||
       !require_size(array, size, 2)) SWIG_fail;
   $1 = ($1_ltype) array_data(array);
@@ -647,19 +647,19 @@
 /* Typemap suite for (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* IN_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[2] = { -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 2) ||
       !require_size(array, size, 2)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
@@ -676,19 +676,19 @@
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_ARRAY2)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[2] = { -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 2) ||
       !require_size(array, size, 2)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
@@ -705,19 +705,19 @@
 /* Typemap suite for (DATA_TYPE* IN_FARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* IN_FARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* IN_FARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[2] = { -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 2) ||
       !require_size(array, size, 2) || !require_fortran(array)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
@@ -734,19 +734,19 @@
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_FARRAY2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_FARRAY2)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* IN_FARRAY2)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[2] = { -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 2) ||
       !require_size(array, size, 2) || !require_fortran(array)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
@@ -763,19 +763,19 @@
 /* Typemap suite for (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE IN_ARRAY3[ANY][ANY][ANY])
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[3] = { $1_dim0, $1_dim1, $1_dim2 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 3) ||
       !require_size(array, size, 3)) SWIG_fail;
   $1 = ($1_ltype) array_data(array);
@@ -791,19 +791,19 @@
  *                    DIM_TYPE DIM3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[3] = { -1, -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 3) ||
       !require_size(array, size, 3)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
@@ -822,19 +822,19 @@
  *                    DATA_TYPE* IN_ARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_ARRAY3)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[3] = { -1, -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 3) ||
       !require_size(array, size, 3)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
@@ -853,19 +853,19 @@
  *                    DIM_TYPE DIM3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* IN_FARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* IN_FARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[3] = { -1, -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 3) ||
       !require_size(array, size, 3) | !require_fortran(array)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
@@ -884,19 +884,19 @@
  *                    DATA_TYPE* IN_FARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_FARRAY3)
 {
   $1 = is_array($input) || PySequence_Check($input);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* IN_FARRAY3)
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[3] = { -1, -1, -1 };
   array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-						   &is_new_object);
+                                                   &is_new_object);
   if (!array || !require_dimensions(array, 3) ||
       !require_size(array, size, 3) || !require_fortran(array)) SWIG_fail;
   $1 = (DIM_TYPE) array_size(array,0);
@@ -918,14 +918,14 @@
 /* Typemap suite for (DATA_TYPE INPLACE_ARRAY1[ANY])
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE INPLACE_ARRAY1[ANY])
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE INPLACE_ARRAY1[ANY])
   (PyArrayObject* array=NULL)
 {
@@ -939,14 +939,14 @@
 /* Typemap suite for (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_ARRAY1, DIM_TYPE DIM1)
   (PyArrayObject* array=NULL, int i=1)
 {
@@ -961,14 +961,14 @@
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DATA_TYPE* INPLACE_ARRAY1)
   (PyArrayObject* array=NULL, int i=0)
 {
@@ -983,14 +983,14 @@
 /* Typemap suite for (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE INPLACE_ARRAY2[ANY][ANY])
   (PyArrayObject* array=NULL)
 {
@@ -1004,14 +1004,14 @@
 /* Typemap suite for (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_ARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
   (PyArrayObject* array=NULL)
 {
@@ -1026,14 +1026,14 @@
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_ARRAY2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_ARRAY2)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_ARRAY2)
   (PyArrayObject* array=NULL)
 {
@@ -1048,14 +1048,14 @@
 /* Typemap suite for (DATA_TYPE* INPLACE_FARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* INPLACE_FARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_FARRAY2, DIM_TYPE DIM1, DIM_TYPE DIM2)
   (PyArrayObject* array=NULL)
 {
@@ -1070,14 +1070,14 @@
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_FARRAY2)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_FARRAY2)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DATA_TYPE* INPLACE_FARRAY2)
   (PyArrayObject* array=NULL)
 {
@@ -1092,14 +1092,14 @@
 /* Typemap suite for (DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY])
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY])
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE INPLACE_ARRAY3[ANY][ANY][ANY])
   (PyArrayObject* array=NULL)
 {
@@ -1114,14 +1114,14 @@
  *                    DIM_TYPE DIM3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* INPLACE_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
   (PyArrayObject* array=NULL)
 {
@@ -1138,14 +1138,14 @@
  *                    DATA_TYPE* INPLACE_ARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* INPLACE_ARRAY3)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* INPLACE_ARRAY3)
   (PyArrayObject* array=NULL)
 {
@@ -1162,14 +1162,14 @@
  *                    DIM_TYPE DIM3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DATA_TYPE* INPLACE_FARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* INPLACE_FARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3)
   (PyArrayObject* array=NULL)
 {
@@ -1186,14 +1186,14 @@
  *                    DATA_TYPE* INPLACE_FARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
-	   fragment="NumPy_Macros")
+           fragment="NumPy_Macros")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* INPLACE_FARRAY3)
 {
   $1 = is_array($input) && PyArray_EquivTypenums(array_type($input),
-						 DATA_TYPECODE);
+                                                 DATA_TYPECODE);
 }
 %typemap(in,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DATA_TYPE* INPLACE_FARRAY3)
   (PyArrayObject* array=NULL)
 {
@@ -1213,7 +1213,7 @@
 /* Typemap suite for (DATA_TYPE ARGOUT_ARRAY1[ANY])
  */
 %typemap(in,numinputs=0,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Macros")
+         fragment="NumPy_Backward_Compatibility,NumPy_Macros")
   (DATA_TYPE ARGOUT_ARRAY1[ANY])
   (PyObject * array = NULL)
 {
@@ -1231,7 +1231,7 @@
 /* Typemap suite for (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
  */
 %typemap(in,numinputs=1,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DATA_TYPE* ARGOUT_ARRAY1, DIM_TYPE DIM1)
   (PyObject * array = NULL)
 {
@@ -1240,8 +1240,8 @@
   {
     char* typestring = pytype_string($input);
     PyErr_Format(PyExc_TypeError,
-		 "Int dimension expected.  '%s' given.",
-		 typestring);
+                 "Int dimension expected.  '%s' given.",
+                 typestring);
     SWIG_fail;
   }
   $2 = (DIM_TYPE) PyInt_AsLong($input);
@@ -1259,7 +1259,7 @@
 /* Typemap suite for (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
  */
 %typemap(in,numinputs=1,
-	 fragment="NumPy_Fragments")
+         fragment="NumPy_Fragments")
   (DIM_TYPE DIM1, DATA_TYPE* ARGOUT_ARRAY1)
   (PyObject * array = NULL)
 {
@@ -1268,8 +1268,8 @@
   {
     char* typestring = pytype_string($input);
     PyErr_Format(PyExc_TypeError,
-		 "Int dimension expected.  '%s' given.",
-		 typestring);
+                 "Int dimension expected.  '%s' given.",
+                 typestring);
     SWIG_fail;
   }
   $1 = (DIM_TYPE) PyInt_AsLong($input);
@@ -1287,7 +1287,7 @@
 /* Typemap suite for (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
  */
 %typemap(in,numinputs=0,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Macros")
+         fragment="NumPy_Backward_Compatibility,NumPy_Macros")
   (DATA_TYPE ARGOUT_ARRAY2[ANY][ANY])
   (PyObject * array = NULL)
 {
@@ -1305,7 +1305,7 @@
 /* Typemap suite for (DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY])
  */
 %typemap(in,numinputs=0,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Macros")
+         fragment="NumPy_Backward_Compatibility,NumPy_Macros")
   (DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY])
   (PyObject * array = NULL)
 {
@@ -1334,7 +1334,7 @@
   $2 = &dim_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility")
   (DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1)
 {
   npy_intp dims[1] = { *$2 };
@@ -1353,7 +1353,7 @@
   $2 = &data_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility")
   (DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEW_ARRAY1)
 {
   npy_intp dims[1] = { *$1 };
@@ -1373,7 +1373,7 @@
   $3 = &dim2_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility")
   (DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)
 {
   npy_intp dims[2] = { *$2, *$3 };
@@ -1393,7 +1393,7 @@
   $3 = &data_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_ARRAY2)
 {
   npy_intp dims[2] = { *$1, *$2 };
@@ -1413,7 +1413,7 @@
   $3 = &dim2_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
   (DATA_TYPE** ARGOUTVIEW_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)
 {
   npy_intp dims[2] = { *$2, *$3 };
@@ -1434,7 +1434,7 @@
   $3 = &data_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEW_FARRAY2)
 {
   npy_intp dims[2] = { *$1, *$2 };
@@ -1457,7 +1457,7 @@
   $4 = &dim3_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility")
   (DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
 {
   npy_intp dims[3] = { *$2, *$3, *$4 };
@@ -1479,7 +1479,7 @@
   $4 = &data_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility")
+         fragment="NumPy_Backward_Compatibility")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)
 {
   npy_intp dims[3] = { *$1, *$2, *$3 };
@@ -1501,7 +1501,7 @@
   $4 = &dim3_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
   (DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
 {
   npy_intp dims[3] = { *$2, *$3, *$4 };
@@ -1524,7 +1524,7 @@
   $4 = &data_temp;
 }
 %typemap(argout,
-	 fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_FARRAY3)
 {
   npy_intp dims[3] = { *$1, *$2, *$3 };
