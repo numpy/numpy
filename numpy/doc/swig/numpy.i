@@ -341,7 +341,7 @@
       sprintf(s, " or %d", exact_dimensions[n-1]);            
       strcat(dims_str,s);
       PyErr_Format(PyExc_TypeError, 
-		   "Array must be have %s dimensions.  Given array has %d dimensions",
+		   "Array must have %s dimensions.  Given array has %d dimensions",
 		   dims_str, array_numdims(ary));
     }
     return success;
@@ -390,7 +390,7 @@
       len = strlen(actual_dims);
       actual_dims[len-1] = ']';
       PyErr_Format(PyExc_TypeError, 
-		   "Array must be have shape of %s.  Given array has shape of %s",
+		   "Array must have shape of %s.  Given array has shape of %s",
 		   desired_dims, actual_dims);
     }
     return success;
