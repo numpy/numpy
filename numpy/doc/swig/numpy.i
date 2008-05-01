@@ -161,8 +161,8 @@
     {
       char* desired_type = typecode_string(typecode);
       char* actual_type  = typecode_string(array_type(input));
-      PyErr_Format(PyExc_TypeError, 
-		   "Array of type '%s' required.  Array of type '%s' given", 
+      PyErr_Format(PyExc_TypeError,
+		   "Array of type '%s' required.  Array of type '%s' given",
 		   desired_type, actual_type);
       ary = NULL;
     }
@@ -170,8 +170,8 @@
     {
       char * desired_type = typecode_string(typecode);
       char * actual_type  = pytype_string(input);
-      PyErr_Format(PyExc_TypeError, 
-		   "Array of type '%s' required.  A '%s' was given", 
+      PyErr_Format(PyExc_TypeError,
+		   "Array of type '%s' required.  A '%s' was given",
 		   desired_type, actual_type);
       ary = NULL;
     }
@@ -220,8 +220,8 @@
     }
     else
     {
-      result = (PyArrayObject*) PyArray_ContiguousFromObject((PyObject*)ary, 
-							     array_type(ary), 
+      result = (PyArrayObject*) PyArray_ContiguousFromObject((PyObject*)ary,
+							     array_type(ary),
 							     min_dims,
 							     max_dims);
       *is_new_object = 1;
@@ -241,7 +241,7 @@
     int is_new1 = 0;
     int is_new2 = 0;
     PyArrayObject* ary2;
-    PyArrayObject* ary1 = obj_to_array_allow_conversion(input, typecode, 
+    PyArrayObject* ary1 = obj_to_array_allow_conversion(input, typecode,
 							&is_new1);
     if (ary1)
     {
@@ -250,7 +250,7 @@
       {
 	Py_DECREF(ary1);
       }
-      ary1 = ary2;    
+      ary1 = ary2;
     }
     *is_new_object = is_new1 || is_new2;
     return ary1;
@@ -305,8 +305,8 @@
     int success = 1;
     if (array_numdims(ary) != exact_dimensions)
     {
-      PyErr_Format(PyExc_TypeError, 
-		   "Array must have %d dimensions.  Given array has %d dimensions", 
+      PyErr_Format(PyExc_TypeError,
+		   "Array must have %d dimensions.  Given array has %d dimensions",
 		   exact_dimensions, array_numdims(ary));
       success = 0;
     }
@@ -335,17 +335,17 @@
     {
       for (i = 0; i < n-1; i++)
       {
-	sprintf(s, "%d, ", exact_dimensions[i]);                
+	sprintf(s, "%d, ", exact_dimensions[i]);
 	strcat(dims_str,s);
       }
-      sprintf(s, " or %d", exact_dimensions[n-1]);            
+      sprintf(s, " or %d", exact_dimensions[n-1]);
       strcat(dims_str,s);
-      PyErr_Format(PyExc_TypeError, 
+      PyErr_Format(PyExc_TypeError,
 		   "Array must have %s dimensions.  Given array has %d dimensions",
 		   dims_str, array_numdims(ary));
     }
     return success;
-  }    
+  }
 
   /* Require the given PyArrayObject to have a specified shape.  If the
    * array has the specified shape, return 1.  Otherwise, set the python
@@ -363,7 +363,7 @@
     {
       if (size[i] != -1 &&  size[i] != array_size(ary,i))
       {
-	success = 0;    
+	success = 0;
       }
     }
     if (!success)
@@ -372,24 +372,24 @@
       {
 	if (size[i] == -1)
 	{
-	  sprintf(s, "*,");                
+	  sprintf(s, "*,");
 	}
 	else
 	{
-	  sprintf(s, "%ld,", (long int)size[i]);                
-	}    
+	  sprintf(s, "%ld,", (long int)size[i]);
+	}
 	strcat(desired_dims,s);
       }
       len = strlen(desired_dims);
       desired_dims[len-1] = ']';
       for (i = 0; i < n; i++)
       {
-	sprintf(s, "%ld,", (long int)array_size(ary,i));                            
+	sprintf(s, "%ld,", (long int)array_size(ary,i));
 	strcat(actual_dims,s);
       }
       len = strlen(actual_dims);
       actual_dims[len-1] = ']';
-      PyErr_Format(PyExc_TypeError, 
+      PyErr_Format(PyExc_TypeError,
 		   "Array must have shape of %s.  Given array has shape of %s",
 		   desired_dims, actual_dims);
     }
@@ -818,7 +818,7 @@
     { Py_DECREF(array$argnum); }
 }
 
-/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, 
+/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
  *                    DATA_TYPE* IN_ARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
@@ -880,7 +880,7 @@
     { Py_DECREF(array$argnum); }
 }
 
-/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, 
+/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
  *                    DATA_TYPE* IN_FARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
@@ -1134,7 +1134,7 @@
   $4 = (DIM_TYPE) array_size(array,2);
 }
 
-/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, 
+/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
  *                    DATA_TYPE* INPLACE_ARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
@@ -1182,7 +1182,7 @@
   $4 = (DIM_TYPE) array_size(array,2);
 }
 
-/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, 
+/* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
  *                    DATA_TYPE* INPLACE_FARRAY3)
  */
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY,
@@ -1239,8 +1239,8 @@
   if (!PyInt_Check($input))
   {
     char* typestring = pytype_string($input);
-    PyErr_Format(PyExc_TypeError, 
-		 "Int dimension expected.  '%s' given.", 
+    PyErr_Format(PyExc_TypeError,
+		 "Int dimension expected.  '%s' given.",
 		 typestring);
     SWIG_fail;
   }
@@ -1267,8 +1267,8 @@
   if (!PyInt_Check($input))
   {
     char* typestring = pytype_string($input);
-    PyErr_Format(PyExc_TypeError, 
-		 "Int dimension expected.  '%s' given.", 
+    PyErr_Format(PyExc_TypeError,
+		 "Int dimension expected.  '%s' given.",
 		 typestring);
     SWIG_fail;
   }
