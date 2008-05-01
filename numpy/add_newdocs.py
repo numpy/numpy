@@ -2198,14 +2198,27 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
-    """a.view(dtype=None)
+    """a.view(dtype=None, type=None)
 
     New view of array with the same data.
 
     Parameters
     ----------
-    dtype : sub-type or data-descriptor
-        Data-type of the returned view.
+    dtype : data-type
+        Data-type descriptor of the returned view, e.g. float32 or int16.
+    type : python type
+        Type of the returned view, e.g. ndarray or matrix.
+
+    Examples
+    --------
+    >>> x = np.array([(1,2)],dtype=[('a',np.int8),('b',np.int8)])
+    >>> y = x.view(dtype=np.int16, type=np.matrix)
+
+    >>> print y.dtype
+    int16
+
+    >>> print type(y)
+    <class 'numpy.core.defmatrix.matrix'>
 
     """))
 

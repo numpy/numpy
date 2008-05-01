@@ -103,26 +103,63 @@ array_squeeze(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *otype=NULL;
-    PyArray_Descr *type=NULL;
+    PyObject *out_dtype_or_type=NULL;
+    PyObject *out_dtype=NULL;
+    PyObject *out_type=NULL;
+    PyArray_Descr *dtype=NULL;
 
-    static char *kwlist[] = {"dtype", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &otype))
+    static char *kwlist[] = {"dtype_or_type", "dtype", "type", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO", kwlist,
+                                     &out_dtype_or_type,
+                                     &out_dtype,
+                                     &out_type))
         return NULL;
 
-    if (otype) {
-        if (PyType_Check(otype) &&                      \
-            PyType_IsSubtype((PyTypeObject *)otype,
+    /* If user specified a positional argument, guess whether it
+       represents a type or a dtype for backward compatibility. */
+    if (out_dtype_or_type) {
+
+        /* type specified? */
+        if (PyType_Check(out_dtype_or_type) &&
+            PyType_IsSubtype((PyTypeObject *)out_dtype_or_type,
                              &PyArray_Type)) {
-            return PyArray_View(self, NULL,
-                                (PyTypeObject *)otype);
-        }
-        else {
-            if (PyArray_DescrConverter(otype, &type) == PY_FAIL)
+            if (out_type) {
+                PyErr_SetString(PyExc_ValueError,
+                                "Cannot specify output type twice.");
                 return NULL;
+            }
+
+            out_type = out_dtype_or_type;
+        }
+
+        /* dtype specified */
+        else {
+            if (out_dtype) {
+                PyErr_SetString(PyExc_ValueError,
+                                "Cannot specify output dtype twice.");
+                return NULL;
+            }
+
+            out_dtype = out_dtype_or_type;
         }
     }
-    return PyArray_View(self, type, NULL);
+
+    if ((out_type) && (!PyType_Check(out_type) ||
+                       !PyType_IsSubtype((PyTypeObject *)out_type,
+                                         &PyArray_Type))) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Type must be a Python type object");
+        return NULL;
+    }
+
+    if ((out_dtype) &&
+        (PyArray_DescrConverter(out_dtype, &dtype) == PY_FAIL)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Dtype must be a numpy data-type");
+        return NULL;
+    }
+
+    return PyArray_View(self, dtype, (PyTypeObject*)out_type);
 }
 
 static PyObject *

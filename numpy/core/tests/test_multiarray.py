@@ -842,6 +842,18 @@ class TestView(NumpyTestCase):
         assert_array_equal(y,z)
         assert_array_equal(y, [67305985, 134678021])
 
+    def test_type(self):
+        x = np.array([1,2,3])
+        assert(isinstance(x.view(np.matrix),np.matrix))
+
+    def test_keywords(self):
+        x = np.array([(1,2)],dtype=[('a',np.int8),('b',np.int8)])
+        y = x.view(dtype=np.int16, type=np.matrix)
+        assert_array_equal(y,[[513]])
+
+        assert(isinstance(y,np.matrix))
+        assert_equal(y.dtype,np.int16)
+
 
 # Import tests without matching module names
 set_local_path()
