@@ -127,7 +127,7 @@
           fragment="NumPy_Backward_Compatibility")
 {
   SWIGINTERN int
-  SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val) 
+  SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val)
   {
     static PyArray_Descr * ulongDescr = PyArray_DescrNewFromType(NPY_ULONG);
     if (PyInt_Check(obj)) {
