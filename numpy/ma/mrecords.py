@@ -180,9 +180,8 @@ class MaskedRecords(MaskedArray, object):
         self.__dict__.update(attrdict)
         # Finalize as a regular maskedarray .....
         # Update special attributes ...
-        self._basedict = getattr(obj, '_basedict', getattr(obj,'__dict__',None))
-        if self._basedict is not None:
-            self.__dict__.update(self._basedict)
+        self._basedict = getattr(obj, '_basedict', getattr(obj,'__dict__',{}))
+        self.__dict__.update(self._basedict)
         return
     #......................................................
     def _getdata(self):

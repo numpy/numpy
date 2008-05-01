@@ -1170,7 +1170,7 @@ class MaskedArray(numeric.ndarray):
         # Process data............
         _data = narray(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
-        _basedict = getattr(data, '_basedict', getattr(data, '__dict__', None))
+        _basedict = getattr(data, '_basedict', getattr(data, '__dict__', {}))
         if not isinstance(data, MaskedArray) or not subok:
             _data = _data.view(cls)
         else:
@@ -1225,26 +1225,27 @@ class MaskedArray(numeric.ndarray):
     #
     def _update_from(self, obj):
         """Copies some attributes of obj to self.
-        """
-        self._hardmask = getattr(obj, '_hardmask', False)
-        self._sharedmask = getattr(obj, '_sharedmask', False)
+        """  
         if obj is not None:
-            self._baseclass = getattr(obj, '_baseclass', type(obj))
+            _baseclass = type(obj)
         else:
-            self._baseclass = ndarray
-        self._fill_value = getattr(obj, '_fill_value', None)
+            _baseclass = ndarray
+        _basedict = getattr(obj,'_basedict',getattr(obj,'__dict__',{}))
+        _dict = dict(_fill_value=getattr(obj, '_fill_value', None),
+                     _hardmask=getattr(obj, '_hardmask', False),
+                     _sharedmask=getattr(obj, '_sharedmask', False),
+                     _baseclass=getattr(obj,'_baseclass',_baseclass),
+                     _basedict=_basedict,)
+        self.__dict__.update(_dict)
+        self.__dict__.update(_basedict)        
         return
     #........................
     def __array_finalize__(self,obj):
         """Finalizes the masked array.
         """
         # Get main attributes .........
-        self._mask = getattr(obj, '_mask', nomask)
         self._update_from(obj)
-        # Update special attributes ...
-        self._basedict = getattr(obj, '_basedict', getattr(obj, '__dict__', None))
-        if self._basedict is not None:
-            self.__dict__.update(self._basedict)
+        self._mask = getattr(obj, '_mask', nomask)
         # Finalize the mask ...........
         if self._mask is not nomask:
             self._mask.shape = self.shape
@@ -1305,6 +1306,7 @@ class MaskedArray(numeric.ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
+        dtest = ndarray.__getitem__(self, indx)
         dout = ndarray.__getitem__(self.view(ndarray), indx)
         m = self._mask
         if not getattr(dout,'ndim', False):
