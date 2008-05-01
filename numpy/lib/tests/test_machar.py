@@ -12,8 +12,7 @@ class TestMachAr(NumpyTestCase):
             hiprec = ntypes.float96
             machar = MachAr(lambda v:array([v], hiprec))
         except AttributeError:
-            print "Skipping test: no nyptes.float96 available on this" \
-                  " platform."
+            "Skipping test: no nyptes.float96 available on this platform."
 
     def test_underlow(self):
         """Regression testing for #759: instanciating MachAr for dtype =
