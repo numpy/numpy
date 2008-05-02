@@ -1306,7 +1306,6 @@ class MaskedArray(numeric.ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
-        dtest = ndarray.__getitem__(self, indx)
         dout = ndarray.__getitem__(self.view(ndarray), indx)
         m = self._mask
         if not getattr(dout,'ndim', False):
