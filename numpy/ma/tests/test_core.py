@@ -1342,6 +1342,13 @@ class TestArrayMethods(NumpyTestCase):
         # Checs that small_mask is preserved
         a = array([1,2,3,4],mask=[0,0,0,0],shrink=False)
         assert_equal(a.ravel()._mask, [0,0,0,0])
+        # Test that the fill_value is preserved
+        a.fill_value = -99
+        a.shape = (2,2)
+        ar = a.ravel()
+        assert_equal(ar._mask, [0,0,0,0])
+        assert_equal(ar._data, [1,2,3,4])
+        assert_equal(ar.fill_value, -99)
 
     def test_reshape(self):
         "Tests reshape"
@@ -1358,11 +1365,18 @@ class TestArrayMethods(NumpyTestCase):
         a = array([1,2,3,4],mask=[0,0,0,0])
         b = a.compressed()
         assert_equal(b, a)
-        assert_equal(b._mask, nomask)
         a[0] = masked
         b = a.compressed()
-        assert_equal(b._data, [2,3,4])
-        assert_equal(b._mask, nomask)
+        assert_equal(b, [2,3,4])
+        #
+        a = array(numpy.matrix([1,2,3,4]), mask=[0,0,0,0])
+        b = a.compressed()
+        assert_equal(b,a)
+        assert(isinstance(b,numpy.matrix))
+        a[0,0] = masked
+        b = a.compressed()
+        assert_equal(b, [[2,3,4]])
+        
 
     def test_tolist(self):
         "Tests to list"

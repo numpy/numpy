@@ -1307,6 +1307,10 @@ class MaskedArray(numeric.ndarray):
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
         dout = ndarray.__getitem__(self.view(ndarray), indx)
+        # We could directly use ndarray.__getitem__ on self...
+        # But then we would have to modify __array_finalize__ to prevent the
+        # mask of being reshaped if it hasn't been set up properly yet...
+        # So it's easier to stick to the current version
         m = self._mask
         if not getattr(dout,'ndim', False):
             # Just a scalar............
@@ -1577,10 +1581,9 @@ class MaskedArray(numeric.ndarray):
         """Return a 1-D array of all the non-masked data.
 
         """
-        data = ndarray.ravel(self._data).view(type(self))
-        data._update_from(self)
+        data = ndarray.ravel(self._data)
         if self._mask is not nomask:
-            data = data[numpy.logical_not(ndarray.ravel(self._mask))]
+            data = data.compress(numpy.logical_not(ndarray.ravel(self._mask)))
         return data
 
 
