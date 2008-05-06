@@ -83,3 +83,6 @@ PyArray_ElementStrides
 PyArray_Item_INCREF
 PyArray_Item_XDECREF
 PyArray_FieldNames
+PyArray_AlignedMalloc 
+PyArray_AlignedRealloc 
+PyArray_AlignedFree 

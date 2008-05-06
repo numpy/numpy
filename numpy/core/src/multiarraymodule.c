@@ -81,7 +81,33 @@ _arraydescr_fromobj(PyObject *obj)
     return NULL;
 }
 
+/* 
+ * Aligned memory allocators 
+ */ 
+ 
+#include "alignedalloc.c" 
+ 
+/*OBJECT_API*/ 
+static void*  
+PyArray_AlignedMalloc(size_t size, size_t alignment) 
+{ 
+        return _aligned_malloc(size, alignment); 
+} 
 
+/*OBJECT_API*/ 
+static void   
+PyArray_AlignedFree(void* ptr) 
+{ 
+        _aligned_free(ptr); 
+} 
+
+/*OBJECT_API*/ 
+static void*  
+PyArray_AlignedRealloc(void* ptr, size_t size, size_t alignment) 
+{ 
+        return _aligned_realloc(ptr, size, alignment); 
+} 
+ 
 /* Including this file is the only way I know how to declare functions
    static in each file, and store the pointers from functions in both
    arrayobject.c and multiarraymodule.c for the C-API
@@ -6124,11 +6150,7 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
         dptr += dtype->elsize;
         if (num < 0 && thisbuf == size) {
             totalbytes += bytes;
-#ifdef NOUSE_PYDATAMEM_RENEW
             tmp = SYS_REALLOC(r->data, totalbytes);
-#else
-            tmp = PyDataMem_RENEW(r->data, totalbytes);
-#endif
             if (tmp == NULL) {
                 err = 1;
                 break;
@@ -6140,7 +6162,8 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
         if (skip_sep(&stream, clean_sep, stream_data) < 0)
             break;
     }
-#ifdef NOUSE_PYDATAMEM_RENEW
+
+    /* XXX: replaces this when using real aligned allocator */
     tmp = _fake_realloc(r->data, (*nread)*dtype->elsize, 
                         PyArray_SIZE(r) * dtype->elsize); 
     if (tmp == NULL) err=1;
@@ -6148,7 +6171,7 @@ array_from_text(PyArray_Descr *dtype, intp num, char *sep, size_t *nread,
         PyArray_DIM(r,0) = *nread;
         r->data = tmp;
     }
-#else
+#if 0
     if (num < 0) {
         tmp = PyDataMem_RENEW(r->data, (*nread)*dtype->elsize);
 	if (tmp == NULL) err=1;
@@ -6388,13 +6411,8 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
         fprintf(stderr, "%ld items requested but only %ld read\n",
                 (long) num, (long) nread);
 	/* Make sure realloc is > 0 */
-#ifdef NOUSE_PYDATAMEM_RENEW
 	tmp = _fake_realloc(ret->data, NPY_MAX(nread,1) * ret->descr->elsize,
                             PyArray_SIZE(ret) * ret->descr->elsize);
-#else
-	tmp = PyDataMem_RENEW(ret->data,
-			      NPY_MAX(nread,1) * ret->descr->elsize);
-#endif
 	/* FIXME: This should not raise a memory error when nread == 0
 	   We should return an empty array or at least raise an  EOF Error.
 	 */
@@ -6498,11 +6516,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
             if (elcount <= (intp)((~(size_t)0) / elsize))
-#ifdef NOUSE_PYDATAMEM_RENEW
                 new_data = SYS_REALLOC(ret->data, elcount * elsize);
-#else
-                new_data = PyDataMem_RENEW(ret->data, elcount * elsize);
-#endif
             else
                 new_data = NULL;
             if (new_data == NULL) {
@@ -6534,11 +6548,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
       (assuming realloc is reasonably good about reusing space...)
     */
     if (i==0) i = 1;
-#ifdef NOUSE_PYDATAMEM_RENEW
     new_data = _fake_realloc(ret->data, i * elsize, PyArray_SIZE(ret) * elsize);
-#else
-    new_data = PyDataMem_RENEW(ret->data, i * elsize);
-#endif
     if (new_data == NULL) {
         PyErr_SetString(PyExc_MemoryError, "cannot allocate array memory");
         goto done;

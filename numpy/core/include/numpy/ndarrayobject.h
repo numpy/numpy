@@ -981,15 +981,26 @@ typedef Py_uintptr_t npy_uintp;
   */
 
   /* Data buffer */
-#define PyDataMem_NEW(size) ((char *)malloc(size))
-#define PyDataMem_FREE(ptr)  free(ptr)
+/*  
+ * default alignment (in bytes) of PyDataMem_ANEW Any pointer redurned by 
+ * PyDataMem_ANEW is guaranteed to be at least NPY_DEF_ALIGNMENT bytes  
+ * 
+ * TODO: provides an API to get this value 
+ */ 
+#define NPY_DEF_ALIGNMENT 16 
+#define PyDataMem_NEW(size) PyArray_AlignedMalloc(size, NPY_DEF_ALIGNMENT) 
+#define PyDataMem_FREE(ptr) PyArray_AlignedFree(ptr) 
+#define PyDataMem_RENEW(ptr,size) \
+               PyArray_AlignedRealloc(ptr, size, NPY_DEF_ALIGNMENT) 
+ 
+#define PyDataAlignedMem_NEW(size, alignment) \
+                PyArray_AlignedMalloc(size, alignment) 
+#define PyDataAlignedMem_FREE(ptr) \
+                PyArray_AlignedFree(ptr) 
+#define PyDataAlignedMem_RENEW(ptr,size, alignment) \
+               PyArray_AlignedRealloc(ptr, size, alignment)
 
-#ifdef NOUSE_PYDATAMEM_RENEW
-#define PyDataMem_RENEW(ptr,size) DO_NOT_USE_PYDATAMEM_RENEW
-#define SYS_REALLOC(ptr, size) realloc((ptr), (size))
-#else
-#define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
-#endif
+#define SYS_REALLOC realloc
 
 #define NPY_USE_PYMEM 1
 

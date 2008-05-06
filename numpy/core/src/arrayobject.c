@@ -5818,11 +5818,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if (newsize == 0) sd = self->descr->elsize;
         else sd = newsize * self->descr->elsize;
         /* Reallocate space if needed */
-#if NOUSE_PYDATAMEM_RENEW
-        new_data = _fake_realloc(self->data, sd, PyArray_SIZE(self) * self->descr->elsize);
-#else
-        new_data = PyDataMem_RENEW(self->data, sd);
-#endif
+        new_data = _fake_realloc(self->data, sd, 
+                       PyArray_SIZE(self) * self->descr->elsize);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                             "cannot allocate memory for array");
