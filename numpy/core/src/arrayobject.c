@@ -5727,7 +5727,7 @@ void* _fake_realloc(void* ptr, size_t new_sz, size_t old_sz)
         }
 
         if (new_sz == 0) {
-                free(ptr);
+                PyDataMem_FREE(ptr);
                 return NULL;
         }
 
@@ -5740,7 +5740,7 @@ void* _fake_realloc(void* ptr, size_t new_sz, size_t old_sz)
                 return NULL;
         }
         memcpy(nptr, ptr, new_sz > old_sz ? old_sz : new_sz);
-        free(ptr);
+        PyDataMem_FREE(ptr);
         return nptr;
 }
 
