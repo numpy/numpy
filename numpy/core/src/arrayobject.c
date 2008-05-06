@@ -5717,6 +5717,32 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
     return;
 }
 
+void* _fake_realloc(void* ptr, size_t new_sz, size_t old_sz)
+{
+        void* nptr;
+
+        //fprintf(stderr, "Using %s\n", __func__);
+        if (ptr == NULL) {
+                return PyDataMem_NEW(new_sz);
+        }
+
+        if (new_sz == 0) {
+                free(ptr);
+                return NULL;
+        }
+
+        if (new_sz == old_sz) {
+                return ptr;
+        }
+
+        nptr = PyDataMem_NEW(new_sz);
+        if (nptr == NULL) {
+                return NULL;
+        }
+        memcpy(nptr, ptr, new_sz > old_sz ? old_sz : new_sz);
+        free(ptr);
+        return nptr;
+}
 
 /*OBJECT_API
   Resize (reallocate data).  Only works if nothing else is referencing
@@ -5792,7 +5818,11 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if (newsize == 0) sd = self->descr->elsize;
         else sd = newsize * self->descr->elsize;
         /* Reallocate space if needed */
+#if NOUSE_PYDATAMEM_RENEW
+        new_data = _fake_realloc(self->data, sd, PyArray_SIZE(self) * self->descr->elsize);
+#else
         new_data = PyDataMem_RENEW(self->data, sd);
+#endif
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                             "cannot allocate memory for array");

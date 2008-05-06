@@ -983,7 +983,13 @@ typedef Py_uintptr_t npy_uintp;
   /* Data buffer */
 #define PyDataMem_NEW(size) ((char *)malloc(size))
 #define PyDataMem_FREE(ptr)  free(ptr)
+
+#ifdef NOUSE_PYDATAMEM_RENEW
+#define PyDataMem_RENEW(ptr,size) DO_NOT_USE_PYDATAMEM_RENEW
+#define SYS_REALLOC(ptr, size) realloc((ptr), (size))
+#else
 #define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
+#endif
 
 #define NPY_USE_PYMEM 1
 
