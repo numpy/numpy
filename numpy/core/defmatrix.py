@@ -223,6 +223,8 @@ class matrix(N.ndarray):
         return
 
     def __getitem__(self, index):
+        if isscalar(index):
+            return self.__array__()[index]
         self._getitem = True
 
         try:
@@ -471,11 +473,6 @@ class matrix(N.ndarray):
 
     def ptp(self, axis=None, out=None):
         return N.ndarray.ptp(self, axis, out)._align(axis)
-
-    # Needed becase tolist method expects a[i]
-    #  to have dimension a.ndim-1
-    def tolist(self):
-        return self.__array__().tolist()
 
     def getI(self):
         M,N = self.shape
