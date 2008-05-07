@@ -1561,6 +1561,11 @@ class TestMiscFunctions(NumpyTestCase):
         a = identity(5)
         assert(isinstance(a, MaskedArray))
         assert_equal(a, numpy.identity(5))
+    #
+    def test_power(self):
+        x = -1.1
+        assert_almost_equal(power(x,2.), 1.21)
+        assert_equal(power(x,0.5)._mask, 1)
 
 
 ###############################################################################
