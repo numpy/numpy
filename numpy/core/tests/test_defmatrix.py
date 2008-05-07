@@ -190,6 +190,9 @@ class TestIndexing(NumpyTestCase):
 ##         assert_equal(x[0],0)
 ##         assert_equal(x[:,0].shape,x.shape)
 
+    def check_scalar_indexing(self):
+        x = asmatrix(zeros((3,2),float))
+        assert_equal(x[0,0],x[0][0])
 
 if __name__ == "__main__":
     NumpyTest().run()

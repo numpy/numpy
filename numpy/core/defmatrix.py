@@ -223,6 +223,8 @@ class matrix(N.ndarray):
         return
 
     def __getitem__(self, index):
+        if isscalar(index):
+            return self.__array__()[index]
         self._getitem = True
 
         try:
