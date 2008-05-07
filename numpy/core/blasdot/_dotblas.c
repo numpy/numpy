@@ -176,6 +176,9 @@ _select_matrix_shape(PyArrayObject *array)
 }
 
 
+/* This also makes sure that the data segment is aligned with
+   an itemsize address as well by returning one if not true. 
+*/
 static int
 _bad_strides(PyArrayObject *ap)
 {
@@ -183,6 +186,8 @@ _bad_strides(PyArrayObject *ap)
     register int i, N=PyArray_NDIM(ap);
     register intp *strides = PyArray_STRIDES(ap);
 
+    if (((intp)(ap->data) % itemsize) != 0)
+	return 1;
     for (i=0; i<N; i++) {
 	if ((strides[i] < 0) || (strides[i] % itemsize) != 0) 
 	    return 1;
