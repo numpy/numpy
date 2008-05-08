@@ -2,6 +2,7 @@ from numpy.testing import *
 set_package_path()
 import numpy.core;reload(numpy.core)
 from numpy.core import *
+import numpy as np
 restore_path()
 
 class TestCtor(NumpyTestCase):
@@ -180,7 +181,8 @@ class TestIndexing(NumpyTestCase):
         assert_equal(x, [[0,1],[0,0],[0,0]])
 
 class TestNewScalarIndexing(NumpyTestCase):
-    a = matrix([[1, 2],[3,4]])
+    def setUp(self):
+        self.a = matrix([[1, 2],[3,4]])
 
     def check_dimesions(self):
         a = self.a
@@ -194,7 +196,7 @@ class TestNewScalarIndexing(NumpyTestCase):
 
     def check_array_to_list(self):
         a = self.a
-        assert a.tolist() == [[1, 2], [3, 4]]
+        assert_equal(a.tolist(),[[1, 2], [3, 4]])
 
     def check_fancy_indexing(self):
         a = self.a
@@ -219,6 +221,32 @@ class TestNewScalarIndexing(NumpyTestCase):
 ##         assert_equal(x[0],0)
 ##         assert_equal(x[:,0].shape,x.shape)
 
+    def check_scalar_indexing(self):
+        x = asmatrix(zeros((3,2),float))
+        assert_equal(x[0,0],x[0][0])
 
+    def check_row_column_indexing(self):
+        x = asmatrix(np.eye(2))
+        assert_array_equal(x[0,:],[[1,0]])
+        assert_array_equal(x[1,:],[[0,1]])
+        assert_array_equal(x[:,0],[[1],[0]])
+        assert_array_equal(x[:,1],[[0],[1]])
+
+    def check_boolean_indexing(self):
+        A = arange(6)
+        A.shape = (3,2)
+        x = asmatrix(A)
+        assert_array_equal(x[:,array([True,False])],x[:,0])
+        assert_array_equal(x[array([True,False,False]),:],x[0,:])
+
+    def check_list_indexing(self):
+        A = arange(6)
+        A.shape = (3,2)
+        x = asmatrix(A)
+        assert_array_equal(x[:,[1,0]],x[:,::-1])
+        assert_array_equal(x[[2,1,0],:],x[::-1,:])
+
+
+        
 if __name__ == "__main__":
     NumpyTest().run()
