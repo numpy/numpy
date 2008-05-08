@@ -2,6 +2,7 @@ from numpy.testing import *
 set_package_path()
 import numpy.core;reload(numpy.core)
 from numpy.core import *
+import numpy as np
 restore_path()
 
 class TestCtor(NumpyTestCase):
@@ -193,6 +194,32 @@ class TestIndexing(NumpyTestCase):
     def check_scalar_indexing(self):
         x = asmatrix(zeros((3,2),float))
         assert_equal(x[0,0],x[0][0])
+    def check_row_column_indexing(self):
+        x = asmatrix(np.eye(2))
+        assert_array_equal(x[0,:],[[1,0]])
+        assert_array_equal(x[1,:],[[0,1]])
+        assert_array_equal(x[:,0],[[1],[0]])
+        assert_array_equal(x[:,1],[[0],[1]])
+
+    def check_boolean_indexing(self):
+        A = arange(6)
+        A.shape = (3,2)
+        x = asmatrix(A)
+        assert_array_equal(x[:,array([True,False])],x[:,0])
+        assert_array_equal(x[array([True,False,False]),:],x[0,:])
+
+    def check_list_indexing(self):
+        A = arange(6)
+        A.shape = (3,2)
+        x = asmatrix(A)
+        assert_array_equal(x[:,[1,0]],x[:,::-1])
+        assert_array_equal(x[[2,1,0],:],x[::-1,:])
+
+    def check_tolist(self):
+        x = asmatrix(np.eye(2))
+        assert_equal(x.tolist(), [[1,0],[0,1]])
+
+
 
 if __name__ == "__main__":
     NumpyTest().run()
