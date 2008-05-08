@@ -179,6 +179,35 @@ class TestIndexing(NumpyTestCase):
         x[:,1] = y>0.5
         assert_equal(x, [[0,1],[0,0],[0,0]])
 
+class TestNewScalarIndexing(NumpyTestCase):
+    a = matrix([[1, 2],[3,4]])
+
+    def check_dimesions(self):
+        a = self.a
+        x = a[0]
+        assert_equal(x.ndim, 1)
+
+    def check_array_from_matrix_list(self):
+        a = self.a
+        x = array([a, a])
+        assert_equal(x.shape, [2,2,2])
+
+    def check_array_to_list(self):
+        a = self.a
+        assert a.tolist() == [[1, 2], [3, 4]]
+
+    def check_fancy_indexing(self):
+        a = self.a
+        x = a[1, [0,1,0]]
+        assert isinstance(x, matrix)
+        assert_equal(x, matrix([[3,  4,  3]]))
+        x = a[[1,0]]
+        assert isinstance(x, matrix)
+        assert_equal(x, matrix([[3,  4], [1, 2]]))
+        x = a[[[1],[0]],[[1,0],[0,1]]]
+        assert isinstance(x, matrix)
+        assert_equal(x, matrix([[4,  3], [1,  2]]))
+
 ##     def check_vector_element(self):
 ##         x = matrix([[1,2,3],[4,5,6]])
 ##         assert_equal(x[0][0],1)
