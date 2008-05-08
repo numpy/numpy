@@ -1016,6 +1016,14 @@ class TestRegression(NumpyTestCase):
         """Test for changeset r5065"""
         assert_array_equal(np.array([np.nan]), np.asfarray([None]))
 
+    def check_dot_alignment_sse2(self, level=rlevel):
+        """Test for ticket #551, changeset r5140"""
+        x = np.zeros((30,40))
+        y = pickle.loads(pickle.dumps(x))
+        # y is now typically not aligned on a 8-byte boundary
+        z = np.ones((1, y.shape[0]))
+        # This shouldn't cause a segmentation fault:
+        np.dot(z, y)
 
 if __name__ == "__main__":
     NumpyTest().run()
