@@ -2852,14 +2852,13 @@ def power(a, b, third=None):
     fb = getdata(b)
     if fb.dtype.char in typecodes["Integer"]:
         return masked_array(umath.power(fa, fb), m)
-    md = (abs(fb-int(fb)) < numpy.finfo(float).precision)
-    m = mask_or(m, md) 
+    m = mask_or(m, (fa < 0) & (fb != fb.astype(int))) 
     if m is nomask:
         return masked_array(umath.power(fa, fb))
     else:
         fa = fa.copy()
         if m.all():
-            fa[m] = 1
+            fa.flat = 1
         else: 
             numpy.putmask(fa,m,1)
         return masked_array(umath.power(fa, fb), m)
