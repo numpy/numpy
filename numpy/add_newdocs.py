@@ -2249,3 +2249,212 @@ add_newdoc('numpy.core.umath','seterrobj',
            seterrcall
 
            """)
+
+add_newdoc("numpy.core","ufunc","""Optimized functions make it possible to implement arithmetic with arrays efficiently
+
+Unary ufuncs:
+=============
+
+op(X, out=None)
+Apply op to X elementwise
+
+Parameters
+----------
+X : array-like
+out : array-like
+    An array to store the output. Must be the same shape as X.
+
+Returns
+-------
+r : array-like
+    r will have the same shape as X; if out is provided, r will be 
+    equal to out.
+
+Binary ufuncs:
+==============
+
+op(X, Y, out=None)
+Apply op to X and Y elementwise. May "broadcast" to make 
+the shapes of X and Y congruent.
+
+The broadcasting rules are:
+* Dimensions of length 1 may be prepended to either array
+* Arrays may be repeated along dimensions of length 1
+
+Parameters
+----------
+X : array-like
+Y : array-like
+out : array-like
+    An array to store the output. Must be the same shape as the 
+    output would have.
+
+Returns
+-------
+r : array-like
+    The return value; if out is provided, r will be equal to out.
+""")
+add_newdoc("numpy.core","ufunc",
+            [("reduce","""reduce(array,axis=0,dtype=None,out=None)
+reduce applies the operator to all elements of the array producing
+a single result.
+
+For a one-dimensional array, reduce produces results equivalent to:
+r = op.identity
+for i in xrange(len(A)):
+    r = op(r,A[i])
+return r
+
+For example, add.reduce() is equivalent to sum().
+
+Parameters:
+-----------
+
+array : array-like
+    The array to act on.
+axis : integer
+    The axis along which to apply the reduction.
+dtype : data type or None
+    The type used to represent the intermediate results. Defaults
+    to the data type of the output array if this is provided, or
+    the data type of the input array if no output array is provided.
+out : array-like or None
+    A location into which the result is stored. If not provided a
+    freshly-allocated array is returned.
+
+Returns:
+--------
+
+r : array
+    The reduced values. If out was supplied, r is equal to out.
+
+Example:
+--------
+>>> np.multiply.reduce([2,3,5])
+30
+
+
+"""),
+        ("accumulate","""accumulate(array,axis=None,dtype=None,out=None)
+accumulate applies the operator to all elements of the array producing
+cumulative results.
+
+For a one-dimensional array, accumulate produces results equivalent to:
+r = np.empty(len(A))
+t = op.identity
+for i in xrange(len(A)):
+    t = op(t,A[i])
+    r[i] = t
+return r
+
+For example, add.accumulate() is equivalent to cumsum().
+
+Parameters:
+-----------
+
+array : array-like
+    The array to act on.
+axis : integer
+    The axis along which to apply the accumulation.
+dtype : data type or None
+    The type used to represent the intermediate results. Defaults
+    to the data type of the output array if this is provided, or
+    the data type of the input array if no output array is provided.
+out : array-like or None
+    A location into which the result is stored. If not provided a
+    freshly-allocated array is returned.
+
+Returns:
+--------
+
+r : array
+    The accumulated values. If out was supplied, r is equal to out.
+
+Example:
+--------
+>>> np.multiply.accumulate([2,3,5])
+array([2,6,30])
+
+"""),
+        ("reduceat","""reduceat(self,array,indices,axis=None,dtype=None,out=None)
+reduceat performs a reduce over an axis using the indices as a guide
+
+op.reduceat(array,indices)  computes
+op.reduce(array[indices[i]:indices[i+1]])
+for i=0..end with an implicit indices[i+1]=len(array)
+assumed when i=end-1
+
+if indices[i+1] <= indices[i]+1
+then the result is array[indices[i]] for that value
+
+op.accumulate(array) is the same as
+op.reduceat(array,indices)[::2]
+where indices is range(len(array)-1) with a zero placed
+in every other sample:
+indices = zeros(len(array)*2-1)
+indices[1::2] = range(1,len(array))
+
+output shape is based on the size of indices
+
+Parameters:
+-----------
+
+array : array-like
+    The array to act on.
+indices : array-like
+    Indices specifying ranges to reduce.
+axis : integer
+    The axis along which to apply the reduceat.
+dtype : data type or None
+    The type used to represent the intermediate results. Defaults
+    to the data type of the output array if this is provided, or
+    the data type of the input array if no output array is provided.
+out : array-like or None
+    A location into which the result is stored. If not provided a
+    freshly-allocated array is returned.
+
+Returns:
+--------
+
+r : array
+    The reduced values. If out was supplied, r is equal to out.
+
+Example:
+--------
+To take the running sum of four successive values:
+>>> np.multiply.reduceat(np.arange(8),[0,4, 1,5, 2,6, 3,7])[::2]
+array([ 6, 10, 14, 18])
+
+"""),
+        ("outer","""outer(A,B)
+Compute the result of applying op to all pairs (a,b)
+
+op.outer(A,B) is equivalent to
+op(A[:,:,...,:,newaxis,...,newaxis]*B[newaxis,...,newaxis,:,...,:])
+where A has B.ndim new axes appended and B has A.ndim new axes prepended.
+
+For A and B one-dimensional, this is equivalent to
+r = empty(len(A),len(B))
+for i in xrange(len(A)):
+    for j in xrange(len(B)):
+        r[i,j] = A[i]*B[j]
+If A and B are higher-dimensional, the result has dimension A.ndim+B.ndim
+
+Parameters:
+-----------
+
+A : array-like
+B : array-like
+
+Returns:
+--------
+
+r : array
+Example:
+--------
+>>> np.multiply.outer([1,2,3],[4,5,6])
+array([[ 4,  5,  6],
+       [ 8, 10, 12],
+       [12, 15, 18]])
+
+""")]) 
