@@ -1566,6 +1566,7 @@ class TestMiscFunctions(NumpyTestCase):
         x = -1.1
         assert_almost_equal(power(x,2.), 1.21)
         assert_equal(power(x,0.5)._mask, 1)
+        assert_equal(power(x,masked)._mask, 1)
 
 
 ###############################################################################

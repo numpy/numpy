@@ -2842,8 +2842,6 @@ compress = _frommethod('compress')
 def power(a, b, third=None):
     """Computes a**b elementwise.
 
-    Masked values are set to 1.
-
     """
     if third is not None:
         raise MAError, "3-argument power not supported."
@@ -2854,14 +2852,16 @@ def power(a, b, third=None):
     fb = getdata(b)
     if fb.dtype.char in typecodes["Integer"]:
         return masked_array(umath.power(fa, fb), m)
-    if numpy.abs(fb) < 1.:
-        md = make_mask((fa < 0), shrink=True)
-        m = mask_or(m, md)
+    md = (abs(fb-int(fb)) < numpy.finfo(float).precision)
+    m = mask_or(m, md) 
     if m is nomask:
         return masked_array(umath.power(fa, fb))
     else:
         fa = fa.copy()
-        fa[m] = 1
+        if m.all():
+            fa[m] = 1
+        else: 
+            numpy.putmask(fa,m,1)
         return masked_array(umath.power(fa, fb), m)
 
 #..............................................................................
