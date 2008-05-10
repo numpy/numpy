@@ -889,30 +889,45 @@ def compress(condition, a, axis=None, out=None):
     return compress(condition, axis, out)
 
 
-def clip(a, a_min, a_max):
+def clip(a, a_min, a_max, out=None):
     """Return an array whose values are limited to [a_min, a_max].
 
     Parameters
     ----------
     a : {array_like}
         Array containing elements to clip.
-    a_min
+    a_min :
         Minimum value
-    a_max
+    a_max :
         Maximum value
+    out : array, optional
+        The results will be placed in this array. It may be the input array for
+        inplace clipping.
 
     Returns
     -------
     clipped_array : {array}
         A new array whose elements are same as for a, but values
         < a_min are replaced with a_min, and > a_max with a_max.
-    
+
+    Examples
+    --------
+    >>> a = np.arange(10)
+    >>> np.clip(a, 1, 8)
+    array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
+    >>> a
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.clip(a, 3, 6, out=a)
+    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+    >>> a
+    array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
+
     """
     try:
         clip = a.clip
     except AttributeError:
-        return _wrapit(a, 'clip', a_min, a_max)
-    return clip(a_min, a_max)
+        return _wrapit(a, 'clip', a_min, a_max, out)
+    return clip(a_min, a_max, out)
 
 
 def sum(a, axis=None, dtype=None, out=None):

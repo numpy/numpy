@@ -668,6 +668,19 @@ class TestClip(NumpyTestCase):
         self.clip(a, m, M, ac)
         assert_array_strict_equal(a, ac)
 
+    def test_clip_func_takes_out(self):
+        """ Ensure that the clip() function takes an out= argument.
+        """
+        a = self._generate_data(self.nr, self.nc)
+        ac = a.copy()
+        m = -0.5
+        M = 0.6
+        a2 = clip(a, m, M, out=a)
+        self.clip(a, m, M, ac)
+        assert_array_strict_equal(a2, ac)
+        self.assert_(a2 is a)
+
+
 class test_allclose_inf(ParametricTestCase):
     rtol = 1e-5
     atol = 1e-8
