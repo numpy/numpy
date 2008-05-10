@@ -319,12 +319,12 @@ add_newdoc('numpy.core.multiarray','fromiter',
 
 add_newdoc('numpy.core.multiarray','fromfile',
     """fromfile(file=, dtype=float, count=-1, sep='')
-    
+
     Return an array of the given data type from a text or binary file.
-    
+
     Data written using the tofile() method can be conveniently recovered using
     this function.
-    
+
     Parameters
     ----------
     file : file or string
@@ -342,21 +342,21 @@ add_newdoc('numpy.core.multiarray','fromfile',
     See also
     --------
     loadtxt : load data from text files
-    
+
     Notes
     -----
     WARNING: This function should be used sparingly as the binary files are not
     platform independent. In particular, they contain no endianess or datatype
     information. Nevertheless it can be useful for reading in simply formatted
     or binary data quickly.
-    
+
     """)
 
 add_newdoc('numpy.core.multiarray','frombuffer',
     """frombuffer(buffer=, dtype=float, count=-1, offset=0)
-    
+
     Returns a 1-d array of data type dtype from buffer.
-    
+
     Parameters
     ----------
     buffer
@@ -367,13 +367,13 @@ add_newdoc('numpy.core.multiarray','frombuffer',
         Number of items to read. -1 means all data in the buffer.
     offset : int
         Number of bytes to jump from the start of the buffer before reading
-    
+
     Notes
     -----
     If the buffer has data that is not in machine byte-order, then
     use a proper data type descriptor. The data will not be
     byteswapped, but the array will manage it in future operations.
-    
+
     """)
 
 add_newdoc('numpy.core.multiarray','concatenate',
@@ -502,7 +502,7 @@ add_newdoc('numpy.core.multiarray','lexsort',
     keys : (k,N) array or tuple of (N,) sequences
         Array containing values that the returned indices should sort, or
         a sequence of things that can be converted to arrays of the same shape.
-    
+
     axis : integer
         Axis to be indirectly sorted.  Default is -1 (i.e. last axis).
 
@@ -802,7 +802,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     out : {None, array}, optional
         Array into which the result can be placed. Its type is preserved
         and it must be of the right shape to hold the output.
-    
+
     See Also
     --------
     all : equivalent function
@@ -814,7 +814,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     """a.any(axis=None, out=None)
 
     Check if any of the elements of `a` are true.
-    
+
     Performs a logical_or over the given axis and returns the result
 
     Parameters
@@ -825,7 +825,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
     out : {None, array}, optional
         Array into which the result can be placed. Its type is preserved
         and it must be of the right shape to hold the output.
-    
+
     See Also
     --------
     any : equivalent function
@@ -935,9 +935,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     ============ ======= ============= ============ ========
         kind      speed    worst case   work space   stable
     ============ ======= ============= ============ ========
-     'quicksort'    1     O(n^2)            0         no  
-     'mergesort'    2     O(n*log(n))      ~n/2       yes 
-     'heapsort'     3     O(n*log(n))       0         no  
+     'quicksort'    1     O(n^2)            0         no
+     'mergesort'    2     O(n*log(n))      ~n/2       yes
+     'heapsort'     3     O(n*log(n))       0         no
     ============ ======= ============= ============ ========
 
     All the sort algorithms make temporary copies of the data when the
@@ -1011,7 +1011,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
     array([20, 31, 12,  3])
     >>> a.choose(choices, mode='wrap')
     array([20,  1, 12,  3])
-    
+
     """))
 
 
@@ -1019,7 +1019,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
     """a.clip(a_min, a_max, out=None)
 
     Return an array whose values are limited to [a_min, a_max].
-    
+
     Parameters
     ----------
     a_min
@@ -1036,7 +1036,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
     clipped_array : array
         A new array whose elements are same as for a, but values
         < a_min are replaced with a_min, and > a_max with a_max.
-    
+
     """))
 
 
@@ -1072,7 +1072,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('compress',
            [3]])
     >>> a.compress([0,1,1])
     array([2, 3])
-    
+
     """))
 
 
@@ -1080,7 +1080,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('conj',
     """a.conj()
 
     Return an array with all complex-valued elements conjugated.
-    
+
     """))
 
 
@@ -1088,7 +1088,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
     """a.conjugate()
 
     Return an array with all complex-valued elements conjugated.
-    
+
     """))
 
 
@@ -1104,7 +1104,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         If order is 'Fortran' (True) then the result has fortran order.
         If order is 'Any' (None) then the result has fortran order
         only if the array already is in fortran order.
-    
+
     """))
 
 
@@ -1245,15 +1245,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
     """a.dump(file)
-    
+
     Dump a pickle of the array to the specified file.
     The array can be read back with pickle.load or numpy.load.
-    
+
     Parameters
     ----------
     file : str
         A string naming the dump file.
-    
+
     """))
 
 
@@ -1262,32 +1262,32 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dumps',
 
     Returns the pickle of the array as a string.
     pickle.loads or numpy.loads will convert the string back to an array.
-    
+
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
     """a.fill(value)
-    
+
     Fill the array with a scalar value.
-    
+
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
     """a.flatten([order])
-    
+
     Return a 1-d array (always copy)
-    
+
     Parameters
     ----------
     order : {'C', 'F'}
         Whether to flatten in C or Fortran order.
-    
+
     Notes
     -----
     a.flatten('F') == a.T.flatten('C')
-    
+
     """))
 
 
@@ -1329,7 +1329,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     amax : array_like
         New array holding the result.
         If ``out`` was specified, ``out`` is returned.
-    
+
     """))
 
 
@@ -1399,21 +1399,21 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
     """a.newbyteorder(byteorder)
 
     Equivalent to a.view(a.dtype.newbytorder(byteorder))
-    
+
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('nonzero',
     """a.nonzero()
-    
+
     Returns a tuple of arrays, one for each dimension of a, containing
     the indices of the non-zero elements in that dimension. The
     corresponding non-zero values can be obtained with::
-    
+
         a[a.nonzero()].
 
     To group the indices by element, rather than dimension, use::
-    
+
         transpose(a.nonzero())
 
     instead. The result of this is always a 2d array, with a row for
@@ -1475,10 +1475,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('prod',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ptp',
     """a.ptp(axis=None, out=None)
-    
+
     Return (maximum - minimum) along the the given dimension
     (i.e. peak-to-peak value).
-    
+
     Parameters
     ----------
     axis : {None, int}, optional
@@ -1488,13 +1488,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ptp',
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
-    
+
     Returns
     -------
     ptp : ndarray.
         A new array holding the result, unless ``out`` was
         specified, in which case a reference to ``out`` is returned.
-    
+
     Examples
     --------
     >>> x = np.arange(4).reshape((2,2))
@@ -1505,7 +1505,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ptp',
     array([2, 2])
     >>> x.ptp(1)
     array([1, 1])
-    
+
     """))
 
 
@@ -1514,7 +1514,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
     Set a.flat[n] = values[n] for all n in indices.
     If values is shorter than indices, it will repeat.
-    
+
     Parameters
     ----------
     indices : array_like
@@ -1549,9 +1549,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
 add_newdoc('numpy.core.multiarray', 'putmask',
     """putmask(a, mask, values)
-    
+
     Sets a.flat[n] = values[n] for each n where mask.flat[n] is true.
-    
+
     If values is not the same size as `a` and `mask` then it will repeat.
     This gives behavior different from a[mask] = values.
 
@@ -1563,6 +1563,7 @@ add_newdoc('numpy.core.multiarray', 'putmask',
         Boolean mask array
     values : {array_like}
         Values to put
+
     """)
 
 
@@ -1604,9 +1605,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('repeat',
     """a.repeat(repeats, axis=None)
-    
+
     Repeat elements of an array.
-    
+
     Parameters
     ----------
     a : {array_like}
@@ -1666,7 +1667,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
     -------
     reshaped_array : array
         A new view to the array.
-    
+
     """))
 
 
@@ -1681,7 +1682,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
     """a.round(decimals=0, out=None)
-    
+
     Return an array rounded a to the given number of decimals.
 
     The real and imaginary parts of complex numbers are rounded separately. The
@@ -1727,7 +1728,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
     array([ 1,  2,  3, 11])
     >>> x.round(decimals=-1)
     array([ 0,  0,  0, 10])
-    
+
     """))
 
 
@@ -1763,7 +1764,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
     -----
     The array a must be 1-d and is assumed to be sorted in ascending order.
     Searchsorted uses binary search to find the required insertion points.
-    
+
     """))
 
 
@@ -1813,13 +1814,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     sort keeps items with the same key in the same relative order. The three
     available algorithms have the following properties:
 
-    =========== ======= ============= ============ ======= 
+    =========== ======= ============= ============ =======
        kind      speed   worst case    work space  stable
-    =========== ======= ============= ============ ======= 
-    'quicksort'    1     O(n^2)            0          no  
-    'mergesort'    2     O(n*log(n))      ~n/2        yes 
-    'heapsort'     3     O(n*log(n))       0          no  
-    =========== ======= ============= ============ ======= 
+    =========== ======= ============= ============ =======
+    'quicksort'    1     O(n^2)            0          no
+    'mergesort'    2     O(n*log(n))      ~n/2        yes
+    'heapsort'     3     O(n*log(n))       0          no
+    =========== ======= ============= ============ =======
 
     All the sort algorithms make temporary copies of the data when the sort is
     not along the last axis. Consequently, sorts along the last axis are faster
@@ -1881,11 +1882,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e. var = sqrt(mean(abs(x - x.mean())**2)).
-    The computed standard deviation is computed by dividing by the number of
-    elements, N-ddof. The option ddof defaults to zero, that is, a
-    biased estimate. Note that for complex numbers std takes the absolute
-    value before squaring, so that the result is always real and nonnegative.
+    deviations from the mean, i.e. var = sqrt(mean(abs(x - x.mean())**2)).  The
+    computed standard deviation is computed by dividing by the number of
+    elements, N-ddof. The option ddof defaults to zero, that is, a biased
+    estimate. Note that for complex numbers std takes the absolute value before
+    squaring, so that the result is always real and nonnegative.
 
     """))
 
@@ -1894,28 +1895,28 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
     """a.sum(axis=None, dtype=None, out=None)
 
     Return the sum of the array elements over the given axis
-    
+
     Parameters
     ----------
     axis : {None, integer}
         Axis over which the sum is taken. If None is used, then the sum is
         over all the array elements.
     dtype : {None, dtype}, optional
-        Determines the type of the returned array and of the accumulator
-        where the elements are summed. If dtype has the value None and the
-        type of a is an integer type of precision less than the default
-        platform integer, then the default platform integer precision is
-        used.  Otherwise, the dtype is the same as that of a.
+        Determines the type of the returned array and of the accumulator where
+        the elements are summed. If dtype has the value None and the type of a
+        is an integer type of precision less than the default platform integer,
+        then the default platform integer precision is used.  Otherwise, the
+        dtype is the same as that of a.
     out : {None, array}, optional
-        Array into which the sum can be placed. Its type is preserved and
-        it must be of the right shape to hold the output.
+        Array into which the sum can be placed. Its type is preserved and it
+        must be of the right shape to hold the output.
 
     Returns
     -------
     sum_along_axis : {array, scalar}, see dtype parameter above.
-        Returns an array whose shape is the same as a with the specified
-        axis removed. Returns a 0d array when a is 1d or axis=None.
-        Returns a reference to the specified output array if specified.
+        Returns an array whose shape is the same as a with the specified axis
+        removed. Returns a 0d array when a is 1d or axis=None.  Returns a
+        reference to the specified output array if specified.
 
     See Also
     --------
@@ -2011,7 +2012,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('take',
     See Also
     --------
     take : equivalent function
-    
+
     """))
 
 
@@ -2026,10 +2027,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
 
     This is a convenience function for quick storage of array data.
     Information on endianess and precision is lost, so this method is not a
-    good choice for files intended to archive data or transport data
-    between machines with different endianess. Some of these problems can
-    be overcome by outputting the data as text files at the expense of
-    speed and file size.
+    good choice for files intended to archive data or transport data between
+    machines with different endianess. Some of these problems can be overcome
+    by outputting the data as text files at the expense of speed and file size.
 
     Parameters
     ----------
@@ -2049,7 +2049,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """a.tolist()
-    
+
     Return the array as nested lists.
 
     Copy the data portion of the array to a hierarchical Python list and return
@@ -2060,15 +2060,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tostring',
     """a.tostring(order='C')
-    
+
     Construct a Python string containing the raw data bytes in the array.
-    
+
     Parameters
     ----------
     order : {'C', 'F', None}
         Order of the data for multidimensional arrays:
         C, Fortran, or the same as for the original array.
-    
+
     """))
 
 
@@ -2077,12 +2077,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
 
     Return the sum along diagonals of the array.
 
-    If a is 2-d, returns the sum along the diagonal of self with the given offset, i.e., the
-    collection of elements of the form a[i,i+offset]. If a has more than two
-    dimensions, then the axes specified by axis1 and axis2 are used to determine
-    the 2-d subarray whose trace is returned. The shape of the resulting
-    array can be determined by removing axis1 and axis2 and appending an index
-    to the right equal to the size of the resulting diagonals.
+    If a is 2-d, returns the sum along the diagonal of self with the given
+    offset, i.e., the collection of elements of the form a[i,i+offset]. If a
+    has more than two dimensions, then the axes specified by axis1 and axis2
+    are used to determine the 2-d subarray whose trace is returned. The shape
+    of the resulting array can be determined by removing axis1 and axis2 and
+    appending an index to the right equal to the size of the resulting
+    diagonals.
 
     Parameters
     ----------
@@ -2223,238 +2224,252 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     """))
 
 add_newdoc('numpy.core.umath','geterrobj',
-           """geterrobj()
+    """geterrobj()
 
-           Used internally by `geterr`.
+    Used internally by `geterr`.
 
-           Returns
-           -------
-           errobj : list
-               Internal numpy buffer size, error mask, error callback function.
+    Returns
+    -------
+    errobj : list
+        Internal numpy buffer size, error mask, error callback function.
 
-           """)
+    """)
 
 add_newdoc('numpy.core.umath','seterrobj',
-           """seterrobj()
+    """seterrobj()
 
-           Used internally by `seterr`.
+    Used internally by `seterr`.
 
-           Parameters
-           ----------
-           errobj : list
-               [buffer_size, error_mask, callback_func]
+    Parameters
+    ----------
+    errobj : list
+        [buffer_size, error_mask, callback_func]
 
-           See Also
-           --------
-           seterrcall
+    See Also
+    --------
+    seterrcall
 
-           """)
+    """)
 
-add_newdoc("numpy.core","ufunc","""Optimized functions make it possible to implement arithmetic with arrays efficiently
-
-Unary ufuncs:
-=============
-
-op(X, out=None)
-Apply op to X elementwise
-
-Parameters
-----------
-X : array-like
-out : array-like
-    An array to store the output. Must be the same shape as X.
-
-Returns
--------
-r : array-like
-    r will have the same shape as X; if out is provided, r will be 
-    equal to out.
-
-Binary ufuncs:
-==============
-
-op(X, Y, out=None)
-Apply op to X and Y elementwise. May "broadcast" to make 
-the shapes of X and Y congruent.
-
-The broadcasting rules are:
-* Dimensions of length 1 may be prepended to either array
-* Arrays may be repeated along dimensions of length 1
-
-Parameters
-----------
-X : array-like
-Y : array-like
-out : array-like
-    An array to store the output. Must be the same shape as the 
-    output would have.
-
-Returns
--------
-r : array-like
-    The return value; if out is provided, r will be equal to out.
-""")
 add_newdoc("numpy.core","ufunc",
-            [("reduce","""reduce(array,axis=0,dtype=None,out=None)
-reduce applies the operator to all elements of the array producing
-a single result.
+    """Functions that operate element by element on whole arrays.
 
-For a one-dimensional array, reduce produces results equivalent to:
-r = op.identity
-for i in xrange(len(A)):
-    r = op(r,A[i])
-return r
+    Unary ufuncs:
+    =============
 
-For example, add.reduce() is equivalent to sum().
+    op(X, out=None)
+    Apply op to X elementwise
 
-Parameters:
------------
+    Parameters
+    ----------
+    X : array-like
+    out : array-like
+        An array to store the output. Must be the same shape as X.
 
-array : array-like
-    The array to act on.
-axis : integer
-    The axis along which to apply the reduction.
-dtype : data type or None
-    The type used to represent the intermediate results. Defaults
-    to the data type of the output array if this is provided, or
-    the data type of the input array if no output array is provided.
-out : array-like or None
-    A location into which the result is stored. If not provided a
-    freshly-allocated array is returned.
+    Returns
+    -------
+    r : array-like
+        r will have the same shape as X; if out is provided, r will be
+        equal to out.
 
-Returns:
---------
+    Binary ufuncs:
+    ==============
 
-r : array
-    The reduced values. If out was supplied, r is equal to out.
+    op(X, Y, out=None)
+    Apply op to X and Y elementwise. May "broadcast" to make
+    the shapes of X and Y congruent.
 
-Example:
---------
->>> np.multiply.reduce([2,3,5])
-30
+    The broadcasting rules are:
+    * Dimensions of length 1 may be prepended to either array
+    * Arrays may be repeated along dimensions of length 1
+
+    Parameters
+    ----------
+    X : array-like
+    Y : array-like
+    out : array-like
+        An array to store the output. Must be the same shape as the
+        output would have.
+
+    Returns
+    -------
+    r : array-like
+        The return value; if out is provided, r will be equal to out.
+
+    """)
 
 
-"""),
-        ("accumulate","""accumulate(array,axis=None,dtype=None,out=None)
-accumulate applies the operator to all elements of the array producing
-cumulative results.
+add_newdoc("numpy.core","ufunc",("reduce",
+    """reduce(array,axis=0,dtype=None,out=None)
 
-For a one-dimensional array, accumulate produces results equivalent to:
-r = np.empty(len(A))
-t = op.identity
-for i in xrange(len(A)):
-    t = op(t,A[i])
-    r[i] = t
-return r
+    Reduce applies the operator to all elements of the array producing
+    a single result.
 
-For example, add.accumulate() is equivalent to cumsum().
+    For a one-dimensional array, reduce produces results equivalent to:
+    r = op.identity
+    for i in xrange(len(A)):
+        r = op(r,A[i])
+    return r
 
-Parameters:
------------
+    For example, add.reduce() is equivalent to sum().
 
-array : array-like
-    The array to act on.
-axis : integer
-    The axis along which to apply the accumulation.
-dtype : data type or None
-    The type used to represent the intermediate results. Defaults
-    to the data type of the output array if this is provided, or
-    the data type of the input array if no output array is provided.
-out : array-like or None
-    A location into which the result is stored. If not provided a
-    freshly-allocated array is returned.
+    Parameters:
+    -----------
 
-Returns:
---------
+    array : array-like
+        The array to act on.
+    axis : integer
+        The axis along which to apply the reduction.
+    dtype : data type or None
+        The type used to represent the intermediate results. Defaults
+        to the data type of the output array if this is provided, or
+        the data type of the input array if no output array is provided.
+    out : array-like or None
+        A location into which the result is stored. If not provided a
+        freshly-allocated array is returned.
 
-r : array
-    The accumulated values. If out was supplied, r is equal to out.
+    Returns:
+    --------
 
-Example:
---------
->>> np.multiply.accumulate([2,3,5])
-array([2,6,30])
+    r : array
+        The reduced values. If out was supplied, r is equal to out.
 
-"""),
-        ("reduceat","""reduceat(self,array,indices,axis=None,dtype=None,out=None)
-reduceat performs a reduce over an axis using the indices as a guide
+    Example:
+    --------
+    >>> np.multiply.reduce([2,3,5])
+    30
 
-op.reduceat(array,indices)  computes
-op.reduce(array[indices[i]:indices[i+1]])
-for i=0..end with an implicit indices[i+1]=len(array)
-assumed when i=end-1
+    """))
 
-if indices[i+1] <= indices[i]+1
-then the result is array[indices[i]] for that value
+add_newdoc("numpy.core","ufunc",("accumulate",
+    """accumulate(array,axis=None,dtype=None,out=None)
 
-op.accumulate(array) is the same as
-op.reduceat(array,indices)[::2]
-where indices is range(len(array)-1) with a zero placed
-in every other sample:
-indices = zeros(len(array)*2-1)
-indices[1::2] = range(1,len(array))
+    Accumulate applies the operator to all elements of the array producing
+    cumulative results.
 
-output shape is based on the size of indices
+    For a one-dimensional array, accumulate produces results equivalent to:
+    r = np.empty(len(A))
+    t = op.identity
+    for i in xrange(len(A)):
+        t = op(t,A[i])
+        r[i] = t
+    return r
 
-Parameters:
------------
+    For example, add.accumulate() is equivalent to cumsum().
 
-array : array-like
-    The array to act on.
-indices : array-like
-    Indices specifying ranges to reduce.
-axis : integer
-    The axis along which to apply the reduceat.
-dtype : data type or None
-    The type used to represent the intermediate results. Defaults
-    to the data type of the output array if this is provided, or
-    the data type of the input array if no output array is provided.
-out : array-like or None
-    A location into which the result is stored. If not provided a
-    freshly-allocated array is returned.
+    Parameters:
+    -----------
 
-Returns:
---------
+    array : array-like
+        The array to act on.
+    axis : integer
+        The axis along which to apply the accumulation.
+    dtype : data type or None
+        The type used to represent the intermediate results. Defaults
+        to the data type of the output array if this is provided, or
+        the data type of the input array if no output array is provided.
+    out : array-like or None
+        A location into which the result is stored. If not provided a
+        freshly-allocated array is returned.
 
-r : array
-    The reduced values. If out was supplied, r is equal to out.
+    Returns:
+    --------
 
-Example:
---------
-To take the running sum of four successive values:
->>> np.multiply.reduceat(np.arange(8),[0,4, 1,5, 2,6, 3,7])[::2]
-array([ 6, 10, 14, 18])
+    r : array
+        The accumulated values. If out was supplied, r is equal to out.
 
-"""),
-        ("outer","""outer(A,B)
-Compute the result of applying op to all pairs (a,b)
+    Example:
+    --------
+    >>> np.multiply.accumulate([2,3,5])
+    array([2,6,30])
 
-op.outer(A,B) is equivalent to
-op(A[:,:,...,:,newaxis,...,newaxis]*B[newaxis,...,newaxis,:,...,:])
-where A has B.ndim new axes appended and B has A.ndim new axes prepended.
+    """))
 
-For A and B one-dimensional, this is equivalent to
-r = empty(len(A),len(B))
-for i in xrange(len(A)):
-    for j in xrange(len(B)):
-        r[i,j] = A[i]*B[j]
-If A and B are higher-dimensional, the result has dimension A.ndim+B.ndim
+add_newdoc("numpy.core","ufunc",("reduceat",
+    """reduceat(self,array,indices,axis=None,dtype=None,out=None)
 
-Parameters:
------------
+    Reduceat performs a reduce over an axis using the indices as a guide
 
-A : array-like
-B : array-like
+    op.reduceat(array,indices)  computes
+    op.reduce(array[indices[i]:indices[i+1]])
+    for i=0..end with an implicit indices[i+1]=len(array)
+    assumed when i=end-1
 
-Returns:
---------
+    if indices[i+1] <= indices[i]+1
+    then the result is array[indices[i]] for that value
 
-r : array
-Example:
---------
->>> np.multiply.outer([1,2,3],[4,5,6])
-array([[ 4,  5,  6],
-       [ 8, 10, 12],
-       [12, 15, 18]])
+    op.accumulate(array) is the same as
+    op.reduceat(array,indices)[::2]
+    where indices is range(len(array)-1) with a zero placed
+    in every other sample:
+    indices = zeros(len(array)*2-1)
+    indices[1::2] = range(1,len(array))
 
-""")]) 
+    output shape is based on the size of indices
+
+    Parameters:
+    -----------
+
+    array : array-like
+        The array to act on.
+    indices : array-like
+        Indices specifying ranges to reduce.
+    axis : integer
+        The axis along which to apply the reduceat.
+    dtype : data type or None
+        The type used to represent the intermediate results. Defaults
+        to the data type of the output array if this is provided, or
+        the data type of the input array if no output array is provided.
+    out : array-like or None
+        A location into which the result is stored. If not provided a
+        freshly-allocated array is returned.
+
+    Returns:
+    --------
+
+    r : array
+        The reduced values. If out was supplied, r is equal to out.
+
+    Example:
+    --------
+    To take the running sum of four successive values:
+    >>> np.multiply.reduceat(np.arange(8),[0,4, 1,5, 2,6, 3,7])[::2]
+    array([ 6, 10, 14, 18])
+
+    """))
+
+add_newdoc("numpy.core","ufunc",("outer",
+    """outer(A,B)
+
+    Compute the result of applying op to all pairs (a,b)
+
+    op.outer(A,B) is equivalent to
+    op(A[:,:,...,:,newaxis,...,newaxis]*B[newaxis,...,newaxis,:,...,:])
+    where A has B.ndim new axes appended and B has A.ndim new axes prepended.
+
+    For A and B one-dimensional, this is equivalent to
+    r = empty(len(A),len(B))
+    for i in xrange(len(A)):
+        for j in xrange(len(B)):
+            r[i,j] = A[i]*B[j]
+    If A and B are higher-dimensional, the result has dimension A.ndim+B.ndim
+
+    Parameters:
+    -----------
+
+    A : array-like
+    B : array-like
+
+    Returns:
+    --------
+
+    r : array
+    Example:
+    --------
+    >>> np.multiply.outer([1,2,3],[4,5,6])
+    array([[ 4,  5,  6],
+           [ 8, 10, 12],
+           [12, 15, 18]])
+
+    """))
+
