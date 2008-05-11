@@ -685,7 +685,7 @@ array_cast(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
-    if (descr == self->descr) {
+    if (PyArray_EquivTypes(descr, self->descr)) {
         obj = _ARET(PyArray_NewCopy(self,NPY_ANYORDER));
         Py_XDECREF(descr);
         return obj;
