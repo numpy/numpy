@@ -7,7 +7,8 @@ API changes in the new masked array implementation
 Masked arrays are subclasses of ndarray
 ---------------------------------------
 
-Contrary to the original implementation, masked arrays are now regular ndarrays::
+Contrary to the original implementation, masked arrays are now regular
+ndarrays::
 
   >>> x = masked_array([1,2,3],mask=[0,0,1])
   >>> print isinstance(x, numpy.ndarray)
@@ -38,7 +39,7 @@ following one will fail::
 
 
 ``filled(x)`` can return a subclass of ndarray
--------------
+----------------------------------------------
 The function ``filled(a)`` returns an array of the same type as ``a._data``::
 
   >>> x = masked_array(numpy.matrix([[1,2],[3,4]]),mask=[[0,0],[0,1]])
@@ -122,9 +123,14 @@ New features (non exhaustive list)
 
 ``mr_`` mimics the behavior of ``r_`` for masked arrays::
 
+  >>> np.ma.mr_[3,4,5]
+  masked_array(data = [3 4 5],
+        mask = False,
+        fill_value=999999)
+
+
 ``anom``
 --------
 
 The ``anom`` method returns the deviations from the average (anomalies).
-
 
