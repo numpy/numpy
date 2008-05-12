@@ -1685,7 +1685,7 @@ masked_%(name)s(data = %(data)s,
         return multiply(self, other)
     #
     def __div__(self, other):
-        "Divides other into self, and return a new masked array."
+        "Divide other into self, and return a new masked array."
         return divide(self, other)
     #
     def __truediv__(self, other):
@@ -1695,7 +1695,10 @@ masked_%(name)s(data = %(data)s,
     def __floordiv__(self, other):
         "Divide other into self, and return a new masked array."
         return floor_divide(self, other)
-
+    #
+    def __pow__(self, other):
+        "Raise self to the power other, masking the potential NaNs/Infs"
+        return power(self, other)
     #............................................
     def __iadd__(self, other):
         "Add other to self in-place."
@@ -1739,6 +1742,19 @@ masked_%(name)s(data = %(data)s,
             numpy.putmask(other_data, dom_mask, 1)
         ndarray.__idiv__(self._data, other_data)
         self._mask = mask_or(self._mask, new_mask)
+        return self
+    #...
+    def __ipow__(self, other):
+        "Raise self to the power other, in place"
+        _data = self._data
+        other_data = getdata(other)
+        other_mask = getmask(other)
+        ndarray.__ipow__(_data, other_data)
+        invalid = numpy.logical_not(numpy.isfinite(_data))
+        new_mask = mask_or(other_mask,invalid)
+        self._mask = mask_or(self._mask, new_mask)
+        # The following line is potentially problematic, as we change _data...
+        numpy.putmask(self._data,invalid,self.fill_value)
         return self
     #............................................
     def __float__(self):
@@ -2859,15 +2875,20 @@ def power(a, b, third=None):
         basetype = MaskedArray
     # Get the result and view it as a (subclass of) MaskedArray
     result = umath.power(fa,fb).view(basetype)
-    # Retrieve some extra attributes if needed
-    result._update_from(a)
     # Find where we're in trouble w/ NaNs and Infs
     invalid = numpy.logical_not(numpy.isfinite(result.view(ndarray)))
+    # Retrieve some extra attributes if needed
+    if isinstance(result,MaskedArray):
+        result._update_from(a)
     # Add the initial mask
     if m is not nomask:
+        if numpy.isscalar(result):
+            return masked
         result._mask = m
     # Fix the invalid parts
     if invalid.any():
+        if not result.ndim:
+            return masked
         result[invalid] = masked
         result._data[invalid] = result.fill_value
     return result
