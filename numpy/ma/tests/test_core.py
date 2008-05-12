@@ -1571,7 +1571,11 @@ class TestMiscFunctions(NumpyTestCase):
         b = array([0.5,2.,0.5,2.,1.], mask=[0,0,0,0,1])
         y = power(x,b)
         assert_almost_equal(y, [0, 1.21, 1.04880884817, 1.21, 0.] )
-        assert_equal(y._mask, [1,0,0,0,1])        
+        assert_equal(y._mask, [1,0,0,0,1])
+        b.mask = nomask
+        y = power(x,b)
+        assert_equal(y._mask, [1,0,0,0,1])
+         
 
 
 ###############################################################################

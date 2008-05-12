@@ -26,8 +26,8 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'arctanh', 'argmax', 'argmin', 'argsort', 'around',
            'array', 'asarray','asanyarray',
            'bitwise_and', 'bitwise_or', 'bitwise_xor',
-           'ceil', 'choose', 'common_fill_value', 'compress', 'compressed',
-           'concatenate', 'conjugate', 'cos', 'cosh', 'count',
+           'ceil', 'choose', 'clip', 'common_fill_value', 'compress',
+           'compressed', 'concatenate', 'conjugate', 'cos', 'cosh', 'count',
            'default_fill_value', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp',
            'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
@@ -1226,7 +1226,7 @@ class MaskedArray(numeric.ndarray):
     def _update_from(self, obj):
         """Copies some attributes of obj to self.
         """  
-        if obj is not None:
+        if obj is not None and isinstance(obj,ndarray):
             _baseclass = type(obj)
         else:
             _baseclass = ndarray
@@ -2845,23 +2845,45 @@ def power(a, b, third=None):
     """
     if third is not None:
         raise MAError, "3-argument power not supported."
+    # Get the masks
     ma = getmask(a)
     mb = getmask(b)
     m = mask_or(ma, mb)
+    # Get the rawdata
     fa = getdata(a)
     fb = getdata(b)
-    if fb.dtype.char in typecodes["Integer"]:
-        return masked_array(umath.power(fa, fb), m)
-    m = mask_or(m, (fa < 0) & (fb != fb.astype(int))) 
-    if m is nomask:
-        return masked_array(umath.power(fa, fb))
+    # Get the type of the result (so that we preserve subclasses)
+    if isinstance(a,MaskedArray):
+        basetype = type(a)
     else:
-        fa = fa.copy()
-        if m.all():
-            fa.flat = 1
-        else: 
-            numpy.putmask(fa,m,1)
-        return masked_array(umath.power(fa, fb), m)
+        basetype = MaskedArray
+    # Get the result and view it as a (subclass of) MaskedArray
+    result = umath.power(fa,fb).view(basetype)
+    # Retrieve some extra attributes if needed
+    result._update_from(a)
+    # Find where we're in trouble w/ NaNs and Infs
+    invalid = numpy.logical_not(numpy.isfinite(result.view(ndarray)))
+    # Add the initial mask
+    if m is not nomask:
+        result._mask = m
+    # Fix the invalid parts
+    if invalid.any():
+        result[invalid] = masked
+        result._data[invalid] = result.fill_value
+    return result
+    
+#    if fb.dtype.char in typecodes["Integer"]:
+#        return masked_array(umath.power(fa, fb), m)
+#    m = mask_or(m, (fa < 0) & (fb != fb.astype(int))) 
+#    if m is nomask:
+#        return masked_array(umath.power(fa, fb))
+#    else:
+#        fa = fa.copy()
+#        if m.all():
+#            fa.flat = 1
+#        else: 
+#            numpy.putmask(fa,m,1)
+#        return masked_array(umath.power(fa, fb), m)
 
 #..............................................................................
 def argsort(a, axis=None, kind='quicksort', order=None, fill_value=None):
@@ -3373,6 +3395,7 @@ frombuffer = _convert2ma('frombuffer')
 fromfunction = _convert2ma('fromfunction')
 identity = _convert2ma('identity')
 indices = numpy.indices
+clip = numpy.clip
 
 ###############################################################################
 
