@@ -1976,7 +1976,7 @@ PyArray_ToList(PyArrayObject *self)
 	    v=(PyArrayObject *)array_big_item(self, i);
 	}
 	else {
-	    v = PySequence_GetItem((PyObject *)self, i);
+	    v = (PyArrayObject *)PySequence_GetItem((PyObject *)self, i);
 	    if ((!PyArray_Check(v)) || (v->nd >= self->nd)) {
 		PyErr_SetString(PyExc_RuntimeError,
 				"array_item not returning smaller-"	\

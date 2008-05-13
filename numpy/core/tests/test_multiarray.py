@@ -854,6 +854,23 @@ class TestView(NumpyTestCase):
         assert(isinstance(y,np.matrix))
         assert_equal(y.dtype,np.int16)
 
+class TestStats(NumpyTestCase):
+    def test_subclass(self):
+        class TestArray(np.ndarray):
+            def __new__(cls, data, info):
+                result = np.array(data)
+                result = result.view(cls)
+                result.info = info
+                return result
+            def __array_finalize__(self, obj):
+                self.info = getattr(obj, "info", '')
+        dat = TestArray([[1,2,3,4],[5,6,7,8]], 'jubba')
+        res = dat.mean(1)
+        assert res.info == dat.info
+        res = dat.std(1)
+        assert res.info == dat.info
+        res = dat.var(1)
+        assert res.info == dat.info
 
 # Import tests without matching module names
 set_local_path()

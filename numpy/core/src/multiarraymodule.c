@@ -849,7 +849,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     if ((new = _check_axis(self, &axis, 0))==NULL) return NULL;
 
     /* Compute and reshape mean */
-    obj1 = PyArray_EnsureArray(PyArray_Mean((PyAO *)new, axis, rtype, NULL));
+    obj1 = PyArray_EnsureAnyArray(PyArray_Mean((PyAO *)new, axis, rtype, NULL));
     if (obj1 == NULL) {Py_DECREF(new); return NULL;}
     n = PyArray_NDIM(new);
     newshape = PyTuple_New(n);
@@ -865,7 +865,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     if (obj2 == NULL) {Py_DECREF(new); return NULL;}
 
     /* Compute x = x - mx */
-    obj1 = PyArray_EnsureArray(PyNumber_Subtract((PyObject *)new, obj2));
+    obj1 = PyArray_EnsureAnyArray(PyNumber_Subtract((PyObject *)new, obj2));
     Py_DECREF(obj2);
     if (obj1 == NULL) {Py_DECREF(new); return NULL;}
 
@@ -878,7 +878,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 	Py_INCREF(obj1);
     }
     if (obj3 == NULL) {Py_DECREF(new); return NULL;}
-    obj2 = PyArray_EnsureArray                                      \
+    obj2 = PyArray_EnsureAnyArray                                      \
         (PyArray_GenericBinaryFunction((PyAO *)obj1, obj3, n_ops.multiply));
     Py_DECREF(obj1);
     Py_DECREF(obj3);
@@ -921,7 +921,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     Py_DECREF(obj2);
 
     if (!variance) {
-        obj1 = PyArray_EnsureArray(ret);
+        obj1 = PyArray_EnsureAnyArray(ret);
 
         /* sqrt() */
         ret = PyArray_GenericUnaryFunction((PyAO *)obj1, n_ops.sqrt);
