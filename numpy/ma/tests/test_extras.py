@@ -355,6 +355,36 @@ class TestMedian(NumpyTestCase):
         assert_equal(median(x,0), [[12,10],[8,9],[16,17]])
 
 
+class TestPolynomial(NumpyTestCase):
+    #
+    def test_polyfit(self):
+        "Tests polyfit"
+        # On ndarrays
+        x = numpy.random.rand(10)
+        y = numpy.random.rand(20).reshape(-1,2)
+        assert_almost_equal(mpolyfit(x,y,3),numpy.polyfit(x,y,3))
+        # ON 1D maskedarrays
+        x = x.view(MaskedArray)
+        x[0] = masked
+        y = y.view(MaskedArray)
+        y[0,0] = y[-1,-1] = masked
+        #
+        (C,R,K,S,D) = mpolyfit(x,y[:,0],3,full=True)
+        (c,r,k,s,d) = numpy.polyfit(x[1:], y[1:,0].compressed(), 3, full=True)
+        for (a,a_) in zip((C,R,K,S,D),(c,r,k,s,d)):
+            assert_almost_equal(a, a_)
+        #
+        (C,R,K,S,D) = mpolyfit(x,y[:,-1],3,full=True)
+        (c,r,k,s,d) = numpy.polyfit(x[1:-1], y[1:-1,-1], 3, full=True)
+        for (a,a_) in zip((C,R,K,S,D),(c,r,k,s,d)):
+            assert_almost_equal(a, a_)
+        #
+        (C,R,K,S,D) = mpolyfit(x,y,3,full=True)
+        (c,r,k,s,d) = numpy.polyfit(x[1:-1], y[1:-1,:], 3, full=True)
+        for (a,a_) in zip((C,R,K,S,D),(c,r,k,s,d)):
+            assert_almost_equal(a, a_)
+
+
 ###############################################################################
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
