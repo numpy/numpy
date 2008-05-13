@@ -223,8 +223,6 @@ class matrix(N.ndarray):
         return
 
     def __getitem__(self, index):
-        if isscalar(index):
-            return self.__array__()[index]
         self._getitem = True
 
         try:
@@ -303,6 +301,10 @@ class matrix(N.ndarray):
             return self.transpose()
         else:
             raise ValueError, "unsupported axis"
+
+    # To overcome dimension non-reduction of x[0]
+    def tolist(self):
+        return self.__array__().tolist()
 
     # To preserve orientation of result...
     def sum(self, axis=None, dtype=None, out=None):
