@@ -920,8 +920,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     indices : integer array
         Array of indices that sort 'a' along the specified axis.
 
-    SeeAlso
-    -------
+    See Also
+    --------
     lexsort : indirect stable sort with multiple keys
     sort : inplace sort
 
@@ -1212,8 +1212,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
         If a is 2-d, then a 1-d array containing the diagonal is returned.
         If a is n-d, n > 2, then an array of diagonals is returned.
 
-    SeeAlso
-    -------
+    See Also
+    --------
     diag : matlab workalike for 1-d and 2-d arrays.
     diagflat : creates diagonal arrays
     trace : sum along diagonals
@@ -1324,7 +1324,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
 
-    Results
+    Returns
     -------
     amax : array_like
         New array holding the result.
@@ -1359,8 +1359,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
         A new array holding the result is returned unless out is specified,
         in which case a reference to out is returned.
 
-    SeeAlso
-    -------
+    See Also
+    --------
     var : variance
     std : standard deviation
 
@@ -1386,7 +1386,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
 
-    Results
+    Returns
     -------
     amin : array_like
         New array holding the result.
@@ -1800,8 +1800,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
         which fields to compare first, second, etc.  Not all fields need be
         specified.
 
-    SeeAlso
-    -------
+    See Also
+    --------
     argsort : indirect sort
     lexsort : indirect stable sort on multiple keys
     searchsorted : find keys in sorted array
@@ -1874,8 +1874,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
         A new array holding the result is returned unless out is specified,
         in which case a reference to out is returned.
 
-    SeeAlso
-    -------
+    See Also
+    --------
     var : variance
     mean : average
 
@@ -2181,8 +2181,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
         A new array holding the result is returned unless out is specified,
         in which case a reference to out is returned.
 
-    SeeAlso
-    -------
+    See Also
+    --------
     std : standard deviation
     mean: average
 
