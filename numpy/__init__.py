@@ -118,33 +118,6 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib'])
 
-    if __doc__ is not None:
-        __doc__ += """
-
-Available subpackages
----------------------
-core      --- Defines a multi-dimensional array and useful procedures
-              for Numerical computation.
-lib       --- Basic functions used by several sub-packages and useful
-              to have in the main name-space.
-random    --- Core Random Tools
-linalg    --- Core Linear Algebra Tools
-fft       --- Core FFT routines
-testing   --- Numpy testing tools
-
-  These packages require explicit import
-f2py      --- Fortran to Python Interface Generator.
-distutils --- Enhancements to distutils with support for
-              Fortran compilers support and more.
-
-
-Global symbols from subpackages
--------------------------------
-core    --> * (use numpy.* not numpy.core.*)
-lib     --> * (use numpy.* not numpy.lib.*)
-testing --> NumpyTest
-"""
-
     def test(*args, **kw):
         import os, sys
         print 'Numpy is installed in %s' % (os.path.split(__file__)[0],)
@@ -153,16 +126,3 @@ testing --> NumpyTest
         return NumpyTest().test(*args, **kw)
     test.__doc__ = NumpyTest.test.__doc__
 
-    if __doc__ is not None:
-        __doc__ += """
-
-Utility tools
--------------
-
-  test        --- Run numpy unittests
-  pkgload     --- Load numpy packages
-  show_config --- Show numpy build configuration
-  dual        --- Overwrite certain functions with high-performance Scipy tools
-  matlib      --- Make everything matrices.
-  __version__ --- Numpy version string
-"""
