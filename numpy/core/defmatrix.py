@@ -125,19 +125,20 @@ def matrix_power(M,n):
 
 
 class matrix(N.ndarray):
-    """mat = matrix(data, dtype=None, copy=True)
+    """
+    mat = matrix(data, dtype=None, copy=True)
 
     Returns a matrix from an array-like object, or a string of
     data.  A matrix is a specialized 2-d array that retains
-    it's 2-d nature through operations and where '*' means matrix
+    its 2-d nature through operations and where '*' means matrix
     multiplication and '**' means matrix power.
 
     Parameters
     ----------
     data : array-like or string
        If data is a string, then interpret the string as a matrix
-         with commas or spaces separating columns and semicolons
-         separating rows.
+       with commas or spaces separating columns and semicolons
+       separating rows.
        If data is array-like than convert the array to a matrix.
     dtype : data-type
        Anything that can be interpreted as a NumPy datatype.
@@ -152,6 +153,7 @@ class matrix(N.ndarray):
     >>> print a
     [[1 2]
      [3 4]]
+
     """
     __array_priority__ = 10.0
     def __new__(subtype, data, dtype=None, copy=True):
@@ -532,18 +534,22 @@ def _from_string(str,gdict,ldict):
 
 
 def bmat(obj, ldict=None, gdict=None):
-    """Build a matrix object from string, nested sequence, or array.
+    """
+    Build a matrix object from string, nested sequence, or array.
 
-    Example
+    Examples
     --------
-    F = bmat('A, B; C, D')
-    F = bmat([[A,B],[C,D]])
-    F = bmat(r_[c_[A,B],c_[C,D]])
+    >>> F = bmat('A, B; C, D')
+    >>> F = bmat([[A,B],[C,D]])
+    >>> F = bmat(r_[c_[A,B],c_[C,D]])
 
-    all produce the same Matrix Object    [ A  B ]
-                                          [ C  D ]
+    All of these produce the same matrix::
+
+        [ A  B ]
+        [ C  D ]
 
     if A, B, C, and D are appropriately shaped 2-d arrays.
+
     """
     if isinstance(obj, str):
         if gdict is None:

@@ -1,14 +1,65 @@
 """
 NumPy
-==========
+=====
+
 Provides
-   1) An array object of arbitrary homogeneous items
-   2) Fast mathematical operations over arrays
-   3) Linear Algebra, Fourier Transforms, Random Number Generation
+  1. An array object of arbitrary homogeneous items
+  2. Fast mathematical operations over arrays
+  3. Linear Algebra, Fourier Transforms, Random Number Generation
 
-Documentation is available in the docstrings and at
+Documentation is available in the docstrings and at http://www.scipy.org
 
-http://www.scipy.org
+Available subpackages
+---------------------
+core
+    Defines a multi-dimensional array and useful procedures
+    for Numerical computation.
+lib
+    Basic functions used by several sub-packages and useful
+    to have in the main name-space.
+random
+    Core Random Tools
+linalg
+    Core Linear Algebra Tools
+fft
+    Core FFT routines
+testing
+    Numpy testing tools
+
+The following sub-packages must be explicitly imported:
+
+f2py
+    Fortran to Python Interface Generator.
+distutils
+    Enhancements to distutils with support for
+    Fortran compilers support and more.
+
+
+Global symbols from subpackages
+-------------------------------
+========  =================================
+core      all (use numpy.* not numpy.core.*)
+lib       all (use numpy.* not numpy.lib.*)
+testing   NumpyTest
+========  =================================
+
+
+Utility tools
+-------------
+
+test
+    Run numpy unittests
+pkgload
+    Load numpy packages
+show_config
+    Show numpy build configuration
+dual
+    Overwrite certain functions with high-performance Scipy tools
+matlib
+    Make everything matrices.
+__version__
+    Numpy version string
+
 """
 
 # We first need to detect if we're being called as part of the numpy setup

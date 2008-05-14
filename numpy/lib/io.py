@@ -428,7 +428,9 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
 import re
 def fromregex(file, regexp, dtype):
-    """Construct an array from a text file, using regular-expressions parsing.
+    """
+    Construct a record array from a text file, using
+    regular-expressions parsing.
 
     Array is constructed from all matches of the regular expression
     in the file. Groups in the regular expression are converted to fields.
@@ -436,19 +438,20 @@ def fromregex(file, regexp, dtype):
     Parameters
     ----------
     file : str or file
-        File name or file object to read
+        File name or file object to read.
     regexp : str or regexp
-        Regular expression to use to parse the file
+        Regular expression used to parse the file.
+        Groups in the regular expression correspond to fields in the dtype.
     dtype : dtype or dtype list
         Dtype for the structured array
 
-    Example
-    -------
-    >>> import numpy as np
+    Examples
+    --------
     >>> f = open('test.dat', 'w')
-    >>> f.write("1312 foo\n1534  bar\n 444   qux")
+    >>> f.write("1312 foo\\n1534  bar\\n444   qux")
     >>> f.close()
-    >>> np.fromregex('test.dat', r"(\d+)\s+(...)", [('num', np.int64), ('key', 'S3')])
+    >>> np.fromregex('test.dat', r"(\\d+)\\s+(...)",
+    ...              [('num', np.int64), ('key', 'S3')])
     array([(1312L, 'foo'), (1534L, 'bar'), (444L, 'qux')],
           dtype=[('num', '<i8'), ('key', '|S3')])
 
