@@ -335,10 +335,11 @@ def inv(a):
 # Cholesky decomposition
 
 def cholesky(a):
-    """Compute the Cholesky decomposition of a matrix.
+    """
+    Compute the Cholesky decomposition of a matrix.
 
-    Returns the Cholesky decomposition, :lm:`A = L L^*` of a Hermitian
-    positive-definite matrix :lm:`A`.
+    Returns the Cholesky decomposition, :math:`A = L L^*` of a Hermitian
+    positive-definite matrix :math:`A`.
 
     Parameters
     ----------
@@ -354,9 +355,8 @@ def cholesky(a):
 
     Examples
     --------
-    >>> from numpy import array, linalg
-    >>> a = array([[1,-2j],[2j,5]])
-    >>> L = linalg.cholesky(a)
+    >>> A = np.array([[1,-2j],[2j,5]])
+    >>> L = np.linalg.cholesky(A)
     >>> L
     array([[ 1.+0.j,  0.+0.j],
            [ 0.+2.j,  1.+0.j]])
@@ -636,7 +636,7 @@ def eigvalsh(a, UPLO='L'):
     determinant and I is the identity matrix.
 
     """
-    a, wrap = _makearray(a) 
+    a, wrap = _makearray(a)
     _assertRank2(a)
     _assertSquareness(a)
     t, result_t = _commonType(a)
