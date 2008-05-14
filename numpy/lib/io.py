@@ -429,8 +429,8 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 import re
 def fromregex(file, regexp, dtype):
     """
-    Construct a record array from a text file, using
-    regular-expressions parsing.
+    Construct an array from a text file, using regular-expressions
+    parsing.
 
     Array is constructed from all matches of the regular expression
     in the file. Groups in the regular expression are converted to fields.
