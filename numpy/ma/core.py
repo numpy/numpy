@@ -1354,7 +1354,8 @@ class MaskedArray(numeric.ndarray):
 #            raise IndexError, msg
         if isinstance(indx, basestring):
             ndarray.__setitem__(self._data,indx, getdata(value))
-            warnings.warn("The mask is NOT affected!")
+            warnings.warn("MaskedArray.__setitem__ on fields: "\
+                          "The mask is NOT affected!")
             return
         #....
         if value is masked:

@@ -16,14 +16,15 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'column_stack','compress_cols','compress_rowcols', 'compress_rows',
            'count_masked',
            'dot','dstack',
-           'expand_dims',
+           'ediff1d','expand_dims',
            'flatnotmasked_contiguous','flatnotmasked_edges',
            'hsplit','hstack',
            'mask_cols','mask_rowcols','mask_rows','masked_all','masked_all_like',
-           'median','mediff1d','mpolyfit','mr_','mvander',
+           'median','mr_',
            'notmasked_contiguous','notmasked_edges',
+           'polyfit',
            'row_stack',
-           'vstack',
+           'vander','vstack',
            ]
 
 from itertools import groupby
@@ -579,7 +580,7 @@ def dot(a,b, strict=False):
     return masked_array(d, mask=m)
 
 #...............................................................................
-def mediff1d(array, to_end=None, to_begin=None):
+def ediff1d(array, to_end=None, to_begin=None):
     """Return the differences between consecutive elements of an
     array, possibly with prefixed and/or appended values.
 
@@ -826,7 +827,7 @@ def notmasked_contiguous(a, axis=None):
 #---- Polynomial fit ---
 #####--------------------------------------------------------------------------
 
-def mvander(x, n=None):
+def vander(x, n=None):
     """%s
     Notes
     -----
@@ -839,7 +840,7 @@ def mvander(x, n=None):
     return _vander
 
 
-def mpolyfit(x, y, deg, rcond=None, full=False):
+def polyfit(x, y, deg, rcond=None, full=False):
     """%s
     
     Notes
@@ -874,7 +875,7 @@ def mpolyfit(x, y, deg, rcond=None, full=False):
     if scale != 0 :
         x = x / scale
     # solve least squares equation for powers of x
-    v = mvander(x, order)
+    v = vander(x, order)
     c, resids, rank, s = _lstsq(v, y.filled(0), rcond)    
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
@@ -892,8 +893,7 @@ def mpolyfit(x, y, deg, rcond=None, full=False):
     
 _g = globals()
 for nfunc in ('vander', 'polyfit'):
-    mfunc = "m%s" % nfunc
-    _g[mfunc].func_doc = _g[mfunc].func_doc % getattr(np,nfunc).__doc__
+    _g[nfunc].func_doc = _g[nfunc].func_doc % getattr(np,nfunc).__doc__
 
 
 

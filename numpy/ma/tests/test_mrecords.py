@@ -120,6 +120,16 @@ class TestMRecords(NumpyTestCase):
         mbase.b[3:] = masked
         assert_equal(mbase.b, base['b'])
         assert_equal(mbase.b._mask, [0,1,0,1,1])
+        # Set fields globally..........................
+        ndtype = [('alpha','|S1'),('num',int)]
+        data = ma.array([('a',1),('b',2),('c',3)], dtype=ndtype)
+        rdata = data.view(MaskedRecords)
+        val = ma.array([10,20,30], mask=[1,0,0])
+        #
+        rdata['num'] = val
+        assert_equal(rdata.num, val)
+        assert_equal(rdata.num.mask, [1,0,0])
+        
     #
     def test_set_mask(self):
         base = self.base.copy()
