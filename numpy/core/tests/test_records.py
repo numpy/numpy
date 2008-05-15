@@ -1,7 +1,7 @@
 
 from numpy.testing import *
 set_package_path()
-import os as _os
+from os import path
 import numpy.core;reload(numpy.core)
 from numpy.core import *
 restore_path()
@@ -33,8 +33,8 @@ class TestFromrecords(NumpyTestCase):
         assert_equal(r.a,array([1,2,3,4]))
 
     def check_recarray_fromfile(self):
-        __path__ = _os.path.split(__file__)
-        filename = _os.path.join(__path__[0], "testdata.fits")
+        data_dir = path.join(path.dirname(__file__),'data')
+        filename = path.join(data_dir,'recarray_from_file.fits')
         fd = open(filename)
         fd.seek(2880*2)
         r = rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')

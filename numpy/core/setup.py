@@ -307,6 +307,8 @@ def configuration(parent_package='',top_path=None):
 
 
     config.add_data_dir('tests')
+    config.add_data_dir('tests/data')
+
     config.make_svn_version_py()
 
     return config
