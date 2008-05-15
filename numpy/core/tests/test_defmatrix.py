@@ -187,7 +187,7 @@ class TestNewScalarIndexing(NumpyTestCase):
     def check_dimesions(self):
         a = self.a
         x = a[0]
-        assert_equal(x.ndim, 1)
+        assert_equal(x.ndim, 2)
 
     def check_array_from_matrix_list(self):
         a = self.a

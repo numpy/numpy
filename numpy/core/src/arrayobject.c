@@ -7082,6 +7082,11 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
     int n, r, i;
     PyObject *e;
 
+    if (PyArray_Check(s)) {
+	*itemsize = MAX(*itemsize, PyArray_ITEMSIZE(s));
+	return 0;
+    }
+
     n = PyObject_Length(s);
 
     if ((nd == 0) || PyString_Check(s) ||
@@ -7112,6 +7117,14 @@ discover_dimensions(PyObject *s, int nd, intp *d, int check_it)
     PyObject *e;
     int r, n, i, n_lower;
 
+
+    if (PyArray_Check(s)) {
+	for (i=0; i<nd; i++) {
+	    d[i] = PyArray_DIM(s,i);
+	}
+	return 0;
+    }
+    
     n=PyObject_Length(s);
     *d = n;
     if (*d < 0) {
@@ -7430,14 +7443,29 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 static int
 setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, intp offset)
 {
-    Py_ssize_t i, slen = PySequence_Length(s);
+    Py_ssize_t i, slen;
     int res = 0;
+
+    /* This code is to ensure that the sequence access below will 
+       return a lower-dimensional sequence.
+     */
+    if (PyArray_Check(s) && !(PyArray_CheckExact(s))) {
+      /* FIXME:  This could probably copy the entire subarray
+	 at once here using a faster algorithm.
+	 Right now, just make sure a base-class array
+	 is used so that the dimensionality reduction assumption
+	 is correct. 
+       */
+	s = PyArray_EnsureArray(s);
+    }
 
     if (dim > a->nd) {
         PyErr_Format(PyExc_ValueError,
                      "setArrayFromSequence: sequence/array dimensions mismatch.");
         return -1;
     }
+
+    slen = PySequence_Length(s);
 
     if (slen != a->dimensions[dim]) {
         PyErr_Format(PyExc_ValueError,
