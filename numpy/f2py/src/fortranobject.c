@@ -100,44 +100,71 @@ static PyMethodDef fortran_methods[] = {
 static PyObject *
 fortran_doc (FortranDataDef def) {
     char *p;
+    /*
+      p is used as a buffer to hold generated documentation strings.
+      A common operation in generating the documentation strings, is
+      appending a string to the buffer p. Earlier, the following
+      idiom was:
+
+        sprintf(p, "%s<string to be appended>", p);
+
+      but this does not work when _FORTIFY_SOURCE=2 is enabled: instead
+      of appending the string, the string is inserted.
+
+      As a fix, the following idiom should be used for appending
+      strings to a buffer p:
+
+        sprintf(p + strlen(p), "<string to be appended>");
+     */
     PyObject *s = NULL;
     int i;
     unsigned size=100;
     if (def.doc!=NULL)
         size += strlen(def.doc);
     p = (char*)malloc (size);
+    p[0] = '\0'; /* make sure that the buffer has zero length */
     if (sprintf(p,"%s - ",def.name)==0) goto fail;
     if (def.rank==-1) {
         if (def.doc==NULL) {
-            if (sprintf(p,"%sno docs available",p)==0)
+            if (sprintf(p+strlen(p),"no docs available")==0)
                 goto fail;
         } else {
-            if (sprintf(p,"%s%s",p,def.doc)==0)
+            if (sprintf(p+strlen(p),"%s",def.doc)==0)
                 goto fail;
         }
     } else {
         PyArray_Descr *d = PyArray_DescrFromType(def.type);
-        if (sprintf(p,"%s'%c'-",p,d->type)==0) {Py_DECREF(d); goto fail;}
+        if (sprintf(p+strlen(p),"'%c'-",d->type)==0) {
+	  Py_DECREF(d);
+	  goto fail;
+	}
         Py_DECREF(d);
         if (def.data==NULL) {
-            if (sprintf(p,"%sarray(%" NPY_INTP_FMT,p,def.dims.d[0])==0) goto fail;
+            if (sprintf(p+strlen(p),"array(%" NPY_INTP_FMT,def.dims.d[0])==0)
+	      goto fail;
             for(i=1;i<def.rank;++i)
-                if (sprintf(p,"%s,%" NPY_INTP_FMT,p,def.dims.d[i])==0) goto fail;
-            if (sprintf(p,"%s), not allocated",p)==0) goto fail;
+                if (sprintf(p+strlen(p),",%" NPY_INTP_FMT,def.dims.d[i])==0)
+		  goto fail;
+            if (sprintf(p+strlen(p),"), not allocated")==0)
+	      goto fail;
         } else {
             if (def.rank>0) {
-                if (sprintf(p,"%sarray(%"NPY_INTP_FMT,p,def.dims.d[0])==0) goto fail;
+                if (sprintf(p+strlen(p),"array(%"NPY_INTP_FMT,def.dims.d[0])==0)
+		  goto fail;
                 for(i=1;i<def.rank;i++)
-                    if (sprintf(p,"%s,%" NPY_INTP_FMT,p,def.dims.d[i])==0) goto fail;
-                if (sprintf(p,"%s)",p)==0) goto fail;
+                    if (sprintf(p+strlen(p),",%" NPY_INTP_FMT,def.dims.d[i])==0)
+		      goto fail;
+                if (sprintf(p+strlen(p),")")==0) goto fail;
             } else {
-                if (sprintf(p,"%sscalar",p)==0) goto fail;
+                if (sprintf(p+strlen(p),"scalar")==0) goto fail;
             }
         }
     }
-    if (sprintf(p,"%s\n",p)==0) goto fail;
+    if (sprintf(p+strlen(p),"\n")==0) goto fail;
     if (strlen(p)>size) {
-        fprintf(stderr,"fortranobject.c:fortran_doc:len(p)=%zd>%d(size): too long doc string required, increase size\n",strlen(p),size);
+        fprintf(stderr,"fortranobject.c:fortran_doc:len(p)=%zd>%d(size):"\
+		" too long doc string required, increase size\n",\
+		strlen(p),size);
         goto fail;
     }
     s = PyString_FromString(p);
