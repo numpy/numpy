@@ -456,7 +456,7 @@ subroutinepattern=re.compile(beforethisafter%('[a-z\s]*?','subroutine','subrouti
 #
 groupbegins77=r'program|block\s*data'
 beginpattern77=re.compile(beforethisafter%('',groupbegins77,groupbegins77,'.*'),re.I),'begin'
-groupbegins90=groupbegins77+r'|module|python\s*module|interface|type(?!\s*\()'
+groupbegins90=groupbegins77+r'|module(?!\s*procedure)|python\s*module|interface|type(?!\s*\()'
 beginpattern90=re.compile(beforethisafter%('',groupbegins90,groupbegins90,'.*'),re.I),'begin'
 groupends=r'end|endprogram|endblockdata|endmodule|endpythonmodule|endinterface'
 endpattern=re.compile(beforethisafter%('',groupends,groupends,'[\w\s]*'),re.I),'end'
