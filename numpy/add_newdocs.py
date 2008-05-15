@@ -967,8 +967,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
-    """a.choose(choices, out=None, mode='raise')
-    a.choose(*choices, out=None, mode='raise')
+    """
+    a.choose(choices, out=None, mode='raise')
 
     Use an index array to construct a new array from a set of choices.
 
@@ -2472,4 +2472,3 @@ add_newdoc("numpy.core","ufunc",("outer",
            [12, 15, 18]])
 
     """))
-
