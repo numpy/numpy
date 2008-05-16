@@ -106,7 +106,7 @@ class _fromnxfunction:
         if len(args)==1:
             x = args[0]
             if isinstance(x, ndarray):
-                _d = func(nxasarray(x), **params)
+                _d = func(np.asarray(x), **params)
                 _m = func(getmaskarray(x), **params)
                 return masked_array(_d, mask=_m)
             elif isinstance(x, tuple) or isinstance(x, list):
@@ -222,7 +222,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         outshape[axis] = res.shape
         dtypes.append(asarray(res).dtype)
         outshape = flatten_inplace(outshape)
-        outarr = zeros(outshape, object_)
+        outarr = zeros(outshape, object)
         outarr[tuple(flatten_inplace(j.tolist()))] = res
         k = 1
         while k < Ntot:
@@ -252,17 +252,17 @@ def average(a, axis=None, weights=None, returned=False):
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        weights : sequence, optional
-            Sequence of weights.
-            The weights must have the shape of a, or be 1D with length
-            the size of a along the given axis.
-            If no weights are given, weights are assumed to be 1.
-        returned : bool
-            Flag indicating whether a tuple (result, sum of weights/counts)
-            should be returned as output (True), or just the result (False).
+    axis : {None,int}, optional
+        Axis along which to perform the operation.
+        If None, applies to a flattened version of the array.
+    weights : {None, sequence}, optional
+        Sequence of weights.
+        The weights must have the shape of a, or be 1D with length
+        the size of a along the given axis.
+        If no weights are given, weights are assumed to be 1.
+    returned : {False, True}, optional
+        Flag indicating whether a tuple (result, sum of weights/counts)
+        should be returned as output (True), or just the result (False).
 
     """
     a = asarray(a)
@@ -374,12 +374,10 @@ def median(a, axis=0, out=None, overwrite_input=False):
         Axis along which the medians are computed. The default is to
         compute the median along the first dimension.  axis=None
         returns the median of the flattened array
-
-    out : ndarray, optional
+    out : {None, ndarray}, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
-
     overwrite_input : {False, True}, optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
@@ -419,17 +417,19 @@ def median(a, axis=0, out=None, overwrite_input=False):
     #
     if overwrite_input:
         if axis is None:
-            sorted = a.ravel()
-            sorted.sort()
+            asorted = a.ravel()
+            asorted.sort()
         else:
             a.sort(axis=axis)
-            sorted = a
+            asorted = a
     else:
-        sorted = sort(a, axis=axis)
+        asorted = sort(a, axis=axis)
     if axis is None:
-        result = _median1D(sorted)
+        result = _median1D(asorted)
     else:
-        result = apply_along_axis(_median1D, axis, sorted)
+        result = apply_along_axis(_median1D, axis, asorted)
+    if out is not None:
+        out = result
     return result
 
 

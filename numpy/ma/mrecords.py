@@ -546,24 +546,18 @@ def fromarrays(arraylist, dtype=None, shape=None, formats=None,
         A list of (masked) arrays. Each element of the sequence is first converted
         to a masked array if needed. If a 2D array is passed as argument, it is
         processed line by line
-    dtype : numeric.dtype
+    dtype : {None, dtype}, optional
         Data type descriptor.
-    shape : integer
+    shape : {None, integer}, optional
         Number of records. If None, shape is defined from the shape of the
         first array in the list.
-    formats : sequence
+    formats : {None, sequence}, optional
         Sequence of formats for each individual field. If None, the formats will
         be autodetected by inspecting the fields and selecting the highest dtype
         possible.
-    names : sequence
+    names : {None, sequence}, optional
         Sequence of the names of each field.
-    titles : sequence
-      (Description to write)
-    aligned : boolean
-      (Description to write, not used anyway)
-    byteorder: boolean
-      (Description to write, not used anyway)
-    fill_value : sequence
+    fill_value : {None, sequence}, optional
         Sequence of data to be used as filling values.
 
     Notes
@@ -571,12 +565,12 @@ def fromarrays(arraylist, dtype=None, shape=None, formats=None,
     Lists of tuples should be preferred over lists of lists for faster processing.
     """
     datalist = [getdata(x) for x in arraylist]
-    masklist = [getmaskarray(x) for x in arraylist]
+    masklist = [np.atleast_1d(getmaskarray(x)) for x in arraylist]
     _array = recfromarrays(datalist,
                            dtype=dtype, shape=shape, formats=formats,
                            names=names, titles=titles, aligned=aligned,
                            byteorder=byteorder).view(mrecarray)
-    _array._fieldmask[:] = zip(*masklist)
+    _array._fieldmask.flat = zip(*masklist)
     if fill_value is not None:
         _array.fill_value = fill_value
     return _array
@@ -590,30 +584,24 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
 
     Parameters
     ----------
-    arraylist : sequence
-        A list of (masked) arrays. Each element of the sequence is first converted
+    reclist : sequence
+        A list of records. Each element of the sequence is first converted
         to a masked array if needed. If a 2D array is passed as argument, it is
         processed line by line
-    dtype : numeric.dtype
+    dtype : {None, dtype}, optional
         Data type descriptor.
-    shape : integer
+    shape : {None,int}, optional
         Number of records. If None, ``shape`` is defined from the shape of the
         first array in the list.
-    formats : sequence
+    formats : {None, sequence}, optional
         Sequence of formats for each individual field. If None, the formats will
         be autodetected by inspecting the fields and selecting the highest dtype
         possible.
-    names : sequence
+    names : {None, sequence}, optional
         Sequence of the names of each field.
-    titles : sequence
-      (Description to write)
-    aligned : boolean
-      (Description to write, not used anyway)
-    byteorder: boolean
-      (Description to write, not used anyway)
-    fill_value : sequence
+    fill_value : {None, sequence}, optional
         Sequence of data to be used as filling values.
-    mask : sequence or boolean.
+    mask : {nomask, sequence}, optional.
         External mask to apply on the data.
 
 *Notes*:
@@ -703,20 +691,21 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
                  varnames=None, vartypes=None):
     """Creates a mrecarray from data stored in the file `filename`.
 
-*Parameters* :
+    Parameters
+    ----------
     filename : {file name/handle}
         Handle of an opened file.
-    delimitor : {string}
+    delimitor : {None, string}, optional
         Alphanumeric character used to separate columns in the file.
         If None, any (group of) white spacestring(s) will be used.
-    commentchar : {string}
+    commentchar : {'#', string}, optional
         Alphanumeric character used to mark the start of a comment.
-    missingchar` : {string}
+    missingchar : {'', string}, optional
         String indicating missing data, and used to create the masks.
-    varnames : {sequence}
+    varnames : {None, sequence}, optional
         Sequence of the variable names. If None, a list will be created from
         the first non empty line of the file.
-    vartypes : {sequence}
+    vartypes : {None, sequence}, optional
         Sequence of the variables dtypes. If None, it will be estimated from
         the first non-commented line.
 
