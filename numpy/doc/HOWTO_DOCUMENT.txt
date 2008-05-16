@@ -25,15 +25,14 @@ Use a code checker:
  * `pyflakes` easy_install pyflakes
  * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`_
 
-If you prefer the use of abbreviated module names, we suggest
-the following commonly used import conventions::
+For documentation purposes, use unabbreviated module names.  If you
+prefer the use of abbreviated module names in code (*not* the
+docstrings), we suggest the import conventions used by NumPy itself::
 
    import numpy as np
    import scipy as sp
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-
-It is still perfectly acceptable to use unnabreviated module names.
 
 Docstring Standard
 ------------------
@@ -89,7 +88,7 @@ The sections of the docstring are:
    ::
 
      def add(a,b):
-        """Return the sum of two numbers.
+        """The sum of two numbers.
 
         """
 
@@ -101,7 +100,7 @@ The sections of the docstring are:
      """
      add(a,b)
 
-     Return the sum of two numbers.
+     The sum of two numbers.
 
      """
 

@@ -8,7 +8,29 @@ extend over multiple lines, the closing three quotation marks must be on
 a line by itself, preferably preceeded by a blank line.
 
 """
-import os                        # standard library imports first
+import os # standard library imports first
+
+# Do NOT import using *, e.g. from numpy import *
+#
+# Import the module using
+#
+#   import numpy
+#
+# instead or import individual functions as needed, e.g
+#
+#  from numpy import array, zeros
+#
+# If you prefer the use of abbreviated module names, we suggest the
+# convention used by NumPy itself::
+#
+#   import numpy as np
+#   import scipy as sp
+#   import matplotlib as mpl
+#   import matplotlib.pyplot as plt
+#
+# These abbreviated names are not to be used in docstrings; users must
+# be able to paste and execute docstrings after importing only the
+# numpy module itself, unabbreviated.
 
 import numpy as np               # related third party imports next
 import scipy as sp               # imports should be at the top of the module
@@ -18,7 +40,8 @@ import matplotlib.pyplot as plt
 from my_module import my_func, other_func
 
 def foo(var1, var2, long_var_name='hi') :
-    """One-line summary or signature.
+    """A one-line summary that does not use variable names or the
+    function name.
 
     Several sentences providing an extended description. You can put
     text in mono-spaced type like so: ``var``.
@@ -27,28 +50,31 @@ def foo(var1, var2, long_var_name='hi') :
     ----------
     var1 : array_like
         Array_like means all those objects -- lists, nested lists, etc. --
-        that can be converted to an array.
-    var2 : integer
-        Write out the full type
-    long_variable_name : {'hi', 'ho'}, optional
+        that can be converted to an array.  We can also refer to
+        variables like `var1`.
+    var2 : int
+        The type above can either refer to an actual Python type
+        (e.g. ``int``), or describe the type of the variable in more
+        detail, e.g. ``(N,) ndarray`` or ``array_like``.
+    Long_variable_name : {'hi', 'ho'}, optional
         Choices in brackets, default first when optional.
 
     Returns
     -------
-    named : type
+    describe : type
         Explanation
-    list
+    output
         Explanation
-    of
+    tuple
         Explanation
-    outputs
+    items
         even more explaining
 
     Other Parameters
     ----------------
     only_seldom_used_keywords : type
         Explanation
-    common_parametrs_listed_above : type
+    common_parameters_listed_above : type
         Explanation
 
     Raises
@@ -65,7 +91,7 @@ def foo(var1, var2, long_var_name='hi') :
     -----
     Notes about the implementation algorithm (if needed).
 
-    This can have multiple paragraphs as can all sections.
+    This can have multiple paragraphs.
 
     You may include some math:
 
