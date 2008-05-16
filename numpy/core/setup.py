@@ -115,7 +115,7 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
 
             if sys.platform=='win32' or os.name=='nt':
-                from distutils.msvccompiler import get_build_architecture
+                from numpy.distutils.misc_util import get_build_architecture
                 a = get_build_architecture()
                 print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
                 if a == 'AMD64':
