@@ -39,33 +39,37 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     endpoint is True, the last sample is stop. If retstep is
     True then return (seq, step_value), where step_value used.
 
-    :Parameters:
-        start : {float}
-            The value the sequence starts at.
-        stop : {float}
-            The value the sequence stops at. If ``endpoint`` is false, then
-            this is not included in the sequence. Otherwise it is
-            guaranteed to be the last value.
-        num : {integer}
-            Number of samples to generate. Default is 50.
-        endpoint : {boolean}
-            If true, ``stop`` is the last sample. Otherwise, it is not
-            included. Default is true.
-        retstep : {boolean}
-            If true, return ``(samples, step)``, where ``step`` is the
-            spacing used in generating the samples.
+    Parameters
+    ----------
+    start : {float}
+        The value the sequence starts at.
+    stop : {float}
+        The value the sequence stops at. If ``endpoint`` is false, then
+        this is not included in the sequence. Otherwise it is
+        guaranteed to be the last value.
+    num : {integer}
+        Number of samples to generate. Default is 50.
+    endpoint : {boolean}
+        If true, ``stop`` is the last sample. Otherwise, it is not
+        included. Default is true.
+    retstep : {boolean}
+        If true, return ``(samples, step)``, where ``step`` is the
+        spacing used in generating the samples.
 
-    :Returns:
-        samples : {array}
-            ``num`` equally spaced samples from the range [start, stop]
-            or [start, stop).
-        step : {float} (Only if ``retstep`` is true)
-            Size of spacing between samples.
+    Returns
+    -------
+    samples : {array}
+        ``num`` equally spaced samples from the range [start, stop]
+        or [start, stop).
+    step : {float} (Only if ``retstep`` is true)
+        Size of spacing between samples.
 
-    :See Also:
-        `arange` : Similiar to linspace, however, when used with
-            a float endpoint, that endpoint may or may not be included.
-        `logspace`
+    See Also
+    --------
+    arange : Similiar to linspace, however, when used with
+             a float endpoint, that endpoint may or may not be included.
+    logspace
+
     """
     num = int(num)
     if num <= 0:
@@ -103,63 +107,62 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
 
     Parameters
     ----------
-
     a : array
-      The data to histogram. 
+        The data to histogram.
 
     bins : int or sequence
-      If an int, then the number of equal-width bins in the given range.
-      If new=True, bins can also be the bin edges, allowing for non-constant
-      bin widths.
+        If an int, then the number of equal-width bins in the given
+        range.  If new=True, bins can also be the bin edges, allowing
+        for non-constant bin widths.
 
     range : (float, float)
-      The lower and upper range of the bins. If not provided, then
-      range is simply (a.min(), a.max()). Using new=False, lower than range
-      are ignored, and values higher than range are tallied in the rightmost 
-      bin. Using new=True, both lower and upper outliers are ignored. 
+        The lower and upper range of the bins. If not provided, range
+        is simply (a.min(), a.max()). Using new=False, lower than
+        range are ignored, and values higher than range are tallied in
+        the rightmost bin. Using new=True, both lower and upper
+        outliers are ignored.
 
     normed : bool
-      If False, the result array will contain the number of samples in
-      each bin.  If True, the result array is the value of the
-      probability *density* function at the bin normalized such that the
-      *integral* over the range is 1. Note that the sum of all of the
-      histogram values will not usually be 1; it is not a probability
-      *mass* function.
+        If False, the result array will contain the number of samples
+        in each bin.  If True, the result array is the value of the
+        probability *density* function at the bin normalized such that
+        the *integral* over the range is 1. Note that the sum of all
+        of the histogram values will not usually be 1; it is not a
+        probability *mass* function.
 
     weights : array
-      An array of weights, the same shape as a. If normed is False, the 
-      histogram is computed by summing the weights of the values falling into
-      each bin. If normed is True, the weights are normalized, so that the 
-      integral of the density over the range is 1. This option is only 
-      available with new=True.
-         
+        An array of weights, the same shape as a. If normed is False,
+        the histogram is computed by summing the weights of the values
+        falling into each bin. If normed is True, the weights are
+        normalized, so that the integral of the density over the range
+        is 1. This option is only available with new=True.
+
     new : bool
-       Compatibility argument to transition from the old version (v1.1) to 
-       the new version (v1.2). 
-    
- 
-    Return
-    ------
+        Compatibility argument to transition from the old version
+        (v1.1) to the new version (v1.2).
+
+    Returns
+    -------
     hist : array
-        The values of the histogram. See `normed` and `weights` for a 
+        The values of the histogram. See `normed` and `weights` for a
         description of the possible semantics.
 
     bin_edges : float array
         With new=False, return the left bin edges (length(hist)).
-        With new=True, return the bin edges (length(hist)+1). 
+        With new=True, return the bin edges (length(hist)+1).
 
-    SeeAlso:
-
-        histogramdd
+    See Also
+    --------
+    histogramdd
 
     """
     # Old behavior
     if new is False:
         warnings.warn("""
-        The semantics of histogram will be modified in 
-        release 1.2 to improve outlier handling. The new behavior can be 
-        obtained using new=True. Note that the new version accepts/returns 
-        the bin edges instead of the left bin edges. 
+        The semantics of histogram will be modified in
+        release 1.2 to improve outlier handling. The new behavior can be
+        obtained using new=True. Note that the new version accepts/returns
+        the bin edges instead of the left bin edges.
         Please read the docstring for more information.""", FutureWarning)
         a = asarray(a).ravel()
 
@@ -168,13 +171,13 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
             if (mn > mx):
                 raise AttributeError, \
                     'max must be larger than min in range parameter.'
-    
+
         if not iterable(bins):
             if range is None:
                 range = (a.min(), a.max())
             else:
                 warnings.warn("""
-                Outliers handling will change in version 1.2.  
+                Outliers handling will change in version 1.2.
                 Please read the docstring for details.""", FutureWarning)
             mn, mx = [mi+0.0 for mi in range]
             if mn == mx:
@@ -182,20 +185,20 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
                 mx += 0.5
             bins = linspace(mn, mx, bins, endpoint=False)
         else:
-            if normed: 
+            if normed:
                 raise ValueError, 'Use new=True to pass bin edges explicitly.'
             warnings.warn("""
-            The semantic for bins will change in version 1.2. 
+            The semantic for bins will change in version 1.2.
             The bins will become the bin edges, instead of the left bin edges.
             """, FutureWarning)
             bins = asarray(bins)
             if (np.diff(bins) < 0).any():
                 raise AttributeError, 'bins must increase monotonically.'
-            
-            
+
+
         if weights is not None:
             raise ValueError, 'weights are only available with new=True.'
-            
+
         # best block size probably depends on processor cache size
         block = 65536
         n = sort(a[:block]).searchsorted(bins)
@@ -203,15 +206,15 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
             n += sort(a[i:i+block]).searchsorted(bins)
         n = concatenate([n, [len(a)]])
         n = n[1:]-n[:-1]
-    
+
         if normed:
             db = bins[1] - bins[0]
             return 1.0/(a.size*db) * n, bins
         else:
             return n, bins
 
-    
-    
+
+
     # New behavior
     elif new is True:
         a = asarray(a)
@@ -221,13 +224,13 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
                 raise ValueError, 'weights should have the same shape as a.'
             weights = weights.ravel()
         a =  a.ravel()
-            
+
         if (range is not None):
             mn, mx = range
             if (mn > mx):
                 raise AttributeError, \
                     'max must be larger than min in range parameter.'
-    
+
         if not iterable(bins):
             if range is None:
                 range = (a.min(), a.max())
@@ -240,7 +243,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
             bins = asarray(bins)
             if (np.diff(bins) < 0).any():
                 raise AttributeError, 'bins must increase monotonically.'
-    
+
         # Histogram is an integer or a float array depending on the weights.
         if weights is None:
             ntype = int
@@ -261,63 +264,63 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
                 tmp_w = weights[i:i+block]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
-                sw = tmp_w[sorting_index] 
+                sw = tmp_w[sorting_index]
                 cw = np.concatenate(([zero,], sw.cumsum()))
                 bin_index = np.r_[sa.searchsorted(bins[:-1], 'left'), \
                     sa.searchsorted(bins[-1], 'right')]
                 n += cw[bin_index]
-            
+
         n = np.diff(n)
-       
+
         if normed is False:
             return n, bins
         elif normed is True:
             db = array(np.diff(bins), float)
             return n/(n*db).sum(), bins
-        
+
 
 def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     """histogramdd(sample, bins=10, range=None, normed=False, weights=None)
 
     Return the N-dimensional histogram of the sample.
 
-    Parameters:
+    Parameters
+    ----------
+    sample : sequence or array
+        A sequence containing N arrays or an NxM array. Input data.
 
-        sample : sequence or array
-            A sequence containing N arrays or an NxM array. Input data.
+    bins : sequence or scalar
+        A sequence of edge arrays, a sequence of bin counts, or a scalar
+        which is the bin count for all dimensions. Default is 10.
 
-        bins : sequence or scalar
-            A sequence of edge arrays, a sequence of bin counts, or a scalar
-            which is the bin count for all dimensions. Default is 10.
+    range : sequence
+        A sequence of lower and upper bin edges. Default is [min, max].
 
-        range : sequence
-            A sequence of lower and upper bin edges. Default is [min, max].
+    normed : boolean
+        If False, return the number of samples in each bin, if True,
+        returns the density.
 
-        normed : boolean
-            If False, return the number of samples in each bin, if True,
-            returns the density.
+    weights : array
+        Array of weights.  The weights are normed only if normed is True.
+        Should the sum of the weights not equal N, the total bin count will
+        not be equal to the number of samples.
 
-        weights : array
-            Array of weights.  The weights are normed only if normed is True.
-            Should the sum of the weights not equal N, the total bin count will
-            not be equal to the number of samples.
+    Returns
+    -------
+    hist : array
+        Histogram array.
 
-    Returns:
+    edges : list
+        List of arrays defining the lower bin edges.
 
-        hist : array
-            Histogram array.
+    See Also
+    --------
+    histogram
 
-        edges : list
-            List of arrays defining the lower bin edges.
-
-    SeeAlso:
-
-        histogram
-
-    Example
-
-        >>> x = random.randn(100,3)
-        >>> hist3d, edges = histogramdd(x, bins = (5, 6, 7))
+    Examples
+    --------
+    >>> x = random.randn(100,3)
+    >>> hist3d, edges = histogramdd(x, bins = (5, 6, 7))
 
     """
 
@@ -338,7 +341,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     try:
         M = len(bins)
         if M != D:
-            raise AttributeError, 'The dimension of bins must be a equal to the dimension of the sample x.'
+            raise AttributeError, 'The dimension of bins must be equal ' \
+                                  'to the dimension of the sample x.'
     except TypeError:
         bins = D*[bins]
 
@@ -384,7 +388,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         # Rounding precision
         decimal = int(-log10(dedges[i].min())) +6
         # Find which points are on the rightmost edge.
-        on_edge = where(around(sample[:,i], decimal) == around(edges[i][-1], decimal))[0]
+        on_edge = where(around(sample[:,i], decimal) == around(edges[i][-1],
+                                                               decimal))[0]
         # Shift these points one bin to the left.
         Ncount[i][on_edge] -= 1
 
@@ -399,7 +404,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
     xy += Ncount[ni[-1]]
 
-    # Compute the number of repetitions in xy and assign it to the flattened histmat.
+    # Compute the number of repetitions in xy and assign it to the
+    # flattened histmat.
     if len(xy) == 0:
         return zeros(nbin-2, int), edges
 
@@ -463,18 +469,18 @@ def average(a, axis=None, weights=None, returned=False):
         sum_of_weights is has the same type as the average.
 
 
-    Example
-    -------
+    Examples
+    --------
       >>> average(range(1,11), weights=range(10,0,-1))
       4.0
 
-    Exceptions
-    ----------
+    Raises
+    ------
     ZeroDivisionError
-        Raised when all weights along axis are zero. See numpy.ma.average for a
+        When all weights along axis are zero. See numpy.ma.average for a
         version robust to this type of error.
     TypeError
-        Raised when the length of 1D weights is not the same as the shape of a
+        When the length of 1D weights is not the same as the shape of a
         along axis.
 
     """
@@ -857,11 +863,12 @@ def sort_complex(a):
 def trim_zeros(filt, trim='fb'):
     """ Trim the leading and trailing zeros from a 1D array.
 
-    Example:
-        >>> import numpy
-        >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
-        >>> numpy.trim_zeros(a)
-        array([1, 2, 3, 2, 1])
+    Examples
+    --------
+    >>> import numpy
+    >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
+    >>> numpy.trim_zeros(a)
+    array([1, 2, 3, 2, 1])
 
     """
     first = 0
@@ -884,7 +891,8 @@ if sys.hexversion < 0x2040000:
 def unique(x):
     """Return sorted unique items from an array or sequence.
 
-    Example:
+    Examples
+    --------
     >>> unique([5,2,4,0,4,4,2,2,1])
     array([0, 1, 2, 4, 5])
 
@@ -1004,10 +1012,9 @@ def _get_nargs(obj):
 
 class vectorize(object):
     """
- vectorize(somefunction, otypes=None, doc=None)
- Generalized Function class.
+    vectorize(somefunction, otypes=None, doc=None)
 
-  Description:
+    Generalized function class.
 
     Define a vectorized function which takes nested sequence
     of objects or numpy arrays as inputs and returns a
@@ -1021,12 +1028,13 @@ class vectorize(object):
     of data-types specifiers.  There should be one data-type specifier for
     each output.
 
-  Input:
+    Parameters
+    ----------
+    f : callable
+      A Python function or method.
 
-    somefunction -- a Python function or method
-
-  Example:
-
+    Examples
+    --------
     >>> def myfunc(a, b):
     ...    if a > b:
     ...        return a-b
@@ -1510,7 +1518,8 @@ def delete(arr, obj, axis=None):
 
     If axis is None, then ravel the array first.
 
-    Example:
+    Examples
+    --------
     >>> arr = [[3,4,5],
     ...       [1,2,3],
     ...       [6,7,8]]
@@ -1613,7 +1622,8 @@ def insert(arr, obj, values, axis=None):
     The obj argument can be an integer, a slice, or a sequence of
     integers.
 
-    Example:
+    Examples
+    --------
     >>> a = array([[1,2,3],
     ...            [4,5,6],
     ...            [7,8,9]])
