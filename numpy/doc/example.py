@@ -8,16 +8,14 @@ extend over multiple lines, the closing three quotation marks must be on
 a line by itself, preferably preceeded by a blank line.
 
 """
-# Make sure this line is here such that epydoc 3 can parse the docstrings for
-# auto-generated documentation.
-__docformat__ = "restructuredtext en"
-
 import os                        # standard library imports first
 
 import numpy as np               # related third party imports next
 import scipy as sp               # imports should be at the top of the module
 import matplotlib as mpl         # imports should usually be on separate lines
 import matplotlib.pyplot as plt
+
+from my_module import my_func, other_func
 
 def foo(var1, var2, long_var_name='hi') :
     """One-line summary or signature.
@@ -53,6 +51,11 @@ def foo(var1, var2, long_var_name='hi') :
     common_parametrs_listed_above : type
         Explanation
 
+    Raises
+    ------
+    BadException
+        Because you shouldn't have done that.
+
     See Also
     --------
     otherfunc : relationship (optional)
@@ -64,34 +67,37 @@ def foo(var1, var2, long_var_name='hi') :
 
     This can have multiple paragraphs as can all sections.
 
+    You may include some math:
+
+    .. math:: X(e^{j\omega } ) = x(n)e^{ - j\omega n}
+
+    And even use a greek symbol like :math:`omega` inline.
+
+    References
+    ----------
+    Cite the relevant literature, e.g. [1]_.  You may also cite these
+    references in the notes section above.
+
+    .. [1] O. McNoleg, "The integration of GIS, remote sensing,
+       expert systems and adaptive co-kriging for environmental habitat
+       modelling of the Highland Haggis using object-oriented, fuzzy-logic
+       and neural-network techniques," Computers & Geosciences, vol. 22,
+       pp. 585-588, 1996.
+
     Examples
     --------
-    examples in doctest format
+    These are written in doctest format, and should illustrate how to
+    use the function.
 
     >>> a=[1,2,3]
-    >>> [x + 3 for x in a]
+    >>> print [x + 3 for x in a]
     [4, 5, 6]
+    >>> print "a\n\nb"
+    a
+    <BLANKLINE>
+    b
 
     """
 
     pass
 
-
-def newfunc() :
-    """Do nothing.
-
-    I never saw a purple cow.
-
-    """
-
-    pass
-
-
-def otherfunc() :
-    """Do nothing.
-
-    I never hope to see one.
-
-    """
-
-    pass
