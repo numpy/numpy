@@ -1,0 +1,60 @@
+=========================================
+Building the NumPy API and reference docs
+=========================================
+
+Using Epydoc_
+-------------
+
+Currently, we recommend that you build epydoc from the trunk::
+
+  svn co https://epydoc.svn.sf.net/svnroot/epydoc/trunk/epydoc epydoc
+  cd epydoc/src
+  sudo python setup.py install
+
+The appearance of some elements can be changed in the epydoc.css
+style sheet.
+
+Emphasized text appearance can be controlled by the definition of the <em>
+tag. For instance, to make them bold, insert::
+
+  em     {font-weight: bold;}
+
+The variables' types are in a span of class rst-classifier, hence can be
+changed by inserting something like::
+
+  span.rst-classifier     {font-weight: normal;}
+
+The first line of the signature should **not** copy the signature unless
+the function is written in C, in which case it is mandatory.  If the function
+signature is generic (uses ``*args`` or ``**kwds``), then a function signature
+may be included.
+
+Use optional in the "type" field for parameters that are non-keyword
+optional for C-functions.
+
+Epydoc depends on Docutils for reStructuredText parsing.  You can
+download Docutils from the `Docutils sourceforge
+page. <http://docutils.sourceforge.net/>`_.  The version in SVN is
+broken, so use 0.4 or the patched version from Debian.  You may also
+be able to use a package manager like yum to install it::
+
+  $ sudo yum install python-docutils
+
+
+Example
+-------
+Here is a short example module,
+`plain text <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_
+or
+`rendered <http://www.scipy.org/doc/example>`_ in HTML.
+
+To try this yourself, simply download the example.py::
+
+  svn co http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py .
+
+Then, run epydoc::
+
+  $ epydoc --docformat=restructuredtext example.py
+
+The output is placed in ``./html``, and may be viewed by loading the
+``index.html`` file into your browser.

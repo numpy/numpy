@@ -4,111 +4,169 @@ A Guide to NumPy/SciPy Documentation
 
 .. Contents::
 
-.. Attention::
+.. Note::
 
-  This document is slightly out of date.  During the December 2007 sprint,
-  Travis Oliphant made some changes to the NumPy/SciPy docstring standard.
-  The changes are relatively minor, but the standard no longer follows the
-  epydoc/restructured text standards.  The changes brings our docstring
-  standard more in line with the ETS standard; in addition, it also
-  conserves horizontal real-estate and arguably looks better when printed as
-  plain text.  Unfortunately, these changes mean that currently it isn't
-  possible to render the docstrings as desired.  Travis has committed to
-  writing something to render the docstrings.  At that point, we will update
-  this document to correspond with the new standard.  For now, just refer
-  to: `example.py
-  <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
+   For an accompanying example, see `example.py
+   <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_.
 
 Overview
 --------
 In general, we follow the standard Python style conventions as described here:
- * `Style Guide for C Code <http://www.python.org/peps/pep-0007.html>`__
- * `Style Guide for Python Code <http://www.python.org/peps/pep-0008.html>`__
- * `Docstring Conventions <http://www.python.org/peps/pep-0257.html>`__
+ * `Style Guide for C Code <http://www.python.org/peps/pep-0007.html>`_
+ * `Style Guide for Python Code <http://www.python.org/peps/pep-0008.html>`_
+ * `Docstring Conventions <http://www.python.org/peps/pep-0257.html>`_
 
 Additional PEPs of interest regarding documentation of code:
- * `Docstring Processing Framework <http://www.python.org/peps/pep-0256.html>`__
- * `Docutils Design Specification <http://www.python.org/peps/pep-0258.html>`__
+ * `Docstring Processing Framework <http://www.python.org/peps/pep-0256.html>`_
+ * `Docutils Design Specification <http://www.python.org/peps/pep-0258.html>`_
 
 Use a code checker:
- * `pylint <http://www.logilab.org/857>`__
+ * `pylint <http://www.logilab.org/857>`_
  * `pyflakes` easy_install pyflakes
- * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`__
+ * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`_
 
-Common import standards::
+If you prefer the use of abbreviated module names, we suggest
+the following commonly used import conventions::
 
    import numpy as np
    import scipy as sp
+   import matplotlib as mpl
+   import matplotlib.pyplot as plt
+
+It is still perfectly acceptable to use unnabreviated module names.
 
 Docstring Standard
 ------------------
-
 A documentation string (docstring) is a string that describes a module,
 function, class, or method definition.  The docstring is a special attribute
 of the object (``object.__doc__``) and, for consistency, is surrounded by
-triple double quotes.
+triple double quotes, i.e.::
 
-It is highly desireable that both NumPy and SciPy_ and scikits to 
-follow a common
-convention for docstrings that provide for consistency while also
-allowing epydoc_ to produce nicely-formatted reference guides.  This
-document describes the current community consensus for this standard.
-If you have suggestions for improvements, post them on the
-`numpy-discussion list`_, together with the epydoc output.
+   """This is the form of a docstring.
 
-Our docstring standard uses `reST
-<http://docutils.sourceforge.net/rst.html>`__ syntax and is rendered
-using something like epydoc_ (+ a pre-processor which understands the
-particular documentation style we are using).  The markup in this
-proposal is as basic as possible which still looks reasonable when the
-text is just printed.  In particular, it avoids too much cruft in the
-reST syntax and other epydoc_-isms.    
+   It can be spread over several lines.
 
-The guiding principle is that human readers of the text itself are
-given precedence over contorting the docstring so that epydoc_
-produces nice output.  In order to improve the rendered output we
-should work on making pre-processor tools to assist epydoc_ or another
-similar tool, rather than making human readers conform to a particular
-computer-imposed style.
+   """
+
+NumPy, SciPy_, and the scikits follow a common convention for
+docstrings that provides for consistency, while also allowing our
+toolchain to produce well-formatted reference guides.  This document
+describes the current community consensus for such a standard.  If you
+have suggestions for improvements, post them on the `numpy-discussion
+list`_, together with the epydoc output.
+
+Our docstring standard uses `re-structured text (reST)
+<http://docutils.sourceforge.net/rst.html>`_ syntax and is rendered
+using tools like epydoc_ or sphinx_ (pre-processors that understand
+the particular documentation style we are using).  While a rich set of
+markup is available, we limit ourselves to a very basic subset, in
+order to provide docstrings that are easy to read on text-only
+terminals.
+
+A guiding principle is that human readers of the text are given
+precedence over contorting docstrings so our tools produce nice
+output.  Rather than sacrificing the readability of the docstrings, we
+have chosen to write pre-processors to assist tools like epydoc_ or
+sphinx_ in their task.
 
 Status
 ------
-
-We are currently trying to convert existing docstrings to the new
-format and write them for those that currently lack docstrings.
-
-We are also trying to improve the rendered output either using a
-pre-processor to epydoc or another tool similar to epydoc.
+We are busy converting existing docstrings to the new format,
+expanding them where they are lacking, as well as writing new ones for
+undocumented functions.  Volunteers are welcome to join the effort on
+our new wiki-based documentation system (see the `Developer Zone
+<http://www.scipy.org/Developer_Zone/DocMarathon2008>`_).
 
 Sections
 --------
+The sections of the docstring are:
 
-The proposed sections of the docstring are:
+1. **Short summary**
 
-1. **Short summary:**
-   A one-line summary not using variable names or the function name
-   (unless a C-function).
+   A one-line summary that does not use variable names or the function
+   name, e.g.
 
-2. **Extended summary:**
-   A few sentences giving an extended description.
+   ::
 
-3. **Parameters:**
+     def add(a,b):
+        """Return the sum of two numbers.
+
+        """
+
+   The function signature is normally found by introspection and
+   displayed by the help function.  For some functions (notably those
+   written in C) the signature is not available, so we have to specify
+   it as the first line of the docstring::
+
+     """
+     add(a,b)
+
+     Return the sum of two numbers.
+
+     """
+
+2. **Extended summary**
+
+   A few sentences giving an extended description.  This section
+   should be used to clarify *functionality*, not to discuss
+   implementation detail or background theory, which should rather be
+   explored in the **notes** section below.  You may refer to the
+   parameters and the function name, but parameter descriptions still
+   belong in the **parameters** section.
+
+3. **Parameters**
+
    Description of the function arguments, keywords and their
    respective types.
 
-4. **Returns:**
-   Explanation of the returned values and their types.
+   ::
 
-5. **Other parameters:**
-   An optional section used to describe little used parameters so that
-   functions with a large number of keyword argument can still be well
-   documented without cluttering the main parameters' list.
+     Parameters
+     ----------
+     x : type
+        Description of parameter `x`.
 
-6. **Raises:**
-   An optional section detailing which errors get raised under what
-   conditions. 
+   Enclose variables in single back-tics.  If it is not necessary to
+   specify a keyword argument, use ``optional``::
 
-7. **See also:**
+     x : int, optional
+
+   Optional keyword parameters have default values, which are
+   displayed as part of the function signature.  They can also be
+   detailed in the description::
+
+     Description of parameter `x` (the default is -1, which implies summation
+     over all axes).
+
+   When a parameter can only assume one of a fixed set of values,
+   those values can be listed in braces ::
+
+     x : {True, False}
+         Description of `x`.
+
+4. **Returns**
+
+   Explanation of the returned values and their types, of the same
+   format as **parameters**.
+
+5. **Other parameters**
+
+   An optional section used to describe infrequently used parameters.
+   It should only be used if a function has a large number of keyword
+   prameters, to prevent cluttering the **parameters** section.
+
+6. **Raises**
+
+   An optional section detailing which errors get raised and under
+   what conditions::
+
+     Raises
+     ------
+     LinAlgException
+         If the matrix is not numerically invertible.
+
+7. **See Also**
+
    An optional section used to refer to related code.  This section
    can be very useful, but should be used judiciously.  The goal is to
    direct users to other functions they may not be aware of, or have
@@ -116,116 +174,157 @@ The proposed sections of the docstring are:
    example).  Routines whose docstrings further explain parameters
    used by this function are good candidates.
 
-8. **Notes:**
+   As an example, for ``numpy.mean`` we would have::
+
+     See Also
+     --------
+     average : Weighted average
+
+8. **Notes**
+
    An optional section that provides additional information about the
    code, possibly including a discussion of the algorithm. This
-   section may include mathematical equations, possibly written in
-   `LaTeX <http://www.latex-project.org/>`__.
+   section may include mathematical equations, written in
+   `LaTeX <http://www.latex-project.org/>`_ format::
 
-9. **Examples:**
-   An optional section for examples, using the `doctest
-   <http://www.python.org/doc/lib/module-doctest.html>`__ format.  It
-   can provide an inline mini-tutorial as well as additional
-   regression testing.  While optional, this section is very strongly
-   encouraged. You can run the tests by doing::
+     The FFT is a fast implementation of the discrete Fourier transform:
 
-     >>> import doctest
-     >>> doctest.testfile('example.py')
+     .. math:: X(e^{j\omega } ) = x(n)e^{ - j\omega n}
 
-   Blank lines are used to seperate doctests.  When they occur in the
-   expected output, they should be replaced by ``<BLANKLINE>`` (see
-   `doctest options
-   <http://docs.python.org/lib/doctest-options.html>`_), e.g.
+   Equations can also be typeset underneath the math directive::
+
+     The discrete-time Fourier time-convolution property states that
+
+     .. math::
+
+          x(n) * y(n) \Leftrightarrow X(e^{j\omega } )Y(e^{j\omega } )\\
+          another equation here
+
+   Math can furthermore be used inline, i.e.
 
    ::
 
-     >>> print "a\n\nb"
-     a
-     <BLANKLINE>
-     b
+     The value of :math:`omega` is larger than 5.
+
+   Note that LaTeX is not particularly easy to read, so use equations
+   sparingly.
+
+   Images are allowed, but should not be central to the explanation;
+   users viewing the docstring as text must be able to comprehend its
+   meaning without resorting to an image viewer.  These additional
+   illustrations are included using::
+
+     .. image:: filename
+
+   where filename is a path relative to the reference guide source
+   directory.
+
+9. **References**
+
+   References cited in the **notes** section may be listed here,
+   e.g. if you cited the article below using the text ``[1]``, include it as
+   in the list as follows::
+
+     .. [1] O. McNoleg, "The integration of GIS, remote sensing,
+        expert systems and adaptive co-kriging for environmental habitat
+        modelling of the Highland Haggis using object-oriented, fuzzy-logic
+        and neural-network techniques," Computers & Geosciences, vol. 22,
+        pp. 585-588, 1996.
+
+   which renders as
+
+   .. [1] O. McNoleg, "The integration of GIS, remote sensing,
+      expert systems and adaptive co-kriging for environmental habitat
+      modelling of the Highland Haggis using object-oriented, fuzzy-logic
+      and neural-network techniques," Computers & Geosciences, vol. 22,
+      pp. 585-588, 1996.
+
+   Referencing sources of a temporary nature, like web pages, is
+   discouraged.  References are meant to augment the docstring, but
+   should not be required to understand it.  Follow the `citation
+   format of the IEEE
+   <http://www.ieee.org/pubs/transactions/auinfo03.pdf>`_, which
+   states that references are numbered, starting from one, in the
+   order in which they are cited.
+
+10. **Examples**
+
+    An optional section for examples, using the `doctest
+    <http://www.python.org/doc/lib/module-doctest.html>`_ format.
+    This section is meant to illustrate usage, not to provide a
+    testing framework -- for that, use the ``tests/`` directory.
+    While optional, this section is very strongly encouraged. You can
+    run these examples by doing::
+
+      >>> import doctest
+      >>> doctest.testfile('example.py')
+
+    or, using nose,
+
+    ::
+
+      $ nosetests --with-doctest example.py
+
+    Blank lines are used to seperate doctests.  When they occur in the
+    expected output, they should be replaced by ``<BLANKLINE>`` (see
+    `doctest options
+    <http://docs.python.org/lib/doctest-options.html>`_ for other such
+    special strings), e.g.
+
+    ::
+
+      >>> print "a\n\nb"
+      a
+      <BLANKLINE>
+      b
+
+11. **Indexing tags***
+
+    Each function needs to be categorised for indexing purposes.  Use
+    the ``index`` directive::
+
+      .. index::
+         :refguide: ufunc, trigonometry
+
+    To index a function as a sub-category of a class, separate index
+    entries by a semi-colon, e.g.
+
+    ::
+
+      :refguide: ufunc, numpy;reshape, other
+
+    A `list of available categories
+    <http://www.scipy.org/Developer_Zone/ReferenceGuide>`_ is
+    available.
+
 
 Common reST concepts
 --------------------
-
 For paragraphs, indentation is significant and indicates indentation in the
-output. New paragraphs are marked with blank line.
+output. New paragraphs are marked with a blank line.
 
-Use *italics*, **bold**, and ``courier`` if needed in any explanations (but
-not for variable names and doctest code or multi-line code)
+Use *italics*, **bold**, and ``courier`` if needed in any explanations
+(but not for variable names and doctest code or multi-line code).
+Variable, module and class names should be written between single
+backticks (```numpy```).
 
-Use ``:lm:`eqn``` for in-line math in latex format (remember to use the
-raw-format for your text string or escape any '\' symbols). Use ``:m:`eqn```
-for non-latex math.
+A more extensive example of reST markup can be found in `this example
+document <http://docutils.sourceforge.net/docs/user/rst/demo.txt>`_;
+the `quick reference
+<http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_ is
+useful while editing.
 
-A more extensive example of reST markup can be found here:
-http://docutils.sourceforge.net/docs/user/rst/demo.txt
-Line spacing and indentation are significant and should
-be carefully followed.
+Line spacing and indentation are significant and should be carefully
+followed.
 
+Conclusion
+----------
 
-
-Using Epydoc_
--------------
-
-Currently, we recommend that you build epydoc from the trunk::
-
-  svn co https://epydoc.svn.sourceforge.net/svnroot/epydoc/trunk/epydoc epydoc
-  cd epydoc/src
-  sudo python setup.py install
-
-Since we use reST-formatted docstrings instead of the epytext markup, you will
-need to include the following line near the top of your module::
-
-    __docformat__ = "restructuredtext en"
-
-The appearance of some elements can be changed in the epydoc.css
-style sheet. 
-
-Emphasized text appearance can be controlled by the definition of the <em>
-tag. For instance, to make them bold, insert::
-
-  em     {font-weight: bold;}
-
-The variables' types are in a span of class rst-classifier, hence can be
-changed by inserting something like::
-
-  span.rst-classifier     {font-weight: normal;}
-
-The first line of the signature should **not** copy the signature unless
-the function is written in C, in which case it is mandatory.  If the function
-signature is generic (uses ``*args`` or ``**kwds``), then a function signature
-may be included.
-
-Use optional in the "type" field for parameters that are non-keyword
-optional for C-functions.
-
-Epydoc depends on Docutils for reStructuredText parsing.  You can download
-Docutils from the 
-`Docutils sourceforge page. <http://docutils.sourceforge.net/>`__
-You may also be able to use a package manager like yum to install a 
-current version::
-
-  $ sudo yum install python-docutils
-
-
-Example
--------
-
-Here is a short example module,
-`plain text <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`__
-or
-`rendered <http://www.scipy.org/doc/example>`__ in HTML.
-
-To try this yourself, simply download the example.py::
-
-  svn co http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py .
-
-Then, run epydoc::
-
-  $ epydoc example.py
-
-The output is placed in ``./html``, and may be viewed by loading the
-``index.html`` file into your browser.   
+`An example
+<http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_ of the
+format shown here is available.  Refer to `How to Build API/Reference
+Documentation <HOWTO_BUILD_DOCS>`_ on how to use epydoc_ or sphinx_ to
+construct a manual and web page.
 
 This document itself was written in ReStructuredText, and may be converted to
 HTML using::
@@ -235,3 +334,4 @@ HTML using::
 .. _SciPy: http://www.scipy.org
 .. _numpy-discussion list: http://www.scipy.org/Mailing_Lists
 .. _epydoc: http://epydoc.sourceforge.net/
+.. _sphinx: http://sphinx.pocoo.org
