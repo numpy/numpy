@@ -127,3 +127,9 @@
 # [mkl]
 # library_dirs = /opt/intel/mkl/9.1.023/lib/32/
 # lapack_libs = mkl_lapack
+#
+# For 10.*, on 32 bits machines:
+# [mkl]
+# library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
+# lapack_libs = mkl_lapack
+# mkl_libs = mkl, guide
