@@ -173,6 +173,29 @@ def protect_path(path):
     # already quoted path, for example).
     return '"' + path + '"'
 
+def parse_package_list(pkglist):
+    return pkglist.split(",")
+
+def find_common(seq1, seq2):
+    """Given two list, return the index of the common items.
+
+    The index are relative to seq1.
+    
+    Note: do not handle duplicate items."""
+    dict2 = dict([(i, None) for i in seq2])
+
+    return [i for i in range(len(seq1)) if dict2.has_key(seq1[i])]
+
+def select_packages(sconspkg, pkglist):
+    """Given a list of packages in pkglist, return the list of packages which
+    match this list."""
+    common = find_common(sconspkg, pkglist)
+    if not len(common) == len(pkglist):
+        msg = "the package list contains a package not found in "\
+              "the current list. The current list is %s" % sconspkg
+        raise ValueError(msg)
+    return common
+
 class scons(old_build_ext):
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
@@ -182,7 +205,10 @@ class scons(old_build_ext):
              ('scons-tool-path=', None, 'specify additional path '\
                                     '(absolute) to look for scons tools'),
              ('silent=', None, 'specify whether scons output should less verbose'\
-                               '(1), silent (2), super silent (3) or not (0, default)')]
+                               '(1), silent (2), super silent (3) or not (0, default)'),
+             ('package-list=', None, 'If specified, only run scons on the given '\
+                 'packages (example: --package-list=scipy.cluster). If empty, '\
+                 'no package is built')]
 
     def initialize_options(self):
         old_build_ext.initialize_options(self)
@@ -196,6 +222,8 @@ class scons(old_build_ext):
         self.scons_compiler = None
         self.scons_compiler_path = None
         self.scons_fcompiler = None
+
+        self.package_list = None
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
@@ -260,6 +288,9 @@ class scons(old_build_ext):
             cxxcompiler.customize_cmd(self)
             self.cxxcompiler = cxxcompiler.cxx_compiler()
             #print self.cxxcompiler.compiler_cxx[0]
+        
+        if self.package_list:
+            self.package_list = parse_package_list(self.package_list)
 
     def run(self):
         if len(self.sconscripts) > 0:
@@ -283,9 +314,21 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
 
-        for sconscript, pre_hook, post_hook, pkg_name in zip(self.sconscripts,
-                                                   self.pre_hooks, self.post_hooks,
-                                                   self.pkg_names):
+        if self.package_list is not None: 
+            id = select_packages(self.pkg_names, self.package_list)
+            sconscripts = [self.sconscripts[i] for i in id]
+            pre_hooks = [self.pre_hooks[i] for i in id]
+            post_hooks = [self.post_hooks[i] for i in id]
+            pkg_names = [self.pkg_names[i] for i in id]
+        else:
+            sconscripts = self.sconscripts
+            pre_hooks = self.pre_hooks
+            post_hooks = self.post_hooks
+            pkg_names = self.pkg_names
+
+        for sconscript, pre_hook, post_hook, pkg_name in zip(sconscripts,
+                                                   pre_hooks, post_hooks,
+                                                   pkg_names):
             if pre_hook:
                 pre_hook()
 
