@@ -1,5 +1,5 @@
-version='1.1.0'
-release=False
+version='1.1.0rc1'
+release=True
 
 if not release:
     version += '.dev'
