@@ -837,7 +837,8 @@ class TestView(NumpyTestCase):
     def test_basic(self):
         x = np.array([(1,2,3,4),(5,6,7,8)],dtype=[('r',np.int8),('g',np.int8),
                                                   ('b',np.int8),('a',np.int8)])
-        y = x.view(dtype=np.int32)
+        # We must be specific about the endianness here:
+        y = x.view(dtype='<i4')
         z = x.view(np.int32)
         assert_array_equal(y,z)
         assert_array_equal(y, [67305985, 134678021])
@@ -848,7 +849,8 @@ class TestView(NumpyTestCase):
 
     def test_keywords(self):
         x = np.array([(1,2)],dtype=[('a',np.int8),('b',np.int8)])
-        y = x.view(dtype=np.int16, type=np.matrix)
+        # We must be specific about the endianness here:
+        y = x.view(dtype='<i2', type=np.matrix)
         assert_array_equal(y,[[513]])
 
         assert(isinstance(y,np.matrix))
