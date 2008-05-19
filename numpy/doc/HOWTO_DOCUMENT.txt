@@ -283,14 +283,14 @@ The sections of the docstring are:
     the ``index`` directive::
 
       .. index::
-         :refguide: ufunc, trigonometry
+         refguide: ufunc, trigonometry
 
     To index a function as a sub-category of a class, separate index
     entries by a semi-colon, e.g.
 
     ::
 
-      :refguide: ufunc, numpy;reshape, other
+      refguide: ufunc, numpy;reshape, other
 
     A `list of available categories
     <http://www.scipy.org/Developer_Zone/ReferenceGuide>`_ is
