@@ -1226,7 +1226,7 @@ def bartlett(M):
     -----
     The Bartlett window is defined as
 
-    .. math:: w(n) = \frac{2}{M-1} (\frac{M-1}{2} - |n - \frac{M-1}{2}|)
+    .. math:: w(n) = \\frac{2}{M-1} (\\frac{M-1}{2} - |n - \\frac{M-1}{2}|)
 
     Most references to the Bartlett window come from the signal
     processing literature, where it is used as one of many windowing
