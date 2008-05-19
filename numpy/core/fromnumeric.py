@@ -1106,14 +1106,14 @@ def alltrue (a, axis=None, out=None):
 
     See Also
     --------
-    ndarray.any : equivalent method
+    ndarray.all : equivalent method
 
     """
     try:
-        any = a.any
+        all = a.all
     except AttributeError:
-        return _wrapit(a, 'any', axis, out)
-    return any(axis, out)
+        return _wrapit(a, 'all', axis, out)
+    return all(axis, out)
 
 
 def any(a,axis=None, out=None):
