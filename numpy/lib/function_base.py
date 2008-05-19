@@ -809,7 +809,16 @@ def interp(x, xp, fp, left=None, right=None):
 
 
 def angle(z, deg=0):
-    """Return the angle of the complex argument z.
+    """
+    Return the angle of the complex argument z.
+
+    Examples
+    --------
+    >>> numpy.angle(1+1j)          # in radians
+    0.78539816339744828
+    >>> numpy.angle(1+1j,deg=True) # in degrees
+    45.0
+
     """
     if deg:
         fact = 180/pi
@@ -889,11 +898,12 @@ if sys.hexversion < 0x2040000:
     from sets import Set as set
 
 def unique(x):
-    """Return sorted unique items from an array or sequence.
+    """
+    Return sorted unique items from an array or sequence.
 
     Examples
     --------
-    >>> unique([5,2,4,0,4,4,2,2,1])
+    >>> numpy.unique([5,2,4,0,4,4,2,2,1])
     array([0, 1, 2, 4, 5])
 
     """
@@ -1187,7 +1197,87 @@ def blackman(M):
     return 0.42-0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
 
 def bartlett(M):
-    """bartlett(M) returns the M-point Bartlett window.
+    """
+    Return the Bartlett window.
+
+    The Bartlett window is very similar to a triangular window, except
+    that the end points are at zero.  It is often used in signal
+    processing for tapering a signal, without generating too much
+    ripple in the frequency domain.
+
+    Parameters
+    ----------
+    M : int
+        Number of points in the output window. If zero or less, an
+        empty array is returned.
+
+    Returns
+    -------
+    out : array
+        The triangular window, normalized to one (the value one
+        appears only if the number of samples is odd), with the first
+        and last samples equal to zero.
+
+    See Also
+    --------
+    blackman, hamming, hanning, kaiser
+
+    Notes
+    -----
+    The Bartlett window is defined as
+
+    .. math:: w(n) = \frac{2}{M-1} (\frac{M-1}{2} - |n - \frac{M-1}{2}|)
+
+    Most references to the Bartlett window come from the signal
+    processing literature, where it is used as one of many windowing
+    functions for smoothing values.  Note that convolution with this
+    window produces linear interpolation.  It is also known as an
+    apodization (which means"removing the foot", i.e. smoothing
+    discontinuities at the beginning and end of the sampled signal) or
+    tapering function.
+
+    References
+    ----------
+    .. [1] M.S. Bartlett, "Periodogram Analysis and Continuous Spectra",
+           Biometrika 37, 1-16, 1950.
+    .. [2] A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal
+           Processing", Prentice-Hall, 1999, pp. 468-471.
+    .. [3] Wikipedia, "Window function",
+           http://en.wikipedia.org/wiki/Window_function
+    .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
+           "Numerical Recipes", Cambridge University Press, 1986, page 429.
+
+    Examples
+    --------
+    >>> from numpy import bartlett
+    >>> bartlett(12)
+    array([ 0.        ,  0.18181818,  0.36363636,  0.54545455,  0.72727273,
+            0.90909091,  0.90909091,  0.72727273,  0.54545455,  0.36363636,
+            0.18181818,  0.        ])
+
+    #  Plot the window and the frequency response of it.
+    >>> from numpy import clip, log10, array, bartlett
+    >>> from scipy.fftpack import fft
+    >>> from matplotlib import pyplot as plt
+
+    >>> window = bartlett(51)
+    >>> plt.plot(window)
+    >>> plt.title("Bartlett window")
+    >>> plt.ylabel("Amplitude")
+    >>> plt.xlabel("Sample")
+    >>> plt.show()
+
+    >>> A = fft(window, 2048) / 25.5
+    >>> mag = abs(fftshift(A))
+    >>> freq = linspace(-0.5,0.5,len(A))
+    >>> response = 20*log10(mag)
+    >>> response = clip(response,-100,100)
+    >>> plt.plot(freq, response)
+    >>> plt.title("Frequency response of Bartlett window")
+    >>> plt.ylabel("Magnitude [dB]")
+    >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    >>> plt.axis('tight'); plt.show()
+
     """
     if M < 1:
         return array([])

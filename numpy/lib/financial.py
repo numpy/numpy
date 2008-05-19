@@ -88,8 +88,8 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     fact = np.where(rate==zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
     return -(fv + pv*temp) / fact
 pmt.__doc__ += eqstr + """
-Example
--------
+Examples
+--------
 
 What would the monthly payment need to be to pay off a $200,000 loan in 15
   years at an annual interest rate of 7.5%?
@@ -116,8 +116,8 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     zer = np.zeros(miter.shape)
     return np.where(rate==zer, A+zer, B+zer) + 0.0
 nper.__doc__ += eqstr + """
-Example
--------
+Examples
+--------
 
 If you only had $150 to spend as payment, how long would it take to pay-off
   a loan of $8,000 at 7% annual interest?

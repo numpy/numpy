@@ -569,27 +569,32 @@ add_newdoc('numpy.core.multiarray','getbuffer',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray',
-    """An array object represents a multidimensional, homogeneous array
+    """
+    An array object represents a multidimensional, homogeneous array
     of fixed-size items.  An associated data-type-descriptor object
     details the data-type in an array (including byteorder and any
-    fields).  An array can be constructed using the numpy.array
+    fields).  An array can be constructed using the `numpy.array`
     command. Arrays are sequence, mapping and numeric objects.
     More information is available in the numpy module and by looking
     at the methods and attributes of an array.
 
-    ndarray.__new__(subtype, shape=, dtype=float, buffer=None,
-                    offset=0, strides=None, order=None)
+    ::
 
-     There are two modes of creating an array using __new__:
-     1) If buffer is None, then only shape, dtype, and order
-        are used
-     2) If buffer is an object exporting the buffer interface, then
-        all keywords are interpreted.
-     The dtype parameter can be any object that can be interpreted
-        as a numpy.dtype object.
+        ndarray.__new__(subtype, shape=, dtype=float, buffer=None,
+                        offset=0, strides=None, order=None)
 
-     No __init__ method is needed because the array is fully
-     initialized after the __new__ method.
+    There are two modes of creating an array using __new__:
+
+    1. If buffer is None, then only shape, dtype, and order
+       are used
+    2. If buffer is an object exporting the buffer interface, then
+       all keywords are interpreted.
+
+    The dtype parameter can be any object that can be interpreted as
+    a numpy.dtype object.
+
+    No __init__ method is needed because the array is fully initialized
+    after the __new__ method.
 
     """)
 
@@ -1109,7 +1114,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('cumprod',
-    """a.cumprod(axis=None, dtype=None, out=None)
+    """
+    a.cumprod(axis=None, dtype=None, out=None)
 
     Return the cumulative product of the elements along the given axis.
 
@@ -1120,7 +1126,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('cumprod',
     ----------
     axis : {None, -1, int}, optional
         Axis along which the product is computed. The default
-        (``axis``= None) is to compute over the flattened array.
+        (`axis` = None) is to compute over the flattened array.
     dtype : {None, dtype}, optional
         Determines the type of the returned array and of the accumulator
         where the elements are multiplied. If dtype has the value None and
@@ -1158,7 +1164,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('cumsum',
     ----------
     axis : {None, -1, int}, optional
         Axis along which the sum is computed. The default
-        (``axis``= None) is to compute over the flattened array.
+        (`axis` = None) is to compute over the flattened array.
     dtype : {None, dtype}, optional
         Determines the type of the returned array and of the accumulator
         where the elements are summed. If dtype has the value None and
@@ -1185,7 +1191,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('cumsum',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
-    """a.diagonal(offset=0, axis1=0, axis2=1) -> diagonals
+    """a.diagonal(offset=0, axis1=0, axis2=1)
 
     If a is 2-d, return the diagonal of self with the given offset, i.e., the
     collection of elements of the form a[i,i+offset]. If a is n-d with n > 2,
@@ -1233,7 +1239,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
     >>> a
     array([[[0, 1],
             [2, 3]],
-
+    <BLANKLINE>
            [[4, 5],
             [6, 7]]])
     >>> a.diagonal(0,-2,-1)
@@ -1410,7 +1416,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nonzero',
     the indices of the non-zero elements in that dimension. The
     corresponding non-zero values can be obtained with::
 
-        a[a.nonzero()].
+        a[a.nonzero()]
 
     To group the indices by element, rather than dimension, use::
 
@@ -1647,7 +1653,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('repeat',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
     """a.reshape(shape, order='C')
-    a.reshape(*shape, order='C')
 
     Returns an array containing the data of a, but with a new shape.
 
@@ -1967,13 +1972,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('swapaxes',
     >>> x
     array([[[0, 1],
             [2, 3]],
-
+    <BLANKLINE>
            [[4, 5],
             [6, 7]]])
     >>> x.swapaxes(0,2)
     array([[[0, 4],
             [2, 6]],
-
+    <BLANKLINE>
            [[1, 5],
             [3, 7]]])
 
