@@ -1226,7 +1226,9 @@ def bartlett(M):
     -----
     The Bartlett window is defined as
 
-    .. math:: w(n) = \\frac{2}{M-1} (\\frac{M-1}{2} - |n - \\frac{M-1}{2}|)
+    .. math:: w(n) = \\frac{2}{M-1} \left(
+              \\frac{M-1}{2} - \\left|n - \\frac{M-1}{2}\\right|
+              \\right)
 
     Most references to the Bartlett window come from the signal
     processing literature, where it is used as one of many windowing
@@ -1255,7 +1257,8 @@ def bartlett(M):
             0.90909091,  0.90909091,  0.72727273,  0.54545455,  0.36363636,
             0.18181818,  0.        ])
 
-    #  Plot the window and the frequency response of it.
+    Plot the window and its frequency response:
+
     >>> from numpy import clip, log10, array, bartlett
     >>> from scipy.fftpack import fft
     >>> from matplotlib import pyplot as plt
