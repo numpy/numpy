@@ -1116,33 +1116,6 @@ def alltrue (a, axis=None, out=None):
     return any(axis, out)
 
 
-def alltrue (a, axis=None, out=None):
-    """Check if all of the elements of `a` are true.
-
-    Performs a logical_and over the given axis and returns the result
-
-    Parameters
-    ----------
-    a : array_like
-    axis : {None, integer}
-        Axis to perform the operation over.
-        If None, perform over flattened array.
-    out : {None, array}, optional
-        Array into which the product can be placed. Its type is preserved
-        and it must be of the right shape to hold the output.
-
-    See Also
-    --------
-    ndarray.all : equivalent method
-
-    """
-    try:
-        all = a.all
-    except AttributeError:
-        return _wrapit(a, 'all', axis, out)
-    return all(axis, out)
-
-
 def any(a,axis=None, out=None):
     """Check if any of the elements of `a` are true.
 
