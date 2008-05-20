@@ -23,7 +23,7 @@ write_info(env)
 
 sources = ['lapack_litemodule.c']
 if not use_lapack:
-    sources.extend(['zlapack_lite.c', 'dlapack_lite.c', 'blas_lite.c',
-                    'dlamch.c', 'f2c_lite.c'])
+    sources.extend(['python_xerbla.c', 'zlapack_lite.c', 'dlapack_lite.c',
+                    'blas_lite.c', 'dlamch.c', 'f2c_lite.c'])
 lapack_lite = env.NumpyPythonExtension('lapack_lite', source = sources)
             
