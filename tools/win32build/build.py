@@ -55,7 +55,6 @@ def build(arch, pyver):
 
     try:
         try:
-            print "Executing command %s" % cmd
             subprocess.check_call(cmd, shell = True, stderr = subprocess.STDOUT, stdout = f)
         finally:
             f.close()
@@ -70,17 +69,29 @@ Error was : %s
 Look at the build log (%s).""" % (cmd, str(e), build_log)
         raise Exception(msg)
 
+    move_binary(arch, pyver)
+
+def move_binary(arch, pyver):
+    if not os.path.exists("binaries"):
+        os.makedirs("binaries")
+
+    shutil.move(os.path.join('dist', get_windist_exec(pyver)), 
+            os.path.join("binaries", get_binary_name(arch)))
+
 def get_numpy_version():
     import __builtin__
     __builtin__.__NUMPY_SETUP__ = True
     from numpy.version import version
     return version
 
+def get_binary_name(arch):
+    return "numpy-%s-%s.exe" % (get_numpy_version(), arch)
+
 def get_windist_exec(pyver):
     """Return the name of the installer built by wininst command."""
     # Yeah, the name logic is harcoded in distutils. We have to reproduce it
     # here
-    name = "numpy-%s.win32-%s.exe" % (get_numpy_version(), pyver)
+    name = "numpy-%s.win32-py%s.exe" % (get_numpy_version(), pyver)
     return name
 
 USAGE = """build.py ARCH PYTHON_VERSION
@@ -89,10 +100,11 @@ Example: build.py sse2 2.4."""
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        raise ValueError(Usage)
+        raise ValueError(USAGE)
         sys.exit(-1)
 
-    #arch = sys.argv[1]
+    arch = sys.argv[1]
     pyver = sys.argv[2]
+    #build(arch, pyver)
     for arch in SITECFG.keys():
         build(arch, pyver)
