@@ -109,6 +109,8 @@ class _dummy_stream:
         self.data.append(message)
     def writeln(self,message):
         self.write(message+'\n')
+    def flush(self):
+        self.stream.flush()
 
 
 class NumpyTestCase (unittest.TestCase):
