@@ -85,6 +85,8 @@ def dist2sconsfc(compiler):
         return 'g77'
     elif compiler.compiler_type == 'gnu95':
         return 'gfortran'
+    elif compiler.compiler_type == 'sun':
+        return 'sunf77'
     else:
         # XXX: Just give up for now, and use generic fortran compiler
         return 'fortran'
