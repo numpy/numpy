@@ -380,7 +380,7 @@ class scons(old_build_ext):
                 elif int(self.silent) == 3:
                     cmd.append('-s')
             cmd.append('silent=%d' % int(self.silent))
-            cmd.append('boostrapping=%d' % bootstrap)
+            cmd.append('bootstrapping=%d' % bootstrap)
             cmdstr = ' '.join(cmd)
             if int(self.silent) < 1:
                 log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
