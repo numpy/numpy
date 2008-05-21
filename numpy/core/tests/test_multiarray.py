@@ -839,8 +839,9 @@ class TestView(NumpyTestCase):
                                                   ('b',np.int8),('a',np.int8)])
         # We must be specific about the endianness here:
         y = x.view(dtype='<i4')
-        z = x.view(np.int32)
-        assert_array_equal(y,z)
+        # ... and again without the keyword.
+        z = x.view('<i4')
+        assert_array_equal(y, z)
         assert_array_equal(y, [67305985, 134678021])
 
     def test_type(self):
@@ -854,7 +855,7 @@ class TestView(NumpyTestCase):
         assert_array_equal(y,[[513]])
 
         assert(isinstance(y,np.matrix))
-        assert_equal(y.dtype,np.int16)
+        assert_equal(y.dtype, np.dtype('<i2'))
 
 class TestStats(NumpyTestCase):
     def test_subclass(self):
