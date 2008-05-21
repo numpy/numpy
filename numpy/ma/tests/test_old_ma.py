@@ -2,6 +2,7 @@ import numpy
 import types, time
 from numpy.ma import *
 from numpy.core.numerictypes import float32
+from numpy.ma.core import umath
 from numpy.testing import NumpyTestCase, NumpyTest
 pi = numpy.pi
 def eq(v,w, msg=''):
