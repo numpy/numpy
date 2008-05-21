@@ -1038,5 +1038,14 @@ class TestRegression(NumpyTestCase):
         assert (xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0])
 
+    def check_recarray_tolist(self, level=rlevel):
+        """Ticket #783
+        """
+        a = np.recarray(2, formats="i4,f8,f8", names="id,x,y")
+        b = a.tolist()
+        assert( a[0].tolist() == b[0])
+        assert( a[1].tolist() == b[1])
+        
+
 if __name__ == "__main__":
     NumpyTest().run()

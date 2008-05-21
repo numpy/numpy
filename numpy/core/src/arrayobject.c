@@ -1972,20 +1972,15 @@ PyArray_ToList(PyArrayObject *self)
     sz = self->dimensions[0];
     lp = PyList_New(sz);
     for(i = 0; i < sz; i++) {
-	if (PyArray_CheckExact(self)) {
-	    v=(PyArrayObject *)array_big_item(self, i);
+	v = (PyArrayObject *)array_big_item(self, i);
+	if (PyArray_Check(v) && (v->nd >= self->nd)) {
+	    PyErr_SetString(PyExc_RuntimeError,
+			    "array_item not returning smaller-"	\
+			    "dimensional array");
+	    Py_DECREF(v);
+	    Py_DECREF(lp);
+	    return NULL;
 	}
-	else {
-	    v = (PyArrayObject *)PySequence_GetItem((PyObject *)self, i);
-	    if ((!PyArray_Check(v)) || (v->nd >= self->nd)) {
-		PyErr_SetString(PyExc_RuntimeError,
-				"array_item not returning smaller-"	\
-				"dimensional array");
-		Py_DECREF(v);
-		Py_DECREF(lp);
-		return NULL;
-	    }
-        }
         PyList_SetItem(lp, i, PyArray_ToList(v));
         Py_DECREF(v);
     }
