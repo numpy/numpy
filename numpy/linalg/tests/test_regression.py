@@ -12,7 +12,7 @@ rlevel = 1
 class TestRegression(NumpyTestCase):
     def test_eig_build(self, level = rlevel):
         """Ticket #652"""
-        rva = [1.03221168e+02 +0.j,
+        rva = array([1.03221168e+02 +0.j,
                -1.91843603e+01 +0.j,
                -6.04004526e-01+15.84422474j,
                -6.04004526e-01-15.84422474j,
@@ -24,11 +24,13 @@ class TestRegression(NumpyTestCase):
                7.80732773e+00 +0.j ,
                -7.65390898e-01 +0.j,
                1.51971555e-15 +0.j ,
-               -1.51308713e-15 +0.j]
+               -1.51308713e-15 +0.j])
         a = arange(13*13, dtype = float64)
         a.shape = (13,13)
         a = a%17
         va, ve = linalg.eig(a)
+        va.sort()
+        rva.sort()
         assert_array_almost_equal(va, rva)
 
     def test_eigh_build(self, level = rlevel):
