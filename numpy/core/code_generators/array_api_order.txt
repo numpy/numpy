@@ -83,3 +83,4 @@ PyArray_ElementStrides
 PyArray_Item_INCREF
 PyArray_Item_XDECREF
 PyArray_FieldNames
+PyArray_CompareString

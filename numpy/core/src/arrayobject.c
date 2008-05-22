@@ -4433,7 +4433,7 @@ PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, register size_t len)
     return 0;
 }
 
-/*
+/*OBJECT_API
  */
 static int
 PyArray_CompareString(char *s1, char *s2, size_t len)
