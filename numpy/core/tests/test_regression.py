@@ -1053,7 +1053,7 @@ class TestRegression(NumpyTestCase):
         except TypeError:
             pass
 
-        
+
     def check_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215
         """

@@ -55,7 +55,7 @@ are considered unequal.
     y = filled(masked_array(d2, copy=False, mask=m), 1).astype(float_)
     d = N.around(N.abs(x-y),decimal) <= 10.0**(-decimal)
     return d.ravel()
-    
+
 
 #................................................
 def _assert_equal_on_sequences(actual, desired, err_msg=''):

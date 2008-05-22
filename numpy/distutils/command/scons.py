@@ -180,7 +180,7 @@ def find_common(seq1, seq2):
     """Given two list, return the index of the common items.
 
     The index are relative to seq1.
-    
+
     Note: do not handle duplicate items."""
     dict2 = dict([(i, None) for i in seq2])
 
@@ -288,7 +288,7 @@ class scons(old_build_ext):
             cxxcompiler.customize_cmd(self)
             self.cxxcompiler = cxxcompiler.cxx_compiler()
             #print self.cxxcompiler.compiler_cxx[0]
-        
+
         if self.package_list:
             self.package_list = parse_package_list(self.package_list)
 
@@ -314,7 +314,7 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
 
-        if self.package_list is not None: 
+        if self.package_list is not None:
             id = select_packages(self.pkg_names, self.package_list)
             sconscripts = [self.sconscripts[i] for i in id]
             pre_hooks = [self.pre_hooks[i] for i in id]

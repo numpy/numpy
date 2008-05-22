@@ -125,4 +125,3 @@ else:
         print 'Python version %s' % (sys.version.replace('\n', '',),)
         return NumpyTest().test(*args, **kw)
     test.__doc__ = NumpyTest.test.__doc__
-

@@ -121,4 +121,3 @@ def foo(var1, var2, long_var_name='hi') :
     """
 
     pass
-

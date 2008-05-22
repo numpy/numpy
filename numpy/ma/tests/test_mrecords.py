@@ -129,7 +129,7 @@ class TestMRecords(NumpyTestCase):
         rdata['num'] = val
         assert_equal(rdata.num, val)
         assert_equal(rdata.num.mask, [1,0,0])
-        
+
     #
     def test_set_mask(self):
         base = self.base.copy()
@@ -297,7 +297,7 @@ class TestMRecordsImport(NumpyTestCase):
         # One record only
         _x = ma.array([1,1.1,'one'], mask=[1,0,0],)
         assert_equal_records(fromarrays(_x, dtype=mrec.dtype), mrec[0])
-        
+
 
 
     def test_fromrecords(self):

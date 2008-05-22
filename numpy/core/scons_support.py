@@ -188,17 +188,17 @@ def define_no_smp():
             nosmp = 0
     return nosmp == 1
 
-array_api_gen_bld = Builder(action = Action(do_generate_array_api, '$ARRAPIGENCOMSTR'), 
+array_api_gen_bld = Builder(action = Action(do_generate_array_api, '$ARRAPIGENCOMSTR'),
                             emitter = [generate_api_emitter,
                                        distutils_dirs_emitter])
 
-ufunc_api_gen_bld = Builder(action = Action(do_generate_ufunc_api, '$UFUNCAPIGENCOMSTR'), 
+ufunc_api_gen_bld = Builder(action = Action(do_generate_ufunc_api, '$UFUNCAPIGENCOMSTR'),
                             emitter = [generate_api_emitter,
                                        distutils_dirs_emitter])
 
-template_bld = Builder(action = Action(generate_from_template, '$TEMPLATECOMSTR'), 
+template_bld = Builder(action = Action(generate_from_template, '$TEMPLATECOMSTR'),
                        emitter = [generate_from_template_emitter,
                                   distutils_dirs_emitter])
 
-umath_bld = Builder(action = Action(generate_umath, '$UMATHCOMSTR'), 
+umath_bld = Builder(action = Action(generate_umath, '$UMATHCOMSTR'),
                     emitter = [generate_umath_emitter, distutils_dirs_emitter])

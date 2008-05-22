@@ -1225,7 +1225,7 @@ class MaskedArray(numeric.ndarray):
     #
     def _update_from(self, obj):
         """Copies some attributes of obj to self.
-        """  
+        """
         if obj is not None and isinstance(obj,ndarray):
             _baseclass = type(obj)
         else:
@@ -1237,7 +1237,7 @@ class MaskedArray(numeric.ndarray):
                      _baseclass=getattr(obj,'_baseclass',_baseclass),
                      _basedict=_basedict,)
         self.__dict__.update(_dict)
-        self.__dict__.update(_basedict)        
+        self.__dict__.update(_basedict)
         return
     #........................
     def __array_finalize__(self,obj):
@@ -1368,7 +1368,7 @@ class MaskedArray(numeric.ndarray):
             return
         #....
         dval = narray(value, copy=False, dtype=self.dtype)
-        valmask = getmask(value)        
+        valmask = getmask(value)
         if self._mask is nomask:
             # Set the data, then the mask
             ndarray.__setitem__(self._data,indx,dval)
@@ -2893,17 +2893,17 @@ def power(a, b, third=None):
         result[invalid] = masked
         result._data[invalid] = result.fill_value
     return result
-    
+
 #    if fb.dtype.char in typecodes["Integer"]:
 #        return masked_array(umath.power(fa, fb), m)
-#    m = mask_or(m, (fa < 0) & (fb != fb.astype(int))) 
+#    m = mask_or(m, (fa < 0) & (fb != fb.astype(int)))
 #    if m is nomask:
 #        return masked_array(umath.power(fa, fb))
 #    else:
 #        fa = fa.copy()
 #        if m.all():
 #            fa.flat = 1
-#        else: 
+#        else:
 #            numpy.putmask(fa,m,1)
 #        return masked_array(umath.power(fa, fb), m)
 
@@ -3420,4 +3420,3 @@ indices = numpy.indices
 clip = numpy.clip
 
 ###############################################################################
-

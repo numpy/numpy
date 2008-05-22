@@ -247,6 +247,6 @@ class TestNewScalarIndexing(NumpyTestCase):
         assert_array_equal(x[[2,1,0],:],x[::-1,:])
 
 
-        
+
 if __name__ == "__main__":
     NumpyTest().run()

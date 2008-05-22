@@ -350,8 +350,8 @@ The fieldname base is either `_data` or `_mask`."""
         "Sets the given record to value."
         MaskedArray.__setitem__(self, indx, value)
         if isinstance(indx, basestring):
-            self._fieldmask[indx] = ma.getmaskarray(value) 
-        
+            self._fieldmask[indx] = ma.getmaskarray(value)
+
     #............................................
     def __setslice__(self, i, j, value):
         "Sets the slice described by [i,j] to `value`."
@@ -780,4 +780,3 @@ set to 'fi', where `i` is the number of existing fields.
     return newdata
 
 ###############################################################################
-

@@ -842,7 +842,7 @@ def vander(x, n=None):
 
 def polyfit(x, y, deg, rcond=None, full=False):
     """%s
-    
+
     Notes
     -----
         Any masked values in x is propagated in y, and vice-versa.
@@ -876,7 +876,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
         x = x / scale
     # solve least squares equation for powers of x
     v = vander(x, order)
-    c, resids, rank, s = _lstsq(v, y.filled(0), rcond)    
+    c, resids, rank, s = _lstsq(v, y.filled(0), rcond)
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         warnings.warn("Polyfit may be poorly conditioned", np.RankWarning)
@@ -890,7 +890,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
         return c, resids, rank, s, rcond
     else :
         return c
-    
+
 _g = globals()
 for nfunc in ('vander', 'polyfit'):
     _g[nfunc].func_doc = _g[nfunc].func_doc % getattr(np,nfunc).__doc__
