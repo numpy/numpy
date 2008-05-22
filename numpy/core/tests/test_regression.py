@@ -1071,7 +1071,13 @@ class TestRegression(NumpyTestCase):
             a = np.ones((n,)*5)
             i = np.random.randint(0,n,size=thesize)
             a[np.ix_(i,i,i,i,i)] = 0
+        def dp2():
+            n = 3
+            a = np.ones((n,)*5)
+            i = np.random.randint(0,n,size=thesize)
+            g = a[np.ix_(i,i,i,i,i)]
         self.failUnlessRaises(ValueError, dp)
+        self.failUnlessRaises(ValueError, dp2)
 
 if __name__ == "__main__":
     NumpyTest().run()
