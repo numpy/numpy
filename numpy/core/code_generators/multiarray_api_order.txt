@@ -82,3 +82,4 @@ PyArray_DescrAlignConverter
 PyArray_DescrAlignConverter2
 PyArray_SearchsideConverter
 PyArray_CheckAxis
+PyArray_OverflowMultiplyList

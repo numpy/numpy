@@ -1061,7 +1061,17 @@ class TestRegression(NumpyTestCase):
         b = a.tolist()
         assert( a[0].tolist() == b[0])
         assert( a[1].tolist() == b[1])
-        
+
+    def check_large_fancy_indexing(self, level=rlevel):
+        # Large enough to fail on 64-bit.
+        nbits = np.dtype(np.intp).itemsize * 8
+        thesize = int((2**nbits)**(1.0/5.0)+1)
+        def dp():
+            n = 3
+            a = np.ones((n,)*5)
+            i = np.random.randint(0,n,size=thesize)
+            a[np.ix_(i,i,i,i,i)] = 0
+        self.failUnlessRaises(ValueError, dp)
 
 if __name__ == "__main__":
     NumpyTest().run()

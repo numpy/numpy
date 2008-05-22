@@ -123,6 +123,22 @@ PyArray_MultiplyList(register intp *l1, register int n)
 }
 
 /*MULTIARRAY_API
+  Multiply a List of Non-negative numbers with over-flow detection.
+*/
+static intp
+PyArray_OverflowMultiplyList(register intp *l1, register int n)
+{
+    register intp s=1;
+    while (n--) {
+	if (*l1 == 0) return 0;
+	if ((s > MAX_INTP / *l1) || (*l1 > MAX_INTP / s))
+	    return -1;
+	s *= (*l1++);
+    }
+    return s;
+}
+
+/*MULTIARRAY_API
   Produce a pointer into array
 */
 static void *

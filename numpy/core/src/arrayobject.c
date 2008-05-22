@@ -5564,7 +5564,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             return NULL;
         }
         size *= dims[i];
-        if (size > largest) {
+        if (size > largest || size < 0) {
             PyErr_SetString(PyExc_ValueError,
                             "dimensions too large.");
             Py_DECREF(descr);
@@ -10158,8 +10158,13 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
 
     /* Reset the iterator dimensions and strides of each iterator
        object -- using 0 valued strides for broadcasting */
-
-    tmp = PyArray_MultiplyList(mit->dimensions, mit->nd);
+    /* Need to check for overflow */
+    tmp = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
+    if (tmp < 0) {
+	PyErr_SetString(PyExc_ValueError, 
+			"broadcast dimensions too large.");
+	return -1;
+    }
     mit->size = tmp;
     for(i=0; i<mit->numiter; i++) {
         it = mit->iters[i];
@@ -10408,7 +10413,12 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     }
  finish:
     /* Here check the indexes (now that we have iteraxes) */
-    mit->size = PyArray_MultiplyList(mit->dimensions, mit->nd);
+    mit->size = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
+    if (mit->size < 0) {
+	PyErr_SetString(PyExc_ValueError, 
+			"dimensions too large in fancy indexing");
+	goto fail;
+    }
     if (mit->ait->size == 0 && mit->size != 0) {
         PyErr_SetString(PyExc_ValueError,
                         "invalid index into a 0-size array");
