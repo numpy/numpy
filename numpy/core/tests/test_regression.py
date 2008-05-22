@@ -1038,6 +1038,22 @@ class TestRegression(NumpyTestCase):
         assert (xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0])
 
+    def check_compress_small_type(self, level=rlevel):
+        """Ticket #789, changeset 5217.
+        """
+        # compress with out argument segfaulted if cannot cast safely
+        import numpy as np
+        a = np.array([[1, 2], [3, 4]])
+        b = np.zeros((2, 1), dtype = np.single)
+        try:
+            a.compress([True, False], axis = 1, out = b)
+            raise AssertionError("compress with an out which cannot be " \
+                                 "safely casted should not return "\
+                                 "successfully")
+        except ValueError:
+            pass
+
+        
     def check_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215
         """
