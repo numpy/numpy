@@ -1050,7 +1050,7 @@ class TestRegression(NumpyTestCase):
             raise AssertionError("compress with an out which cannot be " \
                                  "safely casted should not return "\
                                  "successfully")
-        except ValueError:
+        except TypeError:
             pass
 
         

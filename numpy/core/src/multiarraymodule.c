@@ -3895,17 +3895,9 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         }
         obj = (PyArrayObject *)PyArray_FromArray(ret, self->descr,
                                                  flags);
-	if (obj == NULL) {
- 		PyErr_SetString(PyExc_ValueError,
- 		                "unable to create array of proper type from output array");
-		ret = NULL;
-		Py_DECREF(self->descr);
-		goto fail;
-	}
- 	else if (obj != ret) {
-		copyret = 1;
-	}
+        if (obj != ret) copyret = 1;
         ret = obj;
+	if (ret == NULL) goto fail;
     }
 
     max_item = self->dimensions[axis];
