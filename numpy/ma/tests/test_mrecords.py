@@ -126,6 +126,8 @@ class TestMRecords(NumpyTestCase):
         rdata = data.view(MaskedRecords)
         val = ma.array([10,20,30], mask=[1,0,0])
         #
+        import warnings
+        warnings.simplefilter("ignore")
         rdata['num'] = val
         assert_equal(rdata.num, val)
         assert_equal(rdata.num.mask, [1,0,0])
