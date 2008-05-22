@@ -1,5 +1,6 @@
-# The functions in the numpy_core C API
-# They are defined here so that the order is set.
+# The functions in the numpy_core C API. They are defined
+# here so that the order is set.  Do not append to this
+# list, append to multiarray_api_order.txt instead.
 PyArray_SetNumericOps
 PyArray_GetNumericOps
 PyArray_INCREF
@@ -83,4 +84,3 @@ PyArray_ElementStrides
 PyArray_Item_INCREF
 PyArray_Item_XDECREF
 PyArray_FieldNames
-PyArray_CompareString
