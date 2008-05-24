@@ -147,5 +147,78 @@ class TestUfunc(NumpyTestCase):
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
 
+    def check_all_ufunc(self) :
+        """Try to check presence and results of all ufuncs.
+
+        The list of ufuncs comes from generate_umath.py and is as follows:
+
+        add
+        subtract
+        multiply
+        divide
+        floor_divide
+        true_divide
+        conjugate
+        fmod
+        square
+        reciprocal
+        ones_like
+        power
+        absolute
+        negative
+        sign
+        greater
+        greate_equal
+        less
+        less_equal
+        equal
+        not_equal
+        logical_and
+        logical_or
+        logical_xor
+        maximum
+        minimum
+        bitwise_and
+        bitwise_or
+        bitwise_xor
+        invert
+        left_shift
+        right_shift
+        degrees
+        radians
+        arccos
+        arccosh
+        arcsin
+        arcsinh
+        arctan
+        arctanh
+        cos
+        sin
+        tan
+        cosh
+        sinh
+        tanh
+        exp
+        expm1
+        log
+        log10
+        log1p
+        sqrt
+        ceil
+        fabs
+        floor
+        rint
+        arctan2
+        remainder
+        hypot
+        isnan
+        isinf
+        isfinite
+        signbit
+        modf
+
+        """
+        pass
+
 if __name__ == "__main__":
     NumpyTest().run()
