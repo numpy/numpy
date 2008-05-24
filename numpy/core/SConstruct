@@ -7,7 +7,7 @@ from copy import deepcopy
 
 from numscons import get_python_inc, get_pythonlib_dir
 from numscons import GetNumpyEnvironment
-from numscons import CheckCBLAS 
+from numscons import CheckCBLAS
 from numscons import write_info
 
 from scons_support import CheckBrokenMathlib, define_no_smp, \
@@ -32,7 +32,7 @@ config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMa
 
 # numpyconfig_sym will keep the values of some configuration variables, the one
 # needed for the public numpy API.
- 
+
 # Convention: list of tuples (definition, value). value:
 # - 0: #undef definition
 # - 1: #define definition
@@ -63,12 +63,12 @@ for type in ('Py_intptr_t',):
 
 # We check declaration AND type because that's how distutils does it.
 if config.CheckDeclaration('PY_LONG_LONG', includes = '#include <Python.h>\n'):
-    st = config.CheckTypeSize('PY_LONG_LONG', 
+    st = config.CheckTypeSize('PY_LONG_LONG',
                               includes = '#include <Python.h>\n')
     assert not st == 0
-    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', 
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG',
                             '#define NPY_SIZEOF_LONGLONG %d' % st))
-    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG', 
+    numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_PY_LONG_LONG',
                             '#define NPY_SIZEOF_PY_LONG_LONG %d' % st))
 else:
     numpyconfig_sym.append(('DEFINE_NPY_SIZEOF_LONGLONG', ''))
@@ -84,7 +84,7 @@ maintainer (cdavid)""")
 #----------------------
 if is_npy_no_signal():
     numpyconfig_sym.append(('DEFINE_NPY_NO_SIGNAL', '#define NPY_NO_SIGNAL\n'))
-    config.Define('__NPY_PRIVATE_NO_SIGNAL', 
+    config.Define('__NPY_PRIVATE_NO_SIGNAL',
                   comment = "define to 1 to disable SMP support ")
 else:
     numpyconfig_sym.append(('DEFINE_NPY_NO_SIGNAL', ''))
@@ -99,11 +99,11 @@ else:
 numpyconfig_sym.append(('NPY_NO_SMP', nosmp))
 
 #----------------------
-# Checking the mathlib 
+# Checking the mathlib
 #----------------------
 mlibs = [[], ['m'], ['cpml']]
 mathlib = os.environ.get('MATHLIB')
-if mathlib: 
+if mathlib:
     mlibs.insert(0, mathlib)
 
 mlib = check_mlibs(config, mlibs)
@@ -157,10 +157,10 @@ if mfuncs_defined['atanhl'] == 1:
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
 #-------------------------------------------------------
-if not config.CheckDeclaration('PyOS_ascii_strtod', 
+if not config.CheckDeclaration('PyOS_ascii_strtod',
                                includes = "#include <Python.h>"):
     if config.CheckFunc('strtod'):
-        config.Define('PyOS_ascii_strtod', 'strtod', 
+        config.Define('PyOS_ascii_strtod', 'strtod',
                       "Define to a function to use as a replacement for "\
                       "PyOS_ascii_strtod if not available in python header")
 
@@ -175,7 +175,7 @@ if sys.platform=='win32' or os.name=='nt':
           (a, os.name, sys.platform)
     if a == 'AMD64':
         distutils_use_sdk = 1
-        config.Define('DISTUTILS_USE_SDK', distutils_use_sdk, 
+        config.Define('DISTUTILS_USE_SDK', distutils_use_sdk,
                       "define to 1 to disable SMP support ")
 
 #--------------
@@ -203,7 +203,7 @@ for key, value in numpyconfig_sym:
 env['SUBST_DICT'] = config_dict
 
 include_dir = 'include/numpy'
-env.SubstInFile(pjoin(env['build_dir'], 'numpyconfig.h'), 
+env.SubstInFile(pjoin(env['build_dir'], 'numpyconfig.h'),
                 pjoin(env['src_dir'], include_dir, 'numpyconfig.h.in'))
 
 env['CONFIG_H_GEN'] = numpyconfig_sym
@@ -229,11 +229,10 @@ scalarmathmodule_src = env.GenerateFromTemplate(
 umath = env.GenerateUmath('__umath_generated',
                           pjoin('code_generators', 'generate_umath.py'))
 
-multiarray_api = env.GenerateMultiarrayApi('multiarray_api', 
-                        [ pjoin('code_generators', 'array_api_order.txt'),
-                          pjoin('code_generators', 'multiarray_api_order.txt')])
+multiarray_api = env.GenerateMultiarrayApi('multiarray_api',
+                        [ pjoin('code_generators', 'numpy_api_order.txt')])
 
-ufunc_api = env.GenerateUfuncApi('ufunc_api', 
+ufunc_api = env.GenerateUfuncApi('ufunc_api',
                     pjoin('code_generators', 'ufunc_api_order.txt'))
 
 env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
@@ -257,7 +256,7 @@ umathmodule = env.NumpyPythonExtension('umath', source = umathmodule_src)
 #------------------------
 # Build scalarmath module
 #------------------------
-scalarmathmodule = env.NumpyPythonExtension('scalarmath', 
+scalarmathmodule = env.NumpyPythonExtension('scalarmath',
                                             source = scalarmathmodule_src)
 
 #----------------------

@@ -131,7 +131,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 /* no error checking is performed -- ctypeptr must be same type as scalar */
 /* in case of flexible type, the data is not copied
    into ctypeptr which is expected to be a pointer to pointer */
-/*OBJECT_API
+/*NUMPY_API
  Convert to c-type
 */
 static void
@@ -160,7 +160,7 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 /* This may not work right on narrow builds for NumPy unicode scalars.
  */
 
-/*OBJECT_API
+/*NUMPY_API
  Cast Scalar to c-type
 */
 static int
@@ -197,7 +197,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
         return 0;
 }
 
-/*OBJECT_API
+/*NUMPY_API
  Cast Scalar to c-type
 */
 static int
@@ -220,7 +220,7 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
 */
 
 /* steals reference to outcode */
-/*OBJECT_API
+/*NUMPY_API
  Get 0-dim array from scalar
 */
 static PyObject *
@@ -292,7 +292,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
         return ret;
 }
 
-/*OBJECT_API
+/*NUMPY_API
   Get an Array Scalar From a Python Object
   Returns NULL if unsuccessful but error is only
   set if another error occurred. Currently only Numeric-like
@@ -2720,7 +2720,7 @@ _descr_from_subtype(PyObject *type)
 }
 
 /*New reference */
-/*OBJECT_API
+/*NUMPY_API
  */
 static PyArray_Descr *
 PyArray_DescrFromTypeObject(PyObject *type)
@@ -2785,7 +2785,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
         return _descr_from_subtype(type);
 }
 
-/*OBJECT_API
+/*NUMPY_API
   Return the tuple of ordered field names from a dictionary.
 */
 static PyObject *
@@ -2812,7 +2812,7 @@ PyArray_FieldNames(PyObject *fields)
 }
 
 /* New reference */
-/*OBJECT_API
+/*NUMPY_API
  Return descr object from array scalar.
 */
 static PyArray_Descr *
@@ -2856,7 +2856,7 @@ PyArray_DescrFromScalar(PyObject *sc)
 }
 
 /* New reference */
-/*OBJECT_API
+/*NUMPY_API
  Get a typeobject from a type-number -- can return NULL.
 */
 static PyObject *
