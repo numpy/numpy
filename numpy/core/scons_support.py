@@ -9,8 +9,8 @@ import os
 from os.path import join as pjoin, dirname as pdirname, basename as pbasename
 from copy import deepcopy
 
-from code_generators.generate_array_api import \
-     do_generate_api as nowrap_do_generate_array_api
+from code_generators.generate_numpy_api import \
+     do_generate_api as nowrap_do_generate_numpy_api
 from code_generators.generate_ufunc_api import \
      do_generate_api as nowrap_do_generate_ufunc_api
 
@@ -35,8 +35,8 @@ def split_ext(string):
 #------------------------------------
 # Ufunc and multiarray API generators
 #------------------------------------
-def do_generate_array_api(target, source, env):
-    nowrap_do_generate_array_api([str(i) for i in target],
+def do_generate_numpy_api(target, source, env):
+    nowrap_do_generate_numpy_api([str(i) for i in target],
                                  [str(i) for i in source])
     return 0
 
@@ -188,7 +188,7 @@ def define_no_smp():
             nosmp = 0
     return nosmp == 1
 
-array_api_gen_bld = Builder(action = Action(do_generate_array_api, '$ARRAPIGENCOMSTR'),
+array_api_gen_bld = Builder(action = Action(do_generate_numpy_api, '$ARRAPIGENCOMSTR'),
                             emitter = [generate_api_emitter,
                                        distutils_dirs_emitter])
 
