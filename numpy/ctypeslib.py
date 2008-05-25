@@ -29,7 +29,10 @@ else:
             import warnings
             warnings.warn("All features of ctypes interface may not work " \
                           "with ctypes < 1.0.1")
-        if '.' not in libname:
+
+        ext = os.path.splitext(libname)[1]
+
+        if not ext:
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
@@ -38,6 +41,8 @@ else:
                 libname_ext.insert(0, '%s.dll' % libname)
             elif sys.platform == 'darwin':
                 libname_ext.insert(0, '%s.dylib' % libname)
+        else:
+            libname_ext = [libname]
 
         loader_path = os.path.abspath(loader_path)
         if not os.path.isdir(loader_path):
