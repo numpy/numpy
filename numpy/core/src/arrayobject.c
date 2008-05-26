@@ -13,7 +13,8 @@
   Travis Oliphant,  oliphant@ee.byu.edu
   Brigham Young Univeristy
 
-  maintainer email:  oliphant.travis@ieee.org
+:8613
+maintainer email:  oliphant.travis@ieee.org
 
   Numarray design (which provided guidance) by
   Space Science Telescope Institute
@@ -8801,7 +8802,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         else if (newtype->type_num == PyArray_OBJECT) {
             isobject = 1;
         }
-        if (!PyString_Check(op) && PySequence_Check(op)) {
+        if (PySequence_Check(op)) {
             PyObject *thiserr = NULL;
 
             /* necessary but not sufficient */

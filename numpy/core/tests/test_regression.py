@@ -1079,5 +1079,10 @@ class TestRegression(NumpyTestCase):
         self.failUnlessRaises(ValueError, dp)
         self.failUnlessRaises(ValueError, dp2)
 
+    def check_char_array_creation(self, level=rlevel):
+        a = np.array('123', dtype='c')
+        b = np.array(['1','2','3'])
+        assert_equal(a,b)
+
 if __name__ == "__main__":
     NumpyTest().run()
