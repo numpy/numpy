@@ -8801,7 +8801,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         else if (newtype->type_num == PyArray_OBJECT) {
             isobject = 1;
         }
-        if (!PyString_Check(op) && PySequence_Check(op)) {
+        if (PySequence_Check(op)) {
             PyObject *thiserr = NULL;
 
             /* necessary but not sufficient */
