@@ -811,9 +811,11 @@ class TestMA(NumpyTestCase):
     #
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
+        xm.fill_value = -9999
         xmm = asarray(xm)
         assert_equal(xmm._data, xm._data)
         assert_equal(xmm._mask, xm._mask)
+        assert_equal(xmm.fill_value, xm.fill_value)
     #
     def test_fix_invalid(self):
         "Checks fix_invalid."
@@ -1588,4 +1590,4 @@ class TestMiscFunctions(NumpyTestCase):
 ###############################################################################
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
-    NumpyTest().run()
+    NumpyTest('numpy.ma.core').run()

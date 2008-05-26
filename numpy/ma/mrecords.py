@@ -664,11 +664,11 @@ on the first line. An exception is raised if the file is 3D or more.
                 except ValueError:
                     vartypes.append(arr.dtype)
                 else:
-                    vartypes.append(complex)
+                    vartypes.append(np.dtype(complex))
             else:
-                vartypes.append(float)
+                vartypes.append(np.dtype(float))
         else:
-            vartypes.append(int)
+            vartypes.append(np.dtype(int))
     return vartypes
 
 def openfile(fname):
@@ -738,11 +738,12 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
             vartypes = _guessvartypes(_variables[0])
     # Construct the descriptor ..................
     mdescr = [(n,f) for (n,f) in zip(varnames, vartypes)]
+    mfillv = [ma.default_fill_value(f) for f in vartypes]
     # Get the data and the mask .................
     # We just need a list of masked_arrays. It's easier to create it like that:
     _mask = (_variables.T == missingchar)
-    _datalist = [masked_array(a,mask=m,dtype=t)
-                     for (a,m,t) in zip(_variables.T, _mask, vartypes)]
+    _datalist = [masked_array(a,mask=m,dtype=t,fill_value=f)
+                 for (a,m,t,f) in zip(_variables.T, _mask, vartypes, mfillv)]
     return fromarrays(_datalist, dtype=mdescr)
 
 #....................................................................

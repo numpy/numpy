@@ -1214,8 +1214,9 @@ class MaskedArray(numeric.ndarray):
                 else:
                     _data._mask = umath.logical_or(mask, _data._mask)
                     _data._sharedmask = False
-
         # Update fill_value.......
+        if fill_value is None:
+            fill_value = getattr(data,'_fill_value', None)
         _data._fill_value = _check_fill_value(fill_value, _data.dtype)
         # Process extra options ..
         _data._hardmask = hard_mask
