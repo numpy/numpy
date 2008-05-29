@@ -2742,7 +2742,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         while(loop->index < loop->size) {
             if (loop->obj)
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
-            memcpy(loop->bufptr[0], loop->it->dataptr,
+            memmove(loop->bufptr[0], loop->it->dataptr,
                    loop->outsize);
             PyArray_ITER_NEXT(loop->it);
             loop->bufptr[0] += loop->outsize;
@@ -2755,7 +2755,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             /* Copy first element to output */
             if (loop->obj)
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
-            memcpy(loop->bufptr[0], loop->it->dataptr,
+            memmove(loop->bufptr[0], loop->it->dataptr,
                    loop->outsize);
             /* Adjust input pointer */
             loop->bufptr[1] = loop->it->dataptr+loop->steps[1];
