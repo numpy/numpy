@@ -6,11 +6,11 @@ By comparison, mrecarrays support masking individual fields.
 
 :author: Pierre Gerard-Marchant
 """
-#TODO: We should make sure that no field is called '_mask','mask','_fieldmask',
-#TODO: ...or whatever restricted keywords.
-#TODO: An idea would be to no bother in the first place, and then rename the
-#TODO: invalid fields with a trailing underscore...
-#TODO: Maybe we could just overload the parser function ?
+#!!!: * We should make sure that no field is called '_mask','mask','_fieldmask',
+#!!!:   or whatever restricted keywords.
+#!!!:   An idea would be to no bother in the first place, and then rename the
+#!!!:   invalid fields with a trailing underscore...
+#!!!:   Maybe we could just overload the parser function ?
 
 
 __author__ = "Pierre GF Gerard-Marchant"
@@ -51,9 +51,6 @@ def _getformats(data):
     formats = ''
     for obj in data:
         obj = np.asarray(obj)
-#        if not isinstance(obj, ndarray):
-##        if not isinstance(obj, ndarray):
-#            raise ValueError, "item in the array list must be an ndarray."
         formats += _typestr[obj.dtype.type]
         if issubclass(obj.dtype.type, ntypes.flexible):
             formats += `obj.itemsize`
@@ -124,7 +121,6 @@ class MaskedRecords(MaskedArray, object):
         self = recarray.__new__(cls, shape, dtype=dtype, buf=buf, offset=offset,
                                 strides=strides, formats=formats,
                                 byteorder=byteorder, aligned=aligned,)
-#        self = self.view(cls)
         #
         mdtype = [(k,'|b1') for (k,_) in self.dtype.descr]
         if mask is nomask or not np.size(mask):
@@ -331,11 +327,13 @@ The fieldname base is either `_data` or `_mask`."""
         _data = self._data
         # We want a field ........
         if isinstance(indx, basestring):
+            #NB: Make sure _sharedmask is True to propagate back to _fieldmask
+            #NB: Don't use _set_mask, there are some copies being made that break propagation
+            #NB: Don't force the mask to nomask, that wrecks easy masking
             obj = _data[indx].view(MaskedArray)
-            obj._set_mask(_fieldmask[indx])
-            # Force to nomask if the mask is empty
-            if not obj._mask.any():
-                obj._mask = nomask
+#            obj._set_mask(_fieldmask[indx])
+            obj._mask = _fieldmask[indx]
+            obj._sharedmask = True
             # Force to masked if the mask is True
             if not obj.ndim and obj._mask:
                 return masked
@@ -780,4 +778,3 @@ set to 'fi', where `i` is the number of existing fields.
     newdata._fieldmask = newmask
     return newdata
 
-###############################################################################

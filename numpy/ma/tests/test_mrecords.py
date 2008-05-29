@@ -132,6 +132,20 @@ class TestMRecords(NumpyTestCase):
         assert_equal(rdata.num, val)
         assert_equal(rdata.num.mask, [1,0,0])
 
+    def test_set_fields_mask(self):
+        "Tests setting the mask of a field."
+        base = self.base.copy()
+        # This one has already a mask....
+        mbase = base.view(mrecarray)
+        mbase['a'][-2] = masked
+        assert_equal(mbase.a, [1,2,3,4,5])
+        assert_equal(mbase.a._mask, [0,1,0,1,1])
+        # This one has not yet
+        mbase = fromarrays([np.arange(5), np.random.rand(5)],
+                           dtype=[('a',int),('b',float)])
+        mbase['a'][-2] = masked
+        assert_equal(mbase.a, [0,1,2,3,4])
+        assert_equal(mbase.a._mask, [0,0,0,1,0])
     #
     def test_set_mask(self):
         base = self.base.copy()
@@ -231,7 +245,8 @@ class TestMRecords(NumpyTestCase):
         mbase.soften_mask()
         assert(not mbase._hardmask)
         mbase._mask = nomask
-        assert(mbase['b']._mask is nomask)
+        # So, the mask of a field is no longer set to nomask...
+        assert(ma.make_mask(mbase['b']._mask) is nomask)
         assert_equal(mbase['a']._mask,mbase['b']._mask)
     #
     def test_pickling(self):
@@ -365,7 +380,7 @@ class TestMRecordsImport(NumpyTestCase):
         f.write(fcontent)
         f.close()
         mrectxt = fromtextfile(fname,delimitor=',',varnames='ABCDEFG')
-        os.unlink(fname)
+        os.remove(fname)
         #
         assert(isinstance(mrectxt, MaskedRecords))
         assert_equal(mrectxt.F, [1,1,1,1])

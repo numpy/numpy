@@ -1633,7 +1633,7 @@ class MaskedArray(numeric.ndarray):
                     else:
                         return str(self._data)
                 # convert to object array to make filled work
-#CHECK: the two lines below seem more robust than the self._data.astype
+#!!!: the two lines below seem more robust than the self._data.astype
 #                res = numeric.empty(self._data.shape, object_)
 #                numeric.putmask(res,~m,self._data)
                 res = self._data.astype("|O8")
@@ -2032,7 +2032,7 @@ masked_%(name)s(data = %(data)s,
         indicated `axis1` and `axis2`.
 
         """
-        # TODO: What are we doing with `out`?
+        #!!!: implement out + test!
         m = self._mask
         if m is nomask:
             result = super(MaskedArray, self).trace(offset=offset, axis1=axis1,
@@ -2207,7 +2207,7 @@ masked_%(name)s(data = %(data)s,
 
         """
         if self._mask is nomask:
-            # TODO: Do we keep super, or var _data and take a view ?
+            #???: Do we keep super, or var _data and take a view ?
             return super(MaskedArray, self).var(axis=axis, dtype=dtype,
                                                 ddof=ddof)
         else:
@@ -2676,7 +2676,7 @@ def array(data, dtype=None, copy=False, order=False,
     for convenience.  And backwards compatibility...
 
     """
-    #TODO: we should try to put 'order' somwehere
+    #!!!: we should try to put 'order' somwehere
     return MaskedArray(data, mask=mask, dtype=dtype, copy=copy, subok=subok,
                        keep_mask=keep_mask, hard_mask=hard_mask,
                        fill_value=fill_value, ndmin=ndmin, shrink=shrink)
@@ -3186,7 +3186,7 @@ def where (condition, x=None, y=None):
 
 def choose (indices, t, out=None, mode='raise'):
     "Return array shaped like indices with elements chosen from t"
-    #TODO: implement options `out` and `mode`, if possible.
+    #!!!: implement options `out` and `mode`, if possible + test.
     def fmask (x):
         "Returns the filled array, or True if masked."
         if x is masked:
