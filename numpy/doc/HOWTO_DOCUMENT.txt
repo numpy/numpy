@@ -73,7 +73,7 @@ Status
 We are busy converting existing docstrings to the new format,
 expanding them where they are lacking, as well as writing new ones for
 undocumented functions.  Volunteers are welcome to join the effort on
-our new wiki-based documentation system (see the `Developer Zone
+our new documentation system (see the `Developer Zone
 <http://www.scipy.org/Developer_Zone/DocMarathon2008>`_).
 
 Sections
@@ -177,7 +177,10 @@ The sections of the docstring are:
 
      See Also
      --------
-     average : Weighted average
+     numpy.average : Weighted average
+   
+   Preferably, use the full namespace prefixes. For targets in the same
+   module as the documented object, the prefix can be omitted.
 
 8. **Notes**
 
@@ -276,6 +279,10 @@ The sections of the docstring are:
       a
       <BLANKLINE>
       b
+
+    The examples may assume that ``import numpy`` is executed before
+    the example code in *numpy*, and ``import scipy`` in *scipy*, but
+    other modules used should be explicitly imported.
 
 11. **Indexing tags***
 
