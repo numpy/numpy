@@ -217,29 +217,6 @@ class MaskedRecords(MaskedArray, object):
             return self._fieldmask.view((bool_, len(self.dtype))).all()
     mask = _mask = property(fget=_getmask, fset=_setmask)
     #......................................................
-    def get_fill_value(self):
-        """Return the filling value.
-
-        """
-        if self._fill_value is None:
-            ddtype = self.dtype
-            fillval = _check_fill_value(None, ddtype)
-            self._fill_value = np.array(tuple(fillval), dtype=ddtype)
-        return self._fill_value
-
-    def set_fill_value(self, value=None):
-        """Set the filling value to value.
-
-        If value is None, use a default based on the data type.
-
-        """
-        ddtype = self.dtype
-        fillval = _check_fill_value(value, ddtype)
-        self._fill_value = np.array(tuple(fillval), dtype=ddtype)
-
-    fill_value = property(fget=get_fill_value, fset=set_fill_value,
-                          doc="Filling value.")
-    #......................................................
     def __len__(self):
         "Returns the length"
         # We have more than one record
@@ -306,9 +283,14 @@ class MaskedRecords(MaskedArray, object):
         # Case #1.: Basic field ............
         base_fmask = self._fieldmask
         _names = self.dtype.names or []
+        _localdict = self.__dict__
         if attr in _names:
             if val is masked:
-                fval = self.fill_value[attr]
+                _fill_value = _localdict['_fill_value']
+                if _fill_value is not None:
+                    fval = _fill_value[attr]
+                else:
+                    fval = None
                 mval = True
             else:
                 fval = filled(val)
@@ -327,13 +309,16 @@ The fieldname base is either `_data` or `_mask`."""
         _data = self._data
         # We want a field ........
         if isinstance(indx, basestring):
-            #NB: Make sure _sharedmask is True to propagate back to _fieldmask
-            #NB: Don't use _set_mask, there are some copies being made that break propagation
-            #NB: Don't force the mask to nomask, that wrecks easy masking
+            #!!!: Make sure _sharedmask is True to propagate back to _fieldmask
+            #!!!: Don't use _set_mask, there are some copies being made...
+            #!!!: ...that break propagation
+            #!!!: Don't force the mask to nomask, that wrecks easy masking
             obj = _data[indx].view(MaskedArray)
-#            obj._set_mask(_fieldmask[indx])
             obj._mask = _fieldmask[indx]
             obj._sharedmask = True
+            fval = _localdict['_fill_value']
+            if fval is not None:
+                obj._fill_value = fval[indx]
             # Force to masked if the mask is True
             if not obj.ndim and obj._mask:
                 return masked
@@ -429,18 +414,19 @@ The fieldname base is either `_data` or `_mask`."""
             return d
         #
         if fill_value is None:
-            value = _check_fill_value(_localdict['_fill_value'],self.dtype)
+            value = _check_fill_value(_localdict['_fill_value'], d.dtype)
         else:
             value = fill_value
             if np.size(value) == 1:
-                value = [value,] * len(self.dtype)
+                value = np.array(tuple([value,] * len(d.dtype)),
+                                 dtype=d.dtype)
         #
         if self is masked:
             result = np.asanyarray(value)
         else:
             result = d.copy()
-            for (n, v) in zip(d.dtype.names, value):
-                np.putmask(np.asarray(result[n]), np.asarray(fm[n]), v)
+            for n in d.dtype.names:
+                np.putmask(np.asarray(result[n]), np.asarray(fm[n]), value[n])
         return result
     #......................................................
     def harden_mask(self):

@@ -795,12 +795,12 @@ class TestMA(NumpyTestCase):
         mtype = [('f',float_),('s','|S3')]
         x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
         x.fill_value=999
-        assert_equal(x.fill_value,[999.,'999'])
+        assert_equal(x.fill_value.item(),[999.,'999'])
         assert_equal(x['f'].fill_value, 999)
         assert_equal(x['s'].fill_value, '999')
         #
         x.fill_value=(9,'???')
-        assert_equal(x.fill_value, (9,'???'))
+        assert_equal(x.fill_value.item(), (9,'???'))
         assert_equal(x['f'].fill_value, 9)
         assert_equal(x['s'].fill_value, '???')
         #
@@ -865,7 +865,88 @@ class TestMA(NumpyTestCase):
         assert_equal(xf.dtype, float_)
         assert_equal(xs.data, ['A', 'b', 'pi'])
         assert_equal(xs.dtype, '|S3')
-
+    #
+    def test_check_fill_value(self):
+        "Test _check_fill_value"
+        _check_fill_value = numpy.ma.core._check_fill_value
+        #
+        fval = _check_fill_value(0,int)
+        assert_equal(fval, 0)
+        fval = _check_fill_value(None,int)
+        assert_equal(fval, default_fill_value(0))
+        #
+        fval = _check_fill_value(0,"|S3")
+        assert_equal(fval, "0")
+        fval = _check_fill_value(None,"|S3")
+        assert_equal(fval, default_fill_value("|S3"))
+        #
+        fval = _check_fill_value(1e+20,int)
+        assert_equal(fval, default_fill_value(0))
+        
+    def test_check_fill_value_with_fields(self):
+        "Tests _check_fill_value with records"
+        _check_fill_value = numpy.ma.core._check_fill_value
+        #
+        ndtype = [('a',int),('b',float),('c',"|S3")]
+        fval = _check_fill_value([-999,-999.9,"???"], ndtype)
+        assert(isinstance(fval,ndarray))
+        assert_equal(fval.item(), [-999,-999.9,"???"])
+        #
+        fval = _check_fill_value(None, ndtype)
+        assert(isinstance(fval,ndarray))
+        assert_equal(fval.item(), [default_fill_value(0),
+                                   default_fill_value(0.),
+                                   default_fill_value("0")])
+        #
+        fill_val = np.array((-999,-999.9,"???"),dtype=ndtype)
+        fval = _check_fill_value(fill_val, ndtype)
+        assert(isinstance(fval,ndarray))
+        assert_equal(fval.item(), [-999,-999.9,"???"])
+        #
+        fill_val = np.array((-999,-999.9,"???"),
+                            dtype=[("A",int),("B",float),("C","|S3")])
+        fval = _check_fill_value(fill_val, ndtype)
+        assert(isinstance(fval,ndarray))
+        assert_equal(fval.item(), [-999,-999.9,"???"])
+        #
+        fill_value =  np.array((-999,-999.9,"???"), dtype=object)
+        fval = _check_fill_value(fill_val, ndtype)
+        assert(isinstance(fval,ndarray))
+        assert_equal(fval.item(), [-999,-999.9,"???"])
+        #
+        fill_value =  np.array((-999,-999.9,"???"))
+        fval = _check_fill_value(fill_val, ndtype)
+        assert(isinstance(fval,ndarray))
+        assert_equal(fval.item(), [-999,-999.9,"???"])
+        #
+        ndtype = [("a",int)]
+        fval = _check_fill_value(-999, ndtype)
+        assert(isinstance(fval,ndarray))
+        assert_equal(fval.item(), (-999,))
+    #
+    def test_fillvalue_conversion(self):
+        "Tests the behavior of fill_value during conversion"
+        # We had a tailored comment to make sure special attributes are properly
+        # dealt with
+        a = array(['3', '4', '5'])
+        a._basedict.update(comment="updated!")
+        #
+        b = array(a, dtype=int)
+        assert_equal(b._data, [3,4,5])
+        assert_equal(b.fill_value, default_fill_value(0))
+        #
+        b = array(a, dtype=float)
+        assert_equal(b._data, [3,4,5])
+        assert_equal(b.fill_value, default_fill_value(0.))
+        #
+        b = a.astype(int)
+        assert_equal(b._data, [3,4,5])
+        assert_equal(b.fill_value, default_fill_value(0))
+        assert_equal(b._basedict['comment'], "updated!")
+        #
+        b = a.astype([('a','|S3')])
+        assert_equal(b['a']._data, a._data)
+        assert_equal(b['a'].fill_value, a.fill_value)
 
 
 #...............................................................................
@@ -1478,7 +1559,7 @@ class TestArrayMethods(NumpyTestCase):
         datatype = [('a',int_),('b',float_),('c','|S8')]
         a = masked_array([(1,1.1,'1.1'),(2,2.2,'2.2'),(3,3.3,'3.3')],
                          dtype=datatype)
-        assert_equal(len(a.fill_value), len(datatype))
+        assert_equal(len(a.fill_value.item()), len(datatype))
         #
         b = empty_like(a)
         assert_equal(b.shape, a.shape)
@@ -1590,4 +1671,4 @@ class TestMiscFunctions(NumpyTestCase):
 ###############################################################################
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
-    NumpyTest('numpy.ma.core').run()
+    NumpyTest().run()
