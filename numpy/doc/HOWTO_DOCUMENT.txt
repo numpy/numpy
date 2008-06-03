@@ -309,9 +309,10 @@ The sections of the docstring are:
       <BLANKLINE>
       b
 
-    The examples may assume that ``import numpy`` is executed before
-    the example code in *numpy*, and ``import scipy`` in *scipy*, but
-    other modules used should be explicitly imported.
+    The examples may assume that ``import numpy as np`` is executed before
+    the example code in *numpy*, and ``import scipy as sp`` in *scipy*.
+    Additional examples may make use of *matplotlib* for plotting, but should
+    import it explicitly, e.g., ``import matplotlib.pyplot as plt``.
 
 11. **Indexing tags***
 
