@@ -242,6 +242,11 @@ class TestMA(NumpyTestCase):
         assert_equal(xm._mask, [1,1,1,0,0,1,1,0,0,0,1,1])
         assert_equal(xm._data, [1/5.,1.,1./3.,-1.,-pi/2.,-1.,5.,1.,1.,1.,2.,1.])
 
+    def test_inplace_arithmetixx(self):
+        tiny = numpy.finfo(float).tiny
+        a = array([tiny, 1./tiny, 0.])
+        assert_equal(getmaskarray(a/2), [0,0,0])
+        assert_equal(getmaskarray(2/a), [1,0,1])
 
     #..........................
     def test_scalararithmetic(self):

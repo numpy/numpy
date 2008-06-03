@@ -76,7 +76,7 @@ import warnings
 MaskType = np.bool_
 nomask = MaskType(0)
 
-divide_tolerance = 1.e-35
+divide_tolerance = np.finfo(float).tiny
 np.seterr(all='ignore')
 
 def doc_note(note):
@@ -926,15 +926,22 @@ def masked_outside(x, v1, v2, copy=True):
     return masked_where(condition, x, copy=copy)
 
 #
-def masked_object(x, value, copy=True):
+def masked_object(x, value, copy=True, shrink=True):
     """Mask the array x where the data are exactly equal to value.
 
     This function is suitable only for object arrays: for floating
     point, please use ``masked_values`` instead.
 
-    Notes
-    -----
-    The mask is set to `nomask` if posible.
+    Parameters
+    ----------
+    x : array-like
+        Array to mask
+    value : var
+        Comparison value
+    copy : {True, False}, optional
+        Whether to return a copy of x.
+    shrink : {True, False}, optional
+        Whether to collapse a mask full of False to nomask
 
     """
     if isMaskedArray(x):
@@ -943,10 +950,10 @@ def masked_object(x, value, copy=True):
     else:
         condition = umath.equal(np.asarray(x), value)
         mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=True))
+    mask = mask_or(mask, make_mask(condition, shrink=shrink))
     return masked_array(x, mask=mask, copy=copy, fill_value=value)
 
-def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True):
+def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True, shrink=True):
     """Mask the array x where the data are approximately equal in
     value, i.e.
 
@@ -961,12 +968,14 @@ def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True):
         Array to fill.
     value : float
         Masking value.
-    rtol : float
+    rtol : {float}, optional
         Tolerance parameter.
-    atol : float
+    atol : {float}, optional
         Tolerance parameter (1e-8).
-    copy : bool
+    copy : {True, False}, optional
         Whether to return a copy of x.
+    shrink : {True, False}, optional
+        Whether to collapse a mask full of False to nomask
 
     """
     abs = umath.absolute
@@ -977,7 +986,7 @@ def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True):
     else:
         condition = umath.equal(xnew, value)
         mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=True))
+    mask = mask_or(mask, make_mask(condition, shrink=shrink))
     return masked_array(xnew, mask=mask, copy=copy, fill_value=value)
 
 def masked_invalid(a, copy=True):
@@ -1776,8 +1785,8 @@ masked_%(name)s(data = %(data)s,
         new_mask = mask_or(other_mask, dom_mask)
         # The following 3 lines control the domain filling
         if dom_mask.any():
-            other_data = other_data.copy()
-            np.putmask(other_data, dom_mask, 1)
+            (_, fval) = ufunc_fills[np.divide]
+            other_data = np.where(dom_mask, fval, other_data)
         ndarray.__idiv__(self._data, other_data)
         self._mask = mask_or(self._mask, new_mask)
         return self
