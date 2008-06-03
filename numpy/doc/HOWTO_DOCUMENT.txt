@@ -25,14 +25,23 @@ Use a code checker:
  * `pyflakes` easy_install pyflakes
  * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`_
 
-For documentation purposes, use unabbreviated module names.  If you
-prefer the use of abbreviated module names in code (*not* the
-docstrings), we suggest the import conventions used by NumPy itself::
+The following import conventions are used throughout the NumPy source
+and documentation::
 
    import numpy as np
    import scipy as sp
    import matplotlib as mpl
    import matplotlib.pyplot as plt
+
+It is not necessary to do ``import numpy as np`` at the beginning of
+an example.  However, some sub-modules, such as ``fft``, are not
+imported by default, and you have to include them explicitly::
+
+  import numpy.fft
+
+after which you may use it::
+
+  np.fft.fft2(...)
 
 Docstring Standard
 ------------------
@@ -65,8 +74,8 @@ terminals.
 A guiding principle is that human readers of the text are given
 precedence over contorting docstrings so our tools produce nice
 output.  Rather than sacrificing the readability of the docstrings, we
-have chosen to write pre-processors to assist tools like epydoc_ or
-sphinx_ in their task.
+have written pre-processors to assist tools like epydoc_ and sphinx_ in
+their task.
 
 Status
 ------
@@ -177,10 +186,30 @@ The sections of the docstring are:
 
      See Also
      --------
-     numpy.average : Weighted average
-   
-   Preferably, use the full namespace prefixes. For targets in the same
-   module as the documented object, the prefix can be omitted.
+     average : Weighted average
+
+   When referring to functions in the same sub-module, no prefix is
+   needed, and the tree is searched upwards for a match.
+
+   Prefix functions from other sub-modules appropriately.  E.g.,
+   whilst documenting the ``random`` module, refer to a function in
+   ``fft`` by
+
+   ::
+
+     fft.fft2 : 2-D fast discrete Fourier transform
+
+   When referring to an entirely different module::
+
+     scipy.random.norm : Random variates, PDFs, etc.
+
+   Functions may be listed without descriptions::
+
+     See Also
+     --------
+     func_a : Function a with its description.
+     func_b, func_c_, func_d
+     func_e
 
 8. **Notes**
 
@@ -206,7 +235,7 @@ The sections of the docstring are:
 
    ::
 
-     The value of :math:`omega` is larger than 5.
+     The value of :math:`\omega` is larger than 5.
 
    Note that LaTeX is not particularly easy to read, so use equations
    sparingly.
@@ -329,8 +358,9 @@ Conclusion
 `An example
 <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_ of the
 format shown here is available.  Refer to `How to Build API/Reference
-Documentation <HOWTO_BUILD_DOCS>`_ on how to use epydoc_ or sphinx_ to
-construct a manual and web page.
+Documentation
+<http://svn.scipy.org/svn/numpy/trunk/numpy/doc/HOWTO_BUILD_DOCS.txt>`_
+on how to use epydoc_ or sphinx_ to construct a manual and web page.
 
 This document itself was written in ReStructuredText, and may be converted to
 HTML using::
