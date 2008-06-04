@@ -1413,25 +1413,26 @@ class MaskedArray(ndarray):
             self._sharedmask = False
             return
         #....
-        dval = np.array(value, copy=False, dtype=self.dtype)
-        valmask = getmask(value)
+#        dval = np.array(value, copy=False, dtype=self.dtype)
+        dval = value
+        mval = getmask(value)
         if self._mask is nomask:
             # Set the data, then the mask
             ndarray.__setitem__(self._data,indx,dval)
-            if valmask is not nomask:
+            if mval is not nomask:
                 self._mask = np.zeros(self.shape, dtype=MaskType)
-                self._mask[indx] = valmask
+                self._mask[indx] = mval
         elif not self._hardmask:
             # Unshare the mask if necessary to avoid propagation
             self.unshare_mask()
             # Set the data, then the mask
-            ndarray.__setitem__(self._data,indx,dval)
-            self._mask[indx] = valmask
+            ndarray.__setitem__(self._data, indx, dval)
+            ndarray.__setitem__(self._mask, indx, mval)
         elif hasattr(indx, 'dtype') and (indx.dtype==bool_):
             indx = indx * umath.logical_not(self._mask)
-            ndarray.__setitem__(self._data,indx,dval)
+            ndarray.__setitem__(self._data, indx, dval)
         else:
-            mindx = mask_or(self._mask[indx], valmask, copy=True)
+            mindx = mask_or(self._mask[indx], mval, copy=True)
             dindx = self._data[indx]
             if dindx.size > 1:
                 dindx[~mindx] = dval
@@ -2469,7 +2470,7 @@ masked_%(name)s(data = %(data)s,
             idx_l = idx.tolist()
             tmp_mask = self._mask[idx_l].flat
             tmp_data = self._data[idx_l].flat
-            self.flat = tmp_data
+            self._data.flat = tmp_data
             self._mask.flat = tmp_mask
         return
 

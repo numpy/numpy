@@ -631,6 +631,19 @@ class TestMA(NumpyTestCase):
         ctest = masked_where(btest,atest)
         assert_equal(atest,ctest)
     #........................
+    def test_set_oddities(self):
+        """Tests setting elements with object""" 
+        a = empty(1,dtype=object)
+        x = (1,2,3,4,5)
+        a[0] = x
+        assert_equal(a[0], x)
+        assert(a[0] is x)
+        #
+        import datetime
+        dt = datetime.datetime.now()
+        a[0] = dt
+        assert(a[0] is dt)
+    #........................
     def test_maskingfunctions(self):
         "Tests masking functions."
         x = array([1.,2.,3.,4.,5.])
