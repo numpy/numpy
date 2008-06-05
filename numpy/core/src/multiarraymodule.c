@@ -1345,7 +1345,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                                             self->dimensions,
                                             NULL, NULL,
                                             PyArray_ISFORTRAN(self),
-                                            NULL);
+                                            (PyObject *)self);
         if (out == NULL) goto fail;
         outgood = 1;
     }
@@ -5886,7 +5886,6 @@ array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
     return ret;
 }
 
-
 /* steal a reference */
 /* accepts NULL type */
 /*NUMPY_API
@@ -5896,7 +5895,6 @@ static PyObject *
 PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 {
     PyArrayObject *ret;
-    intp n;
 
     if (!type) type = PyArray_DescrFromType(PyArray_DEFAULT);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
@@ -5906,16 +5904,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
                                                 fortran, NULL);
     if (ret == NULL) return NULL;
 
-    if (PyDataType_REFCHK(type)) {
-        PyObject *zero = PyInt_FromLong(0);
-        PyArray_FillObjectArray(ret, zero);
-        Py_DECREF(zero);
-        if (PyErr_Occurred()) {Py_DECREF(ret); return NULL;}
-    }
-    else {
-        n = PyArray_NBYTES(ret);
-        memset(ret->data, 0, n);
-    }
+    if (_zerofill(ret) < 0) return NULL;
     return (PyObject *)ret;
 
 }

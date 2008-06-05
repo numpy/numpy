@@ -6641,6 +6641,26 @@ array_base_get(PyArrayObject *self)
     }
 }
 
+
+static int
+_zerofill(PyArrayObject *ret)
+{
+    intp n;
+
+    if (PyDataType_REFCHK(ret->descr)) {
+        PyObject *zero = PyInt_FromLong(0);
+        PyArray_FillObjectArray(ret, zero);
+        Py_DECREF(zero);
+        if (PyErr_Occurred()) {Py_DECREF(ret); return -1;}
+    }
+    else {
+        n = PyArray_NBYTES(ret);
+        memset(ret->data, 0, n);
+	return 0;
+    }  
+}
+
+
 /* Create a view of a complex array with an equivalent data-type
    except it is real instead of complex.
 */
@@ -6722,29 +6742,26 @@ static PyObject *
 array_imag_get(PyArrayObject *self)
 {
     PyArrayObject *ret;
-    PyArray_Descr *type;
 
     if (PyArray_ISCOMPLEX(self)) {
         ret = _get_part(self, 1);
-        return (PyObject *) ret;
     }
     else {
-        type = self->descr;
-        Py_INCREF(type);
-        ret = (PyArrayObject *)PyArray_Zeros(self->nd,
-                                             self->dimensions,
-                                             type,
-                                             PyArray_ISFORTRAN(self));
+        Py_INCREF(self->descr);
+	ret = (PyArrayObject *)PyArray_NewFromDescr(self->ob_type,
+						    self->descr,
+						    self->nd, 
+						    self->dimensions,
+						    NULL, NULL,
+						    PyArray_ISFORTRAN(self),
+						    (PyObject *)self);
+	if (ret == NULL) return NULL;
+
+	if (_zerofill(ret) < 0) return NULL;
+
         ret->flags &= ~WRITEABLE;
-        if (PyArray_CheckExact(self))
-            return (PyObject *)ret;
-        else {
-            PyObject *newret;
-            newret = PyArray_View(ret, NULL, self->ob_type);
-            Py_DECREF(ret);
-            return newret;
-        }
     }
+    return (PyObject *) ret;
 }
 
 static int

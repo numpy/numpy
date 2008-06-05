@@ -1053,6 +1053,25 @@ class TestRegression(NumpyTestCase):
         except TypeError:
             pass
 
+    def check_attributes(self, level=rlevel):
+        """Ticket #791
+        """
+        import numpy as np
+        class TestArray(np.ndarray):
+            def __new__(cls, data, info):
+                result = np.array(data)
+                result = result.view(cls)
+                result.info = info
+                return result
+            def __array_finalize__(self, obj):
+                self.info = getattr(obj, 'info', '')
+        dat = TestArray([[1,2,3,4],[5,6,7,8]],'jubba')
+        assert dat.info == 'jubba'
+        assert dat.mean(1).info == 'jubba'
+        assert dat.std(1).info == 'jubba'
+        assert dat.clip(2,7).info == 'jubba'
+        assert dat.imag.info == 'jubba'
+        
 
     def check_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215
