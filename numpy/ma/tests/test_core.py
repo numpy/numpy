@@ -1,4 +1,4 @@
-# pylint: disable-msg=W0611, W0612, W0511,R0201
+# pylint: disable-msg=W0611, W0612, W0614, W0511,R0201
 """Tests suite for MaskedArray & subclassing.
 
 :author: Pierre Gerard-Marchant
@@ -1031,7 +1031,7 @@ class TestUfuncs(NumpyTestCase):
 
 #...............................................................................
 
-class TestArrayMethods(NumpyTestCase):
+class TestArrayMathMethods(NumpyTestCase):
     "Test class for miscellaneous MaskedArrays methods."
     def setUp(self):
         "Base data definition."
@@ -1260,6 +1260,26 @@ class TestArrayMethods(NumpyTestCase):
         assert_equal(mXsmall.all(1), numpy.matrix([False, False, False]).T)
         assert_equal(mXsmall.any(0), numpy.matrix([True,   True, False]))
         assert_equal(mXsmall.any(1), numpy.matrix([True,   True, False]).T)
+
+
+    def test_allany_oddities(self):
+        "Some fun with all and any"
+        store = empty(1, dtype=bool)
+        full = array([1,2,3], mask=True)
+        #
+        assert(full.all() is masked)
+        full.all(out=store)
+        assert(store)
+        assert(store._mask, True)
+        assert(store is not masked)
+        #
+        store = empty(1, dtype=bool)
+        assert(full.any() is masked)
+        full.any(out=store)
+        assert(not store)
+        assert(store._mask, True)
+        assert(store is not masked)
+
 
     def test_keepmask(self):
         "Tests the keep mask flag"
@@ -1587,7 +1607,7 @@ class TestArrayMethods(NumpyTestCase):
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
 
-class TestArrayMethodsComplex(NumpyTestCase):
+class TestArrayMathMethodsComplex(NumpyTestCase):
     "Test class for miscellaneous MaskedArrays methods."
     def setUp(self):
         "Base data definition."
@@ -1684,6 +1704,52 @@ class TestMiscFunctions(NumpyTestCase):
         assert_almost_equal(x,y)
         assert_almost_equal(x._data,y._data)
 
+
+    def test_choose(self):
+        "Test choose"
+        choices = [[0, 1, 2, 3], [10, 11, 12, 13],
+                   [20, 21, 22, 23], [30, 31, 32, 33]]
+        chosen = choose([2, 3, 1, 0], choices)
+        assert_equal(chosen, array([20, 31, 12, 3]))
+        chosen = choose([2, 4, 1, 0], choices, mode='clip')
+        assert_equal(chosen, array([20, 31, 12,  3]))
+        chosen = choose([2, 4, 1, 0], choices, mode='wrap')
+        assert_equal(chosen, array([20,  1, 12,  3]))
+        # Check with some masked indices
+        indices_ = array([2, 4, 1, 0], mask=[1,0,0,1])
+        chosen = choose(indices_, choices, mode='wrap')
+        assert_equal(chosen, array([99, 1, 12, 99]))
+        assert_equal(chosen.mask, [1,0,0,1])
+        # Check with some masked choices
+        choices = array(choices, mask=[[0, 0, 0, 1], [1, 1, 0, 1],
+                                       [1, 0, 0, 0], [0, 0, 0, 0]])
+        indices_ = [2, 3, 1, 0]
+        chosen = choose(indices_, choices, mode='wrap')
+        assert_equal(chosen, array([20, 31, 12, 3]))
+        assert_equal(chosen.mask, [1,0,0,1])
+
+
+    def test_choose_with_out(self):
+        "Test choose with an explicit out keyword"
+        choices = [[0, 1, 2, 3], [10, 11, 12, 13],
+                   [20, 21, 22, 23], [30, 31, 32, 33]]
+        store = empty(4, dtype=int)
+        chosen = choose([2, 3, 1, 0], choices, out=store)
+        assert_equal(store, array([20, 31, 12, 3]))
+        assert(store is chosen)
+        # Check with some masked indices + out
+        store = empty(4, dtype=int)
+        indices_ = array([2, 3, 1, 0], mask=[1,0,0,1])
+        chosen = choose(indices_, choices, mode='wrap', out=store)
+        assert_equal(store, array([99, 31, 12, 99]))
+        assert_equal(store.mask, [1,0,0,1])
+        # Check with some masked choices + out ina ndarray !
+        choices = array(choices, mask=[[0, 0, 0, 1], [1, 1, 0, 1],
+                                       [1, 0, 0, 0], [0, 0, 0, 0]])
+        indices_ = [2, 3, 1, 0]
+        store = empty(4, dtype=int).view(ndarray)
+        chosen = choose(indices_, choices, mode='wrap', out=store)
+        assert_equal(store, array([999999, 31, 12, 999999]))
 
 
 ###############################################################################

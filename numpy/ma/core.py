@@ -1131,6 +1131,20 @@ class FlatIter(object):
         return d
 
 
+def _fill_output_mask(output, mask):
+    """Fills the mask of output (if any) with mask.
+    Private functions used for the methods accepting out as an argument."""
+    if isinstance(output,MaskedArray):
+        outmask = getattr(output, '_mask', nomask)
+        if (outmask is nomask):
+            if mask is not nomask:
+                outmask = output._mask = make_mask_none(output.shape)
+                outmask.flat = mask
+        else:
+            outmask.flat = mask
+    return output
+
+
 class MaskedArray(ndarray):
     """Arrays with possibly masked values.  Masked values of True
     exclude the corresponding element from any computation.
@@ -1972,84 +1986,87 @@ masked_%(name)s(data = %(data)s,
         return (self.ctypes.data, self._mask.ctypes.data)
     #............................................
     def all(self, axis=None, out=None):
-        """Return True if all entries along the given axis are True,
-        False otherwise.  Masked values are considered as True during
-        computation.
+        """a.all(axis=None, out=None)
+    
+    Check if all of the elements of `a` are true.
 
-        Parameter
-        ----------
-            axis : int, optional
-                Axis along which the operation is performed.  If None,
-                the operation is performed on a flatten array
-            out : {MaskedArray}, optional
-                Alternate optional output.  If not None, out should be
-                a valid MaskedArray of the same shape as the output of
-                self._data.all(axis).
+    Performs a logical_and over the given axis and returns the result.
+    Masked values are considered as True during computation.
+    For convenience, the output array is masked where ALL the values along the
+    current axis are masked: if the output would have been a scalar and that 
+    all the values are masked, then the output is `masked`.
 
-        Returns            A masked array, where the mask is True if all data along
-        -------
-        the axis are masked.
+    Parameters
+    ----------
+    axis : {None, integer}
+        Axis to perform the operation over.
+        If None, perform over flattened array.
+    out : {None, array}, optional
+        Array into which the result can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.
 
-        Notes
-        -----
-        An exception is raised if ``out`` is not None and not of the
-        same type as self.
+    See Also
+    --------
+    all : equivalent function
+    
+    Example
+    -------
+    >>> array([1,2,3]).all()
+    True
+    >>> a = array([1,2,3], mask=True)
+    >>> (a.all() is masked)
+    True
 
         """
+        mask = self._mask.all(axis)
         if out is None:
             d = self.filled(True).all(axis=axis).view(type(self))
-            if d.ndim > 0:
-                d.__setmask__(self._mask.all(axis))
+            if d.ndim:
+                d.__setmask__(mask)
+            elif mask:
+                return masked
             return d
-        elif type(out) is not type(self):
-            raise TypeError("The external array should have " \
-                            "a type %s (got %s instead)" %\
-                            (type(self), type(out)))
         self.filled(True).all(axis=axis, out=out)
-        if out.ndim:
-            out.__setmask__(self._mask.all(axis))
+        if isinstance(out, MaskedArray):
+            if out.ndim or mask:
+                out.__setmask__(mask)
         return out
 
 
     def any(self, axis=None, out=None):
-        """Returns True if at least one entry along the given axis is
-        True.
+        """a.any(axis=None, out=None)
 
-        Returns False if all entries are False.
-        Masked values are considered as True during computation.
+    Check if any of the elements of `a` are true.
 
-        Parameter
-        ----------
-            axis : int, optional
-                Axis along which the operation is performed.
-                If None, the operation is performed on a flatten array
-            out : {MaskedArray}, optional
-                Alternate optional output.  If not None, out should be
-                a valid MaskedArray of the same shape as the output of
-                self._data.all(axis).
+    Performs a logical_or over the given axis and returns the result.
+    Masked values are considered as False during computation.
 
-        Returns            A masked array, where the mask is True if all data along
-        -------
-        the axis are masked.
+    Parameters
+    ----------
+    axis : {None, integer}
+        Axis to perform the operation over.
+        If None, perform over flattened array and return a scalar.
+    out : {None, array}, optional
+        Array into which the result can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.
 
-        Notes
-        -----
-        An exception is raised if ``out`` is not None and not of the
-        same type as self.
+    See Also
+    --------
+    any : equivalent function
 
         """
+        mask = self._mask.all(axis)
         if out is None:
             d = self.filled(False).any(axis=axis).view(type(self))
-            if d.ndim > 0:
-                d.__setmask__(self._mask.all(axis))
+            if d.ndim:
+                d.__setmask__(mask)
+            elif mask:
+                d = masked
             return d
-        elif type(out) is not type(self):
-            raise TypeError("The external array should have a type %s "\
-                            "(got %s instead)" %\
-                            (type(self), type(out)))
         self.filled(False).any(axis=axis, out=out)
-        if out.ndim:
-            out.__setmask__(self._mask.all(axis))
+        if isinstance(out, MaskedArray):
+            if out.ndim or mask:
+                out.__setmask__(mask)
         return out
 
 
@@ -2088,30 +2105,44 @@ masked_%(name)s(data = %(data)s,
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
             return D.astype(dtype).filled(0).sum(axis=None)
     #............................................
-    def sum(self, axis=None, dtype=None):
-        """Sum the array over the given axis.
+    def sum(self, axis=None, dtype=None, out=None):
+        """Return the sum of the array elements over the given axis.
+Masked elements are set to 0 internally.
 
-        Masked elements are set to 0 internally.
+    Parameters
+    ----------
+    axis : {None, -1, int}, optional
+        Axis along which the sum is computed. The default
+        (`axis` = None) is to compute over the flattened array.
+    dtype : {None, dtype}, optional
+        Determines the type of the returned array and of the accumulator
+        where the elements are summed. If dtype has the value None and
+        the type of a is an integer type of precision less than the default
+        platform integer, then the default platform integer precision is
+        used.  Otherwise, the dtype is the same as that of a.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : dtype, optional
-            Datatype for the intermediary computation. If not given,
-            the current dtype is used instead.
 
         """
-        if self._mask is nomask:
+        _mask = ndarray.__getattribute__(self, '_mask')
+        if _mask is nomask:
             mask = nomask
         else:
-            mask = self._mask.all(axis)
+            mask = _mask.all(axis)
             if (not mask.ndim) and mask:
+                if out is not None:
+                    out = masked
                 return masked
-        result = self.filled(0).sum(axis, dtype=dtype).view(type(self))
-        if result.ndim > 0:
-            result.__setmask__(mask)
+        if out is None:
+            result = self.filled(0).sum(axis, dtype=dtype).view(type(self))
+            if result.ndim:
+                result.__setmask__(mask)
+        else:
+            result = self.filled(0).sum(axis, dtype=dtype, out=out)
+            _fill_output_mask(out, mask)
         return result
 
     def cumsum(self, axis=None, dtype=None):
@@ -2361,48 +2392,70 @@ masked_%(name)s(data = %(data)s,
             fill_value = default_fill_value(self)
         d = self.filled(fill_value).view(ndarray)
         return d.argsort(axis=axis, kind=kind, order=order)
-    #........................
-    def argmin(self, axis=None, fill_value=None):
-        """Return an ndarray of indices for the minimum values of a
-        along the specified axis.
 
-        Masked values are treated as if they had the value fill_value.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        fill_value : {var}, optional
-            Value used to fill in the masked values.  If None, the
-            output of minimum_fill_value(self._data) is used.
+    def argmin(self, axis=None, fill_value=None, out=None):
+        """a.argmin(axis=None, out=None)
+
+    Return array of indices to the minimum values along the given axis.
+
+    Parameters
+    ----------
+    axis : {None, integer}
+        If None, the index is into the flattened array, otherwise along
+        the specified axis
+    fill_value : {var}, optional
+        Value used to fill in the masked values.  If None, the output of 
+        minimum_fill_value(self._data) is used instead.
+    out : {None, array}, optional
+        Array into which the result can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.        
 
         """
         if fill_value is None:
             fill_value = minimum_fill_value(self)
         d = self.filled(fill_value).view(ndarray)
-        return d.argmin(axis)
-    #........................
-    def argmax(self, axis=None, fill_value=None):
-        """Returns the array of indices for the maximum values of `a`
-        along the specified axis.
+        return d.argmin(axis, out=out)
 
-        Masked values are treated as if they had the value fill_value.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        fill_value : {var}, optional
-            Value used to fill in the masked values.  If None, the
-            output of maximum_fill_value(self._data) is used.
+    def argmax(self, axis=None, fill_value=None, out=None):
+        """a.argmax(axis=None, out=None)
+
+    Returns array of indices of the maximum values along the given axis.
+    Masked values are treated as if they had the value fill_value.
+
+    Parameters
+    ----------
+    axis : {None, integer}
+        If None, the index is into the flattened array, otherwise along
+        the specified axis
+    fill_value : {var}, optional
+        Value used to fill in the masked values.  If None, the output of
+        maximum_fill_value(self._data) is used instead.
+    out : {None, array}, optional
+        Array into which the result can be placed. Its type is preserved
+        and it must be of the right shape to hold the output.
+
+    Returns
+    -------
+    index_array : {integer_array}
+
+    Examples
+    --------
+    >>> a = arange(6).reshape(2,3)
+    >>> a.argmax()
+    5
+    >>> a.argmax(0)
+    array([1, 1, 1])
+    >>> a.argmax(1)
+    array([2, 2])
 
         """
         if fill_value is None:
             fill_value = maximum_fill_value(self._data)
         d = self.filled(fill_value).view(ndarray)
-        return d.argmax(axis)
+        return d.argmax(axis, out=out)
+
 
     def sort(self, axis=-1, kind='quicksort', order=None,
              endwith=True, fill_value=None):
@@ -3230,29 +3283,71 @@ def where (condition, x=None, y=None):
         d._mask = nomask
     return d
 
-def choose (indices, t, out=None, mode='raise'):
-    "Return array shaped like indices with elements chosen from t"
-    #!!!: implement options `out` and `mode`, if possible + test.
+def choose (indices, choices, out=None, mode='raise'):
+    """
+    choose(a, choices, out=None, mode='raise')
+
+    Use an index array to construct a new array from a set of choices.
+
+    Given an array of integers and a set of n choice arrays, this method
+    will create a new array that merges each of the choice arrays.  Where a
+    value in `a` is i, the new array will have the value that choices[i]
+    contains in the same place.
+
+    Parameters
+    ----------
+    a : int array
+        This array must contain integers in [0, n-1], where n is the number
+        of choices.
+    choices : sequence of arrays
+        Choice arrays. The index array and all of the choices should be
+        broadcastable to the same shape.
+    out : array, optional
+        If provided, the result will be inserted into this array. It should
+        be of the appropriate shape and dtype
+    mode : {'raise', 'wrap', 'clip'}, optional
+        Specifies how out-of-bounds indices will behave.
+        'raise' : raise an error
+        'wrap' : wrap around
+        'clip' : clip to the range
+
+    Returns
+    -------
+    merged_array : array
+
+    See Also
+    --------
+    choose : equivalent function
+    
+    """
     def fmask (x):
         "Returns the filled array, or True if masked."
         if x is masked:
-            return 1
+            return True
         return filled(x)
     def nmask (x):
         "Returns the mask, True if ``masked``, False if ``nomask``."
         if x is masked:
-            return 1
-        m = getmask(x)
-        if m is nomask:
-            return 0
-        return m
+            return True
+        return getmask(x)
+    # Get the indices......
     c = filled(indices, 0)
-    masks = [nmask(x) for x in t]
-    a = [fmask(x) for x in t]
-    d = np.choose(c, a)
-    m = np.choose(c, masks)
-    m = make_mask(mask_or(m, getmask(indices)), copy=0, shrink=True)
-    return masked_array(d, mask=m)
+    # Get the masks........
+    masks = [nmask(x) for x in choices]
+    data = [fmask(x) for x in choices]
+    # Construct the mask
+    outputmask = np.choose(c, masks, mode=mode)
+    outputmask = make_mask(mask_or(outputmask, getmask(indices)), 
+                           copy=0, shrink=True)
+    # Get the choices......
+    d = np.choose(c, data, mode=mode, out=out).view(MaskedArray)
+    if out is not None:
+        if isinstance(out, MaskedArray):
+            out.__setmask__(outputmask)
+        return out
+    d.__setmask__(outputmask)
+    return d
+
 
 def round_(a, decimals=0, out=None):
     """Return a copy of a, rounded to 'decimals' places.
