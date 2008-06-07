@@ -6645,19 +6645,20 @@ array_base_get(PyArrayObject *self)
 static int
 _zerofill(PyArrayObject *ret)
 {
-    intp n;
-
     if (PyDataType_REFCHK(ret->descr)) {
         PyObject *zero = PyInt_FromLong(0);
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
-        if (PyErr_Occurred()) {Py_DECREF(ret); return -1;}
+        if (PyErr_Occurred()) {
+            Py_DECREF(ret); 
+            return -1;
+        }
     }
     else {
-        n = PyArray_NBYTES(ret);
+        intp n = PyArray_NBYTES(ret);
         memset(ret->data, 0, n);
-	return 0;
-    }  
+    }
+    return 0;  
 }
 
 
