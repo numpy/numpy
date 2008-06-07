@@ -1067,10 +1067,62 @@ class TestRegression(NumpyTestCase):
                 self.info = getattr(obj, 'info', '')
         dat = TestArray([[1,2,3,4],[5,6,7,8]],'jubba')
         assert dat.info == 'jubba'
-        assert dat.mean(1).info == 'jubba'
-        assert dat.std(1).info == 'jubba'
+        dat.resize((4,2))
+        assert dat.info == 'jubba'        
+        dat.sort()
+        assert dat.info == 'jubba'        
+        dat.fill(2)
+        assert dat.info == 'jubba'
+        dat.put([2,3,4],[6,3,4])
+        assert dat.info == 'jubba'
+        dat.setfield(4, np.int32,0)
+        assert dat.info == 'jubba'
+        dat.setflags()
+        assert dat.info == 'jubba'
+        assert dat.all(1).info == 'jubba'
+        assert dat.any(1).info == 'jubba'
+        assert dat.argmax(1).info == 'jubba'
+        assert dat.argmin(1).info == 'jubba'
+        assert dat.argsort(1).info == 'jubba'
+        assert dat.astype(TestArray).info == 'jubba'
+        assert dat.byteswap().info == 'jubba'
         assert dat.clip(2,7).info == 'jubba'
+        assert dat.compress([0,1,1]).info == 'jubba'
+        assert dat.conj().info == 'jubba'
+        assert dat.conjugate().info == 'jubba'
+        assert dat.copy().info == 'jubba'
+        dat2 = TestArray([2, 3, 1, 0],'jubba')
+        choices = [[0, 1, 2, 3], [10, 11, 12, 13],
+                   [20, 21, 22, 23], [30, 31, 32, 33]]
+        assert dat2.choose(choices).info == 'jubba'
+        assert dat.cumprod(1).info == 'jubba'
+        assert dat.cumsum(1).info == 'jubba'
+        assert dat.diagonal().info == 'jubba'
+        assert dat.flatten().info == 'jubba'
+        assert dat.getfield(np.int32,0).info == 'jubba'
         assert dat.imag.info == 'jubba'
+        assert dat.max(1).info == 'jubba'
+        assert dat.mean(1).info == 'jubba'
+        assert dat.min(1).info == 'jubba'
+        assert dat.newbyteorder().info == 'jubba'
+        assert dat.nonzero()[0].info == 'jubba'
+        assert dat.nonzero()[1].info == 'jubba'
+        assert dat.prod(1).info == 'jubba'
+        assert dat.ptp(1).info == 'jubba'
+        assert dat.ravel().info == 'jubba'
+        assert dat.real.info == 'jubba'
+        assert dat.repeat(2).info == 'jubba'
+        assert dat.reshape((2,4)).info == 'jubba'
+        assert dat.round().info == 'jubba'
+        assert dat.squeeze().info == 'jubba'
+        assert dat.std(1).info == 'jubba'
+        assert dat.sum(1).info == 'jubba'
+        assert dat.swapaxes(0,1).info == 'jubba'
+        assert dat.take([2,3,5]).info == 'jubba'
+        assert dat.transpose().info == 'jubba'
+        assert dat.T.info == 'jubba'
+        assert dat.var(1).info == 'jubba'
+        assert dat.view(TestArray).info == 'jubba'
         
 
     def check_recarray_tolist(self, level=rlevel):
