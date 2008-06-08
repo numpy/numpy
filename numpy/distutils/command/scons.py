@@ -94,6 +94,9 @@ def dist2sconsfc(compiler):
 def dist2sconscxx(compiler):
     """This converts the name passed to distutils to scons name convention
     (C++ compiler). The argument should be a Compiler instance."""
+    if compiler.compiler_type == 'msvc':
+        return compiler.compiler_type
+    
     return compiler.compiler_cxx[0]
 
 def get_compiler_executable(compiler):
