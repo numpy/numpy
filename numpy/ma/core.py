@@ -277,9 +277,9 @@ def filled(a, value = None):
         # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
         return a
     elif isinstance(a, dict):
-        return narray(a, 'O')
+        return np.array(a, 'O')
     else:
-        return narray(a)
+        return np.array(a)
 
 #####--------------------------------------------------------------------------
 def get_masked_subclass(*arrays):
@@ -730,15 +730,15 @@ def get_mask(a):
     return getattr(a, '_mask', nomask)
 getmask = get_mask
 
-def getmaskarray(a):
-    """Return the mask of a, if any, or a boolean array of the shape
+def getmaskarray(arr):
+    """Return the mask of arr, if any, or a boolean array of the shape
     of a, full of False.
 
     """
-    m = getmask(a)
-    if m is nomask:
-        m = make_mask_none(np.shape(a))
-    return m
+    mask = getmask(arr)
+    if mask is nomask:
+        mask = make_mask_none(np.shape(arr), getdata(arr).dtype.names)
+    return mask
 
 def is_mask(m):
     """Return True if m is a legal mask.
@@ -790,18 +790,21 @@ def make_mask(m, copy=False, shrink=True, flag=None):
     else:
         return result
 
-def make_mask_none(newshape):
+def make_mask_none(newshape, fields=None):
     """Return a mask of shape s, filled with False.
 
     Parameters
     ----------
     news : tuple
         A tuple indicating the shape of the final mask.
-    fieldnames: {None, string sequence}, optional
+    fields: {None, string sequence}, optional
         A list of field names, if needed.
 
     """
-    result = np.zeros(newshape, dtype=MaskType)
+    if not fields:
+        result = np.zeros(newshape, dtype=MaskType)
+    else:
+        result = np.zeros(newshape, dtype=[(n, MaskType) for n in fields])
     return result
 
 def mask_or (m1, m2, copy=False, shrink=True):
@@ -817,9 +820,9 @@ def mask_or (m1, m2, copy=False, shrink=True):
         First mask.
     m2 : array_like
         Second mask
-    copy : bool
+    copy : {False, True}, optional
         Whether to return a copy.
-    shrink : bool
+    shrink : {True, False}, optional
         Whether to shrink m to nomask if all its values are False.
 
      """
@@ -2865,6 +2868,7 @@ masked_%(name)s(data = %(data)s,
         out -= self.min(axis=axis, fill_value=fill_value)
         return out
 
+
     # Array methods ---------------------------------------
     copy = _arraymethod('copy')
     diagonal = _arraymethod('diagonal')
@@ -3501,21 +3505,21 @@ def where (condition, x=None, y=None):
     yv = getdata(y)
     if x is masked:
         ndtype = yv.dtype
-#        xm = np.ones(fc.shape, dtype=MaskType)
     elif y is masked:
         ndtype = xv.dtype
-#        ym = np.ones(fc.shape, dtype=MaskType)
     else:
         ndtype = np.max([xv.dtype, yv.dtype])
-#        xm = getmask(x)
+    # Construct an empty array and fill it
     d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
-    np.putmask(d._data, fc, xv.astype(ndtype))
-    np.putmask(d._data, notfc, yv.astype(ndtype))
-    d._mask = np.zeros(fc.shape, dtype=MaskType)
-    np.putmask(d._mask, fc, getmask(x))
-    np.putmask(d._mask, notfc, getmask(y))
-    d._mask |= getmaskarray(condition)
-    if not d._mask.any():
+    _data = d._data
+    np.putmask(_data, fc, xv.astype(ndtype))
+    np.putmask(_data, notfc, yv.astype(ndtype))
+    # Create an empty mask and fill it
+    _mask = d._mask = np.zeros(fc.shape, dtype=MaskType)
+    np.putmask(_mask, fc, getmask(x))
+    np.putmask(_mask, notfc, getmask(y))
+    _mask |= getmaskarray(condition)
+    if not _mask.any():
         d._mask = nomask
     return d
 
