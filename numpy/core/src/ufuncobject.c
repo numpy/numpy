@@ -4007,7 +4007,7 @@ ufunc_get_doc(PyUFuncObject *self)
     PyObject *outargs, *inargs, *doc;
     outargs = _makeargs(self->nout, "y");
     inargs = _makeargs(self->nin, "x");
-    doc = PyString_FromFormat("%s = %s(%s) %s",
+    doc = PyString_FromFormat("%s = %s(%s)\n\n%s",
                               PyString_AS_STRING(outargs),
                               self->name,
                               PyString_AS_STRING(inargs),

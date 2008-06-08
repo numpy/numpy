@@ -211,7 +211,7 @@ class TestChoose(NumpyTestCase):
     def check_attributes(self):
         add = ncu.add
         assert_equal(add.__name__, 'add')
-        assert_equal(add.__doc__, 'y = add(x1,x2) adds the arguments elementwise.')
+        assert add.__doc__.startswith('y = add(x1,x2)\n\n')
         self.failUnless(add.ntypes >= 18) # don't fail if types added
         self.failUnless('ii->i' in add.types)
         assert_equal(add.nin, 2)
