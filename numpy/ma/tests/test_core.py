@@ -1028,6 +1028,23 @@ class TestUfuncs(NumpyTestCase):
         assert_equal(amask.min(0), [5,6,7,8])
         assert(amask.max(1)[0].mask)
         assert(amask.min(1)[0].mask)
+    #........................
+    def test_minmax_funcs_with_out(self):
+        mask = numpy.random.rand(12).round()
+        xm = array(numpy.random.uniform(0,10,12),mask=mask)
+        xm.shape = (3,4)
+        for funcname in ('min', 'max'):
+            # Initialize
+            npfunc = getattr(numpy, funcname)
+            mafunc = getattr(coremodule, funcname)
+            # Use the np version
+            nout = np.empty((4,), dtype=int) 
+            result = npfunc(xm,axis=0,out=nout)
+            assert(result is nout)
+            # Use the ma version
+            nout.fill(-999)
+            result = mafunc(xm,axis=0,out=nout)
+            assert(result is nout)
 
 #...............................................................................
 
@@ -1607,6 +1624,43 @@ class TestArrayMathMethods(NumpyTestCase):
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
 
+
+    def test_varstd_specialcases(self):
+        "Test a special case for var"
+        nout = np.empty(1, dtype=float)
+        mout = empty(1, dtype=float)
+        #
+        x = array(arange(10), mask=True)
+        for methodname in ('var', 'std'):
+            method = getattr(x,methodname)
+            assert(method() is masked)
+            assert(method(0) is masked)
+            assert(method(-1) is masked)
+            # Using a masked array as explicit output
+            _ = method(out=mout)
+            assert(mout is not masked)
+            assert_equal(mout.mask, True)
+            # Using a ndarray as explicit output
+            _ = method(out=nout)
+            assert(np.isnan(nout))
+        #
+        x = array(arange(10), mask=True)
+        x[-1] = 9
+        for methodname in ('var', 'std'):
+            method = getattr(x,methodname)
+            assert(method(ddof=1) is masked)
+            assert(method(0, ddof=1) is masked)
+            assert(method(-1, ddof=1) is masked)
+            # Using a masked array as explicit output
+            _ = method(out=mout, ddof=1)
+            assert(mout is not masked)
+            assert_equal(mout.mask, True)
+            # Using a ndarray as explicit output
+            _ = method(out=nout, ddof=1)
+            assert(np.isnan(nout))
+
+
+
 class TestArrayMathMethodsComplex(NumpyTestCase):
     "Test class for miscellaneous MaskedArrays methods."
     def setUp(self):
@@ -1751,6 +1805,71 @@ class TestMiscFunctions(NumpyTestCase):
         chosen = choose(indices_, choices, mode='wrap', out=store)
         assert_equal(store, array([999999, 31, 12, 999999]))
 
+    def test_functions_with_output(self):
+        xm = array(np.random.uniform(0,10,12)).reshape(3,4)
+        xm[:,0] = xm[0] = xm[-1,-1] = masked
+        #
+        funclist = ('sum','prod','var','std', 'max', 'min', 'ptp', 'mean', )
+        #
+        for funcname in funclist:
+            npfunc = getattr(np, funcname)
+            xmmeth = getattr(xm, funcname)
+            
+            # A ndarray as explicit input
+            output = np.empty(4, dtype=float)
+            output.fill(-9999)
+            result = npfunc(xm, axis=0,out=output)
+            # ... the result should be the given output
+            assert(result is output)
+            assert_equal(result, xmmeth(axis=0, out=output))
+            #
+            output = empty(4, dtype=int)
+            result = xmmeth(axis=0, out=output)
+            assert(result is output)
+            assert(output[0] is masked)
+
+
+    def test_cumsumprod_with_output(self):
+        "Tests cumsum/cumprod w/ output"
+        xm = array(np.random.uniform(0,10,12)).reshape(3,4)
+        xm[:,0] = xm[0] = xm[-1,-1] = masked
+        #
+        funclist = ('cumsum','cumprod')
+        #
+        for funcname in funclist:
+            npfunc = getattr(np, funcname)
+            xmmeth = getattr(xm, funcname)
+            
+            # A ndarray as explicit input
+            output = np.empty((3,4), dtype=float)
+            output.fill(-9999)
+            result = npfunc(xm, axis=0,out=output)
+            # ... the result should be the given output
+            assert(result is output)
+            assert_equal(result, xmmeth(axis=0, out=output))
+            #
+            output = empty((3,4), dtype=int)
+            result = xmmeth(axis=0, out=output)
+            assert(result is output)
+
+
+    def test_round_with_output(self):
+        "Testing round with an explicit output"
+        
+        xm = array(np.random.uniform(0,10,12)).reshape(3,4)
+        xm[:,0] = xm[0] = xm[-1,-1] = masked
+        
+        # A ndarray as explicit input
+        output = np.empty((3,4), dtype=float)
+        output.fill(-9999)
+        result = np.round(xm, decimals=2,out=output)
+        # ... the result should be the given output
+        assert(result is output)
+        assert_equal(result, xm.round(decimals=2, out=output))
+        #
+        output = empty((3,4), dtype=float)
+        result = xm.round(decimals=2, out=output)
+        assert(result is output)
 
 ###############################################################################
 #------------------------------------------------------------------------------

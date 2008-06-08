@@ -1131,20 +1131,6 @@ class FlatIter(object):
         return d
 
 
-def _fill_output_mask(output, mask):
-    """Fills the mask of output (if any) with mask.
-    Private functions used for the methods accepting out as an argument."""
-    if isinstance(output,MaskedArray):
-        outmask = getattr(output, '_mask', nomask)
-        if (outmask is nomask):
-            if mask is not nomask:
-                outmask = output._mask = make_mask_none(output.shape)
-                outmask.flat = mask
-        else:
-            outmask.flat = mask
-    return output
-
-
 class MaskedArray(ndarray):
     """Arrays with possibly masked values.  Masked values of True
     exclude the corresponding element from any computation.
@@ -2087,7 +2073,8 @@ masked_%(name)s(data = %(data)s,
 
         """
         return narray(self.filled(0), copy=False).nonzero()
-    #............................................
+
+
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         """a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
 
@@ -2103,11 +2090,64 @@ masked_%(name)s(data = %(data)s,
             return result.astype(dtype)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
-            return D.astype(dtype).filled(0).sum(axis=None)
-    #............................................
+            return D.astype(dtype).filled(0).sum(axis=None, out=out)
+
+
     def sum(self, axis=None, dtype=None, out=None):
-        """Return the sum of the array elements over the given axis.
-Masked elements are set to 0 internally.
+        """a.sum(axis=None, dtype=None, out=None)
+
+    Return the sum of the array elements over the given axis.
+    Masked elements are set to 0 internally.
+
+    Parameters
+    ----------
+    axis : {None, -1, int}, optional
+        Axis along which the sum is computed. The default
+        (`axis` = None) is to compute over the flattened array.
+    dtype : {None, dtype}, optional
+        Determines the type of the returned array and of the accumulator
+        where the elements are summed. If dtype has the value None and
+        the type of a is an integer type of precision less than the default
+        platform integer, then the default platform integer precision is
+        used.  Otherwise, the dtype is the same as that of a.
+    out :  {None, ndarray}, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary.
+
+
+        """
+        _mask = ndarray.__getattribute__(self, '_mask')
+        newmask = _mask.all(axis=axis)
+        # No explicit output
+        if out is None:
+            result = self.filled(0).sum(axis, dtype=dtype).view(type(self))
+            if result.ndim:
+                result.__setmask__(newmask)
+            elif newmask:
+                result = masked
+            return result
+        # Explicit output
+        result = self.filled(0).sum(axis, dtype=dtype, out=out)
+        if isinstance(out, MaskedArray):
+            outmask = getattr(out, '_mask', nomask)
+            if (outmask is nomask):
+                outmask = out._mask = make_mask_none(out.shape)
+            outmask.flat = newmask
+        return out
+
+
+    def cumsum(self, axis=None, dtype=None, out=None):
+        """a.cumsum(axis=None, dtype=None, out=None)
+
+    Return the cumulative sum of the elements along the given axis.
+
+    The cumulative sum is calculated over the flattened array by
+    default, otherwise over the specified axis.
+
+    Masked values are set to 0 internally during the computation. 
+    However, their position is saved, and the result will be masked at 
+    the same locations.
 
     Parameters
     ----------
@@ -2124,109 +2164,195 @@ Masked elements are set to 0 internally.
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
+        WARNING : The mask is lost if out is not a valid MaskedArray !
 
+    Returns
+    -------
+    cumsum : ndarray.
+        A new array holding the result is returned unless ``out`` is
+        specified, in which case a reference to ``out`` is returned.
+
+    Example
+    -------
+    >>> print array(arange(10),mask=[0,0,0,1,1,1,0,0,0,0]).cumsum()
+    [0 1 3 -- -- -- 9 16 24 33]
+
+
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
+
+        """
+        result = self.filled(0).cumsum(axis=axis, dtype=dtype, out=out)
+        if out is not None:
+            if isinstance(out, MaskedArray):
+                out.__setmask__(self.mask)
+            return out
+        result = result.view(type(self))
+        result.__setmask__(self._mask)
+        return result
+
+
+    def prod(self, axis=None, dtype=None, out=None):
+        """a.prod(axis=None, dtype=None, out=None)
+
+    Return the product of the array elements over the given axis.
+    Masked elements are set to 1 internally for computation.
+
+    Parameters
+    ----------
+    axis : {None, -1, int}, optional
+        Axis over which the product is taken. If None is used, then the
+        product is over all the array elements.
+    dtype : {None, dtype}, optional
+        Determines the type of the returned array and of the accumulator
+        where the elements are multiplied. If dtype has the value None and
+        the type of a is an integer type of precision less than the default
+        platform integer, then the default platform integer precision is
+        used.  Otherwise, the dtype is the same as that of a.
+    out : {None, array}, optional
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
+
+    Returns
+    -------
+    product_along_axis : {array, scalar}, see dtype parameter above.
+        Returns an array whose shape is the same as a with the specified
+        axis removed. Returns a 0d array when a is 1d or axis=None.
+        Returns a reference to the specified output array if specified.
+
+    See Also
+    --------
+    prod : equivalent function
+
+    Examples
+    --------
+    >>> prod([1.,2.])
+    2.0
+    >>> prod([1.,2.], dtype=int32)
+    2
+    >>> prod([[1.,2.],[3.,4.]])
+    24.0
+    >>> prod([[1.,2.],[3.,4.]], axis=1)
+    array([  2.,  12.])
+
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
 
         """
         _mask = ndarray.__getattribute__(self, '_mask')
-        if _mask is nomask:
-            mask = nomask
-        else:
-            mask = _mask.all(axis)
-            if (not mask.ndim) and mask:
-                if out is not None:
-                    out = masked
-                return masked
+        newmask = _mask.all(axis=axis)
+        # No explicit output
         if out is None:
-            result = self.filled(0).sum(axis, dtype=dtype).view(type(self))
+            result = self.filled(1).prod(axis, dtype=dtype).view(type(self))
             if result.ndim:
-                result.__setmask__(mask)
-        else:
-            result = self.filled(0).sum(axis, dtype=dtype, out=out)
-            _fill_output_mask(out, mask)
-        return result
-
-    def cumsum(self, axis=None, dtype=None):
-        """Return the cumulative sum of the elements of the array
-        along the given axis.
-
-        Masked values are set to 0 internally.
-
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
-            Datatype for the intermediary computation. If not
-            given, the current dtype is used instead.
-
-        """
-        result = self.filled(0).cumsum(axis=axis, dtype=dtype).view(type(self))
-        result.__setmask__(self.mask)
-        return result
-
-    def prod(self, axis=None, dtype=None):
-        """Return the product of the elements of the array along the
-        given axis.
-
-        Masked elements are set to 1 internally.
-
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
-            Datatype for the intermediary computation. If not
-            given, the current dtype is used instead.
-
-        """
-        if self._mask is nomask:
-            mask = nomask
-        else:
-            mask = self._mask.all(axis)
-            if (not mask.ndim) and mask:
-                return masked
-        result = self.filled(1).prod(axis=axis, dtype=dtype).view(type(self))
-        if result.ndim:
-            result.__setmask__(mask)
-        return result
+                result.__setmask__(newmask)
+            elif newmask:
+                result = masked
+            return result
+        # Explicit output
+        result = self.filled(1).prod(axis, dtype=dtype, out=out)
+        if isinstance(out,MaskedArray):
+            outmask = getattr(out, '_mask', nomask)
+            if (outmask is nomask):
+                outmask = out._mask = make_mask_none(out.shape)
+            outmask.flat = newmask
+        return out
 
     product = prod
 
-    def cumprod(self, axis=None, dtype=None):
-        """Return the cumulative product of the elements of the array
-        along the given axis.
-
-        Masked values are set to 1 internally.
-
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
-            Datatype for the intermediary computation. If not
-            given, the current dtype is used instead.
-
+    def cumprod(self, axis=None, dtype=None, out=None):
         """
-        result = self.filled(1).cumprod(axis=axis, dtype=dtype).view(type(self))
-        result.__setmask__(self.mask)
+    a.cumprod(axis=None, dtype=None, out=None)
+
+    Return the cumulative product of the elements along the given axis.
+
+    The cumulative product is taken over the flattened array by
+    default, otherwise over the specified axis.
+
+    Masked values are set to 1 internally during the computation. 
+    However, their position is saved, and the result will be masked at 
+    the same locations.
+
+    Parameters
+    ----------
+    axis : {None, -1, int}, optional
+        Axis along which the product is computed. The default
+        (`axis` = None) is to compute over the flattened array.
+    dtype : {None, dtype}, optional
+        Determines the type of the returned array and of the accumulator
+        where the elements are multiplied. If dtype has the value None and
+        the type of a is an integer type of precision less than the default
+        platform integer, then the default platform integer precision is
+        used.  Otherwise, the dtype is the same as that of a.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary.
+        WARNING : The mask is lost if out is not a valid MaskedArray !
+
+    Returns
+    -------
+    cumprod : ndarray.
+        A new array holding the result is returned unless out is
+        specified, in which case a reference to out is returned.
+
+    Notes
+    -----
+    Arithmetic is modular when using integer types, and no error is
+    raised on overflow.
+
+    """
+        result = self.filled(1).cumprod(axis=axis, dtype=dtype, out=out)
+        if out is not None:
+            if isinstance(out, MaskedArray):
+                out.__setmask__(self._mask)
+            return out
+        result = result.view(type(self))
+        result.__setmask__(self._mask)
         return result
 
+
     def mean(self, axis=None, dtype=None, out=None):
-        """Average the array over the given axis.  Equivalent to
+        """a.mean(axis=None, dtype=None, out=None) -> mean
 
-        a.sum(axis, dtype) / a.size(axis).
+    Returns the average of the array elements.  The average is taken over the
+    flattened array by default, otherwise over the specified axis.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
-            Datatype for the intermediary computation. If not
-            given, the current dtype is used instead.
+    Parameters
+    ----------
+    axis : integer
+        Axis along which the means are computed. The default is
+        to compute the mean of the flattened array.
+    dtype : type
+        Type to use in computing the means. For arrays of
+        integer type the default is float32, for arrays of float types it
+        is the same as the array type.
+    out : ndarray
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
+
+    Returns
+    -------
+    mean : The return type varies, see above.
+        A new array holding the result is returned unless out is specified,
+        in which case a reference to out is returned.
+
+    See Also
+    --------
+    var : variance
+    std : standard deviation
+
+    Notes
+    -----
+    The mean is the sum of the elements along the axis divided by the
+    number of elements.
+
 
         """
         if self._mask is nomask:
@@ -2236,7 +2362,13 @@ Masked elements are set to 0 internally.
             cnt = self.count(axis=axis)
             result = dsum*1./cnt
         if out is not None:
-            out.flat = result.ravel()
+            out.flat = result
+            if isinstance(out, MaskedArray):
+                outmask = getattr(out, '_mask', nomask)
+                if (outmask is nomask):
+                    outmask = out._mask = make_mask_none(out.shape)
+                outmask.flat = getattr(result, '_mask', nomask)
+            return out
         return result
 
     def anom(self, axis=None, dtype=None):
@@ -2259,87 +2391,149 @@ Masked elements are set to 0 internally.
         else:
             return (self - expand_dims(m,axis))
 
-    def var(self, axis=None, dtype=None, ddof=0):
-        """Return the variance, a measure of the spread of a distribution.
+    def var(self, axis=None, dtype=None, out=None, ddof=0):
+        """a.var(axis=None, dtype=None, out=None, ddof=0) -> variance
 
-        The variance is the average of the squared deviations from the
-        mean, i.e. var = mean(abs(x - x.mean())**2).
+    Returns the variance of the array elements, a measure of the spread of a
+    distribution.  The variance is computed for the flattened array by default,
+    otherwise over the specified axis.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
-            Datatype for the intermediary computation. If not
-            given, the current dtype is used instead.
+    Parameters
+    ----------
+    axis : integer
+        Axis along which the variance is computed. The default is to
+        compute the variance of the flattened array.
+    dtype : data-type
+        Type to use in computing the variance. For arrays of integer type
+        the default is float32, for arrays of float types it is the same as
+        the array type.
+    out : ndarray
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
+    ddof : {0, integer},
+        Means Delta Degrees of Freedom.  The divisor used in calculation is
+        N - ddof.
 
-        Notes
-        -----
-        The value returned is by default a biased estimate of the
-        true variance, since the mean is computed by dividing by N-ddof.
-        For the (more standard) unbiased estimate, use ddof=1 or.
-        Note that for complex numbers the absolute value is taken before
-        squaring, so that the result is always real and nonnegative.
+    Returns
+    -------
+    variance : The return type varies, see above.
+        A new array holding the result is returned unless out is specified,
+        in which case a reference to out is returned.
+
+    See Also
+    --------
+    std : standard deviation
+    mean: average
+
+    Notes
+    -----
+    The variance is the average of the squared deviations from the mean,
+    i.e.  var = mean(abs(x - x.mean())**2).  The mean is computed by
+    dividing by N-ddof, where N is the number of elements. The argument
+    ddof defaults to zero; for an unbiased estimate supply ddof=1. Note
+    that for complex numbers the absolute value is taken before squaring,
+    so that the result is always real and nonnegative.
 
         """
+        # Easy case: nomask, business as usual
         if self._mask is nomask:
-            #???: Do we keep super, or var _data and take a view ?
-            return super(MaskedArray, self).var(axis=axis, dtype=dtype,
-                                                ddof=ddof)
+            return self._data.var(axis=axis, dtype=dtype, out=out, ddof=ddof)
+        # Some data are masked, yay!
+        cnt = self.count(axis=axis)-ddof
+        danom = self.anom(axis=axis, dtype=dtype)
+        if iscomplexobj(self):
+            danom = umath.absolute(danom)**2
         else:
-            cnt = self.count(axis=axis)-ddof
-            danom = self.anom(axis=axis, dtype=dtype)
-            if iscomplexobj(self):
-                danom = umath.absolute(danom)**2
-            else:
-                danom *= danom
-            dvar = narray(danom.sum(axis) / cnt).view(type(self))
-            if axis is not None:
-                dvar._mask = mask_or(self._mask.all(axis), (cnt==1))
+            danom *= danom
+        dvar = divide(danom.sum(axis), cnt).view(type(self))
+        # Apply the mask if it's not a scalar
+        if dvar.ndim:
+            dvar._mask = mask_or(self._mask.all(axis), (cnt<=ddof))
             dvar._update_from(self)
-            return dvar
+        elif getattr(dvar,'_mask', False):
+        # Make sure that masked is returned when the scalar is masked.
+            dvar = masked
+            if out is not None:
+                if isinstance(out, MaskedArray):
+                    out.__setmask__(True)
+                else:
+                    out.flat = np.nan
+                return out
+        # In case with have an explicit output
+        if out is not None:
+            # Set the data
+            out.flat = dvar
+            # Set the mask if needed
+            if isinstance(out, MaskedArray):
+                out.__setmask__(dvar.mask)
+            return out
+        return dvar
 
-    def std(self, axis=None, dtype=None, ddof=0):
-        """Return the standard deviation, a measure of the spread of a
-        distribution.
+    def std(self, axis=None, dtype=None, out=None, ddof=0):
+        """a.std(axis=None, dtype=None, out=None, ddof=0)
 
-        The standard deviation is the square root of the average of
-        the squared deviations from the mean, i.e.
+    Returns the standard deviation of the array elements, a measure of the
+    spread of a distribution. The standard deviation is computed for the
+    flattened array by default, otherwise over the specified axis.
 
-        std = sqrt(mean(abs(x - x.mean())**2)).
+    Parameters
+    ----------
+    axis : integer
+        Axis along which the standard deviation is computed. The default is
+        to compute the standard deviation of the flattened array.
+    dtype : type
+        Type to use in computing the standard deviation. For arrays of
+        integer type the default is float32, for arrays of float types it
+        is the same as the array type.
+    out : ndarray
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type will be cast if
+        necessary.
+    ddof : {0, integer}
+        Means Delta Degrees of Freedom.  The divisor used in calculations
+        is N-ddof.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        dtype : {dtype}, optional
-            Datatype for the intermediary computation.
-            If not given, the current dtype is used instead.
+    Returns
+    -------
+    standard deviation : The return type varies, see above.
+        A new array holding the result is returned unless out is specified,
+        in which case a reference to out is returned.
 
-        Notes
-        -----
-        The value returned is by default a biased estimate of the
-        true standard deviation, since the mean is computed by dividing
-        by N-ddof.  For the more standard unbiased estimate, use ddof=1.
-        Note that for complex numbers the absolute value is taken before
-        squaring, so that the result is always real and nonnegative.
-        """
-        dvar = self.var(axis,dtype,ddof=ddof)
-        if axis is not None or dvar is not masked:
+    See Also
+    --------
+    var : variance
+    mean : average
+
+    Notes
+    -----
+    The standard deviation is the square root of the average of the squared
+    deviations from the mean, i.e. var = sqrt(mean(abs(x - x.mean())**2)).  The
+    computed standard deviation is computed by dividing by the number of
+    elements, N-ddof. The option ddof defaults to zero, that is, a biased
+    estimate. Note that for complex numbers std takes the absolute value before
+    squaring, so that the result is always real and nonnegative.
+    
+    """
+        dvar = self.var(axis=axis,dtype=dtype,out=out, ddof=ddof)
+        if dvar is not masked:
             dvar = sqrt(dvar)
+            if out is not None:
+                out **= 0.5
+                return out
         return dvar
 
     #............................................
     def round(self, decimals=0, out=None):
-        result = self._data.round(decimals).view(type(self))
+        result = self._data.round(decimals=decimals, out=out).view(type(self))
         result._mask = self._mask
         result._update_from(self)
+        # No explicit output: we're done
         if out is None:
             return result
-        out[:] = result
-        return
+        if isinstance(out, MaskedArray):
+            out.__setmask__(self._mask)
+        return out
     round.__doc__ = ndarray.round.__doc__
 
     #............................................
@@ -2528,43 +2722,56 @@ Masked elements are set to 0 internally.
         return
 
     #............................................
-    def min(self, axis=None, fill_value=None):
-        """Return the minimum of a along the given axis.
+    def min(self, axis=None, out=None, fill_value=None):
+        """a.min(axis=None, out=None, fill_value=None)
 
-        Masked values are filled with fill_value.
+    Return the minimum along a given axis.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        fill_value : {var}, optional
-            Value used to fill in the masked values.
-            If None, use the the output of minimum_fill_value().
+    Parameters
+    ----------
+    axis : {None, int}, optional
+        Axis along which to operate.  By default, ``axis`` is None and the
+        flattened input is used.
+    out : array_like, optional
+        Alternative output array in which to place the result.  Must
+        be of the same shape and buffer length as the expected output.
+    fill_value : {var}, optional
+        Value used to fill in the masked values.
+        If None, use the output of minimum_fill_value().
 
-    """
-        mask = self._mask
-        # Check all/nothing case ......
-        if mask is nomask:
-            return super(MaskedArray, self).min(axis=axis)
-        elif (not mask.ndim) and mask:
-            return masked
-        # Get the mask ................
-        if axis is None:
-            mask = umath.logical_and.reduce(mask.flat)
-        else:
-            mask = umath.logical_and.reduce(mask, axis=axis)
-        # Skip if all masked ..........
-        if not mask.ndim and mask:
-            return masked
-        # Get the fill value ...........
+    Returns
+    -------
+    amin : array_like
+        New array holding the result.
+        If ``out`` was specified, ``out`` is returned.
+
+        """
+        _mask = ndarray.__getattribute__(self, '_mask')
+        newmask = _mask.all(axis=axis)
         if fill_value is None:
             fill_value = minimum_fill_value(self)
-        # Get the data ................
-        result = self.filled(fill_value).min(axis=axis).view(type(self))
-        if result.ndim > 0:
-            result._mask = mask
-        return result
+        # No explicit output
+        if out is None:
+            result = self.filled(fill_value).min(axis=axis, out=out).view(type(self))
+            if result.ndim:
+                # Set the mask
+                result.__setmask__(newmask)
+                # Get rid of Infs
+                if newmask.ndim:
+                    np.putmask(result, newmask, result.fill_value)
+            elif newmask:
+                result = masked
+            return result
+        # Explicit output
+        result = self.filled(fill_value).min(axis=axis, out=out)
+        if isinstance(out, MaskedArray):
+            outmask = getattr(out, '_mask', nomask)
+            if (outmask is nomask):
+                outmask = out._mask = make_mask_none(out.shape)
+            outmask.flat = newmask
+        else:
+            np.putmask(out, newmask, np.nan)
+        return out
 
     def mini(self, axis=None):
         if axis is None:
@@ -2573,58 +2780,90 @@ Masked elements are set to 0 internally.
             return minimum.reduce(self, axis)
 
     #........................
-    def max(self, axis=None, fill_value=None):
-        """Return the maximum/a along the given axis.
+    def max(self, axis=None, out=None, fill_value=None):
+        """a.max(axis=None, out=None, fill_value=None)
 
-        Masked values are filled with fill_value.
+    Return the maximum along a given axis.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        fill_value : {var}, optional
-            Value used to fill in the masked values.
-            If None, use the the output of maximum_fill_value().
+    Parameters
+    ----------
+    axis : {None, int}, optional
+        Axis along which to operate.  By default, ``axis`` is None and the
+        flattened input is used.
+    out : array_like, optional
+        Alternative output array in which to place the result.  Must
+        be of the same shape and buffer length as the expected output.
+    fill_value : {var}, optional
+        Value used to fill in the masked values.
+        If None, use the output of maximum_fill_value().
+
+    Returns
+    -------
+    amax : array_like
+        New array holding the result.
+        If ``out`` was specified, ``out`` is returned.
+
         """
-        mask = self._mask
-        # Check all/nothing case ......
-        if mask is nomask:
-            return super(MaskedArray, self).max(axis=axis)
-        elif (not mask.ndim) and mask:
-            return masked
-        # Check the mask ..............
-        if axis is None:
-            mask = umath.logical_and.reduce(mask.flat)
-        else:
-            mask = umath.logical_and.reduce(mask, axis=axis)
-        # Skip if all masked ..........
-        if not mask.ndim and mask:
-            return masked
-        # Get the fill value ..........
+        _mask = ndarray.__getattribute__(self, '_mask')
+        newmask = _mask.all(axis=axis)
         if fill_value is None:
             fill_value = maximum_fill_value(self)
-        # Get the data ................
-        result = self.filled(fill_value).max(axis=axis).view(type(self))
-        if result.ndim > 0:
-            result._mask = mask
-        return result
-    #........................
-    def ptp(self, axis=None, fill_value=None):
-        """Return the visible data range (max-min) along the given axis.
+        # No explicit output
+        if out is None:
+            result = self.filled(fill_value).max(axis=axis, out=out).view(type(self))
+            if result.ndim:
+                # Set the mask
+                result.__setmask__(newmask)
+                # Get rid of Infs
+                if newmask.ndim:
+                    np.putmask(result, newmask, result.fill_value)
+            elif newmask:
+                result = masked
+            return result
+        # Explicit output
+        result = self.filled(fill_value).max(axis=axis, out=out)
+        if isinstance(out, MaskedArray):
+            outmask = getattr(out, '_mask', nomask)
+            if (outmask is nomask):
+                outmask = out._mask = make_mask_none(out.shape)
+            outmask.flat = newmask
+        else:
+            np.putmask(out, newmask, np.nan)
+        return out
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
-        fill_value : {var}, optional
-            Value used to fill in the masked values.  If None, the
-            maximum uses the maximum default, the minimum uses the
-            minimum default.
+    def ptp(self, axis=None, out=None, fill_value=None):
+        """a.ptp(axis=None, out=None)
+
+    Return (maximum - minimum) along the the given dimension
+    (i.e. peak-to-peak value).
+
+    Parameters
+    ----------
+    axis : {None, int}, optional
+        Axis along which to find the peaks.  If None (default) the
+        flattened array is used.
+    out : array_like
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output
+        but the type will be cast if necessary.
+    fill_value : {var}, optional
+        Value used to fill in the masked values.
+
+    Returns
+    -------
+    ptp : ndarray.
+        A new array holding the result, unless ``out`` was
+        specified, in which case a reference to ``out`` is returned.
+
 
         """
-        return self.max(axis, fill_value) - self.min(axis, fill_value)
+        if out is None:
+            result = self.max(axis=axis, fill_value=fill_value)
+            result -= self.min(axis=axis, fill_value=fill_value)
+            return result
+        out.flat = self.max(axis=axis, out=out, fill_value=fill_value)
+        out -= self.min(axis=axis, fill_value=fill_value)
+        return out
 
     # Array methods ---------------------------------------
     copy = _arraymethod('copy')
@@ -2864,35 +3103,32 @@ class _maximum_operation(_extrema_operation):
         self.fill_value_func = maximum_fill_value
 
 #..........................................................
-def min(array, axis=None, out=None):
-    """Return the minima along the given axis.
-
-    If `axis` is None, applies to the flattened array.
-
-    """
-    if out is not None:
-        raise TypeError("Output arrays Unsupported for masked arrays")
-    if axis is None:
-        return minimum(array)
-    else:
-        return minimum.reduce(array, axis)
+def min(obj, axis=None, out=None, fill_value=None):
+    try:
+        return obj.min(axis=axis, fill_value=fill_value, out=out)
+    except (AttributeError, TypeError):
+        # If obj doesn't have a max method, 
+        # ...or if the method doesn't accept a fill_value argument
+        return asanyarray(obj).min(axis=axis, fill_value=fill_value, out=out)
 min.__doc__ = MaskedArray.min.__doc__
-#............................
-def max(obj, axis=None, out=None):
-    if out is not None:
-        raise TypeError("Output arrays Unsupported for masked arrays")
-    if axis is None:
-        return maximum(obj)
-    else:
-        return maximum.reduce(obj, axis)
+
+def max(obj, axis=None, out=None, fill_value=None):
+    try:
+        return obj.max(axis=axis, fill_value=fill_value, out=out)
+    except (AttributeError, TypeError):
+        # If obj doesn't have a max method, 
+        # ...or if the method doesn't accept a fill_value argument
+        return asanyarray(obj).max(axis=axis, fill_value=fill_value, out=out)
 max.__doc__ = MaskedArray.max.__doc__
-#.............................
-def ptp(obj, axis=None):
+
+def ptp(obj, axis=None, out=None, fill_value=None):
     """a.ptp(axis=None) =  a.max(axis)-a.min(axis)"""
     try:
-        return obj.max(axis)-obj.min(axis)
-    except AttributeError:
-        return max(obj, axis=axis) - min(obj, axis=axis)
+        return obj.ptp(axis, out=out, fill_value=fill_value)
+    except (AttributeError, TypeError):
+        # If obj doesn't have a max method, 
+        # ...or if the method doesn't accept a fill_value argument
+        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
 ptp.__doc__ = MaskedArray.ptp.__doc__
 
 
@@ -3265,13 +3501,13 @@ def where (condition, x=None, y=None):
     yv = getdata(y)
     if x is masked:
         ndtype = yv.dtype
-        xm = np.ones(fc.shape, dtype=MaskType)
+#        xm = np.ones(fc.shape, dtype=MaskType)
     elif y is masked:
         ndtype = xv.dtype
-        ym = np.ones(fc.shape, dtype=MaskType)
+#        ym = np.ones(fc.shape, dtype=MaskType)
     else:
         ndtype = np.max([xv.dtype, yv.dtype])
-        xm = getmask(x)
+#        xm = getmask(x)
     d = np.empty(fc.shape, dtype=ndtype).view(MaskedArray)
     np.putmask(d._data, fc, xv.astype(ndtype))
     np.putmask(d._data, notfc, yv.astype(ndtype))
