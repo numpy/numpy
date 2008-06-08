@@ -46,7 +46,8 @@ class TestMRecords(NumpyTestCase):
         "Test creation by view"
         base = self.base
         mbase = base.view(mrecarray)
-        assert_equal(mbase._mask, base._mask)
+        assert_equal(mbase.recordmask, base.recordmask)
+        assert_equal_records(mbase._mask, base._mask)
         assert isinstance(mbase._data, recarray)
         assert_equal_records(mbase._data, base._data.view(recarray))
         for field in ('a','b','c'):
@@ -66,14 +67,18 @@ class TestMRecords(NumpyTestCase):
         assert isinstance(mbase_first, mrecarray)
         assert_equal(mbase_first.dtype, mbase.dtype)
         assert_equal(mbase_first.tolist(), (1,1.1,'one'))
-        assert_equal(mbase_first.mask, nomask)
+        # Used to be mask, now it's recordmask
+        assert_equal(mbase_first.recordmask, nomask)
+        # _fieldmask and _mask should be the same thing
         assert_equal(mbase_first._fieldmask.item(), (False, False, False))
+        assert_equal(mbase_first._mask.item(), (False, False, False))
         assert_equal(mbase_first['a'], mbase['a'][0])
         mbase_last = mbase[-1]
         assert isinstance(mbase_last, mrecarray)
         assert_equal(mbase_last.dtype, mbase.dtype)
         assert_equal(mbase_last.tolist(), (None,None,None))
-        assert_equal(mbase_last.mask, True)
+        # Used to be mask, now it's recordmask
+        assert_equal(mbase_last.recordmask, True)
         assert_equal(mbase_last._fieldmask.item(), (True, True, True))
         assert_equal(mbase_last['a'], mbase['a'][-1])
         assert (mbase_last['a'] is masked)
@@ -81,7 +86,11 @@ class TestMRecords(NumpyTestCase):
         mbase_sl = mbase[:2]
         assert isinstance(mbase_sl, mrecarray)
         assert_equal(mbase_sl.dtype, mbase.dtype)
-        assert_equal(mbase_sl._mask, [0,1])
+        # Used to be mask, now it's recordmask
+        assert_equal(mbase_sl.recordmask, [0,1])
+        assert_equal_records(mbase_sl.mask,
+                             np.array([(False,False,False),(True,True,True)],
+                                      dtype=mbase._mask.dtype))
         assert_equal_records(mbase_sl, base[:2].view(mrecarray))
         for field in ('a','b','c'):
             assert_equal(getattr(mbase_sl,field), base[:2][field])
@@ -100,13 +109,16 @@ class TestMRecords(NumpyTestCase):
         mbase.a = 1
         assert_equal(mbase['a']._data, [1]*5)
         assert_equal(ma.getmaskarray(mbase['a']), [0]*5)
-        assert_equal(mbase._mask, [False]*5)
+        # Use to be _mask, now it's recordmask
+        assert_equal(mbase.recordmask, [False]*5)
         assert_equal(mbase._fieldmask.tolist(),
                      np.array([(0,0,0),(0,1,1),(0,0,0),(0,0,0),(0,1,1)],
                               dtype=bool))
         # Set a field to mask ........................
         mbase.c = masked
+        # Use to be mask, and now it's still mask !
         assert_equal(mbase.c.mask, [1]*5)
+        assert_equal(mbase.c.recordmask, [1]*5)
         assert_equal(ma.getmaskarray(mbase['c']), [1]*5)
         assert_equal(ma.getdata(mbase['c']), ['N/A']*5)
         assert_equal(mbase._fieldmask.tolist(),
@@ -201,10 +213,11 @@ class TestMRecords(NumpyTestCase):
         assert_equal(mbase._fieldmask.tolist(),
                      np.array([(0,0,0),(1,1,1),(0,0,0),(1,1,1),(1,1,1)],
                               dtype=bool))
-        assert_equal(mbase._mask, [0,1,0,1,1])
+        # Used to be mask, now it's recordmask!
+        assert_equal(mbase.recordmask, [0,1,0,1,1])
         # Set slices .................................
         mbase = base.view(mrecarray).copy()
-        mbase[:2] = 5
+        mbase[:2] = (5,5,5)
         assert_equal(mbase.a._data, [5,5,3,4,5])
         assert_equal(mbase.a._mask, [0,0,0,0,1])
         assert_equal(mbase.b._data, [5.,5.,3.3,4.4,5.5])
@@ -226,13 +239,29 @@ class TestMRecords(NumpyTestCase):
         base = self.base.copy()
         mbase = base.view(mrecarray)
         mbase.harden_mask()
-        mbase[-2:] = 5
-        assert_equal(mbase.a._data, [1,2,3,5,5])
-        assert_equal(mbase.b._data, [1.1,2.2,3.3,5,5.5])
-        assert_equal(mbase.c._data, ['one','two','three','5','five'])
-        assert_equal(mbase.a._mask, [0,1,0,0,1])
-        assert_equal(mbase.b._mask, mbase.a._mask)
-        assert_equal(mbase.b._mask, mbase.c._mask)
+        try:
+            mbase[-2:] = (5,5,5)
+            assert_equal(mbase.a._data, [1,2,3,5,5])
+            assert_equal(mbase.b._data, [1.1,2.2,3.3,5,5.5])
+            assert_equal(mbase.c._data, ['one','two','three','5','five'])
+            assert_equal(mbase.a._mask, [0,1,0,0,1])
+            assert_equal(mbase.b._mask, mbase.a._mask)
+            assert_equal(mbase.b._mask, mbase.c._mask)
+        except NotImplementedError:
+            # OK, not implemented yet...
+            pass
+        except AssertionError:
+            raise
+        else:
+            raise Exception("Flexible hard masks should be supported !")
+        # Not using a tuple should crash
+        try:
+            mbase[-2:] = 3
+        except (NotImplementedError, TypeError):
+            pass
+        else:
+            raise TypeError("Should have expected a readable buffer object!")
+            
 
     def test_hardmask(self):
         "Test hardmask"
@@ -241,11 +270,13 @@ class TestMRecords(NumpyTestCase):
         mbase.harden_mask()
         assert(mbase._hardmask)
         mbase._mask = nomask
-        assert_equal(mbase._mask, [0,1,0,0,1])
+        assert_equal_records(mbase._mask, base._mask)
         mbase.soften_mask()
         assert(not mbase._hardmask)
         mbase._mask = nomask
         # So, the mask of a field is no longer set to nomask...
+        assert_equal_records(mbase._mask, 
+                             ma.make_mask_none(base.shape,base.dtype.names))
         assert(ma.make_mask(mbase['b']._mask) is nomask)
         assert_equal(mbase['a']._mask,mbase['b']._mask)
     #

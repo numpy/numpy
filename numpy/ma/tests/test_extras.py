@@ -11,7 +11,7 @@ __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
-import numpy as N
+import numpy as np
 from numpy.testing import NumpyTest, NumpyTestCase
 from numpy.testing.utils import build_err_msg
 
@@ -52,12 +52,15 @@ class TestAverage(NumpyTestCase):
         assert_equal(average(x, axis=0), 2.5)
         assert_equal(average(x, axis=0, weights=w1), 2.5)
         y = array([arange(6, dtype=float_), 2.0*arange(6)])
-        assert_equal(average(y, None), N.add.reduce(N.arange(6))*3./12.)
-        assert_equal(average(y, axis=0), N.arange(6) * 3./2.)
-        assert_equal(average(y, axis=1), [average(x,axis=0), average(x,axis=0) * 2.0])
+        assert_equal(average(y, None), np.add.reduce(np.arange(6))*3./12.)
+        assert_equal(average(y, axis=0), np.arange(6) * 3./2.)
+        assert_equal(average(y, axis=1), 
+                     [average(x,axis=0), average(x,axis=0) * 2.0])
         assert_equal(average(y, None, weights=w2), 20./6.)
-        assert_equal(average(y, axis=0, weights=w2), [0.,1.,2.,3.,4.,10.])
-        assert_equal(average(y, axis=1), [average(x,axis=0), average(x,axis=0) * 2.0])
+        assert_equal(average(y, axis=0, weights=w2), 
+                     [0.,1.,2.,3.,4.,10.])
+        assert_equal(average(y, axis=1), 
+                     [average(x,axis=0), average(x,axis=0) * 2.0])
         m1 = zeros(6)
         m2 = [0,0,1,1,0,0]
         m3 = [[0,0,1,1,0,0],[0,1,1,1,1,0]]
@@ -115,26 +118,26 @@ class TestConcatenator(NumpyTestCase):
         "Tests mr_ on 2D arrays."
         a_1 = rand(5,5)
         a_2 = rand(5,5)
-        m_1 = N.round_(rand(5,5),0)
-        m_2 = N.round_(rand(5,5),0)
+        m_1 = np.round_(rand(5,5),0)
+        m_2 = np.round_(rand(5,5),0)
         b_1 = masked_array(a_1,mask=m_1)
         b_2 = masked_array(a_2,mask=m_2)
         d = mr_['1',b_1,b_2]  # append columns
         assert(d.shape == (5,10))
         assert_array_equal(d[:,:5],b_1)
         assert_array_equal(d[:,5:],b_2)
-        assert_array_equal(d.mask, N.r_['1',m_1,m_2])
+        assert_array_equal(d.mask, np.r_['1',m_1,m_2])
         d = mr_[b_1,b_2]
         assert(d.shape == (10,5))
         assert_array_equal(d[:5,:],b_1)
         assert_array_equal(d[5:,:],b_2)
-        assert_array_equal(d.mask, N.r_[m_1,m_2])
+        assert_array_equal(d.mask, np.r_[m_1,m_2])
 
 class TestNotMasked(NumpyTestCase):
     "Tests notmasked_edges and notmasked_contiguous."
     def check_edges(self):
         "Tests unmasked_edges"
-        a = masked_array(N.arange(24).reshape(3,8),
+        a = masked_array(np.arange(24).reshape(3,8),
                          mask=[[0,0,0,0,1,1,1,0],
                                [1,1,1,1,1,1,1,1],
                                [0,0,0,0,0,0,1,0],])
@@ -151,7 +154,7 @@ class TestNotMasked(NumpyTestCase):
 
     def check_contiguous(self):
         "Tests notmasked_contiguous"
-        a = masked_array(N.arange(24).reshape(3,8),
+        a = masked_array(np.arange(24).reshape(3,8),
                          mask=[[0,0,0,0,1,1,1,1],
                                [1,1,1,1,1,1,1,1],
                                [0,0,0,0,0,0,1,0],])
@@ -176,7 +179,7 @@ class Test2DFunctions(NumpyTestCase):
     "Tests 2D functions"
     def check_compress2d(self):
         "Tests compress2d"
-        x = array(N.arange(9).reshape(3,3), mask=[[1,0,0],[0,0,0],[0,0,0]])
+        x = array(np.arange(9).reshape(3,3), mask=[[1,0,0],[0,0,0],[0,0,0]])
         assert_equal(compress_rowcols(x), [[4,5],[7,8]] )
         assert_equal(compress_rowcols(x,0), [[3,4,5],[6,7,8]] )
         assert_equal(compress_rowcols(x,1), [[1,2],[4,5],[7,8]] )
@@ -195,7 +198,7 @@ class Test2DFunctions(NumpyTestCase):
     #
     def check_mask_rowcols(self):
         "Tests mask_rowcols."
-        x = array(N.arange(9).reshape(3,3), mask=[[1,0,0],[0,0,0],[0,0,0]])
+        x = array(np.arange(9).reshape(3,3), mask=[[1,0,0],[0,0,0],[0,0,0]])
         assert_equal(mask_rowcols(x).mask, [[1,1,1],[1,0,0],[1,0,0]] )
         assert_equal(mask_rowcols(x,0).mask, [[1,1,1],[0,0,0],[0,0,0]] )
         assert_equal(mask_rowcols(x,1).mask, [[1,0,0],[1,0,0],[1,0,0]] )
@@ -208,13 +211,16 @@ class Test2DFunctions(NumpyTestCase):
         assert_equal(mask_rowcols(x,0).mask, [[1,1,1],[1,1,1],[0,0,0]] )
         assert_equal(mask_rowcols(x,1,).mask, [[1,1,0],[1,1,0],[1,1,0]] )
         x = array(x._data, mask=[[1,0,0],[0,1,0],[0,0,1]])
-        assert(mask_rowcols(x).all())
-        assert(mask_rowcols(x,0).all())
-        assert(mask_rowcols(x,1).all())
+        assert(mask_rowcols(x).all() is masked)
+        assert(mask_rowcols(x,0).all() is masked)
+        assert(mask_rowcols(x,1).all() is masked)
+        assert(mask_rowcols(x).mask.all())
+        assert(mask_rowcols(x,0).mask.all())
+        assert(mask_rowcols(x,1).mask.all())
     #
     def test_dot(self):
         "Tests dot product"
-        n = N.arange(1,7)
+        n = np.arange(1,7)
         #
         m = [1,0,0,0,0,0]
         a = masked_array(n, mask=m).reshape(2,3)
@@ -224,9 +230,9 @@ class Test2DFunctions(NumpyTestCase):
         c = dot(b,a,True)
         assert_equal(c.mask, [[1,1,1],[1,0,0],[1,0,0]])
         c = dot(a,b,False)
-        assert_equal(c, N.dot(a.filled(0), b.filled(0)))
+        assert_equal(c, np.dot(a.filled(0), b.filled(0)))
         c = dot(b,a,False)
-        assert_equal(c, N.dot(b.filled(0), a.filled(0)))
+        assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         m = [0,0,0,0,0,1]
         a = masked_array(n, mask=m).reshape(2,3)
@@ -236,10 +242,10 @@ class Test2DFunctions(NumpyTestCase):
         c = dot(b,a,True)
         assert_equal(c.mask, [[0,0,1],[0,0,1],[1,1,1]])
         c = dot(a,b,False)
-        assert_equal(c, N.dot(a.filled(0), b.filled(0)))
+        assert_equal(c, np.dot(a.filled(0), b.filled(0)))
         assert_equal(c, dot(a,b))
         c = dot(b,a,False)
-        assert_equal(c, N.dot(b.filled(0), a.filled(0)))
+        assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         m = [0,0,0,0,0,0]
         a = masked_array(n, mask=m).reshape(2,3)
@@ -254,37 +260,37 @@ class Test2DFunctions(NumpyTestCase):
         c = dot(a,b,True)
         assert_equal(c.mask,[[1,1],[0,0]])
         c = dot(a,b,False)
-        assert_equal(c, N.dot(a.filled(0),b.filled(0)))
+        assert_equal(c, np.dot(a.filled(0),b.filled(0)))
         c = dot(b,a,True)
         assert_equal(c.mask,[[1,0,0],[1,0,0],[1,0,0]])
         c = dot(b,a,False)
-        assert_equal(c, N.dot(b.filled(0),a.filled(0)))
+        assert_equal(c, np.dot(b.filled(0),a.filled(0)))
         #
         a = masked_array(n, mask=[0,0,0,0,0,1]).reshape(2,3)
         b = masked_array(n, mask=[0,0,0,0,0,0]).reshape(3,2)
         c = dot(a,b,True)
         assert_equal(c.mask,[[0,0],[1,1]])
         c = dot(a,b)
-        assert_equal(c, N.dot(a.filled(0),b.filled(0)))
+        assert_equal(c, np.dot(a.filled(0),b.filled(0)))
         c = dot(b,a,True)
         assert_equal(c.mask,[[0,0,1],[0,0,1],[0,0,1]])
         c = dot(b,a,False)
-        assert_equal(c, N.dot(b.filled(0), a.filled(0)))
+        assert_equal(c, np.dot(b.filled(0), a.filled(0)))
         #
         a = masked_array(n, mask=[0,0,0,0,0,1]).reshape(2,3)
         b = masked_array(n, mask=[0,0,1,0,0,0]).reshape(3,2)
         c = dot(a,b,True)
         assert_equal(c.mask,[[1,0],[1,1]])
         c = dot(a,b,False)
-        assert_equal(c, N.dot(a.filled(0),b.filled(0)))
+        assert_equal(c, np.dot(a.filled(0),b.filled(0)))
         c = dot(b,a,True)
         assert_equal(c.mask,[[0,0,1],[1,1,1],[0,0,1]])
         c = dot(b,a,False)
-        assert_equal(c, N.dot(b.filled(0),a.filled(0)))
+        assert_equal(c, np.dot(b.filled(0),a.filled(0)))
 
     def test_ediff1d(self):
         "Tests mediff1d"
-        x = masked_array(N.arange(5), mask=[1,0,0,0,1])
+        x = masked_array(np.arange(5), mask=[1,0,0,0,1])
         difx_d = (x._data[1:]-x._data[:-1])
         difx_m = (x._mask[1:]-x._mask[:-1])
         dx = ediff1d(x)
@@ -292,29 +298,29 @@ class Test2DFunctions(NumpyTestCase):
         assert_equal(dx._mask, difx_m)
         #
         dx = ediff1d(x, to_begin=masked)
-        assert_equal(dx._data, N.r_[0,difx_d])
-        assert_equal(dx._mask, N.r_[1,difx_m])
+        assert_equal(dx._data, np.r_[0,difx_d])
+        assert_equal(dx._mask, np.r_[1,difx_m])
         dx = ediff1d(x, to_begin=[1,2,3])
-        assert_equal(dx._data, N.r_[[1,2,3],difx_d])
-        assert_equal(dx._mask, N.r_[[0,0,0],difx_m])
+        assert_equal(dx._data, np.r_[[1,2,3],difx_d])
+        assert_equal(dx._mask, np.r_[[0,0,0],difx_m])
         #
         dx = ediff1d(x, to_end=masked)
-        assert_equal(dx._data, N.r_[difx_d,0])
-        assert_equal(dx._mask, N.r_[difx_m,1])
+        assert_equal(dx._data, np.r_[difx_d,0])
+        assert_equal(dx._mask, np.r_[difx_m,1])
         dx = ediff1d(x, to_end=[1,2,3])
-        assert_equal(dx._data, N.r_[difx_d,[1,2,3]])
-        assert_equal(dx._mask, N.r_[difx_m,[0,0,0]])
+        assert_equal(dx._data, np.r_[difx_d,[1,2,3]])
+        assert_equal(dx._mask, np.r_[difx_m,[0,0,0]])
         #
         dx = ediff1d(x, to_end=masked, to_begin=masked)
-        assert_equal(dx._data, N.r_[0,difx_d,0])
-        assert_equal(dx._mask, N.r_[1,difx_m,1])
+        assert_equal(dx._data, np.r_[0,difx_d,0])
+        assert_equal(dx._mask, np.r_[1,difx_m,1])
         dx = ediff1d(x, to_end=[1,2,3], to_begin=masked)
-        assert_equal(dx._data, N.r_[0,difx_d,[1,2,3]])
-        assert_equal(dx._mask, N.r_[1,difx_m,[0,0,0]])
+        assert_equal(dx._data, np.r_[0,difx_d,[1,2,3]])
+        assert_equal(dx._mask, np.r_[1,difx_m,[0,0,0]])
         #
         dx = ediff1d(x._data, to_end=masked, to_begin=masked)
-        assert_equal(dx._data, N.r_[0,difx_d,0])
-        assert_equal(dx._mask, N.r_[1,0,0,0,0,1])
+        assert_equal(dx._data, np.r_[0,difx_d,0])
+        assert_equal(dx._mask, np.r_[1,0,0,0,0,1])
 
 class TestApplyAlongAxis(NumpyTestCase):
     "Tests 2D functions"
