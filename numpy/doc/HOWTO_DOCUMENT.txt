@@ -237,6 +237,12 @@ The sections of the docstring are:
 
      The value of :math:`\omega` is larger than 5.
 
+   Variable names are displayed in typewriter font, obtained by using
+   ``\mathtt{var}``::
+
+     We square the input parameter `alpha` to obtain
+     :math:`\mathtt{alpha}^2`.
+
    Note that LaTeX is not particularly easy to read, so use equations
    sparingly.
 
