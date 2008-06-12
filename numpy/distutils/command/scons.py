@@ -323,7 +323,10 @@ class scons(old_build_ext):
             cxxcompiler.customize(self.distribution, need_cxx = 1)
             cxxcompiler.customize_cmd(self)
             self.cxxcompiler = cxxcompiler.cxx_compiler()
-            #print self.cxxcompiler.compiler_cxx[0]
+            try:
+                get_cxx_tool_path(self.cxxcompiler)
+            except DistutilsSetupError:
+                self.cxxcompiler = None
 
         if self.package_list:
             self.package_list = parse_package_list(self.package_list)
