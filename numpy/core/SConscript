@@ -1,4 +1,4 @@
-# Last Change: Mon Apr 21 07:00 PM 2008 J
+# Last Change: Thu Jun 12 04:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -28,7 +28,7 @@ if os.name == 'nt':
 # Starting Configuration
 #=======================
 config = env.NumpyConfigure(custom_tests = {'CheckBrokenMathlib' : CheckBrokenMathlib,
-    'CheckCBLAS' : CheckCBLAS}, config_h = pjoin(env['build_dir'], 'config.h'))
+    'CheckCBLAS' : CheckCBLAS}, config_h = pjoin('config.h'))
 
 # numpyconfig_sym will keep the values of some configuration variables, the one
 # needed for the public numpy API.
@@ -203,8 +203,7 @@ for key, value in numpyconfig_sym:
 env['SUBST_DICT'] = config_dict
 
 include_dir = 'include/numpy'
-env.SubstInFile(pjoin(env['build_dir'], 'numpyconfig.h'),
-                pjoin(env['src_dir'], include_dir, 'numpyconfig.h.in'))
+env.SubstInFile(pjoin(include_dir, 'numpyconfig.h'), pjoin(include_dir, 'numpyconfig.h.in'))
 
 env['CONFIG_H_GEN'] = numpyconfig_sym
 
@@ -235,28 +234,28 @@ multiarray_api = env.GenerateMultiarrayApi('multiarray_api',
 ufunc_api = env.GenerateUfuncApi('ufunc_api',
                     pjoin('code_generators', 'ufunc_api_order.txt'))
 
-env.Append(CPPPATH = [pjoin(env['src_dir'], 'include'), env['build_dir']])
+env.Append(CPPPATH = ['include', '.'])
 
 #-----------------
 # Build multiarray
 #-----------------
 multiarray_src = [pjoin('src', 'multiarraymodule.c')]
-multiarray = env.NumpyPythonExtension('multiarray', source = multiarray_src)
+multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
 
 #------------------
 # Build sort module
 #------------------
-sort = env.NumpyPythonExtension('_sort', source = sortmodule_src)
+sort = env.DistutilsPythonExtension('_sort', source = sortmodule_src)
 
 #-------------------
 # Build umath module
 #-------------------
-umathmodule = env.NumpyPythonExtension('umath', source = umathmodule_src)
+umathmodule = env.DistutilsPythonExtension('umath', source = umathmodule_src)
 
 #------------------------
 # Build scalarmath module
 #------------------------
-scalarmathmodule = env.NumpyPythonExtension('scalarmath',
+scalarmathmodule = env.DistutilsPythonExtension('scalarmath',
                                             source = scalarmathmodule_src)
 
 #----------------------
@@ -265,5 +264,5 @@ scalarmathmodule = env.NumpyPythonExtension('scalarmath',
 if build_blasdot:
     dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
     blasenv = env.Clone()
-    blasenv.Append(CPPPATH = pjoin(env['src_dir'], 'blasdot'))
-    dotblas = blasenv.NumpyPythonExtension('_dotblas', source = dotblas_src)
+    blasenv.Append(CPPPATH = pjoin('blasdot'))
+    dotblas = blasenv.DistutilsPythonExtension('_dotblas', source = dotblas_src)
