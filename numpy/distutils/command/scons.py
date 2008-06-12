@@ -10,7 +10,6 @@ from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
-from numpy.distutils.misc_util import get_numpy_include_dirs
 
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
@@ -56,6 +55,21 @@ def get_python_exec_invoc():
     # using "local python", using the alias facility of bash.
     import sys
     return sys.executable
+
+def get_numpy_include_dirs(sconscript_path):
+    """Return include dirs for numpy.
+
+    The paths are relatively to the setup.py script path."""
+    from numpy.distutils.misc_util import get_numpy_include_dirs as _incdir
+    from numscons import get_scons_build_dir
+    scdir = pjoin(get_scons_build_dir(), pdirname(sconscript_path))
+    n = scdir.count(os.sep)
+
+    dirs = _incdir()
+    rdirs = []
+    for d in dirs:
+        rdirs.append(pjoin(os.sep.join([os.pardir for i in range(n+1)]), d))
+    return rdirs
 
 def dirl_to_str(dirlist):
     """Given a list of directories, returns a string where the paths are
@@ -387,7 +401,7 @@ class scons(old_build_ext):
                 cmd.append('cxx_opt=%s' % dist2sconscxx(self.cxxcompiler))
                 cmd.append('cxx_opt_path=%s' % protect_path(get_cxx_tool_path(self.cxxcompiler)))
 
-            cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs()))
+            cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
             if self.silent:
                 if int(self.silent) == 2:
                     cmd.append('-Q')
