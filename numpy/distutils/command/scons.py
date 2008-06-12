@@ -336,6 +336,16 @@ class scons(old_build_ext):
                 raise RuntimeError("importing numscons failed (error was %s), using " \
                                    "scons within distutils is not possible without "
                                    "this package " % str(e))
+
+            try:
+                from numscons import get_version
+                if get_version() < '0.8.0':
+                    raise ValueError()
+            except ImportError, ValueError:
+                raise RuntimeError("You need numscons >= 0.8.0 to build numpy "\
+                                   "with numscons (imported numscons path " \
+                                   "is %s)." % numscons.__file__)
+                
         else:
             # nothing to do, just leave it here.
             return
