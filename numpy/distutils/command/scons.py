@@ -38,6 +38,14 @@ def get_scons_local_path():
     from numscons import get_scons_path
     return get_scons_path()
 
+def get_distutils_libdir(cmd):
+    """Returns the path where distutils install libraries, relatively to the
+    scons build directory."""
+    from numscons import get_scons_build_dir
+    scdir = get_scons_build_dir()
+    n = scdir.count(os.sep)
+    return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_lib)
+
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""
     # Do we  need to take into account the PYTHONPATH, in a cross platform way,
@@ -361,7 +369,7 @@ class scons(old_build_ext):
             cmd.append('pkg_name="%s"' % pkg_name)
             #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
             #                                                    pdirname(sconscript))))
-            cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib)))
+            cmd.append('distutils_libdir=%s' % protect_path(get_distutils_libdir(self)))
 
             if not self._bypass_distutils_cc:
                 cmd.append('cc_opt=%s' % self.scons_compiler)
