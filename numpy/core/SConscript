@@ -263,6 +263,5 @@ scalarmathmodule = env.DistutilsPythonExtension('scalarmath',
 #----------------------
 if build_blasdot:
     dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
-    blasenv = env.Clone()
-    blasenv.Append(CPPPATH = pjoin('blasdot'))
-    dotblas = blasenv.DistutilsPythonExtension('_dotblas', source = dotblas_src)
+    dotblas = env.DistutilsPythonExtension('_dotblas', source = dotblas_src)
+    env.Depends(dotblas, pjoin("blasdot", "cblas.h"))
