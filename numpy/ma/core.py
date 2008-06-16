@@ -1225,11 +1225,19 @@ class MaskedArray(ndarray):
                 # With full version
                 else:
                     _data._mask = np.zeros(_data.shape, dtype=mdtype)
-            if copy:
-                _data._mask = _data._mask.copy()
-                _data._sharedmask = False
+            # Check whether we missed something
+            elif isinstance(data, (tuple,list)):
+                mask = np.array([getmaskarray(m) for m in data], dtype=mdtype)
+                # Force shrinking of the mask if needed (and possible)
+                if (mdtype == MaskType) and mask.any():
+                    _data._mask = mask
+                    _data._sharedmask = False
             else:
-                _data._sharedmask = True
+                if copy:
+                    _data._mask = _data._mask.copy()
+                    _data._sharedmask = False
+                else:
+                    _data._sharedmask = True
         # Case 2. : With a mask in input ........
         else:
             # Read the mask with the current mdtype

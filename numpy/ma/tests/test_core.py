@@ -167,6 +167,18 @@ class TestMaskedArray(NumpyTestCase):
         dma_3 = MaskedArray(dma_1, mask=[1,0,0,0]*6)
         fail_if_equal(dma_3.mask, dma_1.mask)
 
+    def test_creation_with_list_of_maskedarrays(self):
+        "Tests creaating a masked array from alist of masked arrays."
+        x = array(np.arange(5), mask=[1,0,0,0,0])
+        data = array((x,x[::-1]))
+        assert_equal(data, [[0,1,2,3,4],[4,3,2,1,0]])
+        assert_equal(data._mask, [[1,0,0,0,0],[0,0,0,0,1]])
+        #
+        x.mask = nomask
+        data = array((x,x[::-1]))
+        assert_equal(data, [[0,1,2,3,4],[4,3,2,1,0]])
+        assert(data.mask is nomask)
+
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
         xm.fill_value = -9999
