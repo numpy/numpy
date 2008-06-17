@@ -2,7 +2,7 @@ from numpy.testing import *
 from numpy import random
 import numpy as np
 
-class TestMultinomial(NumpyTestCase):
+class TestMultinomial(TestCase):
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 
@@ -16,7 +16,7 @@ class TestMultinomial(NumpyTestCase):
         assert np.all(x < -1)
 
 
-class TestSetState(NumpyTestCase):
+class TestSetState(TestCase):
     def setUp(self):
         self.seed = 1234567890
         self.prng = random.RandomState(self.seed)
@@ -62,4 +62,4 @@ class TestSetState(NumpyTestCase):
 
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

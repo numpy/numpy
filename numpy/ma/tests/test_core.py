@@ -12,33 +12,16 @@ import warnings
 import numpy as np
 import numpy.core.fromnumeric  as fromnumeric
 from numpy import ndarray
+from numpy.ma.testutils import *
 
-
-from numpy.testing import NumpyTest, NumpyTestCase
-from numpy.testing import set_local_path, restore_path
-from numpy.testing.utils import build_err_msg
-
-import numpy.ma.testutils
-from numpy.ma.testutils import NumpyTestCase, \
-    assert_equal, assert_array_equal, fail_if_equal, assert_not_equal, \
-    assert_almost_equal, assert_mask_equal, assert_equal_records
-
-import numpy.ma.core as coremodule
+import numpy.ma.core
 from numpy.ma.core import *
 
 pi = np.pi
 
-set_local_path()
-from test_old_ma import *
-restore_path()
-
 #..............................................................................
-class TestMaskedArray(NumpyTestCase):
+class TestMaskedArray(TestCase):
     "Base test class for MaskedArrays."
-
-    def __init__(self, *args, **kwds):
-        NumpyTestCase.__init__(self, *args, **kwds)
-        self.setUp()
 
     def setUp (self):
         "Base data definition."
@@ -443,7 +426,7 @@ class TestMaskedArray(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestMaskedArrayArithmetic(NumpyTestCase):
+class TestMaskedArrayArithmetic(TestCase):
     "Base test class for MaskedArrays."
 
     def setUp (self):
@@ -616,7 +599,7 @@ class TestMaskedArrayArithmetic(NumpyTestCase):
         for funcname in ('min', 'max'):
             # Initialize
             npfunc = getattr(np, funcname)
-            mafunc = getattr(coremodule, funcname)
+            mafunc = getattr(numpy.ma.core, funcname)
             # Use the np version
             nout = np.empty((4,), dtype=int) 
             result = npfunc(xm,axis=0,out=nout)
@@ -730,7 +713,7 @@ class TestMaskedArrayArithmetic(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestMaskedArrayAttributes(NumpyTestCase):
+class TestMaskedArrayAttributes(TestCase):
 
 
     def test_keepmask(self):
@@ -828,7 +811,7 @@ class TestMaskedArrayAttributes(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestFillingValues(NumpyTestCase):
+class TestFillingValues(TestCase):
     #
     def test_check_on_scalar(self):
         "Test _check_fill_value"
@@ -922,7 +905,7 @@ class TestFillingValues(NumpyTestCase):
         assert_equal(series._fill_value, data._fill_value)
         #
         mtype = [('f',float_),('s','|S3')]
-        x = array([(1,'a'),(2,'b'),(np.pi,'pi')], dtype=mtype)
+        x = array([(1,'a'),(2,'b'),(pi,'pi')], dtype=mtype)
         x.fill_value=999
         assert_equal(x.fill_value.item(),[999.,'999'])
         assert_equal(x['f'].fill_value, 999)
@@ -938,9 +921,10 @@ class TestFillingValues(NumpyTestCase):
         assert_equal(np.asarray(x.fill_value).dtype, float_)
         assert_equal(x.fill_value, 999.)
 
+
 #------------------------------------------------------------------------------
 
-class TestUfuncs(NumpyTestCase):
+class TestUfuncs(TestCase):
     "Test class for the application of ufuncs on MaskedArrays."
     def setUp(self):
         "Base data definition."
@@ -972,7 +956,7 @@ class TestUfuncs(NumpyTestCase):
                 uf = getattr(umath, f)
             except AttributeError:
                 uf = getattr(fromnumeric, f)
-            mf = getattr(coremodule, f)
+            mf = getattr(numpy.ma.core, f)
             args = self.d[:uf.nin]
             ur = uf(*args)
             mr = mf(*args)
@@ -1002,7 +986,7 @@ class TestUfuncs(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestMaskedArrayInPlaceArithmetics(NumpyTestCase):
+class TestMaskedArrayInPlaceArithmetics(TestCase):
     "Test MaskedArray Arithmetics"
     
     def setUp(self):
@@ -1134,7 +1118,7 @@ class TestMaskedArrayInPlaceArithmetics(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestMaskedArrayMethods(NumpyTestCase):
+class TestMaskedArrayMethods(TestCase):
     "Test class for miscellaneous MaskedArrays methods."
     def setUp(self):
         "Base data definition."
@@ -1630,7 +1614,7 @@ class TestMaskedArrayMethods(NumpyTestCase):
 #------------------------------------------------------------------------------
 
 
-class TestMaskArrayMathMethod(NumpyTestCase):
+class TestMaskArrayMathMethod(TestCase):
 
     def setUp(self):
         "Base data definition."
@@ -1781,7 +1765,7 @@ class TestMaskArrayMathMethod(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestMaskedArrayMathMethodsComplex(NumpyTestCase):
+class TestMaskedArrayMathMethodsComplex(TestCase):
     "Test class for miscellaneous MaskedArrays methods."
     def setUp(self):
         "Base data definition."
@@ -1834,7 +1818,7 @@ class TestMaskedArrayMathMethodsComplex(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestMaskedArrayFunctions(NumpyTestCase):
+class TestMaskedArrayFunctions(TestCase):
     "Test class for miscellaneous functions."
     #
     def setUp(self):
@@ -2090,7 +2074,7 @@ class TestMaskedArrayFunctions(NumpyTestCase):
 
 #------------------------------------------------------------------------------
 
-class TestMaskedFields(NumpyTestCase):
+class TestMaskedFields(TestCase):
     #
     def setUp(self):
         ilist = [1,2,3,4,5]
@@ -2125,13 +2109,13 @@ class TestMaskedFields(NumpyTestCase):
         "Check setting an element of a record)"
         base = self.data['base']
         (base_a, base_b, base_c) = (base['a'], base['b'], base['c'])
-        base[0] = (np.pi, np.pi, 'pi')
+        base[0] = (pi, pi, 'pi')
         
         assert_equal(base_a.dtype, int)
         assert_equal(base_a.data, [3,2,3,4,5])
         
         assert_equal(base_b.dtype, float)
-        assert_equal(base_b.data, [np.pi, 2.2, 3.3, 4.4, 5.5])
+        assert_equal(base_b.data, [pi, 2.2, 3.3, 4.4, 5.5])
         
         assert_equal(base_c.dtype, '|S8')
         assert_equal(base_c.data, ['pi','two','three','four','five'])
@@ -2139,13 +2123,13 @@ class TestMaskedFields(NumpyTestCase):
     def test_set_record_slice(self):
         base = self.data['base']
         (base_a, base_b, base_c) = (base['a'], base['b'], base['c'])
-        base[:3] = (np.pi, np.pi, 'pi')
+        base[:3] = (pi, pi, 'pi')
         
         assert_equal(base_a.dtype, int)
         assert_equal(base_a.data, [3,3,3,4,5])
         
         assert_equal(base_b.dtype, float)
-        assert_equal(base_b.data, [np.pi, np.pi, np.pi, 4.4, 5.5])
+        assert_equal(base_b.data, [pi, pi, pi, 4.4, 5.5])
         
         assert_equal(base_c.dtype, '|S8')
         assert_equal(base_c.data, ['pi','pi','pi','four','five'])
@@ -2163,4 +2147,4 @@ class TestMaskedFields(NumpyTestCase):
 ###############################################################################
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

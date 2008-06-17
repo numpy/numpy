@@ -23,28 +23,28 @@ def assert_almost_equal(a, b, **kw):
         decimal = 12
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
-class LinalgTestCase(NumpyTestCase):
-    def check_single(self):
+class LinalgTestCase:
+    def test_single(self):
         a = array([[1.,2.], [3.,4.]], dtype=single)
         b = array([2., 1.], dtype=single)
         self.do(a, b)
 
-    def check_double(self):
+    def test_double(self):
         a = array([[1.,2.], [3.,4.]], dtype=double)
         b = array([2., 1.], dtype=double)
         self.do(a, b)
 
-    def check_csingle(self):
+    def test_csingle(self):
         a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=csingle)
         b = array([2.+1j, 1.+2j], dtype=csingle)
         self.do(a, b)
 
-    def check_cdouble(self):
+    def test_cdouble(self):
         a = array([[1.+2j,2+3j], [3+4j,4+5j]], dtype=cdouble)
         b = array([2.+1j, 1.+2j], dtype=cdouble)
         self.do(a, b)
 
-    def check_empty(self):
+    def test_empty(self):
         a = atleast_2d(array([], dtype = double))
         b = atleast_2d(array([], dtype = double))
         try:
@@ -53,79 +53,79 @@ class LinalgTestCase(NumpyTestCase):
         except linalg.LinAlgError, e:
             pass
 
-    def check_nonarray(self):
+    def test_nonarray(self):
         a = [[1,2], [3,4]]
         b = [2, 1]
         self.do(a,b)
 
-    def check_matrix_b_only(self):
+    def test_matrix_b_only(self):
         """Check that matrix type is preserved."""
         a = array([[1.,2.], [3.,4.]])
         b = matrix([2., 1.]).T
         self.do(a, b)
 
-    def check_matrix_a_and_b(self):
+    def test_matrix_a_and_b(self):
         """Check that matrix type is preserved."""
         a = matrix([[1.,2.], [3.,4.]])
         b = matrix([2., 1.]).T
         self.do(a, b)
 
 
-class TestSolve(LinalgTestCase):
+class TestSolve(LinalgTestCase, TestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot(a, x))
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
 
-class TestInv(LinalgTestCase):
+class TestInv(LinalgTestCase, TestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
         assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
 
-class TestEigvals(LinalgTestCase):
+class TestEigvals(LinalgTestCase, TestCase):
     def do(self, a, b):
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
 
-class TestEig(LinalgTestCase):
+class TestEig(LinalgTestCase, TestCase):
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
         assert imply(isinstance(a, matrix), isinstance(evectors, matrix))
 
-class TestSVD(LinalgTestCase):
+class TestSVD(LinalgTestCase, TestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
         assert_almost_equal(a, dot(multiply(u, s), vt))
         assert imply(isinstance(a, matrix), isinstance(u, matrix))
         assert imply(isinstance(a, matrix), isinstance(vt, matrix))
 
-class TestCondSVD(LinalgTestCase):
+class TestCondSVD(LinalgTestCase, TestCase):
     def do(self, a, b):
         c = asarray(a) # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a), decimal=5)
 
-class TestCond2(LinalgTestCase):
+class TestCond2(LinalgTestCase, TestCase):
     def do(self, a, b):
         c = asarray(a) # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a,2), decimal=5)
 
-class TestCondInf(NumpyTestCase):
+class TestCondInf(TestCase):
     def test(self):
         A = array([[1.,0,0],[0,-2.,0],[0,0,3.]])
         assert_almost_equal(linalg.cond(A,inf),3.)
 
-class TestPinv(LinalgTestCase):
+class TestPinv(LinalgTestCase, TestCase):
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
         assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
         assert imply(isinstance(a, matrix), isinstance(a_ginv, matrix))
 
-class TestDet(LinalgTestCase):
+class TestDet(LinalgTestCase, TestCase):
     def do(self, a, b):
         d = linalg.det(a)
         if asarray(a).dtype.type in (single, double):
@@ -135,7 +135,7 @@ class TestDet(LinalgTestCase):
         ev = linalg.eigvals(ad)
         assert_almost_equal(d, multiply.reduce(ev))
 
-class TestLstsq(LinalgTestCase):
+class TestLstsq(LinalgTestCase, TestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
         x, residuals, rank, sv = linalg.lstsq(a, b)
@@ -145,7 +145,7 @@ class TestLstsq(LinalgTestCase):
         assert imply(isinstance(b, matrix), isinstance(x, matrix))
         assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
 
-class TestMatrixPower(ParametricTestCase):
+class TestMatrixPower(TestCase):
     R90 = array([[0,1],[-1,0]])
     Arb22 = array([[4,-7],[-2,10]])
     noninv = array([[1,0],[0,0]])
@@ -158,6 +158,7 @@ class TestMatrixPower(ParametricTestCase):
 
     def test_large_power(self):
         assert_equal(matrix_power(self.R90,2L**100+2**10+2**5+1),self.R90)
+
     def test_large_power_trailing_zero(self):
         assert_equal(matrix_power(self.R90,2L**100+2**10+2**5),identity(2))
 
@@ -197,10 +198,11 @@ class TestMatrixPower(ParametricTestCase):
         self.assertRaises(numpy.linalg.linalg.LinAlgError,
                 lambda: matrix_power(self.noninv,-1))
 
-class TestBoolPower(NumpyTestCase):
-    def check_square(self):
+class TestBoolPower(TestCase):
+    def test_square(self):
         A = array([[True,False],[True,True]])
         assert_equal(matrix_power(A,2),A)
 
-if __name__ == '__main__':
-    NumpyTest().run()
+
+if __name__ == "__main__":
+    nose.run(argv=['', __file__])

@@ -1,14 +1,14 @@
 import numpy as np
 from numpy.testing import *
 
-class TestUfunc(NumpyTestCase):
+class TestUfunc(TestCase):
     def test_reduceat_shifting_sum(self) :
         L = 6
         x = np.arange(L)
         idx = np.array(zip(np.arange(L-2), np.arange(L-2)+2)).ravel()
         assert_array_equal(np.add.reduceat(x,idx)[::2],
                            [1,3,5,7])
-    def check_generic_loops(self) :
+    def test_generic_loops(self) :
         """Test generic loops.
 
         The loops to be tested are:
@@ -147,7 +147,7 @@ class TestUfunc(NumpyTestCase):
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
 
-    def check_all_ufunc(self) :
+    def test_all_ufunc(self) :
         """Try to check presence and results of all ufuncs.
 
         The list of ufuncs comes from generate_umath.py and is as follows:
@@ -232,5 +232,6 @@ class TestUfunc(NumpyTestCase):
         """
         pass
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

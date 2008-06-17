@@ -6,7 +6,7 @@ restore_path()
 
 rlevel = 1
 
-class TestRegression(NumpyTestCase):
+class TestRegression(TestCase):
     def test_polyfit_build(self,level=rlevel):
         """Ticket #628"""
         ref = [-1.06123820e-06, 5.70886914e-04, -1.13822012e-01,
@@ -30,4 +30,4 @@ class TestRegression(NumpyTestCase):
 
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

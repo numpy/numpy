@@ -3,7 +3,8 @@ import types, time
 from numpy.ma import *
 from numpy.core.numerictypes import float32
 from numpy.ma.core import umath
-from numpy.testing import NumpyTestCase, NumpyTest
+from numpy.testing import *
+
 pi = numpy.pi
 def eq(v,w, msg=''):
     result = allclose(v,w)
@@ -14,11 +15,7 @@ def eq(v,w, msg=''):
 %s"""% (msg, str(v), str(w))
     return result
 
-class TestMa(NumpyTestCase):
-    def __init__(self, *args, **kwds):
-        NumpyTestCase.__init__(self, *args, **kwds)
-        self.setUp()
-
+class TestMa(TestCase):
     def setUp (self):
         x=numpy.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
         y=numpy.array([5.,0.,3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
@@ -34,7 +31,7 @@ class TestMa(NumpyTestCase):
         xm.set_fill_value(1.e+20)
         self.d = (x, y, a10, m1, m2, xm, ym, z, zm, xf, s)
 
-    def check_testBasic1d(self):
+    def test_testBasic1d(self):
         "Test of basic array creation and properties in 1 dimension."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         self.failIf(isMaskedArray(x))
@@ -48,7 +45,7 @@ class TestMa(NumpyTestCase):
         self.failUnless(eq(filled(xm, 1.e20), xf))
         self.failUnless(eq(x, xm))
 
-    def check_testBasic2d(self):
+    def test_testBasic2d(self):
         "Test of basic array creation and properties in 2 dimensions."
         for s in [(4,3), (6,2)]:
             (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
@@ -69,7 +66,7 @@ class TestMa(NumpyTestCase):
             self.failUnless(eq(x, xm))
             self.setUp()
 
-    def check_testArithmetic (self):
+    def test_testArithmetic (self):
         "Test of basic arithmetic."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         a2d = array([[1,2],[0,4]])
@@ -111,13 +108,13 @@ class TestMa(NumpyTestCase):
             numpy.seterr(**olderr)
 
 
-    def check_testMixedArithmetic(self):
+    def test_testMixedArithmetic(self):
         na = numpy.array([1])
         ma = array([1])
         self.failUnless(isinstance(na + ma, MaskedArray))
         self.failUnless(isinstance(ma + na, MaskedArray))
 
-    def check_testUfuncs1 (self):
+    def test_testUfuncs1 (self):
         "Test various functions such as sin, cos."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         self.failUnless (eq(numpy.cos(x), cos(xm)))
@@ -149,7 +146,7 @@ class TestMa(NumpyTestCase):
         self.failUnless (eq(numpy.concatenate((x,y)), concatenate((xm,y))))
         self.failUnless (eq(numpy.concatenate((x,y,x)), concatenate((x,ym,x))))
 
-    def check_xtestCount (self):
+    def test_xtestCount (self):
         "Test count"
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
         self.failUnless( isinstance(count(ott), types.IntType))
@@ -163,15 +160,19 @@ class TestMa(NumpyTestCase):
         assert getmask(count(ott,0)) is nomask
         self.failUnless (eq([1,2],count(ott,0)))
 
-    def check_testMinMax (self):
+    def test_testMinMax (self):
         "Test minimum and maximum."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         xr = numpy.ravel(x) #max doesn't work if shaped
         xmr = ravel(xm)
-        self.failUnless (eq(max(xr), maximum(xmr))) #true because of careful selection of data
-        self.failUnless (eq(min(xr), minimum(xmr))) #true because of careful selection of data
 
-    def check_testAddSumProd (self):
+        #true because of careful selection of data
+        self.failUnless(eq(max(xr), maximum(xmr))) 
+
+        #true because of careful selection of data
+        self.failUnless(eq(min(xr), minimum(xmr))) 
+
+    def test_testAddSumProd (self):
         "Test add, sum, product."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         self.failUnless (eq(numpy.add.reduce(x), add.reduce(x)))
@@ -183,15 +184,17 @@ class TestMa(NumpyTestCase):
         self.failUnless (eq(numpy.sum(x,0), sum(x,0)))
         self.failUnless (eq(numpy.product(x,axis=0), product(x,axis=0)))
         self.failUnless (eq(numpy.product(x,0), product(x,0)))
-        self.failUnless (eq(numpy.product(filled(xm,1),axis=0), product(xm,axis=0)))
+        self.failUnless (eq(numpy.product(filled(xm,1),axis=0), 
+                            product(xm,axis=0)))
         if len(s) > 1:
-            self.failUnless (eq(numpy.concatenate((x,y),1), concatenate((xm,ym),1)))
+            self.failUnless (eq(numpy.concatenate((x,y),1), 
+                                concatenate((xm,ym),1)))
             self.failUnless (eq(numpy.add.reduce(x,1), add.reduce(x,1)))
             self.failUnless (eq(numpy.sum(x,1), sum(x,1)))
             self.failUnless (eq(numpy.product(x,1), product(x,1)))
 
 
-    def check_testCI(self):
+    def test_testCI(self):
         "Test of conversions and indexing"
         x1 = numpy.array([1,2,4,3])
         x2 = array(x1, mask = [1,0,0,0])
@@ -240,7 +243,7 @@ class TestMa(NumpyTestCase):
         self.assertEqual(s1, s2)
         assert x1[1:1].shape == (0,)
 
-    def check_testCopySize(self):
+    def test_testCopySize(self):
         "Tests of some subtle points of copying and sizing."
         n = [0,0,1,0,0]
         m = make_mask(n)
@@ -279,7 +282,7 @@ class TestMa(NumpyTestCase):
         y6 = repeat(x4, 2, axis=0)
         self.failUnless( eq(y5, y6))
 
-    def check_testPut(self):
+    def test_testPut(self):
         "Test of put"
         d = arange(5)
         n = [0,0,0,1,1]
@@ -299,14 +302,14 @@ class TestMa(NumpyTestCase):
         self.failUnless( x[3] is masked)
         self.failUnless( x[4] is masked)
 
-    def check_testMaPut(self):
+    def test_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
         i = numpy.nonzero(m)[0]
         put(ym, i, zm)
         assert all(take(ym, i, axis=0) == zm)
 
-    def check_testOddFeatures(self):
+    def test_testOddFeatures(self):
         "Test of other odd features"
         x = arange(20); x=x.reshape(4,5)
         x.flat[5] = 12
@@ -358,7 +361,8 @@ class TestMa(NumpyTestCase):
         assert z[1] is not masked
         assert z[2] is masked
         assert eq(masked_where(greater(x, 2), x), masked_greater(x,2))
-        assert eq(masked_where(greater_equal(x, 2), x), masked_greater_equal(x,2))
+        assert eq(masked_where(greater_equal(x, 2), x), 
+                  masked_greater_equal(x,2))
         assert eq(masked_where(less(x, 2), x), masked_less(x,2))
         assert eq(masked_where(less_equal(x, 2), x), masked_less_equal(x,2))
         assert eq(masked_where(not_equal(x, 2), x), masked_not_equal(x,2))
@@ -366,10 +370,14 @@ class TestMa(NumpyTestCase):
         assert eq(masked_where(not_equal(x,2), x), masked_not_equal(x,2))
         assert eq(masked_inside(range(5), 1, 3), [0, 199, 199, 199, 4])
         assert eq(masked_outside(range(5), 1, 3),[199,1,2,3,199])
-        assert eq(masked_inside(array(range(5), mask=[1,0,0,0,0]), 1, 3).mask, [1,1,1,1,0])
-        assert eq(masked_outside(array(range(5), mask=[0,1,0,0,0]), 1, 3).mask, [1,1,0,0,1])
-        assert eq(masked_equal(array(range(5), mask=[1,0,0,0,0]), 2).mask, [1,0,1,0,0])
-        assert eq(masked_not_equal(array([2,2,1,2,1], mask=[1,0,0,0,0]), 2).mask, [1,0,1,0,1])
+        assert eq(masked_inside(array(range(5), mask=[1,0,0,0,0]), 1, 3).mask, 
+                  [1,1,1,1,0])
+        assert eq(masked_outside(array(range(5), mask=[0,1,0,0,0]), 1, 3).mask,
+                  [1,1,0,0,1])
+        assert eq(masked_equal(array(range(5), mask=[1,0,0,0,0]), 2).mask, 
+                  [1,0,1,0,0])
+        assert eq(masked_not_equal(array([2,2,1,2,1], mask=[1,0,0,0,0]), 2).mask, 
+                  [1,0,1,0,1])
         assert eq(masked_where([1,1,0,0,0], [1,2,3,4,5]), [99,99,3,4,5])
         atest = ones((10,10,10), dtype=float32)
         btest = zeros(atest.shape, MaskType)
@@ -396,7 +404,7 @@ class TestMa(NumpyTestCase):
         z = where(c, 1, masked)
         assert eq(z, [99, 1, 1, 99, 99, 99])
 
-    def check_testMinMax(self):
+    def test_testMinMax(self):
         "Test of minumum, maximum."
         assert eq(minimum([1,2,3],[4,0,9]), [1,0,3])
         assert eq(maximum([1,2,3],[4,0,9]), [4,2,9])
@@ -409,7 +417,7 @@ class TestMa(NumpyTestCase):
         assert minimum(x) == 0
         assert maximum(x) == 4
 
-    def check_testTakeTransposeInnerOuter(self):
+    def test_testTakeTransposeInnerOuter(self):
         "Test of take, transpose, inner, outer products"
         x = arange(24)
         y = numpy.arange(24)
@@ -429,7 +437,7 @@ class TestMa(NumpyTestCase):
         assert t[1] == 2
         assert t[2] == 3
 
-    def check_testInplace(self):
+    def test_testInplace(self):
         """Test of inplace operations and rich comparisons"""
         y = arange(10)
 
@@ -479,7 +487,7 @@ class TestMa(NumpyTestCase):
         x += 1.
         assert eq(x, y+1.)
 
-    def check_testPickle(self):
+    def test_testPickle(self):
         "Test of pickling"
         import pickle
         x = arange(12)
@@ -489,7 +497,7 @@ class TestMa(NumpyTestCase):
         y = pickle.loads(s)
         assert eq(x,y)
 
-    def check_testMasked(self):
+    def test_testMasked(self):
         "Test of masked element"
         xx=arange(6)
         xx[1] = masked
@@ -502,7 +510,7 @@ class TestMa(NumpyTestCase):
         #self.failUnlessRaises(Exception, lambda x,y: x+y, masked, xx)
         #self.failUnlessRaises(Exception, lambda x,y: x+y, xx, masked)
 
-    def check_testAverage1(self):
+    def test_testAverage1(self):
         "Test of average."
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
         self.failUnless(eq(2.0, average(ott,axis=0)))
@@ -521,7 +529,7 @@ class TestMa(NumpyTestCase):
         result, wts = average(ott, axis=0, returned=1)
         self.failUnless(eq(wts, [1., 0.]))
 
-    def check_testAverage2(self):
+    def test_testAverage2(self):
         "More tests of average."
         w1 = [0,1,1,1,1,0]
         w2 = [[0,1,1,1,1,0],[1,0,0,0,0,1]]
@@ -529,12 +537,16 @@ class TestMa(NumpyTestCase):
         self.failUnless(allclose(average(x, axis=0), 2.5))
         self.failUnless(allclose(average(x, axis=0, weights=w1), 2.5))
         y=array([arange(6), 2.0*arange(6)])
-        self.failUnless(allclose(average(y, None), numpy.add.reduce(numpy.arange(6))*3./12.))
+        self.failUnless(allclose(average(y, None), 
+                                 numpy.add.reduce(numpy.arange(6))*3./12.))
         self.failUnless(allclose(average(y, axis=0), numpy.arange(6) * 3./2.))
-        self.failUnless(allclose(average(y, axis=1), [average(x,axis=0), average(x,axis=0) * 2.0]))
+        self.failUnless(allclose(average(y, axis=1), 
+                                 [average(x,axis=0), average(x,axis=0) * 2.0]))
         self.failUnless(allclose(average(y, None, weights=w2), 20./6.))
-        self.failUnless(allclose(average(y, axis=0, weights=w2), [0.,1.,2.,3.,4.,10.]))
-        self.failUnless(allclose(average(y, axis=1), [average(x,axis=0), average(x,axis=0) * 2.0]))
+        self.failUnless(allclose(average(y, axis=0, weights=w2), 
+                                 [0.,1.,2.,3.,4.,10.]))
+        self.failUnless(allclose(average(y, axis=1), 
+                                 [average(x,axis=0), average(x,axis=0) * 2.0]))
         m1 = zeros(6)
         m2 = [0,0,1,1,0,0]
         m3 = [[0,0,1,1,0,0],[0,1,1,1,1,0]]
@@ -549,7 +561,8 @@ class TestMa(NumpyTestCase):
         self.failUnless(allclose(average(z, None), 20./6.))
         self.failUnless(allclose(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5]))
         self.failUnless(allclose(average(z, axis=1), [2.5, 5.0]))
-        self.failUnless(allclose( average(z,axis=0, weights=w2), [0.,1., 99., 99., 4.0, 10.0]))
+        self.failUnless(allclose( average(z,axis=0, weights=w2), 
+                                  [0.,1., 99., 99., 4.0, 10.0]))
 
         a = arange(6)
         b = arange(6) * 3
@@ -573,7 +586,7 @@ class TestMa(NumpyTestCase):
         a2dma = average(a2dm, axis=1)
         self.failUnless(eq(a2dma, [1.5, 4.0]))
 
-    def check_testToPython(self):
+    def test_testToPython(self):
         self.assertEqual(1, int(array(1)))
         self.assertEqual(1.0, float(array(1)))
         self.assertEqual(1, int(array([[[1]]])))
@@ -582,7 +595,7 @@ class TestMa(NumpyTestCase):
         self.failUnlessRaises(ValueError, bool, array([0,1]))
         self.failUnlessRaises(ValueError, bool, array([0,0],mask=[0,1]))
 
-    def check_testScalarArithmetic(self):
+    def test_testScalarArithmetic(self):
         xm = array(0, mask=1)
         self.failUnless((1/array(0)).mask)
         self.failUnless((1 + xm).mask)
@@ -595,7 +608,7 @@ class TestMa(NumpyTestCase):
         self.failUnless(x.filled() == x.data)
         self.failUnlessEqual(str(xm), str(masked_print_option))
 
-    def check_testArrayMethods(self):
+    def test_testArrayMethods(self):
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
         self.failUnless(eq(a.any(), a.data.any()))
@@ -612,29 +625,29 @@ class TestMa(NumpyTestCase):
         self.failUnless(eq(a.take([1,2]), a.data.take([1,2])))
         self.failUnless(eq(m.transpose(), m.data.transpose()))
 
-    def check_testArrayAttributes(self):
+    def test_testArrayAttributes(self):
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
         self.failUnlessEqual(a.ndim, 1)
 
-    def check_testAPI(self):
+    def test_testAPI(self):
         self.failIf([m for m in dir(numpy.ndarray)
                      if m not in dir(MaskedArray) and not m.startswith('_')])
 
-    def check_testSingleElementSubscript(self):
+    def test_testSingleElementSubscript(self):
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
         self.failUnlessEqual(a[0].shape, ())
         self.failUnlessEqual(b[0].shape, ())
         self.failUnlessEqual(b[1].shape, ())
 
-class TestUfuncs(NumpyTestCase):
+class TestUfuncs(TestCase):
     def setUp(self):
         self.d = (array([1.0, 0, -1, pi/2]*2, mask=[0,1]+[0]*6),
                   array([1.0, 0, -1, pi/2]*2, mask=[1,0]+[0]*6),)
 
 
-    def check_testUfuncRegression(self):
+    def test_testUfuncRegression(self):
         for f in ['sqrt', 'log', 'log10', 'exp', 'conjugate',
                   'sin', 'cos', 'tan',
                   'arcsin', 'arccos', 'arctan',
@@ -661,8 +674,11 @@ class TestUfuncs(NumpyTestCase):
             mf = getattr(numpy.ma, f)
             args = self.d[:uf.nin]
             olderr = numpy.geterr()
-            if f in ['sqrt', 'arctanh', 'arcsin', 'arccos', 'arccosh', 'arctanh', 'log',
-                     'log10','divide','true_divide', 'floor_divide', 'remainder', 'fmod']:
+            f_invalid_ignore = ['sqrt', 'arctanh', 'arcsin', 'arccos', 
+                                'arccosh', 'arctanh', 'log', 'log10','divide',
+                                'true_divide', 'floor_divide', 'remainder', 
+                                'fmod']
+            if f in f_invalid_ignore:
                 numpy.seterr(invalid='ignore')
             if f in ['arctanh', 'log', 'log10']:
                 numpy.seterr(divide='ignore')
@@ -695,7 +711,7 @@ class TestUfuncs(NumpyTestCase):
             self.failUnless(eq(nonzero(x), [0]))
 
 
-class TestArrayMethods(NumpyTestCase):
+class TestArrayMethods(TestCase):
 
     def setUp(self):
         x = numpy.array([ 8.375,  7.545,  8.828,  8.5  ,  1.757,  5.928,
@@ -799,56 +815,55 @@ def eqmask(m1, m2):
         return m1 is nomask
     return (m1 == m2).all()
 
-def timingTest():
-    for f in [testf, testinplace]:
-        for n in [1000,10000,50000]:
-            t = testta(n, f)
-            t1 = testtb(n, f)
-            t2 = testtc(n, f)
-            print f.test_name
-            print """\
-n = %7d
-numpy time (ms) %6.1f
-MA maskless ratio %6.1f
-MA masked ratio %6.1f
-""" % (n, t*1000.0, t1/t, t2/t)
+#def timingTest():
+#    for f in [testf, testinplace]:
+#        for n in [1000,10000,50000]:
+#            t = testta(n, f)
+#            t1 = testtb(n, f)
+#            t2 = testtc(n, f)
+#            print f.test_name
+#            print """\
+#n = %7d
+#numpy time (ms) %6.1f
+#MA maskless ratio %6.1f
+#MA masked ratio %6.1f
+#""" % (n, t*1000.0, t1/t, t2/t)
 
-def testta(n, f):
-    x=numpy.arange(n) + 1.0
-    tn0 = time.time()
-    z = f(x)
-    return time.time() - tn0
+#def testta(n, f):
+#    x=numpy.arange(n) + 1.0
+#    tn0 = time.time()
+#    z = f(x)
+#    return time.time() - tn0
 
-def testtb(n, f):
-    x=arange(n) + 1.0
-    tn0 = time.time()
-    z = f(x)
-    return time.time() - tn0
+#def testtb(n, f):
+#    x=arange(n) + 1.0
+#    tn0 = time.time()
+#    z = f(x)
+#    return time.time() - tn0
 
-def testtc(n, f):
-    x=arange(n) + 1.0
-    x[0] = masked
-    tn0 = time.time()
-    z = f(x)
-    return time.time() - tn0
+#def testtc(n, f):
+#    x=arange(n) + 1.0
+#    x[0] = masked
+#    tn0 = time.time()
+#    z = f(x)
+#    return time.time() - tn0
 
-def testf(x):
-    for i in range(25):
-        y = x **2 +  2.0 * x - 1.0
-        w = x **2 +  1.0
-        z = (y / w) ** 2
-    return z
-testf.test_name = 'Simple arithmetic'
+#def testf(x):
+#    for i in range(25):
+#        y = x **2 +  2.0 * x - 1.0
+#        w = x **2 +  1.0
+#        z = (y / w) ** 2
+#    return z
+#testf.test_name = 'Simple arithmetic'
 
-def testinplace(x):
-    for i in range(25):
-        y = x**2
-        y += 2.0*x
-        y -= 1.0
-        y /= x
-    return y
-testinplace.test_name = 'Inplace operations'
+#def testinplace(x):
+#    for i in range(25):
+#        y = x**2
+#        y += 2.0*x
+#        y -= 1.0
+#        y /= x
+#    return y
+#testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    NumpyTest('numpy.ma').run()
-    #timingTest()
+    nose.run(argv=['', __file__])

@@ -31,7 +31,6 @@ __all__ += rec.__all__
 __all__ += char.__all__
 
 
-
-def test(level=1, verbosity=1):
-    from numpy.testing import NumpyTest
-    return NumpyTest().test(level, verbosity)
+from numpy.testing.pkgtester import Tester
+test = Tester().test
+bench = Tester().bench

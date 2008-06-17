@@ -11,21 +11,15 @@ __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
-import numpy as np
-from numpy.testing import NumpyTest, NumpyTestCase
-from numpy.testing.utils import build_err_msg
-
-import numpy.ma.testutils
+import numpy
+from numpy.testing import *
 from numpy.ma.testutils import *
-
-import numpy.ma.core
 from numpy.ma.core import *
-import numpy.ma.extras
 from numpy.ma.extras import *
 
-class TestAverage(NumpyTestCase):
+class TestAverage(TestCase):
     "Several tests of average. Why so many ? Good point..."
-    def check_testAverage1(self):
+    def test_testAverage1(self):
         "Test of average."
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
         assert_equal(2.0, average(ott,axis=0))
@@ -44,7 +38,7 @@ class TestAverage(NumpyTestCase):
         result, wts = average(ott, axis=0, returned=1)
         assert_equal(wts, [1., 0.])
 
-    def check_testAverage2(self):
+    def test_testAverage2(self):
         "More tests of average."
         w1 = [0,1,1,1,1,0]
         w2 = [[0,1,1,1,1,0],[1,0,0,0,0,1]]
@@ -77,7 +71,7 @@ class TestAverage(NumpyTestCase):
         assert_equal(average(z, axis=1), [2.5, 5.0])
         assert_equal(average(z,axis=0, weights=w2), [0.,1., 99., 99., 4.0, 10.0])
 
-    def check_testAverage3(self):
+    def test_testAverage3(self):
         "Yet more tests of average!"
         a = arange(6)
         b = arange(6) * 3
@@ -101,9 +95,9 @@ class TestAverage(NumpyTestCase):
         a2dma = average(a2dm, axis=1)
         assert_equal(a2dma, [1.5, 4.0])
 
-class TestConcatenator(NumpyTestCase):
+class TestConcatenator(TestCase):
     "Tests for mr_, the equivalent of r_ for masked arrays."
-    def check_1d(self):
+    def test_1d(self):
         "Tests mr_ on 1D arrays."
         assert_array_equal(mr_[1,2,3,4,5,6],array([1,2,3,4,5,6]))
         b = ones(5)
@@ -114,7 +108,7 @@ class TestConcatenator(NumpyTestCase):
         assert_array_equal(c,[1,1,1,1,1,0,0,1,1,1,1,1])
         assert_array_equal(c.mask, mr_[m,0,0,m])
 
-    def check_2d(self):
+    def test_2d(self):
         "Tests mr_ on 2D arrays."
         a_1 = rand(5,5)
         a_2 = rand(5,5)
@@ -133,9 +127,9 @@ class TestConcatenator(NumpyTestCase):
         assert_array_equal(d[5:,:],b_2)
         assert_array_equal(d.mask, np.r_[m_1,m_2])
 
-class TestNotMasked(NumpyTestCase):
+class TestNotMasked(TestCase):
     "Tests notmasked_edges and notmasked_contiguous."
-    def check_edges(self):
+    def test_edges(self):
         "Tests unmasked_edges"
         a = masked_array(np.arange(24).reshape(3,8),
                          mask=[[0,0,0,0,1,1,1,0],
@@ -152,7 +146,7 @@ class TestNotMasked(NumpyTestCase):
         assert_equal(tmp[0], (array([0,2,]), array([0,0])))
         assert_equal(tmp[1], (array([0,2,]), array([7,7])))
 
-    def check_contiguous(self):
+    def test_contiguous(self):
         "Tests notmasked_contiguous"
         a = masked_array(np.arange(24).reshape(3,8),
                          mask=[[0,0,0,0,1,1,1,1],
@@ -175,9 +169,9 @@ class TestNotMasked(NumpyTestCase):
         assert_equal(tmp[2][-1], slice(7,7,None))
         assert_equal(tmp[2][-2], slice(0,5,None))
 
-class Test2DFunctions(NumpyTestCase):
+class Test2DFunctions(TestCase):
     "Tests 2D functions"
-    def check_compress2d(self):
+    def test_compress2d(self):
         "Tests compress2d"
         x = array(np.arange(9).reshape(3,3), mask=[[1,0,0],[0,0,0],[0,0,0]])
         assert_equal(compress_rowcols(x), [[4,5],[7,8]] )
@@ -196,7 +190,7 @@ class Test2DFunctions(NumpyTestCase):
         assert_equal(compress_rowcols(x,0).size, 0 )
         assert_equal(compress_rowcols(x,1).size, 0 )
     #
-    def check_mask_rowcols(self):
+    def test_mask_rowcols(self):
         "Tests mask_rowcols."
         x = array(np.arange(9).reshape(3,3), mask=[[1,0,0],[0,0,0],[0,0,0]])
         assert_equal(mask_rowcols(x).mask, [[1,1,1],[1,0,0],[1,0,0]] )
@@ -322,19 +316,16 @@ class Test2DFunctions(NumpyTestCase):
         assert_equal(dx._data, np.r_[0,difx_d,0])
         assert_equal(dx._mask, np.r_[1,0,0,0,0,1])
 
-class TestApplyAlongAxis(NumpyTestCase):
+class TestApplyAlongAxis(TestCase):
     "Tests 2D functions"
-    def check_3d(self):
+    def test_3d(self):
         a = arange(12.).reshape(2,2,3)
         def myfunc(b):
             return b[1]
         xa = apply_along_axis(myfunc,2,a)
         assert_equal(xa,[[1,4],[7,10]])
 
-class TestMedian(NumpyTestCase):
-    def __init__(self, *args, **kwds):
-        NumpyTestCase.__init__(self, *args, **kwds)
-    #
+class TestMedian(TestCase):
     def test_2d(self):
         "Tests median w/ 2D"
         (n,p) = (101,30)
@@ -361,7 +352,7 @@ class TestMedian(NumpyTestCase):
         assert_equal(median(x,0), [[12,10],[8,9],[16,17]])
 
 
-class TestPolynomial(NumpyTestCase):
+class TestPolynomial(TestCase):
     #
     def test_polyfit(self):
         "Tests polyfit"
@@ -394,4 +385,4 @@ class TestPolynomial(NumpyTestCase):
 ###############################################################################
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

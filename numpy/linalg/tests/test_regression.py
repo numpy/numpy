@@ -9,7 +9,7 @@ restore_path()
 
 rlevel = 1
 
-class TestRegression(NumpyTestCase):
+class TestRegression(TestCase):
     def test_eig_build(self, level = rlevel):
         """Ticket #652"""
         rva = array([1.03221168e+02 +0.j,
@@ -54,5 +54,6 @@ class TestRegression(NumpyTestCase):
 
         assert_array_almost_equal(b, np.zeros((2, 2)))
 
+
 if __name__ == '__main__':
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

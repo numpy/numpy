@@ -40,19 +40,19 @@ m, = compile(fortran_code, modulenames = ['test_module_scalar_ext'])
 
 from numpy import *
 
-class TestM(NumpyTestCase):
+class TestM(TestCase):
 
-    def check_foo_simple(self, level=1):
+    def test_foo_simple(self, level=1):
         foo = m.foo
         r = foo(2)
         assert isinstance(r,int32),`type(r)`
         assert_equal(r,3)
 
-    def check_foo2_simple(self, level=1):
+    def test_foo2_simple(self, level=1):
         foo2 = m.foo2
         r = foo2(2)
         assert isinstance(r,int32),`type(r)`
         assert_equal(r,4)
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

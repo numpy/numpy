@@ -506,3 +506,7 @@ def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = StringIO(magic)
         yield raises(ValueError)(format.read_array), f
+
+
+if __name__ == "__main__":
+    nose.run(argv=['', __file__])

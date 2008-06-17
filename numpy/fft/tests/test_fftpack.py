@@ -10,15 +10,17 @@ def fft1(x):
     phase = np.arange(L).reshape(-1,1) * phase
     return np.sum(x*np.exp(phase),axis=1)
 
-class TestFFTShift(NumpyTestCase):
-    def check_fft_n(self):
+class TestFFTShift(TestCase):
+    def test_fft_n(self):
         self.failUnlessRaises(ValueError,np.fft.fft,[1,2,3],0)
 
-class TestFFT1D(NumpyTestCase):
-    def check_basic(self):
+
+class TestFFT1D(TestCase):
+    def test_basic(self):
         rand = np.random.random
         x = rand(30) + 1j*rand(30)
         assert_array_almost_equal(fft1(x), np.fft.fft(x))
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

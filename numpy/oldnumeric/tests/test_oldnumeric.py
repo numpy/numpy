@@ -6,7 +6,7 @@ from numpy.core.numeric import float32, float64, complex64, complex128, int8, \
         int16, int32, int64, uint, uint8, uint16, uint32, uint64
 
 class test_oldtypes(NumPyTestCase):
-    def check_oldtypes(self, level=1):
+    def test_oldtypes(self, level=1):
         a1 = array([0,1,0], Float)
         a2 = array([0,1,0], float)
         assert_array_equal(a1, a2)
@@ -83,4 +83,4 @@ class test_oldtypes(NumPyTestCase):
 
 
 if __name__ == "__main__":
-    NumPyTest().run()
+    nose.run(argv=['', __file__])

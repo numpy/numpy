@@ -10,13 +10,13 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
 
 # This compares scalarmath against ufuncs.
 
-class TestTypes(NumpyTestCase):
-    def check_types(self, level=1):
+class TestTypes(TestCase):
+    def test_types(self, level=1):
         for atype in types:
             a = atype(1)
             assert a == 1, "error with %r: got %r" % (atype,a)
 
-    def check_type_add(self, level=1):
+    def test_type_add(self, level=1):
         # list of types
         for k, atype in enumerate(types):
             vala = atype(3)
@@ -30,20 +30,21 @@ class TestTypes(NumpyTestCase):
                        val.dtype.char == valo.dtype.char, \
                        "error with (%d,%d)" % (k,l)
 
-    def check_type_create(self, level=1):
+    def test_type_create(self, level=1):
         for k, atype in enumerate(types):
             a = array([1,2,3],atype)
             b = atype([1,2,3])
             assert_equal(a,b)
 
-class TestPower(NumpyTestCase):
-    def check_small_types(self):
+
+class TestPower(TestCase):
+    def test_small_types(self):
         for t in [np.int8, np.int16]:
             a = t(3)
             b = a ** 4
             assert b == 81, "error with %r: got %r" % (t,b)
 
-    def check_large_types(self):
+    def test_large_types(self):
         for t in [np.int32, np.int64, np.float32, np.float64, np.longdouble]:
             a = t(51)
             b = a ** 4
@@ -53,7 +54,8 @@ class TestPower(NumpyTestCase):
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
 
-class TestConversion(NumpyTestCase):
+
+class TestConversion(TestCase):
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
@@ -64,6 +66,7 @@ class TestConversion(NumpyTestCase):
         a = np.array(l[:3], dtype=np.uint64)
         assert_equal(map(int,a), li[:3])
 
+
 #class TestRepr(NumpyTestCase):
 #    def check_repr(self):
 #        for t in types:
@@ -72,8 +75,9 @@ class TestConversion(NumpyTestCase):
 #            val2 = eval(val_repr)
 #            assert_equal( val, val2 )
 
-class TestRepr(NumpyTestCase):
-    def check_float_repr(self):
+
+class TestRepr(TestCase):
+    def test_float_repr(self):
         from numpy import nan, inf
         for t in [np.float32, np.float64, np.longdouble]:
             if t is np.longdouble: # skip it for now.
@@ -82,7 +86,8 @@ class TestRepr(NumpyTestCase):
             last_fraction_bit_idx = finfo.nexp + finfo.nmant
             last_exponent_bit_idx = finfo.nexp
             storage_bytes = np.dtype(t).itemsize*8
-            for which in ['small denorm','small norm']: # could add some more types here
+            # could add some more types to the list below
+            for which in ['small denorm','small norm']: 
                 # Values from http://en.wikipedia.org/wiki/IEEE_754
                 constr = array([0x00]*storage_bytes,dtype=np.uint8)
                 if which == 'small denorm':
@@ -106,5 +111,6 @@ class TestRepr(NumpyTestCase):
                 if not (val2 == 0 and val < 1e-100):
                     assert_equal(val, val2)
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

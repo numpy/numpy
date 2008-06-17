@@ -1,10 +1,10 @@
-from numpy.testing import NumpyTestCase, NumpyTest
+from numpy.testing import *
 
 from numpy.lib.machar import MachAr
 import numpy.core.numerictypes as ntypes
 from numpy import seterr, array
 
-class TestMachAr(NumpyTestCase):
+class TestMachAr(TestCase):
     def _run_machar_highprec(self):
         # Instanciate MachAr instance with high enough precision to cause
         # underflow
@@ -26,5 +26,6 @@ class TestMachAr(NumpyTestCase):
         finally:
             seterr(**serrstate)
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

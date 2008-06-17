@@ -1,8 +1,8 @@
+import sys
 from numpy.core import *
 from numpy.random import rand, randint, randn
 from numpy.testing import *
 from numpy.core.multiarray import dot as dot_
-import sys
 
 class Vec:
     def __init__(self,sequence=None):
@@ -31,7 +31,8 @@ class Vec:
         return "Vec("+repr(self.array.tolist())+")"
     __str__=__repr__
 
-class TestDot(NumpyTestCase):
+
+class TestDot(TestCase):
     def setUp(self):
         self.A = rand(10,8)
         self.b1 = rand(8,1)
@@ -40,87 +41,87 @@ class TestDot(NumpyTestCase):
         self.b4 = rand(10)
         self.N = 14
 
-    def check_matmat(self):
+    def test_matmat(self):
         A = self.A
         c1 = dot(A.transpose(), A)
         c2 = dot_(A.transpose(), A)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_matvec(self):
+    def test_matvec(self):
         A, b1 = self.A, self.b1
         c1 = dot(A, b1)
         c2 = dot_(A, b1)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_matvec2(self):
+    def test_matvec2(self):
         A, b2 = self.A, self.b2
         c1 = dot(A, b2)
         c2 = dot_(A, b2)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecmat(self):
+    def test_vecmat(self):
         A, b4 = self.A, self.b4
         c1 = dot(b4, A)
         c2 = dot_(b4, A)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecmat2(self):
+    def test_vecmat2(self):
         b3, A = self.b3, self.A
         c1 = dot(b3, A.transpose())
         c2 = dot_(b3, A.transpose())
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecmat3(self):
+    def test_vecmat3(self):
         A, b4 = self.A, self.b4
         c1 = dot(A.transpose(),b4)
         c2 = dot_(A.transpose(),b4)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecvecouter(self):
+    def test_vecvecouter(self):
         b1, b3 = self.b1, self.b3
         c1 = dot(b1, b3)
         c2 = dot_(b1, b3)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecvecinner(self):
+    def test_vecvecinner(self):
         b1, b3 = self.b1, self.b3
         c1 = dot(b3, b1)
         c2 = dot_(b3, b1)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_matscalar(self):
+    def test_matscalar(self):
         b1 = matrix(ones((3,3),dtype=complex))
         assert_equal(b1*1.0, b1)
 
-    def check_columnvect(self):
+    def test_columnvect1(self):
         b1 = ones((3,1))
         b2 = [5.3]
         c1 = dot(b1,b2)
         c2 = dot_(b1,b2)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_columnvect(self):
+    def test_columnvect2(self):
         b1 = ones((3,1)).transpose()
         b2 = [6.2]
         c1 = dot(b2,b1)
         c2 = dot_(b2,b1)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecscalar(self):
+    def test_vecscalar(self):
         b1 = rand(1,1)
         b2 = rand(1,8)
         c1 = dot(b1,b2)
         c2 = dot_(b1,b2)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecscalar2(self):
+    def test_vecscalar2(self):
         b1 = rand(8,1)
         b2 = rand(1,1)
         c1 = dot(b1,b2)
         c2 = dot_(b1,b2)
         assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_all(self):
+    def test_all(self):
         dims = [(),(1,),(1,1)]
         for dim1 in dims:
             for dim2 in dims:
@@ -131,7 +132,7 @@ class TestDot(NumpyTestCase):
                 assert (c1.shape == c2.shape)
                 assert_almost_equal(c1, c2, decimal=self.N)
 
-    def check_vecobject(self):
+    def test_vecobject(self):
         U_non_cont = transpose([[1.,1.],[1.,2.]])
         U_cont = ascontiguousarray(U_non_cont)
         x = array([Vec([1.,0.]),Vec([0.,1.])])
@@ -141,7 +142,7 @@ class TestDot(NumpyTestCase):
         assert_equal(zeros[1].array, zeros_test[1].array)
 
 
-class TestBoolScalar(NumpyTestCase):
+class TestBoolScalar(TestCase):
     def test_logical(self):
         f = False_
         t = True_
@@ -174,7 +175,7 @@ class TestBoolScalar(NumpyTestCase):
         self.failUnless((f ^ f) is f)
 
 
-class TestSeterr(NumpyTestCase):
+class TestSeterr(TestCase):
     def test_set(self):
         err = seterr()
         old = seterr(divide='warn')
@@ -186,7 +187,8 @@ class TestSeterr(NumpyTestCase):
         self.failUnless(new['divide'] == 'warn')
         seterr(**old)
         self.failUnless(geterr() == old)
-    def test_divideerr(self):
+
+    def test_divide_err(self):
         seterr(divide='raise')
         try:
             array([1.]) / array([0.])
@@ -198,8 +200,7 @@ class TestSeterr(NumpyTestCase):
         array([1.]) / array([0.])
 
 
-class TestFromiter(NumpyTestCase):
-
+class TestFromiter(TestCase):
     def makegen(self):
         for x in xrange(24):
             yield x**2
@@ -232,7 +233,8 @@ class TestFromiter(NumpyTestCase):
         self.failUnless(alltrue(a == expected,axis=0))
         self.failUnless(alltrue(a20 == expected[:20],axis=0))
 
-class TestIndex(NumpyTestCase):
+
+class TestIndex(TestCase):
     def test_boolean(self):
         a = rand(3,5,8)
         V = rand(5,8)
@@ -241,7 +243,8 @@ class TestIndex(NumpyTestCase):
         V[g1,g2] = -V[g1,g2]
         assert (array([a[0][V>0],a[1][V>0],a[2][V>0]]) == a[:,V>0]).all()
 
-class TestBinaryRepr(NumpyTestCase):
+
+class TestBinaryRepr(TestCase):
     def test_zero(self):
         assert_equal(binary_repr(0),'0')
 
@@ -252,6 +255,7 @@ class TestBinaryRepr(NumpyTestCase):
         assert_equal(binary_repr(-1), '-1')
         assert_equal(binary_repr(-1, width=8), '11111111')
 
+
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
     # Check flags
@@ -260,7 +264,7 @@ def assert_array_strict_equal(x, y):
     assert x.dtype.isnative == y.dtype.isnative
 
 
-class TestClip(NumpyTestCase):
+class TestClip(TestCase):
     def setUp(self):
         self.nr = 5
         self.nc = 3
@@ -509,7 +513,7 @@ class TestClip(NumpyTestCase):
         ac  = self.clip(a,m,M)
         assert_array_strict_equal(ac, act)
 
-    def test_type_cast_04(self):
+    def test_type_cast_05(self):
         "Test native int32 with double arrays min/max."
         a   = self._generate_int_data(self.nr, self.nc)
         m   = -0.5
@@ -518,7 +522,7 @@ class TestClip(NumpyTestCase):
         act = self.clip(a, m * zeros(a.shape), M)
         assert_array_strict_equal(ac, act)
 
-    def test_type_cast_05(self):
+    def test_type_cast_06(self):
         "Test native with NON native scalar min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = 0.5
@@ -528,7 +532,7 @@ class TestClip(NumpyTestCase):
         ac  = self.fastclip(a, m_s, M)
         assert_array_strict_equal(ac, act)
 
-    def test_type_cast_06(self):
+    def test_type_cast_07(self):
         "Test NON native with native array min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5 * ones(a.shape)
@@ -539,7 +543,7 @@ class TestClip(NumpyTestCase):
         ac  = self.fastclip(a_s, m, M)
         assert_array_strict_equal(ac, act)
 
-    def test_type_cast_07(self):
+    def test_type_cast_08(self):
         "Test NON native with native scalar min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5
@@ -550,7 +554,7 @@ class TestClip(NumpyTestCase):
         act = a_s.clip(m, M)
         assert_array_strict_equal(ac, act)
 
-    def test_type_cast_08(self):
+    def test_type_cast_09(self):
         "Test native with NON native array min/max."
         a   = self._generate_data(self.nr, self.nc)
         m   = -0.5 * ones(a.shape)
@@ -561,7 +565,7 @@ class TestClip(NumpyTestCase):
         act = self.clip(a, m_s, M)
         assert_array_strict_equal(ac, act)
 
-    def test_type_cast_09(self):
+    def test_type_cast_10(self):
         """Test native int32 with float min/max and float out for output argument."""
         a   = self._generate_int_data(self.nr, self.nc)
         b   = zeros(a.shape, dtype = float32)
@@ -571,7 +575,7 @@ class TestClip(NumpyTestCase):
         ac  = self.fastclip(a, m , M, out = b)
         assert_array_strict_equal(ac, act)
 
-    def test_type_cast_10(self):
+    def test_type_cast_11(self):
         "Test non native with native scalar, min/max, out non native"
         a   = self._generate_non_native_data(self.nr, self.nc)
         b   = a.copy()
@@ -583,7 +587,7 @@ class TestClip(NumpyTestCase):
         self.clip(a, m, M, out = bt)
         assert_array_strict_equal(b, bt)
 
-    def test_type_cast_11(self):
+    def test_type_cast_12(self):
         "Test native int32 input and min/max and float out"
         a   = self._generate_int_data(self.nr, self.nc)
         b   = zeros(a.shape, dtype = float32)
@@ -681,7 +685,7 @@ class TestClip(NumpyTestCase):
         self.assert_(a2 is a)
 
 
-class test_allclose_inf(ParametricTestCase):
+class test_allclose_inf(TestCase):
     rtol = 1e-5
     atol = 1e-8
 
@@ -691,7 +695,7 @@ class test_allclose_inf(ParametricTestCase):
     def tst_not_allclose(self,x,y):
         assert not allclose(x,y), "%s and %s shouldn't be close" % (x,y)
 
-    def testip_allclose(self):
+    def test_ip_allclose(self):
         """Parametric test factory."""
         arr = array([100,1000])
         aran = arange(125).reshape((5,5,5))
@@ -709,7 +713,7 @@ class test_allclose_inf(ParametricTestCase):
         for (x,y) in data:
             yield (self.tst_allclose,x,y)
 
-    def testip_not_allclose(self):
+    def test_ip_not_allclose(self):
         """Parametric test factory."""
         aran = arange(125).reshape((5,5,5))
 
@@ -737,7 +741,8 @@ class test_allclose_inf(ParametricTestCase):
         assert_array_equal(x,array([inf,1]))
         assert_array_equal(y,array([0,inf]))
 
-class TestStdVar(NumpyTestCase):
+
+class TestStdVar(TestCase):
     def setUp(self):
         self.A = array([1,-1,1,-1])
         self.real_var = 1
@@ -745,25 +750,27 @@ class TestStdVar(NumpyTestCase):
     def test_basic(self):
         assert_almost_equal(var(self.A),self.real_var)
         assert_almost_equal(std(self.A)**2,self.real_var)
-    def test_ddof1(self):
-        assert_almost_equal(var(self.A,ddof=1),self.real_var*len(self.A)/float(len(self.A)-1))
-        assert_almost_equal(std(self.A,ddof=1)**2,self.real_var*len(self.A)/float(len(self.A)-1))
-    def test_ddof2(self):
-        assert_almost_equal(var(self.A,ddof=2),self.real_var*len(self.A)/float(len(self.A)-2))
-        assert_almost_equal(std(self.A,ddof=2)**2,self.real_var*len(self.A)/float(len(self.A)-2))
 
-class TestStdVarComplex(NumpyTestCase):
+    def test_ddof1(self):
+        assert_almost_equal(var(self.A,ddof=1),
+                            self.real_var*len(self.A)/float(len(self.A)-1))
+        assert_almost_equal(std(self.A,ddof=1)**2,
+                            self.real_var*len(self.A)/float(len(self.A)-1))
+
+    def test_ddof2(self):
+        assert_almost_equal(var(self.A,ddof=2),
+                            self.real_var*len(self.A)/float(len(self.A)-2))
+        assert_almost_equal(std(self.A,ddof=2)**2,
+                            self.real_var*len(self.A)/float(len(self.A)-2))
+
+
+class TestStdVarComplex(TestCase):
     def test_basic(self):
         A = array([1,1.j,-1,-1.j])
         real_var = 1
         assert_almost_equal(var(A),real_var)
         assert_almost_equal(std(A)**2,real_var)
 
-import sys
-if sys.version_info[:2] >= (2, 5):
-    set_local_path()
-    from test_errstate import *
-    restore_path()
 
-if __name__ == '__main__':
-    NumpyTest().run()
+if __name__ == "__main__":
+    nose.run(argv=['', __file__])

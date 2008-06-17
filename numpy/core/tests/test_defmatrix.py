@@ -1,12 +1,12 @@
+import sys
 from numpy.testing import *
 set_package_path()
-import numpy.core;reload(numpy.core)
 from numpy.core import *
 import numpy as np
 restore_path()
 
-class TestCtor(NumpyTestCase):
-    def check_basic(self):
+class TestCtor(TestCase):
+    def test_basic(self):
         A = array([[1,2],[3,4]])
         mA = matrix(A)
         assert all(mA.A == A)
@@ -24,8 +24,9 @@ class TestCtor(NumpyTestCase):
         mvec = matrix(vec)
         assert mvec.shape == (1,5)
 
-class TestProperties(NumpyTestCase):
-    def check_sum(self):
+
+class TestProperties(TestCase):
+    def test_sum(self):
         """Test whether matrix.sum(axis=1) preserves orientation.
         Fails in NumPy <= 0.9.6.2127.
         """
@@ -40,7 +41,7 @@ class TestProperties(NumpyTestCase):
         assert_array_equal(sum1, M.sum(axis=1))
         assert sumall == M.sum()
 
-    def check_basic(self):
+    def test_basic(self):
         import numpy.linalg as linalg
 
         A = array([[1., 2.],
@@ -57,7 +58,7 @@ class TestProperties(NumpyTestCase):
         assert all(array(transpose(B) == mB.T))
         assert all(array(conjugate(transpose(B)) == mB.H))
 
-    def check_comparisons(self):
+    def test_comparisons(self):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
         mB = matrix(A) + 0.1
@@ -81,19 +82,20 @@ class TestProperties(NumpyTestCase):
         assert not all(abs(mA) > 0)
         assert all(abs(mB > 0))
 
-    def check_asmatrix(self):
+    def test_asmatrix(self):
         A = arange(100).reshape(10,10)
         mA = asmatrix(A)
         A[0,0] = -10
         assert A[0,0] == mA[0,0]
 
-    def check_noaxis(self):
+    def test_noaxis(self):
         A = matrix([[1,0],[0,1]])
         assert A.sum() == matrix(2)
         assert A.mean() == matrix(0.5)
 
-class TestCasting(NumpyTestCase):
-    def check_basic(self):
+
+class TestCasting(TestCase):
+    def test_basic(self):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
 
@@ -110,8 +112,9 @@ class TestCasting(NumpyTestCase):
         assert mC.dtype.type == complex128
         assert all(mA != mB)
 
-class TestAlgebra(NumpyTestCase):
-    def check_basic(self):
+
+class TestAlgebra(TestCase):
+    def test_basic(self):
         import numpy.linalg as linalg
 
         A = array([[1., 2.],
@@ -133,8 +136,9 @@ class TestAlgebra(NumpyTestCase):
         assert allclose((mA + mA).A, (A + A))
         assert allclose((3*mA).A, (3*A))
 
-class TestMatrixReturn(NumpyTestCase):
-    def check_instance_methods(self):
+
+class TestMatrixReturn(TestCase):
+    def test_instance_methods(self):
         a = matrix([1.0], dtype='f8')
         methodargs = {
             'astype' : ('intc',),
@@ -172,33 +176,35 @@ class TestMatrixReturn(NumpyTestCase):
         assert type(c) is matrix
         assert type(d) is matrix
 
-class TestIndexing(NumpyTestCase):
-    def check_basic(self):
+
+class TestIndexing(TestCase):
+    def test_basic(self):
         x = asmatrix(zeros((3,2),float))
         y = zeros((3,1),float)
         y[:,0] = [0.8,0.2,0.3]
         x[:,1] = y>0.5
         assert_equal(x, [[0,1],[0,0],[0,0]])
 
-class TestNewScalarIndexing(NumpyTestCase):
+
+class TestNewScalarIndexing(TestCase):
     def setUp(self):
         self.a = matrix([[1, 2],[3,4]])
 
-    def check_dimesions(self):
+    def test_dimesions(self):
         a = self.a
         x = a[0]
         assert_equal(x.ndim, 2)
 
-    def check_array_from_matrix_list(self):
+    def test_array_from_matrix_list(self):
         a = self.a
         x = array([a, a])
         assert_equal(x.shape, [2,2,2])
 
-    def check_array_to_list(self):
+    def test_array_to_list(self):
         a = self.a
         assert_equal(a.tolist(),[[1, 2], [3, 4]])
 
-    def check_fancy_indexing(self):
+    def test_fancy_indexing(self):
         a = self.a
         x = a[1, [0,1,0]]
         assert isinstance(x, matrix)
@@ -216,30 +222,36 @@ class TestNewScalarIndexing(NumpyTestCase):
 ##         assert_equal(x[0].shape,(1,3))
 ##         assert_equal(x[:,0].shape,(2,1))
 
-##         x = matrix(0)
-##         assert_equal(x[0,0],0)
-##         assert_equal(x[0],0)
-##         assert_equal(x[:,0].shape,x.shape)
+    def test_matrix_element(self):
+        x = matrix([[1,2,3],[4,5,6]])
+        assert_equal(x[0][0].shape,(1,3))
+        assert_equal(x[0].shape,(1,3))
+        assert_equal(x[:,0].shape,(2,1))
 
-    def check_scalar_indexing(self):
+        x = matrix(0)
+        assert_equal(x[0,0],0)
+        assert_equal(x[0],0)
+        assert_equal(x[:,0].shape,x.shape)
+
+    def test_scalar_indexing(self):
         x = asmatrix(zeros((3,2),float))
         assert_equal(x[0,0],x[0][0])
 
-    def check_row_column_indexing(self):
+    def test_row_column_indexing(self):
         x = asmatrix(np.eye(2))
         assert_array_equal(x[0,:],[[1,0]])
         assert_array_equal(x[1,:],[[0,1]])
         assert_array_equal(x[:,0],[[1],[0]])
         assert_array_equal(x[:,1],[[0],[1]])
 
-    def check_boolean_indexing(self):
+    def test_boolean_indexing(self):
         A = arange(6)
         A.shape = (3,2)
         x = asmatrix(A)
         assert_array_equal(x[:,array([True,False])],x[:,0])
         assert_array_equal(x[array([True,False,False]),:],x[0,:])
 
-    def check_list_indexing(self):
+    def test_list_indexing(self):
         A = arange(6)
         A.shape = (3,2)
         x = asmatrix(A)
@@ -247,6 +259,5 @@ class TestNewScalarIndexing(NumpyTestCase):
         assert_array_equal(x[[2,1,0],:],x[::-1,:])
 
 
-
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

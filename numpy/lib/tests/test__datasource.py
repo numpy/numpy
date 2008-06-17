@@ -67,7 +67,7 @@ def valid_httpfile():
 def invalid_httpfile():
     return http_fakefile
 
-class TestDataSourceOpen(NumpyTestCase):
+class TestDataSourceOpen(TestCase):
     def setUp(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
@@ -127,7 +127,7 @@ class TestDataSourceOpen(NumpyTestCase):
         self.assertEqual(magic_line, result)
 
 
-class TestDataSourceExists(NumpyTestCase):
+class TestDataSourceExists(TestCase):
     def setUp(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
@@ -157,7 +157,7 @@ class TestDataSourceExists(NumpyTestCase):
         self.assertEqual(self.ds.exists(tmpfile), False)
 
 
-class TestDataSourceAbspath(NumpyTestCase):
+class TestDataSourceAbspath(TestCase):
     def setUp(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.ds = datasource.DataSource(self.tmpdir)
@@ -222,7 +222,7 @@ class TestDataSourceAbspath(NumpyTestCase):
             os.sep = orig_os_sep
 
 
-class TestRepositoryAbspath(NumpyTestCase):
+class TestRepositoryAbspath(TestCase):
     def setUp(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
@@ -255,7 +255,7 @@ class TestRepositoryAbspath(NumpyTestCase):
             os.sep = orig_os_sep
 
 
-class TestRepositoryExists(NumpyTestCase):
+class TestRepositoryExists(TestCase):
     def setUp(self):
         self.tmpdir = mkdtemp()
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
@@ -288,7 +288,7 @@ class TestRepositoryExists(NumpyTestCase):
         assert self.repos.exists(tmpfile)
 
 
-class TestOpenFunc(NumpyTestCase):
+class TestOpenFunc(TestCase):
     def setUp(self):
         self.tmpdir = mkdtemp()
 
@@ -304,4 +304,4 @@ class TestOpenFunc(NumpyTestCase):
 
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

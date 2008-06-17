@@ -27,10 +27,10 @@ from numpy.ma.mrecords import MaskedRecords, mrecarray,\
     fromarrays, fromtextfile, fromrecords, addfield
 
 #..............................................................................
-class TestMRecords(NumpyTestCase):
+class TestMRecords(TestCase):
     "Base test class for MaskedArrays."
     def __init__(self, *args, **kwds):
-        NumpyTestCase.__init__(self, *args, **kwds)
+        TestCase.__init__(self, *args, **kwds)
         self.setup()
 
     def setup(self):
@@ -318,10 +318,10 @@ class TestMRecords(NumpyTestCase):
                      [(1,1.1,None),(2,2.2,'two'),(None,None,'three')])
 
 ################################################################################
-class TestMRecordsImport(NumpyTestCase):
+class TestMRecordsImport(TestCase):
     "Base test class for MaskedArrays."
     def __init__(self, *args, **kwds):
-        NumpyTestCase.__init__(self, *args, **kwds)
+        TestCase.__init__(self, *args, **kwds)
         self.setup()
 
     def setup(self):
@@ -429,4 +429,4 @@ class TestMRecordsImport(NumpyTestCase):
 ###############################################################################
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

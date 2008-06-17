@@ -51,11 +51,11 @@ m,m2 = compile(fortran_code, modulenames=['test_module_module_ext',
 
 from numpy import *
 
-class TestM(NumpyTestCase):
+class TestM(TestCase):
 
-    def check_foo_simple(self, level=1):
+    def test_foo_simple(self, level=1):
         foo = m.foo
         foo()
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

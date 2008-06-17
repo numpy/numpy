@@ -18,10 +18,10 @@ ucs4_value = u'\U0010FFFF'
 #    Creation tests
 ############################################################
 
-class create_zeros(NumpyTestCase):
+class create_zeros:
     """Check the creation of zero-valued arrays"""
 
-    def content_test(self, ua, ua_scalar, nbytes):
+    def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
         self.assert_(int(ua.dtype.str[2:]) == self.ulen)
@@ -37,41 +37,43 @@ class create_zeros(NumpyTestCase):
         else:
             self.assert_(len(buffer(ua_scalar)) == 0)
 
-    def check_zeros0D(self):
+    def test_zeros0D(self):
         """Check creation of 0-dimensional objects"""
         ua = zeros((), dtype='U%s' % self.ulen)
-        self.content_test(ua, ua[()], 4*self.ulen)
+        self.content_check(ua, ua[()], 4*self.ulen)
 
-    def check_zerosSD(self):
+    def test_zerosSD(self):
         """Check creation of single-dimensional objects"""
         ua = zeros((2,), dtype='U%s' % self.ulen)
-        self.content_test(ua, ua[0], 4*self.ulen*2)
-        self.content_test(ua, ua[1], 4*self.ulen*2)
+        self.content_check(ua, ua[0], 4*self.ulen*2)
+        self.content_check(ua, ua[1], 4*self.ulen*2)
 
-    def check_zerosMD(self):
+    def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
         ua = zeros((2,3,4), dtype='U%s' % self.ulen)
-        self.content_test(ua, ua[0,0,0], 4*self.ulen*2*3*4)
-        self.content_test(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[0,0,0], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
 
 
-class test_create_zeros_1(create_zeros):
+class test_create_zeros_1(create_zeros, TestCase):
     """Check the creation of zero-valued arrays (size 1)"""
     ulen = 1
 
-class test_create_zeros_2(create_zeros):
+
+class test_create_zeros_2(create_zeros, TestCase):
     """Check the creation of zero-valued arrays (size 2)"""
     ulen = 2
 
-class test_create_zeros_1009(create_zeros):
+
+class test_create_zeros_1009(create_zeros, TestCase):
     """Check the creation of zero-valued arrays (size 1009)"""
     ulen = 1009
 
 
-class create_values(NumpyTestCase):
+class create_values:
     """Check the creation of unicode arrays with values"""
 
-    def content_test(self, ua, ua_scalar, nbytes):
+    def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
         self.assert_(int(ua.dtype.str[2:]) == self.ulen)
@@ -95,50 +97,55 @@ class create_values(NumpyTestCase):
                 # regular 2-byte word
                 self.assert_(len(buffer(ua_scalar)) == 2*self.ulen)
 
-    def check_values0D(self):
+    def test_values0D(self):
         """Check creation of 0-dimensional objects with values"""
         ua = array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
-        self.content_test(ua, ua[()], 4*self.ulen)
+        self.content_check(ua, ua[()], 4*self.ulen)
 
-    def check_valuesSD(self):
+    def test_valuesSD(self):
         """Check creation of single-dimensional objects with values"""
         ua = array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
-        self.content_test(ua, ua[0], 4*self.ulen*2)
-        self.content_test(ua, ua[1], 4*self.ulen*2)
+        self.content_check(ua, ua[0], 4*self.ulen*2)
+        self.content_check(ua, ua[1], 4*self.ulen*2)
 
-    def check_valuesMD(self):
+    def test_valuesMD(self):
         """Check creation of multi-dimensional objects with values"""
         ua = array([[[self.ucs_value*self.ulen]*2]*3]*4, dtype='U%s' % self.ulen)
-        self.content_test(ua, ua[0,0,0], 4*self.ulen*2*3*4)
-        self.content_test(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[0,0,0], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
 
 
-class test_create_values_1_ucs2(create_values):
+class test_create_values_1_ucs2(create_values, TestCase):
     """Check the creation of valued arrays (size 1, UCS2 values)"""
     ulen = 1
     ucs_value = ucs2_value
 
-class test_create_values_1_ucs4(create_values):
+
+class test_create_values_1_ucs4(create_values, TestCase):
     """Check the creation of valued arrays (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
 
-class test_create_values_2_ucs2(create_values):
+
+class test_create_values_2_ucs2(create_values, TestCase):
     """Check the creation of valued arrays (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
 
-class test_create_values_2_ucs4(create_values):
+
+class test_create_values_2_ucs4(create_values, TestCase):
     """Check the creation of valued arrays (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
 
-class test_create_values_1009_ucs2(create_values):
+
+class test_create_values_1009_ucs2(create_values, TestCase):
     """Check the creation of valued arrays (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
 
-class test_create_values_1009_ucs4(create_values):
+
+class test_create_values_1009_ucs4(create_values, TestCase):
     """Check the creation of valued arrays (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
@@ -148,10 +155,10 @@ class test_create_values_1009_ucs4(create_values):
 #    Assignment tests
 ############################################################
 
-class assign_values(NumpyTestCase):
+class assign_values:
     """Check the assignment of unicode arrays with values"""
 
-    def content_test(self, ua, ua_scalar, nbytes):
+    def content_check(self, ua, ua_scalar, nbytes):
 
         # Check the length of the unicode base type
         self.assert_(int(ua.dtype.str[2:]) == self.ulen)
@@ -175,68 +182,74 @@ class assign_values(NumpyTestCase):
                 # regular 2-byte word
                 self.assert_(len(buffer(ua_scalar)) == 2*self.ulen)
 
-    def check_values0D(self):
+    def test_values0D(self):
         """Check assignment of 0-dimensional objects with values"""
         ua = zeros((), dtype='U%s' % self.ulen)
         ua[()] = self.ucs_value*self.ulen
-        self.content_test(ua, ua[()], 4*self.ulen)
+        self.content_check(ua, ua[()], 4*self.ulen)
 
-    def check_valuesSD(self):
+    def test_valuesSD(self):
         """Check assignment of single-dimensional objects with values"""
         ua = zeros((2,), dtype='U%s' % self.ulen)
         ua[0] = self.ucs_value*self.ulen
-        self.content_test(ua, ua[0], 4*self.ulen*2)
+        self.content_check(ua, ua[0], 4*self.ulen*2)
         ua[1] = self.ucs_value*self.ulen
-        self.content_test(ua, ua[1], 4*self.ulen*2)
+        self.content_check(ua, ua[1], 4*self.ulen*2)
 
-    def check_valuesMD(self):
+    def test_valuesMD(self):
         """Check assignment of multi-dimensional objects with values"""
         ua = zeros((2,3,4), dtype='U%s' % self.ulen)
         ua[0,0,0] = self.ucs_value*self.ulen
-        self.content_test(ua, ua[0,0,0], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[0,0,0], 4*self.ulen*2*3*4)
         ua[-1,-1,-1] = self.ucs_value*self.ulen
-        self.content_test(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
+        self.content_check(ua, ua[-1,-1,-1], 4*self.ulen*2*3*4)
 
 
-class test_assign_values_1_ucs2(assign_values):
+class test_assign_values_1_ucs2(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1, UCS2 values)"""
     ulen = 1
     ucs_value = ucs2_value
 
-class test_assign_values_1_ucs4(assign_values):
+
+class test_assign_values_1_ucs4(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
+    
 
-class test_assign_values_2_ucs2(assign_values):
+class test_assign_values_2_ucs2(assign_values, TestCase):
     """Check the assignment of valued arrays (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
+    
 
-class test_assign_values_2_ucs4(assign_values):
+class test_assign_values_2_ucs4(assign_values, TestCase):
     """Check the assignment of valued arrays (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
+    
 
-class test_assign_values_1009_ucs2(assign_values):
+class test_assign_values_1009_ucs2(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
+    
 
-class test_assign_values_1009_ucs4(assign_values):
+class test_assign_values_1009_ucs4(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
+    
 
 
 ############################################################
 #    Byteorder tests
 ############################################################
 
-class byteorder_values(NumpyTestCase):
+class byteorder_values:
     """Check the byteorder of unicode arrays in round-trip conversions"""
 
-    def check_values0D(self):
+    def test_values0D(self):
         """Check byteorder of 0-dimensional objects"""
         ua = array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
@@ -248,7 +261,7 @@ class byteorder_values(NumpyTestCase):
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 
-    def check_valuesSD(self):
+    def test_valuesSD(self):
         """Check byteorder of single-dimensional objects"""
         ua = array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
         ua2 = ua.newbyteorder()
@@ -258,7 +271,7 @@ class byteorder_values(NumpyTestCase):
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 
-    def check_valuesMD(self):
+    def test_valuesMD(self):
         """Check byteorder of multi-dimensional objects"""
         ua = array([[[self.ucs_value*self.ulen]*2]*3]*4,
                    dtype='U%s' % self.ulen)
@@ -269,36 +282,43 @@ class byteorder_values(NumpyTestCase):
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 
-class test_byteorder_1_ucs2(byteorder_values):
+
+class test_byteorder_1_ucs2(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1, UCS2 values)"""
     ulen = 1
     ucs_value = ucs2_value
+    
 
-class test_byteorder_1_ucs4(byteorder_values):
+class test_byteorder_1_ucs4(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
+    
 
-class test_byteorder_2_ucs2(byteorder_values):
+class test_byteorder_2_ucs2(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
+    
 
-class test_byteorder_2_ucs4(byteorder_values):
+class test_byteorder_2_ucs4(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
+    
 
-class test_byteorder_1009_ucs2(byteorder_values):
+class test_byteorder_1009_ucs2(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
+    
 
-class test_byteorder_1009_ucs4(byteorder_values):
+class test_byteorder_1009_ucs4(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
 
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])
+    

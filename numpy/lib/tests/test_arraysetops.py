@@ -6,15 +6,14 @@ from numpy.testing import *
 set_package_path()
 import numpy
 from numpy.lib.arraysetops import *
-from numpy.lib.arraysetops import ediff1d
 restore_path()
 
 ##################################################
 
-class TestAso(NumpyTestCase):
+class TestAso(TestCase):
     ##
     # 03.11.2005, c
-    def check_unique1d( self ):
+    def test_unique1d( self ):
 
         a = numpy.array( [5, 7, 1, 2, 1, 5, 7] )
 
@@ -26,7 +25,7 @@ class TestAso(NumpyTestCase):
 
     ##
     # 03.11.2005, c
-    def check_intersect1d( self ):
+    def test_intersect1d( self ):
 
         a = numpy.array( [5, 7, 1, 2] )
         b = numpy.array( [2, 4, 3, 1, 5] )
@@ -39,7 +38,7 @@ class TestAso(NumpyTestCase):
 
     ##
     # 03.11.2005, c
-    def check_intersect1d_nu( self ):
+    def test_intersect1d_nu( self ):
 
         a = numpy.array( [5, 5, 7, 1, 2] )
         b = numpy.array( [2, 1, 4, 3, 3, 1, 5] )
@@ -52,7 +51,7 @@ class TestAso(NumpyTestCase):
 
     ##
     # 03.11.2005, c
-    def check_setxor1d( self ):
+    def test_setxor1d( self ):
 
         a = numpy.array( [5, 7, 1, 2] )
         b = numpy.array( [2, 4, 3, 1, 5] )
@@ -77,7 +76,7 @@ class TestAso(NumpyTestCase):
 
         assert_array_equal([], setxor1d([],[]))
 
-    def check_ediff1d(self):
+    def test_ediff1d(self):
         zero_elem = numpy.array([])
         one_elem = numpy.array([1])
         two_elem = numpy.array([1,2])
@@ -91,7 +90,7 @@ class TestAso(NumpyTestCase):
 
     ##
     # 03.11.2005, c
-    def check_setmember1d( self ):
+    def test_setmember1d( self ):
 
         a = numpy.array( [5, 7, 1, 2] )
         b = numpy.array( [2, 4, 3, 1, 5] )
@@ -114,7 +113,7 @@ class TestAso(NumpyTestCase):
 
     ##
     # 03.11.2005, c
-    def check_union1d( self ):
+    def test_union1d( self ):
 
         a = numpy.array( [5, 4, 7, 1, 2] )
         b = numpy.array( [2, 4, 3, 3, 2, 1, 5] )
@@ -128,7 +127,7 @@ class TestAso(NumpyTestCase):
     ##
     # 03.11.2005, c
     # 09.01.2006
-    def check_setdiff1d( self ):
+    def test_setdiff1d( self ):
 
         a = numpy.array( [6, 5, 4, 7, 1, 2] )
         b = numpy.array( [2, 4, 3, 3, 2, 1, 5] )
@@ -145,14 +144,14 @@ class TestAso(NumpyTestCase):
 
         assert_array_equal([], setdiff1d([],[]))
 
-    def check_setdiff1d_char_array(self):
+    def test_setdiff1d_char_array(self):
         a = numpy.array(['a','b','c'])
         b = numpy.array(['a','b','s'])
         assert_array_equal(setdiff1d(a,b),numpy.array(['c']))
 
     ##
     # 03.11.2005, c
-    def check_manyways( self ):
+    def test_manyways( self ):
 
         nItem = 100
         a = numpy.fix( nItem / 10 * numpy.random.random( nItem ) )
@@ -171,5 +170,6 @@ class TestAso(NumpyTestCase):
         c2 = setdiff1d( aux2, aux1 )
         assert_array_equal( c1, c2 )
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

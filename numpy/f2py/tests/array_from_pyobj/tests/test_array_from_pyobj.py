@@ -8,7 +8,7 @@ from numpy.core.multiarray import typeinfo
 
 set_package_path()
 from array_from_pyobj import wrap
-del sys.path[0]
+restore_path()
 
 def flags_info(arr):
     flags = wrap.array_attrs(arr)[6]
@@ -240,7 +240,7 @@ class Array:
 ##################################################
 
 class test_intent(unittest.TestCase):
-    def check_in_out(self):
+    def test_in_out(self):
         assert_equal(str(intent.in_.out),'intent(in,out)')
         assert intent.in_.c.is_intent('c')
         assert not intent.in_.c.is_intent_exact('c')
@@ -251,11 +251,11 @@ class test_intent(unittest.TestCase):
 class _test_shared_memory:
     num2seq = [1,2]
     num23seq = [[1,2,3],[4,5,6]]
-    def check_in_from_2seq(self):
+    def test_in_from_2seq(self):
         a = self.array([2],intent.in_,self.num2seq)
         assert not a.has_shared_memory()
 
-    def check_in_from_2casttype(self):
+    def test_in_from_2casttype(self):
         for t in self.type.cast_types():
             obj = array(self.num2seq,dtype=t.dtype)
             a = self.array([len(self.num2seq)],intent.in_,obj)
@@ -264,7 +264,7 @@ class _test_shared_memory:
             else:
                 assert not a.has_shared_memory(),`t.dtype`
 
-    def check_inout_2seq(self):
+    def test_inout_2seq(self):
         obj = array(self.num2seq,dtype=self.type.dtype)
         a = self.array([len(self.num2seq)],intent.inout,obj)
         assert a.has_shared_memory()
@@ -277,7 +277,7 @@ class _test_shared_memory:
         else:
             raise SystemError,'intent(inout) should have failed on sequence'
 
-    def check_f_inout_23seq(self):
+    def test_f_inout_23seq(self):
         obj = array(self.num23seq,dtype=self.type.dtype,fortran=1)
         shape = (len(self.num23seq),len(self.num23seq[0]))
         a = self.array(shape,intent.in_.inout,obj)
@@ -293,31 +293,31 @@ class _test_shared_memory:
         else:
             raise SystemError,'intent(inout) should have failed on improper array'
 
-    def check_c_inout_23seq(self):
+    def test_c_inout_23seq(self):
         obj = array(self.num23seq,dtype=self.type.dtype)
         shape = (len(self.num23seq),len(self.num23seq[0]))
         a = self.array(shape,intent.in_.c.inout,obj)
         assert a.has_shared_memory()
 
-    def check_in_copy_from_2casttype(self):
+    def test_in_copy_from_2casttype(self):
         for t in self.type.cast_types():
             obj = array(self.num2seq,dtype=t.dtype)
             a = self.array([len(self.num2seq)],intent.in_.copy,obj)
             assert not a.has_shared_memory(),`t.dtype`
 
-    def check_c_in_from_23seq(self):
+    def test_c_in_from_23seq(self):
         a = self.array([len(self.num23seq),len(self.num23seq[0])],
                        intent.in_,self.num23seq)
         assert not a.has_shared_memory()
 
-    def check_in_from_23casttype(self):
+    def test_in_from_23casttype(self):
         for t in self.type.cast_types():
             obj = array(self.num23seq,dtype=t.dtype)
             a = self.array([len(self.num23seq),len(self.num23seq[0])],
                            intent.in_,obj)
             assert not a.has_shared_memory(),`t.dtype`
 
-    def check_f_in_from_23casttype(self):
+    def test_f_in_from_23casttype(self):
         for t in self.type.cast_types():
             obj = array(self.num23seq,dtype=t.dtype,fortran=1)
             a = self.array([len(self.num23seq),len(self.num23seq[0])],
@@ -327,7 +327,7 @@ class _test_shared_memory:
             else:
                 assert not a.has_shared_memory(),`t.dtype`
 
-    def check_c_in_from_23casttype(self):
+    def test_c_in_from_23casttype(self):
         for t in self.type.cast_types():
             obj = array(self.num23seq,dtype=t.dtype)
             a = self.array([len(self.num23seq),len(self.num23seq[0])],
@@ -337,21 +337,21 @@ class _test_shared_memory:
             else:
                 assert not a.has_shared_memory(),`t.dtype`
 
-    def check_f_copy_in_from_23casttype(self):
+    def test_f_copy_in_from_23casttype(self):
         for t in self.type.cast_types():
             obj = array(self.num23seq,dtype=t.dtype,fortran=1)
             a = self.array([len(self.num23seq),len(self.num23seq[0])],
                            intent.in_.copy,obj)
             assert not a.has_shared_memory(),`t.dtype`
 
-    def check_c_copy_in_from_23casttype(self):
+    def test_c_copy_in_from_23casttype(self):
         for t in self.type.cast_types():
             obj = array(self.num23seq,dtype=t.dtype)
             a = self.array([len(self.num23seq),len(self.num23seq[0])],
                            intent.in_.c.copy,obj)
             assert not a.has_shared_memory(),`t.dtype`
 
-    def check_in_cache_from_2casttype(self):
+    def test_in_cache_from_2casttype(self):
         for t in self.type.all_types():
             if t.elsize != self.type.elsize:
                 continue
@@ -377,7 +377,7 @@ class _test_shared_memory:
                     raise
             else:
                 raise SystemError,'intent(cache) should have failed on multisegmented array'
-    def check_in_cache_from_2casttype_failure(self):
+    def test_in_cache_from_2casttype_failure(self):
         for t in self.type.all_types():
             if t.elsize >= self.type.elsize:
                 continue
@@ -391,7 +391,7 @@ class _test_shared_memory:
             else:
                 raise SystemError,'intent(cache) should have failed on smaller array'
 
-    def check_cache_hidden(self):
+    def test_cache_hidden(self):
         shape = (2,)
         a = self.array(shape,intent.cache.hide,None)
         assert a.arr.shape==shape
@@ -409,7 +409,7 @@ class _test_shared_memory:
         else:
             raise SystemError,'intent(cache) should have failed on undefined dimensions'
 
-    def check_hidden(self):
+    def test_hidden(self):
         shape = (2,)
         a = self.array(shape,intent.hide,None)
         assert a.arr.shape==shape
@@ -436,7 +436,7 @@ class _test_shared_memory:
         else:
             raise SystemError,'intent(hide) should have failed on undefined dimensions'
 
-    def check_optional_none(self):
+    def test_optional_none(self):
         shape = (2,)
         a = self.array(shape,intent.optional,None)
         assert a.arr.shape==shape
@@ -454,14 +454,14 @@ class _test_shared_memory:
         assert a.arr_equal(a.arr,zeros(shape,dtype=self.type.dtype))
         assert not a.arr.flags['FORTRAN'] and a.arr.flags['CONTIGUOUS']
 
-    def check_optional_from_2seq(self):
+    def test_optional_from_2seq(self):
         obj = self.num2seq
         shape = (len(obj),)
         a = self.array(shape,intent.optional,obj)
         assert a.arr.shape==shape
         assert not a.has_shared_memory()
 
-    def check_optional_from_23seq(self):
+    def test_optional_from_23seq(self):
         obj = self.num23seq
         shape = (len(obj),len(obj[0]))
         a = self.array(shape,intent.optional,obj)
@@ -472,7 +472,7 @@ class _test_shared_memory:
         assert a.arr.shape==shape
         assert not a.has_shared_memory()
 
-    def check_inplace(self):
+    def test_inplace(self):
         obj = array(self.num23seq,dtype=self.type.dtype)
         assert not obj.flags['FORTRAN'] and obj.flags['CONTIGUOUS']
         shape = obj.shape
@@ -484,7 +484,7 @@ class _test_shared_memory:
         assert obj.flags['FORTRAN'] # obj attributes are changed inplace!
         assert not obj.flags['CONTIGUOUS']
 
-    def check_inplace_from_casttype(self):
+    def test_inplace_from_casttype(self):
         for t in self.type.cast_types():
             if t is self.type:
                 continue
@@ -502,6 +502,7 @@ class _test_shared_memory:
             assert not obj.flags['CONTIGUOUS']
             assert obj.dtype.type is self.type.dtype # obj type is changed inplace!
 
+
 for t in Type._type_names:
     exec '''\
 class test_%s_gen(unittest.TestCase,
@@ -512,4 +513,4 @@ class test_%s_gen(unittest.TestCase,
 ''' % (t,t,t)
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

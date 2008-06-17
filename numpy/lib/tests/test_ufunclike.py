@@ -59,8 +59,10 @@ array([ 2.169925  ,  1.20163386,  2.70043972])
 
 from numpy.testing import *
 
-class TestDocs(NumpyTestCase):
-    def check_doctests(self): return self.rundocs()
+class TestDocs(TestCase):
+    def test_doctests(self): 
+        return rundocs()
+
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

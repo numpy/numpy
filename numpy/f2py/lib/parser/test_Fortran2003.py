@@ -7,9 +7,9 @@ from api import get_reader
 ############################### SECTION  2 ####################################
 ###############################################################################
 
-class TestProgram(NumpyTestCase): # R201
+class TestProgram(TestCase): # R201
 
-    def check_simple(self):
+    def test_simple(self):
         reader = get_reader('''\
       subroutine foo
       end subroutine foo
@@ -21,9 +21,9 @@ class TestProgram(NumpyTestCase): # R201
         assert isinstance(a, cls),`a`
         assert_equal(str(a), 'SUBROUTINE foo\nEND SUBROUTINE foo\nSUBROUTINE bar\nEND SUBROUTINE bar')
 
-class TestSpecificationPart(NumpyTestCase): # R204
+class TestSpecificationPart(TestCase): # R204
 
-    def check_simple(self):
+    def test_simple(self):
         from api import get_reader
         reader = get_reader('''\
       integer a''')
@@ -37,9 +37,9 @@ class TestSpecificationPart(NumpyTestCase): # R204
 ############################### SECTION  3 ####################################
 ###############################################################################
 
-class TestName(NumpyTestCase): # R304
+class TestName(TestCase): # R304
 
-    def check_name(self):
+    def test_name(self):
         a = Name('a')
         assert isinstance(a,Name),`a`
         a = Name('a2')
@@ -55,9 +55,9 @@ class TestName(NumpyTestCase): # R304
 ############################### SECTION  4 ####################################
 ###############################################################################
 
-class TestTypeParamValue(NumpyTestCase): # 402
+class TestTypeParamValue(TestCase): # 402
 
-    def check_type_param_value(self):
+    def test_type_param_value(self):
         cls = Type_Param_Value
         a = cls('*')
         assert isinstance(a,cls),`a`
@@ -72,9 +72,9 @@ class TestTypeParamValue(NumpyTestCase): # 402
         assert isinstance(a,Level_2_Expr),`a`
         assert_equal(str(a),'1 + 2')
 
-class TestIntrinsicTypeSpec(NumpyTestCase): # R403
+class TestIntrinsicTypeSpec(TestCase): # R403
 
-    def check_intrinsic_type_spec(self):
+    def test_intrinsic_type_spec(self):
         cls = Intrinsic_Type_Spec
         a = cls('INTEGER')
         assert isinstance(a,cls),`a`
@@ -109,9 +109,9 @@ class TestIntrinsicTypeSpec(NumpyTestCase): # R403
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'DOUBLE PRECISION')
 
-class TestKindSelector(NumpyTestCase): # R404
+class TestKindSelector(TestCase): # R404
 
-    def check_kind_selector(self):
+    def test_kind_selector(self):
         cls = Kind_Selector
         a = cls('(1)')
         assert isinstance(a,cls),`a`
@@ -126,9 +126,9 @@ class TestKindSelector(NumpyTestCase): # R404
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'*1')
 
-class TestSignedIntLiteralConstant(NumpyTestCase): # R405
+class TestSignedIntLiteralConstant(TestCase): # R405
 
-    def check_int_literal_constant(self):
+    def test_int_literal_constant(self):
         cls = Signed_Int_Literal_Constant
         a = cls('1')
         assert isinstance(a,cls),`a`
@@ -152,9 +152,9 @@ class TestSignedIntLiteralConstant(NumpyTestCase): # R405
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'+1976354279568241_8')
 
-class TestIntLiteralConstant(NumpyTestCase): # R406
+class TestIntLiteralConstant(TestCase): # R406
 
-    def check_int_literal_constant(self):
+    def test_int_literal_constant(self):
         cls = Int_Literal_Constant
         a = cls('1')
         assert isinstance(a,cls),`a`
@@ -178,9 +178,9 @@ class TestIntLiteralConstant(NumpyTestCase): # R406
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'1976354279568241_8')
 
-class TestBinaryConstant(NumpyTestCase): # R412
+class TestBinaryConstant(TestCase): # R412
 
-    def check_boz_literal_constant(self):
+    def test_boz_literal_constant(self):
         cls = Boz_Literal_Constant
         bcls = Binary_Constant
         a = cls('B"01"')
@@ -188,9 +188,9 @@ class TestBinaryConstant(NumpyTestCase): # R412
         assert_equal(str(a),'B"01"')
         assert_equal(repr(a),"%s('B\"01\"')" % (bcls.__name__))
 
-class TestOctalConstant(NumpyTestCase): # R413
+class TestOctalConstant(TestCase): # R413
 
-    def check_boz_literal_constant(self):
+    def test_boz_literal_constant(self):
         cls = Boz_Literal_Constant
         ocls = Octal_Constant
         a = cls('O"017"')
@@ -198,9 +198,9 @@ class TestOctalConstant(NumpyTestCase): # R413
         assert_equal(str(a),'O"017"')
         assert_equal(repr(a),"%s('O\"017\"')" % (ocls.__name__))
 
-class TestHexConstant(NumpyTestCase): # R414
+class TestHexConstant(TestCase): # R414
 
-    def check_boz_literal_constant(self):
+    def test_boz_literal_constant(self):
         cls = Boz_Literal_Constant
         zcls = Hex_Constant
         a = cls('Z"01A"')
@@ -208,9 +208,9 @@ class TestHexConstant(NumpyTestCase): # R414
         assert_equal(str(a),'Z"01A"')
         assert_equal(repr(a),"%s('Z\"01A\"')" % (zcls.__name__))
 
-class TestSignedRealLiteralConstant(NumpyTestCase): # R416
+class TestSignedRealLiteralConstant(TestCase): # R416
 
-    def check_signed_real_literal_constant(self):
+    def test_signed_real_literal_constant(self):
         cls = Signed_Real_Literal_Constant
         a = cls('12.78')
         assert isinstance(a,cls),`a`
@@ -265,9 +265,9 @@ class TestSignedRealLiteralConstant(NumpyTestCase): # R416
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'-10.9E-17_quad')
 
-class TestRealLiteralConstant(NumpyTestCase): # R417
+class TestRealLiteralConstant(TestCase): # R417
 
-    def check_real_literal_constant(self):
+    def test_real_literal_constant(self):
         cls = Real_Literal_Constant
         a = cls('12.78')
         assert isinstance(a,cls),`a`
@@ -326,9 +326,9 @@ class TestRealLiteralConstant(NumpyTestCase): # R417
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'0.0D+0')
 
-class TestCharSelector(NumpyTestCase): # R424
+class TestCharSelector(TestCase): # R424
 
-    def check_char_selector(self):
+    def test_char_selector(self):
         cls = Char_Selector
         a = cls('(len=2, kind=8)')
         assert isinstance(a,cls),`a`
@@ -352,9 +352,9 @@ class TestCharSelector(NumpyTestCase): # R424
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(LEN = 2, KIND = 8)')
 
-class TestComplexLiteralConstant(NumpyTestCase): # R421
+class TestComplexLiteralConstant(TestCase): # R421
 
-    def check_complex_literal_constant(self):
+    def test_complex_literal_constant(self):
         cls = Complex_Literal_Constant
         a = cls('(1.0, -1.0)')
         assert isinstance(a,cls),`a`
@@ -374,9 +374,9 @@ class TestComplexLiteralConstant(NumpyTestCase): # R421
         assert_equal(str(a),'(0., PI)')
 
 
-class TestTypeName(NumpyTestCase): # C424
+class TestTypeName(TestCase): # C424
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Name
         a = cls('a')
         assert isinstance(a,cls),`a`
@@ -386,9 +386,9 @@ class TestTypeName(NumpyTestCase): # C424
         self.assertRaises(NoMatchError,cls,'integer')
         self.assertRaises(NoMatchError,cls,'doubleprecision')
 
-class TestLengthSelector(NumpyTestCase): # R425
+class TestLengthSelector(TestCase): # R425
 
-    def check_length_selector(self):
+    def test_length_selector(self):
         cls = Length_Selector
         a = cls('( len = *)')
         assert isinstance(a,cls),`a`
@@ -399,9 +399,9 @@ class TestLengthSelector(NumpyTestCase): # R425
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'*2')
 
-class TestCharLength(NumpyTestCase): # R426
+class TestCharLength(TestCase): # R426
 
-    def check_char_length(self):
+    def test_char_length(self):
         cls = Char_Length
         a = cls('(1)')
         assert isinstance(a,cls),`a`
@@ -420,9 +420,9 @@ class TestCharLength(NumpyTestCase): # R426
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(:)')
 
-class TestCharLiteralConstant(NumpyTestCase): # R427
+class TestCharLiteralConstant(TestCase): # R427
 
-    def check_char_literal_constant(self):
+    def test_char_literal_constant(self):
         cls = Char_Literal_Constant
         a = cls('NIH_"DO"')
         assert isinstance(a,cls),`a`
@@ -454,9 +454,9 @@ class TestCharLiteralConstant(NumpyTestCase): # R427
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'"hey ha(ada)\t"')
 
-class TestLogicalLiteralConstant(NumpyTestCase): # R428
+class TestLogicalLiteralConstant(TestCase): # R428
 
-    def check_logical_literal_constant(self):
+    def test_logical_literal_constant(self):
         cls = Logical_Literal_Constant
         a = cls('.TRUE.')
         assert isinstance(a,cls),`a`
@@ -475,9 +475,9 @@ class TestLogicalLiteralConstant(NumpyTestCase): # R428
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'.TRUE._HA')
 
-class TestDerivedTypeStmt(NumpyTestCase): # R430
+class TestDerivedTypeStmt(TestCase): # R430
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Derived_Type_Stmt
         a = cls('type a')
         assert isinstance(a, cls),`a`
@@ -492,18 +492,18 @@ class TestDerivedTypeStmt(NumpyTestCase): # R430
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'TYPE, PRIVATE, ABSTRACT :: a(b, c)')
 
-class TestTypeName(NumpyTestCase): # C423
+class TestTypeName(TestCase): # C423
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Name
         a = cls('a')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a')
         assert_equal(repr(a),"Type_Name('a')")
 
-class TestTypeAttrSpec(NumpyTestCase): # R431
+class TestTypeAttrSpec(TestCase): # R431
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Attr_Spec
         a = cls('abstract')
         assert isinstance(a, cls),`a`
@@ -523,9 +523,9 @@ class TestTypeAttrSpec(NumpyTestCase): # R431
         assert_equal(str(a),'PRIVATE')
 
 
-class TestEndTypeStmt(NumpyTestCase): # R433
+class TestEndTypeStmt(TestCase): # R433
 
-    def check_simple(self):
+    def test_simple(self):
         cls = End_Type_Stmt
         a = cls('end type')
         assert isinstance(a, cls),`a`
@@ -536,18 +536,18 @@ class TestEndTypeStmt(NumpyTestCase): # R433
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'END TYPE a')
 
-class TestSequenceStmt(NumpyTestCase): # R434
+class TestSequenceStmt(TestCase): # R434
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Sequence_Stmt
         a = cls('sequence')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'SEQUENCE')
         assert_equal(repr(a),"Sequence_Stmt('SEQUENCE')")
 
-class TestTypeParamDefStmt(NumpyTestCase): # R435
+class TestTypeParamDefStmt(TestCase): # R435
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Param_Def_Stmt
         a = cls('integer ,kind :: a')
         assert isinstance(a, cls),`a`
@@ -558,9 +558,9 @@ class TestTypeParamDefStmt(NumpyTestCase): # R435
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'INTEGER*2, LEN :: a = 3, b = 2 + c')
 
-class TestTypeParamDecl(NumpyTestCase): # R436
+class TestTypeParamDecl(TestCase): # R436
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Param_Decl
         a = cls('a=2')
         assert isinstance(a, cls),`a`
@@ -571,9 +571,9 @@ class TestTypeParamDecl(NumpyTestCase): # R436
         assert isinstance(a, Name),`a`
         assert_equal(str(a),'a')
 
-class TestTypeParamAttrSpec(NumpyTestCase): # R437
+class TestTypeParamAttrSpec(TestCase): # R437
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Param_Attr_Spec
         a = cls('kind')
         assert isinstance(a, cls),`a`
@@ -584,9 +584,9 @@ class TestTypeParamAttrSpec(NumpyTestCase): # R437
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'LEN')
 
-class TestComponentAttrSpec(NumpyTestCase): # R441
+class TestComponentAttrSpec(TestCase): # R441
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Component_Attr_Spec
         a = cls('pointer')
         assert isinstance(a, cls),`a`
@@ -605,9 +605,9 @@ class TestComponentAttrSpec(NumpyTestCase): # R441
         assert isinstance(a, Access_Spec),`a`
         assert_equal(str(a),'PRIVATE')
 
-class TestComponentDecl(NumpyTestCase): # R442
+class TestComponentDecl(TestCase): # R442
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Component_Decl
         a = cls('a(1)')
         assert isinstance(a, cls),`a`
@@ -626,9 +626,9 @@ class TestComponentDecl(NumpyTestCase): # R442
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a(1) => NULL')
 
-class TestFinalBinding(NumpyTestCase): # R454
+class TestFinalBinding(TestCase): # R454
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Final_Binding
         a = cls('final a, b')
         assert isinstance(a,cls),`a`
@@ -639,9 +639,9 @@ class TestFinalBinding(NumpyTestCase): # R454
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'FINAL :: a')
 
-class TestDerivedTypeSpec(NumpyTestCase): # R455
+class TestDerivedTypeSpec(TestCase): # R455
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Derived_Type_Spec
         a = cls('a(b)')
         assert isinstance(a,cls),`a`
@@ -660,9 +660,9 @@ class TestDerivedTypeSpec(NumpyTestCase): # R455
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a()')
 
-class TestTypeParamSpec(NumpyTestCase): # R456
+class TestTypeParamSpec(TestCase): # R456
 
-    def check_type_param_spec(self):
+    def test_type_param_spec(self):
         cls = Type_Param_Spec
         a = cls('a=1')
         assert isinstance(a,cls),`a`
@@ -677,9 +677,9 @@ class TestTypeParamSpec(NumpyTestCase): # R456
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'k = :')
 
-class TestTypeParamSpecList(NumpyTestCase): # R456-list
+class TestTypeParamSpecList(TestCase): # R456-list
 
-    def check_type_param_spec_list(self):
+    def test_type_param_spec_list(self):
         cls = Type_Param_Spec_List
 
         a = cls('a,b')
@@ -694,9 +694,9 @@ class TestTypeParamSpecList(NumpyTestCase): # R456-list
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'k = a, c, g = 1')
 
-class TestStructureConstructor2(NumpyTestCase): # R457.b
+class TestStructureConstructor2(TestCase): # R457.b
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Structure_Constructor_2
         a = cls('k=a')
         assert isinstance(a,cls),`a`
@@ -707,9 +707,9 @@ class TestStructureConstructor2(NumpyTestCase): # R457.b
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
 
-class TestStructureConstructor(NumpyTestCase): # R457
+class TestStructureConstructor(TestCase): # R457
 
-    def check_structure_constructor(self):
+    def test_structure_constructor(self):
         cls = Structure_Constructor
         a = cls('t()')
         assert isinstance(a,cls),`a`
@@ -729,9 +729,9 @@ class TestStructureConstructor(NumpyTestCase): # R457
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
 
-class TestComponentSpec(NumpyTestCase): # R458
+class TestComponentSpec(TestCase): # R458
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Component_Spec
         a = cls('k=a')
         assert isinstance(a,cls),`a`
@@ -750,9 +750,9 @@ class TestComponentSpec(NumpyTestCase): # R458
         assert isinstance(a, Component_Spec),`a`
         assert_equal(str(a),'s = a % b')
 
-class TestComponentSpecList(NumpyTestCase): # R458-list
+class TestComponentSpecList(TestCase): # R458-list
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Component_Spec_List
         a = cls('k=a, b')
         assert isinstance(a,cls),`a`
@@ -763,9 +763,9 @@ class TestComponentSpecList(NumpyTestCase): # R458-list
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'k = a, c')
 
-class TestArrayConstructor(NumpyTestCase): # R465
+class TestArrayConstructor(TestCase): # R465
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Array_Constructor
         a = cls('(/a/)')
         assert isinstance(a,cls),`a`
@@ -785,9 +785,9 @@ class TestArrayConstructor(NumpyTestCase): # R465
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'[INTEGER :: a, b]')
 
-class TestAcSpec(NumpyTestCase): # R466
+class TestAcSpec(TestCase): # R466
 
-    def check_ac_spec(self):
+    def test_ac_spec(self):
         cls = Ac_Spec
         a = cls('integer ::')
         assert isinstance(a,cls),`a`
@@ -806,9 +806,9 @@ class TestAcSpec(NumpyTestCase): # R466
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'INTEGER :: a, (a, b, n = 1, 5)')
 
-class TestAcValueList(NumpyTestCase): # R469-list
+class TestAcValueList(TestCase): # R469-list
 
-    def check_ac_value_list(self):
+    def test_ac_value_list(self):
         cls = Ac_Value_List
         a = cls('a, b')
         assert isinstance(a,cls),`a`
@@ -819,18 +819,18 @@ class TestAcValueList(NumpyTestCase): # R469-list
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
 
-class TestAcImpliedDo(NumpyTestCase): # R470
+class TestAcImpliedDo(TestCase): # R470
 
-    def check_ac_implied_do(self):
+    def test_ac_implied_do(self):
         cls = Ac_Implied_Do
         a = cls('( a, b, n = 1, 5 )')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(a, b, n = 1, 5)')
         assert_equal(repr(a),"Ac_Implied_Do(Ac_Value_List(',', (Name('a'), Name('b'))), Ac_Implied_Do_Control(Name('n'), [Int_Literal_Constant('1', None), Int_Literal_Constant('5', None)]))")
 
-class TestAcImpliedDoControl(NumpyTestCase): # R471
+class TestAcImpliedDoControl(TestCase): # R471
 
-    def check_ac_implied_do_control(self):
+    def test_ac_implied_do_control(self):
         cls = Ac_Implied_Do_Control
         a = cls('n = 3, 5')
         assert isinstance(a,cls),`a`
@@ -845,9 +845,9 @@ class TestAcImpliedDoControl(NumpyTestCase): # R471
 ############################### SECTION  5 ####################################
 ###############################################################################
 
-class TestTypeDeclarationStmt(NumpyTestCase): # R501
+class TestTypeDeclarationStmt(TestCase): # R501
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Declaration_Stmt
         a = cls('integer a')
         assert isinstance(a, cls),`a`
@@ -869,9 +869,9 @@ class TestTypeDeclarationStmt(NumpyTestCase): # R501
         a = cls('DOUBLE PRECISION   ALPHA, BETA')
         assert isinstance(a, cls),`a`
 
-class TestDeclarationTypeSpec(NumpyTestCase): # R502
+class TestDeclarationTypeSpec(TestCase): # R502
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Declaration_Type_Spec
         a = cls('Integer*2')
         assert isinstance(a, Intrinsic_Type_Spec),`a`
@@ -882,9 +882,9 @@ class TestDeclarationTypeSpec(NumpyTestCase): # R502
         assert_equal(str(a), 'TYPE(foo)')
         assert_equal(repr(a), "Declaration_Type_Spec('TYPE', Type_Name('foo'))")
 
-class TestAttrSpec(NumpyTestCase): # R503
+class TestAttrSpec(TestCase): # R503
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Attr_Spec
         a = cls('allocatable')
         assert isinstance(a, cls),`a`
@@ -894,27 +894,27 @@ class TestAttrSpec(NumpyTestCase): # R503
         assert isinstance(a, Dimension_Attr_Spec),`a`
         assert_equal(str(a),'DIMENSION(a)')
 
-class TestDimensionAttrSpec(NumpyTestCase): # R503.d
+class TestDimensionAttrSpec(TestCase): # R503.d
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Dimension_Attr_Spec
         a = cls('dimension(a)')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'DIMENSION(a)')
         assert_equal(repr(a),"Dimension_Attr_Spec('DIMENSION', Explicit_Shape_Spec(None, Name('a')))")
 
-class TestIntentAttrSpec(NumpyTestCase): # R503.f
+class TestIntentAttrSpec(TestCase): # R503.f
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Intent_Attr_Spec
         a = cls('intent(in)')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'INTENT(IN)')
         assert_equal(repr(a),"Intent_Attr_Spec('INTENT', Intent_Spec('IN'))")
 
-class TestEntityDecl(NumpyTestCase): # 504
+class TestEntityDecl(TestCase): # 504
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Entity_Decl
         a = cls('a(1)')
         assert isinstance(a, cls),`a`
@@ -929,9 +929,9 @@ class TestEntityDecl(NumpyTestCase): # 504
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a(1)*(3) = 2')
 
-class TestAccessSpec(NumpyTestCase): # R508
+class TestAccessSpec(TestCase): # R508
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Access_Spec
         a = cls('private')
         assert isinstance(a, cls),`a`
@@ -942,9 +942,9 @@ class TestAccessSpec(NumpyTestCase): # R508
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'PUBLIC')
 
-class TestLanguageBindingSpec(NumpyTestCase): # R509
+class TestLanguageBindingSpec(TestCase): # R509
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Language_Binding_Spec
         a = cls('bind(c)')
         assert isinstance(a, cls),`a`
@@ -955,9 +955,9 @@ class TestLanguageBindingSpec(NumpyTestCase): # R509
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'BIND(C, NAME = "hey")')
 
-class TestExplicitShapeSpec(NumpyTestCase): # R511
+class TestExplicitShapeSpec(TestCase): # R511
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Explicit_Shape_Spec
         a = cls('a:b')
         assert isinstance(a, cls),`a`
@@ -968,9 +968,9 @@ class TestExplicitShapeSpec(NumpyTestCase): # R511
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a')
 
-class TestUpperBound(NumpyTestCase): # R513
+class TestUpperBound(TestCase): # R513
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Upper_Bound
         a = cls('a')
         assert isinstance(a, Name),`a`
@@ -978,9 +978,9 @@ class TestUpperBound(NumpyTestCase): # R513
 
         self.assertRaises(NoMatchError,cls,'*')
 
-class TestAssumedShapeSpec(NumpyTestCase): # R514
+class TestAssumedShapeSpec(TestCase): # R514
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Assumed_Shape_Spec
         a = cls(':')
         assert isinstance(a, cls),`a`
@@ -991,9 +991,9 @@ class TestAssumedShapeSpec(NumpyTestCase): # R514
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a :')
 
-class TestDeferredShapeSpec(NumpyTestCase): # R515
+class TestDeferredShapeSpec(TestCase): # R515
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Deferred_Shape_Spec
         a = cls(':')
         assert isinstance(a, cls),`a`
@@ -1001,9 +1001,9 @@ class TestDeferredShapeSpec(NumpyTestCase): # R515
         assert_equal(repr(a),'Deferred_Shape_Spec(None, None)')
 
 
-class TestAssumedSizeSpec(NumpyTestCase): # R516
+class TestAssumedSizeSpec(TestCase): # R516
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Assumed_Size_Spec
         a = cls('*')
         assert isinstance(a, cls),`a`
@@ -1022,9 +1022,9 @@ class TestAssumedSizeSpec(NumpyTestCase): # R516
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a : b, 1 : *')
 
-class TestAccessStmt(NumpyTestCase): # R518
+class TestAccessStmt(TestCase): # R518
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Access_Stmt
         a = cls('private')
         assert isinstance(a, cls),`a`
@@ -1039,9 +1039,9 @@ class TestAccessStmt(NumpyTestCase): # R518
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'PUBLIC :: a')
 
-class TestParameterStmt(NumpyTestCase): # R538
+class TestParameterStmt(TestCase): # R538
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Parameter_Stmt
         a = cls('parameter(a=1)')
         assert isinstance(a, cls),`a`
@@ -1056,18 +1056,18 @@ class TestParameterStmt(NumpyTestCase): # R538
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'PARAMETER(ONE = 1.0D+0, ZERO = 0.0D+0)')
 
-class TestNamedConstantDef(NumpyTestCase): # R539
+class TestNamedConstantDef(TestCase): # R539
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Named_Constant_Def
         a = cls('a=1')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a = 1')
         assert_equal(repr(a),"Named_Constant_Def(Name('a'), Int_Literal_Constant('1', None))")
 
-class TestPointerDecl(NumpyTestCase): # R541
+class TestPointerDecl(TestCase): # R541
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Pointer_Decl
         a = cls('a(:)')
         assert isinstance(a, cls),`a`
@@ -1078,9 +1078,9 @@ class TestPointerDecl(NumpyTestCase): # R541
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a(:, :)')
 
-class TestImplicitStmt(NumpyTestCase): # R549
+class TestImplicitStmt(TestCase): # R549
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Implicit_Stmt
         a = cls('implicitnone')
         assert isinstance(a, cls),`a`
@@ -1091,9 +1091,9 @@ class TestImplicitStmt(NumpyTestCase): # R549
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'IMPLICIT REAL(A - D), DOUBLE PRECISION(R - T, X), TYPE(a)(Y - Z)')
 
-class TestImplicitSpec(NumpyTestCase): # R550
+class TestImplicitSpec(TestCase): # R550
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Implicit_Spec
         a = cls('integer (a-z)')
         assert isinstance(a, cls),`a`
@@ -1104,9 +1104,9 @@ class TestImplicitSpec(NumpyTestCase): # R550
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'DOUBLE COMPLEX(R, D - G)')
 
-class TestLetterSpec(NumpyTestCase): # R551
+class TestLetterSpec(TestCase): # R551
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Letter_Spec
         a = cls('a-z')
         assert isinstance(a, cls),`a`
@@ -1117,9 +1117,9 @@ class TestLetterSpec(NumpyTestCase): # R551
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'D')
 
-class TestEquivalenceStmt(NumpyTestCase): # R554
+class TestEquivalenceStmt(TestCase): # R554
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Equivalence_Stmt
         a = cls('equivalence (a, b ,z)')
         assert isinstance(a, cls),`a`
@@ -1130,9 +1130,9 @@ class TestEquivalenceStmt(NumpyTestCase): # R554
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'EQUIVALENCE(a, b, z), (b, l)')
 
-class TestCommonStmt(NumpyTestCase): # R557
+class TestCommonStmt(TestCase): # R557
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Common_Stmt
         a = cls('common a')
         assert isinstance(a, cls),`a`
@@ -1151,9 +1151,9 @@ class TestCommonStmt(NumpyTestCase): # R557
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'COMMON /name/ a, b(4, 5) // c /ljuks/ g(2)')
 
-class TestCommonBlockObject(NumpyTestCase): # R558
+class TestCommonBlockObject(TestCase): # R558
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Common_Block_Object
         a = cls('a(2)')
         assert isinstance(a, cls),`a`
@@ -1169,9 +1169,9 @@ class TestCommonBlockObject(NumpyTestCase): # R558
 ############################### SECTION  6 ####################################
 ###############################################################################
 
-class TestSubstring(NumpyTestCase): # R609
+class TestSubstring(TestCase): # R609
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Substring
         a = cls('a(:)')
         assert isinstance(a, cls),`a`
@@ -1184,9 +1184,9 @@ class TestSubstring(NumpyTestCase): # R609
         assert_equal(repr(a),"Substring(Name('a'), Substring_Range(Int_Literal_Constant('1', None), Int_Literal_Constant('2', None)))")
 
 
-class TestSubstringRange(NumpyTestCase): # R611
+class TestSubstringRange(TestCase): # R611
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Substring_Range
         a = cls(':')
         assert isinstance(a, cls),`a`
@@ -1215,9 +1215,9 @@ class TestSubstringRange(NumpyTestCase): # R611
         assert_equal(str(a),': b')
 
 
-class TestDataRef(NumpyTestCase): # R612
+class TestDataRef(TestCase): # R612
 
-    def check_data_ref(self):
+    def test_data_ref(self):
         cls = Data_Ref
         a = cls('a%b')
         assert isinstance(a,cls),`a`
@@ -1228,17 +1228,17 @@ class TestDataRef(NumpyTestCase): # R612
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
 
-class TestPartRef(NumpyTestCase): # R613
+class TestPartRef(TestCase): # R613
 
-    def check_part_ref(self):
+    def test_part_ref(self):
         cls = Part_Ref
         a = cls('a')
         assert isinstance(a, Name),`a`
         assert_equal(str(a),'a')
 
-class TestTypeParamInquiry(NumpyTestCase): # R615
+class TestTypeParamInquiry(TestCase): # R615
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Type_Param_Inquiry
         a = cls('a % b')
         assert isinstance(a,cls),`a`
@@ -1246,9 +1246,9 @@ class TestTypeParamInquiry(NumpyTestCase): # R615
         assert_equal(repr(a),"Type_Param_Inquiry(Name('a'), '%', Name('b'))")
 
 
-class TestArraySection(NumpyTestCase): # R617
+class TestArraySection(TestCase): # R617
 
-    def check_array_section(self):
+    def test_array_section(self):
         cls = Array_Section
         a = cls('a(:)')
         assert isinstance(a,cls),`a`
@@ -1260,9 +1260,9 @@ class TestArraySection(NumpyTestCase): # R617
         assert_equal(str(a),'a(2 :)')
 
 
-class TestSectionSubscript(NumpyTestCase): # R619
+class TestSectionSubscript(TestCase): # R619
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Section_Subscript
 
         a = cls('1:2')
@@ -1273,9 +1273,9 @@ class TestSectionSubscript(NumpyTestCase): # R619
         assert isinstance(a, Name),`a`
         assert_equal(str(a),'zzz')
 
-class TestSectionSubscriptList(NumpyTestCase): # R619-list
+class TestSectionSubscriptList(TestCase): # R619-list
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Section_Subscript_List
         a = cls('a,2')
         assert isinstance(a,cls),`a`
@@ -1290,9 +1290,9 @@ class TestSectionSubscriptList(NumpyTestCase): # R619-list
         assert isinstance(a,cls),`a`
         assert_equal(str(a),': : 1, 3')
 
-class TestSubscriptTriplet(NumpyTestCase): # R620
+class TestSubscriptTriplet(TestCase): # R620
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Subscript_Triplet
         a = cls('a:b')
         assert isinstance(a,cls),`a`
@@ -1319,18 +1319,18 @@ class TestSubscriptTriplet(NumpyTestCase): # R620
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a + 1 :')
 
-class TestAllocOpt(NumpyTestCase): # R624
+class TestAllocOpt(TestCase): # R624
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Alloc_Opt
         a = cls('stat=a')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'STAT = a')
         assert_equal(repr(a),"Alloc_Opt('STAT', Name('a'))")
 
-class TestNullifyStmt(NumpyTestCase): # R633
+class TestNullifyStmt(TestCase): # R633
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Nullify_Stmt
         a = cls('nullify (a)')
         assert isinstance(a, cls),`a`
@@ -1345,9 +1345,9 @@ class TestNullifyStmt(NumpyTestCase): # R633
 ############################### SECTION  7 ####################################
 ###############################################################################
 
-class TestPrimary(NumpyTestCase): # R701
+class TestPrimary(TestCase): # R701
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Primary
         a = cls('a')
         assert isinstance(a,Name),`a`
@@ -1401,9 +1401,9 @@ class TestPrimary(NumpyTestCase): # R701
         assert isinstance(a,Real_Literal_Constant),`a`
         assert_equal(str(a),'0.0E-1')
 
-class TestParenthesis(NumpyTestCase): # R701.h
+class TestParenthesis(TestCase): # R701.h
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Parenthesis
         a  = cls('(a)')
         assert isinstance(a,cls),`a`
@@ -1422,9 +1422,9 @@ class TestParenthesis(NumpyTestCase): # R701.h
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'(a + (a + c))')
 
-class TestLevel1Expr(NumpyTestCase): # R702
+class TestLevel1Expr(TestCase): # R702
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Level_1_Expr
         a = cls('.hey. a')
         assert isinstance(a,cls),`a`
@@ -1433,9 +1433,9 @@ class TestLevel1Expr(NumpyTestCase): # R702
 
         self.assertRaises(NoMatchError,cls,'.not. a')
 
-class TestMultOperand(NumpyTestCase): # R704
+class TestMultOperand(TestCase): # R704
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Mult_Operand
         a = cls('a**b')
         assert isinstance(a,cls),`a`
@@ -1454,9 +1454,9 @@ class TestMultOperand(NumpyTestCase): # R704
         assert isinstance(a,Real_Literal_Constant),`a`
         assert_equal(str(a),'0.0E-1')
 
-class TestAddOperand(NumpyTestCase): # R705
+class TestAddOperand(TestCase): # R705
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Add_Operand
         a = cls('a*b')
         assert isinstance(a,cls),`a`
@@ -1475,9 +1475,9 @@ class TestAddOperand(NumpyTestCase): # R705
         assert isinstance(a,Real_Literal_Constant),`a`
         assert_equal(str(a),'0.0E-1')
 
-class TestLevel2Expr(NumpyTestCase): # R706
+class TestLevel2Expr(TestCase): # R706
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Level_2_Expr
         a = cls('a+b')
         assert isinstance(a,cls),`a`
@@ -1509,9 +1509,9 @@ class TestLevel2Expr(NumpyTestCase): # R706
         assert_equal(str(a),'0.0E-1')
 
 
-class TestLevel2UnaryExpr(NumpyTestCase):
+class TestLevel2UnaryExpr(TestCase):
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Level_2_Unary_Expr
         a = cls('+a')
         assert isinstance(a,cls),`a`
@@ -1531,9 +1531,9 @@ class TestLevel2UnaryExpr(NumpyTestCase):
         assert_equal(str(a),'0.0E-1')
 
 
-class TestLevel3Expr(NumpyTestCase): # R710
+class TestLevel3Expr(TestCase): # R710
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Level_3_Expr
         a = cls('a//b')
         assert isinstance(a,cls),`a`
@@ -1544,9 +1544,9 @@ class TestLevel3Expr(NumpyTestCase): # R710
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'"a" // "b"')
 
-class TestLevel4Expr(NumpyTestCase): # R712
+class TestLevel4Expr(TestCase): # R712
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Level_4_Expr
         a = cls('a.eq.b')
         assert isinstance(a,cls),`a`
@@ -1593,18 +1593,18 @@ class TestLevel4Expr(NumpyTestCase): # R712
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a > b')
 
-class TestAndOperand(NumpyTestCase): # R714
+class TestAndOperand(TestCase): # R714
 
-    def check_simple(self):
+    def test_simple(self):
         cls = And_Operand
         a = cls('.not.a')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'.NOT. a')
         assert_equal(repr(a),"And_Operand('.NOT.', Name('a'))")
 
-class TestOrOperand(NumpyTestCase): # R715
+class TestOrOperand(TestCase): # R715
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Or_Operand
         a = cls('a.and.b')
         assert isinstance(a,cls),`a`
@@ -1612,9 +1612,9 @@ class TestOrOperand(NumpyTestCase): # R715
         assert_equal(repr(a),"Or_Operand(Name('a'), '.AND.', Name('b'))")
 
 
-class TestEquivOperand(NumpyTestCase): # R716
+class TestEquivOperand(TestCase): # R716
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Equiv_Operand
         a = cls('a.or.b')
         assert isinstance(a,cls),`a`
@@ -1622,9 +1622,9 @@ class TestEquivOperand(NumpyTestCase): # R716
         assert_equal(repr(a),"Equiv_Operand(Name('a'), '.OR.', Name('b'))")
 
 
-class TestLevel5Expr(NumpyTestCase): # R717
+class TestLevel5Expr(TestCase): # R717
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Level_5_Expr
         a = cls('a.eqv.b')
         assert isinstance(a,cls),`a`
@@ -1639,9 +1639,9 @@ class TestLevel5Expr(NumpyTestCase): # R717
         assert isinstance(a,Level_4_Expr),`a`
         assert_equal(str(a),'a .EQ. b')
 
-class TestExpr(NumpyTestCase): # R722
+class TestExpr(TestCase): # R722
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Expr
         a = cls('a .op. b')
         assert isinstance(a,cls),`a`
@@ -1661,9 +1661,9 @@ class TestExpr(NumpyTestCase): # R722
 
         self.assertRaises(NoMatchError,Scalar_Int_Expr,'a,b')
 
-class TestAssignmentStmt(NumpyTestCase): # R734
+class TestAssignmentStmt(TestCase): # R734
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Assignment_Stmt
         a = cls('a = b')
         assert isinstance(a, cls),`a`
@@ -1678,27 +1678,27 @@ class TestAssignmentStmt(NumpyTestCase): # R734
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'a % c = b + c')
 
-class TestProcComponentRef(NumpyTestCase): # R741
+class TestProcComponentRef(TestCase): # R741
 
-    def check_proc_component_ref(self):
+    def test_proc_component_ref(self):
         cls = Proc_Component_Ref
         a = cls('a % b')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a % b')
         assert_equal(repr(a),"Proc_Component_Ref(Name('a'), '%', Name('b'))")
 
-class TestWhereStmt(NumpyTestCase): # R743
+class TestWhereStmt(TestCase): # R743
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Where_Stmt
         a = cls('where (a) c=2')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'WHERE (a) c = 2')
         assert_equal(repr(a),"Where_Stmt(Name('a'), Assignment_Stmt(Name('c'), '=', Int_Literal_Constant('2', None)))")
 
-class TestWhereConstructStmt(NumpyTestCase): # R745
+class TestWhereConstructStmt(TestCase): # R745
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Where_Construct_Stmt
         a = cls('where (a)')
         assert isinstance(a,cls),`a`
@@ -1710,9 +1710,9 @@ class TestWhereConstructStmt(NumpyTestCase): # R745
 ############################### SECTION  8 ####################################
 ###############################################################################
 
-class TestContinueStmt(NumpyTestCase): # R848
+class TestContinueStmt(TestCase): # R848
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Continue_Stmt
         a = cls('continue')
         assert isinstance(a, cls),`a`
@@ -1723,9 +1723,9 @@ class TestContinueStmt(NumpyTestCase): # R848
 ############################### SECTION  9 ####################################
 ###############################################################################
 
-class TestIoUnit(NumpyTestCase): # R901
+class TestIoUnit(TestCase): # R901
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Io_Unit
         a = cls('*')
         assert isinstance(a, cls),`a`
@@ -1735,18 +1735,18 @@ class TestIoUnit(NumpyTestCase): # R901
         assert isinstance(a, Name),`a`
         assert_equal(str(a),'a')
 
-class TestWriteStmt(NumpyTestCase): # R911
+class TestWriteStmt(TestCase): # R911
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Write_Stmt
         a = cls('write (123)"hey"')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'WRITE(UNIT = 123) "hey"')
         assert_equal(repr(a),'Write_Stmt(Io_Control_Spec_List(\',\', (Io_Control_Spec(\'UNIT\', Int_Literal_Constant(\'123\', None)),)), Char_Literal_Constant(\'"hey"\', None))')
 
-class TestPrintStmt(NumpyTestCase): # R912
+class TestPrintStmt(TestCase): # R912
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Print_Stmt
         a = cls('print 123')
         assert isinstance(a, cls),`a`
@@ -1757,18 +1757,18 @@ class TestPrintStmt(NumpyTestCase): # R912
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'PRINT *, "a=", a')
 
-class TestIoControlSpec(NumpyTestCase): # R913
+class TestIoControlSpec(TestCase): # R913
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Io_Control_Spec
         a = cls('end=123')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'END = 123')
         assert_equal(repr(a),"Io_Control_Spec('END', Label('123'))")
 
-class TestIoControlSpecList(NumpyTestCase): # R913-list
+class TestIoControlSpecList(TestCase): # R913-list
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Io_Control_Spec_List
         a = cls('end=123')
         assert isinstance(a, cls),`a`
@@ -1793,9 +1793,9 @@ class TestIoControlSpecList(NumpyTestCase): # R913-list
             assert isinstance(a, cls),`a`
             assert_equal(str(a),'UNIT = 123, NML = a')
 
-class TestFormat(NumpyTestCase): # R914
+class TestFormat(TestCase): # R914
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Format
         a = cls('*')
         assert isinstance(a, cls),`a`
@@ -1810,17 +1810,17 @@ class TestFormat(NumpyTestCase): # R914
         assert isinstance(a, Label),`a`
         assert_equal(str(a),'123')
 
-class TestWaitStmt(NumpyTestCase): # R921
+class TestWaitStmt(TestCase): # R921
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Wait_Stmt
         a = cls('wait (123)')
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'WAIT(UNIT = 123)')
 
-class TestWaitSpec(NumpyTestCase): # R922
+class TestWaitSpec(TestCase): # R922
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Wait_Spec
         a = cls('123')
         assert isinstance(a, cls),`a`
@@ -1840,9 +1840,9 @@ class TestWaitSpec(NumpyTestCase): # R922
 ############################### SECTION 11 ####################################
 ###############################################################################
 
-class TestUseStmt(NumpyTestCase): # R1109
+class TestUseStmt(TestCase): # R1109
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Use_Stmt
         a = cls('use a')
         assert isinstance(a, cls),`a`
@@ -1861,9 +1861,9 @@ class TestUseStmt(NumpyTestCase): # R1109
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'USE, INTRINSIC :: a, OPERATOR(.HEY.) => OPERATOR(.HOO.), c => g')
 
-class TestModuleNature(NumpyTestCase): # R1110
+class TestModuleNature(TestCase): # R1110
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Module_Nature
         a = cls('intrinsic')
         assert isinstance(a, cls),`a`
@@ -1878,9 +1878,9 @@ class TestModuleNature(NumpyTestCase): # R1110
 ############################### SECTION 12 ####################################
 ###############################################################################
 
-class TestFunctionReference(NumpyTestCase): # R1217
+class TestFunctionReference(TestCase): # R1217
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Function_Reference
         a = cls('f()')
         assert isinstance(a,cls),`a`
@@ -1892,18 +1892,18 @@ class TestFunctionReference(NumpyTestCase): # R1217
         assert_equal(str(a),'f(2, k = 1, a)')
 
 
-class TestProcedureDesignator(NumpyTestCase): # R1219
+class TestProcedureDesignator(TestCase): # R1219
 
-    def check_procedure_designator(self):
+    def test_procedure_designator(self):
         cls = Procedure_Designator
         a = cls('a%b')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'a % b')
         assert_equal(repr(a),"Procedure_Designator(Name('a'), '%', Name('b'))")
 
-class TestActualArgSpec(NumpyTestCase): # R1220
+class TestActualArgSpec(TestCase): # R1220
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Actual_Arg_Spec
         a = cls('k=a')
         assert isinstance(a,cls),`a`
@@ -1914,9 +1914,9 @@ class TestActualArgSpec(NumpyTestCase): # R1220
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
 
-class TestActualArgSpecList(NumpyTestCase):
+class TestActualArgSpecList(TestCase):
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Actual_Arg_Spec_List
         a = cls('a,b')
         assert isinstance(a,cls),`a`
@@ -1935,18 +1935,18 @@ class TestActualArgSpecList(NumpyTestCase):
         assert isinstance(a,Name),`a`
         assert_equal(str(a),'a')
 
-class TestAltReturnSpec(NumpyTestCase): # R1222
+class TestAltReturnSpec(TestCase): # R1222
 
-    def check_alt_return_spec(self):
+    def test_alt_return_spec(self):
         cls = Alt_Return_Spec
         a = cls('* 123')
         assert isinstance(a,cls),`a`
         assert_equal(str(a),'*123')
         assert_equal(repr(a),"Alt_Return_Spec(Label('123'))")
 
-class TestPrefix(NumpyTestCase): # R1227
+class TestPrefix(TestCase): # R1227
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Prefix
         a = cls('pure  recursive')
         assert isinstance(a, cls),`a`
@@ -1957,9 +1957,9 @@ class TestPrefix(NumpyTestCase): # R1227
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'INTEGER*2 PURE')
 
-class TestPrefixSpec(NumpyTestCase): # R1228
+class TestPrefixSpec(TestCase): # R1228
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Prefix_Spec
         a = cls('pure')
         assert isinstance(a, cls),`a`
@@ -1978,9 +1978,9 @@ class TestPrefixSpec(NumpyTestCase): # R1228
         assert isinstance(a, Intrinsic_Type_Spec),`a`
         assert_equal(str(a),'INTEGER*2')
 
-class TestSubroutineSubprogram(NumpyTestCase): # R1231
+class TestSubroutineSubprogram(TestCase): # R1231
 
-    def check_simple(self):
+    def test_simple(self):
         from api import get_reader
         reader = get_reader('''\
       subroutine foo
@@ -2000,9 +2000,9 @@ class TestSubroutineSubprogram(NumpyTestCase): # R1231
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'SUBROUTINE foo\n  INTEGER :: a\nEND SUBROUTINE foo')
 
-class TestSubroutineStmt(NumpyTestCase): # R1232
+class TestSubroutineStmt(TestCase): # R1232
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Subroutine_Stmt
         a = cls('subroutine foo')
         assert isinstance(a, cls),`a`
@@ -2021,9 +2021,9 @@ class TestSubroutineStmt(NumpyTestCase): # R1232
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'SUBROUTINE foo BIND(C)')
 
-class TestEndSubroutineStmt(NumpyTestCase): # R1234
+class TestEndSubroutineStmt(TestCase): # R1234
 
-    def check_simple(self):
+    def test_simple(self):
         cls = End_Subroutine_Stmt
         a = cls('end subroutine foo')
         assert isinstance(a, cls),`a`
@@ -2038,18 +2038,18 @@ class TestEndSubroutineStmt(NumpyTestCase): # R1234
         assert isinstance(a, cls),`a`
         assert_equal(str(a),'END SUBROUTINE')
 
-class TestReturnStmt(NumpyTestCase): # R1236
+class TestReturnStmt(TestCase): # R1236
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Return_Stmt
         a = cls('return')
         assert isinstance(a, cls),`a`
         assert_equal(str(a), 'RETURN')
         assert_equal(repr(a), 'Return_Stmt(None)')
 
-class TestContains(NumpyTestCase): # R1237
+class TestContains(TestCase): # R1237
 
-    def check_simple(self):
+    def test_simple(self):
         cls = Contains_Stmt
         a = cls('Contains')
         assert isinstance(a, cls),`a`
@@ -2098,4 +2098,4 @@ if 1:
     print '-----'
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

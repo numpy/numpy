@@ -15,9 +15,9 @@ import operator
 import numpy as np
 from numpy import ndarray, float_
 import numpy.core.umath as umath
-from numpy.testing import NumpyTest, NumpyTestCase
-import numpy.testing.utils as utils
+from numpy.testing import *
 from numpy.testing.utils import build_err_msg, rand
+import numpy.testing.utils as utils
 
 import core
 from core import mask_or, getmask, getmaskarray, masked_array, nomask, masked
@@ -166,9 +166,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         raise ValueError(msg)
     # OK, now run the basic tests on filled versions
     return utils.assert_array_compare(comparison, 
-                                      x.filled(fill_value), y.filled(fill_value), 
-                                      err_msg=err_msg, 
-                                      verbose=verbose, header=header)
+                                x.filled(fill_value), y.filled(fill_value), 
+                                err_msg=err_msg, 
+                                verbose=verbose, header=header)
 
 
 def assert_array_equal(x, y, err_msg='', verbose=True):

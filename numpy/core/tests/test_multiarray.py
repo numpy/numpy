@@ -1,15 +1,14 @@
 import tempfile
-
+import sys
 import numpy as np
 from numpy.testing import *
 from numpy.core import *
 
-
-class TestFlags(NumpyTestCase):
+class TestFlags(TestCase):
     def setUp(self):
         self.a = arange(10)
 
-    def check_writeable(self):
+    def test_writeable(self):
         mydict = locals()
         self.a.flags.writeable = False
         self.assertRaises(RuntimeError, runstring, 'self.a[0] = 3', mydict)
@@ -17,7 +16,7 @@ class TestFlags(NumpyTestCase):
         self.a[0] = 5
         self.a[0] = 0
 
-    def check_otherflags(self):
+    def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
         assert_equal(self.a.flags.farray, False)
         assert_equal(self.a.flags.behaved, True)
@@ -29,13 +28,13 @@ class TestFlags(NumpyTestCase):
         assert_equal(self.a.flags.updateifcopy, False)
 
 
-class TestAttributes(NumpyTestCase):
+class TestAttributes(TestCase):
     def setUp(self):
         self.one = arange(10)
         self.two = arange(20).reshape(4,5)
         self.three = arange(60,dtype=float64).reshape(2,5,6)
 
-    def check_attributes(self):
+    def test_attributes(self):
         assert_equal(self.one.shape, (10,))
         assert_equal(self.two.shape, (4,5))
         assert_equal(self.three.shape, (2,5,6))
@@ -56,7 +55,7 @@ class TestAttributes(NumpyTestCase):
         assert_equal(self.two.itemsize, self.two.dtype.itemsize)
         assert_equal(self.two.base, arange(20))
 
-    def check_dtypeattr(self):
+    def test_dtypeattr(self):
         assert_equal(self.one.dtype, dtype(int_))
         assert_equal(self.three.dtype, dtype(float_))
         assert_equal(self.one.dtype.char, 'l')
@@ -65,7 +64,7 @@ class TestAttributes(NumpyTestCase):
         assert_equal(self.one.dtype.str[1], 'i')
         assert_equal(self.three.dtype.str[1], 'f')
 
-    def check_stridesattr(self):
+    def test_stridesattr(self):
         x = self.one
         def make_array(size, offset, strides):
             return ndarray([size], buffer=x, dtype=int,
@@ -79,7 +78,7 @@ class TestAttributes(NumpyTestCase):
         #self.failUnlessRaises(ValueError, lambda: ndarray([1], strides=4))
 
 
-    def check_set_stridesattr(self):
+    def test_set_stridesattr(self):
         x = self.one
         def make_array(size, offset, strides):
             try:
@@ -94,7 +93,7 @@ class TestAttributes(NumpyTestCase):
         self.failUnlessRaises(ValueError, make_array, 8, 3, 1)
         #self.failUnlessRaises(ValueError, make_array, 8, 3, 0)
 
-    def check_fill(self):
+    def test_fill(self):
         for t in "?bhilqpBHILQPfdgFDGO":
             x = empty((3,2,1), t)
             y = empty((3,2,1), t)
@@ -106,82 +105,85 @@ class TestAttributes(NumpyTestCase):
         x.fill(x[0])
         assert_equal(x['f1'][1], x['f1'][0])
 
-class TestDtypedescr(NumpyTestCase):
-    def check_construction(self):
+
+class TestDtypedescr(TestCase):
+    def test_construction(self):
         d1 = dtype('i4')
         assert_equal(d1, dtype(int32))
         d2 = dtype('f8')
         assert_equal(d2, dtype(float64))
 
-class TestFromstring(NumpyTestCase):
-    def check_binary(self):
+
+class TestFromstring(TestCase):
+    def test_binary(self):
         a = fromstring('\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@',dtype='<f4')
         assert_array_equal(a, array([1,2,3,4]))
 
-    def check_string(self):
+    def test_string(self):
         a = fromstring('1,2,3,4', sep=',')
         assert_array_equal(a, [1., 2., 3., 4.])
 
-    def check_counted_string(self):
+    def test_counted_string(self):
         a = fromstring('1,2,3,4', count=4, sep=',')
         assert_array_equal(a, [1., 2., 3., 4.])
         a = fromstring('1,2,3,4', count=3, sep=',')
         assert_array_equal(a, [1., 2., 3.])
 
-    def check_string_with_ws(self):
+    def test_string_with_ws(self):
         a = fromstring('1 2  3     4   ', dtype=int, sep=' ')
         assert_array_equal(a, [1, 2, 3, 4])
 
-    def check_counted_string_with_ws(self):
+    def test_counted_string_with_ws(self):
         a = fromstring('1 2  3     4   ', count=3, dtype=int, sep=' ')
         assert_array_equal(a, [1, 2, 3])
 
-    def check_ascii(self):
+    def test_ascii(self):
         a = fromstring('1 , 2 , 3 , 4', sep=',')
         b = fromstring('1,2,3,4', dtype=float, sep=',')
         assert_array_equal(a, [1.,2.,3.,4.])
         assert_array_equal(a,b)
 
-class TestZeroRank(NumpyTestCase):
+
+class TestZeroRank(TestCase):
     def setUp(self):
         self.d = array(0), array('x', object)
 
-    def check_ellipsis_subscript(self):
+    def test_ellipsis_subscript(self):
         a,b = self.d
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(b[...], 'x')
         self.failUnless(a[...] is a)
         self.failUnless(b[...] is b)
 
-    def check_empty_subscript(self):
+    def test_empty_subscript(self):
         a,b = self.d
         self.failUnlessEqual(a[()], 0)
         self.failUnlessEqual(b[()], 'x')
         self.failUnless(type(a[()]) is a.dtype.type)
         self.failUnless(type(b[()]) is str)
 
-    def check_invalid_subscript(self):
+    def test_invalid_subscript(self):
         a,b = self.d
         self.failUnlessRaises(IndexError, lambda x: x[0], a)
         self.failUnlessRaises(IndexError, lambda x: x[0], b)
         self.failUnlessRaises(IndexError, lambda x: x[array([], int)], a)
         self.failUnlessRaises(IndexError, lambda x: x[array([], int)], b)
 
-    def check_ellipsis_subscript_assignment(self):
+    def test_ellipsis_subscript_assignment(self):
         a,b = self.d
         a[...] = 42
         self.failUnlessEqual(a, 42)
         b[...] = ''
         self.failUnlessEqual(b.item(), '')
 
-    def check_empty_subscript_assignment(self):
+    def test_empty_subscript_assignment(self):
         a,b = self.d
         a[()] = 42
         self.failUnlessEqual(a, 42)
         b[()] = ''
         self.failUnlessEqual(b.item(), '')
 
-    def check_invalid_subscript_assignment(self):
+    def test_invalid_subscript_assignment(self):
         a,b = self.d
         def assign(x, i, v):
             x[i] = v
@@ -189,7 +191,7 @@ class TestZeroRank(NumpyTestCase):
         self.failUnlessRaises(IndexError, assign, b, 0, '')
         self.failUnlessRaises(ValueError, assign, a, (), '')
 
-    def check_newaxis(self):
+    def test_newaxis(self):
         a,b = self.d
         self.failUnlessEqual(a[newaxis].shape, (1,))
         self.failUnlessEqual(a[..., newaxis].shape, (1,))
@@ -200,13 +202,13 @@ class TestZeroRank(NumpyTestCase):
         self.failUnlessEqual(a[newaxis, newaxis, ...].shape, (1,1))
         self.failUnlessEqual(a[(newaxis,)*10].shape, (1,)*10)
 
-    def check_invalid_newaxis(self):
+    def test_invalid_newaxis(self):
         a,b = self.d
         def subscript(x, i): x[i]
         self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
         self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
 
-    def check_constructor(self):
+    def test_constructor(self):
         x = ndarray(())
         x[()] = 5
         self.failUnlessEqual(x[()], 5)
@@ -214,36 +216,37 @@ class TestZeroRank(NumpyTestCase):
         y[()] = 6
         self.failUnlessEqual(x[()], 6)
 
-    def check_output(self):
+    def test_output(self):
         x = array(2)
         self.failUnlessRaises(ValueError, add, x, [1], x)
 
-class TestScalarIndexing(NumpyTestCase):
+
+class TestScalarIndexing(TestCase):
     def setUp(self):
         self.d = array([0,1])[0]
 
-    def check_ellipsis_subscript(self):
+    def test_ellipsis_subscript(self):
         a = self.d
         self.failUnlessEqual(a[...], 0)
         self.failUnlessEqual(a[...].shape,())
 
-    def check_empty_subscript(self):
+    def test_empty_subscript(self):
         a = self.d
         self.failUnlessEqual(a[()], 0)
         self.failUnlessEqual(a[()].shape,())
 
-    def check_invalid_subscript(self):
+    def test_invalid_subscript(self):
         a = self.d
         self.failUnlessRaises(IndexError, lambda x: x[0], a)
         self.failUnlessRaises(IndexError, lambda x: x[array([], int)], a)
 
-    def check_invalid_subscript_assignment(self):
+    def test_invalid_subscript_assignment(self):
         a = self.d
         def assign(x, i, v):
             x[i] = v
         self.failUnlessRaises(TypeError, assign, a, 0, 42)
 
-    def check_newaxis(self):
+    def test_newaxis(self):
         a = self.d
         self.failUnlessEqual(a[newaxis].shape, (1,))
         self.failUnlessEqual(a[..., newaxis].shape, (1,))
@@ -254,22 +257,21 @@ class TestScalarIndexing(NumpyTestCase):
         self.failUnlessEqual(a[newaxis, newaxis, ...].shape, (1,1))
         self.failUnlessEqual(a[(newaxis,)*10].shape, (1,)*10)
 
-    def check_invalid_newaxis(self):
+    def test_invalid_newaxis(self):
         a = self.d
         def subscript(x, i): x[i]
         self.failUnlessRaises(IndexError, subscript, a, (newaxis, 0))
         self.failUnlessRaises(IndexError, subscript, a, (newaxis,)*50)
 
 
-
-class TestCreation(NumpyTestCase):
-    def check_from_attribute(self):
+class TestCreation(TestCase):
+    def test_from_attribute(self):
         class x(object):
             def __array__(self, dtype=None):
                 pass
         self.failUnlessRaises(ValueError, array, x())
 
-    def check_from_string(self) :
+    def test_from_string(self) :
         types = np.typecodes['AllInteger'] + np.typecodes['Float']
         nstr = ['123','123']
         result = array([123, 123], dtype=int)
@@ -277,8 +279,9 @@ class TestCreation(NumpyTestCase):
             msg = 'String conversion for %s' % type
             assert_equal(array(nstr, dtype=type), result, err_msg=msg)
 
-class TestBool(NumpyTestCase):
-    def check_test_interning(self):
+
+class TestBool(TestCase):
+    def test_test_interning(self):
         a0 = bool_(0)
         b0 = bool_(False)
         self.failUnless(a0 is b0)
@@ -289,21 +292,21 @@ class TestBool(NumpyTestCase):
         self.failUnless(array(True)[()] is a1)
 
 
-class TestMethods(NumpyTestCase):
-    def check_test_round(self):
+class TestMethods(TestCase):
+    def test_test_round(self):
         assert_equal(array([1.2,1.5]).round(), [1,2])
         assert_equal(array(1.5).round(), 2)
         assert_equal(array([12.2,15.5]).round(-1), [10,20])
         assert_equal(array([12.15,15.51]).round(1), [12.2,15.5])
 
-    def check_transpose(self):
+    def test_transpose(self):
         a = array([[1,2],[3,4]])
         assert_equal(a.transpose(), [[1,3],[2,4]])
         self.failUnlessRaises(ValueError, lambda: a.transpose(0))
         self.failUnlessRaises(ValueError, lambda: a.transpose(0,0))
         self.failUnlessRaises(ValueError, lambda: a.transpose(0,1,2))
 
-    def check_sort(self):
+    def test_sort(self):
         # all c scalar sorts use the same code with different types
         # so it suffices to run a quick check with one type. The number
         # of sorted items must be greater than ~50 to check the actual
@@ -390,7 +393,7 @@ class TestMethods(NumpyTestCase):
         # d.sort(axis=None)
         #assert_equal(d, c, "test sort with axis=None")
 
-    def check_argsort(self):
+    def test_argsort(self):
         # all c scalar argsorts use the same code with different types
         # so it suffices to run a quick check with one type. The number
         # of sorted items must be greater than ~50 to check the actual
@@ -468,7 +471,7 @@ class TestMethods(NumpyTestCase):
         a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
 
-    def check_flatten(self):
+    def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
         x1 = np.array([[[1,2],[3,4]],[[5,6],[7,8]]], np.int32)
         y0 = np.array([1,2,3,4,5,6], np.int32)
@@ -482,14 +485,16 @@ class TestMethods(NumpyTestCase):
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
-class TestSubscripting(NumpyTestCase):
-    def check_test_zero_rank(self):
+
+class TestSubscripting(TestCase):
+    def test_test_zero_rank(self):
         x = array([1,2,3])
         self.failUnless(isinstance(x[0], int))
         self.failUnless(type(x[0, ...]) is ndarray)
 
-class TestPickling(NumpyTestCase):
-    def check_both(self):
+
+class TestPickling(TestCase):
+    def test_both(self):
         import pickle
         carray = array([[2,9],[7,0],[3,8]])
         tarray = transpose(carray)
@@ -498,45 +503,46 @@ class TestPickling(NumpyTestCase):
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
-    def check_version0_int8(self):
+    def test_version0_int8(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = array([1,2,3,4], dtype=int8)
         p = loads(s)
         assert_equal(a, p)
 
-    def check_version0_float32(self):
+    def test_version0_float32(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
         p = loads(s)
         assert_equal(a, p)
 
-    def check_version0_object(self):
+    def test_version0_object(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = array([{'a':1}, {'b':2}])
         p = loads(s)
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
-    def check_version1_int8(self):
+    def test_version1_int8(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb.'
         a = array([1,2,3,4], dtype=int8)
         p = loads(s)
         assert_equal(a, p)
 
-    def check_version1_float32(self):
+    def test_version1_float32(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb.'
         a = array([1.0, 2.0, 3.0, 4.0], dtype=float32)
         p = loads(s)
         assert_equal(a, p)
 
-    def check_version1_object(self):
+    def test_version1_object(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
         a = array([{'a':1}, {'b':2}])
         p = loads(s)
         assert_equal(a, p)
 
-class TestFancyIndexing(NumpyTestCase):
-    def check_list(self):
+
+class TestFancyIndexing(TestCase):
+    def test_list(self):
         x = ones((1,1))
         x[:,[0]] = 2.0
         assert_array_equal(x, array([[2.0]]))
@@ -545,7 +551,7 @@ class TestFancyIndexing(NumpyTestCase):
         x[:,:,[0]] = 2.0
         assert_array_equal(x, array([[[2.0]]]))
 
-    def check_tuple(self):
+    def test_tuple(self):
         x = ones((1,1))
         x[:,(0,)] = 2.0
         assert_array_equal(x, array([[2.0]]))
@@ -553,8 +559,9 @@ class TestFancyIndexing(NumpyTestCase):
         x[:,:,(0,)] = 2.0
         assert_array_equal(x, array([[[2.0]]]))
 
-class TestStringCompare(NumpyTestCase):
-    def check_string(self):
+
+class TestStringCompare(TestCase):
+    def test_string(self):
         g1 = array(["This","is","example"])
         g2 = array(["This","was","example"])
         assert_array_equal(g1 == g2, [g1[i] == g2[i] for i in [0,1,2]])
@@ -564,7 +571,7 @@ class TestStringCompare(NumpyTestCase):
         assert_array_equal(g1 < g2, [g1[i] < g2[i] for i in [0,1,2]])
         assert_array_equal(g1 > g2, [g1[i] > g2[i] for i in [0,1,2]])
 
-    def check_mixed(self):
+    def test_mixed(self):
         g1 = array(["spam","spa","spammer","and eggs"])
         g2 = "spam"
         assert_array_equal(g1 == g2, [x == g2 for x in g1])
@@ -575,7 +582,7 @@ class TestStringCompare(NumpyTestCase):
         assert_array_equal(g1 >= g2, [x >= g2 for x in g1])
 
 
-    def check_unicode(self):
+    def test_unicode(self):
         g1 = array([u"This",u"is",u"example"])
         g2 = array([u"This",u"was",u"example"])
         assert_array_equal(g1 == g2, [g1[i] == g2[i] for i in [0,1,2]])
@@ -586,8 +593,8 @@ class TestStringCompare(NumpyTestCase):
         assert_array_equal(g1 > g2,  [g1[i] > g2[i] for i in [0,1,2]])
 
 
-class TestArgmax(NumpyTestCase):
-    def check_all(self):
+class TestArgmax(TestCase):
+    def test_all(self):
         a = np.random.normal(0,1,(4,5,6,7,8))
         for i in xrange(a.ndim):
             amax = a.max(i)
@@ -596,13 +603,15 @@ class TestArgmax(NumpyTestCase):
             axes.remove(i)
             assert all(amax == aargmax.choose(*a.transpose(i,*axes)))
 
-class TestNewaxis(NumpyTestCase):
-    def check_basic(self):
+
+class TestNewaxis(TestCase):
+    def test_basic(self):
         sk = array([0,-0.1,0.1])
         res = 250*sk[:,newaxis]
         assert_almost_equal(res.ravel(),250*sk)
 
-class TestClip(NumpyTestCase):
+
+class TestClip(TestCase):
     def _check_range(self,x,cmin,cmax):
         assert np.all(x >= cmin)
         assert np.all(x <= cmax)
@@ -636,7 +645,7 @@ class TestClip(NumpyTestCase):
                 self._check_range(x,expected_min,expected_max)
         return x
 
-    def check_basic(self):
+    def test_basic(self):
         for inplace in [False, True]:
             self._clip_type('float',1024,-12.8,100.2, inplace=inplace)
             self._clip_type('float',1024,0,0, inplace=inplace)
@@ -647,13 +656,13 @@ class TestClip(NumpyTestCase):
             x = self._clip_type('uint',1024,-120,100,expected_min=0, inplace=inplace)
             x = self._clip_type('uint',1024,0,0, inplace=inplace)
 
-    def check_record_array(self):
+    def test_record_array(self):
         rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
                       dtype=[('x', '<f8'), ('y', '<f8'), ('z', '<f8')])
         y = rec['x'].clip(-0.3,0.5)
         self._check_range(y,-0.3,0.5)
 
-    def check_max_or_min(self):
+    def test_max_or_min(self):
         val = np.array([0,1,2,3,4,5,6,7])
         x = val.clip(3)
         assert np.all(x >= 3)
@@ -662,24 +671,24 @@ class TestClip(NumpyTestCase):
         x = val.clip(max=4)
         assert np.all(x <= 4)
 
-class TestPutmask(ParametricTestCase):
+
+class TestPutmask(TestCase):
     def tst_basic(self,x,T,mask,val):
         np.putmask(x,mask,val)
         assert np.all(x[mask] == T(val))
         assert x.dtype == T
 
-    def testip_types(self):
+    def test_ip_types(self):
         unchecked_types = [str, unicode, np.void, object]
 
         x = np.random.random(1000)*100
         mask = x < 40
 
-        tests = []
         for val in [-100,0,15]:
             for types in np.sctypes.itervalues():
-                tests.extend([(self.tst_basic,x.copy().astype(T),T,mask,val)
-                              for T in types if T not in unchecked_types])
-        return tests
+                for T in types:
+                    if T not in unchecked_types:
+                        yield self.tst_basic,x.copy().astype(T),T,mask,val
 
     def test_mask_size(self):
         self.failUnlessRaises(ValueError, np.putmask,
@@ -690,8 +699,9 @@ class TestPutmask(ParametricTestCase):
         np.putmask(x,[True,False,True],-1)
         assert_array_equal(x,[-1,2,-1])
 
-    def testip_byteorder(self):
-        return [(self.tst_byteorder,dtype) for dtype in ('>i4','<i4')]
+    def test_ip_byteorder(self):
+        for dtype in ('>i4','<i4'):
+            yield self.tst_byteorder,dtype
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -708,21 +718,21 @@ class TestPutmask(ParametricTestCase):
         ## np.putmask(z,[True,True,True],3)
         pass
 
-class TestTake(ParametricTestCase):
+
+class TestTake(TestCase):
     def tst_basic(self,x):
         ind = range(x.shape[0])
         assert_array_equal(x.take(ind, axis=0), x)
 
-    def testip_types(self):
+    def test_ip_types(self):
         unchecked_types = [str, unicode, np.void, object]
 
         x = np.random.random(24)*100
         x.shape = 2,3,4
-        tests = []
         for types in np.sctypes.itervalues():
-            tests.extend([(self.tst_basic,x.copy().astype(T))
-                          for T in types if T not in unchecked_types])
-        return tests
+            for T in types:
+                if T not in unchecked_types:
+                    yield self.tst_basic,x.copy().astype(T)
 
     def test_raise(self):
         x = np.random.random(24)*100
@@ -748,8 +758,9 @@ class TestTake(ParametricTestCase):
         x = np.array([1,2,3],dtype)
         assert_array_equal(x.take([0,2,1]),[1,3,2])
 
-    def testip_byteorder(self):
-        return [(self.tst_byteorder,dtype) for dtype in ('>i4','<i4')]
+    def test_ip_byteorder(self):
+        for dtype in ('>i4','<i4'):
+            yield self.tst_byteorder,dtype
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -758,7 +769,8 @@ class TestTake(ParametricTestCase):
         rec1 = rec.take([1])
         assert rec1['x'] == 5.0 and rec1['y'] == 4.0
 
-class TestLexsort(NumpyTestCase):
+
+class TestLexsort(TestCase):
     def test_basic(self):
         a = [1,2,1,3,1,5]
         b = [0,4,5,6,2,3]
@@ -772,7 +784,8 @@ class TestLexsort(NumpyTestCase):
 
         assert_array_equal(x[1][idx],np.sort(x[1]))
 
-class TestFromToFile(NumpyTestCase):
+
+class TestFromToFile(TestCase):
     def setUp(self):
         shape = (4,7)
         rand = np.random.random
@@ -801,21 +814,21 @@ class TestFromToFile(NumpyTestCase):
         y = np.fromfile(filename,dtype=self.dtype)
         assert_array_equal(y,self.x.flat)
 
-class TestFromBuffer(ParametricTestCase):
+
+class TestFromBuffer(TestCase):
     def tst_basic(self,buffer,expected,kwargs):
         assert_array_equal(np.frombuffer(buffer,**kwargs),expected)
 
-    def testip_basic(self):
-        tests = []
+    def test_ip_basic(self):
         for byteorder in ['<','>']:
             for dtype in [float,int,np.complex]:
                 dt = np.dtype(dtype).newbyteorder(byteorder)
                 x = (np.random.random((4,7))*5).astype(dt)
                 buf = x.tostring()
-                tests.append((self.tst_basic,buf,x.flat,{'dtype':dt}))
-        return tests
+                yield self.tst_basic,buf,x.flat,{'dtype':dt}
 
-class TestResize(NumpyTestCase):
+
+class TestResize(TestCase):
     def test_basic(self):
         x = np.eye(3)
         x.resize((5,5))
@@ -827,13 +840,15 @@ class TestResize(NumpyTestCase):
         y = x
         self.failUnlessRaises(ValueError,x.resize,(5,1))
 
-class TestRecord(NumpyTestCase):
+
+class TestRecord(TestCase):
     def test_field_rename(self):
         dt = np.dtype([('f',float),('i',int)])
         dt.names = ['p','q']
         assert_equal(dt.names,['p','q'])
 
-class TestView(NumpyTestCase):
+
+class TestView(TestCase):
     def test_basic(self):
         x = np.array([(1,2,3,4),(5,6,7,8)],dtype=[('r',np.int8),('g',np.int8),
                                                   ('b',np.int8),('a',np.int8)])
@@ -857,7 +872,8 @@ class TestView(NumpyTestCase):
         assert(isinstance(y,np.matrix))
         assert_equal(y.dtype, np.dtype('<i2'))
 
-class TestStats(NumpyTestCase):
+
+class TestStats(TestCase):
     def test_subclass(self):
         class TestArray(np.ndarray):
             def __new__(cls, data, info):
@@ -875,12 +891,6 @@ class TestStats(NumpyTestCase):
         res = dat.var(1)
         assert res.info == dat.info
 
-# Import tests without matching module names
-set_local_path()
-from test_unicode import *
-from test_regression import *
-from test_ufunc import *
-restore_path()
 
 if __name__ == "__main__":
-    NumpyTest('numpy.core.multiarray').run()
+    nose.run(argv=['', __file__])

@@ -3,6 +3,6 @@ from info import __doc__
 
 from linalg import *
 
-def test(level=1, verbosity=1):
-    from numpy.testing import NumpyTest
-    return NumpyTest().test(level, verbosity)
+from numpy.testing.pkgtester import Tester
+test = Tester().test
+bench = Tester().test

@@ -94,8 +94,11 @@ else:
     __all__ = ['add_newdocs']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
-    import testing
-    from testing import ScipyTest, NumpyTest
+
+    from testing.pkgtester import Tester
+    test = Tester().test
+    bench = Tester().bench
+
     import core
     from core import *
     import lib
@@ -113,15 +116,8 @@ else:
     from core import round, abs, max, min
 
     __all__.extend(['__version__', 'pkgload', 'PackageLoader',
-               'ScipyTest', 'NumpyTest', 'show_config'])
+               'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib'])
 
-    def test(*args, **kw):
-        import os, sys
-        print 'Numpy is installed in %s' % (os.path.split(__file__)[0],)
-        print 'Numpy version %s' % (__version__,)
-        print 'Python version %s' % (sys.version.replace('\n', '',),)
-        return NumpyTest().test(*args, **kw)
-    test.__doc__ = NumpyTest.test.__doc__
