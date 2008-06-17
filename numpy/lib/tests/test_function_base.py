@@ -616,5 +616,12 @@ def compare_results(res,desired):
     for i in range(len(desired)):
         assert_array_equal(res[i],desired[i])
 
+class TestPiecewise(TestCase):
+    def test_0d(self):
+        x = array(3)
+        y = piecewise(x, x>3, [4, 0])
+        assert y.ndim == 0
+        assert y == 0
+
 if __name__ == "__main__":
     nose.run(argv=['', __file__])
