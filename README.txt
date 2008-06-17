@@ -13,8 +13,9 @@ directory) with:
 
 python -c 'import numpy; numpy.test()'
 
-Please note that you must have the 'nose' test framework installed in order to
-run the tests.  More information about nose is available here: 
+Please note that you must have version 0.10 or later of the 'nose' test
+framework installed in order to run the tests.  More information about nose is
+available here: 
 
 http://somethingaboutorange.com/mrl/projects/nose/ 
 

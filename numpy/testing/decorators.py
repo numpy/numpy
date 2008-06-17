@@ -10,11 +10,6 @@ information.
 
 """
 
-try:
-    import nose
-except ImportError:
-    pass
-
 def slow(t):
     """Labels a test as 'slow'.
 
@@ -76,6 +71,9 @@ def skipif(skip_condition, msg=None):
     if msg is None:
         msg = 'Test skipped due to test condition'
     def skip_decorator(f):
+        # Local import to avoid a hard nose dependency and only incur the 
+        # import time overhead at actual test-time. 
+        import nose
         def skipper(*args, **kwargs):
             if skip_condition:
                 raise nose.SkipTest, msg
@@ -87,6 +85,9 @@ def skipif(skip_condition, msg=None):
 def skipknownfailure(f):
     ''' Decorator to raise SkipTest for test known to fail
     '''
+    # Local import to avoid a hard nose dependency and only incur the 
+    # import time overhead at actual test-time. 
+    import nose
     def skipper(*args, **kwargs):
         raise nose.SkipTest, 'This test is known to fail'
     return nose.tools.make_decorator(f)(skipper)

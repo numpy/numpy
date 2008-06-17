@@ -10,14 +10,6 @@ from unittest import TestCase
 
 import decorators as dec
 from utils import *
-
-try:
-    import nose
-    from nose.tools import raises
-except ImportError:
-    pass
-
 from numpytest import *
-
 from pkgtester import Tester
 test = Tester().test

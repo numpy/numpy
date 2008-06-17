@@ -7,7 +7,25 @@ import os
 import sys
 import re
 
-import nose
+def import_nose():
+    """ Import nose only when needed.
+    """
+    fine_nose = True
+    try:
+        import nose
+        from nose.tools import raises
+    except ImportError:
+        fine_nose = False
+    else:
+        nose_version = nose.__versioninfo__
+        if nose_version[0] < 1 and nose_version[1] < 10:
+            fine_nose = False
+
+    if not fine_nose:
+        raise ImportError('Need nose >=0.10 for tests - see '
+            'http://somethingaboutorange.com/mrl/projects/nose')
+
+    return nose
 
 class NoseTester(object):
     """ Nose test runner.
@@ -113,6 +131,7 @@ class NoseTester(object):
         doctests : boolean
             If True, run doctests in module, default False
         '''
+        nose = import_nose()
         argv = self._test_argv(label, verbose, extra_argv)
         if doctests:
             argv+=['--with-doctest','--doctest-tests']
@@ -135,6 +154,7 @@ class NoseTester(object):
         ''' Run benchmarks for module using nose
 
         %(test_header)s'''
+        nose = import_nose()
         argv = self._test_argv(label, verbose, extra_argv)
         argv += ['--match', r'(?:^|[\\b_\\.%s-])[Bb]ench' % os.sep]
         nose.run(argv=argv)
