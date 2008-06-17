@@ -339,6 +339,28 @@ The sections of the docstring are:
     <http://www.scipy.org/Developer_Zone/ReferenceGuide>`_ is
     available.
 
+Documenting classes
+-------------------
+
+Class docstring
+```````````````
+Use the same sections as outlined above (all except ``Returns`` are
+applicable).  The constructor (``__init__``) should also be documented
+here.
+
+An ``Attributes`` section may be used to describe class variables::
+
+  Attributes
+  ----------
+  x : float
+      The X coordinate.
+  y : float
+      The Y coordinate.
+
+Method docstrings
+`````````````````
+Document these as you would any other function.  Do not include
+``self`` in the list of parameters.
 
 Common reST concepts
 --------------------
