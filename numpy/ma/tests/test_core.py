@@ -878,7 +878,7 @@ class TestFillingValues(TestCase):
         # We had a tailored comment to make sure special attributes are properly
         # dealt with
         a = array(['3', '4', '5'])
-        a._basedict.update(comment="updated!")
+        a._basedict.update({'comment':"updated!"})
         #
         b = array(a, dtype=int)
         assert_equal(b._data, [3,4,5])

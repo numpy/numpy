@@ -110,12 +110,13 @@ default_filler = {'b': True,
                   'V' : '???',
                   }
 max_filler = ntypes._minvals
-max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
+max_filler.update(dict([(k, -np.inf) for k in [np.float32, np.float64]]))
 min_filler = ntypes._maxvals
-min_filler.update([(k, +np.inf) for k in [np.float32, np.float64]])
+min_filler.update(dict([(k, +np.inf) for k in [np.float32, np.float64]]))
 if 'float128' in ntypes.typeDict:
-    max_filler.update([(np.float128, -np.inf)])
-    min_filler.update([(np.float128, +np.inf)])
+    max_filler[np.float128] = -np.inf
+    min_filler[np.float128] = +np.inf
+
 
 def default_fill_value(obj):
     """Calculate the default fill value for the argument object.
