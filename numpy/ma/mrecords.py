@@ -51,9 +51,6 @@ def _getformats(data):
     formats = ''
     for obj in data:
         obj = np.asarray(obj)
-#        if not isinstance(obj, ndarray):
-##        if not isinstance(obj, ndarray):
-#            raise ValueError, "item in the array list must be an ndarray."
         formats += _typestr[obj.dtype.type]
         if issubclass(obj.dtype.type, ntypes.flexible):
             formats += `obj.itemsize`
@@ -75,7 +72,7 @@ If the argument `names` is not None, updates the field names to valid names.
         elif isinstance(names, str):
             new_names = names.split(',')
         else:
-            raise NameError, "illegal input names %s" % `names`
+            raise NameError("illegal input names %s" % `names`)
         nnames = len(new_names)
         if nnames < ndescr:
             new_names += default_names[nnames:]
@@ -88,7 +85,7 @@ If the argument `names` is not None, updates the field names to valid names.
                 ndescr.append(t)
         else:
             ndescr.append((n,t[1]))
-    return numeric.dtype(ndescr)
+    return np.dtype(ndescr)
 
 
 def _get_fieldmask(self):
@@ -124,7 +121,6 @@ class MaskedRecords(MaskedArray, object):
         self = recarray.__new__(cls, shape, dtype=dtype, buf=buf, offset=offset,
                                 strides=strides, formats=formats,
                                 byteorder=byteorder, aligned=aligned,)
-#        self = self.view(cls)
         #
         mdtype = [(k,'|b1') for (k,_) in self.dtype.descr]
         if mask is nomask or not np.size(mask):
@@ -411,9 +407,9 @@ The fieldname base is either `_data` or `_mask`."""
                 return ndarray.view(self, obj)
         except TypeError:
             pass
-        dtype = np.dtype(obj)
-        if dtype.fields is None:
-            return self.__array__().view(dtype)
+        dtype_ = np.dtype(obj)
+        if dtype_.fields is None:
+            return self.__array__().view(dtype_)
         return ndarray.view(self, obj)
     #......................................................
     def filled(self, fill_value=None):
@@ -451,14 +447,14 @@ The fieldname base is either `_data` or `_mask`."""
     def soften_mask(self):
         "Forces the mask to soft"
         self._hardmask = False
-    #......................................................
+
     def copy(self):
         """Returns a copy of the masked record."""
         _localdict = self.__dict__
         copied = self._data.copy().view(type(self))
         copied._fieldmask = self._fieldmask.copy()
         return copied
-    #......................................................
+
     def tolist(self, fill_value=None):
         """Copy the data portion of the array to a hierarchical python
         list and returns that list.
@@ -654,21 +650,21 @@ on the first line. An exception is raised if the file is 3D or more.
     # Start the conversion loop .......
     for f in arr:
         try:
-            val = int(f)
+            int(f)
         except ValueError:
             try:
-                val = float(f)
+                float(f)
             except ValueError:
                 try:
                     val = complex(f)
                 except ValueError:
                     vartypes.append(arr.dtype)
                 else:
-                    vartypes.append(complex)
+                    vartypes.append(np.dtype(complex))
             else:
-                vartypes.append(float)
+                vartypes.append(np.dtype(float))
         else:
-            vartypes.append(int)
+            vartypes.append(np.dtype(int))
     return vartypes
 
 def openfile(fname):
