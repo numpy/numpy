@@ -20,7 +20,7 @@ import os
 import sys
 
 CLASSIFIERS = """\
-Development Status :: 4 - Beta
+Development Status :: 5 - Production/Stable
 Intended Audience :: Science/Research
 Intended Audience :: Developers
 License :: OSI Approved
@@ -79,7 +79,7 @@ def setup_package():
             maintainer_email = "numpy-discussion@lists.sourceforge.net",
             description = DOCLINES[0],
             long_description = "\n".join(DOCLINES[2:]),
-            url = "http://numeric.scipy.org",
+            url = "http://numpy.scipy.org",
             download_url = "http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103",
             license = 'BSD',
             classifiers=filter(None, CLASSIFIERS.split('\n')),
