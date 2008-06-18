@@ -357,6 +357,34 @@ An ``Attributes`` section may be used to describe class variables::
   y : float
       The Y coordinate.
 
+In general, it is not necessary to list class methods.  Those that are
+not part of the public API have names that start with an underscore.
+In some cases, however, a class may have a great many methods, of
+which only a few are relevant (e.g., subclasses of ndarray).  Then, it
+becomes useful to have an additional ``Methods`` section::
+
+  class Photo(ndarray):
+      """
+      Array with associated photographic information.
+
+      ...
+
+      Attributes
+      ----------
+      exposure : float
+          Exposure in seconds.
+
+      Methods
+      -------
+      colorspace(c='rgb')
+          Represent the photo in the given colorspace.
+      gamma(n=1.0)
+          Change the photo's gamma exposure.
+
+      """
+
+Note that `self` is *not* listed as the first parameter of methods.
+
 Method docstrings
 `````````````````
 Document these as you would any other function.  Do not include
