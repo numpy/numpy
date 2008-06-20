@@ -2,17 +2,27 @@
 """Cython access to Numpy arrays - simple example.
 """
 
-# Load the pieces of the Python C API we need to use (from c_python.pxd). Note
-# that a 'cimport' is similart to a Python 'import' statement, but it provides
-# access to the C part of a library instead of its Python-visible API.  Please
-# consult the Pyrex/Cython documentation for further details.
+#############################################################################
+# Load C APIs declared in .pxd files via cimport
+# 
+# A 'cimport' is similar to a Python 'import' statement, but it provides access
+# to the C part of a library instead of its Python-visible API.  See the
+# Pyrex/Cython documentation for details.
+
 cimport c_python as py
 
-# (C)Import the NumPy C API (from c_numpy.pxd)
 cimport c_numpy as cnp
 
-# Import the NumPy module for access to its usual Python API
+# NOTE: numpy MUST be initialized before any other code is executed.
+cnp.import_array()
+
+#############################################################################
+# Load Python modules via normal import statements
+
 import numpy as np
+
+#############################################################################
+# Regular code section begins
 
 # A 'def' function is visible in the Python-imported module
 def print_array_info(cnp.ndarray arr):
