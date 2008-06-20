@@ -42,9 +42,9 @@ m, = compile(fortran_code, 'test_derived_scalar_ext')
 
 from numpy import *
 
-class TestM(NumpyTestCase):
+class TestM(TestCase):
 
-    def check_foo_simple(self, level=1):
+    def test_foo_simple(self, level=1):
         a = m.myt(2)
         assert_equal(a.flag,2)
         assert isinstance(a,m.myt),`a`
@@ -59,7 +59,7 @@ class TestM(NumpyTestCase):
 
         #s = m.foo((5,))
 
-    def check_foo2_simple(self, level=1):
+    def test_foo2_simple(self, level=1):
         a = m.myt(2)
         assert_equal(a.flag,2)
         assert isinstance(a,m.myt),`a`
@@ -71,4 +71,4 @@ class TestM(NumpyTestCase):
 
 
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

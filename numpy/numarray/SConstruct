@@ -1,9 +1,2 @@
-# Last Change: Tue May 20 05:00 PM 2008 J
-# vim:syntax=python
-from numscons import GetNumpyEnvironment, scons_get_paths
-
-env = GetNumpyEnvironment(ARGUMENTS)
-env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
-env.Append(CPPPATH = env['src_dir'])
-
-_capi = env.NumpyPythonExtension('_capi', source = ['_capi.c'])
+from numscons import GetInitEnvironment
+GetInitEnvironment(ARGUMENTS).DistutilsSConscript('SConscript')

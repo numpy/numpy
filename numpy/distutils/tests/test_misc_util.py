@@ -8,15 +8,15 @@ from os.path import join, sep
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
-class TestAppendpath(NumpyTestCase):
+class TestAppendpath(TestCase):
 
-    def check_1(self):
+    def test_1(self):
         assert_equal(appendpath('prefix','name'),join('prefix','name'))
         assert_equal(appendpath('/prefix','name'),ajoin('prefix','name'))
         assert_equal(appendpath('/prefix','/name'),ajoin('prefix','name'))
         assert_equal(appendpath('prefix','/name'),join('prefix','name'))
 
-    def check_2(self):
+    def test_2(self):
         assert_equal(appendpath('prefix/sub','name'),
                      join('prefix','sub','name'))
         assert_equal(appendpath('prefix/sub','sup/name'),
@@ -24,7 +24,7 @@ class TestAppendpath(NumpyTestCase):
         assert_equal(appendpath('/prefix/sub','/prefix/name'),
                      ajoin('prefix','sub','name'))
 
-    def check_3(self):
+    def test_3(self):
         assert_equal(appendpath('/prefix/sub','/prefix/sup/name'),
                      ajoin('prefix','sub','sup','name'))
         assert_equal(appendpath('/prefix/sub/sub2','/prefix/sup/sup2/name'),
@@ -32,9 +32,9 @@ class TestAppendpath(NumpyTestCase):
         assert_equal(appendpath('/prefix/sub/sub2','/prefix/sub/sup/name'),
                      ajoin('prefix','sub','sub2','sup','name'))
 
-class TestMinrelpath(NumpyTestCase):
+class TestMinrelpath(TestCase):
 
-    def check_1(self):
+    def test_1(self):
         import os
         n = lambda path: path.replace('/',os.path.sep)
         assert_equal(minrelpath(n('aa/bb')),n('aa/bb'))
@@ -47,14 +47,15 @@ class TestMinrelpath(NumpyTestCase):
         assert_equal(minrelpath(n('.././..')),n('../..'))
         assert_equal(minrelpath(n('aa/bb/.././../dd')),n('dd'))
 
-class TestGpaths(NumpyTestCase):
+class TestGpaths(TestCase):
 
-    def check_gpaths(self):
+    def test_gpaths(self):
         local_path = minrelpath(os.path.join(os.path.dirname(__file__),'..'))
         ls = gpaths('command/*.py', local_path)
         assert os.path.join(local_path,'command','build_src.py') in ls,`ls`
         f = gpaths('system_info.py', local_path)
         assert os.path.join(local_path,'system_info.py')==f[0],`f`
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

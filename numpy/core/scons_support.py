@@ -1,4 +1,4 @@
-#! Last Change: Mon Apr 21 07:00 PM 2008 J
+#! Last Change: Thu Jun 12 02:00 PM 2008 J
 
 """Code to support special facilities to scons which are only useful for
 numpy.core, hence not put into numpy.distutils.scons"""
@@ -9,17 +9,13 @@ import os
 from os.path import join as pjoin, dirname as pdirname, basename as pbasename
 from copy import deepcopy
 
-from code_generators.generate_array_api import \
-     do_generate_api as nowrap_do_generate_array_api
+from code_generators.generate_numpy_api import \
+     do_generate_api as nowrap_do_generate_numpy_api
 from code_generators.generate_ufunc_api import \
      do_generate_api as nowrap_do_generate_ufunc_api
 
 from numscons.numdist import process_c_str as process_str
 from numscons.core.utils import rsplit, isstring
-try:
-    from numscons import distutils_dirs_emitter
-except ImportError:
-    raise ImportError("You need numscons >= 0.5.2")
 
 import SCons.Node
 import SCons
@@ -35,8 +31,8 @@ def split_ext(string):
 #------------------------------------
 # Ufunc and multiarray API generators
 #------------------------------------
-def do_generate_array_api(target, source, env):
-    nowrap_do_generate_array_api([str(i) for i in target],
+def do_generate_numpy_api(target, source, env):
+    nowrap_do_generate_numpy_api([str(i) for i in target],
                                  [str(i) for i in source])
     return 0
 
@@ -188,17 +184,15 @@ def define_no_smp():
             nosmp = 0
     return nosmp == 1
 
-array_api_gen_bld = Builder(action = Action(do_generate_array_api, '$ARRAPIGENCOMSTR'), 
-                            emitter = [generate_api_emitter,
-                                       distutils_dirs_emitter])
+array_api_gen_bld = Builder(action = Action(do_generate_numpy_api, '$ARRAPIGENCOMSTR'),
+                            emitter = generate_api_emitter)
+                                       
 
-ufunc_api_gen_bld = Builder(action = Action(do_generate_ufunc_api, '$UFUNCAPIGENCOMSTR'), 
-                            emitter = [generate_api_emitter,
-                                       distutils_dirs_emitter])
+ufunc_api_gen_bld = Builder(action = Action(do_generate_ufunc_api, '$UFUNCAPIGENCOMSTR'),
+                            emitter = generate_api_emitter)
 
-template_bld = Builder(action = Action(generate_from_template, '$TEMPLATECOMSTR'), 
-                       emitter = [generate_from_template_emitter,
-                                  distutils_dirs_emitter])
+template_bld = Builder(action = Action(generate_from_template, '$TEMPLATECOMSTR'),
+                       emitter = generate_from_template_emitter)
 
-umath_bld = Builder(action = Action(generate_umath, '$UMATHCOMSTR'), 
-                    emitter = [generate_umath_emitter, distutils_dirs_emitter])
+umath_bld = Builder(action = Action(generate_umath, '$UMATHCOMSTR'),
+                    emitter = generate_umath_emitter)

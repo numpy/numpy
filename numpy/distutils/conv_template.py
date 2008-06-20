@@ -286,4 +286,3 @@ if __name__ == "__main__":
     allstr = fid.read()
     writestr = process_str(allstr)
     outfile.write(writestr)
-

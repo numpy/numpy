@@ -9,11 +9,17 @@ find it.  You can guide the process using a site.cfg file.
 If fast BLAS and LAPACK cannot be found, then a slower default version is used.
 
 After installation, tests can be run (from outside the source
-directory) with
+directory) with:
 
 python -c 'import numpy; numpy.test()'
 
-The most current development version is always available from our
+Please note that you must have version 0.10 or later of the 'nose' test
+framework installed in order to run the tests.  More information about nose is
+available here: 
+
+http://somethingaboutorange.com/mrl/projects/nose/ 
+
+The most current development version of NumPy is always available from our
 subversion repository:
 
 http://svn.scipy.org/svn/numpy/trunk

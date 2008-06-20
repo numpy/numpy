@@ -10,7 +10,6 @@ from numpy.distutils.ccompiler import CCompiler
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils import log
-from numpy.distutils.misc_util import get_numpy_include_dirs
 
 def get_scons_build_dir():
     """Return the top path where everything produced by scons will be put.
@@ -38,6 +37,14 @@ def get_scons_local_path():
     from numscons import get_scons_path
     return get_scons_path()
 
+def get_distutils_libdir(cmd, sconscript_path):
+    """Returns the path where distutils install libraries, relatively to the
+    scons build directory."""
+    from numscons import get_scons_build_dir
+    scdir = pjoin(get_scons_build_dir(), pdirname(sconscript_path))
+    n = scdir.count(os.sep)
+    return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_lib)
+
 def get_python_exec_invoc():
     """This returns the python executable from which this file is invocated."""
     # Do we  need to take into account the PYTHONPATH, in a cross platform way,
@@ -48,6 +55,21 @@ def get_python_exec_invoc():
     # using "local python", using the alias facility of bash.
     import sys
     return sys.executable
+
+def get_numpy_include_dirs(sconscript_path):
+    """Return include dirs for numpy.
+
+    The paths are relatively to the setup.py script path."""
+    from numpy.distutils.misc_util import get_numpy_include_dirs as _incdir
+    from numscons import get_scons_build_dir
+    scdir = pjoin(get_scons_build_dir(), pdirname(sconscript_path))
+    n = scdir.count(os.sep)
+
+    dirs = _incdir()
+    rdirs = []
+    for d in dirs:
+        rdirs.append(pjoin(os.sep.join([os.pardir for i in range(n+1)]), d))
+    return rdirs
 
 def dirl_to_str(dirlist):
     """Given a list of directories, returns a string where the paths are
@@ -94,6 +116,9 @@ def dist2sconsfc(compiler):
 def dist2sconscxx(compiler):
     """This converts the name passed to distutils to scons name convention
     (C++ compiler). The argument should be a Compiler instance."""
+    if compiler.compiler_type == 'msvc':
+        return compiler.compiler_type
+    
     return compiler.compiler_cxx[0]
 
 def get_compiler_executable(compiler):
@@ -182,7 +207,7 @@ def find_common(seq1, seq2):
     """Given two list, return the index of the common items.
 
     The index are relative to seq1.
-    
+
     Note: do not handle duplicate items."""
     dict2 = dict([(i, None) for i in seq2])
 
@@ -298,8 +323,11 @@ class scons(old_build_ext):
             cxxcompiler.customize(self.distribution, need_cxx = 1)
             cxxcompiler.customize_cmd(self)
             self.cxxcompiler = cxxcompiler.cxx_compiler()
-            #print self.cxxcompiler.compiler_cxx[0]
-        
+            try:
+                get_cxx_tool_path(self.cxxcompiler)
+            except DistutilsSetupError:
+                self.cxxcompiler = None
+
         if self.package_list:
             self.package_list = parse_package_list(self.package_list)
 
@@ -311,6 +339,16 @@ class scons(old_build_ext):
                 raise RuntimeError("importing numscons failed (error was %s), using " \
                                    "scons within distutils is not possible without "
                                    "this package " % str(e))
+
+            try:
+                from numscons import get_version
+                if get_version() < '0.8.0':
+                    raise ValueError()
+            except ImportError, ValueError:
+                raise RuntimeError("You need numscons >= 0.8.0 to build numpy "\
+                                   "with numscons (imported numscons path " \
+                                   "is %s)." % numscons.__file__)
+                
         else:
             # nothing to do, just leave it here.
             return
@@ -327,7 +365,7 @@ class scons(old_build_ext):
         scons_exec = get_python_exec_invoc()
         scons_exec += ' ' + protect_path(pjoin(get_scons_local_path(), 'scons.py'))
 
-        if self.package_list is not None: 
+        if self.package_list is not None:
             id = select_packages(self.pkg_names, self.package_list)
             sconscripts = [self.sconscripts[i] for i in id]
             pre_hooks = [self.pre_hooks[i] for i in id]
@@ -358,7 +396,8 @@ class scons(old_build_ext):
             cmd.append('pkg_name="%s"' % pkg_name)
             #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
             #                                                    pdirname(sconscript))))
-            cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib)))
+            cmd.append('distutils_libdir=%s' % 
+                         protect_path(get_distutils_libdir(self, sconscript)))
 
             if not self._bypass_distutils_cc:
                 cmd.append('cc_opt=%s' % self.scons_compiler)
@@ -375,7 +414,7 @@ class scons(old_build_ext):
                 cmd.append('cxx_opt=%s' % dist2sconscxx(self.cxxcompiler))
                 cmd.append('cxx_opt_path=%s' % protect_path(get_cxx_tool_path(self.cxxcompiler)))
 
-            cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs()))
+            cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
             if self.silent:
                 if int(self.silent) == 2:
                     cmd.append('-Q')

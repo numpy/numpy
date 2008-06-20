@@ -152,7 +152,7 @@ class PackageLoader:
 
        Parameters
        ----------
-        *packges : arg-tuple
+        *packages : arg-tuple
              the names (one or more strings) of all the modules one
              wishes to load into the top-level namespace.
         verbose= : integer
@@ -183,9 +183,6 @@ class PackageLoader:
             postpone_import = getattr(info_module,'postpone_import',False)
             if (postpone and not global_symbols) \
                    or (postpone_import and postpone is not None):
-                self.log('__all__.append(%r)' % (package_name))
-                if '.' not in package_name:
-                    self.parent_export_names.append(package_name)
                 continue
 
             old_object = frame.f_locals.get(package_name,None)

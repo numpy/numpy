@@ -465,12 +465,10 @@ The ``tests/`` directory
 Ideally, every Python code, extension module, or subpackage in Scipy
 package directory should have the corresponding ``test_<name>.py``
 file in ``tests/`` directory.  This file should define classes
-derived from ``NumpyTestCase`` (or from ``unittest.TestCase``) class
-and have names starting with ``test``. The methods of these classes
-which names start with ``bench``, ``check``, or ``test``, are passed
-on to unittest machinery. In addition, the value of the first optional
-argument of these methods determine the level of the corresponding
-test. Default level is 1.
+derived from the ``numpy.testing.TestCase`` class (or from 
+``unittest.TestCase``) and have names starting with ``test``. The methods
+of these classes whose names contain ``test`` or start with ``bench`` are 
+automatically picked up by the test machinery. 
 
 A minimal example of a ``test_yyy.py`` file that implements tests for
 a Scipy package module ``numpy.xxx.yyy`` containing a function
@@ -489,20 +487,16 @@ a Scipy package module ``numpy.xxx.yyy`` containing a function
   # import modules that are located in the same directory as this file.
   restore_path()
 
-  class test_zzz(NumpyTestCase):
-      def check_simple(self, level=1):
+  class test_zzz(TestCase):
+      def test_simple(self, level=1):
           assert zzz()=='Hello from zzz'
       #...
 
   if __name__ == "__main__":
-      NumpyTest().run()
-
-``NumpyTestCase`` is derived from ``unittest.TestCase`` and it
-basically only implements an additional method ``measure(self,
-code_str, times=1)``.
+      nose.run(argv=['', __file__])
 
 Note that all classes that are inherited from ``TestCase`` class, are
-picked up by the test runner when using ``testoob``.
+automatically picked up by the test runner.
 
 ``numpy.testing`` module provides also the following convenience
 functions::
@@ -514,24 +508,14 @@ functions::
   assert_array_almost_equal(x,y,decimal=6,err_msg='')
   rand(*shape) # returns random array with a given shape
 
-``NumpyTest`` can be used for running ``tests/test_*.py`` scripts.
-For instance, to run all test scripts of the module ``xxx``, execute
-in Python:
+To run all test scripts of the module ``xxx``, execute in Python:
 
-  >>> NumpyTest('xxx').test(level=1,verbosity=1)
-
-or equivalently,
-
-  >>> import xxx
-  >>> NumpyTest(xxx).test(level=1,verbosity=1)
+  >>> import numpy
+  >>> numpy.xxx.test()
 
 To run only tests for ``xxx.yyy`` module, execute:
 
   >>> NumpyTest('xxx.yyy').test(level=1,verbosity=1)
-
-To take the level and verbosity parameters for tests from
-``sys.argv``, use ``NumpyTest.run()`` method (this is supported only
-when ``optparse`` is installed).
 
 Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''

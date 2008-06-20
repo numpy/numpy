@@ -1,5 +1,8 @@
 # :Author:    Travis Oliphant
 
+# API declaration section.  This basically exposes the NumPy C API to
+# Pyrex/Cython programs.
+
 cdef extern from "numpy/arrayobject.h":
 
     cdef enum NPY_TYPES:
@@ -131,3 +134,11 @@ cdef extern from "numpy/arrayobject.h":
     void PyArray_ITER_NEXT(flatiter it)
 
     void import_array()
+
+########################################################################
+# Other code (mostly initialization)
+
+# NumPy must be initialized before any user code is called in the extension
+# module.  By doing so here, we ensure the users don't have to explicitly
+# remember this themselves, and provide a cleaner Cython API.
+import_array()

@@ -1,14 +1,14 @@
 import numpy as np
 from numpy.testing import *
 
-class TestUfunc(NumpyTestCase):
+class TestUfunc(TestCase):
     def test_reduceat_shifting_sum(self) :
         L = 6
         x = np.arange(L)
         idx = np.array(zip(np.arange(L-2), np.arange(L-2)+2)).ravel()
         assert_array_equal(np.add.reduceat(x,idx)[::2],
                            [1,3,5,7])
-    def check_generic_loops(self) :
+    def test_generic_loops(self) :
         """Test generic loops.
 
         The loops to be tested are:
@@ -147,5 +147,91 @@ class TestUfunc(NumpyTestCase):
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
 
+    def test_all_ufunc(self) :
+        """Try to check presence and results of all ufuncs.
+
+        The list of ufuncs comes from generate_umath.py and is as follows:
+
+        =====  =============  ===============  ========================
+        done     function        types                notes
+        =====  =============  ===============  ========================
+        n      add            bool + nums + O  boolean + is ||
+        n      subtract       bool + nums + O  boolean - is ^
+        n      multiply       bool + nums + O  boolean * is &
+        n      divide         nums + O
+        n      floor_divide   nums + O
+        n      true_divide    nums + O         bBhH -> f, iIlLqQ -> d
+        n      conjugate      nums + O
+        n      fmod           nums + M
+        n      square         nums + O
+        n      reciprocal     nums + O
+        n      ones_like      nums + O
+        n      power          nums + O
+        n      absolute       nums + O         complex -> real
+        n      negative       nums + O
+        n      sign           nums + O         -> int
+        n      greater        bool + nums + O  -> bool
+        n      greater_equal  bool + nums + O  -> bool
+        n      less           bool + nums + O  -> bool
+        n      less_equal     bool + nums + O  -> bool
+        n      equal          bool + nums + O  -> bool
+        n      not_equal      bool + nums + O  -> bool
+        n      logical_and    bool + nums + M  -> bool
+        n      logical_not    bool + nums + M  -> bool
+        n      logical_or     bool + nums + M  -> bool
+        n      logical_xor    bool + nums + M  -> bool
+        n      maximum        bool + nums + O
+        n      minimum        bool + nums + O
+        n      bitwise_and    bool + ints + O  flts raise an error
+        n      bitwise_or     bool + ints + O  flts raise an error
+        n      bitwise_xor    bool + ints + O  flts raise an error
+        n      invert         bool + ints + O  flts raise an error
+        n      left_shift     ints + O         flts raise an error
+        n      right_shift    ints + O         flts raise an error
+        n      degrees        real + M         cmplx raise an error
+        n      radians        real + M         cmplx raise an error
+        n      arccos         flts + M
+        n      arccosh        flts + M
+        n      arcsin         flts + M
+        n      arcsinh        flts + M
+        n      arctan         flts + M
+        n      arctanh        flts + M
+        n      cos            flts + M
+        n      sin            flts + M
+        n      tan            flts + M
+        n      cosh           flts + M
+        n      sinh           flts + M
+        n      tanh           flts + M
+        n      exp            flts + M
+        n      expm1          flts + M
+        n      log            flts + M
+        n      log10          flts + M
+        n      log1p          flts + M
+        n      sqrt           flts + M         real x < 0 raises error
+        n      ceil           real + M
+        n      floor          real + M
+        n      fabs           real + M
+        n      rint           flts + M
+        n      arctan2        real + M
+        n      remainder      ints + real + O
+        n      hypot          real + M
+        n      isnan          flts             -> bool
+        n      isinf          flts             -> bool
+        n      isfinite       flts             -> bool
+        n      signbit        real             -> bool
+        n      modf           real             -> (frac, int)
+        =====  =============  ===============  ========================
+
+        Types other than those listed will be accepted, but they are cast to
+        the smallest compatible type for which the function is defined. The
+        casting rules are:
+
+        bool -> int8 -> float32
+        ints -> double
+
+        """
+        pass
+
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

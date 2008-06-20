@@ -574,13 +574,32 @@ def piecewise(x, condlist, funclist, *args, **kw):
         n += 1
     if (n != n2):
         raise ValueError, "function list and condition list must be the same"
+    zerod = False
+    # This is a hack to work around problems with NumPy's 
+    #  handling of 0-d arrays and boolean indexing with 
+    #  numpy.bool_ scalars
+    if x.ndim == 0:
+        x = x[None]
+        zerod = True
+        newcondlist = []
+        for k in range(n):
+            if condlist[k].ndim == 0:
+                condition = condlist[k][None]
+            else:
+                condition = condlist[k]
+            newcondlist.append(condition)
+        condlist = newcondlist
     y = empty(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
         if not callable(item):
             y[condlist[k]] = item
         else:
-            y[condlist[k]] = item(x[condlist[k]], *args, **kw)
+            vals = x[condlist[k]]
+            if vals.size > 0:
+                y[condlist[k]] = item(vals, *args, **kw)
+    if zerod:
+        y = y.squeeze()
     return y
 
 def select(condlist, choicelist, default=0):

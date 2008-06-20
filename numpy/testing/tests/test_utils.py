@@ -1,8 +1,6 @@
 import numpy as N
-from numpy.testing.utils import *
-
+from numpy.testing import *
 import unittest
-
 
 class _GenericTest(object):
     def _test_equal(self, a, b):
@@ -163,5 +161,6 @@ class TestRaises(unittest.TestCase):
         else:
             raise AssertionError("should have raised an AssertionError")
 
+
 if __name__ == '__main__':
-    unittest.main()
+    nose.run(argv=['', __file__])

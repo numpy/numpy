@@ -1,5 +1,15 @@
+"""Common test support for all numpy test scripts.
 
-from info import __doc__
-from numpytest import *
+This single module should provide all the common functionality for numpy tests
+in a single location, so that test scripts can just import it and work right
+away.
+"""
+
+#import unittest
+from unittest import TestCase
+
+import decorators as dec
 from utils import *
-from parametric import ParametricTestCase
+from numpytest import *
+from pkgtester import Tester
+test = Tester().test

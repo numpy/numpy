@@ -107,9 +107,9 @@ m, = compile(fortran_code, 'test_scalar_function_in_ext')
 
 from numpy import *
 
-class TestM(NumpyTestCase):
+class TestM(TestCase):
 
-    def check_foo_integer1(self, level=1):
+    def test_foo_integer1(self, level=1):
         i = int8(2)
         e = int8(3)
         func = m.fooint1
@@ -144,7 +144,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_integer2(self, level=1):
+    def test_foo_integer2(self, level=1):
         i = int16(2)
         e = int16(3)
         func = m.fooint2
@@ -179,7 +179,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_integer4(self, level=1):
+    def test_foo_integer4(self, level=1):
         i = int32(2)
         e = int32(3)
         func = m.fooint4
@@ -214,7 +214,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_integer8(self, level=1):
+    def test_foo_integer8(self, level=1):
         i = int64(2)
         e = int64(3)
         func = m.fooint8
@@ -249,7 +249,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_real4(self, level=1):
+    def test_foo_real4(self, level=1):
         i = float32(2)
         e = float32(3)
         func = m.foofloat4
@@ -283,7 +283,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_real8(self, level=1):
+    def test_foo_real8(self, level=1):
         i = float64(2)
         e = float64(3)
         func = m.foofloat8
@@ -317,7 +317,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_complex8(self, level=1):
+    def test_foo_complex8(self, level=1):
         i = complex64(2)
         e = complex64(3)
         func = m.foocomplex8
@@ -358,7 +358,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1,3]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_complex16(self, level=1):
+    def test_foo_complex16(self, level=1):
         i = complex128(2)
         e = complex128(3)
         func = m.foocomplex16
@@ -399,7 +399,7 @@ class TestM(NumpyTestCase):
         self.assertRaises(TypeError,lambda :func([2,1,3]))
         self.assertRaises(TypeError,lambda :func({}))
 
-    def check_foo_bool1(self, level=1):
+    def test_foo_bool1(self, level=1):
         i = bool8(True)
         e = bool8(False)
         func = m.foobool1
@@ -419,7 +419,7 @@ class TestM(NumpyTestCase):
             assert isinstance(r,bool8),`type(r)`
             assert_equal(r,not e)
 
-    def check_foo_bool2(self, level=1):
+    def test_foo_bool2(self, level=1):
         i = bool8(True)
         e = bool8(False)
         func = m.foobool2
@@ -439,7 +439,7 @@ class TestM(NumpyTestCase):
             assert isinstance(r,bool8),`type(r)`
             assert_equal(r,not e)
 
-    def check_foo_bool4(self, level=1):
+    def test_foo_bool4(self, level=1):
         i = bool8(True)
         e = bool8(False)
         func = m.foobool4
@@ -459,7 +459,7 @@ class TestM(NumpyTestCase):
             assert isinstance(r,bool8),`type(r)`
             assert_equal(r,not e)
 
-    def check_foo_bool8(self, level=1):
+    def test_foo_bool8(self, level=1):
         i = bool8(True)
         e = bool8(False)
         func = m.foobool8
@@ -479,7 +479,7 @@ class TestM(NumpyTestCase):
             assert isinstance(r,bool8),`type(r)`
             assert_equal(r,not e)
 
-    def check_foo_string1(self, level=1):
+    def test_foo_string1(self, level=1):
         i = string0('a')
         e = string0('1')
         func = m.foostring1
@@ -497,7 +497,7 @@ class TestM(NumpyTestCase):
         assert isinstance(r,string0),`type(r)`
         assert_equal(r,e)
 
-    def check_foo_string5(self, level=1):
+    def test_foo_string5(self, level=1):
         i = string0('abcde')
         e = string0('12cde')
         func = m.foostring5
@@ -528,5 +528,6 @@ class TestM(NumpyTestCase):
         r = func('')
         assert_equal(r,'')
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

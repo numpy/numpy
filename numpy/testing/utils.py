@@ -10,8 +10,8 @@ import operator
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
-           'assert_array_almost_equal', 'jiffies', 'memusage', 'rand',
-           'runstring', 'raises']
+           'assert_array_almost_equal', 'build_err_msg', 'jiffies', 'memusage',
+           'raises', 'rand', 'rundocs', 'runstring']
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -140,7 +140,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         return
     from numpy.core import ndarray
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
-        return assert_array_equal(actual, desired, err_msg)
+        return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
     assert desired == actual, msg
 
@@ -293,6 +293,30 @@ def assert_string_equal(actual, desired):
     if not diff_list: return
     msg = 'Differences in strings:\n%s' % (''.join(diff_list)).rstrip()
     assert actual==desired, msg
+
+
+def rundocs(filename=None):
+    """ Run doc string tests found in filename.
+    """
+    import doctest, imp
+    if filename is None:
+        f = sys._getframe(1)
+        filename = f.f_globals['__file__']
+    name = os.path.splitext(os.path.basename(filename))[0]
+    path = [os.path.dirname(filename)]
+    file, pathname, description = imp.find_module(name, path)
+    try:
+        m = imp.load_module(name, file, pathname, description)
+    finally:
+        file.close()
+    if sys.version[:3]<'2.4':
+        doctest.testmod(m, verbose=False)
+    else:
+        tests = doctest.DocTestFinder().find(m)
+        runner = doctest.DocTestRunner(verbose=False)
+        for test in tests:
+            runner.run(test)
+    return
 
 
 def raises(*exceptions):

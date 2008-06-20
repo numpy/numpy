@@ -50,7 +50,7 @@ def configuration(parent_package='',top_path=None):
         # XXX: I really have to think about how to communicate path info
         # between scons and distutils, and set the options at one single
         # location.
-        target = join(scons_build_dir, local_dir, 'numpyconfig.h')
+        target = join(scons_build_dir, local_dir, 'include/numpy/numpyconfig.h')
         incl_dir = os.path.dirname(target)
         if incl_dir not in config.numpy_include_dirs:
             config.numpy_include_dirs.append(incl_dir)

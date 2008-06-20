@@ -389,33 +389,8 @@ static int
  * for strings and unicode is compiled with proper flags.
  */
 
-static int
-compare_string(char *s1, char *s2, size_t len)
-{
-    const unsigned char *c1 = (unsigned char *)s1;
-    const unsigned char *c2 = (unsigned char *)s2;
-    size_t i;
+#define copy_string memcpy
 
-    for(i = 0; i < len; ++i) {
-        if (c1[i] != c2[i]) {
-            return (c1[i] > c2[i]) ? 1 : -1;
-        }
-    }
-    return 0;
-}
-
-static void
-copy_string(char *s1, char *s2, size_t len)
-{
-    if (len < SMALL_STRING) {
-        while(len--) {
-            *s1++ = *s2++;
-        }
-    }
-    else {
-        memcpy(s1, s2, len);
-    }
-}
 
 static void
 swap_string(char *s1, char *s2, size_t len)
@@ -429,13 +404,15 @@ swap_string(char *s1, char *s2, size_t len)
 
 
 static int
-compare_ucs4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+compare_string(char *s1, char *s2, size_t len)
 {
+    const unsigned char *c1 = (unsigned char *)s1;
+    const unsigned char *c2 = (unsigned char *)s2;
     size_t i;
 
     for(i = 0; i < len; ++i) {
-        if (s1[i] != s2[i]) {
-            return (s1[i] > s2[i]) ? 1 : -1;
+        if (c1[i] != c2[i]) {
+            return (c1[i] > c2[i]) ? 1 : -1;
         }
     }
     return 0;
@@ -460,6 +437,21 @@ swap_ucs4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
         *s2++ = t;
     }
 }
+
+
+static int
+compare_ucs4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+{
+    size_t i;
+
+    for(i = 0; i < len; ++i) {
+        if (s1[i] != s2[i]) {
+            return (s1[i] > s2[i]) ? 1 : -1;
+        }
+    }
+    return 0;
+}
+
 
 /**begin repeat
    #TYPE=STRING, UNICODE#

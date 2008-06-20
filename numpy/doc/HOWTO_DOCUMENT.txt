@@ -25,14 +25,23 @@ Use a code checker:
  * `pyflakes` easy_install pyflakes
  * `pep8.py <http://svn.browsershots.org/trunk/devtools/pep8/pep8.py>`_
 
-For documentation purposes, use unabbreviated module names.  If you
-prefer the use of abbreviated module names in code (*not* the
-docstrings), we suggest the import conventions used by NumPy itself::
+The following import conventions are used throughout the NumPy source
+and documentation::
 
    import numpy as np
    import scipy as sp
    import matplotlib as mpl
    import matplotlib.pyplot as plt
+
+It is not necessary to do ``import numpy as np`` at the beginning of
+an example.  However, some sub-modules, such as ``fft``, are not
+imported by default, and you have to include them explicitly::
+
+  import numpy.fft
+
+after which you may use it::
+
+  np.fft.fft2(...)
 
 Docstring Standard
 ------------------
@@ -65,15 +74,15 @@ terminals.
 A guiding principle is that human readers of the text are given
 precedence over contorting docstrings so our tools produce nice
 output.  Rather than sacrificing the readability of the docstrings, we
-have chosen to write pre-processors to assist tools like epydoc_ or
-sphinx_ in their task.
+have written pre-processors to assist tools like epydoc_ and sphinx_ in
+their task.
 
 Status
 ------
 We are busy converting existing docstrings to the new format,
 expanding them where they are lacking, as well as writing new ones for
 undocumented functions.  Volunteers are welcome to join the effort on
-our new wiki-based documentation system (see the `Developer Zone
+our new documentation system (see the `Developer Zone
 <http://www.scipy.org/Developer_Zone/DocMarathon2008>`_).
 
 Sections
@@ -179,6 +188,29 @@ The sections of the docstring are:
      --------
      average : Weighted average
 
+   When referring to functions in the same sub-module, no prefix is
+   needed, and the tree is searched upwards for a match.
+
+   Prefix functions from other sub-modules appropriately.  E.g.,
+   whilst documenting the ``random`` module, refer to a function in
+   ``fft`` by
+
+   ::
+
+     fft.fft2 : 2-D fast discrete Fourier transform
+
+   When referring to an entirely different module::
+
+     scipy.random.norm : Random variates, PDFs, etc.
+
+   Functions may be listed without descriptions::
+
+     See Also
+     --------
+     func_a : Function a with its description.
+     func_b, func_c_, func_d
+     func_e
+
 8. **Notes**
 
    An optional section that provides additional information about the
@@ -203,7 +235,13 @@ The sections of the docstring are:
 
    ::
 
-     The value of :math:`omega` is larger than 5.
+     The value of :math:`\omega` is larger than 5.
+
+   Variable names are displayed in typewriter font, obtained by using
+   ``\mathtt{var}``::
+
+     We square the input parameter `alpha` to obtain
+     :math:`\mathtt{alpha}^2`.
 
    Note that LaTeX is not particularly easy to read, so use equations
    sparingly.
@@ -277,6 +315,11 @@ The sections of the docstring are:
       <BLANKLINE>
       b
 
+    The examples may assume that ``import numpy as np`` is executed before
+    the example code in *numpy*, and ``import scipy as sp`` in *scipy*.
+    Additional examples may make use of *matplotlib* for plotting, but should
+    import it explicitly, e.g., ``import matplotlib.pyplot as plt``.
+
 11. **Indexing tags***
 
     Each function needs to be categorised for indexing purposes.  Use
@@ -286,16 +329,66 @@ The sections of the docstring are:
          :refguide: ufunc, trigonometry
 
     To index a function as a sub-category of a class, separate index
-    entries by a semi-colon, e.g.
+    entries by a colon, e.g.
 
     ::
 
-      :refguide: ufunc, numpy;reshape, other
+      :refguide: ufunc, numpy:reshape, other
 
     A `list of available categories
     <http://www.scipy.org/Developer_Zone/ReferenceGuide>`_ is
     available.
 
+Documenting classes
+-------------------
+
+Class docstring
+```````````````
+Use the same sections as outlined above (all except ``Returns`` are
+applicable).  The constructor (``__init__``) should also be documented
+here.
+
+An ``Attributes`` section may be used to describe class variables::
+
+  Attributes
+  ----------
+  x : float
+      The X coordinate.
+  y : float
+      The Y coordinate.
+
+In general, it is not necessary to list class methods.  Those that are
+not part of the public API have names that start with an underscore.
+In some cases, however, a class may have a great many methods, of
+which only a few are relevant (e.g., subclasses of ndarray).  Then, it
+becomes useful to have an additional ``Methods`` section::
+
+  class Photo(ndarray):
+      """
+      Array with associated photographic information.
+
+      ...
+
+      Attributes
+      ----------
+      exposure : float
+          Exposure in seconds.
+
+      Methods
+      -------
+      colorspace(c='rgb')
+          Represent the photo in the given colorspace.
+      gamma(n=1.0)
+          Change the photo's gamma exposure.
+
+      """
+
+Note that `self` is *not* listed as the first parameter of methods.
+
+Method docstrings
+`````````````````
+Document these as you would any other function.  Do not include
+``self`` in the list of parameters.
 
 Common reST concepts
 --------------------
@@ -322,8 +415,9 @@ Conclusion
 `An example
 <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_ of the
 format shown here is available.  Refer to `How to Build API/Reference
-Documentation <HOWTO_BUILD_DOCS>`_ on how to use epydoc_ or sphinx_ to
-construct a manual and web page.
+Documentation
+<http://svn.scipy.org/svn/numpy/trunk/numpy/doc/HOWTO_BUILD_DOCS.txt>`_
+on how to use epydoc_ or sphinx_ to construct a manual and web page.
 
 This document itself was written in ReStructuredText, and may be converted to
 HTML using::

@@ -24,3 +24,7 @@ del util
 del functions
 del ufuncs
 del compat
+
+from numpy.testing.pkgtester import Tester
+test = Tester().test
+bench = Tester().bench

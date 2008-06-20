@@ -2,8 +2,8 @@ import numpy as np
 from numpy.ctypeslib import ndpointer, load_library
 from numpy.testing import *
 
-class TestLoadLibrary(NumpyTestCase):
-    def check_basic(self):
+class TestLoadLibrary(TestCase):
+    def test_basic(self):
         try:
             cdll = load_library('multiarray',
                                 np.core.multiarray.__file__)
@@ -12,8 +12,24 @@ class TestLoadLibrary(NumpyTestCase):
                   " (import error was: %s)" % str(e)
             print msg
 
-class TestNdpointer(NumpyTestCase):
-    def check_dtype(self):
+    def test_basic2(self):
+        """Regression for #801: load_library with a full library name
+        (including extension) does not work."""
+        try:
+            try:
+                from distutils import sysconfig
+                so = sysconfig.get_config_var('SO')
+                cdll = load_library('multiarray%s' % so,
+                                    np.core.multiarray.__file__)
+            except ImportError:
+                print "No distutils available, skipping test."
+        except ImportError, e:
+            msg = "ctypes is not available on this python: skipping the test" \
+                  " (import error was: %s)" % str(e)
+            print msg
+
+class TestNdpointer(TestCase):
+    def test_dtype(self):
         dt = np.intc
         p = ndpointer(dtype=dt)
         self.assert_(p.from_param(np.array([1], dt)))
@@ -40,7 +56,7 @@ class TestNdpointer(NumpyTestCase):
         else:
             self.assert_(p.from_param(np.zeros((10,), dt2)))
 
-    def check_ndim(self):
+    def test_ndim(self):
         p = ndpointer(ndim=0)
         self.assert_(p.from_param(np.array(1)))
         self.assertRaises(TypeError, p.from_param, np.array([1]))
@@ -50,14 +66,14 @@ class TestNdpointer(NumpyTestCase):
         p = ndpointer(ndim=2)
         self.assert_(p.from_param(np.array([[1]])))
 
-    def check_shape(self):
+    def test_shape(self):
         p = ndpointer(shape=(1,2))
         self.assert_(p.from_param(np.array([[1,2]])))
         self.assertRaises(TypeError, p.from_param, np.array([[1],[2]]))
         p = ndpointer(shape=())
         self.assert_(p.from_param(np.array(1)))
 
-    def check_flags(self):
+    def test_flags(self):
         x = np.array([[1,2,3]], order='F')
         p = ndpointer(flags='FORTRAN')
         self.assert_(p.from_param(x))
@@ -67,5 +83,6 @@ class TestNdpointer(NumpyTestCase):
         self.assert_(p.from_param(x))
         self.assertRaises(TypeError, p.from_param, np.array([[1,2,3]]))
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

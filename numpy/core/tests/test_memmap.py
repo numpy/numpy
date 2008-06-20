@@ -1,13 +1,12 @@
 from tempfile import NamedTemporaryFile, mktemp
 import os
+import warnings
 
 from numpy.core import memmap
 from numpy import arange, allclose
 from numpy.testing import *
 
-import warnings
-
-class TestMemmap(NumpyTestCase):
+class TestMemmap(TestCase):
     def setUp(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
         self.shape = (3,4)
@@ -46,5 +45,6 @@ class TestMemmap(NumpyTestCase):
         fp.sync()
         warnings.simplefilter('default', DeprecationWarning)
 
-if __name__ == '__main__':
-    NumpyTest().run()
+
+if __name__ == "__main__":
+    nose.run(argv=['', __file__])

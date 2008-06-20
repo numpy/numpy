@@ -2742,7 +2742,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         while(loop->index < loop->size) {
             if (loop->obj)
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
-            memcpy(loop->bufptr[0], loop->it->dataptr,
+            memmove(loop->bufptr[0], loop->it->dataptr,
                    loop->outsize);
             PyArray_ITER_NEXT(loop->it);
             loop->bufptr[0] += loop->outsize;
@@ -2755,7 +2755,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             /* Copy first element to output */
             if (loop->obj)
                 Py_INCREF(*((PyObject **)loop->it->dataptr));
-            memcpy(loop->bufptr[0], loop->it->dataptr,
+            memmove(loop->bufptr[0], loop->it->dataptr,
                    loop->outsize);
             /* Adjust input pointer */
             loop->bufptr[1] = loop->it->dataptr+loop->steps[1];
@@ -4007,7 +4007,7 @@ ufunc_get_doc(PyUFuncObject *self)
     PyObject *outargs, *inargs, *doc;
     outargs = _makeargs(self->nout, "y");
     inargs = _makeargs(self->nin, "x");
-    doc = PyString_FromFormat("%s = %s(%s) %s",
+    doc = PyString_FromFormat("%s = %s(%s)\n\n%s",
                               PyString_AS_STRING(outargs),
                               self->name,
                               PyString_AS_STRING(inargs),

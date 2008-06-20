@@ -20,3 +20,7 @@ from extras import *
 __all__ = ['core', 'extras']
 __all__ += core.__all__
 __all__ += extras.__all__
+
+from numpy.testing.pkgtester import Tester
+test = Tester().test
+bench = Tester().bench

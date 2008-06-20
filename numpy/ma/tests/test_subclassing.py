@@ -13,14 +13,9 @@ __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 import numpy as N
 import numpy.core.numeric as numeric
 
-from numpy.testing import NumpyTest, NumpyTestCase
-
-import numpy.ma.testutils
+from numpy.testing import *
 from numpy.ma.testutils import *
-
-import numpy.ma.core as coremodule
 from numpy.ma.core import *
-
 
 class SubArray(N.ndarray):
     """Defines a generic N.ndarray subclass, that stores some metadata
@@ -36,6 +31,7 @@ class SubArray(N.ndarray):
         result = N.ndarray.__add__(self, other)
         result.info.update({'added':result.info.pop('added',0)+1})
         return result
+
 subarray = SubArray
 
 class MSubArray(SubArray,MaskedArray):
@@ -53,6 +49,7 @@ class MSubArray(SubArray,MaskedArray):
         _view._sharedmask = False
         return _view
     _series = property(fget=_get_series)
+
 msubarray = MSubArray
 
 class MMatrix(MaskedArray, N.matrix,):
@@ -69,14 +66,13 @@ class MMatrix(MaskedArray, N.matrix,):
         _view._sharedmask = False
         return _view
     _series = property(fget=_get_series)
+
 mmatrix = MMatrix
 
-
-
-class TestSubclassing(NumpyTestCase):
+class TestSubclassing(TestCase):
     """Test suite for masked subclasses of ndarray."""
 
-    def check_data_subclassing(self):
+    def test_data_subclassing(self):
         "Tests whether the subclass is kept."
         x = N.arange(5)
         m = [0,0,1,0,0]
@@ -86,7 +82,7 @@ class TestSubclassing(NumpyTestCase):
         assert_equal(xmsub._data, xsub)
         assert isinstance(xmsub._data, SubArray)
 
-    def check_maskedarray_subclassing(self):
+    def test_maskedarray_subclassing(self):
         "Tests subclassing MaskedArray"
         x = N.arange(5)
         mx = mmatrix(x,mask=[0,1,0,0,0])
@@ -101,7 +97,7 @@ class TestSubclassing(NumpyTestCase):
         assert isinstance(hypot(mx,mx), mmatrix)
         assert isinstance(hypot(mx,x), mmatrix)
 
-    def check_attributepropagation(self):
+    def test_attributepropagation(self):
         x = array(arange(5), mask=[0]+[1]*4)
         my = masked_array(subarray(x))
         ym = msubarray(x)
@@ -128,7 +124,7 @@ class TestSubclassing(NumpyTestCase):
         assert hasattr(mxsub, 'info')
         assert_equal(mxsub.info, xsub.info)
 
-    def check_subclasspreservation(self):
+    def test_subclasspreservation(self):
         "Checks that masked_array(...,subok=True) preserves the class."
         x = N.arange(5)
         m = [0,0,1,0,0]
@@ -158,8 +154,8 @@ class TestSubclassing(NumpyTestCase):
 
 ################################################################################
 if __name__ == '__main__':
-    NumpyTest().run()
-    #
+    nose.run(argv=['', __file__])
+
     if 0:
         x = array(arange(5), mask=[0]+[1]*4)
         my = masked_array(subarray(x))

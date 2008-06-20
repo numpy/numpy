@@ -2,7 +2,7 @@ from numpy.testing import *
 import numpy as np
 import StringIO
 
-class TestSaveTxt(NumpyTestCase):
+class TestSaveTxt(TestCase):
     def test_array(self):
         a =np.array( [[1,2],[3,4]], float)
         c = StringIO.StringIO()
@@ -62,7 +62,7 @@ class TestSaveTxt(NumpyTestCase):
         assert_equal(lines, ['01 : 2.0\n', '03 : 4.0\n'])
 
 
-class TestLoadTxt(NumpyTestCase):
+class TestLoadTxt(TestCase):
     def test_record(self):
         c = StringIO.StringIO()
         c.write('1 2\n3 4')
@@ -164,7 +164,7 @@ class TestLoadTxt(NumpyTestCase):
         assert_array_equal(x, a[:,1:])
 
 
-class Testfromregex(NumpyTestCase):
+class Testfromregex(TestCase):
     def test_record(self):
         c = StringIO.StringIO()
         c.write('1.312 foo\n1.534 bar\n4.444 qux')
@@ -196,5 +196,6 @@ class Testfromregex(NumpyTestCase):
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
         assert_array_equal(x, a)
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

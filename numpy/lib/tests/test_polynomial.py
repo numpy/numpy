@@ -76,13 +76,14 @@ poly1d([ 2.])
 from numpy.testing import *
 import numpy as np
 
-class TestDocs(NumpyTestCase):
-    def check_doctests(self): return self.rundocs()
+class TestDocs(TestCase):
+    def test_doctests(self): 
+        return rundocs()
 
-    def check_roots(self):
+    def test_roots(self):
         assert_array_equal(np.roots([1,0,0]), [0,0])
 
-    def check_str_leading_zeros(self):
+    def test_str_leading_zeros(self):
         p = np.poly1d([4,3,2,1])
         p[3] = 0
         assert_equal(str(p),
@@ -94,7 +95,7 @@ class TestDocs(NumpyTestCase):
         p[1] = 0
         assert_equal(str(p), " \n0")
 
-    def check_polyfit(self) :
+    def test_polyfit(self) :
         c = np.array([3., 2., 1.])
         x = np.linspace(0,2,5)
         y = np.polyval(c,x)
@@ -109,5 +110,6 @@ class TestDocs(NumpyTestCase):
         cc = np.concatenate((c,c), axis=1)
         assert_almost_equal(cc, np.polyfit(x,yy,2))
 
+
 if __name__ == "__main__":
-    NumpyTest().run()
+    nose.run(argv=['', __file__])

@@ -12,11 +12,7 @@ from numpy.core import *
 from numpy.random import rand, randint
 from numpy.testing import *
 
-
-
-class TestErrstate(NumpyTestCase):
-
-
+class TestErrstate(TestCase):
     def test_invalid(self):
         with errstate(all='raise', under='ignore'):
             a = -arange(3)
@@ -57,6 +53,5 @@ class TestErrstate(NumpyTestCase):
 
 """
 
-if __name__ == '__main__':
-    from numpy.testing import *
-    NumpyTest().run()
+if __name__ == "__main__":
+    nose.run(argv=['', __file__])

@@ -206,7 +206,7 @@ def configuration(parent_package='',top_path=None):
             return (h_file,)
         return generate_api
 
-    generate_array_api = generate_api_func('generate_array_api')
+    generate_numpy_api = generate_api_func('generate_numpy_api')
     generate_ufunc_api = generate_api_func('generate_ufunc_api')
 
     def generate_umath_c(ext,build_dir):
@@ -246,10 +246,10 @@ def configuration(parent_package='',top_path=None):
                          sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,
                                     generate_numpyconfig_h,
-                                    generate_array_api,
+                                    generate_numpy_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
-                                    join(codegen_dir,'generate_array_api.py'),
+                                    join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
                                     ],
                          depends = deps,
@@ -274,7 +274,7 @@ def configuration(parent_package='',top_path=None):
                          sources=[join('src','_sortmodule.c.src'),
                                   generate_config_h,
                                   generate_numpyconfig_h,
-                                  generate_array_api,
+                                  generate_numpy_api,
                                   ],
                          )
 
@@ -282,7 +282,7 @@ def configuration(parent_package='',top_path=None):
                          sources=[join('src','scalarmathmodule.c.src'),
                                   generate_config_h,
                                   generate_numpyconfig_h,
-                                  generate_array_api,
+                                  generate_numpy_api,
                                   generate_ufunc_api],
                          )
 

@@ -2,6 +2,12 @@
 Building the NumPy API and reference docs
 =========================================
 
+Using Sphinx_
+-------------
+`Download <https://code.launchpad.net/~stefanv/scipy/numpy-refguide>`_
+the builder.  Follow the instructions in ``README.txt``.
+
+
 Using Epydoc_
 -------------
 
@@ -58,3 +64,8 @@ Then, run epydoc::
 
 The output is placed in ``./html``, and may be viewed by loading the
 ``index.html`` file into your browser.
+
+
+
+.. _epydoc: http://epydoc.sourceforge.net/
+.. _sphinx: http://sphinx.pocoo.org

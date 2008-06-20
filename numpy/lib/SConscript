@@ -1,0 +1,9 @@
+# Last Change: Thu Jun 12 06:00 PM 2008 J
+# vim:syntax=python
+from numscons import GetNumpyEnvironment, scons_get_paths
+
+env = GetNumpyEnvironment(ARGUMENTS)
+env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
+
+_compiled_base = env.DistutilsPythonExtension('_compiled_base', 
+                                        source = ['src/_compiled_base.c'])
