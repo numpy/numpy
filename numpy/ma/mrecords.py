@@ -170,7 +170,7 @@ class MaskedRecords(MaskedArray, object):
         _locdict = self.__dict__
         if _locdict['_baseclass'] == ndarray:
             _locdict['_baseclass'] = recarray
-        _locdict.update({'_mask':_mask, '_fieldmask':_mask})
+        _locdict.update(_mask=_mask, _fieldmask=_mask)
         return
 
     def _getdata(self):

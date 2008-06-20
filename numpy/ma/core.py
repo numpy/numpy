@@ -44,7 +44,8 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'masked_less','masked_less_equal', 'masked_not_equal',
            'masked_object','masked_outside', 'masked_print_option',
            'masked_singleton','masked_values', 'masked_where', 'max', 'maximum',
-           'mean', 'min', 'minimum', 'multiply',
+           'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value', 
+           'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
            'power', 'product', 'ptp', 'put', 'putmask',
@@ -110,12 +111,12 @@ default_filler = {'b': True,
                   'V' : '???',
                   }
 max_filler = ntypes._minvals
-max_filler.update(dict([(k, -np.inf) for k in [np.float32, np.float64]]))
+max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
 min_filler = ntypes._maxvals
-min_filler.update(dict([(k, +np.inf) for k in [np.float32, np.float64]]))
+min_filler.update([(k, +np.inf) for k in [np.float32, np.float64]])
 if 'float128' in ntypes.typeDict:
-    max_filler[np.float128] = -np.inf
-    min_filler[np.float128] = +np.inf
+    max_filler.update([(np.float128, -np.inf)])
+    min_filler.update([(np.float128, +np.inf)])
 
 
 def default_fill_value(obj):
