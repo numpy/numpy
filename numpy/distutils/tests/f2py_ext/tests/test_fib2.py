@@ -10,4 +10,4 @@ class TestFib2(TestCase):
         assert_array_equal(fib2.fib(6),[0,1,1,2,3,5])
 
 if __name__ == "__main__":
-    nose.run(argv=['', __file__])
+    run_module_suite()

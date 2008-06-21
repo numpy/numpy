@@ -866,4 +866,4 @@ def eqmask(m1, m2):
 #testinplace.test_name = 'Inplace operations'
 
 if __name__ == "__main__":
-    nose.run(argv=['', __file__])
+    run_module_suite()

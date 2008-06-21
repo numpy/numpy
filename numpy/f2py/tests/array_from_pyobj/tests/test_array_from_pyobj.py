@@ -513,4 +513,4 @@ class test_%s_gen(unittest.TestCase,
 ''' % (t,t,t)
 
 if __name__ == "__main__":
-    nose.run(argv=['', __file__])
+    run_module_suite()

@@ -15,6 +15,6 @@ except ImportError:
     _INSTALLED = False
 
 if _INSTALLED:
-    from numpy.testing.pkgtester import Tester
+    from numpy.testing import Tester
     test = Tester().test
     bench = Tester().bench

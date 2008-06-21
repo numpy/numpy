@@ -471,7 +471,7 @@ of these classes whose names contain ``test`` or start with ``bench`` are
 automatically picked up by the test machinery. 
 
 A minimal example of a ``test_yyy.py`` file that implements tests for
-a Scipy package module ``numpy.xxx.yyy`` containing a function
+a NumPy package module ``numpy.xxx.yyy`` containing a function
 ``zzz()``, is shown below::
 
   import sys
@@ -493,7 +493,7 @@ a Scipy package module ``numpy.xxx.yyy`` containing a function
       #...
 
   if __name__ == "__main__":
-      nose.run(argv=['', __file__])
+      run_module_tests(file)
 
 Note that all classes that are inherited from ``TestCase`` class, are
 automatically picked up by the test runner.

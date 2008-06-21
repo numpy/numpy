@@ -25,6 +25,6 @@ del functions
 del ufuncs
 del compat
 
-from numpy.testing.pkgtester import Tester
+from numpy.testing import Tester
 test = Tester().test
 bench = Tester().bench

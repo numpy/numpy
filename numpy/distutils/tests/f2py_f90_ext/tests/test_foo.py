@@ -10,4 +10,4 @@ class TestFoo(TestCase):
         assert_equal(foo.foo_free.bar13(),13)
 
 if __name__ == "__main__":
-    nose.run(argv=['', __file__])
+    run_module_suite()

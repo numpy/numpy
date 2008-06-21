@@ -40,6 +40,6 @@ del precision
 del ufuncs
 del misc
 
-from numpy.testing.pkgtester import Tester
+from numpy.testing import Tester
 test = Tester().test
 bench = Tester().bench

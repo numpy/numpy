@@ -10,6 +10,8 @@ from unittest import TestCase
 
 import decorators as dec
 from utils import *
+from parametric import ParametricTestCase 
 from numpytest import *
-from pkgtester import Tester
+from nosetester import NoseTester as Tester
+from nosetester import run_module_suite
 test = Tester().test

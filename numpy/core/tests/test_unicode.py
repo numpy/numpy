@@ -320,5 +320,5 @@ class test_byteorder_1009_ucs4(byteorder_values, TestCase):
 
 
 if __name__ == "__main__":
-    nose.run(argv=['', __file__])
+    run_module_suite()
     

@@ -13,6 +13,6 @@ def __RandomState_ctor():
     """
     return RandomState()
 
-from numpy.testing.pkgtester import Tester
+from numpy.testing import Tester
 test = Tester().test
 bench = Tester().bench

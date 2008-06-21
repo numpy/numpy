@@ -509,4 +509,4 @@ def test_read_version_1_0_bad_magic():
 
 
 if __name__ == "__main__":
-    nose.run(argv=['', __file__])
+    run_module_suite()

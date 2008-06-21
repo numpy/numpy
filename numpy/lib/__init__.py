@@ -34,7 +34,7 @@ __all__ += arraysetops.__all__
 __all__ += io.__all__
 __all__ += financial.__all__
 
-from numpy.testing.pkgtester import Tester
+from numpy.testing import Tester
 test = Tester().test
 bench = Tester().bench
 

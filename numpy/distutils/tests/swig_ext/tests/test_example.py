@@ -15,4 +15,4 @@ class TestExample(TestCase):
         assert_equal(example.cvar.My_variable,5.0)
 
 if __name__ == "__main__":
-    nose.run(argv=['', __file__])
+    run_module_suite()

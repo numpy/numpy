@@ -154,7 +154,7 @@ class TestSubclassing(TestCase):
 
 ################################################################################
 if __name__ == '__main__':
-    nose.run(argv=['', __file__])
+    run_module_suite()
 
     if 0:
         x = array(arange(5), mask=[0]+[1]*4)

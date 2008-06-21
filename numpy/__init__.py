@@ -95,7 +95,7 @@ else:
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
-    from testing.pkgtester import Tester
+    from testing import Tester
     test = Tester().test
     bench = Tester().bench
 
