@@ -1795,7 +1795,7 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
         PyErr_SetString(PyExc_ValueError, "function not supported");
         return NULL;
     }
-    if ((loop = _pya_malloc(sizeof(PyUFuncLoopObject)))==NULL) {
+    if ((loop = _pya_malloc(sizeof(PyUFuncLoopObject))) == NULL) {
         PyErr_NoMemory();
         return loop;
     }
@@ -1814,30 +1814,30 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
 
     name = self->name ? self->name : "";
 
-    /* Extract sig= keyword and
-       extobj= keyword if present
-       Raise an error if anything else present in the keyword dictionary
-    */
+    /*
+     * Extract sig= keyword and extobj= keyword if present.
+     * Raise an error if anything else is present in the
+     * keyword dictionary
+     */
     if (kwds != NULL) {
         PyObject *key, *value;
         Py_ssize_t pos=0;
         while (PyDict_Next(kwds, &pos, &key, &value)) {
-            if (!PyString_Check(key)) {
-                PyErr_SetString(PyExc_TypeError,
-                                "invalid keyword");
+            char *keystring = PyString_AsString(key);
+            if (keystring == NULL) {
+                PyErr_Clear();
+                PyErr_SetString(PyExc_TypeError, "invalid keyword");
                 goto fail;
             }
-            if (strncmp(PyString_AS_STRING(key),"extobj",6) == 0) {
+            if (strncmp(keystring,"extobj",6) == 0) {
                 extobj = value;
             }
-            else if (strncmp(PyString_AS_STRING(key),"sig",5)==0) {
+            else if (strncmp(keystring,"sig",3) == 0) {
                 typetup = value;
             }
             else {
-                PyErr_Format(PyExc_TypeError,
-                             "'%s' is an invalid keyword " \
-                             "to %s",
-                             PyString_AS_STRING(key), name);
+                char *format = "'%s' is an invalid keyword to %s";
+                PyErr_Format(PyExc_TypeError,format,keystring, name);
                 goto fail;
             }
         }
@@ -3321,6 +3321,10 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
         if (errval == -1)
             return NULL;
         else {
+            /*
+             * PyErr_SetString(PyExc_TypeError,"");
+             * return NULL;
+             */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
         }
