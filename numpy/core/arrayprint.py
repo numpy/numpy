@@ -218,6 +218,7 @@ def array2string(a, max_line_width = None, precision = None,
     Examples
     --------
 
+    >>> import numpy as N
     >>> x = N.array([1e-16,1,2,3])
     >>> print array2string(x,precision=2,separator=',',suppress_small=True)
     [ 0., 1., 2., 3.]
