@@ -343,6 +343,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """ create a record array from a (flat) list of arrays
 
+    >>> import numpy as N
     >>> x1=N.array([1,2,3,4])
     >>> x2=N.array(['a','dd','xyz','12'])
     >>> x3=N.array([1.1,2,3,4])
@@ -430,7 +431,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    chararray(['dbe', 'de'],
+    chararray(['dbe', 'de'], 
           dtype='|S3')
     >>> import cPickle
     >>> print cPickle.loads(cPickle.dumps(r))
@@ -510,6 +511,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     to be a file object.
 
     >>> from tempfile import TemporaryFile
+    >>> import numpy as N
     >>> a = N.empty(10,dtype='f8,i4,a5')
     >>> a[5] = (0.5,10,'abcde')
     >>>
