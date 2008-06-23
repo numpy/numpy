@@ -246,8 +246,9 @@ def put(a, ind, v, mode='raise'):
 
     Examples
     --------
-    >>> x = np.arange(5)
-    >>> np.put(x,[0,2,4],[-1,-2,-3])
+    >>> import numpy
+    >>> x = numpy.arange(5)
+    >>> numpy.put(x,[0,2,4],[-1,-2,-3])
     >>> print x
     [-1  1 -2  3 -3]
 
@@ -269,20 +270,21 @@ def swapaxes(a, axis1, axis2):
 
     Examples
     --------
-    >>> x = np.array([[1,2,3]])
-    >>> np.swapaxes(x,0,1)
+    >>> import numpy
+    >>> x = numpy.array([[1,2,3]])
+    >>> numpy.swapaxes(x,0,1)
     array([[1],
            [2],
            [3]])
 
-    >>> x = np.array([[[0,1],[2,3]],[[4,5],[6,7]]])
+    >>> x = numpy.array([[[0,1],[2,3]],[[4,5],[6,7]]])
     >>> x
     array([[[0, 1],
             [2, 3]],
 
            [[4, 5],
             [6, 7]]])
-    >>> np.swapaxes(x,0,2)
+    >>> numpy.swapaxes(x,0,2)
     array([[[0, 4],
             [2, 6]],
 
@@ -310,16 +312,17 @@ def transpose(a, axes=None):
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
+    >>> import numpy
+    >>> x = numpy.arange(4).reshape((2,2))
     >>> x
     array([[0, 1],
            [2, 3]])
 
-    >>> np.transpose(x)
+    >>> numpy.transpose(x)
     array([[0, 2],
            [1, 3]])
 
-    >>> np.transpose(x,(0,1)) # no change, axes are kept in current order
+    >>> numpy.transpose(x,(0,1)) # no change, axes are kept in current order
     array([[0, 1],
            [2, 3]])
 
@@ -470,7 +473,8 @@ def argmax(a, axis=None):
     index_array : {integer_array}
 
     Examples
-    --------
+    -------- 
+    >>> from numpy import *  
     >>> a = arange(6).reshape(2,3)
     >>> argmax(a)
     5
@@ -504,6 +508,7 @@ def argmin(a, axis=None):
 
     Examples
     --------
+    >>> from numpy import *
     >>> a = arange(6).reshape(2,3)
     >>> argmin(a)
     0
@@ -677,6 +682,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
 
     Examples
     --------
+    >>> from numpy import *
     >>> a = arange(4).reshape(2,2)
     >>> a
     array([[0, 1],
@@ -742,6 +748,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
 
     Examples
     --------
+    >>> from numpy import *
     >>> trace(eye(3))
     3.0
     >>> a = arange(8).reshape((2,2,2))
@@ -777,10 +784,11 @@ def ravel(a, order='C'):
 
     Examples
     --------
+    >>> from numpy import *
     >>> x = array([[1,2,3],[4,5,6]])
     >>> x
     array([[1, 2, 3],
-          [4, 5, 6]])
+           [4, 5, 6]])
     >>> ravel(x)
     array([1, 2, 3, 4, 5, 6])
 
@@ -801,6 +809,7 @@ def nonzero(a):
 
     Examples
     --------
+    >>> from numpy import *
     >>> eye(3)[nonzero(eye(3))]
     array([ 1.,  1.,  1.])
     >>> nonzero(eye(3))
@@ -835,6 +844,7 @@ def shape(a):
 
     Examples
     --------
+    >>> from numpy import *
     >>> shape(eye(3))
     (3, 3)
     >>> shape([[1,2]])
@@ -872,13 +882,14 @@ def compress(condition, a, axis=None, out=None):
 
     Examples
     --------
-    >>> a = np.array([[1, 2], [3, 4]])
-    >>> np.compress([0, 1], a, axis=0)
+    >>> import numpy
+    >>> a = numpy.array([[1, 2], [3, 4]])
+    >>> numpy.compress([0, 1], a, axis=0)
     array([[3, 4]])
-    >>> np.compress([1], a, axis=1)
+    >>> numpy.compress([1], a, axis=1)
     array([[1],
            [3]])
-    >>> np.compress([0,1,1], a)
+    >>> numpy.compress([0,1,1], a)
     array([2, 3])
 
     """
@@ -912,12 +923,13 @@ def clip(a, a_min, a_max, out=None):
 
     Examples
     --------
-    >>> a = np.arange(10)
-    >>> np.clip(a, 1, 8)
+    >>> import numpy
+    >>> a = numpy.arange(10)
+    >>> numpy.clip(a, 1, 8)
     array([1, 1, 2, 3, 4, 5, 6, 7, 8, 8])
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> np.clip(a, 3, 6, out=a)
+    >>> numpy.clip(a, 3, 6, out=a)
     array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
     >>> a
     array([3, 3, 3, 3, 4, 5, 6, 6, 6, 6])
@@ -964,9 +976,10 @@ def sum(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> from numpy import *
     >>> sum([0.5, 1.5])
     2.0
-    >>> sum([0.5, 1.5], dtype=N.int32)
+    >>> sum([0.5, 1.5], dtype=int32)
     1
     >>> sum([[0, 1], [0, 5]])
     6
@@ -1029,6 +1042,7 @@ def product (a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> from numpy import *
     >>> product([1.,2.])
     2.0
     >>> product([1.,2.], dtype=int32)
@@ -1074,6 +1088,7 @@ def sometrue(a, axis=None, out=None):
 
     Examples
     --------
+    >>> import numpy
     >>> b = numpy.array([True, False, True, True])
     >>> numpy.sometrue(b)
     True
@@ -1266,13 +1281,14 @@ def ptp(a, axis=None, out=None):
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
+    >>> import numpy
+    >>> x = numpy.arange(4).reshape((2,2))
     >>> x
     array([[0, 1],
            [2, 3]])
-    >>> np.ptp(x,0)
+    >>> numpy.ptp(x,0)
     array([2, 2])
-    >>> np.ptp(x,1)
+    >>> numpy.ptp(x,1)
     array([1, 1])
 
     """
@@ -1304,13 +1320,14 @@ def amax(a, axis=None, out=None):
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
+    >>> import numpy
+    >>> x = numpy.arange(4).reshape((2,2))
     >>> x
     array([[0, 1],
            [2, 3]])
-    >>> np.amax(x,0)
+    >>> numpy.amax(x,0)
     array([2, 3])
-    >>> np.amax(x,1)
+    >>> numpy.amax(x,1)
     array([1, 3])
 
     """
@@ -1342,13 +1359,14 @@ def amin(a, axis=None, out=None):
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
+    >>> import numpy
+    >>> x = numpy.arange(4).reshape((2,2))
     >>> x
     array([[0, 1],
            [2, 3]])
-    >>> np.amin(x,0)
+    >>> numpy.amin(x,0)
     array([0, 1])
-    >>> np.amin(x,1)
+    >>> numpy.amin(x,1)
     array([0, 2])
 
     """
@@ -1375,6 +1393,7 @@ def alen(a):
 
     Examples
     --------
+    >>> import numpy
     >>> z = numpy.zeros((7,4,5))
     >>> z.shape[0]
     7
@@ -1423,6 +1442,7 @@ def prod(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> from numpy import *
     >>> prod([1.,2.])
     2.0
     >>> prod([1.,2.], dtype=int32)
@@ -1483,6 +1503,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy
     >>> a=numpy.array([[1,2,3],[4,5,6]])
     >>> a=numpy.array([1,2,3])
     >>> numpy.cumprod(a) # intermediate results 1, 1*2

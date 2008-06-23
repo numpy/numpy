@@ -84,6 +84,7 @@ def matrix_power(M,n):
 
     Examples
     --------
+    >>> from numpy import array
     >>> matrix_power(array([[0,1],[-1,0]]),10)
     array([[-1,  0],
            [ 0, -1]])
@@ -539,9 +540,9 @@ def bmat(obj, ldict=None, gdict=None):
 
     Examples
     --------
-    >>> F = bmat('A, B; C, D')
-    >>> F = bmat([[A,B],[C,D]])
-    >>> F = bmat(r_[c_[A,B],c_[C,D]])
+    F = bmat('A, B; C, D')
+    F = bmat([[A,B],[C,D]])
+    F = bmat(r_[c_[A,B],c_[C,D]])
 
     All of these produce the same matrix::
 
