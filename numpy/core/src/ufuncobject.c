@@ -1073,7 +1073,7 @@ select_types(PyUFuncObject *self, int *arg_types,
         int ret=-1;
         obj = NULL;
 	/* Look through all the registered loops for all the user-defined
-	   types to find a match. 
+	   types to find a match.
 	 */
 	while (ret == -1) {
 	    if (userdef_ind >= self->nin) break;
@@ -1277,26 +1277,26 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
     return 0;
 }
 
-#define _GETATTR_(str, rstr) if (strcmp(name, #str) == 0) {     \
-        return PyObject_HasAttrString(op, "__" #rstr "__");}
+#define _GETATTR_(str, rstr) do {if (strcmp(name, #str) == 0)     \
+        return PyObject_HasAttrString(op, "__" #rstr "__");} while (0);
 
 static int
 _has_reflected_op(PyObject *op, char *name)
 {
-    _GETATTR_(add, radd)
-        _GETATTR_(subtract, rsub)
-        _GETATTR_(multiply, rmul)
-        _GETATTR_(divide, rdiv)
-        _GETATTR_(true_divide, rtruediv)
-        _GETATTR_(floor_divide, rfloordiv)
-        _GETATTR_(remainder, rmod)
-        _GETATTR_(power, rpow)
-        _GETATTR_(left_shift, rrlshift)
-        _GETATTR_(right_shift, rrshift)
-        _GETATTR_(bitwise_and, rand)
-        _GETATTR_(bitwise_xor, rxor)
-        _GETATTR_(bitwise_or, ror)
-        return 0;
+    _GETATTR_(add, radd);
+    _GETATTR_(subtract, rsub);
+    _GETATTR_(multiply, rmul);
+    _GETATTR_(divide, rdiv);
+    _GETATTR_(true_divide, rtruediv);
+    _GETATTR_(floor_divide, rfloordiv);
+    _GETATTR_(remainder, rmod);
+    _GETATTR_(power, rpow);
+    _GETATTR_(left_shift, rlshift);
+    _GETATTR_(right_shift, rrshift);
+    _GETATTR_(bitwise_and, rand);
+    _GETATTR_(bitwise_xor, rxor);
+    _GETATTR_(bitwise_or, ror);
+    return 0;
 }
 
 #undef _GETATTR_
@@ -1310,13 +1310,13 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     int arg_types[NPY_MAXARGS];
     PyArray_SCALARKIND scalars[NPY_MAXARGS];
     PyArray_SCALARKIND maxarrkind, maxsckind, new;
-    PyUFuncObject *self=loop->ufunc;
-    Bool allscalars=TRUE;
-    PyTypeObject *subtype=&PyArray_Type;
-    PyObject *context=NULL;
+    PyUFuncObject *self = loop->ufunc;
+    Bool allscalars = TRUE;
+    PyTypeObject *subtype = &PyArray_Type;
+    PyObject *context = NULL;
     PyObject *obj;
-    int flexible=0;
-    int object=0;
+    int flexible = 0;
+    int object = 0;
 
     /* Check number of arguments */
     nargs = PyTuple_Size(args);
@@ -1329,15 +1329,19 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     /* Get each input argument */
     maxarrkind = PyArray_NOSCALAR;
     maxsckind = PyArray_NOSCALAR;
-    for(i=0; i<self->nin; i++) {
+    for(i = 0; i < self->nin; i++) {
         obj = PyTuple_GET_ITEM(args,i);
         if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
             context = Py_BuildValue("OOi", self, args, i);
         }
-        else context = NULL;
+        else {
+            context = NULL;
+        }
         mps[i] = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, context);
         Py_XDECREF(context);
-        if (mps[i] == NULL) return -1;
+        if (mps[i] == NULL) {
+            return -1;
+        }
         arg_types[i] = PyArray_TYPE(mps[i]);
         if (!flexible && PyTypeNum_ISFLEXIBLE(arg_types[i])) {
             flexible = 1;
@@ -1345,22 +1349,23 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         if (!object && PyTypeNum_ISOBJECT(arg_types[i])) {
             object = 1;
         }
+        /* debug
+         * fprintf(stderr, "array %d has reference %d\n", i,
+         * (mps[i])->ob_refcnt);
+         */
+
         /*
-          fprintf(stderr, "array %d has reference %d\n", i,
-          (mps[i])->ob_refcnt);
-        */
+         * Scalars are 0-dimensional arrays at this point
+         */
 
-        /* Scalars are 0-dimensional arrays
-           at this point
-        */
-
-        /* We need to keep track of whether or not scalars
-           are mixed with arrays of different kinds.
-        */
+        /*
+         * We need to keep track of whether or not scalars
+         * are mixed with arrays of different kinds.
+         */
 
         if (mps[i]->nd > 0) {
             scalars[i] = PyArray_NOSCALAR;
-            allscalars=FALSE;
+            allscalars = FALSE;
             new = PyArray_ScalarKind(arg_types[i], NULL);
             maxarrkind = NPY_MAX(new, maxarrkind);
         }
@@ -1370,15 +1375,18 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         }
     }
 
+    /* We don't do strings */
     if (flexible && !object) {
         loop->notimplemented = 1;
         return nargs;
     }
 
-    /* If everything is a scalar, or scalars mixed with arrays of
-       different kinds of lesser types then use normal coercion rules */
+    /*
+     * If everything is a scalar, or scalars mixed with arrays of
+     * different kinds of lesser kinds then use normal coercion rules
+     */
     if (allscalars || (maxsckind > maxarrkind)) {
-        for(i=0; i<self->nin; i++) {
+        for(i = 0; i < self->nin; i++) {
             scalars[i] = PyArray_NOSCALAR;
         }
     }
@@ -1388,11 +1396,12 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                      &(loop->funcdata), scalars, typetup) == -1)
         return -1;
 
-    /* FAIL with NotImplemented if the other object has
-       the __r<op>__ method and has __array_priority__ as
-       an attribute (signalling it can handle ndarray's)
-       and is not already an ndarray
-    */
+    /*
+     * FAIL with NotImplemented if the other object has
+     * the __r<op>__ method and has __array_priority__ as
+     * an attribute (signalling it can handle ndarray's)
+     * and is not already an ndarray
+     */
     if ((arg_types[1] == PyArray_OBJECT) &&                         \
         (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
@@ -1404,24 +1413,31 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         }
     }
 
-    /* Create copies for some of the arrays if they are small
-       enough and not already contiguous */
-    if (_create_copies(loop, arg_types, mps) < 0) return -1;
+    /*
+     * Create copies for some of the arrays if they are small
+     * enough and not already contiguous
+     */
+    if (_create_copies(loop, arg_types, mps) < 0) {
+        return -1;
+    }
 
     /* Create Iterators for the Inputs */
-    for(i=0; i<self->nin; i++) {
+    for(i = 0; i < self->nin; i++) {
         loop->iters[i] = (PyArrayIterObject *)          \
             PyArray_IterNew((PyObject *)mps[i]);
-        if (loop->iters[i] == NULL) return -1;
+        if (loop->iters[i] == NULL) {
+            return -1;
+        }
     }
 
     /* Broadcast the result */
     loop->numiter = self->nin;
-    if (PyArray_Broadcast((PyArrayMultiIterObject *)loop) < 0)
+    if (PyArray_Broadcast((PyArrayMultiIterObject *)loop) < 0) {
         return -1;
+    }
 
     /* Get any return arguments */
-    for(i=self->nin; i<nargs; i++) {
+    for(i = self->nin; i < nargs; i++) {
         mps[i] = (PyArrayObject *)PyTuple_GET_ITEM(args, i);
         if (((PyObject *)mps[i])==Py_None) {
             mps[i] = NULL;
@@ -1464,8 +1480,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     }
 
     /* construct any missing return arrays and make output iterators */
-
-    for(i=self->nin; i<self->nargs; i++) {
+    for(i = self->nin; i < self->nargs; i++) {
         PyArray_Descr *ntype;
 
         if (mps[i] == NULL) {
@@ -1475,12 +1490,15 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                                                   arg_types[i],
                                                   NULL, NULL,
                                                   0, 0, NULL);
-            if (mps[i] == NULL) return -1;
+            if (mps[i] == NULL) {
+                return -1;
+            }
         }
 
-        /* reset types for outputs that are equivalent
-           -- no sense casting uselessly
-        */
+        /*
+         * reset types for outputs that are equivalent
+         * -- no sense casting uselessly
+         */
         else {
             if (mps[i]->descr->type_num != arg_types[i]) {
                 PyArray_Descr *atype;
@@ -1497,15 +1515,18 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                 !PyArray_ISBEHAVED_RO(mps[i])) {
                 if (loop->size < loop->bufsize) {
                     PyObject *new;
-                    /* Copy the array to a temporary copy
-                       and set the UPDATEIFCOPY flag
-                    */
+                    /*
+                     * Copy the array to a temporary copy
+                     * and set the UPDATEIFCOPY flag
+                     */
                     ntype = PyArray_DescrFromType(arg_types[i]);
                     new = PyArray_FromAny((PyObject *)mps[i],
                                           ntype, 0, 0,
                                           FORCECAST | ALIGNED |
                                           UPDATEIFCOPY, NULL);
-                    if (new == NULL) return -1;
+                    if (new == NULL) {
+                        return -1;
+                    }
                     Py_DECREF(mps[i]);
                     mps[i] = (PyArrayObject *)new;
                 }
@@ -1514,23 +1535,27 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 
         loop->iters[i] = (PyArrayIterObject *)          \
             PyArray_IterNew((PyObject *)mps[i]);
-        if (loop->iters[i] == NULL) return -1;
+        if (loop->iters[i] == NULL) {
+            return -1;
+        }
     }
 
 
-    /*  If any of different type, or misaligned or swapped
-        then must use buffers */
-
+    /*
+     * If any of different type, or misaligned or swapped
+     * then must use buffers
+     */
     loop->bufcnt = 0;
     loop->obj = 0;
 
     /* Determine looping method needed */
     loop->meth = NO_UFUNCLOOP;
 
-    if (loop->size == 0) return nargs;
+    if (loop->size == 0) {
+        return nargs;
+    }
 
-
-    for(i=0; i<self->nargs; i++) {
+    for(i = 0; i < self->nargs; i++) {
         loop->needbuffer[i] = 0;
         if (arg_types[i] != mps[i]->descr->type_num ||
             !PyArray_ISBEHAVED_RO(mps[i])) {
@@ -1544,16 +1569,16 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     }
 
     if (loop->meth == NO_UFUNCLOOP) {
-
         loop->meth = ONE_UFUNCLOOP;
 
         /* All correct type and BEHAVED */
         /* Check for non-uniform stridedness */
-
-        for(i=0; i<self->nargs; i++) {
+        for(i = 0; i < self->nargs; i++) {
             if (!(loop->iters[i]->contiguous)) {
-                /* may still have uniform stride
-                   if (broadcated result) <= 1-d */
+                /*
+                 * May still have uniform stride
+                 * if (broadcast result) <= 1-d
+                 */
                 if (mps[i]->nd != 0 &&                  \
                     (loop->iters[i]->nd_m1 > 0)) {
                     loop->meth = NOBUFFER_UFUNCLOOP;
@@ -1562,7 +1587,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             }
         }
         if (loop->meth == ONE_UFUNCLOOP) {
-            for(i=0; i<self->nargs; i++) {
+            for(i = 0; i < self->nargs; i++) {
                 loop->bufptr[i] = mps[i]->data;
             }
         }
@@ -1581,29 +1606,30 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 
         /* Fix iterators */
 
-        /* Optimize axis the iteration takes place over
+        /*
+         * Optimize axis the iteration takes place over
+         *
+         * The first thought was to have the loop go
+         * over the largest dimension to minimize the number of loops
+         *
+         * However, on processors with slow memory bus and cache,
+         * the slowest loops occur when the memory access occurs for
+         * large strides.
+         *
+         * Thus, choose the axis for which strides of the last iterator is
+         * smallest but non-zero.
+         */
 
-           The first thought was to have the loop go
-           over the largest dimension to minimize the number of loops
-
-           However, on processors with slow memory bus and cache,
-           the slowest loops occur when the memory access occurs for
-           large strides.
-
-           Thus, choose the axis for which strides of the last iterator is
-           smallest but non-zero.
-        */
-
-        for(i=0; i<loop->nd; i++) {
+        for(i = 0; i < loop->nd; i++) {
             stride_sum[i] = 0;
-            for(j=0; j<loop->numiter; j++) {
+            for(j = 0; j < loop->numiter; j++) {
                 stride_sum[i] += loop->iters[j]->strides[i];
             }
         }
 
         ldim = loop->nd - 1;
         minsum = stride_sum[loop->nd-1];
-        for(i=loop->nd - 2; i>=0; i--) {
+        for(i = loop->nd - 2; i >= 0; i--) {
             if (stride_sum[i] < minsum ) {
                 ldim = i;
                 minsum = stride_sum[i];
@@ -1615,35 +1641,38 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         loop->bufcnt = maxdim;
         loop->lastdim = ldim;
 
-        /* Fix the iterators so the inner loop occurs over the
-           largest dimensions -- This can be done by
-           setting the size to 1 in that dimension
-           (just in the iterators)
-        */
-
-        for(i=0; i<loop->numiter; i++) {
+        /*
+         * Fix the iterators so the inner loop occurs over the
+         * largest dimensions -- This can be done by
+         * setting the size to 1 in that dimension
+         * (just in the iterators)
+         */
+        for(i = 0; i < loop->numiter; i++) {
             it = loop->iters[i];
             it->contiguous = 0;
             it->size /= (it->dims_m1[ldim]+1);
             it->dims_m1[ldim] = 0;
             it->backstrides[ldim] = 0;
 
-            /* (won't fix factors because we
-               don't use PyArray_ITER_GOTO1D
-               so don't change them) */
-
-            /* Set the steps to the strides in that dimension */
+            /*
+             * (won't fix factors because we
+             * don't use PyArray_ITER_GOTO1D
+             * so don't change them)
+             *
+             * Set the steps to the strides in that dimension
+             */
             loop->steps[i] = it->strides[ldim];
         }
 
-        /* fix up steps where we will be copying data to
-           buffers and calculate the ninnerloops and leftover
-           values -- if step size is already zero that is not changed...
-        */
+        /*
+         * fix up steps where we will be copying data to
+         * buffers and calculate the ninnerloops and leftover
+         * values -- if step size is already zero that is not changed...
+         */
         if (loop->meth == BUFFER_UFUNCLOOP) {
             loop->leftover = maxdim % loop->bufsize;
             loop->ninnerloops = (maxdim / loop->bufsize) + 1;
-            for(i=0; i<self->nargs; i++) {
+            for(i = 0; i < self->nargs; i++) {
                 if (loop->needbuffer[i] && loop->steps[i]) {
                     loop->steps[i] = mps[i]->descr->elsize;
                 }
@@ -1651,8 +1680,9 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             }
         }
     }
-    else { /* uniformly-strided case ONE_UFUNCLOOP */
-        for(i=0; i<self->nargs; i++) {
+    else {
+        /* uniformly-strided case ONE_UFUNCLOOP */
+        for(i = 0; i < self->nargs; i++) {
             if (PyArray_SIZE(mps[i]) == 1)
                 loop->steps[i] = 0;
             else
@@ -1663,8 +1693,10 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 
     /* Finally, create memory for buffers if we need them */
 
-    /* buffers for scalars are specially made small -- scalars are
-       not copied multiple times */
+    /*
+     * Buffers for scalars are specially made small -- scalars are
+     * not copied multiple times
+     */
     if (loop->meth == BUFFER_UFUNCLOOP) {
         int cnt = 0, cntcast = 0; /* keeps track of bytes to allocate */
         int scnt = 0, scntcast = 0;
@@ -1679,17 +1711,20 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         PyArray_Descr *descr;
 
         /* compute the element size */
-        for(i=0; i<self->nargs;i++) {
-            if (!loop->needbuffer[i]) continue;
+        for(i = 0; i < self->nargs; i++) {
+            if (!loop->needbuffer[i]) {
+                continue;
+            }
             if (arg_types[i] != mps[i]->descr->type_num) {
                 descr = PyArray_DescrFromType(arg_types[i]);
-                if (loop->steps[i])
+                if (loop->steps[i]) {
                     cntcast += descr->elsize;
-                else
+                }
+                else {
                     scntcast += descr->elsize;
+                }
                 if (i < self->nin) {
-                    loop->cast[i] = \
-                        PyArray_GetCastFunc(mps[i]->descr,
+                    loop->cast[i] = PyArray_GetCastFunc(mps[i]->descr,
                                             arg_types[i]);
                 }
                 else {
@@ -1697,26 +1732,40 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                         (descr, mps[i]->descr->type_num);
                 }
                 Py_DECREF(descr);
-                if (!loop->cast[i]) return -1;
+                if (!loop->cast[i]) {
+                    return -1;
+                }
             }
             loop->swap[i] = !(PyArray_ISNOTSWAPPED(mps[i]));
-            if (loop->steps[i])
+            if (loop->steps[i]) {
                 cnt += mps[i]->descr->elsize;
-            else
+            }
+            else {
                 scnt += mps[i]->descr->elsize;
+            }
         }
         memsize = loop->bufsize*(cnt+cntcast) + scbufsize*(scnt+scntcast);
         loop->buffer[0] = PyDataMem_NEW(memsize);
 
-        /* fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n", loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast); */
+        /* debug
+         * fprintf(stderr, "Allocated buffer at %p of size %d, cnt=%d, cntcast=%d\n",
+         *               loop->buffer[0], loop->bufsize * (cnt + cntcast), cnt, cntcast);
+         */
 
-        if (loop->buffer[0] == NULL) {PyErr_NoMemory(); return -1;}
-        if (loop->obj) memset(loop->buffer[0], 0, memsize);
+        if (loop->buffer[0] == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+        if (loop->obj) {
+            memset(loop->buffer[0], 0, memsize);
+        }
         castptr = loop->buffer[0] + loop->bufsize*cnt + scbufsize*scnt;
         bufptr = loop->buffer[0];
         loop->objfunc = 0;
-        for(i=0; i<self->nargs; i++) {
-            if (!loop->needbuffer[i]) continue;
+        for(i = 0; i < self->nargs; i++) {
+            if (!loop->needbuffer[i]) {
+                continue;
+            }
             loop->buffer[i] = bufptr + (last_was_scalar ? scbufsize : \
                                         loop->bufsize)*oldbufsize;
             last_was_scalar = (loop->steps[i] == 0);
