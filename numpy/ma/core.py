@@ -1201,7 +1201,8 @@ class MaskedArray(ndarray):
         _data = np.array(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
         _basedict = getattr(data, '_basedict', getattr(data, '__dict__', {}))
-        if not isinstance(data, MaskedArray) or not subok:
+        # Careful, cls might not always be MaskedArray...
+        if not isinstance(data, cls) or not subok:
             _data = _data.view(cls)
         else:
             _data = _data.view(type(data))
@@ -2079,6 +2080,11 @@ masked_%(name)s(data = %(data)s,
         if self._mask is nomask:
             return (self.ctypes.data, id(nomask))
         return (self.ctypes.data, self._mask.ctypes.data)
+
+    def iscontiguous(self):
+        "Is the data contiguous?"
+        return self.flags['CONTIGUOUS']
+
     #............................................
     def all(self, axis=None, out=None):
         """a.all(axis=None, out=None)
