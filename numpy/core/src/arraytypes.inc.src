@@ -253,44 +253,56 @@ CLONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
 static PyObject *
 UNICODE_getitem(char *ip, PyArrayObject *ap)
 {
-    PyObject *obj;
-    int mysize;
-    PyArray_UCS4 *dptr;
-    char *buffer;
-    int alloc=0;
+    intp elsize = ap->descr->elsize;
+    intp mysize = elsize/sizeof(PyArray_UCS4);
+    int alloc = 0;
+    PyArray_UCS4 *buffer = NULL;
+    PyUnicodeObject *obj;
+    intp i;
 
-    mysize = ap->descr->elsize >> 2;
-    dptr = (PyArray_UCS4 *)ip + mysize-1;
-    while(mysize > 0 && *dptr-- == 0) mysize--;
-    if (!PyArray_ISBEHAVED(ap)) {
-        buffer = _pya_malloc(mysize << 2);
-        if (buffer == NULL)
-            return PyErr_NoMemory();
+    if (!PyArray_ISBEHAVED_RO(ap)) {
+        buffer = malloc(elsize);
+        if (buffer == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
         alloc = 1;
-        memcpy(buffer, ip, mysize << 2);
+        memcpy(buffer, ip, elsize);
         if (!PyArray_ISNOTSWAPPED(ap)) {
-            byte_swap_vector(buffer, mysize, 4);
+            byte_swap_vector(buffer, mysize, sizeof(PyArray_UCS4));
         }
     }
-    else buffer = ip;
+    else {
+        buffer = (PyArray_UCS4 *)ip;
+    }
+    for (i = mysize; i > 0 && buffer[--i] == 0; mysize = i);
+
 #ifdef Py_UNICODE_WIDE
-    obj = PyUnicode_FromUnicode((const Py_UNICODE *)buffer, mysize);
+    obj = (PyUnicodeObject *)PyUnicode_FromUnicode(buffer, mysize);
 #else
     /* create new empty unicode object of length mysize*2 */
-    obj = MyPyUnicode_New(mysize*2);
-    if (obj == NULL) {if (alloc) _pya_free(buffer); return obj;}
-    mysize = PyUCS2Buffer_FromUCS4(((PyUnicodeObject *)obj)->str,
-            (PyArray_UCS4 *)buffer, mysize);
+    obj = (PyUnicodeObject *)MyPyUnicode_New(mysize*2);
+    if (obj == NULL) {
+        goto fail;
+    }
+    mysize = PyUCS2Buffer_FromUCS4(obj->str, buffer, mysize);
     /* reset length of unicode object to ucs2size */
-    if (MyPyUnicode_Resize((PyUnicodeObject *)obj, mysize) < 0) {
-        if (alloc) _pya_free(buffer);
+    if (MyPyUnicode_Resize(obj, mysize) < 0) {
         Py_DECREF(obj);
-        return NULL;
+        goto fail;
     }
 #endif
-    if (alloc) _pya_free(buffer);
 
-    return obj;
+    if (alloc) {
+        free(buffer);
+    }
+    return (PyObject *)obj;
+
+fail:
+    if (alloc) {
+        free(buffer);
+    }
+    return NULL;
 }
 
 static int
