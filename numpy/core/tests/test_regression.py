@@ -1152,6 +1152,14 @@ class TestRegression(TestCase):
         b = np.array(['1','2','3'])
         assert_equal(a,b)
 
+    def test_unaligned_unicode_access(self, level=rlevel) :
+        """Ticket #825"""
+        for i in range(1,9) :
+            msg = 'unicode offset: %d chars'%i
+            t = np.dtype([('a','S%d'%i),('b','U2')])
+            x = np.array([('a',u'b')], dtype=t)
+            assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
+
 
 if __name__ == "__main__":
     run_module_suite()
