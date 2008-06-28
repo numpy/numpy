@@ -42,10 +42,9 @@ The dictionary contains three keys:
     "shape" : tuple of int
         The shape of the array.
 
-For repeatability and readability, this dictionary is formatted using
-pprint.pformat() so the keys are in alphabetic order. This is for convenience
-only. A writer SHOULD implement this if possible. A reader MUST NOT depend on
-this.
+For repeatability and readability, the dictionary keys are sorted in alphabetic
+order. This is for convenience only. A writer SHOULD implement this if possible.
+A reader MUST NOT depend on this.
 
 Following the header comes the array data. If the dtype contains Python objects
 (i.e. dtype.hasobject is True), then the data is a Python pickle of the array.
@@ -56,7 +55,6 @@ means there is 1 element) by dtype.itemsize.
 """
 
 import cPickle
-import pprint
 import struct
 
 import numpy
@@ -102,9 +100,11 @@ def read_magic(fp):
     """
     magic_str = fp.read(MAGIC_LEN)
     if len(magic_str) != MAGIC_LEN:
-        raise ValueError("could not read %d characters for the magic string; got %r" % (MAGIC_LEN, magic_str))
+        msg = "could not read %d characters for the magic string; got %r"
+        raise ValueError(msg % (MAGIC_LEN, magic_str))
     if magic_str[:-2] != MAGIC_PREFIX:
-        raise ValueError("the magic string is not correct; expected %r, got %r" % (MAGIC_PREFIX, magic_str[:-2]))
+        msg = "the magic string is not correct; expected %r, got %r"
+        raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
     major, minor = map(ord, magic_str[-2:])
     return major, minor
 
@@ -164,7 +164,11 @@ def write_array_header_1_0(fp, d):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
-    header = pprint.pformat(d)
+    header = "{"
+    for key, value in sorted(d.items()):
+        # Need to use repr here, since we eval these when reading
+        header += "'%s': %s, " % (key, repr(value))
+    header += "}"
     # Pad the header with spaces and a final newline such that the magic string,
     # the header-length short and the header are aligned on a 16-byte boundary.
     # Hopefully, some system, possibly memory-mapping, can take advantage of
