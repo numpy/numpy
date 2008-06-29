@@ -168,11 +168,12 @@ def write_array_header_1_0(fp, d):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
-    header = "{"
+    header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
-        header += "'%s': %s, " % (key, repr(value))
-    header += "}"
+        header.append("'%s': %s, " % (key, repr(value)))
+    header.append("}")
+    header = "".join(header)
     # Pad the header with spaces and a final newline such that the magic
     # string, the header-length short and the header are aligned on a 16-byte
     # boundary.  Hopefully, some system, possibly memory-mapping, can take
