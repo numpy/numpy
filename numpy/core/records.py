@@ -309,6 +309,10 @@ class recarray(ndarray):
             return obj.view(ndarray)
         return obj
 
+    def __repr__(self) :
+        ret = ndarray.__repr__(self)
+        return ret.replace("recarray", "rec.array", 1)
+
     def field(self, attr, val=None):
         if isinstance(attr, int):
             names = ndarray.__getattribute__(self,'dtype').names
