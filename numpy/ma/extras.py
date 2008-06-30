@@ -27,7 +27,6 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'vander','vstack',
            ]
 
-from itertools import groupby
 
 import core
 from core import MaskedArray, MAError, add, array, asarray, concatenate, count,\
@@ -42,6 +41,28 @@ from numpy.lib.index_tricks import AxisConcatenator
 from numpy.lib.polynomial import _lstsq, _single_eps, _double_eps
 
 #...............................................................................
+class groupby(object):
+    "Implements itertools.groupby for numpy 1.1.x"
+    def __init__(self, iterable, key=None):
+        if key is None:
+            key = lambda x: x
+        self.keyfunc = key
+        self.it = iter(iterable)
+        self.tgtkey = self.currkey = self.currvalue = xrange(0)
+    def __iter__(self):
+        return self
+    def next(self):
+        while self.currkey == self.tgtkey:
+            self.currvalue = self.it.next() # Exit on StopIteration
+            self.currkey = self.keyfunc(self.currvalue)
+        self.tgtkey = self.currkey
+        return (self.currkey, self._grouper(self.tgtkey))
+    def _grouper(self, tgtkey):
+        while self.currkey == tgtkey:
+            yield self.currvalue
+            self.currvalue = self.it.next() # Exit on StopIteration
+            self.currkey = self.keyfunc(self.currvalue)
+
 def issequence(seq):
     """Is seq a sequence (ndarray, list or tuple)?"""
     if isinstance(seq, ndarray):
