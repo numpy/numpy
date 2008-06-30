@@ -1276,7 +1276,7 @@ class TestArrayMethods(NumpyTestCase):
         #
         x = [1,4,2,3]
         sortedx = sort(x)
-        assert(not isinstance(sorted, MaskedArray))
+        assert(not isinstance(sortedx, MaskedArray))
         #
         x = array([0,1,-1,-2,2], mask=nomask, dtype=numpy.int8)
         sortedx = sort(x, endwith=False)
