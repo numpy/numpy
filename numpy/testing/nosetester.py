@@ -8,23 +8,110 @@ import sys
 import re
 import warnings
 
+
+# Patches nose functionality to add NumPy-specific features
+# Note: This class should only be instantiated if nose has already
+# been successfully imported
+class NoseCustomizer:
+    __patched = False
+
+    def __init__(self):
+        if NoseCustomizer.__patched:
+            return
+
+        NoseCustomizer.__patched = True
+        from nose.plugins import doctests as npd
+        from nose.util import src
+        import numpy
+        import doctest
+
+        # second-chance checker; if the default comparison doesn't 
+        # pass, then see if the expected output string contains flags that
+        # tell us to ignore the output
+        class NumpyDoctestOutputChecker(doctest.OutputChecker):
+            def check_output(self, want, got, optionflags):
+                ret = doctest.OutputChecker.check_output(self, want, got, 
+                                                         optionflags)
+                if not ret:
+                    if "#random" in want:
+                        return True
+
+                return ret
+
+
+        # Subclass nose.plugins.doctests.DocTestCase to work around a bug in 
+        # its constructor that blocks non-default arguments from being passed
+        # down into doctest.DocTestCase
+        class NumpyDocTestCase(npd.DocTestCase):
+            def __init__(self, test, optionflags=0, setUp=None, tearDown=None,
+                         checker=None, obj=None, result_var='_'):
+                self._result_var = result_var
+                self._nose_obj = obj
+                doctest.DocTestCase.__init__(self, test, 
+                                             optionflags=optionflags,
+                                             setUp=setUp, tearDown=tearDown, 
+                                             checker=checker)
+
+
+        # This will replace the existing loadTestsFromModule method of 
+        # nose.plugins.doctests.Doctest.  It turns on whitespace normalization,
+        # adds an implicit "import numpy as np" for doctests, and adds a
+        # "#random" directive to allow executing a command while ignoring its
+        # output.
+        def loadTestsFromModule(self, module):
+            if not self.matches(module.__name__):
+                npd.log.debug("Doctest doesn't want module %s", module)
+                return
+            try:
+                tests = self.finder.find(module)
+            except AttributeError:
+                # nose allows module.__test__ = False; doctest does not and 
+                # throws AttributeError
+                return
+            if not tests:
+                return
+            tests.sort()
+            module_file = src(module.__file__)
+            for test in tests:
+                if not test.examples:
+                    continue
+                if not test.filename:
+                    test.filename = module_file
+
+                # implicit "import numpy as np" for all doctests
+                test.globs['np'] = numpy
+
+                optionflags = doctest.NORMALIZE_WHITESPACE
+                yield NumpyDocTestCase(test, 
+                                       optionflags=optionflags,
+                                       result_var=self.doctest_result_var,
+                                       checker=NumpyDoctestOutputChecker())
+
+        # Monkeypatch loadTestsFromModule
+        npd.Doctest.loadTestsFromModule = loadTestsFromModule
+
+
 def import_nose():
     """ Import nose only when needed.
     """
     fine_nose = True
+    minimum_nose_version = (0,10,0)
     try:
         import nose
         from nose.tools import raises
     except ImportError:
         fine_nose = False
     else:
-        nose_version = nose.__versioninfo__
-        if nose_version[0] < 1 and nose_version[1] < 10:
+        if nose.__versioninfo__ < minimum_nose_version:
             fine_nose = False
 
     if not fine_nose:
-        raise ImportError('Need nose >=0.10 for tests - see '
-            'http://somethingaboutorange.com/mrl/projects/nose')
+        raise ImportError('Need nose >=%d.%d.%d for tests - see '
+            'http://somethingaboutorange.com/mrl/projects/nose' % 
+            minimum_nose_version)
+
+    # nose was successfully imported; make customizations for doctests
+    NoseCustomizer()
 
     return nose
 
@@ -51,7 +138,7 @@ class NoseTester(object):
 
     This class is made available as numpy.testing.Tester:
 
-    >>> from scipy.testing import Tester
+    >>> from numpy.testing import Tester
     >>> test = Tester().test
     """
 
@@ -203,12 +290,13 @@ class NoseTester(object):
 
         nose = import_nose()
 
-        # Because nose currently discards the test result object, but we need to 
-        # return it to the user, override TestProgram.runTests to retain the result
+        # Because nose currently discards the test result object, but we need 
+        # to return it to the user, override TestProgram.runTests to retain 
+        # the result
         class NumpyTestProgram(nose.core.TestProgram):
             def runTests(self):
-                """Run Tests. Returns true on success, false on failure, and sets
-                self.success to the same value.
+                """Run Tests. Returns true on success, false on failure, and 
+                sets self.success to the same value.
                 """
                 if self.testRunner is None:
                     self.testRunner = nose.core.TextTestRunner(stream=self.config.stream,
@@ -233,3 +321,34 @@ class NoseTester(object):
         argv = self._test_argv(label, verbose, extra_argv)
         argv += ['--match', r'(?:^|[\\b_\\.%s-])[Bb]ench' % os.sep]
         return nose.run(argv=argv)
+
+
+########################################################################
+# Doctests for NumPy-specific doctest modifications
+
+# try the #random directive on the output line
+def check_random_directive():
+    '''
+    >>> 2+2
+    <BadExample object at 0x084D05AC>  #random: may vary on your system
+    '''
+
+# check the implicit "import numpy as np"
+def check_implicit_np():
+    '''
+    >>> np.array([1,2,3])
+    array([1, 2, 3])
+    '''
+
+# there's some extraneous whitespace around the correct responses
+def check_whitespace_enabled():
+    '''
+    # whitespace after the 3
+    >>> 1+2
+    3 
+
+    # whitespace before the 7
+    >>> 3+4
+     7
+    '''
+
