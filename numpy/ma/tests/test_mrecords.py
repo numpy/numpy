@@ -22,7 +22,7 @@ import numpy.ma as ma
 from numpy.ma import masked, nomask, getdata, getmaskarray
 
 import numpy.ma.mrecords
-reload(numpy.ma.mrecords)
+
 from numpy.ma.mrecords import MaskedRecords, mrecarray,\
     fromarrays, fromtextfile, fromrecords, addfield
 
