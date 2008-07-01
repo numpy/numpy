@@ -99,7 +99,7 @@ def assert_equal(actual,desired,err_msg=''):
     # Case #4. arrays or equivalent
     if ((actual is masked) and not (desired is masked)) or \
         ((desired is masked) and not (actual is masked)):
-        msg = build_err_msg([actual, desired], 
+        msg = build_err_msg([actual, desired],
                             err_msg, header='', names=('x', 'y'))
         raise ValueError(msg)
     actual = np.array(actual, copy=False, subok=True)

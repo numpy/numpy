@@ -2015,7 +2015,7 @@ masked_%(name)s(data = %(data)s,
 
         """
         result = self._data.reshape(*s).view(type(self))
-        result.__dict__.update(self.__dict__)
+        result._update_from(self)
         if result._mask is not nomask:
             result._mask = self._mask.copy()
             result._mask.shape = result.shape
