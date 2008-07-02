@@ -51,9 +51,9 @@ class TestAverage(TestCase):
         assert_equal(average(y, axis=1), 
                      [average(x,axis=0), average(x,axis=0) * 2.0])
         assert_equal(average(y, None, weights=w2), 20./6.)
-        assert_equal(average(y, axis=0, weights=w2), 
+        assert_equal(average(y, axis=0, weights=w2),
                      [0.,1.,2.,3.,4.,10.])
-        assert_equal(average(y, axis=1), 
+        assert_equal(average(y, axis=1),
                      [average(x,axis=0), average(x,axis=0) * 2.0])
         m1 = zeros(6)
         m2 = [0,0,1,1,0,0]
