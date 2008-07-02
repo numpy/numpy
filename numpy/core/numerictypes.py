@@ -113,7 +113,7 @@ def english_lower(s):
     >>> from numpy.core.numerictypes import english_lower
     >>> english_lower('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
     'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'
-    >>> english_upper('')
+    >>> english_lower('')
     ''
     """
     lowered = s.translate(LOWER_TABLE)

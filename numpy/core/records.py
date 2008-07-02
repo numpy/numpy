@@ -428,7 +428,8 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         If formats is None, then this will auto-detect formats. Use list of
         tuples rather than list of lists for faster processing.
 
-    >>> r=fromrecords([(456,'dbe',1.2),(2,'de',1.3)],names='col1,col2,col3')
+    >>> r=np.core.records.fromrecords([(456,'dbe',1.2),(2,'de',1.3)],
+    ... names='col1,col2,col3')
     >>> print r[0]
     (456, 'dbe', 1.2)
     >>> r.col1
@@ -522,7 +523,8 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a.tofile(fd)
     >>>
     >>> fd.seek(0)
-    >>> r=np.fromfile(fd, formats='f8,i4,a5', shape=10, byteorder='<')
+    >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10, 
+    ... byteorder='<')
     >>> print r[5]
     (0.5, 10, 'abcde')
     >>> r.shape
