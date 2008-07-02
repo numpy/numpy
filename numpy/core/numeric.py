@@ -214,8 +214,7 @@ def argwhere(a):
     is a sequence of indices into a.  This sequence must be
     converted to a tuple in order to be used to index into a.
 
-    >>> from numpy import ones, argwhere
-    >>> argwhere(ones((2, 2)))
+    >>> np.argwhere(np.ones((2, 2)))
     array([[0, 0],
            [0, 1],
            [1, 0],
@@ -228,10 +227,9 @@ def flatnonzero(a):
 
     Equivalent to a.ravel().nonzero()[0]
 
-    >>> from numpy import arange, flatnonzero
-    >>> arange(-2, 3)
+    >>> np.arange(-2, 3)
     array([-2, -1,  0,  1,  2])
-    >>> flatnonzero(arange(-2, 3))
+    >>> np.flatnonzero(np.arange(-2, 3))
     array([0, 1, 3, 4])
     """
     return a.ravel().nonzero()[0]
@@ -385,10 +383,9 @@ def roll(a, shift, axis=None):
     """Roll the elements in the array by 'shift' positions along
     the given axis.
 
-    >>> from numpy import roll
-    >>> arange(10)
+    >>> np.arange(10)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> roll(arange(10), 2)
+    >>> np.roll(np.arange(10), 2)
     array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7])
     """
     a = asanyarray(a)
@@ -409,13 +406,12 @@ def roll(a, shift, axis=None):
 def rollaxis(a, axis, start=0):
     """Return transposed array so that axis is rolled before start.
 
-    >>> from numpy import ones, rollaxis
-    >>> a = ones((3,4,5,6))
-    >>> rollaxis(a, 3, 1).shape
+    >>> a = np.ones((3,4,5,6))
+    >>> np.rollaxis(a, 3, 1).shape
     (3, 6, 4, 5)
-    >>> rollaxis(a, 2, 0).shape
+    >>> np.rollaxis(a, 2, 0).shape
     (5, 3, 4, 6)
-    >>> rollaxis(a, 1, 4).shape
+    >>> np.rollaxis(a, 1, 4).shape
     (3, 5, 6, 4)
     """
     n = a.ndim

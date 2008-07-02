@@ -84,8 +84,7 @@ def matrix_power(M,n):
 
     Examples
     --------
-    >>> from numpy import array
-    >>> matrix_power(array([[0,1],[-1,0]]),10)
+    >>> np.linalg.matrix_power(np.array([[0,1],[-1,0]]),10)
     array([[-1,  0],
            [ 0, -1]])
     """
@@ -149,7 +148,6 @@ class matrix(N.ndarray):
 
     Examples
     --------
-    >>> import numpy as np
     >>> a = np.matrix('1 2; 3 4')
     >>> print a
     [[1 2]

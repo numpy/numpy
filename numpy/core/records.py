@@ -347,11 +347,10 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
     """ create a record array from a (flat) list of arrays
 
-    >>> import numpy as N
-    >>> x1=N.array([1,2,3,4])
-    >>> x2=N.array(['a','dd','xyz','12'])
-    >>> x3=N.array([1.1,2,3,4])
-    >>> r = fromarrays([x1,x2,x3],names='a,b,c')
+    >>> x1=np.array([1,2,3,4])
+    >>> x2=np.array(['a','dd','xyz','12'])
+    >>> x3=np.array([1.1,2,3,4])
+    >>> r = np.core.records.fromarrays([x1,x2,x3],names='a,b,c')
     >>> print r[1]
     (2, 'dd', 2.0)
     >>> x1[1]=34
@@ -515,8 +514,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     to be a file object.
 
     >>> from tempfile import TemporaryFile
-    >>> import numpy as N
-    >>> a = N.empty(10,dtype='f8,i4,a5')
+    >>> a = np.empty(10,dtype='f8,i4,a5')
     >>> a[5] = (0.5,10,'abcde')
     >>>
     >>> fd=TemporaryFile()
@@ -524,7 +522,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a.tofile(fd)
     >>>
     >>> fd.seek(0)
-    >>> r=fromfile(fd, formats='f8,i4,a5', shape=10, byteorder='<')
+    >>> r=np.fromfile(fd, formats='f8,i4,a5', shape=10, byteorder='<')
     >>> print r[5]
     (0.5, 10, 'abcde')
     >>> r.shape
