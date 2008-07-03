@@ -51,9 +51,13 @@ class test_oldtypes(unittest.TestCase):
         a1 = array([0,1,0], Int32)
         a2 = array([0,1,0], int32)
         assert_array_equal(a1, a2)
-        a1 = array([0,1,0], Int64)
-        a2 = array([0,1,0], int64)
-        assert_array_equal(a1, a2)
+        try:
+            a1 = array([0,1,0], Int64)
+            a2 = array([0,1,0], int64)
+            assert_array_equal(a1, a2)
+        except NameError:
+            # Not all systems have 64-bit integers.
+            pass
         a1 = array([0,1,0], UnsignedInt)
         a2 = array([0,1,0], UnsignedInteger)
         a3 = array([0,1,0], uint)
@@ -74,15 +78,17 @@ class test_oldtypes(unittest.TestCase):
         a3 = array([0,1,0], uint32)
         assert_array_equal(a1, a3)
         assert_array_equal(a2, a3)
-        a1 = array([0,1,0], UInt64)
-        a2 = array([0,1,0], UnsignedInt64)
-        a3 = array([0,1,0], uint64)
-        assert_array_equal(a1, a3)
-        assert_array_equal(a2, a3)
-        a1 = array([0,1,0], Bool)
-        a2 = array([0,1,0], bool)
-        assert_array_equal(a1, a2)
+        try:
+            a1 = array([0,1,0], UInt64)
+            a2 = array([0,1,0], UnsignedInt64)
+            a3 = array([0,1,0], uint64)
+            assert_array_equal(a1, a3)
+            assert_array_equal(a2, a3)
+        except NameError:
+            # Not all systems have 64-bit integers.
+            pass
 
 
 if __name__ == "__main__":
-    run_module_suite()
+    import nose
+    nose.main()
