@@ -3126,7 +3126,7 @@ class _frommethod:
             return getattr(np, self._methodname).__doc__
     def __call__(self, a, *args, **params):
         if isinstance(a, MaskedArray):
-            return getattr(a, self._methodname).__call__(*args, **params)
+            return getattr(a, self._methodname)(*args, **params)
         #FIXME ----
         #As x is not a MaskedArray, we transform it to a ndarray with asarray
         #... and call the corresponding method.
