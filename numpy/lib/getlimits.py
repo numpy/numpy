@@ -31,6 +31,13 @@ class finfo(object):
     See Also
     --------
     numpy.lib.machar.MachAr
+
+    Notes
+    -----
+    For developers of numpy: do not instantiate this at the module level. The
+    initial calculation of these parameters is expensive and negatively impacts
+    import times. These objects are cached, so calling `finfo()` repeatedly
+    inside your functions is not a problem.
     """
 
     _finfo_cache = {}
