@@ -1,7 +1,6 @@
 import sys
 from numpy.testing import *
-import numpy
-from numpy import zeros, ones, array
+import numpy as np
 
 # This is the structure of the table used for plain objects:
 #
@@ -103,33 +102,33 @@ class create_zeros:
 
     def test_zeros0D(self):
         """Check creation of 0-dimensional objects"""
-        h = zeros((), dtype=self._descr)
+        h = np.zeros((), dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
         self.assert_(h.dtype.fields['x'][0].name[:4] == 'void')
         self.assert_(h.dtype.fields['x'][0].char == 'V')
-        self.assert_(h.dtype.fields['x'][0].type == numpy.void)
+        self.assert_(h.dtype.fields['x'][0].type == np.void)
         # A small check that data is ok
-        assert_equal(h['z'], zeros((), dtype='u1'))
+        assert_equal(h['z'], np.zeros((), dtype='u1'))
 
     def test_zerosSD(self):
         """Check creation of single-dimensional objects"""
-        h = zeros((2,), dtype=self._descr)
+        h = np.zeros((2,), dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
         self.assert_(h.dtype['y'].name[:4] == 'void')
         self.assert_(h.dtype['y'].char == 'V')
-        self.assert_(h.dtype['y'].type == numpy.void)
+        self.assert_(h.dtype['y'].type == np.void)
         # A small check that data is ok
-        assert_equal(h['z'], zeros((2,), dtype='u1'))
+        assert_equal(h['z'], np.zeros((2,), dtype='u1'))
 
     def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
-        h = zeros((2,3), dtype=self._descr)
+        h = np.zeros((2,3), dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
         self.assert_(h.dtype['z'].name == 'uint8')
         self.assert_(h.dtype['z'].char == 'B')
-        self.assert_(h.dtype['z'].type == numpy.uint8)
+        self.assert_(h.dtype['z'].type == np.uint8)
         # A small check that data is ok
-        assert_equal(h['z'], zeros((2,3), dtype='u1'))
+        assert_equal(h['z'], np.zeros((2,3), dtype='u1'))
 
 
 class test_create_zeros_plain(create_zeros, TestCase):
@@ -146,7 +145,7 @@ class create_values:
 
     def test_tuple(self):
         """Check creation from tuples"""
-        h = array(self._buffer, dtype=self._descr)
+        h = np.array(self._buffer, dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
             self.assert_(h.shape == (2,))
@@ -155,7 +154,7 @@ class create_values:
 
     def test_list_of_tuple(self):
         """Check creation from list of tuples"""
-        h = array([self._buffer], dtype=self._descr)
+        h = np.array([self._buffer], dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
             self.assert_(h.shape == (1,2))
@@ -164,7 +163,7 @@ class create_values:
 
     def test_list_of_list_of_tuple(self):
         """Check creation from list of list of tuples"""
-        h = array([[self._buffer]], dtype=self._descr)
+        h = np.array([[self._buffer]], dtype=self._descr)
         self.assert_(normalize_descr(self._descr) == h.dtype.descr)
         if self.multiple_rows:
             self.assert_(h.shape == (1,1,2))
@@ -205,19 +204,19 @@ class read_values_plain:
     """Check the reading of values in heterogeneous arrays (plain)"""
 
     def test_access_fields(self):
-        h = array(self._buffer, dtype=self._descr)
+        h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
             self.assert_(h.shape == ())
-            assert_equal(h['x'], array(self._buffer[0], dtype='i4'))
-            assert_equal(h['y'], array(self._buffer[1], dtype='f8'))
-            assert_equal(h['z'], array(self._buffer[2], dtype='u1'))
+            assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
+            assert_equal(h['y'], np.array(self._buffer[1], dtype='f8'))
+            assert_equal(h['z'], np.array(self._buffer[2], dtype='u1'))
         else:
             self.assert_(len(h) == 2)
-            assert_equal(h['x'], array([self._buffer[0][0],
+            assert_equal(h['x'], np.array([self._buffer[0][0],
                                              self._buffer[1][0]], dtype='i4'))
-            assert_equal(h['y'], array([self._buffer[0][1],
+            assert_equal(h['y'], np.array([self._buffer[0][1],
                                              self._buffer[1][1]], dtype='f8'))
-            assert_equal(h['z'], array([self._buffer[0][2],
+            assert_equal(h['z'], np.array([self._buffer[0][2],
                                              self._buffer[1][2]], dtype='u1'))
 
 
@@ -239,73 +238,73 @@ class read_values_nested:
 
     def test_access_top_fields(self):
         """Check reading the top fields of a nested array"""
-        h = array(self._buffer, dtype=self._descr)
+        h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
             self.assert_(h.shape == ())
-            assert_equal(h['x'], array(self._buffer[0], dtype='i4'))
-            assert_equal(h['y'], array(self._buffer[4], dtype='f8'))
-            assert_equal(h['z'], array(self._buffer[5], dtype='u1'))
+            assert_equal(h['x'], np.array(self._buffer[0], dtype='i4'))
+            assert_equal(h['y'], np.array(self._buffer[4], dtype='f8'))
+            assert_equal(h['z'], np.array(self._buffer[5], dtype='u1'))
         else:
             self.assert_(len(h) == 2)
-            assert_equal(h['x'], array([self._buffer[0][0],
-                                             self._buffer[1][0]], dtype='i4'))
-            assert_equal(h['y'], array([self._buffer[0][4],
-                                             self._buffer[1][4]], dtype='f8'))
-            assert_equal(h['z'], array([self._buffer[0][5],
-                                             self._buffer[1][5]], dtype='u1'))
-
+            assert_equal(h['x'], np.array([self._buffer[0][0],
+                                           self._buffer[1][0]], dtype='i4'))
+            assert_equal(h['y'], np.array([self._buffer[0][4],
+                                           self._buffer[1][4]], dtype='f8'))
+            assert_equal(h['z'], np.array([self._buffer[0][5],
+                                           self._buffer[1][5]], dtype='u1'))
+            
 
     def test_nested1_acessors(self):
         """Check reading the nested fields of a nested array (1st level)"""
-        h = array(self._buffer, dtype=self._descr)
+        h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
             assert_equal(h['Info']['value'],
-                         array(self._buffer[1][0], dtype='c16'))
+                         np.array(self._buffer[1][0], dtype='c16'))
             assert_equal(h['Info']['y2'],
-                         array(self._buffer[1][1], dtype='f8'))
+                         np.array(self._buffer[1][1], dtype='f8'))
             assert_equal(h['info']['Name'],
-                         array(self._buffer[3][0], dtype='U2'))
+                         np.array(self._buffer[3][0], dtype='U2'))
             assert_equal(h['info']['Value'],
-                         array(self._buffer[3][1], dtype='c16'))
+                         np.array(self._buffer[3][1], dtype='c16'))
         else:
             assert_equal(h['Info']['value'],
-                         array([self._buffer[0][1][0],
+                         np.array([self._buffer[0][1][0],
                                 self._buffer[1][1][0]],
                                 dtype='c16'))
             assert_equal(h['Info']['y2'],
-                         array([self._buffer[0][1][1],
+                         np.array([self._buffer[0][1][1],
                                 self._buffer[1][1][1]],
                                 dtype='f8'))
             assert_equal(h['info']['Name'],
-                         array([self._buffer[0][3][0],
+                         np.array([self._buffer[0][3][0],
                                 self._buffer[1][3][0]],
                                dtype='U2'))
             assert_equal(h['info']['Value'],
-                         array([self._buffer[0][3][1],
+                         np.array([self._buffer[0][3][1],
                                 self._buffer[1][3][1]],
                                dtype='c16'))
 
     def test_nested2_acessors(self):
         """Check reading the nested fields of a nested array (2nd level)"""
-        h = array(self._buffer, dtype=self._descr)
+        h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
             assert_equal(h['Info']['Info2']['value'],
-                         array(self._buffer[1][2][1], dtype='c16'))
+                         np.array(self._buffer[1][2][1], dtype='c16'))
             assert_equal(h['Info']['Info2']['z3'],
-                         array(self._buffer[1][2][3], dtype='u4'))
+                         np.array(self._buffer[1][2][3], dtype='u4'))
         else:
             assert_equal(h['Info']['Info2']['value'],
-                         array([self._buffer[0][1][2][1],
+                         np.array([self._buffer[0][1][2][1],
                                 self._buffer[1][1][2][1]],
                                dtype='c16'))
             assert_equal(h['Info']['Info2']['z3'],
-                         array([self._buffer[0][1][2][3],
+                         np.array([self._buffer[0][1][2][3],
                                 self._buffer[1][1][2][3]],
                                dtype='u4'))
 
     def test_nested1_descriptor(self):
         """Check access nested descriptors of a nested array (1st level)"""
-        h = array(self._buffer, dtype=self._descr)
+        h = np.array(self._buffer, dtype=self._descr)
         self.assert_(h.dtype['Info']['value'].name == 'complex128')
         self.assert_(h.dtype['Info']['y2'].name == 'float64')
         self.assert_(h.dtype['info']['Name'].name == 'unicode256')
@@ -313,7 +312,7 @@ class read_values_nested:
 
     def test_nested2_descriptor(self):
         """Check access nested descriptors of a nested array (2nd level)"""
-        h = array(self._buffer, dtype=self._descr)
+        h = np.array(self._buffer, dtype=self._descr)
         self.assert_(h.dtype['Info']['Info2']['value'].name == 'void256')
         self.assert_(h.dtype['Info']['Info2']['z3'].name == 'void64')
 
@@ -332,26 +331,26 @@ class test_read_values_nested_multiple(read_values_nested, TestCase):
 
 class TestEmptyField(TestCase):
     def test_assign(self):
-        a = numpy.arange(10, dtype=numpy.float32)
+        a = np.arange(10, dtype=np.float32)
         a.dtype = [("int",   "<0i4"),("float", "<2f4")]
         assert(a['int'].shape == (5,0))
         assert(a['float'].shape == (5,2))
 
 class TestCommonType(TestCase):
     def test_scalar_loses1(self):
-        res = numpy.find_common_type(['f4','f4','i4'],['f8'])
+        res = np.find_common_type(['f4','f4','i4'],['f8'])
         assert(res == 'f4')
     def test_scalar_loses2(self):
-        res = numpy.find_common_type(['f4','f4'],['i8'])
+        res = np.find_common_type(['f4','f4'],['i8'])
         assert(res == 'f4')
     def test_scalar_wins(self):
-        res = numpy.find_common_type(['f4','f4','i4'],['c8'])
+        res = np.find_common_type(['f4','f4','i4'],['c8'])
         assert(res == 'c8')
     def test_scalar_wins2(self):
-        res = numpy.find_common_type(['u4','i4','i4'],['f4'])
+        res = np.find_common_type(['u4','i4','i4'],['f4'])
         assert(res == 'f8')
     def test_scalar_wins3(self): # doesn't go up to 'f16' on purpose
-        res = numpy.find_common_type(['u8','i8','i8'],['f8'])
+        res = np.find_common_type(['u8','i8','i8'],['f8'])
         assert(res == 'f8')
 
 

@@ -291,17 +291,16 @@ class TestClip(TestCase):
         return (randn(n, m)).astype(float32)
 
     def _neg_byteorder(self, a):
-        import sys
-        a   = asarray(a)
+        a = asarray(a)
         if sys.byteorder == 'little':
-            a   = a.astype(a.dtype.newbyteorder('>'))
+            a = a.astype(a.dtype.newbyteorder('>'))
         else:
-            a   = a.astype(a.dtype.newbyteorder('<'))
+            a = a.astype(a.dtype.newbyteorder('<'))
         return a
 
     def _generate_non_native_data(self, n, m):
-        data    = randn(n, m)
-        data    = self._neg_byteorder(data)
+        data = randn(n, m)
+        data = self._neg_byteorder(data)
         assert not data.dtype.isnative
         return data
 

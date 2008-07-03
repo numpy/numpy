@@ -1,4 +1,3 @@
-import sys
 from numpy.testing import *
 from numpy.core import *
 

@@ -1,9 +1,7 @@
 import sys
 from numpy.testing import *
-set_package_path()
 from numpy.core import *
 import numpy as np
-restore_path()
 
 class TestCtor(TestCase):
     def test_basic(self):
@@ -216,11 +214,11 @@ class TestNewScalarIndexing(TestCase):
         assert isinstance(x, matrix)
         assert_equal(x, matrix([[4,  3], [1,  2]]))
 
-##     def check_vector_element(self):
-##         x = matrix([[1,2,3],[4,5,6]])
-##         assert_equal(x[0][0],1)
-##         assert_equal(x[0].shape,(1,3))
-##         assert_equal(x[:,0].shape,(2,1))
+#     def test_vector_element(self):
+#         x = matrix([[1,2,3],[4,5,6]])
+#         assert_equal(x[0][0],1)
+#         assert_equal(x[0].shape,(1,3))
+#         assert_equal(x[:,0].shape,(2,1))
 
     def test_matrix_element(self):
         x = matrix([[1,2,3],[4,5,6]])

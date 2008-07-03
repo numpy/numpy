@@ -1,8 +1,6 @@
+from os import path
 import numpy as np
 from numpy.testing import *
-from os import path
-set_package_path()
-restore_path()
 
 class TestFromrecords(TestCase):
     def test_fromrecords(self):

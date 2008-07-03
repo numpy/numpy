@@ -1,6 +1,5 @@
 from numpy.testing import *
 import numpy.core.umath as ncu
-from numpy import array
 import numpy as np
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -20,10 +19,10 @@ class TestTypes(TestCase):
         # list of types
         for k, atype in enumerate(types):
             vala = atype(3)
-            val1 = array([3],dtype=atype)
+            val1 = np.array([3],dtype=atype)
             for l, btype in enumerate(types):
                 valb = btype(1)
-                val2 = array([1],dtype=btype)
+                val2 = np.array([1],dtype=btype)
                 val = vala+valb
                 valo = val1 + val2
                 assert val.dtype.num == valo.dtype.num and \
@@ -32,7 +31,7 @@ class TestTypes(TestCase):
 
     def test_type_create(self, level=1):
         for k, atype in enumerate(types):
-            a = array([1,2,3],atype)
+            a = np.array([1,2,3],atype)
             b = atype([1,2,3])
             assert_equal(a,b)
 
@@ -67,8 +66,8 @@ class TestConversion(TestCase):
         assert_equal(map(int,a), li[:3])
 
 
-#class TestRepr(NumpyTestCase):
-#    def check_repr(self):
+#class TestRepr(TestCase):
+#    def test_repr(self):
 #        for t in types:
 #            val = t(1197346475.0137341)
 #            val_repr = repr(val)
@@ -89,7 +88,7 @@ class TestRepr(TestCase):
             # could add some more types to the list below
             for which in ['small denorm','small norm']: 
                 # Values from http://en.wikipedia.org/wiki/IEEE_754
-                constr = array([0x00]*storage_bytes,dtype=np.uint8)
+                constr = np.array([0x00]*storage_bytes,dtype=np.uint8)
                 if which == 'small denorm':
                     byte = last_fraction_bit_idx // 8
                     bytebit = 7-(last_fraction_bit_idx % 8)

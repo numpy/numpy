@@ -1,22 +1,18 @@
 from numpy.testing import *
-set_package_path()
-from numpy.core.umath import minimum, maximum, exp
 import numpy.core.umath as ncu
-from numpy import zeros, ndarray, array, choose, pi
 import numpy as np
-restore_path()
 
 class TestDivision(TestCase):
     def test_division_int(self):
         # int division should return the floor of the result, a la Python
-        x = array([5, 10, 90, 100, -5, -10, -90, -100, -120])
+        x = np.array([5, 10, 90, 100, -5, -10, -90, -100, -120])
         assert_equal(x / 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
 class TestPower(TestCase):
     def test_power_float(self):
-        x = array([1., 2., 3.])
+        x = np.array([1., 2., 3.])
         assert_equal(x**0, [1., 1., 1.])
         assert_equal(x**1, x)
         assert_equal(x**2, [1., 4., 9.])
@@ -27,7 +23,7 @@ class TestPower(TestCase):
         assert_almost_equal(x**(0.5), [1., ncu.sqrt(2), ncu.sqrt(3)])
 
     def test_power_complex(self):
-        x = array([1+2j, 2+3j, 3+4j])
+        x = np.array([1+2j, 2+3j, 3+4j])
         assert_equal(x**0, [1., 1., 1.])
         assert_equal(x**1, x)
         assert_equal(x**2, [-3+4j, -5+12j, -7+24j])
@@ -52,12 +48,12 @@ class TestExpm1(TestCase):
 
 class TestMaximum(TestCase):
     def test_reduce_complex(self):
-        assert_equal(maximum.reduce([1,2j]),1)
-        assert_equal(maximum.reduce([1+3j,2j]),1+3j)
+        assert_equal(ncu.maximum.reduce([1,2j]),1)
+        assert_equal(ncu.maximum.reduce([1+3j,2j]),1+3j)
 
 class TestMinimum(TestCase):
     def test_reduce_complex(self):
-        assert_equal(minimum.reduce([1,2j]),2j)
+        assert_equal(ncu.minimum.reduce([1,2j]),2j)
 
 class TestFloatingPoint(TestCase):
     def test_floating_point(self):
@@ -65,29 +61,29 @@ class TestFloatingPoint(TestCase):
 
 class TestDegrees(TestCase):
     def test_degrees(self):
-        assert_almost_equal(ncu.degrees(pi), 180.0)
-        assert_almost_equal(ncu.degrees(-0.5*pi), -90.0)
+        assert_almost_equal(ncu.degrees(np.pi), 180.0)
+        assert_almost_equal(ncu.degrees(-0.5*np.pi), -90.0)
 
 class TestRadians(TestCase):
     def test_radians(self):
-        assert_almost_equal(ncu.radians(180.0), pi)
-        assert_almost_equal(ncu.radians(-90.0), -0.5*pi)
+        assert_almost_equal(ncu.radians(180.0), np.pi)
+        assert_almost_equal(ncu.radians(-90.0), -0.5*np.pi)
 
 class TestSpecialMethods(TestCase):
     def test_wrap(self):
         class with_wrap(object):
             def __array__(self):
-                return zeros(1)
+                return np.zeros(1)
             def __array_wrap__(self, arr, context):
                 r = with_wrap()
                 r.arr = arr
                 r.context = context
                 return r
         a = with_wrap()
-        x = minimum(a, a)
-        assert_equal(x.arr, zeros(1))
+        x = ncu.minimum(a, a)
+        assert_equal(x.arr, np.zeros(1))
         func, args, i = x.context
-        self.failUnless(func is minimum)
+        self.failUnless(func is ncu.minimum)
         self.failUnlessEqual(len(args), 2)
         assert_equal(args[0], a)
         assert_equal(args[1], a)
@@ -96,19 +92,19 @@ class TestSpecialMethods(TestCase):
     def test_old_wrap(self):
         class with_wrap(object):
             def __array__(self):
-                return zeros(1)
+                return np.zeros(1)
             def __array_wrap__(self, arr):
                 r = with_wrap()
                 r.arr = arr
                 return r
         a = with_wrap()
-        x = minimum(a, a)
-        assert_equal(x.arr, zeros(1))
+        x = ncu.minimum(a, a)
+        assert_equal(x.arr, np.zeros(1))
 
     def test_priority(self):
         class A(object):
             def __array__(self):
-                return zeros(1)
+                return np.zeros(1)
             def __array_wrap__(self, arr, context):
                 r = type(self)()
                 r.arr = arr
@@ -118,12 +114,12 @@ class TestSpecialMethods(TestCase):
             __array_priority__ = 20.
         class C(A):
             __array_priority__ = 40.
-        x = zeros(1)
+        x = np.zeros(1)
         a = A()
         b = B()
         c = C()
-        f = minimum
-        self.failUnless(type(f(x,x)) is ndarray)
+        f = ncu.minimum
+        self.failUnless(type(f(x,x)) is np.ndarray)
         self.failUnless(type(f(x,a)) is A)
         self.failUnless(type(f(x,b)) is B)
         self.failUnless(type(f(x,c)) is C)
@@ -139,18 +135,18 @@ class TestSpecialMethods(TestCase):
         self.failUnless(type(f(c,b)) is C)
         self.failUnless(type(f(c,c)) is C)
 
-        self.failUnless(type(exp(a) is A))
-        self.failUnless(type(exp(b) is B))
-        self.failUnless(type(exp(c) is C))
+        self.failUnless(type(ncu.exp(a) is A))
+        self.failUnless(type(ncu.exp(b) is B))
+        self.failUnless(type(ncu.exp(c) is C))
 
     def test_failing_wrap(self):
         class A(object):
             def __array__(self):
-                return zeros(1)
+                return np.zeros(1)
             def __array_wrap__(self, arr, context):
                 raise RuntimeError
         a = A()
-        self.failUnlessRaises(RuntimeError, maximum, a, a)
+        self.failUnlessRaises(RuntimeError, ncu.maximum, a, a)
 
     def test_array_with_context(self):
         class A(object):
@@ -159,28 +155,28 @@ class TestSpecialMethods(TestCase):
                 self.func = func
                 self.args = args
                 self.i = i
-                return zeros(1)
+                return np.zeros(1)
         class B(object):
             def __array__(self, dtype=None):
-                return zeros(1, dtype)
+                return np.zeros(1, dtype)
         class C(object):
             def __array__(self):
-                return zeros(1)
+                return np.zeros(1)
         a = A()
-        maximum(zeros(1), a)
-        self.failUnless(a.func is maximum)
+        ncu.maximum(np.zeros(1), a)
+        self.failUnless(a.func is ncu.maximum)
         assert_equal(a.args[0], 0)
         self.failUnless(a.args[1] is a)
         self.failUnless(a.i == 1)
-        assert_equal(maximum(a, B()), 0)
-        assert_equal(maximum(a, C()), 0)
+        assert_equal(ncu.maximum(a, B()), 0)
+        assert_equal(ncu.maximum(a, C()), 0)
 
 
 class TestChoose(TestCase):
     def test_mixed(self):
-        c = array([True,True])
-        a = array([True,True])
-        assert_equal(choose(c, (a, 1)), array([1,1]))
+        c = np.array([True,True])
+        a = np.array([True,True])
+        assert_equal(np.choose(c, (a, 1)), np.array([1,1]))
 
 
 class TestComplexFunctions(TestCase):
