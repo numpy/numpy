@@ -1,11 +1,9 @@
-import compiler
 import os
 import sys
-import inspect
 import pkgutil
 import types
 import re
-import pydoc
+
 from numpy.core.numerictypes import obj2sctype, generic
 from numpy.core.multiarray import dtype as _dtype
 from numpy.core import product, ndarray
@@ -327,7 +325,8 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
                 p[0]*(x**N-1) + p[1]*(x**N-2) + ... + p[N-2]*x + p[N-1]
     """
     global _namedict, _dictlist
-    import pydoc
+    # Local import to speed up numpy's import time.
+    import pydoc, inspect
 
     if hasattr(object,'_ppimport_importer') or \
        hasattr(object, '_ppimport_module'):
@@ -467,6 +466,8 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
 def source(object, output=sys.stdout):
     """Write source for this object to output.
     """
+    # Local import to speed up numpy's import time.
+    import inspect
     try:
         print >> output,  "In file: %s\n" % inspect.getsourcefile(object)
         print >> output,  inspect.getsource(object)
@@ -599,6 +600,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
 
     """
     global _lookfor_caches
+    # Local import to speed up numpy's import time.
+    import inspect
 
     if module is None:
         module = "numpy"
@@ -751,6 +754,8 @@ def safe_eval(source):
       ...
     SyntaxError: Unknown name: dict
     """
+    # Local import to speed up numpy's import time.
+    import compiler
     walker = SafeEval()
     try:
         ast = compiler.parse(source, "eval")

@@ -39,7 +39,7 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
-from numpy.lib.polynomial import _lstsq, _single_eps, _double_eps
+from numpy.lib.polynomial import _lstsq
 
 #...............................................................................
 def issequence(seq):
@@ -866,10 +866,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
         x[m] = y[m] = masked
     # Set rcond
     if rcond is None :
-        if x.dtype in (np.single, np.csingle):
-            rcond = len(x)*_single_eps
-        else :
-            rcond = len(x)*_double_eps
+        rcond = len(x)*np.finfo(x.dtype).eps
     # Scale x to improve condition number
     scale = abs(x).max()
     if scale != 0 :

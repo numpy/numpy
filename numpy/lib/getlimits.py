@@ -21,14 +21,16 @@ _convert_to_float = {
     }
 
 class finfo(object):
-    """Machine limits for floating point types.
+    """ Machine limits for floating point types.
 
-    :Parameters:
-        dtype : floating point type or instance
+    Parameters
+    ----------
+    dtype : floating point type, dtype, or instance
+        The kind of floating point data type to get information about.
 
-    :SeeAlso:
-      - numpy.lib.machar.MachAr
-
+    See Also
+    --------
+    numpy.lib.machar.MachAr
     """
 
     _finfo_cache = {}

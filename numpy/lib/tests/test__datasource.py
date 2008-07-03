@@ -5,6 +5,7 @@ import struct
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 from urlparse import urlparse
+from urllib2 import URLError
 
 from numpy.testing import *
 
@@ -16,7 +17,7 @@ def urlopen_stub(url, data=None):
         tmpfile = NamedTemporaryFile(prefix='urltmp_')
         return tmpfile
     else:
-        raise datasource.URLError('Name or service not known')
+        raise URLError('Name or service not known')
 
 # Rebind urlopen during testing.  For a 'real' test, uncomment the rebinding
 # below.

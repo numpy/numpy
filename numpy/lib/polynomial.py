@@ -17,8 +17,6 @@ from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex
 eigvals = None
 lstsq = None
-_single_eps = finfo(NX.single).eps
-_double_eps = finfo(NX.double).eps
 
 class RankWarning(UserWarning):
     """Issued by polyfit when Vandermonde matrix is rank deficient.
@@ -301,11 +299,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     # set rcond
     if rcond is None :
-        xtype = x.dtype
-        if xtype == NX.single or xtype == NX.csingle :
-            rcond = len(x)*_single_eps
-        else :
-            rcond = len(x)*_double_eps
+        rcond = len(x)*finfo(x.dtype).eps
 
     # scale x to improve condition number
     scale = abs(x).max()

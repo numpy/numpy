@@ -37,7 +37,6 @@ __docformat__ = "restructuredtext en"
 import os
 import tempfile
 from shutil import rmtree
-from urllib2 import urlopen, URLError
 from urlparse import urlparse
 
 # TODO: .zip support, .tar support?
@@ -196,6 +195,9 @@ class DataSource (object):
         Creates a copy of the file in the datasource cache.
 
         """
+        # We import these here because importing urllib2 is slow and
+        # a significant fraction of numpy's total import time.
+        from urllib2 import urlopen, URLError
 
         upath = self.abspath(path)
 
@@ -337,6 +339,9 @@ class DataSource (object):
             is accessible if it exists in either location.
 
         """
+        # We import this here because importing urllib2 is slow and
+        # a significant fraction of numpy's total import time.
+        from urllib2 import URLError
 
         # Test local path
         if os.path.exists(path):

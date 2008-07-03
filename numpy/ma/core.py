@@ -77,7 +77,6 @@ import warnings
 MaskType = np.bool_
 nomask = MaskType(0)
 
-divide_tolerance = np.finfo(float).tiny
 np.seterr(all='ignore')
 
 def doc_note(note):
@@ -398,9 +397,14 @@ class _DomainTan:
 #............................
 class _DomainSafeDivide:
     """Define a domain for safe division."""
-    def __init__ (self, tolerance=divide_tolerance):
+    def __init__ (self, tolerance=None):
         self.tolerance = tolerance
     def __call__ (self, a, b):
+        # Delay the selection of the tolerance to here in order to reduce numpy
+        # import times. The calculation of these parameters is a substantial
+        # component of numpy's import time.
+        if self.tolerance is None:
+            self.tolerance = np.finfo(float).tiny
         return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 #............................
 class _DomainGreater:
