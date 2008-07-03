@@ -192,15 +192,14 @@ def vstack(tup):
             tup -- sequence of arrays.  All arrays must have the same
                    shape.
         Examples:
-            >>> import numpy
             >>> a = array((1,2,3))
             >>> b = array((2,3,4))
-            >>> numpy.vstack((a,b))
+            >>> np.vstack((a,b))
             array([[1, 2, 3],
                    [2, 3, 4]])
             >>> a = array([[1],[2],[3]])
             >>> b = array([[2],[3],[4]])
-            >>> numpy.vstack((a,b))
+            >>> np.vstack((a,b))
             array([[1],
                    [2],
                    [3],

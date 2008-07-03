@@ -46,8 +46,6 @@ def _tocomplex(arr):
     Examples
     --------
 
-    >>> import numpy as np
-
     First, consider an input of type short:
 
     >>> a = np.array([1,2,3],np.short)
@@ -246,7 +244,7 @@ def log10(x):
     --------
 
     (We set the printing precision so the example can be auto-tested)
-    >>> import numpy as np; np.set_printoptions(precision=4)
+    >>> np.set_printoptions(precision=4)
 
     >>> log10([10**1,10**2])
     array([ 1.,  2.])
@@ -276,7 +274,7 @@ def logn(n, x):
     --------
 
     (We set the printing precision so the example can be auto-tested)
-    >>> import numpy as np; np.set_printoptions(precision=4)
+    >>> np.set_printoptions(precision=4)
 
     >>> logn(2,[4,8])
     array([ 2.,  3.])
@@ -306,7 +304,7 @@ def log2(x):
     --------
 
     (We set the printing precision so the example can be auto-tested)
-    >>> import numpy as np; np.set_printoptions(precision=4)
+    >>> np.set_printoptions(precision=4)
 
     >>> log2([4,8])
     array([ 2.,  3.])
@@ -336,7 +334,7 @@ def power(x, p):
     Examples
     --------
     (We set the printing precision so the example can be auto-tested)
-    >>> import numpy as np; np.set_printoptions(precision=4)
+    >>> np.set_printoptions(precision=4)
 
     >>> power([2,4],2)
     array([ 4, 16])
@@ -368,7 +366,7 @@ def arccos(x):
 
     Examples
     --------
-    >>> import numpy as np; np.set_printoptions(precision=4)
+    >>> np.set_printoptions(precision=4)
 
     >>> arccos(1)
     0.0
@@ -397,7 +395,7 @@ def arcsin(x):
     Examples
     --------
     (We set the printing precision so the example can be auto-tested)
-    >>> import numpy as np; np.set_printoptions(precision=4)
+    >>> np.set_printoptions(precision=4)
 
     >>> arcsin(0)
     0.0
@@ -426,7 +424,7 @@ def arctanh(x):
     Examples
     --------
     (We set the printing precision so the example can be auto-tested)
-    >>> import numpy as np; np.set_printoptions(precision=4)
+    >>> np.set_printoptions(precision=4)
 
     >>> arctanh(0)
     0.0

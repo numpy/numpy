@@ -316,8 +316,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
     """Get help information for a function, class, or module.
 
        Example:
-          >>> from numpy import *
-          >>> info(polyval) # doctest: +SKIP
+          >>> np.info(np.polyval) # doctest: +SKIP
 
           polyval(p, x)
 

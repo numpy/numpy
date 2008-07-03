@@ -319,8 +319,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     Examples
     --------
-    >>> x = random.randn(100,3)
-    >>> hist3d, edges = histogramdd(x, bins = (5, 6, 7))
+    >>> x = np.random.randn(100,3)
+    >>> hist3d, edges = np.lib.histogramdd(x, bins = (5, 6, 7))
 
     """
 
@@ -833,9 +833,9 @@ def angle(z, deg=0):
 
     Examples
     --------
-    >>> numpy.angle(1+1j)          # in radians
+    >>> np.angle(1+1j)          # in radians
     0.78539816339744828
-    >>> numpy.angle(1+1j,deg=True) # in degrees
+    >>> np.angle(1+1j,deg=True) # in degrees
     45.0
 
     """
@@ -893,9 +893,8 @@ def trim_zeros(filt, trim='fb'):
 
     Examples
     --------
-    >>> import numpy
     >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
-    >>> numpy.trim_zeros(a)
+    >>> np.trim_zeros(a)
     array([1, 2, 3, 2, 1])
 
     """
@@ -922,7 +921,7 @@ def unique(x):
 
     Examples
     --------
-    >>> numpy.unique([5,2,4,0,4,4,2,2,1])
+    >>> np.unique([5,2,4,0,4,4,2,2,1])
     array([0, 1, 2, 4, 5])
 
     """
@@ -1270,35 +1269,33 @@ def bartlett(M):
 
     Examples
     --------
-    >>> from numpy import bartlett
-    >>> bartlett(12)
+    >>> np.bartlett(12)
     array([ 0.        ,  0.18181818,  0.36363636,  0.54545455,  0.72727273,
             0.90909091,  0.90909091,  0.72727273,  0.54545455,  0.36363636,
             0.18181818,  0.        ])
 
-    Plot the window and its frequency response:
+    Plot the window and its frequency response (requires SciPy and matplotlib):
 
-    >>> from numpy import clip, log10, array, bartlett
-    >>> from scipy.fftpack import fft
-    >>> from matplotlib import pyplot as plt
+    from scipy.fftpack import fft
+    from matplotlib import pyplot as plt
 
-    >>> window = bartlett(51)
-    >>> plt.plot(window)
-    >>> plt.title("Bartlett window")
-    >>> plt.ylabel("Amplitude")
-    >>> plt.xlabel("Sample")
-    >>> plt.show()
+    window = np.bartlett(51)
+    plt.plot(window) #doctest: SKIP 
+    plt.title("Bartlett window")
+    plt.ylabel("Amplitude")
+    plt.xlabel("Sample")
+    plt.show()
 
-    >>> A = fft(window, 2048) / 25.5
-    >>> mag = abs(fftshift(A))
-    >>> freq = linspace(-0.5,0.5,len(A))
-    >>> response = 20*log10(mag)
-    >>> response = clip(response,-100,100)
-    >>> plt.plot(freq, response)
-    >>> plt.title("Frequency response of Bartlett window")
-    >>> plt.ylabel("Magnitude [dB]")
-    >>> plt.xlabel("Normalized frequency [cycles per sample]")
-    >>> plt.axis('tight'); plt.show()
+    A = fft(window, 2048) / 25.5
+    mag = abs(np.fft.fftshift(A))
+    freq = linspace(-0.5,0.5,len(A))
+    response = 20*np.log10(mag)
+    response = np.clip(response,-100,100)
+    plt.plot(freq, response)
+    plt.title("Frequency response of Bartlett window")
+    plt.ylabel("Magnitude [dB]")
+    plt.xlabel("Normalized frequency [cycles per sample]")
+    plt.axis('tight'); plt.show()
 
     """
     if M < 1:
@@ -1489,7 +1486,6 @@ def median(a, axis=0, out=None, overwrite_input=False):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from numpy import median
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a

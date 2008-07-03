@@ -223,7 +223,6 @@ def polyfit(x, y, deg, rcond=None, full=False):
     -----
     RankWarning : if rank is reduced and not full output
         The warnings can be turned off by:
-        >>> import numpy as np
         >>> import warnings
         >>> warnings.simplefilter('ignore',np.RankWarning)
 
