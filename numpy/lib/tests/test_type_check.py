@@ -1,11 +1,7 @@
-import sys
-
 from numpy.testing import *
-set_package_path()
-import numpy.lib;reload(numpy.lib);reload(numpy.lib.type_check)
+import numpy.lib
 from numpy.lib import *
 from numpy.core import *
-restore_path()
 
 def assert_all(x):
     assert(all(x)), x

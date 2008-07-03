@@ -3,14 +3,9 @@
 """
 
 from numpy.testing import *
-set_package_path()
 from numpy import arange, rot90, add, fliplr, flipud, zeros, ones, eye, \
      array, diag, histogram2d, tri
 import numpy as np
-restore_path()
-
-##################################################
-
 
 def get_mat(n):
     data = arange(n)

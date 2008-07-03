@@ -1,7 +1,5 @@
 from numpy.testing import *
-set_package_path()
 from numpy import array, ones, r_, mgrid
-restore_path()
 
 class TestGrid(TestCase):
     def test_basic(self):

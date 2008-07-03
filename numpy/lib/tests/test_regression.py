@@ -1,8 +1,5 @@
 from numpy.testing import *
-
-set_local_path()
 import numpy as np
-restore_path()
 
 rlevel = 1
 

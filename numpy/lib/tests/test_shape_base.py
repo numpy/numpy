@@ -1,8 +1,6 @@
 from numpy.testing import *
-set_package_path()
 from numpy.lib import *
 from numpy.core import *
-restore_path()
 
 class TestApplyAlongAxis(TestCase):
     def test_simple(self):

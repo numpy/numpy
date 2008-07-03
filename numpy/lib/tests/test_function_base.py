@@ -1,11 +1,9 @@
 import sys
 
 from numpy.testing import *
-set_package_path()
-import numpy.lib;reload(numpy.lib)
+import numpy.lib
 from numpy.lib import *
 from numpy.core import *
-restore_path()
 
 class TestAny(TestCase):
     def test_basic(self):

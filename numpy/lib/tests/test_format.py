@@ -2,7 +2,6 @@ r''' Test the .npy file format.
 
 Set up:
 
-    >>> import numpy as np
     >>> from cStringIO import StringIO
     >>> from numpy.lib import format
     >>>
