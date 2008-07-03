@@ -81,7 +81,16 @@ class TestDataSourceOpen(TestCase):
         assert self.ds.open(valid_httpurl())
 
     def test_InvalidHTTP(self):
-        self.assertRaises(IOError, self.ds.open, invalid_httpurl())
+        url = invalid_httpurl()
+        self.assertRaises(IOError, self.ds.open, url)
+        try:
+            self.ds.open(url)
+        except IOError, e:
+            # Regression test for bug fixed in r4342.
+            assert e.errno is None
+
+    def test_InvalidHTTPCacheURLError(self):
+        self.assertRaises(URLError, self.ds._cache, invalid_httpurl())
 
     def test_ValidFile(self):
         local_file = valid_textfile(self.tmpdir)
@@ -95,10 +104,9 @@ class TestDataSourceOpen(TestCase):
         try:
             import gzip
         except ImportError:
-            # We don't have the bz2 capabilities to test.
-            # FIXME: when we start using nose, raise a SkipTest rather than
-            # passing the test.
-            return
+            # We don't have the gzip capabilities to test.
+            import nose
+            raise nose.SkipTest
         # Test datasource's internal file_opener for Gzip files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.gz')
         fp = gzip.open(filepath, 'w')
@@ -114,9 +122,8 @@ class TestDataSourceOpen(TestCase):
             import bz2
         except ImportError:
             # We don't have the bz2 capabilities to test.
-            # FIXME: when we start using nose, raise a SkipTest rather than
-            # passing the test.
-            return
+            import nose
+            raise nose.SkipTest
         # Test datasource's internal file_opener for BZip2 files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
         fp = bz2.BZ2File(filepath, 'w')
@@ -287,7 +294,6 @@ class TestRepositoryExists(TestCase):
         os.mkdir(local_path, 0700)
         tmpfile = valid_textfile(local_path)
         assert self.repos.exists(tmpfile)
-
 
 class TestOpenFunc(TestCase):
     def setUp(self):
