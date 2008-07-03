@@ -5,9 +5,7 @@ Implements test and bench functions for modules.
 '''
 import os
 import sys
-import re
 import warnings
-
 
 # Patches nose functionality to add NumPy-specific features
 # Note: This class should only be instantiated if nose has already
@@ -20,8 +18,17 @@ class NoseCustomizer:
             return
 
         NoseCustomizer.__patched = True
+
+        # used to monkeypatch the nose doctest classes
+        def monkeypatch_method(cls):
+            def decorator(func):
+                setattr(cls, func.__name__, func)
+                return func
+            return decorator
+
         from nose.plugins import doctests as npd
-        from nose.util import src
+        from nose.plugins.base import Plugin
+        from nose.util import src, tolist
         import numpy
         import doctest
 
@@ -53,11 +60,13 @@ class NoseCustomizer:
                                              checker=checker)
 
 
+
         # This will replace the existing loadTestsFromModule method of 
         # nose.plugins.doctests.Doctest.  It turns on whitespace normalization,
         # adds an implicit "import numpy as np" for doctests, and adds a
         # "#random" directive to allow executing a command while ignoring its
         # output.
+        @monkeypatch_method(npd.Doctest)
         def loadTestsFromModule(self, module):
             if not self.matches(module.__name__):
                 npd.log.debug("Doctest doesn't want module %s", module)
@@ -78,17 +87,39 @@ class NoseCustomizer:
                 if not test.filename:
                     test.filename = module_file
 
-                # implicit "import numpy as np" for all doctests
-                test.globs['np'] = numpy
+                # Each doctest should execute in an environment equivalent to
+                # starting Python and executing "import numpy as np"
+                test.globs = {'__builtins__':__builtins__,
+                              'np':numpy}
 
-                optionflags = doctest.NORMALIZE_WHITESPACE
+                # always use whitespace and ellipsis options
+                optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
+
                 yield NumpyDocTestCase(test, 
                                        optionflags=optionflags,
-                                       result_var=self.doctest_result_var,
                                        checker=NumpyDoctestOutputChecker())
 
-        # Monkeypatch loadTestsFromModule
-        npd.Doctest.loadTestsFromModule = loadTestsFromModule
+        # get original print options
+        print_state = numpy.get_printoptions()
+
+        # Add an afterContext method to nose.plugins.doctests.Doctest in order
+        # to restore print options to the original state after each doctest
+        @monkeypatch_method(npd.Doctest)
+        def afterContext(self):
+            numpy.set_printoptions(**print_state)
+
+        # Replace the existing wantFile method of nose.plugins.doctests.Doctest
+        # so that we can ignore NumPy-specific build files that shouldn't
+        # be searched for tests
+        old_wantFile = npd.Doctest.wantFile
+        ignore_files = ['generate_numpy_api.py', 'scons_support.py']
+        def wantFile(self, file):
+            bn = os.path.basename(file)
+            if bn in ignore_files:
+                return False
+            return old_wantFile(self, file)
+
+        npd.Doctest.wantFile = wantFile
 
 
 def import_nose():

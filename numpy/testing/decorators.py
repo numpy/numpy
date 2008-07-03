@@ -31,7 +31,7 @@ def setastest(tf=True):
 
     e.g
     >>> @setastest(False)
-    >>> def func_with_test_in_name(arg1, arg2): pass
+    ... def func_with_test_in_name(arg1, arg2): pass
     ...
     >>>
 
