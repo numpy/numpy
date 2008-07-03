@@ -341,7 +341,7 @@ class DataSource (object):
         """
         # We import this here because importing urllib2 is slow and
         # a significant fraction of numpy's total import time.
-        from urllib2 import URLError
+        from urllib2 import urlopen, URLError
 
         # Test local path
         if os.path.exists(path):

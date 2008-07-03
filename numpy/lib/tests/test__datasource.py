@@ -6,6 +6,7 @@ from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 from urlparse import urlparse
 from urllib2 import URLError
+import urllib2
 
 from numpy.testing import *
 
@@ -19,9 +20,14 @@ def urlopen_stub(url, data=None):
     else:
         raise URLError('Name or service not known')
 
-# Rebind urlopen during testing.  For a 'real' test, uncomment the rebinding
-# below.
-datasource.urlopen = urlopen_stub
+old_urlopen = None
+def setup():
+    global old_urlopen
+    old_urlopen = urllib2.urlopen
+    urllib2.urlopen = urlopen_stub
+
+def teardown():
+    urllib2.urlopen = old_urlopen
 
 # A valid website for more robust testing
 http_path = 'http://www.google.com/'
