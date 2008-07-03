@@ -881,22 +881,23 @@ class errstate(object):
     """with errstate(**state): --> operations in following block use given state.
 
     # Set error handling to known state.
-    >>> _ = seterr(invalid='raise', divide='raise', over='raise', under='ignore')
+    >>> _ = np.seterr(invalid='raise', divide='raise', over='raise', 
+    ...               under='ignore')
 
-    |>> a = -arange(3)
-    |>> with errstate(invalid='ignore'):
-    ...     print sqrt(a)
+    >>> a = -np.arange(3)
+    >>> with np.errstate(invalid='ignore'): # doctest: +SKIP
+    ...     print np.sqrt(a)                # with statement requires Python 2.5
     [ 0.     -1.#IND -1.#IND]
-    |>> print sqrt(a.astype(complex))
-    [ 0. +0.00000000e+00j  0. +1.00000000e+00j  0. +1.41421356e+00j]
-    |>> print sqrt(a)
+    >>> print np.sqrt(a.astype(complex))
+    [ 0.+0.j          0.+1.j          0.+1.41421356j]
+    >>> print np.sqrt(a)
     Traceback (most recent call last):
      ...
-    FloatingPointError: invalid encountered in sqrt
-    |>> with errstate(divide='ignore'):
+    FloatingPointError: invalid value encountered in sqrt
+    >>> with np.errstate(divide='ignore'):  # doctest: +SKIP
     ...     print a/0
     [0 0 0]
-    |>> print a/0
+    >>> print a/0
     Traceback (most recent call last):
         ...
     FloatingPointError: divide by zero encountered in divide

@@ -155,11 +155,11 @@ def choose(a, choices, out=None, mode='raise'):
 
     >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
     ...   [20, 21, 22, 23], [30, 31, 32, 33]]
-    >>> choose([2, 3, 1, 0], choices)
+    >>> np.choose([2, 3, 1, 0], choices)
     array([20, 31, 12,  3])
-    >>> choose([2, 4, 1, 0], choices, mode='clip')
+    >>> np.choose([2, 4, 1, 0], choices, mode='clip')
     array([20, 31, 12,  3])
-    >>> choose([2, 4, 1, 0], choices, mode='wrap')
+    >>> np.choose([2, 4, 1, 0], choices, mode='wrap')
     array([20,  1, 12,  3])
 
     """
@@ -197,13 +197,13 @@ def repeat(a, repeats, axis=None):
 
     Examples
     --------
-    >>> x = array([[1,2],[3,4]])
-    >>> repeat(x, 2)
+    >>> x = np.array([[1,2],[3,4]])
+    >>> np.repeat(x, 2)
     array([1, 1, 2, 2, 3, 3, 4, 4])
-    >>> repeat(x, 3, axis=1)
+    >>> np.repeat(x, 3, axis=1)
     array([[1, 1, 1, 2, 2, 2],
            [3, 3, 3, 4, 4, 4]])
-    >>> repeat(x, [1, 2], axis=0)
+    >>> np.repeat(x, [1, 2], axis=0)
     array([[1, 2],
            [3, 4],
            [3, 4]])
@@ -560,7 +560,7 @@ def searchsorted(a, v, side='left'):
 
     Examples
     --------
-    >>> searchsorted([1,2,3,4,5],[6,4,0])
+    >>> np.searchsorted([1,2,3,4,5],[6,4,0])
     array([5, 3, 0])
 
     """
@@ -624,10 +624,10 @@ def squeeze(a):
 
     Examples
     --------
-    >>> x = array([[[1,1,1],[2,2,2],[3,3,3]]])
+    >>> x = np.array([[[1,1,1],[2,2,2],[3,3,3]]])
     >>> x.shape
     (1, 3, 3)
-    >>> squeeze(x).shape
+    >>> np.squeeze(x).shape
     (3, 3)
 
     """
@@ -782,7 +782,7 @@ def ravel(a, order='C'):
     >>> x
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> ravel(x)
+    >>> np.ravel(x)
     array([1, 2, 3, 4, 5, 6])
 
     """
@@ -1536,7 +1536,7 @@ def ndim(a):
     --------
     >>> np.ndim([[1,2,3],[4,5,6]])
     2
-    >>> np.ndim(array([[1,2,3],[4,5,6]]))
+    >>> np.ndim(np.array([[1,2,3],[4,5,6]]))
     2
     >>> np.ndim(1)
     0
