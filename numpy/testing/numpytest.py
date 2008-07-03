@@ -38,6 +38,9 @@ def set_package_path(level=1):
 
       restore_path()
     """
+    warnings.warn("set_package_path will be removed in NumPy 1.3; please "
+                  "update your code", DeprecationWarning, stacklevel=2)
+
     from distutils.util import get_platform
     f = get_frame(level)
     if f.f_locals['__name__']=='__main__':
@@ -61,6 +64,9 @@ def set_local_path(reldir='', level=1):
 
       restore_path()
     """
+    warnings.warn("set_local_path will be removed in NumPy 1.3; please "
+                  "update your code", DeprecationWarning, stacklevel=2)
+
     f = get_frame(level)
     if f.f_locals['__name__']=='__main__':
         testfile = sys.argv[0]
@@ -72,8 +78,10 @@ def set_local_path(reldir='', level=1):
     sys.path.insert(0,local_path)
     return
 
-
 def restore_path():
+    warnings.warn("restore_path will be removed in NumPy 1.3; please "
+                  "update your code", DeprecationWarning, stacklevel=2)
+
     if DEBUG:
         print 'Removing %r from sys.path' % (sys.path[0])
     del sys.path[0]
