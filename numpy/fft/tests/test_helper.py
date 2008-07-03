@@ -5,9 +5,7 @@
 
 import sys
 from numpy.testing import *
-set_package_path()
 from numpy.fft import fftshift,ifftshift,fftfreq
-restore_path()
 
 from numpy import pi
 

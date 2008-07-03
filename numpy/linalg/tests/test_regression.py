@@ -2,10 +2,8 @@
 """
 
 from numpy.testing import *
-set_package_path()
 import numpy as np
 from numpy import linalg, arange, float64, array, dot, transpose
-restore_path()
 
 rlevel = 1
 

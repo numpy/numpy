@@ -807,9 +807,14 @@ class TestRegression(TestCase):
 
     def test_hist_bins_as_list(self, level=rlevel):
         """Ticket #632"""
-        hist,edges = np.histogram([1,2,3,4],[1,2])
-        assert_array_equal(hist,[1,3])
-        assert_array_equal(edges,[1,2])
+        import warnings
+        warnings.simplefilter('ignore', FutureWarning)
+        try:
+            hist,edges = np.histogram([1,2,3,4],[1,2])
+            assert_array_equal(hist,[1,3])
+            assert_array_equal(edges,[1,2])
+        finally:
+            warnings.resetwarnings()
 
     def test_copy_detection_zero_dim(self, level=rlevel):
         """Ticket #658"""

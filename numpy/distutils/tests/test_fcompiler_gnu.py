@@ -1,8 +1,6 @@
 from numpy.testing import *
 
-set_package_path()
 import numpy.distutils.fcompiler
-restore_path()
 
 g77_version_strings = [
     ('GNU Fortran 0.5.25 20010319 (prerelease)', '0.5.25'),

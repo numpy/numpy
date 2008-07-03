@@ -1,4 +1,5 @@
 import sys
+import warnings
 
 from numpy.testing import *
 import numpy.lib
@@ -425,8 +426,12 @@ class TestSinc(TestCase):
         assert_array_almost_equal(w,flipud(w),7)
 
 class TestHistogram(TestCase):
-    import warnings
-    warnings.simplefilter('ignore', FutureWarning)
+    def setUp(self):
+        warnings.simplefilter('ignore', FutureWarning)
+
+    def tearDown(self):
+        warnings.resetwarnings()
+
     def test_simple(self):
         n=100
         v=rand(n)

@@ -1,8 +1,6 @@
 import sys
 from numpy.testing import *
-set_package_path()
 import numpy as np
-restore_path()
 
 def fft1(x):
     L = len(x)

@@ -16,9 +16,7 @@ import os
 import sys
 from numpy.testing import *
 
-set_package_path()
-from lib.main import build_extension, compile
-restore_path()
+from numpy.f2py.lib.main import build_extension, compile
 
 fortran_code = '''
 module test_module_module_ext2

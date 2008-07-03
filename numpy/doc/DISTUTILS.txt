@@ -477,15 +477,9 @@ a NumPy package module ``numpy.xxx.yyy`` containing a function
   import sys
   from numpy.testing import *
 
-  set_package_path()
   # import xxx symbols
-  from xxx.yyy import zzz
-  restore_path()
+  from numpy.xxx.yyy import zzz
 
-  #Optional:
-  set_local_path()
-  # import modules that are located in the same directory as this file.
-  restore_path()
 
   class test_zzz(TestCase):
       def test_simple(self, level=1):

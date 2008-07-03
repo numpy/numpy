@@ -2,12 +2,10 @@
 """
 
 from numpy.testing import *
-set_package_path()
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
-from linalg import matrix_power
-restore_path()
+from numpy.linalg import matrix_power
 
 def ifthen(a, b):
     return not a or b

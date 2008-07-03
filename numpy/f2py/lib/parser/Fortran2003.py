@@ -5826,7 +5826,7 @@ if 1: # Optimize subclass tree:
 
     def _rpl_list(clsname):
         if clsname not in Base_classes:
-            print 'Not implemented:',clsname
+            #print 'Not implemented:',clsname
             return [] # remove this code when all classes are implemented
         cls = Base_classes[clsname]
         if 'match' in cls.__dict__:
@@ -5868,7 +5868,7 @@ for clsname, cls in Base_classes.items():
         else:
             print '%s not implemented needed by %s' % (n,clsname)
 
-if 1:
+if False:
     for cls in Base_classes.values():
         subclasses = Base.subclasses.get(cls.__name__,[])
         subclasses_names = [c.__name__ for c in subclasses]
