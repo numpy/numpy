@@ -30,6 +30,7 @@ def setastest(tf=True):
         If True specifies this is a test, not a test otherwise
 
     e.g
+    >>> from numpy.testing.decorators import setastest
     >>> @setastest(False)
     ... def func_with_test_in_name(arg1, arg2): pass
     ...

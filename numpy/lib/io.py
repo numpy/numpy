@@ -344,9 +344,9 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
     Examples
     --------
-    >>> savetxt('test.out', x, delimiter=',') # X is an array
-    >>> savetxt('test.out', (x,y,z)) # x,y,z equal sized 1D arrays
-    >>> savetxt('test.out', x, fmt='%1.4e') # use exponential notation
+    >>> np.savetxt('test.out', x, delimiter=',') # X is an array
+    >>> np.savetxt('test.out', (x,y,z)) # x,y,z equal sized 1D arrays
+    >>> np.savetxt('test.out', x, fmt='%1.4e') # use exponential notation
 
     Notes on fmt
     ------------

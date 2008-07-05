@@ -471,7 +471,7 @@ def average(a, axis=None, weights=None, returned=False):
 
     Examples
     --------
-      >>> average(range(1,11), weights=range(10,0,-1))
+      >>> np.average(range(1,11), weights=range(10,0,-1))
       4.0
 
     Raises
@@ -893,7 +893,7 @@ def trim_zeros(filt, trim='fb'):
 
     Examples
     --------
-    >>> a = array((0, 0, 0, 1, 2, 3, 2, 1, 0))
+    >>> a = np.array((0, 0, 0, 1, 2, 3, 2, 1, 0))
     >>> np.trim_zeros(a)
     array([1, 2, 3, 2, 1])
 
@@ -1069,7 +1069,7 @@ class vectorize(object):
     ...    else:
     ...        return a+b
 
-    >>> vfunc = vectorize(myfunc)
+    >>> vfunc = np.vectorize(myfunc)
 
     >>> vfunc([1, 2, 3, 4], 2)
     array([3, 4, 1, 2])
@@ -1486,29 +1486,28 @@ def median(a, axis=0, out=None, overwrite_input=False):
 
     Examples
     --------
-    >>> from numpy import median
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
            [ 3,  2,  1]])
-    >>> median(a)
+    >>> np.median(a)
     array([ 6.5,  4.5,  2.5])
-    >>> median(a, axis=None)
+    >>> np.median(a, axis=None)
     3.5
-    >>> median(a, axis=1)
+    >>> np.median(a, axis=1)
     array([ 7.,  2.])
-    >>> m = median(a)
+    >>> m = np.median(a)
     >>> out = np.zeros_like(m)
-    >>> median(a, out=m)
+    >>> np.median(a, out=m)
     array([ 6.5,  4.5,  2.5])
     >>> m
     array([ 6.5,  4.5,  2.5])
     >>> b = a.copy()
-    >>> median(b, axis=1, overwrite_input=True)
+    >>> np.median(b, axis=1, overwrite_input=True)
     array([ 7.,  2.])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
-    >>> median(b, axis=None, overwrite_input=True)
+    >>> np.median(b, axis=None, overwrite_input=True)
     3.5
     >>> assert not np.all(a==b)
     """
@@ -1632,11 +1631,11 @@ def delete(arr, obj, axis=None):
     ...       [1,2,3],
     ...       [6,7,8]]
 
-    >>> delete(arr, 1, 1)
+    >>> np.delete(arr, 1, 1)
     array([[3, 5],
            [1, 3],
            [6, 8]])
-    >>> delete(arr, 1, 0)
+    >>> np.delete(arr, 1, 0)
     array([[3, 4, 5],
            [6, 7, 8]])
     """
@@ -1732,11 +1731,11 @@ def insert(arr, obj, values, axis=None):
 
     Examples
     --------
-    >>> a = array([[1,2,3],
-    ...            [4,5,6],
-    ...            [7,8,9]])
+    >>> a = np.array([[1,2,3],
+    ...               [4,5,6],
+    ...               [7,8,9]])
 
-    >>> insert(a, [1,2], [[4],[5]], axis=0)
+    >>> np.insert(a, [1,2], [[4],[5]], axis=0)
     array([[1, 2, 3],
            [4, 4, 4],
            [4, 5, 6],

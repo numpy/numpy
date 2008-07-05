@@ -192,13 +192,13 @@ def vstack(tup):
             tup -- sequence of arrays.  All arrays must have the same
                    shape.
         Examples:
-            >>> a = array((1,2,3))
-            >>> b = array((2,3,4))
+            >>> a = np.array((1,2,3))
+            >>> b = np.array((2,3,4))
             >>> np.vstack((a,b))
             array([[1, 2, 3],
                    [2, 3, 4]])
-            >>> a = array([[1],[2],[3]])
-            >>> b = array([[2],[3],[4]])
+            >>> a = np.array([[1],[2],[3]])
+            >>> b = np.array([[2],[3],[4]])
             >>> np.vstack((a,b))
             array([[1],
                    [2],
@@ -222,14 +222,13 @@ def hstack(tup):
             tup -- sequence of arrays.  All arrays must have the same
                    shape.
         Examples:
-            >>> import numpy
-            >>> a = array((1,2,3))
-            >>> b = array((2,3,4))
-            >>> numpy.hstack((a,b))
+            >>> a = np.array((1,2,3))
+            >>> b = np.array((2,3,4))
+            >>> np.hstack((a,b))
             array([1, 2, 3, 2, 3, 4])
-            >>> a = array([[1],[2],[3]])
-            >>> b = array([[2],[3],[4]])
-            >>> numpy.hstack((a,b))
+            >>> a = np.array([[1],[2],[3]])
+            >>> b = np.array([[2],[3],[4]])
+            >>> np.hstack((a,b))
             array([[1, 2],
                    [2, 3],
                    [3, 4]])
@@ -253,10 +252,9 @@ def column_stack(tup):
             tup -- sequence of 1D or 2D arrays.  All arrays must have the same
                    first dimension.
         Examples:
-            >>> import numpy
-            >>> a = array((1,2,3))
-            >>> b = array((2,3,4))
-            >>> numpy.column_stack((a,b))
+            >>> a = np.array((1,2,3))
+            >>> b = np.array((2,3,4))
+            >>> np.column_stack((a,b))
             array([[1, 2],
                    [2, 3],
                    [3, 4]])
@@ -283,16 +281,15 @@ def dstack(tup):
         tup -- sequence of arrays.  All arrays must have the same
                shape.
     Examples:
-        >>> import numpy
-        >>> a = array((1,2,3))
-        >>> b = array((2,3,4))
-        >>> numpy.dstack((a,b))
+        >>> a = np.array((1,2,3))
+        >>> b = np.array((2,3,4))
+        >>> np.dstack((a,b))
         array([[[1, 2],
                 [2, 3],
                 [3, 4]]])
-        >>> a = array([[1],[2],[3]])
-        >>> b = array([[2],[3],[4]])
-        >>> numpy.dstack((a,b))
+        >>> a = np.array([[1],[2],[3]])
+        >>> b = np.array([[2],[3],[4]])
+        >>> np.dstack((a,b))
         array([[[1, 2]],
         <BLANKLINE>
                [[2, 3]],
@@ -432,12 +429,11 @@ def hsplit(ary,indices_or_sections):
         Related:
             hstack, split, array_split, vsplit, dsplit.
         Examples:
-            >>> import numpy
-            >>> a= array((1,2,3,4))
-            >>> numpy.hsplit(a,2)
+            >>> a= np.array((1,2,3,4))
+            >>> np.hsplit(a,2)
             [array([1, 2]), array([3, 4])]
-            >>> a = array([[1,2,3,4],[1,2,3,4]])
-            >>> hsplit(a,2)
+            >>> a = np.array([[1,2,3,4],[1,2,3,4]])
+            >>> np.hsplit(a,2)
             [array([[1, 2],
                    [1, 2]]), array([[3, 4],
                    [3, 4]])]
@@ -482,9 +478,9 @@ def vsplit(ary,indices_or_sections):
             vstack, split, array_split, hsplit, dsplit.
         Examples:
             import numpy
-            >>> a = array([[1,2,3,4],
-            ...            [1,2,3,4]])
-            >>> numpy.vsplit(a,2)
+            >>> a = np.array([[1,2,3,4],
+            ...              [1,2,3,4]])
+            >>> np.vsplit(a,2)
             [array([[1, 2, 3, 4]]), array([[1, 2, 3, 4]])]
 
     """
@@ -519,8 +515,8 @@ def dsplit(ary,indices_or_sections):
         Related:
             dstack, split, array_split, hsplit, vsplit.
         Examples:
-            >>> a = array([[[1,2,3,4],[1,2,3,4]]])
-            >>> dsplit(a,2)
+            >>> a = np.array([[[1,2,3,4],[1,2,3,4]]])
+            >>> np.dsplit(a,2)
             [array([[[1, 2],
                     [1, 2]]]), array([[[3, 4],
                     [3, 4]]])]
@@ -596,15 +592,15 @@ def tile(A, reps):
 
 
     Examples:
-    >>> a = array([0,1,2])
-    >>> tile(a,2)
+    >>> a = np.array([0,1,2])
+    >>> np.tile(a,2)
     array([0, 1, 2, 0, 1, 2])
-    >>> tile(a,(1,2))
+    >>> np.tile(a,(1,2))
     array([[0, 1, 2, 0, 1, 2]])
-    >>> tile(a,(2,2))
+    >>> np.tile(a,(2,2))
     array([[0, 1, 2, 0, 1, 2],
            [0, 1, 2, 0, 1, 2]])
-    >>> tile(a,(2,1,2))
+    >>> np.tile(a,(2,1,2))
     array([[[0, 1, 2, 0, 1, 2]],
     <BLANKLINE>
            [[0, 1, 2, 0, 1, 2]]])

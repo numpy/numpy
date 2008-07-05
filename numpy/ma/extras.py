@@ -716,7 +716,7 @@ class mr_class(MAxisConcatenator):
     """Translate slice objects to concatenation along the first axis.
 
     For example:
-        >>> mr_[array([1,2,3]), 0, 0, array([4,5,6])]
+        >>> np.ma.mr_[np.ma.array([1,2,3]), 0, 0, np.ma.array([4,5,6])]
         array([1, 2, 3, 0, 0, 4, 5, 6])
 
     """

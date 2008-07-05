@@ -69,7 +69,7 @@ What is the future value after 10 years of saving $100 now, with
   an additional monthly savings of $100.  Assume the interest rate is
   5% (annually) compounded monthly?
 
->>> fv(0.05/12, 10*12, -100, -100)
+>>> np.fv(0.05/12, 10*12, -100, -100)
 15692.928894335748
 
 By convention, the negative sign represents cash flow out (i.e. money not
@@ -94,7 +94,7 @@ Examples
 What would the monthly payment need to be to pay off a $200,000 loan in 15
   years at an annual interest rate of 7.5%?
 
->>> pmt(0.075/12, 12*15, 200000)
+>>> np.pmt(0.075/12, 12*15, 200000)
 -1854.0247200054619
 
 In order to pay-off (i.e. have a future-value of 0) the $200,000 obtained
@@ -122,7 +122,7 @@ Examples
 If you only had $150 to spend as payment, how long would it take to pay-off
   a loan of $8,000 at 7% annual interest?
 
->>> nper(0.07/12, -150, 8000)
+>>> np.nper(0.07/12, -150, 8000)
 64.073348770661852
 
 So, over 64 months would be required to pay off the loan.
@@ -130,7 +130,7 @@ So, over 64 months would be required to pay off the loan.
 The same analysis could be done with several different interest rates and/or
     payments and/or total amounts to produce an entire table.
 
->>> nper(*(ogrid[0.06/12:0.071/12:0.01/12, -200:-99:100, 6000:7001:1000]))
+>>> np.nper(*(np.ogrid[0.06/12:0.071/12:0.01/12, -200:-99:100, 6000:7001:1000]))
 array([[[ 32.58497782,  38.57048452],
         [ 71.51317802,  86.37179563]],
 

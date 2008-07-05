@@ -52,8 +52,8 @@ def poly(seq_of_zeros):
 
     Example:
 
-        >>> b = roots([1,3,1,5,6])
-        >>> poly(b)
+        >>> b = np.roots([1,3,1,5,6])
+        >>> np.poly(b)
         array([ 1.,  3.,  1.,  5.,  6.])
 
     """

@@ -88,13 +88,13 @@ def diagflat(v,k=0):
 
     Examples
     --------
-      >>> diagflat([[1,2],[3,4]]])
+      >>> np.diagflat([[1,2],[3,4]])
       array([[1, 0, 0, 0],
              [0, 2, 0, 0],
              [0, 0, 3, 0],
              [0, 0, 0, 4]])
 
-      >>> diagflat([1,2], 1)
+      >>> np.diagflat([1,2], 1)
       array([[0, 1, 0],
              [0, 0, 2],
              [0, 0, 0]])
@@ -180,8 +180,8 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
       - `xedges, yedges` : Arrays defining the bin edges.
 
     Example:
-      >>> x = random.randn(100,2)
-      >>> hist2d, xedges, yedges = histogram2d(x, bins = (6, 7))
+      >>> x = np.random.randn(100,2)
+      >>> hist2d, xedges, yedges = np.lib.histogram2d(x, bins = (6, 7))
 
     :SeeAlso: histogramdd
     """

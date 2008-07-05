@@ -163,18 +163,17 @@ def tensorsolve(a, b, axes=None):
 
     Examples
     --------
-    >>> from numpy import *
-    >>> a = eye(2*3*4)
+    >>> a = np.eye(2*3*4)
     >>> a.shape = (2*3,4,  2,3,4)
-    >>> b = random.randn(2*3,4)
-    >>> x = linalg.tensorsolve(a, b)
+    >>> b = np.random.randn(2*3,4)
+    >>> x = np.linalg.tensorsolve(a, b)
     >>> x.shape
     (2, 3, 4)
-    >>> allclose(tensordot(a, x, axes=3), b)
+    >>> np.allclose(np.tensordot(a, x, axes=3), b)
     True
 
     """
-    a = asarray(a)
+    a,wrap = _makearray(a)
     b = asarray(b)
     an = a.ndim
 
@@ -266,23 +265,22 @@ def tensorinv(a, ind=2):
 
     Examples
     --------
-    >>> from numpy import *
-    >>> a = eye(4*6)
+    >>> a = np.eye(4*6)
     >>> a.shape = (4,6,8,3)
-    >>> ainv = linalg.tensorinv(a, ind=2)
+    >>> ainv = np.linalg.tensorinv(a, ind=2)
     >>> ainv.shape
     (8, 3, 4, 6)
-    >>> b = random.randn(4,6)
-    >>> allclose(tensordot(ainv, b), linalg.tensorsolve(a, b))
+    >>> b = np.random.randn(4,6)
+    >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
-    >>> a = eye(4*6)
+    >>> a = np.eye(4*6)
     >>> a.shape = (24,8,3)
-    >>> ainv = linalg.tensorinv(a, ind=1)
+    >>> ainv = np.linalg.tensorinv(a, ind=1)
     >>> ainv.shape
     (8, 3, 24)
-    >>> b = random.randn(24)
-    >>> allclose(tensordot(ainv, b, 1), linalg.tensorsolve(a, b))
+    >>> b = np.random.randn(24)
+    >>> np.allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
     True
     """
     a = asarray(a)
@@ -318,12 +316,11 @@ def inv(a):
 
     Examples
     --------
-    >>> from numpy import array, inv, dot
-    >>> a = array([[1., 2.], [3., 4.]])
-    >>> inv(a)
+    >>> a = np.array([[1., 2.], [3., 4.]])
+    >>> np.linalg.inv(a)
     array([[-2. ,  1. ],
            [ 1.5, -0.5]])
-    >>> dot(a, inv(a))
+    >>> np.dot(a, np.linalg.inv(a))
     array([[ 1.,  0.],
            [ 0.,  1.]])
 
@@ -360,7 +357,7 @@ def cholesky(a):
     >>> L
     array([[ 1.+0.j,  0.+0.j],
            [ 0.+2.j,  1.+0.j]])
-    >>> dot(L, L.T.conj())
+    >>> np.dot(L, L.T.conj())
     array([[ 1.+0.j,  0.-2.j],
            [ 0.+2.j,  5.+0.j]])
 
@@ -427,16 +424,15 @@ def qr(a, mode='full'):
 
     Examples
     --------
-    >>> from numpy import *
-    >>> a = random.randn(9, 6)
-    >>> q, r = linalg.qr(a)
-    >>> allclose(a, dot(q, r))
+    >>> a = np.random.randn(9, 6)
+    >>> q, r = np.linalg.qr(a)
+    >>> np.allclose(a, np.dot(q, r))
     True
-    >>> r2 = linalg.qr(a, mode='r')
-    >>> r3 = linalg.qr(a, mode='economic')
-    >>> allclose(r, r2)
+    >>> r2 = np.linalg.qr(a, mode='r')
+    >>> r3 = np.linalg.qr(a, mode='economic')
+    >>> np.allclose(r, r2)
     True
-    >>> allclose(r, triu(r3[:6,:6], k=0))
+    >>> np.allclose(r, np.triu(r3[:6,:6], k=0))
     True
 
     """
@@ -909,20 +905,20 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     Examples
     --------
-    >>> a = random.randn(9, 6) + 1j*random.randn(9, 6)
-    >>> U, s, Vh = linalg.svd(a)
+    >>> a = np.random.randn(9, 6) + 1j*np.random.randn(9, 6)
+    >>> U, s, Vh = np.linalg.svd(a)
     >>> U.shape, Vh.shape, s.shape
     ((9, 9), (6, 6), (6,))
 
-    >>> U, s, Vh = linalg.svd(a, full_matrices=False)
+    >>> U, s, Vh = np.linalg.svd(a, full_matrices=False)
     >>> U.shape, Vh.shape, s.shape
     ((9, 6), (6, 6), (6,))
-    >>> S = diag(s)
-    >>> allclose(a, dot(U, dot(S, Vh)))
+    >>> S = np.diag(s)
+    >>> np.allclose(a, np.dot(U, np.dot(S, Vh)))
     True
 
-    >>> s2 = linalg.svd(a, compute_uv=False)
-    >>> allclose(s, s2)
+    >>> s2 = np.linalg.svd(a, compute_uv=False)
+    >>> np.allclose(s, s2)
     True
     """
     a, wrap = _makearray(a)
@@ -1048,12 +1044,11 @@ def pinv(a, rcond=1e-15 ):
 
     Examples
     --------
-    >>> from numpy import *
-    >>> a = random.randn(9, 6)
-    >>> B = linalg.pinv(a)
-    >>> allclose(a, dot(a, dot(B, a)))
+    >>> a = np.random.randn(9, 6)
+    >>> B = np.linalg.pinv(a)
+    >>> np.allclose(a, np.dot(a, np.dot(B, a)))
     True
-    >>> allclose(B, dot(B, dot(a, B)))
+    >>> np.allclose(B, np.dot(B, np.dot(a, B)))
     True
 
     """

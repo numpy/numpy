@@ -50,8 +50,8 @@ def _tocomplex(arr):
 
     >>> a = np.array([1,2,3],np.short)
 
-    >>> ac = _tocomplex(a); ac
-    array([ 1.+0.j,  2.+0.j,  3.+0.j], dtype=complex64)
+    >>> ac = np.lib.scimath._tocomplex(a); ac
+    array([ 1.+0.j,  2.+0.j,  3.+0.j], dtype=np.complex64)
 
     >>> ac.dtype
     dtype('complex64')
@@ -61,7 +61,7 @@ def _tocomplex(arr):
 
     >>> b = np.array([1,2,3],np.double)
 
-    >>> bc = _tocomplex(b); bc
+    >>> bc = np.lib.scimath._tocomplex(b); bc
     array([ 1.+0.j,  2.+0.j,  3.+0.j])
 
     >>> bc.dtype
@@ -72,7 +72,7 @@ def _tocomplex(arr):
 
     >>> c = np.array([1,2,3],np.csingle)
 
-    >>> cc = _tocomplex(c); cc
+    >>> cc = np.lib.scimath._tocomplex(c); cc
     array([ 1.+0.j,  2.+0.j,  3.+0.j], dtype=complex64)
 
     >>> c *= 2; c
@@ -102,10 +102,10 @@ def _fix_real_lt_zero(x):
 
     Examples
     --------
-    >>> _fix_real_lt_zero([1,2])
+    >>> np.lib.scimath._fix_real_lt_zero([1,2])
     array([1, 2])
 
-    >>> _fix_real_lt_zero([-1,2])
+    >>> np.lib.scimath._fix_real_lt_zero([-1,2])
     array([-1.+0.j,  2.+0.j])
     """
     x = asarray(x)
@@ -128,10 +128,10 @@ def _fix_int_lt_zero(x):
 
     Examples
     --------
-    >>> _fix_int_lt_zero([1,2])
+    >>> np.lib.scimath._fix_int_lt_zero([1,2])
     array([1, 2])
 
-    >>> _fix_int_lt_zero([-1,2])
+    >>> np.lib.scimath._fix_int_lt_zero([-1,2])
     array([-1.,  2.])
     """
     x = asarray(x)
@@ -154,10 +154,10 @@ def _fix_real_abs_gt_1(x):
 
     Examples
     --------
-    >>> _fix_real_abs_gt_1([0,1])
+    >>> np.lib.scimath._fix_real_abs_gt_1([0,1])
     array([0, 1])
 
-    >>> _fix_real_abs_gt_1([0,2])
+    >>> np.lib.scimath._fix_real_abs_gt_1([0,2])
     array([ 0.+0.j,  2.+0.j])
     """
     x = asarray(x)
@@ -180,17 +180,17 @@ def sqrt(x):
     --------
 
     For real, non-negative inputs this works just like numpy.sqrt():
-    >>> sqrt(1)
+    >>> np.lib.scimath.sqrt(1)
     1.0
 
-    >>> sqrt([1,4])
+    >>> np.lib.scimath.sqrt([1,4])
     array([ 1.,  2.])
 
     But it automatically handles negative inputs:
-    >>> sqrt(-1)
+    >>> np.lib.scimath.sqrt(-1)
     (0.0+1.0j)
 
-    >>> sqrt([-1,4])
+    >>> np.lib.scimath.sqrt([-1,4])
     array([ 0.+1.j,  2.+0.j])
     """
     x = _fix_real_lt_zero(x)
@@ -213,14 +213,13 @@ def log(x):
     Examples
     --------
     >>> import math
-
-    >>> log(math.exp(1))
+    >>> np.lib.scimath.log(math.exp(1))
     1.0
 
     Negative arguments are correctly handled (recall that for negative
     arguments, the identity exp(log(z))==z does not hold anymore):
 
-    >>> log(-math.exp(1)) == (1+1j*math.pi)
+    >>> np.lib.scimath.log(-math.exp(1)) == (1+1j*math.pi)
     True
     """
     x = _fix_real_lt_zero(x)
@@ -246,11 +245,11 @@ def log10(x):
     (We set the printing precision so the example can be auto-tested)
     >>> np.set_printoptions(precision=4)
 
-    >>> log10([10**1,10**2])
+    >>> np.lib.scimath.log10([10**1,10**2])
     array([ 1.,  2.])
 
 
-    >>> log10([-10**1,-10**2,10**2])
+    >>> np.lib.scimath.log10([-10**1,-10**2,10**2])
     array([ 1.+1.3644j,  2.+1.3644j,  2.+0.j    ])
     """
     x = _fix_real_lt_zero(x)
@@ -276,10 +275,10 @@ def logn(n, x):
     (We set the printing precision so the example can be auto-tested)
     >>> np.set_printoptions(precision=4)
 
-    >>> logn(2,[4,8])
+    >>> np.lib.scimath.logn(2,[4,8])
     array([ 2.,  3.])
 
-    >>> logn(2,[-4,-8,8])
+    >>> np.lib.scimath.logn(2,[-4,-8,8])
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
     """
     x = _fix_real_lt_zero(x)
@@ -306,10 +305,10 @@ def log2(x):
     (We set the printing precision so the example can be auto-tested)
     >>> np.set_printoptions(precision=4)
 
-    >>> log2([4,8])
+    >>> np.lib.scimath.log2([4,8])
     array([ 2.,  3.])
 
-    >>> log2([-4,-8,8])
+    >>> np.lib.scimath.log2([-4,-8,8])
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
     """
     x = _fix_real_lt_zero(x)
@@ -336,13 +335,13 @@ def power(x, p):
     (We set the printing precision so the example can be auto-tested)
     >>> np.set_printoptions(precision=4)
 
-    >>> power([2,4],2)
+    >>> np.lib.scimath.power([2,4],2)
     array([ 4, 16])
 
-    >>> power([2,4],-2)
+    >>> np.lib.scimath.power([2,4],-2)
     array([ 0.25  ,  0.0625])
 
-    >>> power([-2,4],2)
+    >>> np.lib.scimath.power([-2,4],2)
     array([  4.+0.j,  16.+0.j])
     """
     x = _fix_real_lt_zero(x)
@@ -368,10 +367,10 @@ def arccos(x):
     --------
     >>> np.set_printoptions(precision=4)
 
-    >>> arccos(1)
+    >>> np.lib.scimath.arccos(1)
     0.0
 
-    >>> arccos([1,2])
+    >>> np.lib.scimath.arccos([1,2])
     array([ 0.-0.j   ,  0.+1.317j])
     """
     x = _fix_real_abs_gt_1(x)
@@ -397,10 +396,10 @@ def arcsin(x):
     (We set the printing precision so the example can be auto-tested)
     >>> np.set_printoptions(precision=4)
 
-    >>> arcsin(0)
+    >>> np.lib.scimath.arcsin(0)
     0.0
 
-    >>> arcsin([0,1])
+    >>> np.lib.scimath.arcsin([0,1])
     array([ 0.    ,  1.5708])
     """
     x = _fix_real_abs_gt_1(x)
@@ -426,10 +425,10 @@ def arctanh(x):
     (We set the printing precision so the example can be auto-tested)
     >>> np.set_printoptions(precision=4)
 
-    >>> arctanh(0)
+    >>> np.lib.scimath.arctanh(0)
     0.0
 
-    >>> arctanh([0,2])
+    >>> np.lib.scimath.arctanh([0,2])
     array([ 0.0000+0.j    ,  0.5493-1.5708j])
     """
     x = _fix_real_abs_gt_1(x)

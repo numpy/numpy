@@ -1694,7 +1694,7 @@ class MaskedArray(ndarray):
 
         Examples
         --------
-        >>> x = array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
+        >>> x = np.ma.array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
         >>> x.filled()
         array([1,2,-999,4,-999])
         >>> type(x.filled())
@@ -2116,10 +2116,10 @@ masked_%(name)s(data = %(data)s,
     
     Example
     -------
-    >>> array([1,2,3]).all()
+    >>> np.ma.array([1,2,3]).all()
     True
-    >>> a = array([1,2,3], mask=True)
-    >>> (a.all() is masked)
+    >>> a = np.ma.array([1,2,3], mask=True)
+    >>> (a.all() is np.ma.masked)
     True
 
         """
@@ -2293,7 +2293,7 @@ masked_%(name)s(data = %(data)s,
 
     Example
     -------
-    >>> print array(arange(10),mask=[0,0,0,1,1,1,0,0,0,0]).cumsum()
+    >>> print np.ma.array(np.arange(10), mask=[0,0,0,1,1,1,0,0,0,0]).cumsum()
     [0 1 3 -- -- -- 9 16 24 33]
 
 
@@ -2348,13 +2348,13 @@ masked_%(name)s(data = %(data)s,
 
     Examples
     --------
-    >>> prod([1.,2.])
+    >>> np.prod([1.,2.])
     2.0
-    >>> prod([1.,2.], dtype=int32)
+    >>> np.prod([1.,2.], dtype=np.int32)
     2
-    >>> prod([[1.,2.],[3.,4.]])
+    >>> np.prod([[1.,2.],[3.,4.]])
     24.0
-    >>> prod([[1.,2.],[3.,4.]], axis=1)
+    >>> np.prod([[1.,2.],[3.,4.]], axis=1)
     array([  2.,  12.])
 
     Notes
@@ -2755,7 +2755,7 @@ masked_%(name)s(data = %(data)s,
 
     Examples
     --------
-    >>> a = arange(6).reshape(2,3)
+    >>> a = np.arange(6).reshape(2,3)
     >>> a.argmax()
     5
     >>> a.argmax(0)
