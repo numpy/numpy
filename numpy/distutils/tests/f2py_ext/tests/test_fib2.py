@@ -1,8 +1,6 @@
 import sys
 from numpy.testing import *
-set_package_path()
 from f2py_ext import fib2
-del sys.path[0]
 
 class TestFib2(TestCase):
 

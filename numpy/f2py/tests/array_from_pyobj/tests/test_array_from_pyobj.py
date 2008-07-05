@@ -5,10 +5,7 @@ import copy
 from numpy.testing import *
 from numpy import array, alltrue, ndarray, asarray, can_cast,zeros, dtype
 from numpy.core.multiarray import typeinfo
-
-set_package_path()
 from array_from_pyobj import wrap
-restore_path()
 
 def flags_info(arr):
     flags = wrap.array_attrs(arr)[6]
