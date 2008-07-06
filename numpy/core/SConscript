@@ -1,4 +1,4 @@
-# Last Change: Thu Jun 12 04:00 PM 2008 J
+# Last Change: Sun Jul 06 01:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -234,7 +234,7 @@ multiarray_api = env.GenerateMultiarrayApi('multiarray_api',
 ufunc_api = env.GenerateUfuncApi('ufunc_api',
                     pjoin('code_generators', 'ufunc_api_order.txt'))
 
-env.Append(CPPPATH = ['include', '.'])
+env.Prepend(CPPPATH = ['include', '.'])
 
 #-----------------
 # Build multiarray
