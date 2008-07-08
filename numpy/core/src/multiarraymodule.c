@@ -2139,12 +2139,18 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     if (scalar == PyArray_NOSCALAR) {
         return PyArray_CanCastSafely(thistype, neededtype);
     }
+
     from = PyArray_DescrFromType(thistype);
     if (from->f->cancastscalarkindto &&
         (castlist = from->f->cancastscalarkindto[scalar])) {
         while (*castlist != PyArray_NOTYPE)
-            if (*castlist++ == neededtype) return 1;
+	    if (*castlist++ == neededtype) {
+		Py_DECREF(from); 
+		return 1;
+	    }
     }
+    Py_DECREF(from); 
+
     switch(scalar) {
     case PyArray_BOOL_SCALAR:
     case PyArray_OBJECT_SCALAR:
