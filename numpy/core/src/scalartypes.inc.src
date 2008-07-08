@@ -1883,10 +1883,11 @@ static PyObject *
 
     _WORK@work@
 
-        if (!PyArg_ParseTuple(args, "|O", &obj)) return NULL;
+    if (!PyArg_ParseTuple(args, "|O", &obj)) return NULL;
 
     typecode = PyArray_DescrFromType(PyArray_@TYPE@);
-    Py_INCREF(typecode);
+    /* typecode is new reference and stolen by 
+       PyArray_Scalar and others */
     if (obj == NULL) {
 #if @default@ == 0
         char *mem;
