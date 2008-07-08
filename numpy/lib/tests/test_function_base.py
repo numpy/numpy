@@ -615,16 +615,54 @@ class TestUnique(TestCase):
         x = array([5+6j, 1+1j, 1+10j, 10, 5+6j])
         assert(all(unique(x) == [1+1j, 1+10j, 5+6j, 10]))
 
-def compare_results(res,desired):
-    for i in range(len(desired)):
-        assert_array_equal(res[i],desired[i])
 
-class TestPiecewise(TestCase):
+class TestPiecewise(NumpyTestCase):
+    def check_simple(self):
+        # Condition is single bool list
+        x = piecewise([0, 0], [True, False], [1])
+        assert_array_equal(x, [1, 0])
+
+        # List of conditions: single bool list
+        x = piecewise([0, 0], [[True, False]], [1])
+        assert_array_equal(x, [1, 0])
+
+        # Conditions is single bool array
+        x = piecewise([0, 0], array([True, False]), [1])
+        assert_array_equal(x, [1, 0])
+
+        # Condition is single int array
+        x = piecewise([0, 0], array([1, 0]), [1])
+        assert_array_equal(x, [1, 0])
+
+        # List of conditions: int array
+        x = piecewise([0, 0], [array([1, 0])], [1])
+        assert_array_equal(x, [1, 0])
+
+
+        x = piecewise([0, 0], [[False, True]], [lambda x: -1])
+        assert_array_equal(x, [0, -1])
+
+        x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
+        assert_array_equal(x, [3, 4])
+
+    def check_default(self):
+        # No value specified for x[1], should be 0
+        x = piecewise([1, 2], [True, False], [2])
+        assert_array_equal(x, [2, 0])
+
+        # Should set x[1] to 3
+        x = piecewise([1, 2], [True, False], [2, 3])
+        assert_array_equal(x, [2, 3])
+
     def test_0d(self):
         x = array(3)
         y = piecewise(x, x>3, [4, 0])
         assert y.ndim == 0
         assert y == 0
+
+def compare_results(res,desired):
+    for i in range(len(desired)):
+        assert_array_equal(res[i],desired[i])
 
 if __name__ == "__main__":
     run_module_suite()
