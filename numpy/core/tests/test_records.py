@@ -52,7 +52,7 @@ class TestFromrecords(TestCase):
             assert (mine.data1[i] == 0.0)
             assert (mine.data2[i] == 0.0)
 
-    def check_recarray_from_repr(self):
+    def test_recarray_from_repr(self):
         x = np.rec.array([ (1, 2)],dtype=[('a', np.int8), ('b', np.int8)])
         y = eval("np." + repr(x))
         assert isinstance(y, np.recarray)
