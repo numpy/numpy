@@ -2,8 +2,7 @@
 # vim:syntax=python
 import os
 
-from numscons import GetNumpyEnvironment, scons_get_paths, \
-                                  scons_get_mathlib
+from numscons import GetNumpyEnvironment, scons_get_mathlib
 
 def CheckWincrypt(context):
     from copy import deepcopy
@@ -28,7 +27,6 @@ int main(int argc, char *argv[])
     return st[0]
     
 env = GetNumpyEnvironment(ARGUMENTS)
-env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
 
 mlib = scons_get_mathlib(env)
 env.AppendUnique(LIBS = mlib)
@@ -43,4 +41,4 @@ sources = [os.path.join('mtrand', x) for x in
            ['mtrand.c', 'randomkit.c', 'initarray.c', 'distributions.c']]
 
 # XXX: Pyrex dependency
-mtrand = env.DistutilsPythonExtension('mtrand', source = sources)
+mtrand = env.NumpyPythonExtension('mtrand', source = sources)
