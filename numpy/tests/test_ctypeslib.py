@@ -12,6 +12,22 @@ class TestLoadLibrary(NumpyTestCase):
                   " (import error was: %s)" % str(e)
             print msg
 
+    def check_basic2(self):
+        """Regression for #801: load_library with a full library name
+        (including extension) does not work."""
+        try:
+            try:
+                from distutils import sysconfig
+                so = sysconfig.get_config_var('SO')
+                cdll = load_library('multiarray%s' % so,
+                                    np.core.multiarray.__file__)
+            except ImportError:
+                print "No distutils available, skipping test."
+        except ImportError, e:
+            msg = "ctypes is not available on this python: skipping the test" \
+                  " (import error was: %s)" % str(e)
+            print msg
+
 class TestNdpointer(NumpyTestCase):
     def check_dtype(self):
         dt = np.intc
