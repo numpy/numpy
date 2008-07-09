@@ -72,9 +72,10 @@ generated data-points:
 
 >>> mean = [0,0]
 >>> cov = [[1,0],[0,100]] # diagonal covariance, points lie on x or y-axis
+>>> x,y = np.random.multivariate_normal(mean,cov,5000).T
 
->>> x,y = numpy.multivariate_normal(mean,cov,5000).T
->>> pyplot.plot(x,y,'x'); pyplot.axis('equal'); pyplot.show()
+>>> import matplotlib.pyplot as plt
+>>> plt.plot(x,y,'x'); plt.axis('equal'); pyplot.show()
 
 Note that the covariance matrix must be non-negative definite.
 
@@ -89,7 +90,7 @@ Examples
 --------
 >>> mean = (1,2)
 >>> cov = [[1,0],[1,0]]
->>> x = multivariate_normal(mean,cov,(3,3))
+>>> x = np.random.multivariate_normal(mean,cov,(3,3))
 >>> x.shape
 (3, 3, 2)
 
