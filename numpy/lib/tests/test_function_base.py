@@ -616,7 +616,7 @@ class TestUnique(TestCase):
         assert(all(unique(x) == [1+1j, 1+10j, 5+6j, 10]))
 
 
-class TestPiecewise(NumpyTestCase):
+class TestPiecewise(TestCase):
     def check_simple(self):
         # Condition is single bool list
         x = piecewise([0, 0], [True, False], [1])
