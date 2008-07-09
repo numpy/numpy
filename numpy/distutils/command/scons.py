@@ -341,13 +341,18 @@ class scons(old_build_ext):
                                    "this package " % str(e))
 
             try:
+                minver = "0.8.2"
                 from numscons import get_version
-                if get_version() < '0.8.0':
+                if get_version() < minver:
                     raise ValueError()
-            except ImportError, ValueError:
-                raise RuntimeError("You need numscons >= 0.8.0 to build numpy "\
+            except ImportError:
+                raise RuntimeError("You need numscons >= %s to build numpy "\
                                    "with numscons (imported numscons path " \
-                                   "is %s)." % numscons.__file__)
+                                   "is %s)." % (minver, numscons.__file__))
+            except ValueError:
+                raise RuntimeError("You need numscons >= %s to build numpy "\
+                                   "with numscons (detected %s )" \
+                                   % (minver, get_version()))
                 
         else:
             # nothing to do, just leave it here.
