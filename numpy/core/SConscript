@@ -263,5 +263,12 @@ scalarmathmodule = env.DistutilsPythonExtension('scalarmath',
 #----------------------
 if build_blasdot:
     dotblas_src = [pjoin('blasdot', i) for i in ['_dotblas.c']]
-    dotblas = env.DistutilsPythonExtension('_dotblas', source = dotblas_src)
-    env.Depends(dotblas, pjoin("blasdot", "cblas.h"))
+    # because _dotblas does #include CBLAS_HEADER instead of #include
+    # "cblas.h", scons does not detect the dependency
+    # XXX: PythonExtension builder does not take the Depends on extension into
+    # account for some reason, so we first build the object, with forced
+    # dependency, and then builds the extension. This is more likely a bug in
+    # our PythonExtension builder, but I cannot see how to solve it.
+    dotblas_o = env.PythonObject('_dotblas', source = dotblas_src)
+    env.Depends(dotblas_o, pjoin("blasdot", "cblas.h"))
+    dotblas = env.DistutilsPythonExtension('_dotblas', dotblas_o)
