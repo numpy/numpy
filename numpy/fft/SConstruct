@@ -1,10 +1,2 @@
-# Last Change: Tue May 20 05:00 PM 2008 J
-# vim:syntax=python
-from numscons import GetNumpyEnvironment, scons_get_paths
-
-env = GetNumpyEnvironment(ARGUMENTS)
-env.Append(CPPPATH = scons_get_paths(env['include_bootstrap']))
-
-fftpack_lite = env.NumpyPythonExtension('fftpack_lite', 
-                                        source = ['fftpack_litemodule.c', 
-                                                  'fftpack.c'])
+from numscons import GetInitEnvironment
+GetInitEnvironment(ARGUMENTS).DistutilsSConscript('SConscript')
