@@ -5,4 +5,4 @@ from numscons import GetNumpyEnvironment
 env = GetNumpyEnvironment(ARGUMENTS)
 env.Append(CPPPATH = ['numpy'])
 
-_capi = env.NumpyPythonExtension('_capi', source = ['_capi.c'])
+env.NumpyPythonExtension('_capi', source = ['_capi.c'])

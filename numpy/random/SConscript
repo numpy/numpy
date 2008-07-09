@@ -41,4 +41,4 @@ sources = [os.path.join('mtrand', x) for x in
            ['mtrand.c', 'randomkit.c', 'initarray.c', 'distributions.c']]
 
 # XXX: Pyrex dependency
-mtrand = env.NumpyPythonExtension('mtrand', source = sources)
+env.NumpyPythonExtension('mtrand', source = sources)

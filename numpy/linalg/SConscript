@@ -1,16 +1,12 @@
 # Last Change: Thu Jun 12 06:00 PM 2008 J
 # vim:syntax=python
-import os.path
-
-from numscons import GetNumpyEnvironment, \
-                     scons_get_mathlib
+from numscons import GetNumpyEnvironment, scons_get_mathlib
 from numscons import CheckF77LAPACK
 from numscons import write_info
 
 env = GetNumpyEnvironment(ARGUMENTS)
 
-config = env.NumpyConfigure(custom_tests = 
-    {'CheckLAPACK' : CheckF77LAPACK})
+config = env.NumpyConfigure(custom_tests = {'CheckLAPACK' : CheckF77LAPACK})
 
 use_lapack = config.CheckLAPACK()
 
@@ -24,5 +20,4 @@ sources = ['lapack_litemodule.c']
 if not use_lapack:
     sources.extend(['python_xerbla.c', 'zlapack_lite.c', 'dlapack_lite.c',
                     'blas_lite.c', 'dlamch.c', 'f2c_lite.c'])
-lapack_lite = env.NumpyPythonExtension('lapack_lite', source = sources)
-            
+env.NumpyPythonExtension('lapack_lite', source = sources)
