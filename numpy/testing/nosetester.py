@@ -89,7 +89,12 @@ class NoseCustomizer:
 
                 # Each doctest should execute in an environment equivalent to
                 # starting Python and executing "import numpy as np"
+                #
+                # Note: __file__ allows the doctest in NoseTester to run
+                # without producing an error
                 test.globs = {'__builtins__':__builtins__,
+                              '__file__':'__main__', 
+                              '__name__':'__main__', 
                               'np':numpy}
 
                 # always use whitespace and ellipsis options
@@ -112,7 +117,8 @@ class NoseCustomizer:
         # so that we can ignore NumPy-specific build files that shouldn't
         # be searched for tests
         old_wantFile = npd.Doctest.wantFile
-        ignore_files = ['generate_numpy_api.py', 'scons_support.py']
+        ignore_files = ['generate_numpy_api.py', 'scons_support.py',
+                        'setupscons.py', 'setup.py']
         def wantFile(self, file):
             bn = os.path.basename(file)
             if bn in ignore_files:
@@ -161,16 +167,17 @@ class NoseTester(object):
     Usage: NoseTester(<package>).test()
 
     <package> is package path or module Default for package is None. A
-    value of None finds calling module path.
+    value of None finds the calling module path.
 
-    Typical call is from module __init__, and corresponds to this:
-
-    >>> test = NoseTester().test
-
-    This class is made available as numpy.testing.Tester:
+    This class is made available as numpy.testing.Tester, and a test function
+    is typically added to a package's __init__.py like so:
 
     >>> from numpy.testing import Tester
     >>> test = Tester().test
+
+    Calling this test function finds and runs all tests associated with the
+    package and all its subpackages.
+
     """
 
     def __init__(self, package=None):
