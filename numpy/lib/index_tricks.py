@@ -102,7 +102,7 @@ class nd_grid(object):
 
     Examples
     --------
-    >>> mgrid = nd_grid()
+    >>> mgrid = np.nd_grid()
     >>> mgrid[0:5,0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
@@ -319,7 +319,7 @@ class RClass(AxisConcatenator):
     """Translates slice objects to concatenation along the first axis.
 
     For example:
-    >>> r_[array([1,2,3]), 0, 0, array([4,5,6])]
+    >>> np.r_[array([1,2,3]), 0, 0, array([4,5,6])]
     array([1, 2, 3, 0, 0, 4, 5, 6])
 
     """
@@ -332,7 +332,7 @@ class CClass(AxisConcatenator):
     """Translates slice objects to concatenation along the second axis.
 
     For example:
-    >>> c_[array([[1,2,3]]), 0, 0, array([[4,5,6]])]
+    >>> np.c_[array([[1,2,3]]), 0, 0, array([[4,5,6]])]
     array([1, 2, 3, 0, 0, 4, 5, 6])
     """
     def __init__(self):
@@ -345,8 +345,8 @@ class ndenumerate(object):
     A simple nd index iterator over an array.
 
     Example:
-    >>> a = array([[1,2],[3,4]])
-    >>> for index, x in ndenumerate(a):
+    >>> a = np.array([[1,2],[3,4]])
+    >>> for index, x in np.ndenumerate(a):
     ...     print index, x
     (0, 0) 1
     (0, 1) 2
@@ -369,7 +369,7 @@ class ndindex(object):
     will then return an N-dimensional counter.
 
     Example:
-    >>> for index in ndindex(3,2,1):
+    >>> for index in np.ndindex(3,2,1):
     ...     print index
     (0, 0, 0)
     (0, 1, 0)

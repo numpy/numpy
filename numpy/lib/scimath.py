@@ -51,7 +51,7 @@ def _tocomplex(arr):
     >>> a = np.array([1,2,3],np.short)
 
     >>> ac = np.lib.scimath._tocomplex(a); ac
-    array([ 1.+0.j,  2.+0.j,  3.+0.j], dtype=np.complex64)
+    array([ 1.+0.j,  2.+0.j,  3.+0.j], dtype=complex64)
 
     >>> ac.dtype
     dtype('complex64')
