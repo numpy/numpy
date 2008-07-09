@@ -1,8 +1,5 @@
-# Last Change: Fri Oct 19 09:00 AM 2007 J
+# Last Change: Tue May 20 05:00 PM 2008 J
 # vim:syntax=python
-import __builtin__
-__builtin__.__NUMPY_SETUP__ = True
-from numpy.distutils.misc_util import get_numpy_include_dirs
 from numscons import GetNumpyEnvironment, scons_get_paths
 
 env = GetNumpyEnvironment(ARGUMENTS)

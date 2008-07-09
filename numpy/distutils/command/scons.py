@@ -85,6 +85,8 @@ def dist2sconsfc(compiler):
         return 'g77'
     elif compiler.compiler_type == 'gnu95':
         return 'gfortran'
+    elif compiler.compiler_type == 'sun':
+        return 'sunf77'
     else:
         # XXX: Just give up for now, and use generic fortran compiler
         return 'fortran'
@@ -196,6 +198,15 @@ def select_packages(sconspkg, pkglist):
         raise ValueError(msg)
     return common
 
+def is_bootstrapping():
+    import __builtin__
+    try:
+        __builtin__.__NUMPY_SETUP__
+        return True
+    except AttributeError:
+        return False
+        __NUMPY_SETUP__ = False
+
 class scons(old_build_ext):
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
@@ -303,6 +314,8 @@ class scons(old_build_ext):
         else:
             # nothing to do, just leave it here.
             return
+
+        print "is bootstrapping ? %s" % is_bootstrapping()
         # XXX: when a scons script is missing, scons only prints warnings, and
         # does not return a failure (status is 0). We have to detect this from
         # distutils (this cannot work for recursive scons builds...)
@@ -325,6 +338,11 @@ class scons(old_build_ext):
             pre_hooks = self.pre_hooks
             post_hooks = self.post_hooks
             pkg_names = self.pkg_names
+
+        if is_bootstrapping():
+            bootstrap = 1
+        else:
+            bootstrap = 0
 
         for sconscript, pre_hook, post_hook, pkg_name in zip(sconscripts,
                                                    pre_hooks, post_hooks,
@@ -364,6 +382,7 @@ class scons(old_build_ext):
                 elif int(self.silent) == 3:
                     cmd.append('-s')
             cmd.append('silent=%d' % int(self.silent))
+            cmd.append('bootstrapping=%d' % bootstrap)
             cmdstr = ' '.join(cmd)
             if int(self.silent) < 1:
                 log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
