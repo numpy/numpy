@@ -246,7 +246,7 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
 
 
 /* steals typed reference */
-/*OBJECT_API
+/*NUMPY_API
   Get a subset of bytes from each element of the array
 */
 static PyObject *
@@ -295,7 +295,7 @@ array_getfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-/*OBJECT_API
+/*NUMPY_API
   Set a subset of bytes from each element of the array
 */
 static int
@@ -351,7 +351,7 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 /* This doesn't change the descriptor just the actual data...
  */
 
-/*OBJECT_API*/
+/*NUMPY_API*/
 static PyObject *
 PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 {
@@ -1351,7 +1351,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     return Py_None;
 }
 
-/*OBJECT_API*/
+/*NUMPY_API*/
 static int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
@@ -1376,7 +1376,7 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
     return 0;
 }
 
-/*OBJECT_API*/
+/*NUMPY_API*/
 static PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {

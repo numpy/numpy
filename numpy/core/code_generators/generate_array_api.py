@@ -118,6 +118,12 @@ void *PyArray_API[] = {
 };
 """
 
+c_api_header = """
+===========
+Numpy C-API
+===========
+"""
+
 def generate_api(output_dir, force=False):
     basename = 'multiarray_api'
 
@@ -125,7 +131,7 @@ def generate_api(output_dir, force=False):
     c_file = os.path.join(output_dir, '__%s.c' % basename)
     d_file = os.path.join(output_dir, '%s.txt' % basename)
     targets = (h_file, c_file, d_file)
-    sources = ['array_api_order.txt',  'multiarray_api_order.txt']
+    sources = ['numpy_api_order.txt']
 
     if (not force and not genapi.should_rebuild(targets, sources + [__file__])):
         return targets
@@ -139,17 +145,11 @@ def do_generate_api(targets, sources):
     c_file = targets[1]
     doc_file = targets[2]
 
-    objectapi_list = genapi.get_api_functions('OBJECT_API',
-                                              sources[0])
-    multiapi_list = genapi.get_api_functions('MULTIARRAY_API',
-                                             sources[1])
-    # API fixes for __arrayobject_api.h
+    numpyapi_list = genapi.get_api_functions('NUMPY_API', sources[0])
 
+    # API fixes for __arrayobject_api.h
     fixed = 10
     numtypes = len(types) + fixed
-    numobject = len(objectapi_list) + numtypes
-    nummulti = len(multiapi_list)
-    numtotal = numobject + nummulti
 
     module_list = []
     extension_list = []
@@ -167,13 +167,8 @@ def do_generate_api(targets, sources):
         extension_list.append(astr)
 
     # set up object API
-    genapi.add_api_list(numtypes, 'PyArray_API', objectapi_list,
+    genapi.add_api_list(numtypes, 'PyArray_API', numpyapi_list,
                         module_list, extension_list, init_list)
-
-    # set up multiarray module API
-    genapi.add_api_list(numobject, 'PyArray_API', multiapi_list,
-                        module_list, extension_list, init_list)
-
 
     # Write to header
     fid = open(header_file, 'w')
@@ -189,23 +184,8 @@ def do_generate_api(targets, sources):
 
     # write to documentation
     fid = open(doc_file, 'w')
-    fid.write('''
-===========
-Numpy C-API
-===========
-
-Object API
-==========
-''')
-    for func in objectapi_list:
-        fid.write(func.to_ReST())
-        fid.write('\n\n')
-    fid.write('''
-
-Multiarray API
-==============
-''')
-    for func in multiapi_list:
+    fid.write(c_api_header)
+    for func in numpyapi_list:
         fid.write(func.to_ReST())
         fid.write('\n\n')
     fid.close()

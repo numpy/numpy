@@ -2470,7 +2470,7 @@ static PyArray_Descr *_builtin_descrs[] = {
     &VOID_Descr,
 };
 
-/*OBJECT_API
+/*NUMPY_API
  Get the PyArray_Descr structure for a type.
 */
 static PyArray_Descr *
