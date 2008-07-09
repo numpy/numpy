@@ -1,4 +1,3 @@
-import sys
 from numpy.testing import *
 from numpy.core import *
 import numpy as np
@@ -91,6 +90,9 @@ class TestProperties(TestCase):
         assert A.sum() == matrix(2)
         assert A.mean() == matrix(0.5)
 
+    def test_repr(self):
+        A = matrix([[1,0],[0,1]])
+        assert repr(A) == "matrix([[1, 0],\n        [0, 1]])"
 
 class TestCasting(TestCase):
     def test_basic(self):
@@ -134,6 +136,31 @@ class TestAlgebra(TestCase):
         assert allclose((mA + mA).A, (A + A))
         assert allclose((3*mA).A, (3*A))
 
+        mA2 = matrix(A)
+        mA2 *= 3
+        assert allclose(mA2.A, 3*A)
+        
+    def test_notimplemented(self):
+        '''Check that 'not implemented' operations produce a failure.'''
+        A = matrix([[1., 2.],
+                    [3., 4.]])
+
+        # __rpow__
+        try:
+            1.0**A
+        except TypeError:
+            pass
+        else:
+            self.fail("matrix.__rpow__ doesn't raise a TypeError")
+
+        # __mul__ with something not a list, ndarray, tuple, or scalar
+        try:
+            A*object()
+        except TypeError:
+            pass
+        else:
+            self.fail("matrix.__mul__ with non-numeric object doesn't raise"
+                      "a TypeError")
 
 class TestMatrixReturn(TestCase):
     def test_instance_methods(self):
