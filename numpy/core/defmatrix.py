@@ -249,13 +249,6 @@ class matrix(N.ndarray):
                 out.shape = (1,sh)
         return out
 
-    def _get_truendim(self):
-        shp = self.shape
-        truend = 0
-        for val in shp:
-            if (val > 1): truend += 1
-        return truend
-
     def __mul__(self, other):
         if isinstance(other,(N.ndarray, list, tuple)) :
             # This promotes 1-D vectors to row vectors
