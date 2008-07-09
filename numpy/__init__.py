@@ -108,6 +108,7 @@ else:
     import random
     import ctypeslib
     import ma
+    import doc
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
@@ -119,5 +120,5 @@ else:
                'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(lib.__all__)
-    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma', 'doc'])
 
