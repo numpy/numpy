@@ -41,10 +41,12 @@ class TestOperations(TestCase):
         assert all(QA == ('q' + self.A))
 
     def test_mul(self):
-        A2 = np.array([['abcabc', '123123'],
-                       ['789789', 'xyzxyz']]).view(np.chararray)
+        A = self.A
+        for r in (2,3,5,7,197):
+            Ar = np.array([[A[0,0]*r, A[0,1]*r],
+                           [A[1,0]*r, A[1,1]*r]]).view(np.chararray)
 
-        assert all(A2 == (self.A * 2))
+            assert all(Ar == (self.A * r))
         
         for ob in [object(), 'qrs']:
             try:
@@ -55,10 +57,12 @@ class TestOperations(TestCase):
                 self.fail("chararray can only be multiplied by integers")
 
     def test_rmul(self):
-        A2 = np.array([['abcabc', '123123'],
-                       ['789789', 'xyzxyz']]).view(np.chararray)
+        A = self.A
+        for r in (2,3,5,7,197):
+            Ar = np.array([[A[0,0]*r, A[0,1]*r],
+                           [A[1,0]*r, A[1,1]*r]]).view(np.chararray)
 
-        assert all(A2 == (2 * self.A))
+            assert all(Ar == (r * self.A))
         
         for ob in [object(), 'qrs']:
             try:
