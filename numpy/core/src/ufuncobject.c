@@ -1039,9 +1039,10 @@ extract_specified_loop(PyUFuncObject *self, int *arg_types,
 }
 
 
-/* Called to determine coercion
-   Can change arg_types.
-*/
+/*
+ * Called to determine coercion
+ * Can change arg_types.
+ */
 
 static int
 select_types(PyUFuncObject *self, int *arg_types,
@@ -1051,11 +1052,11 @@ select_types(PyUFuncObject *self, int *arg_types,
 {
     int i, j;
     char start_type;
-    int userdef=-1;
-    int userdef_ind=-1;
+    int userdef = -1;
+    int userdef_ind = -1;
 
     if (self->userloops) {
-        for(i=0; i<self->nin; i++) {
+        for(i = 0; i < self->nin; i++) {
             if (PyTypeNum_ISUSERDEF(arg_types[i])) {
                 userdef = arg_types[i];
 		userdef_ind = i;
@@ -1070,64 +1071,82 @@ select_types(PyUFuncObject *self, int *arg_types,
 
     if (userdef > 0) {
         PyObject *key, *obj;
-        int ret=-1;
+        int ret = -1;
         obj = NULL;
-	/* Look through all the registered loops for all the user-defined
-	   types to find a match.
+
+	/*
+         * Look through all the registered loops for all the user-defined
+	 * types to find a match.
 	 */
 	while (ret == -1) {
-	    if (userdef_ind >= self->nin) break;
+	    if (userdef_ind >= self->nin) {
+                break;
+            }
 	    userdef = arg_types[userdef_ind++];
-	    if (!(PyTypeNum_ISUSERDEF(userdef))) continue;
+	    if (!(PyTypeNum_ISUSERDEF(userdef))) {
+                continue;
+            }
 	    key = PyInt_FromLong((long) userdef);
-	    if (key == NULL) return -1;
+	    if (key == NULL) {
+                return -1;
+            }
 	    obj = PyDict_GetItem(self->userloops, key);
 	    Py_DECREF(key);
-	    if (obj == NULL) continue;
-	    /* extract the correct function
-	       data and argtypes for this user-defined type.
-	    */
+	    if (obj == NULL) {
+                continue;
+            }
+	    /*
+             * extract the correct function
+	     * data and argtypes for this user-defined type.
+	     */
 	    ret = _find_matching_userloop(obj, arg_types, scalars,
 					  function, data, self->nargs,
 					  self->nin);
 	}
-	if (ret == 0) return ret;
+	if (ret == 0) {
+            return ret;
+        }
 	PyErr_SetString(PyExc_TypeError, _types_msg);
 	return ret;
     }
 
     start_type = arg_types[0];
-    /* If the first argument is a scalar we need to place
-       the start type as the lowest type in the class
-    */
+    /*
+     * If the first argument is a scalar we need to place
+     * the start type as the lowest type in the class
+     */
     if (scalars[0] != PyArray_NOSCALAR) {
         start_type = _lowest_type(start_type);
     }
 
     i = 0;
-    while (i<self->ntypes && start_type > self->types[i*self->nargs])
+    while (i < self->ntypes && start_type > self->types[i*self->nargs]) {
         i++;
-
-    for(;i<self->ntypes; i++) {
-        for(j=0; j<self->nin; j++) {
+    }
+    for (; i < self->ntypes; i++) {
+        for (j = 0; j < self->nin; j++) {
             if (!PyArray_CanCoerceScalar(arg_types[j],
-                                         self->types[i*self->nargs+j],
+                                         self->types[i*self->nargs + j],
                                          scalars[j]))
                 break;
         }
-        if (j == self->nin) break;
+        if (j == self->nin) {
+            break;
+        }
     }
-    if(i>=self->ntypes) {
+    if (i >= self->ntypes) {
         PyErr_SetString(PyExc_TypeError, _types_msg);
         return -1;
     }
-    for(j=0; j<self->nargs; j++)
+    for (j = 0; j < self->nargs; j++) {
         arg_types[j] = self->types[i*self->nargs+j];
-
-    if (self->data)
+    }
+    if (self->data) {
         *data = self->data[i];
-    else
+    }
+    else {
         *data = NULL;
+    }
     *function = self->functions[i];
 
     return 0;
@@ -1153,9 +1172,11 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
     }
 
     *bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
-    if ((*bufsize == -1) && PyErr_Occurred()) return -1;
-    if ((*bufsize < PyArray_MIN_BUFSIZE) || \
-        (*bufsize > PyArray_MAX_BUFSIZE) || \
+    if ((*bufsize == -1) && PyErr_Occurred()) {
+        return -1;
+    }
+    if ((*bufsize < PyArray_MIN_BUFSIZE) ||
+        (*bufsize > PyArray_MAX_BUFSIZE) ||
         (*bufsize % 16 != 0)) {
         PyErr_Format(PyExc_ValueError,
                      "buffer size (%d) is not in range "
@@ -1167,8 +1188,10 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 
     *errmask = PyInt_AsLong(PyList_GET_ITEM(ref, 1));
     if (*errmask < 0) {
-        if (PyErr_Occurred()) return -1;
-        PyErr_Format(PyExc_ValueError,          \
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        PyErr_Format(PyExc_ValueError,
                      "invalid error mask (%d)",
                      *errmask);
         return -1;
@@ -1191,7 +1214,9 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
     *errobj = Py_BuildValue("NO",
                             PyString_FromString(name),
                             retval);
-    if (*errobj == NULL) return -1;
+    if (*errobj == NULL) {
+        return -1;
+    }
 
     return 0;
 }
@@ -1203,7 +1228,7 @@ static int
 PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 {
     PyObject *thedict;
-    PyObject *ref=NULL;
+    PyObject *ref = NULL;
 
 #if USE_USE_DEFAULTS==1
     if (PyUFunc_NUM_NODEFAULTS != 0) {
