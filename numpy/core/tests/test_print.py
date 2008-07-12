@@ -30,7 +30,5 @@ class TestPrint(TestCase):
                 assert_equal(str(t(x + x*1j)), str(complex(x + x*1j)))
 
 
-
-
 if __name__ == "__main__":
     run_module_suite()

@@ -550,6 +550,7 @@ gentype_repr(PyObject *self)
     Py_DECREF(arr);
     return ret;
 }
+
 /**begin repeat
  * #name=float, double, longdouble#
  * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
