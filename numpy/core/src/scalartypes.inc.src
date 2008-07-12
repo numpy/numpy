@@ -546,32 +546,49 @@ gentype_repr(PyObject *self)
         Py_DECREF(arr);
         return ret;
 }
+
 /**begin repeat
+ * #name=float, double, longdouble#
+ * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
+ */
 
-#name=float, double, longdouble#
-#NAME=FLOAT, DOUBLE, LONGDOUBLE#
-#PREFIX=NPY_,NPY_,NPY_#
-*/
+#define FMT "%.*" NPY_@NAME@_FMT
+#define CFMT1 "%.*" NPY_@NAME@_FMT "j"
+#define CFMT2 "(%.*" NPY_@NAME@_FMT "%+.*" NPY_@NAME@_FMT "j)"
+
 static void
-format_@name@(char *buf, size_t buflen, @name@ val,
-                  unsigned int precision)
+format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 {
-        char *cp;
+    int cnt, i;
 
-        PyOS_snprintf(buf, buflen, "%.*" @PREFIX@@NAME@_FMT, precision, val);
-        cp = buf;
-        if (*cp == '-')
-                cp++;
-        for (; *cp != '\0'; cp++) {
-                if (!isdigit(Py_CHARMASK(*cp)))
-                        break;
+    cnt = PyOS_snprintf(buf, buflen, FMT, prec, val);
+
+    /* If nothing but digits after sign, append ".0" */
+    for (i = (val < 0) ? 1 : 0; i < cnt; ++i) {
+        if (!isdigit(Py_CHARMASK(buf[i]))) {
+            break;
         }
-        if (*cp == '\0') {
-                *cp++ = '.';
-                *cp++ = '0';
-                *cp++ = '\0';
-        }
+    }
+    if (i == cnt && buflen >= cnt + 3) {
+        strcpy(&buf[cnt],".0");
+    }
 }
+
+static void
+format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
+{
+    if (val.real == 0.0) {
+        PyOS_snprintf(buf, buflen, CFMT1, prec, val.imag);
+    }
+    else {
+        PyOS_snprintf(buf, buflen, CFMT2, prec, val.real, prec, val.imag);
+    }
+}
+
+#undef FMT
+#undef CFMT1
+#undef CFMT2
+
 /**end repeat**/
 
 /* over-ride repr and str of array-scalar strings and unicode to
@@ -632,29 +649,31 @@ static PyObject *
  * #kind = str, repr#
  * #KIND = STR, REPR#
  */
+
+#define PREC @NAME@PREC_@KIND@
+
 static PyObject *
 @name@type_@kind@(PyObject *self)
 {
-        static char buf[100];
-        format_@name@(buf, sizeof(buf),
-                          ((Py@Name@ScalarObject *)self)->obval, @NAME@PREC_@KIND@);
-        return PyString_FromString(buf);
+    char buf[100];
+    @name@ val = ((Py@Name@ScalarObject *)self)->obval;
+
+    format_@name@(buf, sizeof(buf), val, PREC);
+    return PyString_FromString(buf);
 }
 
 static PyObject *
 c@name@type_@kind@(PyObject *self)
 {
-        static char buf1[100];
-        static char buf2[100];
-        static char buf3[202];
-        c@name@ x;
-        x = ((PyC@Name@ScalarObject *)self)->obval;
-        format_@name@(buf1, sizeof(buf1), x.real, @NAME@PREC_@KIND@);
-        format_@name@(buf2, sizeof(buf2), x.imag, @NAME@PREC_@KIND@);
+    char buf[202];
+    c@name@ val = ((PyC@Name@ScalarObject *)self)->obval;
 
-        snprintf(buf3, sizeof(buf3), "(%s+%sj)", buf1, buf2);
-        return PyString_FromString(buf3);
+    format_c@name@(buf, sizeof(buf), val, PREC);
+    return PyString_FromString(buf);
 }
+
+#undef PREC
+
 /**end repeat1**/
 /**end repeat**/
 
