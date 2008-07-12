@@ -2091,12 +2091,12 @@ _signbit_set(PyArrayObject *arr)
     elsize = arr->descr->elsize;
     byteorder = arr->descr->byteorder;
     ptr = arr->data;
-    if (elsize > 1 && \
-        (byteorder == PyArray_LITTLE ||     \
+    if (elsize > 1 &&
+        (byteorder == PyArray_LITTLE ||
          (byteorder == PyArray_NATIVE &&
-          PyArray_ISNBO(PyArray_LITTLE))))
-        ptr += elsize-1;
-
+          PyArray_ISNBO(PyArray_LITTLE)))) {
+        ptr += elsize - 1;
+    }
     return ((*ptr & bitmask) != 0);
 }
 
@@ -2106,18 +2106,30 @@ static NPY_SCALARKIND
 PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 {
     if (PyTypeNum_ISSIGNED(typenum)) {
-        if (arr && _signbit_set(*arr)) return PyArray_INTNEG_SCALAR;
-        else return PyArray_INTPOS_SCALAR;
+        if (arr && _signbit_set(*arr)) {
+            return PyArray_INTNEG_SCALAR;
+        }
+        else {
+            return PyArray_INTPOS_SCALAR;
+        }
     }
-    if (PyTypeNum_ISFLOAT(typenum)) return PyArray_FLOAT_SCALAR;
-    if (PyTypeNum_ISUNSIGNED(typenum)) return PyArray_INTPOS_SCALAR;
-    if (PyTypeNum_ISCOMPLEX(typenum)) return PyArray_COMPLEX_SCALAR;
-    if (PyTypeNum_ISBOOL(typenum)) return PyArray_BOOL_SCALAR;
+    if (PyTypeNum_ISFLOAT(typenum)) {
+        return PyArray_FLOAT_SCALAR;
+    }
+    if (PyTypeNum_ISUNSIGNED(typenum)) {
+        return PyArray_INTPOS_SCALAR;
+    }
+    if (PyTypeNum_ISCOMPLEX(typenum)) {
+        return PyArray_COMPLEX_SCALAR;
+    }
+    if (PyTypeNum_ISBOOL(typenum)) {
+        return PyArray_BOOL_SCALAR;
+    }
 
     if (PyTypeNum_ISUSERDEF(typenum)) {
         NPY_SCALARKIND retval;
-        PyArray_Descr* descr;
-        descr = PyArray_DescrFromType(typenum);
+        PyArray_Descr* descr = PyArray_DescrFromType(typenum);
+
         if (descr->f->scalarkind)
             retval = descr->f->scalarkind((arr ? *arr : NULL));
         else
@@ -2156,7 +2168,9 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     case PyArray_OBJECT_SCALAR:
         return PyArray_CanCastSafely(thistype, neededtype);
     default:
-        if (PyTypeNum_ISUSERDEF(neededtype)) return FALSE;
+        if (PyTypeNum_ISUSERDEF(neededtype)) {
+            return FALSE;
+        }
         switch(scalar) {
         case PyArray_INTPOS_SCALAR:
             return (neededtype >= PyArray_BYTE);
