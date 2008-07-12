@@ -9052,9 +9052,10 @@ PyArray_CanCastSafely(int fromtype, int totype)
     if (fromtype == PyArray_OBJECT || fromtype == PyArray_VOID) return 0;
 
     from = PyArray_DescrFromType(fromtype);
-    /* cancastto is a PyArray_NOTYPE terminated C-int-array of types that
-       the data-type can be cast to safely.
-    */
+    /*
+     * cancastto is a PyArray_NOTYPE terminated C-int-array of types that
+     * the data-type can be cast to safely.
+     */
     if (from->f->cancastto) {
         int *curtype;
         curtype = from->f->cancastto;
@@ -11083,22 +11084,24 @@ PyArray_DescrNewFromType(int type_num)
 static PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
-    PyArray_Descr *new;
+    PyArray_Descr *new = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
 
-    new = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
-    if (new == NULL) return NULL;
+    if (new == NULL) {
+        return NULL;
+    }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)new+sizeof(PyObject),
-           (char *)base+sizeof(PyObject),
-           sizeof(PyArray_Descr)-sizeof(PyObject));
+    memcpy((char *)new + sizeof(PyObject),
+           (char *)base + sizeof(PyObject),
+           sizeof(PyArray_Descr) - sizeof(PyObject));
 
-    if (new->fields == Py_None) new->fields = NULL;
+    if (new->fields == Py_None) {
+        new->fields = NULL;
+    }
     Py_XINCREF(new->fields);
     Py_XINCREF(new->names);
     if (new->subarray) {
         new->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
-        memcpy(new->subarray, base->subarray,
-               sizeof(PyArray_ArrayDescr));
+        memcpy(new->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
         Py_INCREF(new->subarray->shape);
         Py_INCREF(new->subarray->base);
     }
