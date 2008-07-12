@@ -670,7 +670,8 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
 
         switch(method) {
         case UFUNC_ERR_WARN:
-            snprintf(msg, 100, "%s encountered in %s", errtype, name);
+            PyOS_snprintf(msg, sizeof(msg),
+                    "%s encountered in %s", errtype, name);
             if (PyErr_Warn(PyExc_RuntimeWarning, msg) < 0) goto fail;
             break;
         case UFUNC_ERR_RAISE:
@@ -714,7 +715,8 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
                                  errtype, name);
                     goto fail;
                 }
-                snprintf(msg, 100, "Warning: %s encountered in %s\n", errtype, name);
+                PyOS_snprintf(msg, sizeof(msg),
+                        "Warning: %s encountered in %s\n", errtype, name);
                 ret = PyObject_CallMethod(pyfunc, "write", "s", msg);
                 if (ret == NULL) goto fail;
                 Py_DECREF(ret);

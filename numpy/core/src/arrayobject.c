@@ -4343,9 +4343,9 @@ array_repr_builtin(PyArrayObject *self, int repr)
     if (repr) {
         if (PyArray_ISEXTENDED(self)) {
             char buf[100];
-            snprintf(buf, sizeof(buf), "%d", self->descr->elsize);
+            PyOS_snprintf(buf, sizeof(buf), "%d", self->descr->elsize);
             sprintf(string+n, ", '%c%s')", self->descr->type, buf);
-            ret = PyString_FromStringAndSize(string, n+6+strlen(buf));
+            ret = PyString_FromStringAndSize(string, n + 6 + strlen(buf));
         }
         else {
             sprintf(string+n, ", '%c')", self->descr->type);
@@ -4360,8 +4360,8 @@ array_repr_builtin(PyArrayObject *self, int repr)
     return ret;
 }
 
-static PyObject *PyArray_StrFunction=NULL;
-static PyObject *PyArray_ReprFunction=NULL;
+static PyObject *PyArray_StrFunction = NULL;
+static PyObject *PyArray_ReprFunction = NULL;
 
 /*NUMPY_API
   Set the array print function to be a Python function.
@@ -7358,8 +7358,8 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         if (PyCObject_Check(ip)) {
             inter=(PyArrayInterface *)PyCObject_AsVoidPtr(ip);
             if (inter->two == 2) {
-                snprintf(buf, 40, "|%c%d", inter->typekind,
-                         inter->itemsize);
+                PyOS_snprintf(buf, sizeof(buf),
+                        "|%c%d", inter->typekind, inter->itemsize);
                 chktype = _array_typedescr_fromstr(buf);
             }
         }
@@ -8539,7 +8539,8 @@ PyArray_FromStructInterface(PyObject *input)
     }
 
     if (thetype == NULL) {
-        snprintf(buf, 40, "%c%c%d", endian, inter->typekind, inter->itemsize);
+        PyOS_snprintf(buf, sizeof(buf),
+                "%c%c%d", endian, inter->typekind, inter->itemsize);
         if (!(thetype=_array_typedescr_fromstr(buf))) {
             Py_DECREF(attr);
             return NULL;
