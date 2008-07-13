@@ -817,6 +817,28 @@ class TestStdVarComplex(TestCase):
         assert_almost_equal(std(A)**2,real_var)
 
 
+class TestLikeFuncs(TestCase):
+    '''Test zeros_like and empty_like'''
+
+    def setUp(self):
+        self.data = [(array([[1,2,3],[4,5,6]],dtype=int32), (2,3), int32),
+                     (array([[1,2,3],[4,5,6]],dtype=float32), (2,3), float32),
+                     ]
+
+    def test_zeros_like(self):
+        for d, dshape, dtype in self.data:
+            dz = zeros_like(d)
+            assert dz.shape == dshape
+            assert dz.dtype.type == dtype
+            assert all(abs(dz) == 0)
+
+    def test_empty_like(self):
+        for d, dshape, dtype in self.data:
+            dz = zeros_like(d)
+            assert dz.shape == dshape
+            assert dz.dtype.type == dtype
+
+
 if __name__ == "__main__":
     run_module_suite()
 

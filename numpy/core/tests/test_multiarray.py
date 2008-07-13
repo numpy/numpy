@@ -892,5 +892,26 @@ class TestStats(TestCase):
         assert res.info == dat.info
 
 
+class TestSummarization(TestCase):
+    def test_1d(self):
+        A = np.arange(1001)
+        strA = '[   0    1    2 ...,  998  999 1000]'
+        assert str(A) == strA
+
+        reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
+        assert repr(A) == reprA
+
+    def test_2d(self):
+        A = np.arange(1002).reshape(2,501)
+        strA = '[[   0    1    2 ...,  498  499  500]\n' \
+               ' [ 501  502  503 ...,  999 1000 1001]]'
+        assert str(A) == strA
+
+        reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
+                '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
+        assert repr(A) == reprA
+
+
+
 if __name__ == "__main__":
     run_module_suite()
