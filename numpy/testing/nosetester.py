@@ -294,7 +294,10 @@ class NoseTester(object):
         # issue a deprecation warning if any of the pre-1.2 arguments to 
         # test are given
         if old_args.intersection(kwargs.keys()):
-            warnings.warn("This method's signature will change in the next release; the level, verbosity, all, sys_argv, and testcase_pattern keyword arguments will be removed. Please update your code.", 
+            warnings.warn("This method's signature will change in the next " \
+                          "release; the level, verbosity, all, sys_argv, " \
+                          "and testcase_pattern keyword arguments will be " \
+                          "removed. Please update your code.", 
                           DeprecationWarning, stacklevel=2)
         
         # Use old arguments if given (where it makes sense)

@@ -7,11 +7,12 @@ import sys
 import re
 import difflib
 import operator
+from nosetester import import_nose
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
-           'assert_array_almost_equal', 'build_err_msg', 'jiffies', 'memusage',
-           'raises', 'rand', 'rundocs', 'runstring']
+           'assert_array_almost_equal', 'assert_raises', 'build_err_msg', 
+           'jiffies', 'memusage', 'raises', 'rand', 'rundocs', 'runstring']
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -319,32 +320,10 @@ def rundocs(filename=None):
     return
 
 
-def raises(*exceptions):
-    """ Assert that a test function raises one of the specified exceptions to
-    pass.
-    """
-    # FIXME: when we transition to nose, just use its implementation. It's
-    # better.
-    def deco(function):
-        def f2(*args, **kwds):
-            try:
-                function(*args, **kwds)
-            except exceptions:
-                pass
-            except:
-                # Anything else.
-                raise
-            else:
-                raise AssertionError('%s() did not raise one of (%s)' %
-                    (function.__name__, ', '.join([e.__name__ for e in exceptions])))
-        try:
-            f2.__name__ = function.__name__
-        except TypeError:
-            # Python 2.3 does not permit this.
-            pass
-        f2.__dict__ = function.__dict__
-        f2.__doc__ = function.__doc__
-        f2.__module__ = function.__module__
-        return f2
+def raises(*args,**kwargs):
+    nose = import_nose()
+    return nose.tools.raises(*args,**kwargs)
 
-    return deco
+def assert_raises(*args,**kwargs):
+    nose = import_nose()
+    return nose.tools.assert_raises(*args,**kwargs)
