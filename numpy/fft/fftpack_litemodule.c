@@ -13,8 +13,10 @@ fftpack_cfftf(PyObject *self, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data;
+    PyArray_Descr *descr;
     double *wsave, *dptr;
-    int npts, nsave, nrepeats, i;
+    npy_intp nsave;
+    int npts, nrepeats, i;
 
     if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
         return NULL;
@@ -24,7 +26,8 @@ fftpack_cfftf(PyObject *self, PyObject *args)
     if (data == NULL) {
         return NULL;
     }
-    if (PyArray_As1D(&op2, (char **)&wsave, &nsave, PyArray_DOUBLE) == -1) {
+    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
     if (data == NULL) {
@@ -61,8 +64,10 @@ fftpack_cfftb(PyObject *self, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data;
+    PyArray_Descr *descr;
     double *wsave, *dptr;
-    int npts, nsave, nrepeats, i;
+    npy_intp nsave;
+    int npts, nrepeats, i;
 
     if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
         return NULL;
@@ -72,7 +77,8 @@ fftpack_cfftb(PyObject *self, PyObject *args)
     if (data == NULL) {
         return NULL;
     }
-    if (PyArray_As1D(&op2, (char **)&wsave, &nsave, PyArray_DOUBLE) == -1) {
+    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
     if (data == NULL) {
@@ -108,15 +114,16 @@ static PyObject *
 fftpack_cffti(PyObject *self, PyObject *args)
 {
     PyArrayObject *op;
-    int dim, n;
+    npy_intp dim;
+    long n;
 
-    if (!PyArg_ParseTuple(args, "i", &n)) {
+    if (!PyArg_ParseTuple(args, "l", &n)) {
         return NULL;
     }
     /*Magic size needed by cffti*/
     dim = 4*n + 15;
     /*Create a 1 dimensional array of dimensions of type double*/
-    op = (PyArrayObject *)PyArray_FromDims(1, &dim, PyArray_DOUBLE);
+    op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, PyArray_DOUBLE);
     if (op == NULL) {
         return NULL;
     }
@@ -135,8 +142,10 @@ fftpack_rfftf(PyObject *self, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data, *ret;
+    PyArray_Descr *descr;
     double *wsave, *dptr, *rptr;
-    int npts, nsave, nrepeats, i, rstep;
+    npy_intp nsave;
+    int npts, nrepeats, i, rstep;
 
     if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
         return NULL;
@@ -153,7 +162,8 @@ fftpack_rfftf(PyObject *self, PyObject *args)
     data->dimensions[data->nd - 1] = npts;
     rstep = (ret->dimensions[ret->nd - 1])*2;
 
-    if (PyArray_As1D(&op2, (char **)&wsave, &nsave, PyArray_DOUBLE) == -1) {
+    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
     if (data == NULL || ret == NULL) {
@@ -198,8 +208,10 @@ fftpack_rfftb(PyObject *self, PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data, *ret;
+    PyArray_Descr *descr;
     double *wsave, *dptr, *rptr;
-    int npts, nsave, nrepeats, i;
+    npy_intp nsave;
+    int npts, nrepeats, i;
 
     if(!PyArg_ParseTuple(args, "OO", &op1, &op2)) {
         return NULL;
@@ -213,7 +225,8 @@ fftpack_rfftb(PyObject *self, PyObject *args)
     ret = (PyArrayObject *)PyArray_Zeros(data->nd, data->dimensions,
             PyArray_DescrFromType(PyArray_DOUBLE), 0);
 
-    if (PyArray_As1D(&op2, (char **)&wsave, &nsave, PyArray_DOUBLE) == -1) {
+    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
     if (data == NULL || ret == NULL) {
@@ -229,8 +242,8 @@ fftpack_rfftb(PyObject *self, PyObject *args)
     dptr = (double *)data->data;
 
     NPY_SIGINT_ON;
-    for (i=0; i<nrepeats; i++) {
-        memcpy((char *)(rptr+1), (dptr+2), (npts-1)*sizeof(double));
+    for (i = 0; i < nrepeats; i++) {
+        memcpy((char *)(rptr + 1), (dptr + 2), (npts - 1)*sizeof(double));
         rptr[0] = dptr[0];
         rfftb(npts, rptr, wsave);
         rptr += npts;
@@ -255,15 +268,16 @@ static PyObject *
 fftpack_rffti(PyObject *self, PyObject *args)
 {
   PyArrayObject *op;
-  int dim, n;
+  npy_intp dim;
+  long n;
 
-  if (!PyArg_ParseTuple(args, "i", &n)) {
+  if (!PyArg_ParseTuple(args, "l", &n)) {
       return NULL;
   }
   /*Magic size needed by rffti*/
   dim = 2*n + 15;
   /*Create a 1 dimensional array of dimensions of type double*/
-  op = (PyArrayObject *)PyArray_FromDims(1, &dim, PyArray_DOUBLE);
+  op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, PyArray_DOUBLE);
   if (op == NULL) {
       return NULL;
   }

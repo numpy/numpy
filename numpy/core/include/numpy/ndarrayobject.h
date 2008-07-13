@@ -1,4 +1,5 @@
-/* DON'T INCLUDE THIS DIRECTLY.
+/*
+ * DON'T INCLUDE THIS DIRECTLY.
  */
 
 #ifndef NPY_NDARRAYOBJECT_H
@@ -2005,6 +2006,14 @@ typedef struct {
 
 #ifdef __cplusplus
 }
+#endif
+
+/* Define python version independent deprecation macro */
+
+#if PY_VERSION_HEX >= 0x02050000
+#define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
+#else
+#define DEPRECATE(msg) PyErr_Warn(PyExc_DeprecationWarning,msg)
 #endif
 
 #endif /* NPY_NDARRAYOBJECT_H */

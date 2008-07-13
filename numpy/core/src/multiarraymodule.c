@@ -1665,7 +1665,13 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 {
     intp newd1;
     PyArray_Descr *descr;
+    int err;
+    char msg[] = "PyArray_As1D: use PyArray_AsCArray instead.";
 
+    err = DEPRECATE(msg);
+    if (err < 0) {
+        return -1;
+    }
     descr = PyArray_DescrFromType(typecode);
     if (PyArray_AsCArray(op, (void *)ptr, &newd1, 1, descr) == -1)
         return -1;

@@ -22,12 +22,6 @@ maintainer email:  oliphant.travis@ieee.org
 */
 /*#include <stdio.h>*/
 
-#if PY_VERSION_HEX >= 0x02050000
-#define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
-#else
-#define DEPRECATE(msg) PyErr_Warn(PyExc_DeprecationWarning,msg)
-#endif
-
 /*NUMPY_API
  * Get Priority from object
  */
