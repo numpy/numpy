@@ -22,6 +22,12 @@ maintainer email:  oliphant.travis@ieee.org
 */
 /*#include <stdio.h>*/
 
+#if PY_VERSION_HEX >= 0x02050000
+#define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
+#else
+#define DEPRECATE(msg) PyErr_Warn(PyExc_DeprecationWarning,msg)
+#endif
+
 /*NUMPY_API
  * Get Priority from object
  */
@@ -1316,7 +1322,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
     char msg[] = "PyArray_FromDimsAndDataAndDescr";
     int err;
 
-    err = PyErr_WarnEx(PyExc_DeprecationWarning, msg, 1);
+    err = DEPRECATE(msg);
     if (err < 0) {
         return NULL;
     }
@@ -1342,7 +1348,7 @@ PyArray_FromDims(int nd, int *d, int type)
     char msg[] = "PyArray_FromDims";
     int err;
 
-    err = PyErr_WarnEx(PyExc_DeprecationWarning, msg, 1);
+    err = DEPRECATE(msg);
     if (err < 0) {
         return NULL;
     }
