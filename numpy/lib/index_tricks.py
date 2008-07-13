@@ -102,7 +102,7 @@ class nd_grid(object):
 
     Examples
     --------
-    >>> mgrid = np.nd_grid()
+    >>> mgrid = np.lib.index_tricks.nd_grid()
     >>> mgrid[0:5,0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
@@ -117,7 +117,7 @@ class nd_grid(object):
             [0, 1, 2, 3, 4]]])
     >>> mgrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
-    >>> ogrid = nd_grid(sparse=True)
+    >>> ogrid = np.lib.index_tricks.nd_grid(sparse=True)
     >>> ogrid[0:5,0:5]
     [array([[0],
             [1],
@@ -319,7 +319,7 @@ class RClass(AxisConcatenator):
     """Translates slice objects to concatenation along the first axis.
 
     For example:
-    >>> np.r_[array([1,2,3]), 0, 0, array([4,5,6])]
+    >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
     array([1, 2, 3, 0, 0, 4, 5, 6])
 
     """
@@ -332,7 +332,7 @@ class CClass(AxisConcatenator):
     """Translates slice objects to concatenation along the second axis.
 
     For example:
-    >>> np.c_[array([[1,2,3]]), 0, 0, array([[4,5,6]])]
+    >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
     array([1, 2, 3, 0, 0, 4, 5, 6])
     """
     def __init__(self):
