@@ -1,5 +1,12 @@
 from numpy.testing import *
-from numpy import array, ones, r_, mgrid
+from numpy import array, ones, r_, mgrid, unravel_index
+
+class TestUnravelIndex(TestCase):
+    def test_basic(self):
+        assert unravel_index(2,(2,2)) == (1,0)
+        assert unravel_index(254,(17,94)) == (2, 66)
+        assert_raises(ValueError, unravel_index, 4,(2,2))
+
 
 class TestGrid(TestCase):
     def test_basic(self):
@@ -25,6 +32,7 @@ class TestGrid(TestCase):
         assert_array_almost_equal(c[1][:,-1],2*ones(10,'d'),11)
         assert_array_almost_equal(d[0,1,:]-d[0,0,:], 0.1*ones(20,'d'),11)
         assert_array_almost_equal(d[1,:,1]-d[1,:,0], 0.2*ones(20,'d'),11)
+
 
 class TestConcatenator(TestCase):
     def test_1d(self):

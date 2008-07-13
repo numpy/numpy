@@ -1,10 +1,24 @@
 from numpy.testing import *
-import numpy.lib
 from numpy.lib import *
 from numpy.core import *
 
 def assert_all(x):
     assert(all(x)), x
+
+
+class TestCommonType(TestCase):
+    def test_basic(self):
+        ai32 = array([[1,2],[3,4]], dtype=int32)
+        af32 = array([[1,2],[3,4]], dtype=float32)
+        af64 = array([[1,2],[3,4]], dtype=float64)
+        acs = array([[1+5j,2+6j],[3+7j,4+8j]], dtype=csingle)
+        acd = array([[1+5j,2+6j],[3+7j,4+8j]], dtype=cdouble)
+        assert common_type(af32) == float32
+        assert common_type(af64) == float64
+        assert common_type(acs) == csingle
+        assert common_type(acd) == cdouble
+
+
 
 class TestMintypecode(TestCase):
 

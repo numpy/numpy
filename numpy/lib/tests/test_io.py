@@ -2,6 +2,63 @@ from numpy.testing import *
 import numpy as np
 import StringIO
 
+
+class RoundtripTest:
+    def test_array(self):
+        a = np.array( [[1,2],[3,4]], float)
+        self.do(a)
+
+        a = np.array( [[1,2],[3,4]], int)
+        self.do(a)
+
+        a = np.array( [[1+5j,2+6j],[3+7j,4+8j]], dtype=np.csingle)
+        self.do(a)
+
+        a = np.array( [[1+5j,2+6j],[3+7j,4+8j]], dtype=np.cdouble)
+        self.do(a)
+
+    def test_1D(self):
+        a = np.array([1,2,3,4], int)
+        self.do(a)
+
+    def test_record(self):
+        a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
+        self.do(a)
+
+class TestSaveLoad(RoundtripTest, TestCase):
+    def do(self, a):
+        c = StringIO.StringIO()
+        np.save(c, a)
+        c.seek(0)
+        a_reloaded = np.load(c)
+        assert_equal(a, a_reloaded)
+
+
+class TestSavezLoad(RoundtripTest, TestCase):
+    def do(self, *arrays):
+        c = StringIO.StringIO()
+        np.savez(c, *arrays)
+        c.seek(0)
+        l = np.load(c)
+        for n, a in enumerate(arrays):
+            assert_equal(a, l['arr_%d' % n])
+
+    def test_multiple_arrays(self):
+        a = np.array( [[1,2],[3,4]], float)
+        b = np.array( [[1+2j,2+7j],[3-6j,4+12j]], complex)
+        self.do(a,b)
+
+    def test_named_arrays(self):
+        a = np.array( [[1,2],[3,4]], float)
+        b = np.array( [[1+2j,2+7j],[3-6j,4+12j]], complex)
+        c = StringIO.StringIO()
+        np.savez(c, file_a=a, file_b=b)
+        c.seek(0)
+        l = np.load(c)
+        assert_equal(a, l['file_a'])
+        assert_equal(b, l['file_b'])
+        
+
 class TestSaveTxt(TestCase):
     def test_array(self):
         a =np.array( [[1,2],[3,4]], float)
@@ -32,6 +89,7 @@ class TestSaveTxt(TestCase):
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), ['1 2\n', '3 4\n'])
+
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
         c = StringIO.StringIO()

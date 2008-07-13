@@ -616,8 +616,171 @@ class TestUnique(TestCase):
         assert(all(unique(x) == [1+1j, 1+10j, 5+6j, 10]))
 
 
+class TestCheckFinite(TestCase):
+    def test_simple(self):
+        a = [1,2,3]
+        b = [1,2,inf]
+        c = [1,2,nan]
+        numpy.lib.asarray_chkfinite(a)
+        assert_raises(ValueError, numpy.lib.asarray_chkfinite, b)
+        assert_raises(ValueError, numpy.lib.asarray_chkfinite, c)
+
+class TestNaNFuncts(TestCase):
+    def setUp(self):
+        self.A = array([[[ nan,         0.01319214,  0.01620964],
+                         [ 0.11704017,  nan,         0.75157887],
+                         [ 0.28333658,  0.1630199 ,  nan       ]],
+                        [[ 0.59541557,  nan,         0.37910852],
+                         [ nan,         0.87964135,  nan       ],
+                         [ 0.70543747,  nan,         0.34306596]],
+                        [[ 0.72687499,  0.91084584,  nan       ],
+                         [ 0.84386844,  0.38944762,  0.23913896],
+                         [ nan,         0.37068164,  0.33850425]]])
+
+    def test_nansum(self):
+        assert_almost_equal(nansum(self.A), 8.0664079100000006)
+        assert_almost_equal(nansum(self.A,0), 
+                            array([[ 1.32229056,  0.92403798,  0.39531816],
+                                   [ 0.96090861,  1.26908897,  0.99071783],
+                                   [ 0.98877405,  0.53370154,  0.68157021]]))
+        assert_almost_equal(nansum(self.A,1), 
+                            array([[ 0.40037675,  0.17621204,  0.76778851],
+                                   [ 1.30085304,  0.87964135,  0.72217448],
+                                   [ 1.57074343,  1.6709751 ,  0.57764321]]))
+        assert_almost_equal(nansum(self.A,2), 
+                            array([[ 0.02940178,  0.86861904,  0.44635648],
+                                   [ 0.97452409,  0.87964135,  1.04850343],
+                                   [ 1.63772083,  1.47245502,  0.70918589]]))
+        
+    def test_nanmin(self):
+        assert_almost_equal(nanmin(self.A), 0.01319214)
+        assert_almost_equal(nanmin(self.A,0), 
+                            array([[ 0.59541557,  0.01319214,  0.01620964],
+                                   [ 0.11704017,  0.38944762,  0.23913896],
+                                   [ 0.28333658,  0.1630199 ,  0.33850425]]))
+        assert_almost_equal(nanmin(self.A,1), 
+                            array([[ 0.11704017,  0.01319214,  0.01620964],
+                                   [ 0.59541557,  0.87964135,  0.34306596],
+                                   [ 0.72687499,  0.37068164,  0.23913896]]))
+        assert_almost_equal(nanmin(self.A,2), 
+                            array([[ 0.01319214,  0.11704017,  0.1630199 ],
+                                   [ 0.37910852,  0.87964135,  0.34306596],
+                                   [ 0.72687499,  0.23913896,  0.33850425]]))
+
+    def test_nanargmin(self):
+        assert_almost_equal(nanargmin(self.A), 1)
+        assert_almost_equal(nanargmin(self.A,0), 
+                            array([[1, 0, 0],
+                                   [0, 2, 2],
+                                   [0, 0, 2]]))
+        assert_almost_equal(nanargmin(self.A,1), 
+                            array([[1, 0, 0],
+                                   [0, 1, 2],
+                                   [0, 2, 1]]))
+        assert_almost_equal(nanargmin(self.A,2), 
+                            array([[1, 0, 1],
+                                   [2, 1, 2],
+                                   [0, 2, 2]]))
+
+    def test_nanmax(self):
+        assert_almost_equal(nanmax(self.A), 0.91084584000000002)
+        assert_almost_equal(nanmax(self.A,0), 
+                            array([[ 0.72687499,  0.91084584,  0.37910852],
+                                   [ 0.84386844,  0.87964135,  0.75157887],
+                                   [ 0.70543747,  0.37068164,  0.34306596]]))
+        assert_almost_equal(nanmax(self.A,1), 
+                            array([[ 0.28333658,  0.1630199 ,  0.75157887],
+                                   [ 0.70543747,  0.87964135,  0.37910852],
+                                   [ 0.84386844,  0.91084584,  0.33850425]]))
+        assert_almost_equal(nanmax(self.A,2), 
+                            array([[ 0.01620964,  0.75157887,  0.28333658],
+                                   [ 0.59541557,  0.87964135,  0.70543747],
+                                   [ 0.91084584,  0.84386844,  0.37068164]]))
+
+
+class TestCorrCoef(TestCase):
+    def test_simple(self):
+        A = array([[ 0.15391142,  0.18045767,  0.14197213],
+                   [ 0.70461506,  0.96474128,  0.27906989],
+                   [ 0.9297531 ,  0.32296769,  0.19267156]])
+        B = array([[ 0.10377691,  0.5417086 ,  0.49807457],
+                   [ 0.82872117,  0.77801674,  0.39226705],
+                   [ 0.9314666 ,  0.66800209,  0.03538394]])
+        assert_almost_equal(corrcoef(A), 
+                            array([[ 1.        ,  0.9379533 , -0.04931983],
+                                   [ 0.9379533 ,  1.        ,  0.30007991],
+                                   [-0.04931983,  0.30007991,  1.        ]]))
+        assert_almost_equal(corrcoef(A,B), 
+                            array([[ 1.        ,  0.9379533 , -0.04931983, 
+                                     0.30151751,  0.66318558, 0.51532523],
+                                   [ 0.9379533 ,  1.        , 0.30007991, 
+                                     -0.04781421,  0.88157256, 0.78052386],
+                                   [-0.04931983,  0.30007991,  1.        ,
+                                     -0.96717111,  0.71483595, 0.83053601],
+                                   [ 0.30151751, -0.04781421, -0.96717111,  
+                                     1.        , -0.51366032, -0.66173113],
+                                   [ 0.66318558,  0.88157256,  0.71483595, 
+                                     -0.51366032,  1.        , 0.98317823],
+                                   [ 0.51532523,  0.78052386,  0.83053601, 
+                                     -0.66173113,  0.98317823, 1.        ]]))
+
+
+
+class Test_i0(TestCase):
+    def test_simple(self):
+        assert_almost_equal(i0(0.5), array(1.0634833707413234))
+        A = array([ 0.49842636,  0.6969809 ,  0.22011976,  0.0155549])
+        assert_almost_equal(i0(A), 
+                            array([ 1.06307822,  1.12518299,  1.01214991,  1.00006049]))
+        B = array([[ 0.827002  ,  0.99959078],
+                   [ 0.89694769,  0.39298162],
+                   [ 0.37954418,  0.05206293],
+                   [ 0.36465447,  0.72446427],
+                   [ 0.48164949,  0.50324519]])
+        assert_almost_equal(i0(B),
+                            array([[ 1.17843223,  1.26583466],
+                                   [ 1.21147086,  1.0389829 ],
+                                   [ 1.03633899,  1.00067775],
+                                   [ 1.03352052,  1.13557954],
+                                   [ 1.0588429 ,  1.06432317]]))
+
+class TestKaiser(TestCase):
+    def test_simple(self):
+        assert_almost_equal(kaiser(0,1.0), array([]))
+        assert isnan(kaiser(1,1.0))
+        assert_almost_equal(kaiser(2,1.0), array([ 0.78984831,  0.78984831]))
+        assert_almost_equal(kaiser(5,1.0), 
+                            array([ 0.78984831,  0.94503323,  1.        , 
+                                    0.94503323,  0.78984831]))
+        assert_almost_equal(kaiser(5,1.56789), 
+                            array([ 0.58285404,  0.88409679,  1.        ,  
+                                    0.88409679,  0.58285404]))
+
+class TestMsort(TestCase):
+    def test_simple(self):
+        A = array([[ 0.44567325,  0.79115165,  0.5490053 ],
+                   [ 0.36844147,  0.37325583,  0.96098397],
+                   [ 0.64864341,  0.52929049,  0.39172155]])
+        assert_almost_equal(msort(A),
+                            array([[ 0.36844147,  0.37325583,  0.39172155],
+                                   [ 0.44567325,  0.52929049,  0.5490053 ],
+                                   [ 0.64864341,  0.79115165,  0.96098397]]))
+
+class TestMeshgrid(TestCase):
+    def test_simple(self):
+        [X, Y] = meshgrid([1,2,3], [4,5,6,7])
+        assert all(X == array([[1, 2, 3],
+                               [1, 2, 3],
+                               [1, 2, 3],
+                               [1, 2, 3]]))
+        assert all(Y == array([[4, 4, 4],
+                               [5, 5, 5],
+                               [6, 6, 6],
+                               [7, 7, 7]]))
+
+
 class TestPiecewise(TestCase):
-    def check_simple(self):
+    def test_simple(self):
         # Condition is single bool list
         x = piecewise([0, 0], [True, False], [1])
         assert_array_equal(x, [1, 0])
@@ -645,7 +808,7 @@ class TestPiecewise(TestCase):
         x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
         assert_array_equal(x, [3, 4])
 
-    def check_default(self):
+    def test_default(self):
         # No value specified for x[1], should be 0
         x = piecewise([1, 2], [True, False], [2])
         assert_array_equal(x, [2, 0])

@@ -17,6 +17,13 @@ class TestApplyAlongAxis(TestCase):
                            [[27,30,33],[36,39,42],[45,48,51]])
 
 
+class TestApplyOverAxes(TestCase):
+    def test_simple(self):
+        a = arange(24).reshape(2,3,4)
+        aoa_a = apply_over_axes(sum, a, [0,2])
+        assert_array_equal(aoa_a, array([[[60],[92],[124]]]))
+
+
 class TestArraySplit(TestCase):
     def test_integer_0_split(self):
         a = arange(10)
