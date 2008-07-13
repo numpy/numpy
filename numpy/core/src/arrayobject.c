@@ -1311,26 +1311,24 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
                                 char *data)
 {
     PyObject *ret;
-#if SIZEOF_INTP != SIZEOF_INT
     int i;
     intp newd[MAX_DIMS];
-#endif
+    char msg[] = "PyArray_FromDimsAndDataAndDescr";
+    int err;
 
+    err = PyErr_WarnEx(PyExc_DeprecationWarning, msg, 1);
+    if (err < 0) {
+        return NULL;
+    }
     if (!PyArray_ISNBO(descr->byteorder))
         descr->byteorder = '=';
-
-#if SIZEOF_INTP != SIZEOF_INT
-    for(i=0; i<nd; i++) newd[i] = (intp) d[i];
+    for(i = 0; i < nd; i++) {
+        newd[i] = (intp) d[i];
+    }
     ret = PyArray_NewFromDescr(&PyArray_Type, descr,
                                nd, newd,
                                NULL, data,
                                (data ? CARRAY : 0), NULL);
-#else
-    ret = PyArray_NewFromDescr(&PyArray_Type, descr,
-                               nd, (intp *)d,
-                               NULL, data,
-                               (data ? CARRAY : 0), NULL);
-#endif
     return ret;
 }
 
@@ -1341,13 +1339,21 @@ static PyObject *
 PyArray_FromDims(int nd, int *d, int type)
 {
     PyObject *ret;
+    char msg[] = "PyArray_FromDims";
+    int err;
+
+    err = PyErr_WarnEx(PyExc_DeprecationWarning, msg, 1);
+    if (err < 0) {
+        return NULL;
+    }
     ret = PyArray_FromDimsAndDataAndDescr(nd, d,
                                           PyArray_DescrFromType(type),
                                           NULL);
-    /* Old FromDims set memory to zero --- some algorithms
-       relied on that.  Better keep it the same. If
-       Object type, then it's already been set to zero, though.
-    */
+    /*
+     * Old FromDims set memory to zero --- some algorithms
+     * relied on that.  Better keep it the same. If
+     * Object type, then it's already been set to zero, though.
+     */
     if (ret && (PyArray_DESCR(ret)->type_num != PyArray_OBJECT)) {
         memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
     }
