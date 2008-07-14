@@ -1,7 +1,5 @@
-from nose.tools import assert_raises
 import numpy as np
-from numpy.testing import assert_array_equal
-
+from numpy.testing import *
 from numpy.lib.stride_tricks import broadcast_arrays
 
 
@@ -204,3 +202,7 @@ def test_same_as_ufunc():
         if () not in input_shapes:
             yield assert_same_as_ufunc, input_shapes[0], input_shapes[1], False, True
             yield assert_same_as_ufunc, input_shapes[0], input_shapes[1], True, True
+
+
+if __name__ == "__main__":
+    run_module_suite()
