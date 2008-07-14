@@ -202,5 +202,60 @@ class TestBoolPower(TestCase):
         assert_equal(matrix_power(A,2),A)
 
 
+class HermitianTestCase:
+    def test_single(self):
+        a = array([[1.,2.], [2.,1.]], dtype=single)
+        self.do(a)
+
+    def test_double(self):
+        a = array([[1.,2.], [2.,1.]], dtype=double)
+        self.do(a)
+
+    def test_csingle(self):
+        a = array([[1.,2+3j], [2-3j,1]], dtype=csingle)
+        self.do(a)
+
+    def test_cdouble(self):
+        a = array([[1.,2+3j], [2-3j,1]], dtype=cdouble)
+        self.do(a)
+
+    def test_empty(self):
+        a = atleast_2d(array([], dtype = double))
+        assert_raises(linalg.LinAlgError, self.do, a)
+
+    def test_nonarray(self):
+        a = [[1,2], [2,1]]
+        self.do(a)
+
+    def test_matrix_b_only(self):
+        """Check that matrix type is preserved."""
+        a = array([[1.,2.], [2.,1.]])
+        self.do(a)
+
+    def test_matrix_a_and_b(self):
+        """Check that matrix type is preserved."""
+        a = matrix([[1.,2.], [2.,1.]])
+        self.do(a)
+
+class TestEigvalsh(HermitianTestCase, TestCase):
+    def do(self, a):
+        ev = linalg.eigvalsh(a)
+        # flip resulting eigenvalue array, since they are returned in
+        # reverse order from the values given by linal.eig
+        ev = ev[::-1]
+
+        evalues, evectors = linalg.eig(a)
+        assert_almost_equal(ev, evalues)
+
+class TestEigh(HermitianTestCase, TestCase):
+    def do(self, a):
+        ev, evc = linalg.eigh(a)
+        # flip resulting eigenvalue array, since they are returned in
+        # reverse order from the values given by linal.eig
+        ev = ev[::-1]
+
+        evalues, evectors = linalg.eig(a)
+        assert_almost_equal(ev, evalues)
+
 if __name__ == "__main__":
     run_module_suite()
