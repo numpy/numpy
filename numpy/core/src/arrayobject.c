@@ -1313,11 +1313,9 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
     PyObject *ret;
     int i;
     intp newd[MAX_DIMS];
-    char msg[] = "PyArray_FromDimsAndDataAndDescr";
-    int err;
+    char msg[] = "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.";
 
-    err = DEPRECATE(msg);
-    if (err < 0) {
+    if (DEPRECATE(msg) < 0) {
         return NULL;
     }
     if (!PyArray_ISNBO(descr->byteorder))
@@ -1339,11 +1337,9 @@ static PyObject *
 PyArray_FromDims(int nd, int *d, int type)
 {
     PyObject *ret;
-    char msg[] = "PyArray_FromDims";
-    int err;
+    char msg[] = "PyArray_FromDims: use PyArray_SimpleNew.";
 
-    err = DEPRECATE(msg);
-    if (err < 0) {
+    if (DEPRECATE(msg) < 0) {
         return NULL;
     }
     ret = PyArray_FromDimsAndDataAndDescr(nd, d,
