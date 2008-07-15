@@ -116,7 +116,7 @@ else:
                'ScipyTest', 'NumpyTest', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(lib.__all__)
-    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib'])
+    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
     def test(*args, **kw):
         import os, sys
