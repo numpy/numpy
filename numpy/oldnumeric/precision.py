@@ -5,12 +5,12 @@
 
 __all__ = ['Character', 'Complex', 'Float',
            'PrecisionError', 'PyObject', 'Int', 'UInt',
-           'UnsignedInteger', 'string', 'typecodes', 'zeros']
+           'UnsignedInt', 'UnsignedInteger', 'string', 'typecodes', 'zeros']
 
 from functions import zeros
 import string   # for backwards compatibility
 
-typecodes = {'Character':'c', 'Integer':'bhil', 'UnsignedInteger':'BHI', 'Float':'fd', 'Complex':'FD'}
+typecodes = {'Character':'c', 'Integer':'bhil', 'UnsignedInteger':'BHIL', 'Float':'fd', 'Complex':'FD'}
 
 def _get_precisions(typecodes):
     lst = []
@@ -67,8 +67,7 @@ try:
     __all__.extend(['UnsignedInt128', 'UInt128'])
 except(PrecisionError):
     pass
-UnsignedInteger = 'u'
-UInt = UnsignedInteger
+UInt = UnsignedInt = UnsignedInteger = 'u'
 
 try:
     Int0 = _lookup(_code_table, 'Integer', 0)

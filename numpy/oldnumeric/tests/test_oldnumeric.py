@@ -5,7 +5,7 @@ from numpy.oldnumeric import *
 from numpy.core.numeric import float32, float64, complex64, complex128, int8, \
         int16, int32, int64, uint, uint8, uint16, uint32, uint64
 
-class test_oldtypes(NumPyTestCase):
+class test_oldtypes(NumpyTestCase):
     def check_oldtypes(self, level=1):
         a1 = array([0,1,0], Float)
         a2 = array([0,1,0], float)
@@ -49,9 +49,13 @@ class test_oldtypes(NumPyTestCase):
         a1 = array([0,1,0], Int32)
         a2 = array([0,1,0], int32)
         assert_array_equal(a1, a2)
-        a1 = array([0,1,0], Int64)
-        a2 = array([0,1,0], int64)
-        assert_array_equal(a1, a2)
+        try:
+            a1 = array([0,1,0], Int64)
+            a2 = array([0,1,0], int64)
+            assert_array_equal(a1, a2)
+        except NameError:
+            # Not all systems have 64-bit integers.
+            pass
         a1 = array([0,1,0], UnsignedInt)
         a2 = array([0,1,0], UnsignedInteger)
         a3 = array([0,1,0], uint)
@@ -72,15 +76,15 @@ class test_oldtypes(NumPyTestCase):
         a3 = array([0,1,0], uint32)
         assert_array_equal(a1, a3)
         assert_array_equal(a2, a3)
-        a1 = array([0,1,0], UInt64)
-        a2 = array([0,1,0], UnsignedInt64)
-        a3 = array([0,1,0], uint64)
-        assert_array_equal(a1, a3)
-        assert_array_equal(a2, a3)
-        a1 = array([0,1,0], Bool)
-        a2 = array([0,1,0], bool)
-        assert_array_equal(a1, a2)
-
+        try:
+            a1 = array([0,1,0], UInt64)
+            a2 = array([0,1,0], UnsignedInt64)
+            a3 = array([0,1,0], uint64)
+            assert_array_equal(a1, a3)
+            assert_array_equal(a2, a3)
+        except NameError:
+            # Not all systems have 64-bit integers.
+            pass
 
 if __name__ == "__main__":
-    NumPyTest().run()
+    NumpyTest().run()
