@@ -125,7 +125,10 @@ def default_fill_value(obj):
     if hasattr(obj,'dtype'):
         defval = default_filler[obj.dtype.kind]
     elif isinstance(obj, np.dtype):
-        defval = default_filler[obj.kind]
+        if obj.subdtype:
+            defval = default_filler[obj.subdtype[0].kind]
+        else:
+            defval = default_filler[obj.kind]
     elif isinstance(obj, float):
         defval = default_filler['f']
     elif isinstance(obj, int) or isinstance(obj, long):
@@ -184,19 +187,28 @@ def maximum_fill_value(obj):
 
 
 def _check_fill_value(fill_value, dtype):
-    descr = np.dtype(dtype).descr
+    ndtype = np.dtype(dtype)
+    fields = ndtype.fields
     if fill_value is None:
-        if len(descr) > 1:
-            fill_value = [default_fill_value(np.dtype(d[1]))
-                          for d in descr]
+        if fields:
+            fill_value = [default_fill_value(fields[n][0])
+                          for n in ndtype.names]
         else:
-            fill_value = default_fill_value(dtype)
+            fill_value = default_fill_value(ndtype)
     else:
         fill_value = np.array(fill_value).tolist()
-        fval = np.resize(fill_value, len(descr))
-        if len(descr) > 1:
-            fill_value = [np.asarray(f).astype(d[1]).item()
-                          for (f,d) in zip(fval, descr)]
+        fval = np.resize(fill_value, len(ndtype.descr))
+        if fields:
+            fill_value = []
+            for (f, n) in zip(fval, ndtype.names):
+                current = fields[n][0]
+                if current.subdtype:
+                    fill_value.append(np.asarray(f).astype(current.subdtype[0]))
+                else:
+                    fill_value.append(np.asarray(f).astype(current))
+#            
+#            fill_value = [np.asarray(f).astype(fields[n][0]).item()
+#                          for (f, n) in zip(fval, ndtype.names)]
         else:
             fill_value = np.array(fval, copy=False, dtype=dtype).item()
     return fill_value
@@ -1147,7 +1159,9 @@ class MaskedArray(ndarray):
         Value used to fill in the masked values when necessary. If
         None, a default based on the datatype is used.
     keep_mask : {True, boolean}
-        Whether to combine mask with the mask of the input data,
+        Whether to combine m
+        x = mrecarray(1, formats="(2,2)f8")
+        assert_equal(x.fill_value, ma.default_fill_value(np.dtype(float)))ask with the mask of the input data,
         if any (True), or to use only mask for the output (False).
     hard_mask : {False, boolean}
         Whether to use a hard mask or not. With a hard mask,
@@ -3750,3 +3764,5 @@ ones = _convert2ma('ones')
 zeros = _convert2ma('zeros')
 
 ###############################################################################
+if __name__ == '__main__':
+    x = array((1,), dtype=[('f0', '<f8', (2, 2))])

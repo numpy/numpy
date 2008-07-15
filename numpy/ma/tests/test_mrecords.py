@@ -270,6 +270,31 @@ class TestMRecords(NumpyTestCase):
         #
         assert_equal(mrec.tolist(),
                      [(1,1.1,None),(2,2.2,'two'),(None,None,'three')])
+    #
+    def test_withnames(self):
+        "Test the creation w/ format and names"
+        x = mrecarray(1, formats=float, names='base')
+        x[0]['base'] = 10
+        assert_equal(x['base'][0], 10)
+    #
+    def test_exotic_formats(self):
+        "Test that 'exotic' formats are processed properly"
+        easy = mrecarray(1, dtype=[('i',int), ('s','|S3'), ('f',float)])
+        easy[0] = masked
+        easy.filled(1)
+        assert_equal(easy.filled(1).item(), (1,'1',1.))
+        #
+        solo = mrecarray(1, dtype=[('f0', '<f8', (2, 2))])
+        solo[0] = masked
+        assert_equal(solo.filled(1).item(), 
+                     np.array((1,), dtype=solo.dtype).item())
+        #
+        mult = mrecarray(2, dtype= "i4, (2,3)float, float")
+        mult[0] = masked
+        mult[1] = (1, 1, 1)
+        mult.filled(0)
+        assert_equal(mult.filled(0),
+                     np.array([(0,0,0),(1,1,1)], dtype=mult.dtype))
 
 ################################################################################
 class TestMRecordsImport(NumpyTestCase):

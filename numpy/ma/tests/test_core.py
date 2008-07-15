@@ -792,7 +792,7 @@ class TestMA(NumpyTestCase):
         series = data[[0,2,1]]
         assert_equal(series._fill_value, data._fill_value)
         #
-        mtype = [('f',float_),('s','|S3')]
+        mtype = [('f',float),('s','|S3')]
         x = array([(1,'a'),(2,'b'),(numpy.pi,'pi')], dtype=mtype)
         x.fill_value=999
         assert_equal(x.fill_value,[999.,'999'])
