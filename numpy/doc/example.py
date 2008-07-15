@@ -80,7 +80,9 @@ def foo(var1, var2, long_var_name='hi') :
     See Also
     --------
     otherfunc : relationship (optional)
-    newfunc : relationship (optional)
+    newfunc : Relationship (optional), which could be fairly long, in which
+              case the line wraps here.
+    thirdfunc, fourthfunc, fifthfunc
 
     Notes
     -----
