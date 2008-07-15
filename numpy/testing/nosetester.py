@@ -350,6 +350,10 @@ class NoseTester(object):
                 self.result = self.testRunner.run(self.test)
                 self.success = self.result.wasSuccessful()
                 return self.success
+
+        # reset doctest state
+        import doctest
+        doctest.master = None
             
         t = NumpyTestProgram(argv=argv, exit=False)
         return t.result
