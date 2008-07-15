@@ -140,7 +140,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         return
     from numpy.core import ndarray
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
-        return assert_array_equal(actual, desired, err_msg)
+        return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
     assert desired == actual, msg
 
