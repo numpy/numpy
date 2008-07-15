@@ -209,14 +209,14 @@ class DataSource (object):
                 openedurl = urlopen(path)
                 file(upath, 'w').write(openedurl.read())
             except URLError:
-                raise URLError("URL not found: ", path)
+                raise URLError("URL not found: %s" % path)
         else:
             try:
                 # TODO: Why not just copy the file with shutils.copyfile?
                 fp = file(path, 'r')
                 file(upath, 'w').write(fp.read())
             except IOError:
-                raise IOError("File not found: ", path)
+                raise IOError("File not found: %s" % path)
         return upath
 
     def _findfile(self, path):

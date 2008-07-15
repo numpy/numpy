@@ -80,7 +80,16 @@ class TestDataSourceOpen(NumpyTestCase):
         assert self.ds.open(valid_httpurl())
 
     def test_InvalidHTTP(self):
-        self.assertRaises(IOError, self.ds.open, invalid_httpurl())
+        url = invalid_httpurl()
+        self.assertRaises(IOError, self.ds.open, url)
+        try:
+            self.ds.open(url)
+        except IOError, e:
+            # Regression test for bug fixed in r4342.
+            assert e.errno is None
+
+    def test_InvalidHTTPCacheURLError(self):
+        self.assertRaises(datasource.URLError, self.ds._cache, invalid_httpurl())
 
     def test_ValidFile(self):
         local_file = valid_textfile(self.tmpdir)
