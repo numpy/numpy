@@ -7,12 +7,14 @@ import sys
 import re
 import difflib
 import operator
+from inspect import isfunction
 from nosetester import import_nose
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg', 
-           'jiffies', 'memusage', 'raises', 'rand', 'rundocs', 'runstring']
+           'decorate_methods', 'jiffies', 'memusage', 'raises', 'rand', 
+           'rundocs', 'runstring']
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -327,3 +329,37 @@ def raises(*args,**kwargs):
 def assert_raises(*args,**kwargs):
     nose = import_nose()
     return nose.tools.assert_raises(*args,**kwargs)
+
+def decorate_methods(cls, decorator, testmatch=None):
+    ''' Apply decorator to all methods in class matching testmatch
+
+    Parameters
+    ----------
+    cls : class
+        Class to decorate methods for
+    decorator : function
+        Decorator to apply to methods
+    testmatch : compiled regexp or string to compile to regexp
+        Decorators are applied if testmatch.search(methodname)
+        is not None.  Default value is
+        re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
+        (the default for nose)
+    '''
+    if testmatch is None:
+        testmatch = re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
+    else:
+        testmatch = re.compile(testmatch)
+    cls_attr = cls.__dict__
+    methods = filter(isfunction, cls_attr.values())
+    for function in methods:
+        try:
+            if hasattr(function, 'compat_func_name'):
+                funcname = function.compat_func_name
+            else:
+                funcname = function.__name__
+        except AttributeError:
+            # not a function
+            continue
+        if testmatch.search(funcname) and not funcname.startswith('_'):
+            setattr(cls, funcname, decorator(function))
+    return
