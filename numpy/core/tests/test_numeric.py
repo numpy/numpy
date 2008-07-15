@@ -252,6 +252,52 @@ class TestBinaryRepr(NumpyTestCase):
         assert_equal(binary_repr(-1), '-1')
         assert_equal(binary_repr(-1, width=8), '11111111')
 
+class TestArrayComparisons(NumpyTestCase):
+    def test_array_equal(self):
+        res = array_equal(array([1,2]), array([1,2]))
+        assert res
+        assert type(res) is bool
+        res = array_equal(array([1,2]), array([1,2,3]))
+        assert not res
+        assert type(res) is bool
+        res = array_equal(array([1,2]), array([3,4]))
+        assert not res
+        assert type(res) is bool
+        res = array_equal(array([1,2]), array([1,3]))
+        assert not res
+        assert type(res) is bool
+
+    def test_array_equiv(self):
+        res = array_equiv(array([1,2]), array([1,2]))
+        assert res
+        assert type(res) is bool
+        res = array_equiv(array([1,2]), array([1,2,3]))
+        assert not res
+        assert type(res) is bool
+        res = array_equiv(array([1,2]), array([3,4]))
+        assert not res
+        assert type(res) is bool
+        res = array_equiv(array([1,2]), array([1,3]))
+        assert not res
+        assert type(res) is bool
+
+        res = array_equiv(array([1,1]), array([1]))
+        assert res
+        assert type(res) is bool
+        res = array_equiv(array([1,1]), array([[1],[1]]))
+        assert res
+        assert type(res) is bool
+        res = array_equiv(array([1,2]), array([2]))
+        assert not res
+        assert type(res) is bool
+        res = array_equiv(array([1,2]), array([[1],[2]]))
+        assert not res
+        assert type(res) is bool
+        res = array_equiv(array([1,2]), array([[1,2,3],[4,5,6],[7,8,9]]))
+        assert not res
+        assert type(res) is bool
+
+
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)
     # Check flags

@@ -137,7 +137,7 @@ def asarray(a, dtype=None, order=None):
 def asanyarray(a, dtype=None, order=None):
     """Returns a as an array, but will pass subclasses through.
     """
-    return array(a, dtype, copy=False, order=order, subok=1)
+    return array(a, dtype, copy=False, order=order, subok=True)
 
 def ascontiguousarray(a, dtype=None):
     """Return 'a' as an array contiguous in memory (C order).
@@ -182,9 +182,9 @@ def require(a, dtype=None, requirements=None):
         return asanyarray(a, dtype=dtype)
 
     if 'ENSUREARRAY' in requirements or 'E' in requirements:
-        subok = 0
+        subok = False
     else:
-        subok = 1
+        subok = True
 
     arr = array(a, dtype=dtype, copy=False, subok=subok)
 
@@ -344,12 +344,12 @@ def tensordot(a, b, axes=2):
     nda = len(a.shape)
     bs = b.shape
     ndb = len(b.shape)
-    equal = 1
-    if (na != nb): equal = 0
+    equal = True
+    if (na != nb): equal = False
     else:
         for k in xrange(na):
             if as_[axes_a[k]] != bs[axes_b[k]]:
-                equal = 0
+                equal = False
                 break
             if axes_a[k] < 0:
                 axes_a[k] += nda
@@ -394,10 +394,10 @@ def roll(a, shift, axis=None):
     a = asanyarray(a)
     if axis is None:
         n = a.size
-        reshape=1
+        reshape = True
     else:
         n = a.shape[axis]
-        reshape=0
+        reshape = False
     shift %= n
     indexes = concatenate((arange(n-shift,n),arange(n-shift)))
     res = a.take(indexes, axis)
@@ -732,10 +732,10 @@ def array_equal(a1, a2):
     try:
         a1, a2 = asarray(a1), asarray(a2)
     except:
-        return 0
+        return False
     if a1.shape != a2.shape:
-        return 0
-    return logical_and.reduce(equal(a1,a2).ravel())
+        return False
+    return bool(logical_and.reduce(equal(a1,a2).ravel()))
 
 def array_equiv(a1, a2):
     """Returns True if a1 and a2 are shape consistent
@@ -745,11 +745,11 @@ def array_equiv(a1, a2):
     try:
         a1, a2 = asarray(a1), asarray(a2)
     except:
-        return 0
+        return False
     try:
-        return logical_and.reduce(equal(a1,a2).ravel())
+        return bool(logical_and.reduce(equal(a1,a2).ravel()))
     except ValueError:
-        return 0
+        return False
 
 
 _errdict = {"ignore":ERR_IGNORE,
