@@ -4717,24 +4717,24 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         PyObject *new;
         if (self->descr->type_num == PyArray_STRING && \
             other->descr->type_num == PyArray_UNICODE) {
-            Py_INCREF(other);
             Py_INCREF(other->descr);
             new = PyArray_FromAny((PyObject *)self, other->descr,
                                   0, 0, 0, NULL);
             if (new == NULL) {
                 return NULL;
             }
+            Py_INCREF(other);
             self = (PyArrayObject *)new;
         }
         else if (self->descr->type_num == PyArray_UNICODE &&    \
                  other->descr->type_num == PyArray_STRING) {
-            Py_INCREF(self);
             Py_INCREF(self->descr);
             new = PyArray_FromAny((PyObject *)other, self->descr,
                                   0, 0, 0, NULL);
             if (new == NULL) {
                 return NULL;
             }
+            Py_INCREF(self);
             other = (PyArrayObject *)new;
         }
         else {
