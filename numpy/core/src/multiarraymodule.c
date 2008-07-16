@@ -2144,10 +2144,10 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     if (from->f->cancastscalarkindto &&
         (castlist = from->f->cancastscalarkindto[scalar])) {
         while (*castlist != PyArray_NOTYPE)
-	    if (*castlist++ == neededtype) {
-		Py_DECREF(from);
-		return 1;
-	    }
+            if (*castlist++ == neededtype) {
+                Py_DECREF(from);
+                return 1;
+            }
     }
     Py_DECREF(from);
 
