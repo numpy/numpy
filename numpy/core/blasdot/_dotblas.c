@@ -206,10 +206,10 @@ static PyObject *
 dotblas_matrixproduct(PyObject *dummy, PyObject *args)
 {
     PyObject *op1, *op2;
-    PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
+    PyArrayObject *ap1 = NULL, *ap2 = NULL, *ret = NULL;
     int j, l, lda, ldb, ldc;
     int typenum, nd;
-    intp ap1stride=0;
+    intp ap1stride = 0;
     intp dimensions[MAX_DIMS];
     intp numbytes;
     static const float oneF[2] = {1.0, 0.0};
@@ -240,14 +240,19 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     }
 
     dtype = PyArray_DescrFromType(typenum);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED, NULL);
-    if (ap1 == NULL) {
+    if (dtype == NULL) {
         return NULL;
     }
     Py_INCREF(dtype);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED, NULL);
+    if (ap1 == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED, NULL);
     if (ap2 == NULL) {
-        goto fail;
+        Py_DECREF(ap1);
+        return NULL;
     }
 
 
