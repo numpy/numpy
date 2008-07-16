@@ -6051,7 +6051,8 @@ swab_separator(char *sep)
 /* Assuming that the separator is the next bit in the string (file), skip it.
 
    Single spaces in the separator are matched to arbitrary-long sequences
-   of whitespace in the input.
+   of whitespace in the input. If the separator consists only of spaces,
+   it matches one or more whitespace characters.
 
    If we can't match the separator, return -2.
    If we hit the end of the string (file), return -1.
@@ -6069,10 +6070,17 @@ fromstr_skip_separator(char **s, const char *sep, const char *end)
             result = -1;
             break;
         } else if (*sep == '\0') {
-            /* matched separator */
-            result = 0;
-            break;
+            if (string != *s) {
+                /* matched separator */
+                result = 0;
+                break;
+            } else {
+                /* separator was whitespace wildcard that didn't match */
+                result = -2;
+                break;
+            }
         } else if (*sep == ' ') {
+            /* whitespace wildcard */
             if (!isspace(c)) {
                 sep++;
                 continue;
@@ -6093,20 +6101,31 @@ static int
 fromfile_skip_separator(FILE **fp, const char *sep, void *stream_data)
 {
     int result = 0;
+    const char *sep_start = sep;
     while (1) {
         int c = fgetc(*fp);
         if (c == EOF) {
             result = -1;
             break;
         } else if (*sep == '\0') {
-            /* matched separator */
             ungetc(c, *fp);
-            result = 0;
-            break;
+            if (sep != sep_start) {
+                /* matched separator */
+                result = 0;
+                break;
+            } else {
+                /* separator was whitespace wildcard that didn't match */
+                result = -2;
+                break;
+            }
         } else if (*sep == ' ') {
+            /* whitespace wildcard */
             if (!isspace(c)) {
                 sep++;
+                sep_start++;
                 ungetc(c, *fp);
+            } else if (sep == sep_start) {
+                sep_start--;
             }
         } else if (*sep != c) {
             ungetc(c, *fp);
