@@ -1895,24 +1895,25 @@ object_arrtype_dealloc(PyObject *v)
 static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    PyObject *obj=NULL;
+    PyObject *obj = NULL;
     PyObject *robj;
     PyObject *arr;
-    PyArray_Descr *typecode=NULL;
+    PyArray_Descr *typecode = NULL;
     int itemsize;
     void *dest, *src;
 
     _WORK@work@
 
-    if (!PyArg_ParseTuple(args, "|O", &obj)) return NULL;
-
+    if (!PyArg_ParseTuple(args, "|O", &obj)) {
+        return NULL;
+    }
     typecode = PyArray_DescrFromType(PyArray_@TYPE@);
-    /* typecode is new reference and stolen by 
+    /* typecode is new reference and stolen by
        PyArray_Scalar and others */
     if (obj == NULL) {
 #if @default@ == 0
-        char *mem;
-        mem = malloc(sizeof(@name@));
+        char *mem = malloc(sizeof(@name@));
+
         memset(mem, 0, sizeof(@name@));
         robj = PyArray_Scalar(mem, typecode, NULL);
         free(mem);
@@ -1926,20 +1927,30 @@ static PyObject *
     }
 
     arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
-    if ((arr==NULL) || (PyArray_NDIM(arr) > 0)) return arr;
+    if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
+        return arr;
+    }
     robj = PyArray_Return((PyArrayObject *)arr);
 
 finish:
-    if ((robj==NULL) || (robj->ob_type == type)) return robj;
+    if ((robj == NULL) || (robj->ob_type == type)) {
+        return robj;
+    }
     /* Need to allocate new type and copy data-area over */
     if (type->tp_itemsize) {
         itemsize = PyString_GET_SIZE(robj);
     }
-    else itemsize = 0;
+    else {
+        itemsize = 0;
+    }
     obj = type->tp_alloc(type, itemsize);
-    if (obj == NULL) {Py_DECREF(robj); return NULL;}
-    if (typecode==NULL)
+    if (obj == NULL) {
+        Py_DECREF(robj);
+        return NULL;
+    }
+    if (typecode == NULL) {
         typecode = PyArray_DescrFromType(PyArray_@TYPE@);
+    }
     dest = scalar_value(obj, typecode);
     src = scalar_value(robj, typecode);
     Py_DECREF(typecode);
