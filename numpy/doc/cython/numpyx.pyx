@@ -2,21 +2,30 @@
 """Cython access to Numpy arrays - simple example.
 """
 
-# Includes from the python headers
-include "Python.pxi"
-# Include the Numpy C API for use via Cython extension code
-include "numpy.pxi"
+#############################################################################
+# Load C APIs declared in .pxd files via cimport
+# 
+# A 'cimport' is similar to a Python 'import' statement, but it provides access
+# to the C part of a library instead of its Python-visible API.  See the
+# Pyrex/Cython documentation for details.
 
-################################################
-# Initialize numpy - this MUST be done before any other code is executed.
-import_array()
+cimport c_python as py
 
-# Import the Numpy module for access to its usual Python API
+cimport c_numpy as cnp
+
+# NOTE: numpy MUST be initialized before any other code is executed.
+cnp.import_array()
+
+#############################################################################
+# Load Python modules via normal import statements
+
 import numpy as np
 
+#############################################################################
+# Regular code section begins
 
 # A 'def' function is visible in the Python-imported module
-def print_array_info(ndarray arr):
+def print_array_info(cnp.ndarray arr):
     """Simple information printer about an array.
 
     Code meant to illustrate Cython/NumPy integration only."""
@@ -24,19 +33,19 @@ def print_array_info(ndarray arr):
     cdef int i
 
     print '-='*10
-    # Note: the double cast here (void * first, then Py_intptr_t) is needed in
-    # Cython but not in Pyrex, since the casting behavior of cython is slightly
-    # different (and generally safer) than that of Pyrex.  In this case, we
-    # just want the memory address of the actual Array object, so we cast it to
-    # void before doing the Py_intptr_t cast:
+    # Note: the double cast here (void * first, then py.Py_intptr_t) is needed
+    # in Cython but not in Pyrex, since the casting behavior of cython is
+    # slightly different (and generally safer) than that of Pyrex.  In this
+    # case, we just want the memory address of the actual Array object, so we
+    # cast it to void before doing the py.Py_intptr_t cast:
     print 'Printing array info for ndarray at 0x%0lx'% \
-          (<Py_intptr_t><void *>arr,)
+          (<py.Py_intptr_t><void *>arr,)
     print 'number of dimensions:',arr.nd
-    print 'address of strides: 0x%0lx'%(<Py_intptr_t>arr.strides,)
+    print 'address of strides: 0x%0lx'%(<py.Py_intptr_t>arr.strides,)
     print 'strides:'
     for i from 0<=i<arr.nd:
         # print each stride
-        print '  stride %d:'%i,<Py_intptr_t>arr.strides[i]
+        print '  stride %d:'%i,<py.Py_intptr_t>arr.strides[i]
     print 'memory dump:'
     print_elements( arr.data, arr.strides, arr.dimensions,
                     arr.nd, sizeof(double), arr.dtype )
@@ -46,12 +55,12 @@ def print_array_info(ndarray arr):
 # A 'cdef' function is NOT visible to the python side, but it is accessible to
 # the rest of this Cython module
 cdef print_elements(char *data,
-                    Py_intptr_t* strides,
-                    Py_intptr_t* dimensions,
+                    py.Py_intptr_t* strides,
+                    py.Py_intptr_t* dimensions,
                     int nd,
                     int elsize,
                     object dtype):
-    cdef Py_intptr_t i,j
+    cdef py.Py_intptr_t i,j
     cdef void* elptr
 
     if dtype not in [np.dtype(np.object_),
@@ -78,7 +87,7 @@ cdef print_elements(char *data,
             print_elements(data, strides+1, dimensions+1, nd-1, elsize, dtype)
             data = data + strides[0]
 
-def test_methods(ndarray arr):
+def test_methods(cnp.ndarray arr):
     """Test a few attribute accesses for an array.
     
     This illustrates how the pyrex-visible object is in practice a strange

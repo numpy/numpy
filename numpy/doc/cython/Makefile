@@ -24,7 +24,7 @@ numpyx.so: numpyx.pyx numpyx.c
 
 numpyx.pyx.html: numpyx.pyx
 	cython -a numpyx.pyx
-	@echo "Annotated HTML of the C code generated in numpy.pyx.html"
+	@echo "Annotated HTML of the C code generated in numpyx.html"
 
 # Phony targets for cleanup and similar uses
 
