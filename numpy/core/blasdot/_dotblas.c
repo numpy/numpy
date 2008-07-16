@@ -255,7 +255,6 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
         return NULL;
     }
 
-
     if ((ap1->nd > 2) || (ap2->nd > 2)) {
 	/*
          * This function doesn't handle dimensions greater than 2
