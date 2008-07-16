@@ -2476,44 +2476,54 @@ static PyArray_Descr *_builtin_descrs[] = {
 static PyArray_Descr *
 PyArray_DescrFromType(int type)
 {
-    PyArray_Descr *ret=NULL;
+    PyArray_Descr *ret = NULL;
 
     if (type < PyArray_NTYPES) {
         ret = _builtin_descrs[type];
     }
     else if (type == PyArray_NOTYPE) {
-        /* This needs to not raise an error so
-           that PyArray_DescrFromType(PyArray_NOTYPE)
-           works for backwards-compatible C-API
+        /*
+         * This needs to not raise an error so
+         * that PyArray_DescrFromType(PyArray_NOTYPE)
+         * works for backwards-compatible C-API
          */
         return NULL;
     }
-    else if ((type == PyArray_CHAR) || \
-            (type == PyArray_CHARLTR)) {
+    else if ((type == PyArray_CHAR) || (type == PyArray_CHARLTR)) {
         ret = PyArray_DescrNew(_builtin_descrs[PyArray_STRING]);
+
+        if (ret == NULL) {
+            return NULL;
+        }
         ret->elsize = 1;
         ret->type = PyArray_CHARLTR;
         return ret;
     }
-    else if PyTypeNum_ISUSERDEF(type) {
-        ret = userdescrs[type-PyArray_USERDEF];
+    else if (PyTypeNum_ISUSERDEF(type)) {
+        ret = userdescrs[type - PyArray_USERDEF];
     }
     else {
-        int num=PyArray_NTYPES;
-        if (type < _MAX_LETTER)
+        int num = PyArray_NTYPES;
+        if (type < _MAX_LETTER) {
             num = (int) _letter_to_num[type];
-        if (num >= PyArray_NTYPES)
+        }
+        if (num >= PyArray_NTYPES) {
             ret = NULL;
-        else
+        }
+        else {
             ret = _builtin_descrs[num];
+        }
     }
-    if (ret==NULL) {
+    if (ret == NULL) {
         PyErr_SetString(PyExc_ValueError,
                 "Invalid data-type for array");
     }
-    else Py_INCREF(ret);
+    else {
+        Py_INCREF(ret);
+    }
     return ret;
 }
+
 
 
 static int
