@@ -363,3 +363,22 @@ def decorate_methods(cls, decorator, testmatch=None):
         if testmatch.search(funcname) and not funcname.startswith('_'):
             setattr(cls, funcname, decorator(function))
     return
+
+
+def measure(code_str,times=1,label=None):
+    """ Return elapsed time for executing code_str in the
+    namespace of the caller for given times.
+    """
+    frame = sys._getframe(1)
+    locs,globs = frame.f_locals,frame.f_globals
+
+    code = compile(code_str,
+                   'Test name: %s ' % label,
+                   'exec')
+    i = 0
+    elapsed = jiffies()
+    while i<times:
+        i += 1
+        exec code in globs,locs
+    elapsed = jiffies() - elapsed
+    return 0.01*elapsed
