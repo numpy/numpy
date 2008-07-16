@@ -1,12 +1,14 @@
-""" Define a simple format for saving numpy arrays to disk with the full
+"""Define a simple format for saving numpy arrays to disk.
+
+Define a simple format for saving numpy arrays to disk with the full
 information about them.
 
 WARNING: Due to limitations in the interpretation of structured dtypes, dtypes
 with fields with empty names will have the names replaced by 'f0', 'f1', etc.
-Such arrays will not round-trip through the format entirely accurately. The data
-is intact; only the field names will differ. We are working on a fix for this.
-This fix will not require a change in the file format. The arrays with such
-structures can still be saved and restored, and the correct dtype may be
+Such arrays will not round-trip through the format entirely accurately. The
+data is intact; only the field names will differ. We are working on a fix for
+this.  This fix will not require a change in the file format. The arrays with
+such structures can still be saved and restored, and the correct dtype may be
 restored by using the `loadedarray.view(correct_dtype)` method.
 
 Format Version 1.0
@@ -24,11 +26,11 @@ version of the numpy package.
 The next 2 bytes form a little-endian unsigned short int: the length of the
 header data HEADER_LEN.
 
-The next HEADER_LEN bytes form the header data describing the array's format. It
-is an ASCII string which contains a Python literal expression of a dictionary.
-It is terminated by a newline ('\\n') and padded with spaces ('\\x20') to make
-the total length of the magic string + 4 + HEADER_LEN be evenly divisible by 16
-for alignment purposes.
+The next HEADER_LEN bytes form the header data describing the array's format.
+It is an ASCII string which contains a Python literal expression of a
+dictionary.  It is terminated by a newline ('\\n') and padded with spaces
+('\\x20') to make the total length of the magic string + 4 + HEADER_LEN be
+evenly divisible by 16 for alignment purposes.
 
 The dictionary contains three keys:
 
@@ -43,8 +45,8 @@ The dictionary contains three keys:
         The shape of the array.
 
 For repeatability and readability, the dictionary keys are sorted in alphabetic
-order. This is for convenience only. A writer SHOULD implement this if possible.
-A reader MUST NOT depend on this.
+order. This is for convenience only. A writer SHOULD implement this if
+possible.  A reader MUST NOT depend on this.
 
 Following the header comes the array data. If the dtype contains Python objects
 (i.e. dtype.hasobject is True), then the data is a Python pickle of the array.
@@ -52,6 +54,7 @@ Otherwise the data is the contiguous (either C- or Fortran-, depending on
 fortran_order) bytes of the array. Consumers can figure out the number of bytes
 by multiplying the number of elements given by the shape (noting that shape=()
 means there is 1 element) by dtype.itemsize.
+
 """
 
 import cPickle
@@ -112,10 +115,11 @@ def dtype_to_descr(dtype):
     """ Get a serializable descriptor from the dtype.
 
     The .descr attribute of a dtype object cannot be round-tripped through the
-    dtype() constructor. Simple types, like dtype('float32'), have a descr which
-    looks like a record array with one field with '' as a name. The dtype()
-    constructor interprets this as a request to give a default name. Instead, we
-    construct descriptor that can be passed to dtype().
+    dtype() constructor. Simple types, like dtype('float32'), have a descr
+    which looks like a record array with one field with '' as a name. The
+    dtype() constructor interprets this as a request to give a default name.
+    Instead, we construct descriptor that can be passed to dtype().
+
     """
     if dtype.names is not None:
         # This is a record array. The .descr is fine.
@@ -164,15 +168,16 @@ def write_array_header_1_0(fp, d):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
-    header = "{"
+    header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
-        header += "'%s': %s, " % (key, repr(value))
-    header += "}"
-    # Pad the header with spaces and a final newline such that the magic string,
-    # the header-length short and the header are aligned on a 16-byte boundary.
-    # Hopefully, some system, possibly memory-mapping, can take advantage of
-    # our premature optimization.
+        header.append("'%s': %s, " % (key, repr(value)))
+    header.append("}")
+    header = "".join(header)
+    # Pad the header with spaces and a final newline such that the magic
+    # string, the header-length short and the header are aligned on a 16-byte
+    # boundary.  Hopefully, some system, possibly memory-mapping, can take
+    # advantage of our premature optimization.
     current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
     topad = 16 - (current_header_len % 16)
     header = '%s%s\n' % (header, ' '*topad)
@@ -210,7 +215,8 @@ def read_array_header_1_0(fp):
     # header.
     hlength_str = fp.read(2)
     if len(hlength_str) != 2:
-        raise ValueError("EOF at %s before reading array header length" % fp.tell())
+        msg = "EOF at %s before reading array header length"
+        raise ValueError(msg % fp.tell())
     header_length = struct.unpack('<H', hlength_str)[0]
     header = fp.read(header_length)
     if len(header) != header_length:
@@ -225,24 +231,30 @@ def read_array_header_1_0(fp):
     try:
         d = safe_eval(header)
     except SyntaxError, e:
-        raise ValueError("Cannot parse header: %r\nException: %r" % (header, e))
+        msg = "Cannot parse header: %r\nException: %r"
+        raise ValueError(msg % (header, e))
     if not isinstance(d, dict):
-        raise ValueError("Header is not a dictionary: %r" % d)
+        msg = "Header is not a dictionary: %r"
+        raise ValueError(msg % d)
     keys = d.keys()
     keys.sort()
     if keys != ['descr', 'fortran_order', 'shape']:
-        raise ValueError("Header does not contain the correct keys: %r" % (keys,))
+        msg = "Header does not contain the correct keys: %r"
+        raise ValueError(msg % (keys,))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
         not numpy.all([isinstance(x, int) for x in d['shape']])):
-        raise ValueError("shape is not valid: %r" % (d['shape'],))
+        msg = "shape is not valid: %r"
+        raise ValueError(msg % (d['shape'],))
     if not isinstance(d['fortran_order'], bool):
-        raise ValueError("fortran_order is not a valid bool: %r" % (d['fortran_order'],))
+        msg = "fortran_order is not a valid bool: %r"
+        raise ValueError(msg % (d['fortran_order'],))
     try:
         dtype = numpy.dtype(d['descr'])
     except TypeError, e:
-        raise ValueError("descr is not a valid dtype descriptor: %r" % (d['descr'],))
+        msg = "descr is not a valid dtype descriptor: %r"
+        raise ValueError(msg % (d['descr'],))
 
     return d['shape'], d['fortran_order'], dtype
 
@@ -262,12 +274,13 @@ def write_array(fp, array, version=(1,0)):
 
     Raises
     ------
-    ValueError if the array cannot be persisted.
-    Various other errors from pickling if the array contains Python objects as
-    part of its dtype.
+    ValueError if the array cannot be persisted.  Various other errors from
+    pickling if the array contains Python objects as part of its dtype.
+
     """
     if version != (1, 0):
-        raise ValueError("we only support format version (1,0), not %s" % (version,))
+        msg = "we only support format version (1,0), not %s"
+        raise ValueError(msg % (version,))
     fp.write(magic(*version))
     write_array_header_1_0(fp, header_data_from_array_1_0(array))
     if array.dtype.hasobject:
@@ -275,8 +288,8 @@ def write_array(fp, array, version=(1,0)):
         # Instead, we will pickle it out with version 2 of the pickle protocol.
         cPickle.dump(array, fp, protocol=2)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
-        # Use a suboptimal, possibly memory-intensive, but correct way to handle
-        # Fortran-contiguous arrays.
+        # Use a suboptimal, possibly memory-intensive, but correct way to
+        # handle Fortran-contiguous arrays.
         fp.write(array.data)
     else:
         if isinstance(fp, file):
@@ -302,10 +315,12 @@ def read_array(fp):
     Raises
     ------
     ValueError if the data is invalid.
+
     """
     version = read_magic(fp)
     if version != (1, 0):
-        raise ValueError("only support version (1,0) of file format, not %r" % (version,))
+        msg = "only support version (1,0) of file format, not %r"
+        raise ValueError(msg % (version,))
     shape, fortran_order, dtype = read_array_header_1_0(fp)
     if len(shape) == 0:
         count = 1
@@ -321,7 +336,8 @@ def read_array(fp):
             # We can use the fast fromfile() function.
             array = numpy.fromfile(fp, dtype=dtype, count=count)
         else:
-            # This is not a real file. We have to read it the memory-intensive way.
+            # This is not a real file. We have to read it the memory-intensive
+            # way.
             # XXX: we can probably chunk this to avoid the memory hit.
             data = fp.read(count * dtype.itemsize)
             array = numpy.fromstring(data, dtype=dtype, count=count)
@@ -367,12 +383,14 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # We are creating the file, not reading it.
         # Check if we ought to create the file.
         if version != (1, 0):
-            raise ValueError("only support version (1,0) of file format, not %r" % (version,))
+            msg = "only support version (1,0) of file format, not %r"
+            raise ValueError(msg % (version,))
         # Ensure that the given dtype is an authentic dtype object rather than
         # just something that can be interpreted as a dtype object.
         dtype = numpy.dtype(dtype)
         if dtype.hasobject:
-            raise ValueError("the dtype includes Python objects; the array cannot be memory-mapped")
+            msg = "Array can't be memory-mapped: Python objects in dtype."
+            raise ValueError(msg)
         d = dict(
             descr=dtype_to_descr(dtype),
             fortran_order=fortran_order,
@@ -392,10 +410,12 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         try:
             version = read_magic(fp)
             if version != (1, 0):
-                raise ValueError("only support version (1,0) of file format, not %r" % (version,))
+                msg = "only support version (1,0) of file format, not %r"
+                raise ValueError(msg % (version,))
             shape, fortran_order, dtype = read_array_header_1_0(fp)
             if dtype.hasobject:
-                raise ValueError("the dtype includes Python objects; the array cannot be memory-mapped")
+                msg = "Array can't be memory-mapped: Python objects in dtype."
+                raise ValueError(msg)
             offset = fp.tell()
         finally:
             fp.close()
