@@ -1,5 +1,8 @@
 # :Author:    Travis Oliphant
 
+# API declaration section.  This basically exposes the NumPy C API to
+# Pyrex/Cython programs.
+
 cdef extern from "numpy/arrayobject.h":
 
     cdef enum NPY_TYPES:
