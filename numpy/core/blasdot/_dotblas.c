@@ -234,12 +234,20 @@ dotblas_matrixproduct(PyObject *dummy, PyObject *args)
     }
 
     dtype = PyArray_DescrFromType(typenum);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED, NULL);
-    if (ap1 == NULL) return NULL;
+    if (dtype == NULL) {
+        return NULL;
+    }
     Py_INCREF(dtype);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED, NULL);
+    if (ap1 == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED, NULL);
-    if (ap2 == NULL) goto fail;
-
+    if (ap2 == NULL) {
+        Py_DECREF(ap1);
+        return NULL;
+    }
 
     if ((ap1->nd > 2) || (ap2->nd > 2)) {
 	/* This function doesn't handle dimensions greater than 2 
