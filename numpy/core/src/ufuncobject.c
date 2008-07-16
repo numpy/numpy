@@ -1285,21 +1285,22 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
 static int
 _has_reflected_op(PyObject *op, char *name)
 {
-    _GETATTR_(add, radd)
-        _GETATTR_(subtract, rsub)
-        _GETATTR_(multiply, rmul)
-        _GETATTR_(divide, rdiv)
-        _GETATTR_(true_divide, rtruediv)
-        _GETATTR_(floor_divide, rfloordiv)
-        _GETATTR_(remainder, rmod)
-        _GETATTR_(power, rpow)
-        _GETATTR_(left_shift, rrlshift)
-        _GETATTR_(right_shift, rrshift)
-        _GETATTR_(bitwise_and, rand)
-        _GETATTR_(bitwise_xor, rxor)
-        _GETATTR_(bitwise_or, ror)
-        return 0;
+    _GETATTR_(add, radd);
+    _GETATTR_(subtract, rsub);
+    _GETATTR_(multiply, rmul);
+    _GETATTR_(divide, rdiv);
+    _GETATTR_(true_divide, rtruediv);
+    _GETATTR_(floor_divide, rfloordiv);
+    _GETATTR_(remainder, rmod);
+    _GETATTR_(power, rpow);
+    _GETATTR_(left_shift, rlshift);
+    _GETATTR_(right_shift, rrshift);
+    _GETATTR_(bitwise_and, rand);
+    _GETATTR_(bitwise_xor, rxor);
+    _GETATTR_(bitwise_or, ror);
+    return 0;
 }
+
 
 #undef _GETATTR_
 
