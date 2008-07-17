@@ -327,7 +327,7 @@ class TestMRecords(TestCase):
     #
     def test_exotic_formats(self):
         "Test that 'exotic' formats are processed properly"
-        easy = mrecarray(1, dtype=[('i',int), ('s','|S3'), ('f',float)])
+        easy = mrecarray(1, dtype=[('i',int), ('s','|S8'), ('f',float)])
         easy[0] = masked
         assert_equal(easy.filled(1).item(), (1,'1',1.))
         #

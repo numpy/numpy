@@ -937,7 +937,7 @@ class TestFillingValues(TestCase):
     def test_fillvalue_exotic_dtype(self):
         "Tests yet more exotic flexible dtypes"
         _check_fill_value = np.ma.core._check_fill_value
-        ndtype = [('i',int), ('s','|S3'), ('f',float)]
+        ndtype = [('i',int), ('s','|S8'), ('f',float)]
         control = np.array((default_fill_value(0),
                             default_fill_value('0'),
                             default_fill_value(0.),),
