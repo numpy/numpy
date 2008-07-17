@@ -426,7 +426,7 @@ class TestMaskedArray(TestCase):
 
     def test_filled_w_flexible_dtype(self):
         "Test filled w/ flexible dtype"
-        flexi = array([(1,1,1)], dtype=[('i',int), ('s','|S3'), ('f',float)])
+        flexi = array([(1,1,1)], dtype=[('i',int), ('s','|S8'), ('f',float)])
         flexi[0] = masked
         assert_equal(flexi.filled(),
                      np.array([(default_fill_value(0),
