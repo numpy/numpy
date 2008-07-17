@@ -142,6 +142,10 @@ class TestFromstring(NumpyTestCase):
         assert_array_equal(a, [1.,2.,3.,4.])
         assert_array_equal(a,b)
 
+    def test_malformed(self):
+        a = fromstring('1.234 1,234', sep=' ')
+        assert_array_equal(a, [1.234, 1.])
+
 class TestZeroRank(NumpyTestCase):
     def setUp(self):
         self.d = array(0), array('x', object)
@@ -800,6 +804,14 @@ class TestFromToFile(NumpyTestCase):
         f.close()
         y = np.fromfile(filename,dtype=self.dtype)
         assert_array_equal(y,self.x.flat)
+
+    def test_malformed(self):
+        filename = tempfile.mktemp()
+        f = open(filename,'w')
+        f.write("1.234 1,234")
+        f.close()
+        y = np.fromfile(filename, sep=' ')
+        assert_array_equal(y, [1.234, 1.])
 
 class TestFromBuffer(ParametricTestCase):
     def tst_basic(self,buffer,expected,kwargs):
