@@ -38,7 +38,7 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'isMA', 'isMaskedArray', 'is_mask', 'is_masked', 'isarray',
            'left_shift', 'less', 'less_equal', 'load', 'loads', 'log', 'log10',
            'logical_and', 'logical_not', 'logical_or', 'logical_xor',
-           'make_mask', 'make_mask_none', 'mask_or', 'masked',
+           'make_mask', 'make_mask_descr', 'make_mask_none', 'mask_or', 'masked',
            'masked_array', 'masked_equal', 'masked_greater',
            'masked_greater_equal', 'masked_inside', 'masked_invalid',
            'masked_less','masked_less_equal', 'masked_not_equal',
@@ -125,7 +125,10 @@ def default_fill_value(obj):
     if hasattr(obj,'dtype'):
         defval = default_filler[obj.dtype.kind]
     elif isinstance(obj, np.dtype):
-        defval = default_filler[obj.kind]
+        if obj.subdtype:
+            defval = default_filler[obj.subdtype[0].kind]
+        else:
+            defval = default_filler[obj.kind]
     elif isinstance(obj, float):
         defval = default_filler['f']
     elif isinstance(obj, int) or isinstance(obj, long):
@@ -185,26 +188,28 @@ def maximum_fill_value(obj):
 
 def _check_fill_value(fill_value, ndtype):
     ndtype = np.dtype(ndtype)
-    nbfields = len(ndtype)
+    fields = ndtype.fields
     if fill_value is None:
-        if nbfields >= 1:
-            fill_value = np.array(tuple([default_fill_value(np.dtype(d))
-                                         for (_, d) in ndtype.descr]),
-                                  dtype=ndtype)
+        if fields:
+            fdtype = [(_[0], _[1]) for _ in ndtype.descr]
+            fill_value = np.array(tuple([default_fill_value(fields[n][0])
+                                         for n in ndtype.names]),
+                                  dtype=fdtype)
         else:
             fill_value = default_fill_value(ndtype)
-    elif nbfields >= 1:
+    elif fields:
+        fdtype = [(_[0], _[1]) for _ in ndtype.descr]
         if isinstance(fill_value, ndarray):
             try:
-                fill_value = np.array(fill_value, copy=False, dtype=ndtype)
+                fill_value = np.array(fill_value, copy=False, dtype=fdtype)
             except ValueError:
                 err_msg = "Unable to transform %s to dtype %s"
-                raise ValueError(err_msg % (fill_value,ndtype))
+                raise ValueError(err_msg % (fill_value,fdtype))
         else:
-            fval = np.resize(fill_value, nbfields)
-            fill_value = tuple([np.asarray(f).astype(d).item()
-                                for (f, (_, d)) in zip(fval, ndtype.descr)])
-            fill_value = np.array(fill_value, copy=False, dtype=ndtype)
+            fval = np.resize(fill_value, len(ndtype.descr))
+            fill_value = [np.asarray(f).astype(desc[1]).item()
+                          for (f, desc) in zip(fval, ndtype.descr)]
+            fill_value = np.array(tuple(fill_value), copy=False, dtype=fdtype)
     else:
         if isinstance(fill_value, basestring) and (ndtype.char not in 'SV'):
             fill_value = default_fill_value(ndtype)
@@ -726,6 +731,20 @@ fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(), 0, 1)
 #####--------------------------------------------------------------------------
 #---- --- Mask creation functions ---
 #####--------------------------------------------------------------------------
+
+def make_mask_descr(ndtype):
+    """Constructs a dtype description list from a given dtype.
+    Each field is set to a bool.
+    
+    """
+    if ndtype.names:
+        mdescr = [list(_) for _ in ndtype.descr]
+        for m in mdescr:
+            m[1] = '|b1'
+        return [tuple(_) for _ in mdescr]
+    else:
+        return MaskType
+
 def get_mask(a):
     """Return the mask of a, if any, or nomask.
 
@@ -796,21 +815,21 @@ def make_mask(m, copy=False, shrink=True, flag=None):
     else:
         return result
 
-def make_mask_none(newshape, fields=None):
+def make_mask_none(newshape, dtype=None):
     """Return a mask of shape s, filled with False.
 
     Parameters
     ----------
     news : tuple
         A tuple indicating the shape of the final mask.
-    fields: {None, string sequence}, optional
-        A list of field names, if needed.
+    dtype: {None, dtype}, optional
+        A dtype.
 
     """
-    if not fields:
+    if dtype is None:
         result = np.zeros(newshape, dtype=MaskType)
     else:
-        result = np.zeros(newshape, dtype=[(n, MaskType) for n in fields])
+        result = np.zeros(newshape, dtype=make_mask_descr(dtype))
     return result
 
 def mask_or (m1, m2, copy=False, shrink=True):
@@ -1219,7 +1238,7 @@ class MaskedArray(ndarray):
         names_ = _data.dtype.names or ()
         # Type of the mask
         if names_:
-            mdtype = [(n, MaskType) for n in names_]
+            mdtype = make_mask_descr(_data.dtype)
         else:
             mdtype = MaskType
         # Case 1. : no mask in input ............
@@ -1441,17 +1460,18 @@ class MaskedArray(ndarray):
             return
         #........................................
 #        ndgetattr = ndarray.__getattribute__
-        _names = ndarray.__getattribute__(self,'dtype').names or ()
         _data = self._data
+        _dtype = ndarray.__getattribute__(_data,'dtype')
         _mask = ndarray.__getattribute__(self,'_mask')
+        nbfields = len(_dtype.names or ())
         #........................................
         if value is masked:
             # The mask wasn't set: create a full version...
             if _mask is nomask:
-                _mask = self._mask = make_mask_none(self.shape, _names)
+                _mask = self._mask = make_mask_none(self.shape, _dtype)
             # Now, set the mask to its value.
-            if _names:
-                _mask[indx] = tuple([True,] * len(_names))
+            if nbfields:
+                _mask[indx] = tuple([True,] * nbfields)
             else:
                 _mask[indx] = True
             if not self._isfield:
@@ -1462,13 +1482,13 @@ class MaskedArray(ndarray):
         dval = value
         # Get the _mask part of the new value
         mval = getattr(value, '_mask', nomask)
-        if _names and mval is nomask:
-            mval = tuple([False] * len(_names))
+        if nbfields and mval is nomask:
+            mval = tuple([False] * nbfields)
         if _mask is nomask:
             # Set the data, then the mask
             ndarray.__setitem__(_data, indx, dval)
             if mval is not nomask:
-                _mask = self._mask = make_mask_none(self.shape, _names)
+                _mask = self._mask = make_mask_none(self.shape, _dtype)
                 ndarray.__setitem__(_mask, indx, mval)
         elif not self._hardmask:
             # Unshare the mask if necessary to avoid propagation
@@ -1482,7 +1502,7 @@ class MaskedArray(ndarray):
             indx = indx * umath.logical_not(_mask)
             ndarray.__setitem__(_data,indx,dval)
         else:
-            if _names:
+            if nbfields:
                 err_msg = "Flexible 'hard' masks are not yet supported..."
                 raise NotImplementedError(err_msg)
             mindx = mask_or(_mask[indx], mval, copy=True)
@@ -1517,7 +1537,7 @@ class MaskedArray(ndarray):
         """Set the mask.
 
         """
-        names = ndarray.__getattribute__(self,'dtype').names
+        idtype = ndarray.__getattribute__(self,'dtype')
         current_mask = ndarray.__getattribute__(self,'_mask')
         if mask is masked:
             mask = True
@@ -1526,9 +1546,9 @@ class MaskedArray(ndarray):
             # Just don't do anything is there's nothing to do...
             if mask is nomask:
                 return
-            current_mask = self._mask = make_mask_none(self.shape, names)
+            current_mask = self._mask = make_mask_none(self.shape, idtype)
         # No named fields.........
-        if names is None:
+        if idtype.names is None:
             # Hardmask: don't unmask the data
             if self._hardmask:
                 current_mask |= mask
@@ -1559,7 +1579,7 @@ class MaskedArray(ndarray):
                                     dtype=mdtype)
             # Hardmask: don't unmask the data
             if self._hardmask:
-                for n in names:
+                for n in idtype.names:
                     current_mask[n] |= mask[n]
             # Softmask: set everything to False
             else:
@@ -1584,13 +1604,20 @@ class MaskedArray(ndarray):
     A record is masked when all the fields are masked.
 
         """
-        if self.dtype.names is None:
-            return self._mask
-        elif self.size > 1:
-            return self._mask.view((bool_, len(self.dtype))).all(1)
+        _mask = ndarray.__getattribute__(self, '_mask').view(ndarray)
+        if _mask.dtype.names is None:
+            return _mask
+        if _mask.size > 1:
+            axis = 1
         else:
-            return self._mask.view((bool_, len(self.dtype))).all()
-    
+            axis=None
+        #
+        try:
+            return _mask.view((bool_, len(self.dtype))).all(axis)
+        except ValueError:
+            return np.all([[f[n].all() for n in _mask.dtype.names]
+                           for f in _mask], axis=axis)
+
     def _setrecordmask(self):
         """Return the mask of the records.
     A record is masked when all the fields are masked.
@@ -1707,15 +1734,17 @@ class MaskedArray(ndarray):
         #
         if fill_value is None:
             fill_value = self.fill_value
+        else:
+            fill_value = _check_fill_value(fill_value, self.dtype)
         #
         if self is masked_singleton:
             return np.asanyarray(fill_value)
         #
-        if len(self.dtype):
+        if m.dtype.names:
             result = self._data.copy()
             for n in result.dtype.names:
                 field = result[n]
-                np.putmask(field, self._mask[n], self.fill_value[n])
+                np.putmask(field, self._mask[n], fill_value[n])
         elif not m.any():
             return self._data
         else:
@@ -3515,7 +3544,7 @@ def putmask(a, mask, values): #, mode='raise'):
     if getmask(a) is nomask:
         if valmask is not nomask:
             a._sharedmask = True
-            a._mask = make_mask_none(a.shape, a.dtype.names)
+            a._mask = make_mask_none(a.shape, a.dtype)
             np.putmask(a._mask, mask, valmask)
     elif a._hardmask:
         if valmask is not nomask:
@@ -3899,3 +3928,5 @@ ones = _convert2ma('ones')
 zeros = _convert2ma('zeros')
 
 ###############################################################################
+
+

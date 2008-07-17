@@ -141,7 +141,7 @@ class TestMaskedArray(TestCase):
 
     def test_creation_maskcreation(self):
         "Tests how masks are initialized at the creation of Maskedarrays."
-        data = arange(24, dtype=float_)
+        data = arange(24, dtype=float)
         data[[3,6,15]] = masked
         dma_1 = MaskedArray(data)
         assert_equal(dma_1.mask, data.mask)
@@ -422,7 +422,19 @@ class TestMaskedArray(TestCase):
         idx = atest.mask
         atest[idx] = btest[idx]
         assert_equal(atest,[20])
-    #........................
+
+
+    def test_filled_w_flexible_dtype(self):
+        "Test filled w/ flexible dtype"
+        flexi = array([(1,1,1)], dtype=[('i',int), ('s','|S3'), ('f',float)])
+        flexi[0] = masked
+        assert_equal(flexi.filled(),
+                     np.array([(default_fill_value(0),
+                                default_fill_value('0'),
+                                default_fill_value(0.),)], dtype=flexi.dtype))
+        flexi[0] = masked
+        assert_equal(flexi.filled(1),
+                     np.array([(1, '1', 1.)], dtype=flexi.dtype))
 
 #------------------------------------------------------------------------------
 
@@ -845,12 +857,12 @@ class TestFillingValues(TestCase):
         assert_equal(fval.item(), [default_fill_value(0),
                                    default_fill_value(0.),
                                    default_fill_value("0")])
-        #.....Using a flexi-ndarray as fill_value should work
+        #.....Using a flexible type as fill_value should work
         fill_val = np.array((-999,-999.9,"???"),dtype=ndtype)
         fval = _check_fill_value(fill_val, ndtype)
         assert(isinstance(fval,ndarray))
         assert_equal(fval.item(), [-999,-999.9,"???"])
-        #.....Using a flexi-ndarray w/ a different type shouldn't matter
+        #.....Using a flexible type w/ a different type shouldn't matter
         fill_val = np.array((-999,-999.9,"???"),
                             dtype=[("A",int),("B",float),("C","|S3")])
         fval = _check_fill_value(fill_val, ndtype)
@@ -866,7 +878,7 @@ class TestFillingValues(TestCase):
         fval = _check_fill_value(fill_val, ndtype)
         assert(isinstance(fval,ndarray))
         assert_equal(fval.item(), [-999,-999.9,"???"])
-        #.....One-field-only flexi-ndarray should work as well
+        #.....One-field-only flexible type should work as well
         ndtype = [("a",int)]
         fval = _check_fill_value(-999, ndtype)
         assert(isinstance(fval,ndarray))
@@ -904,7 +916,7 @@ class TestFillingValues(TestCase):
         series = data[[0,2,1]]
         assert_equal(series._fill_value, data._fill_value)
         #
-        mtype = [('f',float_),('s','|S3')]
+        mtype = [('f',float),('s','|S3')]
         x = array([(1,'a'),(2,'b'),(pi,'pi')], dtype=mtype)
         x.fill_value=999
         assert_equal(x.fill_value.item(),[999.,'999'])
@@ -918,9 +930,36 @@ class TestFillingValues(TestCase):
         #
         x = array([1,2,3.1])
         x.fill_value = 999
-        assert_equal(np.asarray(x.fill_value).dtype, float_)
+        assert_equal(np.asarray(x.fill_value).dtype, float)
         assert_equal(x.fill_value, 999.)
 
+
+    def test_fillvalue_exotic_dtype(self):
+        "Tests yet more exotic flexible dtypes"
+        _check_fill_value = np.ma.core._check_fill_value
+        ndtype = [('i',int), ('s','|S3'), ('f',float)]
+        control = np.array((default_fill_value(0),
+                            default_fill_value('0'),
+                            default_fill_value(0.),),
+                            dtype=ndtype)
+        assert_equal(_check_fill_value(None, ndtype), control)
+        # The shape shouldn't matter
+        ndtype = [('f0', float, (2, 2))]
+        control = np.array((default_fill_value(0.),),
+                           dtype=[('f0',float)])
+        assert_equal(_check_fill_value(None, ndtype), control)
+        control = np.array((0,), dtype=[('f0',float)])
+        assert_equal(_check_fill_value(0, ndtype), control)
+        # 
+        ndtype = np.dtype("int, (2,3)float, float")
+        control = np.array((default_fill_value(0),
+                            default_fill_value(0.),
+                            default_fill_value(0.),),
+                           dtype="int, float, float")
+        test = _check_fill_value(None, ndtype)
+        assert_equal(test, control)
+        control = np.array((0,0,0), dtype="int, float, float")
+        assert_equal(_check_fill_value(0, ndtype), control)
 
 #------------------------------------------------------------------------------
 
@@ -1038,7 +1077,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         """Test of inplace subtractions"""
         (x, y, xm) = self.floatdata
         m = xm.mask
-        a = arange(10, dtype=float_)
+        a = arange(10, dtype=float)
         a[-1] = masked
         x -= a
         xm -= a
@@ -1058,7 +1097,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         """Test of inplace multiplication"""
         (x, y, xm) = self.floatdata
         m = xm.mask
-        a = arange(10, dtype=float_)
+        a = arange(10, dtype=float)
         a[-1] = masked
         x *= a
         xm *= a
@@ -1089,7 +1128,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         """Test of inplace division"""
         (x, y, xm) = self.floatdata
         m = xm.mask
-        a = arange(10, dtype=float_)
+        a = arange(10, dtype=float)
         a[-1] = masked
         x /= a
         xm /= a
@@ -1341,7 +1380,7 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_empty(self):
         "Tests empty/like"
-        datatype = [('a',int_),('b',float_),('c','|S8')]
+        datatype = [('a',int_),('b',float),('c','|S8')]
         a = masked_array([(1,1.1,'1.1'),(2,2.2,'2.2'),(3,3.3,'3.3')],
                          dtype=datatype)
         assert_equal(len(a.fill_value.item()), len(datatype))
@@ -1606,7 +1645,7 @@ class TestMaskedArrayMethods(TestCase):
         x = array(zip([1,2,3],
                       [1.1,2.2,3.3],
                       ['one','two','thr']),
-                  dtype=[('a',int_),('b',float_),('c','|S8')])
+                  dtype=[('a',int_),('b',float),('c','|S8')])
         x[-1] = masked
         assert_equal(x.tolist(), [(1,1.1,'one'),(2,2.2,'two'),(None,None,None)])
 
@@ -1690,8 +1729,8 @@ class TestMaskArrayMathMethod(TestCase):
         (x,X,XX,m,mx,mX,mXX,m2x,m2X,m2XX) = self.d
         (n,m) = X.shape
         assert_equal(mx.ptp(),mx.compressed().ptp())
-        rows = np.zeros(n,np.float_)
-        cols = np.zeros(m,np.float_)
+        rows = np.zeros(n,np.float)
+        cols = np.zeros(m,np.float)
         for k in range(m):
             cols[k] = mX[:,k].compressed().ptp()
         for k in range(n):
@@ -1857,7 +1896,7 @@ class TestMaskedArrayFunctions(TestCase):
 
     def test_masked_where_oddities(self):
         """Tests some generic features."""
-        atest = ones((10,10,10), dtype=float_)
+        atest = ones((10,10,10), dtype=float)
         btest = zeros(atest.shape, MaskType)
         ctest = masked_where(btest,atest)
         assert_equal(atest,ctest)

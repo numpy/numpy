@@ -119,10 +119,11 @@ class MaskedRecords(MaskedArray, object):
                 **options):
         #
         self = recarray.__new__(cls, shape, dtype=dtype, buf=buf, offset=offset,
-                                strides=strides, formats=formats,
-                                byteorder=byteorder, aligned=aligned,)
+                                strides=strides, formats=formats, names=names,
+                                titles=titles, byteorder=byteorder,
+                                aligned=aligned,)
         #
-        mdtype = [(k,'|b1') for (k,_) in self.dtype.descr]
+        mdtype = ma.make_mask_descr(self.dtype)
         if mask is nomask or not np.size(mask):
             if not keep_mask:
                 self._mask = tuple([False]*len(mdtype))
@@ -156,12 +157,11 @@ class MaskedRecords(MaskedArray, object):
         # Make sure we have a _fieldmask by default ..
         _fieldmask = getattr(obj, '_fieldmask', None)
         if _fieldmask is None:
-            mdescr = [(n,'|b1') for (n,_) in self.dtype.descr]
             objmask = getattr(obj, '_mask', nomask)
             if objmask is nomask:
-                _mask = np.empty(self.shape, dtype=mdescr).view(recarray)
-                _mask.flat = tuple([False]*len(mdescr))
+                _mask = ma.make_mask_none(self.shape, dtype=self.dtype)
             else:
+                mdescr = ma.make_mask_descr(self.dtype)
                 _mask = narray([tuple([m]*len(mdescr)) for m in objmask],
                                dtype=mdescr).view(recarray)
         else:
