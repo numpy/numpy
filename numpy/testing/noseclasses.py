@@ -178,7 +178,7 @@ class numpyDoctest(npd.Doctest):
         self.finder = numpyDocTestFinder()
         self.parser = doctest.DocTestParser()
 
-    # Turns on whitespace normalization, set a minimal execution context
+    # Turn on whitespace normalization, set a minimal execution context
     # for doctests, implement a "#random" directive to allow executing a
     # command while ignoring its output.
     def loadTestsFromModule(self, module):
@@ -221,7 +221,7 @@ class numpyDoctest(npd.Doctest):
                 p = pkg_name.split('.')
                 p1 = '.'.join(p[:-1])
                 p2 = p[-1]
-                test.globs[p2] = __import__(pkg_name, fromlist=[p2])
+                test.globs[p2] = __import__(pkg_name, test.globs, {}, [p2])
                     
                 print 'additional import for %s: from %s import %s' % (test.filename, p1, p2)
                 print '    (%s): %r' % (pkg_name, test.globs[p2])
@@ -240,8 +240,7 @@ class numpyDoctest(npd.Doctest):
         numpy.set_printoptions(**print_state)
 
 
-    # Implement a wantFile method so that we can ignore NumPy-specific 
-    # build files that shouldn't be searched for tests
+    # Ignore NumPy-specific build files that shouldn't be searched for tests
     def wantFile(self, file):
         bn = os.path.basename(file)
         if bn in _doctest_ignore:

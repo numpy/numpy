@@ -236,7 +236,7 @@ class NoseTester(object):
         from noseclasses import numpyDoctest
         plugins = [numpyDoctest(), ]
         for m, p in nose.plugins.builtin.builtins:
-            mod = __import__(m,fromlist=[p])
+            mod = __import__(m,globals(),{},[p])
             plug = getattr(mod, p)
             plugins.append(plug())
 
