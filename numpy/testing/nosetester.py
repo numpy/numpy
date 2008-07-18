@@ -7,125 +7,26 @@ import os
 import sys
 import warnings
 
-# Patches nose functionality to add NumPy-specific features
-# Note: This class should only be instantiated if nose has already
-# been successfully imported
-class NoseCustomizer:
-    __patched = False
+def get_package_name(filepath):
+    # find the package name given a path name that's part of the package
+    fullpath = filepath[:]
+    pkg_name = []
+    while 'site-packages' in filepath:
+        filepath, p2 = os.path.split(filepath)
+        if p2 == 'site-packages':
+            break
+        pkg_name.append(p2)
 
-    def __init__(self):
-        if NoseCustomizer.__patched:
-            return
+    # if package name determination failed, just default to numpy/scipy
+    if not pkg_name:
+        if 'scipy' in fullpath:
+            return 'scipy'
+        else:
+            return 'numpy'
 
-        NoseCustomizer.__patched = True
-
-        # used to monkeypatch the nose doctest classes
-        def monkeypatch_method(cls):
-            def decorator(func):
-                setattr(cls, func.__name__, func)
-                return func
-            return decorator
-
-        from nose.plugins import doctests as npd
-        from nose.plugins.base import Plugin
-        from nose.util import src, tolist
-        import numpy
-        import doctest
-
-        # second-chance checker; if the default comparison doesn't 
-        # pass, then see if the expected output string contains flags that
-        # tell us to ignore the output
-        class NumpyDoctestOutputChecker(doctest.OutputChecker):
-            def check_output(self, want, got, optionflags):
-                ret = doctest.OutputChecker.check_output(self, want, got, 
-                                                         optionflags)
-                if not ret:
-                    if "#random" in want:
-                        return True
-
-                return ret
-
-
-        # Subclass nose.plugins.doctests.DocTestCase to work around a bug in 
-        # its constructor that blocks non-default arguments from being passed
-        # down into doctest.DocTestCase
-        class NumpyDocTestCase(npd.DocTestCase):
-            def __init__(self, test, optionflags=0, setUp=None, tearDown=None,
-                         checker=None, obj=None, result_var='_'):
-                self._result_var = result_var
-                self._nose_obj = obj
-                doctest.DocTestCase.__init__(self, test, 
-                                             optionflags=optionflags,
-                                             setUp=setUp, tearDown=tearDown, 
-                                             checker=checker)
-
-
-
-        # This will replace the existing loadTestsFromModule method of 
-        # nose.plugins.doctests.Doctest.  It turns on whitespace normalization,
-        # adds an implicit "import numpy as np" for doctests, and adds a
-        # "#random" directive to allow executing a command while ignoring its
-        # output.
-        @monkeypatch_method(npd.Doctest)
-        def loadTestsFromModule(self, module):
-            if not self.matches(module.__name__):
-                npd.log.debug("Doctest doesn't want module %s", module)
-                return
-            try:
-                tests = self.finder.find(module)
-            except AttributeError:
-                # nose allows module.__test__ = False; doctest does not and 
-                # throws AttributeError
-                return
-            if not tests:
-                return
-            tests.sort()
-            module_file = src(module.__file__)
-            for test in tests:
-                if not test.examples:
-                    continue
-                if not test.filename:
-                    test.filename = module_file
-
-                # Each doctest should execute in an environment equivalent to
-                # starting Python and executing "import numpy as np"
-                #
-                # Note: __file__ allows the doctest in NoseTester to run
-                # without producing an error
-                test.globs = {'__builtins__':__builtins__,
-                              '__file__':'__main__', 
-                              '__name__':'__main__', 
-                              'np':numpy}
-
-                # always use whitespace and ellipsis options
-                optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
-
-                yield NumpyDocTestCase(test, 
-                                       optionflags=optionflags,
-                                       checker=NumpyDoctestOutputChecker())
-
-        # get original print options
-        print_state = numpy.get_printoptions()
-
-        # Add an afterContext method to nose.plugins.doctests.Doctest in order
-        # to restore print options to the original state after each doctest
-        @monkeypatch_method(npd.Doctest)
-        def afterContext(self):
-            numpy.set_printoptions(**print_state)
-
-        # Replace the existing wantFile method of nose.plugins.doctests.Doctest
-        # so that we can ignore NumPy-specific build files that shouldn't
-        # be searched for tests
-        old_wantFile = npd.Doctest.wantFile
-        ignore_files = ['generate_numpy_api.py', 'scons_support.py',
-                        'setupscons.py', 'setup.py']
-        def wantFile(self, file):
-            bn = os.path.basename(file)
-            if bn in ignore_files:
-                return False
-            return old_wantFile(self, file)
-
-        npd.Doctest.wantFile = wantFile
+    # otherwise, reverse to get correct order and return
+    pkg_name.reverse()
+    return '.'.join(pkg_name)
 
 
 def import_nose():
@@ -143,12 +44,11 @@ def import_nose():
             fine_nose = False
 
     if not fine_nose:
-        raise ImportError('Need nose >=%d.%d.%d for tests - see '
-            'http://somethingaboutorange.com/mrl/projects/nose' % 
-            minimum_nose_version)
+        msg = 'Need nose >= %d.%d.%d for tests - see ' \
+              'http://somethingaboutorange.com/mrl/projects/nose' % \
+              minimum_nose_version
 
-    # nose was successfully imported; make customizations for doctests
-    NoseCustomizer()
+        raise ImportError(msg)
 
     return nose
 
@@ -159,6 +59,30 @@ def run_module_suite(file_to_run = None):
         assert file_to_run is not None
 
     import_nose().run(argv=['',file_to_run])
+
+# contructs NoseTester method docstrings
+def _docmethod(meth, testtype):
+    test_header = \
+        '''Parameters
+        ----------
+        label : {'fast', 'full', '', attribute identifer}
+            Identifies the %(testtype)ss to run.  This can be a string to
+            pass to the nosetests executable with the '-A' option, or one of
+            several special values.
+            Special values are:
+                'fast' - the default - which corresponds to nosetests -A option
+                         of 'not slow'.
+                'full' - fast (as above) and slow %(testtype)ss as in the
+                         no -A option to nosetests - same as ''
+            None or '' - run all %(testtype)ss
+            attribute_identifier - string passed directly to nosetests as '-A'
+        verbose : integer
+            verbosity value for test outputs, 1-10
+        extra_argv : list
+            List with any extra args to pass to nosetests''' \
+            % {'testtype': testtype}
+    
+    meth.__doc__ = meth.__doc__ % {'test_header':test_header}
 
 
 class NoseTester(object):
@@ -201,60 +125,8 @@ class NoseTester(object):
 
         # find the package name under test; this name is used to limit coverage 
         # reporting (if enabled)
-        pkg_temp = package
-        pkg_name = []
-        while 'site-packages' in pkg_temp:
-            pkg_temp, p2 = os.path.split(pkg_temp)
-            if p2 == 'site-packages':
-                break
-            pkg_name.append(p2)
+        self.package_name = get_package_name(package)
 
-        # if package name determination failed, just default to numpy/scipy
-        if not pkg_name:
-            if 'scipy' in self.package_path:
-                self.package_name = 'scipy'
-            else:
-                self.package_name = 'numpy'
-        else:
-            pkg_name.reverse()
-            self.package_name = '.'.join(pkg_name)
-
-    def _add_doc(testtype):
-        ''' Decorator to add docstring to functions using test labels
-
-        Parameters
-        ----------
-        testtype : string
-            Type of test for function docstring
-        '''
-        def docit(func):
-            test_header = \
-        '''Parameters
-        ----------
-        label : {'fast', 'full', '', attribute identifer}
-            Identifies %(testtype)s to run.  This can be a string to pass to
-            the nosetests executable with the'-A' option, or one of
-            several special values.
-            Special values are:
-            'fast' - the default - which corresponds to
-                nosetests -A option of
-                'not slow'.
-            'full' - fast (as above) and slow %(testtype)s as in
-                no -A option to nosetests - same as ''
-            None or '' - run all %(testtype)ss
-            attribute_identifier - string passed directly to
-                nosetests as '-A'
-        verbose : integer
-            verbosity value for test outputs, 1-10
-        extra_argv : list
-            List with any extra args to pass to nosetests''' \
-            % {'testtype': testtype}
-            func.__doc__ = func.__doc__ % {
-                'test_header': test_header}
-            return func
-        return docit
-
-    @_add_doc('(testtype)')
     def _test_argv(self, label, verbose, extra_argv):
         ''' Generate argv for nosetest command
 
@@ -271,8 +143,8 @@ class NoseTester(object):
         if extra_argv:
             argv += extra_argv
         return argv
+
     
-    @_add_doc('test')
     def test(self, label='fast', verbose=1, extra_argv=None, doctests=False, 
              coverage=False, **kwargs):
         ''' Run tests for module using nose
@@ -285,7 +157,9 @@ class NoseTester(object):
             (Requires the coverage module: 
              http://nedbatchelder.com/code/modules/coverage.html)
         '''
-        old_args = set(['level', 'verbosity', 'all', 'sys_argv', 'testcase_pattern'])
+
+        old_args = set(['level', 'verbosity', 'all', 'sys_argv',
+                        'testcase_pattern'])
         unexpected_args = set(kwargs.keys()) - old_args
         if len(unexpected_args) > 0:
             ua = ', '.join(unexpected_args)
@@ -316,7 +190,10 @@ class NoseTester(object):
 
         argv = self._test_argv(label, verbose, extra_argv)
         if doctests:
-            argv+=['--with-doctest','--doctest-tests']
+            argv += ['--with-numpydoctest']
+            print "Running unit tests and doctests for %s" % self.package_name
+        else:
+            print "Running unit tests for %s" % self.package_name
 
         if coverage:
             argv+=['--cover-package=%s' % self.package_name, '--with-coverage',
@@ -342,8 +219,8 @@ class NoseTester(object):
                 """
                 if self.testRunner is None:
                     self.testRunner = nose.core.TextTestRunner(stream=self.config.stream,
-                                                     verbosity=self.config.verbosity,
-                                                     config=self.config)
+                                                               verbosity=self.config.verbosity,
+                                                               config=self.config)
                 plug_runner = self.config.plugins.prepareTestRunner(self.testRunner)
                 if plug_runner is not None:
                     self.testRunner = plug_runner
@@ -351,14 +228,21 @@ class NoseTester(object):
                 self.success = self.result.wasSuccessful()
                 return self.success
 
-        # reset doctest state
+        # reset doctest state on every run
         import doctest
         doctest.master = None
-            
-        t = NumpyTestProgram(argv=argv, exit=False)
+        
+        import nose.plugins.builtin
+        from noseclasses import numpyDoctest
+        plugins = [numpyDoctest(), ]
+        for m, p in nose.plugins.builtin.builtins:
+            mod = __import__(m,fromlist=[p])
+            plug = getattr(mod, p)
+            plugins.append(plug())
+
+        t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
         return t.result
 
-    @_add_doc('benchmark')
     def bench(self, label='fast', verbose=1, extra_argv=None):
         ''' Run benchmarks for module using nose
 
@@ -368,9 +252,14 @@ class NoseTester(object):
         argv += ['--match', r'(?:^|[\\b_\\.%s-])[Bb]ench' % os.sep]
         return nose.run(argv=argv)
 
+    # generate method docstrings
+    _docmethod(_test_argv, '(testtype)')
+    _docmethod(test, 'test')
+    _docmethod(bench, 'benchmark')
+
 
 ########################################################################
-# Doctests for NumPy-specific doctest modifications
+# Doctests for NumPy-specific nose/doctest modifications
 
 # try the #random directive on the output line
 def check_random_directive():
