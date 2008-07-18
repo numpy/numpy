@@ -1824,7 +1824,11 @@ class MaskedArray(ndarray):
                     res = self._data.astype("|O8")
                     res[m] = f
                 else:
-                    res = self._data.astype([(n,'|O8') for n in names])
+                    rdtype = [list(_) for _ in self.dtype.descr]
+                    for r in rdtype:
+                        r[1] = '|O8'
+                    rdtype = [tuple(_) for _ in rdtype]
+                    res = self._data.astype(rdtype)
                     for field in names:
                         np.putmask(res[field], m[field], f)
         else:
