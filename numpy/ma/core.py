@@ -3087,6 +3087,31 @@ masked_%(name)s(data = %(data)s,
     def tofile(self, fid, sep="", format="%s"):
         raise NotImplementedError("Not implemented yet, sorry...")
 
+    def torecords(self):
+        """Transforms a masked array into a flexible-type array with two fields:
+        * the ``_data`` field stores the ``_data`` part of the array;
+        * the ``_mask`` field stores the ``_mask`` part of the array;
+        
+        Warnings
+        --------
+        A side-effect of transforming a masked array into a flexible ndarray is 
+        that metainformation (``fill_value``, ...) will be lost.
+        
+        """
+        # Get the basic dtype ....
+        ddtype = self.dtype
+        # Make sure we have a mask
+        _mask = self._mask
+        if _mask is None:
+            _mask = make_mask_none(self.shape, ddtype)
+        # And get its dtype
+        mdtype = self._mask.dtype
+        #
+        record = np.ndarray(shape=self.shape,
+                            dtype=[('_data',ddtype),('_mask',mdtype)])
+        record['_data'] = self._data
+        record['_mask'] = self._mask
+        return record
     #--------------------------------------------
     # Pickling
     def __getstate__(self):

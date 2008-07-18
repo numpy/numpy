@@ -1650,6 +1650,38 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(x.tolist(), [(1,1.1,'one'),(2,2.2,'two'),(None,None,None)])
 
 
+    def test_torecords(self):
+        "Test the conversion to records"
+        data = arange(10)
+        record = data.torecords()
+        assert_equal(record['_data'], data._data)
+        assert_equal(record['_mask'], data._mask)
+        #
+        data[[0,1,2,-1]] = masked
+        record = data.torecords()
+        assert_equal(record['_data'], data._data)
+        assert_equal(record['_mask'], data._mask)
+        #
+        ndtype = [('i',int), ('s','|S3'), ('f',float)]
+        data = array([(i,s,f) for (i,s,f) in zip(np.arange(10),
+                                                 'ABCDEFGHIJKLM',
+                                                 np.random.rand(10))],
+                     dtype=ndtype)
+        data[[0,1,2,-1]] = masked
+        record = data.torecords()
+        assert_equal(record['_data'], data._data)
+        assert_equal(record['_mask'], data._mask)
+        #
+        ndtype = np.dtype("int, (2,3)float, float")
+        data = array([(i,f,ff) for (i,f,ff) in zip(np.arange(10),
+                                                   np.random.rand(10),
+                                                   np.random.rand(10))],
+                     dtype=ndtype)
+        data[[0,1,2,-1]] = masked
+        record = data.torecords()
+        assert_equal(record['_data'], data._data)
+        assert_equal(record['_mask'], data._mask)
+
 #------------------------------------------------------------------------------
 
 
