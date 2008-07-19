@@ -188,6 +188,12 @@ class NoseTester(object):
             label = ''
             doctests = True
 
+        # if doctests is in the extra args, remove it and set the doctest 
+        # flag so the NumPy doctester is used instead
+        if extra_argv and '--with-doctest' in extra_argv:
+            extra_argv.remove('--with-doctest')
+            doctests = True
+
         argv = self._test_argv(label, verbose, extra_argv)
         if doctests:
             argv += ['--with-numpydoctest']
@@ -231,14 +237,17 @@ class NoseTester(object):
         # reset doctest state on every run
         import doctest
         doctest.master = None
-        
-        import nose.plugins.builtin
+
+        # construct list of plugins, omitting the existing doctest plugin
+        import nose.plugins.builtin 
         from noseclasses import numpyDoctest
-        plugins = [numpyDoctest(), ]
-        for m, p in nose.plugins.builtin.builtins:
-            mod = __import__(m,globals(),{},[p])
-            plug = getattr(mod, p)
-            plugins.append(plug())
+        plugins = [numpyDoctest()]
+        for p in nose.plugins.builtin.plugins:
+            plug = p()
+            if plug.name == 'doctest':
+                continue
+
+            plugins.append(plug)
 
         t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
         return t.result
