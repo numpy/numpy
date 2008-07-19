@@ -174,7 +174,7 @@ class numpyDoctest(npd.Doctest):
     def configure(self, options, config):
         Plugin.configure(self, options, config)
         self.doctest_tests = True
-        self.extension = tolist(options.doctestExtension)
+#        self.extension = tolist(options.doctestExtension)
         self.finder = numpyDocTestFinder()
         self.parser = doctest.DocTestParser()
 
