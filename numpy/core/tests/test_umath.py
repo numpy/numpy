@@ -302,10 +302,10 @@ class TestC99(object):
             ((nan, inf), (inf,inf), 'XXX'), # now (nan, nan)
             ((-inf, 1.), (0.,inf), ''),
             ((inf, 1.), (inf,0.), ''),
-            ((-inf,nan), (nan, -inf), ''), # could also be +inf
+            ((-inf,nan), (nan, -inf), 'XXX'), # could also be +inf. raises 'invalid' on Sparc64
             ((inf, nan), (inf, nan),  ''),
-            ((nan, 1.), (nan, nan), ''),
-            ((nan, nan), (nan, nan), ''),
+            ((nan, 1.), (nan, nan), 'invalid-optional'),
+            ((nan, nan), (nan, nan), 'XXX'), # raises 'invalid' on Sparc64
         ]:
             yield self._check, np.sqrt, p, v, e
 
@@ -316,16 +316,16 @@ class TestC99(object):
             ((0., nan), (pi/2, nan), 'XXX'), # now (nan, nan)
             ((-0., nan), (pi/2, nan), 'XXX'), # now (nan, nan)
             ((1., inf), (pi/2, -inf), 'XXX'), # now (nan, -inf)
-            ((1., nan), (nan, nan), ''),
+            ((1., nan), (nan, nan), 'invalid-optional'),
             ((-inf, 1.), (pi, -inf), 'XXX'), # now (nan, -inf)
             ((inf, 1.), (0., -inf), 'XXX'), # now (nan, -inf)
             ((-inf, inf), (3*pi/4, -inf), 'XXX'), # now (nan, nan)
             ((inf, inf), (pi/4, -inf), 'XXX'), # now (nan, nan)
             ((inf, nan), (nan, +-inf), 'XXX'), # now (nan, nan)
             ((-inf, nan), (nan, +-inf), 'XXX'), # now: (nan, nan)
-            ((nan, 1.), (nan, nan), ''),
+            ((nan, 1.), (nan, nan), 'invalid-optional'),
             ((nan, inf), (nan, -inf), 'XXX'), # now: (nan, nan)
-            ((nan, nan), (nan, nan), ''),
+            ((nan, nan), (nan, nan), 'XXX'), # raises 'invalid' on Sparc64
         ]:
             yield self._check, np.arccos, p, v, e
 
@@ -334,16 +334,16 @@ class TestC99(object):
             ((0., 0), (0, pi/2), ''),
             ((-0., 0), (0, pi/2), ''),
             ((1., inf), (inf, pi/2), 'XXX'), # now: (nan, nan)
-            ((1., nan), (nan, nan), ''),
+            ((1., nan), (nan, nan), 'invalid-optional'),
             ((-inf, 1.), (inf, pi), 'XXX'), # now: (inf, nan)
             ((inf, 1.), (inf, 0.), 'XXX'), # now: (inf, nan)
             ((-inf, inf), (inf, 3*pi/4), 'XXX'), # now: (nan, nan)
             ((inf, inf), (inf, pi/4), 'XXX'), # now: (nan, nan)
             ((inf, nan), (inf, nan), 'XXX'), # now: (nan, nan)
             ((-inf, nan), (inf, nan), 'XXX'), # now: (nan, nan)
-            ((nan, 1.), (nan, nan), ''),
+            ((nan, 1.), (nan, nan), 'invalid-optional'),
             ((nan, inf), (inf, nan), 'XXX'), # now: (nan, nan)
-            ((nan, nan), (nan, nan), '')
+            ((nan, nan), (nan, nan), 'XXX') # raises 'invalid' on Sparc64
         ]:
             yield self._check, np.arccosh, p, v, e
 
@@ -351,14 +351,14 @@ class TestC99(object):
         for p, v, e in [
             ((0., 0), (0, 0), ''),
             ((1., inf), (inf, pi/2), 'XXX'), # now: (inf, nan)
-            ((1., nan), (nan, nan), ''),
+            ((1., nan), (nan, nan), 'invalid-optional'),
             ((inf, 1.), (inf, 0.), 'XXX'), # now: (inf, nan)
             ((inf, inf), (inf, pi/4), 'XXX'), # now: (nan, nan)
             ((inf, nan), (nan, nan), 'XXX'), # now: (nan, nan)
             ((nan, 0.), (nan, 0.), 'XXX'), # now: (nan, nan)
-            ((nan, 1.), (nan, nan), ''),
+            ((nan, 1.), (nan, nan), 'invalid-optional'),
             ((nan, inf), (+-inf, nan), 'XXX'), # now: (nan, nan)
-            ((nan, nan), (nan, nan), ''),
+            ((nan, nan), (nan, nan), 'XXX'), # raises 'invalid' on Sparc64
         ]:
             yield self._check, np.arcsinh, p, v, e
 
@@ -368,11 +368,11 @@ class TestC99(object):
             ((0., nan), (0., nan), 'XXX'), # now: (nan, nan)
             ((1., 0.), (inf, 0.), 'XXX divide'), # now: (nan, nan)
             ((1., inf), (inf, 0.), 'XXX'), # now: (nan, nan)
-            ((1., nan), (nan, nan), ''),
+            ((1., nan), (nan, nan), 'invalid-optional'),
             ((inf, 1.), (0., pi/2), 'XXX'), # now: (nan, nan)
             ((inf, inf), (0, pi/2), 'XXX'), # now: (nan, nan)
             ((inf, nan), (0, nan), 'XXX'), # now: (nan, nan)
-            ((nan, 1.), (nan, nan), ''),
+            ((nan, 1.), (nan, nan), 'invalid-optional'),
             ((nan, inf), (+0, pi/2), 'XXX'), # now: (nan, nan)
             ((nan, nan), (nan, nan), ''),
         ]:
@@ -400,6 +400,7 @@ class TestC99(object):
                 assert_raises(FloatingPointError, func, point)
             else:
                 for k in v.keys(): v[k] = 'raise'
+                if exc == 'invalid-optional': v['invalid'] = 'ignore'
                 np.seterr(**v)
                 func(point)
         finally:
