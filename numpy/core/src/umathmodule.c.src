@@ -825,15 +825,16 @@ nc_acosh@c@(c@typ@ *x, c@typ@ *r)
     c@typ@ t;
 
     nc_sum@c@(x, &nc_1@c@, &t);
+    nc_sqrt@c@(&t, &t);
     nc_diff@c@(x, &nc_1@c@, r);
-    nc_prod@c@(&t, r, r);
     nc_sqrt@c@(r, r);
+    nc_prod@c@(&t, r, r);
     nc_sum@c@(x, r, r);
     nc_log@c@(r, r);
     return;
     /*
       return nc_log(nc_sum(x,
-      nc_sqrt(nc_prod(nc_sum(x,nc_1), nc_diff(x,nc_1)))));
+      nc_prod(nc_sqrt(nc_sum(x,nc_1)), nc_sqrt(nc_diff(x,nc_1)))));
     */
 }
 
@@ -863,12 +864,11 @@ nc_asinh@c@(c@typ@ *x, c@typ@ *r)
     nc_prod@c@(x, x, r);
     nc_sum@c@(&nc_1@c@, r, r);
     nc_sqrt@c@(r, r);
-    nc_diff@c@(r, x, r);
+    nc_sum@c@(r, x, r);
     nc_log@c@(r, r);
-    nc_neg@c@(r, r);
     return;
     /*
-      return nc_neg(nc_log(nc_diff(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x)));
+      return nc_log(nc_sum(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x));
     */
 }
 
