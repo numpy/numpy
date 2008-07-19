@@ -1902,6 +1902,8 @@ static PyObject *
     int itemsize;
     void *dest, *src;
 
+    /* allow base-class (if any) to do conversion */
+    /* If successful, this will jump to finish: */
     _WORK@work@
 
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
@@ -1909,7 +1911,8 @@ static PyObject *
     }
     typecode = PyArray_DescrFromType(PyArray_@TYPE@);
     /* typecode is new reference and stolen by
-       PyArray_Scalar and others */
+       PyArray_FromAny but not PyArray_Scalar
+    */
     if (obj == NULL) {
 #if @default@ == 0
         char *mem = malloc(sizeof(@name@));
@@ -1923,6 +1926,7 @@ static PyObject *
         obj = Py_None;
         robj = PyArray_Scalar(&obj, typecode, NULL);
 #endif
+	Py_DECREF(typecode);
         goto finish;
     }
 
@@ -1930,12 +1934,20 @@ static PyObject *
     if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
         return arr;
     }
-    robj = PyArray_Return((PyArrayObject *)arr);
+    /* 0-d array */
+    robj = PyArray_ToScalar(PyArray_DATA(arr), (NPY_AO *)arr);
+    Py_DECREF(arr);  
 
 finish:
+    /* Normal return */
     if ((robj == NULL) || (robj->ob_type == type)) {
         return robj;
     }
+
+    /* This return path occurs when the requested type is not created
+       but another scalar object is created instead (i.e. when
+       the base-class does the conversion in _WORK macro) */
+
     /* Need to allocate new type and copy data-area over */
     if (type->tp_itemsize) {
         itemsize = PyString_GET_SIZE(robj);
@@ -1948,20 +1960,19 @@ finish:
         Py_DECREF(robj);
         return NULL;
     }
-    if (typecode == NULL) {
-        typecode = PyArray_DescrFromType(PyArray_@TYPE@);
-    }
+    /* typecode will be NULL */
+    typecode = PyArray_DescrFromType(PyArray_@TYPE@);
     dest = scalar_value(obj, typecode);
     src = scalar_value(robj, typecode);
     Py_DECREF(typecode);
 #if @default@ == 0
     *((npy_@name@ *)dest) = *((npy_@name@ *)src);
-#elif @default@ == 1
-    if (itemsize == 0) {
-        itemsize = ((PyUnicodeObject *)robj)->length << 2;
+#elif @default@ == 1 /* unicode and strings */
+    if (itemsize == 0) { /* unicode */
+	itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
     }
     memcpy(dest, src, itemsize);
-#elif @default@ == 2
+#elif @default@ == 2 /* Object arrays */
     memcpy(dest, src, sizeof(void *));
     Py_INCREF(*((PyObject **)dest));
 #endif
