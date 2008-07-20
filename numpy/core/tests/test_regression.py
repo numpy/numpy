@@ -1060,7 +1060,7 @@ class TestRegression(NumpyTestCase):
         a = np.recarray(2, formats="i4,f8,f8", names="id,x,y")
         b = a.tolist()
         print a[0].tolist(), b[0]
-        print a[1].tolist(), b[1])
+        print a[1].tolist(), b[1]
         assert( a[0].tolist() == b[0])
         assert( a[1].tolist() == b[1])
 
