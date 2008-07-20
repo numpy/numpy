@@ -1683,10 +1683,10 @@ static void
 
 #define BOOL_negative BOOL_logical_not
 
-#define _SIGN1(x) (isnan((x)) ? NAN : ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0)) )
+#define _SIGN1(x) (isnan((x)) ? (x) : ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0)) )
 #define _SIGN2(x) ((x) == 0 ? 0 : 1)
-#define _SIGNC(x) (isnan((x.real)) ? NAN : \
-                   isnan((x.imag)) ? NAN : \
+#define _SIGNC(x) (isnan((x).real) ? (x).real : \
+                   isnan((x).imag) ? (x).imag : \
                    ((x).real > 0) ? 1 : \
                    ((x).real < 0 ? -1 : \
                    ((x).imag > 0 ? 1 : \
