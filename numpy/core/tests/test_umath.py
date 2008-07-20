@@ -280,17 +280,16 @@ class TestC99(object):
             ((-0., 0.), (-inf, pi), 'divide'),
             ((+0., 0.), (-inf, 0.), 'divide'),
             ((1., inf), (inf, pi/2), ''),
-            ((1., nan), (nan, nan), ''),
+            ((1., nan), (nan, nan), 'invalid-optional'),
             ((-inf, 1.), (inf, pi), ''),
             ((inf, 1.), (inf, 0.), ''),
             ((-inf, inf), (inf, 3*pi/4), ''),
             ((inf, inf), (inf, pi/4), ''),
             ((inf, nan), (inf, nan), ''),
             ((-inf, nan), (inf, nan), ''),
-            ((nan, 0.), (nan, nan), ''),
-            ((nan, 1.), (nan, nan), ''),
+            ((nan, 1.), (nan, nan), 'invalid-optional'),
             ((nan, inf), (inf, nan), ''),
-            ((+nan, nan), (nan, nan), ''),
+            ((+nan, nan), (nan, nan), 'XXX'), # raises 'invalid' on some platfs
         ]:
             yield self._check, np.log, p, v, e
     
@@ -300,7 +299,7 @@ class TestC99(object):
             ((0., 0.), (0.,0.),  ''),
             ((1., inf), (inf,inf), 'XXX invalid'), # now (inf, nan)
             ((nan, inf), (inf,inf), 'XXX'), # now (nan, nan)
-            ((-inf, 1.), (0.,inf), ''),
+            ((-inf, 1.), (0.,inf), 'XXX'), # (-0., inf) on Mac OSX
             ((inf, 1.), (inf,0.), ''),
             ((-inf,nan), (nan, -inf), 'XXX'), # could also be +inf. raises 'invalid' on Sparc64
             ((inf, nan), (inf, nan),  ''),
@@ -374,7 +373,7 @@ class TestC99(object):
             ((inf, nan), (0, nan), 'XXX'), # now: (nan, nan)
             ((nan, 1.), (nan, nan), 'invalid-optional'),
             ((nan, inf), (+0, pi/2), 'XXX'), # now: (nan, nan)
-            ((nan, nan), (nan, nan), ''),
+            ((nan, nan), (nan, nan), 'XXX'), # raises 'invalid' on some platfs
         ]:
             yield self._check, np.arctanh, p, v, e
 
