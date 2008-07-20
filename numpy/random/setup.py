@@ -6,7 +6,11 @@ def configuration(parent_package='',top_path=None):
 
     def generate_libraries(ext, build_dir):
         config_cmd = config.get_config_cmd()
-        libs = get_mathlibs()
+        if top_path is None:
+            libs = get_mathlibs()
+        else:
+            path = join(split(build_dir)[0],'core')
+            libs = get_mathlibs(path)
         tc = testcode_wincrypt()
         if config_cmd.try_run(tc):
             libs.append('Advapi32')
