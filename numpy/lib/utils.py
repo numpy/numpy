@@ -502,6 +502,8 @@ def lookfor(what, module=None, import_modules=True, regenerate=False):
         Re-generate the docstring cache
 
     """
+    import pydoc
+
     # Cache
     cache = _lookfor_generate_cache(module, import_modules, regenerate)
 
