@@ -527,7 +527,7 @@ class NumpyTest:
         all_tests = unittest.TestSuite(suite_list)
         return all_tests
 
-    def test(self, level=1, verbosity=1, all=True, sys_argv=[],
+    def test(self, level=1, verbosity=1, verbose=0, all=True, sys_argv=[],
              testcase_pattern='.*'):
         """Run Numpy module test suite with level and verbosity.
 
@@ -560,6 +560,10 @@ class NumpyTest:
         (with names having prefixes 'check_' or 'bench_'); each of these
         methods are called when running unit tests.
         """
+        # add verbose keyword and make it an alias for verbosity
+        # so that buildbots using newer test framework work.
+        verbosity = max(verbosity, verbose)
+
         if level is None: # Do nothing.
             return
 
