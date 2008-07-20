@@ -1128,7 +1128,10 @@ class TestRegression(TestCase):
     def test_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215
         """
-        a = np.recarray(2, formats="i4,f8,f8", names="id,x,y")
+        # Comparisons fail for NaN, so we can't use random memory
+        # for the test.
+        buf = np.zeros(40, dtype=np.int8)
+        a = np.recarray(2, formats="i4,f8,f8", names="id,x,y", buf=buf)
         b = a.tolist()
         assert( a[0].tolist() == b[0])
         assert( a[1].tolist() == b[1])
