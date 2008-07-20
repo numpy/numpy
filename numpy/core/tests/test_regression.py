@@ -1124,7 +1124,7 @@ class TestRegression(TestCase):
         assert dat.T.info == 'jubba'
         assert dat.var(1).info == 'jubba'
         assert dat.view(TestArray).info == 'jubba'
-        
+
     def test_recarray_tolist(self, level=rlevel):
         """Ticket #793, changeset r5215
         """
@@ -1162,6 +1162,13 @@ class TestRegression(TestCase):
             t = np.dtype([('a','S%d'%i),('b','U2')])
             x = np.array([('a',u'b')], dtype=t)
             assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
+
+    def check_sign_for_complex_nan(self, level=rlevel):
+        """Ticket 794."""
+        C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
+        have = np.sign(C)
+        want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan+0j])
+        assert_equal(have, want)
 
 
 if __name__ == "__main__":
