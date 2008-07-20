@@ -244,7 +244,7 @@ def read_array_header_1_0(fp):
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-        not numpy.all([isinstance(x, int) for x in d['shape']])):
+        not numpy.all([isinstance(x, (int,long)) for x in d['shape']])):
         msg = "shape is not valid: %r"
         raise ValueError(msg % (d['shape'],))
     if not isinstance(d['fortran_order'], bool):
