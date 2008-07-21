@@ -872,8 +872,16 @@ class TestMA(NumpyTestCase):
         b = a.reshape((5,2))
         assert_equal(b.shape, (5,2))
         assert(b.flags['C'])
+        # Try w/ arguments as list instead of tuple
+        b = a.reshape(5,2)
+        assert_equal(b.shape, (5,2))
+        assert(b.flags['C'])
         # Try w/ order
         b = a.reshape((5,2), order='F')
+        assert_equal(b.shape, (5,2))
+        assert(b.flags['F'])
+        # Try w/ order
+        b = a.reshape(5,2, order='F')
         assert_equal(b.shape, (5,2))
         assert(b.flags['F'])
         #

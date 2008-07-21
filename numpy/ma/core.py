@@ -1867,7 +1867,7 @@ masked_%(name)s(data = %(data)s,
     #
     repeat = _arraymethod('repeat')
     #
-    def reshape (self, shape, order='C'):
+    def reshape (self, *shape, **kwargs):
         """
     Returns a masked array containing the data of a, but with a new shape.
     The result is a view to the original array; if this is not possible,
@@ -1892,11 +1892,12 @@ masked_%(name)s(data = %(data)s,
     If you want to modify the shape in place, please use ``a.shape = s``
 
         """
-        result = self._data.reshape(shape, order=order).view(type(self))
+        kwargs.update({'order':kwargs.get('order','C')})
+        result = self._data.reshape(*shape, **kwargs).view(type(self))
         result._update_from(self)
         mask = self._mask
         if mask is not nomask:
-            result._mask = mask.reshape(shape, order=order)
+            result._mask = mask.reshape(*shape, **kwargs)
         return result
     #
     def resize(self, newshape, refcheck=True, order=False):
@@ -3426,7 +3427,8 @@ def reshape(a, new_shape, order='C'):
     try:
         return a.reshape(new_shape, order=order)
     except AttributeError:
-        return narray(a, copy=False).reshape(new_shape, order=order).view(MaskedArray)
+        _tmp = narray(a, copy=False).reshape(new_shape, order=order)
+        return _tmp.view(MaskedArray)
 
 def resize(x, new_shape):
     """Return a new array with the specified shape.
