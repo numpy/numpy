@@ -1867,24 +1867,36 @@ masked_%(name)s(data = %(data)s,
     #
     repeat = _arraymethod('repeat')
     #
-    def reshape (self, *s):
-        """Reshape the array to shape s.
+    def reshape (self, shape, order='C'):
+        """
+    Returns a masked array containing the data of a, but with a new shape.
+    The result is a view to the original array; if this is not possible,
+    a ValueError is raised.
 
-        Returns
-        -------
-        A new masked array.
+    Parameters
+    ----------
+    shape : shape tuple or int
+       The new shape should be compatible with the original shape. If an
+       integer, then the result will be a 1D array of that length.
+    order : {'C', 'F'}, optional
+        Determines whether the array data should be viewed as in C
+        (row-major) order or FORTRAN (column-major) order.
 
-        Notes
-        -----
-        If you want to modify the shape in place, please use
-        ``a.shape = s``
+    Returns
+    -------
+    reshaped_array : array
+        A new view to the array.
+
+    Notes
+    -----
+    If you want to modify the shape in place, please use ``a.shape = s``
 
         """
-        result = self._data.reshape(*s).view(type(self))
+        result = self._data.reshape(shape, order=order).view(type(self))
         result._update_from(self)
         mask = self._mask
         if mask is not nomask:
-            result._mask = mask.reshape(*s)
+            result._mask = mask.reshape(shape, order=order)
         return result
     #
     def resize(self, newshape, refcheck=True, order=False):
@@ -3408,13 +3420,13 @@ def transpose(a, axes=None):
     except AttributeError:
         return narray(a, copy=False).transpose(axes).view(MaskedArray)
 
-def reshape(a, new_shape):
+def reshape(a, new_shape, order='C'):
     """Change the shape of the array a to new_shape."""
     #We can't use 'frommethod', it whine about some parameters. Dmmit.
     try:
-        return a.reshape(new_shape)
+        return a.reshape(new_shape, order=order)
     except AttributeError:
-        return narray(a, copy=False).reshape(new_shape).view(MaskedArray)
+        return narray(a, copy=False).reshape(new_shape, order=order).view(MaskedArray)
 
 def resize(x, new_shape):
     """Return a new array with the specified shape.

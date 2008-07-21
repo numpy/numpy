@@ -104,7 +104,15 @@ def assert_equal(actual,desired,err_msg=''):
         raise ValueError(msg)
     actual = np.array(actual, copy=False, subok=True)
     desired = np.array(desired, copy=False, subok=True)
-    if actual.dtype.char in "OSV" and desired.dtype.char in "OSV":
+    if actual_dtype.char == "S" and desired_dtype.char == "S":
+        return _assert_equal_on_sequences(actual.tolist(),
+                                          desired.tolist(),
+                                          err_msg='')
+    elif actual_dtype.char in "OV" and desired_dtype.char in "OV":
+        if (actual_dtype != desired_dtype) and actual_dtype:
+            msg = build_err_msg([actual_dtype, desired_dtype],
+                                err_msg, header='', names=('actual', 'desired'))
+            raise ValueError(msg)
         return _assert_equal_on_sequences(actual.tolist(),
                                           desired.tolist(),
                                           err_msg='')

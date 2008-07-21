@@ -865,6 +865,23 @@ class TestMA(NumpyTestCase):
         assert_equal(xs.dtype, '|S3')
 
 
+    def test_reshape(self):
+        a = arange(10)
+        a[0] = masked
+        # Try the default
+        b = a.reshape((5,2))
+        assert_equal(b.shape, (5,2))
+        assert(b.flags['C'])
+        # Try w/ order
+        b = a.reshape((5,2), order='F')
+        assert_equal(b.shape, (5,2))
+        assert(b.flags['F'])
+        #
+        c = np.reshape(a, (2,5))
+        assert(isinstance(c, MaskedArray))
+        assert_equal(c.shape, (2,5))
+        assert(c[0,0] is masked)
+        assert(c.flags['C'])
 
 #...............................................................................
 
