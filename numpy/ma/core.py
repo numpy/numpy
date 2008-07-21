@@ -2063,7 +2063,6 @@ masked_%(name)s(data = %(data)s,
     If you want to modify the shape in place, please use ``a.shape = s``
 
         """
-        print "SHAPE: %s" % str(s)
         kwargs.update(order=kwargs.get('order','C'))
         result = self._data.reshape(*s, **kwargs).view(type(self))
         result._update_from(self)
