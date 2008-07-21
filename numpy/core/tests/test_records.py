@@ -115,6 +115,19 @@ class TestRecord(TestCase):
         self.failUnlessRaises(AttributeError,assign_invalid_column,a)
 
 
+def test_find_duplicate():
+    l1 = [1,2,3,4,5,6]
+    assert np.rec.find_duplicate(l1) == []
+
+    l2 = [1,2,1,4,5,6]
+    assert np.rec.find_duplicate(l2) == [1]
+
+    l3 = [1,2,1,4,1,6,2,3]
+    assert np.rec.find_duplicate(l3) == [1,2]
+
+    l3 = [2,2,1,4,1,6,2,3]
+    assert np.rec.find_duplicate(l3) == [2,1]
+
 if __name__ == "__main__":
     run_module_suite()
 

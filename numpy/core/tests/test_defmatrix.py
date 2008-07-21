@@ -17,9 +17,35 @@ class TestCtor(TestCase):
         assert all(B.A == D)
         assert all(C.A == D)
 
+        E = array([[5,6],[7,8]])
+        AEresult = matrix([[1,2,5,6],[3,4,7,8]])
+        assert all(bmat([A,E]) == AEresult)
+
         vec = arange(5)
         mvec = matrix(vec)
         assert mvec.shape == (1,5)
+
+    def test_bmat_nondefault_str(self):
+        A = array([[1,2],[3,4]])
+        B = array([[5,6],[7,8]])
+        Aresult = array([[1,2,1,2],
+                         [3,4,3,4],
+                         [1,2,1,2],
+                         [3,4,3,4]])
+        Bresult = array([[5,6,5,6],
+                         [7,8,7,8],
+                         [5,6,5,6],
+                         [7,8,7,8]])
+        mixresult = array([[1,2,5,6],
+                           [3,4,7,8],
+                           [5,6,1,2],
+                           [7,8,3,4]])
+        assert all(bmat("A,A;A,A") == Aresult)
+        assert all(bmat("A,A;A,A",ldict={'A':B}) == Aresult)
+        assert_raises(TypeError, bmat, "A,A;A,A",gdict={'A':B})
+        assert all(bmat("A,A;A,A",ldict={'A':A},gdict={'A':B}) == Aresult)
+        b2 = bmat("A,B;C,D",ldict={'A':A,'B':B},gdict={'C':B,'D':A})
+        assert all(b2 == mixresult)
 
 
 class TestProperties(TestCase):
@@ -38,6 +64,34 @@ class TestProperties(TestCase):
         assert_array_equal(sum1, M.sum(axis=1))
         assert sumall == M.sum()
 
+
+    def test_prod(self):
+        x = matrix([[1,2,3],[4,5,6]])
+        assert x.prod() == 720
+        assert all(x.prod(0) == matrix([[4,10,18]]))
+        assert all(x.prod(1) == matrix([[6],[120]]))
+
+        y = matrix([0,1,3])
+        assert y.prod() == 0
+
+    def test_max(self):
+        x = matrix([[1,2,3],[4,5,6]])
+        assert x.max() == 6
+        assert all(x.max(0) == matrix([[4,5,6]]))
+        assert all(x.max(1) == matrix([[3],[6]]))
+
+    def test_min(self):
+        x = matrix([[1,2,3],[4,5,6]])
+        assert x.min() == 1
+        assert all(x.min(0) == matrix([[1,2,3]]))
+        assert all(x.min(1) == matrix([[1],[4]]))
+
+    def test_ptp(self):
+        x = np.arange(4).reshape((2,2))
+        assert x.ptp() == 3
+        assert all(x.ptp(0) == array([2, 2]))
+        assert all(x.ptp(1) == array([1, 1]))
+
     def test_basic(self):
         import numpy.linalg as linalg
 
@@ -54,6 +108,13 @@ class TestProperties(TestCase):
         assert allclose(linalg.inv(B), mB.I)
         assert all(array(transpose(B) == mB.T))
         assert all(array(conjugate(transpose(B)) == mB.H))
+
+    def test_pinv(self):
+        x = matrix(arange(6).reshape(2,3))
+        xpinv = matrix([[-0.77777778,  0.27777778],
+                        [-0.11111111,  0.11111111],
+                        [ 0.55555556, -0.05555556]])
+        assert_almost_equal(x.I, xpinv)
 
     def test_comparisons(self):
         A = arange(100).reshape(10,10)
@@ -241,14 +302,9 @@ class TestNewScalarIndexing(TestCase):
         assert isinstance(x, matrix)
         assert_equal(x, matrix([[4,  3], [1,  2]]))
 
-#     def test_vector_element(self):
-#         x = matrix([[1,2,3],[4,5,6]])
-#         assert_equal(x[0][0],1)
-#         assert_equal(x[0].shape,(1,3))
-#         assert_equal(x[:,0].shape,(2,1))
-
     def test_matrix_element(self):
         x = matrix([[1,2,3],[4,5,6]])
+        assert_equal(x[0][0],matrix([[1,2,3]]))
         assert_equal(x[0][0].shape,(1,3))
         assert_equal(x[0].shape,(1,3))
         assert_equal(x[:,0].shape,(2,1))

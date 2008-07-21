@@ -397,6 +397,29 @@ class TestMethods(TestCase):
         # d.sort(axis=None)
         #assert_equal(d, c, "test sort with axis=None")
 
+
+    def test_sort_order(self):
+        # Test sorting an array with fields
+        x1=np.array([21,32,14])
+        x2=np.array(['my','first','name'])
+        x3=np.array([3.1,4.5,6.2])
+        r=np.rec.fromarrays([x1,x2,x3],names='id,word,number')
+
+        r.sort(order=['id'])
+        assert_equal(r.id, array([14,21,32]))
+        assert_equal(r.word, array(['name','my','first']))
+        assert_equal(r.number, array([6.2,3.1,4.5]))
+
+        r.sort(order=['word'])
+        assert_equal(r.id, array([32,21,14]))
+        assert_equal(r.word, array(['first','my','name']))
+        assert_equal(r.number, array([4.5,3.1,6.2]))
+
+        r.sort(order=['number'])
+        assert_equal(r.id, array([21,32,14]))
+        assert_equal(r.word, array(['my','first','name']))
+        assert_equal(r.number, array([3.1,4.5,6.2]))
+
     def test_argsort(self):
         # all c scalar argsorts use the same code with different types
         # so it suffices to run a quick check with one type. The number

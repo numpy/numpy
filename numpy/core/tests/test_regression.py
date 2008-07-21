@@ -1,3 +1,4 @@
+
 from StringIO import StringIO
 import pickle
 import sys
@@ -1166,7 +1167,7 @@ class TestRegression(TestCase):
             x = np.array([('a',u'b')], dtype=t)
             assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
 
-    def check_sign_for_complex_nan(self, level=rlevel):
+    def test_sign_for_complex_nan(self, level=rlevel):
         """Ticket 794."""
         C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
         have = np.sign(C)

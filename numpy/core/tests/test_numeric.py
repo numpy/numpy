@@ -23,13 +23,6 @@ class Vec:
         return out
     def __rmul__(self,other):
         return self*other
-    def __abs__(self):
-        out=Vec()
-        out.array=abs(self.array)
-        return out
-    def __repr__(self):
-        return "Vec("+repr(self.array.tolist())+")"
-    __str__=__repr__
 
 
 class TestDot(TestCase):
@@ -140,6 +133,59 @@ class TestDot(TestCase):
         zeros_test = dot(U_cont,x) - dot(U_non_cont,x)
         assert_equal(zeros[0].array, zeros_test[0].array)
         assert_equal(zeros[1].array, zeros_test[1].array)
+
+
+class TestResize(TestCase):
+    def test_copies(self):
+        A = array([[1,2],[3,4]])
+        Ar1 = array([[1,2,3,4],[1,2,3,4]])
+        assert_equal(resize(A, (2,4)), Ar1)
+
+        Ar2 = array([[1,2],[3,4],[1,2],[3,4]])
+        assert_equal(resize(A, (4,2)), Ar2)
+
+        Ar3 = array([[1,2,3],[4,1,2],[3,4,1],[2,3,4]])
+        assert_equal(resize(A, (4,3)), Ar3)
+
+    def test_zeroresize(self):
+        A = array([[1,2],[3,4]])
+        Ar = resize(A, (0,))
+        assert_equal(Ar, array([]))
+
+
+class TestNonarrayArgs(TestCase):
+    # check that non-array arguments to functions wrap them in arrays
+    def test_squeeze(self):
+        A = [[[1,1,1],[2,2,2],[3,3,3]]]
+        assert squeeze(A).shape == (3,3)
+
+    def test_cumproduct(self):
+        A = [[1,2,3],[4,5,6]]
+        assert all(cumproduct(A) == array([1,2,6,24,120,720]))
+
+    def test_size(self):
+        A = [[1,2,3],[4,5,6]]
+        assert size(A) == 6
+        assert size(A,0) == 2
+        assert size(A,1) == 3
+
+    def test_mean(self):
+        A = [[1,2,3],[4,5,6]]
+        assert mean(A) == 3.5
+        assert all(mean(A,0) == array([2.5,3.5,4.5]))
+        assert all(mean(A,1) == array([2.,5.]))
+
+    def test_std(self):
+        A = [[1,2,3],[4,5,6]]
+        assert_almost_equal(std(A), 1.707825127659933)
+        assert_almost_equal(std(A,0), array([1.5, 1.5, 1.5]))
+        assert_almost_equal(std(A,1), array([0.81649658, 0.81649658]))
+
+    def test_var(self):
+        A = [[1,2,3],[4,5,6]]
+        assert_almost_equal(var(A), 2.9166666666666665)
+        assert_almost_equal(var(A,0), array([2.25, 2.25, 2.25]))
+        assert_almost_equal(var(A,1), array([0.66666667, 0.66666667]))
 
 
 class TestBoolScalar(TestCase):
