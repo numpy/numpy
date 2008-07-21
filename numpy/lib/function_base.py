@@ -657,14 +657,6 @@ def select(condlist, choicelist, default=0):
             S = S*ones(asarray(pfac).shape, S.dtype)
     return choose(S, tuple(choicelist))
 
-def _asarray1d(arr, copy=False):
-    """Ensure 1D array for one array.
-    """
-    if copy:
-        return asarray(arr).flatten()
-    else:
-        return asarray(arr).ravel()
-
 def copy(a):
     """Return an array copy of the given object.
     """
