@@ -183,6 +183,9 @@ class NoseTester(object):
             # cap verbosity at 3 because nose becomes *very* verbose beyond that
             verbose = min(verbose, 3)
 
+        import utils
+        utils.verbose = verbose
+
         # if all evaluates as True, omit attribute filter and run doctests
         if kwargs.get('all'):
             label = ''
@@ -214,6 +217,21 @@ class NoseTester(object):
         argv += ['--exclude','array_from_pyobj']
 
         nose = import_nose()
+
+        import numpy
+        print "NumPy version %s" % numpy.__version__
+        npdir = os.path.dirname(numpy.__file__)
+        print "NumPy is installed in %s" % npdir
+        
+        if 'scipy' in self.package_name:
+            import scipy
+            print "SciPy version %s" % scipy.__version__
+            spdir = os.path.dirname(scipy.__file__)
+            print "SciPy is installed in %s" % spdir
+            
+        pyversion = sys.version.replace('\n','')
+        print "Python version %s" % pyversion
+        print "nose version %d.%d.%d" % nose.__versioninfo__
 
         # Because nose currently discards the test result object, but we need 
         # to return it to the user, override TestProgram.runTests to retain 

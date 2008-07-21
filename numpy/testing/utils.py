@@ -13,8 +13,10 @@ from nosetester import import_nose
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg', 
-           'decorate_methods', 'jiffies', 'memusage', 'raises', 'rand', 
-           'rundocs', 'runstring']
+           'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
+           'raises', 'rand', 'rundocs', 'runstring', 'verbose']
+
+verbose = 0
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
@@ -146,6 +148,20 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
     assert desired == actual, msg
+
+def print_assert_equal(test_string,actual,desired):
+    import pprint
+    try:
+        assert(actual == desired)
+    except AssertionError:
+        import cStringIO
+        msg = cStringIO.StringIO()
+        msg.write(test_string)
+        msg.write(' failed\nACTUAL: \n')
+        pprint.pprint(actual,msg)
+        msg.write('DESIRED: \n')
+        pprint.pprint(desired,msg)
+        raise AssertionError, msg.getvalue()
 
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     """ Raise an assertion if two items are not equal.
