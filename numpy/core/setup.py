@@ -65,7 +65,10 @@ def configuration(parent_package='',top_path=None):
     header_dir = 'include/numpy' # this is relative to config.path_in_package
 
     def generate_config_h(ext, build_dir):
-        target = join(build_dir,'config.h')
+        target = join(build_dir,header_dir,'config.h')
+        dir = os.path.dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
@@ -159,7 +162,10 @@ def configuration(parent_package='',top_path=None):
 
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
-        target = join(build_dir,'numpyconfig.h')
+        target = join(build_dir,header_dir,'numpyconfig.h')
+        dir = os.path.dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
@@ -198,7 +204,7 @@ def configuration(parent_package='',top_path=None):
             try:
                 m = __import__(module_name)
                 log.info('executing %s', script)
-                h_file, c_file, doc_file = m.generate_api(build_dir)
+                h_file, c_file, doc_file = m.generate_api(os.path.join(build_dir, header_dir))
             finally:
                 del sys.path[0]
             config.add_data_files((header_dir, h_file),
@@ -210,7 +216,10 @@ def configuration(parent_package='',top_path=None):
     generate_ufunc_api = generate_api_func('generate_ufunc_api')
 
     def generate_umath_c(ext,build_dir):
-        target = join(build_dir,'__umath_generated.c')
+        target = join(build_dir,header_dir,'__umath_generated.c')
+        dir = os.path.dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
         script = generate_umath_py
         if newer(script,target):
             f = open(target,'w')
