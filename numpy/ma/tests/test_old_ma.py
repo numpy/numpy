@@ -254,8 +254,8 @@ class TestMa(TestCase):
 
         x1 = numpy.arange(5)
         y1 = array(x1, mask=m)
-        self.failUnless( y1.data is not x1)
-        self.failUnless( allequal(x1,y1.data))
+        self.failUnless( y1._data is not x1)
+        self.failUnless( allequal(x1,y1._data))
         self.failUnless( y1.mask is m)
 
         y1a = array(y1, copy=0)
@@ -603,27 +603,27 @@ class TestMa(TestCase):
         self.failUnless((-xm).mask)
         self.failUnless(maximum(xm, xm).mask)
         self.failUnless(minimum(xm, xm).mask)
-        self.failUnless(xm.filled().dtype is xm.data.dtype)
+        self.failUnless(xm.filled().dtype is xm._data.dtype)
         x = array(0, mask=0)
-        self.failUnless(x.filled() == x.data)
+        self.failUnless(x.filled() == x._data)
         self.failUnlessEqual(str(xm), str(masked_print_option))
 
     def test_testArrayMethods(self):
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
-        self.failUnless(eq(a.any(), a.data.any()))
-        self.failUnless(eq(a.all(), a.data.all()))
-        self.failUnless(eq(a.argmax(), a.data.argmax()))
-        self.failUnless(eq(a.argmin(), a.data.argmin()))
-        self.failUnless(eq(a.choose(0,1,2,3,4), a.data.choose(0,1,2,3,4)))
-        self.failUnless(eq(a.compress([1,0,1]), a.data.compress([1,0,1])))
-        self.failUnless(eq(a.conj(), a.data.conj()))
-        self.failUnless(eq(a.conjugate(), a.data.conjugate()))
+        self.failUnless(eq(a.any(), a._data.any()))
+        self.failUnless(eq(a.all(), a._data.all()))
+        self.failUnless(eq(a.argmax(), a._data.argmax()))
+        self.failUnless(eq(a.argmin(), a._data.argmin()))
+        self.failUnless(eq(a.choose(0,1,2,3,4), a._data.choose(0,1,2,3,4)))
+        self.failUnless(eq(a.compress([1,0,1]), a._data.compress([1,0,1])))
+        self.failUnless(eq(a.conj(), a._data.conj()))
+        self.failUnless(eq(a.conjugate(), a._data.conjugate()))
         m = array([[1,2],[3,4]])
-        self.failUnless(eq(m.diagonal(), m.data.diagonal()))
-        self.failUnless(eq(a.sum(), a.data.sum()))
-        self.failUnless(eq(a.take([1,2]), a.data.take([1,2])))
-        self.failUnless(eq(m.transpose(), m.data.transpose()))
+        self.failUnless(eq(m.diagonal(), m._data.diagonal()))
+        self.failUnless(eq(a.sum(), a._data.sum()))
+        self.failUnless(eq(a.take([1,2]), a._data.take([1,2])))
+        self.failUnless(eq(m.transpose(), m._data.transpose()))
 
     def test_testArrayAttributes(self):
         a = array([1,3,2])
@@ -756,8 +756,8 @@ class TestArrayMethods(TestCase):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         clipped = mx.clip(2,8)
         self.failUnless(eq(clipped.mask,mx.mask))
-        self.failUnless(eq(clipped.data,x.clip(2,8)))
-        self.failUnless(eq(clipped.data,mx.data.clip(2,8)))
+        self.failUnless(eq(clipped._data,x.clip(2,8)))
+        self.failUnless(eq(clipped._data,mx._data.clip(2,8)))
 
     def test_ptp(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
@@ -783,16 +783,16 @@ class TestArrayMethods(TestCase):
     def test_cumprod(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         mXcp = mX.cumprod(0)
-        self.failUnless(eq(mXcp.data,mX.filled(1).cumprod(0)))
+        self.failUnless(eq(mXcp._data,mX.filled(1).cumprod(0)))
         mXcp = mX.cumprod(1)
-        self.failUnless(eq(mXcp.data,mX.filled(1).cumprod(1)))
+        self.failUnless(eq(mXcp._data,mX.filled(1).cumprod(1)))
 
     def test_cumsum(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d
         mXcp = mX.cumsum(0)
-        self.failUnless(eq(mXcp.data,mX.filled(0).cumsum(0)))
+        self.failUnless(eq(mXcp._data,mX.filled(0).cumsum(0)))
         mXcp = mX.cumsum(1)
-        self.failUnless(eq(mXcp.data,mX.filled(0).cumsum(1)))
+        self.failUnless(eq(mXcp._data,mX.filled(0).cumsum(1)))
 
     def test_varstd(self):
         (x,X,XX,m,mx,mX,mXX,) = self.d

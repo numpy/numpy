@@ -60,7 +60,7 @@ class TestMaskedArray(TestCase):
         x = masked_array(0, mask=False)
         assert_equal(str(x), '0')
         x = array(0, mask=1)
-        assert(x.filled().dtype is x.data.dtype)
+        assert(x.filled().dtype is x._data.dtype)
 
 
     def test_basic1d(self):
@@ -753,7 +753,7 @@ class TestMaskedArrayAttributes(TestCase):
         xs[[1,4]] = [10,40]
         assert_equal(xh._data, [0,10,2,3,4])
         assert_equal(xs._data, [0,10,2,3,40])
-        #assert_equal(xh.mask.ctypes.data, m.ctypes.data)
+        #assert_equal(xh.mask.ctypes._data, m.ctypes._data)
         assert_equal(xs.mask, [0,0,0,1,0])
         assert(xh._hardmask)
         assert(not xs._hardmask)
@@ -761,7 +761,7 @@ class TestMaskedArrayAttributes(TestCase):
         xs[1:4] = [10,20,30]
         assert_equal(xh._data, [0,10,20,3,4])
         assert_equal(xs._data, [0,10,20,30,40])
-        #assert_equal(xh.mask.ctypes.data, m.ctypes.data)
+        #assert_equal(xh.mask.ctypes._data, m.ctypes._data)
         assert_equal(xs.mask, nomask)
         xh[0] = masked
         xs[0] = masked
@@ -804,7 +804,7 @@ class TestMaskedArrayAttributes(TestCase):
         m = make_mask(n)
         xh = array(d, mask = m, hard_mask=True)
         xh[4:5] = 999
-        #assert_equal(xh.mask.ctypes.data, m.ctypes.data)
+        #assert_equal(xh.mask.ctypes._data, m.ctypes._data)
         xh[0:1] = 999
         assert_equal(xh._data,[999,1,2,3,4])
 
@@ -1047,9 +1047,9 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         #
         warnings.simplefilter('ignore', DeprecationWarning)
         (x, _, xm) = self.floatdata
-        id1 = x.raw_data().ctypes.data
+        id1 = x.raw_data().ctypes._data
         x += 1.
-        assert (id1 == x.raw_data().ctypes.data)
+        assert (id1 == x.raw_data().ctypes._data)
         assert_equal(x, y+1.)
         warnings.simplefilter('default', DeprecationWarning)
 
@@ -1195,20 +1195,20 @@ class TestMaskedArrayMethods(TestCase):
         "Tests some MaskedArray methods."
         a = array([1,3,2])
         b = array([1,3,2], mask=[1,0,1])
-        assert_equal(a.any(), a.data.any())
-        assert_equal(a.all(), a.data.all())
-        assert_equal(a.argmax(), a.data.argmax())
-        assert_equal(a.argmin(), a.data.argmin())
-        assert_equal(a.choose(0,1,2,3,4), a.data.choose(0,1,2,3,4))
-        assert_equal(a.compress([1,0,1]), a.data.compress([1,0,1]))
-        assert_equal(a.conj(), a.data.conj())
-        assert_equal(a.conjugate(), a.data.conjugate())
+        assert_equal(a.any(), a._data.any())
+        assert_equal(a.all(), a._data.all())
+        assert_equal(a.argmax(), a._data.argmax())
+        assert_equal(a.argmin(), a._data.argmin())
+        assert_equal(a.choose(0,1,2,3,4), a._data.choose(0,1,2,3,4))
+        assert_equal(a.compress([1,0,1]), a._data.compress([1,0,1]))
+        assert_equal(a.conj(), a._data.conj())
+        assert_equal(a.conjugate(), a._data.conjugate())
         #
         m = array([[1,2],[3,4]])
-        assert_equal(m.diagonal(), m.data.diagonal())
-        assert_equal(a.sum(), a.data.sum())
-        assert_equal(a.take([1,2]), a.data.take([1,2]))
-        assert_equal(m.transpose(), m.data.transpose())
+        assert_equal(m.diagonal(), m._data.diagonal())
+        assert_equal(a.sum(), a._data.sum())
+        assert_equal(a.take([1,2]), a._data.take([1,2]))
+        assert_equal(m.transpose(), m._data.transpose())
 
 
     def test_allany(self):
@@ -1325,8 +1325,8 @@ class TestMaskedArrayMethods(TestCase):
         mx = array(x,mask=m)
         clipped = mx.clip(2,8)
         assert_equal(clipped.mask,mx.mask)
-        assert_equal(clipped.data,x.clip(2,8))
-        assert_equal(clipped.data,mx.data.clip(2,8))
+        assert_equal(clipped._data,x.clip(2,8))
+        assert_equal(clipped._data,mx._data.clip(2,8))
 
 
     def test_compress(self):
@@ -1724,14 +1724,14 @@ class TestMaskArrayMathMethod(TestCase):
         "Tests cumsum & cumprod on MaskedArrays."
         (x,X,XX,m,mx,mX,mXX,m2x,m2X,m2XX) = self.d
         mXcp = mX.cumsum(0)
-        assert_equal(mXcp.data,mX.filled(0).cumsum(0))
+        assert_equal(mXcp._data,mX.filled(0).cumsum(0))
         mXcp = mX.cumsum(1)
-        assert_equal(mXcp.data,mX.filled(0).cumsum(1))
+        assert_equal(mXcp._data,mX.filled(0).cumsum(1))
         #
         mXcp = mX.cumprod(0)
-        assert_equal(mXcp.data,mX.filled(1).cumprod(0))
+        assert_equal(mXcp._data,mX.filled(1).cumprod(0))
         mXcp = mX.cumprod(1)
-        assert_equal(mXcp.data,mX.filled(1).cumprod(1))
+        assert_equal(mXcp._data,mX.filled(1).cumprod(1))
 
 
     def test_cumsumprod_with_output(self):
@@ -2143,6 +2143,24 @@ class TestMaskedArrayFunctions(TestCase):
         assert_equal(store, array([999999, 31, 12, 999999]))
 
 
+    def test_reshape(self):
+        a = arange(10)
+        a[0] = masked
+        # Try the default
+        b = a.reshape((5,2))
+        assert_equal(b.shape, (5,2))
+        assert(b.flags['C'])
+        # Try w/ order
+        b = a.reshape((5,2), order='F')
+        assert_equal(b.shape, (5,2))
+        assert(b.flags['F'])
+        #
+        c = np.reshape(a, (2,5))
+        assert(isinstance(c, MaskedArray))
+        assert_equal(c.shape, (2,5))
+        assert(c[0,0] is masked)
+        assert(c.flags['C'])
+
 #------------------------------------------------------------------------------
 
 class TestMaskedFields(TestCase):
@@ -2183,13 +2201,13 @@ class TestMaskedFields(TestCase):
         base[0] = (pi, pi, 'pi')
         
         assert_equal(base_a.dtype, int)
-        assert_equal(base_a.data, [3,2,3,4,5])
+        assert_equal(base_a._data, [3,2,3,4,5])
         
         assert_equal(base_b.dtype, float)
-        assert_equal(base_b.data, [pi, 2.2, 3.3, 4.4, 5.5])
+        assert_equal(base_b._data, [pi, 2.2, 3.3, 4.4, 5.5])
         
         assert_equal(base_c.dtype, '|S8')
-        assert_equal(base_c.data, ['pi','two','three','four','five'])
+        assert_equal(base_c._data, ['pi','two','three','four','five'])
 
     def test_set_record_slice(self):
         base = self.data['base']
@@ -2197,13 +2215,13 @@ class TestMaskedFields(TestCase):
         base[:3] = (pi, pi, 'pi')
         
         assert_equal(base_a.dtype, int)
-        assert_equal(base_a.data, [3,3,3,4,5])
+        assert_equal(base_a._data, [3,3,3,4,5])
         
         assert_equal(base_b.dtype, float)
-        assert_equal(base_b.data, [pi, pi, pi, 4.4, 5.5])
+        assert_equal(base_b._data, [pi, pi, pi, 4.4, 5.5])
         
         assert_equal(base_c.dtype, '|S8')
-        assert_equal(base_c.data, ['pi','pi','pi','four','five'])
+        assert_equal(base_c._data, ['pi','pi','pi','four','five'])
 
     def test_mask_element(self):
         "Check record access"
@@ -2213,7 +2231,7 @@ class TestMaskedFields(TestCase):
         #
         for n in ('a','b','c'):
             assert_equal(base[n].mask, [1,1,0,0,1])
-            assert_equal(base[n].data, base.data[n])
+            assert_equal(base[n]._data, base._data[n])
 
 ###############################################################################
 #------------------------------------------------------------------------------

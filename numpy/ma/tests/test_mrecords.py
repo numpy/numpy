@@ -359,7 +359,7 @@ class TestMRecordsImport(TestCase):
         ddtype = [('a',int),('b',float),('c','|S8')]
         mrec = fromarrays([_a,_b,_c], dtype=ddtype,
                           fill_value=(99999,99999.,'N/A'))
-        nrec = recfromarrays((_a.data,_b.data,_c.data), dtype=ddtype)
+        nrec = recfromarrays((_a._data,_b._data,_c._data), dtype=ddtype)
         self.data = (mrec, nrec, ddtype)
 
     def test_fromarrays(self):
