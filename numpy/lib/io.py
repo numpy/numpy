@@ -274,6 +274,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     SeeAlso: scipy.io.loadmat to read and write matfiles.
     """
+    user_converters = converters
 
     if _string_like(fname):
         if fname.endswith('.gz'):
@@ -317,26 +318,26 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     # Read until we find a line with some values, and use
     # it to estimate the number of columns, N.
-    read_line = None
-    while not read_line:
+    first_vals = None
+    while not first_vals:
         first_line = fh.readline()
-        read_line = split_line(first_line)
-    N = len(usecols or read_line)
+        first_vals = split_line(first_line)
+    N = len(usecols or first_vals)
 
     dtype_types = flatten_dtype(dtype)
     if len(dtype_types) > 1:
         # We're dealing with a structured array, each field of
         # the dtype matches a column
-        converterseq = [_getconv(dt) for dt in dtype_types]
+        converters = [_getconv(dt) for dt in dtype_types]
     else:
         # All fields have the same dtype
-        converterseq = [defconv for i in xrange(N)]
+        converters = [defconv for i in xrange(N)]
 
     # By preference, use the converters specified by the user
-    for i, conv in (converters or {}).iteritems():
+    for i, conv in (user_converters or {}).iteritems():
         if usecols:
             i = usecols.find(i)
-        converterseq[i] = conv
+        converters[i] = conv
 
     # Parse each line, including the first
     for i, line in enumerate(itertools.chain([first_line], fh)):
@@ -348,7 +349,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
             vals = [vals[i] for i in usecols]
 
         # Convert each value according to its column and store
-        X.append(tuple(conv(val) for (conv, val) in zip(converterseq, vals)))
+        X.append(tuple([conv(val) for (conv, val) in zip(converters, vals)]))
 
     if len(dtype_types) > 1:
         # We're dealing with a structured array, with a dtype such as
