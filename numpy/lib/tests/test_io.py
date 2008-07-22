@@ -220,6 +220,17 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=(1,2))
         assert_array_equal(x, a[:,1:])
+        
+        # Checking with dtypes defined converters. 
+        data = '''JOE 70.1 25.3
+                BOB 60.5 27.9
+                '''
+        c = StringIO.StringIO(data)
+        names = ['stid', 'temp']
+        dtypes = ['S4', 'f8']
+        arr = np.loadtxt(c, usecols=(0,2),dtype=zip(names,dtypes))
+        assert_equal(arr['stid'],  ["JOE",  "BOB"])
+        assert_equal(arr['temp'],  [25.3,  27.9])
 
 
 class Testfromregex(TestCase):

@@ -292,8 +292,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     if converters is None:
         converters = {}
         if dtype.names is not None:
-            converterseq = [_getconv(dtype.fields[name][0]) \
-                            for name in dtype.names]
+            if usecols is None:
+                converterseq = [_getconv(dtype.fields[name][0]) \
+                                for name in dtype.names]
+            else:
+                converters.update([(col,_getconv(dtype.fields[name][0])) \
+                                    for col,name in zip(usecols, dtype.names)])
 
     for i,line in enumerate(fh):
         if i<skiprows: continue
