@@ -287,6 +287,19 @@ class TestDiff(TestCase):
         assert_array_equal(diff(x,axis=0),out3)
         assert_array_equal(diff(x,n=2,axis=0),out4)
 
+class TestGradient(TestCase):
+    def test_basic(self):
+        x = array([[1,1],[3,4]])
+        dx = [array([[2.,3.],[2.,3.]]),
+              array([[0.,0.],[1.,1.]])]
+        assert_array_equal(gradient(x), dx)
+
+    def test_badargs(self):
+        # for 2D array, gradient can take 0,1, or 2 extra args
+        x = array([[1,1],[3,4]])
+        assert_raises(SyntaxError, gradient, x, array([1.,1.]), 
+                      array([1.,1.]), array([1.,1.]))
+
 class TestAngle(TestCase):
     def test_basic(self):
         x = [1+3j,sqrt(2)/2.0+1j*sqrt(2)/2,1,1j,-1,-1j,1-3j,-1+3j]

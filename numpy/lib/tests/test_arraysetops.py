@@ -14,6 +14,12 @@ class TestAso(TestCase):
         c = unique1d( a )
         assert_array_equal( c, ec )
 
+        d, c = unique1d( a, True )
+        ed = np.array( [2, 3, 0, 1] )
+        
+        assert_array_equal( d,ed )
+        assert_array_equal( c, ec )
+
         assert_array_equal([], unique1d([]))
 
     def test_intersect1d( self ):

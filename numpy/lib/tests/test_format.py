@@ -280,7 +280,7 @@ import shutil
 import tempfile
 
 import numpy as np
-from numpy.testing import assert_array_equal, raises
+from numpy.testing import *
 
 from numpy.lib import format
 
@@ -506,6 +506,46 @@ def test_read_version_1_0_bad_magic():
         f = StringIO(magic)
         yield raises(ValueError)(format.read_array), f
 
+def test_bad_magic_args():
+    assert_raises(ValueError, format.magic, -1, 1)
+    assert_raises(ValueError, format.magic, 256, 1)
+    assert_raises(ValueError, format.magic, 1, -1)
+    assert_raises(ValueError, format.magic, 1, 256)
+
+def test_large_header():
+    s = StringIO()
+    d = {'a':1,'b':2}
+    format.write_array_header_1_0(s,d)
+
+    s = StringIO()
+    d = {'a':1,'b':2,'c':'x'*256*256}
+    assert_raises(ValueError, format.write_array_header_1_0, s, d)
+
+def test_bad_header():
+    # header of length less than 2 should fail
+    s = StringIO()
+    assert_raises(ValueError, format.read_array_header_1_0, s)
+    s = StringIO('1')
+    assert_raises(ValueError, format.read_array_header_1_0, s)
+
+    # header shorter than indicated size should fail
+    s = StringIO('\x01\x00')
+    assert_raises(ValueError, format.read_array_header_1_0, s)
+
+    # headers without the exact keys required should fail
+    d = {"shape":(1,2),
+         "descr":"x"}
+    s = StringIO()
+    format.write_array_header_1_0(s,d)
+    assert_raises(ValueError, format.read_array_header_1_0, s)
+
+    d = {"shape":(1,2),
+         "fortran_order":False,
+         "descr":"x",
+         "extrakey":-1}
+    s = StringIO()
+    format.write_array_header_1_0(s,d)
+    assert_raises(ValueError, format.read_array_header_1_0, s)
 
 if __name__ == "__main__":
     run_module_suite()
