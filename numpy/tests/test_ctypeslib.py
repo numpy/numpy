@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library
 from numpy.testing import *
+import sys
 
 class TestLoadLibrary(NumpyTestCase):
     def check_basic(self):
@@ -8,9 +9,8 @@ class TestLoadLibrary(NumpyTestCase):
             cdll = load_library('multiarray',
                                 np.core.multiarray.__file__)
         except ImportError, e:
-            msg = "ctypes is not available on this python: skipping the test" \
-                  " (import error was: %s)" % str(e)
-            print msg
+            sys.stdout.write('S')
+            sys.stdout.flush()
 
     def check_basic2(self):
         """Regression for #801: load_library with a full library name
@@ -22,11 +22,11 @@ class TestLoadLibrary(NumpyTestCase):
                 cdll = load_library('multiarray%s' % so,
                                     np.core.multiarray.__file__)
             except ImportError:
-                print "No distutils available, skipping test."
+                sys.stdout.write('S')
+                sys.stdout.flush()
         except ImportError, e:
-            msg = "ctypes is not available on this python: skipping the test" \
-                  " (import error was: %s)" % str(e)
-            print msg
+            sys.stdout.write('S')
+            sys.stdout.flush()
 
 class TestNdpointer(NumpyTestCase):
     def check_dtype(self):
