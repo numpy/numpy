@@ -639,7 +639,10 @@ class _DomainedBinaryOperation:
         if t.any(None):
             mb = mask_or(mb, t)
             # The following line controls the domain filling
-            d2 = np.where(t,self.filly,d2)
+            if t.size == d2.size:
+                d2 = np.where(t,self.filly,d2)
+            else:
+                d2 = np.where(np.resize(t, d2.shape),self.filly, d2)
         m = mask_or(ma, mb)
         if (not m.ndim) and m:
             return masked

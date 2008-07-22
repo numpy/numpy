@@ -492,6 +492,25 @@ class TestMaskedArrayArithmetic(TestCase):
             assert_equal(np.multiply(x,y), multiply(xm, ym))
             assert_equal(np.divide(x,y), divide(xm, ym))
 
+    def test_divide_on_different_shapes(self):
+        x = arange(6, dtype=float)
+        x.shape = (2,3)
+        y = arange(3, dtype=float)
+        #
+        z = x/y
+        assert_equal(z, [[-1.,1.,1.], [-1.,4.,2.5]])
+        assert_equal(z.mask, [[1,0,0],[1,0,0]])
+        #
+        z = x/y[None,:]
+        assert_equal(z, [[-1.,1.,1.], [-1.,4.,2.5]])
+        assert_equal(z.mask, [[1,0,0],[1,0,0]])
+        #
+        y = arange(2, dtype=float)
+        z = x/y[:,None]
+        assert_equal(z, [[-1.,-1.,-1.], [3.,4.,5.]])
+        assert_equal(z.mask, [[1,1,1],[0,0,0]])
+        
+
     def test_mixed_arithmetic(self):
         "Tests mixed arithmetics."
         na = np.array([1])
