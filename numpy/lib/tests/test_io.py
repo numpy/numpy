@@ -232,6 +232,15 @@ class TestLoadTxt(TestCase):
         assert_equal(arr['stid'],  ["JOE",  "BOB"])
         assert_equal(arr['temp'],  [25.3,  27.9])
 
+    def test_fancy_dtype(self):
+        c = StringIO.StringIO()
+        c.write('1,2,3.0\n4,5,6.0\n')
+        c.seek(0)
+        dt = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
+        x = np.loadtxt(c, dtype=dt, delimiter=',')
+        a = np.array([(1,(2,3.0)),(4,(5,6.0))], dt)
+        assert_array_equal(x, a)
+
 
 class Testfromregex(TestCase):
     def test_record(self):
