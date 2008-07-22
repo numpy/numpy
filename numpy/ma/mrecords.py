@@ -240,9 +240,8 @@ class MaskedRecords(MaskedArray, object):
             fillval = _check_fill_value(None, ddtype)
             # We can't use ddtype to reconstruct the array as we don't need...
             # ... the shape of the fields
-            self._fill_value = np.array(tuple(fillval),
-                                        dtype=zip(ddtype.names, 
-                                                  (_[1] for _ in ddtype.descr)))
+            dt = zip(ddtype.names, [s[1] for s in ddtype.descr])
+            self._fill_value = np.array(tuple(fillval), dtype=dt)
         return self._fill_value
 
     def set_fill_value(self, value=None):
@@ -796,7 +795,7 @@ set to 'fi', where `i` is the number of existing fields.
 ###############################################################################
 if __name__ == '__main__':
     from numpy.ma.testutils import assert_equal
-    
+
     if 1:
         ilist = [1,2,3,4,5]
         flist = [1.1,2.2,3.3,4.4,5.5]
