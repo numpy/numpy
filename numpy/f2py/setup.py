@@ -30,8 +30,6 @@ from __version__ import version
 def configuration(parent_package='',top_path=None):
     config = Configuration('f2py', parent_package, top_path)
 
-    config.add_subpackage('lib')
-
     config.add_data_dir('docs')
 
     config.add_data_files('src/fortranobject.c',
