@@ -104,6 +104,7 @@ def assert_equal(actual,desired,err_msg=''):
         raise ValueError(msg)
     actual = np.array(actual, copy=False, subok=True)
     desired = np.array(desired, copy=False, subok=True)
+    (actual_dtype, desired_dtype) = (actual.dtype, desired.dtype)
     if actual_dtype.char == "S" and desired_dtype.char == "S":
         return _assert_equal_on_sequences(actual.tolist(),
                                           desired.tolist(),
