@@ -69,11 +69,11 @@ Description: This program generates a Python C/API file (<modulename>module.c)
 
 Options:
 
-  --g3-numpy       Use numpy.f2py.lib tool, the 3rd generation of F2PY,
-                   with NumPy support.
   --2d-numpy       Use numpy.f2py tool with NumPy support. [DEFAULT]
   --2d-numeric     Use f2py2e tool with Numeric support.
   --2d-numarray    Use f2py2e tool with Numarray support.
+  --g3-numpy       Use 3rd generation f2py from the separate f2py package.
+                   [NOT AVAILABLE YET]
 
   -h <filename>    Write signatures of the fortran routines to file <filename>
                    and exit. You can then edit <filename> and use it instead
