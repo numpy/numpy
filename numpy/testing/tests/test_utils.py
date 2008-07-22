@@ -1,4 +1,4 @@
-import numpy as N
+import numpy as np
 from numpy.testing import *
 import unittest
 
@@ -19,29 +19,29 @@ class _GenericTest(object):
 
     def test_array_rank1_eq(self):
         """Test two equal array of rank 1 are found equal."""
-        a = N.array([1, 2])
-        b = N.array([1, 2])
+        a = np.array([1, 2])
+        b = np.array([1, 2])
 
         self._test_equal(a, b)
 
     def test_array_rank1_noteq(self):
         """Test two different array of rank 1 are found not equal."""
-        a = N.array([1, 2])
-        b = N.array([2, 2])
+        a = np.array([1, 2])
+        b = np.array([2, 2])
 
         self._test_not_equal(a, b)
 
     def test_array_rank2_eq(self):
         """Test two equal array of rank 2 are found equal."""
-        a = N.array([[1, 2], [3, 4]])
-        b = N.array([[1, 2], [3, 4]])
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array([[1, 2], [3, 4]])
 
         self._test_equal(a, b)
 
     def test_array_diffshape(self):
         """Test two arrays with different shapes are found not equal."""
-        a = N.array([1, 2])
-        b = N.array([[1, 2], [1, 2]])
+        a = np.array([1, 2])
+        b = np.array([[1, 2], [1, 2]])
 
         self._test_not_equal(a, b)
 
@@ -52,7 +52,7 @@ class TestEqual(_GenericTest, unittest.TestCase):
     def test_generic_rank1(self):
         """Test rank 1 array for all dtypes."""
         def foo(t):
-            a = N.empty(2, t)
+            a = np.empty(2, t)
             a.fill(1)
             b = a.copy()
             c = a.copy()
@@ -71,7 +71,7 @@ class TestEqual(_GenericTest, unittest.TestCase):
     def test_generic_rank3(self):
         """Test rank 3 array for all dtypes."""
         def foo(t):
-            a = N.empty((4, 2, 3), t)
+            a = np.empty((4, 2, 3), t)
             a.fill(1)
             b = a.copy()
             c = a.copy()
@@ -89,35 +89,35 @@ class TestEqual(_GenericTest, unittest.TestCase):
 
     def test_nan_array(self):
         """Test arrays with nan values in them."""
-        a = N.array([1, 2, N.nan])
-        b = N.array([1, 2, N.nan])
+        a = np.array([1, 2, np.nan])
+        b = np.array([1, 2, np.nan])
 
         self._test_equal(a, b)
 
-        c = N.array([1, 2, 3])
+        c = np.array([1, 2, 3])
         self._test_not_equal(c, b)
 
     def test_string_arrays(self):
         """Test two arrays with different shapes are found not equal."""
-        a = N.array(['floupi', 'floupa'])
-        b = N.array(['floupi', 'floupa'])
+        a = np.array(['floupi', 'floupa'])
+        b = np.array(['floupi', 'floupa'])
 
         self._test_equal(a, b)
 
-        c = N.array(['floupipi', 'floupa'])
+        c = np.array(['floupipi', 'floupa'])
 
         self._test_not_equal(c, b)
 
     def test_recarrays(self):
         """Test record arrays."""
-        a = N.empty(2, [('floupi', N.float), ('floupa', N.float)])
+        a = np.empty(2, [('floupi', np.float), ('floupa', np.float)])
         a['floupi'] = [1, 2]
         a['floupa'] = [1, 2]
         b = a.copy()
 
         self._test_equal(a, b)
 
-        c = N.empty(2, [('floupipi', N.float), ('floupa', N.float)])
+        c = np.empty(2, [('floupipi', np.float), ('floupa', np.float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
 

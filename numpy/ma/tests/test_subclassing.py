@@ -10,25 +10,25 @@ __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
-import numpy as N
+import numpy as np
 import numpy.core.numeric as numeric
 
 from numpy.testing import *
 from numpy.ma.testutils import *
 from numpy.ma.core import *
 
-class SubArray(N.ndarray):
-    """Defines a generic N.ndarray subclass, that stores some metadata
+class SubArray(np.ndarray):
+    """Defines a generic np.ndarray subclass, that stores some metadata
     in the  dictionary `info`."""
     def __new__(cls,arr,info={}):
-        x = N.asanyarray(arr).view(cls)
+        x = np.asanyarray(arr).view(cls)
         x.info = info
         return x
     def __array_finalize__(self, obj):
         self.info = getattr(obj,'info',{})
         return
     def __add__(self, other):
-        result = N.ndarray.__add__(self, other)
+        result = np.ndarray.__add__(self, other)
         result.info.update({'added':result.info.pop('added',0)+1})
         return result
 
@@ -52,13 +52,13 @@ class MSubArray(SubArray,MaskedArray):
 
 msubarray = MSubArray
 
-class MMatrix(MaskedArray, N.matrix,):
+class MMatrix(MaskedArray, np.matrix,):
     def __new__(cls, data, mask=nomask):
-        mat = N.matrix(data)
+        mat = np.matrix(data)
         _data = MaskedArray.__new__(cls, data=mat, mask=mask)
         return _data
     def __array_finalize__(self,obj):
-        N.matrix.__array_finalize__(self, obj)
+        np.matrix.__array_finalize__(self, obj)
         MaskedArray.__array_finalize__(self,obj)
         return
     def _get_series(self):
@@ -74,7 +74,7 @@ class TestSubclassing(TestCase):
 
     def test_data_subclassing(self):
         "Tests whether the subclass is kept."
-        x = N.arange(5)
+        x = np.arange(5)
         m = [0,0,1,0,0]
         xsub = SubArray(x)
         xmsub = masked_array(xsub, mask=m)
@@ -84,14 +84,14 @@ class TestSubclassing(TestCase):
 
     def test_maskedarray_subclassing(self):
         "Tests subclassing MaskedArray"
-        x = N.arange(5)
+        x = np.arange(5)
         mx = mmatrix(x,mask=[0,1,0,0,0])
-        assert isinstance(mx._data, N.matrix)
+        assert isinstance(mx._data, np.matrix)
         "Tests masked_unary_operation"
         assert isinstance(add(mx,mx), mmatrix)
         assert isinstance(add(mx,x), mmatrix)
         assert_equal(add(mx,x), mx+x)
-        assert isinstance(add(mx,mx)._data, N.matrix)
+        assert isinstance(add(mx,mx)._data, np.matrix)
         assert isinstance(add.outer(mx,mx), mmatrix)
         "Tests masked_binary_operation"
         assert isinstance(hypot(mx,mx), mmatrix)
@@ -126,7 +126,7 @@ class TestSubclassing(TestCase):
 
     def test_subclasspreservation(self):
         "Checks that masked_array(...,subok=True) preserves the class."
-        x = N.arange(5)
+        x = np.arange(5)
         m = [0,0,1,0,0]
         xinfo = [(i,j) for (i,j) in zip(x,m)]
         xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
