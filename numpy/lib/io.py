@@ -270,7 +270,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
       >>> X = loadtxt('test.dat')  # data in two columns
       >>> x,y,z = load('somefile.dat', usecols=(3,5,7), unpack=True)
       >>> r = np.loadtxt('record.dat', dtype={'names':('gender','age','weight'),
-                'formats': ('S1','i4', 'f4')})
+      ...                'formats': ('S1','i4', 'f4')})
 
     SeeAlso: scipy.io.loadmat to read and write matfiles.
     """
