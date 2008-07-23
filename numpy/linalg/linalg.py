@@ -92,14 +92,7 @@ def _commonType(*arrays):
         t = double
     return t, result_type
 
-def _castCopyAndTranspose(type, *arrays):
-    if len(arrays) == 1:
-        return transpose(arrays[0]).astype(type)
-    else:
-        return [transpose(a).astype(type) for a in arrays]
-
-# _fastCopyAndTranpose is an optimized version of _castCopyAndTranspose.
-# It assumes the input is 2D (as all the calls in here are).
+# _fastCopyAndTranpose assumes the input is 2D (as all the calls in here are).
 
 _fastCT = fastCopyAndTranspose
 
