@@ -36,7 +36,7 @@ __all__ = ['ediff1d', 'unique1d', 'intersect1d', 'intersect1d_nu', 'setxor1d',
            'setmember1d', 'union1d', 'setdiff1d']
 
 import time
-import numpy as nm
+import numpy as np
 
 def ediff1d(ary, to_end=None, to_begin=None):
     """The differences between consecutive elements of an array, possibly with
@@ -59,7 +59,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
         The differences. Loosely, this will be (ary[1:] - ary[:-1]).
 
     """
-    ary = nm.asarray(ary).flat
+    ary = np.asarray(ary).flat
     ed = ary[1:] - ary[:-1]
     arrays = [ed]
     if to_begin is not None:
@@ -70,7 +70,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     if len(arrays) != 1:
         # We'll save ourselves a copy of a potentially large array in the common
         # case where neither to_begin or to_end was given.
-        ed = nm.hstack(arrays)
+        ed = np.hstack(arrays)
 
     return ed
 
@@ -101,20 +101,20 @@ def unique1d(ar1, return_index=False):
                               for performing set operations on arrays.
 
     """
-    ar = nm.asarray(ar1).flatten()
+    ar = np.asarray(ar1).flatten()
     if ar.size == 0:
-        if return_index: return nm.empty(0, nm.bool), ar
+        if return_index: return np.empty(0, np.bool), ar
         else: return ar
 
     if return_index:
         perm = ar.argsort()
         aux = ar[perm]
-        flag = nm.concatenate( ([True], aux[1:] != aux[:-1]) )
+        flag = np.concatenate( ([True], aux[1:] != aux[:-1]) )
         return perm[flag], aux[flag]
 
     else:
         ar.sort()
-        flag = nm.concatenate( ([True], ar[1:] != ar[:-1]) )
+        flag = np.concatenate( ([True], ar[1:] != ar[:-1]) )
         return ar[flag]
 
 def intersect1d(ar1, ar2):
@@ -139,7 +139,7 @@ def intersect1d(ar1, ar2):
                             performing set operations on arrays.
 
     """
-    aux = nm.concatenate((ar1,ar2))
+    aux = np.concatenate((ar1,ar2))
     aux.sort()
     return aux[aux[1:] == aux[:-1]]
 
@@ -164,7 +164,7 @@ def intersect1d_nu(ar1, ar2):
 
     """
     # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
-    aux = nm.concatenate((unique1d(ar1), unique1d(ar2)))
+    aux = np.concatenate((unique1d(ar1), unique1d(ar2)))
     aux.sort()
     return aux[aux[1:] == aux[:-1]]
 
@@ -190,13 +190,13 @@ def setxor1d(ar1, ar2):
                             performing set operations on arrays.
 
     """
-    aux = nm.concatenate((ar1, ar2))
+    aux = np.concatenate((ar1, ar2))
     if aux.size == 0:
         return aux
 
     aux.sort()
 #    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
-    flag = nm.concatenate( ([True], aux[1:] != aux[:-1], [True] ) )
+    flag = np.concatenate( ([True], aux[1:] != aux[:-1], [True] ) )
 #    flag2 = ediff1d( flag ) == 0
     flag2 = flag[1:] == flag[:-1]
     return aux[flag2]
@@ -224,12 +224,12 @@ def setmember1d(ar1, ar2):
                             performing set operations on arrays.
 
     """
-    ar1 = nm.asarray( ar1 )
-    ar2 = nm.asarray( ar2 )
-    ar = nm.concatenate( (ar1, ar2 ) )
-    b1 = nm.zeros( ar1.shape, dtype = nm.int8 )
-    b2 = nm.ones( ar2.shape, dtype = nm.int8 )
-    tt = nm.concatenate( (b1, b2) )
+    ar1 = np.asarray( ar1 )
+    ar2 = np.asarray( ar2 )
+    ar = np.concatenate( (ar1, ar2 ) )
+    b1 = np.zeros( ar1.shape, dtype = np.int8 )
+    b2 = np.ones( ar2.shape, dtype = np.int8 )
+    tt = np.concatenate( (b1, b2) )
 
     # We need this to be a stable sort, so always use 'mergesort' here. The
     # values from the first array should always come before the values from the
@@ -238,8 +238,8 @@ def setmember1d(ar1, ar2):
     aux = ar[perm]
     aux2 = tt[perm]
 #    flag = ediff1d( aux, 1 ) == 0
-    flag = nm.concatenate( (aux[1:] == aux[:-1], [False] ) )
-    ii = nm.where( flag * aux2 )[0]
+    flag = np.concatenate( (aux[1:] == aux[:-1], [False] ) )
+    ii = np.where( flag * aux2 )[0]
     aux = perm[ii+1]
     perm[ii+1] = perm[ii]
     perm[ii] = aux
@@ -270,7 +270,7 @@ def union1d(ar1, ar2):
                             performing set operations on arrays.
 
     """
-    return unique1d( nm.concatenate( (ar1, ar2) ) )
+    return unique1d( np.concatenate( (ar1, ar2) ) )
 
 def setdiff1d(ar1, ar2):
     """Set difference of 1D arrays with unique elements.
@@ -298,67 +298,5 @@ def setdiff1d(ar1, ar2):
     if aux.size == 0:
         return aux
     else:
-        return nm.asarray(ar1)[aux == 0]
+        return np.asarray(ar1)[aux == 0]
 
-def _test_unique1d_speed( plot_results = False ):
-#    exponents = nm.linspace( 2, 7, 9 )
-    exponents = nm.linspace( 2, 7, 9 )
-    ratios = []
-    nItems = []
-    dt1s = []
-    dt2s = []
-    for ii in exponents:
-
-        nItem = 10 ** ii
-        print 'using %d items:' % nItem
-        a = nm.fix( nItem / 10 * nm.random.random( nItem ) )
-
-        print 'unique:'
-        tt = time.clock()
-        b = nm.unique( a )
-        dt1 = time.clock() - tt
-        print dt1
-
-        print 'unique1d:'
-        tt = time.clock()
-        c = unique1d( a )
-        dt2 = time.clock() - tt
-        print dt2
-
-
-        if dt1 < 1e-8:
-            ratio = 'ND'
-        else:
-            ratio = dt2 / dt1
-        print 'ratio:', ratio
-        print 'nUnique: %d == %d\n' % (len( b ), len( c ))
-
-        nItems.append( nItem )
-        ratios.append( ratio )
-        dt1s.append( dt1 )
-        dt2s.append( dt2 )
-
-        assert nm.alltrue( b == c )
-
-    print nItems
-    print dt1s
-    print dt2s
-    print ratios
-
-    if plot_results:
-        import pylab
-
-        def plotMe( fig, fun, nItems, dt1s, dt2s ):
-            pylab.figure( fig )
-            fun( nItems, dt1s, 'g-o', linewidth = 2, markersize = 8 )
-            fun( nItems, dt2s, 'b-x', linewidth = 2, markersize = 8 )
-            pylab.legend( ('unique', 'unique1d' ) )
-            pylab.xlabel( 'nItem' )
-            pylab.ylabel( 'time [s]' )
-
-        plotMe( 1, pylab.loglog, nItems, dt1s, dt2s )
-        plotMe( 2, pylab.plot, nItems, dt1s, dt2s )
-        pylab.show()
-
-if (__name__ == '__main__'):
-    _test_unique1d_speed( plot_results = True )
