@@ -1,7 +1,13 @@
 NumPy is a replacement of Numeric Python that adds the features of numarray.
-To install system-wide:
+To install system-wide on Unix-like systems:
 
 sudo python setup.py install
+
+or (for system without sudo):
+
+su -c python setup.py install
+
+On windows, it is advised to use the official binaries.
 
 The setup.py script will take advantage of fast BLAS on your system if it can
 find it.  You can guide the process using a site.cfg file.
