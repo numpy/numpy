@@ -1,0 +1,30 @@
+.. -*- rest -*-
+.. vim:syntax=rest
+.. NB! Keep this document a valid restructured document.
+
+Building and installing NumPy
++++++++++++++++++++++++++++++
+
+:Authors: Numpy Developers <numpy-discussion@scipy.org>
+:Discussions to: numpy-discussion@scipy.org
+
+.. Contents::
+
+PREREQUISITES
+=============
+
+Building NumPy requires the following software installed:
+
+1) Python__ 2.4.x or newer
+
+   On Debian and derivative (Ubuntu): python python-dev
+
+   On Windows: the official python installer on Python__ is enough
+
+   Make sure that the Python package distutils is installed before
+   continuing. For example, in Debian GNU/Linux, distutils is included
+   in the python-dev package.
+
+   Python must also be compiled with the zlib module enabled.
+
+__ http://www.python.org
