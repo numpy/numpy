@@ -1,0 +1,8 @@
+env = Environment(tools = ['mingw'])
+
+env.Append(CPPPATH = ['../cpuid'])
+env.Append(CFLAGS = ['-W', '-Wall'])
+cpuplug = env.SharedLibrary('cpucaps', source = ['cpucaps_main.c', '../cpuid/cpuid.c'])
+
+cpuplug_install = env.InstallAs('C:\Program Files\NSIS\Plugins\CpuCaps.dll', cpuplug[0])
+env.Alias('install', cpuplug_install)
