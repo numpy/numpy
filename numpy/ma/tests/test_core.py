@@ -436,6 +436,16 @@ class TestMaskedArray(TestCase):
         assert_equal(flexi.filled(1),
                      np.array([(1, '1', 1.)], dtype=flexi.dtype))
 
+
+    def test_basedict_propagation(self):
+        "Checks that basedict isn't back-propagated"
+        x = array([1,2,3,], dtype=float)
+        x._basedict['info'] = '???'
+        y = x.copy()
+        assert_equal(y._basedict['info'],'???')
+        y._basedict['info'] = '!!!'
+        assert_equal(x._basedict['info'], '???')
+
 #------------------------------------------------------------------------------
 
 class TestMaskedArrayArithmetic(TestCase):
@@ -509,7 +519,6 @@ class TestMaskedArrayArithmetic(TestCase):
         z = x/y[:,None]
         assert_equal(z, [[-1.,-1.,-1.], [3.,4.,5.]])
         assert_equal(z.mask, [[1,1,1],[0,0,0]])
-        
 
     def test_mixed_arithmetic(self):
         "Tests mixed arithmetics."

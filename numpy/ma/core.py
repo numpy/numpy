@@ -1322,7 +1322,9 @@ class MaskedArray(ndarray):
             _baseclass = type(obj)
         else:
             _baseclass = ndarray
-        _basedict = getattr(obj, '_basedict', getattr(obj, '__dict__',{}))
+        # We need to copy the _basedict to avoid backward propagation
+        _basedict = {}
+        _basedict.update(getattr(obj, '_basedict', getattr(obj, '__dict__',{})))
         _dict = dict(_fill_value=getattr(obj, '_fill_value', None),
                      _hardmask=getattr(obj, '_hardmask', False),
                      _sharedmask=getattr(obj, '_sharedmask', False),
