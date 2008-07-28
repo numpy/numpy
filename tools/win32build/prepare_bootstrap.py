@@ -61,10 +61,10 @@ def prepare_bootstrap(pyver = "2.5"):
         shutil.rmtree(bootstrap)
     os.makedirs(bootstrap)
 
-    #build_sdist()
-    #prepare_numpy_sources(bootstrap)
+    build_sdist()
+    prepare_numpy_sources(bootstrap)
 
-    #shutil.copy('build.py', bootstrap)
+    shutil.copy('build.py', bootstrap)
     prepare_nsis_script(bootstrap, pyver, get_numpy_version())
 
 if __name__ == '__main__':
