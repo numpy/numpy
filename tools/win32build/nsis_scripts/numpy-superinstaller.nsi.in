@@ -93,17 +93,17 @@ Section "Core" SecCore
         ${Switch} $CPUSSE
                 ${Case} "3"
                 DetailPrint '"Install SSE 3"'
-                File "@SSE3_BINARY@"
+                File "binaries\@SSE3_BINARY@"
                 ExecWait '"$INSTDIR\@SSE3_BINARY@"'
                 ${Break}
         ${Case} "2"
                 DetailPrint '"Install SSE 2"'
-                File "@SSE2_BINARY@"
+                File "binaries\@SSE2_BINARY@"
                 ExecWait '"$INSTDIR\@SSE2_BINARY@"'
                 ${Break}
         ${Default}
                 DetailPrint '"Install NO SSE"'
-                File "@NOSSE_BINARY@"
+                File "binaries\@NOSSE_BINARY@"
                 ExecWait '"$INSTDIR\@NOSSE_BINARY@"'
                 ${Break}
         ${EndSwitch}
