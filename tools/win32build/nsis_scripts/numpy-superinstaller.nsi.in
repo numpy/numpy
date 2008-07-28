@@ -4,6 +4,7 @@
 !include "MUI2.nsh"
 
 ;SetCompress off ; Useful to disable compression under development
+SetCompressor /Solid LZMA ; Useful to disable compression under development
 
 ;--------------------------------
 ;General
