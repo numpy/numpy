@@ -107,10 +107,11 @@ if __name__ == '__main__':
     arch = opts.arch
     pyver = opts.pyver
 
-    if not arch:
-        arch = "nosse"
     if not pyver:
         pyver = "2.5"
-    build(arch, pyver)
-    #for arch in SITECFG.keys():
-    #    build(arch, pyver)
+
+    if not arch:
+        for arch in SITECFG.keys():
+            build(arch, pyver)
+    else:
+        build(arch, pyver)
