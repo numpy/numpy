@@ -55,7 +55,7 @@ def prepare_nsis_script(bootstrap, pyver, numver):
 
     target.write(cnt)
 
-def prepare_bootstrap(numver, pyver = "2.5"):
+def prepare_bootstrap(pyver):
     bootstrap = "bootstrap-%s" % pyver
     if os.path.exists(bootstrap):
         shutil.rmtree(bootstrap)
@@ -95,4 +95,15 @@ def get_numpy_version(chdir = pjoin('..', '..')):
     return version
 
 if __name__ == '__main__':
-    prepare_bootstrap("2.5")
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("-p", "--pyver", dest="pyver",
+                      help = "Python version (2.4, 2.5, etc...)")
+
+    opts, args = parser.parse_args()
+    pyver = opts.pyver
+
+    if not pyver:
+        pyver = "2.5"
+
+    prepare_bootstrap(pyver)
