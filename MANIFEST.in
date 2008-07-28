@@ -8,6 +8,6 @@ include LICENSE.txt
 include setupscons.py
 include setupegg.py
 # Adding scons build relateed files not found by distutils
-include numpy/core/code_generators/__init__.py
+recursive-include numpy/core/code_generators *.py
 include numpy/core/include/numpy/numpyconfig.h.in
 recursive-include numpy SConstruct
