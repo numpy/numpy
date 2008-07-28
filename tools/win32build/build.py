@@ -10,6 +10,7 @@ import sys
 import subprocess
 import os
 import shutil
+from os.path import join as pjoin, split as psplit, dirname
 
 PYEXECS = {"2.5" : "C:\python25\python.exe",
         "2.4" : "C:\python24\python2.4.exe"}
@@ -94,17 +95,22 @@ def get_windist_exec(pyver):
     name = "numpy-%s.win32-py%s.exe" % (get_numpy_version(), pyver)
     return name
 
-USAGE = """build.py ARCH PYTHON_VERSION
-
-Example: build.py sse2 2.4."""
-
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        raise ValueError(USAGE)
-        sys.exit(-1)
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("-a", "--arch", dest="arch", 
+                      help = "Architecture to build (sse2, sse3, nosse, etc...)")
+    parser.add_option("-p", "--pyver", dest="pyver",
+                      help = "Python version (2.4, 2.5, etc...)")
 
-    arch = sys.argv[1]
-    pyver = sys.argv[2]
-    #build(arch, pyver)
-    for arch in SITECFG.keys():
-        build(arch, pyver)
+    opts, args = parser.parse_args()
+    arch = opts.arch
+    pyver = opts.pyver
+
+    if not arch:
+        arch = "nosse"
+    if not pyver:
+        pyver = "2.5"
+    build(arch, pyver)
+    #for arch in SITECFG.keys():
+    #    build(arch, pyver)
