@@ -28,6 +28,7 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            ]
 
 from itertools import groupby
+import warnings
 
 import core
 from core import MaskedArray, MAError, add, array, asarray, concatenate, count,\
