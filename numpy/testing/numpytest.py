@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import imp
-import glob
 import types
 import shlex
 import unittest
