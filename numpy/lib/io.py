@@ -8,7 +8,6 @@ __all__ = ['savetxt', 'loadtxt',
 import numpy as np
 import format
 import cStringIO
-import tempfile
 import os
 import itertools
 
@@ -109,7 +108,7 @@ def load(file, memmap=False):
     ------
     IOError
     """
-    if isinstance(file, type("")):
+    if isinstance(file, basestring):
         fid = _file(file,"rb")
     else:
         fid = file
@@ -148,7 +147,7 @@ def save(file, arr):
     np.save('myfile', a)
     a = np.load('myfile.npy')
     """
-    if isinstance(file, str):
+    if isinstance(file, basestring):
         if not file.endswith('.npy'):
             file = file + '.npy'
         fid = open(file, "wb")
@@ -171,7 +170,7 @@ def savez(file, *args, **kwds):
     # component of the so-called standard library.
     import zipfile
 
-    if isinstance(file, str):
+    if isinstance(file, basestring):
         if not file.endswith('.npz'):
             file = file + '.npz'
 
@@ -186,6 +185,7 @@ def savez(file, *args, **kwds):
 
     # Place to write temporary .npy files
     #  before storing them in the zip
+    import tempfile
     direc = tempfile.gettempdir()
     todel = []
 
