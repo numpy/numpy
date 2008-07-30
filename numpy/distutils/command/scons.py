@@ -242,6 +242,8 @@ class scons(old_build_ext):
                                     '(absolute) to look for scons tools'),
              ('silent=', None, 'specify whether scons output should less verbose'\
                                '(1), silent (2), super silent (3) or not (0, default)'),
+             ('log-level=', None, 'specify log level for numscons. Any value valid '\
+                                  'for the logging python module is valid'),
              ('package-list=', None, 'If specified, only run scons on the given '\
                  'packages (example: --package-list=scipy.cluster). If empty, '\
                  'no package is built')]
@@ -260,6 +262,7 @@ class scons(old_build_ext):
         self.scons_fcompiler = None
 
         self.package_list = None
+        self.log_level = None
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
@@ -399,6 +402,7 @@ class scons(old_build_ext):
             cmd.append('scons_tool_path="%s"' % self.scons_tool_path)
             cmd.append('src_dir="%s"' % pdirname(sconscript))
             cmd.append('pkg_name="%s"' % pkg_name)
+            cmd.append('log_level=%s' % self.log_level)
             #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
             #                                                    pdirname(sconscript))))
             cmd.append('distutils_libdir=%s' % 
