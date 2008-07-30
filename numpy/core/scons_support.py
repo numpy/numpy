@@ -1,4 +1,4 @@
-#! Last Change: Thu Jun 12 02:00 PM 2008 J
+#! Last Change: Wed Jul 30 02:00 PM 2008 J
 
 """Code to support special facilities to scons which are only useful for
 numpy.core, hence not put into numpy.distutils.scons"""
@@ -15,7 +15,6 @@ from code_generators.generate_ufunc_api import \
      do_generate_api as nowrap_do_generate_ufunc_api
 
 from numscons.numdist import process_c_str as process_str
-from numscons.core.utils import rsplit, isstring
 
 import SCons.Node
 import SCons
@@ -23,7 +22,7 @@ from SCons.Builder import Builder
 from SCons.Action import Action
 
 def split_ext(string):
-    sp = rsplit(string, '.', 1)
+    sp = string.rsplit( '.', 1)
     if len(sp) == 1:
         return (sp[0], '')
     else:
