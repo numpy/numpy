@@ -5,7 +5,6 @@ Utility function to facilitate testing.
 import os
 import sys
 import re
-import difflib
 import operator
 from inspect import isfunction
 from nosetester import import_nose
@@ -282,6 +281,9 @@ def runstring(astr, dict):
     exec astr in dict
 
 def assert_string_equal(actual, desired):
+    # delay import of difflib to reduce startup time
+    import difflib
+
     assert isinstance(actual, str),`type(actual)`
     assert isinstance(desired, str),`type(desired)`
     if re.match(r'\A'+desired+r'\Z', actual, re.M): return
