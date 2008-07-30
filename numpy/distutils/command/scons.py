@@ -262,7 +262,9 @@ class scons(old_build_ext):
         self.scons_fcompiler = None
 
         self.package_list = None
-        self.log_level = None
+
+        # Only critical things
+        self.log_level = 50
 
     def finalize_options(self):
         old_build_ext.finalize_options(self)
@@ -439,7 +441,11 @@ class scons(old_build_ext):
             st = os.system(cmdstr)
             if st:
                 print "status is %d" % st
-                raise DistutilsExecError("Error while executing scons command "\
-                                         "%s (see above)" % cmdstr)
+                msg = "Error while executing scons command %s (see above)" \
+                      % cmdstr
+                msg += """
+Try executing the scons command with --log-level option for more detailed
+output, for example --log-level=0; the lowest, the more detailed"""
+                raise DistutilsExecError(msg)
             if post_hook:
                 post_hook()
