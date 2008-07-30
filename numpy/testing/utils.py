@@ -6,7 +6,6 @@ import os
 import sys
 import re
 import operator
-from inspect import isfunction
 from nosetester import import_nose
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
@@ -368,6 +367,10 @@ def decorate_methods(cls, decorator, testmatch=None):
     else:
         testmatch = re.compile(testmatch)
     cls_attr = cls.__dict__
+
+    # delayed import to reduce startup time
+    from inspect import isfunction
+
     methods = filter(isfunction, cls_attr.values())
     for function in methods:
         try:
