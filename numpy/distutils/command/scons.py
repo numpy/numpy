@@ -454,4 +454,4 @@ class scons(old_build_ext):
     output, for example --log-level=0; the lowest, the more detailed"""
                     raise DistutilsExecError(msg)
             if post_hook:
-                post_hook()
+                post_hook(**{'pkg_name': pkg_name, 'scons_cmd' : self})
