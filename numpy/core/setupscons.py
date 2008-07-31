@@ -76,7 +76,7 @@ def configuration(parent_package='',top_path=None):
         config.add_data_files((header_dir, h_file),
                               (header_dir, t_file))
 
-    def add_generated_files():
+    def add_generated_files(*args, **kw):
         add_config_header()
         add_numpyconfig_header()
         add_array_api()
