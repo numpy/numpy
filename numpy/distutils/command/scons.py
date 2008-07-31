@@ -232,6 +232,7 @@ def is_bootstrapping():
         return False
         __NUMPY_SETUP__ = False
 
+# XXX: this is a giantic mess. Refactor this at some point.
 class scons(old_build_ext):
     # XXX: add an option to the scons command for configuration (auto/force/cache).
     description = "Scons builder"
@@ -400,56 +401,57 @@ class scons(old_build_ext):
             if pre_hook:
                 pre_hook()
 
-            cmd = [scons_exec, "-f", sconscript, '-I.']
-            if self.jobs:
-                cmd.append(" --jobs=%d" % int(self.jobs))
-            if self.inplace:
-                cmd.append("inplace=1")
-            cmd.append('scons_tool_path="%s"' % self.scons_tool_path)
-            cmd.append('src_dir="%s"' % pdirname(sconscript))
-            cmd.append('pkg_name="%s"' % pkg_name)
-            cmd.append('log_level=%s' % self.log_level)
-            #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
-            #                                                    pdirname(sconscript))))
-            cmd.append('distutils_libdir=%s' %
-                         protect_path(get_distutils_libdir(self, sconscript)))
+            if sconscript:
+                cmd = [scons_exec, "-f", sconscript, '-I.']
+                if self.jobs:
+                    cmd.append(" --jobs=%d" % int(self.jobs))
+                if self.inplace:
+                    cmd.append("inplace=1")
+                cmd.append('scons_tool_path="%s"' % self.scons_tool_path)
+                cmd.append('src_dir="%s"' % pdirname(sconscript))
+                cmd.append('pkg_name="%s"' % pkg_name)
+                cmd.append('log_level=%s' % self.log_level)
+                #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
+                #                                                    pdirname(sconscript))))
+                cmd.append('distutils_libdir=%s' %
+                             protect_path(get_distutils_libdir(self, sconscript)))
 
-            if not self._bypass_distutils_cc:
-                cmd.append('cc_opt=%s' % self.scons_compiler)
-                cmd.append('cc_opt_path=%s' % self.scons_compiler_path)
-            else:
-                cmd.append('cc_opt=%s' % self.scons_compiler)
+                if not self._bypass_distutils_cc:
+                    cmd.append('cc_opt=%s' % self.scons_compiler)
+                    cmd.append('cc_opt_path=%s' % self.scons_compiler_path)
+                else:
+                    cmd.append('cc_opt=%s' % self.scons_compiler)
 
 
-            if self.fcompiler:
-                cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
-                cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
+                if self.fcompiler:
+                    cmd.append('f77_opt=%s' % dist2sconsfc(self.fcompiler))
+                    cmd.append('f77_opt_path=%s' % protect_path(get_f77_tool_path(self.fcompiler)))
 
-            if self.cxxcompiler:
-                cmd.append('cxx_opt=%s' % dist2sconscxx(self.cxxcompiler))
-                cmd.append('cxx_opt_path=%s' % protect_path(get_cxx_tool_path(self.cxxcompiler)))
+                if self.cxxcompiler:
+                    cmd.append('cxx_opt=%s' % dist2sconscxx(self.cxxcompiler))
+                    cmd.append('cxx_opt_path=%s' % protect_path(get_cxx_tool_path(self.cxxcompiler)))
 
-            cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
-            if self.silent:
-                if int(self.silent) == 2:
-                    cmd.append('-Q')
-                elif int(self.silent) == 3:
-                    cmd.append('-s')
-            cmd.append('silent=%d' % int(self.silent))
-            cmd.append('bootstrapping=%d' % bootstrap)
-            cmdstr = ' '.join(cmd)
-            if int(self.silent) < 1:
-                log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
-            else:
-                log.info("======== Executing scons command for pkg %s =========", pkg_name)
-            st = os.system(cmdstr)
-            if st:
-                print "status is %d" % st
-                msg = "Error while executing scons command %s (see above)" \
-                      % cmdstr
-                msg += """
-Try executing the scons command with --log-level option for more detailed
-output, for example --log-level=0; the lowest, the more detailed"""
-                raise DistutilsExecError(msg)
+                cmd.append('include_bootstrap=%s' % dirl_to_str(get_numpy_include_dirs(sconscript)))
+                if self.silent:
+                    if int(self.silent) == 2:
+                        cmd.append('-Q')
+                    elif int(self.silent) == 3:
+                        cmd.append('-s')
+                cmd.append('silent=%d' % int(self.silent))
+                cmd.append('bootstrapping=%d' % bootstrap)
+                cmdstr = ' '.join(cmd)
+                if int(self.silent) < 1:
+                    log.info("Executing scons command (pkg is %s): %s ", pkg_name, cmdstr)
+                else:
+                    log.info("======== Executing scons command for pkg %s =========", pkg_name)
+                st = os.system(cmdstr)
+                if st:
+                    print "status is %d" % st
+                    msg = "Error while executing scons command %s (see above)" \
+                          % cmdstr
+                    msg += """
+    Try executing the scons command with --log-level option for more detailed
+    output, for example --log-level=0; the lowest, the more detailed"""
+                    raise DistutilsExecError(msg)
             if post_hook:
                 post_hook()

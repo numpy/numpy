@@ -1188,7 +1188,10 @@ class Configuration(object):
         """Add a sconscript to configuration.
 
         pre_hook and post hook should be sequences of callable, which will be
-        use before and after executing scons. """
+        use before and after executing scons. 
+        
+        sconscript can be None, which can be useful to add only post/pre
+        hooks."""
         if standalone:
             parent_name = None
         else:
