@@ -238,6 +238,7 @@ class scons(old_build_ext):
     user_options = old_build_ext.user_options + \
             [('jobs=', None,
               "specify number of worker threads when executing scons"),
+             ('inplace', 'i', 'If specified, build in place.'),
              ('scons-tool-path=', None, 'specify additional path '\
                                     '(absolute) to look for scons tools'),
              ('silent=', None, 'specify whether scons output should less verbose'\
@@ -262,6 +263,7 @@ class scons(old_build_ext):
         self.scons_fcompiler = None
 
         self.package_list = None
+        self.inplace = 0
 
         # Only critical things
         self.log_level = 50
@@ -401,13 +403,15 @@ class scons(old_build_ext):
             cmd = [scons_exec, "-f", sconscript, '-I.']
             if self.jobs:
                 cmd.append(" --jobs=%d" % int(self.jobs))
+            if self.inplace:
+                cmd.append("inplace=1")
             cmd.append('scons_tool_path="%s"' % self.scons_tool_path)
             cmd.append('src_dir="%s"' % pdirname(sconscript))
             cmd.append('pkg_name="%s"' % pkg_name)
             cmd.append('log_level=%s' % self.log_level)
             #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
             #                                                    pdirname(sconscript))))
-            cmd.append('distutils_libdir=%s' % 
+            cmd.append('distutils_libdir=%s' %
                          protect_path(get_distutils_libdir(self, sconscript)))
 
             if not self._bypass_distutils_cc:
