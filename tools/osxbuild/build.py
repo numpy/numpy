@@ -2,6 +2,8 @@
 
 This is a simple script, most of the heavy lifting is done in bdist_mpkg.
 
+To run this script:  'python build.py'
+
 Requires a svn version of numpy is installed, svn is used to revert
 file changes made to the docs for the end-user install.  Installer is
 built using sudo so file permissions are correct when installed on
