@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 from os.path import join as pjoin
 
-def configuration(parent_package='',top_path=None):
+def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.misc_util import scons_generate_config_py
 
     pkgname = 'numpy'
-    config = Configuration(pkgname,parent_package,top_path, setup_name = 'setupscons.py')
+    config = Configuration(pkgname, parent_package, top_path, 
+                           setup_name = 'setupscons.py')
     config.add_subpackage('distutils')
     config.add_subpackage('testing')
     config.add_subpackage('f2py')
@@ -26,7 +27,8 @@ def configuration(parent_package='',top_path=None):
         if kw['scons_cmd'].inplace:
             target = pjoin(kw['pkg_name'], '__config__.py')
         else:
-            target = pjoin(kw['scons_cmd'].build_lib, kw['pkg_name'], '__config__.py')
+            target = pjoin(kw['scons_cmd'].build_lib, kw['pkg_name'], 
+                           '__config__.py')
         scons_generate_config_py(target)
     config.add_sconscript(None, post_hook = add_config)
 
