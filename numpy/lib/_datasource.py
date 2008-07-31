@@ -35,7 +35,6 @@ Example:
 __docformat__ = "restructuredtext en"
 
 import os
-import tempfile
 from shutil import rmtree
 from urlparse import urlparse
 
@@ -131,6 +130,7 @@ class DataSource (object):
             self._destpath = os.path.abspath(destpath)
             self._istmpdest = False
         else:
+            import tempfile # deferring import to improve startup time
             self._destpath = tempfile.mkdtemp()
             self._istmpdest = True
 
