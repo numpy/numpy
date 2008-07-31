@@ -10,8 +10,7 @@ def configuration(parent_package='',top_path=None):
                           source_files = ['lapack_litemodule.c',
                                           'zlapack_lite.c', 'dlapack_lite.c',
                                           'blas_lite.c', 'dlamch.c',
-                                          'f2c_lite.c','f2c.h'],
-                          post_hook = config.add_configres)
+                                          'f2c_lite.c','f2c.h'])
 
     return config
 

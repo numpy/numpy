@@ -81,7 +81,6 @@ def configuration(parent_package='',top_path=None):
         add_numpyconfig_header()
         add_array_api()
         add_ufunc_api()
-        config.add_configres()
 
     config.add_sconscript('SConstruct',
                           post_hook = add_generated_files,

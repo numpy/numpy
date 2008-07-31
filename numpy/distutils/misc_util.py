@@ -1229,11 +1229,6 @@ class Configuration(object):
             # options in distutils command.
             self.add_extension('', sources = [])
 
-    def add_configres(self):
-        from numscons import get_scons_configres_dir, get_scons_configres_filename
-        file = os.path.join(get_scons_configres_dir(), self.local_path,
-                            get_scons_configres_filename())
-
     def add_scripts(self,*files):
         """Add scripts to configuration.
         """
