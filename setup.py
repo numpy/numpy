@@ -76,7 +76,7 @@ def setup_package():
         setup(
             name = 'numpy',
             maintainer = "NumPy Developers",
-            maintainer_email = "numpy-discussion@lists.sourceforge.net",
+            maintainer_email = "numpy-discussion@scipy.org",
             description = DOCLINES[0],
             long_description = "\n".join(DOCLINES[2:]),
             url = "http://numpy.scipy.org",
@@ -84,7 +84,7 @@ def setup_package():
             license = 'BSD',
             classifiers=filter(None, CLASSIFIERS.split('\n')),
             author = "Travis E. Oliphant, et.al.",
-            author_email = "oliphant@ee.byu.edu",
+            author_email = "oliphant@enthought.com",
             platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
             configuration=configuration )
     finally:
