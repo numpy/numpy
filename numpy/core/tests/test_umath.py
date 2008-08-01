@@ -4,6 +4,11 @@ import numpy as np
 import nose
 from numpy import inf, nan, pi
 
+# Because of the way Python handles literals (e.g. (-0.0, 0.0) can give
+# (-0.0, -0.0)). Use this for -0.0 instead.
+negzero = -0.0
+
+
 class TestDivision(TestCase):
     def test_division_int(self):
         # int division should return the floor of the result, a la Python
@@ -277,8 +282,8 @@ class TestC99(object):
     
     def test_clog(self):
         for p, v, e in [
-            ((-0., 0.), (-inf, pi), 'divide'),
-            ((+0., 0.), (-inf, 0.), 'XXX divide'), # fails on OSX?
+            ((negzero, 0.0), (-inf, pi), 'divide'),
+            ((0.0, 0.0), (-inf, 0.0), 'divide'), # fails on OSX?
             ((1., inf), (inf, pi/2), ''),
             ((1., nan), (nan, nan), 'invalid-optional'),
             ((-inf, 1.), (inf, pi), ''),
@@ -289,13 +294,13 @@ class TestC99(object):
             ((-inf, nan), (inf, nan), ''),
             ((nan, 1.), (nan, nan), 'invalid-optional'),
             ((nan, inf), (inf, nan), ''),
-            ((+nan, nan), (nan, nan), 'XXX'), # raises 'invalid' on some platfs
+            ((+nan, nan), (nan, nan), ''), # raises 'invalid' on some platfs
         ]:
             yield self._check, np.log, p, v, e
     
     def test_csqrt(self):
         for p, v, e in [
-            ((-0., 0.), (0.,0.),  'XXX'), # now (-0., 0.)
+            ((negzero, 0.0), (0.0, 0.0),  ''), # now (-0., 0.)
             ((0., 0.), (0.,0.),  ''),
             ((1., inf), (inf,inf), 'XXX invalid'), # now (inf, nan)
             ((nan, inf), (inf,inf), 'XXX'), # now (nan, nan)
@@ -310,10 +315,10 @@ class TestC99(object):
 
     def test_cacos(self):
         for p, v, e in [
-            ((0., 0.), (pi/2, -0.), 'XXX'), # now (-0., 0.)
-            ((-0., 0.), (pi/2, -0.), ''),
+            ((0., 0.), (pi/2, negzero), 'XXX'), # now (-0., 0.)
+            ((negzero, 0.0), (pi/2, negzero), ''),
             ((0., nan), (pi/2, nan), 'XXX'), # now (nan, nan)
-            ((-0., nan), (pi/2, nan), 'XXX'), # now (nan, nan)
+            ((negzero, nan), (pi/2, nan), ''), # now (nan, nan)
             ((1., inf), (pi/2, -inf), 'XXX'), # now (nan, -inf)
             ((1., nan), (nan, nan), 'invalid-optional'),
             ((-inf, 1.), (pi, -inf), 'XXX'), # now (nan, -inf)
@@ -331,7 +336,7 @@ class TestC99(object):
     def test_cacosh(self):
         for p, v, e in [
             ((0., 0), (0, pi/2), ''),
-            ((-0., 0), (0, pi/2), ''),
+            ((negzero, 0), (0, pi/2), ''),
             ((1., inf), (inf, pi/2), 'XXX'), # now: (nan, nan)
             ((1., nan), (nan, nan), 'invalid-optional'),
             ((-inf, 1.), (inf, pi), 'XXX'), # now: (inf, nan)
