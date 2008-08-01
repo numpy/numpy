@@ -4,7 +4,7 @@ import os
 PYVER = "2.5"
 
 # Bootstrap
-subprocess.check_call(['python', 'prepare_bootstrap.py'])
+subprocess.check_call(['python', 'prepare_bootstrap.py', '-p', PYVER])
 
 # Build binaries
 subprocess.check_call(['python', 'build.py', '-p', PYVER], cwd = 'bootstrap-%s' % PYVER)
