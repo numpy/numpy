@@ -13,7 +13,8 @@ import shutil
 from os.path import join as pjoin, split as psplit, dirname
 
 PYEXECS = {"2.5" : "C:\python25\python.exe",
-        "2.4" : "C:\python24\python2.4.exe"}
+        "2.4" : "C:\python24\python2.4.exe",
+        "2.3" : "C:\python23\python23.exe"}
 
 _SSE3_CFG = r"""[atlas]
 library_dirs = C:\local\lib\yop\sse3"""
@@ -50,7 +51,10 @@ def build(arch, pyver):
     get_clean()
     write_site_cfg(arch)
 
-    cmd = "%s setup.py build -c mingw32 bdist_wininst" % get_python_exec(pyver)
+    if BUILD_MSI:
+        cmd = "%s setup.py build -c mingw32 bdist_msi" % get_python_exec(pyver)
+    else:
+        cmd = "%s setup.py build -c mingw32 bdist_wininst" % get_python_exec(pyver)
     build_log = "build-%s-%s.log" % (arch, pyver)
     f = open(build_log, 'w')
 
@@ -86,13 +90,21 @@ def get_numpy_version():
     return version
 
 def get_binary_name(arch):
-    return "numpy-%s-%s.exe" % (get_numpy_version(), arch)
+    if BUILD_MSI:
+        ext = '.msi'
+    else:
+        ext = '.exe'
+    return "numpy-%s-%s%s" % (get_numpy_version(), arch, ext)
 
 def get_windist_exec(pyver):
     """Return the name of the installer built by wininst command."""
     # Yeah, the name logic is harcoded in distutils. We have to reproduce it
     # here
-    name = "numpy-%s.win32-py%s.exe" % (get_numpy_version(), pyver)
+    if BUILD_MSI:
+        ext = '.msi'
+    else:
+        ext = '.exe'
+    name = "numpy-%s.win32-py%s%s" % (get_numpy_version(), pyver, ext)
     return name
 
 if __name__ == '__main__':
@@ -102,13 +114,20 @@ if __name__ == '__main__':
                       help = "Architecture to build (sse2, sse3, nosse, etc...)")
     parser.add_option("-p", "--pyver", dest="pyver",
                       help = "Python version (2.4, 2.5, etc...)")
+    parser.add_option("-m", "--build-msi", dest="msi",
+                      help = "0 or 1. If 1, build a msi instead of an exe.")
 
     opts, args = parser.parse_args()
     arch = opts.arch
     pyver = opts.pyver
+    msi = opts.msi
 
     if not pyver:
         pyver = "2.5"
+    if not msi:
+        BUILD_MSI = False
+    else:
+        BUILD_MSI = True
 
     if not arch:
         for arch in SITECFG.keys():
