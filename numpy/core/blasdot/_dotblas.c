@@ -1151,7 +1151,7 @@ static struct PyMethodDef dotblas_module_methods[] = {
     {"vdot", (PyCFunction)dotblas_vdot, 1, doc_vdot},
     {"alterdot", (PyCFunction)dotblas_alterdot, 1, doc_alterdot},
     {"restoredot", (PyCFunction)dotblas_restoredot, 1, doc_restoredot},
-    {NULL,		NULL, 0}		/* sentinel */
+    {NULL, NULL, 0, NULL}		/* sentinel */
 };
 
 /* Initialization function for the module */
