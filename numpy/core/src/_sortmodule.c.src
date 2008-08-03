@@ -846,7 +846,7 @@ add_sortfuncs(void)
 }
 
 static struct PyMethodDef methods[] = {
-    {NULL, NULL, 0}
+    {NULL, NULL, 0, NULL}
 };
 
 PyMODINIT_FUNC
