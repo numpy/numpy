@@ -79,6 +79,8 @@ nomask = MaskType(0)
 
 np.seterr(all='ignore')
 
+
+
 def doc_note(note):
     return "\nNotes\n-----\n%s" % note
 
@@ -765,7 +767,7 @@ def getmaskarray(arr):
     """
     mask = getmask(arr)
     if mask is nomask:
-        mask = make_mask_none(np.shape(arr), getdata(arr).dtype.names)
+        mask = make_mask_none(np.shape(arr), getdata(arr).dtype)
     return mask
 
 def is_mask(m):
@@ -1102,7 +1104,7 @@ class _arraymethod(object):
 
     """
     def __init__(self, funcname, onmask=True):
-        self._name = funcname
+        self._name = self.__name__ = funcname
         self._onmask = onmask
         self.obj = None
         self.__doc__ = self.getdoc()
@@ -1226,7 +1228,7 @@ class MaskedArray(ndarray):
         # Process data............
         _data = np.array(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
-        _basedict = getattr(data, '_basedict', getattr(data, '__dict__', {}))
+        _optinfo = {}
         # Careful, cls might not always be MaskedArray...
         if not isinstance(data, cls) or not subok:
             _data = _data.view(cls)
@@ -1312,7 +1314,7 @@ class MaskedArray(ndarray):
         # Process extra options ..
         _data._hardmask = hard_mask
         _data._baseclass = _baseclass
-        _data._basedict = _basedict
+        _data._optinfo = _data._basedict = _optinfo
         return _data
     #
     def _update_from(self, obj):
@@ -1323,16 +1325,20 @@ class MaskedArray(ndarray):
         else:
             _baseclass = ndarray
         # We need to copy the _basedict to avoid backward propagation
-        _basedict = {}
-        _basedict.update(getattr(obj, '_basedict', getattr(obj, '__dict__',{})))
+        _optinfo = {}
+        _optinfo.update(getattr(obj, '_optinfo', {}))
+        _optinfo.update(getattr(obj, '_basedict',{}))
+        if not isinstance(obj, MaskedArray):
+            _optinfo.update(getattr(obj, '__dict__', {}))
         _dict = dict(_fill_value=getattr(obj, '_fill_value', None),
                      _hardmask=getattr(obj, '_hardmask', False),
                      _sharedmask=getattr(obj, '_sharedmask', False),
                      _isfield=getattr(obj, '_isfield', False),
                      _baseclass=getattr(obj,'_baseclass', _baseclass),
-                     _basedict=_basedict,)
+                     _optinfo=_optinfo,
+                     _basedict=_optinfo)
         self.__dict__.update(_dict)
-        self.__dict__.update(_basedict)
+        self.__dict__.update(_optinfo)
         return
     #........................
     def __array_finalize__(self,obj):
@@ -1461,6 +1467,8 @@ class MaskedArray(ndarray):
 #            raise IndexError, msg
         if isinstance(indx, basestring):
             ndarray.__setitem__(self._data, indx, value)
+            if self._mask is nomask:
+                self._mask = make_mask_none(self.shape, self.dtype)
             ndarray.__setitem__(self._mask, indx, getmask(value))
             return
         #........................................

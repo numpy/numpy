@@ -437,14 +437,14 @@ class TestMaskedArray(TestCase):
                      np.array([(1, '1', 1.)], dtype=flexi.dtype))
 
 
-    def test_basedict_propagation(self):
-        "Checks that basedict isn't back-propagated"
+    def test_optinfo_propagation(self):
+        "Checks that _optinfo dictionary isn't back-propagated"
         x = array([1,2,3,], dtype=float)
-        x._basedict['info'] = '???'
+        x._optinfo['info'] = '???'
         y = x.copy()
-        assert_equal(y._basedict['info'],'???')
-        y._basedict['info'] = '!!!'
-        assert_equal(x._basedict['info'], '???')
+        assert_equal(y._optinfo['info'],'???')
+        y._optinfo['info'] = '!!!'
+        assert_equal(x._optinfo['info'], '???')
 
 #------------------------------------------------------------------------------
 
@@ -918,7 +918,7 @@ class TestFillingValues(TestCase):
         # We had a tailored comment to make sure special attributes are properly
         # dealt with
         a = array(['3', '4', '5'])
-        a._basedict.update({'comment':"updated!"})
+        a._optinfo.update({'comment':"updated!"})
         #
         b = array(a, dtype=int)
         assert_equal(b._data, [3,4,5])
@@ -931,7 +931,7 @@ class TestFillingValues(TestCase):
         b = a.astype(int)
         assert_equal(b._data, [3,4,5])
         assert_equal(b.fill_value, default_fill_value(0))
-        assert_equal(b._basedict['comment'], "updated!")
+        assert_equal(b._optinfo['comment'], "updated!")
         #
         b = a.astype([('a','|S3')])
         assert_equal(b['a']._data, a._data)
@@ -2268,6 +2268,19 @@ class TestMaskedFields(TestCase):
         for n in ('a','b','c'):
             assert_equal(base[n].mask, [1,1,0,0,1])
             assert_equal(base[n]._data, base._data[n])
+    #
+    def test_getmaskarray(self):
+        "Test getmaskarray on flexible dtype"
+        ndtype = [('a', int), ('b', float)]
+        test = empty(3, dtype=ndtype)
+        assert_equal(getmaskarray(test),
+                     np.array([(0, 0) , (0, 0), (0, 0)],
+                              dtype=[('a', '|b1'), ('b', '|b1')]))
+        test[:] = masked
+        assert_equal(getmaskarray(test),
+                     np.array([(1, 1) , (1, 1), (1, 1)],
+                              dtype=[('a', '|b1'), ('b', '|b1')]))
+
 
 ###############################################################################
 #------------------------------------------------------------------------------
