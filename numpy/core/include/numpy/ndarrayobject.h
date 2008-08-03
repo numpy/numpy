@@ -971,22 +971,6 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_INTP_FMT "Ld"
 #endif
 
-/* If available, use formats in inttypes for (u)intp types. */
-#ifdef HAVE_UINTPTR_T /* set in pyconfig.h */
-        #ifdef HAVE_INTTYPES_H /* set in pyconfig.h */
-                #include <inttypes.h>
-
-                #undef NPY_MAX_INTP
-                #undef NPY_MIN_INTP
-                #undef NPY_MAX_UINTP
-                #undef NPY_INTP_FMT
-                #define NPY_MAX_INTP INTPTR_MAX
-                #define NPY_MIN_INTP INTPTR_MIN
-                #define NPY_MAX_UINTP UINTPTR_MAX
-                #define NPY_INTP_FMT PRIdPTR
-        #endif
-#endif
-
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
