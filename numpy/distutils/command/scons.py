@@ -18,6 +18,13 @@ def get_scons_build_dir():
     from numscons import get_scons_build_dir
     return get_scons_build_dir()
 
+def get_scons_pkg_build_dir(pkg):
+    """Return the build directory for the given package (foo.bar).
+
+    The path is relative to the top setup.py"""
+    from numscons.core.utils import pkg_to_path
+    return pjoin(get_scons_build_dir(), pkg_to_path(pkg))
+
 def get_scons_configres_dir():
     """Return the top path where everything produced by scons will be put.
 
