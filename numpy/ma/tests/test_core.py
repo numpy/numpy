@@ -839,6 +839,14 @@ class TestMA(NumpyTestCase):
         assert_equal(x._data,[[1,2,3]])
         assert_equal(x._mask,[[1,0,0]])
     #
+    def test_creation_ndmin_from_maskedarray(self):
+        "Make sure we're not losing the original mask w/ ndmin"
+        x = array([1,2,3])
+        x[-1] = masked
+        xx = array(x, ndmin=2, dtype=float)
+        assert_equal(x.shape, x._mask.shape)
+        assert_equal(xx.shape, xx._mask.shape)
+    #
     def test_record(self):
         "Check record access"
         mtype = [('f',float_),('s','|S3')]

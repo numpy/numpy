@@ -1197,6 +1197,10 @@ class MaskedArray(ndarray):
         _data = np.array(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
         _basedict = getattr(data, '_basedict', getattr(data, '__dict__', {}))
+        # Check that we'ew not erasing the mask..........
+        if isinstance(data,MaskedArray) and (data.shape != _data.shape):
+            copy = True
+        # Careful, cls might not always be MaskedArray...
         if not isinstance(data, MaskedArray) or not subok:
             _data = _data.view(cls)
         else:
@@ -1215,6 +1219,9 @@ class MaskedArray(ndarray):
             if copy:
                 _data._mask = _data._mask.copy()
                 _data._sharedmask = False
+                # Reset the shape of the original mask
+                if getmask(data) is not nomask:
+                    data._mask.shape = data.shape
             else:
                 _data._sharedmask = True
         else:
