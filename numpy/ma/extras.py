@@ -360,21 +360,18 @@ def average(a, axis=None, weights=None, returned=False):
 
 
 
-def median(a, axis=0, out=None, overwrite_input=False):
+def median(a, axis=None, out=None, overwrite_input=False):
     """Compute the median along the specified axis.
 
-    Returns the median of the array elements.  The median is taken
-    over the first axis of the array by default, otherwise over
-    the specified axis.
+    Returns the median of the array elements.
 
     Parameters
     ----------
     a : array-like
         Input array or object that can be converted to an array
-    axis : {int, None}, optional
-        Axis along which the medians are computed. The default is to
-        compute the median along the first dimension.  axis=None
-        returns the median of the flattened array
+    axis : {None, int}, optional
+        Axis along which the medians are computed. The default (axis=None) is to
+        compute the median along a flattened version of the array.
     out : {None, ndarray}, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
@@ -402,9 +399,9 @@ def median(a, axis=0, out=None, overwrite_input=False):
 
     Notes
     -----
-    Given a vector V length N, the median of V is the middle value of
-    a sorted copy of V (Vs) - i.e. Vs[(N-1)/2], when N is odd. It is
-    the mean of the two middle values of Vs, when N is even.
+    Given a vector V with N non masked values, the median of V is the middle 
+    value of a sorted copy of V (Vs) - i.e. Vs[(N-1)/2], when N is odd, or
+    {Vs[N/2 - 1] + Vs[N/2]}/2. when N is even.
 
     """
     def _median1D(data):
