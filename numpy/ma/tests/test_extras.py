@@ -12,7 +12,7 @@ __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 import numpy
-from numpy.testing import *
+from numpy.testing import TestCase, run_module_suite
 from numpy.ma.testutils import *
 from numpy.ma.core import *
 from numpy.ma.extras import *
@@ -317,6 +317,7 @@ class Test2DFunctions(TestCase):
         assert_equal(dx._mask, np.r_[1,0,0,0,0,1])
 
 class TestApplyAlongAxis(TestCase):
+    #
     "Tests 2D functions"
     def test_3d(self):
         a = arange(12.).reshape(2,2,3)
@@ -325,7 +326,9 @@ class TestApplyAlongAxis(TestCase):
         xa = apply_along_axis(myfunc,2,a)
         assert_equal(xa,[[1,4],[7,10]])
 
+
 class TestMedian(TestCase):
+    #
     def test_2d(self):
         "Tests median w/ 2D"
         (n,p) = (101,30)
@@ -350,6 +353,71 @@ class TestMedian(TestCase):
         x = numpy.ma.arange(24).reshape(4,3,2)
         x[x%5==0] = masked
         assert_equal(median(x,0), [[12,10],[8,9],[16,17]])
+
+
+class TestCov(TestCase):
+    #
+    def setUp(self):
+        self.data = array(np.random.rand(12))
+    #
+    def test_1d_wo_missing(self):
+        "Test cov on 1D variable w/o missing values"
+        x = self.data
+        assert_equal(np.cov(x), cov(x))
+        assert_equal(np.cov(x, rowvar=False), cov(x, rowvar=False))
+        assert_equal(np.cov(x, rowvar=False, bias=True),
+                     cov(x, rowvar=False, bias=True))
+    #
+    def test_2d_wo_missing(self):
+        "Test cov on 1 2D variable w/o missing values"
+        x = self.data.reshape(3,4)
+        assert_equal(np.cov(x), cov(x))
+        assert_equal(np.cov(x, rowvar=False), cov(x, rowvar=False))
+        assert_equal(np.cov(x, rowvar=False, bias=True),
+                     cov(x, rowvar=False, bias=True))
+    #
+    def test_1d_w_missing(self):
+        "Test cov 1 1D variable w/missing values"
+        x = self.data
+        x[-1] = masked
+        x -= x.mean()
+        nx = x.compressed()
+        assert_almost_equal(np.cov(nx), cov(x))
+        assert_almost_equal(np.cov(nx, rowvar=False), cov(x, rowvar=False))
+        assert_almost_equal(np.cov(nx, rowvar=False, bias=True),
+                            cov(x, rowvar=False, bias=True))
+        #
+        try:
+            cov(x, allow_masked=False)
+        except ValueError:
+            pass
+        #
+        # 2 1D variables w/ missing values
+        nx = x[1:-1]
+        assert_almost_equal(np.cov(nx, nx[::-1]), cov(x, x[::-1]))
+        assert_equal(np.cov(nx, nx[::-1], rowvar=False), 
+                     cov(x, x[::-1], rowvar=False))
+        assert_equal(np.cov(nx, nx[::-1], rowvar=False, bias=True),
+                     cov(x, x[::-1], rowvar=False, bias=True))
+    #
+    def test_2d_w_missing(self):
+        "Test cov on 2D variable w/ missing value"
+        x = self.data
+        x[-1] = masked
+        x = x.reshape(3,4)
+        valid = np.logical_not(getmaskarray(x)).astype(int)
+        frac = np.dot(valid, valid.T)
+        xf = (x - x.mean(1)[:,None]).filled(0)
+        assert_almost_equal(cov(x), np.cov(xf) * (x.shape[1]-1) / (frac - 1.))
+        assert_almost_equal(cov(x, bias=True), 
+                            np.cov(xf, bias=True) * x.shape[1] / frac)
+        frac = np.dot(valid.T, valid)
+        xf = (x - x.mean(0)).filled(0)
+        assert_almost_equal(cov(x, rowvar=False), 
+                            np.cov(xf, rowvar=False) * (x.shape[0]-1)/(frac - 1.))
+        assert_almost_equal(cov(x, rowvar=False, bias=True), 
+                            np.cov(xf, rowvar=False, bias=True) * x.shape[0]/frac)
+
 
 
 class TestPolynomial(TestCase):

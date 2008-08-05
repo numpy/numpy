@@ -14,7 +14,7 @@ __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'average',
            'column_stack','compress_cols','compress_rowcols', 'compress_rows',
-           'count_masked',
+           'count_masked', 'corrcoef', 'cov',
            'dot','dstack',
            'ediff1d','expand_dims',
            'flatnotmasked_contiguous','flatnotmasked_edges',
@@ -30,7 +30,7 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
 from itertools import groupby
 import warnings
 
-import core
+import core as ma
 from core import MaskedArray, MAError, add, array, asarray, concatenate, count,\
     filled, getmask, getmaskarray, masked, masked_array, mask_or, nomask, ones,\
     sort, zeros
@@ -166,7 +166,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     arr is an N-d array.  i varies so as to apply the function along
     the given axis for each 1-d subarray in arr.
     """
-    arr = core.array(arr, copy=False, subok=True)
+    arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
     if axis < 0:
         axis += nd
@@ -213,7 +213,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             dtypes.append(asarray(res).dtype)
             k += 1
     else:
-        res = core.array(res, copy=False, subok=True)
+        res = array(res, copy=False, subok=True)
         j = i.copy()
         j[axis] = ([slice(None, None)] * res.ndim)
         j.put(indlist, ind)
@@ -244,8 +244,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     if not hasattr(arr, '_mask'):
         result = np.asarray(outarr, dtype=max_dtypes)
     else:
-        result = core.asarray(outarr, dtype=max_dtypes)
-        result.fill_value = core.default_fill_value(result)
+        result = asarray(outarr, dtype=max_dtypes)
+        result.fill_value = ma.default_fill_value(result)
     return result
 
 def average(a, axis=None, weights=None, returned=False):
@@ -548,21 +548,19 @@ def mask_cols(a, axis=None):
 def dot(a,b, strict=False):
     """Return the dot product of two 2D masked arrays a and b.
 
-    Like the generic numpy equivalent, the product sum is over the
-    last dimension of a and the second-to-last dimension of b.  If
-    strict is True, masked values are propagated: if a masked value
-    appears in a row or column, the whole row or column is considered
-    masked.
+    Like the generic numpy equivalent, the product sum is over the last 
+    dimension of a and the second-to-last dimension of b.  If strict is True, 
+    masked values are propagated: if a masked value appears in a row or column, 
+    the whole row or column is considered masked.
 
     Parameters
     ----------
-        strict : {boolean}
-            Whether masked data are propagated (True) or set to 0 for
-            the computation.
+    strict : {boolean}
+        Whether masked data are propagated (True) or set to 0 for the computation.
 
     Notes
     -----
-        The first argument is not conjugated.
+    The first argument is not conjugated.
 
     """
     #!!!: Works only with 2D arrays. There should be a way to get it to run with higher dimension
@@ -645,6 +643,131 @@ def ediff1d(array, to_end=None, to_begin=None):
     return masked_array(r_data, mask=r_mask)
 
 
+
+def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
+    """Estimates the covariance matrix.
+
+    Normalization is by (N-1) where N is the number of observations (unbiased
+    estimate).  If bias is True then normalization is by N.
+
+    By default, masked values are recognized as such. If x and y have the same 
+    shape, a common mask is allocated: if x[i,j] is masked, then y[i,j] will also
+    be masked. 
+    Setting `allow_masked` to False will raise an exception if values are missing
+    in either of the input arrays.
+
+    Parameters
+    ----------
+    x : array-like
+        Input data.
+        If x is a 1D array, returns the variance.
+        If x is a 2D array, returns the covariance matrix.
+    y : {None, array-like}, optional
+        Optional set of variables.
+    rowvar : {False, True} optional
+        If rowvar is true, then each row is a variable with observations in columns.
+        If rowvar is False, each column is a variable and the observations are in
+        the rows.
+    bias : {False, True} optional
+        Whether to use a biased (True) or unbiased (False) estimate of the covariance.
+        If bias is True, then the normalization is by N, the number of observations.
+        Otherwise, the normalization is by (N-1).
+    allow_masked : {True, False} optional
+        If True, masked values are propagated pair-wise: if a value is masked in x,
+        the corresponding value is masked in y.
+        If False, raises a ValueError exception when some values are missing.
+
+    Raises
+    ------
+    ValueError:
+        Raised if some values are missing and allow_masked is False.
+
+    """
+    x = array(x, ndmin=2, copy=True, dtype=float)
+    xmask = getmaskarray(x)
+    # Quick exit if we can't process masked data
+    if not allow_masked and xmask.any():
+        raise ValueError("Cannot process masked data...")
+    #
+    if x.shape[0] == 1:
+        rowvar = True
+    # Make sure that rowvar is either 0 or 1
+    rowvar = int(bool(rowvar))
+    axis = 1-rowvar
+    if rowvar:
+        tup = (slice(None), None)
+    else:
+        tup = (None, slice(None))
+    #
+    if y is None:
+        xnotmask = np.logical_not(xmask).astype(int)
+    else:
+        y = array(y, copy=False, ndmin=2, dtype=float)
+        ymask = getmaskarray(y)
+        if not allow_masked and ymask.any():
+            raise ValueError("Cannot process masked data...")
+        if xmask.any() or ymask.any():
+            if y.shape == x.shape:
+                # Define some common mask
+                common_mask = np.logical_or(xmask, ymask)
+                if common_mask is not nomask:
+                    x.unshare_mask()
+                    y.unshare_mask()
+                    xmask = x._mask = y._mask = ymask = common_mask
+        x = concatenate((x,y),axis)
+        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(int)
+
+    x -= x.mean(axis=rowvar)[tup]
+
+    if not rowvar:
+        fact = dot(xnotmask.T, xnotmask)*1. - (1 - bool(bias))
+        result = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
+    else:
+        fact = dot(xnotmask, xnotmask.T)*1. - (1 - bool(bias))
+        result = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
+    return result
+
+
+def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
+    """The correlation coefficients formed from the array x, where the
+    rows are the observations, and the columns are variables.
+
+    corrcoef(x,y) where x and y are 1d arrays is the same as
+    corrcoef(transpose([x,y]))
+
+    Parameters
+    ----------
+    x : ndarray
+        Input data. If x is a 1D array, returns the variance.
+        If x is a 2D array, returns the covariance matrix.
+    y : {None, ndarray} optional
+        Optional set of variables.
+    rowvar : {False, True} optional
+        If True, then each row is a variable with observations in columns.
+        If False, each column is a variable and the observations are in the rows.
+    bias : {False, True} optional
+        Whether to use a biased (True) or unbiased (False) estimate of the
+        covariance.
+        If True, then the normalization is by N, the number of non-missing
+        observations.
+        Otherwise, the normalization is by (N-1).
+    allow_masked : {True, False} optional
+        If True, masked values are propagated pair-wise: if a value is masked
+        in x, the corresponding value is masked in y.
+        If False, raises an exception.
+
+    See Also
+    --------
+    cov
+
+    """
+
+    c = cov(x, y, rowvar, bias, allow_masked)
+    try:
+        d = ma.diag(c)
+    except ValueError: # scalar covariance
+        return 1
+    return c/ma.sqrt(ma.multiply.outer(d,d))
 
 
 #####--------------------------------------------------------------------------
