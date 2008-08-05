@@ -80,33 +80,43 @@ class NpzFile(object):
             raise KeyError, "%s is not a file in the archive" % key
 
 def load(file, memmap=False):
-    """Load a binary file.
-
-    Read a binary file (either a pickle, or a binary .npy/.npz file) and
-    return the result.
+    """
+    Load pickled, ``.npy``, and ``.npz`` binary files.
 
     Parameters
     ----------
     file : file-like object or string
-        the file to read.  It must support seek and read methods
+        The file to read.  It must support seek and read methods.
     memmap : bool
-        If true, then memory-map the .npy file or unzip the .npz file into
-           a temporary directory and memory-map each component
-        This has no effect for a pickle.
+        If True, then memory-map the ``.npy`` file (or unzip the ``.npz`` file
+        into a temporary directory and memory-map each component).  This has no
+        effect for a pickled file.
 
     Returns
     -------
     result : array, tuple, dict, etc.
-        data stored in the file.
-        If file contains pickle data, then whatever is stored in the pickle is
-          returned.
-        If the file is .npy file, then an array is returned.
-        If the file is .npz file, then a dictionary-like object is returned
-          which has a filename:array key:value pair for every file in the zip.
+        Data stored in the file.
+
+        - If file contains pickle data, then whatever is stored in the
+          pickle is returned.
+
+        - If the file is a ``.npy`` file, then an array is returned.
+
+        - If the file is a ``.npz`` file, then a dictionary-like object is
+          returned, containing {filename: array} key-value pairs, one for
+          every file in the archive.
 
     Raises
     ------
     IOError
+        If the input file does not exist or cannot be read.
+
+    Examples
+    --------
+    >>> np.save('/tmp/123', np.array([1, 2, 3])
+    >>> np.load('/tmp/123.npy')
+    array([1, 2, 3])
+
     """
     if isinstance(file, basestring):
         fid = _file(file,"rb")
@@ -133,19 +143,29 @@ def load(file, memmap=False):
                 "Failed to interpret file %s as a pickle" % repr(file)
 
 def save(file, arr):
-    """Save an array to a binary file (a string or file-like object).
+    """
+    Save an array to a binary file in NumPy format.
 
-    If the file is a string, then if it does not have the .npy extension,
-        it is appended and a file open.
-
-    Data is saved to the open file in NumPy-array format
+    Parameters
+    ----------
+    f : file or string
+        File or filename to which the data is saved.  If the filename
+        does not already have a ``.npy`` extension, it is added.
+    x : array_like
+        Array data.
 
     Examples
     --------
-    import numpy as np
-    ...
-    np.save('myfile', a)
-    a = np.load('myfile.npy')
+    >>> from tempfile import TemporaryFile
+    >>> outfile = TemporaryFile()
+
+    >>> x = np.arange(10)
+    >>> np.save(outfile, x)
+
+    >>> outfile.seek(0)
+    >>> np.load(outfile)
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
     """
     if isinstance(file, basestring):
         if not file.endswith('.npy'):
@@ -226,53 +246,70 @@ def _string_like(obj):
 def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
             skiprows=0, usecols=None, unpack=False):
     """
-    Load ASCII data from fname into an array and return the array.
+    Load data from a text file.
 
-    The data must be regular, same number of values in every row
+    Each row in the text file must have the same number of values.
 
     Parameters
     ----------
-    fname : filename or a file handle.
-      Support for gzipped files is automatic, if the filename ends in .gz
-
+    fname : file or string
+        File or filename to read.  If the filename extension is ``.gz``,
+        the file is first decompressed.
     dtype : data-type
-      Data type of the resulting array.  If this is a record data-type, the
-      resulting array will be 1-d and each row will be interpreted as an
-      element of the array. The number of columns used must match the number
-      of fields in the data-type in this case.
-
-    comments : str
-      The character used to indicate the start of a comment in the file.
-
-    delimiter : str
-      A string-like character used to separate values in the file. If delimiter
-      is unspecified or none, any whitespace string is a separator.
-
+        Data type of the resulting array.  If this is a record data-type,
+        the resulting array will be 1-dimensional, and each row will be
+        interpreted as an element of the array.   In this case, the number
+        of columns used must match the number of fields in the data-type.
+    comments : string, optional
+        The character used to indicate the start of a comment.
+    delimiter : string, optional
+        The string used to separate values.  By default, this is any
+        whitespace.
     converters : {}
-      A dictionary mapping column number to a function that will convert that
-      column to a float.  Eg, if column 0 is a date string:
-      converters={0:datestr2num}. Converters can also be used to provide
-      a default value for missing data: converters={3:lambda s: float(s or 0)}.
-
+        A dictionary mapping column number to a function that will convert
+        that column to a float.  E.g., if column 0 is a date string:
+        ``converters = {0: datestr2num}``. Converters can also be used to
+        provide a default value for missing data:
+        ``converters = {3: lambda s: float(s or 0)}``.
     skiprows : int
-      The number of rows from the top to skip.
-
+        Skip the first `skiprows` lines.
     usecols : sequence
-      A sequence of integer column indexes to extract where 0 is the first
-      column, eg. usecols=(1,4,5) will extract the 2nd, 5th and 6th columns.
-
+        Which columns to read, with 0 being the first.  For example,
+        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
     unpack : bool
-      If True, will transpose the matrix allowing you to unpack into named
-      arguments on the left hand side.
+        If True, the returned array is transposed, so that arguments may be
+        unpacked using ``x, y, z = loadtxt(...)``
+
+    Returns
+    -------
+    out : ndarray
+        Data read from the text file.
+
+    See Also
+    --------
+    scipy.io.loadmat : reads Matlab(R) data files
 
     Examples
     --------
-      >>> X = loadtxt('test.dat')  # data in two columns
-      >>> x,y,z = load('somefile.dat', usecols=(3,5,7), unpack=True)
-      >>> r = np.loadtxt('record.dat', dtype={'names':('gender','age','weight'),
-      ...                'formats': ('S1','i4', 'f4')})
+    >>> from StringIO import StringIO   # StringIO behaves like a file object
+    >>> c = StringIO("0 1\\n2 3")
+    >>> np.loadtxt(c)
+    array([[ 0.,  1.],
+           [ 2.,  3.]])
 
-    SeeAlso: scipy.io.loadmat to read and write matfiles.
+    >>> d = StringIO("M 21 72\\nF 35 58")
+    >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
+    ...                      'formats': ('S1', 'i4', 'f4')})
+    array([('M', 21, 72.0), ('F', 35, 58.0)],
+          dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
+
+    >>> c = StringIO("1,0,2\\n3,0,4")
+    >>> x,y = np.loadtxt(c, delimiter=',', usecols=(0,2), unpack=True)
+    >>> x
+    array([ 1.,  3.])
+    >>> y
+    array([ 2.,  4.])
+
     """
     user_converters = converters
 
@@ -373,8 +410,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
 def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     """
-    Save the data in X to file fname using fmt string to convert the
-    data to strings
+    Save an array to file.
 
     Parameters
     ----------
@@ -382,8 +418,8 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
         If the filename ends in .gz, the file is automatically saved in
         compressed gzip format.  The load() command understands gzipped
         files transparently.
-    X : array or sequence
-        Data to write to file.
+    X : array_like
+        Data.
     fmt : string or sequence of strings
         A single format (%10.5f), a sequence of formats, or a
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
@@ -391,42 +427,58 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
     delimiter : str
         Character separating columns.
 
-    Examples
-    --------
-    >>> np.savetxt('test.out', x, delimiter=',') # X is an array
-    >>> np.savetxt('test.out', (x,y,z)) # x,y,z equal sized 1D arrays
-    >>> np.savetxt('test.out', x, fmt='%1.4e') # use exponential notation
+    Notes
+    -----
+    Further explanation of the `fmt` parameter
+    (``%[flag]width[.precision]specifier``):
 
-    Notes on fmt
-    ------------
     flags:
-        - : left justify
-        + : Forces to preceed result with + or -.
-        0 : Left pad the number with zeros instead of space (see width).
+        ``-`` : left justify
+
+        ``+`` : Forces to preceed result with + or -.
+
+        ``0`` : Left pad the number with zeros instead of space (see width).
 
     width:
-        Minimum number of characters to be printed. The value is not truncated.
+        Minimum number of characters to be printed. The value is not truncated
+        if it has more characters.
 
     precision:
-        - For integer specifiers (eg. d,i,o,x), the minimum number of
+        - For integer specifiers (eg. ``d,i,o,x``), the minimum number of
           digits.
-        - For e, E and f specifiers, the number of digits to print
+        - For ``e, E`` and ``f`` specifiers, the number of digits to print
           after the decimal point.
-        - For g and G, the maximum number of significant digits.
-        - For s, the maximum number of charac ters.
+        - For ``g`` and ``G``, the maximum number of significant digits.
+        - For ``s``, the maximum number of characters.
 
     specifiers:
-        c : character
-        d or i : signed decimal integer
-        e or E : scientific notation with e or E.
-        f : decimal floating point
-        g,G : use the shorter of e,E or f
-        o : signed octal
-        s : string of characters
-        u : unsigned decimal integer
-        x,X : unsigned hexadecimal integer
+        ``c`` : character
+
+        ``d`` or ``i`` : signed decimal integer
+
+        ``e`` or ``E`` : scientific notation with ``e`` or ``E``.
+
+        ``f`` : decimal floating point
+
+        ``g,G`` : use the shorter of ``e,E`` or ``f``
+
+        ``o`` : signed octal
+
+        ``s`` : string of characters
+
+        ``u`` : unsigned decimal integer
+
+        ``x,X`` : unsigned hexadecimal integer
 
     This is not an exhaustive specification.
+
+
+
+    Examples
+    --------
+    >>> savetxt('test.out', x, delimiter=',') # X is an array
+    >>> savetxt('test.out', (x,y,z)) # x,y,z equal sized 1D arrays
+    >>> savetxt('test.out', x, fmt='%1.4e') # use exponential notation
 
     """
 
@@ -478,8 +530,7 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 import re
 def fromregex(file, regexp, dtype):
     """
-    Construct an array from a text file, using regular-expressions
-    parsing.
+    Construct an array from a text file, using regular-expressions parsing.
 
     Array is constructed from all matches of the regular expression
     in the file. Groups in the regular expression are converted to fields.

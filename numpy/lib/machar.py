@@ -13,40 +13,62 @@ from numpy.core.numeric import seterr
 # Need to speed this up...especially for longfloat
 
 class MachAr(object):
-    """Diagnosing machine parameters.
+    """
+    Diagnosing machine parameters.
 
-    The following attributes are available:
+    Attributes
+    ----------
+    ibeta : int
+        Radix in which numbers are represented.
+    it : int
+        Number of base-`ibeta` digits in the floating point mantissa M.
+    machep : int
+        Exponent of the smallest (most negative) power of `ibeta` that,
+        added to 1.0, gives something different from 1.0
+    eps : float
+        Floating-point number ``beta**machep`` (floating point precision)
+    negep : int
+        Exponent of the smallest power of `ibeta` that, substracted
+        from 1.0, gives something different from 1.0.
+    epsneg : float
+        Floating-point number ``beta**negep``.
+    iexp : int
+        Number of bits in the exponent (including its sign and bias).
+    minexp : int
+        Smallest (most negative) power of `ibeta` consistent with there
+        being no leading zeros in the mantissa.
+    xmin : float
+        Floating point number ``beta**minexp`` (the smallest [in
+        magnitude] usable floating value).
+    maxexp : int
+        Smallest (positive) power of `ibeta` that causes overflow.
+    xmax : float
+        ``(1-epsneg) * beta**maxexp`` (the largest [in magnitude]
+        usable floating value).
+    irnd : int
+        In ``range(6)``, information on what kind of rounding is done
+        in addition, and on how underflow is handled.
+    ngrd : int
+        Number of 'guard digits' used when truncating the product
+        of two mantissas to fit the representation.
 
-    ibeta  - radix in which numbers are represented
-    it     - number of base-ibeta digits in the floating point mantissa M
-    machep - exponent of the smallest (most negative) power of ibeta that,
-             added to 1.0,
-             gives something different from 1.0
-    eps    - floating-point number beta**machep (floating point precision)
-    negep  - exponent of the smallest power of ibeta that, substracted
-             from 1.0, gives something different from 1.0
-    epsneg - floating-point number beta**negep
-    iexp   - number of bits in the exponent (including its sign and bias)
-    minexp - smallest (most negative) power of ibeta consistent with there
-             being no leading zeros in the mantissa
-    xmin   - floating point number beta**minexp (the smallest (in
-             magnitude) usable floating value)
-    maxexp - smallest (positive) power of ibeta that causes overflow
-    xmax   - (1-epsneg)* beta**maxexp (the largest (in magnitude)
-             usable floating value)
-    irnd   - in range(6), information on what kind of rounding is done
-             in addition, and on how underflow is handled
-    ngrd   - number of 'guard digits' used when truncating the product
-             of two mantissas to fit the representation
+    epsilon : float
+        Same as `eps`.
+    tiny : float
+        Same as `xmin`.
+    huge : float
+        Same as `xmax`.
+    precision : float
+        ``- int(-log10(eps))``
+    resolution : float
+        `` - 10**(-precision)``
 
-    epsilon - same as eps
-    tiny    - same as xmin
-    huge    - same as xmax
-    precision   - int(-log10(eps))
-    resolution  - 10**(-precision)
+    References
+    ----------
+    .. [1] Press, Teukolsky, Vetterling and Flannery,
+           "Numerical Recipes in C++," 2nd ed,
+           Cambridge University Press, 2002, p. 31.
 
-    Reference:
-      Numerical Recipies.
     """
     def __init__(self, float_conv=float,int_conv=int,
                  float_to_float=float,

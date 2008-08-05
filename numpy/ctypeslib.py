@@ -1,3 +1,54 @@
+"""
+============================
+``ctypes`` Utility Functions
+============================
+
+See Also
+---------
+load_library : Load a C library.
+ndpointer : Array restype/argtype with verification.
+as_ctypes : Create a ctypes array from an ndarray.
+as_array : Create an ndarray from a ctypes array.
+
+References
+----------
+.. [1] "SciPy Cookbook: ctypes", http://www.scipy.org/Cookbook/Ctypes
+
+Examples
+--------
+Load the C library:
+
+>>> _lib = np.ctypeslib.load_library('libmystuff', '.') #DOCTEST: +ignore
+
+Our result type, an ndarray that must be of type double, be 1-dimensional
+and is C-contiguous in memory:
+
+>>> array_1d_double = np.ctypeslib.ndpointer(
+...                          dtype=np.double,
+...                          ndim=1, flags='CONTIGUOUS') #DOCTEST: +ignore
+
+Our C-function typically takes an array and updates its values
+in-place.  For example::
+
+    void foo_func(double* x, int length)
+    {
+        int i;
+        for (i = 0; i < length; i++) {
+            x[i] = i*i;
+        }
+    }
+
+We wrap it using:
+
+>>> lib.foo_func.restype = None #DOCTEST: +ignore
+>>> lib.foo.argtypes = [array_1d_double, c_int] #DOCTEST: +ignore
+
+Then, we're ready to call ``foo_func``:
+
+>>> out = np.empty(15, dtype=np.double)
+>>> _lib.foo_func(out, len(out)) #DOCTEST: +ignore
+
+"""
 __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
            'c_intp', 'as_ctypes', 'as_array']
 
@@ -104,26 +155,41 @@ class _ndptr(object):
 #  use with ctypes argtypes mechanism
 _pointer_type_cache = {}
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
-    """Array-checking restype/argtypes.
+    """
+    Array-checking restype/argtypes.
 
     An ndpointer instance is used to describe an ndarray in restypes
     and argtypes specifications.  This approach is more flexible than
-    using, for example,
+    using, for example, ``POINTER(c_double)``, since several restrictions
+    can be specified, which are verified upon calling the ctypes function.
+    These include data type, number of dimensions, shape and flags.  If a
+    given array does not satisfy the specified restrictions,
+    a ``TypeError`` is raised.
 
-    POINTER(c_double)
+    Parameters
+    ----------
+    dtype : data-type, optional
+        Array data-type.
+    ndim : int, optional
+        Number of array dimensions.
+    shape : tuple of ints, optional
+        Array shape.
+    flags : string or tuple of strings
+        Array flags; may be one or more of:
 
-    since several restrictions can be specified, which are verified
-    upon calling the ctypes function.  These include data type
-    (dtype), number of dimensions (ndim), shape and flags (e.g.
-    'C_CONTIGUOUS' or 'F_CONTIGUOUS').  If a given array does not satisfy the
-    specified restrictions, a TypeError is raised.
+          - C_CONTIGUOUS / C / CONTIGUOUS
+          - F_CONTIGUOUS / F / FORTRAN
+          - OWNDATA / O
+          - WRITEABLE / W
+          - ALIGNED / A
+          - UPDATEIFCOPY / U
 
-    Example:
-
-        clib.somefunc.argtypes = [ndpointer(dtype=float64,
-                                            ndim=1,
-                                            flags='C_CONTIGUOUS')]
-        clib.somefunc(array([1,2,3],dtype=float64))
+    Examples
+    --------
+    >>> clib.somefunc.argtypes = [np.ctypeslib.ndpointer(dtype=float64,
+    ...                                                  ndim=1,
+    ...                                                  flags='C_CONTIGUOUS')]
+    >>> clib.somefunc(np.array([1, 2, 3], dtype=np.float64))
 
     """
 

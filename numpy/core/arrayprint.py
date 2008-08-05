@@ -34,27 +34,60 @@ _inf_str = 'Inf'
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None,
                      nanstr=None, infstr=None):
-    """Set options associated with printing.
+    """
+    Set printing options.
 
-    :Parameters:
-        precision : int
-            Number of digits of precision for floating point output (default 8).
-        threshold : int
-            Total number of array elements which trigger summarization
-            rather than full repr (default 1000).
-        edgeitems : int
-            Number of array items in summary at beginning and end of
-            each dimension (default 3).
-        linewidth : int
-            The number of characters per line for the purpose of inserting
-            line breaks (default 75).
-        suppress : bool
-            Whether or not suppress printing of small floating point values
-            using scientific notation (default False).
-        nanstr : string
-            String representation of floating point not-a-number (default nan).
-        infstr : string
-            String representation of floating point infinity (default inf).
+    These options determine the way floating point numbers, arrays and
+    other NumPy objects are displayed.
+
+    Parameters
+    ----------
+    precision : int
+        Number of digits of precision for floating point output (default 8).
+    threshold : int
+        Total number of array elements which trigger summarization
+        rather than full repr (default 1000).
+    edgeitems : int
+        Number of array items in summary at beginning and end of
+        each dimension (default 3).
+    linewidth : int
+        The number of characters per line for the purpose of inserting
+        line breaks (default 75).
+    suppress : bool
+        Whether or not suppress printing of small floating point values
+        using scientific notation (default False).
+    nanstr : string
+        String representation of floating point not-a-number (default nan).
+    infstr : string
+        String representation of floating point infinity (default inf).
+
+    Examples
+    --------
+    Floating point precision can be set:
+
+    >>> np.set_printoptions(precision=4)
+    >>> print np.array([1.123456789])
+    [ 1.1235]
+
+    Long arrays can be summarised:
+
+    >>> np.set_printoptions(threshold=5)
+    >>> print np.arange(10)
+    [0 1 2 ..., 7 8 9]
+
+    Small results can be suppressed:
+
+    >>> eps = np.finfo(float).eps
+    >>> x = np.arange(4.)
+
+    >>> x**2 - (x + eps)**2
+    array([ -4.9304e-32,  -4.4409e-16,   0.0000e+00,   0.0000e+00])
+
+    >>> np.set_printoptions(suppress=True)
+
+    >>> x**2 - (x + eps)**2
+    array([-0., -0.,  0.,  0.])
+
     """
 
     global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
@@ -75,20 +108,26 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         _inf_str = infstr
 
 def get_printoptions():
-    """Return the current print options.
+    """
+    Return the current print options.
 
-    :Returns:
-        dictionary of current print options with keys
-        - precision : int
-        - threshold : int
-        - edgeitems : int
-        - linewidth : int
-        - suppress : bool
-        - nanstr : string
-        - infstr : string
+    Returns
+    -------
+    print_opts : dict
+        Dictionary of current print options with keys
 
-    :SeeAlso:
-     - set_printoptions : parameter descriptions
+          - precision : int
+          - threshold : int
+          - edgeitems : int
+          - linewidth : int
+          - suppress : bool
+          - nanstr : string
+          - infstr : string
+
+    See Also
+    --------
+    set_printoptions : parameter descriptions
+
     """
     d = dict(precision=_float_output_precision,
              threshold=_summaryThreshold,
@@ -192,34 +231,41 @@ def _convert_arrays(obj):
 def array2string(a, max_line_width = None, precision = None,
                  suppress_small = None, separator=' ', prefix="",
                  style=repr):
-    """Return a string representation of an array.
+    """
+    Return a string representation of an array.
 
-    :Parameters:
-        a : ndarray
-            Input array.
-        max_line_width : int
-            The maximum number of columns the string should span. Newline
-            characters splits the string appropriately after array elements.
-        precision : int
-            Floating point precision.
-        suppress_small : bool
-            Represent very small numbers as zero.
-        separator : string
-            Inserted between elements.
-        prefix : string
-            An array is typically printed as
+    Parameters
+    ----------
+    a : ndarray
+        Input array.
+    max_line_width : int, optional
+        The maximum number of columns the string should span. Newline
+        characters splits the string appropriately after array elements.
+    precision : int, optional
+        Floating point precision.
+    suppress_small : bool, optional
+        Represent very small numbers as zero.
+    separator : string, optional
+        Inserted between elements.
+    prefix : string, optional
+        An array is typically printed as::
 
-            'prefix(' + array2string(a) + ')'
+          'prefix(' + array2string(a) + ')'
 
-            The length of the prefix string is used to align the
-            output correctly.
-        style : function
+        The length of the prefix string is used to align the
+        output correctly.
+    style : function, optional
+        Callable.
+
+    See Also
+    --------
+    array_str, array_repr
 
     Examples
     --------
-
     >>> x = np.array([1e-16,1,2,3])
-    >>> print np.core.array2string(x,precision=2,separator=',',suppress_small=True)
+    >>> print np.array2string(x, precision=2, separator=',',
+    ...                       suppress_small=True)
     [ 0., 1., 2., 3.]
 
     """

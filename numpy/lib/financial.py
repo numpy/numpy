@@ -52,7 +52,45 @@ def _convert_when(when):
 
 
 def fv(rate, nper, pmt, pv, when='end'):
-    """future value computed by solving the equation
+    """
+    Compute the future value.
+
+    Parameters
+    ----------
+    rate : array-like
+        Rate of interest (per period)
+    nper : array-like
+        Number of compounding periods
+    pmt : array-like
+        Payment
+    pv : array-like
+        Present value
+    when : array-like
+        When payments are due ('begin' (1) or 'end' (0))
+
+    Notes
+    -----
+    The future value is computed by solving the equation::
+
+      fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) == 0
+
+    or, when ``rate == 0``::
+
+      fv + pv + pmt * nper == 0
+
+    Examples
+    --------
+    What is the future value after 10 years of saving $100 now, with
+    an additional monthly savings of $100.  Assume the interest rate is
+    5% (annually) compounded monthly?
+
+    >>> np.fv(0.05/12, 10*12, -100, -100)
+    15692.928894335748
+
+    By convention, the negative sign represents cash flow out (i.e. money not
+    available today).  Thus, saving $100 a month at 5% annual interest leads
+    to $15,692.93 available to spend in 10 years.
+
     """
     when = _convert_when(when)
     rate, nper, pmt, pv, when = map(np.asarray, [rate, nper, pmt, pv, when])
@@ -78,7 +116,43 @@ By convention, the negative sign represents cash flow out (i.e. money not
 """
 
 def pmt(rate, nper, pv, fv=0, when='end'):
-    """Payment computed by solving the equation
+    """
+    Compute the payment.
+
+    Parameters
+    ----------
+    rate : array-like
+        Rate of interest (per period)
+    nper : array-like
+        Number of compounding periods
+    pv : array-like
+        Present value
+    fv : array-like
+        Future value
+    when : array-like
+        When payments are due ('begin' (1) or 'end' (0))
+
+    Notes
+    -----
+    The payment ``pmt`` is computed by solving the equation::
+
+      fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) == 0
+
+    or, when ``rate == 0``::
+
+      fv + pv + pmt * nper == 0
+
+    Examples
+    --------
+    What would the monthly payment need to be to pay off a $200,000 loan in 15
+    years at an annual interest rate of 7.5%?
+
+    >>> np.pmt(0.075/12, 12*15, 200000)
+    -1854.0247200054619
+
+    In order to pay-off (i.e. have a future-value of 0) the $200,000 obtained
+    today, a monthly payment of $1,854.02 would be required.
+
     """
     when = _convert_when(when)
     rate, nper, pv, fv, when = map(np.asarray, [rate, nper, pv, fv, when])
@@ -102,7 +176,52 @@ In order to pay-off (i.e. have a future-value of 0) the $200,000 obtained
 """
 
 def nper(rate, pmt, pv, fv=0, when='end'):
-    """Number of periods found by solving the equation
+    """
+    Compute the number of periods.
+
+    Parameters
+    ----------
+    rate : array_like
+        Rate of interest (per period)
+    pmt : array_like
+        Payment
+    pv : array_like
+        Present value
+    fv : array_like
+        Future value
+    when : array_like
+        When payments are due ('begin' (1) or 'end' (0))
+
+    Notes
+    -----
+    The number of periods ``nper`` is computed by solving the equation::
+
+      fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) == 0
+
+    or, when ``rate == 0``::
+
+      fv + pv + pmt * nper == 0
+
+    Examples
+    --------
+    If you only had $150 to spend as payment, how long would it take to pay-off
+    a loan of $8,000 at 7% annual interest?
+
+    >>> np.nper(0.07/12, -150, 8000)
+    64.073348770661852
+
+    So, over 64 months would be required to pay off the loan.
+
+    The same analysis could be done with several different interest rates and/or
+    payments and/or total amounts to produce an entire table.
+
+    >>> np.nper(*(np.ogrid[0.06/12:0.071/12:0.01/12, -200:-99:100, 6000:7001:1000]))
+    array([[[ 32.58497782,  38.57048452],
+            [ 71.51317802,  86.37179563]],
+    <BLANKLINE>
+           [[ 33.07413144,  39.26244268],
+            [ 74.06368256,  90.22989997]]])
+
     """
     when = _convert_when(when)
     rate, pmt, pv, fv, when = map(np.asarray, [rate, pmt, pv, fv, when])
@@ -139,6 +258,10 @@ array([[[ 32.58497782,  38.57048452],
 """
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
+    """
+    Not implemented.
+
+    """
     total = pmt(rate, nper, pv, fv, when)
     # Now, compute the nth step in the amortization
     raise NotImplementedError
@@ -148,7 +271,32 @@ def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
     return total - ipmt(rate, per, nper, pv, fv, when)
 
 def pv(rate, nper, pmt, fv=0.0, when='end'):
-    """Number of periods found by solving the equation
+    """
+    Compute the present value.
+
+    Parameters
+    ----------
+    rate : array-like
+        Rate of interest (per period)
+    nper : array-like
+        Number of compounding periods
+    pmt : array-like
+        Payment
+    fv : array-like
+        Future value
+    when : array-like
+        When payments are due ('begin' (1) or 'end' (0))
+
+    Notes
+    -----
+    The present value ``pv`` is computed by solving the equation::
+
+     fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) = 0
+
+    or, when ``rate = 0``::
+
+     fv + pv + pmt * nper = 0
+
     """
     when = _convert_when(when)
     rate, nper, pmt, fv, when = map(np.asarray, [rate, nper, pmt, fv, when])
@@ -175,7 +323,38 @@ def _g_div_gp(r, n, p, x, y, w):
 #  g(r) is the formula
 #  g'(r) is the derivative with respect to r.
 def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
-    """Number of periods found by solving the equation
+    """
+    Compute the rate of interest per period.
+
+    Parameters
+    ----------
+    nper : array_like
+        Number of compounding periods
+    pmt : array_like
+        Payment
+    pv : array_like
+        Present value
+    fv : array_like
+        Future value
+    when : array_like, optional
+        When payments are due ('begin' (1) or 'end' (0))
+    guess : float, optional
+        Starting guess for solving the rate of interest
+    tol : float, optional
+        Required tolerance for the solution
+    maxiter : int, optional
+        Maximum iterations in finding the solution
+
+    Notes
+    -----
+    The rate of interest ``rate`` is computed by solving the equation::
+
+     fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) = 0
+
+    or, if ``rate = 0``::
+
+     fv + pv + pmt * nper = 0
+
     """
     when = _convert_when(when)
     nper, pmt, pv, fv, when = map(np.asarray, [nper, pmt, pv, fv, when])

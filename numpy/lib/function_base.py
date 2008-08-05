@@ -33,42 +33,68 @@ import numpy as np
 #end Fernando's utilities
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
-    """Return evenly spaced numbers.
+    """
+    Return evenly spaced numbers.
 
-    Return num evenly spaced samples from start to stop.  If
-    endpoint is True, the last sample is stop. If retstep is
-    True then return (seq, step_value), where step_value used.
+    `linspace` returns `num` evenly spaced samples, calculated over the
+    interval ``[start, stop]``.  The endpoint of the interval can optionally
+    be excluded.
 
     Parameters
     ----------
-    start : {float}
-        The value the sequence starts at.
-    stop : {float}
-        The value the sequence stops at. If ``endpoint`` is false, then
-        this is not included in the sequence. Otherwise it is
-        guaranteed to be the last value.
-    num : {integer}
+    start : float
+        The starting value of the sequence.
+    stop : float
+        The end value of the sequence, unless `endpoint` is set to False.
+        In that case, the sequence consists of all but the last of ``num + 1``
+        evenly spaced samples, so that `stop` is excluded.  Note that the step
+        size changes when `endpoint` is False.
+    num : int
         Number of samples to generate. Default is 50.
-    endpoint : {boolean}
-        If true, ``stop`` is the last sample. Otherwise, it is not
-        included. Default is true.
-    retstep : {boolean}
-        If true, return ``(samples, step)``, where ``step`` is the
-        spacing used in generating the samples.
+    endpoint : bool
+        If true, `stop` is the last sample. Otherwise, it is not included.
+        Default is True.
+    retstep : bool
+        If True, return (`samples`, `step`), where `step` is the spacing
+        between samples.
 
     Returns
     -------
-    samples : {array}
-        ``num`` equally spaced samples from the range [start, stop]
-        or [start, stop).
-    step : {float} (Only if ``retstep`` is true)
+    samples : ndarray
+        `num` equally spaced samples in the closed interval
+        ``[start, stop]`` or the half-open interval ``[start, stop)``
+        (depending on whether `endpoint` is True or False).
+    step : float (only if `retstep` is True)
         Size of spacing between samples.
+
 
     See Also
     --------
-    arange : Similiar to linspace, however, when used with
-             a float endpoint, that endpoint may or may not be included.
-    logspace
+    arange : Similiar to `linspace`, but uses a step size (instead of the
+             number of samples).  Note that, when used with a float
+             endpoint, the endpoint may or may not be included.
+    logspace : Samples uniformly distributed in log space.
+
+    Examples
+    --------
+    >>> np.linspace(2.0, 3.0, num=5)
+        array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
+    >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
+        array([ 2. ,  2.2,  2.4,  2.6,  2.8])
+    >>> np.linspace(2.0, 3.0, num=5, retstep=True)
+        (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+
+    Graphical illustration:
+
+    >>> import matplotlib.pyplot as plt
+    >>> N = 8
+    >>> y = np.zeros(N)
+    >>> x1 = np.linspace(0, 10, N, endpoint=True)
+    >>> x2 = np.linspace(0, 10, N, endpoint=False)
+    >>> plt.plot(x1, y, 'o')
+    >>> plt.plot(x2, y + 0.5, 'o')
+    >>> plt.ylim([-0.5, 1])
+    >>> plt.show()
 
     """
     num = int(num)
@@ -89,10 +115,73 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         return y
 
 def logspace(start,stop,num=50,endpoint=True,base=10.0):
-    """Evenly spaced numbers on a logarithmic scale.
+    """
+    Return numbers spaced evenly on a log scale.
 
-    Computes int(num) evenly spaced exponents from base**start to
-    base**stop. If endpoint=True, then last number is base**stop
+    In linear space, the sequence starts at ``base ** start``
+    (`base` to the power of `start`) and ends with ``base ** stop``
+    (see `endpoint` below).
+
+    Parameters
+    ----------
+    start : float
+        ``base ** start`` is the starting value of the sequence.
+    stop : float
+        ``base ** stop`` is the final value of the sequence, unless `endpoint`
+        is False.  In that case, ``num + 1`` values are spaced over the
+        interval in log-space, of which all but the last (a sequence of
+        length ``num``) are returned.
+    num : integer, optional
+        Number of samples to generate.  Default is 50.
+    endpoint : boolean, optional
+        If true, `stop` is the last sample. Otherwise, it is not included.
+        Default is True.
+    base : float, optional
+        The base of the log space. The step size between the elements in
+        ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
+        Default is 10.0.
+
+    Returns
+    -------
+    samples : ndarray
+        `num` samples, equally spaced on a log scale.
+
+    See Also
+    --------
+    arange : Similiar to linspace, with the step size specified instead of the
+             number of samples. Note that, when used with a float endpoint, the
+             endpoint may or may not be included.
+    linspace : Similar to logspace, but with the samples uniformly distributed
+               in linear space, instead of log space.
+
+    Notes
+    -----
+    Logspace is equivalent to the code
+
+    >>> y = linspace(start, stop, num=num, endpoint=endpoint)
+    >>> power(base, y)
+
+    Examples
+    --------
+    >>> np.logspace(2.0, 3.0, num=4)
+        array([  100.        ,   215.443469  ,   464.15888336,  1000.        ])
+    >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
+        array([ 100.        ,  177.827941  ,  316.22776602,  562.34132519])
+    >>> np.logspace(2.0, 3.0, num=4, base=2.0)
+        array([ 4.        ,  5.0396842 ,  6.34960421,  8.        ])
+
+    Graphical illustration:
+
+    >>> import matplotlib.pyplot as plt
+    >>> N = 10
+    >>> x1 = np.logspace(0.1, 1, N, endpoint=True)
+    >>> x2 = np.logspace(0.1, 1, N, endpoint=False)
+    >>> y = np.zeros(N)
+    >>> plt.plot(x1, y, 'o')
+    >>> plt.plot(x2, y + 0.5, 'o')
+    >>> plt.ylim([-0.5, 1])
+    >>> plt.show()
+
     """
     y = linspace(start,stop,num=num,endpoint=endpoint)
     return _nx.power(base,y)
@@ -103,43 +192,40 @@ def iterable(y):
     return 1
 
 def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
-    """Compute the histogram from a set of data.
+    """
+    Compute the histogram of a set of data.
 
     Parameters
     ----------
-    a : array
-        The data to histogram.
-
-    bins : int or sequence
-        If an int, then the number of equal-width bins in the given
-        range.  If new=True, bins can also be the bin edges, allowing
-        for non-constant bin widths.
-
-    range : (float, float)
-        The lower and upper range of the bins. If not provided, range
-        is simply (a.min(), a.max()). Using new=False, lower than
-        range are ignored, and values higher than range are tallied in
-        the rightmost bin. Using new=True, both lower and upper
-        outliers are ignored.
-
-    normed : bool
-        If False, the result array will contain the number of samples
-        in each bin.  If True, the result array is the value of the
-        probability *density* function at the bin normalized such that
-        the *integral* over the range is 1. Note that the sum of all
-        of the histogram values will not usually be 1; it is not a
+    a : array_like
+        Input data.
+    bins : int or sequence of scalars, optional
+        If `bins` is an int, it gives the number of equal-width bins in the
+        given range (10, by default).  If `new` is True, bins can also be
+        the bin edges, allowing for non-uniform bin widths.
+    range : (float, float), optional
+        The lower and upper range of the bins.  If not provided, range
+        is simply ``(a.min(), a.max())``.  With `new` set to True, values
+        outside the range are ignored.  With `new` set to False, values
+        below the range are ignored, and those above the range are tallied
+        in the rightmost bin.
+    normed : bool, optional
+        If False, the result will contain the number of samples
+        in each bin.  If True, the result is the value of the
+        probability *density* function at the bin, normalized such that
+        the *integral* over the range is 1. Note that the sum of the
+        histogram values will often not be equal to 1; it is not a
         probability *mass* function.
-
-    weights : array
-        An array of weights, the same shape as a. If normed is False,
-        the histogram is computed by summing the weights of the values
-        falling into each bin. If normed is True, the weights are
-        normalized, so that the integral of the density over the range
-        is 1. This option is only available with new=True.
-
-    new : bool
-        Compatibility argument to transition from the old version
-        (v1.1) to the new version (v1.2).
+    weights : array_like, optional
+        An array of weights, of the same shape as `a`.  Each value in `a`
+        only contributes its associated weight towards the bin count
+        (instead of 1).  If `normed` is True, the weights are normalized,
+        so that the integral of the density over the range remains 1.
+        The `weights` keyword is only available with `new` set to True.
+    new : bool, optional
+        Compatibility argument to aid in the transition between the old
+        (v1.1) and the new (v1.2) implementations.  In version 1.2,
+        `new` will be True by default.
 
     Returns
     -------
@@ -147,13 +233,29 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
         The values of the histogram. See `normed` and `weights` for a
         description of the possible semantics.
 
-    bin_edges : float array
-        With new=False, return the left bin edges (length(hist)).
-        With new=True, return the bin edges (length(hist)+1).
+    bin_edges : array of dtype float
+        With ``new = False``, return the left bin edges (``length(hist)``).
+        With ``new = True``, return the bin edges ``(length(hist)+1)``.
 
     See Also
     --------
     histogramdd
+
+    Notes
+    -----
+    All but the last (righthand-most) bin is half-open.  In other words, if
+    `bins` is::
+
+      [1, 2, 3, 4]
+
+    then the first bin is ``[1, 2)`` (including 1, but excluding 2) and the
+    second ``[2, 3)``.  The last bin, however, is ``[3, 4]``, which *includes*
+    4.
+
+    Examples
+    --------
+    >>> np.histogram([1,2,1], bins=[0,1,2,3], new=True)
+    (array([0, 2, 1]), array([0, 1, 2, 3]))
 
     """
     # Old behavior
@@ -280,47 +382,53 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
 
 
 def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
-    """histogramdd(sample, bins=10, range=None, normed=False, weights=None)
-
-    Return the N-dimensional histogram of the sample.
+    """
+    Compute the multidimensional histogram of some data.
 
     Parameters
     ----------
-    sample : sequence or array
-        A sequence containing N arrays or an NxM array. Input data.
+    sample : array-like
+      Data to histogram passed as a sequence of D arrays of length N, or
+      as an (N,D) array.
+    bins : sequence or int, optional
+      The bin specification:
 
-    bins : sequence or scalar
-        A sequence of edge arrays, a sequence of bin counts, or a scalar
-        which is the bin count for all dimensions. Default is 10.
+       * A sequence of arrays describing the bin edges along each dimension.
+       * The number of bins for each dimension (nx, ny, ... =bins)
+       * The number of bins for all dimensions (nx=ny=...=bins).
 
-    range : sequence
-        A sequence of lower and upper bin edges. Default is [min, max].
-
-    normed : boolean
-        If False, return the number of samples in each bin, if True,
-        returns the density.
-
-    weights : array
-        Array of weights.  The weights are normed only if normed is True.
-        Should the sum of the weights not equal N, the total bin count will
-        not be equal to the number of samples.
+    range : sequence, optional
+      A sequence of lower and upper bin edges to be used if the edges are
+      not given explicitely in `bins`. Defaults to the minimum and maximum
+      values along each dimension.
+    normed : boolean, optional
+      If False, returns the number of samples in each bin. If True, returns
+      the bin density, ie, the bin count divided by the bin hypervolume.
+    weights : array-like (N,), optional
+      An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
+      Weights are normalized to 1 if normed is True. If normed is False, the
+      values of the returned histogram are equal to the sum of the weights
+      belonging to the samples falling into each bin.
 
     Returns
     -------
-    hist : array
-        Histogram array.
-
+    H : array
+      The multidimensional histogram of sample x. See normed and weights for
+      the different possible semantics.
     edges : list
-        List of arrays defining the lower bin edges.
+      A list of D arrays describing the bin edges for each dimension.
 
     See Also
     --------
-    histogram
+    histogram: 1D histogram
+    histogram2d: 2D histogram
 
     Examples
     --------
-    >>> x = np.random.randn(100,3)
-    >>> hist3d, edges = np.lib.histogramdd(x, bins = (5, 6, 7))
+    >>> r = np.random.randn(100,3)
+    >>> H, edges = np.histogramdd(r, bins = (5, 8, 4))
+    >>> H.shape, edges[0].size, edges[1].size, edges[2].size
+    ((5,8,4), 6, 9, 5)
 
     """
 
@@ -439,7 +547,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
 
 def average(a, axis=None, weights=None, returned=False):
-    """Return the weighted average of array a over the given axis.
+    """
+    Return the weighted average of array over the specified axis.
 
 
     Parameters
@@ -447,41 +556,51 @@ def average(a, axis=None, weights=None, returned=False):
     a : array_like
         Data to be averaged.
     axis : {None, integer}, optional
-        Axis along which to average a. If None, averaging is done over the
+        Axis along which to average `a`. If `None`, averaging is done over the
         entire array irrespective of its shape.
     weights : {None, array_like}, optional
-        The importance each datum has in the computation of the
-        average. The weights array can either be 1D, in which case  its length
-        must be the size of a along the given axis, or of the same shape as a.
-        If weights=None, all data are assumed to have weight equal to one.
-    returned :{False, boolean}, optional
-        If True, the tuple (average, sum_of_weights) is returned,
-        otherwise only the average is returmed. Note that if weights=None, then
-        the sum of the weights is also the number of elements averaged over.
+        The importance that each datum has in the computation of the average.
+        The weights array can either be 1D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+    returned : {False, boolean}, optional
+        If `True`, the tuple (`average`, `sum_of_weights`) is returned,
+        otherwise only the average is returned. Note that if `weights=None`,
+        `sum_of_weights` is equivalent to the number of elements over which
+        the average is taken.
 
     Returns
     -------
     average, [sum_of_weights] : {array_type, double}
-        Return the average along the specified axis. When returned is True,
+        Return the average along the specified axis. When returned is `True`,
         return a tuple with the average as the first element and the sum
-        of the weights as the second element. The return type is Float if a is
-        of integer type, otherwise it is of the same type as a.
-        sum_of_weights is has the same type as the average.
-
-
-    Examples
-    --------
-      >>> np.average(range(1,11), weights=range(10,0,-1))
-      4.0
+        of the weights as the second element. The return type is `Float`
+        if `a` is of integer type, otherwise it is of the same type as `a`.
+        `sum_of_weights` is of the same type as `average`.
 
     Raises
     ------
     ZeroDivisionError
-        When all weights along axis are zero. See numpy.ma.average for a
+        When all weights along axis are zero. See `numpy.ma.average` for a
         version robust to this type of error.
     TypeError
-        When the length of 1D weights is not the same as the shape of a
+        When the length of 1D `weights` is not the same as the shape of `a`
         along axis.
+
+    See Also
+    --------
+    ma.average : average for masked arrays
+
+    Examples
+    --------
+    >>> data = range(1,5)
+    >>> data
+    [1, 2, 3, 4]
+    >>> np.average(data)
+    2.5
+    >>> np.average(range(1,11), weights=range(10,0,-1))
+    4.0
 
     """
     if not isinstance(a, np.matrix) :
@@ -528,37 +647,79 @@ def asarray_chkfinite(a):
     return a
 
 def piecewise(x, condlist, funclist, *args, **kw):
-    """Return a piecewise-defined function.
+    """
+    Evaluate a piecewise-defined function.
 
-    x is the domain
+    Given a set of conditions and corresponding functions, evaluate each
+    function on the input data wherever its condition is true.
 
-    condlist is a list of boolean arrays or a single boolean array
-      The length of the condition list must be n2 or n2-1 where n2
-      is the length of the function list.  If len(condlist)==n2-1, then
-      an 'otherwise' condition is formed by |'ing all the conditions
-      and inverting.
+    Parameters
+    ----------
+    x : (N,) ndarray
+        The input domain.
+    condlist : list of M (N,)-shaped boolean arrays
+        Each boolean array corresponds to a function in `funclist`.  Wherever
+        `condlist[i]` is True, `funclist[i](x)` is used as the output value.
 
-    funclist is a list of functions to call of length (n2).
-      Each function should return an array output for an array input
-      Each function can take (the same set) of extra arguments and
-      keyword arguments which are passed in after the function list.
-      A constant may be used in funclist for a function that returns a
-      constant (e.g. val  and lambda x: val are equivalent in a funclist).
+        Each boolean array in `condlist` selects a piece of `x`,
+        and should therefore be of the same shape as `x`.
 
-    The output is the same shape and type as x and is found by
-      calling the functions on the appropriate portions of x.
+        The length of `condlist` must correspond to that of `funclist`.
+        If one extra function is given, i.e. if the length of `funclist` is
+        M+1, then that extra function is the default value, used wherever
+        all conditions are false.
+    funclist : list of M or M+1 callables, f(x,*args,**kw), or values
+        Each function is evaluated over `x` wherever its corresponding
+        condition is True.  It should take an array as input and give an array
+        or a scalar value as output.  If, instead of a callable,
+        a value is provided then a constant function (``lambda x: value``) is
+        assumed.
+    args : tuple, optional
+        Any further arguments given to `piecewise` are passed to the functions
+        upon execution, i.e., if called ``piecewise(...,...,1,'a')``, then
+        each function is called as ``f(x,1,'a')``.
+    kw : dictionary, optional
+        Keyword arguments used in calling `piecewise` are passed to the
+        functions upon execution, i.e., if called
+        ``piecewise(...,...,lambda=1)``, then each function is called as
+        ``f(x,lambda=1)``.
 
-    Note: This is similar to choose or select, except
-          the the functions are only evaluated on elements of x
-          that satisfy the corresponding condition.
+    Returns
+    -------
+    out : ndarray
+        The output is the same shape and type as x and is found by
+        calling the functions in `funclist` on the appropriate portions of `x`,
+        as defined by the boolean arrays in `condlist`.  Portions not covered
+        by any condition have undefined values.
 
-    The result is
-           |--
-           |  f1(x)  for condition1
-     y = --|  f2(x)  for condition2
-           |   ...
-           |  fn(x)  for conditionn
-           |--
+    Notes
+    -----
+    This is similar to choose or select, except that functions are
+    evaluated on elements of `x` that satisfy the corresponding condition from
+    `condlist`.
+
+    The result is::
+
+            |--
+            |funclist[0](x[condlist[0]])
+      out = |funclist[1](x[condlist[1]])
+            |...
+            |funclist[n2](x[condlist[n2]])
+            |--
+
+    Examples
+    --------
+    Define the sigma function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
+
+    >>> x = np.arange(6) - 2.5 # x runs from -2.5 to 2.5 in steps of 1
+    >>> np.piecewise(x, [x < 0, x >= 0.5], [-1,1])
+    array([-1., -1., -1.,  1.,  1.,  1.])
+
+    Define the absolute value, which is ``-x`` for ``x <0`` and ``x`` for
+    ``x >= 0``.
+
+    >>> np.piecewise(x, [x < 0, x >= 0], [lambda x: -x, lambda x: x])
+    array([ 2.5,  1.5,  0.5,  0.5,  1.5,  2.5])
 
     """
     x = asanyarray(x)
@@ -608,25 +769,30 @@ def piecewise(x, condlist, funclist, *args, **kw):
     return y
 
 def select(condlist, choicelist, default=0):
-    """Return an array composed of different elements in choicelist,
-    depending on the list of conditions.
+    """
+    Return an array drawn from elements in choicelist, depending on conditions.
 
-    :Parameters:
-        condlist : list of N boolean arrays of length M
+    Parameters
+    ----------
+    condlist : list of N boolean arrays of length M
             The conditions C_0 through C_(N-1) which determine
             from which vector the output elements are taken.
-        choicelist : list of N arrays of length M
+    choicelist : list of N arrays of length M
             Th vectors V_0 through V_(N-1), from which the output
             elements are chosen.
 
-    :Returns:
-        output : 1-dimensional array of length M
+    Returns
+    -------
+    output : 1-dimensional array of length M
             The output at position m is the m-th element of the first
             vector V_n for which C_n[m] is non-zero.  Note that the
             output depends on the order of conditions, since the
             first satisfied condition is used.
 
-            Equivalent to:
+    Notes
+    -----
+    Equivalent to:
+    ::
 
                 output = []
                 for m in range(M):
@@ -658,28 +824,76 @@ def select(condlist, choicelist, default=0):
     return choose(S, tuple(choicelist))
 
 def copy(a):
-    """Return an array copy of the given object.
+    """
+    Return an array copy of the given object.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+
+    Returns
+    -------
+    arr : ndarray
+        Array interpretation of `a`.
+
+    Notes
+    -----
+    This is equivalent to
+
+    >>> np.array(a, copy=True)
+
+    Examples
+    --------
+    Create an array x, with a reference y and a copy z:
+
+    >>> x = np.array([1, 2, 3])
+    >>> y = x
+    >>> z = np.copy(x)
+
+    Note that, when we modify x, y changes, but not z:
+
+    >>> x[0] = 10
+    >>> x[0] == y[0]
+    True
+    >>> x[0] == z[0]
+    False
+
     """
     return array(a, copy=True)
 
 # Basic operations
 
 def gradient(f, *varargs):
-    """Calculate the gradient of an N-dimensional scalar function.
+    """
+    Return the gradient of an N-dimensional array.
 
-    Uses central differences on the interior and first differences on boundaries
-    to give the same shape.
+    The gradient is computed using central differences in the interior
+    and first differences at the boundaries. The returned gradient hence has
+    the same shape as the input array.
 
-    Inputs:
+    Parameters
+    ----------
+    f : array_like
+      An N-dimensional array containing samples of a scalar function.
+    `*varargs` : scalars
+      0, 1, or N scalars specifying the sample distances in each direction,
+      that is: `dx`, `dy`, `dz`, ... The default distance is 1.
 
-      f -- An N-dimensional array giving samples of a scalar function
 
-      varargs -- 0, 1, or N scalars giving the sample distances in each direction
+    Returns
+    -------
+    g : ndarray
+      N arrays of the same shape as `f` giving the derivative of `f` with
+      respect to each dimension.
 
-    Outputs:
-
-      N arrays of the same shape as f giving the derivative of f with respect
-      to each dimension.
+    Examples
+    --------
+    >>> np.gradient(np.array([[1,1],[3,4]]))
+    [array([[ 2.,  3.],
+           [ 2.,  3.]]),
+     array([[ 0.,  0.],
+           [ 1.,  1.]])]
 
     """
     N = len(f.shape)  # number of dimensions
@@ -740,7 +954,38 @@ def gradient(f, *varargs):
 
 
 def diff(a, n=1, axis=-1):
-    """Calculate the nth order discrete difference along given axis.
+    """
+    Calculate the nth order discrete difference along given axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array
+    n : int, optional
+        The number of times values are differenced.
+    axis : int, optional
+        The axis along which the difference is taken.
+
+    Returns
+    -------
+    out : ndarray
+        The `n` order differences.  The shape of the output is the same as `a`
+        except along `axis` where the dimension is `n` less.
+
+    Examples
+    --------
+    >>> x = np.array([0,1,3,9,5,10])
+    >>> np.diff(x)
+    array([ 1,  2,  6, -4,  5])
+    >>> np.diff(x,n=2)
+    array([  1,   4, -10,   9])
+    >>> x = np.array([[1,3,6,10],[0,5,6,8]])
+    >>> np.diff(x)
+    array([[2, 3, 4],
+    [5, 1, 2]])
+    >>> np.diff(x,axis=0)
+    array([[-1,  2,  0, -2]])
+
     """
     if n == 0:
         return a
@@ -807,16 +1052,60 @@ except RuntimeError:
 
 
 def interp(x, xp, fp, left=None, right=None):
-    """Return the value of a piecewise-linear function at each value in x.
+    """
+    One-dimensional linear interpolation.
 
-    The piecewise-linear function, f, is defined by the known data-points
-    fp=f(xp). The xp points must be sorted in increasing order but this is
-    not checked.
+    Returns the one-dimensional piecewise linear interpolant to a function
+    with given values at discrete data-points.
 
-    For values of x < xp[0] return the value given by left.  If left is None,
-    then return fp[0].
-    For values of x > xp[-1] return the value given by right. If right is
-    None, then return fp[-1].
+    Parameters
+    ----------
+    x : array_like
+        The x-coordinates of the interpolated values.
+
+    xp : 1-D sequence of floats
+        The x-coordinates of the data points, must be increasing.
+
+    fp : 1-D sequence of floats
+        The y-coordinates of the data points, same length as `xp`.
+
+    left : float, optional
+        Value to return for `x < xp[0]`, default is `fp[0]`.
+
+    right : float, optional
+        Value to return for `x > xp[-1]`, defaults is `fp[-1]`.
+
+    Returns
+    -------
+    y : {float, ndarray}
+        The interpolated values, same shape as `x`.
+
+    Raises
+    ------
+    ValueError
+        If `xp` and `fp` have different length
+
+    Notes
+    -----
+    Does not check that the x-coordinate sequence `xp` is increasing.
+    If `xp` is not increasing, the results are nonsense.
+    A simple check for increasingness is::
+
+        np.all(np.diff(xp) > 0)
+
+
+    Examples
+    --------
+    >>> xp = [1, 2, 3]
+    >>> fp = [3, 2, 0]
+    >>> np.interp(2.5, xp, fp)
+    1.0
+    >>> np.interp([0, 1, 1.5, 2.72, 3.14], xp, fp)
+    array([ 3. ,  3. ,  2.5,  0.56,  0. ])
+    >>> UNDEF = -99.0
+    >>> np.interp(3.14, xp, fp, right=UNDEF)
+    -99.0
+
     """
     if isinstance(x, (float, int, number)):
         return compiled_interp([x], xp, fp, left, right).item()
@@ -826,13 +1115,26 @@ def interp(x, xp, fp, left=None, right=None):
 
 def angle(z, deg=0):
     """
-    Return the angle of the complex argument z.
+    Return the angle of the complex argument.
+
+    Parameters
+    ----------
+    z : array_like
+        A complex number or sequence of complex numbers.
+    deg : bool, optional
+        Return angle in degrees if True, radians if False.  Default is False.
+
+    Returns
+    -------
+    angle : {ndarray, scalar}
+        The angle is defined as counterclockwise from the positive real axis on
+        the complex plane, with dtype as numpy.float64.
 
     Examples
     --------
-    >>> np.angle(1+1j)          # in radians
-    0.78539816339744828
-    >>> np.angle(1+1j,deg=True) # in degrees
+    >>> np.angle([1.0, 1.0j, 1+1j])               # in radians
+    array([ 0.        ,  1.57079633,  0.78539816])
+    >>> np.angle(1+1j, deg=True)                  # in degrees
     45.0
 
     """
@@ -850,8 +1152,26 @@ def angle(z, deg=0):
     return arctan2(zimag, zreal) * fact
 
 def unwrap(p, discont=pi, axis=-1):
-    """Unwrap radian phase p by changing absolute jumps greater than
-       'discont' to their 2*pi complement along the given axis.
+    """
+    Unwrap by changing deltas between values to 2*pi complement.
+
+    Unwrap radian phase `p` by changing absolute jumps greater than
+    `discont` to their 2*pi complement along the given axis.
+
+    Parameters
+    ----------
+    p : array_like
+        Input array.
+    discont : float
+        Maximum discontinuity between values.
+    axis : integer
+        Axis along which unwrap will operate.
+
+    Returns
+    -------
+    out : ndarray
+        Output array
+
     """
     p = asarray(p)
     nd = len(p.shape)
@@ -867,10 +1187,18 @@ def unwrap(p, discont=pi, axis=-1):
     return up
 
 def sort_complex(a):
-    """ Sort 'a' as a complex array using the real part first and then
-    the imaginary part if the real part is equal (the default sort order
-    for complex arrays).  This function is a wrapper ensuring a complex
-    return type.
+    """
+    Sort a complex array using the real part first, then the imaginary part.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array
+
+    Returns
+    -------
+    out : complex ndarray
+        Always returns a sorted complex array.
 
     """
     b = array(a,copy=True)
@@ -886,7 +1214,16 @@ def sort_complex(a):
         return b
 
 def trim_zeros(filt, trim='fb'):
-    """ Trim the leading and trailing zeros from a 1D array.
+    """
+    Trim the leading and trailing zeros from a 1D array.
+
+    Parameters
+    ----------
+    filt : array_like
+        Input array.
+    trim : string, optional
+        A string with 'f' representing trim from front and 'b' to trim from
+        back.
 
     Examples
     --------
@@ -914,12 +1251,25 @@ if sys.hexversion < 0x2040000:
 
 def unique(x):
     """
-    Return sorted unique items from an array or sequence.
+    Return the sorted, unique elements of an array or sequence.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+
+    Returns
+    -------
+    y : ndarray
+        The sorted, unique elements are returned in a 1-D array.
 
     Examples
     --------
-    >>> np.unique([5,2,4,0,4,4,2,2,1])
-    array([0, 1, 2, 4, 5])
+    >>> np.unique([1, 1, 2, 2, 3, 3])
+    array([1, 2, 3])
+    >>> a = np.array([[1, 1], [2, 3]])
+    >>> np.unique(a)
+    array([1, 2, 3])
 
     """
     try:
@@ -935,10 +1285,44 @@ def unique(x):
         return asarray(items)
 
 def extract(condition, arr):
-    """Return the elements of ravel(arr) where ravel(condition) is True
-    (in 1D).
+    """
+    Return the elements of an array that satisfy some condition.
 
-    Equivalent to compress(ravel(condition), ravel(arr)).
+    This is equivalent to ``np.compress(ravel(condition), ravel(arr))``.  If
+    `condition` is boolean ``np.extract`` is equivalent to ``arr[condition]``.
+
+    Parameters
+    ----------
+    condition : array_like
+        An array whose nonzero or True entries indicate the elements of `arr`
+        to extract.
+    arr : array_like
+        Input array of the same size as `condition`.
+
+    See Also
+    --------
+    take, put, putmask
+
+    Examples
+    --------
+    >>> arr = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]])
+    >>> arr
+    array([[ 1,  2,  3,  4],
+           [ 5,  6,  7,  8],
+           [ 9, 10, 11, 12]])
+    >>> condition = np.mod(arr, 3)==0
+    >>> condition
+    array([[False, False,  True, False],
+           [False,  True, False, False],
+           [ True, False, False,  True]], dtype=bool)
+    >>> np.extract(condition, arr)
+    array([ 3,  6,  9, 12])
+
+    If `condition` is boolean:
+
+    >>> arr[condition]
+    array([ 3,  6,  9, 12])
+
     """
     return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
@@ -951,7 +1335,29 @@ def place(arr, mask, vals):
     return _insert(arr, mask, vals)
 
 def nansum(a, axis=None):
-    """Sum the array over the given axis, treating NaNs as 0.
+    """
+    Sum the array along the given axis, treating NaNs as zero.
+
+    Parameters
+    ----------
+    a : array-like
+        Input array.
+    axis : {int, None}, optional
+        Axis along which the sum is computed. By default `a` is flattened.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The sum ignoring NaNs.
+
+    Examples
+    --------
+    >>> np.nansum([np.nan, 1])
+    1.0
+    >>> a = np.array([[1, 1], [1, np.nan]])
+    >>> np.nansum(a, axis=0)
+    array([ 2.,  1.])
+
     """
     y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
@@ -959,7 +1365,31 @@ def nansum(a, axis=None):
     return y.sum(axis)
 
 def nanmin(a, axis=None):
-    """Find the minimium over the given axis, ignoring NaNs.
+    """
+    Find the minimum along the given axis, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    axis : int, optional
+        Axis along which the minimum is computed. By default `a` is flattened.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The minimum ignoring NaNs.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, np.nan]])
+    >>> np.nanmin(a)
+    1.0
+    >>> np.nanmin(a, axis=0)
+    array([ 1.,  2.])
+    >>> np.nanmin(a, axis=1)
+    array([ 1.,  3.])
+
     """
     y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
@@ -967,7 +1397,12 @@ def nanmin(a, axis=None):
     return y.min(axis)
 
 def nanargmin(a, axis=None):
-    """Find the indices of the minimium over the given axis ignoring NaNs.
+    """
+    Return indices of the minimum values along the given axis of `a`,
+    ignoring NaNs.
+
+    Refer to `numpy.nanargmax` for detailed documentation.
+
     """
     y = array(a, subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
@@ -975,7 +1410,31 @@ def nanargmin(a, axis=None):
     return y.argmin(axis)
 
 def nanmax(a, axis=None):
-    """Find the maximum over the given axis ignoring NaNs.
+    """
+    Find the maximum along the given axis, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : array-like
+        Input array.
+    axis : {int, None}, optional
+        Axis along which the maximum is computed. By default `a` is flattened.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The maximum ignoring NaNs.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, np.nan]])
+    >>> np.nanmax(a)
+    3.0
+    >>> np.nanmax(a, axis=0)
+    array([ 3.,  2.])
+    >>> np.nanmax(a, axis=1)
+    array([ 2.,  3.])
+
     """
     y = array(a, subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
@@ -983,7 +1442,38 @@ def nanmax(a, axis=None):
     return y.max(axis)
 
 def nanargmax(a, axis=None):
-    """Find the maximum over the given axis ignoring NaNs.
+    """
+    Return indices of the maximum values over the given axis of 'a',
+    ignoring NaNs.
+
+    Parameters
+    ----------
+    a : array-like
+        Input data.
+    axis : int, optional
+        Axis along which to operate.  By default flattened input is used.
+
+    Returns
+    -------
+    index_array : {ndarray, int}
+        An array of indices or a single index value.
+
+    See Also
+    --------
+    argmax
+
+    Examples
+    --------
+    >>> a = np.array([[np.nan, 4], [2, 3]])
+    >>> np.argmax(a)
+    0
+    >>> np.nanargmax(a)
+    1
+    >>> np.nanargmax(a, axis=0)
+    array([1, 1])
+    >>> np.nanargmax(a, axis=1)
+    array([1, 0])
+
     """
     y = array(a,subok=True)
     if not issubclass(y.dtype.type, _nx.integer):
@@ -1144,20 +1634,77 @@ class vectorize(object):
         return _res
 
 def cov(m, y=None, rowvar=1, bias=0):
-    """Estimate the covariance matrix.
+    """
+    Estimate a covariance matrix, given data.
 
-    If m is a vector, return the variance.  For matrices return the
-    covariance matrix.
+    Covariance indicates the level to which two variables vary together.
+    If we examine N-dimensional samples, :math:`X = [x_1, x_2, ... x_N]^T`,
+    then the covariance matrix element :math:`C_{ij}` is the covariance of
+    :math:`x_i` and :math:`x_j`. The element :math:`C_{ii}` is the variance
+    of :math:`x_i`.
 
-    If y is given it is treated as an additional (set of)
-    variable(s).
+    Parameters
+    ----------
+    m : array-like
+        A 1D or 2D array containing multiple variables and observations.
+        Each row of `m` represents a variable, and each column a single
+        observation of all those variables. Also see `rowvar` below.
+    y : array-like, optional
+        An additional set of variables and observations. `y` has the same
+        form as that of `m`.
+    rowvar : int, optional
+        If `rowvar` is non-zero (default), then each row represents a
+        variable, with observations in the columns. Otherwise, the relationship
+        is transposed: each column represents a variable, while the rows
+        contain observations.
+    bias : int, optional
+        Default normalization is by ``(N-1)``, where ``N`` is the number of
+        observations given (unbiased estimate). If `bias` is 1, then
+        normalization is by ``N``.
 
-    Normalization is by (N-1) where N is the number of observations
-    (unbiased estimate).  If bias is 1 then normalization is by N.
+    Returns
+    -------
+    out : ndarray
+        The covariance matrix of the variables.
 
-    If rowvar is non-zero (default), then each row is a variable with
-    observations in the columns, otherwise each column
-    is a variable and the observations are in the rows.
+    See Also
+    --------
+    corrcoef : Normalized covariance matrix
+
+    Examples
+    --------
+    Consider two variables, :math:`x_0` and :math:`x_1`, which
+    correlate perfectly, but in opposite directions:
+
+    >>> x = np.array([[0, 2], [1, 1], [2, 0]]).T
+    >>> x
+    array([[0, 1, 2],
+           [2, 1, 0]])
+
+    Note how :math:`x_0` increases while :math:`x_1` decreases. The covariance
+    matrix shows this clearly:
+
+    >>> np.cov(x)
+    array([[ 1., -1.],
+           [-1.,  1.]])
+
+    Note that element :math:`C_{0,1}`, which shows the correlation between
+    :math:`x_0` and :math:`x_1`, is negative.
+
+    Further, note how `x` and `y` are combined:
+
+    >>> x = [-2.1, -1,  4.3]
+    >>> y = [3,  1.1,  0.12]
+    >>> X = np.vstack((x,y))
+    >>> print np.cov(X)
+    [[ 11.71        -4.286     ]
+     [ -4.286        2.14413333]]
+    >>> print np.cov(x, y)
+    [[ 11.71        -4.286     ]
+     [ -4.286        2.14413333]]
+    >>> print np.cov(x)
+    11.71
+
     """
 
     X = array(m, ndmin=2, dtype=float)
@@ -1192,7 +1739,21 @@ def cov(m, y=None, rowvar=1, bias=0):
         return (dot(X, X.T.conj()) / fact).squeeze()
 
 def corrcoef(x, y=None, rowvar=1, bias=0):
-    """The correlation coefficients
+    """
+    Correlation coefficients.
+
+    Please refer to the documentation for `cov` for more detail.  The
+    relationship between the correlation coefficient matrix, P, and the
+    covariance matrix, C, is
+
+    .. math:: P_{ij} = \\frac{ C_{ij} } { \\sqrt{ C_{ii} * C_{jj} } }
+
+    The values of P are between -1 and 1.
+
+    See Also
+    --------
+    cov : Covariance matrix
+
     """
     c = cov(x, y, rowvar, bias)
     try:
@@ -1202,7 +1763,88 @@ def corrcoef(x, y=None, rowvar=1, bias=0):
     return c/sqrt(multiply.outer(d,d))
 
 def blackman(M):
-    """blackman(M) returns the M-point Blackman window.
+    """
+    Return the Blackman window.
+
+    The Blackman window is a taper formed by using the the first
+    three terms of a summation of cosines. It was designed to have close
+    to the minimal leakage possible.
+    It is close to optimal, only slightly worse than a Kaiser window.
+
+    Parameters
+    ----------
+    M : int
+        Number of points in the output window. If zero or less, an
+        empty array is returned.
+
+    Returns
+    -------
+    out : array
+        The window, normalized to one (the value one
+        appears only if the number of samples is odd).
+
+    See Also
+    --------
+    bartlett, hamming, hanning, kaiser
+
+    Notes
+    -----
+    The Blackman window is defined as
+
+    .. math::  w(n) = 0.42 - 0.5 \\cos(2\\pi n/M) + 0.08 \\cos(4\\pi n/M)
+
+
+    Most references to the Blackman window come from the signal processing
+    literature, where it is used as one of many windowing functions for
+    smoothing values.  It is also known as an apodization (which means
+    "removing the foot", i.e. smoothing discontinuities at the beginning
+    and end of the sampled signal) or tapering function. It is known as a
+    "near optimal" tapering function, almost as good (by some measures)
+    as the kaiser window.
+
+    References
+    ----------
+    .. [1] Blackman, R.B. and Tukey, J.W., (1958) The measurement of power
+           spectra, Dover Publications, New York.
+    .. [2] Wikipedia, "Window function",
+           http://en.wikipedia.org/wiki/Window_function
+    .. [3] Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
+           Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
+
+    Examples
+    --------
+    >>> from numpy import blackman
+    >>> blackman(12)
+    array([ -1.38777878e-17,   3.26064346e-02,   1.59903635e-01,
+             4.14397981e-01,   7.36045180e-01,   9.67046769e-01,
+             9.67046769e-01,   7.36045180e-01,   4.14397981e-01,
+             1.59903635e-01,   3.26064346e-02,  -1.38777878e-17])
+
+
+    Plot the window and the frequency response:
+
+    >>> from numpy import clip, log10, array, bartlett
+    >>> from scipy.fftpack import fft, fftshift
+    >>> import matplotlib.pyplot as plt
+
+    >>> window = blackman(51)
+    >>> plt.plot(window)
+    >>> plt.title("Blackman window")
+    >>> plt.ylabel("Amplitude")
+    >>> plt.xlabel("Sample")
+    >>> plt.show()
+
+    >>> A = fft(window, 2048) / 25.5
+    >>> mag = abs(fftshift(A))
+    >>> freq = linspace(-0.5,0.5,len(A))
+    >>> response = 20*log10(mag)
+    >>> response = clip(response,-100,100)
+    >>> plt.plot(freq, response)
+    >>> plt.title("Frequency response of Bartlett window")
+    >>> plt.ylabel("Magnitude [dB]")
+    >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    >>> plt.axis('tight'); plt.show()
+
     """
     if M < 1:
         return array([])
@@ -1241,7 +1883,7 @@ def bartlett(M):
     -----
     The Bartlett window is defined as
 
-    .. math:: w(n) = \\frac{2}{M-1} \left(
+    .. math:: w(n) = \\frac{2}{M-1} \\left(
               \\frac{M-1}{2} - \\left|n - \\frac{M-1}{2}\\right|
               \\right)
 
@@ -1251,18 +1893,23 @@ def bartlett(M):
     window produces linear interpolation.  It is also known as an
     apodization (which means"removing the foot", i.e. smoothing
     discontinuities at the beginning and end of the sampled signal) or
-    tapering function.
+    tapering function. The fourier transform of the Bartlett is the product
+    of two sinc functions.
+    Note the excellent discussion in Kanasewich.
 
     References
     ----------
     .. [1] M.S. Bartlett, "Periodogram Analysis and Continuous Spectra",
            Biometrika 37, 1-16, 1950.
-    .. [2] A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal
+    .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics",
+           The University of Alberta Press, 1975, pp. 109-110.
+    .. [3] A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal
            Processing", Prentice-Hall, 1999, pp. 468-471.
-    .. [3] Wikipedia, "Window function",
+    .. [4] Wikipedia, "Window function",
            http://en.wikipedia.org/wiki/Window_function
-    .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
+    .. [5] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 429.
+
 
     Examples
     --------
@@ -1273,26 +1920,27 @@ def bartlett(M):
 
     Plot the window and its frequency response (requires SciPy and matplotlib):
 
-    from scipy.fftpack import fft
-    from matplotlib import pyplot as plt
+    >>> from numpy import clip, log10, array, bartlett
+    >>> from numpy.fft import fft
+    >>> import matplotlib.pyplot as plt
 
-    window = np.bartlett(51)
-    plt.plot(window) #doctest: SKIP 
-    plt.title("Bartlett window")
-    plt.ylabel("Amplitude")
-    plt.xlabel("Sample")
-    plt.show()
+    >>> window = bartlett(51)
+    >>> plt.plot(window)
+    >>> plt.title("Bartlett window")
+    >>> plt.ylabel("Amplitude")
+    >>> plt.xlabel("Sample")
+    >>> plt.show()
 
-    A = fft(window, 2048) / 25.5
-    mag = abs(np.fft.fftshift(A))
-    freq = linspace(-0.5,0.5,len(A))
-    response = 20*np.log10(mag)
-    response = np.clip(response,-100,100)
-    plt.plot(freq, response)
-    plt.title("Frequency response of Bartlett window")
-    plt.ylabel("Magnitude [dB]")
-    plt.xlabel("Normalized frequency [cycles per sample]")
-    plt.axis('tight'); plt.show()
+    >>> A = fft(window, 2048) / 25.5
+    >>> mag = abs(fftshift(A))
+    >>> freq = linspace(-0.5,0.5,len(A))
+    >>> response = 20*log10(mag)
+    >>> response = clip(response,-100,100)
+    >>> plt.plot(freq, response)
+    >>> plt.title("Frequency response of Bartlett window")
+    >>> plt.ylabel("Magnitude [dB]")
+    >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    >>> plt.axis('tight'); plt.show()
 
     """
     if M < 1:
@@ -1303,7 +1951,87 @@ def bartlett(M):
     return where(less_equal(n,(M-1)/2.0),2.0*n/(M-1),2.0-2.0*n/(M-1))
 
 def hanning(M):
-    """hanning(M) returns the M-point Hanning window.
+    """
+    Return the Hanning window.
+
+    The Hanning window is a taper formed by using a weighted cosine.
+
+    Parameters
+    ----------
+    M : int
+        Number of points in the output window. If zero or less, an
+        empty array is returned.
+
+    Returns
+    -------
+    out : array
+        The window, normalized to one (the value one
+        appears only if the number of samples is odd).
+
+    See Also
+    --------
+    bartlett, blackman, hamming, kaiser
+
+    Notes
+    -----
+    The Hanning window is defined as
+
+    .. math::  w(n) = 0.5 - 0.5cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
+               \\qquad 0 \\leq n \\leq M-1
+
+    The Hanning was named for Julius van Hann, an Austrian meterologist. It is
+    also known as the Cosine Bell. Some authors prefer that it be called a
+    Hann window, to help avoid confusion with the very similar Hamming window.
+
+    Most references to the Hanning window come from the signal processing
+    literature, where it is used as one of many windowing functions for
+    smoothing values.  It is also known as an apodization (which means
+    "removing the foot", i.e. smoothing discontinuities at the beginning
+    and end of the sampled signal) or tapering function.
+
+    References
+    ----------
+    .. [1] Blackman, R.B. and Tukey, J.W., (1958) The measurement of power
+           spectra, Dover Publications, New York.
+    .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics",
+           The University of Alberta Press, 1975, pp. 106-108.
+    .. [3] Wikipedia, "Window function",
+           http://en.wikipedia.org/wiki/Window_function
+    .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
+           "Numerical Recipes", Cambridge University Press, 1986, page 425.
+
+    Examples
+    --------
+    >>> from numpy import hanning
+    >>> hanning(12)
+    array([ 0.        ,  0.07937323,  0.29229249,  0.57115742,  0.82743037,
+            0.97974649,  0.97974649,  0.82743037,  0.57115742,  0.29229249,
+            0.07937323,  0.        ])
+
+    Plot the window and its frequency response:
+
+    >>> from numpy.fft import fft, fftshift
+    >>> import matplotlib.pyplot as plt
+
+    >>> window = np.hanning(51)
+    >>> plt.subplot(121)
+    >>> plt.plot(window)
+    >>> plt.title("Hann window")
+    >>> plt.ylabel("Amplitude")
+    >>> plt.xlabel("Sample")
+
+    >>> A = fft(window, 2048) / 25.5
+    >>> mag = abs(fftshift(A))
+    >>> freq = np.linspace(-0.5,0.5,len(A))
+    >>> response = 20*np.log10(mag)
+    >>> response = np.clip(response,-100,100)
+    >>> plt.subplot(122)
+    >>> plt.plot(freq, response)
+    >>> plt.title("Frequency response of the Hann window")
+    >>> plt.ylabel("Magnitude [dB]")
+    >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    >>> plt.axis('tight'); plt.show()
+
     """
     if M < 1:
         return array([])
@@ -1313,7 +2041,86 @@ def hanning(M):
     return 0.5-0.5*cos(2.0*pi*n/(M-1))
 
 def hamming(M):
-    """hamming(M) returns the M-point Hamming window.
+    """
+    Return the Hamming window.
+
+    The Hamming window is a taper formed by using a weighted cosine.
+
+    Parameters
+    ----------
+    M : int
+        Number of points in the output window. If zero or less, an
+        empty array is returned.
+
+    Returns
+    -------
+    out : ndarray
+        The window, normalized to one (the value one
+        appears only if the number of samples is odd).
+
+    See Also
+    --------
+    bartlett, blackman, hanning, kaiser
+
+    Notes
+    -----
+    The Hamming window is defined as
+
+    .. math::  w(n) = 0.54 + 0.46cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
+               \\qquad 0 \\leq n \\leq M-1
+
+    The Hamming was named for R. W. Hamming, an associate of J. W. Tukey and
+    is described in Blackman and Tukey. It was recommended for smoothing the
+    truncated autocovariance function in the time domain.
+    Most references to the Hamming window come from the signal processing
+    literature, where it is used as one of many windowing functions for
+    smoothing values.  It is also known as an apodization (which means
+    "removing the foot", i.e. smoothing discontinuities at the beginning
+    and end of the sampled signal) or tapering function.
+
+    References
+    ----------
+    .. [1] Blackman, R.B. and Tukey, J.W., (1958) The measurement of power
+           spectra, Dover Publications, New York.
+    .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
+           University of Alberta Press, 1975, pp. 109-110.
+    .. [3] Wikipedia, "Window function",
+           http://en.wikipedia.org/wiki/Window_function
+    .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
+           "Numerical Recipes", Cambridge University Press, 1986, page 425.
+
+    Examples
+    --------
+    >>> from numpy import hamming
+    >>> hamming(12)
+    array([ 0.08      ,  0.15302337,  0.34890909,  0.60546483,  0.84123594,
+            0.98136677,  0.98136677,  0.84123594,  0.60546483,  0.34890909,
+            0.15302337,  0.08      ])
+
+    Plot the window and the frequency response:
+
+    >>> from numpy import clip, log10, array, hamming
+    >>> from scipy.fftpack import fft, fftshift
+    >>> import matplotlib.pyplot as plt
+
+    >>> window = hamming(51)
+    >>> plt.plot(window)
+    >>> plt.title("Hamming window")
+    >>> plt.ylabel("Amplitude")
+    >>> plt.xlabel("Sample")
+    >>> plt.show()
+
+    >>> A = fft(window, 2048) / 25.5
+    >>> mag = abs(fftshift(A))
+    >>> freq = linspace(-0.5,0.5,len(A))
+    >>> response = 20*log10(mag)
+    >>> response = clip(response,-100,100)
+    >>> plt.plot(freq, response)
+    >>> plt.title("Frequency response of Hamming window")
+    >>> plt.ylabel("Magnitude [dB]")
+    >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    >>> plt.axis('tight'); plt.show()
+
     """
     if M < 1:
         return array([])
@@ -1401,6 +2208,27 @@ def _i0_2(x):
     return exp(x) * _chbevl(32.0/x - 2.0, _i0B) / sqrt(x)
 
 def i0(x):
+    """
+    Modified Bessel function of the first kind, order 0, :math:`I_0`
+
+    Parameters
+    ----------
+    x : array-like, dtype float or complex
+        Argument of the Bessel function.
+
+    Returns
+    -------
+    out : ndarray, shape z.shape, dtype z.dtype
+        The modified Bessel function evaluated for all elements of `x`.
+
+    Examples
+    --------
+    >>> np.i0([0.])
+    array(1.0)
+    >>> np.i0([0., 1. + 2j])
+    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])
+
+    """
     x = atleast_1d(x).copy()
     y = empty_like(x)
     ind = (x<0)
@@ -1414,8 +2242,117 @@ def i0(x):
 ## End of cephes code for i0
 
 def kaiser(M,beta):
-    """kaiser(M, beta) returns a Kaiser window of length M with shape parameter
-    beta.
+    """
+    Return the Kaiser window.
+
+    The Kaiser window is a taper formed by using a Bessel function.
+
+    Parameters
+    ----------
+    M : int
+        Number of points in the output window. If zero or less, an
+        empty array is returned.
+    beta : float
+        Shape parameter for window.
+
+    Returns
+    -------
+    out : array
+        The window, normalized to one (the value one
+        appears only if the number of samples is odd).
+
+    See Also
+    --------
+    bartlett, blackman, hamming, hanning
+
+    Notes
+    -----
+    The Kaiser window is defined as
+
+    .. math::  w(n) = I_0\\left( \\beta \\sqrt{1-\\frac{4n^2}{(M-1)^2}}
+               \\right)/I_0(\\beta)
+
+    with
+
+    .. math:: \\quad -\\frac{M-1}{2} \\leq n \\leq \\frac{M-1}{2},
+
+    where :math:`I_0` is the modified zeroth-order Bessel function.
+
+    The Kaiser was named for Jim Kaiser, who discovered a simple approximation
+    to the DPSS window based on Bessel functions.
+    The Kaiser window is a very good approximation to the Digital Prolate
+    Spheroidal Sequence, or Slepian window, which is the transform which
+    maximizes the energy in the main lobe of the window relative to total
+    energy.
+
+    The Kaiser can approximate many other windows by varying the beta
+    parameter.
+
+    ====  =======================
+    beta  Window shape
+    ====  =======================
+    0     Rectangular
+    5     Similar to a Hamming
+    6     Similar to a Hanning
+    8.6   Similar to a Blackman
+    ====  =======================
+
+    A beta value of 14 is probably a good starting point. Note that as beta
+    gets large, the window narrows, and so the number of samples needs to be
+    large enough to sample the increasingly narrow spike, otherwise nans will
+    get returned.
+
+
+    Most references to the Kaiser window come from the signal processing
+    literature, where it is used as one of many windowing functions for
+    smoothing values.  It is also known as an apodization (which means
+    "removing the foot", i.e. smoothing discontinuities at the beginning
+    and end of the sampled signal) or tapering function.
+
+    References
+    ----------
+    .. [1]  J. F. Kaiser, "Digital Filters" - Ch 7 in "Systems analysis by
+            digital computer", Editors: F.F. Kuo and J.F. Kaiser, p 218-285.
+            John Wiley and Sons, New York, (1966).
+    .. [2]\tE.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
+            University of Alberta Press, 1975, pp. 177-178.
+    .. [3] Wikipedia, "Window function",
+           http://en.wikipedia.org/wiki/Window_function
+
+    Examples
+    --------
+    >>> from numpy import kaiser
+    >>> kaiser(12, 14)
+    array([  7.72686684e-06,   3.46009194e-03,   4.65200189e-02,
+             2.29737120e-01,   5.99885316e-01,   9.45674898e-01,
+             9.45674898e-01,   5.99885316e-01,   2.29737120e-01,
+             4.65200189e-02,   3.46009194e-03,   7.72686684e-06])
+
+
+    Plot the window and the frequency response:
+
+    >>> from numpy import clip, log10, array, kaiser
+    >>> from scipy.fftpack import fft, fftshift
+    >>> import matplotlib.pyplot as plt
+
+    >>> window = kaiser(51, 14)
+    >>> plt.plot(window)
+    >>> plt.title("Kaiser window")
+    >>> plt.ylabel("Amplitude")
+    >>> plt.xlabel("Sample")
+    >>> plt.show()
+
+    >>> A = fft(window, 2048) / 25.5
+    >>> mag = abs(fftshift(A))
+    >>> freq = linspace(-0.5,0.5,len(A))
+    >>> response = 20*log10(mag)
+    >>> response = clip(response,-100,100)
+    >>> plt.plot(freq, response)
+    >>> plt.title("Frequency response of Kaiser window")
+    >>> plt.ylabel("Magnitude [dB]")
+    >>> plt.xlabel("Normalized frequency [cycles per sample]")
+    >>> plt.axis('tight'); plt.show()
+
     """
     from numpy.dual import i0
     n = arange(0,M)
@@ -1423,7 +2360,74 @@ def kaiser(M,beta):
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(beta)
 
 def sinc(x):
-    """sinc(x) returns sin(pi*x)/(pi*x) at all points of array x.
+    """
+    Return the sinc function.
+
+    The sinc function is :math:`\\sin(\\pi x)/(\\pi x)`.
+
+    Parameters
+    ----------
+    x : ndarray
+        Array (possibly multi-dimensional) of values for which to to
+        calculate ``sinc(x)``.
+
+    Returns
+    -------
+    out : ndarray
+        ``sinc(x)``, which has the same shape as the input.
+
+    Notes
+    -----
+    ``sinc(0)`` is the limit value 1.
+
+    The name sinc is short for "sine cardinal" or "sinus cardinalis".
+
+    The sinc function is used in various signal processing applications,
+    including in anti-aliasing, in the construction of a
+    Lanczos resampling filter, and in interpolation.
+
+    For bandlimited interpolation of discrete-time signals, the ideal
+    interpolation kernel is proportional to the sinc function.
+
+    References
+    ----------
+    .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
+           Resource. http://mathworld.wolfram.com/SincFunction.html
+    .. [2] Wikipedia, "Sinc function",
+           http://en.wikipedia.org/wiki/Sinc_function
+
+    Examples
+    --------
+    >>> x = np.arange(-20., 21.)/5.
+    >>> np.sinc(x)
+    array([ -3.89804309e-17,  -4.92362781e-02,  -8.40918587e-02,
+            -8.90384387e-02,  -5.84680802e-02,   3.89804309e-17,
+             6.68206631e-02,   1.16434881e-01,   1.26137788e-01,
+             8.50444803e-02,  -3.89804309e-17,  -1.03943254e-01,
+            -1.89206682e-01,  -2.16236208e-01,  -1.55914881e-01,
+             3.89804309e-17,   2.33872321e-01,   5.04551152e-01,
+             7.56826729e-01,   9.35489284e-01,   1.00000000e+00,
+             9.35489284e-01,   7.56826729e-01,   5.04551152e-01,
+             2.33872321e-01,   3.89804309e-17,  -1.55914881e-01,
+            -2.16236208e-01,  -1.89206682e-01,  -1.03943254e-01,
+            -3.89804309e-17,   8.50444803e-02,   1.26137788e-01,
+             1.16434881e-01,   6.68206631e-02,   3.89804309e-17,
+            -5.84680802e-02,  -8.90384387e-02,  -8.40918587e-02,
+            -4.92362781e-02,  -3.89804309e-17])
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(x, sinc(x))
+    >>> plt.title("Sinc Function")
+    >>> plt.ylabel("Amplitude")
+    >>> plt.xlabel("X")
+    >>> plt.show()
+
+    It works in 2-D as well:
+
+    >>> x = np.arange(-200., 201.)/50.
+    >>> xx = np.outer(x, x)
+    >>> plt.imshow(sinc(xx))
+
     """
     y = pi* where(x == 0, 1.0e-20, x)
     return sin(y)/y
@@ -1434,7 +2438,8 @@ def msort(a):
     return b
 
 def median(a, axis=0, out=None, overwrite_input=False):
-    """Compute the median along the specified axis.
+    """
+    Compute the median along the specified axis.
 
     Returns the median of the array elements.  The median is taken
     over the first axis of the array by default, otherwise over
@@ -1442,44 +2447,44 @@ def median(a, axis=0, out=None, overwrite_input=False):
 
     Parameters
     ----------
-    a : array-like
-        Input array or object that can be converted to an array
+    a : array_like
+        Input array or object that can be converted to an array.
     axis : {int, None}, optional
         Axis along which the medians are computed. The default is to
-        compute the median along the first dimension.  axis=None
-        returns the median of the flattened array
-
+        compute the median along the first dimension.  If `axis` is
+        set to None, return the median of the flattened array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output
-        but the type will be cast if necessary.
-
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
     overwrite_input : {False, True}, optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
        median. This will save memory when you do not need to preserve
        the contents of the input array. Treat the input as undefined,
        but it will probably be fully or partially sorted. Default is
-       False. Note that, if overwrite_input is true, and the input
+       False. Note that, if `overwrite_input` is True and the input
        is not already an ndarray, an error will be raised.
 
     Returns
     -------
-    median : ndarray.
-        A new array holding the result is returned unless out is
-        specified, in which case a reference to out is returned.
-        Return datatype is float64 for ints and floats smaller than
-        float64, or the input datatype otherwise.
+    median : ndarray
+        A new array holding the result (unless `out` is specified, in
+        which case that array is returned instead).  If the input contains
+        integers, or floats of smaller precision than 64, then the output
+        data-type is float64.  Otherwise, the output data-type is the same
+        as that of the input.
 
     See Also
-    -------
+    --------
     mean
 
     Notes
     -----
-    Given a vector V length N, the median of V is the middle value of
-    a sorted copy of V (Vs) - i.e. Vs[(N-1)/2], when N is odd. It is
-    the mean of the two middle values of Vs, when N is even.
+    Given a vector V of length N, the median of V is the middle value of
+    a sorted copy of V, ``V_sorted`` - i.e., ``V_sorted[(N-1)/2]``, when N is
+    odd.  When N is even, it is the average of the two middle values of
+    ``V_sorted``.
 
     Examples
     --------
@@ -1507,6 +2512,7 @@ def median(a, axis=0, out=None, overwrite_input=False):
     >>> np.median(b, axis=None, overwrite_input=True)
     3.5
     >>> assert not np.all(a==b)
+
     """
     if overwrite_input:
         if axis is None:
@@ -1531,8 +2537,29 @@ def median(a, axis=0, out=None, overwrite_input=False):
     return mean(sorted[indexer], axis=axis, out=out)
 
 def trapz(y, x=None, dx=1.0, axis=-1):
-    """Integrate y(x) using samples along the given axis and the composite
-    trapezoidal rule.  If x is None, spacing given by dx is assumed.
+    """
+    Integrate along the given axis using the composite trapezoidal rule.
+
+    Integrate `y` (`x`) along given axis.
+
+    Parameters
+    ----------
+    y : array_like
+        Input array to integrate.
+    x : {array_like, None}, optional
+        If `x` is None, then spacing between all `y` elements is 1.
+    dx : scalar, optional
+        If `x` is None, spacing given by `dx` is assumed.
+    axis : int, optional
+        Specify the axis.
+
+    Examples
+    --------
+    >>> np.trapz([1,2,3])
+    >>> 4.0
+    >>> np.trapz([1,2,3], [4,6,8])
+    >>> 8.0
+
     """
     y = asarray(y)
     if x is None:
@@ -1579,27 +2606,44 @@ def add_newdoc(place, obj, doc):
 # From matplotlib
 def meshgrid(x,y):
     """
-    For vectors x, y with lengths Nx=len(x) and Ny=len(y), return X, Y
-    where X and Y are (Ny, Nx) shaped arrays with the elements of x
-    and y repeated to fill the matrix
-
-    EG,
-
-      [X, Y] = meshgrid([1,2,3], [4,5,6,7])
-
-       X =
-         1   2   3
-         1   2   3
-         1   2   3
-         1   2   3
+    Return coordinate matrices from two coordinate vectors.
 
 
-       Y =
-         4   4   4
-         5   5   5
-         6   6   6
-         7   7   7
-  """
+
+
+    Parameters
+    ----------
+    x, y : ndarray
+        Two 1D arrays representing the x and y coordinates
+
+    Returns
+    -------
+    X, Y : ndarray
+        For vectors `x`, `y` with lengths Nx=len(`x`) and Ny=len(`y`),
+        return `X`, `Y` where `X` and `Y` are (Ny, Nx) shaped arrays
+        with the elements of `x` and y repeated to fill the matrix along
+        the first dimension for `x`, the second for `y`.
+
+    See Also
+    --------
+    numpy.mgrid : Construct a multi-dimensional "meshgrid"
+                               using indexing notation.
+
+    Examples
+    --------
+    >>> X, Y = numpy.meshgrid([1,2,3], [4,5,6,7])
+    >>> X
+    array([[1, 2, 3],
+           [1, 2, 3],
+           [1, 2, 3],
+           [1, 2, 3]])
+    >>> Y
+    array([[4, 4, 4],
+           [5, 5, 5],
+           [6, 6, 6],
+           [7, 7, 7]])
+
+    """
     x = asarray(x)
     y = asarray(y)
     numRows, numCols = len(y), len(x)  # yes, reversed
@@ -1611,30 +2655,41 @@ def meshgrid(x,y):
     return X, Y
 
 def delete(arr, obj, axis=None):
-    """Return a new array with sub-arrays along an axis deleted.
+    """
+    Return a new array with sub-arrays along an axis deleted.
 
-    Return a new array with the sub-arrays (i.e. rows or columns)
-    deleted along the given axis as specified by obj
+    Parameters
+    ----------
+    arr : array-like
+      Input array.
+    obj : slice, integer or an array of integers
+      Indicate which sub-arrays to remove.
+    axis : integer or None
+      The axis along which to delete the subarray defined by `obj`.
+      If `axis` is None, `obj` is applied to the flattened array.
 
-    obj may be a slice_object (s_[3:5:2]) or an integer
-    or an array of integers indicated which sub-arrays to
-    remove.
-
-    If axis is None, then ravel the array first.
+    See Also
+    --------
+    insert : Insert values into an array.
+    append : Append values at the end of an array.
 
     Examples
     --------
-    >>> arr = [[3,4,5],
-    ...       [1,2,3],
-    ...       [6,7,8]]
-
-    >>> np.delete(arr, 1, 1)
-    array([[3, 5],
-           [1, 3],
-           [6, 8]])
+    >>> arr = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]])
+    >>> arr
+    array([[ 1,  2,  3,  4],
+           [ 5,  6,  7,  8],
+           [ 9, 10, 11, 12]])
     >>> np.delete(arr, 1, 0)
-    array([[3, 4, 5],
-           [6, 7, 8]])
+    array([[ 1,  2,  3,  4],
+           [ 9, 10, 11, 12]])
+    >>> np.delete(arr, np.s_[::2], 1)
+    array([[ 2,  4],
+           [ 6,  8],
+           [10, 12]])
+    >>> np.delete(arr, [1,3,5], None)
+    array([ 1,  3,  5,  7,  8,  9, 10, 11, 12])
+
     """
     wrap = None
     if type(arr) is not ndarray:
@@ -1718,26 +2773,33 @@ def delete(arr, obj, axis=None):
         return new
 
 def insert(arr, obj, values, axis=None):
-    """Return a new array with values inserted along the given axis
-    before the given indices
+    """
+    Insert values along the given axis before the given indices.
 
-    If axis is None, then ravel the array first.
-
-    The obj argument can be an integer, a slice, or a sequence of
-    integers.
+    Parameters
+    ----------
+    arr : array_like
+        Input array.
+    obj : {integer, slice, integer array_like}
+        Insert `values` before `obj` indices.
+    values :
+        Values to insert into `arr`.
+    axis : int, optional
+        Axis along which to insert `values`.  If `axis` is None then ravel
+        `arr` first.
 
     Examples
     --------
     >>> a = np.array([[1,2,3],
     ...               [4,5,6],
     ...               [7,8,9]])
-
     >>> np.insert(a, [1,2], [[4],[5]], axis=0)
     array([[1, 2, 3],
            [4, 4, 4],
            [4, 5, 6],
            [5, 5, 5],
            [7, 8, 9]])
+
     """
     wrap = None
     if type(arr) is not ndarray:
@@ -1807,7 +2869,38 @@ def insert(arr, obj, values, axis=None):
     return new
 
 def append(arr, values, axis=None):
-    """Append to the end of an array along axis (ravel first if None)
+    """
+    Append values to the end of an array.
+
+    Parameters
+    ----------
+    arr : array_like
+        Values are appended to a copy of this array.
+    values : array_like
+        These values are appended to a copy of `arr`.  It must be of the
+        correct shape (the same shape as `arr`, excluding `axis`).  If `axis`
+        is not specified, `values` can be any shape and will be flattened
+        before use.
+    axis : int, optional
+        The axis along which `values` are appended.  If `axis` is not given,
+        both `arr` and `values` are flattened before use.
+
+    Returns
+    -------
+    out : ndarray
+        A copy of `arr` with `values` appended to `axis`.  Note that `append`
+        does not occur in-place: a new array is allocated and filled.
+
+    Examples
+    --------
+    >>> np.append([1, 2, 3], [[4, 5, 6], [7, 8, 9]])
+    array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    >>> np.append([[1, 2, 3], [4, 5, 6]], [[7, 8, 9]], axis=0)
+    array([[1, 2, 3],
+           [4, 5, 6],
+           [7, 8, 9]])
+
     """
     arr = asanyarray(arr)
     if axis is None:

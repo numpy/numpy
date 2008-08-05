@@ -1,5 +1,4 @@
-"""Define a simple format for saving numpy arrays to disk.
-
+"""
 Define a simple format for saving numpy arrays to disk with the full
 information about them.
 
@@ -14,13 +13,13 @@ restored by using the `loadedarray.view(correct_dtype)` method.
 Format Version 1.0
 ------------------
 
-The first 6 bytes are a magic string: exactly "\\x93NUMPY".
+The first 6 bytes are a magic string: exactly "\\\\x93NUMPY".
 
 The next 1 byte is an unsigned byte: the major version number of the file
-format, e.g. \\x01.
+format, e.g. \\\\x01.
 
 The next 1 byte is an unsigned byte: the minor version number of the file
-format, e.g. \\x00. Note: the version of the file format is not tied to the
+format, e.g. \\\\x00. Note: the version of the file format is not tied to the
 version of the numpy package.
 
 The next 2 bytes form a little-endian unsigned short int: the length of the
@@ -28,8 +27,8 @@ header data HEADER_LEN.
 
 The next HEADER_LEN bytes form the header data describing the array's format.
 It is an ASCII string which contains a Python literal expression of a
-dictionary.  It is terminated by a newline ('\\n') and padded with spaces
-('\\x20') to make the total length of the magic string + 4 + HEADER_LEN be
+dictionary. It is terminated by a newline ('\\\\n') and padded with spaces
+('\\\\x20') to make the total length of the magic string + 4 + HEADER_LEN be
 evenly divisible by 16 for alignment purposes.
 
 The dictionary contains three keys:
@@ -46,7 +45,7 @@ The dictionary contains three keys:
 
 For repeatability and readability, the dictionary keys are sorted in alphabetic
 order. This is for convenience only. A writer SHOULD implement this if
-possible.  A reader MUST NOT depend on this.
+possible. A reader MUST NOT depend on this.
 
 Following the header comes the array data. If the dtype contains Python objects
 (i.e. dtype.hasobject is True), then the data is a Python pickle of the array.
@@ -112,13 +111,26 @@ def read_magic(fp):
     return major, minor
 
 def dtype_to_descr(dtype):
-    """ Get a serializable descriptor from the dtype.
+    """
+    Get a serializable descriptor from the dtype.
 
-    The .descr attribute of a dtype object cannot be round-tripped through the
-    dtype() constructor. Simple types, like dtype('float32'), have a descr
-    which looks like a record array with one field with '' as a name. The
-    dtype() constructor interprets this as a request to give a default name.
-    Instead, we construct descriptor that can be passed to dtype().
+    The .descr attribute of a dtype object cannot be round-tripped through
+    the dtype() constructor. Simple types, like dtype('float32'), have
+    a descr which looks like a record array with one field with '' as
+    a name. The dtype() constructor interprets this as a request to give
+    a default name.  Instead, we construct descriptor that can be passed to
+    dtype().
+
+    Parameters
+    ----------
+    dtype : dtype
+        The dtype of the array that will be written to disk.
+
+    Returns
+    -------
+    descr : object
+        An object that can be passed to `numpy.dtype()` in order to
+        replicate the input dtype.
 
     """
     if dtype.names is not None:
@@ -188,7 +200,8 @@ def write_array_header_1_0(fp, d):
     fp.write(header)
 
 def read_array_header_1_0(fp):
-    """ Read an array header from a filelike object using the 1.0 file format
+    """
+    Read an array header from a filelike object using the 1.0 file format
     version.
 
     This will leave the file object located just after the header.
@@ -196,6 +209,7 @@ def read_array_header_1_0(fp):
     Parameters
     ----------
     fp : filelike object
+        A file object or something with a `.read()` method like a file.
 
     Returns
     -------
@@ -206,10 +220,13 @@ def read_array_header_1_0(fp):
         or Fortran-contiguous. Otherwise, it will be made contiguous before
         writing it out.
     dtype : dtype
+        The dtype of the file's data.
 
     Raises
     ------
-    ValueError if the data is invalid.
+    ValueError :
+        If the data is invalid.
+
     """
     # Read an unsigned, little-endian short int which has the length of the
     # header.
@@ -259,23 +276,31 @@ def read_array_header_1_0(fp):
     return d['shape'], d['fortran_order'], dtype
 
 def write_array(fp, array, version=(1,0)):
-    """ Write an array to a file, including a header.
+    """
+    Write an array to an NPY file, including a header.
 
     If the array is neither C-contiguous or Fortran-contiguous AND if the
-    filelike object is not a real file object, then this function will have to
-    copy data in memory.
+    filelike object is not a real file object, then this function will have
+    to copy data in memory.
 
     Parameters
     ----------
     fp : filelike object
+        An open, writable file object or similar object with a `.write()`
+        method.
     array : numpy.ndarray
+        The array to write to disk.
     version : (int, int), optional
         The version number of the format.
 
     Raises
     ------
-    ValueError if the array cannot be persisted.  Various other errors from
-    pickling if the array contains Python objects as part of its dtype.
+    ValueError
+        If the array cannot be persisted.
+    Various other errors
+        If the array contains Python objects as part of its dtype, the
+        process of pickling them may raise arbitrary errors if the objects
+        are not picklable.
 
     """
     if version != (1, 0):
@@ -300,7 +325,8 @@ def write_array(fp, array, version=(1,0)):
             fp.write(array.tostring('C'))
 
 def read_array(fp):
-    """ Read an array from a file.
+    """
+    Read an array from an NPY file.
 
     Parameters
     ----------
@@ -311,10 +337,12 @@ def read_array(fp):
     Returns
     -------
     array : numpy.ndarray
+        The array from the data on disk.
 
     Raises
     ------
-    ValueError if the data is invalid.
+    ValueError
+        If the data is invalid.
 
     """
     version = read_magic(fp)
@@ -353,19 +381,28 @@ def read_array(fp):
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
     fortran_order=False, version=(1,0)):
-    """ Open a .npy file as a memory-mapped array.
+    """
+    Open a .npy file as a memory-mapped array.
+
+    This may be used to read an existing file or create a new one.
 
     Parameters
     ----------
     filename : str
+        The name of the file on disk. This may not be a filelike object.
     mode : str, optional
         The mode to open the file with. In addition to the standard file modes,
-        'c' is also accepted to mean "copy on write".
+        'c' is also accepted to mean "copy on write". See `numpy.memmap` for
+        the available mode strings.
     dtype : dtype, optional
+        The data type of the array if we are creating a new file in "write"
+        mode.
     shape : tuple of int, optional
+        The shape of the array if we are creating a new file in "write"
+        mode.
     fortran_order : bool, optional
-        If the mode is a "write" mode, then the file will be created using this
-        dtype, shape, and contiguity.
+        Whether the array should be Fortran-contiguous (True) or
+        C-contiguous (False) if we are creating a new file in "write" mode.
     version : tuple of int (major, minor)
         If the mode is a "write" mode, then this is the version of the file
         format used to create the file.
@@ -373,11 +410,19 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     Returns
     -------
     marray : numpy.memmap
+        The memory-mapped array.
 
     Raises
     ------
-    ValueError if the data or the mode is invalid.
-    IOError if the file is not found or cannot be opened correctly.
+    ValueError
+        If the data or the mode is invalid.
+    IOError
+        If the file is not found or cannot be opened correctly.
+
+    See Also
+    --------
+    numpy.memmap
+
     """
     if 'w' in mode:
         # We are creating the file, not reading it.

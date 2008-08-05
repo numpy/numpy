@@ -46,10 +46,41 @@ ufunc = type(sin)
 
 # originally from Fernando Perez's IPython
 def zeros_like(a):
-    """Return an array of zeros of the shape and data-type of a.
+    """
+    Returns an array of zeros with the same shape and type as a given array.
 
-    If you don't explicitly need the array to be zeroed, you should instead
-    use empty_like(), which is a bit faster as it only allocates memory.
+    Equivalent to ``a.copy().fill(0)``.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` defines the parameters of
+        the returned array.
+
+    Returns
+    -------
+    out : ndarray
+        Array of zeros with same shape and type as `a`.
+
+    See Also
+    --------
+    numpy.ones_like : Return an array of ones with shape and type of input.
+    numpy.empty_like : Return an empty array with shape and type of input.
+    numpy.zeros : Return a new array setting values to zero.
+    numpy.ones : Return a new array setting values to one.
+    numpy.empty : Return a new uninitialized array.
+
+    Examples
+    --------
+    >>> x = np.arange(6)
+    >>> x = x.reshape((2, 3))
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.zeros_like(x)
+    array([[0, 0, 0],
+           [0, 0, 0]])
+
     """
     if isinstance(a, ndarray):
         res = ndarray.__new__(type(a), a.shape, a.dtype, order=a.flags.fnc)
@@ -66,10 +97,30 @@ def zeros_like(a):
     return res
 
 def empty_like(a):
-    """Return an empty (uninitialized) array of the shape and data-type of a.
+    """
+    Create a new array with the same shape and type as another.
 
-    Note that this does NOT initialize the returned array.  If you require
-    your array to be initialized, you should use zeros_like().
+    Parameters
+    ----------
+    a : ndarray
+        Returned array will have same shape and type as `a`.
+
+    See Also
+    --------
+    zeros_like, ones_like, zeros, ones, empty
+
+    Notes
+    -----
+    This function does *not* initialize the returned array; to do that use
+    `zeros_like` or `ones_like` instead.
+
+    Examples
+    --------
+    >>> a = np.array([[1,2,3],[4,5,6]])
+    >>> np.empty_like(a)
+    >>> np.empty_like(a)
+    array([[-1073741821, -1067702173,       65538],    #random data
+           [      25670,    23454291,       71800]])
 
     """
     if isinstance(a, ndarray):
@@ -127,51 +178,186 @@ compare_chararrays = multiarray.compare_chararrays
 putmask = multiarray.putmask
 
 def asarray(a, dtype=None, order=None):
-    """Returns a as an array.
+    """
+    Convert the input to an array.
 
-    Unlike array(), no copy is performed if a is already an array. Subclasses
-    are converted to base class ndarray.
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes lists, lists of tuples, tuples, tuples of tuples, tuples
+        of lists and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F'}, optional
+        Whether to use row-major ('C') or column-major ('FORTRAN') memory
+        representation.  Defaults to 'C'.
+
+    Returns
+    -------
+    out : ndarray
+        Array interpretation of `a`.  No copy is performed if the input
+        is already an ndarray.  If `a` is a subclass of ndarray, a base
+        class ndarray is returned.
+
+    See Also
+    --------
+    asanyarray : Similar function which passes through subclasses.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
+    Examples
+    --------
+    Convert a list into an array:
+
+    >>> a = [1, 2]
+    >>> np.asarray(a)
+    array([1, 2])
+
+    Existing arrays are not copied:
+
+    >>> a = np.array([1, 2])
+    >>> np.asarray(a) is a
+    True
+
     """
     return array(a, dtype, copy=False, order=order)
 
 def asanyarray(a, dtype=None, order=None):
-    """Returns a as an array, but will pass subclasses through.
+    """
+    Convert the input to a ndarray, but pass ndarray subclasses through.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes scalars, lists, lists of tuples, tuples, tuples of tuples,
+        tuples of lists and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F'}, optional
+        Whether to use row-major ('C') or column-major ('F') memory
+        representation.  Defaults to 'C'.
+
+    Returns
+    -------
+    out : ndarray or an ndarray subclass
+        Array interpretation of `a`.  If `a` is an ndarray or a subclass
+        of ndarray, it is returned as-is and no copy is performed.
+
+    See Also
+    --------
+    asarray : Similar function which always returns ndarrays.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
+    Examples
+    --------
+    Convert a list into an array:
+
+    >>> a = [1, 2]
+    >>> np.asanyarray(a)
+    array([1, 2])
+
+    Instances of `ndarray` subclasses are passed through as-is:
+
+    >>> a = np.matrix([1, 2])
+    >>> np.asanyarray(a) is a
+    True
+
     """
     return array(a, dtype, copy=False, order=order, subok=True)
 
 def ascontiguousarray(a, dtype=None):
-    """Return 'a' as an array contiguous in memory (C order).
+    """
+    Return a contiguous array in memory (C order).
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    dtype : string
+        Type code of returned array.
+
+    Returns
+    -------
+    out : ndarray
+        Contiguous array of same shape and content as `a` with type `dtype`.
+
     """
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 def asfortranarray(a, dtype=None):
-    """Return 'a' as an array laid out in Fortran-order in memory.
+    """
+    Return an array laid out in Fortran-order in memory.
+
+    Parameters
+    ----------
+    a : array-like
+        Input array.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+
+    Returns
+    -------
+    out : ndarray
+        Array interpretation of `a` in Fortran (column-order).
+
+    See Also
+    --------
+    asarray : Similar function which always returns ndarrays.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asanyarray : Convert input to an ndarray with either row or
+        column-major memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
 def require(a, dtype=None, requirements=None):
-    """Return an ndarray of the provided type that satisfies requirements.
+    """
+    Return an ndarray of the provided type that satisfies requirements.
 
     This function is useful to be sure that an array with the correct flags
     is returned for passing to compiled code (perhaps through ctypes).
 
     Parameters
     ----------
-     a : array-like
+    a : array-like
        The object to be converted to a type-and-requirement satisfying array
-     dtype : data-type
+    dtype : data-type
        The required data-type (None is the default data-type -- float64)
-     requirements : list of strings
-       The requirements list can be any of the
-       'ENSUREARRAY' ('E')  - ensure that  a base-class ndarray
-       'F_CONTIGUOUS' ('F') - ensure a Fortran-contiguous array
-       'C_CONTIGUOUS' ('C') - ensure a C-contiguous array
-       'ALIGNED' ('A')      - ensure a data-type aligned array
-       'WRITEABLE' ('W')    - ensure a writeable array
-       'OWNDATA' ('O')      - ensure an array that owns its own data
+    requirements : list of strings
+       The requirements list can be any of the following
 
-       The returned array will be guaranteed to have the listed requirements
-       by making a copy if needed.
+       * 'ENSUREARRAY' ('E')  - ensure that  a base-class ndarray
+       * 'F_CONTIGUOUS' ('F') - ensure a Fortran-contiguous array
+       * 'C_CONTIGUOUS' ('C') - ensure a C-contiguous array
+       * 'ALIGNED' ('A')      - ensure a data-type aligned array
+       * 'WRITEABLE' ('W')    - ensure a writeable array
+       * 'OWNDATA' ('O')      - ensure an array that owns its own data
+
+    Notes
+    -----
+    The returned array will be guaranteed to have the listed requirements
+    by making a copy if needed.
+
     """
     if requirements is None:
         requirements = []
@@ -205,7 +391,14 @@ def require(a, dtype=None, requirements=None):
     return arr
 
 def isfortran(a):
-    """Returns True if 'a' is arranged in Fortran-order in memory with a.ndim > 1
+    """
+    Returns True if array is arranged in Fortran-order and dimension > 1.
+
+    Parameters
+    ----------
+    a : ndarray
+        Input array to test.
+
     """
     return a.flags.fnc
 
@@ -223,14 +416,38 @@ def argwhere(a):
     return asarray(a.nonzero()).T
 
 def flatnonzero(a):
-    """Return indicies that are not-zero in flattened version of a
+    """
+    Return indices that are non-zero in the flattened version of a.
 
-    Equivalent to a.ravel().nonzero()[0]
+    This is equivalent to a.ravel().nonzero()[0].
 
-    >>> np.arange(-2, 3)
+    Parameters
+    ----------
+    a : ndarray
+        Input array.
+
+    Returns
+    -------
+    res : ndarray
+        Output array, containing the indices of the elements of `a.ravel()`
+        that are non-zero.
+
+    See Also
+    --------
+    nonzero : Return the indices of the non-zero elements of the input array.
+    ravel : Return a 1-D array containing the elements of the input array.
+
+    Examples
+    --------
+    >>> x = np.arange(-2, 3)
+    >>> x
     array([-2, -1,  0,  1,  2])
-    >>> np.flatnonzero(np.arange(-2, 3))
+    >>> np.flatnonzero(x)
     array([0, 1, 3, 4])
+
+    >>> x.ravel()[np.flatnonzero(x)]
+    array([-2, -1,  1,  2])
+
     """
     return a.ravel().nonzero()[0]
 
@@ -244,17 +461,115 @@ def _mode_from_name(mode):
     return mode
 
 def correlate(a,v,mode='valid'):
-    """Return the discrete, linear correlation of 1-D sequences a and v; mode
-    can be 'valid', 'same', or 'full' to specify the size of the resulting
-    sequence
+    """
+    Discrete, linear correlation of two 1-dimensional sequences.
+
+    This function is equivalent to
+
+    >>> np.convolve(a, v[::-1], mode=mode)
+
+    where ``v[::-1]`` is the reverse of `v`.
+
+    Parameters
+    ----------
+    a, v : array_like
+        Input sequences.
+    mode : {'valid', 'same', 'full'}, optional
+        Refer to the `convolve` docstring.  Note that the default
+        is `valid`, unlike `convolve`, which uses `full`.
+
+    See Also
+    --------
+    convolve : Discrete, linear convolution of two
+               one-dimensional sequences.
+
     """
     mode = _mode_from_name(mode)
     return multiarray.correlate(a,v,mode)
 
 
 def convolve(a,v,mode='full'):
-    """Returns the discrete, linear convolution of 1-D sequences a and v; mode
-    can be 'valid', 'same', or 'full' to specify size of the resulting sequence.
+    """
+    Returns the discrete, linear convolution of two one-dimensional sequences.
+
+    The convolution operator is often seen in signal processing, where it
+    models the effect of a linear time-invariant system on a signal [1]_.  In
+    probability theory, the sum of two independent random variables is
+    distributed according to the convolution of their individual
+    distributions.
+
+    Parameters
+    ----------
+    a : (N,) array_like
+        First one-dimensional input array.
+    v : (M,) array_like
+        Second one-dimensional input array.
+    mode : {'full', 'valid', 'same'}, optional
+        'full':
+          By default, mode is 'full'.  This returns the convolution
+          at each point of overlap, with an output shape of (N+M-1,). At
+          the end-points of the convolution, the signals do not overlap
+          completely, and boundary effects may be seen.
+
+        'same':
+          Mode `same` returns output of length ``max(M, N)``.  Boundary
+          effects are still visible.
+
+        'valid':
+          Mode `valid` returns output of length
+          ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
+          for points where the signals overlap completely.  Values outside
+          the signal boundary have no effect.
+
+    Returns
+    -------
+    out : ndarray
+        Discrete, linear convolution of `a` and `v`.
+
+    See Also
+    --------
+    scipy.signal.fftconv : Convolve two arrays using the Fast Fourier
+                           Transform.
+    scipy.linalg.toeplitz : Used to construct the convolution operator.
+
+    Notes
+    -----
+    The discrete convolution operation is defined as
+
+    .. math:: (f * g)[n] = \\sum_{m = -\\infty}^{\\infty} f[m] f[n - m]
+
+    It can be shown that a convolution :math:`x(t) * y(t)` in time/space
+    is equivalent to the multiplication :math:`X(f) Y(f)` in the Fourier
+    domain, after appropriate padding (padding is necessary to prevent
+    circular convolution).  Since multiplication is more efficient (faster)
+    than convolution, the function `scipy.signal.fftconvolve` exploits the
+    FFT to calculate the convolution of large data-sets.
+
+    References
+    ----------
+    .. [1] Wikipedia, "Convolution", http://en.wikipedia.org/wiki/Convolution.
+
+    Examples
+    --------
+    Note how the convolution operator flips the second array
+    before "sliding" the two across one another:
+
+    >>> np.convolve([1, 2, 3], [0, 1, 0.5])
+    array([ 0. ,  1. ,  2.5,  4. ,  1.5])
+
+    Only return the middle values of the convolution.
+    Contains boundary effects, where zeros are taken
+    into account:
+
+    >>> np.convolve([1,2,3],[0,1,0.5], 'same')
+    array([ 1. ,  2.5,  4. ])
+
+    The two arrays are of the same length, so there
+    is only one position where they completely overlap:
+
+    >>> np.convolve([1,2,3],[0,1,0.5], 'valid')
+    array([ 2.5])
+
     """
     a,v = array(a,ndmin=1),array(v,ndmin=1)
     if (len(v) > len(a)):
@@ -268,21 +583,98 @@ inner = multiarray.inner
 dot = multiarray.dot
 
 def outer(a,b):
-    """Returns the outer product of two vectors.
+    """
+    Returns the outer product of two vectors.
 
-    result[i,j] = a[i]*b[j] when a and b are vectors.
-    Will accept any arguments that can be made into vectors.
+    Given two vectors, ``[a0, a1, ..., aM]`` and ``[b0, b1, ..., bN]``,
+    the outer product becomes::
+
+      [[a0*b0  a0*b1 ... a0*bN ]
+       [a1*b0    .
+       [ ...          .
+       [aM*b0            aM*bN ]]
+
+    Parameters
+    ----------
+    a : array_like, shaped (M,)
+        First input vector.  If either of the input vectors are not
+        1-dimensional, they are flattened.
+    b : array_like, shaped (N,)
+        Second input vector.
+
+    Returns
+    -------
+    out : ndarray, shaped (M, N)
+        ``out[i, j] = a[i] * b[j]``
+
+    Notes
+    -----
+    The outer product of vectors is a special case of the Kronecker product.
+
+    Examples
+    --------
+    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+
+    >>> np.outer(x, [1, 2, 3])
+    array([[a, aa, aaa],
+           [b, bb, bbb],
+           [c, cc, ccc]], dtype=object)
+
     """
     a = asarray(a)
     b = asarray(b)
     return a.ravel()[:,newaxis]*b.ravel()[newaxis,:]
 
 def vdot(a, b):
-    """Returns the dot product of 2 vectors (or anything that can be made into
-    a vector).
+    """
+    Return the dot product of two vectors.
 
-    Note: this is not the same as `dot`, as it takes the conjugate of its first
-    argument if complex and always returns a scalar."""
+    The vdot(`a`, `b`) function handles complex numbers differently than
+    dot(`a`, `b`).  If the first argument is complex the complex conjugate
+    of the first argument is used for the calculation of the dot product.
+
+    Parameters
+    ----------
+    a : array_like
+        If `a` is complex the complex conjugate is taken before calculation
+        of the dot product.
+    b : array_like
+        Second argument to the dot product.
+
+    Returns
+    -------
+    output : scalar
+        Returns dot product of `a` and `b`.  Can be an int, float, or
+        complex depending on the types of `a` and `b`.
+
+    See Also
+    --------
+    dot : Return the dot product without using the complex conjugate of the
+          first argument.
+
+    Notes
+    -----
+    The dot product is the summation of element wise multiplication.
+
+    .. math::
+     a \\cdot b = \\sum_{i=1}^n a_i^*b_i = a_1^*b_1+a_2^*b_2+\\cdots+a_n^*b_n
+
+    Examples
+    --------
+    >>> a = np.array([1+2j,3+4j])
+    >>> b = np.array([5+6j,7+8j])
+    >>> np.vdot(a, b)
+    (70-8j)
+    >>> np.vdot(b, a)
+    (70+8j)
+    >>> a = np.array([[1, 4], [5, 6]])
+    >>> b = np.array([[4, 1], [2, 2]])
+    >>> np.vdot(a, b)
+    30
+    >>> np.vdot(b, a)
+    30
+
+    """
     return dot(asarray(a).ravel().conj(), asarray(b).ravel())
 
 # try to import blas optimized dot if available
@@ -292,30 +684,101 @@ try:
     from _dotblas import dot, vdot, inner, alterdot, restoredot
 except ImportError:
     def alterdot():
-        "Does Nothing"
+        """
+        Change `dot`, `vdot`, and `innerproduct` to use accelerated BLAS
+        functions.
+
+        When numpy is built with an accelerated BLAS like ATLAS, the above
+        functions will be replaced to make use of the faster implementations.
+        The faster implementations only affect float32, float64, complex64, and
+        complex128 arrays. Furthermore, only matrix-matrix, matrix-vector, and
+        vector-vector products are accelerated. Products of arrays with larger
+        dimensionalities will not be accelerated since the BLAS API only
+        includes these.
+
+        Typically, the user will never have to call this function. If numpy was
+        built with an accelerated BLAS, this function will be called when numpy
+        is imported.
+
+        See Also
+        --------
+        restoredot : `restoredot` undoes the effects of `alterdot`.
+
+        """
         pass
     def restoredot():
-        "Does Nothing"
+        """
+        Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
+        implementations.
+
+        Typically, the user will only need to call this when troubleshooting and
+        installation problem, reproducing the conditions of a build without an
+        accelerated BLAS, or when being very careful about benchmarking linear
+        algebra operations.
+
+        See Also
+        --------
+        alterdot : `restoredot` undoes the effects of `alterdot`.
+
+        """
         pass
 
 
 def tensordot(a, b, axes=2):
-    """tensordot returns the product for any (ndim >= 1) arrays.
+    """
+    Returns the tensor dot product for (ndim >= 1) arrays along specified axes.
 
-    r_{xxx, yyy} = \sum_k a_{xxx,k} b_{k,yyy} where
+    The first element of the sequence determines the axis or axes
+    in `a` to sum over, and the second element in `axes` argument sequence
+    determines the axis or axes in `b` to sum over.
 
-    the axes to be summed over are given by the axes argument.
-    the first element of the sequence determines the axis or axes
-    in arr1 to sum over, and the second element in axes argument sequence
-    determines the axis or axes in arr2 to sum over.
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    b : array_like
+        Input array.
+    axes : shape tuple
+        Axes to be summed over.
+
+    See Also
+    --------
+    dot
+
+    Notes
+    -----
+    r_{xxx, yyy} = \\sum_k a_{xxx,k} b_{k,yyy}
 
     When there is more than one axis to sum over, the corresponding
     arguments to axes should be sequences of the same length with the first
     axis to sum over given first in both sequences, the second axis second,
     and so forth.
 
-    If the axes argument is an integer, N, then the last N dimensions of a
-    and first N dimensions of b are summed over.
+    If the `axes` argument is an integer, N, then the last N dimensions of `a`
+    and first N dimensions of `b` are summed over.
+
+    Examples
+    --------
+    >>> a = np.arange(60.).reshape(3,4,5)
+    >>> b = np.arange(24.).reshape(4,3,2)
+    >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))
+    >>> c.shape
+    (5,2)
+    >>> c
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+
+    >>> # A slower but equivalent way of computing the same...
+    >>> c = zeros((5,2))
+    >>> for i in range(5):
+    ...   for j in range(2):
+    ...     for k in range(3):
+    ...       for n in range(4):
+    ...         c[i,j] += a[k,n,i] * b[n,k,j]
+
     """
     try:
         iter(axes)
@@ -380,13 +843,53 @@ def tensordot(a, b, axes=2):
     return res.reshape(olda + oldb)
 
 def roll(a, shift, axis=None):
-    """Roll the elements in the array by 'shift' positions along
-    the given axis.
+    """
+    Roll array elements along a given axis.
 
-    >>> np.arange(10)
-    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    >>> np.roll(np.arange(10), 2)
+    Elements that roll beyond the last position are re-introduced at
+    the first.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    shift : int
+        The number of places by which elements are shifted.
+    axis : int, optional
+        The axis along which elements are shifted.  By default, the array
+        is flattened before shifting, after which the original
+        shape is restored.
+
+    Returns
+    -------
+    res : ndarray
+        Output array, with the same shape as `a`.
+
+    See Also
+    --------
+    rollaxis : Roll the specified axis backwards, until it lies in a
+               given position.
+
+    Examples
+    --------
+    >>> x = np.arange(10)
+    >>> np.roll(x, 2)
     array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7])
+
+    >>> x2 = np.reshape(x, (2,5))
+    >>> x2
+    array([[0, 1, 2, 3, 4],
+           [5, 6, 7, 8, 9]])
+    >>> np.roll(x2, 1)
+    array([[9, 0, 1, 2, 3],
+           [4, 5, 6, 7, 8]])
+    >>> np.roll(x2, 1, axis=0)
+    array([[5, 6, 7, 8, 9],
+           [0, 1, 2, 3, 4]])
+    >>> np.roll(x2, 1, axis=1)
+    array([[4, 0, 1, 2, 3],
+           [9, 5, 6, 7, 8]])
+
     """
     a = asanyarray(a)
     if axis is None:
@@ -404,15 +907,39 @@ def roll(a, shift, axis=None):
         return res
 
 def rollaxis(a, axis, start=0):
-    """Return transposed array so that axis is rolled before start.
+    """
+    Roll the specified axis backwards, until it lies in a given position.
 
+    Parameters
+    ----------
+    a : ndarray
+        Input array.
+    axis : int
+        The axis to roll backwards.  The positions of the other axes do not
+        change relative to one another.
+    start : int, optional
+        The axis is rolled until it lies before this position.
+
+    Returns
+    -------
+    res : ndarray
+        Output array.
+
+    See Also
+    --------
+    roll : Roll the elements of an array by a number of positions along a
+           given axis.
+
+    Examples
+    --------
     >>> a = np.ones((3,4,5,6))
     >>> np.rollaxis(a, 3, 1).shape
     (3, 6, 4, 5)
-    >>> np.rollaxis(a, 2, 0).shape
+    >>> np.rollaxis(a, 2).shape
     (5, 3, 4, 6)
     >>> np.rollaxis(a, 1, 4).shape
     (3, 5, 6, 4)
+
     """
     n = a.ndim
     if axis < 0:
@@ -491,6 +1018,37 @@ if issubclass(longlong, int):
     _typelessdata.append(longlong)
 
 def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
+    """
+    Return the string representation of an array.
+
+    Parameters
+    ----------
+    arr : ndarray
+      Input array.
+    max_line_width : int
+      The maximum number of columns the string should span. Newline
+      characters splits the string appropriately after array elements.
+    precision : int
+      Floating point precision.
+    suppress_small : bool
+      Represent very small numbers as zero.
+
+    Returns
+    -------
+    string : str
+      The string representation of an array.
+
+
+    Examples
+    --------
+    >>> np.array_repr(np.array([1,2]))
+    'array([1, 2])'
+    >>> np.array_repr(np.ma.array([0.]))
+    'MaskedArray([ 0.])'
+    >>> np.array_repr(np.array([], np.int32))
+    'array([], dtype=int32)'
+
+    """
     if arr.size > 0 or arr.shape==(0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
                            ', ', "array(")
@@ -516,6 +1074,30 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
+    """
+    Return a string representation of an array.
+
+    Parameters
+    ----------
+    a : ndarray
+        Input array.
+    max_line_width : int, optional
+        Inserts newlines if text is longer than `max_line_width`.
+    precision : int, optional
+        If `a` is float, `precision` sets loating point precision.
+    suppress_small : boolean, optional
+        Represent very small numbers as zero.
+
+    See Also
+    --------
+    array2string, array_repr
+
+    Examples
+    --------
+    >>> np.array_str(np.arange(3))
+    >>> '[0 1 2]'
+
+    """
     return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
 
 set_string_function = multiarray.set_string_function
@@ -526,8 +1108,41 @@ little_endian = (sys.byteorder == 'little')
 
 
 def indices(dimensions, dtype=int):
-    """Returns an array representing a grid of indices with row-only, and
-    column-only variation.
+    """
+    Return an array representing the coordinates of a grid.
+
+    Parameters
+    ----------
+    shape : (N,) tuple of ints
+
+    Returns
+    -------
+    grid : ndarray
+        The output shape is ``(N,) + shape``.  I.e., if `shape` is ``(2,4,5)``,
+        the output shape is ``(3, 2, 4, 5)``.  Each subarray, ``grid[i,...]``
+        contains values that vary only along the ``i-th`` axis.
+
+    Examples
+    --------
+    >>> grid = np.indices((2,3))
+
+    The row-positions are given by:
+
+    >>> grid[0]
+    array([[0, 0, 0],
+           [1, 1, 1]])
+
+    and the column-positions by
+
+    >>> grid[1]
+    array([[0, 1, 2],
+           [0, 1, 2]])
+
+
+    See Also
+    --------
+    mgrid, meshgrid, ndindex
+
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
@@ -543,24 +1158,76 @@ def indices(dimensions, dtype=int):
     return res
 
 def fromfunction(function, shape, **kwargs):
-    """Returns an array constructed by calling a function on a tuple of number
-    grids.
+    """
+    Construct an array by executing a function over each coordinate.
 
-    The function should accept as many arguments as the length of shape and
-    work on array inputs.  The shape argument is a sequence of numbers
-    indicating the length of the desired output for each axis.
+    The resulting array therefore has a value ``fn(x, y, z)`` at
+    coordinate ``(x, y, z)``.
 
-    The function can also accept keyword arguments (except dtype), which will
-    be passed through fromfunction to the function itself.  The dtype argument
-    (default float) determines the data-type of the index grid passed to the
-    function.
+    Parameters
+    ----------
+    fn : callable
+        The function is called with N parameters, each of which
+        represents the coordinates of the array varying along a
+        specific axis.  For example, if `shape` were ``(2, 2)``, then
+        the parameters would be two arrays, ``[[0, 0], [1, 1]]`` and
+        ``[[0, 1], [0, 1]]``.  `fn` must be capable of operating on
+        arrays, and should return a scalar value.
+    shape : (N,) tuple of ints
+        Shape of the output array, which also determines the shape of
+        the coordinate arrays passed to `fn`.
+    dtype : data-type, optional
+        Data-type of the coordinate arrays passed to `fn`.  By default,
+        `dtype` is float.
+
+    See Also
+    --------
+    indices, meshgrid
+
+    Notes
+    -----
+    Keywords other than `shape` and `dtype` are passed to the function.
+
+    Examples
+    --------
+    >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
+    array([[ True, False, False],
+           [False,  True, False],
+           [False, False,  True]], dtype=bool)
+
+    >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=int)
+    array([[0, 1, 2],
+           [1, 2, 3],
+           [2, 3, 4]])
+
     """
     dtype = kwargs.pop('dtype', float)
     args = indices(shape, dtype=dtype)
     return function(*args,**kwargs)
 
 def isscalar(num):
-    """Returns True if the type of num is a scalar type.
+    """
+    Returns True if the type of num is a scalar type.
+
+    Parameters
+    ----------
+    num : any
+        Input argument.
+
+    Returns
+    -------
+    val : bool
+        True if `num` is a scalar type, False if it is not.
+
+    Examples
+    --------
+    >>> np.isscalar(3.1)
+    True
+    >>> np.isscalar([3.1])
+    False
+    >>> np.isscalar(False)
+    True
+
     """
     if isinstance(num, generic):
         return True
@@ -593,14 +1260,61 @@ _lkup = {
     'L':''}
 
 def binary_repr(num, width=None):
-    """Return the binary representation of the input number as a string.
+    """
+    Return the binary representation of the input number as a string.
 
-    This is equivalent to using base_repr with base 2, but about 25x
-    faster.
-
-    For negative numbers, if width is not given, a - sign is added to the
+    For negative numbers, if width is not given, a minus sign is added to the
     front. If width is given, the two's complement of the number is
     returned, with respect to that width.
+
+    In a two's-complement system negative numbers are represented by the two's
+    complement of the absolute value. This is the most common method of
+    representing signed integers on computers [1]_. A N-bit two's-complement
+    system can represent every integer in the range
+    :math:`-2^{N-1}` to :math:`+2^{N-1}-1`.
+
+    Parameters
+    ----------
+    num : int
+        Only an integer decimal number can be used.
+    width : int, optional
+        The length of the returned string if `num` is positive, the length of
+        the two's complement if `num` is negative.
+
+    Returns
+    -------
+    bin : str
+        Binary representation of `num` or two's complement of `num`.
+
+    See Also
+    --------
+    base_repr
+
+    Notes
+    -----
+    `binary_repr` is equivalent to using `base_repr` with base 2, but about 25x
+    faster.
+
+    References
+    ----------
+    .. [1] Wikipedia, "Two's complement",
+        http://en.wikipedia.org/wiki/Two's_complement
+
+    Examples
+    --------
+    >>> np.binary_repr(3)
+    '11'
+    >>> np.binary_repr(-3)
+    '-11'
+    >>> np.binary_repr(3, width=4)
+    '0011'
+
+    The two's complement is returned when the input number is negative and
+    width is specified:
+
+    >>> np.binary_repr(-3, width=4)
+    '1101'
+
     """
     sign = ''
     if num < 0:
@@ -620,9 +1334,38 @@ def binary_repr(num, width=None):
     return sign + bin
 
 def base_repr (number, base=2, padding=0):
-    """Return the representation of a number in the given base.
+    """
+    Return a string representation of a number in the given base system.
 
-    Base can't be larger than 36.
+    Parameters
+    ----------
+    number : scalar
+        The value to convert. Only positive values are handled.
+    base : int
+        Convert `number` to the `base` number system. The valid range is 2-36,
+        the default value is 2.
+    padding : int, optional
+        Number of zeros padded on the left.
+
+    Returns
+    -------
+    out : str
+        String representation of `number` in `base` system.
+
+    See Also
+    --------
+    binary_repr : Faster version of `base_repr` for base 2 that also handles
+        negative numbers.
+
+    Examples
+    --------
+    >>> np.base_repr(3, 5)
+    '3'
+    >>> np.base_repr(6, 5)
+    '11'
+    >>> np.base_repr(7, 5, padding=3)
+    '00012'
+
     """
     if number < 0:
         raise ValueError("negative numbers not handled in base_repr")
@@ -670,8 +1413,32 @@ def _maketup(descr, val):
         return tuple(res)
 
 def ones(shape, dtype=None, order='C'):
-    """Returns an array of the given dimensions which is initialized to all
-    ones.
+    """
+    Return a new array of given shape and type, filled with ones.
+
+    Please refer to the documentation for `zeros`.
+
+    See Also
+    --------
+    zeros
+
+    Examples
+    --------
+    >>> np.ones(5)
+    array([ 1.,  1.,  1.,  1.,  1.])
+
+    >>> np.ones((5,), dtype=np.int)
+    array([1, 1, 1, 1, 1])
+
+    >>> np.ones((2, 1))
+    array([[ 1.],
+           [ 1.]])
+
+    >>> s = (2,2)
+    >>> np.ones(s)
+    array([[ 1.,  1.],
+           [ 1.,  1.]])
+
     """
     a = empty(shape, dtype, order)
     try:
@@ -685,10 +1452,32 @@ def ones(shape, dtype=None, order='C'):
     return a
 
 def identity(n, dtype=None):
-    """Returns the identity 2-d array of shape n x n.
+    """
+    Return the identity array.
 
-    identity(n)[i,j] == 1 for all i == j
-                     == 0 for all i != j
+    The identity array is a square array with ones on
+    the main diagonal.
+
+    Parameters
+    ----------
+    n : int
+        Number of rows (and columns) in `n` x `n` output.
+    dtype : data-type, optional
+        Data-type of the output.  Defaults to ``float``.
+
+    Returns
+    -------
+    out : ndarray
+        `n` x `n` array with its main diagonal set to one,
+        and all other elements 0.
+
+    Examples
+    --------
+    >>> np.identity(3)
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+
     """
     a = array([1]+n*[0],dtype=dtype)
     b = empty((n,n),dtype=dtype)
@@ -701,12 +1490,36 @@ def identity(n, dtype=None):
     return b
 
 def allclose(a, b, rtol=1.e-5, atol=1.e-8):
-    """Returns True if all components of a and b are equal subject to given
-    tolerances.
+    """
+    Returns True if all elements are equal subject to given tolerances.
 
-    The relative error rtol must be positive and << 1.0
-    The absolute error atol usually comes into play for those elements of b that
-    are very small or zero; it says how small a must be also.
+    The tolerance values are positive, typically very small numbers.  The
+    relative difference (`rtol` * `b`) and the absolute difference (`atol`)
+    are added together to compare against the absolute difference between `a`
+    and `b`.
+
+    Parameters
+    ----------
+    a, b : array_like
+        Input arrays to compare.
+    rtol : Relative tolerance
+        The relative difference is equal to `rtol` * `b`.
+    atol : Absolute tolerance
+        The absolute difference is equal to `atol`.
+
+    See Also
+    --------
+    all, any, alltrue, sometrue
+
+    Examples
+    --------
+    >>> allclose(array([1e10,1e-7]), array([1.00001e10,1e-8]))
+    False
+    >>> allclose(array([1e10,1e-8]), array([1.00001e10,1e-9]))
+    True
+    >>> allclose(array([1e10,1e-8]), array([1.0001e10,1e-9]))
+    False
+
     """
     x = array(a, copy=False)
     y = array(b, copy=False)
@@ -722,8 +1535,32 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     return all(less_equal(absolute(x-y), atol + rtol * absolute(y)))
 
 def array_equal(a1, a2):
-    """Returns True if a1 and a2 have identical shapes
-    and all elements equal and False otherwise.
+    """
+    True if two arrays have the same shape and elements, False otherwise.
+
+    Parameters
+    ----------
+    a1 : array-like
+        First input array.
+    a2 : array-like
+        Second input array.
+
+    Returns
+    -------
+    b : {True, False}
+        Returns True if the arrays are equal.
+
+    Examples
+    --------
+    >>> np.array_equal([1,2],[1,2])
+    True
+    >>> np.array_equal(np.array([1,2]),np.array([1,2]))
+    True
+    >>> np.array_equal([1,2],[1,2,3])
+    False
+    >>> np.array_equal([1,2],[1,4])
+    False
+
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
@@ -849,15 +1686,75 @@ def getbufsize():
     return umath.geterrobj()[0]
 
 def seterrcall(func):
-    """Set the callback function used when a floating-point error handler
-    is set to 'call' or the object with a write method for use when
-    the floating-point error handler is set to 'log'
+    """
+    Set the floating-point error callback function or log object.
 
-    'func' should be a function that takes two arguments. The first is
-    type of error ("divide", "over", "under", or "invalid"), and the second
-    is the status flag (= divide + 2*over + 4*under + 8*invalid).
+    There are two ways to capture floating-point error messages.  The first
+    is to set the error-handler to 'call', using `seterr`.  Then, set
+    the function to call using this function.
 
-    Returns the old handler.
+    The second is to set the error-handler to `log`, using `seterr`.
+    Floating-point errors then trigger a call to the 'write' method of
+    the provided object.
+
+    Parameters
+    ----------
+    log_func_or_obj : callable f(err, flag) or object with write method
+        Function to call upon floating-point errors ('call'-mode) or
+        object whose 'write' method is used to log such message ('log'-mode).
+
+        The call function takes two arguments. The first is the
+        type of error (one of "divide", "over", "under", or "invalid"),
+        and the second is the status flag.  The flag is a byte, whose
+        least-significant bits indicate the status::
+
+          [0 0 0 0 invalid over under invalid]
+
+        In other words, ``flags = divide + 2*over + 4*under + 8*invalid``.
+
+        If an object is provided, it's write method should take one argument,
+        a string.
+
+    Returns
+    -------
+    h : callable or log instance
+        The old error handler.
+
+    Examples
+    --------
+    Callback upon error:
+
+    >>> def err_handler(type, flag):
+        print "Floating point error (%s), with flag %s" % (type, flag)
+    ...
+
+    >>> saved_handler = np.seterrcall(err_handler)
+    >>> save_err = np.seterr(all='call')
+
+    >>> np.array([1,2,3])/0.0
+    Floating point error (divide by zero), with flag 1
+    array([ Inf,  Inf,  Inf])
+
+    >>> np.seterrcall(saved_handler)
+    >>> np.seterr(**save_err)
+
+    Log error message:
+
+    >>> class Log(object):
+            def write(self, msg):
+                print "LOG: %s" % msg
+    ...
+
+    >>> log = Log()
+    >>> saved_handler = np.seterrcall(log)
+    >>> save_err = np.seterr(all='log')
+
+    >>> np.array([1,2,3])/0.0
+    LOG: Warning: divide by zero encountered in divide
+
+    >>> np.seterrcall(saved_handler)
+    >>> np.seterr(**save_err)
+
     """
     if func is not None and not callable(func):
         if not hasattr(func, 'write') or not callable(func.write):

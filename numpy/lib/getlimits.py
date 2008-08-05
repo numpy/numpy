@@ -21,7 +21,46 @@ _convert_to_float = {
     }
 
 class finfo(object):
-    """ Machine limits for floating point types.
+    """
+    Machine limits for floating point types.
+
+    Attributes
+    ----------
+    eps : floating point number of the appropriate type
+        The smallest representable number such that ``1.0 + eps != 1.0``.
+    epsneg : floating point number of the appropriate type
+        The smallest representable number such that ``1.0 - epsneg != 1.0``.
+    iexp : int
+        The number of bits in the exponent portion of the floating point
+        representation.
+    machar : MachAr
+        The object which calculated these parameters and holds more detailed
+        information.
+    machep : int
+        The exponent that yields ``eps``.
+    max : floating point number of the appropriate type
+        The largest representable number.
+    maxexp : int
+        The smallest positive power of the base (2) that causes overflow.
+    min : floating point number of the appropriate type
+        The smallest representable number, typically ``-max``.
+    minexp : int
+        The most negative power of the base (2) consistent with there being
+        no leading 0s in the mantissa.
+    negep : int
+        The exponent that yields ``epsneg``.
+    nexp : int
+        The number of bits in the exponent including its sign and bias.
+    nmant : int
+        The number of bits in the mantissa.
+    precision : int
+        The approximate number of decimal digits to which this kind of float
+        is precise.
+    resolution : floating point number of the appropriate type
+        The approximate decimal resolution of this type, i.e.
+        ``10**-precision``.
+    tiny : floating point number of the appropriate type
+        The smallest-magnitude usable number.
 
     Parameters
     ----------
@@ -30,14 +69,18 @@ class finfo(object):
 
     See Also
     --------
-    numpy.lib.machar.MachAr
+    numpy.lib.machar.MachAr :
+        The implementation of the tests that produce this information.
+    iinfo :
+        The equivalent for integer data types.
 
     Notes
     -----
     For developers of numpy: do not instantiate this at the module level. The
     initial calculation of these parameters is expensive and negatively impacts
-    import times. These objects are cached, so calling `finfo()` repeatedly
+    import times. These objects are cached, so calling ``finfo()`` repeatedly
     inside your functions is not a problem.
+
     """
 
     _finfo_cache = {}
@@ -126,10 +169,47 @@ nexp  =%(nexp)6s   min=       -max
 
 
 class iinfo:
-    """Limits for integer types.
+    """
+    Machine limits for integer types.
 
-    :Parameters:
-        type : integer type or instance
+    Attributes
+    ----------
+    min : int
+        The smallest integer expressible by the type.
+    max : int
+        The largest integer expressible by the type.
+
+    Parameters
+    ----------
+    type : integer type, dtype, or instance
+        The kind of integer data type to get information about.
+
+    See Also
+    --------
+    finfo : The equivalent for floating point data types.
+
+    Examples
+    --------
+    With types:
+
+    >>> ii16 = np.iinfo(np.int16)
+    >>> ii16.min
+    -32768
+    >>> ii16.max
+    32767
+    >>> ii32 = np.iinfo(np.int32)
+    >>> ii32.min
+    -2147483648
+    >>> ii32.max
+    2147483647
+
+    With instances:
+
+    >>> ii32 = np.iinfo(np.int32(10))
+    >>> ii32.min
+    -2147483648
+    >>> ii32.max
+    2147483647
 
     """
 

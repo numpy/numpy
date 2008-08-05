@@ -23,11 +23,13 @@ def as_strided(x, shape=None, strides=None):
     return np.asarray(DummyArray(interface, base=x))
 
 def broadcast_arrays(*args):
-    """ Broadcast any number of arrays against each other.
+    """
+    Broadcast any number of arrays against each other.
 
     Parameters
     ----------
-    *args : arrays
+    `*args` : arrays
+        The arrays to broadcast.
 
     Returns
     -------

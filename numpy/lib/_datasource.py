@@ -402,12 +402,13 @@ class DataSource (object):
 
 
 class Repository (DataSource):
-    """A data Repository where multiple DataSource's share a base URL/directory.
+    """
+    A data Repository where multiple DataSource's share a base URL/directory.
 
     Repository extends DataSource by prepending a base URL (or directory) to
     all the files it handles. Use a Repository when you will be working with
     multiple files from one base URL.  Initialize the Respository with the
-    base URL, then refer to each file by it's filename only.
+    base URL, then refer to each file by its filename only.
 
     *Methods*:
 

@@ -17,19 +17,41 @@ makemat = matrix.matrix
 
 # contributed by Stefan van der Walt
 def unravel_index(x,dims):
-    """Convert a flat index into an index tuple for an array of given shape.
+    """
+    Convert a flat index into an index tuple for an array of given shape.
 
     e.g. for a 2x2 array, unravel_index(2,(2,2)) returns (1,0).
 
-    Example usage:
-      p = x.argmax()
-      idx = unravel_index(p,x.shape)
-      x[idx] == x.max()
+    Parameters
+    ----------
+    x : int
+        Flattened index.
+    dims : shape tuple
+        Input shape.
 
-    Note:  x.flat[p] == x.max()
+    Notes
+    -----
+    Since x.flat[p] == x.max() it may be easier to use flattened indexing
+    than to re-map the index to a tuple.
 
-      Thus, it may be easier to use flattened indexing than to re-map
-      the index to a tuple.
+    Examples
+    --------
+    >>> x = np.ones((5,4))
+    >>> x
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15],
+           [16, 17, 18, 19]])
+    >>> p = x.argmax()
+    >>> p
+    19
+    >>> idx = np.unravel_index(p, x.shape)
+    >>> idx
+    (4, 3)
+    >>> x[idx] == x.max()
+    True
+
     """
     if x > _nx.prod(dims)-1 or x < 0:
         raise ValueError("Invalid index, must be 0 <= x <= number of elements.")
@@ -92,7 +114,7 @@ class nd_grid(object):
     complex number, then the stop is not inclusive.
 
     However, if the step length is a **complex number** (e.g. 5j), then the
-    integer part of it's magnitude is interpreted as specifying the
+    integer part of its magnitude is interpreted as specifying the
     number of points to create between the start and stop values, where
     the stop value **is inclusive**.
 
@@ -342,9 +364,17 @@ c_ = CClass()
 
 class ndenumerate(object):
     """
-    A simple nd index iterator over an array.
+    Multidimensional index iterator.
 
-    Example:
+    Return an iterator yielding pairs of array coordinates and values.
+
+    Parameters
+    ----------
+    a : ndarray
+      Input array.
+
+    Examples
+    --------
     >>> a = np.array([[1,2],[3,4]])
     >>> for index, x in np.ndenumerate(a):
     ...     print index, x
@@ -352,6 +382,7 @@ class ndenumerate(object):
     (0, 1) 2
     (1, 0) 3
     (1, 1) 4
+
     """
     def __init__(self, arr):
         self.iter = asarray(arr).flat

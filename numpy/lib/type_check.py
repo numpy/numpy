@@ -49,16 +49,53 @@ def asfarray(a, dtype=_nx.float_):
     return asarray(a,dtype=dtype)
 
 def real(val):
-    """Return the real part of val.
+    """
+    Return the real part of the elements of the array.
 
-    Useful if val maybe a scalar or an array.
+    Parameters
+    ----------
+    val : {array_like, scalar}
+        Input array.
+
+    Returns
+    -------
+    out : ndarray
+        If `val` is real, the type of `val` is used for the output.  If `val`
+        has complex elements, the returned type is float.
+
+    See Also
+    --------
+    real_if_close, imag, angle
+
+    Examples
+    --------
+    >>> a = np.array([1+2j,3+4j,5+6j])
+    >>> a.real
+    array([ 1.,  3.,  5.])
+    >>> a.real = 9
+    >>> a
+    array([ 9.+2.j,  9.+4.j,  9.+6.j])
+    >>> a.real = np.array([9,8,7])
+    >>> a
+    array([ 9.+2.j,  8.+4.j,  7.+6.j])
+
     """
     return asanyarray(val).real
 
 def imag(val):
-    """Return the imaginary part of val.
+    """
+    Return the imaginary part of array.
 
-    Useful if val maybe a scalar or an array.
+    Parameters
+    ----------
+    val : array_like
+        Input array.
+
+    Returns
+    -------
+    out : ndarray, real or int
+        Real part of each element, same shape as `val`.
+
     """
     return asanyarray(val).imag
 
@@ -75,10 +112,26 @@ def iscomplex(x):
     return +res  # convet to array-scalar if needed
 
 def isreal(x):
-    """Return a boolean array where elements are True if that element
-    is real (has zero imaginary part)
+    """
+    Returns a bool array where True if the corresponding input element is real.
 
-    For scalars, return a boolean.
+    True if complex part is zero.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+
+    Returns
+    -------
+    out : ndarray, bool
+        Boolean array of same shape as `x`.
+
+    Examples
+    --------
+    >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
+    >>> array([False,  True,  True,  True,  True, False], dtype=bool)
+
     """
     return imag(x) == 0
 
@@ -105,12 +158,27 @@ def _getmaxmin(t):
 
 def nan_to_num(x):
     """
-    Returns a copy of replacing NaN's with 0 and Infs with large numbers
+    Replace nan with zero and inf with large numbers.
 
-    The following mappings are applied:
-        NaN -> 0
-        Inf -> limits.double_max
-       -Inf -> limits.double_min
+    Parameters
+    ----------
+    x : array_like
+        Input data.
+
+    Returns
+    -------
+    out : ndarray
+        Array with the same shape and dtype as `x`.  Nan is replaced
+        by zero, and inf (-inf) is replaced by the largest (smallest)
+        floating point value that fits in the output dtype.
+
+    Examples
+    --------
+    >>> x = np.array([np.inf, -np.inf, np.nan, -128, 128])
+    >>> np.nan_to_num(x)
+    array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000,
+            -1.28000000e+002,   1.28000000e+002])
+
     """
     try:
         t = x.dtype.type
@@ -143,10 +211,36 @@ def nan_to_num(x):
 #-----------------------------------------------------------------------------
 
 def real_if_close(a,tol=100):
-    """If a is a complex array, return it as a real array if the imaginary
-    part is close enough to zero.
+    """
+    If complex input returns a real array if complex parts are close to zero.
 
-    "Close enough" is defined as tol*(machine epsilon of a's element type).
+    "Close to zero" is defined as `tol` * (machine epsilon of the type for
+    `a`).
+
+    Parameters
+    ----------
+    a : {array_like, scalar}
+        Input array.
+    tol : scalar
+        Tolerance for the complex part of the elements in the array.
+
+    Returns
+    -------
+    out : ndarray
+        If `a` is real, the type of `a` is used for the output.  If `a`
+        has complex elements, the returned type is float.
+
+    See Also
+    --------
+    real, imag, angle
+
+    Notes
+    -----
+    Machine epsilon varies from machine to machine and between data types
+    but Python floats on most platforms have a machine epsilon equal to
+    2.2204460492503131e-16.  You can use 'np.finfo(np.float).eps' to print
+    out the machine epsilon for floats.
+
     """
     a = asanyarray(a)
     if not issubclass(a.dtype.type, _nx.complexfloating):
@@ -192,7 +286,24 @@ _namefromtype = {'S1' : 'character',
                  }
 
 def typename(char):
-    """Return an english description for the given data type character.
+    """
+    Return a description for the given data type code.
+
+    Parameters
+    ----------
+    char : str
+        Data type code.
+
+    Returns
+    -------
+    out : str
+        Description of the input data type code.
+
+    See Also
+    --------
+    typecodes
+    dtype
+
     """
     return _namefromtype[char]
 
@@ -208,11 +319,22 @@ array_precision = {_nx.single : 0,
                    _nx.cdouble : 1,
                    _nx.clongdouble : 2}
 def common_type(*arrays):
-    """Given a sequence of arrays as arguments, return the best inexact
-    scalar type which is "most" common amongst them.
+    """
+    Return the inexact scalar type which is most common in a list of arrays.
 
     The return type will always be a inexact scalar type, even if all
-    the arrays are integer arrays.
+    the arrays are integer arrays
+
+    Parameters
+    ----------
+    arrays: sequence of array_like
+        Input sequence of arrays.
+
+    Returns
+    -------
+    out: data type code
+        Data type code.
+
     """
     is_complex = False
     precision = 0

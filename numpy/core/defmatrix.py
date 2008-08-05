@@ -41,14 +41,40 @@ def _convert_from_string(data):
     return newdata
 
 def asmatrix(data, dtype=None):
-    """ Returns 'data' as a matrix.  Unlike matrix(), no copy is performed
-    if 'data' is already a matrix or array.  Equivalent to:
-    matrix(data, copy=False)
+    """
+    Interpret the input as a matrix.
+
+    Unlike `matrix`, `asmatrix` does not make a copy if the input is already
+    a matrix or an ndarray.  Equivalent to ``matrix(data, copy=False)``.
+
+    Parameters
+    ----------
+    data : array_like
+        Input data.
+
+    Returns
+    -------
+    mat : matrix
+        `data` interpreted as a matrix.
+
+    Examples
+    --------
+    >>> x = np.array([[1, 2], [3, 4]])
+
+    >>> m = np.asmatrix(x)
+
+    >>> x[0,0] = 5
+
+    >>> m
+    matrix([[5, 2],
+            [3, 4]])
+
     """
     return matrix(data, dtype=dtype, copy=False)
 
 def matrix_power(M,n):
-    """Raise a square matrix to the (integer) power n.
+    """
+    Raise a square matrix to the (integer) power n.
 
     For positive integers n, the power is computed by repeated matrix
     squarings and matrix multiplications. If n=0, the identity matrix
@@ -57,7 +83,7 @@ def matrix_power(M,n):
 
     Parameters
     ----------
-    M : array-like
+    M : array_like
         Must be a square array (that is, of dimension two and with
         equal sizes).
     n : integer
@@ -87,6 +113,7 @@ def matrix_power(M,n):
     >>> np.linalg.matrix_power(np.array([[0,1],[-1,0]]),10)
     array([[-1,  0],
            [ 0, -1]])
+
     """
     if len(M.shape) != 2 or M.shape[0] != M.shape[1]:
         raise ValueError("input must be a square array")
@@ -126,25 +153,29 @@ def matrix_power(M,n):
 
 class matrix(N.ndarray):
     """
-    mat = matrix(data, dtype=None, copy=True)
+    matrix(data, dtype=None, copy=True)
 
-    Returns a matrix from an array-like object, or a string of
-    data.  A matrix is a specialized 2-d array that retains
-    its 2-d nature through operations and where '*' means matrix
-    multiplication and '**' means matrix power.
+    Returns a matrix from an array-like object, or from a string
+    of data.  A matrix is a specialized 2-d array that retains
+    its 2-d nature through operations.  It has certain special
+    operators, such as ``*`` (matrix multiplication) and
+    ``**`` (matrix power).
 
     Parameters
     ----------
-    data : array-like or string
-       If data is a string, then interpret the string as a matrix
-       with commas or spaces separating columns and semicolons
+    data : array_like or string
+       If data is a string, the string is interpreted as a matrix
+       with commas or spaces separating columns, and semicolons
        separating rows.
-       If data is array-like than convert the array to a matrix.
     dtype : data-type
-       Anything that can be interpreted as a NumPy datatype.
+       Data-type of the output matrix.
     copy : bool
        If data is already an ndarray, then this flag determines whether
-       or not the data will be copied
+       the data is copied, or whether a view is constructed.
+
+    See Also
+    --------
+    array
 
     Examples
     --------
@@ -152,6 +183,10 @@ class matrix(N.ndarray):
     >>> print a
     [[1 2]
      [3 4]]
+
+    >>> np.matrix([[1, 2], [3, 4]])
+    matrix([[1, 2],
+            [3, 4]])
 
     """
     __array_priority__ = 10.0
@@ -486,6 +521,26 @@ class matrix(N.ndarray):
         return self.__array__().ravel()
 
     def getT(self):
+        """
+        m.T
+
+        Returns the transpose of m.
+
+        Examples
+        --------
+        >>> m = np.matrix('[1, 2; 3, 4]')
+        >>> m
+        matrix([[1, 2],
+                [3, 4]])
+        >>> m.T
+        matrix([[1, 3],
+                [2, 4]])
+
+        See Also
+        --------
+        transpose
+
+        """
         return self.transpose()
 
     def getH(self):
@@ -527,20 +582,42 @@ def _from_string(str,gdict,ldict):
 
 def bmat(obj, ldict=None, gdict=None):
     """
-    Build a matrix object from string, nested sequence, or array.
+    Build a matrix object from a string, nested sequence, or array.
+
+    Parameters
+    ----------
+    obj : string, sequence or array
+        Input data.  Variables names in the current scope may
+        be referenced, even if `obj` is a string.
+
+    See Also
+    --------
+    matrix
 
     Examples
     --------
-    F = bmat('A, B; C, D')
-    F = bmat([[A,B],[C,D]])
-    F = bmat(r_[c_[A,B],c_[C,D]])
+    >>> A = np.mat('1 1; 1 1')
+    >>> B = np.mat('2 2; 2 2')
+    >>> C = np.mat('3 4; 5 6')
+    >>> D = np.mat('7 8; 9 0')
 
-    All of these produce the same matrix::
+    All the following expressions construct the same block matrix:
 
-        [ A  B ]
-        [ C  D ]
-
-    if A, B, C, and D are appropriately shaped 2-d arrays.
+    >>> np.bmat([[A, B], [C, D]])
+    matrix([[1, 1, 2, 2],
+            [1, 1, 2, 2],
+            [3, 4, 7, 8],
+            [5, 6, 9, 0]])
+    >>> np.bmat(np.r_[np.c_[A, B], np.c_[C, D]])
+    matrix([[1, 1, 2, 2],
+            [1, 1, 2, 2],
+            [3, 4, 7, 8],
+            [5, 6, 9, 0]])
+    >>> np.bmat('A,B; C,D')
+    matrix([[1, 1, 2, 2],
+            [1, 1, 2, 2],
+            [3, 4, 7, 8],
+            [5, 6, 9, 0]])
 
     """
     if isinstance(obj, str):

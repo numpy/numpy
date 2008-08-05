@@ -9,9 +9,47 @@ from numpy.core.numeric import asarray, zeros, newaxis, outer, \
 from numpy.core.fromnumeric import product, reshape
 
 def apply_along_axis(func1d,axis,arr,*args):
-    """ Execute func1d(arr[i],*args) where func1d takes 1-D arrays
-        and arr is an N-d array.  i varies so as to apply the function
-        along the given axis for each 1-d subarray in arr.
+    """
+    Apply function to 1-D slices along the given axis.
+
+    Execute `func1d(arr[i],*args)` where `func1d` takes 1-D arrays, `arr` is
+    the input array, and `i` is an integer that varies in order to apply the
+    function along the given axis for each 1-D subarray in `arr`.
+
+    Parameters
+    ----------
+    func1d : function
+        This function should be able to take 1-D arrays. It is applied to 1-D
+        slices of `arr` along the specified axis.
+    axis : integer
+        Axis along which `func1d` is applied.
+    arr : ndarray
+        Input array.
+    args : any
+        Additional arguments to `func1d`.
+
+    Returns
+    -------
+    outarr : ndarray
+        The output array. The shape of `outarr` depends on the return
+        value of `func1d`. If it returns arrays with the same shape as the
+        input arrays it receives, `outarr` has the same shape as `arr`.
+
+    See Also
+    --------
+    apply_over_axes : Apply a function repeatedly over multiple axes.
+
+    Examples
+    --------
+    >>> def my_func(a):
+    ...     \"\"\"Average first and last element of a 1-D array\"\"\"
+    ...     return (a[0] + a[-1]) * 0.5
+    >>> b = np.array([[1,2,3], [4,5,6], [7,8,9]])
+    >>> np.apply_along_axis(my_func, 0, b)
+    array([4., 5., 6.])
+    >>> np.apply_along_axis(my_func, 1, b)
+    array([2., 5., 8.])
+
     """
     arr = asarray(arr)
     nd = arr.ndim
@@ -71,12 +109,58 @@ def apply_along_axis(func1d,axis,arr,*args):
 
 
 def apply_over_axes(func, a, axes):
-    """Apply a function repeatedly over multiple axes, keeping the same shape
-    for the resulting array.
+    """
+    Apply a function repeatedly over multiple axes.
 
-    func is called as res = func(a, axis).  The result is assumed
-    to be either the same shape as a or have one less dimension.
-    This call is repeated for each axis in the axes sequence.
+    `func` is called as `res = func(a, axis)`, with `axis` the first element
+    of `axes`.  The result `res` of the function call has to have
+    the same or one less dimension(s) as `a`. If `res` has one less dimension
+    than `a`, a dimension is then inserted before `axis`.
+    The call to `func` is then repeated for each axis in  `axes`,
+    with `res` as the first argument.
+
+    Parameters
+    ----------
+    func : function
+        This function should take two arguments, `func(a, axis)`.
+    arr : ndarray
+        Input array.
+    axes : array_like
+        Axes over which `func` has to be applied, the elements should be
+        integers.
+
+    Returns
+    -------
+    val : ndarray
+        The output array. The number of dimensions is the same as `a`,
+        the shape can be different, this depends on whether `func` changes
+        the shape of its output with respect to its input.
+
+    See Also
+    --------
+    apply_along_axis :
+        Apply a function to 1-D slices of an array along the given axis.
+
+    Examples
+    --------
+    >>> a = np.arange(24).reshape(2,3,4)
+    >>> a
+    array([[[ 0,  1,  2,  3],
+            [ 4,  5,  6,  7],
+            [ 8,  9, 10, 11]],
+    <BLANKLINE>
+           [[12, 13, 14, 15],
+            [16, 17, 18, 19],
+            [20, 21, 22, 23]]])
+
+    Sum over axes 0 and 2. The result has same number of dimensions
+    as the original array:
+
+    >>> np.apply_over_axes(np.sum, a, [0,2])
+    array([[[ 60],
+            [ 92],
+            [124]]])
+
     """
     val = asarray(a)
     N = a.ndim
@@ -98,7 +182,55 @@ def apply_over_axes(func, a, axes):
     return val
 
 def expand_dims(a, axis):
-    """Expand the shape of a by including newaxis before given axis.
+    """
+    Expand the shape of an array.
+
+    Insert a new axis, corresponding to a given position in the array shape.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    axis : int
+        Position (amongst axes) where new axis is to be inserted.
+
+    Returns
+    -------
+    res : ndarray
+        Output array. The number of dimensions is one greater than that of
+        the input array.
+
+    See Also
+    --------
+    doc.indexing, atleast_1d, atleast_2d, atleast_3d
+
+    Examples
+    --------
+    >>> x = np.array([1,2])
+    >>> x.shape
+    (2,)
+
+    The following is equivalent to ``x[np.newaxis,:]`` or ``x[np.newaxis]``:
+
+    >>> y = np.expand_dims(x, axis=0)
+    >>> y
+    array([[1, 2]])
+    >>> y.shape
+    (1, 2)
+
+    >>> y = np.expand_dims(x, axis=1)  # Equivalent to x[:,newaxis]
+    >>> y
+    array([[1],
+           [2]])
+    >>> y.shape
+    (2, 1)
+
+    Note that some examples may use ``None`` instead of ``np.newaxis``.  These
+    are the same objects:
+
+    >>> np.newaxis is None
+    True
+
     """
     a = asarray(a)
     shape = a.shape
@@ -108,16 +240,43 @@ def expand_dims(a, axis):
 
 
 def atleast_1d(*arys):
-    """ Force a sequence of arrays to each be at least 1D.
+    """
+    Convert inputs to arrays with at least one dimension.
 
-         Description:
-            Force an array to be at least 1D.  If an array is 0D, the
-            array is converted to a single row of values.  Otherwise,
-            the array is unaltered.
-         Arguments:
-            *arys -- arrays to be converted to 1 or more dimensional array.
-         Returns:
-            input array converted to at least 1D array.
+    Scalar inputs are converted to 1-dimensional arrays, whilst
+    higher-dimensional inputs are preserved.
+
+    Parameters
+    ----------
+    array1, array2, ... : array_like
+        One or more input arrays.
+
+    Returns
+    -------
+    ret : ndarray
+        An array, or sequence of arrays, each with ``a.ndim >= 1``.
+        Copies are made only if necessary.
+
+    See Also
+    --------
+    atleast_2d, atleast_3d
+
+    Examples
+    --------
+    >>> np.atleast_1d(1.0)
+    array([ 1.])
+
+    >>> x = np.arange(9.0).reshape(3,3)
+    >>> np.atleast_1d(x)
+    array([[ 0.,  1.,  2.],
+           [ 3.,  4.,  5.],
+           [ 6.,  7.,  8.]])
+    >>> np.atleast_1d(x) is x
+    True
+
+    >>> np.atleast_1d(1, [3, 4])
+    [array([1]), array([3, 4])]
+
     """
     res = []
     for ary in arys:
@@ -128,16 +287,41 @@ def atleast_1d(*arys):
         return res
 
 def atleast_2d(*arys):
-    """ Force a sequence of arrays to each be at least 2D.
+    """
+    View inputs as arrays with at least two dimensions.
 
-         Description:
-            Force an array to each be at least 2D.  If the array
-            is 0D or 1D, the array is converted to a single
-            row of values.  Otherwise, the array is unaltered.
-         Arguments:
-            arys -- arrays to be converted to 2 or more dimensional array.
-         Returns:
-            input array converted to at least 2D array.
+    Parameters
+    ----------
+    array1, array2, ... : array_like
+        One or more array-like sequences.  Non-array inputs are converted
+        to arrays.  Arrays that already have two or more dimensions are
+        preserved.
+
+    Returns
+    -------
+    res, res2, ... : ndarray
+        An array, or tuple of arrays, each with ``a.ndim >= 2``.
+        Copies are avoided where possible, and views with two or more
+        dimensions are returned.
+
+    See Also
+    --------
+    atleast_1d, atleast_3d
+
+    Examples
+    --------
+    >>> numpy.atleast_2d(3.0)
+    array([[ 3.]])
+
+    >>> x = numpy.arange(3.0)
+    >>> numpy.atleast_2d(x)
+    array([[ 0.,  1.,  2.]])
+    >>> numpy.atleast_2d(x).base is x
+    True
+
+    >>> np.atleast_2d(1, [1, 2], [[1, 2]])
+    [array([[1]]), array([[1, 2]]), array([[1, 2]])]
+
     """
     res = []
     for ary in arys:
@@ -148,19 +332,54 @@ def atleast_2d(*arys):
         return res
 
 def atleast_3d(*arys):
-    """ Force a sequence of arrays to each be at least 3D.
+    """
+    View inputs as arrays with at least three dimensions.
 
-         Description:
-            Force an array each be at least 3D.  If the array is 0D or 1D,
-            the array is converted to a single 1xNx1 array of values where
-            N is the orginal length of the array. If the array is 2D, the
-            array is converted to a single MxNx1 array of values where MxN
-            is the orginal shape of the array. Otherwise, the array is
-            unaltered.
-         Arguments:
-            arys -- arrays to be converted to 3 or more dimensional array.
-         Returns:
-            input array converted to at least 3D array.
+    Parameters
+    ----------
+    array1, array2, ... : array_like
+        One or more array-like sequences.  Non-array inputs are converted
+        to arrays. Arrays that already have three or more dimensions are
+        preserved.
+
+    Returns
+    -------
+    res1, res2, ... : ndarray
+        An array, or tuple of arrays, each with ``a.ndim >= 3``.
+        Copies are avoided where possible, and views with three or more
+        dimensions are returned.  For example, a one-dimensional array of
+        shape ``N`` becomes a view of shape ``(1, N, 1)``.  An ``(M, N)``
+        array becomes a view of shape ``(N, M, 1)``.
+
+    See Also
+    --------
+    numpy.atleast_1d, numpy.atleast_2d
+
+    Examples
+    --------
+    >>> numpy.atleast_3d(3.0)
+    array([[[ 3.]]])
+
+    >>> x = numpy.arange(3.0)
+    >>> numpy.atleast_3d(x).shape
+    (1, 3, 1)
+
+    >>> x = numpy.arange(12.0).reshape(4,3)
+    >>> numpy.atleast_3d(x).shape
+    (4, 3, 1)
+    >>> numpy.atleast_3d(x).base is x
+    True
+
+    >>> for arr in np.atleast_3d(1, [1, 2], [[1, 2]]): print arr, "\\n"
+    ...
+    [[[1]]]
+
+    [[[1]
+      [2]]]
+
+    [[[1]
+      [2]]]
+
     """
     res = []
     for ary in arys:
@@ -181,57 +400,78 @@ def atleast_3d(*arys):
 
 
 def vstack(tup):
-    """ Stack arrays in sequence vertically (row wise)
+    """
+    Stack arrays vertically.
 
-        Description:
-            Take a sequence of arrays and stack them vertically
-            to make a single array.  All arrays in the sequence
-            must have the same shape along all but the first axis.
-            vstack will rebuild arrays divided by vsplit.
-        Arguments:
-            tup -- sequence of arrays.  All arrays must have the same
-                   shape.
-        Examples:
-            >>> a = np.array((1,2,3))
-            >>> b = np.array((2,3,4))
-            >>> np.vstack((a,b))
-            array([[1, 2, 3],
-                   [2, 3, 4]])
-            >>> a = np.array([[1],[2],[3]])
-            >>> b = np.array([[2],[3],[4]])
-            >>> np.vstack((a,b))
-            array([[1],
-                   [2],
-                   [3],
-                   [2],
-                   [3],
-                   [4]])
+    `vstack` can be used to rebuild arrays divided by `vsplit`.
+
+    Parameters
+    ----------
+    tup : sequence of arrays
+        Tuple containing arrays to be stacked.  The arrays must have the same
+        shape along all but the first axis.
+
+    See Also
+    --------
+    array_split : Split an array into a list of multiple sub-arrays of
+                  near-equal size.
+    split : Split array into a list of multiple sub-arrays of equal size.
+    vsplit : Split array into a list of multiple sub-arrays vertically.
+    dsplit : Split array into a list of multiple sub-arrays along the 3rd axis
+             (depth).
+    concatenate : Join arrays together.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    dstack : Stack arrays in sequence depth wise (along third dimension).
+
+    Examples
+    --------
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([2, 3, 4])
+    >>> np.vstack((a,b))
+    array([[1, 2, 3],
+           [2, 3, 4]])
+    >>> a = np.array([[1], [2], [3]])
+    >>> b = np.array([[2], [3], [4]])
+    >>> np.vstack((a,b))
+    array([[1],
+           [2],
+           [3],
+           [2],
+           [3],
+           [4]])
 
     """
     return _nx.concatenate(map(atleast_2d,tup),0)
 
 def hstack(tup):
-    """ Stack arrays in sequence horizontally (column wise)
+    """
+    Stack arrays in sequence horizontally (column wise)
 
-        Description:
-            Take a sequence of arrays and stack them horizontally
-            to make a single array.  All arrays in the sequence
-            must have the same shape along all but the second axis.
-            hstack will rebuild arrays divided by hsplit.
-        Arguments:
-            tup -- sequence of arrays.  All arrays must have the same
-                   shape.
-        Examples:
-            >>> a = np.array((1,2,3))
-            >>> b = np.array((2,3,4))
-            >>> np.hstack((a,b))
-            array([1, 2, 3, 2, 3, 4])
-            >>> a = np.array([[1],[2],[3]])
-            >>> b = np.array([[2],[3],[4]])
-            >>> np.hstack((a,b))
-            array([[1, 2],
-                   [2, 3],
-                   [3, 4]])
+    Take a sequence of arrays and stack them horizontally to make
+    a single array. hstack will rebuild arrays divided by hsplit.
+
+    Parameters
+    ----------
+    tup : sequence of ndarrays
+        All arrays must have the same shape along all but the second axis.
+
+    Returns
+    -------
+    stacked : ndarray
+        Ndarray formed by stacking the given arrays.
+
+    Examples
+    --------
+    >>> a = np.array((1,2,3))
+    >>> b = np.array((2,3,4))
+    >>> np.hstack((a,b))
+    array([1, 2, 3, 2, 3, 4])
+    >>> a = np.array([[1],[2],[3]])
+    >>> b = np.array([[2],[3],[4]])
+    >>> np.hstack((a,b))
+    array([[1, 2],
+           [2, 3],
+           [3, 4]])
 
     """
     return _nx.concatenate(map(atleast_1d,tup),1)
@@ -239,25 +479,27 @@ def hstack(tup):
 row_stack = vstack
 
 def column_stack(tup):
-    """ Stack 1D arrays as columns into a 2D array
+    """
+    Stack 1-D arrays as columns into a 2-D array
 
-        Description:
-            Take a sequence of 1D arrays and stack them as columns
-            to make a single 2D array.  All arrays in the sequence
-            must have the same first dimension.  2D arrays are
-            stacked as-is, just like with hstack.  1D arrays are turned
-            into 2D columns first.
+    Take a sequence of 1-D arrays and stack them as columns
+    to make a single 2-D array. 2-D arrays are stacked as-is,
+    just like with hstack.  1-D arrays are turned into 2-D columns
+    first.
 
-        Arguments:
-            tup -- sequence of 1D or 2D arrays.  All arrays must have the same
-                   first dimension.
-        Examples:
-            >>> a = np.array((1,2,3))
-            >>> b = np.array((2,3,4))
-            >>> np.column_stack((a,b))
-            array([[1, 2],
-                   [2, 3],
-                   [3, 4]])
+    Parameters
+    ----------
+    tup : sequence of 1-D or 2-D arrays.
+        Arrays to stack. All of them must have the same first dimension.
+
+    Examples
+    --------
+    >>> a = np.array((1,2,3))
+    >>> b = np.array((2,3,4))
+    >>> np.column_stack((a,b))
+    array([[1, 2],
+           [2, 3],
+           [3, 4]])
 
     """
     arrays = []
@@ -269,32 +511,35 @@ def column_stack(tup):
     return _nx.concatenate(arrays,1)
 
 def dstack(tup):
-    """ Stack arrays in sequence depth wise (along third dimension)
+    """
+    Stack arrays in sequence depth wise (along third dimension)
 
-    Description:
-        Take a sequence of arrays and stack them along the third axis.
-        All arrays in the sequence must have the same shape along all
-        but the third axis.  This is a simple way to stack 2D arrays
-        (images) into a single 3D array for processing.
-        dstack will rebuild arrays divided by dsplit.
-    Arguments:
-        tup -- sequence of arrays.  All arrays must have the same
-               shape.
-    Examples:
-        >>> a = np.array((1,2,3))
-        >>> b = np.array((2,3,4))
-        >>> np.dstack((a,b))
-        array([[[1, 2],
-                [2, 3],
-                [3, 4]]])
-        >>> a = np.array([[1],[2],[3]])
-        >>> b = np.array([[2],[3],[4]])
-        >>> np.dstack((a,b))
-        array([[[1, 2]],
-        <BLANKLINE>
-               [[2, 3]],
-        <BLANKLINE>
-               [[3, 4]]])
+    Take a sequence of arrays and stack them along the third axis.
+    This is a simple way to stack 2D arrays (images) into a single
+    3D array for processing. dstack will rebuild arrays divided by dsplit.
+
+    Parameters
+    ----------
+    tup : sequence of arrays
+        Arrays to stack. All of them must have the same shape along all
+        but the third axis.
+
+    Examples
+    --------
+    >>> a = np.array((1,2,3))
+    >>> b = np.array((2,3,4))
+    >>> np.dstack((a,b))
+    array([[[1, 2],
+            [2, 3],
+            [3, 4]]])
+    >>> a = np.array([[1],[2],[3]])
+    >>> b = np.array([[2],[3],[4]])
+    >>> np.dstack((a,b))
+    array([[[1, 2]],
+    <BLANKLINE>
+           [[2, 3]],
+    <BLANKLINE>
+           [[3, 4]]])
 
     """
     return _nx.concatenate(map(atleast_3d,tup),2)
@@ -308,32 +553,23 @@ def _replace_zero_by_x_arrays(sub_arys):
     return sub_arys
 
 def array_split(ary,indices_or_sections,axis = 0):
-    """ Divide an array into a list of sub-arrays.
+    """
+    Split an array into multiple sub-arrays of equal or near-equal size.
 
-        Description:
-           Divide ary into a list of sub-arrays along the
-           specified axis.  If indices_or_sections is an integer,
-           ary is divided into that many equally sized arrays.
-           If it is impossible to make an equal split, each of the
-           leading arrays in the list have one additional member.  If
-           indices_or_sections is a list of sorted integers, its
-           entries define the indexes where ary is split.
+    Please refer to the `numpy.split` documentation.  The only difference
+    between these functions is that `array_split` allows `indices_or_sections`
+    to be an integer that does *not* equally divide the axis.
 
-        Arguments:
-           ary -- N-D array.
-              Array to be divided into sub-arrays.
-           indices_or_sections -- integer or 1D array.
-              If integer, defines the number of (close to) equal sized
-              sub-arrays.  If it is a 1D array of sorted indices, it
-              defines the indexes at which ary is divided.  Any empty
-              list results in a single sub-array equal to the original
-              array.
-           axis -- integer. default=0.
-              Specifies the axis along which to split ary.
-        Caveats:
-           Currently, the default for axis is 0.  This
-           means a 2D array is divided into multiple groups
-           of rows.  This seems like the appropriate default,
+    See Also
+    --------
+    numpy.split : Split array into multiple sub-arrays.
+
+    Examples
+    --------
+    >>> x = np.arange(8.0)
+    >>> np.array_split(x, 3)
+        [array([ 0.,  1.,  2.]), array([ 3.,  4.,  5.]), array([ 6.,  7.])]
+
     """
     try:
         Ntotal = ary.shape[axis]
@@ -367,33 +603,70 @@ def array_split(ary,indices_or_sections,axis = 0):
     return sub_arys
 
 def split(ary,indices_or_sections,axis=0):
-    """ Divide an array into a list of sub-arrays.
+    """
+    Split an array into multiple sub-arrays of equal size.
 
-        Description:
-           Divide ary into a list of sub-arrays along the
-           specified axis.  If indices_or_sections is an integer,
-           ary is divided into that many equally sized arrays.
-           If it is impossible to make an equal split, an error is
-           raised.  This is the only way this function differs from
-           the array_split() function. If indices_or_sections is a
-           list of sorted integers, its entries define the indexes
-           where ary is split.
+    Parameters
+    ----------
+    ary : ndarray
+        Array to be divided into sub-arrays.
+    indices_or_sections: integer or 1D array
+        If `indices_or_sections` is an integer, N, the array will be divided
+        into N equal arrays along `axis`.  If such a split is not possible,
+        an error is raised.
 
-        Arguments:
-           ary -- N-D array.
-              Array to be divided into sub-arrays.
-           indices_or_sections -- integer or 1D array.
-              If integer, defines the number of (close to) equal sized
-              sub-arrays.  If it is a 1D array of sorted indices, it
-              defines the indexes at which ary is divided.  Any empty
-              list results in a single sub-array equal to the original
-              array.
-           axis -- integer. default=0.
-              Specifies the axis along which to split ary.
-        Caveats:
-           Currently, the default for axis is 0.  This
-           means a 2D array is divided into multiple groups
-           of rows.  This seems like the appropriate default
+        If `indices_or_sections` is a 1D array of sorted integers, the entries
+        indicate where along `axis` the array is split.  For example,
+        ``[2, 3]`` would, for ``axis = 0``, result in
+
+          - ary[:2]
+          - ary[2:3]
+          - ary[3:]
+
+        If an index exceeds the dimension of the array along `axis`,
+        an empty sub-array is returned correspondingly.
+    axis : integer, optional
+        The axis along which to split.  Default is 0.
+
+    Returns
+    -------
+    sub-arrays : list
+        A list of sub-arrays.
+
+    Raises
+    ------
+    ValueError
+        If `indices_or_sections` is given as an integer, but
+        a split does not result in equal division.
+
+    See Also
+    --------
+    array_split : Split an array into multiple sub-arrays of equal or
+                  near-equal size.  Does not raise an exception if
+                  an equal division cannot be made.
+    hsplit : Split array into multiple sub-arrays horizontally (column-wise).
+    vsplit : Split array into multiple sub-arrays vertically (row wise).
+    dsplit : Split array into multiple sub-arrays along the 3rd axis (depth).
+    concatenate : Join arrays together.
+    hstack : Stack arrays in sequence horizontally (column wise).
+    vstack : Stack arrays in sequence vertically (row wise).
+    dstack : Stack arrays in sequence depth wise (along third dimension).
+
+    Examples
+    --------
+    >>> x = np.arange(9.0)
+    >>> np.split(x, 3)
+    [array([ 0.,  1.,  2.]), array([ 3.,  4.,  5.]), array([ 6.,  7.,  8.])]
+
+    >>> x = np.arange(8.0)
+    >>> np.split(x, [3, 5, 6, 10])
+    <BLANKLINE>
+    [array([ 0.,  1.,  2.]),
+     array([ 3.,  4.]),
+     array([ 5.]),
+     array([ 6.,  7.]),
+     array([], dtype=float64)]
+
     """
     try: len(indices_or_sections)
     except TypeError:
@@ -405,38 +678,41 @@ def split(ary,indices_or_sections,axis=0):
     return res
 
 def hsplit(ary,indices_or_sections):
-    """ Split ary into multiple columns of sub-arrays
+    """
+    Split array into multiple sub-arrays horizontally.
 
-        Description:
-            Split a single array into multiple sub arrays.  The array is
-            divided into groups of columns.  If indices_or_sections is
-            an integer, ary is divided into that many equally sized sub arrays.
-            If it is impossible to make the sub-arrays equally sized, the
-            operation throws a ValueError exception. See array_split and
-            split for other options on indices_or_sections.
-        Arguments:
-           ary -- N-D array.
-              Array to be divided into sub-arrays.
-           indices_or_sections -- integer or 1D array.
-              If integer, defines the number of (close to) equal sized
-              sub-arrays.  If it is a 1D array of sorted indices, it
-              defines the indexes at which ary is divided.  Any empty
-              list results in a single sub-array equal to the original
-              array.
-        Returns:
-            sequence of sub-arrays.  The returned arrays have the same
-            number of dimensions as the input array.
-        Related:
-            hstack, split, array_split, vsplit, dsplit.
-        Examples:
-            >>> a= np.array((1,2,3,4))
-            >>> np.hsplit(a,2)
-            [array([1, 2]), array([3, 4])]
-            >>> a = np.array([[1,2,3,4],[1,2,3,4]])
-            >>> np.hsplit(a,2)
-            [array([[1, 2],
-                   [1, 2]]), array([[3, 4],
-                   [3, 4]])]
+    Please refer to the `numpy.split` documentation.  `hsplit` is
+    equivalent to `numpy.split` with ``axis = 1``.
+
+    See Also
+    --------
+    split : Split array into multiple sub-arrays.
+
+    Examples
+    --------
+    >>> x = np.arange(16.0).reshape(4, 4)
+    >>> np.hsplit(x, 2)
+    <BLANKLINE>
+    [array([[  0.,   1.],
+           [  4.,   5.],
+           [  8.,   9.],
+           [ 12.,  13.]]),
+     array([[  2.,   3.],
+           [  6.,   7.],
+           [ 10.,  11.],
+           [ 14.,  15.]])]
+
+    >>> np.hsplit(x, array([3, 6]))
+    <BLANKLINE>
+    [array([[  0.,   1.,   2.],
+           [  4.,   5.,   6.],
+           [  8.,   9.,  10.],
+           [ 12.,  13.,  14.]]),
+     array([[  3.],
+           [  7.],
+           [ 11.],
+           [ 15.]]),
+     array([], dtype=float64)]
 
     """
     if len(_nx.shape(ary)) == 0:
@@ -447,41 +723,15 @@ def hsplit(ary,indices_or_sections):
         return split(ary,indices_or_sections,0)
 
 def vsplit(ary,indices_or_sections):
-    """ Split ary into multiple rows of sub-arrays
+    """
+    Split array into multiple sub-arrays vertically.
 
-        Description:
-            Split a single array into multiple sub arrays.  The array is
-            divided into groups of rows.  If indices_or_sections is
-            an integer, ary is divided into that many equally sized sub arrays.
-            If it is impossible to make the sub-arrays equally sized, the
-            operation throws a ValueError exception. See array_split and
-            split for other options on indices_or_sections.
-        Arguments:
-           ary -- N-D array.
-              Array to be divided into sub-arrays.
-           indices_or_sections -- integer or 1D array.
-              If integer, defines the number of (close to) equal sized
-              sub-arrays.  If it is a 1D array of sorted indices, it
-              defines the indexes at which ary is divided.  Any empty
-              list results in a single sub-array equal to the original
-              array.
-        Returns:
-            sequence of sub-arrays.  The returned arrays have the same
-            number of dimensions as the input array.
-        Caveats:
-           How should we handle 1D arrays here?  I am currently raising
-           an error when I encounter them.  Any better approach?
+    Please refer to the `numpy.split` documentation.
 
-           Should we reduce the returned array to their minium dimensions
-           by getting rid of any dimensions that are 1?
-        Related:
-            vstack, split, array_split, hsplit, dsplit.
-        Examples:
-            import numpy
-            >>> a = np.array([[1,2,3,4],
-            ...              [1,2,3,4]])
-            >>> np.vsplit(a,2)
-            [array([[1, 2, 3, 4]]), array([[1, 2, 3, 4]])]
+    See Also
+    --------
+    numpy.split : The default behaviour of this function implements
+                  `vsplit`.
 
     """
     if len(_nx.shape(ary)) < 2:
@@ -489,37 +739,79 @@ def vsplit(ary,indices_or_sections):
     return split(ary,indices_or_sections,0)
 
 def dsplit(ary,indices_or_sections):
-    """ Split ary into multiple sub-arrays along the 3rd axis (depth)
+    """
+    Split array into multiple sub-arrays along the 3rd axis (depth).
 
-        Description:
-            Split a single array into multiple sub arrays.  The array is
-            divided into groups along the 3rd axis.  If indices_or_sections is
-            an integer, ary is divided into that many equally sized sub arrays.
-            If it is impossible to make the sub-arrays equally sized, the
-            operation throws a ValueError exception. See array_split and
-            split for other options on indices_or_sections.
-        Arguments:
-           ary -- N-D array.
-              Array to be divided into sub-arrays.
-           indices_or_sections -- integer or 1D array.
-              If integer, defines the number of (close to) equal sized
-              sub-arrays.  If it is a 1D array of sorted indices, it
-              defines the indexes at which ary is divided.  Any empty
-              list results in a single sub-array equal to the original
-              array.
-        Returns:
-            sequence of sub-arrays.  The returned arrays have the same
-            number of dimensions as the input array.
-        Caveats:
-           See vsplit caveats.
-        Related:
-            dstack, split, array_split, hsplit, vsplit.
-        Examples:
-            >>> a = np.array([[[1,2,3,4],[1,2,3,4]]])
-            >>> np.dsplit(a,2)
-            [array([[[1, 2],
-                    [1, 2]]]), array([[[3, 4],
-                    [3, 4]]])]
+    Parameters
+    ----------
+    ary : ndarray
+        An array, with at least 3 dimensions, to be divided into sub-arrays
+        depth-wise, or along the third axis.
+    indices_or_sections: integer or 1D array
+        If `indices_or_sections` is an integer, N, the array will be divided
+        into N equal arrays along `axis`. If an equal split is not possible,
+        a ValueError is raised.
+
+        if `indices_or_sections` is a 1D array of sorted integers representing
+        indices along `axis`, the array will be divided such that each index
+        marks the start of each sub-array. If an index exceeds the dimension of
+        the array along `axis`, and empty sub-array is returned for that index.
+    axis : integer, optional
+      the axis along which to split.  Default is 0.
+
+    Returns
+    -------
+    sub-arrays : list
+        A list of sub-arrays.
+
+    See Also
+    --------
+    array_split : Split an array into a list of multiple sub-arrays
+                  of near-equal size.
+    split : Split array into a list of multiple sub-arrays of equal size.
+    hsplit : Split array into a list of multiple sub-arrays horizontally
+    vsplit : Split array into a list of multiple sub-arrays vertically
+    concatenate : Join arrays together.
+    hstack : Stack arrays in sequence horizontally (column wise)
+    vstack : Stack arrays in sequence vertically (row wise)
+    dstack : Stack arrays in sequence depth wise (along third dimension)
+
+    Notes
+    -----
+    `dsplit` requires that sub-arrays are of equal shape, whereas
+    `array_split` allows for sub-arrays to have nearly-equal shape.
+    Equivalent to `split` with `axis` = 2.
+
+    Examples
+    --------
+    >>> x = np.arange(16.0).reshape(2, 2, 4)
+    >>> np.dsplit(x, 2)
+    <BLANKLINE>
+    [array([[[  0.,   1.],
+            [  4.,   5.]],
+    <BLANKLINE>
+           [[  8.,   9.],
+            [ 12.,  13.]]]),
+     array([[[  2.,   3.],
+            [  6.,   7.]],
+    <BLANKLINE>
+           [[ 10.,  11.],
+            [ 14.,  15.]]])]
+    <BLANKLINE>
+    >>> x = np.arange(16.0).reshape(2, 2, 4)
+    >>> np.dsplit(x, array([3, 6]))
+    <BLANKLINE>
+    [array([[[  0.,   1.,   2.],
+            [  4.,   5.,   6.]],
+    <BLANKLINE>
+           [[  8.,   9.,  10.],
+            [ 12.,  13.,  14.]]]),
+     array([[[  3.],
+            [  7.]],
+    <BLANKLINE>
+           [[ 11.],
+            [ 15.]]]),
+     array([], dtype=float64)]
 
     """
     if len(_nx.shape(ary)) < 3:
@@ -540,12 +832,74 @@ def get_array_wrap(*args):
     return None
 
 def kron(a,b):
-    """kronecker product of a and b
+    """
+    Kronecker product of two arrays.
 
-    Kronecker product of two arrays is block array
-    [[ a[ 0 ,0]*b, a[ 0 ,1]*b, ... , a[ 0 ,n-1]*b  ],
-     [ ...                                   ...   ],
-     [ a[m-1,0]*b, a[m-1,1]*b, ... , a[m-1,n-1]*b  ]]
+    Computes the Kronecker product, a composite array made of blocks of the
+    second array scaled by the first.
+
+    Parameters
+    ----------
+    a, b : array_like
+
+    Returns
+    -------
+    out : ndarray
+
+    See Also
+    --------
+
+    outer : The outer product
+
+    Notes
+    -----
+
+    The function assumes that the number of dimenensions of `a` and `b`
+    are the same, if necessary prepending the smallest with ones.
+    If `a.shape = (r0,r1,..,rN)` and `b.shape = (s0,s1,...,sN)`,
+    the Kronecker product has shape `(r0*s0, r1*s1, ..., rN*SN)`.
+    The elements are products of elements from `a` and `b`, organized
+    explicitly by::
+
+        kron(a,b)[k0,k1,...,kN] = a[i0,i1,...,iN] * b[j0,j1,...,jN]
+
+    where::
+
+        kt = it * st + jt,  t = 0,...,N
+
+    In the common 2-D case (N=1), the block structure can be visualized::
+
+        [[ a[0,0]*b,   a[0,1]*b,  ... , a[0,-1]*b  ],
+         [  ...                              ...   ],
+         [ a[-1,0]*b,  a[-1,1]*b, ... , a[-1,-1]*b ]]
+
+
+    Examples
+    --------
+    >>> np.kron([1,10,100], [5,6,7])
+    array([  5,   6,   7,  50,  60,  70, 500, 600, 700])
+    >>> np.kron([5,6,7], [1,10,100])
+    array([  5,  50, 500,   6,  60, 600,   7,  70, 700])
+
+    >>> np.kron(np.eye(2), np.ones((2,2)))
+    array([[ 1.,  1.,  0.,  0.],
+           [ 1.,  1.,  0.,  0.],
+           [ 0.,  0.,  1.,  1.],
+           [ 0.,  0.,  1.,  1.]])
+
+    >>> a = np.arange(100).reshape((2,5,2,5))
+    >>> b = np.arange(24).reshape((2,3,4))
+    >>> c = np.kron(a,b)
+    >>> c.shape
+    (2, 10, 6, 20)
+    >>> I = (1,3,0,2)
+    >>> J = (0,2,1)
+    >>> J1 = (0,) + J             # extend to ndim=4
+    >>> S1 = (1,) + b.shape
+    >>> K = tuple(np.array(I) * np.array(S1) + np.array(J1))
+    >>> C[K] == A[I]*B[J]
+    True
+
     """
     wrapper = get_array_wrap(a, b)
     b = asanyarray(b)
@@ -576,37 +930,61 @@ def kron(a,b):
 
 
 def tile(A, reps):
-    """Repeat an array the number of times given in the integer tuple, reps.
+    """
+    Construct an array by repeating A the number of times given by reps.
 
-    If reps has length d, the result will have dimension of max(d, A.ndim).
-    If reps is scalar it is treated as a 1-tuple.
+    Parameters
+    ----------
+    A : array_like
+        The input array.
+    reps : array_like
+        The number of repetitions of `A` along each axis.
 
-    If A.ndim < d, A is promoted to be d-dimensional by prepending new axes.
-    So a shape (3,) array is promoted to (1,3) for 2-D replication,
-    or shape (1,1,3) for 3-D replication.
-    If this is not the desired behavior, promote A to d-dimensions manually
-    before calling this function.
+    Returns
+    -------
+    c : ndarray
+        The output array.
 
-    If d < A.ndim, tup is promoted to A.ndim by pre-pending 1's to it.  Thus
-    for an A.shape of (2,3,4,5), a tup of (2,2) is treated as (1,1,2,2)
+    See Also
+    --------
+    repeat
 
+    Notes
+    -----
+    If `reps` has length d, the result will have dimension of max(d, `A`.ndim).
 
-    Examples:
-    >>> a = np.array([0,1,2])
-    >>> np.tile(a,2)
+    If `A`.ndim < d, `A` is promoted to be d-dimensional by prepending new
+    axes. So a shape (3,) array is promoted to (1,3) for 2-D replication,
+    or shape (1,1,3) for 3-D replication. If this is not the desired behavior,
+    promote `A` to d-dimensions manually before calling this function.
+
+    If `A`.ndim > d, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
+    Thus for an `A` of shape (2,3,4,5), a `reps` of (2,2) is treated as
+    (1,1,2,2).
+
+    Examples
+    --------
+    >>> a = np.array([0, 1, 2])
+    >>> np.tile(a, 2)
     array([0, 1, 2, 0, 1, 2])
-    >>> np.tile(a,(1,2))
-    array([[0, 1, 2, 0, 1, 2]])
-    >>> np.tile(a,(2,2))
+    >>> np.tile(a, (2, 2))
     array([[0, 1, 2, 0, 1, 2],
            [0, 1, 2, 0, 1, 2]])
-    >>> np.tile(a,(2,1,2))
+    >>> np.tile(a, (2, 1, 2))
     array([[[0, 1, 2, 0, 1, 2]],
     <BLANKLINE>
            [[0, 1, 2, 0, 1, 2]]])
 
-    See Also:
-       repeat
+    >>> b = np.array([[1, 2], [3, 4]])
+    >>> np.tile(b, 2)
+    array([[1, 2, 1, 2],
+           [3, 4, 3, 4]])
+    >>> np.tile(b, (2, 1))
+    array([[1, 2],
+           [3, 4],
+           [1, 2],
+           [3, 4]])
+
     """
     try:
         tup = tuple(reps)

@@ -24,6 +24,29 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 def issubdtype(arg1, arg2):
+    """
+    Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    Parameters
+    ----------
+    arg1 : dtype_like
+        dtype or string representing a typecode.
+    arg2 : dtype_like
+        dtype or string representing a typecode.
+
+
+    See Also
+    --------
+    numpy.core.numerictypes : Overview of numpy type hierarchy.
+
+    Examples
+    --------
+    >>> np.issubdtype('S1', str)
+    True
+    >>> np.issubdtype(np.float64, np.float32)
+    False
+
+    """
     if issubclass_(arg2, generic):
         return issubclass(_dtype(arg1).type, arg2)
     mro = _dtype(arg2).type.mro()
@@ -34,15 +57,23 @@ def issubdtype(arg1, arg2):
     return issubclass(_dtype(arg1).type, val)
 
 def get_include():
-    """Return the directory in the package that contains the numpy/*.h header
-    files.
+    """
+    Return the directory that contains the numpy \\*.h header files.
 
     Extension modules that need to compile against numpy should use this
-    function to locate the appropriate include directory. Using distutils:
+    function to locate the appropriate include directory.
 
-      import numpy
-      Extension('extension_name', ...
-                include_dirs=[numpy.get_include()])
+    Notes
+    -----
+    When using ``distutils``, for example in ``setup.py``.
+    ::
+
+        import numpy as np
+        ...
+        Extension('extension_name', ...
+                include_dirs=[np.get_include()])
+        ...
+
     """
     import numpy
     if numpy.show_config is None:
@@ -109,6 +140,10 @@ def deprecate(func, oldname=None, newname=None):
         depdoc = '%s is DEPRECATED!! -- use %s instead' % (oldname, newname,)
 
     def newfunc(*args,**kwds):
+        """
+        Use get_include, get_numpy_include is DEPRECATED.
+
+        """
         warnings.warn(str1, DeprecationWarning)
         return func(*args, **kwds)
 
@@ -204,7 +239,40 @@ def may_share_memory(a, b):
 
 
 def who(vardict=None):
-    """Print the Numpy arrays in the given dictionary (or globals() if None).
+    """
+    Print the Numpy arrays in the given dictionary.
+
+    If there is no dictionary passed in or `vardict` is None then returns
+    Numpy arrays in the globals() dictionary (all Numpy arrays in the
+    namespace).
+
+    Parameters
+    ----------
+    vardict : dict, optional
+        A dictionary possibly containing ndarrays.  Default is globals().
+
+    Returns
+    -------
+    out : None
+        Returns 'None'.
+
+    Notes
+    -----
+    Prints out the name, shape, bytes and type of all of the ndarrays present
+    in `vardict`.
+
+    Examples
+    --------
+    >>> d = {'x': arange(2.0), 'y': arange(3.0), 'txt': 'Some str', 'idx': 5}
+    >>> np.whos(d)
+    Name            Shape            Bytes            Type
+    ===========================================================
+    <BLANKLINE>
+    y               3                24               float64
+    x               2                16               float64
+    <BLANKLINE>
+    Upper bound on total bytes  =       40
+
     """
     if vardict is None:
         frame = sys._getframe().f_back
@@ -464,7 +532,18 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
 
 
 def source(object, output=sys.stdout):
-    """Write source for this object to output.
+    """
+    Print or write to a file the source code for a Numpy object.
+
+    Parameters
+    ----------
+    object : numpy object
+        Input object.
+    output : file object, optional
+        If `output` not supplied then source code is printed to screen
+        (sys.stdout).  File object must be created with either write 'w' or
+        append 'a' modes.
+
     """
     # Local import to speed up numpy's import time.
     import inspect
@@ -485,21 +564,31 @@ _function_signature_re = re.compile(r"[a-z_]+\(.*[,=].*\)", re.I)
 
 def lookfor(what, module=None, import_modules=True, regenerate=False):
     """
-    Search for objects whose documentation contains all given words.
-    Shows a summary of matching objects, sorted roughly by relevance.
+    Do a keyword search on docstrings.
+
+    A list of of objects that matched the search is displayed,
+    sorted by relevance.
 
     Parameters
     ----------
     what : str
         String containing words to look for.
-
     module : str, module
         Module whose docstrings to go through.
     import_modules : bool
         Whether to import sub-modules in packages.
-        Will import only modules in __all__
-    regenerate: bool
-        Re-generate the docstring cache
+        Will import only modules in ``__all__``.
+    regenerate : bool
+        Whether to re-generate the docstring cache.
+
+    Examples
+    --------
+
+    >>> np.lookfor('binary representation')
+    Search results for 'binary representation'
+    ------------------------------------------
+    numpy.binary_repr
+        Return the binary representation of the input number as a string.
 
     """
     import pydoc
@@ -718,7 +807,10 @@ class SafeEval(object):
             raise SyntaxError("Unknown name: %s" % node.name)
 
 def safe_eval(source):
-    """ Evaluate a string containing a Python literal expression without
+    """
+    Protected string evaluation.
+
+    Evaluate a string containing a Python literal expression without
     allowing the execution of arbitrary non-literal code.
 
     Parameters
@@ -731,8 +823,9 @@ def safe_eval(source):
 
     Raises
     ------
-    SyntaxError if the code is invalid Python expression syntax or if it
-    contains non-literal code.
+    SyntaxError
+        If the code has invalid Python syntax, or if it contains non-literal
+        code.
 
     Examples
     --------
@@ -755,6 +848,7 @@ def safe_eval(source):
     Traceback (most recent call last):
       ...
     SyntaxError: Unknown name: dict
+
     """
     # Local import to speed up numpy's import time.
     import compiler

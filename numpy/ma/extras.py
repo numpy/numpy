@@ -839,11 +839,115 @@ def vander(x, n=None):
 
 
 def polyfit(x, y, deg, rcond=None, full=False):
-    """%s
+    """
+    Least squares polynomial fit.
+
+    Do a best fit polynomial of degree 'deg' of 'x' to 'y'.  Return value is a
+    vector of polynomial coefficients [pk ... p1 p0].  Eg, for ``deg = 2``::
+
+        p2*x0^2 +  p1*x0 + p0 = y1
+        p2*x1^2 +  p1*x1 + p0 = y1
+        p2*x2^2 +  p1*x2 + p0 = y2
+        .....
+        p2*xk^2 +  p1*xk + p0 = yk
+
+    Parameters
+    ----------
+    x : array_like
+        1D vector of sample points.
+    y : array_like
+        1D vector or 2D array of values to fit. The values should run down the
+        columns in the 2D case.
+    deg : integer
+        Degree of the fitting polynomial
+    rcond: {None, float}, optional
+        Relative condition number of the fit. Singular values smaller than this
+        relative to the largest singular value will be ignored. The defaul value
+        is len(x)*eps, where eps is the relative precision of the float type,
+        about 2e-16 in most cases.
+    full : {False, boolean}, optional
+        Switch determining nature of return value. When it is False just the
+        coefficients are returned, when True diagnostic information from the
+        singular value decomposition is also returned.
+
+    Returns
+    -------
+    coefficients, [residuals, rank, singular_values, rcond] : variable
+        When full=False, only the coefficients are returned, running down the
+        appropriate colume when y is a 2D array. When full=True, the rank of the
+        scaled Vandermonde matrix, its effective rank in light of the rcond
+        value, its singular values, and the specified value of rcond are also
+        returned.
+
+    Warns
+    -----
+    RankWarning : if rank is reduced and not full output
+        The warnings can be turned off by:
+        >>> import warnings
+        >>> warnings.simplefilter('ignore',np.RankWarning)
+
+
+    See Also
+    --------
+    polyval : computes polynomial values.
+
+    Notes
+    -----
+    If X is a the Vandermonde Matrix computed from x (see
+    http://mathworld.wolfram.com/VandermondeMatrix.html), then the
+    polynomial least squares solution is given by the 'p' in
+
+        X*p = y
+
+    where X.shape is a matrix of dimensions (len(x), deg + 1), p is a vector of
+    dimensions (deg + 1, 1), and y is a vector of dimensions (len(x), 1).
+
+    This equation can be solved as
+
+        p = (XT*X)^-1 * XT * y
+
+    where XT is the transpose of X and -1 denotes the inverse. However, this
+    method is susceptible to rounding errors and generally the singular value
+    decomposition of the matrix X is preferred and that is what is done here.
+    The singular value method takes a paramenter, 'rcond', which sets a limit on
+    the relative size of the smallest singular value to be used in solving the
+    equation. This may result in lowering the rank of the Vandermonde matrix, in
+    which case a RankWarning is issued. If polyfit issues a RankWarning, try a
+    fit of lower degree or replace x by x - x.mean(), both of which will
+    generally improve the condition number. The routine already normalizes the
+    vector x by its maximum absolute value to help in this regard. The rcond
+    parameter can be set to a value smaller than its default, but the resulting
+    fit may be spurious. The current default value of rcond is len(x)*eps, where
+    eps is the relative precision of the floating type being used, generally
+    around 1e-7 and 2e-16 for IEEE single and double precision respectively.
+    This value of rcond is fairly conservative but works pretty well when x -
+    x.mean() is used in place of x.
+
+
+    DISCLAIMER: Power series fits are full of pitfalls for the unwary once the
+    degree of the fit becomes large or the interval of sample points is badly
+    centered. The problem is that the powers x**n are generally a poor basis for
+    the polynomial functions on the sample interval, resulting in a Vandermonde
+    matrix is ill conditioned and coefficients sensitive to rounding erros. The
+    computation of the polynomial values will also sensitive to rounding errors.
+    Consequently, the quality of the polynomial fit should be checked against
+    the data whenever the condition number is large.  The quality of polynomial
+    fits *can not* be taken for granted. If all you want to do is draw a smooth
+    curve through the y values and polyfit is not doing the job, try centering
+    the sample range or look into scipy.interpolate, which includes some nice
+    spline fitting functions that may be of use.
+
+    For more info, see
+    http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
+    but note that the k's and n's in the superscripts and subscripts
+    on that page.  The linear algebra is correct, however.
+
+
 
     Notes
     -----
         Any masked values in x is propagated in y, and vice-versa.
+
     """
     order = int(deg) + 1
     x = asarray(x)
@@ -885,12 +989,5 @@ def polyfit(x, y, deg, rcond=None, full=False):
         return c, resids, rank, s, rcond
     else :
         return c
-
-_g = globals()
-for nfunc in ('vander', 'polyfit'):
-    _g[nfunc].func_doc = _g[nfunc].func_doc % getattr(np,nfunc).__doc__
-
-
-
 
 ################################################################################

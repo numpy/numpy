@@ -16,12 +16,13 @@ mode_equivalents = {
     }
 
 class memmap(ndarray):
-    """Create a memory-map to an array stored in a file on disk.
+    """
+    Create a memory-map to an array stored in a file on disk.
 
     Memory-mapped files are used for accessing small segments of large files
-    on disk, without reading the entire file into memory.  Numpy's memmaps are
-    array-like objects.  This differs from python's mmap module which are
-    file-like objects.
+    on disk, without reading the entire file into memory.  Numpy's
+    memmap's are array-like objects.  This differs from Python's ``mmap``
+    module, which uses file-like objects.
 
     Parameters
     ----------
@@ -30,107 +31,131 @@ class memmap(ndarray):
         buffer.
     dtype : data-type, optional
         The data-type used to interpret the file contents.
-        Default is uint8
-    mode : {'r', 'r+', 'w+', 'c'}, optional
-        The mode to open the file.
-        'r',  open existing file for read-only
-        'r+', open existing file for read-write
-        'w+', create or overwrite existing file and open for read-write
-        'c',  copy-on-write, assignments effect data in memory, but changes
-              are not saved to disk.  File on disk is read-only.
-        Default is 'r+'
+        Default is `uint8`
+    mode : {'r+', 'r', 'w+', 'c'}, optional
+        The file is opened in this mode:
+
+        +------+-------------------------------------------------------------+
+        | 'r'  | Open existing file for reading only.                        |
+        +------+-------------------------------------------------------------+
+        | 'r+' | Open existing file for reading and writing.                 |
+        +------+-------------------------------------------------------------+
+        | 'w+' | Create or overwrite existing file for reading and writing.  |
+        +------+-------------------------------------------------------------+
+        | 'c'  | Copy-on-write: assignments affect data in memory, but       |
+        |      | changes are not saved to disk.  The file on disk is         |
+        |      | read-only.                                                  |
+        +------+-------------------------------------------------------------+
+
+        Default is 'r+'.
     offset : integer, optional
-        Byte offset into the file to start the array data. Should be a
-        multiple of the data-type of the data.  Requires shape=None.
-        Default is 0
+        In the file, array data starts at this offset.  `offset` should be
+        a multiple of the byte-size of `dtype`.  Requires `shape=None`.
+        The default is 0.
     shape : tuple, optional
-        The desired shape of the array. If None, the returned array will be 1-D
-        with the number of elements determined by file size and data-type.
-        Default is None
+        The desired shape of the array. By default, the returned array will be
+        1-D with the number of elements determined by file size and data-type.
     order : {'C', 'F'}, optional
-        Specify the order of the N-D array, C or Fortran ordered. This only
-        has an effect if the shape is greater than 2-D.
-        Default is 'C'
+        Specify the order of the ndarray memory layout: C (row-major) or
+        Fortran (column-major).  This only has an effect if the shape is
+        greater than 1-D.  The defaullt order is 'C'.
 
     Methods
     -------
-    close : close the memmap file
-    flush : flush any changes in memory to file on disk
+    close
+        Close the memmap file.
+    flush
+        Flush any changes in memory to file on disk.
         When you delete a memmap object, flush is called first to write
         changes to disk before removing the object.
 
-    Returns
-    -------
-    memmap : array-like memmap object
-        The memmap object can be used anywhere an ndarray is accepted.
-        If fp is a memmap, isinstance(fp, numpy.ndarray) will return True.
+    Notes
+    -----
+    The memmap object can be used anywhere an ndarray is accepted.
+    Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
+    ``True``.
 
     Examples
     --------
     >>> data = np.arange(12, dtype='float32')
     >>> data.resize((3,4))
 
-    >>> # Using a tempfile so doctest doesn't write files to your directory.
-    >>> # You would use a 'normal' filename.
+    This example uses a temporary file so that doctest doesn't write
+    files to your directory. You would use a 'normal' filename.
+
     >>> from tempfile import mkdtemp
     >>> import os.path as path
     >>> filename = path.join(mkdtemp(), 'newfile.dat')
 
-    >>> # Create a memmap with dtype and shape that matches our data
+    Create a memmap with dtype and shape that matches our data:
+
     >>> fp = np.memmap(filename, dtype='float32', mode='w+', shape=(3,4))
     >>> fp
     memmap([[ 0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.]], dtype=float32)
+            [ 0.,  0.,  0.,  0.],
+            [ 0.,  0.,  0.,  0.]], dtype=float32)
 
-    >>> # Write data to memmap array
+    Write data to memmap array:
+
     >>> fp[:] = data[:]
     >>> fp
     memmap([[  0.,   1.,   2.,   3.],
-           [  4.,   5.,   6.,   7.],
-           [  8.,   9.,  10.,  11.]], dtype=float32)
+            [  4.,   5.,   6.,   7.],
+            [  8.,   9.,  10.,  11.]], dtype=float32)
 
-    >>> # Deletion flushes memory changes to disk before removing the object.
+    Deletion flushes memory changes to disk before removing the object:
+
     >>> del fp
-    >>> # Load the memmap and verify data was stored
+
+    Load the memmap and verify data was stored:
+
     >>> newfp = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
     >>> newfp
     memmap([[  0.,   1.,   2.,   3.],
-           [  4.,   5.,   6.,   7.],
-           [  8.,   9.,  10.,  11.]], dtype=float32)
+            [  4.,   5.,   6.,   7.],
+            [  8.,   9.,  10.,  11.]], dtype=float32)
 
-    >>> # read-only memmap
+    Read-only memmap:
+
     >>> fpr = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
     >>> fpr.flags.writeable
     False
-    >>> # Cannot assign to read-only, obviously
+
+    Cannot assign to read-only, obviously:
+
     >>> fpr[0, 3] = 56
     Traceback (most recent call last):
         ...
     RuntimeError: array is not writeable
 
-    >>> # copy-on-write memmap
+    Copy-on-write memmap:
+
     >>> fpc = np.memmap(filename, dtype='float32', mode='c', shape=(3,4))
     >>> fpc.flags.writeable
     True
-    >>> # Can assign to copy-on-write array, but values are only written
-    >>> # into the memory copy of the array, and not written to disk.
+
+    It's possible to assign to copy-on-write array, but values are only
+    written into the memory copy of the array, and not written to disk:
+
     >>> fpc
     memmap([[  0.,   1.,   2.,   3.],
-           [  4.,   5.,   6.,   7.],
-           [  8.,   9.,  10.,  11.]], dtype=float32)
+            [  4.,   5.,   6.,   7.],
+            [  8.,   9.,  10.,  11.]], dtype=float32)
     >>> fpc[0,:] = 0
     >>> fpc
     memmap([[  0.,   0.,   0.,   0.],
-           [  4.,   5.,   6.,   7.],
-           [  8.,   9.,  10.,  11.]], dtype=float32)
-    >>> # file on disk is unchanged
+            [  4.,   5.,   6.,   7.],
+            [  8.,   9.,  10.,  11.]], dtype=float32)
+
+    File on disk is unchanged:
+
     >>> fpr
     memmap([[  0.,   1.,   2.,   3.],
-           [  4.,   5.,   6.,   7.],
-           [  8.,   9.,  10.,  11.]], dtype=float32)
+            [  4.,   5.,   6.,   7.],
+            [  8.,   9.,  10.,  11.]], dtype=float32)
 
-    >>> # offset into a memmap
+    Offset into a memmap:
+
     >>> fpo = np.memmap(filename, dtype='float32', mode='r', offset=16)
     >>> fpo
     memmap([  4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.], dtype=float32)

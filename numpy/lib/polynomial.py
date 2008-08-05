@@ -46,15 +46,49 @@ def _lstsq(X, y, rcond):
         return lstsq(X, y, rcond)
 
 def poly(seq_of_zeros):
-    """ Return a sequence representing a polynomial given a sequence of roots.
+    """
+    Return polynomial coefficients given a sequence of roots.
 
-    If the input is a matrix, return the characteristic polynomial.
+    Calculate the coefficients of a polynomial given the zeros
+    of the polynomial.
 
-    Example:
+    If a square matrix is given, then the coefficients for
+    characteristic equation of the matrix, defined by
+    :math:`\\mathrm{det}(\\mathbf{A} - \\lambda \\mathbf{I})`,
+    are returned.
 
-        >>> b = np.roots([1,3,1,5,6])
-        >>> np.poly(b)
-        array([ 1.,  3.,  1.,  5.,  6.])
+    Parameters
+    ----------
+    seq_of_zeros : ndarray
+        A sequence of polynomial roots or a square matrix.
+
+    Returns
+    -------
+    coefs : ndarray
+        A sequence of polynomial coefficients representing the polynomial
+
+        :math:`\\mathrm{coefs}[0] x^{n-1} + \\mathrm{coefs}[1] x^{n-2} +
+                      ... + \\mathrm{coefs}[2] x + \\mathrm{coefs}[n]`
+
+    See Also
+    --------
+    numpy.poly1d : A one-dimensional polynomial class.
+    numpy.roots : Return the roots of the polynomial coefficients in p
+    numpy.polyfit : Least squares polynomial fit
+
+    Examples
+    --------
+    Given a sequence of polynomial zeros,
+
+    >>> b = np.roots([1, 3, 1, 5, 6])
+    >>> np.poly(b)
+    array([ 1.,  3.,  1.,  5.,  6.])
+
+    Given a square matrix,
+
+    >>> P = np.array([[19, 3], [-2, 26]])
+    >>> np.poly(P)
+    array([   1.,  -45.,  500.])
 
     """
     seq_of_zeros = atleast_1d(seq_of_zeros)
@@ -86,11 +120,35 @@ def poly(seq_of_zeros):
     return a
 
 def roots(p):
-    """ Return the roots of the polynomial coefficients in p.
+    """
+    Return the roots of a polynomial with coefficients given in p.
 
-        The values in the rank-1 array p are coefficients of a polynomial.
-        If the length of p is n+1 then the polynomial is
-        p[0] * x**n + p[1] * x**(n-1) + ... + p[n-1]*x + p[n]
+    The values in the rank-1 array `p` are coefficients of a polynomial.
+    If the length of `p` is n+1 then the polynomial is described by
+    p[0] * x**n + p[1] * x**(n-1) + ... + p[n-1]*x + p[n]
+
+    Parameters
+    ----------
+    p : (N,) array_like
+        Rank-1 array of polynomial co-efficients.
+
+    Returns
+    -------
+    out : ndarray
+        An array containing the complex roots of the polynomial.
+
+    Raises
+    ------
+    ValueError:
+        When `p` cannot be converted to a rank-1 array.
+
+    Examples
+    --------
+
+    >>> coeff = [3.2, 2, 1]
+    >>> print np.roots(coeff)
+    [-0.3125+0.46351241j -0.3125-0.46351241j]
+
     """
     # If input is scalar, this makes it an array
     p = atleast_1d(p)
@@ -128,12 +186,70 @@ def roots(p):
     return roots
 
 def polyint(p, m=1, k=None):
-    """Return the mth analytical integral of the polynomial p.
+    """
+    Return an antiderivative (indefinite integral) of a polynomial.
 
-    If k is None, then zero-valued constants of integration are used.
-    otherwise, k should be a list of length m (or a scalar if m=1) to
-    represent the constants of integration to use for each integration
-    (starting with k[0])
+    The returned order `m` antiderivative `P` of polynomial `p` satisfies
+    :math:`\\frac{d^m}{dx^m}P(x) = p(x)` and is defined up to `m - 1`
+    integration constants `k`. The constants determine the low-order
+    polynomial part
+
+    .. math:: \\frac{k_{m-1}}{0!} x^0 + \\ldots + \\frac{k_0}{(m-1)!}x^{m-1}
+
+    of `P` so that :math:`P^{(j)}(0) = k_{m-j-1}`.
+
+    Parameters
+    ----------
+    p : poly1d or sequence
+        Polynomial to differentiate.
+        A sequence is interpreted as polynomial coefficients, see `poly1d`.
+    m : int, optional
+        Order of the antiderivative. (Default: 1)
+    k : {None, list of `m` scalars, scalar}, optional
+        Integration constants. They are given in the order of integration:
+        those corresponding to highest-order terms come first.
+
+        If ``None`` (default), all constants are assumed to be zero.
+        If `m = 1`, a single scalar can be given instead of a list.
+
+    See Also
+    --------
+    polyder : derivative of a polynomial
+    poly1d.integ : equivalent method
+
+    Examples
+    --------
+    The defining property of the antiderivative:
+
+    >>> p = np.poly1d([1,1,1])
+    >>> P = np.polyint(p)
+    poly1d([ 0.33333333,  0.5       ,  1.        ,  0.        ])
+    >>> np.polyder(P) == p
+    True
+
+    The integration constants default to zero, but can be specified:
+
+    >>> P = np.polyint(p, 3)
+    >>> P(0)
+    0.0
+    >>> np.polyder(P)(0)
+    0.0
+    >>> np.polyder(P, 2)(0)
+    0.0
+    >>> P = np.polyint(p, 3, k=[6,5,3])
+    >>> P
+    poly1d([ 0.01666667,  0.04166667,  0.16666667,  3.,  5.,  3. ])
+
+    Note that 3 = 6 / 2!, and that the constants are given in the order of
+    integrations. Constant of the highest-order polynomial term comes first:
+
+    >>> np.polyder(P, 2)(0)
+    6.0
+    >>> np.polyder(P, 1)(0)
+    5.0
+    >>> P(0)
+    3.0
+
     """
     m = int(m)
     if m < 0:
@@ -160,7 +276,55 @@ def polyint(p, m=1, k=None):
         return val
 
 def polyder(p, m=1):
-    """Return the mth derivative of the polynomial p.
+    """
+    Return the derivative of order m of a polynomial.
+
+    Parameters
+    ----------
+    p : poly1d or sequence
+        Polynomial to differentiate.
+        A sequence is interpreted as polynomial coefficients, see `poly1d`.
+    m : int, optional
+        Order of differentiation (default: 1)
+
+    Returns
+    -------
+    der : poly1d
+        A new polynomial representing the derivative.
+
+    See Also
+    --------
+    polyint : Anti-derivative of a polynomial.
+
+    Examples
+    --------
+    The derivative of the polynomial :math:`x^3 + x^2 + x^1 + 1` is:
+
+    >>> p = np.poly1d([1,1,1,1])
+    >>> p2 = np.polyder(p)
+    >>> p2
+    poly1d([3, 2, 1])
+
+    which evaluates to:
+
+    >>> p2(2.)
+    17.0
+
+    We can verify this, approximating the derivative with
+    ``(f(x + h) - f(x))/h``:
+
+    >>> (p(2. + 0.001) - p(2.)) / 0.001
+    17.007000999997857
+
+    The fourth-order derivative of a 3rd-order polynomial is zero:
+
+    >>> np.polyder(p, 2)
+    poly1d([6, 2])
+    >>> np.polyder(p, 3)
+    poly1d([6])
+    >>> np.polyder(p, 4)
+    poly1d([ 0.])
+
     """
     m = int(m)
     truepoly = isinstance(p, poly1d)
@@ -178,107 +342,134 @@ def polyder(p, m=1):
         return val
 
 def polyfit(x, y, deg, rcond=None, full=False):
-    """Least squares polynomial fit.
+    """
+    Least squares polynomial fit.
 
-    Do a best fit polynomial of degree 'deg' of 'x' to 'y'.  Return value is a
-    vector of polynomial coefficients [pk ... p1 p0].  Eg, for n=2
-
-        p2*x0^2 +  p1*x0 + p0 = y1
-        p2*x1^2 +  p1*x1 + p0 = y1
-        p2*x2^2 +  p1*x2 + p0 = y2
-        .....
-        p2*xk^2 +  p1*xk + p0 = yk
+    Fit a polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
+    to points `(x, y)`. Returns a vector of coefficients `p` that minimises
+    the squared error.
 
     Parameters
     ----------
-    x : array_like
-        1D vector of sample points.
-    y : array_like
-        1D vector or 2D array of values to fit. The values should run down the
-        columes in the 2D case.
-    deg : integer
+    x : array_like, shape (M,)
+        x-coordinates of the M sample points ``(x[i], y[i])``.
+    y : array_like, shape (M,) or (M, K)
+        y-coordinates of the sample points. Several data sets of sample
+        points sharing the same x-coordinates can be fitted at once by
+        passing in a 2D-array that contains one dataset per column.
+    deg : int
         Degree of the fitting polynomial
-    rcond: {None, float}, optional
+    rcond : float, optional
         Relative condition number of the fit. Singular values smaller than this
-        relative to the largest singular value will be ignored. The defaul value
-        is len(x)*eps, where eps is the relative precision of the float type,
-        about 2e-16 in most cases.
-    full : {False, boolean}, optional
-        Switch determining nature of return value. When it is False just the
-        coefficients are returned, when True diagnostic information from the
-        singular value decomposition is also returned.
+        relative to the largest singular value will be ignored. The default
+        value is len(x)*eps, where eps is the relative precision of the float
+        type, about 2e-16 in most cases.
+    full : bool, optional
+        Switch determining nature of return value. When it is
+        False (the default) just the coefficients are returned, when True
+        diagnostic information from the singular value decomposition is also
+        returned.
 
     Returns
     -------
-    coefficients, [residuals, rank, singular_values, rcond] : variable
-        When full=False, only the coefficients are returned, running down the
-        appropriate colume when y is a 2D array. When full=True, the rank of the
-        scaled Vandermonde matrix, it's effective rank in light of the rcond
-        value, its singular values, and the specified value of rcond are also
-        returned.
+    p : ndarray, shape (M,) or (M, K)
+        Polynomial coefficients, highest power first.
+        If `y` was 2-D, the coefficients for `k`-th data set are in ``p[:,k]``.
+
+    residuals, rank, singular_values, rcond : present only if `full` = True
+        Residuals of the least-squares fit, the effective rank of the scaled
+        Vandermonde coefficient matrix, its singular values, and the specified
+        value of `rcond`. For more details, see `linalg.lstsq`.
 
     Warns
     -----
-    RankWarning : if rank is reduced and not full output
-        The warnings can be turned off by:
-        >>> import warnings
-        >>> warnings.simplefilter('ignore',np.RankWarning)
+    RankWarning
+        The rank of the coefficient matrix in the least-squares fit is
+        deficient. The warning is only raised if `full` = False.
 
+        The warnings can be turned off by
+
+        >>> import warnings
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
-    polyval : computes polynomial values.
+    polyval : Computes polynomial values.
+    linalg.lstsq : Computes a least-squares fit.
+    scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    If X is a the Vandermonde Matrix computed from x (see
-    http://mathworld.wolfram.com/VandermondeMatrix.html), then the
-    polynomial least squares solution is given by the 'p' in
+    The solution minimizes the squared error
 
-        X*p = y
+    .. math ::
+        E = \\sum_{j=0}^k |p(x_j) - y_j|^2
 
-    where X.shape is a matrix of dimensions (len(x), deg + 1), p is a vector of
-    dimensions (deg + 1, 1), and y is a vector of dimensions (len(x), 1).
+    in the equations::
 
-    This equation can be solved as
+        x[0]**n * p[n] + ... + x[0] * p[1] + p[0] = y[0]
+        x[1]**n * p[n] + ... + x[1] * p[1] + p[0] = y[1]
+        ...
+        x[k]**n * p[n] + ... + x[k] * p[1] + p[0] = y[k]
 
-        p = (XT*X)^-1 * XT * y
+    The coefficient matrix of the coefficients `p` is a Vandermonde matrix.
 
-    where XT is the transpose of X and -1 denotes the inverse. However, this
-    method is susceptible to rounding errors and generally the singular value
-    decomposition of the matrix X is preferred and that is what is done here.
-    The singular value method takes a paramenter, 'rcond', which sets a limit on
-    the relative size of the smallest singular value to be used in solving the
-    equation. This may result in lowering the rank of the Vandermonde matrix, in
-    which case a RankWarning is issued. If polyfit issues a RankWarning, try a
-    fit of lower degree or replace x by x - x.mean(), both of which will
-    generally improve the condition number. The routine already normalizes the
-    vector x by its maximum absolute value to help in this regard. The rcond
-    parameter can be set to a value smaller than its default, but the resulting
-    fit may be spurious. The current default value of rcond is len(x)*eps, where
-    eps is the relative precision of the floating type being used, generally
-    around 1e-7 and 2e-16 for IEEE single and double precision respectively.
-    This value of rcond is fairly conservative but works pretty well when x -
-    x.mean() is used in place of x.
+    `polyfit` issues a `RankWarning` when the least-squares fit is badly
+    conditioned. This implies that the best fit is not well-defined due
+    to numerical error. The results may be improved by lowering the polynomial
+    degree or by replacing `x` by `x` - `x`.mean(). The `rcond` parameter
+    can also be set to a value smaller than its default, but the resulting
+    fit may be spurious: including contributions from the small singular
+    values can add numerical noise to the result.
 
+    Note that fitting polynomial coefficients is inherently badly conditioned
+    when the degree of the polynomial is large or the interval of sample points
+    is badly centered. The quality of the fit should always be checked in these
+    cases. When polynomial fits are not satisfactory, splines may be a good
+    alternative.
 
-    DISCLAIMER: Power series fits are full of pitfalls for the unwary once the
-    degree of the fit becomes large or the interval of sample points is badly
-    centered. The problem is that the powers x**n are generally a poor basis for
-    the polynomial functions on the sample interval, resulting in a Vandermonde
-    matrix is ill conditioned and coefficients sensitive to rounding erros. The
-    computation of the polynomial values will also sensitive to rounding errors.
-    Consequently, the quality of the polynomial fit should be checked against
-    the data whenever the condition number is large.  The quality of polynomial
-    fits *can not* be taken for granted. If all you want to do is draw a smooth
-    curve through the y values and polyfit is not doing the job, try centering
-    the sample range or look into scipy.interpolate, which includes some nice
-    spline fitting functions that may be of use.
+    References
+    ----------
+    .. [1] Wikipedia, "Curve fitting",
+           http://en.wikipedia.org/wiki/Curve_fitting
+    .. [2] Wikipedia, "Polynomial interpolation",
+           http://en.wikipedia.org/wiki/Polynomial_interpolation
 
-    For more info, see
-    http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
-    but note that the k's and n's in the superscripts and subscripts
-    on that page.  The linear algebra is correct, however.
+    Examples
+    --------
+    >>> x = np.array([0.0, 1.0, 2.0, 3.0,  4.0,  5.0])
+    >>> y = np.array([0.0, 0.8, 0.9, 0.1, -0.8, -1.0])
+    >>> z = np.polyfit(x, y, 3)
+    array([ 0.08703704, -0.81349206,  1.69312169, -0.03968254])
+
+    It is convenient to use `poly1d` objects for dealing with polynomials:
+
+    >>> p = np.poly1d(z)
+    >>> p(0.5)
+    0.6143849206349179
+    >>> p(3.5)
+    -0.34732142857143039
+    >>> p(10)
+    22.579365079365115
+
+    High-order polynomials may oscillate wildly:
+
+    >>> p30 = np.poly1d(np.polyfit(x, y, 30))
+    /... RankWarning: Polyfit may be poorly conditioned...
+    >>> p30(4)
+    -0.80000000000000204
+    >>> p30(5)
+    -0.99999999999999445
+    >>> p30(4.5)
+    -0.10547061179440398
+
+    Illustration:
+
+    >>> import matplotlib.pyplot as plt
+    >>> xp = np.linspace(-2, 6, 100)
+    >>> plt.plot(x, y, '.', xp, p(xp), '-', xp, p30(xp), '--')
+    >>> plt.ylim(-2,2)
+    >>> plt.show()
 
     """
     order = int(deg) + 1
@@ -330,36 +521,48 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
 
 def polyval(p, x):
-    """Evaluate the polynomial p at x.
+    """
+    Evaluate the polynomial p at x.
 
     If p is of length N, this function returns the value:
 
         p[0]*(x**N-1) + p[1]*(x**N-2) + ... + p[N-2]*x + p[N-1]
 
-    If x is a sequence then p(x) will be returned for all elements of x. If x is
-    another polynomial then the composite polynomial p(x) will be returned.
+    If x is a sequence then p(x) will be returned for all elements of x.
+    If x is another polynomial then the composite polynomial p(x) will
+    be returned.
 
     Parameters
     ----------
     p : {array_like, poly1d}
-        1D array of polynomial coefficients from highest degree to zero or an
-        instance of poly1d.
+       1D array of polynomial coefficients from highest degree to zero or an
+       instance of poly1d.
     x : {array_like, poly1d}
-        A number, a 1D array of numbers, or an instance of poly1d.
+       A number, a 1D array of numbers, or an instance of poly1d.
 
     Returns
     -------
     values : {array, poly1d}
-        If either p or x is an instance of poly1d, then an instance of poly1d is
-        returned, otherwise a 1D array is returned. In the case where x is a
-        poly1d, the result is the composition of the two polynomials, i.e.,
-        substitution is used.
+       If either p or x is an instance of poly1d, then an instance of poly1d
+       is returned, otherwise a 1D array is returned. In the case where x is
+       a poly1d, the result is the composition of the two polynomials, i.e.,
+       substitution is used.
+
+    See Also
+    --------
+    poly1d: A polynomial class.
 
     Notes
     -----
-    Horners method is used to evaluate the polynomial. Even so, for polynomial
-    if high degree the values may be inaccurate due to rounding errors. Use
-    carefully.
+    Horner's method is used to evaluate the polynomial. Even so, for
+    polynomials of high degree the values may be inaccurate due to
+    rounding errors. Use carefully.
+
+
+    Examples
+    --------
+    >>> np.polyval([3,0,1], 5)  # 3 * 5**2 + 0 * 5**1 + 1
+    76
 
     """
     p = NX.asarray(p)
@@ -473,24 +676,90 @@ def _raise_power(astr, wrap=70):
 
 
 class poly1d(object):
-    """A one-dimensional polynomial class.
+    """
+    A one-dimensional polynomial class.
 
-    p = poly1d([1,2,3]) constructs the polynomial x**2 + 2 x + 3
+    Parameters
+    ----------
+    c_or_r : array_like
+        Polynomial coefficients, in decreasing powers.  E.g.,
+        ``(1, 2, 3)`` implies :math:`x^2 + 2x + 3`.  If `r` is set
+        to True, these coefficients specify the polynomial roots
+        (values where the polynomial evaluate to 0) instead.
+    r : bool, optional
+        If True, `c_or_r` gives the polynomial roots.  Default is False.
 
-    p(0.5) evaluates the polynomial at the location
-    p.r  is a list of roots
-    p.c  is the coefficient array [1,2,3]
-    p.order is the polynomial order (after leading zeros in p.c are removed)
-    p[k] is the coefficient on the kth power of x (backwards from
-         sequencing the coefficient array.
+    Examples
+    --------
+    Construct the polynomial :math:`x^2 + 2x + 3`:
 
-    polynomials can be added, substracted, multplied and divided (returns
-         quotient and remainder).
-    asarray(p) will also give the coefficient array, so polynomials can
-         be used in all functions that accept arrays.
+    >>> p = np.poly1d([1, 2, 3])
+    >>> print np.poly1d(p)
+       2
+    1 x + 2 x + 3
 
-    p = poly1d([1,2,3], variable='lambda') will use lambda in the
-    string representation of p.
+    Evaluate the polynomial:
+
+    >>> p(0.5)
+    4.25
+
+    Find the roots:
+
+    >>> p.r
+    array([-1.+1.41421356j, -1.-1.41421356j])
+
+    Show the coefficients:
+
+    >>> p.c
+    array([1, 2, 3])
+
+    Display the order (the leading zero-coefficients are removed):
+
+    >>> p.order
+    2
+
+    Show the coefficient of the k-th power in the polynomial
+    (which is equivalent to ``p.c[-(i+1)]``):
+
+    >>> p[1]
+    2
+
+    Polynomials can be added, substracted, multplied and divided
+    (returns quotient and remainder):
+
+    >>> p * p
+    poly1d([ 1,  4, 10, 12,  9])
+
+    >>> (p**3 + 4) / p
+    (poly1d([  1.,   4.,  10.,  12.,   9.]), poly1d([4]))
+
+    ``asarray(p)`` gives the coefficient array, so polynomials can be
+    used in all functions that accept arrays:
+
+    >>> p**2 # square of polynomial
+    poly1d([ 1,  4, 10, 12,  9])
+
+    >>> np.square(p) # square of individual coefficients
+    array([1, 4, 9])
+
+    The variable used in the string representation of `p` can be modified,
+    using the `variable` parameter:
+
+    >>> p = np.poly1d([1,2,3], variable='z')
+    >>> print p
+       2
+    1 z + 2 z + 3
+
+    Construct a polynomial from its roots:
+
+    >>> np.poly1d([1, 2], True)
+    poly1d([ 1, -3,  2])
+
+    This is the same polynomial as obtained by:
+
+    >>> np.poly1d([1, -1]) * np.poly1d([1, -2])
+    poly1d([ 1, -3,  2])
+
     """
     coeffs = None
     order = None
@@ -686,13 +955,28 @@ class poly1d(object):
         return iter(self.coeffs)
 
     def integ(self, m=1, k=0):
-        """Return the mth analytical integral of this polynomial.
-        See the documentation for polyint.
+        """
+        Return an antiderivative (indefinite integral) of this polynomial.
+
+        Refer to `polyint` for full documentation.
+
+        See Also
+        --------
+        polyint : equivalent function
+
         """
         return poly1d(polyint(self.coeffs, m=m, k=k))
 
     def deriv(self, m=1):
-        """Return the mth derivative of this polynomial.
+        """
+        Return a derivative of this polynomial.
+
+        Refer to `polyder` for full documentation.
+
+        See Also
+        --------
+        polyder : equivalent function
+
         """
         return poly1d(polyder(self.coeffs, m=m))
 

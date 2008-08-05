@@ -1,3 +1,15 @@
+"""
+Aliases for functions which may be accelerated by Scipy.
+
+Scipy_ can be built to use accelerated or otherwise improved libraries
+for FFTs, linear algebra, and special functions. This module allows
+developers to transparently support these accelerated functions when
+scipy is available but still support users who have only installed
+Numpy.
+
+.. _Scipy : http://www.scipy.org
+
+"""
 # This module should be used for functions both in numpy and scipy if
 #  you want to use the numpy version if available but the scipy version
 #  otherwise.

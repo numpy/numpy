@@ -133,7 +133,8 @@ def _assertNonEmpty(*arrays):
 # Linear equations
 
 def tensorsolve(a, b, axes=None):
-    """Solve the tensor equation a x = b for x
+    """
+    Solve the tensor equation a x = b for x
 
     It is assumed that all indices of x are summed over in the product,
     together with the rightmost indices of a, similarly as in
@@ -141,10 +142,10 @@ def tensorsolve(a, b, axes=None):
 
     Parameters
     ----------
-    a : array-like, shape b.shape+Q
+    a : array_like, shape b.shape+Q
         Coefficient tensor. Shape Q of the rightmost indices of a must
         be such that a is 'square', ie., prod(Q) == prod(b.shape).
-    b : array-like, any shape
+    b : array_like, any shape
         Right-hand tensor.
     axes : tuple of integers
         Axes in a to reorder to the right, before inversion.
@@ -189,18 +190,39 @@ def tensorsolve(a, b, axes=None):
     return res
 
 def solve(a, b):
-    """Solve the equation a x = b
+    """
+    Solve the equation ``a x = b`` for ``x``.
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
-    b : array-like, shape (M,)
+    a : array_like, shape (M, M)
+        Input equation coefficients.
+    b : array_like, shape (M,)
+        Equation target values.
 
     Returns
     -------
     x : array, shape (M,)
 
-    Raises LinAlgError if a is singular or not square
+    Raises
+    ------
+    LinAlgError
+        If `a` is singular or not square.
+
+    Examples
+    --------
+    Solve the system of equations ``3 * x0 + x1 = 9`` and ``x0 + 2 * x1 = 8``:
+
+    >>> a = np.array([[3,1], [1,2]])
+    >>> b = np.array([9,8])
+    >>> x = np.linalg.solve(a, b)
+    >>> x
+    array([ 2.,  3.])
+
+    Check that the solution is correct:
+
+    >>> (np.dot(a, x) == b).all()
+    True
 
     """
     a, _ = _makearray(a)
@@ -232,7 +254,8 @@ def solve(a, b):
 
 
 def tensorinv(a, ind=2):
-    """Find the 'inverse' of a N-d array
+    """
+    Find the 'inverse' of a N-d array
 
     The result is an inverse corresponding to the operation
     tensordot(a, b, ind), ie.,
@@ -244,7 +267,7 @@ def tensorinv(a, ind=2):
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Tensor to 'invert'. Its shape must 'square', ie.,
         prod(a.shape[:ind]) == prod(a.shape[ind:])
     ind : integer > 0
@@ -275,6 +298,7 @@ def tensorinv(a, ind=2):
     >>> b = np.random.randn(24)
     >>> np.allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
     True
+
     """
     a = asarray(a)
     oldshape = a.shape
@@ -293,19 +317,23 @@ def tensorinv(a, ind=2):
 # Matrix inversion
 
 def inv(a):
-    """Compute the inverse of a matrix.
+    """
+    Compute the inverse of a matrix.
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
+    a : array_like, shape (M, M)
         Matrix to be inverted
 
     Returns
     -------
-    ainv : array-like, shape (M, M)
-        Inverse of the matrix a
+    ainv : ndarray, shape (M, M)
+        Inverse of the matrix `a`
 
-    Raises LinAlgError if a is singular or not square
+    Raises
+    ------
+    LinAlgError
+        If `a` is singular or not square.
 
     Examples
     --------
@@ -326,22 +354,40 @@ def inv(a):
 
 def cholesky(a):
     """
-    Compute the Cholesky decomposition of a matrix.
+    Cholesky decomposition.
 
-    Returns the Cholesky decomposition, :math:`A = L L^*` of a Hermitian
+    Return the Cholesky decomposition, :math:`A = L L^*` of a Hermitian
     positive-definite matrix :math:`A`.
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
-        Matrix to be decomposed
+    a : array_like, shape (M, M)
+        Hermitian (symmetric, if it is real) and positive definite
+        input matrix.
 
     Returns
     -------
-    L : array-like, shape (M, M)
-        Lower-triangular Cholesky factor of A
+    L : array_like, shape (M, M)
+        Lower-triangular Cholesky factor of A.
 
-    Raises LinAlgError if decomposition fails
+    Raises
+    ------
+    LinAlgError
+       If the decomposition fails.
+
+    Notes
+    -----
+    The Cholesky decomposition is often used as a fast way of solving
+
+    .. math:: A \\mathbf{x} = \\mathbf{b}.
+
+    First, we solve for :math:`\\mathbf{y}` in
+
+    .. math:: L \\mathbf{y} = \\mathbf{b},
+
+    and then for :math:`\\mathbf{x}` in
+
+    .. math:: L^* \\mathbf{x} = \\mathbf{y}.
 
     Examples
     --------
@@ -378,14 +424,15 @@ def cholesky(a):
 # QR decompostion
 
 def qr(a, mode='full'):
-    """Compute QR decomposition of a matrix.
+    """
+    Compute QR decomposition of a matrix.
 
     Calculate the decomposition :math:`A = Q R` where Q is orthonormal
     and R upper triangular.
 
     Parameters
     ----------
-    a : array-like, shape (M, N)
+    a : array_like, shape (M, N)
         Matrix to be decomposed
     mode : {'full', 'r', 'economic'}
         Determines what information is to be returned. 'full' is the default.
@@ -505,24 +552,26 @@ def qr(a, mode='full'):
 
 
 def eigvals(a):
-    """Compute the eigenvalues of a general matrix.
+    """
+    Compute the eigenvalues of a general matrix.
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
+    a : array_like, shape (M, M)
         A complex or real matrix whose eigenvalues and eigenvectors
         will be computed.
 
     Returns
     -------
-    w : double or complex array, shape (M,)
+    w : ndarray, shape (M,)
         The eigenvalues, each repeated according to its multiplicity.
         They are not necessarily ordered, nor are they necessarily
         real for real matrices.
 
-    If a is a matrix, so is w.
-
-    Raises LinAlgError if eigenvalue computation does not converge
+    Raises
+    ------
+    LinAlgError
+        If the eigenvalue computation does not converge.
 
     See Also
     --------
@@ -587,25 +636,29 @@ def eigvals(a):
 
 
 def eigvalsh(a, UPLO='L'):
-    """Compute the eigenvalues of a Hermitean or real symmetric matrix.
+    """
+    Compute the eigenvalues of a Hermitean or real symmetric matrix.
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
+    a : array_like, shape (M, M)
         A complex or real matrix whose eigenvalues and eigenvectors
         will be computed.
-    UPLO : {'L', 'U'}
-        Specifies whether the pertinent array data is taken from the upper
-        or lower triangular part of a. Possible values are 'L', and 'U' for
-        upper and lower respectively. Default is 'L'.
+    UPLO : {'L', 'U'}, optional
+        Specifies whether the calculation is done with data from the
+        lower triangular part of `a` ('L', default) or the upper triangular
+        part ('U').
 
     Returns
     -------
-    w : double array, shape (M,)
+    w : ndarray, shape (M,)
         The eigenvalues, each repeated according to its multiplicity.
         They are not necessarily ordered.
 
-    Raises LinAlgError if eigenvalue computation does not converge
+    Raises
+    ------
+    LinAlgError
+        If the eigenvalue computation does not converge.
 
     See Also
     --------
@@ -674,27 +727,28 @@ def _convertarray(a):
 
 
 def eig(a):
-    """Compute eigenvalues and right eigenvectors of a general matrix.
+    """
+    Compute eigenvalues and right eigenvectors of an array.
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
-        A complex or real 2-d array whose eigenvalues and eigenvectors
-        will be computed.
+    a : array_like, shape (M, M)
+        A complex or real 2-D array.
 
     Returns
     -------
-    w : double or complex array, shape (M,)
+    w : ndarray, shape (M,)
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered, nor are they
         necessarily real for real matrices.
-    v : double or complex array, shape (M, M)
-        The normalized eigenvector corresponding to the eigenvalue w[i] is
-        the column v[:,i].
+    v : ndarray, shape (M, M)
+        The normalized eigenvector corresponding to the eigenvalue ``w[i]`` is
+        the column ``v[:,i]``.
 
-    If a is a matrix, so are all the return values.
-
-    Raises LinAlgError if eigenvalue computation does not converge
+    Raises
+    ------
+    LinAlgError
+        If the eigenvalue computation does not converge.
 
     See Also
     --------
@@ -708,17 +762,17 @@ def eig(a):
     that compute the eigenvalues and eigenvectors of general real and
     complex arrays respectively.
 
-    The number w is an eigenvalue of a if there exists a vector v
-    satisfying the equation dot(a,v) = w*v. Alternately, if w is a root of
-    the characteristic equation det(a - w[i]*I) = 0, where det is the
-    determinant and I is the identity matrix. The arrays a, w, and v
-    satisfy the equation dot(a,v[i]) = w[i]*v[:,i].
+    The number `w` is an eigenvalue of a if there exists a vector `v`
+    satisfying the equation ``dot(a,v) = w*v``. Alternately, if `w` is a root of
+    the characteristic equation ``det(a - w[i]*I) = 0``, where `det` is the
+    determinant and `I` is the identity matrix. The arrays `a`, `w`, and `v`
+    satisfy the equation ``dot(a,v[i]) = w[i]*v[:,i]``.
 
-    The array v of eigenvectors may not be of maximum rank, that is, some
+    The array `v` of eigenvectors may not be of maximum rank, that is, some
     of the columns may be dependent, although roundoff error may obscure
     that fact. If the eigenvalues are all different, then theoretically the
     eigenvectors are independent. Likewise, the matrix of eigenvectors is
-    unitary if the matrix a is normal, i.e., if dot(a, a.H) = dot(a.H, a).
+    unitary if the matrix `a` is normal, i.e., if ``dot(a, a.H) = dot(a.H, a)``.
 
     The left and right eigenvectors are not necessarily the (Hermitian)
     transposes of each other.
@@ -779,29 +833,30 @@ def eig(a):
 
 
 def eigh(a, UPLO='L'):
-    """Compute eigenvalues for a Hermitian or real symmetric matrix.
+    """
+    Eigenvalues and eigenvectors of a Hermitian or real symmetric matrix.
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
-        A complex Hermitian or symmetric real matrix whose eigenvalues
-        and eigenvectors will be computed.
-    UPLO : {'L', 'U'}
-        Specifies whether the pertinent array date is taken from the upper
-        or lower triangular part of a. Possible values are 'L', and 'U'.
-        Default is 'L'.
+    a : array_like, shape (M, M)
+        A complex Hermitian or symmetric real matrix.
+    UPLO : {'L', 'U'}, optional
+        Specifies whether the calculation is done with data from the
+        lower triangular part of `a` ('L', default) or the upper triangular
+        part ('U').
 
     Returns
     -------
-    w : double array, shape (M,)
+    w : ndarray, shape (M,)
         The eigenvalues. The eigenvalues are not necessarily ordered.
-    v : double or complex double array, shape (M, M)
+    v : ndarray, shape (M, M)
         The normalized eigenvector corresponding to the eigenvalue w[i] is
         the column v[:,i].
 
-    If a is a matrix, then so are the return values.
-
-    Raises LinAlgError if eigenvalue computation does not converge
+    Raises
+    ------
+    LinAlgError
+        If the eigenvalue computation does not converge.
 
     See Also
     --------
@@ -822,6 +877,7 @@ def eigh(a, UPLO='L'):
     symmetric or complex Hermitean matrices are always real. The array v
     of eigenvectors is unitary and a, w, and v satisfy the equation
     dot(a,v[i]) = w[i]*v[:,i].
+
     """
     a, wrap = _makearray(a)
     _assertRank2(a)
@@ -867,34 +923,44 @@ def eigh(a, UPLO='L'):
 # Singular value decomposition
 
 def svd(a, full_matrices=1, compute_uv=1):
-    """Singular Value Decomposition.
+    """
+    Singular Value Decomposition.
 
-    Factorizes the matrix a into two unitary matrices U and Vh and
-    an 1d-array s of singular values (real, non-negative) such that
-    a == U S Vh  if S is an suitably shaped matrix of zeros whose
-    main diagonal is s.
+    Factorizes the matrix `a` into two unitary matrices, ``U`` and ``Vh``,
+    and a 1-dimensional array of singular values, ``s`` (real, non-negative),
+    such that ``a == U S Vh``, where ``S`` is the diagonal
+    matrix ``np.diag(s)``.
 
     Parameters
     ----------
-    a : array-like, shape (M, N)
+    a : array_like, shape (M, N)
         Matrix to decompose
-    full_matrices : boolean
-        If true,  U, Vh are shaped  (M,M), (N,N)
-        If false, the shapes are    (M,K), (K,N) where K = min(M,N)
+    full_matrices : boolean, optional
+        If True (default), ``U`` and ``Vh`` are shaped
+        ``(M,M)`` and ``(N,N)``.  Otherwise, the shapes are
+        ``(M,K)`` and ``(K,N)``, where ``K = min(M,N)``.
     compute_uv : boolean
-        Whether to compute U and Vh in addition to s
+        Whether to compute ``U`` and ``Vh`` in addition to ``s``.
+        True by default.
 
     Returns
     -------
-    U:  array, shape (M,M) or (M,K) depending on full_matrices
-    s:  array, shape (K,)
-        The singular values, sorted so that s[i] >= s[i+1]
-        K = min(M, N)
-    Vh: array, shape (N,N) or (K,N) depending on full_matrices
+    U : ndarray, shape (M, M) or (M, K) depending on `full_matrices`
+        Unitary matrix.
+    s :  ndarray, shape (K,) where ``K = min(M, N)``
+        The singular values, sorted so that ``s[i] >= s[i+1]``.
+    Vh : ndarray, shape (N,N) or (K,N) depending on `full_matrices`
+        Unitary matrix.
 
-    If a is a matrix, so are all the return values.
+    Raises
+    ------
+    LinAlgError
+        If SVD computation does not converge.
 
-    Raises LinAlgError if SVD computation does not converge
+    Notes
+    -----
+    If `a` is a matrix (in contrast to an ndarray), then so are all
+    the return values.
 
     Examples
     --------
@@ -913,6 +979,7 @@ def svd(a, full_matrices=1, compute_uv=1):
     >>> s2 = np.linalg.svd(a, compute_uv=False)
     >>> np.allclose(s, s2)
     True
+
     """
     a, wrap = _makearray(a)
     _assertRank2(a)
@@ -973,19 +1040,21 @@ def svd(a, full_matrices=1, compute_uv=1):
         return s
 
 def cond(x, p=None):
-    """Compute the condition number of a matrix.
+    """
+    Compute the condition number of a matrix.
 
-    The condition number of x is the norm of x times the norm
-    of the inverse of x.  The norm can be the usual L2
+    The condition number of `x` is the norm of `x` times the norm
+    of the inverse of `x`.  The norm can be the usual L2
     (root-of-sum-of-squares) norm or a number of other matrix norms.
 
     Parameters
     ----------
-    x : array-like, shape (M, N)
+    x : array_like, shape (M, N)
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}
         Order of the norm:
 
+        =====  ============================
         p      norm for matrices
         =====  ============================
         None   2-norm, computed directly using the SVD
@@ -1002,6 +1071,7 @@ def cond(x, p=None):
     -------
     c : float
         The condition number of the matrix. May be infinite.
+
     """
     x = asarray(x) # in case we have a matrix
     if p is None:
@@ -1013,27 +1083,33 @@ def cond(x, p=None):
 # Generalized inverse
 
 def pinv(a, rcond=1e-15 ):
-    """Compute the (Moore-Penrose) pseudo-inverse of a matrix.
+    """
+    Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
-    Calculate a generalized inverse of a matrix using its
-    singular-value decomposition and including all 'large' singular
-    values.
+    Calculate the generalized inverse of a matrix using its
+    singular-value decomposition (SVD) and including all
+    `large` singular values.
 
     Parameters
     ----------
-    a : array-like, shape (M, N)
-        Matrix to be pseudo-inverted
+    a : array_like (M, N)
+      Matrix to be pseudo-inverted.
     rcond : float
-        Cutoff for 'small' singular values.
-        Singular values smaller than rcond*largest_singular_value are
-        considered zero.
+      Cutoff for `small` singular values.
+      Singular values smaller than rcond*largest_singular_value are
+      considered zero.
 
     Returns
     -------
-    B : array, shape (N, M)
-        If a is a matrix, then so is B.
+    B : ndarray (N, M)
+      The pseudo-inverse of `a`. If `a` is an np.matrix instance, then so
+      is `B`.
 
-    Raises LinAlgError if SVD computation does not converge
+
+    Raises
+    ------
+    LinAlgError
+      In case SVD computation does not converge.
 
     Examples
     --------
@@ -1063,20 +1139,32 @@ def pinv(a, rcond=1e-15 ):
 # Determinant
 
 def det(a):
-    """Compute the determinant of a matrix
+    """
+    Compute the determinant of an array.
 
     Parameters
     ----------
     a : array-like, shape (M, M)
+        Input array.
 
     Returns
     -------
-    det : float or complex
-        Determinant of a
+    det : ndarray
+        Determinant of `a`.
 
     Notes
     -----
-    The determinant is computed via LU factorization, LAPACK routine z/dgetrf.
+    The determinant is computed via LU factorization using the LAPACK
+    routine z/dgetrf.
+
+    Examples
+    --------
+    The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
+
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> np.linalg.det(a)
+    -2.0
+
     """
     a = asarray(a)
     _assertRank2(a)
@@ -1102,36 +1190,81 @@ def det(a):
 # Linear Least Squares
 
 def lstsq(a, b, rcond=-1):
-    """Compute least-squares solution to equation :math:`a x = b`
+    """
+    Return the least-squares solution to an equation.
 
-    Compute a vector x such that the 2-norm :math:`|b - a x|` is minimised.
+    Solves the equation `a x = b` by computing a vector `x` that minimizes
+    the norm `|| b - a x ||`.
 
     Parameters
     ----------
-    a : array-like, shape (M, N)
-    b : array-like, shape (M,) or (M, K)
-    rcond : float
-        Cutoff for 'small' singular values.
-        Singular values smaller than rcond*largest_singular_value are
-        considered zero.
-
-    Raises LinAlgError if computation does not converge
+    a : array_like, shape (M, N)
+        Input equation coefficients.
+    b : array_like, shape (M,) or (M, K)
+        Equation target values.  If `b` is two-dimensional, the least
+        squares solution is calculated for each of the `K` target sets.
+    rcond : float, optional
+        Cutoff for ``small`` singular values of `a`.
+        Singular values smaller than `rcond` times the largest singular
+        value are  considered zero.
 
     Returns
     -------
-    x : array, shape (N,) or (N, K) depending on shape of b
-        Least-squares solution
-    residues : array, shape () or (1,) or (K,)
-        Sums of residues, squared 2-norm for each column in :math:`b - a x`
-        If rank of matrix a is < N or > M this is an empty array.
-        If b was 1-d, this is an (1,) shape array, otherwise the shape is (K,)
+    x : ndarray, shape(N,) or (N, K)
+         Least squares solution.  The shape of `x` depends on the shape of
+         `b`.
+    residues : ndarray, shape(), (1,), or (K,)
+        Sums of residues; squared Euclidian norm for each column in
+        `b - a x`.
+        If the rank of `a` is < N or > M, this is an empty array.
+        If `b` is 1-dimensional, this is a (1,) shape array.
+        Otherwise the shape is (K,).
     rank : integer
-        Rank of matrix a
-    s : array, shape (min(M,N),)
-        Singular values of a
+        Rank of matrix `a`.
+    s : ndarray, shape(min(M,N),)
+        Singular values of `a`.
 
-    If b is a matrix, then all results except the rank are also returned as
+    Raises
+    ------
+    LinAlgError
+        If computation does not converge.
+
+    Notes
+    -----
+    If `b` is a matrix, then all array results returned as
     matrices.
+
+    Examples
+    --------
+    Fit a line, ``y = mx + c``, through some noisy data-points:
+
+    >>> x = np.array([0, 1, 2, 3])
+    >>> y = np.array([-1, 0.2, 0.9, 2.1])
+
+    By examining the coefficients, we see that the line should have a
+    gradient of roughly 1 and cuts the y-axis at more-or-less -1.
+
+    We can rewrite the line equation as ``y = Ap``, where ``A = [[x 1]]``
+    and ``p = [[m], [c]]``.  Now use `lstsq` to solve for `p`:
+
+    >>> A = np.vstack([x, np.ones(len(x))]).T
+    >>> A
+    array([[ 0.,  1.],
+           [ 1.,  1.],
+           [ 2.,  1.],
+           [ 3.,  1.]])
+
+    >>> m, c = np.linalg.lstsq(A, y)[0]
+    >>> print m, c
+    1.0 -0.95
+
+    Plot the data along with the fitted line:
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(x, y, 'o', label='Original data', markersize=10)
+    >>> plt.plot(x, m*x + c, 'r', label='Fitted line')
+    >>> plt.legend()
+    >>> plt.show()
 
     """
     import math
@@ -1199,26 +1332,15 @@ def lstsq(a, b, rcond=-1):
     return wrap(x), wrap(resids), results['rank'], st
 
 def norm(x, ord=None):
-    """Matrix or vector norm.
+    """
+    Matrix or vector norm.
 
     Parameters
     ----------
-    x : array-like, shape (M,) or (M, N)
-    ord : number, or {None, 1, -1, 2, -2, inf, -inf, 'fro'}
-        Order of the norm:
-
-        ord    norm for matrices             norm for vectors
-        =====  ============================  ==========================
-        None   Frobenius norm                2-norm
-        'fro'  Frobenius norm                -
-        inf    max(sum(abs(x), axis=1))      max(abs(x))
-        -inf   min(sum(abs(x), axis=1))      min(abs(x))
-        1      max(sum(abs(x), axis=0))      as below
-        -1     min(sum(abs(x), axis=0))      as below
-        2      2-norm (largest sing. value)  as below
-        -2     smallest singular value       as below
-        other  -                             sum(abs(x)**ord)**(1./ord)
-        =====  ============================  ==========================
+    x : array_like, shape (M,) or (M, N)
+        Input array.
+    ord : {int, 1, -1, 2, -2, inf, -inf, 'fro'}
+        Order of the norm (see table under ``Notes``).
 
     Returns
     -------
@@ -1230,6 +1352,22 @@ def norm(x, ord=None):
     For values ord < 0, the result is, strictly speaking, not a
     mathematical 'norm', but it may still be useful for numerical
     purposes.
+
+    The following norms can be calculated:
+
+    =====  ============================  ==========================
+    ord    norm for matrices             norm for vectors
+    =====  ============================  ==========================
+    None   Frobenius norm                2-norm
+    'fro'  Frobenius norm                --
+    inf    max(sum(abs(x), axis=1))      max(abs(x))
+    -inf   min(sum(abs(x), axis=1))      min(abs(x))
+    1      max(sum(abs(x), axis=0))      as below
+    -1     min(sum(abs(x), axis=0))      as below
+    2      2-norm (largest sing. value)  as below
+    -2     smallest singular value       as below
+    other  --                            sum(abs(x)**ord)**(1./ord)
+    =====  ============================  ==========================
 
     """
     x = asarray(x)

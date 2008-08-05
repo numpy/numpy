@@ -1,3 +1,39 @@
+"""
+Record Arrays
+=============
+Record arrays expose the fields of structured arrays as properties.
+
+Most commonly, ndarrays contain elements of a single type, e.g. floats, integers,
+bools etc.  However, it is possible for elements to be combinations of these,
+such as::
+
+  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', int), ('y', float)])
+  >>> a
+  array([(1, 2.0), (1, 2.0)],
+        dtype=[('x', '<i4'), ('y', '<f8')])
+
+Here, each element consists of two fields: x (and int), and y (a float).
+This is known as a structured array.  The different fields are analogous
+to columns in a spread-sheet.  The different fields can be accessed as
+one would a dictionary::
+
+  >>> a['x']
+  array([1, 1])
+
+  >>> a['y']
+  array([ 2.,  2.])
+
+Record arrays allow us to access fields as properties::
+
+  >>> ar = a.view(np.recarray)
+
+  >>> ar.x
+  array([1, 1])
+
+  >>> ar.y
+  array([ 2.,  2.])
+
+"""
 # All of the functions allow formats to be a dtype
 __all__ = ['record', 'recarray', 'format_parser']
 
@@ -214,27 +250,107 @@ class record(nt.void):
 #  the fields (and any subfields)
 
 class recarray(ndarray):
-    """recarray(shape, dtype=None, buf=None, **kwds)
+    """
+    Construct an ndarray that allows field access using attributes.
 
-    Subclass of ndarray that allows field access using attribute lookup.
+    Arrays may have a data-types containing fields, analagous
+    to columns in a spread sheet.  An example is ``[(x, int), (y, float)]``,
+    where each entry in the array is a pair of ``(int, float)``.  Normally,
+    these attributes are accessed using dictionary lookups such as ``arr['x']``
+    and ``arr['y']``.  Record arrays allow the fields to be accessed as members
+    of the array, using ``arr.x`` and ``arr.y``.
 
     Parameters
     ----------
     shape : tuple
-        shape of record array
-    dtype : data-type or None
-        The desired data-type.  If this is None, then the data-type is determined
-        by the *formats*, *names*, *titles*, *aligned*, and *byteorder* keywords.
-    buf : [buffer] or None
-        If this is None, then a new array is created of the given shape and data-type
-        If this is an object exposing the buffer interface, then the array will
-        use the memory from an existing buffer.  In this case, the *offset* and
-        *strides* keywords can also be used.
+        Shape of output array.
+    dtype : data-type, optional
+        The desired data-type.  By default, the data-type is determined
+        from `formats`, `names`, `titles`, `aligned` and `byteorder`.
+    formats : list of data-types, optional
+        A list containing the data-types for the different columns, e.g.
+        ``['i4', 'f8', 'i4']``.  `formats` does *not* support the new
+        convention of using types directly, i.e. ``(int, float, int)``.
+        Note that `formats` must be a list, not a tuple.
+        Given that `formats` is somewhat limited, we recommend specifying
+        `dtype` instead.
+    names : tuple of strings, optional
+        The name of each column, e.g. ``('x', 'y', 'z')``.
+    buf : buffer, optional
+        By default, a new array is created of the given shape and data-type.
+        If `buf` is specified and is an object exposing the buffer interface,
+        the array will use the memory from the existing buffer.  In this case,
+        the `offset` and `strides` keywords are available.
+
+    Other Parameters
+    ----------------
+    titles : tuple of strings, optional
+        Aliases for column names.  For example, if `names` were
+        ``('x', 'y', 'z')`` and `titles` is
+        ``('x_coordinate', 'y_coordinate', 'z_coordinate')``, then
+        ``arr['x']`` is equivalent to both ``arr.x`` and ``arr.x_coordinate``.
+    byteorder : {'<', '>', '='}, optional
+        Byte-order for all fields.
+    aligned : {True, False}, optional
+        Align the fields in memory as the C-compiler would.
+    strides : tuple of ints, optional
+        Buffer (`buf`) is interpreted according to these strides (strides
+        define how many bytes each array element, row, column, etc.
+        occupy in memory).
+    offset : int, optional
+        Start reading buffer (`buf`) from this offset onwards.
+
+    Returns
+    -------
+    rec : recarray
+        Empty array of the given shape and type.
 
     See Also
     --------
-    format_parser : determine a data-type from formats, names, titles
+    rec.fromrecords : Construct a record array from data.
     record : fundamental data-type for recarray
+    format_parser : determine a data-type from formats, names, titles
+
+    Notes
+    -----
+    This constructor can be compared to ``empty``: it creates a new record
+    array but does not fill it with data.  To create a reccord array from data,
+    use one of the following methods:
+
+    1. Create a standard ndarray and convert it to a record array,
+       using ``arr.view(np.recarray)``
+    2. Use the `buf` keyword.
+    3. Use `np.rec.fromrecords`.
+
+    Examples
+    --------
+    Create an array with two fields, ``x`` and ``y``:
+
+    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', float), ('y', int)])
+    >>> x
+    array([(1.0, 2), (3.0, 4)],
+          dtype=[('x', '<f8'), ('y', '<i4')])
+
+    >>> x['x']
+    array([ 1.,  3.])
+
+    View the array as a record array:
+
+    >>> x = x.view(np.recarray)
+
+    >>> x.x
+    array([ 1.,  3.])
+
+    >>> x.y
+    array([2, 4])
+
+    Create a new, empty record array:
+
+    >>> np.recarray((2,),
+    ... dtype=[('x', int), ('y', float), ('z', int)]) #doctest: +SKIP
+    rec.array([(-1073741821, 1.2249118382103472e-301, 24547520),
+           (3471280, 1.2134086255804012e-316, 0)],
+          dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
 
     """
     def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,

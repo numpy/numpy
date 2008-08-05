@@ -7,7 +7,34 @@ Provides
   2. Fast mathematical operations over arrays
   3. Linear Algebra, Fourier Transforms, Random Number Generation
 
-Documentation is available in the docstrings and at http://www.scipy.org
+How to use the documentation
+----------------------------
+Documentation is available in two forms: docstrings provided
+with the code, and a loose standing reference guide, available from
+`the NumPy homepage <http://www.scipy.org>`_.
+
+We recommend exploring the docstrings using
+`IPython <http://ipython.scipy.org>`_, an advanced Python shell with
+TAB-completion and introspection capabilities.  See below for further
+instructions.
+
+The docstring examples assume that `numpy` has been imported as `np`::
+
+  >>> import numpy as np
+
+Code snippets are indicated by three greater-than signs::
+
+  >>> x = x + 1
+
+Use the built-in ``help`` function to view a function's docstring::
+
+  >>> help(np.sort)
+
+For some objects, ``np.info(obj)`` may provide additional help.
+
+To search for objects of which the documentation contains keywords, do::
+
+  >>> np.lookfor('keyword')
 
 Available subpackages
 ---------------------
@@ -34,19 +61,13 @@ distutils
     Enhancements to distutils with support for
     Fortran compilers support and more.
 
-
 Global symbols from subpackages
 -------------------------------
-========  =================================
-core      all (use numpy.* not numpy.core.*)
-lib       all (use numpy.* not numpy.lib.*)
-testing   NumpyTest
-========  =================================
-
+Do not import directly from `core` and `lib`: those functions
+have been imported into the `numpy` namespace.
 
 Utility tools
 -------------
-
 test
     Run numpy unittests
 pkgload
@@ -59,6 +80,24 @@ matlib
     Make everything matrices.
 __version__
     Numpy version string
+
+Viewing documentation using IPython
+-----------------------------------
+Start IPython with the NumPy profile (``ipython -p numpy``), which will
+import `numpy` under the alias `np`.  Then, use the ``cpaste`` command to
+paste examples into the shell.  To see which functions are available in
+`numpy`, type ``np.<TAB>`` (where ``<TAB>`` refers to the TAB key), or use
+``np.*cos*?<ENTER>`` (where ``<ENTER>`` refers to the ENTER key) to narrow
+down the list.  To view the docstring for a function, use
+``np.cos?<ENTER>`` (to view the docstring) and ``np.cos??<ENTER>`` (to view
+the source code).
+
+Copies vs. in-place operation
+-----------------------------
+Most of the methods in `numpy` return a copy of the array argument (e.g.,
+`sort`).  In-place versions of these methods are often available as
+array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.  Exceptions to
+this rule are documented.
 
 """
 

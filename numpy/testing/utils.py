@@ -126,8 +126,40 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
     return '\n'.join(msg)
 
 def assert_equal(actual,desired,err_msg='',verbose=True):
-    """ Raise an assertion if two items are not
-        equal.  I think this should be part of unittest.py
+    """
+    Raise an assertion if two objects are not equal.
+
+    Given two objects (lists, tuples, dictionaries or numpy arrays), check
+    that all elements of these objects are equal. An exception is raised at
+    the first conflicting values.
+
+    Parameters
+    ----------
+    actual : list, tuple, dict or ndarray
+      The object to check.
+    desired : list, tuple, dict or ndarray
+      The expected object.
+    err_msg : string
+      The error message to be printed in case of failure.
+    verbose : bool
+      If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+      If actual and desired are not equal.
+
+    Examples
+    --------
+    >>> np.testing.assert_equal([4,5], [4,6]) # doctest:+ELLIPSIS
+    ...
+    <type 'exceptions.AssertionError'>:
+    Items are not equal:
+    item=1
+    <BLANKLINE>
+     ACTUAL: 5
+     DESIRED: 6
+
     """
     if isinstance(desired, dict):
         assert isinstance(actual, dict), repr(type(actual))
