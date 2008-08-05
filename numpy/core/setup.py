@@ -189,6 +189,24 @@ def configuration(parent_package='',top_path=None):
                 raise SystemError,"Failed to generate numpy configuration. "\
                       "See previous error messages for more information."
 
+            moredefs = []
+            
+            # Check wether we can use inttypes (C99) formats
+            if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
+                moredefs.append(('NPY_USE_C99_FORMATS', 1))
+            else:
+                moredefs.append(('NPY_USE_C99_FORMATS', 0))
+
+            # Add moredefs to header
+            target_f = open(target,'a')
+            for d in moredefs:
+                if isinstance(d,str):
+                    target_f.write('#define %s\n' % (d))
+                else:
+                    target_f.write('#define %s %s\n' % (d[0],d[1]))
+            target_f.close()
+
+            # Dump the numpyconfig.h header to stdout
             print 'File: %s' % target
             target_f = open(target)
             print target_f.read()

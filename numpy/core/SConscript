@@ -1,4 +1,4 @@
-# Last Change: Mon Jul 28 03:00 PM 2008 J
+# Last Change: Tue Aug 05 12:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -98,6 +98,15 @@ else:
     nosmp = 0
 numpyconfig_sym.append(('NPY_NO_SMP', nosmp))
 
+#----------------------------------------------
+# Check whether we can use C99 printing formats
+#----------------------------------------------
+if config.CheckDeclaration(('PRIdPTR'), includes  = '#include <inttypes.h>'):
+    usec99 = 1
+else:
+    usec99 = 0
+numpyconfig_sym.append(('USE_C99_FORMATS', usec99))
+    
 #----------------------
 # Checking the mathlib
 #----------------------

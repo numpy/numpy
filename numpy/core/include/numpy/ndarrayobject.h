@@ -971,6 +971,13 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_INTP_FMT "Ld"
 #endif
 
+/* We can only use C99 formats for npy_int_p if it is the same as intp_t, hence
+ * the condition on HAVE_UNITPTR_T */
+#if NPY_USE_C99_FORMATS == 1 && HAVE_UINTPRT_T
+        #undef NPY_INTP_FMT
+        #define NPY_INTP_FMT PRIdPTR
+#endif
+
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
