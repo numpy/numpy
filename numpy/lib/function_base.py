@@ -337,6 +337,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
             
             *This warning will not printed in the 1.3 release.*
             
+            Use `new=True` to bypass this warning. 
+            
             Please read the docstring for more information.
             """, Warning)
         a = asarray(a)
