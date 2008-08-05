@@ -191,7 +191,7 @@ def iterable(y):
     except: return 0
     return 1
 
-def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
+def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     """
     Compute the histogram of a set of data.
 
@@ -200,14 +200,15 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
     a : array_like
         Input data.
     bins : int or sequence of scalars, optional
-        If `bins` is an int, it gives the number of equal-width bins in the
-        given range (10, by default).  If `new` is True, bins can also be
-        the bin edges, allowing for non-uniform bin widths.
+        If `bins` is an int, it defines the number of equal-width 
+        bins in the given range (10, by default). If `bins` is a sequence,
+        it defines the bin edges, including the rightmost edge, allowing 
+        for non-uniform bin widths.
     range : (float, float), optional
         The lower and upper range of the bins.  If not provided, range
-        is simply ``(a.min(), a.max())``.  With `new` set to True, values
-        outside the range are ignored.  With `new` set to False, values
-        below the range are ignored, and those above the range are tallied
+        is simply ``(a.min(), a.max())``.  Values outside the range are
+        ignored. Note that with `new` set to False, values below 
+        the range are ignored, while those above the range are tallied
         in the rightmost bin.
     normed : bool, optional
         If False, the result will contain the number of samples
@@ -222,20 +223,22 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
         (instead of 1).  If `normed` is True, the weights are normalized,
         so that the integral of the density over the range remains 1.
         The `weights` keyword is only available with `new` set to True.
-    new : bool, optional
-        Compatibility argument to aid in the transition between the old
-        (v1.1) and the new (v1.2) implementations.  In version 1.2,
-        `new` will be True by default.
+    new : {None, True, False}, optional
+        Whether to use the new semantics for histogram: 
+          * None : the new behaviour is used, and a warning is printed,
+          * True : the new behaviour is used and no warning is printed,
+          * False : the old behaviour is used and a message is printed 
+              warning about future deprecation.
 
     Returns
     -------
     hist : array
         The values of the histogram. See `normed` and `weights` for a
         description of the possible semantics.
-
     bin_edges : array of dtype float
-        With ``new = False``, return the left bin edges (``length(hist)``).
-        With ``new = True``, return the bin edges ``(length(hist)+1)``.
+        Return the bin edges ``(length(hist)+1)``.
+        With ``new=False``, return the left bin edges (``length(hist)``).
+
 
     See Also
     --------
@@ -259,13 +262,20 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
 
     """
     # Old behavior
-    if new is False:
+    if new == False:
         warnings.warn("""
-        The semantics of histogram will be modified in
-        release 1.2 to improve outlier handling. The new behavior can be
-        obtained using new=True. Note that the new version accepts/returns
-        the bin edges instead of the left bin edges.
-        Please read the docstring for more information.""", FutureWarning)
+        The original semantics of histogram is scheduled to be 
+        deprecated in NumPy 1.3. The new semantics fixes 
+        long-standing issues with outliers handling. The main
+        changes concern 
+        1. the definition of the bin edges, 
+           now including the rightmost edge, and 
+        2. the handling of upper outliers, 
+           now ignored rather than tallied in the rightmost bin. 
+           
+        Please read the docstring for more information.
+        """, Warning)
+        
         a = asarray(a).ravel()
 
         if (range is not None):
@@ -277,10 +287,6 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
         if not iterable(bins):
             if range is None:
                 range = (a.min(), a.max())
-            else:
-                warnings.warn("""
-                Outliers handling will change in version 1.2.
-                Please read the docstring for details.""", FutureWarning)
             mn, mx = [mi+0.0 for mi in range]
             if mn == mx:
                 mn -= 0.5
@@ -289,10 +295,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
         else:
             if normed:
                 raise ValueError, 'Use new=True to pass bin edges explicitly.'
-            warnings.warn("""
-            The semantic for bins will change in version 1.2.
-            The bins will become the bin edges, instead of the left bin edges.
-            """, FutureWarning)
+                raise ValueError, 'Use new=True to pass bin edges explicitly.'
             bins = asarray(bins)
             if (np.diff(bins) < 0).any():
                 raise AttributeError, 'bins must increase monotonically.'
@@ -318,7 +321,24 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=False):
 
 
     # New behavior
-    elif new is True:
+    elif new in [True, None]:
+        if new is None:
+            warnings.warn("""
+            The semantics of histogram has been modified in
+            the current release to fix long-standing issues with
+            outliers handling. The main changes concern 
+            1. the definition of the bin edges, 
+               now including the rightmost edge, and 
+            2. the handling of upper outliers, now ignored rather
+               than tallied in the rightmost bin. 
+            The previous behaviour is still accessible using 
+            `new=False`, but is scheduled to be deprecated in the 
+            next release (1.3). 
+            
+            *This warning will not printed in the 1.3 release.*
+            
+            Please read the docstring for more information.
+            """, Warning)
         a = asarray(a)
         if weights is not None:
             weights = asarray(weights)

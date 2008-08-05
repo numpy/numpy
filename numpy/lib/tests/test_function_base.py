@@ -440,10 +440,21 @@ class TestSinc(TestCase):
 
 class TestHistogram(TestCase):
     def setUp(self):
-        warnings.simplefilter('ignore', FutureWarning)
-
+        warnings.simplefilter('ignore', Warning)
+        
     def tearDown(self):
         warnings.resetwarnings()
+
+    def test_simple_old(self):
+        n=100
+        v=rand(n)
+        (a,b)=histogram(v,  new=False)
+        #check if the sum of the bins equals the number of samples
+        assert_equal(sum(a,axis=0), n)
+        #check that the bin counts are evenly spaced when the data is from a
+        # linear function
+        (a,b)=histogram(linspace(0,10,100),  new=False)
+        assert_array_equal(a, 10)
 
     def test_simple(self):
         n=100
@@ -456,94 +467,89 @@ class TestHistogram(TestCase):
         (a,b)=histogram(linspace(0,10,100))
         assert_array_equal(a, 10)
 
-    def test_simple_new(self):
-        n=100
-        v=rand(n)
-        (a,b)=histogram(v, new=True)
-        #check if the sum of the bins equals the number of samples
-        assert_equal(sum(a,axis=0), n)
-        #check that the bin counts are evenly spaced when the data is from a
-        # linear function
-        (a,b)=histogram(linspace(0,10,100), new=True)
-        assert_array_equal(a, 10)
+    def test_one_bin(self):
+        # Ticket 632
+        hist,edges = histogram([1,2,3,4],[1,2])
+        assert_array_equal(hist,[2, ])
+        assert_array_equal(edges,[1,2])
 
-    def test_normed_new(self):
+    def test_normed(self):
         # Check that the integral of the density equals 1.
         n = 100
         v = rand(n)
-        a,b = histogram(v, normed=True, new=True)
+        a,b = histogram(v, normed=True)
         area = sum(a*diff(b))
         assert_almost_equal(area, 1)
 
         # Check with non constant bin width
         v = rand(n)*10
         bins = [0,1,5, 9, 10]
-        a,b = histogram(v, bins, normed=True, new=True)
+        a,b = histogram(v, bins, normed=True)
         area = sum(a*diff(b))
         assert_almost_equal(area, 1)
 
 
-    def test_outliers_new(self):
+    def test_outliers(self):
         # Check that outliers are not tallied
         a = arange(10)+.5
 
         # Lower outliers
-        h,b = histogram(a, range=[0,9], new=True)
+        h,b = histogram(a, range=[0,9])
         assert_equal(h.sum(),9)
 
         # Upper outliers
-        h,b = histogram(a, range=[1,10], new=True)
+        h,b = histogram(a, range=[1,10])
         assert_equal(h.sum(),9)
 
         # Normalization
-        h,b = histogram(a, range=[1,9], normed=True, new=True)
+        h,b = histogram(a, range=[1,9], normed=True)
         assert_equal((h*diff(b)).sum(),1)
 
         # Weights
         w = arange(10)+.5
-        h,b = histogram(a, range=[1,9], weights=w, normed=True, new=True)
+        h,b = histogram(a, range=[1,9], weights=w, normed=True)
         assert_equal((h*diff(b)).sum(),1)
 
-        h,b = histogram(a, bins=8, range=[1,9], weights=w, new=True)
+        h,b = histogram(a, bins=8, range=[1,9], weights=w)
         assert_equal(h, w[1:-1])
 
 
-    def test_type_new(self):
+    def test_type(self):
         # Check the type of the returned histogram
         a = arange(10)+.5
-        h,b = histogram(a, new=True)
+        h,b = histogram(a)
         assert(issubdtype(h.dtype, int))
 
-        h,b = histogram(a, normed=True, new=True)
+        h,b = histogram(a, normed=True)
         assert(issubdtype(h.dtype, float))
 
-        h,b = histogram(a, weights=ones(10, int), new=True)
+        h,b = histogram(a, weights=ones(10, int))
         assert(issubdtype(h.dtype, int))
 
-        h,b = histogram(a, weights=ones(10, float), new=True)
+        h,b = histogram(a, weights=ones(10, float))
         assert(issubdtype(h.dtype, float))
 
 
-    def test_weights_new(self):
+    def test_weights(self):
         v = rand(100)
         w = ones(100)*5
-        a,b = histogram(v,new=True)
-        na,nb = histogram(v, normed=True, new=True)
-        wa,wb = histogram(v, weights=w, new=True)
-        nwa,nwb = histogram(v, weights=w, normed=True, new=True)
+        a,b = histogram(v)
+        na,nb = histogram(v, normed=True)
+        wa,wb = histogram(v, weights=w)
+        nwa,nwb = histogram(v, weights=w, normed=True)
         assert_array_almost_equal(a*5, wa)
         assert_array_almost_equal(na, nwa)
 
         # Check weights are properly applied.
         v = linspace(0,10,10)
         w = concatenate((zeros(5), ones(5)))
-        wa,wb = histogram(v, bins=arange(11),weights=w, new=True)
+        wa,wb = histogram(v, bins=arange(11),weights=w)
         assert_array_almost_equal(wa, w)
 
         # Check with integer weights
-        wa, wb = histogram([1,2,2,4], bins=4, weights=[4,3,2,1], new=True)
+        wa, wb = histogram([1,2,2,4], bins=4, weights=[4,3,2,1])
         assert_array_equal(wa, [4,5,0,1])
-        wa, wb = histogram([1,2,2,4], bins=4, weights=[4,3,2,1], normed=True, new=True)
+        wa, wb = histogram([1,2,2,4], bins=4, weights=[4,3,2,1], normed=True)
         assert_array_equal(wa, array([4,5,0,1])/10./3.*4)
 
 class TestHistogramdd(TestCase):

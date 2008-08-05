@@ -809,9 +809,9 @@ class TestRegression(TestCase):
     def test_hist_bins_as_list(self, level=rlevel):
         """Ticket #632"""
         import warnings
-        warnings.simplefilter('ignore', FutureWarning)
+        warnings.simplefilter('ignore', Warning)
         try:
-            hist,edges = np.histogram([1,2,3,4],[1,2])
+            hist,edges = np.histogram([1,2,3,4],[1,2],  new=False)
             assert_array_equal(hist,[1,3])
             assert_array_equal(edges,[1,2])
         finally:
