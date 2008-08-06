@@ -1228,7 +1228,6 @@ class MaskedArray(ndarray):
         # Process data............
         _data = np.array(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
-        _optinfo = {}
         # Check that we'ew not erasing the mask..........
         if isinstance(data,MaskedArray) and (data.shape != _data.shape):
             copy = True
@@ -1320,7 +1319,6 @@ class MaskedArray(ndarray):
         # Process extra options ..
         _data._hardmask = hard_mask
         _data._baseclass = _baseclass
-        _data._optinfo = _data._basedict = _optinfo
         return _data
     #
     def _update_from(self, obj):
