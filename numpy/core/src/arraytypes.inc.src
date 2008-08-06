@@ -1306,6 +1306,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
         Py_ssize_t pos=0;
         descr = arr->descr;
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                         &title)) {
                 arr->descr=descr;return;
@@ -1357,6 +1358,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         Py_ssize_t pos=0;
         descr = arr->descr;  /* Save it */
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                         &title)) {
                 arr->descr=descr;return;
@@ -1596,6 +1598,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         descr = ap->descr;
         savedflags = ap->flags;
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                         &title)) {PyErr_Clear(); continue;}
             ap->descr = new;

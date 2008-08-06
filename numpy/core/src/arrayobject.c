@@ -13,7 +13,7 @@
   Travis Oliphant,  oliphant@ee.byu.edu
   Brigham Young Univeristy
 
-:8613
+
 maintainer email:  oliphant.travis@ieee.org
 
   Numarray design (which provided guidance) by
@@ -171,6 +171,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         Py_ssize_t pos=0;
 
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                   &title)) {
                 return;
@@ -202,8 +203,10 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
             PyArray_Descr *new;
             int offset;
             Py_ssize_t pos=0;
+
             while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-                if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+		if NPY_TITLE_KEY(key, value) continue;
+		if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                       &title)) {
                     return;
                 }
@@ -4814,6 +4817,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 
         op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
         while (PyDict_Next(self->descr->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             a = PyArray_EnsureAnyArray(array_subscript(self, key));
             if (a==NULL) {
                 Py_XDECREF(res);
@@ -5706,6 +5710,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
         int offset;
         Py_ssize_t pos=0;
         while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                   &title)) return;
             _putzero(optr + offset, zero, new);
@@ -5876,6 +5881,7 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         int offset;
         Py_ssize_t pos=0;
         while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                   &title)) return;
             _fillobject(optr + offset, obj, new);
@@ -11296,6 +11302,7 @@ _arraydescr_isnative(PyArray_Descr *self)
         int offset;
         Py_ssize_t pos=0;
         while(PyDict_Next(self->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                   &title)) return -1;
             if (!_arraydescr_isnative(new)) return 0;
@@ -11567,6 +11574,7 @@ _descr_find_object(PyArray_Descr *self)
         int offset;
         Py_ssize_t pos=0;
         while (PyDict_Next(self->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                   &title)) {
                 PyErr_Clear();
@@ -11760,6 +11768,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
         /* make new dictionary with replaced */
         /* PyArray_Descr Objects */
         while(PyDict_Next(self->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) continue;
             if (!PyString_Check(key) ||          \
                 !PyTuple_Check(value) ||                    \
                 ((len=PyTuple_GET_SIZE(value)) < 2))

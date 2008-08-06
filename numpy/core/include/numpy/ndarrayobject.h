@@ -2014,9 +2014,15 @@ typedef struct {
 
 #include "old_defines.h"
 
-#ifdef __cplusplus
-}
-#endif
+/* 
+   Check to see if this key in the dictionary is the "title" 
+   entry of the tuple (i.e. a duplicate dictionary entry in the fields
+   dict. 
+*/
+
+#define NPY_TITLE_KEY(key, value) ((PyTuple_GET_SIZE((value))==3) && \
+				   (PyTuple_GET_ITEM((value), 2) == (key)))
+
 
 /* Define python version independent deprecation macro */
 
@@ -2025,5 +2031,11 @@ typedef struct {
 #else
 #define DEPRECATE(msg) PyErr_Warn(PyExc_DeprecationWarning,msg)
 #endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* NPY_NDARRAYOBJECT_H */
