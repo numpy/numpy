@@ -204,6 +204,13 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
+
+            # Define __STDC_FORMAT_MACROS
+            target_f.write("""
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+""")
             target_f.close()
 
             # Dump the numpyconfig.h header to stdout
