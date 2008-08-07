@@ -2384,7 +2384,7 @@ masked_%(name)s(data = %(data)s,
 
     Parameters
     ----------
-    axis : {None, -1, int}, optional
+    axis : {None, int}, optional
         Axis over which the product is taken. If None is used, then the
         product is over all the array elements.
     dtype : {None, dtype}, optional
@@ -2422,10 +2422,10 @@ masked_%(name)s(data = %(data)s,
 
     Notes
     -----
-    Arithmetic is modular when using integer types, and no error is
-    raised on overflow.
+    Arithmetic is modular when using integer types, and no error is raised
+    on overflow.
 
-        """
+    """
         _mask = ndarray.__getattribute__(self, '_mask')
         newmask = _mask.all(axis=axis)
         # No explicit output
@@ -2835,53 +2835,52 @@ masked_%(name)s(data = %(data)s,
 
     def sort(self, axis=-1, kind='quicksort', order=None,
              endwith=True, fill_value=None):
-        """Sort along the given axis.
+        """
+    Sort along the given axis.
 
-        Parameters
-        ----------
-        axis : int
-            Axis to be indirectly sorted.
-        kind : {string}
-            Sorting algorithm (default 'quicksort')
-            Possible values: 'quicksort', 'mergesort', or 'heapsort'.
-        order : {var}
-            If a has fields defined, then the order keyword can be
-            the field name to sort on or a list (or tuple) of
-            field names to indicate the order that fields should
-            be used to define the sort.
-        fill_value : {var}
-            Value used to fill in the masked values.  If None, use
-            the the output of minimum_fill_value().
-        endwith : bool
-            Whether missing values (if any) should be forced in
-            the upper indices (at the end of the array) (True) or
-            lower indices (at the beginning).
+    Parameters
+    ----------
+    axis : {int}, optional
+        Axis to be indirectly sorted.
+    kind : {'quicksort', 'mergesort', or 'heapsort'}, optional
+        Sorting algorithm (default 'quicksort')
+        Possible values: 'quicksort', 'mergesort', or 'heapsort'.
+    order : {None, var}
+        If a has fields defined, then the order keyword can be the field name 
+        to sort on or a list (or tuple) of field names to indicate  the order 
+        that fields should be used to define the sort.
+    endwith : {True, False}, optional
+        Whether missing values (if any) should be forced in the upper indices 
+        (at the end of the array) (True) or lower indices (at the beginning).
+    fill_value : {var}
+        Value used to fill in the masked values.  If None, use
+        the the output of minimum_fill_value().
 
-        Returns
-        -------
-        When used as method, returns None.
-            When used as a function, returns an array.
+    Returns
+    -------
+    - When used as method, returns None.
+    - When used as a function, returns an array.
 
-        Notes
-        -----
-        This method sorts 'a' in place along the given axis using
-        the algorithm specified by the kind keyword.
+    Notes
+    -----
+    This method sorts 'a' in place along the given axis using
+    the algorithm specified by the kind keyword.
 
-        The various sorts may characterized by average speed,
-        worst case performance need for work space, and whether
-        they are stable.  A stable sort keeps items with the same
-        key in the same relative order and is most useful when
-        used w/ argsort where the key might differ from the items
-        being sorted.  The three available algorithms have the
-        following properties:
+    The various sorts may characterized by average speed,
+    worst case performance need for work space, and whether
+    they are stable.  A stable sort keeps items with the same
+    key in the same relative order and is most useful when
+    used w/ argsort where the key might differ from the items
+    being sorted.  The three available algorithms have the
+    following properties:
 
-        |------------------------------------------------------|
-        |    kind   | speed |  worst case | work space | stable|
-        |------------------------------------------------------|
-        |'quicksort'|   1   | O(n^2)      |     0      |   no  |
-        |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
-        |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
-        |------------------------------------------------------|
+    |------------------------------------------------------|
+    |    kind   | speed |  worst case | work space | stable|
+    |------------------------------------------------------|
+    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
+    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
+    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
+    |------------------------------------------------------|
 
         """
         if self._mask is nomask:
@@ -3024,7 +3023,7 @@ masked_%(name)s(data = %(data)s,
     axis : {None, int}, optional
         Axis along which to find the peaks.  If None (default) the
         flattened array is used.
-    out : array_like
+    out : {None, array_like}, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
@@ -3060,13 +3059,14 @@ masked_%(name)s(data = %(data)s,
     squeeze = _arraymethod('squeeze')
     #--------------------------------------------
     def tolist(self, fill_value=None):
-        """Copy the data portion of the array to a hierarchical python
-        list and returns that list.
+        """
+    Copy the data portion of the array to a hierarchical python
+    list and returns that list.
 
-        Data items are converted to the nearest compatible Python
-        type.  Masked values are converted to fill_value. If
-        fill_value is None, the corresponding entries in the output
-        list will be ``None``.
+    Data items are converted to the nearest compatible Python
+    type.  Masked values are converted to fill_value. If
+    fill_value is None, the corresponding entries in the output
+    list will be ``None``.
 
         """
         if fill_value is not None:
