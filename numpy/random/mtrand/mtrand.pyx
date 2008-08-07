@@ -685,7 +685,7 @@ cdef class RandomState:
         Examples
         --------
         >>> np.random.bytes(10)
-        ' eh\x85\x022SZ\xbf\xa4' #random
+        ' eh\\x85\\x022SZ\\xbf\\xa4' #random
 
         """
         cdef void *bytes
@@ -942,7 +942,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, 30, normed=True)
-        >>> plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) * \
+        >>> plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
         >>> plt.show()
@@ -1781,7 +1781,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, 30, normed=True)
-        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)* \
+        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)*
         ...          np.exp( -np.exp( -(bins - mu) /beta) ),
         ...          linewidth=2, color='r')
         >>> plt.show()
@@ -1798,10 +1798,10 @@ cdef class RandomState:
         >>> count, bins, ignored = plt.hist(maxima, 30, normed=True)
         >>> beta = np.std(maxima)*np.pi/np.sqrt(6)
         >>> mu = np.mean(maxima) - 0.57721*beta
-        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)* \
+        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)*
         ...          np.exp( -np.exp( -(bins - mu) /beta) ),
         ...          linewidth=2, color='r')
-        >>> plt.plot(bins, 1/(beta * np.sqrt(2 * np.pi)) * \
+        >>> plt.plot(bins, 1/(beta * np.sqrt(2 * np.pi)) *
         ...          np.exp( - (bins - mu)**2 / (2 * beta**2) ),
         ...          linewidth=2, color='g')
         >>> plt.show()
@@ -1928,8 +1928,8 @@ cdef class RandomState:
         >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='center')
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
-        >>> pdf = np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2)) \
-        ... / (x * sigma * np.sqrt(2 * np.pi))
+        >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
+        ...        / (x * sigma * np.sqrt(2 * np.pi)))
 
         >>> plt.plot(x, pdf, linewidth=2, color='r')
         >>> plt.axis('tight')
@@ -1953,8 +1953,8 @@ cdef class RandomState:
         >>> mu = np.mean(np.log(b))
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
-        >>> pdf = np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2)) \
-        ... / (x * sigma * np.sqrt(2 * np.pi))
+        >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
+        ...        / (x * sigma * np.sqrt(2 * np.pi)))
 
         >>> plt.plot(x, pdf, color='r', linewidth=2)
         >>> plt.show()
@@ -2645,12 +2645,12 @@ cdef class RandomState:
 
         Notes
         -----
-        .. math:: X \approx \prod_{i=1}^{k}{x^{\alpha_i-1}_i}
+        .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
 
         Uses the following property for computation: for each dimension,
         draw a random sample y_i from a standard gamma generator of shape
         `alpha_i`, then
-        :math:`X = \frac{1}{\sum_{i=1}^k{y_i}} (y_1, \ldots, y_n)` is
+        :math:`X = \\frac{1}{\\sum_{i=1}^k{y_i}} (y_1, \\ldots, y_n)` is
         Dirichlet distributed.
 
         References
