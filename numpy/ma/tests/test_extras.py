@@ -419,6 +419,62 @@ class TestCov(TestCase):
                             np.cov(xf, rowvar=False, bias=True) * x.shape[0]/frac)
 
 
+class TestCorrcoef(TestCase):
+    #
+    def setUp(self):
+        self.data = array(np.random.rand(12))
+    #
+    def test_1d_wo_missing(self):
+        "Test cov on 1D variable w/o missing values"
+        x = self.data
+        assert_equal(np.corrcoef(x), corrcoef(x))
+        assert_equal(np.corrcoef(x, rowvar=False), corrcoef(x, rowvar=False))
+        assert_equal(np.corrcoef(x, rowvar=False, bias=True),
+                     corrcoef(x, rowvar=False, bias=True))
+    #
+    def test_2d_wo_missing(self):
+        "Test corrcoef on 1 2D variable w/o missing values"
+        x = self.data.reshape(3,4)
+        assert_equal(np.corrcoef(x), corrcoef(x))
+        assert_equal(np.corrcoef(x, rowvar=False), corrcoef(x, rowvar=False))
+        assert_equal(np.corrcoef(x, rowvar=False, bias=True),
+                     corrcoef(x, rowvar=False, bias=True))
+    #
+    def test_1d_w_missing(self):
+        "Test corrcoef 1 1D variable w/missing values"
+        x = self.data
+        x[-1] = masked
+        x -= x.mean()
+        nx = x.compressed()
+        assert_almost_equal(np.corrcoef(nx), corrcoef(x))
+        assert_almost_equal(np.corrcoef(nx, rowvar=False), corrcoef(x, rowvar=False))
+        assert_almost_equal(np.corrcoef(nx, rowvar=False, bias=True),
+                            corrcoef(x, rowvar=False, bias=True))
+        #
+        try:
+            corrcoef(x, allow_masked=False)
+        except ValueError:
+            pass
+        #
+        # 2 1D variables w/ missing values
+        nx = x[1:-1]
+        assert_almost_equal(np.corrcoef(nx, nx[::-1]), corrcoef(x, x[::-1]))
+        assert_equal(np.corrcoef(nx, nx[::-1], rowvar=False), 
+                     corrcoef(x, x[::-1], rowvar=False))
+        assert_equal(np.corrcoef(nx, nx[::-1], rowvar=False, bias=True),
+                     corrcoef(x, x[::-1], rowvar=False, bias=True))
+    #
+    def test_2d_w_missing(self):
+        "Test corrcoef on 2D variable w/ missing value"
+        x = self.data
+        x[-1] = masked
+        x = x.reshape(3,4)
+        
+        test = corrcoef(x)
+        control = np.corrcoef(x)
+        assert_almost_equal(test[:-1,:-1], control[:-1,:-1])
+
+
 
 class TestPolynomial(TestCase):
     #

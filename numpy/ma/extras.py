@@ -15,7 +15,7 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'average',
            'column_stack','compress_cols','compress_rowcols', 'compress_rows',
            'count_masked', 'corrcoef', 'cov',
-           'dot','dstack',
+           'diagflat', 'dot','dstack',
            'ediff1d','expand_dims',
            'flatnotmasked_contiguous','flatnotmasked_edges',
            'hsplit','hstack',
@@ -96,14 +96,14 @@ def masked_all_like(arr):
 class _fromnxfunction:
     """Defines a wrapper to adapt numpy functions to masked arrays."""
     def __init__(self, funcname):
-        self._function = funcname
+        self.__name__ = funcname
         self.__doc__ = self.getdoc()
     def getdoc(self):
         "Retrieves the __doc__ string from the function."
-        return getattr(np, self._function).__doc__ +\
+        return getattr(np, self.__name__).__doc__ +\
             "*Notes*:\n    (The function is applied to both the _data and the _mask, if any.)"
     def __call__(self, *args, **params):
-        func = getattr(np, self._function)
+        func = getattr(np, self.__name__)
         if len(args)==1:
             x = args[0]
             if isinstance(x, ndarray):
@@ -136,6 +136,8 @@ column_stack = _fromnxfunction('column_stack')
 dstack = _fromnxfunction('dstack')
 
 hsplit = _fromnxfunction('hsplit')
+
+diagflat = _fromnxfunction('diagflat')
 
 def expand_dims(a, axis):
     """Expands the shape of a by including newaxis before axis.
@@ -643,6 +645,48 @@ def ediff1d(array, to_end=None, to_begin=None):
     return masked_array(r_data, mask=r_mask)
 
 
+def _covhelper(x, y=None, rowvar=True, allow_masked=True):
+    """
+    Private function for the computation of covariance and correlation
+    coefficients.
+    
+    """
+    x = ma.array(x, ndmin=2, copy=True, dtype=float)
+    xmask = ma.getmaskarray(x)
+    # Quick exit if we can't process masked data
+    if not allow_masked and xmask.any():
+        raise ValueError("Cannot process masked data...")
+    #
+    if x.shape[0] == 1:
+        rowvar = True
+    # Make sure that rowvar is either 0 or 1
+    rowvar = int(bool(rowvar))
+    axis = 1-rowvar
+    if rowvar:
+        tup = (slice(None), None)
+    else:
+        tup = (None, slice(None))
+    #
+    if y is None:
+        xnotmask = np.logical_not(xmask).astype(int)
+    else:
+        y = array(y, copy=False, ndmin=2, dtype=float)
+        ymask = ma.getmaskarray(y)
+        if not allow_masked and ymask.any():
+            raise ValueError("Cannot process masked data...")
+        if xmask.any() or ymask.any():
+            if y.shape == x.shape:
+                # Define some common mask
+                common_mask = np.logical_or(xmask, ymask)
+                if common_mask is not nomask:
+                    x.unshare_mask()
+                    y.unshare_mask()
+                    xmask = x._mask = y._mask = ymask = common_mask
+        x = ma.concatenate((x,y),axis)
+        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(int)
+    x -= x.mean(axis=rowvar)[tup]
+    return (x, xnotmask, rowvar)
+
 
 def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
     """Estimates the covariance matrix.
@@ -683,47 +727,12 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
         Raised if some values are missing and allow_masked is False.
 
     """
-    x = array(x, ndmin=2, copy=True, dtype=float)
-    xmask = getmaskarray(x)
-    # Quick exit if we can't process masked data
-    if not allow_masked and xmask.any():
-        raise ValueError("Cannot process masked data...")
-    #
-    if x.shape[0] == 1:
-        rowvar = True
-    # Make sure that rowvar is either 0 or 1
-    rowvar = int(bool(rowvar))
-    axis = 1-rowvar
-    if rowvar:
-        tup = (slice(None), None)
-    else:
-        tup = (None, slice(None))
-    #
-    if y is None:
-        xnotmask = np.logical_not(xmask).astype(int)
-    else:
-        y = array(y, copy=False, ndmin=2, dtype=float)
-        ymask = getmaskarray(y)
-        if not allow_masked and ymask.any():
-            raise ValueError("Cannot process masked data...")
-        if xmask.any() or ymask.any():
-            if y.shape == x.shape:
-                # Define some common mask
-                common_mask = np.logical_or(xmask, ymask)
-                if common_mask is not nomask:
-                    x.unshare_mask()
-                    y.unshare_mask()
-                    xmask = x._mask = y._mask = ymask = common_mask
-        x = concatenate((x,y),axis)
-        xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(int)
-
-    x -= x.mean(axis=rowvar)[tup]
-
+    (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     if not rowvar:
-        fact = dot(xnotmask.T, xnotmask)*1. - (1 - bool(bias))
+        fact = np.dot(xnotmask.T, xnotmask)*1. - (1 - bool(bias))
         result = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
     else:
-        fact = dot(xnotmask, xnotmask.T)*1. - (1 - bool(bias))
+        fact = np.dot(xnotmask, xnotmask.T)*1. - (1 - bool(bias))
         result = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
     return result
 
@@ -761,14 +770,39 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
     cov
 
     """
-
-    c = cov(x, y, rowvar, bias, allow_masked)
+    # Get the data
+    (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
+    # Compute the covariance matrix
+    if not rowvar:
+        fact = np.dot(xnotmask.T, xnotmask)*1. - (1 - bool(bias))
+        c = (dot(x.T, x.conj(), strict=False) / fact).squeeze()
+    else:
+        fact = np.dot(xnotmask, xnotmask.T)*1. - (1 - bool(bias))
+        c = (dot(x, x.T.conj(), strict=False) / fact).squeeze()
+    # Check whether we have a scalar
     try:
-        d = ma.diag(c)
-    except ValueError: # scalar covariance
+        diag = ma.diagonal(c)
+    except ValueError:
         return 1
-    return c/ma.sqrt(ma.multiply.outer(d,d))
-
+    #
+    if xnotmask.all():
+        _denom = ma.sqrt(ma.multiply.outer(diag, diag))
+    else:
+        _denom = diagflat(diag)
+        n = x.shape[1-rowvar]
+        if rowvar:
+            for i in range(n-1):
+                for j in range(i+1,n):
+                    _x = mask_cols(vstack((x[i], x[j]))).var(axis=1,
+                                                             ddof=1-bias)
+                    _denom[i,j] = _denom[j,i] = ma.sqrt(ma.multiply.reduce(_x))
+        else:
+            for i in range(n-1):
+                for j in range(i+1,n):
+                    _x = mask_cols(vstack((x[:,i], x[:,j]))).var(axis=1,
+                                                                 ddof=1-bias)
+                    _denom[i,j] = _denom[j,i] = ma.sqrt(ma.multiply.reduce(_x))
+    return c/_denom
 
 #####--------------------------------------------------------------------------
 #---- --- Concatenation helpers ---

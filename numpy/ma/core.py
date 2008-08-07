@@ -63,7 +63,7 @@ import cPickle
 import operator
 
 import numpy as np
-from numpy import ndarray, dtype, typecodes, amax, amin, iscomplexobj,\
+from numpy import ndarray, typecodes, amax, amin, iscomplexobj,\
     bool_, complex_, float_, int_, object_, str_
 from numpy import array as narray
 
@@ -540,7 +540,7 @@ class _MaskedBinaryOperation:
             return masked
         return result
     #
-    def reduce (self, target, axis=0, dtype=None):
+    def reduce(self, target, axis=0, dtype=None):
         """Reduce `target` along the given `axis`."""
         if isinstance(target, MaskedArray):
             tclass = type(target)
@@ -1104,15 +1104,15 @@ class _arraymethod(object):
 
     """
     def __init__(self, funcname, onmask=True):
-        self._name = self.__name__ = funcname
+        self.__name__ = funcname
         self._onmask = onmask
         self.obj = None
         self.__doc__ = self.getdoc()
     #
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
-        methdoc = getattr(ndarray, self._name, None)
-        methdoc = getattr(np, self._name, methdoc)
+        methdoc = getattr(ndarray, self.__name__, None)
+        methdoc = getattr(np, self.__name__, methdoc)
         if methdoc is not None:
             return methdoc.__doc__
     #
@@ -1121,7 +1121,7 @@ class _arraymethod(object):
         return self
     #
     def __call__(self, *args, **params):
-        methodname = self._name
+        methodname = self.__name__
         data = self.obj._data
         mask = self.obj._mask
         cls = type(self.obj)
@@ -3180,7 +3180,7 @@ masked_%(name)s(data = %(data)s,
         """
         (ver, shp, typ, isf, raw, msk, flv) = state
         ndarray.__setstate__(self, (shp, typ, isf, raw))
-        self._mask.__setstate__((shp, dtype(bool), isf, msk))
+        self._mask.__setstate__((shp, np.dtype(bool), isf, msk))
         self.fill_value = flv
     #
     def __reduce__(self):
@@ -3360,28 +3360,28 @@ class _frommethod:
 
     """
     def __init__(self, methodname):
-        self._methodname = methodname
+        self.__name__ = methodname
         self.__doc__ = self.getdoc()
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
         try:
-            return getattr(MaskedArray, self._methodname).__doc__
+            return getattr(MaskedArray, self.__name__).__doc__
         except:
-            return getattr(np, self._methodname).__doc__
+            return getattr(np, self.__name__).__doc__
     def __call__(self, a, *args, **params):
         if isinstance(a, MaskedArray):
-            return getattr(a, self._methodname).__call__(*args, **params)
+            return getattr(a, self.__name__).__call__(*args, **params)
         #FIXME ----
         #As x is not a MaskedArray, we transform it to a ndarray with asarray
         #... and call the corresponding method.
         #Except that sometimes it doesn't work (try reshape([1,2,3,4],(2,2)))
         #we end up with a "SystemError: NULL result without error in PyObject_Call"
         #A dirty trick is then to call the initial numpy function...
-        method = getattr(narray(a, copy=False), self._methodname)
+        method = getattr(narray(a, copy=False), self.__name__)
         try:
             return method(*args, **params)
         except SystemError:
-            return getattr(np,self._methodname).__call__(a, *args, **params)
+            return getattr(np,self.__name__).__call__(a, *args, **params)
 
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
