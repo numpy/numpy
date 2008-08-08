@@ -17,33 +17,6 @@ _when_to_num = {'end':0, 'begin':1,
                 'start':1,
                 'finish':0}
 
-eqstr = """
-
-                  nper       / (1 + rate*when) \   /        nper   \
-  fv + pv*(1+rate)    + pmt*|-------------------|*| (1+rate)    - 1 | = 0
-                             \     rate        /   \               /
-
-       fv + pv + pmt * nper = 0  (when rate == 0)
-
-where (all can be scalars or sequences)
-
-    Parameters
-    ----------
-    rate :
-        Rate of interest (per period)
-    nper :
-        Number of compounding periods
-    pmt :
-        Payment
-    pv :
-        Present value
-    fv :
-        Future value
-    when :
-        When payments are due ('begin' (1) or 'end' (0))
-
-"""
-
 def _convert_when(when):
     try:
         return _when_to_num[when]
@@ -99,21 +72,6 @@ def fv(rate, nper, pmt, pv, when='end'):
     zer = np.zeros(miter.shape)
     fact = np.where(rate==zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
     return -(pv*temp + pmt*fact)
-fv.__doc__ += eqstr + """
-Example
---------
-
-What is the future value after 10 years of saving $100 now, with
-  an additional monthly savings of $100.  Assume the interest rate is
-  5% (annually) compounded monthly?
-
->>> np.fv(0.05/12, 10*12, -100, -100)
-15692.928894335748
-
-By convention, the negative sign represents cash flow out (i.e. money not
-  available today).  Thus, saving $100 a month at 5% annual interest leads
-  to $15,692.93 available to spend in 10 years.
-"""
 
 def pmt(rate, nper, pv, fv=0, when='end'):
     """
@@ -161,19 +119,6 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     zer = np.zeros(miter.shape)
     fact = np.where(rate==zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
     return -(fv + pv*temp) / fact
-pmt.__doc__ += eqstr + """
-Examples
---------
-
-What would the monthly payment need to be to pay off a $200,000 loan in 15
-  years at an annual interest rate of 7.5%?
-
->>> np.pmt(0.075/12, 12*15, 200000)
--1854.0247200054619
-
-In order to pay-off (i.e. have a future-value of 0) the $200,000 obtained
-  today, a monthly payment of $1,854.02 would be required.
-"""
 
 def nper(rate, pmt, pv, fv=0, when='end'):
     """
@@ -234,28 +179,6 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     miter = np.broadcast(rate, pmt, pv, fv, when)
     zer = np.zeros(miter.shape)
     return np.where(rate==zer, A+zer, B+zer) + 0.0
-nper.__doc__ += eqstr + """
-Examples
---------
-
-If you only had $150 to spend as payment, how long would it take to pay-off
-  a loan of $8,000 at 7% annual interest?
-
->>> np.nper(0.07/12, -150, 8000)
-64.073348770661852
-
-So, over 64 months would be required to pay off the loan.
-
-The same analysis could be done with several different interest rates and/or
-    payments and/or total amounts to produce an entire table.
-
->>> np.nper(*(np.ogrid[0.06/12:0.071/12:0.01/12, -200:-99:100, 6000:7001:1000]))
-array([[[ 32.58497782,  38.57048452],
-        [ 71.51317802,  86.37179563]],
-
-       [[ 33.07413144,  39.26244268],
-        [ 74.06368256,  90.22989997]]])
-"""
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
@@ -305,7 +228,6 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     zer = np.zeros(miter.shape)
     fact = np.where(rate == zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
     return -(fv + pmt*fact)/temp
-pv.__doc__ += eqstr
 
 # Computed with Sage
 #  (y + (r + 1)^n*x + p*((r + 1)^n - 1)*(r*w + 1)/r)/(n*(r + 1)^(n - 1)*x - p*((r + 1)^n - 1)*(r*w + 1)/r^2 + n*p*(r + 1)^(n - 1)*(r*w + 1)/r + p*((r + 1)^n - 1)*w/r)
@@ -372,7 +294,6 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
         return np.nan + rn
     else:
         return rn
-rate.__doc__ += eqstr
 
 def irr(values):
     """Internal Rate of Return
