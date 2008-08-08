@@ -231,7 +231,7 @@ class MaskedRecords(MaskedArray, object):
         if attr in ['_mask','mask','_fieldmask','fieldmask']:
             self.__setmask__(val)
             return
-        # Create a shortcut (so that we don't have to call getattr all the time) 
+        # Create a shortcut (so that we don't have to call getattr all the time)
         _localdict = self.__dict__
         # Check whether we're creating a new field
         newattr = attr not in _localdict
@@ -262,7 +262,7 @@ class MaskedRecords(MaskedArray, object):
             res = fielddict[attr][:2]
         except (TypeError,KeyError):
             raise AttributeError, "record array has no attribute %s" % attr
-        # 
+        #
         if val is masked:
             _fill_value = _localdict['_fill_value']
             if _fill_value is not None:
@@ -680,4 +680,3 @@ set to 'fi', where `i` is the number of existing fields.
                      *newmask.dtype.fields[newfieldname])
     newdata._fieldmask = newmask
     return newdata
-

@@ -189,7 +189,7 @@ class _ParametricTestCase(unittest.TestCase):
         else:
             unittest.TestCase.run(self,result)
 
-# The underscore was added to the class name to keep nose from trying 
+# The underscore was added to the class name to keep nose from trying
 # to run the test class (nose ignores class names that begin with an
 # underscore by default).
 ParametricTestCase = _ParametricTestCase

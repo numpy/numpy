@@ -2234,4 +2234,3 @@ add_newdoc('numpy.core.umath', 'true_divide',
     equivalent to true division in Python.
 
     """)
-

@@ -57,7 +57,7 @@ class TestFromrecords(TestCase):
         y = eval("np." + repr(x))
         assert isinstance(y, np.recarray)
         assert_equal(y, x)
-        
+
     def test_recarray_from_names(self):
         ra = np.rec.array([
             (1, 'abc', 3.7000002861022949, 0),
@@ -130,4 +130,3 @@ def test_find_duplicate():
 
 if __name__ == "__main__":
     run_module_suite()
-

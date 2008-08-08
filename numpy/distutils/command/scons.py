@@ -125,7 +125,7 @@ def dist2sconscxx(compiler):
     (C++ compiler). The argument should be a Compiler instance."""
     if compiler.compiler_type == 'msvc':
         return compiler.compiler_type
-    
+
     return compiler.compiler_cxx[0]
 
 def get_compiler_executable(compiler):
@@ -368,7 +368,7 @@ class scons(old_build_ext):
                 raise RuntimeError("You need numscons >= %s to build numpy "\
                                    "with numscons (detected %s )" \
                                    % (minver, get_version()))
-                
+
         else:
             # nothing to do, just leave it here.
             return

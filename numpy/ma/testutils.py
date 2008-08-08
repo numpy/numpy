@@ -147,9 +147,9 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     The test is equivalent to abs(desired-actual) < 0.5 * 10**(-decimal)
     """
     if isinstance(actual, np.ndarray) or isinstance(desired, np.ndarray):
-        return assert_array_almost_equal(actual, desired, decimal=decimal, 
+        return assert_array_almost_equal(actual, desired, decimal=decimal,
                                          err_msg=err_msg, verbose=verbose)
-    msg = build_err_msg([actual, desired], 
+    msg = build_err_msg([actual, desired],
                         err_msg=err_msg, verbose=verbose)
     assert round(abs(desired - actual),decimal) == 0, msg
 
@@ -170,13 +170,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     y = masked_array(yf, copy=False, mask=m)
     if ((x is masked) and not (y is masked)) or \
         ((y is masked) and not (x is masked)):
-        msg = build_err_msg([x, y], err_msg=err_msg, verbose=verbose, 
+        msg = build_err_msg([x, y], err_msg=err_msg, verbose=verbose,
                             header=header, names=('x', 'y'))
         raise ValueError(msg)
     # OK, now run the basic tests on filled versions
-    return utils.assert_array_compare(comparison, 
-                                x.filled(fill_value), y.filled(fill_value), 
-                                err_msg=err_msg, 
+    return utils.assert_array_compare(comparison,
+                                x.filled(fill_value), y.filled(fill_value),
+                                err_msg=err_msg,
                                 verbose=verbose, header=header)
 
 

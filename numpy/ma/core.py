@@ -44,7 +44,7 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'masked_less','masked_less_equal', 'masked_not_equal',
            'masked_object','masked_outside', 'masked_print_option',
            'masked_singleton','masked_values', 'masked_where', 'max', 'maximum',
-           'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value', 
+           'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
            'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
@@ -740,7 +740,7 @@ fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(), 0, 1)
 def make_mask_descr(ndtype):
     """Constructs a dtype description list from a given dtype.
     Each field is set to a bool.
-    
+
     """
     if ndtype.names:
         mdescr = [list(_) for _ in ndtype.descr]
@@ -2155,13 +2155,13 @@ masked_%(name)s(data = %(data)s,
     #............................................
     def all(self, axis=None, out=None):
         """a.all(axis=None, out=None)
-    
+
     Check if all of the elements of `a` are true.
 
     Performs a logical_and over the given axis and returns the result.
     Masked values are considered as True during computation.
     For convenience, the output array is masked where ALL the values along the
-    current axis are masked: if the output would have been a scalar and that 
+    current axis are masked: if the output would have been a scalar and that
     all the values are masked, then the output is `masked`.
 
     Parameters
@@ -2176,7 +2176,7 @@ masked_%(name)s(data = %(data)s,
     See Also
     --------
     all : equivalent function
-    
+
     Example
     -------
     >>> np.ma.array([1,2,3]).all()
@@ -2327,8 +2327,8 @@ masked_%(name)s(data = %(data)s,
     The cumulative sum is calculated over the flattened array by
     default, otherwise over the specified axis.
 
-    Masked values are set to 0 internally during the computation. 
-    However, their position is saved, and the result will be masked at 
+    Masked values are set to 0 internally during the computation.
+    However, their position is saved, and the result will be masked at
     the same locations.
 
     Parameters
@@ -2456,8 +2456,8 @@ masked_%(name)s(data = %(data)s,
     The cumulative product is taken over the flattened array by
     default, otherwise over the specified axis.
 
-    Masked values are set to 1 internally during the computation. 
-    However, their position is saved, and the result will be masked at 
+    Masked values are set to 1 internally during the computation.
+    However, their position is saved, and the result will be masked at
     the same locations.
 
     Parameters
@@ -2695,7 +2695,7 @@ masked_%(name)s(data = %(data)s,
     elements, N-ddof. The option ddof defaults to zero, that is, a biased
     estimate. Note that for complex numbers std takes the absolute value before
     squaring, so that the result is always real and nonnegative.
-    
+
     """
         dvar = self.var(axis=axis,dtype=dtype,out=out, ddof=ddof)
         if dvar is not masked:
@@ -2781,11 +2781,11 @@ masked_%(name)s(data = %(data)s,
         If None, the index is into the flattened array, otherwise along
         the specified axis
     fill_value : {var}, optional
-        Value used to fill in the masked values.  If None, the output of 
+        Value used to fill in the masked values.  If None, the output of
         minimum_fill_value(self._data) is used instead.
     out : {None, array}, optional
         Array into which the result can be placed. Its type is preserved
-        and it must be of the right shape to hold the output.        
+        and it must be of the right shape to hold the output.
 
         """
         if fill_value is None:
@@ -2846,11 +2846,11 @@ masked_%(name)s(data = %(data)s,
         Sorting algorithm (default 'quicksort')
         Possible values: 'quicksort', 'mergesort', or 'heapsort'.
     order : {None, var}
-        If a has fields defined, then the order keyword can be the field name 
-        to sort on or a list (or tuple) of field names to indicate  the order 
+        If a has fields defined, then the order keyword can be the field name
+        to sort on or a list (or tuple) of field names to indicate  the order
         that fields should be used to define the sort.
     endwith : {True, False}, optional
-        Whether missing values (if any) should be forced in the upper indices 
+        Whether missing values (if any) should be forced in the upper indices
         (at the end of the array) (True) or lower indices (at the beginning).
     fill_value : {var}
         Value used to fill in the masked values.  If None, use
@@ -3115,7 +3115,7 @@ masked_%(name)s(data = %(data)s,
 
         Warnings
         --------
-        As for :meth:`ndarray.tostring`, information about the shape, dtype..., 
+        As for :meth:`ndarray.tostring`, information about the shape, dtype...,
         but also fill_value will be lost.
 
         """
@@ -3128,12 +3128,12 @@ masked_%(name)s(data = %(data)s,
         """Transforms a masked array into a flexible-type array with two fields:
         * the ``_data`` field stores the ``_data`` part of the array;
         * the ``_mask`` field stores the ``_mask`` part of the array;
-        
+
         Warnings
         --------
-        A side-effect of transforming a masked array into a flexible ndarray is 
+        A side-effect of transforming a masked array into a flexible ndarray is
         that metainformation (``fill_value``, ...) will be lost.
-        
+
         """
         # Get the basic dtype ....
         ddtype = self.dtype
@@ -3322,7 +3322,7 @@ def min(obj, axis=None, out=None, fill_value=None):
     try:
         return obj.min(axis=axis, fill_value=fill_value, out=out)
     except (AttributeError, TypeError):
-        # If obj doesn't have a max method, 
+        # If obj doesn't have a max method,
         # ...or if the method doesn't accept a fill_value argument
         return asanyarray(obj).min(axis=axis, fill_value=fill_value, out=out)
 min.__doc__ = MaskedArray.min.__doc__
@@ -3331,7 +3331,7 @@ def max(obj, axis=None, out=None, fill_value=None):
     try:
         return obj.max(axis=axis, fill_value=fill_value, out=out)
     except (AttributeError, TypeError):
-        # If obj doesn't have a max method, 
+        # If obj doesn't have a max method,
         # ...or if the method doesn't accept a fill_value argument
         return asanyarray(obj).max(axis=axis, fill_value=fill_value, out=out)
 max.__doc__ = MaskedArray.max.__doc__
@@ -3341,7 +3341,7 @@ def ptp(obj, axis=None, out=None, fill_value=None):
     try:
         return obj.ptp(axis, out=out, fill_value=fill_value)
     except (AttributeError, TypeError):
-        # If obj doesn't have a max method, 
+        # If obj doesn't have a max method,
         # ...or if the method doesn't accept a fill_value argument
         return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
 ptp.__doc__ = MaskedArray.ptp.__doc__
@@ -3770,7 +3770,7 @@ def choose (indices, choices, out=None, mode='raise'):
     See Also
     --------
     choose : equivalent function
-    
+
     """
     def fmask (x):
         "Returns the filled array, or True if masked."
@@ -3789,7 +3789,7 @@ def choose (indices, choices, out=None, mode='raise'):
     data = [fmask(x) for x in choices]
     # Construct the mask
     outputmask = np.choose(c, masks, mode=mode)
-    outputmask = make_mask(mask_or(outputmask, getmask(indices)), 
+    outputmask = make_mask(mask_or(outputmask, getmask(indices)),
                            copy=0, shrink=True)
     # Get the choices......
     d = np.choose(c, data, mode=mode, out=out).view(MaskedArray)
@@ -3995,5 +3995,3 @@ ones = _convert2ma('ones')
 zeros = _convert2ma('zeros')
 
 ###############################################################################
-
-

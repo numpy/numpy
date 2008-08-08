@@ -1190,7 +1190,7 @@ class Configuration(object):
         pre_hook and post hook should be sequences of callable, which will be
         use before and after executing scons. The callable should be defined as
         callable(*args, **kw). It is ugly, but well, hooks are ugly anyway...
-        
+
         sconscript can be None, which can be useful to add only post/pre
         hooks."""
         if standalone:

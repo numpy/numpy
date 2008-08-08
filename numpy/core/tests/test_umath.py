@@ -211,11 +211,11 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1
-        
+
         yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1
         yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, -1j], 1, -1
         yield _check_branch_cut, np.arctan, [-2j, 2j],  [1,  -1 ], -1, 1
-        
+
         yield _check_branch_cut, np.arcsinh, [-2j,  2j], [-1,   1], -1, 1
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1
         yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, -1j], 1, -1
@@ -239,7 +239,7 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True
         yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, -1j], 1, -1, True
     test_branch_cuts_failing = dec.skipknownfailure(test_branch_cuts_failing)
-        
+
     def test_against_cmath(self):
         import cmath, sys
 
@@ -248,7 +248,7 @@ class TestComplexFunctions(object):
         broken_cmath_asinh = False
         if sys.version_info < (2,5,3):
             broken_cmath_asinh = True
-        
+
         points = [-2, 2j, 2, -2j, -1-1j, -1+1j, +1-1j, +1+1j]
         name_map = {'arcsin': 'asin', 'arccos': 'acos', 'arctan': 'atan',
                     'arcsinh': 'asinh', 'arccosh': 'acosh', 'arctanh': 'atanh'}
@@ -261,20 +261,20 @@ class TestComplexFunctions(object):
             for p in points:
                 a = complex(func(np.complex_(p)))
                 b = cfunc(p)
-                
+
                 if cname == 'asinh' and broken_cmath_asinh:
-                    continue 
+                    continue
 
                 assert abs(a - b) < atol, "%s %s: %s; cmath: %s"%(fname,p,a,b)
 
 class TestC99(object):
     """Check special functions at special points against the C99 standard"""
     # NB: inherits from object instead of TestCase since using test generators
-    
+
     #
     # Non-conforming results are with XXX added to the exception field.
     #
-    
+
     def test_clog(self):
         for p, v, e in [
             ((-0., 0.), (-inf, pi), 'divide'),
@@ -292,7 +292,7 @@ class TestC99(object):
             ((+nan, nan), (nan, nan), 'XXX'), # raises 'invalid' on some platfs
         ]:
             yield self._check, np.log, p, v, e
-    
+
     def test_csqrt(self):
         for p, v, e in [
             ((-0., 0.), (0.,0.),  'XXX'), # now (-0., 0.)
@@ -391,7 +391,7 @@ class TestC99(object):
             got = "(%s, %s)" % (repr(got.real), repr(got.imag))
             expected = "(%s, %s)" % (repr(value.real), repr(value.imag))
             assert got == expected, (got, expected)
-            
+
             # check exceptions
             if exc in ('divide', 'invalid', 'over', 'under'):
                 v[exc] = 'raise'
@@ -442,24 +442,24 @@ def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
     """
     x0 = np.atleast_1d(x0).astype(dtype)
     dx = np.atleast_1d(dx).astype(dtype)
-    
+
     scale = np.finfo(dtype).eps * 1e3
     atol  = 1e-4
-    
+
     y0 = f(x0)
     yp = f(x0 + dx*scale*np.absolute(x0)/np.absolute(dx))
     ym = f(x0 - dx*scale*np.absolute(x0)/np.absolute(dx))
-    
+
     assert np.all(np.absolute(y0.real - yp.real) < atol), (y0, yp)
     assert np.all(np.absolute(y0.imag - yp.imag) < atol), (y0, yp)
     assert np.all(np.absolute(y0.real - ym.real*re_sign) < atol), (y0, ym)
     assert np.all(np.absolute(y0.imag - ym.imag*im_sign) < atol), (y0, ym)
-    
+
     if sig_zero_ok:
         # check that signed zeros also work as a displacement
         jr = (x0.real == 0) & (dx.real != 0)
         ji = (x0.imag == 0) & (dx.imag != 0)
-        
+
         x = -x0
         x.real[jr] = 0.*dx.real
         x.imag[ji] = 0.*dx.imag

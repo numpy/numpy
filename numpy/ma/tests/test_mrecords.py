@@ -261,7 +261,7 @@ class TestMRecords(TestCase):
             pass
         else:
             raise TypeError("Should have expected a readable buffer object!")
-            
+
 
     def test_hardmask(self):
         "Test hardmask"
@@ -275,7 +275,7 @@ class TestMRecords(TestCase):
         assert(not mbase._hardmask)
         mbase._mask = nomask
         # So, the mask of a field is no longer set to nomask...
-        assert_equal_records(mbase._mask, 
+        assert_equal_records(mbase._mask,
                              ma.make_mask_none(base.shape,base.dtype))
         assert(ma.make_mask(mbase['b']._mask) is nomask)
         assert_equal(mbase['a']._mask,mbase['b']._mask)
@@ -333,7 +333,7 @@ class TestMRecords(TestCase):
         #
         solo = mrecarray(1, dtype=[('f0', '<f8', (2, 2))])
         solo[0] = masked
-        assert_equal(solo.filled(1).item(), 
+        assert_equal(solo.filled(1).item(),
                      np.array((1,), dtype=solo.dtype).item())
         #
         mult = mrecarray(2, dtype= "i4, (2,3)float, float")

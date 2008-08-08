@@ -200,14 +200,14 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     a : array_like
         Input data.
     bins : int or sequence of scalars, optional
-        If `bins` is an int, it defines the number of equal-width 
+        If `bins` is an int, it defines the number of equal-width
         bins in the given range (10, by default). If `bins` is a sequence,
-        it defines the bin edges, including the rightmost edge, allowing 
+        it defines the bin edges, including the rightmost edge, allowing
         for non-uniform bin widths.
     range : (float, float), optional
         The lower and upper range of the bins.  If not provided, range
         is simply ``(a.min(), a.max())``.  Values outside the range are
-        ignored. Note that with `new` set to False, values below 
+        ignored. Note that with `new` set to False, values below
         the range are ignored, while those above the range are tallied
         in the rightmost bin.
     normed : bool, optional
@@ -224,10 +224,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
         so that the integral of the density over the range remains 1.
         The `weights` keyword is only available with `new` set to True.
     new : {None, True, False}, optional
-        Whether to use the new semantics for histogram: 
+        Whether to use the new semantics for histogram:
           * None : the new behaviour is used, and a warning is printed,
           * True : the new behaviour is used and no warning is printed,
-          * False : the old behaviour is used and a message is printed 
+          * False : the old behaviour is used and a message is printed
               warning about future deprecation.
 
     Returns
@@ -264,18 +264,18 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     # Old behavior
     if new == False:
         warnings.warn("""
-        The original semantics of histogram is scheduled to be 
-        deprecated in NumPy 1.3. The new semantics fixes 
+        The original semantics of histogram is scheduled to be
+        deprecated in NumPy 1.3. The new semantics fixes
         long-standing issues with outliers handling. The main
-        changes concern 
-        1. the definition of the bin edges, 
-           now including the rightmost edge, and 
-        2. the handling of upper outliers, 
-           now ignored rather than tallied in the rightmost bin. 
-           
+        changes concern
+        1. the definition of the bin edges,
+           now including the rightmost edge, and
+        2. the handling of upper outliers,
+           now ignored rather than tallied in the rightmost bin.
+
         Please read the docstring for more information.
         """, Warning)
-        
+
         a = asarray(a).ravel()
 
         if (range is not None):
@@ -326,19 +326,19 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
             warnings.warn("""
             The semantics of histogram has been modified in
             the current release to fix long-standing issues with
-            outliers handling. The main changes concern 
-            1. the definition of the bin edges, 
-               now including the rightmost edge, and 
+            outliers handling. The main changes concern
+            1. the definition of the bin edges,
+               now including the rightmost edge, and
             2. the handling of upper outliers, now ignored rather
-               than tallied in the rightmost bin. 
-            The previous behaviour is still accessible using 
-            `new=False`, but is scheduled to be deprecated in the 
-            next release (1.3). 
-            
+               than tallied in the rightmost bin.
+            The previous behaviour is still accessible using
+            `new=False`, but is scheduled to be deprecated in the
+            next release (1.3).
+
             *This warning will not printed in the 1.3 release.*
-            
-            Use `new=True` to bypass this warning. 
-            
+
+            Use `new=True` to bypass this warning.
+
             Please read the docstring for more information.
             """, Warning)
         a = asarray(a)

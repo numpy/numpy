@@ -77,7 +77,7 @@ from numpy.testing import *
 import numpy as np
 
 class TestDocs(TestCase):
-    def test_doctests(self): 
+    def test_doctests(self):
         return rundocs()
 
     def test_roots(self):
@@ -113,4 +113,3 @@ class TestDocs(TestCase):
 
 if __name__ == "__main__":
     run_module_suite()
-

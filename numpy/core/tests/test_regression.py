@@ -1070,9 +1070,9 @@ class TestRegression(TestCase):
         dat = TestArray([[1,2,3,4],[5,6,7,8]],'jubba')
         assert dat.info == 'jubba'
         dat.resize((4,2))
-        assert dat.info == 'jubba'        
+        assert dat.info == 'jubba'
         dat.sort()
-        assert dat.info == 'jubba'        
+        assert dat.info == 'jubba'
         dat.fill(2)
         assert dat.info == 'jubba'
         dat.put([2,3,4],[6,3,4])

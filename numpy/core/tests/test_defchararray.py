@@ -47,7 +47,7 @@ class TestOperations(TestCase):
 #                           [A[1,0]*r, A[1,1]*r]]).view(np.chararray)
 #
 #            assert all(Ar == (self.A * r))
-        
+
         for ob in [object(), 'qrs']:
             try:
                 A * ob
@@ -63,7 +63,7 @@ class TestOperations(TestCase):
 #                           [A[1,0]*r, A[1,1]*r]]).view(np.chararray)
 #
 #            assert all(Ar == (r * self.A))
-        
+
         for ob in [object(), 'qrs']:
             try:
                 ob * A
@@ -78,7 +78,7 @@ class TestOperations(TestCase):
     def test_rmod(self):
         assert ("%s" % self.A) == str(self.A)
         assert ("%r" % self.A) == repr(self.A)
-        
+
         for ob in [42, object()]:
             try:
                 ob % self.A

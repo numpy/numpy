@@ -199,7 +199,7 @@ class TestMaskedArray(TestCase):
         #self.failUnlessRaises(Exception, lambda x,y: x+y, xx, masked)
 
     def test_set_element_as_object(self):
-        """Tests setting elements with object""" 
+        """Tests setting elements with object"""
         a = empty(1,dtype=object)
         x = (1,2,3,4,5)
         a[0] = x
@@ -649,7 +649,7 @@ class TestMaskedArrayArithmetic(TestCase):
             npfunc = getattr(np, funcname)
             mafunc = getattr(numpy.ma.core, funcname)
             # Use the np version
-            nout = np.empty((4,), dtype=int) 
+            nout = np.empty((4,), dtype=int)
             result = npfunc(xm,axis=0,out=nout)
             assert(result is nout)
             # Use the ma version
@@ -745,7 +745,7 @@ class TestMaskedArrayArithmetic(TestCase):
         for funcname in funclist:
             npfunc = getattr(np, funcname)
             xmmeth = getattr(xm, funcname)
-            
+
             # A ndarray as explicit input
             output = np.empty(4, dtype=float)
             output.fill(-9999)
@@ -986,7 +986,7 @@ class TestFillingValues(TestCase):
         assert_equal(_check_fill_value(None, ndtype), control)
         control = np.array((0,), dtype=[('f0',float)])
         assert_equal(_check_fill_value(0, ndtype), control)
-        # 
+        #
         ndtype = np.dtype("int, (2,3)float, float")
         control = np.array((default_fill_value(0),
                             default_fill_value(0.),
@@ -1063,7 +1063,7 @@ class TestUfuncs(TestCase):
 
 class TestMaskedArrayInPlaceArithmetics(TestCase):
     "Test MaskedArray Arithmetics"
-    
+
     def setUp(self):
         x = arange(10)
         y = arange(10)
@@ -1643,7 +1643,7 @@ class TestMaskedArrayMethods(TestCase):
         #
         mXswapped = mX.swapaxes(0,1)
         assert_equal(mXswapped[-1],mX[:,-1])
-        
+
         mXXswapped = mXX.swapaxes(0,2)
         assert_equal(mXXswapped.shape,(2,2,3,3))
 
@@ -1778,7 +1778,7 @@ class TestMaskArrayMathMethod(TestCase):
         for funcname in ('cumsum','cumprod'):
             npfunc = getattr(np, funcname)
             xmmeth = getattr(xm, funcname)
-            
+
             # A ndarray as explicit input
             output = np.empty((3,4), dtype=float)
             output.fill(-9999)
@@ -1941,7 +1941,7 @@ class TestMaskedArrayFunctions(TestCase):
         xf = np.where(m1, 1.e+20, x)
         xm.set_fill_value(1.e+20)
         self.info = (xm, ym)
-        
+
     #
     def test_masked_where_bool(self):
         x = [1,2]
@@ -1988,7 +1988,7 @@ class TestMaskedArrayFunctions(TestCase):
         b = empty_like(a)
         a.round(out=b)
         assert_equal(b, [1., 2., 3., 5., 6.])
-    
+
         x = array([1.,2.,3.,4.,5.])
         c = array([1,1,1,0,0])
         x[2] = masked
@@ -2004,10 +2004,10 @@ class TestMaskedArrayFunctions(TestCase):
 
     def test_round_with_output(self):
         "Testing round with an explicit output"
-        
+
         xm = array(np.random.uniform(0,10,12)).reshape(3,4)
         xm[:,0] = xm[0] = xm[-1,-1] = masked
-        
+
         # A ndarray as explicit input
         output = np.empty((3,4), dtype=float)
         output.fill(-9999)
@@ -2062,7 +2062,7 @@ class TestMaskedArrayFunctions(TestCase):
         zm = masked_array(z, mask=[0,1,0,0])
         xf = np.where(m1, 1.e+20, x)
         xm.set_fill_value(1.e+20)
-        
+
         d = where(xm>2,xm,-9)
         assert_equal(d, [-9.,-9.,-9.,-9., -9., 4., -9., -9., 10., -9., -9., 3.])
         assert_equal(d._mask, xm._mask)
@@ -2114,7 +2114,7 @@ class TestMaskedArrayFunctions(TestCase):
         assert z[0] is masked
         assert z[1] is not masked
         assert z[2] is masked
-        #        
+        #
         x = arange(1,6)
         x[-1] = masked
         y = arange(1,6)*10
@@ -2234,8 +2234,8 @@ class TestMaskedFields(TestCase):
         assert_equal_records(base._mask, np.ones(base.shape, dtype=mdtype))
         # Set w/ list
         base.mask = [0,0,0,1,1]
-        assert_equal_records(base._mask, 
-                             np.array([(x,x,x) for x in [0,0,0,1,1]], 
+        assert_equal_records(base._mask,
+                             np.array([(x,x,x) for x in [0,0,0,1,1]],
                                       dtype=mdtype))
 
     def test_set_record_element(self):
@@ -2243,13 +2243,13 @@ class TestMaskedFields(TestCase):
         base = self.data['base']
         (base_a, base_b, base_c) = (base['a'], base['b'], base['c'])
         base[0] = (pi, pi, 'pi')
-        
+
         assert_equal(base_a.dtype, int)
         assert_equal(base_a._data, [3,2,3,4,5])
-        
+
         assert_equal(base_b.dtype, float)
         assert_equal(base_b._data, [pi, 2.2, 3.3, 4.4, 5.5])
-        
+
         assert_equal(base_c.dtype, '|S8')
         assert_equal(base_c._data, ['pi','two','three','four','five'])
 
@@ -2257,13 +2257,13 @@ class TestMaskedFields(TestCase):
         base = self.data['base']
         (base_a, base_b, base_c) = (base['a'], base['b'], base['c'])
         base[:3] = (pi, pi, 'pi')
-        
+
         assert_equal(base_a.dtype, int)
         assert_equal(base_a._data, [3,3,3,4,5])
-        
+
         assert_equal(base_b.dtype, float)
         assert_equal(base_b._data, [pi, pi, pi, 4.4, 5.5])
-        
+
         assert_equal(base_c.dtype, '|S8')
         assert_equal(base_c._data, ['pi','pi','pi','four','five'])
 

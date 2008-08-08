@@ -13,7 +13,7 @@ class TestApplyAlongAxis(TestCase):
 
     def test_3d(self):
         a = arange(27).reshape((3,3,3))
-        assert_array_equal(apply_along_axis(sum,0,a), 
+        assert_array_equal(apply_along_axis(sum,0,a),
                            [[27,30,33],[36,39,42],[45,48,51]])
 
 

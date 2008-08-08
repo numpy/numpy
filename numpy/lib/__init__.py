@@ -39,4 +39,3 @@ __all__ += financial.__all__
 from numpy.testing import Tester
 test = Tester().test
 bench = Tester().bench
-

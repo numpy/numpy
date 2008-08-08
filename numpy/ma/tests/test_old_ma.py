@@ -167,10 +167,10 @@ class TestMa(TestCase):
         xmr = ravel(xm)
 
         #true because of careful selection of data
-        self.failUnless(eq(max(xr), maximum(xmr))) 
+        self.failUnless(eq(max(xr), maximum(xmr)))
 
         #true because of careful selection of data
-        self.failUnless(eq(min(xr), minimum(xmr))) 
+        self.failUnless(eq(min(xr), minimum(xmr)))
 
     def test_testAddSumProd (self):
         "Test add, sum, product."
@@ -184,10 +184,10 @@ class TestMa(TestCase):
         self.failUnless (eq(numpy.sum(x,0), sum(x,0)))
         self.failUnless (eq(numpy.product(x,axis=0), product(x,axis=0)))
         self.failUnless (eq(numpy.product(x,0), product(x,0)))
-        self.failUnless (eq(numpy.product(filled(xm,1),axis=0), 
+        self.failUnless (eq(numpy.product(filled(xm,1),axis=0),
                             product(xm,axis=0)))
         if len(s) > 1:
-            self.failUnless (eq(numpy.concatenate((x,y),1), 
+            self.failUnless (eq(numpy.concatenate((x,y),1),
                                 concatenate((xm,ym),1)))
             self.failUnless (eq(numpy.add.reduce(x,1), add.reduce(x,1)))
             self.failUnless (eq(numpy.sum(x,1), sum(x,1)))
@@ -361,7 +361,7 @@ class TestMa(TestCase):
         assert z[1] is not masked
         assert z[2] is masked
         assert eq(masked_where(greater(x, 2), x), masked_greater(x,2))
-        assert eq(masked_where(greater_equal(x, 2), x), 
+        assert eq(masked_where(greater_equal(x, 2), x),
                   masked_greater_equal(x,2))
         assert eq(masked_where(less(x, 2), x), masked_less(x,2))
         assert eq(masked_where(less_equal(x, 2), x), masked_less_equal(x,2))
@@ -370,13 +370,13 @@ class TestMa(TestCase):
         assert eq(masked_where(not_equal(x,2), x), masked_not_equal(x,2))
         assert eq(masked_inside(range(5), 1, 3), [0, 199, 199, 199, 4])
         assert eq(masked_outside(range(5), 1, 3),[199,1,2,3,199])
-        assert eq(masked_inside(array(range(5), mask=[1,0,0,0,0]), 1, 3).mask, 
+        assert eq(masked_inside(array(range(5), mask=[1,0,0,0,0]), 1, 3).mask,
                   [1,1,1,1,0])
         assert eq(masked_outside(array(range(5), mask=[0,1,0,0,0]), 1, 3).mask,
                   [1,1,0,0,1])
-        assert eq(masked_equal(array(range(5), mask=[1,0,0,0,0]), 2).mask, 
+        assert eq(masked_equal(array(range(5), mask=[1,0,0,0,0]), 2).mask,
                   [1,0,1,0,0])
-        assert eq(masked_not_equal(array([2,2,1,2,1], mask=[1,0,0,0,0]), 2).mask, 
+        assert eq(masked_not_equal(array([2,2,1,2,1], mask=[1,0,0,0,0]), 2).mask,
                   [1,0,1,0,1])
         assert eq(masked_where([1,1,0,0,0], [1,2,3,4,5]), [99,99,3,4,5])
         atest = ones((10,10,10), dtype=float32)
@@ -537,15 +537,15 @@ class TestMa(TestCase):
         self.failUnless(allclose(average(x, axis=0), 2.5))
         self.failUnless(allclose(average(x, axis=0, weights=w1), 2.5))
         y=array([arange(6), 2.0*arange(6)])
-        self.failUnless(allclose(average(y, None), 
+        self.failUnless(allclose(average(y, None),
                                  numpy.add.reduce(numpy.arange(6))*3./12.))
         self.failUnless(allclose(average(y, axis=0), numpy.arange(6) * 3./2.))
-        self.failUnless(allclose(average(y, axis=1), 
+        self.failUnless(allclose(average(y, axis=1),
                                  [average(x,axis=0), average(x,axis=0) * 2.0]))
         self.failUnless(allclose(average(y, None, weights=w2), 20./6.))
-        self.failUnless(allclose(average(y, axis=0, weights=w2), 
+        self.failUnless(allclose(average(y, axis=0, weights=w2),
                                  [0.,1.,2.,3.,4.,10.]))
-        self.failUnless(allclose(average(y, axis=1), 
+        self.failUnless(allclose(average(y, axis=1),
                                  [average(x,axis=0), average(x,axis=0) * 2.0]))
         m1 = zeros(6)
         m2 = [0,0,1,1,0,0]
@@ -561,7 +561,7 @@ class TestMa(TestCase):
         self.failUnless(allclose(average(z, None), 20./6.))
         self.failUnless(allclose(average(z, axis=0), [0.,1.,99.,99.,4.0, 7.5]))
         self.failUnless(allclose(average(z, axis=1), [2.5, 5.0]))
-        self.failUnless(allclose( average(z,axis=0, weights=w2), 
+        self.failUnless(allclose( average(z,axis=0, weights=w2),
                                   [0.,1., 99., 99., 4.0, 10.0]))
 
         a = arange(6)
@@ -674,9 +674,9 @@ class TestUfuncs(TestCase):
             mf = getattr(numpy.ma, f)
             args = self.d[:uf.nin]
             olderr = numpy.geterr()
-            f_invalid_ignore = ['sqrt', 'arctanh', 'arcsin', 'arccos', 
+            f_invalid_ignore = ['sqrt', 'arctanh', 'arcsin', 'arccos',
                                 'arccosh', 'arctanh', 'log', 'log10','divide',
-                                'true_divide', 'floor_divide', 'remainder', 
+                                'true_divide', 'floor_divide', 'remainder',
                                 'fmod']
             if f in f_invalid_ignore:
                 numpy.seterr(invalid='ignore')

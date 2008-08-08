@@ -3,7 +3,7 @@ import numpy as np
 
 class TestFinancial(TestCase):
     def test_rate(self):
-        assert_almost_equal(np.rate(10,0,-3500,10000), 
+        assert_almost_equal(np.rate(10,0,-3500,10000),
                             0.1107, 4)
 
     def test_irr(self):
@@ -12,7 +12,7 @@ class TestFinancial(TestCase):
                             0.0524, 2)
 
     def test_pv(self):
-        assert_almost_equal(np.pv(0.07,20,12000,0), 
+        assert_almost_equal(np.pv(0.07,20,12000,0),
                             -127128.17, 2)
 
     def test_fv(self):

@@ -134,12 +134,12 @@ class numpyDocTestCase(npd.DocTestCase):
         return name
 
 
-# second-chance checker; if the default comparison doesn't 
+# second-chance checker; if the default comparison doesn't
 # pass, then see if the expected output string contains flags that
 # tell us to ignore the output
 class numpyOutputChecker(doctest.OutputChecker):
     def check_output(self, want, got, optionflags):
-        ret = doctest.OutputChecker.check_output(self, want, got, 
+        ret = doctest.OutputChecker.check_output(self, want, got,
                                                  optionflags)
         if not ret:
             if "#random" in want:
@@ -148,7 +148,7 @@ class numpyOutputChecker(doctest.OutputChecker):
         return ret
 
 
-# Subclass nose.plugins.doctests.DocTestCase to work around a bug in 
+# Subclass nose.plugins.doctests.DocTestCase to work around a bug in
 # its constructor that blocks non-default arguments from being passed
 # down into doctest.DocTestCase
 class numpyDocTestCase(npd.DocTestCase):
@@ -156,13 +156,13 @@ class numpyDocTestCase(npd.DocTestCase):
                  checker=None, obj=None, result_var='_'):
         self._result_var = result_var
         self._nose_obj = obj
-        doctest.DocTestCase.__init__(self, test, 
+        doctest.DocTestCase.__init__(self, test,
                                      optionflags=optionflags,
-                                     setUp=setUp, tearDown=tearDown, 
+                                     setUp=setUp, tearDown=tearDown,
                                      checker=checker)
 
 
-print_state = numpy.get_printoptions()        
+print_state = numpy.get_printoptions()
 
 class numpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
@@ -188,7 +188,7 @@ class numpyDoctest(npd.Doctest):
         try:
             tests = self.finder.find(module)
         except AttributeError:
-            # nose allows module.__test__ = False; doctest does not and 
+            # nose allows module.__test__ = False; doctest does not and
             # throws AttributeError
             return
         if not tests:
@@ -205,31 +205,31 @@ class numpyDoctest(npd.Doctest):
 
             # Each doctest should execute in an environment equivalent to
             # starting Python and executing "import numpy as np", and,
-            # for SciPy packages, an additional import of the local 
+            # for SciPy packages, an additional import of the local
             # package (so that scipy.linalg.basic.py's doctests have an
             # implicit "from scipy import linalg" as well.
             #
             # Note: __file__ allows the doctest in NoseTester to run
             # without producing an error
             test.globs = {'__builtins__':__builtins__,
-                          '__file__':'__main__', 
-                          '__name__':'__main__', 
+                          '__file__':'__main__',
+                          '__name__':'__main__',
                           'np':numpy}
-            
+
             # add appropriate scipy import for SciPy tests
             if 'scipy' in pkg_name:
                 p = pkg_name.split('.')
                 p1 = '.'.join(p[:-1])
                 p2 = p[-1]
                 test.globs[p2] = __import__(pkg_name, test.globs, {}, [p2])
-                    
+
                 print 'additional import for %s: from %s import %s' % (test.filename, p1, p2)
                 print '    (%s): %r' % (pkg_name, test.globs[p2])
 
             # always use whitespace and ellipsis options
             optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
-            yield numpyDocTestCase(test, 
+            yield numpyDocTestCase(test,
                                    optionflags=optionflags,
                                    checker=numpyOutputChecker())
 

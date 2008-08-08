@@ -10,7 +10,7 @@ from unittest import TestCase
 
 import decorators as dec
 from utils import *
-from parametric import ParametricTestCase 
+from parametric import ParametricTestCase
 from numpytest import *
 from nosetester import NoseTester as Tester
 from nosetester import run_module_suite

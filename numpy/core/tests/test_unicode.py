@@ -214,31 +214,31 @@ class test_assign_values_1_ucs4(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
-    
+
 
 class test_assign_values_2_ucs2(assign_values, TestCase):
     """Check the assignment of valued arrays (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
-    
+
 
 class test_assign_values_2_ucs4(assign_values, TestCase):
     """Check the assignment of valued arrays (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
-    
+
 
 class test_assign_values_1009_ucs2(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
-    
+
 
 class test_assign_values_1009_ucs4(assign_values, TestCase):
     """Check the assignment of valued arrays (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
-    
+
 
 
 ############################################################
@@ -286,31 +286,31 @@ class test_byteorder_1_ucs2(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1, UCS2 values)"""
     ulen = 1
     ucs_value = ucs2_value
-    
+
 
 class test_byteorder_1_ucs4(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1, UCS4 values)"""
     ulen = 1
     ucs_value = ucs4_value
-    
+
 
 class test_byteorder_2_ucs2(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 2, UCS2 values)"""
     ulen = 2
     ucs_value = ucs2_value
-    
+
 
 class test_byteorder_2_ucs4(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 2, UCS4 values)"""
     ulen = 2
     ucs_value = ucs4_value
-    
+
 
 class test_byteorder_1009_ucs2(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1009, UCS2 values)"""
     ulen = 1009
     ucs_value = ucs2_value
-    
+
 
 class test_byteorder_1009_ucs4(byteorder_values, TestCase):
     """Check the byteorder in unicode (size 1009, UCS4 values)"""
@@ -320,4 +320,3 @@ class test_byteorder_1009_ucs4(byteorder_values, TestCase):
 
 if __name__ == "__main__":
     run_module_suite()
-    

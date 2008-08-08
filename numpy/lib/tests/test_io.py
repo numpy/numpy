@@ -57,7 +57,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
         l = np.load(c)
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
-        
+
 
 class TestSaveTxt(TestCase):
     def test_array(self):
@@ -220,8 +220,8 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=(1,2))
         assert_array_equal(x, a[:,1:])
-        
-        # Checking with dtypes defined converters. 
+
+        # Checking with dtypes defined converters.
         data = '''JOE 70.1 25.3
                 BOB 60.5 27.9
                 '''

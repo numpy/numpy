@@ -185,7 +185,7 @@ def define_no_smp():
 
 array_api_gen_bld = Builder(action = Action(do_generate_numpy_api, '$ARRAPIGENCOMSTR'),
                             emitter = generate_api_emitter)
-                                       
+
 
 ufunc_api_gen_bld = Builder(action = Action(do_generate_ufunc_api, '$UFUNCAPIGENCOMSTR'),
                             emitter = generate_api_emitter)

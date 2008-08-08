@@ -105,7 +105,6 @@ def broadcast_arrays(*args):
             common_shape.append(1)
 
     # Construct the new arrays.
-    broadcasted = [as_strided(x, shape=sh, strides=st) for (x,sh,st) in 
+    broadcasted = [as_strided(x, shape=sh, strides=st) for (x,sh,st) in
         zip(args, shapes, strides)]
     return broadcasted
-

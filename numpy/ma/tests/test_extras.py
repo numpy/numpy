@@ -48,7 +48,7 @@ class TestAverage(TestCase):
         y = array([arange(6, dtype=float_), 2.0*arange(6)])
         assert_equal(average(y, None), np.add.reduce(np.arange(6))*3./12.)
         assert_equal(average(y, axis=0), np.arange(6) * 3./2.)
-        assert_equal(average(y, axis=1), 
+        assert_equal(average(y, axis=1),
                      [average(x,axis=0), average(x,axis=0) * 2.0])
         assert_equal(average(y, None, weights=w2), 20./6.)
         assert_equal(average(y, axis=0, weights=w2),
@@ -395,7 +395,7 @@ class TestCov(TestCase):
         # 2 1D variables w/ missing values
         nx = x[1:-1]
         assert_almost_equal(np.cov(nx, nx[::-1]), cov(x, x[::-1]))
-        assert_almost_equal(np.cov(nx, nx[::-1], rowvar=False), 
+        assert_almost_equal(np.cov(nx, nx[::-1], rowvar=False),
                             cov(x, x[::-1], rowvar=False))
         assert_almost_equal(np.cov(nx, nx[::-1], rowvar=False, bias=True),
                             cov(x, x[::-1], rowvar=False, bias=True))
@@ -409,13 +409,13 @@ class TestCov(TestCase):
         frac = np.dot(valid, valid.T)
         xf = (x - x.mean(1)[:,None]).filled(0)
         assert_almost_equal(cov(x), np.cov(xf) * (x.shape[1]-1) / (frac - 1.))
-        assert_almost_equal(cov(x, bias=True), 
+        assert_almost_equal(cov(x, bias=True),
                             np.cov(xf, bias=True) * x.shape[1] / frac)
         frac = np.dot(valid.T, valid)
         xf = (x - x.mean(0)).filled(0)
-        assert_almost_equal(cov(x, rowvar=False), 
+        assert_almost_equal(cov(x, rowvar=False),
                             np.cov(xf, rowvar=False) * (x.shape[0]-1)/(frac - 1.))
-        assert_almost_equal(cov(x, rowvar=False, bias=True), 
+        assert_almost_equal(cov(x, rowvar=False, bias=True),
                             np.cov(xf, rowvar=False, bias=True) * x.shape[0]/frac)
 
 
@@ -461,7 +461,7 @@ class TestCorrcoef(TestCase):
         # 2 1D variables w/ missing values
         nx = x[1:-1]
         assert_almost_equal(np.corrcoef(nx, nx[::-1]), corrcoef(x, x[::-1]))
-        assert_almost_equal(np.corrcoef(nx, nx[::-1], rowvar=False), 
+        assert_almost_equal(np.corrcoef(nx, nx[::-1], rowvar=False),
                             corrcoef(x, x[::-1], rowvar=False))
         assert_almost_equal(np.corrcoef(nx, nx[::-1], rowvar=False, bias=True),
                             corrcoef(x, x[::-1], rowvar=False, bias=True))
@@ -471,7 +471,7 @@ class TestCorrcoef(TestCase):
         x = self.data
         x[-1] = masked
         x = x.reshape(3,4)
-        
+
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1,:-1], control[:-1,:-1])

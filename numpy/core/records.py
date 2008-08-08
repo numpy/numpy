@@ -551,7 +551,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    chararray(['dbe', 'de'], 
+    chararray(['dbe', 'de'],
           dtype='|S3')
     >>> import cPickle
     >>> print cPickle.loads(cPickle.dumps(r))
@@ -639,7 +639,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a.tofile(fd)
     >>>
     >>> fd.seek(0)
-    >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10, 
+    >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
     >>> print r[5]
     (0.5, 10, 'abcde')

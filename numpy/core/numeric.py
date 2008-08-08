@@ -1778,7 +1778,7 @@ class errstate(object):
     """with errstate(**state): --> operations in following block use given state.
 
     # Set error handling to known state.
-    >>> _ = np.seterr(invalid='raise', divide='raise', over='raise', 
+    >>> _ = np.seterr(invalid='raise', divide='raise', over='raise',
     ...               under='ignore')
 
     >>> a = -np.arange(3)

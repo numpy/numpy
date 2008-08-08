@@ -16,7 +16,7 @@ class TestAso(TestCase):
 
         d, c = unique1d( a, True )
         ed = np.array( [2, 3, 0, 1] )
-        
+
         assert_array_equal( d,ed )
         assert_array_equal( c, ec )
 

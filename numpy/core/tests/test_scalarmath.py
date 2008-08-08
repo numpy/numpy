@@ -86,7 +86,7 @@ class TestRepr(TestCase):
             last_exponent_bit_idx = finfo.nexp
             storage_bytes = np.dtype(t).itemsize*8
             # could add some more types to the list below
-            for which in ['small denorm','small norm']: 
+            for which in ['small denorm','small norm']:
                 # Values from http://en.wikipedia.org/wiki/IEEE_754
                 constr = np.array([0x00]*storage_bytes,dtype=np.uint8)
                 if which == 'small denorm':

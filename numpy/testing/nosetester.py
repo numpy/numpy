@@ -81,7 +81,7 @@ def _docmethod(meth, testtype):
         extra_argv : list
             List with any extra args to pass to nosetests''' \
             % {'testtype': testtype}
-    
+
     meth.__doc__ = meth.__doc__ % {'test_header':test_header}
 
 
@@ -123,7 +123,7 @@ class NoseTester(object):
             package = os.path.dirname(package.__file__)
         self.package_path = package
 
-        # find the package name under test; this name is used to limit coverage 
+        # find the package name under test; this name is used to limit coverage
         # reporting (if enabled)
         self.package_name = get_package_name(package)
 
@@ -144,8 +144,8 @@ class NoseTester(object):
             argv += extra_argv
         return argv
 
-    
-    def test(self, label='fast', verbose=1, extra_argv=None, doctests=False, 
+
+    def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
              coverage=False, **kwargs):
         ''' Run tests for module using nose
 
@@ -154,7 +154,7 @@ class NoseTester(object):
             If True, run doctests in module, default False
         coverage : boolean
             If True, report coverage of NumPy code, default False
-            (Requires the coverage module: 
+            (Requires the coverage module:
              http://nedbatchelder.com/code/modules/coverage.html)
         '''
 
@@ -165,15 +165,15 @@ class NoseTester(object):
             ua = ', '.join(unexpected_args)
             raise TypeError("test() got unexpected arguments: %s" % ua)
 
-        # issue a deprecation warning if any of the pre-1.2 arguments to 
+        # issue a deprecation warning if any of the pre-1.2 arguments to
         # test are given
         if old_args.intersection(kwargs.keys()):
             warnings.warn("This method's signature will change in the next " \
                           "release; the level, verbosity, all, sys_argv, " \
                           "and testcase_pattern keyword arguments will be " \
-                          "removed. Please update your code.", 
+                          "removed. Please update your code.",
                           DeprecationWarning, stacklevel=2)
-        
+
         # Use old arguments if given (where it makes sense)
         # For the moment, level and sys_argv are ignored
 
@@ -191,7 +191,7 @@ class NoseTester(object):
             label = ''
             doctests = True
 
-        # if doctests is in the extra args, remove it and set the doctest 
+        # if doctests is in the extra args, remove it and set the doctest
         # flag so the NumPy doctester is used instead
         if extra_argv and '--with-doctest' in extra_argv:
             extra_argv.remove('--with-doctest')
@@ -222,23 +222,23 @@ class NoseTester(object):
         print "NumPy version %s" % numpy.__version__
         npdir = os.path.dirname(numpy.__file__)
         print "NumPy is installed in %s" % npdir
-        
+
         if 'scipy' in self.package_name:
             import scipy
             print "SciPy version %s" % scipy.__version__
             spdir = os.path.dirname(scipy.__file__)
             print "SciPy is installed in %s" % spdir
-            
+
         pyversion = sys.version.replace('\n','')
         print "Python version %s" % pyversion
         print "nose version %d.%d.%d" % nose.__versioninfo__
 
-        # Because nose currently discards the test result object, but we need 
-        # to return it to the user, override TestProgram.runTests to retain 
+        # Because nose currently discards the test result object, but we need
+        # to return it to the user, override TestProgram.runTests to retain
         # the result
         class NumpyTestProgram(nose.core.TestProgram):
             def runTests(self):
-                """Run Tests. Returns true on success, false on failure, and 
+                """Run Tests. Returns true on success, false on failure, and
                 sets self.success to the same value.
                 """
                 if self.testRunner is None:
@@ -257,7 +257,7 @@ class NoseTester(object):
         doctest.master = None
 
         # construct list of plugins, omitting the existing doctest plugin
-        import nose.plugins.builtin 
+        import nose.plugins.builtin
         from noseclasses import numpyDoctest
         plugins = [numpyDoctest()]
         for p in nose.plugins.builtin.plugins:
@@ -307,10 +307,9 @@ def check_whitespace_enabled():
     '''
     # whitespace after the 3
     >>> 1+2
-    3 
+    3
 
     # whitespace before the 7
     >>> 3+4
      7
     '''
-

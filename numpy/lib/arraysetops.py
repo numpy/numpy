@@ -330,4 +330,3 @@ def setdiff1d(ar1, ar2):
         return aux
     else:
         return np.asarray(ar1)[aux == 0]
-

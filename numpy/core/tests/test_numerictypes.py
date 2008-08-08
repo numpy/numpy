@@ -252,7 +252,7 @@ class read_values_nested:
                                            self._buffer[1][4]], dtype='f8'))
             assert_equal(h['z'], np.array([self._buffer[0][5],
                                            self._buffer[1][5]], dtype='u1'))
-            
+
 
     def test_nested1_acessors(self):
         """Check reading the nested fields of a nested array (1st level)"""
@@ -356,4 +356,3 @@ class TestCommonType(TestCase):
 
 if __name__ == "__main__":
     run_module_suite()
-

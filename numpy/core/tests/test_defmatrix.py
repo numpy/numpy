@@ -200,7 +200,7 @@ class TestAlgebra(TestCase):
         mA2 = matrix(A)
         mA2 *= 3
         assert allclose(mA2.A, 3*A)
-        
+
     def test_notimplemented(self):
         '''Check that 'not implemented' operations produce a failure.'''
         A = matrix([[1., 2.],

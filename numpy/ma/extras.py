@@ -401,7 +401,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
 
     Notes
     -----
-    Given a vector V with N non masked values, the median of V is the middle 
+    Given a vector V with N non masked values, the median of V is the middle
     value of a sorted copy of V (Vs) - i.e. Vs[(N-1)/2], when N is odd, or
     {Vs[N/2 - 1] + Vs[N/2]}/2. when N is even.
 
@@ -550,9 +550,9 @@ def mask_cols(a, axis=None):
 def dot(a,b, strict=False):
     """Return the dot product of two 2D masked arrays a and b.
 
-    Like the generic numpy equivalent, the product sum is over the last 
-    dimension of a and the second-to-last dimension of b.  If strict is True, 
-    masked values are propagated: if a masked value appears in a row or column, 
+    Like the generic numpy equivalent, the product sum is over the last
+    dimension of a and the second-to-last dimension of b.  If strict is True,
+    masked values are propagated: if a masked value appears in a row or column,
     the whole row or column is considered masked.
 
     Parameters
@@ -649,7 +649,7 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
     """
     Private function for the computation of covariance and correlation
     coefficients.
-    
+
     """
     x = ma.array(x, ndmin=2, copy=True, dtype=float)
     xmask = ma.getmaskarray(x)
@@ -694,9 +694,9 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
     Normalization is by (N-1) where N is the number of observations (unbiased
     estimate).  If bias is True then normalization is by N.
 
-    By default, masked values are recognized as such. If x and y have the same 
+    By default, masked values are recognized as such. If x and y have the same
     shape, a common mask is allocated: if x[i,j] is masked, then y[i,j] will also
-    be masked. 
+    be masked.
     Setting `allow_masked` to False will raise an exception if values are missing
     in either of the input arrays.
 

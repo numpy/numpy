@@ -623,7 +623,7 @@ class NumpyTest:
         """ Run Numpy module test suite with level and verbosity
         taken from sys.argv. Requires optparse module.
         """
-        
+
         # delayed import of shlex to reduce startup time
         import shlex
 
