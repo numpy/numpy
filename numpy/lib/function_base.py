@@ -2459,22 +2459,19 @@ def msort(a):
     b.sort(0)
     return b
 
-def median(a, axis=0, out=None, overwrite_input=False):
+def median(a, axis=None, out=None, overwrite_input=False):
     """
     Compute the median along the specified axis.
 
-    Returns the median of the array elements.  The median is taken
-    over the first axis of the array by default, otherwise over
-    the specified axis.
+    Returns the median of the array elements.
 
     Parameters
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    axis : {int, None}, optional
-        Axis along which the medians are computed. The default is to
-        compute the median along the first dimension.  If `axis` is
-        set to None, return the median of the flattened array.
+    axis : {None, int}, optional
+        Axis along which the medians are computed. The default (axis=None) is to
+        compute the median along a flattened version of the array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -2515,14 +2512,14 @@ def median(a, axis=0, out=None, overwrite_input=False):
     array([[10,  7,  4],
            [ 3,  2,  1]])
     >>> np.median(a)
-    array([ 6.5,  4.5,  2.5])
-    >>> np.median(a, axis=None)
     3.5
+    >>> np.median(a, axis=0)
+    array([ 6.5,  4.5,  2.5])
     >>> np.median(a, axis=1)
     array([ 7.,  2.])
-    >>> m = np.median(a)
+    >>> m = np.median(a, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.median(a, out=m)
+    >>> np.median(a, axis=0, out=m)
     array([ 6.5,  4.5,  2.5])
     >>> m
     array([ 6.5,  4.5,  2.5])
