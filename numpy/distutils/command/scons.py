@@ -453,12 +453,14 @@ class scons(old_build_ext):
                     log.info("======== Executing scons command for pkg %s =========", pkg_name)
                 st = os.system(cmdstr)
                 if st:
-                    print "status is %d" % st
-                    msg = "Error while executing scons command %s (see above)" \
-                          % cmdstr
-                    msg += """
-    Try executing the scons command with --log-level option for more detailed
-    output, for example --log-level=0; the lowest, the more detailed"""
+                    #print "status is %d" % st
+                    msg = "Error while executing scons command."
+                    msg += " See above for more information.\n"
+                    msg += """\
+If you think it is a problem in numscons, you can also try executing the scons
+command with --log-level option for more detailed output of what numscons is
+doing, for example --log-level=0; the lowest the level is, the more detailed
+the output it."""
                     raise DistutilsExecError(msg)
             if post_hook:
                 post_hook(**{'pkg_name': pkg_name, 'scons_cmd' : self})
