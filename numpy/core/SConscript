@@ -5,7 +5,7 @@ import sys
 from os.path import join as pjoin, basename as pbasename, dirname as pdirname
 from copy import deepcopy
 
-from numscons import get_python_inc, get_pythonlib_dir
+from numscons import get_pythonlib_dir
 from numscons import GetNumpyEnvironment
 from numscons import CheckCBLAS
 from numscons import write_info
@@ -17,7 +17,7 @@ from scons_support import array_api_gen_bld, ufunc_api_gen_bld, template_bld, \
 
 
 env = GetNumpyEnvironment(ARGUMENTS)
-env.Append(CPPPATH = [get_python_inc()])
+env.Append(CPPPATH = env["PYEXTCPPPATH"])
 if os.name == 'nt':
     # NT needs the pythonlib to run any code importing Python.h, including
     # simple code using only typedef and so on, so we need it for configuration
@@ -43,9 +43,13 @@ numpyconfig_sym = []
 # Checking Types
 #---------------
 if not config.CheckHeader("Python.h"):
-    raise RuntimeError("Error: Python.h header is not found (or cannot be "
-"compiled). On linux, check that you have python-dev/python-devel packages. On"
-" windows, check \ that you have the platform SDK.")
+    errmsg = []
+    for line in config.GetLastError():
+        errmsg.append("\t>> %s " % line)
+    print """\ Error: Python.h header cannot be compiled (or cannot be found).
+On linux, check that you have python-dev/python-devel packages. On windows,
+check that you have he platform SDK. You may also use unsupported cflags. Configuration error log says: \n%s""" % ''.join(errmsg)
+    Exit(-1)
 
 def check_type(type, include = None):
     st = config.CheckTypeSize(type, includes = include)
