@@ -4704,7 +4704,7 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
         new->names = conv->names;
         Py_XINCREF(new->names);
     }
-    new->hasobject = conv->hasobject;
+    new->flags = conv->flags;
     Py_DECREF(conv);
     *errflag = 0;
     return new;
@@ -4783,7 +4783,7 @@ _convert_from_tuple(PyObject *obj)
         PyDimMem_FREE(shape.ptr);
         newdescr->subarray = _pya_malloc(sizeof(PyArray_ArrayDescr));
         newdescr->subarray->base = type;
-        newdescr->hasobject = type->hasobject;
+        newdescr->flags = type->flags;
         Py_INCREF(val);
         newdescr->subarray->shape = val;
         Py_XDECREF(newdescr->fields);
@@ -4873,7 +4873,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                             "two fields with the same name");
             goto fail;
         }
-        dtypeflags |= (conv->hasobject & NPY_FROM_FIELDS);
+        dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         tup = PyTuple_New((title == NULL ? 2 : 3));
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         if (align) {
@@ -4902,7 +4902,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     new->fields = fields;
     new->names = nameslist;
     new->elsize = totalsize;
-    new->hasobject=dtypeflags;
+    new->flags=dtypeflags;
     if (maxalign > 1) {
         totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
     }
@@ -4955,7 +4955,7 @@ _convert_from_list(PyObject *obj, int align)
             Py_DECREF(key);
             goto fail;
         }
-        dtypeflags |= (conv->hasobject & NPY_FROM_FIELDS);
+        dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         if (align) {
             int _align;
@@ -4973,7 +4973,7 @@ _convert_from_list(PyObject *obj, int align)
     new = PyArray_DescrNewFromType(PyArray_VOID);
     new->fields = fields;
     new->names = nameslist;
-    new->hasobject=dtypeflags;
+    new->flags=dtypeflags;
     if (maxalign > 1) {
         totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
     }
@@ -5199,7 +5199,7 @@ _convert_from_dict(PyObject *obj, int align)
         }
         Py_DECREF(tup);
         if ((ret == PY_FAIL) || (newdescr->elsize == 0)) goto fail;
-        dtypeflags |= (newdescr->hasobject & NPY_FROM_FIELDS);
+        dtypeflags |= (newdescr->flags & NPY_FROM_FIELDS);
         totalsize += newdescr->elsize;
     }
 
@@ -5217,7 +5217,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
     new->names = names;
     new->fields = fields;
-    new->hasobject = dtypeflags;
+    new->flags = dtypeflags;
     return new;
 
  fail:
