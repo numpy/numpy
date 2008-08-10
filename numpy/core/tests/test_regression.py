@@ -1174,6 +1174,15 @@ class TestRegression(TestCase):
         want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, 0+0j])
         assert_equal(have, want)
 
+    def test_for_equal_names(self, level=rlevel):
+        """Ticket #674"""
+        dt = np.dtype([('foo', float), ('bar', float)])
+        a = np.zeros(10, dt)
+        b = list(a.dtype.names)
+        b[0] = "notfoo"
+        a.dtype.names = b
+        assert a.dtype.names[0] == "notfoo"
+        assert a.dtype.names[1] == "bar"
 
 if __name__ == "__main__":
     run_module_suite()

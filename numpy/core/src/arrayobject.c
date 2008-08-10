@@ -11145,7 +11145,8 @@ arraydescr_dealloc(PyArray_Descr *self)
 
 /* we need to be careful about setting attributes because these
    objects are pointed to by arrays that depend on them for interpreting
-   data.  Currently no attributes of dtype objects can be set.
+   data.  Currently no attributes of data-type objects can be set
+   directly except names.
 */
 static PyMemberDef arraydescr_members[] = {
     {"type", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
@@ -11403,9 +11404,11 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
 	key = PyTuple_GET_ITEM(self->names, i);
 	/* Borrowed reference to item */
 	item = PyDict_GetItem(self->fields, key);
+	Py_INCREF(item); /* Hold on to it even through DelItem */
 	new_key = PyTuple_GET_ITEM(new_names, i);
-	PyDict_SetItem(self->fields, new_key, item);
 	PyDict_DelItem(self->fields, key);
+	PyDict_SetItem(self->fields, new_key, item);
+	Py_DECREF(item); /* self->fields now holds reference */
     }
 
     /* Replace names */
