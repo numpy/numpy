@@ -45,10 +45,12 @@ numpyconfig_sym = []
 if not config.CheckHeader("Python.h"):
     errmsg = []
     for line in config.GetLastError():
-        errmsg.append("\t>> %s " % line)
-    print """\ Error: Python.h header cannot be compiled (or cannot be found).
+        errmsg.append("%s " % line)
+    print """
+Error: Python.h header cannot be compiled (or cannot be found).
 On linux, check that you have python-dev/python-devel packages. On windows,
-check that you have he platform SDK. You may also use unsupported cflags. Configuration error log says: \n%s""" % ''.join(errmsg)
+check that you have he platform SDK. You may also use unsupported cflags.
+Configuration error log says: \n\n%s""" % ''.join(errmsg)
     Exit(-1)
 
 def check_type(type, include = None):
