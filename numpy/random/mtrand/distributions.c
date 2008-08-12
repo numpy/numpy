@@ -225,7 +225,8 @@ double rk_noncentral_chisquare(rk_state *state, double df, double nonc)
 
 double rk_f(rk_state *state, double dfnum, double dfden)
 {
-    return rk_chisquare(state, dfnum) / rk_chisquare(state, dfden);
+    return ((rk_chisquare(state, dfnum) * dfden) / 
+            (rk_chisquare(state, dfden) * dfnum));
 }
 
 double rk_noncentral_f(rk_state *state, double dfnum, double dfden, double nonc)
