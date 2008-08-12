@@ -884,6 +884,11 @@ def masked_where(condition, a, copy=True):
     """
     cond = make_mask(condition)
     a = np.array(a, copy=copy, subok=True)
+    
+    (cshape, ashape) = (cond.shape, a.shape)
+    if cshape and cshape != ashape:
+        raise IndexError("Inconsistant shape between the condition and the input"\
+                         " (got %s and %s)" % (cshape, ashape))
     if hasattr(a, '_mask'):
         cond = mask_or(cond, a._mask)
         cls = type(a)

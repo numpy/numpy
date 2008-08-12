@@ -1969,6 +1969,17 @@ class TestMaskedArrayFunctions(TestCase):
         ctest = masked_where(btest,atest)
         assert_equal(atest,ctest)
 
+    def test_masked_where_shape_constraint(self):
+        a = arange(10)
+        try:
+            test = masked_equal(1, a)
+        except IndexError:
+            pass
+        else:
+            raise AssertionError("Should have failed...")
+        test = masked_equal(a,1)
+        assert(test.mask, [0,1,0,0,0,0,0,0,0,0])
+
 
     def test_masked_otherfunctions(self):
         assert_equal(masked_inside(range(5), 1, 3), [0, 199, 199, 199, 4])
