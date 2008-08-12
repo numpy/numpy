@@ -685,6 +685,7 @@ class TestNaNFuncts(TestCase):
                             array([[ 0.01319214,  0.11704017,  0.1630199 ],
                                    [ 0.37910852,  0.87964135,  0.34306596],
                                    [ 0.72687499,  0.23913896,  0.33850425]]))
+        assert nanmin([nan, nan]) is nan
 
     def test_nanargmin(self):
         assert_almost_equal(nanargmin(self.A), 1)
