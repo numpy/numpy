@@ -196,7 +196,7 @@
     }
     else
     {
-      py_obj = PyArray_FromObject(input, typecode, 0, 0);
+      py_obj = PyArray_FROMANY(input, typecode, 0, 0, NPY_DEFAULT);
       /* If NULL, PyArray_FromObject will have set python error value.*/
       ary = (PyArrayObject*) py_obj;
       *is_new_object = 1;
@@ -229,6 +229,30 @@
     return result;
   }
 
+  /* Given a PyArrayObject, check to see if it is Fortran-contiguous.
+   * If so, return the input pointer, but do not flag it as not a new
+   * object.  If it is not Fortran-contiguous, create a new
+   * PyArrayObject using the original data, flag it as a new object
+   * and return the pointer.
+   */
+  PyArrayObject* make_fortran(PyArrayObject* ary, int* is_new_object,
+                              int min_dims, int max_dims)
+  {
+    PyArrayObject* result;
+    if (array_is_fortran(ary))
+    {
+      result = ary;
+      *is_new_object = 0;
+    }
+    else
+    {
+      Py_INCREF(ary->descr);
+      result = (PyArrayObject*) PyArray_FromArray(ary, ary->descr, NPY_FORTRAN);
+      *is_new_object = 1;
+    }
+    return result;
+  }
+
   /* Convert a given PyObject to a contiguous PyArrayObject of the
    * specified type.  If the input object is not a contiguous
    * PyArrayObject, a new one will be created and the new object flag
@@ -255,7 +279,36 @@
     *is_new_object = is_new1 || is_new2;
     return ary1;
   }
-}
+
+  /* Convert a given PyObject to a Fortran-ordered PyArrayObject of the
+   * specified type.  If the input object is not a Fortran-ordered
+   * PyArrayObject, a new one will be created and the new object flag
+   * will be set.
+   */
+  PyArrayObject* obj_to_array_fortran_allow_conversion(PyObject* input,
+                                                       int typecode,
+                                                       int* is_new_object)
+  {
+    int is_new1 = 0;
+    int is_new2 = 0;
+    PyArrayObject* ary2;
+    PyArrayObject* ary1 = obj_to_array_allow_conversion(input, typecode,
+                                                        &is_new1);
+    if (ary1)
+    {
+      ary2 = make_fortran(ary1, &is_new2, 0, 0);
+      if (is_new1 && is_new2)
+      {
+        Py_DECREF(ary1);
+      }
+      ary1 = ary2;
+    }
+    *is_new_object = is_new1 || is_new2;
+    return ary1;
+  }
+
+} /* end fragment */
+
 
 /**********************************************************************/
 
@@ -716,8 +769,8 @@
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[2] = { -1, -1 };
-  array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-                                                   &is_new_object);
+  array = obj_to_array_fortran_allow_conversion($input, DATA_TYPECODE,
+                                                &is_new_object);
   if (!array || !require_dimensions(array, 2) ||
       !require_size(array, size, 2) || !require_fortran(array)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
@@ -864,8 +917,8 @@
   (PyArrayObject* array=NULL, int is_new_object=0)
 {
   npy_intp size[3] = { -1, -1, -1 };
-  array = obj_to_array_contiguous_allow_conversion($input, DATA_TYPECODE,
-                                                   &is_new_object);
+  array = obj_to_array_fortran_allow_conversion($input, DATA_TYPECODE,
+                                                &is_new_object);
   if (!array || !require_dimensions(array, 3) ||
       !require_size(array, size, 3) | !require_fortran(array)) SWIG_fail;
   $1 = (DATA_TYPE*) array_data(array);
