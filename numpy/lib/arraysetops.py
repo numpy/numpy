@@ -74,7 +74,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     return ed
 
-def unique1d(ar1, return_index=False):
+def unique1d(ar1, return_index=False, return_inverse=False):
     """
     Find the unique elements of an array.
 
@@ -85,6 +85,9 @@ def unique1d(ar1, return_index=False):
     return_index : bool, optional
         If True, also return the indices against `ar1` that result in the
         unique array.
+    return_inverse : bool, optional
+        If True, also return the indices against the unique array that
+        result in `ar1`.
 
     Returns
     -------
@@ -93,6 +96,9 @@ def unique1d(ar1, return_index=False):
     unique_indices : ndarray, optional
         The indices of the unique values. Only provided if `return_index` is
         True.
+    unique_inverse : ndarray, optional
+        The indices to reconstruct the original array. Only provided if
+        `return_inverse` is True.
 
     See Also
     --------
@@ -107,21 +113,52 @@ def unique1d(ar1, return_index=False):
     >>> np.unique1d(a)
     array([1, 2, 3])
 
+    Reconstruct the input from unique values:
+
+    >>> np.unique1d([1,2,6,4,2,3,2], return_index=True)
+    >>> x = [1,2,6,4,2,3,2]
+    >>> u, i = np.unique1d(x, return_inverse=True)
+    >>> u
+    array([1, 2, 3, 4, 6])
+    >>> i
+    array([0, 1, 4, 3, 1, 2, 1])
+    >>> [u[p] for p in i]
+    [1, 2, 6, 4, 2, 3, 2]
+
     """
+    if return_index:
+        import warnings
+        warnings.warn("The order of the output arguments for "
+                      "`return_index` has changed.  Before, "
+                      "the output was (indices, unique_arr), but "
+                      "has now been reversed to be more consistent.")
+
     ar = np.asarray(ar1).flatten()
     if ar.size == 0:
-        if return_index: return np.empty(0, np.bool), ar
-        else: return ar
+        if return_inverse and return_index:
+            return ar, np.empty(0, np.bool), np.empty(0, np.bool)
+        elif return_inverse or return_index:
+            return ar, np.empty(0, np.bool)
+        else:
+            return ar
 
-    if return_index:
+    if return_inverse or return_index:
         perm = ar.argsort()
         aux = ar[perm]
-        flag = np.concatenate( ([True], aux[1:] != aux[:-1]) )
-        return perm[flag], aux[flag]
+        flag = np.concatenate(([True], aux[1:] != aux[:-1]))
+        if return_inverse:
+            iflag = np.cumsum(flag) - 1
+            iperm = perm.argsort()
+            if return_index:
+                return aux[flag], perm[flag], iflag[iperm]
+            else:
+                return aux[flag], iflag[iperm]
+        else:
+            return aux[flag], perm[flag]
 
     else:
         ar.sort()
-        flag = np.concatenate( ([True], ar[1:] != ar[:-1]) )
+        flag = np.concatenate(([True], ar[1:] != ar[:-1]))
         return ar[flag]
 
 def intersect1d(ar1, ar2):

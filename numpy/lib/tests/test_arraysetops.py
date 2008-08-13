@@ -6,6 +6,8 @@ from numpy.testing import *
 import numpy as np
 from numpy.lib.arraysetops import *
 
+import warnings
+
 class TestAso(TestCase):
     def test_unique1d( self ):
         a = np.array( [5, 7, 1, 2, 1, 5, 7] )
@@ -14,11 +16,13 @@ class TestAso(TestCase):
         c = unique1d( a )
         assert_array_equal( c, ec )
 
-        d, c = unique1d( a, True )
-        ed = np.array( [2, 3, 0, 1] )
+        warnings.simplefilter('ignore', Warning)
+        unique, indices = unique1d( a, return_index=True )
+        warnings.resetwarnings()
 
-        assert_array_equal( d,ed )
-        assert_array_equal( c, ec )
+        ed = np.array( [2, 3, 0, 1] )
+        assert_array_equal(unique, ec)
+        assert_array_equal(indices, ed)
 
         assert_array_equal([], unique1d([]))
 
