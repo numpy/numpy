@@ -13,7 +13,7 @@ import shutil
 from os.path import join as pjoin, split as psplit, dirname
 
 PYEXECS = {"2.5" : "C:\python25\python.exe",
-        "2.4" : "C:\python24\python2.4.exe",
+        "2.4" : "C:\python24\python24.exe",
         "2.3" : "C:\python23\python23.exe"}
 
 _SSE3_CFG = r"""[atlas]
