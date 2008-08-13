@@ -96,8 +96,6 @@ def dist2sconscc(compiler):
         return 'msvc'
     elif compiler_type == 'intel':
         return 'intelc'
-    elif compiler_type == 'mingw32':
-        return 'mingw'
     else:
         return compiler.compiler[0]
 
