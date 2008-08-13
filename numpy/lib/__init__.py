@@ -19,6 +19,7 @@ from arraysetops import *
 from io import *
 from financial import *
 import math
+from arrayterator import *
 
 __all__ = ['emath','math']
 __all__ += type_check.__all__

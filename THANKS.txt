@@ -1,38 +1,39 @@
 Travis Oliphant for the majority of code adaptation
-Jim Hugunin, Paul Dubois, Konrad Hinsen, David Ascher, and many others for 
+Jim Hugunin, Paul Dubois, Konrad Hinsen, David Ascher, and many others for
     Numeric on which the code is based.
 Perry Greenfield, J Todd Miller, Rick White, Paul Barrett for Numarray
     which gave much inspiration and showed the way forward.
 Paul Dubois for original Masked Arrays
 Pearu Peterson for f2py and numpy.distutils and help with code organization
-Robert Kern for mtrand, bug fixes, help with distutils, code organization, 
-    and much more. 
+Robert Kern for mtrand, bug fixes, help with distutils, code organization,
+    and much more.
 Eric Jones for sundry subroutines
 Fernando Perez for code snippets, ideas, bugfixes, and testing.
 Ed Schofield for matrix.py patches, bugfixes, testing, and docstrings.
 Robert Cimrman for array set operations and numpy.distutils help
 John Hunter for code snippets (from matplotlib)
 Chris Hanley for help with records.py, testing, and bug fixes.
-Travis Vaught, Joe Cooper, Jeff Strunk for administration of 
-    numpy.org web site and SVN 
+Travis Vaught, Joe Cooper, Jeff Strunk for administration of
+    numpy.org web site and SVN
 Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing
 David Cooke for many code improvements including the auto-generated C-API,
     and optimizations.
-Alexander Belopolsky (Sasha) for Masked array bug-fixes and tests, 
+Alexander Belopolsky (Sasha) for Masked array bug-fixes and tests,
     rank-0 array improvements, scalar math help and other code additions
-Francesc Altet for unicode and nested record tests 
-    and much help with rooting out nested record array bugs. 
-Tim Hochberg for getting the build working on MSVC, optimization 
+Francesc Altet for unicode and nested record tests
+    and much help with rooting out nested record array bugs.
+Tim Hochberg for getting the build working on MSVC, optimization
     improvements, and code review
-Charles Harris for the sorting code originally written for Numarray and 
+Charles Harris for the sorting code originally written for Numarray and
     for improvements to polyfit, many bug fixes, and documentation strings.
-A.M. Archibald for no-copy-reshape code. 
-David Huard for histogram improvements including 2-d and d-d code and 
-    other bug-fixes. 
-Albert Strasheim for documentation, bug-fixes, regression tests and 
+A.M. Archibald for no-copy-reshape code.
+David Huard for histogram improvements including 2-d and d-d code and
+    other bug-fixes.
+Albert Strasheim for documentation, bug-fixes, regression tests and
     Valgrind expertise.
 Stefan van der Walt for documentation, bug-fixes and regression-tests.
-Andrew Straw for help with http://www.scipy.org, documentation, and testing. 
+Andrew Straw for help with http://www.scipy.org, documentation, and testing.
 David Cournapeau for scons build support, doc-and-bug fixes, and code contributions including fast_clipping.
 Pierre Gerard-Marchant for his rewrite of the masked array functionality.
+Roberto de Almeida for the buffered array iterator.
