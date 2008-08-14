@@ -1408,7 +1408,7 @@ _parse_signature(PyUFuncObject *self, const char *signature)
         PyErr_NoMemory();
         return -1;
     }
-    
+
     self->core_enabled = 1;
     self->core_num_dim_ix = 0;
     self->core_num_dims = _pya_malloc(sizeof(int) * self->nargs);
@@ -1581,12 +1581,13 @@ _compute_dimension_size(PyUFuncLoopObject *loop, PyArrayObject **mps, int i)
 static PyArrayObject *
 _trunc_coredim(PyArrayObject *ap, int core_nd)
 {
+    PyArrayObject *ret;
     int nd = ap->nd - core_nd;
     if (nd < 0) nd = 0;
 
     /* The following code is basically taken from PyArray_Transpose */
     Py_INCREF(ap->descr);  /* NewFromDescr will steal this reference */
-    PyArrayObject *ret = (PyArrayObject *)
+    ret = (PyArrayObject *)
         PyArray_NewFromDescr(ap->ob_type, ap->descr,
                              nd, ap->dimensions,
                              ap->strides, ap->data, ap->flags,
@@ -1598,7 +1599,7 @@ _trunc_coredim(PyArrayObject *ap, int core_nd)
     Py_INCREF(ap);
 
     PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
-    
+
     return ret;
 }
 
@@ -1793,7 +1794,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                 return -1;
             }
         }
-        
+
 
         if (self->core_enabled) {
             if (_compute_dimension_size(loop, mps, i) < 0)
@@ -2448,7 +2449,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
              * right type but not contiguous. -- Almost as fast.
              */
             /*fprintf(stderr, "NOBUFFER...%d\n", loop->size);*/
-            
+
              while (loop->index < loop->size) {
                 for(i = 0; i < self->nargs; i++) {
                     loop->bufptr[i] = loop->iters[i]->dataptr;
@@ -3537,7 +3538,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
                      "Reduction not defined on ufunc with signature");
         return NULL;
     }
-    
+
     if (self->nin != 2) {
         PyErr_Format(PyExc_ValueError,
                      "%s only supported for binary functions",
@@ -4051,7 +4052,7 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
 
     self->ntypes = 1;
     self->check_return = 0;
-    
+
     /* generalized ufunc */
     self->core_enabled = 0;
     self->core_num_dim_ix = 0;
@@ -4156,7 +4157,7 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
     return PyUFunc_FromFuncAndDataAndSignature(func, data, types, ntypes,
         nin, nout, identity, name, doc, check_return, NULL);
 }
-                        
+
 /*UFUNC_API*/
 static PyObject *
 PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
@@ -4190,7 +4191,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
 
     if (doc == NULL) self->doc = "NULL";
     else self->doc = doc;
-    
+
     /* generalized ufunc */
     self->core_enabled = 0;
     self->core_num_dim_ix = 0;
@@ -4411,7 +4412,7 @@ ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
                      " signature");
         return NULL;
     }
-    
+
     if(self->nin != 2) {
         PyErr_SetString(PyExc_ValueError,
                         "outer product only supported "\
