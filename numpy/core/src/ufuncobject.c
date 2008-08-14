@@ -1383,7 +1383,7 @@ _is_same_name(const char* s1, const char* s2)
 static int
 _parse_signature(PyUFuncObject *self, const char *signature)
 {
-    int len;
+    size_t len;
     char const **var_names;
     int nd = 0;             /* number of dimension of the current argument */
     int cur_arg = 0;        /* index into core_num_dims&core_offsets */
@@ -1496,10 +1496,10 @@ _parse_signature(PyUFuncObject *self, const char *signature)
     /* check for trivial core-signature, e.g. "(),()->()" */
     if (cur_core_dim == 0)
         self->core_enabled = 0;
-    _pya_free(var_names);
+    _pya_free((void*)var_names);
     return 0;
 fail:
-    _pya_free(var_names);
+    _pya_free((void*)var_names);
     if (parse_error) {
 	char *buf = _pya_malloc(sizeof(char) * (len + 200));
 	if (buf) {
