@@ -1,4 +1,5 @@
 PyUFunc_FromFuncAndData
+PyUFunc_FromFuncAndDataAndSignature
 PyUFunc_RegisterLoopForType
 PyUFunc_GenericFunction
 PyUFunc_f_f_As_d_d
