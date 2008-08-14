@@ -287,62 +287,67 @@ class scons(old_build_ext):
             self.post_hooks = []
             self.pkg_names = []
 
-        # Try to get the same compiler than the ones used by distutils: this is
-        # non trivial because distutils and scons have totally different
-        # conventions on this one (distutils uses PATH from user's environment,
-        # whereas scons uses standard locations). The way we do it is once we
-        # got the c compiler used, we use numpy.distutils function to get the
-        # full path, and add the path to the env['PATH'] variable in env
-        # instance (this is done in numpy.distutils.scons module).
+	# To avoid trouble, just don't do anything if no sconscripts are used.
+	# This is  useful when for example f2py uses numpy.distutils, because
+	# f2py does not pass compiler information to scons command, and the
+	# compilation setup below can crash in some situation.
+	if len(self.sconscripts) > 0:
+            # Try to get the same compiler than the ones used by distutils: this is
+            # non trivial because distutils and scons have totally different
+            # conventions on this one (distutils uses PATH from user's environment,
+            # whereas scons uses standard locations). The way we do it is once we
+            # got the c compiler used, we use numpy.distutils function to get the
+            # full path, and add the path to the env['PATH'] variable in env
+            # instance (this is done in numpy.distutils.scons module).
 
-        # XXX: The logic to bypass distutils is ... not so logic.
-        compiler_type = self.compiler
-        if compiler_type == 'msvc':
-            self._bypass_distutils_cc = True
-        from numpy.distutils.ccompiler import new_compiler
-        try:
-            distutils_compiler = new_compiler(compiler=compiler_type,
-                                      verbose=self.verbose,
-                                      dry_run=self.dry_run,
-                                      force=self.force)
-            distutils_compiler.customize(self.distribution)
-            # This initialization seems necessary, sometimes, for find_executable to work...
-            if hasattr(distutils_compiler, 'initialize'):
-                distutils_compiler.initialize()
-            self.scons_compiler = dist2sconscc(distutils_compiler)
-            self.scons_compiler_path = protect_path(get_tool_path(distutils_compiler))
-        except DistutilsPlatformError, e:
-            if not self._bypass_distutils_cc:
-                raise e
-            else:
-                self.scons_compiler = compiler_type
+            # XXX: The logic to bypass distutils is ... not so logic.
+            compiler_type = self.compiler
+            if compiler_type == 'msvc':
+                self._bypass_distutils_cc = True
+            from numpy.distutils.ccompiler import new_compiler
+            try:
+                distutils_compiler = new_compiler(compiler=compiler_type,
+                                          verbose=self.verbose,
+                                          dry_run=self.dry_run,
+                                          force=self.force)
+                distutils_compiler.customize(self.distribution)
+                # This initialization seems necessary, sometimes, for find_executable to work...
+                if hasattr(distutils_compiler, 'initialize'):
+                    distutils_compiler.initialize()
+                self.scons_compiler = dist2sconscc(distutils_compiler)
+                self.scons_compiler_path = protect_path(get_tool_path(distutils_compiler))
+            except DistutilsPlatformError, e:
+                if not self._bypass_distutils_cc:
+                    raise e
+                else:
+                    self.scons_compiler = compiler_type
 
-        # We do the same for the fortran compiler ...
-        fcompiler_type = self.fcompiler
-        from numpy.distutils.fcompiler import new_fcompiler
-        self.fcompiler = new_fcompiler(compiler = fcompiler_type,
+            # We do the same for the fortran compiler ...
+            fcompiler_type = self.fcompiler
+            from numpy.distutils.fcompiler import new_fcompiler
+            self.fcompiler = new_fcompiler(compiler = fcompiler_type,
+                                           verbose = self.verbose,
+                                           dry_run = self.dry_run,
+                                           force = self.force)
+            if self.fcompiler is not None:
+                self.fcompiler.customize(self.distribution)
+
+            # And the C++ compiler
+            cxxcompiler = new_compiler(compiler = compiler_type,
                                        verbose = self.verbose,
                                        dry_run = self.dry_run,
                                        force = self.force)
-        if self.fcompiler is not None:
-            self.fcompiler.customize(self.distribution)
+            if cxxcompiler is not None:
+                cxxcompiler.customize(self.distribution, need_cxx = 1)
+                cxxcompiler.customize_cmd(self)
+                self.cxxcompiler = cxxcompiler.cxx_compiler()
+                try:
+                    get_cxx_tool_path(self.cxxcompiler)
+                except DistutilsSetupError:
+                    self.cxxcompiler = None
 
-        # And the C++ compiler
-        cxxcompiler = new_compiler(compiler = compiler_type,
-                                   verbose = self.verbose,
-                                   dry_run = self.dry_run,
-                                   force = self.force)
-        if cxxcompiler is not None:
-            cxxcompiler.customize(self.distribution, need_cxx = 1)
-            cxxcompiler.customize_cmd(self)
-            self.cxxcompiler = cxxcompiler.cxx_compiler()
-            try:
-                get_cxx_tool_path(self.cxxcompiler)
-            except DistutilsSetupError:
-                self.cxxcompiler = None
-
-        if self.package_list:
-            self.package_list = parse_package_list(self.package_list)
+            if self.package_list:
+                self.package_list = parse_package_list(self.package_list)
 
     def run(self):
         if len(self.sconscripts) > 0:
