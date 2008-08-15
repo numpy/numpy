@@ -484,6 +484,49 @@ def obj2sctype(rep, default=None):
     return res.type
 
 
+def issubclass_(arg1, arg2):
+    try:
+        return issubclass(arg1, arg2)
+    except TypeError:
+        return False
+
+def issubsctype(arg1, arg2):
+    return issubclass(obj2sctype(arg1), obj2sctype(arg2))
+
+def issubdtype(arg1, arg2):
+    """
+    Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    Parameters
+    ----------
+    arg1 : dtype_like
+        dtype or string representing a typecode.
+    arg2 : dtype_like
+        dtype or string representing a typecode.
+
+
+    See Also
+    --------
+    numpy.core.numerictypes : Overview of numpy type hierarchy.
+
+    Examples
+    --------
+    >>> np.issubdtype('S1', str)
+    True
+    >>> np.issubdtype(np.float64, np.float32)
+    False
+
+    """
+    if issubclass_(arg2, generic):
+        return issubclass(dtype(arg1).type, arg2)
+    mro = dtype(arg2).type.mro()
+    if len(mro) > 1:
+        val = mro[1]
+    else:
+        val = mro[0]
+    return issubclass(dtype(arg1).type, val)
+
+
 # This dictionary allows look up based on any alias for an array data-type
 class _typedict(dict):
     def __getitem__(self, obj):

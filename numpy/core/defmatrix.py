@@ -3,7 +3,7 @@ __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 import sys
 import numeric as N
 from numeric import concatenate, isscalar, binary_repr, identity
-from numpy.lib.utils import issubdtype
+from numerictypes import issubdtype
 
 # make translation table
 _table = [None]*256

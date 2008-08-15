@@ -4,7 +4,8 @@ import pkgutil
 import types
 import re
 
-from numpy.core.numerictypes import obj2sctype, generic
+from numpy.core.numerictypes import obj2sctype, generic, issubclass_, \
+    issubsctype, issubdtype
 from numpy.core.multiarray import dtype as _dtype
 from numpy.core import product, ndarray
 
@@ -13,48 +14,6 @@ __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
            'get_numarray_include',
            'get_include', 'info', 'source', 'who', 'lookfor',
            'byte_bounds', 'may_share_memory', 'safe_eval']
-
-def issubclass_(arg1, arg2):
-    try:
-        return issubclass(arg1, arg2)
-    except TypeError:
-        return False
-
-def issubsctype(arg1, arg2):
-    return issubclass(obj2sctype(arg1), obj2sctype(arg2))
-
-def issubdtype(arg1, arg2):
-    """
-    Returns True if first argument is a typecode lower/equal in type hierarchy.
-
-    Parameters
-    ----------
-    arg1 : dtype_like
-        dtype or string representing a typecode.
-    arg2 : dtype_like
-        dtype or string representing a typecode.
-
-
-    See Also
-    --------
-    numpy.core.numerictypes : Overview of numpy type hierarchy.
-
-    Examples
-    --------
-    >>> np.issubdtype('S1', str)
-    True
-    >>> np.issubdtype(np.float64, np.float32)
-    False
-
-    """
-    if issubclass_(arg2, generic):
-        return issubclass(_dtype(arg1).type, arg2)
-    mro = _dtype(arg2).type.mro()
-    if len(mro) > 1:
-        val = mro[1]
-    else:
-        val = mro[0]
-    return issubclass(_dtype(arg1).type, val)
 
 def get_include():
     """
