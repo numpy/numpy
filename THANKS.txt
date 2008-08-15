@@ -37,4 +37,3 @@ Andrew Straw for help with http://www.scipy.org, documentation, and testing.
 David Cournapeau for scons build support, doc-and-bug fixes, and code contributions including fast_clipping.
 Pierre Gerard-Marchant for his rewrite of the masked array functionality.
 Roberto de Almeida for the buffered array iterator.
-Wenjie Fu and Hans-Andreas Engel for the generalised ufunc infrastructure.

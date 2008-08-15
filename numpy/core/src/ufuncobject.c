@@ -795,7 +795,6 @@ PyUFunc_clearfperr()
 #define NOBUFFER_REDUCELOOP 2
 #define BUFFER_UFUNCLOOP  3
 #define BUFFER_REDUCELOOP 3
-#define SIGNATURE_NOBUFFER_UFUNCLOOP 4
 
 
 static char
@@ -1260,7 +1259,7 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
 }
 
 /* Create copies for any arrays that are less than loop->bufsize
-   in total size (or core_enabled) and are mis-behaved or in need
+   in total size and are mis-behaved or in need
    of casting.
 */
 
@@ -1288,7 +1287,7 @@ _create_copies(PyUFuncLoopObject *loop, int *arg_types, PyArrayObject **mps)
             }
             Py_DECREF(atype);
         }
-        if (size < loop->bufsize || loop->ufunc->core_enabled) {
+        if (size < loop->bufsize) {
             if (!(PyArray_ISBEHAVED_RO(mps[i])) ||          \
                 PyArray_TYPE(mps[i]) != arg_types[i]) {
                 ntype = PyArray_DescrFromType(arg_types[i]);
@@ -1329,280 +1328,6 @@ _has_reflected_op(PyObject *op, char *name)
 
 #undef _GETATTR_
 
-
-/* Return the position of next non-white-space char in the string
-*/
-static int
-_next_non_white_space(const char* str, int offset)
-{
-    int ret = offset;
-    while (str[ret] == ' ' || str[ret] == '\t') ret++;
-    return ret;
-}
-
-static int
-_is_alpha_underscore(char ch)
-{
-    return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_';
-}
-
-static int
-_is_alnum_underscore(char ch)
-{
-    return _is_alpha_underscore(ch) || (ch >= '0' && ch <= '9');
-}
-
-/* Return the ending position of a variable name
-*/
-static int
-_get_end_of_name(const char* str, int offset)
-{
-    int ret = offset;
-    while (_is_alnum_underscore(str[ret])) ret++;
-    return ret;
-}
-
-/* Returns 1 if the dimension names pointed by s1 and s2 are the same,
-   otherwise returns 0.
-*/
-static int
-_is_same_name(const char* s1, const char* s2)
-{
-    while (_is_alnum_underscore(*s1) && _is_alnum_underscore(*s2)) {
-        if (*s1 != *s2) return 0;
-        s1++;
-        s2++;
-    }
-    return !_is_alnum_underscore(*s1) && !_is_alnum_underscore(*s2);
-}
-
-/* Sets core_num_dim_ix, core_num_dims, core_dim_ixs, core_offsets,
-   and core_signature in PyUFuncObject "self".  Returns 0 unless an
-   error occured.
-*/
-static int
-_parse_signature(PyUFuncObject *self, const char *signature)
-{
-    size_t len;
-    char const **var_names;
-    int nd = 0;             /* number of dimension of the current argument */
-    int cur_arg = 0;        /* index into core_num_dims&core_offsets */
-    int cur_core_dim = 0;   /* index into core_dim_ixs */
-    int i = 0;
-    char *parse_error = NULL;
-
-    if (signature == NULL) {
-	PyErr_SetString(PyExc_RuntimeError,
-			"_parse_signature with NULL signature");
-        return -1;
-    }
-
-    len = strlen(signature);
-    self->core_signature = _pya_malloc(sizeof(char) * (len+1));
-    if (self->core_signature)
-        strcpy(self->core_signature, signature);
-
-    /* Allocate sufficient memory to store pointers to all dimension names */
-    var_names = _pya_malloc(sizeof(char const*) * len);
-    if (var_names == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    self->core_enabled = 1;
-    self->core_num_dim_ix = 0;
-    self->core_num_dims = _pya_malloc(sizeof(int) * self->nargs);
-    self->core_dim_ixs = _pya_malloc(sizeof(int) * len); /* shrink this later */
-    self->core_offsets = _pya_malloc(sizeof(int) * self->nargs);
-    if (self->core_num_dims == NULL || self->core_dim_ixs == NULL ||
-        self->core_offsets == NULL) {
-        PyErr_NoMemory();
-        goto fail;
-    }
-
-    i = _next_non_white_space(signature, 0);
-
-    while (signature[i] != '\0') { /* loop over input/output arguments */
-        if (cur_arg == self->nin) {
-            /* expect "->" */
-            if (signature[i] != '-' || signature[i+1] != '>') {
-                parse_error = "expect '->'";
-                goto fail;
-            }
-            i = _next_non_white_space(signature, i+2);
-        }
-
-        /* parse core dimensions of one argument, e.g. "()", "(i)", or
-	   "(i,j)" */
-        if (signature[i] != '(') {
-            parse_error = "expect '('";
-            goto fail;
-        }
-        i = _next_non_white_space(signature, i+1);
-        while (signature[i] != ')') { /* loop over core dimensions */
-	    int j = 0;
-            if (!_is_alpha_underscore(signature[i])) {
-		parse_error = "expect dimension name";
-		goto fail;
-            }
-	    while (j < self->core_num_dim_ix) {
-		if (_is_same_name(signature+i, var_names[j])) break;
-		j++;
-	    }
-	    if (j >= self->core_num_dim_ix) {
-		var_names[j] = signature+i;
-		self->core_num_dim_ix++;
-	    }
-	    self->core_dim_ixs[cur_core_dim] = j;
-	    cur_core_dim++;
-	    nd++;
-	    i = _get_end_of_name(signature, i);
-	    i = _next_non_white_space(signature, i);
-	    if (signature[i] != ',' && signature[i] != ')') {
-		parse_error = "expect ',' or ')'";
-		goto fail;
-	    }
-	    if (signature[i] == ',')
-	    {
-		i = _next_non_white_space(signature, i+1);
-		if (signature[i] == ')') {
-		    parse_error = "',' must not be followed by ')'";
-		    goto fail;
-		}
-	    }
-        }
-	self->core_num_dims[cur_arg] = nd;
-	self->core_offsets[cur_arg] = cur_core_dim-nd;
-	cur_arg++;
-	nd = 0;
-	i = _next_non_white_space(signature, i+1);
-
-        if (cur_arg != self->nin && cur_arg != self->nargs) {
-	    /* The list of input arguments (or output arguments) was
-	       only read partially */
-            if (signature[i] != ',') {
-                parse_error = "expect ','";
-                goto fail;
-            }
-            i = _next_non_white_space(signature, i+1);
-        }
-    }
-    if (cur_arg != self->nargs) {
-	parse_error = "incomplete signature: not all arguments found";
-        goto fail;
-    }
-    self->core_dim_ixs = _pya_realloc(self->core_dim_ixs,
-                                      sizeof(int) * cur_core_dim);
-    /* check for trivial core-signature, e.g. "(),()->()" */
-    if (cur_core_dim == 0)
-        self->core_enabled = 0;
-    _pya_free((void*)var_names);
-    return 0;
-fail:
-    _pya_free((void*)var_names);
-    if (parse_error) {
-	char *buf = _pya_malloc(sizeof(char) * (len + 200));
-	if (buf) {
-	    sprintf(buf, "%s at position %d in \"%s\"",
-		    parse_error, i, signature);
-	    PyErr_SetString(PyExc_ValueError, signature);
-	    _pya_free(buf);
-	}
-	else {
-	    PyErr_NoMemory();
-	}
-    }
-    return -1;
-}
-
-/* Concatenate the loop and core dimensions of
-   PyArrayMultiIterObject's iarg-th argument, to recover a full
-   dimension array (used for output arguments).
-*/
-static npy_intp*
-_compute_output_dims(PyUFuncLoopObject *loop, int iarg,
-		     int *out_nd, npy_intp *tmp_dims)
-{
-    int i;
-    PyUFuncObject *ufunc = loop->ufunc;
-    if (ufunc->core_enabled == 0) {
-        /* case of ufunc with trivial core-signature */
-        *out_nd = loop->nd;
-        return loop->dimensions;
-    }
-
-    *out_nd = loop->nd + ufunc->core_num_dims[iarg];
-    if (*out_nd > NPY_MAXARGS) {
-        PyErr_SetString(PyExc_ValueError,
-                        "dimension of output variable exceeds limit");
-        return NULL;
-    }
-
-    /* copy loop dimensions */
-    memcpy(tmp_dims, loop->dimensions, sizeof(npy_intp) * loop->nd);
-
-    /* copy core dimension */
-    for (i = 0; i < ufunc->core_num_dims[iarg]; i++)
-        tmp_dims[loop->nd + i] = loop->core_dim_sizes[1 +
-            ufunc->core_dim_ixs[ufunc->core_offsets[iarg]+i]];
-    return tmp_dims;
-}
-
-/* Check and set core_dim_sizes and core_strides for the i-th argument.
-*/
-static int
-_compute_dimension_size(PyUFuncLoopObject *loop, PyArrayObject **mps, int i)
-{
-    PyUFuncObject *ufunc = loop->ufunc;
-    int j = ufunc->core_offsets[i];
-    int k = PyArray_NDIM(mps[i]) - ufunc->core_num_dims[i];
-    int ind;
-    for (ind = 0; ind < ufunc->core_num_dims[i]; ind++, j++, k++) {
-	npy_intp dim = k<0 ? 1 : PyArray_DIM(mps[i], k);
-	/* First element of core_dim_sizes will be used for looping */
-	int dim_ix = ufunc->core_dim_ixs[j] + 1;
-	if (loop->core_dim_sizes[dim_ix] == 1) {
-	    /* broadcast core dimension  */
-	    loop->core_dim_sizes[dim_ix] = dim;
-	}
-	else if (dim != 1 && dim != loop->core_dim_sizes[dim_ix]) {
-	    PyErr_SetString(PyExc_ValueError,
-			    "core dimensions mismatch");
-	    return -1;
-	}
-        /* First ufunc->nargs elements will be used for looping */
-	loop->core_strides[ufunc->nargs + j] =
-            dim == 1 ? 0 : PyArray_STRIDE(mps[i], k);
-    }
-    return 0;
-}
-
-/* Return a view of array "ap" with "core_nd" dimensions cut from tail. */
-static PyArrayObject *
-_trunc_coredim(PyArrayObject *ap, int core_nd)
-{
-    PyArrayObject *ret;
-    int nd = ap->nd - core_nd;
-    if (nd < 0) nd = 0;
-
-    /* The following code is basically taken from PyArray_Transpose */
-    Py_INCREF(ap->descr);  /* NewFromDescr will steal this reference */
-    ret = (PyArrayObject *)
-        PyArray_NewFromDescr(ap->ob_type, ap->descr,
-                             nd, ap->dimensions,
-                             ap->strides, ap->data, ap->flags,
-                             (PyObject *)ap);
-    if (ret == NULL) return NULL;
-
-    /* point at true owner of memory: */
-    ret->base = (PyObject *)ap;
-    Py_INCREF(ap);
-
-    PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
-
-    return ret;
-}
-
 static Py_ssize_t
 construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                  PyObject *typetup)
@@ -1619,10 +1344,6 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
     PyObject *obj;
     int flexible = 0;
     int object = 0;
-
-    npy_intp temp_dims[NPY_MAXDIMS];
-    npy_intp *out_dims;
-    int out_nd;
 
     /* Check number of arguments */
     nargs = PyTuple_Size(args);
@@ -1727,39 +1448,12 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         return -1;
     }
 
-    /* Only use loop dimensions when constructing Iterator:
-     * temporarily replace mps[i] (will be recovered below).
-     */
-    if (self->core_enabled) {
-        for (i = 0; i < self->nin; i++) {
-            PyArrayObject *ao;
-
-	    if (_compute_dimension_size(loop, mps, i) < 0)
-		return -1;
-
-            ao = _trunc_coredim(mps[i], self->core_num_dims[i]);
-            if (ao == NULL)
-                return -1;
-            mps[i] = ao;
-        }
-    }
-
     /* Create Iterators for the Inputs */
     for(i = 0; i < self->nin; i++) {
         loop->iters[i] = (PyArrayIterObject *)          \
             PyArray_IterNew((PyObject *)mps[i]);
         if (loop->iters[i] == NULL) {
             return -1;
-        }
-    }
-
-
-    /* Recover mps[i]. */
-    if (self->core_enabled) {
-        for (i = 0; i < self->nin; i++) {
-            PyArrayObject *ao = mps[i];
-            mps[i] = (PyArrayObject *)mps[i]->base;
-            Py_DECREF(ao);
         }
     }
 
@@ -1794,18 +1488,9 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
                 return -1;
             }
         }
-
-
-        if (self->core_enabled) {
-            if (_compute_dimension_size(loop, mps, i) < 0)
-                return -1;
-        }
-	out_dims = _compute_output_dims(loop, i, &out_nd, temp_dims);
-	if (!out_dims) return -1;
-
-        if (mps[i]->nd != out_nd ||
+        if (mps[i]->nd != loop->nd ||
             !PyArray_CompareLists(mps[i]->dimensions,
-                                  out_dims, out_nd)) {
+                                  loop->dimensions, loop->nd)) {
             PyErr_SetString(PyExc_ValueError,
                             "invalid return array shape");
             Py_DECREF(mps[i]);
@@ -1826,12 +1511,9 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         PyArray_Descr *ntype;
 
         if (mps[i] == NULL) {
-	    out_dims = _compute_output_dims(loop, i, &out_nd, temp_dims);
-	    if (!out_dims) return -1;
-
             mps[i] = (PyArrayObject *)PyArray_New(subtype,
-                                                  out_nd,
-                                                  out_dims,
+                                                  loop->nd,
+                                                  loop->dimensions,
                                                   arg_types[i],
                                                   NULL, NULL,
                                                   0, 0, NULL);
@@ -1858,7 +1540,7 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             /* still not the same -- or will we have to use buffers?*/
             if (mps[i]->descr->type_num != arg_types[i] ||
                 !PyArray_ISBEHAVED_RO(mps[i])) {
-                if (loop->size < loop->bufsize || self->core_enabled) {
+                if (loop->size < loop->bufsize) {
                     PyObject *new;
                     /*
                      * Copy the array to a temporary copy
@@ -1878,34 +1560,13 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             }
         }
 
-        if (self->core_enabled) {
-            PyArrayObject *ao;
-
-            /* computer for all output arguments, and set strides in "loop" */
-            if (_compute_dimension_size(loop, mps, i) < 0)
-                return -1;
-
-            ao = _trunc_coredim(mps[i], self->core_num_dims[i]);
-            if (ao == NULL)
-                return -1;
-            /* Temporarily modify mps[i] for constructing iterator. */
-            mps[i] = ao;
-        }
-
         loop->iters[i] = (PyArrayIterObject *)          \
             PyArray_IterNew((PyObject *)mps[i]);
         if (loop->iters[i] == NULL) {
             return -1;
         }
-
-	/* Recover mps[i]. */
-	if (self->core_enabled) {
-	    PyArrayObject *ao = mps[i];
-	    mps[i] = (PyArrayObject *)mps[i]->base;
-	    Py_DECREF(ao);
-	}
-
     }
+
 
     /*
      * If any of different type, or misaligned or swapped
@@ -1921,19 +1582,10 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         return nargs;
     }
 
-    if (self->core_enabled) {
-        loop->meth = SIGNATURE_NOBUFFER_UFUNCLOOP;
-    }
-
     for(i = 0; i < self->nargs; i++) {
         loop->needbuffer[i] = 0;
         if (arg_types[i] != mps[i]->descr->type_num ||
             !PyArray_ISBEHAVED_RO(mps[i])) {
-            if (self->core_enabled) {
-                PyErr_SetString(PyExc_RuntimeError,
-                                "never reached; copy should have been made");
-                return -1;
-            }
             loop->meth = BUFFER_UFUNCLOOP;
             loop->needbuffer[i] = 1;
         }
@@ -1941,13 +1593,6 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 			   (arg_types[i] == PyArray_OBJECT))) {
             loop->obj = 1;
         }
-    }
-
-
-    if (self->core_enabled && loop->obj) {
-	PyErr_SetString(PyExc_TypeError,
-			"Object type not allowed in ufunc with signature");
-	return -1;
     }
 
     if (loop->meth == NO_UFUNCLOOP) {
@@ -1977,11 +1622,8 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
 
     loop->numiter = self->nargs;
 
-    /* Fill in steps  */
-    if (loop->meth == SIGNATURE_NOBUFFER_UFUNCLOOP && loop->nd == 0) {
-	/* Use default core_strides */
-    }
-    else if (loop->meth != ONE_UFUNCLOOP) {
+    /* Fill in steps */
+    if (loop->meth != ONE_UFUNCLOOP) {
         int ldim;
         intp minsum;
         intp maxdim;
@@ -2050,16 +1692,6 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
         }
 
         /*
-         * Set looping part of core_dim_sizes and core_strides.
-         */
-        if (loop->meth == SIGNATURE_NOBUFFER_UFUNCLOOP) {
-            loop->core_dim_sizes[0] = maxdim;
-            for (i = 0; i < self->nargs; i++) {
-                loop->core_strides[i] = loop->steps[i];
-            }
-        }
-
-        /*
          * fix up steps where we will be copying data to
          * buffers and calculate the ninnerloops and leftover
          * values -- if step size is already zero that is not changed...
@@ -2075,8 +1707,8 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
             }
         }
     }
-    else if (loop->meth == ONE_UFUNCLOOP) {
-        /* uniformly-strided case */
+    else {
+        /* uniformly-strided case ONE_UFUNCLOOP */
         for(i = 0; i < self->nargs; i++) {
             if (PyArray_SIZE(mps[i]) == 1)
                 loop->steps[i] = 0;
@@ -2215,10 +1847,6 @@ ufuncloop_dealloc(PyUFuncLoopObject *self)
     int i;
 
     if (self->ufunc != NULL) {
-	if (self->core_dim_sizes)
-	    _pya_free(self->core_dim_sizes);
-	if (self->core_strides)
-	    _pya_free(self->core_strides);
         for(i = 0; i < self->ufunc->nargs; i++)
             Py_XDECREF(self->iters[i]);
         if (self->buffer[0]) {
@@ -2259,23 +1887,6 @@ construct_loop(PyUFuncObject *self, PyObject *args, PyObject *kwds, PyArrayObjec
     loop->errobj = NULL;
     loop->notimplemented = 0;
     loop->first = 1;
-    loop->core_dim_sizes = NULL;
-    loop->core_strides = NULL;
-
-    if (self->core_enabled) {
-	int num_dim_ix = 1 + self->core_num_dim_ix;
-	int nstrides = self->nargs + self->core_offsets[self->nargs-1]
-	    + self->core_num_dims[self->nargs-1];
-	loop->core_dim_sizes = _pya_malloc(sizeof(npy_intp) * num_dim_ix);
-	loop->core_strides = _pya_malloc(sizeof(npy_intp) * nstrides);
-	if (loop->core_dim_sizes == NULL || loop->core_strides == NULL) {
-	    PyErr_NoMemory();
-	    goto fail;
-	}
-	memset(loop->core_strides, 0, sizeof(npy_intp) * nstrides);
-	for (i = 0; i < num_dim_ix; i++)
-	    loop->core_dim_sizes[i] = 1;
-    }
 
     name = self->name ? self->name : "";
 
@@ -2422,11 +2033,6 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
         ufuncloop_dealloc(loop);
         return -2;
     }
-    if (self->core_enabled && loop->meth != SIGNATURE_NOBUFFER_UFUNCLOOP) {
-	PyErr_SetString(PyExc_RuntimeError,
-			"illegal loop method for ufunc with signature");
-	goto fail;
-    }
 
     NPY_LOOP_BEGIN_THREADS;
     switch(loop->meth) {
@@ -2449,8 +2055,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
              * right type but not contiguous. -- Almost as fast.
              */
             /*fprintf(stderr, "NOBUFFER...%d\n", loop->size);*/
-
-             while (loop->index < loop->size) {
+            while (loop->index < loop->size) {
                 for(i = 0; i < self->nargs; i++) {
                     loop->bufptr[i] = loop->iters[i]->dataptr;
                 }
@@ -2465,23 +2070,6 @@ PyUFunc_GenericFunction(PyUFuncObject *self, PyObject *args, PyObject *kwds,
                 loop->index++;
             }
             break;
-
-        case SIGNATURE_NOBUFFER_UFUNCLOOP:
-	    while (loop->index < loop->size) {
-		for(i = 0; i < self->nargs; i++) {
-		    loop->bufptr[i] = loop->iters[i]->dataptr;
-		}
-		loop->function((char **)loop->bufptr, loop->core_dim_sizes,
-			       loop->core_strides, loop->funcdata);
-		UFUNC_CHECK_ERROR(loop);
-
-		/* Adjust loop pointers */
-		for(i = 0; i < self->nargs; i++) {
-		    PyArray_ITER_NEXT(loop->iters[i]);
-		}
-		loop->index++;
-	    }
-	    break;
 
         case BUFFER_UFUNCLOOP: {
                PyArray_CopySwapNFunc *copyswapn[NPY_MAXARGS];
@@ -2808,12 +2396,6 @@ construct_reduce(PyUFuncObject *self, PyArrayObject **arr, PyArrayObject *out,
     int flags;
     /* Reduce type is the type requested of the input
        during reduction */
-
-    if (self->core_enabled) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "construct_reduce not allowed on ufunc with signature");
-        return NULL;
-    }
 
     nd = (*arr)->nd;
     arg_types[0] = otype;
@@ -3533,12 +3115,6 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         return NULL;
     }
 
-    if (self->core_enabled) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "Reduction not defined on ufunc with signature");
-        return NULL;
-    }
-
     if (self->nin != 2) {
         PyErr_Format(PyExc_ValueError,
                      "%s only supported for binary functions",
@@ -4053,14 +3629,6 @@ ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
     self->ntypes = 1;
     self->check_return = 0;
 
-    /* generalized ufunc */
-    self->core_enabled = 0;
-    self->core_num_dim_ix = 0;
-    self->core_num_dims = NULL;
-    self->core_dim_ixs = NULL;
-    self->core_offsets = NULL;
-    self->core_signature = NULL;
-
     pyname = PyObject_GetAttrString(function, "__name__");
     if (pyname)
         (void) PyString_AsStringAndSize(pyname, &fname, &fname_len);
@@ -4154,18 +3722,6 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
                         int nin, int nout, int identity,
                         char *name, char *doc, int check_return)
 {
-    return PyUFunc_FromFuncAndDataAndSignature(func, data, types, ntypes,
-        nin, nout, identity, name, doc, check_return, NULL);
-}
-
-/*UFUNC_API*/
-static PyObject *
-PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
-                                     char *types, int ntypes,
-                                     int nin, int nout, int identity,
-                                     char *name, char *doc,
-                                     int check_return, const char *signature)
-{
     PyUFuncObject *self;
 
     self = _pya_malloc(sizeof(PyUFuncObject));
@@ -4191,18 +3747,6 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
 
     if (doc == NULL) self->doc = "NULL";
     else self->doc = doc;
-
-    /* generalized ufunc */
-    self->core_enabled = 0;
-    self->core_num_dim_ix = 0;
-    self->core_num_dims = NULL;
-    self->core_dim_ixs = NULL;
-    self->core_offsets = NULL;
-    self->core_signature = NULL;
-    if (signature != NULL) {
-        if (_parse_signature(self, signature) != 0)
-	    return NULL;
-    }
 
     return (PyObject *)self;
 }
@@ -4368,10 +3912,6 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 static void
 ufunc_dealloc(PyUFuncObject *self)
 {
-    if (self->core_num_dims) _pya_free(self->core_num_dims);
-    if (self->core_dim_ixs) _pya_free(self->core_dim_ixs);
-    if (self->core_offsets) _pya_free(self->core_offsets);
-    if (self->core_signature) _pya_free(self->core_signature);
     if (self->ptr) _pya_free(self->ptr);
     Py_XDECREF(self->userloops);
     Py_XDECREF(self->obj);
@@ -4405,13 +3945,6 @@ ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     PyArrayObject *ap1=NULL, *ap2=NULL, *ap_new=NULL;
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
-
-    if (self->core_enabled) {
-        PyErr_Format(PyExc_TypeError,
-                     "method outer is not allowed in ufunc with non-trivial"\
-                     " signature");
-        return NULL;
-    }
 
     if(self->nin != 2) {
         PyErr_SetString(PyExc_ValueError,
@@ -4640,13 +4173,6 @@ ufunc_get_identity(PyUFuncObject *self)
     return Py_None;
 }
 
-static PyObject *
-ufunc_get_signature(PyUFuncObject *self)
-{
-    if (!self->core_enabled)
-        Py_RETURN_NONE;
-    return PyString_FromString(self->core_signature);
-}
 
 #undef _typecharfromnum
 
@@ -4662,7 +4188,6 @@ static PyGetSetDef ufunc_getset[] = {
     {"types",    (getter)ufunc_get_types,    NULL, "return a list with types grouped input->output"},
     {"__name__", (getter)ufunc_get_name,     NULL, "function name"},
     {"identity", (getter)ufunc_get_identity, NULL, "identity value"},
-    {"signature",(getter)ufunc_get_signature,NULL, "signature"},
     {NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 

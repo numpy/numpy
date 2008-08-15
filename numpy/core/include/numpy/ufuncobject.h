@@ -19,20 +19,6 @@ typedef struct {
         void *ptr;
         PyObject *obj;
 	PyObject *userloops;
-    
-        /* generalized ufunc */
-        int core_enabled;      /* 0 for scalar ufunc; 1 for generalized ufunc */
-        int core_num_dim_ix;   /* number of distinct dimension names in
-                                  signature */
- 
-        /* dimension indices of input/output argument k are stored in
-           core_dim_ixs[core_offsets[k]..core_offsets[k]+core_num_dims[k]-1] */
-        int *core_num_dims;    /* numbers of core dimensions of each argument */
-        int *core_dim_ixs;     /* dimension indices in a flatted form; indices
-                                  are in the range of [0,core_num_dim_ix) */
-        int *core_offsets;     /* positions of 1st core dimensions of each
-                                  argument in core_dim_ixs */
-        char *core_signature;  /* signature string for printing purpose */
 } PyUFuncObject;
 
 #include "arrayobject.h"
@@ -136,11 +122,6 @@ typedef struct {
         int notimplemented; /* The loop caused notimplemented */
         int objfunc; /* This loop calls object functions
                         (an inner-loop function with argument types */
-    
-        /* generalized ufunc */
-        npy_intp *core_dim_sizes;   /* stores sizes of core dimensions;
-                                       contains 1 + core_num_dim_ix elements */
-        npy_intp *core_strides;     /* strides of loop and core dimensions */
 } PyUFuncLoopObject;
 
 /* Could make this more clever someday */
