@@ -34,7 +34,4 @@ class build(old_build):
                                               'scripts' + plat_specifier)
 
     def run(self):
-        # Make sure that scons based extensions are complete.
-        self.run_command('scons')
-
         old_build.run(self)

@@ -217,6 +217,11 @@ class build_ext (old_build_ext):
         # Build extensions
         self.build_extensions()
 
+        # Make sure that scons based extensions are complete.
+        if self.inplace:
+            self.reinitialize_command('scons', inplace=1)
+        self.run_command('scons')
+
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.
         return sources
