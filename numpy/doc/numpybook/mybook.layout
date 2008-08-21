@@ -1,0 +1,177 @@
+#% Do not delete the line below; configure depends on this
+#  \DeclareLaTeXClass[book]{Stylish Book}
+# Book textclass definition file. Taken from initial LyX source code
+# Author : Matthias Ettrich <ettrich@informatik.uni-tuebingen.de>
+# Transposed by Pascal André <andre@via.ecp.fr>
+# Heavily modifed and enhanced by serveral developers.
+
+# Input general definitions
+Input stdclass.inc
+
+# Global parameters.
+Sides		2
+PageStyle	Headings
+
+# There is no abstract environment in book.cls
+NoStyle	Abstract
+	
+# a few changes to the bibliography
+Style Bibliography
+  TopSep		4
+  LabelString		Bibliography
+  # label font definition
+  LabelFont 
+    Series		Bold
+    Size		Huge
+  EndFont
+End
+
+
+Style Note
+  LatexType             Command
+  LatexName             notel
+  
+  LabelType             Centered_Top_Environment
+  LabelString           "NOTE"
+  AlignPossible         Left
+  LeftMargin            "MMMMM"
+  RightMargin           "MMMMM"
+  ParSkip               0.7
+  ParSep                0.7
+  TopSep                0.7
+  BottomSep             0.7
+
+  Font
+     Shape              SmallCaps
+     Color              Magenta
+  EndFont
+  Preamble
+        \usepackage{color}
+        \setlength{\fboxrule}{2pt}
+        \definecolor{noteback}{rgb}{0.988235, 0.964706, 0.862745}
+        \newcommand{\notel}[1]{%
+                \begin{center}%
+                \fcolorbox{black}{noteback}{%
+                \begin{minipage}{0.8\textwidth}%
+		 \includegraphics[height=0.3in]{graphics/note.eps}%
+		 \vskip-0.3in\hskip1.65in{\large\bf NOTE} \\[0.2cm]%	
+                #1%
+                \end{minipage}%
+                }%
+                \end{center}%
+                }
+  EndPreamble
+End
+
+
+Style Warning
+  LatexType             Command
+  LatexName             warnl
+  
+  LabelType             Centered_Top_Environment
+  LabelString           "WARNING"
+  AlignPossible         Left
+  LeftMargin            "MMMMM"
+  RightMargin           "MMMMM"
+  ParSkip               0.7
+  ParSep                0.7
+  TopSep                0.7
+  BottomSep             0.7
+
+  Font
+     Shape              SmallCaps
+     Color              Red
+  EndFont
+  Preamble
+        \usepackage{color}
+        \setlength{\fboxrule}{2pt}
+        \definecolor{warnback}{rgb}{1.0, 0.8235294, 0.8235294}
+        \newcommand{\warnl}[1]{%
+                \begin{center}%
+                \fcolorbox{black}{warnback}{%
+                \begin{minipage}{0.8\textwidth}%
+		 \includegraphics[height=0.3in]{graphics/warning.eps}%
+		 \vskip-0.3in\hskip1.5in{\large\bf WARNING} \\[0.2cm]%	
+                #1%
+                \end{minipage}%
+                }%
+                \end{center}%
+                }
+  EndPreamble
+End
+
+
+Style Tip
+  LatexType             Command
+  LatexName             tipl
+  
+  LabelType             Centered_Top_Environment
+  LabelString           "TIP"
+  AlignPossible         Left
+  LeftMargin            "MMMMM"
+  RightMargin           "MMMMM"
+  ParSkip               0.7
+  ParSep                0.7
+  TopSep                0.7
+  BottomSep             0.7
+
+  Font
+     Shape              SmallCaps
+     Color              Blue
+  EndFont
+  Preamble
+        \usepackage{color}
+        \setlength{\fboxrule}{2pt}
+        \definecolor{tipback}{rgb}{0.87843, 0.95686, 1.0}
+        \newcommand{\tipl}[1]{%
+                \begin{center}%
+                \fcolorbox{black}{tipback}{%
+                \begin{minipage}{0.8\textwidth}%
+		 \includegraphics[height=0.3in]{graphics/tip.eps}%
+		 \vskip-0.3in\hskip1.8in{\large\bf TIP} \\[0.2cm]%
+                #1%
+                \end{minipage}%
+                }%
+                \end{center}%
+                }
+  EndPreamble
+End
+
+Style MyCode
+  Margin		Static
+  LatexType		Environment
+  LatexName		mycode
+  NextNoIndent		1
+  LeftMargin		MMM
+  RightMargin		MMM
+  TopSep		0.5
+  BottomSep		0.5
+  Align			Left
+  AlignPossible		Block, Left, Right, Center
+  LabelType		No_Label
+  FreeSpacing 	    	1
+
+  # define the environment lyxcode
+  Preamble
+    \usepackage{color}
+    \setlength{\fboxrule}{2pt}
+    \definecolor{codeback}{rgb}{0.94118,0.94118,0.94118}
+ \newsavebox{\mycodesavebox}
+ \newenvironment{mycode}
+    {\begin{lrbox}{\mycodesavebox}%
+     \begin{minipage}{0.95\linewidth}%
+     \begin{trivlist}
+     \setlength{\itemsep}{0pt}
+     \setlength{\parsep}{0pt}
+     \normalfont\ttfamily
+     \item[] }
+    {\end{trivlist}\end{minipage}\end{lrbox}%
+        \vskip 0.5em \begin{center}\fcolorbox{black}{codeback}{\usebox{\mycodesavebox}}\end{center}\par \vskip 0.5em}
+  EndPreamble
+
+  # standard font definition
+  Font 
+    Family  		Typewriter
+  EndFont
+
+End
