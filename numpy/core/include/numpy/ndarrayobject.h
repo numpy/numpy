@@ -39,7 +39,7 @@ extern "C" CONFUSE_EMACS
 #define NPY_SUCCEED 1
 
         /* Helpful to distinguish what is installed */
-#define NPY_VERSION 0x0100000A
+#define NPY_VERSION 0x01000009
 
         /* Some platforms don't define bool, long long, or long double.
            Handle that here.
@@ -1176,7 +1176,7 @@ typedef struct {
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
 #define PyDataType_FLAGCHK(dtype, flag)                                   \
-        (((dtype)->flags & (flag)) == (flag))
+        (((dtype)->hasobject & (flag)) == (flag))
 
 #define PyDataType_REFCHK(dtype)                                          \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
@@ -1192,7 +1192,7 @@ typedef struct _PyArray_Descr {
         char type;              /* unique-character representing this type */
         char byteorder;         /* '>' (big), '<' (little), '|'
                                    (not-applicable), or '=' (native). */
-        int flags;              /* non-zero if it has object arrays
+        char hasobject;         /* non-zero if it has object arrays
                                    in fields */
         int type_num;          /* number representing this type */
         int elsize;             /* element size for this type */

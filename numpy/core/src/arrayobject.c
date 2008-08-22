@@ -11156,7 +11156,7 @@ static PyMemberDef arraydescr_members[] = {
     {"byteorder", T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
     {"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
     {"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
-    {"flags", T_UBYTE, offsetof(PyArray_Descr, flags), RO, NULL},
+    {"flags", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
     {NULL},
 };
 
@@ -11556,7 +11556,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 
     PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->flags));
+    PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -11568,8 +11568,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *args)
 static int
 _descr_find_object(PyArray_Descr *self)
 {
-    if (PyDataType_FLAGCHK(self, NPY_ITEM_HASOBJECT) || 
-	self->type_num == PyArray_OBJECT ||
+    if (self->hasobject || self->type_num == PyArray_OBJECT ||
         self->kind == 'O')
         return NPY_OBJECT_DTYPE_FLAGS;
     if (PyDescr_HASFIELDS(self)) {
@@ -11585,7 +11584,7 @@ _descr_find_object(PyArray_Descr *self)
                 return 0;
             }
             if (_descr_find_object(new)) {
-                new->flags = NPY_OBJECT_DTYPE_FLAGS;
+                new->hasobject = NPY_OBJECT_DTYPE_FLAGS;
                 return NPY_OBJECT_DTYPE_FLAGS;
             }
         }
@@ -11716,9 +11715,9 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         self->alignment = alignment;
     }
 
-    self->flags = dtypeflags;
+    self->hasobject = dtypeflags;
     if (version < 3) {
-        self->flags = _descr_find_object(self);
+        self->hasobject = _descr_find_object(self);
     }
     Py_INCREF(Py_None);
     return Py_None;
