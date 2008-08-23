@@ -1,108 +1,107 @@
-#!/usr/bin/env python
-"""NumPy: array processing for numbers, strings, records, and objects.
-
-NumPy is a general-purpose array-processing package designed to
-efficiently manipulate large multi-dimensional arrays of arbitrary
-records without sacrificing too much speed for small multi-dimensional
-arrays.  NumPy is built on the Numeric code base and adds features
-introduced by numarray as well as an extended C-API and the ability to
-create arrays of arbitrary type which also makes NumPy suitable for
-interfacing with general-purpose data-base applications.
-
-There are also basic facilities for discrete fourier transform,
-basic linear algebra and random number generation.
-"""
-
-DOCLINES = __doc__.split("\n")
-
-import __builtin__
 import os
 import sys
+import glob
+from os.path import join, basename
 
-CLASSIFIERS = """\
-Development Status :: 4 - Beta
-Intended Audience :: Science/Research
-Intended Audience :: Developers
-License :: OSI Approved
-Programming Language :: C
-Programming Language :: Python
-Topic :: Software Development
-Topic :: Scientific/Engineering
-Operating System :: Microsoft :: Windows
-Operating System :: POSIX
-Operating System :: Unix
-Operating System :: MacOS
-"""
+from numpy.distutils import log
 
-# BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
-# update it when the contents of directories change.
-if os.path.exists('MANIFEST'): os.remove('MANIFEST')
-
-# This is a bit hackish: we are setting a global variable so that the main
-# numpy __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet.  While ugly, it's
-# a lot more robust than what was previously being used.
-__builtin__.__NUMPY_SETUP__ = True
-
-# DO NOT REMOVE numpy.distutils IMPORT ! This is necessary for numpy.distutils'
-# monkey patching to work.
-import numpy.distutils
-from distutils.errors import DistutilsError
-try:
-    import numscons
-except ImportError, e:
-    msg = ["You cannot build numpy with scons without the numscons package "]
-    msg.append("(Failure was: %s)" % e)
-    raise DistutilsError('\n'.join(msg))
+from numscons import get_scons_build_dir
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration
+    from numpy.distutils.misc_util import Configuration,dot_join
+    from numpy.distutils.command.scons import get_scons_pkg_build_dir
+    from numpy.distutils.system_info import get_info, default_lib_dirs
 
-    config = Configuration(None, parent_package, top_path, setup_name = 'setupscons.py')
-    config.set_options(ignore_setup_xxx_py=True,
-                       assume_default_configuration=True,
-                       delegate_options_to_subpackages=True,
-                       quiet=True)
+    config = Configuration('core',parent_package,top_path)
+    local_dir = config.local_path
 
-    config.add_subpackage('numpy')
+    header_dir = 'include/numpy' # this is relative to config.path_in_package
 
-    config.add_data_files(('numpy','*.txt'),
-                          ('numpy','COMPATIBILITY'),
-                          ('numpy','site.cfg.example'),
-                          ('numpy','setup.py'))
+    config.add_subpackage('code_generators')
 
-    config.get_version('numpy/version.py') # sets config.version
+    # List of files to register to numpy.distutils
+    dot_blas_src = [join('blasdot', '_dotblas.c'),
+                    join('blasdot', 'cblas.h')]
+    api_definition = [join('code_generators', 'array_api_order.txt'),
+                      join('code_generators', 'multiarray_api_order.txt'),
+                      join('code_generators', 'ufunc_api_order.txt')]
+    core_src = [join('src', basename(i)) for i in glob.glob(join(local_dir,
+                                                                'src',
+                                                                '*.c'))]
+    core_src += [join('src', basename(i)) for i in glob.glob(join(local_dir,
+                                                                 'src',
+                                                                 '*.src'))]
+
+    source_files = dot_blas_src + api_definition + core_src + \
+                   [join(header_dir, 'numpyconfig.h.in')]
+
+    # Add generated files to distutils...
+    def add_config_header():
+        scons_build_dir = get_scons_build_dir()
+        # XXX: I really have to think about how to communicate path info
+        # between scons and distutils, and set the options at one single
+        # location.
+        target = join(get_scons_pkg_build_dir(config.name), 'config.h')
+        incl_dir = os.path.dirname(target)
+        if incl_dir not in config.numpy_include_dirs:
+            config.numpy_include_dirs.append(incl_dir)
+
+    def add_numpyconfig_header():
+        scons_build_dir = get_scons_build_dir()
+        # XXX: I really have to think about how to communicate path info
+        # between scons and distutils, and set the options at one single
+        # location.
+        target = join(get_scons_pkg_build_dir(config.name),
+                      'include/numpy/numpyconfig.h')
+        incl_dir = os.path.dirname(target)
+        if incl_dir not in config.numpy_include_dirs:
+            config.numpy_include_dirs.append(incl_dir)
+        config.add_data_files((header_dir, target))
+
+    def add_array_api():
+        scons_build_dir = get_scons_build_dir()
+        # XXX: I really have to think about how to communicate path info
+        # between scons and distutils, and set the options at one single
+        # location.
+        h_file = join(get_scons_pkg_build_dir(config.name), '__multiarray_api.h')
+        t_file = join(get_scons_pkg_build_dir(config.name), 'multiarray_api.txt')
+        config.add_data_files((header_dir, h_file),
+                              (header_dir, t_file))
+
+    def add_ufunc_api():
+        scons_build_dir = get_scons_build_dir()
+        # XXX: I really have to think about how to communicate path info
+        # between scons and distutils, and set the options at one single
+        # location.
+        h_file = join(get_scons_pkg_build_dir(config.name), '__ufunc_api.h')
+        t_file = join(get_scons_pkg_build_dir(config.name), 'ufunc_api.txt')
+        config.add_data_files((header_dir, h_file),
+                              (header_dir, t_file))
+
+    def add_generated_files(*args, **kw):
+        add_config_header()
+        add_numpyconfig_header()
+        add_array_api()
+        add_ufunc_api()
+
+    config.add_sconscript('SConstruct',
+                          post_hook = add_generated_files,
+                          source_files = source_files)
+
+    config.add_data_files('include/numpy/*.h')
+    config.add_include_dirs('src')
+
+    config.numpy_include_dirs.extend(config.paths('include'))
+
+    # Don't install fenv unless we need them.
+    if sys.platform == 'cygwin':
+        config.add_data_dir('include/numpy/fenv')
+
+    config.add_data_dir('tests')
+    config.make_svn_version_py()
 
     return config
 
-def setup_package():
-
+if __name__=='__main__':
     from numpy.distutils.core import setup
-
-    old_path = os.getcwd()
-    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-    os.chdir(local_path)
-    sys.path.insert(0,local_path)
-
-    try:
-        setup(
-            name = 'numpy',
-            maintainer = "NumPy Developers",
-            maintainer_email = "numpy-discussion@lists.sourceforge.net",
-            description = DOCLINES[0],
-            long_description = "\n".join(DOCLINES[2:]),
-            url = "http://numeric.scipy.org",
-            download_url = "http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103",
-            license = 'BSD',
-            classifiers=filter(None, CLASSIFIERS.split('\n')),
-            author = "Travis E. Oliphant, et.al.",
-            author_email = "oliphant@ee.byu.edu",
-            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-            configuration=configuration )
-    finally:
-        del sys.path[0]
-        os.chdir(old_path)
-    return
-
-if __name__ == '__main__':
-    setup_package()
+    setup(configuration=configuration)

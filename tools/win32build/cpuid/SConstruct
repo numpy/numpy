@@ -1,5 +1,0 @@
-env = Environment(tools = ['mingw'])
-
-#libcpuid = env.SharedLibrary('cpuid', source = ['cpuid.c'])
-#test = env.Program('test', source = ['test.c'], LIBS = libcpuid, RPATH = ['.'])
-test = env.Program('test', source = ['test.c', 'cpuid.c'])
