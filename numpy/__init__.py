@@ -36,14 +36,17 @@ To search for objects of which the documentation contains keywords, do::
 
   >>> np.lookfor('keyword')
 
+Topical documentation is available under the ``doc`` sub-module::
+
+  >>> from numpy import doc
+  >>> help(doc)
+
 Available subpackages
 ---------------------
-core
-    Defines a multi-dimensional array and useful procedures
-    for Numerical computation.
+doc
+    Topical documentation on broadcasting, indexing, etc.
 lib
-    Basic functions used by several sub-packages and useful
-    to have in the main name-space.
+    Basic functions used by several sub-packages.
 random
     Core Random Tools
 linalg
@@ -52,26 +55,16 @@ fft
     Core FFT routines
 testing
     Numpy testing tools
-
-The following sub-packages must be explicitly imported:
-
 f2py
     Fortran to Python Interface Generator.
 distutils
     Enhancements to distutils with support for
     Fortran compilers support and more.
 
-Global symbols from subpackages
--------------------------------
-Do not import directly from `core` and `lib`: those functions
-have been imported into the `numpy` namespace.
-
-Utility tools
--------------
+Utilities
+---------
 test
     Run numpy unittests
-pkgload
-    Load numpy packages
 show_config
     Show numpy build configuration
 dual
@@ -147,7 +140,6 @@ else:
     import random
     import ctypeslib
     import ma
-    import doc
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
@@ -159,4 +151,4 @@ else:
                'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(lib.__all__)
-    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma', 'doc'])
+    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
