@@ -60,6 +60,12 @@ class TestSetState(TestCase):
         assert np.all(x1 == x2)
         assert np.all(x1 == x3)
 
+    def test_negative_binomial(self):
+        """ Ensure that the negative binomial results take floating point
+        arguments without truncation.
+        """
+        self.prng.negative_binomial(0.5, 0.5)
+
 
 if __name__ == "__main__":
     run_module_suite()

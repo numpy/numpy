@@ -448,7 +448,7 @@ long rk_binomial(rk_state *state, long n, double p)
 
 }
 
-long rk_negative_binomial(rk_state *state, long n, double p)
+long rk_negative_binomial(rk_state *state, double n, double p)
 {
     double Y;
 

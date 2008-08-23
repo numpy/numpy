@@ -103,7 +103,7 @@ extern long rk_binomial_inversion(rk_state *state, long n, double p);
 
 /* Negative binomial distribution computed by generating a Gamma(n, (1-p)/p)
  * variate Y and returning a Poisson(Y) variate (Devroye p. 543). */
-extern long rk_negative_binomial(rk_state *state, long n, double p);
+extern long rk_negative_binomial(rk_state *state, double n, double p);
 
 /* Poisson distribution with mean=lam.
  * When lam < 10, a basic algorithm using repeated multiplications of uniform

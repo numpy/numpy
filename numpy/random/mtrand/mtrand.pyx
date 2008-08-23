@@ -92,7 +92,7 @@ cdef extern from "distributions.h":
     long rk_binomial(rk_state *state, long n, double p)
     long rk_binomial_btpe(rk_state *state, long n, double p)
     long rk_binomial_inversion(rk_state *state, long n, double p)
-    long rk_negative_binomial(rk_state *state, long n, double p)
+    long rk_negative_binomial(rk_state *state, double n, double p)
     long rk_poisson(rk_state *state, double lam)
     long rk_poisson_mult(rk_state *state, double lam)
     long rk_poisson_ptrs(rk_state *state, double lam)
@@ -108,6 +108,7 @@ ctypedef double (* rk_cont3)(rk_state *state, double a, double b, double c)
 
 ctypedef long (* rk_disc0)(rk_state *state)
 ctypedef long (* rk_discnp)(rk_state *state, long n, double p)
+ctypedef long (* rk_discdd)(rk_state *state, double n, double p)
 ctypedef long (* rk_discnmN)(rk_state *state, long n, long m, long N)
 ctypedef long (* rk_discd)(rk_state *state, double a)
 
@@ -348,6 +349,55 @@ cdef object discnp_array(rk_state *state, rk_discnp func, object size, ndarray o
             raise ValueError("size is not compatible with inputs")
         for i from 0 <= i < multi.size:
             on_data = <long *>PyArray_MultiIter_DATA(multi, 1)
+            op_data = <double *>PyArray_MultiIter_DATA(multi, 2)
+            array_data[i] = func(state, on_data[0], op_data[0])
+            PyArray_MultiIter_NEXTi(multi, 1)
+            PyArray_MultiIter_NEXTi(multi, 2)
+
+    return array
+
+cdef object discdd_array_sc(rk_state *state, rk_discdd func, object size, double n, double p):
+    cdef long *array_data
+    cdef ndarray array "arrayObject"
+    cdef long length
+    cdef long i
+
+    if size is None:
+        return func(state, n, p)
+    else:
+        array = <ndarray>np.empty(size, int)
+        length = PyArray_SIZE(array)
+        array_data = <long *>array.data
+        for i from 0 <= i < length:
+            array_data[i] = func(state, n, p)
+        return array
+
+cdef object discdd_array(rk_state *state, rk_discdd func, object size, ndarray on, ndarray op):
+    cdef long *array_data
+    cdef ndarray array "arrayObject"
+    cdef npy_intp length
+    cdef npy_intp i
+    cdef double *op_data
+    cdef double *on_data
+    cdef broadcast multi
+
+    if size is None:
+        multi = <broadcast> PyArray_MultiIterNew(2, <void *>on, <void *>op)
+        array = <ndarray> PyArray_SimpleNew(multi.nd, multi.dimensions, NPY_LONG)
+        array_data = <long *>array.data
+        for i from 0 <= i < multi.size:
+            on_data = <double *>PyArray_MultiIter_DATA(multi, 0)
+            op_data = <double *>PyArray_MultiIter_DATA(multi, 1)
+            array_data[i] = func(state, on_data[0], op_data[0])
+            PyArray_MultiIter_NEXT(multi)
+    else:
+        array = <ndarray>np.empty(size, int)
+        array_data = <long *>array.data
+        multi = <broadcast>PyArray_MultiIterNew(3, <void*>array, <void *>on, <void *>op)
+        if (multi.size != PyArray_SIZE(array)):
+            raise ValueError("size is not compatible with inputs")
+        for i from 0 <= i < multi.size:
+            on_data = <double *>PyArray_MultiIter_DATA(multi, 1)
             op_data = <double *>PyArray_MultiIter_DATA(multi, 2)
             array_data[i] = func(state, on_data[0], op_data[0])
             PyArray_MultiIter_NEXTi(multi, 1)
@@ -2115,24 +2165,24 @@ cdef class RandomState:
         """
         cdef ndarray on
         cdef ndarray op
-        cdef long ln
+        cdef double fn
         cdef double fp
 
         fp = PyFloat_AsDouble(p)
-        ln = PyInt_AsLong(n)
+        fn = PyFloat_AsDouble(n)
         if not PyErr_Occurred():
-            if ln <= 0:
+            if fn <= 0:
                 raise ValueError("n <= 0")
             if fp < 0:
                 raise ValueError("p < 0")
             elif fp > 1:
                 raise ValueError("p > 1")
-            return discnp_array_sc(self.internal_state, rk_negative_binomial,
-                                   size, ln, fp)
+            return discdd_array_sc(self.internal_state, rk_negative_binomial,
+                                   size, fn, fp)
 
         PyErr_Clear()
 
-        on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ALIGNED)
+        on = <ndarray>PyArray_FROM_OTF(n, NPY_DOUBLE, NPY_ALIGNED)
         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ALIGNED)
         if np.any(np.less_equal(n, 0)):
             raise ValueError("n <= 0")
@@ -2140,7 +2190,7 @@ cdef class RandomState:
             raise ValueError("p < 0")
         if np.any(np.greater(p, 1)):
             raise ValueError("p > 1")
-        return discnp_array(self.internal_state, rk_negative_binomial, size,
+        return discdd_array(self.internal_state, rk_negative_binomial, size,
                             on, op)
 
     def poisson(self, lam=1.0, size=None):
