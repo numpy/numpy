@@ -59,10 +59,11 @@ extern \"C\" {
 '''
 
     container_options = CSource.container_options.copy()
-    container_options.update(CAPIDefinition=container_options['CDefinition'],
-                             PyCModuleCDeclaration=dict(default='<KILLLINE>',
-                                                        ignore_empty_content=True),
-                             )
+    container_options.update(dict(CAPIDefinition=container_options['CDefinition'],
+                                  PyCModuleCDeclaration=dict(default='<KILLLINE>',
+                                                             ignore_empty_content=True)\
+                                      )\
+                                 )
 
     component_container_map = dict(
         PyCModuleInitFunction = 'CMainProgram',
@@ -281,17 +282,17 @@ class ArgDocBase(Word):
                                     use_firstline_indent=True, replace_map={'\n':'\\n'})
 class ReqArgDoc(ArgDocBase):
     parent_container_options = ArgDocBase.parent_container_options.copy()
-    parent_container_options.update(prefix='"\\n\\n:Parameters:\\n"\n"  ')
+    parent_container_options.update(dict(prefix='"\\n\\n:Parameters:\\n"\n"  '))
 class OptArgDoc(ArgDocBase):
     parent_container_options = ArgDocBase.parent_container_options.copy()
-    parent_container_options.update(prefix='"\\n\\n:Optional parameters:\\n"\n"  ')
+    parent_container_options.update(dict(prefix='"\\n\\n:Optional parameters:\\n"\n"  '))
 class ExtArgDoc(ArgDocBase):
     parent_container_options = ArgDocBase.parent_container_options.copy()
-    parent_container_options.update(prefix='"\\n\\n:Extra parameters:\\n"\n"  ')
+    parent_container_options.update(dict(prefix='"\\n\\n:Extra parameters:\\n"\n"  '))
 class RetArgDoc(ArgDocBase):
     parent_container_options = ArgDocBase.parent_container_options.copy()
-    parent_container_options.update(prefix='"\\n\\n:Returns:\\n"\n"  ',
-                                    default='"\\n\\n:Returns:\\n  None"')
+    parent_container_options.update(dict(prefix='"\\n\\n:Returns:\\n"\n"  ',
+                                         default='"\\n\\n:Returns:\\n  None"'))
 class ArgFmtBase(Word): parent_container_options = dict(separator='')
 class ReqArgFmt(ArgFmtBase): pass
 class OptArgFmt(ArgFmtBase): pass
@@ -400,8 +401,8 @@ PyObject*
 
     container_options = CFunction.container_options.copy()
 
-    container_options.update(\
-
+    container_options.update(dict(\
+            
         TMP = dict(),
 
         ReqArg = ReqArg.parent_container_options,
@@ -446,18 +447,15 @@ PyObject*
 
         CleanPyObjFrom = dict(default='<KILLLINE>', reverse=True, use_indent=True, ignore_empty_content=True),
         CleanCBody = dict(default='<KILLLINE>', reverse=True, use_indent=True, ignore_empty_content=True),
-        CleanFromPyObj = dict(default='<KILLLINE>', reverse=True, use_indent=True, ignore_empty_content=True),
-
-        )
+        CleanFromPyObj = dict(default='<KILLLINE>', reverse=True, use_indent=True, ignore_empty_content=True)))
 
     default_component_class_name = 'CCode'
 
     component_container_map = CFunction.component_container_map.copy()
-    component_container_map.update(
-        PyCArgument = 'TMP',
-        CCode = 'CBody',
-        )
-
+    component_container_map.update(dict(
+            PyCArgument = 'TMP',
+            CCode = 'CBody'))
+    
     def initialize(self, pyname, *components, **options):
         self.pyname = pyname
         self.title = options.pop('title', None)
