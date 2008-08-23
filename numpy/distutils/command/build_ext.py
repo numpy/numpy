@@ -219,7 +219,8 @@ class build_ext (old_build_ext):
 
         # Make sure that scons based extensions are complete.
         if self.inplace:
-            self.reinitialize_command('scons', inplace=1)
+            cmd = self.reinitialize_command('scons')
+            cmd.inplace = 1
         self.run_command('scons')
 
     def swig_sources(self, sources):
