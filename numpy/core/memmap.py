@@ -195,6 +195,7 @@ class memmap(ndarray):
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
                                offset=offset, order=order)
         self._mmap = mm
+# Should get rid of these...  Are they used?
         self._offset = offset
         self._mode = mode
         self._size = size

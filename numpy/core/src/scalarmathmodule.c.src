@@ -524,6 +524,13 @@ _@name@_convert_to_ctype(PyObject *a, @name@ *arg1)
     return -2;
 }
 
+/**end repeat**/
+
+
+/**begin repeat
+   #name=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,cfloat,cdouble#
+**/
+
 static int
 _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
                            PyObject *b, @name@ *arg2)
@@ -537,6 +544,27 @@ _@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
 }
 
 /**end repeat**/
+
+/**begin repeat
+   #name=longdouble, clongdouble#
+**/
+
+static int
+_@name@_convert2_to_ctypes(PyObject *a, @name@ *arg1,
+                           PyObject *b, @name@ *arg2)
+{
+    int ret;
+    ret = _@name@_convert_to_ctype(a, arg1);
+    if (ret < 0) return ret;
+    ret = _@name@_convert_to_ctype(b, arg2);
+    if (ret == -2) ret = -3;
+    if (ret < 0) return ret;    
+    return 0;
+}
+
+/**end repeat**/
+
+
 
 /**begin repeat
    #name=(byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong)*13, (float, double, longdouble, cfloat, cdouble, clongdouble)*6, (float, double, longdouble)*2#
@@ -569,10 +597,14 @@ static PyObject *
         break;
     case -1: /* one of them can't be cast safely
                 must be mixed-types*/
-        return PyArray_Type.tp_as_number->nb_@oper@(a,b);
+        return PyArray_Type.tp_as_number->nb_@oper@(a,b); 
     case -2: /* use default handling */
         if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+    case -3: /* special case for longdouble and clongdouble
+		because they have a recursive getitem in their dtype */
+        Py_INCREF(Py_NotImplemented);
+	return Py_NotImplemented;
     }
 
 #if @fperr@
@@ -658,6 +690,10 @@ static PyObject *
     case -2: /* use default handling */
         if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+    case -3: /* special case for longdouble and clongdouble
+		because they have a recursive getitem in their dtype */
+        Py_INCREF(Py_NotImplemented);
+	return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -887,6 +923,10 @@ static PyObject*
     case -2: /* use ufunc */
         if (PyErr_Occurred()) return NULL;
         return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
+    case -3: /* special case for longdouble and clongdouble
+		because they have a recursive getitem in their dtype */
+        Py_INCREF(Py_NotImplemented);
+	return Py_NotImplemented;
     }
 
     /* here we do the actual calculation with arg1 and arg2 */
