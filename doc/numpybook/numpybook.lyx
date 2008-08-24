@@ -19056,10 +19056,11 @@ order Either 'C' or 'Fortran' to indicate the order that an N-D array should
 Memory-mapped-file arrays have one additional method (besides those they
  inherit from the ndarray): self.
 \series bold
-sync
+flush
 \series default
-() which must be called manually by the user to ensure that any changes
- to the array actually get written to disk.
+() which can be called manually by the user to ensure that any changes to
+ the array actually get written to disk. This also occurs on deleting
+ the memmap object
  
 \end_layout
 
