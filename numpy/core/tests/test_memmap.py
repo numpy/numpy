@@ -2,7 +2,7 @@ from tempfile import NamedTemporaryFile, mktemp
 import os
 import warnings
 
-from numpy.core import memmap
+from numpy import memmap
 from numpy import arange, allclose
 from numpy.testing import *
 
@@ -45,6 +45,21 @@ class TestMemmap(TestCase):
         fp.sync()
         warnings.simplefilter('default', DeprecationWarning)
 
+    def test_del(self):
+        # Make sure a view does not delete the underlying mmap
+        fp_base = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
+        fp_view = fp_base[:]
+        class ViewCloseError(Exception):
+            pass
+        _close = memmap._close
+        def replace_close(self):
+            raise ViewCloseError('View should not call _close on memmap')
+        try:
+            memmap._close = replace_close
+            del fp_view
+        finally:
+            memmap._close = _close
 
 if __name__ == "__main__":
     run_module_suite()

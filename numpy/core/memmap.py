@@ -219,11 +219,6 @@ class memmap(ndarray):
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
                                offset=offset, order=order)
         self._mmap = mm
-# Should get rid of these...  Are they used?
-        self._offset = offset
-        self._mode = mode
-        self._size = size
-        self._name = filename
         return self
 
     def __array_finalize__(self, obj):
@@ -245,19 +240,11 @@ class memmap(ndarray):
     def _close(self):
         """Close the memmap file.  Only do this when deleting the object."""
         if self.base is self._mmap:
+            # The python mmap probably causes flush on close, but
+            # we put this here for safety
+            self._mmap.flush()
             self._mmap.close()
             self._mmap = None
-
-        # DEV NOTE: This error is raised on the deletion of each row
-        # in a view of this memmap.  Python traps exceptions in
-        # __del__ and prints them to stderr.  Suppressing this for now
-        # until memmap code is cleaned up and and better tested for
-        # numpy v1.1 Objects that do not have a python mmap instance
-        # as their base data array, should not do anything in the
-        # close anyway.
-        #elif self._mmap is not None:
-            #raise ValueError, "Cannot close a memmap that is being used " \
-            #      "by another object."
 
     def close(self):
         """Close the memmap file. Does nothing."""
@@ -265,13 +252,14 @@ class memmap(ndarray):
                       DeprecationWarning)
 
     def __del__(self):
-        if self._mmap is not None:
+        # We first check if we are the owner of the mmap, rather than
+        # a view, so deleting a view does not call _close
+        # on the parent mmap
+        if self._mmap is self.base:
             try:
                 # First run tell() to see whether file is open
                 self._mmap.tell()
             except ValueError:
                 pass
             else:
-                # flush any changes to disk, even if it's a view
-                self.flush()
                 self._close()
