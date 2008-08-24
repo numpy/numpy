@@ -75,6 +75,14 @@ class memmap(ndarray):
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
 
+    Notes 
+    -----
+
+    Memory-mapped arrays use the the Python memory-map object which
+    (prior to Python 2.5) does not allow files to be larger than a
+    certain size depending on the platform. This size is always < 2GB
+    even on 64-bit systems.
+
     Examples
     --------
     >>> data = np.arange(12, dtype='float32')
