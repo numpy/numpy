@@ -1923,10 +1923,8 @@ static PyObject *
 #elif @default@ == 1
         robj = PyArray_Scalar(NULL, typecode, NULL);
 #elif @default@ == 2
-	obj = Py_None;
-	robj = type->tp_alloc(type, 0);
 	Py_INCREF(Py_None);
-	((PyObjectScalarObject *)robj)->obval = obj;
+	robj = Py_None;
 #endif
 	Py_DECREF(typecode);
         goto finish;
@@ -1942,14 +1940,15 @@ static PyObject *
     /* 0-d array */
     robj = PyArray_ToScalar(PyArray_DATA(arr), (NPY_AO *)arr);
     Py_DECREF(arr);  
+
+finish:
+
 #if @default@ == 2  /* In OBJECT case, robj is no longer a
 			  PyArrayScalar at this point but the
 			  remaining code assumes it is 
 		       */
     return robj;
-#endif
-
-finish:
+#else
     /* Normal return */
     if ((robj == NULL) || (robj->ob_type == type)) {
         return robj;
@@ -1983,12 +1982,11 @@ finish:
 	itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
     }
     memcpy(dest, src, itemsize);
-#elif @default@ == 2 /* Object arrays */    
-    memcpy(dest, src, sizeof(void *));
-    Py_INCREF(*((PyObject **)dest));
+    /* @default@ == 2 won't get here */
 #endif
     Py_DECREF(robj);
     return obj;
+#endif
 }
 /**end repeat**/
 

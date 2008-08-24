@@ -1196,7 +1196,7 @@ class TestRegression(TestCase):
         assert type(b2) is float
         assert type(c) is np.ndarray
         assert c.dtype == object
-        assert d.type == object
+        assert d.dtype == object
 
 if __name__ == "__main__":
     run_module_suite()
