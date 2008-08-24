@@ -2432,19 +2432,19 @@ cdef class RandomState:
 
         fp = PyFloat_AsDouble(p)
         if not PyErr_Occurred():
-            if fp < 0.0:
-                raise ValueError("p < 0.0")
-            if fp > 1.0:
-                raise ValueError("p > 1.0")
+            if fp <= 0.0:
+                raise ValueError("p <= 0.0")
+            if fp >= 1.0:
+                raise ValueError("p >= 1.0")
             return discd_array_sc(self.internal_state, rk_logseries, size, fp)
 
         PyErr_Clear()
 
         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ALIGNED)
-        if np.any(np.less(op, 0.0)):
-            raise ValueError("p < 0.0")
-        if np.any(np.greater(op, 1.0)):
-            raise ValueError("p > 1.0")
+        if np.any(np.less_equal(op, 0.0)):
+            raise ValueError("p <= 0.0")
+        if np.any(np.greater_equal(op, 1.0)):
+            raise ValueError("p >= 1.0")
         return discd_array(self.internal_state, rk_logseries, size, op)
 
     # Multivariate distributions:
