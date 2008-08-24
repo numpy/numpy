@@ -476,7 +476,8 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     each element is first converted to its binary representation (which works
     just like the decimal system, only now we're using 2 instead of 10):
 
-    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\\n          y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
+    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
+              y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
 
     where ``W`` is the bit-width of the type (i.e., 8 for a byte or uint8),
     and each :math:`a_i` and :math:`b_j` is either 0 or 1.  For example, 13
@@ -540,7 +541,8 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     each element is first converted to its binary representation (which works
     just like the decimal system, only now we're using 2 instead of 10):
 
-    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\\n          y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
+    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
+              y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
 
     where ``W`` is the bit-width of the type (i.e., 8 for a byte or uint8),
     and each :math:`a_i` and :math:`b_j` is either 0 or 1.  For example, 13
@@ -591,7 +593,8 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
     >>> np.bitwise_or(np.array([2, 5, 255]), np.array([4, 4, 4]))
     array([  6,   5, 255])
-    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647L], dtype=np.int32), \\\n... np.array([4, 4, 4, 2147483647L], dtype=np.int32))
+    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647L], dtype=np.int32),
+    ...               np.array([4, 4, 4, 2147483647L], dtype=np.int32))
     array([         6,          5,        255, 2147483647])
     >>> np.bitwise_or([True, True], [False, True])
     array([ True,  True], dtype=bool)
@@ -606,7 +609,8 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     each element is first converted to its binary representation (which works
     just like the decimal system, only now we're using 2 instead of 10):
 
-    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\\n          y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
+    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
+              y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
 
     where ``W`` is the bit-width of the type (i.e., 8 for a byte or uint8),
     and each :math:`a_i` and :math:`b_j` is either 0 or 1.  For example, 13
