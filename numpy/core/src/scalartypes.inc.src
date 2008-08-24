@@ -1889,7 +1889,7 @@ object_arrtype_dealloc(PyObject *v)
 /**begin repeat1
 #name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
 #TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
-#work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,1#
+#work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
 #default=0*16,1*2,2#
 */
 static PyObject *
@@ -1923,13 +1923,18 @@ static PyObject *
 #elif @default@ == 1
         robj = PyArray_Scalar(NULL, typecode, NULL);
 #elif @default@ == 2
-        obj = Py_None;
-        robj = PyArray_Scalar(&obj, typecode, NULL);
+	obj = Py_None;
+	robj = type->tp_alloc(type, 0);
+	Py_INCREF(Py_None);
+	((PyObjectScalarObject *)robj)->obval = obj;
 #endif
 	Py_DECREF(typecode);
         goto finish;
     }
 
+    /* It is expected at this point that robj is a PyArrayScalar 
+       (even for Object Data Type)
+    */
     arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
     if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
         return arr;
@@ -1937,6 +1942,12 @@ static PyObject *
     /* 0-d array */
     robj = PyArray_ToScalar(PyArray_DATA(arr), (NPY_AO *)arr);
     Py_DECREF(arr);  
+#if @default@ == 2  /* In OBJECT case, robj is no longer a
+			  PyArrayScalar at this point but the
+			  remaining code assumes it is 
+		       */
+    return robj;
+#endif
 
 finish:
     /* Normal return */
@@ -1972,7 +1983,7 @@ finish:
 	itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
     }
     memcpy(dest, src, itemsize);
-#elif @default@ == 2 /* Object arrays */
+#elif @default@ == 2 /* Object arrays */    
     memcpy(dest, src, sizeof(void *));
     Py_INCREF(*((PyObject **)dest));
 #endif

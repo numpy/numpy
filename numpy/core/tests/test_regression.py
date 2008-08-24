@@ -1184,5 +1184,19 @@ class TestRegression(TestCase):
         assert a.dtype.names[0] == "notfoo"
         assert a.dtype.names[1] == "bar"
 
+    def test_for_object_scalar_creation(self, level=rlevel):
+        """Ticket #816"""
+        a = np.object_()
+        b = np.object_(3)
+        b2 = np.object_(3.0)
+        c = np.object_([4,5])
+        d = np.object_([None, {}, []])
+        assert a is None
+        assert type(b) is int
+        assert type(b2) is float
+        assert type(c) is np.ndarray
+        assert c.dtype == object
+        assert d.type == object
+
 if __name__ == "__main__":
     run_module_suite()
