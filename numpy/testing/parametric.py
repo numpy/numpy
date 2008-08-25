@@ -40,6 +40,7 @@ unittest itself changes in the future.  I have only tested this with Python
 __docformat__ = "restructuredtext en"
 
 import unittest
+import warnings
 
 class _ParametricTestCase(unittest.TestCase):
     """TestCase subclass with support for parametric tests.
@@ -58,6 +59,11 @@ class _ParametricTestCase(unittest.TestCase):
     #: to actually share that state.  Use with care (especially be careful not
     #: to mutate the state you are using, which will alter later tests).
     _shareParTestPrefix = 'testsp'
+
+    def __init__(self, methodName = 'runTest'):
+    	warnings.warn("ParametricTestCase will be removed in the next NumPy "
+                      "release", DeprecationWarning)
+	unittest.TestCase.__init__(self, methodName)
 
     def exec_test(self,test,args,result):
         """Execute a single test.  Returns a success boolean"""
