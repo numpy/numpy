@@ -326,6 +326,20 @@ rint (double x)
 }
 #endif
 
+#ifndef HAVE_TRUNC
+static double
+trunc (double x)
+{
+    double y, r;
+
+    if (x < 0) {
+	return - floor(-x);
+    } else {
+        return x;
+    }
+
+}
+#endif
 
 
 
@@ -461,10 +475,10 @@ longdouble radiansl(longdouble x) {
 
 /**begin repeat
 
-   #kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,rint)*2#
-   #typ=longdouble*17, float*17#
-   #c=l*17,f*17#
-   #TYPE=LONGDOUBLE*17, FLOAT*17#
+   #kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,trunc,sqrt,log10,log,exp,asin,acos,atan,rint)*2#
+   #typ=longdouble*18, float*18#
+   #c=l*18,f*18#
+   #TYPE=LONGDOUBLE*18, FLOAT*18#
 */
 
 #ifndef HAVE_@TYPE@_FUNCS
