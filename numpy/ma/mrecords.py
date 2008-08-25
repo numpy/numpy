@@ -158,10 +158,11 @@ class MaskedRecords(MaskedArray, object):
         _fieldmask = getattr(obj, '_fieldmask', None)
         if _fieldmask is None:
             objmask = getattr(obj, '_mask', nomask)
+            _dtype = ndarray.__getattribute__(self,'dtype')
             if objmask is nomask:
-                _mask = ma.make_mask_none(self.shape, dtype=self.dtype)
+                _mask = ma.make_mask_none(self.shape, dtype=_dtype)
             else:
-                mdescr = ma.make_mask_descr(self.dtype)
+                mdescr = ma.make_mask_descr(_dtype)
                 _mask = narray([tuple([m]*len(mdescr)) for m in objmask],
                                dtype=mdescr).view(recarray)
         else:
@@ -232,7 +233,7 @@ class MaskedRecords(MaskedArray, object):
             self.__setmask__(val)
             return
         # Create a shortcut (so that we don't have to call getattr all the time)
-        _localdict = self.__dict__
+        _localdict = object.__getattribute__(self, '__dict__')
         # Check whether we're creating a new field
         newattr = attr not in _localdict
         try:
@@ -241,7 +242,8 @@ class MaskedRecords(MaskedArray, object):
         except:
             # Not a generic attribute: exit if it's not a valid field
             fielddict = ndarray.__getattribute__(self,'dtype').fields or {}
-            if attr not in fielddict:
+            optinfo = ndarray.__getattribute__(self,'_optinfo') or {}
+            if not (attr in fielddict or attr in optinfo):
                 exctype, value = sys.exc_info()[:2]
                 raise exctype, value
         else:

@@ -1942,12 +1942,20 @@ class TestMaskedArrayFunctions(TestCase):
         xm.set_fill_value(1.e+20)
         self.info = (xm, ym)
 
-    #
     def test_masked_where_bool(self):
         x = [1,2]
         y = masked_where(False,x)
         assert_equal(y,[1,2])
         assert_equal(y[1],2)
+
+    def test_masked_equal_wlist(self):
+        x = [1, 2, 3]
+        mx = masked_equal(x, 3)
+        assert_equal(mx, x)
+        assert_equal(mx._mask, [0,0,1])
+        mx = masked_not_equal(x, 3)
+        assert_equal(mx, x)
+        assert_equal(mx._mask, [1,1,0])
 
     def test_masked_where_condition(self):
         "Tests masking functions."

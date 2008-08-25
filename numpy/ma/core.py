@@ -916,9 +916,8 @@ def masked_less_equal(x, value, copy=True):
 
 def masked_not_equal(x, value, copy=True):
     "Shortcut to masked_where, with condition = (x != value)."
-    return masked_where((x != value), x, copy=copy)
+    return masked_where(not_equal(x, value), x, copy=copy)
 
-#
 def masked_equal(x, value, copy=True):
     """Shortcut to masked_where, with condition = (x == value).  For
     floating point, consider `masked_values(x, value)` instead.
@@ -929,7 +928,7 @@ def masked_equal(x, value, copy=True):
     # c = umath.equal(d, value)
     # m = mask_or(c, getmask(x))
     # return array(d, mask=m, copy=copy)
-    return masked_where((x == value), x, copy=copy)
+    return masked_where(equal(x, value), x, copy=copy)
 
 def masked_inside(x, v1, v2, copy=True):
     """Shortcut to masked_where, where condition is True for x inside
