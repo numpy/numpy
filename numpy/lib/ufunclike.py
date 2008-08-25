@@ -11,17 +11,8 @@ import numpy.core.umath as umath
 def fix(x, y=None):
     """ Round x to nearest integer towards zero.
     """
-    x = asanyarray(x)
-    if y is None:
-        y = nx.floor(x)
-    else:
-        nx.floor(x, y)
-    if x.ndim == 0:
-        if (x<0):
-            y += 1
-    else:
-        y[x<0] = y[x<0]+1
-    return y
+    # fix is now implemented in C, using the C99 trunc function.
+    return umath.trunc(x, y)
 
 def isposinf(x, y=None):
     """
