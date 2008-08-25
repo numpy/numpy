@@ -16,6 +16,7 @@ FUNCTIONS_TO_CHECK = [
     ('isnan', 'HAVE_ISNAN'),
     ('isinf', 'HAVE_ISINF'),
     ('rint', 'HAVE_RINT'),
+    ('trunc', 'HAVE_TRUNC'),
     ]
 
 def is_npy_no_signal():

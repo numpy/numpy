@@ -131,7 +131,7 @@ numpyconfig_sym.append(('MATHLIB', ','.join(mlib)))
 #----------------------------------
 # Function to check:
 mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
-          'isnan', 'isinf', 'rint')
+          'isnan', 'isinf', 'rint', 'trunc')
 
 # Set value to 1 for each defined function (in math lib)
 mfuncs_defined = dict([(f, 0) for f in mfuncs])
