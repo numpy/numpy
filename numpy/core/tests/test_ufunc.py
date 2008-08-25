@@ -181,6 +181,7 @@ class TestUfunc(TestCase):
         n      1     log1p          flts + M
         n      1     sqrt           flts + M         real x < 0 raises error
         n      1     ceil           real + M
+        n      1     trunc          real + M
         n      1     floor          real + M
         n      1     fabs           real + M
         n      1     rint           flts + M
