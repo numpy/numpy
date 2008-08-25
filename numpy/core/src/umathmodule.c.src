@@ -333,7 +333,7 @@ trunc (double x)
     double y, r;
 
     if (x < 0) {
-	return - floor(-x);
+    	return - floor(-x);
     } else {
         return x;
     }

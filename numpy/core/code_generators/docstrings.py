@@ -689,6 +689,31 @@ add_newdoc('numpy.core.umath', 'ceil',
 
     """)
 
+add_newdoc('numpy.core.umath', 'trunc',
+    """
+    Return the truncated value of the input, element-wise.
+
+    The truncated value of the scalar `x` is the nearest integer `i`, such
+    that i is not larger than x amplitude
+
+    Parameters
+    ----------
+    x : array_like
+        Input data.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The truncated value of each element in `x`.
+
+    Examples
+    --------
+    >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
+    >>> np.ceil(a)
+    array([-1., -1., -0.,  0.,  1.,  1.,  2.])
+
+    """)
+
 add_newdoc('numpy.core.umath', 'conjugate',
     """
     Return the complex conjugate, element-wise.
