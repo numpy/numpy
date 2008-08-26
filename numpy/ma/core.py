@@ -81,8 +81,17 @@ np.seterr(all='ignore')
 
 
 
-def doc_note(note):
-    return "\nNotes\n-----\n%s" % note
+def doc_note(initialdoc, note):
+    if initialdoc is None:
+        return
+    newdoc = """
+    %s
+    
+    Notes
+    -----
+    %s
+    """
+    return newdoc % (initialdoc, note)
 
 #####--------------------------------------------------------------------------
 #---- --- Exceptions ---
@@ -781,7 +790,7 @@ def is_mask(m):
         return m.dtype.type is MaskType
     except AttributeError:
         return False
-#
+
 def make_mask(m, copy=False, shrink=True, flag=None):
     """Return m as a mask, creating a copy if necessary or requested.
 
@@ -865,13 +874,15 @@ def mask_or (m1, m2, copy=False, shrink=True):
         return m1
     return make_mask(umath.logical_or(m1, m2), copy=copy, shrink=shrink)
 
+
 #####--------------------------------------------------------------------------
 #--- --- Masking functions ---
 #####--------------------------------------------------------------------------
-def masked_where(condition, a, copy=True):
-    """Return a as an array masked where condition is true.
 
-    Masked values of a or condition are kept.
+def masked_where(condition, a, copy=True):
+    """
+    Return ``a`` as an array masked where ``condition`` is True.
+    Masked values of ``a`` or ``condition`` are kept.
 
     Parameters
     ----------
@@ -880,7 +891,7 @@ def masked_where(condition, a, copy=True):
     a : array_like
         Array to mask.
     copy : bool
-        Whether to return a copy of a (True) or modify a in place.
+        Whether to return a copy of ``a`` (True) or modify ``a`` in place (False).
 
     """
     cond = make_mask(condition)
@@ -920,8 +931,9 @@ def masked_not_equal(x, value, copy=True):
     return masked_where(not_equal(x, value), x, copy=copy)
 
 def masked_equal(x, value, copy=True):
-    """Shortcut to masked_where, with condition = (x == value).  For
-    floating point, consider `masked_values(x, value)` instead.
+    """
+    Shortcut to masked_where, with condition = (x == value).  For
+    floating point, consider ``masked_values(x, value)`` instead.
 
     """
     # An alternative implementation relies on filling first: probably not needed.
@@ -932,7 +944,8 @@ def masked_equal(x, value, copy=True):
     return masked_where(equal(x, value), x, copy=copy)
 
 def masked_inside(x, v1, v2, copy=True):
-    """Shortcut to masked_where, where condition is True for x inside
+    """
+    Shortcut to masked_where, where ``condition`` is True for x inside
     the interval [v1,v2] (v1 <= x <= v2).  The boundaries v1 and v2
     can be given in either order.
 
@@ -948,9 +961,10 @@ def masked_inside(x, v1, v2, copy=True):
     return masked_where(condition, x, copy=copy)
 
 def masked_outside(x, v1, v2, copy=True):
-    """Shortcut to masked_where, where condition is True for x outside
-    the interval [v1,v2] (x < v1)|(x > v2).  The boundaries v1 and v2
-    can be given in either order.
+    """
+    Shortcut to ``masked_where``, where ``condition`` is True for x outside
+    the interval [v1,v2] (x < v1)|(x > v2).
+    The boundaries v1 and v2 can be given in either order.
 
     Notes
     -----
@@ -965,10 +979,11 @@ def masked_outside(x, v1, v2, copy=True):
 
 #
 def masked_object(x, value, copy=True, shrink=True):
-    """Mask the array x where the data are exactly equal to value.
+    """
+    Mask the array ``x`` where the data are exactly equal to value.
 
     This function is suitable only for object arrays: for floating
-    point, please use ``masked_values`` instead.
+    point, please use :func:`masked_values` instead.
 
     Parameters
     ----------
@@ -992,13 +1007,14 @@ def masked_object(x, value, copy=True, shrink=True):
     return masked_array(x, mask=mask, copy=copy, fill_value=value)
 
 def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True, shrink=True):
-    """Mask the array x where the data are approximately equal in
+    """
+    Mask the array x where the data are approximately equal in
     value, i.e.
 
     (abs(x - value) <= atol+rtol*abs(value))
 
     Suitable only for floating points. For integers, please use
-    ``masked_equal``.  The mask is set to nomask if posible.
+    :func:`masked_equal`.  The mask is set to ``nomask`` if posible.
 
     Parameters
     ----------
@@ -1028,8 +1044,9 @@ def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True, shrink=True):
     return masked_array(xnew, mask=mask, copy=copy, fill_value=value)
 
 def masked_invalid(a, copy=True):
-    """Mask the array for invalid values (nans or infs).  Any
-    preexisting mask is conserved.
+    """
+    Mask the array for invalid values (NaNs or infs).
+    Any preexisting mask is conserved.
 
     """
     a = np.array(a, copy=copy, subok=True)
@@ -1048,8 +1065,8 @@ def masked_invalid(a, copy=True):
 #---- --- Printing options ---
 #####--------------------------------------------------------------------------
 class _MaskedPrintOption:
-    """Handle the string used to represent missing data in a masked
-    array.
+    """
+    Handle the string used to represent missing data in a masked array.
 
     """
     def __init__ (self, display):
@@ -1087,7 +1104,8 @@ masked_print_option = _MaskedPrintOption('--')
 
 #...............................................................................
 class _arraymethod(object):
-    """Define a wrapper for basic array methods.
+    """
+    Define a wrapper for basic array methods.
 
     Upon call, returns a masked array, where the new _data array is
     the output of the corresponding method called on the original
@@ -1170,7 +1188,8 @@ class FlatIter(object):
 
 
 class MaskedArray(ndarray):
-    """Arrays with possibly masked values.  Masked values of True
+    """
+    Arrays with possibly masked values.  Masked values of True
     exclude the corresponding element from any computation.
 
     Construction:
@@ -3839,7 +3858,6 @@ def round_(a, decimals=0, out=None):
 
 
 def inner(a, b):
-    "maskedarray version of the numpy function."
     fa = filled(a, 0)
     fb = filled(b, 0)
     if len(fa.shape) == 0:
@@ -3847,7 +3865,12 @@ def inner(a, b):
     if len(fb.shape) == 0:
         fb.shape = (1,)
     return np.inner(fa, fb).view(MaskedArray)
+<<<<<<< .mine
+inner.__doc__ = doc_note(np.inner.__doc__, 
+                         "Masked values are replaced by 0.")
+=======
 
+>>>>>>> .r5706
 innerproduct = inner
 if np.inner.__doc__ is not None :
     notes = doc_note("Masked values are replaced by 0.")
@@ -3866,7 +3889,12 @@ def outer(a, b):
     mb = getmaskarray(b)
     m = make_mask(1-np.outer(1-ma, 1-mb), copy=0)
     return masked_array(d, mask=m)
+<<<<<<< .mine
+outer.__doc__ = doc_note(np.outer.__doc__,
+                         "Masked values are replaced by 0.")
+=======
 
+>>>>>>> .r5706
 outerproduct = outer
 if np.outer.__doc__ is not None :
     notes = doc_note("Masked values are replaced by 0.")

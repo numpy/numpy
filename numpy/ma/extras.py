@@ -95,14 +95,20 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 class _fromnxfunction:
     """Defines a wrapper to adapt numpy functions to masked arrays."""
+
     def __init__(self, funcname):
         self.__name__ = funcname
         self.__doc__ = self.getdoc()
 
     def getdoc(self):
         "Retrieves the __doc__ string from the function."
-        return getattr(np, self.__name__).__doc__ +\
-            "*Notes*:\n    (The function is applied to both the _data and the _mask, if any.)"
+        inidoc = getattr(np, self.__name__).__doc__
+        if inidoc:
+            locdoc = "Notes\n-----\nThe function is applied to both the _data"\
+                     " and the _mask, if any."
+            return '\n'.join((inidoc, locdoc))
+        return
+
 
     def __call__(self, *args, **params):
         func = getattr(np, self.__name__)
