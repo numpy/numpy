@@ -98,10 +98,12 @@ class _fromnxfunction:
     def __init__(self, funcname):
         self.__name__ = funcname
         self.__doc__ = self.getdoc()
+
     def getdoc(self):
         "Retrieves the __doc__ string from the function."
         return getattr(np, self.__name__).__doc__ +\
             "*Notes*:\n    (The function is applied to both the _data and the _mask, if any.)"
+
     def __call__(self, *args, **params):
         func = getattr(np, self.__name__)
         if len(args)==1:
