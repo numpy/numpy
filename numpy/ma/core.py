@@ -3865,16 +3865,9 @@ def inner(a, b):
     if len(fb.shape) == 0:
         fb.shape = (1,)
     return np.inner(fa, fb).view(MaskedArray)
-<<<<<<< .mine
 inner.__doc__ = doc_note(np.inner.__doc__, 
                          "Masked values are replaced by 0.")
-=======
-
->>>>>>> .r5706
 innerproduct = inner
-if np.inner.__doc__ is not None :
-    notes = doc_note("Masked values are replaced by 0.")
-    inner.__doc__ = np.inner.__doc__ + notes
 
 def outer(a, b):
     "maskedarray version of the numpy function."
@@ -3889,16 +3882,9 @@ def outer(a, b):
     mb = getmaskarray(b)
     m = make_mask(1-np.outer(1-ma, 1-mb), copy=0)
     return masked_array(d, mask=m)
-<<<<<<< .mine
 outer.__doc__ = doc_note(np.outer.__doc__,
                          "Masked values are replaced by 0.")
-=======
-
->>>>>>> .r5706
 outerproduct = outer
-if np.outer.__doc__ is not None :
-    notes = doc_note("Masked values are replaced by 0.")
-    outer.__doc__ = np.outer.__doc__ + notes
 
 def allequal (a, b, fill_value=True):
     """Return True if all entries of a and b are equal, using
