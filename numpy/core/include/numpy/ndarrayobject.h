@@ -38,12 +38,25 @@ extern "C" CONFUSE_EMACS
 #define NPY_FAIL 0
 #define NPY_SUCCEED 1
 
-        /* Helpful to distinguish what is installed */
+/* Binary compatibility version number.  This number is increased
+   whenever the C-API is changed such that binary compatibility is
+   broken, i.e. whenever a recompile of extension modules is
+   needed. */
 #define NPY_VERSION 0x01000009
 
-        /* Some platforms don't define bool, long long, or long double.
-           Handle that here.
-         */
+/* Minor API version.  This number is increased whenever a change is
+   made to the C-API -- whether it breaks binary compatibility or not.
+   Some changes, such as adding a function pointer to the end of the
+   function table, can be made without breaking binary compatibility.
+   In this case, only the NPY_FEATURE_VERSION (*not* NPY_VERSION)
+   would be increased.  Whenever binary compatibility is broken, both
+   NPY_VERSION and NPY_FEATURE_VERSION should be increased.
+ */
+#define NPY_FEATURE_VERSION 0x00000001
+
+/* Some platforms don't define bool, long long, or long double.
+   Handle that here.
+*/
 
 #define NPY_BYTE_FMT "hhd"
 #define NPY_UBYTE_FMT "hhu"
