@@ -328,6 +328,7 @@ def get_data(a, subok=True):
     if not subok:
         return data.view(ndarray)
     return data
+
 getdata = get_data
 
 def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
@@ -522,7 +523,7 @@ class _MaskedBinaryOperation:
         self.__name__ = getattr(mbfunc, "__name__", str(mbfunc))
         ufunc_domain[mbfunc] = None
         ufunc_fills[mbfunc] = (fillx, filly)
-    #
+
     def __call__ (self, a, b, *args, **kwargs):
         "Execute the call behavior."
         m = mask_or(getmask(a), getmask(b))
@@ -539,7 +540,7 @@ class _MaskedBinaryOperation:
         elif m:
             return masked
         return result
-    #
+
     def reduce(self, target, axis=0, dtype=None):
         """Reduce `target` along the given `axis`."""
         if isinstance(target, MaskedArray):
@@ -3846,9 +3847,11 @@ def inner(a, b):
     if len(fb.shape) == 0:
         fb.shape = (1,)
     return np.inner(fa, fb).view(MaskedArray)
-inner.__doc__ = np.inner.__doc__
-inner.__doc__ += doc_note("Masked values are replaced by 0.")
+
 innerproduct = inner
+if np.inner.__doc__ is not None :
+    notes = doc_note("Masked values are replaced by 0.")
+    inner.__doc__ = np.inner.__doc__ + notes
 
 def outer(a, b):
     "maskedarray version of the numpy function."
@@ -3863,9 +3866,11 @@ def outer(a, b):
     mb = getmaskarray(b)
     m = make_mask(1-np.outer(1-ma, 1-mb), copy=0)
     return masked_array(d, mask=m)
-outer.__doc__ = np.outer.__doc__
-outer.__doc__ += doc_note("Masked values are replaced by 0.")
+
 outerproduct = outer
+if np.outer.__doc__ is not None :
+    notes = doc_note("Masked values are replaced by 0.")
+    outer.__doc__ = np.outer.__doc__ + notes
 
 def allequal (a, b, fill_value=True):
     """Return True if all entries of a and b are equal, using
