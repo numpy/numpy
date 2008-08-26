@@ -144,6 +144,24 @@ class NoseTester(object):
             argv += extra_argv
         return argv
 
+    def _show_system_info(self):
+        nose = import_nose()
+
+        import numpy
+        print "NumPy version %s" % numpy.__version__
+        npdir = os.path.dirname(numpy.__file__)
+        print "NumPy is installed in %s" % npdir
+
+        if 'scipy' in self.package_name:
+            import scipy
+            print "SciPy version %s" % scipy.__version__
+            spdir = os.path.dirname(scipy.__file__)
+            print "SciPy is installed in %s" % spdir
+
+        pyversion = sys.version.replace('\n','')
+        print "Python version %s" % pyversion
+        print "nose version %d.%d.%d" % nose.__versioninfo__
+            
 
     def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
              coverage=False, **kwargs):
@@ -216,22 +234,9 @@ class NoseTester(object):
         argv += ['--exclude','swig_ext']
         argv += ['--exclude','array_from_pyobj']
 
+        self._show_system_info()
+
         nose = import_nose()
-
-        import numpy
-        print "NumPy version %s" % numpy.__version__
-        npdir = os.path.dirname(numpy.__file__)
-        print "NumPy is installed in %s" % npdir
-
-        if 'scipy' in self.package_name:
-            import scipy
-            print "SciPy version %s" % scipy.__version__
-            spdir = os.path.dirname(scipy.__file__)
-            print "SciPy is installed in %s" % spdir
-
-        pyversion = sys.version.replace('\n','')
-        print "Python version %s" % pyversion
-        print "nose version %d.%d.%d" % nose.__versioninfo__
 
         # Because nose currently discards the test result object, but we need
         # to return it to the user, override TestProgram.runTests to retain
@@ -274,6 +279,10 @@ class NoseTester(object):
         ''' Run benchmarks for module using nose
 
         %(test_header)s'''
+
+        print "Running benchmarks for %s" % self.package_name
+        self._show_system_info()
+
         nose = import_nose()
         argv = self._test_argv(label, verbose, extra_argv)
         argv += ['--match', r'(?:^|[\\b_\\.%s-])[Bb]ench' % os.sep]
