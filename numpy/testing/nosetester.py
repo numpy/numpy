@@ -62,6 +62,9 @@ def run_module_suite(file_to_run = None):
 
 # contructs NoseTester method docstrings
 def _docmethod(meth, testtype):
+    if not meth.__doc__:
+        return
+
     test_header = \
         '''Parameters
         ----------
@@ -82,8 +85,7 @@ def _docmethod(meth, testtype):
             List with any extra args to pass to nosetests''' \
             % {'testtype': testtype}
 
-    if meth.__doc__:
-        meth.__doc__ = meth.__doc__ % {'test_header':test_header}
+    meth.__doc__ = meth.__doc__ % {'test_header':test_header}
 
 
 class NoseTester(object):
