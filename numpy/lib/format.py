@@ -57,7 +57,6 @@ means there is 1 element) by dtype.itemsize.
 """
 
 import cPickle
-import struct
 
 import numpy
 from numpy.lib.utils import safe_eval
@@ -180,6 +179,7 @@ def write_array_header_1_0(fp, d):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
+    import struct
     header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
@@ -230,6 +230,7 @@ def read_array_header_1_0(fp):
     """
     # Read an unsigned, little-endian short int which has the length of the
     # header.
+    import struct
     hlength_str = fp.read(2)
     if len(hlength_str) != 2:
         msg = "EOF at %s before reading array header length"

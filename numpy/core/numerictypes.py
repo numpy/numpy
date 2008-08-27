@@ -88,9 +88,22 @@ from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
 # String-handling utilities to avoid locale-dependence.
 
-import string
-LOWER_TABLE = string.maketrans(string.ascii_uppercase, string.ascii_lowercase)
-UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+# "import string" is costly to import!
+# Construct the translation tables directly
+#   "A" = chr(65), "a" = chr(97)
+_all_chars = map(chr, range(256))
+_ascii_upper = _all_chars[65:65+26]
+_ascii_lower = _all_chars[97:97+26]
+LOWER_TABLE="".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])
+UPPER_TABLE="".join(_all_chars[:97] + _ascii_upper + _all_chars[97+26:])
+
+#import string
+# assert (string.maketrans(string.ascii_uppercase, string.ascii_lowercase) == \
+#          LOWER_TABLE)
+# assert (string.maketrnas(string_ascii_lowercase, string.ascii_uppercase) == \
+#          UPPER_TABLE)
+#LOWER_TABLE = string.maketrans(string.ascii_uppercase, string.ascii_lowercase)
+#UPPER_TABLE = string.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 
 def english_lower(s):
     """ Apply English case rules to convert ASCII strings to all lower case.

@@ -36,21 +36,39 @@ __docformat__ = "restructuredtext en"
 
 import os
 from shutil import rmtree
-from urlparse import urlparse
+
+# Using a class instead of a module-level dictionary
+# to reduce the inital 'import numpy' overhead by 
+# deferring the import of bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
-_file_openers = {None: open}
-try:
-    import bz2
-    _file_openers[".bz2"] = bz2.BZ2File
-except ImportError:
-    pass
-try:
-    import gzip
-    _file_openers[".gz"] = gzip.open
-except ImportError:
-    pass
+class _FileOpeners(object):
+    def __init__(self):
+        self._loaded = False
+        self._file_openers = {None: open}
+    def _load(self):
+        if self._loaded:
+            return
+        try:
+            import bz2
+            self._file_openers[".bz2"] = bz2.BZ2File
+        except ImportError:
+            pass
+        try:
+            import gzip
+            self._file_openers[".gz"] = gzip.open
+        except ImportError:
+            pass
+        self._loaded = True
 
+    def keys(self):
+        self._load()
+        return self._file_openers.keys()
+    def __getitem__(self, key):
+        self._load()
+        return self._file_openers[key]
+
+_file_openers = _FileOpeners()
 
 def open(path, mode='r', destpath=os.curdir):
     """Open ``path`` with ``mode`` and return the file object.
@@ -179,6 +197,9 @@ class DataSource (object):
 
     def _isurl(self, path):
         """Test if path is a net location.  Tests the scheme and netloc."""
+        
+        # We do this here to reduce the 'import numpy' initial import time.
+        from urlparse import urlparse
 
         # BUG : URLs require a scheme string ('http://') to be used.
         #       www.google.com will fail.
@@ -276,6 +297,9 @@ class DataSource (object):
             `open` : Method that downloads and opens files.
 
         """
+        # We do this here to reduce the 'import numpy' initial import time.
+        from urlparse import urlparse
+
 
         # TODO:  This should be more robust.  Handles case where path includes
         #        the destpath, but not other sub-paths. Failing case:

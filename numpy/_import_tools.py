@@ -2,7 +2,6 @@
 import os
 import sys
 import imp
-from glob import glob
 
 __all__ = ['PackageLoader']
 

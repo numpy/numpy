@@ -1,6 +1,5 @@
 __all__ = ['memmap']
 
-import mmap
 import warnings
 from numeric import uint8, ndarray, dtype
 
@@ -173,6 +172,8 @@ class memmap(ndarray):
     __array_priority__ = -100.0
     def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
                 shape=None, order='C'):
+        # Import here to minimize 'import numpy' overhead
+        import mmap
         try:
             mode = mode_equivalents[mode]
         except KeyError:
