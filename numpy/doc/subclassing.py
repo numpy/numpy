@@ -191,7 +191,7 @@ object.
 
 Slightly more realistic example - attribute added to existing array
 -------------------------------------------------------------------
-Here is a class (with thanks to PierreGM for the original example,
+Here is a class (with thanks to Pierre GM for the original example),
 that takes array that already exists, casts as our type, and adds an
 extra attribute::
 
@@ -246,9 +246,9 @@ __array_finalize__, and the attributes will be inherited.
 By defining a specific __array_wrap__ method for our subclass, we can
 tweak the output. The __array_wrap__ method requires one argument, the
 object on which the ufunc is applied, and an optional parameter
-context. This parameter is returned by some ufuncs as a 3-element
+*context*. This parameter is returned by some ufuncs as a 3-element
 tuple: (name of the ufunc, argument of the ufunc, domain of the
-ufunc).
+ufunc). See the masked array subclass for an implementation.
 
 Extra gotchas - custom __del__ methods and ndarray.base
 -------------------------------------------------------
