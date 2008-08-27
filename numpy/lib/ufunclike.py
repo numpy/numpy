@@ -5,14 +5,17 @@ storing results in an output array.
 __all__ = ['fix', 'isneginf', 'isposinf', 'log2']
 
 import numpy.core.numeric as nx
-from numpy.core.numeric import asarray, empty, isinf, signbit, asanyarray
-import numpy.core.umath as umath
 
 def fix(x, y=None):
     """ Round x to nearest integer towards zero.
     """
-    # fix is now implemented in C, using the C99 trunc function.
-    return umath.trunc(x, y)
+    x = nx.asanyarray(x)
+    if y is None: 
+        y = nx.zeros_like(x)
+    y1 = nx.floor(x)
+    y2 = nx.ceil(x)
+    y[...] = nx.where(x >= 0, y1, y2)
+    return y 
 
 def isposinf(x, y=None):
     """
@@ -41,9 +44,9 @@ def isposinf(x, y=None):
 
     """
     if y is None:
-        x = asarray(x)
-        y = empty(x.shape, dtype=nx.bool_)
-    umath.logical_and(isinf(x), ~signbit(x), y)
+        x = nx.asarray(x)
+        y = nx.empty(x.shape, dtype=nx.bool_)
+    nx.logical_and(nx.isinf(x), ~nx.signbit(x), y)
     return y
 
 def isneginf(x, y=None):
@@ -73,12 +76,12 @@ def isneginf(x, y=None):
 
     """
     if y is None:
-        x = asarray(x)
-        y = empty(x.shape, dtype=nx.bool_)
-    umath.logical_and(isinf(x), signbit(x), y)
+        x = nx.asarray(x)
+        y = nx.empty(x.shape, dtype=nx.bool_)
+    nx.logical_and(nx.isinf(x), nx.signbit(x), y)
     return y
 
-_log2 = umath.log(2)
+_log2 = nx.log(2)
 def log2(x, y=None):
     """
     Return the base 2 logarithm.
@@ -107,10 +110,10 @@ def log2(x, y=None):
     array([ NaN,   1.,   2.])
 
     """
-    x = asanyarray(x)
+    x = nx.asanyarray(x)
     if y is None:
-        y = umath.log(x)
+        y = nx.log(x)
     else:
-        umath.log(x, y)
+        nx.log(x, y)
     y /= _log2
     return y

@@ -3351,7 +3351,6 @@ typedef struct {
         *logical_and,
         *floor,
         *ceil,
-        *trunc,
         *maximum,
         *minimum,
         *rint,
@@ -3409,7 +3408,6 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(logical_and);
     SET(floor);
     SET(ceil);
-    SET(trunc);
     SET(maximum);
     SET(minimum);
     SET(rint);
@@ -3460,7 +3458,6 @@ PyArray_GetNumericOps(void)
     GET(logical_and);
     GET(floor);
     GET(ceil);
-    GET(trunc);
     GET(maximum);
     GET(minimum);
     GET(rint);
