@@ -6,7 +6,22 @@ __all__ = [f[:-3] for f in os.listdir(ref_dir) if f.endswith('.py') and
            not f.startswith('__')]
 __all__.sort()
 
-__doc__ = 'The following topics are available:\n' + \
-          '\n - '.join([''] + __all__)
+for f in __all__:
+    __import__(__name__ + '.' + f)
+
+del f, ref_dir
+
+__doc__ = """\
+Topical documentation
+=====================
+
+The following topics are available:
+%s
+
+You can view them by
+
+>>> help(doc.TOPIC)
+
+""" % '\n- '.join([''] + __all__)
 
 __all__.extend(['__doc__'])
