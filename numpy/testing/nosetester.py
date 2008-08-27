@@ -82,7 +82,8 @@ def _docmethod(meth, testtype):
             List with any extra args to pass to nosetests''' \
             % {'testtype': testtype}
 
-    meth.__doc__ = meth.__doc__ % {'test_header':test_header}
+    if meth.__doc__:
+        meth.__doc__ = meth.__doc__ % {'test_header':test_header}
 
 
 class NoseTester(object):
