@@ -335,7 +335,7 @@ static double
 trunc(double x)
 {
     if (x < 0) {
-    	return -floor(-x);
+    	return ceil(x);
     }
     else {
         return floor(x);
