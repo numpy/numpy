@@ -5550,7 +5550,7 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
     }
     *endian = str[0];
     if (str[0] != PyArray_BIG && str[0] != PyArray_LITTLE &&        \
-        str[0] != PyArray_NATIVE) {
+        str[0] != PyArray_NATIVE && str[0] != PyArray_IGNORE) {
         if (str[0] == 'b' || str[0] == 'B')
             *endian = PyArray_BIG;
         else if (str[0] == 'l' || str[0] == 'L')
