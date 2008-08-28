@@ -571,13 +571,15 @@ def convolve(a,v,mode='full'):
     array([ 2.5])
 
     """
-    a,v = array(a,ndmin=1),array(v,ndmin=1)
+    a,v = array(a, ndmin=1),array(v, ndmin=1)
     if (len(v) > len(a)):
         a, v = v, a
-    assert len(a) > 0, 'a cannot be empty'
-    assert len(v) > 0, 'v cannot be empty'
+    if len(a) == 0 :
+        raise ValueError('a cannot be empty')
+    if len(v) == 0 :
+        raise ValueError('v cannot be empty')
     mode = _mode_from_name(mode)
-    return multiarray.correlate(a,asarray(v)[::-1],mode)
+    return multiarray.correlate(a, v[::-1], mode)
 
 inner = multiarray.inner
 dot = multiarray.dot

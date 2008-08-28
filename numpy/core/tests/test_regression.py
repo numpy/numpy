@@ -623,8 +623,8 @@ class TestRegression(TestCase):
 
     def test_convolve_empty(self, level=rlevel):
         """Convolve should raise an error for empty input array."""
-        self.failUnlessRaises(AssertionError,np.convolve,[],[1])
-        self.failUnlessRaises(AssertionError,np.convolve,[1],[])
+        self.failUnlessRaises(ValueError,np.convolve,[],[1])
+        self.failUnlessRaises(ValueError,np.convolve,[1],[])
 
     def test_multidim_byteswap(self, level=rlevel):
         """Ticket #449"""
