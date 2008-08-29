@@ -2199,6 +2199,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     }
 }
 
+/* Raises error when len(op) == 0 */
 
 /*NUMPY_API*/
 static PyArrayObject **
@@ -2212,6 +2213,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     NPY_SCALARKIND scalarkind=NPY_NOSCALAR, intypekind=NPY_NOSCALAR;
 
     *retn = n = PySequence_Length(op);
+    if (n == 0) {
+	PyErr_SetString(PyExc_ValueError, "0-length sequence.");
+    }
     if (PyErr_Occurred()) {*retn = 0; return NULL;}
 
     mps = (PyArrayObject **)PyDataMem_NEW(n*sizeof(PyArrayObject *));
