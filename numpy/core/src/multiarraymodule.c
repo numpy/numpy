@@ -515,7 +515,11 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
     for (oi=0; oi<oldnd; oi++) op*=olddims[oi];
 
     if (np != op) return 0; /* different total sizes; no hope */
-    if (np == 0) return 1;
+
+    /* the current code does not handle 0-sized arrays, so give up */
+    if (np == 0) {
+        return 0;
+    }
 
     oi = 0;
     oj = 1;
