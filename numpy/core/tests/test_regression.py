@@ -843,6 +843,12 @@ class TestRegression(TestCase):
         """Ticket #658"""
         np.indices((0,3,4)).T.reshape(-1,3)
 
+    def test_copy_detection_corner_case2(self, level=rlevel):
+        """Ticket #771: strides are not set correctly when reshaping 0-sized
+        arrays"""
+        b = np.indices((0,3,4)).T.reshape(-1,3)
+        assert_equal(b.strides, (24, 4))
+
     def test_object_array_refcounting(self, level=rlevel):
         """Ticket #633"""
         if not hasattr(sys, 'getrefcount'):
