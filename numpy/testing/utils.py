@@ -162,10 +162,12 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
 
     """
     if isinstance(desired, dict):
-        assert isinstance(actual, dict), repr(type(actual))
+        if not isinstance(actual, dict) :
+            raise AssertionError(repr(type(actual)))
         assert_equal(len(actual),len(desired),err_msg,verbose)
         for k,i in desired.items():
-            assert k in actual, repr(k)
+            if k not in actual :
+                raise AssertionError(repr(k))
             assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg), verbose)
         return
     if isinstance(desired, (list,tuple)) and isinstance(actual, (list,tuple)):
@@ -177,7 +179,8 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
-    assert desired == actual, msg
+    if desired != actual :
+        raise AssertionError(msg)
 
 def print_assert_equal(test_string,actual,desired):
     import pprint
@@ -191,7 +194,7 @@ def print_assert_equal(test_string,actual,desired):
         pprint.pprint(actual,msg)
         msg.write('DESIRED: \n')
         pprint.pprint(desired,msg)
-        raise AssertionError, msg.getvalue()
+        raise AssertionError(msg.getvalue())
 
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     """ Raise an assertion if two items are not equal.
@@ -204,7 +207,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_almost_equal(actual, desired, decimal, err_msg)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
-    assert round(abs(desired - actual),decimal) == 0, msg
+    if round(abs(desired - actual),decimal) != 0 :
+        raise AssertionError(msg)
 
 
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
@@ -231,7 +235,8 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
                 header='Items are not equal to %d significant digits:' %
                                  significant,
                 verbose=verbose)
-    assert math.fabs(sc_desired - sc_actual) < pow(10.,-(significant-1)), msg
+    if math.fabs(sc_desired - sc_actual) >= pow(10.,-(significant-1)) :
+        raise AssertionError(msg)
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header=''):
@@ -252,7 +257,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                                                   y.shape),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'))
-            assert cond, msg
+            if not cond :
+                raise AssertionError(msg)
 
         if (isnumber(x) and isnumber(y)) and (any(isnan(x)) or any(isnan(y))):
             # Handling nan: we first check that x and y have the nan at the
@@ -286,7 +292,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 + '\n(mismatch %s%%)' % (match,),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'))
-            assert cond, msg
+            if not cond :
+                raise AssertionError(msg)
     except ValueError:
         msg = build_err_msg([x, y], err_msg, verbose=verbose, header=header,
                             names=('x', 'y'))
@@ -315,8 +322,10 @@ def assert_string_equal(actual, desired):
     # delay import of difflib to reduce startup time
     import difflib
 
-    assert isinstance(actual, str),`type(actual)`
-    assert isinstance(desired, str),`type(desired)`
+    if not isinstance(actual, str) :
+        raise AssertionError(`type(actual)`)
+    if not isinstance(desired, str):
+        raise AssertionError(`type(desired)`)
     if re.match(r'\A'+desired+r'\Z', actual, re.M): return
     diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
     diff_list = []
@@ -330,7 +339,8 @@ def assert_string_equal(actual, desired):
             if d2.startswith('? '):
                 l.append(d2)
                 d2 = diff.pop(0)
-            assert d2.startswith('+ '),`d2`
+            if not d2.startswith('+ ') :
+                raise AssertionError(`d2`)
             l.append(d2)
             d3 = diff.pop(0)
             if d3.startswith('? '):
@@ -341,10 +351,12 @@ def assert_string_equal(actual, desired):
                 continue
             diff_list.extend(l)
             continue
-        assert False, `d1`
-    if not diff_list: return
+        raise AssertionError(`d1`)
+    if not diff_list:
+        return
     msg = 'Differences in strings:\n%s' % (''.join(diff_list)).rstrip()
-    assert actual==desired, msg
+    if actual != desired :
+        raise AssertionError(msg)
 
 
 def rundocs(filename=None):
@@ -430,7 +442,7 @@ def measure(code_str,times=1,label=None):
                    'exec')
     i = 0
     elapsed = jiffies()
-    while i<times:
+    while i < times:
         i += 1
         exec code in globs,locs
     elapsed = jiffies() - elapsed
