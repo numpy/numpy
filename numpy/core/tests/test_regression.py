@@ -1204,5 +1204,10 @@ class TestRegression(TestCase):
         assert c.dtype == object
         assert d.dtype == object
 
+    def test_for_zero_length_in_choose(self, level=rlevel):
+        "Ticket #882"
+        a = np.array(1)
+        self.failUnlessRaises(ValueError, lambda x: x.choose([]), a)
+
 if __name__ == "__main__":
     run_module_suite()
