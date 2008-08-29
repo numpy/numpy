@@ -7,14 +7,12 @@ class _GenericTest(object):
         self._assert_func(a, b)
 
     def _test_not_equal(self, a, b):
-        passed = False
         try:
             self._assert_func(a, b)
             passed = True
         except AssertionError:
             pass
-
-        if passed:
+        else:
             raise AssertionError("a and b are found equal but are not")
 
     def test_array_rank1_eq(self):
