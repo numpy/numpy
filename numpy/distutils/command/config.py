@@ -140,6 +140,36 @@ int main()
         return self.try_link(body, headers, include_dirs,
                              libraries, library_dirs)
 
+    def check_funcs_once(self, funcs,
+                   headers=None, include_dirs=None,
+                   libraries=None, library_dirs=None,
+                   decl=False, call=False, call_args=None):
+        """Like check_func, except that it is given a list of function in
+        funcs, and the test is done only once. Can be useful for faster
+        configure to test a serie of functions."""
+        # clean up distutils's config a bit: add void to main(), and
+        # return a value.
+        self._check_compiler()
+        body = []
+        if decl:
+            for func in funcs:
+                body.append("int %s ();" % func)
+        body.append("int main (void) {")
+        if call:
+            for func in funcs:
+                if not call_args.has_key(func):
+                    call_args = ''
+                body.append("  %s(%s);" % (func, call_args[func]))
+        else:
+            for func in funcs:
+                body.append("  %s;" % func)
+        body.append("  return 0;")
+        body.append("}")
+        body = '\n'.join(body) + "\n"
+
+        return self.try_link(body, headers, include_dirs,
+                             libraries, library_dirs)
+
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
                    lang="c"):
