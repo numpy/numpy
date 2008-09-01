@@ -421,7 +421,7 @@ def test_roundtrip():
 
 def test_memmap_roundtrip():
     # XXX: test crashes nose on windows. Fix this
-    if not sys.platform == 'win32':
+    if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
         for arr in basic_arrays + record_arrays:
             if arr.dtype.hasobject:
                 # Skip these since they can't be mmap'ed.
