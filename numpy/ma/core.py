@@ -86,7 +86,7 @@ def doc_note(initialdoc, note):
         return
     newdoc = """
     %s
-    
+
     Notes
     -----
     %s
@@ -896,7 +896,7 @@ def masked_where(condition, a, copy=True):
     """
     cond = make_mask(condition)
     a = np.array(a, copy=copy, subok=True)
-    
+
     (cshape, ashape) = (cond.shape, a.shape)
     if cshape and cshape != ashape:
         raise IndexError("Inconsistant shape between the condition and the input"\
@@ -3865,7 +3865,7 @@ def inner(a, b):
     if len(fb.shape) == 0:
         fb.shape = (1,)
     return np.inner(fa, fb).view(MaskedArray)
-inner.__doc__ = doc_note(np.inner.__doc__, 
+inner.__doc__ = doc_note(np.inner.__doc__,
                          "Masked values are replaced by 0.")
 innerproduct = inner
 

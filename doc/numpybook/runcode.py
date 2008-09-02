@@ -11,7 +11,7 @@
 #
 # Options:
 #   -n name of code section  (default MyCode)
-#   
+#
 
 import sys
 import optparse
@@ -23,13 +23,13 @@ newre = re.compile(r"\\begin_inset Note.*PYNEW\s+\\end_inset", re.DOTALL)
 
 def getoutput(tstr, dic):
     print "\n\nRunning..."
-    print tstr,    
+    print tstr,
     tempstr = cStringIO.StringIO()
     sys.stdout = tempstr
     code = compile(tstr, '<input>', 'exec')
     try:
         res = eval(tstr, dic)
-        sys.stdout = sys.__stdout__        
+        sys.stdout = sys.__stdout__
     except SyntaxError:
         try:
             res = None
@@ -42,7 +42,7 @@ def getoutput(tstr, dic):
         res = tempstr.getvalue() + '\n' + repr(res)
     if res != '':
         print "\nOutput is"
-        print res,   
+        print res,
     return res
 
 # now find the code in the code segment
@@ -75,7 +75,7 @@ def getnewcodestr(substr, dic):
         if line != 'dummy':
             outlines.append(line)
     return "\n\\newline \n".join(outlines), end
-            
+
 
 def runpycode(lyxstr, name='MyCode'):
     schobj = re.compile(r"\\layout %s\s+>>> " % name)
@@ -85,7 +85,7 @@ def runpycode(lyxstr, name='MyCode'):
     for it in schobj.finditer(lyxstr):
         indx.extend([it.start(), it.end()])
         num += 1
-        
+
     if num == 0:
         print "Nothing found for %s" % name
         return lyxstr
@@ -103,14 +103,14 @@ def runpycode(lyxstr, name='MyCode'):
     for k in range(num):
         # first write everything up to the start of the code segment
         substr = lyxstr[start:indx[2*k]]
-        outstr.write(substr)        
+        outstr.write(substr)
         if start > 0:
             mat = newre.search(substr)
             # if PYNEW found, then start a new namespace
             if mat:
                 edic = {}
                 exec 'from numpy import *' in edic
-                exec 'set_printoptions(linewidth=65)' in edic               
+                exec 'set_printoptions(linewidth=65)' in edic
         # now find the code in the code segment
         # endoutput will contain the index just past any output
         #  already present in the lyx string.

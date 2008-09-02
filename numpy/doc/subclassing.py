@@ -7,7 +7,7 @@ Credits
 -------
 
 This page is based with thanks on the wiki page on subclassing by Pierre
-Gerard-Marchant - http://www.scipy.org/Subclasses. 
+Gerard-Marchant - http://www.scipy.org/Subclasses.
 
 Introduction
 ------------
@@ -40,21 +40,21 @@ this machinery that makes subclassing slightly non-standard.
 
 To allow subclassing, and views of subclasses, ndarray uses the
 ndarray ``__new__`` method for the main work of object initialization,
-rather then the more usual ``__init__`` method.  
+rather then the more usual ``__init__`` method.
 
 ``__new__`` and ``__init__``
 ============================
 
 ``__new__`` is a standard python method, and, if present, is called
 before ``__init__`` when we create a class instance. Consider the
-following::  
+following::
 
   class C(object):
       def __new__(cls, *args):
-	  print 'Args in __new__:', args
-	  return object.__new__(cls, *args)
+          print 'Args in __new__:', args
+          return object.__new__(cls, *args)
       def __init__(self, *args):
-	  print 'Args in __init__:', args
+          print 'Args in __init__:', args
 
   C('hello')
 
@@ -75,7 +75,7 @@ following.
 As you can see, the object can be initialized in the ``__new__``
 method or the ``__init__`` method, or both, and in fact ndarray does
 not have an ``__init__`` method, because all the initialization is
-done in the ``__new__`` method. 
+done in the ``__new__`` method.
 
 Why use ``__new__`` rather than just the usual ``__init__``?  Because
 in some cases, as for ndarray, we want to be able to return an object
@@ -83,21 +83,21 @@ of some other class.  Consider the following::
 
   class C(object):
       def __new__(cls, *args):
-	  print 'cls is:', cls
-	  print 'Args in __new__:', args
-	  return object.__new__(cls, *args)
+          print 'cls is:', cls
+          print 'Args in __new__:', args
+          return object.__new__(cls, *args)
       def __init__(self, *args):
-	  print 'self is :', self
-	  print 'Args in __init__:', args
+          print 'self is :', self
+          print 'Args in __init__:', args
 
   class D(C):
       def __new__(cls, *args):
-	  print 'D cls is:', cls
-	  print 'D args in __new__:', args
-	  return C.__new__(C, *args)
+          print 'D cls is:', cls
+          print 'D args in __new__:', args
+          return C.__new__(C, *args)
       def __init__(self, *args):
-	  print 'D self is :', self
-	  print 'D args in __init__:', args
+          print 'D self is :', self
+          print 'D args in __init__:', args
 
   D('hello')
 
@@ -131,7 +131,7 @@ this way, in its standard methods for taking views, but the ndarray
 ``__new__`` method knows nothing of what we have done in our own
 ``__new__`` method in order to set attributes, and so on.  (Aside -
 why not call ``obj = subdtype.__new__(...`` then?  Because we may not
-have a ``__new__`` method with the same call signature).  
+have a ``__new__`` method with the same call signature).
 
 So, when creating a new view object of our subclass, we need to be
 able to set any extra attributes from the original object of our
@@ -153,21 +153,21 @@ Simple example - adding an extra attribute to ndarray
   class InfoArray(np.ndarray):
 
       def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
-	    strides=None, order=None, info=None):
-	  # Create the ndarray instance of our type, given the usual
-	  # input arguments.  This will call the standard ndarray
-	  # constructor, but return an object of our type
-	  obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
-			   order)
-	  # add the new attribute to the created instance
-	  obj.info = info
-	  # Finally, we must return the newly created object:
-	  return obj
+            strides=None, order=None, info=None):
+          # Create the ndarray instance of our type, given the usual
+          # input arguments.  This will call the standard ndarray
+          # constructor, but return an object of our type
+          obj = np.ndarray.__new__(subtype, shape, dtype, buffer, offset, strides,
+                           order)
+          # add the new attribute to the created instance
+          obj.info = info
+          # Finally, we must return the newly created object:
+          return obj
 
       def __array_finalize__(self,obj):
-	  # reset the attribute from passed original object
-	  self.info = getattr(obj, 'info', None)
-	  # We do not need to return anything
+          # reset the attribute from passed original object
+          self.info = getattr(obj, 'info', None)
+          # We do not need to return anything
 
   obj = InfoArray(shape=(3,), info='information')
   print type(obj)
@@ -200,18 +200,18 @@ extra attribute::
   class RealisticInfoArray(np.ndarray):
 
       def __new__(cls, input_array, info=None):
-	  # Input array is an already formed ndarray instance
-	  # We first cast to be our class type
-	  obj = np.asarray(input_array).view(cls)
-	  # add the new attribute to the created instance
-	  obj.info = info
-	  # Finally, we must return the newly created object:
-	  return obj
+          # Input array is an already formed ndarray instance
+          # We first cast to be our class type
+          obj = np.asarray(input_array).view(cls)
+          # add the new attribute to the created instance
+          obj.info = info
+          # Finally, we must return the newly created object:
+          return obj
 
       def __array_finalize__(self,obj):
-	  # reset the attribute from passed original object
-	  self.info = getattr(obj, 'info', None)
-	  # We do not need to return anything
+          # reset the attribute from passed original object
+          self.info = getattr(obj, 'info', None)
+          # We do not need to return anything
 
   arr = np.arange(5)
   obj = RealisticInfoArray(arr, info='information')

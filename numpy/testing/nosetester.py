@@ -164,7 +164,7 @@ class NoseTester(object):
         pyversion = sys.version.replace('\n','')
         print "Python version %s" % pyversion
         print "nose version %d.%d.%d" % nose.__versioninfo__
-            
+
 
     def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
              coverage=False, **kwargs):

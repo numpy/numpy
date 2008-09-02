@@ -36,7 +36,7 @@ def remove_dirs():
         cmd = 'sudo chown -R %s %s' % (getuser(), DIST_DIR)
         shellcmd(cmd)
         shutil.rmtree(DIST_DIR)
-        
+
 def build_dist():
     print 'Building distribution... (using sudo)'
     cmd = 'sudo python setupegg.py bdist_mpkg'
@@ -67,7 +67,7 @@ def revert_readme():
     print 'Reverting README.txt...'
     cmd = 'svn revert %s' % DEV_README
     shellcmd(cmd)
-                
+
 def shellcmd(cmd, verbose=True):
     """Call a shell command."""
     if verbose:
@@ -80,7 +80,7 @@ def shellcmd(cmd, verbose=True):
         %s
         """ % str(err)
         raise Exception(msg)
-    
+
 def build():
     # update end-user documentation
     copy_readme()
@@ -99,6 +99,6 @@ def build():
     os.chdir(cwd)
     # restore developer documentation
     revert_readme()
-    
+
 if __name__ == '__main__':
     build()

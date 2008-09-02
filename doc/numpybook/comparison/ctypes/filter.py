@@ -21,6 +21,3 @@ def filter2d(a):
     b = N.zeros_like(a)
     lib.dfilter2d(a, b, a.ctypes.strides, a.ctypes.shape)
     return b
-    
-
-

@@ -10,12 +10,12 @@ def fix(x, y=None):
     """ Round x to nearest integer towards zero.
     """
     x = nx.asanyarray(x)
-    if y is None: 
+    if y is None:
         y = nx.zeros_like(x)
     y1 = nx.floor(x)
     y2 = nx.ceil(x)
     y[...] = nx.where(x >= 0, y1, y2)
-    return y 
+    return y
 
 def isposinf(x, y=None):
     """

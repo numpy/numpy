@@ -287,11 +287,11 @@ class scons(old_build_ext):
             self.post_hooks = []
             self.pkg_names = []
 
-	# To avoid trouble, just don't do anything if no sconscripts are used.
-	# This is  useful when for example f2py uses numpy.distutils, because
-	# f2py does not pass compiler information to scons command, and the
-	# compilation setup below can crash in some situation.
-	if len(self.sconscripts) > 0:
+        # To avoid trouble, just don't do anything if no sconscripts are used.
+        # This is  useful when for example f2py uses numpy.distutils, because
+        # f2py does not pass compiler information to scons command, and the
+        # compilation setup below can crash in some situation.
+        if len(self.sconscripts) > 0:
             # Try to get the same compiler than the ones used by distutils: this is
             # non trivial because distutils and scons have totally different
             # conventions on this one (distutils uses PATH from user's environment,

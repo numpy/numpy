@@ -673,10 +673,10 @@ def make_ufuncs(funcdict):
         mlist = []
         docstring = textwrap.dedent(uf.docstring).strip()
         docstring = docstring.encode('string-escape').replace(r'"', r'\"')
-	# Split the docstring because some compilers (like MS) do not like big
-	# string literal in C code. We split at endlines because textwrap.wrap
-	# do not play well with \n
-	docstring = '\\n\"\"'.join(docstring.split(r"\n"))
+        # Split the docstring because some compilers (like MS) do not like big
+        # string literal in C code. We split at endlines because textwrap.wrap
+        # do not play well with \n
+        docstring = '\\n\"\"'.join(docstring.split(r"\n"))
         mlist.append(\
 r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
                                 %d, %d, %s, "%s",

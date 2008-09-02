@@ -80,7 +80,7 @@ def move_binary(arch, pyver):
     if not os.path.exists("binaries"):
         os.makedirs("binaries")
 
-    shutil.move(os.path.join('dist', get_windist_exec(pyver)), 
+    shutil.move(os.path.join('dist', get_windist_exec(pyver)),
             os.path.join("binaries", get_binary_name(arch)))
 
 def get_numpy_version():
@@ -110,7 +110,7 @@ def get_windist_exec(pyver):
 if __name__ == '__main__':
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("-a", "--arch", dest="arch", 
+    parser.add_option("-a", "--arch", dest="arch",
                       help = "Architecture to build (sse2, sse3, nosse, etc...)")
     parser.add_option("-p", "--pyver", dest="pyver",
                       help = "Python version (2.4, 2.5, etc...)")
