@@ -1,194 +1,200 @@
-[[PageOutline]]
-= Introduction =
-!SciPy uses the [http://www.somethingaboutorange.com/mrl/projects/nose Nose testing system], with some minor convenience features added.  Nose is an extension of the unit testing framework offered by [http://docs.python.org/lib/module-unittest.html unittest.py]. Our goal is that every module and package in !SciPy should have a thorough set of unit tests. These tests should exercise the full functionality of a given routine as well as its robustness to erroneous or unexpected input arguments. Long experience has shown that by far the best time to write the tests is before you write or change the code - this is [http://en.wikipedia.org/wiki/Test-driven_development test driven development].  The arguments for this can sound rather abstract, but we can assure you that you will find that writing the tests first leads to more robust and better designed code. Well-designed tests with good coverage make an enormous difference to the ease of refactoring. Whenever a new bug is found in a routine, you should write a new test for that specific case and add it to the test suite to prevent that bug from creeping back in unnoticed.
+.. -*- rest -*-
 
-To run !SciPy's full test suite, use the following:
-{{{
->>> import scipy
->>> scipy.test()
-}}}
+NumPy/SciPy Testing Guidelines
+==============================
 
-!SciPy uses the testing framework from !NumPy (specifically ``numpy.testing``), so all the !SciPy examples shown here are also applicable to !NumPy.  So !NumPy's full test suite can be run as follows:
-{{{
->>> import numpy
->>> numpy.test()
-}}}
+.. contents::
 
-The test method may take two or more arguments; the first is a string label specifying what should be tested and the second is an integer giving the level of output verbosity. See the docstring for numpy.test for details.  The default value for the label is 'fast' - which will run the standard tests.  The string 'full' will run the full battery of tests, including those identified as being slow to run. If the verbosity is 1 or less, the tests will just show information messages about the tests that are run; but if it is greater than 1, then the tests will also provide warnings on missing tests. So if you want to run every test and get messages about which modules don't have tests:
-{{{
->>> scipy.test(label='full', verbosity=2) # or
->>> scipy.test('full', 2)
-}}}
-Finally, if you are only interested in testing a subset of !SciPy, for example, the {{{integrate}}} module, use the following:
-{{{
+Introduction
+''''''''''''
+
+SciPy uses the `Nose testing system <http://www.somethingaboutorange.com/mrl/projects/nose>`__, with some minor convenience features added.  Nose is an extension of the unit testing framework offered by `unittest.py <http://docs.python.org/lib/module-unittest.html>`__. Our goal is that every module and package in SciPy should have a thorough set of unit tests. These tests should exercise the full functionality of a given routine as well as its robustness to erroneous or unexpected input arguments. Long experience has shown that by far the best time to write the tests is before you write or change the code - this is `test-driven development <http://en.wikipedia.org/wiki/Test-driven_development>`__.  The arguments for this can sound rather abstract, but we can assure you that you will find that writing the tests first leads to more robust and better designed code. Well-designed tests with good coverage make an enormous difference to the ease of refactoring. Whenever a new bug is found in a routine, you should write a new test for that specific case and add it to the test suite to prevent that bug from creeping back in unnoticed.
+
+To run SciPy's full test suite, use the following::
+
+  >>> import scipy
+  >>> scipy.test()
+
+SciPy uses the testing framework from NumPy (specifically ``numpy.testing``), so all the SciPy examples shown here are also applicable to NumPy.  So NumPy's full test suite can be run as follows::
+
+  >>> import numpy
+  >>> numpy.test()
+
+
+The test method may take two or more arguments; the first is a string label specifying what should be tested and the second is an integer giving the level of output verbosity. See the docstring for numpy.test for details.  The default value for the label is 'fast' - which will run the standard tests.  The string 'full' will run the full battery of tests, including those identified as being slow to run. If the verbosity is 1 or less, the tests will just show information messages about the tests that are run; but if it is greater than 1, then the tests will also provide warnings on missing tests. So if you want to run every test and get messages about which modules don't have tests::
+
+  >>> scipy.test(label='full', verbosity=2) # or
+  >>> scipy.test('full', 2)
+
+Finally, if you are only interested in testing a subset of SciPy, for example, the ``integrate`` module, use the following::
+
 >>> scipy.integrate.test()
-}}}
-The rest of this page will give you a basic idea of how to add unit tests to modules in !SciPy. It is extremely important for us to have extensive unit testing since this code is going to be used by scientists and researchers and is being developed by a large number of people spread across the world. So, if you are writing a package that you'd like to become part of !SciPy, please write the tests as you develop the package. Also since much of !SciPy is legacy code that was originally written without unit tests, there are still several modules that don't have tests yet. Please feel free to choose one of these modules to develop test for either after or even as you read through this introduction.
 
-== Writing your own tests ==
-Every Python module, extension module, or subpackage in the !SciPy package directory should have a corresponding {{{test_<name>.py}}} file.  The nose framework picks up tests by first looking for any functions in the file that have test-related names (see below), or classes that inherit from {{{unittest.TestCase}}} (which is also made available as {{{numpy.testing.TestCase}}}.  Any methods of these classes, that also have test-related names, are considered tests.  A test-related name is simply a function or method name containing 'test'. 
+The rest of this page will give you a basic idea of how to add unit tests to modules in SciPy. It is extremely important for us to have extensive unit testing since this code is going to be used by scientists and researchers and is being developed by a large number of people spread across the world. So, if you are writing a package that you'd like to become part of SciPy, please write the tests as you develop the package. Also since much of SciPy is legacy code that was originally written without unit tests, there are still several modules that don't have tests yet. Please feel free to choose one of these modules to develop test for either after or even as you read through this introduction.
 
-=== {{{test_yyy.py}}} ===
-Suppose you have a !SciPy module {{{scipy/xxx/yyy.py}}} containing a function {{{zzz()}}}. To test this you would start by creating a test module called {{{test_yyy.py}}}. There are several different ways to implement tests using the nose / !SciPy system.  There is the standard unittest way and the nose test function way.
+Writing your own tests
+''''''''''''''''''''''
 
-==== Standard unit test classes ====
+Every Python module, extension module, or subpackage in the SciPy package directory should have a corresponding ``test_<name>.py`` file.  The nose framework picks up tests by first looking for any functions in the file that have test-related names (see below), or classes that inherit from ``unittest.TestCase`` (which is also made available as ``numpy.testing.TestCase``.  Any methods of these classes, that also have test-related names, are considered tests.  A test-related name is simply a function or method name containing 'test'.
 
-You can use the traditional unittest system by making your test file include a class that tests {{{zzz()}}}. The test class inherits from the !TestCase class, and has test methods that test various aspects of {{{zzz()}}}. Within these test methods, {{{assert()}}} is used to test whether some case is true. If the assert fails, the test fails. The line {{{nose.run(...)}}} function actually runs the test suite. A minimal example of a {{{test_yyy.py}}} file that implements tests for a Scipy package module {{{scipy.xxx.yyy}}}, is shown below:
-{{{
-from numpy.testing import *
+Suppose you have a SciPy module ``scipy/xxx/yyy.py`` containing a function ``zzz()``. To test this you would start by creating a test module called ``test_yyy.py``. There are several different ways to implement tests using the nose / SciPy system.  There is the standard unittest way and the nose test function way.
 
-# import xxx symbols
-from scipy.xxx.yyy import zzz
+Standard unit test classes
+--------------------------
 
-class test_zzz(TestCase):
-    def test_simple(self):
-        assert zzz()=='Hello from zzz'
-    #...
+You can use the traditional unittest system by making your test file include a class that tests ``zzz()``. The test class inherits from the TestCase class, and has test methods that test various aspects of ``zzz()``. Within these test methods, ``assert()`` is used to test whether some case is true. If the assert fails, the test fails. The line ``nose.run(...)`` function actually runs the test suite. A minimal example of a ``test_yyy.py`` file that implements tests for a Scipy package module ``scipy.xxx.yyy``, is shown below::
 
-if __name__ == "__main__":
-    run_module_suite()
-}}}
+  from numpy.testing import *
 
-Note that all classes that are inherited from {{{TestCase}}} class, are picked up by the test runner. For more detailed information on defining test classes see the official documentation for the [http://docs.python.org/lib/module-unittest.html Python Unit testing framework].
+  # import xxx symbols
+  from scipy.xxx.yyy import zzz
 
-==== Using test functions with nose ====
+  class test_zzz(TestCase):
+      def test_simple(self):
+          assert zzz()=='Hello from zzz'
+      #...
 
-This is as simple as making a function or functions with names including 'test':
-
-{{{
-from numpy.testing import *
-
-# import xxx symbols
-from scipy.xxx.yyy import zzz
-
-def test_simple(self):
-    assert zzz()=='Hello from zzz'
+  if __name__ == "__main__":
+      run_module_suite()
 
 
-if __name__ == "__main__":
-    run_module_suite()
-}}}
+Note that all classes that are inherited from ``TestCase`` class, are picked up by the test runner. For more detailed information on defining test classes see the official documentation for the [http://docs.python.org/lib/module-unittest.html Python Unit testing framework].
 
-You can mix nose test functions and !TestCase classes in a single test file.
+Using test functions with nose
+------------------------------
 
-==== Labeling tests with nose ====
+This is as simple as making a function or functions with names including 'test'::
 
-Unlabeled tests like the ones above are run in the default {{{scipy.test()}}} run.  If you want to label your test as slow - and therefore reserved for a full {{{scipy.test(label='full')}}} run, you can label it with a nose decorator:
+  from numpy.testing import *
 
-{{{
-# numpy.testing module includes 'import decorators as dec'
-from numpy.testing import *
-@dec.slow
-def test_big(self):
-    print 'Big, slow test'
-}}}
+  # import xxx symbols
+  from scipy.xxx.yyy import zzz
 
-Similarly for methods:
+  def test_simple(self):
+      assert zzz()=='Hello from zzz'
 
-{{{
-class test_zzz(TestCase):
-    @dec.slow
-    def test_simple(self):
-        assert zzz()=='Hello from zzz'
-}}}
 
-==== Easier setup and teardown functions / methods ====
+  if __name__ == "__main__":
+      run_module_suite()
 
-Nose looks for module level setup and teardown functions by name; thus:
 
-{{{
-def setup():
-    """Module-level setup"""
-    print 'doing setup'
+You can mix nose test functions and TestCase classes in a single test file.
 
-def teardown():
-    """Module-level teardown"""
-    print 'doing teardown'
-}}}
+Labeling tests with nose
+------------------------
 
-You can add setup and teardown functions to functions and methods with nose decorators:
+Unlabeled tests like the ones above are run in the default ``scipy.test()`` run.  If you want to label your test as slow - and therefore reserved for a full ``scipy.test(label='full')`` run, you can label it with a nose decorator::
 
-{{{
-import nose
-from numpy.testing import *
-def setup_func():
-    """A trivial setup function."""
-    global helpful_variable
-    helpful_variable = 'pleasant'
-    print "In setup_func"
+  # numpy.testing module includes 'import decorators as dec'
+  from numpy.testing import *
+  @dec.slow
+  def test_big(self):
+      print 'Big, slow test'
 
-def teardown_func():
-    """A trivial teardown function."""
-    global helpful_variable
-    del helpful_variable
-    print "In teardown_func"
+Similarly for methods::
 
-@nose.with_setup(setup_func, teardown_func)
-def test_with_extras():
-    """This test uses the setup/teardown functions."""
-    global helpful_variable
-    print "  In test_with_extras"
-    print "  Helpful is %s" % helpful_variable
-}}}
+  class test_zzz(TestCase):
+      @dec.slow
+      def test_simple(self):
+          assert zzz()=='Hello from zzz'
 
-==== Parametric tests ====
+Easier setup and teardown functions / methods
+---------------------------------------------
 
-One very nice feature of nose is allowing easy testing across a range of parameters - a nasty problem for standard unit tests.  It does this with test generators:
+Nose looks for module level setup and teardown functions by name; thus::
 
-{{{
-def check_even(n, nn):
-    """A check function to be used in a test generator."""
-    assert n % 2 == 0 or nn % 2 == 0
+  def setup():
+      """Module-level setup"""
+      print 'doing setup'
 
-def test_evens():
-    for i in range(0,4,2):
-        yield check_even, i, i*3
-}}}
+  def teardown():
+      """Module-level teardown"""
+      print 'doing teardown'
+
+
+You can add setup and teardown functions to functions and methods with nose decorators::
+
+  import nose
+  from numpy.testing import *
+  def setup_func():
+      """A trivial setup function."""
+      global helpful_variable
+      helpful_variable = 'pleasant'
+      print "In setup_func"
+
+  def teardown_func():
+      """A trivial teardown function."""
+      global helpful_variable
+      del helpful_variable
+      print "In teardown_func"
+
+  @nose.with_setup(setup_func, teardown_func)
+  def test_with_extras():
+      """This test uses the setup/teardown functions."""
+      global helpful_variable
+      print "  In test_with_extras"
+      print "  Helpful is %s" % helpful_variable
+
+Parametric tests
+----------------
+
+One very nice feature of nose is allowing easy testing across a range of parameters - a nasty problem for standard unit tests.  It does this with test generators::
+
+  def check_even(n, nn):
+      """A check function to be used in a test generator."""
+      assert n % 2 == 0 or nn % 2 == 0
+
+  def test_evens():
+      for i in range(0,4,2):
+          yield check_even, i, i*3
 
 Note that 'check_even' is not itself a test (no 'test' in the name), but 'test_evens' is a generator that returns a series of tests, using 'check_even', across a range of inputs.  Nice.
 
-=== {{{tests/}}} ===
-Rather than keeping the code and the tests in the same directory, we put all the tests for a given subpackage in a {{{tests/}}} subdirectory. For our example, if it doesn't all ready exist you will need to create a {{{tests/}}} directory in {{{scipy/xxx/}}}. So the path for {{{test_yyy.py}}} is {{{scipy/xxx/tests/test_yyy.py}}}.
+``tests/``
+----------
 
-Once the {{{scipy/xxx/tests/test_yyy.py}}} is written, its possible to run the tests by going to the {{{tests/}}} directory and typing:
-{{{
-python test_yyy.py
-}}}
-Or if you add {{{scipy/xxx/tests/}}} to the Python path, you could run the tests interactively in the interpreter like this:
-{{{
->>> import test_yyy
->>> test_yyy.test()
-}}}
+Rather than keeping the code and the tests in the same directory, we put all the tests for a given subpackage in a ``tests/`` subdirectory. For our example, if it doesn't all ready exist you will need to create a ``tests/`` directory in ``scipy/xxx/``. So the path for ``test_yyy.py`` is ``scipy/xxx/tests/test_yyy.py``.
 
-=== {{{__init__.py}}} and {{{setup.py}}} ===
-Usually however, adding the {{{tests/}}} directory to the python path isn't desirable. Instead it would better to invoke the test straight from the module {{{xxx}}}. To this end, simply place the following lines at the end of your package's {{{__init__.py}}} file:
-{{{
-...
-def test(level=1, verbosity=1):
-    from numpy.testing import Tester
-    return Tester().test(level, verbosity)
-}}}
-You will also need to add the tests directory in the configuration section of your setup.py:
-{{{
-...
-def configuration(parent_package='', top_path=None):
-    ...
-    config.add_data_dir('tests')
-    return config
-...
-}}}
-Now you can do the following to test your module:
-{{{
->>> import scipy
->>> scipy.xxx.test()
-}}}
+Once the ``scipy/xxx/tests/test_yyy.py`` is written, its possible to run the tests by going to the ``tests/`` directory and typing::
 
-Also, when invoking the entire !SciPy test suite, your tests will be found and run:
-{{{
->>> import scipy
->>> scipy.test() 
-# your tests are included and run automatically!
-}}}
+  python test_yyy.py
+
+Or if you add ``scipy/xxx/tests/`` to the Python path, you could run the tests interactively in the interpreter like this::
+
+  >>> import test_yyy
+  >>> test_yyy.test()
+
+``__init__.py`` and ``setup.py``
+--------------------------------
+
+Usually however, adding the ``tests/`` directory to the python path isn't desirable. Instead it would better to invoke the test straight from the module ``xxx``. To this end, simply place the following lines at the end of your package's ``__init__.py`` file::
+
+  ...
+  def test(level=1, verbosity=1):
+      from numpy.testing import Tester
+      return Tester().test(level, verbosity)
+
+You will also need to add the tests directory in the configuration section of your setup.py::
+
+  ...
+  def configuration(parent_package='', top_path=None):
+      ...
+      config.add_data_dir('tests')
+      return config
+  ...
+
+Now you can do the following to test your module::
+
+ >>> import scipy
+ >>> scipy.xxx.test()
+
+
+Also, when invoking the entire SciPy test suite, your tests will be found and run:
+
+  >>> import scipy
+  >>> scipy.test() 
+  # your tests are included and run automatically!
+
 
 
 

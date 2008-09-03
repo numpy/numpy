@@ -58,7 +58,7 @@ this dictionary, ``numpy.distutils.misc_util`` provides the
 SciPy pure Python package example
 ---------------------------------
 
-Below is an example of a minimal ``setup.py`` file for a pure Scipy package::
+Below is an example of a minimal ``setup.py`` file for a pure SciPy package::
 
   #!/usr/bin/env python
   def configuration(parent_package='',top_path=None):
@@ -399,7 +399,7 @@ Useful functions in ``numpy.distutils.misc_util``
 The ``info.py`` file
 ''''''''''''''''''''
 
-Scipy package import hooks assume that each package contains a
+SciPy package import hooks assume that each package contains a
 ``info.py`` file.  This file contains overall documentation about the package
 and variables defining the order of package imports, dependency
 relations between packages, etc.
@@ -436,8 +436,8 @@ The ``__init__.py`` file
 
 To speed up the import time and minimize memory usage, numpy
 uses ``ppimport`` hooks to transparently postpone importing large modules,
-which might not be used during the Scipy session. In order to
-have access to the documentation of all Scipy packages, including 
+which might not be used during the SciPy session. In order to
+have access to the documentation of all SciPy packages, including 
 postponed packages, the docstring from ``info.py`` is imported
 into ``__init__.py``.
 
