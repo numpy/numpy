@@ -185,9 +185,8 @@ You will also need to add the tests directory in the configuration section of yo
 
 Now you can do the following to test your module::
 
- >>> import scipy
- >>> scipy.xxx.test()
-
+  >>> import scipy
+  >>> scipy.xxx.test()
 
 Also, when invoking the entire SciPy test suite, your tests will be found and run:
 
@@ -196,9 +195,40 @@ Also, when invoking the entire SciPy test suite, your tests will be found and ru
   # your tests are included and run automatically!
 
 
+Tips & Tricks
+'''''''''''''
 
+Creating many similar tests
+---------------------------
 
+If you have a collection of tests that must be run multiple times with minor variations, it can be helpful to create a base class containing all the common tests, and then create a subclass for each variation.  Several examples of this technique exist in NumPy; below are excerpts from one in `numpy/linalg/tests/test_linalg.py <http://svn.scipy.org/svn/numpy/trunk/numpy/linalg/tests/test_linalg.py>`__::
 
+  class LinalgTestCase:
+      def test_single(self):
+          a = array([[1.,2.], [3.,4.]], dtype=single)
+          b = array([2., 1.], dtype=single)
+          self.do(a, b)
+
+      def test_double(self):
+          a = array([[1.,2.], [3.,4.]], dtype=double)
+          b = array([2., 1.], dtype=double)
+          self.do(a, b)
+
+      ...
+
+  class TestSolve(LinalgTestCase, TestCase):
+      def do(self, a, b):
+          x = linalg.solve(a, b)
+          assert_almost_equal(b, dot(a, x))
+          assert imply(isinstance(b, matrix), isinstance(x, matrix))
+
+  class TestInv(LinalgTestCase, TestCase):
+      def do(self, a, b):
+          a_inv = linalg.inv(a)
+          assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
+          assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
+
+In this case, we wanted to test solving a linear algebra problem using matrices of several data types, using ``linalg.solve`` and ``linalg.inv``.  The common test cases (for single-precision, double-precision, etc. matrices) are collected in ``LinalgTestCase``.  Note that ``LinalgTestCase`` is not descended from ``TestCase``--if it were, then nose would attempt to run ``LinalgTestCase.test_single`` and ``LinalgTestCase.test_double``, which would fail because ``LinalgTestCase`` has no ``do`` method.  Since ``TestSolve`` and ``TestInv`` inherit from ``LinalgTestCase`` and ``TestCase``, nose will run ``test_single`` and ``test_double`` for each class. 
 
 
 
