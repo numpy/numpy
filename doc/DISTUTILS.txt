@@ -450,8 +450,9 @@ The header of a typical ``__init__.py`` is::
   from info import __doc__
   ...
 
-  from numpy.testing import NumpyTest
-  test = NumpyTest().test
+  from numpy.testing import Tester
+  test = Tester().test
+  bench = Tester().bench
 
 Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''
