@@ -4046,19 +4046,20 @@ static struct PyMethodDef ufunc_methods[] = {
    y1,y2,...,yn
 */
 static PyObject *
-_makeargs(int num, char *ltr)
+_makeargs(int num, char *ltr, int null_if_none)
 {
     PyObject *str;
     int i;
     switch (num) {
     case 0:
+        if (null_if_none) return NULL;
         return PyString_FromString("");
     case 1:
         return PyString_FromString(ltr);
     }
-    str = PyString_FromFormat("%s1,%s2", ltr, ltr);
+    str = PyString_FromFormat("%s1, %s2", ltr, ltr);
     for(i = 3; i <= num; ++i) {
-        PyString_ConcatAndDel(&str, PyString_FromFormat(",%s%d", ltr, i));
+        PyString_ConcatAndDel(&str, PyString_FromFormat(", %s%d", ltr, i));
     }
     return str;
 }
@@ -4082,17 +4083,26 @@ ufunc_get_doc(PyUFuncObject *self)
     /* to automate the first part of it */
     /* the doc string shouldn't need the calling convention */
     /* construct
-       y1,y2,,... = name(x1,x2,...) __doc__
+       name(x1, x2, ...,[ out1, out2, ...])
+       
+       __doc__
     */
     PyObject *outargs, *inargs, *doc;
-    outargs = _makeargs(self->nout, "y");
-    inargs = _makeargs(self->nin, "x");
-    doc = PyString_FromFormat("%s = %s(%s)\n\n%s",
-                              PyString_AS_STRING(outargs),
-                              self->name,
-                              PyString_AS_STRING(inargs),
-                              self->doc);
-    Py_DECREF(outargs);
+    outargs = _makeargs(self->nout, "out", 1);
+    inargs = _makeargs(self->nin, "x", 0);
+    if (outargs == NULL) {
+        doc = PyString_FromFormat("%s(%s)\n\n%s",
+                                  self->name,
+                                  PyString_AS_STRING(inargs),
+                                  self->doc);
+    } else {
+        doc = PyString_FromFormat("%s(%s[, %s])\n\n%s",
+                                  self->name,
+                                  PyString_AS_STRING(inargs),
+                                  PyString_AS_STRING(outargs),
+                                  self->doc);
+        Py_DECREF(outargs);
+    }
     Py_DECREF(inargs);
     return doc;
 }
