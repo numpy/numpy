@@ -12,9 +12,10 @@ Executive summary
 
 When building numpy and scipy, we are limited to a quite restricted set of
 warning compilers, thus missing a large class of potential bugs which could be
-detected with stronger warning flags. The goal of this PEP is to clean the code
-and implements some policy to make numpy buildable with a  bigger set of
-warning flags, while keeping the build warnings free.
+detected with stronger warning flags. The goal of this PEP is present the
+various methods used to clean the code and implement some policy to make numpy
+buildable with a  bigger set of warning flags, while keeping the build warnings
+free.
 
 Warning flags
 =============
