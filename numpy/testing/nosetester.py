@@ -266,8 +266,8 @@ class NoseTester(object):
 
         # construct list of plugins, omitting the existing doctest plugin
         import nose.plugins.builtin
-        from noseclasses import numpyDoctest, KnownFailure
-        plugins = [numpyDoctest(), KnownFailure()]
+        from noseclasses import NumpyDoctest, KnownFailure
+        plugins = [NumpyDoctest(), KnownFailure()]
         for p in nose.plugins.builtin.plugins:
             plug = p()
             if plug.name == 'doctest':

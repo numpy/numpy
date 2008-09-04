@@ -17,14 +17,14 @@ import inspect
 _doctest_ignore = ['generate_numpy_api.py', 'scons_support.py',
                    'setupscons.py', 'setup.py']
 
-# Some of the classes in this module begin with 'numpy' to clearly distinguish
+# Some of the classes in this module begin with 'Numpy' to clearly distinguish
 # them from the plethora of very similar names from nose/unittest/doctest
 
 
 #-----------------------------------------------------------------------------
 # Modified version of the one in the stdlib, that fixes a python bug (doctests
 # not found in extension modules, http://bugs.python.org/issue3158)
-class numpyDocTestFinder(doctest.DocTestFinder):
+class NumpyDocTestFinder(doctest.DocTestFinder):
 
     def _from_module(self, module, object):
         """
@@ -114,7 +114,7 @@ class numpyDocTestFinder(doctest.DocTestFinder):
                                globs, seen)
 
 
-class numpyDocTestCase(npd.DocTestCase):
+class NumpyDocTestCase(npd.DocTestCase):
     """Proxy for DocTestCase: provides an address() method that
     returns the correct address for the doctest case. Otherwise
     acts as a proxy to the test case. To provide hints for address(),
@@ -138,7 +138,7 @@ class numpyDocTestCase(npd.DocTestCase):
 # second-chance checker; if the default comparison doesn't
 # pass, then see if the expected output string contains flags that
 # tell us to ignore the output
-class numpyOutputChecker(doctest.OutputChecker):
+class NumpyOutputChecker(doctest.OutputChecker):
     def check_output(self, want, got, optionflags):
         ret = doctest.OutputChecker.check_output(self, want, got,
                                                  optionflags)
@@ -152,7 +152,7 @@ class numpyOutputChecker(doctest.OutputChecker):
 # Subclass nose.plugins.doctests.DocTestCase to work around a bug in
 # its constructor that blocks non-default arguments from being passed
 # down into doctest.DocTestCase
-class numpyDocTestCase(npd.DocTestCase):
+class NumpyDocTestCase(npd.DocTestCase):
     def __init__(self, test, optionflags=0, setUp=None, tearDown=None,
                  checker=None, obj=None, result_var='_'):
         self._result_var = result_var
@@ -165,7 +165,7 @@ class numpyDocTestCase(npd.DocTestCase):
 
 print_state = numpy.get_printoptions()
 
-class numpyDoctest(npd.Doctest):
+class NumpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
     enabled = True
 
@@ -176,7 +176,7 @@ class numpyDoctest(npd.Doctest):
         Plugin.configure(self, options, config)
         self.doctest_tests = True
 #        self.extension = tolist(options.doctestExtension)
-        self.finder = numpyDocTestFinder()
+        self.finder = NumpyDocTestFinder()
         self.parser = doctest.DocTestParser()
 
     # Turn on whitespace normalization, set a minimal execution context
@@ -230,9 +230,9 @@ class numpyDoctest(npd.Doctest):
             # always use whitespace and ellipsis options
             optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
-            yield numpyDocTestCase(test,
+            yield NumpyDocTestCase(test,
                                    optionflags=optionflags,
-                                   checker=numpyOutputChecker())
+                                   checker=NumpyOutputChecker())
 
 
     # Add an afterContext method to nose.plugins.doctests.Doctest in order
