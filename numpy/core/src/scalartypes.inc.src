@@ -1899,8 +1899,10 @@ static PyObject *
     PyObject *robj;
     PyObject *arr;
     PyArray_Descr *typecode = NULL;
+#if !(@default@ == 2)
     int itemsize;
     void *dest, *src;
+#endif
 
     /* allow base-class (if any) to do conversion */
     /* If successful, this will jump to finish: */

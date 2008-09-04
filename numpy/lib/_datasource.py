@@ -38,7 +38,7 @@ import os
 from shutil import rmtree
 
 # Using a class instead of a module-level dictionary
-# to reduce the inital 'import numpy' overhead by 
+# to reduce the inital 'import numpy' overhead by
 # deferring the import of bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
@@ -197,7 +197,7 @@ class DataSource (object):
 
     def _isurl(self, path):
         """Test if path is a net location.  Tests the scheme and netloc."""
-        
+
         # We do this here to reduce the 'import numpy' initial import time.
         from urlparse import urlparse
 

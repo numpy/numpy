@@ -16,8 +16,8 @@ pyx_ext = Extension('add',
                  include_dirs = [numpy.get_include()])
 
 pyx_ext2 = Extension('blur',
-		['blur.pyx'],
-		include_dirs = [numpy.get_include()])
+                ['blur.pyx'],
+                include_dirs = [numpy.get_include()])
 
 
 # Call the routine which does the real work

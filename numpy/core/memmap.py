@@ -74,7 +74,7 @@ class memmap(ndarray):
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
 
-    Notes 
+    Notes
     -----
 
     Memory-mapped arrays use the the Python memory-map object which

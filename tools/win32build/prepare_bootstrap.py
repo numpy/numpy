@@ -79,7 +79,7 @@ def get_numpy_version(chdir = pjoin('..', '..')):
         version = subprocess.Popen(['python', '-c', 'import __builtin__; __builtin__.__NUMPY_SETUP__ = True; from numpy.version import version;print version'], stdout =  subprocess.PIPE).communicate()[0]
         version = version.strip()
         if 'dev' in version:
-            out = subprocess.Popen(['svn', 'info'], stdout = subprocess.PIPE).communicate()[0] 
+            out = subprocess.Popen(['svn', 'info'], stdout = subprocess.PIPE).communicate()[0]
             r = re.compile('Revision: ([0-9]+)')
             svnver = None
             for line in out.split('\n'):

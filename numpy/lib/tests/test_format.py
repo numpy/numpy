@@ -421,7 +421,7 @@ def test_roundtrip():
 
 def test_memmap_roundtrip():
     # XXX: test crashes nose on windows. Fix this
-    if not sys.platform == 'win32':
+    if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
         for arr in basic_arrays + record_arrays:
             if arr.dtype.hasobject:
                 # Skip these since they can't be mmap'ed.
@@ -434,13 +434,13 @@ def test_memmap_roundtrip():
                 format.write_array(fp, arr)
             finally:
                 fp.close()
-    
+
             fortran_order = (arr.flags.f_contiguous and not arr.flags.c_contiguous)
             ma = format.open_memmap(mfn, mode='w+', dtype=arr.dtype,
                 shape=arr.shape, fortran_order=fortran_order)
             ma[...] = arr
             del ma
-    
+
             # Check that both of these files' contents are the same.
             fp = open(nfn, 'rb')
             normal_bytes = fp.read()
@@ -449,7 +449,7 @@ def test_memmap_roundtrip():
             memmap_bytes = fp.read()
             fp.close()
             yield assert_equal, normal_bytes, memmap_bytes
-    
+
             # Check that reading the file using memmap works.
             ma = format.open_memmap(nfn, mode='r')
             #yield assert_array_equal, ma, arr

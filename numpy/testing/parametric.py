@@ -61,9 +61,9 @@ class _ParametricTestCase(unittest.TestCase):
     _shareParTestPrefix = 'testsp'
 
     def __init__(self, methodName = 'runTest'):
-    	warnings.warn("ParametricTestCase will be removed in the next NumPy "
+        warnings.warn("ParametricTestCase will be removed in the next NumPy "
                       "release", DeprecationWarning)
-	unittest.TestCase.__init__(self, methodName)
+        unittest.TestCase.__init__(self, methodName)
 
     def exec_test(self,test,args,result):
         """Execute a single test.  Returns a success boolean"""

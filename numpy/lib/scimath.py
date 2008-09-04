@@ -198,15 +198,15 @@ def sqrt(x):
 
     As the numpy.sqrt, this returns the principal square root of x, which is
     what most people mean when they use square root; the principal square root
-    of x is not any number z such as z^2 = x. 
+    of x is not any number z such as z^2 = x.
 
     For positive numbers, the principal square root is defined as the positive
-    number z such as z^2 = x. 
+    number z such as z^2 = x.
 
     The principal square root of -1 is i, the principal square root of any
     negative number -x is defined a i * sqrt(x). For any non zero complex
     number, it is defined by using the following branch cut: x = r e^(i t) with
-    r > 0 and -pi < t <= pi. The principal square root is then 
+    r > 0 and -pi < t <= pi. The principal square root is then
     sqrt(r) e^(i t/2).
     """
     x = _fix_real_lt_zero(x)

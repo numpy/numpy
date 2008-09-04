@@ -14,7 +14,7 @@ def color_print(msg):
     """Add color to this print output."""
     clrmsg = clrgreen + msg + clrnull
     print clrmsg
-    
+
 distdir = os.path.join(SRC_DIR, DIST_DIR)
 
 # Find the package and build abspath to it

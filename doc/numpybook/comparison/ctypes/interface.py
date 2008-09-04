@@ -27,7 +27,7 @@ lib.dfilter2d.argtypes = [N.ctypeslib.ndpointer(float, ndim=2,
                                                 flags='aligned, contiguous,'\
                                                 'writeable'),
                           ctypes.POINTER(N.ctypeslib.c_intp),
-                          ctypes.POINTER(N.ctypeslib.c_intp)]        
+                          ctypes.POINTER(N.ctypeslib.c_intp)]
 
 def select(dtype):
     if dtype.char in ['?bBhHf']:
@@ -49,12 +49,9 @@ def add(a, b):
     c = N.empty_like(a)
     func(a,b,c,a.size)
     return c
- 
+
 def filter2d(a):
     a = N.require(a, float, ['ALIGNED'])
     b = N.zeros_like(a)
     lib.dfilter2d(a, b, a.ctypes.strides, a.ctypes.shape)
     return b
-    
-
-
