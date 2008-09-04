@@ -126,7 +126,7 @@ double rint(double x)
 double trunc(double x)
 {
     if (x < 0) {
-    	return ceil(x);
+        return ceil(x);
     }
     else {
         return floor(x);
@@ -151,7 +151,7 @@ double trunc(double x)
  * We assume the above are always available in their double versions.
  */
 
-/* 
+/*
  * One value argument function
  */
 
@@ -166,14 +166,14 @@ double trunc(double x)
 */
 
 #ifndef HAVE_@KIND@@C@
-@typ@ @kind@@c@(@typ@ x) 
+@typ@ @kind@@c@(@typ@ x)
 {
     return (@typ@) @kind@((double)x);
 }
 #endif
 /**end repeat**/
 
-/* 
+/*
  * Two values arguments function
  */
 
@@ -187,14 +187,14 @@ double trunc(double x)
    #TYPE=LONGDOUBLE*4,FLOAT*4#
 */
 #ifndef HAVE_@KIND@@C@
-@typ@ @kind@@c@(@typ@ x, @typ@ y) 
+@typ@ @kind@@c@(@typ@ x, @typ@ y)
 {
     return (@typ@) @kind@((double)x, (double) y);
 }
 #endif
 /**end repeat**/
 
-/* 
+/*
  * One value - one pointer argument function
  */
 
@@ -207,7 +207,7 @@ double trunc(double x)
    #TYPE=LONGDOUBLE, FLOAT#
 */
 #ifndef HAVE_@KIND@@C@
-@typ@ modf@c@(@typ@ x, @typ@ *iptr) 
+@typ@ modf@c@(@typ@ x, @typ@ *iptr)
 {
     double nx, niptr, y;
     nx = (double) x;
