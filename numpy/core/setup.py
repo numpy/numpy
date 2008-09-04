@@ -288,7 +288,6 @@ def configuration(parent_package='',top_path=None):
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
-            join('src','math_c99.c.src'),
             join('src','_signbit.c'),
             join('src','_isnan.c'),
             join('src','ucsnarrow.c'),
@@ -327,6 +326,7 @@ def configuration(parent_package='',top_path=None):
                                     ],
                          depends = [join('src','ufuncobject.c'),
                                     generate_umath_py,
+                                    join('src','math_c99.c'),
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
                          )
