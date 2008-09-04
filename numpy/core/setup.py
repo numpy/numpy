@@ -56,14 +56,26 @@ def check_math_capabilities(config, moredefs, mathlibs):
     def name_to_defsymb(name):
         return "HAVE_%s" % name.upper()
 
+    # Mandatory functions: if not found, fail the build
     mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
             "floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos",
             "atan"]
+
+    # Standard functions which may not be available and for which we have a
+    # replacement implementation
+    # XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
+    # python.h... I wish they would clean their public headers someday)
+    optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
+                         "rint", "trunc"]
 
     for f in mandatory_funcs:
         if not check_func(f):
             raise SystemError("Function %s is mandatory to build numpy." % f)
         moredefs.append(name_to_defsymb(f))
+
+    for f in optional_stdfuncs:
+        if check_func(f):
+            moredefs.append(name_to_defsymb(f))
 
 #    for func_name, defsymbol in FUNCTIONS_TO_CHECK:
 #        if check_func(func_name):
