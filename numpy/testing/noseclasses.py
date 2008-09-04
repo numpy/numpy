@@ -7,6 +7,7 @@ import os
 import doctest
 
 from nose.plugins import doctests as npd
+from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
 from nose.util import src, tolist
 import numpy
@@ -16,8 +17,8 @@ import inspect
 _doctest_ignore = ['generate_numpy_api.py', 'scons_support.py',
                    'setupscons.py', 'setup.py']
 
-# All the classes in this module begin with 'numpy' to clearly distinguish them
-# from the plethora of very similar names from nose/unittest/doctest
+# Some of the classes in this module begin with 'numpy' to clearly distinguish
+# them from the plethora of very similar names from nose/unittest/doctest
 
 
 #-----------------------------------------------------------------------------
@@ -246,3 +247,35 @@ class numpyDoctest(npd.Doctest):
         if bn in _doctest_ignore:
             return False
         return npd.Doctest.wantFile(self, file)
+
+
+class KnownFailureTest(Exception):
+    '''Raise this exception to mark a test as a known failing test.'''
+    pass
+
+
+class KnownFailure(ErrorClassPlugin):
+    '''Plugin that installs a KNOWNFAIL error class for the 
+    KnownFailureClass exception.  When KnownFailureTest is raised,
+    the exception will be logged in the knownfail attribute of the
+    result, 'K' or 'KNOWNFAIL' (verbose) will be output, and the
+    exception will not be counted as an error or failure.'''
+    enabled = True
+    knownfail = ErrorClass(KnownFailureTest,
+                           label='KNOWNFAIL',
+                           isfailure=False)
+
+    def options(self, parser, env=os.environ):
+        env_opt = 'NOSE_WITHOUT_KNOWNFAIL'
+        parser.add_option('--no-knownfail', action='store_true',
+                          dest='noKnownFail', default=env.get(env_opt, False),
+                          help='Disable special handling of KnownFailureTest '
+                               'exceptions')
+
+    def configure(self, options, conf):
+        if not self.can_configure:
+            return
+        self.conf = conf
+        disable = getattr(options, 'noKnownFail', False)
+        if disable:
+            self.enabled = False
