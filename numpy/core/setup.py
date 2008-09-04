@@ -77,9 +77,10 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if check_func(f):
             moredefs.append(name_to_defsymb(f))
 
-#    for func_name, defsymbol in FUNCTIONS_TO_CHECK:
-#        if check_func(func_name):
-#            moredefs.append(defsymbol)
+    # Keep this for compatibility for now
+    for func_name, defsymbol in FUNCTIONS_TO_CHECK:
+        if check_func(func_name):
+            moredefs.append(defsymbol)
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
