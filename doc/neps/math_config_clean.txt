@@ -60,6 +60,11 @@ works, it should be as fast as the current scheme, except that the assumptions
 are explicitely checked (all functions implied by HAVE_LONGDOUBLE_FUNCS would
 be checked together, for example).
 
+Issues
+======
+
+Static vs non static ? For basic functions, shall we define them static or not ?
+
 License
 =======
 
