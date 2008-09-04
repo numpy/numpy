@@ -49,6 +49,26 @@ def is_npy_no_smp():
             nosmp = 0
     return nosmp == 1
 
+def check_math_capabilities(config, moredefs, mathlibs):
+    def check_func(func_name):
+        return config.check_func(func_name, libraries=mathlibs, decl=True)
+
+    def name_to_defsymb(name):
+        return "HAVE_%s" % name.upper()
+
+    mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+            "floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos",
+            "atan"]
+
+    for f in mandatory_funcs:
+        if not check_func(f):
+            raise SystemError("Function %s is mandatory to build numpy." % f)
+        moredefs.append(name_to_defsymb(f))
+
+#    for func_name, defsymbol in FUNCTIONS_TO_CHECK:
+#        if check_func(func_name):
+#            moredefs.append(defsymbol)
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -106,14 +126,7 @@ def configuration(parent_package='',top_path=None):
             ext.libraries.extend(mathlibs)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
-            def check_func(func_name):
-                return config_cmd.check_func(func_name,
-                                             libraries=mathlibs, decl=False,
-                                             headers=['math.h'])
-
-            for func_name, defsymbol in FUNCTIONS_TO_CHECK:
-                if check_func(func_name):
-                    moredefs.append(defsymbol)
+            check_math_capabilities(config_cmd, moredefs, mathlibs)
 
             if is_npy_no_signal():
                 moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
