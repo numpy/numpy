@@ -7,7 +7,7 @@ A Guide to NumPy/SciPy Documentation
 .. Note::
 
    For an accompanying example, see `example.py
-   <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_.
+   <http://svn.scipy.org/svn/numpy/trunk/doc/example.py>`_.
 
 Overview
 --------
