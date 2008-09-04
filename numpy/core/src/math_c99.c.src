@@ -1,16 +1,9 @@
 /*
+ * vim:syntax=c
  * A small module to implement missing C99 math capabilities required by numpy
  *
  * Please keep this independant of python as much as possible !
  */
-
-/*
- * Include python.h because it may modify math.h configuration, but we won't
- * use any python code at all here
- */
-#include "Python.h"
-#include "config.h"
-#include <math.h>
 
 /*
  * Basic functions, double version. Some old/weird platforms may not have those

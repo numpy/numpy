@@ -293,6 +293,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('umath',
                          sources = [generate_config_h,
                                     generate_numpyconfig_h,
+                                    join('src','math_c99.c.src'),
                                     join('src','umathmodule.c.src'),
                                     generate_umath_c,
                                     generate_ufunc_api,
