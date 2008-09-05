@@ -58,6 +58,17 @@ def check_math_capabilities(config, moredefs, mathlibs):
             moredefs.extend([name_to_defsymb(f) for f in funcs_name])
         return st
 
+    def check_funcs(funcs_name):
+        # Use check_funcs_once first, and if it does not work, test func per
+        # func. Return success only if all the functions are available
+        if not check_funcs_once(funcs_name):
+            # Global check failed, check func per func
+            for f in funcs_name:
+                if check_func(f):
+                    moredefs.append(name_to_defsymb(f))
+            return 0
+        else:
+            return 1
 
     def name_to_defsymb(name):
         return "HAVE_%s" % name.upper()
@@ -78,22 +89,17 @@ def check_math_capabilities(config, moredefs, mathlibs):
     optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
                          "rint", "trunc"]
 
-    for f in optional_stdfuncs:
-        if check_func(f):
-            moredefs.append(name_to_defsymb(f))
+    check_funcs(optional_stdfuncs)
 
+    # C99 functions: float and long double versions
     c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
 "ceil", "rint", "trunc", "sqrt", "log10", "log", "exp", "expm1", "asin",
 "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2", "pow", "fmod",
 "modf", 'frexp', 'ldexp']
 
     for prec in ['l', 'f']:
-        if not check_funcs_once([f + prec for f in c99_funcs]):
-            # Global check failed, check func per func
-            for f in c99_funcs:
-                name = f + prec
-                if check_func(name):
-                    moredefs.append(name_to_defsymb(name))
+        fns = [f + prec for f in c99_funcs]
+        check_funcs(fns)
 
     # Keep this for compatibility for now
     def check_func_old(func_name):
