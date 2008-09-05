@@ -330,6 +330,24 @@ class TestMaskedArray(TestCase):
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
 
 
+    def test_deepcopy(self):
+        from copy import deepcopy
+        a = array([0,1,2], mask=[False,True,False])
+        copied = deepcopy(a)
+        assert_equal(copied.mask, a.mask)
+        assert_not_equal(id(a._mask), id(copied._mask))
+        #
+        copied[1] = 1
+        assert_equal(copied.mask,[0,0,0])
+        assert_equal(a.mask, [0,1,0])
+        #
+        copied = deepcopy(a)
+        assert_equal(copied.mask, a.mask)
+        copied.mask[1] = False
+        assert_equal(copied.mask,[0,0,0])
+        assert_equal(a.mask, [0,1,0])
+
+
     def test_pickling(self):
         "Tests pickling"
         import cPickle

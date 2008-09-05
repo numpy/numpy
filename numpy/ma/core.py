@@ -3123,6 +3123,14 @@ masked_%(name)s(data = %(data)s,
         return (_mareconstruct,
                 (self.__class__, self._baseclass, (0,), 'b', ),
                 self.__getstate__())
+    #
+    def __deepcopy__(self, memo={}):
+        from copy import deepcopy
+        copied = MaskedArray.__new__(type(self), self, copy=True)
+        memo[id(self)] = copied
+        for (k,v) in self.__dict__.iteritems():
+            copied.__dict__[k] = deepcopy(v, memo)
+        return copied
 
 
 def _mareconstruct(subtype, baseclass, baseshape, basetype,):
