@@ -140,6 +140,61 @@ int main()
         return self.try_link(body, headers, include_dirs,
                              libraries, library_dirs)
 
+    def check_funcs_once(self, funcs,
+                   headers=None, include_dirs=None,
+                   libraries=None, library_dirs=None,
+                   decl=False, call=False, call_args=None):
+        """Check a list of functions at once.
+
+        This is useful to speed up things, since all the functions in the funcs
+        list will be put in one compilation unit.
+
+        Arguments
+        ---------
+
+            funcs: seq
+                list of functions to test
+            include_dirs : seq
+                list of header paths
+            libraries : seq
+                list of libraries to link the code snippet to
+            libraru_dirs : seq
+                list of library paths
+            decl : dict
+                for every (key, value), the declaration in the value will be
+                used for function in key. If a function is not in the
+                dictionay, no declaration will be used.
+            call : dict
+                for every item (f, value), if the value is True, a call will be
+                done to the function f"""
+        self._check_compiler()
+        body = []
+        if decl:
+            for f, v in decl.items():
+                if v:
+                    body.append("int %s ();" % f)
+
+        body.append("int main (void) {")
+        if call:
+            for f in funcs:
+                if call.has_key(f) and call[f]:
+                    if not (call_args and call_args.has_key(f) and call_args[f]):
+                        args = ''
+                    else:
+                        args = call_args[f]
+                    body.append("  %s(%s);" % (f, args))
+                else:
+                    body.append("  %s;" % f)
+        else:
+            for f in funcs:
+                body.append("  %s;" % f)
+        body.append("  return 0;")
+        body.append("}")
+        body = '\n'.join(body) + "\n"
+
+        return self.try_link(body, headers, include_dirs,
+                             libraries, library_dirs)
+
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
                    lang="c"):
