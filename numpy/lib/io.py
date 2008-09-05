@@ -312,7 +312,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
 
     """
     user_converters = converters
-
+    
+    if usecols is not None: 
+        usecols = list(usecols) 
+        
     if _string_like(fname):
         if fname.endswith('.gz'):
             import gzip
@@ -373,7 +376,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     # By preference, use the converters specified by the user
     for i, conv in (user_converters or {}).iteritems():
         if usecols:
-            i = usecols.find(i)
+            i = usecols.index(i)
         converters[i] = conv
 
     # Parse each line, including the first

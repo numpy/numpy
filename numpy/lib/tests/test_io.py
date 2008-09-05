@@ -170,7 +170,6 @@ class TestLoadTxt(TestCase):
         a = np.array([1,2,3,4], int)
         assert_array_equal(x, a)
 
-
     def test_missing(self):
         c = StringIO.StringIO()
         c.write('1,2,3,,5\n')
@@ -180,6 +179,16 @@ class TestLoadTxt(TestCase):
         a = np.array([1,2,3,-999,5], int)
         assert_array_equal(x, a)
 
+    def test_converters_with_usecols(self):
+        c = StringIO.StringIO()
+        c.write('1,2,3,,5\n6,7,8,9,10\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', \
+            converters={3:lambda s: int(s or -999)}, \
+            usecols=(1, 3, ))
+        a = np.array([[2,  -999],[7, 9]], int)
+        assert_array_equal(x, a)
+        
     def test_comments(self):
         c = StringIO.StringIO()
         c.write('# comment\n1,2,3,5\n')
@@ -219,6 +228,11 @@ class TestLoadTxt(TestCase):
         np.savetxt(c, a)
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=(1,2))
+        assert_array_equal(x, a[:,1:])
+
+        # Testing with arrays instead of tuples. 
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, usecols=np.array([1,2]))
         assert_array_equal(x, a[:,1:])
 
         # Checking with dtypes defined converters.
