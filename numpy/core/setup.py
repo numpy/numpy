@@ -8,9 +8,6 @@ from distutils.dep_util import newer
 FUNCTIONS_TO_CHECK = [
     ('expl', 'HAVE_LONGDOUBLE_FUNCS'),
     ('expf', 'HAVE_FLOAT_FUNCS'),
-    ('asinh', 'HAVE_INVERSE_HYPERBOLIC'),
-    ('atanhf', 'HAVE_INVERSE_HYPERBOLIC_FLOAT'),
-    ('atanhl', 'HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE'),
     ('isnan', 'HAVE_ISNAN'),
     ('isinf', 'HAVE_ISINF'),
     ]
