@@ -50,6 +50,15 @@ def check_math_capabilities(config, moredefs, mathlibs):
         return config.check_func(func_name, libraries=mathlibs,
                                  decl=True, call=True)
 
+    def check_funcs_once(funcs_name):
+        decl = dict([(f, True) for f in funcs_name])
+        st = config.check_funcs_once(funcs_name, libraries=mathlibs,
+                                     decl=decl, call=decl)
+        if st:
+            moredefs.extend([name_to_defsymb(f) for f in funcs_name])
+        return st
+
+
     def name_to_defsymb(name):
         return "HAVE_%s" % name.upper()
 
@@ -58,17 +67,16 @@ def check_math_capabilities(config, moredefs, mathlibs):
             "floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos",
             "atan", "fmod", 'modf', 'frexp']
 
+    if not check_funcs_once(mandatory_funcs):
+        raise SystemError("One of the required function to build numpy is not"
+                " available (the list is %s)." % str(mandatory_funcs))
+
     # Standard functions which may not be available and for which we have a
     # replacement implementation
     # XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
     # python.h... I wish they would clean their public headers someday)
     optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
                          "rint", "trunc"]
-
-    for f in mandatory_funcs:
-        if not check_func(f):
-            raise SystemError("Function %s is mandatory to build numpy." % f)
-        moredefs.append(name_to_defsymb(f))
 
     for f in optional_stdfuncs:
         if check_func(f):
@@ -79,13 +87,13 @@ def check_math_capabilities(config, moredefs, mathlibs):
 "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2", "pow", "fmod",
 "modf", 'frexp', 'ldexp']
 
-    for f in c99_funcs:
-        name = "%sl" % f
-        if check_func(name):
-            moredefs.append(name_to_defsymb(name))
-        name = "%sf" % f
-        if check_func(name):
-            moredefs.append(name_to_defsymb(name))
+    for prec in ['l', 'f']:
+        if not check_funcs_once([f + prec for f in c99_funcs]):
+            # Global check failed, check func per func
+            for f in c99_funcs:
+                name = f + prec
+                if check_func(name):
+                    moredefs.append(name_to_defsymb(name))
 
     # Keep this for compatibility for now
     def check_func_old(func_name):
