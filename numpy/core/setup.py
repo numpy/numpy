@@ -7,10 +7,7 @@ from distutils.dep_util import newer
 
 FUNCTIONS_TO_CHECK = [
     ('expl', 'HAVE_LONGDOUBLE_FUNCS'),
-    ('expf', 'HAVE_FLOAT_FUNCS'),
-    ('isnan', 'HAVE_ISNAN'),
-    ('isinf', 'HAVE_ISINF'),
-    ]
+    ('expf', 'HAVE_FLOAT_FUNCS')]
 
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
@@ -97,6 +94,9 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for prec in ['l', 'f']:
         fns = [f + prec for f in c99_funcs]
         check_funcs(fns)
+
+    # IEEE754 handling
+    check_funcs(["isnan", "isinf"])
 
     # Keep this for compatibility for now
     def check_func_old(func_name):
