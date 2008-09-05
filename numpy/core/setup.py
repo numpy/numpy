@@ -8,15 +8,11 @@ from distutils.dep_util import newer
 FUNCTIONS_TO_CHECK = [
     ('expl', 'HAVE_LONGDOUBLE_FUNCS'),
     ('expf', 'HAVE_FLOAT_FUNCS'),
-    ('log1p', 'HAVE_LOG1P'),
-    ('expm1', 'HAVE_EXPM1'),
     ('asinh', 'HAVE_INVERSE_HYPERBOLIC'),
     ('atanhf', 'HAVE_INVERSE_HYPERBOLIC_FLOAT'),
     ('atanhl', 'HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE'),
     ('isnan', 'HAVE_ISNAN'),
     ('isinf', 'HAVE_ISINF'),
-    ('rint', 'HAVE_RINT'),
-    ('trunc', 'HAVE_TRUNC'),
     ]
 
 def is_npy_no_signal():
@@ -92,8 +88,12 @@ def check_math_capabilities(config, moredefs, mathlibs):
             moredefs.append(name_to_defsymb(name))
 
     # Keep this for compatibility for now
+    def check_func_old(func_name):
+        return config.check_func(func_name, libraries=mathlibs,
+                                 decl=False, headers = ["math.h"])
+
     for func_name, defsymbol in FUNCTIONS_TO_CHECK:
-        if check_func(func_name):
+        if check_func_old(func_name):
             moredefs.append(defsymbol)
 
 def configuration(parent_package='',top_path=None):
