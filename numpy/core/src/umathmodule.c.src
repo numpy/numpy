@@ -1628,13 +1628,13 @@ static void
 }
 /**end repeat**/
 
-#define HAVE_DOUBLE_FUNCS
 /**begin repeat
    #TYPE=FLOAT, DOUBLE, LONGDOUBLE#
    #typ=float, double, longdouble#
    #c=f,,l#
+   #C=F,,L#
 */
-#ifdef HAVE_@TYPE@_FUNCS
+#ifdef HAVE_FREXP@C@
 static void
 @TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -1650,7 +1650,9 @@ static void
         *((int *) op2) = y2;
     }
 }
+#endif
 
+#ifdef HAVE_LDEXP@C@
 static void
 @TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -1668,47 +1670,46 @@ static void
 }
 #endif
 /**end repeat**/
-#undef HAVE_DOUBLE_FUNCS
 
 
 static PyUFuncGenericFunction frexp_functions[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_FREXPF
     FLOAT_frexp,
 #endif
     DOUBLE_frexp
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_FREXPL
     ,LONGDOUBLE_frexp
 #endif
 };
 
 static void * blank3_data[] = { (void *)NULL, (void *)NULL, (void *)NULL};
 static char frexp_signatures[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_FREXPF
     PyArray_FLOAT, PyArray_FLOAT, PyArray_INT,
 #endif
     PyArray_DOUBLE, PyArray_DOUBLE, PyArray_INT
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_FREXPL
     ,PyArray_LONGDOUBLE, PyArray_LONGDOUBLE, PyArray_INT
 #endif
 };
 
 
 static PyUFuncGenericFunction ldexp_functions[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_LDEXPF
     FLOAT_ldexp,
 #endif
     DOUBLE_ldexp
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_LDEXPL
     ,LONGDOUBLE_ldexp
 #endif
 };
 
 static char ldexp_signatures[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_LDEXPF
     PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
 #endif
     PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_LDEXPL
     ,PyArray_LONGDOUBLE, PyArray_INT, PyArray_LONGDOUBLE
 #endif
 };
@@ -1761,10 +1762,10 @@ InitOtherOperators(PyObject *dictionary) {
     PyObject *f;
     int num=1;
 
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_FREXPL
     num += 1;
 #endif
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_FREXPF
     num += 1;
 #endif
     f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
@@ -1775,6 +1776,13 @@ InitOtherOperators(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "frexp", f);
     Py_DECREF(f);
 
+    num = 1;
+#ifdef HAVE_LDEXPL
+    num += 1;
+#endif
+#ifdef HAVE_LDEXPF
+    num += 1;
+#endif
     f = PyUFunc_FromFuncAndData(ldexp_functions, blank3_data, ldexp_signatures, num,
                                 2, 1, PyUFunc_None, "ldexp",
                                 "Compute y = x1 * 2**x2.",0);
