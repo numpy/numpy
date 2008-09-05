@@ -56,7 +56,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # Mandatory functions: if not found, fail the build
     mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
             "floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos",
-            "atan"]
+            "atan", "fmod", "modf"]
 
     # Standard functions which may not be available and for which we have a
     # replacement implementation
