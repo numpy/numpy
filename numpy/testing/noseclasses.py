@@ -224,9 +224,6 @@ class NumpyDoctest(npd.Doctest):
                 p2 = p[-1]
                 test.globs[p2] = __import__(pkg_name, test.globs, {}, [p2])
 
-                print 'additional import for %s: from %s import %s' % (test.filename, p1, p2)
-                print '    (%s): %r' % (pkg_name, test.globs[p2])
-
             # always use whitespace and ellipsis options
             optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
