@@ -51,7 +51,8 @@ def is_npy_no_smp():
 
 def check_math_capabilities(config, moredefs, mathlibs):
     def check_func(func_name):
-        return config.check_func(func_name, libraries=mathlibs, decl=True)
+        return config.check_func(func_name, libraries=mathlibs,
+                                 decl=True, call=True)
 
     def name_to_defsymb(name):
         return "HAVE_%s" % name.upper()
