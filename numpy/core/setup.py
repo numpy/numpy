@@ -5,10 +5,6 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 
-FUNCTIONS_TO_CHECK = [
-    ('expl', 'HAVE_LONGDOUBLE_FUNCS'),
-    ('expf', 'HAVE_FLOAT_FUNCS')]
-
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
     header."""
@@ -98,15 +94,6 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # IEEE754 handling
     check_funcs(["isnan", "isinf"])
 
-    # Keep this for compatibility for now
-    def check_func_old(func_name):
-        return config.check_func(func_name, libraries=mathlibs,
-                                 decl=False, headers = ["math.h"])
-
-    for func_name, defsymbol in FUNCTIONS_TO_CHECK:
-        if check_func_old(func_name):
-            moredefs.append(defsymbol)
-
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -187,6 +174,17 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
+
+            # Keep those for backward compatibility for now
+            target_f.write("""
+#ifdef HAVE_EXPL
+#define HAVE_LONGDOUBLE_FUNCS
+#endif
+
+#ifdef HAVE_EXPF
+#define HAVE_FUNCS_FUNCS
+#endif
+""")
             target_f.close()
             print 'File:',target
             target_f = open(target)
