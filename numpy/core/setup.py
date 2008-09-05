@@ -75,8 +75,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     # Mandatory functions: if not found, fail the build
     mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-            "floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos",
-            "atan", "fmod", 'modf', 'frexp']
+                       "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+                       "acos", "atan", "fmod", 'modf', 'frexp']
 
     if not check_funcs_once(mandatory_funcs):
         raise SystemError("One of the required function to build numpy is not"
@@ -93,9 +93,9 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     # C99 functions: float and long double versions
     c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
-"ceil", "rint", "trunc", "sqrt", "log10", "log", "exp", "expm1", "asin",
-"acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2", "pow", "fmod",
-"modf", 'frexp', 'ldexp']
+                 "ceil", "rint", "trunc", "sqrt", "log10", "log", "exp",
+                 "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
+                 "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp']
 
     for prec in ['l', 'f']:
         fns = [f + prec for f in c99_funcs]
