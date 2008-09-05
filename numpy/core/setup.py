@@ -56,7 +56,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # Mandatory functions: if not found, fail the build
     mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
             "floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos",
-            "atan", "fmod", "modf"]
+            "atan", "fmod", 'modf', 'frexp']
 
     # Standard functions which may not be available and for which we have a
     # replacement implementation
@@ -77,7 +77,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
     c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
 "ceil", "rint", "trunc", "sqrt", "log10", "log", "exp", "expm1", "asin",
 "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2", "pow", "fmod",
-"modf"]
+"modf", 'frexp', 'ldexp']
 
     for f in c99_funcs:
         name = "%sl" % f
