@@ -77,6 +77,19 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if check_func(f):
             moredefs.append(name_to_defsymb(f))
 
+    c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
+"ceil", "rint", "trunc", "sqrt", "log10", "log", "exp", "expm1", "asin",
+"acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2", "pow", "fmod",
+"modf"]
+
+    for f in c99_funcs:
+        name = "%sl" % f
+        if check_func(name):
+            moredefs.append(name_to_defsymb(name))
+        name = "%sf" % f
+        if check_func(name):
+            moredefs.append(name_to_defsymb(name))
+
     # Keep this for compatibility for now
     for func_name, defsymbol in FUNCTIONS_TO_CHECK:
         if check_func(func_name):
