@@ -44,11 +44,12 @@ def get_scons_local_path():
     from numscons import get_scons_path
     return get_scons_path()
 
-def get_distutils_libdir(cmd, sconscript_path):
+def get_distutils_libdir(cmd, pkg):
     """Returns the path where distutils install libraries, relatively to the
     scons build directory."""
     from numscons import get_scons_build_dir
-    scdir = pjoin(get_scons_build_dir(), pdirname(sconscript_path))
+    from numscons.core.utils import pkg_to_path
+    scdir = pjoin(get_scons_build_dir(), pkg_to_path(pkg))
     n = scdir.count(os.sep)
     return pjoin(os.sep.join([os.pardir for i in range(n+1)]), cmd.build_lib)
 
@@ -424,7 +425,7 @@ class scons(old_build_ext):
                 #cmd.append('distutils_libdir=%s' % protect_path(pjoin(self.build_lib,
                 #                                                    pdirname(sconscript))))
                 cmd.append('distutils_libdir=%s' %
-                             protect_path(get_distutils_libdir(self, sconscript)))
+                             protect_path(get_distutils_libdir(self, pkg_name)))
 
                 if not self._bypass_distutils_cc:
                     cmd.append('cc_opt=%s' % self.scons_compiler)
