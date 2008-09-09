@@ -327,7 +327,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                 if rl[:4].lower()=='f2py': # f2py directive
                     l = l + 4*' '
                     r=commentline.match(rl[4:])
-                    if r: l=l+r('line')
+                    if r: l=l+r.group('line')
                     else: l = l + rl[4:]
         if l.strip()=='': # Skip empty line
             cont=0
