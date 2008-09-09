@@ -140,7 +140,6 @@ class TestLoadTxt(TestCase):
         y = np.loadtxt(d, dtype=mydescriptor)
         assert_array_equal(y, b)
 
-
     def test_array(self):
         c = StringIO.StringIO()
         c.write('1 2\n3 4')
@@ -188,7 +187,7 @@ class TestLoadTxt(TestCase):
             usecols=(1, 3, ))
         a = np.array([[2,  -999],[7, 9]], int)
         assert_array_equal(x, a)
-        
+
     def test_comments(self):
         c = StringIO.StringIO()
         c.write('# comment\n1,2,3,5\n')
@@ -230,7 +229,7 @@ class TestLoadTxt(TestCase):
         x = np.loadtxt(c, dtype=float, usecols=(1,2))
         assert_array_equal(x, a[:,1:])
 
-        # Testing with arrays instead of tuples. 
+        # Testing with arrays instead of tuples.
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=np.array([1,2]))
         assert_array_equal(x, a[:,1:])
@@ -255,6 +254,9 @@ class TestLoadTxt(TestCase):
         a = np.array([(1,(2,3.0)),(4,(5,6.0))], dt)
         assert_array_equal(x, a)
 
+    def test_empty_file(self):
+        c = StringIO.StringIO()
+        assert_raises(IOError, np.loadtxt, c)
 
 class Testfromregex(TestCase):
     def test_record(self):
