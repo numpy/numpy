@@ -1,8 +1,6 @@
 from numpy.testing import *
 import numpy.core.umath as ncu
 import numpy as np
-import nose
-from numpy import inf, nan, pi
 
 class TestDivision(TestCase):
     def test_division_int(self):

@@ -241,7 +241,6 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header=''):
     from numpy.core import asarray, isnan, any
-    from numpy import isreal, iscomplex
     x = asarray(x)
     y = asarray(y)
 

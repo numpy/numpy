@@ -1,4 +1,3 @@
-import sys
 import warnings
 
 from numpy.testing import *

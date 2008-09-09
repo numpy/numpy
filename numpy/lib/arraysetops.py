@@ -35,7 +35,6 @@ last revision: 07.01.2007
 __all__ = ['ediff1d', 'unique1d', 'intersect1d', 'intersect1d_nu', 'setxor1d',
            'setmember1d', 'union1d', 'setdiff1d']
 
-import time
 import numpy as np
 
 def ediff1d(ary, to_end=None, to_begin=None):

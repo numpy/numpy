@@ -11,8 +11,6 @@ __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 import numpy as np
-import numpy.core.numeric as numeric
-
 from numpy.testing import *
 from numpy.ma.testutils import *
 from numpy.ma.core import *
