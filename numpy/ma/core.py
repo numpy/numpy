@@ -3231,6 +3231,8 @@ class _extrema_operation(object):
             mb = getmaskarray(b)
             m = logical_or.outer(ma, mb)
         result = self.ufunc.outer(filled(a), filled(b))
+        if not isinstance(result, MaskedArray):
+            result = result.view(MaskedArray)
         result._mask = m
         return result
 

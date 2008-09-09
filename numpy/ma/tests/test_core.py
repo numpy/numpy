@@ -656,6 +656,23 @@ class TestMaskedArrayArithmetic(TestCase):
         x[-1,-1] = masked
         assert_equal(maximum(x), 2)
 
+    def test_minimummaximum_func(self):
+        a = np.ones((2,2))
+        aminimum = minimum(a,a)
+        assert(isinstance(aminimum, MaskedArray))
+        assert_equal(aminimum, np.minimum(a,a))
+        #
+        aminimum = minimum.outer(a,a)
+        assert(isinstance(aminimum, MaskedArray))
+        assert_equal(aminimum, np.minimum.outer(a,a))
+        #
+        amaximum = maximum(a,a)
+        assert(isinstance(amaximum, MaskedArray))
+        assert_equal(amaximum, np.maximum(a,a))
+        #
+        amaximum = maximum.outer(a,a)
+        assert(isinstance(amaximum, MaskedArray))
+        assert_equal(amaximum, np.maximum.outer(a,a))
 
     def test_minmax_funcs_with_output(self):
         "Tests the min/max functions with explicit outputs"
