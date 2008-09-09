@@ -82,7 +82,6 @@ class TestLoadTxt(NumpyTestCase):
         y = np.loadtxt(d, dtype=mydescriptor)
         assert_array_equal(y, b)
 
-
     def test_array(self):
         c = StringIO.StringIO()
         c.write('1 2\n3 4')
@@ -163,6 +162,9 @@ class TestLoadTxt(NumpyTestCase):
         x = np.loadtxt(c, dtype=float, usecols=(1,2))
         assert_array_equal(x, a[:,1:])
 
+    def test_empty_file(self):
+        c = StringIO.StringIO()
+        assert_raises(IOError, np.loadtxt, c)
 
 class Testfromregex(NumpyTestCase):
     def test_record(self):
