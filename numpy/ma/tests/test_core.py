@@ -2342,6 +2342,34 @@ class TestMaskedFields(TestCase):
         assert_equal(getmaskarray(test),
                      np.array([(1, 1) , (1, 1), (1, 1)],
                               dtype=[('a', '|b1'), ('b', '|b1')]))
+    #
+    def test_view(self):
+        "Test view w/ flexible dtype"
+        iterator = zip(np.arange(10), np.random.rand(10))
+        data = np.array(iterator)
+        a = array(iterator, dtype=[('a',float),('b',float)])
+        a.mask[0] = (1,0)
+        controlmask = np.array([1]+19*[0], dtype=bool)
+        #
+        test = a.view(float)
+        assert_equal(test, data.ravel())
+        assert_equal(test.mask, controlmask)
+        #
+        test = a.view((float,2))
+        assert_equal(test, data)
+        assert_equal(test.mask, controlmask.reshape(-1,2))
+        #
+        test = a.view([('A',float),('B',float)])
+        assert_equal(test.mask.dtype.names, ('A', 'B'))
+        assert_equal(test['A'], a['a'])
+        assert_equal(test['B'], a['b'])
+        #
+        test = a.view(np.ndarray)
+        assert_equal(test, a._data)
+        #
+        test = a.view((float,2), np.matrix)
+        assert_equal(test, data)
+        assert(isinstance(test, np.matrix))
 
 
 ###############################################################################
