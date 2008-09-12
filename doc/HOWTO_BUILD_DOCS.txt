@@ -50,13 +50,13 @@ be able to use a package manager like yum to install it::
 Example
 -------
 Here is a short example module,
-`plain text <http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_
+`plain text <http://svn.scipy.org/svn/numpy/trunk/doc/example.py>`_
 or
 `rendered <http://www.scipy.org/doc/example>`_ in HTML.
 
 To try this yourself, simply download the example.py::
 
-  svn co http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py .
+  svn co http://svn.scipy.org/svn/numpy/trunk/doc/example.py .
 
 Then, run epydoc::
 
