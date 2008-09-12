@@ -413,10 +413,10 @@ Conclusion
 ----------
 
 `An example
-<http://svn.scipy.org/svn/numpy/trunk/numpy/doc/example.py>`_ of the
+<http://svn.scipy.org/svn/numpy/trunk/doc/example.py>`_ of the
 format shown here is available.  Refer to `How to Build API/Reference
 Documentation
-<http://svn.scipy.org/svn/numpy/trunk/numpy/doc/HOWTO_BUILD_DOCS.txt>`_
+<http://svn.scipy.org/svn/numpy/trunk/doc/HOWTO_BUILD_DOCS.txt>`_
 on how to use epydoc_ or sphinx_ to construct a manual and web page.
 
 This document itself was written in ReStructuredText, and may be converted to
