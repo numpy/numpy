@@ -1234,7 +1234,7 @@ class MaskedArray(ndarray):
 
     def __new__(cls, data=None, mask=nomask, dtype=None, copy=False,
                 subok=True, ndmin=0, fill_value=None,
-                keep_mask=True, hard_mask=False, flag=None, shrink=True,
+                keep_mask=True, hard_mask=None, flag=None, shrink=True,
                 **options):
         """Create a new masked array from scratch.
 
@@ -1338,7 +1338,10 @@ class MaskedArray(ndarray):
         if fill_value is not None:
             _data._fill_value = _check_fill_value(fill_value, _data.dtype)
         # Process extra options ..
-        _data._hardmask = hard_mask
+        if hard_mask is None:
+            _data._hardmask = getattr(data, '_hardmask', False)
+        else:
+            _data._hardmask = hard_mask
         _data._baseclass = _baseclass
         return _data
     #
