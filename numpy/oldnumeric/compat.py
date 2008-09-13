@@ -12,7 +12,7 @@ __all__ = ['NewAxis',
 
 import numpy.core.multiarray as multiarray
 import numpy.core.umath as um
-from numpy.core.numeric import array, correlate
+from numpy.core.numeric import array
 import functions
 import sys
 

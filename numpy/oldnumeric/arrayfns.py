@@ -1,10 +1,11 @@
 """Backward compatible with arrayfns from Numeric
 """
 
-__all__ = ['array_set', 'construct3', 'digitize', 'error', 'find_mask', 'histogram', 'index_sort',
-           'interp', 'nz', 'reverse', 'span', 'to_corners', 'zmin_zmax']
+__all__ = ['array_set', 'construct3', 'digitize', 'error', 'find_mask', 
+           'histogram', 'index_sort', 'interp', 'nz', 'reverse', 'span', 
+           'to_corners', 'zmin_zmax']
 
-import numpy as nx
+import numpy as np
 from numpy import asarray
 
 class error(Exception):
@@ -14,7 +15,7 @@ def array_set(vals1, indices, vals2):
     indices = asarray(indices)
     if indices.ndim != 1:
         raise ValueError, "index array must be 1-d"
-    if not isinstance(vals1, ndarray):
+    if not isinstance(vals1, np.ndarray):
         raise TypeError, "vals1 must be an ndarray"
     vals1 = asarray(vals1)
     vals2 = asarray(vals2)
@@ -31,7 +32,7 @@ def index_sort(arr):
 def interp(y, x, z, typ=None):
     """y(z) interpolated by treating y(x) as piecewise function
     """
-    res = numpy.interp(z, x, y)
+    res = np.interp(z, x, y)
     if typ is None or typ == 'd':
         return res
     if typ == 'f':
@@ -40,17 +41,17 @@ def interp(y, x, z, typ=None):
     raise error, "incompatible typecode"
 
 def nz(x):
-    x = asarray(x,dtype=nx.ubyte)
+    x = asarray(x,dtype=np.ubyte)
     if x.ndim != 1:
         raise TypeError, "intput must have 1 dimension."
-    indxs = nx.flatnonzero(x != 0)
+    indxs = np.flatnonzero(x != 0)
     return indxs[-1].item()+1
 
 def reverse(x, n):
     x = asarray(x,dtype='d')
     if x.ndim != 2:
         raise ValueError, "input must be 2-d"
-    y = nx.empty_like(x)
+    y = np.empty_like(x)
     if n == 0:
         y[...] = x[::-1,:]
     elif n == 1:
@@ -58,11 +59,11 @@ def reverse(x, n):
     return y
 
 def span(lo, hi, num, d2=0):
-    x = linspace(lo, hi, num)
+    x = np.linspace(lo, hi, num)
     if d2 <= 0:
         return x
     else:
-        ret = empty((d2,num),x.dtype)
+        ret = np.empty((d2,num),x.dtype)
         ret[...] = x
         return ret
 
@@ -71,15 +72,15 @@ def zmin_zmax(z, ireg):
     ireg = asarray(ireg, dtype=int)
     if z.shape != ireg.shape or z.ndim != 2:
         raise ValueError, "z and ireg must be the same shape and 2-d"
-    ix, iy = nx.nonzero(ireg)
+    ix, iy = np.nonzero(ireg)
     # Now, add more indices
     x1m = ix - 1
     y1m = iy-1
     i1 = x1m>=0
     i2 = y1m>=0
     i3 = i1 & i2
-    nix = nx.r_[ix, x1m[i1], x1m[i1], ix[i2] ]
-    niy = nx.r_[iy, iy[i1],  y1m[i3], y1m[i2]]
+    nix = np.r_[ix, x1m[i1], x1m[i1], ix[i2] ]
+    niy = np.r_[iy, iy[i1],  y1m[i3], y1m[i2]]
     # remove any negative indices
     zres = z[nix,niy]
     return zres.min().item(), zres.max().item()
