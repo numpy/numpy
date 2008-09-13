@@ -319,7 +319,6 @@ def configuration(parent_package='',top_path=None):
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
-            join('src','_isnan.c'),
             join('src','ucsnarrow.c'),
             join('include','numpy','*object.h'),
             'include/numpy/fenv/fenv.c',
