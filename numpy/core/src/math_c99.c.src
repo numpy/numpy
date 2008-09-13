@@ -2,14 +2,16 @@
  * vim:syntax=c
  * A small module to implement missing C99 math capabilities required by numpy
  *
- * Please keep this independant of python as much as possible !
+ * Please keep this independant of python !
  */
 
 /*
- * Basic functions, double version. Some old/weird platforms may not have those
- *
- * Original code by Konrad Hinsen.
+ *****************************************************************************
+ **                     BASIC MATH FUNCTIONS                                **
+ *****************************************************************************
  */
+
+/* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
 double expm1(double x)
 {
@@ -126,6 +128,74 @@ double trunc(double x)
     }
 
 }
+#endif
+
+/*
+ *****************************************************************************
+ **                     IEEE 754 FPU HANDLING                               **
+ *****************************************************************************
+ */
+#if !defined(HAVE_DECL_ISNAN)
+    # define isnan(x) \
+              (sizeof (x) == sizeof (long double) ? isnan_ld (x) \
+               : sizeof (x) == sizeof (double) ? isnan_d (x) \
+               : isnan_f (x))
+static int isnan_f  (float x) 
+{ 
+    return x != x; 
+}
+
+static int isnan_d  (double x) 
+{ 
+    return x != x; 
+}
+
+static int isnan_ld  (long double x) 
+{ 
+    return x != x; 
+}
+ 
+#if !defined(HAVE_DECL_ISINF)
+    # define isinf(x) \
+              (sizeof (x) == sizeof (long double) ? isinf_ld (x) \
+               : sizeof (x) == sizeof (double) ? isinf_d (x) \
+               : isinf_f (x))
+
+static int isinf_f (float x) 
+{ 
+    return isnan (x - x); 
+}
+
+static int isinf_d (double x) 
+{ 
+    return isnan (x - x); 
+}
+
+static int isinf_ld (long double x) 
+{ 
+    return isnan (x - x);
+}
+
+#if !defined(HAVE_DECL_SIGNBIT)
+    #include "_signbit.c"
+    # define signbit(x) \
+              (sizeof (x) == sizeof (long double) ? signbit_ld (x) \
+               : sizeof (x) == sizeof (double) ? signbit_d (x) \
+               : signbit_f (x))
+
+static int signbit_f (float x) 
+{ 
+    return signbit_d((double)x); 
+}
+
+static int signbit_ld (long double x) 
+{ 
+    return signbit_d((double)x); 
+}
+
+/* Define isfinie if needed */
+#if !defined(HAVE_DECL_ISFINITE)
+#define isfinite(x) (!(isinf((x)) || isnan((x))))
 #endif
 
 /*

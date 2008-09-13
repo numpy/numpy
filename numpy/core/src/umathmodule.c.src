@@ -17,113 +17,7 @@
 #include "config.h"
 #include <math.h>
 
-/*
- *****************************************************************************
- **                     BASIC MATH FUNCTIONS                                **
- *****************************************************************************
- */
 #include "math_c99.c"
-
-/*
- *****************************************************************************
- **                     IEEE 754 FPU HANDLING                               **
- *****************************************************************************
- */
-
-/* Define isnan, isinf, isfinite, signbit if needed */
-/* Use fpclassify if possible */
-/* isnan, isinf --
-   these will use macros and then fpclassify if available before
-   defaulting to a dumb convert-to-double version...
-
-   isfinite -- define a macro if not already available
-   signbit -- if macro available use it, otherwise define a function
-   and a dumb convert-to-double version for other types.
-*/
-
-#if defined(fpclassify)
-
-#if !defined(isnan)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-#endif
-#if !defined(isinf)
-#define isinf(x) (fpclassify(x) == FP_INFINITE)
-#endif
-
-#else  /* check to see if already have a function like this */
-
-#if !defined(HAVE_ISNAN)
-
-#if !defined(isnan)
-#include "_isnan.c"
-#endif
-#endif /* HAVE_ISNAN */
-
-#if !defined(HAVE_ISINF)
-#if !defined(isinf)
-#define isinf(x) (!isnan((x)) && isnan((x)-(x)))
-#endif
-#endif /* HAVE_ISINF */
-
-#endif /* defined(fpclassify) */
-
-
-/* Define signbit if needed */
-#if !defined(signbit)
-#include "_signbit.c"
-#endif
-
-/* Now defined the extended type macros */
-
-#if !defined(isnan)
-
-#if !defined(HAVE_LONGDOUBLE_FUNCS) || !defined(HAVE_ISNAN)
-#define isnanl(x) isnan((double)(x))
-#endif
-
-#if !defined(HAVE_FLOAT_FUNCS) || !defined(HAVE_ISNAN)
-#define isnanf(x) isnan((double)(x))
-#endif
-
-#else /* !defined(isnan) */
-
-#define isnanl(x) isnan((x))
-#define isnanf(x) isnan((x))
-
-#endif /* !defined(isnan) */
-
-
-#if !defined(isinf)
-
-#if !defined(HAVE_LONGDOUBLE_FUNCS) || !defined(HAVE_ISINF)
-#define isinfl(x) (!isnanl((x)) && isnanl((x)-(x)))
-#endif
-
-#if !defined(HAVE_FLOAT_FUNCS) || !defined(HAVE_ISINF)
-#define isinff(x) (!isnanf((x)) && isnanf((x)-(x)))
-#endif
-
-#else /* !defined(isinf) */
-
-#define isinfl(x) isinf((x))
-#define isinff(x) isinf((x))
-
-#endif /* !defined(isinf) */
-
-
-#if !defined(signbit)
-#define signbitl(x) ((longdouble) signbit((double)(x)))
-#define signbitf(x) ((float) signbit((double) (x)))
-#else
-#define signbitl(x) signbit((x))
-#define signbitf(x) signbit((x))
-#endif
-
-#if !defined(isfinite)
-#define isfinite(x) (!(isinf((x)) || isnan((x))))
-#endif
-#define isfinitef(x) (!(isinff((x)) || isnanf((x))))
-#define isfinitel(x) (!(isinfl((x)) || isnanl((x))))
 
 float degreesf(float x) {
     return x * (float)(180.0/M_PI);
@@ -1567,7 +1461,6 @@ static void
    #kind=isnan*3, isinf*3, isfinite*3, signbit*3#
    #TYPE=(FLOAT, DOUBLE, LONGDOUBLE)*4#
    #typ=(float, double, longdouble)*4#
-   #c=(f,,l)*4#
 */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
@@ -1576,7 +1469,7 @@ static void
     intp is=steps[0], os=steps[1], n=dimensions[0];
     char *ip=args[0], *op=args[1];
     for(i=0; i<n; i++, ip+=is, op+=os) {
-        *((Bool *)op) = (Bool) (@kind@@c@(*((@typ@ *)ip)) != 0);
+        *((Bool *)op) = (Bool) (@kind@(*((@typ@ *)ip)) != 0);
     }
 }
 /**end repeat**/
@@ -1586,7 +1479,6 @@ static void
    #kind=isnan*3, isinf*3, isfinite*3#
    #TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*3#
    #typ=(float, double, longdouble)*3#
-   #c=(f,,l)*3#
    #OP=||*6,&&*3#
 */
 static void
@@ -1596,8 +1488,8 @@ static void
     intp is=steps[0], os=steps[1], n=dimensions[0];
     char *ip=args[0], *op=args[1];
     for(i=0; i<n; i++, ip+=is, op+=os) {
-        *((Bool *)op) = @kind@@c@(((@typ@ *)ip)[0]) @OP@        \
-            @kind@@c@(((@typ@ *)ip)[1]);
+        *((Bool *)op) = @kind@(((@typ@ *)ip)[0]) @OP@        \
+            @kind@(((@typ@ *)ip)[1]);
     }
 }
 /**end repeat**/
