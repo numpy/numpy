@@ -154,6 +154,7 @@ static int isnan_ld  (long double x)
 {
     return x != x;
 }
+#endif
 
 #if !defined(HAVE_DECL_ISINF)
     # define isinf(x) \
@@ -175,6 +176,7 @@ static int isinf_ld (long double x)
 {
     return isnan (x - x);
 }
+#endif
 
 #if !defined(HAVE_DECL_SIGNBIT)
     #include "_signbit.c"
@@ -192,6 +194,7 @@ static int signbit_ld (long double x)
 {
     return signbit_d((double)x);
 }
+#endif
 
 /* Define isfinie if needed */
 #if !defined(HAVE_DECL_ISFINITE)

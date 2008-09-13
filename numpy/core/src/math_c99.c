@@ -149,41 +149,43 @@ double trunc(double x)
               (sizeof (x) == sizeof (long double) ? isnan_ld (x) \
                : sizeof (x) == sizeof (double) ? isnan_d (x) \
                : isnan_f (x))
-static int isnan_f  (float x) 
-{ 
-    return x != x; 
+static int isnan_f  (float x)
+{
+    return x != x;
 }
 
-static int isnan_d  (double x) 
-{ 
-    return x != x; 
+static int isnan_d  (double x)
+{
+    return x != x;
 }
 
-static int isnan_ld  (long double x) 
-{ 
-    return x != x; 
+static int isnan_ld  (long double x)
+{
+    return x != x;
 }
- 
+#endif
+
 #if !defined(HAVE_DECL_ISINF)
     # define isinf(x) \
               (sizeof (x) == sizeof (long double) ? isinf_ld (x) \
                : sizeof (x) == sizeof (double) ? isinf_d (x) \
                : isinf_f (x))
 
-static int isinf_f (float x) 
-{ 
-    return isnan (x - x); 
-}
-
-static int isinf_d (double x) 
-{ 
-    return isnan (x - x); 
-}
-
-static int isinf_ld (long double x) 
-{ 
+static int isinf_f (float x)
+{
     return isnan (x - x);
 }
+
+static int isinf_d (double x)
+{
+    return isnan (x - x);
+}
+
+static int isinf_ld (long double x)
+{
+    return isnan (x - x);
+}
+#endif
 
 #if !defined(HAVE_DECL_SIGNBIT)
     #include "_signbit.c"
@@ -192,15 +194,16 @@ static int isinf_ld (long double x)
                : sizeof (x) == sizeof (double) ? signbit_d (x) \
                : signbit_f (x))
 
-static int signbit_f (float x) 
-{ 
-    return signbit_d((double)x); 
+static int signbit_f (float x)
+{
+    return signbit_d((double)x);
 }
 
-static int signbit_ld (long double x) 
-{ 
-    return signbit_d((double)x); 
+static int signbit_ld (long double x)
+{
+    return signbit_d((double)x);
 }
+#endif
 
 /* Define isfinie if needed */
 #if !defined(HAVE_DECL_ISFINITE)
@@ -227,7 +230,7 @@ static int signbit_ld (long double x)
  * One value argument function
  */
 
-#line 230
+#line 233
 
 #ifndef HAVE_SINL
 longdouble sinl(longdouble x)
@@ -236,7 +239,7 @@ longdouble sinl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_COSL
 longdouble cosl(longdouble x)
@@ -245,7 +248,7 @@ longdouble cosl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_TANL
 longdouble tanl(longdouble x)
@@ -254,7 +257,7 @@ longdouble tanl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_SINHL
 longdouble sinhl(longdouble x)
@@ -263,7 +266,7 @@ longdouble sinhl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_COSHL
 longdouble coshl(longdouble x)
@@ -272,7 +275,7 @@ longdouble coshl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_TANHL
 longdouble tanhl(longdouble x)
@@ -281,7 +284,7 @@ longdouble tanhl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_FABSL
 longdouble fabsl(longdouble x)
@@ -290,7 +293,7 @@ longdouble fabsl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_FLOORL
 longdouble floorl(longdouble x)
@@ -299,7 +302,7 @@ longdouble floorl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_CEILL
 longdouble ceill(longdouble x)
@@ -308,7 +311,7 @@ longdouble ceill(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_RINTL
 longdouble rintl(longdouble x)
@@ -317,7 +320,7 @@ longdouble rintl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_TRUNCL
 longdouble truncl(longdouble x)
@@ -326,7 +329,7 @@ longdouble truncl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_SQRTL
 longdouble sqrtl(longdouble x)
@@ -335,7 +338,7 @@ longdouble sqrtl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_LOG10L
 longdouble log10l(longdouble x)
@@ -344,7 +347,7 @@ longdouble log10l(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_LOGL
 longdouble logl(longdouble x)
@@ -353,7 +356,7 @@ longdouble logl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_EXPL
 longdouble expl(longdouble x)
@@ -362,7 +365,7 @@ longdouble expl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_EXPM1L
 longdouble expm1l(longdouble x)
@@ -371,7 +374,7 @@ longdouble expm1l(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ASINL
 longdouble asinl(longdouble x)
@@ -380,7 +383,7 @@ longdouble asinl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ACOSL
 longdouble acosl(longdouble x)
@@ -389,7 +392,7 @@ longdouble acosl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ATANL
 longdouble atanl(longdouble x)
@@ -398,7 +401,7 @@ longdouble atanl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ASINHL
 longdouble asinhl(longdouble x)
@@ -407,7 +410,7 @@ longdouble asinhl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ACOSHL
 longdouble acoshl(longdouble x)
@@ -416,7 +419,7 @@ longdouble acoshl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ATANHL
 longdouble atanhl(longdouble x)
@@ -425,7 +428,7 @@ longdouble atanhl(longdouble x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_SINF
 float sinf(float x)
@@ -434,7 +437,7 @@ float sinf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_COSF
 float cosf(float x)
@@ -443,7 +446,7 @@ float cosf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_TANF
 float tanf(float x)
@@ -452,7 +455,7 @@ float tanf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_SINHF
 float sinhf(float x)
@@ -461,7 +464,7 @@ float sinhf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_COSHF
 float coshf(float x)
@@ -470,7 +473,7 @@ float coshf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_TANHF
 float tanhf(float x)
@@ -479,7 +482,7 @@ float tanhf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_FABSF
 float fabsf(float x)
@@ -488,7 +491,7 @@ float fabsf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_FLOORF
 float floorf(float x)
@@ -497,7 +500,7 @@ float floorf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_CEILF
 float ceilf(float x)
@@ -506,7 +509,7 @@ float ceilf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_RINTF
 float rintf(float x)
@@ -515,7 +518,7 @@ float rintf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_TRUNCF
 float truncf(float x)
@@ -524,7 +527,7 @@ float truncf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_SQRTF
 float sqrtf(float x)
@@ -533,7 +536,7 @@ float sqrtf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_LOG10F
 float log10f(float x)
@@ -542,7 +545,7 @@ float log10f(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_LOGF
 float logf(float x)
@@ -551,7 +554,7 @@ float logf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_EXPF
 float expf(float x)
@@ -560,7 +563,7 @@ float expf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_EXPM1F
 float expm1f(float x)
@@ -569,7 +572,7 @@ float expm1f(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ASINF
 float asinf(float x)
@@ -578,7 +581,7 @@ float asinf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ACOSF
 float acosf(float x)
@@ -587,7 +590,7 @@ float acosf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ATANF
 float atanf(float x)
@@ -596,7 +599,7 @@ float atanf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ASINHF
 float asinhf(float x)
@@ -605,7 +608,7 @@ float asinhf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ACOSHF
 float acoshf(float x)
@@ -614,7 +617,7 @@ float acoshf(float x)
 }
 #endif
 
-#line 230
+#line 233
 
 #ifndef HAVE_ATANHF
 float atanhf(float x)
@@ -628,7 +631,7 @@ float atanhf(float x)
  * Two values arguments function
  */
 
-#line 252
+#line 255
 #ifndef HAVE_ATAN2L
 longdouble atan2l(longdouble x, longdouble y)
 {
@@ -636,7 +639,7 @@ longdouble atan2l(longdouble x, longdouble y)
 }
 #endif
 
-#line 252
+#line 255
 #ifndef HAVE_HYPOTL
 longdouble hypotl(longdouble x, longdouble y)
 {
@@ -644,7 +647,7 @@ longdouble hypotl(longdouble x, longdouble y)
 }
 #endif
 
-#line 252
+#line 255
 #ifndef HAVE_POWL
 longdouble powl(longdouble x, longdouble y)
 {
@@ -652,7 +655,7 @@ longdouble powl(longdouble x, longdouble y)
 }
 #endif
 
-#line 252
+#line 255
 #ifndef HAVE_FMODL
 longdouble fmodl(longdouble x, longdouble y)
 {
@@ -660,7 +663,7 @@ longdouble fmodl(longdouble x, longdouble y)
 }
 #endif
 
-#line 252
+#line 255
 #ifndef HAVE_ATAN2F
 float atan2f(float x, float y)
 {
@@ -668,7 +671,7 @@ float atan2f(float x, float y)
 }
 #endif
 
-#line 252
+#line 255
 #ifndef HAVE_HYPOTF
 float hypotf(float x, float y)
 {
@@ -676,7 +679,7 @@ float hypotf(float x, float y)
 }
 #endif
 
-#line 252
+#line 255
 #ifndef HAVE_POWF
 float powf(float x, float y)
 {
@@ -684,7 +687,7 @@ float powf(float x, float y)
 }
 #endif
 
-#line 252
+#line 255
 #ifndef HAVE_FMODF
 float fmodf(float x, float y)
 {
@@ -697,7 +700,7 @@ float fmodf(float x, float y)
  * One value - one pointer argument function
  */
 
-#line 272
+#line 275
 #ifndef HAVE_MODFL
 longdouble modfl(longdouble x, longdouble *iptr)
 {
@@ -709,7 +712,7 @@ longdouble modfl(longdouble x, longdouble *iptr)
 }
 #endif
 
-#line 272
+#line 275
 #ifndef HAVE_MODFF
 float modff(float x, float *iptr)
 {

@@ -1,7 +1,7 @@
 /* Adapted from cephes */
 
 static int
-signbit(double x)
+signbit_d(double x)
 {
     union
     {
