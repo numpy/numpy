@@ -91,8 +91,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
         fns = [f + prec for f in c99_funcs]
         check_funcs(fns)
 
-    # IEEE754 handling
-    check_funcs(["isnan", "isinf"])
+    # Normally, isnan and isinf are macro (C99), but some platforms only have
+    # func, or both func and macro version. Check for macro only, and define
+    # replacement ones if not found.
+    for f in ["isnan", "isinf", "signbit", "isfinite"]:
+        st = config.check_decl(f, headers = ["math.h"])
+        if st:
+            moredefs.append(name_to_symb("decl_%s" % f))
+ 
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
