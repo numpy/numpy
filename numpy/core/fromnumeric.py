@@ -1617,12 +1617,14 @@ def prod(a, axis=None, dtype=None, out=None):
 
     >>> x = np.array([1, 2, 3], dtype=np.uint8)
     >>> np.prod(x).dtype == np.uint
+    True
 
     If `x` is of a signed integer type, then the output type
     is the default platform integer:
 
     >>> x = np.array([1, 2, 3], dtype=np.int8)
     >>> np.prod(x).dtype == np.int
+    True
 
     """
     try:

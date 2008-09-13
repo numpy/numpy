@@ -765,7 +765,7 @@ def tensordot(a, b, axes=2):
     >>> b = np.arange(24.).reshape(4,3,2)
     >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))
     >>> c.shape
-    (5,2)
+    (5, 2)
     >>> c
     array([[ 4400.,  4730.],
            [ 4532.,  4874.],
@@ -774,7 +774,7 @@ def tensordot(a, b, axes=2):
            [ 4928.,  5306.]])
 
     >>> # A slower but equivalent way of computing the same...
-    >>> c = zeros((5,2))
+    >>> c = np.zeros((5,2))
     >>> for i in range(5):
     ...   for j in range(2):
     ...     for k in range(3):
