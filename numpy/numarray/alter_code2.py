@@ -12,11 +12,8 @@ import warnings
 warnings.warn("numpy.numarray.alter_code2 is not working yet.")
 import sys
 
-
 import os
-import re
 import glob
-
 
 def makenewfile(name, filestr):
     fid = file(name, 'w')

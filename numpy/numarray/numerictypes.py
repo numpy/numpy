@@ -54,9 +54,6 @@ except:
 #from typeconv import typeConverters as _typeConverters
 #import numinclude
 #from _numerictype import _numerictype, typeDict
-import types as _types
-import copy as _copy
-import sys as _sys
 
 # Enumeration of numarray type codes
 typeDict = {}
