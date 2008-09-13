@@ -97,8 +97,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
         st = config.check_decl(f, headers = ["math.h"])
         if st:
-            moredefs.append(name_to_symb("decl_%s" % f))
- 
+            moredefs.append(name_to_defsymb("decl_%s" % f))
+
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
