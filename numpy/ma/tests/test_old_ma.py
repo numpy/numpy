@@ -1,5 +1,5 @@
 import numpy
-import types, time
+import types
 from numpy.ma import *
 from numpy.core.numerictypes import float32
 from numpy.ma.core import umath

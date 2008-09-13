@@ -16,7 +16,6 @@ First, some unfortunate (probably unnecessary) concessions to doctest
 to keep the test run free of warnings.
 
 >>> del _PROXY_ALLOWED
->>> del copy
 >>> del __builtins__
 
 By default, save() stores every variable in the caller's namespace:
@@ -76,7 +75,6 @@ which is not restored by a simple import is lost.
 
 __all__ = ['load', 'save']
 
-import copy
 import sys
 import pickle
 

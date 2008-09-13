@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-import os
-import sys
 from numpy.testing import *
 from numpy.distutils.misc_util import appendpath, minrelpath, gpaths, rel_path
-from os.path import join, sep
+from os.path import join, sep, dirname
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
@@ -35,8 +33,7 @@ class TestAppendpath(TestCase):
 class TestMinrelpath(TestCase):
 
     def test_1(self):
-        import os
-        n = lambda path: path.replace('/',os.path.sep)
+        n = lambda path: path.replace('/',sep)
         assert_equal(minrelpath(n('aa/bb')),n('aa/bb'))
         assert_equal(minrelpath('..'),'..')
         assert_equal(minrelpath(n('aa/..')),'')
@@ -50,11 +47,11 @@ class TestMinrelpath(TestCase):
 class TestGpaths(TestCase):
 
     def test_gpaths(self):
-        local_path = minrelpath(os.path.join(os.path.dirname(__file__),'..'))
+        local_path = minrelpath(join(dirname(__file__),'..'))
         ls = gpaths('command/*.py', local_path)
-        assert os.path.join(local_path,'command','build_src.py') in ls,`ls`
+        assert join(local_path,'command','build_src.py') in ls,`ls`
         f = gpaths('system_info.py', local_path)
-        assert os.path.join(local_path,'system_info.py')==f[0],`f`
+        assert join(local_path,'system_info.py')==f[0],`f`
 
 
 if __name__ == "__main__":

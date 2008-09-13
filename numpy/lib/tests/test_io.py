@@ -140,7 +140,6 @@ class TestLoadTxt(TestCase):
         y = np.loadtxt(d, dtype=mydescriptor)
         assert_array_equal(y, b)
 
-
     def test_array(self):
         c = StringIO.StringIO()
         c.write('1 2\n3 4')
@@ -170,7 +169,6 @@ class TestLoadTxt(TestCase):
         a = np.array([1,2,3,4], int)
         assert_array_equal(x, a)
 
-
     def test_missing(self):
         c = StringIO.StringIO()
         c.write('1,2,3,,5\n')
@@ -178,6 +176,16 @@ class TestLoadTxt(TestCase):
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             converters={3:lambda s: int(s or -999)})
         a = np.array([1,2,3,-999,5], int)
+        assert_array_equal(x, a)
+
+    def test_converters_with_usecols(self):
+        c = StringIO.StringIO()
+        c.write('1,2,3,,5\n6,7,8,9,10\n')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', \
+            converters={3:lambda s: int(s or -999)}, \
+            usecols=(1, 3, ))
+        a = np.array([[2,  -999],[7, 9]], int)
         assert_array_equal(x, a)
 
     def test_comments(self):
@@ -221,6 +229,11 @@ class TestLoadTxt(TestCase):
         x = np.loadtxt(c, dtype=float, usecols=(1,2))
         assert_array_equal(x, a[:,1:])
 
+        # Testing with arrays instead of tuples.
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, usecols=np.array([1,2]))
+        assert_array_equal(x, a[:,1:])
+
         # Checking with dtypes defined converters.
         data = '''JOE 70.1 25.3
                 BOB 60.5 27.9
@@ -241,6 +254,9 @@ class TestLoadTxt(TestCase):
         a = np.array([(1,(2,3.0)),(4,(5,6.0))], dt)
         assert_array_equal(x, a)
 
+    def test_empty_file(self):
+        c = StringIO.StringIO()
+        assert_raises(IOError, np.loadtxt, c)
 
 class Testfromregex(TestCase):
     def test_record(self):

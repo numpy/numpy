@@ -1,8 +1,6 @@
 from numpy.testing import *
 import numpy.core.umath as ncu
 import numpy as np
-import nose
-from numpy import inf, nan, pi
 
 class TestDivision(TestCase):
     def test_division_int(self):
@@ -229,6 +227,7 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.arccosh, [-2j, 2j, 2], [1,  1,  1j], 1, 1
         yield _check_branch_cut, np.arctanh, [-2j, 2j, 0], [1,  1,  1j], 1, 1
 
+    @dec.knownfailureif(True, "These branch cuts are known to fail")
     def test_branch_cuts_failing(self):
         # XXX: signed zeros are not OK for sqrt or for the arc* functions
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True
@@ -238,7 +237,6 @@ class TestComplexFunctions(object):
         yield _check_branch_cut, np.arcsinh, [-2j,  2j], [-1,   1], -1, 1, True
         yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True
         yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, -1j], 1, -1, True
-    test_branch_cuts_failing = dec.skipknownfailure(test_branch_cuts_failing)
 
     def test_against_cmath(self):
         import cmath, sys
@@ -271,7 +269,7 @@ class TestAttributes(TestCase):
     def test_attributes(self):
         add = ncu.add
         assert_equal(add.__name__, 'add')
-        assert add.__doc__.startswith('y = add(x1,x2)\n\n')
+        assert add.__doc__.startswith('add(x1, x2[, out])\n\n')
         self.failUnless(add.ntypes >= 18) # don't fail if types added
         self.failUnless('ii->i' in add.types)
         assert_equal(add.nin, 2)

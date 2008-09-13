@@ -1,5 +1,4 @@
 from numpy.testing import *
-import numpy.core.umath as ncu
 import numpy as np
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -77,7 +76,6 @@ class TestConversion(TestCase):
 
 class TestRepr(TestCase):
     def test_float_repr(self):
-        from numpy import nan, inf
         for t in [np.float32, np.float64, np.longdouble]:
             if t is np.longdouble: # skip it for now.
                 continue

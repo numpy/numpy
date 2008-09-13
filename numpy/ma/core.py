@@ -1257,9 +1257,9 @@ class MaskedArray(ndarray):
             copy = True
         # Careful, cls might not always be MaskedArray...
         if not isinstance(data, cls) or not subok:
-            _data = _data.view(cls)
+            _data = ndarray.view(_data, cls)
         else:
-            _data = _data.view(type(data))
+            _data = ndarray.view(_data, type(data))
         # Backwards compatibility w/ numpy.core.ma .......
         if hasattr(data,'_mask') and not isinstance(data, ndarray):
             _data._mask = data._mask
@@ -1374,7 +1374,15 @@ class MaskedArray(ndarray):
         """
         # Get main attributes .........
         self._update_from(obj)
-        self._mask = getattr(obj, '_mask', nomask)
+        if isinstance(obj, ndarray):
+            odtype = obj.dtype
+            if odtype.names:
+                _mask = getattr(obj, '_mask', make_mask_none(obj.shape, odtype))
+            else:
+                _mask = getattr(obj, '_mask', nomask)
+        else:
+            _mask = nomask
+        self._mask = _mask
         # Finalize the mask ...........
         if self._mask is not nomask:
             self._mask.shape = self.shape
@@ -1424,6 +1432,24 @@ class MaskedArray(ndarray):
                 result._sharedmask = False
         #....
         return result
+    #.............................................
+    def view(self, dtype=None, type=None):
+        if dtype is not None:
+            if type is None:
+                args = (dtype,)
+            else:
+                args = (dtype, type)
+        elif type is None:
+            args = ()
+        else:
+            args = (type,)
+        output = ndarray.view(self, *args)
+        if (getattr(output,'_mask', nomask) is not nomask):
+            mdtype = make_mask_descr(output.dtype)
+            output._mask = self._mask.view(mdtype, ndarray)
+            output._mask.shape = output.shape
+        return output
+    view.__doc__ = ndarray.view.__doc__
     #.............................................
     def astype(self, newtype):
         """Returns a copy of the array cast to newtype."""
@@ -1701,7 +1727,7 @@ class MaskedArray(ndarray):
         underlying data.
 
         """
-        return self.view(self._baseclass)
+        return ndarray.view(self, self._baseclass)
     _data = property(fget=_get_data)
     data = property(fget=_get_data)
 
@@ -3123,6 +3149,14 @@ masked_%(name)s(data = %(data)s,
         return (_mareconstruct,
                 (self.__class__, self._baseclass, (0,), 'b', ),
                 self.__getstate__())
+    #
+    def __deepcopy__(self, memo={}):
+        from copy import deepcopy
+        copied = MaskedArray.__new__(type(self), self, copy=True)
+        memo[id(self)] = copied
+        for (k,v) in self.__dict__.iteritems():
+            copied.__dict__[k] = deepcopy(v, memo)
+        return copied
 
 
 def _mareconstruct(subtype, baseclass, baseshape, basetype,):
@@ -3223,6 +3257,8 @@ class _extrema_operation(object):
             mb = getmaskarray(b)
             m = logical_or.outer(ma, mb)
         result = self.ufunc.outer(filled(a), filled(b))
+        if not isinstance(result, MaskedArray):
+            result = result.view(MaskedArray)
         result._mask = m
         return result
 

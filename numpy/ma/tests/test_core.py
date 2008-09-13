@@ -330,6 +330,24 @@ class TestMaskedArray(TestCase):
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
 
 
+    def test_deepcopy(self):
+        from copy import deepcopy
+        a = array([0,1,2], mask=[False,True,False])
+        copied = deepcopy(a)
+        assert_equal(copied.mask, a.mask)
+        assert_not_equal(id(a._mask), id(copied._mask))
+        #
+        copied[1] = 1
+        assert_equal(copied.mask,[0,0,0])
+        assert_equal(a.mask, [0,1,0])
+        #
+        copied = deepcopy(a)
+        assert_equal(copied.mask, a.mask)
+        copied.mask[1] = False
+        assert_equal(copied.mask,[0,0,0])
+        assert_equal(a.mask, [0,1,0])
+
+
     def test_pickling(self):
         "Tests pickling"
         import cPickle
@@ -638,6 +656,23 @@ class TestMaskedArrayArithmetic(TestCase):
         x[-1,-1] = masked
         assert_equal(maximum(x), 2)
 
+    def test_minimummaximum_func(self):
+        a = np.ones((2,2))
+        aminimum = minimum(a,a)
+        assert(isinstance(aminimum, MaskedArray))
+        assert_equal(aminimum, np.minimum(a,a))
+        #
+        aminimum = minimum.outer(a,a)
+        assert(isinstance(aminimum, MaskedArray))
+        assert_equal(aminimum, np.minimum.outer(a,a))
+        #
+        amaximum = maximum(a,a)
+        assert(isinstance(amaximum, MaskedArray))
+        assert_equal(amaximum, np.maximum(a,a))
+        #
+        amaximum = maximum.outer(a,a)
+        assert(isinstance(amaximum, MaskedArray))
+        assert_equal(amaximum, np.maximum.outer(a,a))
 
     def test_minmax_funcs_with_output(self):
         "Tests the min/max functions with explicit outputs"
@@ -2307,6 +2342,34 @@ class TestMaskedFields(TestCase):
         assert_equal(getmaskarray(test),
                      np.array([(1, 1) , (1, 1), (1, 1)],
                               dtype=[('a', '|b1'), ('b', '|b1')]))
+    #
+    def test_view(self):
+        "Test view w/ flexible dtype"
+        iterator = zip(np.arange(10), np.random.rand(10))
+        data = np.array(iterator)
+        a = array(iterator, dtype=[('a',float),('b',float)])
+        a.mask[0] = (1,0)
+        controlmask = np.array([1]+19*[0], dtype=bool)
+        #
+        test = a.view(float)
+        assert_equal(test, data.ravel())
+        assert_equal(test.mask, controlmask)
+        #
+        test = a.view((float,2))
+        assert_equal(test, data)
+        assert_equal(test.mask, controlmask.reshape(-1,2))
+        #
+        test = a.view([('A',float),('B',float)])
+        assert_equal(test.mask.dtype.names, ('A', 'B'))
+        assert_equal(test['A'], a['a'])
+        assert_equal(test['B'], a['b'])
+        #
+        test = a.view(np.ndarray)
+        assert_equal(test, a._data)
+        #
+        test = a.view((float,2), np.matrix)
+        assert_equal(test, data)
+        assert(isinstance(test, np.matrix))
 
 
 ###############################################################################

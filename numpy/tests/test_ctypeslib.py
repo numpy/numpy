@@ -1,8 +1,11 @@
+import sys
+
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library
 from numpy.testing import *
 
 class TestLoadLibrary(TestCase):
+    @dec.knownfailureif(sys.platform=='cygwin', "This test is known to fail on cygwin")
     def test_basic(self):
         try:
             cdll = load_library('multiarray',
@@ -12,6 +15,7 @@ class TestLoadLibrary(TestCase):
                   " (import error was: %s)" % str(e)
             print msg
 
+    @dec.knownfailureif(sys.platform=='cygwin', "This test is known to fail on cygwin")
     def test_basic2(self):
         """Regression for #801: load_library with a full library name
         (including extension) does not work."""

@@ -3,7 +3,6 @@
 """ Test functions for fftpack.helper module
 """
 
-import sys
 from numpy.testing import *
 from numpy.fft import fftshift,ifftshift,fftfreq
 

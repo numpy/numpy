@@ -20,13 +20,13 @@ __all__ += ['vdot', 'dot', 'matrixmultiply', 'ravel', 'indices',
             'any', 'argmax', 'argmin', 'argsort', 'around', 'array_equal',
             'array_equiv', 'arrayrange', 'array_str', 'array_repr',
             'array2list', 'average', 'choose', 'CLIP', 'RAISE', 'WRAP',
-            'clip', 'compress', 'concatenate', 'copy', 'copy_reg',
+            'clip', 'compress', 'copy', 'copy_reg',
             'diagonal', 'divide_remainder', 'e', 'explicit_type', 'pi',
             'flush_caches', 'fromfile', 'os', 'sys', 'STRICT',
             'SLOPPY', 'WARN', 'EarlyEOFError', 'SizeMismatchError',
             'SizeMismatchWarning', 'FileSeekWarning', 'fromstring',
             'fromfunction', 'fromlist', 'getShape', 'getTypeObject',
-            'identity', 'indices', 'info', 'innerproduct', 'inputarray',
+            'identity', 'info', 'innerproduct', 'inputarray',
             'isBigEndian', 'kroneckerproduct', 'lexsort', 'math',
             'operator', 'outerproduct', 'put', 'putmask', 'rank',
             'repeat', 'reshape', 'resize', 'round', 'searchsorted',
@@ -45,9 +45,9 @@ import math
 import operator
 
 from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
-     allclose, any, around, argsort, array_equal, array_equiv,\
+     allclose, any, argsort, array_equal, array_equiv,\
      array_str, array_repr, CLIP, RAISE, WRAP, clip, concatenate, \
-     diagonal, e, pi, indices, inner as innerproduct, nonzero, \
+     diagonal, e, pi, inner as innerproduct, nonzero, \
      outer as outerproduct, kron as kroneckerproduct, lexsort, putmask, rank, \
      resize, searchsorted, shape, size, sort, swapaxes, trace, transpose
 import numpy as np
@@ -321,7 +321,7 @@ def getTypeObject(sequence, type):
     if type is not None:
         return type
     try:
-        return typefrom(N.array(sequence))
+        return typefrom(np.array(sequence))
     except:
         raise TypeError("Can't determine a reasonable type from sequence")
 
@@ -458,7 +458,7 @@ def take(array, indices, axis=0, outarr=None, clipmode=RAISE):
         res = work[indices]
         if outarr is None:
             return res
-        out[...] = res
+        outarr[...] = res
         return
 
 def tensormultiply(a1, a2):
@@ -466,9 +466,9 @@ def tensormultiply(a1, a2):
     if (a1.shape[-1] != a2.shape[0]):
         raise ValueError("Unmatched dimensions")
     shape = a1.shape[:-1] + a2.shape[1:]
-    return np.reshape(dot(N.reshape(a1, (-1, a1.shape[-1])),
-                         np.reshape(a2, (a2.shape[0],-1))),
-                     shape)
+    return np.reshape(dot(np.reshape(a1, (-1, a1.shape[-1])),
+                          np.reshape(a2, (a2.shape[0],-1))),
+                      shape)
 
 def cumsum(a1, axis=0, out=None, type=None, dim=0):
     return np.asarray(a1).cumsum(axis,dtype=type,out=out)

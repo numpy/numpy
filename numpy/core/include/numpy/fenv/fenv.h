@@ -91,7 +91,7 @@ feclearexcept(int __excepts)
 static __inline int
 fegetexceptflag(fexcept_t *__flagp, int __excepts)
 {
-	int __status;
+	__uint16_t __status;
 
 	__fnstsw(&__status);
 	*__flagp = __status & __excepts;
@@ -123,7 +123,7 @@ feraiseexcept(int __excepts)
 static __inline int
 fetestexcept(int __excepts)
 {
-	int __status;
+	__uint16_t __status;
 
 	__fnstsw(&__status);
 	return (__status & __excepts);
@@ -187,7 +187,7 @@ fesetenv(const fenv_t *__envp)
 static __inline int
 feupdateenv(const fenv_t *__envp)
 {
-	int __status;
+	__uint16_t __status;
 
 	__fnstsw(&__status);
 	__fldenv(*__envp);

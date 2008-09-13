@@ -87,7 +87,6 @@ class TestRegression(TestCase):
 
     def test_char_dump(self,level=rlevel):
         """Ticket #50"""
-        import tempfile
         f = StringIO()
         ca = np.char.array(np.arange(1000,1010),itemsize=4)
         ca.dump(f)
