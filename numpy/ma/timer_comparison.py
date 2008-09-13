@@ -1,16 +1,14 @@
-
 import timeit
 
-import numpy
-from numpy import int_, float_, bool_
-import numpy.core.fromnumeric as fromnumeric
+import numpy as np
+from numpy import float_
+import np.core.fromnumeric as fromnumeric
 
-from numpy.testing.utils import build_err_msg, rand
+from np.testing.utils import build_err_msg
 
+np.seterr(all='ignore')
 
-numpy.seterr(all='ignore')
-
-pi = numpy.pi
+pi = np.pi
 
 class moduletester:
     #-----------------------------------
@@ -61,15 +59,15 @@ class moduletester:
         y = self.filled(self.masked_array(yf, mask=m), fill_value)
         if (x.dtype.char != "O"):
             x = x.astype(float_)
-            if isinstance(x, numpy.ndarray) and x.size > 1:
-                x[numpy.isnan(x)] = 0
-            elif numpy.isnan(x):
+            if isinstance(x, np.ndarray) and x.size > 1:
+                x[np.isnan(x)] = 0
+            elif np.isnan(x):
                 x = 0
         if (y.dtype.char != "O"):
             y = y.astype(float_)
-            if isinstance(y, numpy.ndarray) and y.size > 1:
-                y[numpy.isnan(y)] = 0
-            elif numpy.isnan(y):
+            if isinstance(y, np.ndarray) and y.size > 1:
+                y[np.isnan(y)] = 0
+            elif np.isnan(y):
                 y = 0
         try:
             cond = (x.shape==() or y.shape==()) or x.shape == y.shape
@@ -110,23 +108,23 @@ class moduletester:
     #----------------------------------
     def test_0(self):
         "Tests creation"
-        x = numpy.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         xm = self.masked_array(x, mask=m)
         xm[0]
     #----------------------------------
     def test_1(self):
         "Tests creation"
-        x = numpy.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
-        y = numpy.array([5.,0.,3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
+        x = np.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        y = np.array([5.,0.,3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 ,0, 1]
         xm = self.masked_array(x, mask=m1)
         ym = self.masked_array(y, mask=m2)
-        z = numpy.array([-.5, 0., .5, .8])
+        z = np.array([-.5, 0., .5, .8])
         zm = self.masked_array(z, mask=[0,1,0,0])
-        xf = numpy.where(m1, 1.e+20, x)
+        xf = np.where(m1, 1.e+20, x)
         xm.set_fill_value(1.e+20)
         #.....
         assert((xm-ym).filled(0).any())
@@ -146,13 +144,13 @@ class moduletester:
     #----------------------------------
     def test_2(self):
         "Tests conversions and indexing"
-        x1 = numpy.array([1,2,4,3])
+        x1 = np.array([1,2,4,3])
         x2 = self.array(x1, mask=[1,0,0,0])
         x3 = self.array(x1, mask=[0,1,0,1])
         x4 = self.array(x1)
     # test conversion to strings
         junk, garbage = str(x2), repr(x2)
-#        assert_equal(numpy.sort(x1), self.sort(x2, fill_value=0))
+#        assert_equal(np.sort(x1), self.sort(x2, fill_value=0))
     # tests of indexing
         assert type(x2[1]) is type(x1[1])
         assert x1[1] == x2[1]
@@ -178,12 +176,12 @@ class moduletester:
         x4[:] = self.masked_array([1,2,3,4],[0,1,1,0])
 #        assert self.allequal(self.getmask(x4), self.array([0,1,1,0]))
 #        assert self.allequal(x4, self.array([1,2,3,4]))
-        x1 = numpy.arange(5)*1.0
+        x1 = np.arange(5)*1.0
         x2 = self.masked_values(x1, 3.0)
 #        assert self.allequal(x1,x2)
 #        assert self.allequal(self.array([0,0,0,1,0], self.MaskType), x2.mask)
         x1 = self.array([1,'hello',2,3],object)
-        x2 = numpy.array([1,'hello',2,3],object)
+        x2 = np.array([1,'hello',2,3],object)
         s1 = x1[1]
         s2 = x2[1]
         assert x1[1:1].shape == (0,)
@@ -216,15 +214,15 @@ class moduletester:
     def test_4(self):
         "Test of take, transpose, inner, outer products"
         x = self.arange(24)
-        y = numpy.arange(24)
+        y = np.arange(24)
         x[5:6] = self.masked
         x = x.reshape(2,3,4)
         y = y.reshape(2,3,4)
-        assert self.allequal(numpy.transpose(y,(2,0,1)), self.transpose(x,(2,0,1)))
-        assert self.allequal(numpy.take(y, (2,0,1), 1), self.take(x, (2,0,1), 1))
-        assert self.allequal(numpy.inner(self.filled(x,0), self.filled(y,0)),
+        assert self.allequal(np.transpose(y,(2,0,1)), self.transpose(x,(2,0,1)))
+        assert self.allequal(np.take(y, (2,0,1), 1), self.take(x, (2,0,1), 1))
+        assert self.allequal(np.inner(self.filled(x,0), self.filled(y,0)),
                             self.inner(x, y))
-        assert self.allequal(numpy.outer(self.filled(x,0), self.filled(y,0)),
+        assert self.allequal(np.outer(self.filled(x,0), self.filled(y,0)),
                             self.outer(x, y))
         y = self.array(['abc', 1, 'def', 2, 3], object)
         y[2] = self.masked
@@ -396,8 +394,8 @@ class moduletester:
         self.assert_array_equal(self.average(x, axis=0), 2.5)
         self.assert_array_equal(self.average(x, axis=0, weights=w1), 2.5)
         y = self.array([self.arange(6), 2.0*self.arange(6)])
-        self.assert_array_equal(self.average(y, None), numpy.add.reduce(numpy.arange(6))*3./12.)
-        self.assert_array_equal(self.average(y, axis=0), numpy.arange(6) * 3./2.)
+        self.assert_array_equal(self.average(y, None), np.add.reduce(np.arange(6))*3./12.)
+        self.assert_array_equal(self.average(y, axis=0), np.arange(6) * 3./2.)
         self.assert_array_equal(self.average(y, axis=1), [self.average(x,axis=0), self.average(x,axis=0) * 2.0])
         self.assert_array_equal(self.average(y, None, weights=w2), 20./6.)
         self.assert_array_equal(self.average(y, axis=0, weights=w2), [0.,1.,2.,3.,4.,10.])
@@ -420,7 +418,7 @@ class moduletester:
     #------------------------
     def test_A(self):
         x = self.arange(24)
-        y = numpy.arange(24)
+        y = np.arange(24)
         x[5:6] = self.masked
         x = x.reshape(2,3,4)
 
@@ -431,10 +429,10 @@ if __name__ == '__main__':
     setup_base = "from __main__ import moduletester \n"\
                  "import numpy\n" \
                  "tester = moduletester(module)\n"
-#    setup_new = "import numpy.ma.core_ini as module\n"+setup_base
-    setup_cur = "import numpy.ma.core as module\n"+setup_base
-#    setup_alt = "import numpy.ma.core_alt as module\n"+setup_base
-#    setup_tmp = "import numpy.ma.core_tmp as module\n"+setup_base
+#    setup_new = "import np.ma.core_ini as module\n"+setup_base
+    setup_cur = "import np.ma.core as module\n"+setup_base
+#    setup_alt = "import np.ma.core_alt as module\n"+setup_base
+#    setup_tmp = "import np.ma.core_tmp as module\n"+setup_base
 
     (nrepeat, nloop) = (10, 10)
 
@@ -445,10 +443,10 @@ if __name__ == '__main__':
             cur = timeit.Timer(func, setup_cur).repeat(nrepeat, nloop*10)
 #            alt = timeit.Timer(func, setup_alt).repeat(nrepeat, nloop*10)
 #            tmp = timeit.Timer(func, setup_tmp).repeat(nrepeat, nloop*10)
-#            new = numpy.sort(new)
-            cur = numpy.sort(cur)
-#            alt = numpy.sort(alt)
-#            tmp = numpy.sort(tmp)
+#            new = np.sort(new)
+            cur = np.sort(cur)
+#            alt = np.sort(alt)
+#            tmp = np.sort(tmp)
             print "#%i" % i +50*'.'
             print eval("moduletester.test_%i.__doc__" % i)
 #            print "core_ini     : %.3f - %.3f" % (new[0], new[1])

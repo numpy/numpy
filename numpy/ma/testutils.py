@@ -16,12 +16,10 @@ import numpy as np
 from numpy import ndarray, float_
 import numpy.core.umath as umath
 from numpy.testing import *
-from numpy.testing.utils import build_err_msg, rand
 import numpy.testing.utils as utils
 
-import core
-from core import mask_or, getmask, getmaskarray, masked_array, nomask, masked
-from core import fix_invalid, filled, equal, less
+from core import mask_or, getmask, masked_array, nomask, masked, filled, \
+                 equal, less
 
 #------------------------------------------------------------------------------
 def approx (a, b, fill_value=True, rtol=1.e-5, atol=1.e-8):

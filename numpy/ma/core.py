@@ -57,16 +57,13 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'var', 'where',
            'zeros']
 
-import sys
-import types
 import cPickle
 import operator
 
 import numpy as np
-from numpy import ndarray, typecodes, amax, amin, iscomplexobj,\
-    bool_, complex_, float_, int_, object_, str_
+from numpy import ndarray, amax, amin, iscomplexobj, bool_, complex_, float_,\
+                  int_, object_
 from numpy import array as narray
-
 
 import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes

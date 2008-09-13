@@ -16,23 +16,21 @@ By comparison, mrecarrays support masking individual fields.
 __author__ = "Pierre GF Gerard-Marchant"
 
 import sys
-import types
 
 import numpy as np
-from numpy import bool_, complex_, float_, int_, str_, object_, dtype, \
-    chararray, ndarray, recarray, record, array as narray
+from numpy import bool_, dtype, \
+    ndarray, recarray, array as narray
 import numpy.core.numerictypes as ntypes
-from numpy.core.records import find_duplicate, format_parser
 from numpy.core.records import fromarrays as recfromarrays, \
-    fromrecords as recfromrecords
+                               fromrecords as recfromrecords
 
 _byteorderconv = np.core.records._byteorderconv
 _typestr = ntypes._typestr
 
 import numpy.ma as ma
 from numpy.ma import MAError, MaskedArray, masked, nomask, masked_array,\
-    make_mask, mask_or, getdata, getmask, getmaskarray, filled, \
-    default_fill_value, masked_print_option
+                     getdata, getmaskarray, filled
+
 _check_fill_value = ma.core._check_fill_value
 
 import warnings
