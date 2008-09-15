@@ -164,7 +164,12 @@ class TestLoadTxt(NumpyTestCase):
 
     def test_empty_file(self):
         c = StringIO.StringIO()
-        assert_raises(IOError, np.loadtxt, c)
+        try:
+            np.loadtxt(c)
+        except IOError:
+            return
+        else:
+            raise RuntimeError("Empty file should raise IOError.")
 
 class Testfromregex(NumpyTestCase):
     def test_record(self):
