@@ -20,9 +20,6 @@ f2py_version='See `f2py -v`'
 import pprint
 import copy
 import sys
-import time
-import types
-import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint

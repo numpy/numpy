@@ -1,4 +1,5 @@
-import os,sys,re,time
+import sys
+import re
 
 from numpy.testing.utils import jiffies, memusage
 

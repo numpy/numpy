@@ -19,7 +19,9 @@ __version__ = "$Revision: 1.75 $"[10:-1]
 import __version__
 f2py_version = __version__.version
 
-import types,sys,copy,os
+import types
+import sys
+import copy
 errmess=sys.stderr.write
 
 ##################### Definitions ##################

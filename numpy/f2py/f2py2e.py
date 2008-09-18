@@ -21,7 +21,6 @@ f2py_version = __version__.version
 import sys
 import os
 import pprint
-import shutil
 import types
 import re
 errmess=sys.stderr.write
@@ -31,11 +30,8 @@ show=pprint.pprint
 import crackfortran
 import rules
 import cb_rules
-import common_rules
 import auxfuncs
 import cfuncs
-import capi_maps
-import func2subr
 import f90mod_rules
 
 outmess = auxfuncs.outmess
@@ -395,7 +391,7 @@ def run_compile():
     """
     Do it all in one call!
     """
-    import tempfile,os,shutil
+    import tempfile
 
     i = sys.argv.index('-c')
     del sys.argv[i]
@@ -547,6 +543,7 @@ def run_compile():
     setup(ext_modules = [ext])
 
     if remove_build_dir and os.path.exists(build_dir):
+        import shutil 
         outmess('Removing build directory %s\n'%(build_dir))
         shutil.rmtree(build_dir)
 

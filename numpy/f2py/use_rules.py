@@ -21,16 +21,11 @@ f2py_version='See `f2py -v`'
 
 import pprint
 import sys
-import time
-import types
-import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
 from auxfuncs import *
-import capi_maps
-import cfuncs
 ##############
 
 usemodule_rules={

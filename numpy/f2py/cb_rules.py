@@ -21,16 +21,13 @@ f2py_version = __version__.version
 
 import pprint
 import sys
-import time
 import types
-import copy
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
 from auxfuncs import *
 import capi_maps
-#from capi_maps import *
 import cfuncs
 
 ################## Rules for callback function ##############
