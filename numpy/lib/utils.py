@@ -4,9 +4,7 @@ import pkgutil
 import types
 import re
 
-from numpy.core.numerictypes import obj2sctype, generic, issubclass_, \
-    issubsctype, issubdtype
-from numpy.core.multiarray import dtype as _dtype
+from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core import product, ndarray
 
 __all__ = ['issubclass_', 'get_numpy_include', 'issubsctype',
