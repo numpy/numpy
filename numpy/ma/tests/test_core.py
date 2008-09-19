@@ -2372,7 +2372,23 @@ class TestMaskedFields(TestCase):
         test = a.view((float,2), np.matrix)
         assert_equal(test, data)
         assert(isinstance(test, np.matrix))
-
+    #
+    def test_getitem(self):
+        ndtype = [('a',float), ('b',float)]
+        a = array(zip(np.random.rand(10),np.arange(10)), dtype=ndtype)
+        a.mask = np.array(zip([0,0,0,0,0,0,0,0,1,1],
+                              [1,0,0,0,0,0,0,0,1,0]),
+                          dtype=[('a',bool),('b',bool)])
+        # No mask
+        assert(isinstance(a[1], np.void))
+        # One element masked
+        assert(isinstance(a[0], MaskedArray))
+        assert_equal_records(a[0]._data, a._data[0])
+        assert_equal_records(a[0]._mask, a._mask[0])
+        # All element masked
+        assert(isinstance(a[-2], MaskedArray))
+        assert_equal_records(a[-2]._data, a._data[-2])
+        assert_equal_records(a[-2]._mask, a._mask[-2])
 
 ###############################################################################
 #------------------------------------------------------------------------------

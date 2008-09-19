@@ -203,8 +203,8 @@ class TestMRecords(TestCase):
     #
     def test_set_elements(self):
         base = self.base.copy()
-        mbase = base.view(mrecarray)
         # Set an element to mask .....................
+        mbase = base.view(mrecarray).copy()
         mbase[-2] = masked
         assert_equal(mbase._fieldmask.tolist(),
                      np.array([(0,0,0),(1,1,1),(0,0,0),(1,1,1),(1,1,1)],

@@ -151,10 +151,9 @@ class MaskedRecords(MaskedArray, object):
         return self
     #......................................................
     def __array_finalize__(self,obj):
-        MaskedArray._update_from(self,obj)
         # Make sure we have a _fieldmask by default ..
-        _fieldmask = getattr(obj, '_fieldmask', None)
-        if _fieldmask is None:
+        _mask = getattr(obj, '_mask', None)
+        if _mask is None:
             objmask = getattr(obj, '_mask', nomask)
             _dtype = ndarray.__getattribute__(self,'dtype')
             if objmask is nomask:
@@ -163,14 +162,14 @@ class MaskedRecords(MaskedArray, object):
                 mdescr = ma.make_mask_descr(_dtype)
                 _mask = narray([tuple([m]*len(mdescr)) for m in objmask],
                                dtype=mdescr).view(recarray)
-        else:
-            _mask = _fieldmask
         # Update some of the attributes
-        _locdict = self.__dict__
-        if _locdict['_baseclass'] == ndarray:
-            _locdict['_baseclass'] = recarray
-        _locdict.update(_mask=_mask, _fieldmask=_mask)
+        _dict = self.__dict__
+        _dict.update(_mask=_mask, _fieldmask=_mask)
+        self._update_from(obj)
+        if _dict['_baseclass'] == ndarray:
+            _dict['_baseclass'] = recarray
         return
+
 
     def _getdata(self):
         "Returns the data as a recarray."
@@ -248,7 +247,6 @@ class MaskedRecords(MaskedArray, object):
             # Get the list of names ......
             fielddict = ndarray.__getattribute__(self,'dtype').fields or {}
             # Check the attribute
-#####            _localdict = self.__dict__
             if attr not in fielddict:
                 return ret
             if newattr:         # We just added this one
@@ -282,8 +280,8 @@ class MaskedRecords(MaskedArray, object):
         """Returns all the fields sharing the same fieldname base.
 The fieldname base is either `_data` or `_mask`."""
         _localdict = self.__dict__
-        _mask = _localdict['_fieldmask']
-        _data = self._data
+        _mask = ndarray.__getattribute__(self,'_mask')
+        _data = ndarray.view(self, _localdict['_baseclass'])
         # We want a field ........
         if isinstance(indx, basestring):
             #!!!: Make sure _sharedmask is True to propagate back to _fieldmask
@@ -471,7 +469,7 @@ def fromarrays(arraylist, dtype=None, shape=None, formats=None,
                            dtype=dtype, shape=shape, formats=formats,
                            names=names, titles=titles, aligned=aligned,
                            byteorder=byteorder).view(mrecarray)
-    _array._fieldmask.flat = zip(*masklist)
+    _array._mask.flat = zip(*masklist)
     if fill_value is not None:
         _array.fill_value = fill_value
     return _array
@@ -505,13 +503,17 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
     mask : {nomask, sequence}, optional.
         External mask to apply on the data.
 
-*Notes*:
+    Notes
+    -----
     Lists of tuples should be preferred over lists of lists for faster processing.
     """
     # Grab the initial _fieldmask, if needed:
     _fieldmask = getattr(reclist, '_fieldmask', None)
     # Get the list of records.....
-    nfields = len(reclist[0])
+    try:
+        nfields = len(reclist[0])
+    except TypeError:
+        nfields = len(reclist[0].dtype)
     if isinstance(reclist, ndarray):
         # Make sure we don't have some hidden mask
         if isinstance(reclist,MaskedArray):
@@ -654,7 +656,7 @@ and `newfieldname` as name. If `newfieldname` is None, the new field name is
 set to 'fi', where `i` is the number of existing fields.
     """
     _data = mrecord._data
-    _mask = mrecord._fieldmask
+    _mask = mrecord._mask
     if newfieldname is None or newfieldname in reserved_fields:
         newfieldname = 'f%i' % len(_data.dtype)
     newfield = ma.array(newfield)

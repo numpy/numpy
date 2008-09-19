@@ -1479,15 +1479,22 @@ class MaskedArray(ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
-        dout = ndarray.__getitem__(self.view(ndarray), indx)
+        dout = ndarray.__getitem__(ndarray.view(self,ndarray), indx)
         # We could directly use ndarray.__getitem__ on self...
         # But then we would have to modify __array_finalize__ to prevent the
         # mask of being reshaped if it hasn't been set up properly yet...
         # So it's easier to stick to the current version
         _mask = self._mask
         if not getattr(dout,'ndim', False):
+            # A record ................
+            if isinstance(dout, np.void):
+                mask = _mask[indx]
+                if mask.view((bool,len(mask.dtype))).any():
+                    dout = masked_array(dout, mask=mask)
+                else:
+                    return dout
             # Just a scalar............
-            if _mask is not nomask and _mask[indx]:
+            elif _mask is not nomask and _mask[indx]:
                 return masked
         else:
             # Force dout to MA ........
@@ -1896,7 +1903,15 @@ class MaskedArray(ndarray):
                 res = self._data
             else:
                 if m.shape == ():
-                    if m:
+                    if m.dtype.names:
+                        m = m.view((bool, len(m.dtype)))
+                        if m.any():
+                            r = np.array(self._data.tolist(), dtype=object)
+                            np.putmask(r, m, f)
+                            return str(tuple(r))
+                        else:
+                            return str(self._data)
+                    elif m:
                         return str(f)
                     else:
                         return str(self._data)
@@ -1933,21 +1948,31 @@ masked_%(name)s(data = %(data)s,
       mask = %(mask)s,
       fill_value=%(fill)s)
 """
+        with_mask_flx = """\
+masked_%(name)s(data =
+ %(data)s,
+      mask =
+ %(mask)s,
+      fill_value=%(fill)s,
+      dtype=%(dtype)s)
+"""
+        with_mask1_flx = """\
+masked_%(name)s(data = %(data)s,
+      mask = %(mask)s,
+      fill_value=%(fill)s
+      dtype=%(dtype)s)
+"""
         n = len(self.shape)
         name = repr(self._data).split('(')[0]
-        if n <= 1:
-            return with_mask1 % {
-                'name': name,
-                'data': str(self),
-                'mask': str(self._mask),
-                'fill': str(self.fill_value),
-                }
-        return with_mask % {
-            'name': name,
-            'data': str(self),
-            'mask': str(self._mask),
-            'fill': str(self.fill_value),
-            }
+        parameters =  dict(name=name, data=str(self), mask=str(self._mask),
+                           fill=str(self.fill_value), dtype=str(self.dtype))
+        if self.dtype.names:
+            if n<= 1:
+                return with_mask1_flx % parameters
+            return  with_mask_flx % parameters
+        elif n <= 1:
+            return with_mask1 % parameters
+        return with_mask % parameters
     #............................................
     def __add__(self, other):
         "Add other to self, and return a new masked array."
@@ -3509,6 +3534,8 @@ def concatenate(arrays, axis=0):
     return data
 
 def count(a, axis = None):
+    if isinstance(a, MaskedArray):
+        return a.count(axis)
     return masked_array(a, copy=False).count(axis)
 count.__doc__ = MaskedArray.count.__doc__
 
