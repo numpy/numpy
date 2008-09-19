@@ -448,16 +448,22 @@ class recarray(ndarray):
         else:
             return self.setfield(val, *res)
 
-    def view(self, obj):
-        try:
-            if issubclass(obj, ndarray):
-                return ndarray.view(self, obj)
-        except TypeError:
-            pass
-        dtype = sb.dtype(obj)
-        if dtype.fields is None:
-            return self.__array__().view(dtype)
-        return ndarray.view(self, obj)
+    def view(self, dtype=None, type=None):
+        if dtype is None:
+            return ndarray.view(self, type)
+        elif type is None:
+            try:
+                if issubclass(dtype, ndarray):
+                    return ndarray.view(self, dtype)
+            except TypeError:
+                pass
+            dtype = sb.dtype(dtype)
+            if dtype.fields is None:
+                return self.__array__().view(dtype)
+            return ndarray.view(self, dtype)
+        else:
+            return ndarray.view(self, dtype, type)
+
 
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
