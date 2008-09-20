@@ -94,8 +94,10 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # Normally, isnan and isinf are macro (C99), but some platforms only have
     # func, or both func and macro version. Check for macro only, and define
     # replacement ones if not found.
+    # Note: including Python.h is necessary because it modifies some math.h
+    # definitions
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
-        st = config.check_decl(f, headers = ["math.h"])
+        st = config.check_decl(f, headers = ["Python.h", "math.h"])
         if st:
             moredefs.append(name_to_defsymb("decl_%s" % f))
 
