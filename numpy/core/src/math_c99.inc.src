@@ -143,6 +143,11 @@ double trunc(double x)
     # define isinf(x) isnan((x) - (x))
 #endif
 
+/* Define isfinie if needed */
+#if !defined(HAVE_DECL_ISFINITE)
+#define isfinite(x) (!(isinf((x)) || isnan((x))))
+#endif
+
 #if !defined(HAVE_DECL_SIGNBIT)
     #include "_signbit.c"
     # define signbit(x) \
@@ -159,11 +164,6 @@ static int signbit_ld (long double x)
 {
     return signbit_d((double)x);
 }
-#endif
-
-/* Define isfinie if needed */
-#if !defined(HAVE_DECL_ISFINITE)
-#define isfinite(x) (!(isinf((x)) || isnan((x))))
 #endif
 
 /*
