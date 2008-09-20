@@ -17,7 +17,7 @@
 #include "config.h"
 #include <math.h>
 
-#include "math_c99.c"
+#include "math_c99.inc"
 
 float degreesf(float x) {
     return x * (float)(180.0/M_PI);

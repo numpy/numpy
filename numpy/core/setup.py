@@ -354,10 +354,10 @@ def configuration(parent_package='',top_path=None):
                                     generate_ufunc_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
+                                    join('src','math_c99.inc.src'),
                                     ],
                          depends = [join('src','ufuncobject.c'),
                                     generate_umath_py,
-                                    join('src','math_c99.c'),
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
                          )
