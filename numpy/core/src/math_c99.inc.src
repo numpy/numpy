@@ -215,6 +215,10 @@ static int signbit_ld (long double x)
  * hypot, atan2, pow, fmod, modf
  *
  * We assume the above are always available in their double versions.
+ *
+ * NOTE: some facilities may be available as macro only  instead of functions.
+ * For simplicity, we define our own functions and undef the macros. We could
+ * instead test for the macro, but I am lazy to do that for now.
  */
 
 /*
@@ -232,6 +236,9 @@ static int signbit_ld (long double x)
 */
 
 #ifndef HAVE_@KIND@@C@
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
 @typ@ @kind@@c@(@typ@ x)
 {
     return (@typ@) @kind@((double)x);
@@ -253,6 +260,9 @@ static int signbit_ld (long double x)
    #TYPE=LONGDOUBLE*4,FLOAT*4#
 */
 #ifndef HAVE_@KIND@@C@
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
 @typ@ @kind@@c@(@typ@ x, @typ@ y)
 {
     return (@typ@) @kind@((double)x, (double) y);
@@ -273,6 +283,9 @@ static int signbit_ld (long double x)
    #TYPE=LONGDOUBLE, FLOAT#
 */
 #ifndef HAVE_@KIND@@C@
+#ifdef modf@c@
+#undef modf@c@
+#endif
 @typ@ modf@c@(@typ@ x, @typ@ *iptr)
 {
     double nx, niptr, y;
