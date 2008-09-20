@@ -139,8 +139,8 @@ double trunc(double x)
     # define isnan(x) ((x) != (x))
 #endif
 
-#if !defined(HAVE_DECL_ISINF)
-    # define isinf(x) isnan((x) - (x))
+#if !defined(HAVE_DECL_ISFINITE)
+    # define isfinite(x) !isnan((x) - (x))
 #endif
 
 /* Define isfinie if needed */
