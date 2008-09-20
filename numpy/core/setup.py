@@ -63,6 +63,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
     def name_to_defsymb(name):
         return "HAVE_%s" % name.upper()
 
+    use_msvc = config.check_decl("_MSC_VER")
+
     # Mandatory functions: if not found, fail the build
     mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
                        "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
