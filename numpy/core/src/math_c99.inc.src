@@ -136,24 +136,7 @@ double trunc(double x)
  *****************************************************************************
  */
 #if !defined(HAVE_DECL_ISNAN)
-    # define isnan(x) \
-              (sizeof (x) == sizeof (long double) ? isnan_ld (x) \
-               : sizeof (x) == sizeof (double) ? isnan_d (x) \
-               : isnan_f (x))
-static int isnan_f  (float x)
-{
-    return x != x;
-}
-
-static int isnan_d  (double x)
-{
-    return x != x;
-}
-
-static int isnan_ld  (long double x)
-{
-    return x != x;
-}
+    # define isnan(x) ((x) != (x))
 #endif
 
 #if !defined(HAVE_DECL_ISINF)
