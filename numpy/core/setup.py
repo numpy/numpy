@@ -200,7 +200,7 @@ def configuration(parent_package='',top_path=None):
 #endif
 
 #ifdef HAVE_EXPF
-#define HAVE_FUNCS_FUNCS
+#define HAVE_FLOAT_FUNCS
 #endif
 """)
             target_f.close()
