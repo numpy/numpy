@@ -145,7 +145,7 @@ double trunc(double x)
 
 /* Define isfinie if needed */
 #if !defined(HAVE_DECL_ISFINITE)
-#define isfinite(x) (!(isinf((x)) || isnan((x))))
+#define isfinite(x) (!isinf(x) && !isnan(x))
 #endif
 
 #if !defined(HAVE_DECL_SIGNBIT)
