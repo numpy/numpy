@@ -72,7 +72,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
         # intrisincs functions are available.
         # Functions which have intrisinces: sin, cos, tan, sin, cosh, tanh,
         # fabs, sqrt, log10, log, exp, asin, acos, atan, fmod
-        mandatory_funcs = ["floor", "ceil", 'modf', 'frexp', 'ldexp']
+        mandatory_funcs = ['modf', 'frexp', 'ldexp']
     else:
         mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
                         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
