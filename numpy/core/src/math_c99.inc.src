@@ -139,8 +139,10 @@ double trunc(double x)
     # define isnan(x) ((x) != (x))
 #endif
 
+/* VS 2003 with /Ox optimizes (x)-(x) to 0, which is not IEEE compliant. So we
+ * force (x) + (-x), which seems to work. */
 #if !defined(HAVE_DECL_ISFINITE)
-    # define isfinite(x) !isnan((x) - (x))
+    # define isfinite(x) !isnan((x) + (-x))
 #endif
 
 #if !defined(HAVE_DECL_ISINF)
