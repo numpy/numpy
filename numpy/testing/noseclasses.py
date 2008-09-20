@@ -9,7 +9,7 @@ import doctest
 from nose.plugins import doctests as npd
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
-from nose.util import src, tolist
+from nose.util import src, getpackage
 import numpy
 from nosetester import get_package_name
 import inspect
@@ -79,10 +79,11 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # doctests in extension modules.
 
         # Local shorthands
-        from inspect import isroutine, isclass, ismodule
+        from inspect import isroutine, isclass, ismodule, isfunction, \
+                            ismethod
 
         # Look for tests in a module's contained objects.
-        if inspect.ismodule(obj) and self._recurse:
+        if ismodule(obj) and self._recurse:
             for valname, val in obj.__dict__.items():
                 valname1 = '%s.%s' % (name, valname)
                 if ( (isroutine(val) or isclass(val))
@@ -93,7 +94,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
 
 
         # Look for tests in a class's contained objects.
-        if inspect.isclass(obj) and self._recurse:
+        if isclass(obj) and self._recurse:
             #print 'RECURSE into class:',obj  # dbg
             for valname, val in obj.__dict__.items():
                 #valname1 = '%s.%s' % (name, valname)  # dbg
@@ -105,9 +106,8 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                     val = getattr(obj, valname).im_func
 
                 # Recurse to methods, properties, and nested classes.
-                if ((inspect.isfunction(val) or inspect.isclass(val) or
-                     inspect.ismethod(val) or
-                      isinstance(val, property)) and
+                if ((isfunction(val) or isclass(val) or
+                     ismethod(val) or isinstance(val, property)) and
                       self._from_module(module, val)):
                     valname = '%s.%s' % (name, valname)
                     self._find(tests, val, valname, module, source_lines,
@@ -175,7 +175,6 @@ class NumpyDoctest(npd.Doctest):
     def configure(self, options, config):
         Plugin.configure(self, options, config)
         self.doctest_tests = True
-#        self.extension = tolist(options.doctestExtension)
         self.finder = NumpyDocTestFinder()
         self.parser = doctest.DocTestParser()
 

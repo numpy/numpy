@@ -415,7 +415,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
 
     """
     def _median1D(data):
-        counts = filled(count(data, axis),0)
+        counts = filled(count(data),0)
         (idx, rmd) = divmod(counts, 2)
         if rmd:
             choice = slice(idx, idx+1)

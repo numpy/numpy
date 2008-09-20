@@ -15,7 +15,6 @@ Pearu Peterson
 __version__ = "$Revision: 1.177 $"[10:-1]
 
 import __version__
-import string
 f2py_version = __version__.version
 
 """

@@ -6,9 +6,9 @@ import timeit
 #ip = IPython.ipapi.get()
 #from IPython import ipmagic
 import numpy
-from numpy import ma
-from numpy.ma import filled
-from numpy.ma.testutils import assert_equal
+#from numpy import ma
+#from numpy.ma import filled
+#from numpy.ma.testutils import assert_equal
 
 
 #####---------------------------------------------------------------------------

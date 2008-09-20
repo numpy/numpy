@@ -1,7 +1,5 @@
-
 import os
 import sys
-import imp
 
 __all__ = ['PackageLoader']
 

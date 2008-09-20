@@ -8,23 +8,19 @@ __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
-import types
-
 import numpy as np
 from numpy import recarray
 from numpy.core.records import fromrecords as recfromrecords, \
-    fromarrays as recfromarrays
+                               fromarrays as recfromarrays
 
 import numpy.ma.testutils
 from numpy.ma.testutils import *
 
 import numpy.ma as ma
-from numpy.ma import masked, nomask, getdata, getmaskarray
+from numpy.ma import masked, nomask
 
-import numpy.ma.mrecords
-reload(numpy.ma.mrecords)
-from numpy.ma.mrecords import MaskedRecords, mrecarray,\
-    fromarrays, fromtextfile, fromrecords, addfield
+from numpy.ma.mrecords import MaskedRecords, mrecarray, fromarrays, \
+                              fromtextfile, fromrecords, addfield
 
 #..............................................................................
 class TestMRecords(TestCase):
@@ -207,8 +203,8 @@ class TestMRecords(TestCase):
     #
     def test_set_elements(self):
         base = self.base.copy()
-        mbase = base.view(mrecarray)
         # Set an element to mask .....................
+        mbase = base.view(mrecarray).copy()
         mbase[-2] = masked
         assert_equal(mbase._fieldmask.tolist(),
                      np.array([(0,0,0),(1,1,1),(0,0,0),(1,1,1),(1,1,1)],
@@ -432,7 +428,6 @@ class TestMRecordsImport(TestCase):
 'strings',4,-1e-10,,,1
 """
         import os
-        from datetime import datetime
         import tempfile
         (tmp_fd,tmp_fl) = tempfile.mkstemp()
         os.write(tmp_fd, fcontent)

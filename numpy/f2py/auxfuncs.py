@@ -20,9 +20,7 @@ f2py_version = __version__.version
 
 import pprint
 import sys
-import time
 import types
-import os
 import cfuncs
 
 

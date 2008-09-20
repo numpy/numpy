@@ -9,16 +9,9 @@ dgeev, zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf,
 zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 """
 
-__all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv',
-           'inv', 'cholesky',
-           'eigvals',
-           'eigvalsh', 'pinv',
-           'det', 'svd',
-           'eig', 'eigh','lstsq', 'norm',
-           'qr',
-           'cond',
-           'LinAlgError'
-           ]
+__all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv', 
+           'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'det', 'svd',
+           'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'LinAlgError']
 
 from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
@@ -27,7 +20,7 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         isfinite, size
 from numpy.lib import triu
 from numpy.linalg import lapack_lite
-from numpy.core.defmatrix import matrix_power, matrix
+from numpy.core.defmatrix import matrix_power
 
 fortran_int = intc
 

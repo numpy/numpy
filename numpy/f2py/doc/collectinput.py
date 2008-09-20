@@ -23,7 +23,6 @@ __version__ = "0.0"
 
 stdoutflag=0
 import sys
-import os
 import fileinput
 import re
 import commands

@@ -1,6 +1,10 @@
 # This module is for compatibility only.  All functions are defined elsewhere.
 
-__all__ = ['rand', 'tril', 'trapz', 'hanning', 'rot90', 'triu', 'diff', 'angle', 'roots', 'ptp', 'kaiser', 'randn', 'cumprod', 'diag', 'msort', 'LinearAlgebra', 'RandomArray', 'prod', 'std', 'hamming', 'flipud', 'max', 'blackman', 'corrcoef', 'bartlett', 'eye', 'squeeze', 'sinc', 'tri', 'cov', 'svd', 'min', 'median', 'fliplr', 'eig', 'mean']
+__all__ = ['rand', 'tril', 'trapz', 'hanning', 'rot90', 'triu', 'diff', 'angle',
+           'roots', 'ptp', 'kaiser', 'randn', 'cumprod', 'diag', 'msort', 
+           'LinearAlgebra', 'RandomArray', 'prod', 'std', 'hamming', 'flipud',
+           'max', 'blackman', 'corrcoef', 'bartlett', 'eye', 'squeeze', 'sinc',
+           'tri', 'cov', 'svd', 'min', 'median', 'fliplr', 'eig', 'mean']
 
 import numpy.oldnumeric.linear_algebra as LinearAlgebra
 import numpy.oldnumeric.random_array as RandomArray
@@ -12,7 +16,7 @@ from numpy import tril, trapz as _Ntrapz, hanning, rot90, triu, diff, \
 
 from numpy.linalg import eig, svd
 from numpy.random import rand, randn
-import numpy as nn
+import numpy as np
 
 from typeconv import convtypecode
 
@@ -22,7 +26,7 @@ def eye(N, M=None, k=0, typecode=None, dtype=None):
     """
     dtype = convtypecode(typecode, dtype)
     if M is None: M = N
-    m = nn.equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
+    m = np.equal(np.subtract.outer(np.arange(N), np.arange(M)),-k)
     if m.dtype != dtype:
         return m.astype(dtype)
 
@@ -32,7 +36,7 @@ def tri(N, M=None, k=0, typecode=None, dtype=None):
     """
     dtype = convtypecode(typecode, dtype)
     if M is None: M = N
-    m = nn.greater_equal(nn.subtract.outer(nn.arange(N), nn.arange(M)),-k)
+    m = np.greater_equal(np.subtract.outer(np.arange(N), np.arange(M)),-k)
     if m.dtype != dtype:
         return m.astype(dtype)
 

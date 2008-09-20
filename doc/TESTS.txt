@@ -58,7 +58,7 @@ You can use the traditional unittest system by making your test file include a c
       run_module_suite()
 
 
-Note that all classes that are inherited from ``TestCase`` class, are picked up by the test runner. For more detailed information on defining test classes see the official documentation for the [http://docs.python.org/lib/module-unittest.html Python Unit testing framework].
+Note that all classes that are inherited from ``TestCase`` class, are picked up by the test runner. For more detailed information on defining test classes see the official documentation for the `Python Unit testing framework <http://docs.python.org/lib/module-unittest.html>`__.
 
 Using test functions with nose
 ------------------------------
@@ -150,6 +150,19 @@ One very nice feature of nose is allowing easy testing across a range of paramet
 
 Note that 'check_even' is not itself a test (no 'test' in the name), but 'test_evens' is a generator that returns a series of tests, using 'check_even', across a range of inputs.  Nice.
 
+Doctests
+--------
+
+Doctests are a convenient way of documenting the behavior a function and allowing that behavior to be tested at the same time.  The output of an interactive Python session can be included in the docstring of a function, and the test framework can run the example and compare the actual output to the expected output.
+
+The doctests can be run by adding the ``doctests`` argument to the ``test()`` call; for example, to run all tests (including doctests) for numpy.lib::
+
+>>> import numpy as np
+>>> np.lib.test(doctests=True)
+
+The doctests are run as if they are in a fresh Python instance which has executed ``import numpy as np`` (tests that are part of the SciPy package also have an implicit ``import scipy as sp``).
+
+
 ``tests/``
 ----------
 
@@ -188,12 +201,11 @@ Now you can do the following to test your module::
   >>> import scipy
   >>> scipy.xxx.test()
 
-Also, when invoking the entire SciPy test suite, your tests will be found and run:
+Also, when invoking the entire SciPy test suite, your tests will be found and run::
 
   >>> import scipy
   >>> scipy.test() 
   # your tests are included and run automatically!
-
 
 Tips & Tricks
 '''''''''''''
@@ -230,9 +242,29 @@ If you have a collection of tests that must be run multiple times with minor var
 
 In this case, we wanted to test solving a linear algebra problem using matrices of several data types, using ``linalg.solve`` and ``linalg.inv``.  The common test cases (for single-precision, double-precision, etc. matrices) are collected in ``LinalgTestCase``.  Note that ``LinalgTestCase`` is not descended from ``TestCase``--if it were, then nose would attempt to run ``LinalgTestCase.test_single`` and ``LinalgTestCase.test_double``, which would fail because ``LinalgTestCase`` has no ``do`` method.  Since ``TestSolve`` and ``TestInv`` inherit from ``LinalgTestCase`` and ``TestCase``, nose will run ``test_single`` and ``test_double`` for each class. 
 
+Known failures & skipping tests
+-------------------------------
 
+Sometimes you might want to skip a test or mark it as a known failure, such as when the test suite is being written before the code it's meant to test, or if a test only fails on a particular architecture.  The decorators from numpy.testing.dec can be used to do this.
 
+To skip a test, simply use ``skipif``::
 
+  from numpy.testing import *
 
+  @dec.skipif(SkipMyTest, "Skipping this test because...")
+  def test_something(foo):
+      ...
+
+The test is marked as skipped if ``SkipMyTest`` evaluates to nonzero, and the message in verbose test output is the second argument given to ``skipif``.  Similarly, a test can be marked as a known failure by using ``knownfailureif``::
+
+  from numpy.testing import *
+
+  @dec.knownfailureif(MyTestFails, "This test is known to fail because...")
+  def test_something_else(foo):
+      ...
+
+Of course, a test can be unconditionally skipped or marked as a known failure by passing ``True`` as the first argument to ``skipif`` or ``knownfailureif``, respectively.
+
+A total of the number of skipped and known failing tests is displayed at the end of the test run.  Skipped tests are marked as ``'S'`` in the test results (or ``'SKIPPED'`` for ``verbosity > 1``), and known failing tests are marked as ``'K'`` (or ``'KNOWN'`` if ``verbosity > 1``).
 
 

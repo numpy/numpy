@@ -4,9 +4,9 @@
 # It is for backwards compatibility only.
 
 
-__all__ = ['CreateGenerator','ExponentialDistribution','LogNormalDistribution','NormalDistribution',
-           'UniformDistribution', 'error', 'default_distribution', 'random_sample', 'ranf',
-           'standard_generator']
+__all__ = ['CreateGenerator','ExponentialDistribution','LogNormalDistribution',
+           'NormalDistribution', 'UniformDistribution', 'error', 'ranf', 
+           'default_distribution', 'random_sample', 'standard_generator']
 
 import numpy.random.mtrand as mt
 import math
@@ -44,7 +44,7 @@ class ExponentialDistribution(Distribution):
             return 0.0
         else:
             lambda_ = self._args[0]
-            return lambda_*exp(-lambda_*x)
+            return lambda_*math.exp(-lambda_*x)
 
 class LogNormalDistribution(Distribution):
     def __init__(self, m, s):
@@ -61,7 +61,7 @@ class LogNormalDistribution(Distribution):
     def density(x):
         m,s = self._args
         y = (math.log(x)-self._mn)/self._sn
-        return self._fac*exp(-0.5*y*y)/x
+        return self._fac*math.exp(-0.5*y*y)/x
 
 
 class NormalDistribution(Distribution):
@@ -76,7 +76,7 @@ class NormalDistribution(Distribution):
     def density(x):
         m,s = self._args
         y = (x-m)/s
-        return self._fac*exp(-0.5*y*y)
+        return self._fac*math.exp(-0.5*y*y)
 
 class UniformDistribution(Distribution):
     def __init__(self, a, b):

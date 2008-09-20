@@ -11,7 +11,7 @@ __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
-import numpy
+import numpy as np
 from numpy.testing import TestCase, run_module_suite
 from numpy.ma.testutils import *
 from numpy.ma.core import *
@@ -332,25 +332,36 @@ class TestMedian(TestCase):
     def test_2d(self):
         "Tests median w/ 2D"
         (n,p) = (101,30)
-        x = masked_array(numpy.linspace(-1.,1.,n),)
+        x = masked_array(np.linspace(-1.,1.,n),)
         x[:10] = x[-10:] = masked
-        z = masked_array(numpy.empty((n,p), dtype=numpy.float_))
+        z = masked_array(np.empty((n,p), dtype=float))
         z[:,0] = x[:]
-        idx = numpy.arange(len(x))
+        idx = np.arange(len(x))
         for i in range(1,p):
-            numpy.random.shuffle(idx)
+            np.random.shuffle(idx)
             z[:,i] = x[idx]
         assert_equal(median(z[:,0]), 0)
-        assert_equal(median(z), numpy.zeros((p,)))
+        assert_equal(median(z), 0)
+        assert_equal(median(z, axis=0), np.zeros(p))
+        assert_equal(median(z.T, axis=1), np.zeros(p))
+    #
+    def test_2d_waxis(self):
+        "Tests median w/ 2D arrays and different axis."
+        x = masked_array(np.arange(30).reshape(10,3))
+        x[:3] = x[-3:] = masked
+        assert_equal(median(x), 14.5)
+        assert_equal(median(x, axis=0), [13.5,14.5,15.5])
+        assert_equal(median(x,axis=1), [0,0,0,10,13,16,19,0,0,0])
+        assert_equal(median(x,axis=1).mask, [1,1,1,0,0,0,0,1,1,1])
     #
     def test_3d(self):
         "Tests median w/ 3D"
-        x = numpy.ma.arange(24).reshape(3,4,2)
+        x = np.ma.arange(24).reshape(3,4,2)
         x[x%3==0] = masked
         assert_equal(median(x,0), [[12,9],[6,15],[12,9],[18,15]])
         x.shape = (4,3,2)
         assert_equal(median(x,0),[[99,10],[11,99],[13,14]])
-        x = numpy.ma.arange(24).reshape(4,3,2)
+        x = np.ma.arange(24).reshape(4,3,2)
         x[x%5==0] = masked
         assert_equal(median(x,0), [[12,10],[8,9],[16,17]])
 
@@ -483,9 +494,9 @@ class TestPolynomial(TestCase):
     def test_polyfit(self):
         "Tests polyfit"
         # On ndarrays
-        x = numpy.random.rand(10)
-        y = numpy.random.rand(20).reshape(-1,2)
-        assert_almost_equal(polyfit(x,y,3),numpy.polyfit(x,y,3))
+        x = np.random.rand(10)
+        y = np.random.rand(20).reshape(-1,2)
+        assert_almost_equal(polyfit(x,y,3),np.polyfit(x,y,3))
         # ON 1D maskedarrays
         x = x.view(MaskedArray)
         x[0] = masked
@@ -493,17 +504,17 @@ class TestPolynomial(TestCase):
         y[0,0] = y[-1,-1] = masked
         #
         (C,R,K,S,D) = polyfit(x,y[:,0],3,full=True)
-        (c,r,k,s,d) = numpy.polyfit(x[1:], y[1:,0].compressed(), 3, full=True)
+        (c,r,k,s,d) = np.polyfit(x[1:], y[1:,0].compressed(), 3, full=True)
         for (a,a_) in zip((C,R,K,S,D),(c,r,k,s,d)):
             assert_almost_equal(a, a_)
         #
         (C,R,K,S,D) = polyfit(x,y[:,-1],3,full=True)
-        (c,r,k,s,d) = numpy.polyfit(x[1:-1], y[1:-1,-1], 3, full=True)
+        (c,r,k,s,d) = np.polyfit(x[1:-1], y[1:-1,-1], 3, full=True)
         for (a,a_) in zip((C,R,K,S,D),(c,r,k,s,d)):
             assert_almost_equal(a, a_)
         #
         (C,R,K,S,D) = polyfit(x,y,3,full=True)
-        (c,r,k,s,d) = numpy.polyfit(x[1:-1], y[1:-1,:], 3, full=True)
+        (c,r,k,s,d) = np.polyfit(x[1:-1], y[1:-1,:], 3, full=True)
         for (a,a_) in zip((C,R,K,S,D),(c,r,k,s,d)):
             assert_almost_equal(a, a_)
 
