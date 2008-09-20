@@ -227,12 +227,12 @@ static int signbit_ld (long double x)
 
 /**begin repeat
 
-   #kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,log,exp,expm1,asin,acos,atan,asinh,acosh,atanh)*2#
-   #KIND=(SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH)*2#
-   #typ=longdouble*22, float*22#
-   #c=l*22,f*22#
-   #C=L*22,F*22#
-   #TYPE=LONGDOUBLE*22, FLOAT*22#
+   #kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p)*2#
+   #KIND=(SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P)*2#
+   #typ=longdouble*23, float*23#
+   #c=l*23,f*23#
+   #C=L*23,F*23#
+   #TYPE=LONGDOUBLE*23, FLOAT*23#
 */
 
 #ifndef HAVE_@KIND@@C@
