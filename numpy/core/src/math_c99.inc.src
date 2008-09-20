@@ -140,25 +140,7 @@ double trunc(double x)
 #endif
 
 #if !defined(HAVE_DECL_ISINF)
-    # define isinf(x) \
-              (sizeof (x) == sizeof (long double) ? isinf_ld (x) \
-               : sizeof (x) == sizeof (double) ? isinf_d (x) \
-               : isinf_f (x))
-
-static int isinf_f (float x)
-{
-    return isnan (x - x);
-}
-
-static int isinf_d (double x)
-{
-    return isnan (x - x);
-}
-
-static int isinf_ld (long double x)
-{
-    return isnan (x - x);
-}
+    # define isinf(x) isnan((x) - (x))
 #endif
 
 #if !defined(HAVE_DECL_SIGNBIT)
