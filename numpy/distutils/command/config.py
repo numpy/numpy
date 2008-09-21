@@ -131,7 +131,7 @@ int main()
         # avoid build error because the intrisinc and our 'fake' test
         # declaration do not match.
         body.append("#ifdef _MSC_VER")
-        body.append("#define function(%s)" % func)
+        body.append("#pragma function(%s)" % func)
         body.append("#endif")
         body.append("int main (void) {")
         if call:
@@ -184,7 +184,7 @@ int main()
         # Handle MS intrinsics. See check_func for more info.
         body.append("#ifdef _MSC_VER")
         for func in funcs:
-            body.append("#define function(%s)" % func)
+            body.append("#pragma function(%s)" % func)
         body.append("#endif")
 
         body.append("int main (void) {")
