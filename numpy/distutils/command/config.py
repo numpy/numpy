@@ -181,6 +181,12 @@ int main()
                 if v:
                     body.append("int %s ();" % f)
 
+        # Handle MS intrinsics. See check_func for more info.
+        body.append("#ifdef _MSC_VER")
+        for func in funcs:
+            body.append("#define function(%s)" % func)
+        body.append("#endif")
+
         body.append("int main (void) {")
         if call:
             for f in funcs:
