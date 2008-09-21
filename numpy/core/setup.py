@@ -63,20 +63,12 @@ def check_math_capabilities(config, moredefs, mathlibs):
     def name_to_defsymb(name):
         return "HAVE_%s" % name.upper()
 
-    use_msvc = config.check_decl("_MSC_VER")
+    #use_msvc = config.check_decl("_MSC_VER")
 
     # Mandatory functions: if not found, fail the build
-    if use_msvc:
-        # MSVC use intrisincs functions when build with e.g. /Ox, and this
-        # breaks tests. Fixing the tests is not trivial, so we assume the
-        # intrisincs functions are available.
-        # Functions which have intrisinces: sin, cos, tan, sin, cosh, tanh,
-        # fabs, sqrt, log10, log, exp, asin, acos, atan, fmod
-        mandatory_funcs = ['modf', 'frexp', 'ldexp']
-    else:
-        mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-                        "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-                        "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
+    mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+		"floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+		"acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
 
     if not check_funcs_once(mandatory_funcs):
         raise SystemError("One of the required function to build numpy is not"
