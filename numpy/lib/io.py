@@ -378,7 +378,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     # By preference, use the converters specified by the user
     for i, conv in (user_converters or {}).iteritems():
         if usecols:
-            i = usecols.index(i)
+            try:
+                i = usecols.index(i)
+            except ValueError:
+                # Unused converter specified
+                continue
         converters[i] = conv
 
     # Parse each line, including the first
