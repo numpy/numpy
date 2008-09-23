@@ -258,6 +258,17 @@ class TestLoadTxt(TestCase):
         c = StringIO.StringIO()
         assert_raises(IOError, np.loadtxt, c)
 
+    def test_unused_converter(self):
+        c = StringIO.StringIO()
+        c.writelines(['1 21\n', '3 42\n'])
+        c.seek(0)
+        data = np.loadtxt(c, usecols=(1,), converters={0: lambda s: int(s, 16)})
+        assert_array_equal(data, [21, 42])
+
+        c.seek(0)
+        data = np.loadtxt(c, usecols=(1,), converters={1: lambda s: int(s, 16)})
+        assert_array_equal(data, [33, 66])
+
 class Testfromregex(TestCase):
     def test_record(self):
         c = StringIO.StringIO()
