@@ -473,6 +473,52 @@ static void
 }
 /**end repeat1**/
 
+static void
+@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, os = steps[1], n = dimensions[0];
+    char *op = args[1];
+
+    for (i = 0; i < n; i++, op += os) {
+        *((@type@ *)op) = 1;
+    }
+}
+
+static void
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, n;
+    intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
+
+    n=dimensions[0];
+
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@type@ *)op) = *((@type@*)i1);
+    }
+}
+
+/**begin repeat1
+ *
+ * #kind=greater, greater_equal, less, less_equal, equal, not_equal, logical_and,
+ * logical_or, bitwise_and, bitwise_or, bitwise_xor#
+ * #OP=>, >=, <, <=, ==, !=, &&, ||, &, |, ^#
+ **/
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    Bool in1, in2;
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        in1 = (*((Bool *)i1) != 0);
+        in2 = (*((Bool *)i2) != 0);
+        *((Bool *)op)= in1 @OP@ in2;
+    }
+}
+/**end repeat1**/
+
 /**end repeat**/
 
 
@@ -486,7 +532,7 @@ static void
  * base integer types.
  * #type = byte, short, int, long, longlong#
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
- * #otype = float, float, double, double, double#
+ * #ftype = float, float, double, double, double#
  */
 
 /**begin repeat1
@@ -512,6 +558,23 @@ static void
 }
 /**end repeat2**/
 
+/**begin repeat2
+ * kind = greater, greater_equal, less, less_equal, equal, not_equal,
+ * logical_and, logical_or#
+ * OP = >, >=, <, <=, ==, !=, &&, ||#
+ */
+static void
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op)=*((@s@@type@ *)i1) @OP@ *((@s@@type@ *)i2);
+    }
+}
+/**end repeat2**/
+
 static void
 @S@@TYPE@_true_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -523,7 +586,7 @@ static void
             *((@otype@ *)op)=0;
         }
         else {
-            *((@otype@ *)op)= 
+            *((@otype@ *)op)=
                 (@otype@)((double)*((@s@@type@ *)i1) / (double)*((@s@@type@ *)i2));
         }
     }
@@ -553,7 +616,71 @@ static void
     }
 }
 
+static void
+@S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, os = steps[1], n = dimensions[0];
+    char *op = args[1];
+
+    for (i = 0; i < n; i++, op += os) {
+        *((@s@@type@ *)op) = 1;
+    }
+}
+
+static void
+@S@@TYPE@_power(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, is1=steps[0],is2=steps[1];
+    intp os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    @ftype@ x, y;
+
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        x = (@ftype@)*((@s@@type@ *)i1);
+        y = (@ftype@)*((@s@@type@ *)i2);
+        *((@s@@type@ *)op) = (@s@@type@) pow(x,y);
+    }
+}
+
+static void
+@S@@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func)
+{
+    register intp i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@s@@type@ *)op)=*((@s@@type@ *)i1);
+    }
+}
+
 /**end repeat1**/
+
+static void
+U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, n;
+    intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
+
+    n=dimensions[0];
+
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((u@type@ *)op) = *((u@type@*)i1);
+    }
+}
+
+static void
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, n;
+    intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
+
+    n=dimensions[0];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@type@ *)op) = *((@type@ *)i1) < 0 ? -*((@type@ *)i1) : *((@type@ *)i1);
+        *((@type@ *)op) += 0; /* fixme clear sign-bit ? */
+    }
+}
 
 static void
 @TYPE@_divide(char **args, intp *dimensions, intp *steps, void *func)
@@ -628,6 +755,23 @@ static void
 }
 /**end repeat1**/
 
+/**begin repeat1
+ * kind = less, less_equal, greater, greater_equal, equal, not_equal,
+ * logical_and, logical_or#
+ * OP = <, <=, >, >=, ==, !=, &&, ||#
+ */
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    register intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op)=*((@type@ *)i1) @OP@ *((@type@ *)i2);
+    }
+}
+/**end repeat1**/
+
 static void
 @TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -662,6 +806,42 @@ static void
     }
 }
 
+static void
+@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, os = steps[1], n = dimensions[0];
+    char *op = args[1];
+
+    for (i = 0; i < n; i++, op += os) {
+        *((@type@ *)op) = 1;
+    }
+}
+
+static void
+@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@type@ *)op)=*((@type@ *)i1);
+    }
+}
+
+static void
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, n;
+    intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
+
+    n=dimensions[0];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@type@ *)op) = *((@type@ *)i1) < 0 ? -*((@type@ *)i1) : *((@type@ *)i1);
+        *((@type@ *)op) += 0; /* fixme clear sign-bit ? */
+    }
+}
+
+
 #define @TYPE@_true_divide @TYPE@_divide
 /**end repeat**/
 
@@ -688,7 +868,7 @@ static void
 static void
 @CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i;
+    intp i;
     intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
     char *i1=args[0], *i2=args[1], *op=args[2];
     for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
@@ -696,7 +876,23 @@ static void
         ((@type@ *)op)[1]=((@type@ *)i1)[1] @OP@ ((@type@ *)i2)[1];
     }
 }
+/**end repeat1**/
 
+/**begin repeat1
+   #kind = equal, not_equal, logical_and, logical_or#
+   #OP = ==, !=, &&, ||#
+   #OP2 = &&, ||, &&, ||#
+*/
+static void
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        *((Bool *)op) = (*((@type@ *)i1) @OP@ *((@type@ *)i2)) @OP2@ (*((@type@ *)i1+1) @OP@ *((@type@ *)i2+1));
+    }
+}
 /**end repeat1**/
 
 static void
@@ -791,6 +987,64 @@ static void
     }
 }
 
+static void
+@CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
+    char *i1 = args[0], *op = args[1];
+    @ctype@ *y;
+
+    for (i = 0; i < n; i++, i1 += is1, op += os) {
+        y = (@ctype@ *)op;
+        y->real = 1.0;
+        y->imag = 0.0;
+    }
+}
+
+static void
+@CTYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func) {
+    intp i, is1=steps[0], os=steps[1], n=dimensions[0];
+    char *i1=args[0], *op=args[1];
+
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        ((@type@ *)op)[0]=((@type@ *)i1)[0];
+        ((@type@ *)op)[1]=-(((@type@ *)i1)[1]);
+    }
+}
+
+static void
+@CTYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i, n;
+    intp is1=steps[0], os=steps[1];
+    char *i1=args[0], *op=args[1];
+    n=dimensions[0];
+    for(i=0; i<n; i++, i1+=is1, op+=os) {
+        *((@type@ *)op) = (@type@)sqrt@c@(((@type@ *)i1)[0]*((@type@ *)i1)[0] + ((@type@ *)i1)[1]*((@type@ *)i1)[1]);
+    }
+}
+
+/**begin repeat1
+ * #kind= greater, greater_equal, less, less_equal#
+ * #OP = >, >=, <, <=#
+ */
+static void
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp i;
+    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
+    char *i1=args[0], *i2=args[1], *op=args[2];
+    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
+        if (((c@type@ *)i1)->real == ((c@type@ *)i2)->real)
+            *((Bool *)op)=((c@type@ *)i1)->imag @OP@
+                ((c@type@ *)i2)->imag;
+        else
+            *((Bool *)op)=((c@type@ *)i1)->real @OP@
+                ((c@type@ *)i2)->real;
+    }
+}
+/**end repeat1**/
+
 #define @CTYPE@_true_divide @CTYPE@_divide
 /**end repeat**/
 
@@ -807,6 +1061,11 @@ Py_square(PyObject *o)
     return PyNumber_Multiply(o, o);
 }
 
+static PyObject *
+Py_get_one(PyObject *o)
+{
+    return PyInt_FromLong(1);
+}
 
 static PyObject *
 Py_reciprocal(PyObject *o)
@@ -853,276 +1112,6 @@ _npy_ObjectMin(PyObject *i1, PyObject *i2)
     return res;
 }
 
-/*
- *****************************************************************************
- **                            UNDONE LOOPS                                 **
- *****************************************************************************
- */
-
-/* ones_like is defined here because it's used for x**0 */
-
-/**begin repeat
-   #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-   #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-*/
-static void
-@TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
-{
-    intp i, os = steps[1], n = dimensions[0];
-    char *op = args[1];
-
-    for (i = 0; i < n; i++, op += os) {
-        *((@typ@ *)op) = 1;
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-   #TYP=CFLOAT,CDOUBLE,CLONGDOUBLE#
-   #typ=float, double, longdouble#
-*/
-static void
-@TYP@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
-{
-    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
-    char *i1 = args[0], *op = args[1];
-    c@typ@ *y;
-
-    for (i = 0; i < n; i++, i1 += is1, op += os) {
-        y = (c@typ@ *)op;
-        y->real = 1.0;
-        y->imag = 0.0;
-    }
-}
-/**end repeat**/
-
-static PyObject *
-Py_get_one(PyObject *o)
-{
-    return PyInt_FromLong(1);
-}
-
-
-/**begin repeat
-   #TYP=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-   #typ=char, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
-   #btyp=float*4, double*6#
-*/
-static void
-@TYP@_power(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i, is1=steps[0],is2=steps[1];
-    register intp os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    @btyp@ x, y;
-
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        x = (@btyp@)*((@typ@ *)i1);
-        y = (@btyp@)*((@typ@ *)i2);
-        *((@typ@ *)op) = (@typ@) pow(x,y);
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-   #TYP=UBYTE, BYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
-   #typ=ubyte, char, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
-*/
-static void
-@TYP@_conjugate(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i, is1=steps[0], os=steps[1], n=dimensions[0];
-    char *i1=args[0], *op=args[1];
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        *((@typ@ *)op)=*((@typ@ *)i1);
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-
-   #TYP=CFLOAT, CDOUBLE, CLONGDOUBLE#
-   #typ=float, double, longdouble#
-*/
-static void
-@TYP@_conjugate(char **args, intp *dimensions, intp *steps, void *func) {
-    register intp i, is1=steps[0], os=steps[1], n=dimensions[0];
-    char *i1=args[0], *op=args[1];
-
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        ((@typ@ *)op)[0]=((@typ@ *)i1)[0];
-        ((@typ@ *)op)[1]=-(((@typ@ *)i1)[1]);
-    }
-}
-/**end repeat**/
-
-
-/**begin repeat
-
-   #TYPE=BOOL,UBYTE,USHORT,UINT,ULONG,ULONGLONG#
-   #typ=Bool, ubyte, ushort, uint, ulong, ulonglong#
-*/
-static void
-@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i, n;
-    intp is1=steps[0], os=steps[1];
-    char *i1=args[0], *op=args[1];
-
-    n=dimensions[0];
-
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        *((@typ@ *)op) = *((@typ@*)i1);
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-
-   #TYPE=BYTE,SHORT,INT,LONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-   #typ=byte, short, int, long, longlong, float, double, longdouble#
-*/
-static void
-@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i, n;
-    intp is1=steps[0], os=steps[1];
-    char *i1=args[0], *op=args[1];
-
-    n=dimensions[0];
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        *((@typ@ *)op) = *((@typ@ *)i1) < 0 ? -*((@typ@ *)i1) : *((@typ@ *)i1);
-        *((@typ@ *)op) += 0; /* clear sign-bit */
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-   #TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
-   #typ= float, double, longdouble#
-   #c= f,,l#
-*/
-static void
-@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i, n;
-    register intp is1=steps[0], os=steps[1];
-    char *i1=args[0], *op=args[1];
-    n=dimensions[0];
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        *((@typ@ *)op) = (@typ@)sqrt@c@(((@typ@ *)i1)[0]*((@typ@ *)i1)[0] + ((@typ@ *)i1)[1]*((@typ@ *)i1)[1]);
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-
-   #kind=greater, greater_equal, less, less_equal, equal, not_equal, logical_and, logical_or, bitwise_and, bitwise_or, bitwise_xor#
-   #OP=>, >=, <, <=, ==, !=, &&, ||, &, |, ^#
-**/
-static void
-BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    Bool in1, in2;
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        in1 = (*((Bool *)i1) != 0);
-        in2 = (*((Bool *)i2) != 0);
-        *((Bool *)op)= in1 @OP@ in2;
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-
-   #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
-   #OP= >*13, >=*13, <*13, <=*13#
-   #typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
-   #kind= greater*13, greater_equal*13, less*13, less_equal*13#
-*/
-
-static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        *((Bool *)op)=*((@typ@ *)i1) @OP@ *((@typ@ *)i2);
-    }
-}
-/**end repeat**/
-
-
-/**begin repeat
-   #TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*4#
-   #OP= >*3, >=*3, <*3, <=*3#
-   #typ=(cfloat, cdouble, clongdouble)*4#
-   #kind= greater*3, greater_equal*3, less*3, less_equal*3#
-*/
-
-static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        if (((@typ@ *)i1)->real == ((@typ@ *)i2)->real)
-            *((Bool *)op)=((@typ@ *)i1)->imag @OP@ \
-                ((@typ@ *)i2)->imag;
-        else
-            *((Bool *)op)=((@typ@ *)i1)->real @OP@ \
-                ((@typ@ *)i2)->real;
-    }
-}
-/**end repeat**/
-
-
-/**begin repeat
-   #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*4#
-   #typ=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*4#
-   #OP= ==*13, !=*13, &&*13, ||*13#
-   #kind=equal*13, not_equal*13, logical_and*13, logical_or*13#
-*/
-static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        *((Bool *)op) = *((@typ@ *)i1) @OP@ *((@typ@ *)i2);
-    }
-}
-/**end repeat**/
-
-
-/**begin repeat
-
-   #TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*4#
-   #typ=(float, double, longdouble)*4#
-   #OP= ==*3, !=*3, &&*3, ||*3#
-   #OP2= &&*3, ||*3, &&*3, ||*3#
-   #kind=equal*3, not_equal*3, logical_and*3, logical_or*3#
-*/
-static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        *((Bool *)op) = (*((@typ@ *)i1) @OP@ *((@typ@ *)i2)) @OP2@ (*((@typ@ *)i1+1) @OP@ *((@typ@ *)i2+1));
-    }
-}
-/**end repeat**/
-
-
-/** OBJECT comparison for OBJECT arrays **/
-
 /**begin repeat
 
    #kind=greater, greater_equal, less, less_equal, equal, not_equal#
@@ -1140,6 +1129,15 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
 }
 /**end repeat**/
 
+/*
+ *****************************************************************************
+ **                            UNDONE LOOPS                                 **
+ *****************************************************************************
+ */
+
+
+
+/*negative*/
 /**begin repeat
 
    #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
@@ -1160,6 +1158,7 @@ static void
 
 #define BOOL_negative BOOL_logical_not
 
+/*sign*/
 #define _SIGN1(x) ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0))
 #define _SIGN2(x) ((x) == 0 ? 0 : 1)
 #define _SIGNC(x) (((x).real > 0) ? 1 : ((x).real < 0 ? -1 : ((x).imag > 0 ? 1 : ((x).imag < 0) ? -1 : 0)))
@@ -1223,7 +1222,7 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
     Py_DECREF(zero);
 }
 
-
+/*logical_not*/
 /**begin repeat
    #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
    #typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
@@ -1259,7 +1258,7 @@ static void
 
 
 
-
+/*remainder*/
 /**begin repeat
    #TYPE=BYTE,SHORT,INT,LONG,LONGLONG#
    #typ=byte, short, int, long, longlong#
@@ -1338,7 +1337,7 @@ static void
 }
 /**end repeat**/
 
-
+/*fmod*/
 /**begin repeat
 
    #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
@@ -1366,6 +1365,7 @@ static void
 }
 /**end repeat**/
 
+/*bitwise operators*/
 /**begin repeat
 
    #TYPE=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG)*5#
@@ -1386,7 +1386,7 @@ static void
 }
 /**end repeat**/
 
-
+/*invert*/
 /**begin repeat
    #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
    #typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
@@ -1414,7 +1414,7 @@ BOOL_invert(char **args, intp *dimensions, intp *steps, void *func)
     }
 }
 
-
+/*logical_xor*/
 /**begin repeat
    #TYPE=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
    #typ=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
@@ -1453,7 +1453,7 @@ static void
 /**end repeat**/
 
 
-
+/*max,min*/
 /**begin repeat
 
    #TYPE=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*2#
@@ -1565,6 +1565,7 @@ static void
 }
 /**end repeat**/
 
+/*frexp, ldexp*/
 /**begin repeat
    #TYPE=FLOAT, DOUBLE, LONGDOUBLE#
    #typ=float, double, longdouble#
