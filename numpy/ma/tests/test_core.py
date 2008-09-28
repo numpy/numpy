@@ -132,6 +132,15 @@ class TestMaskedArray(TestCase):
         assert_array_equal(z,[1,1,0,0])
         assert_array_equal(z.mask,[False,True,False,False])
 
+    def test_concatenate_flexible(self):
+        "Tests the concatenation on flexible arrays."
+        data = masked_array(zip(np.random.rand(10),
+                                np.arange(10)),
+                            dtype=[('a',float),('b',int)])
+        #
+        test = concatenate([data[:5], data[5:]])
+        assert_equal_records(test, data)
+
     def test_creation_ndmin(self):
         "Check the use of ndmin"
         x = array([1,2,3],mask=[1,0,0], ndmin=2)

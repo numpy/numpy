@@ -1978,11 +1978,23 @@ masked_%(name)s(data = %(data)s,
         "Add other to self, and return a new masked array."
         return add(self, other)
     #
+    def __radd__(self, other):
+        "Add other to self, and return a new masked array."
+        return add(self, other)
+    #
     def __sub__(self, other):
         "Subtract other to self, and return a new masked array."
         return subtract(self, other)
     #
+    def __rsub__(self, other):
+        "Subtract other to self, and return a new masked array."
+        return subtract(other, self)
+    #
     def __mul__(self, other):
+        "Multiply other by self, and return a new masked array."
+        return multiply(self, other)
+    #
+    def __rmul__(self, other):
         "Multiply other by self, and return a new masked array."
         return multiply(self, other)
     #
@@ -3527,7 +3539,7 @@ def concatenate(arrays, axis=0):
     # ... all of them are True, and then check for dm.any()
 #    shrink = numpy.logical_or.reduce([getattr(a,'_shrinkmask',True) for a in arrays])
 #    if shrink and not dm.any():
-    if not dm.any():
+    if not dm.dtype.fields and not dm.any():
         data._mask = nomask
     else:
         data._mask = dm.reshape(d.shape)
