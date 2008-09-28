@@ -126,6 +126,13 @@ int main()
         body = []
         if decl:
             body.append("int %s ();" % func)
+        # Handle MSVC intrisincs: force MS compiler to make a function call.
+        # Useful to test for some functions when built with optimization on, to
+        # avoid build error because the intrisinc and our 'fake' test
+        # declaration do not match.
+        body.append("#ifdef _MSC_VER")
+        body.append("#pragma function(%s)" % func)
+        body.append("#endif")
         body.append("int main (void) {")
         if call:
             if call_args is None:
@@ -173,6 +180,12 @@ int main()
             for f, v in decl.items():
                 if v:
                     body.append("int %s ();" % f)
+
+        # Handle MS intrinsics. See check_func for more info.
+        body.append("#ifdef _MSC_VER")
+        for func in funcs:
+            body.append("#pragma function(%s)" % func)
+        body.append("#endif")
 
         body.append("int main (void) {")
         if call:
