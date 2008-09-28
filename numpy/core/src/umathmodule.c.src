@@ -596,7 +596,7 @@ static void
 
 /**begin repeat2
  * Arithmetic
- * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor
+ * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
  *          left_shift, right_shift#
  * #OP = +, -,*, &, |, ^, <<, >>#
  */
@@ -635,7 +635,7 @@ static void
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
         if (in2 == 0) {
             generate_divbyzero_error();
-            *((@otype@ *)op) = 0;
+            *((@ftype@ *)op) = 0;
         }
         else {
             *((@ftype@ *)op) = (@ftype@)in1 / (@ftype@)in2;
@@ -652,7 +652,6 @@ static void
         *((@s@@type@ *)op) = (@s@@type@) pow(in1, in2);
     }
 }
-
 /**end repeat1**/
 
 static void
@@ -745,9 +744,9 @@ static void
 /**end repeat1**/
 
 /**begin repeat1
- * kind = less, less_equal, greater, greater_equal, equal, not_equal,
- * logical_and, logical_or#
- * OP = <, <=, >, >=, ==, !=, &&, ||#
+ * #kind = less, less_equal, greater, greater_equal, equal, not_equal,
+ *        logical_and, logical_or#
+ * #OP = <, <=, >, >=, ==, !=, &&, ||#
  */
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
@@ -1053,6 +1052,7 @@ static void
                 ((c@type@ *)i2)->real;
     }
 }
+/**end repeat1**/
 
 static void
 @CTYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
@@ -1065,8 +1065,6 @@ static void
                            ((@ctype@ *)i1)->imag);
     }
 }
-
-/**end repeat1**/
 
 #define @CTYPE@_true_divide @CTYPE@_divide
 /**end repeat**/
