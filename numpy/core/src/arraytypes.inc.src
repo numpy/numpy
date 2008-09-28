@@ -664,7 +664,7 @@ fail:
 #from=BYTE*13,UBYTE*13,SHORT*13,USHORT*13,INT*13,UINT*13,LONG*13,ULONG*13,LONGLONG*13,ULONGLONG*13,FLOAT*13,DOUBLE*13,LONGDOUBLE*13,CFLOAT*13,CDOUBLE*13,CLONGDOUBLE*13#
 #totyp=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*16#
 #fromtyp=byte*13, ubyte*13, short*13, ushort*13, int*13, uint*13, long*13, ulong*13, longlong*13, ulonglong*13, float*13, double*13, longdouble*13, float*13, double*13, longdouble*13#
-#incr= ip++*169,ip+=2*39#
+#incr= (ip++)*169,(ip+=2)*39#
 */
 static void
 @from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n,
