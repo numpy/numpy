@@ -26,7 +26,7 @@ class TestAverage(TestCase):
         assert_equal(2.0, average(ott, weights=[1., 1., 2., 1.]))
         result, wts = average(ott, weights=[1.,1.,2.,1.], returned=1)
         assert_equal(2.0, result)
-        assert(wts == 4.0)
+        self.failUnless(wts == 4.0)
         ott[:] = masked
         assert_equal(average(ott,axis=0).mask, [True])
         ott = array([0.,1.,2.,3.], mask=[1,0,0,0])
@@ -104,7 +104,7 @@ class TestConcatenator(TestCase):
         m = [1,0,0,0,0]
         d = masked_array(b,mask=m)
         c = mr_[d,0,0,d]
-        assert(isinstance(c,MaskedArray) or isinstance(c,core.MaskedArray))
+        self.failUnless(isinstance(c,MaskedArray) or isinstance(c,core.MaskedArray))
         assert_array_equal(c,[1,1,1,1,1,0,0,1,1,1,1,1])
         assert_array_equal(c.mask, mr_[m,0,0,m])
 
@@ -117,12 +117,12 @@ class TestConcatenator(TestCase):
         b_1 = masked_array(a_1,mask=m_1)
         b_2 = masked_array(a_2,mask=m_2)
         d = mr_['1',b_1,b_2]  # append columns
-        assert(d.shape == (5,10))
+        self.failUnless(d.shape == (5,10))
         assert_array_equal(d[:,:5],b_1)
         assert_array_equal(d[:,5:],b_2)
         assert_array_equal(d.mask, np.r_['1',m_1,m_2])
         d = mr_[b_1,b_2]
-        assert(d.shape == (10,5))
+        self.failUnless(d.shape == (10,5))
         assert_array_equal(d[:5,:],b_1)
         assert_array_equal(d[5:,:],b_2)
         assert_array_equal(d.mask, np.r_[m_1,m_2])
@@ -158,14 +158,14 @@ class TestNotMasked(TestCase):
         assert_equal(tmp[-3], slice(0,3,None))
         #
         tmp = notmasked_contiguous(a, 0)
-        assert(len(tmp[-1]) == 1)
-        assert(tmp[-2] is None)
+        self.failUnless(len(tmp[-1]) == 1)
+        self.failUnless(tmp[-2] is None)
         assert_equal(tmp[-3],tmp[-1])
-        assert(len(tmp[0]) == 2)
+        self.failUnless(len(tmp[0]) == 2)
         #
         tmp = notmasked_contiguous(a, 1)
         assert_equal(tmp[0][-1], slice(0,3,None))
-        assert(tmp[1] is None)
+        self.failUnless(tmp[1] is None)
         assert_equal(tmp[2][-1], slice(7,7,None))
         assert_equal(tmp[2][-2], slice(0,5,None))
 
@@ -205,12 +205,12 @@ class Test2DFunctions(TestCase):
         assert_equal(mask_rowcols(x,0).mask, [[1,1,1],[1,1,1],[0,0,0]] )
         assert_equal(mask_rowcols(x,1,).mask, [[1,1,0],[1,1,0],[1,1,0]] )
         x = array(x._data, mask=[[1,0,0],[0,1,0],[0,0,1]])
-        assert(mask_rowcols(x).all() is masked)
-        assert(mask_rowcols(x,0).all() is masked)
-        assert(mask_rowcols(x,1).all() is masked)
-        assert(mask_rowcols(x).mask.all())
-        assert(mask_rowcols(x,0).mask.all())
-        assert(mask_rowcols(x,1).mask.all())
+        self.failUnless(mask_rowcols(x).all() is masked)
+        self.failUnless(mask_rowcols(x,0).all() is masked)
+        self.failUnless(mask_rowcols(x,1).all() is masked)
+        self.failUnless(mask_rowcols(x).mask.all())
+        self.failUnless(mask_rowcols(x,0).mask.all())
+        self.failUnless(mask_rowcols(x,1).mask.all())
     #
     def test_dot(self):
         "Tests dot product"

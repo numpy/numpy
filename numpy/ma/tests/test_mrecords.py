@@ -264,16 +264,16 @@ class TestMRecords(TestCase):
         base = self.base.copy()
         mbase = base.view(mrecarray)
         mbase.harden_mask()
-        assert(mbase._hardmask)
+        self.failUnless(mbase._hardmask)
         mbase._mask = nomask
         assert_equal_records(mbase._mask, base._mask)
         mbase.soften_mask()
-        assert(not mbase._hardmask)
+        self.failUnless(not mbase._hardmask)
         mbase._mask = nomask
         # So, the mask of a field is no longer set to nomask...
         assert_equal_records(mbase._mask,
                              ma.make_mask_none(base.shape,base.dtype))
-        assert(ma.make_mask(mbase['b']._mask) is nomask)
+        self.failUnless(ma.make_mask(mbase['b']._mask) is nomask)
         assert_equal(mbase['a']._mask,mbase['b']._mask)
     #
     def test_pickling(self):
@@ -435,7 +435,7 @@ class TestMRecordsImport(TestCase):
         mrectxt = fromtextfile(tmp_fl, delimitor=',',varnames='ABCDEFG')
         os.remove(tmp_fl)
         #
-        assert(isinstance(mrectxt, MaskedRecords))
+        self.failUnless(isinstance(mrectxt, MaskedRecords))
         assert_equal(mrectxt.F, [1,1,1,1])
         assert_equal(mrectxt.E._mask, [1,1,1,1])
         assert_equal(mrectxt.C, [1,2,3.e+5,-1e-10])
