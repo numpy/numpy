@@ -81,10 +81,12 @@ def assert_equal(actual,desired,err_msg=''):
     """
     # Case #1: dictionary .....
     if isinstance(desired, dict):
-        assert isinstance(actual, dict), repr(type(actual))
+        if not isinstance(actual, dict):
+            raise AssertionError(repr(type(actual)))
         assert_equal(len(actual),len(desired),err_msg)
         for k,i in desired.items():
-            assert k in actual, repr(k)
+            if not k in actual:
+                raise AssertionError("%s not in %s" % (k,actual))
             assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg))
         return
     # Case #2: lists .....
@@ -92,7 +94,8 @@ def assert_equal(actual,desired,err_msg=''):
         return _assert_equal_on_sequences(actual, desired, err_msg='')
     if not (isinstance(actual, ndarray) or isinstance(desired, ndarray)):
         msg = build_err_msg([actual, desired], err_msg,)
-        assert desired == actual, msg
+        if not desired == actual:
+            raise AssertionError(msg)
         return
     # Case #4. arrays or equivalent
     if ((actual is masked) and not (desired is masked)) or \
@@ -122,10 +125,12 @@ def fail_if_equal(actual,desired,err_msg='',):
     """Raises an assertion error if two items are equal.
     """
     if isinstance(desired, dict):
-        assert isinstance(actual, dict), repr(type(actual))
+        if not isinstance(actual, dict):
+            raise AssertionError(repr(type(actual)))
         fail_if_equal(len(actual),len(desired),err_msg)
         for k,i in desired.items():
-            assert k in actual, repr(k)
+            if not k in actual:
+                raise AssertionError(repr(k))
             fail_if_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg))
         return
     if isinstance(desired, (list,tuple)) and isinstance(actual, (list,tuple)):
@@ -136,7 +141,8 @@ def fail_if_equal(actual,desired,err_msg='',):
     if isinstance(actual, np.ndarray) or isinstance(desired, np.ndarray):
         return fail_if_array_equal(actual, desired, err_msg)
     msg = build_err_msg([actual, desired], err_msg)
-    assert desired != actual, msg
+    if not desired != actual:
+        raise AssertionError(msg)
 assert_not_equal = fail_if_equal
 
 
@@ -149,7 +155,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
                                          err_msg=err_msg, verbose=verbose)
     msg = build_err_msg([actual, desired],
                         err_msg=err_msg, verbose=verbose)
-    assert round(abs(desired - actual),decimal) == 0, msg
+    if not round(abs(desired - actual),decimal) == 0:
+        raise AssertionError(msg)
 
 
 assert_close = assert_almost_equal
