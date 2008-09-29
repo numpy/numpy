@@ -703,6 +703,24 @@ static void
         *((@s@@type@ *)op) = (@s@@type@) pow(in1, in2);
     }
 }
+
+static void
+@S@@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        const @s@@type@ in2 = *(@s@@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@s@@type@ *)op) = 0;
+        }
+        else {
+            *((@s@@type@ *)op)= in1 % in2;
+        }
+
+    }
+}
+
 /**end repeat1**/
 
 static void
@@ -720,6 +738,24 @@ static void
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         *((@type@ *)op) = (in1 > 0) ? in1 : -in1;
+    }
+}
+
+static void
+U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const u@type@ in1 = *(u@type@ *)ip1;
+        *((u@type@ *)op) = in1 > 0 ? 1 : 0;
+    }
+}
+
+static void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
     }
 }
 
@@ -754,6 +790,45 @@ U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *func)
         }
         else {
             *((u@type@ *)op)= in1/in2;
+        }
+    }
+}
+
+static void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@type@ *)op) = 0;
+        }
+        else {
+            /* handle mixed case the way Python does */
+            const @type@ rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((@type@ *)op) = rem;
+            }
+            else {
+                *((@type@ *)op) = rem + in2;
+            }
+        }
+    }
+}
+
+static void
+U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const u@type@ in1 = *(u@type@ *)ip1;
+        const u@type@ in2 = *(u@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@type@ *)op) = 0;
+        }
+        else {
+            *((@type@ *)op) = in1 % in2;
         }
     }
 }
@@ -844,6 +919,22 @@ static void
 }
 
 static void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        const @type@ res = fmod@c@(in1,in2);
+        if (res && ((in2 < 0) != (res < 0))) {
+            *((@type@ *)op) = res + in2;
+        }
+        else {
+            *((@type@ *)op) = res;
+        }
+    }
+}
+
+static void
 @TYPE@_square(char **args, intp *dimensions, intp *steps, void *data)
 {
     UNARY_LOOP {
@@ -905,6 +996,15 @@ static void
     }
 }
 
+static void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+    }
+}
+
 #define @TYPE@_true_divide @TYPE@_divide
 /**end repeat**/
 
@@ -925,35 +1025,19 @@ static void
 
 /**begin repeat1
  * arithmetic
- * #OP = +, -#
  * #kind = add, subtract#
+ * #OP = +, -#
  */
 static void
 @CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        ((@type@ *)op)[0]=((@type@ *)i1)[0] @OP@ ((@type@ *)i2)[0];
-        ((@type@ *)op)[1]=((@type@ *)i1)[1] @OP@ ((@type@ *)i2)[1];
-    }
-}
-/**end repeat1**/
-
-/**begin repeat1
-   #kind = equal, not_equal, logical_and, logical_or#
-   #OP = ==, !=, &&, ||#
-   #OP2 = &&, ||, &&, ||#
-*/
-static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        *((Bool *)op) = (*((@type@ *)i1) @OP@ *((@type@ *)i2)) @OP2@ (*((@type@ *)i1+1) @OP@ *((@type@ *)i2+1));
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        ((@type@ *)op)[0] = in1r @OP@ in2r;
+        ((@type@ *)op)[1] = in1i @OP@ in2i;
     }
 }
 /**end repeat1**/
@@ -961,131 +1045,61 @@ static void
 static void
 @CTYPE@_multiply(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i;
-    intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        @type@ ar=((@ctype@ *)i1)->real;
-        @type@ ai=((@ctype@ *)i1)->imag;
-        @type@ br=((@ctype@ *)i2)->real;
-        @type@ bi=((@ctype@ *)i2)->imag;
-        ((@ctype@ *)op)->real = ar*br - ai*bi;
-        ((@ctype@ *)op)->imag = ar*bi + ai*br;
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        ((@type@ *)op)[0] = in1r*in2r - in1i*in2i;
+        ((@type@ *)op)[1] = in1r*in2i + in1i*in2r;
     }
 }
 
 static void
 @CTYPE@_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i;
-    intp is1=steps[0], is2=steps[1], os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        @type@ ar=((@ctype@ *)i1)->real;
-        @type@ ai=((@ctype@ *)i1)->imag;
-        @type@ br=((@ctype@ *)i2)->real;
-        @type@ bi=((@ctype@ *)i2)->imag;
-        @type@ d = br*br + bi*bi;
-        ((@ctype@ *)op)->real = (ar*br + ai*bi)/d;
-        ((@ctype@ *)op)->imag = (ai*br - ar*bi)/d;
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        @type@ d = in2r*in2r + in2i*in2i;
+        ((@type@ *)op)[0] = (in1r*in2r + in1i*in2i)/d;
+        ((@type@ *)op)[1] = (in1i*in2r - in1r*in2i)/d;
     }
 }
 
 static void
 @CTYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        @type@ ar=((@ctype@ *)i1)->real;
-        @type@ ai=((@ctype@ *)i1)->imag;
-        @type@ br=((@ctype@ *)i2)->real;
-        @type@ bi=((@ctype@ *)i2)->imag;
-        @type@ d = br*br + bi*bi;
-        ((@ctype@ *)op)->real = floor@c@((ar*br + ai*bi)/d);
-        ((@ctype@ *)op)->imag = 0;
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        @type@ d = in2r*in2r + in2i*in2i;
+        ((@type@ *)op)[0] = floor@c@((in1r*in2r + in1i*in2i)/d);
+        ((@type@ *)op)[1] = 0;
     }
 }
 
+/**begin repeat1
+   #kind = equal, not_equal#
+   #OP1 = ==, !=#
+   #OP2 = &&, ||#
+*/
 static void
-@CTYPE@_square(char **args, intp *dimensions, intp *steps, void *data)
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
-    char *i1 = args[0], *op = args[1];
-
-    for (i = 0; i < n; i++, i1 += is1, op += os) {
-        @ctype@ *x = (@ctype@ *)i1;
-        @ctype@ *y = (@ctype@ *)op;
-        @type@ xr = x->real;
-        @type@ xi = x->imag;
-        y->real = xr*xr - xi*xi;
-        y->imag = 2*xr*xi;
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        *((Bool *)op) = (in1r @OP1@ in2r) @OP2@ (in1i @OP1@ in2i);
     }
 }
-
-/* fixme -- need type specific fabs */
-static void
-@CTYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
-{
-    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
-    char *i1 = args[0], *op = args[1];
-
-    for (i = 0; i < n; i++, i1 += is1, op += os) {
-        @ctype@ *x = (@ctype@ *)i1;
-        @ctype@ *y = (@ctype@ *)op;
-        @type@ xr = x->real;
-        @type@ xi = x->imag;
-        if (fabs(xi) <= fabs(xr)) {
-            @type@ r = xi/xr;
-            @type@ denom = xr + xi*r;
-            y->real = 1/denom;
-            y->imag = -r/denom;
-        } else {
-            @type@ r = xr/xi;
-            @type@ denom = xr*r + xi;
-            y->real = r/denom;
-            y->imag = -1/denom;
-        }
-    }
-}
-
-static void
-@CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
-{
-    intp i, is1 = steps[0], os = steps[1], n = dimensions[0];
-    char *i1 = args[0], *op = args[1];
-    @ctype@ *y;
-
-    for (i = 0; i < n; i++, i1 += is1, op += os) {
-        y = (@ctype@ *)op;
-        y->real = 1.0;
-        y->imag = 0.0;
-    }
-}
-
-static void
-@CTYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func) {
-    intp i, is1=steps[0], os=steps[1], n=dimensions[0];
-    char *i1=args[0], *op=args[1];
-
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        ((@type@ *)op)[0]=((@type@ *)i1)[0];
-        ((@type@ *)op)[1]=-(((@type@ *)i1)[1]);
-    }
-}
-
-static void
-@CTYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
-{
-    intp i, n;
-    intp is1=steps[0], os=steps[1];
-    char *i1=args[0], *op=args[1];
-    n=dimensions[0];
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        *((@type@ *)op) = (@type@)sqrt@c@(((@type@ *)i1)[0]*((@type@ *)i1)[0] + ((@type@ *)i1)[1]*((@type@ *)i1)[1]);
-    }
-}
+/**end repeat1**/
 
 /**begin repeat1
  * #kind= greater, greater_equal, less, less_equal#
@@ -1094,31 +1108,165 @@ static void
 static void
 @CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        if (((c@type@ *)i1)->real == ((c@type@ *)i2)->real)
-            *((Bool *)op)=((c@type@ *)i1)->imag @OP@
-                ((c@type@ *)i2)->imag;
-        else
-            *((Bool *)op)=((c@type@ *)i1)->real @OP@
-                ((c@type@ *)i2)->real;
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        if (in1r != in2r) {
+            *((Bool *)op) = in1r @OP@ in2r ? 1 : 0;
+        }
+        else {
+            *((Bool *)op) = in1i @OP@ in2i ? 1 : 0;
+        }
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+   #kind = logical_and, logical_or#
+   #OP1 = ||, ||#
+   #OP2 = &&, ||#
+*/
+static void
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        *((Bool *)op) = (in1r @OP1@ in1i) @OP2@ (in2r @OP1@ in2i);
     }
 }
 /**end repeat1**/
 
 static void
-@CTYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
 {
-    intp i;
-    intp is1=steps[0],os=steps[1], n=dimensions[0];
-    char *i1=args[0], *op=args[1];
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        *((Bool *)op) = ! (((@ctype@ *)i1)->real ||
-                           ((@ctype@ *)i1)->imag);
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        const Bool tmp1 = (in1r || in1i);
+        const Bool tmp2 = (in2r || in2i);
+        *((Bool *)op) = (tmp1 && !tmp2) || (!tmp1 && tmp2);
     }
 }
+
+static void
+@CTYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        *((Bool *)op) = !(in1r || in1i);
+    }
+}
+
+static void
+@CTYPE@_square(char **args, intp *dimensions, intp *steps, void *data)
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        ((@type@ *)op)[0] = in1r*in1r - in1i*in1i;
+        ((@type@ *)op)[1] = in1r*in1i + in1i*in1r;
+    }
+}
+
+static void
+@CTYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        if (fabs@c@(in1i) <= fabs@c@(in1r)) {
+            const @type@ r = in1i/in1r;
+            const @type@ d = in1r + in1i*r;
+            ((@type@ *)op)[0] = 1/d;
+            ((@type@ *)op)[1] = -r/d;
+        } else {
+            const @type@ r = in1r/in1i;
+            const @type@ d = in1r*r + in1i;
+            ((@type@ *)op)[0] = r/d;
+            ((@type@ *)op)[1] = -1/d;
+        }
+    }
+}
+
+static void
+@CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+{
+    OUTPUT_LOOP {
+        ((@type@ *)op)[0] = 1;
+        ((@type@ *)op)[1] = 0;
+    }
+}
+
+static void
+@CTYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func) {
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        ((@type@ *)op)[0] = in1r;
+        ((@type@ *)op)[1] = -in1i;
+    }
+}
+
+static void
+@CTYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        *((@type@ *)op) = sqrt@c@(in1r*in1r + in1i*in1i);
+    }
+}
+
+static void
+@CTYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        if (in1r != 0) {
+            ((@type@ *)op)[0] = in1r > 0 ? 1 : -1;
+        }
+        else if (in1i != 0) {
+            ((@type@ *)op)[0] = in1i > 0 ? 1 : -1;
+        }
+        else {
+            ((@type@ *)op)[0] = 0;
+        }
+        ((@type@ *)op)[1] = 0;
+    }
+}
+
+/**begin repeat1
+ * #kind = maximum, minimum#
+ * #OP = >, <#
+ */
+static void
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        if (in1r @OP@ in2r || ((in1r == in2r) && (in1i @OP@ in2i))) {
+            ((@type@ *)op)[0] = in1r;
+            ((@type@ *)op)[1] = in1i;
+        }
+        else {
+            ((@type@ *)op)[0] = in2r;
+            ((@type@ *)op)[1] = in2i;
+        }
+    }
+}
+/**end repeat1**/
 
 #define @CTYPE@_true_divide @CTYPE@_divide
 /**end repeat**/
@@ -1210,53 +1358,6 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
  *****************************************************************************
  */
 
-/*sign*/
-#define _SIGN1(x) ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0))
-#define _SIGN2(x) ((x) == 0 ? 0 : 1)
-#define _SIGNC(x) (((x).real > 0) ? 1 : ((x).real < 0 ? -1 : ((x).imag > 0 ? 1 : ((x).imag < 0) ? -1 : 0)))
-/**begin repeat
-   #TYPE=BYTE,SHORT,INT,LONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE,UBYTE,USHORT,UINT,ULONG,ULONGLONG#
-   #typ=byte,short,int,long,longlong,float,double,longdouble,ubyte,ushort,uint,ulong,ulonglong#
-   #func=_SIGN1*8,_SIGN2*5#
-*/
-static void
-@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],os=steps[1], n=dimensions[0];
-    char *i1=args[0], *op=args[1];
-    @typ@ t1;
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        t1 = *((@typ@ *)i1);
-        *((@typ@ *)op) = (@typ@) @func@(t1);
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-   #TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
-   #typ=cfloat,cdouble,clongdouble#
-   #rtyp=float,double,longdouble#
-*/
-static void
-@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],os=steps[1], n=dimensions[0];
-    char *i1=args[0], *op=args[1];
-    @typ@ t1;
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        t1 = *((@typ@ *)i1);
-        (*((@typ@ *)op)).real = (@rtyp@)_SIGNC(t1);
-        (*((@typ@ *)op)).imag = (@rtyp@)0;
-    }
-}
-/**end repeat**/
-
-#undef _SIGN1
-#undef _SIGN2
-#undef _SIGNC
-
 
 static void
 OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
@@ -1273,165 +1374,6 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
     }
     Py_DECREF(zero);
 }
-
-
-
-
-/*remainder*/
-/**begin repeat
-   #TYPE=BYTE,SHORT,INT,LONG,LONGLONG#
-   #typ=byte, short, int, long, longlong#
-   #c=f*2,,,l*1#
-*/
-static void
-@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    register @typ@ ix,iy, tmp;
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        ix = *((@typ@ *)i1);
-        iy = *((@typ@ *)i2);
-        if (iy == 0 || ix == 0) {
-            if (iy == 0) generate_divbyzero_error();
-            *((@typ@ *)op) = 0;
-        }
-        else if ((ix > 0) == (iy > 0)) {
-            *((@typ@ *)op) = ix % iy;
-        }
-        else {  /* handle mixed case the way Python does */
-            tmp = ix % iy;
-            if (tmp) tmp += iy;
-            *((@typ@ *)op)= tmp;
-        }
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-   #TYPE=UBYTE,USHORT,UINT,ULONG,ULONGLONG#
-   #typ=ubyte, ushort, uint, ulong, ulonglong#
-*/
-static void
-@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    register @typ@ ix,iy;
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        ix = *((@typ@ *)i1);
-        iy = *((@typ@ *)i2);
-        if (iy == 0) {
-            generate_divbyzero_error();
-            *((@typ@ *)op) = 0;
-        }
-        *((@typ@ *)op) = ix % iy;
-    }
-}
-/**end repeat**/
-
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,LONGDOUBLE#
-   #typ=float,double,longdouble#
-   #c=f,,l#
-*/
-static void
-@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    @typ@ x, y, res;
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        x = *((@typ@ *)i1);
-        y = *((@typ@ *)i2);
-        res = fmod@c@(x, y);
-        if (res && ((y < 0) != (res < 0))) {
-            res += y;
-        }
-        *((@typ@ *)op)= res;
-    }
-}
-/**end repeat**/
-
-/*fmod*/
-/**begin repeat
-
-   #TYPE=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-   #typ=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
-*/
-static void
-@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    @typ@ x, y;
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        x = *((@typ@ *)i1);
-        y = *((@typ@ *)i2);
-        if (y == 0) {
-            generate_divbyzero_error();
-            *((@typ@ *)op) = 0;
-        }
-        else {
-            *((@typ@ *)op)= x % y;
-        }
-
-    }
-}
-/**end repeat**/
-
-
-/**begin repeat
-   #TYPE=CFLOAT,CDOUBLE,CLONGDOUBLE#
-   #typ=cfloat, cdouble, clongdouble#
-*/
-static void
-@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
-{
-    Bool p1, p2;
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        p1 = ((@typ@ *)i1)->real || ((@typ@ *)i1)->imag;
-        p2 = ((@typ@ *)i2)->real || ((@typ@ *)i2)->imag;
-        *((Bool *)op)= (p1 || p2) && !(p1 && p2);
-    }
-}
-/**end repeat**/
-
-
-/*max,min*/
-/**begin repeat
-
-   #TYPE=(CFLOAT,CDOUBLE,CLONGDOUBLE)*2#
-   #OP= >*3, <*3#
-   #typ=(cfloat, cdouble, clongdouble)*2#
-   #kind= maximum*3, minimum*3#
-*/
-static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    @typ@ *i1c, *i2c;
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        i1c = (@typ@ *)i1;
-        i2c = (@typ@ *)i2;
-        if ((i1c->real @OP@ i2c->real) ||                       \
-            ((i1c->real==i2c->real) && (i1c->imag @OP@ i2c->imag)))
-            memmove(op, i1, sizeof(@typ@));
-        else
-            memmove(op, i2, sizeof(@typ@));
-    }
-}
-/**end repeat**/
-
 
 
 /*** isinf, isinf, isfinite, signbit ***/
