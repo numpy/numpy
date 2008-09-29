@@ -50,16 +50,72 @@ longdouble radiansl(longdouble x) {
 
 /*
  *****************************************************************************
+ **                        PYTHON OBJECT FUNCTIONS                          **
+ *****************************************************************************
+ */
+
+static PyObject *
+Py_square(PyObject *o)
+{
+    return PyNumber_Multiply(o, o);
+}
+
+static PyObject *
+Py_get_one(PyObject *o)
+{
+    return PyInt_FromLong(1);
+}
+
+static PyObject *
+Py_reciprocal(PyObject *o)
+{
+    PyObject *one = PyInt_FromLong(1);
+    PyObject *result;
+
+    if (!one) {
+        return NULL;
+    }
+    result = PyNumber_Divide(one, o);
+    Py_DECREF(one);
+    return result;
+}
+
+/**begin repeat
+ * #Kind = Max, Min#
+ * #OP = >=, <=#
+ */
+static PyObject *
+_npy_Object@Kind@(PyObject *i1, PyObject *i2)
+{
+    PyObject *result;
+    int cmp;
+
+    if (PyObject_Cmp(i1, i2, &cmp) < 0) {
+        return NULL;
+    }
+    if (cmp @OP@ 0) {
+        result = i1;
+    }
+    else {
+        result = i2;
+    }
+    Py_INCREF(result);
+    return result;
+}
+/**end repeat**/
+
+/*
+ *****************************************************************************
  **                           COMPLEX FUNCTIONS                             **
  *****************************************************************************
  */
 
 
 /* Don't pass structures between functions (only pointers) because how
-   structures are passed is compiler dependent and could cause
-   segfaults if ufuncobject.c is compiled with a different compiler
-   than an extension that makes use of the UFUNC API
-*/
+ * structures are passed is compiler dependent and could cause
+ * segfaults if ufuncobject.c is compiled with a different compiler
+ * than an extension that makes use of the UFUNC API
+ */
 
 /**begin repeat
 
@@ -73,9 +129,10 @@ static c@typ@ nc_half@c@ = {0.5, 0.};
 static c@typ@ nc_i@c@ = {0., 1.};
 static c@typ@ nc_i2@c@ = {0., 0.5};
 /*
-  static c@typ@ nc_mi@c@ = {0., -1.};
-  static c@typ@ nc_pi2@c@ = {M_PI/2., 0.};
-*/
+ *   static c@typ@ nc_mi@c@ = {0., -1.};
+ *   static c@typ@ nc_pi2@c@ = {M_PI/2., 0.};
+ */
+
 
 static void
 nc_sum@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
@@ -104,7 +161,7 @@ nc_neg@c@(c@typ@ *a, c@typ@ *r)
 static void
 nc_prod@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
-    register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+    @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
     r->real = ar*br - ai*bi;
     r->imag = ar*bi + ai*br;
     return;
@@ -114,8 +171,8 @@ static void
 nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
 {
 
-    register @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
-    register @typ@ d = br*br + bi*bi;
+    @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+    @typ@ d = br*br + bi*bi;
     r->real = (ar*br + ai*bi)/d;
     r->imag = (ai*br - ar*bi)/d;
     return;
@@ -224,8 +281,10 @@ nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
             return;
         }
     }
-    /* complexobect.c uses an inline version of this formula
-       investigate whether this had better performance or accuracy */
+    /*
+     * complexobect.c uses an inline version of this formula
+     * investigate whether this had better performance or accuracy
+     */
     nc_log@c@(a, r);
     nc_prod@c@(r, b, r);
     nc_exp@c@(r, r);
@@ -246,6 +305,10 @@ nc_prodi@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_acos@c@(c@typ@ *x, c@typ@ *r)
 {
+    /*
+     * return nc_neg(nc_prodi(nc_log(nc_sum(x,nc_prod(nc_i,
+     * nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))))));
+     */
     nc_prod@c@(x,x,r);
     nc_diff@c@(&nc_1@c@, r, r);
     nc_sqrt@c@(r, r);
@@ -255,14 +318,15 @@ nc_acos@c@(c@typ@ *x, c@typ@ *r)
     nc_prodi@c@(r, r);
     nc_neg@c@(r, r);
     return;
-    /* return nc_neg(nc_prodi(nc_log(nc_sum(x,nc_prod(nc_i,
-       nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))))));
-    */
 }
 
 static void
 nc_acosh@c@(c@typ@ *x, c@typ@ *r)
 {
+    /*
+     * return nc_log(nc_sum(x,
+     * nc_prod(nc_sqrt(nc_sum(x,nc_1)), nc_sqrt(nc_diff(x,nc_1)))));
+     */
     c@typ@ t;
 
     nc_sum@c@(x, &nc_1@c@, &t);
@@ -273,15 +337,15 @@ nc_acosh@c@(c@typ@ *x, c@typ@ *r)
     nc_sum@c@(x, r, r);
     nc_log@c@(r, r);
     return;
-    /*
-      return nc_log(nc_sum(x,
-      nc_prod(nc_sqrt(nc_sum(x,nc_1)), nc_sqrt(nc_diff(x,nc_1)))));
-    */
 }
 
 static void
 nc_asin@c@(c@typ@ *x, c@typ@ *r)
 {
+    /*
+     * return nc_neg(nc_prodi(nc_log(nc_sum(nc_prod(nc_i,x),
+     * nc_sqrt(nc_diff(nc_1,nc_prod(x,x)))))));
+     */
     c@typ@ a, *pa=&a;
     nc_prod@c@(x, x, r);
     nc_diff@c@(&nc_1@c@, r, r);
@@ -292,30 +356,29 @@ nc_asin@c@(c@typ@ *x, c@typ@ *r)
     nc_prodi@c@(r, r);
     nc_neg@c@(r, r);
     return;
-    /*
-      return nc_neg(nc_prodi(nc_log(nc_sum(nc_prod(nc_i,x),
-      nc_sqrt(nc_diff(nc_1,nc_prod(x,x)))))));
-    */
 }
 
 
 static void
 nc_asinh@c@(c@typ@ *x, c@typ@ *r)
 {
+    /*
+     * return nc_log(nc_sum(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x));
+     */
     nc_prod@c@(x, x, r);
     nc_sum@c@(&nc_1@c@, r, r);
     nc_sqrt@c@(r, r);
     nc_sum@c@(r, x, r);
     nc_log@c@(r, r);
     return;
-    /*
-      return nc_log(nc_sum(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x));
-    */
 }
 
 static void
 nc_atan@c@(c@typ@ *x, c@typ@ *r)
 {
+    /*
+     * return nc_prod(nc_i2,nc_log(nc_quot(nc_sum(nc_i,x),nc_diff(nc_i,x))));
+     */
     c@typ@ a, *pa=&a;
     nc_diff@c@(&nc_i@c@, x, pa);
     nc_sum@c@(&nc_i@c@, x, r);
@@ -323,14 +386,14 @@ nc_atan@c@(c@typ@ *x, c@typ@ *r)
     nc_log@c@(r,r);
     nc_prod@c@(&nc_i2@c@, r, r);
     return;
-    /*
-      return nc_prod(nc_i2,nc_log(nc_quot(nc_sum(nc_i,x),nc_diff(nc_i,x))));
-    */
 }
 
 static void
 nc_atanh@c@(c@typ@ *x, c@typ@ *r)
 {
+    /*
+     * return nc_prod(nc_half,nc_log(nc_quot(nc_sum(nc_1,x),nc_diff(nc_1,x))));
+     */
     c@typ@ a, *pa=&a;
     nc_diff@c@(&nc_1@c@, x, r);
     nc_sum@c@(&nc_1@c@, x, pa);
@@ -338,9 +401,6 @@ nc_atanh@c@(c@typ@ *x, c@typ@ *r)
     nc_log@c@(r, r);
     nc_prod@c@(&nc_half@c@, r, r);
     return;
-    /*
-      return nc_prod(nc_half,nc_log(nc_quot(nc_sum(nc_1,x),nc_diff(nc_1,x))));
-    */
 }
 
 static void
@@ -441,12 +501,12 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
  *****************************************************************************
  */
 
-#define BINARY_LOOP\
-    char *ip1 = args[0], *ip2 = args[1], *op = args[2];\
-    intp is1 = steps[0], is2 = steps[1], os = steps[2];\
+#define OUTPUT_LOOP\
+    char *op = args[1];\
+    intp os = steps[1];\
     intp n = dimensions[0];\
     intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os)
+    for(i = 0; i < n; i++, op += os)
 
 #define UNARY_LOOP\
     char *ip1 = args[0], *op = args[1];\
@@ -455,23 +515,48 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
     intp i;\
     for(i = 0; i < n; i++, ip1 += is1, op += os)
 
-#define OUTPUT_LOOP\
-    char *op = args[1];\
-    intp os = steps[1];\
+#define UNARY_LOOP_TWO_OUT\
+    char *ip1 = args[0], *op1 = args[1], *op2 = args[2];\
+    intp is1 = steps[0], os1 = steps[1], os2 = steps[2];\
     intp n = dimensions[0];\
     intp i;\
-    for(i = 0; i < n; i++, op += os)
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
+
+#define BINARY_LOOP\
+    char *ip1 = args[0], *ip2 = args[1], *op = args[2];\
+    intp is1 = steps[0], is2 = steps[1], os = steps[2];\
+    intp n = dimensions[0];\
+    intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os)
+
+#define BINARY_LOOP_TWO_OUT\
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];\
+    intp is1 = steps[0], is2 = steps[1], os1 = steps[2], os2 = steps[3];\
+    intp n = dimensions[0];\
+    intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
+
 /*
  *****************************************************************************
  **                             BOOLEAN LOOPS                               **
  *****************************************************************************
  */
 
+#define BOOL_invert BOOL_logical_not
+#define BOOL_negative BOOL_logical_not
+#define BOOL_add BOOL_logical_or
+#define BOOL_bitwise_and BOOL_logical_and
+#define BOOL_bitwise_or BOOL_logical_or
+#define BOOL_bitwise_xor BOOL_logical_xor
+#define BOOL_multiply BOOL_logical_and
+#define BOOL_subtract BOOL_logical_xor
+
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
  *         logical_and, logical_or#
  * #OP =  ==, !=, >, >=, <, <=, &&, ||#
  **/
+
 static void
 BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -530,15 +615,6 @@ BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *data)
     }
 }
 
-#define BOOL_invert BOOL_logical_not
-#define BOOL_negative BOOL_logical_not
-#define BOOL_add BOOL_logical_or
-#define BOOL_bitwise_and BOOL_logical_and
-#define BOOL_bitwise_or BOOL_logical_or
-#define BOOL_bitwise_xor BOOL_logical_xor
-#define BOOL_multiply BOOL_logical_and
-#define BOOL_subtract BOOL_logical_xor
-
 
 /*
  *****************************************************************************
@@ -554,9 +630,11 @@ BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *data)
 
 /**begin repeat1
  * both signed and unsigned integer types
- * # s = , u#
- * # S = , U#
+ * #s = , u#
+ * #S = , U#
  */
+
+#define @S@@TYPE@_floor_divide @S@@TYPE@_divide
 
 static void
 @S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
@@ -833,8 +911,6 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
     }
 }
 
-#define @TYPE@_floor_divide @TYPE@_divide
-#define U@TYPE@_floor_divide U@TYPE@_divide
 /**end repeat**/
 
 /*
@@ -849,6 +925,7 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
  *  #type = float, double, longdouble#
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  *  #c = f, , l#
+ *  #C = F, , L#
  */
 
 /**begin repeat1
@@ -892,6 +969,20 @@ static void
         *((Bool *)op)= (in1 && !in2) || (!in1 && in2);
     }
 }
+
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite, signbit#
+ * #func = isnan, isinf, isfinite, signbit#
+ **/
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((Bool *)op) = @func@(in1) != 0;
+    }
+}
+/**end repeat1**/
 
 /**begin repeat1
  * #kind = maximum, minimum#
@@ -1005,7 +1096,40 @@ static void
     }
 }
 
+static void
+@TYPE@_modf(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        *(@type@ *)op1 = modf@c@(in1, (@type@ *)op2);
+    }
+}
+
+#ifdef HAVE_FREXP@C@
+static void
+@TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        *(@type@ *)op1 = frexp@c@(in1, (int *)op2);
+    }
+}
+#endif
+
+#ifdef HAVE_LDEXP@C@
+static void
+@TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const int in2 = *(int *)ip2;
+        *(@type@ *)op = ldexp@c@(in1, in2);
+    }
+}
+#endif
+
 #define @TYPE@_true_divide @TYPE@_divide
+
 /**end repeat**/
 
 
@@ -1165,6 +1289,22 @@ static void
     }
 }
 
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite#
+ * #func = isnan, isinf, isfinite#
+ * #OP = ||, ||, &&#
+ **/
+static void
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        *((Bool *)op) = @func@(in1r) @OP@ @func@(in1i);
+    }
+}
+/**end repeat1**/
+
 static void
 @CTYPE@_square(char **args, intp *dimensions, intp *steps, void *data)
 {
@@ -1278,211 +1418,36 @@ static void
  *****************************************************************************
  */
 
-static PyObject *
-Py_square(PyObject *o)
-{
-    return PyNumber_Multiply(o, o);
-}
-
-static PyObject *
-Py_get_one(PyObject *o)
-{
-    return PyInt_FromLong(1);
-}
-
-static PyObject *
-Py_reciprocal(PyObject *o)
-{
-    PyObject *one, *result;
-    one = PyInt_FromLong(1);
-    if (!one) return NULL;
-    result = PyNumber_Divide(one, o);
-    Py_DECREF(one);
-    return result;
-}
-
-static PyObject *
-_npy_ObjectMax(PyObject *i1, PyObject *i2)
-{
-    int cmp;
-    PyObject *res;
-    if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
-
-    if (cmp >= 0) {
-        res = i1;
-    }
-    else {
-        res = i2;
-    }
-    Py_INCREF(res);
-    return res;
-}
-
-static PyObject *
-_npy_ObjectMin(PyObject *i1, PyObject *i2)
-{
-    int cmp;
-    PyObject *res;
-    if (PyObject_Cmp(i1, i2, &cmp) < 0) return NULL;
-
-    if (cmp <= 0) {
-        res = i1;
-    }
-    else {
-        res = i2;
-    }
-    Py_INCREF(res);
-    return res;
-}
-
 /**begin repeat
-
-   #kind=greater, greater_equal, less, less_equal, equal, not_equal#
-   #op=GT, GE, LT, LE, EQ, NE#
-*/
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #OP = EQ, NE, GT, GE, LT, LE#
+ */
 static void
 OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
-    register intp i, is1=steps[0],is2=steps[1],os=steps[2], n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    for(i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        *((Bool *)op)=PyObject_RichCompareBool(*((PyObject **)i1),
-                                               *((PyObject **)i2),
-                                               Py_@op@);
+    BINARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        *(Bool *)op = (Bool) PyObject_RichCompareBool(in1, in2, Py_@OP@);
     }
 }
 /**end repeat**/
-
-/*
- *****************************************************************************
- **                            UNDONE LOOPS                                 **
- *****************************************************************************
- */
-
 
 static void
 OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
 {
-    register intp i;
-    intp is1=steps[0],os=steps[1], n=dimensions[0];
-    char *i1=args[0], *op=args[1];
-    PyObject *t1, *zero, *res;
-    zero = PyInt_FromLong(0);
-    for(i=0; i<n; i++, i1+=is1, op+=os) {
-        t1 = *((PyObject **)i1);
-        res = PyInt_FromLong((long) PyObject_Compare(t1, zero));
-        *((PyObject **)op) = res;
+    PyObject *zero = PyInt_FromLong(0);
+    UNARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        *(PyObject **)op = PyInt_FromLong(PyObject_Compare(in1, zero));
     }
     Py_DECREF(zero);
 }
 
-
-/*** isinf, isinf, isfinite, signbit ***/
-/**begin repeat
-   #kind=isnan*3, isinf*3, isfinite*3, signbit*3#
-   #TYPE=(FLOAT, DOUBLE, LONGDOUBLE)*4#
-   #typ=(float, double, longdouble)*4#
-*/
-static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is=steps[0], os=steps[1], n=dimensions[0];
-    char *ip=args[0], *op=args[1];
-    for(i=0; i<n; i++, ip+=is, op+=os) {
-        *((Bool *)op) = (Bool) (@kind@(*((@typ@ *)ip)) != 0);
-    }
-}
-/**end repeat**/
-
-
-/**begin repeat
-   #kind=isnan*3, isinf*3, isfinite*3#
-   #TYPE=(CFLOAT, CDOUBLE, CLONGDOUBLE)*3#
-   #typ=(float, double, longdouble)*3#
-   #OP=||*6,&&*3#
-*/
-static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is=steps[0], os=steps[1], n=dimensions[0];
-    char *ip=args[0], *op=args[1];
-    for(i=0; i<n; i++, ip+=is, op+=os) {
-        *((Bool *)op) = @kind@(((@typ@ *)ip)[0]) @OP@        \
-            @kind@(((@typ@ *)ip)[1]);
-    }
-}
-/**end repeat**/
-
-
-
-
-/****** modf ****/
-
-/**begin repeat
-   #TYPE=FLOAT, DOUBLE, LONGDOUBLE#
-   #typ=float, double, longdouble#
-   #c=f,,l#
-*/
-static void
-@TYPE@_modf(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
-    char *i1=args[0], *op1=args[1], *op2=args[2];
-    @typ@ x1, y1, y2;
-    for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
-        x1 = *((@typ@ *)i1);
-        y1 = modf@c@(x1, &y2);
-        *((@typ@ *)op1) = y1;
-        *((@typ@ *)op2) = y2;
-    }
-}
-/**end repeat**/
-
-/*frexp, ldexp*/
-/**begin repeat
-   #TYPE=FLOAT, DOUBLE, LONGDOUBLE#
-   #typ=float, double, longdouble#
-   #c=f,,l#
-   #C=F,,L#
-*/
-#ifdef HAVE_FREXP@C@
-static void
-@TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],os1=steps[1],os2=steps[2],n=dimensions[0];
-    char *i1=args[0], *op1=args[1], *op2=args[2];
-    @typ@ x1, y1;
-    int y2;
-    for (i=0; i<n; i++, i1+=is1, op1+=os1, op2+=os2) {
-        x1 = *((@typ@ *)i1);
-        y1 = frexp@c@(x1, &y2);
-        *((@typ@ *)op1) = y1;
-        *((int *) op2) = y2;
-    }
-}
-#endif
-
-#ifdef HAVE_LDEXP@C@
-static void
-@TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *func)
-{
-    register intp i;
-    intp is1=steps[0],is2=steps[1],os=steps[2],n=dimensions[0];
-    char *i1=args[0], *i2=args[1], *op=args[2];
-    @typ@ x1, y1;
-    int x2;
-    for (i=0; i<n; i++, i1+=is1, i2+=is2, op+=os) {
-        x1 = *((@typ@ *)i1);
-        x2 = *((int *)i2);
-        y1 = ldexp@c@(x1, x2);
-        *((@typ@ *)op) = y1;
-    }
-}
-#endif
-/**end repeat**/
+/*
+ *****************************************************************************
+ **                              END LOOPS                                  **
+ *****************************************************************************
+ */
 
 
 static PyUFuncGenericFunction frexp_functions[] = {
@@ -1528,12 +1493,8 @@ static char ldexp_signatures[] = {
 };
 
 
-
 #include "__umath_generated.c"
-
-
 #include "ufuncobject.c"
-
 #include "__ufunc_api.c"
 
 static double
@@ -1546,7 +1507,9 @@ pinf_init(void)
     pinf = mul;
     for (;;) {
         pinf *= mul;
-        if (pinf == tmp) break;
+        if (pinf == tmp) {
+            break;
+        }
         tmp = pinf;
     }
     return pinf;
@@ -1562,7 +1525,9 @@ pzero_init(void)
     pinf = div;
     for (;;) {
         pinf /= div;
-        if (pinf == tmp) break;
+        if (pinf == tmp) {
+            break;
+        }
         tmp = pinf;
     }
     return pinf;
@@ -1711,6 +1676,7 @@ PyMODINIT_FUNC initumath(void) {
     PyDict_SetItemString(d, "mod", s2);
 
     return;
+
  err:
     /* Check for errors */
     if (!PyErr_Occurred()) {
