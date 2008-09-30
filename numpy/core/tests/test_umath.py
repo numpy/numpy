@@ -205,9 +205,9 @@ class TestComplexFunctions(object):
 
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
-        yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True
+        yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1
+        yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1
+        yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1
 
         yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1
@@ -229,6 +229,11 @@ class TestComplexFunctions(object):
 
     @dec.knownfailureif(True, "These branch cuts are known to fail")
     def test_branch_cuts_failing(self):
+        # XXX: signed zero not OK with ICC on 64-bit platform for log, see
+        # http://permalink.gmane.org/gmane.comp.python.numeric.general/25335
+        yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1, True
+        yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True
+        yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True
         # XXX: signed zeros are not OK for sqrt or for the arc* functions
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, -1j], 1, -1, True
