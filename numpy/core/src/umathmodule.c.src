@@ -995,25 +995,16 @@ static void
 
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP1 =  >=, <=#
- * #OP2 =  <=, >=#
+ * #OP =  >, <#
  **/
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
-    /* Return NaN if either value is NaN */
+    /*  */
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        if (in1 @OP1@ in2) {
-            *((@type@ *)op) = in1;
-        }
-        else if (in1 @OP2@ in2) {
-            *((@type@ *)op) = in2;
-        }
-        else {
-            *((@type@ *)op) = NAN;
-        }
+        *((@type@ *)op) = in1 @OP@ in2 ? in1 : in2;
     }
 }
 /**end repeat1**/
@@ -1102,7 +1093,7 @@ static void
 static void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
 {
-    /* Returns NaN as sign of NaN */
+    /*  */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         if (in1 > 0) {
@@ -1111,12 +1102,8 @@ static void
         else if (in1 < 0) {
             *((@type@ *)op) = -1;
         }
-        else if (in1 == 0) {
-            *((@type@ *)op) = 0;
-        }
         else {
-            /* is NaN */
-            *((@type@ *)op) = in1;
+            *((@type@ *)op) = 0;
         }
     }
 }
@@ -1396,14 +1383,22 @@ static void
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        if (in1r != 0) {
-            ((@type@ *)op)[0] = in1r > 0 ? 1 : -1;
+        if (in1r > 0) {
+            ((@type@ *)op)[0] = 1;
         }
-        else if (in1i != 0) {
-            ((@type@ *)op)[0] = in1i > 0 ? 1 : -1;
+        else if (in1r < 0) {
+            ((@type@ *)op)[0] = -1;
         }
         else {
-            ((@type@ *)op)[0] = 0;
+            if (in1i > 0) {
+                ((@type@ *)op)[0] = 1;
+            }
+            else if (in1i < 0) {
+                ((@type@ *)op)[0] = -1;
+            }
+            else {
+                ((@type@ *)op)[0] = 0;
+            }
         }
         ((@type@ *)op)[1] = 0;
     }
