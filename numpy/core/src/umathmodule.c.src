@@ -815,7 +815,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = (in1 > 0) ? in1 : -in1;
+        *((@type@ *)op) = (in1 >= 0) ? in1 : -in1;
     }
 }
 
@@ -970,6 +970,15 @@ static void
     }
 }
 
+static void
+@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((Bool *)op) = !in1;
+    }
+}
+
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit#
  * #func = isnan, isinf, isfinite, signbit#
@@ -986,15 +995,25 @@ static void
 
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP =  >, <#
+ * #OP1 =  >=, <=#
+ * #OP2 =  <=, >=#
  **/
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
+    /* Return NaN if either value is NaN */
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op) = (in1 @OP@ in2) ? in1 : in2;
+        if (in1 @OP1@ in2) {
+            *((@type@ *)op) = in1;
+        }
+        else if (in1 @OP2@ in2) {
+            *((@type@ *)op) = in2;
+        }
+        else {
+            *((@type@ *)op) = NAN;
+        }
     }
 }
 /**end repeat1**/
@@ -1065,7 +1084,9 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = (in1 < 0) ? -in1 : in1;
+        const @type@ tmp = (in1 > 0) ? in1 : -in1;
+        /* add 0 to clear -0.0 */
+        *((@type@ *)op) = tmp + 0;
     }
 }
 
@@ -1079,20 +1100,24 @@ static void
 }
 
 static void
-@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
-{
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((Bool *)op) = !in1;
-    }
-}
-
-static void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
 {
+    /* Returns NaN as sign of NaN */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+        if (in1 > 0) {
+            *((@type@ *)op) = 1;
+        }
+        else if (in1 < 0) {
+            *((@type@ *)op) = -1;
+        }
+        else if (in1 == 0) {
+            *((@type@ *)op) = 0;
+        }
+        else {
+            /* is NaN */
+            *((@type@ *)op) = in1;
+        }
     }
 }
 
