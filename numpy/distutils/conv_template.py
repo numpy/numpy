@@ -128,19 +128,22 @@ def paren_repl(obj):
     numrep = obj.group(2)
     return ','.join([torep]*int(numrep))
 
-parenrep = re.compile(r"[(]([^)]*?)[)]\*(\d+)")
+parenrep = re.compile(r"[(]([^)]*)[)]\*(\d+)")
 plainrep = re.compile(r"([^*]+)\*(\d+)")
-def conv(astr):
+def parse_values(astr):
     # replaces all occurrences of '(a,b,c)*4' in astr
-    #  with 'a,b,c,a,b,c,a,b,c,a,b,c'. The result is
+    # with 'a,b,c,a,b,c,a,b,c,a,b,c'. Empty braces generate
+    # empty values, i.e., ()*4 yields ',,,'. The result is
     # split at ',' and a list of values returned.
-    astr = parenrep.sub(paren_repl,astr)
+    astr = parenrep.sub(paren_repl, astr)
     # replaces occurences of xxx*3 with xxx, xxx, xxx
     astr = ','.join([plainrep.sub(paren_repl,x.strip())
                      for x in astr.split(',')])
     return astr.split(',')
 
-named_re = re.compile(r"#\s*([\w]*)\s*=\s*([^#]*)#")
+
+stripast = re.compile(r"\n\s*\*?")
+named_re = re.compile(r"#\s*(\w*)\s*=([^#]*)#")
 def parse_loop_header(loophead) :
     """Find all named replacements in the header
 
@@ -149,23 +152,29 @@ def parse_loop_header(loophead) :
     value is the replacement string.
 
     """
+    # Strip out '\n' and leading '*', if any, in continuation lines.
+    # This should not effect code previous to this change as
+    # continuation lines were not allowed.
+    loophead = stripast.sub("", loophead)
     # parse out the names and lists of values
     names = []
     reps = named_re.findall(loophead)
     nsub = None
     for rep in reps:
-        name = rep[0].strip()
-        vals = conv(rep[1])
+        name = rep[0]
+        vals = parse_values(rep[1])
         size = len(vals)
         if nsub is None :
             nsub = size
         elif nsub != size :
-            msg = "Mismatch in number: %s - %s" % (name, vals)
+            msg = "Mismatch in number of values:\n%s = %s" % (name, vals)
             raise ValueError, msg
         names.append((name,vals))
 
     # generate list of dictionaries, one for each template iteration
     dlist = []
+    if nsub is None :
+        raise ValueError, "No substitution variables found"
     for i in range(nsub) :
         tmp = {}
         for name,vals in names :
@@ -183,8 +192,8 @@ def parse_string(astr, env, level, line) :
         try :
             val = env[name]
         except KeyError, e :
-            msg = '%s: %s'%(lineno, e)
-            raise KeyError, msg
+            msg = 'line %d: %s'%(line, e)
+            raise ValueError, msg
         return val
 
     code = [lineno]
@@ -203,7 +212,7 @@ def parse_string(astr, env, level, line) :
             try :
                 envlist = parse_loop_header(head)
             except ValueError, e :
-                msg = "%s: %s" % (lineno, e)
+                msg = "line %d: %s" % (newline, e)
                 raise ValueError, msg
             for newenv in envlist :
                 newenv.update(env)
@@ -249,7 +258,10 @@ def resolve_includes(source):
 def process_file(source):
     lines = resolve_includes(source)
     sourcefile = os.path.normcase(source).replace("\\","\\\\")
-    code = process_str(''.join(lines))
+    try:
+        code = process_str(''.join(lines))
+    except ValueError, e:
+        raise ValueError, '"%s", %s' % (sourcefile, e)
     return '#line 1 "%s"\n%s' % (sourcefile, code)
 
 
@@ -284,5 +296,8 @@ if __name__ == "__main__":
         outfile = open(newname,'w')
 
     allstr = fid.read()
-    writestr = process_str(allstr)
+    try:
+        writestr = process_str(allstr)
+    except ValueError, e:
+        raise ValueError, "file %s, %s" % (file, e)
     outfile.write(writestr)
