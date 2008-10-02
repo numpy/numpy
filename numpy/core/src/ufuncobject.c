@@ -1427,12 +1427,15 @@ construct_arrays(PyUFuncLoopObject *loop, PyObject *args, PyArrayObject **mps,
      * FAIL with NotImplemented if the other object has
      * the __r<op>__ method and has __array_priority__ as
      * an attribute (signalling it can handle ndarray's)
-     * and is not already an ndarray
+     * and is not already an ndarray or a subtype of the same type.
      */
     if ((arg_types[1] == PyArray_OBJECT) &&                         \
         (loop->ufunc->nin==2) && (loop->ufunc->nout == 1)) {
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
-        if (!PyArray_CheckExact(_obj) &&                        \
+        if (!PyArray_CheckExact(_obj) &&
+	    /* If both are same subtype of object arrays, then proceed */
+	    !(_obj->ob_type == (PyTuple_GET_ITEM(args, 0))->ob_type) &&   \
+
             PyObject_HasAttrString(_obj, "__array_priority__") && \
             _has_reflected_op(_obj, loop->ufunc->name)) {
             loop->notimplemented = 1;

@@ -278,6 +278,16 @@ class TestAttributes(TestCase):
         assert_equal(add.nout, 1)
         assert_equal(add.identity, 0)
 
+class TestSubclass(TestCase):
+    def test_subclass_op(self):
+        class simple(np.ndarray):
+            def __new__(subtype, shape):
+                self = np.ndarray.__new__(subtype, shape, dtype=object)
+                self.fill(0)
+                return self
+        a = simple((3,4))
+        assert_equal(a+a, a)
+
 def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
                       dtype=np.complex):
     """
