@@ -186,38 +186,6 @@ for f in ["isnan", "isinf", "signbit", "isfinite"]:
 """
     config.CheckDeclaration(f, includes=includes)
 
-def check_func(f):
-    """Check that f is available in mlib, and add the symbol appropriately.  """
-    st = config.CheckDeclaration(f, language = 'C', includes = "#include <math.h>")
-    if st:
-        st = config.CheckFunc(f, language = 'C')
-    if st:
-        mfuncs_defined[f] = 1
-    else:
-        mfuncs_defined[f] = 0
-
-for f in mfuncs:
-    check_func(f)
-
-if mfuncs_defined['expl'] == 1:
-    config.Define('HAVE_LONGDOUBLE_FUNCS',
-                  comment = 'Define to 1 if long double funcs are available')
-if mfuncs_defined['expf'] == 1:
-    config.Define('HAVE_FLOAT_FUNCS',
-                  comment = 'Define to 1 if long double funcs are available')
-if mfuncs_defined['asinh'] == 1:
-    config.Define('HAVE_INVERSE_HYPERBOLIC',
-                  comment = 'Define to 1 if inverse hyperbolic funcs are '\
-                            'available')
-if mfuncs_defined['atanhf'] == 1:
-    config.Define('HAVE_INVERSE_HYPERBOLIC_FLOAT',
-                  comment = 'Define to 1 if inverse hyperbolic float funcs '\
-                            'are available')
-if mfuncs_defined['atanhl'] == 1:
-    config.Define('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE',
-                  comment = 'Define to 1 if inverse hyperbolic long double '\
-                            'funcs are available')
-
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
 #-------------------------------------------------------
