@@ -2021,7 +2021,7 @@ static void
         }
         else {
             ((@type@ *)op)[0] = NAN;
-            ((@type@ *)op)[1] = 0;
+            ((@type@ *)op)[1] = NAN;
         }
     }
 }
@@ -2042,7 +2042,7 @@ static void
         if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
             if (isnan(in1r) || isnan(in1i)) {
                 ((@type@ *)op)[0] = NAN;
-                ((@type@ *)op)[1] = 0;
+                ((@type@ *)op)[1] = NAN;
             }
             else {
                 ((@type@ *)op)[0] = in1r;
