@@ -1,4 +1,4 @@
-# Last Change: Tue Aug 05 12:00 PM 2008 J
+# Last Change: Fri Oct 03 03:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -136,7 +136,15 @@ mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
 # Set value to 1 for each defined function (in math lib)
 mfuncs_defined = dict([(f, 0) for f in mfuncs])
 
-# TODO: checklib vs checkfunc ?
+# Check for mandatory funcs: we barf if a single one of those is not there
+mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+"floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos", "atan", "fmod",
+'modf', 'frexp', 'ldexp']
+
+if not config.CheckFuncsAtOnce(mandatory_funcs):
+    raise SystemError("One of the required function to build numpy is not"
+            " available (the list is %s)." % str(mandatory_funcs))
+
 def check_func(f):
     """Check that f is available in mlib, and add the symbol appropriately.  """
     st = config.CheckDeclaration(f, language = 'C', includes = "#include <math.h>")
