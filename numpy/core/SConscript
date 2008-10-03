@@ -154,6 +154,13 @@ def check_funcs(funcs):
         for f in funcs:
             st = config.CheckFunc(f, language = 'C')
 
+# XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
+# python.h... I wish they would clean their public headers someday)
+optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
+                     "rint", "trunc"]
+
+check_funcs(optional_stdfuncs)
+
 def check_func(f):
     """Check that f is available in mlib, and add the symbol appropriately.  """
     st = config.CheckDeclaration(f, language = 'C', includes = "#include <math.h>")
