@@ -6,6 +6,7 @@ sys.path.pop(0)
 
 Zero = "PyUFunc_Zero"
 One = "PyUFunc_One"
+Nan = "PyUFunc_Nan"
 None_ = "PyUFunc_None"
 
 class TypeDescription(object):
@@ -315,6 +316,16 @@ defdict = {
           docstrings.get('numpy.core.umath.minimum'),
           TD(noobj),
           TD(O, f='_npy_ObjectMin')
+          ),
+'fmax' :
+    Ufunc(2, 1, Nan,
+          "",
+          TD(inexact),
+          ),
+'fmin' :
+    Ufunc(2, 1, Nan,
+          "",
+          TD(inexact),
           ),
 'bitwise_and' :
     Ufunc(2, 1, One,

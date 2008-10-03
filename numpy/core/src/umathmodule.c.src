@@ -1579,7 +1579,7 @@ static void
 
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP =  >, <#
+ * #OP =  >=, <=#
  **/
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
@@ -1588,7 +1588,23 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op) = in1 @OP@ in2 ? in1 : in2;
+        *((@type@ *)op) = (in1 @OP@ in2 || isnan(in1)) ? in1 : in2;
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP =  >=, <=#
+ **/
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    /*  */
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op) = (in1 @OP@ in2 || isnan(in2)) ? in1 : in2;
     }
 }
 /**end repeat1**/
@@ -1680,15 +1696,7 @@ static void
     /*  */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        if (in1 > 0) {
-            *((@type@ *)op) = 1;
-        }
-        else if (in1 < 0) {
-            *((@type@ *)op) = -1;
-        }
-        else {
-            *((@type@ *)op) = 0;
-        }
+        *((@type@ *)op) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
     }
 }
 
@@ -1988,9 +1996,12 @@ static void
     }
 }
 
+#define GE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi))
+#define LE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi))
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP = >, <#
+ * #OP1 = GE, LE#
+ * #OP2 = LE, GE#
  */
 static void
 @CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
@@ -2000,9 +2011,43 @@ static void
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (in1r @OP@ in2r || ((in1r == in2r) && (in1i @OP@ in2i))) {
+        if (@OP1@(in1r, in1i, in2r, in2i)) {
             ((@type@ *)op)[0] = in1r;
             ((@type@ *)op)[1] = in1i;
+        }
+        else if (@OP2@(in1r, in1i, in2r, in2i)) {
+            ((@type@ *)op)[0] = in2r;
+            ((@type@ *)op)[1] = in2i;
+        }
+        else {
+            ((@type@ *)op)[0] = NAN;
+            ((@type@ *)op)[1] = 0;
+        }
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP1 = GE, LE#
+ */
+static void
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
+            if (isnan(in1r) || isnan(in1i)) {
+                ((@type@ *)op)[0] = NAN;
+                ((@type@ *)op)[1] = 0;
+            }
+            else {
+                ((@type@ *)op)[0] = in1r;
+                ((@type@ *)op)[1] = in1i;
+            }
         }
         else {
             ((@type@ *)op)[0] = in2r;
@@ -2011,6 +2056,8 @@ static void
     }
 }
 /**end repeat1**/
+#undef GE
+#undef LE
 
 #define @CTYPE@_true_divide @CTYPE@_divide
 /**end repeat**/
@@ -2251,7 +2298,7 @@ PyMODINIT_FUNC initumath(void) {
 
     pinf = pinf_init();
     pzero = pzero_init();
-    mynan = pinf / pinf;
+    mynan = copysign(pinf / pinf, 1);
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(pinf));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-pinf));
