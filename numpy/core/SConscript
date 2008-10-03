@@ -148,7 +148,7 @@ if not config.CheckFuncsAtOnce(mandatory_funcs):
 def check_funcs(funcs):
     # Use check_funcs_once first, and if it does not work, test func per
     # func. Return success only if all the functions are available
-    st = config.CheckFuncsAtOnce(func)
+    st = config.CheckFuncsAtOnce(funcs)
     if not st:
         # Global check failed, check func per func
         for f in funcs:
