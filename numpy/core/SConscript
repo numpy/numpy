@@ -145,6 +145,15 @@ if not config.CheckFuncsAtOnce(mandatory_funcs):
     raise SystemError("One of the required function to build numpy is not"
             " available (the list is %s)." % str(mandatory_funcs))
 
+def check_funcs(funcs):
+    # Use check_funcs_once first, and if it does not work, test func per
+    # func. Return success only if all the functions are available
+    st = config.CheckFuncsAtOnce(func)
+    if not st:
+        # Global check failed, check func per func
+        for f in funcs:
+            st = config.CheckFunc(f, language = 'C')
+
 def check_func(f):
     """Check that f is available in mlib, and add the symbol appropriately.  """
     st = config.CheckDeclaration(f, language = 'C', includes = "#include <math.h>")
