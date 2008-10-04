@@ -1,13 +1,25 @@
 import subprocess
 import os
 
-PYVER = "2.5"
+if __name__ == '__main__':
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("-p", "--pyver", dest="pyver",
+                      help = "Python version (2.4, 2.5, etc...)")
 
-# Bootstrap
-subprocess.check_call(['python', 'prepare_bootstrap.py', '-p', PYVER])
+    opts, args = parser.parse_args()
+    pyver = opts.pyver
 
-# Build binaries
-subprocess.check_call(['python', 'build.py', '-p', PYVER], cwd = 'bootstrap-%s' % PYVER)
+    if not pyver:
+        pyver = "2.5"
 
-# Build installer using nsis
-subprocess.check_call(['makensis', 'numpy-superinstaller.nsi'], cwd = 'bootstrap-%s' % PYVER)
+    # Bootstrap
+    subprocess.check_call(['python', 'prepare_bootstrap.py', '-p', pyver])
+
+    # Build binaries
+    subprocess.check_call(['python', 'build.py', '-p', pyver], 
+                          cwd = 'bootstrap-%s' % pyver)
+
+    # Build installer using nsis
+    subprocess.check_call(['makensis', 'numpy-superinstaller.nsi'], 
+                          cwd = 'bootstrap-%s' % pyver)

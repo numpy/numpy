@@ -16,6 +16,7 @@
 #include "abstract.h"
 #include "config.h"
 #include <math.h>
+#include "numpy/WTF_MathExtras.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338328
@@ -47,7 +48,7 @@ longdouble radiansl(longdouble x) {
     return x * (M_PI/180.0L);
 }
 
-/* 
+/*
  * A whole slew of basic math functions are provided originally
  * by Konrad Hinsen.
  */

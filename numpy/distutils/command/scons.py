@@ -360,7 +360,7 @@ class scons(old_build_ext):
                                    "this package " % str(e))
 
             try:
-                minver = "0.9.1"
+                minver = "0.9.3"
                 from numscons import get_version
                 if get_version() < minver:
                     raise ValueError()
