@@ -45,7 +45,7 @@
 #if defined(_MSC_VER)
 
 #include <xmath.h>
-#include <limits>
+#include <limits.h>
 
 #if HAVE(FLOAT_H)
 #include <float.h>
