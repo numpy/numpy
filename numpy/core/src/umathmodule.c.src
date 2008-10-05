@@ -1737,6 +1737,7 @@ static void
 #undef HAVE_DOUBLE_FUNCS
 
 #define @TYPE@_true_divide @TYPE@_divide
+
 #undef ONE
 #undef ZERO
 
@@ -1756,6 +1757,11 @@ static void
  * #type = float, double, longdouble#
  * #c = f, , l#
  */
+
+#define CGE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi))
+#define CLE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi))
+#define ONE 1.0@c@
+#define ZERO 0.0@c@
 
 /**begin repeat1
  * arithmetic
@@ -1950,8 +1956,8 @@ static void
 @CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
 {
     OUTPUT_LOOP {
-        ((@type@ *)op)[0] = 1;
-        ((@type@ *)op)[1] = 0;
+        ((@type@ *)op)[0] = ONE;
+        ((@type@ *)op)[1] = ZERO;
     }
 }
 
@@ -1982,32 +1988,30 @@ static void
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         if (in1r > 0) {
-            ((@type@ *)op)[0] = 1;
+            ((@type@ *)op)[0] = ONE;
         }
         else if (in1r < 0) {
-            ((@type@ *)op)[0] = -1;
+            ((@type@ *)op)[0] = -ONE;
         }
         else {
             if (in1i > 0) {
-                ((@type@ *)op)[0] = 1;
+                ((@type@ *)op)[0] = ONE;
             }
             else if (in1i < 0) {
-                ((@type@ *)op)[0] = -1;
+                ((@type@ *)op)[0] = -ONE;
             }
             else {
-                ((@type@ *)op)[0] = 0;
+                ((@type@ *)op)[0] = ZERO;
             }
         }
-        ((@type@ *)op)[1] = 0;
+        ((@type@ *)op)[1] = ZERO;
     }
 }
 
-#define GE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi))
-#define LE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi))
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP1 = GE, LE#
- * #OP2 = LE, GE#
+ * #OP1 = CGE, CLE#
+ * #OP2 = CLE, CGE#
  */
 static void
 @CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
@@ -2035,7 +2039,7 @@ static void
 
 /**begin repeat1
  * #kind = fmax, fmin#
- * #OP1 = GE, LE#
+ * #OP1 = CGE, CLE#
  */
 static void
 @CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
@@ -2062,10 +2066,14 @@ static void
     }
 }
 /**end repeat1**/
-#undef GE
-#undef LE
 
 #define @CTYPE@_true_divide @CTYPE@_divide
+
+#undef CGE
+#undef CLE
+#undef ONE
+#undef ZERO
+
 /**end repeat**/
 
 
