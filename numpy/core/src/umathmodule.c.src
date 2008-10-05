@@ -1243,7 +1243,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((@s@@type@ *)op) = 1.0/in1;
+        *((@s@@type@ *)op) = (@s@@type@)(1.0/in1);
     }
 }
 
@@ -1513,6 +1513,9 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
  *  #C = F, , L#
  */
 
+#define ONE 1.0@c@
+#define ZERO 0.0@c@
+
 /**begin repeat1
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
@@ -1650,7 +1653,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = 1.0/in1;
+        *((@type@ *)op) = ONE/in1;
     }
 }
 
@@ -1658,7 +1661,7 @@ static void
 @TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
 {
     OUTPUT_LOOP {
-        *((@type@ *)op) = 1;
+        *((@type@ *)op) = ONE;
     }
 }
 
@@ -1676,7 +1679,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        const @type@ tmp = (in1 > 0) ? in1 : -in1;
+        const @type@ tmp = in1 > 0 ? in1 : -in1;
         /* add 0 to clear -0.0 */
         *((@type@ *)op) = tmp + 0;
     }
@@ -1697,7 +1700,7 @@ static void
     /*  */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+        *((@type@ *)op) = in1 > 0 ? ONE : (in1 < 0 ? -ONE : ZERO);
     }
 }
 
@@ -1734,6 +1737,8 @@ static void
 #undef HAVE_DOUBLE_FUNCS
 
 #define @TYPE@_true_divide @TYPE@_divide
+#undef ONE
+#undef ZERO
 
 /**end repeat**/
 
