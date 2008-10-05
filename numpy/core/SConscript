@@ -1,4 +1,4 @@
-# Last Change: Tue Aug 05 12:00 PM 2008 J
+# Last Change: Fri Oct 03 04:00 PM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -136,38 +136,55 @@ mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
 # Set value to 1 for each defined function (in math lib)
 mfuncs_defined = dict([(f, 0) for f in mfuncs])
 
-# TODO: checklib vs checkfunc ?
-def check_func(f):
-    """Check that f is available in mlib, and add the symbol appropriately.  """
-    st = config.CheckDeclaration(f, language = 'C', includes = "#include <math.h>")
-    if st:
-        st = config.CheckFunc(f, language = 'C')
-    if st:
-        mfuncs_defined[f] = 1
-    else:
-        mfuncs_defined[f] = 0
+# Check for mandatory funcs: we barf if a single one of those is not there
+mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+"floor", "ceil", "sqrt", "log10", "log", "exp", "asin", "acos", "atan", "fmod",
+'modf', 'frexp', 'ldexp']
 
-for f in mfuncs:
-    check_func(f)
+if not config.CheckFuncsAtOnce(mandatory_funcs):
+    raise SystemError("One of the required function to build numpy is not"
+            " available (the list is %s)." % str(mandatory_funcs))
 
-if mfuncs_defined['expl'] == 1:
-    config.Define('HAVE_LONGDOUBLE_FUNCS',
-                  comment = 'Define to 1 if long double funcs are available')
-if mfuncs_defined['expf'] == 1:
-    config.Define('HAVE_FLOAT_FUNCS',
-                  comment = 'Define to 1 if long double funcs are available')
-if mfuncs_defined['asinh'] == 1:
-    config.Define('HAVE_INVERSE_HYPERBOLIC',
-                  comment = 'Define to 1 if inverse hyperbolic funcs are '\
-                            'available')
-if mfuncs_defined['atanhf'] == 1:
-    config.Define('HAVE_INVERSE_HYPERBOLIC_FLOAT',
-                  comment = 'Define to 1 if inverse hyperbolic float funcs '\
-                            'are available')
-if mfuncs_defined['atanhl'] == 1:
-    config.Define('HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE',
-                  comment = 'Define to 1 if inverse hyperbolic long double '\
-                            'funcs are available')
+# Standard functions which may not be available and for which we have a
+# replacement implementation
+#
+def check_funcs(funcs):
+    # Use check_funcs_once first, and if it does not work, test func per
+    # func. Return success only if all the functions are available
+    st = config.CheckFuncsAtOnce(funcs)
+    if not st:
+        # Global check failed, check func per func
+        for f in funcs:
+            st = config.CheckFunc(f, language = 'C')
+
+# XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
+# python.h... I wish they would clean their public headers someday)
+optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
+                     "rint", "trunc"]
+
+check_funcs(optional_stdfuncs)
+
+# C99 functions: float and long double versions
+c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
+             "ceil", "rint", "trunc", "sqrt", "log10", "log", "exp",
+             "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
+             "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp']
+
+for prec in ['l', 'f']:
+    fns = [f + prec for f in c99_funcs]
+    check_funcs(fns)
+
+# Normally, isnan and isinf are macro (C99), but some platforms only have
+# func, or both func and macro version. Check for macro only, and define
+# replacement ones if not found.
+# Note: including Python.h is necessary because it modifies some math.h
+# definitions
+for f in ["isnan", "isinf", "signbit", "isfinite"]:
+    includes = """\
+#include <Python.h>
+#include <math.h>
+"""
+    config.CheckDeclaration(f, includes=includes)
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
@@ -234,6 +251,7 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 # Generate generated code
 #------------------------
 scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.inc.src'))
+math_c99_src = env.GenerateFromTemplate(pjoin('src', 'math_c99.inc.src'))
 arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.inc.src'))
 sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umathmodule.c.src'))
