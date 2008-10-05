@@ -11,6 +11,8 @@
  *****************************************************************************
  */
 
+#include "numpy/WTF_MathExtras.h"
+
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
 double expm1(double x)
