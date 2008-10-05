@@ -106,7 +106,7 @@ _npy_Object@Kind@(PyObject *i1, PyObject *i2)
  */
 
 
-/* 
+/*
  * Don't pass structures between functions (only pointers) because how
  * structures are passed is compiler dependent and could cause
  * segfaults if ufuncobject.c is compiled with a different compiler
@@ -1533,6 +1533,16 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
  */
 
 
+/*
+ *****************************************************************************
+ **                            SETUP UFUNCS                                 **
+ *****************************************************************************
+ */
+
+#include "__umath_generated.c"
+#include "ufuncobject.c"
+#include "__ufunc_api.c"
+
 static PyUFuncGenericFunction frexp_functions[] = {
 #ifdef HAVE_FREXPF
     FLOAT_frexp,
@@ -1554,7 +1564,6 @@ static char frexp_signatures[] = {
 #endif
 };
 
-
 static PyUFuncGenericFunction ldexp_functions[] = {
 #ifdef HAVE_LDEXPF
     FLOAT_ldexp,
@@ -1575,10 +1584,6 @@ static char ldexp_signatures[] = {
 #endif
 };
 
-
-#include "__umath_generated.c"
-#include "ufuncobject.c"
-#include "__ufunc_api.c"
 
 static double
 pinf_init(void)
