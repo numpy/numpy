@@ -125,7 +125,7 @@ int main()
         self._check_compiler()
         body = []
         if decl:
-            body.append("int %s ();" % func)
+            body.append("int %s (void);" % func)
         # Handle MSVC intrisincs: force MS compiler to make a function call.
         # Useful to test for some functions when built with optimization on, to
         # avoid build error because the intrisinc and our 'fake' test
@@ -179,7 +179,7 @@ int main()
         if decl:
             for f, v in decl.items():
                 if v:
-                    body.append("int %s ();" % f)
+                    body.append("int %s (void);" % f)
 
         # Handle MS intrinsics. See check_func for more info.
         body.append("#ifdef _MSC_VER")
