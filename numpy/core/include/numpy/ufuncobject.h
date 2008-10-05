@@ -263,11 +263,6 @@ typedef struct _loop1d_info {
 		| ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
 	}
 
-#define isnan(x) (_isnan((double)(x)))
-#define isinf(x) ((_fpclass((double)(x)) == _FPCLASS_PINF) ||	\
-		  (_fpclass((double)(x)) == _FPCLASS_NINF))
-#define isfinite(x) (_finite((double) x))
-
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */

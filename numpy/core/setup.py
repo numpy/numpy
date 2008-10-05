@@ -5,20 +5,6 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 
-FUNCTIONS_TO_CHECK = [
-    ('expl', 'HAVE_LONGDOUBLE_FUNCS'),
-    ('expf', 'HAVE_FLOAT_FUNCS'),
-    ('log1p', 'HAVE_LOG1P'),
-    ('expm1', 'HAVE_EXPM1'),
-    ('asinh', 'HAVE_INVERSE_HYPERBOLIC'),
-    ('atanhf', 'HAVE_INVERSE_HYPERBOLIC_FLOAT'),
-    ('atanhl', 'HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE'),
-    ('isnan', 'HAVE_ISNAN'),
-    ('isinf', 'HAVE_ISINF'),
-    ('rint', 'HAVE_RINT'),
-    ('trunc', 'HAVE_TRUNC'),
-    ]
-
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
     header."""
@@ -48,6 +34,75 @@ def is_npy_no_smp():
         except KeyError:
             nosmp = 0
     return nosmp == 1
+
+def check_math_capabilities(config, moredefs, mathlibs):
+    def check_func(func_name):
+        return config.check_func(func_name, libraries=mathlibs,
+                                 decl=True, call=True)
+
+    def check_funcs_once(funcs_name):
+        decl = dict([(f, True) for f in funcs_name])
+        st = config.check_funcs_once(funcs_name, libraries=mathlibs,
+                                     decl=decl, call=decl)
+        if st:
+            moredefs.extend([name_to_defsymb(f) for f in funcs_name])
+        return st
+
+    def check_funcs(funcs_name):
+        # Use check_funcs_once first, and if it does not work, test func per
+        # func. Return success only if all the functions are available
+        if not check_funcs_once(funcs_name):
+            # Global check failed, check func per func
+            for f in funcs_name:
+                if check_func(f):
+                    moredefs.append(name_to_defsymb(f))
+            return 0
+        else:
+            return 1
+
+    def name_to_defsymb(name):
+        return "HAVE_%s" % name.upper()
+
+    #use_msvc = config.check_decl("_MSC_VER")
+
+    # Mandatory functions: if not found, fail the build
+    mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+		"floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+		"acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
+
+    if not check_funcs_once(mandatory_funcs):
+        raise SystemError("One of the required function to build numpy is not"
+                " available (the list is %s)." % str(mandatory_funcs))
+
+    # Standard functions which may not be available and for which we have a
+    # replacement implementation
+    # XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
+    # python.h... I wish they would clean their public headers someday)
+    optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
+                         "rint", "trunc"]
+
+    check_funcs(optional_stdfuncs)
+
+    # C99 functions: float and long double versions
+    c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
+                 "ceil", "rint", "trunc", "sqrt", "log10", "log", "exp",
+                 "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
+                 "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp']
+
+    for prec in ['l', 'f']:
+        fns = [f + prec for f in c99_funcs]
+        check_funcs(fns)
+
+    # Normally, isnan and isinf are macro (C99), but some platforms only have
+    # func, or both func and macro version. Check for macro only, and define
+    # replacement ones if not found.
+    # Note: including Python.h is necessary because it modifies some math.h
+    # definitions
+    for f in ["isnan", "isinf", "signbit", "isfinite"]:
+        st = config.check_decl(f, headers = ["Python.h", "math.h"])
+        if st:
+            moredefs.append(name_to_defsymb("decl_%s" % f))
+
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
@@ -106,14 +161,7 @@ def configuration(parent_package='',top_path=None):
             ext.libraries.extend(mathlibs)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
-            def check_func(func_name):
-                return config_cmd.check_func(func_name,
-                                             libraries=mathlibs, decl=False,
-                                             headers=['math.h'])
-
-            for func_name, defsymbol in FUNCTIONS_TO_CHECK:
-                if check_func(func_name):
-                    moredefs.append(defsymbol)
+            check_math_capabilities(config_cmd, moredefs, mathlibs)
 
             if is_npy_no_signal():
                 moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
@@ -136,6 +184,17 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
+
+            # Keep those for backward compatibility for now
+            target_f.write("""
+#ifdef HAVE_EXPL
+#define HAVE_LONGDOUBLE_FUNCS
+#endif
+
+#ifdef HAVE_EXPF
+#define HAVE_FLOAT_FUNCS
+#endif
+""")
             target_f.close()
             print 'File:',target
             target_f = open(target)
@@ -264,7 +323,6 @@ def configuration(parent_package='',top_path=None):
             join('src','scalartypes.inc.src'),
             join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
-            join('src','_isnan.c'),
             join('src','ucsnarrow.c'),
             join('include','numpy','*object.h'),
             'include/numpy/fenv/fenv.c',
@@ -298,6 +356,7 @@ def configuration(parent_package='',top_path=None):
                                     generate_ufunc_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
+                                    join('src','math_c99.inc.src'),
                                     ],
                          depends = [join('src','ufuncobject.c'),
                                     generate_umath_py,
