@@ -16,17 +16,12 @@
 #include "abstract.h"
 #include "config.h"
 #include <math.h>
-#include "numpy/WTF_MathExtras.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338328
 #endif
 
-/*
- *****************************************************************************
- **                     BASIC MATH FUNCTIONS                                **
- *****************************************************************************
- */
+#include "math_c99.inc"
 
 float degreesf(float x) {
     return x * (float)(180.0/M_PI);
@@ -47,590 +42,6 @@ double radians(double x) {
 longdouble radiansl(longdouble x) {
     return x * (M_PI/180.0L);
 }
-
-/*
- * A whole slew of basic math functions are provided originally
- * by Konrad Hinsen.
- */
-
-#if !defined(__STDC__) && !defined(_MSC_VER)
-extern double fmod (double, double);
-extern double frexp (double, int *);
-extern double ldexp (double, int);
-extern double modf (double, double *);
-#endif
-
-
-#if defined(DISTUTILS_USE_SDK)
-/* win32 on AMD64 build architecture */
-/* See also http://projects.scipy.org/scipy/numpy/ticket/164 */
-#ifndef HAVE_FABSF
-#ifdef fabsf
-#undef fabsf
-#endif
-static float fabsf(float x)
-{
-    return (float)fabs((double)(x));
-}
-#endif
-#ifndef HAVE_HYPOTF
-static float hypotf(float x, float y)
-{
-    return (float)hypot((double)(x), (double)(y));
-}
-#endif
-#ifndef HAVE_RINTF
-#ifndef HAVE_RINT
-static double rint (double x);
-#endif
-static float rintf(float x)
-{
-    return (float)rint((double)(x));
-}
-#endif
-#ifndef HAVE_FREXPF
-static float frexpf(float x, int * i)
-{
-    return (float)frexp((double)(x), i);
-}
-#endif
-#ifndef HAVE_LDEXPF
-static float ldexpf(float x, int i)
-{
-    return (float)ldexp((double)(x), i);
-}
-#endif
-#define tanhf nc_tanhf
-#endif
-
-#ifndef HAVE_INVERSE_HYPERBOLIC
-static double acosh(double x)
-{
-    return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
-}
-
-double log1p(double);
-static double asinh(double xx)
-{
-    double x, d;
-    int sign;
-    if (xx < 0.0) {
-        sign = -1;
-        x = -xx;
-    }
-    else {
-        sign = 1;
-        x = xx;
-    }
-    if (x > 1e8) {
-        d = x;
-    } else {
-        d = sqrt(x*x + 1);
-    }
-    return sign*log1p(x*(1.0 + x/(d+1)));
-}
-
-static double atanh(double x)
-{
-    return 0.5*log1p(2.0*x/(1.0-x));
-}
-#endif
-
-#if !defined(HAVE_INVERSE_HYPERBOLIC_FLOAT)
-#ifdef HAVE_FLOAT_FUNCS
-#ifdef log1pf
-#undef log1pf
-#endif
-#ifdef logf
-#undef logf
-#endif
-#ifdef sqrtf
-#undef sqrtf
-#endif
-float log1pf(float);
-#ifdef DISTUTILS_USE_SDK
-DL_IMPORT(float) logf(float);
-DL_IMPORT(float) sqrtf(float);
-#else
-/* should these be extern?: */
-float logf(float);
-float sqrtf(float);
-#endif
-#ifdef acoshf
-#undef acoshf
-#endif
-static float acoshf(float x)
-{
-    return 2*logf(sqrtf((x+1)/2)+sqrtf((x-1)/2));
-}
-
-#ifdef asinhf
-#undef asinhf
-#endif
-static float asinhf(float xx)
-{
-    float x, d;
-    int sign;
-    if (xx < 0) {
-        sign = -1;
-        x = -xx;
-    }
-    else {
-        sign = 1;
-        x = xx;
-    }
-    if (x > 1e5) {
-        d = x;
-    } else {
-        d = sqrtf(x*x + 1);
-    }
-    return sign*log1pf(x*(1 + x/(d+1)));
-}
-
-#ifdef atanhf
-#undef atanhf
-#endif
-static float atanhf(float x)
-{
-    return log1pf(2*x/(1-x))/2;
-}
-#else
-#ifdef acoshf
-#undef acoshf
-#endif
-static float acoshf(float x)
-{
-    return (float)acosh((double)(x));
-}
-
-#ifdef asinhf
-#undef asinhf
-#endif
-static float asinhf(float x)
-{
-    return (float)asinh((double)(x));
-}
-
-#ifdef atanhf
-#undef atanhf
-#endif
-static float atanhf(float x)
-{
-    return (float)atanh((double)(x));
-}
-#endif
-#endif
-
-
-#if !defined(HAVE_INVERSE_HYPERBOLIC_LONGDOUBLE)
-#ifdef HAVE_LONGDOUBLE_FUNCS
-#ifdef logl
-#undef logl
-#endif
-#ifdef sqrtl
-#undef sqrtl
-#endif
-#ifdef log1pl
-#undef log1pl
-#endif
-longdouble logl(longdouble);
-longdouble sqrtl(longdouble);
-longdouble log1pl(longdouble);
-#ifdef acoshl
-#undef acoshl
-#endif
-static longdouble acoshl(longdouble x)
-{
-    return 2*logl(sqrtl((x+1.0)/2)+sqrtl((x-1.0)/2));
-}
-
-#ifdef asinhl
-#undef asinhl
-#endif
-static longdouble asinhl(longdouble xx)
-{
-    longdouble x, d;
-    int sign;
-    if (xx < 0.0) {
-        sign = -1;
-        x = -xx;
-    }
-    else {
-        sign = 1;
-        x = xx;
-    }
-    if (x > 1e17) {
-        d = x;
-    } else {
-        d = sqrtl(x*x + 1);
-    }
-    return sign*log1pl(x*(1.0 + x/(d+1)));
-}
-
-#ifdef atanhl
-#undef atanhl
-#endif
-static longdouble atanhl(longdouble x)
-{
-    return 0.5*log1pl(2.0*x/(1.0-x));
-}
-
-#else
-
-#ifdef acoshl
-#undef acoshl
-#endif
-static longdouble acoshl(longdouble x)
-{
-    return (longdouble)acosh((double)(x));
-}
-
-#ifdef asinhl
-#undef asinhl
-#endif
-static longdouble asinhl(longdouble x)
-{
-    return (longdouble)asinh((double)(x));
-}
-
-#ifdef atanhl
-#undef atanhl
-#endif
-static longdouble atanhl(longdouble x)
-{
-    return (longdouble)atanh((double)(x));
-}
-
-#endif
-#endif
-
-
-#ifdef HAVE_HYPOT
-#if !defined(NeXT) && !defined(_MSC_VER)
-extern double hypot(double, double);
-#endif
-#else
-static double hypot(double x, double y)
-{
-    double yx;
-
-    x = fabs(x);
-    y = fabs(y);
-    if (x < y) {
-        double temp = x;
-        x = y;
-        y = temp;
-    }
-    if (x == 0.)
-        return 0.;
-    else {
-        yx = y/x;
-        return x*sqrt(1.+yx*yx);
-    }
-}
-#endif
-
-#ifndef HAVE_RINT
-/* needs cleanup */
-static double
-rint(double x)
-{
-    double y, r;
-
-    y = floor(x);
-    r = x - y;
-
-    if (r > 0.5) goto rndup;
-
-    /* Round to nearest even */
-    if (r==0.5) {
-        r = y - 2.0*floor(0.5*y);
-        if (r==1.0) {
-        rndup:
-            y+=1.0;
-        }
-    }
-    return y;
-}
-#endif
-
-/*
- * Comment out trunc definition until build problems are fixed.
- */
-/*
-#ifndef HAVE_TRUNC
-static double
-trunc(double x)
-{
-    if (x < 0) {
-    	return ceil(x);
-    }
-    else {
-        return floor(x);
-    }
-
-}
-#endif
-*/
-
-
-
-
-/* Define isnan, isinf, isfinite, signbit if needed */
-/* Use fpclassify if possible */
-/* isnan, isinf --
-   these will use macros and then fpclassify if available before
-   defaulting to a dumb convert-to-double version...
-
-   isfinite -- define a macro if not already available
-   signbit -- if macro available use it, otherwise define a function
-   and a dumb convert-to-double version for other types.
-*/
-
-#if defined(fpclassify)
-
-#if !defined(isnan)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-#endif
-#if !defined(isinf)
-#define isinf(x) (fpclassify(x) == FP_INFINITE)
-#endif
-
-#else  /* check to see if already have a function like this */
-
-#if !defined(HAVE_ISNAN)
-
-#if !defined(isnan)
-#include "_isnan.c"
-#endif
-#endif /* HAVE_ISNAN */
-
-#if !defined(HAVE_ISINF)
-#if !defined(isinf)
-#define isinf(x) (!isnan((x)) && isnan((x)-(x)))
-#endif
-#endif /* HAVE_ISINF */
-
-#endif /* defined(fpclassify) */
-
-
-/* Define signbit if needed */
-#if !defined(signbit)
-#include "_signbit.c"
-#endif
-
-/* Now defined the extended type macros */
-
-#if !defined(isnan)
-
-#if !defined(HAVE_LONGDOUBLE_FUNCS) || !defined(HAVE_ISNAN)
-#define isnanl(x) isnan((double)(x))
-#endif
-
-#if !defined(HAVE_FLOAT_FUNCS) || !defined(HAVE_ISNAN)
-#define isnanf(x) isnan((double)(x))
-#endif
-
-#else /* !defined(isnan) */
-
-#define isnanl(x) isnan((x))
-#define isnanf(x) isnan((x))
-
-#endif /* !defined(isnan) */
-
-
-#if !defined(isinf)
-
-#if !defined(HAVE_LONGDOUBLE_FUNCS) || !defined(HAVE_ISINF)
-#define isinfl(x) (!isnanl((x)) && isnanl((x)-(x)))
-#endif
-
-#if !defined(HAVE_FLOAT_FUNCS) || !defined(HAVE_ISINF)
-#define isinff(x) (!isnanf((x)) && isnanf((x)-(x)))
-#endif
-
-#else /* !defined(isinf) */
-
-#define isinfl(x) isinf((x))
-#define isinff(x) isinf((x))
-
-#endif /* !defined(isinf) */
-
-
-#if !defined(signbit)
-#define signbitl(x) ((longdouble) signbit((double)(x)))
-#define signbitf(x) ((float) signbit((double) (x)))
-#else
-#define signbitl(x) signbit((x))
-#define signbitf(x) signbit((x))
-#endif
-
-#if !defined(isfinite)
-#define isfinite(x) (!(isinf((x)) || isnan((x))))
-#endif
-#define isfinitef(x) (!(isinff((x)) || isnanf((x))))
-#define isfinitel(x) (!(isinfl((x)) || isnanl((x))))
-
-/* First, the C functions that do the real work */
-
-/* if C99 extensions not available then define dummy functions that use the
-   double versions for
-
-   sin, cos, tan
-   sinh, cosh, tanh,
-   fabs, floor, ceil, fmod, sqrt, log10, log, exp, fabs
-   asin, acos, atan,
-   asinh, acosh, atanh
-
-   hypot, atan2, pow
-*/
-
-/**begin repeat
-
-   #kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,sqrt,log10,log,exp,asin,acos,atan,rint)*2#
-   #typ=longdouble*17, float*17#
-   #c=l*17,f*17#
-   #TYPE=LONGDOUBLE*17, FLOAT*17#
-*/
-
-#ifndef HAVE_@TYPE@_FUNCS
-#ifdef @kind@@c@
-#undef @kind@@c@
-#endif
-@typ@ @kind@@c@(@typ@ x) {
-    return (@typ@) @kind@((double)x);
-}
-#endif
-/**end repeat**/
-
-/**begin repeat
-
-   #kind=(atan2,hypot,pow,fmod)*2#
-   #typ=longdouble*4, float*4#
-   #c=l*4,f*4#
-   #TYPE=LONGDOUBLE*4,FLOAT*4#
-*/
-#ifndef HAVE_@TYPE@_FUNCS
-#ifdef @kind@@c@
-#undef @kind@@c@
-#endif
-@typ@ @kind@@c@(@typ@ x, @typ@ y) {
-    return (@typ@) @kind@((double)x, (double) y);
-}
-#endif
-/**end repeat**/
-
-/**begin repeat
-   #kind=modf*2#
-   #typ=longdouble, float#
-   #c=l,f#
-   #TYPE=LONGDOUBLE, FLOAT#
-*/
-#ifndef HAVE_@TYPE@_FUNCS
-#ifdef modf@c@
-#undef modf@c@
-#endif
-@typ@ modf@c@(@typ@ x, @typ@ *iptr) {
-    double nx, niptr, y;
-    nx = (double) x;
-    y = modf(nx, &niptr);
-    *iptr = (@typ@) niptr;
-    return (@typ@) y;
-}
-#endif
-/**end repeat**/
-
-
-
-#ifndef HAVE_LOG1P
-double log1p(double x)
-{
-    double u = 1. + x;
-    if (u == 1.0) {
-        return x;
-    } else {
-        return log(u) * x / (u-1.);
-    }
-}
-#endif
-
-#if !defined(HAVE_LOG1P) || !defined(HAVE_LONGDOUBLE_FUNCS)
-#ifdef log1pl
-#undef log1pl
-#endif
-longdouble log1pl(longdouble x)
-{
-    longdouble u = 1. + x;
-    if (u == 1.0) {
-        return x;
-    } else {
-        return logl(u) * x / (u-1.);
-    }
-}
-#endif
-
-#if !defined(HAVE_LOG1P) || !defined(HAVE_FLOAT_FUNCS)
-#ifdef log1pf
-#undef log1pf
-#endif
-float log1pf(float x)
-{
-    float u = 1 + x;
-    if (u == 1) {
-        return x;
-    } else {
-        return logf(u) * x / (u-1);
-    }
-}
-#endif
-
-#ifndef HAVE_EXPM1
-static double expm1(double x)
-{
-    double u = exp(x);
-    if (u == 1.0) {
-        return x;
-    } else if (u-1.0 == -1.0) {
-        return -1;
-    } else {
-        return (u-1.0) * x/log(u);
-    }
-}
-#endif
-
-#if !defined(HAVE_EXPM1) || !defined(HAVE_LONGDOUBLE_FUNCS)
-#ifdef expml1
-#undef expml1
-#endif
-static longdouble expm1l(longdouble x)
-{
-    longdouble u = expl(x);
-    if (u == 1.0) {
-        return x;
-    } else if (u-1.0 == -1.0) {
-        return -1;
-    } else {
-        return (u-1.0) * x/logl(u);
-    }
-}
-#endif
-
-#if !defined(HAVE_EXPM1) || !defined(HAVE_FLOAT_FUNCS)
-#ifdef expm1f
-#undef expm1f
-#endif
-static float expm1f(float x)
-{
-    float u = expf(x);
-    if (u == 1) {
-        return x;
-    } else if (u-1 == -1) {
-        return -1;
-    } else {
-        return (u-1) * x/logf(u);
-    }
-}
-#endif
 
 /*
  *****************************************************************************
@@ -1700,7 +1111,15 @@ static void
     /*  */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = in1 > 0 ? ONE : (in1 < 0 ? -ONE : ZERO);
+        if (in1 > 0) {
+            *((@type@ *)op) = 1;
+        }
+        else if (in1 < 0) {
+            *((@type@ *)op) = -1;
+        }
+        else {
+            *((@type@ *)op) = 0;
+        }
     }
 }
 
@@ -1713,8 +1132,7 @@ static void
     }
 }
 
-#define HAVE_DOUBLE_FUNCS
-#ifdef HAVE_@TYPE@_FUNCS
+#ifdef HAVE_FREXP@C@
 static void
 @TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -1723,7 +1141,9 @@ static void
         *(@type@ *)op1 = frexp@c@(in1, (int *)op2);
     }
 }
+#endif
 
+#ifdef HAVE_LDEXP@C@
 static void
 @TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *func)
 {
@@ -1734,7 +1154,6 @@ static void
     }
 }
 #endif
-#undef HAVE_DOUBLE_FUNCS
 
 #define @TYPE@_true_divide @TYPE@_divide
 
@@ -2076,7 +1495,6 @@ static void
 
 /**end repeat**/
 
-
 /*
  *****************************************************************************
  **                            OBJECT LOOPS                                 **
@@ -2116,43 +1534,43 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
 
 
 static PyUFuncGenericFunction frexp_functions[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_FREXPF
     FLOAT_frexp,
 #endif
     DOUBLE_frexp
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_FREXPL
     ,LONGDOUBLE_frexp
 #endif
 };
 
 static void * blank3_data[] = { (void *)NULL, (void *)NULL, (void *)NULL};
 static char frexp_signatures[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_FREXPF
     PyArray_FLOAT, PyArray_FLOAT, PyArray_INT,
 #endif
     PyArray_DOUBLE, PyArray_DOUBLE, PyArray_INT
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_FREXPL
     ,PyArray_LONGDOUBLE, PyArray_LONGDOUBLE, PyArray_INT
 #endif
 };
 
 
 static PyUFuncGenericFunction ldexp_functions[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_LDEXPF
     FLOAT_ldexp,
 #endif
     DOUBLE_ldexp
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_LDEXPL
     ,LONGDOUBLE_ldexp
 #endif
 };
 
 static char ldexp_signatures[] = {
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_LDEXPF
     PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
 #endif
     PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_LDEXPL
     ,PyArray_LONGDOUBLE, PyArray_INT, PyArray_LONGDOUBLE
 #endif
 };
@@ -2201,10 +1619,10 @@ InitOtherOperators(PyObject *dictionary) {
     PyObject *f;
     int num=1;
 
-#ifdef HAVE_LONGDOUBLE_FUNCS
+#ifdef HAVE_FREXPL
     num += 1;
 #endif
-#ifdef HAVE_FLOAT_FUNCS
+#ifdef HAVE_FREXPF
     num += 1;
 #endif
     f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
@@ -2215,6 +1633,13 @@ InitOtherOperators(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "frexp", f);
     Py_DECREF(f);
 
+    num = 1;
+#ifdef HAVE_LDEXPL
+    num += 1;
+#endif
+#ifdef HAVE_LDEXPF
+    num += 1;
+#endif
     f = PyUFunc_FromFuncAndData(ldexp_functions, blank3_data, ldexp_signatures, num,
                                 2, 1, PyUFunc_None, "ldexp",
                                 "Compute y = x1 * 2**x2.",0);
@@ -2312,7 +1737,7 @@ PyMODINIT_FUNC initumath(void) {
 
     pinf = pinf_init();
     pzero = pzero_init();
-    mynan = copysign(pinf / pinf, 1);
+    mynan = pinf / pinf;
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(pinf));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-pinf));
