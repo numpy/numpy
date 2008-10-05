@@ -184,7 +184,6 @@ typedef struct {
 #define PyUFunc_One 1
 #define PyUFunc_Zero 0
 #define PyUFunc_None -1
-#define PyUFunc_Nan NAN
 
 #define UFUNC_REDUCE 0
 #define UFUNC_ACCUMULATE 1
