@@ -11,8 +11,6 @@ __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
 
 import numpy as np
-import numpy.core.numeric as numeric
-
 from numpy.testing import *
 from numpy.ma.testutils import *
 from numpy.ma.core import *
@@ -78,24 +76,24 @@ class TestSubclassing(TestCase):
         m = [0,0,1,0,0]
         xsub = SubArray(x)
         xmsub = masked_array(xsub, mask=m)
-        assert isinstance(xmsub, MaskedArray)
+        self.failUnless(isinstance(xmsub, MaskedArray))
         assert_equal(xmsub._data, xsub)
-        assert isinstance(xmsub._data, SubArray)
+        self.failUnless(isinstance(xmsub._data, SubArray))
 
     def test_maskedarray_subclassing(self):
         "Tests subclassing MaskedArray"
         x = np.arange(5)
         mx = mmatrix(x,mask=[0,1,0,0,0])
-        assert isinstance(mx._data, np.matrix)
+        self.failUnless(isinstance(mx._data, np.matrix))
         "Tests masked_unary_operation"
-        assert isinstance(add(mx,mx), mmatrix)
-        assert isinstance(add(mx,x), mmatrix)
+        self.failUnless(isinstance(add(mx,mx), mmatrix))
+        self.failUnless(isinstance(add(mx,x), mmatrix))
         assert_equal(add(mx,x), mx+x)
-        assert isinstance(add(mx,mx)._data, np.matrix)
-        assert isinstance(add.outer(mx,mx), mmatrix)
+        self.failUnless(isinstance(add(mx,mx)._data, np.matrix))
+        self.failUnless(isinstance(add.outer(mx,mx), mmatrix))
         "Tests masked_binary_operation"
-        assert isinstance(hypot(mx,mx), mmatrix)
-        assert isinstance(hypot(mx,x), mmatrix)
+        self.failUnless(isinstance(hypot(mx,mx), mmatrix))
+        self.failUnless(isinstance(hypot(mx,x), mmatrix))
 
     def test_attributepropagation(self):
         x = array(arange(5), mask=[0]+[1]*4)
@@ -103,16 +101,16 @@ class TestSubclassing(TestCase):
         ym = msubarray(x)
         #
         z = (my+1)
-        assert isinstance(z,MaskedArray)
-        assert not isinstance(z, MSubArray)
-        assert isinstance(z._data, SubArray)
+        self.failUnless(isinstance(z,MaskedArray))
+        self.failUnless(not isinstance(z, MSubArray))
+        self.failUnless(isinstance(z._data, SubArray))
         assert_equal(z._data.info, {})
         #
         z = (ym+1)
-        assert isinstance(z, MaskedArray)
-        assert isinstance(z, MSubArray)
-        assert isinstance(z._data, SubArray)
-        assert z._data.info['added'] > 0
+        self.failUnless(isinstance(z, MaskedArray))
+        self.failUnless(isinstance(z, MSubArray))
+        self.failUnless(isinstance(z._data, SubArray))
+        self.failUnless(z._data.info['added'] > 0)
         #
         ym._set_mask([1,0,0,0,1])
         assert_equal(ym._mask, [1,0,0,0,1])
@@ -121,7 +119,7 @@ class TestSubclassing(TestCase):
         #
         xsub = subarray(x, info={'name':'x'})
         mxsub = masked_array(xsub)
-        assert hasattr(mxsub, 'info')
+        self.failUnless(hasattr(mxsub, 'info'))
         assert_equal(mxsub.info, xsub.info)
 
     def test_subclasspreservation(self):
@@ -132,22 +130,22 @@ class TestSubclassing(TestCase):
         xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
         #
         mxsub = masked_array(xsub, subok=False)
-        assert not isinstance(mxsub, MSubArray)
-        assert isinstance(mxsub, MaskedArray)
+        self.failUnless(not isinstance(mxsub, MSubArray))
+        self.failUnless(isinstance(mxsub, MaskedArray))
         assert_equal(mxsub._mask, m)
         #
         mxsub = asarray(xsub)
-        assert not isinstance(mxsub, MSubArray)
-        assert isinstance(mxsub, MaskedArray)
+        self.failUnless(not isinstance(mxsub, MSubArray))
+        self.failUnless(isinstance(mxsub, MaskedArray))
         assert_equal(mxsub._mask, m)
         #
         mxsub = masked_array(xsub, subok=True)
-        assert isinstance(mxsub, MSubArray)
+        self.failUnless(isinstance(mxsub, MSubArray))
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, xsub._mask)
         #
         mxsub = asanyarray(xsub)
-        assert isinstance(mxsub, MSubArray)
+        self.failUnless(isinstance(mxsub, MSubArray))
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, m)
 
@@ -156,24 +154,4 @@ class TestSubclassing(TestCase):
 if __name__ == '__main__':
     run_module_suite()
 
-    if 0:
-        x = array(arange(5), mask=[0]+[1]*4)
-        my = masked_array(subarray(x))
-        ym = msubarray(x)
-        #
-        z = (my+1)
-        assert isinstance(z,MaskedArray)
-        assert not isinstance(z, MSubArray)
-        assert isinstance(z._data, SubArray)
-        assert_equal(z._data.info, {})
-        #
-        z = (ym+1)
-        assert isinstance(z, MaskedArray)
-        assert isinstance(z, MSubArray)
-        assert isinstance(z._data, SubArray)
-        assert z._data.info['added'] > 0
-        #
-        ym._set_mask([1,0,0,0,1])
-        assert_equal(ym._mask, [1,0,0,0,1])
-        ym._series._set_mask([0,0,0,0,1])
-        assert_equal(ym._mask, [0,0,0,0,1])
+
