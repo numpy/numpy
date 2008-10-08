@@ -80,7 +80,7 @@ mnx (intp *i , intp len)
 
 
 static PyObject *
-arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
+arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     /* arr_bincount is registered as bincount.
      * bincount accepts one or two arguments. The first is an array of
@@ -147,7 +147,7 @@ arr_bincount(PyObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
+arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     /* digitize (x, bins) returns an array of python integers the same
        length of x. The values i returned are such that bins [i - 1] <= x <
@@ -219,7 +219,7 @@ arr_digitize(PyObject *self, PyObject *args, PyObject *kwds)
 static char arr_insert__doc__[] = "Insert vals sequentially into equivalent 1-d positions indicated by mask.";
 
 static PyObject *
-arr_insert(PyObject *self, PyObject *args, PyObject *kwdict)
+arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
     /* Returns input array with values inserted sequentially into places
        indicated by the mask
@@ -379,7 +379,7 @@ binary_search(double dval, double dlist [], npy_intp len)
 }
 
 static PyObject *
-arr_interp(PyObject *self, PyObject *args, PyObject *kwdict)
+arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
 
     PyObject *fp, *xp, *x;
@@ -474,7 +474,7 @@ static PyTypeObject *PyMethodDescr_TypePtr=NULL;
 /* Can only be called if doc is currently NULL
  */
 static PyObject *
-arr_add_docstring(PyObject *dummy, PyObject *args)
+arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
     PyObject *str;
@@ -624,11 +624,11 @@ _packbits(
 static void
 _unpackbits(
 		void      *In,
-		int       el_size,  /* unused */
+		int       NPY_UNUSED(el_size),  /* unused */
 		npy_intp  in_N,
 		npy_intp  in_stride,
 	        void      *Out,
-	        npy_intp  out_N,
+	        npy_intp  NPY_UNUSED(out_N),
 		npy_intp  out_stride
                )
 {
@@ -772,7 +772,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
 
 
 static PyObject *
-io_pack(PyObject *self, PyObject *args, PyObject *kwds)
+io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
   PyObject *obj;
   int axis=NPY_MAXDIMS;
@@ -785,7 +785,7 @@ io_pack(PyObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-io_unpack(PyObject *self, PyObject *args, PyObject *kwds)
+io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
   PyObject *obj;
   int axis=NPY_MAXDIMS;
