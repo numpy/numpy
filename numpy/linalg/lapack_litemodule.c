@@ -129,7 +129,7 @@ check_object(PyObject *ob, int t, char *obname,
 #define IDATA(p) ((int *) (((PyArrayObject *)p)->data))
 
 static PyObject *
-lapack_lite_dgeev(PyObject *self, PyObject *args)
+lapack_lite_dgeev(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     char jobvl;
@@ -169,7 +169,7 @@ lapack_lite_dgeev(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dsyevd(PyObject *self, PyObject *args)
+lapack_lite_dsyevd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     /*  Arguments */
     /*  ========= */
@@ -251,7 +251,7 @@ lapack_lite_dsyevd(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zheevd(PyObject *self, PyObject *args)
+lapack_lite_zheevd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     /*  Arguments */
     /*  ========= */
@@ -339,7 +339,7 @@ lapack_lite_zheevd(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dgelsd(PyObject *self, PyObject *args)
+lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int m;
@@ -378,7 +378,7 @@ lapack_lite_dgelsd(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dgesv(PyObject *self, PyObject *args)
+lapack_lite_dgesv(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int n;
@@ -404,7 +404,7 @@ lapack_lite_dgesv(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dgesdd(PyObject *self, PyObject *args)
+lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     char jobz;
@@ -470,7 +470,7 @@ lapack_lite_dgesdd(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dgetrf(PyObject *self, PyObject *args)
+lapack_lite_dgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int m;
@@ -492,7 +492,7 @@ lapack_lite_dgetrf(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dpotrf(PyObject *self, PyObject *args)
+lapack_lite_dpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int n;
@@ -512,7 +512,7 @@ lapack_lite_dpotrf(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_dgeqrf(PyObject *self, PyObject *args)
+lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
         int  lapack_lite_status__;
         int m, n, lwork;
@@ -538,7 +538,7 @@ lapack_lite_dgeqrf(PyObject *self, PyObject *args)
 
 
 static PyObject *
-lapack_lite_dorgqr(PyObject *self, PyObject *args)
+lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
 {
         int  lapack_lite_status__;
         int m, n, k, lwork;
@@ -559,7 +559,7 @@ lapack_lite_dorgqr(PyObject *self, PyObject *args)
 
 
 static PyObject *
-lapack_lite_zgeev(PyObject *self, PyObject *args)
+lapack_lite_zgeev(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     char jobvl;
@@ -599,7 +599,7 @@ lapack_lite_zgeev(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zgelsd(PyObject *self, PyObject *args)
+lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int m;
@@ -638,7 +638,7 @@ lapack_lite_zgelsd(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zgesv(PyObject *self, PyObject *args)
+lapack_lite_zgesv(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int n;
@@ -664,7 +664,7 @@ lapack_lite_zgesv(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zgesdd(PyObject *self, PyObject *args)
+lapack_lite_zgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     char jobz;
@@ -706,7 +706,7 @@ lapack_lite_zgesdd(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zgetrf(PyObject *self, PyObject *args)
+lapack_lite_zgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int m;
@@ -728,7 +728,7 @@ lapack_lite_zgetrf(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zpotrf(PyObject *self, PyObject *args)
+lapack_lite_zpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int  lapack_lite_status__;
     int n;
@@ -747,7 +747,7 @@ lapack_lite_zpotrf(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-lapack_lite_zgeqrf(PyObject *self, PyObject *args)
+lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
         int  lapack_lite_status__;
         int m, n, lwork;
@@ -770,7 +770,7 @@ lapack_lite_zgeqrf(PyObject *self, PyObject *args)
 
 
 static PyObject *
-lapack_lite_zungqr(PyObject *self, PyObject *args)
+lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
 {
         int  lapack_lite_status__;
         int m, n, k, lwork;
