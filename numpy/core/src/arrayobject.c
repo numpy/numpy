@@ -6880,69 +6880,69 @@ array_finalize_get(PyArrayObject *NPY_UNUSED(self))
 static PyGetSetDef array_getsetlist[] = {
     {"ndim",
      (getter)array_ndim_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"flags",
      (getter)array_flags_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"shape",
      (getter)array_shape_get,
      (setter)array_shape_set,
-     NULL},
+     NULL, NULL},
     {"strides",
      (getter)array_strides_get,
      (setter)array_strides_set,
-     NULL},
+     NULL, NULL},
     {"data",
      (getter)array_data_get,
      (setter)array_data_set,
-     NULL},
+     NULL, NULL},
     {"itemsize",
      (getter)array_itemsize_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"size",
      (getter)array_size_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"nbytes",
      (getter)array_nbytes_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"base",
      (getter)array_base_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"dtype",
      (getter)array_descr_get,
      (setter)array_descr_set,
-     NULL},
+     NULL, NULL},
     {"real",
      (getter)array_real_get,
      (setter)array_real_set,
-     NULL},
+     NULL, NULL},
     {"imag",
      (getter)array_imag_get,
      (setter)array_imag_set,
-     NULL},
+     NULL, NULL},
     {"flat",
      (getter)array_flat_get,
      (setter)array_flat_set,
-     NULL},
+     NULL, NULL},
     {"ctypes",
      (getter)array_ctypes_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"T",
      (getter)array_transpose_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"__array_interface__",
      (getter)array_interface_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"__array_struct__",
      (getter)array_struct_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"__array_priority__",
      (getter)array_priority_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"__array_finalize__",
      (getter)array_finalize_get,
-     NULL, NULL},
-    {NULL, NULL, NULL, NULL},  /* Sentinel */
+     NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
 /****************** end of attribute get and set routines *******************/
@@ -7017,7 +7017,17 @@ static PyTypeObject PyArray_Type = {
     0,                                          /* tp_mro */
     0,                                          /* tp_cache */
     0,                                          /* tp_subclasses */
-    0                                           /* tp_weaklist */
+    0,                                          /* tp_weaklist */
+    0,   /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 };
 
 /* The rest of this code is to build the right kind of array from a python */
@@ -10019,7 +10029,7 @@ static PyMethodDef iter_methods[] = {
     /* to get array */
     {"__array__", (PyCFunction)iter_array, 1, NULL},
     {"copy", (PyCFunction)iter_copy, 1, NULL},
-    {NULL,          NULL}           /* sentinel */
+    {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
 static PyObject *
@@ -10038,7 +10048,7 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
 static PyMemberDef iter_members[] = {
     {"base", T_OBJECT, offsetof(PyArrayIterObject, ao), RO, NULL},
     {"index", T_INT, offsetof(PyArrayIterObject, index), RO, NULL},
-    {NULL},
+    {NULL, 0, 0, 0, NULL},
 };
 
 static PyObject *
@@ -10062,9 +10072,8 @@ iter_coords_get(PyArrayIterObject *self)
 static PyGetSetDef iter_getsets[] = {
     {"coords",
      (getter)iter_coords_get,
-     NULL,
-     NULL},
-    {NULL, NULL, NULL, NULL},
+     NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL},
 };
 
 static PyTypeObject PyArrayIter_Type = {
@@ -10100,6 +10109,30 @@ static PyTypeObject PyArrayIter_Type = {
     iter_methods,                           /* tp_methods */
     iter_members,                   /* tp_members */
     iter_getsets,                           /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,   				    /* tp_dictoffset */
+    0,   				    /* tp_init */
+    0,   				    /* tp_alloc */
+    0,   				    /* tp_new */
+    0,   				    /* tp_free */
+    0,   				    /* tp_is_gc */
+    0,   				    /* tp_bases */
+    0,   				    /* tp_mro */
+    0,   				    /* tp_cache */
+    0,   				    /* tp_subclasses */
+    0,   				    /* tp_weaklist */
+    0,   				    /* tp_del */
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 
 };
 
@@ -10783,7 +10816,17 @@ static PyTypeObject PyArrayMapIter_Type = {
     0,                                        /* tp_mro */
     0,                                        /* tp_cache */
     0,                                        /* tp_subclasses */
-    0                                         /* tp_weaklist */
+    0,                                        /* tp_weaklist */
+    0,   				      /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 
 };
 
@@ -11046,24 +11089,24 @@ arraymultiter_iters_get(PyArrayMultiIterObject *self)
 static PyGetSetDef arraymultiter_getsetlist[] = {
     {"size",
      (getter)arraymultiter_size_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"index",
      (getter)arraymultiter_index_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"shape",
      (getter)arraymultiter_shape_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"iters",
      (getter)arraymultiter_iters_get,
-     NULL, NULL},
-    {NULL, NULL, NULL, NULL},
+     NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL},
 };
 
 static PyMemberDef arraymultiter_members[] = {
     {"numiter", T_INT, offsetof(PyArrayMultiIterObject, numiter),
      RO, NULL},
     {"nd", T_INT, offsetof(PyArrayMultiIterObject, nd), RO, NULL},
-    {NULL},
+    {NULL, 0, 0, 0, NULL},
 };
 
 static PyObject *
@@ -11078,7 +11121,7 @@ arraymultiter_reset(PyArrayMultiIterObject *self, PyObject *args)
 
 static PyMethodDef arraymultiter_methods[] = {
     {"reset", (PyCFunction) arraymultiter_reset, METH_VARARGS, NULL},
-    {NULL, NULL},
+    {NULL, NULL, 0, NULL},
 };
 
 static PyTypeObject PyArrayMultiIter_Type = {
@@ -11128,7 +11171,17 @@ static PyTypeObject PyArrayMultiIter_Type = {
     0,                                        /* tp_mro */
     0,                                        /* tp_cache */
     0,                                        /* tp_subclasses */
-    0                                         /* tp_weaklist */
+    0,                                        /* tp_weaklist */
+    0,   /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 };
 
 /*NUMPY_API*/
@@ -11226,7 +11279,7 @@ static PyMemberDef arraydescr_members[] = {
     {"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
     {"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
     {"flags", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
-    {NULL},
+    {NULL, 0, 0, 0, NULL},
 };
 
 static PyObject *
@@ -11490,39 +11543,39 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
 static PyGetSetDef arraydescr_getsets[] = {
     {"subdtype",
      (getter)arraydescr_subdescr_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"descr",
      (getter)arraydescr_protocol_descr_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"str",
      (getter)arraydescr_protocol_typestr_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"name",
      (getter)arraydescr_typename_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"base",
      (getter)arraydescr_base_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"shape",
      (getter)arraydescr_shape_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"isbuiltin",
      (getter)arraydescr_isbuiltin_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"isnative",
      (getter)arraydescr_isnative_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"fields",
      (getter)arraydescr_fields_get,
-     NULL, NULL},
+     NULL, NULL, NULL},
     {"names",
      (getter)arraydescr_names_get,
      (setter)arraydescr_names_set,
-     NULL},
+     NULL, NULL},
     {"hasobject",
      (getter)arraydescr_hasobject_get,
-     NULL, NULL},
-    {NULL, NULL, NULL, NULL},
+     NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL},
 };
 
 static PyObject *
@@ -11896,7 +11949,7 @@ static PyMethodDef arraydescr_methods[] = {
      NULL},
     {"newbyteorder", (PyCFunction)arraydescr_newbyteorder, METH_VARARGS,
      NULL},
-    {NULL,          NULL}           /* sentinel */
+    {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
 static PyObject *
@@ -12130,6 +12183,12 @@ static PySequenceMethods descr_as_sequence = {
     descr_length,
     (binaryfunc)NULL,
     descr_repeat,
+    NULL, NULL,
+    NULL, /* sq_ass_item */
+    NULL, /* ssizessizeobjargproc sq_ass_slice */
+    0, /* sq_contains */
+    0, /* sq_inplace_concat */
+    0, /* sq_inplace_repeat */
 };
 
 static PyMappingMethods descr_as_mapping = {
@@ -12188,7 +12247,17 @@ static PyTypeObject PyArrayDescr_Type = {
     0,                                        /* tp_mro */
     0,                                        /* tp_cache */
     0,                                        /* tp_subclasses */
-    0                                         /* tp_weaklist */
+    0,                                        /* tp_weaklist */
+    0,   /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 };
 
 
@@ -12350,60 +12419,60 @@ static PyGetSetDef arrayflags_getsets[] = {
     {"contiguous",
      (getter)arrayflags_contiguous_get,
      NULL,
-     ""},
+     "", NULL},
     {"c_contiguous",
      (getter)arrayflags_contiguous_get,
      NULL,
-     ""},
+     "", NULL},
     {"f_contiguous",
      (getter)arrayflags_fortran_get,
      NULL,
-     ""},
+     "", NULL},
     {"fortran",
      (getter)arrayflags_fortran_get,
      NULL,
-     ""},
+     "", NULL},
     {"updateifcopy",
      (getter)arrayflags_updateifcopy_get,
      (setter)arrayflags_updateifcopy_set,
-     ""},
+     "", NULL},
     {"owndata",
      (getter)arrayflags_owndata_get,
      NULL,
-     ""},
+     "", NULL},
     {"aligned",
      (getter)arrayflags_aligned_get,
      (setter)arrayflags_aligned_set,
-     ""},
+     "", NULL},
     {"writeable",
      (getter)arrayflags_writeable_get,
      (setter)arrayflags_writeable_set,
-     ""},
+     "", NULL},
     {"fnc",
      (getter)arrayflags_fnc_get,
      NULL,
-     ""},
+     "", NULL},
     {"forc",
      (getter)arrayflags_forc_get,
      NULL,
-     ""},
+     "", NULL},
     {"behaved",
      (getter)arrayflags_behaved_get,
      NULL,
-     ""},
+     "", NULL},
     {"carray",
      (getter)arrayflags_carray_get,
      NULL,
-     ""},
+     "", NULL},
     {"farray",
      (getter)arrayflags_farray_get,
      NULL,
-     ""},
+     "", NULL},
     {"num",
      (getter)arrayflags_num_get,
      NULL,
-     ""},
-    {NULL, NULL, NULL, NULL},
+     "", NULL},
+    {NULL, NULL, NULL, NULL, NULL},
 };
 
 static PyObject *
@@ -12618,5 +12687,15 @@ static PyTypeObject PyArrayFlags_Type = {
     0,                                        /* tp_mro */
     0,                                        /* tp_cache */
     0,                                        /* tp_subclasses */
-    0                                         /* tp_weaklist */
+    0,                                        /* tp_weaklist */
+    0,   /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 };

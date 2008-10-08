@@ -1268,7 +1268,7 @@ static struct PyMethodDef methods[] = {
      METH_VARARGS, doc_usepythonmath},
     {"use_scalarmath", (PyCFunction) use_scalarmath,
      METH_VARARGS, doc_usescalarmath},
-    {NULL, NULL, 0}
+    {NULL, NULL, 0, NULL}
 };
 
 PyMODINIT_FUNC initscalarmath(void) {

@@ -24,6 +24,59 @@ static PyTypeObject Py@NAME@ArrType_Type = {
     0,                                /*ob_size*/
     "numpy.@name@",                   /*tp_name*/
     sizeof(PyObject),                 /*tp_basicsize*/
+    0,                                  /* tp_itemsize */
+    /* methods */
+    0,   /* tp_dealloc */
+    0,   /* tp_print */
+    0,   /* tp_getattr */
+    0,   /* tp_setattr */
+    0,   /* tp_compare */
+    0,   /* tp_repr */
+    0,   /* tp_as_number */
+    0,   /* tp_as_sequence */
+    0,   /* tp_as_mapping */
+    0,   /* tp_hash */
+    0,   /* tp_call */
+    0,   /* tp_str */
+    0,   /* tp_getattro */
+    0,   /* tp_setattro */
+    0,   /* tp_as_buffer */
+    0,   /* tp_flags */
+    0,   /* tp_doc */
+    0,   /* tp_traverse */
+    0,   /* tp_clear */
+    0,   /* tp_richcompare */
+    0,   /* tp_weaklistoffset */
+    0,   /* tp_iter */ 
+    0,   /* tp_iternext */ 
+    0,   /* tp_methods */
+    0,   /* tp_members */
+    0,   /* tp_getset */
+    0,   /* tp_base */
+    0,   /* tp_dict */
+    0,   /* tp_descr_get */
+    0,   /* tp_descr_set */
+    0,   /* tp_dictoffset */
+    0,   /* tp_init */
+    0,   /* tp_alloc */
+    0,   /* tp_new */
+    0,   /* tp_free */
+    0,   /* tp_is_gc */
+    0,   /* tp_bases */
+    0,   /* tp_mro */
+    0,   /* tp_cache */
+    0,   /* tp_subclasses */
+    0,   /* tp_weaklist */
+    0,   /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 };
 /**end repeat**/
 
@@ -1019,72 +1072,89 @@ static PyGetSetDef gentype_getsets[] = {
     {"ndim",
         (getter)gentype_ndim_get,
         (setter) 0,
-        "number of array dimensions"},
+        "number of array dimensions",
+        NULL},
     {"flags",
         (getter)gentype_flags_get,
         (setter)0,
-        "integer value of flags"},
+        "integer value of flags",
+        NULL},
     {"shape",
         (getter)gentype_shape_get,
         (setter)0,
-        "tuple of array dimensions"},
+        "tuple of array dimensions",
+        NULL},
     {"strides",
         (getter)gentype_shape_get,
         (setter) 0,
-        "tuple of bytes steps in each dimension"},
+        "tuple of bytes steps in each dimension",
+        NULL},
     {"data",
         (getter)gentype_data_get,
         (setter) 0,
-        "pointer to start of data"},
+        "pointer to start of data",
+        NULL},
     {"itemsize",
         (getter)gentype_itemsize_get,
         (setter)0,
-        "length of one element in bytes"},
+        "length of one element in bytes",
+        NULL},
     {"size",
         (getter)gentype_size_get,
         (setter)0,
-        "number of elements in the gentype"},
+        "number of elements in the gentype",
+        NULL},
     {"nbytes",
         (getter)gentype_itemsize_get,
         (setter)0,
-        "length of item in bytes"},
+        "length of item in bytes",
+        NULL},
     {"base",
         (getter)gentype_base_get,
         (setter)0,
-        "base object"},
+        "base object",
+        NULL},
     {"dtype",
         (getter)gentype_typedescr_get,
         NULL,
-        "get array data-descriptor"},
+        "get array data-descriptor",
+        NULL},
     {"real",
         (getter)gentype_real_get,
         (setter)0,
-        "real part of scalar"},
+        "real part of scalar",
+        NULL},
     {"imag",
         (getter)gentype_imag_get,
         (setter)0,
-        "imaginary part of scalar"},
+        "imaginary part of scalar",
+        NULL},
     {"flat",
         (getter)gentype_flat_get,
         (setter)0,
-        "a 1-d view of scalar"},
+        "a 1-d view of scalar",
+        NULL},
     {"T",
         (getter)gentype_transpose_get,
         (setter)0,
-        "transpose"},
+        "transpose",
+        NULL},
     {"__array_interface__",
         (getter)gentype_interface_get,
         NULL,
-        "Array protocol: Python side"},
+        "Array protocol: Python side",
+        NULL},
     {"__array_struct__",
         (getter)gentype_struct_get,
         NULL,
-        "Array protocol: struct"},
+        "Array protocol: struct",
+        NULL},
     {"__array_priority__",
         (getter)gentype_priority_get,
         NULL,
-        "Array priority."},
-    {NULL, NULL, NULL, NULL}  /* Sentinel */
+        "Array priority.",
+        NULL},
+    {NULL, NULL, NULL, NULL, NULL}  /* Sentinel */
 };
 
 
@@ -1574,7 +1644,7 @@ static PyMethodDef gentype_methods[] = {
     {"newbyteorder",
         (PyCFunction)gentype_newbyteorder,
         METH_VARARGS, NULL},
-    {NULL, NULL}           /* sentinel */
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
 
@@ -1582,12 +1652,14 @@ static PyGetSetDef voidtype_getsets[] = {
     {"flags",
         (getter)voidtype_flags_get,
         (setter)0,
-        "integer value of flags"},
+        "integer value of flags",
+        NULL},
     {"dtype",
         (getter)voidtype_dtypedescr_get,
         (setter)0,
-        "dtype object"},
-    {NULL, NULL}
+        "dtype object",
+        NULL},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 static PyMethodDef voidtype_methods[] = {
@@ -1597,7 +1669,7 @@ static PyMethodDef voidtype_methods[] = {
     {"setfield",
         (PyCFunction)voidtype_setfield,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {NULL, NULL}
+    {NULL, NULL, 0, NULL}
 };
 
 /************* As_mapping functions for void array scalar ************/
@@ -1757,15 +1829,19 @@ static PySequenceMethods voidtype_as_sequence = {
     0,                                          /*sq_repeat*/
     (ssizeargfunc)voidtype_item,                /*sq_item*/
     0,                                          /*sq_slice*/
-    (ssizeobjargproc)voidtype_ass_item          /*sq_ass_item*/
+    (ssizeobjargproc)voidtype_ass_item,         /*sq_ass_item*/
 #else
         (inquiry)voidtype_length,               /*sq_length*/
     0,                                          /*sq_concat*/
     0,                                          /*sq_repeat*/
     (intargfunc)voidtype_item,                  /*sq_item*/
     0,                                          /*sq_slice*/
-    (intobjargproc)voidtype_ass_item            /*sq_ass_item*/
+    (intobjargproc)voidtype_ass_item,           /*sq_ass_item*/
 #endif
+    0,                                          /* ssq_ass_slice */
+    0,                                          /* sq_contains */
+    0,                                          /* sq_inplace_concat */
+    0,                                          /* sq_inplace_repeat */
 };
 
 
@@ -1844,6 +1920,59 @@ static PyTypeObject PyGenericArrType_Type = {
     0,                          /*ob_size*/
     "numpy.generic",            /*tp_name*/
     sizeof(PyObject),           /*tp_basicsize*/
+    0,   /* tp_itemsize */
+    /* methods */
+    0,   /* tp_dealloc */
+    0,   /* tp_print */
+    0,   /* tp_getattr */
+    0,   /* tp_setattr */
+    0,   /* tp_compare */
+    0,   /* tp_repr */
+    0,   /* tp_as_number */
+    0,   /* tp_as_sequence */
+    0,   /* tp_as_mapping */
+    0,   /* tp_hash */
+    0,   /* tp_call */
+    0,   /* tp_str */
+    0,   /* tp_getattro */
+    0,   /* tp_setattro */
+    0,   /* tp_as_buffer */
+    0,   /* tp_flags */
+    0,   /* tp_doc */
+    0,   /* tp_traverse */
+    0,   /* tp_clear */
+    0,   /* tp_richcompare */
+    0,   /* tp_weaklistoffset */
+    0,   /* tp_iter */ 
+    0,   /* tp_iternext */ 
+    0,   /* tp_methods */
+    0,   /* tp_members */
+    0,   /* tp_getset */
+    0,   /* tp_base */
+    0,   /* tp_dict */
+    0,   /* tp_descr_get */
+    0,   /* tp_descr_set */
+    0,   /* tp_dictoffset */
+    0,   /* tp_init */
+    0,   /* tp_alloc */
+    0,   /* tp_new */
+    0,   /* tp_free */
+    0,   /* tp_is_gc */
+    0,   /* tp_bases */
+    0,   /* tp_mro */
+    0,   /* tp_cache */
+    0,   /* tp_subclasses */
+    0,   /* tp_weaklist */
+    0,   /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 };
 
 static void
@@ -2097,6 +2226,32 @@ static PyNumberMethods bool_arrtype_as_number = {
     (binaryfunc)bool_arrtype_and,           /* nb_and */
     (binaryfunc)bool_arrtype_xor,           /* nb_xor */
     (binaryfunc)bool_arrtype_or,            /* nb_or */
+    0,	/* nb_coerce */
+    0,  /* nb_int */
+    0,  /* nb_long */
+    0,  /* nb_float */
+    0,  /* nb_oct */
+    0,  /* nb_hex */
+    /* Added in release 2.0 */
+    0, 	/* nb_inplace_add */
+    0,	/* nb_inplace_subtract */
+    0,	/* nb_inplace_multiply */
+    0,	/* nb_inplace_divide */
+    0,	/* nb_inplace_remainder */
+    0,	/* nb_inplace_power */
+    0,	/* nb_inplace_lshift */
+    0,	/* nb_inplace_rshift */
+    0,	/* nb_inplace_and */
+    0,	/* nb_inplace_xor */
+    0,	/* nb_inplace_or */
+    /* Added in release 2.2 */
+    /* The following require the Py_TPFLAGS_HAVE_CLASS flag */
+    0, 	/* nb_floor_divide */
+    0, 	/* nb_true_divide */
+    0, 	/* nb_inplace_floor_divide */
+    0, 	/* nb_inplace_true_divide */
+    /* Added in release 2.5 */
+    0, 	/* nb_index */
 };
 
 static PyObject *
@@ -2494,6 +2649,40 @@ static PyTypeObject PyObjectArrType_Type = {
     (setattrofunc)object_arrtype_setattro,    /* tp_setattro */
     &object_arrtype_as_buffer,                /* tp_as_buffer */
     0,                                        /* tp_flags */
+    0,   				      /* tp_doc */
+    0,   				      /* tp_traverse */
+    0,   				      /* tp_clear */
+    0,   				      /* tp_richcompare */
+    0,   				      /* tp_weaklistoffset */
+    0,   				      /* tp_iter */ 
+    0,   				      /* tp_iternext */ 
+    0,   				      /* tp_methods */
+    0,   				      /* tp_members */
+    0,   				      /* tp_getset */
+    0,   				      /* tp_base */
+    0,   				      /* tp_dict */
+    0,   				      /* tp_descr_get */
+    0,   				      /* tp_descr_set */
+    0,   				      /* tp_dictoffset */
+    0,   				      /* tp_init */
+    0,   				      /* tp_alloc */
+    0,   				      /* tp_new */
+    0,   				      /* tp_free */
+    0,   				      /* tp_is_gc */
+    0,   				      /* tp_bases */
+    0,   				      /* tp_mro */
+    0,   				      /* tp_cache */
+    0,   				      /* tp_subclasses */
+    0,   				      /* tp_weaklist */
+    0,   				      /* tp_del */
+#ifdef COUNT_ALLOCS
+    /* these must be last and never explicitly initialized */
+    0, 					      /* tp_allocs */
+    0, 					      /* tp_frees */
+    0, 					      /* tp_maxalloc */
+    0, 					      /* tp_prev */
+    0, 					      /* *tp_next */
+#endif
 };
 
 
@@ -2554,6 +2743,57 @@ static PyTypeObject Py@NAME@ArrType_Type = {
     0,                                        /*ob_size*/
     "numpy.@name@@ex@",                       /*tp_name*/
     sizeof(Py@NAME@ScalarObject),             /*tp_basicsize*/
+    0,                                        /* tp_itemsize */
+    0,       				      /* tp_dealloc */
+    0,                                        /* tp_print */
+    0,                                        /* tp_getattr */
+    0,                                        /* tp_setattr */
+    0,                                        /* tp_compare */
+    0,                                        /* tp_repr */
+    0,                                        /* tp_as_number */
+    0,              			      /* tp_as_sequence */
+    0,               			      /* tp_as_mapping */
+    0,                                        /* tp_hash */
+    0,         				      /* tp_call */
+    0,                                        /* tp_str */
+    0,					      /* tp_getattro */
+    0,					      /* tp_setattro */
+    0,					      /* tp_as_buffer */
+    0,                                        /* tp_flags */
+    0,   				      /* tp_doc */
+    0,   				      /* tp_traverse */
+    0,   				      /* tp_clear */
+    0,   				      /* tp_richcompare */
+    0,   				      /* tp_weaklistoffset */
+    0,   				      /* tp_iter */ 
+    0,   				      /* tp_iternext */ 
+    0,   				      /* tp_methods */
+    0,   				      /* tp_members */
+    0,   				      /* tp_getset */
+    0,   				      /* tp_base */
+    0,   				      /* tp_dict */
+    0,   				      /* tp_descr_get */
+    0,   				      /* tp_descr_set */
+    0,   				      /* tp_dictoffset */
+    0,   				      /* tp_init */
+    0,   				      /* tp_alloc */
+    0,   				      /* tp_new */
+    0,   				      /* tp_free */
+    0,   				      /* tp_is_gc */
+    0,   				      /* tp_bases */
+    0,   				      /* tp_mro */
+    0,   				      /* tp_cache */
+    0,   				      /* tp_subclasses */
+    0,   				      /* tp_weaklist */
+    0,   				      /* tp_del */
+#ifdef COUNT_ALLOCS
+    /* these must be last and never explicitly initialized */
+    0, 					      /* tp_allocs */
+    0, 					      /* tp_frees */
+    0, 					      /* tp_maxalloc */
+    0, 					      /* tp_prev */
+    0, 					      /* *tp_next */
+#endif
 };
 /**end repeat**/
 
@@ -2584,6 +2824,57 @@ static PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /*ob_size*/
     "numpy.@name@" _THIS_SIZE,                  /*tp_name*/
     sizeof(Py@NAME@ScalarObject),               /*tp_basicsize*/
+    0,                                        /* tp_itemsize */
+    0,       				      /* tp_dealloc */
+    0,                                        /* tp_print */
+    0,                                        /* tp_getattr */
+    0,                                        /* tp_setattr */
+    0,                                        /* tp_compare */
+    0,                                        /* tp_repr */
+    0,                                        /* tp_as_number */
+    0,              			      /* tp_as_sequence */
+    0,               			      /* tp_as_mapping */
+    0,                                        /* tp_hash */
+    0,         				      /* tp_call */
+    0,                                        /* tp_str */
+    0,					      /* tp_getattro */
+    0,					      /* tp_setattro */
+    0,					      /* tp_as_buffer */
+    0,                                        /* tp_flags */
+    0,   				      /* tp_doc */
+    0,   				      /* tp_traverse */
+    0,   				      /* tp_clear */
+    0,   				      /* tp_richcompare */
+    0,   				      /* tp_weaklistoffset */
+    0,   				      /* tp_iter */ 
+    0,   				      /* tp_iternext */ 
+    0,   				      /* tp_methods */
+    0,   				      /* tp_members */
+    0,   				      /* tp_getset */
+    0,   				      /* tp_base */
+    0,   				      /* tp_dict */
+    0,   				      /* tp_descr_get */
+    0,   				      /* tp_descr_set */
+    0,   				      /* tp_dictoffset */
+    0,   				      /* tp_init */
+    0,   				      /* tp_alloc */
+    0,   				      /* tp_new */
+    0,   				      /* tp_free */
+    0,   				      /* tp_is_gc */
+    0,   				      /* tp_bases */
+    0,   				      /* tp_mro */
+    0,   				      /* tp_cache */
+    0,   				      /* tp_subclasses */
+    0,   				      /* tp_weaklist */
+    0,   				      /* tp_del */
+#ifdef COUNT_ALLOCS
+    /* these must be last and never explicitly initialized */
+    0, 					      /* tp_allocs */
+    0, 					      /* tp_frees */
+    0, 					      /* tp_maxalloc */
+    0, 					      /* tp_prev */
+    0, 					      /* *tp_next */
+#endif
 };
 
 #undef _THIS_SIZE
@@ -2647,6 +2938,39 @@ static PyTypeObject Py@NAME@ArrType_Type = {
     0,                                              /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
     "Composed of two " _THIS_SIZE2 " bit floats",   /* tp_doc */
+    0,   				      /* tp_traverse */
+    0,   				      /* tp_clear */
+    0,   				      /* tp_richcompare */
+    0,   				      /* tp_weaklistoffset */
+    0,   				      /* tp_iter */ 
+    0,   				      /* tp_iternext */ 
+    0,   				      /* tp_methods */
+    0,   				      /* tp_members */
+    0,   				      /* tp_getset */
+    0,   				      /* tp_base */
+    0,   				      /* tp_dict */
+    0,   				      /* tp_descr_get */
+    0,   				      /* tp_descr_set */
+    0,   				      /* tp_dictoffset */
+    0,   				      /* tp_init */
+    0,   				      /* tp_alloc */
+    0,   				      /* tp_new */
+    0,   				      /* tp_free */
+    0,   				      /* tp_is_gc */
+    0,   				      /* tp_bases */
+    0,   				      /* tp_mro */
+    0,   				      /* tp_cache */
+    0,   				      /* tp_subclasses */
+    0,   				      /* tp_weaklist */
+    0,   				      /* tp_del */
+#ifdef COUNT_ALLOCS
+    /* these must be last and never explicitly initialized */
+    0, 					      /* tp_allocs */
+    0, 					      /* tp_frees */
+    0, 					      /* tp_maxalloc */
+    0, 					      /* tp_prev */
+    0, 					      /* *tp_next */
+#endif
 };
 #undef _THIS_SIZE1
 #undef _THIS_SIZE2

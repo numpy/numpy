@@ -1586,7 +1586,7 @@ static struct PyMethodDef methods[] = {
      METH_VARARGS, NULL},
     {"geterrobj", (PyCFunction) ufunc_geterr,
      METH_VARARGS, NULL},
-    {NULL,          NULL, 0}                /* sentinel */
+    {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
 PyMODINIT_FUNC initumath(void) {

@@ -7531,7 +7531,7 @@ static struct PyMethodDef array_module_methods[] = {
      METH_VARARGS | METH_KEYWORDS, NULL},
     {"test_interrupt", (PyCFunction)test_interrupt,
      METH_VARARGS, NULL},
-    {NULL,          NULL, 0}                /* sentinel */
+    {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
 #include "__multiarray_api.c"

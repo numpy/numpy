@@ -2021,7 +2021,7 @@ static PyMethodDef array_methods[] = {
          METH_VARARGS | METH_KEYWORDS, NULL},
     {"view", (PyCFunction)array_view,
          METH_VARARGS | METH_KEYWORDS, NULL},
-    {NULL, NULL}           /* sentinel */
+    {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
 #undef _ARET
