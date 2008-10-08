@@ -23,6 +23,8 @@ extern "C" CONFUSE_EMACS
         #define NPY_ALLOW_THREADS 0
 #endif
 
+#include "utils.h"
+
 /* There are several places in the code where an array of dimensions is
  * allocated statically.  This is the size of that static allocation.
  *

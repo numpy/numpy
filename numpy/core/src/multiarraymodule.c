@@ -4177,7 +4177,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
 }
 
 static PyObject *
-array_putmask(PyObject *module, PyObject *args, PyObject *kwds)
+array_putmask(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwds)
 {
     PyObject *mask, *values;
     PyObject *array;
@@ -5697,7 +5697,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
                                  PyArray_ISFORTRAN(op)))
 
 static PyObject *
-_array_fromobject(PyObject *ignored, PyObject *args, PyObject *kws)
+_array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 {
     PyObject *op, *ret=NULL;
     static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
@@ -5816,7 +5816,7 @@ PyArray_Empty(int nd, intp *dims, PyArray_Descr *type, int fortran)
 }
 
 static PyObject *
-array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
+array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
     static char *kwlist[] = {"shape","dtype","order",NULL};
@@ -5851,7 +5851,7 @@ array_empty(PyObject *ignored, PyObject *args, PyObject *kwds)
    numpy scalar objects.
 */
 static PyObject *
-array_scalar(PyObject *ignored, PyObject *args, PyObject *kwds)
+array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
     static char *kwlist[] = {"dtype","obj", NULL};
@@ -5935,7 +5935,7 @@ PyArray_Zeros(int nd, intp *dims, PyArray_Descr *type, int fortran)
 }
 
 static PyObject *
-array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
+array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"shape","dtype","order",NULL}; /* XXX ? */
     PyArray_Descr *typecode=NULL;
@@ -5966,7 +5966,7 @@ array_zeros(PyObject *ignored, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_set_typeDict(PyObject *ignored, PyObject *args)
+array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {
     PyObject *dict;
     if (!PyArg_ParseTuple(args, "O", &dict)) return NULL;
@@ -6002,7 +6002,7 @@ fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
 
 static int
 fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
-                      void *stream_data)
+                      void *NPY_UNUSED(stream_data))
 {
     /* the NULL argument is for backwards-compatibility */
     return dtype->f->scanfunc(*fp, dptr, NULL, dtype);
@@ -6095,7 +6095,7 @@ fromstr_skip_separator(char **s, const char *sep, const char *end)
 }
 
 static int
-fromfile_skip_separator(FILE **fp, const char *sep, void *stream_data)
+fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data))
 {
     int result = 0;
     const char *sep_start = sep;
@@ -6307,7 +6307,7 @@ PyArray_FromString(char *data, intp slen, PyArray_Descr *dtype,
 }
 
 static PyObject *
-array_fromstring(PyObject *ignored, PyObject *args, PyObject *keywds)
+array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     char *data;
     Py_ssize_t nin=-1;
@@ -6440,7 +6440,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, intp num, char *sep)
 }
 
 static PyObject *
-array_fromfile(PyObject *ignored, PyObject *args, PyObject *keywds)
+array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *file=NULL, *ret;
     FILE *fp;
@@ -6579,7 +6579,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, intp count)
 }
 
 static PyObject *
-array_fromiter(PyObject *ignored, PyObject *args, PyObject *keywds)
+array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *iter;
     Py_ssize_t nin=-1;
@@ -6698,7 +6698,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 }
 
 static PyObject *
-array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
+array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *obj=NULL;
     Py_ssize_t nin=-1, offset=0;
@@ -6721,7 +6721,7 @@ array_frombuffer(PyObject *ignored, PyObject *args, PyObject *keywds)
 }
 
 static PyObject *
-array_concatenate(PyObject *dummy, PyObject *args, PyObject *kwds)
+array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *a0;
     int axis=0;
@@ -6734,7 +6734,7 @@ array_concatenate(PyObject *dummy, PyObject *args, PyObject *kwds)
     return PyArray_Concatenate(a0, axis);
 }
 
-static PyObject *array_innerproduct(PyObject *dummy, PyObject *args) {
+static PyObject *array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     PyObject *b0, *a0;
 
     if (!PyArg_ParseTuple(args, "OO", &a0, &b0)) return NULL;
@@ -6742,7 +6742,7 @@ static PyObject *array_innerproduct(PyObject *dummy, PyObject *args) {
     return _ARET(PyArray_InnerProduct(a0, b0));
 }
 
-static PyObject *array_matrixproduct(PyObject *dummy, PyObject *args) {
+static PyObject *array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     PyObject *v, *a;
 
     if (!PyArg_ParseTuple(args, "OO", &a, &v)) return NULL;
@@ -6750,7 +6750,7 @@ static PyObject *array_matrixproduct(PyObject *dummy, PyObject *args) {
     return _ARET(PyArray_MatrixProduct(a, v));
 }
 
-static PyObject *array_fastCopyAndTranspose(PyObject *dummy, PyObject *args) {
+static PyObject *array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     PyObject *a0;
 
     if (!PyArg_ParseTuple(args, "O", &a0)) return NULL;
@@ -6758,7 +6758,7 @@ static PyObject *array_fastCopyAndTranspose(PyObject *dummy, PyObject *args) {
     return _ARET(PyArray_CopyAndTranspose(a0));
 }
 
-static PyObject *array_correlate(PyObject *dummy, PyObject *args, PyObject *kwds) {
+static PyObject *array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     PyObject *shape, *a0;
     int mode=0;
     static char *kwlist[] = {"a", "v", "mode", NULL};
@@ -6988,7 +6988,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 }
 
 static PyObject *
-array_arange(PyObject *ignored, PyObject *args, PyObject *kws) {
+array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     PyObject *o_start=NULL, *o_stop=NULL, *o_step=NULL;
     static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
     PyArray_Descr *typecode=NULL;
@@ -7015,7 +7015,7 @@ PyArray_GetNDArrayCVersion(void)
 }
 
 static PyObject *
-array__get_ndarray_c_version(PyObject *dummy, PyObject *args, PyObject *kwds)
+array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {NULL};
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) return NULL;
@@ -7024,7 +7024,7 @@ array__get_ndarray_c_version(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array__reconstruct(PyObject *dummy, PyObject *args)
+array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
 
     PyObject *ret;
@@ -7056,7 +7056,7 @@ array__reconstruct(PyObject *dummy, PyObject *args)
 }
 
 static PyObject *
-array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds)
+array_set_string_function(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *op=NULL;
     int repr=1;
@@ -7078,7 +7078,7 @@ array_set_string_function(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_set_ops_function(PyObject *self, PyObject *args, PyObject *kwds)
+array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), PyObject *kwds)
 {
     PyObject *oldops=NULL;
 
@@ -7145,7 +7145,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 }
 
 static PyObject *
-array_where(PyObject *ignored, PyObject *args)
+array_where(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {
     PyObject *obj=NULL, *x=NULL, *y=NULL;
 
@@ -7155,7 +7155,7 @@ array_where(PyObject *ignored, PyObject *args)
 }
 
 static PyObject *
-array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
+array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
     int axis=-1;
     PyObject *obj;
@@ -7170,7 +7170,7 @@ array_lexsort(PyObject *ignored, PyObject *args, PyObject *kwds)
 #undef _ARET
 
 static PyObject *
-array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
+array_can_cast_safely(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *d1=NULL;
     PyArray_Descr *d2=NULL;
@@ -7201,7 +7201,7 @@ array_can_cast_safely(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-new_buffer(PyObject *dummy, PyObject *args)
+new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int size;
 
@@ -7212,7 +7212,7 @@ new_buffer(PyObject *dummy, PyObject *args)
 }
 
 static PyObject *
-buffer_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
+buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     Py_ssize_t offset=0, size=Py_END_OF_BUFFER, n;
@@ -7258,7 +7258,7 @@ _SigSegv_Handler(int signum)
     }
 
 static PyObject *
-as_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
+as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *mem;
     Py_ssize_t size;
@@ -7315,7 +7315,7 @@ as_buffer(PyObject *dummy, PyObject *args, PyObject *kwds)
 #undef _test_code
 
 static PyObject *
-format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
+format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     unsigned int precision;
@@ -7340,7 +7340,7 @@ format_longfloat(PyObject *dummy, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-compare_chararrays(PyObject *dummy, PyObject *args, PyObject *kwds)
+compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *array;
     PyObject *other;
@@ -7441,7 +7441,7 @@ _PyArray_GetSigintBuf(void)
 
 
 static PyObject *
-test_interrupt(PyObject *self, PyObject *args)
+test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     int kind=0;
     int a = 0;
@@ -7546,7 +7546,7 @@ static struct PyMethodDef array_module_methods[] = {
     Thus, we call PyType_Ready on the standard Python Types, here.
 */
 static int
-setup_scalartypes(PyObject *dict)
+setup_scalartypes(PyObject *NPY_UNUSED(dict))
 {
 
     initialize_numeric_types();

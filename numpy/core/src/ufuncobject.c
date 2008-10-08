@@ -3500,7 +3500,7 @@ fail:
 }
 
 static PyObject *
-ufunc_geterr(PyObject *dummy, PyObject *args)
+ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *thedict;
     PyObject *res;
@@ -3563,7 +3563,7 @@ ufunc_update_use_defaults(void)
 #endif
 
 static PyObject *
-ufunc_seterr(PyObject *dummy, PyObject *args)
+ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *thedict;
     int res;
@@ -3600,7 +3600,7 @@ static char
 doc_frompyfunc[] = "frompyfunc(func, nin, nout) take an arbitrary python function that takes nin objects as input and returns nout objects and return a universal function (ufunc).  This ufunc always returns PyObject arrays";
 
 static PyObject *
-ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
+ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
     /* Keywords are ignored for now */
 
     PyObject *function, *pyname=NULL;

@@ -80,7 +80,7 @@ static Bool altered=FALSE;
 static char doc_alterdot[] = "alterdot() changes all dot functions to use blas.";
 
 static PyObject *
-dotblas_alterdot(PyObject *dummy, PyObject *args)
+dotblas_alterdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyArray_Descr *descr;
 
@@ -115,7 +115,7 @@ dotblas_alterdot(PyObject *dummy, PyObject *args)
 static char doc_restoredot[] = "restoredot() restores dots to defaults.";
 
 static PyObject *
-dotblas_restoredot(PyObject *dummy, PyObject *args)
+dotblas_restoredot(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyArray_Descr *descr;
 
@@ -203,7 +203,7 @@ static char doc_matrixproduct[] = \
     "dimension of b.\nNB: The first argument is not conjugated.";
 
 static PyObject *
-dotblas_matrixproduct(PyObject *dummy, PyObject *args)
+dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *ret = NULL;
@@ -798,7 +798,7 @@ static char doc_innerproduct[] = \
     "not conjugated.";
 
 static PyObject *
-dotblas_innerproduct(PyObject *dummy, PyObject *args)
+dotblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *ap1, *ap2, *ret;
@@ -1046,7 +1046,7 @@ dotblas_innerproduct(PyObject *dummy, PyObject *args)
 static char doc_vdot[] = "vdot(a,b)\nReturns the dot product of a and b for scalars and vectors\nof floating point and complex types.  The first argument, a, is conjugated.";
 
 
-static PyObject *dotblas_vdot(PyObject *dummy, PyObject *args) {
+static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     PyObject *op1, *op2;
     PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
     int l;

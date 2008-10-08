@@ -3710,7 +3710,7 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace) {
 }
 
 static PyObject *
-array_power(PyArrayObject *a1, PyObject *o2, PyObject *modulo)
+array_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo))
 {
     /* modulo is ignored! */
     PyObject *value;
@@ -3801,7 +3801,7 @@ array_inplace_remainder(PyArrayObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *modulo)
+array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo))
 {
     /* modulo is ignored! */
     PyObject *value;
@@ -6871,7 +6871,7 @@ array_transpose_get(PyArrayObject *self)
    --- default sub-class behavior
 */
 static PyObject *
-array_finalize_get(PyArrayObject *self)
+array_finalize_get(PyArrayObject *NPY_UNUSED(self))
 {
     Py_INCREF(Py_None);
     return Py_None;
@@ -6949,7 +6949,7 @@ static PyGetSetDef array_getsetlist[] = {
 
 
 static PyObject *
-array_alloc(PyTypeObject *type, Py_ssize_t nitems)
+array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 {
     PyObject *obj;
     /* nitems will always be 0 */
@@ -9960,7 +9960,7 @@ static PyMappingMethods iter_as_mapping = {
 
 
 static PyObject *
-iter_array(PyArrayIterObject *it, PyObject *op)
+iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
 {
 
     PyObject *r;
@@ -10917,7 +10917,7 @@ PyArray_MultiIterNew(int n, ...)
 }
 
 static PyObject *
-arraymultiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
+arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds)
 {
 
     int n, i;
@@ -11526,7 +11526,7 @@ static PyGetSetDef arraydescr_getsets[] = {
 };
 
 static PyObject *
-arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
+arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds)
 {
     PyObject *odescr;
     PyArray_Descr *descr, *conv;
@@ -11558,7 +11558,7 @@ arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
 /* return a tuple of (callable object, args, state). */
 static PyObject *
-arraydescr_reduce(PyArray_Descr *self, PyObject *args)
+arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
 {
     /* version number of this pickle type. Increment if we need to
        change the format. Be sure to handle the old versions in
@@ -12557,7 +12557,7 @@ static PyMappingMethods arrayflags_as_mapping = {
 
 
 static PyObject *
-arrayflags_new(PyTypeObject *self, PyObject *args, PyObject *kwds)
+arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *arg=NULL;
     if (!PyArg_UnpackTuple(args, "flagsobj", 0, 1, &arg))

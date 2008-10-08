@@ -554,7 +554,7 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
  **/
 
 static void
-BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         Bool in1 = *((Bool *)ip1) != 0;
@@ -565,7 +565,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 /**end repeat**/
 
 static void
-BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
+BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         Bool in1 = *((Bool *)ip1) != 0;
@@ -579,7 +579,7 @@ BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
  * #OP =  >, <#
  **/
 static void
-BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         Bool in1 = *((Bool *)ip1) != 0;
@@ -594,7 +594,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
  * #OP =  !=, ==#
  **/
 static void
-BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         Bool in1 = *(Bool *)ip1;
@@ -659,7 +659,7 @@ static void
 }
 
 static void
-@S@@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -668,7 +668,7 @@ static void
 }
 
 static void
-@S@@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -677,7 +677,7 @@ static void
 }
 
 static void
-@S@@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -686,7 +686,7 @@ static void
 }
 
 static void
-@S@@TYPE@_invert(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_invert(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -701,7 +701,7 @@ static void
  * #OP = +, -,*, &, |, ^, <<, >>#
  */
 static void
-@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -717,7 +717,7 @@ static void
  * #OP =  ==, !=, >, >=, <, <=, &&, ||#
  */
 static void
-@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -728,7 +728,7 @@ static void
 /**end repeat2**/
 
 static void
-@S@@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -742,7 +742,7 @@ static void
  * #OP =  >, <#
  **/
 static void
-@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -753,7 +753,7 @@ static void
 /**end repeat2**/
 
 static void
-@S@@TYPE@_true_divide(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_true_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -769,7 +769,7 @@ static void
 }
 
 static void
-@S@@TYPE@_power(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_power(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @ftype@ in1 = (@ftype@)*(@s@@type@ *)ip1;
@@ -779,7 +779,7 @@ static void
 }
 
 static void
-@S@@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *func)
+@S@@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -798,7 +798,7 @@ static void
 /**end repeat1**/
 
 static void
-U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const u@type@ in1 = *(u@type@ *)ip1;
@@ -807,7 +807,7 @@ U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 static void
-@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -816,7 +816,7 @@ static void
 }
 
 static void
-U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const u@type@ in1 = *(u@type@ *)ip1;
@@ -825,7 +825,7 @@ U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 static void
-@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -834,7 +834,7 @@ static void
 }
 
 static void
-@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -853,7 +853,7 @@ static void
 }
 
 static void
-U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *func)
+U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const u@type@ in1 = *(u@type@ *)ip1;
@@ -869,7 +869,7 @@ U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *func)
 }
 
 static void
-@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -892,7 +892,7 @@ static void
 }
 
 static void
-U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
+U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const u@type@ in1 = *(u@type@ *)ip1;
@@ -930,7 +930,7 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
  * # OP = +, -, *, /#
  */
 static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -946,7 +946,7 @@ static void
  * #OP = ==, !=, <, <=, >, >=, &&, ||#
  */
 static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -957,7 +957,7 @@ static void
 /**end repeat1**/
 
 static void
-@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -967,7 +967,7 @@ static void
 }
 
 static void
-@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -980,7 +980,7 @@ static void
  * #func = isnan, isinf, isfinite, signbit#
  **/
 static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -994,7 +994,7 @@ static void
  * #OP =  >, <#
  **/
 static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
     BINARY_LOOP {
@@ -1006,7 +1006,7 @@ static void
 /**end repeat1**/
 
 static void
-@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1016,7 +1016,7 @@ static void
 }
 
 static void
-@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1058,7 +1058,7 @@ static void
 }
 
 static void
-@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1067,7 +1067,7 @@ static void
 }
 
 static void
-@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1078,7 +1078,7 @@ static void
 }
 
 static void
-@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1087,7 +1087,7 @@ static void
 }
 
 static void
-@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
     UNARY_LOOP {
@@ -1105,7 +1105,7 @@ static void
 }
 
 static void
-@TYPE@_modf(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_modf(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1115,7 +1115,7 @@ static void
 
 #ifdef HAVE_FREXP@C@
 static void
-@TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1126,7 +1126,7 @@ static void
 
 #ifdef HAVE_LDEXP@C@
 static void
-@TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1161,7 +1161,7 @@ static void
  * #OP = +, -#
  */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1175,7 +1175,7 @@ static void
 /**end repeat1**/
 
 static void
-@CTYPE@_multiply(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1188,7 +1188,7 @@ static void
 }
 
 static void
-@CTYPE@_divide(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1202,7 +1202,7 @@ static void
 }
 
 static void
-@CTYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1221,7 +1221,7 @@ static void
    #OP2 = &&, ||#
 */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1238,7 +1238,7 @@ static void
  * #OP = >, >=, <, <=#
  */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1261,7 +1261,7 @@ static void
    #OP2 = &&, ||#
 */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1274,7 +1274,7 @@ static void
 /**end repeat1**/
 
 static void
-@CTYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1288,7 +1288,7 @@ static void
 }
 
 static void
-@CTYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1303,7 +1303,7 @@ static void
  * #OP = ||, ||, &&#
  **/
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1354,7 +1354,7 @@ static void
 }
 
 static void
-@CTYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *func) {
+@CTYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
@@ -1364,7 +1364,7 @@ static void
 }
 
 static void
-@CTYPE@_absolute(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1374,7 +1374,7 @@ static void
 }
 
 static void
-@CTYPE@_sign(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1405,7 +1405,7 @@ static void
  * #OP = >, <#
  */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1438,7 +1438,7 @@ static void
  * #OP = EQ, NE, GT, GE, LT, LE#
  */
 static void
-OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
+OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
@@ -1447,7 +1447,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *func) {
 }
 /**end repeat**/
 
-OBJECT_sign(char **args, intp *dimensions, intp *steps, void *func)
+OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     PyObject *zero = PyInt_FromLong(0);
     UNARY_LOOP {

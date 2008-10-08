@@ -14,6 +14,7 @@
 
 /** numarray adapted routines.... **/
 
+#if SIZEOF_LONGLONG == 64 || SIZEOF_LONGLONG == 128
 static int ulonglong_overflow(ulonglong a, ulonglong b)
 {
     ulonglong ah, al, bh, bl, w, x, y, z;
@@ -50,6 +51,12 @@ static int ulonglong_overflow(ulonglong a, ulonglong b)
 #endif
 
 }
+#else
+static int ulonglong_overflow(ulonglong NPY_UNUSED(a), ulonglong NPY_UNUSED(b))
+{
+	return 0;
+}
+#endif
 
 static int slonglong_overflow(longlong a0, longlong b0)
 {
@@ -665,7 +672,7 @@ static PyObject *
 **/
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *c)
+@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
 {
     PyObject *ret;
     @name@ arg1, arg2;
@@ -1117,7 +1124,7 @@ static void *saved_tables[9];
 char doc_alterpyscalars[] = "";
 
 static PyObject *
-alter_pyscalars(PyObject *dummy, PyObject *args)
+alter_pyscalars(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int n;
     PyObject *obj;
@@ -1152,7 +1159,7 @@ alter_pyscalars(PyObject *dummy, PyObject *args)
 
 char doc_restorepyscalars[] = "";
 static PyObject *
-restore_pyscalars(PyObject *dummy, PyObject *args)
+restore_pyscalars(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int n;
     PyObject *obj;
@@ -1186,7 +1193,7 @@ restore_pyscalars(PyObject *dummy, PyObject *args)
 
 char doc_usepythonmath[] = "";
 static PyObject *
-use_pythonmath(PyObject *dummy, PyObject *args)
+use_pythonmath(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int n;
     PyObject *obj;
@@ -1220,7 +1227,7 @@ use_pythonmath(PyObject *dummy, PyObject *args)
 
 char doc_usescalarmath[] = "";
 static PyObject *
-use_scalarmath(PyObject *dummy, PyObject *args)
+use_scalarmath(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int n;
     PyObject *obj;

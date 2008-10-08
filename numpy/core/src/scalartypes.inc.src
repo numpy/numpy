@@ -373,7 +373,7 @@ gentype_dealloc(PyObject *v)
 
 
 static PyObject *
-gentype_power(PyObject *m1, PyObject *m2, PyObject *m3)
+gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
 {
     PyObject *arr, *ret, *arg2;
     char *msg="unsupported operand type(s) for ** or pow()";
@@ -770,13 +770,13 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 }
 
 static PyObject *
-gentype_ndim_get(PyObject *self)
+gentype_ndim_get(PyObject *NPY_UNUSED(self))
 {
     return PyInt_FromLong(0);
 }
 
 static PyObject *
-gentype_flags_get(PyObject *self)
+gentype_flags_get(PyObject *NPY_UNUSED(self))
 {
     return PyArray_NewFlagsObject(NULL);
 }
@@ -827,7 +827,7 @@ gentype_itemsize_get(PyObject *self)
 }
 
 static PyObject *
-gentype_size_get(PyObject *self)
+gentype_size_get(PyObject *NPY_UNUSED(self))
 {
     return PyInt_FromLong(1);
 }
@@ -866,13 +866,13 @@ gentype_struct_get(PyObject *self)
 }
 
 static PyObject *
-gentype_priority_get(PyObject *self)
+gentype_priority_get(PyObject *NPY_UNUSED(self))
 {
     return PyFloat_FromDouble(NPY_SCALAR_PRIORITY);
 }
 
 static PyObject *
-gentype_shape_get(PyObject *self)
+gentype_shape_get(PyObject *NPY_UNUSED(self))
 {
     return PyTuple_New(0);
 }
@@ -902,7 +902,7 @@ gentype_typedescr_get(PyObject *self)
 
 
 static PyObject *
-gentype_base_get(PyObject *self)
+gentype_base_get(PyObject *NPY_UNUSED(self))
 {
     Py_INCREF(Py_None);
     return Py_None;
@@ -1110,7 +1110,7 @@ gentype_getarray(PyObject *scalar, PyObject *args)
 static char doc_sc_wraparray[] = "sc.__array_wrap__(obj) return scalar from array";
 
 static PyObject *
-gentype_wraparray(PyObject *scalar, PyObject *args)
+gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 {
     PyObject *arr;
 
@@ -1143,7 +1143,7 @@ gentype_@name@(PyObject *self, PyObject *args)
 /**end repeat**/
 
 static PyObject *
-gentype_itemset(PyObject *self, PyObject *args)
+gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
     PyErr_SetString(PyExc_ValueError, "array-scalars are immutable");
     return NULL;
@@ -1230,7 +1230,7 @@ voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-gentype_setfield(PyObject *self, PyObject *args, PyObject *kwds)
+gentype_setfield(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
     PyErr_SetString(PyExc_TypeError,
             "Can't set fields in a non-void array scalar.");
@@ -1296,7 +1296,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-gentype_reduce(PyObject *self, PyObject *args)
+gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     PyObject *ret=NULL, *obj=NULL, *mod=NULL;
     const char *buffer;
@@ -1369,7 +1369,7 @@ fail:
 
 /* ignores everything */
 static PyObject *
-gentype_setstate(PyObject *self, PyObject *args)
+gentype_setstate(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
     Py_INCREF(Py_None);
     return (Py_None);
@@ -1400,7 +1400,7 @@ gentype_dumps(PyObject *self, PyObject *args)
 
 /* setting flags cannot be done for scalars */
 static PyObject *
-gentype_setflags(PyObject *self, PyObject *args, PyObject *kwds)
+gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
     Py_INCREF(Py_None);
     return Py_None;
@@ -1892,8 +1892,13 @@ object_arrtype_dealloc(PyObject *v)
 #work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
 #default=0*16,1*2,2#
 */
+
+#define _NPY_UNUSED1 
+#define _NPY_UNUSEDz
+#define _NPY_UNUSED0 NPY_UNUSED
+
 static PyObject *
-@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *_NPY_UNUSED@work@(kwds))
 {
     PyObject *obj = NULL;
     PyObject *robj;
@@ -1999,7 +2004,7 @@ finish:
 
 /* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
-bool_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *obj=NULL;
     PyObject *arr;
@@ -2095,7 +2100,7 @@ static PyNumberMethods bool_arrtype_as_number = {
 };
 
 static PyObject *
-void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *obj, *arr;
     ulonglong memu=1;
