@@ -2022,12 +2022,15 @@ object_arrtype_dealloc(PyObject *v)
 #default=0*16,1*2,2#
 */
 
-#define _NPY_UNUSED1 
-#define _NPY_UNUSEDz
-#define _NPY_UNUSED0 NPY_UNUSED
+#define _NPY_UNUSED2_1 
+#define _NPY_UNUSED2_z
+#define _NPY_UNUSED2_0 NPY_UNUSED
+#define _NPY_UNUSED1_0
+#define _NPY_UNUSED1_1
+#define _NPY_UNUSED1_2 NPY_UNUSED
 
 static PyObject *
-@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *_NPY_UNUSED@work@(kwds))
+@name@_arrtype_new(PyTypeObject *_NPY_UNUSED1_@default@(type), PyObject *args, PyObject *_NPY_UNUSED2_@work@(kwds))
 {
     PyObject *obj = NULL;
     PyObject *robj;

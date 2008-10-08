@@ -2327,7 +2327,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
                NPY_CLIPMODE clipmode)
 {
     int n, elsize;
-    intp i, m;
+    intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi=NULL;

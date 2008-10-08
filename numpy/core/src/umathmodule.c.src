@@ -56,7 +56,7 @@ Py_square(PyObject *o)
 }
 
 static PyObject *
-Py_get_one(PyObject *o)
+Py_get_one(PyObject *NPY_UNUSED(o))
 {
     return PyInt_FromLong(1);
 }
@@ -604,7 +604,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 /**end repeat**/
 
 static void
-BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((Bool *)op) = 1;
@@ -633,7 +633,7 @@ BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *data)
 #define @S@@TYPE@_floor_divide @S@@TYPE@_divide
 
 static void
-@S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+@S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((@s@@type@ *)op) = 1;
@@ -641,7 +641,7 @@ static void
 }
 
 static void
-@S@@TYPE@_square(char **args, intp *dimensions, intp *steps, void *data)
+@S@@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -650,7 +650,7 @@ static void
 }
 
 static void
-@S@@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+@S@@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
@@ -1032,7 +1032,7 @@ static void
 }
 
 static void
-@TYPE@_square(char **args, intp *dimensions, intp *steps, void *data)
+@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1041,7 +1041,7 @@ static void
 }
 
 static void
-@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
@@ -1050,7 +1050,7 @@ static void
 }
 
 static void
-@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((@type@ *)op) = 1;
@@ -1314,7 +1314,7 @@ static void
 /**end repeat1**/
 
 static void
-@CTYPE@_square(char **args, intp *dimensions, intp *steps, void *data)
+@CTYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1325,7 +1325,7 @@ static void
 }
 
 static void
-@CTYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *data)
+@CTYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1345,7 +1345,7 @@ static void
 }
 
 static void
-@CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *data)
+@CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         ((@type@ *)op)[0] = 1;
