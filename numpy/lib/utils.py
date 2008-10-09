@@ -1,6 +1,5 @@
 import os
 import sys
-import pkgutil
 import types
 import re
 
@@ -682,15 +681,21 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                 _all = item.__all__
             except AttributeError:
                 _all = None
+
             # import sub-packages
             if import_modules and hasattr(item, '__path__'):
-                for m in pkgutil.iter_modules(item.__path__):
-                    if _all is not None and m[1] not in _all:
-                        continue
-                    try:
-                        __import__("%s.%s" % (name, m[1]))
-                    except ImportError:
-                        continue
+                for pth in item.__path__: 
+                    for mod_path in os.listdir(pth): 
+                        init_py = os.path.join(pth, mod_path, '__init__.py') 
+                        if not os.path.isfile(init_py):
+                            continue 
+                        if _all is not None and mod_path not in _all:
+                            continue
+                        try:
+                            __import__("%s.%s" % (name, mod_path))
+                        except ImportError:
+                            continue
+
             for n, v in inspect.getmembers(item):
                 if _all is not None and n not in _all:
                     continue
