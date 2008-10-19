@@ -362,19 +362,19 @@ class TestView(TestCase):
         (mrec, a, b, arr) = self.data
         ntype = (np.float, 2)
         test = mrec.view(ntype)
-        assert(isinstance(test, ma.MaskedArray))
+        self.failUnless(isinstance(test, ma.MaskedArray))
         assert_equal(test, np.array(zip(a,b), dtype=np.float))
-        assert(test[3,1] is ma.masked)
+        self.failUnless(test[3,1] is ma.masked)
     #
     def test_view_flexible_type(self):
         (mrec, a, b, arr) = self.data
         alttype = [('A',np.float), ('B',np.float)]
         test = mrec.view(alttype)
-        assert(isinstance(test, MaskedRecords))
+        self.failUnless(isinstance(test, MaskedRecords))
         assert_equal_records(test, arr.view(alttype))
-        assert(test['B'][3] is masked)
+        self.failUnless(test['B'][3] is masked)
         assert_equal(test.dtype, np.dtype(alttype))
-        assert(test._fill_value is None)
+        self.failUnless(test._fill_value is None)
 
 
 ################################################################################
