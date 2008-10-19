@@ -199,25 +199,31 @@ class MaskedRecords(MaskedArray, object):
         if obj.dtype.fields:
             raise NotImplementedError("MaskedRecords is currently limited to"\
                                       "simple records...")
-        obj = obj.view(MaskedArray)
-        obj._baseclass = ndarray
-        obj._isfield = True
         # Get some special attributes
-        _fill_value = _localdict.get('_fill_value', None)
-        _mask = _localdict.get('_mask', None)
         # Reset the object's mask
+        hasmasked = False
+        _mask = _localdict.get('_mask', None)
         if _mask is not None:
             try:
-                obj._mask = _mask[attr]
+                _mask = _mask[attr]
             except IndexError:
                 # Couldn't find a mask: use the default (nomask)
                 pass
-        # Reset the field values
-        if _fill_value is not None:
-            try:
-                obj._fill_value = _fill_value[attr]
-            except ValueError:
-                obj._fill_value = None
+            hasmasked = _mask.view((np.bool,(len(_mask.dtype) or 1))).any()
+        if (obj.shape or hasmasked):
+            obj = obj.view(MaskedArray)
+            obj._baseclass = ndarray
+            obj._isfield = True
+            obj._mask = _mask
+            # Reset the field values
+            _fill_value = _localdict.get('_fill_value', None)
+            if _fill_value is not None:
+                try:
+                    obj._fill_value = _fill_value[attr]
+                except ValueError:
+                    obj._fill_value = None
+        else:
+            obj = obj.item()
         return obj
 
 
