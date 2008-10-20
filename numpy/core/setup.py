@@ -399,14 +399,6 @@ def configuration(parent_package='',top_path=None):
                          extra_info = blas_info
                          )
 
-    config.add_extension('umath_tests',
-                         sources = [join('src','umath_tests.c.src'),
-                                    ],
-                         depends = [join('blasdot','cblas.h'),] + deps,
-                         include_dirs = ['blasdot'],
-                         extra_info = blas_info
-                         )
-
 
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')
