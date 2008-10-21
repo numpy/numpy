@@ -47,12 +47,83 @@ class TestExpm1(TestCase):
 
 class TestMaximum(TestCase):
     def test_reduce_complex(self):
-        assert_equal(ncu.maximum.reduce([1,2j]),1)
-        assert_equal(ncu.maximum.reduce([1+3j,2j]),1+3j)
+        assert_equal(np.maximum.reduce([1,2j]),1)
+        assert_equal(np.maximum.reduce([1+3j,2j]),1+3j)
+
+    def test_float_nans(self):
+        nan = np.nan
+        arg1 = np.array([0,   nan, nan])
+        arg2 = np.array([nan, 0,   nan])
+        out  = np.array([nan, nan, nan])
+        assert_equal(np.maximum(arg1, arg2), out)
+
+    def test_complex_nans(self):
+        nan = np.nan
+        for cnan in [nan, nan*1j, nan + nan*1j] :
+            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+            out  = np.array([nan, nan, nan], dtype=np.complex)
+            assert_equal(np.maximum(arg1, arg2), out)
 
 class TestMinimum(TestCase):
     def test_reduce_complex(self):
-        assert_equal(ncu.minimum.reduce([1,2j]),2j)
+        assert_equal(np.minimum.reduce([1,2j]),2j)
+        assert_equal(np.minimum.reduce([1+3j,2j]),2j)
+
+    def test_float_nans(self):
+        nan = np.nan
+        arg1 = np.array([0,   nan, nan])
+        arg2 = np.array([nan, 0,   nan])
+        out  = np.array([nan, nan, nan])
+        assert_equal(np.minimum(arg1, arg2), out)
+
+    def test_complex_nans(self):
+        nan = np.nan
+        for cnan in [nan, nan*1j, nan + nan*1j] :
+            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+            out  = np.array([nan, nan, nan], dtype=np.complex)
+            assert_equal(np.minimum(arg1, arg2), out)
+
+class TestFmax(TestCase):
+    def test_reduce_complex(self):
+        assert_equal(np.fmax.reduce([1,2j]),1)
+        assert_equal(np.fmax.reduce([1+3j,2j]),1+3j)
+
+    def test_float_nans(self):
+        nan = np.nan
+        arg1 = np.array([0,   nan, nan])
+        arg2 = np.array([nan, 0,   nan])
+        out  = np.array([0,   0,   nan])
+        assert_equal(np.fmax(arg1, arg2), out)
+
+    def test_complex_nans(self):
+        nan = np.nan
+        for cnan in [nan, nan*1j, nan + nan*1j] :
+            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+            out  = np.array([0,    0, nan], dtype=np.complex)
+            assert_equal(np.fmax(arg1, arg2), out)
+
+class TestFmin(TestCase):
+    def test_reduce_complex(self):
+        assert_equal(np.fmin.reduce([1,2j]),2j)
+        assert_equal(np.fmin.reduce([1+3j,2j]),2j)
+
+    def test_float_nans(self):
+        nan = np.nan
+        arg1 = np.array([0,   nan, nan])
+        arg2 = np.array([nan, 0,   nan])
+        out  = np.array([0,   0,   nan])
+        assert_equal(np.fmin(arg1, arg2), out)
+
+    def test_complex_nans(self):
+        nan = np.nan
+        for cnan in [nan, nan*1j, nan + nan*1j] :
+            arg1 = np.array([0, cnan, cnan], dtype=np.complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
+            out  = np.array([0,    0, nan], dtype=np.complex)
+            assert_equal(np.fmin(arg1, arg2), out)
 
 class TestFloatingPoint(TestCase):
     def test_floating_point(self):

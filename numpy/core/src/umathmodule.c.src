@@ -654,7 +654,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((@s@@type@ *)op) = 1.0/in1;
+        *((@s@@type@ *)op) = (@s@@type@)(1.0/in1);
     }
 }
 
@@ -924,6 +924,9 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
  *  #C = F, , L#
  */
 
+#define ONE 1.0@c@
+#define ZERO 0.0@c@
+
 /**begin repeat1
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
@@ -991,7 +994,7 @@ static void
 
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP =  >, <#
+ * #OP =  >=, <=#
  **/
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
@@ -1000,7 +1003,23 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op) = in1 @OP@ in2 ? in1 : in2;
+        *((@type@ *)op) = (in1 @OP@ in2 || isnan(in1)) ? in1 : in2;
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP =  >=, <=#
+ **/
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    /*  */
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op) = (in1 @OP@ in2 || isnan(in2)) ? in1 : in2;
     }
 }
 /**end repeat1**/
@@ -1045,7 +1064,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = 1.0/in1;
+        *((@type@ *)op) = ONE/in1;
     }
 }
 
@@ -1053,7 +1072,7 @@ static void
 @TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        *((@type@ *)op) = 1;
+        *((@type@ *)op) = ONE;
     }
 }
 
@@ -1071,7 +1090,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        const @type@ tmp = (in1 > 0) ? in1 : -in1;
+        const @type@ tmp = in1 > 0 ? in1 : -in1;
         /* add 0 to clear -0.0 */
         *((@type@ *)op) = tmp + 0;
     }
@@ -1138,6 +1157,9 @@ static void
 
 #define @TYPE@_true_divide @TYPE@_divide
 
+#undef ONE
+#undef ZERO
+
 /**end repeat**/
 
 
@@ -1154,6 +1176,11 @@ static void
  * #type = float, double, longdouble#
  * #c = f, , l#
  */
+
+#define CGE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi))
+#define CLE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi))
+#define ONE 1.0@c@
+#define ZERO 0.0@c@
 
 /**begin repeat1
  * arithmetic
@@ -1348,8 +1375,8 @@ static void
 @CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        ((@type@ *)op)[0] = 1;
-        ((@type@ *)op)[1] = 0;
+        ((@type@ *)op)[0] = ONE;
+        ((@type@ *)op)[1] = ZERO;
     }
 }
 
@@ -1380,29 +1407,30 @@ static void
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         if (in1r > 0) {
-            ((@type@ *)op)[0] = 1;
+            ((@type@ *)op)[0] = ONE;
         }
         else if (in1r < 0) {
-            ((@type@ *)op)[0] = -1;
+            ((@type@ *)op)[0] = -ONE;
         }
         else {
             if (in1i > 0) {
-                ((@type@ *)op)[0] = 1;
+                ((@type@ *)op)[0] = ONE;
             }
             else if (in1i < 0) {
-                ((@type@ *)op)[0] = -1;
+                ((@type@ *)op)[0] = -ONE;
             }
             else {
-                ((@type@ *)op)[0] = 0;
+                ((@type@ *)op)[0] = ZERO;
             }
         }
-        ((@type@ *)op)[1] = 0;
+        ((@type@ *)op)[1] = ZERO;
     }
 }
 
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP = >, <#
+ * #OP1 = CGE, CLE#
+ * #OP2 = CLE, CGE#
  */
 static void
 @CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
@@ -1412,7 +1440,31 @@ static void
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (in1r @OP@ in2r || ((in1r == in2r) && (in1i @OP@ in2i))) {
+        if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in1r) || isnan(in1i)) {
+            ((@type@ *)op)[0] = in1r;
+            ((@type@ *)op)[1] = in1i;
+        }
+        else {
+            ((@type@ *)op)[0] = in2r;
+            ((@type@ *)op)[1] = in2i;
+        }
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP1 = CGE, CLE#
+ */
+static void
+@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
             ((@type@ *)op)[0] = in1r;
             ((@type@ *)op)[1] = in1i;
         }
@@ -1425,6 +1477,12 @@ static void
 /**end repeat1**/
 
 #define @CTYPE@_true_divide @CTYPE@_divide
+
+#undef CGE
+#undef CLE
+#undef ONE
+#undef ZERO
+
 /**end repeat**/
 
 /*
@@ -1447,6 +1505,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
 }
 /**end repeat**/
 
+static void
 OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     PyObject *zero = PyInt_FromLong(0);
@@ -1463,6 +1522,16 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
  *****************************************************************************
  */
 
+
+/*
+ *****************************************************************************
+ **                            SETUP UFUNCS                                 **
+ *****************************************************************************
+ */
+
+#include "__umath_generated.c"
+#include "ufuncobject.c"
+#include "__ufunc_api.c"
 
 static PyUFuncGenericFunction frexp_functions[] = {
 #ifdef HAVE_FREXPF
@@ -1485,7 +1554,6 @@ static char frexp_signatures[] = {
 #endif
 };
 
-
 static PyUFuncGenericFunction ldexp_functions[] = {
 #ifdef HAVE_LDEXPF
     FLOAT_ldexp,
@@ -1506,10 +1574,6 @@ static char ldexp_signatures[] = {
 #endif
 };
 
-
-#include "__umath_generated.c"
-#include "ufuncobject.c"
-#include "__ufunc_api.c"
 
 static double
 pinf_init(void)
