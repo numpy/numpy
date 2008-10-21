@@ -1105,7 +1105,7 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
 
 
 static PyObject *
-array_reduce(PyArrayObject *self, PyObject *args)
+array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
     /* version number of this pickle type. Increment if we need to
        change the format. Be sure to handle the old versions in
@@ -2021,7 +2021,7 @@ static PyMethodDef array_methods[] = {
          METH_VARARGS | METH_KEYWORDS, NULL},
     {"view", (PyCFunction)array_view,
          METH_VARARGS | METH_KEYWORDS, NULL},
-    {NULL, NULL}           /* sentinel */
+    {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
 #undef _ARET

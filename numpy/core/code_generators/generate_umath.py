@@ -316,16 +316,6 @@ defdict = {
           TD(noobj),
           TD(O, f='_npy_ObjectMin')
           ),
-'fmax' :
-    Ufunc(2, 1, None,
-          "",
-          TD(inexact)
-          ),
-'fmin' :
-    Ufunc(2, 1, None,
-          "",
-          TD(inexact)
-          ),
 'bitwise_and' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.bitwise_and'),

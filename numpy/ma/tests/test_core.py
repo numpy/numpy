@@ -2270,6 +2270,21 @@ class TestMaskedArrayFunctions(TestCase):
         self.failUnless(c[0,0] is masked)
         self.failUnless(c.flags['C'])
 
+
+    def test_make_mask_descr(self):
+        "Test make_mask_descr"
+        ntype = [('a',np.float), ('b',np.float)]
+        test = make_mask_descr(ntype)
+        assert_equal(test, [('a',np.bool),('b',np.bool)])
+        #
+        ntype = (np.float, 2)
+        test = make_mask_descr(ntype)
+        assert_equal(test, (np.bool,2))
+        #
+        ntype = np.float
+        test = make_mask_descr(ntype)
+        assert_equal(test, np.dtype(np.bool))
+
 #------------------------------------------------------------------------------
 
 class TestMaskedFields(TestCase):
@@ -2361,22 +2376,14 @@ class TestMaskedFields(TestCase):
         a = array(iterator, dtype=[('a',float),('b',float)])
         a.mask[0] = (1,0)
         controlmask = np.array([1]+19*[0], dtype=bool)
-        #
+        # Transform globally to simple dtype
         test = a.view(float)
         assert_equal(test, data.ravel())
         assert_equal(test.mask, controlmask)
-        #
+        # Transform globally to dty
         test = a.view((float,2))
         assert_equal(test, data)
         assert_equal(test.mask, controlmask.reshape(-1,2))
-        #
-        test = a.view([('A',float),('B',float)])
-        assert_equal(test.mask.dtype.names, ('A', 'B'))
-        assert_equal(test['A'], a['a'])
-        assert_equal(test['B'], a['b'])
-        #
-        test = a.view(np.ndarray)
-        assert_equal(test, a._data)
         #
         test = a.view((float,2), np.matrix)
         assert_equal(test, data)
@@ -2398,6 +2405,86 @@ class TestMaskedFields(TestCase):
         self.failUnless(isinstance(a[-2], MaskedArray))
         assert_equal_records(a[-2]._data, a._data[-2])
         assert_equal_records(a[-2]._mask, a._mask[-2])
+
+
+class TestMaskedView(TestCase):
+    #
+    def setUp(self):
+        iterator = zip(np.arange(10), np.random.rand(10))
+        data = np.array(iterator)
+        a = array(iterator, dtype=[('a',float),('b',float)])
+        a.mask[0] = (1,0)
+        controlmask = np.array([1]+19*[0], dtype=bool)
+        self.data = (data, a, controlmask)
+    #
+    def test_view_to_nothing(self):
+        (data, a, controlmask) = self.data
+        test = a.view()
+        self.failUnless(isinstance(test, MaskedArray))
+        assert_equal(test._data, a._data)
+        assert_equal(test._mask, a._mask)
+        
+    #
+    def test_view_to_type(self):
+        (data, a, controlmask) = self.data
+        test = a.view(np.ndarray)
+        self.failUnless(not isinstance(test, MaskedArray))
+        assert_equal(test, a._data)
+        assert_equal_records(test, data.view(a.dtype).squeeze())
+    #
+    def test_view_to_simple_dtype(self):
+        (data, a, controlmask) = self.data
+        # View globally
+        test = a.view(float)
+        self.failUnless(isinstance(test, MaskedArray))
+        assert_equal(test, data.ravel())
+        assert_equal(test.mask, controlmask)
+    #
+    def test_view_to_flexible_dtype(self):
+        (data, a, controlmask) = self.data
+        #
+        test = a.view([('A',float),('B',float)])
+        assert_equal(test.mask.dtype.names, ('A', 'B'))
+        assert_equal(test['A'], a['a'])
+        assert_equal(test['B'], a['b'])
+        #
+        test = a[0].view([('A',float),('B',float)])
+        self.failUnless(isinstance(test, MaskedArray))
+        assert_equal(test.mask.dtype.names, ('A', 'B'))
+        assert_equal(test['A'], a['a'][0])
+        assert_equal(test['B'], a['b'][0])
+        #
+        test = a[-1].view([('A',float),('B',float)])
+        self.failUnless(not isinstance(test, MaskedArray))
+        assert_equal(test.dtype.names, ('A', 'B'))
+        assert_equal(test['A'], a['a'][-1])
+        assert_equal(test['B'], a['b'][-1])
+        
+    #
+    def test_view_to_subdtype(self):
+        (data, a, controlmask) = self.data
+        # View globally
+        test = a.view((float,2))
+        self.failUnless(isinstance(test, MaskedArray))
+        assert_equal(test, data)
+        assert_equal(test.mask, controlmask.reshape(-1,2))
+        # View on 1 masked element
+        test = a[0].view((float,2))
+        self.failUnless(isinstance(test, MaskedArray))
+        assert_equal(test, data[0])
+        assert_equal(test.mask, (1,0))
+        # View on 1 unmasked element
+        test = a[-1].view((float,2))
+        self.failUnless(not isinstance(test, MaskedArray))
+        assert_equal(test, data[-1])
+    #
+    def test_view_to_dtype_and_type(self):
+        (data, a, controlmask) = self.data
+        #
+        test = a.view((float,2), np.matrix)
+        assert_equal(test, data)
+        self.failUnless(isinstance(test, np.matrix))
+        self.failUnless(not isinstance(test, MaskedArray))
 
 ###############################################################################
 #------------------------------------------------------------------------------

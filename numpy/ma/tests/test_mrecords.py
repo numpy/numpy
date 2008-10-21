@@ -65,8 +65,6 @@ class TestMRecords(TestCase):
         assert_equal(mbase_first.tolist(), (1,1.1,'one'))
         # Used to be mask, now it's recordmask
         assert_equal(mbase_first.recordmask, nomask)
-        # _fieldmask and _mask should be the same thing
-        assert_equal(mbase_first._fieldmask.item(), (False, False, False))
         assert_equal(mbase_first._mask.item(), (False, False, False))
         assert_equal(mbase_first['a'], mbase['a'][0])
         mbase_last = mbase[-1]
@@ -75,7 +73,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase_last.tolist(), (None,None,None))
         # Used to be mask, now it's recordmask
         assert_equal(mbase_last.recordmask, True)
-        assert_equal(mbase_last._fieldmask.item(), (True, True, True))
+        assert_equal(mbase_last._mask.item(), (True, True, True))
         assert_equal(mbase_last['a'], mbase['a'][-1])
         assert (mbase_last['a'] is masked)
         # as slice ..........
@@ -107,7 +105,7 @@ class TestMRecords(TestCase):
         assert_equal(ma.getmaskarray(mbase['a']), [0]*5)
         # Use to be _mask, now it's recordmask
         assert_equal(mbase.recordmask, [False]*5)
-        assert_equal(mbase._fieldmask.tolist(),
+        assert_equal(mbase._mask.tolist(),
                      np.array([(0,0,0),(0,1,1),(0,0,0),(0,0,0),(0,1,1)],
                               dtype=bool))
         # Set a field to mask ........................
@@ -117,7 +115,7 @@ class TestMRecords(TestCase):
         assert_equal(mbase.c.recordmask, [1]*5)
         assert_equal(ma.getmaskarray(mbase['c']), [1]*5)
         assert_equal(ma.getdata(mbase['c']), ['N/A']*5)
-        assert_equal(mbase._fieldmask.tolist(),
+        assert_equal(mbase._mask.tolist(),
                      np.array([(0,0,1),(0,1,1),(0,0,1),(0,0,1),(0,1,1)],
                               dtype=bool))
         # Set fields by slices .......................
@@ -159,23 +157,23 @@ class TestMRecords(TestCase):
         base = self.base.copy()
         mbase = base.view(mrecarray)
         # Set the mask to True .......................
-        mbase._mask = masked
+        mbase.mask = masked
         assert_equal(ma.getmaskarray(mbase['b']), [1]*5)
         assert_equal(mbase['a']._mask, mbase['b']._mask)
         assert_equal(mbase['a']._mask, mbase['c']._mask)
-        assert_equal(mbase._fieldmask.tolist(),
+        assert_equal(mbase._mask.tolist(),
                      np.array([(1,1,1)]*5, dtype=bool))
         # Delete the mask ............................
-        mbase._mask = nomask
+        mbase.mask = nomask
         assert_equal(ma.getmaskarray(mbase['c']), [0]*5)
-        assert_equal(mbase._fieldmask.tolist(),
+        assert_equal(mbase._mask.tolist(),
                      np.array([(0,0,0)]*5, dtype=bool))
     #
     def test_set_mask_fromarray(self):
         base = self.base.copy()
         mbase = base.view(mrecarray)
         # Sets the mask w/ an array
-        mbase._mask = [1,0,0,0,1]
+        mbase.mask = [1,0,0,0,1]
         assert_equal(mbase.a.mask, [1,0,0,0,1])
         assert_equal(mbase.b.mask, [1,0,0,0,1])
         assert_equal(mbase.c.mask, [1,0,0,0,1])
@@ -206,7 +204,7 @@ class TestMRecords(TestCase):
         # Set an element to mask .....................
         mbase = base.view(mrecarray).copy()
         mbase[-2] = masked
-        assert_equal(mbase._fieldmask.tolist(),
+        assert_equal(mbase._mask.tolist(),
                      np.array([(0,0,0),(1,1,1),(0,0,0),(1,1,1),(1,1,1)],
                               dtype=bool))
         # Used to be mask, now it's recordmask!
@@ -265,11 +263,11 @@ class TestMRecords(TestCase):
         mbase = base.view(mrecarray)
         mbase.harden_mask()
         self.failUnless(mbase._hardmask)
-        mbase._mask = nomask
+        mbase.mask = nomask
         assert_equal_records(mbase._mask, base._mask)
         mbase.soften_mask()
         self.failUnless(not mbase._hardmask)
-        mbase._mask = nomask
+        mbase.mask = nomask
         # So, the mask of a field is no longer set to nomask...
         assert_equal_records(mbase._mask,
                              ma.make_mask_none(base.shape,base.dtype))
@@ -286,7 +284,7 @@ class TestMRecords(TestCase):
         assert_equal(mrec_.dtype, mrec.dtype)
         assert_equal_records(mrec_._data, mrec._data)
         assert_equal(mrec_._mask, mrec._mask)
-        assert_equal_records(mrec_._fieldmask, mrec._fieldmask)
+        assert_equal_records(mrec_._mask, mrec._mask)
     #
     def test_filled(self):
         "Test filling the array"
@@ -338,6 +336,45 @@ class TestMRecords(TestCase):
         mult.filled(0)
         assert_equal(mult.filled(0),
                      np.array([(0,0,0),(1,1,1)], dtype=mult.dtype))
+
+
+class TestView(TestCase):
+    #
+    def setUp(self):
+        (a, b) = (np.arange(10), np.random.rand(10))
+        ndtype = [('a',np.float), ('b',np.float)]
+        arr = np.array(zip(a,b), dtype=ndtype)
+        rec = arr.view(np.recarray)
+        #
+        marr = ma.array(zip(a,b), dtype=ndtype, fill_value=(-9., -99.))
+        mrec = fromarrays([a,b], dtype=ndtype, fill_value=(-9., -99.))
+        mrec.mask[3] = (False, True)
+        self.data = (mrec, a, b, arr)
+    #
+    def test_view_by_itself(self):
+        (mrec, a, b, arr) = self.data
+        test = mrec.view()
+        self.failUnless(isinstance(test, MaskedRecords))
+        assert_equal_records(test, mrec)
+        assert_equal_records(test._mask, mrec._mask)
+    #
+    def test_view_simple_dtype(self):
+        (mrec, a, b, arr) = self.data
+        ntype = (np.float, 2)
+        test = mrec.view(ntype)
+        self.failUnless(isinstance(test, ma.MaskedArray))
+        assert_equal(test, np.array(zip(a,b), dtype=np.float))
+        self.failUnless(test[3,1] is ma.masked)
+    #
+    def test_view_flexible_type(self):
+        (mrec, a, b, arr) = self.data
+        alttype = [('A',np.float), ('B',np.float)]
+        test = mrec.view(alttype)
+        self.failUnless(isinstance(test, MaskedRecords))
+        assert_equal_records(test, arr.view(alttype))
+        self.failUnless(test['B'][3] is masked)
+        assert_equal(test.dtype, np.dtype(alttype))
+        self.failUnless(test._fill_value is None)
 
 
 ################################################################################
@@ -395,7 +432,7 @@ class TestMRecordsImport(TestCase):
         _mrec = fromrecords(mrec)
         assert_equal(_mrec.dtype, mrec.dtype)
         assert_equal_records(_mrec._data, mrec.filled())
-        assert_equal_records(_mrec._fieldmask, mrec._fieldmask)
+        assert_equal_records(_mrec._mask, mrec._mask)
 
     def test_fromrecords_wmask(self):
         "Tests construction from records w/ mask."
@@ -403,20 +440,20 @@ class TestMRecordsImport(TestCase):
         #
         _mrec = fromrecords(nrec.tolist(), dtype=ddtype, mask=[0,1,0,])
         assert_equal_records(_mrec._data, mrec._data)
-        assert_equal(_mrec._fieldmask.tolist(), [(0,0,0),(1,1,1),(0,0,0)])
+        assert_equal(_mrec._mask.tolist(), [(0,0,0),(1,1,1),(0,0,0)])
         #
         _mrec = fromrecords(nrec.tolist(), dtype=ddtype, mask=True)
         assert_equal_records(_mrec._data, mrec._data)
-        assert_equal(_mrec._fieldmask.tolist(), [(1,1,1),(1,1,1),(1,1,1)])
+        assert_equal(_mrec._mask.tolist(), [(1,1,1),(1,1,1),(1,1,1)])
         #
-        _mrec = fromrecords(nrec.tolist(), dtype=ddtype, mask=mrec._fieldmask)
+        _mrec = fromrecords(nrec.tolist(), dtype=ddtype, mask=mrec._mask)
         assert_equal_records(_mrec._data, mrec._data)
-        assert_equal(_mrec._fieldmask.tolist(), mrec._fieldmask.tolist())
+        assert_equal(_mrec._mask.tolist(), mrec._mask.tolist())
         #
         _mrec = fromrecords(nrec.tolist(), dtype=ddtype,
-                            mask=mrec._fieldmask.tolist())
+                            mask=mrec._mask.tolist())
         assert_equal_records(_mrec._data, mrec._data)
-        assert_equal(_mrec._fieldmask.tolist(), mrec._fieldmask.tolist())
+        assert_equal(_mrec._mask.tolist(), mrec._mask.tolist())
 
     def test_fromtextfile(self):
         "Tests reading from a text file."

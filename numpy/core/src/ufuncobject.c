@@ -3500,7 +3500,7 @@ fail:
 }
 
 static PyObject *
-ufunc_geterr(PyObject *dummy, PyObject *args)
+ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *thedict;
     PyObject *res;
@@ -3563,7 +3563,7 @@ ufunc_update_use_defaults(void)
 #endif
 
 static PyObject *
-ufunc_seterr(PyObject *dummy, PyObject *args)
+ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *thedict;
     int res;
@@ -3600,7 +3600,7 @@ static char
 doc_frompyfunc[] = "frompyfunc(func, nin, nout) take an arbitrary python function that takes nin objects as input and returns nout objects and return a universal function (ufunc).  This ufunc always returns PyObject arrays";
 
 static PyObject *
-ufunc_frompyfunc(PyObject *dummy, PyObject *args, PyObject *kwds) {
+ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
     /* Keywords are ignored for now */
 
     PyObject *function, *pyname=NULL;
@@ -4034,13 +4034,13 @@ ufunc_reduceat(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 
 
 static struct PyMethodDef ufunc_methods[] = {
-    {"reduce",  (PyCFunction)ufunc_reduce, METH_VARARGS | METH_KEYWORDS },
+    {"reduce",  (PyCFunction)ufunc_reduce, METH_VARARGS | METH_KEYWORDS, NULL },
     {"accumulate",  (PyCFunction)ufunc_accumulate,
-     METH_VARARGS | METH_KEYWORDS },
+     METH_VARARGS | METH_KEYWORDS, NULL },
     {"reduceat",  (PyCFunction)ufunc_reduceat,
-     METH_VARARGS | METH_KEYWORDS },
-    {"outer", (PyCFunction)ufunc_outer, METH_VARARGS | METH_KEYWORDS },
-    {NULL,          NULL}           /* sentinel */
+     METH_VARARGS | METH_KEYWORDS, NULL },
+    {"outer", (PyCFunction)ufunc_outer, METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
 
@@ -4193,15 +4193,15 @@ ufunc_get_identity(PyUFuncObject *self)
 /* static char *Ufunctype__doc__ = NULL; */
 
 static PyGetSetDef ufunc_getset[] = {
-    {"__doc__",  (getter)ufunc_get_doc,      NULL, "documentation string"},
-    {"nin",      (getter)ufunc_get_nin,      NULL, "number of inputs"},
-    {"nout",     (getter)ufunc_get_nout,     NULL, "number of outputs"},
-    {"nargs",    (getter)ufunc_get_nargs,    NULL, "number of arguments"},
-    {"ntypes",   (getter)ufunc_get_ntypes,   NULL, "number of types"},
-    {"types",    (getter)ufunc_get_types,    NULL, "return a list with types grouped input->output"},
-    {"__name__", (getter)ufunc_get_name,     NULL, "function name"},
-    {"identity", (getter)ufunc_get_identity, NULL, "identity value"},
-    {NULL, NULL, NULL, NULL},  /* Sentinel */
+    {"__doc__",  (getter)ufunc_get_doc,      NULL, "documentation string", NULL},
+    {"nin",      (getter)ufunc_get_nin,      NULL, "number of inputs", NULL},
+    {"nout",     (getter)ufunc_get_nout,     NULL, "number of outputs", NULL},
+    {"nargs",    (getter)ufunc_get_nargs,    NULL, "number of arguments", NULL},
+    {"ntypes",   (getter)ufunc_get_ntypes,   NULL, "number of types", NULL},
+    {"types",    (getter)ufunc_get_types,    NULL, "return a list with types grouped input->output", NULL},
+    {"__name__", (getter)ufunc_get_name,     NULL, "function name", NULL},
+    {"identity", (getter)ufunc_get_identity, NULL, "identity value", NULL},
+    {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
 static PyTypeObject PyUFunc_Type = {
@@ -4237,6 +4237,31 @@ static PyTypeObject PyUFunc_Type = {
     ufunc_methods,                 /* tp_methods */
     0,                             /* tp_members */
     ufunc_getset,                  /* tp_getset */
+    0,   /* tp_base */
+    0,   /* tp_dict */
+    0,   /* tp_descr_get */
+    0,   /* tp_descr_set */
+    0,   /* tp_dictoffset */
+    0,   /* tp_init */
+    0,   /* tp_alloc */
+    0,   /* tp_new */
+    0,   /* tp_free */
+    0,   /* tp_is_gc */
+    0,   /* tp_bases */
+    0,   /* tp_mro */
+    0,   /* tp_cache */
+    0,   /* tp_subclasses */
+    0,   /* tp_weaklist */
+    0,   /* tp_del */
+
+#ifdef COUNT_ALLOCS
+	/* these must be last and never explicitly initialized */
+    0, /* tp_allocs */
+    0, /* tp_frees */
+    0, /* tp_maxalloc */
+    0, /* tp_prev */
+    0, /* *tp_next */
+#endif
 };
 
 /* End of code for ufunc objects */

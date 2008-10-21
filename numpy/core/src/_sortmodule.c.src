@@ -54,7 +54,7 @@
    #lessequal=STDC_LE*14,NUMC_LE*3#
 **/
 static int
-@TYPE@_quicksort(@type@ *start, intp num, void *unused)
+@TYPE@_quicksort(@type@ *start, intp num, void * NPY_UNUSED(unused))
 {
     @type@ *pl = start;
     @type@ *pr = start + num - 1;
@@ -112,7 +112,7 @@ static int
 }
 
 static int
-@TYPE@_aquicksort(@type@ *v, intp* tosort, intp num, void *unused)
+@TYPE@_aquicksort(@type@ *v, intp* tosort, intp num, void *NPY_UNUSED(unused))
 {
     @type@ vp;
     intp *pl, *pr, SWAP_temp;
@@ -174,7 +174,7 @@ static int
 
 
 static int
-@TYPE@_heapsort(@type@ *start, intp n, void *unused)
+@TYPE@_heapsort(@type@ *start, intp n, void *NPY_UNUSED(unused))
 {
     @type@ tmp, *a;
     intp i,j,l;
@@ -220,7 +220,7 @@ static int
 }
 
 static int
-@TYPE@_aheapsort(@type@ *v, intp *tosort, intp n, void *unused)
+@TYPE@_aheapsort(@type@ *v, intp *tosort, intp n, void *NPY_UNUSED(unused))
 {
     intp *a, i,j,l, tmp;
     /* The arrays need to be offset by one for heapsort indexing */
@@ -306,7 +306,7 @@ static void
 }
 
 static int
-@TYPE@_mergesort(@type@ *start, intp num, void *unused)
+@TYPE@_mergesort(@type@ *start, intp num, void *NPY_UNUSED(unused))
 {
     @type@ *pl, *pr, *pw;
 
@@ -365,7 +365,7 @@ static void
 }
 
 static int
-@TYPE@_amergesort(@type@ *v, intp *tosort, intp num, void *unused)
+@TYPE@_amergesort(@type@ *v, intp *tosort, intp num, void *NPY_UNUSED(unused))
 {
     intp *pl, *pr, *pw;
 

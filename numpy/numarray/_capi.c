@@ -225,7 +225,7 @@ static double num_round(double x)
 ** should always be 0                                               *
 */
 
-static int int_dividebyzero_error(long value, long unused) {
+static int int_dividebyzero_error(long NPY_UNUSED(value), long NPY_UNUSED(unused)) {
     double dummy;
     dummy = 1./numarray_zero;
     if (dummy) /* to prevent optimizer from eliminating expression */
@@ -876,7 +876,7 @@ NumTypeFromPyValue(PyObject *self, PyObject *args) {
    cfunc and wrapper.
 */
 static PyObject *
-cfunc_call(PyObject *self, PyObject *argsTuple, PyObject *argsDict)
+cfunc_call(PyObject *self, PyObject *argsTuple, PyObject *NPY_UNUSED(argsDict))
 {
 	CfuncObject *me = (CfuncObject *) self;
 	switch(me->descr.type) {
@@ -2546,9 +2546,9 @@ static PyObject *
 NA_callStrideConvCFuncCore(
 	PyObject *self, int nshape, maybelong *shape,
 	PyObject *inbuffObj,  long inboffset, 
-	int ninbstrides, maybelong *inbstrides,
+	int NPY_UNUSED(ninbstrides), maybelong *inbstrides,
 	PyObject *outbuffObj, long outboffset, 
-	int noutbstrides, maybelong *outbstrides,
+	int NPY_UNUSED(noutbstrides), maybelong *outbstrides,
 	long nbytes)
 {
 	CfuncObject *me = (CfuncObject *) self;
@@ -2627,17 +2627,17 @@ NA_stridesFromShape(int nshape, maybelong *shape, maybelong bytestride,
 }
 
 static int
-NA_OperatorCheck(PyObject *op) {
+NA_OperatorCheck(PyObject *NPY_UNUSED(op)) {
         return 0;
 }
 
 static int
-NA_ConverterCheck(PyObject *op) {
+NA_ConverterCheck(PyObject *NPY_UNUSED(op)) {
         return 0;
 }
 
 static int
-NA_UfuncCheck(PyObject *op) {
+NA_UfuncCheck(PyObject *NPY_UNUSED(op)) {
         return 0;
 }
 
@@ -2647,8 +2647,8 @@ NA_CfuncCheck(PyObject *op) {
 }
 
 static int
-NA_getByteOffset(PyArrayObject *array, int nindices, maybelong *indices, 
-		 long *offset)
+NA_getByteOffset(PyArrayObject *NPY_UNUSED(array), int NPY_UNUSED(nindices),
+		 maybelong *NPY_UNUSED(indices), long *NPY_UNUSED(offset))
 {
         return 0;
 }
@@ -2742,8 +2742,9 @@ NA_NumarrayType(PyObject *seq)
 /* ignores bytestride */
 static PyArrayObject *
 NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
-		    PyObject *bufferObject, maybelong byteoffset, maybelong bytestride,
-		    int byteorder, int aligned, int writeable)
+		    PyObject *bufferObject, maybelong byteoffset, 
+		    maybelong NPY_UNUSED(bytestride), int byteorder, 
+		    int NPY_UNUSED(aligned), int NPY_UNUSED(writeable))
 {
 	PyArrayObject *self = NULL;
 	PyArray_Descr *dtype;
@@ -2822,17 +2823,17 @@ NA_NDArrayCheckExact(PyObject *op) {
 }
 
 static int
-NA_OperatorCheckExact(PyObject *op) {
+NA_OperatorCheckExact(PyObject *NPY_UNUSED(op)) {
         return 0;
 }
 
 static int
-NA_ConverterCheckExact(PyObject *op) {
+NA_ConverterCheckExact(PyObject *NPY_UNUSED(op)) {
         return 0;
 }
 
 static int
-NA_UfuncCheckExact(PyObject *op) {
+NA_UfuncCheckExact(PyObject *NPY_UNUSED(op)) {
         return 0;
 }
 
@@ -2854,7 +2855,7 @@ NA_getArrayData(PyArrayObject *obj)
 
 /* Byteswap is not a flag of the array --- it is implicit in the data-type */
 static void
-NA_updateByteswap(PyArrayObject *self)
+NA_updateByteswap(PyArrayObject *NPY_UNUSED(self))
 {
         return;
 }

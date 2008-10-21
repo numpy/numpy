@@ -9,7 +9,7 @@ static PyObject *ErrorObject;
 static char fftpack_cfftf__doc__[] = "";
 
 PyObject *
-fftpack_cfftf(PyObject *self, PyObject *args)
+fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data;
@@ -60,7 +60,7 @@ fail:
 static char fftpack_cfftb__doc__[] = "";
 
 PyObject *
-fftpack_cfftb(PyObject *self, PyObject *args)
+fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data;
@@ -111,7 +111,7 @@ fail:
 static char fftpack_cffti__doc__[] ="";
 
 static PyObject *
-fftpack_cffti(PyObject *self, PyObject *args)
+fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyArrayObject *op;
     npy_intp dim;
@@ -138,7 +138,7 @@ fftpack_cffti(PyObject *self, PyObject *args)
 static char fftpack_rfftf__doc__[] ="";
 
 PyObject *
-fftpack_rfftf(PyObject *self, PyObject *args)
+fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data, *ret;
@@ -204,7 +204,7 @@ static char fftpack_rfftb__doc__[] ="";
 
 
 PyObject *
-fftpack_rfftb(PyObject *self, PyObject *args)
+fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     PyObject *op1, *op2;
     PyArrayObject *data, *ret;
@@ -265,7 +265,7 @@ fail:
 static char fftpack_rffti__doc__[] ="";
 
 static PyObject *
-fftpack_rffti(PyObject *self, PyObject *args)
+fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
 {
   PyArrayObject *op;
   npy_intp dim;

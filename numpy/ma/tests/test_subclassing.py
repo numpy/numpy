@@ -154,24 +154,4 @@ class TestSubclassing(TestCase):
 if __name__ == '__main__':
     run_module_suite()
 
-    if 0:
-        x = array(arange(5), mask=[0]+[1]*4)
-        my = masked_array(subarray(x))
-        ym = msubarray(x)
-        #
-        z = (my+1)
-        self.failUnless(isinstance(z,MaskedArray))
-        self.failUnless(not isinstance(z, MSubArray))
-        self.failUnless(isinstance(z._data, SubArray))
-        assert_equal(z._data.info, {})
-        #
-        z = (ym+1)
-        self.failUnless(isinstance(z, MaskedArray))
-        self.failUnless(isinstance(z, MSubArray))
-        self.failUnless(isinstance(z._data, SubArray))
-        self.failUnless(z._data.info['added'] > 0)
-        #
-        ym._set_mask([1,0,0,0,1])
-        assert_equal(ym._mask, [1,0,0,0,1])
-        ym._series._set_mask([0,0,0,0,1])
-        assert_equal(ym._mask, [0,0,0,0,1])
+

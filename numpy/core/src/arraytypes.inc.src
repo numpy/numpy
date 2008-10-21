@@ -668,7 +668,7 @@ fail:
 */
 static void
 @from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n,
-               PyArrayObject *aip, PyArrayObject *aop)
+               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
         *op++ = (@totyp@)*ip;
@@ -683,7 +683,7 @@ static void
 */
 static void
 @from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n,
-               PyArrayObject *aip, PyArrayObject *aop)
+               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
         *op++ = (Bool)(*ip++ != FALSE);
@@ -697,7 +697,7 @@ static void
 */
 static void
 @from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n,
-               PyArrayObject *aip, PyArrayObject *aop)
+               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
         *op = (Bool)(((*ip).real != FALSE) || ((*ip).imag != FALSE));
@@ -712,7 +712,7 @@ static void
 */
 static void
 BOOL_to_@to@(register Bool *ip, register @totyp@ *op, register intp n,
-             PyArrayObject *aip, PyArrayObject *aop)
+             PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
         *op++ = (@totyp@)(*ip++ != FALSE);
@@ -729,7 +729,7 @@ BOOL_to_@to@(register Bool *ip, register @totyp@ *op, register intp n,
 */
 static void
 @from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n,
-               PyArrayObject *aip, PyArrayObject *aop)
+               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
         *op++ = (@totyp@)*ip++;
@@ -748,7 +748,7 @@ static void
 */
 static void
 @from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n,
-               PyArrayObject *aip, PyArrayObject *aop)
+               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     n <<= 1;
     while (n--) {
@@ -766,7 +766,7 @@ static void
 */
 static void
 @from@_to_OBJECT(@fromtyp@ *ip, PyObject **op, intp n, PyArrayObject *aip,
-                 PyArrayObject *aop)
+                 PyArrayObject *NPY_UNUSED(aop))
 {
     register intp i;
     int skip=@skip@;
@@ -777,6 +777,26 @@ static void
 }
 /**end repeat**/
 
+#define _NPY_UNUSEDBOOL  NPY_UNUSED
+#define _NPY_UNUSEDBYTE  NPY_UNUSED
+#define _NPY_UNUSEDUBYTE  NPY_UNUSED
+#define _NPY_UNUSEDSHORT  NPY_UNUSED
+#define _NPY_UNUSEDUSHORT  NPY_UNUSED
+#define _NPY_UNUSEDINT  NPY_UNUSED
+#define _NPY_UNUSEDUINT  NPY_UNUSED
+#define _NPY_UNUSEDLONG  NPY_UNUSED
+#define _NPY_UNUSEDULONG  NPY_UNUSED
+#define _NPY_UNUSEDLONGLONG  NPY_UNUSED
+#define _NPY_UNUSEDULONGLONG  NPY_UNUSED
+#define _NPY_UNUSEDFLOAT  NPY_UNUSED
+#define _NPY_UNUSEDDOUBLE  NPY_UNUSED
+#define _NPY_UNUSEDLONGDOUBLE  NPY_UNUSED
+#define _NPY_UNUSEDCFLOAT  NPY_UNUSED
+#define _NPY_UNUSEDCDOUBLE  NPY_UNUSED
+#define _NPY_UNUSEDCLONGDOUBLE  NPY_UNUSED
+#define _NPY_UNUSEDSTRING 
+#define _NPY_UNUSEDVOID 
+#define _NPY_UNUSEDUNICODE
 /**begin repeat
 
 #to=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE, STRING, UNICODE, VOID#
@@ -784,7 +804,7 @@ static void
 #skip= 1*17, aip->descr->elsize*3#
 */
 static void
-OBJECT_to_@to@(PyObject **ip, @totyp@ *op, intp n, PyArrayObject *aip,
+OBJECT_to_@to@(PyObject **ip, @totyp@ *op, intp n, PyArrayObject *_NPY_UNUSED@to@(aip),
                  PyArrayObject *aop)
 {
     register intp i;
@@ -883,7 +903,7 @@ static void
 #format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT,"f","lf","Lf"#
 */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, void *ignore, PyArray_Descr *ignore2)
+@fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
 {
     return fscanf(fp, "%"@format@, ip);
 }
@@ -897,7 +917,7 @@ static int
 #format="d","u"#
 */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, void *ignore, PyArray_Descr *ignore2)
+@fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
 {
     @btype@ temp;
     int num;
@@ -908,7 +928,7 @@ static int
 /**end repeat**/
 
 static int
-BOOL_scan (FILE *fp, Bool *ip, void *ignore, PyArray_Descr *ignore2)
+BOOL_scan (FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
 {
     int temp;
     int num;
@@ -932,7 +952,7 @@ BOOL_scan (FILE *fp, Bool *ip, void *ignore, PyArray_Descr *ignore2)
 #btype=(long,ulong)*5#
 */
 static int
-@fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *ignore)
+@fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
 {
     @btype@ result;
 
@@ -948,7 +968,7 @@ static int
 */
 #if (PY_VERSION_HEX >= 0x02040000) || defined(PyOS_ascii_strtod)
 static int
-@fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *ignore)
+@fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
 {
     double result;
 
@@ -980,7 +1000,7 @@ static int
 */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride,
-                   intp n, int swap, void *arr)
+                   intp n, int swap, void *NPY_UNUSED(arr))
 {
     if (src != NULL) {
         if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
@@ -997,7 +1017,7 @@ static void
 }
 
 static void
-@fname@_copyswap (void *dst, void *src, int swap, void *arr)
+@fname@_copyswap (void *dst, void *src, int swap, void *NPY_UNUSED(arr))
 {
 
     if (src != NULL) /* copy first if needed */
@@ -1067,7 +1087,7 @@ static void
 */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride, intp n,
-                   int swap, void *arr)
+                   int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
     if (src != NULL) {
         if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
@@ -1082,7 +1102,7 @@ static void
 }
 
 static void
-@fname@_copyswap (void *dst, void *src, int swap, void *arr)
+@fname@_copyswap (void *dst, void *src, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
     if (src != NULL) /* copy first if needed */
         memcpy(dst, src, sizeof(@type@));
@@ -1101,7 +1121,7 @@ static void
 */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride, intp n,
-                   int swap, void *arr)
+                   int swap, void *NPY_UNUSED(arr))
 {
 
     if (src != NULL) { /* copy first if needed */
@@ -1123,7 +1143,7 @@ static void
 }
 
 static void
-@fname@_copyswap (void *dst, void *src, int swap, void *arr)
+@fname@_copyswap (void *dst, void *src, int swap, void *NPY_UNUSED(arr))
 {
     if (src != NULL) /* copy first if needed */
         memcpy(dst, src, sizeof(@type@));
@@ -1225,7 +1245,7 @@ static void
 #define __ALIGNED(obj, sz) ((((size_t) obj) % (sz))==0)
 static void
 OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
-                  register intp n, int swap, void *arr)
+                  register intp n, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
     register intp i;
     if (src != NULL) {
@@ -1258,7 +1278,7 @@ OBJECT_copyswapn (PyObject **dst, intp dstride, PyObject **src, intp sstride,
 }
 
 static void
-OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
+OBJECT_copyswap(PyObject **dst, PyObject **src, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
 
     if (src != NULL) {
@@ -1279,7 +1299,7 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int swap, void *arr)
 /* ignore swap */
 static void
 STRING_copyswapn (char *dst, intp dstride, char *src, intp sstride,
-                  intp n, int swap, PyArrayObject *arr)
+                  intp n, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
     if (src != NULL && arr != NULL) {
         int itemsize = arr->descr->elsize;
@@ -1422,7 +1442,7 @@ UNICODE_copyswapn (char *dst, intp dstride, char *src, intp sstride,
 
 
 static void
-STRING_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
+STRING_copyswap(char *dst, char *src, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
     if (src != NULL && arr != NULL) {
         memcpy(dst, src, arr->descr->elsize);
@@ -1633,7 +1653,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 /****************** compare **********************************/
 
 static int
-BOOL_compare(Bool *ip1, Bool *ip2, PyArrayObject *ap)
+BOOL_compare(Bool *ip1, Bool *ip2, PyArrayObject *NPY_UNUSED(ap))
 {
     return (*ip1 ? (*ip2 ? 0 : 1) : (*ip2 ? -1 : 0));
 }
@@ -1644,7 +1664,7 @@ BOOL_compare(Bool *ip1, Bool *ip2, PyArrayObject *ap)
 */
 
 static int
-@fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *ap)
+@fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *NPY_UNUSED(ap))
 {
     return *ip1 < *ip2 ? -1 : *ip1 == *ip2 ? 0 : 1;
 }
@@ -1658,7 +1678,7 @@ static int
 */
 
 static int
-@fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *ap)
+@fname@_compare (@type@ *ip1, @type@ *ip2, PyArrayObject *NPY_UNUSED(ap))
 {
     if (*ip1 == *ip2) {
         return ip1[1]<ip2[1] ? -1 : (ip1[1] == ip2[1] ? 0 : 1);
@@ -1670,7 +1690,7 @@ static int
  /**end repeat**/
 
 static int
-OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *ap)
+OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
 {
     if ((*ip1 == NULL) || (*ip2 == NULL)) {
         if (ip1 == ip2) return 1;
@@ -1795,7 +1815,7 @@ finish:
 */
 
 static int
-@fname@_argmax(@type@ *ip, intp n, intp *max_ind, PyArrayObject *aip)
+@fname@_argmax(@type@ *ip, intp n, intp *max_ind, PyArrayObject *NPY_UNUSED(aip))
 {
     register intp i;
     @type@ mp=*ip;
@@ -1813,7 +1833,7 @@ static int
 /**end repeat**/
 
 static int
-OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *aip)
+OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *NPY_UNUSED(aip))
 {
     register intp i;
     PyObject *mp=ip[0]; *max_ind=0;
@@ -1865,7 +1885,7 @@ static int
 
 static void
 BOOL_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
-         void *ignore)
+         void *NPY_UNUSED(ignore))
 {
     register Bool tmp=FALSE;
     register intp i;
@@ -1885,7 +1905,7 @@ BOOL_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 */
 static void
 @name@_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
-           void *ignore)
+           void *NPY_UNUSED(ignore))
 {
     register @out@ tmp=(@out@)0;
     register intp i;
@@ -1903,7 +1923,7 @@ static void
 #type= float, double, longdouble#
 */
 static void @name@_dot(char *ip1, intp is1, char *ip2, intp is2,
-                       char *op, intp n, void *ignore)
+                       char *op, intp n, void *NPY_UNUSED(ignore))
 {
     @type@ tmpr=(@type@)0.0, tmpi=(@type@)0.0;
     intp i;
@@ -1920,7 +1940,7 @@ static void @name@_dot(char *ip1, intp is1, char *ip2, intp is2,
 
 static void
 OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
-           void *ignore)
+           void *NPY_UNUSED(ignore))
 {
     intp i;
     PyObject *tmp1, *tmp2, *tmp=NULL;
@@ -1955,7 +1975,7 @@ OBJECT_dot(char *ip1, intp is1, char *ip2, intp is2, char *op, intp n,
 
 /* this requires buffer to be filled with objects or NULL */
 static void
-OBJECT_fill(PyObject **buffer, intp length, void *ignored)
+OBJECT_fill(PyObject **buffer, intp length, void *NPY_UNUSED(ignored))
 {
     intp i;
     PyObject *start = buffer[0];
@@ -1983,7 +2003,7 @@ finish:
 #typ=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
 */
 static void
-@NAME@_fill(@typ@ *buffer, intp length, void *ignored)
+@NAME@_fill(@typ@ *buffer, intp length, void *NPY_UNUSED(ignored))
 {
     register intp i;
     @typ@ start = buffer[0];
@@ -2000,7 +2020,7 @@ static void
 #typ=cfloat,cdouble,clongdouble#
 */
 static void
-@NAME@_fill(@typ@ *buffer, intp length, void *ignored)
+@NAME@_fill(@typ@ *buffer, intp length, void *NPY_UNUSED(ignore))
 {
     register intp i;
     @typ@ start;
@@ -2023,7 +2043,7 @@ static void
 
 /* this requires buffer to be filled with objects or NULL */
 static void
-OBJECT_fillwithscalar(PyObject **buffer, intp length, PyObject **value, void *ignored)
+OBJECT_fillwithscalar(PyObject **buffer, intp length, PyObject **value, void *NPY_UNUSED(ignored))
 {
     intp i;
     PyObject *val = *value;
@@ -2038,7 +2058,7 @@ OBJECT_fillwithscalar(PyObject **buffer, intp length, PyObject **value, void *ig
 #typ=Bool,byte,ubyte#
 */
 static void
-@NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *ignored)
+@NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *NPY_UNUSED(ignored))
 {
     memset(buffer, *value, length);
 }
@@ -2049,7 +2069,7 @@ static void
 #typ=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble,cfloat,cdouble,clongdouble#
 */
 static void
-@NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *ignored)
+@NAME@_fillwithscalar(@typ@ *buffer, intp length, @typ@ *value, void *NPY_UNUSED(ignored))
 {
     register intp i;
     @typ@ val = *value;

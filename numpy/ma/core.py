@@ -749,11 +749,20 @@ def make_mask_descr(ndtype):
     Each field is set to a bool.
 
     """
+    # Make sure we do have a dtype
+    if not isinstance(ndtype, np.dtype):
+        ndtype = np.dtype(ndtype)
+    # Do we have some name fields ?
     if ndtype.names:
         mdescr = [list(_) for _ in ndtype.descr]
         for m in mdescr:
             m[1] = '|b1'
-        return [tuple(_) for _ in mdescr]
+        return np.dtype([tuple(_) for _ in mdescr])
+    # Is this some kind of composite a la (np.float,2)
+    elif ndtype.subdtype:
+        mdescr = list(ndtype.subdtype)
+        mdescr[0] = np.dtype(bool)
+        return np.dtype(tuple(mdescr))
     else:
         return MaskType
 
@@ -1434,20 +1443,33 @@ class MaskedArray(ndarray):
         return result
     #.............................................
     def view(self, dtype=None, type=None):
-        if dtype is not None:
+        if dtype is None:
             if type is None:
-                args = (dtype,)
+                output = ndarray.view(self)
             else:
-                args = (dtype, type)
+                output = ndarray.view(self, type)
         elif type is None:
-            args = ()
+            try:
+                if issubclass(dtype, ndarray):
+                    output = ndarray.view(self, dtype)
+                    dtype = None
+                else:
+                    output = ndarray.view(self, dtype)
+            except TypeError:
+                output = ndarray.view(self, dtype)
         else:
-            args = (type,)
-        output = ndarray.view(self, *args)
+            output = ndarray.view(self, dtype, type)
+        # Should we update the mask ?
         if (getattr(output,'_mask', nomask) is not nomask):
-            mdtype = make_mask_descr(output.dtype)
+            if dtype is None:
+                dtype = output.dtype
+            mdtype = make_mask_descr(dtype)
+            
             output._mask = self._mask.view(mdtype, ndarray)
             output._mask.shape = output.shape
+        # Make sure to reset the _fill_value if needed
+        if getattr(output, '_fill_value', None):
+            output._fill_value = None
         return output
     view.__doc__ = ndarray.view.__doc__
     #.............................................
@@ -1996,7 +2018,7 @@ masked_%(name)s(data = %(data)s,
     #
     def __rmul__(self, other):
         "Multiply other by self, and return a new masked array."
-        return multiply(self, other)
+        return multiply(other, self)
     #
     def __div__(self, other):
         "Divide other into self, and return a new masked array."

@@ -8,18 +8,13 @@ import re
 import operator
 from nosetester import import_nose
 
-__all__ = ['assert_', 'assert_equal', 'assert_almost_equal',
-           'assert_approx_equal', 'assert_array_equal', 'assert_array_less',
-           'assert_string_equal', 'assert_array_almost_equal', 'assert_raises',
-           'build_err_msg', 'decorate_methods', 'jiffies', 'memusage',
-           'print_assert_equal', 'raises', 'rand', 'rundocs', 'runstring',
-           'verbose']
+__all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
+           'assert_array_equal', 'assert_array_less', 'assert_string_equal',
+           'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
+           'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
+           'raises', 'rand', 'rundocs', 'runstring', 'verbose']
 
 verbose = 0
-
-def assert_(test, message=""):
-    if not test:
-        raise AssertionError(message)
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
