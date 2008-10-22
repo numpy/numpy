@@ -1440,17 +1440,13 @@ static void
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (@OP1@(in1r, in1i, in2r, in2i)) {
+        if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in1r) || isnan(in1i)) {
             ((@type@ *)op)[0] = in1r;
             ((@type@ *)op)[1] = in1i;
         }
-        else if (@OP2@(in1r, in1i, in2r, in2i)) {
+        else {
             ((@type@ *)op)[0] = in2r;
             ((@type@ *)op)[1] = in2i;
-        }
-        else {
-            ((@type@ *)op)[0] = NAN;
-            ((@type@ *)op)[1] = NAN;
         }
     }
 }
@@ -1469,14 +1465,8 @@ static void
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
         if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
-            if (isnan(in1r) || isnan(in1i)) {
-                ((@type@ *)op)[0] = NAN;
-                ((@type@ *)op)[1] = NAN;
-            }
-            else {
-                ((@type@ *)op)[0] = in1r;
-                ((@type@ *)op)[1] = in1i;
-            }
+            ((@type@ *)op)[0] = in1r;
+            ((@type@ *)op)[1] = in1i;
         }
         else {
             ((@type@ *)op)[0] = in2r;
@@ -1515,6 +1505,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
 }
 /**end repeat**/
 
+static void
 OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     PyObject *zero = PyInt_FromLong(0);
