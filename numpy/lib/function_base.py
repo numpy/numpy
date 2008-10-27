@@ -1128,6 +1128,17 @@ def interp(x, xp, fp, left=None, right=None):
     >>> np.interp(3.14, xp, fp, right=UNDEF)
     -99.0
 
+    Plot an interpolant to the sine function:
+
+    >>> x = np.linspace(0, 2*np.pi, 10)
+    >>> y = np.sin(x)
+    >>> xvals = np.linspace(0, 2*np.pi, 50)
+    >>> yinterp = np.interp(xvals, x, y)
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(x, y, 'o')
+    >>> plt.plot(xvals, yinterp, '-x')
+    >>> plt.show()
+
     """
     if isinstance(x, (float, int, number)):
         return compiled_interp([x], xp, fp, left, right).item()

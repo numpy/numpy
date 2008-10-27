@@ -687,20 +687,18 @@ try:
 except ImportError:
     def alterdot():
         """
-        Change `dot`, `vdot`, and `innerproduct` to use accelerated BLAS
-        functions.
+        Change `dot`, `vdot`, and `innerproduct` to use accelerated BLAS functions.
 
-        When numpy is built with an accelerated BLAS like ATLAS, the above
-        functions will be replaced to make use of the faster implementations.
-        The faster implementations only affect float32, float64, complex64, and
-        complex128 arrays. Furthermore, only matrix-matrix, matrix-vector, and
-        vector-vector products are accelerated. Products of arrays with larger
-        dimensionalities will not be accelerated since the BLAS API only
-        includes these.
+        Typically, as a user of Numpy, you do not explicitly call this function. If
+        Numpy is built with an accelerated BLAS, this function is automatically
+        called when Numpy is imported.
 
-        Typically, the user will never have to call this function. If numpy was
-        built with an accelerated BLAS, this function will be called when numpy
-        is imported.
+        When Numpy is built with an accelerated BLAS like ATLAS, these functions
+        are replaced to make use of the faster implementations.  The faster
+        implementations only affect float32, float64, complex64, and complex128
+        arrays. Furthermore, the BLAS API only includes matrix-matrix,
+        matrix-vector, and vector-vector products. Products of arrays with larger
+        dimensionalities use the built in functions and are not accelerated.
 
         See Also
         --------

@@ -277,7 +277,7 @@ def polyint(p, m=1, k=None):
 
 def polyder(p, m=1):
     """
-    Return the derivative of order m of a polynomial.
+    Return the derivative of the specified order of a polynomial.
 
     Parameters
     ----------
@@ -295,6 +295,7 @@ def polyder(p, m=1):
     See Also
     --------
     polyint : Anti-derivative of a polynomial.
+    poly1d : Class for one-dimensional polynomials.
 
     Examples
     --------
