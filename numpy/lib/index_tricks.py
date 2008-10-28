@@ -20,8 +20,6 @@ def unravel_index(x,dims):
     """
     Convert a flat index into an index tuple for an array of given shape.
 
-    e.g. for a 2x2 array, unravel_index(2,(2,2)) returns (1,0).
-
     Parameters
     ----------
     x : int
@@ -31,25 +29,26 @@ def unravel_index(x,dims):
 
     Notes
     -----
-    Since x.flat[p] == x.max() it may be easier to use flattened indexing
-    than to re-map the index to a tuple.
+    In the Examples section, since ``arr.flat[x] == arr.max()`` it may be
+    easier to use flattened indexing than to re-map the index to a tuple.
 
     Examples
     --------
-    >>> x = np.ones((5,4))
-    >>> x
+    >>> arr = np.ones((5,4))
+    >>> arr
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11],
            [12, 13, 14, 15],
            [16, 17, 18, 19]])
-    >>> p = x.argmax()
-    >>> p
+    >>> x = arr.argmax()
+    >>> x
     19
-    >>> idx = np.unravel_index(p, x.shape)
+    >>> dims = arr.shape
+    >>> idx = np.unravel_index(x, dims)
     >>> idx
     (4, 3)
-    >>> x[idx] == x.max()
+    >>> arr[idx] == arr.max()
     True
 
     """

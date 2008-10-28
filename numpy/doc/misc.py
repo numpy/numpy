@@ -1,9 +1,223 @@
 """
-
 =============
 Miscellaneous
 =============
 
-Placeholder for other tips.
+IEEE 754 Floating Point Special Values:
+-----------------------------------------------
+
+Special values defined in numpy: nan, inf,
+
+NaNs can be used as a poor-man's mask (if you don't care what the
+original value was)
+
+Note: cannot use equality to test NaNs. E.g.: ::
+
+ >>> np.where(myarr == np.nan)
+ >>> nan == nan  # is always False! Use special numpy functions instead.
+
+ >>> np.nan == np.nan
+ False
+ >>> myarr = np.array([1., 0., np.nan, 3.])
+ >>> myarr[myarr == np.nan] = 0. # doesn't work
+ >>> myarr
+ array([  1.,   0.,  NaN,   3.])
+ >>> myarr[np.isnan(myarr)] = 0. # use this instead find
+ >>> myarr
+ array([ 1.,  0.,  0.,  3.])
+
+Other related special value functions: ::
+
+ isinf():    True if value is inf
+ isfinite(): True if not nan or inf
+ nan_to_num(): Map nan to 0, inf to max float, -inf to min float
+
+The following corresponds to the usual functions except that nans are excluded from
+the results: ::
+
+ nansum()
+ nanmax()
+ nanmin()
+ nanargmax()
+ nanargmin()
+
+ >>> x = np.arange(10.)
+ >>> x[3] = np.nan
+ >>> x.sum()
+ nan
+ >>> np.nansum(x)
+ 42.0
+
+How numpy handles numerical exceptions
+
+Default is to "warn"
+But this can be changed, and it can be set individually for different kinds
+of exceptions. The different behaviors are: ::
+
+ 'ignore' : ignore completely
+ 'warn'   : print a warning (once only)
+ 'raise'  : raise an exception
+ 'call'   : call a user-supplied function (set using seterrcall())
+
+These behaviors can be set for all kinds of errors or specific ones: ::
+
+ all:       apply to all numeric exceptions
+ invalid:   when NaNs are generated
+ divide:    divide by zero (for integers as well!)
+ overflow:  floating point overflows
+ underflow: floating point underflows
+
+Note that integer divide-by-zero is handled by the same machinery.
+These behaviors are set on a per-thead basis.
+
+Examples:
+------------
+
+::
+
+ >>> oldsettings = np.seterr(all='warn')
+ >>> np.zeros(5,dtype=np.float32)/0.
+ invalid value encountered in divide
+ >>> j = np.seterr(under='ignore')
+ >>> np.array([1.e-100])**10
+ >>> j = np.seterr(invalid='raise')
+ >>> np.sqrt(np.array([-1.]))
+ FloatingPointError: invalid value encountered in sqrt
+ >>> def errorhandler(errstr, errflag):
+ ...      print "saw stupid error!"
+ >>> np.seterrcall(errorhandler)
+ >>> j = np.seterr(all='call')
+ >>> np.zeros(5, dtype=np.int32)/0
+ FloatingPointError: invalid value encountered in divide
+ saw stupid error!
+ >>> j = np.seterr(**oldsettings) # restore previous
+                                  # error-handling settings
+
+Interfacing to C:
+-----------------
+Only a survey the choices. Little detail on how each works.
+
+1) Bare metal, wrap your own C-code manually.
+
+ - Plusses:
+
+   - Efficient
+   - No dependencies on other tools
+
+ - Minuses:
+
+   - Lots of learning overhead:
+
+     - need to learn basics of Python C API
+     - need to learn basics of numpy C API
+     - need to learn how to handle reference counting and love it.
+
+   - Reference counting often difficult to get right.
+
+     - getting it wrong leads to memory leaks, and worse, segfaults
+
+   - API will change for Python 3.0!
+
+2) pyrex
+
+ - Plusses:
+
+   - avoid learning C API's
+   - no dealing with reference counting
+   - can code in psuedo python and generate C code
+   - can also interface to existing C code
+   - should shield you from changes to Python C api
+   - become pretty popular within Python community
+
+ - Minuses:
+
+   - Can write code in non-standard form which may become obsolete
+   - Not as flexible as manual wrapping
+   - Maintainers not easily adaptable to new features
+
+Thus:
+
+3) cython - fork of pyrex to allow needed features for SAGE
+
+  - being considered as the standard scipy/numpy wrapping tool
+  - fast indexing support for arrays
+
+4) ctypes
+
+ - Plusses:
+
+   - part of Python standard library
+   - good for interfacing to existing sharable libraries, particularly
+     Windows DLLs
+   - avoids API/reference counting issues
+   - good numpy support: arrays have all these in their ctypes
+     attribute: ::
+
+       a.ctypes.data              a.ctypes.get_strides
+       a.ctypes.data_as           a.ctypes.shape
+       a.ctypes.get_as_parameter  a.ctypes.shape_as
+       a.ctypes.get_data          a.ctypes.strides
+       a.ctypes.get_shape         a.ctypes.strides_as
+
+ - Minuses:
+
+   - can't use for writing code to be turned into C extensions, only a wrapper tool.
+
+5) SWIG (automatic wrapper generator)
+
+ - Plusses:
+
+   - around a long time
+   - multiple scripting language support
+   - C++ support
+   - Good for wrapping large (many functions) existing C libraries
+
+ - Minuses:
+
+   - generates lots of code between Python and the C code
+
+     - can cause performance problems that are nearly impossible to optimize out
+
+   - interface files can be hard to write
+   - doesn't necessarily avoid reference counting issues or needing to know API's
+
+7) Weave
+
+ - Plusses:
+
+   - Phenomenal tool
+   - can turn many numpy expressions into C code
+   - dynamic compiling and loading of generated C code
+   - can embed pure C code in Python module and have weave extract, generate interfaces
+     and compile, etc.
+
+ - Minuses:
+
+   - Future uncertain--lacks a champion
+
+8) Psyco
+
+ - Plusses:
+
+   - Turns pure python into efficient machine code through jit-like optimizations
+   - very fast when it optimizes well
+
+ - Minuses:
+
+   - Only on intel (windows?)
+   - Doesn't do much for numpy?
+
+Interfacing to Fortran:
+-----------------------
+Fortran: Clear choice is f2py. (Pyfort is an older alternative, but not supported
+any longer)
+
+Interfacing to C++:
+-------------------
+1) CXX
+2) Boost.python
+3) SWIG
+4) Sage has used cython to wrap C++ (not pretty, but it can be done)
+5) SIP (used mainly in PyQT)
 
 """

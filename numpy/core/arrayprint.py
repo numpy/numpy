@@ -42,23 +42,23 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     Parameters
     ----------
-    precision : int
+    precision : int, optional
         Number of digits of precision for floating point output (default 8).
-    threshold : int
+    threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr (default 1000).
-    edgeitems : int
+    edgeitems : int, optional
         Number of array items in summary at beginning and end of
         each dimension (default 3).
-    linewidth : int
+    linewidth : int, optional
         The number of characters per line for the purpose of inserting
         line breaks (default 75).
-    suppress : bool
+    suppress : bool, optional
         Whether or not suppress printing of small floating point values
         using scientific notation (default False).
-    nanstr : string
+    nanstr : string, optional
         String representation of floating point not-a-number (default nan).
-    infstr : string
+    infstr : string, optional
         String representation of floating point infinity (default inf).
 
     Examples
@@ -242,7 +242,8 @@ def array2string(a, max_line_width = None, precision = None,
         The maximum number of columns the string should span. Newline
         characters splits the string appropriately after array elements.
     precision : int, optional
-        Floating point precision.
+        Floating point precision. Default is the current printing
+        precision (usually 8), which can be altered using `set_printoptions`.
     suppress_small : bool, optional
         Represent very small numbers as zero.
     separator : string, optional
@@ -259,7 +260,7 @@ def array2string(a, max_line_width = None, precision = None,
 
     See Also
     --------
-    array_str, array_repr
+    array_str, array_repr, set_printoptions
 
     Examples
     --------

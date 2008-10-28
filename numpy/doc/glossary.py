@@ -1,7 +1,7 @@
 """
-=================
+========
 Glossary
-=================
+========
 
 along an axis
     Axes are defined for arrays with more than one dimension.  A
@@ -23,7 +23,7 @@ along an axis
       >>> x.sum(axis=1)
       array([ 6, 22, 38])
 
-array or ndarray
+array
     A homogeneous container of numerical elements.  Each element in the
     array occupies a fixed amount of memory (hence homogeneous), and
     can be a numerical element of a single type (such as float, int
@@ -60,6 +60,9 @@ attribute
       >>> x.shape
       (3,)
 
+BLAS
+    `Basic Linear Algebra Subprograms <http://en.wikipedia.org/wiki/BLAS>`_
+
 broadcast
     NumPy can do operations on arrays whose shapes are mismatched::
 
@@ -78,6 +81,24 @@ broadcast
              [5, 6]])
 
     See `doc.broadcasting`_ for more information.
+
+C order
+    See `row-major`
+
+column-major
+    A way to represent items in a N-dimensional array in the 1-dimensional
+    computer memory. In column-major order, the leftmost index "varies the
+    fastest": for example the array::
+
+         [[1, 2, 3],
+          [4, 5, 6]]
+
+    is represented in the column-major order as::
+
+        [1, 4, 2, 5, 3, 6]
+
+    Column-major order is also known as the Fortran order, as the Fortran
+    programming language uses it.
 
 decorator
     An operator that transforms a function.  For example, a ``log``
@@ -127,6 +148,12 @@ dictionary
 
     For more information on dictionaries, read the
     `Python tutorial <http://docs.python.org/tut>`_.
+
+Fortran order
+    See `column-major`
+
+flattened
+    Collapsed to a one-dimensional array. See `ndarray.flatten`_ for details.
 
 immutable
     An object that cannot be modified after execution is called
@@ -250,9 +277,27 @@ method
       >>> x.repeat(2)
       array([1, 1, 2, 2, 3, 3])
 
+ndarray
+    See *array*.
+
 reference
     If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
     ``a`` and ``b`` are different names for the same Python object.
+
+row-major
+    A way to represent items in a N-dimensional array in the 1-dimensional
+    computer memory. In row-major order, the rightmost index "varies
+    the fastest": for example the array::
+
+         [[1, 2, 3],
+          [4, 5, 6]]
+
+    is represented in the row-major order as::
+
+        [1, 2, 3, 4, 5, 6]
+
+    Row-major order is also known as the C order, as the C programming
+    language uses it. New Numpy arrays are by default in row-major order.
 
 self
     Often seen in method signatures, ``self`` refers to the instance

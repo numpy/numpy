@@ -65,11 +65,25 @@ dtype([('surname', '|S25'), ('age', '|u1')])
 
 add_newdoc('numpy.core', 'dtype',
     """
-    Create a data type.
+    dtype(obj, align=False, copy=False)
+
+    Create a data type object.
 
     A numpy array is homogeneous, and contains elements described by a
-    dtype.  A dtype can be constructed from different combinations of
-    fundamental numeric types, as illustrated below.
+    dtype object. A dtype object can be constructed from different
+    combinations of fundamental numeric types.
+
+    Parameters
+    ----------
+    obj
+        Object to be converted to a data type object.
+    align : bool, optional
+        Add padding to the fields to match what a C compiler would output
+        for a similar C-struct. Can be ``True`` only if `obj` is a dictionary
+        or a comma-separated string.
+    copy : bool, optional
+        Make a new copy of the data-type object. If ``False``, the result
+        may just be a reference to a built-in data-type object.
 
     Examples
     --------
@@ -228,7 +242,7 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Parameters
     ----------
-    object : array-like
+    object : array_like
         An array, any object exposing the array interface, an
         object whose __array__ method returns an array, or any
         (nested) sequence.
@@ -752,15 +766,16 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     Values are generated within the half-open interval ``[start, stop)``
     (in other words, the interval including `start` but excluding `stop`).
-    For integer arguments, the function is equivalent to ``range``
-    (but returns an array).
+    For integer arguments the function is equivalent to the Python built-in
+    `range <http://docs.python.org/lib/built-in-funcs.html>`_ function,
+    but returns a ndarray rather than a list.
 
     Parameters
     ----------
     start : number, optional
         Start of interval.  The interval includes this value.  The default
         start value is 0.
-    end : number
+    stop : number
         End of interval.  The interval does not include this value.
     step : number, optional
         Spacing between values.  For any output `out`, this is the distance
@@ -782,7 +797,6 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     See Also
     --------
-    range : The Python equivalent for integers
     linspace : Evenly spaced numbers with careful handling of endpoints.
     ogrid: Arrays of evenly spaced numbers in N-dimensions
     mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions
@@ -913,7 +927,7 @@ add_newdoc('numpy.core.multiarray', 'where',
 
     See Also
     --------
-    nonzero
+    nonzero, choose
 
     Notes
     -----
@@ -964,18 +978,19 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
     keys : (k,N) array or tuple containing k (N,)-shaped sequences
         The `k` different "columns" to be sorted.  The last column is the
         primary sort column.
-    axis : integer, optional
+    axis : int, optional
         Axis to be indirectly sorted.  By default, sort over the last axis.
 
     Returns
     -------
-    indices : (N,) integer array
+    indices : (N,) ndarray of ints
         Array of indices that sort the keys along the specified axis.
 
     See Also
     --------
     argsort : Indirect sort.
-    sort : In-place sort.
+    ndarray.sort : In-place sort.
+    sort : Return a sorted copy of an array.
 
     Examples
     --------
@@ -1255,7 +1270,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dtype',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('imag',
     """
-    Imaginary part of the array.
+    The imaginary part of the array.
 
     Examples
     --------
@@ -1285,7 +1300,52 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemsize',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
-    """Special object providing array flags.
+    """
+    Information about the memory layout of the array.
+
+    Attributes
+    ----------
+    C_CONTIGUOUS (C)
+        The data is in a single, C-style contiguous segment.
+    F_CONTIGUOUS (F)
+        The data is in a single, Fortran-style contiguous segment.
+    OWNDATA (O)
+        The array owns the memory it uses or borrows it from another object.
+    WRITEABLE (W)
+        The data area can be written to.
+    ALIGNED (A)
+        The data and strides are aligned appropriately for the hardware.
+    UPDATEIFCOPY (U)
+        This array is a copy of some other array. When this array is
+        deallocated, the base array will be updated with the contents of
+        this array.
+
+    FNC
+        F_CONTIGUOUS and not C_CONTIGUOUS.
+    FORC
+        F_CONTIGUOUS or C_CONTIGUOUS (one-segment test).
+    BEHAVED (B)
+        ALIGNED and WRITEABLE.
+    CARRAY (CA)
+        BEHAVED and C_CONTIGUOUS.
+    FARRAY (FA)
+        BEHAVED and F_CONTIGUOUS and not C_CONTIGUOUS.
+
+    Notes
+    -----
+    The `flags` object can be also accessed dictionary-like, and using
+    lowercased attribute names. Short flag names are only supported in
+    dictionary access.
+
+    Only the UPDATEIFCOPY, WRITEABLE, and ALIGNED flags can be changed by
+    the user, via assigning to ``flags['FLAGNAME']`` or `ndarray.setflags`.
+    The array flags cannot be set arbitrarily:
+
+    - UPDATEIFCOPY can only be set ``False``.
+    - ALIGNED can only be set ``True`` if the data is truly aligned.
+    - WRITEABLE can only be set ``True`` if the array owns its own memory
+      or the ultimate owner of the memory exposes a writeable buffer
+      interface or is a string.
 
     """))
 
@@ -1340,7 +1400,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ndim',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('real',
     """
-    Real part of the array.
+    The real part of the array.
 
     Examples
     --------
@@ -1500,7 +1560,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('all',
     """
     a.all(axis=None, out=None)
 
-    Check if all of the elements of `a` are true.
+    Returns True if all elements evaluate to True.
 
     Refer to `numpy.all` for full documentation.
 
@@ -1542,7 +1602,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmax',
 
     Returns
     -------
-    index_array : {ndarray, int}
+    index_array : ndarray
         An array of indices or single index value, or a reference to `out`
         if it was specified.
 
@@ -1609,10 +1669,41 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
-    """a.byteswap(False) -> View or copy. Swap the bytes in the array.
+    """
+    a.byteswap(inplace)
 
-    Swap the bytes in the array.  Return the byteswapped array.  If the first
-    argument is True, byteswap in-place and return a reference to self.
+    Swap the bytes of the array elements
+
+    Toggle between low-endian and big-endian data representation by
+    returning a byteswapped array, optionally swapped in-place.
+
+    Parameters
+    ----------
+    inplace: bool, optional
+        If ``True``, swap bytes in-place, default is ``False``.
+
+    Returns
+    -------
+    out: ndarray
+        The byteswapped array. If `inplace` is ``True``, this is
+        a view to self.
+
+    Examples
+    --------
+    >>> A = np.array([1, 256, 8755], dtype=np.int16)
+    >>> map(hex, A)
+    ['0x1', '0x100', '0x2233']
+    >>> A.byteswap(True)
+    array([  256,     1, 13090], dtype=int16)
+    >>> map(hex, A)
+    ['0x100', '0x1', '0x3322']
+
+    Arrays of strings are not swapped
+
+    >>> A = np.array(['ceg', 'fac'])
+    >>> A.byteswap()
+    array(['ceg', 'fac'],
+          dtype='|S3')
 
     """))
 
@@ -1680,7 +1771,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
     """
-    a.copy([order])
+    a.copy(order='C')
 
     Return a copy of the array.
 
@@ -1794,10 +1885,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
         Input array
     value : scalar
         All elements of `a` will be assigned this value.
-
-    Returns
-    -------
-    None
 
     Examples
     --------
@@ -1917,7 +2004,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nonzero',
     """
     a.nonzero()
 
-    Return the indices of the elements of a which are not zero.
+    Return the indices of the elements that are non-zero.
 
     Refer to `numpy.nonzero` for full documentation.
 
@@ -1977,10 +2064,12 @@ add_newdoc('numpy.core.multiarray', 'putmask',
     """
     putmask(a, mask, values)
 
-    Sets a.flat[n] = values[n] for each n where mask.flat[n] is true.
+    Changes elements of an array based on conditional and input values.
+
+    Sets `a`.flat[n] = `values`\\[n] for each n where `mask`.flat[n] is true.
 
     If `values` is not the same size as `a` and `mask` then it will repeat.
-    This gives behavior different from a[mask] = values.
+    This gives behavior different from `a[mask] = values`.
 
     Parameters
     ----------
@@ -1993,7 +2082,7 @@ add_newdoc('numpy.core.multiarray', 'putmask',
 
     See Also
     --------
-    put, take
+    place, put, take
 
     Examples
     --------
@@ -2050,7 +2139,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
     """
     a.reshape(shape, order='C')
 
-    Returns an array containing the data of a, but with a new shape.
+    Returns an array containing the same data with a new shape.
 
     Refer to `numpy.reshape` for full documentation.
 
@@ -2167,41 +2256,47 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
 
     Parameters
     ----------
-    axis : integer
-        Axis to be sorted along. None indicates that the flattened array
-        should be used. Default is -1.
-    kind : string
-        Sorting algorithm to use. Possible values are 'quicksort',
-        'mergesort', or 'heapsort'. Default is 'quicksort'.
-    order : list type or None
-        When a is an array with fields defined, this argument specifies
+    axis : int, optional
+        Axis along which to sort. Default is -1, which means sort along the
+        last axis.
+    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        Sorting algorithm. Default is 'quicksort'.
+    order : list, optional
+        When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  Not all fields need be
         specified.
 
     See Also
     --------
-    argsort : indirect sort
-    lexsort : indirect stable sort on multiple keys
-    searchsorted : find keys in sorted array
+    numpy.sort : Return a sorted copy of an array.
+    argsort : Indirect sort.
+    lexsort : Indirect stable sort on multiple keys.
+    searchsorted : Find elements in sorted array.
 
     Notes
     -----
-    The various sorts are characterized by average speed, worst case
-    performance, need for work space, and whether they are stable. A stable
-    sort keeps items with the same key in the same relative order. The three
-    available algorithms have the following properties:
+    See ``sort`` for notes on the different sorting algorithms.
 
-    =========== ======= ============= ============ =======
-       kind      speed   worst case    work space  stable
-    =========== ======= ============= ============ =======
-    'quicksort'    1     O(n^2)            0          no
-    'mergesort'    2     O(n*log(n))      ~n/2        yes
-    'heapsort'     3     O(n*log(n))       0          no
-    =========== ======= ============= ============ =======
+    Examples
+    --------
+    >>> a = np.array([[1,4], [3,1]])
+    >>> a.sort(axis=1)
+    >>> a
+    array([[1, 4],
+           [1, 3]])
+    >>> a.sort(axis=0)
+    >>> a
+    array([[1, 3],
+           [1, 4]])
 
-    All the sort algorithms make temporary copies of the data when the sort is
-    not along the last axis. Consequently, sorts along the last axis are faster
-    and use less space than sorts along other axis.
+    Use the `order` keyword to specify a field to use when sorting a
+    structured array:
+
+    >>> a = np.array([('a', 2), ('c', 1)], dtype=[('x', 'S1'), ('y', int)])
+    >>> a.sort(order='y')
+    >>> a
+    array([('c', 1), ('a', 2)],
+          dtype=[('x', '|S1'), ('y', '<i4')])
 
     """))
 
@@ -2282,9 +2377,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('take',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
-    """a.tofile(fid, sep="", format="%s")
+    """
+    a.tofile(fid, sep="", format="%s")
 
-    Write the data to a file.
+    Write array to a file as text or binary.
 
     Data is always written in 'C' order, independently of the order of `a`.
     The data produced by this method can be recovered by using the function
@@ -2316,19 +2412,23 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """
     a.tolist()
 
-    Return the array as a list or nested lists.
+    Return the array as a possibly nested list.
+
+    Return a copy of the array data as a hierarchical Python list.
+    Data items are converted to the nearest compatible Python type.
 
     Parameters
     ----------
-    a : ndarray
-        Input array.
+    none
 
     Returns
     -------
     y : list
-        Copy the data portion of the array to a hierarchical Python list and
-        return that list. Data items are converted to the nearest compatible
-        Python type.
+        The possibly nested list of array elements.
+
+    Notes
+    -----
+    The array may be recreated, ``a = np.array(a.tolist())``.
 
     Examples
     --------
@@ -2336,6 +2436,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     >>> a.tolist()
     [1, 2]
     >>> a = np.array([[1, 2], [3, 4]])
+    >>> list(a)
+    [array([1, 2]), array([3, 4])]
     >>> a.tolist()
     [[1, 2], [3, 4]]
 
@@ -2465,8 +2567,9 @@ add_newdoc('numpy.core.umath','geterrobj',
 
     """)
 
-add_newdoc('numpy.core.umath','seterrobj',
-    """seterrobj()
+add_newdoc('numpy.core.umath', 'seterrobj',
+    """
+    seterrobj(errobj)
 
     Used internally by `seterr`.
 
@@ -2481,8 +2584,9 @@ add_newdoc('numpy.core.umath','seterrobj',
 
     """)
 
-add_newdoc("numpy.core","ufunc",
-    """Functions that operate element by element on whole arrays.
+add_newdoc('numpy.core', 'ufunc',
+    """
+    Functions that operate element by element on whole arrays.
 
     Unary ufuncs:
     =============
@@ -2492,13 +2596,14 @@ add_newdoc("numpy.core","ufunc",
 
     Parameters
     ----------
-    X : array-like
-    out : array-like
+    X : array_like
+        Input array
+    out : array_like
         An array to store the output. Must be the same shape as X.
 
     Returns
     -------
-    r : array-like
+    r : array_like
         r will have the same shape as X; if out is provided, r will be
         equal to out.
 
@@ -2515,8 +2620,10 @@ add_newdoc("numpy.core","ufunc",
 
     Parameters
     ----------
-    X : array-like
-    Y : array-like
+    X : array_like
+        First input array
+    Y : array_like
+        Second input array
     out : array-like
         An array to store the output. Must be the same shape as the
         output would have.
@@ -2547,21 +2654,21 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
     Parameters
     ----------
-    array : array-like
+    array : array_like
         The array to act on.
-    axis : integer
+    axis : integer, optional
         The axis along which to apply the reduction.
-    dtype : {data-type-code, None}
+    dtype : data-type-code, optional
         The type used to represent the intermediate results. Defaults
         to the data type of the output array if this is provided, or
         the data type of the input array if no output array is provided.
-    out : {array-like, None}
+    out : array_like, optional
         A location into which the result is stored. If not provided a
         freshly-allocated array is returned.
 
     Returns
     -------
-    r : {array, scalar}
+    r : ndarray
         The reduced values. If out was supplied, r is equal to out.
 
     Examples
@@ -2690,14 +2797,14 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
     Parameters
     ----------
-    A : array-like
+    A : array_like
         First term
-    B : array-like
+    B : array_like
         Second term
 
     Returns
     -------
-    r : array
+    r : ndarray
         Output array
 
     Examples

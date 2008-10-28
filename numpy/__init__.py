@@ -30,13 +30,18 @@ Use the built-in ``help`` function to view a function's docstring::
 
   >>> help(np.sort)
 
-For some objects, ``np.info(obj)`` may provide additional help.
+For some objects, ``np.info(obj)`` may provide additional help.  This is
+particularly true if you see the line "Help on ufunc object:" at the top
+of the help() page.  Ufuncs are implemented in C, not Python, for speed.
+The native Python help() does not know how to view their help, but our
+np.info() function does.
 
-To search for objects of which the documentation contains keywords, do::
+To search for documents containing a keyword, do::
 
   >>> np.lookfor('keyword')
 
-Topical documentation is available under the ``doc`` sub-module::
+General-purpose documents like a glossary and help on the basic concepts
+of numpy are available under the ``doc`` sub-module::
 
   >>> from numpy import doc
   >>> help(doc)
@@ -87,10 +92,10 @@ the source code).
 
 Copies vs. in-place operation
 -----------------------------
-Most of the methods in `numpy` return a copy of the array argument (e.g.,
-`sort`).  In-place versions of these methods are often available as
-array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.  Exceptions to
-this rule are documented.
+Most of the functions in `numpy` return a copy of the array argument
+(e.g., `sort`).  In-place versions of these functions are often
+available as array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.
+Exceptions to this rule are documented.
 
 """
 

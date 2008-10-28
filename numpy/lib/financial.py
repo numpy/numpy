@@ -30,26 +30,36 @@ def fv(rate, nper, pmt, pv, when='end'):
 
     Parameters
     ----------
-    rate : array-like
-        Rate of interest (per period)
-    nper : array-like
+    rate : scalar or array_like of shape(M, )
+        Rate of interest as decimal (not per cent) per period
+    nper : scalar or array_like of shape(M, )
         Number of compounding periods
-    pmt : array-like
+    pmt : scalar or array_like of shape(M, )
         Payment
-    pv : array-like
+    pv : scalar or array_like of shape(M, )
         Present value
-    when : array-like
-        When payments are due ('begin' (1) or 'end' (0))
+    when : {{'begin', 1}, {'end', 0}}, {string, int}, optional
+        When payments are due ('begin' (1) or 'end' (0)).
+        Defaults to {'end', 0}.
+
+    Returns
+    -------
+    out : ndarray
+        Future values.  If all input is scalar, returns a scalar float.  If
+        any input is array_like, returns future values for each input element.
+        If multiple inputs are array_like, they all must have the same shape.
 
     Notes
     -----
     The future value is computed by solving the equation::
 
-      fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) == 0
+     fv +
+     pv*(1+rate)**nper +
+     pmt*(1 + rate*when)/rate*((1 + rate)**nper - 1) == 0
 
     or, when ``rate == 0``::
 
-      fv + pv + pmt * nper == 0
+     fv + pv + pmt * nper == 0
 
     Examples
     --------
@@ -64,6 +74,13 @@ def fv(rate, nper, pmt, pv, when='end'):
     available today).  Thus, saving $100 a month at 5% annual interest leads
     to $15,692.93 available to spend in 10 years.
 
+    If any input is array_like, returns an array of equal shape.  Let's
+    compare different interest rates from the example above.
+
+    >>> a = np.array((0.05, 0.06, 0.07))/12
+    >>> np.fv(a, 10*12, -100, -100)
+    array([ 15692.92889434,  16569.87435405,  17509.44688102])
+
     """
     when = _convert_when(when)
     rate, nper, pmt, pv, when = map(np.asarray, [rate, nper, pmt, pv, when])
@@ -75,26 +92,36 @@ def fv(rate, nper, pmt, pv, when='end'):
 
 def pmt(rate, nper, pv, fv=0, when='end'):
     """
-    Compute the payment.
+    Compute the payment against loan principal plus interest.
 
     Parameters
     ----------
-    rate : array-like
+    rate : array_like
         Rate of interest (per period)
-    nper : array-like
+    nper : array_like
         Number of compounding periods
-    pv : array-like
+    pv : array_like
         Present value
-    fv : array-like
+    fv : array_like
         Future value
-    when : array-like
+    when : {{'begin', 1}, {'end', 0}}, {string, int}
         When payments are due ('begin' (1) or 'end' (0))
+
+    Returns
+    -------
+    out : ndarray
+        Payment against loan plus interest.  If all input is scalar, returns a
+        scalar float.  If any input is array_like, returns payment for each
+        input element. If multiple inputs are array_like, they all must have
+        the same shape.
 
     Notes
     -----
     The payment ``pmt`` is computed by solving the equation::
 
-      fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) == 0
+     fv +
+     pv*(1 + rate)**nper +
+     pmt*(1 + rate*when)/rate*((1 + rate)**nper - 1) == 0
 
     or, when ``rate == 0``::
 
@@ -132,9 +159,9 @@ def nper(rate, pmt, pv, fv=0, when='end'):
         Payment
     pv : array_like
         Present value
-    fv : array_like
+    fv : array_like, optional
         Future value
-    when : array_like
+    when : {{'begin', 1}, {'end', 0}}, {string, int}, optional
         When payments are due ('begin' (1) or 'end' (0))
 
     Notes
@@ -157,8 +184,8 @@ def nper(rate, pmt, pv, fv=0, when='end'):
 
     So, over 64 months would be required to pay off the loan.
 
-    The same analysis could be done with several different interest rates and/or
-    payments and/or total amounts to produce an entire table.
+    The same analysis could be done with several different interest rates
+    and/or payments and/or total amounts to produce an entire table.
 
     >>> np.nper(*(np.ogrid[0.06/12:0.071/12:0.01/12, -200:-99:100, 6000:7001:1000]))
     array([[[ 32.58497782,  38.57048452],
@@ -182,7 +209,42 @@ def nper(rate, pmt, pv, fv=0, when='end'):
 
 def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     """
-    Not implemented.
+    Not implemented. Compute the payment portion for loan interest.
+
+    Parameters
+    ----------
+    rate : scalar or array_like of shape(M, )
+        Rate of interest as decimal (not per cent) per period
+    per : scalar or array_like of shape(M, )
+        Interest paid against the loan changes during the life or the loan.
+        The `per` is the payment period to calculate the interest amount.
+    nper : scalar or array_like of shape(M, )
+        Number of compounding periods
+    pv : scalar or array_like of shape(M, )
+        Present value
+    fv : scalar or array_like of shape(M, ), optional
+        Future value
+    when : {{'begin', 1}, {'end', 0}}, {string, int}, optional
+        When payments are due ('begin' (1) or 'end' (0)).
+        Defaults to {'end', 0}.
+
+    Returns
+    -------
+    out : ndarray
+        Interest portion of payment.  If all input is scalar, returns a scalar
+        float.  If any input is array_like, returns interest payment for each
+        input element. If multiple inputs are array_like, they all must have
+        the same shape.
+
+    See Also
+    --------
+    ppmt, pmt, pv
+
+    Notes
+    -----
+    The total payment is made up of payment against principal plus interest.
+
+    ``pmt = ppmt + ipmt``
 
     """
     total = pmt(rate, nper, pv, fv, when)
@@ -190,6 +252,30 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     raise NotImplementedError
 
 def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
+    """
+    Not implemented. Compute the payment against loan principal.
+
+    Parameters
+    ----------
+    rate : array_like
+        Rate of interest (per period)
+    per : array_like, int
+        Amount paid against the loan changes.  The `per` is the period of
+        interest.
+    nper : array_like
+        Number of compounding periods
+    pv : array_like
+        Present value
+    fv : array_like, optional
+        Future value
+    when : {{'begin', 1}, {'end', 0}}, {string, int}
+        When payments are due ('begin' (1) or 'end' (0))
+
+    See Also
+    --------
+    pmt, pv, ipmt
+
+    """
     total = pmt(rate, nper, pv, fv, when)
     return total - ipmt(rate, per, nper, pv, fv, when)
 
@@ -199,22 +285,29 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
 
     Parameters
     ----------
-    rate : array-like
+    rate : array_like
         Rate of interest (per period)
-    nper : array-like
+    nper : array_like
         Number of compounding periods
-    pmt : array-like
+    pmt : array_like
         Payment
-    fv : array-like
+    fv : array_like, optional
         Future value
-    when : array-like
+    when : {{'begin', 1}, {'end', 0}}, {string, int}, optional
         When payments are due ('begin' (1) or 'end' (0))
+
+    Returns
+    -------
+    out : ndarray, float
+        Present value of a series of payments or investments.
 
     Notes
     -----
     The present value ``pv`` is computed by solving the equation::
 
-     fv + pv*(1+rate)**nper + pmt*(1+rate*when)/rate * ((1+rate)**nper - 1) = 0
+     fv +
+     pv*(1 + rate)**nper +
+     pmt*(1 + rate*when)/rate*((1 + rate)**nper - 1) = 0
 
     or, when ``rate = 0``::
 
@@ -258,7 +351,7 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
         Present value
     fv : array_like
         Future value
-    when : array_like, optional
+    when : {{'begin', 1}, {'end', 0}}, {string, int}, optional
         When payments are due ('begin' (1) or 'end' (0))
     guess : float, optional
         Starting guess for solving the rate of interest
@@ -296,11 +389,27 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
         return rn
 
 def irr(values):
-    """Internal Rate of Return
+    """
+    Return the Internal Rate of Return (IRR).
 
-    This is the rate of return that gives a net present value of 0.0
+    This is the rate of return that gives a net present value of 0.0.
 
-    npv(irr(values), values) == 0.0
+    Parameters
+    ----------
+    values : array_like, shape(N,)
+        Input cash flows per time period.  At least the first value would be
+        negative to represent the investment in the project.
+
+    Returns
+    -------
+    out : float
+        Internal Rate of Return for periodic input values.
+
+    Examples
+    --------
+    >>> np.irr([-100, 39, 59, 55, 20])
+    0.2809484211599611
+
     """
     res = np.roots(values[::-1])
     # Find the root(s) between 0 and 1
@@ -314,25 +423,51 @@ def irr(values):
     return rate
 
 def npv(rate, values):
-    """Net Present Value
+    """
+    Returns the NPV (Net Present Value) of a cash flow series.
 
-    sum ( values_k / (1+rate)**k, k = 1..n)
+    Parameters
+    ----------
+    rate : scalar
+        The discount rate.
+    values : array_like, shape(M, )
+        The values of the time series of cash flows.  Must be the same
+        increment as the `rate`.
+
+    Returns
+    -------
+    out : float
+        The NPV of the input cash flow series `values` at the discount `rate`.
+
+    Notes
+    -----
+    Returns the result of:
+
+    .. math :: \\sum_{t=1}^M{\\frac{values_t}{(1+rate)^{t}}}
+
     """
     values = np.asarray(values)
     return (values / (1+rate)**np.arange(1,len(values)+1)).sum(axis=0)
 
 def mirr(values, finance_rate, reinvest_rate):
-    """Modified internal rate of return
+    """
+    Modified internal rate of return.
 
     Parameters
     ----------
-    values:
+    values : array_like
         Cash flows (must contain at least one positive and one negative value)
         or nan is returned.
-    finance_rate :
+    finance_rate : scalar
         Interest rate paid on the cash flows
-    reinvest_rate :
+    reinvest_rate : scalar
         Interest rate received on the cash flows upon reinvestment
+
+    Returns
+    -------
+    out : float
+        Modified internal rate of return
+
     """
 
     values = np.asarray(values)

@@ -22,6 +22,8 @@ _convert_to_float = {
 
 class finfo(object):
     """
+    finfo(dtype)
+
     Machine limits for floating point types.
 
     Attributes
@@ -170,6 +172,8 @@ nexp  =%(nexp)6s   min=       -max
 
 class iinfo:
     """
+    iinfo(type)
+
     Machine limits for integer types.
 
     Attributes

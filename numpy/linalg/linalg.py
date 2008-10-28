@@ -1137,7 +1137,7 @@ def det(a):
 
     Parameters
     ----------
-    a : array-like, shape (M, M)
+    a : array_like, shape (M, M)
         Input array.
 
     Returns

@@ -532,7 +532,7 @@ cdef class RandomState:
 
     Parameters
     ----------
-    seed : {None, int, array-like}
+    seed : array_like, int, optional
         Random seed initializing the PRNG.
         Can be an integer, an array (or other sequence) of integers of
         any length, or ``None``.
@@ -1160,7 +1160,70 @@ cdef class RandomState:
         """
         gamma(shape, scale=1.0, size=None)
 
-        Gamma distribution.
+        Draw samples from a Gamma distribution.
+
+        Samples are drawn from a Gamma distribution with specified parameters,
+        `shape` (sometimes designated "k") and `scale` (sometimes designated
+        "theta"), where both parameters are > 0.
+
+        Parameters
+        ----------
+        shape : scalar > 0
+            The shape of the gamma distribution.
+        scale : scalar > 0, optional
+            The scale of the gamma distribution.  Default is equal to 1.
+        size : shape_tuple, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray, float
+            Returns one sample unless `size` parameter is specified.
+
+        See Also
+        --------
+        scipy.stats.distributions.gamma : probability density function,
+            distribution or cumulative density function, etc.
+
+        Notes
+        -----
+        The probability density for the Gamma distribution is
+
+        .. math:: p(x) = x^{k-1}\\frac{e^{-x/\\theta}}{\\theta^k\\Gamma(k)},
+
+        where :math:`k` is the shape and :math:`\\theta` the scale,
+        and :math:`\\Gamma` is the Gamma function.
+
+        The Gamma distribution is often used to model the times to failure of
+        electronic components, and arises naturally in processes for which the
+        waiting times between Poisson distributed events are relevant.
+
+        References
+        ----------
+        .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
+               Wolfram Web Resource.
+               http://mathworld.wolfram.com/GammaDistribution.html
+        .. [2] Wikipedia, "Gamma-distribution",
+               http://en.wikipedia.org/wiki/Gamma-distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> shape, scale = 2., 2. # mean and dispersion
+        >>> s = np.random.gamma(shape, scale, 1000)
+
+        Display the histogram of the samples, along with
+        the probability density function:
+
+        >>> import matplotlib.pyplot as plt
+        >>> import scipy.special as sps
+        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> y = bins**(shape-1)*((exp(-bins/scale))/\\
+            (sps.gamma(shape)*scale**shape))
+        >>> plt.plot(bins, y, linewidth=2, color='r')
+        >>> plt.show()
 
         """
         cdef ndarray oshape, oscale
@@ -1188,7 +1251,81 @@ cdef class RandomState:
         """
         f(dfnum, dfden, size=None)
 
-        F distribution.
+        Draw samples from a F distribution.
+
+        Samples are drawn from an F distribution with specified parameters,
+        `dfnum` (degrees of freedom in numerator) and `dfden` (degrees of freedom
+        in denominator), where both parameters should be greater than zero.
+
+        The random variate of the F distribution (also known as the
+        Fisher distribution) is a continuous probability distribution
+        that arises in ANOVA tests, and is the ratio of two chi-square
+        variates.
+
+        Parameters
+        ----------
+        dfnum : float
+            Degrees of freedom in numerator. Should be greater than zero.
+        dfden : float
+            Degrees of freedom in denominator. Should be greater than zero.
+        size : {tuple, int}, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``,
+            then ``m * n * k`` samples are drawn. By default only one sample
+            is returned.
+
+        Returns
+        -------
+        samples : {ndarray, scalar}
+            Samples from the Fisher distribution.
+
+        See Also
+        --------
+        scipy.stats.distributions.f : probability density function,
+            distribution or cumulative density function, etc.
+
+        Notes
+        -----
+
+        The F statistic is used to compare in-group variances to between-group
+        variances. Calculating the distribution depends on the sampling, and
+        so it is a function of the respective degrees of freedom in the
+        problem.  The variable `dfnum` is the number of samples minus one, the
+        between-groups degrees of freedom, while `dfden` is the within-groups
+        degrees of freedom, the sum of the number of samples in each group
+        minus the number of groups.
+
+        References
+        ----------
+        .. [1] Glantz, Stanton A. "Primer of Biostatistics.", McGraw-Hill,
+               Fifth Edition, 2002.
+        .. [2] Wikipedia, "F-distribution",
+               http://en.wikipedia.org/wiki/F-distribution
+
+        Examples
+        --------
+        An example from Glantz[1], pp 47-40.
+        Two groups, children of diabetics (25 people) and children from people
+        without diabetes (25 controls). Fasting blood glucose was measured,
+        case group had a mean value of 86.1, controls had a mean value of
+        82.2. Standard deviations were 2.09 and 2.49 respectively. Are these
+        data consistent with the null hypothesis that the parents diabetic
+        status does not affect their children's blood glucose levels?
+        Calculating the F statistic from the data gives a value of 36.01.
+
+        Draw samples from the distribution:
+
+        >>> dfnum = 1. # between group degrees of freedom
+        >>> dfden = 48. # within groups degrees of freedom
+        >>> s = np.random.f(dfnum, dfden, 1000)
+
+        The lower bound for the top 1% of the samples is :
+
+        >>> sort(s)[-10]
+        7.61988120985
+
+        So there is about a 1% chance that the F statistic will exceed 7.62,
+        the measured value is 36, so the null hypothesis is rejected at the 1%
+        level.
 
         """
         cdef ndarray odfnum, odfden
@@ -1831,8 +1968,8 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, 30, normed=True)
-        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)*
-        ...          np.exp( -np.exp( -(bins - mu) /beta) ),
+        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
+        ...          * np.exp( -np.exp( -(bins - mu) /beta) ),
         ...          linewidth=2, color='r')
         >>> plt.show()
 
@@ -1848,11 +1985,11 @@ cdef class RandomState:
         >>> count, bins, ignored = plt.hist(maxima, 30, normed=True)
         >>> beta = np.std(maxima)*np.pi/np.sqrt(6)
         >>> mu = np.mean(maxima) - 0.57721*beta
-        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)*
-        ...          np.exp( -np.exp( -(bins - mu) /beta) ),
+        >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
+        ...          * np.exp(-np.exp(-(bins - mu)/beta)),
         ...          linewidth=2, color='r')
-        >>> plt.plot(bins, 1/(beta * np.sqrt(2 * np.pi)) *
-        ...          np.exp( - (bins - mu)**2 / (2 * beta**2) ),
+        >>> plt.plot(bins, 1/(beta * np.sqrt(2 * np.pi))
+        ...          * np.exp(-(bins - mu)**2 / (2 * beta**2)),
         ...          linewidth=2, color='g')
         >>> plt.show()
 
@@ -1878,7 +2015,71 @@ cdef class RandomState:
         """
         logistic(loc=0.0, scale=1.0, size=None)
 
-        Logistic distribution.
+        Draw samples from a Logistic distribution.
+
+        Samples are drawn from a Logistic distribution with specified
+        parameters, loc (location or mean, also median), and scale (>0).
+
+        Parameters
+        ----------
+        loc : float
+
+        scale : float > 0.
+
+        size : {tuple, int}
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : {ndarray, scalar}
+                  where the values are all integers in  [0, n].
+
+        See Also
+        --------
+        scipy.stats.distributions.logistic : probability density function,
+            distribution or cumulative density function, etc.
+
+        Notes
+        -----
+        The probability density for the Logistic distribution is
+
+        .. math:: P(x) = P(x) = \\frac{e^{-(x-\\mu)/s}}{s(1+e^{-(x-\\mu)/s})^2},
+
+        where :math:`\\mu` = location and :math:`s` = scale.
+
+        The Logistic distribution is used in Extreme Value problems where it
+        can act as a mixture of Gumbel distributions, in Epidemiology, and by
+        the World Chess Federation (FIDE) where it is used in the Elo ranking
+        system, assuming the performance of each player is a logistically
+        distributed random variable.
+
+        References
+        ----------
+        .. [1] Reiss, R.-D. and Thomas M. (2001), Statistical Analysis of Extreme
+               Values, from Insurance, Finance, Hydrology and Other Fields,
+               Birkhauser Verlag, Basel, pp 132-133.
+        .. [2] Weisstein, Eric W. "Logistic Distribution." From
+               MathWorld--A Wolfram Web Resource.
+               http://mathworld.wolfram.com/LogisticDistribution.html
+        .. [3] Wikipedia, "Logistic-distribution",
+               http://en.wikipedia.org/wiki/Logistic-distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> loc, scale = 10, 1
+        >>> s = np.random.logistic(loc, scale, 10000)
+        >>> count, bins, ignored = plt.hist(s, bins=50)
+
+        #   plot against distribution
+
+        >>> def logist(x, loc, scale):
+        ...     return exp((loc-x)/scale)/(scale*(1+exp((loc-x)/scale))**2)
+        >>> plt.plot(bins, logist(bins, loc, scale)*count.max()/\\
+        ... logist(bins, loc, scale).max())
+        >>> plt.show()
 
         """
         cdef ndarray oloc, oscale
@@ -2126,7 +2327,81 @@ cdef class RandomState:
         """
         binomial(n, p, size=None)
 
-        Binomial distribution of n trials and p probability of success.
+        Draw samples from a binomial distribution.
+
+        Samples are drawn from a Binomial distribution with specified
+        parameters, n trials and p probability of success where
+        n an integer > 0 and p is in the interval [0,1]. (n may be
+        input as a float, but it is truncated to an integer in use)
+
+        Parameters
+        ----------
+        n : float (but truncated to an integer)
+                parameter, > 0.
+        p : float
+                parameter, >= 0 and <=1.
+        size : {tuple, int}
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : {ndarray, scalar}
+                  where the values are all integers in  [0, n].
+
+        See Also
+        --------
+        scipy.stats.distributions.binom : probability density function,
+            distribution or cumulative density function, etc.
+
+        Notes
+        -----
+        The probability density for the Binomial distribution is
+
+        .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
+
+        where :math:`n` is the number of trials, :math:`p` is the probability
+        of success, and :math:`N` is the number of successes.
+
+        When estimating the standard error of a proportion in a population by
+        using a random sample, the normal distribution works well unless the
+        product p*n <=5, where p = population proportion estimate, and n =
+        number of samples, in which case the binomial distribution is used
+        instead. For example, a sample of 15 people shows 4 who are left
+        handed, and 11 who are right handed. Then p = 4/15 = 27%. 0.27*15 = 4,
+        so the binomial distribution should be used in this case.
+
+        References
+        ----------
+        .. [1] Dalgaard, Peter, "Introductory Statistics with R",
+               Springer-Verlag, 2002.
+        .. [2] Glantz, Stanton A. "Primer of Biostatistics.", McGraw-Hill,
+               Fifth Edition, 2002.
+        .. [3] Lentner, Marvin, "Elementary Applied Statistics", Bogden
+               and Quigley, 1972.
+        .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
+               Wolfram Web Resource.
+               http://mathworld.wolfram.com/BinomialDistribution.html
+        .. [5] Wikipedia, "Binomial-distribution",
+               http://en.wikipedia.org/wiki/Binomial_distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> n, p = 10, .5 # number of trials, probability of each trial
+        >>> s = np.random.binomial(n, p, 1000)
+        # result of flipping a coin 10 times, tested 1000 times.
+
+        A real world example. A company drills 9 wild-cat oil exploration
+        wells, each with an estimated probability of success of 0.1. All nine
+        wells fail. What is the probability of that happening?
+
+        Let's do 20,000 trials of the model, and count the number that
+        generate zero positive results.
+
+        >>> sum(np.random.binomial(9,0.1,20000)==0)/20000.
+        answer = 0.38885, or 38%.
 
         """
         cdef ndarray on, op
@@ -2377,12 +2652,84 @@ cdef class RandomState:
         """
         hypergeometric(ngood, nbad, nsample, size=None)
 
-        Hypergeometric distribution.
+        Draw samples from a Hypergeometric distribution.
 
-        Consider an urn with ngood "good" balls and nbad "bad" balls. If one
-        were to draw nsample balls from the urn without replacement, then
-        the hypergeometric distribution describes the distribution of "good"
-        balls in the sample.
+        Samples are drawn from a Hypergeometric distribution with specified
+        parameters, ngood (ways to make a good selection), nbad (ways to make
+        a bad selection), and nsample = number of items sampled, which is less
+        than or equal to the sum ngood + nbad.
+
+        Parameters
+        ----------
+        ngood : float (but truncated to an integer)
+                parameter, > 0.
+        nbad  : float
+                parameter, >= 0.
+        nsample  : float
+                   parameter, > 0 and <= ngood+nbad
+        size : {tuple, int}
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : {ndarray, scalar}
+                  where the values are all integers in  [0, n].
+
+        See Also
+        --------
+        scipy.stats.distributions.hypergeom : probability density function,
+            distribution or cumulative density function, etc.
+
+        Notes
+        -----
+        The probability density for the Hypergeometric distribution is
+
+        .. math:: P(x) = \\frac{\\binom{m}{n}\\binom{N-m}{n-x}}{\\binom{N}{n}},
+
+        where :math:`0 \\le x \\le m` and :math:`n+m-N \\le x \\le n`
+
+        for P(x) the probability of x successes, n = ngood, m = nbad, and
+        N = number of samples.
+
+        Consider an urn with black and white marbles in it, ngood of them
+        black and nbad are white. If you draw nsample balls without
+        replacement, then the Hypergeometric distribution describes the
+        distribution of black balls in the drawn sample.
+
+        Note that this distribution is very similar to the Binomial
+        distribution, except that in this case, samples are drawn without
+        replacement, whereas in the Binomial case samples are drawn with
+        replacement (or the sample space is infinite). As the sample space
+        becomes large, this distribution approaches the Binomial.
+
+        References
+        ----------
+        .. [1] Lentner, Marvin, "Elementary Applied Statistics", Bogden
+               and Quigley, 1972.
+        .. [2] Weisstein, Eric W. "Hypergeometric Distribution." From
+               MathWorld--A Wolfram Web Resource.
+               http://mathworld.wolfram.com/HypergeometricDistribution.html
+        .. [3] Wikipedia, "Hypergeometric-distribution",
+               http://en.wikipedia.org/wiki/Hypergeometric-distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> ngood, nbad, nsamp = 100, 2, 10
+        # number of good, number of bad, and number of samples
+        >>> s = np.random.hypergeometric(ngood, nbad, nsamp, 1000)
+        >>> hist(s)
+        #   note that it is very unlikely to grab both bad items
+
+        Suppose you have an urn with 15 white and 15 black marbles.
+        If you pull 15 marbles at random, how likely is it that
+        12 or more of them are one color?
+
+        >>> s = np.random.hypergeometric(15, 15, 15, 100000)
+        >>> sum(s>=12)/100000. + sum(s<=3)/100000.
+        #   answer = 0.003 ... pretty unlikely!
 
         """
         cdef ndarray ongood, onbad, onsample
@@ -2424,7 +2771,74 @@ cdef class RandomState:
         """
         logseries(p, size=None)
 
-        Logarithmic series distribution.
+        Draw samples from a Logarithmic Series distribution.
+
+        Samples are drawn from a Log Series distribution with specified
+        parameter, p (probability, 0 < p < 1).
+
+        Parameters
+        ----------
+        loc : float
+
+        scale : float > 0.
+
+        size : {tuple, int}
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : {ndarray, scalar}
+                  where the values are all integers in  [0, n].
+
+        See Also
+        --------
+        scipy.stats.distributions.logser : probability density function,
+            distribution or cumulative density function, etc.
+
+        Notes
+        -----
+        The probability density for the Log Series distribution is
+
+        .. math:: P(k) = \\frac{-p^k}{k \\ln(1-p)},
+
+        where p = probability.
+
+        The Log Series distribution is frequently used to represent species
+        richness and occurrence, first proposed by Fisher, Corbet, and
+        Williams in 1943 [2].  It may also be used to model the numbers of
+        occupants seen in cars [3].
+
+        References
+        ----------
+        .. [1] Buzas, Martin A.; Culver, Stephen J.,  Understanding regional
+               species diversity through the log series distribution of
+               occurrences: BIODIVERSITY RESEARCH Diversity & Distributions,
+               Volume 5, Number 5, September 1999 , pp. 187-195(9).
+        .. [2] Fisher, R.A,, A.S. Corbet, and C.B. Williams. 1943. The
+               relation between the number of species and the number of
+               individuals in a random sample of an animal population.
+               Journal of Animal Ecology, 12:42-58.
+        .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
+               Data Sets, CRC Press, 1994.
+        .. [4] Wikipedia, "Logarithmic-distribution",
+               http://en.wikipedia.org/wiki/Logarithmic-distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> a = .6
+        >>> s = np.random.logseries(a, 10000)
+        >>> count, bins, ignored = plt.hist(s)
+
+        #   plot against distribution
+
+        >>> def logseries(k, p):
+        ...     return -p**k/(k*log(1-p))
+        >>> plt.plot(bins, logseries(bins, a)*count.max()/\\
+            logseries(bins, a).max(),'r')
+        >>> plt.show()
 
         """
         cdef ndarray op

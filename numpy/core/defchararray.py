@@ -16,6 +16,20 @@ _unicode = unicode
 #   comparisons
 
 class chararray(ndarray):
+    """
+    chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
+              strides=None, order=None)
+
+    A character array of string or unicode type.
+
+    The array items will be `itemsize` characters long.
+
+    Create the array using buffer (with offset and strides) if it is
+    not None. If buffer is None, then construct a new array with strides
+    in Fortran order if len(shape) >=2 and order is 'Fortran' (otherwise
+    the strides will be in 'C' order).
+
+    """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
         global _globalvar

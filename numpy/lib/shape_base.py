@@ -12,28 +12,28 @@ def apply_along_axis(func1d,axis,arr,*args):
     """
     Apply function to 1-D slices along the given axis.
 
-    Execute `func1d(arr[i],*args)` where `func1d` takes 1-D arrays, `arr` is
+    Execute `func1d(a[i],*args)` where `func1d` takes 1-D arrays, `a` is
     the input array, and `i` is an integer that varies in order to apply the
-    function along the given axis for each 1-D subarray in `arr`.
+    function along the given axis for each 1-D subarray in `a`.
 
     Parameters
     ----------
     func1d : function
         This function should be able to take 1-D arrays. It is applied to 1-D
-        slices of `arr` along the specified axis.
+        slices of `a` along the specified axis.
     axis : integer
         Axis along which `func1d` is applied.
-    arr : ndarray
+    a : ndarray
         Input array.
     args : any
         Additional arguments to `func1d`.
 
     Returns
     -------
-    outarr : ndarray
-        The output array. The shape of `outarr` depends on the return
-        value of `func1d`. If it returns arrays with the same shape as the
-        input arrays it receives, `outarr` has the same shape as `arr`.
+    out : ndarray
+        The output array. The shape of `out` is identical to the shape of `a`,
+        except along the `axis` dimension, whose length is equal to the size
+        of the return value of `func1d`.
 
     See Also
     --------
@@ -112,28 +112,28 @@ def apply_over_axes(func, a, axes):
     """
     Apply a function repeatedly over multiple axes.
 
-    `func` is called as `res = func(a, axis)`, with `axis` the first element
-    of `axes`.  The result `res` of the function call has to have
-    the same or one less dimension(s) as `a`. If `res` has one less dimension
-    than `a`, a dimension is then inserted before `axis`.
+    `func` is called as `res = func(a, axis)`, where `axis` is the first
+    element of `axes`.  The result `res` of the function call must have
+    either the same dimensions as `a` or one less dimension. If `res` has one
+    less dimension than `a`, a dimension is inserted before `axis`.
     The call to `func` is then repeated for each axis in  `axes`,
     with `res` as the first argument.
 
     Parameters
     ----------
     func : function
-        This function should take two arguments, `func(a, axis)`.
-    arr : ndarray
+        This function must take two arguments, `func(a, axis)`.
+    a : ndarray
         Input array.
     axes : array_like
-        Axes over which `func` has to be applied, the elements should be
+        Axes over which `func` is applied, the elements must be
         integers.
 
     Returns
     -------
     val : ndarray
-        The output array. The number of dimensions is the same as `a`,
-        the shape can be different, this depends on whether `func` changes
+        The output array. The number of dimensions is the same as `a`, but
+        the shape can be different. This depends on whether `func` changes
         the shape of its output with respect to its input.
 
     See Also
@@ -448,7 +448,7 @@ def hstack(tup):
     Stack arrays in sequence horizontally (column wise)
 
     Take a sequence of arrays and stack them horizontally to make
-    a single array. hstack will rebuild arrays divided by hsplit.
+    a single array. Rebuild arrays divided by ``hsplit``.
 
     Parameters
     ----------
@@ -458,7 +458,18 @@ def hstack(tup):
     Returns
     -------
     stacked : ndarray
-        Ndarray formed by stacking the given arrays.
+        The array formed by stacking the given arrays.
+
+    See Also
+    --------
+    vstack : Stack along first axis.
+    dstack : Stack along third axis.
+    concatenate : Join arrays.
+    hsplit : Split array along second axis.
+
+    Notes
+    -----
+    Equivalent to ``np.concatenate(tup, axis=1)``
 
     Examples
     --------
@@ -512,17 +523,34 @@ def column_stack(tup):
 
 def dstack(tup):
     """
-    Stack arrays in sequence depth wise (along third dimension)
+    Stack arrays in sequence depth wise (along third axis)
 
-    Take a sequence of arrays and stack them along the third axis.
+    Takes a sequence of arrays and stack them along the third axis
+    to make a single array. Rebuilds arrays divided by ``dsplit``.
     This is a simple way to stack 2D arrays (images) into a single
-    3D array for processing. dstack will rebuild arrays divided by dsplit.
+    3D array for processing.
 
     Parameters
     ----------
     tup : sequence of arrays
         Arrays to stack. All of them must have the same shape along all
         but the third axis.
+
+    Returns
+    -------
+    stacked : ndarray
+        The array formed by stacking the given arrays.
+
+    See Also
+    --------
+    vstack : Stack along first axis.
+    hstack : Stack along second axis.
+    concatenate : Join arrays.
+    dsplit : Split array along third axis.
+
+    Notes
+    -----
+    Equivalent to ``np.concatenate(tup, axis=2)``
 
     Examples
     --------

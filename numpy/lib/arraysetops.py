@@ -79,7 +79,7 @@ def unique1d(ar1, return_index=False, return_inverse=False):
 
     Parameters
     ----------
-    ar1 : array-like
+    ar1 : array_like
         This array will be flattened if it is not already 1-D.
     return_index : bool, optional
         If True, also return the indices against `ar1` that result in the
@@ -101,8 +101,8 @@ def unique1d(ar1, return_index=False, return_inverse=False):
 
     See Also
     --------
-      numpy.lib.arraysetops : Module with a number of other functions
-                              for performing set operations on arrays.
+    numpy.lib.arraysetops : Module with a number of other functions
+                            for performing set operations on arrays.
 
     Examples
     --------
@@ -230,14 +230,14 @@ def setxor1d(ar1, ar2):
 
     Parameters
     ----------
-    ar1 : array
+    ar1 : array_like
         Input array.
-    ar2 : array
+    ar2 : array_like
         Input array.
 
     Returns
     -------
-    xor : array
+    xor : ndarray
         The values that are only in one, but not both, of the input arrays.
 
     See Also
@@ -269,15 +269,15 @@ def setmember1d(ar1, ar2):
 
     Parameters
     ----------
-    ar1 : array
+    ar1 : array_like
         Input array.
-    ar2 : array
+    ar2 : array_like
         Input array.
 
     Returns
     -------
-    mask : bool-array
-        The values ar1[mask] are in ar2.
+    mask : ndarray, bool
+        The values `ar1[mask]` are in `ar2`.
 
     See Also
     --------
@@ -325,7 +325,7 @@ def union1d(ar1, ar2):
 
     Returns
     -------
-    union : array
+    union : ndarray
         Unique union of input arrays.
 
     See also
@@ -345,14 +345,14 @@ def setdiff1d(ar1, ar2):
 
     Parameters
     ----------
-    ar1 : array
+    ar1 : array_like
         Input array.
-    ar2 : array
+    ar2 : array_like
         Input comparison array.
 
     Returns
     -------
-    difference : array
+    difference : ndarray
         The values in ar1 that are not in ar2.
 
     See Also

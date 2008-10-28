@@ -42,15 +42,23 @@ def get_include():
     return d
 
 def get_numarray_include(type=None):
-    """Return the directory in the package that contains the numpy/*.h header
-    files.
+    """
+    Return the directory that contains the numarray \\*.h header files.
 
-    Extension modules that need to compile against numpy should use this
-    function to locate the appropriate include directory. Using distutils:
+    Extension modules that need to compile against numarray should use this
+    function to locate the appropriate include directory.
 
-      import numpy
-      Extension('extension_name', ...
-                include_dirs=[numpy.get_numarray_include()])
+    Notes
+    -----
+    When using ``distutils``, for example in ``setup.py``.
+    ::
+
+        import numpy as np
+        ...
+        Extension('extension_name', ...
+                include_dirs=[np.get_numarray_include()])
+        ...
+
     """
     from numpy.numarray import get_numarray_include_dirs
     include_dirs = get_numarray_include_dirs()
@@ -96,10 +104,7 @@ def deprecate(func, oldname=None, newname=None):
         depdoc = '%s is DEPRECATED!! -- use %s instead' % (oldname, newname,)
 
     def newfunc(*args,**kwds):
-        """
-        Use get_include, get_numpy_include is DEPRECATED.
-
-        """
+        """Use get_include, get_numpy_include is DEPRECATED."""
         warnings.warn(str1, DeprecationWarning)
         return func(*args, **kwds)
 
@@ -335,18 +340,30 @@ def _makenamedict(module='numpy'):
     return thedict, dictlist
 
 def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
-    """Get help information for a function, class, or module.
+    """
+    Get help information for a function, class, or module.
 
-       Example:
-          >>> np.info(np.polyval) # doctest: +SKIP
+    Parameters
+    ----------
+    object : optional
+        Input object to get information about.
+    maxwidth : int, optional
+        Printing width.
+    output : file like object open for writing, optional
+        Write into file like object.
+    toplevel : string, optional
+        Start search at this level.
 
-          polyval(p, x)
+    Examples
+    --------
+    >>> np.info(np.polyval) # doctest: +SKIP
 
-            Evaluate the polymnomial p at x.
+       polyval(p, x)
 
-            Description:
-                If p is of length N, this function returns the value:
-                p[0]*(x**N-1) + p[1]*(x**N-2) + ... + p[N-2]*x + p[N-1]
+         Evaluate the polymnomial p at x.
+
+         ...
+
     """
     global _namedict, _dictlist
     # Local import to speed up numpy's import time.
