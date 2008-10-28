@@ -12,7 +12,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
-           'raises', 'rand', 'rundocs', 'runstring', 'verbose']
+           'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure']
 
 verbose = 0
 
