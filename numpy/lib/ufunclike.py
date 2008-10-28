@@ -7,7 +7,38 @@ __all__ = ['fix', 'isneginf', 'isposinf', 'log2']
 import numpy.core.numeric as nx
 
 def fix(x, y=None):
-    """ Round x to nearest integer towards zero.
+    """
+    Round to nearest integer towards zero.
+
+    Round an array of floats element-wise to nearest integer towards zero.
+    The rounded values are returned as floats.
+
+    Parameters
+    ----------
+    x : array_like
+        An array of floats to be rounded
+    y : ndarray, optional
+        Output array
+
+    Returns
+    -------
+    out : ndarray of floats
+        The array of rounded numbers
+
+    See Also
+    --------
+    floor : Round downwards
+    around : Round to given number of decimals
+
+    Examples
+    --------
+    >>> np.fix(3.14)
+    3.0
+    >>> np.fix(3)
+    3.0
+    >>> np.fix([2.1, 2.9, -2.1, -2.9])
+    array([ 2.,  2., -2., -2.])
+
     """
     x = nx.asanyarray(x)
     if y is None:
@@ -19,7 +50,10 @@ def fix(x, y=None):
 
 def isposinf(x, y=None):
     """
-    Return True where x is +infinity, and False otherwise.
+    Shows which elements of the input are positive infinity.
+
+    Returns a numpy array resulting from an element-wise test for positive
+    infinity.
 
     Parameters
     ----------
@@ -31,16 +65,54 @@ def isposinf(x, y=None):
     Returns
     -------
     y : ndarray
-      A boolean array where y[i] = True only if x[i] = +Inf.
+      A numpy boolean array with the same dimensions as the input.
+      If second argument is not supplied then a numpy boolean array is returned
+      with values True where the corresponding element of the input is positive
+      infinity and values False where the element of the input is not positive
+      infinity.
+
+      If second argument is supplied then an numpy integer array is returned
+      with values 1 where the corresponding element of the input is positive
+      positive infinity.
 
     See Also
     --------
-    isneginf, isfinite
+    isinf : Shows which elements are negative or positive infinity.
+    isneginf : Shows which elements are negative infinity.
+    isnan : Shows which elements are Not a Number (NaN).
+    isfinite: Shows which elements are not: Not a number, positive and
+             negative infinity
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Also that positive infinity is not equivalent to negative infinity. But
+    infinity is equivalent to positive infinity.
+
+    Errors result if second argument is also supplied with scalar input or
+    if first and second arguments have different shapes.
+
+    Numpy's definitions for positive infinity (PINF) and negative infinity
+    (NINF) may be change in the future versions.
+
 
     Examples
     --------
+    >>> np.isposinf(np.PINF)
+    array(True, dtype=bool)
+    >>> np.isposinf(np.inf)
+    array(True, dtype=bool)
+    >>> np.isposinf(np.NINF)
+    array(False, dtype=bool)
     >>> np.isposinf([-np.inf, 0., np.inf])
-    array([ False, False, True], dtype=bool)
+    array([False, False,  True], dtype=bool)
+    >>> x=np.array([-np.inf, 0., np.inf])
+    >>> y=np.array([2,2,2])
+    >>> np.isposinf(x,y)
+    array([1, 0, 0])
+    >>> y
+    array([1, 0, 0])
 
     """
     if y is None:
@@ -95,10 +167,9 @@ def log2(x, y=None):
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
       The logarithm to the base 2 of `x` elementwise.
       NaNs are returned where `x` is negative.
-
 
     See Also
     --------

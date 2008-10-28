@@ -44,17 +44,17 @@ def _wrapit(obj, method, *args, **kwds):
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
-    Take elements from an array along a given axis.
+    Take elements from an array along an axis.
 
     This function does the same thing as "fancy" indexing (indexing arrays
-    using arrays); however, it can be easier to use if you need to specify
-    a given axis.
+    using arrays); however, it can be easier to use if you need elements
+    along a given axis.
 
     Parameters
     ----------
-    a : ndarray
+    a : array_like
         The source array.
-    indices : int array
+    indices : array_like, int
         The indices of the values to extract.
     axis : int, optional
         The axis over which to select values.  By default, the
@@ -77,6 +77,18 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     --------
     ndarray.take : equivalent method
 
+    Examples
+    --------
+    >>> a = [4, 3, 5, 7, 6, 8]
+    >>> indices = [0, 1, 4]
+    >>> np.take(a, indices)
+    array([4, 3, 6])
+
+    In this example if `a` is a ndarray, "fancy" indexing can be used.
+    >>> a = np.array(a)
+    >>> a[indices]
+    array([4, 3, 6])
+
     """
     try:
         take = a.take
@@ -88,15 +100,17 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 # not deprecated --- copy if necessary, view otherwise
 def reshape(a, newshape, order='C'):
     """
-    Returns an array containing the data of a, but with a new shape.
+    Gives a new shape to an array without changing its data.
 
     Parameters
     ----------
-    a : ndarray
+    a : array_like
         Array to be reshaped.
     newshape : {tuple, int}
-        The new shape should be compatible with the original shape. If an
-        integer, then the result will be a 1-D array of that length.
+        The new shape should be compatible with the original shape. If
+        an integer, then the result will be a 1-D array of that length.
+        One shape dimension can be -1. In this case, the value is inferred
+        from the length of the array and remaining dimensions.
     order : {'C', 'F'}, optional
         Determines whether the array data should be viewed as in C
         (row-major) order or FORTRAN (column-major) order.
@@ -113,16 +127,15 @@ def reshape(a, newshape, order='C'):
 
     Examples
     --------
-    >>> a = np.array([[1,2], [3,4]])
-    >>> a.reshape(4)
-    array([1, 2, 3, 4])
-    >>> a.reshape(4, order='F')
-    array([1, 3, 2, 4])
-    >>> a.reshape((4,1))
-    array([[1],
-           [2],
-           [3],
-           [4]])
+    >>> a = np.array([[1,2,3], [4,5,6]])
+    >>> np.reshape(a, 6)
+    array([1, 2, 3, 4, 5, 6])
+    >>> np.reshape(a, 6, order='F')
+    array([1, 4, 2, 5, 3, 6])
+    >>> np.reshape(a, (3,-1))       # the unspecified value is inferred to be 2
+    array([[1, 2],
+           [3, 4],
+           [5, 6]])
 
     """
     try:
@@ -236,9 +249,10 @@ def repeat(a, repeats, axis=None):
 
 def put(a, ind, v, mode='raise'):
     """
-    Set a.flat[n] = v[n] for all n in ind.
+    Changes specific elements of one array by replacing from another array.
 
-    If `v` is shorter than `ind`, it will repeat.
+    Set `a`.flat[n] = `v`\\[n] for all n in `ind`.  If `v` is shorter than
+    `ind`, it will repeat which is different than `a[ind]` = `v`.
 
     Parameters
     ----------
@@ -379,28 +393,29 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Array to be sorted.
-    axis : int, optional
-        Axis along which to sort.  If not specified, the flattened array
-        is used.
+    axis : int or None, optional
+        Axis along which to sort. If None, the array is flattened before
+        sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
-        Sorting algorithm.
+        Sorting algorithm. Default is 'quicksort'.
     order : list, optional
-        When `a` is an ndarray with fields defined, this argument specifies
-        which fields to compare first, second, etc.  Not all fields need be
-        specified.
+        When `a` is a structured array, this argument specifies which fields
+        to compare first, second, and so on.  This list does not need to
+        include all of the fields.
 
     Returns
     -------
     sorted_array : ndarray
-        Array of same type and shape as `a`.
+        Array of the same type and shape as `a`.
 
     See Also
     --------
+    ndarray.sort : Method to sort an array in-place.
     argsort : Indirect sort.
     lexsort : Indirect stable sort on multiple keys.
-    searchsorted : Find keys in sorted array.
+    searchsorted : Find elements in a sorted array.
 
     Notes
     -----
@@ -425,15 +440,34 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     Examples
     --------
-    >>> a=np.array([[1,4],[3,1]])
-    >>> a.sort(1)
-    >>> a
+    >>> a = np.array([[1,4],[3,1]])
+    >>> np.sort(a)                # sort along the last axis
     array([[1, 4],
            [1, 3]])
-    >>> a.sort(0)
-    >>> a
-    array([[1, 3],
-           [1, 4]])
+    >>> np.sort(a, axis=None)     # sort the flattened array
+    array([1, 1, 3, 4])
+    >>> np.sort(a, axis=0)        # sort along the first axis
+    array([[1, 1],
+           [3, 4]])
+
+    Use the `order` keyword to specify a field to use when sorting a
+    structured array:
+
+    >>> dtype = [('name', 'S10'), ('height', float), ('age', int)]
+    >>> values = [('Arthur', 1.8, 41), ('Lancelot', 1.9, 38),
+    ...           ('Galahad', 1.7, 38)]
+    >>> a = np.array(values, dtype=dtype)       # create a structured array
+    >>> np.sort(a, order='height')                        # doctest: +SKIP
+    array([('Galahad', 1.7, 38), ('Arthur', 1.8, 41),
+           ('Lancelot', 1.8999999999999999, 38)],
+          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
+
+    Sort by age, then height if ages are equal:
+
+    >>> np.sort(a, order=['age', 'height'])               # doctest: +SKIP
+    array([('Galahad', 1.7, 38), ('Lancelot', 1.8999999999999999, 38),
+           ('Arthur', 1.8, 41)],
+          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
 
     """
     if axis is None:
@@ -468,7 +502,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
     Returns
     -------
-    index_array : ndarray of ints
+    index_array : ndarray, int
         Array of indices that sort `a` along the specified axis.
         In other words, ``a[index_array]`` yields a sorted `a`.
 
@@ -528,7 +562,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
 def argmax(a, axis=None):
     """
-    Indices of the maximum values along a given axis.
+    Indices of the maximum values along an axis.
 
     Parameters
     ----------
@@ -540,13 +574,14 @@ def argmax(a, axis=None):
 
     Returns
     -------
-    index_array : ndarray of ints
-        Array of indices into the array.  It has the same shape `a`,
+    index_array : ndarray, int
+        Array of indices into the array.  It has the same shape as `a`,
         except with `axis` removed.
 
     See Also
     --------
-    amax : The maximum along a given axis.
+    argmin : Indices of the minimum values along an axis.
+    amax : The maximum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
 
     Examples
@@ -569,9 +604,12 @@ def argmax(a, axis=None):
 
 def argmin(a, axis=None):
     """
-    Return the indices of the minimum values along the given axis of `a`.
+    Return the indices of the minimum values along an axis.
 
-    Refer to `numpy.argmax` for detailed documentation.
+    See Also
+    --------
+    argmax : Similar function.  Please refer to `numpy.argmax` for detailed
+        documentation.
 
     """
     try:
@@ -697,7 +735,7 @@ def squeeze(a):
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Input data.
 
     Returns
@@ -726,7 +764,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     """
     Return specified diagonals.
 
-    If `a` is 2-D, returns the diagonal of self with the given offset,
+    If `a` is 2-D, returns the diagonal of `a` with the given offset,
     i.e., the collection of elements of the form `a[i,i+offset]`.
     If `a` has more than two dimensions, then the axes specified
     by `axis1` and `axis2` are used to determine the 2-D subarray
@@ -829,7 +867,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
 
     Returns
     -------
-    sum_along_diagonals : array
+    sum_along_diagonals : ndarray
         If a is 2-d, a 0-d array containing the diagonal is
         returned.  If a has larger dimensions, then an array of
         diagonals is returned.
@@ -935,6 +973,8 @@ def nonzero(a):
     flatnonzero :
         Return indices that are non-zero in the flattened version of the input
         array.
+    ndarray.nonzero :
+        Equivalent ndarray method.
 
     Examples
     --------
@@ -980,6 +1020,7 @@ def shape(a):
 
     See Also
     --------
+    alen,
     ndarray.shape : array method
 
     Examples
@@ -993,10 +1034,10 @@ def shape(a):
     >>> np.shape(0)
     ()
 
-    >>> x = np.array([(1,2),(3,4)], dtype=[('x', 'i4'), ('y', 'i4')])
-    >>> np.shape(x)
+    >>> a = np.array([(1,2),(3,4)], dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> np.shape(a)
     (2,)
-    >>> x.shape
+    >>> a.shape
     (2,)
 
     """
@@ -1013,23 +1054,28 @@ def compress(condition, a, axis=None, out=None):
 
     Parameters
     ----------
-    condition : {array}
-        Boolean 1-d array selecting which entries to return. If len(condition)
-        is less than the size of a along the axis, then output is truncated
-        to length of condition array.
-    a : {array_type}
+    condition : array_like
+        Boolean 1-D array selecting which entries to return. If len(condition)
+        is less than the size of `a` along the given axis, then output is
+        truncated to the length of the condition array.
+    a : array_like
         Array from which to extract a part.
-    axis : {None, integer}
-        Axis along which to take slices. If None, work on the flattened array.
-    out : array, optional
+    axis : int, optional
+        Axis along which to take slices. If None (default), work on the
+        flattened array.
+    out : ndarray, optional
         Output array.  Its type is preserved and it must be of the right
         shape to hold the output.
 
     Returns
     -------
-    compressed_array : array
+    compressed_array : ndarray
         A copy of `a` without the slices along axis for which `condition`
         is false.
+
+    See Also
+    --------
+    ndarray.compress: Equivalent method.
 
     Examples
     --------
@@ -1127,7 +1173,7 @@ def sum(a, axis=None, dtype=None, out=None):
 
     Returns
     -------
-    sum_along_axis : ndarray or scalar
+    sum_along_axis : ndarray
         An array with the same shape as `a`, with the specified
         axis removed.   If `a` is a 0-d array, or if `axis` is None, a scalar
         is returned.  If an output array is specified, a reference to
@@ -1208,14 +1254,11 @@ def sometrue(a, axis=None, out=None):
 
 def alltrue (a, axis=None, out=None):
     """
-    Check if all of the elements of `a` are true.
-
-    Please refer to the `numpy.all` documentation.  `numpy.all` is
-    the same function.
+    Check if all elements of input array are true.
 
     See Also
     --------
-    numpy.all : equivalent function
+    numpy.all : Equivalent function; see for details.
 
     """
     try:
@@ -1227,7 +1270,7 @@ def alltrue (a, axis=None, out=None):
 
 def any(a,axis=None, out=None):
     """
-    Test whether any elements of an array evaluate to true along a given axis.
+    Test whether any elements of an array evaluate to True along an axis.
 
     Parameters
     ----------
@@ -1278,7 +1321,7 @@ def any(a,axis=None, out=None):
 
 def all(a,axis=None, out=None):
     """
-    Test whether all elements of an array evaluate to true along a given axis.
+    Returns True if all elements evaluate to True.
 
     Parameters
     ----------
@@ -1293,7 +1336,7 @@ def all(a,axis=None, out=None):
 
     Returns
     -------
-    out : ndarray
+    out : ndarray, bool
         A logical AND is performed along `axis`, and the result placed
         in `out`.  If `out` was not specified, a new output array is created.
 
@@ -1333,7 +1376,7 @@ def cumsum (a, axis=None, dtype=None, out=None):
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Input array or object that can be converted to an array.
     axis : int, optional
         Axis along which the cumulative sum is computed. The default
@@ -1403,7 +1446,9 @@ def cumproduct(a, axis=None, dtype=None, out=None):
 
 def ptp(a, axis=None, out=None):
     """
-    Peak to peak (maximum - minimum) value along a given axis.
+    Range of values (maximum - minimum) along an axis.
+
+    The name of the function comes from the acronym for 'peak to peak'.
 
     Parameters
     ----------
@@ -1526,7 +1571,7 @@ def amin(a, axis=None, out=None):
 
 def alen(a):
     """
-    Return the length of an array_like as an array of at least 1 dimension.
+    Return the length of the first dimension of the input array.
 
     Parameters
     ----------
@@ -1538,12 +1583,16 @@ def alen(a):
     alen : int
        Length of the first dimension of `a`.
 
+    See Also
+    --------
+    shape
+
     Examples
     --------
-    >>> z = np.zeros((7,4,5))
-    >>> z.shape[0]
+    >>> a = np.zeros((7,4,5))
+    >>> a.shape[0]
     7
-    >>> np.alen(z)
+    >>> np.alen(a)
     7
 
     """
@@ -1567,8 +1616,8 @@ def prod(a, axis=None, dtype=None, out=None):
     dtype : data-type, optional
         The data-type of the returned array, as well as of the accumulator
         in which the elements are multiplied.  By default, if `a` is of
-        integer type, `dtype` is the default platform integer (note: if
-        the type of `a` is unsigned, then so is `dtype`).  Otherwise,
+        integer type, `dtype` is the default platform integer. (Note: if
+        the type of `a` is unsigned, then so is `dtype`.)  Otherwise,
         the dtype is the same as that of `a`.
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
@@ -1577,7 +1626,7 @@ def prod(a, axis=None, dtype=None, out=None):
 
     Returns
     -------
-    product_along_axis : {ndarray, scalar}, see `dtype` parameter above.
+    product_along_axis : ndarray, see `dtype` parameter above.
         An array shaped as `a` but with the specified axis removed.
         Returns a reference to `out` if specified.
 
@@ -1844,9 +1893,9 @@ def around(a, decimals=0, out=None):
 
     Returns
     -------
-    rounded_array : {array}
+    rounded_array : ndarray
         An array of the same type as `a`, containing the rounded values.
-        Unless `a` was specified, a new array is created.  A reference to
+        Unless `out` was specified, a new array is created.  A reference to
         the result is returned.
 
         The real and imaginary parts of complex numbers are rounded

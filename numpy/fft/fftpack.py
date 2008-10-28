@@ -109,23 +109,26 @@ def fft(a, n=None, axis=-1):
 
 def ifft(a, n=None, axis=-1):
     """
-    Compute the one-dimensonal inverse fft on a given axis.
+    Compute the one-dimensonal inverse fft along an axis.
 
-    Return the n point inverse discrete Fourier transform of a.  n
-    defaults to the length of a. If n is larger than the length of a,
-    then a will be zero-padded to make up the difference. If n is
-    smaller than the length of a, then a will be truncated to reduce
-    its size.
+    Return the `n` point inverse discrete Fourier transform of `a`.  The length
+    `n` defaults to the length of `a`. If `n` is larger than the length of `a`,
+    then `a` will be zero-padded to make up the difference. If `n` is smaller
+    than the length of `a`, then `a` will be truncated to reduce its size.
 
     Parameters
     ----------
 
-    a : array
-        input array
-    n : int
-        length of the fft
-    axis : int
-        axis over which to compute the inverse fft
+    a : array_like
+        Input array.
+    n : int, optional
+        Length of the fft.
+    axis : int, optional
+        Axis over which to compute the inverse fft.
+
+    See Also
+    --------
+    fft
 
     Notes
     -----
@@ -135,10 +138,10 @@ def ifft(a, n=None, axis=-1):
     This is the inverse of fft: ifft(fft(a)) == a within numerical
     accuracy.
 
-    This is most efficient for n a power of two. This also stores a cache of
+    This is most efficient for `n` a power of two. This also stores a cache of
     working memory for different sizes of fft's, so you could theoretically
     run into memory problems if you call this too many times with too many
-    different n's.
+    different `n` values.
 
     """
 
@@ -189,34 +192,35 @@ def irfft(a, n=None, axis=-1):
     """
     Compute the one-dimensional inverse fft for real input.
 
-    Notes
-    -----
-
-    Return the real valued n point inverse discrete Fourier transform
-    of a, where a contains the nonnegative frequency terms of a
-    Hermite-symmetric sequence. n is the length of the result, not the
-    input. If n is not supplied, the default is 2*(len(a)-1). If you
-    want the length of the result to be odd, you have to say so.
-
     Parameters
     ----------
-
     a : array
-        input array with real data type
+        Input array with real data type.
     n : int
-        length of the fft
+        Length of the fft.
     axis : int
-        axis over which to compute the fft
+        Axis over which to compute the fft.
+
+    See Also
+    --------
+    rfft
 
     Notes
     -----
+    Return the real valued `n` point inverse discrete Fourier transform
+    of `a`, where `a` contains the nonnegative frequency terms of a
+    Hermite-symmetric sequence. `n` is the length of the result, not the
+    input. If `n` is not supplied, the default is 2*(len(`a`)-1). If you
+    want the length of the result to be odd, you have to say so.
 
-    If you specify an n such that a must be zero-padded or truncated, the
+    If you specify an `n` such that `a` must be zero-padded or truncated, the
     extra/removed values will be added/removed at high frequencies. One can
     thus resample a series to m points via Fourier interpolation by: a_resamp
     = irfft(rfft(a), m).
 
-    This is the inverse of rfft: irfft(rfft(a), len(a)) == a within numerical accuracy.
+    Within numerical accuracy ``irfft`` is the inverse of ``rfft``::
+
+     irfft(rfft(a), len(a)) == a
 
     """
 
@@ -240,6 +244,11 @@ def hfft(a, n=None, axis=-1):
     axis : int
         axis over which to compute the hfft
 
+    See also
+    --------
+    rfft
+    ihfft
+
     Notes
     -----
     These are a pair analogous to rfft/irfft, but for the
@@ -249,11 +258,6 @@ def hfft(a, n=None, axis=-1):
 
     ihfft(hfft(a), len(a)) == a
     within numerical accuracy.
-
-    See also
-    --------
-    rfft
-    ihfft
 
     """
 
@@ -265,17 +269,20 @@ def hfft(a, n=None, axis=-1):
 
 def ihfft(a, n=None, axis=-1):
     """
-    Compute the inverse fft of a signal which spectrum has Hermitian
-    symmetry.
+    Compute the inverse fft of a signal whose spectrum has Hermitian symmetry.
 
     Parameters
     ----------
-    a : array
-        input array
-    n : int
-        length of the ihfft
-    axis : int
-        axis over which to compute the ihfft
+    a : array_like
+        Input array.
+    n : int, optional
+        Length of the ihfft.
+    axis : int, optional
+        Axis over which to compute the ihfft.
+
+    See also
+    --------
+    rfft, hfft
 
     Notes
     -----
@@ -286,11 +293,6 @@ def ihfft(a, n=None, axis=-1):
 
     ihfft(hfft(a), len(a)) == a
     within numerical accuracy.
-
-    See also
-    --------
-    rfft
-    hfft
 
     """
 
@@ -395,20 +397,21 @@ def ifftn(a, s=None, axes=None):
 
 def fft2(a, s=None, axes=(-2,-1)):
     """
-    Compute the 2d fft of an array.
+    Compute the 2-D FFT of an array.
 
     Parameters
     ----------
-    a : array
-        input array
-    s : sequence (int)
-        shape of the fft
-    axis : int
-        axis over which to compute the fft
+    a : array_like
+        Input array.  The rank (dimensions) of `a` must be 2 or greater.
+    s : shape tuple
+        Shape of the FFT.
+    axes : sequence of 2 ints
+        The 2 axes over which to compute the FFT.  The default is the last two
+        axes (-2, -1).
 
     Notes
     -----
-    This is really just fftn with different default behavior.
+    This is really just ``fftn`` with different default behavior.
 
     """
 

@@ -371,29 +371,30 @@ def average(a, axis=None, weights=None, returned=False):
 
 
 def median(a, axis=None, out=None, overwrite_input=False):
-    """Compute the median along the specified axis.
+    """
+    Compute the median along the specified axis.
 
     Returns the median of the array elements.
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Input array or object that can be converted to an array
-    axis : {None, int}, optional
-        Axis along which the medians are computed. The default (axis=None) is to
-        compute the median along a flattened version of the array.
-    out : {None, ndarray}, optional
+    axis : int, optional
+        Axis along which the medians are computed. The default (axis=None) is
+        to compute the median along a flattened version of the array.
+    out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
     overwrite_input : {False, True}, optional
-       If True, then allow use of memory of input array (a) for
-       calculations. The input array will be modified by the call to
-       median. This will save memory when you do not need to preserve
-       the contents of the input array. Treat the input as undefined,
-       but it will probably be fully or partially sorted. Default is
-       False. Note that, if overwrite_input is true, and the input
-       is not already an ndarray, an error will be raised.
+        If True, then allow use of memory of input array (a) for
+        calculations. The input array will be modified by the call to
+        median. This will save memory when you do not need to preserve
+        the contents of the input array. Treat the input as undefined,
+        but it will probably be fully or partially sorted. Default is
+        False. Note that, if overwrite_input is true, and the input
+        is not already an ndarray, an error will be raised.
 
     Returns
     -------
@@ -404,7 +405,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
         float64, or the input datatype otherwise.
 
     See Also
-    -------
+    --------
     mean
 
     Notes
@@ -697,36 +698,40 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
 
 
 def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
-    """Estimates the covariance matrix.
+    """
+    Estimates the covariance matrix.
 
     Normalization is by (N-1) where N is the number of observations (unbiased
     estimate).  If bias is True then normalization is by N.
 
     By default, masked values are recognized as such. If x and y have the same
-    shape, a common mask is allocated: if x[i,j] is masked, then y[i,j] will also
-    be masked.
-    Setting `allow_masked` to False will raise an exception if values are missing
-    in either of the input arrays.
+    shape, a common mask is allocated: if x[i,j] is masked, then y[i,j] will
+    also be masked.
+    Setting `allow_masked` to False will raise an exception if values are
+    missing in either of the input arrays.
 
     Parameters
     ----------
-    x : array-like
+    x : array_like
         Input data.
         If x is a 1D array, returns the variance.
         If x is a 2D array, returns the covariance matrix.
-    y : {None, array-like}, optional
+    y : array_like, optional
         Optional set of variables.
     rowvar : {False, True} optional
-        If rowvar is true, then each row is a variable with observations in columns.
-        If rowvar is False, each column is a variable and the observations are in
-        the rows.
+        If rowvar is true, then each row is a variable with observations in
+        columns.
+        If rowvar is False, each column is a variable and the observations are
+        in the rows.
     bias : {False, True} optional
-        Whether to use a biased (True) or unbiased (False) estimate of the covariance.
-        If bias is True, then the normalization is by N, the number of observations.
+        Whether to use a biased (True) or unbiased (False) estimate of the
+        covariance.
+        If bias is True, then the normalization is by N, the number of
+        observations.
         Otherwise, the normalization is by (N-1).
     allow_masked : {True, False} optional
-        If True, masked values are propagated pair-wise: if a value is masked in x,
-        the corresponding value is masked in y.
+        If True, masked values are propagated pair-wise: if a value is masked
+        in x, the corresponding value is masked in y.
         If False, raises a ValueError exception when some values are missing.
 
     Raises

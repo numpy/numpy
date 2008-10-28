@@ -132,6 +132,4 @@ identical behaviour between arrays and scalars, irrespective of whether the
 value is inside an array or not.  NumPy scalars also have many of the same
 methods arrays do.
 
-See xxx for details.
-
 """

@@ -308,13 +308,13 @@ def tri(N, M=None, k=0, dtype=float):
         Number of rows in the array.
     M : int, optional
         Number of columns in the array.
-        By default, `M` is taken to equal to `N`.
+        By default, `M` is taken equal to `N`.
     k : int, optional
         The sub-diagonal below which the array is filled.
-        ``k = 0`` is the main diagonal, while ``k < 0`` is below it,
-        and ``k > 0`` is above.  The default is 0.
+        `k` = 0 is the main diagonal, while `k` < 0 is below it,
+        and `k` > 0 is above.  The default is 0.
     dtype : dtype, optional
-        Data type of the returned array.  The default is `float`.
+        Data type of the returned array.  The default is float.
 
     Returns
     -------
@@ -341,13 +341,13 @@ def tri(N, M=None, k=0, dtype=float):
 
 def tril(m, k=0):
     """
-    Lower triangular.
+    Lower triangle of an array.
 
-    Return a copy of an array with elements above the k-th diagonal zeroed.
+    Return a copy of an array with elements above the `k`-th diagonal zeroed.
 
     Parameters
     ----------
-    m : array-like, shape (M, N)
+    m : array_like, shape (M, N)
         Input array.
     k : int
         Diagonal above which to zero elements.
@@ -377,7 +377,7 @@ def tril(m, k=0):
 
 def triu(m, k=0):
     """
-    Upper triangular.
+    Upper triangle of an array.
 
     Construct a copy of a matrix with elements below the k-th diagonal zeroed.
 
@@ -453,9 +453,9 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
 
     Parameters
     ----------
-    x : array-like (N,)
+    x : array_like, shape(N,)
       A sequence of values to be histogrammed along the first dimension.
-    y : array-like (N,)
+    y : array_like, shape(M,)
       A sequence of values to be histogrammed along the second dimension.
     bins : int or [int, int] or array-like or [array, array], optional
       The bin specification:
@@ -465,7 +465,7 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
         * the bin edges for the two dimensions (x_edges=y_edges=bins),
         * the bin edges in each dimension (x_edges, y_edges = bins).
 
-    range : array-like, (2,2), optional
+    range : array_like, shape(2,2), optional
       The leftmost and rightmost edges of the bins along each dimension
       (if not specified explicitly in the `bins` parameters):
       [[xmin, xmax], [ymin, ymax]]. All values outside of this range will be
@@ -473,7 +473,7 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
     normed : boolean, optional
       If False, returns the number of samples in each bin. If True, returns
       the bin density, ie, the bin count divided by the bin area.
-    weights : array-like (N,), optional
+    weights : array-like, shape(N,), optional
       An array of values `w_i` weighing each sample `(x_i, y_i)`. Weights are
       normalized to 1 if normed is True. If normed is False, the values of the
       returned histogram are equal to the sum of the weights belonging to the
@@ -481,13 +481,13 @@ def histogram2d(x,y, bins=10, range=None, normed=False, weights=None):
 
     Returns
     -------
-    H : array (nx, ny)
+    H : ndarray, shape(nx, ny)
       The bidimensional histogram of samples x and y. Values in x are
       histogrammed along the first dimension and values in y are histogrammed
       along the second dimension.
-    xedges : array (nx,)
+    xedges : ndarray, shape(nx,)
       The bin edges along the first dimension.
-    yedges : array (ny,)
+    yedges : ndarray, shape(ny,)
       The bin edges along the second dimension.
 
     See Also

@@ -42,7 +42,32 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
     return l[0][1]
 
 def asfarray(a, dtype=_nx.float_):
-    """asfarray(a,dtype=None) returns a as a float array."""
+    """
+    Return an array converted to float type.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    dtype : string or dtype object, optional
+        Float type code to coerce input array `a`.  If one of the 'int' dtype,
+        it is replaced with float64.
+
+    Returns
+    -------
+    out : ndarray, float
+        Input `a` as a float ndarray.
+
+    Examples
+    --------
+    >>> np.asfarray([2, 3])
+    array([ 2.,  3.])
+    >>> np.asfarray([2, 3], dtype='float')
+    array([ 2.,  3.])
+    >>> np.asfarray([2, 3], dtype='int8')
+    array([ 2.,  3.])
+
+    """
     dtype = _nx.obj2sctype(dtype)
     if not issubclass(dtype, _nx.inexact):
         dtype = _nx.float_
@@ -54,7 +79,7 @@ def real(val):
 
     Parameters
     ----------
-    val : {array_like, scalar}
+    val : array_like
         Input array.
 
     Returns
@@ -100,10 +125,27 @@ def imag(val):
     return asanyarray(val).imag
 
 def iscomplex(x):
-    """Return a boolean array where elements are True if that element
-    is complex (has non-zero imaginary part).
+    """
+    Return a bool array, True if element is complex (non-zero imaginary part).
 
     For scalars, return a boolean.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+
+    Returns
+    -------
+    out : ndarray, bool
+        Output array.
+
+    Examples
+    --------
+    >>> x = np.array([1,2,3.j])
+    >>> np.iscomplex(x)
+    array([False, False,  True], dtype=bool)
+
     """
     ax = asanyarray(x)
     if issubclass(ax.dtype.type, _nx.complexfloating):
@@ -219,7 +261,7 @@ def real_if_close(a,tol=100):
 
     Parameters
     ----------
-    a : {array_like, scalar}
+    a : array_like
         Input array.
     tol : scalar
         Tolerance for the complex part of the elements in the array.
@@ -241,6 +283,16 @@ def real_if_close(a,tol=100):
     2.2204460492503131e-16.  You can use 'np.finfo(np.float).eps' to print
     out the machine epsilon for floats.
 
+    Examples
+    --------
+    >>> np.finfo(np.float).eps      # DOCTEST +skip
+    2.2204460492503131e-16
+
+    >>> np.real_if_close([2.1 + 4e-14j], tol = 1000)
+    array([ 2.1])
+    >>> np.real_if_close([2.1 + 4e-13j], tol = 1000)
+    array([ 2.1 +4.00000000e-13j])
+
     """
     a = asanyarray(a)
     if not issubclass(a.dtype.type, _nx.complexfloating):
@@ -255,7 +307,24 @@ def real_if_close(a,tol=100):
 
 
 def asscalar(a):
-    """Convert an array of size 1 to its scalar equivalent.
+    """
+    Convert an array of size 1 to its scalar equivalent.
+
+    Parameters
+    ----------
+    a : ndarray
+        Input array.
+
+    Returns
+    -------
+    out : scalar
+        Scalar of size 1 array.
+
+    Examples
+    --------
+    >>> np.asscalar(np.array([24]))
+    >>> 24
+
     """
     return a.item()
 
@@ -322,18 +391,27 @@ def common_type(*arrays):
     """
     Return the inexact scalar type which is most common in a list of arrays.
 
-    The return type will always be a inexact scalar type, even if all
-    the arrays are integer arrays
+    The return type will always be an inexact scalar type, even if all the
+    arrays are integer arrays
 
     Parameters
     ----------
-    arrays: sequence of array_like
-        Input sequence of arrays.
+    array1, array2, ... : ndarray
+        Input arrays.
 
     Returns
     -------
-    out: data type code
+    out : data type code
         Data type code.
+
+    See Also
+    --------
+    dtype
+
+    Examples
+    --------
+    >>> np.common_type(np.arange(4), np.array([45,6]), np.array([45.0, 6.0]))
+    <type 'numpy.float64'>
 
     """
     is_complex = False

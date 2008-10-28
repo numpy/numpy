@@ -20,17 +20,17 @@ why subclassing works as it does.
 ndarrays and object creation
 ============================
 The creation of ndarrays is complicated by the need to return views of
-ndarrays, that are also ndarrays.  For example::
+ndarrays, that are also ndarrays.  For example:
 
-  >>> import numpy as np
-  >>> arr = np.zeros((3,))
-  >>> type(arr)
-  <type 'numpy.ndarray'>
-  >>> v = arr[1:]
-  >>> type(v)
-  <type 'numpy.ndarray'>
-  >>> v is arr
-  False
+>>> import numpy as np
+>>> arr = np.zeros((3,))
+>>> type(arr)
+<type 'numpy.ndarray'>
+>>> v = arr[1:]
+>>> type(v)
+<type 'numpy.ndarray'>
+>>> v is arr
+False
 
 So, when we take a view (here a slice) from the ndarray, we return a
 new ndarray, that points to the data in the original.  When we
@@ -148,6 +148,7 @@ Simple example - adding an extra attribute to ndarray
 -----------------------------------------------------
 
 ::
+
   import numpy as np
 
   class InfoArray(np.ndarray):

@@ -129,7 +129,7 @@ def roots(p):
 
     Parameters
     ----------
-    p : (N,) array_like
+    p : array_like of shape(M,)
         Rank-1 array of polynomial co-efficients.
 
     Returns
@@ -200,7 +200,7 @@ def polyint(p, m=1, k=None):
 
     Parameters
     ----------
-    p : poly1d or sequence
+    p : {array_like, poly1d}
         Polynomial to differentiate.
         A sequence is interpreted as polynomial coefficients, see `poly1d`.
     m : int, optional
@@ -523,7 +523,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
 def polyval(p, x):
     """
-    Evaluate the polynomial p at x.
+    Evaluate a polynomial at specific values.
 
     If p is of length N, this function returns the value:
 
@@ -543,7 +543,7 @@ def polyval(p, x):
 
     Returns
     -------
-    values : {array, poly1d}
+    values : {ndarray, poly1d}
        If either p or x is an instance of poly1d, then an instance of poly1d
        is returned, otherwise a 1D array is returned. In the case where x is
        a poly1d, the result is the composition of the two polynomials, i.e.,
@@ -577,7 +577,28 @@ def polyval(p, x):
     return y
 
 def polyadd(a1, a2):
-    """Adds two polynomials represented as sequences
+    """
+    Returns sum of two polynomials.
+
+    Returns sum of polynomials; `a1` + `a2`.  Input polynomials are
+    represented as an array_like sequence of terms or a poly1d object.
+
+    Parameters
+    ----------
+    a1 : {array_like, poly1d}
+        Polynomial as sequence of terms.
+    a2 : {array_like, poly1d}
+        Polynomial as sequence of terms.
+
+    Returns
+    -------
+    out : {ndarray, poly1d}
+        Array representing the polynomial terms.
+
+    See Also
+    --------
+    polyval, polydiv, polymul, polyadd
+
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
     a1 = atleast_1d(a1)
@@ -596,7 +617,35 @@ def polyadd(a1, a2):
     return val
 
 def polysub(a1, a2):
-    """Subtracts two polynomials represented as sequences
+    """
+    Returns difference from subtraction of two polynomials input as sequences.
+
+    Returns difference of polynomials; `a1` - `a2`.  Input polynomials are
+    represented as an array_like sequence of terms or a poly1d object.
+
+    Parameters
+    ----------
+    a1 : {array_like, poly1d}
+        Minuend polynomial as sequence of terms.
+    a2 : {array_like, poly1d}
+        Subtrahend polynomial as sequence of terms.
+
+    Returns
+    -------
+    out : {ndarray, poly1d}
+        Array representing the polynomial terms.
+
+    See Also
+    --------
+    polyval, polydiv, polymul, polyadd
+
+    Examples
+    --------
+    .. math:: (2 x^2 + 10x - 2) - (3 x^2 + 10x -4) = (-x^2 + 2)
+
+    >>> np.polysub([2, 10, -2], [3, 10, -4])
+    array([-1,  0,  2])
+
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
     a1 = atleast_1d(a1)
@@ -616,7 +665,29 @@ def polysub(a1, a2):
 
 
 def polymul(a1, a2):
-    """Multiplies two polynomials represented as sequences.
+    """
+    Returns product of two polynomials represented as sequences.
+
+    The input arrays specify the polynomial terms in turn with a length equal
+    to the polynomial degree plus 1.
+
+    Parameters
+    ----------
+    a1 : {array_like, poly1d}
+        First multiplier polynomial.
+    a2 : {array_like, poly1d}
+        Second multiplier polynomial.
+
+    Returns
+    -------
+    out : {ndarray, poly1d}
+        Product of inputs.
+
+    See Also
+    --------
+    poly, polyadd, polyder, polydiv, polyfit, polyint, polysub,
+    polyval
+
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
     a1,a2 = poly1d(a1),poly1d(a2)
@@ -626,8 +697,40 @@ def polymul(a1, a2):
     return val
 
 def polydiv(u, v):
-    """Computes q and r polynomials so that u(s) = q(s)*v(s) + r(s)
-    and deg r < deg v.
+    """
+    Returns the quotient and remainder of polynomial division.
+
+    The input arrays specify the polynomial terms in turn with a length equal
+    to the polynomial degree plus 1.
+
+    Parameters
+    ----------
+    u : {array_like, poly1d}
+        Dividend polynomial.
+    v : {array_like, poly1d}
+        Divisor polynomial.
+
+    Returns
+    -------
+    q : ndarray
+        Polynomial terms of quotient.
+    r : ndarray
+        Remainder of polynomial division.
+
+    See Also
+    --------
+    poly, polyadd, polyder, polydiv, polyfit, polyint, polymul, polysub,
+    polyval
+
+    Examples
+    --------
+    .. math:: \\frac{3x^2 + 5x + 2}{2x + 1} = 1.5x + 1.75, remainder 0.25
+
+    >>> x = np.array([3.0, 5.0, 2.0])
+    >>> y = np.array([2.0, 1.0])
+    >>> np.polydiv(x, y)
+    >>> (array([ 1.5 ,  1.75]), array([ 0.25]))
+
     """
     truepoly = (isinstance(u, poly1d) or isinstance(u, poly1d))
     u = atleast_1d(u)
@@ -683,7 +786,7 @@ class poly1d(object):
     Parameters
     ----------
     c_or_r : array_like
-        Polynomial coefficients, in decreasing powers.  E.g.,
+        Polynomial coefficients, in decreasing powers.  For example,
         ``(1, 2, 3)`` implies :math:`x^2 + 2x + 3`.  If `r` is set
         to True, these coefficients specify the polynomial roots
         (values where the polynomial evaluate to 0) instead.

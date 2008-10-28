@@ -34,34 +34,35 @@ import numpy as np
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """
-    Return evenly spaced numbers.
+    Return evenly spaced numbers over a specified interval.
 
-    `linspace` returns `num` evenly spaced samples, calculated over the
-    interval ``[start, stop]``.  The endpoint of the interval can optionally
-    be excluded.
+    Returns `num` evenly spaced samples, calculated over the
+    interval [`start`, `stop` ].
+
+    The endpoint of the interval can optionally be excluded.
 
     Parameters
     ----------
-    start : float
+    start : {float, int}
         The starting value of the sequence.
-    stop : float
+    stop : {float, int}
         The end value of the sequence, unless `endpoint` is set to False.
         In that case, the sequence consists of all but the last of ``num + 1``
         evenly spaced samples, so that `stop` is excluded.  Note that the step
         size changes when `endpoint` is False.
-    num : int
+    num : int, optional
         Number of samples to generate. Default is 50.
-    endpoint : bool
-        If true, `stop` is the last sample. Otherwise, it is not included.
+    endpoint : bool, optional
+        If True, `stop` is the last sample. Otherwise, it is not included.
         Default is True.
-    retstep : bool
+    retstep : bool, optional
         If True, return (`samples`, `step`), where `step` is the spacing
         between samples.
 
     Returns
     -------
     samples : ndarray
-        `num` equally spaced samples in the closed interval
+        There are `num` equally spaced samples in the closed interval
         ``[start, stop]`` or the half-open interval ``[start, stop)``
         (depending on whether `endpoint` is True or False).
     step : float (only if `retstep` is True)
@@ -71,8 +72,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     See Also
     --------
     arange : Similiar to `linspace`, but uses a step size (instead of the
-             number of samples).  Note that, when used with a float
-             endpoint, the endpoint may or may not be included.
+             number of samples).
     logspace : Samples uniformly distributed in log space.
 
     Examples
@@ -409,36 +409,36 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     Parameters
     ----------
-    sample : array-like
-      Data to histogram passed as a sequence of D arrays of length N, or
-      as an (N,D) array.
+    sample : array_like
+        Data to histogram passed as a sequence of D arrays of length N, or
+        as an (N,D) array.
     bins : sequence or int, optional
-      The bin specification:
+        The bin specification:
 
-       * A sequence of arrays describing the bin edges along each dimension.
-       * The number of bins for each dimension (nx, ny, ... =bins)
-       * The number of bins for all dimensions (nx=ny=...=bins).
+        * A sequence of arrays describing the bin edges along each dimension.
+        * The number of bins for each dimension (nx, ny, ... =bins)
+        * The number of bins for all dimensions (nx=ny=...=bins).
 
     range : sequence, optional
-      A sequence of lower and upper bin edges to be used if the edges are
-      not given explicitely in `bins`. Defaults to the minimum and maximum
-      values along each dimension.
+        A sequence of lower and upper bin edges to be used if the edges are
+        not given explicitely in `bins`. Defaults to the minimum and maximum
+        values along each dimension.
     normed : boolean, optional
-      If False, returns the number of samples in each bin. If True, returns
-      the bin density, ie, the bin count divided by the bin hypervolume.
-    weights : array-like (N,), optional
-      An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
-      Weights are normalized to 1 if normed is True. If normed is False, the
-      values of the returned histogram are equal to the sum of the weights
-      belonging to the samples falling into each bin.
+        If False, returns the number of samples in each bin. If True, returns
+        the bin density, ie, the bin count divided by the bin hypervolume.
+    weights : array_like (N,), optional
+        An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
+        Weights are normalized to 1 if normed is True. If normed is False, the
+        values of the returned histogram are equal to the sum of the weights
+        belonging to the samples falling into each bin.
 
     Returns
     -------
-    H : array
-      The multidimensional histogram of sample x. See normed and weights for
-      the different possible semantics.
+    H : ndarray
+        The multidimensional histogram of sample x. See normed and weights for
+        the different possible semantics.
     edges : list
-      A list of D arrays describing the bin edges for each dimension.
+        A list of D arrays describing the bin edges for each dimension.
 
     See Also
     --------
@@ -572,25 +572,24 @@ def average(a, axis=None, weights=None, returned=False):
     """
     Return the weighted average of array over the specified axis.
 
-
     Parameters
     ----------
     a : array_like
         Data to be averaged.
-    axis : {None, integer}, optional
+    axis : int, optional
         Axis along which to average `a`. If `None`, averaging is done over the
         entire array irrespective of its shape.
-    weights : {None, array_like}, optional
+    weights : array_like, optional
         The importance that each datum has in the computation of the average.
-        The weights array can either be 1D (in which case its length must be
+        The weights array can either be 1-D (in which case its length must be
         the size of `a` along the given axis) or of the same shape as `a`.
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
-    returned : {False, boolean}, optional
-        If `True`, the tuple (`average`, `sum_of_weights`) is returned,
-        otherwise only the average is returned. Note that if `weights=None`,
-        `sum_of_weights` is equivalent to the number of elements over which
-        the average is taken.
+    returned : bool, optional
+        Default is `False`. If `True`, the tuple (`average`, `sum_of_weights`)
+        is returned, otherwise only the average is returned.  Note that
+        if `weights=None`, `sum_of_weights` is equivalent to the number of
+        elements over which the average is taken.
 
     Returns
     -------
@@ -660,7 +659,64 @@ def average(a, axis=None, weights=None, returned=False):
         return avg
 
 def asarray_chkfinite(a):
-    """Like asarray, but check that no NaNs or Infs are present.
+    """
+    Convert the input to an array, checking for NaNs or Infs.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes lists, lists of tuples, tuples, tuples of tuples, tuples
+        of lists and ndarrays.  Success requires no NaNs or Infs.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F'}, optional
+        Whether to use row-major ('C') or column-major ('FORTRAN') memory
+        representation.  Defaults to 'C'.
+
+    Returns
+    -------
+    out : ndarray
+        Array interpretation of `a`.  No copy is performed if the input
+        is already an ndarray.  If `a` is a subclass of ndarray, a base
+        class ndarray is returned.
+
+    Raises
+    ------
+    ValueError
+        Raises ValueError if `a` contains NaN (Not a Number) or Inf (Infinity).
+
+    See Also
+    --------
+    asarray : Create and array.
+    asanyarray : Similar function which passes through subclasses.
+    ascontiguousarray : Convert input to a contiguous array.
+    asfarray : Convert input to a floating point ndarray.
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    fromiter : Create an array from an iterator.
+    fromfunction : Construct an array by executing a function on grid
+                   positions.
+
+    Examples
+    --------
+    Convert a list into an array.  If all elements are finite
+    ``asarray_chkfinite`` is identical to ``asarray``.
+
+    >>> a = [1, 2]
+    >>> np.asarray_chkfinite(a)
+    array([1, 2])
+
+    Raises ValueError if array_like contains Nans or Infs.
+
+    >>> a = [1, 2, np.inf]
+    >>> try:
+    ...     np.asarray_chkfinite(a)
+    ... except ValueError:
+    ...     print 'ValueError'
+    ...
+    ValueError
+
     """
     a = asarray(a)
     if (a.dtype.char in typecodes['AllFloat']) \
@@ -820,6 +876,15 @@ def select(condlist, choicelist, default=0):
                 for m in range(M):
                     output += [V[m] for V,C in zip(values,cond) if C[m]]
                               or [default]
+
+    Examples
+    --------
+    >>> t = np.arange(10)
+    >>> s = np.arange(10)*100
+    >>> condlist = [t == 4, t > 5]
+    >>> choicelist = [s, t]
+    >>> np.select(condlist, choicelist)
+    array([  0,   0,   0,   0, 400,   0,   6,   7,   8,   9])
 
     """
     n = len(condlist)
@@ -1155,13 +1220,17 @@ def angle(z, deg=0):
     z : array_like
         A complex number or sequence of complex numbers.
     deg : bool, optional
-        Return angle in degrees if True, radians if False.  Default is False.
+        Return angle in degrees if True, radians if False (default).
 
     Returns
     -------
     angle : {ndarray, scalar}
-        The angle is defined as counterclockwise from the positive real axis on
+        The counterclockwise angle from the positive real axis on
         the complex plane, with dtype as numpy.float64.
+
+    See Also
+    --------
+    arctan2
 
     Examples
     --------
@@ -1232,6 +1301,13 @@ def sort_complex(a):
     -------
     out : complex ndarray
         Always returns a sorted complex array.
+
+    Examples
+    --------
+    >>> np.sort_complex([5, 3, 6, 2, 1])
+    array([ 1.+0.j,  2.+0.j,  3.+0.j,  5.+0.j,  6.+0.j])
+    >>> np.sort_complex([5 + 2j, 3 - 1j, 6 - 2j, 2 - 3j, 1 - 5j])
+    array([ 1.-5.j,  2.-3.j,  3.-1.j,  5.+2.j,  6.-2.j])
 
     """
     b = array(a,copy=True)
@@ -1360,9 +1436,27 @@ def extract(condition, arr):
     return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
 def place(arr, mask, vals):
-    """Similar to putmask arr[mask] = vals but the 1D array vals has the
-    same number of elements as the non-zero values of mask. Inverse of
-    extract.
+    """
+    Changes elements of an array based on conditional and input values.
+
+    Similar to ``putmask(a, mask, vals)`` but the 1D array `vals` has the
+    same number of elements as the non-zero values of `mask`. Inverse of
+    ``extract``.
+
+    Sets `a`.flat[n] = `values`\\[n] for each n where `mask`.flat[n] is true.
+
+    Parameters
+    ----------
+    a : array_like
+        Array to put data into.
+    mask : array_like
+        Boolean mask array.
+    values : array_like, shape(number of non-zero `mask`, )
+        Values to put into `a`.
+
+    See Also
+    --------
+    putmask, put, take
 
     """
     return _insert(arr, mask, vals)
@@ -1401,46 +1495,111 @@ def _nanop(op, fill, a, axis=None):
 
 def nansum(a, axis=None):
     """
-    Sum the array along the given axis, treating NaNs as zero.
+    Return the sum of array elements over a given axis treating
+    Not a Numbers (NaNs) as zero.
 
     Parameters
     ----------
-    a : array-like
-        Input array.
-    axis : {int, None}, optional
-        Axis along which the sum is computed. By default `a` is flattened.
+    a : array_like
+        Array containing numbers whose sum is desired. If `a` is not an
+        array, a conversion is attempted.
+    axis : int, optional
+        Axis along which the sum is computed. The default is to compute
+        the sum of the flattened array.
 
     Returns
     -------
-    y : {ndarray, scalar}
-        The sum ignoring NaNs.
+    y : ndarray
+        An array with the same shape as a, with the specified axis removed.
+        If a is a 0-d array, or if axis is None, a scalar is returned with
+        the same dtype as `a`.
+
+    See Also
+    --------
+    numpy.sum : Sum across array including Not a Numbers.
+    isnan : Shows which elements are Not a Number (NaN).
+    isfinite: Shows which elements are not: Not a Number, positive and
+             negative infinity
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    If positive or negative infinity are present the result is positive or
+    negative infinity. But if both positive and negative infinity are present,
+    the result is Not A Number (NaN).
+
+    Arithmetic is modular when using integer types (all elements of `a` must
+    be finite i.e. no elements that are NaNs, positive infinity and negative
+    infinity because NaNs are floating point types), and no error is raised
+    on overflow.
+
 
     Examples
     --------
-    >>> np.nansum([np.nan, 1])
+    >>> np.nansum(1)
+    1
+    >>> np.nansum([1])
+    1
+    >>> np.nansum([1, np.nan])
     1.0
     >>> a = np.array([[1, 1], [1, np.nan]])
+    >>> np.nansum(a)
+    3.0
     >>> np.nansum(a, axis=0)
     array([ 2.,  1.])
+
+    When positive infinity and negative infinity are present
+
+    >>> np.nansum([1, np.nan, np.inf])
+    inf
+    >>> np.nansum([1, np.nan, np.NINF])
+    -inf
+    >>> np.nansum([1, np.nan, np.inf, np.NINF])
+    nan
 
     """
     return _nanop(np.sum, 0, a, axis)
 
 def nanmin(a, axis=None):
     """
-    Find the minimum along the given axis, ignoring NaNs.
+    Return the minimum of array elements over the given axis ignoring any NaNs.
 
     Parameters
     ----------
     a : array_like
-        Input array.
+        Array containing numbers whose sum is desired. If `a` is not
+        an array, a conversion is attempted.
     axis : int, optional
-        Axis along which the minimum is computed. By default `a` is flattened.
+        Axis along which the minimum is computed.The default is to compute
+        the minimum of the flattened array.
 
     Returns
     -------
     y : {ndarray, scalar}
-        The minimum ignoring NaNs.
+        An array with the same shape as `a`, with the specified axis removed.
+        If `a` is a 0-d array, or if axis is None, a scalar is returned. The
+        the same dtype as `a` is returned.
+
+
+    See Also
+    --------
+    numpy.amin : Minimum across array including any Not a Numbers.
+    numpy.nanmax : Maximum across array ignoring any Not a Numbers.
+    isnan : Shows which elements are Not a Number (NaN).
+    isfinite: Shows which elements are not: Not a Number, positive and
+             negative infinity
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Positive infinity is treated as a very large number and negative infinity
+    is treated as a very small (i.e. negative) number.
+
+    If the input has a integer type, an integer type is returned unless
+    the input contains NaNs and infinity.
+
 
     Examples
     --------
@@ -1452,34 +1611,65 @@ def nanmin(a, axis=None):
     >>> np.nanmin(a, axis=1)
     array([ 1.,  3.])
 
+    When positive infinity and negative infinity are present:
+
+    >>> np.nanmin([1, 2, np.nan, np.inf])
+    1.0
+    >>> np.nanmin([1, 2, np.nan, np.NINF])
+    -inf
+
     """
     return _nanop(np.min, np.inf, a, axis)
 
 def nanargmin(a, axis=None):
     """
-    Return indices of the minimum values along the given axis of `a`,
-    ignoring NaNs.
+    Return indices of the minimum values along an axis, ignoring NaNs.
 
-    Refer to `numpy.nanargmax` for detailed documentation.
+
+    See Also
+    --------
+    nanargmax : corresponding function for maxima; see for details.
 
     """
     return _nanop(np.argmin, np.inf, a, axis)
 
 def nanmax(a, axis=None):
     """
-    Find the maximum along the given axis, ignoring NaNs.
+    Return the maximum of array elements over the given axis ignoring any NaNs.
 
     Parameters
     ----------
-    a : array-like
-        Input array.
-    axis : {int, None}, optional
-        Axis along which the maximum is computed. By default `a` is flattened.
+    a : array_like
+        Array containing numbers whose maximum is desired. If `a` is not
+        an array, a conversion is attempted.
+    axis : int, optional
+        Axis along which the maximum is computed.The default is to compute
+        the maximum of the flattened array.
 
     Returns
     -------
-    y : {ndarray, scalar}
-        The maximum ignoring NaNs.
+    y : ndarray
+        An array with the same shape as `a`, with the specified axis removed.
+        If `a` is a 0-d array, or if axis is None, a scalar is returned. The
+        the same dtype as `a` is returned.
+
+    See Also
+    --------
+    numpy.amax : Maximum across array including any Not a Numbers.
+    numpy.nanmin : Minimum across array ignoring any Not a Numbers.
+    isnan : Shows which elements are Not a Number (NaN).
+    isfinite: Shows which elements are not: Not a Number, positive and
+             negative infinity
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Positive infinity is treated as a very large number and negative infinity
+    is treated as a very small (i.e. negative) number.
+
+    If the input has a integer type, an integer type is returned unless
+    the input contains NaNs and infinity.
 
     Examples
     --------
@@ -1491,29 +1681,35 @@ def nanmax(a, axis=None):
     >>> np.nanmax(a, axis=1)
     array([ 2.,  3.])
 
+    When positive infinity and negative infinity are present:
+
+    >>> np.nanmax([1, 2, np.nan, np.NINF])
+    2.0
+    >>> np.nanmax([1, 2, np.nan, np.inf])
+    inf
+
     """
     return _nanop(np.max, -np.inf, a, axis)
 
 def nanargmax(a, axis=None):
     """
-    Return indices of the maximum values over the given axis of 'a',
-    ignoring NaNs.
+    Return indices of the maximum values over an axis, ignoring NaNs.
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Input data.
     axis : int, optional
         Axis along which to operate.  By default flattened input is used.
 
     Returns
     -------
-    index_array : {ndarray, int}
+    index_array : ndarray
         An array of indices or a single index value.
 
     See Also
     --------
-    argmax
+    argmax, nanargmin
 
     Examples
     --------
@@ -1531,8 +1727,19 @@ def nanargmax(a, axis=None):
     return _nanop(np.argmax, -np.inf, a, axis)
 
 def disp(mesg, device=None, linefeed=True):
-    """Display a message to the given device (default is sys.stdout)
-    with or without a linefeed.
+    """
+    Display a message on a device
+
+    Parameters
+    ----------
+    mesg : string
+        Message to display.
+    device : device object with 'write' method
+        Device to write message.  If None, defaults to ``sys.stdout`` which is
+        very similar to ``print``.
+    linefeed : bool, optional
+        Option whether to print a line feed or not.  Defaults to True.
+
     """
     if device is None:
         import sys
@@ -1695,11 +1902,11 @@ def cov(m, y=None, rowvar=1, bias=0):
 
     Parameters
     ----------
-    m : array-like
-        A 1D or 2D array containing multiple variables and observations.
+    m : array_like
+        A 1-D or 2-D array containing multiple variables and observations.
         Each row of `m` represents a variable, and each column a single
         observation of all those variables. Also see `rowvar` below.
-    y : array-like, optional
+    y : array_like, optional
         An additional set of variables and observations. `y` has the same
         form as that of `m`.
     rowvar : int, optional
@@ -1790,7 +1997,7 @@ def cov(m, y=None, rowvar=1, bias=0):
 
 def corrcoef(x, y=None, rowvar=1, bias=0):
     """
-    Correlation coefficients.
+    Return correlation coefficients.
 
     Please refer to the documentation for `cov` for more detail.  The
     relationship between the correlation coefficient matrix, P, and the
@@ -2014,9 +2221,9 @@ def hanning(M):
 
     Returns
     -------
-    out : array
+    out : ndarray, shape(M,)
         The window, normalized to one (the value one
-        appears only if the number of samples is odd).
+        appears only if `M` is odd).
 
     See Also
     --------
@@ -2259,17 +2466,30 @@ def _i0_2(x):
 
 def i0(x):
     """
-    Modified Bessel function of the first kind, order 0, :math:`I_0`
+    Modified Bessel function of the first kind, order 0.
+
+    Usually denoted :math:`I_0`.
 
     Parameters
     ----------
-    x : array-like, dtype float or complex
+    x : array_like, dtype float or complex
         Argument of the Bessel function.
 
     Returns
     -------
     out : ndarray, shape z.shape, dtype z.dtype
-        The modified Bessel function evaluated for all elements of `x`.
+        The modified Bessel function evaluated at the elements of `x`.
+
+    See Also
+    --------
+    scipy.special.iv, scipy.special.ive
+
+    References
+    ----------
+    .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
+           10th printing, 1964, pp. 374. http://www.math.sfu.ca/~cbm/aands/
+    .. [2] Wikipedia, "Bessel function",
+           http://en.wikipedia.org/wiki/Bessel_function
 
     Examples
     --------
@@ -2361,11 +2581,11 @@ def kaiser(M,beta):
 
     References
     ----------
-    .. [1]  J. F. Kaiser, "Digital Filters" - Ch 7 in "Systems analysis by
-            digital computer", Editors: F.F. Kuo and J.F. Kaiser, p 218-285.
-            John Wiley and Sons, New York, (1966).
-    .. [2]\tE.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
-            University of Alberta Press, 1975, pp. 177-178.
+    .. [1] J. F. Kaiser, "Digital Filters" - Ch 7 in "Systems analysis by
+           digital computer", Editors: F.F. Kuo and J.F. Kaiser, p 218-285.
+           John Wiley and Sons, New York, (1966).
+    .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
+           University of Alberta Press, 1975, pp. 177-178.
     .. [3] Wikipedia, "Window function",
            http://en.wikipedia.org/wiki/Window_function
 
@@ -2483,6 +2703,28 @@ def sinc(x):
     return sin(y)/y
 
 def msort(a):
+    """
+    Return a copy of an array sorted along the first axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Array to be sorted.
+
+    Returns
+    -------
+    sorted_array : ndarray
+        Array of the same type and shape as `a`.
+
+    See Also
+    --------
+    sort
+
+    Notes
+    -----
+    ``np.msort(a)`` is equivalent to  ``np.sort(a, axis=0)``.
+
+    """
     b = array(a,subok=True,copy=True)
     b.sort(0)
     return b
@@ -2593,7 +2835,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     ----------
     y : array_like
         Input array to integrate.
-    x : {array_like, None}, optional
+    x : array_like, optional
         If `x` is None, then spacing between all `y` elements is 1.
     dx : scalar, optional
         If `x` is None, spacing given by `dx` is assumed.
@@ -2707,11 +2949,11 @@ def delete(arr, obj, axis=None):
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
       Input array.
     obj : slice, integer or an array of integers
       Indicate which sub-arrays to remove.
-    axis : integer or None
+    axis : integer, optional
       The axis along which to delete the subarray defined by `obj`.
       If `axis` is None, `obj` is applied to the flattened array.
 

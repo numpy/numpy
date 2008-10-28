@@ -81,35 +81,35 @@ class NpzFile(object):
 
 def load(file, memmap=False):
     """
-    Load pickled, ``.npy``, and ``.npz`` binary files.
+    Load a pickled, ``.npy``, or ``.npz`` binary file.
 
     Parameters
     ----------
     file : file-like object or string
-        The file to read.  It must support seek and read methods.
+        The file to read.  It must support ``seek()`` and ``read()`` methods.
     memmap : bool
         If True, then memory-map the ``.npy`` file (or unzip the ``.npz`` file
-        into a temporary directory and memory-map each component).  This has no
-        effect for a pickled file.
+        into a temporary directory and memory-map each component).  This has
+        no effect for a pickled file.
 
     Returns
     -------
     result : array, tuple, dict, etc.
         Data stored in the file.
 
-        - If file contains pickle data, then whatever is stored in the
-          pickle is returned.
-
-        - If the file is a ``.npy`` file, then an array is returned.
-
-        - If the file is a ``.npz`` file, then a dictionary-like object is
-          returned, containing {filename: array} key-value pairs, one for
-          every file in the archive.
-
     Raises
     ------
     IOError
         If the input file does not exist or cannot be read.
+
+    Notes
+    -----
+    - If file contains pickle data, then whatever is stored in the
+      pickle is returned.
+    - If the file is a ``.npy`` file, then an array is returned.
+    - If the file is a ``.npz`` file, then a dictionary-like object is
+      returned, containing {filename: array} key-value pairs, one for
+      every file in the archive.
 
     Examples
     --------
@@ -178,12 +178,23 @@ def save(file, arr):
     format.write_array(fid, arr)
 
 def savez(file, *args, **kwds):
-    """Save several arrays into an .npz file format which is a zipped-archive
+    """
+    Save several arrays into an .npz file format which is a zipped-archive
     of arrays
 
     If keyword arguments are given, then filenames are taken from the keywords.
     If arguments are passed in with no keywords, then stored file names are
     arr_0, arr_1, etc.
+
+    Parameters
+    ----------
+    file : string
+        File name of .npz file.
+    args : Arguments
+        Function arguments.
+    kwds : Keyword arguments
+        Keywords.
+
     """
 
     # Import is postponed to here since zipfile depends on gzip, an optional

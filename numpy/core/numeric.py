@@ -305,7 +305,7 @@ def asfortranarray(a, dtype=None):
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Input array.
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
@@ -339,7 +339,7 @@ def require(a, dtype=None, requirements=None):
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
        The object to be converted to a type-and-requirement satisfying array
     dtype : data-type
        The required data-type (None is the default data-type -- float64)
@@ -403,15 +403,42 @@ def isfortran(a):
     return a.flags.fnc
 
 def argwhere(a):
-    """Return a 2-d array of shape N x a.ndim where each row
-    is a sequence of indices into a.  This sequence must be
-    converted to a tuple in order to be used to index into a.
+    """
+    Find the indices of array elements that are non-zero, grouped by element.
 
-    >>> np.argwhere(np.ones((2, 2)))
-    array([[0, 0],
-           [0, 1],
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+
+    Returns
+    -------
+    index_array : ndarray
+        Indices of elements that are non-zero. Indices are grouped by element.
+
+    See Also
+    --------
+    where, nonzero
+
+    Notes
+    -----
+    ``np.argwhere(a)`` is the same as ``np.transpose(np.nonzero(a))``.
+
+    The output of ``argwhere`` is not suitable for indexing arrays.
+    For this purpose use ``where(a)`` instead.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.argwhere(x>1)
+    array([[0, 2],
            [1, 0],
-           [1, 1]])
+           [1, 1],
+           [1, 2]])
+
     """
     return asarray(a.nonzero()).T
 
@@ -635,6 +662,13 @@ def vdot(a, b):
     dot(`a`, `b`).  If the first argument is complex the complex conjugate
     of the first argument is used for the calculation of the dot product.
 
+    For 2-D arrays it is equivalent to matrix multiplication, and for 1-D
+    arrays to inner product of vectors (with complex conjugation of `a`).
+    For N dimensions it is a sum product over the last axis of `a` and
+    the second-to-last of `b`::
+
+        dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
     Parameters
     ----------
     a : array_like
@@ -645,7 +679,7 @@ def vdot(a, b):
 
     Returns
     -------
-    output : scalar
+    output : ndarray
         Returns dot product of `a` and `b`.  Can be an int, float, or
         complex depending on the types of `a` and `b`.
 
@@ -726,7 +760,7 @@ except ImportError:
 
 def tensordot(a, b, axes=2):
     """
-    Returns the tensor dot product for (ndim >= 1) arrays along specified axes.
+    Returns the tensor dot product for (ndim >= 1) arrays along an axes.
 
     The first element of the sequence determines the axis or axes
     in `a` to sum over, and the second element in `axes` argument sequence
@@ -1109,39 +1143,51 @@ little_endian = (sys.byteorder == 'little')
 
 def indices(dimensions, dtype=int):
     """
-    Return an array representing the coordinates of a grid.
+    Return an array representing the indices of a grid.
+
+    Compute an array where the subarrays contain index values 0,1,...
+    varying only along the corresponding axis.
 
     Parameters
     ----------
-    shape : (N,) tuple of ints
+    dimensions : sequence of ints
+        The shape of the grid.
+    dtype : optional
+        Data_type of the result.
 
     Returns
     -------
     grid : ndarray
-        The output shape is ``(N,) + shape``.  I.e., if `shape` is ``(2,4,5)``,
-        the output shape is ``(3, 2, 4, 5)``.  Each subarray, ``grid[i,...]``
-        contains values that vary only along the ``i-th`` axis.
+        The array of grid indices,
+        ``grid.shape = (len(dimensions),) + tuple(dimensions)``.
+
+    See Also
+    --------
+    mgrid, meshgrid
+
+    Notes
+    -----
+    The output shape is obtained by prepending the number of dimensions
+    in front of the tuple of dimensions, i.e. if `dimensions` is a tuple
+    ``(r0, ..., rN-1)`` of length ``N``, the output shape is
+    ``(N,r0,...,rN-1)``.
+
+    The subarrays ``grid[k]`` contains the N-D array of indices along the
+    ``k-th`` axis. Explicitly::
+
+        grid[k,i0,i1,...,iN-1] = ik
 
     Examples
     --------
     >>> grid = np.indices((2,3))
-
-    The row-positions are given by:
-
-    >>> grid[0]
+    >>> grid.shape
+    (2,2,3)
+    >>> grid[0]        # row indices
     array([[0, 0, 0],
            [1, 1, 1]])
-
-    and the column-positions by
-
-    >>> grid[1]
+    >>> grid[1]        # column indices
     array([[0, 1, 2],
            [0, 1, 2]])
-
-
-    See Also
-    --------
-    mgrid, meshgrid, ndindex
 
     """
     dimensions = tuple(dimensions)
@@ -1491,7 +1537,7 @@ def identity(n, dtype=None):
 
 def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     """
-    Returns True if all elements are equal subject to given tolerances.
+    Returns True if two arrays are element-wise equal within a tolerance.
 
     The tolerance values are positive, typically very small numbers.  The
     relative difference (`rtol` * `b`) and the absolute difference (`atol`)
@@ -1507,17 +1553,33 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     atol : Absolute tolerance
         The absolute difference is equal to `atol`.
 
+    Returns
+    -------
+    y : bool
+        Returns True if the two arrays are equal within the given
+        tolerance; False otherwise. If either array contains NaN, then
+        False is returned.
+
     See Also
     --------
     all, any, alltrue, sometrue
 
+    Notes
+    -----
+    If the following equation is element-wise True, then allclose returns
+    True.
+
+     absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
+
     Examples
     --------
-    >>> allclose(array([1e10,1e-7]), array([1.00001e10,1e-8]))
+    >>> np.allclose([1e10,1e-7], [1.00001e10,1e-8])
     False
-    >>> allclose(array([1e10,1e-8]), array([1.00001e10,1e-9]))
+    >>> np.allclose([1e10,1e-8], [1.00001e10,1e-9])
     True
-    >>> allclose(array([1e10,1e-8]), array([1.0001e10,1e-9]))
+    >>> np.allclose([1e10,1e-8], [1.0001e10,1e-9])
+    False
+    >>> np.allclose([1.0, np.nan], [1.0, np.nan])
     False
 
     """
@@ -1540,9 +1602,9 @@ def array_equal(a1, a2):
 
     Parameters
     ----------
-    a1 : array-like
+    a1 : array_like
         First input array.
-    a2 : array-like
+    a2 : array_like
         Second input array.
 
     Returns
@@ -1571,9 +1633,32 @@ def array_equal(a1, a2):
     return bool(logical_and.reduce(equal(a1,a2).ravel()))
 
 def array_equiv(a1, a2):
-    """Returns True if a1 and a2 are shape consistent
-    (mutually broadcastable) and have all elements equal and False
-    otherwise.
+    """
+    Returns True if input arrays are shape consistent and all elements equal.
+
+    Parameters
+    ----------
+    a1 : array_like
+        Input array.
+    a2 : array_like
+        Input array.
+
+    Returns
+    -------
+    out : bool
+        True if equivalent, False otherwise.
+
+    Examples
+    --------
+    >>> np.array_equiv([1,2],[1,2])
+    >>> True
+    >>> np.array_equiv([1,2],[1,3])
+    >>> False
+    >>> np.array_equiv([1,2], [[1,2],[1,2]])
+    >>> True
+    >>> np.array_equiv([1,2], [[1,2],[1,3]])
+    >>> False
+
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
@@ -1598,31 +1683,73 @@ for key in _errdict.keys():
 del key
 
 def seterr(all=None, divide=None, over=None, under=None, invalid=None):
-    """Set how floating-point errors are handled.
-
-    Valid values for each type of error are the strings
-    "ignore", "warn", "raise", and "call". Returns the old settings.
-    If 'all' is specified, values that are not otherwise specified
-    will be set to 'all', otherwise they will retain their old
-    values.
+    """
+    Set how floating-point errors are handled.
 
     Note that operations on integer scalar types (such as int16) are
     handled like floating point, and are affected by these settings.
 
-    Example:
+    Parameters
+    ----------
+    all : {'ignore', 'warn', 'raise', 'call'}, optional
+        Set treatment for all types of floating-point errors at once:
+
+        - ignore: Take no action when the exception occurs
+        - warn: Print a RuntimeWarning (via the Python `warnings` module)
+        - raise: Raise a FloatingPointError
+        - call: Call a function specified using the `seterrcall` function.
+
+        The default is not to change the current behavior.
+    divide : {'ignore', 'warn', 'raise', 'call'}, optional
+        Treatment for division by zero.
+    over : {'ignore', 'warn', 'raise', 'call'}, optional
+        Treatment for floating-point overflow.
+    under : {'ignore', 'warn', 'raise', 'call'}, optional
+        Treatment for floating-point underflow.
+    invalid : {'ignore', 'warn', 'raise', 'call'}, optional
+        Treatment for invalid floating-point operation.
+
+    Returns
+    -------
+    old_settings : dict
+        Dictionary containing the old settings.
+
+    See also
+    --------
+    seterrcall : set a callback function for the 'call' mode.
+    geterr, geterrcall
+
+    Notes
+    -----
+    The floating-point exceptions are defined in the IEEE 754 standard [1]:
+
+    - Division by zero: infinite result obtained from finite numbers.
+    - Overflow: result too large to be expressed.
+    - Underflow: result so close to zero that some precision
+      was lost.
+    - Invalid operation: result is not an expressible number, typically
+      indicates that a NaN was produced.
+
+    .. [1] http://en.wikipedia.org/wiki/IEEE_754
+
+    Examples
+    --------
+
+    Set mode:
 
     >>> seterr(over='raise') # doctest: +SKIP
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+     'under': 'ignore'}
 
-    >>> seterr(all='warn', over='raise') # doctest: +SKIP
-    {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    >>> old_settings = seterr(all='warn', over='raise') # doctest: +SKIP
 
     >>> int16(32000) * int16(3) # doctest: +SKIP
     Traceback (most recent call last):
           File "<stdin>", line 1, in ?
     FloatingPointError: overflow encountered in short_scalars
     >>> seterr(all='ignore') # doctest: +SKIP
-    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
+     'under': 'ignore'}
 
     """
 
@@ -1665,7 +1792,14 @@ def geterr():
     return res
 
 def setbufsize(size):
-    """Set the size of the buffer used in ufuncs.
+    """
+    Set the size of the buffer used in ufuncs.
+
+    Parameters
+    ----------
+    size : int
+        Size of buffer.
+
     """
     if size > 10e6:
         raise ValueError, "Buffer size, %s, is too big." % size

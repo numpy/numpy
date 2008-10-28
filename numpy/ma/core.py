@@ -986,14 +986,14 @@ def masked_outside(x, v1, v2, copy=True):
 #
 def masked_object(x, value, copy=True, shrink=True):
     """
-    Mask the array ``x`` where the data are exactly equal to value.
+    Mask the array `x` where the data are exactly equal to value.
 
     This function is suitable only for object arrays: for floating
-    point, please use :func:`masked_values` instead.
+    point, please use `masked_values`_ instead.
 
     Parameters
     ----------
-    x : array-like
+    x : array_like
         Array to mask
     value : var
         Comparison value
@@ -1474,7 +1474,28 @@ class MaskedArray(ndarray):
     view.__doc__ = ndarray.view.__doc__
     #.............................................
     def astype(self, newtype):
-        """Returns a copy of the array cast to newtype."""
+        """
+        Returns a copy of the MaskedArray cast to given newtype.
+
+        Returns
+        -------
+        output : MaskedArray
+            A copy of self cast to input newtype.
+            The returned record shape matches self.shape.
+
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2,3.1],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
+        >>> print x
+        [[1.0 -- 3.1]
+         [-- 5.0 --]
+         [7.0 -- 9.0]]
+        >>> print x.astype(int32)
+        [[1 -- 3]
+         [-- 5 --]
+         [7 -- 9]]
+
+        """
         newtype = np.dtype(newtype)
         output = self._data.astype(newtype).view(type(self))
         output._update_from(self)
@@ -1862,7 +1883,25 @@ class MaskedArray(ndarray):
         return result
 
     def compressed(self):
-        """Return a 1-D array of all the non-masked data.
+        """
+        Return a 1-D array of all the non-masked data.
+
+        Returns
+        -------
+        data : ndarray.
+            A new ndarray holding the non-masked data is returned.
+
+        Notes
+        -----
+        + The result is NOT a MaskedArray !
+
+        Examples
+        --------
+        >>> x = array(arange(5), mask=[0]+[1]*4)
+        >>> print x.compressed()
+        [0]
+        >>> print type(x.compressed())
+        <type 'numpy.ndarray'>
 
         """
         data = ndarray.ravel(self._data)
@@ -2169,7 +2208,26 @@ masked_%(name)s(data = %(data)s,
     flatten = _arraymethod('flatten')
     #
     def ravel(self):
-        """Returns a 1D version of self, as a view."""
+        """
+        Returns a 1D version of self, as a view.
+
+        Returns
+        -------
+        MaskedArray
+            Output view is of shape ``(self.size,)`` (or
+            ``(np.ma.product(self.shape),)``).
+
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
+        >>> print x
+        [[1 -- 3]
+         [-- 5 --]
+         [7 -- 9]]
+        >>> print x.ravel()
+        [1 -- 3 -- 5 -- 7 -- 9]
+
+        """
         r = ndarray.ravel(self._data).view(type(self))
         r._update_from(self)
         if self._mask is not nomask:
@@ -2182,27 +2240,40 @@ masked_%(name)s(data = %(data)s,
     #
     def reshape (self, *s, **kwargs):
         """
-    Returns a masked array containing the data of a, but with a new shape.
-    The result is a view to the original array; if this is not possible,
-    a ValueError is raised.
+        Returns a masked array containing the data of a, but with a new shape.
+        The result is a view to the original array; if this is not possible,
+        a ValueError is raised.
 
-    Parameters
-    ----------
-    shape : shape tuple or int
-       The new shape should be compatible with the original shape. If an
-       integer, then the result will be a 1D array of that length.
-    order : {'C', 'F'}, optional
-        Determines whether the array data should be viewed as in C
-        (row-major) order or FORTRAN (column-major) order.
+        Parameters
+        ----------
+        shape : shape tuple or int
+           The new shape should be compatible with the original shape. If an
+           integer, then the result will be a 1D array of that length.
+        order : {'C', 'F'}, optional
+            Determines whether the array data should be viewed as in C
+            (row-major) order or FORTRAN (column-major) order.
 
-    Returns
-    -------
-    reshaped_array : array
-        A new view to the array.
+        Returns
+        -------
+        reshaped_array : array
+            A new view to the array.
 
-    Notes
-    -----
-    If you want to modify the shape in place, please use ``a.shape = s``
+        Notes
+        -----
+        If you want to modify the shape in place, please use ``a.shape = s``
+
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2],[3,4]], mask=[1,0,0,1])
+        >>> print x
+        [[-- 2]
+         [3 --]]
+        >>> x = x.reshape((4,1))
+        >>> print x
+        [[--]
+         [2]
+         [3]
+         [--]]
 
         """
         kwargs.update(order=kwargs.get('order','C'))
@@ -2235,13 +2306,48 @@ masked_%(name)s(data = %(data)s,
         return None
     #
     def put(self, indices, values, mode='raise'):
-        """Set storage-indexed locations to corresponding values.
+        """
+        Set storage-indexed locations to corresponding values.
 
-        a.put(values, indices, mode) sets a.flat[n] = values[n] for
-        each n in indices.  If ``values`` is shorter than ``indices``
-        then it will repeat.  If ``values`` has some masked values, the
-        initial mask is updated in consequence, else the corresponding
-        values are unmasked.
+        Sets self._data.flat[n] = values[n] for each n in indices.
+        If `values` is shorter than `indices` then it will repeat.
+        If `values` has some masked values, the initial mask is updated
+        in consequence, else the corresponding values are unmasked.
+
+        Parameters
+        ----------
+        indicies : 1-D array_like
+            Target indices, interpreted as integers.
+        values : array_like
+            Values to place in self._data copy at target indices.
+        mode : {'raise', 'wrap', 'clip'}, optional
+            Specifies how out-of-bounds indices will behave.
+            'raise' : raise an error.
+            'wrap' : wrap around.
+            'clip' : clip to the range.
+
+        Notes
+        -----
+        `values` can be a scalar or length 1 array.
+
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
+        >>> print x
+        [[1 -- 3]
+         [-- 5 --]
+         [7 -- 9]]
+        >>> x.put([0,4,8],[10,20,30])
+        >>> print x
+        [[10 -- 3]
+         [-- 20 --]
+         [7 -- 30]]
+
+        >>> x.put(4,999)
+        >>> print x
+        [[10 -- 3]
+         [-- 999 --]
+         [7 -- 30]]
 
         """
         m = self._mask
@@ -2279,36 +2385,35 @@ masked_%(name)s(data = %(data)s,
 
     #............................................
     def all(self, axis=None, out=None):
-        """a.all(axis=None, out=None)
+        """
+        Check if all of the elements of `a` are true.
 
-    Check if all of the elements of `a` are true.
+        Performs a :func:`logical_and` over the given axis and returns the result.
+        Masked values are considered as True during computation.
+        For convenience, the output array is masked where ALL the values along the
+        current axis are masked: if the output would have been a scalar and that
+        all the values are masked, then the output is `masked`.
 
-    Performs a :func:`logical_and` over the given axis and returns the result.
-    Masked values are considered as True during computation.
-    For convenience, the output array is masked where ALL the values along the
-    current axis are masked: if the output would have been a scalar and that
-    all the values are masked, then the output is `masked`.
+        Parameters
+        ----------
+        axis : {None, integer}
+            Axis to perform the operation over.
+            If None, perform over flattened array.
+        out : {None, array}, optional
+            Array into which the result can be placed. Its type is preserved
+            and it must be of the right shape to hold the output.
 
-    Parameters
-    ----------
-    axis : {None, integer}
-        Axis to perform the operation over.
-        If None, perform over flattened array.
-    out : {None, array}, optional
-        Array into which the result can be placed. Its type is preserved
-        and it must be of the right shape to hold the output.
+        See Also
+        --------
+        all : equivalent function
 
-    See Also
-    --------
-    all : equivalent function
-
-    Example
-    -------
-    >>> np.ma.array([1,2,3]).all()
-    True
-    >>> a = np.ma.array([1,2,3], mask=True)
-    >>> (a.all() is np.ma.masked)
-    True
+        Examples
+        --------
+        >>> np.ma.array([1,2,3]).all()
+        True
+        >>> a = np.ma.array([1,2,3], mask=True)
+        >>> (a.all() is np.ma.masked)
+        True
 
         """
         mask = self._mask.all(axis)
@@ -2327,25 +2432,24 @@ masked_%(name)s(data = %(data)s,
 
 
     def any(self, axis=None, out=None):
-        """a.any(axis=None, out=None)
+        """
+        Check if any of the elements of `a` are true.
 
-    Check if any of the elements of `a` are true.
+        Performs a logical_or over the given axis and returns the result.
+        Masked values are considered as False during computation.
 
-    Performs a logical_or over the given axis and returns the result.
-    Masked values are considered as False during computation.
+        Parameters
+        ----------
+        axis : {None, integer}
+            Axis to perform the operation over.
+            If None, perform over flattened array and return a scalar.
+        out : {None, array}, optional
+            Array into which the result can be placed. Its type is preserved
+            and it must be of the right shape to hold the output.
 
-    Parameters
-    ----------
-    axis : {None, integer}
-        Axis to perform the operation over.
-        If None, perform over flattened array and return a scalar.
-    out : {None, array}, optional
-        Array into which the result can be placed. Its type is preserved
-        and it must be of the right shape to hold the output.
-
-    See Also
-    --------
-    any : equivalent function
+        See Also
+        --------
+        any : equivalent function
 
         """
         mask = self._mask.all(axis)
@@ -2383,8 +2487,7 @@ masked_%(name)s(data = %(data)s,
 
 
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
-        """a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
-
+        """
         Return the sum along the offset diagonal of the array's
         indicated `axis1` and `axis2`.
 
@@ -2401,27 +2504,49 @@ masked_%(name)s(data = %(data)s,
 
 
     def sum(self, axis=None, dtype=None, out=None):
-        """a.sum(axis=None, dtype=None, out=None)
+        """
+        Return the sum of the array elements over the given axis.
+        Masked elements are set to 0 internally.
 
-    Return the sum of the array elements over the given axis.
-    Masked elements are set to 0 internally.
+        Parameters
+        ----------
+        axis : {None, -1, int}, optional
+            Axis along which the sum is computed. The default
+            (`axis` = None) is to compute over the flattened array.
+        dtype : {None, dtype}, optional
+            Determines the type of the returned array and of the accumulator
+            where the elements are summed. If dtype has the value None and
+            the type of a is an integer type of precision less than the default
+            platform integer, then the default platform integer precision is
+            used.  Otherwise, the dtype is the same as that of a.
+        out :  {None, ndarray}, optional
+            Alternative output array in which to place the result. It must
+            have the same shape and buffer length as the expected output
+            but the type will be cast if necessary.
 
-    Parameters
-    ----------
-    axis : {None, -1, int}, optional
-        Axis along which the sum is computed. The default
-        (`axis` = None) is to compute over the flattened array.
-    dtype : {None, dtype}, optional
-        Determines the type of the returned array and of the accumulator
-        where the elements are summed. If dtype has the value None and
-        the type of a is an integer type of precision less than the default
-        platform integer, then the default platform integer precision is
-        used.  Otherwise, the dtype is the same as that of a.
-    out :  {None, ndarray}, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output
-        but the type will be cast if necessary.
+        Returns
+        -------
+        sum_along_axis : MaskedArray or scalar
+            An array with the same shape as self, with the specified
+            axis removed.   If self is a 0-d array, or if `axis` is None, a scalar
+            is returned.  If an output array is specified, a reference to
+            `out` is returned.
 
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
+        >>> print x
+        [[1 -- 3]
+         [-- 5 --]
+         [7 -- 9]]
+        >>> print x.sum()
+        25
+        >>> print x.sum(axis=1)
+        [4 5 16]
+        >>> print x.sum(axis=0)
+        [8 5 12]
+        >>> print type(x.sum(axis=0, dtype=np.int64)[0])
+        <type 'numpy.int64'>
 
         """
         _mask = ndarray.__getattribute__(self, '_mask')
@@ -2506,53 +2631,53 @@ masked_%(name)s(data = %(data)s,
 
     def prod(self, axis=None, dtype=None, out=None):
         """
-    Return the product of the array elements over the given axis.
-    Masked elements are set to 1 internally for computation.
+        Return the product of the array elements over the given axis.
+        Masked elements are set to 1 internally for computation.
 
-    Parameters
-    ----------
-    axis : {None, int}, optional
-        Axis over which the product is taken. If None is used, then the
-        product is over all the array elements.
-    dtype : {None, dtype}, optional
-        Determines the type of the returned array and of the accumulator
-        where the elements are multiplied. If ``dtype`` has the value ``None``
-        and the type of a is an integer type of precision less than the default
-        platform integer, then the default platform integer precision is
-        used.  Otherwise, the dtype is the same as that of a.
-    out : {None, array}, optional
-        Alternative output array in which to place the result. It must have
-        the same shape as the expected output but the type will be cast if
-        necessary.
+        Parameters
+        ----------
+        axis : {None, int}, optional
+            Axis over which the product is taken. If None is used, then the
+            product is over all the array elements.
+        dtype : {None, dtype}, optional
+            Determines the type of the returned array and of the accumulator
+            where the elements are multiplied. If ``dtype`` has the value ``None``
+            and the type of a is an integer type of precision less than the default
+            platform integer, then the default platform integer precision is
+            used.  Otherwise, the dtype is the same as that of a.
+        out : {None, array}, optional
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
 
-    Returns
-    -------
-    product_along_axis : {array, scalar}, see dtype parameter above.
-        Returns an array whose shape is the same as a with the specified
-        axis removed. Returns a 0d array when a is 1d or axis=None.
-        Returns a reference to the specified output array if specified.
+        Returns
+        -------
+        product_along_axis : {array, scalar}, see dtype parameter above.
+            Returns an array whose shape is the same as a with the specified
+            axis removed. Returns a 0d array when a is 1d or axis=None.
+            Returns a reference to the specified output array if specified.
 
-    See Also
-    --------
-    prod : equivalent function
+        See Also
+        --------
+        prod : equivalent function
 
-    Examples
-    --------
-    >>> np.prod([1.,2.])
-    2.0
-    >>> np.prod([1.,2.], dtype=np.int32)
-    2
-    >>> np.prod([[1.,2.],[3.,4.]])
-    24.0
-    >>> np.prod([[1.,2.],[3.,4.]], axis=1)
-    array([  2.,  12.])
+        Notes
+        -----
+        Arithmetic is modular when using integer types, and no error is raised
+        on overflow.
 
-    Notes
-    -----
-    Arithmetic is modular when using integer types, and no error is raised
-    on overflow.
+        Examples
+        --------
+        >>> np.prod([1.,2.])
+        2.0
+        >>> np.prod([1.,2.], dtype=np.int32)
+        2
+        >>> np.prod([[1.,2.],[3.,4.]])
+        24.0
+        >>> np.prod([[1.,2.],[3.,4.]], axis=1)
+        array([  2.,  12.])
 
-    """
+        """
         _mask = ndarray.__getattribute__(self, '_mask')
         newmask = _mask.all(axis=axis)
         # No explicit output
@@ -2716,6 +2841,16 @@ masked_%(name)s(data = %(data)s,
 
     #............................................
     def round(self, decimals=0, out=None):
+        """
+        Return an array rounded a to the given number of decimals.
+
+        Refer to `numpy.around` for full documentation.
+
+        See Also
+        --------
+        numpy.around : equivalent function
+
+        """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
         result._mask = self._mask
         result._update_from(self)
@@ -2780,21 +2915,39 @@ masked_%(name)s(data = %(data)s,
 
 
     def argmin(self, axis=None, fill_value=None, out=None):
-        """a.argmin(axis=None, out=None)
+        """
+        Return array of indices to the minimum values along the given axis.
 
-    Return array of indices to the minimum values along the given axis.
+        Parameters
+        ----------
+        axis : {None, integer}
+            If None, the index is into the flattened array, otherwise along
+            the specified axis
+        fill_value : {var}, optional
+            Value used to fill in the masked values.  If None, the output of
+            minimum_fill_value(self._data) is used instead.
+        out : {None, array}, optional
+            Array into which the result can be placed. Its type is preserved
+            and it must be of the right shape to hold the output.
 
-    Parameters
-    ----------
-    axis : {None, integer}
-        If None, the index is into the flattened array, otherwise along
-        the specified axis
-    fill_value : {var}, optional
-        Value used to fill in the masked values.  If None, the output of
-        minimum_fill_value(self._data) is used instead.
-    out : {None, array}, optional
-        Array into which the result can be placed. Its type is preserved
-        and it must be of the right shape to hold the output.
+        Returns
+        -------
+        {ndarray, scalar}
+            If multi-dimension input, returns a new ndarray of indices to the
+            minimum values along the given axis.  Otherwise, returns a scalar
+            of index to the minimum values along the given axis.
+
+        Examples
+        --------
+        >>> x = np.ma.array(arange(4), mask=[1,1,0,0])
+        >>> x.shape = (2,2)
+        >>> print x
+        [[-- --]
+         [2 3]]
+        >>> print x.argmin(axis=0, fill_value=-1)
+        [0 0]
+        >>> print x.argmin(axis=0, fill_value=9)
+        [1 1]
 
         """
         if fill_value is None:
@@ -2804,36 +2957,35 @@ masked_%(name)s(data = %(data)s,
 
 
     def argmax(self, axis=None, fill_value=None, out=None):
-        """a.argmax(axis=None, out=None)
+        """
+        Returns array of indices of the maximum values along the given axis.
+        Masked values are treated as if they had the value fill_value.
 
-    Returns array of indices of the maximum values along the given axis.
-    Masked values are treated as if they had the value fill_value.
+        Parameters
+        ----------
+        axis : {None, integer}
+            If None, the index is into the flattened array, otherwise along
+            the specified axis
+        fill_value : {var}, optional
+            Value used to fill in the masked values.  If None, the output of
+            maximum_fill_value(self._data) is used instead.
+        out : {None, array}, optional
+            Array into which the result can be placed. Its type is preserved
+            and it must be of the right shape to hold the output.
 
-    Parameters
-    ----------
-    axis : {None, integer}
-        If None, the index is into the flattened array, otherwise along
-        the specified axis
-    fill_value : {var}, optional
-        Value used to fill in the masked values.  If None, the output of
-        maximum_fill_value(self._data) is used instead.
-    out : {None, array}, optional
-        Array into which the result can be placed. Its type is preserved
-        and it must be of the right shape to hold the output.
+        Returns
+        -------
+        index_array : {integer_array}
 
-    Returns
-    -------
-    index_array : {integer_array}
-
-    Examples
-    --------
-    >>> a = np.arange(6).reshape(2,3)
-    >>> a.argmax()
-    5
-    >>> a.argmax(0)
-    array([1, 1, 1])
-    >>> a.argmax(1)
-    array([2, 2])
+        Examples
+        --------
+        >>> a = np.arange(6).reshape(2,3)
+        >>> a.argmax()
+        5
+        >>> a.argmax(0)
+        array([1, 1, 1])
+        >>> a.argmax(1)
+        array([2, 2])
 
         """
         if fill_value is None:
@@ -2975,32 +3127,31 @@ masked_%(name)s(data = %(data)s,
 
     #........................
     def max(self, axis=None, out=None, fill_value=None):
-        """a.max(axis=None, out=None, fill_value=None)
+        """
+        Return the maximum along a given axis.
 
-    Return the maximum along a given axis.
+        Parameters
+        ----------
+        axis : {None, int}, optional
+            Axis along which to operate.  By default, ``axis`` is None and the
+            flattened input is used.
+        out : array_like, optional
+            Alternative output array in which to place the result.  Must
+            be of the same shape and buffer length as the expected output.
+        fill_value : {var}, optional
+            Value used to fill in the masked values.
+            If None, use the output of maximum_fill_value().
 
-    Parameters
-    ----------
-    axis : {None, int}, optional
-        Axis along which to operate.  By default, ``axis`` is None and the
-        flattened input is used.
-    out : array_like, optional
-        Alternative output array in which to place the result.  Must
-        be of the same shape and buffer length as the expected output.
-    fill_value : {var}, optional
-        Value used to fill in the masked values.
-        If None, use the output of maximum_fill_value().
+        Returns
+        -------
+        amax : array_like
+            New array holding the result.
+            If ``out`` was specified, ``out`` is returned.
 
-    Returns
-    -------
-    amax : array_like
-        New array holding the result.
-        If ``out`` was specified, ``out`` is returned.
-
-    See Also
-    --------
-    maximum_fill_value
-        Returns the maximum filling value for a given datatype.
+        See Also
+        --------
+        maximum_fill_value
+            Returns the maximum filling value for a given datatype.
 
         """
         _mask = ndarray.__getattribute__(self, '_mask')
@@ -3031,29 +3182,27 @@ masked_%(name)s(data = %(data)s,
         return out
 
     def ptp(self, axis=None, out=None, fill_value=None):
-        """a.ptp(axis=None, out=None)
+        """
+        Return (maximum - minimum) along the the given dimension
+        (i.e. peak-to-peak value).
 
-    Return (maximum - minimum) along the the given dimension
-    (i.e. peak-to-peak value).
+        Parameters
+        ----------
+        axis : {None, int}, optional
+            Axis along which to find the peaks.  If None (default) the
+            flattened array is used.
+        out : {None, array_like}, optional
+            Alternative output array in which to place the result. It must
+            have the same shape and buffer length as the expected output
+            but the type will be cast if necessary.
+        fill_value : {var}, optional
+            Value used to fill in the masked values.
 
-    Parameters
-    ----------
-    axis : {None, int}, optional
-        Axis along which to find the peaks.  If None (default) the
-        flattened array is used.
-    out : {None, array_like}, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output
-        but the type will be cast if necessary.
-    fill_value : {var}, optional
-        Value used to fill in the masked values.
-
-    Returns
-    -------
-    ptp : ndarray.
-        A new array holding the result, unless ``out`` was
-        specified, in which case a reference to ``out`` is returned.
-
+        Returns
+        -------
+        ptp : ndarray.
+            A new array holding the result, unless ``out`` was
+            specified, in which case a reference to ``out`` is returned.
 
         """
         if out is None:
@@ -3116,8 +3265,7 @@ masked_%(name)s(data = %(data)s,
     def tostring(self, fill_value=None, order='C'):
         """
         Return a copy of array data as a Python string containing the raw bytes
-        in the array.
-        The array is filled beforehand.
+        in the array.  The array is filled beforehand.
 
         Parameters
         ----------
@@ -3125,15 +3273,15 @@ masked_%(name)s(data = %(data)s,
             Value used to fill in the masked values.
             If None, uses self.fill_value instead.
         order : {string}
-            Order of the data item in the copy {"C","F","A"}.
-            "C"       -- C order (row major)
-            "Fortran" -- Fortran order (column major)
-            "Any"     -- Current order of array.
+            Order of the data item in the copy {'C','F','A'}.
+            'C'       -- C order (row major)
+            'Fortran' -- Fortran order (column major)
+            'Any'     -- Current order of array.
             None      -- Same as "Any"
 
-        Warnings
-        --------
-        As for :meth:`ndarray.tostring`, information about the shape, dtype...,
+        Notes
+        -----
+        As for method:`ndarray.tostring`, information about the shape, dtype...,
         but also fill_value will be lost.
 
         """
@@ -3143,14 +3291,34 @@ masked_%(name)s(data = %(data)s,
         raise NotImplementedError("Not implemented yet, sorry...")
 
     def torecords(self):
-        """Transforms a masked array into a flexible-type array with two fields:
+        """
+        Transforms a MaskedArray into a flexible-type array with two fields:
         * the ``_data`` field stores the ``_data`` part of the array;
         * the ``_mask`` field stores the ``_mask`` part of the array;
 
-        Warnings
-        --------
+        Returns
+        -------
+        record : ndarray
+            A new flexible-type ndarray with two fields: the first element
+            containing a value, the second element containing the corresponding
+            mask boolean.  The returned record shape matches self.shape.
+
+        Notes
+        -----
         A side-effect of transforming a masked array into a flexible ndarray is
-        that metainformation (``fill_value``, ...) will be lost.
+        that meta information (``fill_value``, ...) will be lost.
+
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
+        >>> print x
+        [[1 -- 3]
+         [-- 5 --]
+         [7 -- 9]]
+        >>> print x.torecords()
+        [[(1, False) (2, True) (3, False)]
+         [(4, True) (5, False) (6, True)]
+         [(7, False) (8, True) (9, False)]]
 
         """
         # Get the basic dtype ....

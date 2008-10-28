@@ -662,7 +662,8 @@ def _find_common_coerce(a, b):
 
 
 def find_common_type(array_types, scalar_types):
-    """Determine common type following standard coercion rules
+    """
+    Determine common type following standard coercion rules
 
     Parameters
     ----------
@@ -679,6 +680,11 @@ def find_common_type(array_types, scalar_types):
         is of a different kind.
 
         If the kinds is not understood, then None is returned.
+
+    See Also
+    --------
+    dtype
+
     """
     array_types = [dtype(x) for x in array_types]
     scalar_types = [dtype(x) for x in scalar_types]

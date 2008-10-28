@@ -95,7 +95,7 @@ add_newdoc('numpy.core.umath', 'arccos',
 
     Returns
     -------
-    angle : {ndarray, scalar}
+    angle : ndarray
         The angle of the ray intersecting the unit circle at the given
         `x`-coordinate in radians [0, pi]. If `x` is a scalar then a
         scalar is returned, otherwise an array of the same shape as `x`
@@ -156,7 +156,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
 
     Returns
     -------
-    out : {ndarray, scalar}
+    out : ndarray
         Array of the same shape and dtype as `x`.
 
     Notes
@@ -198,7 +198,7 @@ add_newdoc('numpy.core.umath', 'arcsin',
 
     Returns
     -------
-    angle : {ndarray, scalar}
+    angle : ndarray
       The angle of the ray intersecting the unit circle at the given
       `y`-coordinate in radians ``[-pi, pi]``. If `x` is a scalar then
       a scalar is returned, otherwise an array is returned.
@@ -263,7 +263,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
 
     For real-valued input data types, `arcsinh` always returns real output.
     For each value that cannot be expressed as a real number or infinity, it
-    yields ``nan`` and sets the `invalid` floating point error flag.
+    returns ``nan`` and sets the `invalid` floating point error flag.
 
     For complex-valued input, `arccos` is a complex analytical function that
     has branch cuts `[1j, infj]` and `[-1j, -infj]` and is continuous from
@@ -294,12 +294,12 @@ add_newdoc('numpy.core.umath', 'arctan',
 
     Parameters
     ----------
-    x : {array_like, scalar}
+    x : array_like
         Input values.  `arctan` is applied to each element of `x`.
 
     Returns
     -------
-    out : {ndarray, scalar}
+    out : ndarray
         Out has the same shape as `x`.  Its real part is
         in ``[-pi/2, pi/2]``. It is a scalar if `x` is a scalar.
 
@@ -363,15 +363,15 @@ add_newdoc('numpy.core.umath', 'arctan2',
 
     Parameters
     ----------
-    x1 : array-like, real-valued
+    x1 : array_like, real-valued
         y-coordinates.
-    x2 : array-like, real-valued
+    x2 : array_like, real-valued
         x-coordinates. `x2` must be broadcastable to match the shape of `x1`,
         or vice versa.
 
     Returns
     -------
-    angle : array-like
+    angle : ndarray
         Array of angles in radians, in the range ``[-pi, pi]``.
 
     See Also
@@ -726,7 +726,7 @@ add_newdoc('numpy.core.umath', 'conjugate',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
         The complex conjugate of `x`, with same dtype as `y`.
 
     Examples
@@ -793,12 +793,12 @@ add_newdoc('numpy.core.umath', 'degrees',
 
     Parameters
     ----------
-    x : array-like
+    x : array_like
       Angle in radians.
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
       The corresponding angle in degrees.
 
 
@@ -964,7 +964,37 @@ add_newdoc('numpy.core.umath', 'exp',
 
 add_newdoc('numpy.core.umath', 'expm1',
     """
-    e**x-1 elementwise.
+    Return the exponential of the elements in the array minus one.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+
+    Returns
+    -------
+    out : ndarray
+        Element-wise exponential minus one: ``out=exp(x)-1``.
+
+    See Also
+    --------
+    log1p : ``log(1+x)``, the inverse of expm1.
+
+
+    Notes
+    -----
+    This function provides greater precision than using ``exp(x)-1``
+    for small values of `x`.
+
+    Examples
+    --------
+    Since the series expansion of ``e**x = 1 + x + x**2/2! + x**3/3! + ...``,
+    for very small `x` we expect that ``e**x -1 ~ x + x**2/2``:
+
+    >>> np.expm1(1e-10)
+    1.00000000005e-10
+    >>> np.exp(1e-10) - 1
+    1.000000082740371e-10
 
     """)
 
@@ -1135,7 +1165,7 @@ add_newdoc('numpy.core.umath', 'greater',
 
 add_newdoc('numpy.core.umath', 'greater_equal',
     """
-    Returns (x1 >= x2) element-wise.
+    Element-wise True if first array is greater or equal than second array.
 
     Parameters
     ----------
@@ -1144,12 +1174,12 @@ add_newdoc('numpy.core.umath', 'greater_equal',
 
     Returns
     -------
-    Out : {ndarray, bool}
-        Output array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : ndarray, bool
+        Output array.
 
     See Also
     --------
-    greater
+    greater, less, less_equal, equal
 
     Examples
     --------
@@ -1164,16 +1194,15 @@ add_newdoc('numpy.core.umath', 'hypot',
 
     Parameters
     ----------
-    x : array-like
+    x : array_like
       Base of the triangle.
-    y : array-like
+    y : array_like
       Height of the triangle.
 
     Returns
     -------
-    z : {ndarray, scalar}
+    z : ndarray
       Hypotenuse of the triangle: sqrt(x**2 + y**2)
-
 
     Examples
     --------
@@ -1277,66 +1306,182 @@ add_newdoc('numpy.core.umath', 'invert',
 
 add_newdoc('numpy.core.umath', 'isfinite',
     """
-    Returns True where x is finite, False otherwise.
+    Returns True for each element that is a finite number.
+
+    Shows which elements of the input are finite (not infinity or not
+    Not a Number).
 
     Parameters
     ----------
     x : array_like
-      input values
+      Input values.
+    y : array_like, optional
+      A boolean array with the same shape and type as `x` to store the result.
 
     Returns
     -------
-    y : {ndarray, bool}
-      array of bools
+    y : ndarray, bool
+      For scalar input data, the result is a new numpy boolean with value True
+      if the input data is finite; otherwise the value is False (input is
+      either positive infinity, negative infinity or Not a Number).
+
+      For array input data, the result is an numpy boolean array with the same
+      dimensions as the input and the values are True if the corresponding
+      element of the input is finite; otherwise the values are False (element
+      is either positive infinity, negative infinity or Not a Number). If the
+      second argument is supplied then an numpy integer array is returned with
+      values 0 or 1 corresponding to False and True, respectively.
+
+    See Also
+    --------
+    isinf : Shows which elements are negative or negative infinity.
+    isneginf : Shows which elements are negative infinity.
+    isposinf : Shows which elements are positive infinity.
+    isnan : Shows which elements are Not a Number (NaN).
+
 
     Notes
     -----
-    `Nan` is considered as non-finite.
+    Not a Number, positive infinity and negative infinity are considered
+    to be non-finite.
+
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Also that positive infinity is not equivalent to negative infinity. But
+    infinity is equivalent to positive infinity.
+
+    Errors result if second argument is also supplied with scalar input or
+    if first and second arguments have different shapes.
 
     Examples
     --------
+    >>> np.isfinite(1)
+    True
+    >>> np.isfinite(0)
+    True
+    >>> np.isfinite(np.nan)
+    False
+    >>> np.isfinite(np.inf)
+    False
+    >>> np.isfinite(np.NINF)
+    False
     >>> np.isfinite([np.log(-1.),1.,np.log(0)])
     array([False,  True, False], dtype=bool)
+    >>> x=np.array([-np.inf, 0., np.inf])
+    >>> y=np.array([2,2,2])
+    >>> np.isfinite(x,y)
+    array([0, 1, 0])
+    >>> y
+    array([0, 1, 0])
 
     """)
 
 add_newdoc('numpy.core.umath', 'isinf',
     """
-    Returns True where x is +inf or -inf, False otherwise.
+    Shows which elements of the input are positive or negative infinity.
+    Returns a numpy boolean scalar or array resulting from an element-wise test
+    for positive or negative infinity.
 
     Parameters
     ----------
     x : array_like
       input values
+    y : array_like, optional
+      An array with the same shape as `x` to store the result.
 
     Returns
     -------
     y : {ndarray, bool}
-      array of bools
+      For scalar input data, the result is a new numpy boolean with value True
+      if the input data is positive or negative infinity; otherwise the value
+      is False.
+
+      For array input data, the result is an numpy boolean array with the same
+      dimensions as the input and the values are True if the corresponding
+      element of the input is positive or negative infinity; otherwise the
+      values are False.  If the second argument is supplied then an numpy
+      integer array is returned with values 0 or 1 corresponding to False and
+      True, respectively.
+
+    See Also
+    --------
+    isneginf : Shows which elements are negative infinity.
+    isposinf : Shows which elements are positive infinity.
+    isnan : Shows which elements are Not a Number (NaN).
+    isfinite: Shows which elements are not: Not a number, positive and
+             negative infinity
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Also that positive infinity is not equivalent to negative infinity. But
+    infinity is equivalent to positive infinity.
+
+    Errors result if second argument is also supplied with scalar input or
+    if first and second arguments have different shapes.
+
+    Numpy's definitions for positive infinity (PINF) and negative infinity
+    (NINF) may be change in the future versions.
 
     Examples
     --------
+    >>> np.isinf(np.inf)
+    True
+    >>> np.isinf(np.nan)
+    False
+    >>> np.isinf(np.NINF)
+    True
     >>> np.isinf([np.inf, -np.inf, 1.0, np.nan])
     array([ True,  True, False, False], dtype=bool)
+    >>> x=np.array([-np.inf, 0., np.inf])
+    >>> y=np.array([2,2,2])
+    >>> np.isinf(x,y)
+    array([1, 0, 1])
+    >>> y
+    array([1, 0, 1])
 
     """)
 
 add_newdoc('numpy.core.umath', 'isnan',
     """
-    Returns True where elements are Not-A-Number, False otherwise.
+    Returns a numpy boolean scalar or array resulting from an element-wise test
+    for Not a Number (NaN).
 
     Parameters
     ----------
     x : array_like
-      input values.
+      input data.
 
     Returns
     -------
     y : {ndarray, bool}
-      array of bools
+      For scalar input data, the result is a new numpy boolean with value True
+      if the input data is NaN; otherwise the value is False.
+
+      For array input data, the result is an numpy boolean array with the same
+      dimensions as the input and the values are True if the corresponding
+      element of the input is Not a Number; otherwise the values are False.
+
+    See Also
+    --------
+    isinf : Tests for infinity.
+    isneginf : Tests for negative infinity.
+    isposinf : Tests for positive infinity.
+    isfinite : Shows which elements are not: Not a number, positive infinity
+               and negative infinity
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
 
     Examples
     --------
+    >>> np.isnan(np.nan)
+    True
+    >>> np.isnan(np.inf)
+    False
     >>> np.isnan([np.log(-1.),1.,np.log(0)])
     array([ True, False, False], dtype=bool)
 
@@ -1344,7 +1489,34 @@ add_newdoc('numpy.core.umath', 'isnan',
 
 add_newdoc('numpy.core.umath', 'left_shift',
     """
-    Computes x1 << x2 (x1 shifted to left by x2 bits) elementwise.
+    Shift the bits of an integer to the left.
+
+    Bits are shifted to the left by appending `x2` 0s at the right of `x1`.
+    Since the internal representation of numbers is in binary format, this
+    operation is equivalent to multiplying `x1` by ``2**x2``.
+
+    Parameters
+    ----------
+    x1 : array_like of integer type
+        Input values.
+    x2 : array_like of integer type
+        Number of zeros to append to `x1`.
+
+    Returns
+    -------
+    out : array of integer type
+        Return `x1` with bits shifted `x2` times to the left.
+
+    See Also
+    --------
+    right_shift : Shift the bits of an integer to the right.
+    binary_repr : Return the binary representation of the input number
+        as a string.
+
+    Examples
+    --------
+    >>> np.left_shift(5, [1,2,3])
+    array([10, 20, 40])
 
     """)
 
@@ -1354,7 +1526,7 @@ add_newdoc('numpy.core.umath', 'less',
 
     Parameters
     ----------
-    x1, x2 : array-like
+    x1, x2 : array_like
         Input arrays.
 
     Returns
@@ -1408,12 +1580,12 @@ add_newdoc('numpy.core.umath', 'log',
     Parameters
     ----------
     x : array_like
-      Input value.
+        Input value.
 
     Returns
     -------
-    y : {ndarray, scalar}
-      The natural logarithm of `x`, element-wise.
+    y : ndarray
+        The natural logarithm of `x`, element-wise.
 
     See Also
     --------
@@ -1449,18 +1621,17 @@ add_newdoc('numpy.core.umath', 'log',
 
 add_newdoc('numpy.core.umath', 'log10',
     """
-    Compute the logarithm in base 10 elementwise.
+    Compute the logarithm in base 10 element-wise.
 
     Parameters
     ----------
     x : array_like
-      input values.
+        Input values.
 
     Returns
     -------
-    y : {ndarray, scalar}
-      base-10 logarithm of `x`.
-
+    y : ndarray
+        Base-10 logarithm of `x`.
 
     Notes
     -----
@@ -1501,7 +1672,7 @@ add_newdoc('numpy.core.umath', 'log1p',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
         Natural logarithm of `1 + x`, elementwise.
 
     Notes
@@ -1674,13 +1845,79 @@ add_newdoc('numpy.core.umath', 'logical_xor',
 
 add_newdoc('numpy.core.umath', 'maximum',
     """
-    Returns maximum (if x1 > x2: x1;  else: x2) elementwise.
+    Element-wise maximum of array elements.
+
+    Compare two arrays and returns a new array containing
+    the element-wise maxima.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        The arrays holding the elements to be compared.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The maximum of `x1` and `x2`, element-wise.  Returns scalar if
+        both  `x1` and `x2` are scalars.
+
+    See Also
+    --------
+    minimum :
+      element-wise minimum
+
+    Notes
+    -----
+    Equivalent to ``np.where(x1 > x2, x1, x2)`` but faster and does proper
+    broadcasting.
+
+    Examples
+    --------
+    >>> np.maximum([2, 3, 4], [1, 5, 2])
+    array([2, 5, 4])
+
+    >>> np.maximum(np.eye(2), [0.5, 2])
+    array([[ 1. ,  2. ],
+           [ 0.5,  2. ]])
 
     """)
 
 add_newdoc('numpy.core.umath', 'minimum',
     """
-    Returns minimum (if x1 < x2: x1;  else: x2) elementwise
+    Element-wise minimum of array elements.
+
+    Compare two arrays and returns a new array containing
+    the element-wise minima.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        The arrays holding the elements to be compared.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
+        both  `x1` and `x2` are scalars.
+
+    See Also
+    --------
+    maximum :
+        element-wise maximum
+
+    Notes
+    -----
+    Equivalent to ``np.where(x1 < x2, x1, x2)`` but faster and does proper
+    broadcasting.
+
+    Examples
+    --------
+    >>> np.minimum([2, 3, 4], [1, 5, 2])
+    array([1, 3, 2])
+
+    >>> np.minimum(np.eye(2), [0.5, 2])
+    array([[ 0.5,  0. ],
+           [ 0. ,  1. ]])
 
     """)
 
@@ -1718,12 +1955,12 @@ add_newdoc('numpy.core.umath', 'multiply',
 
     Parameters
     ----------
-    x1, x2 : array-like
+    x1, x2 : array_like
         The arrays to be multiplied.
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
         The product of `x1` and `x2`, elementwise. Returns a scalar if
         both  `x1` and `x2` are scalars.
 
@@ -1797,7 +2034,7 @@ add_newdoc('numpy.core.umath', 'not_equal',
 
 add_newdoc('numpy.core.umath', 'ones_like',
     """
-    Returns an array of zeros with the same shape and type as a given array.
+    Returns an array of ones with the same shape and type as a given array.
 
     Equivalent to ``a.copy().fill(1)``.
 
@@ -1818,7 +2055,7 @@ add_newdoc('numpy.core.umath', 'ones_like',
 
 add_newdoc('numpy.core.umath', 'power',
     """
-    Computes `x1` ** `x2` elementwise.
+    Returns element-wise base array raised to power from second array.
 
     Raise each base in `x1` to the power of the exponents in `x2`. This
     requires that `x1` and `x2` must be broadcastable to the same shape.
@@ -1874,7 +2111,7 @@ add_newdoc('numpy.core.umath', 'radians',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
       The corresponding angle in radians.
 
     See Also
@@ -1895,7 +2132,7 @@ add_newdoc('numpy.core.umath', 'radians',
 
 add_newdoc('numpy.core.umath', 'reciprocal',
     """
-    Compute 1/x.
+    Return element-wise reciprocal.
 
     Parameters
     ----------
@@ -1904,7 +2141,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
         Return value.
 
     Examples
@@ -1918,7 +2155,9 @@ add_newdoc('numpy.core.umath', 'reciprocal',
 
 add_newdoc('numpy.core.umath', 'remainder',
     """
-    Computes x1-n*x2 where n is floor(x1 / x2)
+    Returns element-wise remainder of division.
+
+    Computes `x1 - floor(x1/x2)*x2`.
 
     Parameters
     ----------
@@ -1929,9 +2168,9 @@ add_newdoc('numpy.core.umath', 'remainder',
 
     Returns
     -------
-    y : {ndarray, scalar}
-        The quotient `x1/x2`, element-wise. Returns a scalar if
-        both  `x1` and `x2` are scalars.
+    y : ndarray
+        The remainder of the quotient `x1/x2`, element-wise. Returns a scalar
+        if both  `x1` and `x2` are scalars.
 
     See Also
     --------
@@ -1951,7 +2190,34 @@ add_newdoc('numpy.core.umath', 'remainder',
 
 add_newdoc('numpy.core.umath', 'right_shift',
     """
-    Computes x1 >> x2 (x1 shifted to right by x2 bits) elementwise.
+    Shift the bits of an integer to the right.
+
+    Bits are shifted to the right by removing `x2` bits at the right of `x1`.
+    Since the internal representation of numbers is in binary format, this
+    operation is equivalent to dividing `x1` by ``2**x2``.
+
+    Parameters
+    ----------
+    x1 : array_like, int
+        Input values.
+    x2 : array_like, int
+        Number of bits to remove at the right of `x1`.
+
+    Returns
+    -------
+    out : ndarray, int
+        Return `x1` with bits shifted `x2` times to the right.
+
+    See Also
+    --------
+    left_shift : Shift the bits of an integer to the left.
+    binary_repr : Return the binary representation of the input number
+        as a string.
+
+    Examples
+    --------
+    >>> np.right_shift(10, [1,2,3])
+    array([5, 2, 1])
 
     """)
 
@@ -1979,9 +2245,9 @@ add_newdoc('numpy.core.umath', 'rint',
 
 add_newdoc('numpy.core.umath', 'sign',
     """
-    Return the sign of a number.
+    Returns an element-wise indication of the sign of a number.
 
-    -1 if x < 0, 0 if x==0, 1 if x > 0.
+    The `sign` function returns ``-1 if x < 0, 0 if x==0, 1 if x > 0``.
 
     Parameters
     ----------
@@ -1990,7 +2256,7 @@ add_newdoc('numpy.core.umath', 'sign',
 
     Returns
     -------
-    y : {ndarray, scalar}
+    y : ndarray
       The sign of `x`.
 
     Examples
@@ -2004,20 +2270,23 @@ add_newdoc('numpy.core.umath', 'sign',
 
 add_newdoc('numpy.core.umath', 'signbit',
     """
-    Returns True where `signbit` of `x` is set (`x<0`).
+    Returns element-wise True where signbit is set (less than zero).
 
     Parameters
     ----------
-    x: array-like or scalar
-      the input value(s).
-    output : array-like or scalar
-      the returned boolean(s)
+    x: array_like
+        The input value(s).
+
+    Returns
+    -------
+    out : array_like, bool
+        Output.
 
     Examples
     --------
     >>> np.signbit(-1.2)
     True
-    >>> np.signbit(np.array([1,-2.3,2.1]))
+    >>> np.signbit(np.array([1, -2.3, 2.1]))
     array([False,  True, False], dtype=bool)
 
     """)
@@ -2138,18 +2407,18 @@ add_newdoc('numpy.core.umath', 'sqrt',
 
 add_newdoc('numpy.core.umath', 'square',
     """
-    Compute `x` squared, or `x` to the power of two.
+    Return the element-wise square of the input.
 
     Parameters
     ----------
-    x : array_like or scalar
+    x : array_like
         Input data.
 
     Returns
     -------
-    out : ndarray or scalar
+    out : ndarray
         Element-wise `x*x`, of the same shape and dtype as `x`.
-        `out` is a scalar if `x` is a scalar.
+        Returns scalar if `x` is a scalar.
 
     See Also
     --------
@@ -2166,18 +2435,18 @@ add_newdoc('numpy.core.umath', 'square',
 
 add_newdoc('numpy.core.umath', 'subtract',
     """
-    Subtract arguments elementwise.
+    Subtract arguments element-wise.
 
     Parameters
     ----------
-    x1, x2 : {array_like, scalar}
+    x1, x2 : array_like
         The arrays to be subtracted from each other.  If type is 'array_like'
         the `x1` and `x2` shapes must be identical.
 
     Returns
     -------
-    y : {ndarray, scalar}
-        The difference of `x1` and `x2`, elementwise.  Returns a scalar if
+    y : ndarray
+        The difference of `x1` and `x2`, element-wise.  Returns a scalar if
         both  `x1` and `x2` are scalars.
 
     Notes
@@ -2200,7 +2469,7 @@ add_newdoc('numpy.core.umath', 'subtract',
 
 add_newdoc('numpy.core.umath', 'tan',
     """
-    Compute tangent elementwise.
+    Compute tangent element-wise.
 
     Parameters
     ----------
@@ -2209,7 +2478,7 @@ add_newdoc('numpy.core.umath', 'tan',
 
     Returns
     -------
-    y : ndarray or scalar
+    y : ndarray
       The corresponding tangent values.
 
 
@@ -2223,7 +2492,7 @@ add_newdoc('numpy.core.umath', 'tan',
 
 add_newdoc('numpy.core.umath', 'tanh',
     """
-    Hyperbolic tangent elementwise.
+    Hyperbolic tangent element-wise.
 
     Parameters
     ----------
@@ -2232,14 +2501,14 @@ add_newdoc('numpy.core.umath', 'tanh',
 
     Returns
     -------
-    y : ndarray or scalar
+    y : ndarray
         The corresponding hyperbolic tangent values.
 
     """)
 
 add_newdoc('numpy.core.umath', 'true_divide',
     """
-    Returns an elementwise, true division of the inputs.
+    Returns an element-wise, true division of the inputs.
 
     Instead of the Python traditional 'floor division', this returns a true
     division.  True division adjusts the output type to present the best
@@ -2254,7 +2523,7 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     Returns
     -------
-    out : {ndarray, scalar}
+    out : ndarray
         Result is scalar if both inputs are scalar, ndarray otherwise.
 
     Notes

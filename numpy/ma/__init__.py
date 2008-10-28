@@ -17,7 +17,7 @@ When we try to calculate the mean of the data, the result is undetermined:
 nan
 
 The mean is calculated using roughly ``np.sum(x)/len(x)``, but since
-any number added to ``NaN`` [*]_ produces ``NaN``, this doesn't work.  Enter
+any number added to ``NaN`` [1]_ produces ``NaN``, this doesn't work.  Enter
 masked arrays:
 
 >>> m = np.ma.masked_array(x, np.isnan(x))
@@ -32,7 +32,7 @@ may now proceed to calculate the mean of the other values:
 >>> np.mean(m)
 2.6666666666666665
 
-.. [*] Not-a-Number, a floating point value that is the result of an
+.. [1] Not-a-Number, a floating point value that is the result of an
        invalid operation.
 
 """

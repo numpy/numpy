@@ -10,14 +10,23 @@ from numpy.core import asarray, concatenate, arange, take, \
 import types
 
 def fftshift(x,axes=None):
-    """ fftshift(x, axes=None) -> y
-
+    """
     Shift zero-frequency component to center of spectrum.
 
     This function swaps half-spaces for all axes listed (defaults to all).
+    If len(x) is even then the Nyquist component is y[0].
 
-    Notes:
-      If len(x) is even then the Nyquist component is y[0].
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    axes : int or shape tuple, optional
+        Axes over which to shift.  Default is None which shifts all axes.
+
+    See Also
+    --------
+    ifftshift
+
     """
     tmp = asarray(x)
     ndim = len(tmp.shape)
@@ -33,9 +42,20 @@ def fftshift(x,axes=None):
 
 
 def ifftshift(x,axes=None):
-    """ ifftshift(x,axes=None) - > y
-
+    """
     Inverse of fftshift.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    axes : int or shape tuple, optional
+        Axes over which to calculate.  Defaults to None which is over all axes.
+
+    See Also
+    --------
+    fftshift
+
     """
     tmp = asarray(x)
     ndim = len(tmp.shape)
@@ -50,16 +70,39 @@ def ifftshift(x,axes=None):
     return y
 
 def fftfreq(n,d=1.0):
-    """ fftfreq(n, d=1.0) -> f
-
-    DFT sample frequencies
+    """
+    Discrete Fourier Transform sample frequencies.
 
     The returned float array contains the frequency bins in
-    cycles/unit (with zero at the start) given a window length n and a
-    sample spacing d:
+    cycles/unit (with zero at the start) given a window length `n` and a
+    sample spacing `d`.
+    ::
 
       f = [0,1,...,n/2-1,-n/2,...,-1]/(d*n)         if n is even
       f = [0,1,...,(n-1)/2,-(n-1)/2,...,-1]/(d*n)   if n is odd
+
+    Parameters
+    ----------
+    n : int
+        Window length.
+    d : scalar
+        Sample spacing.
+
+    Returns
+    -------
+    out : ndarray, shape(`n`,)
+        Sample frequencies.
+
+    Examples
+    --------
+    >>> signal = np.array([-2.,  8., -6.,  4.,  1., 0.,  3.,  5.])
+    >>> fourier = np.fft.fft(signal)
+    >>> n = len(signal)
+    >>> timestep = 0.1
+    >>> freq = np.fft.fftfreq(n, d=timestep)
+    >>> freq
+    array([ 0.  ,  1.25,  2.5 ,  3.75, -5.  , -3.75, -2.5 , -1.25])
+
     """
     assert isinstance(n,types.IntType) or isinstance(n, integer)
     val = 1.0/(n*d)
