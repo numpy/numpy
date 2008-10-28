@@ -294,7 +294,7 @@ def swapaxes(a, axis1, axis2):
     Returns
     -------
     a_swapped : ndarray
-        If `a` is an ndarray, then a view on `a` is returned, otherwise
+        If `a` is an ndarray, then a view of `a` is returned; otherwise
         a new array is created.
 
     Examples
@@ -1176,11 +1176,9 @@ def product (a, axis=None, dtype=None, out=None):
     """
     Return the product of array elements over a given axis.
 
-    Refer to `numpy.prod` for full documentation.
-
     See Also
     --------
-    prod : equivalent function
+    prod : equivalent function; see for details.
 
     """
     try:
@@ -1390,11 +1388,10 @@ def cumproduct(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative product over the given axis.
 
-    See `cumprod` for full documentation.
 
     See Also
     --------
-    cumprod
+    cumprod : equivalent function; see for details.
 
     """
     try:
@@ -1449,7 +1446,7 @@ def ptp(a, axis=None, out=None):
 
 def amax(a, axis=None, out=None):
     """
-    Return the maximum along a given axis.
+    Return the maximum along an axis.
 
     Parameters
     ----------
@@ -1463,19 +1460,19 @@ def amax(a, axis=None, out=None):
 
     Returns
     -------
-    amax : {ndarray, scalar}
+    amax : ndarray
         A new array or a scalar with the result, or a reference to `out`
         if it was specified.
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
-    >>> x
+    >>> a = np.arange(4).reshape((2,2))
+    >>> a
     array([[0, 1],
            [2, 3]])
-    >>> np.amax(x,0)
+    >>> np.amax(a, axis=0)
     array([2, 3])
-    >>> np.amax(x,1)
+    >>> np.amax(a, axis=1)
     array([1, 3])
 
     """
@@ -1488,7 +1485,7 @@ def amax(a, axis=None, out=None):
 
 def amin(a, axis=None, out=None):
     """
-    Return the minimum along a given axis.
+    Return the minimum along an axis.
 
     Parameters
     ----------
@@ -1502,19 +1499,21 @@ def amin(a, axis=None, out=None):
 
     Returns
     -------
-    amin : {ndarray, scalar}
+    amin : ndarray
         A new array or a scalar with the result, or a reference to `out` if it
         was specified.
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
-    >>> x
+    >>> a = np.arange(4).reshape((2,2))
+    >>> a
     array([[0, 1],
            [2, 3]])
-    >>> np.amin(x,0)
+    >>> np.amin(a)           # Minimum of the flattened array
+    0
+    >>> np.amin(a, axis=0)         # Minima along the first axis
     array([0, 1])
-    >>> np.amin(x,1)
+    >>> np.amin(a, axis=1)         # Minima along the second axis
     array([0, 2])
 
     """
@@ -1638,7 +1637,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     Parameters
     ----------
-    a : array-like
+    a : array_like
         Input array.
     axis : int, optional
         Axis along which the cumulative product is computed.  By default the
@@ -1656,7 +1655,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     Returns
     -------
-    cumprod : ndarray.
+    cumprod : ndarray
         A new array holding the result is returned unless `out` is
         specified, in which case a reference to out is returned.
 
@@ -1923,21 +1922,21 @@ def mean(a, axis=None, dtype=None, out=None):
     a : array_like
         Array containing numbers whose mean is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : {None, int}, optional
+    axis : int, optional
         Axis along which the means are computed. The default is to compute
         the mean of the flattened array.
-    dtype : {None, dtype}, optional
-        Type to use in computing the mean. For integer inputs the default
-        is float64; for floating point inputs it is the same as the input
+    dtype : dtype, optional
+        Type to use in computing the mean. For integer inputs, the default
+        is float64; for floating point, inputs it is the same as the input
         dtype.
-    out : {None, ndarray}, optional
+    out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type will be cast if
         necessary.
 
     Returns
     -------
-    mean : {ndarray, scalar}, see dtype parameter above
+    mean : ndarray, see dtype parameter above
         If `out=None`, returns a new array containing the mean values,
         otherwise a reference to the output array is returned.
 
@@ -2048,27 +2047,27 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     Parameters
     ----------
     a : array_like
-        Array containing numbers whose variance is desired. If a is not an
+        Array containing numbers whose variance is desired. If `a` is not an
         array, a conversion is attempted.
     axis : int, optional
         Axis along which the variance is computed. The default is to compute
         the variance of the flattened array.
     dtype : dtype, optional
         Type to use in computing the variance. For arrays of integer type
-        the default is float32, for arrays of float types it is the same as
+        the default is float32; for arrays of float types it is the same as
         the array type.
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
-        the same shape as the expected output but the type will be cast if
+        the same shape as the expected output but the type is cast if
         necessary.
     ddof : positive int,optional
-        Means Delta Degrees of Freedom.  The divisor used in calculation is
+        "Delta Degrees of Freedom": the divisor used in calculation is
         N - ddof.
 
     Returns
     -------
-    variance : {ndarray, scalar}, see dtype parameter above
-        If out=None, returns a new array containing the variance, otherwise
+    variance : ndarray, see dtype parameter above
+        If out=None, returns a new array containing the variance; otherwise
         a reference to the output array is returned.
 
     See Also
@@ -2079,7 +2078,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     Notes
     -----
     The variance is the average of the squared deviations from the mean,
-    i.e.  var = mean(abs(x - x.mean())**2).  The computed variance is biased,
+    i.e.,  var = mean(abs(x - x.mean())**2).  The computed variance is biased,
     i.e., the mean is computed by dividing by the number of elements, N,
     rather than by N-1. Note that for complex numbers the absolute value is
     taken before squaring, so that the result is always real and nonnegative.

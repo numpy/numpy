@@ -590,6 +590,11 @@ def bmat(obj, ldict=None, gdict=None):
         Input data.  Variables names in the current scope may
         be referenced, even if `obj` is a string.
 
+    Returns
+    -------
+    out : matrix
+        Returns a matrix object, which is a specialized 2-D array.
+
     See Also
     --------
     matrix

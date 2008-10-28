@@ -1902,7 +1902,7 @@ cdef class RandomState:
         """
         lognormal(mean=0.0, sigma=1.0, size=None)
 
-        Log-normal distribution.
+        Return samples drawn from a log-normal distribution.
 
         Draw samples from a log-normal distribution with specified mean, standard
         deviation, and shape. Note that the mean and standard deviation are not the
@@ -1938,7 +1938,7 @@ cdef class RandomState:
         where :math:`\\mu` is the mean and :math:`\\sigma` is the standard deviation
         of the normally distributed logarithm of the variable.
 
-        A log normal distribution results if a random variable is the *product* of
+        A log-normal distribution results if a random variable is the *product* of
         a large number of independent, identically-distributed variables in the
         same way that a normal distribution results if the variable is the *sum*
         of a large number of independent, identically-distributed variables
@@ -1947,7 +1947,7 @@ cdef class RandomState:
 
         The log-normal distribution is commonly used to model the lifespan of units
         with fatigue-stress failure modes. Since this includes
-        most mechanical systems, the lognormal distribution has widespread
+        most mechanical systems, the log-normal distribution has widespread
         application.
 
         It is also commonly used to model oil field sizes, species abundance, and
@@ -1986,7 +1986,7 @@ cdef class RandomState:
         >>> plt.show()
 
         Demonstrate that taking the products of random samples from a uniform
-        distribution can be fit well by a log-normal pdf.
+        distribution can be fit well by a log-normal probability density function.
 
         >>> # Generate a thousand samples: each is the product of 100 random
         >>> # values, drawn from a normal distribution.

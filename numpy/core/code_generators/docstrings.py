@@ -11,21 +11,19 @@ def add_newdoc(place, name, doc):
 
 add_newdoc('numpy.core.umath', 'absolute',
     """
-    Calculate the absolute value elementwise.
+    Calculate the absolute value element-wise.
 
     Parameters
     ----------
     x : array_like
-        An array-like sequence of values or a scalar.
+        Input array.
 
     Returns
     -------
-    res : {ndarray, scalar}
+    res : ndarray
         An ndarray containing the absolute value of
         each element in `x`.  For complex input, ``a + ib``, the
         absolute value is :math:`\\sqrt{ a^2 + b^2 }`.
-
-        Returns a scalar for scalar input.
 
     Examples
     --------
@@ -1126,6 +1124,13 @@ add_newdoc('numpy.core.umath', 'greater',
     >>> np.greater([4,2],[2,2])
     array([ True, False], dtype=bool)
 
+    If the inputs are ndarrays, then np.greater is equivalent to '>'.
+
+    >>> a = np.array([4,2])
+    >>> b = np.array([2,2])
+    >>> a > b
+    array([ True, False], dtype=bool)
+
     """)
 
 add_newdoc('numpy.core.umath', 'greater_equal',
@@ -2104,14 +2109,15 @@ add_newdoc('numpy.core.umath', 'sqrt',
     Returns
     -------
     y : ndarray
-        The square-root of each element in `x`.  If any element in `x`
+        An array of the same shape as `x`, containing the square-root of
+        each element in `x`.  If any element in `x`
         is complex, a complex array is returned.  If all of the elements
-        of `x` are real, negative elements will return numpy.nan elements.
+        of `x` are real, negative elements return numpy.nan elements.
 
     See Also
     --------
     numpy.lib.scimath.sqrt
-        A version which will return complex numbers when given negative reals.
+        A version which returns complex numbers when given negative reals.
 
     Notes
     -----
