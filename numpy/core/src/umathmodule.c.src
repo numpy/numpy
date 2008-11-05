@@ -23,25 +23,55 @@
 
 #include "math_c99.inc"
 
-float degreesf(float x) {
-    return x * (float)(180.0/M_PI);
-}
-double degrees(double x) {
-    return x * (180.0/M_PI);
-}
-longdouble degreesl(longdouble x) {
-    return x * (180.0L/M_PI);
+/*
+ *****************************************************************************
+ **                            FLOAT FUNCTIONS                              **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #type = float, double, longdouble#
+ * #c = f, ,l#
+ * #C = F, ,L#
+ */
+
+#define PI 3.14159265358979323846264338328@c@
+
+static @type@
+degrees@c@(@type@ x) {
+    return x*(180.0@c@/PI);
 }
 
-float radiansf(float x) {
-    return x * (float)(M_PI/180.0);
+static @type@
+radians@c@(@type@ x) {
+    return x*(PI/180.0@c@);
 }
-double radians(double x) {
-    return x * (M_PI/180.0);
+
+static @type@
+rad2deg@c@(@type@ x) {
+    return x*(180.0@c@/PI);
 }
-longdouble radiansl(longdouble x) {
-    return x * (M_PI/180.0L);
+
+static @type@
+deg2rad@c@(@type@ x) {
+    return x*(PI/180.0@c@);
 }
+
+static @type@
+logsumexp@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + log1p@c@(exp@c@(-tmp));
+    }
+    else {
+        return y + log1p@c@(exp@c@(tmp));
+    }
+}
+
+#undef PI
+
+/**end repeat**/
 
 /*
  *****************************************************************************

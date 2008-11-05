@@ -326,6 +326,11 @@ defdict = {
           "",
           TD(inexact)
           ),
+'logsumexp' :
+    Ufunc(2, 1, None,
+          "",
+          TD(flts, f="logsumexp")
+          ),
 'bitwise_and' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.bitwise_and'),

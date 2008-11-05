@@ -33,7 +33,7 @@ double log1p(double x)
     if (u == 1.0) {
         return x;
     } else {
-        return log(u) * x / (u-1.);
+        return log(u) * x / (u - 1);
     }
 }
 #endif
@@ -187,78 +187,56 @@ static int signbit_ld (long double x)
  * instead test for the macro, but I am lazy to do that for now.
  */
 
-/*
- * One value argument function
- */
-
 /**begin repeat
-
-   #kind=(sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p)*2#
-   #KIND=(SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P)*2#
-   #typ=longdouble*23, float*23#
-   #c=l*23,f*23#
-   #C=L*23,F*23#
-   #TYPE=LONGDOUBLE*23, FLOAT*23#
+ * #type = longdouble, float#
+ * #TYPE = LONGDOUBLE, FLOAT#
+ * #c = l,f#
+ * #C = L,F#
 */
 
+/**begin repeat1
+ * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p#
+ * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
+ *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P#
+ */
 #ifndef HAVE_@KIND@@C@
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-@typ@ @kind@@c@(@typ@ x)
+@type@ @kind@@c@(@type@ x)
 {
-    return (@typ@) @kind@((double)x);
+    return (@type@) @kind@((double)x);
 }
 #endif
-/**end repeat**/
+/**end repeat1**/
 
-/*
- * Two values arguments function
+/**begin repeat1
+ * #kind = atan2,hypot,pow,fmod#
+ * #KIND = ATAN2,HYPOT,POW,FMOD#
  */
-
-/**begin repeat
-
-   #kind=(atan2,hypot,pow,fmod)*2#
-   #KIND=(ATAN2,HYPOT,POW,FMOD)*2#
-   #typ=longdouble*4, float*4#
-   #c=l*4,f*4#
-   #C=L*4,F*4#
-   #TYPE=LONGDOUBLE*4,FLOAT*4#
-*/
 #ifndef HAVE_@KIND@@C@
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-@typ@ @kind@@c@(@typ@ x, @typ@ y)
+@type@ @kind@@c@(@type@ x, @type@ y)
 {
-    return (@typ@) @kind@((double)x, (double) y);
+    return (@type@) @kind@((double)x, (double) y);
 }
 #endif
-/**end repeat**/
+/**end repeat1**/
 
-/*
- * One value - one pointer argument function
- */
-
-/**begin repeat
-   #kind=modf*2#
-   #KIND=MODF*2#
-   #c=l,f#
-   #C=L,F#
-   #typ=longdouble, float#
-   #TYPE=LONGDOUBLE, FLOAT#
-*/
-#ifndef HAVE_@KIND@@C@
+#ifndef HAVE_MODF@C@
 #ifdef modf@c@
 #undef modf@c@
 #endif
-@typ@ modf@c@(@typ@ x, @typ@ *iptr)
+@type@ modf@c@(@type@ x, @type@ *iptr)
 {
-    double nx, niptr, y;
-    nx = (double) x;
-    y = modf(nx, &niptr);
-    *iptr = (@typ@) niptr;
-    return (@typ@) y;
+    double niptr;
+    double y = modf((double)x, &niptr);
+    *iptr = (@type@) niptr;
+    return (@type@) y;
 }
 #endif
+
 /**end repeat**/
