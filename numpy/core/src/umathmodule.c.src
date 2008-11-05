@@ -498,18 +498,18 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
  */
 
 #define OUTPUT_LOOP\
-    char *op = args[1];\
-    intp os = steps[1];\
+    char *op1 = args[1];\
+    intp os1 = steps[1];\
     intp n = dimensions[0];\
     intp i;\
-    for(i = 0; i < n; i++, op += os)
+    for(i = 0; i < n; i++, op1 += os1)
 
 #define UNARY_LOOP\
-    char *ip1 = args[0], *op = args[1];\
-    intp is1 = steps[0], os = steps[1];\
+    char *ip1 = args[0], *op1 = args[1];\
+    intp is1 = steps[0], os1 = steps[1];\
     intp n = dimensions[0];\
     intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, op += os)
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
 
 #define UNARY_LOOP_TWO_OUT\
     char *ip1 = args[0], *op1 = args[1], *op2 = args[2];\
@@ -519,11 +519,11 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
     for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
 
 #define BINARY_LOOP\
-    char *ip1 = args[0], *ip2 = args[1], *op = args[2];\
-    intp is1 = steps[0], is2 = steps[1], os = steps[2];\
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
+    intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
     intp n = dimensions[0];\
     intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op += os)
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
 
 #define BINARY_LOOP_TWO_OUT\
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];\
@@ -559,7 +559,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     BINARY_LOOP {
         Bool in1 = *((Bool *)ip1) != 0;
         Bool in2 = *((Bool *)ip2) != 0;
-        *((Bool *)op)= in1 @OP@ in2;
+        *((Bool *)op1)= in1 @OP@ in2;
     }
 }
 /**end repeat**/
@@ -570,7 +570,7 @@ BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
     BINARY_LOOP {
         Bool in1 = *((Bool *)ip1) != 0;
         Bool in2 = *((Bool *)ip2) != 0;
-        *((Bool *)op)= (in1 && !in2) || (!in1 && in2);
+        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
     }
 }
 
@@ -584,7 +584,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     BINARY_LOOP {
         Bool in1 = *((Bool *)ip1) != 0;
         Bool in2 = *((Bool *)ip2) != 0;
-        *((Bool *)op) = (in1 @OP@ in2) ? in1 : in2;
+        *((Bool *)op1) = (in1 @OP@ in2) ? in1 : in2;
     }
 }
 /**end repeat**/
@@ -598,7 +598,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         Bool in1 = *(Bool *)ip1;
-        *((Bool *)op) = in1 @OP@ 0;
+        *((Bool *)op1) = in1 @OP@ 0;
     }
 }
 /**end repeat**/
@@ -607,7 +607,7 @@ static void
 BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        *((Bool *)op) = 1;
+        *((Bool *)op1) = 1;
     }
 }
 
@@ -636,7 +636,7 @@ static void
 @S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        *((@s@@type@ *)op) = 1;
+        *((@s@@type@ *)op1) = 1;
     }
 }
 
@@ -645,7 +645,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((@s@@type@ *)op) = in1*in1;
+        *((@s@@type@ *)op1) = in1*in1;
     }
 }
 
@@ -654,7 +654,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((@s@@type@ *)op) = (@s@@type@)(1.0/in1);
+        *((@s@@type@ *)op1) = (@s@@type@)(1.0/in1);
     }
 }
 
@@ -663,7 +663,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((@s@@type@ *)op) = in1;
+        *((@s@@type@ *)op1) = in1;
     }
 }
 
@@ -672,7 +672,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((@s@@type@ *)op) = (@s@@type@)(-(@type@)in1);
+        *((@s@@type@ *)op1) = (@s@@type@)(-(@type@)in1);
     }
 }
 
@@ -681,7 +681,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((Bool *)op) = !in1;
+        *((Bool *)op1) = !in1;
     }
 }
 
@@ -690,7 +690,7 @@ static void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((@s@@type@ *)op) = ~in1;
+        *((@s@@type@ *)op1) = ~in1;
     }
 }
 
@@ -706,7 +706,7 @@ static void
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((@s@@type@ *)op) = in1 @OP@ in2;
+        *((@s@@type@ *)op1) = in1 @OP@ in2;
     }
 }
 /**end repeat2**/
@@ -722,7 +722,7 @@ static void
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((Bool *)op) = in1 @OP@ in2;
+        *((Bool *)op1) = in1 @OP@ in2;
     }
 }
 /**end repeat2**/
@@ -733,7 +733,7 @@ static void
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((Bool *)op)= (in1 && !in2) || (!in1 && in2);
+        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
     }
 }
 
@@ -747,7 +747,7 @@ static void
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((@s@@type@ *)op) = (in1 @OP@ in2) ? in1 : in2;
+        *((@s@@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
     }
 }
 /**end repeat2**/
@@ -760,10 +760,10 @@ static void
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
         if (in2 == 0) {
             generate_divbyzero_error();
-            *((@ftype@ *)op) = 0;
+            *((@ftype@ *)op1) = 0;
         }
         else {
-            *((@ftype@ *)op) = (@ftype@)in1 / (@ftype@)in2;
+            *((@ftype@ *)op1) = (@ftype@)in1 / (@ftype@)in2;
         }
     }
 }
@@ -774,7 +774,7 @@ static void
     BINARY_LOOP {
         const @ftype@ in1 = (@ftype@)*(@s@@type@ *)ip1;
         const @ftype@ in2 = (@ftype@)*(@s@@type@ *)ip2;
-        *((@s@@type@ *)op) = (@s@@type@) pow(in1, in2);
+        *((@s@@type@ *)op1) = (@s@@type@) pow(in1, in2);
     }
 }
 
@@ -786,10 +786,10 @@ static void
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
         if (in2 == 0) {
             generate_divbyzero_error();
-            *((@s@@type@ *)op) = 0;
+            *((@s@@type@ *)op1) = 0;
         }
         else {
-            *((@s@@type@ *)op)= in1 % in2;
+            *((@s@@type@ *)op1)= in1 % in2;
         }
 
     }
@@ -802,7 +802,7 @@ U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 {
     UNARY_LOOP {
         const u@type@ in1 = *(u@type@ *)ip1;
-        *((u@type@ *)op) = in1;
+        *((u@type@ *)op1) = in1;
     }
 }
 
@@ -811,7 +811,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = (in1 >= 0) ? in1 : -in1;
+        *((@type@ *)op1) = (in1 >= 0) ? in1 : -in1;
     }
 }
 
@@ -820,7 +820,7 @@ U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const u@type@ in1 = *(u@type@ *)ip1;
-        *((u@type@ *)op) = in1 > 0 ? 1 : 0;
+        *((u@type@ *)op1) = in1 > 0 ? 1 : 0;
     }
 }
 
@@ -829,7 +829,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
     }
 }
 
@@ -841,13 +841,13 @@ static void
         const @type@ in2 = *(@type@ *)ip2;
         if (in2 == 0) {
             generate_divbyzero_error();
-            *((@type@ *)op) = 0;
+            *((@type@ *)op1) = 0;
         }
         else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-            *((@type@ *)op) = in1/in2 - 1;
+            *((@type@ *)op1) = in1/in2 - 1;
         }
         else {
-            *((@type@ *)op) = in1/in2;
+            *((@type@ *)op1) = in1/in2;
         }
     }
 }
@@ -860,10 +860,10 @@ U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
         const u@type@ in2 = *(u@type@ *)ip2;
         if (in2 == 0) {
             generate_divbyzero_error();
-            *((u@type@ *)op) = 0;
+            *((u@type@ *)op1) = 0;
         }
         else {
-            *((u@type@ *)op)= in1/in2;
+            *((u@type@ *)op1)= in1/in2;
         }
     }
 }
@@ -876,16 +876,16 @@ static void
         const @type@ in2 = *(@type@ *)ip2;
         if (in2 == 0) {
             generate_divbyzero_error();
-            *((@type@ *)op) = 0;
+            *((@type@ *)op1) = 0;
         }
         else {
             /* handle mixed case the way Python does */
             const @type@ rem = in1 % in2;
             if ((in1 > 0) == (in2 > 0) || rem == 0) {
-                *((@type@ *)op) = rem;
+                *((@type@ *)op1) = rem;
             }
             else {
-                *((@type@ *)op) = rem + in2;
+                *((@type@ *)op1) = rem + in2;
             }
         }
     }
@@ -899,10 +899,10 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
         const u@type@ in2 = *(u@type@ *)ip2;
         if (in2 == 0) {
             generate_divbyzero_error();
-            *((@type@ *)op) = 0;
+            *((@type@ *)op1) = 0;
         }
         else {
-            *((@type@ *)op) = in1 % in2;
+            *((@type@ *)op1) = in1 % in2;
         }
     }
 }
@@ -924,8 +924,6 @@ U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
  *  #C = F, , L#
  */
 
-#define ONE 1.0@c@
-#define ZERO 0.0@c@
 
 /**begin repeat1
  * Arithmetic
@@ -938,7 +936,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op) = in1 @OP@ in2;
+        *((@type@ *)op1) = in1 @OP@ in2;
     }
 }
 /**end repeat1**/
@@ -954,7 +952,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((Bool *)op) = in1 @OP@ in2;
+        *((Bool *)op1) = in1 @OP@ in2;
     }
 }
 /**end repeat1**/
@@ -965,7 +963,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((Bool *)op)= (in1 && !in2) || (!in1 && in2);
+        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
     }
 }
 
@@ -974,7 +972,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((Bool *)op) = !in1;
+        *((Bool *)op1) = !in1;
     }
 }
 
@@ -987,7 +985,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((Bool *)op) = @func@(in1) != 0;
+        *((Bool *)op1) = @func@(in1) != 0;
     }
 }
 /**end repeat1**/
@@ -1003,7 +1001,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op) = (in1 @OP@ in2 || isnan(in1)) ? in1 : in2;
+        *((@type@ *)op1) = (in1 @OP@ in2 || isnan(in1)) ? in1 : in2;
     }
 }
 /**end repeat1**/
@@ -1019,7 +1017,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op) = (in1 @OP@ in2 || isnan(in2)) ? in1 : in2;
+        *((@type@ *)op1) = (in1 @OP@ in2 || isnan(in2)) ? in1 : in2;
     }
 }
 /**end repeat1**/
@@ -1030,7 +1028,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op) = floor@c@(in1/in2);
+        *((@type@ *)op1) = floor@c@(in1/in2);
     }
 }
 
@@ -1042,10 +1040,10 @@ static void
         const @type@ in2 = *(@type@ *)ip2;
         const @type@ res = fmod@c@(in1,in2);
         if (res && ((in2 < 0) != (res < 0))) {
-            *((@type@ *)op) = res + in2;
+            *((@type@ *)op1) = res + in2;
         }
         else {
-            *((@type@ *)op) = res;
+            *((@type@ *)op1) = res;
         }
     }
 }
@@ -1055,7 +1053,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = in1*in1;
+        *((@type@ *)op1) = in1*in1;
     }
 }
 
@@ -1064,7 +1062,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = ONE/in1;
+        *((@type@ *)op1) = 1/in1;
     }
 }
 
@@ -1072,7 +1070,7 @@ static void
 @TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        *((@type@ *)op) = ONE;
+        *((@type@ *)op1) = 1;
     }
 }
 
@@ -1081,7 +1079,7 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = in1;
+        *((@type@ *)op1) = in1;
     }
 }
 
@@ -1092,7 +1090,7 @@ static void
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ tmp = in1 > 0 ? in1 : -in1;
         /* add 0 to clear -0.0 */
-        *((@type@ *)op) = tmp + 0;
+        *((@type@ *)op1) = tmp + 0;
     }
 }
 
@@ -1101,25 +1099,17 @@ static void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op) = -in1;
+        *((@type@ *)op1) = -in1;
     }
 }
 
 static void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    /*  */
+    /* Sign of nan is currently 0 */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        if (in1 > 0) {
-            *((@type@ *)op) = 1;
-        }
-        else if (in1 < 0) {
-            *((@type@ *)op) = -1;
-        }
-        else {
-            *((@type@ *)op) = 0;
-        }
+        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
     }
 }
 
@@ -1157,9 +1147,6 @@ static void
 
 #define @TYPE@_true_divide @TYPE@_divide
 
-#undef ONE
-#undef ZERO
-
 /**end repeat**/
 
 
@@ -1169,18 +1156,19 @@ static void
  *****************************************************************************
  */
 
-/**begin repeat
- * complex types
- * #ctype= cfloat, cdouble, clongdouble#
- * #CTYPE= CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #type = float, double, longdouble#
- * #c = f, , l#
- */
-
 #define CGE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi))
 #define CLE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi))
-#define ONE 1.0@c@
-#define ZERO 0.0@c@
+#define CGT(xr,xi,yr,yi) (xr > yr || (xr == yr && xi > yi))
+#define CLT(xr,xi,yr,yi) (xr < yr || (xr == yr && xi < yi))
+#define CEQ(xr,xi,yr,yi) (xr == yr && xi == yi)
+#define CNE(xr,xi,yr,yi) (xr != yr || xi != yi)
+
+/**begin repeat
+ * complex types
+ * #type = float, double, longdouble#
+ * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ * #c = f, , l#
+ */
 
 /**begin repeat1
  * arithmetic
@@ -1188,34 +1176,34 @@ static void
  * #OP = +, -#
  */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        ((@type@ *)op)[0] = in1r @OP@ in2r;
-        ((@type@ *)op)[1] = in1i @OP@ in2i;
+        ((@type@ *)op1)[0] = in1r @OP@ in2r;
+        ((@type@ *)op1)[1] = in1i @OP@ in2i;
     }
 }
 /**end repeat1**/
 
 static void
-@CTYPE@_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        ((@type@ *)op)[0] = in1r*in2r - in1i*in2i;
-        ((@type@ *)op)[1] = in1r*in2i + in1i*in2r;
+        ((@type@ *)op1)[0] = in1r*in2r - in1i*in2i;
+        ((@type@ *)op1)[1] = in1r*in2i + in1i*in2r;
     }
 }
 
 static void
-@CTYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1223,13 +1211,13 @@ static void
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
         @type@ d = in2r*in2r + in2i*in2i;
-        ((@type@ *)op)[0] = (in1r*in2r + in1i*in2i)/d;
-        ((@type@ *)op)[1] = (in1i*in2r - in1r*in2i)/d;
+        ((@type@ *)op1)[0] = (in1r*in2r + in1i*in2i)/d;
+        ((@type@ *)op1)[1] = (in1i*in2r - in1r*in2i)/d;
     }
 }
 
 static void
-@CTYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1237,47 +1225,24 @@ static void
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
         @type@ d = in2r*in2r + in2i*in2i;
-        ((@type@ *)op)[0] = floor@c@((in1r*in2r + in1i*in2i)/d);
-        ((@type@ *)op)[1] = 0;
+        ((@type@ *)op1)[0] = floor@c@((in1r*in2r + in1i*in2i)/d);
+        ((@type@ *)op1)[1] = 0;
     }
 }
 
 /**begin repeat1
-   #kind = equal, not_equal#
-   #OP1 = ==, !=#
-   #OP2 = &&, ||#
-*/
-static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1r = ((@type@ *)ip1)[0];
-        const @type@ in1i = ((@type@ *)ip1)[1];
-        const @type@ in2r = ((@type@ *)ip2)[0];
-        const @type@ in2i = ((@type@ *)ip2)[1];
-        *((Bool *)op) = (in1r @OP1@ in2r) @OP2@ (in1i @OP1@ in2i);
-    }
-}
-/**end repeat1**/
-
-/**begin repeat1
- * #kind= greater, greater_equal, less, less_equal#
- * #OP = >, >=, <, <=#
+ * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
+ * #OP = CGT, CGE, CLT, CLE, CEQ, CNE#
  */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (in1r != in2r) {
-            *((Bool *)op) = in1r @OP@ in2r ? 1 : 0;
-        }
-        else {
-            *((Bool *)op) = in1i @OP@ in2i ? 1 : 0;
-        }
+        *((Bool *)op1) = @OP@(in1r,in1i,in2r,in2i);
     }
 }
 /**end repeat1**/
@@ -1288,20 +1253,20 @@ static void
    #OP2 = &&, ||#
 */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        *((Bool *)op) = (in1r @OP1@ in1i) @OP2@ (in2r @OP1@ in2i);
+        *((Bool *)op1) = (in1r @OP1@ in1i) @OP2@ (in2r @OP1@ in2i);
     }
 }
 /**end repeat1**/
 
 static void
-@CTYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1310,17 +1275,17 @@ static void
         const @type@ in2i = ((@type@ *)ip2)[1];
         const Bool tmp1 = (in1r || in1i);
         const Bool tmp2 = (in2r || in2i);
-        *((Bool *)op) = (tmp1 && !tmp2) || (!tmp1 && tmp2);
+        *((Bool *)op1) = (tmp1 && !tmp2) || (!tmp1 && tmp2);
     }
 }
 
 static void
-@CTYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        *((Bool *)op) = !(in1r || in1i);
+        *((Bool *)op1) = !(in1r || in1i);
     }
 }
 
@@ -1330,29 +1295,29 @@ static void
  * #OP = ||, ||, &&#
  **/
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        *((Bool *)op) = @func@(in1r) @OP@ @func@(in1i);
+        *((Bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
 }
 /**end repeat1**/
 
 static void
-@CTYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+C@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        ((@type@ *)op)[0] = in1r*in1r - in1i*in1i;
-        ((@type@ *)op)[1] = in1r*in1i + in1i*in1r;
+        ((@type@ *)op1)[0] = in1r*in1r - in1i*in1i;
+        ((@type@ *)op1)[1] = in1r*in1i + in1i*in1r;
     }
 }
 
 static void
-@CTYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+C@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
@@ -1360,93 +1325,78 @@ static void
         if (fabs@c@(in1i) <= fabs@c@(in1r)) {
             const @type@ r = in1i/in1r;
             const @type@ d = in1r + in1i*r;
-            ((@type@ *)op)[0] = 1/d;
-            ((@type@ *)op)[1] = -r/d;
+            ((@type@ *)op1)[0] = 1/d;
+            ((@type@ *)op1)[1] = -r/d;
         } else {
             const @type@ r = in1r/in1i;
             const @type@ d = in1r*r + in1i;
-            ((@type@ *)op)[0] = r/d;
-            ((@type@ *)op)[1] = -1/d;
+            ((@type@ *)op1)[0] = r/d;
+            ((@type@ *)op1)[1] = -1/d;
         }
     }
 }
 
 static void
-@CTYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+C@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        ((@type@ *)op)[0] = ONE;
-        ((@type@ *)op)[1] = ZERO;
+        ((@type@ *)op1)[0] = 1;
+        ((@type@ *)op1)[1] = 0;
     }
 }
 
 static void
-@CTYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
+C@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        ((@type@ *)op)[0] = in1r;
-        ((@type@ *)op)[1] = -in1i;
+        ((@type@ *)op1)[0] = in1r;
+        ((@type@ *)op1)[1] = -in1i;
     }
 }
 
 static void
-@CTYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        *((@type@ *)op) = sqrt@c@(in1r*in1r + in1i*in1i);
+        *((@type@ *)op1) = sqrt@c@(in1r*in1r + in1i*in1i);
     }
 }
 
 static void
-@CTYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
+    /* fixme: sign of nan is currently 0 */
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        if (in1r > 0) {
-            ((@type@ *)op)[0] = ONE;
-        }
-        else if (in1r < 0) {
-            ((@type@ *)op)[0] = -ONE;
-        }
-        else {
-            if (in1i > 0) {
-                ((@type@ *)op)[0] = ONE;
-            }
-            else if (in1i < 0) {
-                ((@type@ *)op)[0] = -ONE;
-            }
-            else {
-                ((@type@ *)op)[0] = ZERO;
-            }
-        }
-        ((@type@ *)op)[1] = ZERO;
+        ((@type@ *)op1)[0] = CGT(in1r, in1i, 0, 0) ? 1 :
+                            (CLT(in1r, in1i, 0, 0) ? -1 : 0);
+        ((@type@ *)op1)[1] = 0;
     }
 }
 
 /**begin repeat1
  * #kind = maximum, minimum#
- * #OP1 = CGE, CLE#
- * #OP2 = CLE, CGE#
+ * #OP = CGE, CLE#
  */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in1r) || isnan(in1i)) {
-            ((@type@ *)op)[0] = in1r;
-            ((@type@ *)op)[1] = in1i;
+        if (@OP@(in1r, in1i, in2r, in2i) || isnan(in1r) || isnan(in1i)) {
+            ((@type@ *)op1)[0] = in1r;
+            ((@type@ *)op1)[1] = in1i;
         }
         else {
-            ((@type@ *)op)[0] = in2r;
-            ((@type@ *)op)[1] = in2i;
+            ((@type@ *)op1)[0] = in2r;
+            ((@type@ *)op1)[1] = in2i;
         }
     }
 }
@@ -1454,36 +1404,38 @@ static void
 
 /**begin repeat1
  * #kind = fmax, fmin#
- * #OP1 = CGE, CLE#
+ * #OP = CGE, CLE#
  */
 static void
-@CTYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (@OP1@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
-            ((@type@ *)op)[0] = in1r;
-            ((@type@ *)op)[1] = in1i;
+        if (@OP@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
+            ((@type@ *)op1)[0] = in1r;
+            ((@type@ *)op1)[1] = in1i;
         }
         else {
-            ((@type@ *)op)[0] = in2r;
-            ((@type@ *)op)[1] = in2i;
+            ((@type@ *)op1)[0] = in2r;
+            ((@type@ *)op1)[1] = in2i;
         }
     }
 }
 /**end repeat1**/
 
-#define @CTYPE@_true_divide @CTYPE@_divide
+#define C@TYPE@_true_divide C@TYPE@_divide
+
+/**end repeat**/
 
 #undef CGE
 #undef CLE
-#undef ONE
-#undef ZERO
-
-/**end repeat**/
+#undef CGT
+#undef CLT
+#undef CEQ
+#undef CNE
 
 /*
  *****************************************************************************
