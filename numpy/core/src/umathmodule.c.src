@@ -36,8 +36,8 @@
  */
 
 #define PI 3.14159265358979323846264338328@c@
-#define degrees@c@ deg2rad@c@
-#define radians@c@ rad2deg@c@
+#define degrees@c@ rad2deg@c@
+#define radians@c@ deg2rad@c@
 
 static @type@
 rad2deg@c@(@type@ x) {
