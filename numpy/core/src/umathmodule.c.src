@@ -1118,7 +1118,7 @@ static void
 {
     UNARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
-        *(@type@ *)op1 = modf@c@(in1, (@type@ *)op2);
+        *((@type@ *)op1) = modf@c@(in1, (@type@ *)op2);
     }
 }
 
@@ -1128,7 +1128,7 @@ static void
 {
     UNARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
-        *(@type@ *)op1 = frexp@c@(in1, (int *)op2);
+        *((@type@ *)op1) = frexp@c@(in1, (int *)op2);
     }
 }
 #endif
@@ -1140,7 +1140,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const int in2 = *(int *)ip2;
-        *(@type@ *)op = ldexp@c@(in1, in2);
+        *((@type@ *)op1) = ldexp@c@(in1, in2);
     }
 }
 #endif
@@ -1452,7 +1452,7 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
-        *(Bool *)op = (Bool) PyObject_RichCompareBool(in1, in2, Py_@OP@);
+        *((Bool *)op1) = (Bool) PyObject_RichCompareBool(in1, in2, Py_@OP@);
     }
 }
 /**end repeat**/
@@ -1463,7 +1463,7 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     PyObject *zero = PyInt_FromLong(0);
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
-        *(PyObject **)op = PyInt_FromLong(PyObject_Compare(in1, zero));
+        *((PyObject **)op1) = PyInt_FromLong(PyObject_Compare(in1, zero));
     }
     Py_DECREF(zero);
 }
