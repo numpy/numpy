@@ -36,16 +36,8 @@
  */
 
 #define PI 3.14159265358979323846264338328@c@
-
-static @type@
-degrees@c@(@type@ x) {
-    return x*(180.0@c@/PI);
-}
-
-static @type@
-radians@c@(@type@ x) {
-    return x*(PI/180.0@c@);
-}
+#define degrees@c@ deg2rad@c@
+#define radians@c@ rad2deg@c@
 
 static @type@
 rad2deg@c@(@type@ x) {
@@ -136,7 +128,7 @@ _npy_Object@Kind@(PyObject *i1, PyObject *i2)
  */
 
 
-/* 
+/*
  * Don't pass structures between functions (only pointers) because how
  * structures are passed is compiler dependent and could cause
  * segfaults if ufuncobject.c is compiled with a different compiler
@@ -576,6 +568,8 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
 #define BOOL_bitwise_xor BOOL_logical_xor
 #define BOOL_multiply BOOL_logical_and
 #define BOOL_subtract BOOL_logical_xor
+#define BOOL_fmax BOOL_maximum
+#define BOOL_fmin BOOL_minimum
 
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
@@ -661,6 +655,8 @@ BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data
  */
 
 #define @S@@TYPE@_floor_divide @S@@TYPE@_divide
+#define @S@@TYPE@_fmax @S@@TYPE@_maximum
+#define @S@@TYPE@_fmin @S@@TYPE@_minimum
 
 static void
 @S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))

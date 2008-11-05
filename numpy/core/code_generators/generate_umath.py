@@ -221,7 +221,7 @@ defdict = {
 'ones_like' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.ones_like'),
-          TD(nobool_or_obj),
+          TD(noobj),
           TD(O, f='Py_get_one'),
           ),
 'power' :
@@ -319,12 +319,19 @@ defdict = {
 'fmax' :
     Ufunc(2, 1, None,
           "",
-          TD(inexact)
+          TD(noobj),
+          TD(O, f='_npy_ObjectMax')
           ),
 'fmin' :
     Ufunc(2, 1, None,
           "",
-          TD(inexact)
+          TD(noobj),
+          TD(O, f='_npy_ObjectMin')
+          ),
+'logsumexp' :
+    Ufunc(2, 1, None,
+          "",
+          TD(flts, f="logsumexp")
           ),
 'logsumexp' :
     Ufunc(2, 1, None,
