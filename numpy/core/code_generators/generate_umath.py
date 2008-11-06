@@ -503,6 +503,12 @@ defdict = {
           TD(flts, f='ceil'),
           TD(M, f='ceil'),
           ),
+'trunc' :
+    Ufunc(1, 1, None,
+          '',
+          TD(flts, f='trunc'),
+          TD(M, f='trunc'),
+          ),
 'fabs' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.fabs'),
