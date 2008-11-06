@@ -328,10 +328,10 @@ defdict = {
           TD(noobj),
           TD(O, f='_npy_ObjectMin')
           ),
-'logsumexp' :
+'logaddexp' :
     Ufunc(2, 1, None,
           "",
-          TD(flts, f="logsumexp")
+          TD(flts, f="logaddexp")
           ),
 'logsumexp' :
     Ufunc(2, 1, None,
@@ -379,10 +379,20 @@ defdict = {
           docstrings.get('numpy.core.umath.degrees'),
           TD(fltsM, f='degrees'),
           ),
+'rad2deg' :
+    Ufunc(1, 1, None,
+          '',
+          TD(fltsM, f='rad2deg'),
+          ),
 'radians' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.radians'),
           TD(fltsM, f='radians'),
+          ),
+'deg2rad' :
+    Ufunc(1, 1, None,
+          '',
+          TD(fltsM, f='deg2rad'),
           ),
 'arccos' :
     Ufunc(1, 1, None,

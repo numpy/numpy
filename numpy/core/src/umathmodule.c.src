@@ -50,7 +50,7 @@ deg2rad@c@(@type@ x) {
 }
 
 static @type@
-logsumexp@c@(@type@ x, @type@ y)
+logaddexp@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
