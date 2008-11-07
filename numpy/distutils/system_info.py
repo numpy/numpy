@@ -521,7 +521,7 @@ class system_info:
         # Debian and Ubuntu added a g3f suffix to shared library to deal with
         # g77 -> gfortran ABI transition
         if sys.platform[:5] == 'linux':
-            exts.append('.so.g3f')
+            exts.append('.so.3gf')
         return exts
 
     def check_libs(self,lib_dir,libs,opt_libs =[]):
