@@ -28,3 +28,32 @@ Building NumPy requires the following software installed:
    Python must also be compiled with the zlib module enabled.
 
 __ http://www.python.org
+
+Building with ATLAS support
+===========================
+
+Ubuntu 8.10 (Intrepid)
+----------------------
+
+You can install the necessary packages for optimized ATLAS with this command:
+
+    sudo apt-get install libatlas-base-dev
+
+If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
+also install the corresponding package for optimal performances. For example,
+for SSE2:
+
+    sudo apt-get install libatlas3gf-sse2
+
+Ubuntu 8.04 and lower
+---------------------
+
+You can install the necessary packages for optimized ATLAS with this command:
+
+    sudo apt-get install atlas3-base-dev
+
+If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
+also install the corresponding package for optimal performances. For example,
+for SSE2:
+
+    sudo apt-get install atlas3-sse2
