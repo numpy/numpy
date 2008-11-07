@@ -45,6 +45,10 @@ for SSE2:
 
     sudo apt-get install libatlas3gf-sse2
 
+*NOTE*: if you build your own atlas, Intrepid changed its default fortran
+compiler to gfortran. So you should rebuild everything from scratch, including
+lapack, to use it on Intrepid.
+
 Ubuntu 8.04 and lower
 ---------------------
 
