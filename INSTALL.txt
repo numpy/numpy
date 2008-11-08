@@ -29,6 +29,36 @@ Building NumPy requires the following software installed:
 
 __ http://www.python.org
 
+Fortran ABI mismatch
+====================
+
+The two most popular open source fortran compilers are g77 and gfortran.
+Unfortunately, they are not ABI compatible, which means that concretely you
+should avoid mixing libraries built with one with another. In particular, if
+your blas/lapack/atlas is built with g77, you *must* use g77 when building
+numpy and scipy; on the contrary, if your atlas is built with gfortran, you
+*must* build numpy/scipy with gfortran.
+
+Choosing the fortran compiler
+-----------------------------
+
+To build with g77:
+
+    python setup.py build --fcompiler=gnu
+
+To build with gfortran:
+
+    python setup.py build --fcompiler=gnu95
+
+How to check the ABI of blas/lapack/atlas
+-----------------------------------------
+
+One relatively simple and reliable way to check for the compiler used to build
+a library is to use ldd on the library. If libg2c.so is a dependency, this
+means that g77 has been used. If libgfortran.so is a a dependency, gfortran has
+been used. If both are dependencies, this means both have been used, which is
+almost always a very bad idea.
+
 Building with ATLAS support
 ===========================
 
