@@ -36,11 +36,11 @@ class FindDependenciesLdd:
         return founds
 
 class TestF77Mismatch(TestCase):
-    @dec.skipif(not(sys.platform[:5] == 'linux'), 
+    @dec.skipif(not(sys.platform[:5] == 'linux'),
                 "Skipping fortran compiler mismatch on non Linux platform")
     def test_lapack(self):
         f = FindDependenciesLdd()
-        deps = f.grep_dependencies(lapack_lite.__file__, 
+        deps = f.grep_dependencies(lapack_lite.__file__,
                                    ['libg2c', 'libgfortran'])
         self.failIf(len(deps) > 1,
 """Both g77 and gfortran runtimes linked in lapack_lite ! This is likely to
