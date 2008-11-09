@@ -393,31 +393,31 @@ Math operations
 
 .. autosummary::
 
-    absolute
     add
-    conj
-    divide
-    exp
-    expm1
-    floor_divide
-    fmod
-    log
-    log1p
-    log10
-    logaddexp
-    mod
+    subtract
     multiply
+    divide
+    logaddexp
+    true_divide
+    floor_divide
     negative
-    ones_like
     power
     remainder
+    mod
+    fmod
+    absolute
     rint
-    reciprocal
     sign
+    conj
+    exp
+    log
+    expm1
+    log1p
+    log10
     sqrt
     square
-    subtract
-    true_divide
+    reciprocal
+    ones_like
 
 .. tip::
 
@@ -437,22 +437,22 @@ The ratio of degrees to radians is :math:`180^{\circ}/\pi.`
 
 .. autosummary::
 
-    arccos
+    sin
+    cos
+    tan
     arcsin
+    arccos
     arctan
+    arctan2
+    hypot
+    sinh
+    cosh
+    tanh
     arcsinh
     arccosh
     arctanh
-    arctan2
-    cos
-    cosh
     deg2rad
-    hypot
     rad2deg
-    sin
-    sinh
-    tan
-    tanh
 
 Bit-twiddling functions
 -----------------------
@@ -540,16 +540,16 @@ single operation.
 
 .. autosummary::
 
-    ceil
+    isreal
     iscomplex
     isfinite
     isinf
     isnan
-    isreal
-    ldexp
-    modf
-    floor
-    fmod
-    frexp
     signbit
-    trunk
+    modf
+    ldexp
+    frexp
+    fmod
+    floor
+    ceil
+    trunc
