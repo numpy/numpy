@@ -2,7 +2,6 @@
 # here so that the order is set. Append new functions
 # to the end of the list.
 PyUFunc_FromFuncAndData
-PyUFunc_FromFuncAndDataAndSignature
 PyUFunc_RegisterLoopForType
 PyUFunc_GenericFunction
 PyUFunc_f_f_As_d_d
@@ -32,3 +31,4 @@ PyUFunc_clearfperr
 PyUFunc_getfperr
 PyUFunc_handlefperr
 PyUFunc_ReplaceLoopBySignature
+PyUFunc_FromFuncAndDataAndSignature
