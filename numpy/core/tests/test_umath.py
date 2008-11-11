@@ -69,7 +69,7 @@ class TestLogAddExp(TestCase):
         for dt in ['f','d','g'] :
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
-            logzf = np.array(z, dtype=dt))
+            logzf = np.array(z, dtype=dt)
             assert_almost_equal(np.logaddexp(logxf, logyf), logzf)
 
 class TestLogAddExp(TestCase):
