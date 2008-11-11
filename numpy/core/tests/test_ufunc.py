@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import *
-import numpy.core.umath_tests as umt
+#import numpy.core.umath_tests as umt
 
 class TestUfunc(TestCase):
     def test_reduceat_shifting_sum(self) :
@@ -231,193 +231,193 @@ class TestUfunc(TestCase):
         """
         pass
 
-    def test_signature(self):
-        # the arguments to test_signature are: nin, nout, core_signature
-        # pass
-        assert_equal(umt.test_signature(2,1,"(i),(i)->()"), 1)
 
-        # pass. empty core signature; treat as plain ufunc (with trivial core)
-        assert_equal(umt.test_signature(2,1,"(),()->()"), 0)
-
-        # in the following calls, a ValueError should be raised because
-        # of error in core signature
-        # error: extra parenthesis
-        msg = "core_sig: extra parenthesis"
-        try:
-            ret = umt.test_signature(2,1,"((i)),(i)->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
-        # error: parenthesis matching
-        msg = "core_sig: parenthesis matching"
-        try:
-            ret = umt.test_signature(2,1,"(i),)i(->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
-        # error: incomplete signature. letters outside of parenthesis are ignored
-        msg = "core_sig: incomplete signature"
-        try:
-            ret = umt.test_signature(2,1,"(i),->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
-        # error: incomplete signature. 2 output arguments are specified
-        msg = "core_sig: incomplete signature"
-        try:
-            ret = umt.test_signature(2,2,"(i),(i)->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
-
-        # more complicated names for variables
-        assert_equal(umt.test_signature(2,1,"(i1,i2),(J_1)->(_kAB)"),1)
-
-    def test_get_signature(self):
-        assert_equal(umt.inner1d.signature, "(i),(i)->()")
-
-    def test_inner1d(self):
-        a = np.arange(6).reshape((2,3))
-        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1))
-
-    def test_broadcast(self):
-        msg = "broadcast"
-        a = np.arange(4).reshape((2,1,2))
-        b = np.arange(4).reshape((1,2,2))
-        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
-        msg = "extend & broadcast loop dimensions"
-        b = np.arange(4).reshape((2,2))
-        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
-        msg = "broadcast in core dimensions"
-        a = np.arange(8).reshape((4,2))
-        b = np.arange(4).reshape((4,1))
-        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
-        msg = "extend & broadcast core and loop dimensions"
-        a = np.arange(8).reshape((4,2))
-        b = np.array(7)
-        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
-        msg = "broadcast should fail"
-        a = np.arange(2).reshape((2,1,1))
-        b = np.arange(3).reshape((3,1,1))
-        try:
-            ret = umt.inner1d(a,b)
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError: None
-
-    def test_type_cast(self):
-        msg = "type cast"
-        a = np.arange(6, dtype='short').reshape((2,3))
-        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
-        msg = "type cast on one argument"
-        a = np.arange(6).reshape((2,3))
-        b = a+0.1
-        assert_array_almost_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1),
-            err_msg=msg)
-
-    def test_endian(self):
-        msg = "big endian"
-        a = np.arange(6, dtype='>i4').reshape((2,3))
-        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
-        msg = "little endian"
-        a = np.arange(6, dtype='<i4').reshape((2,3))
-        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
-
-    def test_incontiguous_array(self):
-        msg = "incontiguous memory layout of array"
-        x = np.arange(64).reshape((2,2,2,2,2,2))
-        a = x[:,0,:,0,:,0]
-        b = x[:,1,:,1,:,1]
-        a[0,0,0] = -1
-        msg2 = "make sure it references to the original array"
-        assert_equal(x[0,0,0,0,0,0], -1, err_msg=msg2)
-        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
-        x = np.arange(24).reshape(2,3,4)
-        a = x.T
-        b = x.T
-        a[0,0,0] = -1
-        assert_equal(x[0,0,0], -1, err_msg=msg2)
-        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
-
-    def test_output_argument(self):
-        msg = "output argument"
-        a = np.arange(12).reshape((2,3,2))
-        b = np.arange(4).reshape((2,1,2)) + 1
-        c = np.zeros((2,3),dtype='int')
-        umt.inner1d(a,b,c)
-        assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
-        msg = "output argument with type cast"
-        c = np.zeros((2,3),dtype='int16')
-        umt.inner1d(a,b,c)
-        assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
-        msg = "output argument with incontiguous layout"
-        c = np.zeros((2,3,4),dtype='int16')
-        umt.inner1d(a,b,c[...,0])
-        assert_array_equal(c[...,0], np.sum(a*b,axis=-1), err_msg=msg)
-
-    def test_innerwt(self):
-        a = np.arange(6).reshape((2,3))
-        b = np.arange(10,16).reshape((2,3))
-        w = np.arange(20,26).reshape((2,3))
-        assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
-        a = np.arange(100,124).reshape((2,3,4))
-        b = np.arange(200,224).reshape((2,3,4))
-        w = np.arange(300,324).reshape((2,3,4))
-        assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
-
-    def test_matrix_multiply(self):
-        self.compare_matrix_multiply_results(np.long)
-        self.compare_matrix_multiply_results(np.double)
-
-    def compare_matrix_multiply_results(self, tp):
-        d1 = np.array(rand(2,3,4), dtype=tp)
-        d2 = np.array(rand(2,3,4), dtype=tp)
-        msg = "matrix multiply on type %s" % d1.dtype.name
-
-        def permute_n(n):
-            if n == 1:
-                return ([0],)
-            ret = ()
-            base = permute_n(n-1)
-            for perm in base:
-                for i in xrange(n):
-                    new = perm + [n-1]
-                    new[n-1] = new[i]
-                    new[i] = n-1
-                    ret += (new,)
-            return ret
-
-        def slice_n(n):
-            if n == 0:
-                return ((),)
-            ret = ()
-            base = slice_n(n-1)
-            for sl in base:
-                ret += (sl+(slice(None),),)
-                ret += (sl+(slice(0,1),),)
-            return ret
-
-        def broadcastable(s1,s2):
-            return s1 == s2 or s1 == 1 or s2 == 1
-
-        permute_3 = permute_n(3)
-        slice_3 = slice_n(3) + ((slice(None,None,-1),)*3,)
-
-        ref = True
-        for p1 in permute_3:
-            for p2 in permute_3:
-                for s1 in slice_3:
-                    for s2 in slice_3:
-                        a1 = d1.transpose(p1)[s1]
-                        a2 = d2.transpose(p2)[s2]
-                        ref = ref and a1.base != None and a1.base.base != None
-                        ref = ref and a2.base != None and a2.base.base != None
-                        if broadcastable(a1.shape[-1], a2.shape[-2]) and \
-                           broadcastable(a1.shape[0], a2.shape[0]):
-                            assert_array_almost_equal(
-                                umt.matrix_multiply(a1,a2),
-                                np.sum(a2[...,np.newaxis].swapaxes(-3,-1) *
-                                       a1[...,np.newaxis,:], axis=-1),
-                                err_msg = msg+' %s %s' % (str(a1.shape),
-                                                          str(a2.shape)))
-
-        assert_equal(ref, True, err_msg="reference check")
-
+#    def test_signature(self):
+#        # the arguments to test_signature are: nin, nout, core_signature
+#        # pass
+#        assert_equal(umt.test_signature(2,1,"(i),(i)->()"), 1)
+#
+#        # pass. empty core signature; treat as plain ufunc (with trivial core)
+#        assert_equal(umt.test_signature(2,1,"(),()->()"), 0)
+#
+#        # in the following calls, a ValueError should be raised because
+#        # of error in core signature
+#        # error: extra parenthesis
+#        msg = "core_sig: extra parenthesis"
+#        try:
+#            ret = umt.test_signature(2,1,"((i)),(i)->()")
+#            assert_equal(ret, None, err_msg=msg)
+#        except ValueError: None
+#        # error: parenthesis matching
+#        msg = "core_sig: parenthesis matching"
+#        try:
+#            ret = umt.test_signature(2,1,"(i),)i(->()")
+#            assert_equal(ret, None, err_msg=msg)
+#        except ValueError: None
+#        # error: incomplete signature. letters outside of parenthesis are ignored
+#        msg = "core_sig: incomplete signature"
+#        try:
+#            ret = umt.test_signature(2,1,"(i),->()")
+#            assert_equal(ret, None, err_msg=msg)
+#        except ValueError: None
+#        # error: incomplete signature. 2 output arguments are specified
+#        msg = "core_sig: incomplete signature"
+#        try:
+#            ret = umt.test_signature(2,2,"(i),(i)->()")
+#            assert_equal(ret, None, err_msg=msg)
+#        except ValueError: None
+#
+#        # more complicated names for variables
+#        assert_equal(umt.test_signature(2,1,"(i1,i2),(J_1)->(_kAB)"),1)
+#
+#    def test_get_signature(self):
+#        assert_equal(umt.inner1d.signature, "(i),(i)->()")
+#
+#    def test_inner1d(self):
+#        a = np.arange(6).reshape((2,3))
+#        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1))
+#
+#    def test_broadcast(self):
+#        msg = "broadcast"
+#        a = np.arange(4).reshape((2,1,2))
+#        b = np.arange(4).reshape((1,2,2))
+#        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
+#        msg = "extend & broadcast loop dimensions"
+#        b = np.arange(4).reshape((2,2))
+#        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
+#        msg = "broadcast in core dimensions"
+#        a = np.arange(8).reshape((4,2))
+#        b = np.arange(4).reshape((4,1))
+#        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
+#        msg = "extend & broadcast core and loop dimensions"
+#        a = np.arange(8).reshape((4,2))
+#        b = np.array(7)
+#        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
+#        msg = "broadcast should fail"
+#        a = np.arange(2).reshape((2,1,1))
+#        b = np.arange(3).reshape((3,1,1))
+#        try:
+#            ret = umt.inner1d(a,b)
+#            assert_equal(ret, None, err_msg=msg)
+#        except ValueError: None
+#
+#    def test_type_cast(self):
+#        msg = "type cast"
+#        a = np.arange(6, dtype='short').reshape((2,3))
+#        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
+#        msg = "type cast on one argument"
+#        a = np.arange(6).reshape((2,3))
+#        b = a+0.1
+#        assert_array_almost_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1),
+#            err_msg=msg)
+#
+#    def test_endian(self):
+#        msg = "big endian"
+#        a = np.arange(6, dtype='>i4').reshape((2,3))
+#        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
+#        msg = "little endian"
+#        a = np.arange(6, dtype='<i4').reshape((2,3))
+#        assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
+#
+#    def test_incontiguous_array(self):
+#        msg = "incontiguous memory layout of array"
+#        x = np.arange(64).reshape((2,2,2,2,2,2))
+#        a = x[:,0,:,0,:,0]
+#        b = x[:,1,:,1,:,1]
+#        a[0,0,0] = -1
+#        msg2 = "make sure it references to the original array"
+#        assert_equal(x[0,0,0,0,0,0], -1, err_msg=msg2)
+#        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
+#        x = np.arange(24).reshape(2,3,4)
+#        a = x.T
+#        b = x.T
+#        a[0,0,0] = -1
+#        assert_equal(x[0,0,0], -1, err_msg=msg2)
+#        assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
+#
+#    def test_output_argument(self):
+#        msg = "output argument"
+#        a = np.arange(12).reshape((2,3,2))
+#        b = np.arange(4).reshape((2,1,2)) + 1
+#        c = np.zeros((2,3),dtype='int')
+#        umt.inner1d(a,b,c)
+#        assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
+#        msg = "output argument with type cast"
+#        c = np.zeros((2,3),dtype='int16')
+#        umt.inner1d(a,b,c)
+#        assert_array_equal(c, np.sum(a*b,axis=-1), err_msg=msg)
+#        msg = "output argument with incontiguous layout"
+#        c = np.zeros((2,3,4),dtype='int16')
+#        umt.inner1d(a,b,c[...,0])
+#        assert_array_equal(c[...,0], np.sum(a*b,axis=-1), err_msg=msg)
+#
+#    def test_innerwt(self):
+#        a = np.arange(6).reshape((2,3))
+#        b = np.arange(10,16).reshape((2,3))
+#        w = np.arange(20,26).reshape((2,3))
+#        assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
+#        a = np.arange(100,124).reshape((2,3,4))
+#        b = np.arange(200,224).reshape((2,3,4))
+#        w = np.arange(300,324).reshape((2,3,4))
+#        assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
+#
+#    def test_matrix_multiply(self):
+#        self.compare_matrix_multiply_results(np.long)
+#        self.compare_matrix_multiply_results(np.double)
+#
+#    def compare_matrix_multiply_results(self, tp):
+#        d1 = np.array(rand(2,3,4), dtype=tp)
+#        d2 = np.array(rand(2,3,4), dtype=tp)
+#        msg = "matrix multiply on type %s" % d1.dtype.name
+#
+#        def permute_n(n):
+#            if n == 1:
+#                return ([0],)
+#            ret = ()
+#            base = permute_n(n-1)
+#            for perm in base:
+#                for i in xrange(n):
+#                    new = perm + [n-1]
+#                    new[n-1] = new[i]
+#                    new[i] = n-1
+#                    ret += (new,)
+#            return ret
+#
+#        def slice_n(n):
+#            if n == 0:
+#                return ((),)
+#            ret = ()
+#            base = slice_n(n-1)
+#            for sl in base:
+#                ret += (sl+(slice(None),),)
+#                ret += (sl+(slice(0,1),),)
+#            return ret
+#
+#        def broadcastable(s1,s2):
+#            return s1 == s2 or s1 == 1 or s2 == 1
+#
+#        permute_3 = permute_n(3)
+#        slice_3 = slice_n(3) + ((slice(None,None,-1),)*3,)
+#
+#        ref = True
+#        for p1 in permute_3:
+#            for p2 in permute_3:
+#                for s1 in slice_3:
+#                    for s2 in slice_3:
+#                        a1 = d1.transpose(p1)[s1]
+#                        a2 = d2.transpose(p2)[s2]
+#                        ref = ref and a1.base != None and a1.base.base != None
+#                        ref = ref and a2.base != None and a2.base.base != None
+#                        if broadcastable(a1.shape[-1], a2.shape[-2]) and \
+#                           broadcastable(a1.shape[0], a2.shape[0]):
+#                            assert_array_almost_equal(
+#                                umt.matrix_multiply(a1,a2),
+#                                np.sum(a2[...,np.newaxis].swapaxes(-3,-1) *
+#                                       a1[...,np.newaxis,:], axis=-1),
+#                                err_msg = msg+' %s %s' % (str(a1.shape),
+#                                                          str(a2.shape)))
+#
+#        assert_equal(ref, True, err_msg="reference check")
 
 if __name__ == "__main__":
     run_module_suite()
