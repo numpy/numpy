@@ -174,6 +174,11 @@ class MaskedRecords(MaskedArray, object):
         return ndarray.view(self,recarray)
     _data = property(fget=_getdata)
 
+    def _getfieldmask(self):
+        "Alias to mask"
+        return self._mask
+    _fieldmask = property(fget=_getfieldmask)
+
     def __len__(self):
         "Returns the length"
         # We have more than one record
