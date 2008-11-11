@@ -75,11 +75,11 @@ def check_math_capabilities(config, moredefs, mathlibs):
                 " available (the list is %s)." % str(mandatory_funcs))
 
     # Standard functions which may not be available and for which we have a
-    # replacement implementation
+    # replacement implementation. Note that some of these are C99 functions.
     # XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
     # python.h... I wish they would clean their public headers someday)
     optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
-                         "rint", "trunc"]
+                         "rint", "trunc", "exp2", "log2"]
 
     check_funcs(optional_stdfuncs)
 
@@ -87,7 +87,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
     c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
                  "ceil", "rint", "trunc", "sqrt", "log10", "log", "exp",
                  "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
-                 "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp']
+                 "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
+                 "exp2", "log2"]
 
     for prec in ['l', 'f']:
         fns = [f + prec for f in c99_funcs]

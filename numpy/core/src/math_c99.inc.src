@@ -120,14 +120,26 @@ double rint(double x)
 #ifndef HAVE_TRUNC
 double trunc(double x)
 {
-    if (x < 0) {
-        return ceil(x);
-    }
-    else {
-        return floor(x);
-    }
-
+    return x < 0 ? ceil(x) : floor(x);
 }
+#endif
+
+#ifndef HAVE_EXP2
+#define LOG2 0.69314718055994530943
+double trunc(double x)
+{
+    return exp(LOG2*x)
+}
+#undef LOG2
+#endif
+
+#ifndef HAVE_LOG2
+#define INVLOG2 1.4426950408889634074
+double trunc(double x)
+{
+    return INVLOG2*log(x)
+}
+#undef INVLOG2
 #endif
 
 /*
@@ -196,9 +208,9 @@ static int signbit_ld (long double x)
 
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p#
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
  * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
- *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P#
+ *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
  */
 #ifndef HAVE_@KIND@@C@
 #ifdef @kind@@c@

@@ -328,7 +328,7 @@ def log2(x):
     array([ 2.+4.5324j,  3.+4.5324j,  3.+0.j    ])
     """
     x = _fix_real_lt_zero(x)
-    return nx.log(x)/_ln2
+    return nx.log2(x)
 
 def power(x, p):
     """Return x**p.
