@@ -53,7 +53,7 @@ class TestExp2(TestCase):
             yf = np.array(y, dtype=dt)
             assert_almost_equal(np.exp2(yf), xf)
 
-class TestLogAddExp2(TestCase):
+class TestLogAddExp2(object):
     # Need test for intermediate precisions
     def test_logaddexp2_values(self) :
         x = [1, 2, 3, 4, 5]
@@ -66,9 +66,9 @@ class TestLogAddExp2(TestCase):
             assert_almost_equal(np.logaddexp2(xf, yf), zf, decimal=dec)
 
     def test_logaddexp2_range(self) :
-        x = [1000000, -1000000, 2000000, -2000000]
-        y = [2000000, -2000000, 1000000, -1000000]
-        z = [2000000, -1000000, 2000000, -1000000]
+        x = [1000000., -1000000., 2000000., -2000000.]
+        y = [2000000., -2000000., 1000000., -1000000.]
+        z = [2000000., -1000000., 2000000., -1000000.]
         for dt in ['f','d','g'] :
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
@@ -95,7 +95,7 @@ class TestExp(TestCase):
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.exp(yf), xf)
 
-class TestLogAddExp(TestCase):
+class TestLogAddExp(object):
     def test_logaddexp_values(self) :
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
@@ -107,9 +107,9 @@ class TestLogAddExp(TestCase):
             assert_almost_equal(np.logaddexp(xf, yf), zf, decimal=dec)
 
     def test_logaddexp_range(self) :
-        x = [1000000, -1000000, 2000000, -2000000]
-        y = [2000000, -2000000, 1000000, -1000000]
-        z = [2000000, -1000000, 2000000, -1000000]
+        x = [1000000., -1000000., 2000000., -2000000.]
+        y = [2000000., -2000000., 1000000., -1000000.]
+        z = [2000000., -1000000., 2000000., -1000000.]
         for dt in ['f','d','g'] :
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
