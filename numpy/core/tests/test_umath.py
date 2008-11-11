@@ -66,9 +66,9 @@ class TestLogAddExp2(object):
             assert_almost_equal(np.logaddexp2(xf, yf), zf, decimal=dec)
 
     def test_logaddexp2_range(self) :
-        x = [1000000., -1000000., 1000050., -1000050.]
-        y = [1000050., -1000050., 1000000., -1000000.]
-        z = [1000050., -1000000., 1000050., -1000000.]
+        x = [1000000., -1000000., 1000200., -1000200.]
+        y = [1000200., -1000200., 1000000., -1000000.]
+        z = [1000200., -1000000., 1000200., -1000000.]
         for dt in ['f','d','g'] :
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
@@ -107,9 +107,9 @@ class TestLogAddExp(object):
             assert_almost_equal(np.logaddexp(xf, yf), zf, decimal=dec)
 
     def test_logaddexp_range(self) :
-        x = [1000000., -1000000., 1000050., -1000050.]
-        y = [1000050., -1000050., 1000000., -1000000.]
-        z = [1000050., -1000000., 1000050., -1000000.]
+        x = [1000000., -1000000., 1000200., -1000200.]
+        y = [1000200., -1000200., 1000000., -1000000.]
+        z = [1000200., -1000000., 1000200., -1000000.]
         for dt in ['f','d','g'] :
             logxf = np.array(x, dtype=dt)
             logyf = np.array(y, dtype=dt)
