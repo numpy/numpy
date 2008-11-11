@@ -128,11 +128,11 @@ class TestLog1p(TestCase):
     def test_log1p_d(self):
         np.log1p(np.array(1e-100, dtype='d'))
 
-#    def test_log1p_f(self):
-#        np.log1p(np.array(1e-100, dtype='f'))
+    def test_log1p_f(self):
+        np.log1p(np.array(1e-100, dtype='f'))
 
-#    def test_log1p_g(self):
-#        np.log1p(np.array(1e-100, dtype='g'))
+    def test_log1p_g(self):
+        np.log1p(np.array(1e-100, dtype='g'))
 
     def test_log1p(self):
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))

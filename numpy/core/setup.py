@@ -85,7 +85,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     # C99 functions: float and long double versions
     c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
-                 "ceil", "rint", "trunc", "sqrt", "log10", "log", "exp",
+                 "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
                  "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
                  "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
                  "exp2", "log2"]
