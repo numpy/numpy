@@ -333,6 +333,11 @@ defdict = {
           "",
           TD(flts, f="logaddexp")
           ),
+'logaddexp2' :
+    Ufunc(2, 1, None,
+          "",
+          TD(flts, f="logaddexp2")
+          ),
 'bitwise_and' :
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.bitwise_and'),

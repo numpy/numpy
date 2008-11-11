@@ -35,7 +35,11 @@
  * #C = F, ,L#
  */
 
+/* fixme: need more precision for LOG2 and INVLOG2 */
+
 #define PI 3.14159265358979323846264338328@c@
+#define LOG2 0.69314718055994530943@c@
+#define INVLOG2 1.4426950408889634074@c@
 #define degrees@c@ rad2deg@c@
 #define radians@c@ deg2rad@c@
 
@@ -50,6 +54,30 @@ deg2rad@c@(@type@ x) {
 }
 
 static @type@
+log2_1p@c@(@type@ x)
+{
+    @type@ u = 1 + x;
+    if (u == 1) {
+        return INVLOG2*x;
+    } else {
+        return log2@c@(u) * x / (u - 1);
+    }
+}
+
+static @type@
+exp2_1m@c@(@type@ x)
+{
+    @type@ u = exp@c@(x);
+    if (u == 1.0) {
+        return LOG2*x;
+    } else if (u - 1 == -1) {
+        return -LOG2;
+    } else {
+        return (u - 1) * x/log2@c@(u);
+    }
+}
+
+static @type@
 logaddexp@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
@@ -61,7 +89,21 @@ logaddexp@c@(@type@ x, @type@ y)
     }
 }
 
+static @type@
+logaddexp2@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + log2_1p@c@(exp2@c@(-tmp));
+    }
+    else {
+        return y + log2_1p@c@(exp2@c@(tmp));
+    }
+}
+
 #undef PI
+#undef LOG2
+#undef INVLOG2
 
 /**end repeat**/
 
