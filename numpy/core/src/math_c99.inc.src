@@ -126,18 +126,18 @@ double trunc(double x)
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-double trunc(double x)
+double exp2(double x)
 {
-    return exp(LOG2*x)
+    return exp(LOG2*x);
 }
 #undef LOG2
 #endif
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-double trunc(double x)
+double log2(double x)
 {
-    return INVLOG2*log(x)
+    return INVLOG2*log(x);
 }
 #undef INVLOG2
 #endif
