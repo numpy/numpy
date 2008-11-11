@@ -35,6 +35,54 @@ class TestPower(TestCase):
         assert_almost_equal(x**14, [-76443+16124j, 23161315+58317492j,
                                     5583548873 +  2465133864j])
 
+class TestLog2(TestCase):
+    def test_log2_values(self) :
+        x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+        y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        for dt in ['f','d','g'] :
+            xf = np.array(x, dtype=dt)
+            assert_almost_equal(np.log2(xf), y)
+
+class TestExp2(TestCase):
+    def test_exp2_values(self) :
+        x = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+        y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        for dt in ['f','d','g'] :
+            yf = np.array(y, dtype=dt)
+            assert_almost_equal(np.exp2(yf), x)
+
+class TestLogAddExp(TestCase):
+    def test_logaddexp_values(self) :
+        x = [1, 2, 3, 4, 5]
+        y = [5, 4, 3, 2, 1]
+        z = [6, 6, 6, 6, 6]
+        for dt in ['f','d','g'] :
+            logxf = np.log(np.array(x, dtype=dt))
+            logyf = np.log(np.array(y, dtype=dt))
+            logzf = np.log(np.array(z, dtype=dt))
+            assert_almost_equal(np.logaddexp(logxf, logyf), logzf)
+
+    def test_logaddexp_range(self) :
+        x = [1000000, -1000000, 2000000, -2000000]
+        y = [2000000, -2000000, 1000000, -1000000]
+        z = [2000000, -1000000, 2000000, -1000000]
+        for dt in ['f','d','g'] :
+            logxf = np.array(x, dtype=dt)
+            logyf = np.array(y, dtype=dt)
+            logzf = np.array(z, dtype=dt))
+            assert_almost_equal(np.logaddexp(logxf, logyf), logzf)
+
+class TestLogAddExp(TestCase):
+    def test_logaddexp(self) :
+        x = [1, 2, 3, 4, 5]
+        y = [5, 4, 3, 2, 1]
+        z = [6, 6, 6, 6, 6]
+        for dt in ['f','d','g'] :
+            logxf = np.log2(np.array(x, dtype=dt))
+            logyf = np.log2(np.array(y, dtype=dt))
+            logzf = np.log2(np.array(z, dtype=dt))
+            assert_almost_equal(np.logaddexp2(logxf, logyf), logzf)
+
 class TestLog1p(TestCase):
     def test_log1p(self):
         assert_almost_equal(ncu.log1p(0.2), ncu.log(1.2))
