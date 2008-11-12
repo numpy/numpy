@@ -42,9 +42,10 @@
 @type@ scalbn@c@(@type@ x, int pow);
 @type@ scalbln@c@(@type@ x, long pow);
 
+/**end repeat**/
+
 #endif
 
-/**end repeat**/
 /*
  *****************************************************************************
  **                     BASIC MATH FUNCTIONS                                **
