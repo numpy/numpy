@@ -29,11 +29,11 @@
  * #kind = atan2,hypot,pow,fmod#
  */
 
-@type@ @kind@@c@(@type@ x, @type@ y)
+@type@ @kind@@c@(@type@ x, @type@ y);
 
 /**end repeat1**/
 
-@type@ modf@c@(@type@ x, @type@ *iptr)
+@type@ modf@c@(@type@ x, @type@ *iptr);
 
 /**end repeat**/
 /*
