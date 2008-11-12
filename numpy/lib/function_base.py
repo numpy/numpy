@@ -225,10 +225,13 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
         The `weights` keyword is only available with `new` set to True.
     new : {None, True, False}, optional
         Whether to use the new semantics for histogram:
-          * None : the new behaviour is used, and a warning is printed,
-          * True : the new behaviour is used and no warning is printed,
-          * False : the old behaviour is used and a message is printed
-              warning about future deprecation.
+          * None : the new behaviour is used, no warning is printed.
+          * True : the new behaviour is used and a warning is raised about
+            the future removal of the `new` keyword.
+          * False : the old behaviour is used and a DeprecationWarning 
+            is raised.
+        As of NumPy 1.3, this keyword should not be used explicitly since it 
+        will disappear in NumPy 1.4. 
 
     Returns
     -------
@@ -264,17 +267,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     # Old behavior
     if new == False:
         warnings.warn("""
-        The original semantics of histogram is scheduled to be
-        deprecated in NumPy 1.3. The new semantics fixes
-        long-standing issues with outliers handling. The main
-        changes concern
-        1. the definition of the bin edges,
-           now including the rightmost edge, and
-        2. the handling of upper outliers,
-           now ignored rather than tallied in the rightmost bin.
-
-        Please read the docstring for more information.
-        """, Warning)
+        The histogram semantics being used is now deprecated and 
+        will disappear in NumPy 1.4.  Please update your code to 
+        use the default semantics. 
+        """, DeprecationWarning)
 
         a = asarray(a).ravel()
 
@@ -322,24 +318,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
 
     # New behavior
     elif new in [True, None]:
-        if new is None:
+        if new is True:
             warnings.warn("""
-            The semantics of histogram has been modified in
-            the current release to fix long-standing issues with
-            outliers handling. The main changes concern
-            1. the definition of the bin edges,
-               now including the rightmost edge, and
-            2. the handling of upper outliers, now ignored rather
-               than tallied in the rightmost bin.
-            The previous behaviour is still accessible using
-            `new=False`, but is scheduled to be deprecated in the
-            next release (1.3).
-
-            *This warning will not printed in the 1.3 release.*
-
-            Use `new=True` to bypass this warning.
-
-            Please read the docstring for more information.
+            The new semantics of histogram is now the default and the `new` 
+            keyword will be removed in NumPy 1.4. 
             """, Warning)
         a = asarray(a)
         if weights is not None:

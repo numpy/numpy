@@ -439,7 +439,7 @@ class TestSinc(TestCase):
 
 class TestHistogram(TestCase):
     def setUp(self):
-        warnings.simplefilter('ignore', Warning)
+        warnings.simplefilter('ignore', DeprecationWarning)
 
     def tearDown(self):
         warnings.resetwarnings()
