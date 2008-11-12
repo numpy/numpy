@@ -11,7 +11,7 @@
  *****************************************************************************
  */
 
-#ifndef _MSC_VER
+#if 0
 
 /**begin repeat
  * #type = float, double, longdouble#
@@ -54,7 +54,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-double expm1(double x)
+static double expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -68,7 +68,7 @@ double expm1(double x)
 #endif
 
 #ifndef HAVE_LOG1P
-double log1p(double x)
+static double log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
@@ -80,7 +80,7 @@ double log1p(double x)
 #endif
 
 #ifndef HAVE_HYPOT
-double hypot(double x, double y)
+static double hypot(double x, double y)
 {
     double yx;
 
@@ -101,14 +101,14 @@ double hypot(double x, double y)
 #endif
 
 #ifndef HAVE_ACOSH
-double acosh(double x)
+static double acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 #endif
 
 #ifndef HAVE_ASINH
-double asinh(double xx)
+static double asinh(double xx)
 {
     double x, d;
     int sign;
@@ -137,7 +137,7 @@ static double atanh(double x)
 #endif
 
 #ifndef HAVE_RINT
-double rint(double x)
+static double rint(double x)
 {
     double y, r;
 
@@ -159,7 +159,7 @@ double rint(double x)
 #endif
 
 #ifndef HAVE_TRUNC
-double trunc(double x)
+static double trunc(double x)
 {
     return x < 0 ? ceil(x) : floor(x);
 }
@@ -167,7 +167,7 @@ double trunc(double x)
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-double exp2(double x)
+static double exp2(double x)
 {
     return exp(LOG2*x);
 }
@@ -176,7 +176,7 @@ double exp2(double x)
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-double log2(double x)
+static double log2(double x)
 {
     return INVLOG2*log(x);
 }
@@ -257,7 +257,7 @@ static int signbit_ld (long double x)
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-@type@ @kind@@c@(@type@ x)
+static @type@ @kind@@c@(@type@ x)
 {
     return (@type@) @kind@((double)x);
 }
@@ -272,7 +272,7 @@ static int signbit_ld (long double x)
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-@type@ @kind@@c@(@type@ x, @type@ y)
+static @type@ @kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) @kind@((double)x, (double) y);
 }
@@ -283,7 +283,7 @@ static int signbit_ld (long double x)
 #ifdef modf@c@
 #undef modf@c@
 #endif
-@type@ modf@c@(@type@ x, @type@ *iptr)
+static @type@ modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = modf((double)x, &niptr);
