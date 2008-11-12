@@ -11,6 +11,8 @@
  *****************************************************************************
  */
 
+#ifndef _MSC_VER
+
 /**begin repeat
  * #type = float, double, longdouble#
  * #c = f, ,l#
@@ -18,7 +20,8 @@
 
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2,
+ *         logb#
  */
 
 @type@ @kind@@c@(@type@ x);
@@ -26,7 +29,7 @@
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod#
+ * #kind = atan2,hypot,pow,fmod,scalb#
  */
 
 @type@ @kind@@c@(@type@ x, @type@ y);
@@ -34,6 +37,12 @@
 /**end repeat1**/
 
 @type@ modf@c@(@type@ x, @type@ *iptr);
+@type@ ldexp@c@(@type@ x, int iexp);
+@type@ frexp@c@(@type@ x, int *iptr);
+@type@ scalbn@c@(@type@ x, int pow);
+@type@ scalbln@c@(@type@ x, long pow);
+
+#endif
 
 /**end repeat**/
 /*

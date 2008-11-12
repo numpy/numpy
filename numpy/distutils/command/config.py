@@ -126,9 +126,9 @@ int main()
         body = []
         if decl:
             body.append("int %s (void);" % func)
-        # Handle MSVC intrisincs: force MS compiler to make a function call.
+        # Handle MSVC intrinsics: force MS compiler to make a function call.
         # Useful to test for some functions when built with optimization on, to
-        # avoid build error because the intrisinc and our 'fake' test
+        # avoid build error because the intrinsic and our 'fake' test
         # declaration do not match.
         body.append("#ifdef _MSC_VER")
         body.append("#pragma function(%s)" % func)
