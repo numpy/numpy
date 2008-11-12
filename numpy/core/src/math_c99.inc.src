@@ -7,48 +7,10 @@
 
 /*
  *****************************************************************************
- **                     C99 PROTOTYPES                                      **
+ **                     DISTRO VOODOO                                       **
  *****************************************************************************
  */
 
-#ifndef _MSC_VER
-
-/**begin repeat
- * #type = float, double, longdouble#
- * #c = f, ,l#
- */
-
-/**begin repeat1
- * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2,
- *         logb#
- */
-
-@type@ @kind@@c@(@type@ x);
-
-/**end repeat1**/
-
-/**begin repeat1
- * #kind = atan2,hypot,pow,fmod,scalb#
- */
-
-@type@ @kind@@c@(@type@ x, @type@ y);
-
-/**end repeat1**/
-
-@type@ modf@c@(@type@ x, @type@ *iptr);
-@type@ ldexp@c@(@type@ x, int iexp);
-@type@ frexp@c@(@type@ x, int *iptr);
-@type@ scalbn@c@(@type@ x, int pow);
-@type@ scalbln@c@(@type@ x, long pow);
-
-/**end repeat**/
-
-#else
-#include <xmath.h>
-#define HAVE_TANHF
-
-#endif
 
 /*
  *****************************************************************************
@@ -58,7 +20,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-static double expm1(double x)
+double expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -69,10 +31,12 @@ static double expm1(double x)
         return (u-1.0) * x/log(u);
     }
 }
+#else
+double expm1(double x);
 #endif
 
 #ifndef HAVE_LOG1P
-static double log1p(double x)
+double log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
@@ -81,10 +45,12 @@ static double log1p(double x)
         return log(u) * x / (u - 1);
     }
 }
+#else
+double log1p(double x);
 #endif
 
 #ifndef HAVE_HYPOT
-static double hypot(double x, double y)
+double hypot(double x, double y)
 {
     double yx;
 
@@ -102,17 +68,21 @@ static double hypot(double x, double y)
         return x*sqrt(1.+yx*yx);
     }
 }
+#else
+double hypot(double x, double y);
 #endif
 
 #ifndef HAVE_ACOSH
-static double acosh(double x)
+double acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
+#else
+double acosh(double x);
 #endif
 
 #ifndef HAVE_ASINH
-static double asinh(double xx)
+double asinh(double xx)
 {
     double x, d;
     int sign;
@@ -131,17 +101,21 @@ static double asinh(double xx)
     }
     return sign*log1p(x*(1.0 + x/(d+1)));
 }
+#else
+double asinh(double xx);
 #endif
 
 #ifndef HAVE_ATANH
-static double atanh(double x)
+double atanh(double x)
 {
     return 0.5*log1p(2.0*x/(1.0-x));
 }
+#else
+double atanh(double x);
 #endif
 
 #ifndef HAVE_RINT
-static double rint(double x)
+double rint(double x)
 {
     double y, r;
 
@@ -160,31 +134,39 @@ static double rint(double x)
     }
     return y;
 }
+#else
+double rint(double x);
 #endif
 
 #ifndef HAVE_TRUNC
-static double trunc(double x)
+double trunc(double x)
 {
     return x < 0 ? ceil(x) : floor(x);
 }
+#else
+double trunc(double x);
 #endif
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-static double exp2(double x)
+double exp2(double x)
 {
     return exp(LOG2*x);
 }
 #undef LOG2
+#else
+double exp2(double x);
 #endif
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-static double log2(double x)
+double log2(double x)
 {
     return INVLOG2*log(x);
 }
 #undef INVLOG2
+#else
+double log2(double x);
 #endif
 
 /*
@@ -257,43 +239,54 @@ static int signbit_ld (long double x)
  * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
  *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
  */
-#ifndef HAVE_@KIND@@C@
+
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-static @type@ @kind@@c@(@type@ x)
+#ifndef HAVE_@KIND@@C@
+@type@ npy_@kind@@c@(@type@ x)
 {
     return (@type@) @kind@((double)x);
 }
+#define @kind@@c@  npy_@kind@@c@
+#else
+@type@ @kind@@c@(@type@ x);
 #endif
+
 /**end repeat1**/
 
 /**begin repeat1
  * #kind = atan2,hypot,pow,fmod#
  * #KIND = ATAN2,HYPOT,POW,FMOD#
  */
-#ifndef HAVE_@KIND@@C@
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-static @type@ @kind@@c@(@type@ x, @type@ y)
+#ifndef HAVE_@KIND@@C@
+@type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) @kind@((double)x, (double) y);
 }
+#define @kind@@c@  npy_@kind@@c@
+#else
+@type@ @kind@@c@(@type@ x, @type@ y);
 #endif
 /**end repeat1**/
 
-#ifndef HAVE_MODF@C@
 #ifdef modf@c@
 #undef modf@c@
 #endif
-static @type@ modf@c@(@type@ x, @type@ *iptr)
+#ifndef HAVE_MODF@C@
+@type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = modf((double)x, &niptr);
     *iptr = (@type@) niptr;
     return (@type@) y;
 }
+#define modf@c@ npy_modf@c@
+#else
+@type@ modf@c@(@type@ x, @type@ *iptr);
 #endif
 
 /**end repeat**/
