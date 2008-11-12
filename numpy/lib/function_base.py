@@ -260,7 +260,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
 
     Examples
     --------
-    >>> np.histogram([1,2,1], bins=[0,1,2,3], new=True)
+    >>> np.histogram([1,2,1], bins=[0,1,2,3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
 
     """
