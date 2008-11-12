@@ -11,12 +11,12 @@
  *****************************************************************************
  */
 
-#if 0
+#ifndef _MSC_VER
 
 /**begin repeat
  * #type = float, double, longdouble#
  * #c = f, ,l#
-*/
+ */
 
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
@@ -43,6 +43,10 @@
 @type@ scalbln@c@(@type@ x, long pow);
 
 /**end repeat**/
+
+#else
+#include <xmath.h>
+#define HAVE_TANHF
 
 #endif
 
@@ -245,7 +249,7 @@ static int signbit_ld (long double x)
  * #TYPE = LONGDOUBLE, FLOAT#
  * #c = l,f#
  * #C = L,F#
-*/
+ */
 
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
