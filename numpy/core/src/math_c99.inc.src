@@ -3,6 +3,65 @@
  * A small module to implement missing C99 math capabilities required by numpy
  *
  * Please keep this independant of python !
+ *
+ * How to add a function to this section
+ * -------------------------------------
+ *
+ * Say you want to add `foo`, these are the steps and the reasons for them.
+ *
+ * 1) Add foo to the appropriate list in the configuration system. The
+ *    lists can be found in numpy/core/setup.py lines 63-105. Read the
+ *    comments that come with them, they are very helpful.
+ *
+ * 2) The configuration system will define a macro HAVE_FOO if your function
+ *    can be linked from the math library. The result can depend on the
+ *    optimization flags as well as the compiler, so can't be known ahead of
+ *    time. If the function can't be linked, then either it is absent, defined
+ *    as a macro, or is an intrinsic (hardware) function. If it is linkable it
+ *    may still be the case that no prototype is available. So to cover all the
+ *    cases requires the following construction.
+ *
+ *    i) Undefine any possible macros:
+ *
+ *    #ifdef foo
+ *    #undef foo
+ *    #endif
+ *
+ *    ii) Check if the function was in the library, If not, define the
+ *    function with npy_ prepended to its name to avoid conflict with any
+ *    intrinsic versions, then use a define so that the preprocessor will
+ *    replace foo with npy_foo before the compilation pass.
+ *
+ *    #ifdef foo
+ *    #undef foo
+ *    #endif
+ *    #ifndef HAVE_FOO
+ *    double npy_foo(double x)
+ *    {
+ *        return x;
+ *    }
+ *    #define foo npy_foo
+ *
+ *    iii) Finally, even if foo is in the library, add a prototype. Just being
+ *    in the library doesn't guarantee a prototype in math.h, and in any case
+ *    you want to make sure the prototype is what you think it is. Count on it,
+ *    whatever can go wrong will go wrong. Think defensively! The result:
+ *
+ *    #ifdef foo
+ *    #undef foo
+ *    #endif
+ *    #ifndef HAVE_FOO
+ *    double npy_foo(double x)
+ *    {
+ *        return x;
+ *    }
+ *    #define foo npy_foo
+ *    #else
+ *    double foo(double x);
+ *    #end
+ *
+ *    And there you have it.
+ *
  */
 
 /*
