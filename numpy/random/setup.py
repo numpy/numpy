@@ -43,7 +43,7 @@ def configuration(parent_package='',top_path=None):
             if msvcrt is None:
                 raise ValueError("Discrepancy between " \
                                  "msvc_runtime_library " \
-                                 "and our msvc detection scheme ?"
+                                 "and our msvc detection scheme ?")
             hmsvc = msvc_to_hex(msvcrt)
             defs.append("NPY_NEEDS_MINGW_TIME_WORKAROUND")
             defs.append(("NPY_MSVCRT_VERSION", str(hmsvc)))
