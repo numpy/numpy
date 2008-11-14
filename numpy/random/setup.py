@@ -13,8 +13,8 @@ def msvc_version():
     return None
 
 def msvcrt_to_hex(msvc):
-    major = msvc / 100
-    minor = msvc - major * 100
+    major = msvc / 10
+    minor = msvc - major * 10
     return hex(major * 256 + minor)
 
 def configuration(parent_package='',top_path=None):
@@ -44,7 +44,7 @@ def configuration(parent_package='',top_path=None):
                 raise ValueError("Discrepancy between " \
                                  "msvc_runtime_library " \
                                  "and our msvc detection scheme ?")
-            hmsvc = msvcrt_to_hex(msvcrt)
+            hmsvc = msvcrt_to_hex(int(msvcrt[5:])
             defs.append("NPY_NEEDS_MINGW_TIME_WORKAROUND")
             defs.append(("NPY_MSVCRT_VERSION", str(hmsvc)))
 
