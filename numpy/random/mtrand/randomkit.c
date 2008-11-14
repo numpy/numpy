@@ -70,12 +70,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <time.h>
 #include <limits.h>
 #include <math.h>
 
 #ifdef _WIN32
 /* Windows */
+#include <time.h>
 #include <sys/timeb.h>
 #ifndef RK_NO_WINCRYPT
 /* Windows crypto */
@@ -87,6 +87,7 @@
 #endif
 #else
 /* Unix */
+#include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
 #endif
