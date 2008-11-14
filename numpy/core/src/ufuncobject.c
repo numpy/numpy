@@ -91,7 +91,7 @@ PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
 {
-    doubleUnaryFunc *f = (floatUnaryFunc *)func;
+    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
     UNARY_LOOP {
         double in1 = *(double *)ip1;
         *(double *)op1 = f(in1);

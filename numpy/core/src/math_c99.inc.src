@@ -30,13 +30,15 @@
  *    ii) Check if the function was in the library, If not, define the
  *    function with npy_ prepended to its name to avoid conflict with any
  *    intrinsic versions, then use a define so that the preprocessor will
- *    replace foo with npy_foo before the compilation pass.
+ *    replace foo with npy_foo before the compilation pass. Make the
+ *    function static to avoid poluting the module library.
  *
  *    #ifdef foo
  *    #undef foo
  *    #endif
  *    #ifndef HAVE_FOO
- *    double npy_foo(double x)
+ *    static double
+ *    npy_foo(double x)
  *    {
  *        return x;
  *    }
@@ -51,7 +53,8 @@
  *    #undef foo
  *    #endif
  *    #ifndef HAVE_FOO
- *    double npy_foo(double x)
+ *    static double
+ *    npy_foo(double x)
  *    {
  *        return x;
  *    }
@@ -79,7 +82,8 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-double expm1(double x)
+static double
+npy_expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -90,12 +94,14 @@ double expm1(double x)
         return (u-1.0) * x/log(u);
     }
 }
+#define expm1 npy_expm1
 #else
 double expm1(double x);
 #endif
 
 #ifndef HAVE_LOG1P
-double log1p(double x)
+static double
+npy_log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
@@ -104,12 +110,14 @@ double log1p(double x)
         return log(u) * x / (u - 1);
     }
 }
+#define log1p npy_log1p
 #else
 double log1p(double x);
 #endif
 
 #ifndef HAVE_HYPOT
-double hypot(double x, double y)
+static double
+npy_hypot(double x, double y)
 {
     double yx;
 
@@ -127,21 +135,25 @@ double hypot(double x, double y)
         return x*sqrt(1.+yx*yx);
     }
 }
+#define hypot npy_hypot
 #else
 double hypot(double x, double y);
 #endif
 
 #ifndef HAVE_ACOSH
-double acosh(double x)
+static double
+npy_acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
+#define acosh npy_acosh
 #else
 double acosh(double x);
 #endif
 
 #ifndef HAVE_ASINH
-double asinh(double xx)
+static double
+npy_asinh(double xx)
 {
     double x, d;
     int sign;
@@ -160,21 +172,25 @@ double asinh(double xx)
     }
     return sign*log1p(x*(1.0 + x/(d+1)));
 }
+#define asinh npy_asinh
 #else
 double asinh(double xx);
 #endif
 
 #ifndef HAVE_ATANH
-double atanh(double x)
+static double
+npy_atanh(double x)
 {
     return 0.5*log1p(2.0*x/(1.0-x));
 }
+#define atanh npy_atanh
 #else
 double atanh(double x);
 #endif
 
 #ifndef HAVE_RINT
-double rint(double x)
+static double
+npy_rint(double x)
 {
     double y, r;
 
@@ -193,25 +209,30 @@ double rint(double x)
     }
     return y;
 }
+#define rint npy_rint
 #else
 double rint(double x);
 #endif
 
 #ifndef HAVE_TRUNC
-double trunc(double x)
+static double
+npy_trunc(double x)
 {
     return x < 0 ? ceil(x) : floor(x);
 }
+#define trunc npy_trunc
 #else
 double trunc(double x);
 #endif
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-double exp2(double x)
+static double
+npy_exp2(double x)
 {
     return exp(LOG2*x);
 }
+#define exp2 npy_exp2
 #undef LOG2
 #else
 double exp2(double x);
@@ -219,10 +240,12 @@ double exp2(double x);
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-double log2(double x)
+static double
+npy_log2(double x)
 {
     return INVLOG2*log(x);
 }
+#define log2 npy_log2
 #undef INVLOG2
 #else
 double log2(double x);
@@ -303,7 +326,8 @@ static int signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x)
+static @type@
+npy_@kind@@c@(@type@ x)
 {
     return (@type@) @kind@((double)x);
 }
@@ -322,7 +346,8 @@ static int signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-@type@ npy_@kind@@c@(@type@ x, @type@ y)
+static @type@
+npy_@kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) @kind@((double)x, (double) y);
 }
@@ -336,7 +361,8 @@ static int signbit_ld (long double x)
 #undef modf@c@
 #endif
 #ifndef HAVE_MODF@C@
-@type@ npy_modf@c@(@type@ x, @type@ *iptr)
+static @type@
+npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = modf((double)x, &niptr);
