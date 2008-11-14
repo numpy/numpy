@@ -123,22 +123,22 @@ class TestUfunc(TestCase):
             def logical_and(self, obj) :
                 return np.bool_(1)
 
-        # check unary PyUFunc_O_0
+        # check unary PyUFunc_O_O
         msg = "PyUFunc_O_O"
         x = np.ones(10, dtype=np.object)[0::2]
         assert np.all(np.abs(x) == 1), msg
-        # check unary PyUFunc_O_0_method
+        # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
         assert np.all(np.logical_not(x) == True), msg
 
-        # check binary PyUFunc_OO_0
+        # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
         x = np.ones(10, dtype=np.object)[0::2]
         assert np.all(np.add(x,x) == 2), msg
-        # check binary PyUFunc_OO_0_method
+        # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
