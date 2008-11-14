@@ -44,7 +44,7 @@ def configuration(parent_package='',top_path=None):
                 raise ValueError("Discrepancy between " \
                                  "msvc_runtime_library " \
                                  "and our msvc detection scheme ?")
-            hmsvc = msvcrt_to_hex(int(msvcrt[5:])
+            hmsvc = msvcrt_to_hex(int(msvcrt[5:]))
             defs.append("NPY_NEEDS_MINGW_TIME_WORKAROUND")
             defs.append(("NPY_MSVCRT_VERSION", str(hmsvc)))
 
