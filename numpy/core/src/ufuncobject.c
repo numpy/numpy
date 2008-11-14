@@ -168,7 +168,7 @@ PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
     UNARY_LOOP {
         const float *in1 = (float *)ip1;
         cdouble tmp = {(double)(in1[0]),(double)in1[1]};
-        cdouble out; 
+        cdouble out;
         f(&tmp, &out);
         ((float *)op1)[0] = (float)out.real;
         ((float *)op1)[1] = (float)out.imag;
@@ -198,7 +198,7 @@ PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
         const float *in2 = (float *)ip2;
         cdouble tmp1 = {(double)(in1[0]),(double)in1[1]};
         cdouble tmp2 = {(double)(in2[0]),(double)in2[1]};
-        cdouble out; 
+        cdouble out;
         f(&tmp1, &tmp2, &out);
         ((float *)op1)[0] = (float)out.real;
         ((float *)op1)[1] = (float)out.imag;
