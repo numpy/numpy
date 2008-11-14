@@ -1,5 +1,7 @@
-from os.path import join, split
+from os.path import join, split, dirname
+import os
 import sys
+from distutils.dep_util import newer
 
 def msvc_version():
     """Return the msvc version used to build the running python, None if not
@@ -22,12 +24,27 @@ def configuration(parent_package='',top_path=None):
         ext.libraries.extend(libs)
         return None
 
+    def generate_config_h(ext, build_dir):
+        defs = []
+        target = join(build_dir, "mtrand", 'config.h')
+        dir = dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        if newer(__file__, target):
+            target_f = open(target, 'a')
+            for d in defs:
+                if isinstance(d, str):
+                    target_f.write('#define %s\n' % (d))
+            target_f.close()
+
     libs = []
     # Configure mtrand
     config.add_extension('mtrand',
                          sources=[join('mtrand', x) for x in
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',
-                                   'distributions.c']]+[generate_libraries],
+                                   'distributions.c']]+[generate_libraries]
+                                   + [generate_config_h],
                          libraries=libs,
                          depends = [join('mtrand','*.h'),
                                     join('mtrand','*.pyx'),

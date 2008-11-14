@@ -64,6 +64,7 @@
 
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
+#include "config.h"
 
 #include <stddef.h>
 #include <stdio.h>
