@@ -1,4 +1,13 @@
 from os.path import join, split
+import sys
+
+def msvc_version():
+    """Return the msvc version used to build the running python, None if not
+    built with MSVC."""
+    msc_pos = sys.version.find('MSC v.')
+    if msc_pos != -1:
+        return sys.version[msc_pos+6:msc_pos+10]
+    return None
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
