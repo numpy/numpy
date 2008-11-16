@@ -225,3 +225,49 @@ def build_import_library():
     #    msg = "Couldn't find import library, and failed to build it."
     #    raise DistutilsPlatformError, msg
     return
+
+# Functions to deal with visual studio manifests. Manifest are a mechanism to
+# enforce strong DLL versioning on windows, and has nothing to do with
+# distutils MANIFEST. manifests are XML files with version info, and used by
+# the OS loader; they are necessary when linking against a DLL no in the system
+# path; in particular, python 2.6 is built against the MS runtime 9 (the one
+# from VS 2008), which is not available on most windows systems; python 2.6
+# installer does install it in the Win SxS (Side by side) directory, but this
+# requires the manifest too. This is a big mess, thanks MS for a wonderful
+# system.
+
+# XXX: ideally, we should use exactly the same version as used by python, but I
+# have no idea how to obtain the exact version.
+_MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
+
+def msvc_manifest_xml(maj, min):
+    """Given a major and minor version of the MSVCR, returns the
+    corresponding XML file."""
+    try:
+        fullver = _MSVCRVER_TO_FULLVER[str(maj * 10 + min)]
+    except KeyError:
+        raise ValueError("Version %d,%d of MSVCRT not supported yet" \
+                         % (maj, min))
+    # Don't be fooled, it looks like an XML, but it is not. In particular, it
+    # should not have any space before starting, and its size should be
+    # divisible by 4, most likely for alignement constraints when the xml is
+    # embedded in the binary...
+    # This template was copied directly from the python 2.6 binary (using
+    # strings.exe from mingw on python.exe).
+    template = """\
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="false"></requestedExecutionLevel>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.VC%(maj)d%(min)d.CRT" version="%(fullver)s" processorArchitecture="*" publicKeyToken="1fc8b3b9a1e18e3b"></assemblyIdentity>
+    </dependentAssembly>
+  </dependency>
+</assembly>"""
+
+    return template % {'fullver': fullver, 'maj': maj, 'min': min}
