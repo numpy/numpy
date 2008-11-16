@@ -123,14 +123,19 @@ Notes:
 
 Here are some examples of signatures:
 
-
-  || add         || `"(),()->()"`           || ||
-  || inner1d     || `"(i),(i)->()"`         || ||
-  || sum1d       || `"(i)->()"`             || ||
-  || dot2d       || `"(m,n),(n,p)->(m,p)"`  || (matrix multiplication) ||
-  || outer_inner || `"(i,t),(j,t)->(i,j)"`  || (inner over the last dimension, outer over the second to last, and loop/broadcast over the rest.) ||
-
-
++-------------+--------------------------+-----------------------------------+
+| add         | ``"(),()->()"``          |                                   |
++-------------+--------------------------+-----------------------------------+
+| inner1d     | ``"(i),(i)->()"``        |                                   |
++-------------+--------------------------+-----------------------------------+
+| sum1d       | ``"(i)->()"``            |                                   |
++-------------+--------------------------+-----------------------------------+
+| dot2d       | ``"(m,n),(n,p)->(m,p)"`` | matrix multiplication             |
++-------------+--------------------------+-----------------------------------+
+| outer_inner | ``"(i,t),(j,t)->(i,j)"`` | inner over the last dimension,    |
+|             |                          | outer over the second to last,    |
+|             |                          | and loop/broadcast over the rest. |
++-------------+--------------------------+-----------------------------------+
 
 C-API for implementing Elementary Functions
 -------------------------------------------
