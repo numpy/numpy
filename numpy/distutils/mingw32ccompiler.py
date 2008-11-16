@@ -275,7 +275,15 @@ def msvc_manifest_xml(maj, min):
 
 def manifest_rc(biname, type='dll'):
     """Return the rc file used to generate the res file which will be embedded
-    as manifest for binary biname, of given type ('dll' or 'exe')."""
+    as manifest for given manifest file name, of given type ('dll' or
+    'exe').
+    
+    Parameters
+    ----------
+        name: str
+            name of the manifest file to embed
+        type: str ('dll', 'exe')
+            type of the binary which will embed the manifest"""
     if type == 'dll':
         rctype = 2
     elif type == 'exe':
@@ -285,4 +293,4 @@ def manifest_rc(biname, type='dll'):
 
     return """\
 #include "winuser.h"
-%d RT_MANIFEST %s.manifest""" % (rctype, biname)
+%d RT_MANIFEST %s""" % (rctype, name)
