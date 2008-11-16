@@ -229,7 +229,7 @@ defdict = {
           docstrings.get('numpy.core.umath.power'),
           TD(ints),
           TD(inexact, f='pow'),
-          TD(O, f='PyNumber_Power'),
+          TD(O, f='npy_ObjectPower'),
           ),
 'absolute' :
     Ufunc(1, 1, None,
@@ -308,25 +308,25 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.maximum'),
           TD(noobj),
-          TD(O, f='_npy_ObjectMax')
+          TD(O, f='npy_ObjectMax')
           ),
 'minimum' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.minimum'),
           TD(noobj),
-          TD(O, f='_npy_ObjectMin')
+          TD(O, f='npy_ObjectMin')
           ),
 'fmax' :
     Ufunc(2, 1, None,
           "",
           TD(noobj),
-          TD(O, f='_npy_ObjectMax')
+          TD(O, f='npy_ObjectMax')
           ),
 'fmin' :
     Ufunc(2, 1, None,
           "",
           TD(noobj),
-          TD(O, f='_npy_ObjectMin')
+          TD(O, f='npy_ObjectMin')
           ),
 'logaddexp' :
     Ufunc(2, 1, None,

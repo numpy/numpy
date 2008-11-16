@@ -143,18 +143,17 @@ Py_reciprocal(PyObject *o)
  * Define numpy version of PyNumber_Power as binary function.
  */
 static PyObject *
-npy_PyNumber_Power(PyObject *x, PyObject *y)
+npy_ObjectPower(PyObject *x, PyObject *y)
 {
-    PyNumber_Power(x, y, Py_None);
+    return PyNumber_Power(x, y, Py_None);
 }
-#define PyNumber_Power npy_PyNumber_Power
 
 /**begin repeat
  * #Kind = Max, Min#
  * #OP = >=, <=#
  */
 static PyObject *
-_npy_Object@Kind@(PyObject *i1, PyObject *i2)
+npy_Object@Kind@(PyObject *i1, PyObject *i2)
 {
     PyObject *result;
     int cmp;
@@ -172,6 +171,7 @@ _npy_Object@Kind@(PyObject *i1, PyObject *i2)
     return result;
 }
 /**end repeat**/
+
 
 /*
  *****************************************************************************
