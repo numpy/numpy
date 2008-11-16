@@ -94,8 +94,8 @@ following format:
   list of dimension names in parentheses, ``(i_1,...,i_N)``; a scalar 
   input/output is denoted by ``()``.  Instead of ``i_1``, ``i_2``,
   etc, one can use any valid Python variable name.
-* Dimension lists for different arguments are separated by ``*,*``.
-  Input/output arguments are separated by ``->``.
+* Dimension lists for different arguments are separated by ``","``.
+  Input/output arguments are separated by ``"->"``.
 * If one uses the same dimension name in multiple locations, this
   enforces the same size (or broadcastable size) of the corresponding
   dimensions.  
