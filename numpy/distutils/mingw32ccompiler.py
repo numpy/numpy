@@ -277,7 +277,7 @@ def manifest_rc(name, type='dll'):
     """Return the rc file used to generate the res file which will be embedded
     as manifest for given manifest file name, of given type ('dll' or
     'exe').
-    
+
     Parameters
     ----------
         name: str
