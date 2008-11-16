@@ -272,3 +272,17 @@ def msvc_manifest_xml(maj, min):
 </assembly>"""
 
     return template % {'fullver': fullver, 'maj': maj, 'min': min}
+
+def manifest_rc(biname, type='dll'):
+    """Return the rc file used to generate the res file which will be embedded
+    as manifest for binary biname, of given type ('dll' or 'exe')."""
+    if type == 'dll':
+        rctype = 2
+    elif type == 'exe':
+        rctype = 1
+    else:
+        raise ValueError("Type %s not supported" % type)
+
+    return """\
+#include "winuser.h"
+%d RT_MANIFEST %s.manifest""" % (rctype, biname)
