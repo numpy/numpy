@@ -273,7 +273,7 @@ def msvc_manifest_xml(maj, min):
 
     return template % {'fullver': fullver, 'maj': maj, 'min': min}
 
-def manifest_rc(biname, type='dll'):
+def manifest_rc(name, type='dll'):
     """Return the rc file used to generate the res file which will be embedded
     as manifest for given manifest file name, of given type ('dll' or
     'exe').
