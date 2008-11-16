@@ -268,12 +268,7 @@ PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret;
-
-        if (in1 == NULL) {
-            return;
-        }
-        ret = f(in1);
+        PyObject *ret = f(in1);
         if ((ret == NULL) || PyErr_Occurred()) {
             return;
         }
@@ -291,7 +286,6 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
         PyObject *ret = PyObject_CallMethod(in1, meth, NULL);
-
         if (ret == NULL) {
             return;
         }
@@ -304,21 +298,12 @@ PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
 static void
 PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
 {
+    binaryfunc f = (binaryfunc)func;
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret;
-
-        if ((in1 == NULL) || (in2 == NULL)) {
-            return;
-        }
-        if ( (void *) func == (void *) PyNumber_Power) {
-            ret = ((ternaryfunc)func)(in1, in2, Py_None);
-        }
-        else {
-            ret = ((binaryfunc)func)(in1, in2);
-        }
+        PyObject *ret = f(in1, in2);
         if (PyErr_Occurred()) {
             return;
         }
@@ -337,7 +322,6 @@ PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
         PyObject *ret = PyObject_CallMethod(in1, meth, "(O)", in2);
-
         if (ret == NULL) {
             return;
         }

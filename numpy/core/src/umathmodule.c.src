@@ -139,6 +139,16 @@ Py_reciprocal(PyObject *o)
     return result;
 }
 
+/*
+ * Define numpy version of PyNumber_Power as binary function.
+ */
+static PyObject *
+npy_PyNumber_Power(PyObject *x, PyObject *y)
+{
+    PyNumber_Power(x, y, Py_None);
+}
+#define PyNumber_Power npy_PyNumber_Power
+
 /**begin repeat
  * #Kind = Max, Min#
  * #OP = >=, <=#
@@ -1520,7 +1530,11 @@ OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
-        *((Bool *)op1) = (Bool) PyObject_RichCompareBool(in1, in2, Py_@OP@);
+        int ret = PyObject_RichCompareBool(in1, in2, Py_@OP@);
+        if (ret == -1) {
+            return;
+        }
+        *((Bool *)op1) = (Bool)ret;
     }
 }
 /**end repeat**/
@@ -1531,7 +1545,13 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     PyObject *zero = PyInt_FromLong(0);
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
-        *((PyObject **)op1) = PyInt_FromLong(PyObject_Compare(in1, zero));
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = PyInt_FromLong(PyObject_Compare(in1, zero));
+        if (PyErr_Occurred()) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
     }
     Py_DECREF(zero);
 }
