@@ -237,7 +237,8 @@ def build_import_library():
 # system.
 
 # XXX: ideally, we should use exactly the same version as used by python, but I
-# have no idea how to obtain the exact version.
+# have no idea how to obtain the exact version from python. We could use the
+# strings utility on python.exe, maybe ?
 _MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
 
 def msvc_manifest_xml(maj, min):
