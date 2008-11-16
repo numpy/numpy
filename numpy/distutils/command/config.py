@@ -4,6 +4,8 @@
 # Pearu Peterson
 
 import os, signal
+import warnings
+
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
@@ -21,6 +23,17 @@ class config(old_config):
     def initialize_options(self):
         self.fcompiler = None
         old_config.initialize_options(self)
+
+    def try_run(self, body, headers=None, include_dirs=None,
+                libraries=None, library_dirs=None, lang="c"):
+        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
+                      "Usage of try_run is deprecated: please do not \n" \
+                      "use it anymore, and avoid configuration checks \n" \
+                      "involving running executable on the target machine.\n" \
+                      "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
+                      DeprecationWarning)
+        return old_config.try_run(self, body, headers, include_dirs, libraries,
+                                  library_dirs, lang)
 
     def _check_compiler (self):
         old_config._check_compiler(self)
@@ -215,6 +228,12 @@ int main()
         built from 'body' and 'headers'. Returns the exit status code
         of the program and its output.
         """
+        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
+                      "Usage of get_output is deprecated: please do not \n" \
+                      "use it anymore, and avoid configuration checks \n" \
+                      "involving running executable on the target machine.\n" \
+                      "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
+                      DeprecationWarning)
         from distutils.ccompiler import CompileError, LinkError
         self._check_compiler()
         exitcode, output = 255, ''

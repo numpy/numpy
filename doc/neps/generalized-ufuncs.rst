@@ -18,18 +18,18 @@ what the "core" dimensionality of the inputs is, as well as the
 corresponding dimensionality of the outputs (the element-wise ufuncs
 have zero core dimensions).  The list of the core dimensions for all
 arguments is called the "signature" of a ufunc.  For example, the
-ufunc numpy.add has signature ``"(),()->()"`` defining two scalar inputs
+ufunc numpy.add has signature ``(),()->()`` defining two scalar inputs
 and one scalar output.
 
 Another example is (see the GeneralLoopingFunctions page) the function
-``inner1d(a,b)`` with a signature of ``"(i),(i)->()"``.  This applies the
+``inner1d(a,b)`` with a signature of ``(i),(i)->()``.  This applies the
 inner product along the last axis of each input, but keeps the
 remaining indices intact.  For example, where ``a`` is of shape ``(3,5,N)``
 and ``b`` is of shape ``(5,N)``, this will return an output of shape ``(3,5)``.
 The underlying elementary function is called 3*5 times.  In the
-signature, we specify one core dimension ``"(i)"`` for each input and zero core
-dimensions ``"()"`` for the output, since it takes two 1-d arrays and
-returns a scalar.  By using the same name ``"i"``, we specify that the two
+signature, we specify one core dimension ``(i)`` for each input and zero core
+dimensions ``()`` for the output, since it takes two 1-d arrays and
+returns a scalar.  By using the same name ``i``, we specify that the two
 corresponding dimensions should be of the same size (or one of them is
 of size 1 and will be broadcasted).
 
@@ -91,8 +91,8 @@ dimensions.  The signature is represented by a string of the
 following format:
 
 * Core dimensions of each input or output array are represented by a
-  list of dimension names in parentheses, ``"(i_1,...,i_N)"``; a scalar 
-  input/output is denoted by ``"()"``.  Instead of ``"i_1"``, ``"i_2"``,
+  list of dimension names in parentheses, ``(i_1,...,i_N)``; a scalar 
+  input/output is denoted by ``()``.  Instead of ``i_1``, ``i_2``,
   etc, one can use any valid Python variable name.
 * Dimension lists for different arguments are separated by ``","``.
   Input/output arguments are separated by ``"->"``.
@@ -123,19 +123,19 @@ Notes:
 
 Here are some examples of signatures:
 
-+-------------+--------------------------+-----------------------------------+
-| add         | ``"(),()->()"``          |                                   |
-+-------------+--------------------------+-----------------------------------+
-| inner1d     | ``"(i),(i)->()"``        |                                   |
-+-------------+--------------------------+-----------------------------------+
-| sum1d       | ``"(i)->()"``            |                                   |
-+-------------+--------------------------+-----------------------------------+
-| dot2d       | ``"(m,n),(n,p)->(m,p)"`` | matrix multiplication             |
-+-------------+--------------------------+-----------------------------------+
-| outer_inner | ``"(i,t),(j,t)->(i,j)"`` | inner over the last dimension,    |
-|             |                          | outer over the second to last,    |
-|             |                          | and loop/broadcast over the rest. |
-+-------------+--------------------------+-----------------------------------+
++-------------+------------------------+-----------------------------------+
+| add         | ``(),()->()``          |                                   |
++-------------+------------------------+-----------------------------------+
+| inner1d     | ``(i),(i)->()``        |                                   |
++-------------+------------------------+-----------------------------------+
+| sum1d       | ``(i)->()``            |                                   |
++-------------+------------------------+-----------------------------------+
+| dot2d       | ``(m,n),(n,p)->(m,p)`` | matrix multiplication             |
++-------------+------------------------+-----------------------------------+
+| outer_inner | ``(i,t),(j,t)->(i,j)`` | inner over the last dimension,    |
+|             |                        | outer over the second to last,    |
+|             |                        | and loop/broadcast over the rest. |
++-------------+------------------------+-----------------------------------+
 
 C-API for implementing Elementary Functions
 -------------------------------------------
@@ -167,7 +167,7 @@ The first ``nargs`` elements of ``steps`` remain the same as for scalar
 ufuncs.  The following elements contain the strides of all core
 dimensions for all arguments in order.
 
-For example, consider a ufunc with signature ``"(i,j),(i)->()"``.  In
+For example, consider a ufunc with signature ``(i,j),(i)->()``.  In
 this case, ``args`` will contain three pointers to the data of the
 input/output arrays ``a``, ``b``, ``c``.  Furthermore, ``dimensions`` will be
 ``[N, I, J]`` to define the size of ``N`` of the loop and the sizes ``I`` and ``J``
