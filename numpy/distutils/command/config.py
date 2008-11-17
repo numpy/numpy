@@ -126,12 +126,12 @@ class config(old_config):
                     self.temp_files.append(manxml)
                     man.write(manxml)
                     man.close()
-                    # Write the rc file
-                    manrc = manifest_rc(manifest_name(self), "exe")
-                    rc = open(rc_name(self), "w")
-                    self.temp_files.append(manrc)
-                    rc.write(manrc)
-                    rc.close()
+                    # # Write the rc file
+                    # manrc = manifest_rc(manifest_name(self), "exe")
+                    # rc = open(rc_name(self), "w")
+                    # self.temp_files.append(manrc)
+                    # rc.write(manrc)
+                    # rc.close()
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
