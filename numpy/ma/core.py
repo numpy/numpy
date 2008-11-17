@@ -95,14 +95,8 @@ def doc_note(initialdoc, note):
 #####--------------------------------------------------------------------------
 class MAError(Exception):
     "Class for MA related errors."
-    def __init__ (self, args=None):
-        "Creates an exception."
-        Exception.__init__(self, args)
-        self.args = args
-    def __str__(self):
-        "Calculates the string representation."
-        return str(self.args)
-    __repr__ = __str__
+    pass
+
 
 #####--------------------------------------------------------------------------
 #---- --- Filling options ---
@@ -4102,8 +4096,27 @@ def allclose (a, b, fill_value=True, rtol=1.e-5, atol=1.e-8):
 
 #..............................................................................
 def asarray(a, dtype=None):
-    """asarray(data, dtype) = array(data, dtype, copy=0, subok=0)
-
+    """
+    Convert the input to a masked array.
+    
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes lists, lists of tuples, tuples, tuples of tuples, tuples
+        of lists and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F'}, optional
+        Whether to use row-major ('C') or column-major ('FORTRAN') memory
+        representation.  Defaults to 'C'.
+    
+    Returns
+    -------
+    out : ndarray
+        MaskedArray interpretation of `a`.  No copy is performed if the input
+        is already an ndarray.  If `a` is a subclass of ndarray, a base
+        class ndarray is returned.
     Return a as a MaskedArray object of the given dtype.
     If dtype is not given or None, is is set to the dtype of a.
     No copy is performed if a is already an array.

@@ -75,6 +75,18 @@
 
 #ifdef _WIN32
 /* Windows */
+#ifdef NPY_NEEDS_MINGW_TIME_WORKAROUND
+/* FIXME: ideally, we should set this to the real version of MSVCRT. We need
+ * something higher than 0x601 to enable _ftime64 and co */
+#define __MSVCRT_VERSION__ 0x0700
+/* mingw msvcr lib import wrongly export _ftime, which does not exist in the
+ * actual msvc runtime for version >= 8; we make it an alist to _ftime64, which
+ * is available in those versions of the runtime and should be ABI compatible
+ */
+#define _FTIME(x) _ftime64((x))
+#else
+#define _FTIME(x) _ftime((x))
+#endif
 #include <time.h>
 #include <sys/timeb.h>
 #ifndef RK_NO_WINCRYPT
@@ -169,7 +181,7 @@ rk_error rk_randomseed(rk_state *state)
 	rk_seed(rk_hash(getpid()) ^ rk_hash(tv.tv_sec) ^ rk_hash(tv.tv_usec)
 		^ rk_hash(clock()), state);
 #else
-	_ftime(&tv);
+	_FTIME(&tv);
 	rk_seed(rk_hash(tv.time) ^ rk_hash(tv.millitm) ^ rk_hash(clock()), state);
 #endif
 

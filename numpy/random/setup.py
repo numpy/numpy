@@ -2,20 +2,17 @@ from os.path import join, split, dirname
 import os
 import sys
 from distutils.dep_util import newer
-from numpy.distutils.misc_util import msvc_runtime_library
+from distutils.msvccompiler import get_build_version as get_msvc_build_version
 
-def msvc_version():
-    """Return the msvc version used to build the running python, None if not
-    built with MSVC."""
-    msc_pos = sys.version.find('MSC v.')
-    if msc_pos != -1:
-        return sys.version[msc_pos+6:msc_pos+10]
-    return None
+def needs_mingw_ftime_workaround(config):
+    # We need the mingw workaround for _ftime if the msvc runtime version is
+    # 7.1 or above and we build with mingw
+    if config.compiler.compiler_type == 'mingw32':
+        msver = get_msvc_build_version()
+        if msver and msver > 7:
+            return True
 
-def msvcrt_to_hex(msvc):
-    major = msvc / 10
-    minor = msvc - major * 10
-    return hex(major * 256 + minor)
+    return False
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
@@ -37,16 +34,9 @@ def configuration(parent_package='',top_path=None):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        msv = msvc_version()
-        if msv and msv >= 1400:
-            msvcrt = msvc_runtime_library()
-            if msvcrt is None:
-                raise ValueError("Discrepancy between " \
-                                 "msvc_runtime_library " \
-                                 "and our msvc detection scheme ?")
-            hmsvc = msvcrt_to_hex(int(msvcrt[5:]))
+        config_cmd = config.get_config_cmd()
+        if needs_mingw_ftime_workaround(config_cmd):
             defs.append("NPY_NEEDS_MINGW_TIME_WORKAROUND")
-            defs.append(("NPY_MSVCRT_VERSION", str(hmsvc)))
 
         if newer(__file__, target):
             target_f = open(target, 'a')
