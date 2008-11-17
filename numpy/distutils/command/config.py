@@ -11,6 +11,7 @@ from distutils.command.config import LANG_EXT
 from distutils import log
 from distutils.file_util import copy_file
 from numpy.distutils.exec_command import exec_command
+from numpy.distutils.mingw32ccompiler import generate_manifest
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -110,6 +111,8 @@ class config(old_config):
                 if fileexists: continue
                 log.warn('could not find library %r in directories %s' \
                          % (libname, library_dirs))
+        elif self.compiler.compiler_type == 'mingw32':
+            generate_manifest(self)
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))

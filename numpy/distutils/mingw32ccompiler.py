@@ -27,6 +27,7 @@ from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
 
 from distutils.unixccompiler import UnixCCompiler
+from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.misc_util import msvc_runtime_library
 
 # the same as cygwin plus some additional parameters
@@ -225,3 +226,119 @@ def build_import_library():
     #    msg = "Couldn't find import library, and failed to build it."
     #    raise DistutilsPlatformError, msg
     return
+
+# Functions to deal with visual studio manifests. Manifest are a mechanism to
+# enforce strong DLL versioning on windows, and has nothing to do with
+# distutils MANIFEST. manifests are XML files with version info, and used by
+# the OS loader; they are necessary when linking against a DLL no in the system
+# path; in particular, python 2.6 is built against the MS runtime 9 (the one
+# from VS 2008), which is not available on most windows systems; python 2.6
+# installer does install it in the Win SxS (Side by side) directory, but this
+# requires the manifest too. This is a big mess, thanks MS for a wonderful
+# system.
+
+# XXX: ideally, we should use exactly the same version as used by python, but I
+# have no idea how to obtain the exact version from python. We could use the
+# strings utility on python.exe, maybe ?
+_MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
+
+def msvc_manifest_xml(maj, min):
+    """Given a major and minor version of the MSVCR, returns the
+    corresponding XML file."""
+    try:
+        fullver = _MSVCRVER_TO_FULLVER[str(maj * 10 + min)]
+    except KeyError:
+        raise ValueError("Version %d,%d of MSVCRT not supported yet" \
+                         % (maj, min))
+    # Don't be fooled, it looks like an XML, but it is not. In particular, it
+    # should not have any space before starting, and its size should be
+    # divisible by 4, most likely for alignement constraints when the xml is
+    # embedded in the binary...
+    # This template was copied directly from the python 2.6 binary (using
+    # strings.exe from mingw on python.exe).
+    template = """\
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="false"></requestedExecutionLevel>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.VC%(maj)d%(min)d.CRT" version="%(fullver)s" processorArchitecture="*" publicKeyToken="1fc8b3b9a1e18e3b"></assemblyIdentity>
+    </dependentAssembly>
+  </dependency>
+</assembly>"""
+
+    return template % {'fullver': fullver, 'maj': maj, 'min': min}
+
+def manifest_rc(name, type='dll'):
+    """Return the rc file used to generate the res file which will be embedded
+    as manifest for given manifest file name, of given type ('dll' or
+    'exe').
+
+    Parameters
+    ---------- name: str
+            name of the manifest file to embed
+        type: str ('dll', 'exe')
+            type of the binary which will embed the manifest"""
+    if type == 'dll':
+        rctype = 2
+    elif type == 'exe':
+        rctype = 1
+    else:
+        raise ValueError("Type %s not supported" % type)
+
+    return """\
+#include "winuser.h"
+%d RT_MANIFEST %s""" % (rctype, name)
+
+def check_embedded_msvcr_match_linked(msver):
+    """msver is the ms runtime version used for the MANIFEST."""
+    # check msvcr major version are the same for linking and
+    # embedding
+    msvcv = msvc_runtime_library()
+    if msvcv:
+        maj = int(msvcv[5:6])
+        if not maj == int(msver):
+            raise ValueError, \
+                  "Discrepancy between linked msvcr " \
+                  "(%d) and the one about to be embedded " \
+                  "(%d)" % (int(msver), maj)
+
+def configtest_name(config):
+    base = os.path.basename(config._gen_temp_sourcefile("yo", [], "c"))
+    return os.path.splitext(base)[0]
+       
+def manifest_name(config):
+    # Get configest name (including suffix)  
+    root = configtest_name(config)
+    exext = config.compiler.exe_extension
+    return root + exext + ".manifest"
+
+def rc_name(config):
+    # Get configest name (including suffix)  
+    root = configtest_name(config)
+    return root + ".rc"
+
+def generate_manifest(config):
+    msver = get_build_msvc_version()
+    if msver is not None:
+        if msver >= 8:
+            check_embedded_msvcr_match_linked(msver)
+            ma = int(msver)
+            mi = int((msver - ma) * 10)
+            # Write the manifest file
+            manxml = msvc_manifest_xml(ma, mi)
+            man = open(manifest_name(config), "w")
+            config.temp_files.append(manifest_name(config))
+            man.write(manxml)
+            man.close()
+            # # Write the rc file
+            # manrc = manifest_rc(manifest_name(self), "exe")
+            # rc = open(rc_name(self), "w")
+            # self.temp_files.append(manrc)
+            # rc.write(manrc)
+            # rc.close()
