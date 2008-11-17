@@ -10,7 +10,7 @@ def needs_mingw_ftime_workaround():
     # ... but we can't easily detect compiler version outside distutils command
     # context, so we will need to detect in randomkit whether we build with gcc
     msver = get_msvc_build_version()
-    if msver and msver > 7:
+    if msver and msver >= 8:
         return True
 
     return False
