@@ -80,8 +80,8 @@
  * something higher than 0x601 to enable _ftime64 and co */
 #define __MSVCRT_VERSION__ 0x0700
 /* mingw msvcr lib import wrongly export _ftime, which does not exist in the
- * actual msvc runtime for version >= 8; we make it an alist to _ftime64, which
- * is available in those versions of the runtime and should be ABI compatible
+ * actual msvc runtime for version >= 8; we make it an alias to _ftime64, which
+ * is available in those versions of the runtime
  */
 #define _FTIME(x) _ftime64((x))
 #else
