@@ -10,10 +10,8 @@ from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
 from distutils.file_util import copy_file
-from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.mingw32ccompiler import msvc_manifest_xml, \
-     check_embedded_msvcr_match_linked, manifest_name, rc_name, manifest_rc
+from numpy.distutils.mingw32ccompiler import generate_manifest
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -114,24 +112,7 @@ class config(old_config):
                 log.warn('could not find library %r in directories %s' \
                          % (libname, library_dirs))
         elif self.compiler.compiler_type == 'mingw32':
-            msver = get_build_msvc_version()
-            if msver is not None:
-                if msver >= 8:
-                    check_embedded_msvcr_match_linked(msver)
-                    ma = int(msver)
-                    mi = int((msver - ma) * 10)
-                    # Write the manifest file
-                    manxml = msvc_manifest_xml(ma, mi)
-                    man = open(manifest_name(self), "w")
-                    self.temp_files.append(manxml)
-                    man.write(manxml)
-                    man.close()
-                    # # Write the rc file
-                    # manrc = manifest_rc(manifest_name(self), "exe")
-                    # rc = open(rc_name(self), "w")
-                    # self.temp_files.append(manrc)
-                    # rc.write(manrc)
-                    # rc.close()
+            generate_manifest(self)
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))

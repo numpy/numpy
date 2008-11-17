@@ -27,6 +27,7 @@ from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
 
 from distutils.unixccompiler import UnixCCompiler
+from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.misc_util import msvc_runtime_library
 
 # the same as cygwin plus some additional parameters
@@ -321,3 +322,23 @@ def rc_name(config):
     # Get configest name (including suffix)  
     root = configtest_name(config)
     return root + ".rc"
+
+def generate_manifest(config):
+    msver = get_build_msvc_version()
+    if msver is not None:
+        if msver >= 8:
+            check_embedded_msvcr_match_linked(msver)
+            ma = int(msver)
+            mi = int((msver - ma) * 10)
+            # Write the manifest file
+            manxml = msvc_manifest_xml(ma, mi)
+            man = open(manifest_name(config), "w")
+            config.temp_files.append(manifest_name(config))
+            man.write(manxml)
+            man.close()
+            # # Write the rc file
+            # manrc = manifest_rc(manifest_name(self), "exe")
+            # rc = open(rc_name(self), "w")
+            # self.temp_files.append(manrc)
+            # rc.write(manrc)
+            # rc.close()
