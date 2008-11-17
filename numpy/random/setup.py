@@ -4,7 +4,7 @@ import sys
 from distutils.dep_util import newer
 from distutils.msvccompiler import get_build_version as get_msvc_build_version
 
-def needs_mingw_ftime_workaround(config):
+def needs_mingw_ftime_workaround():
     # We need the mingw workaround for _ftime if the msvc runtime version is
     # 7.1 or above and we build with mingw ...
     # ... but we can't easily detect compiler version outside distutils command
