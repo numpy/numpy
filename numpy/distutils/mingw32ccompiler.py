@@ -316,3 +316,8 @@ def manifest_name(config):
     root = configtest_name(config)
     exext = self.compiler.exe_extension
     return root + exect + ".manifest"
+
+def rc_name(config):
+    # Get configest name (including suffix)  
+    root = configtest_name(config)
+    return root + ".rc"

@@ -13,7 +13,7 @@ from distutils.file_util import copy_file
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import msvc_manifest_xml, \
-     check_embedded_msvcr_match_linked, manifest_name
+     check_embedded_msvcr_match_linked, manifest_name, rc_name
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -126,6 +126,12 @@ class config(old_config):
                     self.temp_files.append(man)
                     man.write(manxml)
                     man.close()
+                    # Write the rc file
+                    manrc = manifest_rc(manifest_name(self), "exe")
+                    rc = open(rc_name(self), "w")
+                    self.temp_files.append(rc)
+                    rc.write(manrc)
+                    rc.close()
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
