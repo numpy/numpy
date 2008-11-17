@@ -10,7 +10,10 @@ from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
 from distutils.file_util import copy_file
+from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.exec_command import exec_command
+from numpy.distutils.misc_util import msvc_runtime_library
+from numpy.distutils.mingw32compiler import msvc_manifest_xml
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -110,6 +113,21 @@ class config(old_config):
                 if fileexists: continue
                 log.warn('could not find library %r in directories %s' \
                          % (libname, library_dirs))
+        elif self.compiler.compiler_type == 'mingw32':
+            msver = get_build_msvc_version()
+            if msver is not None:
+                if msver >= 8:
+                    # check msvcr major version are the same for linking and
+                    # embedding
+                    msvcv = msvc_runtime_library()
+                    if msvcv:
+                        maj = msvcv[5:6]
+                        if not maj == int(msver):
+                            raise ValueError, 
+                                  "Dyscrepancy between linked msvcr " \
+                                  "(%f) and the one about to be embedded " \
+                                  "(%f)" % (int(msver), maj)
+                    
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
