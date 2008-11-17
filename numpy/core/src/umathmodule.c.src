@@ -606,6 +606,375 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
     intp i;\
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
 
+/******************************************************************************
+ **                          GENERIC FLOAT LOOPS                             **
+ *****************************************************************************/
+
+
+typedef float floatUnaryFunc(float x);
+typedef double doubleUnaryFunc(double x);
+typedef longdouble longdoubleUnaryFunc(longdouble x);
+typedef float floatBinaryFunc(float x, float y);
+typedef double doubleBinaryFunc(double x, double y);
+typedef longdouble longdoubleBinaryFunc(longdouble x, longdouble y);
+
+
+/*UFUNC_API*/
+static void
+PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
+{
+    floatUnaryFunc *f = (floatUnaryFunc *)func;
+    UNARY_LOOP {
+        const float in1 = *(float *)ip1;
+        *(float *)op1 = f(in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
+    UNARY_LOOP {
+        const float in1 = *(float *)ip1;
+        *(float *)op1 = (float)f((double)in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func)
+{
+    floatBinaryFunc *f = (floatBinaryFunc *)func;
+    BINARY_LOOP {
+        float in1 = *(float *)ip1;
+        float in2 = *(float *)ip2;
+        *(float *)op1 = f(in1, in2);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleBinaryFunc *f = (doubleBinaryFunc *)func;
+    BINARY_LOOP {
+        float in1 = *(float *)ip1;
+        float in2 = *(float *)ip2;
+        *(float *)op1 = (double)f((double)in1, (double)in2);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
+    UNARY_LOOP {
+        double in1 = *(double *)ip1;
+        *(double *)op1 = f(in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleBinaryFunc *f = (doubleBinaryFunc *)func;
+    BINARY_LOOP {
+        double in1 = *(double *)ip1;
+        double in2 = *(double *)ip2;
+        *(double *)op1 = f(in1, in2);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
+{
+    longdoubleUnaryFunc *f = (longdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        longdouble in1 = *(longdouble *)ip1;
+        *(longdouble *)op1 = f(in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
+{
+    longdoubleBinaryFunc *f = (longdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        longdouble in1 = *(longdouble *)ip1;
+        longdouble in2 = *(longdouble *)ip2;
+        *(longdouble *)op1 = f(in1, in2);
+    }
+}
+
+
+
+/******************************************************************************
+ **                          GENERIC COMPLEX LOOPS                           **
+ *****************************************************************************/
+
+
+typedef void cdoubleUnaryFunc(cdouble *x, cdouble *r);
+typedef void cfloatUnaryFunc(cfloat *x, cfloat *r);
+typedef void clongdoubleUnaryFunc(clongdouble *x, clongdouble *r);
+typedef void cdoubleBinaryFunc(cdouble *x, cdouble *y, cdouble *r);
+typedef void cfloatBinaryFunc(cfloat *x, cfloat *y, cfloat *r);
+typedef void clongdoubleBinaryFunc(clongdouble *x, clongdouble *y,
+                                   clongdouble *r);
+
+/*UFUNC_API*/
+static void
+PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cfloatUnaryFunc *f = (cfloatUnaryFunc *)func;
+    UNARY_LOOP {
+        cfloat in1 = *(cfloat *)ip1;
+        cfloat *out = (cfloat *)op1;
+        f(&in1, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        const float *in1 = (float *)ip1;
+        cdouble tmp = {(double)(in1[0]),(double)in1[1]};
+        cdouble out;
+        f(&tmp, &out);
+        ((float *)op1)[0] = (float)out.real;
+        ((float *)op1)[1] = (float)out.imag;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cfloatBinaryFunc *f = (cfloatBinaryFunc *)func;
+    BINARY_LOOP {
+        cfloat in1 = *(cfloat *)ip1;
+        cfloat in2 = *(cfloat *)ip2;
+        cfloat *out = (cfloat *)op1;
+        f(&in1, &in2, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        const float *in1 = (float *)ip1;
+        const float *in2 = (float *)ip2;
+        cdouble tmp1 = {(double)(in1[0]),(double)in1[1]};
+        cdouble tmp2 = {(double)(in2[0]),(double)in2[1]};
+        cdouble out;
+        f(&tmp1, &tmp2, &out);
+        ((float *)op1)[0] = (float)out.real;
+        ((float *)op1)[1] = (float)out.imag;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        cdouble in1 = *(cdouble *)ip1;
+        cdouble *out = (cdouble *)op1;
+        f(&in1, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        cdouble in1 = *(cdouble *)ip1;
+        cdouble in2 = *(cdouble *)ip2;
+        cdouble *out = (cdouble *)op1;
+        f(&in1, &in2, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
+{
+    clongdoubleUnaryFunc *f = (clongdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        clongdouble in1 = *(clongdouble *)ip1;
+        clongdouble *out = (clongdouble *)op1;
+        f(&in1, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
+{
+    clongdoubleBinaryFunc *f = (clongdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        clongdouble in1 = *(clongdouble *)ip1;
+        clongdouble in2 = *(clongdouble *)ip2;
+        clongdouble *out = (clongdouble *)op1;
+        f(&in1, &in2, out);
+    }
+}
+
+
+/******************************************************************************
+ **                         GENERIC OBJECT lOOPS                             **
+ *****************************************************************************/
+
+/*UFUNC_API*/
+static void
+PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
+{
+    unaryfunc f = (unaryfunc)func;
+    UNARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = f(in1);
+        if ((ret == NULL) || PyErr_Occurred()) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
+{
+    char *meth = (char *)func;
+    UNARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = PyObject_CallMethod(in1, meth, NULL);
+        if (ret == NULL) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
+{
+    binaryfunc f = (binaryfunc)func;
+    BINARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = f(in1, in2);
+        if (PyErr_Occurred()) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
+{
+    char *meth = (char *)func;
+    BINARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = PyObject_CallMethod(in1, meth, "(O)", in2);
+        if (ret == NULL) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*
+ * A general-purpose ufunc that deals with general-purpose Python callable.
+ * func is a structure with nin, nout, and a Python callable function
+ */
+
+/*UFUNC_API*/
+static void
+PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp n =  dimensions[0];
+    PyUFunc_PyFuncData *data = (PyUFunc_PyFuncData *)func;
+    int nin = data->nin;
+    int nout = data->nout;
+    PyObject *tocall = data->callable;
+    char *ptrs[NPY_MAXARGS];
+    PyObject *arglist, *result;
+    PyObject *in, **op;
+    intp i, j, ntot;
+
+    ntot = nin+nout;
+
+    for(j = 0; j < ntot; j++) {
+        ptrs[j] = args[j];
+    }
+    for(i = 0; i < n; i++) {
+        arglist = PyTuple_New(nin);
+        if (arglist == NULL) {
+            return;
+        }
+        for(j = 0; j < nin; j++) {
+            in = *((PyObject **)ptrs[j]);
+            if (in == NULL) {
+                Py_DECREF(arglist);
+                return;
+            }
+            PyTuple_SET_ITEM(arglist, j, in);
+            Py_INCREF(in);
+        }
+        result = PyEval_CallObject(tocall, arglist);
+        Py_DECREF(arglist);
+        if (result == NULL) {
+            return;
+        }
+        if PyTuple_Check(result) {
+            if (nout != PyTuple_Size(result)) {
+                Py_DECREF(result);
+                return;
+            }
+            for(j = 0; j < nout; j++) {
+                op = (PyObject **)ptrs[j+nin];
+                Py_XDECREF(*op);
+                *op = PyTuple_GET_ITEM(result, j);
+                Py_INCREF(*op);
+            }
+            Py_DECREF(result);
+        }
+        else {
+            op = (PyObject **)ptrs[nin];
+            Py_XDECREF(*op);
+            *op = result;
+        }
+        for(j = 0; j < ntot; j++) {
+            ptrs[j] += steps[j];
+        }
+    }
+}
+
 /*
  *****************************************************************************
  **                             BOOLEAN LOOPS                               **
