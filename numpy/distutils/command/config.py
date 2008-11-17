@@ -123,13 +123,13 @@ class config(old_config):
                     # Write the manifest file
                     manxml = msvc_manifest_xml(ma, mi)
                     man = open(manifest_name(self), "w")
-                    self.temp_files.append(man)
+                    self.temp_files.append(manxml)
                     man.write(manxml)
                     man.close()
                     # Write the rc file
                     manrc = manifest_rc(manifest_name(self), "exe")
                     rc = open(rc_name(self), "w")
-                    self.temp_files.append(rc)
+                    self.temp_files.append(manrc)
                     rc.write(manrc)
                     rc.close()
         return self._wrap_method(old_config._link,lang,
