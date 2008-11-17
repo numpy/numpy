@@ -294,3 +294,16 @@ def manifest_rc(name, type='dll'):
     return """\
 #include "winuser.h"
 %d RT_MANIFEST %s""" % (rctype, name)
+
+def check_embedded_msvcr_match_linked(msver):
+    """msver is the ms runtime version used for the MANIFEST."""
+    # check msvcr major version are the same for linking and
+    # embedding
+    msvcv = msvc_runtime_library()
+    if msvcv:
+        maj = msvcv[5:6]
+        if not maj == int(msver):
+            raise ValueError, 
+                  "Dyscrepancy between linked msvcr " \
+                  "(%f) and the one about to be embedded " \
+                  "(%f)" % (int(msver), maj)

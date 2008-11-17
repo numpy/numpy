@@ -12,8 +12,8 @@ from distutils import log
 from distutils.file_util import copy_file
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.exec_command import exec_command
-from numpy.distutils.misc_util import msvc_runtime_library
-from numpy.distutils.mingw32compiler import msvc_manifest_xml
+from numpy.distutils.mingw32compiler import msvc_manifest_xml,
+                                            check_embedded_match_linked
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -117,16 +117,7 @@ class config(old_config):
             msver = get_build_msvc_version()
             if msver is not None:
                 if msver >= 8:
-                    # check msvcr major version are the same for linking and
-                    # embedding
-                    msvcv = msvc_runtime_library()
-                    if msvcv:
-                        maj = msvcv[5:6]
-                        if not maj == int(msver):
-                            raise ValueError, 
-                                  "Dyscrepancy between linked msvcr " \
-                                  "(%f) and the one about to be embedded " \
-                                  "(%f)" % (int(msver), maj)
+                    check_embedded_msvcr_match_linked(msver)
                     
         return self._wrap_method(old_config._link,lang,
                                  (body, headers, include_dirs,
