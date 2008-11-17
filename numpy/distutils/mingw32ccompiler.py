@@ -304,7 +304,7 @@ def check_embedded_msvcr_match_linked(msver):
         maj = int(msvcv[5:6])
         if not maj == int(msver):
             raise ValueError, \
-                  "Dyscrepancy between linked msvcr " \
+                  "Discrepancy between linked msvcr " \
                   "(%d) and the one about to be embedded " \
                   "(%d)" % (int(msver), maj)
 
