@@ -307,9 +307,12 @@ def check_embedded_msvcr_match_linked(msver):
                   "(%d) and the one about to be embedded " \
                   "(%d)" % (int(msver), maj)
 
+def configtest_name(config):
+    base = os.path.basename(config._gen_temp_sourcefile("yo", [], lang))
+    return os.path.splitext(base)[0]
+       
 def manifest_name(config):
     # Get configest name (including suffix)  
-    base = os.path.basename(config._gen_temp_sourcefile("yo", [], lang))
-    root, ext = os.path.splitext(base)
+    root = configtest_name(config)
     exext = self.compiler.exe_extension
     return root + exect + ".manifest"
