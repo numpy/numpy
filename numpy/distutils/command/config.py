@@ -13,7 +13,7 @@ from distutils.file_util import copy_file
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import msvc_manifest_xml, \
-     check_embedded_msvcr_match_linked, manifest_name, rc_name
+     check_embedded_msvcr_match_linked, manifest_name, rc_name, manifest_rc
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
