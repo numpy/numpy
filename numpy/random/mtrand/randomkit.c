@@ -73,7 +73,9 @@
 
 #ifdef _WIN32
 /* Windows */
-#ifdef NPY_NEEDS_MINGW_TIME_WORKAROUND
+/* XXX: we have to use this ugly defined(__GNUC__) because it is not easy to
+ * detect the compiler used in distutils itself */
+#if (defined(__GNUC__) && defined(NPY_NEEDS_MINGW_TIME_WORKAROUND))
 /* FIXME: ideally, we should set this to the real version of MSVCRT. We need
  * something higher than 0x601 to enable _ftime64 and co */
 #define __MSVCRT_VERSION__ 0x0700
