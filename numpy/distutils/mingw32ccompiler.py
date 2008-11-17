@@ -301,9 +301,9 @@ def check_embedded_msvcr_match_linked(msver):
     # embedding
     msvcv = msvc_runtime_library()
     if msvcv:
-        maj = msvcv[5:6]
+        maj = int(msvcv[5:6])
         if not maj == int(msver):
-            raise ValueError, 
+            raise ValueError, \
                   "Dyscrepancy between linked msvcr " \
-                  "(%f) and the one about to be embedded " \
-                  "(%f)" % (int(msver), maj)
+                  "(%d) and the one about to be embedded " \
+                  "(%d)" % (int(msver), maj)
