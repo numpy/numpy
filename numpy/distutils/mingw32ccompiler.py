@@ -279,8 +279,7 @@ def manifest_rc(name, type='dll'):
     'exe').
 
     Parameters
-    ----------
-        name: str
+    ---------- name: str
             name of the manifest file to embed
         type: str ('dll', 'exe')
             type of the binary which will embed the manifest"""
@@ -307,3 +306,10 @@ def check_embedded_msvcr_match_linked(msver):
                   "Dyscrepancy between linked msvcr " \
                   "(%d) and the one about to be embedded " \
                   "(%d)" % (int(msver), maj)
+
+def manifest_name(config):
+    # Get configest name (including suffix)  
+    base = os.path.basename(config._gen_temp_sourcefile("yo", [], lang))
+    root, ext = os.path.splitext(base)
+    exext = self.compiler.exe_extension
+    return root + exect + ".manifest"
