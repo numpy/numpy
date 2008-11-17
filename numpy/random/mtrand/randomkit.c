@@ -64,8 +64,6 @@
 
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
-#include "config.h"
-
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,20 +73,22 @@
 
 #ifdef _WIN32
 /* Windows */
-#ifdef NPY_NEEDS_MINGW_TIME_WORKAROUND
+/* XXX: we have to use this ugly defined(__GNUC__) because it is not easy to
+ * detect the compiler used in distutils itself */
+#if (defined(__GNUC__) && defined(NPY_NEEDS_MINGW_TIME_WORKAROUND))
 /* FIXME: ideally, we should set this to the real version of MSVCRT. We need
  * something higher than 0x601 to enable _ftime64 and co */
 #define __MSVCRT_VERSION__ 0x0700
+#include <time.h>
+#include <sys/timeb.h>
 /* mingw msvcr lib import wrongly export _ftime, which does not exist in the
- * actual msvc runtime for version >= 8; we make it an alist to _ftime64, which
- * is available in those versions of the runtime and should be ABI compatible
+ * actual msvc runtime for version >= 8; we make it an alias to _ftime64, which
+ * is available in those versions of the runtime
  */
 #define _FTIME(x) _ftime64((x))
 #else
 #define _FTIME(x) _ftime((x))
 #endif
-#include <time.h>
-#include <sys/timeb.h>
 #ifndef RK_NO_WINCRYPT
 /* Windows crypto */
 #ifndef _WIN32_WINNT
