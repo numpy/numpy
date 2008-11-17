@@ -87,6 +87,8 @@
  */
 #define _FTIME(x) _ftime64((x))
 #else
+#include <time.h>
+#include <sys/timeb.h>
 #define _FTIME(x) _ftime((x))
 #endif
 #ifndef RK_NO_WINCRYPT
