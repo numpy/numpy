@@ -1,8 +1,10 @@
-# Last Change: Thu Jun 12 06:00 PM 2008 J
+# Last Change: Wed Nov 19 09:00 PM 2008 J
 # vim:syntax=python
 import os
 
 from numscons import GetNumpyEnvironment, scons_get_mathlib
+
+from setup import needs_mingw_ftime_workaround
 
 def CheckWincrypt(context):
     from copy import deepcopy
@@ -36,6 +38,9 @@ if os.name == 'nt':
     config = env.NumpyConfigure(custom_tests = {'CheckWincrypt' : CheckWincrypt})
     if config.CheckWincrypt:
         config.env.AppendUnique(LIBS = 'Advapi32')
+
+if needs_mingw_ftime_workaround():
+    env.Append(CPPDEFINES=['NPY_NEEDS_MINGW_TIME_WORKAROUND'])
 
 sources = [os.path.join('mtrand', x) for x in 
            ['mtrand.c', 'randomkit.c', 'initarray.c', 'distributions.c']]
