@@ -38,6 +38,7 @@ if os.name == 'nt':
     config = env.NumpyConfigure(custom_tests = {'CheckWincrypt' : CheckWincrypt})
     if config.CheckWincrypt:
         config.env.AppendUnique(LIBS = 'Advapi32')
+    config.Finish()
 
 if needs_mingw_ftime_workaround():
     env.Append(CPPDEFINES=['NPY_NEEDS_MINGW_TIME_WORKAROUND'])
