@@ -65,7 +65,7 @@ class TestSaveTxt(TestCase):
         c = StringIO.StringIO()
         np.savetxt(c, a)
         c.seek(0)
-        assert(c.readlines(),
+        assert(c.readlines() ==
                ['1.000000000000000000e+00 2.000000000000000000e+00\n',
                 '3.000000000000000000e+00 4.000000000000000000e+00\n'])
 
