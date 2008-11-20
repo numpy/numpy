@@ -12,6 +12,7 @@ import warnings
 import numpy as np
 import numpy.core.fromnumeric  as fromnumeric
 from numpy import ndarray
+from numpy import int_
 from numpy.ma.testutils import *
 
 import numpy.ma.core
