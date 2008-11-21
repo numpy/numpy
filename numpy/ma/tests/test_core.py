@@ -69,7 +69,7 @@ class TestMaskedArray(TestCase):
         self.failUnless(not isMaskedArray(x))
         self.failUnless(isMaskedArray(xm))
         self.failUnless((xm-ym).filled(0).any())
-        fail_if_equal(xm.mask.astype(int_), ym.mask.astype(int_))
+        fail_if_equal(xm.mask.astype(int), ym.mask.astype(int))
         s = x.shape
         assert_equal(np.shape(xm), s)
         assert_equal(xm.shape, s)
@@ -593,7 +593,12 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(y.shape, x.shape)
         assert_equal(y._mask, [True, True])
 
-
+    def test_arithmetic_with_masked_singleton_on_1d_singleton(self):
+        "Check that we're not losing the shape of a singleton"
+        x = masked_array([1, ])
+        y = x + masked
+        assert_equal(y.shape, x.shape)
+        assert_equal(y.mask, [True, ])
 
     def test_scalar_arithmetic(self):
         x = array(0, mask=0)
@@ -1293,6 +1298,27 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(m.transpose(), m._data.transpose())
 
 
+    def test_allclose(self):
+        "Tests allclose on arrays"
+        a = np.random.rand(10)
+        b = a + np.random.rand(10) * 1e-8
+        self.failUnless(allclose(a,b))
+        # Test allclose w/ infs
+        a[0] = np.inf
+        self.failUnless(not allclose(a,b))
+        b[0] = np.inf
+        self.failUnless(allclose(a,b))
+        # Test all close w/ masked
+        a = masked_array(a)
+        a[-1] = masked
+        self.failUnless(allclose(a,b, masked_equal=True))
+        self.failUnless(not allclose(a, b, masked_equal=False))
+        # Test comparison w/ scalar
+        a *= 1e-8
+        a[0] = 0
+        self.failUnless(allclose(a, 0, masked_equal=True))
+        
+
     def test_allany(self):
         """Checks the any/all methods/functions."""
         x = np.array([[ 0.13,  0.26,  0.90],
@@ -1462,7 +1488,7 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_empty(self):
         "Tests empty/like"
-        datatype = [('a',int_),('b',float),('c','|S8')]
+        datatype = [('a',int),('b',float),('c','|S8')]
         a = masked_array([(1,1.1,'1.1'),(2,2.2,'2.2'),(3,3.3,'3.3')],
                          dtype=datatype)
         assert_equal(len(a.fill_value.item()), len(datatype))
@@ -1727,7 +1753,7 @@ class TestMaskedArrayMethods(TestCase):
         x = array(zip([1,2,3],
                       [1.1,2.2,3.3],
                       ['one','two','thr']),
-                  dtype=[('a',int_),('b',float),('c','|S8')])
+                  dtype=[('a',int),('b',float),('c','|S8')])
         x[-1] = masked
         assert_equal(x.tolist(), [(1,1.1,'one'),(2,2.2,'two'),(None,None,None)])
 
@@ -1952,7 +1978,7 @@ class TestMaskedArrayMathMethodsComplex(TestCase):
         m2XX = array(data=XX,mask=m2.reshape(XX.shape))
         self.d =  (x,X,XX,m,mx,mX,mXX,m2x,m2X,m2XX)
 
-    #------------------------------------------------------
+
     def test_varstd(self):
         "Tests var & std on MaskedArrays."
         (x,X,XX,m,mx,mX,mXX,m2x,m2X,m2XX) = self.d
@@ -2016,12 +2042,14 @@ class TestMaskedArrayFunctions(TestCase):
         assert_equal(masked_where(not_equal(x,2), x), masked_not_equal(x,2))
         assert_equal(masked_where([1,1,0,0,0], [1,2,3,4,5]), [99,99,3,4,5])
 
+
     def test_masked_where_oddities(self):
         """Tests some generic features."""
         atest = ones((10,10,10), dtype=float)
         btest = zeros(atest.shape, MaskType)
         ctest = masked_where(btest,atest)
         assert_equal(atest,ctest)
+
 
     def test_masked_where_shape_constraint(self):
         a = arange(10)
@@ -2140,10 +2168,11 @@ class TestMaskedArrayFunctions(TestCase):
         tmp[(xm<=2).filled(True)] = True
         assert_equal(d._mask, tmp)
         #
-        ixm = xm.astype(int_)
+        ixm = xm.astype(int)
         d = where(ixm>2, ixm, masked)
         assert_equal(d, [-9,-9,-9,-9, -9, 4, -9, -9, 10, -9, -9, 3])
         assert_equal(d.dtype, ixm.dtype)
+
 
     def test_where_with_masked_choice(self):
         x = arange(10)
@@ -2285,6 +2314,70 @@ class TestMaskedArrayFunctions(TestCase):
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype(np.bool))
 
+
+    def test_make_mask(self):
+        "Test make_mask"
+        # w/ a list as an input
+        mask = [0,1]
+        test = make_mask(mask)
+        assert_equal(test.dtype, MaskType)
+        assert_equal(test, [0,1])
+        # w/ a ndarray as an input
+        mask = np.array([0,1], dtype=np.bool)
+        test = make_mask(mask)
+        assert_equal(test.dtype, MaskType)
+        assert_equal(test, [0,1])
+        # w/ a flexible-type ndarray as an input - use default
+        mdtype = [('a', np.bool), ('b', np.bool)]
+        mask = np.array([(0, 0), (0, 1)], dtype=mdtype)
+        test = make_mask(mask)
+        assert_equal(test.dtype, MaskType)
+        assert_equal(test, [1,1])
+        # w/ a flexible-type ndarray as an input - use input dtype
+        mdtype = [('a', np.bool), ('b', np.bool)]
+        mask = np.array([(0, 0), (0, 1)], dtype=mdtype)
+        test = make_mask(mask, dtype=mask.dtype)
+        assert_equal(test.dtype, mdtype)
+        assert_equal(test, mask)
+        # w/ a flexible-type ndarray as an input - use input dtype
+        mdtype = [('a', np.float), ('b', np.float)]
+        bdtype = [('a', np.bool), ('b', np.bool)]
+        mask = np.array([(0, 0), (0, 1)], dtype=mdtype)
+        test = make_mask(mask, dtype=mask.dtype)
+        assert_equal(test.dtype, bdtype)
+        assert_equal(test, np.array([(0, 0), (0, 1)], dtype=bdtype))
+
+
+    def test_mask_or(self):
+        # Initialize
+        mtype = [('a', np.bool), ('b', np.bool)]
+        mask = np.array([(0, 0), (0, 1), (1, 0), (0, 0)], dtype=mtype)
+        # Test using nomask as input
+        test = mask_or(mask, nomask)
+        assert_equal(test, mask)
+        test = mask_or(nomask, mask)
+        assert_equal(test, mask)
+        # Using False as input
+        test = mask_or(mask, False)
+        assert_equal(test, mask)
+        # Using True as input. Won't work, but keep it for the kicks
+        #test = ma.mask_or(mask, True)
+        #control = np.array([(1, 1), (1, 1), (1, 1), (1, 1)], dtype=mtype)
+        #assert_equal(test, control)
+        # Using another array w/ the same dtype
+        other = np.array([(0, 1), (0, 1), (0, 1), (0, 1)], dtype=mtype)
+        test = mask_or(mask, other)
+        control = np.array([(0, 1), (0, 1), (1, 1), (0, 1)], dtype=mtype)
+        assert_equal(test, control)
+        # Using another array w/ a different dtype
+        othertype = [('A', np.bool), ('B', np.bool)]
+        other = np.array([(0, 1), (0, 1), (0, 1), (0, 1)], dtype=othertype)
+        try:
+            test = mask_or(mask, other)
+        except ValueError:
+            pass
+
+
 #------------------------------------------------------------------------------
 
 class TestMaskedFields(TestCase):
@@ -2406,6 +2499,8 @@ class TestMaskedFields(TestCase):
         assert_equal_records(a[-2]._data, a._data[-2])
         assert_equal_records(a[-2]._mask, a._mask[-2])
 
+
+#------------------------------------------------------------------------------
 
 class TestMaskedView(TestCase):
     #
