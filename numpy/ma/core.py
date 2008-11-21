@@ -565,7 +565,7 @@ class _MaskedBinaryOperation:
         m = mask_or(getmask(a), getmask(b))
         (d1, d2) = (get_data(a), get_data(b))
         result = self.f(d1, d2, *args, **kwargs).view(get_masked_subclass(a, b))
-        if result.size > 1:
+        if len(result.shape):
             if m is not nomask:
                 result._mask = make_mask_none(result.shape)
                 result._mask.flat = m
@@ -874,7 +874,7 @@ def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
     else:
         result = np.array(filled(m, True), dtype=MaskType)
     # Bas les masques !
-    if shrink and not result.any():
+    if shrink and (not result.dtype.names) and (not result.any()):
         return nomask
     else:
         return result
@@ -1590,17 +1590,17 @@ class MaskedArray(ndarray):
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
 #            raise IndexError, msg
-        dout = ndarray.__getitem__(ndarray.view(self,ndarray), indx)
+        dout = ndarray.__getitem__(ndarray.view(self, ndarray), indx)
         # We could directly use ndarray.__getitem__ on self...
         # But then we would have to modify __array_finalize__ to prevent the
         # mask of being reshaped if it hasn't been set up properly yet...
         # So it's easier to stick to the current version
         _mask = self._mask
-        if not getattr(dout,'ndim', False):
+        if not getattr(dout, 'ndim', False):
             # A record ................
             if isinstance(dout, np.void):
                 mask = _mask[indx]
-                if mask.view((bool,len(mask.dtype))).any():
+                if mask.view((bool, len(mask.dtype))).any():
                     dout = masked_array(dout, mask=mask)
                 else:
                     return dout
@@ -1656,7 +1656,7 @@ class MaskedArray(ndarray):
                 _mask = self._mask = make_mask_none(self.shape, _dtype)
             # Now, set the mask to its value.
             if nbfields:
-                _mask[indx] = tuple([True,] * nbfields)
+                _mask[indx] = tuple([True] * nbfields)
             else:
                 _mask[indx] = True
             if not self._isfield:
@@ -1795,7 +1795,7 @@ class MaskedArray(ndarray):
         if _mask.size > 1:
             axis = 1
         else:
-            axis=None
+            axis = None
         #
         try:
             return _mask.view((bool_, len(self.dtype))).all(axis)
@@ -2197,7 +2197,7 @@ masked_%(name)s(data = %(data)s,
         new_mask = mask_or(other_mask, invalid)
         self._mask = mask_or(self._mask, new_mask)
         # The following line is potentially problematic, as we change _data...
-        np.putmask(self._data,invalid,self.fill_value)
+        np.putmask(self._data, invalid, self.fill_value)
         return self
     #............................................
     def __float__(self):
@@ -2857,7 +2857,7 @@ masked_%(name)s(data = %(data)s,
         if not axis:
             return (self - m)
         else:
-            return (self - expand_dims(m,axis))
+            return (self - expand_dims(m, axis))
 
     def var(self, axis=None, dtype=None, out=None, ddof=0):
         ""
@@ -3124,7 +3124,8 @@ masked_%(name)s(data = %(data)s,
             else:
                 filler = fill_value
             idx = np.indices(self.shape)
-            idx[axis] = self.filled(filler).argsort(axis=axis,kind=kind,order=order)
+            idx[axis] = self.filled(filler).argsort(axis=axis, kind=kind,
+                                                    order=order)
             idx_l = idx.tolist()
             tmp_mask = self._mask[idx_l].flat
             tmp_data = self._data[idx_l].flat
@@ -3315,11 +3316,11 @@ masked_%(name)s(data = %(data)s,
         nbdims = self.ndim
         dtypesize = len(self.dtype)
         if nbdims == 0:
-            return tuple([None]*dtypesize)
+            return tuple([None] * dtypesize)
         elif nbdims == 1:
             maskedidx = _mask.nonzero()[0].tolist()
             if dtypesize:
-                nodata = tuple([None]*dtypesize)
+                nodata = tuple([None] * dtypesize)
             else:
                 nodata = None
             [operator.setitem(result,i,nodata) for i in maskedidx]
