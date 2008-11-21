@@ -1298,6 +1298,27 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(m.transpose(), m._data.transpose())
 
 
+    def test_allclose(self):
+        "Tests allclose on arrays"
+        a = np.random.rand(10)
+        b = a + np.random.rand(10) * 1e-8
+        self.failUnless(allclose(a,b))
+        # Test allclose w/ infs
+        a[0] = np.inf
+        self.failUnless(not allclose(a,b))
+        b[0] = np.inf
+        self.failUnless(allclose(a,b))
+        # Test all close w/ masked
+        a = masked_array(a)
+        a[-1] = masked
+        self.failUnless(allclose(a,b, masked_equal=True))
+        self.failUnless(not allclose(a, b, masked_equal=False))
+        # Test comparison w/ scalar
+        a *= 1e-8
+        a[0] = 0
+        self.failUnless(allclose(a, 0, masked_equal=True))
+        
+
     def test_allany(self):
         """Checks the any/all methods/functions."""
         x = np.array([[ 0.13,  0.26,  0.90],
@@ -1467,7 +1488,7 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_empty(self):
         "Tests empty/like"
-        datatype = [('a',int_),('b',float),('c','|S8')]
+        datatype = [('a',int),('b',float),('c','|S8')]
         a = masked_array([(1,1.1,'1.1'),(2,2.2,'2.2'),(3,3.3,'3.3')],
                          dtype=datatype)
         assert_equal(len(a.fill_value.item()), len(datatype))
