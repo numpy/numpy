@@ -1,0 +1,570 @@
+/*
+ * This file is for the definitions of the non-c99 functions used in ufuncs.
+ * All the complex ufuncs are defined here along with a smattering of real and
+ * object functions.
+ */
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338328
+#endif
+
+#define M_LOG10_E       0.434294481903251827651128918916605082294397
+
+/* Useful constants in three precisions.*/
+
+/**begin repeat
+ * #c = f, ,l#
+ * #C = F, ,L#
+ */
+#define NPY_E@c@        2.7182818284590452353602874713526625@C@ /* e */
+#define NPY_LOG2E@c@    1.4426950408889634073599246810018921@C@ /* log_2 e */
+#define NPY_LOG10E@c@   0.4342944819032518276511289189166051@C@ /* log_10 e */
+#define NPY_LOGE2@c@    0.6931471805599453094172321214581766@C@ /* log_e 2 */
+#define NPY_LOGE10@c@   2.3025850929940456840179914546843642@C@ /* log_e 10 */
+#define NPY_PI@c@       3.1415926535897932384626433832795029@C@ /* pi */
+#define NPY_PI_2@c@     1.5707963267948966192313216916397514@C@ /* pi/2 */
+#define NPY_PI_4@c@     0.7853981633974483096156608458198757@C@ /* pi/4 */
+#define NPY_1_PI@c@     0.3183098861837906715377675267450287@C@ /* 1/pi */
+#define NPY_2_PI@c@     0.6366197723675813430755350534900574@C@ /* 2/pi */
+/**end repeat**/
+
+/*
+ ******************************************************************************
+ **                            FLOAT FUNCTIONS                               **
+ ******************************************************************************
+ */
+
+/**begin repeat
+ * #type = float, double, longdouble#
+ * #c = f, ,l#
+ * #C = F, ,L#
+ */
+
+#define LOGE2    NPY_LOGE2@c@
+#define LOG2E    NPY_LOG2E@c@
+#define RAD2DEG  (180.0@c@/NPY_PI@c@)
+#define DEG2RAD  (NPY_PI@c@/180.0@c@)
+
+static @type@
+rad2deg@c@(@type@ x) {
+    return x*RAD2DEG;
+}
+
+static @type@
+deg2rad@c@(@type@ x) {
+    return x*DEG2RAD;
+}
+
+static @type@
+log2_1p@c@(@type@ x)
+{
+    @type@ u = 1 + x;
+    if (u == 1) {
+        return LOG2E*x;
+    } else {
+        return log2@c@(u) * x / (u - 1);
+    }
+}
+
+static @type@
+exp2_1m@c@(@type@ x)
+{
+    @type@ u = exp@c@(x);
+    if (u == 1.0) {
+        return LOGE2*x;
+    } else if (u - 1 == -1) {
+        return -LOGE2;
+    } else {
+        return (u - 1) * x/log2@c@(u);
+    }
+}
+
+static @type@
+logaddexp@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + log1p@c@(exp@c@(-tmp));
+    }
+    else {
+        return y + log1p@c@(exp@c@(tmp));
+    }
+}
+
+static @type@
+logaddexp2@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + log2_1p@c@(exp2@c@(-tmp));
+    }
+    else {
+        return y + log2_1p@c@(exp2@c@(tmp));
+    }
+}
+
+#define degrees@c@ rad2deg@c@
+#define radians@c@ deg2rad@c@
+
+#undef LOGE2
+#undef LOG2E
+#undef RAD2DEG
+#undef DEG2RAD
+
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                        PYTHON OBJECT FUNCTIONS                          **
+ *****************************************************************************
+ */
+
+static PyObject *
+Py_square(PyObject *o)
+{
+    return PyNumber_Multiply(o, o);
+}
+
+static PyObject *
+Py_get_one(PyObject *NPY_UNUSED(o))
+{
+    return PyInt_FromLong(1);
+}
+
+static PyObject *
+Py_reciprocal(PyObject *o)
+{
+    PyObject *one = PyInt_FromLong(1);
+    PyObject *result;
+
+    if (!one) {
+        return NULL;
+    }
+    result = PyNumber_Divide(one, o);
+    Py_DECREF(one);
+    return result;
+}
+
+/*
+ * Define numpy version of PyNumber_Power as binary function.
+ */
+static PyObject *
+npy_ObjectPower(PyObject *x, PyObject *y)
+{
+    return PyNumber_Power(x, y, Py_None);
+}
+
+/**begin repeat
+ * #Kind = Max, Min#
+ * #OP = >=, <=#
+ */
+static PyObject *
+npy_Object@Kind@(PyObject *i1, PyObject *i2)
+{
+    PyObject *result;
+    int cmp;
+
+    if (PyObject_Cmp(i1, i2, &cmp) < 0) {
+        return NULL;
+    }
+    if (cmp @OP@ 0) {
+        result = i1;
+    }
+    else {
+        result = i2;
+    }
+    Py_INCREF(result);
+    return result;
+}
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                           COMPLEX FUNCTIONS                             **
+ *****************************************************************************
+ */
+
+
+/*
+ * Don't pass structures between functions (only pointers) because how
+ * structures are passed is compiler dependent and could cause segfaults if
+ * umath_ufunc_object.inc is compiled with a different compiler than an
+ * extension that makes use of the UFUNC API
+ */
+
+/**begin repeat
+
+   #typ=float, double, longdouble#
+   #c=f,,l#
+*/
+
+/* constants */
+static c@typ@ nc_1@c@ = {1., 0.};
+static c@typ@ nc_half@c@ = {0.5, 0.};
+static c@typ@ nc_i@c@ = {0., 1.};
+static c@typ@ nc_i2@c@ = {0., 0.5};
+/*
+ *   static c@typ@ nc_mi@c@ = {0., -1.};
+ *   static c@typ@ nc_pi2@c@ = {M_PI/2., 0.};
+ */
+
+
+static void
+nc_sum@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
+{
+    r->real = a->real + b->real;
+    r->imag = a->imag + b->imag;
+    return;
+}
+
+static void
+nc_diff@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
+{
+    r->real = a->real - b->real;
+    r->imag = a->imag - b->imag;
+    return;
+}
+
+static void
+nc_neg@c@(c@typ@ *a, c@typ@ *r)
+{
+    r->real = -a->real;
+    r->imag = -a->imag;
+    return;
+}
+
+static void
+nc_prod@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
+{
+    @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+    r->real = ar*br - ai*bi;
+    r->imag = ar*bi + ai*br;
+    return;
+}
+
+static void
+nc_quot@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
+{
+
+    @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+    @typ@ d = br*br + bi*bi;
+    r->real = (ar*br + ai*bi)/d;
+    r->imag = (ai*br - ar*bi)/d;
+    return;
+}
+
+static void
+nc_sqrt@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ s,d;
+    if (x->real == 0. && x->imag == 0.)
+        *r = *x;
+    else {
+        s = sqrt@c@((fabs@c@(x->real) + hypot@c@(x->real,x->imag))/2);
+        d = x->imag/(2*s);
+        if (x->real > 0) {
+            r->real = s;
+            r->imag = d;
+        }
+        else if (x->imag >= 0) {
+            r->real = d;
+            r->imag = s;
+        }
+        else {
+            r->real = -d;
+            r->imag = -s;
+        }
+    }
+    return;
+}
+
+static void
+nc_rint@c@(c@typ@ *x, c@typ@ *r)
+{
+    r->real = rint@c@(x->real);
+    r->imag = rint@c@(x->imag);
+}
+
+static void
+nc_log@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ l = hypot@c@(x->real,x->imag);
+    r->imag = atan2@c@(x->imag, x->real);
+    r->real = log@c@(l);
+    return;
+}
+
+static void
+nc_log1p@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ l = hypot@c@(x->real + 1,x->imag);
+    r->imag = atan2@c@(x->imag, x->real + 1);
+    r->real = log@c@(l);
+    return;
+}
+
+static void
+nc_exp@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ a = exp@c@(x->real);
+    r->real = a*cos@c@(x->imag);
+    r->imag = a*sin@c@(x->imag);
+    return;
+}
+
+static void
+nc_expm1@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ a = exp@c@(x->real);
+    r->real = a*cos@c@(x->imag) - 1;
+    r->imag = a*sin@c@(x->imag);
+    return;
+}
+
+static void
+nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
+{
+    intp n;
+    @typ@ ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
+
+    if (br == 0. && bi == 0.) {
+        r->real = 1.;
+        r->imag = 0.;
+        return;
+    }
+    if (ar == 0. && ai == 0.) {
+        r->real = 0.;
+        r->imag = 0.;
+        return;
+    }
+    if (bi == 0 && (n=(intp)br) == br) {
+        if (n > -100 && n < 100) {
+            c@typ@ p, aa;
+            intp mask = 1;
+            if (n < 0) n = -n;
+            aa = nc_1@c@;
+            p.real = ar; p.imag = ai;
+            while (1) {
+                if (n & mask)
+                    nc_prod@c@(&aa,&p,&aa);
+                mask <<= 1;
+                if (n < mask || mask <= 0) break;
+                nc_prod@c@(&p,&p,&p);
+            }
+            r->real = aa.real; r->imag = aa.imag;
+            if (br < 0) nc_quot@c@(&nc_1@c@, r, r);
+            return;
+        }
+    }
+    /*
+     * complexobect.c uses an inline version of this formula
+     * investigate whether this had better performance or accuracy
+     */
+    nc_log@c@(a, r);
+    nc_prod@c@(r, b, r);
+    nc_exp@c@(r, r);
+    return;
+}
+
+
+static void
+nc_prodi@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ xr = x->real;
+    r->real = -x->imag;
+    r->imag = xr;
+    return;
+}
+
+
+static void
+nc_acos@c@(c@typ@ *x, c@typ@ *r)
+{
+    /*
+     * return nc_neg(nc_prodi(nc_log(nc_sum(x,nc_prod(nc_i,
+     * nc_sqrt(nc_diff(nc_1,nc_prod(x,x))))))));
+     */
+    nc_prod@c@(x,x,r);
+    nc_diff@c@(&nc_1@c@, r, r);
+    nc_sqrt@c@(r, r);
+    nc_prodi@c@(r, r);
+    nc_sum@c@(x, r, r);
+    nc_log@c@(r, r);
+    nc_prodi@c@(r, r);
+    nc_neg@c@(r, r);
+    return;
+}
+
+static void
+nc_acosh@c@(c@typ@ *x, c@typ@ *r)
+{
+    /*
+     * return nc_log(nc_sum(x,
+     * nc_prod(nc_sqrt(nc_sum(x,nc_1)), nc_sqrt(nc_diff(x,nc_1)))));
+     */
+    c@typ@ t;
+
+    nc_sum@c@(x, &nc_1@c@, &t);
+    nc_sqrt@c@(&t, &t);
+    nc_diff@c@(x, &nc_1@c@, r);
+    nc_sqrt@c@(r, r);
+    nc_prod@c@(&t, r, r);
+    nc_sum@c@(x, r, r);
+    nc_log@c@(r, r);
+    return;
+}
+
+static void
+nc_asin@c@(c@typ@ *x, c@typ@ *r)
+{
+    /*
+     * return nc_neg(nc_prodi(nc_log(nc_sum(nc_prod(nc_i,x),
+     * nc_sqrt(nc_diff(nc_1,nc_prod(x,x)))))));
+     */
+    c@typ@ a, *pa=&a;
+    nc_prod@c@(x, x, r);
+    nc_diff@c@(&nc_1@c@, r, r);
+    nc_sqrt@c@(r, r);
+    nc_prodi@c@(x, pa);
+    nc_sum@c@(pa, r, r);
+    nc_log@c@(r, r);
+    nc_prodi@c@(r, r);
+    nc_neg@c@(r, r);
+    return;
+}
+
+
+static void
+nc_asinh@c@(c@typ@ *x, c@typ@ *r)
+{
+    /*
+     * return nc_log(nc_sum(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x));
+     */
+    nc_prod@c@(x, x, r);
+    nc_sum@c@(&nc_1@c@, r, r);
+    nc_sqrt@c@(r, r);
+    nc_sum@c@(r, x, r);
+    nc_log@c@(r, r);
+    return;
+}
+
+static void
+nc_atan@c@(c@typ@ *x, c@typ@ *r)
+{
+    /*
+     * return nc_prod(nc_i2,nc_log(nc_quot(nc_sum(nc_i,x),nc_diff(nc_i,x))));
+     */
+    c@typ@ a, *pa=&a;
+    nc_diff@c@(&nc_i@c@, x, pa);
+    nc_sum@c@(&nc_i@c@, x, r);
+    nc_quot@c@(r, pa, r);
+    nc_log@c@(r,r);
+    nc_prod@c@(&nc_i2@c@, r, r);
+    return;
+}
+
+static void
+nc_atanh@c@(c@typ@ *x, c@typ@ *r)
+{
+    /*
+     * return nc_prod(nc_half,nc_log(nc_quot(nc_sum(nc_1,x),nc_diff(nc_1,x))));
+     */
+    c@typ@ a, *pa=&a;
+    nc_diff@c@(&nc_1@c@, x, r);
+    nc_sum@c@(&nc_1@c@, x, pa);
+    nc_quot@c@(pa, r, r);
+    nc_log@c@(r, r);
+    nc_prod@c@(&nc_half@c@, r, r);
+    return;
+}
+
+static void
+nc_cos@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = cos@c@(xr)*cosh@c@(xi);
+    r->imag = -sin@c@(xr)*sinh@c@(xi);
+    return;
+}
+
+static void
+nc_cosh@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = cos@c@(xi)*cosh@c@(xr);
+    r->imag = sin@c@(xi)*sinh@c@(xr);
+    return;
+}
+
+static void
+nc_log10@c@(c@typ@ *x, c@typ@ *r)
+{
+    nc_log@c@(x, r);
+    r->real *= (@typ@) M_LOG10_E;
+    r->imag *= (@typ@) M_LOG10_E;
+    return;
+}
+
+static void
+nc_sin@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = sin@c@(xr)*cosh@c@(xi);
+    r->imag = cos@c@(xr)*sinh@c@(xi);
+    return;
+}
+
+static void
+nc_sinh@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ xr=x->real, xi=x->imag;
+    r->real = cos@c@(xi)*sinh@c@(xr);
+    r->imag = sin@c@(xi)*cosh@c@(xr);
+    return;
+}
+
+static void
+nc_tan@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ sr,cr,shi,chi;
+    @typ@ rs,is,rc,ic;
+    @typ@ d;
+    @typ@ xr=x->real, xi=x->imag;
+    sr = sin@c@(xr);
+    cr = cos@c@(xr);
+    shi = sinh@c@(xi);
+    chi = cosh@c@(xi);
+    rs = sr*chi;
+    is = cr*shi;
+    rc = cr*chi;
+    ic = -sr*shi;
+    d = rc*rc + ic*ic;
+    r->real = (rs*rc+is*ic)/d;
+    r->imag = (is*rc-rs*ic)/d;
+    return;
+}
+
+static void
+nc_tanh@c@(c@typ@ *x, c@typ@ *r)
+{
+    @typ@ si,ci,shr,chr;
+    @typ@ rs,is,rc,ic;
+    @typ@ d;
+    @typ@ xr=x->real, xi=x->imag;
+    si = sin@c@(xi);
+    ci = cos@c@(xi);
+    shr = sinh@c@(xr);
+    chr = cosh@c@(xr);
+    rs = ci*shr;
+    is = si*chr;
+    rc = ci*chr;
+    ic = si*shr;
+    d = rc*rc + ic*ic;
+    r->real = (rs*rc+is*ic)/d;
+    r->imag = (is*rc-rs*ic)/d;
+    return;
+}
+
+/**end repeat**/
+

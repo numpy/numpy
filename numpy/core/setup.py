@@ -358,6 +358,8 @@ def configuration(parent_package='',top_path=None):
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
                                     join('src','umath_funcs_c99.inc.src'),
+                                    join('src','umath_funcs.inc.src'),
+                                    join('src','umath_loops.inc.src'),
                                     ],
                          depends = [join('src','umath_ufunc_object.inc'),
                                     generate_umath_py,

@@ -1,0 +1,1369 @@
+/* -*- c -*- */
+
+/*
+ *****************************************************************************
+ **                             UFUNC LOOPS                                 **
+ *****************************************************************************
+ */
+
+#define OUTPUT_LOOP\
+    char *op1 = args[1];\
+    intp os1 = steps[1];\
+    intp n = dimensions[0];\
+    intp i;\
+    for(i = 0; i < n; i++, op1 += os1)
+
+#define UNARY_LOOP\
+    char *ip1 = args[0], *op1 = args[1];\
+    intp is1 = steps[0], os1 = steps[1];\
+    intp n = dimensions[0];\
+    intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
+
+#define UNARY_LOOP_TWO_OUT\
+    char *ip1 = args[0], *op1 = args[1], *op2 = args[2];\
+    intp is1 = steps[0], os1 = steps[1], os2 = steps[2];\
+    intp n = dimensions[0];\
+    intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
+
+#define BINARY_LOOP\
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
+    intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
+    intp n = dimensions[0];\
+    intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
+
+#define BINARY_LOOP_TWO_OUT\
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];\
+    intp is1 = steps[0], is2 = steps[1], os1 = steps[2], os2 = steps[3];\
+    intp n = dimensions[0];\
+    intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
+
+/******************************************************************************
+ **                          GENERIC FLOAT LOOPS                             **
+ *****************************************************************************/
+
+
+typedef float floatUnaryFunc(float x);
+typedef double doubleUnaryFunc(double x);
+typedef longdouble longdoubleUnaryFunc(longdouble x);
+typedef float floatBinaryFunc(float x, float y);
+typedef double doubleBinaryFunc(double x, double y);
+typedef longdouble longdoubleBinaryFunc(longdouble x, longdouble y);
+
+
+/*UFUNC_API*/
+static void
+PyUFunc_f_f(char **args, intp *dimensions, intp *steps, void *func)
+{
+    floatUnaryFunc *f = (floatUnaryFunc *)func;
+    UNARY_LOOP {
+        const float in1 = *(float *)ip1;
+        *(float *)op1 = f(in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_f_f_As_d_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
+    UNARY_LOOP {
+        const float in1 = *(float *)ip1;
+        *(float *)op1 = (float)f((double)in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_ff_f(char **args, intp *dimensions, intp *steps, void *func)
+{
+    floatBinaryFunc *f = (floatBinaryFunc *)func;
+    BINARY_LOOP {
+        float in1 = *(float *)ip1;
+        float in2 = *(float *)ip2;
+        *(float *)op1 = f(in1, in2);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_ff_f_As_dd_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleBinaryFunc *f = (doubleBinaryFunc *)func;
+    BINARY_LOOP {
+        float in1 = *(float *)ip1;
+        float in2 = *(float *)ip2;
+        *(float *)op1 = (double)f((double)in1, (double)in2);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_d_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
+    UNARY_LOOP {
+        double in1 = *(double *)ip1;
+        *(double *)op1 = f(in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_dd_d(char **args, intp *dimensions, intp *steps, void *func)
+{
+    doubleBinaryFunc *f = (doubleBinaryFunc *)func;
+    BINARY_LOOP {
+        double in1 = *(double *)ip1;
+        double in2 = *(double *)ip2;
+        *(double *)op1 = f(in1, in2);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_g_g(char **args, intp *dimensions, intp *steps, void *func)
+{
+    longdoubleUnaryFunc *f = (longdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        longdouble in1 = *(longdouble *)ip1;
+        *(longdouble *)op1 = f(in1);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_gg_g(char **args, intp *dimensions, intp *steps, void *func)
+{
+    longdoubleBinaryFunc *f = (longdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        longdouble in1 = *(longdouble *)ip1;
+        longdouble in2 = *(longdouble *)ip2;
+        *(longdouble *)op1 = f(in1, in2);
+    }
+}
+
+
+
+/******************************************************************************
+ **                          GENERIC COMPLEX LOOPS                           **
+ *****************************************************************************/
+
+
+typedef void cdoubleUnaryFunc(cdouble *x, cdouble *r);
+typedef void cfloatUnaryFunc(cfloat *x, cfloat *r);
+typedef void clongdoubleUnaryFunc(clongdouble *x, clongdouble *r);
+typedef void cdoubleBinaryFunc(cdouble *x, cdouble *y, cdouble *r);
+typedef void cfloatBinaryFunc(cfloat *x, cfloat *y, cfloat *r);
+typedef void clongdoubleBinaryFunc(clongdouble *x, clongdouble *y,
+                                   clongdouble *r);
+
+/*UFUNC_API*/
+static void
+PyUFunc_F_F(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cfloatUnaryFunc *f = (cfloatUnaryFunc *)func;
+    UNARY_LOOP {
+        cfloat in1 = *(cfloat *)ip1;
+        cfloat *out = (cfloat *)op1;
+        f(&in1, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        const float *in1 = (float *)ip1;
+        cdouble tmp = {(double)(in1[0]),(double)in1[1]};
+        cdouble out;
+        f(&tmp, &out);
+        ((float *)op1)[0] = (float)out.real;
+        ((float *)op1)[1] = (float)out.imag;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_FF_F(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cfloatBinaryFunc *f = (cfloatBinaryFunc *)func;
+    BINARY_LOOP {
+        cfloat in1 = *(cfloat *)ip1;
+        cfloat in2 = *(cfloat *)ip2;
+        cfloat *out = (cfloat *)op1;
+        f(&in1, &in2, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        const float *in1 = (float *)ip1;
+        const float *in2 = (float *)ip2;
+        cdouble tmp1 = {(double)(in1[0]),(double)in1[1]};
+        cdouble tmp2 = {(double)(in2[0]),(double)in2[1]};
+        cdouble out;
+        f(&tmp1, &tmp2, &out);
+        ((float *)op1)[0] = (float)out.real;
+        ((float *)op1)[1] = (float)out.imag;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_D_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        cdouble in1 = *(cdouble *)ip1;
+        cdouble *out = (cdouble *)op1;
+        f(&in1, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_DD_D(char **args, intp *dimensions, intp *steps, void *func)
+{
+    cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        cdouble in1 = *(cdouble *)ip1;
+        cdouble in2 = *(cdouble *)ip2;
+        cdouble *out = (cdouble *)op1;
+        f(&in1, &in2, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_G_G(char **args, intp *dimensions, intp *steps, void *func)
+{
+    clongdoubleUnaryFunc *f = (clongdoubleUnaryFunc *)func;
+    UNARY_LOOP {
+        clongdouble in1 = *(clongdouble *)ip1;
+        clongdouble *out = (clongdouble *)op1;
+        f(&in1, out);
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_GG_G(char **args, intp *dimensions, intp *steps, void *func)
+{
+    clongdoubleBinaryFunc *f = (clongdoubleBinaryFunc *)func;
+    BINARY_LOOP {
+        clongdouble in1 = *(clongdouble *)ip1;
+        clongdouble in2 = *(clongdouble *)ip2;
+        clongdouble *out = (clongdouble *)op1;
+        f(&in1, &in2, out);
+    }
+}
+
+
+/******************************************************************************
+ **                         GENERIC OBJECT lOOPS                             **
+ *****************************************************************************/
+
+/*UFUNC_API*/
+static void
+PyUFunc_O_O(char **args, intp *dimensions, intp *steps, void *func)
+{
+    unaryfunc f = (unaryfunc)func;
+    UNARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = f(in1);
+        if ((ret == NULL) || PyErr_Occurred()) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_O_O_method(char **args, intp *dimensions, intp *steps, void *func)
+{
+    char *meth = (char *)func;
+    UNARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = PyObject_CallMethod(in1, meth, NULL);
+        if (ret == NULL) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_OO_O(char **args, intp *dimensions, intp *steps, void *func)
+{
+    binaryfunc f = (binaryfunc)func;
+    BINARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = f(in1, in2);
+        if (PyErr_Occurred()) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*UFUNC_API*/
+static void
+PyUFunc_OO_O_method(char **args, intp *dimensions, intp *steps, void *func)
+{
+    char *meth = (char *)func;
+    BINARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = PyObject_CallMethod(in1, meth, "(O)", in2);
+        if (ret == NULL) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
+/*
+ * A general-purpose ufunc that deals with general-purpose Python callable.
+ * func is a structure with nin, nout, and a Python callable function
+ */
+
+/*UFUNC_API*/
+static void
+PyUFunc_On_Om(char **args, intp *dimensions, intp *steps, void *func)
+{
+    intp n =  dimensions[0];
+    PyUFunc_PyFuncData *data = (PyUFunc_PyFuncData *)func;
+    int nin = data->nin;
+    int nout = data->nout;
+    PyObject *tocall = data->callable;
+    char *ptrs[NPY_MAXARGS];
+    PyObject *arglist, *result;
+    PyObject *in, **op;
+    intp i, j, ntot;
+
+    ntot = nin+nout;
+
+    for(j = 0; j < ntot; j++) {
+        ptrs[j] = args[j];
+    }
+    for(i = 0; i < n; i++) {
+        arglist = PyTuple_New(nin);
+        if (arglist == NULL) {
+            return;
+        }
+        for(j = 0; j < nin; j++) {
+            in = *((PyObject **)ptrs[j]);
+            if (in == NULL) {
+                Py_DECREF(arglist);
+                return;
+            }
+            PyTuple_SET_ITEM(arglist, j, in);
+            Py_INCREF(in);
+        }
+        result = PyEval_CallObject(tocall, arglist);
+        Py_DECREF(arglist);
+        if (result == NULL) {
+            return;
+        }
+        if PyTuple_Check(result) {
+            if (nout != PyTuple_Size(result)) {
+                Py_DECREF(result);
+                return;
+            }
+            for(j = 0; j < nout; j++) {
+                op = (PyObject **)ptrs[j+nin];
+                Py_XDECREF(*op);
+                *op = PyTuple_GET_ITEM(result, j);
+                Py_INCREF(*op);
+            }
+            Py_DECREF(result);
+        }
+        else {
+            op = (PyObject **)ptrs[nin];
+            Py_XDECREF(*op);
+            *op = result;
+        }
+        for(j = 0; j < ntot; j++) {
+            ptrs[j] += steps[j];
+        }
+    }
+}
+
+/*
+ *****************************************************************************
+ **                             BOOLEAN LOOPS                               **
+ *****************************************************************************
+ */
+
+#define BOOL_invert BOOL_logical_not
+#define BOOL_negative BOOL_logical_not
+#define BOOL_add BOOL_logical_or
+#define BOOL_bitwise_and BOOL_logical_and
+#define BOOL_bitwise_or BOOL_logical_or
+#define BOOL_bitwise_xor BOOL_logical_xor
+#define BOOL_multiply BOOL_logical_and
+#define BOOL_subtract BOOL_logical_xor
+#define BOOL_fmax BOOL_maximum
+#define BOOL_fmin BOOL_minimum
+
+/**begin repeat
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
+ *         logical_and, logical_or#
+ * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ **/
+
+static void
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        Bool in1 = *((Bool *)ip1) != 0;
+        Bool in2 = *((Bool *)ip2) != 0;
+        *((Bool *)op1)= in1 @OP@ in2;
+    }
+}
+/**end repeat**/
+
+static void
+BOOL_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        Bool in1 = *((Bool *)ip1) != 0;
+        Bool in2 = *((Bool *)ip2) != 0;
+        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+    }
+}
+
+/**begin repeat
+ * #kind = maximum, minimum#
+ * #OP =  >, <#
+ **/
+static void
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        Bool in1 = *((Bool *)ip1) != 0;
+        Bool in2 = *((Bool *)ip2) != 0;
+        *((Bool *)op1) = (in1 @OP@ in2) ? in1 : in2;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+ * #kind = absolute, logical_not#
+ * #OP =  !=, ==#
+ **/
+static void
+BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        Bool in1 = *(Bool *)ip1;
+        *((Bool *)op1) = in1 @OP@ 0;
+    }
+}
+/**end repeat**/
+
+static void
+BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    OUTPUT_LOOP {
+        *((Bool *)op1) = 1;
+    }
+}
+
+
+/*
+ *****************************************************************************
+ **                           INTEGER LOOPS
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #type = byte, short, int, long, longlong#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
+ * #ftype = float, float, double, double, double#
+ */
+
+/**begin repeat1
+ * both signed and unsigned integer types
+ * #s = , u#
+ * #S = , U#
+ */
+
+#define @S@@TYPE@_floor_divide @S@@TYPE@_divide
+#define @S@@TYPE@_fmax @S@@TYPE@_maximum
+#define @S@@TYPE@_fmin @S@@TYPE@_minimum
+
+static void
+@S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    OUTPUT_LOOP {
+        *((@s@@type@ *)op1) = 1;
+    }
+}
+
+static void
+@S@@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        *((@s@@type@ *)op1) = in1*in1;
+    }
+}
+
+static void
+@S@@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        *((@s@@type@ *)op1) = (@s@@type@)(1.0/in1);
+    }
+}
+
+static void
+@S@@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        *((@s@@type@ *)op1) = in1;
+    }
+}
+
+static void
+@S@@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        *((@s@@type@ *)op1) = (@s@@type@)(-(@type@)in1);
+    }
+}
+
+static void
+@S@@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        *((Bool *)op1) = !in1;
+    }
+}
+
+static void
+@S@@TYPE@_invert(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        *((@s@@type@ *)op1) = ~in1;
+    }
+}
+
+/**begin repeat2
+ * Arithmetic
+ * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
+ *          left_shift, right_shift#
+ * #OP = +, -,*, &, |, ^, <<, >>#
+ */
+static void
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        const @s@@type@ in2 = *(@s@@type@ *)ip2;
+        *((@s@@type@ *)op1) = in1 @OP@ in2;
+    }
+}
+/**end repeat2**/
+
+/**begin repeat2
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
+ *         logical_and, logical_or#
+ * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ */
+static void
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        const @s@@type@ in2 = *(@s@@type@ *)ip2;
+        *((Bool *)op1) = in1 @OP@ in2;
+    }
+}
+/**end repeat2**/
+
+static void
+@S@@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        const @s@@type@ in2 = *(@s@@type@ *)ip2;
+        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+    }
+}
+
+/**begin repeat2
+ * #kind = maximum, minimum#
+ * #OP =  >, <#
+ **/
+static void
+@S@@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        const @s@@type@ in2 = *(@s@@type@ *)ip2;
+        *((@s@@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
+    }
+}
+/**end repeat2**/
+
+static void
+@S@@TYPE@_true_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        const @s@@type@ in2 = *(@s@@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@ftype@ *)op1) = 0;
+        }
+        else {
+            *((@ftype@ *)op1) = (@ftype@)in1 / (@ftype@)in2;
+        }
+    }
+}
+
+static void
+@S@@TYPE@_power(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @ftype@ in1 = (@ftype@)*(@s@@type@ *)ip1;
+        const @ftype@ in2 = (@ftype@)*(@s@@type@ *)ip2;
+        *((@s@@type@ *)op1) = (@s@@type@) pow(in1, in2);
+    }
+}
+
+static void
+@S@@TYPE@_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @s@@type@ in1 = *(@s@@type@ *)ip1;
+        const @s@@type@ in2 = *(@s@@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@s@@type@ *)op1) = 0;
+        }
+        else {
+            *((@s@@type@ *)op1)= in1 % in2;
+        }
+
+    }
+}
+
+/**end repeat1**/
+
+static void
+U@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const u@type@ in1 = *(u@type@ *)ip1;
+        *((u@type@ *)op1) = in1;
+    }
+}
+
+static void
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = (in1 >= 0) ? in1 : -in1;
+    }
+}
+
+static void
+U@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const u@type@ in1 = *(u@type@ *)ip1;
+        *((u@type@ *)op1) = in1 > 0 ? 1 : 0;
+    }
+}
+
+static void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+    }
+}
+
+static void
+@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@type@ *)op1) = 0;
+        }
+        else if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
+            *((@type@ *)op1) = in1/in2 - 1;
+        }
+        else {
+            *((@type@ *)op1) = in1/in2;
+        }
+    }
+}
+
+static void
+U@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const u@type@ in1 = *(u@type@ *)ip1;
+        const u@type@ in2 = *(u@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((u@type@ *)op1) = 0;
+        }
+        else {
+            *((u@type@ *)op1)= in1/in2;
+        }
+    }
+}
+
+static void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@type@ *)op1) = 0;
+        }
+        else {
+            /* handle mixed case the way Python does */
+            const @type@ rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((@type@ *)op1) = rem;
+            }
+            else {
+                *((@type@ *)op1) = rem + in2;
+            }
+        }
+    }
+}
+
+static void
+U@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const u@type@ in1 = *(u@type@ *)ip1;
+        const u@type@ in2 = *(u@type@ *)ip2;
+        if (in2 == 0) {
+            generate_divbyzero_error();
+            *((@type@ *)op1) = 0;
+        }
+        else {
+            *((@type@ *)op1) = in1 % in2;
+        }
+    }
+}
+
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                             FLOAT LOOPS                                 **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ * Float types
+ *  #type = float, double, longdouble#
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ *  #c = f, , l#
+ *  #C = F, , L#
+ */
+
+
+/**begin repeat1
+ * Arithmetic
+ * # kind = add, subtract, multiply, divide#
+ * # OP = +, -, *, /#
+ */
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = in1 @OP@ in2;
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
+ *        logical_and, logical_or#
+ * #OP = ==, !=, <, <=, >, >=, &&, ||#
+ */
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((Bool *)op1) = in1 @OP@ in2;
+    }
+}
+/**end repeat1**/
+
+static void
+@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+    }
+}
+
+static void
+@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((Bool *)op1) = !in1;
+    }
+}
+
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite, signbit#
+ * #func = isnan, isinf, isfinite, signbit#
+ **/
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((Bool *)op1) = @func@(in1) != 0;
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = maximum, minimum#
+ * #OP =  >=, <=#
+ **/
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    /*  */
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = (in1 @OP@ in2 || isnan(in1)) ? in1 : in2;
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP =  >=, <=#
+ **/
+static void
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    /*  */
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = (in1 @OP@ in2 || isnan(in2)) ? in1 : in2;
+    }
+}
+/**end repeat1**/
+
+static void
+@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = floor@c@(in1/in2);
+    }
+}
+
+static void
+@TYPE@_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        const @type@ res = fmod@c@(in1,in2);
+        if (res && ((in2 < 0) != (res < 0))) {
+            *((@type@ *)op1) = res + in2;
+        }
+        else {
+            *((@type@ *)op1) = res;
+        }
+    }
+}
+
+static void
+@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = in1*in1;
+    }
+}
+
+static void
+@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = 1/in1;
+    }
+}
+
+static void
+@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    OUTPUT_LOOP {
+        *((@type@ *)op1) = 1;
+    }
+}
+
+static void
+@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = in1;
+    }
+}
+
+static void
+@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ tmp = in1 > 0 ? in1 : -in1;
+        /* add 0 to clear -0.0 */
+        *((@type@ *)op1) = tmp + 0;
+    }
+}
+
+static void
+@TYPE@_negative(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = -in1;
+    }
+}
+
+static void
+@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    /* Sign of nan is currently 0 */
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+    }
+}
+
+static void
+@TYPE@_modf(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = modf@c@(in1, (@type@ *)op2);
+    }
+}
+
+#ifdef HAVE_FREXP@C@
+static void
+@TYPE@_frexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = frexp@c@(in1, (int *)op2);
+    }
+}
+#endif
+
+#ifdef HAVE_LDEXP@C@
+static void
+@TYPE@_ldexp(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const int in2 = *(int *)ip2;
+        *((@type@ *)op1) = ldexp@c@(in1, in2);
+    }
+}
+#endif
+
+#define @TYPE@_true_divide @TYPE@_divide
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                           COMPLEX LOOPS                                 **
+ *****************************************************************************
+ */
+
+#define CGE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi))
+#define CLE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi))
+#define CGT(xr,xi,yr,yi) (xr > yr || (xr == yr && xi > yi))
+#define CLT(xr,xi,yr,yi) (xr < yr || (xr == yr && xi < yi))
+#define CEQ(xr,xi,yr,yi) (xr == yr && xi == yi)
+#define CNE(xr,xi,yr,yi) (xr != yr || xi != yi)
+
+/**begin repeat
+ * complex types
+ * #type = float, double, longdouble#
+ * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ * #c = f, , l#
+ */
+
+/**begin repeat1
+ * arithmetic
+ * #kind = add, subtract#
+ * #OP = +, -#
+ */
+static void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        ((@type@ *)op1)[0] = in1r @OP@ in2r;
+        ((@type@ *)op1)[1] = in1i @OP@ in2i;
+    }
+}
+/**end repeat1**/
+
+static void
+C@TYPE@_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        ((@type@ *)op1)[0] = in1r*in2r - in1i*in2i;
+        ((@type@ *)op1)[1] = in1r*in2i + in1i*in2r;
+    }
+}
+
+static void
+C@TYPE@_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        @type@ d = in2r*in2r + in2i*in2i;
+        ((@type@ *)op1)[0] = (in1r*in2r + in1i*in2i)/d;
+        ((@type@ *)op1)[1] = (in1i*in2r - in1r*in2i)/d;
+    }
+}
+
+static void
+C@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        @type@ d = in2r*in2r + in2i*in2i;
+        ((@type@ *)op1)[0] = floor@c@((in1r*in2r + in1i*in2i)/d);
+        ((@type@ *)op1)[1] = 0;
+    }
+}
+
+/**begin repeat1
+ * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
+ * #OP = CGT, CGE, CLT, CLE, CEQ, CNE#
+ */
+static void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        *((Bool *)op1) = @OP@(in1r,in1i,in2r,in2i);
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+   #kind = logical_and, logical_or#
+   #OP1 = ||, ||#
+   #OP2 = &&, ||#
+*/
+static void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        *((Bool *)op1) = (in1r @OP1@ in1i) @OP2@ (in2r @OP1@ in2i);
+    }
+}
+/**end repeat1**/
+
+static void
+C@TYPE@_logical_xor(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        const Bool tmp1 = (in1r || in1i);
+        const Bool tmp2 = (in2r || in2i);
+        *((Bool *)op1) = (tmp1 && !tmp2) || (!tmp1 && tmp2);
+    }
+}
+
+static void
+C@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        *((Bool *)op1) = !(in1r || in1i);
+    }
+}
+
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite#
+ * #func = isnan, isinf, isfinite#
+ * #OP = ||, ||, &&#
+ **/
+static void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        *((Bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
+    }
+}
+/**end repeat1**/
+
+static void
+C@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        ((@type@ *)op1)[0] = in1r*in1r - in1i*in1i;
+        ((@type@ *)op1)[1] = in1r*in1i + in1i*in1r;
+    }
+}
+
+static void
+C@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        if (fabs@c@(in1i) <= fabs@c@(in1r)) {
+            const @type@ r = in1i/in1r;
+            const @type@ d = in1r + in1i*r;
+            ((@type@ *)op1)[0] = 1/d;
+            ((@type@ *)op1)[1] = -r/d;
+        } else {
+            const @type@ r = in1r/in1i;
+            const @type@ d = in1r*r + in1i;
+            ((@type@ *)op1)[0] = r/d;
+            ((@type@ *)op1)[1] = -1/d;
+        }
+    }
+}
+
+static void
+C@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data))
+{
+    OUTPUT_LOOP {
+        ((@type@ *)op1)[0] = 1;
+        ((@type@ *)op1)[1] = 0;
+    }
+}
+
+static void
+C@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        ((@type@ *)op1)[0] = in1r;
+        ((@type@ *)op1)[1] = -in1i;
+    }
+}
+
+static void
+C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        *((@type@ *)op1) = sqrt@c@(in1r*in1r + in1i*in1i);
+    }
+}
+
+static void
+C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    /* fixme: sign of nan is currently 0 */
+    UNARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        ((@type@ *)op1)[0] = CGT(in1r, in1i, 0, 0) ? 1 :
+                            (CLT(in1r, in1i, 0, 0) ? -1 : 0);
+        ((@type@ *)op1)[1] = 0;
+    }
+}
+
+/**begin repeat1
+ * #kind = maximum, minimum#
+ * #OP = CGE, CLE#
+ */
+static void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        if (@OP@(in1r, in1i, in2r, in2i) || isnan(in1r) || isnan(in1i)) {
+            ((@type@ *)op1)[0] = in1r;
+            ((@type@ *)op1)[1] = in1i;
+        }
+        else {
+            ((@type@ *)op1)[0] = in2r;
+            ((@type@ *)op1)[1] = in2i;
+        }
+    }
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = fmax, fmin#
+ * #OP = CGE, CLE#
+ */
+static void
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+{
+    BINARY_LOOP {
+        const @type@ in1r = ((@type@ *)ip1)[0];
+        const @type@ in1i = ((@type@ *)ip1)[1];
+        const @type@ in2r = ((@type@ *)ip2)[0];
+        const @type@ in2i = ((@type@ *)ip2)[1];
+        if (@OP@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
+            ((@type@ *)op1)[0] = in1r;
+            ((@type@ *)op1)[1] = in1i;
+        }
+        else {
+            ((@type@ *)op1)[0] = in2r;
+            ((@type@ *)op1)[1] = in2i;
+        }
+    }
+}
+/**end repeat1**/
+
+#define C@TYPE@_true_divide C@TYPE@_divide
+
+/**end repeat**/
+
+#undef CGE
+#undef CLE
+#undef CGT
+#undef CLT
+#undef CEQ
+#undef CNE
+
+/*
+ *****************************************************************************
+ **                            OBJECT LOOPS                                 **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #OP = EQ, NE, GT, GE, LT, LE#
+ */
+static void
+OBJECT_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)) {
+    BINARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        int ret = PyObject_RichCompareBool(in1, in2, Py_@OP@);
+        if (ret == -1) {
+            return;
+        }
+        *((Bool *)op1) = (Bool)ret;
+    }
+}
+/**end repeat**/
+
+static void
+OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    PyObject *zero = PyInt_FromLong(0);
+    UNARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = PyInt_FromLong(PyObject_Compare(in1, zero));
+        if (PyErr_Occurred()) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+    Py_DECREF(zero);
+}
+
+/*
+ *****************************************************************************
+ **                              END LOOPS                                  **
+ *****************************************************************************
+ */
+
+
