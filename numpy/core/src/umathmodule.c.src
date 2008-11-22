@@ -21,7 +21,7 @@
 #define M_PI 3.14159265358979323846264338328
 #endif
 
-#include "math_c99.inc"
+#include "umath_funcs_c99.inc"
 
 /*
  *****************************************************************************
@@ -182,9 +182,9 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
 
 /*
  * Don't pass structures between functions (only pointers) because how
- * structures are passed is compiler dependent and could cause
- * segfaults if ufuncobject.c is compiled with a different compiler
- * than an extension that makes use of the UFUNC API
+ * structures are passed is compiler dependent and could cause segfaults if
+ * umath_ufunc_object.inc is compiled with a different compiler than an
+ * extension that makes use of the UFUNC API
  */
 
 /**begin repeat
@@ -1939,7 +1939,7 @@ OBJECT_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
  */
 
 #include "__umath_generated.c"
-#include "ufuncobject.c"
+#include "umath_ufunc_object.inc"
 #include "__ufunc_api.c"
 
 static PyUFuncGenericFunction frexp_functions[] = {

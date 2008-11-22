@@ -17,7 +17,7 @@ API_FILES = ['arraymethods.c',
              'arraytypes.inc.src',
              'multiarraymodule.c',
              'scalartypes.inc.src',
-             'ufuncobject.c',
+             'umath_ufunc_object.inc',
              'umathmodule.c.src'
             ]
 THIS_DIR = os.path.dirname(__file__)
