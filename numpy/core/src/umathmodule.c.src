@@ -9,12 +9,24 @@
  **                            INCLUDES                                     **
  *****************************************************************************
  */
+
+/*
+ * _UMATHMODULE IS needed in __ufunc_api.h, included from numpy/ufuncobject.h.
+ * This is a mess and it would be nice to fix it. It has nothing to do with
+ * __ufunc_api.c
+ */
+#define _UMATHMODULE
+
 #include "Python.h"
 #include "numpy/noprefix.h"
-#define _UMATHMODULE /* needed in one of the numpy include files */
 #include "numpy/ufuncobject.h"
 #include "abstract.h"
 #include "config.h"
+
+/*
+ * Looks like some versions of Python.h do naughty things, so math.h needs
+ * to come after.
+ */
 #include <math.h>
 
 /*
@@ -113,7 +125,7 @@ InitOtherOperators(PyObject *dictionary) {
     return;
 }
 
-/* Setup +inf and +0 */ 
+/* Setup +inf and +0 */
 
 static double
 pinf_init(void)
@@ -148,6 +160,7 @@ pzero_init(void)
 }
 
 /* Setup the umath module */
+static PyTypeObject PyUFunc_Type;
 
 static struct PyMethodDef methods[] = {
     {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
