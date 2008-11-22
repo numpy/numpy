@@ -160,7 +160,8 @@ pzero_init(void)
 }
 
 /* Setup the umath module */
-static PyTypeObject PyUFunc_Type;
+/* Remove for time being, it is declared in __ufunc_api.h */
+/*static PyTypeObject PyUFunc_Type;*/
 
 static struct PyMethodDef methods[] = {
     {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
