@@ -46,7 +46,7 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'masked_object','masked_outside', 'masked_print_option',
            'masked_singleton','masked_values', 'masked_where', 'max', 'maximum',
            'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
-           'multiply',
+           'mod', 'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
            'power', 'product', 'ptp', 'put', 'putmask',
@@ -768,6 +768,7 @@ floor_divide = _DomainedBinaryOperation(umath.floor_divide,
 remainder = _DomainedBinaryOperation(umath.remainder,
                                       _DomainSafeDivide(), 0, 1)
 fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(), 0, 1)
+mod = _DomainedBinaryOperation(umath.mod, _DomainSafeDivide(), 0, 1)
 
 
 #####--------------------------------------------------------------------------
