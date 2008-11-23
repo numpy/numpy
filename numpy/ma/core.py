@@ -45,7 +45,7 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'masked_object','masked_outside', 'masked_print_option',
            'masked_singleton','masked_values', 'masked_where', 'max', 'maximum',
            'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
-           'multiply',
+           'mod', 'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
            'power', 'product', 'ptp', 'put', 'putmask',
@@ -291,9 +291,12 @@ def common_fill_value(a, b):
 
 #####--------------------------------------------------------------------------
 def filled(a, fill_value = None):
-    """Return a as an array with masked data replaced by value.  If
-    value is None, get_fill_value(a) is used instead.  If a is already
-    a ndarray, a itself is returned.
+    """
+    Return `a` as an array where masked data have been replaced by `value`.
+    
+    If `a` is not a MaskedArray, `a` itself is returned.
+    If `a` is a MaskedArray and `fill_value` is None, `fill_value` is set to
+    `a.fill_value`.
 
     Parameters
     ----------
@@ -764,6 +767,7 @@ floor_divide = _DomainedBinaryOperation(umath.floor_divide,
 remainder = _DomainedBinaryOperation(umath.remainder,
                                       _DomainSafeDivide(), 0, 1)
 fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(), 0, 1)
+mod = _DomainedBinaryOperation(umath.mod, _DomainSafeDivide(), 0, 1)
 
 
 #####--------------------------------------------------------------------------
@@ -875,6 +879,7 @@ def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
     else:
         return result
 
+
 def make_mask_none(newshape, dtype=None):
     """
     Return a mask of shape s, filled with False.
@@ -884,7 +889,8 @@ def make_mask_none(newshape, dtype=None):
     news : tuple
         A tuple indicating the shape of the final mask.
     dtype: {None, dtype}, optional
-        A dtype.
+        If None, use MaskType. Otherwise, use a new datatype with the same fields
+        as `dtype` with boolean type.
 
     """
     if dtype is None:
