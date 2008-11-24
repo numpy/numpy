@@ -480,7 +480,7 @@ class matrix(N.ndarray):
         is taken before squaring, so that the result is always real
         and nonnegative.
         """
-        return N.ndarray.var(self, axis, dtype, out)._align(axis)
+        return N.ndarray.var(self, axis, dtype, out, ddof)._align(axis)
 
     def prod(self, axis=None, dtype=None, out=None):
         return N.ndarray.prod(self, axis, dtype, out)._align(axis)

@@ -92,6 +92,12 @@ class TestProperties(TestCase):
         assert all(x.ptp(0) == array([2, 2]))
         assert all(x.ptp(1) == array([1, 1]))
 
+    def test_var(self):
+        x = np.arange(9).reshape((3,3))
+        mx = x.view(np.matrix)
+        assert_equal(x.var(ddof=0), mx.var(ddof=0))
+        assert_equal(x.var(ddof=1), mx.var(ddof=1))
+
     def test_basic(self):
         import numpy.linalg as linalg
 
