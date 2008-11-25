@@ -1,6 +1,12 @@
 /*
  * This set (target) cpu specific macros:
- *      - NPY_TARGET_CPU: target CPU type
+ *      - NPY_TARGET_CPU: target CPU type. Possible values:
+ *              NPY_X86
+ *              NPY_AMD64
+ *              NPY_PPC
+ *              NPY_SPARC
+ *              NPY_S390
+ *              NPY_PA_RISC
  */
 #ifndef _NPY_CPUARCH_H_
 #define _NPY_CPUARCH_H_
