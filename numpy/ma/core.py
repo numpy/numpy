@@ -28,13 +28,14 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'array', 'asarray','asanyarray',
            'bitwise_and', 'bitwise_or', 'bitwise_xor',
            'ceil', 'choose', 'clip', 'common_fill_value', 'compress',
-           'compressed', 'concatenate', 'conjugate', 'cos', 'cosh', 'count',
-           'default_fill_value', 'diagonal', 'divide', 'dump', 'dumps',
+           'compressed', 'concatenate', 'conjugate', 'copy', 'cos', 'cosh',
+           'count', 'cumprod', 'cumsum',
+           'default_fill_value', 'diag', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp',
            'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
            'frombuffer', 'fromfunction',
            'getdata','getmask', 'getmaskarray', 'greater', 'greater_equal',
-           'hypot',
+           'harden_mask', 'hypot',
            'identity', 'ids', 'indices', 'inner', 'innerproduct',
            'isMA', 'isMaskedArray', 'is_mask', 'is_masked', 'isarray',
            'left_shift', 'less', 'less_equal', 'load', 'loads', 'log', 'log10',
@@ -49,12 +50,13 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'mod', 'multiply',
            'negative', 'nomask', 'nonzero', 'not_equal',
            'ones', 'outer', 'outerproduct',
-           'power', 'product', 'ptp', 'put', 'putmask',
+           'power', 'prod', 'product', 'ptp', 'put', 'putmask',
            'rank', 'ravel', 'remainder', 'repeat', 'reshape', 'resize',
-           'right_shift', 'round_',
-           'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'sometrue', 'sort',
-           'sqrt', 'std', 'subtract', 'sum', 'swapaxes',
-           'take', 'tan', 'tanh', 'transpose', 'true_divide',
+           'right_shift', 'round_', 'round',
+           'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'sometrue',
+           'sort', 'soften_mask', 'sqrt', 'squeeze', 'std', 'subtract', 'sum', 
+           'swapaxes',
+           'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
            'var', 'where',
            'zeros']
 
@@ -2668,8 +2670,8 @@ masked_%(name)s(data = %(data)s,
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
 
-    Warning
-    -------
+    Warnings
+    --------
         The mask is lost if out is not a valid :class:`MaskedArray` !
 
     Returns
@@ -2678,8 +2680,8 @@ masked_%(name)s(data = %(data)s,
         A new array holding the result is returned unless ``out`` is
         specified, in which case a reference to ``out`` is returned.
 
-    Example
-    -------
+    Examples
+    --------
     >>> marr = np.ma.array(np.arange(10), mask=[0,0,0,1,1,1,0,0,0,0])
     >>> print marr.cumsum()
     [0 1 3 -- -- -- 9 16 24 33]
@@ -3189,7 +3191,11 @@ masked_%(name)s(data = %(data)s,
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         else:
-            np.putmask(out, newmask, np.nan)
+            if out.dtype < np.dtype(float):
+                filler = -9999
+            else:
+                filler = np.nan
+            np.putmask(out, newmask, filler)
         return out
 
     def mini(self, axis=None):
@@ -3251,7 +3257,11 @@ masked_%(name)s(data = %(data)s,
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         else:
-            np.putmask(out, newmask, np.nan)
+            if out.dtype < np.dtype(float):
+                filler = -9999
+            else:
+                filler = np.nan
+            np.putmask(out, newmask, filler)
         return out
 
     def ptp(self, axis=None, out=None, fill_value=None):
@@ -3657,25 +3667,32 @@ class _frommethod:
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
 any = _frommethod('any')
+compress = _frommethod('compress')
 conjugate = _frommethod('conjugate')
-ids = _frommethod('ids')
-nonzero = _frommethod('nonzero')
+cumprod = _frommethod('cumprod')
+cumsum = _frommethod('cumsum')
+copy = _frommethod('copy')
 diagonal = _frommethod('diagonal')
+harden_mask = _frommethod('harden_mask')
+ids = _frommethod('ids')
 maximum = _maximum_operation()
 mean = _frommethod('mean')
 minimum = _minimum_operation ()
+nonzero = _frommethod('nonzero')
+prod = _frommethod('prod')
 product = _frommethod('prod')
 ptp = _frommethod('ptp')
 ravel = _frommethod('ravel')
 repeat = _frommethod('repeat')
 round = _frommethod('round')
+shrink_mask = _frommethod('shrink_mask')
+soften_mask = _frommethod('soften_mask')
 std = _frommethod('std')
 sum = _frommethod('sum')
 swapaxes = _frommethod('swapaxes')
 take = _frommethod('take')
 trace = _frommethod('trace')
 var = _frommethod('var')
-compress = _frommethod('compress')
 
 #..............................................................................
 def power(a, b, third=None):
@@ -3823,6 +3840,40 @@ def count(a, axis = None):
         return a.count(axis)
     return masked_array(a, copy=False).count(axis)
 count.__doc__ = MaskedArray.count.__doc__
+
+
+def diag(v, k=0):
+    """
+    Extract a diagonal or construct a diagonal array.
+
+    Parameters
+    ----------
+    v : array_like
+        If `v` is a 2-dimensional array, return a copy of
+        its `k`-th diagonal. If `v` is a 1-dimensional array,
+        return a 2-dimensional array with `v` on the `k`-th diagonal.
+    k : int, optional
+        Diagonal in question.  The defaults is 0.
+
+    Examples
+    --------
+    >>> x = np.arange(9).reshape((3,3))
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.diag(x)
+    array([0, 4, 8])
+    >>> np.diag(np.diag(x))
+    array([[0, 0, 0],
+           [0, 4, 0],
+           [0, 0, 8]])
+
+    """
+    output = np.diag(v, k).view(MaskedArray)
+    if getmask(v) is not nomask:
+        output._mask = np.diag(v._mask, k)
+    return output
 
 
 def expand_dims(x, axis):
@@ -4348,5 +4399,6 @@ identity = _convert2ma('identity')
 indices = np.indices
 ones = _convert2ma('ones')
 zeros = _convert2ma('zeros')
+squeeze = np.squeeze
 
 ###############################################################################
