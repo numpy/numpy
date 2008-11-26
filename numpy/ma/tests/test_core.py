@@ -752,7 +752,17 @@ class TestMaskedArrayArithmetic(TestCase):
             assert_equal(np.sum(x,1), sum(x,1))
             assert_equal(np.product(x,1), product(x,1))
 
-
+    def test_mod(self):
+        "Tests mod"
+        (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
+        assert_equal(mod(x, y), mod(xm, ym))
+        test = mod(ym, xm)
+        assert_equal(test, np.mod(ym, xm))
+        assert_equal(test.mask, mask_or(xm.mask, ym.mask))
+        test = mod(xm, ym)
+        assert_equal(test, np.mod(xm, ym))
+        assert_equal(test.mask, mask_or(mask_or(xm.mask, ym.mask), (ym == 0)))
+        
 
 
     def test_TakeTransposeInnerOuter(self):
@@ -1941,6 +1951,22 @@ class TestMaskArrayMathMethod(TestCase):
             # Using a ndarray as explicit output
             _ = method(out=nout, ddof=1)
             self.failUnless(np.isnan(nout))
+
+
+    def test_diag(self):
+        "Test diag"
+        x = arange(9).reshape((3,3))
+        x[1,1] = masked
+        out = np.diag(x)
+        assert_equal(out, [0, 4, 8])
+        out = diag(x)
+        assert_equal(out, [0, 4, 8])
+        assert_equal(out.mask, [0, 1, 0])
+        out = diag(out)
+        control = array([[0, 0, 0], [0, 4, 0], [0, 0, 8]], 
+                        mask = [[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+        assert_equal(out, control)
+
 
 #------------------------------------------------------------------------------
 
