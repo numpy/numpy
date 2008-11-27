@@ -4219,6 +4219,17 @@ def round_(a, decimals=0, out=None):
 round = round_
 
 def inner(a, b):
+    """
+    Returns the inner product of a and b for arrays of floating point types.
+
+    Like the generic NumPy equivalent the product sum is over the last dimension
+    of a and b. 
+    
+    Notes
+    -----
+    The first argument is not conjugated.
+
+    """
     fa = filled(a, 0)
     fb = filled(b, 0)
     if len(fa.shape) == 0:
@@ -4269,7 +4280,7 @@ def allequal (a, b, fill_value=True):
 
 def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
     """
-        Returns True if two arrays are element-wise equal within a tolerance.
+    Returns True if two arrays are element-wise equal within a tolerance.
 
     The tolerance values are positive, typically very small numbers.  The
     relative difference (`rtol` * `b`) and the absolute difference (`atol`)
