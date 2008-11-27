@@ -6,6 +6,7 @@ Numpy manual contents
    
    user/index
    reference/index
+   release
    about
    bugs
    license
