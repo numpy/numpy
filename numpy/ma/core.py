@@ -31,7 +31,7 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'compressed', 'concatenate', 'conjugate', 'copy', 'cos', 'cosh',
            'count', 'cumprod', 'cumsum',
            'default_fill_value', 'diag', 'diagonal', 'divide', 'dump', 'dumps',
-           'empty', 'empty_like', 'equal', 'exp',
+           'empty', 'empty_like', 'equal', 'exp', 'expand_dims',
            'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
            'frombuffer', 'fromfunction',
            'getdata','getmask', 'getmaskarray', 'greater', 'greater_equal',
@@ -96,6 +96,22 @@ def doc_note(initialdoc, note):
     %s
     """
     return newdoc % (initialdoc, note)
+
+def get_object_signature(obj):
+    """
+    Get the signature from obj
+    """
+    import inspect
+    try:
+        sig = inspect.formatargspec(*inspect.getargspec(obj))
+    except TypeError, errmsg:
+        msg = "Unable to retrieve the signature of %s '%s'\n"\
+              "(Initial error message: %s)"
+#        warnings.warn(msg % (type(obj),
+#                             getattr(obj, '__name__', '???'),
+#                             errmsg))
+        sig = ''
+    return sig
 
 #####--------------------------------------------------------------------------
 #---- --- Exceptions ---
@@ -1210,8 +1226,8 @@ class _arraymethod(object):
     #
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
-        methdoc = getattr(ndarray, self.__name__, None)
-        methdoc = getattr(np, self.__name__, methdoc)
+        methdoc = getattr(ndarray, self.__name__, None) or \
+                  getattr(np, self.__name__, None)
         if methdoc is not None:
             return methdoc.__doc__
     #
@@ -2562,9 +2578,7 @@ masked_%(name)s(data = %(data)s,
 
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         """
-        Return the sum along the offset diagonal of the array's
-        indicated `axis1` and `axis2`.
-
+        (this docstring should be overwritten)
         """
         #!!!: implement out + test!
         m = self._mask
@@ -2575,7 +2589,7 @@ masked_%(name)s(data = %(data)s,
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
             return D.astype(dtype).filled(0).sum(axis=None, out=out)
-
+    trace.__doc__ = ndarray.trace.__doc__
 
     def sum(self, axis=None, dtype=None, out=None):
         """
@@ -2826,7 +2840,14 @@ masked_%(name)s(data = %(data)s,
 
 
     def mean(self, axis=None, dtype=None, out=None):
-        ""
+        """
+    Returns the average of the array elements along given axis.
+    Refer to `numpy.mean` for full documentation.
+
+    See Also
+    --------
+    numpy.mean : equivalent function'
+        """
         if self._mask is nomask:
             result = super(MaskedArray, self).mean(axis=axis, dtype=dtype)
         else:
@@ -2842,7 +2863,6 @@ masked_%(name)s(data = %(data)s,
                 outmask.flat = getattr(result, '_mask', nomask)
             return out
         return result
-    mean.__doc__ = ndarray.mean.__doc__
 
     def anom(self, axis=None, dtype=None):
         """
@@ -2939,47 +2959,36 @@ masked_%(name)s(data = %(data)s,
     #............................................
     def argsort(self, axis=None, fill_value=None, kind='quicksort',
                 order=None):
-        """Return an ndarray of indices that sort the array along the
-        specified axis.  Masked values are filled beforehand to
-        fill_value.
+        """
+    Return an ndarray of indices that sort the array along the
+    specified axis.  Masked values are filled beforehand to
+    fill_value.
 
-        Parameters
-        ----------
-        axis : int, optional
-            Axis to be indirectly sorted.
-            If not given, uses a flatten version of the array.
-        fill_value : {var}
-            Value used to fill in the masked values.
-            If not given, self.fill_value is used instead.
-        kind : {string}
-            Sorting algorithm (default 'quicksort')
-            Possible values: 'quicksort', 'mergesort', or 'heapsort'
+    Parameters
+    ----------
+    axis : int, optional
+        Axis along which to sort.  If not given, the flattened array is used.
+    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        Sorting algorithm.
+    order : list, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  Not all fields need be
+        specified.
+    Returns
+    -------
+    index_array : ndarray, int
+        Array of indices that sort `a` along the specified axis.
+        In other words, ``a[index_array]`` yields a sorted `a`.
+    
+    See Also
+    --------
+    sort : Describes sorting algorithms used.
+    lexsort : Indirect stable sort with multiple keys.
+    ndarray.sort : Inplace sort.
 
-        Notes
-        -----
-        This method executes an indirect sort along the given axis
-        using the algorithm specified by the kind keyword. It returns
-        an array of indices of the same shape as 'a' that index data
-        along the given axis in sorted order.
-
-        The various sorts are characterized by average speed, worst
-        case performance need for work space, and whether they are
-        stable.  A stable sort keeps items with the same key in the
-        same relative order. The three available algorithms have the
-        following properties:
-
-        |------------------------------------------------------|
-        |    kind   | speed |  worst case | work space | stable|
-        |------------------------------------------------------|
-        |'quicksort'|   1   | O(n^2)      |     0      |   no  |
-        |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
-        |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
-        |------------------------------------------------------|
-
-        All the sort algorithms make temporary copies of the data when
-        the sort is not along the last axis. Consequently, sorts along
-        the last axis are faster and use less space than sorts along
-        other axis.
+    Notes
+    -----
+    See `sort` for notes on the different sorting algorithms.
 
         """
         if fill_value is None:
@@ -3071,19 +3080,21 @@ masked_%(name)s(data = %(data)s,
     def sort(self, axis=-1, kind='quicksort', order=None,
              endwith=True, fill_value=None):
         """
-    Sort along the given axis.
+    Return a sorted copy of an array.
 
     Parameters
     ----------
-    axis : {int}, optional
-        Axis to be indirectly sorted.
-    kind : {'quicksort', 'mergesort', or 'heapsort'}, optional
-        Sorting algorithm (default 'quicksort')
-        Possible values: 'quicksort', 'mergesort', or 'heapsort'.
-    order : {None, var}
-        If a has fields defined, then the order keyword can be the field name
-        to sort on or a list (or tuple) of field names to indicate  the order
-        that fields should be used to define the sort.
+    a : array_like
+        Array to be sorted.
+    axis : int or None, optional
+        Axis along which to sort. If None, the array is flattened before
+        sorting. The default is -1, which sorts along the last axis.
+    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        Sorting algorithm. Default is 'quicksort'.
+    order : list, optional
+        When `a` is a structured array, this argument specifies which fields
+        to compare first, second, and so on.  This list does not need to
+        include all of the fields.
     endwith : {True, False}, optional
         Whether missing values (if any) should be forced in the upper indices
         (at the end of the array) (True) or lower indices (at the beginning).
@@ -3093,29 +3104,67 @@ masked_%(name)s(data = %(data)s,
 
     Returns
     -------
-    - When used as method, returns None.
-    - When used as a function, returns an array.
+    sorted_array : ndarray
+        Array of the same type and shape as `a`.
+
+    See Also
+    --------
+    ndarray.sort : Method to sort an array in-place.
+    argsort : Indirect sort.
+    lexsort : Indirect stable sort on multiple keys.
+    searchsorted : Find elements in a sorted array.
 
     Notes
     -----
-    This method sorts 'a' in place along the given axis using
-    the algorithm specified by the kind keyword.
+    The various sorting algorithms are characterized by their average speed,
+    worst case performance, work space size, and whether they are stable. A
+    stable sort keeps items with the same key in the same relative
+    order. The three available algorithms have the following
+    properties:
 
-    The various sorts may characterized by average speed,
-    worst case performance need for work space, and whether
-    they are stable.  A stable sort keeps items with the same
-    key in the same relative order and is most useful when
-    used w/ argsort where the key might differ from the items
-    being sorted.  The three available algorithms have the
-    following properties:
+    =========== ======= ============= ============ =======
+       kind      speed   worst case    work space  stable
+    =========== ======= ============= ============ =======
+    'quicksort'    1     O(n^2)            0          no
+    'mergesort'    2     O(n*log(n))      ~n/2        yes
+    'heapsort'     3     O(n*log(n))       0          no
+    =========== ======= ============= ============ =======
 
-    |------------------------------------------------------|
-    |    kind   | speed |  worst case | work space | stable|
-    |------------------------------------------------------|
-    |'quicksort'|   1   | O(n^2)      |     0      |   no  |
-    |'mergesort'|   2   | O(n*log(n)) |    ~n/2    |   yes |
-    |'heapsort' |   3   | O(n*log(n)) |     0      |   no  |
-    |------------------------------------------------------|
+    All the sort algorithms make temporary copies of the data when
+    sorting along any but the last axis.  Consequently, sorting along
+    the last axis is faster and uses less space than sorting along
+    any other axis.
+
+    Examples
+    --------
+    >>> a = np.array([[1,4],[3,1]])
+    >>> np.sort(a)                # sort along the last axis
+    array([[1, 4],
+           [1, 3]])
+    >>> np.sort(a, axis=None)     # sort the flattened array
+    array([1, 1, 3, 4])
+    >>> np.sort(a, axis=0)        # sort along the first axis
+    array([[1, 1],
+           [3, 4]])
+
+    Use the `order` keyword to specify a field to use when sorting a
+    structured array:
+
+    >>> dtype = [('name', 'S10'), ('height', float), ('age', int)]
+    >>> values = [('Arthur', 1.8, 41), ('Lancelot', 1.9, 38),
+    ...           ('Galahad', 1.7, 38)]
+    >>> a = np.array(values, dtype=dtype)       # create a structured array
+    >>> np.sort(a, order='height')                        # doctest: +SKIP
+    array([('Galahad', 1.7, 38), ('Arthur', 1.8, 41),
+           ('Lancelot', 1.8999999999999999, 38)],
+          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
+
+    Sort by age, then height if ages are equal:
+
+    >>> np.sort(a, order=['age', 'height'])               # doctest: +SKIP
+    array([('Galahad', 1.7, 38), ('Lancelot', 1.8999999999999999, 38),
+           ('Arthur', 1.8, 41)],
+          dtype=[('name', '|S10'), ('height', '<f8'), ('age', '<i4')])
 
         """
         if self._mask is nomask:
@@ -3643,12 +3692,16 @@ class _frommethod:
     def __init__(self, methodname):
         self.__name__ = methodname
         self.__doc__ = self.getdoc()
+    #
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
-        try:
-            return getattr(MaskedArray, self.__name__).__doc__
-        except:
-            return getattr(np, self.__name__).__doc__
+        meth = getattr(MaskedArray, self.__name__, None) or\
+               getattr(np, self.__name__, None)
+        signature = self.__name__ + get_object_signature(meth)
+        if meth is not None:
+            doc = """    %s\n%s""" % (signature, getattr(meth, '__doc__', None))
+            return doc
+    #
     def __call__(self, a, *args, **params):
         if isinstance(a, MaskedArray):
             return getattr(a, self.__name__).__call__(*args, **params)
@@ -3668,7 +3721,6 @@ all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
 any = _frommethod('any')
 compress = _frommethod('compress')
-conjugate = _frommethod('conjugate')
 cumprod = _frommethod('cumprod')
 cumsum = _frommethod('cumsum')
 copy = _frommethod('copy')
@@ -3681,10 +3733,8 @@ minimum = _minimum_operation ()
 nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
 product = _frommethod('prod')
-ptp = _frommethod('ptp')
 ravel = _frommethod('ravel')
 repeat = _frommethod('repeat')
-round = _frommethod('round')
 shrink_mask = _frommethod('shrink_mask')
 soften_mask = _frommethod('soften_mask')
 std = _frommethod('std')
@@ -4136,7 +4186,8 @@ def choose (indices, choices, out=None, mode='raise'):
 
 
 def round_(a, decimals=0, out=None):
-    """Return a copy of a, rounded to 'decimals' places.
+    """
+    Return a copy of a, rounded to 'decimals' places.
 
     When 'decimals' is negative, it specifies the number of positions
     to the left of the decimal point.  The real and imaginary parts of
@@ -4165,7 +4216,7 @@ def round_(a, decimals=0, out=None):
         if hasattr(out, '_mask'):
             out._mask = getmask(a)
         return out
-
+round = round_
 
 def inner(a, b):
     fa = filled(a, 0)
@@ -4383,9 +4434,18 @@ class _convert2ma:
     def __init__(self, funcname):
         self._func = getattr(np, funcname)
         self.__doc__ = self.getdoc()
+    #
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
-        return self._func.__doc__
+        doc = getattr(self._func, '__doc__', None)
+        sig = get_object_signature(self._func)
+        if doc:
+            # Add the signature of the function at the beginning of the doc
+            if sig:
+                sig = "%s%s\n" % (self._func.__name__, sig)
+            doc = sig + doc
+        return doc
+    #
     def __call__(self, a, *args, **params):
         return self._func.__call__(a, *args, **params).view(MaskedArray)
 
