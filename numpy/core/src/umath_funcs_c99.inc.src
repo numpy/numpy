@@ -181,7 +181,12 @@ double asinh(double xx);
 static double
 npy_atanh(double x)
 {
-    return 0.5*log1p(2.0*x/(1.0-x));
+    if (x > 0) {
+        return -0.5*log1p(-2.0*x/(1.0 + x));
+    }
+    else {
+        return 0.5*log1p(2.0*x/(1.0 - x));
+    }
 }
 #define atanh npy_atanh
 #else
