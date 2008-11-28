@@ -330,12 +330,12 @@ defdict = {
           ),
 'logaddexp' :
     Ufunc(2, 1, None,
-          "",
+          docstrings.get('numpy.core.umath.logaddexp'),
           TD(flts, f="logaddexp")
           ),
 'logaddexp2' :
     Ufunc(2, 1, None,
-          "",
+          docstrings.get('numpy.core.umath.logaddexp2'),
           TD(flts, f="logaddexp2")
           ),
 'bitwise_and' :
@@ -381,7 +381,7 @@ defdict = {
           ),
 'rad2deg' :
     Ufunc(1, 1, None,
-          '',
+          docstrings.get('numpy.core.umath.rad2deg'),
           TD(fltsM, f='rad2deg'),
           ),
 'radians' :
@@ -391,7 +391,7 @@ defdict = {
           ),
 'deg2rad' :
     Ufunc(1, 1, None,
-          '',
+          docstrings.get('numpy.core.umath.deg2rad'),
           TD(fltsM, f='deg2rad'),
           ),
 'arccos' :
@@ -474,7 +474,7 @@ defdict = {
           ),
 'exp2' :
     Ufunc(1, 1, None,
-          '',
+          docstrings.get('numpy.core.umath.exp2'),
           TD(flts, f='exp2'),
           TD(M, f='exp2'),
           ),
@@ -492,7 +492,7 @@ defdict = {
           ),
 'log2' :
     Ufunc(1, 1, None,
-          '',
+          docstrings.get('numpy.core.umath.log2'),
           TD(flts, f='log2'),
           TD(M, f='log2'),
           ),
@@ -522,7 +522,7 @@ defdict = {
           ),
 'trunc' :
     Ufunc(1, 1, None,
-          '',
+          docstrings.get('numpy.core.umath.trunc'),
           TD(flts, f='trunc'),
           TD(M, f='trunc'),
           ),

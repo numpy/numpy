@@ -77,20 +77,20 @@ is true:
    with a dimension of length 1 to satisfy property 2.
 
 .. admonition:: Example
- 
+
    If ``a.shape`` is (5,1), ``b.shape`` is (1,6), ``c.shape`` is (6,)
    and d.shape is ``()`` so that d is a scalar, then *a*, *b*, *c*,
    and *d* are all broadcastable to dimension (5,6); and
-   
+
    - *a* acts like a (5,6) array where ``a[:,0]`` is broadcast to the other
      columns,
-   
+
    - *b* acts like a (5,6) array where ``b[0,:]`` is broadcast
      to the other rows,
-        
+
    - *c* acts like a (1,6) array and therefore like a (5,6) array
      where ``c[:]` is broadcast to every row, and finally,
-   
+
    - *d* acts like a (5,6) array where the single value is repeated.
 
 
@@ -205,8 +205,8 @@ table for your system with code shown in that Figure.
 
 .. admonition:: Figure
 
-    Code segment showing the can cast safely table for a 32-bit system. 
-    
+    Code segment showing the can cast safely table for a 32-bit system.
+
     >>> def print_table(ntypes):
     ...     print 'X',
     ...     for char in ntypes: print char,
@@ -245,7 +245,7 @@ table for your system with code shown in that Figure.
 You should note that, while included in the table for completeness,
 the 'S', 'U', and 'V' types cannot be operated on by ufuncs. Also,
 note that on a 64-bit system the integer types may have different
-sizes resulting in a slightly altered table. 
+sizes resulting in a slightly altered table.
 
 Mixed scalar-array operations use a different set of casting rules
 that ensure that a scalar cannot upcast an array unless the scalar is
@@ -264,7 +264,7 @@ Optional keyword arguments
 --------------------------
 
 All ufuncs take optional keyword arguments. These represent rather
-advanced usage and will likely not be used by most users. 
+advanced usage and will likely not be used by most users.
 
 .. index::
    pair: ufunc; keyword arguments
@@ -296,7 +296,7 @@ Attributes
 ----------
 
 There are some informational attributes that universal functions
-possess. None of the attributes can be set. 
+possess. None of the attributes can be set.
 
 .. index::
    pair: ufunc; attributes
@@ -316,7 +316,7 @@ possess. None of the attributes can be set.
 
    ufunc.nin
    ufunc.nout
-   ufunc.nargs 
+   ufunc.nargs
    ufunc.ntypes
    ufunc.types
    ufunc.identity
@@ -386,7 +386,7 @@ return a set of scalar outputs.
 .. note::
 
     The ufunc still returns its output(s) even if you use the optional
-    output argument(s). 
+    output argument(s).
 
 Math operations
 ---------------
@@ -398,6 +398,7 @@ Math operations
     multiply
     divide
     logaddexp
+    logaddexp2
     true_divide
     floor_divide
     negative
@@ -410,10 +411,12 @@ Math operations
     sign
     conj
     exp
+    exp2
     log
+    log2
+    log10
     expm1
     log1p
-    log10
     sqrt
     square
     reciprocal
@@ -433,7 +436,7 @@ Math operations
 Trigonometric functions
 -----------------------
 All trigonometric functions use radians when an angle is called for.
-The ratio of degrees to radians is :math:`180^{\circ}/\pi.` 
+The ratio of degrees to radians is :math:`180^{\circ}/\pi.`
 
 .. autosummary::
 
@@ -458,7 +461,7 @@ Bit-twiddling functions
 -----------------------
 
 These function all need integer arguments and they maniuplate the bit-
-pattern of those arguments. 
+pattern of those arguments.
 
 .. autosummary::
 
@@ -501,7 +504,7 @@ Comparison functions
     element-by-element array comparisons. Be sure to understand the
     operator precedence: (a>2) & (a<5) is the proper syntax because a>2 &
     a<5 will result in an error due to the fact that 2 & a is evaluated
-    first. 
+    first.
 
 .. autosummary::
 
@@ -514,7 +517,7 @@ Comparison functions
     method of the maximum ufunc is much faster. Also, the max() method
     will not give answers you might expect for arrays with greater than
     one dimension. The reduce method of minimum also allows you to compute
-    a total minimum over an array. 
+    a total minimum over an array.
 
 .. autosummary::
 
@@ -528,7 +531,7 @@ Comparison functions
     two arrays is larger. In contrast, max(a,b) treats the objects a and b
     as a whole, looks at the (total) truth value of a>b and uses it to
     return either a or b (as a whole). A similar difference exists between
-    minimum(a,b) and min(a,b). 
+    minimum(a,b) and min(a,b).
 
 
 Floating functions
@@ -536,7 +539,7 @@ Floating functions
 
 Recall that all of these functions work element-by-element over an
 array, returning an array output. The description details only a
-single operation. 
+single operation.
 
 .. autosummary::
 

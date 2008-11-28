@@ -691,8 +691,9 @@ add_newdoc('numpy.core.umath', 'trunc',
     """
     Return the truncated value of the input, element-wise.
 
-    The truncated value of the scalar `x` is the nearest integer `i`, such
-    that i is not larger than x amplitude
+    The truncated value of the scalar `x` is the nearest integer `i` which
+    is closer to zero than `x` is. In short, the fractional part of the
+    signed number `x` is discarded.
 
     Parameters
     ----------
@@ -789,7 +790,9 @@ add_newdoc('numpy.core.umath', 'cosh',
 
 add_newdoc('numpy.core.umath', 'degrees',
     """
-    Convert angles from radians to degrees.
+    Convert angles from radians to degrees. This is the same
+    function as rad2deg but the latter is preferred because of
+    the more descriptive name.
 
     Parameters
     ----------
@@ -804,6 +807,8 @@ add_newdoc('numpy.core.umath', 'degrees',
 
     See Also
     --------
+    rad2deg : Convert angles from radians to degrees.
+    deg2rad : Convert angles from degrees to radians.
     radians : Convert angles from degrees to radians.
     unwrap : Remove large jumps in angle by wrapping.
 
@@ -814,6 +819,41 @@ add_newdoc('numpy.core.umath', 'degrees',
     Examples
     --------
     >>> np.degrees(np.pi/2)
+    90.0
+
+    """)
+
+add_newdoc('numpy.core.umath', 'rad2deg',
+    """
+    Convert angles from radians to degrees. This is the same
+    function as degrees but is preferred because its more
+    descriptive name.
+
+    Parameters
+    ----------
+    x : array_like
+      Angle in radians.
+
+    Returns
+    -------
+    y : ndarray
+      The corresponding angle in degrees.
+
+
+    See Also
+    --------
+    degrees : Convert angles from radians to degrees.
+    deg2rad : Convert angles from degrees to radians.
+    radians : Convert angles from degrees to radians.
+    unwrap : Remove large jumps in angle by wrapping.
+
+    Notes
+    -----
+    rad2deg(x) is ``180 * x / pi``.
+
+    Examples
+    --------
+    >>> np.rad2deg(np.pi/2)
     90.0
 
     """)
@@ -959,6 +999,22 @@ add_newdoc('numpy.core.umath', 'exp',
     ...            extent=[-2*np.pi, 2*np.pi, -2*np.pi, 2*np.pi])
     >>> plt.title('Phase (angle) of exp(x)')
     >>> plt.show()
+
+    """)
+
+add_newdoc('numpy.core.umath', 'exp2',
+    """
+    Calculate `2**p` for all `p` in the input array.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+
+    Returns
+    -------
+    out : ndarray
+        Element-wise 2 to the power `x`.
 
     """)
 
@@ -1661,6 +1717,82 @@ add_newdoc('numpy.core.umath', 'log10',
 
     """)
 
+add_newdoc('numpy.core.umath', 'log2',
+    """
+    Base-2 logarithm of `x`.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+
+    Returns
+    -------
+    y : ndarray
+        Base-2 logarithm of `x`.
+
+    See Also
+    --------
+    log, log10, log1p
+
+    """)
+
+add_newdoc('numpy.core.umath', 'logaddexp',
+    """
+    Logarithm of `exp(x) + exp(y)`.
+
+    This function is useful in statistics where the calculated probabilities of
+    events may be so small as to excede the range of normal floating point
+    numbers.  In such cases the logarithm of the calculated probability is
+    stored. This function allows adding probabilities stored in such a fashion.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+    y : array_like
+        Input values.
+
+
+    Returns
+    -------
+    result : ndarray
+        Logarithm of `exp(x) + exp(y)`.
+
+    See Also
+    --------
+    logaddexp2
+
+    """)
+
+add_newdoc('numpy.core.umath', 'logaddexp2',
+    """
+    Base-2 Logarithm of `2**x + 2**y`.
+
+    This function is useful in machine learning when the calculated probabilities of
+    events may be so small as to excede the range of normal floating point
+    numbers.  In such cases the base-2 logarithm of the calculated probability
+    can be used instead. This function allows adding probabilities stored in such a fashion.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+    y : array_like
+        Input values.
+
+
+    Returns
+    -------
+    result : ndarray
+        Base-2 logarithm of `2**x + 2**y`.
+
+    See Also
+    --------
+    logaddexp
+
+    """)
+
 add_newdoc('numpy.core.umath', 'log1p',
     """
     `log(1 + x)` in base `e`, elementwise.
@@ -1921,6 +2053,16 @@ add_newdoc('numpy.core.umath', 'minimum',
 
     """)
 
+add_newdoc('numpy.core.umath', 'fmax',
+    """
+
+    """)
+
+add_newdoc('numpy.core.umath', 'fmin',
+    """
+
+    """)
+
 add_newdoc('numpy.core.umath', 'modf',
     """
     Return the fractional and integral part of a number.
@@ -2102,7 +2244,8 @@ add_newdoc('numpy.core.umath', 'power',
 
 add_newdoc('numpy.core.umath', 'radians',
     """
-    Convert angles from degrees to radians.
+    Convert angles from degrees to radians. This function is
+    the same as deg2rad, which is more descriptive..
 
     Parameters
     ----------
@@ -2116,6 +2259,8 @@ add_newdoc('numpy.core.umath', 'radians',
 
     See Also
     --------
+    deg2rad : Convert angles from degrees to radians.
+    rad2deg : Convert angles from radians to degrees.
     degrees : Convert angles from radians to degrees.
     unwrap : Remove large jumps in angle by wrapping.
 
@@ -2126,6 +2271,39 @@ add_newdoc('numpy.core.umath', 'radians',
     Examples
     --------
     >>> np.radians(180)
+    3.1415926535897931
+
+    """)
+
+add_newdoc('numpy.core.umath', 'deg2rad',
+    """
+    Convert angles from degrees to radians. This is the same
+    function as radians, but deg2rad is a more descriptive name.
+
+    Parameters
+    ----------
+    x : array_like
+      Angles in degrees.
+
+    Returns
+    -------
+    y : ndarray
+      The corresponding angle in radians.
+
+    See Also
+    --------
+    radians : Convert angles from degrees to radians.
+    rad2deg : Convert angles from radians to degrees.
+    degrees : Convert angles from radians to degrees.
+    unwrap : Remove large jumps in angle by wrapping.
+
+    Notes
+    -----
+    ``deg2rad(x)`` is ``x * pi / 180``.
+
+    Examples
+    --------
+    >>> np.deg2rad(180)
     3.1415926535897931
 
     """)
