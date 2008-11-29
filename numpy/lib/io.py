@@ -348,7 +348,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
             fh = gzip.open(fname)
         else:
             fh = file(fname)
-    elif hasattr(fname, 'seek'):
+    elif hasattr(fname, 'readline'):
         fh = fname
     else:
         raise ValueError('fname must be a string or file handle')
