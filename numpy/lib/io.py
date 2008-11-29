@@ -79,7 +79,7 @@ class NpzFile(object):
         else:
             raise KeyError, "%s is not a file in the archive" % key
 
-def load(file, memmap=False):
+def load(file, mmap_mode=None):
     """
     Load a pickled, ``.npy``, or ``.npz`` binary file.
 
@@ -87,10 +87,15 @@ def load(file, memmap=False):
     ----------
     file : file-like object or string
         The file to read.  It must support ``seek()`` and ``read()`` methods.
-    memmap : bool
-        If True, then memory-map the ``.npy`` file (or unzip the ``.npz`` file
-        into a temporary directory and memory-map each component).  This has
-        no effect for a pickled file.
+    mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
+        If not None, then memory-map the file, using the given mode
+        (see `numpy.memmap`).  The mode has no effect for pickled or
+        zipped files.
+        A memory-mapped array is stored on disk, and not directly loaded
+        into memory.  However, it can be accessed and sliced like any
+        ndarray.  Memory mapping is especially useful for accessing
+        small fragments of large files without reading the entire file
+        into memory.
 
     Returns
     -------
@@ -104,27 +109,34 @@ def load(file, memmap=False):
 
     Notes
     -----
-    - If file contains pickle data, then whatever is stored in the
+    - If the file contains pickle data, then whatever is stored in the
       pickle is returned.
     - If the file is a ``.npy`` file, then an array is returned.
     - If the file is a ``.npz`` file, then a dictionary-like object is
-      returned, containing {filename: array} key-value pairs, one for
-      every file in the archive.
+      returned, containing ``{filename: array}`` key-value pairs, one for
+      each file in the archive.
 
     Examples
     --------
-    >>> np.save('/tmp/123', np.array([1, 2, 3])
+    Store data to disk, and load it again:
+
+    >>> np.save('/tmp/123', np.array([[1, 2, 3], [4, 5, 6]]))
     >>> np.load('/tmp/123.npy')
-    array([1, 2, 3])
+    array([[1, 2, 3],
+           [4, 5, 6]])
+
+    Mem-map the stored array, and then access the second row
+    directly from disk:
+
+    >>> X = np.load('/tmp/123.npy', mmap_mode='r')
+    >>> X[1, :]
+    memmap([4, 5, 6])
 
     """
     if isinstance(file, basestring):
         fid = _file(file,"rb")
     else:
         fid = file
-
-    if memmap:
-        raise NotImplementedError
 
     # Code to distinguish from NumPy binary files and pickles.
     _ZIP_PREFIX = 'PK\x03\x04'
@@ -134,7 +146,10 @@ def load(file, memmap=False):
     if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
         return NpzFile(fid)
     elif magic == format.MAGIC_PREFIX: # .npy file
-        return format.read_array(fid)
+        if mmap_mode:
+            return format.open_memmap(file, mode=mmap_mode)
+        else:
+            return format.read_array(fid)
     else:  # Try a pickle
         try:
             return _cload(fid)
