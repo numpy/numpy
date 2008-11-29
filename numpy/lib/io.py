@@ -279,8 +279,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     Parameters
     ----------
     fname : file or string
-        File or filename to read.  If the filename extension is ``.gz``,
-        the file is first decompressed.
+        File or filename to read.  If the filename extension is ``.gz`` or
+        ``.bz2``, the file is first decompressed.
     dtype : data-type
         Data type of the resulting array.  If this is a record data-type,
         the resulting array will be 1-dimensional, and each row will be
@@ -346,6 +346,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         if fname.endswith('.gz'):
             import gzip
             fh = gzip.open(fname)
+        elif fname.endswith('.bz2'):
+            import bz2
+            fh = bz2.BZ2File(fname)
         else:
             fh = file(fname)
     elif hasattr(fname, 'readline'):
