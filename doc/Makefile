@@ -37,14 +37,11 @@ dist: html
 	cd build/dist && tar czf ../dist.tar.gz *
 
 generate: build/generate-stamp
-build/generate-stamp: $(wildcard source/reference/*.rst) ext
+build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
-	./ext/autosummary_generate.py source/reference/*.rst \
+	./sphinxext/autosummary_generate.py source/reference/*.rst \
 		-p dump.xml -o source/reference/generated 
 	touch build/generate-stamp
-
-ext:
-	svn co http://sphinx.googlecode.com/svn/contrib/trunk/numpyext ext
 
 html: generate
 	mkdir -p build/html build/doctrees
