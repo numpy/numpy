@@ -1,7 +1,7 @@
 import re, textwrap
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
-import docstrings
+import ufunc_docstrings as docstrings
 sys.path.pop(0)
 
 Zero = "PyUFunc_Zero"
