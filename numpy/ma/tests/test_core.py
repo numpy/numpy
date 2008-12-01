@@ -2414,6 +2414,24 @@ class TestMaskedArrayFunctions(TestCase):
             pass
 
 
+    def test_flatten_mask(self):
+        "Tests flatten mask"
+        # Standarad dtype
+        mask = np.array([0, 0, 1], dtype=np.bool)
+        assert_equal(flatten_mask(mask), mask)
+        # Flexible dtype
+        mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])
+        test = flatten_mask(mask)
+        control = np.array([0, 0, 0, 1], dtype=bool)
+        assert_equal(test, control)
+        
+        mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
+        data = [(0, (0, 0)), (0, (0, 1))]
+        mask = np.array(data, dtype=mdtype)
+        test = flatten_mask(mask)
+        control = np.array([ 0, 0, 0, 0, 0, 1], dtype=bool)
+        assert_equal(test, control)
+
 #------------------------------------------------------------------------------
 
 class TestMaskedFields(TestCase):
