@@ -2339,6 +2339,16 @@ class TestMaskedArrayFunctions(TestCase):
         ntype = np.float
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype(np.bool))
+        #
+        ntype = [('a', np.float), ('b', [('ba', np.float), ('bb', np.float)])]
+        test = make_mask_descr(ntype)
+        control = np.dtype([('a', 'b1'), ('b', [('ba', 'b1'), ('bb', 'b1')])])
+        assert_equal(test, control)
+        #
+        ntype = [('a', (np.float, 2))]
+        test = make_mask_descr(ntype)
+        assert_equal(test, np.dtype([('a', (np.bool, 2))]))
+
 
 
     def test_make_mask(self):

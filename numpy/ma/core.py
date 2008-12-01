@@ -798,22 +798,27 @@ def make_mask_descr(ndtype):
     Each field is set to a bool.
 
     """
+    def _make_descr(datatype):
+        "Private function allowing recursion."
+        # Do we have some name fields ?
+        names = datatype.names
+        if names:
+            descr = []
+            for name in names:
+                (ndtype, _) = datatype.fields[name]
+                descr.append((name, _make_descr(ndtype)))
+            return descr
+        # Is this some kind of composite a la (np.float,2)
+        elif datatype.subdtype:
+            mdescr = list(datatype.subdtype)
+            mdescr[0] = np.dtype(bool)
+            return tuple(mdescr)
+        else:
+            return np.bool
     # Make sure we do have a dtype
     if not isinstance(ndtype, np.dtype):
         ndtype = np.dtype(ndtype)
-    # Do we have some name fields ?
-    if ndtype.names:
-        mdescr = [list(_) for _ in ndtype.descr]
-        for m in mdescr:
-            m[1] = '|b1'
-        return np.dtype([tuple(_) for _ in mdescr])
-    # Is this some kind of composite a la (np.float,2)
-    elif ndtype.subdtype:
-        mdescr = list(ndtype.subdtype)
-        mdescr[0] = np.dtype(bool)
-        return np.dtype(tuple(mdescr))
-    else:
-        return MaskType
+    return np.dtype(_make_descr(ndtype))
 
 def get_mask(a):
     """Return the mask of a, if any, or nomask.
