@@ -800,12 +800,19 @@ def make_mask_descr(ndtype):
     """
     def _make_descr(datatype):
         "Private function allowing recursion."
+        datatype = np.dtype(datatype)
         # Do we have some name fields ?
-        names = datatype.names
-        if names:
+        if datatype.names:
             descr = []
-            for name in names:
-                (ndtype, _) = datatype.fields[name]
+            # !!!: If one of the fieldnames is a tuple, only its last element
+            # !!!: is listed in datatype.names: we need to take datatype.descr.
+            for name in (_[0] for _ in datatype.descr):
+                # Take the last element of the tuple as key for datatype.fields
+                if isinstance(name, tuple):
+                    # datatype.fields[name] is a tuple of 2 or 3 element...
+                    ndtype = datatype.fields[name[-1]][0]
+                else:
+                    ndtype = datatype.fields[name][0]
                 descr.append((name, _make_descr(ndtype)))
             return descr
         # Is this some kind of composite a la (np.float,2)

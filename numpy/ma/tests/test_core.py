@@ -2328,27 +2328,31 @@ class TestMaskedArrayFunctions(TestCase):
 
     def test_make_mask_descr(self):
         "Test make_mask_descr"
+        # Flexible
         ntype = [('a',np.float), ('b',np.float)]
         test = make_mask_descr(ntype)
         assert_equal(test, [('a',np.bool),('b',np.bool)])
-        #
+        # Standard w/ shape
         ntype = (np.float, 2)
         test = make_mask_descr(ntype)
         assert_equal(test, (np.bool,2))
-        #
+        # Standard standard
         ntype = np.float
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype(np.bool))
-        #
+        # Nested
         ntype = [('a', np.float), ('b', [('ba', np.float), ('bb', np.float)])]
         test = make_mask_descr(ntype)
         control = np.dtype([('a', 'b1'), ('b', [('ba', 'b1'), ('bb', 'b1')])])
         assert_equal(test, control)
-        #
+        # Named+ shape
         ntype = [('a', (np.float, 2))]
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype([('a', (np.bool, 2))]))
-
+        # 2 names
+        ntype = [(('A', 'a'), float)]
+        test = make_mask_descr(ntype)
+        assert_equal(test, np.dtype([(('A', 'a'), bool)]))
 
 
     def test_make_mask(self):
