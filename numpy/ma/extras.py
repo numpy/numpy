@@ -32,8 +32,8 @@ import warnings
 
 import core as ma
 from core import MaskedArray, MAError, add, array, asarray, concatenate, count,\
-    filled, getmask, getmaskarray, masked, masked_array, mask_or, nomask, ones,\
-    sort, zeros
+    filled, getmask, getmaskarray, make_mask_descr, masked, masked_array,\
+    mask_or, nomask, ones, sort, zeros
 #from core import *
 
 import numpy as np
@@ -77,7 +77,7 @@ def masked_all(shape, dtype=float):
 
     """
     a = masked_array(np.empty(shape, dtype),
-                     mask=np.ones(shape, bool))
+                     mask=np.ones(shape, make_mask_descr(dtype)))
     return a
 
 def masked_all_like(arr):
@@ -85,8 +85,8 @@ def masked_all_like(arr):
     the array `a`, where all the data are masked.
 
     """
-    a = masked_array(np.empty_like(arr),
-                     mask=np.ones(arr.shape, bool))
+    a = np.empty_like(arr).view(MaskedArray)
+    a._mask = np.ones(a.shape, dtype=make_mask_descr(a.dtype))
     return a
 
 

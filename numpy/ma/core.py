@@ -1488,8 +1488,16 @@ class MaskedArray(ndarray):
                     _data._sharedmask = not copy
                 else:
                     if names_:
-                        for n in names_:
-                            _data._mask[n] |= mask[n]
+                        def _recursive_or(a, b):
+                            "do a|=b on each field of a, recursively"
+                            for name in a.dtype.names:
+                                (af, bf) = (a[name], b[name])
+                                if af.dtype.names:
+                                    _recursive_or(af, bf)
+                                else:
+                                    af |= bf
+                            return
+                        _recursive_or(_data._mask, mask)
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
                     _data._sharedmask = False

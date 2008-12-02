@@ -17,6 +17,62 @@ from numpy.ma.testutils import *
 from numpy.ma.core import *
 from numpy.ma.extras import *
 
+
+class TestGeneric(TestCase):
+    #
+    def test_masked_all(self):
+        "Tests masked_all"
+        # Standard dtype 
+        test = masked_all((2,), dtype=float)
+        control = array([1, 1], mask=[1, 1], dtype=float)
+        assert_equal(test, control)
+        # Flexible dtype
+        dt = np.dtype({'names': ['a', 'b'], 'formats': ['f', 'f']})
+        test = masked_all((2,), dtype=dt)
+        control = array([(0, 0), (0, 0)], mask=[(1, 1), (1, 1)], dtype=dt)
+        assert_equal(test, control)
+        test = masked_all((2,2), dtype=dt)
+        control = array([[(0, 0), (0, 0)], [(0, 0), (0, 0)]],
+                        mask=[[(1, 1), (1, 1)], [(1, 1), (1, 1)]],
+                        dtype=dt)
+        assert_equal(test, control)
+        # Nested dtype
+        dt = np.dtype([('a','f'), ('b', [('ba', 'f'), ('bb', 'f')])])
+        test = masked_all((2,), dtype=dt)
+        control = array([(1, (1, 1)), (1, (1, 1))],
+                         mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
+        assert_equal(test, control)
+        test = masked_all((2,), dtype=dt)
+        control = array([(1, (1, 1)), (1, (1, 1))],
+                         mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
+        assert_equal(test, control)
+        test = masked_all((1,1), dtype=dt)
+        control = array([[(1, (1, 1))]], mask=[[(1, (1, 1))]], dtype=dt)
+        assert_equal(test, control)
+
+
+    def test_masked_all_like(self):
+        "Tests masked_all"
+        # Standard dtype 
+        base = array([1, 2], dtype=float)
+        test = masked_all_like(base)
+        control = array([1, 1], mask=[1, 1], dtype=float)
+        assert_equal(test, control)
+        # Flexible dtype
+        dt = np.dtype({'names': ['a', 'b'], 'formats': ['f', 'f']})
+        base = array([(0, 0), (0, 0)], mask=[(1, 1), (1, 1)], dtype=dt)
+        test = masked_all_like(base)
+        control = array([(10, 10), (10, 10)], mask=[(1, 1), (1, 1)], dtype=dt)
+        assert_equal(test, control)
+        # Nested dtype
+        dt = np.dtype([('a','f'), ('b', [('ba', 'f'), ('bb', 'f')])])
+        control = array([(1, (1, 1)), (1, (1, 1))],
+                        mask=[(1, (1, 1)), (1, (1, 1))], dtype=dt)
+        test = masked_all_like(control)
+        assert_equal(test, control)
+        #
+
+
 class TestAverage(TestCase):
     "Several tests of average. Why so many ? Good point..."
     def test_testAverage1(self):
