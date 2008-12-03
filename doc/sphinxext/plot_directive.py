@@ -81,7 +81,7 @@ def setup(app):
     app.add_config_value('plot_rcparams', sane_rcparameters, True)
     app.add_config_value('plot_include_source', False, True)
 
-    app.add_directive('plot', plot_directive, True, (1, 0, False),
+    app.add_directive('plot', plot_directive, True, (0, 1, False),
                       **plot_directive_options)
 
 sane_rcparameters = {
