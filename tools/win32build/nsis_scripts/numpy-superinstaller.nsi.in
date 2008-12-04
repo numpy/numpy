@@ -6,6 +6,11 @@
 ;SetCompress off ; Useful to disable compression under development
 SetCompressor /Solid LZMA ; Useful to disable compression under development
 
+; Include FileFunc for command line parsing options
+!include "FileFunc.nsh"
+!insertmacro GetParameters
+!insertmacro GetOptions
+
 ;--------------------------------
 ;General
 
@@ -46,6 +51,34 @@ InstallDir "$TEMP"
 Var HasSSE2
 Var HasSSE3
 Var CPUSSE
+Var option_arch
+
+Function .onInit
+        ; Get parameters
+        var /GLOBAL cmdLineParams
+        Push $R0
+
+        ${GetParameters} $cmdLineParams
+
+        ; XXX; How to get a console output help ? GUI seems useless when using
+        ; command line help...
+        ; ; /? param (help)
+        ; ClearErrors
+        ; ${GetOptions} $cmdLineParams '/?' $R0
+        ; IfErrors +3 0
+        ; MessageBox MB_OK "list all command line options here!"
+        ; Abort
+
+        Pop $R0
+
+        ; Initialise options
+        StrCpy $option_arch 'native'
+
+        ; Parse Parameters
+        Push $R0
+        Call parseParameters
+        Pop $R0
+FunctionEnd
 
 Section "Core" SecCore
 
@@ -89,6 +122,28 @@ Section "Core" SecCore
 
         ClearErrors
 
+        ${Switch} $option_arch
+                ${Case} "native"
+                DetailPrint '"native install (arch value: $option_arch)"'
+                ${Break}
+                ${Case} "nosse"
+                DetailPrint '"nosse install (arch value: $option_arch)"'
+                StrCpy $CPUSSE "0"
+                ${Break}
+                ${Case} "sse2"
+                DetailPrint '"sse2 install (arch value: $option_arch)"'
+                StrCpy $CPUSSE "2"
+                ${Break}
+                ${Case} "sse3"
+                DetailPrint '"sse3 install (arch value: $option_arch)"'
+                StrCpy $CPUSSE "3"
+                ${Break}
+                ${Default}
+                MessageBox MB_OK "option /arch $option_arch not understood: only native, nosse, sse2 and sse3 are valid."
+                Abort
+                ${Break}
+        ${EndSwitch}
+
         ; Install files conditionaly on detected cpu
         ${Switch} $CPUSSE
                 ${Case} "3"
@@ -119,3 +174,10 @@ Section "Core" SecCore
         done:
 
 SectionEnd
+
+Function parseParameters
+    ; /arch option
+    ${GetOptions} $cmdLineParams '/arch' $R0
+    IfErrors +2 0
+    StrCpy $option_arch $R0
+FunctionEnd
