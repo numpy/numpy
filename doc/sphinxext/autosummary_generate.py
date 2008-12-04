@@ -14,7 +14,7 @@ Example Makefile rule::
             ./ext/autosummary_generate.py -o source/generated source/*.rst
 
 """
-import glob, re, inspect, os, optparse
+import glob, re, inspect, os, optparse, pydoc
 from autosummary import import_by_name
 
 try:
@@ -104,6 +104,36 @@ def format_classmember(name, directive):
 def get_documented(filenames):
     """
     Find out what items are documented in source/*.rst
+    See `get_documented_in_lines`.
+
+    """
+    documented = {}
+    for filename in filenames:
+        f = open(filename, 'r')
+        lines = f.read().splitlines()
+        documented.update(get_documented_in_lines(lines, filename=filename))
+        f.close()
+    return documented
+
+def get_documented_in_docstring(name, module=None, filename=None):
+    """
+    Find out what items are documented in the given object's docstring.
+    See `get_documented_in_lines`.
+    
+    """
+    try:
+        obj, real_name = import_by_name(name)
+        lines = pydoc.getdoc(obj).splitlines()
+        return get_documented_in_lines(lines, module=name, filename=filename)
+    except AttributeError:
+        pass
+    except ImportError, e:
+        print "Failed to import '%s': %s" % (name, e)
+    return {}
+
+def get_documented_in_lines(lines, module=None, filename=None):
+    """
+    Find out what items are documented in the given lines
     
     Returns
     -------
@@ -123,66 +153,66 @@ def get_documented(filenames):
     toctree_arg_re = re.compile(r'^\s+:toctree:\s*(.*?)\s*$')
     
     documented = {}
+   
+    current_title = []
+    last_line = None
+    toctree = None
+    current_module = module
+    in_autosummary = False
     
-    for filename in filenames:
-        current_title = []
-        last_line = None
-        toctree = None
-        current_module = None
-        in_autosummary = False
-
-        f = open(filename, 'r')
-        for line in f:
-            try:
-                if in_autosummary:
-                    m = toctree_arg_re.match(line)
-                    if m:
-                        toctree = m.group(1)
-                        continue
-
-                    if line.strip().startswith(':'):
-                        continue # skip options
-
-                    m = autosummary_item_re.match(line)
-                    if m:
-                        name = m.group(1).strip()
-                        if current_module and not name.startswith(current_module + '.'):
-                            name = "%s.%s" % (current_module, name)
-                        documented.setdefault(name, []).append(
-                            (filename, current_title, 'autosummary', toctree))
-                        continue
-                    if line.strip() == '':
-                        continue
-                    in_autosummary = False
-                
-                m = autosummary_re.match(line)
+    for line in lines:
+        try:
+            if in_autosummary:
+                m = toctree_arg_re.match(line)
                 if m:
-                    in_autosummary = True
+                    toctree = m.group(1)
                     continue
-                
-                m = autodoc_re.search(line)
+
+                if line.strip().startswith(':'):
+                    continue # skip options
+
+                m = autosummary_item_re.match(line)
                 if m:
-                    name = m.group(2).strip()
+                    name = m.group(1).strip()
                     if current_module and not name.startswith(current_module + '.'):
                         name = "%s.%s" % (current_module, name)
-                    if m.group(1) == "module":
-                        current_module = name
                     documented.setdefault(name, []).append(
-                        (filename, current_title, "auto" + m.group(1), None))
+                        (filename, current_title, 'autosummary', toctree))
                     continue
+                if line.strip() == '':
+                    continue
+                in_autosummary = False
 
-                m = title_underline_re.match(line)
-                if m and last_line:
-                    current_title = last_line.strip()
-                    continue
+            m = autosummary_re.match(line)
+            if m:
+                in_autosummary = True
+                continue
 
-                m = module_re.match(line)
-                if m:
-                    current_module = m.group(2)
-                    continue
-            finally:
-                last_line = line
-    
+            m = autodoc_re.search(line)
+            if m:
+                name = m.group(2).strip()
+                if m.group(1) == "module":
+                    current_module = name
+                    documented.update(get_documented_in_docstring(
+                        name, filename=filename))
+                elif current_module and not name.startswith(current_module+'.'):
+                    name = "%s.%s" % (current_module, name)
+                documented.setdefault(name, []).append(
+                    (filename, current_title, "auto" + m.group(1), None))
+                continue
+
+            m = title_underline_re.match(line)
+            if m and last_line:
+                current_title = last_line.strip()
+                continue
+
+            m = module_re.match(line)
+            if m:
+                current_module = m.group(2)
+                continue
+        finally:
+            last_line = line
+
     return documented
 
 if __name__ == "__main__":
