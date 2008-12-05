@@ -19,7 +19,7 @@ Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
 __author__ = "Pierre GF Gerard-Marchant"
 __docformat__ = "restructuredtext en"
 
-__all__ = ['MAError', 'MaskType', 'MaskedArray',
+__all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'bool_',
            'abs', 'absolute', 'add', 'all', 'allclose', 'allequal', 'alltrue',
            'amax', 'amin', 'anom', 'anomalies', 'any', 'arange',
@@ -118,6 +118,9 @@ def get_object_signature(obj):
 #####--------------------------------------------------------------------------
 class MAError(Exception):
     "Class for MA related errors."
+    pass
+class MaskError(MAError):
+    "Class for mask related errors."
     pass
 
 
@@ -1478,7 +1481,7 @@ class MaskedArray(ndarray):
                 else:
                     msg = "Mask and data not compatible: data size is %i, "+\
                           "mask size is %i."
-                    raise MAError, msg % (nd, nm)
+                    raise MaskError, msg % (nd, nm)
                 copy = True
             # Set the mask to the new value
             if _data._mask is nomask:
@@ -1727,7 +1730,7 @@ class MaskedArray(ndarray):
 
         """
         if self is masked:
-            raise MAError, 'Cannot alter the masked element.'
+            raise MaskError, 'Cannot alter the masked element.'
         # This test is useful, but we should keep things light...
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
@@ -2311,7 +2314,7 @@ masked_%(name)s(data = %(data)s,
             raise TypeError("Only length-1 arrays can be converted "\
                             "to Python scalars")
         elif self._mask:
-            raise MAError, 'Cannot convert masked element to a Python int.'
+            raise MaskError, 'Cannot convert masked element to a Python int.'
         return int(self.item())
     #............................................
     def get_imag(self):
@@ -2983,6 +2986,10 @@ masked_%(name)s(data = %(data)s,
             if out is not None:
                 if isinstance(out, MaskedArray):
                     out.__setmask__(True)
+                elif out.dtype.kind in 'biu':
+                    errmsg = "Masked data information would be lost in one or "\
+                             "more location."
+                    raise MaskError(errmsg)
                 else:
                     out.flat = np.nan
                 return out
@@ -3316,11 +3323,11 @@ masked_%(name)s(data = %(data)s,
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         else:
-            if out.dtype < np.dtype(float):
-                filler = -9999
-            else:
-                filler = np.nan
-            np.putmask(out, newmask, filler)
+            if out.dtype.kind in 'biu':
+                errmsg = "Masked data information would be lost in one or more"\
+                         " location."
+                raise MaskError(errmsg)
+            np.putmask(out, newmask, np.nan)
         return out
 
     def mini(self, axis=None):
@@ -3382,11 +3389,12 @@ masked_%(name)s(data = %(data)s,
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         else:
-            if out.dtype < np.dtype(float):
-                filler = -9999
-            else:
-                filler = np.nan
-            np.putmask(out, newmask, filler)
+            
+            if out.dtype.kind in 'biu':
+                errmsg = "Masked data information would be lost in one or more"\
+                         " location."
+                raise MaskError(errmsg)
+            np.putmask(out, newmask, np.nan)
         return out
 
     def ptp(self, axis=None, out=None, fill_value=None):
@@ -3826,7 +3834,7 @@ def power(a, b, third=None):
 
     """
     if third is not None:
-        raise MAError, "3-argument power not supported."
+        raise MaskError, "3-argument power not supported."
     # Get the masks
     ma = getmask(a)
     mb = getmask(b)
