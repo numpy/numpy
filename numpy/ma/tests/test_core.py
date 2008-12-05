@@ -693,7 +693,7 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_minmax_funcs_with_output(self):
         "Tests the min/max functions with explicit outputs"
         mask = np.random.rand(12).round()
-        xm = array(np.random.uniform(0,10,12),mask=mask)
+        xm = array(np.random.uniform(0,10,12), mask=mask)
         xm.shape = (3,4)
         for funcname in ('min', 'max'):
             # Initialize
@@ -701,11 +701,16 @@ class TestMaskedArrayArithmetic(TestCase):
             mafunc = getattr(numpy.ma.core, funcname)
             # Use the np version
             nout = np.empty((4,), dtype=int)
-            result = npfunc(xm,axis=0,out=nout)
+            try:
+                result = npfunc(xm, axis=0, out=nout)
+            except MaskError:
+                pass
+            nout = np.empty((4,), dtype=float)
+            result = npfunc(xm, axis=0, out=nout)
             self.failUnless(result is nout)
             # Use the ma version
             nout.fill(-999)
-            result = mafunc(xm,axis=0,out=nout)
+            result = mafunc(xm, axis=0, out=nout)
             self.failUnless(result is nout)
 
 
@@ -2348,7 +2353,10 @@ class TestMaskedArrayFunctions(TestCase):
         ntype = [('a', (np.float, 2))]
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype([('a', (np.bool, 2))]))
-
+        # 2 names
+        ntype = [(('A', 'a'), float)]
+        test = make_mask_descr(ntype)
+        assert_equal(test, np.dtype([(('A', 'a'), bool)]))
 
 
     def test_make_mask(self):
@@ -2413,6 +2421,24 @@ class TestMaskedArrayFunctions(TestCase):
         except ValueError:
             pass
 
+
+    def test_flatten_mask(self):
+        "Tests flatten mask"
+        # Standarad dtype
+        mask = np.array([0, 0, 1], dtype=np.bool)
+        assert_equal(flatten_mask(mask), mask)
+        # Flexible dtype
+        mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])
+        test = flatten_mask(mask)
+        control = np.array([0, 0, 0, 1], dtype=bool)
+        assert_equal(test, control)
+        
+        mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
+        data = [(0, (0, 0)), (0, (0, 1))]
+        mask = np.array(data, dtype=mdtype)
+        test = flatten_mask(mask)
+        control = np.array([ 0, 0, 0, 0, 0, 1], dtype=bool)
+        assert_equal(test, control)
 
 #------------------------------------------------------------------------------
 

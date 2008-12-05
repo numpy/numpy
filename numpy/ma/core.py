@@ -13,12 +13,13 @@ pgmdevlist_AT_gmail_DOT_com
 Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
 
 :author: Pierre Gerard-Marchant
-:contact: pierregm_at_uga_dot_edu
+
+
 """
 __author__ = "Pierre GF Gerard-Marchant"
 __docformat__ = "restructuredtext en"
 
-__all__ = ['MAError', 'MaskType', 'MaskedArray',
+__all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'bool_',
            'abs', 'absolute', 'add', 'all', 'allclose', 'allequal', 'alltrue',
            'amax', 'amin', 'anom', 'anomalies', 'any', 'arange',
@@ -31,8 +32,8 @@ __all__ = ['MAError', 'MaskType', 'MaskedArray',
            'count', 'cumprod', 'cumsum',
            'default_fill_value', 'diag', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp', 'expand_dims',
-           'fabs', 'fmod', 'filled', 'floor', 'floor_divide','fix_invalid',
-           'frombuffer', 'fromfunction',
+           'fabs', 'flatten_mask', 'fmod', 'filled', 'floor', 'floor_divide',
+           'fix_invalid', 'frombuffer', 'fromfunction',
            'getdata','getmask', 'getmaskarray', 'greater', 'greater_equal',
            'harden_mask', 'hypot',
            'identity', 'ids', 'indices', 'inner', 'innerproduct',
@@ -117,6 +118,9 @@ def get_object_signature(obj):
 #####--------------------------------------------------------------------------
 class MAError(Exception):
     "Class for MA related errors."
+    pass
+class MaskError(MAError):
+    "Class for mask related errors."
     pass
 
 
@@ -800,12 +804,14 @@ def make_mask_descr(ndtype):
     def _make_descr(datatype):
         "Private function allowing recursion."
         # Do we have some name fields ?
-        names = datatype.names
-        if names:
+        if datatype.names:
             descr = []
-            for name in names:
-                (ndtype, _) = datatype.fields[name]
-                descr.append((name, _make_descr(ndtype)))
+            for name in datatype.names:
+                field = datatype.fields[name]
+                if len(field) == 3:
+                    # Prepend the title to the name
+                    name = (field[-1], name)
+                descr.append((name, _make_descr(field[0])))
             return descr
         # Is this some kind of composite a la (np.float,2)
         elif datatype.subdtype:
@@ -964,6 +970,61 @@ def mask_or (m1, m2, copy=False, shrink=True):
             newmask[n] = umath.logical_or(m1[n], m2[n])
         return newmask
     return make_mask(umath.logical_or(m1, m2), copy=copy, shrink=shrink)
+
+
+def flatten_mask(mask):
+    """
+    Returns a completely flattened version of the mask, where nested fields
+    are collapsed.
+    
+    Parameters
+    ----------
+    mask : array_like
+        Array of booleans
+
+    Returns
+    -------
+    flattened_mask : ndarray
+        Boolean array.
+
+    Examples
+    --------
+    >>> mask = np.array([0, 0, 1], dtype=np.bool)
+    >>> flatten_mask(mask)
+    array([False, False,  True], dtype=bool)
+    >>> mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])
+    >>> flatten_mask(mask)
+    array([False, False, False,  True], dtype=bool)
+    >>> mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
+    >>> mask = np.array([(0, (0, 0)), (0, (0, 1))], dtype=mdtype)
+    >>> flatten_mask(mask)
+    array([False, False, False, False, False,  True], dtype=bool)
+    
+    """
+    #
+    def _flatmask(mask):
+        "Flatten the mask and returns a (maybe nested) sequence of booleans."
+        mnames = mask.dtype.names
+        if mnames:
+            return [flatten_mask(mask[name]) for name in mnames]
+        else:
+            return mask
+    #
+    def _flatsequence(sequence):
+        "Generates a flattened version of the sequence."
+        try:
+            for element in sequence:
+                if hasattr(element, '__iter__'):
+                    for f in _flatsequence(element):
+                        yield f
+                else:
+                    yield element
+        except TypeError:
+            yield sequence
+    #
+    mask = np.asarray(mask)
+    flattened = _flatsequence(_flatmask(mask))
+    return np.array([_ for _ in flattened], dtype=bool)
 
 
 #####--------------------------------------------------------------------------
@@ -1349,7 +1410,7 @@ class MaskedArray(ndarray):
         # Process data............
         _data = np.array(data, dtype=dtype, copy=copy, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
-        # Check that we'ew not erasing the mask..........
+        # Check that we're not erasing the mask..........
         if isinstance(data, MaskedArray) and (data.shape != _data.shape):
             copy = True
         # Careful, cls might not always be MaskedArray...
@@ -1381,7 +1442,13 @@ class MaskedArray(ndarray):
                     _data._mask = np.zeros(_data.shape, dtype=mdtype)
             # Check whether we missed something
             elif isinstance(data, (tuple,list)):
-                mask = np.array([getmaskarray(m) for m in data], dtype=mdtype)
+                try:
+                    # If data is a sequence of masked array
+                    mask = np.array([getmaskarray(m) for m in data],
+                                    dtype=mdtype)
+                except ValueError:
+                    # If data is nested
+                    mask = nomask
                 # Force shrinking of the mask if needed (and possible)
                 if (mdtype == MaskType) and mask.any():
                     _data._mask = mask
@@ -1414,7 +1481,7 @@ class MaskedArray(ndarray):
                 else:
                     msg = "Mask and data not compatible: data size is %i, "+\
                           "mask size is %i."
-                    raise MAError, msg % (nd, nm)
+                    raise MaskError, msg % (nd, nm)
                 copy = True
             # Set the mask to the new value
             if _data._mask is nomask:
@@ -1426,8 +1493,16 @@ class MaskedArray(ndarray):
                     _data._sharedmask = not copy
                 else:
                     if names_:
-                        for n in names_:
-                            _data._mask[n] |= mask[n]
+                        def _recursive_or(a, b):
+                            "do a|=b on each field of a, recursively"
+                            for name in a.dtype.names:
+                                (af, bf) = (a[name], b[name])
+                                if af.dtype.names:
+                                    _recursive_or(af, bf)
+                                else:
+                                    af |= bf
+                            return
+                        _recursive_or(_data._mask, mask)
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
                     _data._sharedmask = False
@@ -1623,7 +1698,7 @@ class MaskedArray(ndarray):
             # A record ................
             if isinstance(dout, np.void):
                 mask = _mask[indx]
-                if mask.view((bool, len(mask.dtype))).any():
+                if flatten_mask(mask).any():
                     dout = masked_array(dout, mask=mask)
                 else:
                     return dout
@@ -1655,7 +1730,7 @@ class MaskedArray(ndarray):
 
         """
         if self is masked:
-            raise MAError, 'Cannot alter the masked element.'
+            raise MaskError, 'Cannot alter the masked element.'
         # This test is useful, but we should keep things light...
 #        if getmask(indx) is not nomask:
 #            msg = "Masked arrays must be filled before they can be used as indices!"
@@ -2239,7 +2314,7 @@ masked_%(name)s(data = %(data)s,
             raise TypeError("Only length-1 arrays can be converted "\
                             "to Python scalars")
         elif self._mask:
-            raise MAError, 'Cannot convert masked element to a Python int.'
+            raise MaskError, 'Cannot convert masked element to a Python int.'
         return int(self.item())
     #............................................
     def get_imag(self):
@@ -3746,7 +3821,7 @@ def power(a, b, third=None):
 
     """
     if third is not None:
-        raise MAError, "3-argument power not supported."
+        raise MaskError, "3-argument power not supported."
     # Get the masks
     ma = getmask(a)
     mb = getmask(b)
