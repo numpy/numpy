@@ -21,7 +21,7 @@ if sphinx.__version__ < "0.5":
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'phantom_import', 'autosummary', 'sphinx.ext.intersphinx',
-              'sphinx.ext.coverage']
+              'sphinx.ext.coverage', 'only_directives']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -131,7 +131,7 @@ html_use_modindex = True
 #html_file_suffix = '.html'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'NumPydoc'
+htmlhelp_basename = 'numpy'
 
 # Pngmath should try to align formulas properly
 pngmath_use_preview = True
@@ -208,7 +208,7 @@ intersphinx_mapping = {'http://docs.python.org/dev': None}
 phantom_import_file = 'dump.xml'
 
 # Edit links
-#numpydoc_edit_link = '`Edit </pydocweb/doc/%(full_name)s/>`__'
+numpydoc_edit_link = '`Edit </numpy/docs/%(full_name)s/>`__'
 
 # -----------------------------------------------------------------------------
 # Coverage checker

@@ -33,8 +33,13 @@ def mangle_docstrings(app, what, name, obj, options, lines,
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
            obj.__name__:
-        v = dict(full_name=obj.__name__)
-        lines += [''] + (app.config.numpydoc_edit_link % v).split("\n")
+        if hasattr(obj, '__module__'):
+            v = dict(full_name="%s.%s" % (obj.__module__, obj.__name__))
+        else:
+            v = dict(full_name=obj.__name__)
+        lines += ['', '.. htmlonly::', '']
+        lines += ['    %s' % x for x in
+                  (app.config.numpydoc_edit_link % v).split("\n")]
 
     # replace reference numbers so that there are no duplicates
     references = []
