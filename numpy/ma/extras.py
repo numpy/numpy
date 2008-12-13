@@ -40,7 +40,7 @@ import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
-from numpy.lib.polynomial import _lstsq
+from numpy.linalg import lstsq
 
 #...............................................................................
 def issequence(seq):
@@ -1033,7 +1033,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
         x = x / scale
     # solve least squares equation for powers of x
     v = vander(x, order)
-    c, resids, rank, s = _lstsq(v, y.filled(0), rcond)
+    c, resids, rank, s = lstsq(v, y.filled(0), rcond)
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         warnings.warn("Polyfit may be poorly conditioned", np.RankWarning)
