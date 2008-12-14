@@ -35,8 +35,7 @@ Albert Strasheim for documentation, bug-fixes, regression tests and
     Valgrind expertise.
 David Cournapeau for build support, doc-and-bug fixes, and code
     contributions including fast_clipping.
-Jarrod Millman for release management, community coordination,
-    and cheerleading.
+Jarrod Millman for release management and community coordination.
 Chris Burns for work on memory mapped arrays and bug-fixes.
 Pauli Virtanen for documentation, bug-fixes, lookfor and the
      documentation editor.
