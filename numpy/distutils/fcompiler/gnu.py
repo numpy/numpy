@@ -271,7 +271,7 @@ class Gnu95FCompiler(GnuFCompiler):
         return self._add_arches_for_universal_build(flags)
 
     def get_library_dirs(self):
-        opt = GnuFCompiler.get_libraries(self)
+        opt = GnuFCompiler.get_library_dirs(self)
 	if sys.platform == 'win32':
 	    c_compiler = self.c_compiler
 	    if c_compiler and c_compiler.compiler_type == "msvc":
