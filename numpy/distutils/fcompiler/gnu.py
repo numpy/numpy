@@ -10,6 +10,7 @@ from numpy.distutils.misc_util import msvc_runtime_library
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
+TARGET_R = re.compile("Target: ([a-zA-Z0-9_\-]*)")
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
     compiler_aliases = ('g77',)
@@ -274,6 +275,16 @@ class Gnu95FCompiler(GnuFCompiler):
         if sys.platform == 'darwin':
             opt.remove('cc_dynamic')
         return opt
+
+    def get_target(self):
+        status, output = exec_command(self.compiler_f77 +
+                                      ['-v'],
+                                      use_tee=0)
+        if not status:
+	    m = TARGET_R.search(output)
+	    if m:
+	        print m.group(1)	
+        return ""
 
 if __name__ == '__main__':
     from distutils import log
