@@ -283,7 +283,7 @@ class Gnu95FCompiler(GnuFCompiler):
         if not status:
 	    m = TARGET_R.search(output)
 	    if m:
-	        print m.group(1)	
+	        return m.group(1)	
         return ""
 
 if __name__ == '__main__':
