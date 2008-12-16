@@ -289,6 +289,13 @@ class Gnu95FCompiler(GnuFCompiler):
         opt = GnuFCompiler.get_libraries(self)
         if sys.platform == 'darwin':
             opt.remove('cc_dynamic')
+	if sys.platform == 'win32':
+	    c_compiler = self.c_compiler
+	    if c_compiler and c_compiler.compiler_type == "msvc":
+		if "gcc" in opt:
+		    i = opt.index("gcc")
+		    opt.insert(i+1, "mingwex")
+		    opt.insert(i+1, "mingw32")
         return opt
 
     def get_target(self):
