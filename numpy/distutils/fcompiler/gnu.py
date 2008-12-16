@@ -130,10 +130,10 @@ class GnuFCompiler(FCompiler):
                 # if windows and not cygwin, libg2c lies in a different folder
                 if sys.platform == 'win32' and not d.startswith('/usr/lib'):
                     d = os.path.normpath(d)
-                    if not os.path.exists(os.path.join(d, 'libg2c.a')):
+                    if not os.path.exists(os.path.join(d, "lib%s.a" % self.g2c)):
                         d2 = os.path.abspath(os.path.join(d,
                                                           '../../../../lib'))
-                        if os.path.exists(os.path.join(d2, 'libg2c.a')):
+                        if os.path.exists(os.path.join(d2, "lib%s.a" % self.g2c)):
                             opt.append(d2)
                 opt.append(d)
         return opt
