@@ -270,6 +270,21 @@ class Gnu95FCompiler(GnuFCompiler):
         flags = GnuFCompiler.get_flags_linker_so(self)
         return self._add_arches_for_universal_build(flags)
 
+    def get_library_dirs(self):
+        opt = GnuFCompiler.get_libraries(self)
+	if sys.platform == 'win32':
+	    c_compiler = self.c_compiler
+	    if c_compiler and c_compiler.compiler_type == "msvc":
+		target = self.get_target()
+		if target:
+                    d = os.path.normpath(self.get_libgcc_dir())
+		    root = os.path.join(d, os.pardir, os.pardir, os.pardir, os.pardir)
+		    mingwdir = os.path.normpath(os.path.join(root, target, "lib"))
+		    full = os.path.join(mingwdir, "libmingwex.a")
+		    if os.path.exists(full):
+			opt.append(mingwdir)
+	return opt
+
     def get_libraries(self):
         opt = GnuFCompiler.get_libraries(self)
         if sys.platform == 'darwin':
