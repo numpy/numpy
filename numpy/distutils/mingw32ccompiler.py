@@ -243,6 +243,9 @@ def generate_def(dll, dfile):
         else:
             break
 
+    if len(syms) == 0:
+        log.warn('No symbols found in %s' % dll)
+
     d = open(dfile, 'w')
     d.write('LIBRARY        %s\n' % dll)
     d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
