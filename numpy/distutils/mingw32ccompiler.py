@@ -247,12 +247,13 @@ def generate_def(dll, dfile):
         log.warn('No symbols found in %s' % dll)
 
     d = open(dfile, 'w')
-    d.write('LIBRARY        %s\n' % dll)
+    d.write('LIBRARY        %s\n' % os.path.basename(dll))
     d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
     d.write(';DATA          PRELOAD SINGLE\n')
     d.write('\nEXPORTS\n')
     for s in syms:
-        d.write('@%d    %s\n' % (s[0], s[1]))
+        #d.write('@%d    %s\n' % (s[0], s[1]))
+        d.write('%s\n' % s[1])
     d.close()
 
 def build_import_library():
