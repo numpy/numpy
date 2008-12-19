@@ -189,6 +189,29 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
     # object_filenames ()
 
 
+def find_python_dll():
+    maj, min, micro = [int(i) for i in sys.version_info[:3]]
+    dllname = 'python%d%d.dll' % (maj, min)
+    print "Looking for %s" % dllname
+
+    # We can't do much here: 
+    # - find it in python main dir
+    # - in system32,
+    # - ortherwise (Sxs), I don't know how to get it.
+    lib_dirs = []
+    lib_dirs.append(os.path.join(sys.prefix, 'lib'))
+    try:
+        lib_dirs.append(os.path.join(os.environ['SYSTEM_ROOT'], 'system32'))
+    except KeyError:
+        pass
+
+    for d in lib_dirs:
+        dll = os.path.join(d, dllname)
+        if os.path.exists(dll):
+            return dll
+
+    raise ValueError("%s not found in %s" % (dllname, lib_dirs))
+
 def build_import_library():
     """ Build the import libraries for Mingw32-gcc on Windows
     """
