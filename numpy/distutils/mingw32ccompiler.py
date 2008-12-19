@@ -405,7 +405,7 @@ def rc_name(config):
 def generate_manifest(config):
     msver = get_build_msvc_version()
     if msver is not None:
-        if msver >= 8:
+        if msver >= 9:
             check_embedded_msvcr_match_linked(msver)
             ma = int(msver)
             mi = int((msver - ma) * 10)
