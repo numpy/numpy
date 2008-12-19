@@ -12,6 +12,7 @@ import os
 import sys
 import log
 import subprocess
+import re
 
 # Overwrite certain distutils.ccompiler functions:
 import numpy.distutils.ccompiler
@@ -30,6 +31,10 @@ from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from numpy.distutils.misc_util import msvc_runtime_library
+
+# Useful to generate table of symbols from a dll
+_START = re.compile(r'\[Ordinal/Name Pointer\] Table')
+_TABLE = re.compile(r'^\s+\[([\s*[0-9]*)\] ([a-zA-Z0-9_]*)')
 
 # the same as cygwin plus some additional parameters
 class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
@@ -224,7 +229,7 @@ def generate_def(dll, dfile):
     The .def file will be overwritten"""
     dump = dump_table(dll)
     for i in range(len(dump)):
-        if TABLE.match(dump[i]):
+        if _START.match(dump[i]):
             break
 
     if i == len(dump):
@@ -232,7 +237,7 @@ def generate_def(dll, dfile):
 
     syms = []
     for j in range(i, len(dump)):
-        m = table.match(lines[j])
+        m = _TABLE.match(lines[j])
         if m:
             syms.append((int(m.group(1).strip()), m.group(2)))
         else:
