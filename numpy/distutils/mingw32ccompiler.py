@@ -217,6 +217,36 @@ def dump_table(dll):
     st = subprocess.Popen(["objdump.exe", "-p", dll], stdout=subprocess.PIPE)
     return st.stdout.readlines()
 
+def generate_def(dll, dfile):
+    """Given a dll file location,  get all its exported symbols and dump them
+    into the given def file.
+
+    The .def file will be overwritten"""
+    dump = dump_table(dll)
+    for i in range(len(dump)):
+        if TABLE.match(dump[i]):
+            break
+
+    if i == len(dump):
+        raise ValueError("Symbol table not found")
+
+    syms = []
+    for j in range(i, len(dump)):
+        m = table.match(lines[j])
+        if m:
+            syms.append((int(m.group(1).strip()), m.group(2)))
+        else:
+            break
+
+    d = open(deffile, 'w')
+    d.write('LIBRARY        %s\n' % dllname)
+    d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
+    d.write(';DATA          PRELOAD SINGLE\n')
+    d.write('\nEXPORTS\n')
+    for s in syms:
+        d.write('@%d    %s\n' % (s[0], s[1]))
+    d.close()
+
 def build_import_library():
     """ Build the import libraries for Mingw32-gcc on Windows
     """
