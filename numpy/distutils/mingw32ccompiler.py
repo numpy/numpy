@@ -268,6 +268,8 @@ def build_import_library():
         raise ValueError("Unhandled arch %s" % arch)
 
 def _build_import_library_amd64():
+    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
+    out_file = os.path.join(sys.prefix, 'libs', out_name)
     log.info('Building import library (arch=AMD64): "%s"' % (out_file))
 
 def _build_import_library_x86():
