@@ -278,6 +278,14 @@ class build_ext (old_build_ext):
             c_sources += cxx_sources
             cxx_sources = []
 
+        # MS_WIN64 should be defined when building for amd64 on windows, but
+        # python headers define it only for MS compilers, which has all kind of
+        # bad consequences, like using Py_ModuleInit4 instead of
+        # Py_ModuleInit4_64, etc... So we add it here
+        if self.compiler.compiler_type == 'mingw32' and \
+           get_build_architecture() == 'AMD64':
+               macros.append('MS_WIN64')
+
         # Set Fortran/C++ compilers for compilation and linking.
         if ext.language=='f90':
             fcompiler = self._f90_compiler
