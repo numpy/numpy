@@ -16,7 +16,7 @@ from numpy.distutils.exec_command import exec_command
 from numpy.distutils.system_info import combine_paths
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources, get_ext_source_files, \
-     get_numpy_include_dirs, is_sequence
+     get_numpy_include_dirs, is_sequence, get_build_architecture
 from numpy.distutils.command.config_compiler import show_fortran_compilers
 
 try:
