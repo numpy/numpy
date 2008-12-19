@@ -280,6 +280,9 @@ def _build_import_library_amd64():
 
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
     out_file = os.path.join(sys.prefix, 'libs', out_name)
+    if os.path.isfile(out_file):
+        log.debug('Skip building import library: "%s" exists' % (out_file))
+        return
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
     def_file = os.path.join(sys.prefix,'libs',def_name)
