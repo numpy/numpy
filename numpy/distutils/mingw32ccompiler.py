@@ -93,17 +93,24 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         #                     linker_exe='gcc -mno-cygwin',
         #                     linker_so='%s --driver-name g++ -mno-cygwin -mdll -static %s'
         #                                % (self.linker, entry_point))
-        if self.gcc_version <= "3.0.0":
-            self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
-                                 compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
-                                 linker_exe='g++ -mno-cygwin',
-                                 linker_so='%s -mno-cygwin -mdll -static %s'
-                                 % (self.linker, entry_point))
+        if get_build_architecture() == 'AMD64':
+            self.set_executables(
+                    compiler='gcc -mno-cygwin -O2 -Wall',
+                    compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
+                    linker_exe='gcc -mno-cygwin',
+                    linker_so='gcc -mno-cygwin -shared')
         else:
-            self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
-                                 compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
-                                 linker_exe='g++ -mno-cygwin',
-                                 linker_so='g++ -mno-cygwin -shared')
+            if self.gcc_version <= "3.0.0":
+                self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
+                                     compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
+                                     linker_exe='g++ -mno-cygwin',
+                                     linker_so='%s -mno-cygwin -mdll -static %s'
+                                     % (self.linker, entry_point))
+            else:
+                self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
+                                     compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
+                                     linker_exe='g++ -mno-cygwin',
+                                     linker_so='g++ -mno-cygwin -shared')
         # added for python2.3 support
         # we can't pass it through set_executables because pre 2.2 would fail
         self.compiler_cxx = ['g++']
