@@ -344,7 +344,10 @@ def _build_import_library_x86():
 # XXX: ideally, we should use exactly the same version as used by python, but I
 # have no idea how to obtain the exact version from python. We could use the
 # strings utility on python.exe, maybe ?
-_MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
+_MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8",
+        # I took one version in my SxS directory: no idea if it is the good
+        # one, and we can't retrieve it from python
+        '80': "8.0.50727.42"}
 
 def msvc_manifest_xml(maj, min):
     """Given a major and minor version of the MSVCR, returns the
