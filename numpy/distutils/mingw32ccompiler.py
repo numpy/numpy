@@ -11,6 +11,7 @@ Support code for building Python extensions on Windows.
 import os
 import sys
 import log
+import subprocess
 
 # Overwrite certain distutils.ccompiler functions:
 import numpy.distutils.ccompiler
@@ -211,6 +212,10 @@ def find_python_dll():
             return dll
 
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
+
+def dump_table(dll):
+    st = subprocess.Popen(["objdump.exe", "-p", dll], stdout=subprocess.PIPE)
+    return st.stdout.readlines()
 
 def build_import_library():
     """ Build the import libraries for Mingw32-gcc on Windows
