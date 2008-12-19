@@ -268,9 +268,21 @@ def build_import_library():
         raise ValueError("Unhandled arch %s" % arch)
 
 def _build_import_library_amd64():
+    dll_file = find_python_dll()
+
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
     out_file = os.path.join(sys.prefix, 'libs', out_name)
-    log.info('Building import library (arch=AMD64): "%s"' % (out_file))
+
+    def_name = "python%d%d.def" % tuple(sys.version_info[:2])
+    def_file = os.path.join(sys.prefix,'libs',def_name)
+
+    log.info('Building import library (arch=AMD64): "%s" (from %s)' \
+             % (out_file, dll_file))
+
+    generate_def(dll_file, def_file)
+
+    cmd = ['dlltool', '-d', def_file, '-l', out_file]
+    subprocess.Popen(cmd)
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
