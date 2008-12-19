@@ -236,15 +236,15 @@ def generate_def(dll, dfile):
         raise ValueError("Symbol table not found")
 
     syms = []
-    for j in range(i, len(dump)):
-        m = _TABLE.match(lines[j])
+    for j in range(i+1, len(dump)):
+        m = _TABLE.match(dump[j])
         if m:
             syms.append((int(m.group(1).strip()), m.group(2)))
         else:
             break
 
-    d = open(deffile, 'w')
-    d.write('LIBRARY        %s\n' % dllname)
+    d = open(dfile, 'w')
+    d.write('LIBRARY        %s\n' % dll)
     d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
     d.write(';DATA          PRELOAD SINGLE\n')
     d.write('\nEXPORTS\n')
