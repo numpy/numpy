@@ -201,7 +201,7 @@ def find_python_dll():
     lib_dirs = []
     lib_dirs.append(os.path.join(sys.prefix, 'lib'))
     try:
-        lib_dirs.append(os.path.join(os.environ['SYSTEM_ROOT'], 'system32'))
+        lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
     except KeyError:
         pass
 
