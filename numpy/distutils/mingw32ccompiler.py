@@ -30,7 +30,7 @@ from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
 
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
-from numpy.distutils.misc_util import msvc_runtime_library
+from numpy.distutils.misc_util import msvc_runtime_library, get_build_architecture
 
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
@@ -256,10 +256,23 @@ def generate_def(dll, dfile):
     d.close()
 
 def build_import_library():
-    """ Build the import libraries for Mingw32-gcc on Windows
-    """
     if os.name != 'nt':
         return
+
+    arch = get_build_architecture()
+    if arch == 'AMD64':
+        return _build_import_library_amd64()
+    elif arch == 'Intel':
+        return _build_import_library_x86()
+    else:
+        raise ValueError("Unhandled arch %s" % arch)
+
+def _build_import_library_amd64():
+    pass
+
+def _build_import_library_x86():
+    """ Build the import libraries for Mingw32-gcc on Windows
+    """
     lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])
     lib_file = os.path.join(sys.prefix,'libs',lib_name)
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
