@@ -284,7 +284,7 @@ class build_ext (old_build_ext):
         # Py_ModuleInit4_64, etc... So we add it here
         if self.compiler.compiler_type == 'mingw32' and \
            get_build_architecture() == 'AMD64':
-               macros.append(('MS_WIN64',))
+               macros.append(('MS_WIN64', None))
 
         # Set Fortran/C++ compilers for compilation and linking.
         if ext.language=='f90':
