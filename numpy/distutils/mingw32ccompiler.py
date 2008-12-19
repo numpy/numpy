@@ -268,7 +268,7 @@ def build_import_library():
         raise ValueError("Unhandled arch %s" % arch)
 
 def _build_import_library_amd64():
-    pass
+    log.info('Building import library (arch=AMD64): "%s"' % (out_file))
 
 def _build_import_library_x86():
     """ Build the import libraries for Mingw32-gcc on Windows
@@ -283,7 +283,7 @@ def _build_import_library_x86():
     if os.path.isfile(out_file):
         log.debug('Skip building import library: "%s" exists' % (out_file))
         return
-    log.info('Building import library: "%s"' % (out_file))
+    log.info('Building import library (ARCH=x86): "%s"' % (out_file))
 
     from numpy.distutils import lib2def
 
