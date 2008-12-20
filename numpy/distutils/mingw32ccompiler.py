@@ -95,8 +95,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         #                                % (self.linker, entry_point))
         if get_build_architecture() == 'AMD64':
             self.set_executables(
-                    compiler='gcc -mno-cygwin -O2 -Wall',
-                    compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
+                    compiler='gcc -mno-cygwin -O0 -Wall',
+                    compiler_so='gcc -mno-cygwin -O0 -Wall -Wstrict-prototypes',
                     linker_exe='gcc -mno-cygwin',
                     linker_so='gcc -mno-cygwin -shared')
         else:
