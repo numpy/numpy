@@ -93,6 +93,11 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         #                     linker_exe='gcc -mno-cygwin',
         #                     linker_so='%s --driver-name g++ -mno-cygwin -mdll -static %s'
         #                                % (self.linker, entry_point))
+
+        # MS_WIN64 should be defined when building for amd64 on windows, but
+        # python headers define it only for MS compilers, which has all kind of
+        # bad consequences, like using Py_ModuleInit4 instead of
+        # Py_ModuleInit4_64, etc... So we add it here
         if get_build_architecture() == 'AMD64':
             self.set_executables(
                     compiler='gcc -DMS_WIN64 -mno-cygwin -O0 -Wall',
