@@ -95,8 +95,6 @@ npy_expm1(double x)
     }
 }
 #define expm1 npy_expm1
-#else
-double expm1(double x);
 #endif
 
 #ifndef HAVE_LOG1P
@@ -111,8 +109,6 @@ npy_log1p(double x)
     }
 }
 #define log1p npy_log1p
-#else
-double log1p(double x);
 #endif
 
 #ifndef HAVE_HYPOT
@@ -136,8 +132,6 @@ npy_hypot(double x, double y)
     }
 }
 #define hypot npy_hypot
-#else
-double hypot(double x, double y);
 #endif
 
 #ifndef HAVE_ACOSH
@@ -147,8 +141,6 @@ npy_acosh(double x)
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 #define acosh npy_acosh
-#else
-double acosh(double x);
 #endif
 
 #ifndef HAVE_ASINH
@@ -173,8 +165,6 @@ npy_asinh(double xx)
     return sign*log1p(x*(1.0 + x/(d+1)));
 }
 #define asinh npy_asinh
-#else
-double asinh(double xx);
 #endif
 
 #ifndef HAVE_ATANH
@@ -189,8 +179,6 @@ npy_atanh(double x)
     }
 }
 #define atanh npy_atanh
-#else
-double atanh(double x);
 #endif
 
 #ifndef HAVE_RINT
@@ -215,8 +203,6 @@ npy_rint(double x)
     return y;
 }
 #define rint npy_rint
-#else
-double rint(double x);
 #endif
 
 #ifndef HAVE_TRUNC
@@ -226,8 +212,6 @@ npy_trunc(double x)
     return x < 0 ? ceil(x) : floor(x);
 }
 #define trunc npy_trunc
-#else
-double trunc(double x);
 #endif
 
 #ifndef HAVE_EXP2
@@ -239,8 +223,6 @@ npy_exp2(double x)
 }
 #define exp2 npy_exp2
 #undef LOG2
-#else
-double exp2(double x);
 #endif
 
 #ifndef HAVE_LOG2
@@ -252,8 +234,6 @@ npy_log2(double x)
 }
 #define log2 npy_log2
 #undef INVLOG2
-#else
-double log2(double x);
 #endif
 
 /*
@@ -337,8 +317,6 @@ npy_@kind@@c@(@type@ x)
     return (@type@) @kind@((double)x);
 }
 #define @kind@@c@  npy_@kind@@c@
-#else
-@type@ @kind@@c@(@type@ x);
 #endif
 
 /**end repeat1**/
@@ -357,8 +335,6 @@ npy_@kind@@c@(@type@ x, @type@ y)
     return (@type@) @kind@((double)x, (double) y);
 }
 #define @kind@@c@  npy_@kind@@c@
-#else
-@type@ @kind@@c@(@type@ x, @type@ y);
 #endif
 /**end repeat1**/
 
@@ -375,8 +351,6 @@ npy_modf@c@(@type@ x, @type@ *iptr)
     return (@type@) y;
 }
 #define modf@c@ npy_modf@c@
-#else
-@type@ modf@c@(@type@ x, @type@ *iptr);
 #endif
 
 /**end repeat**/
