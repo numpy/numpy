@@ -56,8 +56,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-static double
-expm1(double x)
+double expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -71,8 +70,7 @@ expm1(double x)
 #endif
 
 #ifndef HAVE_LOG1P
-static double
-log1p(double x)
+double log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
@@ -84,8 +82,7 @@ log1p(double x)
 #endif
 
 #ifndef HAVE_HYPOT
-static double
-hypot(double x, double y)
+double hypot(double x, double y)
 {
     double yx;
 
@@ -106,16 +103,14 @@ hypot(double x, double y)
 #endif
 
 #ifndef HAVE_ACOSH
-static double
-acosh(double x)
+double acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 #endif
 
 #ifndef HAVE_ASINH
-static double
-asinh(double xx)
+double asinh(double xx)
 {
     double x, d;
     int sign;
@@ -137,8 +132,7 @@ asinh(double xx)
 #endif
 
 #ifndef HAVE_ATANH
-static double
-atanh(double x)
+double atanh(double x)
 {
     if (x > 0) {
         return -0.5*log1p(-2.0*x/(1.0 + x));
@@ -150,8 +144,7 @@ atanh(double x)
 #endif
 
 #ifndef HAVE_RINT
-static double
-rint(double x)
+double rint(double x)
 {
     double y, r;
 
@@ -173,8 +166,7 @@ rint(double x)
 #endif
 
 #ifndef HAVE_TRUNC
-static double
-trunc(double x)
+double trunc(double x)
 {
     return x < 0 ? ceil(x) : floor(x);
 }
@@ -182,8 +174,7 @@ trunc(double x)
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-static double
-exp2(double x)
+double exp2(double x)
 {
     return exp(LOG2*x);
 }
@@ -192,8 +183,7 @@ exp2(double x)
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-static double
-log2(double x)
+double log2(double x)
 {
     return INVLOG2*log(x);
 }
@@ -275,8 +265,7 @@ static int signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@
-@kind@@c@(@type@ x)
+@type@ @kind@@c@(@type@ x)
 {
     return (@type@) @kind@((double)x);
 }
@@ -292,8 +281,7 @@ static @type@
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@
-@kind@@c@(@type@ x, @type@ y)
+@type@ @kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) @kind@((double)x, (double) y);
 }
@@ -304,8 +292,7 @@ static @type@
 #undef modf@c@
 #endif
 #ifndef HAVE_MODF@C@
-static @type@
-modf@c@(@type@ x, @type@ *iptr)
+@type@ modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = modf((double)x, &niptr);
