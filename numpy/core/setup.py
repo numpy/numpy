@@ -457,7 +457,7 @@ int main(int argc, char **argv)
                   ('SIZEOF_LONG', 'long'),
                   ('SIZEOF_FLOAT', 'float'),
                   ('SIZEOF_DOUBLE', 'double'),
-                  ('SIZEOF_LONG_DOUBLE', 'long double'),
+                  #('SIZEOF_LONG_DOUBLE', 'long double'),
                   ('SIZEOF_PY_INTPTR_T', 'Py_intptr_t'),
                   ]:
         testcode.append(c_size_test % {'sz' : sz, 'type' : t})
@@ -473,6 +473,7 @@ int main(int argc, char **argv)
 #else
         fprintf(fp, "/* PY_LONG_LONG not defined */\n");
 #endif
+        fprintf(fp, "#define SIZEOF_LONG_DOUBLE 8\n");
 #ifndef CHAR_BIT
           {
              unsigned char var = 2;
