@@ -44,27 +44,10 @@
  *    }
  *    #define foo npy_foo
  *
- *    iii) Finally, even if foo is in the library, add a prototype. Just being
- *    in the library doesn't guarantee a prototype in math.h, and in any case
- *    you want to make sure the prototype is what you think it is. Count on it,
- *    whatever can go wrong will go wrong. Think defensively! The result:
- *
- *    #ifdef foo
- *    #undef foo
- *    #endif
- *    #ifndef HAVE_FOO
- *    static double
- *    npy_foo(double x)
- *    {
- *        return x;
- *    }
- *    #define foo npy_foo
- *    #else
- *    double foo(double x);
- *    #end
- *
- *    And there you have it.
- *
+ *    iii) Avoid as much as possible to declare any function here. Declaring
+ *    functions is not portable: some platforms define some function inline
+ *    with a non standard identifier, for example. If you really have to,
+ *    ALWAYS declare it for the one platform you are dealing with
  */
 
 /*
