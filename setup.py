@@ -44,6 +44,14 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # a lot more robust than what was previously being used.
 __builtin__.__NUMPY_SETUP__ = True
 
+def setup_doc_files(configuration):
+    # Add doc sources
+    configuration.add_data_dir("doc/release")
+    configuration.add_data_dir("doc/source")
+    configuration.add_data_dir("doc/sphinxext")
+    configuration.add_data_files(("doc/Makefile"), ("doc/postprocess.py"))
+
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
 
@@ -60,6 +68,8 @@ def configuration(parent_package='',top_path=None):
                           ('numpy','site.cfg.example'))
 
     config.get_version('numpy/version.py') # sets config.version
+
+    setup_doc_files(config)
 
     return config
 
