@@ -17,9 +17,7 @@
  *    can be linked from the math library. The result can depend on the
  *    optimization flags as well as the compiler, so can't be known ahead of
  *    time. If the function can't be linked, then either it is absent, defined
- *    as a macro, or is an intrinsic (hardware) function. If it is linkable it
- *    may still be the case that no prototype is available. So to cover all the
- *    cases requires the following construction.
+ *    as a macro, or is an intrinsic (hardware) function.
  *
  *    i) Undefine any possible macros:
  *
@@ -27,44 +25,20 @@
  *    #undef foo
  *    #endif
  *
- *    ii) Check if the function was in the library, If not, define the
- *    function with npy_ prepended to its name to avoid conflict with any
- *    intrinsic versions, then use a define so that the preprocessor will
- *    replace foo with npy_foo before the compilation pass. Make the
- *    function static to avoid poluting the module library.
+ *    ii) Avoid as much as possible to declare any function here. Declaring
+ *    functions is not portable: some platforms define some function inline
+ *    with a non standard identifier, for example, or may put another
+ *    idendifier which changes the calling convention of the function. If you
+ *    really have to, ALWAYS declare it for the one platform you are dealing
+ *    with:
  *
- *    #ifdef foo
- *    #undef foo
- *    #endif
- *    #ifndef HAVE_FOO
- *    static double
- *    npy_foo(double x)
- *    {
- *        return x;
- *    }
- *    #define foo npy_foo
+ *    Not ok:
+ *        double exp(double a);
  *
- *    iii) Finally, even if foo is in the library, add a prototype. Just being
- *    in the library doesn't guarantee a prototype in math.h, and in any case
- *    you want to make sure the prototype is what you think it is. Count on it,
- *    whatever can go wrong will go wrong. Think defensively! The result:
- *
- *    #ifdef foo
- *    #undef foo
- *    #endif
- *    #ifndef HAVE_FOO
- *    static double
- *    npy_foo(double x)
- *    {
- *        return x;
- *    }
- *    #define foo npy_foo
- *    #else
- *    double foo(double x);
- *    #end
- *
- *    And there you have it.
- *
+ *    Ok:
+ *        #ifdef SYMBOL_DEFINED_WEIRD_PLATFORM
+ *        double exp(double);
+ *        #endif 
  */
 
 /*
@@ -82,8 +56,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-static double
-npy_expm1(double x)
+double expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -94,14 +67,10 @@ npy_expm1(double x)
         return (u-1.0) * x/log(u);
     }
 }
-#define expm1 npy_expm1
-#else
-double expm1(double x);
 #endif
 
 #ifndef HAVE_LOG1P
-static double
-npy_log1p(double x)
+double log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
@@ -110,14 +79,10 @@ npy_log1p(double x)
         return log(u) * x / (u - 1);
     }
 }
-#define log1p npy_log1p
-#else
-double log1p(double x);
 #endif
 
 #ifndef HAVE_HYPOT
-static double
-npy_hypot(double x, double y)
+double hypot(double x, double y)
 {
     double yx;
 
@@ -135,25 +100,17 @@ npy_hypot(double x, double y)
         return x*sqrt(1.+yx*yx);
     }
 }
-#define hypot npy_hypot
-#else
-double hypot(double x, double y);
 #endif
 
 #ifndef HAVE_ACOSH
-static double
-npy_acosh(double x)
+double acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
-#define acosh npy_acosh
-#else
-double acosh(double x);
 #endif
 
 #ifndef HAVE_ASINH
-static double
-npy_asinh(double xx)
+double asinh(double xx)
 {
     double x, d;
     int sign;
@@ -172,14 +129,10 @@ npy_asinh(double xx)
     }
     return sign*log1p(x*(1.0 + x/(d+1)));
 }
-#define asinh npy_asinh
-#else
-double asinh(double xx);
 #endif
 
 #ifndef HAVE_ATANH
-static double
-npy_atanh(double x)
+double atanh(double x)
 {
     if (x > 0) {
         return -0.5*log1p(-2.0*x/(1.0 + x));
@@ -188,14 +141,10 @@ npy_atanh(double x)
         return 0.5*log1p(2.0*x/(1.0 - x));
     }
 }
-#define atanh npy_atanh
-#else
-double atanh(double x);
 #endif
 
 #ifndef HAVE_RINT
-static double
-npy_rint(double x)
+double rint(double x)
 {
     double y, r;
 
@@ -214,46 +163,31 @@ npy_rint(double x)
     }
     return y;
 }
-#define rint npy_rint
-#else
-double rint(double x);
 #endif
 
 #ifndef HAVE_TRUNC
-static double
-npy_trunc(double x)
+double trunc(double x)
 {
     return x < 0 ? ceil(x) : floor(x);
 }
-#define trunc npy_trunc
-#else
-double trunc(double x);
 #endif
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-static double
-npy_exp2(double x)
+double exp2(double x)
 {
     return exp(LOG2*x);
 }
-#define exp2 npy_exp2
 #undef LOG2
-#else
-double exp2(double x);
 #endif
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-static double
-npy_log2(double x)
+double log2(double x)
 {
     return INVLOG2*log(x);
 }
-#define log2 npy_log2
 #undef INVLOG2
-#else
-double log2(double x);
 #endif
 
 /*
@@ -331,14 +265,10 @@ static int signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@
-npy_@kind@@c@(@type@ x)
+@type@ @kind@@c@(@type@ x)
 {
     return (@type@) @kind@((double)x);
 }
-#define @kind@@c@  npy_@kind@@c@
-#else
-@type@ @kind@@c@(@type@ x);
 #endif
 
 /**end repeat1**/
@@ -351,14 +281,10 @@ npy_@kind@@c@(@type@ x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-static @type@
-npy_@kind@@c@(@type@ x, @type@ y)
+@type@ @kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) @kind@((double)x, (double) y);
 }
-#define @kind@@c@  npy_@kind@@c@
-#else
-@type@ @kind@@c@(@type@ x, @type@ y);
 #endif
 /**end repeat1**/
 
@@ -366,17 +292,13 @@ npy_@kind@@c@(@type@ x, @type@ y)
 #undef modf@c@
 #endif
 #ifndef HAVE_MODF@C@
-static @type@
-npy_modf@c@(@type@ x, @type@ *iptr)
+@type@ modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = modf((double)x, &niptr);
     *iptr = (@type@) niptr;
     return (@type@) y;
 }
-#define modf@c@ npy_modf@c@
-#else
-@type@ modf@c@(@type@ x, @type@ *iptr);
 #endif
 
 /**end repeat**/

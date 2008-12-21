@@ -42,7 +42,7 @@ dist: html
 	perl -pi -e 's#^\s*(<li><a href=".*?">NumPy.*?Manual.*?&raquo;</li>)#<li><a href="/">Numpy and Scipy Documentation</a> &raquo;</li>#;' build/dist/*.html build/dist/*/*.html build/dist/*/*/*.html
 	cd build/html && zip -9r ../dist/numpy-html.zip .
 	cp build/latex/numpy-*.pdf build/dist
-	-cp build/htmlhelp/numpy.chm build/dist
+	-zip build/dist/numpy-chm.zip build/htmlhelp/numpy.chm
 	cd build/dist && tar czf ../dist.tar.gz *
 	chmod ug=rwX,o=rX -R build/dist
 	find build/dist -type d -print0 | xargs -0r chmod g+s
