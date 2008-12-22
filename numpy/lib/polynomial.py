@@ -15,35 +15,12 @@ from numpy.lib.getlimits import finfo
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.shape_base import hstack, atleast_1d
 from numpy.lib.function_base import trim_zeros, sort_complex
-eigvals = None
-lstsq = None
+from numpy.linalg import eigvals, lstsq
 
 class RankWarning(UserWarning):
     """Issued by polyfit when Vandermonde matrix is rank deficient.
     """
     pass
-
-def get_linalg_funcs():
-    "Look for linear algebra functions in numpy"
-    global eigvals, lstsq
-    from numpy.dual import eigvals, lstsq
-    return
-
-def _eigvals(arg):
-    "Return the eigenvalues of the argument"
-    try:
-        return eigvals(arg)
-    except TypeError:
-        get_linalg_funcs()
-        return eigvals(arg)
-
-def _lstsq(X, y, rcond):
-    "Do least squares on the arguments"
-    try:
-        return lstsq(X, y, rcond)
-    except TypeError:
-        get_linalg_funcs()
-        return lstsq(X, y, rcond)
 
 def poly(seq_of_zeros):
     """
@@ -94,7 +71,7 @@ def poly(seq_of_zeros):
     seq_of_zeros = atleast_1d(seq_of_zeros)
     sh = seq_of_zeros.shape
     if len(sh) == 2 and sh[0] == sh[1]:
-        seq_of_zeros = _eigvals(seq_of_zeros)
+        seq_of_zeros = eigvals(seq_of_zeros)
     elif len(sh) ==1:
         pass
     else:
@@ -177,7 +154,7 @@ def roots(p):
         # build companion matrix and find its eigenvalues (the roots)
         A = diag(NX.ones((N-2,), p.dtype), -1)
         A[0, :] = -p[1:] / p[0]
-        roots = _eigvals(A)
+        roots = eigvals(A)
     else:
         roots = NX.array([])
 
@@ -500,7 +477,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
 
     # solve least squares equation for powers of x
     v = vander(x, order)
-    c, resids, rank, s = _lstsq(v, y, rcond)
+    c, resids, rank, s = lstsq(v, y, rcond)
 
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:

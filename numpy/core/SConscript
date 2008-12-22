@@ -1,4 +1,4 @@
-# Last Change: Fri Oct 03 04:00 PM 2008 J
+# Last Change: Sat Nov 29 01:00 AM 2008 J
 # vim:syntax=python
 import os
 import sys
@@ -137,9 +137,9 @@ mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
 mfuncs_defined = dict([(f, 0) for f in mfuncs])
 
 # Check for mandatory funcs: we barf if a single one of those is not there
-    mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-		"floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-		"acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
+mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+		           "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+		           "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
 
 if not config.CheckFuncsAtOnce(mandatory_funcs):
     raise SystemError("One of the required function to build numpy is not"
@@ -159,17 +159,17 @@ def check_funcs(funcs):
 
 # XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
 # python.h... I wish they would clean their public headers someday)
-    optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
-                         "rint", "trunc", "exp2", "log2"]
+optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
+                     "rint", "trunc", "exp2", "log2"]
 
 check_funcs(optional_stdfuncs)
 
 # C99 functions: float and long double versions
-    c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
-                 "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
-                 "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
-                 "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
-                 "exp2", "log2"]
+c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
+             "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
+             "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
+             "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
+             "exp2", "log2"]
 
 for prec in ['l', 'f']:
     fns = [f + prec for f in c99_funcs]

@@ -693,7 +693,7 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_minmax_funcs_with_output(self):
         "Tests the min/max functions with explicit outputs"
         mask = np.random.rand(12).round()
-        xm = array(np.random.uniform(0,10,12),mask=mask)
+        xm = array(np.random.uniform(0,10,12), mask=mask)
         xm.shape = (3,4)
         for funcname in ('min', 'max'):
             # Initialize
@@ -701,11 +701,16 @@ class TestMaskedArrayArithmetic(TestCase):
             mafunc = getattr(numpy.ma.core, funcname)
             # Use the np version
             nout = np.empty((4,), dtype=int)
-            result = npfunc(xm,axis=0,out=nout)
+            try:
+                result = npfunc(xm, axis=0, out=nout)
+            except MaskError:
+                pass
+            nout = np.empty((4,), dtype=float)
+            result = npfunc(xm, axis=0, out=nout)
             self.failUnless(result is nout)
             # Use the ma version
             nout.fill(-999)
-            result = mafunc(xm,axis=0,out=nout)
+            result = mafunc(xm, axis=0, out=nout)
             self.failUnless(result is nout)
 
 
@@ -819,6 +824,7 @@ class TestMaskedArrayArithmetic(TestCase):
             result = xmmeth(axis=0, out=output)
             self.failUnless(result is output)
             self.failUnless(output[0] is masked)
+
 
 #------------------------------------------------------------------------------
 
@@ -1235,22 +1241,131 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
 
     def test_inplace_division_misc(self):
         #
-        x = np.array([1.,1.,1.,-2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
-        y = np.array([5.,0.,3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
-        m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 ,0, 1]
+        x = [1., 1., 1.,-2., pi/2.,  4., 5., -10., 10., 1., 2., 3.]
+        y = [5., 0., 3., 2.,   -1., -4., 0., -10., 10., 1., 0., 3.]
+        m1 = [1,  0,  0,  0,     0,   0, 1,     0,   0,  0,  0, 0]
+        m2 = [0,  0,  1,  0,     0,   1, 1,     0,   0,  0 , 0, 1]
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
         #
         z = xm/ym
         assert_equal(z._mask, [1,1,1,0,0,1,1,0,0,0,1,1])
-        assert_equal(z._data, [0.2,1.,1./3.,-1.,-pi/2.,-1.,5.,1.,1.,1.,2.,1.])
+        assert_equal(z._data, [1.,1.,1.,-1.,-pi/2.,4.,5.,1.,1.,1.,2.,3.])
+        #assert_equal(z._data, [0.2,1.,1./3.,-1.,-pi/2.,-1.,5.,1.,1.,1.,2.,1.])
         #
         xm = xm.copy()
         xm /= ym
         assert_equal(xm._mask, [1,1,1,0,0,1,1,0,0,0,1,1])
-        assert_equal(xm._data, [1/5.,1.,1./3.,-1.,-pi/2.,-1.,5.,1.,1.,1.,2.,1.])
+        assert_equal(z._data, [1.,1.,1.,-1.,-pi/2.,4.,5.,1.,1.,1.,2.,3.])
+        #assert_equal(xm._data, [1/5.,1.,1./3.,-1.,-pi/2.,-1.,5.,1.,1.,1.,2.,1.])
 
+
+    def test_datafriendly_add(self):
+        "Test keeping data w/ (inplace) addition"
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        # Test add w/ scalar
+        xx = x + 1
+        assert_equal(xx.data, [2, 3, 3])
+        assert_equal(xx.mask, [0, 0, 1])
+        # Test iadd w/ scalar
+        x += 1
+        assert_equal(x.data, [2, 3, 3])
+        assert_equal(x.mask, [0, 0, 1])
+        # Test add w/ array
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        xx = x + array([1, 2, 3], mask=[1, 0, 0])
+        assert_equal(xx.data, [1, 4, 3])
+        assert_equal(xx.mask, [1, 0, 1])
+        # Test iadd w/ array
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        x += array([1, 2, 3], mask=[1, 0, 0])
+        assert_equal(x.data, [1, 4, 3])
+        assert_equal(x.mask, [1, 0, 1])
+
+
+    def test_datafriendly_sub(self):
+        "Test keeping data w/ (inplace) subtraction"
+        # Test sub w/ scalar
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        xx = x - 1
+        assert_equal(xx.data, [0, 1, 3])
+        assert_equal(xx.mask, [0, 0, 1])
+        # Test isub w/ scalar
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        x -= 1
+        assert_equal(x.data, [0, 1, 3])
+        assert_equal(x.mask, [0, 0, 1])
+        # Test sub w/ array
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        xx = x - array([1, 2, 3], mask=[1, 0, 0])
+        assert_equal(xx.data, [1, 0, 3])
+        assert_equal(xx.mask, [1, 0, 1])
+        # Test isub w/ array
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        x -= array([1, 2, 3], mask=[1, 0, 0])
+        assert_equal(x.data, [1, 0, 3])
+        assert_equal(x.mask, [1, 0, 1])
+
+
+    def test_datafriendly_mul(self):
+        "Test keeping data w/ (inplace) multiplication"
+        # Test mul w/ scalar
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        xx = x * 2
+        assert_equal(xx.data, [2, 4, 3])
+        assert_equal(xx.mask, [0, 0, 1])
+        # Test imul w/ scalar
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        x *= 2
+        assert_equal(x.data, [2, 4, 3])
+        assert_equal(x.mask, [0, 0, 1])
+        # Test mul w/ array
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        xx = x * array([10, 20, 30], mask=[1, 0, 0])
+        assert_equal(xx.data, [1, 40, 3])
+        assert_equal(xx.mask, [1, 0, 1])
+        # Test imul w/ array
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        x *= array([10, 20, 30], mask=[1, 0, 0])
+        assert_equal(x.data, [1, 40, 3])
+        assert_equal(x.mask, [1, 0, 1])
+
+
+    def test_datafriendly_div(self):
+        "Test keeping data w/ (inplace) division"
+        # Test div on scalar
+        x = array([1, 2, 3], mask=[0, 0, 1])
+        xx = x / 2.
+        assert_equal(xx.data, [1/2., 2/2., 3])
+        assert_equal(xx.mask, [0, 0, 1])
+        # Test idiv on scalar
+        x = array([1., 2., 3.], mask=[0, 0, 1])
+        x /= 2.
+        assert_equal(x.data, [1/2., 2/2., 3])
+        assert_equal(x.mask, [0, 0, 1])
+        # Test div on array
+        x = array([1., 2., 3.], mask=[0, 0, 1])
+        xx = x / array([10., 20., 30.], mask=[1, 0, 0])
+        assert_equal(xx.data, [1., 2./20., 3.])
+        assert_equal(xx.mask, [1, 0, 1])
+        # Test idiv on array
+        x = array([1., 2., 3.], mask=[0, 0, 1])
+        x /= array([10., 20., 30.], mask=[1, 0, 0])
+        assert_equal(x.data, [1., 2/20., 3.])
+        assert_equal(x.mask, [1, 0, 1])
+
+
+    def test_datafriendly_pow(self):
+        "Test keeping data w/ (inplace) power"
+        # Test pow on scalar
+        x = array([1., 2., 3.], mask=[0, 0, 1])
+        xx = x ** 2.5
+        assert_equal(xx.data, [1., 2.**2.5, 3.])
+        assert_equal(xx.mask, [0, 0, 1])
+        # Test ipow on scalar
+        x **= 2.5
+        assert_equal(x.data, [1., 2.**2.5, 3])
+        assert_equal(x.mask, [0, 0, 1])
 
 #------------------------------------------------------------------------------
 
@@ -1952,6 +2067,22 @@ class TestMaskArrayMathMethod(TestCase):
             _ = method(out=nout, ddof=1)
             self.failUnless(np.isnan(nout))
 
+
+    def test_diag(self):
+        "Test diag"
+        x = arange(9).reshape((3,3))
+        x[1,1] = masked
+        out = np.diag(x)
+        assert_equal(out, [0, 4, 8])
+        out = diag(x)
+        assert_equal(out, [0, 4, 8])
+        assert_equal(out.mask, [0, 1, 0])
+        out = diag(out)
+        control = array([[0, 0, 0], [0, 4, 0], [0, 0, 8]], 
+                        mask = [[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+        assert_equal(out, control)
+
+
 #------------------------------------------------------------------------------
 
 class TestMaskedArrayMathMethodsComplex(TestCase):
@@ -2132,8 +2263,8 @@ class TestMaskedArrayFunctions(TestCase):
 
     def test_power(self):
         x = -1.1
-        assert_almost_equal(power(x,2.), 1.21)
-        self.failUnless(power(x,masked) is masked)
+        assert_almost_equal(power(x, 2.), 1.21)
+        self.failUnless(power(x, masked) is masked)
         x = array([-1.1,-1.1,1.1,1.1,0.])
         b = array([0.5,2.,0.5,2.,-1.], mask=[0,0,0,0,1])
         y = power(x,b)
@@ -2312,17 +2443,31 @@ class TestMaskedArrayFunctions(TestCase):
 
     def test_make_mask_descr(self):
         "Test make_mask_descr"
+        # Flexible
         ntype = [('a',np.float), ('b',np.float)]
         test = make_mask_descr(ntype)
         assert_equal(test, [('a',np.bool),('b',np.bool)])
-        #
+        # Standard w/ shape
         ntype = (np.float, 2)
         test = make_mask_descr(ntype)
         assert_equal(test, (np.bool,2))
-        #
+        # Standard standard
         ntype = np.float
         test = make_mask_descr(ntype)
         assert_equal(test, np.dtype(np.bool))
+        # Nested
+        ntype = [('a', np.float), ('b', [('ba', np.float), ('bb', np.float)])]
+        test = make_mask_descr(ntype)
+        control = np.dtype([('a', 'b1'), ('b', [('ba', 'b1'), ('bb', 'b1')])])
+        assert_equal(test, control)
+        # Named+ shape
+        ntype = [('a', (np.float, 2))]
+        test = make_mask_descr(ntype)
+        assert_equal(test, np.dtype([('a', (np.bool, 2))]))
+        # 2 names
+        ntype = [(('A', 'a'), float)]
+        test = make_mask_descr(ntype)
+        assert_equal(test, np.dtype([(('A', 'a'), bool)]))
 
 
     def test_make_mask(self):
@@ -2387,6 +2532,24 @@ class TestMaskedArrayFunctions(TestCase):
         except ValueError:
             pass
 
+
+    def test_flatten_mask(self):
+        "Tests flatten mask"
+        # Standarad dtype
+        mask = np.array([0, 0, 1], dtype=np.bool)
+        assert_equal(flatten_mask(mask), mask)
+        # Flexible dtype
+        mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])
+        test = flatten_mask(mask)
+        control = np.array([0, 0, 0, 1], dtype=bool)
+        assert_equal(test, control)
+        
+        mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
+        data = [(0, (0, 0)), (0, (0, 1))]
+        mask = np.array(data, dtype=mdtype)
+        test = flatten_mask(mask)
+        control = np.array([ 0, 0, 0, 0, 0, 1], dtype=bool)
+        assert_equal(test, control)
 
 #------------------------------------------------------------------------------
 

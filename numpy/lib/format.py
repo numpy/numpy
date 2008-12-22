@@ -381,7 +381,7 @@ def read_array(fp):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-    fortran_order=False, version=(1,0)):
+                fortran_order=False, version=(1,0)):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -390,7 +390,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     Parameters
     ----------
     filename : str
-        The name of the file on disk. This may not be a filelike object.
+        The name of the file on disk. This may not be a file-like object.
     mode : str, optional
         The mode to open the file with. In addition to the standard file modes,
         'c' is also accepted to mean "copy on write". See `numpy.memmap` for
@@ -425,6 +425,10 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     numpy.memmap
 
     """
+    if not isinstance(filename, basestring):
+        raise ValueError("Filename must be a string.  Memmap cannot use" \
+                         " existing file handles.")
+
     if 'w' in mode:
         # We are creating the file, not reading it.
         # Check if we ought to create the file.

@@ -1,0 +1,41 @@
+=========================
+NumPy 1.3.0 Release Notes
+=========================
+
+This minor release comes almost four months after the 1.1.0 release.
+
+Changes
+-------
+
+Generalized ufuncs
+~~~~~~~~~~~~~~~~~~
+
+http://projects.scipy.org/scipy/numpy/ticket/887
+
+Refactoring numpy.core math configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/math_config_clean.txt
+
+Improvements to build warnings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/warnfix.txt
+
+Python 2.6 support
+~~~~~~~~~~~~~~~~~~
+
+http://www.python.org/dev/peps/pep-0361/
+
+Histogram
+~~~~~~~~~
+
+The semantics of histogram has been modified to fix long-standing issues
+with outliers handling. The main changes concern
+
+#. the definition of the bin edges, now including the rightmost edge, and
+#. the handling of upper outliers, now ignored rather than tallied in the
+   rightmost bin.
+
+The previous behavior is still accessible using `new=False`, but is scheduled
+to be deprecated in the next release (1.3).

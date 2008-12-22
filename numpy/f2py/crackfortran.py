@@ -2446,9 +2446,9 @@ def crack2fortrangen(block,tab='\n'):
     global skipfuncs, onlyfuncs
     setmesstext(block)
     ret=''
-    if type(block) is type([]):
+    if isinstance(block, list):
         for g in block:
-            if g['block'] in ['function','subroutine']:
+            if g and g['block'] in ['function','subroutine']:
                 if g['name'] in skipfuncs:
                     continue
                 if onlyfuncs and g['name'] not in onlyfuncs:

@@ -7,10 +7,10 @@ Show a summary about which Numpy functions are documented and which are not.
 """
 
 import os, glob, re, sys, inspect, optparse
-sys.path.append(os.path.join(os.path.dirname(__file__), 'ext'))
-from ext.phantom_import import import_phantom_module
+sys.path.append(os.path.join(os.path.dirname(__file__), 'sphinxext'))
+from sphinxext.phantom_import import import_phantom_module
 
-from ext.autosummary_generate import get_documented
+from sphinxext.autosummary_generate import get_documented
 
 CUR_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(CUR_DIR, 'source', 'reference')
@@ -56,6 +56,8 @@ ctypeslib ctypeslib.test
 
 def main():
     p = optparse.OptionParser(__doc__)
+    p.add_option("-c", "--columns", action="store", type="int", dest="cols",
+                 default=3, help="Maximum number of columns")
     options, args = p.parse_args()
 
     if len(args) != 0:
@@ -84,13 +86,13 @@ def main():
             print "--- %s\n" % filename
         last_filename = filename
         print " ** ", section
-        print format_in_columns(sorted(names))
+        print format_in_columns(sorted(names), options.cols)
         print "\n"
 
     print ""
     print "Undocumented"
     print "============\n"
-    print format_in_columns(sorted(undocumented.keys()))
+    print format_in_columns(sorted(undocumented.keys()), options.cols)
 
 def check_numpy():
     documented = get_documented(glob.glob(SOURCE_DIR + '/*.rst'))
@@ -141,7 +143,7 @@ def get_undocumented(documented, module, module_name=None, skip=[]):
     
     return undocumented
 
-def format_in_columns(lst):
+def format_in_columns(lst, max_columns):
     """
     Format a list containing strings to a string containing the items
     in columns.
@@ -149,7 +151,9 @@ def format_in_columns(lst):
     lst = map(str, lst)
     col_len = max(map(len, lst)) + 2
     ncols = 80//col_len
-    if ncols == 0:
+    if ncols > max_columns:
+        ncols = max_columns
+    if ncols <= 0:
         ncols = 1
 
     if len(lst) % ncols == 0:

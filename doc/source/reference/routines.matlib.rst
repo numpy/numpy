@@ -8,4 +8,4 @@ the following replacement functions that return :class:`matrices
 <matrix>` instead of :class:`ndarrays <ndarray>`.
 
 .. automodule:: numpy.matlib
-   :members:
+

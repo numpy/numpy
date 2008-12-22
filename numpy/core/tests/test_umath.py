@@ -404,7 +404,7 @@ class TestComplexFunctions(object):
         if sys.version_info < (2,5,3):
             broken_cmath_asinh = True
 
-        points = [-2, 2j, 2, -2j, -1-1j, -1+1j, +1-1j, +1+1j]
+        points = [-1-1j, -1+1j, +1-1j, +1+1j]
         name_map = {'arcsin': 'asin', 'arccos': 'acos', 'arctan': 'atan',
                     'arcsinh': 'asinh', 'arccosh': 'acosh', 'arctanh': 'atanh'}
         atol = 4*np.finfo(np.complex).eps

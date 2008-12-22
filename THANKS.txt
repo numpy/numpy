@@ -35,15 +35,17 @@ Albert Strasheim for documentation, bug-fixes, regression tests and
     Valgrind expertise.
 David Cournapeau for build support, doc-and-bug fixes, and code
     contributions including fast_clipping.
-Jarrod Millman for release management, community coordination,
-    and cheerleading.
+Jarrod Millman for release management, community coordination, and code
+    clean up.
 Chris Burns for work on memory mapped arrays and bug-fixes.
 Pauli Virtanen for documentation, bug-fixes, lookfor and the
-     documentation editor.
+    documentation editor.
 A.M. Archibald for no-copy-reshape code, strided array tricks,
-     documentation and bug-fixes.
+    documentation and bug-fixes.
 Pierre Gerard-Marchant for rewriting masked array functionality.
 Roberto de Almeida for the buffered array iterator.
+Alan McIntyre for updating the NumPy test framework to use nose, improve
+    the test coverage, and enhancing the test system documentation 
 
 NumPy is based on the Numeric (Jim Hugunin, Paul Dubois, Konrad
 Hinsen, and David Ascher) and NumArray (Perry Greenfield, J Todd

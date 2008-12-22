@@ -16,15 +16,15 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'column_stack','compress_cols','compress_rowcols', 'compress_rows',
            'count_masked', 'corrcoef', 'cov',
            'diagflat', 'dot','dstack',
-           'ediff1d','expand_dims',
-           'flatnotmasked_contiguous','flatnotmasked_edges',
-           'hsplit','hstack',
-           'mask_cols','mask_rowcols','mask_rows','masked_all','masked_all_like',
-           'median','mr_',
-           'notmasked_contiguous','notmasked_edges',
+           'ediff1d',
+           'flatnotmasked_contiguous', 'flatnotmasked_edges',
+           'hsplit', 'hstack',
+           'mask_cols', 'mask_rowcols', 'mask_rows', 'masked_all',
+           'masked_all_like', 'median', 'mr_',
+           'notmasked_contiguous', 'notmasked_edges',
            'polyfit',
            'row_stack',
-           'vander','vstack',
+           'vander', 'vstack',
            ]
 
 from itertools import groupby
@@ -32,15 +32,15 @@ import warnings
 
 import core as ma
 from core import MaskedArray, MAError, add, array, asarray, concatenate, count,\
-    filled, getmask, getmaskarray, masked, masked_array, mask_or, nomask, ones,\
-    sort, zeros
+    filled, getmask, getmaskarray, make_mask_descr, masked, masked_array,\
+    mask_or, nomask, ones, sort, zeros
 #from core import *
 
 import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
 from numpy.lib.index_tricks import AxisConcatenator
-from numpy.lib.polynomial import _lstsq
+from numpy.linalg import lstsq
 
 #...............................................................................
 def issequence(seq):
@@ -77,7 +77,7 @@ def masked_all(shape, dtype=float):
 
     """
     a = masked_array(np.empty(shape, dtype),
-                     mask=np.ones(shape, bool))
+                     mask=np.ones(shape, make_mask_descr(dtype)))
     return a
 
 def masked_all_like(arr):
@@ -85,8 +85,8 @@ def masked_all_like(arr):
     the array `a`, where all the data are masked.
 
     """
-    a = masked_array(np.empty_like(arr),
-                     mask=np.ones(arr.shape, bool))
+    a = np.empty_like(arr).view(MaskedArray)
+    a._mask = np.ones(a.shape, dtype=make_mask_descr(a.dtype))
     return a
 
 
@@ -102,11 +102,13 @@ class _fromnxfunction:
 
     def getdoc(self):
         "Retrieves the __doc__ string from the function."
-        inidoc = getattr(np, self.__name__).__doc__
-        if inidoc:
+        npfunc = getattr(np, self.__name__, None)
+        doc = getattr(npfunc, '__doc__', None)
+        if doc:
+            sig = self.__name__ + ma.get_object_signature(npfunc)
             locdoc = "Notes\n-----\nThe function is applied to both the _data"\
                      " and the _mask, if any."
-            return '\n'.join((inidoc, locdoc))
+            return '\n'.join((sig, doc, locdoc))
         return
 
 
@@ -147,16 +149,6 @@ hsplit = _fromnxfunction('hsplit')
 
 diagflat = _fromnxfunction('diagflat')
 
-def expand_dims(a, axis):
-    """Expands the shape of a by including newaxis before axis.
-    """
-    if not isinstance(a, MaskedArray):
-        return np.expand_dims(a, axis)
-    elif getmask(a) is nomask:
-        return np.expand_dims(a, axis).view(MaskedArray)
-    m = getmaskarray(a)
-    return masked_array(np.expand_dims(a, axis),
-                        mask=np.expand_dims(m, axis))
 
 #####--------------------------------------------------------------------------
 #----
@@ -172,9 +164,8 @@ def flatten_inplace(seq):
 
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
-    """Execute func1d(arr[i],*args) where func1d takes 1-D arrays and
-    arr is an N-d array.  i varies so as to apply the function along
-    the given axis for each 1-d subarray in arr.
+    """
+    (This docstring should be overwritten)
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
@@ -257,6 +248,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         result = asarray(outarr, dtype=max_dtypes)
         result.fill_value = ma.default_fill_value(result)
     return result
+apply_along_axis.__doc__ = np.apply_along_axis.__doc__
+
 
 def average(a, axis=None, weights=None, returned=False):
     """Average the array over the given axis.
@@ -446,23 +439,25 @@ def median(a, axis=None, out=None, overwrite_input=False):
 
 #..............................................................................
 def compress_rowcols(x, axis=None):
-    """Suppress the rows and/or columns of a 2D array that contains
+    """
+    Suppress the rows and/or columns of a 2D array that contains
     masked values.
 
     The suppression behavior is selected with the `axis`parameter.
+
         - If axis is None, rows and columns are suppressed.
         - If axis is 0, only rows are suppressed.
         - If axis is 1 or -1, only columns are suppressed.
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
+    axis : int, optional
+        Axis along which to perform the operation.
+        If None, applies to a flattened version of the array.
 
     Returns
     -------
-        compressed_array : an ndarray.
+    compressed_array : an ndarray.
 
     """
     x = asarray(x)
@@ -499,9 +494,10 @@ def compress_cols(a):
     return compress_rowcols(a, 1)
 
 def mask_rowcols(a, axis=None):
-    """Mask whole rows and/or columns of a 2D array that contain
+    """
+    Mask whole rows and/or columns of a 2D array that contain
     masked values.  The masking behavior is selected with the
-    `axis`parameter.
+    `axis` parameter.
 
         - If axis is None, rows and columns are masked.
         - If axis is 0, only rows are masked.
@@ -509,13 +505,13 @@ def mask_rowcols(a, axis=None):
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
+    axis : int, optional
+        Axis along which to perform the operation.
+        If None, applies to a flattened version of the array.
 
     Returns
     -------
-         a *pure* ndarray.
+     a *pure* ndarray.
 
     """
     a = asarray(a)
@@ -996,128 +992,20 @@ def notmasked_contiguous(a, axis=None):
 #####--------------------------------------------------------------------------
 
 def vander(x, n=None):
-    """%s
-    Notes
-    -----
-        Masked values in x will result in rows of zeros.
+    """
+    Masked values in the input array result in rows of zeros.
     """
     _vander = np.vander(x, n)
     m = getmask(x)
     if m is not nomask:
         _vander[m] = 0
     return _vander
+vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
 
 
 def polyfit(x, y, deg, rcond=None, full=False):
     """
-    Least squares polynomial fit.
-
-    Do a best fit polynomial of degree 'deg' of 'x' to 'y'.  Return value is a
-    vector of polynomial coefficients [pk ... p1 p0].  Eg, for ``deg = 2``::
-
-        p2*x0^2 +  p1*x0 + p0 = y1
-        p2*x1^2 +  p1*x1 + p0 = y1
-        p2*x2^2 +  p1*x2 + p0 = y2
-        .....
-        p2*xk^2 +  p1*xk + p0 = yk
-
-    Parameters
-    ----------
-    x : array_like
-        1D vector of sample points.
-    y : array_like
-        1D vector or 2D array of values to fit. The values should run down the
-        columns in the 2D case.
-    deg : integer
-        Degree of the fitting polynomial
-    rcond: {None, float}, optional
-        Relative condition number of the fit. Singular values smaller than this
-        relative to the largest singular value will be ignored. The defaul value
-        is len(x)*eps, where eps is the relative precision of the float type,
-        about 2e-16 in most cases.
-    full : {False, boolean}, optional
-        Switch determining nature of return value. When it is False just the
-        coefficients are returned, when True diagnostic information from the
-        singular value decomposition is also returned.
-
-    Returns
-    -------
-    coefficients, [residuals, rank, singular_values, rcond] : variable
-        When full=False, only the coefficients are returned, running down the
-        appropriate colume when y is a 2D array. When full=True, the rank of the
-        scaled Vandermonde matrix, its effective rank in light of the rcond
-        value, its singular values, and the specified value of rcond are also
-        returned.
-
-    Warns
-    -----
-    RankWarning : if rank is reduced and not full output
-        The warnings can be turned off by:
-        >>> import warnings
-        >>> warnings.simplefilter('ignore',np.RankWarning)
-
-
-    See Also
-    --------
-    polyval : computes polynomial values.
-
-    Notes
-    -----
-    If X is a the Vandermonde Matrix computed from x (see
-    http://mathworld.wolfram.com/VandermondeMatrix.html), then the
-    polynomial least squares solution is given by the 'p' in
-
-        X*p = y
-
-    where X.shape is a matrix of dimensions (len(x), deg + 1), p is a vector of
-    dimensions (deg + 1, 1), and y is a vector of dimensions (len(x), 1).
-
-    This equation can be solved as
-
-        p = (XT*X)^-1 * XT * y
-
-    where XT is the transpose of X and -1 denotes the inverse. However, this
-    method is susceptible to rounding errors and generally the singular value
-    decomposition of the matrix X is preferred and that is what is done here.
-    The singular value method takes a paramenter, 'rcond', which sets a limit on
-    the relative size of the smallest singular value to be used in solving the
-    equation. This may result in lowering the rank of the Vandermonde matrix, in
-    which case a RankWarning is issued. If polyfit issues a RankWarning, try a
-    fit of lower degree or replace x by x - x.mean(), both of which will
-    generally improve the condition number. The routine already normalizes the
-    vector x by its maximum absolute value to help in this regard. The rcond
-    parameter can be set to a value smaller than its default, but the resulting
-    fit may be spurious. The current default value of rcond is len(x)*eps, where
-    eps is the relative precision of the floating type being used, generally
-    around 1e-7 and 2e-16 for IEEE single and double precision respectively.
-    This value of rcond is fairly conservative but works pretty well when x -
-    x.mean() is used in place of x.
-
-
-    DISCLAIMER: Power series fits are full of pitfalls for the unwary once the
-    degree of the fit becomes large or the interval of sample points is badly
-    centered. The problem is that the powers x**n are generally a poor basis for
-    the polynomial functions on the sample interval, resulting in a Vandermonde
-    matrix is ill conditioned and coefficients sensitive to rounding erros. The
-    computation of the polynomial values will also sensitive to rounding errors.
-    Consequently, the quality of the polynomial fit should be checked against
-    the data whenever the condition number is large.  The quality of polynomial
-    fits *can not* be taken for granted. If all you want to do is draw a smooth
-    curve through the y values and polyfit is not doing the job, try centering
-    the sample range or look into scipy.interpolate, which includes some nice
-    spline fitting functions that may be of use.
-
-    For more info, see
-    http://mathworld.wolfram.com/LeastSquaresFittingPolynomial.html,
-    but note that the k's and n's in the superscripts and subscripts
-    on that page.  The linear algebra is correct, however.
-
-
-
-    Notes
-    -----
-        Any masked values in x is propagated in y, and vice-versa.
-
+    Any masked values in x is propagated in y, and vice-versa.
     """
     order = int(deg) + 1
     x = asarray(x)
@@ -1145,7 +1033,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
         x = x / scale
     # solve least squares equation for powers of x
     v = vander(x, order)
-    c, resids, rank, s = _lstsq(v, y.filled(0), rcond)
+    c, resids, rank, s = lstsq(v, y.filled(0), rcond)
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         warnings.warn("Polyfit may be poorly conditioned", np.RankWarning)
@@ -1159,5 +1047,6 @@ def polyfit(x, y, deg, rcond=None, full=False):
         return c, resids, rank, s, rcond
     else :
         return c
+polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)
 
 ################################################################################

@@ -10,6 +10,7 @@ from numpy.distutils.misc_util import msvc_runtime_library
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
+TARGET_R = re.compile("Target: ([a-zA-Z0-9_\-]*)")
 class GnuFCompiler(FCompiler):
     compiler_type = 'gnu'
     compiler_aliases = ('g77',)
@@ -130,10 +131,10 @@ class GnuFCompiler(FCompiler):
                 # if windows and not cygwin, libg2c lies in a different folder
                 if sys.platform == 'win32' and not d.startswith('/usr/lib'):
                     d = os.path.normpath(d)
-                    if not os.path.exists(os.path.join(d, 'libg2c.a')):
+                    if not os.path.exists(os.path.join(d, "lib%s.a" % self.g2c)):
                         d2 = os.path.abspath(os.path.join(d,
                                                           '../../../../lib'))
-                        if os.path.exists(os.path.join(d2, 'libg2c.a')):
+                        if os.path.exists(os.path.join(d2, "lib%s.a" % self.g2c)):
                             opt.append(d2)
                 opt.append(d)
         return opt
@@ -269,11 +270,43 @@ class Gnu95FCompiler(GnuFCompiler):
         flags = GnuFCompiler.get_flags_linker_so(self)
         return self._add_arches_for_universal_build(flags)
 
+    def get_library_dirs(self):
+        opt = GnuFCompiler.get_library_dirs(self)
+	if sys.platform == 'win32':
+	    c_compiler = self.c_compiler
+	    if c_compiler and c_compiler.compiler_type == "msvc":
+		target = self.get_target()
+		if target:
+                    d = os.path.normpath(self.get_libgcc_dir())
+		    root = os.path.join(d, os.pardir, os.pardir, os.pardir, os.pardir)
+		    mingwdir = os.path.normpath(os.path.join(root, target, "lib"))
+		    full = os.path.join(mingwdir, "libmingwex.a")
+		    if os.path.exists(full):
+			opt.append(mingwdir)
+	return opt
+
     def get_libraries(self):
         opt = GnuFCompiler.get_libraries(self)
         if sys.platform == 'darwin':
             opt.remove('cc_dynamic')
+	if sys.platform == 'win32':
+	    c_compiler = self.c_compiler
+	    if c_compiler and c_compiler.compiler_type == "msvc":
+		if "gcc" in opt:
+		    i = opt.index("gcc")
+		    opt.insert(i+1, "mingwex")
+		    opt.insert(i+1, "mingw32")
         return opt
+
+    def get_target(self):
+        status, output = exec_command(self.compiler_f77 +
+                                      ['-v'],
+                                      use_tee=0)
+        if not status:
+	    m = TARGET_R.search(output)
+	    if m:
+	        return m.group(1)	
+        return ""
 
 if __name__ == '__main__':
     from distutils import log

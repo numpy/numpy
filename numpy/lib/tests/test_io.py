@@ -2,55 +2,90 @@ from numpy.testing import *
 import numpy as np
 import StringIO
 
+from tempfile import NamedTemporaryFile
 
 class RoundtripTest:
+    def roundtrip(self, save_func, *args, **kwargs):
+        """
+        save_func : callable
+            Function used to save arrays to file.
+        file_on_disk : bool
+            If true, store the file on disk, instead of in a
+            string buffer.
+        save_kwds : dict
+            Parameters passed to `save_func`.
+        load_kwds : dict
+            Parameters passed to `numpy.load`.
+        args : tuple of arrays
+            Arrays stored to file.
+
+        """
+        save_kwds = kwargs.get('save_kwds', {})
+        load_kwds = kwargs.get('load_kwds', {})
+        file_on_disk = kwargs.get('file_on_disk', False)
+
+        if file_on_disk:
+            target_file = NamedTemporaryFile()
+            load_file = target_file.name
+        else:
+            target_file = StringIO.StringIO()
+            load_file = target_file
+
+        arr = args
+
+        save_func(target_file, *arr, **save_kwds)
+        target_file.flush()
+        target_file.seek(0)
+
+        arr_reloaded = np.load(load_file, **load_kwds)
+
+        self.arr = arr
+        self.arr_reloaded = arr_reloaded
+
     def test_array(self):
-        a = np.array( [[1,2],[3,4]], float)
-        self.do(a)
+        a = np.array([[1, 2], [3, 4]], float)
+        self.roundtrip(a)
 
-        a = np.array( [[1,2],[3,4]], int)
-        self.do(a)
+        a = np.array([[1, 2], [3, 4]], int)
+        self.roundtrip(a)
 
-        a = np.array( [[1+5j,2+6j],[3+7j,4+8j]], dtype=np.csingle)
-        self.do(a)
+        a = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.csingle)
+        self.roundtrip(a)
 
-        a = np.array( [[1+5j,2+6j],[3+7j,4+8j]], dtype=np.cdouble)
-        self.do(a)
+        a = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.cdouble)
+        self.roundtrip(a)
 
     def test_1D(self):
-        a = np.array([1,2,3,4], int)
-        self.do(a)
+        a = np.array([1, 2, 3, 4], int)
+        self.roundtrip(a)
+
+    def test_mmap(self):
+        a = np.array([[1, 2.5], [4, 7.3]])
+        self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
 
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
-        self.do(a)
+        self.roundtrip(a)
 
 class TestSaveLoad(RoundtripTest, TestCase):
-    def do(self, a):
-        c = StringIO.StringIO()
-        np.save(c, a)
-        c.seek(0)
-        a_reloaded = np.load(c)
-        assert_equal(a, a_reloaded)
-
+    def roundtrip(self, *args, **kwargs):
+        RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
+        assert_equal(self.arr[0], self.arr_reloaded)
 
 class TestSavezLoad(RoundtripTest, TestCase):
-    def do(self, *arrays):
-        c = StringIO.StringIO()
-        np.savez(c, *arrays)
-        c.seek(0)
-        l = np.load(c)
-        for n, a in enumerate(arrays):
-            assert_equal(a, l['arr_%d' % n])
+    def roundtrip(self, *args, **kwargs):
+        RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+        for n, arr in enumerate(self.arr):
+            assert_equal(arr, self.arr_reloaded['arr_%d' % n])
 
     def test_multiple_arrays(self):
-        a = np.array( [[1,2],[3,4]], float)
-        b = np.array( [[1+2j,2+7j],[3-6j,4+12j]], complex)
-        self.do(a,b)
+        a = np.array([[1, 2], [3, 4]], float)
+        b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
+        self.roundtrip(a,b)
 
     def test_named_arrays(self):
-        a = np.array( [[1,2],[3,4]], float)
-        b = np.array( [[1+2j,2+7j],[3-6j,4+12j]], complex)
+        a = np.array([[1, 2], [3, 4]], float)
+        b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
         c = StringIO.StringIO()
         np.savez(c, file_a=a, file_b=b)
         c.seek(0)
@@ -61,7 +96,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
 
 class TestSaveTxt(TestCase):
     def test_array(self):
-        a =np.array( [[1,2],[3,4]], float)
+        a =np.array([[1, 2], [3, 4]], float)
         c = StringIO.StringIO()
         np.savetxt(c, a)
         c.seek(0)
@@ -69,14 +104,14 @@ class TestSaveTxt(TestCase):
                ['1.000000000000000000e+00 2.000000000000000000e+00\n',
                 '3.000000000000000000e+00 4.000000000000000000e+00\n'])
 
-        a =np.array( [[1,2],[3,4]], int)
+        a =np.array([[1, 2], [3, 4]], int)
         c = StringIO.StringIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), ['1 2\n', '3 4\n'])
 
     def test_1D(self):
-        a = np.array([1,2,3,4], int)
+        a = np.array([1, 2, 3, 4], int)
         c = StringIO.StringIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
@@ -146,12 +181,12 @@ class TestLoadTxt(TestCase):
 
         c.seek(0)
         x = np.loadtxt(c, dtype=int)
-        a = np.array([[1,2],[3,4]], int)
+        a = np.array([[1, 2], [3, 4]], int)
         assert_array_equal(x, a)
 
         c.seek(0)
         x = np.loadtxt(c, dtype=float)
-        a = np.array([[1,2],[3,4]], float)
+        a = np.array([[1, 2], [3, 4]], float)
         assert_array_equal(x, a)
 
     def test_1D(self):
@@ -159,14 +194,14 @@ class TestLoadTxt(TestCase):
         c.write('1\n2\n3\n4\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int)
-        a = np.array([1,2,3,4], int)
+        a = np.array([1, 2, 3, 4], int)
         assert_array_equal(x, a)
 
         c = StringIO.StringIO()
         c.write('1,2,3,4\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',')
-        a = np.array([1,2,3,4], int)
+        a = np.array([1, 2, 3, 4], int)
         assert_array_equal(x, a)
 
     def test_missing(self):
@@ -175,7 +210,7 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             converters={3:lambda s: int(s or -999)})
-        a = np.array([1,2,3,-999,5], int)
+        a = np.array([1, 2, 3, -999, 5], int)
         assert_array_equal(x, a)
 
     def test_converters_with_usecols(self):
@@ -184,8 +219,8 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             converters={3:lambda s: int(s or -999)}, \
-            usecols=(1, 3, ))
-        a = np.array([[2,  -999],[7, 9]], int)
+            usecols=(1, 3,))
+        a = np.array([[2, -999], [7, 9]], int)
         assert_array_equal(x, a)
 
     def test_comments(self):
@@ -194,7 +229,7 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             comments='#')
-        a = np.array([1,2,3,5], int)
+        a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
     def test_skiprows(self):
@@ -203,7 +238,7 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             skiprows=1)
-        a = np.array([1,2,3,5], int)
+        a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
         c = StringIO.StringIO()
@@ -211,28 +246,28 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             skiprows=1)
-        a = np.array([1,2,3,5], int)
+        a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
     def test_usecols(self):
-        a =np.array( [[1,2],[3,4]], float)
+        a = np.array([[1, 2], [3, 4]], float)
         c = StringIO.StringIO()
         np.savetxt(c, a)
         c.seek(0)
         x = np.loadtxt(c, dtype=float, usecols=(1,))
         assert_array_equal(x, a[:,1])
 
-        a =np.array( [[1,2,3],[3,4,5]], float)
+        a =np.array([[1, 2, 3], [3, 4, 5]], float)
         c = StringIO.StringIO()
         np.savetxt(c, a)
         c.seek(0)
-        x = np.loadtxt(c, dtype=float, usecols=(1,2))
-        assert_array_equal(x, a[:,1:])
+        x = np.loadtxt(c, dtype=float, usecols=(1, 2))
+        assert_array_equal(x, a[:, 1:])
 
         # Testing with arrays instead of tuples.
         c.seek(0)
-        x = np.loadtxt(c, dtype=float, usecols=np.array([1,2]))
-        assert_array_equal(x, a[:,1:])
+        x = np.loadtxt(c, dtype=float, usecols=np.array([1, 2]))
+        assert_array_equal(x, a[:, 1:])
 
         # Checking with dtypes defined converters.
         data = '''JOE 70.1 25.3
@@ -241,9 +276,9 @@ class TestLoadTxt(TestCase):
         c = StringIO.StringIO(data)
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
-        arr = np.loadtxt(c, usecols=(0,2),dtype=zip(names,dtypes))
-        assert_equal(arr['stid'],  ["JOE",  "BOB"])
-        assert_equal(arr['temp'],  [25.3,  27.9])
+        arr = np.loadtxt(c, usecols=(0, 2), dtype=zip(names, dtypes))
+        assert_equal(arr['stid'], ["JOE",  "BOB"])
+        assert_equal(arr['temp'], [25.3,  27.9])
 
     def test_fancy_dtype(self):
         c = StringIO.StringIO()
@@ -251,7 +286,7 @@ class TestLoadTxt(TestCase):
         c.seek(0)
         dt = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
         x = np.loadtxt(c, dtype=dt, delimiter=',')
-        a = np.array([(1,(2,3.0)),(4,(5,6.0))], dt)
+        a = np.array([(1, (2, 3.0)), (4, (5, 6.0))], dt)
         assert_array_equal(x, a)
 
     def test_empty_file(self):
@@ -262,11 +297,13 @@ class TestLoadTxt(TestCase):
         c = StringIO.StringIO()
         c.writelines(['1 21\n', '3 42\n'])
         c.seek(0)
-        data = np.loadtxt(c, usecols=(1,), converters={0: lambda s: int(s, 16)})
+        data = np.loadtxt(c, usecols=(1,),
+                          converters={0: lambda s: int(s, 16)})
         assert_array_equal(data, [21, 42])
 
         c.seek(0)
-        data = np.loadtxt(c, usecols=(1,), converters={1: lambda s: int(s, 16)})
+        data = np.loadtxt(c, usecols=(1,),
+                          converters={1: lambda s: int(s, 16)})
         assert_array_equal(data, [33, 66])
 
 class Testfromregex(TestCase):
@@ -277,7 +314,8 @@ class Testfromregex(TestCase):
 
         dt = [('num', np.float64), ('val', 'S3')]
         x = np.fromregex(c, r"([0-9.]+)\s+(...)", dt)
-        a = np.array([(1.312, 'foo'), (1.534, 'bar'), (4.444, 'qux')], dtype=dt)
+        a = np.array([(1.312, 'foo'), (1.534, 'bar'), (4.444, 'qux')],
+                     dtype=dt)
         assert_array_equal(x, a)
 
     def test_record_2(self):
@@ -288,7 +326,8 @@ class Testfromregex(TestCase):
 
         dt = [('num', np.int32), ('val', 'S3')]
         x = np.fromregex(c, r"(\d+)\s+(...)", dt)
-        a = np.array([(1312, 'foo'), (1534, 'bar'), (4444, 'qux')], dtype=dt)
+        a = np.array([(1312, 'foo'), (1534, 'bar'), (4444, 'qux')],
+                     dtype=dt)
         assert_array_equal(x, a)
 
     def test_record_3(self):
