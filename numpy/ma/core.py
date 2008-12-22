@@ -535,17 +535,20 @@ class _MaskedUnaryOperation:
             # ... but np.putmask looks more efficient, despite the copy.
             np.putmask(d1, dm, self.fill)
         # Take care of the masked singletong first ...
-        if not m.ndim and m:
+        if (not m.ndim) and m:
             return masked
-        # Get the result class .......................
-        if isinstance(a, MaskedArray):
-            subtype = type(a)
+        elif m is nomask:
+            result = self.f(d1, *args, **kwargs)
         else:
-            subtype = MaskedArray
-        # Get the result  as a view of the subtype ...
-        result = self.f(d1, *args, **kwargs).view(subtype)
-        # Fix the mask if we don't have a scalar
-        if result.ndim > 0:
+            result = np.where(m, d1, self.f(d1, *args, **kwargs))
+        # If result is not a scalar
+        if result.ndim:
+            # Get the result subclass:
+            if isinstance(a, MaskedArray):
+                subtype = type(a)
+            else:
+                subtype = MaskedArray
+            result = result.view(subtype)
             result._mask = m
             result._update_from(a)
         return result
@@ -584,19 +587,45 @@ class _MaskedBinaryOperation:
     def __call__ (self, a, b, *args, **kwargs):
         "Execute the call behavior."
         m = mask_or(getmask(a), getmask(b))
-        (d1, d2) = (get_data(a), get_data(b))
-        result = self.f(d1, d2, *args, **kwargs).view(get_masked_subclass(a, b))
-        if len(result.shape):
-            if m is not nomask:
-                result._mask = make_mask_none(result.shape)
-                result._mask.flat = m
+        (da, db) = (getdata(a), getdata(b))
+        # Easy case: there's no mask...
+        if m is nomask:
+            result = self.f(da, db, *args, **kwargs)
+        # There are some masked elements: run only on the unmasked
+        else:
+            result = np.where(m, da, self.f(da, db, *args, **kwargs))
+        # Transforms to a (subclass of) MaskedArray if we don't have a scalar
+        if result.shape:
+            result = result.view(get_masked_subclass(a, b))
+            result._mask = make_mask_none(result.shape)
+            result._mask.flat = m
             if isinstance(a, MaskedArray):
                 result._update_from(a)
             if isinstance(b, MaskedArray):
                 result._update_from(b)
+        # ... or return masked if we have a scalar and the common mask is True
         elif m:
             return masked
         return result
+#        
+#        result = self.f(d1, d2, *args, **kwargs).view(get_masked_subclass(a, b))
+#        if len(result.shape):
+#            if m is not nomask:
+#                result._mask = make_mask_none(result.shape)
+#                result._mask.flat = m
+#                #!!!!!
+#                # Force m to be at least 1D
+#                m.shape = m.shape or (1,)
+#                print "Resetting data"
+#                result.data[m].flat = d1.flat
+#                #!!!!!
+#            if isinstance(a, MaskedArray):
+#                result._update_from(a)
+#            if isinstance(b, MaskedArray):
+#                result._update_from(b)
+#        elif m:
+#            return masked
+#        return result
 
     def reduce(self, target, axis=0, dtype=None):
         """Reduce `target` along the given `axis`."""
@@ -639,11 +668,13 @@ class _MaskedBinaryOperation:
             m = umath.logical_or.outer(ma, mb)
         if (not m.ndim) and m:
             return masked
-        rcls = get_masked_subclass(a, b)
-        # We could fill the arguments first, butis it useful ?
-        # d = self.f.outer(filled(a, self.fillx), filled(b, self.filly)).view(rcls)
-        d = self.f.outer(getdata(a), getdata(b)).view(rcls)
-        if d.ndim > 0:
+        (da, db) = (getdata(a), getdata(b))
+        if m is nomask:
+            d = self.f.outer(da, db)
+        else:
+            d = np.where(m, da, self.f.outer(da, db))
+        if d.shape:
+            d = d.view(get_masked_subclass(a, b))
             d._mask = m
         return d
 
@@ -655,7 +686,7 @@ class _MaskedBinaryOperation:
         if isinstance(target, MaskedArray):
             tclass = type(target)
         else:
-            tclass = masked_array
+            tclass = MaskedArray
         t = filled(target, self.filly)
         return self.f.accumulate(t, axis).view(tclass)
 
@@ -664,7 +695,8 @@ class _MaskedBinaryOperation:
 
 #..............................................................................
 class _DomainedBinaryOperation:
-    """Define binary operations that have a domain, like divide.
+    """
+    Define binary operations that have a domain, like divide.
 
     They have no reduce, outer or accumulate.
 
@@ -689,25 +721,29 @@ class _DomainedBinaryOperation:
         ufunc_domain[dbfunc] = domain
         ufunc_fills[dbfunc] = (fillx, filly)
 
-    def __call__(self, a, b):
+    def __call__(self, a, b, *args, **kwargs):
         "Execute the call behavior."
         ma = getmask(a)
         mb = getmask(b)
-        d1 = getdata(a)
-        d2 = get_data(b)
-        t = narray(self.domain(d1, d2), copy=False)
+        da = getdata(a)
+        db = getdata(b)
+        t = narray(self.domain(da, db), copy=False)
         if t.any(None):
             mb = mask_or(mb, t)
             # The following line controls the domain filling
-            if t.size == d2.size:
-                d2 = np.where(t, self.filly, d2)
+            if t.size == db.size:
+                db = np.where(t, self.filly, db)
             else:
-                d2 = np.where(np.resize(t, d2.shape), self.filly, d2)
+                db = np.where(np.resize(t, db.shape), self.filly, db)
         m = mask_or(ma, mb)
         if (not m.ndim) and m:
             return masked
-        result =  self.f(d1, d2).view(get_masked_subclass(a, b))
-        if result.ndim > 0:
+        elif (m is nomask):
+            result = self.f(da, db, *args, **kwargs)
+        else:
+            result = np.where(m, da, self.f(da, db, *args, **kwargs))
+        if result.shape:
+            result = result.view(get_masked_subclass(a, b))
             result._mask = m
             if isinstance(a, MaskedArray):
                 result._update_from(a)
@@ -2243,32 +2279,33 @@ masked_%(name)s(data = %(data)s,
     #............................................
     def __iadd__(self, other):
         "Add other to self in-place."
-        ndarray.__iadd__(self._data, getdata(other))
         m = getmask(other)
         if self._mask is nomask:
             self._mask = m
-        elif m is not nomask:
-            self._mask += m
+        else:
+            if m is not nomask:
+                self._mask += m
+        ndarray.__iadd__(self._data, np.where(self._mask, 0, getdata(other)))
         return self
     #....
     def __isub__(self, other):
         "Subtract other from self in-place."
-        ndarray.__isub__(self._data, getdata(other))
         m = getmask(other)
         if self._mask is nomask:
             self._mask = m
         elif m is not nomask:
             self._mask += m
+        ndarray.__isub__(self._data, np.where(self._mask, 0, getdata(other)))
         return self
     #....
     def __imul__(self, other):
         "Multiply self by other in-place."
-        ndarray.__imul__(self._data, getdata(other))
         m = getmask(other)
         if self._mask is nomask:
             self._mask = m
         elif m is not nomask:
             self._mask += m
+        ndarray.__imul__(self._data, np.where(self._mask, 1, getdata(other)))
         return self
     #....
     def __idiv__(self, other):
@@ -2281,21 +2318,25 @@ masked_%(name)s(data = %(data)s,
         if dom_mask.any():
             (_, fval) = ufunc_fills[np.divide]
             other_data = np.where(dom_mask, fval, other_data)
-        ndarray.__idiv__(self._data, other_data)
-        self._mask = mask_or(self._mask, new_mask)
+#        self._mask = mask_or(self._mask, new_mask)
+        self._mask |= new_mask
+        ndarray.__idiv__(self._data, np.where(self._mask, 1, other_data))
         return self
     #...
     def __ipow__(self, other):
         "Raise self to the power other, in place"
-        _data = self._data
         other_data = getdata(other)
         other_mask = getmask(other)
-        ndarray.__ipow__(_data, other_data)
-        invalid = np.logical_not(np.isfinite(_data))
+        ndarray.__ipow__(self._data, np.where(self._mask, 1, other_data))
+        invalid = np.logical_not(np.isfinite(self._data))
+        if invalid.any():
+            if self._mask is not nomask:
+                self._mask |= invalid
+            else:
+                self._mask = invalid
+            np.putmask(self._data, invalid, self.fill_value)
         new_mask = mask_or(other_mask, invalid)
         self._mask = mask_or(self._mask, new_mask)
-        # The following line is potentially problematic, as we change _data...
-        np.putmask(self._data, invalid, self.fill_value)
         return self
     #............................................
     def __float__(self):
@@ -3848,22 +3889,22 @@ def power(a, b, third=None):
     else:
         basetype = MaskedArray
     # Get the result and view it as a (subclass of) MaskedArray
-    result = umath.power(fa, fb).view(basetype)
+    result = np.where(m, fa, umath.power(fa, fb)).view(basetype)
+    result._update_from(a)
     # Find where we're in trouble w/ NaNs and Infs
     invalid = np.logical_not(np.isfinite(result.view(ndarray)))
-    # Retrieve some extra attributes if needed
-    if isinstance(result, MaskedArray):
-        result._update_from(a)
     # Add the initial mask
     if m is not nomask:
-        if np.isscalar(result):
+        if not (result.ndim):
             return masked
+        m |= invalid
         result._mask = m
     # Fix the invalid parts
     if invalid.any():
         if not result.ndim:
             return masked
-        result[invalid] = masked
+        elif result._mask is nomask:
+            result._mask = invalid
         result._data[invalid] = result.fill_value
     return result
 

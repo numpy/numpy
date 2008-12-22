@@ -167,22 +167,24 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     """Asserts that a comparison relation between two masked arrays is satisfied
     elementwise."""
     # Fill the data first
-    xf = filled(x)
-    yf = filled(y)
+#    xf = filled(x)
+#    yf = filled(y)
     # Allocate a common mask and refill
     m = mask_or(getmask(x), getmask(y))
-    x = masked_array(xf, copy=False, mask=m)
-    y = masked_array(yf, copy=False, mask=m)
+    x = masked_array(x, copy=False, mask=m, subok=False)
+    y = masked_array(y, copy=False, mask=m, subok=False)
     if ((x is masked) and not (y is masked)) or \
         ((y is masked) and not (x is masked)):
         msg = build_err_msg([x, y], err_msg=err_msg, verbose=verbose,
                             header=header, names=('x', 'y'))
         raise ValueError(msg)
     # OK, now run the basic tests on filled versions
+    comparison = getattr(np, comparison.__name__, lambda x,y: True)
     return utils.assert_array_compare(comparison,
-                                x.filled(fill_value), y.filled(fill_value),
-                                err_msg=err_msg,
-                                verbose=verbose, header=header)
+                                      x.filled(fill_value),
+                                      y.filled(fill_value),
+                                      err_msg=err_msg,
+                                      verbose=verbose, header=header)
 
 
 def assert_array_equal(x, y, err_msg='', verbose=True):
