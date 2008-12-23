@@ -18,12 +18,12 @@
 #else
         /* Set endianness info using target CPU */
         #include "cpuarch.h"
-        
-        #if defined(NPY_X86) || defined(NPY_AMD64)
+
+        #if defined(NPY_TARGET_CPU_X86) || defined(NPY_TARGET_CPU_AMD64)
                         #define NPY_LITTLE_ENDIAN
                         #define NPY_BYTE_ORDER 1234
-        #elif defined(NPY_PPC) || defined(NPY_SPARC) || defined(NPY_S390) || \
-              defined(NPY_PA_RISC)
+        #elif defined(NPY_TARGET_CPU_PPC) || defined(NPY_TARGET_CPU_SPARC) || \
+              defined(NPY_TARGET_CPU_S390) || defined(NPY_TARGET_CPU_PA_RISC)
                         #define NPY_BIG_ENDIAN
                         #define NPY_BYTE_ORDER 4321
         #endif
