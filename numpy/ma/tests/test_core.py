@@ -483,6 +483,16 @@ class TestMaskedArray(TestCase):
         y._optinfo['info'] = '!!!'
         assert_equal(x._optinfo['info'], '???')
 
+
+    def test_fancy_printoptions(self):
+        "Test printing a masked array w/ fancy dtype."
+        fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
+        test = array([(1, (2, 3.0)), (4, (5, 6.0))],
+                     mask=[(1, (0, 1)), (0, (1, 0))],
+                     dtype=fancydtype)
+        control = "[(--, (2, --)) (4, (--, 6.0))]"
+        assert_equal(str(test), control)
+
 #------------------------------------------------------------------------------
 
 class TestMaskedArrayArithmetic(TestCase):
@@ -1049,19 +1059,19 @@ class TestFillingValues(TestCase):
         # The shape shouldn't matter
         ndtype = [('f0', float, (2, 2))]
         control = np.array((default_fill_value(0.),),
-                           dtype=[('f0',float)])
+                           dtype=[('f0',float)]).astype(ndtype)
         assert_equal(_check_fill_value(None, ndtype), control)
-        control = np.array((0,), dtype=[('f0',float)])
+        control = np.array((0,), dtype=[('f0',float)]).astype(ndtype)
         assert_equal(_check_fill_value(0, ndtype), control)
         #
         ndtype = np.dtype("int, (2,3)float, float")
         control = np.array((default_fill_value(0),
                             default_fill_value(0.),
                             default_fill_value(0.),),
-                           dtype="int, float, float")
+                           dtype="int, float, float").astype(ndtype)
         test = _check_fill_value(None, ndtype)
         assert_equal(test, control)
-        control = np.array((0,0,0), dtype="int, float, float")
+        control = np.array((0,0,0), dtype="int, float, float").astype(ndtype)
         assert_equal(_check_fill_value(0, ndtype), control)
 
 #------------------------------------------------------------------------------
@@ -1912,8 +1922,8 @@ class TestMaskedArrayMethods(TestCase):
                      dtype=ndtype)
         data[[0,1,2,-1]] = masked
         record = data.torecords()
-        assert_equal(record['_data'], data._data)
-        assert_equal(record['_mask'], data._mask)
+        assert_equal_records(record['_data'], data._data)
+        assert_equal_records(record['_mask'], data._mask)
 
 #------------------------------------------------------------------------------
 
@@ -2531,6 +2541,12 @@ class TestMaskedArrayFunctions(TestCase):
             test = mask_or(mask, other)
         except ValueError:
             pass
+        # Using nested arrays
+        dtype = [('a', np.bool), ('b', [('ba', np.bool), ('bb', np.bool)])]
+        amask = np.array([(0, (1, 0)), (0, (1, 0))], dtype=dtype)
+        bmask = np.array([(1, (0, 1)), (0, (0, 0))], dtype=dtype)
+        cntrl = np.array([(1, (1, 1)), (0, (1, 0))], dtype=dtype)
+        assert_equal(mask_or(amask, bmask), cntrl)
 
 
     def test_flatten_mask(self):
