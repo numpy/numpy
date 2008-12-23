@@ -227,15 +227,19 @@ def build_import_library():
     #    raise DistutilsPlatformError, msg
     return
 
+#=====================================
+# Dealing with Visual Studio MANIFESTS
+#=====================================
+
 # Functions to deal with visual studio manifests. Manifest are a mechanism to
 # enforce strong DLL versioning on windows, and has nothing to do with
 # distutils MANIFEST. manifests are XML files with version info, and used by
-# the OS loader; they are necessary when linking against a DLL no in the system
-# path; in particular, python 2.6 is built against the MS runtime 9 (the one
-# from VS 2008), which is not available on most windows systems; python 2.6
-# installer does install it in the Win SxS (Side by side) directory, but this
-# requires the manifest too. This is a big mess, thanks MS for a wonderful
-# system.
+# the OS loader; they are necessary when linking against a DLL not in the
+# system path; in particular, official python 2.6 binary is built against the
+# MS runtime 9 (the one from VS 2008), which is not available on most windows
+# systems; python 2.6 installer does install it in the Win SxS (Side by side)
+# directory, but this requires the manifest for this to work. This is a big
+# mess, thanks MS for a wonderful system.
 
 # XXX: ideally, we should use exactly the same version as used by python, but I
 # have no idea how to obtain the exact version from python. We could use the
