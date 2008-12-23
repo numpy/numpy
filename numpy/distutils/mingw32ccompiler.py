@@ -244,7 +244,17 @@ def build_import_library():
 # XXX: ideally, we should use exactly the same version as used by python, but I
 # have no idea how to obtain the exact version from python. We could use the
 # strings utility on python.exe, maybe ?
-_MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
+try:
+    import msvcrt
+    if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
+        _MSVCRVER_TO_FULLVER = {'90': msvcrt.CRT_ASSEMBLY_VERSION}
+    else:
+        _MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
+except ImportError:
+    # If we are here, means python was not built with MSVC. Not sure what to do
+    # in that case: manifest building will fail, but it should not be used in
+    # that case anyway
+    log.warn('Cannot import msvcrt: using manifest will not be possible')
 
 def msvc_manifest_xml(maj, min):
     """Given a major and minor version of the MSVCR, returns the
