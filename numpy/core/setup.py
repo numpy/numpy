@@ -81,6 +81,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
     optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
                          "rint", "trunc", "exp2", "log2"]
 
+    # XXX: hack to circumvent cpp pollution from python: python put its
+    # config.h in the public namespace, so we have a clash for the common
+    # functions we test. We remove every function tested by python's autoconf,
+    # hoping their own test are correct
+    if sys.version_info[0] == 2 and sys.version_info[1] >= 6:
+        for f in ["expm1", "log1p", "acosh", "atanh", "asinh"]:
+            optional_stdfuncs.remove(f)
+
     check_funcs(optional_stdfuncs)
 
     # C99 functions: float and long double versions
