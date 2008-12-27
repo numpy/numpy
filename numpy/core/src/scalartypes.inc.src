@@ -619,17 +619,30 @@ static void
 format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 {
     int cnt, i;
+    char format[32];
+    register char* cp;
 
-    cnt = PyOS_snprintf(buf, buflen, FMT, prec, val);
+    //cnt = PyOS_snprintf(buf, buflen, FMT, prec, val);
+    PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
+    PyOS_ascii_formatd(buf, buflen, format, val);
+    cp = buf;
+    if (*cp == '-') {
+        ++cp;
+    }
 
     /* If nothing but digits after sign, append ".0" */
-    for (i = (val < 0) ? 1 : 0; i < cnt; ++i) {
-        if (!isdigit(Py_CHARMASK(buf[i]))) {
+    for (; *cp != '\0';  ++cp) {
+        if (!isdigit(Py_CHARMASK(*cp))) {
             break;
         }
     }
-    if (i == cnt && buflen >= cnt + 3) {
-        strcpy(&buf[cnt],".0");
+
+    if (*cp == '\0') {
+	cp[0] = '.';
+	cp[1] = '0';
+	cp[2] = '\0';
+	cp += 3;
+	return ;
     }
 }
 
