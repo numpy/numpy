@@ -24,6 +24,7 @@
 
 #define PyAO PyArrayObject
 
+#include "umath_funcs_c99.inc"
 
 static PyObject *typeDict=NULL;   /* Must be explicitly loaded */
 
