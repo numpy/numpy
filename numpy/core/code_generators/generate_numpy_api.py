@@ -65,10 +65,12 @@ static void **PyArray_API=NULL;
 static int
 _import_array(void)
 {
+#ifdef WORDS_BIGENDIAN
   union {
     long i;
     char c[sizeof(long)];
   } bint = {1};
+#endif
 
   PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
   PyObject *c_api = NULL;
