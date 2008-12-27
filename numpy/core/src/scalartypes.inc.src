@@ -615,6 +615,8 @@ gentype_repr(PyObject *self)
 #define CFMT1 "%.*" NPY_@NAME@_FMT "j"
 #define CFMT2 "(%.*" NPY_@NAME@_FMT "%+.*" NPY_@NAME@_FMT "j)"
 
+/* Both format functions are shameless copies from python floatobject and
+ * complexobject files */
 static void
 format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 {
@@ -622,7 +624,6 @@ format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
     char format[32];
     register char* cp;
 
-    //cnt = PyOS_snprintf(buf, buflen, FMT, prec, val);
     PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
     PyOS_ascii_formatd(buf, buflen, format, val);
     cp = buf;
@@ -643,6 +644,29 @@ format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 	cp[2] = '\0';
 	cp += 3;
 	return ;
+    }
+    /* Checking the next three chars should be more than enough to
+     * detect inf or nan, even on Windows. We check for inf or nan
+     * at last because they are rare cases.
+     */
+    for (i=0; *cp != '\0' && i<3; cp++, i++) {
+	if (isdigit(Py_CHARMASK(*cp)) || *cp == '.') {
+	    continue;
+	}
+	/* found something that is neither a digit nor point
+	* it might be a NaN or INF
+	*/
+	if (isnan(val)) {
+	    strcpy(buf, "nan");
+        }
+	else if (isinf(val)) {
+           cp = buf;
+           if (*cp == '-') {
+                cp++;
+           }
+           strcpy(cp, "inf");
+        }
+        break;
     }
 }
 
