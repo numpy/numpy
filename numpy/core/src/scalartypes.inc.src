@@ -639,32 +639,32 @@ format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
     }
 
     if (*cp == '\0') {
-	cp[0] = '.';
-	cp[1] = '0';
-	cp[2] = '\0';
-	cp += 3;
-	return ;
+        cp[0] = '.';
+        cp[1] = '0';
+        cp[2] = '\0';
+        cp += 3;
+        return ;
     }
     /* Checking the next three chars should be more than enough to
      * detect inf or nan, even on Windows. We check for inf or nan
      * at last because they are rare cases.
      */
     for (i=0; *cp != '\0' && i<3; cp++, i++) {
-	if (isdigit(Py_CHARMASK(*cp)) || *cp == '.') {
-	    continue;
-	}
-	/* found something that is neither a digit nor point
-	* it might be a NaN or INF
-	*/
-	if (isnan(val)) {
-	    strcpy(buf, "nan");
+        if (isdigit(Py_CHARMASK(*cp)) || *cp == '.') {
+            continue;
         }
-	else if (isinf(val)) {
-           cp = buf;
-           if (*cp == '-') {
+        /* found something that is neither a digit nor point
+         * it might be a NaN or INF
+         */
+        if (isnan(val)) {
+            strcpy(buf, "nan");
+        }
+        else if (isinf(val)) {
+            cp = buf;
+            if (*cp == '-') {
                 cp++;
-           }
-           strcpy(cp, "inf");
+            }
+            strcpy(cp, "inf");
         }
         break;
     }
