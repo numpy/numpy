@@ -65,6 +65,11 @@ static void **PyArray_API=NULL;
 static int
 _import_array(void)
 {
+  union {
+    long i;
+    char c[sizeof(long)];
+  } bint = {1};
+
   PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
   PyObject *c_api = NULL;
   if (numpy == NULL) return -1;
@@ -83,6 +88,17 @@ _import_array(void)
         (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
     return -1;
   }
+
+#ifdef WORDS_BIGENDIAN
+  if (bint.c[0] == 1) {
+    PyErr_Format(PyExc_RuntimeError, "module compiled against "\
+        "python headers configured as big endian, but little endian arch "\
+        "detected: this is a python 2.6.* bug (see bug 4728 in python bug "\
+        "tracker )");
+    return -1;
+  }
+#endif
+
   return 0;
 }
 
