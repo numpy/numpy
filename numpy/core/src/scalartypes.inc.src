@@ -619,7 +619,7 @@ format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
     register char* cp;
 
     PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
-    PyOS_ascii_formatd(buf, buflen, format, val);
+    PyOS_snprintf(buf, buflen, format, val);
     cp = buf;
     if (*cp == '-') {
         ++cp;
@@ -670,14 +670,14 @@ format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
     char format[32];
     if (val.real == 0.0) {
         PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
-        PyOS_ascii_formatd(buf, buflen - 1, format, val.imag);
+        PyOS_snprintf(buf, buflen - 1, format, val.imag);
         strncat(buf, "j", 1);
     } else {
         char re[64], im[64];
         PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
-        PyOS_ascii_formatd(re, sizeof(re), format, val.real);
+        PyOS_snprintf(re, sizeof(re), format, val.real);
         PyOS_snprintf(format, sizeof(format), "%%+.%i" NPY_@NAME@_FMT, prec);
-        PyOS_ascii_formatd(im, sizeof(im), format, val.imag);
+        PyOS_snprintf(im, sizeof(im), format, val.imag);
         PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
     }
 }
