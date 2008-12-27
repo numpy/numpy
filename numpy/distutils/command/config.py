@@ -41,15 +41,6 @@ class config(old_config):
     def _check_compiler (self):
         old_config._check_compiler(self)
         from numpy.distutils.fcompiler import FCompiler, new_fcompiler
-        if not isinstance(self.fcompiler, FCompiler):
-            self.fcompiler = new_fcompiler(compiler=self.fcompiler,
-                                           dry_run=self.dry_run, force=1,
-                                           c_compiler=self.compiler)
-            if self.fcompiler is not None:
-                self.fcompiler.customize(self.distribution)
-                if self.fcompiler.get_version():
-                    self.fcompiler.customize_cmd(self)
-                    self.fcompiler.show_customization()
 
         if sys.platform == 'win32' and self.compiler.compiler_type == 'msvc':
             # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
@@ -73,6 +64,16 @@ class was %s
                     print """\
 ============================================================================"""
                     raise distutils.errors.DistutilsPlatformError(msg)
+
+        if not isinstance(self.fcompiler, FCompiler):
+            self.fcompiler = new_fcompiler(compiler=self.fcompiler,
+                                           dry_run=self.dry_run, force=1,
+                                           c_compiler=self.compiler)
+            if self.fcompiler is not None:
+                self.fcompiler.customize(self.distribution)
+                if self.fcompiler.get_version():
+                    self.fcompiler.customize_cmd(self)
+                    self.fcompiler.show_customization()
 
     def _wrap_method(self,mth,lang,args):
         from distutils.ccompiler import CompileError
