@@ -3,6 +3,10 @@ import numpy as np
 import StringIO
 
 from tempfile import NamedTemporaryFile
+import sys
+
+
+MAJVER, MINVER = sys.version_info[:2]
 
 class RoundtripTest:
     def roundtrip(self, save_func, *args, **kwargs):
@@ -25,7 +29,14 @@ class RoundtripTest:
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
-            target_file = NamedTemporaryFile()
+            # Do not delete the file on windows, because we can't
+            # reopen an already opened file on that platform, so we
+            # need to close the file and reopen it, implying no
+            # automatic deletion.
+            if sys.platform == 'win32' and MAJVER >= 2 and MINVER >= 6:
+                target_file = NamedTemporaryFile(delete=False)
+            else:
+                target_file = NamedTemporaryFile()
             load_file = target_file.name
         else:
             target_file = StringIO.StringIO()
@@ -36,6 +47,9 @@ class RoundtripTest:
         save_func(target_file, *arr, **save_kwds)
         target_file.flush()
         target_file.seek(0)
+
+        if sys.platform == 'win32' and not isinstance(target_file, StringIO.StringIO):
+            target_file.close()
 
         arr_reloaded = np.load(load_file, **load_kwds)
 
