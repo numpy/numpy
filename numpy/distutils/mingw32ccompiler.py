@@ -252,9 +252,9 @@ def msvcrt_version(num):
         try:
             import msvcrt
             if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
-                _MSVCRVER_TO_FULLVER = {'90': msvcrt.CRT_ASSEMBLY_VERSION}
+                _MSVCRVER_TO_FULLVER['90'] = msvcrt.CRT_ASSEMBLY_VERSION
             else:
-                _MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
+                _MSVCRVER_TO_FULLVER['90'] = "9.0.21022.8"
         except ImportError:
             # If we are here, means python was not built with MSVC. Not sure what to do
             # in that case: manifest building will fail, but it should not be used in
@@ -265,7 +265,7 @@ def msvc_manifest_xml(maj, min):
     """Given a major and minor version of the MSVCR, returns the
     corresponding XML file."""
     try:
-        fullver = msvcrt_version[str(maj * 10 + min)]
+        fullver = msvcrt_version(str(maj * 10 + min))
     except KeyError:
         raise ValueError("Version %d,%d of MSVCRT not supported yet" \
                          % (maj, min))
