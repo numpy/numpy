@@ -352,8 +352,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
                                     join(codegen_dir,'generate_numpy_api.py'),
-                                    join('*.py'),
-                                    join('src','umath_funcs_c99.inc.src'),
+                                    join('*.py')
                                     ],
                          depends = deps,
                          )

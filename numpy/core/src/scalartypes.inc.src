@@ -604,107 +604,49 @@ gentype_repr(PyObject *self)
     return ret;
 }
 
-/* Hack to deal with mingw brokenness wrt long double support in printf */
-
-/**begin repeat
- * #name=float, double#
- * #NAME=FLOAT, DOUBLE#
- */
-#define _CAST_@NAME@(prec) (prec)
-/**end repeat**/
-#ifdef __MINGW32__
-#undef LONGDOUBLEPREC_REPR
-#undef LONGDOUBLEPREC_STR
-#define LONGDOUBLEPREC_REPR DOUBLEPREC_REPR
-#define LONGDOUBLEPREC_STR DOUBLEPREC_STR
-#define _CAST_LONGDOUBLE(prec) ((double)prec)
-#else
-#define _CAST_LONGDOUBLE(prec) (prec)
-#endif
-
-
 /**begin repeat
  * #name=float, double, longdouble#
  * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
  */
 
-/* Both format functions are shameless copies from python floatobject and
- * complexobject files */
+#define FMT "%.*" NPY_@NAME@_FMT
+#define CFMT1 "%.*" NPY_@NAME@_FMT "j"
+#define CFMT2 "(%.*" NPY_@NAME@_FMT "%+.*" NPY_@NAME@_FMT "j)"
+
 static void
 format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 {
     int cnt, i;
-    char format[32];
-    register char* cp;
 
-    PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
-    PyOS_snprintf(buf, buflen, format, _CAST_@NAME@(val));
-    cp = buf;
-    if (*cp == '-') {
-        ++cp;
-    }
+    cnt = PyOS_snprintf(buf, buflen, FMT, prec, val);
 
     /* If nothing but digits after sign, append ".0" */
-    for (; *cp != '\0';  ++cp) {
-        if (!isdigit(Py_CHARMASK(*cp))) {
+    for (i = (val < 0) ? 1 : 0; i < cnt; ++i) {
+        if (!isdigit(Py_CHARMASK(buf[i]))) {
             break;
         }
     }
-
-    if (*cp == '\0') {
-        cp[0] = '.';
-        cp[1] = '0';
-        cp[2] = '\0';
-        cp += 3;
-        return ;
-    }
-    /* Checking the next three chars should be more than enough to
-     * detect inf or nan, even on Windows. We check for inf or nan
-     * at last because they are rare cases.
-     */
-    for (i=0; *cp != '\0' && i<3; cp++, i++) {
-        if (isdigit(Py_CHARMASK(*cp)) || *cp == '.') {
-            continue;
-        }
-        /* found something that is neither a digit nor point
-         * it might be a NaN or INF
-         */
-        if (isnan(val)) {
-            strcpy(buf, "nan");
-        }
-        else if (isinf(val)) {
-            cp = buf;
-            if (*cp == '-') {
-                cp++;
-            }
-            strcpy(cp, "inf");
-        }
-        break;
+    if (i == cnt && buflen >= cnt + 3) {
+        strcpy(&buf[cnt],".0");
     }
 }
 
 static void
 format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
 {
-    char format[32];
     if (val.real == 0.0) {
-        PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
-        PyOS_snprintf(buf, buflen - 1, format, _CAST_@NAME@(val.imag));
-        strncat(buf, "j", 1);
-    } else {
-        char re[64], im[64];
-        PyOS_snprintf(format, sizeof(format), "%%.%i" NPY_@NAME@_FMT, prec);
-        PyOS_snprintf(re, sizeof(re), format, _CAST_@NAME@(val.real));
-        PyOS_snprintf(format, sizeof(format), "%%+.%i" NPY_@NAME@_FMT, prec);
-        PyOS_snprintf(im, sizeof(im), format, _CAST_@NAME@(val.imag));
-        PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
+        PyOS_snprintf(buf, buflen, CFMT1, prec, val.imag);
+    }
+    else {
+        PyOS_snprintf(buf, buflen, CFMT2, prec, val.real, prec, val.imag);
     }
 }
 
+#undef FMT
+#undef CFMT1
+#undef CFMT2
+
 /**end repeat**/
-#undef _CAST_FLOAT
-#undef _CAST_DOUBLE
-#undef _CAST_LONGDOUBLE
 
 /* over-ride repr and str of array-scalar strings and unicode to
    remove NULL bytes and then call the corresponding functions
