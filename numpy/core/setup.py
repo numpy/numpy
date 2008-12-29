@@ -330,6 +330,7 @@ def configuration(parent_package='',top_path=None):
     deps = [join('src','arrayobject.c'),
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
+            join('src','npy_format.c'),
             join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
             join('src','ucsnarrow.c'),
