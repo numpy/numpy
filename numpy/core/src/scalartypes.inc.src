@@ -5,6 +5,7 @@
 #endif
 #include "numpy/arrayscalars.h"
 
+#include "config.h"
 #include "npy_format.c"
 
 static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
@@ -605,6 +606,11 @@ gentype_repr(PyObject *self)
     Py_DECREF(arr);
     return ret;
 }
+
+#ifdef FORCE_NO_LONG_DOUBLE_FORMATTING
+#undef NPY_LONGDOUBLE_FMT
+#define NPY_LONGDOUBLE_FMT NPY_DOUBLE_FMT
+#endif
 
 /**begin repeat
  * #name=float, double, longdouble#
