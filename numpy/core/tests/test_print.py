@@ -13,7 +13,7 @@ def test_float_types():
         python float precision.
 
     """
-    for t in [np.float, np.double, np.longdouble] :
+    for t in [np.float32, np.double, np.longdouble] :
         yield check_float_type, t
 
 def check_complex_type(tp):
@@ -30,7 +30,7 @@ def test_complex_types():
         python float precision.
 
     """
-    for t in [np.cfloat, np.cdouble, np.clongdouble] :
+    for t in [np.complex64, np.cdouble, np.clongdouble] :
         yield check_complex_type, t
 
 if __name__ == "__main__":
