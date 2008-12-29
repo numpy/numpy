@@ -6,7 +6,8 @@ import sys
 
 def check_float_type(tp):
     for x in [0, 1,-1, 1e10, 1e20] :
-        assert_equal(str(tp(x)), str(float(x)))
+        assert_equal(str(tp(x)), str(float(x)),
+                     err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_types():
     """ Check formatting.
@@ -21,7 +22,8 @@ def test_float_types():
 
 def check_nan_inf_float(tp):
     for x in [float('inf'), float('-inf'), float('nan')]:
-        assert_equal(str(tp(x)), str(float(x)))
+        assert_equal(str(tp(x)), str(float(x)),
+                     err_msg='Failed str formatting for type %s' % tp)
 
 def test_nan_inf_float():
     """ Check formatting.
@@ -36,9 +38,12 @@ def test_nan_inf_float():
 
 def check_complex_type(tp):
     for x in [0, 1,-1, 1e10, 1e20] :
-        assert_equal(str(tp(x)), str(complex(x)))
-        assert_equal(str(tp(x*1j)), str(complex(x*1j)))
-        assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)))
+        assert_equal(str(tp(x)), str(complex(x)),
+                     err_msg='Failed str formatting for type %s' % tp)
+        assert_equal(str(tp(x*1j)), str(complex(x*1j)),
+                     err_msg='Failed str formatting for type %s' % tp)
+        assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)),
+                     err_msg='Failed str formatting for type %s' % tp)
 
 def test_complex_types():
     """Check formatting.
@@ -79,7 +84,8 @@ def _test_locale_independance(tp):
         else:
             locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
 
-        assert_equal(str(tp(1.2)), str(float(1.2)))
+        assert_equal(str(tp(1.2)), str(float(1.2)),
+                     err_msg='Failed locale test for type %s' % tp)
     finally:
         locale.setlocale(locale.LC_NUMERIC, locale=curloc)
 
@@ -91,12 +97,12 @@ def test_locale_single():
 @np.testing.dec.skipif(not has_french_locale(),
                        "Skipping locale test, French locale not found")
 def test_locale_double():
-    return _test_locale_independance(np.float64)
+    return _test_locale_independance(np.double)
 
 @np.testing.dec.skipif(not has_french_locale(),
                        "Skipping locale test, French locale not found")
 def test_locale_longdouble():
-    return _test_locale_independance(np.float96)
+    return _test_locale_independance(np.longdouble)
 
 if __name__ == "__main__":
     run_module_suite()
