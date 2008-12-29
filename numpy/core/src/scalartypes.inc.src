@@ -622,17 +622,18 @@ static void
 format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 {
     /* XXX: Find a correct size here for format string */
-    /* XXX: check for inf and nan */
-    char format[64];
+    char format[64], *res;
+    int i, cnt;
+
     PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-    NumPyOS_ascii_format@type@(buf, buflen, format, val);
-
-#if 0
-    int cnt, i;
-
-    cnt = PyOS_snprintf(buf, buflen, FMT, prec, val);
+    res = NumPyOS_ascii_format@type@(buf, buflen, format, val, 0);
+    if (res == NULL) {
+        fprintf(stderr, "Error while formatting\n");
+	return;
+    }
 
     /* If nothing but digits after sign, append ".0" */
+    cnt = strlen(buf);
     for (i = (val < 0) ? 1 : 0; i < cnt; ++i) {
         if (!isdigit(Py_CHARMASK(buf[i]))) {
             break;
@@ -641,27 +642,38 @@ format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
     if (i == cnt && buflen >= cnt + 3) {
         strcpy(&buf[cnt],".0");
     }
-#endif
 }
 
 static void
 format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
 {
     /* XXX: Find a correct size here for format string */
-    /* XXX: check for inf and nan */
     char format[64];
+    char *res;
     if (val.real == 0.0) {
         PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-        NumPyOS_ascii_format@type@(buf, buflen-1, format, val.imag);
+        res = NumPyOS_ascii_format@type@(buf, buflen-1, format, val.imag, 0);
+	if (res == NULL) {
+            fprintf(stderr, "Error while formatting\n");
+	    return;
+	}
 	strncat(buf, "j", 1);
     }
     else {
 	char re[64], im[64];
 	PyOS_snprintf(format, sizeof(format), _FMT1, prec);
-        NumPyOS_ascii_format@type@(re, sizeof(re), format, val.real);
+        res = NumPyOS_ascii_format@type@(re, sizeof(re), format, val.real, 0);
+	if (res == NULL) {
+            fprintf(stderr, "Error while formatting\n");
+	    return;
+	}
 
 	PyOS_snprintf(format, sizeof(format), _FMT2, prec);
-        NumPyOS_ascii_format@type@(im, sizeof(im), format, val.imag);
+        res = NumPyOS_ascii_format@type@(im, sizeof(im), format, val.imag, 0);
+	if (res == NULL) {
+            fprintf(stderr, "Error while formatting\n");
+	    return;
+	}
 	PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
     }
 }
