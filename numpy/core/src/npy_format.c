@@ -152,257 +152,122 @@ static void change_decimal_from_locale_to_dot(char* buffer)
 		}
 	}
 }
-/**
- * NumPyOS_ascii_formatd:
- * @buffer: A buffer to place the resulting string in
- * @buf_size: The length of the buffer.
- * @format: The printf()-style format to use for the
- *          code to use for converting. 
- * @d: The #gdouble to convert
+
+/*
+ * Check that the format string is a valid one for NumPyOS_ascii_format*
+ */
+static int _check_ascii_format(const char *format)
+{
+	char format_char;
+	size_t format_len = strlen(format);
+
+	/* The last character in the format string must be the format char */
+	format_char = format[format_len - 1];
+
+	if (format[0] != '%') {
+		return -1;
+	}
+
+	/* I'm not sure why this test is here.  It's ensuring that the format
+	   string after the first character doesn't have a single quote, a
+	   lowercase l, or a percent. This is the reverse of the commented-out
+	   test about 10 lines ago. */
+	if (strpbrk(format + 1, "'l%")) {
+		return -1;
+	}
+
+	/* Also curious about this function is that it accepts format strings
+	   like "%xg", which are invalid for floats.  In general, the
+	   interface to this function is not very good, but changing it is
+	   difficult because it's a public API. */
+
+	if (!(format_char == 'e' || format_char == 'E' || 
+	      format_char == 'f' || format_char == 'F' || 
+	      format_char == 'g' || format_char == 'G')) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Fix the generated string: make sure the decimal is ., that exponent has a
+ * minimal number of digits, and that it has a decimal + one digit after that
+ * decimal if decimal argument != 0 (Same effect that 'Z' format in
+ * PyOS_ascii_formatd
+ */
+static char* _fix_ascii_format(char* buf, size_t buflen, int decimal)
+{
+	/* Get the current locale, and find the decimal point string.
+	   Convert that string back to a dot. */
+	change_decimal_from_locale_to_dot(buf);
+
+	/* If an exponent exists, ensure that the exponent is at least
+	   MIN_EXPONENT_DIGITS digits, providing the buffer is large enough
+	   for the extra zeros.  Also, if there are more than
+	   MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
+	   back to MIN_EXPONENT_DIGITS */
+	ensure_minumim_exponent_length(buf, buflen);
+
+	if (decimal != 0) {
+		ensure_decimal_point(buf, buflen);
+	}
+
+	return buf;
+}
+
+/*
+ * NumPyOS_ascii_format*:
+ * 	- buffer: A buffer to place the resulting string in
+ * 	- buf_size: The length of the buffer.
+ * 	- format: The printf()-style format to use for the code to use for
+ * 	converting. 
+ * 	- value: The value to convert
+ * 	- decimal: if != 0, always has a decimal, and at leasat one digit after
+ * 	the decimal. This has the same effect as passing 'Z' in the origianl
+ * 	PyOS_ascii_formatd
  *
  * This is similar to PyOS_ascii_formatd in python > 2.6, except that it does
- * not handle 'n'.
+ * not handle 'n', and handles nan / inf.
  *
- * Converts a #gdouble to a string, using the '.' as
- * decimal point. To format the number you pass in
- * a printf()-style format string. Allowed conversion
+ * Converts a #gdouble to a string, using the '.' as decimal point. To format
+ * the number you pass in a printf()-style format string. Allowed conversion
  * specifiers are 'e', 'E', 'f', 'F', 'g', 'G'.
  * 
- * 'Z' is the same as 'g', except it always has a decimal and
- *     at least one digit after the decimal.
- *
  * Return value: The pointer to the buffer with the converted string.
- **/
-char* NumPyOS_ascii_formatd(char *buffer, size_t buf_size, const char *format, 
-		   	    double val)
-{
-	char format_char;
-	size_t format_len = strlen(format);
-
-	/* Issue 2264: code 'Z' requires copying the format.  'Z' is 'g', but
-	   also with at least one character past the decimal. */
-	char tmp_format[FLOAT_FORMATBUFLEN];
-
-	/* The last character in the format string must be the format char */
-	format_char = format[format_len - 1];
-
-	if (format[0] != '%') {
-		return NULL;
-	}
-
-	/* I'm not sure why this test is here.  It's ensuring that the format
-	   string after the first character doesn't have a single quote, a
-	   lowercase l, or a percent. This is the reverse of the commented-out
-	   test about 10 lines ago. */
-	if (strpbrk(format + 1, "'l%")) {
-		return NULL;
-	}
-
-	/* Also curious about this function is that it accepts format strings
-	   like "%xg", which are invalid for floats.  In general, the
-	   interface to this function is not very good, but changing it is
-	   difficult because it's a public API. */
-
-	if (!(format_char == 'e' || format_char == 'E' || 
-	      format_char == 'f' || format_char == 'F' || 
-	      format_char == 'g' || format_char == 'G' ||
-	      format_char == 'Z')) {
-		return NULL;
-	}
-
-	/* Map 'Z' format_char to 'g', by copying the format string and
-	   replacing the final char with a 'g' */
-	if (format_char == 'Z') {
-		if (format_len + 1 >= sizeof(tmp_format)) {
-			/* The format won't fit in our copy.  Error out.  In
-			   practice, this will never happen and will be
-			   detected by returning NULL */
-			return NULL;
-		}
-		strcpy(tmp_format, format);
-		tmp_format[format_len - 1] = 'g';
-		format = tmp_format;
-	}
-
-
-	/* Have PyOS_snprintf do the hard work */
-	PyOS_snprintf(buffer, buf_size, format, val);
-
-	/* Do various fixups on the return string */
-
-	/* Get the current locale, and find the decimal point string.
-	   Convert that string back to a dot. */
-	change_decimal_from_locale_to_dot(buffer);
-
-	/* If an exponent exists, ensure that the exponent is at least
-	   MIN_EXPONENT_DIGITS digits, providing the buffer is large enough
-	   for the extra zeros.  Also, if there are more than
-	   MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
-	   back to MIN_EXPONENT_DIGITS */
-	ensure_minumim_exponent_length(buffer, buf_size);
-
-	/* If format_char is 'Z', make sure we have at least one character
-	   after the decimal point (and make sure we have a decimal point). */
-	if (format_char == 'Z') {
-		ensure_decimal_point(buffer, buf_size);
-	}
-	ensure_decimal_point(buffer, buf_size);
-
-	return buffer;
+ */
+#define _ASCII_FORMAT(type, suffix) \
+char* NumPyOS_ascii_format ## suffix(char *buffer, size_t buf_size, \
+			      const char *format, \
+			      type val, int decimal) \
+{\
+	if (isfinite(val)) { \
+		if(_check_ascii_format(format)) {\
+			return NULL; \
+		} \
+		PyOS_snprintf(buffer, buf_size, format, val); \
+		return _fix_ascii_format(buffer, buf_size, decimal);\
+	} else if (isnan(val)){ \
+		if (buf_size < 4) { \
+			return NULL; \
+		} \
+		strncpy(buffer, "nan", 4); \
+	} else { \
+		if (signbit(val)) { \
+			if (buf_size < 5) { \
+				return NULL; \
+			} \
+			strncpy(buffer, "-inf", 5); \
+		} else { \
+			if (buf_size < 4) { \
+				return NULL; \
+			} \
+			strncpy(buffer, "inf", 4); \
+		} \
+	} \
+	return buffer; \
 }
 
-char* NumPyOS_ascii_formatf(char *buffer, size_t buf_size, const char *format, 
-		   	    float val)
-{
-	char format_char;
-	size_t format_len = strlen(format);
-
-	/* Issue 2264: code 'Z' requires copying the format.  'Z' is 'g', but
-	   also with at least one character past the decimal. */
-	char tmp_format[FLOAT_FORMATBUFLEN];
-
-	/* The last character in the format string must be the format char */
-	format_char = format[format_len - 1];
-
-	if (format[0] != '%') {
-		return NULL;
-	}
-
-	/* I'm not sure why this test is here.  It's ensuring that the format
-	   string after the first character doesn't have a single quote, a
-	   lowercase l, or a percent. This is the reverse of the commented-out
-	   test about 10 lines ago. */
-	if (strpbrk(format + 1, "'l%")) {
-		return NULL;
-	}
-
-	/* Also curious about this function is that it accepts format strings
-	   like "%xg", which are invalid for floats.  In general, the
-	   interface to this function is not very good, but changing it is
-	   difficult because it's a public API. */
-
-	if (!(format_char == 'e' || format_char == 'E' || 
-	      format_char == 'f' || format_char == 'F' || 
-	      format_char == 'g' || format_char == 'G' ||
-	      format_char == 'Z')) {
-		return NULL;
-	}
-
-	/* Map 'Z' format_char to 'g', by copying the format string and
-	   replacing the final char with a 'g' */
-	if (format_char == 'Z') {
-		if (format_len + 1 >= sizeof(tmp_format)) {
-			/* The format won't fit in our copy.  Error out.  In
-			   practice, this will never happen and will be
-			   detected by returning NULL */
-			return NULL;
-		}
-		strcpy(tmp_format, format);
-		tmp_format[format_len - 1] = 'g';
-		format = tmp_format;
-	}
-
-
-	/* Have PyOS_snprintf do the hard work */
-	PyOS_snprintf(buffer, buf_size, format, val);
-
-	/* Do various fixups on the return string */
-
-	/* Get the current locale, and find the decimal point string.
-	   Convert that string back to a dot. */
-	change_decimal_from_locale_to_dot(buffer);
-
-	/* If an exponent exists, ensure that the exponent is at least
-	   MIN_EXPONENT_DIGITS digits, providing the buffer is large enough
-	   for the extra zeros.  Also, if there are more than
-	   MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
-	   back to MIN_EXPONENT_DIGITS */
-	ensure_minumim_exponent_length(buffer, buf_size);
-
-	/* If format_char is 'Z', make sure we have at least one character
-	   after the decimal point (and make sure we have a decimal point). */
-	if (format_char == 'Z') {
-		ensure_decimal_point(buffer, buf_size);
-	}
-	ensure_decimal_point(buffer, buf_size);
-
-	return buffer;
-}
-
-char* NumPyOS_ascii_formatl(char *buffer, size_t buf_size, const char *format, 
-		   	    long double val)
-{
-	char format_char;
-	size_t format_len = strlen(format);
-
-	/* Issue 2264: code 'Z' requires copying the format.  'Z' is 'g', but
-	   also with at least one character past the decimal. */
-	char tmp_format[FLOAT_FORMATBUFLEN];
-
-	/* The last character in the format string must be the format char */
-	format_char = format[format_len - 1];
-
-	if (format[0] != '%') {
-		return NULL;
-	}
-
-	/* I'm not sure why this test is here.  It's ensuring that the format
-	   string after the first character doesn't have a single quote, a
-	   lowercase l, or a percent. This is the reverse of the commented-out
-	   test about 10 lines ago. */
-	if (strpbrk(format + 1, "'l%")) {
-		return NULL;
-	}
-
-	/* Also curious about this function is that it accepts format strings
-	   like "%xg", which are invalid for floats.  In general, the
-	   interface to this function is not very good, but changing it is
-	   difficult because it's a public API. */
-
-	if (!(format_char == 'e' || format_char == 'E' || 
-	      format_char == 'f' || format_char == 'F' || 
-	      format_char == 'g' || format_char == 'G' ||
-	      format_char == 'Z')) {
-		return NULL;
-	}
-
-	/* Map 'Z' format_char to 'g', by copying the format string and
-	   replacing the final char with a 'g' */
-	if (format_char == 'Z') {
-		if (format_len + 1 >= sizeof(tmp_format)) {
-			/* The format won't fit in our copy.  Error out.  In
-			   practice, this will never happen and will be
-			   detected by returning NULL */
-			return NULL;
-		}
-		strcpy(tmp_format, format);
-		tmp_format[format_len - 1] = 'g';
-		format = tmp_format;
-	}
-
-
-	/* Have PyOS_snprintf do the hard work */
-	PyOS_snprintf(buffer, buf_size, format, val);
-
-	/* Do various fixups on the return string */
-
-	/* Get the current locale, and find the decimal point string.
-	   Convert that string back to a dot. */
-	change_decimal_from_locale_to_dot(buffer);
-
-	/* If an exponent exists, ensure that the exponent is at least
-	   MIN_EXPONENT_DIGITS digits, providing the buffer is large enough
-	   for the extra zeros.  Also, if there are more than
-	   MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
-	   back to MIN_EXPONENT_DIGITS */
-	ensure_minumim_exponent_length(buffer, buf_size);
-
-	/* If format_char is 'Z', make sure we have at least one character
-	   after the decimal point (and make sure we have a decimal point). */
-	if (format_char == 'Z') {
-		ensure_decimal_point(buffer, buf_size);
-	}
-	ensure_decimal_point(buffer, buf_size);
-
-	return buffer;
-}
+_ASCII_FORMAT(float, f)
+_ASCII_FORMAT(double, d)
+_ASCII_FORMAT(long double, l)
