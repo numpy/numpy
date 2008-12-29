@@ -618,9 +618,6 @@ gentype_repr(PyObject *self)
  * #type=f, d, l#
  */
 
-#define FMT "%.*" NPY_@NAME@_FMT
-#define CFMT1 "%.*" NPY_@NAME@_FMT "j"
-#define CFMT2 "(%.*" NPY_@NAME@_FMT "%+.*" NPY_@NAME@_FMT "j)"
 #define _FMT1 "%%.%i" NPY_@NAME@_FMT
 #define _FMT2 "%%+.%i" NPY_@NAME@_FMT
 
@@ -684,9 +681,6 @@ format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
     }
 }
 
-#undef FMT
-#undef CFMT1
-#undef CFMT2
 #undef _FMT1
 #undef _FMT2
 
