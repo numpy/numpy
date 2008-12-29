@@ -16,6 +16,21 @@ def test_float_types():
     for t in [np.float32, np.double, np.longdouble] :
         yield check_float_type, t
 
+def check_nan_inf_float(tp):
+    for x in [float('inf'), float('-inf'), float('nan')]:
+        assert_equal(str(tp(x)), str(float(x)))
+
+def test_nan_inf_float():
+    """ Check formatting.
+
+        This is only for the str function, and only for simple types.
+        The precision of np.float and np.longdouble aren't the same as the
+        python float precision.
+
+    """
+    for t in [np.float32, np.double, np.longdouble] :
+        yield check_nan_inf_float, t
+
 def check_complex_type(tp):
     for x in [0, 1,-1, 1e10, 1e20] :
         assert_equal(str(tp(x)), str(complex(x)))
