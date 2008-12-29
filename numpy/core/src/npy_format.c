@@ -236,7 +236,7 @@ static char* _fix_ascii_format(char* buf, size_t buflen, int decimal)
  * 
  * Return value: The pointer to the buffer with the converted string.
  */
-#define _ASCII_FORMAT(type, suffix) \
+#define _ASCII_FORMAT(type, suffix, print_type) \
 char* NumPyOS_ascii_format ## suffix(char *buffer, size_t buf_size, \
 			      const char *format, \
 			      type val, int decimal) \
@@ -245,7 +245,7 @@ char* NumPyOS_ascii_format ## suffix(char *buffer, size_t buf_size, \
 		if(_check_ascii_format(format)) {\
 			return NULL; \
 		} \
-		PyOS_snprintf(buffer, buf_size, format, val); \
+		PyOS_snprintf(buffer, buf_size, format, (print_type)val); \
 		return _fix_ascii_format(buffer, buf_size, decimal);\
 	} else if (isnan(val)){ \
 		if (buf_size < 4) { \
@@ -268,6 +268,10 @@ char* NumPyOS_ascii_format ## suffix(char *buffer, size_t buf_size, \
 	return buffer; \
 }
 
-_ASCII_FORMAT(float, f)
-_ASCII_FORMAT(double, d)
-_ASCII_FORMAT(long double, l)
+_ASCII_FORMAT(float, f, float)
+_ASCII_FORMAT(double, d, double)
+#ifndef FORCE_NO_LONG_DOUBLE_FORMATTING
+_ASCII_FORMAT(long double, l, long double)
+#else
+_ASCII_FORMAT(long double, l, double)
+#endif
