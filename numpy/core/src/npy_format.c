@@ -307,8 +307,12 @@ NumPyOS_ascii_isspace(char c)
 static double
 NumPyOS_ascii_strtod(const char *s, char** endptr)
 {
+    struct lconv *locale_data = localeconv();
+    const char *decimal_point = locale_data->decimal_point;
+    size_t decimal_point_len = strlen(decimal_point);
+
     char buffer[FLOAT_FORMATBUFLEN+1];
-    const char *p;
+    char *p;
     size_t n;
     double result;
 
@@ -320,23 +324,27 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
      *
      * At least Python versions <= 2.5.2 and <= 2.6.1
      *
-     * Fails to do best-efforts parsing of strings of the form "1,234"
-     * under foreign locale.
+     * Fails to do best-efforts parsing of strings of the form "1<DP>234"
+     * where <DP> is the decimal point under the foreign locale.
      */
-    p = s;
-    if (*p == '+' || *p == '-')
-        ++p;
-    while (*p >= '0' && *p <= '9')
-        ++p;
-    if (*p == ',') {
-        n = (size_t)(p - s);
-        if (n > FLOAT_FORMATBUFLEN)
-            n = FLOAT_FORMATBUFLEN;
-        memcpy(buffer, s, n);
-        buffer[n] = '\0';
-        result = PyOS_ascii_strtod(buffer, &p);
-        *endptr = s + (p - buffer);
-        return result;
+    if (decimal_point[0] != '.' || decimal_point[1] != 0) {
+        p = (char *)s;
+        if (*p == '+' || *p == '-')
+            ++p;
+        while (*p >= '0' && *p <= '9')
+            ++p;
+        if (strncmp(p, decimal_point, decimal_point_len) == 0) {
+            n = (size_t)(p - s);
+            if (n > FLOAT_FORMATBUFLEN)
+                n = FLOAT_FORMATBUFLEN;
+            memcpy(buffer, s, n);
+            buffer[n] = '\0';
+            result = PyOS_ascii_strtod(buffer, &p);
+            if (endptr != NULL) {
+                *endptr = s + (p - buffer);
+            }
+            return result;
+        }
     }
     /* End of ##1 */
 
