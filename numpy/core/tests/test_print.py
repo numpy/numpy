@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import *
+import nose
 
 import locale
 import sys
@@ -150,54 +151,39 @@ def test_complex_type_print():
     for t in [np.complex64, np.cdouble, np.clongdouble] :
         yield check_complex_type_print, t
 
-# Locale tests: scalar types formatting should be independant of the locale
-def has_french_locale():
-    curloc = locale.getlocale(locale.LC_NUMERIC)
-    try:
-        if not sys.platform == 'win32':
-            locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
-        else:
-            locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
-
-        st = True
-    except:
-        st = False
-    finally:
-        locale.setlocale(locale.LC_NUMERIC, locale=curloc)
-
-    return st
-
-def _test_locale_independance(tp):
+# Locale tests: scalar types formatting should be independent of the locale
+def in_foreign_locale(func):
     # XXX: How to query locale on a given system ?
 
     # French is one language where the decimal is ',' not '.', and should be
     # relatively common on many systems
-    curloc = locale.getlocale(locale.LC_NUMERIC)
-    try:
-        if not sys.platform == 'win32':
-            locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
-        else:
-            locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
+    def wrapper(*args, **kwargs):
+        curloc = locale.getlocale(locale.LC_NUMERIC)
+        try:
+            try:
+                if not sys.platform == 'win32':
+                    locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
+                else:
+                    locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
+            except locale.Error:
+                raise nose.SkipTest("Skipping locale test, because "
+                                    "French locale not found")
+            return func(*args, **kwargs)
+        finally:
+            locale.setlocale(locale.LC_NUMERIC, locale=curloc)
+    return nose.tools.make_decorator(func)(wrapper)
 
-        assert_equal(str(tp(1.2)), str(float(1.2)),
-                     err_msg='Failed locale test for type %s' % tp)
-    finally:
-        locale.setlocale(locale.LC_NUMERIC, locale=curloc)
-
-@np.testing.dec.skipif(not has_french_locale(),
-                       "Skipping locale test, French locale not found")
+@in_foreign_locale
 def test_locale_single():
-    return _test_locale_independance(np.float32)
+    assert_equal(str(np.float32(1.2)), str(float(1.2)))
 
-@np.testing.dec.skipif(not has_french_locale(),
-                       "Skipping locale test, French locale not found")
+@in_foreign_locale
 def test_locale_double():
-    return _test_locale_independance(np.double)
+    assert_equal(str(np.double(1.2)), str(float(1.2)))
 
-@np.testing.dec.skipif(not has_french_locale(),
-                       "Skipping locale test, French locale not found")
+@in_foreign_locale
 def test_locale_longdouble():
-    return _test_locale_independance(np.longdouble)
+    assert_equal(str(np.longdouble(1.2)), str(float(1.2)))
 
 if __name__ == "__main__":
     run_module_suite()
