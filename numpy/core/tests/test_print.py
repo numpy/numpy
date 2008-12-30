@@ -6,8 +6,15 @@ import sys
 from StringIO import StringIO
 
 def check_float_type(tp):
-    for x in [0, 1,-1, 1e10, 1e20] :
+    for x in [0, 1,-1, 1e20] :
         assert_equal(str(tp(x)), str(float(x)),
+                     err_msg='Failed str formatting for type %s' % tp)
+
+    if tp(1e10).itemsize > 4:
+        assert_equal(str(tp(1e10)), str(float('1e10')),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '1e+10',
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_types():
@@ -38,12 +45,19 @@ def test_nan_inf_float():
         yield check_nan_inf_float, t
 
 def check_complex_type(tp):
-    for x in [0, 1,-1, 1e10, 1e20] :
+    for x in [0, 1,-1, 1e20] :
         assert_equal(str(tp(x)), str(complex(x)),
                      err_msg='Failed str formatting for type %s' % tp)
         assert_equal(str(tp(x*1j)), str(complex(x*1j)),
                      err_msg='Failed str formatting for type %s' % tp)
         assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)),
+                     err_msg='Failed str formatting for type %s' % tp)
+
+    if tp(1e10).itemsize > 8:
+        assert_equal(str(tp(1e10)), str(complex(1e10)),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '(1e+10+0j)',
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_complex_types():
