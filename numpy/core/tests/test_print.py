@@ -5,6 +5,10 @@ import locale
 import sys
 from StringIO import StringIO
 
+_REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan', complex(np.inf, 1):
+        '(inf+1j)', complex(np.nan, 1): '(nan+1j)', complex(-np.inf, 1):
+        '(-inf+1j)'}
+
 def check_float_type(tp):
     for x in [0, 1,-1, 1e20] :
         assert_equal(str(tp(x)), str(float(x)),
@@ -34,7 +38,7 @@ def test_float_types():
 
 def check_nan_inf_float(tp):
     for x in [np.inf, -np.inf, np.nan]:
-        assert_equal(str(tp(x)), str(float(x)),
+        assert_equal(str(tp(x)), _REF[x],
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_nan_inf_float():
@@ -88,7 +92,10 @@ def _test_redirected_print(x, tp):
         sys.stdout = file_tp
         print tp(x)
         sys.stdout = file
-        print x
+        if x in _REF:
+            print _REF[x]
+        else:
+            print x
     finally:
         sys.stdout = stdout
 
