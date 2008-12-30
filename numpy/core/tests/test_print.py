@@ -67,9 +67,9 @@ def check_complex_type(tp):
     else:
         if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
            sys.version_info[1] <= 5:
-            ref = '1e+010'
+            ref = '(1e+010+0j)'
         else:
-            ref = '1e+10'
+            ref = '(1e+10+0j)'
         assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
