@@ -774,6 +774,46 @@ c@name@type_@kind@(PyObject *self)
 /**end repeat1**/
 /**end repeat**/
 
+/*
+ * float type print (control print a, where a is a float type instance)
+ */
+/**begin repeat
+ * #name=float, double, longdouble#
+ * #Name=Float, Double, LongDouble#
+ * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
+ */
+
+static int
+@name@type_print(PyObject *v, FILE *fp, int flags)
+{
+	char buf[100];
+        @name@ val = ((Py@Name@ScalarObject *)v)->obval;
+
+	format_@name@(buf, sizeof(buf), val,
+		      (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
+	Py_BEGIN_ALLOW_THREADS
+	fputs(buf, fp);
+	Py_END_ALLOW_THREADS
+	return 0;
+}
+
+static int
+c@name@type_print(PyObject *v, FILE *fp, int flags)
+{
+        /* Size of buf: twice sizeof(real) + 2 (for the parenthesis) */
+	char buf[202];
+        c@name@ val = ((PyC@Name@ScalarObject *)v)->obval;
+
+	format_c@name@(buf, sizeof(buf), val,
+		       (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
+	Py_BEGIN_ALLOW_THREADS
+	fputs(buf, fp);
+	Py_END_ALLOW_THREADS
+	return 0;
+}
+
+/**end repeat**/
+
 
 /*
  * Could improve this with a PyLong_FromLongDouble(longdouble ldval)
