@@ -74,10 +74,35 @@ def check_float_type_print(tp):
         assert_equal(file.getvalue(), file_tp.getvalue(),
                      err_msg='print failed for type%s' % tp)
 
+def check_complex_type_print(tp):
+    # We do not create complex with inf/nan directly because the feature is
+    # missing in python < 2.6
+    for x in [complex(0), complex(1), complex(-1), complex(1e10), complex(1e20),
+              complex(float('inf'), 1), complex(float('nan'), 1),
+              complex(float('-inf'), 1)] :
+        file = StringIO()
+        file_tp = StringIO()
+        stdout = sys.stdout
+        try:
+            sys.stdout = file_tp
+            print tp(x)
+            sys.stdout = file
+            print x
+        finally:
+            sys.stdout = stdout
+
+        assert_equal(file.getvalue(), file_tp.getvalue(),
+                     err_msg='print failed for type%s' % tp)
+
 def test_float_type_print():
     """Check formatting when using print """
     for t in [np.float32, np.double, np.longdouble] :
         yield check_float_type_print, t
+
+def test_complex_type_print():
+    """Check formatting when using print """
+    for t in [np.complex64, np.cdouble, np.clongdouble] :
+        yield check_complex_type_print, t
 
 # Locale tests: scalar types formatting should be independant of the locale
 def has_french_locale():
