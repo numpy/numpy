@@ -88,7 +88,7 @@ def _test_redirected_print(x, tp):
                  err_msg='print failed for type%s' % tp)
 
 def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e20, np.inf, -np.inf, np.nan]
+    for x in [0, 1,-1, 1e20, np.inf, -np.inf, np.nan]:
         _test_redirected_print(float(x), tp)
 
     if tp(1e10).itemsize > 4:
