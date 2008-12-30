@@ -5,9 +5,17 @@ import locale
 import sys
 from StringIO import StringIO
 
-_REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan', complex(np.inf, 1):
-        '(inf+1j)', complex(np.nan, 1): '(nan+1j)', complex(-np.inf, 1):
-        '(-inf+1j)'}
+_REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan',
+        np.complex64(np.inf, 1): '(inf+1j)',
+        np.complex64(np.nan, 1): '(nan+1j)',
+        np.complex64(-np.inf, 1): '(-inf+1j)'
+        np.cdouble(np.inf, 1): '(inf+1j)',
+        np.cdouble(np.nan, 1): '(nan+1j)',
+        np.cdouble(-np.inf, 1): '(-inf+1j)'
+        np.clongdouble(np.inf, 1): '(inf+1j)',
+        np.clongdouble(np.nan, 1): '(nan+1j)',
+        np.clongdouble(-np.inf, 1): '(-inf+1j)'
+        }
 
 if sys.platform == 'win32' and sys.version_info[0] <= 2 and sys.version_info[1] <= 5:
     _REF[np.float32(1e10)] = '1e+010'
@@ -89,8 +97,8 @@ def _test_redirected_print(x, tp):
         sys.stdout = file_tp
         print tp(x)
         sys.stdout = file
-        if x in _REF:
-            print _REF[x]
+        if tp(x) in _REF:
+            print _REF[tp(x)]
         else:
             print x
     finally:
