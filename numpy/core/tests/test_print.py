@@ -9,6 +9,11 @@ _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan', complex(np.inf, 1):
         '(inf+1j)', complex(np.nan, 1): '(nan+1j)', complex(-np.inf, 1):
         '(-inf+1j)'}
 
+if sys.platform == 'win32' and sys.version_info[0] <= 2 and sys.version_info[1] <= 5:
+    _REF[np.float32(1e10)] = '1e+010'
+else:
+    _REF[np.float32(1e10)] = '1e+10'
+
 def check_float_type(tp):
     for x in [0, 1,-1, 1e20] :
         assert_equal(str(tp(x)), str(float(x)),
@@ -18,11 +23,7 @@ def check_float_type(tp):
         assert_equal(str(tp(1e10)), str(float('1e10')),
                      err_msg='Failed str formatting for type %s' % tp)
     else:
-        if sys.platform == 'win32' and sys.version_info[0] <= 2 and sys.version_info[1] <= 5:
-            ref = '1e+010'
-        else:
-            ref = '1e+10'
-        assert_equal(str(tp(1e10)), ref,
+        assert_equal(str(tp(1e10)), _REF[tp(1e10)],
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_types():
@@ -65,11 +66,7 @@ def check_complex_type(tp):
         assert_equal(str(tp(1e10)), str(complex(1e10)),
                      err_msg='Failed str formatting for type %s' % tp)
     else:
-        if sys.platform == 'win32' and sys.version_info[0] <= 2 and sys.version_info[1] <= 5:
-            ref = '(1e+010+0j)'
-        else:
-            ref = '(1e+10+0j)'
-        assert_equal(str(tp(1e10)), ref,
+        assert_equal(str(tp(1e10)), _REF[tp(1e10)],
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_complex_types():
@@ -103,29 +100,15 @@ def _test_redirected_print(x, tp):
                  err_msg='print failed for type%s' % tp)
 
 def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e20, np.inf, -np.inf, np.nan]:
+    for x in [0, 1,-1, 1e10, 1e20, np.inf, -np.inf, np.nan]:
         _test_redirected_print(float(x), tp)
-
-    if tp(1e10).itemsize > 4:
-        assert_equal(str(tp(1e10)), str(float(1e10)),
-                     err_msg='Failed str formatting for type %s' % tp)
-    else:
-        assert_equal(str(tp(1e10)), '1e+10',
-                     err_msg='Failed str formatting for type %s' % tp)
 
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
-    for x in [0, 1, -1, 1e20, complex(np.inf, 1),
+    for x in [0, 1, -1, 1e10, 1e20, complex(np.inf, 1),
               complex(np.nan, 1), complex(-np.inf, 1)] :
         _test_redirected_print(complex(x), tp)
-
-    if tp(1e10).itemsize > 8:
-        assert_equal(str(tp(1e10)), str(complex(1e10)),
-                     err_msg='Failed str formatting for type %s' % tp)
-    else:
-        assert_equal(str(tp(1e10)), '(1e+10+0j)',
-                     err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_type_print():
     """Check formatting when using print """
