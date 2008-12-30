@@ -6,8 +6,15 @@ import sys
 from StringIO import StringIO
 
 def check_float_type(tp):
-    for x in [0, 1,-1, 1e10, 1e20] :
+    for x in [0, 1,-1, 1e20] :
         assert_equal(str(tp(x)), str(float(x)),
+                     err_msg='Failed str formatting for type %s' % tp)
+
+    if tp(1e10).itemsize > 4:
+        assert_equal(str(tp(1e10)), str(float('1e10')),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '1e+10',
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_types():
@@ -38,12 +45,19 @@ def test_nan_inf_float():
         yield check_nan_inf_float, t
 
 def check_complex_type(tp):
-    for x in [0, 1,-1, 1e10, 1e20] :
+    for x in [0, 1,-1, 1e20] :
         assert_equal(str(tp(x)), str(complex(x)),
                      err_msg='Failed str formatting for type %s' % tp)
         assert_equal(str(tp(x*1j)), str(complex(x*1j)),
                      err_msg='Failed str formatting for type %s' % tp)
         assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)),
+                     err_msg='Failed str formatting for type %s' % tp)
+
+    if tp(1e10).itemsize > 8:
+        assert_equal(str(tp(1e10)), str(complex(1e10)),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '(1e+10+0j)',
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_complex_types():
@@ -58,42 +72,45 @@ def test_complex_types():
         yield check_complex_type, t
 
 # print tests
-def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e10, 1e20, float('inf'), float('nan'), float('-inf')] :
-        x = float(x)
-        file = StringIO()
-        file_tp = StringIO()
-        stdout = sys.stdout
-        try:
-            sys.stdout = file_tp
-            print tp(x)
-            sys.stdout = file
-            print x
-        finally:
-            sys.stdout = stdout
+def _test_redirected_print(x, tp):
+    file = StringIO()
+    file_tp = StringIO()
+    stdout = sys.stdout
+    try:
+        sys.stdout = file_tp
+        print tp(x)
+        sys.stdout = file
+        print x
+    finally:
+        sys.stdout = stdout
 
-        assert_equal(file.getvalue(), file_tp.getvalue(),
-                     err_msg='print failed for type%s' % tp)
+    assert_equal(file.getvalue(), file_tp.getvalue(),
+                 err_msg='print failed for type%s' % tp)
+
+def check_float_type_print(tp):
+    for x in [0, 1,-1, 1e20, 'inf', 'nan', '-inf'] :
+        _test_redirected_print(float(x), tp)
+
+    if tp(1e10).itemsize > 4:
+        assert_equal(str(tp(1e10)), str(float(1e10)),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '1e+10',
+                     err_msg='Failed str formatting for type %s' % tp)
 
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
-    for x in [complex(0), complex(1), complex(-1), complex(1e10), complex(1e20),
-              complex(float('inf'), 1), complex(float('nan'), 1),
-              complex(float('-inf'), 1)] :
-        file = StringIO()
-        file_tp = StringIO()
-        stdout = sys.stdout
-        try:
-            sys.stdout = file_tp
-            print tp(x)
-            sys.stdout = file
-            print x
-        finally:
-            sys.stdout = stdout
+    for x in [0, 1, -1, 1e20, complex(float('inf'), 1),
+              complex(float('nan'), 1), complex(float('-inf'), 1)] :
+        _test_redirected_print(complex(x), tp)
 
-        assert_equal(file.getvalue(), file_tp.getvalue(),
-                     err_msg='print failed for type%s' % tp)
+    if tp(1e10).itemsize > 8:
+        assert_equal(str(tp(1e10)), str(complex(1e10)),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '(1e+10+0j)',
+                     err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_type_print():
     """Check formatting when using print """
