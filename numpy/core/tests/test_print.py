@@ -8,7 +8,7 @@ from StringIO import StringIO
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan',
         np.complex64(np.inf, 1): '(inf+1j)',
         np.complex64(np.nan, 1): '(nan+1j)',
-        np.complex64(-np.inf, 1): '(-inf+1j)'
+        np.complex64(-np.inf, 1): '(-inf+1j)',
         np.cdouble(np.inf, 1): '(inf+1j)',
         np.cdouble(np.nan, 1): '(nan+1j)',
         np.cdouble(-np.inf, 1): '(-inf+1j)'
