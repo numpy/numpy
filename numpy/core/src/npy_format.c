@@ -4,7 +4,12 @@
 The exponent always contains at least two digits, and only as many more digits
 as necessary to represent the exponent.
 */
+/* We force 3 digits on windows for python < 2.6 for compatibility reason */
+#ifdef MS_WIN32 && PY_VERSION_HEX < 0x02060000
+#define MIN_EXPONENT_DIGITS 3
+#else
 #define MIN_EXPONENT_DIGITS 2
+#endif
 
 /* Ensure that any exponent, if present, is at least MIN_EXPONENT_DIGITS
    in length. */
