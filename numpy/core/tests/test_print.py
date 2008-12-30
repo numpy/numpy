@@ -60,6 +60,7 @@ def test_complex_types():
 # print tests
 def check_float_type_print(tp):
     for x in [0, 1,-1, 1e10, 1e20, float('inf'), float('nan'), float('-inf')] :
+        x = float(x)
         file = StringIO()
         file_tp = StringIO()
         stdout = sys.stdout
