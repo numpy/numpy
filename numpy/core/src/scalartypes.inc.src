@@ -3153,6 +3153,14 @@ ComplexFloating, Flexible, Character#
     PyCDoubleArrType_Type.tp_@name@  = cdoubletype_@name@;
     /**end repeat**/
 
+    PyFloatArrType_Type.tp_print = floattype_print;
+    PyDoubleArrType_Type.tp_print = doubletype_print;
+    PyLongDoubleArrType_Type.tp_print = longdoubletype_print;
+
+    PyCFloatArrType_Type.tp_print = cfloattype_print;
+    PyCDoubleArrType_Type.tp_print = cdoubletype_print;
+    PyCLongDoubleArrType_Type.tp_print = clongdoubletype_print;
+
     /* These need to be coded specially because getitem does not
        return a normal Python type
      */
