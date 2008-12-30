@@ -1,4 +1,5 @@
 #include <locale.h>
+#include <stdio.h>
 
 /* From the C99 standard, section 7.19.6:
 The exponent always contains at least two digits, and only as many more digits
@@ -280,3 +281,166 @@ _ASCII_FORMAT(long double, l, long double)
 #else
 _ASCII_FORMAT(long double, l, double)
 #endif
+
+
+/* NumPyOS_ascii_isspace:
+ *
+ * Same as isspace under C locale
+ */
+static int
+NumPyOS_ascii_isspace(char c)
+{
+    return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t'
+        || c == '\v';
+}
+
+
+/*
+ * NumPyOS_ascii_ftolf:
+ * 	* fp: FILE pointer
+ * 	* value: Place to store the value read
+ *
+ * Similar to PyOS_ascii_strtod, except that it reads input from a file.
+ *
+ * Similarly to fscanf, this function always consumes leading whitespace,
+ * and any text that could be the leading part in valid input.
+ *
+ * Return value: similar to fscanf.
+ *      * 0 if no number read,
+ *      * 1 if a number read,
+ *      * EOF if end-of-file met before reading anything.
+ */
+
+static int
+NumPyOS_ascii_ftolf(FILE *fp, double *value)
+{
+    char buffer[FLOAT_FORMATBUFLEN+1];
+    char *endp;
+    char *p;
+    int c;
+    int ok;
+
+    /*
+     * Pass on to PyOS_ascii_strtod the leftmost matching part in regexp
+     *
+     *     \s*[+-]? ( [0-9]*\.[0-9]+([eE][+-]?[0-9]+)
+     *              | nan  (  \([:alphanum:_]*\) )?
+     *              | inf(inity)?
+     *              )
+     *
+     * case-insensitively.
+     *
+     * The "do { ... } while (0)" wrapping in macros ensures that they behave
+     * properly eg. in "if ... else" structures.
+     */
+
+#define END_MATCH()                                                         \
+        goto buffer_filled
+
+#define NEXT_CHAR()                                                         \
+        do {                                                                \
+            if (c == EOF || endp >= buffer + FLOAT_FORMATBUFLEN)            \
+                END_MATCH();                                                \
+            *endp++ = (char)c;                                              \
+            c = getc(fp);                                                   \
+        } while (0)
+
+#define MATCH_ALPHA_STRING_NOCASE(string)                                   \
+        do {                                                                \
+            for (p=(string); *p!='\0' && (c==*p || c+('a'-'A')==*p); ++p)   \
+                NEXT_CHAR();                                                \
+            if (*p != '\0') END_MATCH();                                    \
+        } while (0)
+
+#define MATCH_ONE_OR_NONE(condition)                                        \
+        do { if (condition) NEXT_CHAR(); } while (0)
+
+#define MATCH_ONE_OR_MORE(condition)                                        \
+        do {                                                                \
+            ok = 0;                                                         \
+            while (condition) { NEXT_CHAR(); ok = 1; }                      \
+            if (!ok) END_MATCH();                                           \
+        } while (0)
+
+#define MATCH_ZERO_OR_MORE(condition)                                       \
+        while (condition) { NEXT_CHAR(); }
+
+#define IS_NUMBER (c >= '0' && c <= '9')
+
+#define IS_ALPHA ((c >= 'a' && c <= 'z') ||  (c >= 'A' && c <= 'Z'))
+
+#define IS_ALPHANUM (IS_NUMBER || IS_ALPHA)
+
+    /* 1. emulate fscanf EOF handling */
+    c = getc(fp);
+    if (c == EOF)
+        return EOF;
+
+    /* 2. consume leading whitespace unconditionally */
+    while (NumPyOS_ascii_isspace(c)) {
+        c = getc(fp);
+    }
+
+    /* 3. start reading matching input to buffer */
+    endp = buffer;
+
+    /* 4.1 sign (optional) */
+    MATCH_ONE_OR_NONE(c == '+' || c == '-');
+
+    /* 4.2 nan, inf, infinity; [case-insensitive] */
+    if (c == 'n' || c == 'N') {
+        NEXT_CHAR();
+        MATCH_ALPHA_STRING_NOCASE("an");
+        
+        /* accept nan([:alphanum:_]*), similarly to strtod */
+        if (c == '(') {
+            NEXT_CHAR();
+            MATCH_ZERO_OR_MORE(IS_ALPHANUM || c == '_');
+            if (c == ')') NEXT_CHAR();
+        }
+        END_MATCH();
+    } else if (c == 'i' || c == 'I') {
+        NEXT_CHAR();
+        MATCH_ALPHA_STRING_NOCASE("nfinity");
+        END_MATCH();
+    }
+
+    /* 4.3 mantissa */
+    MATCH_ZERO_OR_MORE(IS_NUMBER);
+
+    if (c == '.') {
+        NEXT_CHAR();
+        MATCH_ONE_OR_MORE(IS_NUMBER);
+    }
+
+    /* 4.4 exponent */
+    if (c == 'e' || c == 'E') {
+        NEXT_CHAR();
+        MATCH_ONE_OR_NONE(c == '+' || c == '-');
+        MATCH_ONE_OR_MORE(IS_NUMBER);
+    }
+
+    END_MATCH();
+
+buffer_filled:
+
+    ungetc(c, fp);
+    *endp = '\0';
+
+    /* 5. try to convert buffer. */
+
+    *value = PyOS_ascii_strtod(buffer, &p);
+
+    return (buffer == p) ? 0 : 1; /* if something was read */
+}
+
+#undef END_MATCH
+#undef NEXT_CHAR
+#undef MATCH_ALPHA_STRING_NOCASE
+#undef MATCH_ONE_OR_NONE
+#undef MATCH_ONE_OR_MORE
+#undef MATCH_ZERO_OR_MORE
+#undef IS_NUMBER
+#undef IS_ALPHA
+#undef IS_ALPHANUM
+

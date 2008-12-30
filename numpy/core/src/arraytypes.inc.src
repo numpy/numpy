@@ -897,17 +897,30 @@ static void
  */
 
 /**begin repeat
-
-#fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
-#format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT,"f","lf","Lf"#
+#fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+#type=short,ushort,int,uint,long,ulong,longlong,ulonglong#
+#format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT#
 */
 static int
 @fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
 {
     return fscanf(fp, "%"@format@, ip);
 }
+/**end repeat**/
 
+/**begin repeat
+#fname=FLOAT,DOUBLE,LONGDOUBLE#
+#type=float,double,longdouble#
+*/
+static int
+@fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
+{
+    double result;
+    int ret;
+    ret = NumPyOS_ascii_ftolf(fp, &result);
+    *ip = (@type@) result;
+    return ret;
+}
 /**end repeat**/
 
 /**begin repeat
