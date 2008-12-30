@@ -14,7 +14,11 @@ def check_float_type(tp):
         assert_equal(str(tp(1e10)), str(float('1e10')),
                      err_msg='Failed str formatting for type %s' % tp)
     else:
-        assert_equal(str(tp(1e10)), '1e+10',
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and sys.version_info[1] <= 5:
+            ref = '1e+010'
+        else:
+            ref = '1e+10'
+        assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_types():
@@ -57,7 +61,11 @@ def check_complex_type(tp):
         assert_equal(str(tp(1e10)), str(complex(1e10)),
                      err_msg='Failed str formatting for type %s' % tp)
     else:
-        assert_equal(str(tp(1e10)), '(1e+10+0j)',
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and sys.version_info[1] <= 5:
+            ref = '(1e+010+0j)'
+        else:
+            ref = '(1e+10+0j)'
+        assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_complex_types():
