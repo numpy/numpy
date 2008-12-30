@@ -104,8 +104,11 @@ def _test_redirected_print(x, tp, ref=None):
                  err_msg='print failed for type%s' % tp)
 
 def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e20, np.inf, -np.inf, np.nan]:
+    for x in [0, 1,-1, 1e20]:
         _test_redirected_print(float(x), tp)
+
+    for x in [np.inf, -np.inf, np.nan]:
+        _test_redirected_print(float(x), tp, _REF[x])
 
     if tp(1e10).itemsize > 4:
         _test_redirected_print(float(1e10), tp)
@@ -120,8 +123,7 @@ def check_float_type_print(tp):
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
-    for x in [0, 1, -1, 1e20, complex(np.inf, 1),
-              complex(np.nan, 1), complex(-np.inf, 1)] :
+    for x in [0, 1, -1, 1e20]:
         _test_redirected_print(complex(x), tp)
 
     if tp(1e10).itemsize > 8:
@@ -133,6 +135,10 @@ def check_complex_type_print(tp):
         else:
             ref = '(1e+10+0j)'
         _test_redirected_print(complex(1e10), tp, ref)
+
+    _test_redirected_print(complex(np.inf, 1), tp, '(inf+1j)')
+    _test_redirected_print(complex(-np.inf, 1), tp, '(-inf+1j)')
+    _test_redirected_print(complex(-np.nan, 1), tp, '(nan+1j)')
 
 def test_float_type_print():
     """Check formatting when using print """
