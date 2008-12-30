@@ -295,6 +295,46 @@ NumPyOS_ascii_isspace(char c)
 }
 
 
+/* NumPyOS_ascii_strtod:
+ *
+ * Work around bugs in PyOS_ascii_strtod
+ */
+static double
+NumPyOS_ascii_strtod(const char *s, char** endptr)
+{
+    char buffer[FLOAT_FORMATBUFLEN+1];
+    char *p;
+    size_t n;
+    double result;
+
+    /* ## 1
+     *
+     * At least Python versions <= 2.5.2 and <= 2.6.1
+     *
+     * Fails to do best-efforts parsing of strings of the form "1,234"
+     * under foreign locale.
+     */
+    p = s;
+    while ((*p >= '0' && *p <= '9') || *p == '+' || *p == '-'
+           || NumPyOS_ascii_isspace(*p)) {
+        ++p;
+    }
+    if (*p == ',') {
+        n = (size_t)(p - s);
+        if (n > FLOAT_FORMATBUFLEN)
+            n = FLOAT_FORMATBUFLEN;
+        memcpy(buffer, s, n);
+        buffer[n] = '\0';
+        result = PyOS_ascii_strtod(buffer, &p);
+        *endptr = s + (p - buffer);
+        return result;
+    }
+    /* End of ##1 */
+
+    return PyOS_ascii_strtod(s, endptr);
+}
+
+
 /*
  * NumPyOS_ascii_ftolf:
  * 	* fp: FILE pointer
@@ -429,6 +469,9 @@ buffer_filled:
 
     /* 5. try to convert buffer. */
 
+    /* No need for NumPyOS here, the bugs in PyOS_ascii_strtod discussed
+       above can't manifest here, since the above parsing only copies
+       "good" strings. */
     *value = PyOS_ascii_strtod(buffer, &p);
 
     return (buffer == p) ? 0 : 1; /* if something was read */

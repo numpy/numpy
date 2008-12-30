@@ -979,19 +979,15 @@ static int
 #fname=FLOAT,DOUBLE,LONGDOUBLE#
 #type=float,double,longdouble#
 */
-#if (PY_VERSION_HEX >= 0x02040000) || defined(PyOS_ascii_strtod)
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
 {
     double result;
 
-    result = PyOS_ascii_strtod(str, endptr);
+    result = NumPyOS_ascii_strtod(str, endptr);
     *ip = (@type@) result;
     return 0;
 }
-#else
-#define @fname@_fromstr NULL
-#endif
 /**end repeat**/
 
 
