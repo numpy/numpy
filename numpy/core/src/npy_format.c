@@ -303,9 +303,13 @@ static double
 NumPyOS_ascii_strtod(const char *s, char** endptr)
 {
     char buffer[FLOAT_FORMATBUFLEN+1];
-    char *p;
+    const char *p;
     size_t n;
     double result;
+
+    while (NumPyOS_ascii_isspace(*s)) {
+        ++s;
+    }
 
     /* ## 1
      *
@@ -315,10 +319,8 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
      * under foreign locale.
      */
     p = s;
-    while ((*p >= '0' && *p <= '9') || *p == '+' || *p == '-'
-           || NumPyOS_ascii_isspace(*p)) {
-        ++p;
-    }
+    if (*p == '+' || *p == '-') ++p;
+    while (*p >= '0' && *p <= '9') ++p;
     if (*p == ',') {
         n = (size_t)(p - s);
         if (n > FLOAT_FORMATBUFLEN)
