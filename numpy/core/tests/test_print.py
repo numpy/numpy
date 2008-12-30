@@ -29,7 +29,7 @@ def test_float_types():
         yield check_float_type, t
 
 def check_nan_inf_float(tp):
-    for x in [float('inf'), float('-inf'), float('nan')]:
+    for x in [np.inf, -np.inf, np.nan]:
         assert_equal(str(tp(x)), str(float(x)),
                      err_msg='Failed str formatting for type %s' % tp)
 
@@ -88,7 +88,7 @@ def _test_redirected_print(x, tp):
                  err_msg='print failed for type%s' % tp)
 
 def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e20, 'inf', 'nan', '-inf'] :
+    for x in [0, 1,-1, 1e20, np.inf, -np.inf, np.nan]
         _test_redirected_print(float(x), tp)
 
     if tp(1e10).itemsize > 4:
@@ -101,8 +101,8 @@ def check_float_type_print(tp):
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
-    for x in [0, 1, -1, 1e20, complex(float('inf'), 1),
-              complex(float('nan'), 1), complex(float('-inf'), 1)] :
+    for x in [0, 1, -1, 1e20, complex(np.inf, 1),
+              complex(np.nan, 1), complex(-np.inf, 1)] :
         _test_redirected_print(complex(x), tp)
 
     if tp(1e10).itemsize > 8:
