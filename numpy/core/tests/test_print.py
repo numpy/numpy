@@ -88,15 +88,29 @@ def _test_redirected_print(x, tp):
                  err_msg='print failed for type%s' % tp)
 
 def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e10, 1e20, 'inf', 'nan', '-inf'] :
+    for x in [0, 1,-1, 1e20, 'inf', 'nan', '-inf'] :
         _test_redirected_print(float(x), tp)
+
+    if tp(1e10).itemsize > 4:
+        assert_equal(str(tp(1e10)), str(float(1e10)),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '1e+10',
+                     err_msg='Failed str formatting for type %s' % tp)
 
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
-    for x in [0, 1, -1, 1e10, 1e20, complex(float('inf'), 1),
+    for x in [0, 1, -1, 1e20, complex(float('inf'), 1),
               complex(float('nan'), 1), complex(float('-inf'), 1)] :
         _test_redirected_print(complex(x), tp)
+
+    if tp(1e10).itemsize > 8:
+        assert_equal(str(tp(1e10)), str(complex(1e10)),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        assert_equal(str(tp(1e10)), '(1e+10+0j)',
+                     err_msg='Failed str formatting for type %s' % tp)
 
 def test_float_type_print():
     """Check formatting when using print """
