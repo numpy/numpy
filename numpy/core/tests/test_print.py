@@ -6,15 +6,15 @@ import sys
 from StringIO import StringIO
 
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan',
-        np.complex64(np.inf, 1): '(inf+1j)',
-        np.complex64(np.nan, 1): '(nan+1j)',
-        np.complex64(-np.inf, 1): '(-inf+1j)',
-        np.cdouble(np.inf, 1): '(inf+1j)',
-        np.cdouble(np.nan, 1): '(nan+1j)',
-        np.cdouble(-np.inf, 1): '(-inf+1j)',
-        np.clongdouble(np.inf, 1): '(inf+1j)',
-        np.clongdouble(np.nan, 1): '(nan+1j)',
-        np.clongdouble(-np.inf, 1): '(-inf+1j)'
+        np.complex64(complex(np.inf, 1)): '(inf+1j)',
+        np.complex64(complex(np.nan, 1)): '(nan+1j)',
+        np.complex64(complex(-np.inf, 1)): '(-inf+1j)',
+        np.cdouble(complex(np.inf, 1)): '(inf+1j)',
+        np.cdouble(complex(np.nan, 1)): '(nan+1j)',
+        np.cdouble(complex(-np.inf, 1)): '(-inf+1j)',
+        np.clongdouble(complex(np.inf, 1)): '(inf+1j)',
+        np.clongdouble(complex(np.nan, 1)): '(nan+1j)',
+        np.clongdouble(complex(-np.inf, 1)): '(-inf+1j)'
         }
 
 if sys.platform == 'win32' and sys.version_info[0] <= 2 and sys.version_info[1] <= 5:
