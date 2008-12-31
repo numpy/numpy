@@ -1,5 +1,6 @@
 import tempfile
 import sys
+import os
 import numpy as np
 from numpy.testing import *
 from numpy.core import *
@@ -832,6 +833,7 @@ class TestFromToFile(TestCase):
             tmp_file.flush()
             y = np.fromfile(tmp_file.name,dtype=self.dtype)
             assert_array_equal(y,self.x.flat)
+            tmp_file.close()
 
     def test_filename(self):
         filename = tempfile.mktemp()
@@ -840,6 +842,7 @@ class TestFromToFile(TestCase):
         f.close()
         y = np.fromfile(filename,dtype=self.dtype)
         assert_array_equal(y,self.x.flat)
+        os.unlink(filename)
 
     def test_malformed(self):
         filename = tempfile.mktemp()
@@ -848,6 +851,7 @@ class TestFromToFile(TestCase):
         f.close()
         y = np.fromfile(filename, sep=' ')
         assert_array_equal(y, [1.234, 1.])
+        os.unlink(filename)
 
 class TestFromBuffer(TestCase):
     def tst_basic(self,buffer,expected,kwargs):
