@@ -699,11 +699,11 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
 
             # import sub-packages
             if import_modules and hasattr(item, '__path__'):
-                for pth in item.__path__: 
-                    for mod_path in os.listdir(pth): 
-                        init_py = os.path.join(pth, mod_path, '__init__.py') 
+                for pth in item.__path__:
+                    for mod_path in os.listdir(pth):
+                        init_py = os.path.join(pth, mod_path, '__init__.py')
                         if not os.path.isfile(init_py):
-                            continue 
+                            continue
                         if _all is not None and mod_path not in _all:
                             continue
                         try:

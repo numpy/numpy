@@ -327,15 +327,15 @@ def check_embedded_msvcr_match_linked(msver):
 def configtest_name(config):
     base = os.path.basename(config._gen_temp_sourcefile("yo", [], "c"))
     return os.path.splitext(base)[0]
-       
+
 def manifest_name(config):
-    # Get configest name (including suffix)  
+    # Get configest name (including suffix)
     root = configtest_name(config)
     exext = config.compiler.exe_extension
     return root + exext + ".manifest"
 
 def rc_name(config):
-    # Get configest name (including suffix)  
+    # Get configest name (including suffix)
     root = configtest_name(config)
     return root + ".rc"
 

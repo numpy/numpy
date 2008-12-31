@@ -955,7 +955,7 @@ class TestChoose(TestCase):
         self.x = 2*ones((3,),dtype=int)
         self.y = 3*ones((3,),dtype=int)
         self.x2 = 2*ones((2,3), dtype=int)
-        self.y2 = 3*ones((2,3), dtype=int)        
+        self.y2 = 3*ones((2,3), dtype=int)
         self.ind = [0,0,1]
 
     def test_basic(self):
@@ -965,11 +965,11 @@ class TestChoose(TestCase):
     def test_broadcast1(self):
         A = np.choose(self.ind, (self.x2, self.y2))
         assert_equal(A, [[2,2,3],[2,2,3]])
-    
+
     def test_broadcast2(self):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2,2,3],[2,2,3]])
-        
+
 
 if __name__ == "__main__":
     run_module_suite()

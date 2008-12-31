@@ -89,7 +89,7 @@ def knownfailureif(skip_condition, msg=None):
     Parameters
     ---------
     skip_condition : bool
-        Flag to determine whether to mark test as known failure (True) 
+        Flag to determine whether to mark test as known failure (True)
         or not (False)
     msg : string
         Message to give on raising a KnownFailureTest exception

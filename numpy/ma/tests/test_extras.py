@@ -22,7 +22,7 @@ class TestGeneric(TestCase):
     #
     def test_masked_all(self):
         "Tests masked_all"
-        # Standard dtype 
+        # Standard dtype
         test = masked_all((2,), dtype=float)
         control = array([1, 1], mask=[1, 1], dtype=float)
         assert_equal(test, control)
@@ -53,7 +53,7 @@ class TestGeneric(TestCase):
 
     def test_masked_all_like(self):
         "Tests masked_all"
-        # Standard dtype 
+        # Standard dtype
         base = array([1, 2], dtype=float)
         test = masked_all_like(base)
         control = array([1, 1], mask=[1, 1], dtype=float)

@@ -54,7 +54,7 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'rank', 'ravel', 'remainder', 'repeat', 'reshape', 'resize',
            'right_shift', 'round_', 'round',
            'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'sometrue',
-           'sort', 'soften_mask', 'sqrt', 'squeeze', 'std', 'subtract', 'sum', 
+           'sort', 'soften_mask', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
            'swapaxes',
            'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
            'var', 'where',
@@ -335,7 +335,7 @@ def common_fill_value(a, b):
 def filled(a, fill_value = None):
     """
     Return `a` as an array where masked data have been replaced by `value`.
-    
+
     If `a` is not a MaskedArray, `a` itself is returned.
     If `a` is a MaskedArray and `fill_value` is None, `fill_value` is set to
     `a.fill_value`.
@@ -627,7 +627,7 @@ class _MaskedBinaryOperation:
         elif m:
             return masked
         return result
-#        
+#
 #        result = self.f(d1, d2, *args, **kwargs).view(get_masked_subclass(a, b))
 #        if len(result.shape):
 #            if m is not nomask:
@@ -1016,7 +1016,7 @@ def mask_or (m1, m2, copy=False, shrink=True):
             if current1.dtype.names:
                 _recursive_mask_or(current1, m2[name], newmask[name])
             else:
-                 umath.logical_or(current1, m2[name], newmask[name])
+                umath.logical_or(current1, m2[name], newmask[name])
         return
     #
     if (m1 is nomask) or (m1 is False):
@@ -1041,7 +1041,7 @@ def flatten_mask(mask):
     """
     Returns a completely flattened version of the mask, where nested fields
     are collapsed.
-    
+
     Parameters
     ----------
     mask : array_like
@@ -1064,7 +1064,7 @@ def flatten_mask(mask):
     >>> mask = np.array([(0, (0, 0)), (0, (0, 1))], dtype=mdtype)
     >>> flatten_mask(mask)
     array([False, False, False, False, False,  True], dtype=bool)
-    
+
     """
     #
     def _flatmask(mask):
@@ -1711,7 +1711,7 @@ class MaskedArray(ndarray):
             if dtype is None:
                 dtype = output.dtype
             mdtype = make_mask_descr(dtype)
-            
+
             output._mask = self._mask.view(mdtype, ndarray)
             output._mask.shape = output.shape
         # Make sure to reset the _fill_value if needed
@@ -3144,7 +3144,7 @@ masked_%(name)s(data = %(data)s,
     index_array : ndarray, int
         Array of indices that sort `a` along the specified axis.
         In other words, ``a[index_array]`` yields a sorted `a`.
-    
+
     See Also
     --------
     sort : Describes sorting algorithms used.
@@ -3471,7 +3471,7 @@ masked_%(name)s(data = %(data)s,
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         else:
-            
+
             if out.dtype.kind in 'biu':
                 errmsg = "Masked data information would be lost in one or more"\
                          " location."
@@ -4016,12 +4016,12 @@ sort.__doc__ = MaskedArray.sort.__doc__
 def compressed(x):
     """
     Return a 1-D array of all the non-masked data.
-    
+
     See Also
     --------
     MaskedArray.compressed
         equivalent method
-    
+
     """
     if getmask(x) is nomask:
         return np.asanyarray(x)
@@ -4389,8 +4389,8 @@ def inner(a, b):
     Returns the inner product of a and b for arrays of floating point types.
 
     Like the generic NumPy equivalent the product sum is over the last dimension
-    of a and b. 
-    
+    of a and b.
+
     Notes
     -----
     The first argument is not conjugated.
@@ -4460,7 +4460,7 @@ def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
     fill_value : boolean, optional
         Whether masked values in a or b are considered equal (True) or not
         (False).
-        
+
     rtol : Relative tolerance
         The relative difference is equal to `rtol` * `b`.
     atol : Absolute tolerance
@@ -4483,7 +4483,7 @@ def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
     True.
 
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
-    
+
     Return True if all elements of a and b are equal subject to
     given tolerances.
 
@@ -4519,7 +4519,7 @@ def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
 def asarray(a, dtype=None):
     """
     Convert the input to a masked array.
-    
+
     Parameters
     ----------
     a : array_like
@@ -4531,7 +4531,7 @@ def asarray(a, dtype=None):
     order : {'C', 'F'}, optional
         Whether to use row-major ('C') or column-major ('FORTRAN') memory
         representation.  Defaults to 'C'.
-    
+
     Returns
     -------
     out : ndarray

@@ -357,7 +357,7 @@ The fieldname base is either `_data` or `_mask`."""
                     dtype = None
                 else:
                     output = ndarray.view(self, dtype)
-            # OK, there's the change 
+            # OK, there's the change
             except TypeError:
                 dtype = np.dtype(dtype)
                 # we need to revert to MaskedArray, but keeping the possibility

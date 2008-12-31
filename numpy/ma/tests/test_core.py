@@ -777,7 +777,7 @@ class TestMaskedArrayArithmetic(TestCase):
         test = mod(xm, ym)
         assert_equal(test, np.mod(xm, ym))
         assert_equal(test.mask, mask_or(mask_or(xm.mask, ym.mask), (ym == 0)))
-        
+
 
 
     def test_TakeTransposeInnerOuter(self):
@@ -1452,7 +1452,7 @@ class TestMaskedArrayMethods(TestCase):
         a *= 1e-8
         a[0] = 0
         self.failUnless(allclose(a, 0, masked_equal=True))
-        
+
 
     def test_allany(self):
         """Checks the any/all methods/functions."""
@@ -2088,7 +2088,7 @@ class TestMaskArrayMathMethod(TestCase):
         assert_equal(out, [0, 4, 8])
         assert_equal(out.mask, [0, 1, 0])
         out = diag(out)
-        control = array([[0, 0, 0], [0, 4, 0], [0, 0, 8]], 
+        control = array([[0, 0, 0], [0, 4, 0], [0, 0, 8]],
                         mask = [[0, 0, 0], [0, 1, 0], [0, 0, 0]])
         assert_equal(out, control)
 
@@ -2559,7 +2559,7 @@ class TestMaskedArrayFunctions(TestCase):
         test = flatten_mask(mask)
         control = np.array([0, 0, 0, 1], dtype=bool)
         assert_equal(test, control)
-        
+
         mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
         data = [(0, (0, 0)), (0, (0, 1))]
         mask = np.array(data, dtype=mdtype)
@@ -2707,7 +2707,7 @@ class TestMaskedView(TestCase):
         self.failUnless(isinstance(test, MaskedArray))
         assert_equal(test._data, a._data)
         assert_equal(test._mask, a._mask)
-        
+
     #
     def test_view_to_type(self):
         (data, a, controlmask) = self.data
@@ -2743,7 +2743,7 @@ class TestMaskedView(TestCase):
         assert_equal(test.dtype.names, ('A', 'B'))
         assert_equal(test['A'], a['a'][-1])
         assert_equal(test['B'], a['b'][-1])
-        
+
     #
     def test_view_to_subdtype(self):
         (data, a, controlmask) = self.data

@@ -228,10 +228,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
           * None : the new behaviour is used, no warning is printed.
           * True : the new behaviour is used and a warning is raised about
             the future removal of the `new` keyword.
-          * False : the old behaviour is used and a DeprecationWarning 
+          * False : the old behaviour is used and a DeprecationWarning
             is raised.
-        As of NumPy 1.3, this keyword should not be used explicitly since it 
-        will disappear in NumPy 1.4. 
+        As of NumPy 1.3, this keyword should not be used explicitly since it
+        will disappear in NumPy 1.4.
 
     Returns
     -------
@@ -267,9 +267,9 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     # Old behavior
     if new == False:
         warnings.warn("""
-        The histogram semantics being used is now deprecated and 
-        will disappear in NumPy 1.4.  Please update your code to 
-        use the default semantics. 
+        The histogram semantics being used is now deprecated and
+        will disappear in NumPy 1.4.  Please update your code to
+        use the default semantics.
         """, DeprecationWarning)
 
         a = asarray(a).ravel()
@@ -320,8 +320,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     elif new in [True, None]:
         if new is True:
             warnings.warn("""
-            The new semantics of histogram is now the default and the `new` 
-            keyword will be removed in NumPy 1.4. 
+            The new semantics of histogram is now the default and the `new`
+            keyword will be removed in NumPy 1.4.
             """, Warning)
         a = asarray(a)
         if weights is not None:

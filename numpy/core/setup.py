@@ -67,8 +67,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     # Mandatory functions: if not found, fail the build
     mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-		"floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-		"acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
+                "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+                "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
 
     if not check_funcs_once(mandatory_funcs):
         raise SystemError("One of the required function to build numpy is not"

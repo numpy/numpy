@@ -53,11 +53,11 @@ class config(old_config):
                     self.compiler.initialize()
                 except IOError, e:
                     msg = """\
-Could not initialize compiler instance: do you have Visual Studio 
+Could not initialize compiler instance: do you have Visual Studio
 installed ? If you are trying to build with mingw, please use python setup.py
 build -c mingw32 instead ). If you have Visual Studio installed, check it is
 correctly installed, and the right version (VS 2008 for python 2.6, VS 2003 for
-2.5, etc...). Original exception was: %s, and the Compiler 
+2.5, etc...). Original exception was: %s, and the Compiler
 class was %s
 ============================================================================""" \
                         % (e, self.compiler.__class__.__name__)

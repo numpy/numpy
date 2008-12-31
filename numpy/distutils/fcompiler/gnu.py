@@ -272,30 +272,30 @@ class Gnu95FCompiler(GnuFCompiler):
 
     def get_library_dirs(self):
         opt = GnuFCompiler.get_library_dirs(self)
-	if sys.platform == 'win32':
-	    c_compiler = self.c_compiler
-	    if c_compiler and c_compiler.compiler_type == "msvc":
-		target = self.get_target()
-		if target:
+        if sys.platform == 'win32':
+            c_compiler = self.c_compiler
+            if c_compiler and c_compiler.compiler_type == "msvc":
+                target = self.get_target()
+                if target:
                     d = os.path.normpath(self.get_libgcc_dir())
-		    root = os.path.join(d, os.pardir, os.pardir, os.pardir, os.pardir)
-		    mingwdir = os.path.normpath(os.path.join(root, target, "lib"))
-		    full = os.path.join(mingwdir, "libmingwex.a")
-		    if os.path.exists(full):
-			opt.append(mingwdir)
-	return opt
+                    root = os.path.join(d, os.pardir, os.pardir, os.pardir, os.pardir)
+                    mingwdir = os.path.normpath(os.path.join(root, target, "lib"))
+                    full = os.path.join(mingwdir, "libmingwex.a")
+                    if os.path.exists(full):
+                        opt.append(mingwdir)
+        return opt
 
     def get_libraries(self):
         opt = GnuFCompiler.get_libraries(self)
         if sys.platform == 'darwin':
             opt.remove('cc_dynamic')
-	if sys.platform == 'win32':
-	    c_compiler = self.c_compiler
-	    if c_compiler and c_compiler.compiler_type == "msvc":
-		if "gcc" in opt:
-		    i = opt.index("gcc")
-		    opt.insert(i+1, "mingwex")
-		    opt.insert(i+1, "mingw32")
+        if sys.platform == 'win32':
+            c_compiler = self.c_compiler
+            if c_compiler and c_compiler.compiler_type == "msvc":
+                if "gcc" in opt:
+                    i = opt.index("gcc")
+                    opt.insert(i+1, "mingwex")
+                    opt.insert(i+1, "mingw32")
         return opt
 
     def get_target(self):
@@ -303,9 +303,9 @@ class Gnu95FCompiler(GnuFCompiler):
                                       ['-v'],
                                       use_tee=0)
         if not status:
-	    m = TARGET_R.search(output)
-	    if m:
-	        return m.group(1)	
+            m = TARGET_R.search(output)
+            if m:
+                return m.group(1)
         return ""
 
 if __name__ == '__main__':

@@ -251,7 +251,7 @@ class KnownFailureTest(Exception):
 
 
 class KnownFailure(ErrorClassPlugin):
-    '''Plugin that installs a KNOWNFAIL error class for the 
+    '''Plugin that installs a KNOWNFAIL error class for the
     KnownFailureClass exception.  When KnownFailureTest is raised,
     the exception will be logged in the knownfail attribute of the
     result, 'K' or 'KNOWNFAIL' (verbose) will be output, and the
