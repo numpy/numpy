@@ -260,20 +260,20 @@ _fix_ascii_format(char* buf, size_t buflen, int decimal)
             if (buf_size < 4) {                                         \
                 return NULL;                                            \
             }                                                           \
-            strncpy(buffer, "nan", 4);                                  \
+            strcpy(buffer, "nan");                                      \
 	}                                                               \
         else {                                                          \
             if (signbit(val)) {                                         \
                 if (buf_size < 5) {                                     \
                     return NULL;                                        \
                 }                                                       \
-                strncpy(buffer, "-inf", 5);                             \
+                strcpy(buffer, "-inf");                                 \
             }                                                           \
             else {                                                      \
                 if (buf_size < 4) {                                     \
                     return NULL;                                        \
                 }                                                       \
-                strncpy(buffer, "inf", 4);                              \
+                strcpy(buffer, "inf");                                  \
             }                                                           \
 	}                                                               \
 	return buffer;                                                  \
