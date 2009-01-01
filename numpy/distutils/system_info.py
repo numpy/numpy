@@ -141,7 +141,8 @@ else:
                         '/opt/local/lib', '/sw/lib']
     default_include_dirs = ['/usr/local/include',
                             '/opt/include', '/usr/include',
-                            '/opt/local/include', '/sw/include']
+                            '/opt/local/include', '/sw/include',
+                            '/usr/include/suitesparse']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
 
     try:
