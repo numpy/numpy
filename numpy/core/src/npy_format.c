@@ -51,7 +51,7 @@ _ensure_minimum_exponent_length(char* buffer, size_t buf_size)
                if we can delete some of the leading zeros */
             if (significant_digit_cnt < MIN_EXPONENT_DIGITS)
                 significant_digit_cnt = MIN_EXPONENT_DIGITS;
-            
+
             extra_zeros_cnt = exponent_digit_cnt - significant_digit_cnt;
 
             /* Delete extra_zeros_cnt worth of characters from the
@@ -225,14 +225,14 @@ _fix_ascii_format(char* buf, size_t buflen, int decimal)
 
 /*
  * NumPyOS_ascii_format*:
- * 	- buffer: A buffer to place the resulting string in
- * 	- buf_size: The length of the buffer.
- * 	- format: The printf()-style format to use for the code to use for
- * 	converting.
- * 	- value: The value to convert
- * 	- decimal: if != 0, always has a decimal, and at leasat one digit after
- * 	the decimal. This has the same effect as passing 'Z' in the origianl
- * 	PyOS_ascii_formatd
+ *	- buffer: A buffer to place the resulting string in
+ *	- buf_size: The length of the buffer.
+ *	- format: The printf()-style format to use for the code to use for
+ *	converting.
+ *	- value: The value to convert
+ *	- decimal: if != 0, always has a decimal, and at leasat one digit after
+ *	the decimal. This has the same effect as passing 'Z' in the origianl
+ *	PyOS_ascii_formatd
  *
  * This is similar to PyOS_ascii_formatd in python > 2.6, except that it does
  * not handle 'n', and handles nan / inf.
@@ -354,8 +354,8 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
 
 /*
  * NumPyOS_ascii_ftolf:
- * 	* fp: FILE pointer
- * 	* value: Place to store the value read
+ *	* fp: FILE pointer
+ *	* value: Place to store the value read
  *
  * Similar to PyOS_ascii_strtod, except that it reads input from a file.
  *
