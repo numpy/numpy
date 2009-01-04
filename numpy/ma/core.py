@@ -152,7 +152,7 @@ def default_fill_value(obj):
 
     """
     if hasattr(obj,'dtype'):
-        defval = default_filler[obj.dtype.kind]
+        defval = _check_fill_value(None, obj.dtype)
     elif isinstance(obj, np.dtype):
         if obj.subdtype:
             defval = default_filler[obj.subdtype[0].kind]
@@ -170,6 +170,18 @@ def default_fill_value(obj):
         defval = default_filler['O']
     return defval
 
+
+def _recursive_extremum_fill_value(ndtype, extremum):
+    names = ndtype.names
+    if names:
+        deflist = []
+        for name in names:
+            fval = _recursive_extremum_fill_value(ndtype[name], extremum)
+            deflist.append(fval)
+        return tuple(deflist)
+    return extremum[ndtype]
+
+
 def minimum_fill_value(obj):
     """
     Calculate the default fill value suitable for taking the minimum of ``obj``.
@@ -177,11 +189,7 @@ def minimum_fill_value(obj):
     """
     errmsg = "Unsuitable type for calculating minimum."
     if hasattr(obj, 'dtype'):
-        objtype = obj.dtype
-        filler = min_filler[objtype]
-        if filler is None:
-            raise TypeError(errmsg)
-        return filler
+        return _recursive_extremum_fill_value(obj.dtype, min_filler)
     elif isinstance(obj, float):
         return min_filler[ntypes.typeDict['float_']]
     elif isinstance(obj, int):
@@ -193,6 +201,7 @@ def minimum_fill_value(obj):
     else:
         raise TypeError(errmsg)
 
+
 def maximum_fill_value(obj):
     """
     Calculate the default fill value suitable for taking the maximum of ``obj``.
@@ -200,11 +209,7 @@ def maximum_fill_value(obj):
     """
     errmsg = "Unsuitable type for calculating maximum."
     if hasattr(obj, 'dtype'):
-        objtype = obj.dtype
-        filler = max_filler[objtype]
-        if filler is None:
-            raise TypeError(errmsg)
-        return filler
+        return _recursive_extremum_fill_value(obj.dtype, max_filler)
     elif isinstance(obj, float):
         return max_filler[ntypes.typeDict['float_']]
     elif isinstance(obj, int):
@@ -257,7 +262,7 @@ def _check_fill_value(fill_value, ndtype):
         if fields:
             descr = ndtype.descr
             fill_value = np.array(_recursive_set_default_fill_value(descr),
-                                  dtype=ndtype)
+                                  dtype=ndtype,)
         else:
             fill_value = default_fill_value(ndtype)
     elif fields:

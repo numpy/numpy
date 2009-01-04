@@ -1074,6 +1074,29 @@ class TestFillingValues(TestCase):
         control = np.array((0,0,0), dtype="int, float, float").astype(ndtype)
         assert_equal(_check_fill_value(0, ndtype), control)
 
+
+    def test_extremum_fill_value(self):
+        "Tests extremum fill values for flexible type."
+        a = array([(1, (2, 3)), (4, (5, 6))],
+                  dtype=[('A', int), ('B', [('BA', int), ('BB', int)])])
+        test = a.fill_value
+        assert_equal(test['A'], default_fill_value(a['A']))
+        assert_equal(test['B']['BA'], default_fill_value(a['B']['BA']))
+        assert_equal(test['B']['BB'], default_fill_value(a['B']['BB']))
+        #
+        test = minimum_fill_value(a)
+        assert_equal(test[0], minimum_fill_value(a['A']))
+        assert_equal(test[1][0], minimum_fill_value(a['B']['BA']))
+        assert_equal(test[1][1], minimum_fill_value(a['B']['BB']))
+        assert_equal(test[1], minimum_fill_value(a['B']))
+        #
+        test = maximum_fill_value(a)
+        assert_equal(test[0], maximum_fill_value(a['A']))
+        assert_equal(test[1][0], maximum_fill_value(a['B']['BA']))
+        assert_equal(test[1][1], maximum_fill_value(a['B']['BB']))
+        assert_equal(test[1], maximum_fill_value(a['B']))
+    
+
 #------------------------------------------------------------------------------
 
 class TestUfuncs(TestCase):
@@ -1818,6 +1841,28 @@ class TestMaskedArrayMethods(TestCase):
         am.sort(2)
         an.sort(2)
         assert_equal(am, an)
+
+
+    def test_sort_flexible(self):
+        "Test sort on flexible dtype."
+        a = array([(3, 3), (3, 2), (2, 2), (2, 1), (1, 0), (1, 1), (1, 2)],
+             mask=[(0, 0), (0, 1), (0, 0), (0, 0), (1, 0), (0, 0), (0, 0)],
+            dtype=[('A', int), ('B', int)])
+        #
+        test = sort(a)
+        b = array([(1, 1), (1, 2), (2, 1), (2, 2), (3, 3), (3, 2), (1, 0)],
+             mask=[(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (1, 0)],
+            dtype=[('A', int), ('B', int)])
+        assert_equal(test, b)
+        assert_equal(test.mask, b.mask)
+        #
+        test = sort(a, endwith=False)
+        b = array([(1, 0), (1, 1), (1, 2), (2, 1), (2, 2), (3, 2), (3, 3),],
+             mask=[(1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 1), (0, 0),],
+            dtype=[('A', int), ('B', int)])
+        assert_equal(test, b)
+        assert_equal(test.mask, b.mask)
+        #
 
 
     def test_squeeze(self):
