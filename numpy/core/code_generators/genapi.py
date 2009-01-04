@@ -6,8 +6,14 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 """
 import sys, os, re
-import md5
 import textwrap
+
+_PY_MAJ, _PY_MIN = sys.version_info[:2]
+# md5 is deprecated from python 2.6
+if _PY_MAJ == 2 and _PY_MIN  < 6:
+    import md5
+else:
+    from hashlib import md5
 
 __docformat__ = 'restructuredtext'
 
