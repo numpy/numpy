@@ -9,6 +9,7 @@ Support code for building Python extensions on Windows.
 """
 
 import os
+import subprocess
 import sys
 import log
 
@@ -50,9 +51,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # get_versions methods regex
         if self.gcc_version is None:
             import re
-            out = os.popen('gcc -dumpversion','r')
-            out_string = out.read()
-            out.close()
+            p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
+                                 stdout=subprocess.PIPE)
+            out_string = p.stdout.read()
+            p.stdout.close()
             result = re.search('(\d+\.\d+)',out_string)
             if result:
                 self.gcc_version = StrictVersion(result.group(1))

@@ -6,6 +6,7 @@ import copy
 import glob
 import atexit
 import tempfile
+import subprocess
 
 try:
     set
@@ -1340,7 +1341,10 @@ class Configuration(object):
         revision = None
         m = None
         try:
-            sin, sout = os.popen4('svnversion')
+            p = subprocess.Popen(['svnversion'], shell=True,
+                    stdout=subprocess.PIPE, stderr=STDOUT,
+                    close_fds=True)
+            sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
         except:
             pass

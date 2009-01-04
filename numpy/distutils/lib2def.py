@@ -1,6 +1,7 @@
 import re
 import sys
 import os
+import subprocess
 
 __doc__ = """This module generates a DEF file from the symbols in
 an MSVC-compiled DLL import library.  It correctly discriminates between
@@ -59,13 +60,13 @@ libfile, deffile = parse_cmd()"""
         deffile = None
     return libfile, deffile
 
-def getnm(nm_cmd = 'nm -Cs python%s.lib' % py_ver):
+def getnm(nm_cmd = ['nm', '-Cs', 'python%s.lib' % py_ver]):
     """Returns the output of nm_cmd via a pipe.
 
 nm_output = getnam(nm_cmd = 'nm -Cs py_lib')"""
-    f = os.popen(nm_cmd)
-    nm_output = f.read()
-    f.close()
+    f = subprocess.Popen(nm_cmd, shell=True, stdout=subprocess.PIPE)
+    nm_output = f.stdout.read()
+    f.stdout.close()
     return nm_output
 
 def parse_nm(nm_output):
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         deffile = sys.stdout
     else:
         deffile = open(deffile, 'w')
-    nm_cmd = '%s %s' % (DEFAULT_NM, libfile)
+    nm_cmd = [str(DEFAULT_NM), str(libfile)]
     nm_output = getnm(nm_cmd)
     dlist, flist = parse_nm(nm_output)
     output_def(dlist, flist, DEF_HEADER, deffile)
