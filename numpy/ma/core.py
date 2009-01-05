@@ -1340,6 +1340,32 @@ def _recursive_printoption(result, mask, printopt):
             np.putmask(curdata, curmask, printopt)
     return
 
+_print_templates = dict(long = """\
+masked_%(name)s(data =
+ %(data)s,
+       %(nlen)s mask =
+ %(mask)s,
+ %(nlen)s fill_value = %(fill)s)
+""",
+                        short = """\
+masked_%(name)s(data = %(data)s,
+       %(nlen)s mask = %(mask)s,
+%(nlen)s  fill_value = %(fill)s)
+""",
+                        long_flx = """\
+masked_%(name)s(data =
+ %(data)s,
+       %(nlen)s mask =
+ %(mask)s,
+%(nlen)s  fill_value = %(fill)s,
+      %(nlen)s dtype = %(dtype)s)
+""",
+                        short_flx = """\
+masked_%(name)s(data = %(data)s,
+%(nlen)s        mask = %(mask)s,
+%(nlen)s  fill_value = %(fill)s,
+%(nlen)s       dtype = %(dtype)s)
+""")
 
 #####--------------------------------------------------------------------------
 #---- --- MaskedArray class ---
@@ -2245,43 +2271,18 @@ class MaskedArray(ndarray):
         """Literal string representation.
 
         """
-        with_mask = """\
-masked_%(name)s(data =
- %(data)s,
-      mask =
- %(mask)s,
-      fill_value=%(fill)s)
-"""
-        with_mask1 = """\
-masked_%(name)s(data = %(data)s,
-      mask = %(mask)s,
-      fill_value=%(fill)s)
-"""
-        with_mask_flx = """\
-masked_%(name)s(data =
- %(data)s,
-      mask =
- %(mask)s,
-      fill_value=%(fill)s,
-      dtype=%(dtype)s)
-"""
-        with_mask1_flx = """\
-masked_%(name)s(data = %(data)s,
-      mask = %(mask)s,
-      fill_value=%(fill)s
-      dtype=%(dtype)s)
-"""
         n = len(self.shape)
         name = repr(self._data).split('(')[0]
-        parameters =  dict(name=name, data=str(self), mask=str(self._mask),
+        parameters =  dict(name=name, nlen=" "*len(name),
+                           data=str(self), mask=str(self._mask),
                            fill=str(self.fill_value), dtype=str(self.dtype))
         if self.dtype.names:
             if n <= 1:
-                return with_mask1_flx % parameters
-            return  with_mask_flx % parameters
+                return _print_templates['short_flx'] % parameters
+            return  _print_templates['long_flx'] % parameters
         elif n <= 1:
-            return with_mask1 % parameters
-        return with_mask % parameters
+            return _print_templates['short'] % parameters
+        return _print_templates['long'] % parameters
     #............................................
     def __add__(self, other):
         "Add other to self, and return a new masked array."
