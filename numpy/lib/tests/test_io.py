@@ -8,7 +8,7 @@ import sys
 
 MAJVER, MINVER = sys.version_info[:2]
 
-class RoundtripTest:
+class RoundtripTest(object):
     def roundtrip(self, save_func, *args, **kwargs):
         """
         save_func : callable

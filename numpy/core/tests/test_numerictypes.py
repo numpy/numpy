@@ -97,7 +97,7 @@ def normalize_descr(descr):
 #    Creation tests
 ############################################################
 
-class create_zeros:
+class create_zeros(object):
     """Check the creation of heterogeneous arrays zero-valued"""
 
     def test_zeros0D(self):
@@ -140,7 +140,7 @@ class test_create_zeros_nested(create_zeros, TestCase):
     _descr = Ndescr
 
 
-class create_values:
+class create_values(object):
     """Check the creation of heterogeneous arrays with values"""
 
     def test_tuple(self):
@@ -200,7 +200,7 @@ class test_create_values_nested_multiple(create_values, TestCase):
 #    Reading tests
 ############################################################
 
-class read_values_plain:
+class read_values_plain(object):
     """Check the reading of values in heterogeneous arrays (plain)"""
 
     def test_access_fields(self):
@@ -232,7 +232,7 @@ class test_read_values_plain_multiple(read_values_plain, TestCase):
     multiple_rows = 1
     _buffer = PbufferT
 
-class read_values_nested:
+class read_values_nested(object):
     """Check the reading of values in heterogeneous arrays (nested)"""
 
 
