@@ -1,5 +1,6 @@
 # pylint: disable-msg=E1002
-"""MA: a facility for dealing with missing observations
+"""
+MA: a facility for dealing with missing observations
 MA is generally used as a numpy.array look-alike.
 by Paul F. Dubois.
 
@@ -8,9 +9,9 @@ Released for unlimited redistribution.
 Adapted for numpy_core 2005 by Travis Oliphant and
 (mainly) Paul Dubois.
 
-Subclassing of the base ndarray 2006 by Pierre Gerard-Marchant.
-pgmdevlist_AT_gmail_DOT_com
-Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
+* Subclassing of the base ndarray 2006 by Pierre Gerard-Marchant 
+  (pgmdevlist_AT_gmail_DOT_com)
+* Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
 
 :author: Pierre Gerard-Marchant
 
@@ -392,7 +393,7 @@ def get_masked_subclass(*arrays):
     return rcls
 
 #####--------------------------------------------------------------------------
-def get_data(a, subok=True):
+def getdata(a, subok=True):
     """
     Return the `_data` part of `a` if `a` is a MaskedArray, or `a` itself.
 
@@ -409,8 +410,8 @@ def get_data(a, subok=True):
     if not subok:
         return data.view(ndarray)
     return data
+get_data = getdata
 
-getdata = get_data
 
 def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
     """
@@ -886,7 +887,7 @@ def make_mask_descr(ndtype):
         ndtype = np.dtype(ndtype)
     return np.dtype(_recursive_make_descr(ndtype, np.bool))
 
-def get_mask(a):
+def getmask(a):
     """Return the mask of a, if any, or nomask.
 
     To get a full array of booleans of the same shape as a, use
@@ -894,7 +895,7 @@ def get_mask(a):
 
     """
     return getattr(a, '_mask', nomask)
-getmask = get_mask
+get_mask = getmask
 
 def getmaskarray(arr):
     """Return the mask of arr, if any, or a boolean array of the shape
@@ -1470,32 +1471,32 @@ class MaskedArray(ndarray):
     ----------
     data : {var}
         Input data.
-    mask : {nomask, sequence}
+    mask : {nomask, sequence}, optional
         Mask.  Must be convertible to an array of booleans with
         the same shape as data: True indicates a masked (eg.,
         invalid) data.
-    dtype : dtype
-        Data type of the output. If None, the type of the data
-        argument is used.  If dtype is not None and different from
-        data.dtype, a copy is performed.
-    copy : bool
-        Whether to copy the input data (True), or to use a
-        reference instead.  Note: data are NOT copied by default.
-    subok : {True, boolean}
+    dtype : {dtype}, optional
+        Data type of the output.
+        If dtype is None, the type of the data argument (`data.dtype`) is used.
+        If dtype is not None and different from `data.dtype`, a copy is performed.
+    copy : {False, True}, optional
+        Whether to copy the input data (True), or to use a reference instead.
+        Note: data are NOT copied by default.
+    subok : {True, False}, optional
         Whether to return a subclass of MaskedArray (if possible)
         or a plain MaskedArray.
-    ndmin : {0, int}
+    ndmin : {0, int}, optional
         Minimum number of dimensions
-    fill_value : {var}
-        Value used to fill in the masked values when necessary. If
-        None, a default based on the datatype is used.
-    keep_mask : {True, boolean}
+    fill_value : {var}, optional
+        Value used to fill in the masked values when necessary.
+        If None, a default based on the datatype is used.
+    keep_mask : {True, boolean}, optional
         Whether to combine mask with the mask of the input data,
         if any (True), or to use only mask for the output (False).
-    hard_mask : {False, boolean}
-        Whether to use a hard mask or not. With a hard mask,
-        masked values cannot be unmasked.
-    shrink : {True, boolean}
+    hard_mask : {False, boolean}, optional
+        Whether to use a hard mask or not.
+        With a hard mask, masked values cannot be unmasked.
+    shrink : {True, boolean}, optional
         Whether to force compression of an empty mask.
 
     """
@@ -1509,10 +1510,12 @@ class MaskedArray(ndarray):
                 subok=True, ndmin=0, fill_value=None,
                 keep_mask=True, hard_mask=None, flag=None, shrink=True,
                 **options):
-        """Create a new masked array from scratch.
+        """
+    Create a new masked array from scratch.
 
-        Note: you can also create an array with the .view(MaskedArray)
-        method.
+    Notes
+    -----
+    A masked array can also be created by taking a .view(MaskedArray).
 
         """
         if flag is not None:
