@@ -34,7 +34,7 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'default_fill_value', 'diag', 'diagonal', 'divide', 'dump', 'dumps',
            'empty', 'empty_like', 'equal', 'exp', 'expand_dims',
            'fabs', 'flatten_mask', 'fmod', 'filled', 'floor', 'floor_divide',
-           'fix_invalid', 'frombuffer', 'fromfunction',
+           'fix_invalid', 'frombuffer', 'fromflex', 'fromfunction',
            'getdata','getmask', 'getmaskarray', 'greater', 'greater_equal',
            'harden_mask', 'hypot',
            'identity', 'ids', 'indices', 'inner', 'innerproduct',
@@ -623,8 +623,8 @@ class _MaskedBinaryOperation:
         # Transforms to a (subclass of) MaskedArray if we don't have a scalar
         if result.shape:
             result = result.view(get_masked_subclass(a, b))
-            result._mask = make_mask_none(result.shape)
-            result._mask.flat = m
+            if m.any():
+                result._mask = mask_or(getmaskarray(a), getmaskarray(b))
             if isinstance(a, MaskedArray):
                 result._update_from(a)
             if isinstance(b, MaskedArray):
@@ -3603,7 +3603,7 @@ class MaskedArray(ndarray):
     def tofile(self, fid, sep="", format="%s"):
         raise NotImplementedError("Not implemented yet, sorry...")
 
-    def torecords(self):
+    def toflex(self):
         """
         Transforms a MaskedArray into a flexible-type array with two fields:
         * the ``_data`` field stores the ``_data`` part of the array;
@@ -3648,6 +3648,7 @@ class MaskedArray(ndarray):
         record['_data'] = self._data
         record['_mask'] = self._mask
         return record
+    torecords = toflex
     #--------------------------------------------
     # Pickling
     def __getstate__(self):
@@ -4611,6 +4612,15 @@ def loads(strg):
 ################################################################################
 def fromfile(file, dtype=float, count=-1, sep=''):
     raise NotImplementedError("Not yet implemented. Sorry")
+
+
+def fromflex(fxarray):
+    """
+    Rebuilds a masked_array from a flexible-type array output by the '.torecord'
+    array
+    """
+    return masked_array(fxarray['_data'], mask=fxarray['_mask'])
+
 
 
 class _convert2ma:
