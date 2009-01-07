@@ -2331,7 +2331,9 @@ class MaskedArray(ndarray):
         "Add other to self in-place."
         m = getmask(other)
         if self._mask is nomask:
-            self._mask = m
+            if m is not nomask and m.any():
+                self._mask = make_mask_none(self.shape, self.dtype)
+                self._mask += m
         else:
             if m is not nomask:
                 self._mask += m
@@ -2342,7 +2344,9 @@ class MaskedArray(ndarray):
         "Subtract other from self in-place."
         m = getmask(other)
         if self._mask is nomask:
-            self._mask = m
+            if m is not nomask and m.any():
+                self._mask = make_mask_none(self.shape, self.dtype)
+                self._mask += m
         elif m is not nomask:
             self._mask += m
         ndarray.__isub__(self._data, np.where(self._mask, 0, getdata(other)))
@@ -2352,7 +2356,9 @@ class MaskedArray(ndarray):
         "Multiply self by other in-place."
         m = getmask(other)
         if self._mask is nomask:
-            self._mask = m
+            if m is not nomask and m.any():
+                self._mask = make_mask_none(self.shape, self.dtype)
+                self._mask += m
         elif m is not nomask:
             self._mask += m
         ndarray.__imul__(self._data, np.where(self._mask, 1, getdata(other)))
@@ -3701,7 +3707,7 @@ def _mareconstruct(subtype, baseclass, baseshape, basetype,):
 
     """
     _data = ndarray.__new__(baseclass, baseshape, basetype)
-    _mask = ndarray.__new__(ndarray, baseshape, 'b1')
+    _mask = ndarray.__new__(ndarray, baseshape, make_mask_descr(basetype))
     return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
 
 

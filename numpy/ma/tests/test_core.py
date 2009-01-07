@@ -1400,6 +1400,51 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         assert_equal(x.data, [1., 2.**2.5, 3])
         assert_equal(x.mask, [0, 0, 1])
 
+
+    def test_datafriendly_add_arrays(self):
+        a = array([[1, 1], [3, 3]])
+        b = array([1, 1], mask=[0, 0])
+        a += b
+        assert_equal(a, [[2, 2], [4, 4]])
+        if a.mask is not nomask:
+            assert_equal(a.mask, [[0, 0], [0, 0]])
+        #
+        a = array([[1, 1], [3, 3]])
+        b = array([1, 1], mask=[0, 1])
+        a += b
+        assert_equal(a, [[2, 2], [4, 4]])
+        assert_equal(a.mask, [[0, 1], [0, 1]])
+
+
+    def test_datafriendly_sub_arrays(self):
+        a = array([[1, 1], [3, 3]])
+        b = array([1, 1], mask=[0, 0])
+        a -= b
+        assert_equal(a, [[0, 0], [2, 2]])
+        if a.mask is not nomask:
+            assert_equal(a.mask, [[0, 0], [0, 0]])
+        #
+        a = array([[1, 1], [3, 3]])
+        b = array([1, 1], mask=[0, 1])
+        a -= b
+        assert_equal(a, [[0, 0], [2, 2]])
+        assert_equal(a.mask, [[0, 1], [0, 1]])
+
+
+    def test_datafriendly_mul_arrays(self):
+        a = array([[1, 1], [3, 3]])
+        b = array([1, 1], mask=[0, 0])
+        a *= b
+        assert_equal(a, [[1, 1], [3, 3]])
+        if a.mask is not nomask:
+            assert_equal(a.mask, [[0, 0], [0, 0]])
+        #
+        a = array([[1, 1], [3, 3]])
+        b = array([1, 1], mask=[0, 1])
+        a *= b
+        assert_equal(a, [[1, 1], [3, 3]])
+        assert_equal(a.mask, [[0, 1], [0, 1]])
+
 #------------------------------------------------------------------------------
 
 class TestMaskedArrayMethods(TestCase):
