@@ -154,7 +154,7 @@ def _test_locale_independance(tp):
         else:
             locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
 
-        assert_equal(locale.format("%f",tp(1.2)), locale.format("%f",float(1.2)),
+        assert_equal(str(tp(1.2)), str(float(1.2)),
                      err_msg='Failed locale test for type %s' % tp)
     finally:
         locale.setlocale(locale.LC_NUMERIC, locale=curloc)
