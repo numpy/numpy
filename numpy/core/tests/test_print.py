@@ -128,14 +128,15 @@ def test_complex_type_print():
 def has_french_locale():
     curloc = locale.getlocale(locale.LC_NUMERIC)
     try:
-        if not sys.platform == 'win32':
-            locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
-        else:
-            locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
+        try:
+            if not sys.platform == 'win32':
+                locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
+            else:
+                locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
 
-        st = True
-    except:
-        st = False
+            st = True
+        except:
+            st = False
     finally:
         locale.setlocale(locale.LC_NUMERIC, locale=curloc)
 
