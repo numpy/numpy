@@ -474,6 +474,16 @@ class TestMaskedArray(TestCase):
                      np.array([(1, '1', 1.)], dtype=flexi.dtype))
 
 
+    def test_filled_w_nested_dtype(self):
+        "Test filled w/ nested dtype"
+        ndtype = [('A', int), ('B', [('BA', int), ('BB', int)])]
+        a = array([(1, (1, 1)), (2, (2, 2))],
+                  mask=[(0, (1, 0)), (0, (0, 1))], dtype=ndtype)
+        test = a.filled(0)
+        control = np.array([(1, (0, 1)), (2, (2, 0))], dtype=ndtype)
+        assert_equal(test, control)
+        
+
     def test_optinfo_propagation(self):
         "Checks that _optinfo dictionary isn't back-propagated"
         x = array([1,2,3,], dtype=float)
@@ -882,6 +892,40 @@ class TestMaskedArrayArithmetic(TestCase):
             result = xmmeth(axis=0, out=output)
             self.failUnless(result is output)
             self.failUnless(output[0] is masked)
+
+
+    def test_eq_on_structured(self):
+        "Test the equality of structured arrays"
+        ndtype = [('A', int), ('B', int)]
+        a = array([(1, 1), (2, 2)], mask=[(0, 1), (0, 0)], dtype=ndtype)
+        test = (a == a)
+        assert_equal(test, [True, True])
+        assert_equal(test.mask, [False, False])
+        b = array([(1, 1), (2, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
+        test = (a == b)
+        assert_equal(test, [False, True])
+        assert_equal(test.mask, [True, False])
+        b = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
+        test = (a == b)
+        assert_equal(test, [True, False])
+        assert_equal(test.mask, [False, False])
+
+
+    def test_ne_on_structured(self):
+        "Test the equality of structured arrays"
+        ndtype = [('A', int), ('B', int)]
+        a = array([(1, 1), (2, 2)], mask=[(0, 1), (0, 0)], dtype=ndtype)
+        test = (a != a)
+        assert_equal(test, [False, False])
+        assert_equal(test.mask, [False, False])
+        b = array([(1, 1), (2, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
+        test = (a != b)
+        assert_equal(test, [True, False])
+        assert_equal(test.mask, [True, False])
+        b = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
+        test = (a != b)
+        assert_equal(test, [False, True])
+        assert_equal(test.mask, [False, False])
 
 
 #------------------------------------------------------------------------------
