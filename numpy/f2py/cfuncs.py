@@ -472,15 +472,17 @@ cppmacros['CHECKARRAY']="""\
 cppmacros['CHECKSTRING']="""\
 #define CHECKSTRING(check,tcheck,name,show,var)\\
 \tif (!(check)) {\\
-\t\tPyErr_SetString(#modulename#_error,\"(\"tcheck\") failed for \"name);\\
-\t\tfprintf(stderr,show\"\\n\",slen(var),var);\\
+\t\tchar errstring[256];\\
+\t\tsprintf(errstring, \"%s: \"show, \"(\"tcheck\") failed for \"name, slen(var), var);\\
+\t\tPyErr_SetString(#modulename#_error, errstring);\\
 \t\t/*goto capi_fail;*/\\
 \t} else """
 cppmacros['CHECKSCALAR']="""\
 #define CHECKSCALAR(check,tcheck,name,show,var)\\
 \tif (!(check)) {\\
-\t\tPyErr_SetString(#modulename#_error,\"(\"tcheck\") failed for \"name);\\
-\t\tfprintf(stderr,show\"\\n\",var);\\
+\t\tchar errstring[256];\\
+\t\tsprintf(errstring, \"%s: \"show, \"(\"tcheck\") failed for \"name, var);\\
+\t\tPyErr_SetString(#modulename#_error,errstring);\\
 \t\t/*goto capi_fail;*/\\
 \t} else """
 ## cppmacros['CHECKDIMS']="""\
