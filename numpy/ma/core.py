@@ -1392,7 +1392,6 @@ def _recursive_filled(a, mask, fill_value):
     names = a.dtype.names
     for name in names:
         current = a[name]
-        print "Name: %s : %s" % (name, current)
         if current.dtype.names:
             _recursive_filled(current, mask[name], fill_value[name])
         else:
@@ -2169,9 +2168,6 @@ class MaskedArray(ndarray):
         if m.dtype.names:
             result = self._data.copy()
             _recursive_filled(result, self._mask, fill_value)
-#            for n in result.dtype.names:
-#                field = result[n]
-#                np.putmask(field, self._mask[n], fill_value[n])
         elif not m.any():
             return self._data
         else:
