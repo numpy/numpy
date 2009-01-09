@@ -167,9 +167,10 @@ def libpaths(paths,bits):
         return paths
 
     # Handle 64bit case
-    out = [None]*(2*len(paths))
-    out[::2] = paths
-    out[1::2] = (p+'64' for p in paths)
+    out = []
+    for p in paths:
+        out.extend([p, p+bits])
+
     return out
 
 
