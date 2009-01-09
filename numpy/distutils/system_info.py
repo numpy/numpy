@@ -133,8 +133,6 @@ import platform
 _bits = {'32bit':32,'64bit':64}
 platform_bits = _bits[platform.architecture()[0]]
 
-from itertools import cycle
-
 def libpaths(paths,bits):
     """Return a list of library paths valid on 32 or 64 bit systems.
 
