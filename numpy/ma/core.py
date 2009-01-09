@@ -1483,6 +1483,56 @@ class FlatIter(object):
         return d
 
 
+def flatten_structured_array(a):
+    """
+    Flatten a strutured array.
+
+    The datatype of the output is the largest datatype of the (nested) fields.
+
+    Returns
+    -------
+    output : var
+        Flatten MaskedArray if the input is a MaskedArray,
+        standard ndarray otherwise.
+
+    Examples
+    --------
+    >>> ndtype = [('a', int), ('b', float)]
+    >>> a = np.array([(1, 1), (2, 2)], dtype=ndtype)
+    >>> flatten_structured_array(a)
+    array([[1., 1.],
+           [2., 2.]])
+
+    """
+    #
+    def flatten_sequence(iterable):
+        """Flattens a compound of nested iterables."""
+        for elm in iter(iterable):
+            if hasattr(elm,'__iter__'):
+                for f in flatten_sequence(elm):
+                    yield f
+            else:
+                yield elm
+    #
+    a = np.asanyarray(a)
+    inishape = a.shape
+    a = a.ravel()
+    if isinstance(a, MaskedArray):
+        out = np.array([tuple(flatten_sequence(d.item())) for d in a._data])
+        out = out.view(MaskedArray)
+        out._mask = np.array([tuple(flatten_sequence(d.item()))
+                              for d in getmaskarray(a)])
+    else:
+        out = np.array([tuple(flatten_sequence(d.item())) for d in a])
+    if len(inishape) > 1:
+        newshape = list(out.shape)
+        newshape[0] = inishape
+        out.shape = tuple(flatten_sequence(newshape))
+    return out
+
+
+
+
 class MaskedArray(ndarray):
     """
     Arrays with possibly masked values.  Masked values of True
@@ -2021,34 +2071,28 @@ class MaskedArray(ndarray):
 #        return self._mask.reshape(self.shape)
         return self._mask
     mask = property(fget=_get_mask, fset=__setmask__, doc="Mask")
-    #
-    def _getrecordmask(self):
-        """Return the mask of the records.
+
+
+    def _get_recordmask(self):
+        """
+    Return the mask of the records.
     A record is masked when all the fields are masked.
 
         """
         _mask = ndarray.__getattribute__(self, '_mask').view(ndarray)
         if _mask.dtype.names is None:
             return _mask
-        if _mask.size > 1:
-            axis = 1
-        else:
-            axis = None
-        #
-        try:
-            return _mask.view((bool_, len(self.dtype))).all(axis)
-        except ValueError:
-            # In case we have nested fields...
-            return np.all([[f[n].all() for n in _mask.dtype.names]
-                           for f in _mask], axis=axis)
+        return np.all(flatten_structured_array(_mask), axis=-1)
 
-    def _setrecordmask(self):
+
+    def _set_recordmask(self):
         """Return the mask of the records.
     A record is masked when all the fields are masked.
 
         """
         raise NotImplementedError("Coming soon: setting the mask per records!")
-    recordmask = property(fget=_getrecordmask)
+    recordmask = property(fget=_get_recordmask)
+
     #............................................
     def harden_mask(self):
         """Force the mask to hard.

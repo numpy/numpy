@@ -482,7 +482,11 @@ class TestMaskedArray(TestCase):
         test = a.filled(0)
         control = np.array([(1, (0, 1)), (2, (2, 0))], dtype=ndtype)
         assert_equal(test, control)
-        
+        #
+        test = a['B'].filled(0)
+        control = np.array([(0, 1), (2, 0)], dtype=a['B'].dtype)
+        assert_equal(test, control)
+
 
     def test_optinfo_propagation(self):
         "Checks that _optinfo dictionary isn't back-propagated"
@@ -502,6 +506,45 @@ class TestMaskedArray(TestCase):
                      dtype=fancydtype)
         control = "[(--, (2, --)) (4, (--, 6.0))]"
         assert_equal(str(test), control)
+
+
+    def test_flatten_structured_array(self):
+        "Test flatten_structured_array on arrays"
+        # On ndarray
+        ndtype = [('a', int), ('b', float)]
+        a = np.array([(1, 1), (2, 2)], dtype=ndtype)
+        test = flatten_structured_array(a)
+        control = np.array([[1., 1.], [2., 2.]], dtype=np.float)
+        assert_equal(test, control)
+        assert_equal(test.dtype, control.dtype)
+        # On masked_array
+        a = ma.array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
+        test = flatten_structured_array(a)
+        control = ma.array([[1., 1.], [2., 2.]], 
+                           mask=[[0, 1], [1, 0]], dtype=np.float)
+        assert_equal(test, control)
+        assert_equal(test.dtype, control.dtype)
+        assert_equal(test.mask, control.mask)
+        # On masked array with nested structure
+        ndtype = [('a', int), ('b', [('ba', int), ('bb', float)])]
+        a = ma.array([(1, (1, 1.1)), (2, (2, 2.2))],
+                     mask=[(0, (1, 0)), (1, (0, 1))], dtype=ndtype)
+        test = flatten_structured_array(a)
+        control = ma.array([[1., 1., 1.1], [2., 2., 2.2]], 
+                           mask=[[0, 1, 0], [1, 0, 1]], dtype=np.float)
+        assert_equal(test, control)
+        assert_equal(test.dtype, control.dtype)
+        assert_equal(test.mask, control.mask)
+        # Keeping the initial shape
+        ndtype = [('a', int), ('b', float)]
+        a = np.array([[(1, 1),], [(2, 2),]], dtype=ndtype)
+        test = flatten_structured_array(a)
+        control = np.array([[[1., 1.],], [[2., 2.],]], dtype=np.float)
+        assert_equal(test, control)
+        assert_equal(test.dtype, control.dtype)
+
+
+        
 
 #------------------------------------------------------------------------------
 
