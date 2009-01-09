@@ -133,6 +133,46 @@ import platform
 _bits = {'32bit':32,'64bit':64}
 platform_bits = _bits[platform.architecture()[0]]
 
+from itertools import cycle
+
+def libpaths(paths,bits):
+    """Return a list of library paths valid on 32 or 64 bit systems.
+
+    Inputs:
+      paths : sequence
+        A sequence of strings (typically paths)
+      bits : int
+        An integer, the only valid values are 32 or 64.  A ValueError exception
+      is raised otherwise.
+
+    Examples:
+
+    Consider a list of directories
+    >>> paths = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
+
+    For a 32-bit platform, this is already valid:
+    >>> libpaths(paths,32)
+    ['/usr/X11R6/lib', '/usr/X11/lib', '/usr/lib']
+
+    On 64 bits, we append the '64' postfix
+    >>> libpaths(paths,64)
+    ['/usr/X11R6/lib', '/usr/X11R6/lib64', '/usr/X11/lib', '/usr/X11/lib64',
+    '/usr/lib', '/usr/lib64']
+    """
+    if bits not in (32, 64):
+        raise ValueError("Invalid bit size in libpaths: 32 or 64 only")
+
+    # Handle 32bit case
+    if bits==32:
+        return paths
+
+    # Handle 64bit case
+    out = [None]*(2*len(paths))
+    out[::2] = paths
+    out[1::2] = (p+'64' for p in paths)
+    return out
+
+
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
                         os.path.join(distutils.sysconfig.EXEC_PREFIX,
@@ -142,19 +182,16 @@ if sys.platform == 'win32':
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
 else:
-    default_lib_dirs = ['/usr/local/lib', '/opt/lib', '/usr/lib',
-                        '/opt/local/lib', '/sw/lib']
+    default_lib_dirs = libpaths(['/usr/local/lib','/opt/lib','/usr/lib',
+                                 '/opt/local/lib','/sw/lib'], platform_bits)
     default_include_dirs = ['/usr/local/include',
                             '/opt/include', '/usr/include',
                             '/opt/local/include', '/sw/include',
                             '/usr/include/suitesparse']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
 
-    if platform_bits == 64:
-        default_x11_lib_dirs = ['/usr/lib64']
-    else:
-        default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
-
+    default_x11_lib_dirs = libpaths(['/usr/X11R6/lib','/usr/X11/lib',
+                                     '/usr/lib'], platform_bits)
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
 
