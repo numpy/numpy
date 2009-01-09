@@ -154,10 +154,10 @@ def libpaths(paths,bits):
     >>> libpaths(paths,32)
     ['/usr/X11R6/lib', '/usr/X11/lib', '/usr/lib']
 
-    On 64 bits, we append the '64' postfix
+    On 64 bits, we prepend the '64' postfix
     >>> libpaths(paths,64)
-    ['/usr/X11R6/lib', '/usr/X11R6/lib64', '/usr/X11/lib', '/usr/X11/lib64',
-    '/usr/lib', '/usr/lib64']
+    ['/usr/X11R6/lib64', '/usr/X11R6/lib', '/usr/X11/lib64', '/usr/X11/lib',
+    '/usr/lib64', '/usr/lib']
     """
     if bits not in (32, 64):
         raise ValueError("Invalid bit size in libpaths: 32 or 64 only")
@@ -169,7 +169,7 @@ def libpaths(paths,bits):
     # Handle 64bit case
     out = []
     for p in paths:
-        out.extend([p, p+bits])
+        out.extend([p+bits, p])
 
     return out
 
