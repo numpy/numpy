@@ -128,6 +128,11 @@ from numpy.distutils.exec_command import \
 from numpy.distutils.misc_util import is_sequence, is_string
 from numpy.distutils.command.config import config as cmd_config
 
+# Determine number of bits
+import platform
+_bits = {'32bit':32,'64bit':64}
+platform_bits = _bits[platform.architecture()[0]]
+
 if sys.platform == 'win32':
     default_lib_dirs = ['C:\\',
                         os.path.join(distutils.sysconfig.EXEC_PREFIX,
@@ -145,13 +150,7 @@ else:
                             '/usr/include/suitesparse']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
 
-    try:
-        platform = os.uname()
-        bit64 = platform[-1].endswith('64')
-    except:
-        bit64 = False
-
-    if bit64:
+    if platform_bits == 64:
         default_x11_lib_dirs = ['/usr/lib64']
     else:
         default_x11_lib_dirs = ['/usr/X11R6/lib','/usr/X11/lib','/usr/lib']
