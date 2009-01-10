@@ -518,20 +518,20 @@ class TestMaskedArray(TestCase):
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
         # On masked_array
-        a = ma.array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
+        a = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
         test = flatten_structured_array(a)
-        control = ma.array([[1., 1.], [2., 2.]], 
-                           mask=[[0, 1], [1, 0]], dtype=np.float)
+        control = array([[1., 1.], [2., 2.]], 
+                        mask=[[0, 1], [1, 0]], dtype=np.float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
         assert_equal(test.mask, control.mask)
         # On masked array with nested structure
         ndtype = [('a', int), ('b', [('ba', int), ('bb', float)])]
-        a = ma.array([(1, (1, 1.1)), (2, (2, 2.2))],
-                     mask=[(0, (1, 0)), (1, (0, 1))], dtype=ndtype)
+        a = array([(1, (1, 1.1)), (2, (2, 2.2))],
+                  mask=[(0, (1, 0)), (1, (0, 1))], dtype=ndtype)
         test = flatten_structured_array(a)
-        control = ma.array([[1., 1., 1.1], [2., 2., 2.2]], 
-                           mask=[[0, 1, 0], [1, 0, 1]], dtype=np.float)
+        control = array([[1., 1., 1.1], [2., 2., 2.2]], 
+                        mask=[[0, 1, 0], [1, 0, 1]], dtype=np.float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
         assert_equal(test.mask, control.mask)
