@@ -6,7 +6,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "config.h"
-#include "npy_format.c"
+#include "numpyos.c"
 
 static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},

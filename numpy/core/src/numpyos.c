@@ -288,6 +288,40 @@ _ASCII_FORMAT(long double, l, double)
 #endif
 
 
+static double NumPyOS_PINF;  /* Positive infinity */
+static double NumPyOS_PZERO; /* +0 */
+static double NumPyOS_NAN;   /* NaN */
+
+/* NumPyOS_init:
+ *
+ * initialize floating-point constants
+ */
+static void
+NumPyOS_init(void) {
+    double mul = 1e100;
+    double div = 1e10;
+    double tmp, c;
+
+    c = mul;
+    for (;;) {
+        c *= mul;
+        if (c == tmp) break;
+        tmp = c;
+    }
+    NumPyOS_PINF = c;
+
+    c = div;
+    for (;;) {
+        c /= div;
+        if (c == tmp) break;
+        tmp = c;
+    }
+    NumPyOS_PZERO = c;
+
+    NumPyOS_NAN = NumPyOS_PINF / NumPyOS_PINF;
+}
+
+
 /* NumPyOS_ascii_isspace:
  *
  * Same as isspace under C locale
@@ -297,6 +331,74 @@ NumPyOS_ascii_isspace(char c)
 {
     return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' ||
         c == '\v';
+}
+
+
+/* NumPyOS_ascii_isalpha:
+ *
+ * Same as isalpha under C locale
+ */
+static int
+NumPyOS_ascii_isalpha(char c)
+{
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
+
+/* NumPyOS_ascii_isdigit:
+ *
+ * Same as isdigit under C locale
+ */
+static int
+NumPyOS_ascii_isdigit(char c)
+{
+    return (c >= '0' && c <= '9');
+}
+
+
+/* NumPyOS_ascii_isalnum:
+ *
+ * Same as isalnum under C locale
+ */
+static int
+NumPyOS_ascii_isalnum(char c)
+{
+    return NumPyOS_ascii_isdigit(c) || NumPyOS_ascii_isalpha(c);
+}
+
+
+/* NumPyOS_ascii_tolower:
+ *
+ * Same as tolower under C locale
+ */
+static char
+NumPyOS_ascii_tolower(char c)
+{
+    if (c >= 'A' && c <= 'Z')
+        return c + ('a'-'A');
+    return c;
+}
+
+
+/* NumPyOS_ascii_strncasecmp:
+ *
+ * Same as strncasecmp under C locale
+ */
+static int
+NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
+{
+    int diff;
+    while (len > 0 && *s1 != '\0' && *s2 != '\0') {
+        diff = ((int)NumPyOS_ascii_tolower(*s1)) -
+            ((int)NumPyOS_ascii_tolower(*s2));
+        if (diff != 0) return diff;
+        ++s1;
+        ++s2;
+        --len;
+    }
+    if (len > 0)
+        return ((int)*s1) - ((int)*s2);
+    return 0;
 }
 
 
@@ -320,7 +422,39 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
         ++s;
     }
 
-    /* ## 1
+    /* ##1
+     *
+     * Recognize POSIX inf/nan representations on all platforms.
+     */
+    p = s;
+    result = 1.0;
+    if (*p == '-') {
+        result = -1.0;
+        ++p;
+    }
+    else if (*p == '+') {
+        ++p;
+    }
+    if (NumPyOS_ascii_strncasecmp(p, "nan", 3) == 0) {
+        p += 3;
+        if (*p == '(') {
+            ++p;
+            while (NumPyOS_ascii_isalnum(*p) || *p == '_') ++p;
+            if (*p == ')') ++p;
+        }
+        if (endptr != NULL) *endptr = p;
+        return NumPyOS_NAN;
+    }
+    else if (NumPyOS_ascii_strncasecmp(p, "inf", 3) == 0) {
+        p += 3;
+        if (NumPyOS_ascii_strncasecmp(p, "inity", 5) == 0)
+            p += 5;
+        if (endptr != NULL) *endptr = p;
+        return result*NumPyOS_PINF;
+    }
+    /* End of ##1 */
+
+    /* ## 2
      *
      * At least Python versions <= 2.5.2 and <= 2.6.1
      *
@@ -346,7 +480,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
             return result;
         }
     }
-    /* End of ##1 */
+    /* End of ##2 */
 
     return PyOS_ascii_strtod(s, endptr);
 }
@@ -420,13 +554,7 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value)
 
 #define MATCH_ZERO_OR_MORE(condition)                                       \
         while (condition) { NEXT_CHAR(); }
-
-#define IS_NUMBER (c >= '0' && c <= '9')
-
-#define IS_ALPHA ((c >= 'a' && c <= 'z') ||  (c >= 'A' && c <= 'Z'))
-
-#define IS_ALPHANUM (IS_NUMBER || IS_ALPHA)
-
+    
     /* 1. emulate fscanf EOF handling */
     c = getc(fp);
     if (c == EOF)
@@ -451,7 +579,7 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value)
         /* accept nan([:alphanum:_]*), similarly to strtod */
         if (c == '(') {
             NEXT_CHAR();
-            MATCH_ZERO_OR_MORE(IS_ALPHANUM || c == '_');
+            MATCH_ZERO_OR_MORE(NumPyOS_ascii_isalnum(c) || c == '_');
             if (c == ')') NEXT_CHAR();
         }
         END_MATCH();
@@ -463,18 +591,18 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value)
     }
 
     /* 4.3 mantissa */
-    MATCH_ZERO_OR_MORE(IS_NUMBER);
+    MATCH_ZERO_OR_MORE(NumPyOS_ascii_isdigit(c));
 
     if (c == '.') {
         NEXT_CHAR();
-        MATCH_ONE_OR_MORE(IS_NUMBER);
+        MATCH_ONE_OR_MORE(NumPyOS_ascii_isdigit(c));
     }
 
     /* 4.4 exponent */
     if (c == 'e' || c == 'E') {
         NEXT_CHAR();
         MATCH_ONE_OR_NONE(c == '+' || c == '-');
-        MATCH_ONE_OR_MORE(IS_NUMBER);
+        MATCH_ONE_OR_MORE(NumPyOS_ascii_isdigit(c));
     }
 
     END_MATCH();
@@ -486,10 +614,7 @@ buffer_filled:
 
     /* 5. try to convert buffer. */
 
-    /* No need for NumPyOS here, the bugs in PyOS_ascii_strtod discussed
-       above can't manifest here, since the above parsing only copies
-       "good" strings. */
-    *value = PyOS_ascii_strtod(buffer, &p);
+    *value = NumPyOS_ascii_strtod(buffer, &p);
 
     return (buffer == p) ? 0 : 1; /* if something was read */
 }
@@ -500,6 +625,3 @@ buffer_filled:
 #undef MATCH_ONE_OR_NONE
 #undef MATCH_ONE_OR_MORE
 #undef MATCH_ZERO_OR_MORE
-#undef IS_NUMBER
-#undef IS_ALPHA
-#undef IS_ALPHANUM

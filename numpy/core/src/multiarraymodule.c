@@ -7705,6 +7705,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyObject *m, *d, *s;
     PyObject *c_api;
 
+    /* Initialize constants etc. */
+    NumPyOS_init();
+
     /* Create the module and add the functions */
     m = Py_InitModule("multiarray", array_module_methods);
     if (!m) goto err;

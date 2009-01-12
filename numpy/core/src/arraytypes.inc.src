@@ -2,41 +2,17 @@
 #include "config.h"
 
 static double
-_getNAN(void) {
-#ifdef NAN
-    return NAN;
-#else
-    static double nan=0;
-
-    if (nan == 0) {
-        double mul = 1e100;
-        double tmp = 0.0;
-        double pinf=0;
-        pinf = mul;
-        for (;;) {
-            pinf *= mul;
-            if (pinf == tmp) break;
-            tmp = pinf;
-        }
-        nan = pinf / pinf;
-    }
-    return nan;
-#endif
-}
-
-
-static double
 MyPyFloat_AsDouble(PyObject *obj)
 {
     double ret = 0;
     PyObject *num;
 
     if (obj == Py_None) {
-        return _getNAN();
+        return NumPyOS_NAN;
     }
     num = PyNumber_Float(obj);
     if (num == NULL) {
-        return _getNAN();
+        return NumPyOS_NAN;
     }
     ret = PyFloat_AsDouble(num);
     Py_DECREF(num);
@@ -192,7 +168,7 @@ static int
             op2 = op; Py_INCREF(op);
         }
         if (op2 == Py_None) {
-            oop.real = oop.imag = _getNAN();
+            oop.real = oop.imag = NumPyOS_NAN;
         }
         else {
             oop = PyComplex_AsCComplex (op2);
