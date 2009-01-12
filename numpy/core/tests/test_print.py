@@ -43,7 +43,7 @@ def check_nan_inf_float(tp):
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_nan_inf_float():
-    """ Check formatting.
+    """ Check formatting of nan & inf.
 
         This is only for the str function, and only for simple types.
         The precision of np.float and np.longdouble aren't the same as the
@@ -75,7 +75,7 @@ def check_complex_type(tp):
                      err_msg='Failed str formatting for type %s' % tp)
 
 def test_complex_types():
-    """Check formatting.
+    """Check formatting of complex types.
 
         This is only for the str function, and only for simple types.
         The precision of np.float and np.longdouble aren't the same as the

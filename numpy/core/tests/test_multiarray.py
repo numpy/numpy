@@ -781,11 +781,13 @@ class TestLexsort(TestCase):
 
 
 class TestIO(object):
+    """Test tofile, fromfile, tostring, and fromstring"""
+    
     def setUp(self):
-        shape = (4,7)
+        shape = (2,4,3)
         rand = np.random.random
         self.x = rand(shape) + rand(shape).astype(np.complex)*1j
-        self.x[:,0] = [nan, inf, -inf, nan]
+        self.x[0,:,1] = [nan, inf, -inf, nan]
         self.dtype = self.x.dtype
         self.filename = tempfile.mktemp()
 
@@ -807,6 +809,30 @@ class TestIO(object):
         self.x.tofile(self.filename)
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
+
+    def test_roundtrip_binary_str(self):
+        s = self.x.tostring()
+        y = np.fromstring(s, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
+
+        s = self.x.tostring('F')
+        y = np.fromstring(s, dtype=self.dtype)
+        assert_array_equal(y, self.x.flatten('F'))
+
+    def test_roundtrip_str(self):
+        x = self.x.real.ravel()
+        s = "@".join(map(str, x))
+        y = np.fromstring(s, sep="@")
+        # NB. str imbues less precision
+        nan_mask = ~np.isfinite(x)
+        assert_array_equal(x[nan_mask], y[nan_mask])
+        assert_array_almost_equal(x[~nan_mask], y[~nan_mask], decimal=5)
+
+    def test_roundtrip_repr(self):
+        x = self.x.real.ravel()
+        s = "@".join(map(repr, x))
+        y = np.fromstring(s, sep="@")
+        assert_array_equal(x, y)
 
     def _check_from(self, s, value, **kw):
         y = np.fromstring(s, **kw)
@@ -842,6 +868,7 @@ class TestIO(object):
     def test_counted_string(self):
         self._check_from('1,2,3,4', [1., 2., 3., 4.], count=4, sep=',')
         self._check_from('1,2,3,4', [1., 2., 3.], count=3, sep=',')
+        self._check_from('1,2,3,4', [1., 2., 3., 4.], count=-1, sep=',')
 
     def test_string_with_ws(self):
         self._check_from('1 2  3     4   ', [1, 2, 3, 4], dtype=int, sep=' ')
@@ -857,6 +884,33 @@ class TestIO(object):
     def test_malformed(self):
         self._check_from('1.234 1,234', [1.234, 1.], sep=' ')
 
+    def test_long_sep(self):
+        self._check_from('1_x_3_x_4_x_5', [1,3,4,5], sep='_x_')
+
+    def test_dtype(self):
+        v = np.array([1,2,3,4], dtype=np.int_)
+        self._check_from('1,2,3,4', v, sep=',', dtype=np.int_)
+
+    def test_tofile_sep(self):
+        x = np.array([1.51, 2, 3.51, 4], dtype=float)
+        f = open(self.filename, 'w')
+        x.tofile(f, sep=',')
+        f.close()
+        f = open(self.filename, 'r')
+        s = f.read()
+        f.close()
+        assert_equal(s, '1.51,2.0,3.51,4.0')
+
+    def test_tofile_format(self):
+        x = np.array([1.51, 2, 3.51, 4], dtype=float)
+        f = open(self.filename, 'w')
+        x.tofile(f, sep=',', format='%.2f')
+        f.close()
+        f = open(self.filename, 'r')
+        s = f.read()
+        f.close()
+        assert_equal(s, '1.51,2.00,3.51,4.00')
+
     @in_foreign_locale
     def _run_in_foreign_locale(self, func, fail=False):
         np.testing.dec.knownfailureif(fail)(func)(self)
@@ -868,6 +922,8 @@ class TestIO(object):
         yield self._run_in_foreign_locale, TestIO.test_counted_string
         yield self._run_in_foreign_locale, TestIO.test_ascii
         yield self._run_in_foreign_locale, TestIO.test_malformed
+        yield self._run_in_foreign_locale, TestIO.test_tofile_sep
+        yield self._run_in_foreign_locale, TestIO.test_tofile_format
 
 
 class TestFromBuffer(TestCase):
