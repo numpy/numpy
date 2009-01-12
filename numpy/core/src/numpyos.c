@@ -302,6 +302,7 @@ NumPyOS_init(void) {
     double div = 1e10;
     double tmp, c;
 
+    tmp = 0;
     c = mul;
     for (;;) {
         c *= mul;
@@ -310,6 +311,7 @@ NumPyOS_init(void) {
     }
     NumPyOS_PINF = c;
 
+    tmp = 0;
     c = div;
     for (;;) {
         c /= div;
