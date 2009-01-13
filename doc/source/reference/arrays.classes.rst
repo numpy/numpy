@@ -261,7 +261,12 @@ scalar data type object :class:`record`.
 Masked arrays (:mod:`numpy.ma`)
 ===============================
 
-.. seealso:: :ref:`routines.ma`
+.. seealso:: :ref:`maskedarray`
+
+Masked arrays are arrays that may have missing or invalid entries.
+The :mod:`numpy.ma` module provides a nearly work-alike replacement for numpy
+that supports data arrays with masks.
+
 
 .. XXX: masked array documentation should be improved
 
@@ -270,12 +275,10 @@ Masked arrays (:mod:`numpy.ma`)
 .. index::
    single: masked arrays
 
-.. autosummary::
-   :toctree: generated/
+.. toctree::
+   :maxdepth: 2
 
-   ma.masked_array
-
-.. automodule:: numpy.ma
+   maskedarray
 
 
 Standard container class

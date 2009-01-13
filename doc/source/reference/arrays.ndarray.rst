@@ -135,6 +135,8 @@ in a different scheme.
    is automatically made.
 
 
+.. _arrays.ndarray.attributes:
+
 Array attributes
 ================
 
@@ -216,6 +218,9 @@ Array interface
    ndarray.ctypes
 
 .. note:: XXX: update and check these docstrings.
+
+
+.. _array.ndarray.methods:
 
 Array methods
 =============

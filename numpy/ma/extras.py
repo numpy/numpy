@@ -45,22 +45,19 @@ from numpy.linalg import lstsq
 #...............................................................................
 def issequence(seq):
     """Is seq a sequence (ndarray, list or tuple)?"""
-    if isinstance(seq, ndarray):
-        return True
-    elif isinstance(seq, tuple):
-        return True
-    elif isinstance(seq, list):
+    if isinstance(seq, (ndarray, tuple, list)):
         return True
     return False
 
 def count_masked(arr, axis=None):
-    """Count the number of masked elements along the given axis.
+    """
+    Count the number of masked elements along the given axis.
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to count.
-            If None (default), a flattened version of the array is used.
+    axis : int, optional
+        Axis along which to count.
+        If None (default), a flattened version of the array is used.
 
     """
     m = getmaskarray(arr)
@@ -252,7 +249,8 @@ apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 
 def average(a, axis=None, weights=None, returned=False):
-    """Average the array over the given axis.
+    """
+    Average the array over the given axis.
 
     Parameters
     ----------
@@ -440,10 +438,10 @@ def median(a, axis=None, out=None, overwrite_input=False):
 #..............................................................................
 def compress_rowcols(x, axis=None):
     """
-    Suppress the rows and/or columns of a 2D array that contains
+    Suppress the rows and/or columns of a 2D array that contain
     masked values.
 
-    The suppression behavior is selected with the `axis`parameter.
+    The suppression behavior is selected with the `axis` parameter.
 
         - If axis is None, rows and columns are suppressed.
         - If axis is 0, only rows are suppressed.
@@ -482,13 +480,15 @@ def compress_rowcols(x, axis=None):
     return x._data[idxr][:,idxc]
 
 def compress_rows(a):
-    """Suppress whole rows of a 2D array that contain masked values.
+    """
+    Suppress whole rows of a 2D array that contain masked values.
 
     """
     return compress_rowcols(a, 0)
 
 def compress_cols(a):
-    """Suppress whole columnss of a 2D array that contain masked values.
+    """
+    Suppress whole columns of a 2D array that contain masked values.
 
     """
     return compress_rowcols(a, 1)
@@ -530,30 +530,35 @@ def mask_rowcols(a, axis=None):
     return a
 
 def mask_rows(a, axis=None):
-    """Mask whole rows of a 2D array that contain masked values.
+    """
+    Mask whole rows of a 2D array that contain masked values.
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
+    axis : int, optional
+        Axis along which to perform the operation.
+        If None, applies to a flattened version of the array.
+
     """
     return mask_rowcols(a, 0)
 
 def mask_cols(a, axis=None):
-    """Mask whole columns of a 2D array that contain masked values.
+    """
+    Mask whole columns of a 2D array that contain masked values.
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
+    axis : int, optional
+        Axis along which to perform the operation.
+        If None, applies to a flattened version of the array.
+
     """
     return mask_rowcols(a, 1)
 
 
 def dot(a,b, strict=False):
-    """Return the dot product of two 2D masked arrays a and b.
+    """
+    Return the dot product of two 2D masked arrays a and b.
 
     Like the generic numpy equivalent, the product sum is over the last
     dimension of a and the second-to-last dimension of b.  If strict is True,
@@ -584,24 +589,25 @@ def dot(a,b, strict=False):
 
 #...............................................................................
 def ediff1d(array, to_end=None, to_begin=None):
-    """Return the differences between consecutive elements of an
+    """
+    Return the differences between consecutive elements of an
     array, possibly with prefixed and/or appended values.
 
     Parameters
     ----------
-        array : {array}
-            Input array,  will be flattened before the difference is taken.
-        to_end : {number}, optional
-            If provided, this number will be tacked onto the end of the returned
-            differences.
-        to_begin : {number}, optional
-            If provided, this number will be taked onto the beginning of the
-            returned differences.
+    array : {array}
+        Input array,  will be flattened before the difference is taken.
+    to_end : {number}, optional
+        If provided, this number will be tacked onto the end of the returned
+        differences.
+    to_begin : {number}, optional
+        If provided, this number will be taked onto the beginning of the
+        returned differences.
 
     Returns
     -------
-          ed : {array}
-            The differences. Loosely, this will be (ary[1:] - ary[:-1]).
+    ed : {array}
+        The differences. Loosely, this will be (ary[1:] - ary[:-1]).
 
     """
     a = masked_array(array, copy=True)
@@ -747,7 +753,8 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True):
 
 
 def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
-    """The correlation coefficients formed from the array x, where the
+    """
+    The correlation coefficients formed from the array x, where the
     rows are the observations, and the columns are variables.
 
     corrcoef(x,y) where x and y are 1d arrays is the same as
@@ -818,7 +825,8 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True):
 #####--------------------------------------------------------------------------
 
 class MAxisConcatenator(AxisConcatenator):
-    """Translate slice objects to concatenation along an axis.
+    """
+    Translate slice objects to concatenation along an axis.
 
     """
 
@@ -877,11 +885,13 @@ class MAxisConcatenator(AxisConcatenator):
         return self._retval(res)
 
 class mr_class(MAxisConcatenator):
-    """Translate slice objects to concatenation along the first axis.
+    """
+    Translate slice objects to concatenation along the first axis.
 
-    For example:
-        >>> np.ma.mr_[np.ma.array([1,2,3]), 0, 0, np.ma.array([4,5,6])]
-        array([1, 2, 3, 0, 0, 4, 5, 6])
+    Examples
+    --------
+    >>> np.ma.mr_[np.ma.array([1,2,3]), 0, 0, np.ma.array([4,5,6])]
+    array([1, 2, 3, 0, 0, 4, 5, 6])
 
     """
     def __init__(self):
@@ -894,7 +904,8 @@ mr_ = mr_class()
 #####--------------------------------------------------------------------------
 
 def flatnotmasked_edges(a):
-    """Find the indices of the first and last not masked values in a
+    """
+    Find the indices of the first and last not masked values in a
     1D masked array.  If all values are masked, returns None.
 
     """
@@ -907,8 +918,10 @@ def flatnotmasked_edges(a):
     else:
         return None
 
+
 def notmasked_edges(a, axis=None):
-    """Find the indices of the first and last not masked values along
+    """
+    Find the indices of the first and last not masked values along
     the given axis in a masked array.
 
     If all values are masked, return None.  Otherwise, return a list
@@ -917,9 +930,10 @@ def notmasked_edges(a, axis=None):
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
+    axis : int, optional
+        Axis along which to perform the operation.
+        If None, applies to a flattened version of the array.
+
     """
     a = asarray(a)
     if axis is None or a.ndim == 1:
@@ -929,8 +943,10 @@ def notmasked_edges(a, axis=None):
     return [tuple([idx[i].min(axis).compressed() for i in range(a.ndim)]),
             tuple([idx[i].max(axis).compressed() for i in range(a.ndim)]),]
 
+
 def flatnotmasked_contiguous(a):
-    """Find contiguous unmasked data in a flattened masked array.
+    """
+    Find contiguous unmasked data in a flattened masked array.
 
     Return a sorted sequence of slices (start index, end index).
 
@@ -950,22 +966,22 @@ def flatnotmasked_contiguous(a):
     return result
 
 def notmasked_contiguous(a, axis=None):
-    """Find contiguous unmasked data in a masked array along the given
-    axis.
+    """
+    Find contiguous unmasked data in a masked array along the given axis.
 
     Parameters
     ----------
-        axis : int, optional
-            Axis along which to perform the operation.
-            If None, applies to a flattened version of the array.
+    axis : int, optional
+        Axis along which to perform the operation.
+        If None, applies to a flattened version of the array.
 
     Returns
     -------
-        A sorted sequence of slices (start index, end index).
+    A sorted sequence of slices (start index, end index).
 
     Notes
     -----
-        Only accepts 2D arrays at most.
+    Only accepts 2D arrays at most.
 
     """
     a = asarray(a)

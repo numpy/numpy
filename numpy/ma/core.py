@@ -1,19 +1,22 @@
 # pylint: disable-msg=E1002
 """
-MA: a facility for dealing with missing observations
-MA is generally used as a numpy.array look-alike.
-by Paul F. Dubois.
+numpy.ma : a package to handle missing or invalid values.
+
+This package was initially written for numarray by Paul F. Dubois
+at Lawrence Livermore National Laboratory. 
+In 2006, the package was completely rewritten by Pierre Gerard-Marchant
+(University of Georgia) to make the MaskedArray class a subclass of ndarray,
+and to improve support of structured arrays.
+
 
 Copyright 1999, 2000, 2001 Regents of the University of California.
 Released for unlimited redistribution.
-Adapted for numpy_core 2005 by Travis Oliphant and
-(mainly) Paul Dubois.
-
+* Adapted for numpy_core 2005 by Travis Oliphant and (mainly) Paul Dubois.
 * Subclassing of the base ndarray 2006 by Pierre Gerard-Marchant 
   (pgmdevlist_AT_gmail_DOT_com)
 * Improvements suggested by Reggie Dugard (reggie_AT_merfinllc_DOT_com)
 
-:author: Pierre Gerard-Marchant
+.. moduleauthor:: Pierre Gerard-Marchant
 
 
 """
@@ -1106,7 +1109,7 @@ def flatten_mask(mask):
 
 def masked_where(condition, a, copy=True):
     """
-    Return ``a`` as an array masked where ``condition`` is True.
+    Return ``a`` as an array masked where ``condition`` is ``True``.
     Masked values of ``a`` or ``condition`` are kept.
 
     Parameters
@@ -1139,7 +1142,7 @@ def masked_where(condition, a, copy=True):
 
 def masked_greater(x, value, copy=True):
     """
-    Return the array `x` masked where (x > value).
+    Return the array `x` masked where ``(x > value)``.
     Any value of mask already masked is kept masked.
 
     """
@@ -1147,29 +1150,33 @@ def masked_greater(x, value, copy=True):
 
 
 def masked_greater_equal(x, value, copy=True):
-    "Shortcut to masked_where, with condition = (x >= value)."
+    "Shortcut to masked_where, with condition ``(x >= value)``."
     return masked_where(greater_equal(x, value), x, copy=copy)
 
 
 def masked_less(x, value, copy=True):
-    "Shortcut to masked_where, with condition = (x < value)."
+    "Shortcut to masked_where, with condition ``(x < value)``."
     return masked_where(less(x, value), x, copy=copy)
 
 
 def masked_less_equal(x, value, copy=True):
-    "Shortcut to masked_where, with condition = (x <= value)."
+    "Shortcut to masked_where, with condition ``(x <= value)``."
     return masked_where(less_equal(x, value), x, copy=copy)
 
 
 def masked_not_equal(x, value, copy=True):
-    "Shortcut to masked_where, with condition = (x != value)."
+    "Shortcut to masked_where, with condition ``(x != value)``."
     return masked_where(not_equal(x, value), x, copy=copy)
 
 
 def masked_equal(x, value, copy=True):
     """
-    Shortcut to masked_where, with condition = (x == value).  For
-    floating point, consider ``masked_values(x, value)`` instead.
+    Shortcut to masked_where, with condition ``(x == value)``.
+
+    See Also
+    --------
+    masked_where : base function
+    masked_values : equivalent function for floats.
 
     """
     # An alternative implementation relies on filling first: probably not needed.
@@ -1755,7 +1762,8 @@ class MaskedArray(ndarray):
         return
     #..................................
     def __array_wrap__(self, obj, context=None):
-        """Special hook for ufuncs.
+        """
+        Special hook for ufuncs.
         Wraps the numpy array and sets the mask according to context.
         """
         result = obj.view(type(self))
@@ -1988,7 +1996,8 @@ class MaskedArray(ndarray):
             ndarray.__setitem__(_data, indx, dindx)
             _mask[indx] = mindx
         return
-    #............................................
+
+
     def __getslice__(self, i, j):
         """x.__getslice__(i, j) <==> x[i:j]
 
@@ -1997,7 +2006,8 @@ class MaskedArray(ndarray):
 
         """
         return self.__getitem__(slice(i, j))
-    #........................
+
+
     def __setslice__(self, i, j, value):
         """x.__setslice__(i, j, value) <==> x[i:j]=value
 
@@ -2006,7 +2016,8 @@ class MaskedArray(ndarray):
 
         """
         self.__setitem__(slice(i, j), value)
-    #............................................
+
+
     def __setmask__(self, mask, copy=False):
         """Set the mask.
 
@@ -2107,6 +2118,10 @@ class MaskedArray(ndarray):
         """
         self._hardmask = False
 
+    hardmask = property(fget=lambda self: self._hardmask,
+                        doc="Hardness of the mask")
+
+
     def unshare_mask(self):
         """Copy the mask and set the sharedmask flag to False.
 
@@ -2114,6 +2129,9 @@ class MaskedArray(ndarray):
         if self._sharedmask:
             self._mask = self._mask.copy()
             self._sharedmask = False
+
+    sharedmask = property(fget=lambda self: self._sharedmask,
+                          doc="Share status of the mask (read-only).")
 
     def shrink_mask(self):
         """Reduce a mask to nomask when possible.
@@ -2124,6 +2142,10 @@ class MaskedArray(ndarray):
             self._mask = nomask
 
     #............................................
+
+    baseclass = property(fget= lambda self:self._baseclass,
+                         doc="Class of the underlying data (read-only).")
+    
     def _get_data(self):
         """Return the current data, as a view of the original
         underlying data.
@@ -2179,23 +2201,23 @@ class MaskedArray(ndarray):
 
 
     def filled(self, fill_value=None):
-        """Return a copy of self._data, where masked values are filled
-        with fill_value.
+        """
+    Return a copy of self, where masked values are filled with `fill_value`.
 
-        If fill_value is None, self.fill_value is used instead.
+    If `fill_value` is None, `self.fill_value` is used instead.
 
-        Notes
-        -----
-        + Subclassing is preserved
-        + The result is NOT a MaskedArray !
+    Notes
+    -----
+    + Subclassing is preserved
+    + The result is NOT a MaskedArray !
 
-        Examples
-        --------
-        >>> x = np.ma.array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
-        >>> x.filled()
-        array([1,2,-999,4,-999])
-        >>> type(x.filled())
-        <type 'numpy.ndarray'>
+    Examples
+    --------
+    >>> x = np.ma.array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
+    >>> x.filled()
+    array([1,2,-999,4,-999])
+    >>> type(x.filled())
+    <type 'numpy.ndarray'>
 
         """
         m = self._mask
@@ -2502,7 +2524,7 @@ class MaskedArray(ndarray):
         return self
     #...
     def __ipow__(self, other):
-        "Raise self to the power other, in place"
+        "Raise self to the power other, in place."
         other_data = getdata(other)
         other_mask = getmask(other)
         ndarray.__ipow__(self._data, np.where(self._mask, 1, other_data))
@@ -3728,6 +3750,7 @@ class MaskedArray(ndarray):
     def toflex(self):
         """
         Transforms a MaskedArray into a flexible-type array with two fields:
+
         * the ``_data`` field stores the ``_data`` part of the array;
         * the ``_mask`` field stores the ``_mask`` part of the array;
 
@@ -4563,7 +4586,8 @@ outer.__doc__ = doc_note(np.outer.__doc__,
 outerproduct = outer
 
 def allequal (a, b, fill_value=True):
-    """Return True if all entries of a and b are equal, using
+    """
+    Return True if all entries of a and b are equal, using
     fill_value as a truth value where either or both are masked.
 
     """
@@ -4654,9 +4678,9 @@ def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
     return np.all(d)
 
 #..............................................................................
-def asarray(a, dtype=None):
+def asarray(a, dtype=None, order=None):
     """
-    Convert the input to a masked array.
+    Convert the input `a` to a masked array of the given datatype.
 
     Parameters
     ----------
@@ -4674,23 +4698,34 @@ def asarray(a, dtype=None):
     -------
     out : ndarray
         MaskedArray interpretation of `a`.  No copy is performed if the input
-        is already an ndarray.  If `a` is a subclass of ndarray, a base
-        class ndarray is returned.
-    Return a as a MaskedArray object of the given dtype.
-    If dtype is not given or None, is is set to the dtype of a.
-    No copy is performed if a is already an array.
-    Subclasses are converted to the base class MaskedArray.
+        is already an ndarray.  If `a` is a subclass of MaskedArray, a base
+        class MaskedArray is returned.
 
     """
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=False)
 
 def asanyarray(a, dtype=None):
-    """asanyarray(data, dtype) = array(data, dtype, copy=0, subok=1)
+    """
+    Convert the input `a` to a masked array of the given datatype.
+    If `a` is a subclass of MaskedArray, its class is conserved.
 
-    Return a as an masked array.
-    If dtype is not given or None, is is set to the dtype of a.
-    No copy is performed if a is already an array.
-    Subclasses are conserved.
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.  This
+        includes lists, lists of tuples, tuples, tuples of tuples, tuples
+        of lists and ndarrays.
+    dtype : data-type, optional
+        By default, the data-type is inferred from the input data.
+    order : {'C', 'F'}, optional
+        Whether to use row-major ('C') or column-major ('FORTRAN') memory
+        representation.  Defaults to 'C'.
+
+    Returns
+    -------
+    out : ndarray
+        MaskedArray interpretation of `a`.  No copy is performed if the input
+        is already an ndarray.
 
     """
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
