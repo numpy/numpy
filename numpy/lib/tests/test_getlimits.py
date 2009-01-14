@@ -51,5 +51,9 @@ class TestIinfo(TestCase):
             assert_equal(iinfo(T).max, T(-1))
 
 
+def test_instances():
+    iinfo(10)
+    finfo(3.0)
+
 if __name__ == "__main__":
     run_module_suite()

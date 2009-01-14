@@ -88,6 +88,12 @@ class finfo(object):
     _finfo_cache = {}
 
     def __new__(cls, dtype):
+        try:
+            dtype = np.dtype(dtype)
+        except TypeError:
+            # In case a float instance was given
+            dtype = np.dtype(type(dtype))
+
         obj = cls._finfo_cache.get(dtype,None)
         if obj is not None:
             return obj
@@ -220,8 +226,11 @@ class iinfo:
     _min_vals = {}
     _max_vals = {}
 
-    def __init__(self, type):
-        self.dtype = np.dtype(type)
+    def __init__(self, int_type):
+        try:
+            self.dtype = np.dtype(int_type)
+        except TypeError:
+            self.dtype = np.dtype(type(int_type))
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)
@@ -258,7 +267,7 @@ class iinfo:
 
     def __str__(self):
         """String representation."""
-        return '''
+        return '''\
 Machine parameters for %(dtype)s
 ---------------------------------------------------------------------
 min = %(min)s
