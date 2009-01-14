@@ -98,23 +98,10 @@ polymul          --  Multiply polynomials
 polydiv          --  Divide polynomials
 polyval          --  Evaluate polynomial at given argument
 
-Import tricks
-=============
-ppimport         --  Postpone module import until trying to use it
-ppimport_attr    --  Postpone module import until trying to use its
-                      attribute
-ppresolve        --  Import postponed module and return it.
-
-Machine arithmetics
-===================
-machar_single    --  MachAr instance storing the parameters of system
-                     single precision floating point arithmetics
-machar_double    --  MachAr instance storing the parameters of system
-                     double precision floating point arithmetics
-
-Threading tricks
-================
-ParallelExec     --  Execute commands in parallel thread.
+Machine arithmetic
+==================
+finfo            --  Parameters of system floating point arithmetic
+iinfo            --  Parameters of system integer arithmetic
 
 1D array set operations
 =======================
