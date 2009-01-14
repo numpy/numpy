@@ -115,7 +115,7 @@ class finfo(object):
         return obj
 
     def _init(self, dtype):
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
         if dtype is ntypes.double:
             itype = ntypes.int64
             fmt = '%24.16e'
@@ -149,23 +149,23 @@ class finfo(object):
         self.nexp = machar.iexp
         self.nmant = machar.it
         self.machar = machar
-        self._str_tiny = machar._str_xmin
-        self._str_max = machar._str_xmax
-        self._str_epsneg = machar._str_epsneg
-        self._str_eps = machar._str_eps
-        self._str_resolution = machar._str_resolution
+        self._str_tiny = machar._str_xmin.strip()
+        self._str_max = machar._str_xmax.strip()
+        self._str_epsneg = machar._str_epsneg.strip()
+        self._str_eps = machar._str_eps.strip()
+        self._str_resolution = machar._str_resolution.strip()
         return self
 
     def __str__(self):
         return '''\
 Machine parameters for %(dtype)s
 ---------------------------------------------------------------------
-precision=%(precision)3s   resolution=%(_str_resolution)s
-machep=%(machep)6s   eps=     %(_str_eps)s
-negep =%(negep)6s   epsneg=  %(_str_epsneg)s
-minexp=%(minexp)6s   tiny=    %(_str_tiny)s
-maxexp=%(maxexp)6s   max=     %(_str_max)s
-nexp  =%(nexp)6s   min=       -max
+precision=%(precision)3s   resolution= %(_str_resolution)s
+machep=%(machep)6s   eps=        %(_str_eps)s
+negep =%(negep)6s   epsneg=     %(_str_epsneg)s
+minexp=%(minexp)6s   tiny=       %(_str_tiny)s
+maxexp=%(maxexp)6s   max=        %(_str_max)s
+nexp  =%(nexp)6s   min=        -max
 ---------------------------------------------------------------------
 ''' % self.__dict__
 
@@ -255,6 +255,17 @@ class iinfo:
         return val
 
     max = property(max)
+
+    def __str__(self):
+        """String representation."""
+        return '''
+Machine parameters for %(dtype)s
+---------------------------------------------------------------------
+min = %(min)s
+max = %(max)s
+---------------------------------------------------------------------
+''' % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
+
 
 if __name__ == '__main__':
     f = finfo(ntypes.single)
