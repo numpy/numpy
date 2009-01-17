@@ -1459,7 +1459,7 @@ class _arraymethod(object):
             elif mask is not nomask:
                 result.__setmask__(getattr(mask, methodname)(*args, **params))
         else:
-            if mask.ndim and mask.all():
+            if mask.ndim and (not mask.dtype.names and mask.all()):
                 return masked
         return result
 #..........................................................
