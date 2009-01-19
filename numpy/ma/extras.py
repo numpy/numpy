@@ -19,11 +19,14 @@ __all__ = ['apply_along_axis', 'atleast_1d', 'atleast_2d', 'atleast_3d',
            'ediff1d',
            'flatnotmasked_contiguous', 'flatnotmasked_edges',
            'hsplit', 'hstack',
+           'intersect1d', 'intersect1d_nu',
            'mask_cols', 'mask_rowcols', 'mask_rows', 'masked_all',
            'masked_all_like', 'median', 'mr_',
            'notmasked_contiguous', 'notmasked_edges',
            'polyfit',
            'row_stack',
+           'setdiff1d', 'setmember1d', 'setxor1d',
+           'unique1d', 'union1d',
            'vander', 'vstack',
            ]
 
@@ -133,9 +136,12 @@ class _fromnxfunction:
                 res.append(masked_array(_d, mask=_m))
             return res
 
-atleast_1d = _fromnxfunction('atleast_1d')
-atleast_2d = _fromnxfunction('atleast_2d')
-atleast_3d = _fromnxfunction('atleast_3d')
+#atleast_1d = _fromnxfunction('atleast_1d')
+#atleast_2d = _fromnxfunction('atleast_2d')
+#atleast_3d = _fromnxfunction('atleast_3d')
+atleast_1d = np.atleast_1d
+atleast_2d = np.atleast_2d
+atleast_3d = np.atleast_3d
 
 vstack = row_stack = _fromnxfunction('vstack')
 hstack = _fromnxfunction('hstack')
@@ -587,73 +593,211 @@ def dot(a,b, strict=False):
     m = ~np.dot(am, bm)
     return masked_array(d, mask=m)
 
-#...............................................................................
-def ediff1d(array, to_end=None, to_begin=None):
-    """
-    Return the differences between consecutive elements of an
-    array, possibly with prefixed and/or appended values.
+#####--------------------------------------------------------------------------
+#---- --- arraysetops ---
+#####--------------------------------------------------------------------------
 
-    Parameters
-    ----------
-    array : {array}
-        Input array,  will be flattened before the difference is taken.
-    to_end : {number}, optional
-        If provided, this number will be tacked onto the end of the returned
-        differences.
-    to_begin : {number}, optional
-        If provided, this number will be taked onto the beginning of the
-        returned differences.
+def ediff1d(arr, to_end=None, to_begin=None):
+    """
+    Computes the differences between consecutive elements of an array.
+
+    This function is the equivalent of `numpy.ediff1d` that takes masked
+    values into account.
+
+    See Also
+    --------
+    numpy.eddif1d : equivalent function for ndarrays.
 
     Returns
     -------
-    ed : {array}
-        The differences. Loosely, this will be (ary[1:] - ary[:-1]).
+    output : MaskedArray
+    
+    """
+    arr = ma.asanyarray(arr).flat
+    ed = arr[1:] - arr[:-1]
+    arrays = [ed]
+    #
+    if to_begin is not None:
+        arrays.insert(0, to_begin)
+    if to_end is not None:
+        arrays.append(to_end)
+    #
+    if len(arrays) != 1:
+        # We'll save ourselves a copy of a potentially large array in the common
+        # case where neither to_begin or to_end was given.
+        ed = hstack(arrays)
+    #
+    return ed
+
+
+def unique1d(ar1, return_index=False, return_inverse=False):
+    """
+    Finds the unique elements of an array.
+
+    Masked values are considered the same element (masked).
+
+    The output array is always a MaskedArray.
+
+    See Also
+    --------
+    np.unique1d : equivalent function for ndarrays.
+    """
+    output = np.unique1d(ar1,
+                         return_index=return_index,
+                         return_inverse=return_inverse)
+    if isinstance(output, tuple):
+        output = list(output)
+        output[0] = output[0].view(MaskedArray)
+        output = tuple(output)
+    else:
+        output = output.view(MaskedArray)
+    return output
+
+
+def intersect1d(ar1, ar2):
+    """
+    Returns the repeated or unique elements belonging to the two arrays.
+
+    Masked values are assumed equals one to the other.
+    The output is always a masked array
+
+    See Also
+    --------
+    numpy.intersect1d : equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
+    >>> y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
+    >>> intersect1d(x, y)
+    masked_array(data = [1 1 3 3 --],
+                 mask = [False False False False  True],
+           fill_value = 999999)
+    """
+    aux = ma.concatenate((ar1,ar2))
+    aux.sort()
+    return aux[aux[1:] == aux[:-1]]
+
+
+
+def intersect1d_nu(ar1, ar2):
+    """
+    Returns the unique elements common to both arrays.
+
+    Masked values are considered equal one to the other.
+    The output is always a masked array.
+
+    See Also
+    --------
+    intersect1d : Returns repeated or unique common elements.
+    numpy.intersect1d_nu : equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> x = array([1, 3, 3, 3], mask=[0, 0, 0, 1])
+    >>> y = array([3, 1, 1, 1], mask=[0, 0, 0, 1])
+    >>> intersect1d_nu(x, y)
+    masked_array(data = [1 3 --],
+                 mask = [False False  True],
+           fill_value = 999999)
 
     """
-    a = masked_array(array, copy=True)
-    if a.ndim > 1:
-        a.reshape((a.size,))
-    (d, m, n) = (a._data, a._mask, a.size-1)
-    dd = d[1:]-d[:-1]
-    if m is nomask:
-        dm = nomask
+    # Might be faster than unique1d( intersect1d( ar1, ar2 ) )?
+    aux = ma.concatenate((unique1d(ar1), unique1d(ar2)))
+    aux.sort()
+    return aux[aux[1:] == aux[:-1]]
+
+
+
+def setxor1d(ar1, ar2):
+    """
+    Set exclusive-or of 1D arrays with unique elements.
+
+    See Also
+    --------
+    numpy.setxor1d : equivalent function for ndarrays
+
+    """
+    aux = ma.concatenate((ar1, ar2))
+    if aux.size == 0:
+        return aux
+    aux.sort()
+    auxf = aux.filled()
+#    flag = ediff1d( aux, to_end = 1, to_begin = 1 ) == 0
+    flag = ma.concatenate(([True], (auxf[1:] != auxf[:-1]), [True]))
+#    flag2 = ediff1d( flag ) == 0
+    flag2 = (flag[1:] == flag[:-1])
+    return aux[flag2]
+
+
+def setmember1d(ar1, ar2):
+    """
+    Return a boolean array set True where first element is in second array.
+
+    See Also
+    --------
+    numpy.setmember1d : equivalent function for ndarrays.
+
+    """
+    ar1 = ma.asanyarray(ar1)
+    ar2 = ma.asanyarray( ar2 )
+    ar = ma.concatenate((ar1, ar2 ))
+    b1 = ma.zeros(ar1.shape, dtype = np.int8)
+    b2 = ma.ones(ar2.shape, dtype = np.int8)
+    tt = ma.concatenate((b1, b2))
+
+    # We need this to be a stable sort, so always use 'mergesort' here. The
+    # values from the first array should always come before the values from the
+    # second array.
+    perm = ar.argsort(kind='mergesort')
+    aux = ar[perm]
+    aux2 = tt[perm]
+#    flag = ediff1d( aux, 1 ) == 0
+    flag = ma.concatenate((aux[1:] == aux[:-1], [False]))
+    ii = ma.where( flag * aux2 )[0]
+    aux = perm[ii+1]
+    perm[ii+1] = perm[ii]
+    perm[ii] = aux
+    #
+    indx = perm.argsort(kind='mergesort')[:len( ar1 )]
+    #
+    return flag[indx]
+
+
+def union1d(ar1, ar2):
+    """
+    Union of 1D arrays with unique elements.
+
+    See also
+    --------
+    numpy.union1d : equivalent function for ndarrays.
+
+    """
+    return unique1d(ma.concatenate((ar1, ar2)))
+
+
+def setdiff1d(ar1, ar2):
+    """
+    Set difference of 1D arrays with unique elements.
+
+    See Also
+    --------
+    numpy.setdiff1d : equivalent function for ndarrays
+
+    """
+    aux = setmember1d(ar1,ar2)
+    if aux.size == 0:
+        return aux
     else:
-        dm = m[1:]-m[:-1]
-    #
-    if to_end is not None:
-        to_end = asarray(to_end)
-        nend = to_end.size
-        if to_begin is not None:
-            to_begin = asarray(to_begin)
-            nbegin = to_begin.size
-            r_data = np.empty((n+nend+nbegin,), dtype=a.dtype)
-            r_mask = np.zeros((n+nend+nbegin,), dtype=bool)
-            r_data[:nbegin] = to_begin._data
-            r_mask[:nbegin] = to_begin._mask
-            r_data[nbegin:-nend] = dd
-            r_mask[nbegin:-nend] = dm
-        else:
-            r_data = np.empty((n+nend,), dtype=a.dtype)
-            r_mask = np.zeros((n+nend,), dtype=bool)
-            r_data[:-nend] = dd
-            r_mask[:-nend] = dm
-        r_data[-nend:] = to_end._data
-        r_mask[-nend:] = to_end._mask
-    #
-    elif to_begin is not None:
-        to_begin = asarray(to_begin)
-        nbegin = to_begin.size
-        r_data = np.empty((n+nbegin,), dtype=a.dtype)
-        r_mask = np.zeros((n+nbegin,), dtype=bool)
-        r_data[:nbegin] = to_begin._data
-        r_mask[:nbegin] = to_begin._mask
-        r_data[nbegin:] = dd
-        r_mask[nbegin:] = dm
-    #
-    else:
-        r_data = dd
-        r_mask = dm
-    return masked_array(r_data, mask=r_mask)
+        return ma.asarray(ar1)[aux == 0]
+
+
+
+#####--------------------------------------------------------------------------
+#---- --- Covariance ---
+#####--------------------------------------------------------------------------
+
+
 
 
 def _covhelper(x, y=None, rowvar=True, allow_masked=True):
