@@ -1464,10 +1464,11 @@ class _arraymethod(object):
         return result
 #..........................................................
 
-class FlatIter(object):
+class MaskedIterator(object):
     "Define an interator."
     def __init__(self, ma):
         self.ma = ma
+        self.ma1d = ma.ravel()
         self.ma_iter = np.asarray(ma).flat
 
         if ma._mask is nomask:
@@ -1478,10 +1479,12 @@ class FlatIter(object):
     def __iter__(self):
         return self
 
+    def __getitem__(self, indx):
+        return self.ma1d.__getitem__(indx)
+
     ### This won't work is ravel makes a copy
     def __setitem__(self, index, value):
-        a = self.ma.ravel()
-        a[index] = value
+        self.ma1d[index] = value
 
     def next(self):
         "Returns the next element of the iterator."
@@ -2168,7 +2171,7 @@ class MaskedArray(ndarray):
         """Return a flat iterator.
 
         """
-        return FlatIter(self)
+        return MaskedIterator(self)
     #
     def _set_flat (self, value):
         """Set a flattened version of self to value.
