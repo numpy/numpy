@@ -748,7 +748,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         first_line = fhd.readline()
         if first_line == '':
             raise IOError('End-of-file reached before encountering data.')
-        first_values = split_line(first_line)
+        if names is True:
+            first_values = first_line.strip().split(delimiter)
+        else:
+            first_values = split_line(first_line)
+    if names is True:
+        fval = first_values[0].strip()
+        if fval in comments:
+            del first_values[0]
 
     # Check the columns to use
     if usecols is not None:

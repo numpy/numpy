@@ -483,6 +483,30 @@ class TestFromTxt(TestCase):
         assert_equal(test, control)
 
 
+    def test_commented_header(self):
+        "Check that names can be retrieved even if the line is commented out."
+        data = StringIO.StringIO("""
+#gender age weight
+M   21  72.100000
+F   35  58.330000
+M   33  21.99
+        """)
+        # The # is part of the first name and should be deleted automatically.
+        test = np.genfromtxt(data, names=True, dtype=None)
+        ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
+                  dtype=[('gender','|S1'), ('age', int), ('weight', float)])
+        assert_equal(test, ctrl)
+        # Ditto, but we should get rid of the first element
+        data = StringIO.StringIO("""
+# gender age weight
+M   21  72.100000
+F   35  58.330000
+M   33  21.99
+        """)
+        test = np.genfromtxt(data, names=True, dtype=None)
+        assert_equal(test, ctrl)
+
+
     def test_autonames_and_usecols(self):
         "Tests names and usecols"
         data = StringIO.StringIO('A B C D\n aaaa 121 45 9.1')
@@ -707,7 +731,7 @@ class TestFromTxt(TestCase):
                            dtype=[('a', np.int), ('b', np.int)])
         self.failUnless(isinstance(test, np.recarray))
         assert_equal(test, control)
-        
+
 
 
 
