@@ -883,18 +883,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     # Reset the dtype
     data = rows
     if dtype is None:
-        # Get the dtypes from the first row
-        coldtypes = [np.array(val).dtype for val in data[0]]
-        # Find the columns with strings, and take the largest number of chars.
-        strcolidx = [i for (i, v) in enumerate(coldtypes) if v.char == 'S']
+        # Get the dtypes from the types of the converters
+        coldtypes = [conv.type for conv in converters]
+        # Find the columns with strings...
+        strcolidx = [i for (i, v) in enumerate(coldtypes)
+                     if v in (type('S'), np.string_)]
+        # ... and take the largest number of chars.
         for i in strcolidx:
             coldtypes[i] = "|S%i" % max(len(row[i]) for row in data)
         #
         if names is None:
             # If the dtype is uniform, don't define names, else use ''
-            base = coldtypes[0]
-            if np.all([(dt == base) for dt in coldtypes]):
-                (ddtype, mdtype) = (base, np.bool)
+            base = set([c.type for c in converters if c._checked])
+            
+            if len(base) == 1:
+                (ddtype, mdtype) = (list(base)[0], np.bool)
             else:
                 ddtype = [('', dt) for dt in coldtypes]
                 mdtype = [('', np.bool) for dt in coldtypes]

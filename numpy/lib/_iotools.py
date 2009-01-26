@@ -294,7 +294,7 @@ class StringConverter:
 
     """
     #
-    _mapper = [(nx.bool_, str2bool, None),
+    _mapper = [(nx.bool_, str2bool, False),
                (nx.integer, int, -1),
                (nx.floating, float, nx.nan),
                (complex, complex, nx.nan+0j),
@@ -354,7 +354,7 @@ class StringConverter:
         if dtype_or_func is None:
             self.func = str2bool
             self._status = 0
-            self.default = default
+            self.default = default or False
             ttype = np.bool
         else:
             # Is the input a np.dtype ?
@@ -396,6 +396,7 @@ class StringConverter:
         #
         self._callingfunction = self._strict_call
         self.type = ttype
+        self._checked = False
     #
     def _loose_call(self, value):
         try:
@@ -408,6 +409,8 @@ class StringConverter:
             return self.func(value)
         except ValueError:
             if value.strip() in self.missing_values:
+                if not self._status:
+                    self._checked = False
                 return self.default
             raise ValueError("Cannot convert string '%s'" % value)
     #
@@ -421,6 +424,7 @@ class StringConverter:
     The order in which the converters are tested is read from the
     :attr:`_status` attribute of the instance.
         """
+        self._checked = True
         try:
             self._strict_call(value)
         except ValueError:

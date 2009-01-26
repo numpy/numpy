@@ -685,6 +685,23 @@ M   33  21.99
         assert_equal(test.mask, control.mask)
 
 
+    def test_with_masked_column_uniform(self):
+        "Test masked column"
+        data = StringIO.StringIO('1 2 3\n4 5 6\n')
+        test = np.genfromtxt(data, missing='2,5', dtype=None, usemask=True)
+        control = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[0, 1, 0],[0, 1, 0]])
+        assert_equal(test, control)
+
+    def test_with_masked_column_various(self):
+        "Test masked column"
+        data = StringIO.StringIO('True 2 3\nFalse 5 6\n')
+        test = np.genfromtxt(data, missing='2,5', dtype=None, usemask=True)
+        control = ma.array([(1, 2, 3), (0, 5, 6)],
+                           mask=[(0, 1, 0),(0, 1, 0)],
+                           dtype=[('f0', bool), ('f1', bool), ('f2', int)])
+        assert_equal(test, control)
+
+
     def test_recfromtxt(self):
         #
         data = StringIO.StringIO('A,B\n0,1\n2,3')
