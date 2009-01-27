@@ -616,7 +616,7 @@ class _MaskedBinaryOperation:
 
     def __call__ (self, a, b, *args, **kwargs):
         "Execute the call behavior."
-        m = mask_or(getmask(a), getmask(b))
+        m = mask_or(getmask(a), getmask(b), shrink=False)
         (da, db) = (getdata(a), getdata(b))
         # Easy case: there's no mask...
         if m is nomask:
@@ -627,8 +627,12 @@ class _MaskedBinaryOperation:
         # Transforms to a (subclass of) MaskedArray if we don't have a scalar
         if result.shape:
             result = result.view(get_masked_subclass(a, b))
+            # If we have a mask, make sure it's broadcasted properly
             if m.any():
                 result._mask = mask_or(getmaskarray(a), getmaskarray(b))
+            # If some initial masks where not shrunk, don't shrink the result
+            elif m.shape:
+                result._mask = make_mask_none(result.shape, result.dtype)
             if isinstance(a, MaskedArray):
                 result._update_from(a)
             if isinstance(b, MaskedArray):
@@ -754,18 +758,19 @@ class _DomainedBinaryOperation:
     def __call__(self, a, b, *args, **kwargs):
         "Execute the call behavior."
         ma = getmask(a)
-        mb = getmask(b)
+        mb = getmaskarray(b)
         da = getdata(a)
         db = getdata(b)
         t = narray(self.domain(da, db), copy=False)
         if t.any(None):
-            mb = mask_or(mb, t)
+            mb = mask_or(mb, t, shrink=False)
             # The following line controls the domain filling
             if t.size == db.size:
                 db = np.where(t, self.filly, db)
             else:
                 db = np.where(np.resize(t, db.shape), self.filly, db)
-        m = mask_or(ma, mb)
+        # Shrink m if a.mask was nomask, otherwise don't.
+        m = mask_or(ma, mb, shrink=(getattr(a, '_mask', nomask) is nomask))
         if (not m.ndim) and m:
             return masked
         elif (m is nomask):
@@ -774,7 +779,12 @@ class _DomainedBinaryOperation:
             result = np.where(m, da, self.f(da, db, *args, **kwargs))
         if result.shape:
             result = result.view(get_masked_subclass(a, b))
-            result._mask = m
+            # If we have a mask, make sure it's broadcasted properly
+            if m.any():
+                result._mask = mask_or(getmaskarray(a), mb)
+            # If some initial masks where not shrunk, don't shrink the result
+            elif m.shape:
+                result._mask = make_mask_none(result.shape, result.dtype)
             if isinstance(a, MaskedArray):
                 result._update_from(a)
             if isinstance(b, MaskedArray):

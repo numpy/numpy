@@ -869,6 +869,60 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test.mask, control.mask)
 
 
+    def test_domained_binops_d2D(self):
+        "Test domained binary operations on 2D data"
+        a = array([[1.], [2.], [3.]], mask=[[False], [True], [True]])
+        b = array([[2., 3.], [4., 5.], [6., 7.]])
+        #
+        test = a / b
+        control = array([[1./2., 1./3.], [2., 2.], [3., 3.]],
+                        mask=[[0, 0], [1, 1], [1, 1]])
+        assert_equal(test, control)
+        assert_equal(test.data, control.data)
+        assert_equal(test.mask, control.mask)
+        #
+        test = b / a
+        control = array([[2./1., 3./1.], [4., 5.], [6., 7.]],
+                        mask=[[0, 0], [1, 1], [1, 1]])
+        assert_equal(test, control)
+        assert_equal(test.data, control.data)
+        assert_equal(test.mask, control.mask)
+        #
+        a = array([[1.], [2.], [3.]])
+        b = array([[2., 3.], [4., 5.], [6., 7.]],
+                  mask=[[0, 0], [0, 0], [0, 1]])
+        test = a / b
+        control = array([[1./2, 1./3], [2./4, 2./5], [3./6, 3]],
+                        mask=[[0, 0], [0, 0], [0, 1]])
+        assert_equal(test, control)
+        assert_equal(test.data, control.data)
+        assert_equal(test.mask, control.mask)
+        #
+        test = b / a
+        control = array([[2/1., 3/1.], [4/2., 5/2.], [6/3., 7]],
+                        mask=[[0, 0], [0, 0], [0, 1]])
+        assert_equal(test, control)
+        assert_equal(test.data, control.data)
+        assert_equal(test.mask, control.mask)
+
+
+    def test_noshrinking(self):
+        "Check that we don't shrink a mask when not wanted"
+        # Binary operations
+        a = masked_array([1,2,3], mask=[False,False,False], shrink=False)
+        b = a + 1
+        assert_equal(b.mask, [0, 0, 0])
+        # In place binary operation
+        a += 1
+        assert_equal(a.mask, [0, 0, 0])
+        # Domained binary operation
+        b = a / 1.
+        assert_equal(b.mask, [0, 0, 0])
+        # In place binary operation
+        a /= 1.
+        assert_equal(a.mask, [0, 0, 0])
+        
+
     def test_mod(self):
         "Tests mod"
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
