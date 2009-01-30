@@ -1997,6 +1997,32 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
 
     Equivalent to a.view(a.dtype.newbytorder(byteorder))
 
+    Return array with dtype changed to interpret array data as
+    specified byte order.
+
+    Changes are also made in all fields and sub-arrays of the array
+    data type.
+
+    Parameters
+    ----------
+    new_order : string, optional
+        Byte order to force; a value from the byte order
+        specifications below.  The default value ('S') results in
+        swapping the current byte order.
+        `new_order` codes can be any of:
+         * {'<', 'L'} - little endian
+         * {'>', 'B'} - big endian
+         * {'=', 'N'} - native order
+         * 'S' - swap dtype from current to opposite endian
+         * {'|', 'I'} - ignore (no change to byte order)
+        The code does a case-insensitive check on the first letter of
+        `new_order` for these alternatives.  For example, any of '>'
+        or 'B' or 'b' or 'brian' are valid to specify big-endian.
+
+    Returns
+    -------
+    new_arr : array
+        array with the given change to the dtype byte order.
     """))
 
 
@@ -2815,3 +2841,100 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
            [12, 15, 18]])
 
     """))
+
+add_newdoc('numpy.core', 'dtype', ('newbyteorder',
+    '''
+    newbyteorder(new_order='S')
+
+    Return a new dtype with a different byte order.
+
+    Changes are also made in all fields and sub-arrays of the data type.
+
+    Parameters
+    ----------
+    new_order : string, optional
+        Byte order to force; a value from the byte order
+        specifications below.  The default value ('S') results in
+        swapping the current byte order.
+        `new_order` codes can be any of:
+         * {'<', 'L'} - little endian
+         * {'>', 'B'} - big endian
+         * {'=', 'N'} - native order
+         * 'S' - swap dtype from current to opposite endian
+         * {'|', 'I'} - ignore (no change to byte order)
+        The code does a case-insensitive check on the first letter of
+        `new_order` for these alternatives.  For example, any of '>'
+        or 'B' or 'b' or 'brian' are valid to specify big-endian.
+
+    Returns
+    -------
+    new_dtype : dtype
+        New dtype object with the given change to the byte order.
+
+    Examples
+    --------
+    >>> import sys
+    >>> sys_is_le = sys.byteorder == 'little'
+    >>> native_code = sys_is_le and '<' or '>'
+    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> native_dt = np.dtype(native_code+'i2')
+    >>> swapped_dt = np.dtype(swapped_code+'i2')
+    >>> native_dt.newbyteorder('S') == swapped_dt
+    True
+    >>> native_dt.newbyteorder() == swapped_dt
+    True
+    >>> native_dt == swapped_dt.newbyteorder('S')
+    True
+    >>> native_dt == swapped_dt.newbyteorder('=')
+    True
+    >>> native_dt == swapped_dt.newbyteorder('N')
+    True
+    >>> native_dt == native_dt.newbyteorder('|')
+    True
+    >>> np.dtype('<i2') == native_dt.newbyteorder('<')
+    True
+    >>> np.dtype('<i2') == native_dt.newbyteorder('L')
+    True
+    >>> np.dtype('>i2') == native_dt.newbyteorder('>')
+    True
+    >>> np.dtype('>i2') == native_dt.newbyteorder('B')
+    True
+    '''))
+
+add_newdoc('numpy.core', 'dtype', ('byteorder',
+    '''
+    dt.byteorder
+
+    String giving byteorder of dtype
+
+    One of:
+    * '=' - native byteorder
+    * '<' - little endian
+    * '>' - big endian
+    * '|' - endian not relevant
+
+    Examples
+    --------
+    >>> dt = np.dtype('i2')
+    >>> dt.byteorder
+    '='
+    >>> # endian is not relevant for 8 bit numbers
+    >>> np.dtype('i1').byteorder
+    '|'
+    >>> # or ASCII strings
+    >>> np.dtype('S2').byteorder
+    '|'
+    >>> # Even if specific code is given, and it is native
+    >>> # '=' is the byteorder
+    >>> import sys
+    >>> sys_is_le = sys.byteorder == 'little'
+    >>> native_code = sys_is_le and '<' or '>'
+    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> dt = np.dtype(native_code + 'i2')
+    >>> dt.byteorder
+    '='
+    >>> # Swapped code shows up as itself
+    >>> dt = np.dtype(swapped_code + 'i2')
+    >>> dt.byteorder == swapped_code
+    True
+    '''))
