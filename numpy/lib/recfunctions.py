@@ -628,7 +628,8 @@ def rec_append_fields(base, names, data, dtypes=None):
 
 
 
-def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False):
+def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
+                 autoconvert=False):
     """
     Superposes arrays fields by fields
 
@@ -644,6 +645,8 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False):
     asrecarray : {False, True}, optional
         Whether to return a recarray (or MaskedRecords if `usemask==True`) or
         just a flexible-type ndarray.
+    autoconvert : {False, True}, optional
+        Whether automatically cast the type of the field to the maximum.
 
     Examples
     --------
@@ -673,16 +676,24 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False):
     #
     dtype_l = ndtype[0]
     newdescr = dtype_l.descr
-    names = list(dtype_l.names or ()) or ['']
+    names = [_[0] for _ in newdescr]
     for dtype_n in ndtype[1:]:
         for descr in dtype_n.descr:
             name = descr[0] or ''
             if name not in names:
                 newdescr.append(descr)
                 names.append(name)
-            elif descr[1] != dict(newdescr)[name]:
-                raise TypeError("Incompatible type '%s' <> '%s'" %\
-                                (dict(newdescr)[name], descr[1]))
+            else:
+                nameidx = names.index(name)
+                current_descr = newdescr[nameidx]
+                if autoconvert:
+                    if np.dtype(descr[1]) > np.dtype(current_descr[-1]):
+                        current_descr = list(current_descr)
+                        current_descr[-1] = descr[1]
+                        newdescr[nameidx] = tuple(current_descr)
+                elif descr[1] != current_descr[-1]:
+                    raise TypeError("Incompatible type '%s' <> '%s'" %\
+                                    (dict(newdescr)[name], descr[1]))
     # Only one field: use concatenate
     if len(newdescr) == 1:
         output = ma.concatenate(seqarrays)

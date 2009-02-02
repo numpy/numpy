@@ -485,7 +485,6 @@ class TestStackArrays(TestCase):
         assert_equal(test.mask, control.mask)
 
 
-    #
     def test_defaults(self):
         "Test defaults: no exception raised if keys of defaults are not fields."
         (_, _, _, z) = self.data
@@ -502,6 +501,37 @@ class TestStackArrays(TestCase):
         assert_equal(test.data, control.data)
         assert_equal(test.mask, control.mask)
 
+
+    def test_autoconversion(self):
+        "Tests autoconversion"
+        adtype = [('A', int), ('B', bool), ('C', float)]
+        a = ma.array([(1, 2, 3)], mask=[(0, 1, 0)], dtype=adtype)
+        bdtype = [('A', int), ('B', float), ('C', float)]
+        b = ma.array([(4, 5, 6)], dtype=bdtype)
+        control = ma.array([(1, 2, 3), (4, 5, 6)], mask=[(0, 1, 0), (0, 0, 0)],
+                           dtype=bdtype)
+        test = stack_arrays((a, b), autoconvert=True)
+        assert_equal(test, control)
+        assert_equal(test.mask, control.mask)
+        try:
+            test = stack_arrays((a, b), autoconvert=False)
+        except TypeError:
+            pass
+        else:
+            raise AssertionError
+
+
+    def test_checktitles(self):
+        "Test using titles in the field names"
+        adtype = [(('a', 'A'), int), (('b', 'B'), bool), (('c', 'C'), float)]
+        a = ma.array([(1, 2, 3)], mask=[(0, 1, 0)], dtype=adtype)
+        bdtype = [(('a', 'A'), int), (('b', 'B'), bool), (('c', 'C'), float)]
+        b = ma.array([(4, 5, 6)], dtype=bdtype)
+        test = stack_arrays((a, b))
+        control = ma.array([(1, 2, 3), (4, 5, 6)], mask=[(0, 1, 0), (0, 0, 0)],
+                           dtype=bdtype)
+        assert_equal(test, control)
+        assert_equal(test.mask, control.mask)
 
 
 class TestJoinBy(TestCase):
