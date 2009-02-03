@@ -468,6 +468,11 @@ class StringConverter:
                 for val in missing_values:
                     self.missing_values.add(val)
         else:
-            self.missing_values = []        # Update the type
-        self.type = self._getsubdtype(func('0'))
+            self.missing_values = []
+        # Update the type
+        try:
+            tester = func('0')
+        except ValueError:
+            tester = None
+        self.type = self._getsubdtype(tester)
 

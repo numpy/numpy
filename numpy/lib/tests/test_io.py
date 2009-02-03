@@ -535,6 +535,17 @@ M   33  21.99
             dtype=[('A', '|S4'), ('C', int), ('D', float)])
         assert_equal(test, control)
 
+    def test_converters_cornercases(self):
+        "Test the conversion to datetime."
+        from datetime import datetime
+        converter = {'date':lambda s: datetime.strptime(s,'%Y-%m-%d %H:%M:%SZ')}
+        data = StringIO.StringIO('2009-02-03 12:00:00Z, 72214.0')
+        test = np.ndfromtxt(data, delimiter=',', dtype=None,
+                            names=['date','stid'], converters=converter)
+        control = np.array((datetime(2009,02,03,12,0), 72214.),
+                           dtype=[('date', np.object_), ('stid', float)])
+        assert_equal(test, control)
+
 
     def test_unused_converter(self):
         "Test whether unused converters are forgotten"
