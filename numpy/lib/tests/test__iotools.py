@@ -130,11 +130,14 @@ class TestStringConverter(TestCase):
     #
     def test_upgrademapper(self):
         "Tests updatemapper"
-        import dateutil.parser
-        import datetime
-        dateparser = dateutil.parser.parse
-        StringConverter.upgrade_mapper(dateparser, datetime.date(2000,1,1))
-        convert = StringConverter(dateparser, datetime.date(2000, 1, 1))
-        test = convert('2001-01-01')
-        assert_equal(test, datetime.datetime(2001, 01, 01, 00, 00, 00))
+        try:
+            import dateutil.parser
+            import datetime
+            dateparser = dateutil.parser.parse
+            StringConverter.upgrade_mapper(dateparser, datetime.date(2000,1,1))
+            convert = StringConverter(dateparser, datetime.date(2000, 1, 1))
+            test = convert('2001-01-01')
+            assert_equal(test, datetime.datetime(2001, 01, 01, 00, 00, 00))
+        except ImportError:
+            pass
 

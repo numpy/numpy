@@ -2466,7 +2466,7 @@ class MaskedArray(ndarray):
     #
     def __rmul__(self, other):
         "Multiply other by self, and return a new masked array."
-        return multiply(other, self)
+        return multiply(self, other)
     #
     def __div__(self, other):
         "Divide other into self, and return a new masked array."
