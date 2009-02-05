@@ -573,6 +573,35 @@ M   33  21.99
         assert_equal(test, control)
 
 
+    def test_dtype_with_object(self):
+        "Test using an explicit dtype qith an object"
+        from datetime import date
+        import time
+        data = """
+        1; 2001-01-01
+        2; 2002-01-31
+        """
+        ndtype = [('idx', int), ('code', np.object)]
+        func = lambda s: date(*(time.strptime(s.strip(), "%Y-%m-%d")[:3]))
+        converters = {1: func}
+        test = np.genfromtxt(StringIO.StringIO(data), delimiter=";", dtype=ndtype,
+                             converters=converters)
+        control = np.array([(1, date(2001,1,1)), (2, date(2002,1,31))],
+                           dtype=ndtype)
+        assert_equal(test, control)
+        #
+        ndtype = [('nest', [('idx', int), ('code', np.object)])]
+        try:
+            test = np.genfromtxt(StringIO.StringIO(data), delimiter=";",
+                                 dtype=ndtype, converters=converters)
+        except NotImplementedError:
+            pass
+        else:
+            errmsg = "Nested dtype involving objects should be supported."
+            raise AssertionError(errmsg)
+        
+
+
     def test_spacedelimiter(self):
         "Test space delimiter"
         data = StringIO.StringIO("1  2  3  4   5\n6  7  8  9  10")

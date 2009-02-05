@@ -2,7 +2,8 @@
 import StringIO
 
 import numpy as np
-from numpy.lib._iotools import LineSplitter, NameValidator, StringConverter
+from numpy.lib._iotools import LineSplitter, NameValidator, StringConverter,\
+                               has_nested_fields
 from numpy.testing import *
 
 class TestLineSplitter(TestCase):
@@ -141,4 +142,18 @@ class TestStringConverter(TestCase):
         assert_equal(test, date(2009, 01, 01))
         test = convert('')
         assert_equal(test, date(2000, 01, 01))
+
+
+#-------------------------------------------------------------------------------
+
+class TestMiscFunctions(TestCase):
+    #
+    def test_has_nested_dtype(self):
+        "Test has_nested_dtype"
+        ndtype = np.dtype(np.float)
+        assert_equal(has_nested_fields(ndtype), False)
+        ndtype = np.dtype([('A', '|S3'), ('B', float)])
+        assert_equal(has_nested_fields(ndtype), False)
+        ndtype = np.dtype([('A', int), ('B', [('BA', float), ('BB', '|S1')])])
+        assert_equal(has_nested_fields(ndtype), True)
 

@@ -54,6 +54,16 @@ def _to_filehandle(fname, flag='r', return_opened=False):
     return fhd
 
 
+def has_nested_fields(ndtype):
+    """
+    Returns whether one or several fields of a structured array are nested.
+    """
+    for name in ndtype.names or ():
+        if ndtype[name].names:
+            return True
+    return False
+
+
 def flatten_dtype(ndtype):
     """
     Unpack a structured data-type.
@@ -69,7 +79,6 @@ def flatten_dtype(ndtype):
             flat_dt = flatten_dtype(typ)
             types.extend(flat_dt)
         return types
-
 
 
 class LineSplitter:
@@ -377,11 +386,17 @@ class StringConverter:
                         default = None
                 ttype = self._getsubdtype(default)
             # Set the status according to the dtype
+            _status = -1
             for (i, (deftype, func, default_def)) in enumerate(self._mapper):
                 if np.issubdtype(ttype, deftype):
-                    self._status = i
+                    _status = i
                     self.default = default or default_def
                     break
+            if _status == -1:
+                # We never found a match in the _mapper...
+                _status = 0
+                self.default = default
+            self._status = _status
             # If the input was a dtype, set the function to the last we saw
             if self.func is None:
                 self.func = func

@@ -17,7 +17,7 @@ from _datasource import DataSource
 from _compiled_base import packbits, unpackbits
 
 from _iotools import LineSplitter, NameValidator, StringConverter, \
-                     _is_string_like, flatten_dtype
+                     _is_string_like, has_nested_fields, flatten_dtype
 
 _file = file
 _string_like = _is_string_like
@@ -703,6 +703,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
       there must not be any header in the file (else a :exc:ValueError exception
       is raised).
 
+    Warnings
+    --------
+    * Individual values are not stripped of spaces by default.
+      When using a custom converter, make sure the function does remove spaces.
+
     See Also
     --------
     numpy.loadtxt : equivalent function when no data is missing.
@@ -918,8 +923,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
             # First, create the array using a flattened dtype:
             # [('a', int), ('b1', int), ('b2', float)]
             # Then, view the array using the specified dtype.
-            rows = np.array(data, dtype=[('', t) for t in flatdtypes])
-            output = rows.view(dtype)
+            if has_nested_fields(dtype):
+                if 'O' in (_.char for _ in flatdtypes):
+                    errmsg = "Nested fields involving objects "\
+                             "are not supported..."
+                    raise NotImplementedError(errmsg)
+                rows = np.array(data, dtype=[('', t) for t in flatdtypes])
+                output = rows.view(dtype)
+            else:
+                output = np.array(data, dtype=dtype)
             # Now, process the rowmasks the same way
             if usemask:
                 rowmasks = np.array(masks,
