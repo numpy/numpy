@@ -336,7 +336,6 @@ class Testfromregex(TestCase):
         assert_array_equal(x, a)
 
     def test_record_2(self):
-        return # pass this test until #736 is resolved
         c = StringIO.StringIO()
         c.write('1312 foo\n1534 bar\n4444 qux')
         c.seek(0)
