@@ -400,8 +400,9 @@ class system_info:
         self.files.extend(get_standard_file('.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
         self.parse_config_files()
-        self.search_static_first = self.cp.getboolean(self.section,
-                                                      'search_static_first')
+        if self.section is not None:
+            self.search_static_first = self.cp.getboolean(self.section,
+                                                          'search_static_first')
         assert isinstance(self.search_static_first, int)
 
     def parse_config_files(self):
