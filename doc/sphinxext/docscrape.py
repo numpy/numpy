@@ -406,11 +406,13 @@ def header(text, style='-'):
 
 
 class FunctionDoc(NumpyDocString):
-    def __init__(self, func, role='func'):
+    def __init__(self, func, role='func', doc=None):
         self._f = func
         self._role = role # e.g. "func" or "meth"
+        if doc is None:
+            doc = inspect.getdoc(func) or ''
         try:
-            NumpyDocString.__init__(self,inspect.getdoc(func) or '')
+            NumpyDocString.__init__(self, doc)
         except ValueError, e:
             print '*'*78
             print "ERROR: '%s' while parsing `%s`" % (e, self._f)
@@ -459,7 +461,7 @@ class FunctionDoc(NumpyDocString):
 
 
 class ClassDoc(NumpyDocString):
-    def __init__(self,cls,modulename='',func_doc=FunctionDoc):
+    def __init__(self,cls,modulename='',func_doc=FunctionDoc,doc=None):
         if not inspect.isclass(cls):
             raise ValueError("Initialise using a class. Got %r" % cls)
         self._cls = cls
@@ -470,7 +472,10 @@ class ClassDoc(NumpyDocString):
         self._name = cls.__name__
         self._func_doc = func_doc
 
-        NumpyDocString.__init__(self, pydoc.getdoc(cls))
+        if doc is None:
+            doc = pydoc.getdoc(cls)
+
+        NumpyDocString.__init__(self, doc)
 
     @property
     def methods(self):
