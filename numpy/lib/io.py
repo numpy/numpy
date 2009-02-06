@@ -604,10 +604,15 @@ def fromregex(file, regexp, dtype):
 
     seq = regexp.findall(file.read())
     if seq and not isinstance(seq[0], tuple):
-        # make sure np.array doesn't interpret strings as binary data
-        # by always producing a list of tuples
-        seq = [(x,) for x in seq]
-    output = np.array(seq, dtype=dtype)
+        # Only one group is in the regexp.
+        # Create the new array as a single data-type and then
+        #   re-interpret as a single-field structured array. 
+        newdtype = np.dtype(dtype[dtype.names[0]])
+        output = np.array(seq, dtype=newdtype)
+        output.dtype = dtype
+    else:
+        output = np.array(seq, dtype=dtype)
+
     return output
 
 
