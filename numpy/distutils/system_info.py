@@ -408,7 +408,8 @@ class system_info:
     def parse_config_files(self):
         self.cp.read(self.files)
         if not self.cp.has_section(self.section):
-            self.cp.add_section(self.section)
+            if self.section is not None:
+                self.cp.add_section(self.section)
 
     def calc_libraries_info(self):
         libs = self.get_libraries()
