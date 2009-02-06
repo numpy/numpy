@@ -263,24 +263,6 @@ Masked arrays (:mod:`numpy.ma`)
 
 .. seealso:: :ref:`maskedarray`
 
-Masked arrays are arrays that may have missing or invalid entries.
-The :mod:`numpy.ma` module provides a nearly work-alike replacement for numpy
-that supports data arrays with masks.
-
-
-.. XXX: masked array documentation should be improved
-
-.. currentmodule:: numpy
-
-.. index::
-   single: masked arrays
-
-.. toctree::
-   :maxdepth: 2
-
-   maskedarray
-
-
 Standard container class
 ========================
 
