@@ -1478,9 +1478,8 @@ class MaskedIterator(object):
     "Define an interator."
     def __init__(self, ma):
         self.ma = ma
-        self.ma1d = ma.ravel()
-        self.ma_iter = np.asarray(ma).flat
-
+        self.dataiter = ma._data.flat
+        #
         if ma._mask is nomask:
             self.maskiter = None
         else:
@@ -1490,15 +1489,23 @@ class MaskedIterator(object):
         return self
 
     def __getitem__(self, indx):
-        return self.ma1d.__getitem__(indx)
+        result = self.dataiter.__getitem__(indx).view(type(self.ma))
+        if self.maskiter is not None:
+            _mask = self.maskiter.__getitem__(indx)
+            _mask.shape = result.shape
+            result._mask = _mask
+        return result
 
     ### This won't work is ravel makes a copy
     def __setitem__(self, index, value):
-        self.ma1d[index] = value
+        self.dataiter[index] = getdata(value)
+        if self.maskiter is not None:
+            self.maskiter[index] = getmaskarray(value)
+#        self.ma1d[index] = value
 
     def next(self):
         "Returns the next element of the iterator."
-        d = self.ma_iter.next()
+        d = self.dataiter.next()
         if self.maskiter is not None and self.maskiter.next():
             d = masked
         return d
@@ -2707,25 +2714,24 @@ class MaskedArray(ndarray):
         return result
     #
     def resize(self, newshape, refcheck=True, order=False):
-        """Attempt to modify the size and the shape of the array in place.
-
-        The array must own its own memory and not be referenced by
-        other arrays.
-
-        Returns
-        -------
-        None.
+        """
+    Change shape and size of array in-place.
 
         """
-        try:
-            self._data.resize(newshape, refcheck, order)
-            if self.mask is not nomask:
-                self._mask.resize(newshape, refcheck, order)
-        except ValueError:
-            raise ValueError("Cannot resize an array that has been referenced "
-                             "or is referencing another array in this way.\n"
-                             "Use the resize function.")
-        return None
+        # Note : the 'order' keyword looks broken, let's just drop it
+#        try:
+#            ndarray.resize(self, newshape, refcheck=refcheck)
+#            if self.mask is not nomask:
+#                self._mask.resize(newshape, refcheck=refcheck)
+#        except ValueError:
+#            raise ValueError("Cannot resize an array that has been referenced "
+#                             "or is referencing another array in this way.\n"
+#                             "Use the numpy.ma.resize function.")
+#        return None
+        errmsg = "A masked array does not own its data "\
+                 "and therefore cannot be resized.\n" \
+                 "Use the numpy.ma.resize function instead."
+        raise ValueError(errmsg)
     #
     def put(self, indices, values, mode='raise'):
         """

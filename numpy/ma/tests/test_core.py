@@ -1122,6 +1122,17 @@ class TestMaskedArrayAttributes(TestCase):
         a[1] = 1
         assert_equal(a._mask, zeros(10))
 
+    def test_flat(self):
+        "Test flat on masked_matrices"
+        test = ma.array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
+        test.flat = ma.array([3, 2, 1], mask=[1, 0, 0])
+        control = ma.array(np.matrix([[3, 2, 1]]), mask=[1, 0, 0])
+        assert_equal(test, control)
+        #
+        test = ma.array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
+        testflat = test.flat
+        testflat[:] = testflat[[2, 1, 0]]
+        assert_equal(test, control)
 
 #------------------------------------------------------------------------------
 
