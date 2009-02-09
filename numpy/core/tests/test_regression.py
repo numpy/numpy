@@ -1,7 +1,7 @@
-
 from StringIO import StringIO
 import pickle
 import sys
+import gc
 from os import path
 from numpy.testing import *
 import numpy as np
@@ -1207,6 +1207,18 @@ class TestRegression(TestCase):
         "Ticket #882"
         a = np.array(1)
         self.failUnlessRaises(ValueError, lambda x: x.choose([]), a)
+
+    def test_errobj_reference_leak(self, level=rlevel):
+        """Ticket #955"""
+        z = int(0)
+        p = np.int32(-1)
+
+        gc.collect()
+        n_before = len(gc.get_objects())
+        z**p  # this shouldn't leak a reference to errobj
+        gc.collect()
+        n_after = len(gc.get_objects())
+        assert n_before >= n_after, (n_before, n_after)
 
 if __name__ == "__main__":
     run_module_suite()

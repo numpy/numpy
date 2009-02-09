@@ -636,8 +636,11 @@ static PyObject *
                                 &errobj) < 0)
             return NULL;
         first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
+        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
+            Py_XDECREF(errobj);
             return NULL;
+        }
+        Py_XDECREF(errobj);
     }
 #endif
 
@@ -736,8 +739,11 @@ static PyObject *
                                 &errobj) < 0)
             return NULL;
         first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first))
+        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
+            Py_XDECREF(errobj);
             return NULL;
+        }
+        Py_XDECREF(errobj);
     }
 
 #if @isint@
