@@ -1598,7 +1598,8 @@ class MaskedArray(ndarray):
                     if d is not nomask:
                         m = d
                 else:
-                    m |= d
+                    # Don't modify inplace, we risk back-propagation
+                    m = (m | d)
             # Make sure the mask has the proper size
             if result.shape == () and m:
                 return masked

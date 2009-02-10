@@ -825,6 +825,25 @@ class TestMaskedArrayArithmetic(TestCase):
             self.failUnless(result is output)
             self.failUnless(output[0] is masked)
 
+
+
+    def test_numpyarithmetics(self):
+        "Check that the mask is not back-propagated when using numpy functions"
+        a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
+        control = masked_array([np.nan, np.nan, 0, np.log(2), -1],
+                               mask=[1, 1, 0, 0, 1])
+        #
+        test = log(a)
+        assert_equal(test, control)
+        assert_equal(test.mask, control.mask)
+        assert_equal(a.mask, [0, 0, 0, 0, 1])
+        #
+        test = np.log(a)
+        assert_equal(test, control)
+        assert_equal(test.mask, control.mask)
+        assert_equal(a.mask, [0, 0, 0, 0, 1])
+        #
+
 #------------------------------------------------------------------------------
 
 class TestMaskedArrayAttributes(TestCase):
