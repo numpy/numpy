@@ -1040,7 +1040,6 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
-        #
 
 #------------------------------------------------------------------------------
 
@@ -1374,6 +1373,16 @@ class TestUfuncs(TestCase):
         assert_equal(amask.min(0), [5,6,7,8])
         self.failUnless(amask.max(1)[0].mask)
         self.failUnless(amask.min(1)[0].mask)
+
+    def test_ndarray_mask(self):
+        "Check that the mask of the result is a ndarray (not a MaskedArray...)"
+        a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
+        test = np.sqrt(a)
+        control = masked_array([-1, 0, 1, np.sqrt(2), -1],
+                          mask=[1, 0, 0, 0, 1])
+        assert_equal(test, control)
+        assert_equal(test.mask, control.mask)
+        self.failUnless(not isinstance(test.mask, MaskedArray))
 
 
 #------------------------------------------------------------------------------
