@@ -1577,10 +1577,11 @@ class MaskedArray(ndarray):
             # Get the domain mask................
             domain = ufunc_domain.get(func, None)
             if domain is not None:
+                # Take the domain, and make sure it's a ndarray
                 if len(args) > 2:
-                    d = reduce(domain, args)
+                    d = filled(reduce(domain, args), True)
                 else:
-                    d = domain(*args)
+                    d = filled(domain(*args), True)
                 # Fill the result where the domain is wrong
                 try:
                     # Binary domain: take the last value
