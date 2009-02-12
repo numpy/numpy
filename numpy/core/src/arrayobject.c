@@ -2827,10 +2827,10 @@ array_subscript(PyArrayObject *self, PyObject *op)
     int nd, fancy;
     PyArrayObject *other;
     PyArrayMapIterObject *mit;
+    PyObject *obj;
 
     if (PyString_Check(op) || PyUnicode_Check(op)) {
         if (self->descr->names) {
-            PyObject *obj;
             obj = PyDict_GetItem(self->descr->fields, op);
             if (obj != NULL) {
                 PyArray_Descr *descr;
@@ -2850,6 +2850,34 @@ array_subscript(PyArrayObject *self, PyObject *op)
                      "field named %s not found.",
                      PyString_AsString(op));
         return NULL;
+    }
+
+    /* Check for multiple field access 
+     */
+    if (self->descr->names && PySequence_Check(op) && !PyTuple_Check(op)) {
+	int seqlen, i;
+	seqlen = PySequence_Size(op);
+	for (i=0; i<seqlen; i++) {
+	    obj = PySequence_GetItem(op, i);
+	    if (!PyString_Check(obj) && !PyUnicode_Check(obj)) {
+		Py_DECREF(obj);
+		break;
+	    }
+	    Py_DECREF(obj);
+	}
+	/* extract multiple fields if all elements in sequence
+	   are either string or unicode (i.e. no break occurred). 
+	*/
+	fancy = ((seqlen > 0) && (i == seqlen));
+	if (fancy) { 
+	    PyObject *_numpy_internal;
+	    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+	    if (_numpy_internal == NULL) return NULL;
+	    obj = PyObject_CallMethod(_numpy_internal, "_index_fields",
+				      "OO", self, op);
+	    Py_DECREF(_numpy_internal);
+	    return obj;
+	}
     }
 
     if (op == Py_Ellipsis) {

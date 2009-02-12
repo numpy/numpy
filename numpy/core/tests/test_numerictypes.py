@@ -353,6 +353,16 @@ class TestCommonType(TestCase):
         res = np.find_common_type(['u8','i8','i8'],['f8'])
         assert(res == 'f8')
 
+class TestMultipleFields(TestCase):
+    def setUp(self):
+        self.ary = np.array([(1,2,3,4),(5,6,7,8)], dtype='i4,f4,i2,c8')
+    def _bad_call(self):
+        return self.ary['f0','f1']
+    def test_no_tuple(self):
+        self.failUnlessRaises(ValueError, self._bad_call)
+    def test_return(self):
+        res = self.ary[['f0','f2']].tolist()
+        assert(res == [(1,3), (5,7)])        
 
 if __name__ == "__main__":
     run_module_suite()
