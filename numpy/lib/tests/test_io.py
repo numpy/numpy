@@ -573,7 +573,7 @@ M   33  21.99
 
 
     def test_dtype_with_object(self):
-        "Test using an explicit dtype qith an object"
+        "Test using an explicit dtype with an object"
         from datetime import date
         import time
         data = """
@@ -598,7 +598,16 @@ M   33  21.99
         else:
             errmsg = "Nested dtype involving objects should be supported."
             raise AssertionError(errmsg)
-        
+
+
+    def test_userconverters_with_explicit_dtype(self):
+        "Test user_converters w/ explicit (standard) dtype"
+        data = StringIO.StringIO('skip,skip,2001-01-01,1.0,skip')
+        test = np.genfromtxt(data, delimiter=",", names=None, dtype=float,
+                             usecols=(2, 3), converters={2: str})
+        control = np.array([('2001-01-01', 1.)],
+                           dtype=[('', '|S10'), ('', float)])
+        assert_equal(test, control)
 
 
     def test_spacedelimiter(self):

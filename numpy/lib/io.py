@@ -837,6 +837,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
     missing_values = [_.missing_values for _ in converters]
 
     # Update the converters to use the user-defined ones
+    uc_update = []
     for (i, conv) in user_converters.iteritems():
         # If the converter is specified by column names, use the index instead
         if _is_string_like(i):
@@ -850,6 +851,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
         converters[i].update(conv, default=None, 
                              missing_values=missing_values[i],
                              locked=True)
+        uc_update.append((i, conv))
+    # Make sure we have the corrected keys in user_converters...
+    user_converters.update(uc_update)
 
     # Reset the names to match the usecols
     if (not first_line) and usecols:
@@ -960,8 +964,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
                         descr.append(('', ttype))
                     else:
                         descr.append(('', dtype))
+                # So we changed the dtype ?
                 if not ishomogeneous:
-                    dtype = np.dtype(descr)
+                    # We have more than one field
+                    if len(descr) > 1:
+                        dtype = np.dtype(descr)
+                    # We have only one field: drop the name if not needed.
+                    else:
+                        dtype = np.dtype(ttype)
             #
             output = np.array(data, dtype)
             if usemask:

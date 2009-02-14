@@ -142,6 +142,14 @@ class TestStringConverter(TestCase):
         assert_equal(test, date(2009, 01, 01))
         test = convert('')
         assert_equal(test, date(2000, 01, 01))
+    #
+    def test_string_to_object(self):
+        "Make sure that string-to-object functions are properly recognized"
+        from datetime import date
+        import time
+        conv = StringConverter(lambda s: date(*(time.strptime(s)[:3])))
+        assert_equal(conv._mapper[-2][0](0), 0j)
+        assert(hasattr(conv, 'default'))
 
 
 #-------------------------------------------------------------------------------
