@@ -805,7 +805,7 @@ class TestIO(object):
         y = np.fromfile(f, dtype=self.dtype)
         f.close()
         assert_array_equal(y, self.x.flat)
-        os.unlink(filename)
+        os.unlink(self.filename)
 
     def test_roundtrip_filename(self):
         self.x.tofile(self.filename)
@@ -902,7 +902,7 @@ class TestIO(object):
         s = f.read()
         f.close()
         assert_equal(s, '1.51,2.0,3.51,4.0')
-        os.unlink(filename)
+        os.unlink(self.filename)
 
     def test_tofile_format(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
