@@ -2502,11 +2502,11 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 
 ##############################################################################
 #
-# lib._compile_base functions
+# lib._compiled_base functions
 #
 ##############################################################################
 
-add_newdoc('numpy.lib._compile_base', 'digitize',
+add_newdoc('numpy.lib._compiled_base', 'digitize',
     """
     digitize(x,bins)
 
@@ -2519,7 +2519,7 @@ add_newdoc('numpy.lib._compile_base', 'digitize',
     Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
     """)
 
-add_newdoc('numpy.lib._compile_base', 'bincount',
+add_newdoc('numpy.lib._compiled_base', 'bincount',
     """
     bincount(x,weights=None)
 
@@ -2533,7 +2533,7 @@ add_newdoc('numpy.lib._compile_base', 'bincount',
     See also: histogram, digitize, unique.
     """)
 
-add_newdoc('numpy.lib._compile_base', 'add_docstring',
+add_newdoc('numpy.lib._compiled_base', 'add_docstring',
     """
     docstring(obj, docstring)
 
@@ -2541,6 +2541,44 @@ add_newdoc('numpy.lib._compile_base', 'add_docstring',
     If the obj already has a docstring raise a RuntimeError
     If this routine does not know how to add a docstring to the object
     raise a TypeError
+    """)
+
+add_newdoc('numpy.lib._compiled_base', 'packbits',
+    """
+    out = numpy.packbits(myarray, axis=None)
+
+    myarray : an integer type array whose elements should be packed to bits
+
+    This routine packs the elements of a binary-valued dataset into a
+    NumPy array of type uint8 ('B') whose bits correspond to
+    the logical (0 or nonzero) value of the input elements.
+    The dimension over-which bit-packing is done is given by axis.
+    The shape of the output has the same number of dimensions as the input
+    (unless axis is None, in which case the output is 1-d).
+
+    Example:
+    >>> a = array([[[1,0,1],
+    ...             [0,1,0]],
+    ...            [[1,1,0],
+    ...             [0,0,1]]])
+    >>> b = numpy.packbits(a,axis=-1)
+    >>> b
+    array([[[160],[64]],[[192],[32]]], dtype=uint8)
+
+    Note that 160 = 128 + 32
+              192 = 128 + 64
+    """)
+
+add_newdoc('numpy.lib._compiled_base', 'unpackbits',
+    """
+    out = numpy.unpackbits(myarray, axis=None)
+
+    myarray - array of uint8 type where each element represents a bit-field
+        that should be unpacked into a boolean output array
+
+        The shape of the output array is either 1-d (if axis is None) or
+        the same shape as the input array with unpacking done along the
+        axis specified.
     """)
 
 

@@ -544,35 +544,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 
-static char packbits_doc[] =
-  "out = numpy.packbits(myarray, axis=None)\n\n"
-  "  myarray : an integer type array whose elements should be packed to bits\n\n"
-  "   This routine packs the elements of a binary-valued dataset into a\n"
-  "   NumPy array of type uint8 ('B') whose bits correspond to\n"
-  "   the logical (0 or nonzero) value of the input elements.\n"
-  "   The dimension over-which bit-packing is done is given by axis.\n"
-  "   The shape of the output has the same number of dimensions as the input\n"
-  "   (unless axis is None, in which case the output is 1-d).\n"
-  "\n"
-  "     Example:\n"
-  "     >>> a = array([[[1,0,1],\n"
-  "     ...             [0,1,0]],\n"
-  "     ...            [[1,1,0],\n"
-  "     ...             [0,0,1]]])\n"
-  "     >>> b = numpy.packbits(a,axis=-1)\n"
-  "     >>> b\n"
-  "     array([[[160],[64]],[[192],[32]]], dtype=uint8)\n\n"
-  "     Note that 160 = 128 + 32\n"
-  "               192 = 128 + 64\n";
-
-static char unpackbits_doc[] =
-  "out = numpy.unpackbits(myarray, axis=None)\n\n"
-  "     myarray - array of uint8 type where each element represents a bit-field\n"
-  "        that should be unpacked into a boolean output array\n\n"
-  "        The shape of the output array is either 1-d (if axis is None) or\n"
-  "        the same shape as the input array with unpacking done along the\n"
-  "        axis specified.";
-
 /*  PACKBITS
 
     This function packs binary (0 or 1) 1-bit per pixel arrays
@@ -820,9 +791,9 @@ static struct PyMethodDef methods[] = {
     {"add_docstring", (PyCFunction)arr_add_docstring, METH_VARARGS,
      NULL},
     {"packbits",  (PyCFunction)io_pack,       METH_VARARGS | METH_KEYWORDS,
-     packbits_doc},
+     NULL},
     {"unpackbits", (PyCFunction)io_unpack,     METH_VARARGS | METH_KEYWORDS,
-     unpackbits_doc},
+     NULL},
     {NULL, NULL}    /* sentinel */
 };
 
