@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import *
+import nose
 
 import locale
 import sys
@@ -25,7 +26,7 @@ def check_float_type(tp):
         assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
-@dec.knownfailureif(True, "formatting tests are known to fail")
+#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_float_types():
     """ Check formatting.
 
@@ -42,9 +43,9 @@ def check_nan_inf_float(tp):
         assert_equal(str(tp(x)), _REF[x],
                      err_msg='Failed str formatting for type %s' % tp)
 
-@dec.knownfailureif(True, "formatting tests are known to fail")
+#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_nan_inf_float():
-    """ Check formatting.
+    """ Check formatting of nan & inf.
 
         This is only for the str function, and only for simple types.
         The precision of np.float and np.longdouble aren't the same as the
@@ -69,15 +70,15 @@ def check_complex_type(tp):
     else:
         if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
            sys.version_info[1] <= 5:
-            ref = '1e+010'
+            ref = '(1e+010+0j)'
         else:
-            ref = '1e+10'
+            ref = '(1e+10+0j)'
         assert_equal(str(tp(1e10)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
-@dec.knownfailureif(True, "formatting tests are known to fail")
+#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_complex_types():
-    """Check formatting.
+    """Check formatting of complex types.
 
         This is only for the str function, and only for simple types.
         The precision of np.float and np.longdouble aren't the same as the
@@ -107,80 +108,90 @@ def _test_redirected_print(x, tp, ref=None):
                  err_msg='print failed for type%s' % tp)
 
 def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e10, 1e20, np.inf, -np.inf, np.nan]:
+    for x in [0, 1,-1, 1e20]:
         _test_redirected_print(float(x), tp)
 
+    for x in [np.inf, -np.inf, np.nan]:
+        _test_redirected_print(float(x), tp, _REF[x])
+
+    if tp(1e10).itemsize > 4:
+        _test_redirected_print(float(1e10), tp)
+    else:
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
+           sys.version_info[1] <= 5:
+            ref = '1e+010'
+        else:
+            ref = '1e+10'
+        _test_redirected_print(float(1e10), tp, ref)
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
 def check_complex_type_print(tp):
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
-    for x in [0, 1, -1, 1e10, 1e20, complex(np.inf, 1),
-              complex(np.nan, 1), complex(-np.inf, 1)] :
+    for x in [0, 1, -1, 1e20]:
         _test_redirected_print(complex(x), tp)
 
-@dec.knownfailureif(True, "formatting tests are known to fail")
+    if tp(1e10).itemsize > 8:
+        _test_redirected_print(complex(1e10), tp)
+    else:
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
+           sys.version_info[1] <= 5:
+            ref = '(1e+010+0j)'
+        else:
+            ref = '(1e+10+0j)'
+        _test_redirected_print(complex(1e10), tp, ref)
+
+    _test_redirected_print(complex(np.inf, 1), tp, '(inf+1j)')
+    _test_redirected_print(complex(-np.inf, 1), tp, '(-inf+1j)')
+    _test_redirected_print(complex(-np.nan, 1), tp, '(nan+1j)')
+
 def test_float_type_print():
     """Check formatting when using print """
     for t in [np.float32, np.double, np.longdouble] :
         yield check_float_type_print, t
 
-@dec.knownfailureif(True, "formatting tests are known to fail")
+#@dec.knownfailureif(True, "formatting tests are known to fail")
 def test_complex_type_print():
     """Check formatting when using print """
     for t in [np.complex64, np.cdouble, np.clongdouble] :
         yield check_complex_type_print, t
 
-# Locale tests: scalar types formatting should be independant of the locale
-def has_french_locale():
-    curloc = locale.getlocale(locale.LC_NUMERIC)
-    try:
-        try:
-            if not sys.platform == 'win32':
-                locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
-            else:
-                locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
-
-            st = True
-        except:
-            st = False
-    finally:
-        locale.setlocale(locale.LC_NUMERIC, locale=curloc)
-
-    return st
-
-def _test_locale_independance(tp):
+# Locale tests: scalar types formatting should be independent of the locale
+def in_foreign_locale(func):
     # XXX: How to query locale on a given system ?
 
     # French is one language where the decimal is ',' not '.', and should be
     # relatively common on many systems
-    curloc = locale.getlocale(locale.LC_NUMERIC)
-    try:
-        if not sys.platform == 'win32':
-            locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
-        else:
-            locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
+    def wrapper(*args, **kwargs):
+        curloc = locale.getlocale(locale.LC_NUMERIC)
+        try:
+            try:
+                if not sys.platform == 'win32':
+                    locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
+                else:
+                    locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
+            except locale.Error:
+                raise nose.SkipTest("Skipping locale test, because "
+                                    "French locale not found")
+            return func(*args, **kwargs)
+        finally:
+            locale.setlocale(locale.LC_NUMERIC, locale=curloc)
+    return nose.tools.make_decorator(func)(wrapper)
 
-        assert_equal(str(tp(1.2)), str(float(1.2)),
-                     err_msg='Failed locale test for type %s' % tp)
-    finally:
-        locale.setlocale(locale.LC_NUMERIC, locale=curloc)
-
-@dec.knownfailureif(True, "formatting tests are known to fail")
-@np.testing.dec.skipif(not has_french_locale(),
-                       "Skipping locale test, French locale not found")
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+@in_foreign_locale
 def test_locale_single():
-    return _test_locale_independance(np.float32)
+    assert_equal(str(np.float32(1.2)), str(float(1.2)))
 
-@dec.knownfailureif(True, "formatting tests are known to fail")
-@np.testing.dec.skipif(not has_french_locale(),
-                       "Skipping locale test, French locale not found")
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+@in_foreign_locale
 def test_locale_double():
-    return _test_locale_independance(np.double)
+    assert_equal(str(np.double(1.2)), str(float(1.2)))
 
-@dec.knownfailureif(True, "formatting tests are known to fail")
-@np.testing.dec.skipif(not has_french_locale(),
-                       "Skipping locale test, French locale not found")
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+@in_foreign_locale
 def test_locale_longdouble():
-    return _test_locale_independance(np.longdouble)
+    assert_equal(str(np.longdouble(1.2)), str(float(1.2)))
 
 if __name__ == "__main__":
     run_module_suite()

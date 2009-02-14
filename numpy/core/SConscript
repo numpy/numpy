@@ -211,6 +211,10 @@ if sys.platform=='win32' or os.name=='nt':
         config.Define('DISTUTILS_USE_SDK', distutils_use_sdk,
                       "define to 1 to disable SMP support ")
 
+    if a == "Intel":
+        config.Define('FORCE_NO_LONG_DOUBLE_FORMATTING', 1,
+                      "define to 1 to force long double format string to the" \
+                      " same as double (Lg -> g)")
 #--------------
 # Checking Blas
 #--------------

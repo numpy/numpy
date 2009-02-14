@@ -187,6 +187,14 @@ def configuration(parent_package='',top_path=None):
                                          headers=['stdlib.h']):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
 
+            if sys.platform == "win32":
+                from numpy.distutils.misc_util import get_build_architecture
+                # On win32, force long double format string to be 'g', not
+                # 'Lg', since the MS runtime does not support long double whose
+                # size is > sizeof(double)
+                if get_build_architecture()=="Intel":
+                    moredefs.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
+
             target_f = open(target,'a')
             for d in moredefs:
                 if isinstance(d,str):
@@ -330,6 +338,7 @@ def configuration(parent_package='',top_path=None):
     deps = [join('src','arrayobject.c'),
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
+            join('src','numpyos.c'),
             join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
             join('src','ucsnarrow.c'),
