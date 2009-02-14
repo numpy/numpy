@@ -8,140 +8,6 @@
 
 from lib import add_newdoc
 
-add_newdoc('numpy.core', 'dtype',
-"""Create a data type.
-
-A numpy array is homogeneous, and contains elements described by a
-dtype.  A dtype can be constructed from different combinations of
-fundamental numeric types, as illustrated below.
-
-Examples
---------
-
-Using array-scalar type:
->>> np.dtype(np.int16)
-dtype('int16')
-
-Record, one field name 'f1', containing int16:
->>> np.dtype([('f1', np.int16)])
-dtype([('f1', '<i2')])
-
-Record, one field named 'f1', in itself containing a record with one field:
->>> np.dtype([('f1', [('f1', np.int16)])])
-dtype([('f1', [('f1', '<i2')])])
-
-Record, two fields: the first field contains an unsigned int, the
-second an int32:
->>> np.dtype([('f1', np.uint), ('f2', np.int32)])
-dtype([('f1', '<u4'), ('f2', '<i4')])
-
-Using array-protocol type strings:
->>> np.dtype([('a','f8'),('b','S10')])
-dtype([('a', '<f8'), ('b', '|S10')])
-
-Using comma-separated field formats.  The shape is (2,3):
->>> np.dtype("i4, (2,3)f8")
-dtype([('f0', '<i4'), ('f1', '<f8', (2, 3))])
-
-Using tuples.  ``int`` is a fixed type, 3 the field's shape.  ``void``
-is a flexible type, here of size 10:
->>> np.dtype([('hello',(np.int,3)),('world',np.void,10)])
-dtype([('hello', '<i4', 3), ('world', '|V10')])
-
-Subdivide ``int16`` into 2 ``int8``'s, called x and y.  0 and 1 are
-the offsets in bytes:
->>> np.dtype((np.int16, {'x':(np.int8,0), 'y':(np.int8,1)}))
-dtype(('<i2', [('x', '|i1'), ('y', '|i1')]))
-
-Using dictionaries.  Two fields named 'gender' and 'age':
->>> np.dtype({'names':['gender','age'], 'formats':['S1',np.uint8]})
-dtype([('gender', '|S1'), ('age', '|u1')])
-
-Offsets in bytes, here 0 and 25:
->>> np.dtype({'surname':('S25',0),'age':(np.uint8,25)})
-dtype([('surname', '|S25'), ('age', '|u1')])
-
-""")
-
-add_newdoc('numpy.core', 'dtype',
-    """
-    dtype(obj, align=False, copy=False)
-
-    Create a data type object.
-
-    A numpy array is homogeneous, and contains elements described by a
-    dtype object. A dtype object can be constructed from different
-    combinations of fundamental numeric types.
-
-    Parameters
-    ----------
-    obj
-        Object to be converted to a data type object.
-    align : bool, optional
-        Add padding to the fields to match what a C compiler would output
-        for a similar C-struct. Can be ``True`` only if `obj` is a dictionary
-        or a comma-separated string.
-    copy : bool, optional
-        Make a new copy of the data-type object. If ``False``, the result
-        may just be a reference to a built-in data-type object.
-
-    Examples
-    --------
-    Using array-scalar type:
-
-    >>> np.dtype(np.int16)
-    dtype('int16')
-
-    Record, one field name 'f1', containing int16:
-
-    >>> np.dtype([('f1', np.int16)])
-    dtype([('f1', '<i2')])
-
-    Record, one field named 'f1', in itself containing a record with one field:
-
-    >>> np.dtype([('f1', [('f1', np.int16)])])
-    dtype([('f1', [('f1', '<i2')])])
-
-    Record, two fields: the first field contains an unsigned int, the
-    second an int32:
-
-    >>> np.dtype([('f1', np.uint), ('f2', np.int32)])
-    dtype([('f1', '<u4'), ('f2', '<i4')])
-
-    Using array-protocol type strings:
-
-    >>> np.dtype([('a','f8'),('b','S10')])
-    dtype([('a', '<f8'), ('b', '|S10')])
-
-    Using comma-separated field formats.  The shape is (2,3):
-
-    >>> np.dtype("i4, (2,3)f8")
-    dtype([('f0', '<i4'), ('f1', '<f8', (2, 3))])
-
-    Using tuples.  ``int`` is a fixed type, 3 the field's shape.  ``void``
-    is a flexible type, here of size 10:
-
-    >>> np.dtype([('hello',(np.int,3)),('world',np.void,10)])
-    dtype([('hello', '<i4', 3), ('world', '|V10')])
-
-    Subdivide ``int16`` into 2 ``int8``'s, called x and y.  0 and 1 are
-    the offsets in bytes:
-
-    >>> np.dtype((np.int16, {'x':(np.int8,0), 'y':(np.int8,1)}))
-    dtype(('<i2', [('x', '|i1'), ('y', '|i1')]))
-
-    Using dictionaries.  Two fields named 'gender' and 'age':
-
-    >>> np.dtype({'names':['gender','age'], 'formats':['S1',np.uint8]})
-    dtype([('gender', '|S1'), ('age', '|u1')])
-
-    Offsets in bytes, here 0 and 25:
-
-    >>> np.dtype({'surname':('S25',0),'age':(np.uint8,25)})
-    dtype([('surname', '|S25'), ('age', '|u1')])
-
-    """)
-
 ###############################################################################
 #
 # flatiter
@@ -150,7 +16,12 @@ add_newdoc('numpy.core', 'dtype',
 #
 ###############################################################################
 
-# attributes
+add_newdoc('numpy.core', 'flatiter',
+    """
+    """)
+
+# flatiter attributes
+
 add_newdoc('numpy.core', 'flatiter', ('base',
     """documentation needed
 
@@ -170,9 +41,8 @@ add_newdoc('numpy.core', 'flatiter', ('index',
 
     """))
 
+# flatiter functions
 
-
-# functions
 add_newdoc('numpy.core', 'flatiter', ('__array__',
     """__array__(type=None) Get array from iterator
 
@@ -191,36 +61,36 @@ add_newdoc('numpy.core', 'flatiter', ('copy',
 #
 ###############################################################################
 
+add_newdoc('numpy.core', 'broadcast',
+    """
+    """)
+
 # attributes
+
 add_newdoc('numpy.core', 'broadcast', ('index',
     """current index in broadcasted result
 
     """))
-
 
 add_newdoc('numpy.core', 'broadcast', ('iters',
     """tuple of individual iterators
 
     """))
 
-
 add_newdoc('numpy.core', 'broadcast', ('nd',
     """number of dimensions of broadcasted result
 
     """))
-
 
 add_newdoc('numpy.core', 'broadcast', ('numiter',
     """number of iterators
 
     """))
 
-
 add_newdoc('numpy.core', 'broadcast', ('shape',
     """shape of broadcasted result
 
     """))
-
 
 add_newdoc('numpy.core', 'broadcast', ('size',
     """total size of broadcasted result
@@ -2581,6 +2451,25 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
     """))
 
+
+##############################################################################
+#
+# umath functions
+#
+##############################################################################
+
+add_newdoc('numpy.core.umath', 'frexp',
+    """
+    """)
+
+add_newdoc('numpy.core.umath', 'frompyfunc',
+    """
+    """)
+
+add_newdoc('numpy.core.umath', 'ldexp',
+    """
+    """)
+
 add_newdoc('numpy.core.umath','geterrobj',
     """geterrobj()
 
@@ -2609,6 +2498,64 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     seterrcall
 
     """)
+
+
+##############################################################################
+#
+# lib._compile_base functions
+#
+##############################################################################
+
+add_newdoc('numpy.lib._compile_base', 'digitize',
+    """
+    digitize(x,bins)
+
+    Return the index of the bin to which each value of x belongs.
+
+    Each index i returned is such that bins[i-1] <= x < bins[i] if
+    bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
+    bins is monotonically decreasing.
+
+    Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
+    """)
+
+add_newdoc('numpy.lib._compile_base', 'bincount',
+    """
+    bincount(x,weights=None)
+
+    Return the number of occurrences of each value in x.
+
+    x must be a list of non-negative integers.  The output, b[i],
+    represents the number of times that i is found in x.  If weights
+    is specified, every occurrence of i at a position p contributes
+    weights[p] instead of 1.
+
+    See also: histogram, digitize, unique.
+    """)
+
+add_newdoc('numpy.lib._compile_base', 'add_docstring',
+    """
+    docstring(obj, docstring)
+
+    Add a docstring to a built-in obj if possible.
+    If the obj already has a docstring raise a RuntimeError
+    If this routine does not know how to add a docstring to the object
+    raise a TypeError
+    """)
+
+
+##############################################################################
+#
+# Documentation for ufunc attributes and methods
+#
+##############################################################################
+
+
+##############################################################################
+#
+# ufunc object
+#
+##############################################################################
 
 add_newdoc('numpy.core', 'ufunc',
     """
@@ -2661,6 +2608,12 @@ add_newdoc('numpy.core', 'ufunc',
 
     """)
 
+
+##############################################################################
+#
+# ufunc methods
+#
+##############################################################################
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
@@ -2842,7 +2795,217 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
     """))
 
-add_newdoc('numpy.core', 'dtype', ('newbyteorder',
+
+##############################################################################
+#
+# Documentation for dtype attributes and methods
+#
+##############################################################################
+
+##############################################################################
+#
+# dtype object
+#
+##############################################################################
+
+add_newdoc('numpy.core.multiarray', 'dtype',
+    """
+    dtype(obj, align=False, copy=False)
+
+    Create a data type object.
+
+    A numpy array is homogeneous, and contains elements described by a
+    dtype object. A dtype object can be constructed from different
+    combinations of fundamental numeric types.
+
+    Parameters
+    ----------
+    obj
+        Object to be converted to a data type object.
+    align : bool, optional
+        Add padding to the fields to match what a C compiler would output
+        for a similar C-struct. Can be ``True`` only if `obj` is a dictionary
+        or a comma-separated string.
+    copy : bool, optional
+        Make a new copy of the data-type object. If ``False``, the result
+        may just be a reference to a built-in data-type object.
+
+    Examples
+    --------
+    Using array-scalar type:
+
+    >>> np.dtype(np.int16)
+    dtype('int16')
+
+    Record, one field name 'f1', containing int16:
+
+    >>> np.dtype([('f1', np.int16)])
+    dtype([('f1', '<i2')])
+
+    Record, one field named 'f1', in itself containing a record with one field:
+
+    >>> np.dtype([('f1', [('f1', np.int16)])])
+    dtype([('f1', [('f1', '<i2')])])
+
+    Record, two fields: the first field contains an unsigned int, the
+    second an int32:
+
+    >>> np.dtype([('f1', np.uint), ('f2', np.int32)])
+    dtype([('f1', '<u4'), ('f2', '<i4')])
+
+    Using array-protocol type strings:
+
+    >>> np.dtype([('a','f8'),('b','S10')])
+    dtype([('a', '<f8'), ('b', '|S10')])
+
+    Using comma-separated field formats.  The shape is (2,3):
+
+    >>> np.dtype("i4, (2,3)f8")
+    dtype([('f0', '<i4'), ('f1', '<f8', (2, 3))])
+
+    Using tuples.  ``int`` is a fixed type, 3 the field's shape.  ``void``
+    is a flexible type, here of size 10:
+
+    >>> np.dtype([('hello',(np.int,3)),('world',np.void,10)])
+    dtype([('hello', '<i4', 3), ('world', '|V10')])
+
+    Subdivide ``int16`` into 2 ``int8``'s, called x and y.  0 and 1 are
+    the offsets in bytes:
+
+    >>> np.dtype((np.int16, {'x':(np.int8,0), 'y':(np.int8,1)}))
+    dtype(('<i2', [('x', '|i1'), ('y', '|i1')]))
+
+    Using dictionaries.  Two fields named 'gender' and 'age':
+
+    >>> np.dtype({'names':['gender','age'], 'formats':['S1',np.uint8]})
+    dtype([('gender', '|S1'), ('age', '|u1')])
+
+    Offsets in bytes, here 0 and 25:
+
+    >>> np.dtype({'surname':('S25',0),'age':(np.uint8,25)})
+    dtype([('surname', '|S25'), ('age', '|u1')])
+
+    """)
+
+##############################################################################
+#
+# dtype attributes
+#
+##############################################################################
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('alignment',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
+    '''
+    dt.byteorder
+
+    String giving byteorder of dtype
+
+    One of:
+    * '=' - native byteorder
+    * '<' - little endian
+    * '>' - big endian
+    * '|' - endian not relevant
+
+    Examples
+    --------
+    >>> dt = np.dtype('i2')
+    >>> dt.byteorder
+    '='
+    >>> # endian is not relevant for 8 bit numbers
+    >>> np.dtype('i1').byteorder
+    '|'
+    >>> # or ASCII strings
+    >>> np.dtype('S2').byteorder
+    '|'
+    >>> # Even if specific code is given, and it is native
+    >>> # '=' is the byteorder
+    >>> import sys
+    >>> sys_is_le = sys.byteorder == 'little'
+    >>> native_code = sys_is_le and '<' or '>'
+    >>> swapped_code = sys_is_le and '>' or '<'
+    >>> dt = np.dtype(native_code + 'i2')
+    >>> dt.byteorder
+    '='
+    >>> # Swapped code shows up as itself
+    >>> dt = np.dtype(swapped_code + 'i2')
+    >>> dt.byteorder == swapped_code
+    True
+    '''))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('char',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('flags',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('hasobject',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('isnative',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('name',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('names',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('num',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('shape',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('str',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('subdtype',
+    """
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('type',
+    """
+    """))
+
+##############################################################################
+#
+# dtype methods
+#
+##############################################################################
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     '''
     newbyteorder(new_order='S')
 
@@ -2901,40 +3064,410 @@ add_newdoc('numpy.core', 'dtype', ('newbyteorder',
     True
     '''))
 
-add_newdoc('numpy.core', 'dtype', ('byteorder',
-    '''
-    dt.byteorder
 
-    String giving byteorder of dtype
+##############################################################################
+#
+# nd_grid instances
+#
+##############################################################################
 
-    One of:
-    * '=' - native byteorder
-    * '<' - little endian
-    * '>' - big endian
-    * '|' - endian not relevant
+add_newdoc('numpy.lib.index_tricks', 'mgrid',
+    """
+    Construct a multi-dimensional filled "meshgrid".
+
+    Returns a mesh-grid when indexed.  The dimension and number of the
+    output arrays are equal to the number of indexing dimensions.  If
+    the step length is not a complex number, then the stop is not
+    inclusive.
+
+    However, if the step length is a **complex number** (e.g. 5j),
+    then the integer part of its magnitude is interpreted as
+    specifying the number of points to create between the start and
+    stop values, where the stop value **is inclusive**.
+
+    See also
+    --------
+    ogrid
 
     Examples
     --------
-    >>> dt = np.dtype('i2')
-    >>> dt.byteorder
-    '='
-    >>> # endian is not relevant for 8 bit numbers
-    >>> np.dtype('i1').byteorder
-    '|'
-    >>> # or ASCII strings
-    >>> np.dtype('S2').byteorder
-    '|'
-    >>> # Even if specific code is given, and it is native
-    >>> # '=' is the byteorder
-    >>> import sys
-    >>> sys_is_le = sys.byteorder == 'little'
-    >>> native_code = sys_is_le and '<' or '>'
-    >>> swapped_code = sys_is_le and '>' or '<'
-    >>> dt = np.dtype(native_code + 'i2')
-    >>> dt.byteorder
-    '='
-    >>> # Swapped code shows up as itself
-    >>> dt = np.dtype(swapped_code + 'i2')
-    >>> dt.byteorder == swapped_code
-    True
-    '''))
+    >>> np.mgrid[0:5,0:5]
+    array([[[0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1],
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
+            [4, 4, 4, 4, 4]],
+    <BLANKLINE>
+           [[0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4]]])
+    >>> np.mgrid[-1:1:5j]
+    array([-1. , -0.5,  0. ,  0.5,  1. ])
+    """)
+
+add_newdoc('numpy.lib.index_tricks', 'ogrid',
+    """
+    Construct a multi-dimensional open "meshgrid".
+
+    Returns an 'open' mesh-grid when indexed.  The dimension and
+    number of the output arrays are equal to the number of indexing
+    dimensions.  If the step length is not a complex number, then the
+    stop is not inclusive.
+
+    The returned mesh-grid is open (or not fleshed out), so that only
+    one-dimension of each returned argument is greater than 1
+
+    If the step length is a **complex number** (e.g. 5j), then the
+    integer part of its magnitude is interpreted as specifying the
+    number of points to create between the start and stop values,
+    where the stop value **is inclusive**.
+
+    See also
+    --------
+    mgrid
+
+    Examples
+    --------
+    >>> np.ogrid[0:5,0:5]
+    [array([[0],
+            [1],
+            [2],
+            [3],
+            [4]]), array([[0, 1, 2, 3, 4]])]
+    """)
+
+   
+##############################################################################
+#
+# Documentation for `generic` attributes and methods
+#
+##############################################################################
+
+add_newdoc('numpy.core.numerictypes', 'generic',
+    """
+    """)
+
+# Attributes
+    
+add_newdoc('numpy.core.numerictypes', 'generic', ('T',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('base',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('data',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('dtype',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('flags',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('flat',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('imag',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('itemsize',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('nbytes',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('ndim',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('real',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('shape',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('size',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('strides',
+    """
+    """))
+
+# Methods
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('all',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('any',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('argmax',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('argmin',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('argsort',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('astype',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('byteswap',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('choose',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('clip',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('compress',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('conjugate',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('copy',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('cumprod',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('cumsum',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('diagonal',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('dump',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('dumps',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('fill',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('flatten',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('getfield',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('item',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('itemset',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('max',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('mean',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('min',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('nonzero',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('prod',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('ptp',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('put',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('ravel',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('repeat',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('reshape',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('resize',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('round',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('searchsorted',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('setfield',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('setflags',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('sort',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('squeeze',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('std',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('sum',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('swapaxes',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('take',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('tofile',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('tolist',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('tostring',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('trace',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('transpose',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('var',
+    """
+    """))
+
+add_newdoc('numpy.core.numerictypes', 'generic', ('view',
+    """
+    """))
+   
+
+##############################################################################
+#
+# Documentation for other scalar classes
+#
+##############################################################################
+
+add_newdoc('numpy.core.numerictypes', 'bool_',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'complex64',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'complex128',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'complex256',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'float32',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'float64',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'float96',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'float128',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'int8',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'int16',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'int32',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'int64',
+    """
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'object_',
+    """
+    """)

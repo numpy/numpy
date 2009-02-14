@@ -494,34 +494,45 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
 #define _TESTDOC1(typebase) (obj->ob_type == &Py##typebase##_Type)
 #define _TESTDOC2(typebase) (obj->ob_type == Py##typebase##_TypePtr)
-#define _ADDDOC(typebase, doc, name) {                                  \
+#define _ADDDOC(typebase, doc, name) do {                               \
         Py##typebase##Object *new = (Py##typebase##Object *)obj;        \
         if (!(doc)) {                                                   \
             doc = docstr;                                               \
         }                                                               \
         else {                                                          \
-            PyErr_Format(PyExc_RuntimeError,                            \
-                         "%s method %s",name, msg);                     \
+            PyErr_Format(PyExc_RuntimeError, "%s method %s", name, msg); \
             return NULL;                                                \
         }                                                               \
-    }
+    } while (0)
 
-    if _TESTDOC1(CFunction)
-                    _ADDDOC(CFunction, new->m_ml->ml_doc, new->m_ml->ml_name)
-        else if _TESTDOC1(Type)
-                             _ADDDOC(Type, new->tp_doc, new->tp_name)
-            else if _TESTDOC2(MemberDescr)
-                                 _ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name)
-                else if _TESTDOC2(GetSetDescr)
-                                     _ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name)
-                    else if _TESTDOC2(MethodDescr)
-                                         _ADDDOC(MethodDescr, new->d_method->ml_doc,
-                                                 new->d_method->ml_name)
-                        else {
-                            PyErr_SetString(PyExc_TypeError,
-                                            "Cannot set a docstring for that object");
-                            return NULL;
-                        }
+    if (_TESTDOC1(CFunction))
+        _ADDDOC(CFunction, new->m_ml->ml_doc, new->m_ml->ml_name);
+    else if (_TESTDOC1(Type))
+        _ADDDOC(Type, new->tp_doc, new->tp_name);
+    else if (_TESTDOC2(MemberDescr))
+        _ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name);
+    else if (_TESTDOC2(GetSetDescr))
+        _ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name);
+    else if (_TESTDOC2(MethodDescr))
+        _ADDDOC(MethodDescr, new->d_method->ml_doc, new->d_method->ml_name);
+    else {
+        PyObject *doc_attr;
+        
+        doc_attr = PyObject_GetAttrString(obj, "__doc__");
+        if (doc_attr != NULL && doc_attr != Py_None) {
+            PyErr_Format(PyExc_RuntimeError, "object %s", msg);
+            return NULL;
+        }
+        Py_XDECREF(doc_attr);
+
+        if (PyObject_SetAttrString(obj, "__doc__", str) < 0) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot set a docstring for that object");
+            return NULL;
+        }
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
 
 #undef _TESTDOC1
 #undef _TESTDOC2
