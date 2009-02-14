@@ -794,7 +794,7 @@ class TestIO(object):
     def tearDown(self):
         if os.path.isfile(self.filename):
             os.unlink(self.filename)
-            tmp_file.close()
+            #tmp_file.close()
 
     def test_roundtrip_file(self):
         f = open(self.filename, 'wb')
