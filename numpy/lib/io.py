@@ -1,4 +1,5 @@
 __all__ = ['savetxt', 'loadtxt',
+           'genfromtxt', 'ndfromtxt', 'mafromtxt', 'recfromtxt', 'recfromcsv',
            'load', 'loads',
            'save', 'savez',
            'packbits', 'unpackbits',
@@ -15,7 +16,11 @@ from cPickle import load as _cload, loads
 from _datasource import DataSource
 from _compiled_base import packbits, unpackbits
 
+from _iotools import LineSplitter, NameValidator, StringConverter, \
+                     _is_string_like, has_nested_fields, flatten_dtype
+
 _file = file
+_string_like = _is_string_like
 
 class BagObj(object):
     """A simple class that converts attribute lookups to
@@ -264,10 +269,6 @@ def _getconv(dtype):
         return str
 
 
-def _string_like(obj):
-    try: obj + ''
-    except (TypeError, ValueError): return 0
-    return 1
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
             skiprows=0, usecols=None, unpack=False):
@@ -342,7 +343,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     if usecols is not None:
         usecols = list(usecols)
 
-    if _string_like(fname):
+    if _is_string_like(fname):
         if fname.endswith('.gz'):
             import gzip
             fh = gzip.open(fname)
@@ -520,7 +521,7 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
 
     """
 
-    if _string_like(fname):
+    if _is_string_like(fname):
         if fname.endswith('.gz'):
             import gzip
             fh = gzip.open(fname,'wb')
@@ -603,8 +604,508 @@ def fromregex(file, regexp, dtype):
 
     seq = regexp.findall(file.read())
     if seq and not isinstance(seq[0], tuple):
-        # make sure np.array doesn't interpret strings as binary data
-        # by always producing a list of tuples
-        seq = [(x,) for x in seq]
-    output = np.array(seq, dtype=dtype)
+        # Only one group is in the regexp.
+        # Create the new array as a single data-type and then
+        #   re-interpret as a single-field structured array. 
+        newdtype = np.dtype(dtype[dtype.names[0]])
+        output = np.array(seq, dtype=newdtype)
+        output.dtype = dtype
+    else:
+        output = np.array(seq, dtype=dtype)
+
     return output
+
+
+
+
+#####--------------------------------------------------------------------------
+#---- --- ASCII functions ---
+#####--------------------------------------------------------------------------
+
+
+
+def genfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
+               converters=None, missing='', missing_values=None, usecols=None,
+               names=None, excludelist=None, deletechars=None,
+               case_sensitive=True, unpack=None, usemask=False, loose=True):
+    """
+    Load data from a text file.
+
+    Each line past the first `skiprows` ones is split at the `delimiter`
+    character, and characters following the `comments` character are discarded.
+    
+
+
+    Parameters
+    ----------
+    fname : file or string
+        File or filename to read.  If the filename extension is `.gz` or `.bz2`,
+        the file is first decompressed.
+    dtype : data-type
+        Data type of the resulting array.  If this is a flexible data-type,
+        the resulting array will be 1-dimensional, and each row will be
+        interpreted as an element of the array. In this case, the number
+        of columns used must match the number of fields in the data-type,
+        and the names of each field will be set by the corresponding name
+        of the dtype.
+        If None, the dtypes will be determined by the contents of each
+        column, individually.
+    comments : {string}, optional
+        The character used to indicate the start of a comment.
+        All the characters occurring on a line after a comment are discarded
+    delimiter : {string}, optional
+        The string used to separate values.  By default, any consecutive
+        whitespace act as delimiter.
+    skiprows : {int}, optional
+        Numbers of lines to skip at the beginning of the file.
+    converters : {None, dictionary}, optional
+        A dictionary mapping column number to a function that will convert
+        values in the column to a number. Converters can also be used to
+        provide a default value for missing data:
+        ``converters = {3: lambda s: float(s or 0)}``.
+    missing : {string}, optional
+        A string representing a missing value, irrespective of the column where
+        it appears (e.g., `'missing'` or `'unused'`).
+    missing_values : {None, dictionary}, optional
+        A dictionary mapping a column number to a string indicating whether the
+        corresponding field should be masked.
+    usecols : {None, sequence}, optional
+        Which columns to read, with 0 being the first.  For example,
+        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
+    names : {None, True, string, sequence}, optional
+        If `names` is True, the field names are read from the first valid line
+        after the first `skiprows` lines.
+        If `names` is a sequence or a single-string of comma-separated names,
+        the names will be used to define the field names in a flexible dtype.
+        If `names` is None, the names of the dtype fields will be used, if any.
+    excludelist : {sequence}, optional
+        A list of names to exclude. This list is appended to the default list
+        ['return','file','print']. Excluded names are appended an underscore:
+        for example, `file` would become `file_`.
+    deletechars : {string}, optional
+        A string combining invalid characters that must be deleted from the names.
+    case_sensitive : {True, False, 'upper', 'lower'}, optional
+        If True, field names are case_sensitive.
+        If False or 'upper', field names are converted to upper case.
+        If 'lower', field names are converted to lower case.
+    unpack : {bool}, optional
+        If True, the returned array is transposed, so that arguments may be
+        unpacked using ``x, y, z = loadtxt(...)``
+    usemask : {bool}, optional
+        If True, returns a masked array.
+        If False, return a regular standard array.
+
+    Returns
+    -------
+    out : MaskedArray
+        Data read from the text file.
+
+    Notes
+    --------
+    * When spaces are used as delimiters, or when no delimiter has been given
+      as input, there should not be any missing data between two fields.
+    * When the variable are named (either by a flexible dtype or with `names`,
+      there must not be any header in the file (else a :exc:ValueError exception
+      is raised).
+
+    Warnings
+    --------
+    * Individual values are not stripped of spaces by default.
+      When using a custom converter, make sure the function does remove spaces.
+
+    See Also
+    --------
+    numpy.loadtxt : equivalent function when no data is missing.
+
+    """
+    #
+    if usemask:
+        from numpy.ma import MaskedArray, make_mask_descr
+    # Check the input dictionary of converters
+    user_converters = converters or {}
+    if not isinstance(user_converters, dict):
+        errmsg = "The input argument 'converter' should be a valid dictionary "\
+                 "(got '%s' instead)"
+        raise TypeError(errmsg % type(user_converters))
+    # Check the input dictionary of missing values
+    user_missing_values = missing_values or {}
+    if not isinstance(user_missing_values, dict):
+        errmsg = "The input argument 'missing_values' should be a valid "\
+                 "dictionary (got '%s' instead)"
+        raise TypeError(errmsg % type(missing_values))
+    defmissing = [_.strip() for _ in missing.split(',')] + ['']
+
+    # Initialize the filehandle, the LineSplitter and the NameValidator
+#    fhd = _to_filehandle(fname)
+    if isinstance(fname, basestring):
+        fhd = np.lib._datasource.open(fname)
+    elif not hasattr(fname, 'read'):
+        raise TypeError("The input should be a string or a filehandle. "\
+                        "(got %s instead)" % type(fname))
+    else:
+        fhd = fname
+    split_line = LineSplitter(delimiter=delimiter, comments=comments, 
+                              autostrip=False)._handyman
+    validate_names = NameValidator(excludelist=excludelist,
+                                   deletechars=deletechars,
+                                   case_sensitive=case_sensitive)
+
+    # Get the first valid lines after the first skiprows ones
+    for i in xrange(skiprows):
+        fhd.readline()
+    first_values = None
+    while not first_values:
+        first_line = fhd.readline()
+        if first_line == '':
+            raise IOError('End-of-file reached before encountering data.')
+        if names is True:
+            first_values = first_line.strip().split(delimiter)
+        else:
+            first_values = split_line(first_line)
+    if names is True:
+        fval = first_values[0].strip()
+        if fval in comments:
+            del first_values[0]
+
+    # Check the columns to use
+    if usecols is not None:
+        usecols = list(usecols)
+    nbcols = len(usecols or first_values)
+
+    # Check the names and overwrite the dtype.names if needed
+    if dtype is not None:
+        dtype = np.dtype(dtype)
+    dtypenames = getattr(dtype, 'names', None)
+    if names is True:
+        names = validate_names([_.strip() for _ in first_values])
+        first_line =''
+    elif _is_string_like(names):
+        names = validate_names([_.strip() for _ in names.split(',')])
+    elif names:
+        names = validate_names(names)
+    elif dtypenames:
+        dtype.names = validate_names(dtypenames)
+    if names and dtypenames:
+        dtype.names = names
+
+    # If usecols is a list of names, convert to a list of indices
+    if usecols:
+        for (i, current) in enumerate(usecols):
+            if _is_string_like(current):
+                usecols[i] = names.index(current)
+
+    # If user_missing_values has names as keys, transform them to indices
+    missing_values = {}
+    for (key, val) in user_missing_values.iteritems():
+        # If val is a list, flatten it. In any case, add missing &'' to the list
+        if isinstance(val, (list, tuple)):
+            val = [str(_) for _ in val]
+        else:
+            val = [str(val),]
+        val.extend(defmissing)
+        if _is_string_like(key):
+            try:
+                missing_values[names.index(key)] = val
+            except ValueError:
+                pass
+        else:
+            missing_values[key] = val
+
+
+    # Initialize the default converters
+    if dtype is None:
+        # Note: we can't use a [...]*nbcols, as we would have 3 times the same
+        # ... converter, instead of 3 different converters.
+        converters = [StringConverter(None,
+                              missing_values=missing_values.get(_, defmissing))
+                      for _ in range(nbcols)]
+    else:
+        flatdtypes = flatten_dtype(dtype)
+        # Initialize the converters
+        if len(flatdtypes) > 1:
+            # Flexible type : get a converter from each dtype
+            converters = [StringConverter(dt,
+                              missing_values=missing_values.get(i, defmissing),
+                              locked=True)
+                          for (i, dt) in enumerate(flatdtypes)]
+        else:
+            # Set to a default converter (but w/ different missing values)
+            converters = [StringConverter(dtype,
+                              missing_values=missing_values.get(_, defmissing),
+                              locked=True)
+                          for _ in range(nbcols)]
+    missing_values = [_.missing_values for _ in converters]
+
+    # Update the converters to use the user-defined ones
+    uc_update = []
+    for (i, conv) in user_converters.iteritems():
+        # If the converter is specified by column names, use the index instead
+        if _is_string_like(i):
+            i = names.index(i)
+        if usecols:
+            try:
+                i = usecols.index(i)
+            except ValueError:
+                # Unused converter specified
+                continue
+        converters[i].update(conv, default=None, 
+                             missing_values=missing_values[i],
+                             locked=True)
+        uc_update.append((i, conv))
+    # Make sure we have the corrected keys in user_converters...
+    user_converters.update(uc_update)
+
+    # Reset the names to match the usecols
+    if (not first_line) and usecols:
+        names = [names[_] for _ in usecols]
+
+    rows = []
+    append_to_rows = rows.append
+    if usemask:
+        masks = []
+        append_to_masks = masks.append
+    # Parse each line
+    for line in itertools.chain([first_line,], fhd):
+        values = split_line(line)
+        # Skip an empty line
+        if len(values) == 0:
+            continue
+        # Select only the columns we need
+        if usecols:
+            values = [values[_] for _ in usecols]
+        # Check whether we need to update the converter
+        if dtype is None:
+            for (converter, item) in zip(converters, values):
+                converter.upgrade(item)
+        # Store the values
+        append_to_rows(tuple(values))
+        if usemask:
+            append_to_masks(tuple([val.strip() in mss 
+                                   for (val, mss) in zip(values,
+                                                         missing_values)]))
+
+    # Convert each value according to the converter:
+    # We want to modify the list in place to avoid creating a new one...
+    if loose:
+        conversionfuncs = [conv._loose_call for conv in converters]
+    else:
+        conversionfuncs = [conv._strict_call for conv in converters]
+    for (i, vals) in enumerate(rows):
+        rows[i] = tuple([convert(val)
+                         for (convert, val) in zip(conversionfuncs, vals)])
+
+    # Reset the dtype
+    data = rows
+    if dtype is None:
+        # Get the dtypes from the types of the converters
+        coldtypes = [conv.type for conv in converters]
+        # Find the columns with strings...
+        strcolidx = [i for (i, v) in enumerate(coldtypes)
+                     if v in (type('S'), np.string_)]
+        # ... and take the largest number of chars.
+        for i in strcolidx:
+            coldtypes[i] = "|S%i" % max(len(row[i]) for row in data)
+        #
+        if names is None:
+            # If the dtype is uniform, don't define names, else use ''
+            base = set([c.type for c in converters if c._checked])
+            
+            if len(base) == 1:
+                (ddtype, mdtype) = (list(base)[0], np.bool)
+            else:
+                ddtype = [('', dt) for dt in coldtypes]
+                mdtype = [('', np.bool) for dt in coldtypes]
+        else:
+            ddtype = zip(names, coldtypes)
+            mdtype = zip(names, [np.bool] * len(coldtypes))
+        output = np.array(data, dtype=ddtype)
+        if usemask:
+            outputmask = np.array(masks, dtype=mdtype)
+    else:
+        # Overwrite the initial dtype names if needed
+        if names and dtype.names:
+            dtype.names = names
+        flatdtypes = flatten_dtype(dtype)
+        # Case 1. We have a structured type
+        if len(flatdtypes) > 1:
+            # Nested dtype, eg  [('a', int), ('b', [('b0', int), ('b1', 'f4')])]
+            # First, create the array using a flattened dtype:
+            # [('a', int), ('b1', int), ('b2', float)]
+            # Then, view the array using the specified dtype.
+            if has_nested_fields(dtype):
+                if 'O' in (_.char for _ in flatdtypes):
+                    errmsg = "Nested fields involving objects "\
+                             "are not supported..."
+                    raise NotImplementedError(errmsg)
+                rows = np.array(data, dtype=[('', t) for t in flatdtypes])
+                output = rows.view(dtype)
+            else:
+                output = np.array(data, dtype=dtype)
+            # Now, process the rowmasks the same way
+            if usemask:
+                rowmasks = np.array(masks,
+                                    dtype=np.dtype([('', np.bool)
+                                                    for t in flatdtypes]))
+                # Construct the new dtype
+                mdtype = make_mask_descr(dtype)
+                outputmask = rowmasks.view(mdtype)
+        # Case #2. We have a basic dtype
+        else:
+            # We used some user-defined converters
+            if user_converters:
+                ishomogeneous = True
+                descr = []
+                for (i, ttype) in enumerate([conv.type for conv in converters]):
+                    # Keep the dtype of the current converter
+                    if i in user_converters:
+                        ishomogeneous &= (ttype == dtype.type)
+                        if ttype == np.string_:
+                            ttype = "|S%i" % max(len(row[i]) for row in data)
+                        descr.append(('', ttype))
+                    else:
+                        descr.append(('', dtype))
+                # So we changed the dtype ?
+                if not ishomogeneous:
+                    # We have more than one field
+                    if len(descr) > 1:
+                        dtype = np.dtype(descr)
+                    # We have only one field: drop the name if not needed.
+                    else:
+                        dtype = np.dtype(ttype)
+            #
+            output = np.array(data, dtype)
+            if usemask:
+                if dtype.names:
+                    mdtype = [(_, np.bool) for _ in dtype.names]
+                else:
+                    mdtype = np.bool
+                outputmask = np.array(masks, dtype=mdtype)
+    # Try to take care of the missing data we missed
+    if usemask and output.dtype.names:
+        for (name, conv) in zip(names or (), converters):
+            missing_values = [conv(_) for _ in conv.missing_values if _ != '']
+            for mval in missing_values:
+                outputmask[name] |= (output[name] == mval)
+    # Construct the final array
+    if usemask:
+        output = output.view(MaskedArray)
+        output._mask = outputmask
+    if unpack:
+        return output.squeeze().T
+    return output.squeeze()
+
+
+
+def ndfromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
+             converters=None, missing='', missing_values=None,
+             usecols=None, unpack=None, names=None,
+             excludelist=None, deletechars=None, case_sensitive=True,):
+    """
+    Load ASCII data stored in fname and returns a ndarray.
+    
+    Complete description of all the optional input parameters is available in
+    the docstring of the `genfromtxt` function.
+    
+    See Also
+    --------
+    numpy.genfromtxt : generic function.
+    
+    """
+    kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
+                  skiprows=skiprows, converters=converters,
+                  missing=missing, missing_values=missing_values,
+                  usecols=usecols, unpack=unpack, names=names, 
+                  excludelist=excludelist, deletechars=deletechars,
+                  case_sensitive=case_sensitive, usemask=False)
+    return genfromtxt(fname, **kwargs)
+
+def mafromtxt(fname, dtype=float, comments='#', delimiter=None, skiprows=0,
+              converters=None, missing='', missing_values=None,
+              usecols=None, unpack=None, names=None,
+              excludelist=None, deletechars=None, case_sensitive=True,):
+    """
+    Load ASCII data stored in fname and returns a MaskedArray.
+    
+    Complete description of all the optional input parameters is available in
+    the docstring of the `genfromtxt` function.
+    
+    See Also
+    --------
+    numpy.genfromtxt : generic function.
+    """
+    kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
+                  skiprows=skiprows, converters=converters,
+                  missing=missing, missing_values=missing_values,
+                  usecols=usecols, unpack=unpack, names=names, 
+                  excludelist=excludelist, deletechars=deletechars,
+                  case_sensitive=case_sensitive,
+                  usemask=True)
+    return genfromtxt(fname, **kwargs)
+
+
+def recfromtxt(fname, dtype=None, comments='#', delimiter=None, skiprows=0,
+               converters=None, missing='', missing_values=None,
+               usecols=None, unpack=None, names=None,
+               excludelist=None, deletechars=None, case_sensitive=True,
+               usemask=False):
+    """
+    Load ASCII data stored in fname and returns a standard recarray (if 
+    `usemask=False`) or a MaskedRecords (if `usemask=True`).
+    
+    Complete description of all the optional input parameters is available in
+    the docstring of the `genfromtxt` function.
+    
+    See Also
+    --------
+    numpy.genfromtxt : generic function
+
+    Warnings
+    --------
+    * by default, `dtype=None`, which means that the dtype of the output array
+      will be determined from the data.
+    """
+    kwargs = dict(dtype=dtype, comments=comments, delimiter=delimiter, 
+                  skiprows=skiprows, converters=converters,
+                  missing=missing, missing_values=missing_values,
+                  usecols=usecols, unpack=unpack, names=names, 
+                  excludelist=excludelist, deletechars=deletechars,
+                  case_sensitive=case_sensitive, usemask=usemask)
+    output = genfromtxt(fname, **kwargs)
+    if usemask:
+        from numpy.ma.mrecords import MaskedRecords
+        output = output.view(MaskedRecords)
+    else:
+        output = output.view(np.recarray)
+    return output
+
+
+def recfromcsv(fname, dtype=None, comments='#', skiprows=0,
+               converters=None, missing='', missing_values=None,
+               usecols=None, unpack=None, names=True,
+               excludelist=None, deletechars=None, case_sensitive='lower',
+               usemask=False):
+    """
+    Load ASCII data stored in comma-separated file and returns a recarray (if 
+    `usemask=False`) or a MaskedRecords (if `usemask=True`).
+    
+    Complete description of all the optional input parameters is available in
+    the docstring of the `genfromtxt` function.
+    
+    See Also
+    --------
+    numpy.genfromtxt : generic function
+    """
+    kwargs = dict(dtype=dtype, comments=comments, delimiter=",", 
+                  skiprows=skiprows, converters=converters,
+                  missing=missing, missing_values=missing_values,
+                  usecols=usecols, unpack=unpack, names=names, 
+                  excludelist=excludelist, deletechars=deletechars,
+                  case_sensitive=case_sensitive, usemask=usemask)
+    output = genfromtxt(fname, **kwargs)
+    if usemask:
+        from numpy.ma.mrecords import MaskedRecords
+        output = output.view(MaskedRecords)
+    else:
+        output = output.view(np.recarray)
+    return output
+

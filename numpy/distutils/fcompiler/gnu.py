@@ -87,21 +87,29 @@ class GnuFCompiler(FCompiler):
     def get_flags_linker_so(self):
         opt = self.linker_so[1:]
         if sys.platform=='darwin':
-            # MACOSX_DEPLOYMENT_TARGET must be at least 10.3. This is
-            # a reasonable default value even when building on 10.4 when using
-            # the official Python distribution and those derived from it (when
-            # not broken).
             target = os.environ.get('MACOSX_DEPLOYMENT_TARGET', None)
-            if target is None or target == '':
-                target = '10.3'
-            major, minor = target.split('.')
-            if int(minor) < 3:
-                minor = '3'
-                warnings.warn('Environment variable '
-                    'MACOSX_DEPLOYMENT_TARGET reset to %s.%s' % (major, minor))
-            os.environ['MACOSX_DEPLOYMENT_TARGET'] = '%s.%s' % (major,
-                minor)
-
+            # If MACOSX_DEPLOYMENT_TARGET is set, we simply trust the value
+            # and leave it alone.  But, distutils will complain if the 
+            # environment's value is different from the one in the Python 
+            # Makefile used to build Python.  We let disutils handle this 
+            # error checking.
+            if not target:
+                # If MACOSX_DEPLOYMENT_TARGET is not set in the environment, 
+                # we try to get it first from the Python Makefile and then we 
+                # fall back to setting it to 10.3 to maximize the set of 
+                # versions we can work with.  This is a reasonable default
+                # even when using the official Python dist and those derived
+                # from it.
+                import distutils.sysconfig as sc
+                g = {}
+                filename = sc.get_makefile_filename()
+                sc.parse_makefile(filename, g)
+                target = g.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
+                if target == '10.3':
+                    s = 'Env. variable MACOSX_DEPLOYMENT_TARGET set to 10.3'
+                    warnings.warn(s)
+            
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
@@ -272,30 +280,30 @@ class Gnu95FCompiler(GnuFCompiler):
 
     def get_library_dirs(self):
         opt = GnuFCompiler.get_library_dirs(self)
-	if sys.platform == 'win32':
-	    c_compiler = self.c_compiler
-	    if c_compiler and c_compiler.compiler_type == "msvc":
-		target = self.get_target()
-		if target:
+        if sys.platform == 'win32':
+            c_compiler = self.c_compiler
+            if c_compiler and c_compiler.compiler_type == "msvc":
+                target = self.get_target()
+                if target:
                     d = os.path.normpath(self.get_libgcc_dir())
-		    root = os.path.join(d, os.pardir, os.pardir, os.pardir, os.pardir)
-		    mingwdir = os.path.normpath(os.path.join(root, target, "lib"))
-		    full = os.path.join(mingwdir, "libmingwex.a")
-		    if os.path.exists(full):
-			opt.append(mingwdir)
-	return opt
+                    root = os.path.join(d, os.pardir, os.pardir, os.pardir, os.pardir)
+                    mingwdir = os.path.normpath(os.path.join(root, target, "lib"))
+                    full = os.path.join(mingwdir, "libmingwex.a")
+                    if os.path.exists(full):
+                        opt.append(mingwdir)
+        return opt
 
     def get_libraries(self):
         opt = GnuFCompiler.get_libraries(self)
         if sys.platform == 'darwin':
             opt.remove('cc_dynamic')
-	if sys.platform == 'win32':
-	    c_compiler = self.c_compiler
-	    if c_compiler and c_compiler.compiler_type == "msvc":
-		if "gcc" in opt:
-		    i = opt.index("gcc")
-		    opt.insert(i+1, "mingwex")
-		    opt.insert(i+1, "mingw32")
+        if sys.platform == 'win32':
+            c_compiler = self.c_compiler
+            if c_compiler and c_compiler.compiler_type == "msvc":
+                if "gcc" in opt:
+                    i = opt.index("gcc")
+                    opt.insert(i+1, "mingwex")
+                    opt.insert(i+1, "mingw32")
         return opt
 
     def get_target(self):
@@ -303,9 +311,9 @@ class Gnu95FCompiler(GnuFCompiler):
                                       ['-v'],
                                       use_tee=0)
         if not status:
-	    m = TARGET_R.search(output)
-	    if m:
-	        return m.group(1)	
+            m = TARGET_R.search(output)
+            if m:
+                return m.group(1)
         return ""
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ dgeev, zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf,
 zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 """
 
-__all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv', 
+__all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'det', 'svd',
            'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'LinAlgError']
 

@@ -9,6 +9,7 @@ Support code for building Python extensions on Windows.
 """
 
 import os
+import subprocess
 import sys
 import log
 
@@ -50,9 +51,10 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # get_versions methods regex
         if self.gcc_version is None:
             import re
-            out = os.popen('gcc -dumpversion','r')
-            out_string = out.read()
-            out.close()
+            p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
+                                 stdout=subprocess.PIPE)
+            out_string = p.stdout.read()
+            p.stdout.close()
             result = re.search('(\d+\.\d+)',out_string)
             if result:
                 self.gcc_version = StrictVersion(result.group(1))
@@ -227,20 +229,36 @@ def build_import_library():
     #    raise DistutilsPlatformError, msg
     return
 
+#=====================================
+# Dealing with Visual Studio MANIFESTS
+#=====================================
+
 # Functions to deal with visual studio manifests. Manifest are a mechanism to
 # enforce strong DLL versioning on windows, and has nothing to do with
 # distutils MANIFEST. manifests are XML files with version info, and used by
-# the OS loader; they are necessary when linking against a DLL no in the system
-# path; in particular, python 2.6 is built against the MS runtime 9 (the one
-# from VS 2008), which is not available on most windows systems; python 2.6
-# installer does install it in the Win SxS (Side by side) directory, but this
-# requires the manifest too. This is a big mess, thanks MS for a wonderful
-# system.
+# the OS loader; they are necessary when linking against a DLL not in the
+# system path; in particular, official python 2.6 binary is built against the
+# MS runtime 9 (the one from VS 2008), which is not available on most windows
+# systems; python 2.6 installer does install it in the Win SxS (Side by side)
+# directory, but this requires the manifest for this to work. This is a big
+# mess, thanks MS for a wonderful system.
 
-# XXX: ideally, we should use exactly the same version as used by python, but I
-# have no idea how to obtain the exact version from python. We could use the
-# strings utility on python.exe, maybe ?
-_MSVCRVER_TO_FULLVER = {'90': "9.0.21022.8"}
+# XXX: ideally, we should use exactly the same version as used by python. I
+# submitted a patch to get this version, but it was only included for python
+# 2.6.1 and above. So for versions below, we use a "best guess".
+_MSVCRVER_TO_FULLVER = {}
+if sys.platform == 'win32':
+    try:
+        import msvcrt
+        if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
+            _MSVCRVER_TO_FULLVER['90'] = msvcrt.CRT_ASSEMBLY_VERSION
+        else:
+            _MSVCRVER_TO_FULLVER['90'] = "9.0.21022.8"
+    except ImportError:
+        # If we are here, means python was not built with MSVC. Not sure what to do
+        # in that case: manifest building will fail, but it should not be used in
+        # that case anyway
+        log.warn('Cannot import msvcrt: using manifest will not be possible')
 
 def msvc_manifest_xml(maj, min):
     """Given a major and minor version of the MSVCR, returns the
@@ -311,15 +329,15 @@ def check_embedded_msvcr_match_linked(msver):
 def configtest_name(config):
     base = os.path.basename(config._gen_temp_sourcefile("yo", [], "c"))
     return os.path.splitext(base)[0]
-       
+
 def manifest_name(config):
-    # Get configest name (including suffix)  
+    # Get configest name (including suffix)
     root = configtest_name(config)
     exext = config.compiler.exe_extension
     return root + exext + ".manifest"
 
 def rc_name(config):
-    # Get configest name (including suffix)  
+    # Get configest name (including suffix)
     root = configtest_name(config)
     return root + ".rc"
 

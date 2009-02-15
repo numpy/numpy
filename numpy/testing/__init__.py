@@ -5,12 +5,10 @@ in a single location, so that test scripts can just import it and work right
 away.
 """
 
-#import unittest
 from unittest import TestCase
 
 import decorators as dec
 from utils import *
-from parametric import ParametricTestCase
 from numpytest import *
 from nosetester import NoseTester as Tester
 from nosetester import run_module_suite

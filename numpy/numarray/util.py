@@ -1,7 +1,7 @@
 import os
 import numpy
 
-__all__ = ['MathDomainError', 'UnderflowError', 'NumOverflowError', 
+__all__ = ['MathDomainError', 'UnderflowError', 'NumOverflowError',
            'handleError', 'get_numarray_include_dirs']
 
 class MathDomainError(ArithmeticError): pass

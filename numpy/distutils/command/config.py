@@ -5,11 +5,13 @@
 
 import os, signal
 import warnings
+import sys
 
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
 from distutils.file_util import copy_file
+import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
 
@@ -39,6 +41,30 @@ class config(old_config):
     def _check_compiler (self):
         old_config._check_compiler(self)
         from numpy.distutils.fcompiler import FCompiler, new_fcompiler
+
+        if sys.platform == 'win32' and self.compiler.compiler_type == 'msvc':
+            # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
+            # initialize call query_vcvarsall, which throws an IOError, and
+            # causes an error along the way without much information. We try to
+            # catch it here, hoping it is early enough, and print an helpful
+            # message instead of Error: None.
+            if not self.compiler.initialized:
+                try:
+                    self.compiler.initialize()
+                except IOError, e:
+                    msg = """\
+Could not initialize compiler instance: do you have Visual Studio
+installed ? If you are trying to build with mingw, please use python setup.py
+build -c mingw32 instead ). If you have Visual Studio installed, check it is
+correctly installed, and the right version (VS 2008 for python 2.6, VS 2003 for
+2.5, etc...). Original exception was: %s, and the Compiler
+class was %s
+============================================================================""" \
+                        % (e, self.compiler.__class__.__name__)
+                    print """\
+============================================================================"""
+                    raise distutils.errors.DistutilsPlatformError(msg)
+
         if not isinstance(self.fcompiler, FCompiler):
             self.fcompiler = new_fcompiler(compiler=self.fcompiler,
                                            dry_run=self.dry_run, force=1,

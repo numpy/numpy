@@ -494,34 +494,45 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
 #define _TESTDOC1(typebase) (obj->ob_type == &Py##typebase##_Type)
 #define _TESTDOC2(typebase) (obj->ob_type == Py##typebase##_TypePtr)
-#define _ADDDOC(typebase, doc, name) {                                  \
+#define _ADDDOC(typebase, doc, name) do {                               \
         Py##typebase##Object *new = (Py##typebase##Object *)obj;        \
         if (!(doc)) {                                                   \
             doc = docstr;                                               \
         }                                                               \
         else {                                                          \
-            PyErr_Format(PyExc_RuntimeError,                            \
-                         "%s method %s",name, msg);                     \
+            PyErr_Format(PyExc_RuntimeError, "%s method %s", name, msg); \
             return NULL;                                                \
         }                                                               \
-    }
+    } while (0)
 
-    if _TESTDOC1(CFunction)
-                    _ADDDOC(CFunction, new->m_ml->ml_doc, new->m_ml->ml_name)
-        else if _TESTDOC1(Type)
-                             _ADDDOC(Type, new->tp_doc, new->tp_name)
-            else if _TESTDOC2(MemberDescr)
-                                 _ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name)
-                else if _TESTDOC2(GetSetDescr)
-                                     _ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name)
-                    else if _TESTDOC2(MethodDescr)
-                                         _ADDDOC(MethodDescr, new->d_method->ml_doc,
-                                                 new->d_method->ml_name)
-                        else {
-                            PyErr_SetString(PyExc_TypeError,
-                                            "Cannot set a docstring for that object");
-                            return NULL;
-                        }
+    if (_TESTDOC1(CFunction))
+        _ADDDOC(CFunction, new->m_ml->ml_doc, new->m_ml->ml_name);
+    else if (_TESTDOC1(Type))
+        _ADDDOC(Type, new->tp_doc, new->tp_name);
+    else if (_TESTDOC2(MemberDescr))
+        _ADDDOC(MemberDescr, new->d_member->doc, new->d_member->name);
+    else if (_TESTDOC2(GetSetDescr))
+        _ADDDOC(GetSetDescr, new->d_getset->doc, new->d_getset->name);
+    else if (_TESTDOC2(MethodDescr))
+        _ADDDOC(MethodDescr, new->d_method->ml_doc, new->d_method->ml_name);
+    else {
+        PyObject *doc_attr;
+        
+        doc_attr = PyObject_GetAttrString(obj, "__doc__");
+        if (doc_attr != NULL && doc_attr != Py_None) {
+            PyErr_Format(PyExc_RuntimeError, "object %s", msg);
+            return NULL;
+        }
+        Py_XDECREF(doc_attr);
+
+        if (PyObject_SetAttrString(obj, "__doc__", str) < 0) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot set a docstring for that object");
+            return NULL;
+        }
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
 
 #undef _TESTDOC1
 #undef _TESTDOC2
@@ -532,35 +543,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return Py_None;
 }
 
-
-static char packbits_doc[] =
-  "out = numpy.packbits(myarray, axis=None)\n\n"
-  "  myarray : an integer type array whose elements should be packed to bits\n\n"
-  "   This routine packs the elements of a binary-valued dataset into a\n"
-  "   NumPy array of type uint8 ('B') whose bits correspond to\n"
-  "   the logical (0 or nonzero) value of the input elements.\n"
-  "   The dimension over-which bit-packing is done is given by axis.\n"
-  "   The shape of the output has the same number of dimensions as the input\n"
-  "   (unless axis is None, in which case the output is 1-d).\n"
-  "\n"
-  "     Example:\n"
-  "     >>> a = array([[[1,0,1],\n"
-  "     ...             [0,1,0]],\n"
-  "     ...            [[1,1,0],\n"
-  "     ...             [0,0,1]]])\n"
-  "     >>> b = numpy.packbits(a,axis=-1)\n"
-  "     >>> b\n"
-  "     array([[[160],[64]],[[192],[32]]], dtype=uint8)\n\n"
-  "     Note that 160 = 128 + 32\n"
-  "               192 = 128 + 64\n";
-
-static char unpackbits_doc[] =
-  "out = numpy.unpackbits(myarray, axis=None)\n\n"
-  "     myarray - array of uint8 type where each element represents a bit-field\n"
-  "        that should be unpacked into a boolean output array\n\n"
-  "        The shape of the output array is either 1-d (if axis is None) or\n"
-  "        the same shape as the input array with unpacking done along the\n"
-  "        axis specified.";
 
 /*  PACKBITS
 
@@ -809,9 +791,9 @@ static struct PyMethodDef methods[] = {
     {"add_docstring", (PyCFunction)arr_add_docstring, METH_VARARGS,
      NULL},
     {"packbits",  (PyCFunction)io_pack,       METH_VARARGS | METH_KEYWORDS,
-     packbits_doc},
+     NULL},
     {"unpackbits", (PyCFunction)io_unpack,     METH_VARARGS | METH_KEYWORDS,
-     unpackbits_doc},
+     NULL},
     {NULL, NULL}    /* sentinel */
 };
 

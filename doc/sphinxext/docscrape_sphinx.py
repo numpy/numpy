@@ -115,7 +115,7 @@ class SphinxFunctionDoc(SphinxDocString, FunctionDoc):
 class SphinxClassDoc(SphinxDocString, ClassDoc):
     pass
 
-def get_doc_object(obj, what=None):
+def get_doc_object(obj, what=None, doc=None):
     if what is None:
         if inspect.isclass(obj):
             what = 'class'
@@ -126,8 +126,11 @@ def get_doc_object(obj, what=None):
         else:
             what = 'object'
     if what == 'class':
-        return SphinxClassDoc(obj, '', func_doc=SphinxFunctionDoc)
+        return SphinxClassDoc(obj, '', func_doc=SphinxFunctionDoc, doc=doc)
     elif what in ('function', 'method'):
-        return SphinxFunctionDoc(obj, '')
+        return SphinxFunctionDoc(obj, '', doc=doc)
     else:
-        return SphinxDocString(pydoc.getdoc(obj))
+        if doc is None:
+            doc = pydoc.getdoc(obj)
+        return SphinxDocString(doc)
+

@@ -334,8 +334,8 @@ class TestMRecords(TestCase):
         mult[0] = masked
         mult[1] = (1, 1, 1)
         mult.filled(0)
-        assert_equal(mult.filled(0),
-                     np.array([(0,0,0),(1,1,1)], dtype=mult.dtype))
+        assert_equal_records(mult.filled(0),
+                             np.array([(0,0,0),(1,1,1)], dtype=mult.dtype))
 
 
 class TestView(TestCase):

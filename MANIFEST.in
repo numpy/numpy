@@ -11,3 +11,9 @@ include setupegg.py
 recursive-include numpy/core/code_generators *.py
 include numpy/core/include/numpy/numpyconfig.h.in
 recursive-include numpy SConstruct
+# Add documentation: we don't use add_data_dir since we do not want to include
+# this at installation, only for sdist-generated tarballs
+include doc/Makefile doc/postprocess.py
+recursive-include doc/release *
+recursive-include doc/source *
+recursive-include doc/sphinxext *

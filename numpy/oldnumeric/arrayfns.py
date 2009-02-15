@@ -1,8 +1,8 @@
 """Backward compatible with arrayfns from Numeric
 """
 
-__all__ = ['array_set', 'construct3', 'digitize', 'error', 'find_mask', 
-           'histogram', 'index_sort', 'interp', 'nz', 'reverse', 'span', 
+__all__ = ['array_set', 'construct3', 'digitize', 'error', 'find_mask',
+           'histogram', 'index_sort', 'interp', 'nz', 'reverse', 'span',
            'to_corners', 'zmin_zmax']
 
 import numpy as np

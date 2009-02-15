@@ -5,7 +5,7 @@
 
 
 __all__ = ['CreateGenerator','ExponentialDistribution','LogNormalDistribution',
-           'NormalDistribution', 'UniformDistribution', 'error', 'ranf', 
+           'NormalDistribution', 'UniformDistribution', 'error', 'ranf',
            'default_distribution', 'random_sample', 'standard_generator']
 
 import numpy.random.mtrand as mt

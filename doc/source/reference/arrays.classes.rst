@@ -261,22 +261,7 @@ scalar data type object :class:`record`.
 Masked arrays (:mod:`numpy.ma`)
 ===============================
 
-.. seealso:: :ref:`routines.ma`
-
-.. XXX: masked array documentation should be improved
-
-.. currentmodule:: numpy
-
-.. index::
-   single: masked arrays
-
-.. autosummary::
-   :toctree: generated/
-
-   ma.masked_array
-
-.. automodule:: numpy.ma
-
+.. seealso:: :ref:`maskedarray`
 
 Standard container class
 ========================

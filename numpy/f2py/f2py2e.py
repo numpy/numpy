@@ -543,7 +543,7 @@ def run_compile():
     setup(ext_modules = [ext])
 
     if remove_build_dir and os.path.exists(build_dir):
-        import shutil 
+        import shutil
         outmess('Removing build directory %s\n'%(build_dir))
         shutil.rmtree(build_dir)
 

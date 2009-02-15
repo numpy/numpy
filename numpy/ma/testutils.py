@@ -110,14 +110,14 @@ def assert_equal(actual,desired,err_msg=''):
         return _assert_equal_on_sequences(actual.tolist(),
                                           desired.tolist(),
                                           err_msg='')
-    elif actual_dtype.char in "OV" and desired_dtype.char in "OV":
-        if (actual_dtype != desired_dtype) and actual_dtype:
-            msg = build_err_msg([actual_dtype, desired_dtype],
-                                err_msg, header='', names=('actual', 'desired'))
-            raise ValueError(msg)
-        return _assert_equal_on_sequences(actual.tolist(),
-                                          desired.tolist(),
-                                          err_msg='')
+#    elif actual_dtype.char in "OV" and desired_dtype.char in "OV":
+#        if (actual_dtype != desired_dtype) and actual_dtype:
+#            msg = build_err_msg([actual_dtype, desired_dtype],
+#                                err_msg, header='', names=('actual', 'desired'))
+#            raise ValueError(msg)
+#        return _assert_equal_on_sequences(actual.tolist(),
+#                                          desired.tolist(),
+#                                          err_msg='')
     return assert_array_equal(actual, desired, err_msg)
 
 
@@ -171,15 +171,14 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 #    yf = filled(y)
     # Allocate a common mask and refill
     m = mask_or(getmask(x), getmask(y))
-    x = masked_array(x, copy=False, mask=m, subok=False)
-    y = masked_array(y, copy=False, mask=m, subok=False)
+    x = masked_array(x, copy=False, mask=m, keep_mask=False, subok=False)
+    y = masked_array(y, copy=False, mask=m, keep_mask=False, subok=False)
     if ((x is masked) and not (y is masked)) or \
         ((y is masked) and not (x is masked)):
         msg = build_err_msg([x, y], err_msg=err_msg, verbose=verbose,
                             header=header, names=('x', 'y'))
         raise ValueError(msg)
     # OK, now run the basic tests on filled versions
-    comparison = getattr(np, comparison.__name__, lambda x,y: True)
     return utils.assert_array_compare(comparison,
                                       x.filled(fill_value),
                                       y.filled(fill_value),
@@ -189,7 +188,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
 def assert_array_equal(x, y, err_msg='', verbose=True):
     """Checks the elementwise equality of two masked arrays."""
-    assert_array_compare(equal, x, y, err_msg=err_msg, verbose=verbose,
+    assert_array_compare(operator.__eq__, x, y,
+                         err_msg=err_msg, verbose=verbose,
                          header='Arrays are not equal')
 
 
@@ -223,7 +223,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
 def assert_array_less(x, y, err_msg='', verbose=True):
     "Checks that x is smaller than y elementwise."
-    assert_array_compare(less, x, y, err_msg=err_msg, verbose=verbose,
+    assert_array_compare(operator.__lt__, x, y,
+                         err_msg=err_msg, verbose=verbose,
                          header='Arrays are not less-ordered')
 
 

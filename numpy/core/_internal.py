@@ -292,3 +292,22 @@ def _newnames(datatype, order):
                 raise ValueError, "unknown field name: %s" % (name,)
         return tuple(list(order) + nameslist)
     raise ValueError, "unsupported order value: %s" % (order,)
+
+# Given an array with fields and a sequence of field names
+# construct a new array with just those fields copied over
+def _index_fields(ary, fields):
+    from multiarray import empty, dtype
+    dt = ary.dtype
+    new_dtype = [(name, dt[name]) for name in dt.names if name in fields]
+    if ary.flags.f_contiguous:
+        order = 'F'
+    else:
+        order = 'C'
+
+    newarray = empty(ary.shape, dtype=new_dtype, order=order) 
+   
+    for name in fields:
+        newarray[name] = ary[name]
+
+    return newarray
+    
