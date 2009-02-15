@@ -57,6 +57,9 @@ The plot directive has the following configuration options:
     plot_include_source
         Default value for the include-source option
 
+    plot_formats
+        The set of files to generate. Default: ['png', 'pdf', 'hires.png'],
+        ie. everything.
 
 TODO
 ----
@@ -75,22 +78,27 @@ def setup(app):
     setup.app = app
     setup.config = app.config
     setup.confdir = app.confdir
-    
-    app.add_config_value('plot_output_dir', '_static', True)
+
+    static_path = '_static'
+    if hasattr(app.config, 'html_static_path') and app.config.html_static_path:
+        static_path = app.config.html_static_path[0]
+
+    app.add_config_value('plot_output_dir', static_path, True)
     app.add_config_value('plot_pre_code', '', True)
     app.add_config_value('plot_rcparams', sane_rcparameters, True)
     app.add_config_value('plot_include_source', False, True)
+    app.add_config_value('plot_formats', ['png', 'hires.png', 'pdf'], True)
 
     app.add_directive('plot', plot_directive, True, (0, 1, False),
                       **plot_directive_options)
 
 sane_rcparameters = {
-    'font.size': 8,
-    'axes.titlesize': 8,
-    'axes.labelsize': 8,
-    'xtick.labelsize': 8,
-    'ytick.labelsize': 8,
-    'legend.fontsize': 8,
+    'font.size': 9,
+    'axes.titlesize': 9,
+    'axes.labelsize': 9,
+    'xtick.labelsize': 9,
+    'ytick.labelsize': 9,
+    'legend.fontsize': 9,
     'figure.figsize': (4, 3),
 }
 
@@ -134,10 +142,16 @@ def run_code(code, code_path):
     # Change the working directory to the directory of the example, so
     # it can get at its data files, if any.
     pwd = os.getcwd()
+    old_sys_path = list(sys.path)
     if code_path is not None:
-        os.chdir(os.path.dirname(code_path))
+        dirname = os.path.abspath(os.path.dirname(code_path))
+        os.chdir(dirname)
+        sys.path.insert(0, dirname)
+
+    # Redirect stdout
     stdout = sys.stdout
     sys.stdout = cStringIO.StringIO()
+    
     try:
         code = unescape_doctest(code)
         ns = {}
@@ -145,8 +159,10 @@ def run_code(code, code_path):
         exec code in ns
     finally:
         os.chdir(pwd)
+        sys.path[:] = old_sys_path
         sys.stdout = stdout
     return ns
+
 
 #------------------------------------------------------------------------------
 # Generating figures
@@ -160,16 +176,19 @@ def out_of_date(original, derived):
     return (not os.path.exists(derived)
             or os.stat(derived).st_mtime < os.stat(original).st_mtime)
 
+
 def makefig(code, code_path, output_dir, output_base, config):
     """
     run a pyplot script and save the low and high res PNGs and a PDF in _static
 
     """
 
-    formats = [('png', 100),
-               ('hires.png', 200),
-               ('pdf', 50),
-               ]
+    included_formats = config.plot_formats
+    if type(included_formats) is str:
+        included_formats = eval(included_formats)
+    
+    formats = [x for x in [('png', 80), ('hires.png', 200), ('pdf', 50)]
+               if x[0] in config.plot_formats]
 
     all_exists = True
 
@@ -181,26 +200,25 @@ def makefig(code, code_path, output_dir, output_base, config):
             break
 
     if all_exists:
-        return 1
+        return [output_base]
 
-    # Then look for multi-figure output files, assuming
-    # if we have some we have all...
-    i = 0
-    while True:
-        all_exists = True
+    # Then look for multi-figure output files
+    image_names = []
+    for i in xrange(1000):
+        image_names.append('%s_%02d' % (output_base, i))
         for format, dpi in formats:
             output_path = os.path.join(output_dir,
-                                       '%s_%02d.%s' % (output_base, i, format))
+                                       '%s.%s' % (image_names[-1], format))
             if out_of_date(code_path, output_path):
                 all_exists = False
                 break
-        if all_exists:
-            i += 1
-        else:
+        if not all_exists:
+            # assume that if we have one, we have them all
+            all_exists = (i > 0)
             break
 
-    if i != 0:
-        return i
+    if all_exists:
+        return image_names
 
     # We didn't find the files, so build them
     print "-- Plotting figures %s" % output_base
@@ -212,31 +230,24 @@ def makefig(code, code_path, output_dir, output_base, config):
     matplotlib.rcdefaults()
     matplotlib.rcParams.update(config.plot_rcparams)
 
-    try:
-        run_code(code, code_path)
-    except:
-        raise
-	s = cbook.exception_to_str("Exception running plot %s" % code_path)
-        warnings.warn(s)
-        return 0
+    # Run code
+    run_code(code, code_path)
+
+    # Collect images
+    image_names = []
 
     fig_managers = _pylab_helpers.Gcf.get_all_fig_managers()
     for i, figman in enumerate(fig_managers):
+        if len(fig_managers) == 1:
+            name = output_base
+        else:
+            name = "%s_%02d" % (output_base, i)
+        image_names.append(name)
         for format, dpi in formats:
-            if len(fig_managers) == 1:
-                name = output_base
-            else:
-                name = "%s_%02d" % (output_base, i)
             path = os.path.join(output_dir, '%s.%s' % (name, format))
-            try:
-                figman.canvas.figure.savefig(path, dpi=dpi)
-            except:
-                s = cbook.exception_to_str("Exception running plot %s"
-                                           % code_path)
-                warnings.warn(s)
-                return 0
+            figman.canvas.figure.savefig(path, dpi=dpi)
 
-    return len(fig_managers)
+    return image_names
 
 #------------------------------------------------------------------------------
 # Generating output
@@ -303,7 +314,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         document.attributes['_plot_counter'] = counter
         output_base = '%d-%s' % (counter, os.path.basename(file_name))
 
-    rel_name = relative_path(file_name, setup.confdir)
+    rel_name = relpath(file_name, setup.confdir)
 
     base, ext = os.path.splitext(output_base)
     if ext in ('.py', '.rst', '.txt'):
@@ -334,13 +345,19 @@ def run(arguments, content, options, state_machine, state, lineno):
     f.write(unescape_doctest(code))
     f.close()
 
-    source_link = relative_path(target_name, rst_dir)
+    source_link = relpath(target_name, rst_dir)
 
     # determine relative reference
-    link_dir = relative_path(output_dir, rst_dir)
+    link_dir = relpath(output_dir, rst_dir)
 
     # make figures
-    num_figs = makefig(code, file_name, output_dir, output_base, config)
+    try:
+        image_names = makefig(code, file_name, output_dir, output_base, config)
+    except RuntimeError, err:
+        reporter = state.memo.reporter
+        sm = reporter.system_message(3, "Exception occurred rendering plot",
+                                     line=lineno)
+        return [sm]
 
     # generate output
     if options['include-source']:
@@ -352,20 +369,6 @@ def run(arguments, content, options, state_machine, state, lineno):
         source_code = "\n".join(lines)
     else:
         source_code = ""
-
-    if num_figs > 0:
-        image_names = []
-        for i in range(num_figs):
-            if num_figs == 1:
-                image_names.append(output_base)
-            else:
-                image_names.append("%s_%02d" % (output_base, i))
-    else:
-        reporter = state.memo.reporter
-        sm = reporter.system_message(3, "Exception occurred rendering plot",
-                                     line=lineno)
-        return [sm]
-
 
     opts = [':%s: %s' % (key, val) for key, val in options.items()
             if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
@@ -381,23 +384,48 @@ def run(arguments, content, options, state_machine, state, lineno):
     if len(lines):
         state_machine.insert_input(
             lines, state_machine.input_lines.source(0))
+
     return []
 
 
-def relative_path(target, base):
-    target = os.path.abspath(os.path.normpath(target))
-    base = os.path.abspath(os.path.normpath(base))
+if hasattr(os.path, 'relpath'):
+    relpath = os.path.relpath
+else:
+    def relpath(target, base=os.curdir):
+        """
+        Return a relative path to the target from either the current
+        dir or an optional base dir.  Base can be a directory
+        specified either as absolute or relative to current dir.
+        """
 
-    target_parts = target.split(os.path.sep)
-    base_parts = base.split(os.path.sep)
-    rel_parts = 0
+        if not os.path.exists(target):
+            raise OSError, 'Target does not exist: '+target
 
-    while target_parts and base_parts and target_parts[0] == base_parts[0]:
-        target_parts.pop(0)
-        base_parts.pop(0)
+        if not os.path.isdir(base):
+            raise OSError, 'Base is not a directory or does not exist: '+base
 
-    rel_parts += len(base_parts)
-    return os.path.sep.join([os.path.pardir] * rel_parts + target_parts)
+        base_list = (os.path.abspath(base)).split(os.sep)
+        target_list = (os.path.abspath(target)).split(os.sep)
+
+        # On the windows platform the target may be on a completely
+        # different drive from the base.
+        if os.name in ['nt','dos','os2'] and base_list[0] <> target_list[0]:
+            raise OSError, 'Target is on a different drive to base. Target: '+target_list[0].upper()+', base: '+base_list[0].upper()
+
+        # Starting from the filepath root, work out how much of the
+        # filepath is shared by base and target.
+        for i in range(min(len(base_list), len(target_list))):
+            if base_list[i] <> target_list[i]: break
+        else:
+            # If we broke out of the loop, i is pointing to the first
+            # differing path elements.  If we didn't break out of the
+            # loop, i is pointing to identical path elements.
+            # Increment i so that in all cases it points to the first
+            # differing path elements.
+            i+=1
+
+        rel_list = [os.pardir] * (len(base_list)-i) + target_list[i:]
+        return os.path.join(*rel_list)
 
 #------------------------------------------------------------------------------
 # plot:: directive registration etc.
@@ -412,21 +440,11 @@ except ImportError:
     from docutils.parsers.rst.directives.images import Image
     align = Image.align
 
-try:
-    from docutils.parsers.rst import Directive
-except ImportError:
-    from docutils.parsers.rst.directives import _directives
+def plot_directive(name, arguments, options, content, lineno,
+                   content_offset, block_text, state, state_machine):
+    return run(arguments, content, options, state_machine, state, lineno)
 
-    def plot_directive(name, arguments, options, content, lineno,
-                       content_offset, block_text, state, state_machine):
-        return run(arguments, content, options, state_machine, state, lineno)
-    plot_directive.__doc__ = __doc__
-else:
-    class plot_directive(Directive):
-        def run(self):
-            return run(self.arguments, self.content, self.options,
-                       self.state_machine, self.state, self.lineno)
-    plot_directive.__doc__ = __doc__
+plot_directive.__doc__ = __doc__
 
 def _option_boolean(arg):
     if not arg or not arg.strip():
