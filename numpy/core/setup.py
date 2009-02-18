@@ -411,6 +411,7 @@ def configuration(parent_package='',top_path=None):
                                     join('*.py')
                                     ],
                          depends = deps,
+                         libraries=['npymath'],
                          )
 
     config.add_extension('umath',
@@ -428,6 +429,7 @@ def configuration(parent_package='',top_path=None):
                                     generate_umath_py,
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
+                         libraries=['npymath'],
                          )
 
     config.add_extension('scalarmath',
