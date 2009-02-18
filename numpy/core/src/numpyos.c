@@ -416,7 +416,8 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
     size_t decimal_point_len = strlen(decimal_point);
 
     char buffer[FLOAT_FORMATBUFLEN+1];
-    char *p;
+    const char *p;
+    char *q;
     size_t n;
     double result;
 
@@ -444,14 +445,14 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
             while (NumPyOS_ascii_isalnum(*p) || *p == '_') ++p;
             if (*p == ')') ++p;
         }
-        if (endptr != NULL) *endptr = p;
+        if (endptr != NULL) *endptr = (char*)p;
         return NumPyOS_NAN;
     }
     else if (NumPyOS_ascii_strncasecmp(p, "inf", 3) == 0) {
         p += 3;
         if (NumPyOS_ascii_strncasecmp(p, "inity", 5) == 0)
             p += 5;
-        if (endptr != NULL) *endptr = p;
+        if (endptr != NULL) *endptr = (char*)p;
         return result*NumPyOS_PINF;
     }
     /* End of ##1 */
@@ -464,7 +465,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
      * where <DP> is the decimal point under the foreign locale.
      */
     if (decimal_point[0] != '.' || decimal_point[1] != 0) {
-        p = (char *)s;
+        p = s;
         if (*p == '+' || *p == '-')
             ++p;
         while (*p >= '0' && *p <= '9')
@@ -475,9 +476,9 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
                 n = FLOAT_FORMATBUFLEN;
             memcpy(buffer, s, n);
             buffer[n] = '\0';
-            result = PyOS_ascii_strtod(buffer, &p);
+            result = PyOS_ascii_strtod(buffer, &q);
             if (endptr != NULL) {
-                *endptr = s + (p - buffer);
+                *endptr = (char*)(s + (q - buffer));
             }
             return result;
         }
