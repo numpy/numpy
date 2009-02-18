@@ -10,7 +10,8 @@ from distutils.errors import DistutilsSetupError, DistutilsError, \
 from numpy.distutils import log
 from distutils.dep_util import newer_group
 from numpy.distutils.misc_util import filter_sources, has_f_sources,\
-     has_cxx_sources, all_strings, get_lib_source_files, is_sequence
+     has_cxx_sources, all_strings, get_lib_source_files, is_sequence, \
+     get_numpy_include_dirs
 
 # Fix Python distutils bug sf #1718574:
 _l = old_build_clib.user_options
@@ -162,8 +163,11 @@ class build_clib(old_build_clib):
 
         macros = build_info.get('macros')
         include_dirs = build_info.get('include_dirs')
+        if include_dirs is None:
+            include_dirs = []
         extra_postargs = build_info.get('extra_compiler_args') or []
 
+        include_dirs.extend(get_numpy_include_dirs())
         # where compiled F90 module files are:
         module_dirs = build_info.get('module_dirs') or []
         module_build_dir = os.path.dirname(lib_file)
