@@ -153,6 +153,24 @@ def sym2def(symbol):
     define = symbol.replace(' ', '_')
     return define.upper()
 
+def check_mathlib(config_cmd):
+    # Testing the C math library
+    mathlibs = []
+    tc = testcode_mathlib()
+    mathlibs_choices = [[],['m'],['cpml']]
+    mathlib = os.environ.get('MATHLIB')
+    if mathlib:
+        mathlibs_choices.insert(0,mathlib.split(','))
+    for libs in mathlibs_choices:
+        if config_cmd.try_run(tc,libraries=libs):
+            mathlibs = libs
+            break
+    else:
+        raise EnvironmentError("math library missing; rerun "
+                               "setup.py after setting the "
+                               "MATHLIB env variable")
+    return mathlibs
+
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
     from numpy.distutils.system_info import get_info, default_lib_dirs
@@ -180,22 +198,7 @@ def configuration(parent_package='',top_path=None):
 
             moredefs, ignored = check_types(config, ext, build_dir)
 
-            # Testing the C math library
-            mathlibs = []
-            tc = testcode_mathlib()
-            mathlibs_choices = [[],['m'],['cpml']]
-            mathlib = os.environ.get('MATHLIB')
-            if mathlib:
-                mathlibs_choices.insert(0,mathlib.split(','))
-            for libs in mathlibs_choices:
-                if config_cmd.try_run(tc,libraries=libs):
-                    mathlibs = libs
-                    break
-            else:
-                raise EnvironmentError("math library missing; rerun "
-                                       "setup.py after setting the "
-                                       "MATHLIB env variable")
-            ext.libraries.extend(mathlibs)
+            mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
@@ -259,7 +262,11 @@ def configuration(parent_package='',top_path=None):
                         mathlibs.extend(value.split(','))
             target_f.close()
 
-        ext.libraries.extend(mathlibs)
+        # Ugly: this can be called within a library and not an extension,
+        # in which case there is no libraries attributes (and none is
+        # needed).
+        if hasattr(ext, 'libraries'):
+            ext.libraries.extend(mathlibs)
 
         incl_dir = os.path.dirname(target)
         if incl_dir not in config.numpy_include_dirs:
