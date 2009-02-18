@@ -383,6 +383,23 @@ def configuration(parent_package='',top_path=None):
     if sys.platform == 'cygwin':
         config.add_data_dir('include/numpy/fenv')
 
+    config.add_extension('_sort',
+                         sources=[join('src','_sortmodule.c.src'),
+                                  generate_config_h,
+                                  generate_numpyconfig_h,
+                                  generate_numpy_api,
+                                  ],
+                         )
+
+    # npymath needs the config.h and numpyconfig.h files to be generated, but
+    # build_clib cannot handle generate_config_h and generate_numpyconfig_h
+    # (don't ask). Because clib are generated before extensions, we have to
+    # explicitely add an extension which has generate_config_h and
+    # generate_numpyconfig_h as sources *before* adding npymath.
+    config.add_library('npymath', 
+            sources=[join('src', 'npy_math.c.src')],
+            depends=[])
+
     config.add_extension('multiarray',
                          sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,
@@ -412,14 +429,6 @@ def configuration(parent_package='',top_path=None):
                                     generate_umath_py,
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
-                         )
-
-    config.add_extension('_sort',
-                         sources=[join('src','_sortmodule.c.src'),
-                                  generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api,
-                                  ],
                          )
 
     config.add_extension('scalarmath',
