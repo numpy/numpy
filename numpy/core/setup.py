@@ -171,9 +171,9 @@ def configuration(parent_package='',top_path=None):
 
     def generate_config_h(ext, build_dir):
         target = join(build_dir,header_dir,'config.h')
-        dir = os.path.dirname(target)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        d = os.path.dirname(target)
+        if not os.path.exists(d):
+            os.makedirs(d)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
@@ -270,9 +270,9 @@ def configuration(parent_package='',top_path=None):
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
         target = join(build_dir,header_dir,'numpyconfig.h')
-        dir = os.path.dirname(target)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        d = os.path.dirname(target)
+        if not os.path.exists(d):
+            os.makedirs(d)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
