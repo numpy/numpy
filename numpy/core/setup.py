@@ -286,6 +286,18 @@ def configuration(parent_package='',top_path=None):
 
             moredefs = []
 
+            # Normally, isnan and isinf are macro (C99), but some platforms
+            # only have func, or both func and macro version. Check for macro
+            # only, and define replacement ones if not found.
+            # Note: including Python.h is necessary because it modifies some
+            # math.h definitions
+            # XXX: we check those twice... should decouple tests from
+            # config.h/numpyconfig.h to avoid this
+            for f in ["isnan", "isinf", "signbit", "isfinite"]:
+                st = config_cmd.check_decl(f, headers = ["Python.h", "math.h"])
+                if st:
+                    moredefs.append('NPY_HAVE_DECL_%s' % f.upper())
+
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
                 moredefs.append(('NPY_USE_C99_FORMATS', 1))
