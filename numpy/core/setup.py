@@ -215,11 +215,6 @@ def configuration(parent_package='',top_path=None):
                 if a == 'AMD64':
                     moredefs.append('DISTUTILS_USE_SDK')
 
-            if sys.version[:3] < '2.4':
-                if config_cmd.check_func('strtod', decl=False,
-                                         headers=['stdlib.h']):
-                    moredefs.append(('PyOS_ascii_strtod', 'strtod'))
-
             if sys.platform == "win32":
                 from numpy.distutils.misc_util import get_build_architecture
                 # On win32, force long double format string to be 'g', not
