@@ -112,6 +112,43 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if st:
             moredefs.append(name_to_defsymb("decl_%s" % f))
 
+def check_types(config, ext, build_dir):
+    private_defines = []
+    public_defines = []
+
+    config_cmd = config.get_config_cmd()
+
+    # Check we have the python header (-dev* packages on Linux)
+    result = config_cmd.check_header('Python.h')
+    if not result:
+        raise SystemError(
+                "Cannot compiler 'Python.h'. Perhaps you need to "\
+                "install python-dev|python-devel.")
+
+    # Check basic types sizes
+    for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
+        res = config_cmd.check_type_size(type)
+        if res >= 0:
+            private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+
+    for type in ('Py_intptr_t',):
+        res = config_cmd.check_type_size(type, headers=["Python.h"])
+        if res >= 0:
+            private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+
+    # We check declaration AND type because that's how distutils does it.
+    if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
+        st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'])
+        assert not st == 0
+        private_defines.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
+
+    if not config_cmd.check_decl('CHAR_BIT', headers=['Python.h']):
+        raise RuntimeError(
+            "Config wo CHAR_BIT is not supported"\
+            ", please contact the maintainers")
+
+    return private_defines, public_defines
+
 def sym2def(symbol):
     define = symbol.replace(' ', '_')
     return define.upper()
@@ -139,38 +176,9 @@ def configuration(parent_package='',top_path=None):
             os.makedirs(dir)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
-            moredefs = []
-
             log.info('Generating %s',target)
 
-            # Check we have the python header (-dev* packages on Linux)
-            result = config_cmd.check_header('Python.h')
-            if not result:
-                raise SystemError(
-                        "Cannot compiler 'Python.h'. Perhaps you need to "\
-                        "install python-dev|python-devel.")
-
-            # Check basic types sizes
-            for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
-                res = config_cmd.check_type_size(type)
-                if res >= 0:
-                    moredefs.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
-
-            for type in ('Py_intptr_t',):
-                res = config_cmd.check_type_size(type, headers=["Python.h"])
-                if res >= 0:
-                    moredefs.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
-
-            # We check declaration AND type because that's how distutils does it.
-            if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
-                st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'])
-                assert not st == 0
-                moredefs.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % st))
-
-            if not config_cmd.check_decl('CHAR_BIT', headers=['Python.h']):
-                raise RuntimeError(
-                    "Config wo CHAR_BIT is not supported"\
-                    ", please contact the maintainers")
+            moredefs, ignored = check_types(config, ext, build_dir)
 
             # Testing the C math library
             mathlibs = []
