@@ -139,7 +139,11 @@ def configuration(parent_package='',top_path=None):
             log.info('Generating %s',target)
 
             # Check we have the python header (-dev* packages on Linux)
-            config_cmd.check_header('Python.h')
+            result = config_cmd.check_header('Python.h')
+            if not result:
+                raise SystemError(
+                        "Cannot compiler 'Python.h'. Perhaps you need to "\
+                        "install python-dev|python-devel.")
 
             tc = generate_testcode(target)
             result = config_cmd.try_run(tc, library_dirs = default_lib_dirs)
