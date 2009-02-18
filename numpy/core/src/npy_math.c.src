@@ -195,35 +195,17 @@ double log2(double x)
  **                     IEEE 754 FPU HANDLING                               **
  *****************************************************************************
  */
-#if !defined(HAVE_DECL_ISNAN)
-    # define isnan(x) ((x) != (x))
-#endif
-
-/* VS 2003 with /Ox optimizes (x)-(x) to 0, which is not IEEE compliant. So we
- * force (x) + (-x), which seems to work. */
-#if !defined(HAVE_DECL_ISFINITE)
-    # define isfinite(x) !isnan((x) + (-x))
-#endif
-
-#if !defined(HAVE_DECL_ISINF)
-#define isinf(x) (!isfinite(x) && !isnan(x))
-#endif
-
 #if !defined(HAVE_DECL_SIGNBIT)
-    #include "_signbit.c"
-    # define signbit(x) \
-              (sizeof (x) == sizeof (long double) ? signbit_ld (x) \
-               : sizeof (x) == sizeof (double) ? signbit_d (x) \
-               : signbit_f (x))
+#include "_signbit.c"
 
-static int signbit_f (float x)
+static int _npy_signbit_f (float x)
 {
-    return signbit_d((double)x);
+    return npy_signbit_d((double)x);
 }
 
-static int signbit_ld (long double x)
+static int _npy_signbit_ld (long double x)
 {
-    return signbit_d((double)x);
+    return _npy_signbit_d((double)x);
 }
 #endif
 

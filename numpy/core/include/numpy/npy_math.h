@@ -21,25 +21,28 @@ double npy_log2(double x);
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
 #ifndef NPY_HAVE_DECL_ISNAN
-        #define npy_isnan(x) _npy_isnan((x))
+        #define npy_isnan(x) ((x) != (x))
 #else
         #define npy_isnan(x) isnan((x))
 #endif
 
 #ifndef NPY_HAVE_DECL_ISFINITE
-        #define npy_isfinite(x) _npy_isfinite((x))
+        #define npy_isfinite(x) !npy_isnan((x) + (-x))
 #else
         #define npy_isfinite(x) isfinite((x))
 #endif
 
 #ifndef NPY_HAVE_DECL_ISFINITE
-        #define npy_isinf(x) _npy_isinf((x))
+        #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
 #else
         #define npy_isinf(x) isinf((x))
 #endif
 
 #ifndef NPY_HAVE_DECL_SIGNBIT
-        #define npy_signbit(x) _npy_signbit((x))
+        #define npy_signbit(x) \
+              (sizeof (x) == sizeof (long double) ? _npy_signbit_ld (x) \
+               : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
+               : _npy_signbit_f (x))
 #else
         #define npy_signbit(x) signbit((x))
 #endif
