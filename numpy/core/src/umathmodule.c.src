@@ -23,18 +23,13 @@
 #include "abstract.h"
 #include "config.h"
 
-/*
- * Looks like some versions of Python.h do naughty things, so math.h needs
- * to come after.
- */
-#include <math.h>
+#include "numpy/npy_math.h"
 
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
  *****************************************************************************
  */
-#include "umath_funcs_c99.inc"
 #include "umath_funcs.inc"
 #include "umath_loops.inc"
 #include "umath_ufunc_object.inc"

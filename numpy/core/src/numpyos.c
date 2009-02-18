@@ -1,6 +1,8 @@
 #include <locale.h>
 #include <stdio.h>
 
+#include "numpy/npy_math.h"
+
 /* From the C99 standard, section 7.19.6: The exponent always contains at least
    two digits, and only as many more digits as necessary to represent the
    exponent.
@@ -249,21 +251,21 @@ _fix_ascii_format(char* buf, size_t buflen, int decimal)
                                    const char *format,                  \
                                    type val, int decimal)               \
     {                                                                   \
-	if (isfinite(val)) {                                            \
+	if (npy_isfinite(val)) {                                        \
             if(_check_ascii_format(format)) {                           \
                 return NULL;                                            \
             }                                                           \
             PyOS_snprintf(buffer, buf_size, format, (print_type)val);   \
             return _fix_ascii_format(buffer, buf_size, decimal);        \
 	}                                                               \
-        else if (isnan(val)){                                           \
+        else if (npy_isnan(val)){                                       \
             if (buf_size < 4) {                                         \
                 return NULL;                                            \
             }                                                           \
             strcpy(buffer, "nan");                                      \
 	}                                                               \
         else {                                                          \
-            if (signbit(val)) {                                         \
+            if (npy_signbit(val)) {                                     \
                 if (buf_size < 5) {                                     \
                     return NULL;                                        \
                 }                                                       \

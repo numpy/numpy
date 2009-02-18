@@ -81,11 +81,6 @@ _arraydescr_fromobj(PyObject *obj)
     return NULL;
 }
 
-/* XXX: We include c99 compat math module here because it is needed for
- * numpyos.c (included by arrayobject). This is bad - we should separate
- * declaration/implementation and share this in a lib. */
-#include "umath_funcs_c99.inc"
-
 /* Including this file is the only way I know how to declare functions
    static in each file, and store the pointers from functions in both
    arrayobject.c and multiarraymodule.c for the C-API
