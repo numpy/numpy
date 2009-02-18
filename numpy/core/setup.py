@@ -285,20 +285,9 @@ def configuration(parent_package='',top_path=None):
             log.info('Generating %s',target)
             testcode = generate_numpyconfig_code(target)
 
-            from distutils import sysconfig
-            python_include = sysconfig.get_python_inc()
-            python_h = join(python_include, 'Python.h')
-            if not os.path.isfile(python_h):
-                raise SystemError,\
-                      "Non-existing %s. Perhaps you need to install"\
-                      " python-dev|python-devel." % (python_h)
-
-            config.numpy_include_dirs
             result = config_cmd.try_run(testcode,
-                                include_dirs = [python_include] + \
-                                                       config.numpy_include_dirs,
-                                        library_dirs = default_lib_dirs)
-
+                        include_dirs=config.numpy_include_dirs,
+                        library_dirs=default_lib_dirs)
             if not result:
                 raise SystemError,"Failed to generate numpy configuration. "\
                       "See previous error messages for more information."
