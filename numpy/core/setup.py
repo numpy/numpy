@@ -235,16 +235,6 @@ def configuration(parent_package='',top_path=None):
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
 
-            # Keep those for backward compatibility for now
-            target_f.write("""
-#ifdef HAVE_EXPL
-#define HAVE_LONGDOUBLE_FUNCS
-#endif
-
-#ifdef HAVE_EXPF
-#define HAVE_FLOAT_FUNCS
-#endif
-""")
             target_f.close()
             print 'File:',target
             target_f = open(target)
