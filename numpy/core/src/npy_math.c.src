@@ -46,7 +46,7 @@
 #include <math.h>
 
 #include "config.h"
-#include "npy_math.h"
+#include "numpy/npy_math.h"
 
 /*
  *****************************************************************************
