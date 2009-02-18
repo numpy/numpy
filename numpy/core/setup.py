@@ -112,6 +112,9 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if st:
             moredefs.append(name_to_defsymb("decl_%s" % f))
 
+def sym2def(symbol):
+    define = symbol.replace(' ', '_')
+    return define.upper()
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
@@ -130,13 +133,14 @@ def configuration(parent_package='',top_path=None):
     header_dir = 'include/numpy' # this is relative to config.path_in_package
 
     def generate_config_h(ext, build_dir):
-        sizeofs = {}
         target = join(build_dir,header_dir,'config.h')
         dir = os.path.dirname(target)
         if not os.path.exists(dir):
             os.makedirs(dir)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
+            moredefs = []
+
             log.info('Generating %s',target)
 
             # Check we have the python header (-dev* packages on Linux)
@@ -150,25 +154,23 @@ def configuration(parent_package='',top_path=None):
             for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
                 res = config_cmd.check_type_size(type)
                 if res >= 0:
-                    sizeofs[type] = res
+                    moredefs.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
 
             for type in ('Py_intptr_t',):
                 res = config_cmd.check_type_size(type, headers=["Python.h"])
                 if res >= 0:
-                    sizeofs[type] = res
+                    moredefs.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
 
             # We check declaration AND type because that's how distutils does it.
             if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
                 st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'])
                 assert not st == 0
-                sizeofs['PY_LONG_LONG'] = st
+                moredefs.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % st))
 
             if not config_cmd.check_decl('CHAR_BIT', headers=['Python.h']):
                 raise RuntimeError(
                     "Config wo CHAR_BIT is not supported"\
                     ", please contact the maintainers")
-
-            moredefs = []
 
             # Testing the C math library
             mathlibs = []
@@ -190,9 +192,11 @@ def configuration(parent_package='',top_path=None):
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
 
+            # Signal test
             if is_npy_no_signal():
                 moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
 
+            # Distutils hack on AMD64 on windows
             if sys.platform=='win32' or os.name=='nt':
                 from numpy.distutils.misc_util import get_build_architecture
                 a = get_build_architecture()
