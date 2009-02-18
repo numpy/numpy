@@ -130,6 +130,7 @@ def configuration(parent_package='',top_path=None):
     header_dir = 'include/numpy' # this is relative to config.path_in_package
 
     def generate_config_h(ext, build_dir):
+        sizeofs = {}
         target = join(build_dir,header_dir,'config.h')
         dir = os.path.dirname(target)
         if not os.path.exists(dir):
@@ -145,14 +146,31 @@ def configuration(parent_package='',top_path=None):
                         "Cannot compiler 'Python.h'. Perhaps you need to "\
                         "install python-dev|python-devel.")
 
-            tc = generate_testcode(target)
-            result = config_cmd.try_run(tc, library_dirs = default_lib_dirs)
-            if not result:
-                raise SystemError,"Failed to test configuration. "\
-                      "See previous error messages for more information."
+            # Check basic types sizes
+            for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
+                res = config_cmd.check_type_size(type)
+                if res >= 0:
+                    sizeofs[type] = res
+
+            for type in ('Py_intptr_t',):
+                res = config_cmd.check_type_size(type, headers=["Python.h"])
+                if res >= 0:
+                    sizeofs[type] = res
+
+            # We check declaration AND type because that's how distutils does it.
+            if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
+                st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'])
+                assert not st == 0
+                sizeofs['PY_LONG_LONG'] = st
+
+            if not config_cmd.check_decl('CHAR_BIT', headers=['Python.h']):
+                raise RuntimeError(
+                    "Config wo CHAR_BIT is not supported"\
+                    ", please contact the maintainers")
 
             moredefs = []
-            #
+
+            # Testing the C math library
             mathlibs = []
             tc = testcode_mathlib()
             mathlibs_choices = [[],['m'],['cpml']]
