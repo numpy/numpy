@@ -35,6 +35,22 @@ def is_npy_no_smp():
             nosmp = 0
     return nosmp == 1
 
+def win32_checks(deflist):
+    from numpy.distutils.misc_util import get_build_architecture
+    a = get_build_architecture()
+
+    # Distutils hack on AMD64 on windows
+    print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % \
+          (a, os.name, sys.platform)
+    if a == 'AMD64':
+        deflist.append('DISTUTILS_USE_SDK')
+
+    # On win32, force long double format string to be 'g', not
+    # 'Lg', since the MS runtime does not support long double whose
+    # size is > sizeof(double)
+    if a =="Intel":
+        deflist.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
+
 def check_math_capabilities(config, moredefs, mathlibs):
     def check_func(func_name):
         return config.check_func(func_name, libraries=mathlibs,
@@ -196,33 +212,24 @@ def configuration(parent_package='',top_path=None):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
 
+            # Check sizeof
             moredefs, ignored = check_types(config, ext, build_dir)
 
+            # Check math library and C99 math funcs availability
             mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
 
-            # Signal test
+            # Signal check
             if is_npy_no_signal():
                 moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
 
-            # Distutils hack on AMD64 on windows
+            # Windows checks
             if sys.platform=='win32' or os.name=='nt':
-                from numpy.distutils.misc_util import get_build_architecture
-                a = get_build_architecture()
-                print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
-                if a == 'AMD64':
-                    moredefs.append('DISTUTILS_USE_SDK')
+                win32_checks(moredefs)
 
-            if sys.platform == "win32":
-                from numpy.distutils.misc_util import get_build_architecture
-                # On win32, force long double format string to be 'g', not
-                # 'Lg', since the MS runtime does not support long double whose
-                # size is > sizeof(double)
-                if get_build_architecture()=="Intel":
-                    moredefs.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
-
+            # Generate the config.h file from moredefs
             target_f = open(target,'a')
             for d in moredefs:
                 if isinstance(d,str):
