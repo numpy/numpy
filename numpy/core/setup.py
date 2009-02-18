@@ -394,7 +394,7 @@ def configuration(parent_package='',top_path=None):
     # npymath needs the config.h and numpyconfig.h files to be generated, but
     # build_clib cannot handle generate_config_h and generate_numpyconfig_h
     # (don't ask). Because clib are generated before extensions, we have to
-    # explicitely add an extension which has generate_config_h and
+    # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
     config.add_library('npymath', 
             sources=[join('src', 'npy_math.c.src')],
