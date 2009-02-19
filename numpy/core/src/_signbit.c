@@ -1,6 +1,6 @@
 /* Adapted from cephes */
 
-static int
+int
 _npy_signbit_d(double x)
 {
     union
