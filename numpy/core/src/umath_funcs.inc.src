@@ -62,7 +62,7 @@ log2_1p@c@(@type@ x)
     if (u == 1) {
         return LOG2E*x;
     } else {
-        return log2@c@(u) * x / (u - 1);
+        return npy_log2@c@(u) * x / (u - 1);
     }
 }
 
@@ -75,7 +75,7 @@ exp2_1m@c@(@type@ x)
     } else if (u - 1 == -1) {
         return -LOGE2;
     } else {
-        return (u - 1) * x/log2@c@(u);
+        return (u - 1) * x/npy_log2@c@(u);
     }
 }
 
@@ -84,10 +84,10 @@ logaddexp@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
-        return x + log1p@c@(exp@c@(-tmp));
+        return x + npy_log1p@c@(npy_exp@c@(-tmp));
     }
     else {
-        return y + log1p@c@(exp@c@(tmp));
+        return y + npy_log1p@c@(npy_exp@c@(tmp));
     }
 }
 
@@ -96,10 +96,10 @@ logaddexp2@c@(@type@ x, @type@ y)
 {
     const @type@ tmp = x - y;
     if (tmp > 0) {
-        return x + log2_1p@c@(exp2@c@(-tmp));
+        return x + log2_1p@c@(npy_exp2@c@(-tmp));
     }
     else {
-        return y + log2_1p@c@(exp2@c@(tmp));
+        return y + log2_1p@c@(npy_exp2@c@(tmp));
     }
 }
 
