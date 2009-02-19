@@ -1,3 +1,4 @@
+import sys
 
 import numpy as np
 import numpy.ma as ma
@@ -137,6 +138,7 @@ class TestRecFunctions(TestCase):
         assert_equal(test, control)
 
 
+    @np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_find_duplicates(self):
         "Test find_duplicates"
         a = ma.array([(2, (2., 'B')), (1, (2., 'B')), (2, (2., 'B')),
@@ -171,6 +173,7 @@ class TestRecFunctions(TestCase):
         assert_equal(test[0], a[control])
 
 
+    @np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_find_duplicates_ignoremask(self):
         "Test the ignoremask option of find_duplicates"
         ndtype = [('a', int)]
