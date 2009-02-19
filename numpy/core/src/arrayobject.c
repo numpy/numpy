@@ -8882,87 +8882,119 @@ _array_typedescr_fromstr(char *str)
     swapchar = str[0];
     str += 1;
 
-#define _MY_FAIL {                              \
-        PyErr_SetString(PyExc_ValueError, msg); \
-        return NULL;                            \
-    }
-
     typechar = str[0];
     size = atoi(str + 1);
     switch (typechar) {
-    case 'b':
-        if (size == sizeof(Bool))
-            type_num = PyArray_BOOL;
-        else _MY_FAIL
-                 break;
-    case 'u':
-        if (size == sizeof(uintp))
-            type_num = PyArray_UINTP;
-        else if (size == sizeof(char))
-            type_num = PyArray_UBYTE;
-        else if (size == sizeof(short))
-            type_num = PyArray_USHORT;
-        else if (size == sizeof(ulong))
-            type_num = PyArray_ULONG;
-        else if (size == sizeof(int))
-            type_num = PyArray_UINT;
-        else if (size == sizeof(ulonglong))
-            type_num = PyArray_ULONGLONG;
-        else _MY_FAIL
-                 break;
-    case 'i':
-        if (size == sizeof(intp))
-            type_num = PyArray_INTP;
-        else if (size == sizeof(char))
-            type_num = PyArray_BYTE;
-        else if (size == sizeof(short))
-            type_num = PyArray_SHORT;
-        else if (size == sizeof(long))
-            type_num = PyArray_LONG;
-        else if (size == sizeof(int))
-            type_num = PyArray_INT;
-        else if (size == sizeof(longlong))
-            type_num = PyArray_LONGLONG;
-        else _MY_FAIL
-                 break;
-    case 'f':
-        if (size == sizeof(float))
-            type_num = PyArray_FLOAT;
-        else if (size == sizeof(double))
-            type_num = PyArray_DOUBLE;
-        else if (size == sizeof(longdouble))
-            type_num = PyArray_LONGDOUBLE;
-        else _MY_FAIL
-                 break;
-    case 'c':
-        if (size == sizeof(float)*2)
-            type_num = PyArray_CFLOAT;
-        else if (size == sizeof(double)*2)
-            type_num = PyArray_CDOUBLE;
-        else if (size == sizeof(longdouble)*2)
-            type_num = PyArray_CLONGDOUBLE;
-        else _MY_FAIL
-                 break;
-    case 'O':
-        if (size == sizeof(PyObject *))
-            type_num = PyArray_OBJECT;
-        else _MY_FAIL
-                 break;
-    case PyArray_STRINGLTR:
-        type_num = PyArray_STRING;
-        break;
-    case PyArray_UNICODELTR:
-        type_num = PyArray_UNICODE;
-        size <<= 2;
-        break;
-    case 'V':
-        type_num = PyArray_VOID;
-        break;
-    default:
-        _MY_FAIL
+        case 'b':
+            if (size == sizeof(Bool)) {
+                type_num = PyArray_BOOL;
             }
-
-#undef _MY_FAIL
+            else {
+                PyErr_SetString(PyExc_ValueError, msg);
+                return NULL;
+            }
+            break;
+        case 'u':
+            if (size == sizeof(uintp)) {
+                type_num = PyArray_UINTP;
+            }
+            else if (size == sizeof(char)) {
+                type_num = PyArray_UBYTE;
+            }
+            else if (size == sizeof(short)) {
+                type_num = PyArray_USHORT;
+            }
+            else if (size == sizeof(ulong)) {
+                type_num = PyArray_ULONG;
+            }
+            else if (size == sizeof(int)) {
+                type_num = PyArray_UINT;
+            }
+            else if (size == sizeof(ulonglong)) {
+                type_num = PyArray_ULONGLONG;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, msg);
+                return NULL;
+            }
+            break;
+        case 'i':
+            if (size == sizeof(intp)) {
+                type_num = PyArray_INTP;
+            }
+            else if (size == sizeof(char)) {
+                type_num = PyArray_BYTE;
+            }
+            else if (size == sizeof(short)) {
+                type_num = PyArray_SHORT;
+            }
+            else if (size == sizeof(long)) {
+                type_num = PyArray_LONG;
+            }
+            else if (size == sizeof(int)) {
+                type_num = PyArray_INT;
+            }
+            else if (size == sizeof(longlong)) {
+                type_num = PyArray_LONGLONG;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, msg);
+                return NULL;
+            }
+            break;
+        case 'f':
+            if (size == sizeof(float)) {
+                type_num = PyArray_FLOAT;
+            }
+            else if (size == sizeof(double)) {
+                type_num = PyArray_DOUBLE;
+            }
+            else if (size == sizeof(longdouble)) {
+                type_num = PyArray_LONGDOUBLE;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, msg);
+                return NULL;
+            }
+            break;
+        case 'c':
+            if (size == sizeof(float)*2) {
+                type_num = PyArray_CFLOAT;
+            }
+            else if (size == sizeof(double)*2) {
+                type_num = PyArray_CDOUBLE;
+            }
+            else if (size == sizeof(longdouble)*2) {
+                type_num = PyArray_CLONGDOUBLE;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, msg);
+                return NULL;
+            }
+            break;
+        case 'O':
+            if (size == sizeof(PyObject *)) {
+                type_num = PyArray_OBJECT;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError, msg);
+                return NULL;
+            }
+            break;
+        case PyArray_STRINGLTR:
+            type_num = PyArray_STRING;
+            break;
+        case PyArray_UNICODELTR:
+            type_num = PyArray_UNICODE;
+            size <<= 2;
+            break;
+        case 'V':
+            type_num = PyArray_VOID;
+            break;
+        default:
+            PyErr_SetString(PyExc_ValueError, msg);
+            return NULL;
+    }
 
     descr = PyArray_DescrFromType(type_num);
     if (descr == NULL) {
@@ -9603,79 +9635,94 @@ PyArray_CanCastSafely(int fromtype, int totype)
     Py_DECREF(to);
 
     switch(fromtype) {
-    case PyArray_BYTE:
-    case PyArray_SHORT:
-    case PyArray_INT:
-    case PyArray_LONG:
-    case PyArray_LONGLONG:
-        if (PyTypeNum_ISINTEGER(totype)) {
-            if (PyTypeNum_ISUNSIGNED(totype)) {
-                return 0;
+        case PyArray_BYTE:
+        case PyArray_SHORT:
+        case PyArray_INT:
+        case PyArray_LONG:
+        case PyArray_LONGLONG:
+            if (PyTypeNum_ISINTEGER(totype)) {
+                if (PyTypeNum_ISUNSIGNED(totype)) {
+                    return 0;
+                }
+                else {
+                    return telsize >= felsize;
+                }
+            }
+            else if (PyTypeNum_ISFLOAT(totype)) {
+                if (felsize < 8) {
+                    return telsize > felsize;
+                }
+                else {
+                    return telsize >= felsize;
+                }
+            }
+            else if (PyTypeNum_ISCOMPLEX(totype)) {
+                if (felsize < 8) {
+                    return (telsize >> 1) > felsize;
+                }
+                else {
+                    return (telsize >> 1) >= felsize;
+                }
             }
             else {
-                return (telsize >= felsize);
+                return totype > fromtype;
             }
-        }
-        else if (PyTypeNum_ISFLOAT(totype)) {
-            if (felsize < 8)
-                return (telsize > felsize);
-            else
-                return (telsize >= felsize);
-        }
-        else if (PyTypeNum_ISCOMPLEX(totype)) {
-            if (felsize < 8)
-                return ((telsize >> 1) > felsize);
-            else
-                return ((telsize >> 1) >= felsize);
-        }
-        else return totype > fromtype;
-    case PyArray_UBYTE:
-    case PyArray_USHORT:
-    case PyArray_UINT:
-    case PyArray_ULONG:
-    case PyArray_ULONGLONG:
-        if (PyTypeNum_ISINTEGER(totype)) {
-            if (PyTypeNum_ISSIGNED(totype)) {
-                return (telsize > felsize);
+        case PyArray_UBYTE:
+        case PyArray_USHORT:
+        case PyArray_UINT:
+        case PyArray_ULONG:
+        case PyArray_ULONGLONG:
+            if (PyTypeNum_ISINTEGER(totype)) {
+                if (PyTypeNum_ISSIGNED(totype)) {
+                    return telsize > felsize;
+                }
+                else {
+                    return telsize >= felsize;
+                }
+            }
+            else if (PyTypeNum_ISFLOAT(totype)) {
+                if (felsize < 8) {
+                    return telsize > felsize;
+                }
+                else {
+                    return telsize >= felsize;
+                }
+            }
+            else if (PyTypeNum_ISCOMPLEX(totype)) {
+                if (felsize < 8) {
+                    return (telsize >> 1) > felsize;
+                }
+                else {
+                    return (telsize >> 1) >= felsize;
+                }
             }
             else {
-                return (telsize >= felsize);
+                return totype > fromtype;
             }
-        }
-        else if (PyTypeNum_ISFLOAT(totype)) {
-            if (felsize < 8)
-                return (telsize > felsize);
-            else
-                return (telsize >= felsize);
-        }
-        else if (PyTypeNum_ISCOMPLEX(totype)) {
-            if (felsize < 8)
-                return ((telsize >> 1) > felsize);
-            else
-                return ((telsize >> 1) >= felsize);
-        }
-        else return totype > fromtype;
-    case PyArray_FLOAT:
-    case PyArray_DOUBLE:
-    case PyArray_LONGDOUBLE:
-        if (PyTypeNum_ISCOMPLEX(totype))
-            return ((telsize >> 1) >= felsize);
-        else
-            return (totype > fromtype);
-    case PyArray_CFLOAT:
-    case PyArray_CDOUBLE:
-    case PyArray_CLONGDOUBLE:
-        return (totype > fromtype);
-    case PyArray_STRING:
-    case PyArray_UNICODE:
-        return (totype > fromtype);
-    default:
-        return 0;
+        case PyArray_FLOAT:
+        case PyArray_DOUBLE:
+        case PyArray_LONGDOUBLE:
+            if (PyTypeNum_ISCOMPLEX(totype)) {
+                return (telsize >> 1) >= felsize;
+            }
+            else {
+                return totype > fromtype;
+            }
+        case PyArray_CFLOAT:
+        case PyArray_CDOUBLE:
+        case PyArray_CLONGDOUBLE:
+            return totype > fromtype;
+        case PyArray_STRING:
+        case PyArray_UNICODE:
+            return totype > fromtype;
+        default:
+            return 0;
     }
 }
 
-/* leaves reference count alone --- cannot be NULL*/
-/*NUMPY_API*/
+/*NUMPY_API
+ * leaves reference count alone --- cannot be NULL
+ */
 static Bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
@@ -9731,8 +9778,8 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 /*         and Python's array iterator                                   ***/
 
 /*NUMPY_API
-  Get Iterator.
-*/
+ * Get Iterator.
+ */
 static PyObject *
 PyArray_IterNew(PyObject *obj)
 {
@@ -9778,7 +9825,7 @@ PyArray_IterNew(PyObject *obj)
 }
 
 /*NUMPY_API
- *Get Iterator broadcast to a particular shape
+ * Get Iterator broadcast to a particular shape
  */
 static PyObject *
 PyArray_BroadcastToShape(PyObject *obj, intp *dims, int nd)
