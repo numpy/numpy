@@ -4,6 +4,14 @@ import sys
 from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
+from distutils.sysconfig import get_config_var
+
+def pythonlib_dir():
+    """return path where libpython* is."""
+    if sys.platform == 'win32':
+        return os.path.join(sys.prefix, "libs")
+    else:
+        return get_config_var('LIBDIR')
 
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
@@ -150,7 +158,8 @@ def check_types(config, ext, build_dir):
             raise SystemError("Checking sizeof (%s) failed !" % type)
 
     for type in ('Py_intptr_t',):
-        res = config_cmd.check_type_size(type, headers=["Python.h"])
+        res = config_cmd.check_type_size(type, headers=["Python.h"],
+                library_dirs=[pythonlib_dir()])
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
         else:
@@ -158,7 +167,7 @@ def check_types(config, ext, build_dir):
 
     # We check declaration AND type because that's how distutils does it.
     if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
-        st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'])
+        st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'], library_dirs=[pythonlib_dir()])
         assert not st == 0
         private_defines.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
 
