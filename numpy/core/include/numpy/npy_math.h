@@ -30,6 +30,7 @@ double npy_trunc(double x);
 double npy_exp2(double x);
 double npy_log2(double x);
 
+double npy_atan2(double x, double y);
 /*
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
