@@ -60,13 +60,16 @@ double npy_pow(double x, double y);
         #define npy_isfinite(x) isfinite((x))
 #endif
 
-#ifndef NPY_HAVE_DECL_ISFINITE
+#ifndef NPY_HAVE_DECL_ISINF
         #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
 #else
         #define npy_isinf(x) isinf((x))
 #endif
 
 #ifndef NPY_HAVE_DECL_SIGNBIT
+	int _npy_signbit_f(float x);
+	int _npy_signbit(double x);
+	int _npy_signbit_ld(npy_longdouble x);
         #define npy_signbit(x) \
               (sizeof (x) == sizeof (long double) ? _npy_signbit_ld (x) \
                : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
