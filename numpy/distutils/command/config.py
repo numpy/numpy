@@ -165,7 +165,7 @@ int main()
 
         return self.try_compile(body, headers, include_dirs)
 
-    def check_type_size(self, type_name, headers=None, include_dirs=None):
+    def check_type_size(self, type_name, headers=None, include_dirs=None, library_dirs=None):
         """Check size of a given type."""
         # XXX: should also implement the cross-compiling version (using binary
         # search + array indexing, see AC_CHECK_SIZEOF).
@@ -211,7 +211,7 @@ main (void)
         size = None
         try:
             src, obj, exe = self._link(body, headers, include_dirs,
-                                       [], [], 'c')
+                                       [], library_dirs, 'c')
             #exe = os.path.join('.', exe)
             exitstatus, output = exec_command(exe, execute_in='.')
             if hasattr(os, 'WEXITSTATUS'):
