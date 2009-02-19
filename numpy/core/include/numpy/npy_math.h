@@ -16,6 +16,8 @@ double npy_tanh(double x);
 
 double npy_exp(double x);
 double npy_log(double x);
+double npy_sqrt(double x);
+double npy_fabs(double x);
 
 double npy_expm1(double x);
 double npy_log1p(double x);
