@@ -212,7 +212,7 @@ main (void)
         try:
             src, obj, exe = self._link(body, headers, include_dirs,
                                        [], [], 'c')
-            exe = os.path.join('.', exe)
+            #exe = os.path.join('.', exe)
             exitstatus, output = exec_command(exe, execute_in='.')
             if hasattr(os, 'WEXITSTATUS'):
                 exitcode = os.WEXITSTATUS(exitstatus)

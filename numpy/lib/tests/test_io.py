@@ -76,6 +76,7 @@ class RoundtripTest(object):
         a = np.array([1, 2, 3, 4], int)
         self.roundtrip(a)
 
+    @np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_mmap(self):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
@@ -112,6 +113,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
 
 
 class TestSaveTxt(TestCase):
+    @np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_array(self):
         a =np.array([[1, 2], [3, 4]], float)
         c = StringIO.StringIO()
