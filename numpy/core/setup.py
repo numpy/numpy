@@ -146,11 +146,15 @@ def check_types(config, ext, build_dir):
         res = config_cmd.check_type_size(type)
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % type)
 
     for type in ('Py_intptr_t',):
         res = config_cmd.check_type_size(type, headers=["Python.h"])
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % type)
 
     # We check declaration AND type because that's how distutils does it.
     if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
