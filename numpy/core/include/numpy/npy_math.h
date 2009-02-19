@@ -3,9 +3,20 @@
 
 #include <math.h>
 #include <numpy/npy_common.h>
+
 /*
  * C99 double math funcs
  */
+double npy_sin(double x);
+double npy_cos(double x);
+double npy_tan(double x);
+double npy_sinh(double x);
+double npy_cosh(double x);
+double npy_tanh(double x);
+
+double npy_exp(double x);
+double npy_log(double x);
+
 double npy_expm1(double x);
 double npy_log1p(double x);
 double npy_hypot(double x, double y);
