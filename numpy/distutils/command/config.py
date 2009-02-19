@@ -144,6 +144,12 @@ class was %s
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
 
+    def check_header(self, header, include_dirs=None, library_dirs=None, lang='c'):
+        self._check_compiler()
+        return self.try_compile(
+                "/* we need a dummy line to make distutils happy */", 
+                [header], include_dirs)
+
     def check_decl(self, symbol,
                    headers=None, include_dirs=None):
         self._check_compiler()
