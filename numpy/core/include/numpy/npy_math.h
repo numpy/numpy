@@ -25,7 +25,6 @@ double npy_afabs(double x);
 double npy_log(double x);
 double npy_log10(double x);
 double npy_exp(double x);
-double npy_pow(double x);
 double npy_sqrt(double x);
 
 double npy_fabs(double x);
@@ -45,6 +44,7 @@ double npy_exp2(double x);
 double npy_log2(double x);
 
 double npy_atan2(double x, double y);
+double npy_pow(double x, double y);
 /*
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
@@ -148,5 +148,31 @@ npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_fmodl(npy_longdouble x, npy_longdouble y);
 
 npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
+
+/*
+ * Non standard functions
+ */
+double npy_deg2rad(double x);
+double npy_rad2deg(double x);
+double npy_logaddexp(double x, double y);
+double npy_logaddexp2(double x, double y);
+
+float npy_deg2radf(float x);
+float npy_rad2degf(float x);
+float npy_logaddexpf(float x, float y);
+float npy_logaddexp2f(float x, float y);
+
+npy_longdouble npy_deg2radl(npy_longdouble x);
+npy_longdouble npy_rad2degl(npy_longdouble x);
+npy_longdouble npy_logaddexpl(npy_longdouble x, npy_longdouble y);
+npy_longdouble npy_logaddexp2l(npy_longdouble x, npy_longdouble y);
+
+#define npy_degrees npy_rad2deg
+#define npy_degreesf npy_rad2degf
+#define npy_degreesl npy_rad2degl
+
+#define npy_radians npy_deg2rad
+#define npy_radiansf npy_deg2radf
+#define npy_radiansl npy_deg2radl
 
 #endif
