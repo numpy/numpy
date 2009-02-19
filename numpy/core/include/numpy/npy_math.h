@@ -14,10 +14,24 @@ double npy_sinh(double x);
 double npy_cosh(double x);
 double npy_tanh(double x);
 
-double npy_exp(double x);
+double npy_asin(double x);
+double npy_acos(double x);
+double npy_atan(double x);
+double npy_aexp(double x);
+double npy_alog(double x);
+double npy_asqrt(double x);
+double npy_afabs(double x);
+
 double npy_log(double x);
+double npy_log10(double x);
+double npy_exp(double x);
+double npy_pow(double x);
 double npy_sqrt(double x);
+
 double npy_fabs(double x);
+double npy_ceil(double x);
+double npy_fmod(double x, double y);
+double npy_floor(double x);
 
 double npy_expm1(double x);
 double npy_log1p(double x);
