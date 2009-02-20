@@ -5099,157 +5099,157 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     int typenum;
 
     switch (cmp_op) {
-        case Py_LT:
-            result = PyArray_GenericBinaryFunction(self, other,
-                    n_ops.less);
-            break;
-        case Py_LE:
-            result = PyArray_GenericBinaryFunction(self, other,
-                    n_ops.less_equal);
-            break;
-        case Py_EQ:
-            if (other == Py_None) {
-                Py_INCREF(Py_False);
-                return Py_False;
+    case Py_LT:
+        result = PyArray_GenericBinaryFunction(self, other,
+                n_ops.less);
+        break;
+    case Py_LE:
+        result = PyArray_GenericBinaryFunction(self, other,
+                n_ops.less_equal);
+        break;
+    case Py_EQ:
+        if (other == Py_None) {
+            Py_INCREF(Py_False);
+            return Py_False;
+        }
+        /* Try to convert other to an array */
+        if (!PyArray_Check(other)) {
+            typenum = self->descr->type_num;
+            if (typenum != PyArray_OBJECT) {
+                typenum = PyArray_NOTYPE;
             }
-            /* Try to convert other to an array */
-            if (!PyArray_Check(other)) {
-                typenum = self->descr->type_num;
-                if (typenum != PyArray_OBJECT) {
-                    typenum = PyArray_NOTYPE;
-                }
-                array_other = PyArray_FromObject(other,
-                        typenum, 0, 0);
-                /*
-                 * If not successful, then return False. This fixes code
-                 * that used to allow equality comparisons between arrays
-                 * and other objects which would give a result of False.
-                 */
-                if ((array_other == NULL) ||
-                        (array_other == Py_None)) {
-                    Py_XDECREF(array_other);
-                    PyErr_Clear();
-                    Py_INCREF(Py_False);
-                    return Py_False;
-                }
-            }
-            else {
-                Py_INCREF(other);
-                array_other = other;
-            }
-            result = PyArray_GenericBinaryFunction(self,
-                    array_other,
-                    n_ops.equal);
-            if ((result == Py_NotImplemented) &&
-                    (self->descr->type_num == PyArray_VOID)) {
-                int _res;
-
-                _res = PyObject_RichCompareBool
-                       ((PyObject *)self->descr,
-                        (PyObject *)\
-                        PyArray_DESCR(array_other),
-                        Py_EQ);
-                if (_res < 0) {
-                    Py_DECREF(result);
-                    Py_DECREF(array_other);
-                    return NULL;
-                }
-                if (_res) {
-                    Py_DECREF(result);
-                    result = _void_compare
-                             (self,
-                              (PyArrayObject *)array_other,
-                              cmp_op);
-                    Py_DECREF(array_other);
-                }
-                return result;
-            }
+            array_other = PyArray_FromObject(other,
+                    typenum, 0, 0);
             /*
-             * If the comparison results in NULL, then the
-             * two array objects can not be compared together so
-             * return zero
+             * If not successful, then return False. This fixes code
+             * that used to allow equality comparisons between arrays
+             * and other objects which would give a result of False.
              */
-            Py_DECREF(array_other);
-            if (result == NULL) {
+            if ((array_other == NULL) ||
+                    (array_other == Py_None)) {
+                Py_XDECREF(array_other);
                 PyErr_Clear();
                 Py_INCREF(Py_False);
                 return Py_False;
             }
-            break;
-        case Py_NE:
-            if (other == Py_None) {
-                Py_INCREF(Py_True);
-                return Py_True;
-            }
-            /* Try to convert other to an array */
-            if (!PyArray_Check(other)) {
-                typenum = self->descr->type_num;
-                if (typenum != PyArray_OBJECT) {
-                    typenum = PyArray_NOTYPE;
-                }
-                array_other = PyArray_FromObject(other, typenum, 0, 0);
-                /*
-                 * If not successful, then objects cannot be
-                 * compared and cannot be equal, therefore,
-                 * return True;
-                 */
-                if ((array_other == NULL) || (array_other == Py_None)) {
-                    Py_XDECREF(array_other);
-                    PyErr_Clear();
-                    Py_INCREF(Py_True);
-                    return Py_True;
-                }
-            }
-            else {
-                Py_INCREF(other);
-                array_other = other;
-            }
-            result = PyArray_GenericBinaryFunction(self,
-                    array_other,
-                    n_ops.not_equal);
-            if ((result == Py_NotImplemented) &&
-                    (self->descr->type_num == PyArray_VOID)) {
-                int _res;
+        }
+        else {
+            Py_INCREF(other);
+            array_other = other;
+        }
+        result = PyArray_GenericBinaryFunction(self,
+                array_other,
+                n_ops.equal);
+        if ((result == Py_NotImplemented) &&
+                (self->descr->type_num == PyArray_VOID)) {
+            int _res;
 
-                _res = PyObject_RichCompareBool(
-                        (PyObject *)self->descr,
-                        (PyObject *)
-                        PyArray_DESCR(array_other),
-                        Py_EQ);
-                if (_res < 0) {
-                    Py_DECREF(result);
-                    Py_DECREF(array_other);
-                    return NULL;
-                }
-                if (_res) {
-                    Py_DECREF(result);
-                    result = _void_compare(
-                              self,
-                              (PyArrayObject *)array_other,
-                              cmp_op);
-                    Py_DECREF(array_other);
-                }
-                return result;
+            _res = PyObject_RichCompareBool
+                ((PyObject *)self->descr,
+                 (PyObject *)\
+                 PyArray_DESCR(array_other),
+                 Py_EQ);
+            if (_res < 0) {
+                Py_DECREF(result);
+                Py_DECREF(array_other);
+                return NULL;
             }
-
-            Py_DECREF(array_other);
-            if (result == NULL) {
+            if (_res) {
+                Py_DECREF(result);
+                result = _void_compare
+                    (self,
+                     (PyArrayObject *)array_other,
+                     cmp_op);
+                Py_DECREF(array_other);
+            }
+            return result;
+        }
+        /*
+         * If the comparison results in NULL, then the
+         * two array objects can not be compared together so
+         * return zero
+         */
+        Py_DECREF(array_other);
+        if (result == NULL) {
+            PyErr_Clear();
+            Py_INCREF(Py_False);
+            return Py_False;
+        }
+        break;
+    case Py_NE:
+        if (other == Py_None) {
+            Py_INCREF(Py_True);
+            return Py_True;
+        }
+        /* Try to convert other to an array */
+        if (!PyArray_Check(other)) {
+            typenum = self->descr->type_num;
+            if (typenum != PyArray_OBJECT) {
+                typenum = PyArray_NOTYPE;
+            }
+            array_other = PyArray_FromObject(other, typenum, 0, 0);
+            /*
+             * If not successful, then objects cannot be
+             * compared and cannot be equal, therefore,
+             * return True;
+             */
+            if ((array_other == NULL) || (array_other == Py_None)) {
+                Py_XDECREF(array_other);
                 PyErr_Clear();
                 Py_INCREF(Py_True);
                 return Py_True;
             }
-            break;
-        case Py_GT:
-            result = PyArray_GenericBinaryFunction(self, other,
-                    n_ops.greater);
-            break;
-        case Py_GE:
-            result = PyArray_GenericBinaryFunction(self, other,
-                    n_ops.greater_equal);
-            break;
-        default:
-            result = Py_NotImplemented;
-            Py_INCREF(result);
+        }
+        else {
+            Py_INCREF(other);
+            array_other = other;
+        }
+        result = PyArray_GenericBinaryFunction(self,
+                array_other,
+                n_ops.not_equal);
+        if ((result == Py_NotImplemented) &&
+                (self->descr->type_num == PyArray_VOID)) {
+            int _res;
+
+            _res = PyObject_RichCompareBool(
+                    (PyObject *)self->descr,
+                    (PyObject *)
+                    PyArray_DESCR(array_other),
+                    Py_EQ);
+            if (_res < 0) {
+                Py_DECREF(result);
+                Py_DECREF(array_other);
+                return NULL;
+            }
+            if (_res) {
+                Py_DECREF(result);
+                result = _void_compare(
+                        self,
+                        (PyArrayObject *)array_other,
+                        cmp_op);
+                Py_DECREF(array_other);
+            }
+            return result;
+        }
+
+        Py_DECREF(array_other);
+        if (result == NULL) {
+            PyErr_Clear();
+            Py_INCREF(Py_True);
+            return Py_True;
+        }
+        break;
+    case Py_GT:
+        result = PyArray_GenericBinaryFunction(self, other,
+                n_ops.greater);
+        break;
+    case Py_GE:
+        result = PyArray_GenericBinaryFunction(self, other,
+                n_ops.greater_equal);
+        break;
+    default:
+        result = Py_NotImplemented;
+        Py_INCREF(result);
     }
     if (result == Py_NotImplemented) {
         /* Try to handle string comparisons */
@@ -8886,115 +8886,115 @@ _array_typedescr_fromstr(char *str)
     typechar = str[0];
     size = atoi(str + 1);
     switch (typechar) {
-        case 'b':
-            if (size == sizeof(Bool)) {
-                type_num = PyArray_BOOL;
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError, msg);
-                return NULL;
-            }
-            break;
-        case 'u':
-            if (size == sizeof(uintp)) {
-                type_num = PyArray_UINTP;
-            }
-            else if (size == sizeof(char)) {
-                type_num = PyArray_UBYTE;
-            }
-            else if (size == sizeof(short)) {
-                type_num = PyArray_USHORT;
-            }
-            else if (size == sizeof(ulong)) {
-                type_num = PyArray_ULONG;
-            }
-            else if (size == sizeof(int)) {
-                type_num = PyArray_UINT;
-            }
-            else if (size == sizeof(ulonglong)) {
-                type_num = PyArray_ULONGLONG;
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError, msg);
-                return NULL;
-            }
-            break;
-        case 'i':
-            if (size == sizeof(intp)) {
-                type_num = PyArray_INTP;
-            }
-            else if (size == sizeof(char)) {
-                type_num = PyArray_BYTE;
-            }
-            else if (size == sizeof(short)) {
-                type_num = PyArray_SHORT;
-            }
-            else if (size == sizeof(long)) {
-                type_num = PyArray_LONG;
-            }
-            else if (size == sizeof(int)) {
-                type_num = PyArray_INT;
-            }
-            else if (size == sizeof(longlong)) {
-                type_num = PyArray_LONGLONG;
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError, msg);
-                return NULL;
-            }
-            break;
-        case 'f':
-            if (size == sizeof(float)) {
-                type_num = PyArray_FLOAT;
-            }
-            else if (size == sizeof(double)) {
-                type_num = PyArray_DOUBLE;
-            }
-            else if (size == sizeof(longdouble)) {
-                type_num = PyArray_LONGDOUBLE;
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError, msg);
-                return NULL;
-            }
-            break;
-        case 'c':
-            if (size == sizeof(float)*2) {
-                type_num = PyArray_CFLOAT;
-            }
-            else if (size == sizeof(double)*2) {
-                type_num = PyArray_CDOUBLE;
-            }
-            else if (size == sizeof(longdouble)*2) {
-                type_num = PyArray_CLONGDOUBLE;
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError, msg);
-                return NULL;
-            }
-            break;
-        case 'O':
-            if (size == sizeof(PyObject *)) {
-                type_num = PyArray_OBJECT;
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError, msg);
-                return NULL;
-            }
-            break;
-        case PyArray_STRINGLTR:
-            type_num = PyArray_STRING;
-            break;
-        case PyArray_UNICODELTR:
-            type_num = PyArray_UNICODE;
-            size <<= 2;
-            break;
-        case 'V':
-            type_num = PyArray_VOID;
-            break;
-        default:
+    case 'b':
+        if (size == sizeof(Bool)) {
+            type_num = PyArray_BOOL;
+        }
+        else {
             PyErr_SetString(PyExc_ValueError, msg);
             return NULL;
+        }
+        break;
+    case 'u':
+        if (size == sizeof(uintp)) {
+            type_num = PyArray_UINTP;
+        }
+        else if (size == sizeof(char)) {
+            type_num = PyArray_UBYTE;
+        }
+        else if (size == sizeof(short)) {
+            type_num = PyArray_USHORT;
+        }
+        else if (size == sizeof(ulong)) {
+            type_num = PyArray_ULONG;
+        }
+        else if (size == sizeof(int)) {
+            type_num = PyArray_UINT;
+        }
+        else if (size == sizeof(ulonglong)) {
+            type_num = PyArray_ULONGLONG;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError, msg);
+            return NULL;
+        }
+        break;
+    case 'i':
+        if (size == sizeof(intp)) {
+            type_num = PyArray_INTP;
+        }
+        else if (size == sizeof(char)) {
+            type_num = PyArray_BYTE;
+        }
+        else if (size == sizeof(short)) {
+            type_num = PyArray_SHORT;
+        }
+        else if (size == sizeof(long)) {
+            type_num = PyArray_LONG;
+        }
+        else if (size == sizeof(int)) {
+            type_num = PyArray_INT;
+        }
+        else if (size == sizeof(longlong)) {
+            type_num = PyArray_LONGLONG;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError, msg);
+            return NULL;
+        }
+        break;
+    case 'f':
+        if (size == sizeof(float)) {
+            type_num = PyArray_FLOAT;
+        }
+        else if (size == sizeof(double)) {
+            type_num = PyArray_DOUBLE;
+        }
+        else if (size == sizeof(longdouble)) {
+            type_num = PyArray_LONGDOUBLE;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError, msg);
+            return NULL;
+        }
+        break;
+    case 'c':
+        if (size == sizeof(float)*2) {
+            type_num = PyArray_CFLOAT;
+        }
+        else if (size == sizeof(double)*2) {
+            type_num = PyArray_CDOUBLE;
+        }
+        else if (size == sizeof(longdouble)*2) {
+            type_num = PyArray_CLONGDOUBLE;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError, msg);
+            return NULL;
+        }
+        break;
+    case 'O':
+        if (size == sizeof(PyObject *)) {
+            type_num = PyArray_OBJECT;
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError, msg);
+            return NULL;
+        }
+        break;
+    case PyArray_STRINGLTR:
+        type_num = PyArray_STRING;
+        break;
+    case PyArray_UNICODELTR:
+        type_num = PyArray_UNICODE;
+        size <<= 2;
+        break;
+    case 'V':
+        type_num = PyArray_VOID;
+        break;
+    default:
+        PyErr_SetString(PyExc_ValueError, msg);
+        return NULL;
     }
 
     descr = PyArray_DescrFromType(type_num);
@@ -9636,88 +9636,88 @@ PyArray_CanCastSafely(int fromtype, int totype)
     Py_DECREF(to);
 
     switch(fromtype) {
-        case PyArray_BYTE:
-        case PyArray_SHORT:
-        case PyArray_INT:
-        case PyArray_LONG:
-        case PyArray_LONGLONG:
-            if (PyTypeNum_ISINTEGER(totype)) {
-                if (PyTypeNum_ISUNSIGNED(totype)) {
-                    return 0;
-                }
-                else {
-                    return telsize >= felsize;
-                }
-            }
-            else if (PyTypeNum_ISFLOAT(totype)) {
-                if (felsize < 8) {
-                    return telsize > felsize;
-                }
-                else {
-                    return telsize >= felsize;
-                }
-            }
-            else if (PyTypeNum_ISCOMPLEX(totype)) {
-                if (felsize < 8) {
-                    return (telsize >> 1) > felsize;
-                }
-                else {
-                    return (telsize >> 1) >= felsize;
-                }
+    case PyArray_BYTE:
+    case PyArray_SHORT:
+    case PyArray_INT:
+    case PyArray_LONG:
+    case PyArray_LONGLONG:
+        if (PyTypeNum_ISINTEGER(totype)) {
+            if (PyTypeNum_ISUNSIGNED(totype)) {
+                return 0;
             }
             else {
-                return totype > fromtype;
+                return telsize >= felsize;
             }
-        case PyArray_UBYTE:
-        case PyArray_USHORT:
-        case PyArray_UINT:
-        case PyArray_ULONG:
-        case PyArray_ULONGLONG:
-            if (PyTypeNum_ISINTEGER(totype)) {
-                if (PyTypeNum_ISSIGNED(totype)) {
-                    return telsize > felsize;
-                }
-                else {
-                    return telsize >= felsize;
-                }
-            }
-            else if (PyTypeNum_ISFLOAT(totype)) {
-                if (felsize < 8) {
-                    return telsize > felsize;
-                }
-                else {
-                    return telsize >= felsize;
-                }
-            }
-            else if (PyTypeNum_ISCOMPLEX(totype)) {
-                if (felsize < 8) {
-                    return (telsize >> 1) > felsize;
-                }
-                else {
-                    return (telsize >> 1) >= felsize;
-                }
+        }
+        else if (PyTypeNum_ISFLOAT(totype)) {
+            if (felsize < 8) {
+                return telsize > felsize;
             }
             else {
-                return totype > fromtype;
+                return telsize >= felsize;
             }
-        case PyArray_FLOAT:
-        case PyArray_DOUBLE:
-        case PyArray_LONGDOUBLE:
-            if (PyTypeNum_ISCOMPLEX(totype)) {
+        }
+        else if (PyTypeNum_ISCOMPLEX(totype)) {
+            if (felsize < 8) {
+                return (telsize >> 1) > felsize;
+            }
+            else {
                 return (telsize >> 1) >= felsize;
             }
-            else {
-                return totype > fromtype;
+        }
+        else {
+            return totype > fromtype;
+        }
+    case PyArray_UBYTE:
+    case PyArray_USHORT:
+    case PyArray_UINT:
+    case PyArray_ULONG:
+    case PyArray_ULONGLONG:
+        if (PyTypeNum_ISINTEGER(totype)) {
+            if (PyTypeNum_ISSIGNED(totype)) {
+                return telsize > felsize;
             }
-        case PyArray_CFLOAT:
-        case PyArray_CDOUBLE:
-        case PyArray_CLONGDOUBLE:
+            else {
+                return telsize >= felsize;
+            }
+        }
+        else if (PyTypeNum_ISFLOAT(totype)) {
+            if (felsize < 8) {
+                return telsize > felsize;
+            }
+            else {
+                return telsize >= felsize;
+            }
+        }
+        else if (PyTypeNum_ISCOMPLEX(totype)) {
+            if (felsize < 8) {
+                return (telsize >> 1) > felsize;
+            }
+            else {
+                return (telsize >> 1) >= felsize;
+            }
+        }
+        else {
             return totype > fromtype;
-        case PyArray_STRING:
-        case PyArray_UNICODE:
+        }
+    case PyArray_FLOAT:
+    case PyArray_DOUBLE:
+    case PyArray_LONGDOUBLE:
+        if (PyTypeNum_ISCOMPLEX(totype)) {
+            return (telsize >> 1) >= felsize;
+        }
+        else {
             return totype > fromtype;
-        default:
-            return 0;
+        }
+    case PyArray_CFLOAT:
+    case PyArray_CDOUBLE:
+    case PyArray_CLONGDOUBLE:
+        return totype > fromtype;
+    case PyArray_STRING:
+    case PyArray_UNICODE:
+        return totype > fromtype;
+    default:
+        return 0;
     }
 }
 
@@ -12505,38 +12505,38 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         return NULL;
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
-        case 8:
-            if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
-                        &subarray, &names, &fields, &elsize,
-                        &alignment, &dtypeflags)) {
-                return NULL;
-            }
-            break;
-        case 7:
-            if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian,
-                        &subarray, &names, &fields, &elsize,
-                        &alignment)) {
-                return NULL;
-            }
-            break;
-        case 6:
-            if (!PyArg_ParseTuple(args, "(icOOii)", &version,
-                        &endian, &subarray, &fields,
-                        &elsize, &alignment)) {
-                PyErr_Clear();
-            }
-            break;
-        case 5:
-            version = 0;
-            if (!PyArg_ParseTuple(args, "(cOOii)",
-                        &endian, &subarray, &fields, &elsize,
-                        &alignment)) {
-                return NULL;
-            }
-            break;
-        default:
-            /* raise an error */
-            version = -1;
+    case 8:
+        if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
+                    &subarray, &names, &fields, &elsize,
+                    &alignment, &dtypeflags)) {
+            return NULL;
+        }
+        break;
+    case 7:
+        if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian,
+                    &subarray, &names, &fields, &elsize,
+                    &alignment)) {
+            return NULL;
+        }
+        break;
+    case 6:
+        if (!PyArg_ParseTuple(args, "(icOOii)", &version,
+                    &endian, &subarray, &fields,
+                    &elsize, &alignment)) {
+            PyErr_Clear();
+        }
+        break;
+    case 5:
+        version = 0;
+        if (!PyArg_ParseTuple(args, "(cOOii)",
+                    &endian, &subarray, &fields, &elsize,
+                    &alignment)) {
+            return NULL;
+        }
+        break;
+    default:
+        /* raise an error */
+        version = -1;
     }
 
     /*
@@ -12832,54 +12832,54 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
         Py_INCREF(new);
     }
     switch (cmp_op) {
-        case Py_LT:
-            if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(self, new)) {
-                result = Py_True;
-            }
-            else {
-                result = Py_False;
-            }
-            break;
-        case Py_LE:
-            if (PyArray_CanCastTo(self, new)) {
-                result = Py_True;
-            }
-            else {
-                result = Py_False;
-            }
-            break;
-        case Py_EQ:
-            if (PyArray_EquivTypes(self, new)) {
-                result = Py_True;
-            }
-            else {
-                result = Py_False;
-            }
-            break;
-        case Py_NE:
-            if (PyArray_EquivTypes(self, new))
-                result = Py_False;
-            else
-                result = Py_True;
-            break;
-        case Py_GT:
-            if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(new, self)) {
-                result = Py_True;
-            }
-            else {
-                result = Py_False;
-            }
-            break;
-        case Py_GE:
-            if (PyArray_CanCastTo(new, self)) {
-                result = Py_True;
-            }
-            else {
-                result = Py_False;
-            }
-            break;
-        default:
-            result = Py_NotImplemented;
+    case Py_LT:
+        if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(self, new)) {
+            result = Py_True;
+        }
+        else {
+            result = Py_False;
+        }
+        break;
+    case Py_LE:
+        if (PyArray_CanCastTo(self, new)) {
+            result = Py_True;
+        }
+        else {
+            result = Py_False;
+        }
+        break;
+    case Py_EQ:
+        if (PyArray_EquivTypes(self, new)) {
+            result = Py_True;
+        }
+        else {
+            result = Py_False;
+        }
+        break;
+    case Py_NE:
+        if (PyArray_EquivTypes(self, new))
+            result = Py_False;
+        else
+            result = Py_True;
+        break;
+    case Py_GT:
+        if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(new, self)) {
+            result = Py_True;
+        }
+        else {
+            result = Py_False;
+        }
+        break;
+    case Py_GE:
+        if (PyArray_CanCastTo(new, self)) {
+            result = Py_True;
+        }
+        else {
+            result = Py_False;
+        }
+        break;
+    default:
+        result = Py_NotImplemented;
     }
 
     Py_XDECREF(new);
@@ -13296,87 +13296,87 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
     key = PyString_AS_STRING(ind);
     n = PyString_GET_SIZE(ind);
     switch(n) {
-        case 1:
-            switch(key[0]) {
-                case 'C':
-                    return arrayflags_contiguous_get(self);
-                case 'F':
-                    return arrayflags_fortran_get(self);
-                case 'W':
-                    return arrayflags_writeable_get(self);
-                case 'B':
-                    return arrayflags_behaved_get(self);
-                case 'O':
-                    return arrayflags_owndata_get(self);
-                case 'A':
-                    return arrayflags_aligned_get(self);
-                case 'U':
-                    return arrayflags_updateifcopy_get(self);
-                default:
-                    goto fail;
-            }
-            break;
-        case 2:
-            if (strncmp(key, "CA", n) == 0) {
-                return arrayflags_carray_get(self);
-            }
-            if (strncmp(key, "FA", n) == 0) {
-                return arrayflags_farray_get(self);
-            }
-            break;
-        case 3:
-            if (strncmp(key, "FNC", n) == 0) {
-                return arrayflags_fnc_get(self);
-            }
-            break;
-        case 4:
-            if (strncmp(key, "FORC", n) == 0) {
-                return arrayflags_forc_get(self);
-            }
-            break;
-        case 6:
-            if (strncmp(key, "CARRAY", n) == 0) {
-                return arrayflags_carray_get(self);
-            }
-            if (strncmp(key, "FARRAY", n) == 0) {
-                return arrayflags_farray_get(self);
-            }
-            break;
-        case 7:
-            if (strncmp(key,"FORTRAN",n) == 0) {
-                return arrayflags_fortran_get(self);
-            }
-            if (strncmp(key,"BEHAVED",n) == 0) {
-                return arrayflags_behaved_get(self);
-            }
-            if (strncmp(key,"OWNDATA",n) == 0) {
-                return arrayflags_owndata_get(self);
-            }
-            if (strncmp(key,"ALIGNED",n) == 0) {
-                return arrayflags_aligned_get(self);
-            }
-            break;
-        case 9:
-            if (strncmp(key,"WRITEABLE",n) == 0) {
-                return arrayflags_writeable_get(self);
-            }
-            break;
-        case 10:
-            if (strncmp(key,"CONTIGUOUS",n) == 0) {
-                return arrayflags_contiguous_get(self);
-            }
-            break;
-        case 12:
-            if (strncmp(key, "UPDATEIFCOPY", n) == 0) {
-                return arrayflags_updateifcopy_get(self);
-            }
-            if (strncmp(key, "C_CONTIGUOUS", n) == 0) {
-                return arrayflags_contiguous_get(self);
-            }
-            if (strncmp(key, "F_CONTIGUOUS", n) == 0) {
-                return arrayflags_fortran_get(self);
-            }
-            break;
+    case 1:
+        switch(key[0]) {
+        case 'C':
+            return arrayflags_contiguous_get(self);
+        case 'F':
+            return arrayflags_fortran_get(self);
+        case 'W':
+            return arrayflags_writeable_get(self);
+        case 'B':
+            return arrayflags_behaved_get(self);
+        case 'O':
+            return arrayflags_owndata_get(self);
+        case 'A':
+            return arrayflags_aligned_get(self);
+        case 'U':
+            return arrayflags_updateifcopy_get(self);
+        default:
+            goto fail;
+        }
+        break;
+    case 2:
+        if (strncmp(key, "CA", n) == 0) {
+            return arrayflags_carray_get(self);
+        }
+        if (strncmp(key, "FA", n) == 0) {
+            return arrayflags_farray_get(self);
+        }
+        break;
+    case 3:
+        if (strncmp(key, "FNC", n) == 0) {
+            return arrayflags_fnc_get(self);
+        }
+        break;
+    case 4:
+        if (strncmp(key, "FORC", n) == 0) {
+            return arrayflags_forc_get(self);
+        }
+        break;
+    case 6:
+        if (strncmp(key, "CARRAY", n) == 0) {
+            return arrayflags_carray_get(self);
+        }
+        if (strncmp(key, "FARRAY", n) == 0) {
+            return arrayflags_farray_get(self);
+        }
+        break;
+    case 7:
+        if (strncmp(key,"FORTRAN",n) == 0) {
+            return arrayflags_fortran_get(self);
+        }
+        if (strncmp(key,"BEHAVED",n) == 0) {
+            return arrayflags_behaved_get(self);
+        }
+        if (strncmp(key,"OWNDATA",n) == 0) {
+            return arrayflags_owndata_get(self);
+        }
+        if (strncmp(key,"ALIGNED",n) == 0) {
+            return arrayflags_aligned_get(self);
+        }
+        break;
+    case 9:
+        if (strncmp(key,"WRITEABLE",n) == 0) {
+            return arrayflags_writeable_get(self);
+        }
+        break;
+    case 10:
+        if (strncmp(key,"CONTIGUOUS",n) == 0) {
+            return arrayflags_contiguous_get(self);
+        }
+        break;
+    case 12:
+        if (strncmp(key, "UPDATEIFCOPY", n) == 0) {
+            return arrayflags_updateifcopy_get(self);
+        }
+        if (strncmp(key, "C_CONTIGUOUS", n) == 0) {
+            return arrayflags_contiguous_get(self);
+        }
+        if (strncmp(key, "F_CONTIGUOUS", n) == 0) {
+            return arrayflags_fortran_get(self);
+        }
+        break;
     }
 
  fail:
