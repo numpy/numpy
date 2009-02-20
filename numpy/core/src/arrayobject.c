@@ -7395,77 +7395,78 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 
 static PyTypeObject PyArray_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                          /*ob_size*/
-    "numpy.ndarray",                            /*tp_name*/
-    sizeof(PyArrayObject),                      /*tp_basicsize*/
-    0,                                          /*tp_itemsize*/
+    0,                                           /* ob_size */
+    "numpy.ndarray",                             /* tp_name */
+    sizeof(PyArrayObject),                       /* tp_basicsize */
+    0,                                           /* tp_itemsize */
     /* methods */
-    (destructor)array_dealloc,                  /*tp_dealloc  */
-    (printfunc)NULL,                            /*tp_print*/
-    0,                                          /*tp_getattr*/
-    0,                                          /*tp_setattr*/
-    (cmpfunc)0,                                 /*tp_compare*/
-    (reprfunc)array_repr,                       /*tp_repr*/
-    &array_as_number,                           /*tp_as_number*/
-    &array_as_sequence,                         /*tp_as_sequence*/
-    &array_as_mapping,                          /*tp_as_mapping*/
-    (hashfunc)0,                                /*tp_hash*/
-    (ternaryfunc)0,                             /*tp_call*/
-    (reprfunc)array_str,                        /*tp_str*/
-
-    (getattrofunc)0,                            /*tp_getattro*/
-    (setattrofunc)0,                            /*tp_setattro*/
-    &array_as_buffer,                           /*tp_as_buffer*/
+    (destructor)array_dealloc,                   /* tp_dealloc */
+    (printfunc)NULL,                             /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    (cmpfunc)0,                                  /* tp_compare */
+    (reprfunc)array_repr,                        /* tp_repr */
+    &array_as_number,                            /* tp_as_number */
+    &array_as_sequence,                          /* tp_as_sequence */
+    &array_as_mapping,                           /* tp_as_mapping */
+    (hashfunc)0,                                 /* tp_hash */
+    (ternaryfunc)0,                              /* tp_call */
+    (reprfunc)array_str,                         /* tp_str */
+    (getattrofunc)0,                             /* tp_getattro */
+    (setattrofunc)0,                             /* tp_setattro */
+    &array_as_buffer,                            /* tp_as_buffer */
     (Py_TPFLAGS_DEFAULT
      | Py_TPFLAGS_BASETYPE
-     | Py_TPFLAGS_CHECKTYPES),                  /*tp_flags*/
+     | Py_TPFLAGS_CHECKTYPES),                   /* tp_flags */
     /*Documentation string */
-    0,                                          /*tp_doc*/
+    0,                                           /* tp_doc */
 
-    (traverseproc)0,                            /*tp_traverse */
-    (inquiry)0,                                 /*tp_clear */
-    (richcmpfunc)array_richcompare,             /*tp_richcompare */
-    offsetof(PyArrayObject, weakreflist),       /*tp_weaklistoffset */
+    (traverseproc)0,                             /* tp_traverse */
+    (inquiry)0,                                  /* tp_clear */
+    (richcmpfunc)array_richcompare,              /* tp_richcompare */
+    offsetof(PyArrayObject, weakreflist),        /* tp_weaklistoffset */
 
     /* Iterator support (use standard) */
 
-    (getiterfunc)array_iter,                    /* tp_iter */
-    (iternextfunc)0,                            /* tp_iternext */
+    (getiterfunc)array_iter,                     /* tp_iter */
+    (iternextfunc)0,                             /* tp_iternext */
 
     /* Sub-classing (new-style object) support */
 
-    array_methods,                              /* tp_methods */
-    0,                                          /* tp_members */
-    array_getsetlist,                           /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,                                          /* tp_dictoffset */
-    (initproc)0,                                /* tp_init */
-    array_alloc,                                /* tp_alloc */
-    (newfunc)array_new,                         /* tp_new */
-    0,                                          /* tp_free */
-    0,                                          /* tp_is_gc */
-    0,                                          /* tp_bases */
-    0,                                          /* tp_mro */
-    0,                                          /* tp_cache */
-    0,                                          /* tp_subclasses */
-    0,                                          /* tp_weaklist */
-    0,   /* tp_del */
+    array_methods,                               /* tp_methods */
+    0,                                           /* tp_members */
+    array_getsetlist,                            /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    (initproc)0,                                 /* tp_init */
+    array_alloc,                                 /* tp_alloc */
+    (newfunc)array_new,                          /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 
-/* The rest of this code is to build the right kind of array from a python */
-/* object. */
+/*
+ * The rest of this code is to build the right kind of array
+ * from a python object.
+ */
 
 static int
 discover_depth(PyObject *s, int max, int stop_at_string, int stop_at_tuple)
@@ -10552,14 +10553,13 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                                  val_it, swap) < 0) {
                 goto finish;
             }
-            retval=0;
+            retval = 0;
         }
     }
 
  finish:
     if (!PyErr_Occurred() && retval < 0) {
-        PyErr_SetString(PyExc_IndexError,
-                        "unsupported iterator index");
+        PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
     }
     Py_XDECREF(indtype);
     Py_XDECREF(obj);
@@ -10592,13 +10592,12 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
     /* Any argument ignored */
 
     /* Two options:
-       1) underlying array is contiguous
-       -- return 1-d wrapper around it
-       2) underlying array is not contiguous
-       -- make new 1-d contiguous array with updateifcopy flag set
-       to copy back to the old array
-    */
-
+     *  1) underlying array is contiguous
+     *  -- return 1-d wrapper around it
+     * 2) underlying array is not contiguous
+     * -- make new 1-d contiguous array with updateifcopy flag set
+     * to copy back to the old array
+     */
     size = PyArray_SIZE(it->ao);
     Py_INCREF(it->ao->descr);
     if (PyArray_ISCONTIGUOUS(it->ao)) {
@@ -10608,7 +10607,9 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
                                  NULL, it->ao->data,
                                  it->ao->flags,
                                  (PyObject *)it->ao);
-        if (r==NULL) return NULL;
+        if (r == NULL) {
+            return NULL;
+        }
     }
     else {
         r = PyArray_NewFromDescr(&PyArray_Type,
@@ -10616,7 +10617,9 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
                                  1, &size,
                                  NULL, NULL,
                                  0, (PyObject *)it->ao);
-        if (r==NULL) return NULL;
+        if (r == NULL) {
+            return NULL;
+        }
         if (_flat_copyinto(r, (PyObject *)it->ao,
                            PyArray_CORDER) < 0) {
             Py_DECREF(r);
@@ -10634,7 +10637,9 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
 static PyObject *
 iter_copy(PyArrayIterObject *it, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
     return PyArray_Flatten(it->ao, 0);
 }
 
@@ -10651,7 +10656,9 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
     PyArrayObject *new;
     PyObject *ret;
     new = (PyArrayObject *)iter_array(self, NULL);
-    if (new == NULL) return NULL;
+    if (new == NULL) {
+        return NULL;
+    }
     ret = array_richcompare(new, other, cmp_op);
     Py_DECREF(new);
     return ret;
@@ -10669,12 +10676,15 @@ iter_coords_get(PyArrayIterObject *self)
 {
     int nd;
     nd = self->ao->nd;
-    if (self->contiguous) { /* coordinates not kept track of --- need to generate
-                               from index */
+    if (self->contiguous) {
+        /*
+         * coordinates not kept track of ---
+         * need to generate from index
+         */
         intp val;
         int i;
         val = self->index;
-        for(i=0;i<nd; i++) {
+        for (i = 0; i < nd; i++) {
             self->coordinates[i] = val / self->factors[i];
             val = val % self->factors[i];
         }
@@ -10691,60 +10701,60 @@ static PyGetSetDef iter_getsets[] = {
 
 static PyTypeObject PyArrayIter_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                       /* ob_size */
-    "numpy.flatiter",                        /* tp_name */
-    sizeof(PyArrayIterObject),               /* tp_basicsize */
-    0,                                       /* tp_itemsize */
+    0,                                           /* ob_size */
+    "numpy.flatiter",                            /* tp_name */
+    sizeof(PyArrayIterObject),                   /* tp_basicsize */
+    0,                                           /* tp_itemsize */
     /* methods */
-    (destructor)arrayiter_dealloc,          /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    0,                                      /* tp_repr */
-    0,                                      /* tp_as_number */
-    0,                                      /* tp_as_sequence */
-    &iter_as_mapping,                       /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    0,                                      /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                     /* tp_flags */
-    0,                                      /* tp_doc */
-    0,                                      /* tp_traverse */
-    0,                                      /* tp_clear */
-    (richcmpfunc)iter_richcompare,          /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    0,                              /* tp_iter */
-    (iternextfunc)arrayiter_next,           /* tp_iternext */
-    iter_methods,                           /* tp_methods */
-    iter_members,                   /* tp_members */
-    iter_getsets,                           /* tp_getset */
-    0,                                          /* tp_base */
-    0,                                          /* tp_dict */
-    0,                                          /* tp_descr_get */
-    0,                                          /* tp_descr_set */
-    0,   				    /* tp_dictoffset */
-    0,   				    /* tp_init */
-    0,   				    /* tp_alloc */
-    0,   				    /* tp_new */
-    0,   				    /* tp_free */
-    0,   				    /* tp_is_gc */
-    0,   				    /* tp_bases */
-    0,   				    /* tp_mro */
-    0,   				    /* tp_cache */
-    0,   				    /* tp_subclasses */
-    0,   				    /* tp_weaklist */
-    0,   				    /* tp_del */
+    (destructor)arrayiter_dealloc,               /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    &iter_as_mapping,                            /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    (richcmpfunc)iter_richcompare,               /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    (iternextfunc)arrayiter_next,                /* tp_iternext */
+    iter_methods,                                /* tp_methods */
+    iter_members,                                /* tp_members */
+    iter_getsets,                                /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,   				         /* tp_dictoffset */
+    0,   				         /* tp_init */
+    0,   				         /* tp_alloc */
+    0,   				         /* tp_new */
+    0,   				         /* tp_free */
+    0,   				         /* tp_is_gc */
+    0,   				         /* tp_bases */
+    0,   				         /* tp_mro */
+    0,   				         /* tp_cache */
+    0,   				         /* tp_subclasses */
+    0,   				         /* tp_weaklist */
+    0,   				         /* tp_del */
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 
 };
@@ -10775,18 +10785,23 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
     PyArray_Descr *indtype;
     PyObject *arr;
 
-    if (PySlice_Check(obj) || (obj == Py_Ellipsis))
+    if (PySlice_Check(obj) || (obj == Py_Ellipsis)) {
         return 0;
+    }
     else if (PyArray_Check(obj) && PyArray_ISBOOL(obj)) {
         return _nonzero_indices(obj, iter);
     }
     else {
         indtype = PyArray_DescrFromType(PyArray_INTP);
         arr = PyArray_FromAny(obj, indtype, 0, 0, FORCECAST, NULL);
-        if (arr == NULL) return -1;
+        if (arr == NULL) {
+            return -1;
+        }
         *iter = (PyArrayIterObject *)PyArray_IterNew(arr);
         Py_DECREF(arr);
-        if (*iter == NULL) return -1;
+        if (*iter == NULL) {
+            return -1;
+        }
     }
     return 1;
 }
@@ -10803,23 +10818,26 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
     PyArrayIterObject *it;
 
     /* Discover the broadcast number of dimensions */
-    for(i=0, nd=0; i<mit->numiter; i++)
+    for (i = 0, nd = 0; i < mit->numiter; i++) {
         nd = MAX(nd, mit->iters[i]->ao->nd);
+    }
     mit->nd = nd;
 
     /* Discover the broadcast shape in each dimension */
-    for(i=0; i<nd; i++) {
+    for (i = 0; i < nd; i++) {
         mit->dimensions[i] = 1;
-        for(j=0; j<mit->numiter; j++) {
+        for (j = 0; j < mit->numiter; j++) {
             it = mit->iters[j];
-            /* This prepends 1 to shapes not already
-               equal to nd */
+            /* This prepends 1 to shapes not already equal to nd */
             k = i + it->ao->nd - nd;
-            if (k>=0) {
+            if (k >= 0) {
                 tmp = it->ao->dimensions[k];
-                if (tmp == 1) continue;
-                if (mit->dimensions[i] == 1)
+                if (tmp == 1) {
+                    continue;
+                }
+                if (mit->dimensions[i] == 1) {
                     mit->dimensions[i] = tmp;
+                }
                 else if (mit->dimensions[i] != tmp) {
                     PyErr_SetString(PyExc_ValueError,
                                     "shape mismatch: objects" \
@@ -10831,9 +10849,11 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
         }
     }
 
-    /* Reset the iterator dimensions and strides of each iterator
-       object -- using 0 valued strides for broadcasting */
-    /* Need to check for overflow */
+    /*
+     * Reset the iterator dimensions and strides of each iterator
+     * object -- using 0 valued strides for broadcasting
+     * Need to check for overflow
+     */
     tmp = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
     if (tmp < 0) {
 	PyErr_SetString(PyExc_ValueError, 
@@ -10841,18 +10861,20 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
 	return -1;
     }
     mit->size = tmp;
-    for(i=0; i<mit->numiter; i++) {
+    for (i = 0; i < mit->numiter; i++) {
         it = mit->iters[i];
         it->nd_m1 = mit->nd - 1;
         it->size = tmp;
         nd = it->ao->nd;
         it->factors[mit->nd-1] = 1;
-        for(j=0; j < mit->nd; j++) {
+        for (j = 0; j < mit->nd; j++) {
             it->dims_m1[j] = mit->dimensions[j] - 1;
             k = j + nd - mit->nd;
-            /* If this dimension was added or shape
-               of underlying array was 1 */
-            if ((k < 0) || \
+            /*
+             * If this dimension was added or shape of
+             * underlying array was 1
+             */
+            if ((k < 0) ||
                 it->ao->dimensions[k] != mit->dimensions[j]) {
                 it->contiguous = 0;
                 it->strides[j] = 0;
@@ -10860,12 +10882,10 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
             else {
                 it->strides[j] = it->ao->strides[k];
             }
-            it->backstrides[j] = it->strides[j] *   \
-                it->dims_m1[j];
+            it->backstrides[j] = it->strides[j] * it->dims_m1[j];
             if (j > 0)
-                it->factors[mit->nd-j-1] =              \
-                    it->factors[mit->nd-j] *        \
-                    mit->dimensions[mit->nd-j];
+                it->factors[mit->nd-j-1] =
+                    it->factors[mit->nd-j] * mit->dimensions[mit->nd-j];
         }
         PyArray_ITER_RESET(it);
     }
@@ -10887,12 +10907,11 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     if (mit->subspace != NULL) {
         memcpy(coord, mit->bscoord, sizeof(intp)*mit->ait->ao->nd);
         PyArray_ITER_RESET(mit->subspace);
-        for(i=0; i<mit->numiter; i++) {
+        for (i = 0; i < mit->numiter; i++) {
             it = mit->iters[i];
             PyArray_ITER_RESET(it);
             j = mit->iteraxes[i];
-            copyswap(coord+j,it->dataptr,
-                     !PyArray_ISNOTSWAPPED(it->ao),
+            copyswap(coord+j,it->dataptr, !PyArray_ISNOTSWAPPED(it->ao),
                      it->ao);
         }
         PyArray_ITER_GOTO(mit->ait, coord);
@@ -10900,15 +10919,16 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
         mit->dataptr = mit->subspace->dataptr;
     }
     else {
-        for(i=0; i<mit->numiter; i++) {
+        for (i = 0; i < mit->numiter; i++) {
             it = mit->iters[i];
             if (it->size != 0) {
                 PyArray_ITER_RESET(it);
-                copyswap(coord+i,it->dataptr,
-                         !PyArray_ISNOTSWAPPED(it->ao),
+                copyswap(coord+i,it->dataptr, !PyArray_ISNOTSWAPPED(it->ao),
                          it->ao);
             }
-            else coord[i] = 0;
+            else {
+                coord[i] = 0;
+            }
         }
         PyArray_ITER_GOTO(mit->ait, coord);
         mit->dataptr = mit->ait->dataptr;
@@ -10916,9 +10936,10 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     return;
 }
 
-/* This function needs to update the state of the map iterator
-   and point mit->dataptr to the memory-location of the next object
-*/
+/*
+ * This function needs to update the state of the map iterator
+ * and point mit->dataptr to the memory-location of the next object
+ */
 static void
 PyArray_MapIterNext(PyArrayMapIterObject *mit)
 {
@@ -10928,23 +10949,22 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
     PyArray_CopySwapFunc *copyswap;
 
     mit->index += 1;
-    if (mit->index >= mit->size) return;
+    if (mit->index >= mit->size) {
+        return;
+    }
     copyswap = mit->iters[0]->ao->descr->f->copyswap;
     /* Sub-space iteration */
     if (mit->subspace != NULL) {
         PyArray_ITER_NEXT(mit->subspace);
         if (mit->subspace->index >= mit->subspace->size) {
-            /* reset coord to coordinates of
-               beginning of the subspace */
-            memcpy(coord, mit->bscoord,
-                   sizeof(intp)*mit->ait->ao->nd);
+            /* reset coord to coordinates of beginning of the subspace */
+            memcpy(coord, mit->bscoord, sizeof(intp)*mit->ait->ao->nd);
             PyArray_ITER_RESET(mit->subspace);
-            for(i=0; i<mit->numiter; i++) {
+            for (i = 0; i < mit->numiter; i++) {
                 it = mit->iters[i];
                 PyArray_ITER_NEXT(it);
                 j = mit->iteraxes[i];
-                copyswap(coord+j,it->dataptr,
-                         !PyArray_ISNOTSWAPPED(it->ao),
+                copyswap(coord+j,it->dataptr, !PyArray_ISNOTSWAPPED(it->ao),
                          it->ao);
             }
             PyArray_ITER_GOTO(mit->ait, coord);
@@ -10953,7 +10973,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
         mit->dataptr = mit->subspace->dataptr;
     }
     else {
-        for(i=0; i<mit->numiter; i++) {
+        for (i = 0; i < mit->numiter; i++) {
             it = mit->iters[i];
             PyArray_ITER_NEXT(it);
             copyswap(coord+i,it->dataptr,
@@ -10966,26 +10986,26 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
     return;
 }
 
-/*  Bind a mapiteration to a particular array */
-
-/*  Determine if subspace iteration is necessary.  If so,
-    1) Fill in mit->iteraxes
-    2) Create subspace iterator
-    3) Update nd, dimensions, and size.
-
-    Subspace iteration is necessary if:  arr->nd > mit->numiter
-*/
-
-/* Need to check for index-errors somewhere.
-
-   Let's do it at bind time and also convert all <0 values to >0 here
-   as well.
-*/
+/*
+ * Bind a mapiteration to a particular array
+ *
+ *  Determine if subspace iteration is necessary.  If so,
+ *  1) Fill in mit->iteraxes
+ *  2) Create subspace iterator
+ *  3) Update nd, dimensions, and size.
+ *
+ *  Subspace iteration is necessary if:  arr->nd > mit->numiter
+ *
+ * Need to check for index-errors somewhere.
+ *
+ * Let's do it at bind time and also convert all <0 values to >0 here
+ * as well.
+ */
 static void
 PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 {
     int subnd;
-    PyObject *sub, *obj=NULL;
+    PyObject *sub, *obj = NULL;
     int i, j, n, curraxis, ellipexp, noellip;
     PyArrayIterObject *it;
     intp dimsize;
@@ -10999,22 +11019,24 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     }
 
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
-    if (mit->ait == NULL) return;
-
+    if (mit->ait == NULL) {
+        return;
+    }
     /* no subspace iteration needed.  Finish up and Return */
     if (subnd == 0) {
         n = arr->nd;
-        for(i=0; i<n; i++) {
+        for (i = 0; i < n; i++) {
             mit->iteraxes[i] = i;
         }
         goto finish;
     }
 
-    /* all indexing arrays have been converted to 0
-       therefore we can extract the subspace with a simple
-       getitem call which will use view semantics
-    */
-    /* But, be sure to do it with a true array.
+    /*
+     * all indexing arrays have been converted to 0
+     * therefore we can extract the subspace with a simple
+     * getitem call which will use view semantics
+     *
+     * But, be sure to do it with a true array.
      */
     if (PyArray_CheckExact(arr)) {
         sub = array_subscript_simple(arr, mit->indexobj);
@@ -11022,54 +11044,65 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     else {
         Py_INCREF(arr);
         obj = PyArray_EnsureArray((PyObject *)arr);
-        if (obj == NULL) goto fail;
+        if (obj == NULL) {
+            goto fail;
+        }
         sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj);
         Py_DECREF(obj);
     }
 
-    if (sub == NULL) goto fail;
+    if (sub == NULL) {
+        goto fail;
+    }
     mit->subspace = (PyArrayIterObject *)PyArray_IterNew(sub);
     Py_DECREF(sub);
-    if (mit->subspace == NULL) goto fail;
-
+    if (mit->subspace == NULL) {
+        goto fail;
+    }
     /* Expand dimensions of result */
     n = mit->subspace->ao->nd;
-    for(i=0; i<n; i++)
+    for (i = 0; i < n; i++) {
         mit->dimensions[mit->nd+i] = mit->subspace->ao->dimensions[i];
+    }
     mit->nd += n;
 
-    /* Now, we still need to interpret the ellipsis and slice objects
-       to determine which axes the indexing arrays are referring to
-    */
+    /*
+     * Now, we still need to interpret the ellipsis and slice objects
+     * to determine which axes the indexing arrays are referring to
+     */
     n = PyTuple_GET_SIZE(mit->indexobj);
-
     /* The number of dimensions an ellipsis takes up */
     ellipexp = arr->nd - n + 1;
-    /* Now fill in iteraxes -- remember indexing arrays have been
-       converted to 0's in mit->indexobj */
+    /*
+     * Now fill in iteraxes -- remember indexing arrays have been
+     * converted to 0's in mit->indexobj
+     */
     curraxis = 0;
     j = 0;
-    noellip = 1;  /* Only expand the first ellipsis */
+    /* Only expand the first ellipsis */
+    noellip = 1;
     memset(mit->bscoord, 0, sizeof(intp)*arr->nd);
-    for(i=0; i<n; i++) {
-        /* We need to fill in the starting coordinates for
-           the subspace */
+    for (i = 0; i < n; i++) {
+        /*
+         * We need to fill in the starting coordinates for
+         * the subspace
+         */
         obj = PyTuple_GET_ITEM(mit->indexobj, i);
-        if (PyInt_Check(obj) || PyLong_Check(obj))
+        if (PyInt_Check(obj) || PyLong_Check(obj)) {
             mit->iteraxes[j++] = curraxis++;
+        }
         else if (noellip && obj == Py_Ellipsis) {
             curraxis += ellipexp;
             noellip = 0;
         }
         else {
-            intp start=0;
+            intp start = 0;
             intp stop, step;
-            /* Should be slice object or
-               another Ellipsis */
+            /* Should be slice object or another Ellipsis */
             if (obj == Py_Ellipsis) {
                 mit->bscoord[curraxis] = 0;
             }
-            else if (!PySlice_Check(obj) || \
+            else if (!PySlice_Check(obj) ||
                      (slice_GetIndices((PySliceObject *)obj,
                                        arr->dimensions[curraxis],
                                        &start, &stop, &step,
@@ -11086,6 +11119,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             curraxis += 1;
         }
     }
+
  finish:
     /* Here check the indexes (now that we have iteraxes) */
     mit->size = PyArray_OverflowMultiplyList(mit->dimensions, mit->nd);
@@ -11100,15 +11134,17 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         goto fail;
     }
 
-    for(i=0; i<mit->numiter; i++) {
+    for (i = 0; i < mit->numiter; i++) {
         intp indval;
         it = mit->iters[i];
         PyArray_ITER_RESET(it);
         dimsize = arr->dimensions[mit->iteraxes[i]];
-        while(it->index < it->size) {
+        while (it->index < it->size) {
             indptr = ((intp *)it->dataptr);
             indval = *indptr;
-            if (indval < 0) indval += dimsize;
+            if (indval < 0) {
+                indval += dimsize;
+            }
             if (indval < 0 || indval >= dimsize) {
                 PyErr_Format(PyExc_IndexError,
                              "index (%d) out of range "\
@@ -11131,14 +11167,15 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     return;
 }
 
-/* This function takes a Boolean array and constructs index objects and
-   iterators as if nonzero(Bool) had been called
-*/
+/*
+ * This function takes a Boolean array and constructs index objects and
+ * iterators as if nonzero(Bool) had been called
+ */
 static int
 _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 {
     PyArray_Descr *typecode;
-    PyArrayObject *ba =NULL, *new=NULL;
+    PyArrayObject *ba = NULL, *new = NULL;
     int nd, j;
     intp size, i, count;
     Bool *ptr;
@@ -11148,45 +11185,59 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     typecode=PyArray_DescrFromType(PyArray_BOOL);
     ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
                                           CARRAY, NULL);
-    if (ba == NULL) return -1;
+    if (ba == NULL) {
+        return -1;
+    }
     nd = ba->nd;
-    for(j=0; j<nd; j++) iters[j] = NULL;
+    for (j = 0; j < nd; j++) {
+        iters[j] = NULL;
+    }
     size = PyArray_SIZE(ba);
     ptr = (Bool *)ba->data;
     count = 0;
 
     /* pre-determine how many nonzero entries there are */
-    for(i=0; i<size; i++)
-        if (*(ptr++)) count++;
+    for (i = 0; i < size; i++) {
+        if (*(ptr++)) {
+            count++;
+        }
+    }
 
     /* create count-sized index arrays for each dimension */
-    for(j=0; j<nd; j++) {
+    for (j = 0; j < nd; j++) {
         new = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
                                            PyArray_INTP, NULL, NULL,
                                            0, 0, NULL);
-        if (new == NULL) goto fail;
-        iters[j] = (PyArrayIterObject *)        \
+        if (new == NULL) {
+            goto fail;
+        }
+        iters[j] = (PyArrayIterObject *)
             PyArray_IterNew((PyObject *)new);
         Py_DECREF(new);
-        if (iters[j] == NULL) goto fail;
+        if (iters[j] == NULL) {
+            goto fail;
+        }
         dptr[j] = (intp *)iters[j]->ao->data;
         coords[j] = 0;
         dims_m1[j] = ba->dimensions[j]-1;
     }
-
     ptr = (Bool *)ba->data;
+    if (count == 0) {
+        goto finish;
+    }
 
-    if (count == 0) goto finish;
-
-    /* Loop through the Boolean array  and copy coordinates
-       for non-zero entries */
-    for(i=0; i<size; i++) {
+    /*
+     * Loop through the Boolean array  and copy coordinates
+     * for non-zero entries
+     */
+    for (i = 0; i < size; i++) {
         if (*(ptr++)) {
-            for(j=0; j<nd; j++)
+            for (j = 0; j < nd; j++) {
                 *(dptr[j]++) = coords[j];
+            }
         }
         /* Borrowed from ITER_NEXT macro */
-        for(j=nd-1; j>=0; j--) {
+        for (j = nd - 1; j >= 0; j--) {
             if (coords[j] < dims_m1[j]) {
                 coords[j]++;
                 break;
@@ -11202,7 +11253,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     return nd;
 
  fail:
-    for(j=0; j<nd; j++) {
+    for (j = 0; j < nd; j++) {
         Py_XDECREF(iters[j]);
     }
     Py_XDECREF(ba);
@@ -11230,10 +11281,12 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 
     mit = (PyArrayMapIterObject *)_pya_malloc(sizeof(PyArrayMapIterObject));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
-    if (mit == NULL)
+    if (mit == NULL) {
         return NULL;
-    for(i=0; i<MAX_DIMS; i++)
+    }
+    for (i = 0; i < MAX_DIMS; i++) {
         mit->iters[i] = NULL;
+    }
     mit->index = 0;
     mit->ait = NULL;
     mit->subspace = NULL;
@@ -11245,7 +11298,9 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     if (fancy == SOBJ_LISTTUP) {
         PyObject *newobj;
         newobj = PySequence_Tuple(indexobj);
-        if (newobj == NULL) goto fail;
+        if (newobj == NULL) {
+            goto fail;
+        }
         Py_DECREF(indexobj);
         indexobj = newobj;
         mit->indexobj = indexobj;
@@ -11257,25 +11312,30 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 #undef SOBJ_TOOMANY
 #undef SOBJ_LISTTUP
 
-    if (oned) return (PyObject *)mit;
-
-    /* Must have some kind of fancy indexing if we are here */
-    /* indexobj is either a list, an arrayobject, or a tuple
-       (with at least 1 list or arrayobject or Bool object), */
+    if (oned) {
+        return (PyObject *)mit;
+    }
+    /*
+     * Must have some kind of fancy indexing if we are here
+     * indexobj is either a list, an arrayobject, or a tuple
+     * (with at least 1 list or arrayobject or Bool object)
+     */
 
     /* convert all inputs to iterators */
-    if (PyArray_Check(indexobj) &&                  \
-        (PyArray_TYPE(indexobj) == PyArray_BOOL)) {
+    if (PyArray_Check(indexobj) && (PyArray_TYPE(indexobj) == PyArray_BOOL)) {
         mit->numiter = _nonzero_indices(indexobj, mit->iters);
-        if (mit->numiter < 0) goto fail;
+        if (mit->numiter < 0) {
+            goto fail;
+        }
         mit->nd = 1;
         mit->dimensions[0] = mit->iters[0]->dims_m1[0]+1;
         Py_DECREF(mit->indexobj);
         mit->indexobj = PyTuple_New(mit->numiter);
-        if (mit->indexobj == NULL) goto fail;
-        for(i=0; i<mit->numiter; i++) {
-            PyTuple_SET_ITEM(mit->indexobj, i,
-                             PyInt_FromLong(0));
+        if (mit->indexobj == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < mit->numiter; i++) {
+            PyTuple_SET_ITEM(mit->indexobj, i, PyInt_FromLong(0));
         }
     }
 
@@ -11283,31 +11343,41 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         mit->numiter = 1;
         indtype = PyArray_DescrFromType(PyArray_INTP);
         arr = PyArray_FromAny(indexobj, indtype, 0, 0, FORCECAST, NULL);
-        if (arr == NULL) goto fail;
+        if (arr == NULL) {
+            goto fail;
+        }
         mit->iters[0] = (PyArrayIterObject *)PyArray_IterNew(arr);
-        if (mit->iters[0] == NULL) {Py_DECREF(arr); goto fail;}
+        if (mit->iters[0] == NULL) {
+            Py_DECREF(arr);
+            goto fail;
+        }
         mit->nd = PyArray_NDIM(arr);
-        memcpy(mit->dimensions,PyArray_DIMS(arr),mit->nd*sizeof(intp));
+        memcpy(mit->dimensions, PyArray_DIMS(arr), mit->nd*sizeof(intp));
         mit->size = PyArray_SIZE(arr);
         Py_DECREF(arr);
         Py_DECREF(mit->indexobj);
         mit->indexobj = Py_BuildValue("(N)", PyInt_FromLong(0));
     }
-    else { /* must be a tuple */
+    else {
+        /* must be a tuple */
         PyObject *obj;
         PyArrayIterObject **iterp;
         PyObject *new;
         int numiters, j, n2;
-        /* Make a copy of the tuple -- we will be replacing
-           index objects with 0's */
+        /*
+         * Make a copy of the tuple -- we will be replacing
+         * index objects with 0's
+         */
         n = PyTuple_GET_SIZE(indexobj);
         n2 = n;
         new = PyTuple_New(n2);
-        if (new == NULL) goto fail;
+        if (new == NULL) {
+            goto fail;
+        }
         started = 0;
         nonindex = 0;
         j = 0;
-        for(i=0; i<n; i++) {
+        for (i = 0; i < n; i++) {
             obj = PyTuple_GET_ITEM(indexobj,i);
             iterp = mit->iters + mit->numiter;
             if ((numiters=_convert_obj(obj, iterp)) < 0) {
@@ -11316,39 +11386,45 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
             }
             if (numiters > 0) {
                 started = 1;
-                if (nonindex) mit->consec = 0;
+                if (nonindex) {
+                    mit->consec = 0;
+                }
                 mit->numiter += numiters;
                 if (numiters == 1) {
-                    PyTuple_SET_ITEM(new,j++,
-                                     PyInt_FromLong(0));
+                    PyTuple_SET_ITEM(new,j++, PyInt_FromLong(0));
                 }
-                else { /* we need to grow the
-                          new indexing object and fill
-                          it with 0s for each of the iterators
-                          produced */
+                else {
+                    /*
+                     * we need to grow the new indexing object and fill
+                     * it with 0s for each of the iterators produced
+                     */
                     int k;
                     n2 += numiters - 1;
-                    if (_PyTuple_Resize(&new, n2) < 0)
+                    if (_PyTuple_Resize(&new, n2) < 0) {
                         goto fail;
-                    for(k=0;k<numiters;k++) {
-                        PyTuple_SET_ITEM        \
-                            (new,j++,
-                             PyInt_FromLong(0));
+                    }
+                    for (k = 0; k < numiters; k++) {
+                        PyTuple_SET_ITEM(new, j++, PyInt_FromLong(0));
                     }
                 }
             }
             else {
-                if (started) nonindex = 1;
+                if (started) {
+                    nonindex = 1;
+                }
                 Py_INCREF(obj);
                 PyTuple_SET_ITEM(new,j++,obj);
             }
         }
         Py_DECREF(mit->indexobj);
         mit->indexobj = new;
-        /* Store the number of iterators actually converted */
-        /*  These will be mapped to actual axes at bind time */
-        if (PyArray_Broadcast((PyArrayMultiIterObject *)mit) < 0)
+        /*
+         * Store the number of iterators actually converted
+         * These will be mapped to actual axes at bind time
+         */
+        if (PyArray_Broadcast((PyArrayMultiIterObject *)mit) < 0) {
             goto fail;
+        }
     }
 
     return (PyObject *)mit;
@@ -11366,96 +11442,94 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
     Py_XDECREF(mit->indexobj);
     Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);
-    for(i=0; i<mit->numiter; i++)
+    for (i = 0; i < mit->numiter; i++) {
         Py_XDECREF(mit->iters[i]);
+    }
     _pya_free(mit);
 }
 
-/* The mapiter object must be created new each time.  It does not work
-   to bind to a new array, and continue.
-
-   This was the orginal intention, but currently that does not work.
-   Do not expose the MapIter_Type to Python.
-
-   It's not very useful anyway, since mapiter(indexobj); mapiter.bind(a);
-   mapiter is equivalent to a[indexobj].flat but the latter gets to use
-   slice syntax.
-*/
-
+/*
+ * The mapiter object must be created new each time.  It does not work
+ * to bind to a new array, and continue.
+ *
+ * This was the orginal intention, but currently that does not work.
+ * Do not expose the MapIter_Type to Python.
+ *
+ * It's not very useful anyway, since mapiter(indexobj); mapiter.bind(a);
+ * mapiter is equivalent to a[indexobj].flat but the latter gets to use
+ * slice syntax.
+ */
 static PyTypeObject PyArrayMapIter_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                       /* ob_size */
-    "numpy.mapiter",                        /* tp_name */
-    sizeof(PyArrayIterObject),               /* tp_basicsize */
-    0,                                       /* tp_itemsize */
+    0,                                           /* ob_size */
+    "numpy.mapiter",                             /* tp_name */
+    sizeof(PyArrayIterObject),                   /* tp_basicsize */
+    0,                                           /* tp_itemsize */
     /* methods */
-    (destructor)arraymapiter_dealloc,       /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    0,                                      /* tp_repr */
-    0,                                      /* tp_as_number */
-    0,                                      /* tp_as_sequence */
-    0,                                      /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    0,                                      /* tp_str */
-    0,              /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                     /* tp_flags */
-    0,                                      /* tp_doc */
-    (traverseproc)0,                        /* tp_traverse */
-    0,                                      /* tp_clear */
-    0,                                      /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    0,                                      /* tp_iter */
-    (iternextfunc)0,                        /* tp_iternext */
-    0,                              /* tp_methods */
-    0,                                        /* tp_members */
-    0,                                        /* tp_getset */
-    0,                                        /* tp_base */
-    0,                                        /* tp_dict */
-    0,                                        /* tp_descr_get */
-    0,                                        /* tp_descr_set */
-    0,                                        /* tp_dictoffset */
-    (initproc)0,                              /* tp_init */
-    0,                                        /* tp_alloc */
-    0,                                        /* tp_new */
-    0,                                        /* tp_free */
-    0,                                        /* tp_is_gc */
-    0,                                        /* tp_bases */
-    0,                                        /* tp_mro */
-    0,                                        /* tp_cache */
-    0,                                        /* tp_subclasses */
-    0,                                        /* tp_weaklist */
-    0,   				      /* tp_del */
+    (destructor)arraymapiter_dealloc,            /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    0,                                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
+    0,                                           /* tp_doc */
+    (traverseproc)0,                             /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    (iternextfunc)0,                             /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    (initproc)0,                                 /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,   				         /* tp_del */
 
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
-
 };
 
 /** END of Subscript Iterator **/
 
 
-/*
-  NUMPY_API
-  Get MultiIterator from array of Python objects and any additional
-
-  PyObject **mps -- array of PyObjects 
-  int n - number of PyObjects in the array
-  int nadd - number of additional arrays to include in the
-             iterator. 
-
-  Returns a multi-iterator object.
+/*NUMPY_API
+ * Get MultiIterator from array of Python objects and any additional
+ *
+ * PyObject **mps -- array of PyObjects
+ * int n - number of PyObjects in the array
+ * int nadd - number of additional arrays to include in the iterator.
+ *
+ * Returns a multi-iterator object.
  */
 static PyObject *
 PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
@@ -11474,17 +11548,20 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
                      "array objects (inclusive).", NPY_MAXARGS);
         return NULL;
     }
-
     multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
-    if (multi == NULL) return PyErr_NoMemory();
+    if (multi == NULL) {
+        return PyErr_NoMemory();
+    }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    for(i=0; i<ntot; i++) multi->iters[i] = NULL;
+    for (i = 0; i < ntot; i++) {
+        multi->iters[i] = NULL;
+    }
     multi->numiter = ntot;
     multi->index = 0;
 
     va_start(va, nadd);
-    for(i=0; i<ntot; i++) {
+    for (i = 0; i < ntot; i++) {
 	if (i < n) {
 	    current = mps[i];
 	}
@@ -11492,32 +11569,31 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
 	    current = va_arg(va, PyObject *);
 	}
         arr = PyArray_FROM_O(current);
-        if (arr==NULL) {
-            err=1; break;
+        if (arr == NULL) {
+            err = 1;
+            break;
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
             Py_DECREF(arr);
         }
     }
-
     va_end(va);
 
-    if (!err && PyArray_Broadcast(multi) < 0) err=1;
-
+    if (!err && PyArray_Broadcast(multi) < 0) {
+        err = 1;
+    }
     if (err) {
         Py_DECREF(multi);
         return NULL;
     }
-
     PyArray_MultiIter_RESET(multi);
-
-    return (PyObject *)multi;  
+    return (PyObject *)multi;
 }
 
 /*NUMPY_API
-  Get MultiIterator,
-*/
+ * Get MultiIterator,
+ */
 static PyObject *
 PyArray_MultiIterNew(int n, ...)
 {
@@ -11526,7 +11602,7 @@ PyArray_MultiIterNew(int n, ...)
     PyObject *current;
     PyObject *arr;
 
-    int i, err=0;
+    int i, err = 0;
 
     if (n < 2 || n > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -11538,37 +11614,40 @@ PyArray_MultiIterNew(int n, ...)
     /* fprintf(stderr, "multi new...");*/
 
     multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
-    if (multi == NULL) return PyErr_NoMemory();
+    if (multi == NULL) {
+        return PyErr_NoMemory();
+    }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    for(i=0; i<n; i++) multi->iters[i] = NULL;
+    for (i = 0; i < n; i++) {
+        multi->iters[i] = NULL;
+    }
     multi->numiter = n;
     multi->index = 0;
 
     va_start(va, n);
-    for(i=0; i<n; i++) {
+    for (i = 0; i < n; i++) {
         current = va_arg(va, PyObject *);
         arr = PyArray_FROM_O(current);
-        if (arr==NULL) {
-            err=1; break;
+        if (arr == NULL) {
+            err = 1;
+            break;
         }
         else {
             multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
             Py_DECREF(arr);
         }
     }
-
     va_end(va);
 
-    if (!err && PyArray_Broadcast(multi) < 0) err=1;
-
+    if (!err && PyArray_Broadcast(multi) < 0) {
+        err = 1;
+    }
     if (err) {
         Py_DECREF(multi);
         return NULL;
     }
-
     PyArray_MultiIter_RESET(multi);
-
     return (PyObject *)multi;
 }
 
@@ -11588,7 +11667,9 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
 
     n = PyTuple_Size(args);
     if (n < 2 || n > NPY_MAXARGS) {
-        if (PyErr_Occurred()) return NULL;
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
         PyErr_Format(PyExc_ValueError,
                      "Need at least two and fewer than (%d) "   \
                      "array objects.", NPY_MAXARGS);
@@ -11596,23 +11677,31 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
     }
 
     multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
-    if (multi == NULL) return PyErr_NoMemory();
+    if (multi == NULL) {
+        return PyErr_NoMemory();
+    }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
     multi->numiter = n;
     multi->index = 0;
-    for(i=0; i<n; i++) multi->iters[i] = NULL;
-    for(i=0; i<n; i++) {
+    for (i = 0; i < n; i++) {
+        multi->iters[i] = NULL;
+    }
+    for (i = 0; i < n; i++) {
         arr = PyArray_FromAny(PyTuple_GET_ITEM(args, i), NULL, 0, 0, 0, NULL);
-        if (arr == NULL) goto fail;
-        if ((multi->iters[i] =                                  \
-             (PyArrayIterObject *)PyArray_IterNew(arr))==NULL)
+        if (arr == NULL) {
             goto fail;
+        }
+        if ((multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr))
+                == NULL) {
+            goto fail;
+        }
         Py_DECREF(arr);
     }
-    if (PyArray_Broadcast(multi) < 0) goto fail;
+    if (PyArray_Broadcast(multi) < 0) {
+        goto fail;
+    }
     PyArray_MultiIter_RESET(multi);
-
     return (PyObject *)multi;
 
  fail:
@@ -11628,9 +11717,11 @@ arraymultiter_next(PyArrayMultiIterObject *multi)
 
     n = multi->numiter;
     ret = PyTuple_New(n);
-    if (ret == NULL) return NULL;
+    if (ret == NULL) {
+        return NULL;
+    }
     if (multi->index < multi->size) {
-        for(i=0; i < n; i++) {
+        for (i = 0; i < n; i++) {
             PyArrayIterObject *it=multi->iters[i];
             PyTuple_SET_ITEM(ret, i,
                              PyArray_ToScalar(it->dataptr, it->ao));
@@ -11647,8 +11738,9 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 {
     int i;
 
-    for(i=0; i<multi->numiter; i++)
+    for (i = 0; i < multi->numiter; i++) {
         Py_XDECREF(multi->iters[i]);
+    }
     multi->ob_type->tp_free((PyObject *)multi);
 }
 
@@ -11658,10 +11750,12 @@ arraymultiter_size_get(PyArrayMultiIterObject *self)
 #if SIZEOF_INTP <= SIZEOF_LONG
     return PyInt_FromLong((long) self->size);
 #else
-    if (self->size < MAX_LONG)
+    if (self->size < MAX_LONG) {
         return PyInt_FromLong((long) self->size);
-    else
+    }
+    else {
         return PyLong_FromLongLong((longlong) self->size);
+    }
 #endif
 }
 
@@ -11671,10 +11765,12 @@ arraymultiter_index_get(PyArrayMultiIterObject *self)
 #if SIZEOF_INTP <= SIZEOF_LONG
     return PyInt_FromLong((long) self->index);
 #else
-    if (self->size < MAX_LONG)
+    if (self->size < MAX_LONG) {
         return PyInt_FromLong((long) self->index);
-    else
+    }
+    else {
         return PyLong_FromLongLong((longlong) self->index);
+    }
 #endif
 }
 
@@ -11689,10 +11785,13 @@ arraymultiter_iters_get(PyArrayMultiIterObject *self)
 {
     PyObject *res;
     int i, n;
+
     n = self->numiter;
     res = PyTuple_New(n);
-    if (res == NULL) return res;
-    for(i=0; i<n; i++) {
+    if (res == NULL) {
+        return res;
+    }
+    for (i = 0; i < n; i++) {
         Py_INCREF(self->iters[i]);
         PyTuple_SET_ITEM(res, i, (PyObject *)self->iters[i]);
     }
@@ -11725,8 +11824,9 @@ static PyMemberDef arraymultiter_members[] = {
 static PyObject *
 arraymultiter_reset(PyArrayMultiIterObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
     PyArray_MultiIter_RESET(self);
     Py_INCREF(Py_None);
     return Py_None;
@@ -11739,61 +11839,61 @@ static PyMethodDef arraymultiter_methods[] = {
 
 static PyTypeObject PyArrayMultiIter_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                       /* ob_size */
-    "numpy.broadcast",                       /* tp_name */
-    sizeof(PyArrayMultiIterObject),          /* tp_basicsize */
-    0,                                       /* tp_itemsize */
+    0,                                           /* ob_size */
+    "numpy.broadcast",                           /* tp_name */
+    sizeof(PyArrayMultiIterObject),              /* tp_basicsize */
+    0,                                           /* tp_itemsize */
     /* methods */
-    (destructor)arraymultiter_dealloc,      /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    0,                                      /* tp_repr */
-    0,                                      /* tp_as_number */
-    0,                                      /* tp_as_sequence */
-    0,                              /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    0,                                      /* tp_str */
-    0,              /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                     /* tp_flags */
-    0,                                      /* tp_doc */
-    0,                              /* tp_traverse */
-    0,                                      /* tp_clear */
-    0,                                      /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    0,                              /* tp_iter */
-    (iternextfunc)arraymultiter_next,       /* tp_iternext */
-    arraymultiter_methods,          /* tp_methods */
-    arraymultiter_members,                  /* tp_members */
-    arraymultiter_getsetlist,               /* tp_getset */
-    0,                                        /* tp_base */
-    0,                                        /* tp_dict */
-    0,                                        /* tp_descr_get */
-    0,                                        /* tp_descr_set */
-    0,                                        /* tp_dictoffset */
-    (initproc)0,                              /* tp_init */
-    0,                                        /* tp_alloc */
-    arraymultiter_new,                        /* tp_new */
-    0,                                        /* tp_free */
-    0,                                        /* tp_is_gc */
-    0,                                        /* tp_bases */
-    0,                                        /* tp_mro */
-    0,                                        /* tp_cache */
-    0,                                        /* tp_subclasses */
-    0,                                        /* tp_weaklist */
-    0,   /* tp_del */
+    (destructor)arraymultiter_dealloc,           /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    0,                                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    (iternextfunc)arraymultiter_next,            /* tp_iternext */
+    arraymultiter_methods,                       /* tp_methods */
+    arraymultiter_members,                       /* tp_members */
+    arraymultiter_getsetlist,                    /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    (initproc)0,                                 /* tp_init */
+    0,                                           /* tp_alloc */
+    arraymultiter_new,                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 
@@ -11810,21 +11910,23 @@ PyArray_DescrNewFromType(int type_num)
     return new;
 }
 
-/*** Array Descr Objects for dynamic types **/
+/** Array Descr Objects for dynamic types **/
 
-/** There are some statically-defined PyArray_Descr objects corresponding
-    to the basic built-in types.
-    These can and should be DECREF'd and INCREF'd as appropriate, anyway.
-    If a mistake is made in reference counting, deallocation on these
-    builtins will be attempted leading to problems.
+/*
+ * There are some statically-defined PyArray_Descr objects corresponding
+ * to the basic built-in types.
+ * These can and should be DECREF'd and INCREF'd as appropriate, anyway.
+ * If a mistake is made in reference counting, deallocation on these
+ * builtins will be attempted leading to problems.
+ *
+ * This let's us deal with all PyArray_Descr objects using reference
+ * counting (regardless of whether they are statically or dynamically
+ * allocated).
+ */
 
-    This let's us deal with all PyArray_Descr objects using reference
-    counting (regardless of whether they are statically or dynamically
-    allocated).
-**/
-
-/* base cannot be NULL */
-/*NUMPY_API*/
+/*NUMPY_API
+ * base cannot be NULL
+ */
 static PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
@@ -11853,9 +11955,10 @@ PyArray_DescrNew(PyArray_Descr *base)
     return new;
 }
 
-/* should never be called for builtin-types unless
-   there is a reference-count problem
-*/
+/*
+ * should never be called for builtin-types unless
+ * there is a reference-count problem
+ */
 static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
@@ -11878,20 +11981,29 @@ arraydescr_dealloc(PyArray_Descr *self)
     self->ob_type->tp_free((PyObject *)self);
 }
 
-/* we need to be careful about setting attributes because these
-   objects are pointed to by arrays that depend on them for interpreting
-   data.  Currently no attributes of data-type objects can be set
-   directly except names.
-*/
+/*
+ * we need to be careful about setting attributes because these
+ * objects are pointed to by arrays that depend on them for interpreting
+ * data.  Currently no attributes of data-type objects can be set
+ * directly except names.
+ */
 static PyMemberDef arraydescr_members[] = {
-    {"type", T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
-    {"kind", T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
-    {"char", T_CHAR, offsetof(PyArray_Descr, type), RO, NULL},
-    {"num", T_INT, offsetof(PyArray_Descr, type_num), RO, NULL},
-    {"byteorder", T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
-    {"itemsize", T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
-    {"alignment", T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
-    {"flags", T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
+    {"type",
+        T_OBJECT, offsetof(PyArray_Descr, typeobj), RO, NULL},
+    {"kind",
+        T_CHAR, offsetof(PyArray_Descr, kind), RO, NULL},
+    {"char",
+        T_CHAR, offsetof(PyArray_Descr, type), RO, NULL},
+    {"num",
+        T_INT, offsetof(PyArray_Descr, type_num), RO, NULL},
+    {"byteorder",
+        T_CHAR, offsetof(PyArray_Descr, byteorder), RO, NULL},
+    {"itemsize",
+        T_INT, offsetof(PyArray_Descr, elsize), RO, NULL},
+    {"alignment",
+        T_INT, offsetof(PyArray_Descr, alignment), RO, NULL},
+    {"flags",
+        T_UBYTE, offsetof(PyArray_Descr, hasobject), RO, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -11909,15 +12021,16 @@ arraydescr_subdescr_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self)
 {
-    char basic_=self->kind;
+    char basic_ = self->kind;
     char endian = self->byteorder;
-    int size=self->elsize;
+    int size = self->elsize;
 
     if (endian == '=') {
         endian = '<';
-        if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
+        if (!PyArray_IsNativeByteOrder(endian)) {
+            endian = '>';
+        }
     }
-
     if (self->type_num == PyArray_UNICODE) {
         size >>= 2;
     }
@@ -11931,7 +12044,8 @@ arraydescr_typename_get(PyArray_Descr *self)
     PyTypeObject *typeobj = self->typeobj;
     PyObject *res;
     char *s;
-    static int prefix_len=0;
+    /* fixme: not reentrant */
+    static int prefix_len = 0;
 
     if (PyTypeNum_ISUSERDEF(self->type_num)) {
         s = strrchr(typeobj->tp_name, '.');
@@ -11939,17 +12053,18 @@ arraydescr_typename_get(PyArray_Descr *self)
             res = PyString_FromString(typeobj->tp_name);
         }
         else {
-            res = PyString_FromStringAndSize(s+1, strlen(s)-1);
+            res = PyString_FromStringAndSize(s + 1, strlen(s) - 1);
         }
         return res;
     }
     else {
-        if (prefix_len == 0)
+        if (prefix_len == 0) {
             prefix_len = strlen("numpy.");
-
+        }
         len = strlen(typeobj->tp_name);
-        if (*(typeobj->tp_name + (len-1)) == '_')
-            len-=1;
+        if (*(typeobj->tp_name + (len-1)) == '_') {
+            len -= 1;
+        }
         len -= prefix_len;
         res = PyString_FromStringAndSize(typeobj->tp_name+prefix_len, len);
     }
@@ -11994,35 +12109,45 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
     if (self->names == NULL) {
         /* get default */
         dobj = PyTuple_New(2);
-        if (dobj == NULL) return NULL;
+        if (dobj == NULL) {
+            return NULL;
+        }
         PyTuple_SET_ITEM(dobj, 0, PyString_FromString(""));
-        PyTuple_SET_ITEM(dobj, 1, \
-                         arraydescr_protocol_typestr_get(self));
+        PyTuple_SET_ITEM(dobj, 1, arraydescr_protocol_typestr_get(self));
         res = PyList_New(1);
-        if (res == NULL) {Py_DECREF(dobj); return NULL;}
+        if (res == NULL) {
+            Py_DECREF(dobj);
+            return NULL;
+        }
         PyList_SET_ITEM(res, 0, dobj);
         return res;
     }
 
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) return NULL;
-    res = PyObject_CallMethod(_numpy_internal, "_array_descr",
-                              "O", self);
+    if (_numpy_internal == NULL) {
+        return NULL;
+    }
+    res = PyObject_CallMethod(_numpy_internal, "_array_descr", "O", self);
     Py_DECREF(_numpy_internal);
     return res;
 }
 
-/* returns 1 for a builtin type
-   and 2 for a user-defined data-type descriptor
-   return 0 if neither (i.e. it's a copy of one)
-*/
+/*
+ * returns 1 for a builtin type
+ * and 2 for a user-defined data-type descriptor
+ * return 0 if neither (i.e. it's a copy of one)
+ */
 static PyObject *
 arraydescr_isbuiltin_get(PyArray_Descr *self)
 {
     long val;
     val = 0;
-    if (self->fields == Py_None) val = 1;
-    if (PyTypeNum_ISUSERDEF(self->type_num)) val = 2;
+    if (self->fields == Py_None) {
+        val = 1;
+    }
+    if (PyTypeNum_ISUSERDEF(self->type_num)) {
+        val = 2;
+    }
     return PyInt_FromLong(val);
 }
 
@@ -12033,34 +12158,42 @@ _arraydescr_isnative(PyArray_Descr *self)
         return PyArray_ISNBO(self->byteorder);
     }
     else {
-        PyObject *key, *value, *title=NULL;
+        PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
         int offset;
-        Py_ssize_t pos=0;
-        while(PyDict_Next(self->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) continue;
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
-                                  &title)) return -1;
-            if (!_arraydescr_isnative(new)) return 0;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(self->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) {
+                continue;
+            }
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+                return -1;
+            }
+            if (!_arraydescr_isnative(new)) {
+                return 0;
+            }
         }
     }
     return 1;
 }
 
-/* return Py_True if this data-type descriptor
-   has native byteorder if no fields are defined
-
-   or if all sub-fields have native-byteorder if
-   fields are defined
-*/
+/*
+ * return Py_True if this data-type descriptor
+ * has native byteorder if no fields are defined
+ *
+ * or if all sub-fields have native-byteorder if
+ * fields are defined
+ */
 static PyObject *
 arraydescr_isnative_get(PyArray_Descr *self)
 {
     PyObject *ret;
     int retval;
     retval = _arraydescr_isnative(self);
-    if (retval == -1) return NULL;
-    ret = (retval ? Py_True : Py_False);
+    if (retval == -1) {
+        return NULL;
+    }
+    ret = retval ? Py_True : Py_False;
     Py_INCREF(ret);
     return ret;
 }
@@ -12079,10 +12212,12 @@ static PyObject *
 arraydescr_hasobject_get(PyArray_Descr *self)
 {
     PyObject *res;
-    if (PyDataType_FLAGCHK(self, NPY_ITEM_HASOBJECT))
+    if (PyDataType_FLAGCHK(self, NPY_ITEM_HASOBJECT)) {
         res = Py_True;
-    else
+    }
+    else {
         res = Py_False;
+    }
     Py_INCREF(res);
     return res;
 }
@@ -12116,9 +12251,9 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
 	return -1;
     }
     /* Make sure all entries are strings */
-    for(i=0; i<N; i++) {
+    for (i = 0; i < N; i++) {
 	PyObject *item;
-	int valid=1;
+	int valid = 1;
 	item = PySequence_GetItem(val, i);
 	valid = PyString_Check(item);
 	Py_DECREF(item);
@@ -12131,8 +12266,7 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     }
     /* Update dictionary keys in fields */
     new_names = PySequence_Tuple(val);
-
-    for(i=0; i<N; i++) {
+    for (i = 0; i < N; i++) {
 	PyObject *key;
 	PyObject *item;
 	PyObject *new_key;
@@ -12155,39 +12289,39 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
 
 static PyGetSetDef arraydescr_getsets[] = {
     {"subdtype",
-     (getter)arraydescr_subdescr_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_subdescr_get,
+        NULL, NULL, NULL},
     {"descr",
-     (getter)arraydescr_protocol_descr_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_protocol_descr_get,
+        NULL, NULL, NULL},
     {"str",
-     (getter)arraydescr_protocol_typestr_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_protocol_typestr_get,
+        NULL, NULL, NULL},
     {"name",
-     (getter)arraydescr_typename_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_typename_get,
+        NULL, NULL, NULL},
     {"base",
-     (getter)arraydescr_base_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_base_get,
+        NULL, NULL, NULL},
     {"shape",
-     (getter)arraydescr_shape_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_shape_get,
+        NULL, NULL, NULL},
     {"isbuiltin",
-     (getter)arraydescr_isbuiltin_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_isbuiltin_get,
+        NULL, NULL, NULL},
     {"isnative",
-     (getter)arraydescr_isnative_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_isnative_get,
+        NULL, NULL, NULL},
     {"fields",
-     (getter)arraydescr_fields_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_fields_get,
+        NULL, NULL, NULL},
     {"names",
-     (getter)arraydescr_names_get,
-     (setter)arraydescr_names_set,
-     NULL, NULL},
+        (getter)arraydescr_names_get,
+        (setter)arraydescr_names_set,
+        NULL, NULL},
     {"hasobject",
-     (getter)arraydescr_hasobject_get,
-     NULL, NULL, NULL},
+        (getter)arraydescr_hasobject_get,
+        NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
 
@@ -12196,22 +12330,24 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
 {
     PyObject *odescr;
     PyArray_Descr *descr, *conv;
-    Bool align=FALSE;
-    Bool copy=FALSE;
+    Bool align = FALSE;
+    Bool copy = FALSE;
     static char *kwlist[] = {"dtype", "align", "copy", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&",
                                      kwlist, &odescr,
                                      PyArray_BoolConverter, &align,
-                                     PyArray_BoolConverter, &copy))
+                                     PyArray_BoolConverter, &copy)) {
         return NULL;
-
-    if (align) {
-        if (!PyArray_DescrAlignConverter(odescr, &conv))
-            return NULL;
     }
-    else if (!PyArray_DescrConverter(odescr, &conv))
+    if (align) {
+        if (!PyArray_DescrAlignConverter(odescr, &conv)) {
+            return NULL;
+        }
+    }
+    else if (!PyArray_DescrConverter(odescr, &conv)) {
         return NULL;
+    }
     /* Get a new copy of it unless it's already a copy */
     if (copy && conv->fields == Py_None) {
         descr = PyArray_DescrNew(conv);
@@ -12226,9 +12362,11 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
 static PyObject *
 arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
 {
-    /* version number of this pickle type. Increment if we need to
-       change the format. Be sure to handle the old versions in
-       arraydescr_setstate. */
+    /*
+     * version number of this pickle type. Increment if we need to
+     * change the format. Be sure to handle the old versions in
+     * arraydescr_setstate.
+    */
     const int version = 3;
     PyObject *ret, *mod, *obj;
     PyObject *state;
@@ -12236,15 +12374,23 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     int elsize, alignment;
 
     ret = PyTuple_New(3);
-    if (ret == NULL) return NULL;
+    if (ret == NULL) {
+        return NULL;
+    }
     mod = PyImport_ImportModule("numpy.core.multiarray");
-    if (mod == NULL) {Py_DECREF(ret); return NULL;}
+    if (mod == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
     obj = PyObject_GetAttrString(mod, "dtype");
     Py_DECREF(mod);
-    if (obj == NULL) {Py_DECREF(ret); return NULL;}
+    if (obj == NULL) {
+        Py_DECREF(ret);
+        return NULL;
+    }
     PyTuple_SET_ITEM(ret, 0, obj);
-    if (PyTypeNum_ISUSERDEF(self->type_num) ||              \
-        ((self->type_num == PyArray_VOID &&                 \
+    if (PyTypeNum_ISUSERDEF(self->type_num) ||
+        ((self->type_num == PyArray_VOID &&
           self->typeobj != &PyVoidArrType_Type))) {
         obj = (PyObject *)self->typeobj;
         Py_INCREF(obj);
@@ -12258,12 +12404,16 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(ret, 1, Py_BuildValue("(Nii)", obj, 0, 1));
 
-    /* Now return the state which is at least
-       byteorder, subarray, and fields */
+    /* 
+     * Now return the state which is at least byteorder,
+     * subarray, and fields
+     */
     endian = self->byteorder;
     if (endian == '=') {
         endian = '<';
-        if (!PyArray_IsNativeByteOrder(endian)) endian = '>';
+        if (!PyArray_IsNativeByteOrder(endian)) {
+            endian = '>';
+        }
     }
     state = PyTuple_New(8);
     PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
@@ -12287,12 +12437,13 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
         elsize = self->elsize;
         alignment = self->alignment;
     }
-    else {elsize = -1; alignment = -1;}
-
+    else {
+        elsize = -1;
+        alignment = -1;
+    }
     PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
     PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->hasobject));
-
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
 }
@@ -12304,17 +12455,20 @@ static int
 _descr_find_object(PyArray_Descr *self)
 {
     if (self->hasobject || self->type_num == PyArray_OBJECT ||
-        self->kind == 'O')
+        self->kind == 'O') {
         return NPY_OBJECT_DTYPE_FLAGS;
+    }
     if (PyDescr_HASFIELDS(self)) {
-        PyObject *key, *value, *title=NULL;
+        PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
         int offset;
-        Py_ssize_t pos=0;
+        Py_ssize_t pos = 0;
+
         while (PyDict_Next(self->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) continue;
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
-                                  &title)) {
+	    if NPY_TITLE_KEY(key, value) {
+                continue;
+            }
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
                 PyErr_Clear();
                 return 0;
             }
@@ -12327,64 +12481,68 @@ _descr_find_object(PyArray_Descr *self)
     return 0;
 }
 
-/* state is at least byteorder, subarray, and fields but could include elsize
-   and alignment for EXTENDED arrays
-*/
-
+/*
+ * state is at least byteorder, subarray, and fields but could include elsize
+ * and alignment for EXTENDED arrays
+ */
 static PyObject *
 arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 {
     int elsize = -1, alignment = -1;
     int version = 3;
     char endian;
-    PyObject *subarray, *fields, *names=NULL;
+    PyObject *subarray, *fields, *names = NULL;
     int incref_names = 1;
-    int dtypeflags=0;
+    int dtypeflags = 0;
 
-    if (self->fields == Py_None) {Py_INCREF(Py_None); return Py_None;}
-
+    if (self->fields == Py_None) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
     if (PyTuple_GET_SIZE(args) != 1 ||
         !(PyTuple_Check(PyTuple_GET_ITEM(args, 0)))) {
         PyErr_BadInternalCall();
         return NULL;
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
-    case 8:
-        if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
-                              &subarray, &names, &fields, &elsize,
-                              &alignment, &dtypeflags)) {
-            return NULL;
-        }
-        break;
-    case 7:
-        if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian,
-                              &subarray, &names, &fields, &elsize,
-                              &alignment)) {
-            return NULL;
-        }
-        break;
-    case 6:
-        if (!PyArg_ParseTuple(args, "(icOOii)", &version,
-                              &endian, &subarray, &fields,
-                              &elsize, &alignment)) {
-            PyErr_Clear();
-        }
-        break;
-    case 5:
-        version = 0;
-        if (!PyArg_ParseTuple(args, "(cOOii)",
-                              &endian, &subarray, &fields, &elsize,
-                              &alignment)) {
-            return NULL;
-        }
-        break;
-    default:
-        version = -1; /* raise an error */
+        case 8:
+            if (!PyArg_ParseTuple(args, "(icOOOiii)", &version, &endian,
+                        &subarray, &names, &fields, &elsize,
+                        &alignment, &dtypeflags)) {
+                return NULL;
+            }
+            break;
+        case 7:
+            if (!PyArg_ParseTuple(args, "(icOOOii)", &version, &endian,
+                        &subarray, &names, &fields, &elsize,
+                        &alignment)) {
+                return NULL;
+            }
+            break;
+        case 6:
+            if (!PyArg_ParseTuple(args, "(icOOii)", &version,
+                        &endian, &subarray, &fields,
+                        &elsize, &alignment)) {
+                PyErr_Clear();
+            }
+            break;
+        case 5:
+            version = 0;
+            if (!PyArg_ParseTuple(args, "(cOOii)",
+                        &endian, &subarray, &fields, &elsize,
+                        &alignment)) {
+                return NULL;
+            }
+            break;
+        default:
+            /* raise an error */
+            version = -1;
     }
 
-    /* If we ever need another pickle format, increment the version
-       number. But we should still be able to handle the old versions.
-    */
+    /*
+     * If we ever need another pickle format, increment the version
+     * number. But we should still be able to handle the old versions.
+     */
     if (version < 0 || version > 3) {
         PyErr_Format(PyExc_ValueError,
                      "can't handle version %d of numpy.dtype pickle",
@@ -12397,7 +12555,9 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             PyObject *key, *list;
             key = PyInt_FromLong(-1);
             list = PyDict_GetItem(fields, key);
-            if (!list) return NULL;
+            if (!list) {
+                return NULL;
+            }
             Py_INCREF(list);
             names = list;
             PyDict_DelItem(fields, key);
@@ -12409,16 +12569,16 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
 
-    if ((fields == Py_None && names != Py_None) ||  \
+    if ((fields == Py_None && names != Py_None) ||
         (names == Py_None && fields != Py_None)) {
         PyErr_Format(PyExc_ValueError,
                      "inconsistent fields and names");
         return NULL;
     }
 
-    if (endian != '|' &&
-        PyArray_IsNativeByteOrder(endian)) endian = '=';
-
+    if (endian != '|' && PyArray_IsNativeByteOrder(endian)) {
+        endian = '=';
+    }
     self->byteorder = endian;
     if (self->subarray) {
         Py_XDECREF(self->subarray->base);
@@ -12441,8 +12601,9 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         Py_INCREF(fields);
         Py_XDECREF(self->names);
         self->names = names;
-        if (incref_names)
+        if (incref_names) {
             Py_INCREF(names);
+        }
     }
 
     if (PyTypeNum_ISEXTENDED(self->type_num)) {
@@ -12459,23 +12620,23 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 }
 
 
-/* returns a copy of the PyArray_Descr structure with the byteorder
-   altered:
-   no arguments:  The byteorder is swapped (in all subfields as well)
-   single argument:  The byteorder is forced to the given state
-   (in all subfields as well)
-
-   Valid states:  ('big', '>') or ('little' or '<')
-   ('native', or '=')
-
-   If a descr structure with | is encountered it's own
-   byte-order is not changed but any fields are:
-*/
-
-/*NUMPY_API
-  Deep bytorder change of a data-type descriptor
-  *** Leaves reference count of self unchanged --- does not DECREF self ***
-  */
+ /*NUMPY_API
+ * returns a copy of the PyArray_Descr structure with the byteorder
+ * altered:
+ * no arguments:  The byteorder is swapped (in all subfields as well)
+ * single argument:  The byteorder is forced to the given state
+ * (in all subfields as well)
+ *
+ * Valid states:  ('big', '>') or ('little' or '<')
+ * ('native', or '=')
+ *
+ * If a descr structure with | is encountered it's own
+ * byte-order is not changed but any fields are:
+ *
+ *
+ * Deep bytorder change of a data-type descriptor
+ * *** Leaves reference count of self unchanged --- does not DECREF self ***
+ */
 static PyArray_Descr *
 PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 {
@@ -12485,9 +12646,14 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
     new = PyArray_DescrNew(self);
     endian = new->byteorder;
     if (endian != PyArray_IGNORE) {
-        if (newendian == PyArray_SWAP) {  /* swap byteorder */
-            if PyArray_ISNBO(endian) endian = PyArray_OPPBYTE;
-            else endian = PyArray_NATBYTE;
+        if (newendian == PyArray_SWAP) {
+            /* swap byteorder */
+            if PyArray_ISNBO(endian) {
+                endian = PyArray_OPPBYTE;
+            }
+            else {
+                endian = PyArray_NATBYTE;
+            }
             new->byteorder = endian;
         }
         else if (newendian != PyArray_IGNORE) {
@@ -12502,28 +12668,31 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
         PyArray_Descr *newdescr;
         Py_ssize_t pos = 0;
         int len, i;
-        newfields = PyDict_New();
-        /* make new dictionary with replaced */
-        /* PyArray_Descr Objects */
-        while(PyDict_Next(self->fields, &pos, &key, &value)) {
-	    if NPY_TITLE_KEY(key, value) continue;
-            if (!PyString_Check(key) ||          \
-                !PyTuple_Check(value) ||                    \
-                ((len=PyTuple_GET_SIZE(value)) < 2))
-                continue;
 
+        newfields = PyDict_New();
+        /* make new dictionary with replaced PyArray_Descr Objects */
+        while(PyDict_Next(self->fields, &pos, &key, &value)) {
+	    if NPY_TITLE_KEY(key, value) {
+                continue;
+            }
+            if (!PyString_Check(key) ||
+                !PyTuple_Check(value) ||
+                ((len=PyTuple_GET_SIZE(value)) < 2)) {
+                continue;
+            }
             old = PyTuple_GET_ITEM(value, 0);
-            if (!PyArray_DescrCheck(old)) continue;
-            newdescr = PyArray_DescrNewByteorder            \
-                ((PyArray_Descr *)old, newendian);
+            if (!PyArray_DescrCheck(old)) {
+                continue;
+            }
+            newdescr = PyArray_DescrNewByteorder(
+                    (PyArray_Descr *)old, newendian);
             if (newdescr == NULL) {
                 Py_DECREF(newfields); Py_DECREF(new);
                 return NULL;
             }
             newvalue = PyTuple_New(len);
-            PyTuple_SET_ITEM(newvalue, 0,           \
-                             (PyObject *)newdescr);
-            for(i=1; i<len; i++) {
+            PyTuple_SET_ITEM(newvalue, 0, (PyObject *)newdescr);
+            for (i = 1; i < len; i++) {
                 old = PyTuple_GET_ITEM(value, i);
                 Py_INCREF(old);
                 PyTuple_SET_ITEM(newvalue, i, old);
@@ -12536,7 +12705,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
     }
     if (new->subarray) {
         Py_DECREF(new->subarray->base);
-        new->subarray->base = PyArray_DescrNewByteorder \
+        new->subarray->base = PyArray_DescrNewByteorder
             (self->subarray->base, newendian);
     }
     return new;
@@ -12549,19 +12718,20 @@ arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
     char endian=PyArray_SWAP;
 
     if (!PyArg_ParseTuple(args, "|O&", PyArray_ByteorderConverter,
-                          &endian)) return NULL;
-
+                          &endian)) {
+        return NULL;
+    }
     return (PyObject *)PyArray_DescrNewByteorder(self, endian);
 }
 
 static PyMethodDef arraydescr_methods[] = {
     /* for pickling */
-    {"__reduce__", (PyCFunction)arraydescr_reduce, METH_VARARGS,
-     NULL},
-    {"__setstate__", (PyCFunction)arraydescr_setstate, METH_VARARGS,
-     NULL},
-    {"newbyteorder", (PyCFunction)arraydescr_newbyteorder, METH_VARARGS,
-     NULL},
+    {"__reduce__",
+        (PyCFunction)arraydescr_reduce, METH_VARARGS, NULL},
+    {"__setstate__",
+        (PyCFunction)arraydescr_setstate, METH_VARARGS, NULL},
+    {"newbyteorder",
+        (PyCFunction)arraydescr_newbyteorder, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
@@ -12577,7 +12747,9 @@ arraydescr_str(PyArray_Descr *self)
             sub = PyString_FromString("<err>");
             PyErr_Clear();
         }
-        else sub = PyObject_Str(lst);
+        else {
+            sub = PyObject_Str(lst);
+        }
         Py_XDECREF(lst);
         if (self->type_num != PyArray_VOID) {
             PyObject *p;
@@ -12648,55 +12820,66 @@ arraydescr_repr(PyArray_Descr *self)
 static PyObject *
 arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 {
-    PyArray_Descr *new=NULL;
+    PyArray_Descr *new = NULL;
     PyObject *result = Py_NotImplemented;
     if (!PyArray_DescrCheck(other)) {
-        if (PyArray_DescrConverter(other, &new) == PY_FAIL)
+        if (PyArray_DescrConverter(other, &new) == PY_FAIL) {
             return NULL;
+        }
     }
     else {
         new = (PyArray_Descr *)other;
         Py_INCREF(new);
     }
     switch (cmp_op) {
-    case Py_LT:
-        if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(self, new))
-            result = Py_True;
-        else
-            result = Py_False;
-        break;
-    case Py_LE:
-        if (PyArray_CanCastTo(self, new))
-            result = Py_True;
-        else
-            result = Py_False;
-        break;
-    case Py_EQ:
-        if (PyArray_EquivTypes(self, new))
-            result = Py_True;
-        else
-            result = Py_False;
-        break;
-    case Py_NE:
-        if (PyArray_EquivTypes(self, new))
-            result = Py_False;
-        else
-            result = Py_True;
-        break;
-    case Py_GT:
-        if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(new, self))
-            result = Py_True;
-        else
-            result = Py_False;
-        break;
-    case Py_GE:
-        if (PyArray_CanCastTo(new, self))
-            result = Py_True;
-        else
-            result = Py_False;
-        break;
-    default:
-        result = Py_NotImplemented;
+        case Py_LT:
+            if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(self, new)) {
+                result = Py_True;
+            }
+            else {
+                result = Py_False;
+            }
+            break;
+        case Py_LE:
+            if (PyArray_CanCastTo(self, new)) {
+                result = Py_True;
+            }
+            else {
+                result = Py_False;
+            }
+            break;
+        case Py_EQ:
+            if (PyArray_EquivTypes(self, new)) {
+                result = Py_True;
+            }
+            else {
+                result = Py_False;
+            }
+            break;
+        case Py_NE:
+            if (PyArray_EquivTypes(self, new))
+                result = Py_False;
+            else
+                result = Py_True;
+            break;
+        case Py_GT:
+            if (!PyArray_EquivTypes(self, new) && PyArray_CanCastTo(new, self)) {
+                result = Py_True;
+            }
+            else {
+                result = Py_False;
+            }
+            break;
+        case Py_GE:
+            if (PyArray_CanCastTo(new, self)) {
+                result = Py_True;
+            }
+            else {
+                result = Py_False;
+            }
+            break;
+        default:
+            result = Py_NotImplemented;
     }
 
     Py_XDECREF(new);
@@ -12711,12 +12894,14 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 static Py_ssize_t
 descr_length(PyObject *self0)
 {
-
     PyArray_Descr *self = (PyArray_Descr *)self0;
 
-    if (self->names)
+    if (self->names) {
         return PyTuple_GET_SIZE(self->names);
-    else return 0;
+    }
+    else {
+        return 0;
+    }
 }
 
 static PyObject *
@@ -12724,7 +12909,7 @@ descr_repeat(PyObject *self, Py_ssize_t length)
 {
     PyObject *tup;
     PyArray_Descr *new;
-    if (length < 0)
+    if (length < 0) {
         return PyErr_Format(PyExc_ValueError,
 #if (PY_VERSION_HEX < 0x02050000)
                             "Array length must be >= 0, not %d",
@@ -12732,8 +12917,11 @@ descr_repeat(PyObject *self, Py_ssize_t length)
                             "Array length must be >= 0, not %zd",
 #endif
                             length);
+    }
     tup = Py_BuildValue("O" NPY_SSIZE_T_PYFMT, self, length);
-    if (tup == NULL) return NULL;
+    if (tup == NULL) {
+        return NULL;
+    }
     PyArray_DescrConverter(tup, &new);
     Py_DECREF(tup);
     return (PyObject *)new;
@@ -12745,11 +12933,9 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
 
     if (self->names) {
         if (PyString_Check(op) || PyUnicode_Check(op)) {
-            PyObject *obj;
-            obj = PyDict_GetItem(self->fields, op);
+            PyObject *obj = PyDict_GetItem(self->fields, op);
             if (obj != NULL) {
-                PyObject *descr;
-                descr = PyTuple_GET_ITEM(obj, 0);
+                PyObject *descr = PyTuple_GET_ITEM(obj, 0);
                 Py_INCREF(descr);
                 return descr;
             }
@@ -12761,12 +12947,12 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         }
         else {
             PyObject *name;
-            int value;
-            value = PyArray_PyIntAsInt(op);
+            int value = PyArray_PyIntAsInt(op);
             if (!PyErr_Occurred()) {
-                int size;
-                size = PyTuple_GET_SIZE(self->names);
-                if (value < 0) value += size;
+                int size = PyTuple_GET_SIZE(self->names);
+                if (value < 0) {
+                    value += size;
+                }
                 if (value < 0 || value >= size) {
                     PyErr_Format(PyExc_IndexError,
                                  "0<=index<%d not %d",
@@ -12797,17 +12983,17 @@ static PySequenceMethods descr_as_sequence = {
     (binaryfunc)NULL,
     descr_repeat,
     NULL, NULL,
-    NULL, /* sq_ass_item */
-    NULL, /* ssizessizeobjargproc sq_ass_slice */
-    0, /* sq_contains */
-    0, /* sq_inplace_concat */
-    0, /* sq_inplace_repeat */
+    NULL,                                        /* sq_ass_item */
+    NULL,                                        /* ssizessizeobjargproc sq_ass_slice */
+    0,                                           /* sq_contains */
+    0,                                           /* sq_inplace_concat */
+    0,                                           /* sq_inplace_repeat */
 };
 
 static PyMappingMethods descr_as_mapping = {
-    descr_length,                       /*mp_length*/
-    (binaryfunc)descr_subscript,        /*mp_subscript*/
-    (objobjargproc)NULL,                /*mp_ass_subscript*/
+    descr_length,                                /* mp_length*/
+    (binaryfunc)descr_subscript,                 /* mp_subscript*/
+    (objobjargproc)NULL,                         /* mp_ass_subscript*/
 };
 
 /****************** End of Mapping Protocol ******************************/
@@ -12815,70 +13001,71 @@ static PyMappingMethods descr_as_mapping = {
 
 static PyTypeObject PyArrayDescr_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                       /* ob_size */
-    "numpy.dtype",                           /* tp_name */
-    sizeof(PyArray_Descr),                   /* tp_basicsize */
-    0,                                       /* tp_itemsize */
+    0,                                           /* ob_size */
+    "numpy.dtype",                               /* tp_name */
+    sizeof(PyArray_Descr),                       /* tp_basicsize */
+    0,                                           /* tp_itemsize */
     /* methods */
-    (destructor)arraydescr_dealloc,         /* tp_dealloc */
-    0,                                      /* tp_print */
-    0,                                      /* tp_getattr */
-    0,                                      /* tp_setattr */
-    0,                                      /* tp_compare */
-    (reprfunc)arraydescr_repr,              /* tp_repr */
-    0,                                      /* tp_as_number */
-    &descr_as_sequence,                     /* tp_as_sequence */
-    &descr_as_mapping,                      /* tp_as_mapping */
-    0,                                      /* tp_hash */
-    0,                                      /* tp_call */
-    (reprfunc)arraydescr_str,               /* tp_str */
-    0,                                      /* tp_getattro */
-    0,                                      /* tp_setattro */
-    0,                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                     /* tp_flags */
-    0,                                      /* tp_doc */
-    0,                                      /* tp_traverse */
-    0,                                      /* tp_clear */
-    (richcmpfunc)arraydescr_richcompare,    /* tp_richcompare */
-    0,                                      /* tp_weaklistoffset */
-    0,                                      /* tp_iter */
-    0,                                      /* tp_iternext */
-    arraydescr_methods,                     /* tp_methods */
-    arraydescr_members,                     /* tp_members */
-    arraydescr_getsets,                     /* tp_getset */
-    0,                                        /* tp_base */
-    0,                                        /* tp_dict */
-    0,                                        /* tp_descr_get */
-    0,                                        /* tp_descr_set */
-    0,                                        /* tp_dictoffset */
-    0,                                        /* tp_init */
-    0,                                        /* tp_alloc */
-    arraydescr_new,                           /* tp_new */
-    0,                                        /* tp_free */
-    0,                                        /* tp_is_gc */
-    0,                                        /* tp_bases */
-    0,                                        /* tp_mro */
-    0,                                        /* tp_cache */
-    0,                                        /* tp_subclasses */
-    0,                                        /* tp_weaklist */
-    0,   /* tp_del */
+    (destructor)arraydescr_dealloc,              /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    (reprfunc)arraydescr_repr,                   /* tp_repr */
+    0,                                           /* tp_as_number */
+    &descr_as_sequence,                          /* tp_as_sequence */
+    &descr_as_mapping,                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    (reprfunc)arraydescr_str,                    /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                          /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    (richcmpfunc)arraydescr_richcompare,         /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    0,                                           /* tp_iternext */
+    arraydescr_methods,                          /* tp_methods */
+    arraydescr_members,                          /* tp_members */
+    arraydescr_getsets,                          /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    0,                                           /* tp_init */
+    0,                                           /* tp_alloc */
+    arraydescr_new,                              /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 
 
-/** Array Flags Object **/
+/* Array Flags Object */
 
 /*NUMPY_API
-  Get New ArrayFlagsObject
-*/
+ *
+ * Get New ArrayFlagsObject
+ */
 static PyObject *
 PyArray_NewFlagsObject(PyObject *obj)
 {
@@ -12891,11 +13078,12 @@ PyArray_NewFlagsObject(PyObject *obj)
         flags = PyArray_FLAGS(obj);
     }
     flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
-    if (flagobj == NULL) return NULL;
+    if (flagobj == NULL) {
+        return NULL;
+    }
     Py_XINCREF(obj);
     ((PyArrayFlagsObject *)flagobj)->arr = obj;
     ((PyArrayFlagsObject *)flagobj)->flags = flags;
-
     return flagobj;
 }
 
@@ -12933,11 +13121,12 @@ arrayflags_forc_get(PyArrayFlagsObject *self)
     PyObject *item;
 
     if (((self->flags & FORTRAN) == FORTRAN) ||
-        ((self->flags & CONTIGUOUS) == CONTIGUOUS))
+        ((self->flags & CONTIGUOUS) == CONTIGUOUS)) {
         item = Py_True;
-    else
+    }
+    else {
         item = Py_False;
-
+    }
     Py_INCREF(item);
     return item;
 }
@@ -12948,11 +13137,12 @@ arrayflags_fnc_get(PyArrayFlagsObject *self)
     PyObject *item;
 
     if (((self->flags & FORTRAN) == FORTRAN) &&
-        !((self->flags & CONTIGUOUS) == CONTIGUOUS))
+        !((self->flags & CONTIGUOUS) == CONTIGUOUS)) {
         item = Py_True;
-    else
+    }
+    else {
         item = Py_False;
-
+    }
     Py_INCREF(item);
     return item;
 }
@@ -12962,13 +13152,14 @@ arrayflags_farray_get(PyArrayFlagsObject *self)
 {
     PyObject *item;
 
-    if (((self->flags & (ALIGNED|WRITEABLE|FORTRAN)) ==     \
+    if (((self->flags & (ALIGNED|WRITEABLE|FORTRAN)) ==
          (ALIGNED|WRITEABLE|FORTRAN)) &&
-        !((self->flags & CONTIGUOUS) == CONTIGUOUS))
+        !((self->flags & CONTIGUOUS) == CONTIGUOUS)) {
         item = Py_True;
-    else
+    }
+    else {
         item = Py_False;
-
+    }
     Py_INCREF(item);
     return item;
 }
@@ -12990,7 +13181,9 @@ arrayflags_updateifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
     }
     res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None,
                               (PyObject_IsTrue(obj) ? Py_True : Py_False));
-    if (res == NULL) return -1;
+    if (res == NULL) {
+        return -1;
+    }
     Py_DECREF(res);
     return 0;
 }
@@ -13006,7 +13199,9 @@ arrayflags_aligned_set(PyArrayFlagsObject *self, PyObject *obj)
     res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None,
                               (PyObject_IsTrue(obj) ? Py_True : Py_False),
                               Py_None);
-    if (res == NULL) return -1;
+    if (res == NULL) {
+        return -1;
+    }
     Py_DECREF(res);
     return 0;
 }
@@ -13022,7 +13217,9 @@ arrayflags_writeable_set(PyArrayFlagsObject *self, PyObject *obj)
     res = PyObject_CallMethod(self->arr, "setflags", "OOO",
                               (PyObject_IsTrue(obj) ? Py_True : Py_False),
                               Py_None, Py_None);
-    if (res == NULL) return -1;
+    if (res == NULL) {
+        return -1;
+    }
     Py_DECREF(res);
     return 0;
 }
@@ -13030,61 +13227,61 @@ arrayflags_writeable_set(PyArrayFlagsObject *self, PyObject *obj)
 
 static PyGetSetDef arrayflags_getsets[] = {
     {"contiguous",
-     (getter)arrayflags_contiguous_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_contiguous_get,
+        NULL,
+        "", NULL},
     {"c_contiguous",
-     (getter)arrayflags_contiguous_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_contiguous_get,
+        NULL,
+        "", NULL},
     {"f_contiguous",
-     (getter)arrayflags_fortran_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_fortran_get,
+        NULL,
+        "", NULL},
     {"fortran",
-     (getter)arrayflags_fortran_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_fortran_get,
+        NULL,
+        "", NULL},
     {"updateifcopy",
-     (getter)arrayflags_updateifcopy_get,
-     (setter)arrayflags_updateifcopy_set,
-     "", NULL},
+        (getter)arrayflags_updateifcopy_get,
+        (setter)arrayflags_updateifcopy_set,
+        "", NULL},
     {"owndata",
-     (getter)arrayflags_owndata_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_owndata_get,
+        NULL,
+        "", NULL},
     {"aligned",
-     (getter)arrayflags_aligned_get,
-     (setter)arrayflags_aligned_set,
-     "", NULL},
+        (getter)arrayflags_aligned_get,
+        (setter)arrayflags_aligned_set,
+        "", NULL},
     {"writeable",
-     (getter)arrayflags_writeable_get,
-     (setter)arrayflags_writeable_set,
-     "", NULL},
+        (getter)arrayflags_writeable_get,
+        (setter)arrayflags_writeable_set,
+        "", NULL},
     {"fnc",
-     (getter)arrayflags_fnc_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_fnc_get,
+        NULL,
+        "", NULL},
     {"forc",
-     (getter)arrayflags_forc_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_forc_get,
+        NULL,
+        "", NULL},
     {"behaved",
-     (getter)arrayflags_behaved_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_behaved_get,
+        NULL,
+        "", NULL},
     {"carray",
-     (getter)arrayflags_carray_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_carray_get,
+        NULL,
+        "", NULL},
     {"farray",
-     (getter)arrayflags_farray_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_farray_get,
+        NULL,
+        "", NULL},
     {"num",
-     (getter)arrayflags_num_get,
-     NULL,
-     "", NULL},
+        (getter)arrayflags_num_get,
+        NULL,
+        "", NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
 
@@ -13093,76 +13290,93 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
 {
     char *key;
     int n;
-    if (!PyString_Check(ind)) goto fail;
+    if (!PyString_Check(ind)) {
+        goto fail;
+    }
     key = PyString_AS_STRING(ind);
     n = PyString_GET_SIZE(ind);
     switch(n) {
-    case 1:
-        switch(key[0]) {
-        case 'C':
-            return arrayflags_contiguous_get(self);
-        case 'F':
-            return arrayflags_fortran_get(self);
-        case 'W':
-            return arrayflags_writeable_get(self);
-        case 'B':
-            return arrayflags_behaved_get(self);
-        case 'O':
-            return arrayflags_owndata_get(self);
-        case 'A':
-            return arrayflags_aligned_get(self);
-        case 'U':
-            return arrayflags_updateifcopy_get(self);
-        default:
-            goto fail;
-        }
-        break;
-    case 2:
-        if (strncmp(key, "CA", n)==0)
-            return arrayflags_carray_get(self);
-        if (strncmp(key, "FA", n)==0)
-            return arrayflags_farray_get(self);
-        break;
-    case 3:
-        if (strncmp(key, "FNC", n)==0)
-            return arrayflags_fnc_get(self);
-        break;
-    case 4:
-        if (strncmp(key, "FORC", n)==0)
-            return arrayflags_forc_get(self);
-        break;
-    case 6:
-        if (strncmp(key, "CARRAY", n)==0)
-            return arrayflags_carray_get(self);
-        if (strncmp(key, "FARRAY", n)==0)
-            return arrayflags_farray_get(self);
-        break;
-    case 7:
-        if (strncmp(key,"FORTRAN",n)==0)
-            return arrayflags_fortran_get(self);
-        if (strncmp(key,"BEHAVED",n)==0)
-            return arrayflags_behaved_get(self);
-        if (strncmp(key,"OWNDATA",n)==0)
-            return arrayflags_owndata_get(self);
-        if (strncmp(key,"ALIGNED",n)==0)
-            return arrayflags_aligned_get(self);
-        break;
-    case 9:
-        if (strncmp(key,"WRITEABLE",n)==0)
-            return arrayflags_writeable_get(self);
-        break;
-    case 10:
-        if (strncmp(key,"CONTIGUOUS",n)==0)
-            return arrayflags_contiguous_get(self);
-        break;
-    case 12:
-        if (strncmp(key, "UPDATEIFCOPY", n)==0)
-            return arrayflags_updateifcopy_get(self);
-        if (strncmp(key, "C_CONTIGUOUS", n)==0)
-            return arrayflags_contiguous_get(self);
-        if (strncmp(key, "F_CONTIGUOUS", n)==0)
-            return arrayflags_fortran_get(self);
-        break;
+        case 1:
+            switch(key[0]) {
+                case 'C':
+                    return arrayflags_contiguous_get(self);
+                case 'F':
+                    return arrayflags_fortran_get(self);
+                case 'W':
+                    return arrayflags_writeable_get(self);
+                case 'B':
+                    return arrayflags_behaved_get(self);
+                case 'O':
+                    return arrayflags_owndata_get(self);
+                case 'A':
+                    return arrayflags_aligned_get(self);
+                case 'U':
+                    return arrayflags_updateifcopy_get(self);
+                default:
+                    goto fail;
+            }
+            break;
+        case 2:
+            if (strncmp(key, "CA", n) == 0) {
+                return arrayflags_carray_get(self);
+            }
+            if (strncmp(key, "FA", n) == 0) {
+                return arrayflags_farray_get(self);
+            }
+            break;
+        case 3:
+            if (strncmp(key, "FNC", n) == 0) {
+                return arrayflags_fnc_get(self);
+            }
+            break;
+        case 4:
+            if (strncmp(key, "FORC", n) == 0) {
+                return arrayflags_forc_get(self);
+            }
+            break;
+        case 6:
+            if (strncmp(key, "CARRAY", n) == 0) {
+                return arrayflags_carray_get(self);
+            }
+            if (strncmp(key, "FARRAY", n) == 0) {
+                return arrayflags_farray_get(self);
+            }
+            break;
+        case 7:
+            if (strncmp(key,"FORTRAN",n) == 0) {
+                return arrayflags_fortran_get(self);
+            }
+            if (strncmp(key,"BEHAVED",n) == 0) {
+                return arrayflags_behaved_get(self);
+            }
+            if (strncmp(key,"OWNDATA",n) == 0) {
+                return arrayflags_owndata_get(self);
+            }
+            if (strncmp(key,"ALIGNED",n) == 0) {
+                return arrayflags_aligned_get(self);
+            }
+            break;
+        case 9:
+            if (strncmp(key,"WRITEABLE",n) == 0) {
+                return arrayflags_writeable_get(self);
+            }
+            break;
+        case 10:
+            if (strncmp(key,"CONTIGUOUS",n) == 0) {
+                return arrayflags_contiguous_get(self);
+            }
+            break;
+        case 12:
+            if (strncmp(key, "UPDATEIFCOPY", n) == 0) {
+                return arrayflags_updateifcopy_get(self);
+            }
+            if (strncmp(key, "C_CONTIGUOUS", n) == 0) {
+                return arrayflags_contiguous_get(self);
+            }
+            if (strncmp(key, "F_CONTIGUOUS", n) == 0) {
+                return arrayflags_fortran_get(self);
+            }
+            break;
     }
 
  fail:
@@ -13175,18 +13389,23 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
 {
     char *key;
     int n;
-    if (!PyString_Check(ind)) goto fail;
+    if (!PyString_Check(ind)) {
+        goto fail;
+    }
     key = PyString_AS_STRING(ind);
     n = PyString_GET_SIZE(ind);
-    if (((n==9) && (strncmp(key, "WRITEABLE", n)==0)) ||
-        ((n==1) && (strncmp(key, "W", n)==0)))
+    if (((n==9) && (strncmp(key, "WRITEABLE", n) == 0)) ||
+        ((n==1) && (strncmp(key, "W", n) == 0))) {
         return arrayflags_writeable_set(self, item);
-    else if (((n==7) && (strncmp(key, "ALIGNED", n)==0)) ||
-             ((n==1) && (strncmp(key, "A", n)==0)))
+    }
+    else if (((n==7) && (strncmp(key, "ALIGNED", n) == 0)) ||
+             ((n==1) && (strncmp(key, "A", n) == 0))) {
         return arrayflags_aligned_set(self, item);
-    else if (((n==12) && (strncmp(key, "UPDATEIFCOPY", n)==0)) ||
-             ((n==1) && (strncmp(key, "U", n)==0)))
+    }
+    else if (((n==12) && (strncmp(key, "UPDATEIFCOPY", n) == 0)) ||
+             ((n==1) && (strncmp(key, "U", n) == 0))) {
         return arrayflags_updateifcopy_set(self, item);
+    }
 
  fail:
     PyErr_SetString(PyExc_KeyError, "Unknown flag");
@@ -13196,8 +13415,12 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
 static char *
 _torf_(int flags, int val)
 {
-    if ((flags & val) == val) return "True";
-    else return "False";
+    if ((flags & val) == val) {
+        return "True";
+    }
+    else {
+        return "False";
+    }
 }
 
 static PyObject *
@@ -13219,12 +13442,15 @@ arrayflags_print(PyArrayFlagsObject *self)
 static int
 arrayflags_compare(PyArrayFlagsObject *self, PyArrayFlagsObject *other)
 {
-    if (self->flags == other->flags)
+    if (self->flags == other->flags) {
         return 0;
-    else if (self->flags < other->flags)
+    }
+    else if (self->flags < other->flags) {
         return -1;
-    else
+    }
+    else {
         return 1;
+    }
 }
 
 static PyMappingMethods arrayflags_as_mapping = {
@@ -13242,9 +13468,9 @@ static PyObject *
 arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *arg=NULL;
-    if (!PyArg_UnpackTuple(args, "flagsobj", 0, 1, &arg))
+    if (!PyArg_UnpackTuple(args, "flagsobj", 0, 1, &arg)) {
         return NULL;
-
+    }
     if ((arg != NULL) && PyArray_Check(arg)) {
         return PyArray_NewFlagsObject(arg);
     }
@@ -13258,7 +13484,7 @@ static PyTypeObject PyArrayFlags_Type = {
     0,
     "numpy.flagsobj",
     sizeof(PyArrayFlagsObject),
-    0,                                       /* tp_itemsize */
+    0,                                      /* tp_itemsize */
     /* methods */
     (destructor)arrayflags_dealloc,         /* tp_dealloc */
     0,                                      /* tp_print */
@@ -13283,32 +13509,32 @@ static PyTypeObject PyArrayFlags_Type = {
     0,                                      /* tp_weaklistoffset */
     0,                                      /* tp_iter */
     0,                                      /* tp_iternext */
-    0,                                       /* tp_methods */
-    0,                                       /* tp_members */
-    arrayflags_getsets,                      /* tp_getset */
-    0,                                        /* tp_base */
-    0,                                        /* tp_dict */
-    0,                                        /* tp_descr_get */
-    0,                                        /* tp_descr_set */
-    0,                                        /* tp_dictoffset */
-    0,                                        /* tp_init */
-    0,                                        /* tp_alloc */
-    arrayflags_new,                           /* tp_new */
-    0,                                        /* tp_free */
-    0,                                        /* tp_is_gc */
-    0,                                        /* tp_bases */
-    0,                                        /* tp_mro */
-    0,                                        /* tp_cache */
-    0,                                        /* tp_subclasses */
-    0,                                        /* tp_weaklist */
-    0,   /* tp_del */
+    0,                                      /* tp_methods */
+    0,                                      /* tp_members */
+    arrayflags_getsets,                     /* tp_getset */
+    0,                                      /* tp_base */
+    0,                                      /* tp_dict */
+    0,                                      /* tp_descr_get */
+    0,                                      /* tp_descr_set */
+    0,                                      /* tp_dictoffset */
+    0,                                      /* tp_init */
+    0,                                      /* tp_alloc */
+    arrayflags_new,                         /* tp_new */
+    0,                                      /* tp_free */
+    0,                                      /* tp_is_gc */
+    0,                                      /* tp_bases */
+    0,                                      /* tp_mro */
+    0,                                      /* tp_cache */
+    0,                                      /* tp_subclasses */
+    0,                                      /* tp_weaklist */
+    0,                                      /* tp_del */
 
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                      /* tp_allocs */
+    0,                                      /* tp_frees */
+    0,                                      /* tp_maxalloc */
+    0,                                      /* tp_prev */
+    0,                                      /* *tp_next */
 #endif
 };
