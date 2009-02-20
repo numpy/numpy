@@ -43,4 +43,5 @@ of also more complicated arrangements of data.
    arrays.dtypes
    arrays.indexing
    arrays.classes
+   maskedarray
    arrays.interface

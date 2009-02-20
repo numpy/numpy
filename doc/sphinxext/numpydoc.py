@@ -28,7 +28,7 @@ def mangle_docstrings(app, what, name, obj, options, lines,
                               re.I|re.S)
         lines[:] = title_re.sub('', "\n".join(lines)).split("\n")
     else:
-        doc = get_doc_object(obj, what)
+        doc = get_doc_object(obj, what, "\n".join(lines))
         lines[:] = str(doc).split("\n")
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \

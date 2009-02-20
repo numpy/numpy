@@ -79,12 +79,16 @@ class CompaqVisualFCompiler(FCompiler):
             m.initialize()
             ar_exe = m.lib
         except DistutilsPlatformError, msg:
-            print 'Ignoring "%s" (one should fix me in fcompiler/compaq.py)' % (msg)
+			pass
         except AttributeError, msg:
             if '_MSVCCompiler__root' in str(msg):
                 print 'Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg)
             else:
                 raise
+        except IOError, e:
+            if not "vcvarsall.bat" in str(e):
+                print "Unexpected IOError in", __file__
+                raise e
 
     executables = {
         'version_cmd'  : ['<F90>', "/what"],

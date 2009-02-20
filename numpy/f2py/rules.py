@@ -245,7 +245,7 @@ static PyObject *#apiname#(const PyObject *capi_self,
 f2py_start_clock();
 #endif
 \tif (!PyArg_ParseTupleAndKeywords(capi_args,capi_keywds,\\
-\t\t\"#argformat#|#keyformat##xaformat#:#pyname#\",\\
+\t\t\"#argformat##keyformat##xaformat#:#pyname#\",\\
 \t\tcapi_kwlist#args_capi##keys_capi##keys_xa#))\n\t\treturn NULL;
 #frompyobj#
 /*end of frompyobj*/
@@ -1355,6 +1355,16 @@ def buildapi(rout):
             rd['latexdocstrsigns']=rd['latexdocstrsigns']+rd[k][0:1]+\
                                     ['\\begin{description}']+rd[k][1:]+\
                                     ['\\end{description}']
+
+    # Workaround for Python 2.6, 2.6.1 bug: http://bugs.python.org/issue4720
+    if rd['keyformat'] or rd['xaformat']:
+        argformat = rd['argformat']
+        if isinstance(argformat, list):
+            argformat.append('|')
+        else:
+            assert isinstance(argformat, str),repr((argformat, type(argformat)))
+            rd['argformat'] += '|'
+
     ar=applyrules(routine_rules,rd)
     if ismoduleroutine(rout):
         outmess('\t\t\t  %s\n'%(ar['docshort']))

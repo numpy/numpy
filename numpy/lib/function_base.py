@@ -228,10 +228,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
           * None : the new behaviour is used, no warning is printed.
           * True : the new behaviour is used and a warning is raised about
             the future removal of the `new` keyword.
-          * False : the old behaviour is used and a DeprecationWarning 
+          * False : the old behaviour is used and a DeprecationWarning
             is raised.
-        As of NumPy 1.3, this keyword should not be used explicitly since it 
-        will disappear in NumPy 1.4. 
+        As of NumPy 1.3, this keyword should not be used explicitly since it
+        will disappear in NumPy 1.4.
 
     Returns
     -------
@@ -267,9 +267,9 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     # Old behavior
     if new == False:
         warnings.warn("""
-        The histogram semantics being used is now deprecated and 
-        will disappear in NumPy 1.4.  Please update your code to 
-        use the default semantics. 
+        The histogram semantics being used is now deprecated and
+        will disappear in NumPy 1.4.  Please update your code to
+        use the default semantics.
         """, DeprecationWarning)
 
         a = asarray(a).ravel()
@@ -320,8 +320,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
     elif new in [True, None]:
         if new is True:
             warnings.warn("""
-            The new semantics of histogram is now the default and the `new` 
-            keyword will be removed in NumPy 1.4. 
+            The new semantics of histogram is now the default and the `new`
+            keyword will be removed in NumPy 1.4.
             """, Warning)
         a = asarray(a)
         if weights is not None:
@@ -1072,53 +1072,6 @@ def diff(a, n=1, axis=-1):
         return diff(a[slice1]-a[slice2], n-1, axis=axis)
     else:
         return a[slice1]-a[slice2]
-
-try:
-    add_docstring(digitize,
-r"""digitize(x,bins)
-
-Return the index of the bin to which each value of x belongs.
-
-Each index i returned is such that bins[i-1] <= x < bins[i] if
-bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
-bins is monotonically decreasing.
-
-Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
-
-""")
-except RuntimeError:
-    pass
-
-try:
-    add_docstring(bincount,
-r"""bincount(x,weights=None)
-
-Return the number of occurrences of each value in x.
-
-x must be a list of non-negative integers.  The output, b[i],
-represents the number of times that i is found in x.  If weights
-is specified, every occurrence of i at a position p contributes
-weights[p] instead of 1.
-
-See also: histogram, digitize, unique.
-
-""")
-except RuntimeError:
-    pass
-
-try:
-    add_docstring(add_docstring,
-r"""docstring(obj, docstring)
-
-Add a docstring to a built-in obj if possible.
-If the obj already has a docstring raise a RuntimeError
-If this routine does not know how to add a docstring to the object
-raise a TypeError
-
-""")
-except RuntimeError:
-    pass
-
 
 def interp(x, xp, fp, left=None, right=None):
     """
@@ -2818,9 +2771,9 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     y : array_like
         Input array to integrate.
     x : array_like, optional
-        If `x` is None, then spacing between all `y` elements is 1.
+        If `x` is None, then spacing between all `y` elements is `dx`.
     dx : scalar, optional
-        If `x` is None, spacing given by `dx` is assumed.
+        If `x` is None, spacing given by `dx` is assumed. Default is 1.
     axis : int, optional
         Specify the axis.
 
@@ -2836,7 +2789,15 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     if x is None:
         d = dx
     else:
-        d = diff(x,axis=axis)
+        x = asarray(x)
+        if x.ndim == 1:
+            d = diff(x)
+            # reshape to correct shape
+            shape = [1]*y.ndim
+            shape[axis] = d.shape[0]
+            d = d.reshape(shape)
+        else:
+            d = diff(x, axis=axis)
     nd = len(y.shape)
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd

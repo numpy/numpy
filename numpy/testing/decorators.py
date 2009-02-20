@@ -51,8 +51,11 @@ def skipif(skip_condition, msg=None):
 
     Parameters
     ---------
-    skip_condition : bool
-        Flag to determine whether to skip test (True) or not (False)
+    skip_condition : bool or callable.
+        Flag to determine whether to skip test.  If the condition is a
+        callable, it is used at runtime to dynamically make the decision.  This
+        is useful for tests that may require costly imports, to delay the cost
+        until the test suite is actually executed.
     msg : string
         Message to give on raising a SkipTest exception
 
@@ -69,28 +72,66 @@ def skipif(skip_condition, msg=None):
     decorator with the nose.tools.make_decorator function in order to
     transmit function name, and various other metadata.
     '''
-    if msg is None:
-        msg = 'Test skipped due to test condition'
+
     def skip_decorator(f):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
-        def skipper(*args, **kwargs):
-            if skip_condition:
-                raise nose.SkipTest, msg
+
+        # Allow for both boolean or callable skip conditions.
+        if callable(skip_condition):
+            skip_val = lambda : skip_condition()
+        else:
+            skip_val = lambda : skip_condition
+
+        def get_msg(func,msg=None):
+            """Skip message with information about function being skipped."""
+            if msg is None: 
+                out = 'Test skipped due to test condition'
+            else: 
+                out = '\n'+msg
+
+            return "Skipping test: %s%s" % (func.__name__,out)
+
+        # We need to define *two* skippers because Python doesn't allow both
+        # return with value and yield inside the same function.
+        def skipper_func(*args, **kwargs):
+            """Skipper for normal test functions."""
+            if skip_val():
+                raise nose.SkipTest(get_msg(f,msg))
             else:
                 return f(*args, **kwargs)
+
+        def skipper_gen(*args, **kwargs):
+            """Skipper for test generators."""
+            if skip_val():
+                raise nose.SkipTest(get_msg(f,msg))
+            else:
+                for x in f(*args, **kwargs):
+                    yield x
+
+        # Choose the right skipper to use when building the actual decorator.
+        if nose.util.isgenerator(f):
+            skipper = skipper_gen
+        else:
+            skipper = skipper_func
+            
         return nose.tools.make_decorator(f)(skipper)
+
     return skip_decorator
 
-def knownfailureif(skip_condition, msg=None):
-    ''' Make function raise KnownFailureTest exception if skip_condition is true
+
+def knownfailureif(fail_condition, msg=None):
+    ''' Make function raise KnownFailureTest exception if fail_condition is true
 
     Parameters
     ---------
-    skip_condition : bool
-        Flag to determine whether to mark test as known failure (True) 
-        or not (False)
+    fail_condition : bool or callable.
+        Flag to determine whether to mark test as known failure (True)
+        or not (False).  If the condition is a callable, it is used at
+        runtime to dynamically make the decision.  This is useful for 
+        tests that may require costly imports, to delay the cost
+        until the test suite is actually executed.
     msg : string
         Message to give on raising a KnownFailureTest exception
 
@@ -109,15 +150,23 @@ def knownfailureif(skip_condition, msg=None):
     '''
     if msg is None:
         msg = 'Test skipped due to known failure'
-    def skip_decorator(f):
+
+    # Allow for both boolean or callable known failure conditions.
+    if callable(fail_condition):
+        fail_val = lambda : fail_condition()
+    else:
+        fail_val = lambda : fail_condition
+
+    def knownfail_decorator(f):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
         from noseclasses import KnownFailureTest
-        def skipper(*args, **kwargs):
-            if skip_condition:
+        def knownfailer(*args, **kwargs):
+            if fail_val():
                 raise KnownFailureTest, msg
             else:
                 return f(*args, **kwargs)
-        return nose.tools.make_decorator(f)(skipper)
-    return skip_decorator
+        return nose.tools.make_decorator(f)(knownfailer)
+
+    return knownfail_decorator

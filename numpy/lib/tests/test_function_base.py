@@ -430,6 +430,44 @@ class TestTrapz(TestCase):
         #check integral of normal equals 1
         assert_almost_equal(sum(r,axis=0),1,7)
 
+    def test_ndim(self):
+        x = linspace(0, 1, 3)
+        y = linspace(0, 2, 8)
+        z = linspace(0, 3, 13)
+
+        wx = ones_like(x) * (x[1]-x[0])
+        wx[0] /= 2
+        wx[-1] /= 2
+        wy = ones_like(y) * (y[1]-y[0])
+        wy[0] /= 2
+        wy[-1] /= 2
+        wz = ones_like(z) * (z[1]-z[0])
+        wz[0] /= 2
+        wz[-1] /= 2
+
+        q = x[:,None,None] + y[None,:,None] + z[None,None,:]
+
+        qx = (q*wx[:,None,None]).sum(axis=0)
+        qy = (q*wy[None,:,None]).sum(axis=1)
+        qz = (q*wz[None,None,:]).sum(axis=2)
+
+        # n-d `x`
+        r = trapz(q, x=x[:,None,None], axis=0)
+        assert_almost_equal(r, qx)
+        r = trapz(q, x=y[None,:,None], axis=1)
+        assert_almost_equal(r, qy)
+        r = trapz(q, x=z[None,None,:], axis=2)
+        assert_almost_equal(r, qz)
+
+        # 1-d `x`
+        r = trapz(q, x=x, axis=0)
+        assert_almost_equal(r, qx)
+        r = trapz(q, x=y, axis=1)
+        assert_almost_equal(r, qy)
+        r = trapz(q, x=z, axis=2)
+        assert_almost_equal(r, qz)
+
+
 class TestSinc(TestCase):
     def test_simple(self):
         assert(sinc(0)==1)

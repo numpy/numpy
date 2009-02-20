@@ -202,7 +202,7 @@ class TestBoolPower(TestCase):
         assert_equal(matrix_power(A,2),A)
 
 
-class HermitianTestCase:
+class HermitianTestCase(object):
     def test_single(self):
         a = array([[1.,2.], [2.,1.]], dtype=single)
         self.do(a)

@@ -5,7 +5,6 @@ Implements test and bench functions for modules.
 '''
 import os
 import sys
-import warnings
 
 def get_package_name(filepath):
     # find the package name given a path name that's part of the package
@@ -27,7 +26,6 @@ def get_package_name(filepath):
     # otherwise, reverse to get correct order and return
     pkg_name.reverse()
     return '.'.join(pkg_name)
-
 
 def import_nose():
     """ Import nose only when needed.
@@ -166,8 +164,8 @@ class NoseTester(object):
         print "nose version %d.%d.%d" % nose.__versioninfo__
 
 
-    def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
-             coverage=False, **kwargs):
+    def prepare_test_args(self, label='fast', verbose=1, extra_argv=None, 
+                          doctests=False, coverage=False):
         ''' Run tests for module using nose
 
         %(test_header)s
@@ -179,39 +177,6 @@ class NoseTester(object):
              http://nedbatchelder.com/code/modules/coverage.html)
         '''
 
-        old_args = set(['level', 'verbosity', 'all', 'sys_argv',
-                        'testcase_pattern'])
-        unexpected_args = set(kwargs.keys()) - old_args
-        if len(unexpected_args) > 0:
-            ua = ', '.join(unexpected_args)
-            raise TypeError("test() got unexpected arguments: %s" % ua)
-
-        # issue a deprecation warning if any of the pre-1.2 arguments to
-        # test are given
-        if old_args.intersection(kwargs.keys()):
-            warnings.warn("This method's signature will change in the next " \
-                          "release; the level, verbosity, all, sys_argv, " \
-                          "and testcase_pattern keyword arguments will be " \
-                          "removed. Please update your code.",
-                          DeprecationWarning, stacklevel=2)
-
-        # Use old arguments if given (where it makes sense)
-        # For the moment, level and sys_argv are ignored
-
-        # replace verbose with verbosity
-        if kwargs.get('verbosity') is not None:
-            verbose = kwargs.get('verbosity')
-            # cap verbosity at 3 because nose becomes *very* verbose beyond that
-            verbose = min(verbose, 3)
-
-        import utils
-        utils.verbose = verbose
-
-        # if all evaluates as True, omit attribute filter and run doctests
-        if kwargs.get('all'):
-            label = ''
-            doctests = True
-
         # if doctests is in the extra args, remove it and set the doctest
         # flag so the NumPy doctester is used instead
         if extra_argv and '--with-doctest' in extra_argv:
@@ -221,9 +186,6 @@ class NoseTester(object):
         argv = self._test_argv(label, verbose, extra_argv)
         if doctests:
             argv += ['--with-numpydoctest']
-            print "Running unit tests and doctests for %s" % self.package_name
-        else:
-            print "Running unit tests for %s" % self.package_name
 
         if coverage:
             argv+=['--cover-package=%s' % self.package_name, '--with-coverage',
@@ -237,32 +199,7 @@ class NoseTester(object):
         argv += ['--exclude','swig_ext']
         argv += ['--exclude','array_from_pyobj']
 
-        self._show_system_info()
-
         nose = import_nose()
-
-        # Because nose currently discards the test result object, but we need
-        # to return it to the user, override TestProgram.runTests to retain
-        # the result
-        class NumpyTestProgram(nose.core.TestProgram):
-            def runTests(self):
-                """Run Tests. Returns true on success, false on failure, and
-                sets self.success to the same value.
-                """
-                if self.testRunner is None:
-                    self.testRunner = nose.core.TextTestRunner(stream=self.config.stream,
-                                                               verbosity=self.config.verbosity,
-                                                               config=self.config)
-                plug_runner = self.config.plugins.prepareTestRunner(self.testRunner)
-                if plug_runner is not None:
-                    self.testRunner = plug_runner
-                self.result = self.testRunner.run(self.test)
-                self.success = self.result.wasSuccessful()
-                return self.success
-
-        # reset doctest state on every run
-        import doctest
-        doctest.master = None
 
         # construct list of plugins, omitting the existing doctest plugin
         import nose.plugins.builtin
@@ -271,10 +208,46 @@ class NoseTester(object):
         for p in nose.plugins.builtin.plugins:
             plug = p()
             if plug.name == 'doctest':
+                # skip the builtin doctest plugin
                 continue
 
             plugins.append(plug)
 
+        return argv, plugins
+
+    def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
+             coverage=False):
+        ''' Run tests for module using nose
+
+        %(test_header)s
+        doctests : boolean
+            If True, run doctests in module, default False
+        coverage : boolean
+            If True, report coverage of NumPy code, default False
+            (Requires the coverage module:
+             http://nedbatchelder.com/code/modules/coverage.html)
+        '''
+
+        # cap verbosity at 3 because nose becomes *very* verbose beyond that
+        verbose = min(verbose, 3)
+
+        import utils
+        utils.verbose = verbose
+
+        if doctests:
+            print "Running unit tests and doctests for %s" % self.package_name
+        else:
+            print "Running unit tests for %s" % self.package_name
+
+        self._show_system_info()
+
+        # reset doctest state on every run
+        import doctest
+        doctest.master = None
+
+        argv, plugins = self.prepare_test_args(label, verbose, extra_argv,
+                                               doctests, coverage)
+        from noseclasses import NumpyTestProgram
         t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
         return t.result
 
@@ -286,9 +259,10 @@ class NoseTester(object):
         print "Running benchmarks for %s" % self.package_name
         self._show_system_info()
 
-        nose = import_nose()
         argv = self._test_argv(label, verbose, extra_argv)
         argv += ['--match', r'(?:^|[\\b_\\.%s-])[Bb]ench' % os.sep]
+
+        nose = import_nose()
         return nose.run(argv=argv)
 
     # generate method docstrings

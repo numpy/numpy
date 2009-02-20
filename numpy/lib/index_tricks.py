@@ -212,6 +212,8 @@ class nd_grid(object):
 
 mgrid = nd_grid(sparse=False)
 ogrid = nd_grid(sparse=True)
+mgrid.__doc__ = None # set in numpy.add_newdocs
+ogrid.__doc__ = None # set in numpy.add_newdocs
 
 class AxisConcatenator(object):
     """Translates slice objects to concatenation along an axis.

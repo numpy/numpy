@@ -1,4 +1,6 @@
-# These classes implement a doctest runner plugin for nose.
+# These classes implement a doctest runner plugin for nose, a "known failure"
+# error class, and a customized TestProgram for NumPy.
+
 # Because this module imports nose directly, it should not
 # be used except by nosetester.py to avoid a general NumPy
 # dependency on nose.
@@ -6,6 +8,7 @@
 import os
 import doctest
 
+import nose
 from nose.plugins import doctests as npd
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
@@ -251,7 +254,7 @@ class KnownFailureTest(Exception):
 
 
 class KnownFailure(ErrorClassPlugin):
-    '''Plugin that installs a KNOWNFAIL error class for the 
+    '''Plugin that installs a KNOWNFAIL error class for the
     KnownFailureClass exception.  When KnownFailureTest is raised,
     the exception will be logged in the knownfail attribute of the
     result, 'K' or 'KNOWNFAIL' (verbose) will be output, and the
@@ -275,3 +278,25 @@ class KnownFailure(ErrorClassPlugin):
         disable = getattr(options, 'noKnownFail', False)
         if disable:
             self.enabled = False
+
+
+
+# Because nose currently discards the test result object, but we need
+# to return it to the user, override TestProgram.runTests to retain
+# the result
+class NumpyTestProgram(nose.core.TestProgram):
+    def runTests(self):
+        """Run Tests. Returns true on success, false on failure, and
+        sets self.success to the same value.
+        """
+        if self.testRunner is None:
+            self.testRunner = nose.core.TextTestRunner(stream=self.config.stream,
+                                                       verbosity=self.config.verbosity,
+                                                       config=self.config)
+        plug_runner = self.config.plugins.prepareTestRunner(self.testRunner)
+        if plug_runner is not None:
+            self.testRunner = plug_runner
+
+        self.result = self.testRunner.run(self.test)
+        self.success = self.result.wasSuccessful()
+        return self.success

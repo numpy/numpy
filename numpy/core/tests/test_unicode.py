@@ -17,7 +17,7 @@ ucs4_value = u'\U0010FFFF'
 #    Creation tests
 ############################################################
 
-class create_zeros:
+class create_zeros(object):
     """Check the creation of zero-valued arrays"""
 
     def content_check(self, ua, ua_scalar, nbytes):
@@ -69,7 +69,7 @@ class test_create_zeros_1009(create_zeros, TestCase):
     ulen = 1009
 
 
-class create_values:
+class create_values(object):
     """Check the creation of unicode arrays with values"""
 
     def content_check(self, ua, ua_scalar, nbytes):
@@ -154,7 +154,7 @@ class test_create_values_1009_ucs4(create_values, TestCase):
 #    Assignment tests
 ############################################################
 
-class assign_values:
+class assign_values(object):
     """Check the assignment of unicode arrays with values"""
 
     def content_check(self, ua, ua_scalar, nbytes):

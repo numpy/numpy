@@ -353,8 +353,3 @@ if ctypes is not None:
         result = tp.from_address(addr)
         result.__keep = ai
         return result
-
-
-def test(level=1, verbosity=1):
-    from numpy.testing import NumpyTest
-    return NumpyTest().test(level, verbosity)

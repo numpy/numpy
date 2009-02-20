@@ -1,34 +1,197 @@
 import numpy as np
 from numpy.testing import *
+import nose
 
-class TestPrint(TestCase):
+import locale
+import sys
+from StringIO import StringIO
 
-    def test_float_types(self) :
-        """ Check formatting.
+_REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
-            This is only for the str function, and only for simple types.
-            The precision of np.float and np.longdouble aren't the same as the
-            python float precision.
 
-        """
-        for t in [np.float, np.double, np.longdouble] :
-            for x in [0, 1,-1, 1e10, 1e20] :
-                assert_equal(str(t(x)), str(float(x)))
+def check_float_type(tp):
+    for x in [0, 1,-1, 1e20] :
+        assert_equal(str(tp(x)), str(float(x)),
+                     err_msg='Failed str formatting for type %s' % tp)
 
-    def test_complex_types(self) :
-        """Check formatting.
+    if tp(1e10).itemsize > 4:
+        assert_equal(str(tp(1e10)), str(float('1e10')),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
+           sys.version_info[1] <= 5:
+            ref = '1e+010'
+        else:
+            ref = '1e+10'
+        assert_equal(str(tp(1e10)), ref,
+                     err_msg='Failed str formatting for type %s' % tp)
 
-            This is only for the str function, and only for simple types.
-            The precision of np.float and np.longdouble aren't the same as the
-            python float precision.
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+def test_float_types():
+    """ Check formatting.
 
-        """
-        for t in [np.cfloat, np.cdouble, np.clongdouble] :
-            for x in [0, 1,-1, 1e10, 1e20] :
-                assert_equal(str(t(x)), str(complex(x)))
-                assert_equal(str(t(x*1j)), str(complex(x*1j)))
-                assert_equal(str(t(x + x*1j)), str(complex(x + x*1j)))
+        This is only for the str function, and only for simple types.
+        The precision of np.float and np.longdouble aren't the same as the
+        python float precision.
 
+    """
+    for t in [np.float32, np.double, np.longdouble] :
+        yield check_float_type, t
+
+def check_nan_inf_float(tp):
+    for x in [np.inf, -np.inf, np.nan]:
+        assert_equal(str(tp(x)), _REF[x],
+                     err_msg='Failed str formatting for type %s' % tp)
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+def test_nan_inf_float():
+    """ Check formatting of nan & inf.
+
+        This is only for the str function, and only for simple types.
+        The precision of np.float and np.longdouble aren't the same as the
+        python float precision.
+
+    """
+    for t in [np.float32, np.double, np.longdouble] :
+        yield check_nan_inf_float, t
+
+def check_complex_type(tp):
+    for x in [0, 1,-1, 1e20] :
+        assert_equal(str(tp(x)), str(complex(x)),
+                     err_msg='Failed str formatting for type %s' % tp)
+        assert_equal(str(tp(x*1j)), str(complex(x*1j)),
+                     err_msg='Failed str formatting for type %s' % tp)
+        assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)),
+                     err_msg='Failed str formatting for type %s' % tp)
+
+    if tp(1e10).itemsize > 8:
+        assert_equal(str(tp(1e10)), str(complex(1e10)),
+                     err_msg='Failed str formatting for type %s' % tp)
+    else:
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
+           sys.version_info[1] <= 5:
+            ref = '(1e+010+0j)'
+        else:
+            ref = '(1e+10+0j)'
+        assert_equal(str(tp(1e10)), ref,
+                     err_msg='Failed str formatting for type %s' % tp)
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+def test_complex_types():
+    """Check formatting of complex types.
+
+        This is only for the str function, and only for simple types.
+        The precision of np.float and np.longdouble aren't the same as the
+        python float precision.
+
+    """
+    for t in [np.complex64, np.cdouble, np.clongdouble] :
+        yield check_complex_type, t
+
+# print tests
+def _test_redirected_print(x, tp, ref=None):
+    file = StringIO()
+    file_tp = StringIO()
+    stdout = sys.stdout
+    try:
+        sys.stdout = file_tp
+        print tp(x)
+        sys.stdout = file
+        if ref:
+            print ref
+        else:
+            print x
+    finally:
+        sys.stdout = stdout
+
+    assert_equal(file.getvalue(), file_tp.getvalue(),
+                 err_msg='print failed for type%s' % tp)
+
+def check_float_type_print(tp):
+    for x in [0, 1,-1, 1e20]:
+        _test_redirected_print(float(x), tp)
+
+    for x in [np.inf, -np.inf, np.nan]:
+        _test_redirected_print(float(x), tp, _REF[x])
+
+    if tp(1e10).itemsize > 4:
+        _test_redirected_print(float(1e10), tp)
+    else:
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
+           sys.version_info[1] <= 5:
+            ref = '1e+010'
+        else:
+            ref = '1e+10'
+        _test_redirected_print(float(1e10), tp, ref)
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+def check_complex_type_print(tp):
+    # We do not create complex with inf/nan directly because the feature is
+    # missing in python < 2.6
+    for x in [0, 1, -1, 1e20]:
+        _test_redirected_print(complex(x), tp)
+
+    if tp(1e10).itemsize > 8:
+        _test_redirected_print(complex(1e10), tp)
+    else:
+        if sys.platform == 'win32' and sys.version_info[0] <= 2 and \
+           sys.version_info[1] <= 5:
+            ref = '(1e+010+0j)'
+        else:
+            ref = '(1e+10+0j)'
+        _test_redirected_print(complex(1e10), tp, ref)
+
+    _test_redirected_print(complex(np.inf, 1), tp, '(inf+1j)')
+    _test_redirected_print(complex(-np.inf, 1), tp, '(-inf+1j)')
+    _test_redirected_print(complex(-np.nan, 1), tp, '(nan+1j)')
+
+def test_float_type_print():
+    """Check formatting when using print """
+    for t in [np.float32, np.double, np.longdouble] :
+        yield check_float_type_print, t
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+def test_complex_type_print():
+    """Check formatting when using print """
+    for t in [np.complex64, np.cdouble, np.clongdouble] :
+        yield check_complex_type_print, t
+
+# Locale tests: scalar types formatting should be independent of the locale
+def in_foreign_locale(func):
+    # XXX: How to query locale on a given system ?
+
+    # French is one language where the decimal is ',' not '.', and should be
+    # relatively common on many systems
+    def wrapper(*args, **kwargs):
+        curloc = locale.getlocale(locale.LC_NUMERIC)
+        try:
+            try:
+                if not sys.platform == 'win32':
+                    locale.setlocale(locale.LC_NUMERIC, 'fr_FR')
+                else:
+                    locale.setlocale(locale.LC_NUMERIC, 'FRENCH')
+            except locale.Error:
+                raise nose.SkipTest("Skipping locale test, because "
+                                    "French locale not found")
+            return func(*args, **kwargs)
+        finally:
+            locale.setlocale(locale.LC_NUMERIC, locale=curloc)
+    return nose.tools.make_decorator(func)(wrapper)
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+@in_foreign_locale
+def test_locale_single():
+    assert_equal(str(np.float32(1.2)), str(float(1.2)))
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+@in_foreign_locale
+def test_locale_double():
+    assert_equal(str(np.double(1.2)), str(float(1.2)))
+
+#@dec.knownfailureif(True, "formatting tests are known to fail")
+@in_foreign_locale
+def test_locale_longdouble():
+    assert_equal(str(np.longdouble(1.2)), str(float(1.2)))
 
 if __name__ == "__main__":
     run_module_suite()

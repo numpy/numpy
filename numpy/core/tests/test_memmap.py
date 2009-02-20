@@ -14,6 +14,9 @@ class TestMemmap(TestCase):
         self.data = arange(12, dtype=self.dtype)
         self.data.resize(self.shape)
 
+    def tearDown(self):
+        self.tmpfp.close()
+
     def test_roundtrip(self):
         # Write data to file
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',

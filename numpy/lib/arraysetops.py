@@ -52,13 +52,19 @@ def ediff1d(ary, to_end=None, to_begin=None):
         If provided, this number will be taked onto the beginning of the
         returned differences.
 
+    Notes
+    -----
+    When applied to masked arrays, this function drops the mask information
+    if the `to_begin` and/or `to_end` parameters are used
+
+
     Returns
     -------
     ed : array
         The differences. Loosely, this will be (ary[1:] - ary[:-1]).
 
     """
-    ary = np.asarray(ary).flat
+    ary = np.asanyarray(ary).flat
     ed = ary[1:] - ary[:-1]
     arrays = [ed]
     if to_begin is not None:
@@ -132,7 +138,7 @@ def unique1d(ar1, return_index=False, return_inverse=False):
                       "the output was (indices, unique_arr), but "
                       "has now been reversed to be more consistent.")
 
-    ar = np.asarray(ar1).flatten()
+    ar = np.asanyarray(ar1).flatten()
     if ar.size == 0:
         if return_inverse and return_index:
             return ar, np.empty(0, np.bool), np.empty(0, np.bool)

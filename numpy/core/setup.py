@@ -67,8 +67,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     # Mandatory functions: if not found, fail the build
     mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-		"floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-		"acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
+                "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+                "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
 
     if not check_funcs_once(mandatory_funcs):
         raise SystemError("One of the required function to build numpy is not"
@@ -80,6 +80,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # python.h... I wish they would clean their public headers someday)
     optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
                          "rint", "trunc", "exp2", "log2"]
+
+    # XXX: hack to circumvent cpp pollution from python: python put its
+    # config.h in the public namespace, so we have a clash for the common
+    # functions we test. We remove every function tested by python's autoconf,
+    # hoping their own test are correct
+    if sys.version_info[0] == 2 and sys.version_info[1] >= 6:
+        for f in ["expm1", "log1p", "acosh", "atanh", "asinh"]:
+            optional_stdfuncs.remove(f)
 
     check_funcs(optional_stdfuncs)
 
@@ -178,6 +186,14 @@ def configuration(parent_package='',top_path=None):
                 if config_cmd.check_func('strtod', decl=False,
                                          headers=['stdlib.h']):
                     moredefs.append(('PyOS_ascii_strtod', 'strtod'))
+
+            if sys.platform == "win32":
+                from numpy.distutils.misc_util import get_build_architecture
+                # On win32, force long double format string to be 'g', not
+                # 'Lg', since the MS runtime does not support long double whose
+                # size is > sizeof(double)
+                if get_build_architecture()=="Intel":
+                    moredefs.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
 
             target_f = open(target,'a')
             for d in moredefs:
@@ -322,6 +338,7 @@ def configuration(parent_package='',top_path=None):
     deps = [join('src','arrayobject.c'),
             join('src','arraymethods.c'),
             join('src','scalartypes.inc.src'),
+            join('src','numpyos.c'),
             join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
             join('src','ucsnarrow.c'),

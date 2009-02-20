@@ -2,41 +2,17 @@
 #include "config.h"
 
 static double
-_getNAN(void) {
-#ifdef NAN
-    return NAN;
-#else
-    static double nan=0;
-
-    if (nan == 0) {
-        double mul = 1e100;
-        double tmp = 0.0;
-        double pinf=0;
-        pinf = mul;
-        for (;;) {
-            pinf *= mul;
-            if (pinf == tmp) break;
-            tmp = pinf;
-        }
-        nan = pinf / pinf;
-    }
-    return nan;
-#endif
-}
-
-
-static double
 MyPyFloat_AsDouble(PyObject *obj)
 {
     double ret = 0;
     PyObject *num;
 
     if (obj == Py_None) {
-        return _getNAN();
+        return NumPyOS_NAN;
     }
     num = PyNumber_Float(obj);
     if (num == NULL) {
-        return _getNAN();
+        return NumPyOS_NAN;
     }
     ret = PyFloat_AsDouble(num);
     Py_DECREF(num);
@@ -192,7 +168,7 @@ static int
             op2 = op; Py_INCREF(op);
         }
         if (op2 == Py_None) {
-            oop.real = oop.imag = _getNAN();
+            oop.real = oop.imag = NumPyOS_NAN;
         }
         else {
             oop = PyComplex_AsCComplex (op2);
@@ -897,17 +873,30 @@ static void
  */
 
 /**begin repeat
-
-#fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
-#format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT,"f","lf","Lf"#
+#fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
+#type=short,ushort,int,uint,long,ulong,longlong,ulonglong#
+#format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT#
 */
 static int
 @fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
 {
     return fscanf(fp, "%"@format@, ip);
 }
+/**end repeat**/
 
+/**begin repeat
+#fname=FLOAT,DOUBLE,LONGDOUBLE#
+#type=float,double,longdouble#
+*/
+static int
+@fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
+{
+    double result;
+    int ret;
+    ret = NumPyOS_ascii_ftolf(fp, &result);
+    *ip = (@type@) result;
+    return ret;
+}
 /**end repeat**/
 
 /**begin repeat
@@ -966,19 +955,15 @@ static int
 #fname=FLOAT,DOUBLE,LONGDOUBLE#
 #type=float,double,longdouble#
 */
-#if (PY_VERSION_HEX >= 0x02040000) || defined(PyOS_ascii_strtod)
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
 {
     double result;
 
-    result = PyOS_ascii_strtod(str, endptr);
+    result = NumPyOS_ascii_strtod(str, endptr);
     *ip = (@type@) result;
     return 0;
 }
-#else
-#define @fname@_fromstr NULL
-#endif
 /**end repeat**/
 
 
