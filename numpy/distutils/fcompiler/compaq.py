@@ -79,7 +79,7 @@ class CompaqVisualFCompiler(FCompiler):
             m.initialize()
             ar_exe = m.lib
         except DistutilsPlatformError, msg:
-            print 'Ignoring "%s" (one should fix me in fcompiler/compaq.py)' % (msg)
+			pass
         except AttributeError, msg:
             if '_MSVCCompiler__root' in str(msg):
                 print 'Ignoring "%s" (I think it is msvccompiler.py bug)' % (msg)
