@@ -131,7 +131,7 @@ numpyconfig_sym.append(('MATHLIB', ','.join(mlib)))
 #----------------------------------
 # Function to check:
 mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
-          'isnan', 'isinf', 'rint', 'trunc')
+          'rint', 'trunc')
 
 # Set value to 1 for each defined function (in math lib)
 mfuncs_defined = dict([(f, 0) for f in mfuncs])
@@ -185,7 +185,11 @@ for f in ["isnan", "isinf", "signbit", "isfinite"]:
 #include <Python.h>
 #include <math.h>
 """
-    config.CheckDeclaration(f, includes=includes)
+    st = config.CheckDeclaration(f, includes=includes)
+    if st:
+	numpyconfig_sym.append(('DEFINE_NPY_HAVE_%s_DECL' % f.upper(), 
+		'#define NPY_HAVE_%s_DECL' % f.upper()))
+        
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
