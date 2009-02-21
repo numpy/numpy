@@ -260,7 +260,6 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 # Generate generated code
 #------------------------
 scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.inc.src'))
-umath_funcs_c99_src = env.GenerateFromTemplate(pjoin('src', 'umath_funcs_c99.inc.src'))
 umath_funcs_src = env.GenerateFromTemplate(pjoin('src', 'umath_funcs.inc.src'))
 umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath_loops.inc.src'))
 arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.inc.src'))
@@ -279,6 +278,12 @@ ufunc_api = env.GenerateUfuncApi('ufunc_api',
                     pjoin('code_generators', 'ufunc_api_order.txt'))
 
 env.Prepend(CPPPATH = ['include', '.'])
+
+# npymath core lib
+npymath_src = env.GenerateFromTemplate(pjoin('src', 'npy_math.c.src'))
+env.DistutilsStaticExtLibrary("npymath", npymath_src)
+env.Prepend(LIBS=["npymath"])
+env.Prepend(LIBPATH=["."])
 
 #-----------------
 # Build multiarray
