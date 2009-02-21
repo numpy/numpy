@@ -474,7 +474,7 @@ int main(int argc, char **argv)
                   ('SIZEOF_LONG', 'long'),
                   ('SIZEOF_FLOAT', 'float'),
                   ('SIZEOF_DOUBLE', 'double'),
-                  #('SIZEOF_LONG_DOUBLE', 'long double'),
+                  ('SIZEOF_LONG_DOUBLE', 'long double'),
                   ('SIZEOF_PY_INTPTR_T', 'Py_intptr_t'),
                   ]:
         testcode.append(c_size_test % {'sz' : sz, 'type' : t})
