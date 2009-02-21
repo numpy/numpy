@@ -187,8 +187,8 @@ for f in ["isnan", "isinf", "signbit", "isfinite"]:
 """
     st = config.CheckDeclaration(f, includes=includes)
     if st:
-	numpyconfig_sym.append(('DEFINE_NPY_HAVE_%s_DECL' % f.upper(), 
-		'#define NPY_HAVE_%s_DECL' % f.upper()))
+	numpyconfig_sym.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), 
+		'#define NPY_HAVE_DECL_%s' % f.upper()))
         
 
 #-------------------------------------------------------
