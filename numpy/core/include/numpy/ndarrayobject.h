@@ -1692,12 +1692,12 @@ typedef struct {
 
 #define PyArray_GETITEM(obj,itemptr)                                          \
         ((PyArrayObject *)(obj))->descr->f->getitem((char *)(itemptr),        \
-                                                 (PyArrayObject *)(obj));
+                                                 (PyArrayObject *)(obj))
 
 #define PyArray_SETITEM(obj,itemptr,v)                                        \
         ((PyArrayObject *)(obj))->descr->f->setitem((PyObject *)(v),          \
                                                     (char *)(itemptr),        \
-                                                    (PyArrayObject *)(obj));
+                                                    (PyArrayObject *)(obj))
 
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
