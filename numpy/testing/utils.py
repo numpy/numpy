@@ -240,9 +240,9 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header=''):
-    from numpy.core import asarray, isnan, any
-    x = asarray(x)
-    y = asarray(y)
+    from numpy.core import array, isnan, any
+    x = array(x, copy=False, subok=True)
+    y = array(y, copy=False, subok=True)
 
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPfdgFDG'
