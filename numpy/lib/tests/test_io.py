@@ -1,4 +1,3 @@
-
 import numpy as np
 import numpy.ma as ma
 from numpy.ma.testutils import *
@@ -699,7 +698,7 @@ M   33  21.99
 
 
     def test_user_missing_values(self):
-        datastr ="A, B, C\n0, 0., 0j\n1, N/A, 1j\n-9, 2.2, N/A\n3, -99, 3j" 
+        datastr ="A, B, C\n0, 0., 0j\n1, N/A, 1j\n-9, 2.2, N/A\n3, -99, 3j"
         data = StringIO.StringIO(datastr)
         basekwargs = dict(dtype=None, delimiter=',', names=True, missing='N/A')
         mdtype = [('A', int), ('B', float), ('C', complex)]
@@ -712,7 +711,7 @@ M   33  21.99
         assert_equal(test, control)
         #
         data.seek(0)
-        test = np.mafromtxt(data, 
+        test = np.mafromtxt(data,
                             missing_values={0:-9, 1:-99, 2:-999j}, **basekwargs)
         control = ma.array([(   0, 0.0,    0j), (1, -999, 1j),
                             (  -9, 2.2, -999j), (3,  -99, 3j)],
@@ -721,7 +720,7 @@ M   33  21.99
         assert_equal(test, control)
         #
         data.seek(0)
-        test = np.mafromtxt(data, 
+        test = np.mafromtxt(data,
                             missing_values={0:-9, 'B':-99, 'C':-999j},
                             **basekwargs)
         control = ma.array([(   0, 0.0,    0j), (1, -999, 1j),
