@@ -805,7 +805,21 @@ M   33  21.99
         self.failUnless(isinstance(test, np.recarray))
         assert_equal(test, control)
 
+def test_gzip_load():
+    import gzip
+    from StringIO import StringIO
 
+    a = np.random.random((5, 5))
+
+    s = StringIO()
+    f = gzip.GzipFile(fileobj=s, mode="w")
+
+    np.save(f, a)
+    f.close()
+    s.seek(0)
+
+    f = gzip.GzipFile(fileobj=s, mode="r")
+    assert_array_equal(np.load(f), a)
 
 
 if __name__ == "__main__":
