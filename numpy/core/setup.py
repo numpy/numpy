@@ -490,7 +490,6 @@ int main(int argc, char **argv)
 #else
         fprintf(fp, "/* PY_LONG_LONG not defined */\n");
 #endif
-        fprintf(fp, "#define SIZEOF_LONG_DOUBLE 8\n");
 #ifndef CHAR_BIT
           {
              unsigned char var = 2;
