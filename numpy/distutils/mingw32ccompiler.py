@@ -365,7 +365,7 @@ if sys.platform == 'win32':
             _MSVCRVER_TO_FULLVER['90'] = "9.0.21022.8"
         # I took one version in my SxS directory: no idea if it is the good
         # one, and we can't retrieve it from python
-        _MSVCRVER_TO_FULLVER['90'] = "8.0.50727.42"
+        _MSVCRVER_TO_FULLVER['80'] = "8.0.50727.42"
     except ImportError:
         # If we are here, means python was not built with MSVC. Not sure what to do
         # in that case: manifest building will fail, but it should not be used in
