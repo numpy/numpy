@@ -12,6 +12,8 @@ import os
 import subprocess
 import sys
 import log
+import subprocess
+import re
 
 # Overwrite certain distutils.ccompiler functions:
 import numpy.distutils.ccompiler
@@ -29,7 +31,11 @@ from distutils.errors import DistutilsExecError, CompileError, UnknownFileError
 
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
-from numpy.distutils.misc_util import msvc_runtime_library
+from numpy.distutils.misc_util import msvc_runtime_library, get_build_architecture
+
+# Useful to generate table of symbols from a dll
+_START = re.compile(r'\[Ordinal/Name Pointer\] Table')
+_TABLE = re.compile(r'^\s+\[([\s*[0-9]*)\] ([a-zA-Z0-9_]*)')
 
 # the same as cygwin plus some additional parameters
 class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
@@ -89,17 +95,29 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         #                     linker_exe='gcc -mno-cygwin',
         #                     linker_so='%s --driver-name g++ -mno-cygwin -mdll -static %s'
         #                                % (self.linker, entry_point))
-        if self.gcc_version <= "3.0.0":
-            self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
-                                 compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
-                                 linker_exe='g++ -mno-cygwin',
-                                 linker_so='%s -mno-cygwin -mdll -static %s'
-                                 % (self.linker, entry_point))
+
+        # MS_WIN64 should be defined when building for amd64 on windows, but
+        # python headers define it only for MS compilers, which has all kind of
+        # bad consequences, like using Py_ModuleInit4 instead of
+        # Py_ModuleInit4_64, etc... So we add it here
+        if get_build_architecture() == 'AMD64':
+            self.set_executables(
+                    compiler='gcc -DMS_WIN64 -mno-cygwin -O0 -Wall',
+                    compiler_so='gcc -DMS_WIN64 -mno-cygwin -O0 -Wall -Wstrict-prototypes',
+                    linker_exe='gcc -mno-cygwin',
+                    linker_so='gcc -mno-cygwin -shared')
         else:
-            self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
-                                 compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
-                                 linker_exe='g++ -mno-cygwin',
-                                 linker_so='g++ -mno-cygwin -shared')
+            if self.gcc_version <= "3.0.0":
+                self.set_executables(compiler='gcc -mno-cygwin -O2 -w',
+                                     compiler_so='gcc -mno-cygwin -mdll -O2 -w -Wstrict-prototypes',
+                                     linker_exe='g++ -mno-cygwin',
+                                     linker_so='%s -mno-cygwin -mdll -static %s'
+                                     % (self.linker, entry_point))
+            else:
+                self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
+                                     compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
+                                     linker_exe='g++ -mno-cygwin',
+                                     linker_so='g++ -mno-cygwin -shared')
         # added for python2.3 support
         # we can't pass it through set_executables because pre 2.2 would fail
         self.compiler_cxx = ['g++']
@@ -191,11 +209,102 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
     # object_filenames ()
 
 
+def find_python_dll():
+    maj, min, micro = [int(i) for i in sys.version_info[:3]]
+    dllname = 'python%d%d.dll' % (maj, min)
+    print "Looking for %s" % dllname
+
+    # We can't do much here:
+    # - find it in python main dir
+    # - in system32,
+    # - ortherwise (Sxs), I don't know how to get it.
+    lib_dirs = []
+    lib_dirs.append(os.path.join(sys.prefix, 'lib'))
+    try:
+        lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
+    except KeyError:
+        pass
+
+    for d in lib_dirs:
+        dll = os.path.join(d, dllname)
+        if os.path.exists(dll):
+            return dll
+
+    raise ValueError("%s not found in %s" % (dllname, lib_dirs))
+
+def dump_table(dll):
+    st = subprocess.Popen(["objdump.exe", "-p", dll], stdout=subprocess.PIPE)
+    return st.stdout.readlines()
+
+def generate_def(dll, dfile):
+    """Given a dll file location,  get all its exported symbols and dump them
+    into the given def file.
+
+    The .def file will be overwritten"""
+    dump = dump_table(dll)
+    for i in range(len(dump)):
+        if _START.match(dump[i]):
+            break
+
+    if i == len(dump):
+        raise ValueError("Symbol table not found")
+
+    syms = []
+    for j in range(i+1, len(dump)):
+        m = _TABLE.match(dump[j])
+        if m:
+            syms.append((int(m.group(1).strip()), m.group(2)))
+        else:
+            break
+
+    if len(syms) == 0:
+        log.warn('No symbols found in %s' % dll)
+
+    d = open(dfile, 'w')
+    d.write('LIBRARY        %s\n' % os.path.basename(dll))
+    d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
+    d.write(';DATA          PRELOAD SINGLE\n')
+    d.write('\nEXPORTS\n')
+    for s in syms:
+        #d.write('@%d    %s\n' % (s[0], s[1]))
+        d.write('%s\n' % s[1])
+    d.close()
+
 def build_import_library():
-    """ Build the import libraries for Mingw32-gcc on Windows
-    """
     if os.name != 'nt':
         return
+
+    arch = get_build_architecture()
+    if arch == 'AMD64':
+        return _build_import_library_amd64()
+    elif arch == 'Intel':
+        return _build_import_library_x86()
+    else:
+        raise ValueError("Unhandled arch %s" % arch)
+
+def _build_import_library_amd64():
+    dll_file = find_python_dll()
+
+    out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
+    out_file = os.path.join(sys.prefix, 'libs', out_name)
+    if os.path.isfile(out_file):
+        log.debug('Skip building import library: "%s" exists' % (out_file))
+        return
+
+    def_name = "python%d%d.def" % tuple(sys.version_info[:2])
+    def_file = os.path.join(sys.prefix,'libs',def_name)
+
+    log.info('Building import library (arch=AMD64): "%s" (from %s)' \
+             % (out_file, dll_file))
+
+    generate_def(dll_file, def_file)
+
+    cmd = ['dlltool', '-d', def_file, '-l', out_file]
+    subprocess.Popen(cmd)
+
+def _build_import_library_x86():
+    """ Build the import libraries for Mingw32-gcc on Windows
+    """
     lib_name = "python%d%d.lib" % tuple(sys.version_info[:2])
     lib_file = os.path.join(sys.prefix,'libs',lib_name)
     out_name = "libpython%d%d.a" % tuple(sys.version_info[:2])
@@ -206,7 +315,7 @@ def build_import_library():
     if os.path.isfile(out_file):
         log.debug('Skip building import library: "%s" exists' % (out_file))
         return
-    log.info('Building import library: "%s"' % (out_file))
+    log.info('Building import library (ARCH=x86): "%s"' % (out_file))
 
     from numpy.distutils import lib2def
 
@@ -254,6 +363,9 @@ if sys.platform == 'win32':
             _MSVCRVER_TO_FULLVER['90'] = msvcrt.CRT_ASSEMBLY_VERSION
         else:
             _MSVCRVER_TO_FULLVER['90'] = "9.0.21022.8"
+        # I took one version in my SxS directory: no idea if it is the good
+        # one, and we can't retrieve it from python
+        _MSVCRVER_TO_FULLVER['90'] = "8.0.50727.42"
     except ImportError:
         # If we are here, means python was not built with MSVC. Not sure what to do
         # in that case: manifest building will fail, but it should not be used in
@@ -344,7 +456,7 @@ def rc_name(config):
 def generate_manifest(config):
     msver = get_build_msvc_version()
     if msver is not None:
-        if msver >= 8:
+        if msver >= 9:
             check_embedded_msvcr_match_linked(msver)
             ma = int(msver)
             mi = int((msver - ma) * 10)

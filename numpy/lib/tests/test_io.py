@@ -6,10 +6,18 @@ from numpy.ma.testutils import *
 import StringIO
 
 from tempfile import NamedTemporaryFile
-import sys
+import sys, time
+from datetime import datetime
 
 
 MAJVER, MINVER = sys.version_info[:2]
+
+def strptime(s, fmt=None):
+    """This function is available in the datetime module only
+    from Python >= 2.5.
+
+    """
+    return datetime(*time.strptime(s, fmt)[:3])
 
 class RoundtripTest(object):
     def roundtrip(self, save_func, *args, **kwargs):
@@ -538,12 +546,11 @@ M   33  21.99
 
     def test_converters_cornercases(self):
         "Test the conversion to datetime."
-        from datetime import datetime
-        converter = {'date':lambda s: datetime.strptime(s,'%Y-%m-%d %H:%M:%SZ')}
+        converter = {'date': lambda s: strptime(s, '%Y-%m-%d %H:%M:%SZ')}
         data = StringIO.StringIO('2009-02-03 12:00:00Z, 72214.0')
         test = np.ndfromtxt(data, delimiter=',', dtype=None,
                             names=['date','stid'], converters=converter)
-        control = np.array((datetime(2009,02,03,12,0), 72214.),
+        control = np.array((datetime(2009,02,03), 72214.),
                            dtype=[('date', np.object_), ('stid', float)])
         assert_equal(test, control)
 
@@ -583,11 +590,11 @@ M   33  21.99
         2; 2002-01-31
         """
         ndtype = [('idx', int), ('code', np.object)]
-        func = lambda s: date(*(time.strptime(s.strip(), "%Y-%m-%d")[:3]))
+        func = lambda s: strptime(s.strip(), "%Y-%m-%d")
         converters = {1: func}
         test = np.genfromtxt(StringIO.StringIO(data), delimiter=";", dtype=ndtype,
                              converters=converters)
-        control = np.array([(1, date(2001,1,1)), (2, date(2002,1,31))],
+        control = np.array([(1, datetime(2001,1,1)), (2, datetime(2002,1,31))],
                            dtype=ndtype)
         assert_equal(test, control)
         #

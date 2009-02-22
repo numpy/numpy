@@ -13,72 +13,74 @@ static PyBoolScalarObject _PyArrayScalar_BoolValues[2] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
 };
 
-/* Inheritance established later when tp_bases is set (or tp_base for
-   single inheritance) */
+/*
+ * Inheritance is established later when tp_bases is set (or tp_base for
+ * single inheritance)
+ */
 
 /**begin repeat
-
-#name=number, integer, signedinteger, unsignedinteger, inexact, floating, complexfloating, flexible, character#
-#NAME=Number, Integer, SignedInteger, UnsignedInteger, Inexact, Floating, ComplexFloating, Flexible, Character#
-*/
-
+ * #name = number, integer, signedinteger, unsignedinteger, inexact,
+ *         floating, complexfloating, flexible, character#
+ * #NAME = Number, Integer, SignedInteger, UnsignedInteger, Inexact,
+ *         Floating, ComplexFloating, Flexible, Character#
+ */
 static PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                /*ob_size*/
-    "numpy.@name@",                   /*tp_name*/
-    sizeof(PyObject),                 /*tp_basicsize*/
-    0,                                  /* tp_itemsize */
+    0,                                           /* ob_size*/
+    "numpy.@name@",                              /* tp_name*/
+    sizeof(PyObject),                            /* tp_basicsize*/
+    0,                                           /* tp_itemsize */
     /* methods */
-    0,   /* tp_dealloc */
-    0,   /* tp_print */
-    0,   /* tp_getattr */
-    0,   /* tp_setattr */
-    0,   /* tp_compare */
-    0,   /* tp_repr */
-    0,   /* tp_as_number */
-    0,   /* tp_as_sequence */
-    0,   /* tp_as_mapping */
-    0,   /* tp_hash */
-    0,   /* tp_call */
-    0,   /* tp_str */
-    0,   /* tp_getattro */
-    0,   /* tp_setattro */
-    0,   /* tp_as_buffer */
-    0,   /* tp_flags */
-    0,   /* tp_doc */
-    0,   /* tp_traverse */
-    0,   /* tp_clear */
-    0,   /* tp_richcompare */
-    0,   /* tp_weaklistoffset */
-    0,   /* tp_iter */ 
-    0,   /* tp_iternext */ 
-    0,   /* tp_methods */
-    0,   /* tp_members */
-    0,   /* tp_getset */
-    0,   /* tp_base */
-    0,   /* tp_dict */
-    0,   /* tp_descr_get */
-    0,   /* tp_descr_set */
-    0,   /* tp_dictoffset */
-    0,   /* tp_init */
-    0,   /* tp_alloc */
-    0,   /* tp_new */
-    0,   /* tp_free */
-    0,   /* tp_is_gc */
-    0,   /* tp_bases */
-    0,   /* tp_mro */
-    0,   /* tp_cache */
-    0,   /* tp_subclasses */
-    0,   /* tp_weaklist */
-    0,   /* tp_del */
+    0,                                           /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    0,                                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    0,                                           /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    0,                                           /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    0,                                           /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 /**end repeat**/
@@ -118,13 +120,18 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         CASE(CLONGDOUBLE, CLongDouble);
         CASE(OBJECT, Object);
 #undef CASE
-        case NPY_STRING: return (void *)PyString_AS_STRING(scalar);
-        case NPY_UNICODE: return (void *)PyUnicode_AS_DATA(scalar);
-        case NPY_VOID: return ((PyVoidScalarObject *)scalar)->obval;
+        case NPY_STRING:
+            return (void *)PyString_AS_STRING(scalar);
+        case NPY_UNICODE:
+            return (void *)PyUnicode_AS_DATA(scalar);
+        case NPY_VOID:
+            return ((PyVoidScalarObject *)scalar)->obval;
     }
 
-    /* Must be a user-defined type --- check to see which
-       scalar it inherits from. */
+    /*
+     * Must be a user-defined type --- check to see which
+     * scalar it inherits from.
+     */
 
 #define _CHK(cls) (PyObject_IsInstance(scalar, \
             (PyObject *)&Py##cls##ArrType_Type))
@@ -140,7 +147,8 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
                 _IFCASE(Long);
                 _IFCASE(LongLong);
             }
-            else { /* Unsigned Integer */
+            else {
+                /* Unsigned Integer */
                 _IFCASE(UByte);
                 _IFCASE(UShort);
                 _IFCASE(UInt);
@@ -148,49 +156,64 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
                 _IFCASE(ULongLong);
             }
         }
-        else { /* Inexact */
+        else {
+            /* Inexact */
             if _CHK(Floating) {
                 _IFCASE(Float);
                 _IFCASE(Double);
                 _IFCASE(LongDouble);
             }
-            else { /*ComplexFloating */
+            else {
+                /*ComplexFloating */
                 _IFCASE(CFloat);
                 _IFCASE(CDouble);
                 _IFCASE(CLongDouble);
             }
         }
     }
-    else if _CHK(Bool) return _OBJ(Bool);
-    else if _CHK(Flexible) {
-        if _CHK(String) return (void *)PyString_AS_STRING(scalar);
-        if _CHK(Unicode) return (void *)PyUnicode_AS_DATA(scalar);
-        if _CHK(Void) return ((PyVoidScalarObject *)scalar)->obval;
+    else if (_CHK(Bool)) {
+        return _OBJ(Bool);
     }
-    else _IFCASE(Object);
+    else if (_CHK(Flexible)) {
+        if (_CHK(String)) {
+            return (void *)PyString_AS_STRING(scalar);
+        }
+        if (_CHK(Unicode)) {
+            return (void *)PyUnicode_AS_DATA(scalar);
+        }
+        if (_CHK(Void)) {
+            return ((PyVoidScalarObject *)scalar)->obval;
+        }
+    }
+    else {
+        _IFCASE(Object);
+    }
 
 
-    /* Use the alignment flag to figure out where the data begins
-       after a PyObject_HEAD
+    /*
+     * Use the alignment flag to figure out where the data begins
+     * after a PyObject_HEAD
      */
     memloc = (intp)scalar;
     memloc += sizeof(PyObject);
-    /* now round-up to the nearest alignment value
-     */
+    /* now round-up to the nearest alignment value */
     align = descr->alignment;
-    if (align > 1) memloc = ((memloc + align - 1)/align)*align;
+    if (align > 1) {
+        memloc = ((memloc + align - 1)/align)*align;
+    }
     return (void *)memloc;
 #undef _IFCASE
 #undef _OBJ
 #undef _CHK
 }
 
-/* no error checking is performed -- ctypeptr must be same type as scalar */
-/* in case of flexible type, the data is not copied
-   into ctypeptr which is expected to be a pointer to pointer */
 /*NUMPY_API
- Convert to c-type
-*/
+ * Convert to c-type
+ *
+ * no error checking is performed -- ctypeptr must be same type as scalar
+ * in case of flexible type, the data is not copied
+ * into ctypeptr which is expected to be a pointer to pointer
+ */
 static void
 PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
 {
@@ -202,24 +225,23 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
     if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
         void **ct = (void **)ctypeptr;
         *ct = newptr;
-    } else {
+    }
+    else {
         memcpy(ctypeptr, newptr, typecode->elsize);
     }
     Py_DECREF(typecode);
     return;
 }
 
-/* The output buffer must be large-enough to receive the value */
-/*  Even for flexible types which is different from ScalarAsCtype
-    where only a reference for flexible types is returned
-*/
-
-/* This may not work right on narrow builds for NumPy unicode scalars.
- */
-
 /*NUMPY_API
- Cast Scalar to c-type
-*/
+ * Cast Scalar to c-type
+ *
+ * The output buffer must be large-enough to receive the value
+ *  Even for flexible types which is different from ScalarAsCtype
+ *  where only a reference for flexible types is returned
+ *
+ * This may not work right on narrow builds for NumPy unicode scalars.
+ */
 static int
 PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                           PyArray_Descr *outcode)
@@ -229,7 +251,9 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 
     descr = PyArray_DescrFromScalar(scalar);
     castfunc = PyArray_GetCastFunc(descr, outcode->type_num);
-    if (castfunc == NULL) return -1;
+    if (castfunc == NULL) {
+        return -1;
+    }
     if (PyTypeNum_ISEXTENDED(descr->type_num) ||
             PyTypeNum_ISEXTENDED(outcode->type_num)) {
         PyArrayObject *ain, *aout;
@@ -245,7 +269,10 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                     0, NULL,
                     NULL, ctypeptr,
                     CARRAY, NULL);
-        if (aout == NULL) {Py_DECREF(ain); return -1;}
+        if (aout == NULL) {
+            Py_DECREF(ain);
+            return -1;
+        }
         castfunc(ain->data, aout->data, 1, ain, aout);
         Py_DECREF(ain);
         Py_DECREF(aout);
@@ -258,8 +285,8 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
 }
 
 /*NUMPY_API
- Cast Scalar to c-type
-*/
+ * Cast Scalar to c-type
+ */
 static int
 PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
                          void *ctypeptr, int outtype)
@@ -267,22 +294,24 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
     PyArray_VectorUnaryFunc* castfunc;
     void *ptr;
     castfunc = PyArray_GetCastFunc(indescr, outtype);
-    if (castfunc == NULL) return -1;
+    if (castfunc == NULL) {
+        return -1;
+    }
     ptr = scalar_value(scalar, indescr);
     castfunc(ptr, ctypeptr, 1, NULL, NULL);
     return 0;
 }
 
-/* 0-dim array from array-scalar object */
-/* always contains a copy of the data
-   unless outcode is NULL, it is of void type and the referrer does
-   not own it either.
-*/
-
-/* steals reference to outcode */
 /*NUMPY_API
- Get 0-dim array from scalar
-*/
+ * Get 0-dim array from scalar
+ *
+ * 0-dim array from array-scalar object
+ * always contains a copy of the data
+ * unless outcode is NULL, it is of void type and the referrer does
+ * not own it either.
+ *
+ * steals reference to outcode
+ */
 static PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
@@ -310,8 +339,10 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
             typecode,
             0, NULL,
             NULL, NULL, 0, NULL);
-    if (r==NULL) {Py_XDECREF(outcode); return NULL;}
-
+    if (r==NULL) {
+        Py_XDECREF(outcode);
+        return NULL;
+    }
     if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
         if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
             Py_XDECREF(outcode); Py_DECREF(r);
@@ -328,7 +359,8 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
                 (PyArray_UCS4 *)PyArray_DATA(r),
                 PyUnicode_GET_SIZE(scalar),
                 PyArray_ITEMSIZE(r) >> 2);
-    } else
+    }
+    else
 #endif
     {
         memcpy(PyArray_DATA(r), memptr, PyArray_ITEMSIZE(r));
@@ -338,8 +370,9 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     }
 
 finish:
-    if (outcode == NULL) return r;
-
+    if (outcode == NULL) {
+        return r;
+    }
     if (outcode->type_num == typecode->type_num) {
         if (!PyTypeNum_ISEXTENDED(typecode->type_num) ||
                 (outcode->elsize == typecode->elsize))
@@ -353,10 +386,10 @@ finish:
 }
 
 /*NUMPY_API
-  Get an Array Scalar From a Python Object
-  Returns NULL if unsuccessful but error is only
-  set if another error occurred. Currently only Numeric-like
-  object supported.
+ * Get an Array Scalar From a Python Object
+ *
+ * Returns NULL if unsuccessful but error is only set if another error occurred.
+ * Currently only Numeric-like object supported.
  */
 static PyObject *
 PyArray_ScalarFromObject(PyObject *object)
@@ -367,17 +400,23 @@ PyArray_ScalarFromObject(PyObject *object)
     }
     if (PyInt_Check(object)) {
         ret = PyArrayScalar_New(Long);
-        if (ret == NULL) return NULL;
+        if (ret == NULL) {
+            return NULL;
+        }
         PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
     }
     else if (PyFloat_Check(object)) {
         ret = PyArrayScalar_New(Double);
-        if (ret == NULL) return NULL;
+        if (ret == NULL) {
+            return NULL;
+        }
         PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
     }
     else if (PyComplex_Check(object)) {
         ret = PyArrayScalar_New(CDouble);
-        if (ret == NULL) return NULL;
+        if (ret == NULL) {
+            return NULL;
+        }
         PyArrayScalar_VAL(ret, CDouble).real =
                 ((PyComplexObject *)object)->cval.real;
         PyArrayScalar_VAL(ret, CDouble).imag =
@@ -391,7 +430,9 @@ PyArray_ScalarFromObject(PyObject *object)
             return NULL;
         }
         ret = PyArrayScalar_New(LongLong);
-        if (ret == NULL) return NULL;
+        if (ret == NULL) {
+            return NULL;
+        }
         PyArrayScalar_VAL(ret, LongLong) = val;
     }
     else if (PyBool_Check(object)) {
@@ -410,14 +451,16 @@ static PyObject *
 gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 {
     PyObject *obj;
-    const size_t size = _PyObject_VAR_SIZE(type, nitems+1);
+    const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
 
     obj = (PyObject *)_pya_malloc(size);
     memset(obj, 0, size);
-    if (type->tp_itemsize == 0)
+    if (type->tp_itemsize == 0) {
         PyObject_INIT(obj, type);
-    else
+    }
+    else {
         (void) PyObject_INIT_VAR((PyVarObject *)obj, type, nitems);
+    }
     return obj;
 }
 
@@ -436,8 +479,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
 
     if (!PyArray_IsScalar(m1,Generic)) {
         if (PyArray_Check(m1)) {
-            ret = m1->ob_type->tp_as_number->nb_power(m1,m2,
-                    Py_None);
+            ret = m1->ob_type->tp_as_number->nb_power(m1,m2, Py_None);
         }
         else {
             if (!PyArray_IsScalar(m2,Generic)) {
@@ -445,17 +487,17 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
                 return NULL;
             }
             arr = PyArray_FromScalar(m2, NULL);
-            if (arr == NULL) return NULL;
-            ret = arr->ob_type->tp_as_number->nb_power(m1, arr,
-                    Py_None);
+            if (arr == NULL) {
+                return NULL;
+            }
+            ret = arr->ob_type->tp_as_number->nb_power(m1, arr, Py_None);
             Py_DECREF(arr);
         }
         return ret;
     }
     if (!PyArray_IsScalar(m2, Generic)) {
         if (PyArray_Check(m2)) {
-            ret = m2->ob_type->tp_as_number->nb_power(m1,m2,
-                    Py_None);
+            ret = m2->ob_type->tp_as_number->nb_power(m1,m2, Py_None);
         }
         else {
             if (!PyArray_IsScalar(m1, Generic)) {
@@ -463,18 +505,21 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *NPY_UNUSED(m3))
                 return NULL;
             }
             arr = PyArray_FromScalar(m1, NULL);
-            if (arr == NULL) return NULL;
-            ret = arr->ob_type->tp_as_number->nb_power(arr, m2,
-                    Py_None);
+            if (arr == NULL) {
+                return NULL;
+            }
+            ret = arr->ob_type->tp_as_number->nb_power(arr, m2, Py_None);
             Py_DECREF(arr);
         }
         return ret;
     }
-    arr=arg2=NULL;
+    arr = arg2 = NULL;
     arr = PyArray_FromScalar(m1, NULL);
     arg2 = PyArray_FromScalar(m2, NULL);
     if (arr == NULL || arg2 == NULL) {
-        Py_XDECREF(arr); Py_XDECREF(arg2); return NULL;
+        Py_XDECREF(arr);
+        Py_XDECREF(arg2);
+        return NULL;
     }
     ret = arr->ob_type->tp_as_number->nb_power(arr, arg2, Py_None);
     Py_DECREF(arr);
@@ -489,26 +534,35 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
     PyObject *arr, *meth, *ret;
 
     arr = PyArray_FromScalar(self, NULL);
-    if (arr == NULL) return NULL;
+    if (arr == NULL) {
+        return NULL;
+    }
     meth = PyObject_GetAttrString(arr, str);
-    if (meth == NULL) {Py_DECREF(arr); return NULL;}
-    if (kwds == NULL)
+    if (meth == NULL) {
+        Py_DECREF(arr);
+        return NULL;
+    }
+    if (kwds == NULL) {
         ret = PyObject_CallObject(meth, args);
-    else
+    }
+    else {
         ret = PyObject_Call(meth, args, kwds);
+    }
     Py_DECREF(meth);
     Py_DECREF(arr);
-    if (ret && PyArray_Check(ret))
+    if (ret && PyArray_Check(ret)) {
         return PyArray_Return((PyArrayObject *)ret);
-    else
+    }
+    else {
         return ret;
+    }
 }
 
 /**begin repeat
  *
- * #name=add, subtract, divide, remainder, divmod, lshift, rshift, and, xor, or, floor_divide, true_divide#
+ * #name = add, subtract, divide, remainder, divmod, lshift, rshift,
+ *         and, xor, or, floor_divide, true_divide#
  */
-
 static PyObject *
 gentype_@name@(PyObject *m1, PyObject *m2)
 {
@@ -521,28 +575,30 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2)
 {
-    PyObject *ret=NULL;
+    PyObject *ret = NULL;
     long repeat;
 
     if (!PyArray_IsScalar(m1, Generic) &&
             ((m1->ob_type->tp_as_number == NULL) ||
              (m1->ob_type->tp_as_number->nb_multiply == NULL))) {
-        /* Try to convert m2 to an int and try sequence
-           repeat */
+        /* Try to convert m2 to an int and try sequence repeat */
         repeat = PyInt_AsLong(m2);
-        if (repeat == -1 && PyErr_Occurred()) return NULL;
+        if (repeat == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
         ret = PySequence_Repeat(m1, (int) repeat);
     }
     else if (!PyArray_IsScalar(m2, Generic) &&
             ((m2->ob_type->tp_as_number == NULL) ||
              (m2->ob_type->tp_as_number->nb_multiply == NULL))) {
-        /* Try to convert m1 to an int and try sequence
-           repeat */
+        /* Try to convert m1 to an int and try sequence repeat */
         repeat = PyInt_AsLong(m1);
-        if (repeat == -1 && PyErr_Occurred()) return NULL;
+        if (repeat == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
         ret = PySequence_Repeat(m2, (int) repeat);
     }
-    if (ret==NULL) {
+    if (ret == NULL) {
         PyErr_Clear(); /* no effect if not set */
         ret = PyArray_Type.tp_as_number->nb_multiply(m1, m2);
     }
@@ -550,17 +606,18 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 }
 
 /**begin repeat
-
-#name=positive, negative, absolute, invert, int, long, float, oct, hex#
-*/
-
+ *
+ * #name=positive, negative, absolute, invert, int, long, float, oct, hex#
+ */
 static PyObject *
 gentype_@name@(PyObject *m1)
 {
     PyObject *arr, *ret;
 
     arr = PyArray_FromScalar(m1, NULL);
-    if (arr == NULL) return NULL;
+    if (arr == NULL) {
+        return NULL;
+    }
     ret = arr->ob_type->tp_as_number->nb_@name@(arr);
     Py_DECREF(arr);
     return ret;
@@ -574,7 +631,9 @@ gentype_nonzero_number(PyObject *m1)
     int ret;
 
     arr = PyArray_FromScalar(m1, NULL);
-    if (arr == NULL) return -1;
+    if (arr == NULL) {
+        return -1;
+    }
     ret = arr->ob_type->tp_as_number->nb_nonzero(arr);
     Py_DECREF(arr);
     return ret;
@@ -587,7 +646,9 @@ gentype_str(PyObject *self)
     PyObject *ret;
 
     arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr==NULL) return NULL;
+    if (arr == NULL) {
+        return NULL;
+    }
     ret = PyObject_Str((PyObject *)arr);
     Py_DECREF(arr);
     return ret;
@@ -601,7 +662,9 @@ gentype_repr(PyObject *self)
     PyObject *ret;
 
     arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr==NULL) return NULL;
+    if (arr == NULL) {
+        return NULL;
+    }
     ret = PyObject_Str((PyObject *)arr);
     Py_DECREF(arr);
     return ret;
@@ -613,9 +676,9 @@ gentype_repr(PyObject *self)
 #endif
 
 /**begin repeat
- * #name=float, double, longdouble#
- * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
- * #type=f, d, l#
+ * #name = float, double, longdouble#
+ * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = f, d, l#
  */
 
 #define _FMT1 "%%.%i" NPY_@NAME@_FMT
@@ -632,7 +695,7 @@ format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
     res = NumPyOS_ascii_format@type@(buf, buflen, format, val, 0);
     if (res == NULL) {
         fprintf(stderr, "Error while formatting\n");
-	return;
+        return;
     }
 
     /* If nothing but digits after sign, append ".0" */
@@ -656,28 +719,28 @@ format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
     if (val.real == 0.0) {
         PyOS_snprintf(format, sizeof(format), _FMT1, prec);
         res = NumPyOS_ascii_format@type@(buf, buflen-1, format, val.imag, 0);
-	if (res == NULL) {
+        if (res == NULL) {
             fprintf(stderr, "Error while formatting\n");
-	    return;
-	}
-	strncat(buf, "j", 1);
+            return;
+        }
+        strncat(buf, "j", 1);
     }
     else {
-	char re[64], im[64];
-	PyOS_snprintf(format, sizeof(format), _FMT1, prec);
+        char re[64], im[64];
+        PyOS_snprintf(format, sizeof(format), _FMT1, prec);
         res = NumPyOS_ascii_format@type@(re, sizeof(re), format, val.real, 0);
-	if (res == NULL) {
+        if (res == NULL) {
             fprintf(stderr, "Error while formatting\n");
-	    return;
-	}
+            return;
+        }
 
-	PyOS_snprintf(format, sizeof(format), _FMT2, prec);
+        PyOS_snprintf(format, sizeof(format), _FMT2, prec);
         res = NumPyOS_ascii_format@type@(im, sizeof(im), format, val.imag, 0);
-	if (res == NULL) {
+        if (res == NULL) {
             fprintf(stderr, "Error while formatting\n");
-	    return;
-	}
-	PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
+            return;
+        }
+        PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
     }
 }
 
@@ -686,19 +749,20 @@ format_c@name@(char *buf, size_t buflen, c@name@ val, unsigned int prec)
 
 /**end repeat**/
 
-/* over-ride repr and str of array-scalar strings and unicode to
-   remove NULL bytes and then call the corresponding functions
-   of string and unicode.
+/*
+ * over-ride repr and str of array-scalar strings and unicode to
+ * remove NULL bytes and then call the corresponding functions
+ * of string and unicode.
  */
 
 /**begin repeat
-#name=string*2,unicode*2#
-#form=(repr,str)*2#
-#Name=String*2,Unicode*2#
-#NAME=STRING*2,UNICODE*2#
-#extra=AndSize*2,,#
-#type=char*2, Py_UNICODE*2#
-*/
+ * #name = string*2,unicode*2#
+ * #form = (repr,str)*2#
+ * #Name = String*2,Unicode*2#
+ * #NAME = STRING*2,UNICODE*2#
+ * #extra = AndSize*2,,#
+ * #type = char*2, Py_UNICODE*2#
+ */
 static PyObject *
 @name@type_@form@(PyObject *self)
 {
@@ -710,9 +774,13 @@ static PyObject *
     ip = dptr = Py@Name@_AS_@NAME@(self);
     len = Py@Name@_GET_SIZE(self);
     dptr += len-1;
-    while(len > 0 && *dptr-- == 0) len--;
+    while(len > 0 && *dptr-- == 0) {
+        len--;
+    }
     new = Py@Name@_From@Name@@extra@(ip, len);
-    if (new == NULL) return PyString_FromString("");
+    if (new == NULL) {
+        return PyString_FromString("");
+    }
     ret = Py@Name@_Type.tp_@form@(new);
     Py_DECREF(new);
     return ret;
@@ -737,10 +805,11 @@ static PyObject *
  *
  * These functions will return NULL if PyString creation fails.
  */
+
 /**begin repeat
- * #name=float, double, longdouble#
- * #Name=Float, Double, LongDouble#
- * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
+ * #name = float, double, longdouble#
+ * #Name = Float, Double, LongDouble#
+ * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  */
 /**begin repeat1
  * #kind = str, repr#
@@ -778,38 +847,38 @@ c@name@type_@kind@(PyObject *self)
  * float type print (control print a, where a is a float type instance)
  */
 /**begin repeat
- * #name=float, double, longdouble#
- * #Name=Float, Double, LongDouble#
- * #NAME=FLOAT, DOUBLE, LONGDOUBLE#
+ * #name = float, double, longdouble#
+ * #Name = Float, Double, LongDouble#
+ * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  */
 
 static int
 @name@type_print(PyObject *v, FILE *fp, int flags)
 {
-	char buf[100];
+        char buf[100];
         @name@ val = ((Py@Name@ScalarObject *)v)->obval;
 
-	format_@name@(buf, sizeof(buf), val,
-		      (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
-	Py_BEGIN_ALLOW_THREADS
-	fputs(buf, fp);
-	Py_END_ALLOW_THREADS
-	return 0;
+        format_@name@(buf, sizeof(buf), val,
+                      (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
+        Py_BEGIN_ALLOW_THREADS
+        fputs(buf, fp);
+        Py_END_ALLOW_THREADS
+        return 0;
 }
 
 static int
 c@name@type_print(PyObject *v, FILE *fp, int flags)
 {
         /* Size of buf: twice sizeof(real) + 2 (for the parenthesis) */
-	char buf[202];
+        char buf[202];
         c@name@ val = ((PyC@Name@ScalarObject *)v)->obval;
 
-	format_c@name@(buf, sizeof(buf), val,
-		       (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
-	Py_BEGIN_ALLOW_THREADS
-	fputs(buf, fp);
-	Py_END_ALLOW_THREADS
-	return 0;
+        format_c@name@(buf, sizeof(buf), val,
+                       (flags & Py_PRINT_RAW) ? @NAME@PREC_STR : @NAME@PREC_REPR);
+        Py_BEGIN_ALLOW_THREADS
+        fputs(buf, fp);
+        Py_END_ALLOW_THREADS
+        return 0;
 }
 
 /**end repeat**/
@@ -821,13 +890,13 @@ c@name@type_print(PyObject *v, FILE *fp, int flags)
  */
 
 /**begin repeat
-
-#name=(int, long, hex, oct, float)*2#
-#KIND=(Long*4, Float)*2#
-#char=,,,,,c*5#
-#CHAR=,,,,,C*5#
-#POST=,,,,,.real*5#
-*/
+ *
+ * #name = (int, long, hex, oct, float)*2#
+ * #KIND = (Long*4, Float)*2#
+ * #char = ,,,,,c*5#
+ * #CHAR = ,,,,,C*5#
+ * #POST = ,,,,,.real*5#
+ */
 static PyObject *
 @char@longdoubletype_@name@(PyObject *self)
 {
@@ -844,46 +913,46 @@ static PyObject *
 
 
 static PyNumberMethods gentype_as_number = {
-    (binaryfunc)gentype_add,                    /*nb_add*/
-    (binaryfunc)gentype_subtract,               /*nb_subtract*/
-    (binaryfunc)gentype_multiply,               /*nb_multiply*/
-    (binaryfunc)gentype_divide,                 /*nb_divide*/
-    (binaryfunc)gentype_remainder,              /*nb_remainder*/
-    (binaryfunc)gentype_divmod,                 /*nb_divmod*/
-    (ternaryfunc)gentype_power,                 /*nb_power*/
+    (binaryfunc)gentype_add,                     /*nb_add*/
+    (binaryfunc)gentype_subtract,                /*nb_subtract*/
+    (binaryfunc)gentype_multiply,                /*nb_multiply*/
+    (binaryfunc)gentype_divide,                  /*nb_divide*/
+    (binaryfunc)gentype_remainder,               /*nb_remainder*/
+    (binaryfunc)gentype_divmod,                  /*nb_divmod*/
+    (ternaryfunc)gentype_power,                  /*nb_power*/
     (unaryfunc)gentype_negative,
-    (unaryfunc)gentype_positive,                /*nb_pos*/
-    (unaryfunc)gentype_absolute,                /*(unaryfunc)gentype_abs,*/
-    (inquiry)gentype_nonzero_number,            /*nb_nonzero*/
-    (unaryfunc)gentype_invert,                  /*nb_invert*/
-    (binaryfunc)gentype_lshift,                 /*nb_lshift*/
-    (binaryfunc)gentype_rshift,                 /*nb_rshift*/
-    (binaryfunc)gentype_and,                    /*nb_and*/
-    (binaryfunc)gentype_xor,                    /*nb_xor*/
-    (binaryfunc)gentype_or,                     /*nb_or*/
-    0,                                          /*nb_coerce*/
-    (unaryfunc)gentype_int,                     /*nb_int*/
-    (unaryfunc)gentype_long,                    /*nb_long*/
-    (unaryfunc)gentype_float,                   /*nb_float*/
-    (unaryfunc)gentype_oct,                     /*nb_oct*/
-    (unaryfunc)gentype_hex,                     /*nb_hex*/
-    0,                                          /*inplace_add*/
-    0,                                          /*inplace_subtract*/
-    0,                                          /*inplace_multiply*/
-    0,                                          /*inplace_divide*/
-    0,                                          /*inplace_remainder*/
-    0,                                          /*inplace_power*/
-    0,                                          /*inplace_lshift*/
-    0,                                          /*inplace_rshift*/
-    0,                                          /*inplace_and*/
-    0,                                          /*inplace_xor*/
-    0,                                          /*inplace_or*/
-    (binaryfunc)gentype_floor_divide,           /*nb_floor_divide*/
-    (binaryfunc)gentype_true_divide,            /*nb_true_divide*/
-    0,                                          /*nb_inplace_floor_divide*/
-    0,                                          /*nb_inplace_true_divide*/
+    (unaryfunc)gentype_positive,                 /*nb_pos*/
+    (unaryfunc)gentype_absolute,                 /*(unaryfunc)gentype_abs,*/
+    (inquiry)gentype_nonzero_number,             /*nb_nonzero*/
+    (unaryfunc)gentype_invert,                   /*nb_invert*/
+    (binaryfunc)gentype_lshift,                  /*nb_lshift*/
+    (binaryfunc)gentype_rshift,                  /*nb_rshift*/
+    (binaryfunc)gentype_and,                     /*nb_and*/
+    (binaryfunc)gentype_xor,                     /*nb_xor*/
+    (binaryfunc)gentype_or,                      /*nb_or*/
+    0,                                           /*nb_coerce*/
+    (unaryfunc)gentype_int,                      /*nb_int*/
+    (unaryfunc)gentype_long,                     /*nb_long*/
+    (unaryfunc)gentype_float,                    /*nb_float*/
+    (unaryfunc)gentype_oct,                      /*nb_oct*/
+    (unaryfunc)gentype_hex,                      /*nb_hex*/
+    0,                                           /*inplace_add*/
+    0,                                           /*inplace_subtract*/
+    0,                                           /*inplace_multiply*/
+    0,                                           /*inplace_divide*/
+    0,                                           /*inplace_remainder*/
+    0,                                           /*inplace_power*/
+    0,                                           /*inplace_lshift*/
+    0,                                           /*inplace_rshift*/
+    0,                                           /*inplace_and*/
+    0,                                           /*inplace_xor*/
+    0,                                           /*inplace_or*/
+    (binaryfunc)gentype_floor_divide,            /*nb_floor_divide*/
+    (binaryfunc)gentype_true_divide,             /*nb_true_divide*/
+    0,                                           /*nb_inplace_floor_divide*/
+    0,                                           /*nb_inplace_true_divide*/
 #if PY_VERSION_HEX >= 0x02050000
-    (unaryfunc)NULL,                            /*nb_index*/
+    (unaryfunc)NULL,                             /*nb_index*/
 #endif
 };
 
@@ -894,7 +963,9 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
     PyObject *arr, *ret;
 
     arr = PyArray_FromScalar(self, NULL);
-    if (arr == NULL) return NULL;
+    if (arr == NULL) {
+        return NULL;
+    }
     ret = arr->ob_type->tp_richcompare(arr, other, cmp_op);
     Py_DECREF(arr);
     return ret;
@@ -917,7 +988,9 @@ voidtype_flags_get(PyVoidScalarObject *self)
 {
     PyObject *flagobj;
     flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
-    if (flagobj == NULL) return NULL;
+    if (flagobj == NULL) {
+        return NULL;
+    }
     ((PyArrayFlagsObject *)flagobj)->arr = NULL;
     ((PyArrayFlagsObject *)flagobj)->flags = self->flags;
     return flagobj;
@@ -1016,9 +1089,13 @@ gentype_interface_get(PyObject *self)
     PyObject *inter;
 
     arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr == NULL) return NULL;
+    if (arr == NULL) {
+        return NULL;
+    }
     inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
-    if (inter != NULL) PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
+    if (inter != NULL) {
+        PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
+    }
     Py_DECREF(arr);
     return inter;
 }
@@ -1076,7 +1153,9 @@ gentype_real_get(PyObject *self)
     else if (PyArray_IsScalar(self, Object)) {
         PyObject *obj = ((PyObjectScalarObject *)self)->obval;
         ret = PyObject_GetAttrString(obj, "real");
-        if (ret != NULL) return ret;
+        if (ret != NULL) {
+            return ret;
+        }
         PyErr_Clear();
     }
     Py_INCREF(self);
@@ -1094,8 +1173,7 @@ gentype_imag_get(PyObject *self)
         char *ptr;
         typecode = _realdescr_fromcomplexscalar(self, &typenum);
         ptr = (char *)scalar_value(self, NULL);
-        ret = PyArray_Scalar(ptr + typecode->elsize,
-                typecode, NULL);
+        ret = PyArray_Scalar(ptr + typecode->elsize, typecode, NULL);
     }
     else if (PyArray_IsScalar(self, Object)) {
         PyObject *obj = ((PyObjectScalarObject *)self)->obval;
@@ -1131,7 +1209,9 @@ gentype_flat_get(PyObject *self)
     PyObject *ret, *arr;
 
     arr = PyArray_FromScalar(self, NULL);
-    if (arr == NULL) return NULL;
+    if (arr == NULL) {
+        return NULL;
+    }
     ret = PyArray_IterNew(arr);
     Py_DECREF(arr);
     return ret;
@@ -1279,10 +1359,11 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 
 
 /**begin repeat
-
-#name=tolist, item, tostring, astype, copy, __deepcopy__, searchsorted, view, swapaxes, conj, conjugate, nonzero, flatten, ravel, fill, transpose, newbyteorder#
-*/
-
+ *
+ * #name = tolist, item, tostring, astype, copy, __deepcopy__, searchsorted,
+ *         view, swapaxes, conj, conjugate, nonzero, flatten, ravel, fill,
+ *         transpose, newbyteorder#
+ */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args)
 {
@@ -1300,7 +1381,9 @@ gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 static PyObject *
 gentype_squeeze(PyObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
     Py_INCREF(self);
     return self;
 }
@@ -1313,17 +1396,16 @@ gentype_byteswap(PyObject *self, PyObject *args)
 {
     Bool inplace=FALSE;
 
-    if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter, &inplace))
+    if (!PyArg_ParseTuple(args, "|O&", PyArray_BoolConverter, &inplace)) {
         return NULL;
-
+    }
     if (inplace) {
         PyErr_SetString(PyExc_ValueError,
                 "cannot byteswap a scalar in-place");
         return NULL;
     }
     else {
-        /* get the data, copyswap it and pass it to a new Array scalar
-        */
+        /* get the data, copyswap it and pass it to a new Array scalar */
         char *data;
         int numbytes;
         PyArray_Descr *descr;
@@ -1333,8 +1415,13 @@ gentype_byteswap(PyObject *self, PyObject *args)
         numbytes = gentype_getreadbuf(self, 0, (void **)&data);
         descr = PyArray_DescrFromScalar(self);
         newmem = _pya_malloc(descr->elsize);
-        if (newmem == NULL) {Py_DECREF(descr); return PyErr_NoMemory();}
-        else memcpy(newmem, data, descr->elsize);
+        if (newmem == NULL) {
+            Py_DECREF(descr);
+            return PyErr_NoMemory();
+        }
+        else {
+            memcpy(newmem, data, descr->elsize);
+        }
         byte_swap_vector(newmem, 1, descr->elsize);
         new = PyArray_Scalar(newmem, descr, NULL);
         _pya_free(newmem);
@@ -1345,10 +1432,12 @@ gentype_byteswap(PyObject *self, PyObject *args)
 
 
 /**begin repeat
-
-#name=take, getfield, put, repeat, tofile, mean, trace, diagonal, clip, std, var, sum, cumsum, prod, cumprod, compress, sort, argsort, round, argmax, argmin, max, min, ptp, any, all, resize, reshape, choose#
-*/
-
+ *
+ * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
+ *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
+ *         round, argmax, argmin, max, min, ptp, any, all, resize, reshape,
+ *         choose#
+ */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1362,7 +1451,9 @@ voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     PyObject *ret;
 
     ret = gentype_generic_method((PyObject *)self, args, kwds, "getfield");
-    if (!ret) return ret;
+    if (!ret) {
+        return ret;
+    }
     if (PyArray_IsScalar(ret, Generic) &&   \
             (!PyArray_IsScalar(ret, Void))) {
         PyArray_Descr *new;
@@ -1388,7 +1479,7 @@ gentype_setfield(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), PyObjec
 static PyObject *
 voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_Descr *typecode=NULL;
+    PyArray_Descr *typecode = NULL;
     int offset = 0;
     PyObject *value, *src;
     int mysize;
@@ -1396,8 +1487,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"value", "dtype", "offset", 0};
 
     if ((self->flags & WRITEABLE) != WRITEABLE) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "Can't write to memory");
+        PyErr_SetString(PyExc_RuntimeError, "Can't write to memory");
         return NULL;
     }
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i", kwlist,
@@ -1432,7 +1522,9 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     else {
         /* Copy data from value to correct place in dptr */
         src = PyArray_FromAny(value, typecode, 0, 0, CARRAY, NULL);
-        if (src == NULL) return NULL;
+        if (src == NULL) {
+            return NULL;
+        }
         typecode->f->copyswap(dptr, PyArray_DATA(src),
                 !PyArray_ISNBO(self->descr->byteorder),
                 src);
@@ -1446,38 +1538,44 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 {
-    PyObject *ret=NULL, *obj=NULL, *mod=NULL;
+    PyObject *ret = NULL, *obj = NULL, *mod = NULL;
     const char *buffer;
     Py_ssize_t buflen;
 
     /* Return a tuple of (callable object, arguments) */
-
     ret = PyTuple_New(2);
-    if (ret == NULL) return NULL;
+    if (ret == NULL) {
+        return NULL;
+    }
     if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
-        Py_DECREF(ret); return NULL;
+        Py_DECREF(ret);
+        return NULL;
     }
     mod = PyImport_ImportModule("numpy.core.multiarray");
-    if (mod == NULL) return NULL;
+    if (mod == NULL) {
+        return NULL;
+    }
     obj = PyObject_GetAttrString(mod, "scalar");
     Py_DECREF(mod);
-    if (obj == NULL) return NULL;
+    if (obj == NULL) {
+        return NULL;
+    }
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyObject_GetAttrString((PyObject *)self, "dtype");
     if (PyArray_IsScalar(self, Object)) {
         mod = ((PyObjectScalarObject *)self)->obval;
-        PyTuple_SET_ITEM(ret, 1,
-                Py_BuildValue("NO", obj, mod));
+        PyTuple_SET_ITEM(ret, 1, Py_BuildValue("NO", obj, mod));
     }
     else {
 #ifndef Py_UNICODE_WIDE
-        /* We need to expand the buffer so that we always write
-           UCS4 to disk for pickle of unicode scalars.
-
-           This could be in a unicode_reduce function, but
-           that would require re-factoring.
-           */
-        int alloc=0;
+        /*
+         * We need to expand the buffer so that we always write
+         * UCS4 to disk for pickle of unicode scalars.
+         *
+         * This could be in a unicode_reduce function, but
+         * that would require re-factoring.
+         */
+        int alloc = 0;
         char *tmp;
         int newlen;
 
@@ -1526,13 +1624,16 @@ gentype_setstate(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 static PyObject *
 gentype_dump(PyObject *self, PyObject *args)
 {
-    PyObject *file=NULL;
+    PyObject *file = NULL;
     int ret;
 
-    if (!PyArg_ParseTuple(args, "O", &file))
+    if (!PyArg_ParseTuple(args, "O", &file)) {
         return NULL;
+    }
     ret = PyArray_Dump(self, file, 2);
-    if (ret < 0) return NULL;
+    if (ret < 0) {
+        return NULL;
+    }
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -1540,15 +1641,17 @@ gentype_dump(PyObject *self, PyObject *args)
 static PyObject *
 gentype_dumps(PyObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, ""))
+    if (!PyArg_ParseTuple(args, "")) {
         return NULL;
+    }
     return PyArray_Dumps(self, 2);
 }
 
 
 /* setting flags cannot be done for scalars */
 static PyObject *
-gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
+gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
+        PyObject *NPY_UNUSED(kwds))
 {
     Py_INCREF(Py_None);
     return Py_None;
@@ -1776,7 +1879,9 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
     }
     flist = self->descr->names;
     m = PyTuple_GET_SIZE(flist);
-    if (n < 0) n += m;
+    if (n < 0) {
+        n += m;
+    }
     if (n < 0 || n >= m) {
         PyErr_Format(PyExc_IndexError, "invalid index (%d)", (int) n);
         return NULL;
@@ -1803,14 +1908,17 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
     if (PyString_Check(ind) || PyUnicode_Check(ind)) {
         /* look up in fields */
         fieldinfo = PyDict_GetItem(self->descr->fields, ind);
-        if (!fieldinfo) goto fail;
+        if (!fieldinfo) {
+            goto fail;
+        }
         return voidtype_getfield(self, fieldinfo, NULL);
     }
 
     /* try to convert it to a number */
     n = PyArray_PyIntAsIntp(ind);
-    if (error_converting(n)) goto fail;
-
+    if (error_converting(n)) {
+        goto fail;
+    }
     return voidtype_item(self, (Py_ssize_t)n);
 
 fail:
@@ -1833,8 +1941,12 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
 
     flist = self->descr->names;
     m = PyTuple_GET_SIZE(flist);
-    if (n < 0) n += m;
-    if (n < 0 || n >= m) goto fail;
+    if (n < 0) {
+        n += m;
+    }
+    if (n < 0 || n >= m) {
+        goto fail;
+    }
     fieldinfo = PyDict_GetItem(self->descr->fields,
             PyTuple_GET_ITEM(flist, n));
     newtup = Py_BuildValue("(OOO)", val,
@@ -1842,7 +1954,9 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
             PyTuple_GET_ITEM(fieldinfo, 1));
     res = voidtype_setfield(self, newtup, NULL);
     Py_DECREF(newtup);
-    if (!res) return -1;
+    if (!res) {
+        return -1;
+    }
     Py_DECREF(res);
     return 0;
 
@@ -1868,20 +1982,26 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
     if (PyString_Check(ind) || PyUnicode_Check(ind)) {
         /* look up in fields */
         fieldinfo = PyDict_GetItem(self->descr->fields, ind);
-        if (!fieldinfo) goto fail;
+        if (!fieldinfo) {
+            goto fail;
+        }
         newtup = Py_BuildValue("(OOO)", val,
                 PyTuple_GET_ITEM(fieldinfo, 0),
                 PyTuple_GET_ITEM(fieldinfo, 1));
         res = voidtype_setfield(self, newtup, NULL);
         Py_DECREF(newtup);
-        if (!res) return -1;
+        if (!res) {
+            return -1;
+        }
         Py_DECREF(res);
         return 0;
     }
 
     /* try to convert it to a number */
     n = PyArray_PyIntAsIntp(ind);
-    if (error_converting(n)) goto fail;
+    if (error_converting(n)) {
+        goto fail;
+    }
     return voidtype_ass_item(self, (Py_ssize_t)n, val);
 
 fail:
@@ -1891,35 +2011,35 @@ fail:
 
 static PyMappingMethods voidtype_as_mapping = {
 #if PY_VERSION_HEX >= 0x02050000
-    (lenfunc)voidtype_length,                   /*mp_length*/
+    (lenfunc)voidtype_length,                    /*mp_length*/
 #else
-    (inquiry)voidtype_length,                   /*mp_length*/
+    (inquiry)voidtype_length,                    /*mp_length*/
 #endif
-    (binaryfunc)voidtype_subscript,             /*mp_subscript*/
-    (objobjargproc)voidtype_ass_subscript,      /*mp_ass_subscript*/
+    (binaryfunc)voidtype_subscript,              /*mp_subscript*/
+    (objobjargproc)voidtype_ass_subscript,       /*mp_ass_subscript*/
 };
 
 
 static PySequenceMethods voidtype_as_sequence = {
 #if PY_VERSION_HEX >= 0x02050000
-    (lenfunc)voidtype_length,                   /*sq_length*/
-    0,                                          /*sq_concat*/
-    0,                                          /*sq_repeat*/
-    (ssizeargfunc)voidtype_item,                /*sq_item*/
-    0,                                          /*sq_slice*/
-    (ssizeobjargproc)voidtype_ass_item,         /*sq_ass_item*/
+    (lenfunc)voidtype_length,                    /*sq_length*/
+    0,                                           /*sq_concat*/
+    0,                                           /*sq_repeat*/
+    (ssizeargfunc)voidtype_item,                 /*sq_item*/
+    0,                                           /*sq_slice*/
+    (ssizeobjargproc)voidtype_ass_item,          /*sq_ass_item*/
 #else
-        (inquiry)voidtype_length,               /*sq_length*/
-    0,                                          /*sq_concat*/
-    0,                                          /*sq_repeat*/
-    (intargfunc)voidtype_item,                  /*sq_item*/
-    0,                                          /*sq_slice*/
-    (intobjargproc)voidtype_ass_item,           /*sq_ass_item*/
+        (inquiry)voidtype_length,                /*sq_length*/
+    0,                                           /*sq_concat*/
+    0,                                           /*sq_repeat*/
+    (intargfunc)voidtype_item,                   /*sq_item*/
+    0,                                           /*sq_slice*/
+    (intobjargproc)voidtype_ass_item,            /*sq_ass_item*/
 #endif
-    0,                                          /* ssq_ass_slice */
-    0,                                          /* sq_contains */
-    0,                                          /* sq_inplace_concat */
-    0,                                          /* sq_inplace_repeat */
+    0,                                           /* ssq_ass_slice */
+    0,                                           /* sq_contains */
+    0,                                           /* sq_inplace_concat */
+    0,                                           /* sq_inplace_repeat */
 };
 
 
@@ -1970,9 +2090,10 @@ gentype_getsegcount(PyObject *self, Py_ssize_t *lenp)
 static Py_ssize_t
 gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
 {
-    if (PyArray_IsScalar(self, String) ||   \
-            PyArray_IsScalar(self, Unicode))
+    if (PyArray_IsScalar(self, String) ||
+            PyArray_IsScalar(self, Unicode)) {
         return gentype_getreadbuf(self, segment, (void **)ptrptr);
+    }
     else {
         PyErr_SetString(PyExc_TypeError,
                 "Non-character array cannot be interpreted "\
@@ -1983,10 +2104,10 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
 
 
 static PyBufferProcs gentype_as_buffer = {
-    gentype_getreadbuf,         /*bf_getreadbuffer*/
-    NULL,                       /*bf_getwritebuffer*/
-    gentype_getsegcount,        /*bf_getsegcount*/
-    gentype_getcharbuf,         /*bf_getcharbuffer*/
+    gentype_getreadbuf,                          /* bf_getreadbuffer*/
+    NULL,                                        /* bf_getwritebuffer*/
+    gentype_getsegcount,                         /* bf_getsegcount*/
+    gentype_getcharbuf,                          /* bf_getcharbuffer*/
 };
 
 
@@ -1995,69 +2116,70 @@ static PyBufferProcs gentype_as_buffer = {
 
 static PyTypeObject PyGenericArrType_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                          /*ob_size*/
-    "numpy.generic",            /*tp_name*/
-    sizeof(PyObject),           /*tp_basicsize*/
-    0,   /* tp_itemsize */
+    0,                                           /* ob_size*/
+    "numpy.generic",                             /* tp_name*/
+    sizeof(PyObject),                            /* tp_basicsize*/
+    0,                                           /* tp_itemsize */
     /* methods */
-    0,   /* tp_dealloc */
-    0,   /* tp_print */
-    0,   /* tp_getattr */
-    0,   /* tp_setattr */
-    0,   /* tp_compare */
-    0,   /* tp_repr */
-    0,   /* tp_as_number */
-    0,   /* tp_as_sequence */
-    0,   /* tp_as_mapping */
-    0,   /* tp_hash */
-    0,   /* tp_call */
-    0,   /* tp_str */
-    0,   /* tp_getattro */
-    0,   /* tp_setattro */
-    0,   /* tp_as_buffer */
-    0,   /* tp_flags */
-    0,   /* tp_doc */
-    0,   /* tp_traverse */
-    0,   /* tp_clear */
-    0,   /* tp_richcompare */
-    0,   /* tp_weaklistoffset */
-    0,   /* tp_iter */ 
-    0,   /* tp_iternext */ 
-    0,   /* tp_methods */
-    0,   /* tp_members */
-    0,   /* tp_getset */
-    0,   /* tp_base */
-    0,   /* tp_dict */
-    0,   /* tp_descr_get */
-    0,   /* tp_descr_set */
-    0,   /* tp_dictoffset */
-    0,   /* tp_init */
-    0,   /* tp_alloc */
-    0,   /* tp_new */
-    0,   /* tp_free */
-    0,   /* tp_is_gc */
-    0,   /* tp_bases */
-    0,   /* tp_mro */
-    0,   /* tp_cache */
-    0,   /* tp_subclasses */
-    0,   /* tp_weaklist */
-    0,   /* tp_del */
+    0,                                           /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    0,                                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    0,                                           /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    0,                                           /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    0,                                           /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 
 #ifdef COUNT_ALLOCS
-	/* these must be last and never explicitly initialized */
-    0, /* tp_allocs */
-    0, /* tp_frees */
-    0, /* tp_maxalloc */
-    0, /* tp_prev */
-    0, /* *tp_next */
+    /* these must be last and never explicitly initialized */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
-    if (v->flags & OWNDATA)
+    if (v->flags & OWNDATA) {
         PyDataMem_FREE(v->obval);
+    }
     Py_XDECREF(v->descr);
     Py_XDECREF(v->base);
     v->ob_type->tp_free(v);
@@ -2070,11 +2192,13 @@ object_arrtype_dealloc(PyObject *v)
     v->ob_type->tp_free(v);
 }
 
-/* string and unicode inherit from Python Type first and so GET_ITEM is different to get to the Python Type.
+/*
+ * string and unicode inherit from Python Type first and so GET_ITEM
+ * is different to get to the Python Type.
+ *
+ * ok is a work-around for a bug in complex_new that doesn't allocate
+ *  memory from the sub-types memory allocator.
  */
-/* ok is a work-around for a bug in complex_new that doesn't allocate
-   memory from the sub-types memory allocator.
-*/
 
 #define _WORK(num)  \
     if (type->tp_bases && (PyTuple_GET_SIZE(type->tp_bases)==2)) { \
@@ -2093,14 +2217,18 @@ object_arrtype_dealloc(PyObject *v)
 #define _WORKz _WORK(0)
 #define _WORK0
 
-/**begin repeat1
-#name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, object#
-#TYPE=BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, OBJECT#
-#work=0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
-#default=0*16,1*2,2#
-*/
+/**begin repeat
+ * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
+ *         ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble,
+ *         string, unicode, object#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
+ *         ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         STRING, UNICODE, OBJECT#
+ * #work = 0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,z,z,0#
+ * #default = 0*16,1*2,2#
+ */
 
-#define _NPY_UNUSED2_1 
+#define _NPY_UNUSED2_1
 #define _NPY_UNUSED2_z
 #define _NPY_UNUSED2_0 NPY_UNUSED
 #define _NPY_UNUSED1_0
@@ -2119,17 +2247,20 @@ static PyObject *
     void *dest, *src;
 #endif
 
-    /* allow base-class (if any) to do conversion */
-    /* If successful, this will jump to finish: */
+    /*
+     * allow base-class (if any) to do conversion
+     * If successful, this will jump to finish:
+     */
     _WORK@work@
 
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
         return NULL;
     }
     typecode = PyArray_DescrFromType(PyArray_@TYPE@);
-    /* typecode is new reference and stolen by
-       PyArray_FromAny but not PyArray_Scalar
-    */
+    /*
+     * typecode is new reference and stolen by
+     * PyArray_FromAny but not PyArray_Scalar
+     */
     if (obj == NULL) {
 #if @default@ == 0
         char *mem = malloc(sizeof(@name@));
@@ -2140,30 +2271,32 @@ static PyObject *
 #elif @default@ == 1
         robj = PyArray_Scalar(NULL, typecode, NULL);
 #elif @default@ == 2
-	Py_INCREF(Py_None);
-	robj = Py_None;
+        Py_INCREF(Py_None);
+        robj = Py_None;
 #endif
-	Py_DECREF(typecode);
+        Py_DECREF(typecode);
         goto finish;
     }
 
-    /* It is expected at this point that robj is a PyArrayScalar 
-       (even for Object Data Type)
-    */
+    /*
+     * It is expected at this point that robj is a PyArrayScalar
+     * (even for Object Data Type)
+     */
     arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
     if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
         return arr;
     }
     /* 0-d array */
     robj = PyArray_ToScalar(PyArray_DATA(arr), (NPY_AO *)arr);
-    Py_DECREF(arr);  
+    Py_DECREF(arr);
 
 finish:
-
-#if @default@ == 2  /* In OBJECT case, robj is no longer a
-			  PyArrayScalar at this point but the
-			  remaining code assumes it is 
-		       */
+    /*
+     * In OBJECT case, robj is no longer a
+     * PyArrayScalar at this point but the
+     * remaining code assumes it is
+     */
+#if @default@ == 2
     return robj;
 #else
     /* Normal return */
@@ -2171,9 +2304,11 @@ finish:
         return robj;
     }
 
-    /* This return path occurs when the requested type is not created
-       but another scalar object is created instead (i.e. when
-       the base-class does the conversion in _WORK macro) */
+    /*
+     * This return path occurs when the requested type is not created
+     * but another scalar object is created instead (i.e. when
+     * the base-class does the conversion in _WORK macro)
+     */
 
     /* Need to allocate new type and copy data-area over */
     if (type->tp_itemsize) {
@@ -2196,7 +2331,7 @@ finish:
     *((npy_@name@ *)dest) = *((npy_@name@ *)src);
 #elif @default@ == 1 /* unicode and strings */
     if (itemsize == 0) { /* unicode */
-	itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
+        itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
     }
     memcpy(dest, src, itemsize);
     /* @default@ == 2 won't get here */
@@ -2216,16 +2351,21 @@ finish:
 static PyObject *
 bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
-    PyObject *obj=NULL;
+    PyObject *obj = NULL;
     PyObject *arr;
 
-    if (!PyArg_ParseTuple(args, "|O", &obj)) return NULL;
-    if (obj == NULL)
+    if (!PyArg_ParseTuple(args, "|O", &obj)) {
+        return NULL;
+    }
+    if (obj == NULL) {
         PyArrayScalar_RETURN_FALSE;
-    if (obj == Py_False)
+    }
+    if (obj == Py_False) {
         PyArrayScalar_RETURN_FALSE;
-    if (obj == Py_True)
+    }
+    if (obj == Py_True) {
         PyArrayScalar_RETURN_TRUE;
+    }
     arr = PyArray_FROM_OTF(obj, PyArray_BOOL, FORCECAST);
     if (arr && 0 == PyArray_NDIM(arr)) {
         Bool val = *((Bool *)PyArray_DATA(arr));
@@ -2238,27 +2378,30 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_U
 static PyObject *
 bool_arrtype_and(PyObject *a, PyObject *b)
 {
-    if (PyArray_IsScalar(a, Bool) && PyArray_IsScalar(b, Bool))
+    if (PyArray_IsScalar(a, Bool) && PyArray_IsScalar(b, Bool)) {
         PyArrayScalar_RETURN_BOOL_FROM_LONG
             ((a == PyArrayScalar_True)&(b == PyArrayScalar_True));
+    }
     return PyGenericArrType_Type.tp_as_number->nb_and(a, b);
 }
 
 static PyObject *
 bool_arrtype_or(PyObject *a, PyObject *b)
 {
-    if (PyArray_IsScalar(a, Bool) && PyArray_IsScalar(b, Bool))
+    if (PyArray_IsScalar(a, Bool) && PyArray_IsScalar(b, Bool)) {
         PyArrayScalar_RETURN_BOOL_FROM_LONG
             ((a == PyArrayScalar_True)|(b == PyArrayScalar_True));
+    }
     return PyGenericArrType_Type.tp_as_number->nb_or(a, b);
 }
 
 static PyObject *
 bool_arrtype_xor(PyObject *a, PyObject *b)
 {
-    if (PyArray_IsScalar(a, Bool) && PyArray_IsScalar(b, Bool))
+    if (PyArray_IsScalar(a, Bool) && PyArray_IsScalar(b, Bool)) {
         PyArrayScalar_RETURN_BOOL_FROM_LONG
             ((a == PyArrayScalar_True)^(b == PyArrayScalar_True));
+    }
     return PyGenericArrType_Type.tp_as_number->nb_xor(a, b);
 }
 
@@ -2270,10 +2413,13 @@ bool_arrtype_nonzero(PyObject *a)
 
 #if PY_VERSION_HEX >= 0x02050000
 /**begin repeat
-#name=byte, short, int, long, ubyte, ushort, longlong, uint, ulong, ulonglong#
-#Name=Byte, Short, Int, Long, UByte, UShort, LongLong, UInt, ULong, ULongLong#
-#type=PyInt_FromLong*6, PyLong_FromLongLong*1, PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong#
-*/
+ * #name = byte, short, int, long, ubyte, ushort, longlong, uint, ulong,
+ *         ulonglong#
+ * #Name = Byte, Short, Int, Long, UByte, UShort, LongLong, UInt, ULong,
+ *         ULongLong#
+ * #type = PyInt_FromLong*6, PyLong_FromLongLong*1, PyLong_FromUnsignedLong*2,
+ *         PyLong_FromUnsignedLongLong#
+ */
 static PyNumberMethods @name@_arrtype_as_number;
 static PyObject *
 @name@_index(PyObject *self)
@@ -2281,6 +2427,7 @@ static PyObject *
     return @type@(PyArrayScalar_VAL(self, @Name@));
 }
 /**end repeat**/
+
 static PyObject *
 bool_index(PyObject *a)
 {
@@ -2290,50 +2437,50 @@ bool_index(PyObject *a)
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 static PyNumberMethods bool_arrtype_as_number = {
-    0,                                      /* nb_add */
-    0,                                      /* nb_subtract */
-    0,                                      /* nb_multiply */
-    0,                                      /* nb_divide */
-    0,                                      /* nb_remainder */
-    0,                                      /* nb_divmod */
-    0,                                      /* nb_power */
-    0,                                      /* nb_negative */
-    0,                                      /* nb_positive */
-    0,                                      /* nb_absolute */
-    (inquiry)bool_arrtype_nonzero,          /* nb_nonzero */
-    0,                                      /* nb_invert */
-    0,                                      /* nb_lshift */
-    0,                                      /* nb_rshift */
-    (binaryfunc)bool_arrtype_and,           /* nb_and */
-    (binaryfunc)bool_arrtype_xor,           /* nb_xor */
-    (binaryfunc)bool_arrtype_or,            /* nb_or */
-    0,	/* nb_coerce */
-    0,  /* nb_int */
-    0,  /* nb_long */
-    0,  /* nb_float */
-    0,  /* nb_oct */
-    0,  /* nb_hex */
+    0,                                           /* nb_add */
+    0,                                           /* nb_subtract */
+    0,                                           /* nb_multiply */
+    0,                                           /* nb_divide */
+    0,                                           /* nb_remainder */
+    0,                                           /* nb_divmod */
+    0,                                           /* nb_power */
+    0,                                           /* nb_negative */
+    0,                                           /* nb_positive */
+    0,                                           /* nb_absolute */
+    (inquiry)bool_arrtype_nonzero,               /* nb_nonzero */
+    0,                                           /* nb_invert */
+    0,                                           /* nb_lshift */
+    0,                                           /* nb_rshift */
+    (binaryfunc)bool_arrtype_and,                /* nb_and */
+    (binaryfunc)bool_arrtype_xor,                /* nb_xor */
+    (binaryfunc)bool_arrtype_or,                 /* nb_or */
+    0,                                           /* nb_coerce */
+    0,                                           /* nb_int */
+    0,                                           /* nb_long */
+    0,                                           /* nb_float */
+    0,                                           /* nb_oct */
+    0,                                           /* nb_hex */
     /* Added in release 2.0 */
-    0, 	/* nb_inplace_add */
-    0,	/* nb_inplace_subtract */
-    0,	/* nb_inplace_multiply */
-    0,	/* nb_inplace_divide */
-    0,	/* nb_inplace_remainder */
-    0,	/* nb_inplace_power */
-    0,	/* nb_inplace_lshift */
-    0,	/* nb_inplace_rshift */
-    0,	/* nb_inplace_and */
-    0,	/* nb_inplace_xor */
-    0,	/* nb_inplace_or */
+    0,                                           /* nb_inplace_add */
+    0,                                           /* nb_inplace_subtract */
+    0,                                           /* nb_inplace_multiply */
+    0,                                           /* nb_inplace_divide */
+    0,                                           /* nb_inplace_remainder */
+    0,                                           /* nb_inplace_power */
+    0,                                           /* nb_inplace_lshift */
+    0,                                           /* nb_inplace_rshift */
+    0,                                           /* nb_inplace_and */
+    0,                                           /* nb_inplace_xor */
+    0,                                           /* nb_inplace_or */
     /* Added in release 2.2 */
     /* The following require the Py_TPFLAGS_HAVE_CLASS flag */
-    0, 	/* nb_floor_divide */
-    0, 	/* nb_true_divide */
-    0, 	/* nb_inplace_floor_divide */
-    0, 	/* nb_inplace_true_divide */
+    0,                                           /* nb_floor_divide */
+    0,                                           /* nb_true_divide */
+    0,                                           /* nb_inplace_floor_divide */
+    0,                                           /* nb_inplace_true_divide */
     /* Added in release 2.5 */
 #if PY_VERSION_HEX >= 0x02050000
-    0, 	/* nb_index */
+    0,                                           /* nb_index */
 #endif
 };
 
@@ -2341,18 +2488,20 @@ static PyObject *
 void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *obj, *arr;
-    ulonglong memu=1;
-    PyObject *new=NULL;
+    ulonglong memu = 1;
+    PyObject *new = NULL;
     char *destptr;
 
-    if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
-    /* For a VOID scalar first see if obj is an integer or long
-       and create new memory of that size (filled with 0) for the scalar
-       */
-
-    if (PyLong_Check(obj) || PyInt_Check(obj) || \
+    if (!PyArg_ParseTuple(args, "O", &obj)) {
+        return NULL;
+    }
+    /*
+     * For a VOID scalar first see if obj is an integer or long
+     * and create new memory of that size (filled with 0) for the scalar
+     */
+    if (PyLong_Check(obj) || PyInt_Check(obj) ||
             PyArray_IsScalar(obj, Integer) ||
-            (PyArray_Check(obj) && PyArray_NDIM(obj)==0 &&      \
+            (PyArray_Check(obj) && PyArray_NDIM(obj)==0 &&
              PyArray_ISINTEGER(obj))) {
         new = obj->ob_type->tp_as_number->nb_long(obj);
     }
@@ -2368,7 +2517,9 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
             return NULL;
         }
         destptr = PyDataMem_NEW((int) memu);
-        if (destptr == NULL) return PyErr_NoMemory();
+        if (destptr == NULL) {
+            return PyErr_NoMemory();
+        }
         ret = type->tp_alloc(type, 0);
         if (ret == NULL) {
             PyDataMem_FREE(destptr);
@@ -2376,8 +2527,8 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
         ((PyVoidScalarObject *)ret)->ob_size = (int) memu;
-        ((PyVoidScalarObject *)ret)->descr = \
-                                             PyArray_DescrNewFromType(PyArray_VOID);
+        ((PyVoidScalarObject *)ret)->descr =
+            PyArray_DescrNewFromType(PyArray_VOID);
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
         ((PyVoidScalarObject *)ret)->flags = BEHAVED | OWNDATA;
         ((PyVoidScalarObject *)ret)->base = NULL;
@@ -2393,8 +2544,8 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
 /****************  Define Hash functions ********************/
 
 /**begin repeat
-#lname=bool,ubyte,ushort#
-#name=Bool,UByte, UShort#
+ * #lname = bool,ubyte,ushort#
+ * #name = Bool,UByte, UShort#
  */
 static long
 @lname@_arrtype_hash(PyObject *obj)
@@ -2404,14 +2555,16 @@ static long
 /**end repeat**/
 
 /**begin repeat
-#lname=byte,short,uint,ulong#
-#name=Byte,Short,UInt,ULong#
+ * #lname=byte,short,uint,ulong#
+ * #name=Byte,Short,UInt,ULong#
  */
 static long
 @lname@_arrtype_hash(PyObject *obj)
 {
     long x = (long)(((Py@name@ScalarObject *)obj)->obval);
-    if (x == -1) x=-2;
+    if (x == -1) {
+        x = -2;
+    }
     return x;
 }
 /**end repeat**/
@@ -2421,16 +2574,18 @@ static long
 int_arrtype_hash(PyObject *obj)
 {
     long x = (long)(((PyIntScalarObject *)obj)->obval);
-    if (x == -1) x=-2;
+    if (x == -1) {
+        x = -2;
+    }
     return x;
 }
 #endif
 
 /**begin repeat
-#char=,u#
-#Char=,U#
-#ext=&& (x >= LONG_MIN),#
-*/
+ * #char = ,u#
+ * #Char = ,U#
+ * #ext = && (x >= LONG_MIN),#
+ */
 #if SIZEOF_LONG != SIZEOF_LONGLONG
 /* we assume SIZEOF_LONGLONG=2*SIZEOF_LONG */
 static long
@@ -2451,7 +2606,9 @@ static long
         both.v = x;
         y = both.hashvals[0] + (1000003)*both.hashvals[1];
     }
-    if (y == -1) y = -2;
+    if (y == -1) {
+        y = -2;
+    }
     return y;
 }
 #endif
@@ -2462,7 +2619,9 @@ static long
 ulonglong_arrtype_hash(PyObject *obj)
 {
     long x = (long)(((PyULongLongScalarObject *)obj)->obval);
-    if (x == -1) x=-2;
+    if (x == -1) {
+        x = -2;
+    }
     return x;
 }
 #endif
@@ -2470,9 +2629,10 @@ ulonglong_arrtype_hash(PyObject *obj)
 
 
 /* Wrong thing to do for longdouble, but....*/
+
 /**begin repeat
-#lname=float, longdouble#
-#name=Float, LongDouble#
+ * #lname = float, longdouble#
+ * #name = Float, LongDouble#
  */
 static long
 @lname@_arrtype_hash(PyObject *obj)
@@ -2485,16 +2645,21 @@ static long
 c@lname@_arrtype_hash(PyObject *obj)
 {
     long hashreal, hashimag, combined;
-    hashreal = _Py_HashDouble((double)                              \
+    hashreal = _Py_HashDouble((double)
             (((PyC@name@ScalarObject *)obj)->obval).real);
 
-    if (hashreal == -1) return -1;
-    hashimag = _Py_HashDouble((double)                              \
+    if (hashreal == -1) {
+        return -1;
+    }
+    hashimag = _Py_HashDouble((double)
             (((PyC@name@ScalarObject *)obj)->obval).imag);
-    if (hashimag == -1) return -1;
-
+    if (hashimag == -1) {
+        return -1;
+    }
     combined = hashreal + 1000003 * hashimag;
-    if (combined == -1) combined = -2;
+    if (combined == -1) {
+        combined = -2;
+    }
     return combined;
 }
 /**end repeat**/
@@ -2520,7 +2685,9 @@ object_arrtype_getattro(PyObjectScalarObject *obj, PyObject *attr) {
     /* first look in object and then hand off to generic type */
 
     res = PyObject_GenericGetAttr(obj->obval, attr);
-    if (res) return res;
+    if (res) {
+        return res;
+    }
     PyErr_Clear();
     return  PyObject_GenericGetAttr((PyObject *)obj, attr);
 }
@@ -2531,7 +2698,9 @@ object_arrtype_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val
     /* first look in object and then hand off to generic type */
 
     res = PyObject_GenericSetAttr(obj->obval, attr, val);
-    if (res >= 0) return res;
+    if (res >= 0) {
+        return res;
+    }
     PyErr_Clear();
     return PyObject_GenericSetAttr((PyObject *)obj, attr, val);
 }
@@ -2587,27 +2756,27 @@ object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 
 static PySequenceMethods object_arrtype_as_sequence = {
 #if PY_VERSION_HEX >= 0x02050000
-    (lenfunc)object_arrtype_length,                     /*sq_length*/
-    (binaryfunc)object_arrtype_concat,                  /*sq_concat*/
-    (ssizeargfunc)object_arrtype_repeat,                /*sq_repeat*/
-    0,                                                  /*sq_item*/
-    0,                                                  /*sq_slice*/
-    0,                                                  /* sq_ass_item */
-    0,                                                  /* sq_ass_slice */
-    (objobjproc)object_arrtype_contains,                /* sq_contains */
-    (binaryfunc)object_arrtype_inplace_concat,          /* sq_inplace_concat */
-    (ssizeargfunc)object_arrtype_inplace_repeat,        /* sq_inplace_repeat */
+    (lenfunc)object_arrtype_length,              /*sq_length*/
+    (binaryfunc)object_arrtype_concat,           /*sq_concat*/
+    (ssizeargfunc)object_arrtype_repeat,         /*sq_repeat*/
+    0,                                           /*sq_item*/
+    0,                                           /*sq_slice*/
+    0,                                           /* sq_ass_item */
+    0,                                           /* sq_ass_slice */
+    (objobjproc)object_arrtype_contains,         /* sq_contains */
+    (binaryfunc)object_arrtype_inplace_concat,   /* sq_inplace_concat */
+    (ssizeargfunc)object_arrtype_inplace_repeat, /* sq_inplace_repeat */
 #else
-    (inquiry)object_arrtype_length,                     /*sq_length*/
-    (binaryfunc)object_arrtype_concat,                  /*sq_concat*/
-    (intargfunc)object_arrtype_repeat,                  /*sq_repeat*/
-    0,                                                  /*sq_item*/
-    0,                                                  /*sq_slice*/
-    0,                                                  /* sq_ass_item */
-    0,                                                  /* sq_ass_slice */
-    (objobjproc)object_arrtype_contains,                /* sq_contains */
-    (binaryfunc)object_arrtype_inplace_concat,          /* sq_inplace_concat */
-    (intargfunc)object_arrtype_inplace_repeat,          /* sq_inplace_repeat */
+    (inquiry)object_arrtype_length,              /*sq_length*/
+    (binaryfunc)object_arrtype_concat,           /*sq_concat*/
+    (intargfunc)object_arrtype_repeat,           /*sq_repeat*/
+    0,                                           /*sq_item*/
+    0,                                           /*sq_slice*/
+    0,                                           /* sq_ass_item */
+    0,                                           /* sq_ass_slice */
+    (objobjproc)object_arrtype_contains,         /* sq_contains */
+    (binaryfunc)object_arrtype_inplace_concat,   /* sq_inplace_concat */
+    (intargfunc)object_arrtype_inplace_repeat,   /* sq_inplace_repeat */
 #endif
 };
 
@@ -2630,14 +2799,14 @@ object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp)
     int cnt;
     PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
-    if (pb == NULL || \
-            pb->bf_getsegcount == NULL || \
-            (cnt = (*pb->bf_getsegcount)(self->obval, &newlen)) != 1)
+    if (pb == NULL ||
+            pb->bf_getsegcount == NULL ||
+            (cnt = (*pb->bf_getsegcount)(self->obval, &newlen)) != 1) {
         return 0;
-
-    if (lenp)
+    }
+    if (lenp) {
         *lenp = newlen;
-
+    }
     return cnt;
 }
 
@@ -2646,14 +2815,13 @@ object_arrtype_getreadbuf(PyObjectScalarObject *self, Py_ssize_t segment, void *
 {
     PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
-    if (pb == NULL || \
+    if (pb == NULL ||
             pb->bf_getreadbuffer == NULL ||
             pb->bf_getsegcount == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "expected a readable buffer object");
         return -1;
     }
-
     return (*pb->bf_getreadbuffer)(self->obval, segment, ptrptr);
 }
 
@@ -2662,14 +2830,13 @@ object_arrtype_getwritebuf(PyObjectScalarObject *self, Py_ssize_t segment, void 
 {
     PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
-    if (pb == NULL || \
+    if (pb == NULL ||
             pb->bf_getwritebuffer == NULL ||
             pb->bf_getsegcount == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "expected a writeable buffer object");
         return -1;
     }
-
     return (*pb->bf_getwritebuffer)(self->obval, segment, ptrptr);
 }
 
@@ -2679,14 +2846,13 @@ object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment,
 {
     PyBufferProcs *pb = self->obval->ob_type->tp_as_buffer;
 
-    if (pb == NULL || \
+    if (pb == NULL ||
             pb->bf_getcharbuffer == NULL ||
             pb->bf_getsegcount == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "expected a character buffer object");
         return -1;
     }
-
     return (*pb->bf_getcharbuffer)(self->obval, segment, ptrptr);
 }
 
@@ -2707,64 +2873,64 @@ static PyBufferProcs object_arrtype_as_buffer = {
 static PyObject *
 object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
 {
-        return PyObject_Call(obj->obval, args, kwds);
+    return PyObject_Call(obj->obval, args, kwds);
 }
 
 static PyTypeObject PyObjectArrType_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                        /*ob_size*/
-    "numpy.object_",                          /*tp_name*/
-    sizeof(PyObjectScalarObject),             /*tp_basicsize*/
-    0,                                        /* tp_itemsize */
-    (destructor)object_arrtype_dealloc,       /* tp_dealloc */
-    0,                                        /* tp_print */
-    0,                                        /* tp_getattr */
-    0,                                        /* tp_setattr */
-    0,                                        /* tp_compare */
-    0,                                        /* tp_repr */
-    0,                                        /* tp_as_number */
-    &object_arrtype_as_sequence,              /* tp_as_sequence */
-    &object_arrtype_as_mapping,               /* tp_as_mapping */
-    0,                                        /* tp_hash */
-    (ternaryfunc)object_arrtype_call,         /* tp_call */
-    0,                                        /* tp_str */
-    (getattrofunc)object_arrtype_getattro,    /* tp_getattro */
-    (setattrofunc)object_arrtype_setattro,    /* tp_setattro */
-    &object_arrtype_as_buffer,                /* tp_as_buffer */
-    0,                                        /* tp_flags */
-    0,   				      /* tp_doc */
-    0,   				      /* tp_traverse */
-    0,   				      /* tp_clear */
-    0,   				      /* tp_richcompare */
-    0,   				      /* tp_weaklistoffset */
-    0,   				      /* tp_iter */ 
-    0,   				      /* tp_iternext */ 
-    0,   				      /* tp_methods */
-    0,   				      /* tp_members */
-    0,   				      /* tp_getset */
-    0,   				      /* tp_base */
-    0,   				      /* tp_dict */
-    0,   				      /* tp_descr_get */
-    0,   				      /* tp_descr_set */
-    0,   				      /* tp_dictoffset */
-    0,   				      /* tp_init */
-    0,   				      /* tp_alloc */
-    0,   				      /* tp_new */
-    0,   				      /* tp_free */
-    0,   				      /* tp_is_gc */
-    0,   				      /* tp_bases */
-    0,   				      /* tp_mro */
-    0,   				      /* tp_cache */
-    0,   				      /* tp_subclasses */
-    0,   				      /* tp_weaklist */
-    0,   				      /* tp_del */
+    0,                                           /* ob_size*/
+    "numpy.object_",                             /* tp_name*/
+    sizeof(PyObjectScalarObject),                /* tp_basicsize*/
+    0,                                           /* tp_itemsize */
+    (destructor)object_arrtype_dealloc,          /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    &object_arrtype_as_sequence,                 /* tp_as_sequence */
+    &object_arrtype_as_mapping,                  /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    (ternaryfunc)object_arrtype_call,            /* tp_call */
+    0,                                           /* tp_str */
+    (getattrofunc)object_arrtype_getattro,       /* tp_getattro */
+    (setattrofunc)object_arrtype_setattro,       /* tp_setattro */
+    &object_arrtype_as_buffer,                   /* tp_as_buffer */
+    0,                                           /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    0,                                           /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    0,                                           /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 #ifdef COUNT_ALLOCS
     /* these must be last and never explicitly initialized */
-    0, 					      /* tp_allocs */
-    0, 					      /* tp_frees */
-    0, 					      /* tp_maxalloc */
-    0, 					      /* tp_prev */
-    0, 					      /* *tp_next */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 
@@ -2778,12 +2944,12 @@ count_new_axes_0d(PyObject *);
 static PyObject *
 gen_arrtype_subscript(PyObject *self, PyObject *key)
 {
-    /* Only [...], [...,<???>], [<???>, ...],
-       is allowed for indexing a scalar
-
-       These return a new N-d array with a copy of
-       the data where N is the number of None's in <???>.
-
+    /*
+     * Only [...], [...,<???>], [<???>, ...],
+     * is allowed for indexing a scalar
+     *
+     * These return a new N-d array with a copy of
+     * the data where N is the number of None's in <???>.
      */
     PyObject *res, *ret;
     int N;
@@ -2797,19 +2963,19 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
                 "invalid index to scalar variable.");
         return NULL;
     }
-
-    if (key == Py_Ellipsis)
+    if (key == Py_Ellipsis) {
         return res;
-
+    }
     if (key == Py_None) {
         ret = add_new_axes_0d((PyArrayObject *)res, 1);
         Py_DECREF(res);
         return ret;
     }
     /* Must be a Tuple */
-
     N = count_new_axes_0d(key);
-    if (N < 0) return NULL;
+    if (N < 0) {
+        return NULL;
+    }
     ret = add_new_axes_0d((PyArrayObject *)res, N);
     Py_DECREF(res);
     return ret;
@@ -2817,74 +2983,75 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 
 
 /**begin repeat
- * #name=bool, string, unicode, void#
- * #NAME=Bool, String, Unicode, Void#
- * #ex=_,_,_,#
+ * #name = bool, string, unicode, void#
+ * #NAME = Bool, String, Unicode, Void#
+ * #ex = _,_,_,#
  */
 static PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                        /*ob_size*/
-    "numpy.@name@@ex@",                       /*tp_name*/
-    sizeof(Py@NAME@ScalarObject),             /*tp_basicsize*/
-    0,                                        /* tp_itemsize */
-    0,       				      /* tp_dealloc */
-    0,                                        /* tp_print */
-    0,                                        /* tp_getattr */
-    0,                                        /* tp_setattr */
-    0,                                        /* tp_compare */
-    0,                                        /* tp_repr */
-    0,                                        /* tp_as_number */
-    0,              			      /* tp_as_sequence */
-    0,               			      /* tp_as_mapping */
-    0,                                        /* tp_hash */
-    0,         				      /* tp_call */
-    0,                                        /* tp_str */
-    0,					      /* tp_getattro */
-    0,					      /* tp_setattro */
-    0,					      /* tp_as_buffer */
-    0,                                        /* tp_flags */
-    0,   				      /* tp_doc */
-    0,   				      /* tp_traverse */
-    0,   				      /* tp_clear */
-    0,   				      /* tp_richcompare */
-    0,   				      /* tp_weaklistoffset */
-    0,   				      /* tp_iter */ 
-    0,   				      /* tp_iternext */ 
-    0,   				      /* tp_methods */
-    0,   				      /* tp_members */
-    0,   				      /* tp_getset */
-    0,   				      /* tp_base */
-    0,   				      /* tp_dict */
-    0,   				      /* tp_descr_get */
-    0,   				      /* tp_descr_set */
-    0,   				      /* tp_dictoffset */
-    0,   				      /* tp_init */
-    0,   				      /* tp_alloc */
-    0,   				      /* tp_new */
-    0,   				      /* tp_free */
-    0,   				      /* tp_is_gc */
-    0,   				      /* tp_bases */
-    0,   				      /* tp_mro */
-    0,   				      /* tp_cache */
-    0,   				      /* tp_subclasses */
-    0,   				      /* tp_weaklist */
-    0,   				      /* tp_del */
+    0,                                           /* ob_size*/
+    "numpy.@name@@ex@",                          /* tp_name*/
+    sizeof(Py@NAME@ScalarObject),                /* tp_basicsize*/
+    0,                                           /* tp_itemsize */
+    0,                                           /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    0,                                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    0,                                           /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    0,                                           /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    0,                                           /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 #ifdef COUNT_ALLOCS
     /* these must be last and never explicitly initialized */
-    0, 					      /* tp_allocs */
-    0, 					      /* tp_frees */
-    0, 					      /* tp_maxalloc */
-    0, 					      /* tp_prev */
-    0, 					      /* *tp_next */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 /**end repeat**/
 
 /**begin repeat
-#NAME=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble#
-#name=int*5, uint*5, float*3#
-#CNAME=(CHAR, SHORT, INT, LONG, LONGLONG)*2, FLOAT, DOUBLE, LONGDOUBLE#
-*/
+ * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
+ *         ULongLong, Float, Double, LongDouble#
+ * #name = int*5, uint*5, float*3#
+ * #CNAME = (CHAR, SHORT, INT, LONG, LONGLONG)*2, FLOAT, DOUBLE, LONGDOUBLE#
+ */
 #if BITSOF_@CNAME@ == 8
 #define _THIS_SIZE "8"
 #elif BITSOF_@CNAME@ == 16
@@ -2904,59 +3071,59 @@ static PyTypeObject Py@NAME@ArrType_Type = {
 #endif
 static PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                          /*ob_size*/
-    "numpy.@name@" _THIS_SIZE,                  /*tp_name*/
-    sizeof(Py@NAME@ScalarObject),               /*tp_basicsize*/
-    0,                                        /* tp_itemsize */
-    0,       				      /* tp_dealloc */
-    0,                                        /* tp_print */
-    0,                                        /* tp_getattr */
-    0,                                        /* tp_setattr */
-    0,                                        /* tp_compare */
-    0,                                        /* tp_repr */
-    0,                                        /* tp_as_number */
-    0,              			      /* tp_as_sequence */
-    0,               			      /* tp_as_mapping */
-    0,                                        /* tp_hash */
-    0,         				      /* tp_call */
-    0,                                        /* tp_str */
-    0,					      /* tp_getattro */
-    0,					      /* tp_setattro */
-    0,					      /* tp_as_buffer */
-    0,                                        /* tp_flags */
-    0,   				      /* tp_doc */
-    0,   				      /* tp_traverse */
-    0,   				      /* tp_clear */
-    0,   				      /* tp_richcompare */
-    0,   				      /* tp_weaklistoffset */
-    0,   				      /* tp_iter */ 
-    0,   				      /* tp_iternext */ 
-    0,   				      /* tp_methods */
-    0,   				      /* tp_members */
-    0,   				      /* tp_getset */
-    0,   				      /* tp_base */
-    0,   				      /* tp_dict */
-    0,   				      /* tp_descr_get */
-    0,   				      /* tp_descr_set */
-    0,   				      /* tp_dictoffset */
-    0,   				      /* tp_init */
-    0,   				      /* tp_alloc */
-    0,   				      /* tp_new */
-    0,   				      /* tp_free */
-    0,   				      /* tp_is_gc */
-    0,   				      /* tp_bases */
-    0,   				      /* tp_mro */
-    0,   				      /* tp_cache */
-    0,   				      /* tp_subclasses */
-    0,   				      /* tp_weaklist */
-    0,   				      /* tp_del */
+    0,                                           /* ob_size*/
+    "numpy.@name@" _THIS_SIZE,                   /* tp_name*/
+    sizeof(Py@NAME@ScalarObject),                /* tp_basicsize*/
+    0,                                           /* tp_itemsize */
+    0,                                           /* tp_dealloc */
+    0,                                           /* tp_print */
+    0,                                           /* tp_getattr */
+    0,                                           /* tp_setattr */
+    0,                                           /* tp_compare */
+    0,                                           /* tp_repr */
+    0,                                           /* tp_as_number */
+    0,                                           /* tp_as_sequence */
+    0,                                           /* tp_as_mapping */
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call */
+    0,                                           /* tp_str */
+    0,                                           /* tp_getattro */
+    0,                                           /* tp_setattro */
+    0,                                           /* tp_as_buffer */
+    0,                                           /* tp_flags */
+    0,                                           /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    0,                                           /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    0,                                           /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 #ifdef COUNT_ALLOCS
     /* these must be last and never explicitly initialized */
-    0, 					      /* tp_allocs */
-    0, 					      /* tp_frees */
-    0, 					      /* tp_maxalloc */
-    0, 					      /* tp_prev */
-    0, 					      /* *tp_next */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 
@@ -2972,10 +3139,10 @@ static PyMappingMethods gentype_as_mapping = {
 
 
 /**begin repeat
-#NAME=CFloat, CDouble, CLongDouble#
-#name=complex*3#
-#CNAME=FLOAT, DOUBLE, LONGDOUBLE#
-*/
+ * #NAME = CFloat, CDouble, CLongDouble#
+ * #name = complex*3#
+ * #CNAME = FLOAT, DOUBLE, LONGDOUBLE#
+ */
 #if BITSOF_@CNAME@ == 16
 #define _THIS_SIZE2 "16"
 #define _THIS_SIZE1 "32"
@@ -2998,65 +3165,69 @@ static PyMappingMethods gentype_as_mapping = {
 #define _THIS_SIZE2 "256"
 #define _THIS_SIZE1 "512"
 #endif
-static PyTypeObject Py@NAME@ArrType_Type = {
+
+#define _THIS_DOC "Composed of two " _THIS_SIZE2 " bit floats"
+
+    static PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                                              /*ob_size*/
-    "numpy.@name@" _THIS_SIZE1,                     /*tp_name*/
-    sizeof(Py@NAME@ScalarObject),                   /*tp_basicsize*/
-    0,                                              /*tp_itemsize*/
-    0,                                              /*tp_dealloc*/
-    0,                                              /*tp_print*/
-    0,                                              /*tp_getattr*/
-    0,                                              /*tp_setattr*/
-    0,                                              /*tp_compare*/
-    0,                                              /*tp_repr*/
-    0,                                              /*tp_as_number*/
-    0,                                              /*tp_as_sequence*/
-    0,                                              /*tp_as_mapping*/
-    0,                                              /*tp_hash */
-    0,                                              /*tp_call*/
-    0,                                              /*tp_str*/
-    0,                                              /*tp_getattro*/
-    0,                                              /*tp_setattro*/
-    0,                                              /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,                             /*tp_flags*/
-    "Composed of two " _THIS_SIZE2 " bit floats",   /* tp_doc */
-    0,   				      /* tp_traverse */
-    0,   				      /* tp_clear */
-    0,   				      /* tp_richcompare */
-    0,   				      /* tp_weaklistoffset */
-    0,   				      /* tp_iter */ 
-    0,   				      /* tp_iternext */ 
-    0,   				      /* tp_methods */
-    0,   				      /* tp_members */
-    0,   				      /* tp_getset */
-    0,   				      /* tp_base */
-    0,   				      /* tp_dict */
-    0,   				      /* tp_descr_get */
-    0,   				      /* tp_descr_set */
-    0,   				      /* tp_dictoffset */
-    0,   				      /* tp_init */
-    0,   				      /* tp_alloc */
-    0,   				      /* tp_new */
-    0,   				      /* tp_free */
-    0,   				      /* tp_is_gc */
-    0,   				      /* tp_bases */
-    0,   				      /* tp_mro */
-    0,   				      /* tp_cache */
-    0,   				      /* tp_subclasses */
-    0,   				      /* tp_weaklist */
-    0,   				      /* tp_del */
+    0,                                           /* ob_size*/
+    "numpy.@name@" _THIS_SIZE1,                  /* tp_name*/
+    sizeof(Py@NAME@ScalarObject),                /* tp_basicsize*/
+    0,                                           /* tp_itemsize*/
+    0,                                           /* tp_dealloc*/
+    0,                                           /* tp_print*/
+    0,                                           /* tp_getattr*/
+    0,                                           /* tp_setattr*/
+    0,                                           /* tp_compare*/
+    0,                                           /* tp_repr*/
+    0,                                           /* tp_as_number*/
+    0,                                           /* tp_as_sequence*/
+    0,                                           /* tp_as_mapping*/
+    0,                                           /* tp_hash */
+    0,                                           /* tp_call*/
+    0,                                           /* tp_str*/
+    0,                                           /* tp_getattro*/
+    0,                                           /* tp_setattro*/
+    0,                                           /* tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT,                          /* tp_flags*/
+    _THIS_DOC,                                   /* tp_doc */
+    0,                                           /* tp_traverse */
+    0,                                           /* tp_clear */
+    0,                                           /* tp_richcompare */
+    0,                                           /* tp_weaklistoffset */
+    0,                                           /* tp_iter */
+    0,                                           /* tp_iternext */
+    0,                                           /* tp_methods */
+    0,                                           /* tp_members */
+    0,                                           /* tp_getset */
+    0,                                           /* tp_base */
+    0,                                           /* tp_dict */
+    0,                                           /* tp_descr_get */
+    0,                                           /* tp_descr_set */
+    0,                                           /* tp_dictoffset */
+    0,                                           /* tp_init */
+    0,                                           /* tp_alloc */
+    0,                                           /* tp_new */
+    0,                                           /* tp_free */
+    0,                                           /* tp_is_gc */
+    0,                                           /* tp_bases */
+    0,                                           /* tp_mro */
+    0,                                           /* tp_cache */
+    0,                                           /* tp_subclasses */
+    0,                                           /* tp_weaklist */
+    0,                                           /* tp_del */
 #ifdef COUNT_ALLOCS
     /* these must be last and never explicitly initialized */
-    0, 					      /* tp_allocs */
-    0, 					      /* tp_frees */
-    0, 					      /* tp_maxalloc */
-    0, 					      /* tp_prev */
-    0, 					      /* *tp_next */
+    0,                                           /* tp_allocs */
+    0,                                           /* tp_frees */
+    0,                                           /* tp_maxalloc */
+    0,                                           /* tp_prev */
+    0,                                           /* *tp_next */
 #endif
 };
 #undef _THIS_SIZE1
 #undef _THIS_SIZE2
+#undef _THIS_DOC
 
 /**end repeat**/
 
@@ -3084,12 +3255,15 @@ initialize_numeric_types(void)
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
 #if PY_VERSION_HEX >= 0x02050000
-    /* need to add dummy versions with filled-in nb_index
-       in-order for PyType_Ready to fill in .__index__() method
+    /*
+     * need to add dummy versions with filled-in nb_index
+     * in-order for PyType_Ready to fill in .__index__() method
      */
     /**begin repeat
-#name=byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong#
-#NAME=Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong#
+     * #name = byte, short, int, long, longlong, ubyte, ushort,
+     *         uint, ulong, ulonglong#
+     * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort,
+     *         UInt, ULong, ULongLong#
      */
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
     Py@NAME@ArrType_Type.tp_as_number->nb_index = (unaryfunc)@name@_index;
@@ -3113,15 +3287,19 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
 
     /**begin repeat
-#NAME=Number, Integer, SignedInteger, UnsignedInteger, Inexact, Floating,
-ComplexFloating, Flexible, Character#
+     * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,
+     *        Floating, ComplexFloating, Flexible, Character#
      */
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
     /**end repeat**/
 
     /**begin repeat
-#name=bool, byte, short, int, long, longlong, ubyte, ushort, uint, ulong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, string, unicode, void, object#
-#NAME=Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble, CLongDouble, String, Unicode, Void, Object#
+     * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint,
+     *         ulong, ulonglong, float, double, longdouble, cfloat, cdouble,
+     *         clongdouble, string, unicode, void, object#
+     * #NAME = Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt,
+     *         ULong, ULongLong, Float, Double, LongDouble, CFloat, CDouble,
+     *         CLongDouble, String, Unicode, Void, Object#
      */
     Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
     Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
@@ -3129,8 +3307,10 @@ ComplexFloating, Flexible, Character#
     /**end repeat**/
 
     /**begin repeat
-#name=bool, byte, short, ubyte, ushort, uint, ulong, ulonglong, float, longdouble, cfloat, clongdouble, void, object#
-#NAME=Bool, Byte, Short, UByte, UShort, UInt, ULong, ULongLong, Float, LongDouble, CFloat, CLongDouble, Void, Object#
+     * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,
+     *         float, longdouble, cfloat, clongdouble, void, object#
+     * #NAME = Bool, Byte, Short, UByte, UShort, UInt, ULong, ULongLong,
+     *         Float, LongDouble, CFloat, CLongDouble, Void, Object#
      */
     Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
     /**end repeat**/
@@ -3146,7 +3326,7 @@ ComplexFloating, Flexible, Character#
 #endif
 
     /**begin repeat
-     *#name = repr, str#
+     * #name = repr, str#
      */
     PyFloatArrType_Type.tp_@name@ = floattype_@name@;
     PyCFloatArrType_Type.tp_@name@ = cfloattype_@name@;
@@ -3163,15 +3343,16 @@ ComplexFloating, Flexible, Character#
     PyCDoubleArrType_Type.tp_print = cdoubletype_print;
     PyCLongDoubleArrType_Type.tp_print = clongdoubletype_print;
 
-    /* These need to be coded specially because getitem does not
-       return a normal Python type
+    /*
+     * These need to be coded specially because getitem does not
+     * return a normal Python type
      */
     PyLongDoubleArrType_Type.tp_as_number = &longdoubletype_as_number;
     PyCLongDoubleArrType_Type.tp_as_number = &clongdoubletype_as_number;
 
     /**begin repeat
-     * #name=int, long, hex, oct, float, repr, str#
-     * #kind=tp_as_number->nb*5, tp*2#
+     * #name = int, long, hex, oct, float, repr, str#
+     * #kind = tp_as_number->nb*5, tp*2#
      */
     PyLongDoubleArrType_Type.@kind@_@name@ = longdoubletype_@name@;
     PyCLongDoubleArrType_Type.@kind@_@name@ = clongdoubletype_@name@;
@@ -3225,8 +3406,9 @@ _typenum_fromtypeobj(PyObject *type, int user)
         i++;
     }
 
-    if (!user) return typenum;
-
+    if (!user) {
+        return typenum;
+    }
     /* Search any registered types */
     i = 0;
     while (i < PyArray_NUMUSERTYPES) {
@@ -3267,36 +3449,41 @@ PyArray_DescrFromTypeObject(PyObject *type)
     }
 
     /* Check the generic types */
-    if ((type == (PyObject *) &PyNumberArrType_Type) ||             \
-            (type == (PyObject *) &PyInexactArrType_Type) ||            \
-            (type == (PyObject *) &PyFloatingArrType_Type))
+    if ((type == (PyObject *) &PyNumberArrType_Type) ||
+            (type == (PyObject *) &PyInexactArrType_Type) ||
+            (type == (PyObject *) &PyFloatingArrType_Type)) {
         typenum = PyArray_DOUBLE;
-    else if (type == (PyObject *)&PyComplexFloatingArrType_Type)
+    }
+    else if (type == (PyObject *)&PyComplexFloatingArrType_Type) {
         typenum = PyArray_CDOUBLE;
-    else if ((type == (PyObject *)&PyIntegerArrType_Type) ||        \
-            (type == (PyObject *)&PySignedIntegerArrType_Type))
+    }
+    else if ((type == (PyObject *)&PyIntegerArrType_Type) ||
+            (type == (PyObject *)&PySignedIntegerArrType_Type)) {
         typenum = PyArray_LONG;
-    else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type)
+    }
+    else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type) {
         typenum = PyArray_ULONG;
-    else if (type == (PyObject *) &PyCharacterArrType_Type)
+    }
+    else if (type == (PyObject *) &PyCharacterArrType_Type) {
         typenum = PyArray_STRING;
-    else if ((type == (PyObject *) &PyGenericArrType_Type) || \
-            (type == (PyObject *) &PyFlexibleArrType_Type))
+    }
+    else if ((type == (PyObject *) &PyGenericArrType_Type) ||
+            (type == (PyObject *) &PyFlexibleArrType_Type)) {
         typenum = PyArray_VOID;
+    }
 
     if (typenum != PyArray_NOTYPE) {
         return PyArray_DescrFromType(typenum);
     }
 
-    /* Otherwise --- type is a sub-type of an array scalar
-       not corresponding to a registered data-type object.
+    /*
+     * Otherwise --- type is a sub-type of an array scalar
+     * not corresponding to a registered data-type object.
      */
 
-    /* Do special thing for VOID sub-types
-     */
+    /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         new = PyArray_DescrNewFromType(PyArray_VOID);
-
         conv = _arraydescr_fromobj(type);
         if (conv) {
             new->fields = conv->fields;
@@ -3317,8 +3504,8 @@ PyArray_DescrFromTypeObject(PyObject *type)
 }
 
 /*NUMPY_API
-  Return the tuple of ordered field names from a dictionary.
-*/
+ * Return the tuple of ordered field names from a dictionary.
+ */
 static PyObject *
 PyArray_FieldNames(PyObject *fields)
 {
@@ -3332,20 +3519,25 @@ PyArray_FieldNames(PyObject *fields)
         return NULL;
     }
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-    if (_numpy_internal == NULL) return NULL;
+    if (_numpy_internal == NULL) {
+        return NULL;
+    }
     tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "O", fields);
     Py_DECREF(_numpy_internal);
-    if (tup == NULL) return NULL;
+    if (tup == NULL) {
+        return NULL;
+    }
     ret = PyTuple_GET_ITEM(tup, 0);
     ret = PySequence_Tuple(ret);
     Py_DECREF(tup);
     return ret;
 }
 
-/* New reference */
 /*NUMPY_API
- Return descr object from array scalar.
-*/
+ * Return descr object from array scalar.
+ *
+ * New reference
+ */
 static PyArray_Descr *
 PyArray_DescrFromScalar(PyObject *sc)
 {
@@ -3361,8 +3553,9 @@ PyArray_DescrFromScalar(PyObject *sc)
     if (descr->elsize == 0) {
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
-        if (type_num == PyArray_STRING)
+        if (type_num == PyArray_STRING) {
             descr->elsize = PyString_GET_SIZE(sc);
+        }
         else if (type_num == PyArray_UNICODE) {
             descr->elsize = PyUnicode_GET_DATA_SIZE(sc);
 #ifndef Py_UNICODE_WIDE
@@ -3378,18 +3571,20 @@ PyArray_DescrFromScalar(PyObject *sc)
                 Py_XDECREF(descr->fields);
                 descr->fields = NULL;
             }
-            if (descr->fields)
+            if (descr->fields) {
                 descr->names = PyArray_FieldNames(descr->fields);
+            }
             PyErr_Clear();
         }
     }
     return descr;
 }
 
-/* New reference */
 /*NUMPY_API
- Get a typeobject from a type-number -- can return NULL.
-*/
+ * Get a typeobject from a type-number -- can return NULL.
+ *
+ * New reference
+ */
 static PyObject *
 PyArray_TypeObjectFromType(int type)
 {
@@ -3397,7 +3592,9 @@ PyArray_TypeObjectFromType(int type)
     PyObject *obj;
 
     descr = PyArray_DescrFromType(type);
-    if (descr == NULL) return NULL;
+    if (descr == NULL) {
+        return NULL;
+    }
     obj = (PyObject *)descr->typeobj;
     Py_XINCREF(obj);
     Py_DECREF(descr);
