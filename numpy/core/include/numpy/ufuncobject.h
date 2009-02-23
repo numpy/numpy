@@ -299,6 +299,23 @@ typedef struct _loop1d_info {
 	(void) fpsetsticky(0);						\
 	}
 
+#elif defined(__MINGW32__) && defined(__amd64__)
+#include "mingw_amd64_fenv.h"
+
+#define UFUNC_CHECK_STATUS(ret) {                                       \
+	int fpstatus = (int) npy_fetestexcept(NPY_FE_DIVBYZERO | 	\
+		NPY_FE_OVERFLOW | NPY_FE_UNDERFLOW | NPY_FE_INVALID);	\
+	ret = ((NPY_FE_DIVBYZERO  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+		| ((NPY_FE_OVERFLOW   & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)	\
+		| ((NPY_FE_UNDERFLOW  & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+		| ((NPY_FE_INVALID    & fpstatus) ? UFUNC_FPE_INVALID : 0);	\
+	(void) npy_feclearexcept(NPY_FE_DIVBYZERO | NPY_FE_OVERFLOW |		\
+			     NPY_FE_UNDERFLOW | NPY_FE_INVALID);		\
+}
+
+#define generate_divbyzero_error() npy_feraiseexcept(NPY_FE_DIVBYZERO)
+#define generate_overflow_error() npy_feraiseexcept(NPY_FE_OVERFLOW)
+
 #elif defined(__GLIBC__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__MINGW32__) || (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
 
 #if defined(__GLIBC__) || defined(__APPLE__) || defined(__MINGW32__) || defined(__FreeBSD__)

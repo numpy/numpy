@@ -22,6 +22,37 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
 _file = file
 _string_like = _is_string_like
 
+def seek_gzip_factory(f):
+    """Use this factory to produce the class so that we can do a lazy
+    import on gzip.
+
+    """
+    import gzip, new
+
+    def seek(self, offset, whence=0):
+        # figure out new position (we can only seek forwards)
+        if whence == 1:
+            offset = self.offset + offset
+
+        if whence not in [0, 1]:
+            raise IOError, "Illegal argument"
+
+        if offset < self.offset:
+            # for negative seek, rewind and do positive seek
+            self.rewind()
+            count = offset - self.offset
+            for i in range(count // 1024):
+                self.read(1024)
+            self.read(count % 1024)
+
+    def tell(self):
+        return self.offset
+
+    f.seek = new.instancemethod(seek, f)
+    f.tell = new.instancemethod(tell, f)
+
+    return f
+
 class BagObj(object):
     """A simple class that converts attribute lookups to
     getitems on the class passed in.
@@ -138,8 +169,12 @@ def load(file, mmap_mode=None):
     memmap([4, 5, 6])
 
     """
+    import gzip
+
     if isinstance(file, basestring):
         fid = _file(file,"rb")
+    elif isinstance(file, gzip.GzipFile):
+        fid = seek_gzip_factory(file)
     else:
         fid = file
 
@@ -346,7 +381,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     if _is_string_like(fname):
         if fname.endswith('.gz'):
             import gzip
-            fh = gzip.open(fname)
+            fh = seek_gzip_factory(fname)
         elif fname.endswith('.bz2'):
             import bz2
             fh = bz2.BZ2File(fname)
