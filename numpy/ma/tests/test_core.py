@@ -369,12 +369,24 @@ class TestMaskedArray(TestCase):
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled._data, a._data)
         assert_equal(a_pickled.fill_value, 999)
-        #
+
+    def test_pickling_subbaseclass(self):
+        "Test pickling w/ a subclass of ndarray"
+        import cPickle
         a = array(np.matrix(range(10)), mask=[1,0,1,0,0]*2)
         a_pickled = cPickle.loads(a.dumps())
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled, a)
         self.failUnless(isinstance(a_pickled._data,np.matrix))
+
+    def test_pickling_wstructured(self):
+        "Tests pickling w/ structured array"
+        import cPickle
+        a = array([(1, 1.), (2, 2.)], mask=[(0, 0), (0, 1)],
+                  dtype=[('a', int), ('b', float)])
+        a_pickled = cPickle.loads(a.dumps())
+        assert_equal(a_pickled._mask, a._mask)
+        assert_equal(a_pickled, a)
 
 
     def test_single_element_subscript(self):
