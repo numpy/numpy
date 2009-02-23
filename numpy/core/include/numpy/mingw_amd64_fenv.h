@@ -66,13 +66,20 @@ static __inline int npy_fetestexcept(int __excepts)
 }
 
 static __inline int
-npy_fegetexceptflag(npy_fexcept_t *__flagp, int __excepts)
+npy_fesetexceptflag(const npy_fexcept_t *flagp, int excepts)
 {
-	int __mxcsr, __status;
+	npy_fenv_t env;
 
-	__stmxcsr(&__mxcsr);
-	__fnstsw(&__status);
-	*__flagp = (__mxcsr | __status) & __excepts;
+	__fnstenv(&env.__x87);
+	env.__x87.__status &= ~excepts;
+	env.__x87.__status |= *flagp & excepts;
+	__fldenv(env.__x87);
+
+	__stmxcsr(&env.__mxcsr);
+	env.__mxcsr &= ~excepts;
+	env.__mxcsr |= *flagp & excepts;
+	__ldmxcsr(env.__mxcsr);
+
 	return (0);
 }
 
