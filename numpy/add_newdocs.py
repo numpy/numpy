@@ -2937,7 +2937,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('alignment',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
     '''
-    dt.byteorder
+    byteorder
 
     String giving byteorder of dtype
 
@@ -2995,6 +2995,33 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('hasobject',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
     """
+    isbuiltin
+
+    Value identifying if numpy dtype is a numpy builtin type
+
+    Read-only
+
+    Returns
+    -------
+    val : {0,1,2}
+       0 if this is a structured array type, with fields
+       1 if this is a dtype compiled into numpy (such as ints, floats etc)
+       2 if the dtype is for a user-defined numpy type
+         A user-defined type uses the numpy C-API machinery to extend
+         numpy to handle a new array type.  See the Guide to Numpy for
+         details.
+
+    Examples
+    --------
+    >>> dt = np.dtype('i2')
+    >>> dt.isbuiltin
+    1
+    >>> dt = np.dtype('f8')
+    >>> dt.isbuiltin
+    1
+    >>> dt = np.dtype([('field1', 'f8')])
+    >>> dt.isbuiltin
+    0
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('isnative',
