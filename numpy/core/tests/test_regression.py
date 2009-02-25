@@ -1220,5 +1220,13 @@ class TestRegression(TestCase):
         n_after = len(gc.get_objects())
         assert n_before >= n_after, (n_before, n_after)
 
+    def test_void_scalar_with_titles(self, level=rlevel):
+        """No ticket"""
+        data = [('john', 4), ('mary', 5)]
+        dtype1 = [(('source:yy', 'name'), 'O'), (('source:xx', 'id'), int)]
+        arr = array(data, dtype=dtype1)
+        assert arr[0][0] == 'john'
+        assert arr[0][1] == 4
+
 if __name__ == "__main__":
     run_module_suite()
