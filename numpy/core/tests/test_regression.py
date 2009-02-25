@@ -1209,5 +1209,13 @@ class TestRegression(TestCase):
         a = np.array(1)
         self.failUnlessRaises(ValueError, lambda x: x.choose([]), a)
 
+    def test_void_scalar_with_titles(self, level=rlevel):
+        """No ticket"""
+        data = [('john', 4), ('mary', 5)]
+        dtype1 = [(('source:yy', 'name'), 'O'), (('source:xx', 'id'), int)]
+        arr = array(data, dtype=dtype1)
+        assert arr[0][0] == 'john'
+        assert arr[0][1] == 4
+
 if __name__ == "__main__":
     run_module_suite()
