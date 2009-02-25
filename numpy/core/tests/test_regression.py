@@ -1224,7 +1224,7 @@ class TestRegression(TestCase):
         """No ticket"""
         data = [('john', 4), ('mary', 5)]
         dtype1 = [(('source:yy', 'name'), 'O'), (('source:xx', 'id'), int)]
-        arr = array(data, dtype=dtype1)
+        arr = np.array(data, dtype=dtype1)
         assert arr[0][0] == 'john'
         assert arr[0][1] == 4
 
