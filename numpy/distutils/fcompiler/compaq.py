@@ -89,6 +89,10 @@ class CompaqVisualFCompiler(FCompiler):
             if not "vcvarsall.bat" in str(e):
                 print "Unexpected IOError in", __file__
                 raise e
+        except ValueError, e:
+	    if not "path']" in str(e):
+                print "Unexpected ValueError in", __file__
+                raise e
 
     executables = {
         'version_cmd'  : ['<F90>', "/what"],
