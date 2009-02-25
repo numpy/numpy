@@ -1,3 +1,4 @@
+import sys
 from numpy.testing import *
 import numpy as np
 
@@ -5,6 +6,10 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
          np.single, np.double, np.longdouble, np.csingle,
          np.cdouble, np.clongdouble]
+
+def iswin64():
+    import platform
+    return platform.architecture()[0] == "64bit" and sys.platform == "win32"
 
 # This compares scalarmath against ufuncs.
 
@@ -42,6 +47,7 @@ class TestPower(TestCase):
             b = a ** 4
             assert b == 81, "error with %r: got %r" % (t,b)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_large_types(self):
         for t in [np.int32, np.int64, np.float32, np.float64, np.longdouble]:
             a = t(51)
