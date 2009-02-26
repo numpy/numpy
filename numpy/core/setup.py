@@ -6,6 +6,29 @@ from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
 
+# XXX: ugly, we use a class to avoid calling twice some expensive functions in
+# config.h/numpyconfig.h. I don't see a better way because distutils force
+# config.h generation inside an Extension class, and as such sharing
+# configuration informations between extensions is not easy.
+# Using a pickled-based memoize does not work because config_cmd is an instance
+# method, which cPickle does not like.
+try:
+    import cPickle as _pik
+except ImportError:
+    import pickle as _pik
+
+class CallOnceOnly(object):
+    def __init__(self):
+        self._check_types = None
+
+    def check_types(self, *a, **kw):
+        if self._check_types is None:
+            out = check_types(*a, **kw)
+            self._check_types = _pik.dumps(out)
+        else:
+            out = _pik.loads(self._check_types)
+        return out
+
 def pythonlib_dir():
     """return path where libpython* is."""
     if sys.platform == 'win32':
@@ -228,6 +251,8 @@ def configuration(parent_package='',top_path=None):
 
     header_dir = 'include/numpy' # this is relative to config.path_in_package
 
+    cocache = CallOnceOnly()
+
     def generate_config_h(ext, build_dir):
         target = join(build_dir,header_dir,'config.h')
         d = os.path.dirname(target)
@@ -238,7 +263,7 @@ def configuration(parent_package='',top_path=None):
             log.info('Generating %s',target)
 
             # Check sizeof
-            moredefs, ignored = check_types(config_cmd, ext, build_dir)
+            moredefs, ignored = cocache.check_types(config_cmd, ext, build_dir)
 
             # Check math library and C99 math funcs availability
             mathlibs = check_mathlib(config_cmd)
@@ -302,7 +327,7 @@ def configuration(parent_package='',top_path=None):
             log.info('Generating %s',target)
 
             # Check sizeof
-            ignored, moredefs = check_types(config_cmd, ext, build_dir)
+            ignored, moredefs = cocache.check_types(config_cmd, ext, build_dir)
 
             if is_npy_no_signal():
                 moredefs.append(('NPY_NO_SIGNAL', 1))
