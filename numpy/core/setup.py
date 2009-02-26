@@ -180,6 +180,20 @@ def check_types(config_cmd, ext, build_dir):
     private_defines = []
     public_defines = []
 
+    # Expected size (in number of bytes) for each type. This is an
+    # optimization: those are only hints, and an exhaustive search for the size
+    # is done if the hints are wrong.
+    expected = {}
+    expected['short'] = [2]
+    expected['int'] = [4]
+    expected['long'] = [8, 4]
+    expected['float'] = [4]
+    expected['double'] = [8]
+    expected['long double'] = [8, 12, 16]
+    expected['Py_intptr_t'] = [4, 8]
+    expected['PY_LONG_LONG'] = [8]
+    expected['long long'] = [8]
+
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
     if not result:
@@ -189,7 +203,7 @@ def check_types(config_cmd, ext, build_dir):
 
     # Check basic types sizes
     for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
-        res = config_cmd.check_type_size(type)
+        res = config_cmd.check_type_size(type, expected=expected[type])
         if res >= 0:
             if not type == 'long double':
                 private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
@@ -199,7 +213,9 @@ def check_types(config_cmd, ext, build_dir):
 
     for type in ('Py_intptr_t',):
         res = config_cmd.check_type_size(type, headers=["Python.h"],
-                library_dirs=[pythonlib_dir()])
+                library_dirs=[pythonlib_dir()],
+                expected=expected[type])
+
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
             public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
@@ -209,14 +225,16 @@ def check_types(config_cmd, ext, build_dir):
     # We check declaration AND type because that's how distutils does it.
     if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
         res = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'],
-                library_dirs=[pythonlib_dir()])
+                library_dirs=[pythonlib_dir()],
+                expected=expected['PY_LONG_LONG'])
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
             public_defines.append(('NPY_SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
         else:
             raise SystemError("Checking sizeof (%s) failed !" % 'PY_LONG_LONG')
 
-        res = config_cmd.check_type_size('long long')
+        res = config_cmd.check_type_size('long long',
+                expected=expected['long long'])
         if res >= 0:
             #private_defines.append(('SIZEOF_%s' % sym2def('long long'), '%d' % res))
             public_defines.append(('NPY_SIZEOF_%s' % sym2def('long long'), '%d' % res))
