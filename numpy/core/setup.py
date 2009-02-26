@@ -294,16 +294,17 @@ def configuration(parent_package='',top_path=None):
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
-            testcode = generate_numpyconfig_code(target)
 
-            result = config_cmd.try_run(testcode,
-                        include_dirs=config.numpy_include_dirs,
-                        library_dirs=default_lib_dirs)
-            if not result:
-                raise SystemError,"Failed to generate numpy configuration. "\
-                      "See previous error messages for more information."
+            # Check sizeof
+            ignored, moredefs = check_types(config, ext, build_dir)
 
-            moredefs = []
+            if is_npy_no_signal():
+                moredefs.append(('NPY_NO_SIGNAL', 1))
+
+            if is_npy_no_smp():
+                moredefs.append(('NPY_NO_SMP', 1))
+            else:
+                moredefs.append(('NPY_NO_SMP', 0))
 
             # Normally, isnan and isinf are macro (C99), but some platforms
             # only have func, or both func and macro version. Check for macro
