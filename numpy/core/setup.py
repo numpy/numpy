@@ -154,6 +154,7 @@ def check_types(config, ext, build_dir):
         res = config_cmd.check_type_size(type)
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+            public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
         else:
             raise SystemError("Checking sizeof (%s) failed !" % type)
 
@@ -162,6 +163,7 @@ def check_types(config, ext, build_dir):
                 library_dirs=[pythonlib_dir()])
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+            public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
         else:
             raise SystemError("Checking sizeof (%s) failed !" % type)
 
@@ -171,6 +173,7 @@ def check_types(config, ext, build_dir):
                 library_dirs=[pythonlib_dir()])
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
+            public_defines.append(('NPY_SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
         else:
             raise SystemError("Checking sizeof (%s) failed !" % 'PY_LONG_LONG')
 
