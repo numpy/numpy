@@ -167,9 +167,12 @@ def check_types(config, ext, build_dir):
 
     # We check declaration AND type because that's how distutils does it.
     if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
-        st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'], library_dirs=[pythonlib_dir()])
-        assert not st == 0
-        private_defines.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
+        res = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'],
+                library_dirs=[pythonlib_dir()])
+        if res >= 0:
+            private_defines.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % 'PY_LONG_LONG')
 
     if not config_cmd.check_decl('CHAR_BIT', headers=['Python.h']):
         raise RuntimeError(
