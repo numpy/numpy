@@ -177,6 +177,13 @@ def check_types(config, ext, build_dir):
         else:
             raise SystemError("Checking sizeof (%s) failed !" % 'PY_LONG_LONG')
 
+        res = config_cmd.check_type_size('long long')
+        if res >= 0:
+            private_defines.append(('SIZEOF_%s' % sym2def('long long'), '%d' % res))
+            public_defines.append(('NPY_SIZEOF_%s' % 'LONGLONG', '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % 'long long')
+
     if not config_cmd.check_decl('CHAR_BIT', headers=['Python.h']):
         raise RuntimeError(
             "Config wo CHAR_BIT is not supported"\
