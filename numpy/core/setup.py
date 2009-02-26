@@ -180,7 +180,7 @@ def check_types(config, ext, build_dir):
         res = config_cmd.check_type_size('long long')
         if res >= 0:
             private_defines.append(('SIZEOF_%s' % sym2def('long long'), '%d' % res))
-            public_defines.append(('NPY_SIZEOF_%s' % 'LONGLONG', '%d' % res))
+            public_defines.append(('NPY_SIZEOF_%s' % sym2def('long long'), '%d' % res))
         else:
             raise SystemError("Checking sizeof (%s) failed !" % 'long long')
 
@@ -192,7 +192,7 @@ def check_types(config, ext, build_dir):
     return private_defines, public_defines
 
 def sym2def(symbol):
-    define = symbol.replace(' ', '_')
+    define = symbol.replace(' ', '')
     return define.upper()
 
 def check_mathlib(config_cmd):
