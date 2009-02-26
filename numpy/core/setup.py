@@ -141,7 +141,8 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # hoping their own test are correct
     if sys.version_info[0] == 2 and sys.version_info[1] >= 6:
         for f in ["expm1", "log1p", "acosh", "atanh", "asinh"]:
-            optional_stdfuncs.remove(f)
+	    if config.check_decl(fname2def(f), headers = ["Python.h", "math.h"]):
+                optional_stdfuncs.remove(f)
 
     check_funcs(optional_stdfuncs)
 
