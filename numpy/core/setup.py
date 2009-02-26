@@ -92,7 +92,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
         st = config.check_funcs_once(funcs_name, libraries=mathlibs,
                                      decl=decl, call=decl)
         if st:
-            moredefs.extend([name_to_defsymb(f) for f in funcs_name])
+            moredefs.extend([fname2def(f) for f in funcs_name])
         return st
 
     def check_funcs(funcs_name):
@@ -102,13 +102,10 @@ def check_math_capabilities(config, moredefs, mathlibs):
             # Global check failed, check func per func
             for f in funcs_name:
                 if check_func(f):
-                    moredefs.append(name_to_defsymb(f))
+                    moredefs.append(fname2def(f))
             return 0
         else:
             return 1
-
-    def name_to_defsymb(name):
-        return "HAVE_%s" % name.upper()
 
     #use_msvc = config.check_decl("_MSC_VER")
 
@@ -157,7 +154,10 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
         st = config.check_decl(f, headers = ["Python.h", "math.h"])
         if st:
-            moredefs.append(name_to_defsymb("decl_%s" % f))
+            moredefs.append(fname2def("decl_%s" % f))
+
+def fname2def(name):
+    return "HAVE_%s" % name.upper()
 
 def check_types(config_cmd, ext, build_dir):
     private_defines = []
