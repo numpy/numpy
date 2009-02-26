@@ -3846,7 +3846,7 @@ class MaskedArray(ndarray):
         """
         (ver, shp, typ, isf, raw, msk, flv) = state
         ndarray.__setstate__(self, (shp, typ, isf, raw))
-        self._mask.__setstate__((shp, np.dtype(bool), isf, msk))
+        self._mask.__setstate__((shp, make_mask_descr(typ), isf, msk))
         self.fill_value = flv
     #
     def __reduce__(self):

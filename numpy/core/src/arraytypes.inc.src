@@ -21,10 +21,9 @@ MyPyFloat_AsDouble(PyObject *obj)
 
 
 /**begin repeat
-#type=long,longlong#
-#Type=Long,LongLong#
-*/
-
+ * #type = long, longlong#
+ * #Type = Long, LongLong#
+ */
 static @type@
 MyPyLong_As@Type@ (PyObject *obj)
 {
@@ -38,7 +37,6 @@ MyPyLong_As@Type@ (PyObject *obj)
     Py_DECREF(num);
     return ret;
 }
-
 
 static u@type@
 MyPyLong_AsUnsigned@Type@ (PyObject *obj)
@@ -64,15 +62,21 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 /****************** getitem and setitem **********************/
 
 /**begin repeat
-
-#TYP=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,LONG,UINT,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE#
-#func1=PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2, PyLong_FromLongLong, PyLong_FromUnsignedLongLong, PyFloat_FromDouble*2#
-#func2=PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2, MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong, MyPyFloat_AsDouble*2#
-#typ=Bool, byte, ubyte, short, ushort, int, long, uint, ulong, longlong, ulonglong, float, double#
-#typ1=long*7, ulong*2, longlong, ulonglong, float, double#
-#kind=Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong, LongLong, ULongLong, Float, Double#
+ *
+ * #TYP = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
+ *        LONGLONG, ULONGLONG, FLOAT, DOUBLE#
+ * #func1 = PyBool_FromLong, PyInt_FromLong*6, PyLong_FromUnsignedLong*2,
+ *          PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
+ *          PyFloat_FromDouble*2#
+ * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
+ *          MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong,
+ *          MyPyFloat_AsDouble*2#
+ * #typ = Bool, byte, ubyte, short, ushort, int, long, uint, ulong,
+ *        longlong, ulonglong, float, double#
+ * #typ1 = long*7, ulong*2, longlong, ulonglong, float, double#
+ * #kind = Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong,
+ *         LongLong, ULongLong, Float, Double#
 */
-
 static PyObject *
 @TYP@_getitem(char *ip, PyArrayObject *ap) {
     @typ@ t1;
@@ -82,8 +86,7 @@ static PyObject *
         return @func1@((@typ1@)t1);
     }
     else {
-        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap),
-                ap);
+        ap->descr->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
         return @func1@((@typ1@)t1);
     }
 }
@@ -91,7 +94,6 @@ static PyObject *
 static int
 @TYP@_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     @typ@ temp;  /* ensures alignment */
-
 
     if (PyArray_IsScalar(op, @kind@)) {
         temp = ((Py@kind@ScalarObject *)op)->obval;
@@ -113,19 +115,16 @@ static int
         ap->descr->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap),
                 ap);
     }
-
     return 0;
 }
 
 /**end repeat**/
 
-
 /**begin repeat
-
-#TYP=CFLOAT,CDOUBLE#
-#typ=float, double#
-*/
-
+ *
+ * #TYP = CFLOAT, CDOUBLE#
+ * #typ = float, double#
+ */
 static PyObject *
 @TYP@_getitem(char *ip, PyArrayObject *ap) {
     @typ@ t1, t2;
@@ -142,14 +141,15 @@ static PyObject *
         return PyComplex_FromDoubles((double)t1, (double)t2);
     }
 }
+
 /**end repeat**/
 
 /**begin repeat
-
-#TYP=CFLOAT, CDOUBLE, CLONGDOUBLE#
-#typ=float, double, longdouble#
-#kind=CFloat, CDouble, CLongDouble#
-*/
+ *
+ * #TYP = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #typ = float, double, longdouble#
+ * #kind = CFloat, CDouble, CLongDouble#
+ */
 static int
 @TYP@_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
@@ -159,8 +159,8 @@ static int
     int rsize;
 
     if (!(PyArray_IsScalar(op, @kind@))) {
-        if (PyArray_Check(op) && (PyArray_NDIM(op)==0)) {
-            op2 = ((PyArrayObject *)op)->descr->f->getitem     \
+        if (PyArray_Check(op) && (PyArray_NDIM(op) == 0)) {
+            op2 = ((PyArrayObject *)op)->descr->f->getitem
                   (((PyArrayObject *)op)->data,
                    (PyArrayObject *)op);
         }
@@ -174,22 +174,24 @@ static int
             oop = PyComplex_AsCComplex (op2);
         }
         Py_DECREF(op2);
-        if (PyErr_Occurred()) return -1;
+        if (PyErr_Occurred()) {
+            return -1;
+        }
         temp.real = (@typ@) oop.real;
         temp.imag = (@typ@) oop.imag;
     }
     else {
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
-
     memcpy(ov, &temp, ap->descr->elsize);
-    if (!PyArray_ISNOTSWAPPED(ap))
+    if (!PyArray_ISNOTSWAPPED(ap)) {
         byte_swap_vector(ov, 2, sizeof(@typ@));
-
+    }
     rsize = sizeof(@typ@);
     copy_and_swap(ov, &temp, rsize, 2, rsize, !PyArray_ISNOTSWAPPED(ap));
     return 0;
 }
+
 /**end repeat**/
 
 static PyObject *
@@ -208,9 +210,12 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     else {
         temp = (longdouble) MyPyFloat_AsDouble(op);
     }
-    if (PyErr_Occurred()) return -1;
-    if (ap == NULL || PyArray_ISBEHAVED(ap))
+    if (PyErr_Occurred()) {
+        return -1;
+    }
+    if (ap == NULL || PyArray_ISBEHAVED(ap)) {
         *((longdouble *)ov)=temp;
+    }
     else {
         copy_and_swap(ov, &temp, ap->descr->elsize, 1, 0,
                 !PyArray_ISNOTSWAPPED(ap));
@@ -297,8 +302,12 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         return -1;
     }
     /* Sequence_Size might have returned an error */
-    if (PyErr_Occurred()) PyErr_Clear();
-    if ((temp=PyObject_Unicode(op)) == NULL) return -1;
+    if (PyErr_Occurred()) {
+        PyErr_Clear();
+    }
+    if ((temp=PyObject_Unicode(op)) == NULL) {
+        return -1;
+    }
     ptr = PyUnicode_AS_UNICODE(temp);
     if ((ptr == NULL) || (PyErr_Occurred())) {
         Py_DECREF(temp);
@@ -317,7 +326,9 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
             return -1;
         }
     }
-    else buffer = ov;
+    else {
+        buffer = ov;
+    }
     datalen = PyUCS2Buffer_AsUCS4(ptr, (PyArray_UCS4 *)buffer,
             datalen >> 1,
             ap->descr->elsize >> 2);
@@ -331,16 +342,18 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     if (ap->descr->elsize > datalen) {
         memset(ov + datalen, 0, (ap->descr->elsize - datalen));
     }
-
-    if (!PyArray_ISNOTSWAPPED(ap))
+    if (!PyArray_ISNOTSWAPPED(ap)) {
         byte_swap_vector(ov, ap->descr->elsize >> 2, 4);
+    }
     Py_DECREF(temp);
     return 0;
 }
 
-/* STRING -- can handle both NULL-terminated and not NULL-terminated cases
-             will truncate all ending NULLs in returned string.
-*/
+/* STRING
+ *
+ * can handle both NULL-terminated and not NULL-terminated cases
+ * will truncate all ending NULLs in returned string.
+ */
 static PyObject *
 STRING_getitem(char *ip, PyArrayObject *ap)
 {
@@ -348,8 +361,10 @@ STRING_getitem(char *ip, PyArrayObject *ap)
     char *ptr;
     int size = ap->descr->elsize;
 
-    ptr = ip + size-1;
-    while (*ptr-- == '\0' && size > 0) size--;
+    ptr = ip + size - 1;
+    while (*ptr-- == '\0' && size > 0) {
+        size--;
+    }
     return PyString_FromStringAndSize(ip,size);
 }
 
@@ -358,7 +373,7 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 {
     char *ptr;
     Py_ssize_t len;
-    PyObject *temp=NULL;
+    PyObject *temp = NULL;
 
     if (!PyString_Check(op) && !PyUnicode_Check(op) &&
             PySequence_Check(op) && PySequence_Size(op) > 0) {
@@ -367,17 +382,21 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
         return -1;
     }
     /* Sequence_Size might have returned an error */
-    if (PyErr_Occurred()) PyErr_Clear();
-    if ((temp = PyObject_Str(op)) == NULL) return -1;
-
+    if (PyErr_Occurred()) {
+        PyErr_Clear();
+    }
+    if ((temp = PyObject_Str(op)) == NULL) {
+        return -1;
+    }
     if (PyString_AsStringAndSize(temp, &ptr, &len) == -1) {
         Py_DECREF(temp);
         return -1;
     }
     memcpy(ov, ptr, MIN(ap->descr->elsize,len));
-    /* If string lenth is smaller than room in array
-       Then fill the rest of the element size
-       with NULL */
+    /*
+     * If string lenth is smaller than room in array
+     * Then fill the rest of the element size with NULL
+     */
     if (ap->descr->elsize > len) {
         memset(ov + len, 0, (ap->descr->elsize - len));
     }
@@ -429,7 +448,7 @@ OBJECT_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 static PyObject *
 VOID_getitem(char *ip, PyArrayObject *ap)
 {
-    PyObject *u=NULL;
+    PyObject *u = NULL;
     PyArray_Descr* descr;
     int itemsize;
 
@@ -446,29 +465,30 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 
         /* get the names from the fields dictionary*/
         names = descr->names;
-        if (!names) goto finish;
+        if (!names) {
+            goto finish;
+        }
         n = PyTuple_GET_SIZE(names);
         ret = PyTuple_New(n);
         savedflags = ap->flags;
-        for (i=0; i<n; i++) {
+        for (i = 0; i < n; i++) {
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
-            if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset,
-                        &title)) {
+            if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
                 Py_DECREF(ret);
                 ap->descr = descr;
                 return NULL;
             }
             ap->descr = new;
             /* update alignment based on offset */
-            if ((new->alignment > 1) &&                     \
-                    ((((intp)(ip+offset)) % new->alignment) != 0))
+            if ((new->alignment > 1)
+                    && ((((intp)(ip+offset)) % new->alignment) != 0)) {
                 ap->flags &= ~ALIGNED;
-            else
+            }
+            else {
                 ap->flags |= ALIGNED;
-
-            PyTuple_SET_ITEM(ret, i,                        \
-                    new->f->getitem(ip+offset, ap));
+            }
+            PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
             ap->flags = savedflags;
         }
         ap->descr = descr;
@@ -477,10 +497,10 @@ VOID_getitem(char *ip, PyArrayObject *ap)
 
     if (descr->subarray) {
         /* return an array of the basic type */
-        PyArray_Dims shape={NULL,-1};
+        PyArray_Dims shape = {NULL, -1};
         PyObject *ret;
-        if (!(PyArray_IntpConverter(descr->subarray->shape,
-                        &shape))) {
+
+        if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
             PyDimMem_FREE(shape.ptr);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
@@ -488,11 +508,12 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         }
         Py_INCREF(descr->subarray->base);
         ret = PyArray_NewFromDescr(&PyArray_Type,
-                descr->subarray->base,
-                shape.len, shape.ptr,
+                descr->subarray->base, shape.len, shape.ptr,
                 NULL, ip, ap->flags, NULL);
         PyDimMem_FREE(shape.ptr);
-        if (!ret) return NULL;
+        if (!ret) {
+            return NULL;
+        }
         PyArray_BASE(ret) = (PyObject *)ap;
         Py_INCREF(ap);
         PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
@@ -500,23 +521,27 @@ VOID_getitem(char *ip, PyArrayObject *ap)
     }
 
 finish:
-    if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
-            PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
+    if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
+            || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
         PyErr_SetString(PyExc_ValueError,
                 "tried to get void-array with object"
                 " members as buffer.");
         return NULL;
     }
-
-    itemsize=ap->descr->elsize;
-    if (PyArray_ISWRITEABLE(ap))
+    itemsize = ap->descr->elsize;
+    if (PyArray_ISWRITEABLE(ap)) {
         u = PyBuffer_FromReadWriteMemory(ip, itemsize);
-    else
+    }
+    else {
         u = PyBuffer_FromMemory(ip, itemsize);
-    if (u==NULL) goto fail;
-
-    /* default is to return buffer object pointing to current item */
-    /*  a view of it */
+    }
+    if (u == NULL) {
+        goto fail;
+    }
+    /*
+     * default is to return buffer object pointing to
+     * current item a view of it
+     */
     return u;
 
 fail:
@@ -543,6 +568,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         PyArray_Descr *new;
         int offset;
         int savedflags;
+
         res = -1;
         /* get the names from the fields dictionary*/
         names = descr->names;
@@ -554,26 +580,27 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
             return -1;
         }
         savedflags = ap->flags;
-        for (i=0; i<n; i++) {
+        for (i = 0; i < n; i++) {
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
-            if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset,
-                        &title)) {
+            if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
                 ap->descr = descr;
                 return -1;
             }
             ap->descr = new;
             /* remember to update alignment flags */
-            if ((new->alignment > 1) &&                     \
-                    ((((intp)(ip+offset)) % new->alignment) != 0))
+            if ((new->alignment > 1)
+                    && ((((intp)(ip+offset)) % new->alignment) != 0)) {
                 ap->flags &= ~ALIGNED;
-            else
+            }
+            else {
                 ap->flags |= ALIGNED;
-
-            res = new->f->setitem(PyTuple_GET_ITEM(op, i),
-                    ip+offset, ap);
+            }
+            res = new->f->setitem(PyTuple_GET_ITEM(op, i), ip+offset, ap);
             ap->flags = savedflags;
-            if (res < 0) break;
+            if (res < 0) {
+                break;
+            }
         }
         ap->descr = descr;
         return res;
@@ -581,10 +608,9 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
 
     if (descr->subarray) {
         /* copy into an array of the same basic type */
-        PyArray_Dims shape={NULL,-1};
+        PyArray_Dims shape = {NULL, -1};
         PyObject *ret;
-        if (!(PyArray_IntpConverter(descr->subarray->shape,
-                        &shape))) {
+        if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
             PyDimMem_FREE(shape.ptr);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
@@ -592,11 +618,12 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         }
         Py_INCREF(descr->subarray->base);
         ret = PyArray_NewFromDescr(&PyArray_Type,
-                descr->subarray->base,
-                shape.len, shape.ptr,
+                descr->subarray->base, shape.len, shape.ptr,
                 NULL, ip, ap->flags, NULL);
         PyDimMem_FREE(shape.ptr);
-        if (!ret) return -1;
+        if (!ret) {
+            return -1;
+        }
         PyArray_BASE(ret) = (PyObject *)ap;
         Py_INCREF(ap);
         PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
@@ -609,15 +636,17 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
     {
         const void *buffer;
         Py_ssize_t buflen;
-        if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
-                PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
+        if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
+                || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
             PyErr_SetString(PyExc_ValueError,
                     "tried to set void-array with object"
                     " members using buffer.");
             return -1;
         }
         res = PyObject_AsReadBuffer(op, &buffer, &buflen);
-        if (res == -1) goto fail;
+        if (res == -1) {
+            goto fail;
+        }
         memcpy(ip, buffer, NPY_MIN(buflen, itemsize));
         if (itemsize > buflen) {
             memset(ip+buflen, 0, (itemsize-buflen));
@@ -636,29 +665,58 @@ fail:
 
 
 /**begin repeat
-#to=(BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE)*16#
-#from=BYTE*13,UBYTE*13,SHORT*13,USHORT*13,INT*13,UINT*13,LONG*13,ULONG*13,LONGLONG*13,ULONGLONG*13,FLOAT*13,DOUBLE*13,LONGDOUBLE*13,CFLOAT*13,CDOUBLE*13,CLONGDOUBLE*13#
-#totyp=(byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble)*16#
-#fromtyp=byte*13, ubyte*13, short*13, ushort*13, int*13, uint*13, long*13, ulong*13, longlong*13, ulonglong*13, float*13, double*13, longdouble*13, float*13, double*13, longdouble*13#
-#incr= (ip++)*169,(ip+=2)*39#
+ *
+ * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ * #totype = byte, ubyte, short, ushort, int, uint, long, ulong,
+ *           longlong, ulonglong, float, double, longdouble#
 */
+
+/**begin repeat1
+ *
+ * #FROMTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ * #fromtype = byte, ubyte, short, ushort, int, uint, long, ulong,
+ *             longlong, ulonglong, float, double, longdouble#
+ */
 static void
-@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n,
+@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
                PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
-        *op++ = (@totyp@)*ip;
-        @incr@;
+        *op++ = (@totype@)*ip++;
     }
 }
+/**end repeat1**/
+
+/**begin repeat1
+ *
+ * #FROMTYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #fromtype = float, double, longdouble#
+ */
+static void
+@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
+               PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
+{
+    while (n--) {
+        *op++ = (@totype@)*ip;
+        ip += 2;
+    }
+}
+/**end repeat1**/
+
 /**end repeat**/
 
+
 /**begin repeat
-#from=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#fromtyp=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+ *
+ * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *             longlong, ulonglong, float, double, longdouble#
 */
 static void
-@from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n,
+@FROMTYPE@_to_BOOL(@fromtype@ *ip, Bool *op, intp n,
                PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
@@ -668,87 +726,105 @@ static void
 /**end repeat**/
 
 /**begin repeat
-#from=CFLOAT, CDOUBLE, CLONGDOUBLE#
-#fromtyp=cfloat, cdouble, clongdouble#
+ *
+ * #FROMTYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #fromtype = cfloat, cdouble, clongdouble#
 */
 static void
-@from@_to_BOOL(register @fromtyp@ *ip, register Bool *op, register intp n,
+@FROMTYPE@_to_BOOL(@fromtype@ *ip, Bool *op, intp n,
                PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
         *op = (Bool)(((*ip).real != FALSE) || ((*ip).imag != FALSE));
-        op++; ip++;
+        op++;
+        ip++;
     }
 }
 /**end repeat**/
 
 /**begin repeat
-#to=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#totyp=byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+ * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ * #totype = byte, ubyte, short, ushort, int, uint, long, ulong,
+ *           longlong, ulonglong, float, double, longdouble#
 */
 static void
-BOOL_to_@to@(register Bool *ip, register @totyp@ *op, register intp n,
+BOOL_to_@TOTYPE@(Bool *ip, @totype@ *op, intp n,
              PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
-        *op++ = (@totyp@)(*ip++ != FALSE);
+        *op++ = (@totype@)(*ip++ != FALSE);
     }
 }
 /**end repeat**/
 
 /**begin repeat
+ *
+ * #TOTYPE = CFLOAT,CDOUBLE,CLONGDOUBLE#
+ * #totype = float, double, longdouble#
+ */
 
-#to=(CFLOAT,CDOUBLE,CLONGDOUBLE)*14#
-#from=BOOL*3,BYTE*3,UBYTE*3,SHORT*3,USHORT*3,INT*3,UINT*3,LONG*3,ULONG*3,LONGLONG*3,ULONGLONG*3,FLOAT*3,DOUBLE*3,LONGDOUBLE*3#
-#fromtyp=Bool*3,byte*3, ubyte*3, short*3, ushort*3, int*3, uint*3, long*3, ulong*3, longlong*3, ulonglong*3, float*3, double*3, longdouble*3#
-#totyp= (float, double, longdouble)*14#
-*/
+/**begin repeat1
+ * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *             longlong, ulonglong, float, double, longdouble#
+ */
 static void
-@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n,
+@FROMTYPE@_to_@TOTYPE@(register @fromtype@ *ip, register @totype@ *op, register intp n,
                PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     while (n--) {
-        *op++ = (@totyp@)*ip++;
+        *op++ = (@totype@)*ip++;
         *op++ = 0.0;
     }
 
 }
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
+ *
+ * #TOTYPE = CFLOAT,CDOUBLE,CLONGDOUBLE#
+ * #totype = float, double, longdouble#
+ */
 
-#to=(CFLOAT,CDOUBLE,CLONGDOUBLE)*3#
-#from=CFLOAT*3,CDOUBLE*3,CLONGDOUBLE*3#
-#totyp=(float, double, longdouble)*3#
-#fromtyp=float*3, double*3, longdouble*3#
-*/
+/**begin repeat1
+ * #FROMTYPE = CFLOAT,CDOUBLE,CLONGDOUBLE#
+ * #fromtype = float, double, longdouble#
+ */
 static void
-@from@_to_@to@(register @fromtyp@ *ip, register @totyp@ *op, register intp n,
+@FROMTYPE@_to_@TOTYPE@(@fromtype@ *ip, @totype@ *op, intp n,
                PyArrayObject *NPY_UNUSED(aip), PyArrayObject *NPY_UNUSED(aop))
 {
     n <<= 1;
     while (n--) {
-        *op++ = (@totyp@)*ip++;
+        *op++ = (@totype@)*ip++;
     }
-
 }
+
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
-
-#from=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE, STRING, UNICODE, VOID, OBJECT#
-#fromtyp=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char, PyObject *#
-#skip= 1*17, aip->descr->elsize*3, 1#
-*/
+ *
+ * #FROMTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *             CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID, OBJECT#
+ * #fromtype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *             longlong, ulonglong, float, double, longdouble,
+ *             cfloat, cdouble, clongdouble, char, char, char, PyObject *#
+ * #skip = 1*17, aip->descr->elsize*3, 1#
+ */
 static void
-@from@_to_OBJECT(@fromtyp@ *ip, PyObject **op, intp n, PyArrayObject *aip,
+@FROMTYPE@_to_OBJECT(@fromtype@ *ip, PyObject **op, intp n, PyArrayObject *aip,
                  PyArrayObject *NPY_UNUSED(aop))
 {
-    register intp i;
-    int skip=@skip@;
-    for(i=0;i<n;i++,ip+=skip,op++) {
+    intp i;
+    int skip = @skip@;
+    for (i = 0; i < n; i++, ip +=skip, op++) {
         Py_XDECREF(*op);
-        *op = @from@_getitem((char *)ip, aip);
+        *op = @FROMTYPE@_getitem((char *)ip, aip);
     }
 }
 /**end repeat**/
@@ -770,27 +846,33 @@ static void
 #define _NPY_UNUSEDCFLOAT  NPY_UNUSED
 #define _NPY_UNUSEDCDOUBLE  NPY_UNUSED
 #define _NPY_UNUSEDCLONGDOUBLE  NPY_UNUSED
-#define _NPY_UNUSEDSTRING 
-#define _NPY_UNUSEDVOID 
+#define _NPY_UNUSEDSTRING
+#define _NPY_UNUSEDVOID
 #define _NPY_UNUSEDUNICODE
-/**begin repeat
 
-#to=BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE, STRING, UNICODE, VOID#
-#totyp=Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char#
-#skip= 1*17, aip->descr->elsize*3#
-*/
+/**begin repeat
+ *
+ * #TOTYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE,
+ *           CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID#
+ * #totype = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *           longlong, ulonglong, float, double, longdouble,
+ *           cfloat, cdouble, clongdouble, char, char, char#
+ * #skip = 1*17, aip->descr->elsize*3#
+ */
 static void
-OBJECT_to_@to@(PyObject **ip, @totyp@ *op, intp n, PyArrayObject *_NPY_UNUSED@to@(aip),
-                 PyArrayObject *aop)
+OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, intp n,
+        PyArrayObject *_NPY_UNUSED@TOTYPE@(aip), PyArrayObject *aop)
 {
-    register intp i;
-    int skip=@skip@;
-    for(i=0;i<n;i++,ip++,op+=skip) {
+    intp i;
+    int skip = @skip@;
+
+    for (i = 0; i < n; i++, ip++, op += skip) {
         if (*ip == NULL) {
-            @to@_setitem(Py_False, (char *)op, aop);
+            @TOTYPE@_setitem(Py_False, (char *)op, aop);
         }
         else {
-            @to@_setitem(*ip, (char *)op, aop);
+            @TOTYPE@_setitem(*ip, (char *)op, aop);
         }
     }
 }
@@ -798,26 +880,28 @@ OBJECT_to_@to@(PyObject **ip, @totyp@ *op, intp n, PyArrayObject *_NPY_UNUSED@to
 
 
 /**begin repeat
-
-#from=STRING*20, UNICODE*20, VOID*20#
-#fromtyp=char*60#
-#to=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE,STRING,UNICODE,VOID)*3#
-#totyp=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char)*3#
-#oskip=(1*17,aop->descr->elsize*3)*3#
-#convert=1*17,0*3,1*17,0*3,0*20#
-#convstr=(Int*9,Long*2,Float*3,Complex*3,Tuple*3)*3#
+ *
+ * #from = STRING*20, UNICODE*20, VOID*20#
+ * #fromtyp = char*60#
+ * #to = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE, VOID)*3#
+ * #totyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble, char, char, char)*3#
+ * #oskip = (1*17,aop->descr->elsize*3)*3#
+ * #convert = 1*17, 0*3, 1*17, 0*3, 0*20#
+ * #convstr = (Int*9, Long*2, Float*3, Complex*3, Tuple*3)*3#
 */
 static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
              PyArrayObject *aop)
 {
     register intp i;
-    PyObject *temp=NULL;
-    int skip=aip->descr->elsize;
-    int oskip=@oskip@;
-    for(i=0; i<n; i++, ip+=skip, op+=oskip) {
+    PyObject *temp = NULL;
+    int skip = aip->descr->elsize;
+    int oskip = @oskip@;
+    for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
         temp = @from@_getitem((char *)ip, aip);
-        if (temp==NULL) return;
+        if (temp == NULL) {
+            return;
+        }
         /* convert from Python object to needed one */
         if (@convert@) {
             PyObject *new, *args;
@@ -826,9 +910,10 @@ static void
             new = Py@convstr@_Type.tp_new(&Py@convstr@_Type, args, NULL);
             Py_DECREF(args);
             temp = new;
-            if (temp==NULL) return;
+            if (temp == NULL) {
+                return;
+            }
         }
-
         @to@_setitem(temp,(char *)op, aop);
         Py_DECREF(temp);
     }
@@ -837,24 +922,23 @@ static void
 /**end repeat**/
 
 /**begin repeat
-
-#to=STRING*17, UNICODE*17, VOID*17#
-#totyp=char*17, char*17, char*17#
-#from=(BOOL,BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE,CFLOAT,CDOUBLE,CLONGDOUBLE)*3#
-#fromtyp=(Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble)*3#
-*/
-
+ *
+ * #to = STRING*17, UNICODE*17, VOID*17#
+ * #totyp = char*17, char*17, char*17#
+ * #from = (BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE, CLONGDOUBLE)*3#
+ * #fromtyp = (Bool, byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble, cfloat, cdouble, clongdouble)*3#
+ */
 static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, intp n, PyArrayObject *aip,
              PyArrayObject *aop)
 {
-    register intp i;
-    PyObject *temp=NULL;
-    int skip=1;
-    int oskip=aop->descr->elsize;
-    for(i=0; i<n; i++, ip+=skip, op+=oskip) {
+    intp i;
+    PyObject *temp = NULL;
+    int skip = 1;
+    int oskip = aop->descr->elsize;
+    for (i = 0; i < n; i++, ip += skip, op += oskip) {
         temp = @from@_getitem((char *)ip, aip);
-        if (temp==NULL) {
+        if (temp == NULL) {
             Py_INCREF(Py_False);
             temp = Py_False;
         }
@@ -868,31 +952,33 @@ static void
 
 /****************** scan *************************************/
 
-/* The first ignore argument is for backwards compatibility.
-   Should be removed when the API version is bumped up.
+/*
+ * The first ignore argument is for backwards compatibility.
+ * Should be removed when the API version is bumped up.
  */
 
 /**begin repeat
-#fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-#type=short,ushort,int,uint,long,ulong,longlong,ulonglong#
-#format="hd","hu","d","u","ld","lu",LONGLONG_FMT,ULONGLONG_FMT#
-*/
+ * #fname = SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG#
+ * #type = short, ushort, int, uint, long, ulong, longlong, ulonglong#
+ * #format = "hd", "hu", "d", "u", "ld", "lu", LONGLONG_FMT, ULONGLONG_FMT#
+ */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
+@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
 {
     return fscanf(fp, "%"@format@, ip);
 }
 /**end repeat**/
 
 /**begin repeat
-#fname=FLOAT,DOUBLE,LONGDOUBLE#
-#type=float,double,longdouble#
-*/
+ * #fname = FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = float, double, longdouble#
+ */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
+@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignored))
 {
     double result;
     int ret;
+
     ret = NumPyOS_ascii_ftolf(fp, &result);
     *ip = (@type@) result;
     return ret;
@@ -900,16 +986,17 @@ static int
 /**end repeat**/
 
 /**begin repeat
-#fname=BYTE,UBYTE#
-#type=byte,ubyte#
-#btype=int,uint#
-#format="d","u"#
-*/
+ * #fname = BYTE, UBYTE#
+ * #type = byte, ubyte#
+ * #btype = int, uint#
+ * #format = "d", "u"#
+ */
 static int
-@fname@_scan (FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
+@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
 {
     @btype@ temp;
     int num;
+
     num = fscanf(fp, "%"@format@, &temp);
     *ip = (@type@) temp;
     return num;
@@ -917,29 +1004,30 @@ static int
 /**end repeat**/
 
 static int
-BOOL_scan (FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
+BOOL_scan(FILE *fp, Bool *ip, void *NPY_UNUSED(ignore), PyArray_Descr *NPY_UNUSED(ignore2))
 {
     int temp;
     int num;
+
     num = fscanf(fp, "%d", &temp);
     *ip = (Bool) (temp != 0);
     return num;
 }
 
 /**begin repeat
-#fname=CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
-*/
+ * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID#
+ */
 #define @fname@_scan NULL
 /**end repeat**/
 
 /****************** fromstr *************************************/
 
 /**begin repeat
-#fname=BYTE,UBYTE,SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG#
-#type=byte,ubyte,short,ushort,int,uint,long,ulong,longlong,ulonglong#
-#func=(l,ul)*5#
-#btype=(long,ulong)*5#
-*/
+ * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG#
+ * #type = byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong#
+ * #func = (l, ul)*5#
+ * #btype = (long, ulong)*5#
+ */
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
 {
@@ -952,9 +1040,10 @@ static int
 /**end repeat**/
 
 /**begin repeat
-#fname=FLOAT,DOUBLE,LONGDOUBLE#
-#type=float,double,longdouble#
-*/
+ *
+ * #fname=FLOAT,DOUBLE,LONGDOUBLE#
+ * #type=float,double,longdouble#
+ */
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr, PyArray_Descr *NPY_UNUSED(ignore))
 {
@@ -969,8 +1058,8 @@ static int
 
 
 /**begin repeat
-#fname=BOOL,CFLOAT,CDOUBLE,CLONGDOUBLE,OBJECT,STRING,UNICODE,VOID#
-*/
+ * #fname = BOOL, CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID#
+ */
 #define @fname@_fromstr NULL
 /**end repeat**/
 
@@ -978,11 +1067,11 @@ static int
 /****************** copyswapn *************************************/
 
 /**begin repeat
-
-#fname=SHORT,USHORT,INT,UINT,LONG,ULONG,LONGLONG,ULONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#fsize=SHORT,SHORT,INT,INT,LONG,LONG,LONGLONG,LONGLONG,FLOAT,DOUBLE,LONGDOUBLE#
-#type=short,ushort,int,uint,long,ulong,longlong,ulonglong,float,double,longdouble#
-*/
+ *
+ * #fname = SHORT, USHORT, INT, UINT, LONG, ULONG, LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ * #fsize = SHORT, SHORT, INT, INT, LONG, LONG, LONGLONG, LONGLONG, FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = short, ushort, int, uint, long, ulong, longlong, ulonglong, float, double, longdouble#
+ */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride,
                    intp n, int swap, void *NPY_UNUSED(arr))
@@ -1005,11 +1094,13 @@ static void
 @fname@_copyswap (void *dst, void *src, int swap, void *NPY_UNUSED(arr))
 {
 
-    if (src != NULL) /* copy first if needed */
+    if (src != NULL) {
+        /* copy first if needed */
         memcpy(dst, src, sizeof(@type@));
-
+    }
     if (swap) {
-        register char *a, *b, c;
+        char *a, *b, c;
+
         a = (char *)dst;
 #if SIZEOF_@fsize@ == 2
         b = a + 1;
@@ -1051,25 +1142,27 @@ static void
         c = *a; *a++ = *b; *b   = c;
 #else
         {
-            register int i, nn;
+            int i, nn;
+
             b = a + (SIZEOF_@fsize@-1);
             nn = SIZEOF_@fsize@ / 2;
-            for (i=0; i<nn; i++) {
-                c=*a; *a++ = *b; *b-- = c;
+            for (i = 0; i < nn; i++) {
+                c = *a;
+                *a++ = *b;
+                *b-- = c;
             }
         }
 #endif
     }
 }
 
-
 /**end repeat**/
 
 /**begin repeat
-
-#fname=BOOL, BYTE, UBYTE#
-#type=Bool, byte, ubyte#
-*/
+ *
+ * #fname = BOOL, BYTE, UBYTE#
+ * #type = Bool, byte, ubyte#
+ */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride, intp n,
                    int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
@@ -1089,8 +1182,10 @@ static void
 static void
 @fname@_copyswap (void *dst, void *src, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
-    if (src != NULL) /* copy first if needed */
+    if (src != NULL) {
+        /* copy first if needed */
         memcpy(dst, src, sizeof(@type@));
+    }
     /* ignore swap */
 }
 
@@ -1099,10 +1194,10 @@ static void
 
 
 /**begin repeat
-
-#fname=CFLOAT,CDOUBLE,CLONGDOUBLE#
-#type=cfloat, cdouble, clongdouble#
-#fsize=FLOAT,DOUBLE,LONGDOUBLE#
+ *
+ * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #type = cfloat,  cdouble,  clongdouble#
+ * #fsize = FLOAT, DOUBLE, LONGDOUBLE#
 */
 static void
 @fname@_copyswapn (void *dst, intp dstride, void *src, intp sstride, intp n,
@@ -2636,22 +2731,22 @@ set_typeinfo(PyObject *dict)
 #define SETTYPE(name)                           \
     Py_INCREF(&Py##name##ArrType_Type);     \
     PyDict_SetItemString(infodict, #name,   \
-            (PyObject *)&Py##name##ArrType_Type);
+            (PyObject *)&Py##name##ArrType_Type)
 
-    SETTYPE(Generic)
-        SETTYPE(Number)
-        SETTYPE(Integer)
-        SETTYPE(Inexact)
-        SETTYPE(SignedInteger)
-        SETTYPE(UnsignedInteger)
-        SETTYPE(Floating)
-        SETTYPE(ComplexFloating)
-        SETTYPE(Flexible)
-        SETTYPE(Character)
+    SETTYPE(Generic);
+    SETTYPE(Number);
+    SETTYPE(Integer);
+    SETTYPE(Inexact);
+    SETTYPE(SignedInteger);
+    SETTYPE(UnsignedInteger);
+    SETTYPE(Floating);
+    SETTYPE(ComplexFloating);
+    SETTYPE(Flexible);
+    SETTYPE(Character);
 
 #undef SETTYPE
 
-        PyDict_SetItemString(dict, "typeinfo", infodict);
+    PyDict_SetItemString(dict, "typeinfo", infodict);
     Py_DECREF(infodict);
     return 0;
 }

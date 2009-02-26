@@ -1448,9 +1448,14 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *ret;
+    PyObject *ret, *newargs;
 
-    ret = gentype_generic_method((PyObject *)self, args, kwds, "getfield");
+    newargs = PyTuple_GetSlice(args, 0, 2);
+    if (newargs == NULL) {
+        return NULL;
+    }
+    ret = gentype_generic_method((PyObject *)self, newargs, kwds, "getfield");
+    Py_DECREF(newargs);
     if (!ret) {
         return ret;
     }

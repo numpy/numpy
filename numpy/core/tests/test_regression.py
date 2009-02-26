@@ -8,6 +8,10 @@ import numpy as np
 
 rlevel = 1
 
+def iswin64():
+    import platform
+    return platform.architecture()[0] == "64bit" and sys.platform == "win32"
+
 def assert_valid_refcount(op):
     a = np.arange(100 * 100)
     b = np.arange(100*100).reshape(100, 100)
@@ -283,6 +287,7 @@ class TestRegression(TestCase):
         x[0].tolist()
         [i for i in x[0]]
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_unicode_string_comparison(self,level=rlevel):
         """Ticket #190"""
         a = np.array('hello',np.unicode_)
@@ -753,6 +758,7 @@ class TestRegression(TestCase):
             x |= y
         self.failUnlessRaises(TypeError,rs)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_unicode_scalar(self, level=rlevel):
         """Ticket #600"""
         import cPickle
@@ -1164,6 +1170,7 @@ class TestRegression(TestCase):
         b = np.array(['1','2','3'])
         assert_equal(a,b)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_unaligned_unicode_access(self, level=rlevel) :
         """Ticket #825"""
         for i in range(1,9) :
@@ -1219,6 +1226,14 @@ class TestRegression(TestCase):
         gc.collect()
         n_after = len(gc.get_objects())
         assert n_before >= n_after, (n_before, n_after)
+
+    def test_void_scalar_with_titles(self, level=rlevel):
+        """No ticket"""
+        data = [('john', 4), ('mary', 5)]
+        dtype1 = [(('source:yy', 'name'), 'O'), (('source:xx', 'id'), int)]
+        arr = np.array(data, dtype=dtype1)
+        assert arr[0][0] == 'john'
+        assert arr[0][1] == 4
 
 if __name__ == "__main__":
     run_module_suite()

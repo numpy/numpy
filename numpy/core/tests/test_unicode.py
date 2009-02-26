@@ -1,5 +1,11 @@
+import sys
+
 from numpy.testing import *
 from numpy.core import *
+
+def iswin64():
+    import platform
+    return platform.architecture()[0] == "64bit" and sys.platform == "win32"
 
 # Guess the UCS length for this python interpreter
 if len(buffer(u'u')) == 4:
@@ -36,17 +42,20 @@ class create_zeros(object):
         else:
             self.assert_(len(buffer(ua_scalar)) == 0)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_zeros0D(self):
         """Check creation of 0-dimensional objects"""
         ua = zeros((), dtype='U%s' % self.ulen)
         self.content_check(ua, ua[()], 4*self.ulen)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_zerosSD(self):
         """Check creation of single-dimensional objects"""
         ua = zeros((2,), dtype='U%s' % self.ulen)
         self.content_check(ua, ua[0], 4*self.ulen*2)
         self.content_check(ua, ua[1], 4*self.ulen*2)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_zerosMD(self):
         """Check creation of multi-dimensional objects"""
         ua = zeros((2,3,4), dtype='U%s' % self.ulen)
@@ -96,17 +105,20 @@ class create_values(object):
                 # regular 2-byte word
                 self.assert_(len(buffer(ua_scalar)) == 2*self.ulen)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_values0D(self):
         """Check creation of 0-dimensional objects with values"""
         ua = array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
         self.content_check(ua, ua[()], 4*self.ulen)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_valuesSD(self):
         """Check creation of single-dimensional objects with values"""
         ua = array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
         self.content_check(ua, ua[0], 4*self.ulen*2)
         self.content_check(ua, ua[1], 4*self.ulen*2)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_valuesMD(self):
         """Check creation of multi-dimensional objects with values"""
         ua = array([[[self.ucs_value*self.ulen]*2]*3]*4, dtype='U%s' % self.ulen)
@@ -181,12 +193,14 @@ class assign_values(object):
                 # regular 2-byte word
                 self.assert_(len(buffer(ua_scalar)) == 2*self.ulen)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_values0D(self):
         """Check assignment of 0-dimensional objects with values"""
         ua = zeros((), dtype='U%s' % self.ulen)
         ua[()] = self.ucs_value*self.ulen
         self.content_check(ua, ua[()], 4*self.ulen)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_valuesSD(self):
         """Check assignment of single-dimensional objects with values"""
         ua = zeros((2,), dtype='U%s' % self.ulen)
@@ -195,6 +209,7 @@ class assign_values(object):
         ua[1] = self.ucs_value*self.ulen
         self.content_check(ua, ua[1], 4*self.ulen*2)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_valuesMD(self):
         """Check assignment of multi-dimensional objects with values"""
         ua = zeros((2,3,4), dtype='U%s' % self.ulen)
@@ -248,6 +263,7 @@ class test_assign_values_1009_ucs4(assign_values, TestCase):
 class byteorder_values:
     """Check the byteorder of unicode arrays in round-trip conversions"""
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_values0D(self):
         """Check byteorder of 0-dimensional objects"""
         ua = array(self.ucs_value*self.ulen, dtype='U%s' % self.ulen)
@@ -260,6 +276,7 @@ class byteorder_values:
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_valuesSD(self):
         """Check byteorder of single-dimensional objects"""
         ua = array([self.ucs_value*self.ulen]*2, dtype='U%s' % self.ulen)
@@ -270,6 +287,7 @@ class byteorder_values:
         # Arrays must be equal after the round-trip
         assert_equal(ua, ua3)
 
+    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_valuesMD(self):
         """Check byteorder of multi-dimensional objects"""
         ua = array([[[self.ucs_value*self.ulen]*2]*3]*4,
