@@ -16,6 +16,7 @@ try:
     import cPickle as _pik
 except ImportError:
     import pickle as _pik
+import copy
 
 class CallOnceOnly(object):
     def __init__(self):
@@ -26,7 +27,7 @@ class CallOnceOnly(object):
             out = check_types(*a, **kw)
             self._check_types = _pik.dumps(out)
         else:
-            out = _pik.loads(self._check_types)
+            out = copy.deepcopy(_pik.loads(self._check_types))
         return out
 
 def pythonlib_dir():
