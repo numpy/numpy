@@ -11,6 +11,7 @@ from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
 from distutils import log
 from distutils.file_util import copy_file
+from distutils.ccompiler import CompileError, LinkError
 import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
@@ -143,6 +144,12 @@ class was %s
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
 
+    def check_header(self, header, include_dirs=None, library_dirs=None, lang='c'):
+        self._check_compiler()
+        return self.try_compile(
+                "/* we need a dummy line to make distutils happy */", 
+                [header], include_dirs)
+
     def check_decl(self, symbol,
                    headers=None, include_dirs=None):
         self._check_compiler()
@@ -157,6 +164,81 @@ int main()
 }""" % (symbol, symbol)
 
         return self.try_compile(body, headers, include_dirs)
+
+    def check_type_size(self, type_name, headers=None, include_dirs=None, library_dirs=None):
+        """Check size of a given type."""
+        # XXX: should also implement the cross-compiling version (using binary
+        # search + array indexing, see AC_CHECK_SIZEOF).
+        self._check_compiler()
+
+        # We declare the functions to avoid warnings with -Wstrict-prototypes
+        body = r"""
+typedef %(type)s _dist_type_sizeof_;
+
+static long int longval (void)
+{
+    return (long int) (sizeof (_dist_type_sizeof_));
+}
+static unsigned long int ulongval (void)
+{
+    return (long int) (sizeof (_dist_type_sizeof_));
+}
+
+#include <stdio.h>
+#include <stdlib.h>
+int
+main (void)
+{
+
+    if (((long int) (sizeof (_dist_type_sizeof_))) < 0) {
+        long int i = longval ();
+        if (i != ((long int) (sizeof (_dist_type_sizeof_))))
+            return 1;
+        printf("%%ld\n", i);
+    } else {
+        unsigned long int i = ulongval ();
+        if (i != ((long int) (sizeof (_dist_type_sizeof_))))
+            return 1;
+        printf("%%lu\n", i);
+    }
+
+    return 0;
+}
+""" % {'type': type_name}
+
+        # XXX: this should be refactored (same code as get_output)
+        exitcode, output = 255, ''
+        size = None
+        try:
+            src, obj, exe = self._link(body, headers, include_dirs,
+                                       [], library_dirs, 'c')
+            #exe = os.path.join('.', exe)
+            exitstatus, output = exec_command(exe, execute_in='.')
+            if hasattr(os, 'WEXITSTATUS'):
+                exitcode = os.WEXITSTATUS(exitstatus)
+                if os.WIFSIGNALED(exitstatus):
+                    sig = os.WTERMSIG(exitstatus)
+                    log.error('subprocess exited with signal %d' % (sig,))
+                    if sig == signal.SIGINT:
+                        # control-C
+                        raise KeyboardInterrupt
+            else:
+                exitcode = exitstatus
+            log.info("success!")
+
+            try:
+                size = int(output)
+            except ValueError:
+                log.error("Unexpected output %s" % output)
+                log.info("failure")
+        except (CompileError, LinkError):
+            log.info("failure.")
+
+        self._clean()
+        if size is not None:
+            return size
+        else:
+            return -1
 
     def check_func(self, func,
                    headers=None, include_dirs=None,

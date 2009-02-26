@@ -1,7 +1,7 @@
 /* Adapted from cephes */
 
-static int
-signbit_d(double x)
+int
+_npy_signbit_d(double x)
 {
     union
     {

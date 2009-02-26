@@ -4,6 +4,14 @@ import sys
 from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
+from distutils.sysconfig import get_config_var
+
+def pythonlib_dir():
+    """return path where libpython* is."""
+    if sys.platform == 'win32':
+        return os.path.join(sys.prefix, "libs")
+    else:
+        return get_config_var('LIBDIR')
 
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
@@ -34,6 +42,22 @@ def is_npy_no_smp():
         except KeyError:
             nosmp = 0
     return nosmp == 1
+
+def win32_checks(deflist):
+    from numpy.distutils.misc_util import get_build_architecture
+    a = get_build_architecture()
+
+    # Distutils hack on AMD64 on windows
+    print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % \
+          (a, os.name, sys.platform)
+    if a == 'AMD64':
+        deflist.append('DISTUTILS_USE_SDK')
+
+    # On win32, force long double format string to be 'g', not
+    # 'Lg', since the MS runtime does not support long double whose
+    # size is > sizeof(double)
+    if a =="Intel":
+        deflist.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
 
 def check_math_capabilities(config, moredefs, mathlibs):
     def check_func(func_name):
@@ -112,6 +136,69 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if st:
             moredefs.append(name_to_defsymb("decl_%s" % f))
 
+def check_types(config, ext, build_dir):
+    private_defines = []
+    public_defines = []
+
+    config_cmd = config.get_config_cmd()
+
+    # Check we have the python header (-dev* packages on Linux)
+    result = config_cmd.check_header('Python.h')
+    if not result:
+        raise SystemError(
+                "Cannot compiler 'Python.h'. Perhaps you need to "\
+                "install python-dev|python-devel.")
+
+    # Check basic types sizes
+    for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
+        res = config_cmd.check_type_size(type)
+        if res >= 0:
+            private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % type)
+
+    for type in ('Py_intptr_t',):
+        res = config_cmd.check_type_size(type, headers=["Python.h"],
+                library_dirs=[pythonlib_dir()])
+        if res >= 0:
+            private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+        else:
+            raise SystemError("Checking sizeof (%s) failed !" % type)
+
+    # We check declaration AND type because that's how distutils does it.
+    if config_cmd.check_decl('PY_LONG_LONG', headers=['Python.h']):
+        st = config_cmd.check_type_size('PY_LONG_LONG',  headers=['Python.h'], library_dirs=[pythonlib_dir()])
+        assert not st == 0
+        private_defines.append(('SIZEOF_%s' % sym2def('PY_LONG_LONG'), '%d' % res))
+
+    if not config_cmd.check_decl('CHAR_BIT', headers=['Python.h']):
+        raise RuntimeError(
+            "Config wo CHAR_BIT is not supported"\
+            ", please contact the maintainers")
+
+    return private_defines, public_defines
+
+def sym2def(symbol):
+    define = symbol.replace(' ', '_')
+    return define.upper()
+
+def check_mathlib(config_cmd):
+    # Testing the C math library
+    mathlibs = []
+    tc = testcode_mathlib()
+    mathlibs_choices = [[],['m'],['cpml']]
+    mathlib = os.environ.get('MATHLIB')
+    if mathlib:
+        mathlibs_choices.insert(0,mathlib.split(','))
+    for libs in mathlibs_choices:
+        if config_cmd.try_run(tc,libraries=libs):
+            mathlibs = libs
+            break
+    else:
+        raise EnvironmentError("math library missing; rerun "
+                               "setup.py after setting the "
+                               "MATHLIB env variable")
+    return mathlibs
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration,dot_join
@@ -131,70 +218,31 @@ def configuration(parent_package='',top_path=None):
 
     def generate_config_h(ext, build_dir):
         target = join(build_dir,header_dir,'config.h')
-        dir = os.path.dirname(target)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        d = os.path.dirname(target)
+        if not os.path.exists(d):
+            os.makedirs(d)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
-            tc = generate_testcode(target)
-            from distutils import sysconfig
-            python_include = sysconfig.get_python_inc()
-            python_h = join(python_include, 'Python.h')
-            if not os.path.isfile(python_h):
-                raise SystemError,\
-                      "Non-existing %s. Perhaps you need to install"\
-                      " python-dev|python-devel." % (python_h)
-            result = config_cmd.try_run(tc,include_dirs=[python_include],
-                                        library_dirs = default_lib_dirs)
-            if not result:
-                raise SystemError,"Failed to test configuration. "\
-                      "See previous error messages for more information."
 
-            moredefs = []
-            #
-            mathlibs = []
-            tc = testcode_mathlib()
-            mathlibs_choices = [[],['m'],['cpml']]
-            mathlib = os.environ.get('MATHLIB')
-            if mathlib:
-                mathlibs_choices.insert(0,mathlib.split(','))
-            for libs in mathlibs_choices:
-                if config_cmd.try_run(tc,libraries=libs):
-                    mathlibs = libs
-                    break
-            else:
-                raise EnvironmentError("math library missing; rerun "
-                                       "setup.py after setting the "
-                                       "MATHLIB env variable")
-            ext.libraries.extend(mathlibs)
+            # Check sizeof
+            moredefs, ignored = check_types(config, ext, build_dir)
+
+            # Check math library and C99 math funcs availability
+            mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
 
+            # Signal check
             if is_npy_no_signal():
                 moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
 
+            # Windows checks
             if sys.platform=='win32' or os.name=='nt':
-                from numpy.distutils.misc_util import get_build_architecture
-                a = get_build_architecture()
-                print 'BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % (a, os.name, sys.platform)
-                if a == 'AMD64':
-                    moredefs.append('DISTUTILS_USE_SDK')
+                win32_checks(moredefs)
 
-            if sys.version[:3] < '2.4':
-                if config_cmd.check_func('strtod', decl=False,
-                                         headers=['stdlib.h']):
-                    moredefs.append(('PyOS_ascii_strtod', 'strtod'))
-
-            if sys.platform == "win32":
-                from numpy.distutils.misc_util import get_build_architecture
-                # On win32, force long double format string to be 'g', not
-                # 'Lg', since the MS runtime does not support long double whose
-                # size is > sizeof(double)
-                if get_build_architecture()=="Intel":
-                    moredefs.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
-
+            # Generate the config.h file from moredefs
             target_f = open(target,'a')
             for d in moredefs:
                 if isinstance(d,str):
@@ -202,16 +250,6 @@ def configuration(parent_package='',top_path=None):
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
 
-            # Keep those for backward compatibility for now
-            target_f.write("""
-#ifdef HAVE_EXPL
-#define HAVE_LONGDOUBLE_FUNCS
-#endif
-
-#ifdef HAVE_EXPF
-#define HAVE_FLOAT_FUNCS
-#endif
-""")
             target_f.close()
             print 'File:',target
             target_f = open(target)
@@ -229,7 +267,11 @@ def configuration(parent_package='',top_path=None):
                         mathlibs.extend(value.split(','))
             target_f.close()
 
-        ext.libraries.extend(mathlibs)
+        # Ugly: this can be called within a library and not an extension,
+        # in which case there is no libraries attributes (and none is
+        # needed).
+        if hasattr(ext, 'libraries'):
+            ext.libraries.extend(mathlibs)
 
         incl_dir = os.path.dirname(target)
         if incl_dir not in config.numpy_include_dirs:
@@ -240,33 +282,34 @@ def configuration(parent_package='',top_path=None):
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
         target = join(build_dir,header_dir,'numpyconfig.h')
-        dir = os.path.dirname(target)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        d = os.path.dirname(target)
+        if not os.path.exists(d):
+            os.makedirs(d)
         if newer(__file__,target):
             config_cmd = config.get_config_cmd()
             log.info('Generating %s',target)
             testcode = generate_numpyconfig_code(target)
 
-            from distutils import sysconfig
-            python_include = sysconfig.get_python_inc()
-            python_h = join(python_include, 'Python.h')
-            if not os.path.isfile(python_h):
-                raise SystemError,\
-                      "Non-existing %s. Perhaps you need to install"\
-                      " python-dev|python-devel." % (python_h)
-
-            config.numpy_include_dirs
             result = config_cmd.try_run(testcode,
-                                include_dirs = [python_include] + \
-                                                       config.numpy_include_dirs,
-                                        library_dirs = default_lib_dirs)
-
+                        include_dirs=config.numpy_include_dirs,
+                        library_dirs=default_lib_dirs)
             if not result:
                 raise SystemError,"Failed to generate numpy configuration. "\
                       "See previous error messages for more information."
 
             moredefs = []
+
+            # Normally, isnan and isinf are macro (C99), but some platforms
+            # only have func, or both func and macro version. Check for macro
+            # only, and define replacement ones if not found.
+            # Note: including Python.h is necessary because it modifies some
+            # math.h definitions
+            # XXX: we check those twice... should decouple tests from
+            # config.h/numpyconfig.h to avoid this
+            for f in ["isnan", "isinf", "signbit", "isfinite"]:
+                st = config_cmd.check_decl(f, headers = ["Python.h", "math.h"])
+                if st:
+                    moredefs.append('NPY_HAVE_DECL_%s' % f.upper())
 
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
@@ -353,6 +396,23 @@ def configuration(parent_package='',top_path=None):
     if sys.platform == 'cygwin':
         config.add_data_dir('include/numpy/fenv')
 
+    config.add_extension('_sort',
+                         sources=[join('src','_sortmodule.c.src'),
+                                  generate_config_h,
+                                  generate_numpyconfig_h,
+                                  generate_numpy_api,
+                                  ],
+                         )
+
+    # npymath needs the config.h and numpyconfig.h files to be generated, but
+    # build_clib cannot handle generate_config_h and generate_numpyconfig_h
+    # (don't ask). Because clib are generated before extensions, we have to
+    # explicitly add an extension which has generate_config_h and
+    # generate_numpyconfig_h as sources *before* adding npymath.
+    config.add_library('npymath', 
+            sources=[join('src', 'npy_math.c.src')],
+            depends=[])
+
     config.add_extension('multiarray',
                          sources = [join('src','multiarraymodule.c'),
                                     generate_config_h,
@@ -364,6 +424,7 @@ def configuration(parent_package='',top_path=None):
                                     join('*.py')
                                     ],
                          depends = deps,
+                         libraries=['npymath'],
                          )
 
     config.add_extension('umath',
@@ -374,7 +435,6 @@ def configuration(parent_package='',top_path=None):
                                     generate_ufunc_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
-                                    join('src','umath_funcs_c99.inc.src'),
                                     join('src','umath_funcs.inc.src'),
                                     join('src','umath_loops.inc.src'),
                                     ],
@@ -382,14 +442,7 @@ def configuration(parent_package='',top_path=None):
                                     generate_umath_py,
                                     join(codegen_dir,'generate_ufunc_api.py'),
                                     ]+deps,
-                         )
-
-    config.add_extension('_sort',
-                         sources=[join('src','_sortmodule.c.src'),
-                                  generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api,
-                                  ],
+                         libraries=['npymath'],
                          )
 
     config.add_extension('scalarmath',
@@ -446,70 +499,6 @@ int main(int argc, char *argv[])
 """
 
 import sys
-def generate_testcode(target):
-    if sys.platform == 'win32':
-        target = target.replace('\\','\\\\')
-    testcode = [r'''
-#include <Python.h>
-#include <limits.h>
-#include <stdio.h>
-
-int main(int argc, char **argv)
-{
-
-        FILE *fp;
-
-        fp = fopen("'''+target+'''","w");
-        ''']
-
-    c_size_test = r'''
-#ifndef %(sz)s
-          fprintf(fp,"#define %(sz)s %%d\n", sizeof(%(type)s));
-#else
-          fprintf(fp,"/* #define %(sz)s %%d */\n", %(sz)s);
-#endif
-'''
-    for sz, t in [('SIZEOF_SHORT', 'short'),
-                  ('SIZEOF_INT', 'int'),
-                  ('SIZEOF_LONG', 'long'),
-                  ('SIZEOF_FLOAT', 'float'),
-                  ('SIZEOF_DOUBLE', 'double'),
-                  ('SIZEOF_LONG_DOUBLE', 'long double'),
-                  ('SIZEOF_PY_INTPTR_T', 'Py_intptr_t'),
-                  ]:
-        testcode.append(c_size_test % {'sz' : sz, 'type' : t})
-
-    testcode.append('#ifdef PY_LONG_LONG')
-    testcode.append(c_size_test % {'sz' : 'SIZEOF_LONG_LONG',
-                                   'type' : 'PY_LONG_LONG'})
-    testcode.append(c_size_test % {'sz' : 'SIZEOF_PY_LONG_LONG',
-                                   'type' : 'PY_LONG_LONG'})
-
-
-    testcode.append(r'''
-#else
-        fprintf(fp, "/* PY_LONG_LONG not defined */\n");
-#endif
-#ifndef CHAR_BIT
-          {
-             unsigned char var = 2;
-             int i=0;
-             while (var >= 2) {
-                     var = var << 1;
-                     i++;
-             }
-             fprintf(fp,"#define CHAR_BIT %d\n", i+1);
-          }
-#else
-          fprintf(fp, "/* #define CHAR_BIT %d */\n", CHAR_BIT);
-#endif
-          fclose(fp);
-          return 0;
-}
-''')
-    testcode = '\n'.join(testcode)
-    return testcode
-
 def generate_numpyconfig_code(target):
     """Return the source code as a string of the code to generate the
     numpyconfig header file."""

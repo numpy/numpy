@@ -10,109 +10,6 @@
 
 #define M_LOG10_E       0.434294481903251827651128918916605082294397
 
-/* Useful constants in three precisions.*/
-
-/**begin repeat
- * #c = f, ,l#
- * #C = F, ,L#
- */
-#define NPY_E@c@        2.7182818284590452353602874713526625@C@ /* e */
-#define NPY_LOG2E@c@    1.4426950408889634073599246810018921@C@ /* log_2 e */
-#define NPY_LOG10E@c@   0.4342944819032518276511289189166051@C@ /* log_10 e */
-#define NPY_LOGE2@c@    0.6931471805599453094172321214581766@C@ /* log_e 2 */
-#define NPY_LOGE10@c@   2.3025850929940456840179914546843642@C@ /* log_e 10 */
-#define NPY_PI@c@       3.1415926535897932384626433832795029@C@ /* pi */
-#define NPY_PI_2@c@     1.5707963267948966192313216916397514@C@ /* pi/2 */
-#define NPY_PI_4@c@     0.7853981633974483096156608458198757@C@ /* pi/4 */
-#define NPY_1_PI@c@     0.3183098861837906715377675267450287@C@ /* 1/pi */
-#define NPY_2_PI@c@     0.6366197723675813430755350534900574@C@ /* 2/pi */
-/**end repeat**/
-
-/*
- ******************************************************************************
- **                            FLOAT FUNCTIONS                               **
- ******************************************************************************
- */
-
-/**begin repeat
- * #type = float, double, longdouble#
- * #c = f, ,l#
- * #C = F, ,L#
- */
-
-#define LOGE2    NPY_LOGE2@c@
-#define LOG2E    NPY_LOG2E@c@
-#define RAD2DEG  (180.0@c@/NPY_PI@c@)
-#define DEG2RAD  (NPY_PI@c@/180.0@c@)
-
-static @type@
-rad2deg@c@(@type@ x) {
-    return x*RAD2DEG;
-}
-
-static @type@
-deg2rad@c@(@type@ x) {
-    return x*DEG2RAD;
-}
-
-static @type@
-log2_1p@c@(@type@ x)
-{
-    @type@ u = 1 + x;
-    if (u == 1) {
-        return LOG2E*x;
-    } else {
-        return log2@c@(u) * x / (u - 1);
-    }
-}
-
-static @type@
-exp2_1m@c@(@type@ x)
-{
-    @type@ u = exp@c@(x);
-    if (u == 1.0) {
-        return LOGE2*x;
-    } else if (u - 1 == -1) {
-        return -LOGE2;
-    } else {
-        return (u - 1) * x/log2@c@(u);
-    }
-}
-
-static @type@
-logaddexp@c@(@type@ x, @type@ y)
-{
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + log1p@c@(exp@c@(-tmp));
-    }
-    else {
-        return y + log1p@c@(exp@c@(tmp));
-    }
-}
-
-static @type@
-logaddexp2@c@(@type@ x, @type@ y)
-{
-    const @type@ tmp = x - y;
-    if (tmp > 0) {
-        return x + log2_1p@c@(exp2@c@(-tmp));
-    }
-    else {
-        return y + log2_1p@c@(exp2@c@(tmp));
-    }
-}
-
-#define degrees@c@ rad2deg@c@
-#define radians@c@ deg2rad@c@
-
-#undef LOGE2
-#undef LOG2E
-#undef RAD2DEG
-#undef DEG2RAD
-
-/**end repeat**/
-
 /*
  *****************************************************************************
  **                        PYTHON OBJECT FUNCTIONS                          **
@@ -261,7 +158,7 @@ nc_sqrt@c@(c@typ@ *x, c@typ@ *r)
     if (x->real == 0. && x->imag == 0.)
         *r = *x;
     else {
-        s = sqrt@c@((fabs@c@(x->real) + hypot@c@(x->real,x->imag))/2);
+        s = npy_sqrt@c@((npy_fabs@c@(x->real) + npy_hypot@c@(x->real,x->imag))/2);
         d = x->imag/(2*s);
         if (x->real > 0) {
             r->real = s;
@@ -282,43 +179,43 @@ nc_sqrt@c@(c@typ@ *x, c@typ@ *r)
 static void
 nc_rint@c@(c@typ@ *x, c@typ@ *r)
 {
-    r->real = rint@c@(x->real);
-    r->imag = rint@c@(x->imag);
+    r->real = npy_rint@c@(x->real);
+    r->imag = npy_rint@c@(x->imag);
 }
 
 static void
 nc_log@c@(c@typ@ *x, c@typ@ *r)
 {
-    @typ@ l = hypot@c@(x->real,x->imag);
-    r->imag = atan2@c@(x->imag, x->real);
-    r->real = log@c@(l);
+    @typ@ l = npy_hypot@c@(x->real,x->imag);
+    r->imag = npy_atan2@c@(x->imag, x->real);
+    r->real = npy_log@c@(l);
     return;
 }
 
 static void
 nc_log1p@c@(c@typ@ *x, c@typ@ *r)
 {
-    @typ@ l = hypot@c@(x->real + 1,x->imag);
-    r->imag = atan2@c@(x->imag, x->real + 1);
-    r->real = log@c@(l);
+    @typ@ l = npy_hypot@c@(x->real + 1,x->imag);
+    r->imag = npy_atan2@c@(x->imag, x->real + 1);
+    r->real = npy_log@c@(l);
     return;
 }
 
 static void
 nc_exp@c@(c@typ@ *x, c@typ@ *r)
 {
-    @typ@ a = exp@c@(x->real);
-    r->real = a*cos@c@(x->imag);
-    r->imag = a*sin@c@(x->imag);
+    @typ@ a = npy_exp@c@(x->real);
+    r->real = a*npy_cos@c@(x->imag);
+    r->imag = a*npy_sin@c@(x->imag);
     return;
 }
 
 static void
 nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 {
-    @typ@ a = exp@c@(x->real);
-    r->real = a*cos@c@(x->imag) - 1;
-    r->imag = a*sin@c@(x->imag);
+    @typ@ a = npy_exp@c@(x->real);
+    r->real = a*npy_cos@c@(x->imag) - 1;
+    r->imag = a*npy_sin@c@(x->imag);
     return;
 }
 
@@ -483,8 +380,8 @@ static void
 nc_cos@c@(c@typ@ *x, c@typ@ *r)
 {
     @typ@ xr=x->real, xi=x->imag;
-    r->real = cos@c@(xr)*cosh@c@(xi);
-    r->imag = -sin@c@(xr)*sinh@c@(xi);
+    r->real = npy_cos@c@(xr)*npy_cosh@c@(xi);
+    r->imag = -npy_sin@c@(xr)*npy_sinh@c@(xi);
     return;
 }
 
@@ -492,8 +389,8 @@ static void
 nc_cosh@c@(c@typ@ *x, c@typ@ *r)
 {
     @typ@ xr=x->real, xi=x->imag;
-    r->real = cos@c@(xi)*cosh@c@(xr);
-    r->imag = sin@c@(xi)*sinh@c@(xr);
+    r->real = npy_cos@c@(xi)*npy_cosh@c@(xr);
+    r->imag = npy_sin@c@(xi)*npy_sinh@c@(xr);
     return;
 }
 
@@ -510,8 +407,8 @@ static void
 nc_sin@c@(c@typ@ *x, c@typ@ *r)
 {
     @typ@ xr=x->real, xi=x->imag;
-    r->real = sin@c@(xr)*cosh@c@(xi);
-    r->imag = cos@c@(xr)*sinh@c@(xi);
+    r->real = npy_sin@c@(xr)*npy_cosh@c@(xi);
+    r->imag = npy_cos@c@(xr)*npy_sinh@c@(xi);
     return;
 }
 
@@ -519,8 +416,8 @@ static void
 nc_sinh@c@(c@typ@ *x, c@typ@ *r)
 {
     @typ@ xr=x->real, xi=x->imag;
-    r->real = cos@c@(xi)*sinh@c@(xr);
-    r->imag = sin@c@(xi)*cosh@c@(xr);
+    r->real = npy_cos@c@(xi)*npy_sinh@c@(xr);
+    r->imag = npy_sin@c@(xi)*npy_cosh@c@(xr);
     return;
 }
 
@@ -531,10 +428,10 @@ nc_tan@c@(c@typ@ *x, c@typ@ *r)
     @typ@ rs,is,rc,ic;
     @typ@ d;
     @typ@ xr=x->real, xi=x->imag;
-    sr = sin@c@(xr);
-    cr = cos@c@(xr);
-    shi = sinh@c@(xi);
-    chi = cosh@c@(xi);
+    sr = npy_sin@c@(xr);
+    cr = npy_cos@c@(xr);
+    shi = npy_sinh@c@(xi);
+    chi = npy_cosh@c@(xi);
     rs = sr*chi;
     is = cr*shi;
     rc = cr*chi;
@@ -552,10 +449,10 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
     @typ@ rs,is,rc,ic;
     @typ@ d;
     @typ@ xr=x->real, xi=x->imag;
-    si = sin@c@(xi);
-    ci = cos@c@(xi);
-    shr = sinh@c@(xr);
-    chr = cosh@c@(xr);
+    si = npy_sin@c@(xi);
+    ci = npy_cos@c@(xi);
+    shr = npy_sinh@c@(xr);
+    chr = npy_cosh@c@(xr);
     rs = ci*shr;
     is = si*chr;
     rc = ci*chr;

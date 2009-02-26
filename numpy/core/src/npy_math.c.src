@@ -2,7 +2,8 @@
  * vim:syntax=c
  * A small module to implement missing C99 math capabilities required by numpy
  *
- * Please keep this independant of python !
+ * Please keep this independant of python ! Only basic types (npy_longdouble)
+ * can be used, otherwise, pure C, without any use of Python facilities
  *
  * How to add a function to this section
  * -------------------------------------
@@ -38,15 +39,14 @@
  *    Ok:
  *        #ifdef SYMBOL_DEFINED_WEIRD_PLATFORM
  *        double exp(double);
- *        #endif 
+ *        #endif
  */
 
-/*
- *****************************************************************************
- **                     DISTRO VOODOO                                       **
- *****************************************************************************
- */
+#include <Python.h>
+#include <math.h>
 
+#include "config.h"
+#include "numpy/npy_math.h"
 
 /*
  *****************************************************************************
@@ -56,7 +56,7 @@
 
 /* Original code by Konrad Hinsen.  */
 #ifndef HAVE_EXPM1
-double expm1(double x)
+static double expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -70,7 +70,7 @@ double expm1(double x)
 #endif
 
 #ifndef HAVE_LOG1P
-double log1p(double x)
+static double log1p(double x)
 {
     double u = 1. + x;
     if (u == 1.0) {
@@ -82,7 +82,7 @@ double log1p(double x)
 #endif
 
 #ifndef HAVE_HYPOT
-double hypot(double x, double y)
+static double hypot(double x, double y)
 {
     double yx;
 
@@ -103,14 +103,14 @@ double hypot(double x, double y)
 #endif
 
 #ifndef HAVE_ACOSH
-double acosh(double x)
+static double acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 #endif
 
 #ifndef HAVE_ASINH
-double asinh(double xx)
+static double asinh(double xx)
 {
     double x, d;
     int sign;
@@ -132,7 +132,7 @@ double asinh(double xx)
 #endif
 
 #ifndef HAVE_ATANH
-double atanh(double x)
+static double atanh(double x)
 {
     if (x > 0) {
         return -0.5*log1p(-2.0*x/(1.0 + x));
@@ -144,7 +144,7 @@ double atanh(double x)
 #endif
 
 #ifndef HAVE_RINT
-double rint(double x)
+static double rint(double x)
 {
     double y, r;
 
@@ -166,7 +166,7 @@ double rint(double x)
 #endif
 
 #ifndef HAVE_TRUNC
-double trunc(double x)
+static double trunc(double x)
 {
     return x < 0 ? ceil(x) : floor(x);
 }
@@ -174,7 +174,7 @@ double trunc(double x)
 
 #ifndef HAVE_EXP2
 #define LOG2 0.69314718055994530943
-double exp2(double x)
+static double exp2(double x)
 {
     return exp(LOG2*x);
 }
@@ -183,7 +183,7 @@ double exp2(double x)
 
 #ifndef HAVE_LOG2
 #define INVLOG2 1.4426950408889634074
-double log2(double x)
+static double log2(double x)
 {
     return INVLOG2*log(x);
 }
@@ -195,35 +195,17 @@ double log2(double x)
  **                     IEEE 754 FPU HANDLING                               **
  *****************************************************************************
  */
-#if !defined(HAVE_DECL_ISNAN)
-    # define isnan(x) ((x) != (x))
-#endif
-
-/* VS 2003 with /Ox optimizes (x)-(x) to 0, which is not IEEE compliant. So we
- * force (x) + (-x), which seems to work. */
-#if !defined(HAVE_DECL_ISFINITE)
-    # define isfinite(x) !isnan((x) + (-x))
-#endif
-
-#if !defined(HAVE_DECL_ISINF)
-#define isinf(x) (!isfinite(x) && !isnan(x))
-#endif
-
 #if !defined(HAVE_DECL_SIGNBIT)
-    #include "_signbit.c"
-    # define signbit(x) \
-              (sizeof (x) == sizeof (long double) ? signbit_ld (x) \
-               : sizeof (x) == sizeof (double) ? signbit_d (x) \
-               : signbit_f (x))
+#include "_signbit.c"
 
-static int signbit_f (float x)
+int _npy_signbit_f (float x)
 {
-    return signbit_d((double)x);
+    return _npy_signbit_d((double)x);
 }
 
-static int signbit_ld (long double x)
+int _npy_signbit_ld (long double x)
 {
-    return signbit_d((double)x);
+    return _npy_signbit_d((double)x);
 }
 #endif
 
@@ -248,8 +230,8 @@ static int signbit_ld (long double x)
  */
 
 /**begin repeat
- * #type = longdouble, float#
- * #TYPE = LONGDOUBLE, FLOAT#
+ * #type = npy_longdouble, float#
+ * #TYPE = NPY_LONGDOUBLE, FLOAT#
  * #c = l,f#
  * #C = L,F#
  */
@@ -265,7 +247,7 @@ static int signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-@type@ @kind@@c@(@type@ x)
+static @type@ @kind@@c@(@type@ x)
 {
     return (@type@) @kind@((double)x);
 }
@@ -281,7 +263,7 @@ static int signbit_ld (long double x)
 #undef @kind@@c@
 #endif
 #ifndef HAVE_@KIND@@C@
-@type@ @kind@@c@(@type@ x, @type@ y)
+static @type@ @kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) @kind@((double)x, (double) y);
 }
@@ -292,7 +274,7 @@ static int signbit_ld (long double x)
 #undef modf@c@
 #endif
 #ifndef HAVE_MODF@C@
-@type@ modf@c@(@type@ x, @type@ *iptr)
+static @type@ modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
     double y = modf((double)x, &niptr);
@@ -300,5 +282,142 @@ static int signbit_ld (long double x)
     return (@type@) y;
 }
 #endif
+
+/**end repeat**/
+
+/* 
+ * Useful constants in three precisions: 
+ * XXX: those should really be in the header
+ */
+
+/**begin repeat
+ * #c = f, ,l#
+ * #C = F, ,L#
+ */
+#define NPY_E@c@        2.7182818284590452353602874713526625@C@ /* e */
+#define NPY_LOG2E@c@    1.4426950408889634073599246810018921@C@ /* log_2 e */
+#define NPY_LOG10E@c@   0.4342944819032518276511289189166051@C@ /* log_10 e */
+#define NPY_LOGE2@c@    0.6931471805599453094172321214581766@C@ /* log_e 2 */
+#define NPY_LOGE10@c@   2.3025850929940456840179914546843642@C@ /* log_e 10 */
+#define NPY_PI@c@       3.1415926535897932384626433832795029@C@ /* pi */
+#define NPY_PI_2@c@     1.5707963267948966192313216916397514@C@ /* pi/2 */
+#define NPY_PI_4@c@     0.7853981633974483096156608458198757@C@ /* pi/4 */
+#define NPY_1_PI@c@     0.3183098861837906715377675267450287@C@ /* 1/pi */
+#define NPY_2_PI@c@     0.6366197723675813430755350534900574@C@ /* 2/pi */
+/**end repeat**/
+
+/*
+ * Non standard functions
+ */
+
+/**begin repeat
+ * #type = float, double, npy_longdouble#
+ * #c = f, ,l#
+ * #C = F, ,L#
+ */
+
+#define LOGE2    NPY_LOGE2@c@
+#define LOG2E    NPY_LOG2E@c@
+#define RAD2DEG  (180.0@c@/NPY_PI@c@)
+#define DEG2RAD  (NPY_PI@c@/180.0@c@)
+
+static @type@ rad2deg@c@(@type@ x) 
+{
+    return x*RAD2DEG;
+}
+
+static @type@ deg2rad@c@(@type@ x) 
+{
+    return x*DEG2RAD;
+}
+
+static @type@ log2_1p@c@(@type@ x)
+{
+    @type@ u = 1 + x;
+    if (u == 1) {
+        return LOG2E*x;
+    } else {
+        return npy_log2@c@(u) * x / (u - 1);
+    }
+}
+
+static @type@ exp2_1m@c@(@type@ x)
+{
+    @type@ u = exp@c@(x);
+    if (u == 1.0) {
+        return LOGE2*x;
+    } else if (u - 1 == -1) {
+        return -LOGE2;
+    } else {
+        return (u - 1) * x/npy_log2@c@(u);
+    }
+}
+
+static @type@ logaddexp@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + npy_log1p@c@(npy_exp@c@(-tmp));
+    }
+    else {
+        return y + npy_log1p@c@(npy_exp@c@(tmp));
+    }
+}
+
+static @type@ logaddexp2@c@(@type@ x, @type@ y)
+{
+    const @type@ tmp = x - y;
+    if (tmp > 0) {
+        return x + log2_1p@c@(npy_exp2@c@(-tmp));
+    }
+    else {
+        return y + log2_1p@c@(npy_exp2@c@(tmp));
+    }
+}
+
+#define degrees@c@ rad2deg@c@
+#define radians@c@ deg2rad@c@
+
+#undef LOGE2
+#undef LOG2E
+#undef RAD2DEG
+#undef DEG2RAD
+
+/**end repeat**/
+
+/*
+ * Decorate all the functions: those are the public ones
+ */
+
+/**begin repeat
+ * #type = npy_longdouble,double,float#
+ * #c = l,,f#
+ */
+/**begin repeat1
+ * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2,
+ *         rad2deg,deg2rad,exp2_1m#
+ */
+
+@type@ npy_@kind@@c@(@type@ x)
+{
+    return @kind@@c@(x);
+}
+
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = atan2,hypot,pow,fmod,logaddexp,logaddexp2#
+ */
+@type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return @kind@@c@(x, y);
+}
+/**end repeat1**/
+
+@type@ npy_modf@c@(@type@ x, @type@ *iptr)
+{
+    return modf@c@(x, iptr);
+}
 
 /**end repeat**/

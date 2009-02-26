@@ -131,7 +131,7 @@ numpyconfig_sym.append(('MATHLIB', ','.join(mlib)))
 #----------------------------------
 # Function to check:
 mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
-          'isnan', 'isinf', 'rint', 'trunc')
+          'rint', 'trunc')
 
 # Set value to 1 for each defined function (in math lib)
 mfuncs_defined = dict([(f, 0) for f in mfuncs])
@@ -185,7 +185,11 @@ for f in ["isnan", "isinf", "signbit", "isfinite"]:
 #include <Python.h>
 #include <math.h>
 """
-    config.CheckDeclaration(f, includes=includes)
+    st = config.CheckDeclaration(f, includes=includes)
+    if st:
+	numpyconfig_sym.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), 
+		'#define NPY_HAVE_DECL_%s' % f.upper()))
+        
 
 #-------------------------------------------------------
 # Define the function PyOS_ascii_strod if not available
@@ -256,7 +260,6 @@ env.Append(BUILDERS = {'GenerateMultiarrayApi' : array_api_gen_bld,
 # Generate generated code
 #------------------------
 scalartypes_src = env.GenerateFromTemplate(pjoin('src', 'scalartypes.inc.src'))
-umath_funcs_c99_src = env.GenerateFromTemplate(pjoin('src', 'umath_funcs_c99.inc.src'))
 umath_funcs_src = env.GenerateFromTemplate(pjoin('src', 'umath_funcs.inc.src'))
 umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath_loops.inc.src'))
 arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.inc.src'))
@@ -275,6 +278,12 @@ ufunc_api = env.GenerateUfuncApi('ufunc_api',
                     pjoin('code_generators', 'ufunc_api_order.txt'))
 
 env.Prepend(CPPPATH = ['include', '.'])
+
+# npymath core lib
+npymath_src = env.GenerateFromTemplate(pjoin('src', 'npy_math.c.src'))
+env.DistutilsStaticExtLibrary("npymath", npymath_src)
+env.Prepend(LIBS=["npymath"])
+env.Prepend(LIBPATH=["."])
 
 #-----------------
 # Build multiarray

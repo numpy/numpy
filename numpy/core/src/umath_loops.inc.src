@@ -860,7 +860,7 @@ static void
 
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit#
- * #func = isnan, isinf, isfinite, signbit#
+ * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit#
  **/
 static void
 @TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
@@ -883,7 +883,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = (in1 @OP@ in2 || isnan(in1)) ? in1 : in2;
+        *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
     }
 }
 /**end repeat1**/
@@ -899,7 +899,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = (in1 @OP@ in2 || isnan(in2)) ? in1 : in2;
+        *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
     }
 }
 /**end repeat1**/
@@ -1173,7 +1173,7 @@ C@TYPE@_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
 
 /**begin repeat1
  * #kind = isnan, isinf, isfinite#
- * #func = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
  * #OP = ||, ||, &&#
  **/
 static void
@@ -1272,7 +1272,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (@OP@(in1r, in1i, in2r, in2i) || isnan(in1r) || isnan(in1i)) {
+        if (@OP@(in1r, in1i, in2r, in2i) || npy_isnan(in1r) || npy_isnan(in1i)) {
             ((@type@ *)op1)[0] = in1r;
             ((@type@ *)op1)[1] = in1i;
         }
@@ -1296,7 +1296,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        if (@OP@(in1r, in1i, in2r, in2i) || isnan(in2r) || isnan(in2i)) {
+        if (@OP@(in1r, in1i, in2r, in2i) || npy_isnan(in2r) || npy_isnan(in2i)) {
             ((@type@ *)op1)[0] = in1r;
             ((@type@ *)op1)[1] = in1i;
         }
