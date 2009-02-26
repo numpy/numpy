@@ -153,7 +153,8 @@ def check_types(config, ext, build_dir):
     for type in ('short', 'int', 'long', 'float', 'double', 'long double'):
         res = config_cmd.check_type_size(type)
         if res >= 0:
-            private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
+            if not type == 'long double':
+                private_defines.append(('SIZEOF_%s' % sym2def(type), '%d' % res))
             public_defines.append(('NPY_SIZEOF_%s' % sym2def(type), '%d' % res))
         else:
             raise SystemError("Checking sizeof (%s) failed !" % type)
@@ -179,7 +180,7 @@ def check_types(config, ext, build_dir):
 
         res = config_cmd.check_type_size('long long')
         if res >= 0:
-            private_defines.append(('SIZEOF_%s' % sym2def('long long'), '%d' % res))
+            #private_defines.append(('SIZEOF_%s' % sym2def('long long'), '%d' % res))
             public_defines.append(('NPY_SIZEOF_%s' % sym2def('long long'), '%d' % res))
         else:
             raise SystemError("Checking sizeof (%s) failed !" % 'long long')
