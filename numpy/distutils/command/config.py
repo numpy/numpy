@@ -165,7 +165,7 @@ int main()
 
         return self.try_compile(body, headers, include_dirs)
 
-    def check_type_size(self, type_name, headers=None, include_dirs=None, library_dirs=None):
+    def check_type_size(self, type_name, headers=None, include_dirs=None, library_dirs=None, expected=None):
         """Check size of a given type."""
         self._check_compiler()
 
@@ -184,6 +184,27 @@ int main ()
         self._compile(body % {'type': type_name},
                 headers, include_dirs, 'c')
         self._clean()
+
+        if expected:
+            body = r"""
+typedef %(type)s npy_check_sizeof_type;
+int main ()
+{
+    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) == %(size)s)];
+    test_array [0] = 0
+
+    ;
+    return 0;
+}
+"""
+            for size in expected:
+                try:
+                    self._compile(body % {'type': type_name, 'size': size},
+                            headers, include_dirs, 'c')
+                    self._clean()
+                    return size
+                except CompileError:
+                    pass
 
         # this fails to *compile* if size > sizeof(type)
         body = r"""
