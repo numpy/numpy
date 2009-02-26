@@ -21,6 +21,7 @@ import copy
 class CallOnceOnly(object):
     def __init__(self):
         self._check_types = None
+        self._check_ieee_macros = None
 
     def check_types(self, *a, **kw):
         if self._check_types is None:
@@ -28,6 +29,14 @@ class CallOnceOnly(object):
             self._check_types = _pik.dumps(out)
         else:
             out = copy.deepcopy(_pik.loads(self._check_types))
+        return out
+
+    def check_ieee_macros(self, *a, **kw):
+        if self._check_ieee_macros is None:
+            out = check_ieee_macros(*a, **kw)
+            self._check_ieee_macros = _pik.dumps(out)
+        else:
+            out = copy.deepcopy(_pik.loads(self._check_ieee_macros))
         return out
 
 def pythonlib_dir():
@@ -147,6 +156,13 @@ def check_math_capabilities(config, moredefs, mathlibs):
         fns = [f + prec for f in c99_funcs]
         check_funcs(fns)
 
+def fname2def(name):
+    return "HAVE_%s" % name.upper()
+
+def check_ieee_macros(config):
+    priv = []
+    pub = []
+
     # Normally, isnan and isinf are macro (C99), but some platforms only have
     # func, or both func and macro version. Check for macro only, and define
     # replacement ones if not found.
@@ -155,10 +171,10 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
         st = config.check_decl(f, headers = ["Python.h", "math.h"])
         if st:
-            moredefs.append(fname2def("decl_%s" % f))
+            priv.append(fname2def("decl_%s" % f))
+            pub.append('NPY_%s' % fname2def("decl_%s" % f))
 
-def fname2def(name):
-    return "HAVE_%s" % name.upper()
+    return priv, pub
 
 def check_types(config_cmd, ext, build_dir):
     private_defines = []
@@ -271,6 +287,7 @@ def configuration(parent_package='',top_path=None):
             moredefs.append(('MATHLIB',','.join(mathlibs)))
 
             check_math_capabilities(config_cmd, moredefs, mathlibs)
+            moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
 
             # Signal check
             if is_npy_no_signal():
@@ -338,17 +355,7 @@ def configuration(parent_package='',top_path=None):
             else:
                 moredefs.append(('NPY_NO_SMP', 0))
 
-            # Normally, isnan and isinf are macro (C99), but some platforms
-            # only have func, or both func and macro version. Check for macro
-            # only, and define replacement ones if not found.
-            # Note: including Python.h is necessary because it modifies some
-            # math.h definitions
-            # XXX: we check those twice... should decouple tests from
-            # config.h/numpyconfig.h to avoid this
-            for f in ["isnan", "isinf", "signbit", "isfinite"]:
-                st = config_cmd.check_decl(f, headers = ["Python.h", "math.h"])
-                if st:
-                    moredefs.append('NPY_HAVE_DECL_%s' % f.upper())
+            moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
 
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):
