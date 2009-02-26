@@ -136,11 +136,9 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if st:
             moredefs.append(name_to_defsymb("decl_%s" % f))
 
-def check_types(config, ext, build_dir):
+def check_types(config_cmd, ext, build_dir):
     private_defines = []
     public_defines = []
-
-    config_cmd = config.get_config_cmd()
 
     # Check we have the python header (-dev* packages on Linux)
     result = config_cmd.check_header('Python.h')
@@ -240,7 +238,7 @@ def configuration(parent_package='',top_path=None):
             log.info('Generating %s',target)
 
             # Check sizeof
-            moredefs, ignored = check_types(config, ext, build_dir)
+            moredefs, ignored = check_types(config_cmd, ext, build_dir)
 
             # Check math library and C99 math funcs availability
             mathlibs = check_mathlib(config_cmd)
@@ -304,7 +302,7 @@ def configuration(parent_package='',top_path=None):
             log.info('Generating %s',target)
 
             # Check sizeof
-            ignored, moredefs = check_types(config, ext, build_dir)
+            ignored, moredefs = check_types(config_cmd, ext, build_dir)
 
             if is_npy_no_signal():
                 moredefs.append(('NPY_NO_SIGNAL', 1))
