@@ -167,78 +167,65 @@ int main()
 
     def check_type_size(self, type_name, headers=None, include_dirs=None, library_dirs=None):
         """Check size of a given type."""
-        # XXX: should also implement the cross-compiling version (using binary
-        # search + array indexing, see AC_CHECK_SIZEOF).
         self._check_compiler()
 
-        # We declare the functions to avoid warnings with -Wstrict-prototypes
+        # First check the type can be compiled
         body = r"""
-typedef %(type)s _dist_type_sizeof_;
-
-static long int longval (void)
+typedef %(type)s npy_check_sizeof_type;
+int main ()
 {
-    return (long int) (sizeof (_dist_type_sizeof_));
-}
-static unsigned long int ulongval (void)
-{
-    return (long int) (sizeof (_dist_type_sizeof_));
-}
+    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) >= 0)];
+    test_array [0] = 0
 
-#include <stdio.h>
-#include <stdlib.h>
-int
-main (void)
-{
-
-    if (((long int) (sizeof (_dist_type_sizeof_))) < 0) {
-        long int i = longval ();
-        if (i != ((long int) (sizeof (_dist_type_sizeof_))))
-            return 1;
-        printf("%%ld\n", i);
-    } else {
-        unsigned long int i = ulongval ();
-        if (i != ((long int) (sizeof (_dist_type_sizeof_))))
-            return 1;
-        printf("%%lu\n", i);
-    }
-
+    ;
     return 0;
 }
-""" % {'type': type_name}
-
-        # XXX: this should be refactored (same code as get_output)
-        exitcode, output = 255, ''
-        size = None
-        try:
-            src, obj, exe = self._link(body, headers, include_dirs,
-                                       [], library_dirs, 'c')
-            #exe = os.path.join('.', exe)
-            exitstatus, output = exec_command(exe, execute_in='.')
-            if hasattr(os, 'WEXITSTATUS'):
-                exitcode = os.WEXITSTATUS(exitstatus)
-                if os.WIFSIGNALED(exitstatus):
-                    sig = os.WTERMSIG(exitstatus)
-                    log.error('subprocess exited with signal %d' % (sig,))
-                    if sig == signal.SIGINT:
-                        # control-C
-                        raise KeyboardInterrupt
-            else:
-                exitcode = exitstatus
-            log.info("success!")
-
-            try:
-                size = int(output)
-            except ValueError:
-                log.error("Unexpected output %s" % output)
-                log.info("failure")
-        except (CompileError, LinkError):
-            log.info("failure.")
-
+"""
+        self._compile(body % {'type': type_name},
+                headers, include_dirs, 'c')
         self._clean()
-        if size is not None:
-            return size
-        else:
-            return -1
+
+        # this fails to *compile* if size > sizeof(type)
+        body = r"""
+typedef %(type)s npy_check_sizeof_type;
+int main ()
+{
+    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) <= %(size)s)];
+    test_array [0] = 0
+
+    ;
+    return 0;
+}
+"""
+
+        # The principle is simple: we first find low and high bounds of size
+        # for the type, where low/high are looked up on a log scale. Then, we
+        # do a binary search to find the exact size between low and high
+        low = 0
+        mid = 0
+        while True:
+            try:
+                self._compile(body % {'type': type_name, 'size': mid},
+                        headers, include_dirs, 'c')
+                self._clean()
+                break
+            except CompileError:
+                #log.info("failure to test for bound %d" % mid)
+                low = mid + 1
+                mid = 2 * mid + 1
+
+        high = mid
+        # Binary search:
+        while low != high:
+            mid = (high - low) / 2 + low
+            try:
+                self._compile(body % {'type': type_name, 'size': mid},
+                        headers, include_dirs, 'c')
+                self._clean()
+                high = mid
+            except CompileError:
+                low = mid + 1
+        return low
 
     def check_func(self, func,
                    headers=None, include_dirs=None,
