@@ -282,22 +282,22 @@ main (void)
 
         Arguments
         ---------
-
-            funcs: seq
-                list of functions to test
-            include_dirs : seq
-                list of header paths
-            libraries : seq
-                list of libraries to link the code snippet to
-            libraru_dirs : seq
-                list of library paths
-            decl : dict
-                for every (key, value), the declaration in the value will be
-                used for function in key. If a function is not in the
-                dictionay, no declaration will be used.
-            call : dict
-                for every item (f, value), if the value is True, a call will be
-                done to the function f"""
+        funcs: seq
+            list of functions to test
+        include_dirs : seq
+            list of header paths
+        libraries : seq
+            list of libraries to link the code snippet to
+        libraru_dirs : seq
+            list of library paths
+        decl : dict
+            for every (key, value), the declaration in the value will be
+            used for function in key. If a function is not in the
+            dictionay, no declaration will be used.
+        call : dict
+            for every item (f, value), if the value is True, a call will be
+            done to the function f.
+        """
         self._check_compiler()
         body = []
         if decl:
