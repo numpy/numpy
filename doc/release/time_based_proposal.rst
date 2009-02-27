@@ -34,9 +34,11 @@ for the cycle:
 
         * Development: anything can happen (by anything, we mean as currently
         done). The focus is on new features, refactoring, etc...
+
         * Beta: no new features. No bug fixing which requires heavy changes.
         regression fixes which appear on supported platforms and were not
         caught earlier.
+
         * Polish/RC: only docstring changes and blocker regressions are allowed.
 
 The schedule would be as follows:
@@ -45,31 +47,53 @@ The schedule would be as follows:
         | Week |     1.3.0       |      1.4.0      |  Release time    |
         +======+=================+=================+==================+
         |  1   |  Development    |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  2   |  Development    |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  3   |  Development    |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  4   |  Development    |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  5   |  Development    |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  6   |  Development    |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  7   |  Beta           |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  8   |  Beta           |        -        |                  |
+        +------+-----------------+-----------------+------------------+
         |  9   |  Beta           |        -        |  1.3.0 released  |
+        +------+-----------------+-----------------+------------------+
         |  10  |  Polish         |   Development   |                  |
+        +------+-----------------+-----------------+------------------+
         |  11  |  Polish         |   Development   |                  |
+        +------+-----------------+-----------------+------------------+
         |  12  |  Polish         |   Development   |                  |
+        +------+-----------------+-----------------+------------------+
         |  13  |  Polish         |   Development   |                  |
+        +------+-----------------+-----------------+------------------+
         |  14  |                 |   Development   |                  |
+        +------+-----------------+-----------------+------------------+
         |  15  |                 |   Development   |                  |
+        +------+-----------------+-----------------+------------------+
         |  16  |                 |   Beta          |                  |
+        +------+-----------------+-----------------+------------------+
         |  17  |                 |   Beta          |                  |
+        +------+-----------------+-----------------+------------------+
         |  18  |                 |   Beta          |  1.4.0 released  |
         +------+-----------------+-----------------+------------------+
 
 Each stage can be defined as follows:
 
-                     Development  Beta            Polish
-  Python Frozen:         -        slushy          Y
-  Docstring Frozen:      -        slushy          thicker slush
-  C code Frozen:         -        thicker slush   thicker slush
+        +------------------+-------------+----------------+----------------+
+        |                  | Development |      Beta      |    Polish      |
+        +==================+=============+================+================+
+        | Python Frozen    |      -      |     slushy     |       Y        |
+        +------------------+-------------+----------------+----------------+
+        | Docstring Frozen |      -      |     slushy     |  thicker slush |
+        +------------------+-------------+----------------+----------------+
+        | C code Frozen    |      -      | thicker slush  |  thicker slush |
+        +------------------+-------------+----------------+----------------+
 
 Terminology:
 
@@ -83,10 +107,8 @@ Terminology:
 
 The different frozen states are intended to be gradients. The exact meaning is
 decided by the release manager: he has the last word on what's go in, what
-doesn't.
-
-The proposed schedule means that there would be at most 4 months between
-putting code into the source code repository and being released.
+doesn't.  The proposed schedule means that there would be at most 4 months
+between putting code into the source code repository and being released.
 
 Release team
 ------------
