@@ -4,11 +4,11 @@ Introduction
 ============
 
 This document proposes some enhancements for numpy and scipy releases.
-Successive numpy and scipy releases are too far appart from a time point of
+Successive numpy and scipy releases are too far apart from a time point of
 view - some people who are in the numpy release team feel that it cannot
 improve without a bit more formal release process. The main proposal is to
 follow a time-based release, with expected dates for code freeze, beta and rc.
-The goal is two folds: make release more predictible, and move the code forward.
+The goal is two folds: make release more predictable, and move the code forward.
 
 Rationale
 =========
