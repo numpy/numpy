@@ -94,3 +94,13 @@ Release team
 For every release, there would be at least one release manager. We propose to
 rotate the release manager: rotation means it is not always the same person
 doing the dirty job, and it should also keep the release manager honest.
+
+References
+==========
+
+        * Proposed schedule for Gnome from Havoc Pennington (one of the core
+          GTK and Gnome manager):
+          http://mail.gnome.org/archives/gnome-hackers/2002-June/msg00041.html
+          The proposed schedule is heavily based on this email
+
+        * http://live.gnome.org/ReleasePlanning/Freezes
