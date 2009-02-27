@@ -28,7 +28,7 @@ Proposal
 Time schedule
 -------------
 
-The proposed schedule is to release numpy every 3 months - the exact period can
+The proposed schedule is to release numpy every 9 weeks - the exact period can
 be tweaked if it ends up not working as expected. There will be several stages
 for the cycle:
 
@@ -108,7 +108,7 @@ Terminology:
 
 The different frozen states are intended to be gradients. The exact meaning is
 decided by the release manager: he has the last word on what's go in, what
-doesn't.  The proposed schedule means that there would be at most 4 months
+doesn't.  The proposed schedule means that there would be at most 12 weeks
 between putting code into the source code repository and being released.
 
 Release team
