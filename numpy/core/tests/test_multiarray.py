@@ -560,7 +560,6 @@ class TestFancyIndexing(TestCase):
 
 
 class TestStringCompare(TestCase):
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_string(self):
         g1 = array(["This","is","example"])
         g2 = array(["This","was","example"])
@@ -571,7 +570,6 @@ class TestStringCompare(TestCase):
         assert_array_equal(g1 < g2, [g1[i] < g2[i] for i in [0,1,2]])
         assert_array_equal(g1 > g2, [g1[i] > g2[i] for i in [0,1,2]])
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_mixed(self):
         g1 = array(["spam","spa","spammer","and eggs"])
         g2 = "spam"
@@ -583,7 +581,6 @@ class TestStringCompare(TestCase):
         assert_array_equal(g1 >= g2, [x >= g2 for x in g1])
 
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_unicode(self):
         g1 = array([u"This",u"is",u"example"])
         g2 = array([u"This",u"was",u"example"])
