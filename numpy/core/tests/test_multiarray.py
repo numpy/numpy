@@ -7,10 +7,6 @@ from numpy.core import *
 
 from test_print import in_foreign_locale
 
-def iswin64():
-    import platform
-    return platform.architecture()[0] == "64bit" and sys.platform == "win32"
-
 class TestFlags(TestCase):
     def setUp(self):
         self.a = arange(10)
