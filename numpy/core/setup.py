@@ -89,7 +89,7 @@ def win32_checks(deflist):
     # On win32, force long double format string to be 'g', not
     # 'Lg', since the MS runtime does not support long double whose
     # size is > sizeof(double)
-    if a =="Intel":
+    if a == "Intel" or a == "AMD64":
         deflist.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
 
 def check_math_capabilities(config, moredefs, mathlibs):
