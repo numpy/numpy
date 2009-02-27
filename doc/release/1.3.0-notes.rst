@@ -4,28 +4,18 @@ NumPy 1.3.0 Release Notes
 
 This minor release comes almost four months after the 1.1.0 release.
 
-Changes
--------
-
-Generalized ufuncs
-~~~~~~~~~~~~~~~~~~
-
-http://projects.scipy.org/scipy/numpy/ticket/887
-
-Refactoring numpy.core math configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/math_config_clean.txt
-
-Improvements to build warnings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/warnfix.txt
+New features
+============
 
 Python 2.6 support
 ~~~~~~~~~~~~~~~~~~
 
 http://www.python.org/dev/peps/pep-0361/
+
+Generalized ufuncs
+~~~~~~~~~~~~~~~~~~
+
+http://projects.scipy.org/scipy/numpy/ticket/887
 
 Histogram
 ~~~~~~~~~
@@ -39,3 +29,45 @@ with outliers handling. The main changes concern
 
 The previous behavior is still accessible using `new=False`, but is scheduled
 to be deprecated in the next release (1.3).
+
+Masked arrays
+~~~~~~~~~~~~~
+
+TODO
+
+gfortran support on windows (32 and 64 bits)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Gfortran can now be used as a fortran compiler for numpy, even when the C
+compiler is Visual Studio.
+
+Documentation changes
+=====================
+
+Internal changes
+================
+
+Refactoring numpy.core math configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This should make the porting to new platforms easier, and more robust. In
+particular, the configuration stage does not need to execute any code on the
+target platform, which is a first step toward cross-compilation.
+
+http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/math_config_clean.txt
+
+Improvements to build warnings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Numpy can now build with -W -Wall without warnings.
+
+http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/warnfix.txt
+
+Separate core math library
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The core math functions (sin, cos, etc... for basic C types) have been put into
+a separate library. The library includes platform-specific fixes for various
+maths functions, such as using those versions should be more robust than using
+your platform functions directly. The API for existing functions is exactly the
+same as the C99 math functions API, except they are prefixed with npy_.
