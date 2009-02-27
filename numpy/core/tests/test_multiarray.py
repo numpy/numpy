@@ -800,7 +800,6 @@ class TestIO(object):
             os.unlink(self.filename)
             #tmp_file.close()
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_roundtrip_file(self):
         f = open(self.filename, 'wb')
         self.x.tofile(f)
@@ -812,13 +811,11 @@ class TestIO(object):
         assert_array_equal(y, self.x.flat)
         os.unlink(self.filename)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_roundtrip_filename(self):
         self.x.tofile(self.filename)
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_roundtrip_binary_str(self):
         s = self.x.tostring()
         y = np.fromstring(s, dtype=self.dtype)
@@ -828,7 +825,6 @@ class TestIO(object):
         y = np.fromstring(s, dtype=self.dtype)
         assert_array_equal(y, self.x.flatten('F'))
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_roundtrip_str(self):
         x = self.x.real.ravel()
         s = "@".join(map(str, x))
@@ -838,14 +834,12 @@ class TestIO(object):
         assert_array_equal(x[nan_mask], y[nan_mask])
         assert_array_almost_equal(x[~nan_mask], y[~nan_mask], decimal=5)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_roundtrip_repr(self):
         x = self.x.real.ravel()
         s = "@".join(map(repr, x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def _check_from(self, s, value, **kw):
         y = np.fromstring(s, **kw)
         assert_array_equal(y, value)
@@ -856,66 +850,53 @@ class TestIO(object):
         y = np.fromfile(self.filename, **kw)
         assert_array_equal(y, value)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_nan(self):
         self._check_from("nan +nan -nan NaN nan(foo) +NaN(BAR) -NAN(q_u_u_x_)",
                          [nan, nan, nan, nan, nan, nan, nan],
                          sep=' ')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_inf(self):
         self._check_from("inf +inf -inf infinity -Infinity iNfInItY -inF",
                          [inf, inf, -inf, inf, -inf, inf, -inf], sep=' ')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_numbers(self):
         self._check_from("1.234 -1.234 .3 .3e55 -123133.1231e+133",
                          [1.234, -1.234, .3, .3e55, -123133.1231e+133], sep=' ')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_binary(self):
         self._check_from('\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@',
                          array([1,2,3,4]),
                          dtype='<f4')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_string(self):
         self._check_from('1,2,3,4', [1., 2., 3., 4.], sep=',')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_counted_string(self):
         self._check_from('1,2,3,4', [1., 2., 3., 4.], count=4, sep=',')
         self._check_from('1,2,3,4', [1., 2., 3.], count=3, sep=',')
         self._check_from('1,2,3,4', [1., 2., 3., 4.], count=-1, sep=',')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_string_with_ws(self):
         self._check_from('1 2  3     4   ', [1, 2, 3, 4], dtype=int, sep=' ')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_counted_string_with_ws(self):
         self._check_from('1 2  3     4   ', [1,2,3], count=3, dtype=int,
                          sep=' ')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_ascii(self):
         self._check_from('1 , 2 , 3 , 4', [1.,2.,3.,4.], sep=',')
         self._check_from('1,2,3,4', [1.,2.,3.,4.], dtype=float, sep=',')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_malformed(self):
         self._check_from('1.234 1,234', [1.234, 1.], sep=' ')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_long_sep(self):
         self._check_from('1_x_3_x_4_x_5', [1,3,4,5], sep='_x_')
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_dtype(self):
         v = np.array([1,2,3,4], dtype=np.int_)
         self._check_from('1,2,3,4', v, sep=',', dtype=np.int_)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_tofile_sep(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         f = open(self.filename, 'w')
@@ -927,7 +908,6 @@ class TestIO(object):
         assert_equal(s, '1.51,2.0,3.51,4.0')
         os.unlink(self.filename)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_tofile_format(self):
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         f = open(self.filename, 'w')
@@ -942,7 +922,6 @@ class TestIO(object):
     def _run_in_foreign_locale(self, func, fail=False):
         np.testing.dec.knownfailureif(fail)(func)(self)
 
-    @dec.knownfailureif(iswin64(), "Crash on win64")
     def test_locale(self):
         yield self._run_in_foreign_locale, TestIO.test_numbers
         yield self._run_in_foreign_locale, TestIO.test_nan
