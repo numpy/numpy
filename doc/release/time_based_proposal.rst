@@ -33,11 +33,11 @@ be tweaked if it ends up not working as expected. There will be several stages
 for the cycle:
 
         * Development: anything can happen (by anything, we mean as currently
-        done). The focus is on new features, refactoring, etc...
+          done). The focus is on new features, refactoring, etc...
 
         * Beta: no new features. No bug fixing which requires heavy changes.
-        regression fixes which appear on supported platforms and were not
-        caught earlier.
+          regression fixes which appear on supported platforms and were not
+          caught earlier.
 
         * Polish/RC: only docstring changes and blocker regressions are allowed.
 
@@ -46,23 +46,23 @@ The schedule would be as follows:
         +------+-----------------+-----------------+------------------+
         | Week |     1.3.0       |      1.4.0      |  Release time    |
         +======+=================+=================+==================+
-        |  1   |  Development    |        -        |                  |
+        |  1   |  Development    |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  2   |  Development    |        -        |                  |
+        |  2   |  Development    |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  3   |  Development    |        -        |                  |
+        |  3   |  Development    |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  4   |  Development    |        -        |                  |
+        |  4   |  Development    |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  5   |  Development    |        -        |                  |
+        |  5   |  Development    |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  6   |  Development    |        -        |                  |
+        |  6   |  Development    |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  7   |  Beta           |        -        |                  |
+        |  7   |  Beta           |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  8   |  Beta           |        -        |                  |
+        |  8   |  Beta           |                 |                  |
         +------+-----------------+-----------------+------------------+
-        |  9   |  Beta           |        -        |  1.3.0 released  |
+        |  9   |  Beta           |                 |  1.3.0 released  |
         +------+-----------------+-----------------+------------------+
         |  10  |  Polish         |   Development   |                  |
         +------+-----------------+-----------------+------------------+
@@ -88,22 +88,23 @@ Each stage can be defined as follows:
         +------------------+-------------+----------------+----------------+
         |                  | Development |      Beta      |    Polish      |
         +==================+=============+================+================+
-        | Python Frozen    |      -      |     slushy     |       Y        |
+        | Python Frozen    |             |     slushy     |       Y        |
         +------------------+-------------+----------------+----------------+
-        | Docstring Frozen |      -      |     slushy     |  thicker slush |
+        | Docstring Frozen |             |     slushy     |  thicker slush |
         +------------------+-------------+----------------+----------------+
-        | C code Frozen    |      -      | thicker slush  |  thicker slush |
+        | C code Frozen    |             | thicker slush  |  thicker slush |
         +------------------+-------------+----------------+----------------+
 
 Terminology:
 
         * slushy: you can change it if you beg the release team and it's really
-        important and you coordinate with docs/translations; no "big" changes.
+          important and you coordinate with docs/translations; no "big"
+          changes.
 
         * thicker slush: you can change it if it's an open bug marked
-        showstopper for the Polish release, you beg the release team, the
-        change is very very small yet very very important, and you feel
-        extremely guilty about your transgressions.
+          showstopper for the Polish release, you beg the release team, the
+          change is very very small yet very very important, and you feel
+          extremely guilty about your transgressions.
 
 The different frozen states are intended to be gradients. The exact meaning is
 decided by the release manager: he has the last word on what's go in, what
