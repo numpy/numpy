@@ -207,9 +207,6 @@ intersphinx_mapping = {'http://docs.python.org/dev': None}
 # If we want to do a phantom import from an XML file for all autodocs
 phantom_import_file = 'dump.xml'
 
-# Edit links
-numpydoc_edit_link = '`Edit </numpy/docs/%(full_name)s/>`__'
-
 # -----------------------------------------------------------------------------
 # Coverage checker
 # -----------------------------------------------------------------------------
