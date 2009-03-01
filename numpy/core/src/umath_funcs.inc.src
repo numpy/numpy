@@ -96,6 +96,17 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
    #c=f,,l#
 */
 
+/* Perform the operation  result := 1 + coef * x * result,
+ * with real coefficient `coef`.
+ */
+#define SERIES_HORNER_TERM@c@(result, x, coef)                  \
+    do {                                                        \
+        nc_prod@c@((result), (x), (result));                    \
+        (result)->real *= (coef);                               \
+        (result)->imag *= (coef);                               \
+        nc_sum@c@((result), &nc_1@c@, (result));                \
+    } while(0)
+
 /* constants */
 static c@typ@ nc_1@c@ = {1., 0.};
 static c@typ@ nc_half@c@ = {0.5, 0.};
@@ -319,15 +330,33 @@ nc_asin@c@(c@typ@ *x, c@typ@ *r)
      * return nc_neg(nc_prodi(nc_log(nc_sum(nc_prod(nc_i,x),
      * nc_sqrt(nc_diff(nc_1,nc_prod(x,x)))))));
      */
-    c@typ@ a, *pa=&a;
-    nc_prod@c@(x, x, r);
-    nc_diff@c@(&nc_1@c@, r, r);
-    nc_sqrt@c@(r, r);
-    nc_prodi@c@(x, pa);
-    nc_sum@c@(pa, r, r);
-    nc_log@c@(r, r);
-    nc_prodi@c@(r, r);
-    nc_neg@c@(r, r);
+    if (fabs(x->real) > 1e-3 || fabs(x->imag) > 1e-3) {
+        c@typ@ a, *pa=&a;
+        nc_prod@c@(x, x, r);
+        nc_diff@c@(&nc_1@c@, r, r);
+        nc_sqrt@c@(r, r);
+        nc_prodi@c@(x, pa);
+        nc_sum@c@(pa, r, r);
+        nc_log@c@(r, r);
+        nc_prodi@c@(r, r);
+        nc_neg@c@(r, r);
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * asin(x) = x [1 + (1/6) x^2 [1 + (9/20) x^2 [1 - ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-20
+         */
+        c@typ@ x2;
+        nc_prod@c@(x, x, &x2);
+        
+        *r = nc_1@c@;
+        SERIES_HORNER_TERM@c@(r, &x2, 25./42);
+        SERIES_HORNER_TERM@c@(r, &x2, 9./20);
+        SERIES_HORNER_TERM@c@(r, &x2, 1./6);
+        nc_prod@c@(r, x, r);
+    }
     return;
 }
 
@@ -338,11 +367,29 @@ nc_asinh@c@(c@typ@ *x, c@typ@ *r)
     /*
      * return nc_log(nc_sum(nc_sqrt(nc_sum(nc_1,nc_prod(x,x))),x));
      */
-    nc_prod@c@(x, x, r);
-    nc_sum@c@(&nc_1@c@, r, r);
-    nc_sqrt@c@(r, r);
-    nc_sum@c@(r, x, r);
-    nc_log@c@(r, r);
+    if (fabs(x->real) > 1e-3 || fabs(x->imag) > 1e-3) {
+        nc_prod@c@(x, x, r);
+        nc_sum@c@(&nc_1@c@, r, r);
+        nc_sqrt@c@(r, r);
+        nc_sum@c@(r, x, r);
+        nc_log@c@(r, r);
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * asinh(x) = x [1 - (1/6) x^2 [1 - (9/20) x^2 [1 - ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-20
+         */
+        c@typ@ x2;
+        nc_prod@c@(x, x, &x2);
+        
+        *r = nc_1@c@;
+        SERIES_HORNER_TERM@c@(r, &x2, -25./42);
+        SERIES_HORNER_TERM@c@(r, &x2, -9./20);
+        SERIES_HORNER_TERM@c@(r, &x2, -1./6);
+        nc_prod@c@(r, x, r);
+    }
     return;
 }
 
@@ -352,12 +399,30 @@ nc_atan@c@(c@typ@ *x, c@typ@ *r)
     /*
      * return nc_prod(nc_i2,nc_log(nc_quot(nc_sum(nc_i,x),nc_diff(nc_i,x))));
      */
-    c@typ@ a, *pa=&a;
-    nc_diff@c@(&nc_i@c@, x, pa);
-    nc_sum@c@(&nc_i@c@, x, r);
-    nc_quot@c@(r, pa, r);
-    nc_log@c@(r,r);
-    nc_prod@c@(&nc_i2@c@, r, r);
+    if (fabs(x->real) > 1e-3 || fabs(x->imag) > 1e-3) {
+        c@typ@ a, *pa=&a;
+        nc_diff@c@(&nc_i@c@, x, pa);
+        nc_sum@c@(&nc_i@c@, x, r);
+        nc_quot@c@(r, pa, r);
+        nc_log@c@(r,r);
+        nc_prod@c@(&nc_i2@c@, r, r);
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * atan(x) = x [1 - (1/3) x^2 [1 - (3/5) x^2 [1 - ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-20
+         */
+        c@typ@ x2;
+        nc_prod@c@(x, x, &x2);
+        
+        *r = nc_1@c@;
+        SERIES_HORNER_TERM@c@(r, &x2, -5./7);
+        SERIES_HORNER_TERM@c@(r, &x2, -3./5);
+        SERIES_HORNER_TERM@c@(r, &x2, -1./3);
+        nc_prod@c@(r, x, r);
+    }
     return;
 }
 
@@ -367,12 +432,30 @@ nc_atanh@c@(c@typ@ *x, c@typ@ *r)
     /*
      * return nc_prod(nc_half,nc_log(nc_quot(nc_sum(nc_1,x),nc_diff(nc_1,x))));
      */
-    c@typ@ a, *pa=&a;
-    nc_diff@c@(&nc_1@c@, x, r);
-    nc_sum@c@(&nc_1@c@, x, pa);
-    nc_quot@c@(pa, r, r);
-    nc_log@c@(r, r);
-    nc_prod@c@(&nc_half@c@, r, r);
+    if (fabs(x->real) > 1e-3 || fabs(x->imag) > 1e-3) {
+        c@typ@ a, *pa=&a;
+        nc_diff@c@(&nc_1@c@, x, r);
+        nc_sum@c@(&nc_1@c@, x, pa);
+        nc_quot@c@(pa, r, r);
+        nc_log@c@(r, r);
+        nc_prod@c@(&nc_half@c@, r, r);
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * atan(x) = x [1 + (1/3) x^2 [1 + (3/5) x^2 [1 - ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-20
+         */
+        c@typ@ x2;
+        nc_prod@c@(x, x, &x2);
+        
+        *r = nc_1@c@;
+        SERIES_HORNER_TERM@c@(r, &x2, 5./7);
+        SERIES_HORNER_TERM@c@(r, &x2, 3./5);
+        SERIES_HORNER_TERM@c@(r, &x2, 1./3);
+        nc_prod@c@(r, x, r);
+    }
     return;
 }
 
@@ -462,6 +545,8 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
     r->imag = (is*rc-rs*ic)/d;
     return;
 }
+
+#undef SERIES_HORNER_TERM@c@
 
 /**end repeat**/
 

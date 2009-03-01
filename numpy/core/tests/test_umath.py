@@ -422,6 +422,81 @@ class TestComplexFunctions(object):
 
                 assert abs(a - b) < atol, "%s %s: %s; cmath: %s"%(fname,p,a,b)
 
+    def check_loss_of_precision(self, dtype):
+        """Check loss of precision in complex arc* functions"""
+
+        # Check against known-good functions
+
+        info = np.finfo(dtype)
+        real_dtype = dtype(0.).real.dtype
+
+        eps = info.eps
+
+        def check(x, rtol):
+            d = np.absolute(np.arcsinh(x)/np.arcsinh(x+0j).real - 1)
+            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+
+            d = np.absolute(np.arcsinh(x)/np.arcsin(1j*x).imag - 1)
+            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+
+            d = np.absolute(np.arctanh(x)/np.arctanh(x+0j).real - 1)
+            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+
+            d = np.absolute(np.arctanh(x)/np.arctan(1j*x).imag - 1)
+            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+        
+        # The switchover was chosen as 1e-3; hence there can be up to
+        # ~eps/1e-3 of relative cancellation error before it
+
+        x_series = np.logspace(np.log10(info.tiny/eps).real, -3, 200,
+                               endpoint=False)
+        x_basic = np.logspace(dtype(-3.).real, -1e-8, 10)
+
+        check(x_series, 2*eps)
+        check(x_basic, 2*eps/1e-3)
+
+        # Check a few points
+
+        z = np.array([1e-5*(1+1j)], dtype=dtype)
+        p = 9.999999999333333333e-6 + 1.000000000066666666e-5j
+        d = np.absolute(1-np.arctanh(z)/p)
+        assert np.all(d < 1e-15)
+
+        p = 1.0000000000333333333e-5 + 9.999999999666666667e-6j
+        d = np.absolute(1-np.arcsinh(z)/p)
+        assert np.all(d < 1e-15)
+
+        p = 9.999999999333333333e-6j + 1.000000000066666666e-5
+        d = np.absolute(1-np.arctan(z)/p)
+        assert np.all(d < 1e-15)
+
+        p = 1.0000000000333333333e-5j + 9.999999999666666667e-6
+        d = np.absolute(1-np.arcsin(z)/p)
+        assert np.all(d < 1e-15)
+
+        # Check continuity across switchover points
+
+        def check(func, z0, d=1):
+            z0 = np.asarray(z0, dtype=dtype)
+            zp = z0 + abs(z0) * d * eps * 2
+            zm = z0 - abs(z0) * d * eps * 2
+            assert np.all(zp != zm), (zp, zm)
+
+            # NB: the cancellation error at the switchover is at least eps
+            good = (abs(func(zp) - func(zm)) < 2*eps)
+            assert np.all(good), (func, z0[~good])
+
+        for func in (np.arcsinh,np.arcsinh,np.arcsin,np.arctanh,np.arctan):
+            pts = [rp+1j*ip for rp in (-1e-3,0,1e-3) for ip in(-1e-3,0,1e-3)
+                   if rp != 0 or ip != 0]
+            check(func, pts, 1)
+            check(func, pts, 1j)
+            check(func, pts, 1+1j)
+
+    def test_loss_of_precision(self):
+        for dtype in [np.complex64, np.complex_, np.longcomplex]:
+            yield self.check_loss_of_precision, dtype
+
 class TestAttributes(TestCase):
     def test_attributes(self):
         add = ncu.add
