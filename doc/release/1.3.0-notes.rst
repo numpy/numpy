@@ -30,6 +30,11 @@ with outliers handling. The main changes concern
 The previous behavior is still accessible using `new=False`, but is scheduled
 to be deprecated in the next release (1.3).
 
+Nan handling in max/min/sort
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
 Masked arrays
 ~~~~~~~~~~~~~
 
