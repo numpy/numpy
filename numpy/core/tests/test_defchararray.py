@@ -23,6 +23,15 @@ class TestWhitespace(TestCase):
         assert all(self.A == self.B)
 
 
+class TestChar(TestCase):
+    def setUp(self):
+        self.A = np.array('abc1', dtype='c').view(np.chararray)
+
+    def test_it(self):
+        assert self.A.shape == (4,)
+        assert self.A.upper()[:2].tostring() == 'AB'    
+
+
 class TestOperations(TestCase):
     def setUp(self):
         self.A = np.array([['abc', '123'],
