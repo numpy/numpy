@@ -48,6 +48,9 @@ def seek_gzip_factory(f):
     def tell(self):
         return self.offset
 
+    if isinstance(f, str):
+        f = gzip.GzipFile(f)
+
     f.seek = new.instancemethod(seek, f)
     f.tell = new.instancemethod(tell, f)
 

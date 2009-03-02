@@ -3,6 +3,7 @@ import numpy.ma as ma
 from numpy.ma.testutils import *
 
 import StringIO
+import gzip
 
 from tempfile import NamedTemporaryFile
 import sys, time
@@ -821,6 +822,13 @@ def test_gzip_load():
     f = gzip.GzipFile(fileobj=s, mode="r")
     assert_array_equal(np.load(f), a)
 
+def test_gzip_loadtxt():
+    f = NamedTemporaryFile(suffix='.gz')
+    g = gzip.GzipFile(fileobj=f)
+    g.write('1 2 3\n')
+    g.close()
+    f.seek(0)
+    assert_array_equal(np.loadtxt(f.name), [1, 2, 3])
 
 if __name__ == "__main__":
     run_module_suite()
