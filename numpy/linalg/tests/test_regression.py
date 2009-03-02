@@ -52,6 +52,11 @@ class TestRegression(TestCase):
 
         assert_array_almost_equal(b, np.zeros((2, 2)))
 
+    def test_norm_vector_badarg(self):
+        """Regression for #786: Froebenius norm for vectors raises
+        TypeError."""
+        self.assertRaises(ValueError, linalg.norm, array([1., 2., 3.]), 'fro')
+
 
 if __name__ == '__main__':
     run_module_suite()

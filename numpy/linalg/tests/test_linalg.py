@@ -290,12 +290,6 @@ class _TestNorm(TestCase):
                   array(c, dtype=self.dt)):
             _test(v)
 
-    @np.testing.dec.knownfailureif(True, "#786: FIXME")
-    def test_vector_badarg(self):
-        """Regression for #786: Froebenius norm for vectors raises
-        TypeError."""
-        self.assertRaises(ValueError, norm, array([1., 2., 3.]), 'fro')
-
     def test_matrix(self):
         A = matrix([[1.,3.],[5.,7.]], dtype=self.dt)
         A = matrix([[1.,3.],[5.,7.]], dtype=self.dt)

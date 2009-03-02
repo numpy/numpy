@@ -1378,6 +1378,10 @@ def norm(x, ord=None):
         elif ord == 2:
             return sqrt(((x.conj()*x).real).sum()) # special case for speedup
         else:
+            try:
+                ord + 1
+            except TypeError:
+                raise ValueError, "Invalid norm order for vectors."
             return ((abs(x)**ord).sum())**(1.0/ord)
     elif nd == 2:
         if ord == 2:
