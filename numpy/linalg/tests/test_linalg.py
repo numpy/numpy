@@ -5,7 +5,7 @@ from numpy.testing import *
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
-from numpy.linalg import matrix_power
+from numpy.linalg import matrix_power, norm
 
 def ifthen(a, b):
     return not a or b
@@ -256,6 +256,46 @@ class TestEigh(HermitianTestCase, TestCase):
 
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
+
+class TestNorm(TestCase):
+    def check_empty(self):
+        assert_equal(norm([]), 0.0)
+        assert_equal(norm(array([], dtype = double)), 0.0)
+        assert_equal(norm(atleast_2d(array([], dtype = double))), 0.0)
+
+    def test_vector(self):
+        a = [1.0,2.0,3.0,4.0]
+        b = [-1.0,-2.0,-3.0,-4.0]
+        c = [-1.0, 2.0,-3.0, 4.0]
+        for v in (a,array(a),b,array(b),c,array(c)):
+            assert_almost_equal(norm(v), 30**0.5)
+            assert_almost_equal(norm(v,inf), 4.0)
+            assert_almost_equal(norm(v,-inf), 1.0)
+            assert_almost_equal(norm(v,1), 10.0)
+            assert_almost_equal(norm(v,-1), 12.0/25)
+            assert_almost_equal(norm(v,2), 30**0.5)
+            assert_almost_equal(norm(v,-2), (205./144)**-0.5)
+
+    @dec.knownfailureif(True, "#786: FIXME")
+    def test_vector_badarg(self):
+        """Regression for #786: Froebenius norm for vectors raises
+        TypeError."""
+        self.assertRaises(ValueError, norm, array([1., 2., 3.]), 'fro')
+
+    def test_matrix(self):
+        A = matrix([[1.,3.],[5.,7.]], dtype=single)
+        A = matrix([[1.,3.],[5.,7.]], dtype=single)
+        assert_almost_equal(norm(A), 84**0.5)
+        assert_almost_equal(norm(A,'fro'), 84**0.5)
+        assert_almost_equal(norm(A,inf), 12.0)
+        assert_almost_equal(norm(A,-inf), 4.0)
+        assert_almost_equal(norm(A,1), 10.0)
+        assert_almost_equal(norm(A,-1), 6.0)
+        assert_almost_equal(norm(A,2), 9.12310563)
+        assert_almost_equal(norm(A,-2), 0.87689437)
+
+        self.assertRaises(ValueError, norm, A, 'nofro')
+        self.assertRaises(ValueError, norm, A, -3)
 
 if __name__ == "__main__":
     run_module_suite()
