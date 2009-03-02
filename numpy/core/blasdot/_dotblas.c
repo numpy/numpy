@@ -2,7 +2,7 @@ static char module_doc[] =
 "This module provides a BLAS optimized\nmatrix multiply, inner product and dot for numpy arrays";
 
 #include "Python.h"
-#include "numpy/noprefix.h"
+#include "numpy/ndarrayobject.h"
 #ifndef CBLAS_HEADER
 #define CBLAS_HEADER "cblas.h"
 #endif
@@ -13,8 +13,8 @@ static char module_doc[] =
 static PyArray_DotFunc *oldFunctions[PyArray_NTYPES];
 
 static void
-FLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
-	  intp n, void *tmp)
+FLOAT_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
+	  npy_intp n, void *tmp)
 {
     register int na = stridea / sizeof(float);
     register int nb = strideb / sizeof(float);
@@ -29,8 +29,8 @@ FLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 }
 
 static void
-DOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
-	   intp n, void *tmp)
+DOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
+	   npy_intp n, void *tmp)
 {
     register int na = stridea / sizeof(double);
     register int nb = strideb / sizeof(double);
@@ -44,15 +44,15 @@ DOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 }
 
 static void
-CFLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
-	   intp n, void *tmp)
+CFLOAT_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
+	   npy_intp n, void *tmp)
 {
 
-    register int na = stridea / sizeof(cfloat);
-    register int nb = strideb / sizeof(cfloat);
+    register int na = stridea / sizeof(npy_cfloat);
+    register int nb = strideb / sizeof(npy_cfloat);
 
-    if ((sizeof(cfloat) * na == stridea) &&
-	(sizeof(cfloat) * nb == strideb) &&
+    if ((sizeof(npy_cfloat) * na == stridea) &&
+	(sizeof(npy_cfloat) * nb == strideb) &&
 	(na >= 0) && (nb >= 0))
 	    cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
     else
@@ -60,14 +60,14 @@ CFLOAT_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 }
 
 static void
-CDOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
-	    intp n, void *tmp)
+CDOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
+	    npy_intp n, void *tmp)
 {
-    register int na = stridea / sizeof(cdouble);
-    register int nb = strideb / sizeof(cdouble);
+    register int na = stridea / sizeof(npy_cdouble);
+    register int nb = strideb / sizeof(npy_cdouble);
 
-    if ((sizeof(cdouble) * na == stridea) &&
-	(sizeof(cdouble) * nb == strideb) &&
+    if ((sizeof(npy_cdouble) * na == stridea) &&
+	(sizeof(npy_cdouble) * nb == strideb) &&
 	(na >= 0) && (nb >= 0))
 	    cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb, (double *)res);
     else
@@ -75,7 +75,7 @@ CDOUBLE_dot(void *a, intp stridea, void *b, intp strideb, void *res,
 }
 
 
-static Bool altered=FALSE;
+static npy_bool altered=NPY_FALSE;
 
 static char doc_alterdot[] = "alterdot() changes all dot functions to use blas.";
 
@@ -105,7 +105,7 @@ dotblas_alterdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
 	oldFunctions[PyArray_CDOUBLE] = descr->f->dotfunc;
 	descr->f->dotfunc = (PyArray_DotFunc *)CDOUBLE_dot;
 
-	altered = TRUE;
+	altered = NPY_TRUE;
     }
 
     Py_INCREF(Py_None);
@@ -142,7 +142,7 @@ dotblas_restoredot(PyObject *NPY_UNUSED(dummy), PyObject *args)
 	oldFunctions[PyArray_CDOUBLE] = NULL;
 	Py_XDECREF(descr);
 
-	altered = FALSE;
+	altered = NPY_FALSE;
     }
 
     Py_INCREF(Py_None);
@@ -184,9 +184,9 @@ _bad_strides(PyArrayObject *ap)
 {
     register int itemsize = PyArray_ITEMSIZE(ap);
     register int i, N=PyArray_NDIM(ap);
-    register intp *strides = PyArray_STRIDES(ap);
+    register npy_intp *strides = PyArray_STRIDES(ap);
 
-    if (((intp)(ap->data) % itemsize) != 0)
+    if (((npy_intp)(ap->data) % itemsize) != 0)
 	return 1;
     for (i=0; i<N; i++) {
 	if ((strides[i] < 0) || (strides[i] % itemsize) != 0)
@@ -209,9 +209,9 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *ret = NULL;
     int j, l, lda, ldb, ldc;
     int typenum, nd;
-    intp ap1stride = 0;
-    intp dimensions[MAX_DIMS];
-    intp numbytes;
+    npy_intp ap1stride = 0;
+    npy_intp dimensions[NPY_MAXDIMS];
+    npy_intp numbytes;
     static const float oneF[2] = {1.0, 0.0};
     static const float zeroF[2] = {0.0, 0.0};
     static const double oneD[2] = {1.0, 0.0};
@@ -244,12 +244,12 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
     Py_INCREF(dtype);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, ALIGNED, NULL);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, dtype, 0, 0, NPY_ALIGNED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, ALIGNED, NULL);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, dtype, 0, 0, NPY_ALIGNED, NULL);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
         return NULL;
@@ -315,7 +315,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
 
  	if (ap1->nd == 0 || ap2->nd == 0) {
-            intp *thisdims;
+            npy_intp *thisdims;
             if (ap1->nd == 0) {
                 nd = ap2->nd;
                 thisdims = ap2->dimensions;
@@ -460,17 +460,17 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 	}
 	else if (typenum == PyArray_CDOUBLE) {
 	    if (l == 1) {
-		cdouble *ptr1, *ptr2, *res;
+		npy_cdouble *ptr1, *ptr2, *res;
 
-		ptr1 = (cdouble *)ap2->data;
-		ptr2 = (cdouble *)ap1->data;
-		res = (cdouble *)ret->data;
+		ptr1 = (npy_cdouble *)ap2->data;
+		ptr2 = (npy_cdouble *)ap1->data;
+		res = (npy_cdouble *)ret->data;
 		res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
 		res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
 	    }
 	    else if (ap1shape != _matrix) {
 		cblas_zaxpy(l, (double *)ap2->data, (double *)ap1->data,
-			    ap1stride/sizeof(cdouble), (double *)ret->data, 1);
+			    ap1stride/sizeof(npy_cdouble), (double *)ret->data, 1);
 	    }
 	    else {
 		int maxind, oind, i, a1s, rets;
@@ -483,8 +483,8 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 		rptr = ret->data;
 		l = ap1->dimensions[maxind];
 		pval = (double *)ap2->data;
-		a1s = ap1->strides[maxind] / sizeof(cdouble);
-		rets = ret->strides[maxind] / sizeof(cdouble);
+		a1s = ap1->strides[maxind] / sizeof(npy_cdouble);
+		rets = ret->strides[maxind] / sizeof(npy_cdouble);
 		for (i = 0; i < ap1->dimensions[oind]; i++) {
 		    cblas_zaxpy(l, pval, (double *)ptr, a1s,
 				(double *)rptr, rets);
@@ -525,17 +525,17 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 	}
 	else if (typenum == PyArray_CFLOAT) {
 	    if (l == 1) {
-		cfloat *ptr1, *ptr2, *res;
+		npy_cfloat *ptr1, *ptr2, *res;
 
-		ptr1 = (cfloat *)ap2->data;
-		ptr2 = (cfloat *)ap1->data;
-		res = (cfloat *)ret->data;
+		ptr1 = (npy_cfloat *)ap2->data;
+		ptr2 = (npy_cfloat *)ap1->data;
+		res = (npy_cfloat *)ret->data;
 		res->real = ptr1->real * ptr2->real - ptr1->imag * ptr2->imag;
 		res->imag = ptr1->real * ptr2->imag + ptr1->imag * ptr2->real;
 	    }
 	    else if (ap1shape != _matrix) {
 		cblas_caxpy(l, (float *)ap2->data, (float *)ap1->data,
-			    ap1stride/sizeof(cfloat), (float *)ret->data, 1);
+			    ap1stride/sizeof(npy_cfloat), (float *)ret->data, 1);
 	    }
 	    else {
 		int maxind, oind, i, a1s, rets;
@@ -548,8 +548,8 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 		rptr = ret->data;
 		l = ap1->dimensions[maxind];
 		pval = (float *)ap2->data;
-		a1s = ap1->strides[maxind] / sizeof(cfloat);
-		rets = ret->strides[maxind] / sizeof(cfloat);
+		a1s = ap1->strides[maxind] / sizeof(npy_cfloat);
+		rets = ret->strides[maxind] / sizeof(npy_cfloat);
 		for (i = 0; i < ap1->dimensions[oind]; i++) {
 		    cblas_caxpy(l, pval, (float *)ptr, a1s,
 				(float *)rptr, rets);
@@ -804,7 +804,7 @@ dotblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArrayObject *ap1, *ap2, *ret;
     int j, l, lda, ldb, ldc;
     int typenum, nd;
-    intp dimensions[MAX_DIMS];
+    npy_intp dimensions[NPY_MAXDIMS];
     static const float oneF[2] = {1.0, 0.0};
     static const float zeroF[2] = {0.0, 0.0};
     static const double oneD[2] = {1.0, 0.0};
@@ -1051,7 +1051,7 @@ static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
     int l;
     int typenum;
-    intp dimensions[MAX_DIMS];
+    npy_intp dimensions[NPY_MAXDIMS];
     PyArray_Descr *type;
 
     if (!PyArg_ParseTuple(args, "OO", &op1, &op2)) return NULL;
