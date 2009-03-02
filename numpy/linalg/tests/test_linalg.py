@@ -258,7 +258,7 @@ class TestEigh(HermitianTestCase, TestCase):
         assert_almost_equal(ev, evalues)
 
 class TestNorm(TestCase):
-    def check_empty(self):
+    def test_empty(self):
         assert_equal(norm([]), 0.0)
         assert_equal(norm(array([], dtype = double)), 0.0)
         assert_equal(norm(atleast_2d(array([], dtype = double))), 0.0)
