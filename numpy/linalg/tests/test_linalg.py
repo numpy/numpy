@@ -260,6 +260,7 @@ class TestEigh(HermitianTestCase, TestCase):
 
 class _TestNorm(TestCase):
     dt = None
+    dec = None
     def test_empty(self):
         assert_equal(norm([]), 0.0)
         assert_equal(norm(array([], dtype=self.dt)), 0.0)
@@ -269,17 +270,27 @@ class _TestNorm(TestCase):
         a = [1.0,2.0,3.0,4.0]
         b = [-1.0,-2.0,-3.0,-4.0]
         c = [-1.0, 2.0,-3.0, 4.0]
-        for v in (a,array(a, dtype=self.dt),b,array(b, dtype=self.dt),c,array(c,
-                  dtype=self.dt)):
-            assert_almost_equal(norm(v), 30**0.5)
-            assert_almost_equal(norm(v,inf), 4.0)
-            assert_almost_equal(norm(v,-inf), 1.0)
-            assert_almost_equal(norm(v,1), 10.0)
-            assert_almost_equal(norm(v,-1), 12.0/25)
-            assert_almost_equal(norm(v,2), 30**0.5)
-            assert_almost_equal(norm(v,-2), (205./144)**-0.5)
 
-    @dec.knownfailureif(True, "#786: FIXME")
+        def _test(v):
+            np.testing.assert_almost_equal(norm(v), 30**0.5, decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v,inf), 4.0, decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v,-inf), 1.0, decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v,1), 10.0, decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v,-1), 12.0/25,
+                    decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v,2), 30**0.5,
+                    decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v,-2), ((205./144)**-0.5),
+                    decimal=self.dec)
+
+        for v in (a, b, c,):
+            _test(v)
+
+        for v in (array(a, dtype=self.dt), array(b, dtype=self.dt),
+                  array(c, dtype=self.dt)):
+            _test(v)
+
+    @np.testing.dec.knownfailureif(True, "#786: FIXME")
     def test_vector_badarg(self):
         """Regression for #786: Froebenius norm for vectors raises
         TypeError."""
@@ -302,6 +313,11 @@ class _TestNorm(TestCase):
 
 class TestNormDouble(_TestNorm):
     dt = np.double
+    dec= 12
+
+class TestNormSingle(_TestNorm):
+    dt = np.float32
+    dec = 6
 
 if __name__ == "__main__":
     run_module_suite()
