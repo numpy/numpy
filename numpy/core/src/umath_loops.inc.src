@@ -910,7 +910,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = floor@c@(in1/in2);
+        *((@type@ *)op1) = npy_floor@c@(in1/in2);
     }
 }
 
@@ -920,7 +920,7 @@ static void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        const @type@ res = fmod@c@(in1,in2);
+        const @type@ res = npy_fmod@c@(in1,in2);
         if (res && ((in2 < 0) != (res < 0))) {
             *((@type@ *)op1) = res + in2;
         }
@@ -1000,7 +1000,7 @@ static void
 {
     UNARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = modf@c@(in1, (@type@ *)op2);
+        *((@type@ *)op1) = npy_modf@c@(in1, (@type@ *)op2);
     }
 }
 
@@ -1107,7 +1107,7 @@ C@TYPE@_floor_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSE
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
         @type@ d = in2r*in2r + in2i*in2i;
-        ((@type@ *)op1)[0] = floor@c@((in1r*in2r + in1i*in2i)/d);
+        ((@type@ *)op1)[0] = npy_floor@c@((in1r*in2r + in1i*in2i)/d);
         ((@type@ *)op1)[1] = 0;
     }
 }
@@ -1204,7 +1204,7 @@ C@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        if (fabs@c@(in1i) <= fabs@c@(in1r)) {
+        if (npy_fabs@c@(in1i) <= npy_fabs@c@(in1r)) {
             const @type@ r = in1i/in1r;
             const @type@ d = in1r + in1i*r;
             ((@type@ *)op1)[0] = 1/d;
@@ -1243,7 +1243,7 @@ C@TYPE@_absolute(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        *((@type@ *)op1) = sqrt@c@(in1r*in1r + in1i*in1i);
+        *((@type@ *)op1) = npy_sqrt@c@(in1r*in1r + in1i*in1i);
     }
 }
 
