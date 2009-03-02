@@ -546,7 +546,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         hist /= s
 
     if (hist.shape != nbin-2).any():
-        raise 'Internal Shape Error'
+        raise RuntimeError('Internal Shape Error')
     return hist, edges
 
 

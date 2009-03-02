@@ -465,7 +465,8 @@ class build_src(build_ext.build_ext):
         if not (f2py_sources or f_sources):
             return new_sources
 
-        map(self.mkpath, target_dirs)
+        for d in target_dirs:
+            self.mkpath(d)
 
         f2py_options = extension.f2py_options + self.f2py_opts
 
@@ -632,7 +633,9 @@ class build_src(build_ext.build_ext):
         if skip_swig:
             return new_sources + py_files
 
-        map(self.mkpath, target_dirs)
+        for d in target_dirs:
+            self.mkpath(d)
+
         swig = self.swig or self.find_swig()
         swig_cmd = [swig, "-python"]
         if is_cpp:

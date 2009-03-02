@@ -141,7 +141,7 @@ class FortranLibrary:
 class LapackLibrary(FortranLibrary):
     def _newFortranRoutine(self, rname, filename):
         routine = FortranLibrary._newFortranRoutine(self, rname, filename)
-        if 'BLAS' in filename
+        if 'BLAS' in filename:
             routine.type = 'blas'
         elif rname.startswith('z'):
             routine.type = 'zlapack'

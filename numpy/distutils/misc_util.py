@@ -204,7 +204,7 @@ def _fix_paths(paths,local_path,include_non_existing):
             new_paths.extend(_fix_paths(n,local_path,include_non_existing))
         else:
             new_paths.append(n)
-    return map(minrelpath,new_paths)
+    return [minrelpath(p) for p in new_paths]
 
 def gpaths(paths, local_path='', include_non_existing=True):
     """Apply glob to paths and prepend local_path if needed.
@@ -954,7 +954,8 @@ class Configuration(object):
         for p,files in self.data_files:
             if p not in data_dict:
                 data_dict[p] = set()
-            map(data_dict[p].add,files)
+            for f in files:
+                data_dict[p].add(f)
         self.data_files[:] = [(p,list(files)) for p,files in data_dict.items()]
 
     def add_data_files(self,*files):
@@ -980,7 +981,8 @@ class Configuration(object):
         """
 
         if len(files)>1:
-            map(self.add_data_files, files)
+            for f in files:
+                self.add_data_files(f)
             return
         assert len(files)==1
         if is_sequence(files[0]):

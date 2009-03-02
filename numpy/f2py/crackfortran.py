@@ -341,7 +341,9 @@ def readfortrancode(ffile,dowithline=show,istop=1):
             elif strictf77:
                 if len(l)>72: l=l[:72]
             if not (l[0] in spacedigits):
-                raise 'readfortrancode: Found non-(space,digit) char in the first column.\n\tAre you sure that this code is in fix form?\n\tline=%s'%`l`
+                raise Exception('readfortrancode: Found non-(space,digit) char '
+                                'in the first column.\n\tAre you sure that '
+                                'this code is in fix form?\n\tline=%s' % `l`)
 
             if (not cont or strictf77) and (len(l)>5 and not l[5]==' '):
                 # Continuation of a previous line
@@ -596,11 +598,16 @@ def crackline(line,reset=0):
             groupcounter=groupcounter-1
             if skipblocksuntil<=groupcounter: return
         if groupcounter<=0:
-            raise 'crackline: groupcounter(=%s) is nonpositive. Check the blocks.'\
-                  % (groupcounter)
+            raise Exception('crackline: groupcounter(=%s) is nonpositive. '
+                            'Check the blocks.' \
+                            % (groupcounter))
         m1 = beginpattern[0].match((line))
         if (m1) and (not m1.group('this')==groupname[groupcounter]):
-            raise 'crackline: End group %s does not match with previous Begin group %s\n\t%s'%(`m1.group('this')`,`groupname[groupcounter]`,filepositiontext)
+            raise Exception('crackline: End group %s does not match with '
+                            'previous Begin group %s\n\t%s' % \
+                            (`m1.group('this')`, `groupname[groupcounter]`,
+                             filepositiontext)
+                            )
         if skipblocksuntil==groupcounter:
             skipblocksuntil=-1
         grouplist[groupcounter-1].append(groupcache[groupcounter])
@@ -683,7 +690,8 @@ def appenddecl(decl,decl2,force=1):
         elif k in ['intent','check','dimension','optional','required']:
             errmess('appenddecl: "%s" not implemented.\n'%k)
         else:
-            raise 'appenddecl: Unknown variable definition key:', k
+            raise Exception('appenddecl: Unknown variable definition key:' + \
+                            str(k))
     return decl
 
 selectpattern=re.compile(r'\s*(?P<this>(@\(@.*?@\)@|[*][\d*]+|[*]\s*@\(@.*?@\)@|))(?P<after>.*)\Z',re.I)
@@ -1542,7 +1550,8 @@ def postcrack(block,args=None,tab=''):
         return uret+gret
     setmesstext(block)
     if (not type(block)==types.DictType) and 'block' not in block:
-        raise 'postcrack: Expected block dictionary instead of ',block
+        raise Exception('postcrack: Expected block dictionary instead of ' + \
+                        str(block))
     if 'name' in block and not block['name']=='unknown_interface':
         outmess('%sBlock: %s\n'%(tab,block['name']),0)
     blocktype=block['block']
