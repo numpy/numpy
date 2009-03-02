@@ -302,6 +302,10 @@ class matrix(N.ndarray):
     def __pow__(self, other):
         return matrix_power(self, other)
 
+    def __ipow__(self, other):
+        self[:] = self ** other
+        return self
+
     def __rpow__(self, other):
         return NotImplemented
 

@@ -207,6 +207,19 @@ class TestAlgebra(TestCase):
         mA2 *= 3
         assert allclose(mA2.A, 3*A)
 
+    def test_pow(self):
+        """Test raising a matrix to an integer power works as expected."""
+        m = matrix("1. 2.; 3. 4.")
+        m2 = m.copy()
+        m2 **= 2
+        mi = m.copy()
+        mi **= -1
+        m4 = m2.copy()
+        m4 **= 2
+        assert_array_almost_equal(m2, m**2)
+        assert_array_almost_equal(m4, np.dot(m2, m2))
+        assert_array_almost_equal(np.dot(mi, m), np.eye(2))
+
     def test_notimplemented(self):
         '''Check that 'not implemented' operations produce a failure.'''
         A = matrix([[1., 2.],
