@@ -4616,7 +4616,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                         "be an array");
         return NULL;
     }
-    if (!PyArray_ISCONTIGUOUS(self) || !(self->flags & ALIGNED)) {
+    if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
         int flags = NPY_CARRAY | NPY_UPDATEIFCOPY;
 
