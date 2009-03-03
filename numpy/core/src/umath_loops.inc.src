@@ -893,7 +893,7 @@ static void
  * #OP =  >=, <=#
  **/
 static void
-@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
     BINARY_LOOP {
@@ -1289,7 +1289,7 @@ C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
  * #OP = CGE, CLE#
  */
 static void
-C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *func)
+C@TYPE@_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
