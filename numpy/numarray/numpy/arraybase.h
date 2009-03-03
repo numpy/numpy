@@ -14,7 +14,7 @@ typedef npy_uint16 UInt16;
 typedef npy_int32 Int32;
 typedef npy_uint32 UInt32; 
 typedef npy_int64 Int64;
-typedef npy_int64 UInt64;
+typedef npy_uint64 UInt64;
 typedef npy_float32 Float32;
 typedef npy_float64 Float64;
 
