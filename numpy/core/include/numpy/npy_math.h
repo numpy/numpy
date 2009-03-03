@@ -81,6 +81,8 @@ double npy_log2(double x);
 
 double npy_atan2(double x, double y);
 double npy_pow(double x, double y);
+double npy_modf(double x, double* y);
+
 /*
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
