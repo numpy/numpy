@@ -401,7 +401,7 @@ class TestComplexFunctions(object):
         # cmath.asinh is broken in some versions of Python, see
         # http://bugs.python.org/issue1381
         broken_cmath_asinh = False
-        if sys.version_info < (2,5,3):
+        if sys.version_info < (2,6):
             broken_cmath_asinh = True
 
         points = [-1-1j, -1+1j, +1-1j, +1+1j]
