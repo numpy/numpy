@@ -18,7 +18,7 @@ http://www.python.org/dev/peps/pep-0361/
 Generalized ufuncs
 ~~~~~~~~~~~~~~~~~~
 
-http://projects.scipy.org/scipy/numpy/ticket/887
+http://projects.scipy.org/numpy/ticket/887
 
 Experimental Windows 64 bits support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,7 +84,7 @@ This should make the porting to new platforms easier, and more robust. In
 particular, the configuration stage does not need to execute any code on the
 target platform, which is a first step toward cross-compilation.
 
-http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/math_config_clean.txt
+http://projects.scipy.org/numpy/browser/trunk/doc/neps/math_config_clean.txt
 
 umath refactor
 ~~~~~~~~~~~~~~
@@ -96,7 +96,7 @@ Improvements to build warnings
 
 Numpy can now build with -W -Wall without warnings
 
-http://projects.scipy.org/scipy/numpy/browser/trunk/doc/neps/warnfix.txt
+http://projects.scipy.org/numpy/browser/trunk/doc/neps/warnfix.txt
 
 Separate core math library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

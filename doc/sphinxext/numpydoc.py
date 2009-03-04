@@ -12,7 +12,7 @@ It will:
 - Renumber references.
 - Extract the signature from the docstring, if it can't be determined otherwise.
 
-.. [1] http://projects.scipy.org/scipy/numpy/wiki/CodingStyleGuidelines#docstring-standard
+.. [1] http://projects.scipy.org/numpy/wiki/CodingStyleGuidelines#docstring-standard
 
 """
 

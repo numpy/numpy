@@ -36,7 +36,7 @@ Our main means of communication are:
 
 - `Mailing lists <http://scipy.org/Mailing_Lists>`__
 
-- `Numpy Trac <http://projects.scipy.org/scipy/numpy>`__ (bug "tickets" go here)
+- `Numpy Trac <http://projects.scipy.org/numpy>`__ (bug "tickets" go here)
 
 More information about the development of Numpy can be found at
 http://scipy.org/Developer_Zone
