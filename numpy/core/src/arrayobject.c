@@ -6781,12 +6781,12 @@ array_data_get(PyArrayObject *self)
         return NULL;
     }
     nbytes = PyArray_NBYTES(self);
-    if PyArray_ISWRITEABLE(self) {
-        return PyBuffer_FromReadWriteObject((PyObject *)self, 0, (int) nbytes);
-    }
-    else {
-        return PyBuffer_FromObject((PyObject *)self, 0, (int) nbytes);
-    }
+    if PyArray_ISWRITEABLE(self)
+	return PyBuffer_FromReadWriteObject((PyObject *)self, 0,
+					  (Py_ssize_t) nbytes);
+    else
+	return PyBuffer_FromObject((PyObject *)self, 0, 
+				   (Py_ssize_t) nbytes);
 }
 
 static int
