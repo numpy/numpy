@@ -12,12 +12,18 @@
 #ifndef _NPY_CPUARCH_H_
 #define _NPY_CPUARCH_H_
 
-#if defined ( _i386_ ) || defined( __i386__ )
-        /* __i386__ is defined by gcc and Intel compiler on Linux, _i386_ by
-        VS compiler */
+#if defined ( _i386_ ) || defined( __i386__ ) || defined(i386)
+        /* 
+	 * __i386__ is defined by gcc and Intel compiler on Linux, 
+	 * _i386_ by VS compiler,
+	 * i386 by Sun compilers on opensolaris at least
+	 */
         #define NPY_CPU_X86
-#elif defined(__x86_64__) || defined(__amd64__)
-        /* both __x86_64__ and __amd64__ are defined by gcc */
+#elif defined(__x86_64__) || defined(__amd64__) || defined(__x86_64)
+        /* 
+	 * both __x86_64__ and __amd64__ are defined by gcc
+	 * __x86_64 defined by sun compiler on opensolaris at least
+	 */
         #define NPY_CPU_AMD64
 #elif defined(__ppc__) || defined(__powerpc__)
         /* __ppc__ is defined by gcc, I remember having seen __powerpc__ once,
