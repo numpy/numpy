@@ -4,6 +4,7 @@
  *              NPY_CPU_X86
  *              NPY_CPU_AMD64
  *              NPY_CPU_PPC
+ *              NPY_CPU_PPC64
  *              NPY_CPU_SPARC
  *              NPY_CPU_S390
  *              NPY_CPU_PARISC
@@ -22,11 +23,13 @@
         /* __ppc__ is defined by gcc, I remember having seen __powerpc__ once,
          * but can't find it ATM */
         #define NPY_CPU_PPC
+#elif defined(__ppc64__)
+        #define NPY_CPU_PPC64
 #elif defined(__sparc__) || defined(__sparc)
         /* __sparc__ is defined by gcc and Forte (e.g. Sun) compilers */
         #define NPY_CPU_SPARC
 #elif defined(__s390__)
-        #define NPY_TARGET_CPU NPY_S390
+        #define NPY_CPU_S390
 #elif defined(__parisc__)
         /* XXX: Not sure about this one... */
         #define NPY_CPU_PARISC
