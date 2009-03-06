@@ -7684,6 +7684,7 @@ array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObje
     return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
 
+#define __STR2INTCST(str) ((str[0] << 24) + (str[1] << 16) + (str[2] << 8) + str[3])
 static int compute_endianness()
 {
 	union {
@@ -7692,7 +7693,7 @@ static int compute_endianness()
 	} bint;
 	int st;
 
-	bint.i = 'ABCD';
+	bint.i = __STR2INTCST("ABCD");
 
 	switch(bint.c[0]) {
 		case 'A':
@@ -7703,6 +7704,7 @@ static int compute_endianness()
 			return NPY_CPU_UNKNOWN_ENDIAN;	
 	}
 }
+#undef __STR2INTCST
 
 /*NUMPY_API
 */
