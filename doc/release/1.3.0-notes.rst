@@ -81,6 +81,16 @@ Gfortran can now be used as a fortran compiler for numpy on windows, even when
 the C compiler is Visual Studio. Gfortran + Visual studio does not work on
 windows 64 bits (but gcc + gfortran does).
 
+Arch option for windows binary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Automatic arch detection can now be bypassed from the command line for the superpack installed:
+
+	numpy-1.3.0-superpack-win32.exe /arch=nosse
+
+will install a numpy which works on any x86, even if the running computer
+supports SSE set.
+
 Deprecated features
 ===================
 
