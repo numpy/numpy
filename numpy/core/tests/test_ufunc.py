@@ -2,10 +2,7 @@ import sys
 
 import numpy as np
 from numpy.testing import *
-if not sys.platform == 'win32':
-    import numpy.core.umath_tests as umt
-else:
-    umt = None
+import numpy.core.umath_tests as umt
 
 class TestUfunc(TestCase):
     def test_reduceat_shifting_sum(self) :
