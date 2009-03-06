@@ -9,11 +9,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 
-#ifndef CBLAS_HEADER
-#define CBLAS_HEADER "cblas.h"
-#endif
-#include CBLAS_HEADER
-
 /*
  *****************************************************************************
  **                            BASICS                                       **
@@ -127,8 +122,8 @@ char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
 
 /**begin repeat
 
-   #TYPE=LONG#
-   #typ=npy_long#
+   #TYPE=FLOAT,DOUBLE,LONG#
+   #typ=npy_float, npy_double,npy_long#
 */
 
 /*
@@ -152,123 +147,6 @@ static void
     intp ib2_n = is2_n*dn;
     intp ib2_p = is2_p*dp;
     intp ob_p  = os_p *dp;
-    BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
-        for (m = 0; m < dm; m++) {
-            for (n = 0; n < dn; n++) {
-                register @typ@ val1 = (*(@typ@ *)ip1);
-                for (p = 0; p < dp; p++) {
-                    if (n == 0) *(@typ@ *)op = 0;
-                    *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
-                    ip2 += is2_p;
-                    op  +=  os_p;
-                }
-                ip2 -= ib2_p;
-                op  -=  ob_p;
-                ip1 += is1_n;
-                ip2 += is2_n;
-            }
-            ip1 -= ib1_n;
-            ip2 -= ib2_n;
-            ip1 += is1_m;
-            op  +=  os_m;
-        }
-    END_OUTER_LOOP
-}
-
-/**end repeat**/
-
-/**begin repeat
-
-   #TYPE=FLOAT,DOUBLE#
-   #B_TYPE=s, d#
-   #typ=npy_float, npy_double#
-*/
-
-static void
-@TYPE@_matrix_multiply(char **args, intp *dimensions, intp *steps, void *func)
-{
-    INIT_OUTER_LOOP_3
-    intp dm = dimensions[0];
-    intp dn = dimensions[1];
-    intp dp = dimensions[2];
-    intp m,n,p;
-    intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
-         os_m=steps[4], os_p=steps[5];
-    intp ib1_n = is1_n*dn;
-    intp ib2_n = is2_n*dn;
-    intp ib2_p = is2_p*dp;
-    intp ob_p  = os_p *dp;
-
-    enum CBLAS_ORDER Order = CblasRowMajor;
-    enum CBLAS_TRANSPOSE Trans1, Trans2;
-    int M, N, L;
-    int lda, ldb, ldc;
-    int typeSize = sizeof(@typ@);
-
-    /*
-     * BLAS requires each array to have contiguous memory layout on one
-     * dimension and a positive stride for the other dimension.
-     */
-    if (is1_m <= 0 || is1_n <= 0 || is2_n <= 0 || is2_p <= 0)
-	goto no_blas;
-
-    if (is1_n == typeSize && is1_m % typeSize == 0) {
-	Trans1 = CblasNoTrans;
-	lda = is1_m / typeSize;
-    }
-    else if (is1_m == typeSize && is1_n % typeSize == 0) {
-	Trans1 = CblasTrans;
-	lda = is1_n / typeSize;
-    }
-    else {
-	goto no_blas;
-    }
-
-    if (is2_p == typeSize && is2_n % typeSize == 0) {
-	Trans2 = CblasNoTrans;
-	ldb = is2_n / typeSize;
-    }
-    else if (is2_n == typeSize && is2_p % typeSize == 0) {
-	Trans2 = CblasTrans;
-	ldb = is2_p / typeSize;
-    }
-    else {
-	goto no_blas;
-    }
-
-    M = dm;
-    N = dp;
-    L = dn;
-    if (os_p == typeSize && os_m % typeSize == 0) {
-	ldc = os_m / typeSize;
-	BEGIN_OUTER_LOOP_3
-	    cblas_@B_TYPE@gemm(Order, Trans1, Trans2,
-			       M, N, L,
-			       1.0, (@typ@*)args[0], lda,
-			       (@typ@*)args[1], ldb,
-			       0.0, (@typ@*)args[2], ldc);
-	END_OUTER_LOOP
-	return;
-    }
-    else if (os_m == typeSize && os_p % typeSize == 0) {
-	enum CBLAS_TRANSPOSE Trans1r, Trans2r;
-	ldc = os_p / typeSize;
-	Trans1r = (Trans1 == CblasTrans) ? CblasNoTrans : CblasTrans;
-	Trans2r = (Trans2 == CblasTrans) ? CblasNoTrans : CblasTrans;
-	BEGIN_OUTER_LOOP_3
-	    /* compute C^T = B^T * A^T */
-	    cblas_@B_TYPE@gemm(Order, Trans2r, Trans1r,
-			       N, M, L,
-			       1.0, (@typ@*)args[1], ldb,
-			       (@typ@*)args[0], lda,
-			       0.0, (@typ@*)args[2], ldc);
-	END_OUTER_LOOP
-	return;
-    }
-
-
-no_blas:
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
         for (m = 0; m < dm; m++) {
