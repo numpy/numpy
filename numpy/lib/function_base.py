@@ -2562,7 +2562,7 @@ def kaiser(M,beta):
     from numpy.dual import i0
     n = arange(0,M)
     alpha = (M-1)/2.0
-    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(beta)
+    return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
 
 def sinc(x):
     """

@@ -813,6 +813,9 @@ class TestKaiser(TestCase):
                             array([ 0.58285404,  0.88409679,  1.        ,
                                     0.88409679,  0.58285404]))
 
+    def test_int_beta(self):
+        kaiser(3, 4)
+
 class TestMsort(TestCase):
     def test_simple(self):
         A = array([[ 0.44567325,  0.79115165,  0.5490053 ],
