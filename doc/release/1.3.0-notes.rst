@@ -2,7 +2,8 @@
 NumPy 1.3.0 Release Notes
 =========================
 
-This minor release comes almost four months after the 1.2.0 release.
+This minor includes numerous bug fixes, official python 2.6 support, and
+several new features such as generalized ufuncs.
 
 Highlights
 ==========
@@ -36,7 +37,11 @@ New features
 Formatting issues
 ~~~~~~~~~~~~~~~~~
 
-TODO
+Float formatting is now handled by numpy instead of the C runtime: this enables
+locale independent formatting, more robust fromstring and related methods.
+Special values (inf and nan) are also more consistent across platforms (nan vs
+IND/NaN, etc...), and more consistent with recent python formatting work (in
+2.6 and later).
 
 Nan handling in max/min
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,6 +100,48 @@ deprecated, and will be removed entirely in 1.4.0.
 Documentation changes
 =====================
 
+TODO
+
+New C API
+=========
+
+Multiarray API
+~~~~~~~~~~~~~~
+
+The following functions have been added to the multiarray C API:
+
+	* PyArray_GetEndianness: to get runtime endianness
+
+Ufunc API
+~~~~~~~~~~~~~~
+
+The following functions have been added to the ufunc API:
+
+	* TODO
+
+New defines
+~~~~~~~~~~~
+
+New public C defines are available for ARCH specific code through numpy/npy_cpu.h:
+
+	* NPY_CPU_X86: x86 arch (32 bits)
+        * NPY_CPU_AMD64: amd64 arch (x86_64, NOT Itanium)
+        * NPY_CPU_PPC: 32 bits ppc
+        * NPY_CPU_PPC64: 64 bits ppc
+        * NPY_CPU_SPARC: 32 bits sparc
+        * NPY_CPU_SPARC64: 64 bits sparc
+        * NPY_CPU_S390: S390
+        * NPY_CPU_PARISC: PARISC
+
+New macros for CPU endianness has been added as well (see internal changes
+below for details):
+
+	* NPY_BYTE_ORDER: integer
+	* NPY_LITTLE_ENDIAN/NPY_BIG_ENDIAN defines
+
+Those provide portable alternatives to glibc endian.h macros for platforms
+without it.
+
 Internal changes
 ================
 
@@ -129,3 +176,20 @@ various maths functions, such as using those versions should be more robust
 than using your platform functions directly. The API for existing functions is
 exactly the same as the C99 math functions API; the only difference is the npy
 prefix (npy_cos vs cos).
+
+The core library will be made available to any extension in 1.4.0.
+
+CPU arch detection
+~~~~~~~~~~~~~~~~~~
+
+npy_cpu.h defines numpy specific CPU defines, such as NPY_CPU_X86, etc...
+Those are portable across OS and toolchains, and set up when the header is
+parsed, so that they can be safely used even in the case of cross-compilation
+(the values is not set when numpy is built), or for multi-arch binaries (e.g.
+fat binaries on Max OS X).
+
+npy_endian.h defines numpy specific endianness defines, modeled on the glibc
+endian.h. NPY_BYTE_ORDER  is equivalent to BYTE_ORDER, and one of
+NPY_LITTLE_ENDIAN or NPY_BIG_ENDIAN is defined. As for CPU archs, those are set
+when the header is parsed by the compiler, and as such can be used for
+cross-compilation and multi-arch binaries.
