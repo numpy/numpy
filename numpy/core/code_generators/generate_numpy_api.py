@@ -65,13 +65,7 @@ static void **PyArray_API=NULL;
 static int
 _import_array(void)
 {
-#ifdef WORDS_BIGENDIAN
-  union {
-    long i;
-    char c[sizeof(long)];
-  } bint = {1};
-#endif
-
+  int st;
   PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
   PyObject *c_api = NULL;
   if (numpy == NULL) return -1;
@@ -90,13 +84,26 @@ _import_array(void)
         (int) NPY_VERSION, (int) PyArray_GetNDArrayCVersion());
     return -1;
   }
-
-#ifdef WORDS_BIGENDIAN
-  if (bint.c[0] == 1) {
-    PyErr_Format(PyExc_RuntimeError, "module compiled against "\
-        "python headers configured as big endian, but little endian arch "\
-        "detected: this is a python 2.6.* bug (see bug 4728 in python bug "\
-        "tracker )");
+ 
+  /* 
+   * Perform runtime check of endianness and check it matches the one set by
+   * the headers (npy_endian.h) as a safeguard 
+   */
+  st = PyArray_GetEndianness();
+  if (st == NPY_CPU_UNKNOWN_ENDIAN) {
+    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as unknown endian");
+    return -1;
+  }
+#ifdef NPY_BIG_ENDIAN
+  if (st != NPY_CPU_BIG) {
+    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
+        "big endian, but detected different endianness at runtime");
+    return -1;
+  }
+#elif defined(NPY_LITTLE_ENDIAN)
+  if (st != NPY_CPU_LITTLE) {
+    PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as"\
+        "little endian, but detected different endianness at runtime");
     return -1;
   }
 #endif

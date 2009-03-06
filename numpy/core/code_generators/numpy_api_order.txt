@@ -171,3 +171,4 @@ PyArray_CheckAxis
 PyArray_OverflowMultiplyList
 PyArray_CompareString
 PyArray_MultiIterFromObjects
+PyArray_GetEndianness

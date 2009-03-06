@@ -7684,6 +7684,34 @@ array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObje
     return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
 
+static int compute_endianness()
+{
+	union {
+		char c[4];
+		npy_uint32 i;
+	} bint;
+	int st;
+
+	bint.i = 'ABCD';
+
+	switch(bint.c[0]) {
+		case 'A':
+			return NPY_CPU_BIG;
+		case 'D':
+			return NPY_CPU_LITTLE;
+		default:
+			return NPY_CPU_UNKNOWN_ENDIAN;	
+	}
+}
+
+/*NUMPY_API
+*/
+static int 
+PyArray_GetEndianness(void)
+{
+    return compute_endianness();
+}
+
 static PyObject *
 array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {

@@ -4,6 +4,13 @@
 /* This is auto-generated */
 #include "numpyconfig.h"
 
+/* enums for detected endianness */
+enum {
+	NPY_CPU_UNKNOWN_ENDIAN,
+	NPY_CPU_LITTLE,
+	NPY_CPU_BIG,
+};
+
 /* Some platforms don't define bool, long long, or long double.
    Handle that here.
 */

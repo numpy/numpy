@@ -23,6 +23,8 @@ extern "C" CONFUSE_EMACS
         #define NPY_ALLOW_THREADS 0
 #endif
 
+#include "npy_endian.h"
+
 #include "utils.h"
 
 /* There are several places in the code where an array of dimensions is
@@ -1728,7 +1730,7 @@ typedef struct {
 #define NPY_SWAP 's'
 #define NPY_IGNORE '|'
 
-#ifdef WORDS_BIGENDIAN
+#ifdef NPY_BIG_ENDIAN
 #define NPY_NATBYTE NPY_BIG
 #define NPY_OPPBYTE NPY_LITTLE
 #else
