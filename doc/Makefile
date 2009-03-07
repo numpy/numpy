@@ -1,6 +1,9 @@
 # Makefile for Sphinx documentation
 #
 
+PYVER =
+PYTHON = python$(PYVER)
+
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = LANG=C sphinx-build
@@ -11,29 +14,60 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
-.PHONY: help clean html web pickle htmlhelp latex changes linkcheck
+.PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
+        dist dist-build
+
+#------------------------------------------------------------------------------
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  dist      to make a distribution-ready tree"
 	@echo "  html      to make standalone HTML files"
 	@echo "  pickle    to make pickle files (usable by e.g. sphinx-web)"
 	@echo "  htmlhelp  to make HTML files and a HTML help project"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  changes   to make an overview over all changed/added/deprecated items"
 	@echo "  linkcheck to check all external links for integrity"
+	@echo "  dist PYVER=... to make a distribution-ready tree"
 	@echo "  upload USER=...  to upload results to docs.scipy.org"
 
 clean:
 	-rm -rf build/* source/reference/generated
 
+
+#------------------------------------------------------------------------------
+# Automated generation of all documents
+#------------------------------------------------------------------------------
+
+# Build the current numpy version, and extract docs from it.
+# We have to be careful of some issues:
+# 
+# - Everything must be done using the same Python version
+# - We must use eggs (otherwise they might override PYTHONPATH on import).
+# - Different versions of easy_install install to different directories (!)
+#
+
+INSTALL_DIR = $(CURDIR)/build/inst-dist/
+INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
+
+DIST_VARS=SPHINXBUILD="LANG=C $(PYTHON) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)"
+
+UPLOAD_TARGET = $(USER)@docs.scipy.org:/home/docserver/www-root/doc/numpy/
+
 upload:
 	@test -e build/dist || { echo "make dist is required first"; exit 1; }
 	@test output-is-fine -nt build/dist || { \
 		echo "Review the output in build/dist, and do 'touch output-is-fine' before uploading."; exit 1; }
-	rsync -r -z --delete-after -p build/dist/ $(USER)@docs.scipy.org:/home/docserver/www-root/doc/numpy/
+	rsync -r -z --delete-after -p \
+	    $(if $(shell test -f build/dist/numpy-ref.pdf && echo "y"),, \
+	         --exclude '**-ref.pdf' --exclude '**-user.pdf') \
+	    $(if $(shell test -f build/dist/numpy-chm.zip && echo "y"),, \
+	         --exclude '**-chm.zip') \
+	    build/dist/ $(UPLOAD_TARGET)
 
-dist: html
+dist:
+	make $(DIST_VARS) real-dist
+
+real-dist: dist-build html
 	test -d build/latex || make latex
 	make -C build/latex all-pdf
 	-test -d build/htmlhelp || make htmlhelp-build
@@ -47,17 +81,29 @@ dist: html
 	chmod ug=rwX,o=rX -R build/dist
 	find build/dist -type d -print0 | xargs -0r chmod g+s
 
+dist-build:
+	rm -f ../dist/*.egg
+	cd .. && $(PYTHON) setupegg.py bdist_egg
+	install -d $(subst :, ,$(INSTALL_PPH))
+	$(PYTHON) `which easy_install` --prefix=$(INSTALL_DIR) ../dist/*.egg
+
+
+#------------------------------------------------------------------------------
+# Basic Sphinx generation rules for different formats
+#------------------------------------------------------------------------------
+
 generate: build/generate-stamp
 build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
-	./sphinxext/autosummary_generate.py source/reference/*.rst \
+	$(PYTHON) \
+		./sphinxext/autosummary_generate.py source/reference/*.rst \
 		-p dump.xml -o source/reference/generated 
 	touch build/generate-stamp
 
 html: generate
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html
-	python postprocess.py html build/html/*.html
+	$(PYTHON) postprocess.py html build/html/*.html
 	@echo
 	@echo "Build finished. The HTML pages are in build/html."
 
@@ -85,7 +131,7 @@ htmlhelp-build: htmlhelp build/htmlhelp/numpy.chm
 latex: generate
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex
-	python postprocess.py tex build/latex/*.tex
+	$(PYTHON) postprocess.py tex build/latex/*.tex
 	perl -pi -e 's/\t(latex.*|pdflatex) (.*)/\t-$$1 -interaction batchmode $$2/' build/latex/Makefile
 	@echo
 	@echo "Build finished; the LaTeX files are in build/latex."
