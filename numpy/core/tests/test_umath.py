@@ -439,16 +439,16 @@ class TestComplexFunctions(object):
 
         def check(x, rtol):
             d = np.absolute(np.arcsinh(x)/np.arcsinh(x+0j).real - 1)
-            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
 
             d = np.absolute(np.arcsinh(x)/np.arcsin(1j*x).imag - 1)
-            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
 
             d = np.absolute(np.arctanh(x)/np.arctanh(x+0j).real - 1)
-            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
 
             d = np.absolute(np.arctanh(x)/np.arctan(1j*x).imag - 1)
-            assert np.all(d < rtol), (x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
 
         # The switchover was chosen as 1e-3; hence there can be up to
         # ~eps/1e-3 of relative cancellation error before it
