@@ -3,10 +3,12 @@
 
 #include "numpy/npy_math.h"
 
-/* From the C99 standard, section 7.19.6: The exponent always contains at least
-   two digits, and only as many more digits as necessary to represent the
-   exponent.
-*/
+/*
+ * From the C99 standard, section 7.19.6: The exponent always contains at least
+ * two digits, and only as many more digits as necessary to represent the
+ * exponent.
+ */
+
 /* We force 3 digits on windows for python < 2.6 for compatibility reason */
 #if defined(MS_WIN32) && (PY_VERSION_HEX < 0x02060000)
 #define MIN_EXPONENT_DIGITS 3
@@ -14,8 +16,10 @@
 #define MIN_EXPONENT_DIGITS 2
 #endif
 
-/* Ensure that any exponent, if present, is at least MIN_EXPONENT_DIGITS
-   in length. */
+/*
+ * Ensure that any exponent, if present, is at least MIN_EXPONENT_DIGITS
+ * in length.
+ */
 static void
 _ensure_minimum_exponent_length(char* buffer, size_t buf_size)
 {
@@ -30,43 +34,54 @@ _ensure_minimum_exponent_length(char* buffer, size_t buf_size)
         /* Skip over the exponent and the sign. */
         p += 2;
 
-        /* Find the end of the exponent, keeping track of leading
-           zeros. */
+        /* Find the end of the exponent, keeping track of leading zeros. */
         while (*p && isdigit(Py_CHARMASK(*p))) {
-            if (in_leading_zeros && *p == '0')
+            if (in_leading_zeros && *p == '0') {
                 ++leading_zero_cnt;
-            if (*p != '0')
+            }
+            if (*p != '0') {
                 in_leading_zeros = 0;
+            }
             ++p;
             ++exponent_digit_cnt;
         }
 
         significant_digit_cnt = exponent_digit_cnt - leading_zero_cnt;
         if (exponent_digit_cnt == MIN_EXPONENT_DIGITS) {
-            /* If there are 2 exactly digits, we're done,
-               regardless of what they contain */
+            /*
+             * If there are 2 exactly digits, we're done,
+             * regardless of what they contain
+             */
         }
         else if (exponent_digit_cnt > MIN_EXPONENT_DIGITS) {
             int extra_zeros_cnt;
 
-            /* There are more than 2 digits in the exponent.  See
-               if we can delete some of the leading zeros */
-            if (significant_digit_cnt < MIN_EXPONENT_DIGITS)
+            /*
+             * There are more than 2 digits in the exponent.  See
+             * if we can delete some of the leading zeros
+             */
+            if (significant_digit_cnt < MIN_EXPONENT_DIGITS) {
                 significant_digit_cnt = MIN_EXPONENT_DIGITS;
-
+            }
             extra_zeros_cnt = exponent_digit_cnt - significant_digit_cnt;
 
-            /* Delete extra_zeros_cnt worth of characters from the
-               front of the exponent */
+            /*
+             * Delete extra_zeros_cnt worth of characters from the
+             * front of the exponent
+             */
             assert(extra_zeros_cnt >= 0);
 
-            /* Add one to significant_digit_cnt to copy the
-               trailing 0 byte, thus setting the length */
+            /*
+             * Add one to significant_digit_cnt to copy the
+             * trailing 0 byte, thus setting the length
+             */
             memmove(start, start + extra_zeros_cnt, significant_digit_cnt + 1);
         }
         else {
-            /* If there are fewer than 2 digits, add zeros
-               until there are 2, if there's enough room */
+            /*
+             * If there are fewer than 2 digits, add zeros
+             * until there are 2, if there's enough room
+             */
             int zeros = MIN_EXPONENT_DIGITS - exponent_digit_cnt;
             if (start + zeros + exponent_digit_cnt + 1 < buffer + buf_size) {
                 memmove(start + zeros, start, exponent_digit_cnt + 1);
@@ -76,8 +91,10 @@ _ensure_minimum_exponent_length(char* buffer, size_t buf_size)
     }
 }
 
-/* Ensure that buffer has a decimal point in it.  The decimal point
-   will not be in the current locale, it will always be '.' */
+/*
+ * Ensure that buffer has a decimal point in it.  The decimal point
+ * will not be in the current locale, it will always be '.'
+ */
 static void
 _ensure_decimal_point(char* buffer, size_t buf_size)
 {
@@ -87,20 +104,26 @@ _ensure_decimal_point(char* buffer, size_t buf_size)
     /* search for the first non-digit character */
     char *p = buffer;
     if (*p == '-' || *p == '+')
-        /* Skip leading sign, if present.  I think this could only
-           ever be '-', but it can't hurt to check for both. */
+        /*
+         * Skip leading sign, if present.  I think this could only
+         * ever be '-', but it can't hurt to check for both.
+         */
         ++p;
-    while (*p && isdigit(Py_CHARMASK(*p)))
+    while (*p && isdigit(Py_CHARMASK(*p))) {
         ++p;
-
+    }
     if (*p == '.') {
         if (isdigit(Py_CHARMASK(*(p+1)))) {
-            /* Nothing to do, we already have a decimal
-               point and a digit after it */
+            /*
+             * Nothing to do, we already have a decimal
+             * point and a digit after it.
+             */
         }
         else {
-            /* We have a decimal point, but no following
-               digit.  Insert a zero after the decimal. */
+            /*
+             * We have a decimal point, but no following
+             * digit.  Insert a zero after the decimal.
+             */
             ++p;
             chars_to_insert = "0";
             insert_count = 1;
@@ -113,13 +136,14 @@ _ensure_decimal_point(char* buffer, size_t buf_size)
     if (insert_count) {
         size_t buf_len = strlen(buffer);
         if (buf_len + insert_count + 1 >= buf_size) {
-            /* If there is not enough room in the buffer
-               for the additional text, just skip it.  It's
-               not worth generating an error over. */
+            /*
+             * If there is not enough room in the buffer
+             * for the additional text, just skip it.  It's
+             * not worth generating an error over.
+             */
         }
         else {
-            memmove(p + insert_count, p,
-                    buffer + strlen(buffer) - p + 1);
+            memmove(p + insert_count, p, buffer + strlen(buffer) - p + 1);
             memcpy(p, chars_to_insert, insert_count);
         }
     }
@@ -128,9 +152,11 @@ _ensure_decimal_point(char* buffer, size_t buf_size)
 /* see FORMATBUFLEN in unicodeobject.c */
 #define FLOAT_FORMATBUFLEN 120
 
-/* Given a string that may have a decimal point in the current
-   locale, change it back to a dot.  Since the string cannot get
-   longer, no need for a maximum buffer size parameter. */
+/*
+ * Given a string that may have a decimal point in the current
+ * locale, change it back to a dot.  Since the string cannot get
+ * longer, no need for a maximum buffer size parameter.
+ */
 static void
 _change_decimal_from_locale_to_dot(char* buffer)
 {
@@ -140,20 +166,19 @@ _change_decimal_from_locale_to_dot(char* buffer)
     if (decimal_point[0] != '.' || decimal_point[1] != 0) {
         size_t decimal_point_len = strlen(decimal_point);
 
-        if (*buffer == '+' || *buffer == '-')
+        if (*buffer == '+' || *buffer == '-') {
             buffer++;
-        while (isdigit(Py_CHARMASK(*buffer)))
+        }
+        while (isdigit(Py_CHARMASK(*buffer))) {
             buffer++;
+        }
         if (strncmp(buffer, decimal_point, decimal_point_len) == 0) {
             *buffer = '.';
             buffer++;
             if (decimal_point_len > 1) {
                 /* buffer needs to get smaller */
-                size_t rest_len = strlen(buffer +
-                                         (decimal_point_len - 1));
-                memmove(buffer,
-                        buffer + (decimal_point_len - 1),
-                        rest_len);
+                size_t rest_len = strlen(buffer + (decimal_point_len - 1));
+                memmove(buffer, buffer + (decimal_point_len - 1), rest_len);
                 buffer[rest_len] = 0;
             }
         }
@@ -176,22 +201,25 @@ _check_ascii_format(const char *format)
         return -1;
     }
 
-    /* I'm not sure why this test is here.  It's ensuring that the format
-       string after the first character doesn't have a single quote, a
-       lowercase l, or a percent. This is the reverse of the commented-out
-       test about 10 lines ago. */
+    /*
+     * I'm not sure why this test is here.  It's ensuring that the format
+     * string after the first character doesn't have a single quote, a
+     * lowercase l, or a percent. This is the reverse of the commented-out
+     * test about 10 lines ago.
+     */
     if (strpbrk(format + 1, "'l%")) {
         return -1;
     }
 
-    /* Also curious about this function is that it accepts format strings
-       like "%xg", which are invalid for floats.  In general, the
-       interface to this function is not very good, but changing it is
-       difficult because it's a public API. */
-
-    if (!(format_char == 'e' || format_char == 'E' ||
-          format_char == 'f' || format_char == 'F' ||
-          format_char == 'g' || format_char == 'G')) {
+    /*
+     * Also curious about this function is that it accepts format strings
+     * like "%xg", which are invalid for floats.  In general, the
+     * interface to this function is not very good, but changing it is
+     * difficult because it's a public API.
+     */
+    if (!(format_char == 'e' || format_char == 'E'
+          || format_char == 'f' || format_char == 'F'
+          || format_char == 'g' || format_char == 'G')) {
         return -1;
     }
 
@@ -207,15 +235,19 @@ _check_ascii_format(const char *format)
 static char*
 _fix_ascii_format(char* buf, size_t buflen, int decimal)
 {
-    /* Get the current locale, and find the decimal point string.
-       Convert that string back to a dot. */
+    /*
+     * Get the current locale, and find the decimal point string.
+     * Convert that string back to a dot.
+     */
     _change_decimal_from_locale_to_dot(buf);
 
-    /* If an exponent exists, ensure that the exponent is at least
-       MIN_EXPONENT_DIGITS digits, providing the buffer is large enough
-       for the extra zeros.  Also, if there are more than
-       MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
-       back to MIN_EXPONENT_DIGITS */
+    /*
+     * If an exponent exists, ensure that the exponent is at least
+     * MIN_EXPONENT_DIGITS digits, providing the buffer is large enough
+     * for the extra zeros.  Also, if there are more than
+     * MIN_EXPONENT_DIGITS, remove as many zeros as possible until we get
+     * back to MIN_EXPONENT_DIGITS
+     */
     _ensure_minimum_exponent_length(buf, buflen);
 
     if (decimal != 0) {
@@ -308,7 +340,9 @@ NumPyOS_init(void) {
     c = mul;
     for (;;) {
         c *= mul;
-        if (c == tmp) break;
+        if (c == tmp) {
+            break;
+        }
         tmp = c;
     }
     NumPyOS_PINF = c;
@@ -317,28 +351,32 @@ NumPyOS_init(void) {
     c = div;
     for (;;) {
         c /= div;
-        if (c == tmp) break;
+        if (c == tmp) {
+            break;
+        }
         tmp = c;
     }
-    NumPyOS_PZERO = c;
 
+    NumPyOS_PZERO = c;
     NumPyOS_NAN = NumPyOS_PINF / NumPyOS_PINF;
 }
 
 
-/* NumPyOS_ascii_isspace:
+/*
+ * NumPyOS_ascii_isspace:
  *
  * Same as isspace under C locale
  */
 static int
 NumPyOS_ascii_isspace(char c)
 {
-    return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' ||
-        c == '\v';
+    return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t'
+                    || c == '\v';
 }
 
 
-/* NumPyOS_ascii_isalpha:
+/*
+ * NumPyOS_ascii_isalpha:
  *
  * Same as isalpha under C locale
  */
@@ -349,7 +387,8 @@ NumPyOS_ascii_isalpha(char c)
 }
 
 
-/* NumPyOS_ascii_isdigit:
+/*
+ * NumPyOS_ascii_isdigit:
  *
  * Same as isdigit under C locale
  */
@@ -360,7 +399,8 @@ NumPyOS_ascii_isdigit(char c)
 }
 
 
-/* NumPyOS_ascii_isalnum:
+/*
+ * NumPyOS_ascii_isalnum:
  *
  * Same as isalnum under C locale
  */
@@ -371,20 +411,23 @@ NumPyOS_ascii_isalnum(char c)
 }
 
 
-/* NumPyOS_ascii_tolower:
+/*
+ * NumPyOS_ascii_tolower:
  *
  * Same as tolower under C locale
  */
 static char
 NumPyOS_ascii_tolower(char c)
 {
-    if (c >= 'A' && c <= 'Z')
+    if (c >= 'A' && c <= 'Z') {
         return c + ('a'-'A');
+    }
     return c;
 }
 
 
-/* NumPyOS_ascii_strncasecmp:
+/*
+ * NumPyOS_ascii_strncasecmp:
  *
  * Same as strncasecmp under C locale
  */
@@ -395,18 +438,22 @@ NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
     while (len > 0 && *s1 != '\0' && *s2 != '\0') {
         diff = ((int)NumPyOS_ascii_tolower(*s1)) -
             ((int)NumPyOS_ascii_tolower(*s2));
-        if (diff != 0) return diff;
+        if (diff != 0) {
+            return diff;
+        }
         ++s1;
         ++s2;
         --len;
     }
-    if (len > 0)
+    if (len > 0) {
         return ((int)*s1) - ((int)*s2);
+    }
     return 0;
 }
 
 
-/* NumPyOS_ascii_strtod:
+/*
+ * NumPyOS_ascii_strtod:
  *
  * Work around bugs in PyOS_ascii_strtod
  */
@@ -427,7 +474,8 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
         ++s;
     }
 
-    /* ##1
+    /*
+     * ##1
      *
      * Recognize POSIX inf/nan representations on all platforms.
      */
@@ -444,22 +492,32 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
         p += 3;
         if (*p == '(') {
             ++p;
-            while (NumPyOS_ascii_isalnum(*p) || *p == '_') ++p;
-            if (*p == ')') ++p;
+            while (NumPyOS_ascii_isalnum(*p) || *p == '_') {
+                ++p;
+            }
+            if (*p == ')') {
+                ++p;
+            }
         }
-        if (endptr != NULL) *endptr = (char*)p;
+        if (endptr != NULL) {
+            *endptr = (char*)p;
+        }
         return NumPyOS_NAN;
     }
     else if (NumPyOS_ascii_strncasecmp(p, "inf", 3) == 0) {
         p += 3;
-        if (NumPyOS_ascii_strncasecmp(p, "inity", 5) == 0)
+        if (NumPyOS_ascii_strncasecmp(p, "inity", 5) == 0) {
             p += 5;
-        if (endptr != NULL) *endptr = (char*)p;
+        }
+        if (endptr != NULL) {
+            *endptr = (char*)p;
+        }
         return result*NumPyOS_PINF;
     }
     /* End of ##1 */
 
-    /* ## 2
+    /*
+     * ## 2
      *
      * At least Python versions <= 2.5.2 and <= 2.6.1
      *
@@ -468,14 +526,17 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
      */
     if (decimal_point[0] != '.' || decimal_point[1] != 0) {
         p = s;
-        if (*p == '+' || *p == '-')
+        if (*p == '+' || *p == '-') {
             ++p;
-        while (*p >= '0' && *p <= '9')
+        }
+        while (*p >= '0' && *p <= '9') {
             ++p;
+        }
         if (strncmp(p, decimal_point, decimal_point_len) == 0) {
             n = (size_t)(p - s);
-            if (n > FLOAT_FORMATBUFLEN)
+            if (n > FLOAT_FORMATBUFLEN) {
                 n = FLOAT_FORMATBUFLEN;
+            }
             memcpy(buffer, s, n);
             buffer[n] = '\0';
             result = PyOS_ascii_strtod(buffer, &q);
@@ -509,7 +570,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
 static int
 NumPyOS_ascii_ftolf(FILE *fp, double *value)
 {
-    char buffer[FLOAT_FORMATBUFLEN+1];
+    char buffer[FLOAT_FORMATBUFLEN + 1];
     char *endp;
     char *p;
     int c;
@@ -559,12 +620,12 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value)
 
 #define MATCH_ZERO_OR_MORE(condition)                                       \
         while (condition) { NEXT_CHAR(); }
-    
+
     /* 1. emulate fscanf EOF handling */
     c = getc(fp);
-    if (c == EOF)
+    if (c == EOF) {
         return EOF;
-
+    }
     /* 2. consume leading whitespace unconditionally */
     while (NumPyOS_ascii_isspace(c)) {
         c = getc(fp);
@@ -585,7 +646,9 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value)
         if (c == '(') {
             NEXT_CHAR();
             MATCH_ZERO_OR_MORE(NumPyOS_ascii_isalnum(c) || c == '_');
-            if (c == ')') NEXT_CHAR();
+            if (c == ')') {
+                NEXT_CHAR();
+            }
         }
         END_MATCH();
     }
@@ -618,10 +681,10 @@ buffer_filled:
     *endp = '\0';
 
     /* 5. try to convert buffer. */
-
     *value = NumPyOS_ascii_strtod(buffer, &p);
 
-    return (buffer == p) ? 0 : 1; /* if something was read */
+    /* return 1 if something read, else 0 */
+    return (buffer == p) ? 0 : 1;
 }
 
 #undef END_MATCH
