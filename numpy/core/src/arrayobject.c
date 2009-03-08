@@ -511,7 +511,7 @@ static void
 copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
               intp srcstrides, int swap)
 {
-    int i;
+    intp i;
     char *s1 = (char *)src;
     char *d1 = (char *)dst;
 
@@ -527,8 +527,9 @@ copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
         }
     }
 
-    if (swap)
+    if (swap) {
         byte_swap_vector(d1, numitems, itemsize);
+    }
 }
 
 
@@ -1262,7 +1263,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      */
     if (dest->descr->type == PyArray_CHARLTR && dest->nd > 0 \
         && PyString_Check(src_object)) {
-        int n_new, n_old;
+        intp n_new, n_old;
         char *new_string;
         PyObject *tmp;
 
@@ -1270,10 +1271,8 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
         n_old = PyString_Size(src_object);
         if (n_new > n_old) {
             new_string = (char *)malloc(n_new);
-            memmove(new_string,
-                    PyString_AS_STRING(src_object),
-                    n_old);
-            memset(new_string+n_old, ' ', n_new-n_old);
+            memmove(new_string, PyString_AS_STRING(src_object), n_old);
+            memset(new_string + n_old, ' ', n_new - n_old);
             tmp = PyString_FromStringAndSize(new_string, n_new);
             free(new_string);
             src_object = tmp;
@@ -1884,8 +1883,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
         else {
             NPY_BEGIN_THREADS_DEF;
 
-            it = (PyArrayIterObject *)
-                PyArray_IterNew((PyObject *)self);
+            it = (PyArrayIterObject *) PyArray_IterNew((PyObject *)self);
             NPY_BEGIN_THREADS;
             while (it->index < it->size) {
                 if (fwrite((const void *)it->dataptr,
@@ -1894,8 +1892,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     NPY_END_THREADS;
                     PyErr_Format(PyExc_IOError,
                             "problem writing element"\
-                            " %d to file",
-                            (int)it->index);
+                            " %"INTP_FMT" to file",
+                            it->index);
                     Py_DECREF(it);
                     return -1;
                 }
@@ -1955,14 +1953,13 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 }
             }
             NPY_BEGIN_ALLOW_THREADS;
-            n = fwrite(PyString_AS_STRING(strobj), 1,
-                    n2=PyString_GET_SIZE(strobj), fp);
+            n2 = PyString_GET_SIZE(strobj);
+            n = fwrite(PyString_AS_STRING(strobj), 1, n2, fp);
             NPY_END_ALLOW_THREADS;
             if (n < n2) {
                 PyErr_Format(PyExc_IOError,
-                        "problem writing element %d"\
-                        " to file",
-                        (int) it->index);
+                        "problem writing element %"INTP_FMT\
+                        " to file", it->index);
                 Py_DECREF(strobj);
                 Py_DECREF(it);
                 return -1;
@@ -2043,9 +2040,9 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     */
 
     numbytes = PyArray_NBYTES(self);
-    if ((PyArray_ISCONTIGUOUS(self) && (order == NPY_CORDER)) ||
-        (PyArray_ISFORTRAN(self) && (order == NPY_FORTRANORDER))) {
-        ret = PyString_FromStringAndSize(self->data, (int) numbytes);
+    if ((PyArray_ISCONTIGUOUS(self) && (order == NPY_CORDER))
+        || (PyArray_ISFORTRAN(self) && (order == NPY_FORTRANORDER))) {
+        ret = PyString_FromStringAndSize(self->data, (Py_ssize_t) numbytes);
     }
     else {
         PyObject *new;
@@ -2065,7 +2062,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         if (it == NULL) {
             return NULL;
         }
-        ret = PyString_FromStringAndSize(NULL, (int) numbytes);
+        ret = PyString_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
         if (ret == NULL) {
             Py_DECREF(it);
             return NULL;
@@ -3366,12 +3363,12 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 	    noellipses = FALSE;
 	}
         else if (PySequence_Check(op)) {
-            int n, i;
+            Py_ssize_t n, i;
             PyObject *temp;
 
             n = PySequence_Size(op);
             i = 0;
-            while (i<n && noellipses) {
+            while (i < n && noellipses) {
                 temp = PySequence_GetItem(op, i);
                 if (temp == Py_Ellipsis) {
                     noellipses = FALSE;
@@ -4460,7 +4457,7 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
     PyArray_Descr *descr=self->descr;
     PyObject *op, *sp;
     char *ostring;
-    int i, N;
+    intp i, N;
 
 #define CHECK_MEMORY do { if (*n >= *max_n-16) {         \
         *max_n *= 2;                                     \
@@ -6782,12 +6779,10 @@ array_data_get(PyArrayObject *self)
     }
     nbytes = PyArray_NBYTES(self);
     if PyArray_ISWRITEABLE(self) {
-	return PyBuffer_FromReadWriteObject((PyObject *)self, 0,
-					  (Py_ssize_t) nbytes);
+        return PyBuffer_FromReadWriteObject((PyObject *)self, 0, (Py_ssize_t) nbytes);
     }
     else {
-	return PyBuffer_FromObject((PyObject *)self, 0,
-				   (Py_ssize_t) nbytes);
+        return PyBuffer_FromObject((PyObject *)self, 0, (Py_ssize_t) nbytes);
     }
 }
 
@@ -10030,7 +10025,8 @@ iter_length(PyArrayIterObject *self)
 static PyObject *
 iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 {
-    int index, strides, itemsize;
+    intp index, strides;
+    int itemsize;
     intp count = 0;
     char *dptr, *optr;
     PyObject *r;
@@ -10096,7 +10092,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     int itemsize;
     int swap;
     char *optr;
-    int index;
+    intp index;
     PyArray_CopySwapFunc *copyswap;
 
     itemsize = self->ao->descr->elsize;
@@ -10107,9 +10103,9 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         }
         if (num < 0 || num >= self->size) {
             PyErr_Format(PyExc_IndexError,
-                         "index %d out of bounds"   \
-                         " 0<=index<%d", (int) num,
-                         (int) self->size);
+                         "index %"INTP_FMT" out of bounds"   \
+                         " 0<=index<%"INTP_FMT,
+                         num, self->size);
             r = NULL;
         }
         else {
@@ -10144,9 +10140,9 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         }
         if (num < 0 || num >= self->size) {
             PyErr_Format(PyExc_IndexError,
-                         "index %d out of bounds"           \
-                         " 0<=index<%d", (int) num,
-                         (int) self->size);
+                         "index %"INTP_FMT" out of bounds" \
+                         " 0<=index<%"INTP_FMT,
+			 num, self->size);
             Py_DECREF(ind_it);
             Py_DECREF(r);
             PyArray_ITER_RESET(self);
@@ -10315,7 +10311,7 @@ static int
 iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                   PyArrayIterObject *val, int swap)
 {
-    int index, strides;
+    intp index, strides;
     char *dptr;
     PyArray_CopySwapFunc *copyswap;
 
@@ -10359,7 +10355,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     PyArray_Descr *typecode;
     intp num;
     PyArrayIterObject *ind_it;
-    int index;
+    intp index;
     PyArray_CopySwapFunc *copyswap;
 
     typecode = self->ao->descr;
@@ -10382,9 +10378,9 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
         }
         if ((num < 0) || (num >= self->size)) {
             PyErr_Format(PyExc_IndexError,
-                         "index %d out of bounds"           \
-                         " 0<=index<%d", (int) num,
-                         (int) self->size);
+                         "index %"INTP_FMT" out of bounds"           \
+                         " 0<=index<%"INTP_FMT, num,
+                         self->size);
             Py_DECREF(ind_it);
             return -1;
         }
@@ -11149,10 +11145,9 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             }
             if (indval < 0 || indval >= dimsize) {
                 PyErr_Format(PyExc_IndexError,
-                             "index (%d) out of range "\
-                             "(0<=index<%d) in dimension %d",
-                             (int) indval, (int) (dimsize-1),
-                             mit->iteraxes[i]);
+                             "index (%"INTP_FMT") out of range "\
+                             "(0<=index<%"INTP_FMT") in dimension %d",
+                             indval, (dimsize-1), mit->iteraxes[i]);
                 goto fail;
             }
             PyArray_ITER_NEXT(it);
@@ -12913,11 +12908,7 @@ descr_repeat(PyObject *self, Py_ssize_t length)
     PyArray_Descr *new;
     if (length < 0) {
         return PyErr_Format(PyExc_ValueError,
-#if (PY_VERSION_HEX < 0x02050000)
-                            "Array length must be >= 0, not %d",
-#else
-                            "Array length must be >= 0, not %zd",
-#endif
+                            "Array length must be >= 0, not %"INTP_FMT,
                             length);
     }
     tup = Py_BuildValue("O" NPY_SSIZE_T_PYFMT, self, length);
