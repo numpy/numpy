@@ -475,7 +475,7 @@ defdict = {
 'exp2' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.exp2'),
-          TD(flts, f='exp2'),
+          TD(inexact, f='exp2'),
           TD(M, f='exp2'),
           ),
 'expm1' :
@@ -493,7 +493,7 @@ defdict = {
 'log2' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.log2'),
-          TD(flts, f='log2'),
+          TD(inexact, f='log2'),
           TD(M, f='log2'),
           ),
 'log10' :

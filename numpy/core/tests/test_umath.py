@@ -331,9 +331,10 @@ class TestChoose(TestCase):
 
 
 class TestComplexFunctions(object):
-    funcs = [np.arcsin , np.arccos , np.arctan, np.arcsinh, np.arccosh,
-             np.arctanh, np.sin    , np.cos   , np.tan    , np.exp,
-             np.log    , np.sqrt   , np.log10,  np.log1p]
+    funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
+             np.arctanh, np.sin,     np.cos,    np.tan,     np.exp,
+             np.exp2,    np.log,     np.sqrt,   np.log10,   np.log2,
+             np.log1p]
 
     def test_it(self):
         for f in self.funcs:
@@ -358,6 +359,7 @@ class TestComplexFunctions(object):
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
         yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1
+        yield _check_branch_cut, np.log2,  -0.5, 1j, 1, -1
         yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1
         yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1
         yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1
@@ -384,6 +386,7 @@ class TestComplexFunctions(object):
         # XXX: signed zero not OK with ICC on 64-bit platform for log, see
         # http://permalink.gmane.org/gmane.comp.python.numeric.general/25335
         yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1, True
+        yield _check_branch_cut, np.log2,  -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True
         yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True
         # XXX: signed zeros are not OK for sqrt or for the arc* functions
@@ -411,8 +414,10 @@ class TestComplexFunctions(object):
         for func in self.funcs:
             fname = func.__name__.split('.')[-1]
             cname = name_map.get(fname, fname)
-            try: cfunc = getattr(cmath, cname)
-            except AttributeError: continue
+            try:
+                cfunc = getattr(cmath, cname)
+            except AttributeError:
+                continue
             for p in points:
                 a = complex(func(np.complex_(p)))
                 b = cfunc(p)
@@ -444,7 +449,7 @@ class TestComplexFunctions(object):
 
             d = np.absolute(np.arctanh(x)/np.arctan(1j*x).imag - 1)
             assert np.all(d < rtol), (x[np.argmax(d)], d.max())
-        
+
         # The switchover was chosen as 1e-3; hence there can be up to
         # ~eps/1e-3 of relative cancellation error before it
 
