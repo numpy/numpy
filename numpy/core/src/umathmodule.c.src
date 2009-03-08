@@ -210,7 +210,7 @@ PyMODINIT_FUNC initumath(void) {
 
     InitOtherOperators(d);
 
-    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(M_PI));
+    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
     Py_DECREF(s);
