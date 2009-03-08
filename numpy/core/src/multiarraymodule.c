@@ -7684,34 +7684,25 @@ array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObje
     return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
 }
 
-#define __STR2INTCST(str) ((str[0] << 24) + (str[1] << 16) + (str[2] << 8) + str[3])
-static int compute_endianness()
-{
-	union {
-		char c[4];
-		npy_uint32 i;
-	} bint;
-	int st;
-
-	bint.i = __STR2INTCST("ABCD");
-
-	switch(bint.c[0]) {
-		case 'A':
-			return NPY_CPU_BIG;
-		case 'D':
-			return NPY_CPU_LITTLE;
-		default:
-			return NPY_CPU_UNKNOWN_ENDIAN;	
-	}
-}
-#undef __STR2INTCST
-
 /*NUMPY_API
 */
-static int 
+static int
 PyArray_GetEndianness(void)
 {
-    return compute_endianness();
+    const union {
+        npy_uint32 i;
+        char c[4];
+    } bint = {0x01020304};
+
+    if (bint.c[0] == 1) {
+        return NPY_CPU_BIG;
+    }
+    else if (bint.c[0] == 4) {
+        return NPY_CPU_LITTLE;
+    }
+    else {
+        return NPY_CPU_UNKNOWN_ENDIAN;
+    }
 }
 
 static PyObject *
@@ -7722,6 +7713,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyTypeObject *subtype;
     PyArray_Dims shape = {NULL, 0};
     PyArray_Descr *dtype = NULL;
+
     if (!PyArg_ParseTuple(args, "O!O&O&", &PyType_Type, &subtype,
                           PyArray_IntpConverter, &shape,
                           PyArray_DescrConverter, &dtype)) {
