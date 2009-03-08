@@ -245,7 +245,8 @@ def array2string(a, max_line_width = None, precision = None,
         Floating point precision. Default is the current printing
         precision (usually 8), which can be altered using `set_printoptions`.
     suppress_small : bool, optional
-        Represent very small numbers as zero.
+        Represent very small numbers as zero. A number is "very small" if it
+        is smaller than the current printing precision.
     separator : string, optional
         Inserted between elements.
     prefix : string, optional
@@ -256,7 +257,13 @@ def array2string(a, max_line_width = None, precision = None,
         The length of the prefix string is used to align the
         output correctly.
     style : function, optional
-        Callable.
+        A function that accepts an ndarray and returns a string.  Used only
+        when the shape of `a` is equal to ().
+
+    Returns
+    -------
+    array_str : str
+        String representation of the array.
 
     See Also
     --------

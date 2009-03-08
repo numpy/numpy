@@ -790,36 +790,11 @@ add_newdoc('numpy.core.umath', 'cosh',
 
 add_newdoc('numpy.core.umath', 'degrees',
     """
-    Convert angles from radians to degrees. This is the same
-    function as rad2deg but the latter is preferred because of
-    the more descriptive name.
-
-    Parameters
-    ----------
-    x : array_like
-      Angle in radians.
-
-    Returns
-    -------
-    y : ndarray
-      The corresponding angle in degrees.
-
+    Convert angles from radians to degrees.
 
     See Also
     --------
-    rad2deg : Convert angles from radians to degrees.
-    deg2rad : Convert angles from degrees to radians.
-    radians : Convert angles from degrees to radians.
-    unwrap : Remove large jumps in angle by wrapping.
-
-    Notes
-    -----
-    degrees(x) is ``180 * x / pi``.
-
-    Examples
-    --------
-    >>> np.degrees(np.pi/2)
-    90.0
+    rad2deg : equivalent function; see for documentation.
 
     """)
 
@@ -1203,7 +1178,7 @@ add_newdoc('numpy.core.umath', 'greater',
 
     See Also
     --------
-    greater_equal
+    greater_equal, less, less_equal, equal, not_equal
 
     Examples
     --------
@@ -2244,34 +2219,11 @@ add_newdoc('numpy.core.umath', 'power',
 
 add_newdoc('numpy.core.umath', 'radians',
     """
-    Convert angles from degrees to radians. This function is
-    the same as deg2rad, which is more descriptive..
-
-    Parameters
-    ----------
-    x : array_like
-      Angles in degrees.
-
-    Returns
-    -------
-    y : ndarray
-      The corresponding angle in radians.
+    Convert angles from degrees to radians.
 
     See Also
     --------
-    deg2rad : Convert angles from degrees to radians.
-    rad2deg : Convert angles from radians to degrees.
-    degrees : Convert angles from radians to degrees.
-    unwrap : Remove large jumps in angle by wrapping.
-
-    Notes
-    -----
-    ``radians(x)`` is ``x * pi / 180``.
-
-    Examples
-    --------
-    >>> np.radians(180)
-    3.1415926535897931
+    deg2rad : equivalent function; see for documentation.
 
     """)
 

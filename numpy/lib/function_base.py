@@ -43,9 +43,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
 
     Parameters
     ----------
-    start : {float, int}
+    start : scalar
         The starting value of the sequence.
-    stop : {float, int}
+    stop : scalar
         The end value of the sequence, unless `endpoint` is set to False.
         In that case, the sequence consists of all but the last of ``num + 1``
         evenly spaced samples, so that `stop` is excluded.  Note that the step

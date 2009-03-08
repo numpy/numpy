@@ -819,7 +819,6 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     >>> a
     array([[[0, 1],
             [2, 3]],
-    <BLANKLINE>
            [[4, 5],
             [6, 7]]])
     >>> a.diagonal(0,-2,-1)
@@ -2132,9 +2131,10 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type is cast if
         necessary.
-    ddof : positive int,optional
+    ddof : int, optional
         "Delta Degrees of Freedom": the divisor used in calculation is
-        N - ddof.
+        ``N - ddof``, where ``N`` represents the number of elements. By
+        default `ddof` is zero.
 
     Returns
     -------
@@ -2150,10 +2150,17 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     Notes
     -----
     The variance is the average of the squared deviations from the mean,
-    i.e.,  var = mean(abs(x - x.mean())**2).  The computed variance is biased,
-    i.e., the mean is computed by dividing by the number of elements, N,
-    rather than by N-1. Note that for complex numbers the absolute value is
-    taken before squaring, so that the result is always real and nonnegative.
+    i.e.,  ``var = mean(abs(x - x.mean())**2)``.
+
+    The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
+    If, however, `ddof` is specified, the divisor ``N - ddof`` is used
+    instead. In standard statistical practice, ``ddof=1`` provides an
+    unbiased estimator of the variance of the infinite population. ``ddof=0``
+    provides a maximum likelihood estimate of the variance for normally
+    distributed variables.
+
+    Note that for complex numbers, the absolute value is taken before
+    squaring, so that the result is always real and nonnegative.
 
     Examples
     --------
