@@ -3172,10 +3172,9 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
             PyErr_Clear();
         }
     }
-    if (np >= 1) {
+    if (np > 0) {
+        /* If we have some wraps defined, find the one of highest priority */
         wrap = wraps[0];
-    }
-    if (np >= 2) {
         double maxpriority = PyArray_GetPriority(with_wrap[0],
                                         PyArray_SUBTYPE_PRIORITY);
         for (i = 1; i < np; ++i) {
