@@ -1,8 +1,10 @@
 #ifndef _NPY_ENDIAN_H_
 #define _NPY_ENDIAN_H_
 
-/* NPY_BYTE_ORDER is set to the same value as BYTE_ORDER set by glibc in
- * endian.h */
+/*
+ * NPY_BYTE_ORDER is set to the same value as BYTE_ORDER set by glibc in
+ * endian.h
+ */
 
 #ifdef NPY_HAVE_ENDIAN_H
         /* Use endian.h if available */
@@ -18,7 +20,7 @@
 #else
         /* Set endianness info using target CPU */
         #include "npy_cpu.h"
-        
+
         #if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
 		#define NPY_LITTLE_ENDIAN
 		#define NPY_BYTE_ORDER 1234
@@ -28,7 +30,7 @@
 		#define NPY_BIG_ENDIAN
 		#define NPY_BYTE_ORDER 4321
         #else
-                #error Unknown CPU: don't know how to set endianness
+                #error Unknown CPU: can not set endianness
         #endif
 #endif
 

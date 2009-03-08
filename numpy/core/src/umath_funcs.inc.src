@@ -4,11 +4,6 @@
  * object functions.
  */
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338328
-#endif
-
-#define M_LOG10_E       0.434294481903251827651128918916605082294397
 
 /*
  *****************************************************************************
@@ -91,12 +86,13 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
  */
 
 /**begin repeat
+ *
+ * #typ = float, double, longdouble#
+ * #c = f, ,l#
+ */
 
-   #typ=float, double, longdouble#
-   #c=f,,l#
-*/
-
-/* Perform the operation  result := 1 + coef * x * result,
+/*
+ * Perform the operation  result := 1 + coef * x * result,
  * with real coefficient `coef`.
  */
 #define SERIES_HORNER_TERM@c@(result, x, coef)                  \
@@ -113,8 +109,8 @@ static c@typ@ nc_half@c@ = {0.5, 0.};
 static c@typ@ nc_i@c@ = {0., 1.};
 static c@typ@ nc_i2@c@ = {0., 0.5};
 /*
- *   static c@typ@ nc_mi@c@ = {0., -1.};
- *   static c@typ@ nc_pi2@c@ = {M_PI/2., 0.};
+ *   static c@typ@ nc_mi@c@ = {0.0@c@, -1.0@c@};
+ *   static c@typ@ nc_pi2@c@ = {NPY_PI_2@c@., 0.0@c@};
  */
 
 
@@ -222,10 +218,20 @@ nc_exp@c@(c@typ@ *x, c@typ@ *r)
 }
 
 static void
+nc_exp2@c@(c@typ@ *x, c@typ@ *r)
+{
+    c@typ@ a;
+    a.real = x->real*NPY_LOGE2@c@;
+    a.imag = x->imag*NPY_LOGE2@c@;
+    nc_exp@c@(&a, r);
+    return;
+}
+
+static void
 nc_expm1@c@(c@typ@ *x, c@typ@ *r)
 {
     @typ@ a = npy_exp@c@(x->real);
-    r->real = a*npy_cos@c@(x->imag) - 1;
+    r->real = a*npy_cos@c@(x->imag) - 1.0@c@;
     r->imag = a*npy_sin@c@(x->imag);
     return;
 }
@@ -350,7 +356,7 @@ nc_asin@c@(c@typ@ *x, c@typ@ *r)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
-        
+
         *r = nc_1@c@;
         SERIES_HORNER_TERM@c@(r, &x2, 25./42);
         SERIES_HORNER_TERM@c@(r, &x2, 9./20);
@@ -383,7 +389,7 @@ nc_asinh@c@(c@typ@ *x, c@typ@ *r)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
-        
+
         *r = nc_1@c@;
         SERIES_HORNER_TERM@c@(r, &x2, -25./42);
         SERIES_HORNER_TERM@c@(r, &x2, -9./20);
@@ -416,7 +422,7 @@ nc_atan@c@(c@typ@ *x, c@typ@ *r)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
-        
+
         *r = nc_1@c@;
         SERIES_HORNER_TERM@c@(r, &x2, -5./7);
         SERIES_HORNER_TERM@c@(r, &x2, -3./5);
@@ -449,7 +455,7 @@ nc_atanh@c@(c@typ@ *x, c@typ@ *r)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
-        
+
         *r = nc_1@c@;
         SERIES_HORNER_TERM@c@(r, &x2, 5./7);
         SERIES_HORNER_TERM@c@(r, &x2, 3./5);
@@ -481,8 +487,17 @@ static void
 nc_log10@c@(c@typ@ *x, c@typ@ *r)
 {
     nc_log@c@(x, r);
-    r->real *= (@typ@) M_LOG10_E;
-    r->imag *= (@typ@) M_LOG10_E;
+    r->real *= NPY_LOG10E@c@;
+    r->imag *= NPY_LOG10E@c@;
+    return;
+}
+
+static void
+nc_log2@c@(c@typ@ *x, c@typ@ *r)
+{
+    nc_log@c@(x, r);
+    r->real *= NPY_LOG2E@c@;
+    r->imag *= NPY_LOG2E@c@;
     return;
 }
 
@@ -549,4 +564,3 @@ nc_tanh@c@(c@typ@ *x, c@typ@ *r)
 #undef SERIES_HORNER_TERM@c@
 
 /**end repeat**/
-
