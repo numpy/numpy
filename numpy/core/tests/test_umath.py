@@ -240,6 +240,19 @@ class TestSpecialMethods(TestCase):
         assert_equal(args[1], a)
         self.failUnlessEqual(i, 0)
 
+    def test_wrap_with_iterable(self):
+        # test fix for bug #1026:
+        class with_wrap(np.ndarray):
+            __array_priority = 10
+            def __new__(cls):
+                return np.asarray(1).view(cls).copy()
+            def __array_wrap__(self, arr, context):
+                return arr.view(type(self))
+        a = with_wrap()
+        x = ncu.multiply(a, (1, 2, 3))
+        self.failUnless(isinstance(x, with_wrap))
+        assert_array_equal(x, np.array((1, 2, 3)))
+
     def test_old_wrap(self):
         class with_wrap(object):
             def __array__(self):
