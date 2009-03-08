@@ -243,7 +243,7 @@ class TestSpecialMethods(TestCase):
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
         class with_wrap(np.ndarray):
-            __array_priority = 10
+            __array_priority__ = 10
             def __new__(cls):
                 return np.asarray(1).view(cls).copy()
             def __array_wrap__(self, arr, context):
