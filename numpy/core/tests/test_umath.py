@@ -253,6 +253,17 @@ class TestSpecialMethods(TestCase):
         self.failUnless(isinstance(x, with_wrap))
         assert_array_equal(x, np.array((1, 2, 3)))
 
+    def test_priority_with_scalar(self):
+        # test fix for bug #826:
+        class A(np.ndarray):
+            __array_priority__ = 10
+            def __new__(cls):
+                return np.asarray(1.0, 'float64').view(cls).copy()
+        a = A()
+        x = np.float64(1)*a
+        self.failUnless(isinstance(x, A))
+        assert_array_equal(x, np.array(1))
+
     def test_old_wrap(self):
         class with_wrap(object):
             def __array__(self):
