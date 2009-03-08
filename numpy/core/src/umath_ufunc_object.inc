@@ -3147,7 +3147,6 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
     Py_ssize_t nargs;
     int i;
     int np = 0;
-    double priority, maxpriority;
     PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
     PyObject *obj, *wrap = NULL;
 
@@ -3173,12 +3172,14 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
             PyErr_Clear();
         }
     }
-    if (np >= 2) {
+    if (np >= 1) {
         wrap = wraps[0];
-        maxpriority = PyArray_GetPriority(with_wrap[0],
+    }
+    if (np >= 2) {
+        double maxpriority = PyArray_GetPriority(with_wrap[0],
                                         PyArray_SUBTYPE_PRIORITY);
         for (i = 1; i < np; ++i) {
-            priority = PyArray_GetPriority(with_wrap[i],
+            double priority = PyArray_GetPriority(with_wrap[i],
                                         PyArray_SUBTYPE_PRIORITY);
             if (priority > maxpriority) {
                 maxpriority = priority;
