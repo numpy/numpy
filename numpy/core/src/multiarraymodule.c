@@ -1416,6 +1416,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         PyArray_ScalarKind(self->descr->type_num, NULL)) {
         indescr = _array_small_type(newdescr, self->descr);
         func = indescr->f->fastclip;
+        if (func == NULL) {
+            return _slow_array_clip(self, min, max, out);
+        }
     }
     else {
         indescr = self->descr;
