@@ -234,7 +234,6 @@ class TestUfunc(TestCase):
         pass
 
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_signature(self):
         # the arguments to test_signature are: nin, nout, core_signature
         # pass
@@ -273,16 +272,13 @@ class TestUfunc(TestCase):
         # more complicated names for variables
         assert_equal(umt.test_signature(2,1,"(i1,i2),(J_1)->(_kAB)"),1)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_inner1d(self):
         a = np.arange(6).reshape((2,3))
         assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1))
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_broadcast(self):
         msg = "broadcast"
         a = np.arange(4).reshape((2,1,2))
@@ -307,7 +303,6 @@ class TestUfunc(TestCase):
             assert_equal(ret, None, err_msg=msg)
         except ValueError: None
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2,3))
@@ -318,7 +313,6 @@ class TestUfunc(TestCase):
         assert_array_almost_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1),
             err_msg=msg)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_endian(self):
         msg = "big endian"
         a = np.arange(6, dtype='>i4').reshape((2,3))
@@ -327,7 +321,6 @@ class TestUfunc(TestCase):
         a = np.arange(6, dtype='<i4').reshape((2,3))
         assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_incontiguous_array(self):
         msg = "incontiguous memory layout of array"
         x = np.arange(64).reshape((2,2,2,2,2,2))
@@ -344,7 +337,6 @@ class TestUfunc(TestCase):
         assert_equal(x[0,0,0], -1, err_msg=msg2)
         assert_array_equal(umt.inner1d(a,b), np.sum(a*b,axis=-1), err_msg=msg)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_output_argument(self):
         msg = "output argument"
         a = np.arange(12).reshape((2,3,2))
@@ -361,7 +353,6 @@ class TestUfunc(TestCase):
         umt.inner1d(a,b,c[...,0])
         assert_array_equal(c[...,0], np.sum(a*b,axis=-1), err_msg=msg)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_innerwt(self):
         a = np.arange(6).reshape((2,3))
         b = np.arange(10,16).reshape((2,3))
@@ -372,12 +363,10 @@ class TestUfunc(TestCase):
         w = np.arange(300,324).reshape((2,3,4))
         assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def test_matrix_multiply(self):
         self.compare_matrix_multiply_results(np.long)
         self.compare_matrix_multiply_results(np.double)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Generalized ufunc known to fail on win32")
     def compare_matrix_multiply_results(self, tp):
         d1 = np.array(rand(2,3,4), dtype=tp)
         d2 = np.array(rand(2,3,4), dtype=tp)
