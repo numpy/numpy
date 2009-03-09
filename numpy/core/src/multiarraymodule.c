@@ -6264,8 +6264,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                                     PyArray_OrderConverter, &order,
                                     PyArray_BoolConverter, &subok,
                                     &ndmin)) {
-            Py_XDECREF(type);
-            return NULL;
+            goto clean_type;
     }
 
     /* fast exit if simple call */
@@ -6332,6 +6331,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
      * steals a reference to ret
      */
     return _prepend_ones((PyArrayObject *)ret, nd, ndmin);
+
+clean_type:
+    Py_XDECREF(type);
+    return NULL;
 }
 
 /*NUMPY_API
