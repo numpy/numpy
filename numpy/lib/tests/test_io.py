@@ -4,8 +4,9 @@ from numpy.ma.testutils import *
 
 import StringIO
 import gzip
+import os
 
-from tempfile import NamedTemporaryFile
+from tempfile import mkstemp
 import sys, time
 from datetime import datetime
 
@@ -807,12 +808,9 @@ M   33  21.99
         assert_equal(test, control)
 
 def test_gzip_load():
-    import gzip
-    from StringIO import StringIO
-
     a = np.random.random((5, 5))
 
-    s = StringIO()
+    s = StringIO.StringIO()
     f = gzip.GzipFile(fileobj=s, mode="w")
 
     np.save(f, a)
@@ -823,12 +821,35 @@ def test_gzip_load():
     assert_array_equal(np.load(f), a)
 
 def test_gzip_loadtxt():
-    f = NamedTemporaryFile(suffix='.gz')
-    g = gzip.GzipFile(fileobj=f)
+    # Thanks to another windows brokeness, we can't use
+    # NamedTemporaryFile: a file created from this function cannot be
+    # reopened by another open call. So we first put the gzipped string
+    # of the test reference array, write it to a securely opened file,
+    # which is then read from by the loadtxt function
+    s = StringIO.StringIO()
+    g = gzip.GzipFile(fileobj=s, mode='w')
     g.write('1 2 3\n')
     g.close()
-    f.seek(0)
-    assert_array_equal(np.loadtxt(f.name), [1, 2, 3])
+    s.seek(0)
+
+    f, name = mkstemp(suffix='.gz')
+    try:
+        os.write(f, s.read())
+        s.close()
+        assert_array_equal(np.loadtxt(name), [1, 2, 3])
+    finally:
+        os.close(f)
+        os.unlink(name)
+
+def test_gzip_loadtxt_from_string():
+    s = StringIO.StringIO()
+    f = gzip.GzipFile(fileobj=s, mode="w")
+    f.write('1 2 3\n')
+    f.close()
+    s.seek(0)
+
+    f = gzip.GzipFile(fileobj=s, mode="r")
+    assert_array_equal(np.loadtxt(f), [1, 2, 3])
 
 if __name__ == "__main__":
     run_module_suite()
