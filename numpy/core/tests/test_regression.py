@@ -1208,10 +1208,9 @@ class TestRegression(TestCase):
         a = np.array(1)
         self.failUnlessRaises(ValueError, lambda x: x.choose([]), a)
 
-    @dec.knownfailureif(True, "Overflowing ndmin arg of array ctor segfaults.")
     def test_array_ndmin_overflow(self):
         "Ticket #947."
-        a = np.array([1], ndmin=33)
+        self.assertRaises(ValueError, lambda: np.array([1], ndmin=33))
 
     def test_errobj_reference_leak(self, level=rlevel):
         """Ticket #955"""
