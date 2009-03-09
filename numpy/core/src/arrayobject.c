@@ -1459,7 +1459,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             }
             else if (type_num == PyArray_UNICODE) {
                 PyUnicodeObject *uni = (PyUnicodeObject*)obj;
-                int length = itemsize >> 2;
+                size_t length = itemsize >> 2;
 #ifndef Py_UNICODE_WIDE
                 char *buffer;
                 int alloc = 0;

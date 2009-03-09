@@ -689,7 +689,7 @@ format_@name@(char *buf, size_t buflen, @name@ val, unsigned int prec)
 {
     /* XXX: Find a correct size here for format string */
     char format[64], *res;
-    int i, cnt;
+    size_t i, cnt;
 
     PyOS_snprintf(format, sizeof(format), _FMT1, prec);
     res = NumPyOS_ascii_format@type@(buf, buflen, format, val, 0);

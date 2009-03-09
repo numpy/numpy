@@ -965,6 +965,7 @@ static int
  * #sign=(signed,unsigned)*5,,,,,,#
  * #ctype=long*8,PY_LONG_LONG*2,double*6#
  * #realtyp=0*10,1*6#
+ * #unsigntyp=0,1,0,1,0,1,0,1,0,1,1*6#
  * #func=(PyLong_FromLong,PyLong_FromUnsignedLong)*4,PyLong_FromLongLong,PyLong_FromUnsignedLongLong,PyLong_FromDouble*6#
  */
 static PyObject *
@@ -976,8 +977,14 @@ static PyObject *
     modf(x, &ix);
     x = ix;
 #endif
+
+#if @unsigntyp@
+    if(LONG_MIN < (@ctype@)x && (@ctype@)x < LONG_MAX)
+        return PyInt_FromLong(x);
+#else
     if(LONG_MIN < x && x < LONG_MAX)
         return PyInt_FromLong(x);
+#endif
     return @func@(x);
 }
 /**end repeat**/
