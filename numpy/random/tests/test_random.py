@@ -15,6 +15,17 @@ class TestMultinomial(TestCase):
         assert np.all(-5 <= x)
         assert np.all(x < -1)
 
+class TestVonMises(TestCase):
+    def test_output_domain(self):
+        """Make sure generated random variables are in [-pi, pi].
+
+        Regression test for ticket #986.
+        """
+        for mu in np.linspace(-7., 7., 5):        
+            r = random.mtrand.vonmises(mu,1,50)
+            assert np.all(r>-np.pi) and np.all(r<=np.pi)
+
+
 
 class TestSetState(TestCase):
     def setUp(self):

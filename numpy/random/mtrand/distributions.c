@@ -561,6 +561,7 @@ double rk_vonmises(rk_state *state, double mu, double kappa)
     double r, rho, s;
     double U, V, W, Y, Z;
     double result, mod;
+    int neg;
 
     if (kappa < 1e-8)
     {
@@ -585,15 +586,22 @@ double rk_vonmises(rk_state *state, double mu, double kappa)
             }
         }
 
-	U = rk_double(state);
+        U = rk_double(state);
 
-	result = acos(W);
+        result = acos(W);
         if (U < 0.5)
         {
 	    result = -result;
         }
         result += mu;
-        mod = fmod(result, 2*M_PI);
+        neg = (result < 0);
+        mod = fabs(result);
+        mod = (fmod(mod+M_PI, 2*M_PI)-M_PI);
+        if (neg)
+        {
+            mod *= -1;
+        }         
+
         return mod;
     }
 }
