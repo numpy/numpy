@@ -12,9 +12,16 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
-           'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure']
+           'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
+           'assert_']
 
 verbose = 0
+
+def assert_(val, msg) :
+    """Assert that works in release mode."""
+    if not val :
+        raise AssertionError(msg)
+
 
 def rand(*args):
     """Returns an array of random numbers with the given shape.
