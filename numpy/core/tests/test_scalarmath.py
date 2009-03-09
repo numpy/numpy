@@ -78,8 +78,6 @@ class TestConversion(TestCase):
 class TestRepr(TestCase):
     def test_float_repr(self):
         for t in [np.float32, np.float64, np.longdouble]:
-            if t is np.longdouble: # skip it for now.
-                continue
             finfo=np.finfo(t)
             last_fraction_bit_idx = finfo.nexp + finfo.nmant
             last_exponent_bit_idx = finfo.nexp
