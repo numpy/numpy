@@ -1,10 +1,9 @@
 from numpy.testing import *
 import numpy as np
 
-rlevel = 1
 
-class TestRegression(TestCase):
-    def test_polyfit_build(self,level=rlevel):
+class TestRegression(object):
+    def test_polyfit_build(self):
         """Ticket #628"""
         ref = [-1.06123820e-06, 5.70886914e-04, -1.13822012e-01,
                 9.95368241e+00, -3.14526520e+02]
@@ -24,6 +23,12 @@ class TestRegression(TestCase):
              8.0, 8.0, 8.0, 6.0, 7.0, 4.0, 4.0, 5.0, 7.0]
         tested = np.polyfit(x, y, 4)
         assert_array_almost_equal(ref, tested)
+
+    def test_polyint_type(self) :
+        """Ticket #944"""
+        msg = "Wrong type, should be complex"
+        x = np.polyint(np.ones(3, dtype=np.complex))
+        assert_(np.asarray(x).dtype == np.complex, msg)
 
 
 if __name__ == "__main__":

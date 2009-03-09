@@ -244,10 +244,10 @@ def polyint(p, m=1, k=None):
     else:
         truepoly = isinstance(p, poly1d)
         p = NX.asarray(p)
-        y = NX.zeros(len(p)+1, float)
+        y = NX.zeros(len(p) + 1, p.dtype)
         y[:-1] = p*1.0/NX.arange(len(p), 0, -1)
         y[-1] = k[0]
-        val = polyint(y, m-1, k=k[1:])
+        val = polyint(y, m - 1, k=k[1:])
         if truepoly:
             val = poly1d(val)
         return val
