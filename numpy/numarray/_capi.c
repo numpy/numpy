@@ -481,7 +481,7 @@ static int NA_checkOneStriding(char *name, long dim, maybelong *shape,
 {
   int i;
   long omin=offset, omax=offset;
-  long alignsize = (itemsize <= sizeof(Float64) ? itemsize : sizeof(Float64));
+  long alignsize = ((size_t)itemsize <= sizeof(Float64) ? (size_t)itemsize : sizeof(Float64));
   
   if (align && (offset % alignsize)) {
     PyErr_Format(_Error, 
@@ -1533,7 +1533,7 @@ NA_get1D_Float64(PyArrayObject *a, long offset, int cnt, Float64*out)
 static Float64 *
 NA_alloc1D_Float64(PyArrayObject *a, long offset, int cnt)
 {
-	Float64 *result = PyMem_New(Float64, cnt);
+	Float64 *result = PyMem_New(Float64, (size_t)cnt);
 	if (!result) return NULL;
 	if (NA_get1D_Float64(a, offset, cnt, result) < 0) {
 		PyMem_Free(result);
@@ -1657,7 +1657,7 @@ NA_get1D_Int64(PyArrayObject *a, long offset, int cnt, Int64*out)
 static Int64 *
 NA_alloc1D_Int64(PyArrayObject *a, long offset, int cnt)
 {
-	Int64 *result = PyMem_New(Int64, cnt);
+	Int64 *result = PyMem_New(Int64, (size_t)cnt);
 	if (!result) return NULL;
 	if (NA_get1D_Int64(a, offset, cnt, result) < 0) {
 		PyMem_Free(result);
@@ -1868,7 +1868,7 @@ static NumarrayTypeNameMapping NumarrayTypeNameMap[] = {
 static char *
 NA_typeNoToName(int typeno) 
 {
-	int i;
+	size_t i;
 	PyObject *typeObj;
 	int typeno2;
 
@@ -1890,7 +1890,7 @@ NA_typeNoToName(int typeno)
 static int 
 NA_nameToTypeNo(char *typename)
 {
-	int i;
+	size_t i;
 	for(i=0; i<ELEM(NumarrayTypeNameMap); i++)
 		if (!strcmp(typename, NumarrayTypeNameMap[i].name))
 			return NumarrayTypeNameMap[i].typeno;
@@ -3146,7 +3146,7 @@ static scipy_typestr scipy_descriptors[ ] = {
 static int
 NA_scipy_typestr(NumarrayType t, int byteorder, char *typestr)
 {
-	int i;
+	size_t i;
 	if (byteorder) 
 		strcpy(typestr, ">");
 	else

@@ -3076,7 +3076,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = PyArray_LONG;
             }
-            else if (mp->descr->elsize < sizeof(long)) {
+            else if ((size_t)mp->descr->elsize < sizeof(long)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
                     typenum = PyArray_ULONG;
                 }
