@@ -1519,8 +1519,8 @@ def amax(a, axis=None, out=None):
     >>> np.amax(a, axis=1)
     array([1, 3])
 
-    Note
-    ----
+    Notes
+    -----
     NaN values are propagated, that is if at least one item is nan, the
     corresponding max value will be nan as well. To ignore NaN values (matlab
     behavior), please use nanmax.
@@ -1571,8 +1571,8 @@ def amin(a, axis=None, out=None):
     >>> np.amin(a, axis=1)         # Minima along the second axis
     array([0, 2])
 
-    Note
-    ----
+    Notes
+    -----
     NaN values are propagated, that is if at least one item is nan, the
     corresponding min value will be nan as well. To ignore NaN values (matlab
     behavior), please use nanmin.
