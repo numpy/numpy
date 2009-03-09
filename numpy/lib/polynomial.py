@@ -239,17 +239,20 @@ def polyint(p, m=1, k=None):
     if len(k) < m:
         raise ValueError, \
               "k must be a scalar or a rank-1 array of length 1 or >m."
+
+    truepoly = isinstance(p, poly1d)
+    p = NX.asarray(p) + 0.0
     if m == 0:
+        if truepoly:
+            return poly1d(p)
         return p
     else:
-        truepoly = isinstance(p, poly1d)
-        p = NX.asarray(p)
         y = NX.zeros(len(p) + 1, p.dtype)
         y[:-1] = p*1.0/NX.arange(len(p), 0, -1)
         y[-1] = k[0]
         val = polyint(y, m - 1, k=k[1:])
         if truepoly:
-            val = poly1d(val)
+            return poly1d(val)
         return val
 
 def polyder(p, m=1):
@@ -710,12 +713,14 @@ def polydiv(u, v):
 
     """
     truepoly = (isinstance(u, poly1d) or isinstance(u, poly1d))
-    u = atleast_1d(u)
-    v = atleast_1d(v)
+    u = atleast_1d(u) + 0.0
+    v = atleast_1d(v) + 0.0
+    # w has the common type
+    w = u[0] + v[0]
     m = len(u) - 1
     n = len(v) - 1
     scale = 1. / v[0]
-    q = NX.zeros((max(m-n+1,1),), float)
+    q = NX.zeros((max(m - n + 1, 1),), w.dtype)
     r = u.copy()
     for k in range(0, m-n+1):
         d = scale * r[k]
@@ -724,8 +729,7 @@ def polydiv(u, v):
     while NX.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
     if truepoly:
-        q = poly1d(q)
-        r = poly1d(r)
+        return poly1d(q), poly1d(r)
     return q, r
 
 _poly_mat = re.compile(r"[*][*]([0-9]*)")

@@ -27,8 +27,22 @@ class TestRegression(object):
     def test_polyint_type(self) :
         """Ticket #944"""
         msg = "Wrong type, should be complex"
-        x = np.polyint(np.ones(3, dtype=np.complex))
-        assert_(np.asarray(x).dtype == np.complex, msg)
+        x = np.ones(3, dtype=np.complex)
+        assert_(np.polyint(x).dtype == np.complex, msg)
+        msg = "Wrong type, should be float"
+        x = np.ones(3, dtype=np.int)
+        assert_(np.polyint(x).dtype == np.float, msg)
+
+    def test_polydiv_type(self) :
+        """Make polydiv work for complex types"""
+        msg = "Wrong type, should be complex"
+        x = np.ones(3, dtype=np.complex)
+        q,r = np.polydiv(x,x)
+        assert_(q.dtype == np.complex, msg)
+        msg = "Wrong type, should be float"
+        x = np.ones(3, dtype=np.int)
+        q,r = np.polydiv(x,x)
+        assert_(q.dtype == np.float, msg)
 
 
 if __name__ == "__main__":
