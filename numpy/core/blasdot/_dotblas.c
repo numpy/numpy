@@ -16,11 +16,11 @@ static void
 FLOAT_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
 	  npy_intp n, void *tmp)
 {
-    register int na = stridea / sizeof(float);
-    register int nb = strideb / sizeof(float);
+    register npy_intp na = stridea / sizeof(float);
+    register npy_intp nb = strideb / sizeof(float);
 
-    if ((sizeof(float) * na == stridea) &&
-	(sizeof(float) * nb == strideb) &&
+    if ((sizeof(float) * na == (size_t)stridea) &&
+	(sizeof(float) * nb == (size_t)strideb) &&
 	(na >= 0) && (nb >= 0))
 	    *((float *)res) = cblas_sdot((int)n, (float *)a, na, (float *)b, nb);
 
@@ -35,8 +35,8 @@ DOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
     register int na = stridea / sizeof(double);
     register int nb = strideb / sizeof(double);
 
-    if ((sizeof(double) * na == stridea) &&
-	(sizeof(double) * nb == strideb) &&
+    if ((sizeof(double) * na == (size_t)stridea) &&
+	(sizeof(double) * nb == (size_t)strideb) &&
 	(na >= 0) && (nb >= 0))
 	    *((double *)res) = cblas_ddot((int)n, (double *)a, na, (double *)b, nb);
     else
@@ -51,8 +51,8 @@ CFLOAT_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
     register int na = stridea / sizeof(npy_cfloat);
     register int nb = strideb / sizeof(npy_cfloat);
 
-    if ((sizeof(npy_cfloat) * na == stridea) &&
-	(sizeof(npy_cfloat) * nb == strideb) &&
+    if ((sizeof(npy_cfloat) * na == (size_t)stridea) &&
+	(sizeof(npy_cfloat) * nb == (size_t)strideb) &&
 	(na >= 0) && (nb >= 0))
 	    cblas_cdotu_sub((int)n, (float *)a, na, (float *)b, nb, (float *)res);
     else
@@ -66,8 +66,8 @@ CDOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
     register int na = stridea / sizeof(npy_cdouble);
     register int nb = strideb / sizeof(npy_cdouble);
 
-    if ((sizeof(npy_cdouble) * na == stridea) &&
-	(sizeof(npy_cdouble) * nb == strideb) &&
+    if ((sizeof(npy_cdouble) * na == (size_t)stridea) &&
+	(sizeof(npy_cdouble) * nb == (size_t)strideb) &&
 	(na >= 0) && (nb >= 0))
 	    cblas_zdotu_sub((int)n, (double *)a, na, (double *)b, nb, (double *)res);
     else
