@@ -253,7 +253,23 @@ nc_pow@c@(c@typ@ *a, c@typ@ *b, c@typ@ *r)
         return;
     }
     if (bi == 0 && (n=(intp)br) == br) {
-        if (n > -100 && n < 100) {
+        if (n == 1) {
+            /* unroll: handle inf better */
+            r->real = a->real; r->imag = a->imag;
+            return;
+        }
+        else if (n == 2) {
+            /* unroll: handle inf better */
+            nc_prod@c@(a, a, r);
+            return;
+        }
+        else if (n == 3) {
+            /* unroll: handle inf better */
+            nc_prod@c@(a, a, r);
+            nc_prod@c@(a, r, r);
+            return;
+        }
+        else if (n > -100 && n < 100) {
             c@typ@ p, aa;
             intp mask = 1;
             if (n < 0) n = -n;
