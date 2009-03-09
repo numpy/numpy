@@ -122,15 +122,16 @@ class TestSavezLoad(RoundtripTest, TestCase):
 
 
 class TestSaveTxt(TestCase):
-    @np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
+    #@np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_array(self):
         a =np.array([[1, 2], [3, 4]], float)
+        fmt = "%.18e"
         c = StringIO.StringIO()
-        np.savetxt(c, a)
+        np.savetxt(c, a, fmt=fmt)
         c.seek(0)
-        assert(c.readlines() ==
-               ['1.000000000000000000e+00 2.000000000000000000e+00\n',
-                '3.000000000000000000e+00 4.000000000000000000e+00\n'])
+        assert_equal(c.readlines(),
+               [(fmt + ' ' + fmt + '\n') % (1, 2),
+                (fmt + ' ' + fmt + '\n') % (3, 4)])
 
         a =np.array([[1, 2], [3, 4]], int)
         c = StringIO.StringIO()
