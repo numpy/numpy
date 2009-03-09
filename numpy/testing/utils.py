@@ -310,9 +310,13 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
                          verbose=verbose, header='Arrays are not equal')
 
 def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
-    from numpy.core import around
+    from numpy.core import around, number, float_
+    from numpy.lib import issubdtype
     def compare(x, y):
-        return around(abs(x-y),decimal) <= 10.0**(-decimal)
+        z = abs(x-y)
+        if not issubdtype(z.dtype, number):
+            z = z.astype(float_) # handle object arrays
+        return around(z, decimal) <= 10.0**(-decimal)
     assert_array_compare(compare, x, y, err_msg=err_msg, verbose=verbose,
                          header='Arrays are not almost equal')
 
