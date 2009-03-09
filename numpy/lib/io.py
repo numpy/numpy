@@ -381,7 +381,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
     if usecols is not None:
         usecols = list(usecols)
 
+    isstring = False
     if _is_string_like(fname):
+        isstring = True
         if fname.endswith('.gz'):
             import gzip
             fh = seek_gzip_factory(fname)
@@ -416,54 +418,58 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
         else:
             return []
 
-    # Make sure we're dealing with a proper dtype
-    dtype = np.dtype(dtype)
-    defconv = _getconv(dtype)
+    try:
+        # Make sure we're dealing with a proper dtype
+        dtype = np.dtype(dtype)
+        defconv = _getconv(dtype)
 
-    # Skip the first `skiprows` lines
-    for i in xrange(skiprows):
-        fh.readline()
+        # Skip the first `skiprows` lines
+        for i in xrange(skiprows):
+            fh.readline()
 
-    # Read until we find a line with some values, and use
-    # it to estimate the number of columns, N.
-    first_vals = None
-    while not first_vals:
-        first_line = fh.readline()
-        if first_line == '': # EOF reached
-            raise IOError('End-of-file reached before encountering data.')
-        first_vals = split_line(first_line)
-    N = len(usecols or first_vals)
+        # Read until we find a line with some values, and use
+        # it to estimate the number of columns, N.
+        first_vals = None
+        while not first_vals:
+            first_line = fh.readline()
+            if first_line == '': # EOF reached
+                raise IOError('End-of-file reached before encountering data.')
+            first_vals = split_line(first_line)
+        N = len(usecols or first_vals)
 
-    dtype_types = flatten_dtype(dtype)
-    if len(dtype_types) > 1:
-        # We're dealing with a structured array, each field of
-        # the dtype matches a column
-        converters = [_getconv(dt) for dt in dtype_types]
-    else:
-        # All fields have the same dtype
-        converters = [defconv for i in xrange(N)]
+        dtype_types = flatten_dtype(dtype)
+        if len(dtype_types) > 1:
+            # We're dealing with a structured array, each field of
+            # the dtype matches a column
+            converters = [_getconv(dt) for dt in dtype_types]
+        else:
+            # All fields have the same dtype
+            converters = [defconv for i in xrange(N)]
 
-    # By preference, use the converters specified by the user
-    for i, conv in (user_converters or {}).iteritems():
-        if usecols:
-            try:
-                i = usecols.index(i)
-            except ValueError:
-                # Unused converter specified
+        # By preference, use the converters specified by the user
+        for i, conv in (user_converters or {}).iteritems():
+            if usecols:
+                try:
+                    i = usecols.index(i)
+                except ValueError:
+                    # Unused converter specified
+                    continue
+            converters[i] = conv
+
+        # Parse each line, including the first
+        for i, line in enumerate(itertools.chain([first_line], fh)):
+            vals = split_line(line)
+            if len(vals) == 0:
                 continue
-        converters[i] = conv
 
-    # Parse each line, including the first
-    for i, line in enumerate(itertools.chain([first_line], fh)):
-        vals = split_line(line)
-        if len(vals) == 0:
-            continue
+            if usecols:
+                vals = [vals[i] for i in usecols]
 
-        if usecols:
-            vals = [vals[i] for i in usecols]
-
-        # Convert each value according to its column and store
-        X.append(tuple([conv(val) for (conv, val) in zip(converters, vals)]))
+            # Convert each value according to its column and store
+            X.append(tuple([conv(val) for (conv, val) in zip(converters, vals)]))
+    finally:
+        if isstring:
+            fh.close()
 
     if len(dtype_types) > 1:
         # We're dealing with a structured array, with a dtype such as
