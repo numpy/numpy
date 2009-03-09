@@ -467,7 +467,7 @@ static void
 {
     @type@ *pi, *pj, *pk, *pm;
 
-    if (pr - pl > SMALL_MERGESORT*len) {
+    if ((size_t)(pr - pl) > SMALL_MERGESORT*len) {
         /* merge sort */
         pm = pl + (((pr - pl)/len) >> 1)*len;
         @TYPE@_mergesort0(pl, pm, pw, vp, len);
@@ -546,7 +546,7 @@ static int
     @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
 
     for(;;) {
-        while ((pr - pl) > SMALL_QUICKSORT*len) {
+        while ((size_t)(pr - pl) > SMALL_QUICKSORT*len) {
             /* quicksort partition */
             pm = pl + (((pr - pl)/len) >> 1)*len;
             if (@lessthan@(pm, pl, len)) @swap@(pm, pl, len);
