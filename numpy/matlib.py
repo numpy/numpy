@@ -51,7 +51,7 @@ def ones(shape, dtype=None, order='C'):
             [ 1.,  1.,  1.]])
 
     >>> np.matlib.ones(2)
-    matrix([[ 1.,  1.]]
+    matrix([[ 1.,  1.]])
 
     """
     a = ndarray.__new__(matrix, shape, dtype, order=order)
@@ -96,7 +96,7 @@ def zeros(shape, dtype=None, order='C'):
             [ 0.,  0.,  0.]])
 
     >>> np.matlib.zeros(2)
-    matrix([[ 0.,  0.]]
+    matrix([[ 0.,  0.]])
 
     """
     a = ndarray.__new__(matrix, shape, dtype, order=order)
