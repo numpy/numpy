@@ -6,7 +6,7 @@ import StringIO
 import gzip
 import os
 
-from tempfile import mkstemp
+from tempfile import mkstemp, NamedTemporaryFile
 import sys, time
 from datetime import datetime
 
