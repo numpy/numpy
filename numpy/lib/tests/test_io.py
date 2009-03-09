@@ -122,7 +122,6 @@ class TestSavezLoad(RoundtripTest, TestCase):
 
 
 class TestSaveTxt(TestCase):
-    #@np.testing.dec.knownfailureif(sys.platform=='win32', "Fail on Win32")
     def test_array(self):
         a =np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
