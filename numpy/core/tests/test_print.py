@@ -88,6 +88,33 @@ def test_complex_types():
     for t in [np.complex64, np.cdouble, np.clongdouble] :
         yield check_complex_type, t
 
+def test_complex_inf_nan():
+    """Check inf/nan formatting of complex types."""
+    TESTS = {
+        complex(np.inf, 0): "(inf+0j)",
+        complex(0, np.inf): "infj",
+        complex(-np.inf, 0): "(-inf+0j)",
+        complex(0, -np.inf): "-infj",
+        complex(np.inf, 1): "(inf+1j)",
+        complex(1, np.inf): "(1+infj)",
+        complex(-np.inf, 1): "(-inf+1j)",
+        complex(1, -np.inf): "(1-infj)",
+        complex(np.nan, 0): "(nan+0j)",
+        complex(0, np.nan): "nanj",
+        complex(-np.nan, 0): "(nan+0j)",
+        complex(0, -np.nan): "nanj",
+        complex(np.nan, 1): "(nan+1j)",
+        complex(1, np.nan): "(1+nanj)",
+        complex(-np.nan, 1): "(nan+1j)",
+        complex(1, -np.nan): "(1+nanj)",
+    }
+    for tp in [np.complex64, np.cdouble, np.clongdouble]:
+        for c, s in TESTS.items():
+            yield _check_complex_inf_nan, c, s, tp
+
+def _check_complex_inf_nan(c, s, dtype):
+    assert_equal(str(dtype(c)), s)
+
 # print tests
 def _test_redirected_print(x, tp, ref=None):
     file = StringIO()
