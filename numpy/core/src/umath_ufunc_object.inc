@@ -3149,6 +3149,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
     int np = 0;
     PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
     PyObject *obj, *wrap = NULL;
+    double maxpriority;
 
     nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nin; i++) {
@@ -3175,7 +3176,7 @@ _find_array_wrap(PyObject *args, PyObject **output_wrap, int nin, int nout)
     if (np > 0) {
         /* If we have some wraps defined, find the one of highest priority */
         wrap = wraps[0];
-        double maxpriority = PyArray_GetPriority(with_wrap[0],
+        maxpriority = PyArray_GetPriority(with_wrap[0],
                                         PyArray_SUBTYPE_PRIORITY);
         for (i = 1; i < np; ++i) {
             double priority = PyArray_GetPriority(with_wrap[i],
