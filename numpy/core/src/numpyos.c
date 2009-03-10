@@ -321,48 +321,6 @@ _ASCII_FORMAT(long double, l, long double)
 _ASCII_FORMAT(long double, l, double)
 #endif
 
-#if 0
-static double NPY_INFINITY;  /* Positive infinity */
-static double NPY_PZERO; /* +0 */
-static double NPY_NAN;   /* NaN */
-
-/* NumPyOS_init:
- *
- * initialize floating-point constants
- */
-static void
-NumPyOS_init(void) {
-    double mul = 1e100;
-    double div = 1e10;
-    double tmp, c;
-
-    tmp = 0;
-    c = mul;
-    for (;;) {
-        c *= mul;
-        if (c == tmp) {
-            break;
-        }
-        tmp = c;
-    }
-    NPY_INFINITY = c;
-
-    tmp = 0;
-    c = div;
-    for (;;) {
-        c /= div;
-        if (c == tmp) {
-            break;
-        }
-        tmp = c;
-    }
-
-    NPY_PZERO = c;
-    NPY_NAN = NPY_INFINITY / NPY_INFINITY;
-}
-#endif
-
-
 /*
  * NumPyOS_ascii_isspace:
  *
