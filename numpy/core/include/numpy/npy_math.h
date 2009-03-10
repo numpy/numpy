@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <numpy/npy_common.h>
+#include <numpy/ndarrayobject.h>
 
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
@@ -21,14 +22,33 @@ static float __npy_nanf(void)
         const union { npy_uint32 __i; float __f;} __bint = {0x7fc00000UL};
         return __bint.__f;
 }
+
+static float __npy_pzerof(void)
+{
+        const union { npy_uint32 __i; float __f;} __bint = {0x00000000UL};
+        return __bint.__f;
+}
+
+static float __npy_nzerof(void)
+{
+        const union { npy_uint32 __i; float __f;} __bint = {0x80000000UL};
+        return __bint.__f;
+}
+
 #define NPY_INFINITYF __npy_inff()
 #define NPY_NANF __npy_nanf()
+#define NPY_PZEROF __npy_pzerof()
+#define NPY_NZEROF __npy_nzerof()
 
 #define NPY_INFINITY ((npy_double)NPY_INFINITYF)
 #define NPY_NAN ((npy_double)NPY_NANF)
+#define NPY_PZERO ((npy_double)NPY_PZEROF)
+#define NPY_NZERO ((npy_double)NPY_NZEROF)
 
 #define NPY_INFINITYL ((npy_longdouble)NPY_INFINITYF)
 #define NPY_NANL ((npy_longdouble)NPY_NANF)
+#define NPY_PZEROL ((npy_double)NPY_PZEROF)
+#define NPY_NZEROL ((npy_double)NPY_NZEROF)
 
 /*
  * Useful constants

@@ -8,11 +8,11 @@ MyPyFloat_AsDouble(PyObject *obj)
     PyObject *num;
 
     if (obj == Py_None) {
-        return NumPyOS_NAN;
+        return NPY_NAN;
     }
     num = PyNumber_Float(obj);
     if (num == NULL) {
-        return NumPyOS_NAN;
+        return NPY_NAN;
     }
     ret = PyFloat_AsDouble(num);
     Py_DECREF(num);
@@ -168,7 +168,7 @@ static int
             op2 = op; Py_INCREF(op);
         }
         if (op2 == Py_None) {
-            oop.real = oop.imag = NumPyOS_NAN;
+            oop.real = oop.imag = NPY_NAN;
         }
         else {
             oop = PyComplex_AsCComplex (op2);

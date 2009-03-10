@@ -321,10 +321,10 @@ _ASCII_FORMAT(long double, l, long double)
 _ASCII_FORMAT(long double, l, double)
 #endif
 
-
-static double NumPyOS_PINF;  /* Positive infinity */
-static double NumPyOS_PZERO; /* +0 */
-static double NumPyOS_NAN;   /* NaN */
+#if 0
+static double NPY_INFINITY;  /* Positive infinity */
+static double NPY_PZERO; /* +0 */
+static double NPY_NAN;   /* NaN */
 
 /* NumPyOS_init:
  *
@@ -345,7 +345,7 @@ NumPyOS_init(void) {
         }
         tmp = c;
     }
-    NumPyOS_PINF = c;
+    NPY_INFINITY = c;
 
     tmp = 0;
     c = div;
@@ -357,9 +357,10 @@ NumPyOS_init(void) {
         tmp = c;
     }
 
-    NumPyOS_PZERO = c;
-    NumPyOS_NAN = NumPyOS_PINF / NumPyOS_PINF;
+    NPY_PZERO = c;
+    NPY_NAN = NPY_INFINITY / NPY_INFINITY;
 }
+#endif
 
 
 /*
@@ -502,7 +503,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
         if (endptr != NULL) {
             *endptr = (char*)p;
         }
-        return NumPyOS_NAN;
+        return NPY_NAN;
     }
     else if (NumPyOS_ascii_strncasecmp(p, "inf", 3) == 0) {
         p += 3;
@@ -512,7 +513,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
         if (endptr != NULL) {
             *endptr = (char*)p;
         }
-        return result*NumPyOS_PINF;
+        return result*NPY_INFINITY;
     }
     /* End of ##1 */
 
