@@ -179,9 +179,9 @@ PyUFunc_F_F_As_D_D(char **args, intp *dimensions, intp *steps, void *func)
 {
     cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
     UNARY_LOOP {
-        const float *in1 = (float *)ip1;
-        cdouble tmp = {(double)(in1[0]),(double)in1[1]};
-        cdouble out;
+        cdouble tmp, out;
+        tmp.real = (double)((float *)ip1)[0];
+        tmp.imag = (double)((float *)ip1)[1];
         f(&tmp, &out);
         ((float *)op1)[0] = (float)out.real;
         ((float *)op1)[1] = (float)out.imag;
@@ -207,11 +207,11 @@ PyUFunc_FF_F_As_DD_D(char **args, intp *dimensions, intp *steps, void *func)
 {
     cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
     BINARY_LOOP {
-        const float *in1 = (float *)ip1;
-        const float *in2 = (float *)ip2;
-        cdouble tmp1 = {(double)(in1[0]),(double)in1[1]};
-        cdouble tmp2 = {(double)(in2[0]),(double)in2[1]};
-        cdouble out;
+        cdouble tmp1, tmp2, out;
+        tmp1.real = (double)((float *)ip1)[0];
+        tmp1.imag = (double)((float *)ip1)[1];
+        tmp2.real = (double)((float *)ip2)[0];
+        tmp2.imag = (double)((float *)ip2)[1];
         f(&tmp1, &tmp2, &out);
         ((float *)op1)[0] = (float)out.real;
         ((float *)op1)[1] = (float)out.imag;
