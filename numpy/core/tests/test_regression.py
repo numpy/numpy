@@ -1176,7 +1176,7 @@ class TestRegression(TestCase):
         """Ticket 794."""
         C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
         have = np.sign(C)
-        want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, 0+0j])
+        want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan])
         assert_equal(have, want)
 
     def test_for_equal_names(self, level=rlevel):
