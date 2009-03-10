@@ -47,8 +47,8 @@ static float __npy_nzerof(void)
 
 #define NPY_INFINITYL ((npy_longdouble)NPY_INFINITYF)
 #define NPY_NANL ((npy_longdouble)NPY_NANF)
-#define NPY_PZEROL ((npy_double)NPY_PZEROF)
-#define NPY_NZEROL ((npy_double)NPY_NZEROF)
+#define NPY_PZEROL ((npy_longdouble)NPY_PZEROF)
+#define NPY_NZEROL ((npy_longdouble)NPY_NZEROF)
 
 /*
  * Useful constants
