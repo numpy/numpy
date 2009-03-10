@@ -5,6 +5,24 @@
 #include <numpy/npy_common.h>
 
 /*
+ * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
+ * for INFINITY)
+ *
+ * XXX: I should test whether INFINITY and NAN are available on the platform
+ */
+#define NPY_INFINITYF \
+        ((union { npy_uint32 __i; float __f;}) {__i: 0x7f800000L}).__f
+
+#define NPY_INFINITY ((npy_double)NPY_INFINITYF)
+#define NPY_INFINITYL ((npy_longdouble)NPY_INFINITYF)
+
+#define NPY_NANF \
+        ((union { npy_uint32 __i; float __f;}) {__i: 0x7fc00000L}).__f
+
+#define NPY_NAN ((npy_double)NPY_NANF)
+#define NPY_NANL ((npy_longdouble)NPY_NANF)
+
+/*
  * Useful constants
  */
 #define NPY_E         2.7182818284590452353602874713526625  /* e */
