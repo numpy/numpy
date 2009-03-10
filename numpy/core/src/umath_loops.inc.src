@@ -988,10 +988,10 @@ static void
 static void
 @TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    /* Sign of nan is currently 0 */
+    /* Sign of nan is nan */
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+        *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : (in1 == 0 ? 0 : in1));
     }
 }
 
