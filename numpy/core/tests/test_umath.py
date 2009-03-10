@@ -493,7 +493,7 @@ class TestComplexFunctions(object):
 
         x_series = np.logspace(np.log10(info.tiny/eps).real, -3, 200,
                                endpoint=False)
-        x_basic = np.logspace(dtype(-3.).real, -1e-8, 10)
+        x_basic = np.logspace(dtype(-3.).real, 0, 10, endpoint=False)
 
         check(x_series, 2*eps)
         check(x_basic, 2*eps/1e-3)
