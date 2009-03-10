@@ -1,4 +1,4 @@
-# Last Change: Sat Nov 29 01:00 AM 2008 J
+# Last Change: Tue Mar 10 04:00 PM 2009 J
 # vim:syntax=python
 import os
 import sys
@@ -265,6 +265,7 @@ umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath_loops.inc.src'))
 arraytypes_src = env.GenerateFromTemplate(pjoin('src', 'arraytypes.inc.src'))
 sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umathmodule.c.src'))
+umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath_tests.c.src'))
 scalarmathmodule_src = env.GenerateFromTemplate(
                             pjoin('src', 'scalarmathmodule.c.src'))
 
@@ -306,6 +307,12 @@ umathmodule = env.DistutilsPythonExtension('umath', source = umathmodule_src)
 #------------------------
 scalarmathmodule = env.DistutilsPythonExtension('scalarmath',
                                             source = scalarmathmodule_src)
+
+#------------------------
+# Build scalarmath module
+#------------------------
+umath_tests = env.DistutilsPythonExtension('umath_tests',
+        source=umath_tests_src)
 
 #----------------------
 # Build _dotblas module
