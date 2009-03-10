@@ -10,16 +10,24 @@
  *
  * XXX: I should test whether INFINITY and NAN are available on the platform
  */
-#define NPY_INFINITYF \
-        ((union { npy_uint32 __i; float __f;}) {__i: 0x7f800000L}).__f
+static float __npy_inff(void)
+{
+        const union { npy_uint32 __i; float __f;} __bint = {0x7f800000UL};
+        return __bint.__f;
+}
+
+static float __npy_nanf(void)
+{
+        const union { npy_uint32 __i; float __f;} __bint = {0x7fc00000UL};
+        return __bint.__f;
+}
+#define NPY_INFINITYF __npy_inff()
+#define NPY_NANF __npy_nanf()
 
 #define NPY_INFINITY ((npy_double)NPY_INFINITYF)
-#define NPY_INFINITYL ((npy_longdouble)NPY_INFINITYF)
-
-#define NPY_NANF \
-        ((union { npy_uint32 __i; float __f;}) {__i: 0x7fc00000L}).__f
-
 #define NPY_NAN ((npy_double)NPY_NANF)
+
+#define NPY_INFINITYL ((npy_longdouble)NPY_INFINITYF)
 #define NPY_NANL ((npy_longdouble)NPY_NANF)
 
 /*
