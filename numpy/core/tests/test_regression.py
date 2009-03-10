@@ -1232,5 +1232,21 @@ class TestRegression(TestCase):
         assert arr[0][0] == 'john'
         assert arr[0][1] == 4
 
+    def test_blasdot_uninitialized_memory(self):
+        """Ticket #950"""
+        for m in [0, 1, 2]:
+            for n in [0, 1, 2]:
+                for k in xrange(3):
+                    # Try to ensure that x->data contains non-zero floats
+                    x = np.array([123456789e199], dtype=np.float64)
+                    x.resize((m, 0))
+                    y = np.array([123456789e199], dtype=np.float64)
+                    y.resize((0, n))
+
+                    # `dot` should just return zero (m,n) matrix
+                    z = np.dot(x, y)
+                    assert np.all(z == 0)
+                    assert z.shape == (m, n)
+
 if __name__ == "__main__":
     run_module_suite()

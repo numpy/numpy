@@ -369,6 +369,11 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
                     l = dimensions[0];
                 }
             }
+
+            /* Check if the summation dimension is 0-sized */
+            if (oap1->dimensions[oap1->nd - 1] == 0) {
+                l = 0;
+            }
 	}
     }
     else {
