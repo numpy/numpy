@@ -75,15 +75,15 @@ precision are also available by adding the F and L suffixes respectively.
 
 .. cvar:: NPY_E
 
-    Euler constant (:math:`e^1`)
+    Euler constant (:math:`e`)
 
 .. cvar:: NPY_LOG2E
 
-    Logarithm to base 2 of the Euler constant (:math:`\frac{\ln(e^1)}{\ln(2)})
+    Logarithm to base 2 of the Euler constant (:math:`\frac{\ln(e)}{\ln(2)}`)
 
 .. cvar:: NPY_LOG10E
 
-    Logarithm to base 10 of the Euler constant (:math:`\frac{\ln(e^1)}{\ln(10)})
+    Logarithm to base 10 of the Euler constant (:math:`\frac{\ln(e)}{\ln(10)}`)
 
 .. cvar:: NPY_LOGE2
 
