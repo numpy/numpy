@@ -15,6 +15,7 @@ from distutils.ccompiler import CompileError, LinkError
 import distutils
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.mingw32ccompiler import generate_manifest
+from numpy.distutils.command.autodist import check_inline
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -339,6 +340,11 @@ int main ()
 
         return self.try_link(body, headers, include_dirs,
                              libraries, library_dirs)
+
+    def check_inline(self):
+        """Return the inline keyword recognized by the compiler, empty string
+        otherwise."""
+        return check_inline(self)
 
     def get_output(self, body, headers=None, include_dirs=None,
                    libraries=None, library_dirs=None,
