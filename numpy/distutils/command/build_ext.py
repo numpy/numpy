@@ -16,7 +16,8 @@ from numpy.distutils.exec_command import exec_command
 from numpy.distutils.system_info import combine_paths
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
      has_cxx_sources, get_ext_source_files, \
-     get_numpy_include_dirs, is_sequence, get_build_architecture
+     get_numpy_include_dirs, is_sequence, get_build_architecture, \
+     msvc_version
 from numpy.distutils.command.config_compiler import show_fortran_compilers
 
 try:
@@ -387,6 +388,10 @@ class build_ext (old_build_ext):
             # expand libraries with fcompiler libraries as we are
             # not using fcompiler linker
             self._libs_with_msvc_and_fortran(fcompiler, libraries, library_dirs)
+	    if fcompiler is not None and fcompiler.compiler_type == "gnu95":
+		if msvc_version(self.compiler) < 8:
+		    self._add_dummy_mingwex_sym(c_sources)
+		    libraries.append("_gfortran_workaround")
         elif ext.language in ['f77','f90'] and fcompiler is not None:
             linker = fcompiler.link_shared_object
         if ext.language=='c++' and cxx_compiler is not None:
@@ -405,6 +410,14 @@ class build_ext (old_build_ext):
                export_symbols=self.get_export_symbols(ext),
                debug=self.debug,
                build_temp=self.build_temp,**kws)
+
+    def _add_dummy_mingwex_sym(self, c_sources):
+	build_src = self.get_finalized_command("build_src").build_src
+	build_clib = self.get_finalized_command("build_clib").build_clib
+	objects = self.compiler.compile([os.path.join(build_src,
+		"gfortran_vs2003_hack.c")],
+                output_dir=self.build_temp)
+        self.compiler.create_static_lib(objects, "_gfortran_workaround", output_dir=build_clib, debug=self.debug)
 
     def _libs_with_msvc_and_fortran(self, fcompiler, c_libraries,
                                     c_library_dirs):

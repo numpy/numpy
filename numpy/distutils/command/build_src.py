@@ -275,6 +275,13 @@ class build_src(build_ext.build_ext):
         #for f in h_files:
         #    self.distribution.headers.append((package,f))
 
+	hack_name = os.path.join(os.path.dirname(__file__),
+			os.pardir, "mingw", "gfortran_vs2003_hack.c")
+	target_c = os.path.join(self.build_src,
+			"gfortran_vs2003_hack.c")
+	import shutil
+	shutil.copy(hack_name, target_c)
+	#sources.append(target_c)
         ext.sources = sources
 
     def generate_sources(self, sources, extension):
