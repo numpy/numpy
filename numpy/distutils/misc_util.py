@@ -1632,6 +1632,14 @@ def show():
     f.close()
     return target
 
+def msvc_version(compiler):
+    """Return version major and minor of compiler instance if it is
+    MSVC, raise an exception otherwise."""
+    if not compiler.compiler_type == "msvc":
+	raise ValueError("Compiler instance is not msvc (%s)"\
+			 % compiler.compiler_type)
+    return compiler._MSVCCompiler__version
+
 if sys.version[:3] >= '2.5':
     def get_build_architecture():
         from distutils.msvccompiler import get_build_architecture
