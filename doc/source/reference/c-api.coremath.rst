@@ -75,7 +75,7 @@ precision are also available by adding the F and L suffixes respectively.
 
 .. cvar:: NPY_E
 
-    Euler constant (:math:`e`)
+    Base of natural logarithm (:math:`e`)
 
 .. cvar:: NPY_LOG2E
 
