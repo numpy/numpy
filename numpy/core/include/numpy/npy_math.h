@@ -11,25 +11,25 @@
  *
  * XXX: I should test whether INFINITY and NAN are available on the platform
  */
-static float __npy_inff(void)
+NPY_INLINE static float __npy_inff(void)
 {
         const union { npy_uint32 __i; float __f;} __bint = {0x7f800000UL};
         return __bint.__f;
 }
 
-static float __npy_nanf(void)
+NPY_INLINE static float __npy_nanf(void)
 {
         const union { npy_uint32 __i; float __f;} __bint = {0x7fc00000UL};
         return __bint.__f;
 }
 
-static float __npy_pzerof(void)
+NPY_INLINE static float __npy_pzerof(void)
 {
         const union { npy_uint32 __i; float __f;} __bint = {0x00000000UL};
         return __bint.__f;
 }
 
-static float __npy_nzerof(void)
+NPY_INLINE static float __npy_nzerof(void)
 {
         const union { npy_uint32 __i; float __f;} __bint = {0x80000000UL};
         return __bint.__f;

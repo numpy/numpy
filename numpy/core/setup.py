@@ -393,6 +393,9 @@ def configuration(parent_package='',top_path=None):
             else:
                 moredefs.append(('NPY_USE_C99_FORMATS', 0))
 
+            # Inline check
+            inline = config_cmd.check_inline()
+
             # Add moredefs to header
             target_f = open(target,'a')
             for d in moredefs:
@@ -400,6 +403,9 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
+
+            # define NPY_INLINE to recognized keyword
+            target_f.write('#define NPY_INLINE %s\n' % inline)
 
             # Define __STDC_FORMAT_MACROS
             target_f.write("""
