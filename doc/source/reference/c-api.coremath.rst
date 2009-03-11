@@ -13,8 +13,8 @@ Numpy core math library
 
 The numpy core math library ('npymath') is a first step in this direction. This
 library contains most math-related C99 functionality, which can be used on
-platforms where C99 is not well supported. Generally, the core math functions
-have the same API as the C99 ones, except for the npy_* prefix.
+platforms where C99 is not well supported. The core math functions have the
+same API as the C99 ones, except for the npy_* prefix.
 
 The available functions are defined in npy_math.h - please refer to this header
 in doubt.
