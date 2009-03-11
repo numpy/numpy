@@ -51,6 +51,12 @@ arguments is a nan, then nan is retured. This affects np.min/np.max, amin/amax
 and the array methods max/min. New ufuncs fmax and fmin have been added to deal
 with non-propagating nans.
 
+Nan handling in sign
+~~~~~~~~~~~~~~~~~~~~
+
+The ufunc sign now returns nan for the sign of anan.
+
+
 New ufuncs
 ~~~~~~~~~~
 
