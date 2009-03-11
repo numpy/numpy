@@ -1050,6 +1050,7 @@ static void
  * #type = float, double, longdouble#
  * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  * #c = f, , l#
+ * #C = F, , L#
  */
 
 /**begin repeat1
@@ -1256,7 +1257,7 @@ C@TYPE@_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         const @type@ in1i = ((@type@ *)ip1)[1];
         ((@type@ *)op1)[0] = CGT(in1r, in1i, 0, 0) ?  1 :
                             (CLT(in1r, in1i, 0, 0) ? -1 :
-                            (CEQ(in1r, in1i, 0, 0) ?  0 : NAN));
+                            (CEQ(in1r, in1i, 0, 0) ?  0 : NPY_NAN@C@));
         ((@type@ *)op1)[1] = 0;
     }
 }
