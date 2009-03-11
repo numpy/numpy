@@ -120,40 +120,6 @@ InitOtherOperators(PyObject *dictionary) {
     return;
 }
 
-/* Setup +inf and +0 */
-
-static double
-pinf_init(void)
-{
-    double mul = 1e10;
-    double tmp = 0.0;
-    double pinf;
-
-    pinf = mul;
-    for (;;) {
-        pinf *= mul;
-        if (pinf == tmp) break;
-        tmp = pinf;
-    }
-    return pinf;
-}
-
-static double
-pzero_init(void)
-{
-    double div = 1e10;
-    double tmp = 0.0;
-    double pinf;
-
-    pinf = div;
-    for (;;) {
-        pinf /= div;
-        if (pinf == tmp) break;
-        tmp = pinf;
-    }
-    return pinf;
-}
-
 /* Setup the umath module */
 /* Remove for time being, it is declared in __ufunc_api.h */
 /*static PyTypeObject PyUFunc_Type;*/
@@ -170,7 +136,6 @@ static struct PyMethodDef methods[] = {
 
 PyMODINIT_FUNC initumath(void) {
     PyObject *m, *d, *s, *s2, *c_api;
-    double pinf, pzero;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
@@ -245,13 +210,10 @@ PyMODINIT_FUNC initumath(void) {
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)PyArray_BUFSIZE);
 
-    pinf = pinf_init();
-    pzero = pzero_init();
-
-    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(pinf));
-    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-pinf));
-    PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(pzero));
-    PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(-pzero));
+    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
+    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
+    PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
+    PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
     PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
 
     s = PyDict_GetItemString(d, "conjugate");
