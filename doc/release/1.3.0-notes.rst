@@ -195,6 +195,19 @@ prefix (npy_cos vs cos).
 
 The core library will be made available to any extension in 1.4.0.
 
+Portable NAN, INFINITY, etc...
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+npy_math.h now makes available several portable macro to get NAN, INFINITY:
+
+        * NPY_NAN: equivalent to NAN, which is a GNU extension
+        * NPY_INFINITY: equivalent to C99 INFINITY
+        * NPY_PZERO, NPY_NZERO: positive and negative zero respectively
+
+Corresponding single and extended precision macros are available as well. All
+references to NAN, or home-grown computation of NAN on the fly have been
+removed for consistency.
+
 CPU arch detection
 ~~~~~~~~~~~~~~~~~~
 
