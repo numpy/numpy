@@ -84,8 +84,10 @@ gfortran support on windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Gfortran can now be used as a fortran compiler for numpy on windows, even when
-the C compiler is Visual Studio. Gfortran + Visual studio does not work on
-windows 64 bits (but gcc + gfortran does).
+the C compiler is Visual Studio (VS 2005 and above; VS 2003 will NOT work).
+Gfortran + Visual studio does not work on windows 64 bits (but gcc + gfortran
+does). It is unclear whether it will be possible to use gfortran and visual
+studio at all on x64.
 
 Arch option for windows binary
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
