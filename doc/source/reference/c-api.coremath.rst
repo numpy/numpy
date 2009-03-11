@@ -67,3 +67,48 @@ Floating point classification
     and extended precision, and return a non 0 value is x has the signbit set
     (that is the number is negative).
 
+Useful math constants
+~~~~~~~~~~~~~~~~~~~~~
+
+The following math constants are available in npy_math.h. Single and extended
+precision are also available by adding the F and L suffixes respectively.
+
+.. cvar:: NPY_E
+
+    Euler constant (:math:`e^1`)
+
+.. cvar:: NPY_LOG2E
+
+    Logarithm to base 2 of the Euler constant (:math:`\frac{\ln(e^1)}{\ln(2)})
+
+.. cvar:: NPY_LOG10E
+
+    Logarithm to base 10 of the Euler constant (:math:`\frac{\ln(e^1)}{\ln(10)})
+
+.. cvar:: NPY_LOGE2
+
+    Natural logarithm of 2 (:math:`\ln(2)`)
+
+.. cvar:: NPY_LOGE10
+
+    Natural logarithm of 10 (:math:`\ln(10)`)
+
+.. cvar:: NPY_PI
+
+    Pi (:math:`\pi`)
+
+.. cvar:: NPY_PI_2
+
+    Pi divided by 2 (:math:`\frac{\pi}{2}`)
+
+.. cvar:: NPY_PI_4
+
+    Pi divided by 4 (:math:`\frac{\pi}{4}`)
+
+.. cvar:: NPY_1_PI
+
+    Reciprocal of pi (:math:`\frac{1}{\pi}`)
+
+.. cvar:: NPY_2_PI
+
+    Two times the reciprocal of pi (:math:`\frac{2}{\pi}`)
