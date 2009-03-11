@@ -316,6 +316,9 @@ def configuration(parent_package='',top_path=None):
             if sys.platform=='win32' or os.name=='nt':
                 win32_checks(moredefs)
 
+            # Inline check
+            inline = config_cmd.check_inline()
+
             # Generate the config.h file from moredefs
             target_f = open(target,'a')
             for d in moredefs:
@@ -323,6 +326,14 @@ def configuration(parent_package='',top_path=None):
                     target_f.write('#define %s\n' % (d))
                 else:
                     target_f.write('#define %s %s\n' % (d[0],d[1]))
+
+            # define inline to our keyword, or nothing
+            target_f.write('#ifndef __cplusplus\n')
+            if inline == 'inline':
+                target_f.write('/* #undef inline */\n')
+            else:
+                target_f.write('#define inline %s\n' % inline)
+            target_f.write('#endif\n')
 
             target_f.close()
             print 'File:',target
