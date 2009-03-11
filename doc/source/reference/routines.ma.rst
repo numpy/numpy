@@ -12,9 +12,6 @@ Constants
 .. autosummary::
    :toctree: generated/
    
-   ma.masked
-   ma.nomask
-   
    ma.MaskType
 
 

@@ -47,12 +47,19 @@ defines several constants.
 The :class:`MaskedArray` class
 ==============================
 
+
+.. class:: MaskedArray
+
+   A subclass of :class:`~numpy.ndarray` designed to manipulate numerical array with missing data.
+
+
+
  An instance of :class:`MaskedArray` can be thought as the combination of several elements:
 
-* The :attr:`data`, as a regular :class:`numpy.ndarray` of any shape or datatype (the data).
-* A boolean :attr:`mask` with the same shape as the data, where a ``True`` value indicates that the corresponding element of the data is invalid.
-  The special value :attr:`nomask` is also acceptable for arrays without named fields, and indicates that no data is invalid.
-* A :attr:`fill_value`, a value that may be used to replace the invalid entries in order to return a standard :class:`numpy.ndarray`.
+* The :attr:`~MaskedArray.data`, as a regular :class:`numpy.ndarray` of any shape or datatype (the data).
+* A boolean :attr:`~numpy.ma.MaskedArray.mask` with the same shape as the data, where a ``True`` value indicates that the corresponding element of the data is invalid.
+  The special value :const:`nomask` is also acceptable for arrays without named fields, and indicates that no data is invalid.
+* A :attr:`~numpy.ma.MaskedArray.fill_value`, a value that may be used to replace the invalid entries in order to return a standard :class:`numpy.ndarray`.
 
 
 
@@ -79,7 +86,7 @@ Attributes and properties of masked arrays
 .. attribute:: MaskedArray.mask
 
    Returns the underlying mask, as an array with the same shape and structure
-   as the data, but where all fields are booleans. 
+   as the data, but where all fields are atomically booleans. 
    A value of ``True`` indicates an invalid entry.
 
 
@@ -100,7 +107,7 @@ Attributes and properties of masked arrays
 
    Returns the value used to fill the invalid entries of a masked array.
    The value is either a scalar (if the masked array has no named fields),
-   or a 0d-ndarray with the same datatype as the masked array if it has
+   or a 0d-ndarray with the same :attr:`dtype` as the masked array if it has
    named fields.
 
    The default filling value depends on the datatype of the array:
@@ -120,7 +127,7 @@ Attributes and properties of masked arrays
 
 .. attribute:: MaskedArray.baseclass
 
-   Returns the class of the underlying data.::
+   Returns the class of the underlying data.
 
       >>> x =  ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 0], [1, 0]])
       >>> x.baseclass
@@ -129,9 +136,9 @@ Attributes and properties of masked arrays
 
 .. attribute:: MaskedArray.sharedmask
 
-   Returns whether the mask of the array is shared between several arrays.
+   Returns whether the mask of the array is shared between several masked arrays.
    If this is the case, any modification to the mask of one array will be
-   propagated to the other masked arrays.
+   propagated to the others.
 
 
 .. attribute:: MaskedArray.hardmask
@@ -145,20 +152,22 @@ As :class:`MaskedArray` is a subclass of :class:`~numpy.ndarray`, a masked array
 .. autosummary::
    :toctree: generated/
 
+   MaskedArray.base
+   MaskedArray.ctypes
+   MaskedArray.dtype
    MaskedArray.flags
-   MaskedArray.shape
-   MaskedArray.strides
-   MaskedArray.ndim
-   MaskedArray.size
+
    MaskedArray.itemsize
    MaskedArray.nbytes
-   MaskedArray.base
-   MaskedArray.dtype
-   MaskedArray.T
-   MaskedArray.real
+   MaskedArray.ndim
+   MaskedArray.shape
+   MaskedArray.size
+   MaskedArray.strides
+
    MaskedArray.imag
+   MaskedArray.real
+
    MaskedArray.flat
-   MaskedArray.ctypes
    MaskedArray.__array_priority__
 
 
@@ -175,8 +184,17 @@ Conversion
 .. autosummary::
    :toctree: generated/
 
+   MaskedArray.__float__
+   MaskedArray.__hex__
+   MaskedArray.__int__
+   MaskedArray.__long__
+   MaskedArray.__oct__
+
    MaskedArray.view
    MaskedArray.astype
+   MaskedArray.byteswap
+
+   MaskedArray.compressed
    MaskedArray.filled
    MaskedArray.tofile
    MaskedArray.toflex
@@ -201,6 +219,7 @@ replaced with ``n`` integers which will be interpreted as an n-tuple.
    MaskedArray.squeeze
    MaskedArray.swapaxes
    MaskedArray.transpose
+   MaskedArray.T
 
 
 Item selection and manipulation
@@ -214,16 +233,31 @@ the operation should proceed.
 .. autosummary::
    :toctree: generated/
 
+   MaskedArray.argmax
+   MaskedArray.argmin
    MaskedArray.argsort
    MaskedArray.choose
    MaskedArray.compress
    MaskedArray.diagonal
+   MaskedArray.fill
+   MaskedArray.item
    MaskedArray.nonzero
    MaskedArray.put
    MaskedArray.repeat
    MaskedArray.searchsorted
    MaskedArray.sort
    MaskedArray.take
+
+
+Pickling and copy
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+
+   MaskedArray.copy
+   MaskedArray.dump
+   MaskedArray.dumps
 
 
 Calculations
@@ -235,15 +269,16 @@ Calculations
    MaskedArray.all
    MaskedArray.anom
    MaskedArray.any
-   MaskedArray.argmax
-   MaskedArray.argmin
    MaskedArray.clip
    MaskedArray.conj
+   MaskedArray.conjugate
    MaskedArray.cumprod
    MaskedArray.cumsum
+   MaskedArray.max
    MaskedArray.mean
    MaskedArray.min
    MaskedArray.prod
+   MaskedArray.product
    MaskedArray.ptp
    MaskedArray.round
    MaskedArray.std
@@ -285,20 +320,35 @@ Arithmetic:
 .. autosummary::
    :toctree: generated/
    
+   MaskedArray.__abs__
    MaskedArray.__add__
+   MaskedArray.__radd__
    MaskedArray.__sub__
+   MaskedArray.__rsub__
    MaskedArray.__mul__
+   MaskedArray.__rmul__
    MaskedArray.__div__
+   MaskedArray.__rdiv__
    MaskedArray.__truediv__
+   MaskedArray.__rtruediv__
    MaskedArray.__floordiv__
+   MaskedArray.__rfloordiv__
    MaskedArray.__mod__
+   MaskedArray.__rmod__
    MaskedArray.__divmod__
+   MaskedArray.__rdivmod__
    MaskedArray.__pow__
+   MaskedArray.__rpow__
    MaskedArray.__lshift__
+   MaskedArray.__rlshift__
    MaskedArray.__rshift__
+   MaskedArray.__rrshift__
    MaskedArray.__and__
+   MaskedArray.__rand__
    MaskedArray.__or__
+   MaskedArray.__ror__
    MaskedArray.__xor__
+   MaskedArray.__rxor__
 
 
 Arithmetic, in-place:
@@ -322,6 +372,18 @@ Arithmetic, in-place:
    MaskedArray.__ixor__
 
 
+Representation
+--------------
+
+.. autosummary::
+   :toctree: generated/
+
+   MaskedArray.__repr__
+   MaskedArray.__str__
+
+   MaskedArray.ids
+   MaskedArray.iscontiguous
+
 
 Special methods
 ---------------
@@ -333,6 +395,7 @@ For standard library functions:
 
    MaskedArray.__copy__
    MaskedArray.__deepcopy__
+   MaskedArray.__getstate__
    MaskedArray.__reduce__
    MaskedArray.__setstate__
 
@@ -353,6 +416,7 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    MaskedArray.__len__
    MaskedArray.__getitem__
    MaskedArray.__setitem__
+   MaskedArray.__delitem__
    MaskedArray.__getslice__
    MaskedArray.__setslice__
    MaskedArray.__contains__
@@ -371,6 +435,8 @@ manipulate the mask.
 .. autosummary::
    :toctree: generated/
 
+   MaskedArray.__setmask__
+
    MaskedArray.harden_mask
    MaskedArray.soften_mask
    MaskedArray.unshare_mask
@@ -387,9 +453,12 @@ Handling the `fill_value`
    MaskedArray.set_fill_value
 
 
+
+Counting the missing elements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. autosummary::
    :toctree: generated/
 
-   MaskedArray.compressed
    MaskedArray.count
 

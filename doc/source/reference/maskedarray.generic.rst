@@ -47,7 +47,7 @@ The :mod:`numpy.ma` module
 --------------------------
 
 
-The main feature of the :mod:`numpy.ma` module is the :class:`~numpy.ma.MaskedArray` class, which is a subclass of :class:`numpy.ndarray`. 
+The main feature of the :mod:`numpy.ma` module is the :class:`MaskedArray` class, which is a subclass of :class:`numpy.ndarray`. 
 The class, its attributes and methods are described in more details in the
 :ref:`MaskedArray class <maskedarray.baseclass>` section.
 
@@ -95,13 +95,19 @@ There are several ways to construct a masked array.
 
 * A third option is to take the view of an existing array. In that case, the
   mask of the view is set to :attr:`nomask` if the array has no named fields,
-  or an array of boolean with the same structure as the array otherwise.::
+  or an array of boolean with the same structure as the array otherwise.
 
      >>> x = np.array([1, 2, 3])
      >>> x.view(ma.MaskedArray)
      masked_array(data = [1 2 3],
                   mask = False,
             fill_value = 999999)
+     >>> x = np.array([(1, 1.), (2, 2.)], dtype=[('a',int), ('b', float)])
+     >>> x.view(ma.MaskedArray)
+     masked_array(data = [(1, 1.0) (2, 2.0)],
+                  mask = [(False, False) (False, False)],
+            fill_value = (999999, 1e+20),
+                 dtype = [('a', '<i4'), ('b', '<f8')])
 
 * Yet another possibility is to use any of the following functions:
 
@@ -131,13 +137,13 @@ Accessing the data
 
 The underlying data of a masked array can be accessed through several ways:
 
-* through the :attr:`data` attribute. The output is a view of the array as 
+* through the :attr:`~MaskedArray.data` attribute. The output is a view of the array as 
   a :class:`numpy.ndarray` or one of its subclasses, depending on the type
   of the underlying data at the masked array creation.
 
 * through the :meth:`~MaskedArray.__array__` method. The output is then a :class:`numpy.ndarray`.
 
-* by directly taking a view of the masked array as a :class:`numpy.ndarray` or one of its subclass (which is actually what using the :attr:`data` attribute does).
+* by directly taking a view of the masked array as a :class:`numpy.ndarray` or one of its subclass (which is actually what using the :attr:`~MaskedArray.data` attribute does).
 
 * by using the :func:`getdata` function. 
 
@@ -150,7 +156,7 @@ If a representation of the array is needed without any masked entries, it is rec
 Accessing the mask
 ------------------
 
-The mask of a masked array is accessible through its :attr:`mask` attribute.
+The mask of a masked array is accessible through its :attr:`~MaskedArray.mask` attribute.
 We must keep in mind that a ``True`` entry in the mask indicates an *invalid* data.
 
 Another possibility is to use the :func:`getmask` and :func:`getmaskarray` functions. :func:`getmask(x)` outputs the mask of ``x`` if ``x`` is a masked array, and the special value :data:`nomask` otherwise.
@@ -171,10 +177,14 @@ To retrieve only the valid entries, we can use the inverse of the mask as an ind
                 mask = [False False],
           fill_value = 999999)
 
-Another way to retrieve the valid data is to use the :meth:`compressed` method, which returns a one-dimensional :class:`~numpy.ndarray` (or one of its subclasses, depending on the value of the :attr:`baseclass` attribute)::
+Another way to retrieve the valid data is to use the :meth:`compressed` method, 
+which returns a one-dimensional :class:`~numpy.ndarray` (or one of its subclasses, 
+depending on the value of the :attr:`~MaskedArray.baseclass` attribute)::
 
-   >>> x.compressed
+   >>> x.compressed()
    array([1, 4])
+
+Note that the output of :meth:`compressed` is always 1D.
 
 
 
@@ -212,7 +222,8 @@ The recommended way to mark one or several specific entries of a masked array as
           fill_value = 999999)
 
 
-A second possibility is to modify the mask directly, but this usage is    discouraged. 
+A second possibility is to modify the :attr:`~MaskedArray.mask` directly, 
+but this usage is discouraged. 
 
 .. note::
    When creating a new masked array with a simple, non-structured datatype, the mask is initially set to the special value :attr:`nomask`, that corresponds roughly to the boolean ``False``. Trying to set an element of :attr:`nomask` will fail with a :exc:`TypeError` exception, as a boolean does not support item assignment.
@@ -254,7 +265,7 @@ To unmask one or several specific entries, we can just assign one or several new
 
 .. note::
    Unmasking an entry by direct assignment will not work if the masked array
-   has a *hard* mask, as shown by the :attr:`hardmask`. 
+   has a *hard* mask, as shown by the :attr:`~MaskedArray.hardmask` attribute. 
    This feature was introduced to prevent the overwriting of the mask.
    To force the unmasking of an entry in such circumstance, the mask has first
    to be softened with the :meth:`soften_mask` method before the allocation, 
@@ -326,7 +337,7 @@ If the masked array has named fields, accessing a single entry returns a
                dtype = [('a', '<i4'), ('b', '<i4')])
 
 
-When accessing a slice, the output is a masked array whose :attr:`data` attribute is a view of the original data, and whose mask is either :attr:`nomask` (if there was no invalid entries in the original array) or a copy of the corresponding slice of the original mask. The copy is required to avoid propagation of any modification of the mask to the original.
+When accessing a slice, the output is a masked array whose :attr:`~MaskedArray.data` attribute is a view of the original data, and whose mask is either :attr:`nomask` (if there was no invalid entries in the original array) or a copy of the corresponding slice of the original mask. The copy is required to avoid propagation of any modification of the mask to the original.
 
    >>> x = ma.array([1, 2, 3, 4, 5], mask=[0, 1, 0, 0, 1])
    >>> mx = x[:3]
@@ -353,11 +364,18 @@ Operations on masked arrays
 ---------------------------
 
 Arithmetic and comparison operations are supported by masked arrays.
-As much as possible, invalid entries of a masked array are not processed, meaning that the corresponding :attr:`data` entries *should* be the same before and after the operation.
-We need to stress that this behavior may not be systematic, that invalid data may actually be affected by the operation in some cases and once again that invalid data should not be relied on.
+As much as possible, invalid entries of a masked array are not processed, 
+meaning that the corresponding :attr:`~MaskedArray.data` entries *should* be 
+the same before and after the operation.
+
+.. warning::
+   We need to stress that this behavior may not be systematic, that invalid 
+   data may actually be affected by the operation in some cases and once again
+   that invalid data should not be relied on.
 
 The :mod:`numpy.ma` module comes with a specific implementation of most
-ufuncs. Unary and binary functions that have a validity domain (such as :func:`~numpy.log` or :func:`~numpy.divide`) return the :data:`masked` constant whenever the input is masked or falls outside the validity domain::
+ufuncs. 
+Unary and binary functions that have a validity domain (such as :func:`~numpy.log` or :func:`~numpy.divide`) return the :data:`masked` constant whenever the input is masked or falls outside the validity domain::
 
    >>> ma.log([-1, 0, 1, 2])
    masked_array(data = [-- -- 0.0 0.69314718056],
@@ -422,6 +440,6 @@ Ignoring extreme values
 -----------------------
 
 Let's consider an array ``d`` of random floats between 0 and 1. 
-We wish to compute the average of the values of ``d`` while ignoring any data outside the range [0.1, 0.9]::
+We wish to compute the average of the values of ``d`` while ignoring any data outside the range ``[0.1, 0.9]``::
 
    >>> print ma.masked_outside(d, 0.1, 0.9).mean()

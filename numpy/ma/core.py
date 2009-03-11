@@ -419,8 +419,8 @@ get_data = getdata
 
 def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
     """
-    Return (a copy of) a where invalid data (nan/inf) are masked
-    and replaced by fill_value.
+    Return (a copy of) `a` where invalid data (nan/inf) are masked
+    and replaced by `fill_value`.
 
     Note that a copy is performed by default (just in case...).
 
@@ -1265,9 +1265,7 @@ def masked_object(x, value, copy=True, shrink=True):
 def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True, shrink=True):
     """
     Mask the array x where the data are approximately equal in
-    value, i.e.
-
-    (abs(x - value) <= atol+rtol*abs(value))
+    value, i.e. ``(abs(x - value) <= atol+rtol*abs(value))``
 
     Suitable only for floating points. For integers, please use
     :func:`masked_equal`.  The mask is set to ``nomask`` if posible.
