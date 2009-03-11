@@ -170,7 +170,7 @@ static struct PyMethodDef methods[] = {
 
 PyMODINIT_FUNC initumath(void) {
     PyObject *m, *d, *s, *s2, *c_api;
-    double pinf, pzero, mynan;
+    double pinf, pzero;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
@@ -247,13 +247,12 @@ PyMODINIT_FUNC initumath(void) {
 
     pinf = pinf_init();
     pzero = pzero_init();
-    mynan = pinf / pinf;
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(pinf));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-pinf));
     PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(pzero));
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(-pzero));
-    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(mynan));
+    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
 
     s = PyDict_GetItemString(d, "conjugate");
     s2 = PyDict_GetItemString(d, "remainder");
