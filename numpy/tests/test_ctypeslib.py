@@ -4,7 +4,14 @@ import numpy as np
 from numpy.ctypeslib import ndpointer, load_library
 from numpy.testing import *
 
+try:
+    cdll = load_library('multiarray', np.core.multiarray.__file__)
+    _HAS_CTYPE = True
+except ImportError:
+    _HAS_CTYPE = False
+
 class TestLoadLibrary(TestCase):
+    @dec.skipif(not _HAS_CTYPE, "ctypes not available on this python installation")
     @dec.knownfailureif(sys.platform=='cygwin', "This test is known to fail on cygwin")
     def test_basic(self):
         try:
@@ -15,6 +22,7 @@ class TestLoadLibrary(TestCase):
                   " (import error was: %s)" % str(e)
             print msg
 
+    @dec.skipif(not _HAS_CTYPE, "ctypes not available on this python installation")
     @dec.knownfailureif(sys.platform=='cygwin', "This test is known to fail on cygwin")
     def test_basic2(self):
         """Regression for #801: load_library with a full library name
