@@ -12908,7 +12908,7 @@ descr_repeat(PyObject *self, Py_ssize_t length)
     PyArray_Descr *new;
     if (length < 0) {
         return PyErr_Format(PyExc_ValueError,
-                            "Array length must be >= 0, not %"INTP_FMT,
+                            "Array length must be >= 0, not %"NPY_SSIZE_T_PYFMT,
                             length);
     }
     tup = Py_BuildValue("O" NPY_SSIZE_T_PYFMT, self, length);
