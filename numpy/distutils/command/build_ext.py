@@ -388,10 +388,7 @@ class build_ext (old_build_ext):
             # expand libraries with fcompiler libraries as we are
             # not using fcompiler linker
             self._libs_with_msvc_and_fortran(fcompiler, libraries, library_dirs)
-	    if fcompiler is not None and fcompiler.compiler_type == "gnu95":
-		if msvc_version(self.compiler) < 8:
-		    self._add_dummy_mingwex_sym(c_sources)
-		    libraries.append("_gfortran_workaround")
+
         elif ext.language in ['f77','f90'] and fcompiler is not None:
             linker = fcompiler.link_shared_object
         if ext.language=='c++' and cxx_compiler is not None:
