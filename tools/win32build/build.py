@@ -14,7 +14,7 @@ from os.path import join as pjoin, split as psplit, dirname
 
 PYEXECS = {"2.5" : "C:\python25\python.exe",
         "2.4" : "C:\python24\python24.exe",
-        "2.3" : "C:\python23\python23.exe"}
+        "2.6" : "C:\python26\python26.exe"}
 
 _SSE3_CFG = r"""[atlas]
 library_dirs = C:\local\lib\yop\sse3"""
