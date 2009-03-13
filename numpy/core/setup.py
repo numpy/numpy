@@ -6,6 +6,8 @@ from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
 
+from setup_common import *
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -119,43 +121,28 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     #use_msvc = config.check_decl("_MSC_VER")
 
-    # Mandatory functions: if not found, fail the build
-    mandatory_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-                "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-                "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
-
-    if not check_funcs_once(mandatory_funcs):
+    if not check_funcs_once(MANDATORY_FUNCS):
         raise SystemError("One of the required function to build numpy is not"
-                " available (the list is %s)." % str(mandatory_funcs))
+                " available (the list is %s)." % str(MANDATORY_FUNCS))
 
     # Standard functions which may not be available and for which we have a
     # replacement implementation. Note that some of these are C99 functions.
-    # XXX: we do not test for hypot because python checks for it (HAVE_HYPOT in
-    # python.h... I wish they would clean their public headers someday)
-    optional_stdfuncs = ["expm1", "log1p", "acosh", "asinh", "atanh",
-                         "rint", "trunc", "exp2", "log2"]
 
     # XXX: hack to circumvent cpp pollution from python: python put its
     # config.h in the public namespace, so we have a clash for the common
-    # functions we test. We remove every function tested by python's autoconf,
-    # hoping their own test are correct
+    # functions we test. We remove every function tested by python's
+    # autoconf, hoping their own test are correct
     if sys.version_info[0] == 2 and sys.version_info[1] >= 6:
-        for f in ["expm1", "log1p", "acosh", "atanh", "asinh"]:
-	    if config.check_decl(fname2def(f), headers = ["Python.h", "math.h"]):
-                optional_stdfuncs.remove(f)
+        for f in OPTIONAL_STDFUNCS_MAYBE:
+            if config.check_decl(fname2def(f),
+                        headers=["Python.h", "math.h"]):
+                OPTIONAL_STDFUNCS.remove(f)
 
-    check_funcs(optional_stdfuncs)
+    check_funcs(OPTIONAL_STDFUNCS)
 
     # C99 functions: float and long double versions
-    c99_funcs = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor",
-                 "ceil", "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp",
-                 "expm1", "asin", "acos", "atan", "asinh", "acosh", "atanh",
-                 "hypot", "atan2", "pow", "fmod", "modf", 'frexp', 'ldexp',
-                 "exp2", "log2"]
-
-    for prec in ['l', 'f']:
-        fns = [f + prec for f in c99_funcs]
-        check_funcs(fns)
+    check_funcs(C99_FUNCS_SINGLE)
+    check_funcs(C99_FUNCS_EXTENDED)
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()
