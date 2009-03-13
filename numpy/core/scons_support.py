@@ -1,4 +1,4 @@
-#! Last Change: Wed Jul 30 02:00 PM 2008 J
+#! Last Change: Fri Mar 13 01:00 PM 2009 J
 
 """Code to support special facilities to scons which are only useful for
 numpy.core, hence not put into numpy.distutils.scons"""
@@ -182,6 +182,33 @@ def define_no_smp():
         except KeyError:
             nosmp = 0
     return nosmp == 1
+
+# Inline check
+def CheckInline(context):
+    context.Message("Checking for inline keyword... ")
+    body = """
+#ifndef __cplusplus
+static %(inline)s int static_func (void)
+{
+    return 0;
+}
+%(inline)s int nostatic_func (void)
+{
+    return 0;
+}
+#endif"""
+    inline = None
+    for kw in ['inline', '__inline__', '__inline']:
+        st = context.TryCompile(body % {'inline': kw}, '.c')
+        if st:
+            inline = kw
+            break
+
+    if inline:
+        context.Result(inline)
+    else:
+        context.Result(0)
+    return inline
 
 array_api_gen_bld = Builder(action = Action(do_generate_numpy_api, '$ARRAPIGENCOMSTR'),
                             emitter = generate_api_emitter)
