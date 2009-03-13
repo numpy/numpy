@@ -20,6 +20,8 @@
 @DEFINE_NPY_SIZEOF_LONGLONG@
 @DEFINE_NPY_SIZEOF_PY_LONG_LONG@
 
+#define NPY_INLINE @NPY_INLINE@
+
 #define NPY_USE_C99_FORMATS @USE_C99_FORMATS@
 
 /* Ugly, but we can't test this in a proper manner without requiring a C++
