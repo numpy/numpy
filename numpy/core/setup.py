@@ -144,9 +144,6 @@ def check_math_capabilities(config, moredefs, mathlibs):
     check_funcs(C99_FUNCS_SINGLE)
     check_funcs(C99_FUNCS_EXTENDED)
 
-def fname2def(name):
-    return "HAVE_%s" % name.upper()
-
 def check_ieee_macros(config):
     priv = []
     pub = []
