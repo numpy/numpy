@@ -17,7 +17,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
 
 verbose = 0
 
-def assert_(val, msg) :
+def assert_(val, msg='') :
     """Assert that works in release mode."""
     if not val :
         raise AssertionError(msg)
