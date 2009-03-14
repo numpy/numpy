@@ -20,17 +20,18 @@ class TestRegression(TestCase):
 
     def test_logseries_convergence(self) :
         """Test for ticket #923"""
-        N = 100000
+        N = 1000
+        np.random.seed(0)
         rvsn = np.random.logseries(0.8, size=N)
         # these two frequency counts should be close to theoretical
         # numbers with this large sample
         # theoretical large N result is 0.49706795
         freq = np.sum(rvsn == 1) / float(N)
-        msg = "Obsevered frequency was %f, should be > 0.45" % freq
+        msg = "Frequency was %f, should be > 0.45" % freq
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
         freq = np.sum(rvsn == 2) / float(N)
-        msg = "Obsevered frequency was %f, should be < 0.23" % freq
+        msg = "Frequency was %f, should be < 0.23" % freq
         assert_(freq < 0.23, msg)
 
 
