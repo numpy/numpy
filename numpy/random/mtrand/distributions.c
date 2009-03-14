@@ -814,7 +814,7 @@ long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample)
     if (good > bad) Z = m - Z;
     
     /* another fix from rv.py to allow sample to exceed popsize/2 */
-    if (m < sample) Z = bad - Z;
+    if (m < sample) Z = good - Z;
     
     return Z;
 }
@@ -876,7 +876,7 @@ long rk_logseries(rk_state *state, double p)
                 return result;
             }
         }
-        if (V <= q) {
+        if (V >= q) {
             return 1;
         }
         return 2;
