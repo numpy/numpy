@@ -2,8 +2,6 @@
 #include <Python.h>
 #include <numpy/ndarrayobject.h>
 
-#include "hashdescr.h"
-
 long PyArray_DescrHash(PyObject* odescr)
 {
     PyArray_Descr *descr;
@@ -13,10 +11,10 @@ long PyArray_DescrHash(PyObject* odescr)
     if (!PyArray_DescrCheck(odescr)) {
         PyErr_SetString(PyExc_ValueError,
                 "PyArray_DescrHash argument must be a type descriptor");
-        return NULL;
+        return -1;
     }
     descr = (PyArray_Descr*)odescr;
 
-    hash = PyObject_Hash(odescr);
+    hash = _Py_HashPointer(odescr);
     return hash;
 }

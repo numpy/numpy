@@ -24,7 +24,7 @@
 
 #define PyAO PyArrayObject
 
-#include "hashdescr.h"
+#include "hashdescr.c"
 
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
