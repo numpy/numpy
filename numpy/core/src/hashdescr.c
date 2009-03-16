@@ -2,10 +2,45 @@
 #include <Python.h>
 #include <numpy/ndarrayobject.h>
 
-/* Main function for hasing, walk recursively for non-builtin types */
-static int _hash_imp(PyArray_Descr* descr, PyObject *l);
+/*
+ * How this works ? The hash is computed from a list which contains all the
+ * information specific to a type. The hard work is to build the list
+ * (_array_descr_walk). The list is built as follows:
+ *      * If the dtype is builtin (no fields, no subarray), then the list
+ *      contains 6 items which uniquely define one dtype (_array_descr_builtin)
+ *      * If the dtype is a compound array, one walk on each field. For each
+ *      field, we append title, names, offset to the final list used for
+ *      hashing, and then append the list recursively built for each
+ *      corresponding dtype (_array_descr_walk_fields)
+ *      * If the dtype is a subarray, one adds the shape tuple to the list, and
+ *      then append the list recursively built for each corresponding dtype
+ *      (_array_descr_walk_subarray)
+ *
+ */
 
-static int builtin_hash(PyArray_Descr* descr, PyObject *l)
+static int _is_array_descr_builtin(PyArray_Descr* descr);
+static int _array_descr_walk(PyArray_Descr* descr, PyObject *l);
+static int _array_descr_walk_fields(PyObject* fields, PyObject* l);
+static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l);
+
+/*
+ * Return true if descr is a builtin type
+ */
+static int _is_array_descr_builtin(PyArray_Descr* descr)
+{
+        if (descr->fields != NULL && descr->fields != Py_None) {
+                return 0;
+        }
+        if (descr->subarray != NULL) {
+                return 0;
+        }
+        return 1;
+}
+
+/*
+ * Add to l all the items which uniquely define a builtin type
+ */
+static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
 {
     Py_ssize_t i;
     PyObject *t, *item;
@@ -36,22 +71,20 @@ clean_t:
 }
 
 /*
- * Walk inside the fields and add every item which will be used for hashing in
- * the list l
- *
- * May recursively call into _hash_imp
+ * Walk inside the fields and add every item which will be used for hashing
+ * into the list l
  *
  * Return 0 on success
  * Return -3 for unexpected error
  */
-static int walk_fields(PyObject* fields, PyObject* l)
+static int _array_descr_walk_fields(PyObject* fields, PyObject* l)
 {
     PyObject *key, *value, *foffset, *fdescr;
     int pos = 0;
 
     while (PyDict_Next(fields, &pos, &key, &value)) {
         /*
-         * For each field, add the key + descr + offset
+         * For each field, add the key + descr + offset to l
          */
 
         /* XXX: are those checks necessary ? */
@@ -72,7 +105,7 @@ static int walk_fields(PyObject* fields, PyObject* l)
             return -3;
         } else {
             Py_INCREF(fdescr);
-            _hash_imp((PyArray_Descr*)fdescr, l);
+            _array_descr_walk((PyArray_Descr*)fdescr, l);
             Py_DECREF(fdescr);
         }
 
@@ -93,7 +126,7 @@ static int walk_fields(PyObject* fields, PyObject* l)
  *
  * Return 0 on success
  */
-static int walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
+static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
 {
     PyObject *item;
     Py_ssize_t i;
@@ -116,45 +149,34 @@ static int walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
     }
 
     Py_INCREF(adescr->base);
-    st = _hash_imp(adescr->base, l);
+    st = _array_descr_walk(adescr->base, l);
     Py_DECREF(adescr->base);
 
     return st;
 }
 
 /*
- * Return true if descr is a builtin type
+ * 'Root' function to walk into a dtype. May be call recursively
  */
-static int isbuiltin(PyArray_Descr* descr)
-{
-        if (descr->fields != NULL && descr->fields != Py_None) {
-                return 0;
-        }
-        if (descr->subarray != NULL) {
-                return 0;
-        }
-        return 1;
-}
-
-static int _hash_imp(PyArray_Descr* descr, PyObject *l)
+static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 {
     int st;
 
-    if (isbuiltin(descr)) {
-        return builtin_hash(descr, l);
+    if (_is_array_descr_builtin(descr)) {
+        return _array_descr_builtin(descr, l);
     } else {
         if(descr->fields != NULL && descr->fields != Py_None) {
             if (!PyDict_Check(descr->fields)) {
                 return -3;
             }
-            st = walk_fields(descr->fields, l);
+            st = _array_descr_walk_fields(descr->fields, l);
             if (st) {
                 printf("Error while walking fields\n");
                 return -3;
             }
         }
         if(descr->subarray != NULL) {
-            st = walk_subarray(descr->subarray, l);
+            st = _array_descr_walk_subarray(descr->subarray, l);
             if (st) {
                 return -1;
             }
@@ -182,7 +204,7 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
         return -1;
     }
 
-    st = _hash_imp(descr, l);
+    st = _array_descr_walk(descr, l);
     if (st) {
         printf("Error while computing hash\n");
         st = -3;
