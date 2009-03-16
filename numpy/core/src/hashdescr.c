@@ -81,7 +81,7 @@ clean_t:
 static int _array_descr_walk_fields(PyObject* fields, PyObject* l)
 {
     PyObject *key, *value, *foffset, *fdescr;
-    int pos = 0;
+    Py_ssize_t pos = 0;
     int st;
 
     while (PyDict_Next(fields, &pos, &key, &value)) {
