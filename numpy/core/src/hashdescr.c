@@ -56,6 +56,8 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
     for(i = 0; i < PyTuple_Size(t); ++i) {
         item = PyTuple_GetItem(t, i);
         if (item == NULL) {
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) Error while computing builting hash");
             goto clean_t;
         }
         Py_INCREF(item);
@@ -75,7 +77,6 @@ clean_t:
  * into the list l
  *
  * Return 0 on success
- * Return -3 for unexpected error
  */
 static int _array_descr_walk_fields(PyObject* fields, PyObject* l)
 {
@@ -89,29 +90,42 @@ static int _array_descr_walk_fields(PyObject* fields, PyObject* l)
 
         /* XXX: are those checks necessary ? */
         if (!PyString_Check(key)) {
-            return -3;
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) key of dtype dict not a string ???");
+            return -1;
         }
         if (!PyTuple_Check(value)) {
-            return -3;
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) value of dtype dict not a dtype ???");
+            return -1;
         }
         if (PyTuple_Size(value) < 2) {
-            return -3;
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) Less than 2 items in dtype dict ???");
+            return -1;
         }
         Py_INCREF(key);
         PyList_Append(l, key);
 
         fdescr = PyTuple_GetItem(value, 0);
         if (!PyArray_DescrCheck(fdescr)) {
-            return -3;
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) First item in compound dtype tuple not a descr ???");
+            return -1;
         } else {
             Py_INCREF(fdescr);
-            _array_descr_walk((PyArray_Descr*)fdescr, l);
+            st = _array_descr_walk((PyArray_Descr*)fdescr, l);
             Py_DECREF(fdescr);
+            if (st) {
+                return -1;
+            }
         }
 
         foffset = PyTuple_GetItem(value, 1);
         if (!PyInt_Check(foffset)) {
-            return -3;
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) Second item in compound dtype tuple not an int ???");
+            return -1;
         } else {
             Py_INCREF(foffset);
             PyList_Append(l, foffset);
@@ -136,12 +150,16 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
      * Add shape and descr itself to the list of object to hash
      */
     if ( !PyTuple_Check(adescr->shape)) {
-        return -3;
+        PyErr_SetString(PyExc_SystemError,
+                "(Hash) Shape of subarray dtype an tuple ???");
+        return -1;
     }
 
     for(i = 0; i < PyTuple_Size(adescr->shape); ++i) {
         item = PyTuple_GetItem(adescr->shape, i);
         if (item == NULL) {
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) Error while getting shape item of subarray dtype ???");
             return -1;
         }
         Py_INCREF(item);
@@ -167,12 +185,13 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
     } else {
         if(descr->fields != NULL && descr->fields != Py_None) {
             if (!PyDict_Check(descr->fields)) {
-                return -3;
+                PyErr_SetString(PyExc_SystemError,
+                        "(Hash) fields is not a dict ???");
+                return -1;
             }
             st = _array_descr_walk_fields(descr->fields, l);
             if (st) {
-                printf("Error while walking fields\n");
-                return -3;
+                return -1;
             }
         }
         if(descr->subarray != NULL) {
@@ -197,7 +216,7 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
 {
     PyObject *l, *tl, *item;
     Py_ssize_t i;
-    int st = -3;
+    int st;
 
     l = PyList_New(0);
     if (l == NULL) {
@@ -206,8 +225,6 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
 
     st = _array_descr_walk(descr, l);
     if (st) {
-        printf("Error while computing hash\n");
-        st = -3;
         goto clean_l;
     }
 
@@ -219,7 +236,9 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
     for(i = 0; i < PyList_Size(l); ++i) {
         item = PyList_GetItem(l, i);
         if (item == NULL) {
-            st = -3;
+            PyErr_SetString(PyExc_SystemError,
+                    "(Hash) Error while translating the list into a tuple " \
+                    "(NULL item)");
             goto clean_tl;
         }
         PyTuple_SetItem(tl, i, item);
@@ -227,7 +246,11 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
 
     *hash = PyObject_Hash(tl);
     if (*hash == -1) {
-        st = -2;
+        /* XXX: does PyObject_Hash set an exception on failure ? */
+#if 0
+        PyErr_SetString(PyExc_SystemError,
+                "(Hash) Error while hashing final tuple");
+#endif
         goto clean_tl;
     }
     Py_DECREF(tl);
@@ -239,7 +262,7 @@ clean_tl:
     Py_DECREF(tl);
 clean_l:
     Py_DECREF(l);
-    return st;
+    return -1;
 }
 
 long PyArray_DescrHash(PyObject* odescr)
