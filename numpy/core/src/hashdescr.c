@@ -166,7 +166,7 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
         PyList_Append(l, adescr->shape);
     } else {
         PyErr_SetString(PyExc_SystemError,
-                "(Hash) Shape of subarray dtype an tuple ???");
+                "(Hash) Shape of subarray dtype neither a tuple or int ???");
         return -1;
     }
 
