@@ -76,37 +76,36 @@ class TestConversion(TestCase):
 
 
 class TestRepr(TestCase):
-    def test_float_repr(self):
-        for t in [np.float32, np.float64, np.longdouble]:
-            finfo=np.finfo(t)
-            last_fraction_bit_idx = finfo.nexp + finfo.nmant
-            last_exponent_bit_idx = finfo.nexp
-            storage_bytes = np.dtype(t).itemsize*8
-            # could add some more types to the list below
-            for which in ['small denorm','small norm']:
-                # Values from http://en.wikipedia.org/wiki/IEEE_754
-                constr = np.array([0x00]*storage_bytes,dtype=np.uint8)
-                if which == 'small denorm':
-                    byte = last_fraction_bit_idx // 8
-                    bytebit = 7-(last_fraction_bit_idx % 8)
-                    constr[byte] = 1<<bytebit
-                elif which == 'small norm':
-                    byte = last_exponent_bit_idx // 8
-                    bytebit = 7-(last_exponent_bit_idx % 8)
-                    constr[byte] = 1<<bytebit
-                else:
-                    raise ValueError('hmm')
-                val = constr.view(t)[0]
-                val_repr = repr(val)
-                val2 = t(eval(val_repr))
-                if t == np.longdouble:
-                    # Skip longdouble - the eval() statement goes
-                    # through a Python float, which will lose
-                    # precision
-                    continue
-                if not (val2 == 0 and val < 1e-100):
-                    assert_equal(val, val2)
+    def _test_type_repr(self, t):
+        finfo=np.finfo(t)
+        last_fraction_bit_idx = finfo.nexp + finfo.nmant
+        last_exponent_bit_idx = finfo.nexp
+        storage_bytes = np.dtype(t).itemsize*8
+        # could add some more types to the list below
+        for which in ['small denorm','small norm']:
+            # Values from http://en.wikipedia.org/wiki/IEEE_754
+            constr = np.array([0x00]*storage_bytes,dtype=np.uint8)
+            if which == 'small denorm':
+                byte = last_fraction_bit_idx // 8
+                bytebit = 7-(last_fraction_bit_idx % 8)
+                constr[byte] = 1<<bytebit
+            elif which == 'small norm':
+                byte = last_exponent_bit_idx // 8
+                bytebit = 7-(last_exponent_bit_idx % 8)
+                constr[byte] = 1<<bytebit
+            else:
+                raise ValueError('hmm')
+            val = constr.view(t)[0]
+            val_repr = repr(val)
+            val2 = t(eval(val_repr))
+            if not (val2 == 0 and val < 1e-100):
+                assert_equal(val, val2)
 
+    def test_float_repr(self):
+	# long double test cannot work, because eval goes through a python
+	# float
+        for t in [np.float32, np.float64]:
+	    yield test_float_repr, t
 
 if __name__ == "__main__":
     run_module_suite()
