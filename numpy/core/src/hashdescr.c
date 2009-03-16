@@ -212,7 +212,8 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
     }
 
     /*
-     * Convert the list to tuple
+     * Convert the list to tuple and compute the tuple hash using python
+     * builtin function
      */
     tl = PyTuple_New(PyList_Size(l));
     for(i = 0; i < PyList_Size(l); ++i) {
