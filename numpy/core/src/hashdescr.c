@@ -3,7 +3,7 @@
 #include <numpy/ndarrayobject.h>
 
 /*
- * How this works ? The hash is computed from a list which contains all the
+ * How does this work ? The hash is computed from a list which contains all the
  * information specific to a type. The hard work is to build the list
  * (_array_descr_walk). The list is built as follows:
  *      * If the dtype is builtin (no fields, no subarray), then the list
@@ -178,7 +178,7 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
 }
 
 /*
- * 'Root' function to walk into a dtype. May be call recursively
+ * 'Root' function to walk into a dtype. May be called recursively
  */
 static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 {
