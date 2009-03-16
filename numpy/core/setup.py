@@ -451,6 +451,7 @@ def configuration(parent_package='',top_path=None):
             join('src','arraytypes.inc.src'),
             join('src','_signbit.c'),
             join('src','ucsnarrow.c'),
+            join('src','hashdescr.h'),
             join('include','numpy','*object.h'),
             'include/numpy/fenv/fenv.c',
             'include/numpy/fenv/fenv.h',
@@ -486,6 +487,7 @@ def configuration(parent_package='',top_path=None):
                                     generate_numpy_api,
                                     join('src','scalartypes.inc.src'),
                                     join('src','arraytypes.inc.src'),
+                                    join('src','hashdescr.c'),
                                     join(codegen_dir,'generate_numpy_api.py'),
                                     join('*.py')
                                     ],

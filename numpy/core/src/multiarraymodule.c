@@ -24,6 +24,7 @@
 
 #define PyAO PyArrayObject
 
+#include "hashdescr.h"
 
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
@@ -8503,7 +8504,7 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
         return;
     }
-    PyArrayDescr_Type.tp_hash = (hashfunc)_Py_HashPointer;
+    PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         return;
     }
