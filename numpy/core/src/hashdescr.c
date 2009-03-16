@@ -211,10 +211,6 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 
 /*
  * Return 0 if successfull
- *
- * -1: memory-like error
- * -2: hashing error (bug)
- * -3: unexpected error
  */
 static int _PyArray_DescrHashImp(PyArray_Descr *descr, long *hash)
 {
