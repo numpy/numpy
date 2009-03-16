@@ -150,21 +150,24 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
     /*
      * Add shape and descr itself to the list of object to hash
      */
-    if ( !PyTuple_Check(adescr->shape)) {
+    if (PyTuple_Check(adescr->shape)) {
+        for(i = 0; i < PyTuple_Size(adescr->shape); ++i) {
+            item = PyTuple_GetItem(adescr->shape, i);
+            if (item == NULL) {
+                PyErr_SetString(PyExc_SystemError,
+                        "(Hash) Error while getting shape item of subarray dtype ???");
+                return -1;
+            }
+            Py_INCREF(item);
+            PyList_Append(l, item);
+        }
+    } else if (PyInt_Check(adescr->shape)) {
+        Py_INCREF(adescr->shape);
+        PyList_Append(l, adescr->shape);
+    } else {
         PyErr_SetString(PyExc_SystemError,
                 "(Hash) Shape of subarray dtype an tuple ???");
         return -1;
-    }
-
-    for(i = 0; i < PyTuple_Size(adescr->shape); ++i) {
-        item = PyTuple_GetItem(adescr->shape, i);
-        if (item == NULL) {
-            PyErr_SetString(PyExc_SystemError,
-                    "(Hash) Error while getting shape item of subarray dtype ???");
-            return -1;
-        }
-        Py_INCREF(item);
-        PyList_Append(l, item);
     }
 
     Py_INCREF(adescr->base);

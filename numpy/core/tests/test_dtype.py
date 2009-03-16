@@ -34,6 +34,12 @@ class TestRecord(TestCase):
                 "%s and %s hash the same !" % (a, b))
 
 class TestSubarray(TestCase):
+    def test_single_subarray(self):
+        a = np.dtype((np.int, (2)))
+        b = np.dtype((np.int, (2,)))
+        self.failUnless(hash(a) == hash(b), 
+                "two equivalent types do not hash to the same value !")
+
     def test_equivalent_record(self):
         """Test whether equivalent subarray dtypes hash the same."""
         a = np.dtype((np.int, (2, 3)))
