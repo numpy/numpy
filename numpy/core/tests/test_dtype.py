@@ -66,7 +66,20 @@ class TestSubarray(TestCase):
 
 class TestMonsterType(TestCase):
     """Test deeply nested subtypes."""
-    pass
+    def test1(self):
+        simple1 = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
+            'titles': ['Red pixel', 'Blue pixel']})
+        a = np.dtype([('yo', np.int), ('ye', simple1),
+            ('yi', np.dtype((np.int, (3, 2))))])
+        b = np.dtype([('yo', np.int), ('ye', simple1),
+            ('yi', np.dtype((np.int, (3, 2))))])
+        self.failUnless(hash(a) == hash(b))
+
+        c = np.dtype([('yo', np.int), ('ye', simple1),
+            ('yi', np.dtype((a, (3, 2))))])
+        d = np.dtype([('yo', np.int), ('ye', simple1),
+            ('yi', np.dtype((a, (3, 2))))])
+        self.failUnless(hash(c) == hash(d))
 
 if __name__ == "__main__":
     run_module_suite()
