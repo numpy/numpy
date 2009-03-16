@@ -89,6 +89,40 @@ static int walk_fields(PyObject* fields, PyObject* l)
 }
 
 /*
+ * Walk into subarray, and add items for hashing in l
+ *
+ * Return 0 on success
+ */
+static int walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
+{
+    PyObject *item;
+    Py_ssize_t i;
+    int st;
+
+    /*
+     * Add shape and descr itself to the list of object to hash
+     */
+    if ( !PyTuple_Check(adescr->shape)) {
+        return -3;
+    }
+
+    for(i = 0; i < PyTuple_Size(adescr->shape); ++i) {
+        item = PyTuple_GetItem(adescr->shape, i);
+        if (item == NULL) {
+            return -1;
+        }
+        Py_INCREF(item);
+        PyList_Append(l, item);
+    }
+
+    Py_INCREF(adescr->base);
+    st = _hash_imp(adescr->base, l);
+    Py_DECREF(adescr->base);
+
+    return st;
+}
+
+/*
  * Return true if descr is a builtin type
  */
 static int isbuiltin(PyArray_Descr* descr)
@@ -120,7 +154,10 @@ static int _hash_imp(PyArray_Descr* descr, PyObject *l)
             }
         }
         if(descr->subarray != NULL) {
-            return -1;
+            st = walk_subarray(descr->subarray, l);
+            if (st) {
+                return -1;
+            }
         }
     }
 
