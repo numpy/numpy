@@ -2,6 +2,9 @@
 #include <Python.h>
 #include <numpy/ndarrayobject.h>
 
+/* Main function for hasing, walk recursively for non-builtin types */
+static int _hash_imp(PyArray_Descr* descr, PyObject *l);
+
 static int builtin_hash(PyArray_Descr* descr, PyObject *l)
 {
     Py_ssize_t i;
@@ -33,6 +36,59 @@ clean_t:
 }
 
 /*
+ * Walk inside the fields and add every item which will be used for hashing in
+ * the list l
+ *
+ * May recursively call into _hash_imp
+ *
+ * Return 0 on success
+ * Return -3 for unexpected error
+ */
+static int walk_fields(PyObject* fields, PyObject* l)
+{
+    PyObject *key, *value, *foffset, *fdescr;
+    int pos = 0;
+
+    while (PyDict_Next(fields, &pos, &key, &value)) {
+        /*
+         * For each field, add the key + descr + offset
+         */
+
+        /* XXX: are those checks necessary ? */
+        if (!PyString_Check(key)) {
+            return -3;
+        }
+        if (!PyTuple_Check(value)) {
+            return -3;
+        }
+        if (PyTuple_Size(value) < 2) {
+            return -3;
+        }
+        Py_INCREF(key);
+        PyList_Append(l, key);
+
+        fdescr = PyTuple_GetItem(value, 0);
+        if (!PyArray_DescrCheck(fdescr)) {
+            return -3;
+        } else {
+            Py_INCREF(fdescr);
+            _hash_imp((PyArray_Descr*)fdescr, l);
+            Py_DECREF(fdescr);
+        }
+
+        foffset = PyTuple_GetItem(value, 1);
+        if (!PyInt_Check(foffset)) {
+            return -3;
+        } else {
+            Py_INCREF(foffset);
+            PyList_Append(l, foffset);
+        }
+    }
+
+    return 0;
+}
+
+/*
  * Return true if descr is a builtin type
  */
 static int isbuiltin(PyArray_Descr* descr)
@@ -48,10 +104,24 @@ static int isbuiltin(PyArray_Descr* descr)
 
 static int _hash_imp(PyArray_Descr* descr, PyObject *l)
 {
+    int st;
+
     if (isbuiltin(descr)) {
         return builtin_hash(descr, l);
     } else {
-        return -1;
+        if(descr->fields != NULL && descr->fields != Py_None) {
+            if (!PyDict_Check(descr->fields)) {
+                return -3;
+            }
+            st = walk_fields(descr->fields, l);
+            if (st) {
+                printf("Error while walking fields\n");
+                return -3;
+            }
+        }
+        if(descr->subarray != NULL) {
+            return -1;
+        }
     }
 
     return 0;
