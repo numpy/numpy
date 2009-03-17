@@ -190,8 +190,8 @@ def get_autosummary(names, state, no_signatures=False):
     table = nodes.table('')
     group = nodes.tgroup('', cols=2)
     table.append(group)
-    group.append(nodes.colspec('', colwidth=30))
-    group.append(nodes.colspec('', colwidth=70))
+    group.append(nodes.colspec('', colwidth=10))
+    group.append(nodes.colspec('', colwidth=90))
     body = nodes.tbody('')
     group.append(body)
 
@@ -223,9 +223,9 @@ def get_autosummary(names, state, no_signatures=False):
         else:
             title = ""
         
-        col1 = ":obj:`%s <%s>`" % (name, real_name)
+        col1 = u":obj:`%s <%s>`" % (name, real_name)
         if doc['Signature']:
-            sig = re.sub('^[a-zA-Z_0-9.-]*', '', doc['Signature'])
+            sig = re.sub('^[^(\[]*', '', doc['Signature'].strip())
             if '=' in sig:
                 # abbreviate optional arguments
                 sig = re.sub(r', ([a-zA-Z0-9_]+)=', r'[, \1=', sig, count=1)
@@ -236,7 +236,8 @@ def get_autosummary(names, state, no_signatures=False):
                 sig = re.sub(r'(\[.{16,16}[^,)]*?),.*?\]\)', r'\1, ...])', sig)
             else:
                 sig = re.sub(r'(\(.{16,16}[^,)]*?),.*?\)', r'\1, ...)', sig)
-            col1 += " " + sig
+            # make signature contain non-breaking spaces
+            col1 += u"\\ \u00a0" + unicode(sig).replace(u" ", u"\u00a0")
         col2 = title
         append_row(col1, col2)
 
