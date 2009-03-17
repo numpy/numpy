@@ -34,15 +34,15 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008, The Scipy community'
+copyright = '2008-2009, The Scipy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '1.2'
+version = '1.4.dev'
 # The full version, including alpha/beta/rc tags.
-release = '1.2.dev'
+release = '1.4.dev'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
