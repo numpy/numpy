@@ -129,7 +129,8 @@ def autosummary_directive(dirname, arguments, options, content, lineno,
     """
 
     names = []
-    names += [x.strip() for x in content if x.strip()]
+    names += [x.strip().split()[0] for x in content
+              if x.strip() and re.search(r'^[a-zA-Z_]', x.strip()[0])]
 
     table, warnings, real_names = get_autosummary(names, state,
                                                   'nosignatures' in options)
