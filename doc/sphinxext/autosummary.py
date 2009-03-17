@@ -233,9 +233,9 @@ def get_autosummary(names, state, no_signatures=False):
                 sig = re.sub(r'=[^,)]+,', ',', sig)
                 sig = re.sub(r'=[^,)]+\)$', '])', sig)
                 # shorten long strings
-                sig = re.sub(r'(\[.{16,16}[^,)]*?),.*?\]\)', r'\1, ...])', sig)
+                sig = re.sub(r'(\[.{16,16}[^,]*?),.*?\]\)', r'\1, ...])', sig)
             else:
-                sig = re.sub(r'(\(.{16,16}[^,)]*?),.*?\)', r'\1, ...)', sig)
+                sig = re.sub(r'(\(.{16,16}[^,]*?),.*?\)', r'\1, ...)', sig)
             # make signature contain non-breaking spaces
             col1 += u"\\ \u00a0" + unicode(sig).replace(u" ", u"\u00a0")
         col2 = title
