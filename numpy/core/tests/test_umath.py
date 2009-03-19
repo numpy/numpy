@@ -368,6 +368,10 @@ class TestChoose(TestCase):
         assert_equal(np.choose(c, (a, 1)), np.array([1,1]))
 
 
+def is_longdouble_finfo_bogus():
+    info = np.finfo(np.longdouble)
+    return info.tiny < 0 or info.eps < 0
+
 class TestComplexFunctions(object):
     funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
              np.arctanh, np.sin,     np.cos,    np.tan,     np.exp,
@@ -537,8 +541,13 @@ class TestComplexFunctions(object):
             check(func, pts, 1+1j)
 
     def test_loss_of_precision(self):
-        for dtype in [np.complex64, np.complex_, np.longcomplex]:
+        for dtype in [np.complex64, np.complex_]:
             yield self.check_loss_of_precision, dtype
+
+    @dec.knownfailureif(is_longdouble_finfo_bogus(),
+                        "Bogus floating-point information for long doubles")
+    def test_loss_of_precision_longcomplex(self):
+        yield self.check_loss_of_precision, np.longcomplex
 
 class TestAttributes(TestCase):
     def test_attributes(self):
