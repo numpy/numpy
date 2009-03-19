@@ -481,16 +481,20 @@ class TestComplexFunctions(object):
 
         def check(x, rtol):
             d = np.absolute(np.arcsinh(x)/np.arcsinh(x+0j).real - 1)
-            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
+                                      'arcsinh')
 
             d = np.absolute(np.arcsinh(x)/np.arcsin(1j*x).imag - 1)
-            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
+                                      'arcsin')
 
             d = np.absolute(np.arctanh(x)/np.arctanh(x+0j).real - 1)
-            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
+                                      'arctanh')
 
             d = np.absolute(np.arctanh(x)/np.arctan(1j*x).imag - 1)
-            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max())
+            assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
+                                      'arctan')
 
         # The switchover was chosen as 1e-3; hence there can be up to
         # ~eps/1e-3 of relative cancellation error before it
@@ -547,7 +551,7 @@ class TestComplexFunctions(object):
     @dec.knownfailureif(is_longdouble_finfo_bogus(),
                         "Bogus floating-point information for long doubles")
     def test_loss_of_precision_longcomplex(self):
-        yield self.check_loss_of_precision, np.longcomplex
+        self.check_loss_of_precision(np.longcomplex)
 
 class TestAttributes(TestCase):
     def test_attributes(self):
