@@ -1,21 +1,23 @@
-Configuration defines
-=====================
+System configuration
+====================
 
 .. sectionauthor:: Travis E. Oliphant
 
-When NumPy is built, a configuration file is constructed and placed as config.h
-in the NumPy include directory. This configuration file ensures that specific
-macros are defined and defines other macros based on whether or not your system
-has certain features. This file is private, and is not exported by numpy (that
-is a python extension which use the numpy C API will not see those symbols), to
+When NumPy is built, information about system configuration is
+recorded, and is made available for extension modules using Numpy's C
+API.  These are mostly defined in ``numpyconfig.h`` (included in
+``ndarrayobject.h``). The public symbols are prefixed by ``NPY_*``.
+Numpy also offers some functions for querying information about the
+platform in use.
+
+For private use, Numpy also constructs a ``config.h`` in the NumPy
+include directory, which is not exported by Numpy (that is a python
+extension which use the numpy C API will not see those symbols), to
 avoid namespace pollution.
 
-Some of those defines have a public equivalent, which are defined in
-numpyconfig.h (included in ndarrayobject.h). The public symbols are prefixed by
-NPY_*.
 
-Guaranteed to be defined
-------------------------
+Data type sizes
+---------------
 
 The :cdata:`NPY_SIZEOF_{CTYPE}` constants are defined so that sizeof
 information is available to the pre-processor.
@@ -56,3 +58,47 @@ information is available to the pre-processor.
 
     Size of a pointer on this platform (sizeof(void \*)) (A macro defines
     NPY_SIZEOF_INTP as well.)
+
+
+Platform information
+--------------------
+
+.. cvar:: NPY_CPU_X86
+.. cvar:: NPY_CPU_AMD64
+.. cvar:: NPY_CPU_IA64
+.. cvar:: NPY_CPU_PPC
+.. cvar:: NPY_CPU_PPC64
+.. cvar:: NPY_CPU_SPARC
+.. cvar:: NPY_CPU_SPARC64
+.. cvar:: NPY_CPU_S390
+.. cvar:: NPY_CPU_PARISC
+
+    .. versionadded:: 1.3.0
+
+    CPU architecture of the platform; only one of the above is
+    defined.
+
+    Defined in ``numpy/npy_cpu.h``
+
+.. cvar:: NPY_LITTLE_ENDIAN
+
+.. cvar:: NPY_BIG_ENDIAN
+
+.. cvar:: NPY_BYTE_ORDER
+
+    .. versionadded:: 1.3.0
+
+    Portable alternatives to the ``endian.h`` macros of GNU Libc.
+    One of :cdata:`NPY_BIG_ENDIAN` :cdata:`NPY_LITTLE_ENDIAN` or
+    is defined, and :cdata:`NPY_BYTE_ORDER` is either 4321 or 1234.
+
+    Defined in ``numpy/npy_endian.h``.
+
+.. cfunction:: PyArray_GetEndianness()
+
+    .. versionadded:: 1.3.0
+
+    Returns the endianness of the current platform.
+    One of :cdata:`NPY_CPU_BIG`, :cdata:`NPY_CPU_LITTLE`,
+    or :cdata:`NPY_CPU_UNKNOWN_ENDIAN`.
+ 

@@ -824,6 +824,8 @@ add_newdoc('numpy.core.umath', 'rad2deg',
 
     Notes
     -----
+    .. versionadded:: 1.3.0
+
     rad2deg(x) is ``180 * x / pi``.
 
     Examples
@@ -990,6 +992,10 @@ add_newdoc('numpy.core.umath', 'exp2',
     -------
     out : ndarray
         Element-wise 2 to the power `x`.
+
+    Notes
+    -----
+    .. versionadded:: 1.3.0
 
     """)
 
@@ -1710,6 +1716,10 @@ add_newdoc('numpy.core.umath', 'log2',
     --------
     log, log10, log1p
 
+    Notes
+    -----
+    .. versionadded:: 1.3.0
+
     """)
 
 add_newdoc('numpy.core.umath', 'logaddexp',
@@ -1738,6 +1748,10 @@ add_newdoc('numpy.core.umath', 'logaddexp',
     --------
     logaddexp2
 
+    Notes
+    -----
+    .. versionadded:: 1.3.0
+
     """)
 
 add_newdoc('numpy.core.umath', 'logaddexp2',
@@ -1765,6 +1779,10 @@ add_newdoc('numpy.core.umath', 'logaddexp2',
     See Also
     --------
     logaddexp
+
+    Notes
+    -----
+    .. versionadded:: 1.3.0
 
     """)
 
@@ -2030,11 +2048,13 @@ add_newdoc('numpy.core.umath', 'minimum',
 
 add_newdoc('numpy.core.umath', 'fmax',
     """
+    .. versionadded:: 1.3.0
 
     """)
 
 add_newdoc('numpy.core.umath', 'fmin',
     """
+    .. versionadded:: 1.3.0
 
     """)
 
@@ -2251,6 +2271,8 @@ add_newdoc('numpy.core.umath', 'deg2rad',
 
     Notes
     -----
+    .. versionadded:: 1.3.0
+    
     ``deg2rad(x)`` is ``x * pi / 180``.
 
     Examples
