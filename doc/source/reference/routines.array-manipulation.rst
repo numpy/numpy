@@ -46,8 +46,8 @@ Changing kind of array
 .. autosummary::
    :toctree: generated/
 
-   asarray 
-   asanyarray 
+   asarray
+   asanyarray
    asmatrix
    asfarray
    asfortranarray
@@ -59,11 +59,11 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   append 
-   column_stack 
-   concatenate 
-   dstack 
-   hstack 
+   append
+   column_stack
+   concatenate
+   dstack
+   hstack
    vstack
 
 Splitting arrays
@@ -71,10 +71,10 @@ Splitting arrays
 .. autosummary::
    :toctree: generated/
 
-   array_split 
-   dsplit 
-   hsplit 
-   split 
+   array_split
+   dsplit
+   hsplit
+   split
    vsplit
 
 Tiling arrays
@@ -82,7 +82,7 @@ Tiling arrays
 .. autosummary::
    :toctree: generated/
 
-   tile 
+   tile
    repeat
 
 Adding and removing elements
@@ -90,9 +90,9 @@ Adding and removing elements
 .. autosummary::
    :toctree: generated/
 
-   delete 
-   insert 
-   resize 
+   delete
+   insert
+   resize
    trim_zeros
    unique
 
@@ -101,8 +101,8 @@ Rearranging elements
 .. autosummary::
    :toctree: generated/
 
-   fliplr 
-   flipud 
-   reshape 
-   roll 
+   fliplr
+   flipud
+   reshape
+   roll
    rot90

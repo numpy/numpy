@@ -43,7 +43,7 @@ objects implementing the :class:`buffer` or :ref:`array
    dtype('int32')
 
    The array can be indexed using a Python container-like syntax:
-   
+
    >>> x[1,2]
    6
 
@@ -64,7 +64,7 @@ New arrays can be constructed using the routines detailed in
 :class:`ndarray` constructor:
 
 .. autosummary::
-   :toctree: generated/ 
+   :toctree: generated/
 
    ndarray
 
@@ -110,7 +110,7 @@ for example in the Fortran language and in *Matlab*) and
 :term:`row-major` order (used in C) are special cases of the strided
 scheme, and correspond to the strides:
 
-.. math:: 
+.. math::
 
    s_k^{\mathrm{column}} = \prod_{j=0}^{k-1} d_j , \quad  s_k^{\mathrm{row}} = \prod_{j=k+1}^{N-1} d_j .
 
@@ -127,7 +127,7 @@ in a different scheme.
 
 .. seealso: :ref:`Indexing <arrays.ndarray.indexing>`_
 
-.. note:: 
+.. note::
 
    Several algorithms in NumPy work on arbitrarily strided arrays.
    However, some algorithms require single-segment arrays. When an
@@ -307,7 +307,7 @@ Calculation
 
 .. index:: axis
 
-Many of these methods take an argument named *axis*. In such cases, 
+Many of these methods take an argument named *axis*. In such cases,
 
 - If *axis* is *None* (the default), the array is treated as a 1-D
   array and the operation is performed over the entire array. This
@@ -315,7 +315,7 @@ Many of these methods take an argument named *axis*. In such cases,
   array scalar.
 
 - If *axis* is an integer, then the operation is done over the given axis
-  (for each 1-D subarray that can be created along the given axis). 
+  (for each 1-D subarray that can be created along the given axis).
 
 The parameter *dtype* specifies the data type over which a reduction
 operation (like summing) should take place. The default reduce data
@@ -404,7 +404,7 @@ Unary operations:
 
 .. autosummary::
    :toctree: generated/
-   
+
    ndarray.__neg__
    ndarray.__pos__
    ndarray.__abs__
@@ -414,7 +414,7 @@ Arithmetic:
 
 .. autosummary::
    :toctree: generated/
-   
+
    ndarray.__add__
    ndarray.__sub__
    ndarray.__mul__
@@ -430,7 +430,7 @@ Arithmetic:
    ndarray.__or__
    ndarray.__xor__
 
-.. note:: 
+.. note::
 
    - Any third argument to :func:`pow()` is silently ignored,
      as the underlying :func:`ufunc <power>` only takes two arguments.
@@ -449,7 +449,7 @@ Arithmetic, in-place:
 
 .. autosummary::
    :toctree: generated/
-   
+
    ndarray.__iadd__
    ndarray.__isub__
    ndarray.__imul__

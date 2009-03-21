@@ -40,7 +40,7 @@ information is available to the pre-processor.
     platform (A macro defines **NPY_SIZEOF_LONGLONG** as well.)
 
 .. cvar:: NPY_SIZEOF_PY_LONG_LONG
-    
+
 
 .. cvar:: NPY_SIZEOF_FLOAT
 
@@ -101,4 +101,4 @@ Platform information
     Returns the endianness of the current platform.
     One of :cdata:`NPY_CPU_BIG`, :cdata:`NPY_CPU_LITTLE`,
     or :cdata:`NPY_CPU_UNKNOWN_ENDIAN`.
- 
+

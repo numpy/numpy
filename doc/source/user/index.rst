@@ -18,7 +18,7 @@ and classes, see :ref:`reference`.
 
 .. toctree::
    :maxdepth: 2
-   
+
    howtofind
    basics
    performance

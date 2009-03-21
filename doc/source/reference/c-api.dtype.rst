@@ -35,24 +35,24 @@ are all called :cdata:`NPY_{NAME}` where ``{NAME}`` can be
     **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**, **CDOUBLE**,
     **CLONGDOUBLE**, **OBJECT**, **STRING**, **UNICODE**, **VOID**
 
-    **NTYPES**, **NOTYPE**, **USERDEF**, **DEFAULT_TYPE** 
+    **NTYPES**, **NOTYPE**, **USERDEF**, **DEFAULT_TYPE**
 
 The various character codes indicating certain types are also part of
 an enumerated list. References to type characters (should they be
 needed at all) should always use these enumerations. The form of them
-is :cdata:`NPY_{NAME}LTR` where ``{NAME}`` can be 
+is :cdata:`NPY_{NAME}LTR` where ``{NAME}`` can be
 
     **BOOL**, **BYTE**, **UBYTE**, **SHORT**, **USHORT**, **INT**,
     **UINT**, **LONG**, **ULONG**, **LONGLONG**, **ULONGLONG**,
     **FLOAT**, **DOUBLE**, **LONGDOUBLE**, **CFLOAT**, **CDOUBLE**,
     **CLONGDOUBLE**, **OBJECT**, **STRING**, **VOID**
 
-    **INTP**, **UINTP** 
+    **INTP**, **UINTP**
 
-    **GENBOOL**, **SIGNED**, **UNSIGNED**, **FLOATING**, **COMPLEX** 
+    **GENBOOL**, **SIGNED**, **UNSIGNED**, **FLOATING**, **COMPLEX**
 
 The latter group of ``{NAME}s`` corresponds to letters used in the array
-interface typestring specification. 
+interface typestring specification.
 
 
 Defines
@@ -142,7 +142,7 @@ Boolean
 ^^^^^^^^^^^^^^^^^^
 
 Unsigned versions of the integers can be defined by pre-pending a 'u'
-to the front of the integer name. 
+to the front of the integer name.
 
 .. ctype:: npy_(u)byte
 
@@ -194,7 +194,7 @@ Bit-width names
 
 There are also typedefs for signed integers, unsigned integers,
 floating point, and complex floating point types of specific bit-
-widths. The available type names are 
+widths. The available type names are
 
     :ctype:`npy_int{bits}`, :ctype:`npy_uint{bits}`, :ctype:`npy_float{bits}`,
     and :ctype:`npy_complex{bits}`

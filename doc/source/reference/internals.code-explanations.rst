@@ -5,19 +5,19 @@ Numpy C Code Explanations
 *************************
 
     Fanaticism consists of redoubling your efforts when you have forgotten
-    your aim. 
-    --- *George Santayana* 
+    your aim.
+    --- *George Santayana*
 
     An authority is a person who can tell you more about something than
-    you really care to know. 
-    --- *Unknown* 
+    you really care to know.
+    --- *Unknown*
 
 This Chapter attempts to explain the logic behind some of the new
 pieces of code. The purpose behind these explanations is to enable
 somebody to be able to understand the ideas behind the implementation
 somewhat more easily than just staring at the code. Perhaps in this
 way, the algorithms can be improved on, borrowed from, and/or
-optimized. 
+optimized.
 
 
 Memory model
@@ -38,7 +38,7 @@ pointers because strides are in units of bytes. Keep in mind also that
 strides do not have to be unit-multiples of the element size. Also,
 remember that if the number of dimensions of the array is 0 (sometimes
 called a rank-0 array), then the strides and dimensions variables are
-NULL. 
+NULL.
 
 Besides the structural information contained in the strides and
 dimensions members of the :ctype:`PyArrayObject`, the flags contain important
@@ -54,7 +54,7 @@ the array. It is also possible to obtain a pointer to an unwriteable
 memory area. Sometimes, writing to the memory area when the
 :cdata:`NPY_WRITEABLE` flag is not set will just be rude. Other times it can
 cause program crashes ( *e.g.* a data-area that is a read-only
-memory-mapped file). 
+memory-mapped file).
 
 
 Data-type encapsulation
@@ -71,7 +71,7 @@ list of function pointers pointed to by the 'f' member of the
 extended simply by providing a :ctype:`PyArray_Descr` structure with suitable
 function pointers in the 'f' member. For built-in types there are some
 optimizations that by-pass this mechanism, but the point of the data-
-type abstraction is to allow new data-types to be added. 
+type abstraction is to allow new data-types to be added.
 
 One of the built-in data-types, the void data-type allows for
 arbitrary records containing 1 or more fields as elements of the
@@ -82,7 +82,7 @@ implemented for the void type. A common idiom is to cycle through the
 elements of the dictionary and perform a specific operation based on
 the data-type object stored at the given offset. These offsets can be
 arbitrary numbers. Therefore, the possibility of encountering mis-
-aligned data must be recognized and taken into account if necessary. 
+aligned data must be recognized and taken into account if necessary.
 
 
 N-D Iterators
@@ -100,7 +100,7 @@ dataptr member of the iterator object structure and call the macro
 :cfunc:`PyArray_ITER_NEXT` (it) on the iterator object to move to the next
 element. The "next" element is always in C-contiguous order. The macro
 works by first special casing the C-contiguous, 1-d, and 2-d cases
-which work very simply. 
+which work very simply.
 
 For the general case, the iteration works by keeping track of a list
 of coordinate counters in the iterator object. At each iteration, the
@@ -118,13 +118,13 @@ but a local dimension counter is decremented so that the next-to-last
 dimension replaces the role that the last dimension played and the
 previously-described tests are executed again on the next-to-last
 dimension. In this way, the dataptr is adjusted appropriately for
-arbitrary striding. 
+arbitrary striding.
 
 The coordinates member of the :ctype:`PyArrayIterObject` structure maintains
 the current N-d counter unless the underlying array is C-contiguous in
 which case the coordinate counting is by-passed. The index member of
 the :ctype:`PyArrayIterObject` keeps track of the current flat index of the
-iterator. It is updated by the :cfunc:`PyArray_ITER_NEXT` macro. 
+iterator. It is updated by the :cfunc:`PyArray_ITER_NEXT` macro.
 
 
 Broadcasting
@@ -142,7 +142,7 @@ binary equivalent) to be passed in. The :ctype:`PyArrayMultiIterObject` keeps
 track of the broadcasted number of dimensions and size in each
 dimension along with the total size of the broadcasted result. It also
 keeps track of the number of arrays being broadcast and a pointer to
-an iterator for each of the arrays being broadcasted. 
+an iterator for each of the arrays being broadcasted.
 
 The :cfunc:`PyArray_Broadcast` function takes the iterators that have already
 been defined and uses them to determine the broadcast shape in each
@@ -155,14 +155,14 @@ because the iterator strides are also adjusted. Broadcasting only
 adjusts (or adds) length-1 dimensions. For these dimensions, the
 strides variable is simply set to 0 so that the data-pointer for the
 iterator over that array doesn't move as the broadcasting operation
-operates over the extended dimension. 
+operates over the extended dimension.
 
 Broadcasting was always implemented in Numeric using 0-valued strides
 for the extended dimensions. It is done in exactly the same way in
 NumPy. The big difference is that now the array of strides is kept
 track of in a :ctype:`PyArrayIterObject`, the iterators involved in a
 broadcasted result are kept track of in a :ctype:`PyArrayMultiIterObject`,
-and the :cfunc:`PyArray_BroadCast` call implements the broad-casting rules. 
+and the :cfunc:`PyArray_BroadCast` call implements the broad-casting rules.
 
 
 Array Scalars
@@ -178,14 +178,14 @@ array. An exception to this rule was made with object arrays. Object
 arrays are heterogeneous collections of arbitrary Python objects. When
 you select an item from an object array, you get back the original
 Python object (and not an object array scalar which does exist but is
-rarely used for practical purposes). 
+rarely used for practical purposes).
 
 The array scalars also offer the same methods and attributes as arrays
 with the intent that the same code can be used to support arbitrary
 dimensions (including 0-dimensions). The array scalars are read-only
 (immutable) with the exception of the void scalar which can also be
 written to so that record-array field setting works more naturally
-(a[0]['f1'] = ``value`` ). 
+(a[0]['f1'] = ``value`` ).
 
 
 Advanced ("Fancy") Indexing
@@ -202,7 +202,7 @@ The second is general-purpose that works for arrays of "arbitrary
 dimension" (up to a fixed maximum). The one-dimensional indexing
 approaches were implemented in a rather straightforward fashion, and
 so it is the general-purpose indexing code that will be the focus of
-this section. 
+this section.
 
 There is a multi-layer approach to indexing because the indexing code
 can at times return an array scalar and at other times return an
@@ -218,7 +218,7 @@ not created only to be discarded as the array scalar is returned
 instead. This provides significant speed-up for code that is selecting
 many scalars out of an array (such as in a loop). However, it is still
 not faster than simply using a list to store standard Python scalars,
-because that is optimized by the Python interpreter itself. 
+because that is optimized by the Python interpreter itself.
 
 After these optimizations, the array_subscript function itself is
 called. This function first checks for field selection which occurs
@@ -230,7 +230,7 @@ using code borrowed from Numeric which parses the indexing object and
 returns the offset into the data-buffer and the dimensions necessary
 to create a new view of the array. The strides are also changed by
 multiplying each stride by the step-size requested along the
-corresponding dimension. 
+corresponding dimension.
 
 
 Fancy-indexing check
@@ -248,7 +248,7 @@ contains any slice, newaxis, or Ellipsis objects, and no arrays or
 additional sequences are also contained in the sequence. The purpose
 of this is to allow the construction of "slicing" sequences which is a
 common technique for building up code that works in arbitrary numbers
-of dimensions. 
+of dimensions.
 
 
 Fancy-indexing implementation
@@ -265,7 +265,7 @@ binding the :ctype:`PyArrayMapIterObject` to the array being indexed, and (3)
 getting (or setting) the items determined by the indexing object.
 There is an optimization implemented so that the :ctype:`PyArrayIterObject`
 (which has it's own less complicated fancy-indexing) is used for
-indexing when possible. 
+indexing when possible.
 
 
 Creating the mapping object
@@ -276,7 +276,7 @@ where iterators are created for all of the index array inputs and all
 Boolean arrays are converted to equivalent integer index arrays (as if
 nonzero(arr) had been called). Finally, all integer arrays are
 replaced with the integer 0 in the indexing object and all of the
-index-array iterators are "broadcast" to the same shape. 
+index-array iterators are "broadcast" to the same shape.
 
 
 Binding the mapping object
@@ -296,7 +296,7 @@ accomplished by extracting a sub-space view of the array (using the
 index object resulting from replacing all the integer index arrays
 with 0) and storing the information about where this sub-space starts
 in the mapping object. This is used later during mapping-object
-iteration to select the correct elements from the underlying array. 
+iteration to select the correct elements from the underlying array.
 
 
 Getting (or Setting)
@@ -312,7 +312,7 @@ next coordinate location indicated by all of the indexing-object
 iterators while adjusting, if necessary, for the presence of a sub-
 space. The result of this function is that the dataptr member of the
 mapping object structure is pointed to the next position in the array
-that needs to be copied out or set to some value. 
+that needs to be copied out or set to some value.
 
 When advanced indexing is used to extract an array, an iterator for
 the new array is constructed and advanced in phase with the mapping
@@ -320,7 +320,7 @@ object iterator. When advanced indexing is used to place values in an
 array, a special "broadcasted" iterator is constructed from the object
 being placed into the array so that it will only work if the values
 used for setting have a shape that is "broadcastable" to the shape
-implied by the indexing object. 
+implied by the indexing object.
 
 
 Universal Functions
@@ -338,7 +338,7 @@ in C, although there is a mechanism for creating ufuncs from Python
 functions (:func:`frompyfunc`). The user must supply a 1-d loop that
 implements the basic function taking the input scalar values and
 placing the resulting scalars into the appropriate output slots as
-explaine n implementation. 
+explaine n implementation.
 
 
 Setup
@@ -352,7 +352,7 @@ for small arrays than the ufunc. In particular, using ufuncs to
 perform many calculations on 0-d arrays will be slower than other
 Python-based solutions (the silently-imported scalarmath module exists
 precisely to give array scalars the look-and-feel of ufunc-based
-calculations with significantly reduced overhead). 
+calculations with significantly reduced overhead).
 
 When a ufunc is called, many things must be done. The information
 collected from these setup operations is stored in a loop-object. This
@@ -360,7 +360,7 @@ loop object is a C-structure (that could become a Python object but is
 not initialized as such because it is only used internally). This loop
 object has the layout needed to be used with PyArray_Broadcast so that
 the broadcasting can be handled in the same way as it is handled in
-other sections of code. 
+other sections of code.
 
 The first thing done is to look-up in the thread-specific global
 dictionary the current values for the buffer-size, the error mask, and
@@ -372,14 +372,14 @@ contiguous and of the correct type so that a single 1-d loop is
 performed, then the flags may not be checked until all elements of the
 array have been calcluated. Looking up these values in a thread-
 specific dictionary takes time which is easily ignored for all but
-very small arrays. 
+very small arrays.
 
 After checking, the thread-specific global variables, the inputs are
 evaluated to determine how the ufunc should proceed and the input and
 output arrays are constructed if necessary. Any inputs which are not
 arrays are converted to arrays (using context if necessary). Which of
 the inputs are scalars (and therefore converted to 0-d arrays) is
-noted. 
+noted.
 
 Next, an appropriate 1-d loop is selected from the 1-d loops available
 to the ufunc based on the input array types. This 1-d loop is selected
@@ -397,7 +397,7 @@ implication of this search procedure is that "lesser types" should be
 placed below "larger types" when the signatures are stored. If no 1-d
 loop is found, then an error is reported. Otherwise, the argument_list
 is updated with the stored signature --- in case casting is necessary
-and to fix the output types assumed by the 1-d loop. 
+and to fix the output types assumed by the 1-d loop.
 
 If the ufunc has 2 inputs and 1 output and the second input is an
 Object array then a special-case check is performed so that
@@ -406,13 +406,13 @@ the __array_priority\__ attribute, and has an __r{op}\__ special
 method. In this way, Python is signaled to give the other object a
 chance to complete the operation instead of using generic object-array
 calculations. This allows (for example) sparse matrices to override
-the multiplication operator 1-d loop. 
+the multiplication operator 1-d loop.
 
 For input arrays that are smaller than the specified buffer size,
 copies are made of all non-contiguous, mis-aligned, or out-of-
 byteorder arrays to ensure that for small arrays, a single-loop is
 used. Then, array iterators are created for all the input arrays and
-the resulting collection of iterators is broadcast to a single shape. 
+the resulting collection of iterators is broadcast to a single shape.
 
 The output arguments (if any) are then processed and any missing
 return arrays are constructed. If any provided output array doesn't
@@ -420,7 +420,7 @@ have the correct type (or is mis-aligned) and is smaller than the
 buffer size, then a new output array is constructed with the special
 UPDATEIFCOPY flag set so that when it is DECREF'd on completion of the
 function, it's contents will be copied back into the output array.
-Iterators for the output arguments are then processed. 
+Iterators for the output arguments are then processed.
 
 Finally, the decision is made about how to execute the looping
 mechanism to ensure that all elements of the input arrays are combined
@@ -429,7 +429,7 @@ execution are one-loop (for contiguous, aligned, and correct data-
 type), strided-loop (for non-contiguous but still aligned and correct
 data-type), and a buffered loop (for mis-aligned or incorrect data-
 type situations). Depending on which execution method is called for,
-the loop is then setup and computed. 
+the loop is then setup and computed.
 
 
 Function call
@@ -442,7 +442,7 @@ compilation, then the Python Global Interpreter Lock (GIL) is released
 prior to calling all of these loops (as long as they don't involve
 object arrays). It is re-acquired if necessary to handle error
 conditions. The hardware error flags are checked only after the 1-d
-loop is calcluated. 
+loop is calcluated.
 
 
 One Loop
@@ -455,7 +455,7 @@ and output and all arrays have uniform strides (either contiguous,
 0-d, or 1-d). In this case, the 1-d computational loop is called once
 to compute the calculation for the entire array. Note that the
 hardware error flags are only checked after the entire calculation is
-complete. 
+complete.
 
 
 Strided Loop
@@ -468,7 +468,7 @@ approach converts all of the iterators for the input and output
 arguments to iterate over all but the largest dimension. The inner
 loop is then handled by the underlying 1-d computational loop. The
 outer loop is a standard iterator loop on the converted iterators. The
-hardware error flags are checked after each 1-d loop is completed. 
+hardware error flags are checked after each 1-d loop is completed.
 
 
 Buffered Loop
@@ -484,7 +484,7 @@ processing is performed on the outputs in bufsize chunks (where
 bufsize is a user-settable parameter). The underlying 1-d
 computational loop is called on data that is copied over (if it needs
 to be). The setup code and the loop code is considerably more
-complicated in this case because it has to handle: 
+complicated in this case because it has to handle:
 
 - memory allocation of the temporary buffers
 
@@ -501,7 +501,7 @@ complicated in this case because it has to handle:
   remainder).
 
 Again, the hardware error flags are checked at the end of each 1-d
-loop. 
+loop.
 
 
 Final output manipulation
@@ -520,7 +520,7 @@ calling styles of the :obj:`__array_wrap__` function supported. The first
 takes the ndarray as the first argument and a tuple of "context" as
 the second argument. The context is (ufunc, arguments, output argument
 number). This is the first call tried. If a TypeError occurs, then the
-function is called with just the ndarray as the first argument. 
+function is called with just the ndarray as the first argument.
 
 
 Methods
@@ -534,7 +534,7 @@ corresponding to no-elements, one-element, strided-loop, and buffered-
 loop. These are the same basic loop styles as implemented for the
 general purpose function call except for the no-element and one-
 element cases which are special-cases occurring when the input array
-objects have 0 and 1 elements respectively. 
+objects have 0 and 1 elements respectively.
 
 
 Setup
@@ -564,7 +564,7 @@ to work with a well-behaved output array but the result will be copied
 back into the true output array when the method computation is
 complete. Finally, iterators are set up to loop over the correct axis
 (depending on the value of axis provided to the method) and the setup
-routine returns to the actual computation routine. 
+routine returns to the actual computation routine.
 
 
 Reduce
@@ -580,7 +580,7 @@ reduce is that the 1-d loop is called with the output and the second
 input pointing to the same position in memory and both having a step-
 size of 0. The first input is pointing to the input array with a step-
 size given by the appropriate stride for the selected axis. In this
-way, the operation performed is 
+way, the operation performed is
 
 .. math::
    :nowrap:
@@ -596,14 +596,14 @@ where :math:`N+1` is the number of elements in the input, :math:`i`,
 This basic operations is repeated for arrays with greater than 1
 dimension so that the reduction takes place for every 1-d sub-array
 along the selected axis. An iterator with the selected dimension
-removed handles this looping. 
+removed handles this looping.
 
 For buffered loops, care must be taken to copy and cast data before
 the loop function is called because the underlying loop expects
 aligned data of the correct data-type (including byte-order). The
 buffered loop must handle this copying and casting prior to calling
 the loop function on chunks no greater than the user-specified
-bufsize. 
+bufsize.
 
 
 Accumulate
@@ -615,7 +615,7 @@ Accumulate
 The accumulate function is very similar to the reduce function in that
 the output and the second input both point to the output. The
 difference is that the second input points to memory one stride behind
-the current output pointer. Thus, the operation performed is 
+the current output pointer. Thus, the operation performed is
 
 .. math::
    :nowrap:
@@ -627,7 +627,7 @@ the current output pointer. Thus, the operation performed is
 
 The output has the same shape as the input and each 1-d loop operates
 over :math:`N` elements when the shape in the selected axis is :math:`N+1`. Again, buffered loops take care to copy and cast the data before
-calling the underlying 1-d computational loop. 
+calling the underlying 1-d computational loop.
 
 
 Reduceat
@@ -653,7 +653,7 @@ computational loop is fixed to be the difference between the current
 index and the next index (when the current index is the last index,
 then the next index is assumed to be the length of the array along the
 selected dimension). In this way, the 1-d loop will implement a reduce
-over the specified indices. 
+over the specified indices.
 
 Mis-aligned or a loop data-type that does not match the input and/or
 output data-type is handled using buffered code where-in data is
@@ -662,4 +662,4 @@ necessary prior to calling the underlying 1-d function. The temporary
 buffers are created in (element) sizes no bigger than the user
 settable buffer-size value. Thus, the loop must be flexible enough to
 call the underlying 1-d computational loop enough times to complete
-the total calculation in chunks no bigger than the buffer-size. 
+the total calculation in chunks no bigger than the buffer-size.

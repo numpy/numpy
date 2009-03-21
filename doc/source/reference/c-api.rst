@@ -6,10 +6,10 @@ Numpy C-API
 
 .. sectionauthor:: Travis E. Oliphant
 
-|    Beware of the man who won't be bothered with details. 
+|    Beware of the man who won't be bothered with details.
 |    --- *William Feather, Sr.*
 
-|    The truth is out there. 
+|    The truth is out there.
 |    --- *Chris Carter, The X Files*
 
 
@@ -21,7 +21,7 @@ experience at first. Be assured that the task becomes easier with
 practice, and you may be surprised at how simple the C-code can be to
 understand. Even if you don't think you can write C-code from scratch,
 it is much easier to understand and modify already-written source code
-then create it *de novo*. 
+then create it *de novo*.
 
 Python extensions are especially straightforward to understand because
 they all have a very similar structure. Admittedly, NumPy is not a
@@ -33,7 +33,7 @@ little persistence, the code can be opened to your understanding. It
 is my hope, that this guide to the C-API can assist in the process of
 becoming familiar with the compiled-level work that can be done with
 NumPy in order to squeeze that last bit of necessary speed out of your
-code. 
+code.
 
 .. currentmodule:: numpy-c-api
 

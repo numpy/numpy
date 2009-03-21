@@ -5,12 +5,12 @@ Array API
 
 |    The test of a first-rate intelligence is the ability to hold two
 |    opposed ideas in the mind at the same time, and still retain the
-|    ability to function. 
-|    --- *F. Scott Fitzgerald* 
+|    ability to function.
+|    --- *F. Scott Fitzgerald*
 
 |    For a successful technology, reality must take precedence over public
-|    relations, for Nature cannot be fooled. 
-|    --- *Richard P. Feynman* 
+|    relations, for Nature cannot be fooled.
+|    --- *Richard P. Feynman*
 
 .. index::
    pair: ndarray; C-API
@@ -275,40 +275,40 @@ From other objects
     .. cvar:: NPY_C_CONTIGUOUS
 
         Make sure the returned array is C-style contiguous
-    
+
     .. cvar:: NPY_F_CONTIGUOUS
 
         Make sure the returned array is Fortran-style contiguous.
-    
+
     .. cvar:: NPY_ALIGNED
 
         Make sure the returned array is aligned on proper boundaries for its
         data type. An aligned array has the data pointer and every strides
         factor as a multiple of the alignment factor for the data-type-
         descriptor.
-    
+
     .. cvar:: NPY_WRITEABLE
 
         Make sure the returned array can be written to.
-    
+
     .. cvar:: NPY_ENSURECOPY
 
         Make sure a copy is made of *op*. If this flag is not
         present, data is not copied if it can be avoided.
-    
+
     .. cvar:: NPY_ENSUREARRAY
 
         Make sure the result is a base-class ndarray or bigndarray. By
         default, if *op* is an instance of a subclass of the
         bigndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
-    
+
     .. cvar:: NPY_FORCECAST
 
         Force a cast to the output type even if it cannot be done
         safely.  Without this flag, a data cast will occur only if it
         can be done safely, otherwise an error is reaised.
-    
+
     .. cvar:: NPY_UPDATEIFCOPY
 
         If *op* is already an array, but does not satisfy the
@@ -322,60 +322,60 @@ From other objects
         will be made writeable again. If *op* is not writeable to
         begin with, then an error is raised. If *op* is not already an
         array, then this flag has no effect.
-    
+
     .. cvar:: NPY_BEHAVED
 
         :cdata:`NPY_ALIGNED` \| :cdata:`NPY_WRITEABLE`
-    
+
     .. cvar:: NPY_CARRAY
 
         :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_BEHAVED`
-    
+
     .. cvar:: NPY_CARRAY_RO
 
         :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
-    
+
     .. cvar:: NPY_FARRAY
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_BEHAVED`
-    
+
     .. cvar:: NPY_FARRAY_RO
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
-    
+
     .. cvar:: NPY_DEFAULT
 
         :cdata:`NPY_CARRAY`
-    
+
     .. cvar:: NPY_IN_ARRAY
 
         :cdata:`NPY_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
-    
+
     .. cvar:: NPY_IN_FARRAY
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
-    
+
     .. cvar:: NPY_INOUT_ARRAY
 
         :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
         :cdata:`NPY_ALIGNED`
-    
+
     .. cvar:: NPY_INOUT_FARRAY
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
         :cdata:`NPY_ALIGNED`
-    
+
     .. cvar:: NPY_OUT_ARRAY
 
         :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
         :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
-    
+
     .. cvar:: NPY_OUT_FARRAY
 
         :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
         :cdata:`NPY_ALIGNED` \| :cdata:`UPDATEIFCOPY`
-    
-    
+
+
 .. cfunction:: PyObject* PyArray_CheckFromAny(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context)
 
     Nearly identical to :cfunc:`PyArray_FromAny` (...) except
@@ -878,7 +878,7 @@ Converting data types
     this routine (using :cfunc:`PyDataMem_FREE` ) and all the array objects
     in it ``DECREF`` 'd or a memory-leak will occur. The example
     template-code below shows a typically usage:
-    
+
     .. code-block:: c
 
         mps = PyArray_ConvertToCommonType(obj, &n);
@@ -1080,7 +1080,7 @@ Flag-like constants
 ^^^^^^^^^^^^^^^^^^^
 
 These constants are used in :cfunc:`PyArray_FromAny` (and its macro forms) to
-specify desired properties of the new array. 
+specify desired properties of the new array.
 
 .. cvar:: NPY_FORCECAST
 
@@ -1425,19 +1425,19 @@ Item selection and manipulation
     entries in *self* are not between 0 and len(*op*).
 
     .. cvar:: NPY_RAISE
-    
+
         raise a ValueError;
-    
+
     .. cvar:: NPY_WRAP
-    
+
         wrap values < 0 by adding len(*op*) and values >=len(*op*)
         by subtracting len(*op*) until they are in range;
-    
+
     .. cvar:: NPY_CLIP
-    
+
         all values are clipped to the region [0, len(*op*) ).
-    
-    
+
+
 .. cfunction:: PyObject* PyArray_Sort(PyArrayObject* self, int axis)
 
     Equivalent to :meth:`ndarray.sort` (*self*, *axis*). Return an array with
@@ -1643,33 +1643,33 @@ Array Functions
     1-, 2-, and 3-d ndarrays.
 
     :param op:
-                
+
         The address to any Python object. This Python object will be replaced
         with an equivalent well-behaved, C-style contiguous, ndarray of the
         given data type specifice by the last two arguments. Be sure that
         stealing a reference in this way to the input object is justified.
-    
+
     :param ptr:
-                
+
         The address to a (ctype* for 1-d, ctype** for 2-d or ctype*** for 3-d)
         variable where ctype is the equivalent C-type for the data type. On
         return, *ptr* will be addressable as a 1-d, 2-d, or 3-d array.
-    
+
     :param dims:
-                
+
         An output array that contains the shape of the array object. This
         array gives boundaries on any looping that will take place.
-    
+
     :param nd:
-                
+
         The dimensionality of the array (1, 2, or 3).
-    
+
     :param typenum:
-                
+
         The expected data type of the array.
-    
+
     :param itemsize:
-                
+
         This argument is only needed when *typenum* represents a
         flexible array. Otherwise it should be 0.
 
@@ -1679,7 +1679,7 @@ Array Functions
     arrays. For example, the simulated arrays of pointers cannot be passed
     to subroutines expecting specific, statically-defined 2-d and 3-d
     arrays. To pass to functions requiring those kind of inputs, you must
-    statically define the required array and copy data. 
+    statically define the required array and copy data.
 
 .. cfunction:: int PyArray_Free(PyObject* op, void* ptr)
 
@@ -2240,7 +2240,7 @@ the C-API is needed then some additional steps must be taken.
     variable to it.
 
 .. cmacro:: PY_ARRAY_UNIQUE_SYMBOL
-    
+
 .. cmacro:: NO_IMPORT_ARRAY
 
     Using these #defines you can use the C-API in multiple files for a
@@ -2258,16 +2258,16 @@ the C-API is needed then some additional steps must be taken.
     coolmodule.c contains the required initcool module initialization
     function (with the import_array() function called). Then,
     coolmodule.c would have at the top:
-    
+
     .. code-block:: c
-    
+
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
         #include numpy/arrayobject.h
-    
+
     On the other hand, coolhelper.c would contain at the top:
-    
+
     .. code-block:: c
-    
+
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
         #define NO_IMPORT_ARRAY
         #include numpy/arrayobject.h
@@ -2308,8 +2308,8 @@ Internal Flexibility
         **greater**, **greater_equal**, **floor_divide**,
         **true_divide**, **logical_or**, **logical_and**,
         **floor**, **ceil**, **maximum**, **minimum**, **rint**.
-    
-    
+
+
     These functions are included here because they are used at least once
     in the array object's methods. The function returns -1 (without
     setting a Python Error) if one of the objects being assigned is not
@@ -2393,45 +2393,45 @@ Group 1
     its calculation.
 
     .. cmacro:: NPY_BEGIN_ALLOW_THREADS
-    
+
         Equivalent to :cmacro:`Py_BEGIN_ALLOW_THREADS` except it uses
         :cdata:`NPY_ALLOW_THREADS` to determine if the macro if
         replaced with white-space or not.
-    
+
     .. cmacro:: NPY_END_ALLOW_THREADS
-    
+
         Equivalent to :cmacro:`Py_END_ALLOW_THREADS` except it uses
         :cdata:`NPY_ALLOW_THREADS` to determine if the macro if
         replaced with white-space or not.
-    
+
     .. cmacro:: NPY_BEGIN_THREADS_DEF
-    
+
         Place in the variable declaration area. This macro sets up the
         variable needed for storing the Python state.
-    
+
     .. cmacro:: NPY_BEGIN_THREADS
-    
+
         Place right before code that does not need the Python
         interpreter (no Python C-API calls). This macro saves the
         Python state and releases the GIL.
-    
+
     .. cmacro:: NPY_END_THREADS
-    
+
         Place right after code that does not need the Python
         interpreter. This macro acquires the GIL and restores the
         Python state from the saved variable.
-    
-    .. cfunction:: NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype) 
-    
+
+    .. cfunction:: NPY_BEGIN_THREADS_DESCR(PyArray_Descr *dtype)
+
         Useful to release the GIL only if *dtype* does not contain
         arbitrary Python objects which may need the Python interpreter
         during execution of the loop. Equivalent to
-    
+
     .. cfunction:: NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
 
         Useful to regain the GIL in situations where it was released
         using the BEGIN form of this macro.
-    
+
 Group 2
 """""""
 
@@ -2444,23 +2444,23 @@ Group 2
     what state it had) and then re-release it with the saved state.
 
     .. cmacro:: NPY_ALLOW_C_API_DEF
-    
+
         Place in the variable declaration area to set up the necessary
         variable.
-    
+
     .. cmacro:: NPY_ALLOW_C_API
-    
+
         Place before code that needs to call the Python C-API (when it is
         known that the GIL has already been released).
-    
+
     .. cmacro:: NPY_DISABLE_C_API
-    
+
         Place after code that needs to call the Python C-API (to re-release
         the GIL).
 
 .. tip::
 
-    Never use semicolons after the threading support macros. 
+    Never use semicolons after the threading support macros.
 
 
 Priority
@@ -2593,10 +2593,10 @@ Enumerated Types
     A special variable-type which can take on the values :cdata:`NPY_{KIND}`
     where ``{KIND}`` is
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT** 
-    
+        **QUICKSORT**, **HEAPSORT**, **MERGESORT**
+
     .. cvar:: NPY_NSORTS
-    
+
        Defined to be the number of sorts.
 
 .. ctype:: NPY_SCALARKIND
@@ -2607,11 +2607,11 @@ Enumerated Types
 
         **NOSCALAR**, **BOOL_SCALAR**, **INTPOS_SCALAR**,
         **INTNEG_SCALAR**, **FLOAT_SCALAR**, **COMPLEX_SCALAR**,
-        **OBJECT_SCALAR** 
-    
-    
+        **OBJECT_SCALAR**
+
+
     .. cvar:: NPY_NSCALARKINDS
-    
+
        Defined to be the number of scalar kinds
        (not including :cdata:`NPY_NOSCALAR`).
 
@@ -2621,7 +2621,7 @@ Enumerated Types
     interpreted in. The value of a variable of this type can be
     :cdata:`NPY_{ORDER}` where ``{ORDER}`` is
 
-        **ANYORDER**, **CORDER**, **FORTRANORDER** 
+        **ANYORDER**, **CORDER**, **FORTRANORDER**
 
 .. ctype:: NPY_CLIPMODE
 
@@ -2629,7 +2629,7 @@ Enumerated Types
     applied in certain functions. The value of a variable of this type
     can be :cdata:`NPY_{MODE}` where ``{MODE}`` is
 
-        **CLIP**, **WRAP**, **RAISE** 
-    
+        **CLIP**, **WRAP**, **RAISE**
+
 .. index::
    pair: ndarray; C-API

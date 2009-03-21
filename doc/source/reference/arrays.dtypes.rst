@@ -38,7 +38,7 @@ Note that the scalar types are not :class:`dtype` objects, even though
 they can be used in place of one whenever a data type specification is
 needed in Numpy.
 
-.. index:: 
+.. index::
    pair: dtype; field
    pair: dtype; record
 
@@ -66,7 +66,7 @@ record behave differently, see :ref:`arrays.indexing.rec`.
    (see :ref:`arrays.dtypes.constructing` for details on construction)
 
    >>> dt = np.dtype('>i4')
-   >>> dt.byteorder 
+   >>> dt.byteorder
    '>'
    >>> dt.itemsize
    4
@@ -100,7 +100,7 @@ record behave differently, see :ref:`arrays.indexing.rec`.
    <type 'numpy.void'>
    >>> type(x[1]['grades'])
    <type 'numpy.ndarray'>
-  
+
 .. _arrays.dtypes.constructing:
 
 Specifying and constructing data types
@@ -130,7 +130,7 @@ What can be converted to a data-type object is described below:
    .. index::
       triple: dtype; construction; from None
 
-   The default data type: :class:`float_`. 
+   The default data type: :class:`float_`.
 
 .. index::
    triple: dtype; construction; from type
@@ -139,7 +139,7 @@ Array-scalar types
 
     The 21 built-in :ref:`array scalar type objects
     <arrays.scalars.built-in>` all convert to an associated data-type object.
-    This is true for their sub-classes as well. 
+    This is true for their sub-classes as well.
 
     Note that not all data-type information can be supplied with a
     type-object: for example, :term:`flexible` data-types have
@@ -188,7 +188,7 @@ Built-in Python types
        >>> dt = np.dtype(object)  # Python object
 
 Types with ``.dtype``
-       
+
     Any type object with a ``dtype`` attribute: The attribute will be
     accessed and used directly. The attribute must return something
     that is convertible into a dtype object.
@@ -253,7 +253,7 @@ String with comma-separated fields
 
    .. admonition:: Example
 
-      - field named ``f0`` containing a 32-bit integer 
+      - field named ``f0`` containing a 32-bit integer
       - field named ``f1`` containing a 2 x 3 sub-array
         of 64-bit floating-point numbers
       - field named ``f2`` containing a 32-bit floating-point number
@@ -265,7 +265,7 @@ String with comma-separated fields
         containing 64-bit unsigned integers
       - field named ``f2`` containing a 3 x 4 sub-array
         containing 10-character strings
-       
+
       >>> dt = np.dtype("a3, 3u8, (3,4)a10")
 
 Type strings
@@ -281,7 +281,7 @@ Type strings
    triple: dtype; construction; from tuple
 
 ``(flexible_dtype, itemsize)``
-   
+
     The first argument must be an object that is converted to a
     flexible data-type object (one whose element size is 0), the
     second argument is an integer providing the desired itemsize.
@@ -320,7 +320,7 @@ Type strings
 
        32-bit integer, whose first two bytes are interpreted as an integer
        via field ``real``, and the following two bytes via field ``imag``.
-    
+
        >>> dt = np.dtype((np.int32, {'real': (np.int16, 0), 'imag': (np.int16, 2)})
 
        32-bit integer, which is interpreted as consisting of a sub-array
@@ -334,7 +334,7 @@ Type strings
        >>> dt = np.dtype(('i4', [('r','u1'),('g','u1'),('b','u1'),('a','u1')]))
 
 .. note:: XXX: does the second-to-last example above make sense?
-                         
+
 .. index::
    triple: dtype; construction; from list
 
@@ -379,7 +379,7 @@ Type strings
    triple: dtype; construction; from dict
 
 ``{'names': ..., 'formats': ..., 'offsets': ..., 'titles': ...}``
- 
+
     This style has two required and two optional keys.  The *names*
     and *formats* keys are required. Their respective values are
     equal-length lists with the field names and the field formats.
@@ -408,11 +408,11 @@ Type strings
        Data type with fields ``r`` and ``b`` (with the given titles),
        both being 8-bit unsigned integers, the first at byte position
        0 from the start of the field and the second at position 2:
-       
+
        >>> dt = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
        ...                'offsets': [0, 2],
        ...                'titles': ['Red pixel', 'Blue pixel']})
-       
+
 
 ``{'field1': ..., 'field2': ..., ...}``
 
@@ -429,7 +429,7 @@ Type strings
        and ``col3`` (integers at byte position 14):
 
        >>> dt = np.dtype({'col1': ('S10', 0), 'col2': (float32, 10), 'col3': (int, 14)})
-       
+
 
 :class:`dtype`
 ==============

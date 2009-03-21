@@ -11,7 +11,7 @@ Constants
 
 .. autosummary::
    :toctree: generated/
-   
+
    ma.MaskType
 
 
@@ -38,7 +38,7 @@ Ones and zeros
 
 .. autosummary::
    :toctree: generated/
-   
+
    ma.empty
    ma.empty_like
    ma.masked_all
@@ -65,11 +65,11 @@ Inspecting the array
    ma.nonzero
    ma.shape
    ma.size
-   
+
    ma.MaskedArray.data
    ma.MaskedArray.mask
    ma.MaskedArray.recordmask
-   
+
    ma.MaskedArray.all
    ma.MaskedArray.any
    ma.MaskedArray.count
@@ -88,7 +88,7 @@ Changing the shape
 
 .. autosummary::
    :toctree: generated/
-   
+
    ma.ravel
    ma.reshape
    ma.resize
@@ -103,10 +103,10 @@ Modifying axes
 ~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
-   
+
    ma.swapaxes
    ma.transpose
-   
+
    ma.MaskedArray.swapaxes
    ma.MaskedArray.transpose
 
@@ -115,7 +115,7 @@ Changing the number of dimensions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
-   
+
    ma.atleast_1d
    ma.atleast_2d
    ma.atleast_3d
@@ -123,7 +123,7 @@ Changing the number of dimensions
    ma.squeeze
 
    ma.MaskedArray.squeeze
-   
+
    ma.column_stack
    ma.concatenate
    ma.dstack
@@ -139,10 +139,10 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   ma.column_stack 
-   ma.concatenate 
-   ma.dstack 
-   ma.hstack 
+   ma.column_stack
+   ma.concatenate
+   ma.dstack
+   ma.hstack
    ma.vstack
 
 
@@ -194,7 +194,7 @@ Modifying a mask
    ma.mask_rows
    ma.harden_mask
    ma.soften_mask
-   
+
    ma.MaskedArray.harden_mask
    ma.MaskedArray.soften_mask
    ma.MaskedArray.shrink_mask
@@ -238,7 +238,7 @@ Conversion operations
    ma.compress_rows
    ma.compressed
    ma.filled
-   
+
    ma.MaskedArray.compressed
    ma.MaskedArray.filled
 
@@ -247,7 +247,7 @@ Conversion operations
 ~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
-   
+
    ma.MaskedArray.tofile
    ma.MaskedArray.tolist
    ma.MaskedArray.torecords
@@ -258,7 +258,7 @@ Pickling and unpickling
 ~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
-   
+
    ma.dump
    ma.dumps
    ma.load
@@ -275,7 +275,7 @@ Filling a masked array
    ma.maximum_fill_value
    ma.maximum_fill_value
    ma.set_fill_value
-   
+
    ma.MaskedArray.get_fill_value
    ma.MaskedArray.set_fill_value
    ma.MaskedArray.fill_value
@@ -290,7 +290,7 @@ Arithmetics
 ~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
-   
+
    ma.anom
    ma.anomalies
    ma.average
@@ -306,7 +306,7 @@ Arithmetics
    ma.std
    ma.sum
    ma.var
-   
+
    ma.MaskedArray.anom
    ma.MaskedArray.cumprod
    ma.MaskedArray.cumsum
@@ -369,7 +369,7 @@ Polynomial fit
 ~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
-   
+
    ma.vander
    ma.polyfit
 
