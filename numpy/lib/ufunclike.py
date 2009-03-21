@@ -93,10 +93,6 @@ def isposinf(x, y=None):
     Errors result if second argument is also supplied with scalar input or
     if first and second arguments have different shapes.
 
-    Numpy's definitions for positive infinity (PINF) and negative infinity
-    (NINF) may be change in the future versions.
-
-
     Examples
     --------
     >>> np.isposinf(np.PINF)
