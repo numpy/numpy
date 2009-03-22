@@ -109,6 +109,7 @@ New ufuncs
 #. rad2deg - converts radians to degrees, same as the degrees ufunc.
 #. log2 - base 2 logarithm.
 #. exp2 - base 2 exponential.
+#. trunc - truncate floats to nearest integer towards zero.
 #. logaddexp - add numbers stored as logarithms and return the logarithm
    of the result.
 #. logaddexp2 - add numbers stored as base 2 logarithms and return the base 2
@@ -117,13 +118,15 @@ New ufuncs
 Masked arrays
 ~~~~~~~~~~~~~
 
-* structured arrays should now be fully supported by MaskedArray 
-   (r6463, r6324, r6305, r6300, r6294...) 
-* Minor bug fixes (r6356, r6352, r6335, r6299, r6298) 
-* Improved support for __iter__ (r6326) 
-* made baseclass, sharedmask and hardmask accesible to the user (but   
-read-only) 
-* doc update 
+Several new features and bug fixes, including:
+
+	* structured arrays should now be fully supported by MaskedArray
+	  (r6463, r6324, r6305, r6300, r6294...)
+	* Minor bug fixes (r6356, r6352, r6335, r6299, r6298)
+	* Improved support for __iter__ (r6326)
+	* made baseclass, sharedmask and hardmask accesible to the user (but
+	  read-only)
+	* doc update
 
 gfortran support on windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,7 +185,8 @@ Ufunc API
 The following functions have been added to the ufunc API:
 
 	* PyUFunc_FromFuncAndDataAndSignature: to declare a more general ufunc
-	(generalized ufunc).
+	  (generalized ufunc).
+
 
 New defines
 ~~~~~~~~~~~
@@ -196,6 +200,7 @@ New public C defines are available for ARCH specific code through numpy/npy_cpu.
         * NPY_CPU_SPARC: 32 bits sparc
         * NPY_CPU_SPARC64: 64 bits sparc
         * NPY_CPU_S390: S390
+        * NPY_CPU_IA64: ia64
         * NPY_CPU_PARISC: PARISC
 
 New macros for CPU endianness has been added as well (see internal changes
