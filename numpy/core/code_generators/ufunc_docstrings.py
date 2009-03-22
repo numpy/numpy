@@ -508,7 +508,7 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
 
     Examples
     --------
-    We've seen that 13 is represented by ``00001101``.  Similary, 17 is
+    We have seen that 13 is represented by ``00001101``.  Similary, 17 is
     represented by ``00010001``.  The bit-wise AND of 13 and 17 is
     therefore ``000000001``, or 1:
 
@@ -537,7 +537,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
     When calculating the bit-wise OR between two elements, ``x`` and ``y``,
     each element is first converted to its binary representation (which works
-    just like the decimal system, only now we're using 2 instead of 10):
+    just like the decimal system, only now we are using 2 instead of 10):
 
     .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
               y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
@@ -605,7 +605,7 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
 
     When calculating the bit-wise XOR between two elements, ``x`` and ``y``,
     each element is first converted to its binary representation (which works
-    just like the decimal system, only now we're using 2 instead of 10):
+    just like the decimal system, only now we are using 2 instead of 10):
 
     .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
               y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
@@ -710,6 +710,10 @@ add_newdoc('numpy.core.umath', 'trunc',
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
     >>> np.ceil(a)
     array([-1., -1., -0.,  0.,  1.,  1.,  2.])
+
+    Notes
+    -----
+    .. versionadded:: 1.3.0
 
     """)
 
@@ -824,6 +828,8 @@ add_newdoc('numpy.core.umath', 'rad2deg',
 
     Notes
     -----
+    .. versionadded:: 1.3.0
+
     rad2deg(x) is ``180 * x / pi``.
 
     Examples
@@ -990,6 +996,10 @@ add_newdoc('numpy.core.umath', 'exp2',
     -------
     out : ndarray
         Element-wise 2 to the power `x`.
+
+    Notes
+    -----
+    .. versionadded:: 1.3.0
 
     """)
 
@@ -1452,9 +1462,6 @@ add_newdoc('numpy.core.umath', 'isinf',
     Errors result if second argument is also supplied with scalar input or
     if first and second arguments have different shapes.
 
-    Numpy's definitions for positive infinity (PINF) and negative infinity
-    (NINF) may be change in the future versions.
-
     Examples
     --------
     >>> np.isinf(np.inf)
@@ -1710,6 +1717,10 @@ add_newdoc('numpy.core.umath', 'log2',
     --------
     log, log10, log1p
 
+    Notes
+    -----
+    .. versionadded:: 1.3.0
+
     """)
 
 add_newdoc('numpy.core.umath', 'logaddexp',
@@ -1738,6 +1749,10 @@ add_newdoc('numpy.core.umath', 'logaddexp',
     --------
     logaddexp2
 
+    Notes
+    -----
+    .. versionadded:: 1.3.0
+
     """)
 
 add_newdoc('numpy.core.umath', 'logaddexp2',
@@ -1765,6 +1780,10 @@ add_newdoc('numpy.core.umath', 'logaddexp2',
     See Also
     --------
     logaddexp
+
+    Notes
+    -----
+    .. versionadded:: 1.3.0
 
     """)
 
@@ -2030,11 +2049,13 @@ add_newdoc('numpy.core.umath', 'minimum',
 
 add_newdoc('numpy.core.umath', 'fmax',
     """
+    .. versionadded:: 1.3.0
 
     """)
 
 add_newdoc('numpy.core.umath', 'fmin',
     """
+    .. versionadded:: 1.3.0
 
     """)
 
@@ -2251,6 +2272,8 @@ add_newdoc('numpy.core.umath', 'deg2rad',
 
     Notes
     -----
+    .. versionadded:: 1.3.0
+
     ``deg2rad(x)`` is ``x * pi / 180``.
 
     Examples
