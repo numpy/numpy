@@ -89,6 +89,7 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
  *
  * #typ = float, double, longdouble#
  * #c = f, ,l#
+ * #C = F, ,L#
  * #precision = 1,2,4#
  */
 
@@ -376,14 +377,14 @@ nc_asin@c@(c@typ@ *x, c@typ@ *r)
 
         *r = nc_1@c@;
 #if @precision@ >= 3
-        SERIES_HORNER_TERM@c@(r, &x2, 81./110);
-        SERIES_HORNER_TERM@c@(r, &x2, 49./72);
+        SERIES_HORNER_TERM@c@(r, &x2, 81.0@C@/110);
+        SERIES_HORNER_TERM@c@(r, &x2, 49.0@C@/72);
 #endif
 #if @precision@ >= 2
-        SERIES_HORNER_TERM@c@(r, &x2, 25./42);
+        SERIES_HORNER_TERM@c@(r, &x2, 25.0@C@/42);
 #endif
-        SERIES_HORNER_TERM@c@(r, &x2, 9./20);
-        SERIES_HORNER_TERM@c@(r, &x2, 1./6);
+        SERIES_HORNER_TERM@c@(r, &x2, 9.0@C@/20);
+        SERIES_HORNER_TERM@c@(r, &x2, 1.0@C@/6);
         nc_prod@c@(r, x, r);
     }
     return;
@@ -415,14 +416,14 @@ nc_asinh@c@(c@typ@ *x, c@typ@ *r)
 
         *r = nc_1@c@;
 #if @precision@ >= 3
-        SERIES_HORNER_TERM@c@(r, &x2, -81./110);
-        SERIES_HORNER_TERM@c@(r, &x2, -49./72);
+        SERIES_HORNER_TERM@c@(r, &x2, -81.0@C@/110);
+        SERIES_HORNER_TERM@c@(r, &x2, -49.0@C@/72);
 #endif
 #if @precision@ >= 2
-        SERIES_HORNER_TERM@c@(r, &x2, -25./42);
+        SERIES_HORNER_TERM@c@(r, &x2, -25.0@C@/42);
 #endif
-        SERIES_HORNER_TERM@c@(r, &x2, -9./20);
-        SERIES_HORNER_TERM@c@(r, &x2, -1./6);
+        SERIES_HORNER_TERM@c@(r, &x2, -9.0@C@/20);
+        SERIES_HORNER_TERM@c@(r, &x2, -1.0@C@/6);
         nc_prod@c@(r, x, r);
     }
     return;
@@ -454,14 +455,14 @@ nc_atan@c@(c@typ@ *x, c@typ@ *r)
 
         *r = nc_1@c@;
 #if @precision@ >= 3
-        SERIES_HORNER_TERM@c@(r, &x2, -9./11);
-        SERIES_HORNER_TERM@c@(r, &x2, -7./9);
+        SERIES_HORNER_TERM@c@(r, &x2, -9.0@C@/11);
+        SERIES_HORNER_TERM@c@(r, &x2, -7.0@C@/9);
 #endif
 #if @precision@ >= 2
-        SERIES_HORNER_TERM@c@(r, &x2, -5./7);
+        SERIES_HORNER_TERM@c@(r, &x2, -5.0@C@/7);
 #endif
-        SERIES_HORNER_TERM@c@(r, &x2, -3./5);
-        SERIES_HORNER_TERM@c@(r, &x2, -1./3);
+        SERIES_HORNER_TERM@c@(r, &x2, -3.0@C@/5);
+        SERIES_HORNER_TERM@c@(r, &x2, -1.0@C@/3);
         nc_prod@c@(r, x, r);
     }
     return;
@@ -493,14 +494,14 @@ nc_atanh@c@(c@typ@ *x, c@typ@ *r)
 
         *r = nc_1@c@;
 #if @precision@ >= 3
-        SERIES_HORNER_TERM@c@(r, &x2, 9./11);
-        SERIES_HORNER_TERM@c@(r, &x2, 7./9);
+        SERIES_HORNER_TERM@c@(r, &x2, 9.0@C@/11);
+        SERIES_HORNER_TERM@c@(r, &x2, 7.0@C@/9);
 #endif
 #if @precision@ >= 2
-        SERIES_HORNER_TERM@c@(r, &x2, 5./7);
+        SERIES_HORNER_TERM@c@(r, &x2, 5.0@C@/7);
 #endif
-        SERIES_HORNER_TERM@c@(r, &x2, 3./5);
-        SERIES_HORNER_TERM@c@(r, &x2, 1./3);
+        SERIES_HORNER_TERM@c@(r, &x2, 3.0@C@/5);
+        SERIES_HORNER_TERM@c@(r, &x2, 1.0@C@/3);
         nc_prod@c@(r, x, r);
     }
     return;
