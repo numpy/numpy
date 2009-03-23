@@ -369,8 +369,8 @@ class TestChoose(TestCase):
 
 
 def is_longdouble_finfo_bogus():
-    info = np.finfo(np.longdouble)
-    return info.tiny < 0 or info.eps < 0
+    info = np.finfo(np.longcomplex)
+    return not np.isfinite(np.log10(info.tiny/info.eps))
 
 class TestComplexFunctions(object):
     funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
@@ -476,32 +476,36 @@ class TestComplexFunctions(object):
 
         info = np.finfo(dtype)
         real_dtype = dtype(0.).real.dtype
-
         eps = info.eps
 
         def check(x, rtol):
-            d = np.absolute(np.arcsinh(x)/np.arcsinh(x+0j).real - 1)
+            x = x.astype(real_dtype)
+
+            z = x.astype(dtype)
+            d = np.absolute(np.arcsinh(x)/np.arcsinh(z).real - 1)
             assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
                                       'arcsinh')
 
-            d = np.absolute(np.arcsinh(x)/np.arcsin(1j*x).imag - 1)
+            z = (1j*x).astype(dtype)
+            d = np.absolute(np.arcsinh(x)/np.arcsin(z).imag - 1)
             assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
                                       'arcsin')
 
-            d = np.absolute(np.arctanh(x)/np.arctanh(x+0j).real - 1)
+            z = x.astype(dtype)
+            d = np.absolute(np.arctanh(x)/np.arctanh(z).real - 1)
             assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
                                       'arctanh')
 
-            d = np.absolute(np.arctanh(x)/np.arctan(1j*x).imag - 1)
+            z = (1j*x).astype(dtype)
+            d = np.absolute(np.arctanh(x)/np.arctan(z).imag - 1)
             assert np.all(d < rtol), (np.argmax(d), x[np.argmax(d)], d.max(),
                                       'arctan')
 
         # The switchover was chosen as 1e-3; hence there can be up to
         # ~eps/1e-3 of relative cancellation error before it
 
-        x_series = np.logspace(np.log10(info.tiny/eps).real, -3, 200,
-                               endpoint=False)
-        x_basic = np.logspace(dtype(-3.).real, 0, 10, endpoint=False)
+        x_series = np.logspace(-20, -3.001, 200)
+        x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
         check(x_series, 2*eps)
         check(x_basic, 2*eps/1e-3)
@@ -548,8 +552,7 @@ class TestComplexFunctions(object):
         for dtype in [np.complex64, np.complex_]:
             yield self.check_loss_of_precision, dtype
 
-    @dec.knownfailureif(is_longdouble_finfo_bogus(),
-                        "Bogus floating-point information for long doubles")
+    @dec.knownfailureif(is_longdouble_finfo_bogus(), "Bogus long double finfo")
     def test_loss_of_precision_longcomplex(self):
         self.check_loss_of_precision(np.longcomplex)
 

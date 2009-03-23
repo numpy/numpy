@@ -89,6 +89,7 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
  *
  * #typ = float, double, longdouble#
  * #c = f, ,l#
+ * #precision = 1,2,4#
  */
 
 /*
@@ -366,15 +367,21 @@ nc_asin@c@(c@typ@ *x, c@typ@ *r)
     else {
         /*
          * Small arguments: series expansion, to avoid loss of precision
-         * asin(x) = x [1 + (1/6) x^2 [1 + (9/20) x^2 [1 - ...]]]
+         * asin(x) = x [1 + (1/6) x^2 [1 + (9/20) x^2 [1 + ...]]]
          *
-         * |x| < 1e-3 => |rel. error| < 1e-20
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
 
         *r = nc_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@c@(r, &x2, 81./110);
+        SERIES_HORNER_TERM@c@(r, &x2, 49./72);
+#endif
+#if @precision@ >= 2
         SERIES_HORNER_TERM@c@(r, &x2, 25./42);
+#endif
         SERIES_HORNER_TERM@c@(r, &x2, 9./20);
         SERIES_HORNER_TERM@c@(r, &x2, 1./6);
         nc_prod@c@(r, x, r);
@@ -401,13 +408,19 @@ nc_asinh@c@(c@typ@ *x, c@typ@ *r)
          * Small arguments: series expansion, to avoid loss of precision
          * asinh(x) = x [1 - (1/6) x^2 [1 - (9/20) x^2 [1 - ...]]]
          *
-         * |x| < 1e-3 => |rel. error| < 1e-20
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
 
         *r = nc_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@c@(r, &x2, -81./110);
+        SERIES_HORNER_TERM@c@(r, &x2, -49./72);
+#endif
+#if @precision@ >= 2
         SERIES_HORNER_TERM@c@(r, &x2, -25./42);
+#endif
         SERIES_HORNER_TERM@c@(r, &x2, -9./20);
         SERIES_HORNER_TERM@c@(r, &x2, -1./6);
         nc_prod@c@(r, x, r);
@@ -434,13 +447,19 @@ nc_atan@c@(c@typ@ *x, c@typ@ *r)
          * Small arguments: series expansion, to avoid loss of precision
          * atan(x) = x [1 - (1/3) x^2 [1 - (3/5) x^2 [1 - ...]]]
          *
-         * |x| < 1e-3 => |rel. error| < 1e-20
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
 
         *r = nc_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@c@(r, &x2, -9./11);
+        SERIES_HORNER_TERM@c@(r, &x2, -7./9);
+#endif
+#if @precision@ >= 2
         SERIES_HORNER_TERM@c@(r, &x2, -5./7);
+#endif
         SERIES_HORNER_TERM@c@(r, &x2, -3./5);
         SERIES_HORNER_TERM@c@(r, &x2, -1./3);
         nc_prod@c@(r, x, r);
@@ -465,15 +484,21 @@ nc_atanh@c@(c@typ@ *x, c@typ@ *r)
     else {
         /*
          * Small arguments: series expansion, to avoid loss of precision
-         * atan(x) = x [1 + (1/3) x^2 [1 + (3/5) x^2 [1 - ...]]]
+         * atan(x) = x [1 + (1/3) x^2 [1 + (3/5) x^2 [1 + ...]]]
          *
-         * |x| < 1e-3 => |rel. error| < 1e-20
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
          */
         c@typ@ x2;
         nc_prod@c@(x, x, &x2);
 
         *r = nc_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@c@(r, &x2, 9./11);
+        SERIES_HORNER_TERM@c@(r, &x2, 7./9);
+#endif
+#if @precision@ >= 2
         SERIES_HORNER_TERM@c@(r, &x2, 5./7);
+#endif
         SERIES_HORNER_TERM@c@(r, &x2, 3./5);
         SERIES_HORNER_TERM@c@(r, &x2, 1./3);
         nc_prod@c@(r, x, r);
