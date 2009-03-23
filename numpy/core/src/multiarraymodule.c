@@ -7417,7 +7417,10 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     PyObject *obj;
     int ret;
 
-    length = (intp ) ceil((stop - start)/step);
+    if (_safe_ceil_to_intp((stop - start)/step, &length)) {
+        PyErr_SetString(PyExc_OverflowError,
+                "arange: overflow while computing length");
+    }
 
     if (length <= 0) {
         length = 0;
