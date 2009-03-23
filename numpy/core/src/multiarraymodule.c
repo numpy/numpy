@@ -7404,6 +7404,25 @@ static PyObject *array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, Py
     return PyArray_Correlate(a0, shape, mode);
 }
 
+/*
+ * Like ceil(value), but check for overflow.
+ *
+ * Return 0 on success, -1 on failure. In case of failure, set a PyExc_Overflow
+ * exception
+ */
+static int _safe_ceil_to_intp(double value, intp* ret)
+{
+    double ivalue;
+
+    ivalue = npy_ceil(value);
+    if (ivalue < NPY_MIN_INTP || ivalue > NPY_MAX_INTP) {
+        return -1;
+    }
+
+    *ret = (intp)ivalue;
+    return 0;
+}
+
 
 /*NUMPY_API
   Arange,
@@ -7471,25 +7490,6 @@ PyArray_Arange(double start, double stop, double step, int type_num)
  fail:
     Py_DECREF(range);
     return NULL;
-}
-
-/*
- * Like ceil(value), but check for overflow.
- *
- * Return 0 on success, -1 on failure. In case of failure, set a PyExc_Overflow
- * exception
- */
-static int _safe_ceil_to_intp(double value, intp* ret)
-{
-    double ivalue;
-
-    ivalue = npy_ceil(value);
-    if (ivalue < NPY_MIN_INTP || ivalue > NPY_MAX_INTP) {
-        return -1;
-    }
-
-    *ret = (intp)ivalue;
-    return 0;
 }
 
 /*
