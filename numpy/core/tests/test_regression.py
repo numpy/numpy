@@ -1261,5 +1261,12 @@ class TestRegression(TestCase):
         except Exception, e:
             self.fail("Got exception of type %s instead of ValueError" % type(e))
 
+    def test_huge_arange(self):
+        """Regression test for #1062."""
+        # Set a size which cannot fit into a 64 bits signed integer
+        sz = 2 ** 64
+        a = np.arange(sz)
+        self.failUnless(np.size == sz)
+
 if __name__ == "__main__":
     run_module_suite()
