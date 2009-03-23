@@ -1248,5 +1248,18 @@ class TestRegression(TestCase):
                     assert np.all(z == 0)
                     assert z.shape == (m, n)
 
+    def test_zeros(self):
+        """Regression test for #1061."""
+        # Set a size which cannot fit into a 64 bits signed integer
+        sz = 2 ** 64
+        good = 'Maximum allowed dimension exceeded'
+        try:
+            np.empty(sz)
+        except ValueError, e:
+            if not str(e) == good:
+                self.fail("Got msg '%s', expected '%s'" % (e, good))
+        except Exception, e:
+            self.fail("Got exception of type %s instead of ValueError" % type(e))
+
 if __name__ == "__main__":
     run_module_suite()
