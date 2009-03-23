@@ -1265,8 +1265,15 @@ class TestRegression(TestCase):
         """Regression test for #1062."""
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
-        a = np.arange(sz)
-        self.failUnless(np.size == sz)
+        good = 'Maximum allowed size exceeded'
+        try:
+            a = np.arange(sz)
+            self.failUnless(np.size == sz)
+        except ValueError, e:
+            if not str(e) == good:
+                self.fail("Got msg '%s', expected '%s'" % (e, good))
+        except Exception, e:
+            self.fail("Got exception of type %s instead of ValueError" % type(e))
 
 if __name__ == "__main__":
     run_module_suite()
