@@ -7545,12 +7545,11 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         if (error_converting(value)) {
             return -1;
         }
-        if (_safe_ceil_to_intp(value, &tmp)) {
+        if (_safe_ceil_to_intp(value, &len)) {
             PyErr_SetString(PyExc_OverflowError,
                     "arange: overflow while computing length");
             return -1;
         }
-        len = (intp) ceil(value);
     }
     if (len > 0) {
         *next = PyNumber_Add(start, step);
