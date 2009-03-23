@@ -7471,12 +7471,31 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 }
 
 /*
+ * Like ceil(value), but check for overflow.
+ *
+ * Return 0 on success, -1 on failure. In case of failure, set a PyExc_Overflow
+ * exception
+ */
+static int _safe_ceil_to_intp(double value, intp* ret)
+{
+    double ivalue;
+
+    ivalue = npy_ceil(value);
+    if (ivalue < NPY_MIN_INTP || ivalue > NPY_MAX_INTP) {
+        return -1;
+    }
+
+    *ret = (intp)ivalue;
+    return 0;
+}
+
+/*
  * the formula is len = (intp) ceil((start - stop) / step);
  */
 static intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
-    intp len;
+    intp len, tmp;
     PyObject *val;
     double value;
 
@@ -7502,18 +7521,33 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
             Py_DECREF(val);
             return -1;
         }
-        len = (intp) ceil(value);
+        if (_safe_ceil_to_intp(value, &len)) {
+            Py_DECREF(val);
+            PyErr_SetString(PyExc_OverflowError,
+                    "arange: overflow while computing length");
+            return -1;
+        }
         value = PyComplex_ImagAsDouble(val);
         Py_DECREF(val);
         if (error_converting(value)) {
             return -1;
         }
-        len = MIN(len, (intp) ceil(value));
+        if (_safe_ceil_to_intp(value, &tmp)) {
+            PyErr_SetString(PyExc_OverflowError,
+                    "arange: overflow while computing length");
+            return -1;
+        }
+        len = MIN(len, tmp);
     }
     else {
         value = PyFloat_AsDouble(val);
         Py_DECREF(val);
         if (error_converting(value)) {
+            return -1;
+        }
+        if (_safe_ceil_to_intp(value, &tmp)) {
+            PyErr_SetString(PyExc_OverflowError,
+                    "arange: overflow while computing length");
             return -1;
         }
         len = (intp) ceil(value);
@@ -7538,7 +7572,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 {
     PyObject *range;
     PyArray_ArrFuncs *funcs;
-    PyObject *next;
+    PyObject *next, *err;
     intp length;
     PyArray_Descr *native = NULL;
     int swap;
@@ -7582,8 +7616,12 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     /* calculate the length and next = start + step*/
     length = _calc_length(start, stop, step, &next,
                           PyTypeNum_ISCOMPLEX(dtype->type_num));
-    if (PyErr_Occurred()) {
+    err = PyErr_Occurred(); 
+    if (err) {
         Py_DECREF(dtype);
+        if (err && PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_ValueError, "Maximum allowed size exceeded");
+        }
         goto fail;
     }
     if (length <= 0) {
