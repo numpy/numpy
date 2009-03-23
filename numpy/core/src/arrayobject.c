@@ -5364,7 +5364,7 @@ static int
 PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
 {
     int nd, i;
-    PyObject *op;
+    PyObject *op, *err;
 
     /*
      * Check to see if sequence is a single integer first.
@@ -5388,6 +5388,22 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
         vals[0] = (intp ) PyLong_AsLongLong(op);
 #endif
         Py_DECREF(op);
+
+        /*
+         * Check wether there was an error - if the error was an overflow, raise
+         * a ValueError instead to be more helpful
+         */
+        if(vals[0] == -1) {
+            err = PyErr_Occurred();
+            if (err  &&
+                PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Maximum allowed dimension exceeded");
+            }
+            if(err != NULL) {
+                return -1;
+            }
+        }
     }
     else {
         for (i = 0; i < MIN(nd,maxvals); i++) {
@@ -5401,8 +5417,21 @@ PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals)
             vals[i]=(intp )PyLong_AsLongLong(op);
 #endif
             Py_DECREF(op);
-            if(PyErr_Occurred()) {
-                return -1;
+
+            /*
+             * Check wether there was an error - if the error was an overflow,
+             * raise a ValueError instead to be more helpful
+             */
+            if(vals[0] == -1) {
+                err = PyErr_Occurred();
+                if (err  &&
+                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Maximum allowed dimension exceeded");
+                }
+                if(err != NULL) {
+                    return -1;
+                }
             }
         }
     }
