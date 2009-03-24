@@ -108,6 +108,14 @@ _import_array(void)
   }
 #endif
 
+#ifdef MS_WIN64
+  PyErr_WarnEx(PyExc_Warning,
+        "Windows 64 bits support is experimental, and only available for \n" \
+        "testing. You are advised not to use it for production. \n\n" \
+        "CRASHES ARE TO BE EXPECTED - PLEASE REPORT THEM TO NUMPY DEVELOPERS",
+        1);
+#endif
+
   return 0;
 }
 
