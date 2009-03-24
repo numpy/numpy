@@ -607,8 +607,8 @@ updates the output array.
         PyObject *arg1=NULL, *arg2=NULL, *out=NULL;
         PyObject *arr1=NULL, *arr2=NULL, *oarr=NULL;
 
-        if (!PyArg_ParseTuple(args, OOO&, &arg1, *arg2,
-            &PyArrayType, *out)) return NULL;
+        if (!PyArg_ParseTuple(args, "OOO!", &arg1, &arg2,
+            &PyArray_Type, &out)) return NULL;
 
         arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY);
         if (arr1 == NULL) return NULL;

@@ -158,12 +158,11 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
 
     Examples
     --------
-    >>> np.testing.assert_equal([4,5], [4,6]) # doctest:+ELLIPSIS
+    >>> np.testing.assert_equal([4,5], [4,6])
     ...
     <type 'exceptions.AssertionError'>:
     Items are not equal:
     item=1
-    <BLANKLINE>
      ACTUAL: 5
      DESIRED: 6
 
@@ -204,11 +203,59 @@ def print_assert_equal(test_string,actual,desired):
         raise AssertionError(msg.getvalue())
 
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
-    """ Raise an assertion if two items are not equal.
-
-    I think this should be part of unittest.py
+    """
+    Raise an assertion if two items are not equal up to desired precision.
 
     The test is equivalent to abs(desired-actual) < 0.5 * 10**(-decimal)
+
+    Given two objects (numbers or ndarrays), check that all elements of these
+    objects are almost equal. An exception is raised at conflicting values.
+    For ndarrays this delegates to assert_array_almost_equal
+
+    Parameters
+    ----------
+    actual : number or ndarray
+      The object to check.
+    desired : number or ndarray
+      The expected object.
+    decimal : integer (decimal=7)
+      desired precision
+    err_msg : string
+      The error message to be printed in case of failure.
+    verbose : bool
+      If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+      If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    assert_array_almost_equal: compares array_like objects
+    assert_equal: tests objects for equality
+
+
+    Examples
+    --------
+    >>> npt.assert_almost_equal(2.3333333333333, 2.33333334)
+    >>> npt.assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
+    ...
+    <type 'exceptions.AssertionError'>:
+    Items are not equal:
+     ACTUAL: 2.3333333333333002
+     DESIRED: 2.3333333399999998
+
+    >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
+    \t\t\tnp.array([1.0,2.33333334]), decimal=9)
+    ...
+    <type 'exceptions.AssertionError'>:
+    Arrays are not almost equal
+    <BLANKLINE>
+    (mismatch 50.0%)
+     x: array([ 1.        ,  2.33333333])
+     y: array([ 1.        ,  2.33333334])
+
     """
     from numpy.core import ndarray
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
@@ -219,10 +266,56 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
 
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
-    """ Raise an assertion if two items are not
-        equal.  I think this should be part of unittest.py
-        Approximately equal is defined as the number of significant digits
-        correct
+    """
+    Raise an assertion if two items are not equal up to significant digits.
+
+    Given two numbers, check that they are approximately equal.
+    Approximately equal is defined as the number of significant digits
+    that agree.
+
+    Parameters
+    ----------
+    actual : number
+      The object to check.
+    desired : number
+      The expected object.
+    significant : integer (significant=7)
+      desired precision
+    err_msg : string
+      The error message to be printed in case of failure.
+    verbose : bool
+      If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+      If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    assert_almost_equal: compares objects by decimals
+    assert_array_almost_equal: compares array_like objects by decimals
+    assert_equal: tests objects for equality
+
+
+    Examples
+    --------
+    >>> np.testing.assert_approx_equal(0.12345677777777e-20, 0.1234567e-20)
+    >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345671e-20,
+                                       significant=8)
+    >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345672e-20,
+                                       significant=8)
+    ...
+    <type 'exceptions.AssertionError'>:
+    Items are not equal to 8 significant digits:
+     ACTUAL: 1.234567e-021
+     DESIRED: 1.2345672000000001e-021
+
+    the evaluated condition that raises the exception is
+
+    >>> abs(0.12345670e-20/1e-21 - 0.12345672e-20/1e-21) >= 10**-(8-1)
+    True
+
     """
     import math
     actual, desired = map(float, (actual, desired))
@@ -306,10 +399,133 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         raise ValueError(msg)
 
 def assert_array_equal(x, y, err_msg='', verbose=True):
+    """
+    Raise an assertion if two array_like objects are not equal.
+
+    Given two array_like objects, check that the shape is equal and all
+    elements of these objects are equal. An exception is raised at
+    shape mismatch or conflicting values. In contrast to the standard usage
+    in numpy, NaNs are compared like numbers, no assertion is raised if
+    both objects have NaNs in the same positions.
+
+    The usual caution for verifying equality with floating point numbers is
+    advised.
+
+    Parameters
+    ----------
+    x : array_like
+      The actual object to check.
+    y : array_like
+      The desired, expected object.
+    err_msg : string
+      The error message to be printed in case of failure.
+    verbose : bool
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+      If actual and desired objects are not equal.
+
+    See Also
+    --------
+    assert_array_almost_equal: test objects for equality up to precision
+    assert_equal: tests objects for equality
+
+
+    Examples
+    --------
+    the first assert does not raise an exception
+
+    >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
+    \t\t\t[np.exp(0),2.33333, np.nan])
+
+    assert fails with numerical inprecision with floats
+
+    >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
+    \t\t\t[1, np.sqrt(np.pi)**2, np.nan])
+    ...
+    <type 'exceptions.ValueError'>:
+    AssertionError:
+    Arrays are not equal
+    <BLANKLINE>
+    (mismatch 50.0%)
+     x: array([ 1.        ,  3.14159265,         NaN])
+     y: array([ 1.        ,  3.14159265,         NaN])
+
+    use assert_array_almost_equal for these cases instead
+
+    >>> np.testing.assert_array_almost_equal([1.0,np.pi,np.nan],
+    \t\t\t[1, np.sqrt(np.pi)**2, np.nan], decimal=15)
+
+    """
     assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
                          verbose=verbose, header='Arrays are not equal')
 
 def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
+    """
+    Raise an assertion if two objects are not equal up to desired precision.
+
+    The test verifies identical shapes and verifies values with
+    abs(desired-actual) < 0.5 * 10**(-decimal)
+
+    Given two array_like objects, check that the shape is equal and all
+    elements of these objects are almost equal. An exception is raised at
+    shape mismatch or conflicting values. In contrast to the standard usage
+    in numpy, NaNs are compared like numbers, no assertion is raised if
+    both objects have NaNs in the same positions.
+
+    Parameters
+    ----------
+    x : array_like
+      The actual object to check.
+    y : array_like
+      The desired, expected object.
+    decimal : integer (decimal=6)
+      desired precision
+    err_msg : string
+      The error message to be printed in case of failure.
+    verbose : bool
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+      If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    assert_almost_equal: simple version for comparing numbers
+    assert_array_equal: tests objects for equality
+
+
+    Examples
+    --------
+    the first assert does not raise an exception
+
+    >>> np.testing.assert_array_almost_equal([1.0,2.333,np.nan],
+                                             [1.0,2.333,np.nan])
+
+    >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
+    \t\t\t[1.0,2.33339,np.nan], decimal=5)
+    ...
+    <type 'exceptions.AssertionError'>:
+    AssertionError:
+    Arrays are not almost equal
+    <BLANKLINE>
+    (mismatch 50.0%)
+     x: array([ 1.     ,  2.33333,      NaN])
+     y: array([ 1.     ,  2.33339,      NaN])
+
+    >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
+    \t\t\t[1.0,2.33333, 5], decimal=5)
+    <type 'exceptions.ValueError'>:
+    ValueError:
+    Arrays are not almost equal
+     x: array([ 1.     ,  2.33333,      NaN])
+     y: array([ 1.     ,  2.33333,  5.     ])
+
+    """
     from numpy.core import around, number, float_
     from numpy.lib import issubdtype
     def compare(x, y):
@@ -321,6 +537,70 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
                          header='Arrays are not almost equal')
 
 def assert_array_less(x, y, err_msg='', verbose=True):
+    """
+    Raise an assertion if two array_like objects are not ordered by less than.
+
+    Given two array_like objects, check that the shape is equal and all
+    elements of the first object are strictly smaller than those of the
+    second object. An exception is raised at shape mismatch or incorrectly
+    ordered values. Shape mismatch does not raise if an object has zero
+    dimension. In contrast to the standard usage in numpy, NaNs are
+    compared, no assertion is raised if both objects have NaNs in the same
+    positions.
+
+
+
+    Parameters
+    ----------
+    x : array_like
+      The smaller object to check.
+    y : array_like
+      The larger object to compare.
+    err_msg : string
+      The error message to be printed in case of failure.
+    verbose : bool
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+      If actual and desired objects are not equal.
+
+    See Also
+    --------
+    assert_array_equal: tests objects for equality
+    assert_array_almost_equal: test objects for equality up to precision
+
+
+
+    Examples
+    --------
+    >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1.1, 2.0, np.nan])
+    >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1, 2.0, np.nan])
+    ...
+    <type 'exceptions.ValueError'>:
+    Arrays are not less-ordered
+    (mismatch 50.0%)
+     x: array([  1.,   1.,  NaN])
+     y: array([  1.,   2.,  NaN])
+
+    >>> np.testing.assert_array_less([1.0, 4.0], 3)
+    ...
+    <type 'exceptions.ValueError'>:
+    Arrays are not less-ordered
+    (mismatch 50.0%)
+     x: array([ 1.,  4.])
+     y: array(3)
+
+    >>> np.testing.assert_array_less([1.0, 2.0, 3.0], [4])
+    ...
+    <type 'exceptions.ValueError'>:
+    Arrays are not less-ordered
+    (shapes (3,), (1,) mismatch)
+     x: array([ 1.,  2.,  3.])
+     y: array([4])
+
+    """
     assert_array_compare(operator.__lt__, x, y, err_msg=err_msg,
                          verbose=verbose,
                          header='Arrays are not less-ordered')
@@ -398,6 +678,17 @@ def raises(*args,**kwargs):
     return nose.tools.raises(*args,**kwargs)
 
 def assert_raises(*args,**kwargs):
+    """
+    assert_raises(excecption_class, callable, *args, **kwargs)
+
+    Fail unless an exception of class exception_class is thrown
+    by callable when invoked with arguments args and keyword
+    arguments kwargs. If a different type of exception is
+    thrown, it will not be caught, and the test case will be
+    deemed to have suffered an error, exactly as for an
+    unexpected exception.
+
+    """
     nose = import_nose()
     return nose.tools.assert_raises(*args,**kwargs)
 

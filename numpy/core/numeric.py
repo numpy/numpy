@@ -288,44 +288,66 @@ def ascontiguousarray(a, dtype=None):
     ----------
     a : array_like
         Input array.
-    dtype : string
-        Type code of returned array.
+    dtype : str or dtype object, optional
+        Data-type of returned array.
 
     Returns
     -------
     out : ndarray
-        Contiguous array of same shape and content as `a` with type `dtype`.
+        Contiguous array of same shape and content as `a`, with type `dtype`
+        if specified.
+
+    See Also
+    --------
+    asfortranarray : Convert input to an ndarray with column-major
+                     memory order.
+    require : Return an ndarray that satisfies requirements.
+    ndarray.flags : Information about the memory layout of the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> np.ascontiguousarray(x, dtype=np.float32)
+    array([[ 0.,  1.,  2.],
+           [ 3.,  4.,  5.]], dtype=float32)
+    >>> x.flags['C_CONTIGUOUS']
+    True
 
     """
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 def asfortranarray(a, dtype=None):
     """
-    Return an array laid out in Fortran-order in memory.
+    Return an array laid out in Fortran order in memory.
 
     Parameters
     ----------
     a : array_like
         Input array.
-    dtype : data-type, optional
+    dtype : str or dtype object, optional
         By default, the data-type is inferred from the input data.
 
     Returns
     -------
     out : ndarray
-        Array interpretation of `a` in Fortran (column-order).
+        The input `a` in Fortran, or column-major, order.
 
     See Also
     --------
-    asarray : Similar function which always returns ndarrays.
-    ascontiguousarray : Convert input to a contiguous array.
-    asfarray : Convert input to a floating point ndarray.
+    ascontiguousarray : Convert input to a contiguous (C order) array.
     asanyarray : Convert input to an ndarray with either row or
         column-major memory order.
-    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
-    fromiter : Create an array from an iterator.
-    fromfunction : Construct an array by executing a function on grid
-                   positions.
+    require : Return an ndarray that satisfies requirements.
+    ndarray.flags : Information about the memory layout of the array.
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2,3)
+    >>> y = np.asfortranarray(x)
+    >>> x.flags['F_CONTIGUOUS']
+    False
+    >>> y.flags['F_CONTIGUOUS']
+    True
 
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
@@ -392,12 +414,57 @@ def require(a, dtype=None, requirements=None):
 
 def isfortran(a):
     """
-    Returns True if array is arranged in Fortran-order and dimension > 1.
+    Returns True if array is arranged in Fortran-order in memory
+    and dimension > 1.
 
     Parameters
     ----------
     a : ndarray
-        Input array to test.
+        Input array.
+
+
+    Examples
+    --------
+
+    np.array allows to specify whether the array is written in C-contiguous
+    order (last index varies the fastest), or FORTRAN-contiguous order in
+    memory (first index varies the fastest).
+
+    >>> a = np.array([[1, 2, 3], [4, 5, 6]], order='C')
+    >>> a
+    array([[1, 2, 3],
+           [4, 5, 6]])
+    >>> np.isfortran(a)
+    False
+
+    >>> b = np.array([[1, 2, 3], [4, 5, 6]], order='FORTRAN')
+    >>> b
+    array([[1, 2, 3],
+           [4, 5, 6]])
+    >>> np.isfortran(b)
+    True
+
+
+    The transpose of a C-ordered array is a FORTRAN-ordered array.
+
+    >>> a = np.array([[1, 2, 3], [4, 5, 6]], order='C')
+    >>> a
+    array([[1, 2, 3],
+           [4, 5, 6]])
+    >>> np.isfortran(a)
+    False
+    >>> b = a.T
+    >>> b
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
+    >>> np.isfortran(b)
+    True
+
+    1-D arrays always evaluate as False.
+
+    >>> np.isfortran(np.array([1, 2], order='FORTRAN'))
+    False
 
     """
     return a.flags.fnc
@@ -471,6 +538,9 @@ def flatnonzero(a):
     array([-2, -1,  0,  1,  2])
     >>> np.flatnonzero(x)
     array([0, 1, 3, 4])
+
+    Use the indices of the non-zero elements as an index array to extract
+    these elements:
 
     >>> x.ravel()[np.flatnonzero(x)]
     array([-2, -1,  1,  2])
@@ -908,12 +978,110 @@ def _move_axis_to_0(a, axis):
     return rollaxis(a, axis, 0)
 
 def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
-    """Return the cross product of two (arrays of) vectors.
+    """
+    Return the cross product of two (arrays of) vectors.
 
-    The cross product is performed over the last axis of a and b by default,
-    and can handle axes with dimensions 2 and 3. For a dimension of 2,
-    the z-component of the equivalent three-dimensional cross product is
-    returned.
+    The cross product of `a` and `b` in :math:`R^3` is a vector perpendicular
+    to both `a` and `b`.  If `a` and `b` are arrays of vectors, the vectors
+    are defined by the last axis of `a` and `b` by default, and these axes
+    can have dimensions 2 or 3.  Where the dimension of either `a` or `b` is
+    2, the third component of the input vector is assumed to be zero and the
+    cross product calculated accordingly.  In cases where both input vectors
+    have dimension 2, the z-component of the cross product is returned.
+
+    Parameters
+    ----------
+    a : array_like
+        Components of the first vector(s).
+    b : array_like
+        Components of the second vector(s).
+    axisa : int, optional
+        Axis of `a` that defines the vector(s).  By default, the last axis.
+    axisb : int, optional
+        Axis of `b` that defines the vector(s).  By default, the last axis.
+    axisc : int, optional
+        Axis of `c` containing the cross product vector(s).  By default, the
+        last axis.
+    axis : int, optional
+        If defined, the axis of `a`, `b` and `c` that defines the vector(s)
+        and cross product(s).  Overrides `axisa`, `axisb` and `axisc`.
+
+    Returns
+    -------
+    c : ndarray
+        Vector cross product(s).
+
+    Raises
+    ------
+    ValueError
+        When the dimension of the vector(s) in `a` and/or `b` does not
+        equal 2 or 3.
+
+    See Also
+    --------
+    inner : Inner product
+    outer : Outer product.
+    ix_ : Construct index arrays.
+
+    Examples
+    --------
+    Vector cross-product.
+
+    >>> x = [1, 2, 3]
+    >>> y = [4, 5, 6]
+    >>> np.cross(x, y)
+    array([-3,  6, -3])
+
+    One vector with dimension 2.
+
+    >>> x = [1, 2]
+    >>> y = [4, 5, 6]
+    >>> np.cross(x, y)
+    array([12, -6, -3])
+
+    Equivalently:
+
+    >>> x = [1, 2, 0]
+    >>> y = [4, 5, 6]
+    >>> np.cross(x, y)
+    array([12, -6, -3])
+
+    Both vectors with dimension 2.
+
+    >>> x = [1,2]
+    >>> y = [4,5]
+    >>> np.cross(x, y)
+    -3
+
+    Multiple vector cross-products. Note that the direction of the cross
+    product vector is defined by the `right-hand rule`.
+
+    >>> x = np.array([[1,2,3], [4,5,6]])
+    >>> y = np.array([[4,5,6], [1,2,3]])
+    >>> np.cross(x, y)
+    array([[-3,  6, -3],
+           [ 3, -6,  3]])
+
+    The orientation of `c` can be changed using the `axisc` keyword.
+
+    >>> np.cross(x, y, axisc=0)
+    array([[-3,  3],
+           [ 6, -6],
+           [-3,  3]])
+
+    Change the vector definition of `x` and `y` using `axisa` and `axisb`.
+
+    >>> x = np.array([[1,2,3], [4,5,6], [7, 8, 9]])
+    >>> y = np.array([[7, 8, 9], [4,5,6], [1,2,3]])
+    >>> np.cross(x, y)
+    array([[ -6,  12,  -6],
+           [  0,   0,   0],
+           [  6, -12,   6]])
+    >>> np.cross(x, y, axisa=0, axisb=0)
+    array([[-24,  48, -24],
+           [-30,  60, -30],
+           [-36,  72, -36]])
+
     """
     if axis is not None:
         axisa,axisb,axisc=(axis,)*3
@@ -1027,7 +1195,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     max_line_width : int, optional
         Inserts newlines if text is longer than `max_line_width`.
     precision : int, optional
-        If `a` is float, `precision` sets loating point precision.
+        If `a` is float, `precision` sets floating point precision.
     suppress_small : boolean, optional
         Represent very small numbers as zero.
 
@@ -1162,12 +1330,12 @@ def fromfunction(function, shape, **kwargs):
 
 def isscalar(num):
     """
-    Returns True if the type of num is a scalar type.
+    Returns True if the type of `num` is a scalar type.
 
     Parameters
     ----------
     num : any
-        Input argument.
+        Input argument, can be of any type and shape.
 
     Returns
     -------
@@ -1243,7 +1411,8 @@ def binary_repr(num, width=None):
 
     See Also
     --------
-    base_repr
+    base_repr: Return a string representation of a number in the given base
+               system.
 
     Notes
     -----
@@ -1318,7 +1487,7 @@ def base_repr (number, base=2, padding=0):
     '3'
     >>> np.base_repr(6, 5)
     '11'
-    >>> np.base_repr(7, 5, padding=3)
+    >>> np.base_repr(7, base=5, padding=3)
     '00012'
 
     """
@@ -1449,18 +1618,18 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     Returns True if two arrays are element-wise equal within a tolerance.
 
     The tolerance values are positive, typically very small numbers.  The
-    relative difference (`rtol` * `b`) and the absolute difference (`atol`)
-    are added together to compare against the absolute difference between `a`
-    and `b`.
+    relative difference (`rtol` * abs(`b`)) and the absolute difference
+    `atol` are added together to compare against the absolute difference
+    between `a` and `b`.
 
     Parameters
     ----------
     a, b : array_like
         Input arrays to compare.
-    rtol : Relative tolerance
-        The relative difference is equal to `rtol` * `b`.
-    atol : Absolute tolerance
-        The absolute difference is equal to `atol`.
+    rtol : float
+        The relative tolerance parameter (see Notes).
+    atol : float
+        The absolute tolerance parameter (see Notes).
 
     Returns
     -------
@@ -1511,25 +1680,30 @@ def array_equal(a1, a2):
 
     Parameters
     ----------
-    a1 : array_like
-        First input array.
-    a2 : array_like
-        Second input array.
+    a1, a2 : array_like
+        Input arrays.
 
     Returns
     -------
-    b : {True, False}
+    b : bool
         Returns True if the arrays are equal.
+
+    See Also
+    --------
+    allclose: Returns True if two arrays are element-wise equal within a
+              tolerance.
+    array_equiv: Returns True if input arrays are shape consistent and all
+                 elements equal.
 
     Examples
     --------
-    >>> np.array_equal([1,2],[1,2])
+    >>> np.array_equal([1, 2], [1, 2])
     True
-    >>> np.array_equal(np.array([1,2]),np.array([1,2]))
+    >>> np.array_equal(np.array([1, 2]), np.array([1, 2]))
     True
-    >>> np.array_equal([1,2],[1,2,3])
+    >>> np.array_equal([1, 2], [1, 2, 3])
     False
-    >>> np.array_equal([1,2],[1,4])
+    >>> np.array_equal([1, 2], [1, 4])
     False
 
     """
@@ -1545,12 +1719,13 @@ def array_equiv(a1, a2):
     """
     Returns True if input arrays are shape consistent and all elements equal.
 
+    Shape consistent means they are either the same shape, or one input array
+    can be broadcasted to create the same shape as the other one.
+
     Parameters
     ----------
-    a1 : array_like
-        Input array.
-    a2 : array_like
-        Input array.
+    a1, a2 : array_like
+        Input arrays.
 
     Returns
     -------
@@ -1559,13 +1734,19 @@ def array_equiv(a1, a2):
 
     Examples
     --------
-    >>> np.array_equiv([1,2],[1,2])
+    >>> np.array_equiv([1, 2], [1, 2])
     >>> True
-    >>> np.array_equiv([1,2],[1,3])
+    >>> np.array_equiv([1, 2], [1, 3])
     >>> False
-    >>> np.array_equiv([1,2], [[1,2],[1,2]])
+
+    Showing the shape equivalence:
+
+    >>> np.array_equiv([1, 2], [[1, 2], [1, 2]])
     >>> True
-    >>> np.array_equiv([1,2], [[1,2],[1,3]])
+    >>> np.array_equiv([1, 2], [[1, 2, 1, 2], [1, 2, 1, 2]])
+    >>> False
+
+    >>> np.array_equiv([1, 2], [[1, 2], [1, 3]])
     >>> False
 
     """
@@ -1595,7 +1776,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     """
     Set how floating-point errors are handled.
 
-    Note that operations on integer scalar types (such as int16) are
+    Note that operations on integer scalar types (such as `int16`) are
     handled like floating point, and are affected by these settings.
 
     Parameters
@@ -1604,8 +1785,8 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
         Set treatment for all types of floating-point errors at once:
 
         - ignore: Take no action when the exception occurs
-        - warn: Print a RuntimeWarning (via the Python `warnings` module)
-        - raise: Raise a FloatingPointError
+        - warn: Print a `RuntimeWarning` (via the Python `warnings` module)
+        - raise: Raise a `FloatingPointError`
         - call: Call a function specified using the `seterrcall` function.
 
         The default is not to change the current behavior.

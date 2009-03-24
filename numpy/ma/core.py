@@ -296,20 +296,61 @@ def _check_fill_value(fill_value, ndtype):
 
 def set_fill_value(a, fill_value):
     """
-    Set the filling value of a, if a is a masked array.  Otherwise,
-    do nothing.
+    Set the filling value of a, if a is a masked array.
+
+    This function changes the fill value of the masked array `a` in place.
+    If `a` is not a masked array, the function returns silently, without
+    doing anything.
 
     Parameters
     ----------
-    a : ndarray
-        Input array
-    fill_value : var
+    a : array_like
+        Input array.
+    fill_value : dtype
         Filling value. A consistency test is performed to make sure
-        the value is compatible with the dtype of a.
+        the value is compatible with the dtype of `a`.
 
     Returns
     -------
     None
+        Nothing returned by this function.
+
+    See Also
+    --------
+    maximum_fill_value : Return the default fill value for a dtype.
+    MaskedArray.fill_value : Return current fill value.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(5)
+    >>> a
+    array([0, 1, 2, 3, 4])
+    >>> a = ma.masked_where(a < 3, a)
+    >>> a
+    masked_array(data = [-- -- -- 3 4],
+          mask = [ True  True  True False False],
+          fill_value=999999)
+    >>> ma.set_fill_value(a, -999)
+    >>> a
+    masked_array(data = [-- -- -- 3 4],
+          mask = [ True  True  True False False],
+          fill_value=-999)
+
+    Nothing happens if `a` is not a masked array.
+
+    >>> a = range(5)
+    >>> a
+    [0, 1, 2, 3, 4]
+    >>> ma.set_fill_value(a, 100)
+    >>> a
+    [0, 1, 2, 3, 4]
+    >>> a = np.arange(5)
+    >>> a
+    array([0, 1, 2, 3, 4])
+    >>> ma.set_fill_value(a, 100)
+    >>> a
+    array([0, 1, 2, 3, 4])
 
     """
     if isinstance(a, MaskedArray):
@@ -399,15 +440,46 @@ def get_masked_subclass(*arrays):
 #####--------------------------------------------------------------------------
 def getdata(a, subok=True):
     """
-    Return the `_data` part of `a` if `a` is a MaskedArray, or `a` itself.
+    Return the data of a masked array as an ndarray.
+
+    Return the data of `a` (if any) as an ndarray if `a` is a ``MaskedArray``,
+    else return `a` as a ndarray or subclass (depending on `subok`) if not.
 
     Parameters
     ----------
     a : array_like
-        A ndarray or a subclass of.
-    subok : {True, False}, optional
-        Whether to force the output to a 'pure' ndarray (False) or to
-        return a subclass of ndarray if approriate (True).
+        Input ``MaskedArray``, alternatively a ndarray or a subclass thereof.
+    subok : bool
+        Whether to force the output to be a `pure` ndarray (False) or to
+        return a subclass of ndarray if approriate (True - default).
+
+    See Also
+    --------
+    getmask : Return the mask of a masked array, or nomask.
+    getmaskarray : Return the mask of a masked array, or full array of False.
+
+    Examples
+    --------
+
+    >>> import numpy.ma as ma
+    >>> a = ma.masked_equal([[1,2],[3,4]], 2)
+    >>> a
+    masked_array(data =
+     [[1 --]
+     [3 4]],
+          mask =
+     [[False  True]
+     [False False]],
+          fill_value=999999)
+    >>> ma.getdata(a)
+    array([[1, 2],
+           [3, 4]])
+
+    Equivalently use the ``MaskedArray`` `data` attribute.
+
+    >>> a.data
+    array([[1, 2],
+           [3, 4]])
 
     """
     data = getattr(a, '_data', np.array(a, subok=subok))
@@ -893,8 +965,33 @@ def _recursive_make_descr(datatype, newtype=bool_):
         return newtype
 
 def make_mask_descr(ndtype):
-    """Constructs a dtype description list from a given dtype.
-    Each field is set to a bool.
+    """
+    Construct a dtype description list from a given dtype.
+
+    Returns a new dtype object, with the type of all fields in `ndtype` to a
+    boolean type. Field names are not altered.
+
+    Parameters
+    ----------
+    ndtype : dtype
+        The dtype to convert.
+
+    Returns
+    -------
+    result : dtype
+        A dtype that looks like `ndtype`, the type of all fields is boolean.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> dtype = np.dtype({'names':['foo', 'bar'],
+                          'formats':[np.float32, np.int]})
+    >>> dtype
+    dtype([('foo', '<f4'), ('bar', '<i4')])
+    >>> ma.make_mask_descr(dtype)
+    dtype([('foo', '|b1'), ('bar', '|b1')])
+    >>> ma.make_mask_descr(np.float32)
+    <type 'numpy.bool_'>
 
     """
     # Make sure we do have a dtype
@@ -903,18 +1000,115 @@ def make_mask_descr(ndtype):
     return np.dtype(_recursive_make_descr(ndtype, np.bool))
 
 def getmask(a):
-    """Return the mask of a, if any, or nomask.
+    """
+    Return the mask of a masked array, or nomask.
 
-    To get a full array of booleans of the same shape as a, use
-    getmaskarray.
+    Return the mask of `a` as an ndarray if `a` is a `MaskedArray` and the
+    mask is not `nomask`, else return `nomask`. To guarantee a full array
+    of booleans of the same shape as a, use `getmaskarray`.
+
+    Parameters
+    ----------
+    a : array_like
+        Input `MaskedArray` for which the mask is required.
+
+    See Also
+    --------
+    getdata : Return the data of a masked array as an ndarray.
+    getmaskarray : Return the mask of a masked array, or full array of False.
+
+    Examples
+    --------
+
+    >>> import numpy.ma as ma
+    >>> a = ma.masked_equal([[1,2],[3,4]], 2)
+    >>> a
+    masked_array(data =
+     [[1 --]
+     [3 4]],
+          mask =
+     [[False  True]
+     [False False]],
+          fill_value=999999)
+    >>> ma.getmask(a)
+    array([[False,  True],
+           [False, False]], dtype=bool)
+
+    Equivalently use the `MaskedArray` `mask` attribute.
+
+    >>> a.mask
+    array([[False,  True],
+           [False, False]], dtype=bool)
+
+    Result when mask == `nomask`
+
+    >>> b = ma.masked_array([[1,2],[3,4]])
+    >>> b
+    masked_array(data =
+     [[1 2]
+     [3 4]],
+          mask =
+     False,
+          fill_value=999999)
+    >>> ma.nomask
+    False
+    >>> ma.getmask(b) == ma.nomask
+    True
+    >>> b.mask == ma.nomask
+    True
 
     """
     return getattr(a, '_mask', nomask)
 get_mask = getmask
 
 def getmaskarray(arr):
-    """Return the mask of arr, if any, or a boolean array of the shape
-    of a, full of False.
+    """
+    Return the mask of a masked array, or full boolean array of False.
+
+    Return the mask of `arr` as an ndarray if `arr` is a `MaskedArray` and
+    the mask is not `nomask`, else return a full boolean array of False of
+    the same shape as `arr`.
+
+    Parameters
+    ----------
+    arr : array_like
+        Input `MaskedArray` for which the mask is required.
+
+    See Also
+    --------
+    getmask : Return the mask of a masked array, or nomask.
+    getdata : Return the data of a masked array as an ndarray.
+
+    Examples
+    --------
+
+    >>> import numpy.ma as ma
+    >>> a = ma.masked_equal([[1,2],[3,4]], 2)
+    >>> a
+    masked_array(data =
+     [[1 --]
+     [3 4]],
+          mask =
+     [[False  True]
+     [False False]],
+          fill_value=999999)
+    >>> ma.getmaskarray(a)
+    array([[False,  True],
+           [False, False]], dtype=bool)
+
+    Result when mask == ``nomask``
+
+    >>> b = ma.masked_array([[1,2],[3,4]])
+    >>> b
+    masked_array(data =
+     [[1 2]
+     [3 4]],
+          mask =
+     False,
+          fill_value=999999)
+    >>> >ma.getmaskarray(b)
+    array([[False, False],
+           [False, False]], dtype=bool)
 
     """
     mask = getmask(arr)
@@ -926,10 +1120,62 @@ def is_mask(m):
     """
     Return True if m is a valid, standard mask.
 
-    Notes
-    -----
-    This function does not check contents, only the type. In particular,
-    this function returns False if the mask has a flexible dtype.
+    This function does not check the contents of the input, only that the
+    type is MaskType. In particular, this function returns False if the
+    mask has a flexible dtype.
+
+    Parameters
+    ----------
+    m : array_like
+        Array to test.
+
+    Returns
+    -------
+    result : bool
+        True if `m.dtype.type` is MaskType, False otherwise.
+
+    See Also
+    --------
+    isMaskedArray : Test whether input is an instance of MaskedArray.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> m = ma.masked_equal([0, 1, 0, 2, 3], 0)
+    >>> m
+    masked_array(data = [-- 1 -- 2 3],
+          mask = [ True False  True False False],
+          fill_value=999999)
+    >>> ma.is_mask(m)
+    False
+    >>> ma.is_mask(m.mask)
+    True
+
+    Input must be an ndarray (or have similar attributes)
+    for it to be considered a valid mask.
+
+    >>> m = [False, True, False]
+    >>> ma.is_mask(m)
+    False
+    >>> m = np.array([False, True, False])
+    >>> m
+    array([False,  True, False], dtype=bool)
+    >>> ma.is_mask(m)
+    True
+
+    Arrays with complex dtypes don't return True.
+
+    >>> dtype = np.dtype({'names':['monty', 'pithon'],
+                          'formats':[np.bool, np.bool]})
+    >>> dtype
+    dtype([('monty', '|b1'), ('pithon', '|b1')])
+    >>> m = np.array([(True, False), (False, True), (True, False)],
+                     dtype=dtype)
+    >>> m
+    array([(True, False), (False, True), (True, False)],
+          dtype=[('monty', '|b1'), ('pithon', '|b1')])
+    >>> ma.is_mask(m)
+    False
 
     """
     try:
@@ -939,23 +1185,74 @@ def is_mask(m):
 
 def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
     """
-    Return m as a mask, creating a copy if necessary or requested.
+    Create a boolean mask from an array.
 
-    The function can accept any sequence of integers or nomask.  Does
-    not check that contents must be 0s and 1s.
+    Return `m` as a boolean mask, creating a copy if necessary or requested.
+    The function can accept any sequence that is convertible to integers,
+    or ``nomask``.  Does not require that contents must be 0s and 1s, values
+    of 0 are interepreted as False, everything else as True.
 
     Parameters
     ----------
     m : array_like
         Potential mask.
     copy : bool
-        Whether to return a copy of m (True) or m itself (False).
+        Whether to return a copy of `m` (True) or `m` itself (False).
     shrink : bool
-        Whether to shrink m to nomask if all its values are False.
+        Whether to shrink `m` to ``nomask`` if all its values are False.
+    flag : bool
+        Deprecated equivalent of `shrink`.
     dtype : dtype
         Data-type of the output mask. By default, the output mask has
         a dtype of MaskType (bool). If the dtype is flexible, each field
         has a boolean dtype.
+
+    Returns
+    -------
+    result : ndarray
+        A boolean mask derived from `m`.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> m = [True, False, True, True]
+    >>> ma.make_mask(m)
+    array([ True, False,  True,  True], dtype=bool)
+    >>> m = [1, 0, 1, 1]
+    >>> ma.make_mask(m)
+    array([ True, False,  True,  True], dtype=bool)
+    >>> m = [1, 0, 2, -3]
+    >>> ma.make_mask(m)
+    array([ True, False,  True,  True], dtype=bool)
+
+    Effect of the `shrink` parameter.
+
+    >>> m = np.zeros(4)
+    >>> m
+    array([ 0.,  0.,  0.,  0.])
+    >>> ma.make_mask(m)
+    False
+    >>> ma.make_mask(m, shrink=False)
+    array([False, False, False, False], dtype=bool)
+
+    Using a flexible `dtype`.
+
+    >>> m = [1, 0, 1, 1]
+    >>> n = [0, 1, 0, 0]
+    >>> arr = []
+    >>> for man, mouse in zip(m, n):
+    ...     arr.append((man, mouse))
+    >>> arr
+    [(1, 0), (0, 1), (1, 0), (1, 0)]
+    >>> dtype = np.dtype({'names':['man', 'mouse'],
+                          'formats':[np.int, np.int]})
+    >>> arr = np.array(arr, dtype=dtype)
+    >>> arr
+    array([(1, 0), (0, 1), (1, 0), (1, 0)],
+          dtype=[('man', '<i4'), ('mouse', '<i4')])
+    >>> ma.make_mask(arr, dtype=dtype)
+    array([(True, False), (False, True), (True, False), (True, False)],
+          dtype=[('man', '|b1'), ('mouse', '|b1')])
 
     """
     if flag is not None:
@@ -988,15 +1285,45 @@ def make_mask(m, copy=False, shrink=True, flag=None, dtype=MaskType):
 
 def make_mask_none(newshape, dtype=None):
     """
-    Return a mask of shape s, filled with False.
+    Return a boolean mask of the given shape, filled with False.
+
+    This function returns a boolean ndarray with all entries False, that can
+    be used in common mask manipulations. If a complex dtype is specified, the
+    type of each field is converted to a boolean type.
 
     Parameters
     ----------
-    news : tuple
-        A tuple indicating the shape of the final mask.
+    newshape : tuple
+        A tuple indicating the shape of the mask.
     dtype: {None, dtype}, optional
-        If None, use MaskType. Otherwise, use a new datatype with the same fields
-        as `dtype` with boolean type.
+        If None, use a MaskType instance. Otherwise, use a new datatype with
+        the same fields as `dtype`, converted to boolean types.
+
+    Returns
+    -------
+    result : ndarray
+        An ndarray of appropriate shape and dtype, filled with False.
+
+    See Also
+    --------
+    make_mask : Create a boolean mask from an array.
+    make_mask_descr : Construct a dtype description list from a given dtype.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> ma.make_mask_none((3,))
+    array([False, False, False], dtype=bool)
+
+    Defining a more complex dtype.
+
+    >>> dtype = np.dtype({'names':['foo', 'bar'],
+                          'formats':[np.float32, np.int]})
+    >>> dtype
+    dtype([('foo', '<f4'), ('bar', '<i4')])
+    >>> ma.make_mask_none((3,), dtype=dtype)
+    array([(False, False), (False, False), (False, False)],
+          dtype=[('foo', '|b1'), ('bar', '|b1')])
 
     """
     if dtype is None:
@@ -1119,17 +1446,100 @@ def flatten_mask(mask):
 
 def masked_where(condition, a, copy=True):
     """
-    Return ``a`` as an array masked where ``condition`` is ``True``.
-    Masked values of ``a`` or ``condition`` are kept.
+    Mask an array where a condition is met.
+
+    Return `a` as an array masked where `condition` is True.
+    Any masked values of `a` or `condition` are also masked in the output.
 
     Parameters
     ----------
     condition : array_like
-        Masking condition.
+        Masking condition.  When `condition` tests floating point values for
+        equality, consider using ``masked_values`` instead.
     a : array_like
         Array to mask.
     copy : bool
-        Whether to return a copy of ``a`` (True) or modify ``a`` in place (False).
+        If True (default) make a copy of `a` in the result.  If False modify
+        `a` in place and return a view.
+
+    Returns
+    -------
+    result : MaskedArray
+        The result of masking `a` where `condition` is True.
+
+    See Also
+    --------
+    masked_values : Mask using floating point equality.
+    masked_equal : Mask where equal to a given value.
+    masked_not_equal : Mask where `not` equal to a given value.
+    masked_less_equal : Mask where less than or equal to a given value.
+    masked_greater_equal : Mask where greater than or equal to a given value.
+    masked_less : Mask where less than a given value.
+    masked_greater : Mask where greater than a given value.
+    masked_inside : Mask inside a given interval.
+    masked_outside : Mask outside a given interval.
+    masked_invalid : Mask invalid values (NaNs or infs).
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(4)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> ma.masked_where(a <= 2, a)
+    masked_array(data = [-- -- -- 3],
+          mask = [ True  True  True False],
+          fill_value=999999)
+
+    Mask array `b` conditional on `a`.
+
+    >>> b = ['a', 'b', 'c', 'd']
+    >>> ma.masked_where(a == 2, b)
+    masked_array(data = [a b -- d],
+          mask = [False False  True False],
+          fill_value=N/A)
+
+    Effect of the `copy` argument.
+
+    >>> c = ma.masked_where(a <= 2, a)
+    >>> c
+    masked_array(data = [-- -- -- 3],
+          mask = [ True  True  True False],
+          fill_value=999999)
+    >>> c[0] = 99
+    >>> c
+    masked_array(data = [99 -- -- 3],
+          mask = [False  True  True False],
+          fill_value=999999)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> c = ma.masked_where(a <= 2, a, copy=False)
+    >>> c[0] = 99
+    >>> c
+    masked_array(data = [99 -- -- 3],
+          mask = [False  True  True False],
+          fill_value=999999)
+    >>> a
+    array([99,  1,  2,  3])
+
+    When `condition` or `a` contain masked values.
+
+    >>> a = np.arange(4)
+    >>> a = ma.masked_where(a == 2, a)
+    >>> a
+    masked_array(data = [0 1 -- 3],
+          mask = [False False  True False],
+          fill_value=999999)
+    >>> b = np.arange(4)
+    >>> b = ma.masked_where(b == 0, b)
+    >>> b
+    masked_array(data = [-- 1 2 3],
+          mask = [ True False False False],
+          fill_value=999999)
+    >>> ma.masked_where(a == 3, b)
+    masked_array(data = [-- 1 -- --],
+          mask = [ True False  True  True],
+          fill_value=999999)
 
     """
     # Make sure that condition is a valid standard-type mask.
@@ -1152,41 +1562,157 @@ def masked_where(condition, a, copy=True):
 
 def masked_greater(x, value, copy=True):
     """
-    Return the array `x` masked where ``(x > value)``.
-    Any value of mask already masked is kept masked.
+    Mask an array where greater than a given value.
+
+    This function is a shortcut to ``masked_where``, with
+    `condition` = (x > value).
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(4)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> ma.masked_greater(a, 2)
+    masked_array(data = [0 1 2 --],
+          mask = [False False False  True],
+          fill_value=999999)
 
     """
     return masked_where(greater(x, value), x, copy=copy)
 
 
 def masked_greater_equal(x, value, copy=True):
-    "Shortcut to masked_where, with condition ``(x >= value)``."
+    """
+    Mask an array where greater than or equal to a given value.
+
+    This function is a shortcut to ``masked_where``, with
+    `condition` = (x >= value).
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(4)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> ma.masked_greater_equal(a, 2)
+    masked_array(data = [0 1 -- --],
+          mask = [False False  True  True],
+          fill_value=999999)
+
+    """
     return masked_where(greater_equal(x, value), x, copy=copy)
 
 
 def masked_less(x, value, copy=True):
-    "Shortcut to masked_where, with condition ``(x < value)``."
+    """
+    Mask an array where less than a given value.
+
+    This function is a shortcut to ``masked_where``, with
+    `condition` = (x < value).
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(4)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> ma.masked_less(a, 2)
+    masked_array(data = [-- -- 2 3],
+          mask = [ True  True False False],
+          fill_value=999999)
+
+    """
     return masked_where(less(x, value), x, copy=copy)
 
 
 def masked_less_equal(x, value, copy=True):
-    "Shortcut to masked_where, with condition ``(x <= value)``."
+    """
+    Mask an array where less than or equal to a given value.
+
+    This function is a shortcut to ``masked_where``, with
+    `condition` = (x <= value).
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(4)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> ma.masked_less_equal(a, 2)
+    masked_array(data = [-- -- -- 3],
+          mask = [ True  True  True False],
+          fill_value=999999)
+
+    """
     return masked_where(less_equal(x, value), x, copy=copy)
 
 
 def masked_not_equal(x, value, copy=True):
-    "Shortcut to masked_where, with condition ``(x != value)``."
+    """
+    Mask an array where `not` equal to a given value.
+
+    This function is a shortcut to ``masked_where``, with
+    `condition` = (x != value).
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(4)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> ma.masked_not_equal(a, 2)
+    masked_array(data = [-- -- 2 --],
+          mask = [ True  True False  True],
+          fill_value=999999)
+
+    """
     return masked_where(not_equal(x, value), x, copy=copy)
 
 
 def masked_equal(x, value, copy=True):
     """
-    Shortcut to masked_where, with condition ``(x == value)``.
+    Mask an array where equal to a given value.
+
+    This function is a shortcut to ``masked_where``, with
+    `condition` = (x == value).  For floating point arrays,
+    consider using ``masked_values(x, value)``.
 
     See Also
     --------
-    masked_where : base function
-    masked_values : equivalent function for floats.
+    masked_where : Mask where a condition is met.
+    masked_values : Mask using floating point equality.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(4)
+    >>> a
+    array([0, 1, 2, 3])
+    >>> ma.masked_equal(a, 2)
+    masked_array(data = [0 1 -- 3],
+          mask = [False False  True False],
+          fill_value=999999)
 
     """
     # An alternative implementation relies on filling first: probably not needed.
@@ -1199,13 +1725,35 @@ def masked_equal(x, value, copy=True):
 
 def masked_inside(x, v1, v2, copy=True):
     """
-    Shortcut to masked_where, where ``condition`` is True for x inside
-    the interval [v1,v2] (v1 <= x <= v2).  The boundaries v1 and v2
+    Mask an array inside a given interval.
+
+    Shortcut to ``masked_where``, where `condition` is True for `x` inside
+    the interval [v1,v2] (v1 <= x <= v2).  The boundaries `v1` and `v2`
     can be given in either order.
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
 
     Notes
     -----
-    The array x is prefilled with its filling value.
+    The array `x` is prefilled with its filling value.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [0.31, 1.2, 0.01, 0.2, -0.4, -1.1]
+    >>> ma.masked_inside(x, -0.3, 0.3)
+    masked_array(data = [0.31 1.2 -- -- -0.4 -1.1],
+          mask = [False False  True  True False False],
+          fill_value=1e+20)
+
+    The order of `v1` and `v2` doesn't matter.
+
+    >>> ma.masked_inside(x, 0.3, -0.3)
+    masked_array(data = [0.31 1.2 -- -- -0.4 -1.1],
+          mask = [False False  True  True False False],
+          fill_value=1e+20)
 
     """
     if v2 < v1:
@@ -1217,13 +1765,35 @@ def masked_inside(x, v1, v2, copy=True):
 
 def masked_outside(x, v1, v2, copy=True):
     """
-    Shortcut to ``masked_where``, where ``condition`` is True for x outside
+    Mask an array outside a given interval.
+
+    Shortcut to ``masked_where``, where `condition` is True for `x` outside
     the interval [v1,v2] (x < v1)|(x > v2).
-    The boundaries v1 and v2 can be given in either order.
+    The boundaries `v1` and `v2` can be given in either order.
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
 
     Notes
     -----
-    The array x is prefilled with its filling value.
+    The array `x` is prefilled with its filling value.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [0.31, 1.2, 0.01, 0.2, -0.4, -1.1]
+    >>> ma.masked_outside(x, -0.3, 0.3)
+    masked_array(data = [-- -- 0.01 0.2 -- --],
+          mask = [ True  True False False  True  True],
+          fill_value=1e+20)
+
+    The order of `v1` and `v2` doesn't matter.
+
+    >>> ma.masked_outside(x, 0.3, -0.3)
+    masked_array(data = [-- -- 0.01 0.2 -- --],
+          mask = [ True  True False False  True  True],
+          fill_value=1e+20)
 
     """
     if v2 < v1:
@@ -1237,19 +1807,51 @@ def masked_object(x, value, copy=True, shrink=True):
     """
     Mask the array `x` where the data are exactly equal to value.
 
-    This function is suitable only for object arrays: for floating
-    point, please use `masked_values`_ instead.
+    This function is similar to `masked_values`, but only suitable
+    for object arrays: for floating point, use `masked_values` instead.
 
     Parameters
     ----------
     x : array_like
         Array to mask
-    value : var
+    value : object
         Comparison value
     copy : {True, False}, optional
-        Whether to return a copy of x.
+        Whether to return a copy of `x`.
     shrink : {True, False}, optional
         Whether to collapse a mask full of False to nomask
+
+    Returns
+    -------
+    result : MaskedArray
+        The result of masking `x` where equal to `value`.
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+    masked_equal : Mask where equal to a given value (integers).
+    masked_values : Mask using floating point equality.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> food = np.array(['green_eggs', 'ham'], dtype=object)
+    >>> # don't eat spoiled food
+    >>> eat = ma.masked_object(food, 'green_eggs')
+    >>> print eat
+    [-- ham]
+    >>> # plain ol` ham is boring
+    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
+    >>> eat = ma.masked_object(fresh_food, 'green_eggs')
+    >>> print eat
+    [cheese ham pineapple]
+
+    Note that `mask` is set to ``nomask`` if possible.
+
+    >>> eat
+    masked_array(data = [cheese ham pineapple],
+          mask = False,
+          fill_value=?)
 
     """
     if isMaskedArray(x):
@@ -1264,26 +1866,71 @@ def masked_object(x, value, copy=True, shrink=True):
 
 def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True, shrink=True):
     """
-    Mask the array x where the data are approximately equal in
-    value, i.e. ``(abs(x - value) <= atol+rtol*abs(value))``
+    Mask using floating point equality.
 
-    Suitable only for floating points. For integers, please use
-    :func:`masked_equal`.  The mask is set to ``nomask`` if posible.
+    Return a MaskedArray, masked where the data in array `x` are approximately
+    equal to `value`, i.e. where the following condition is True
+
+    (abs(x - value) <= atol+rtol*abs(value))
+
+    The fill_value is set to `value` and the mask is set to ``nomask`` if
+    possible.  For integers, consider using ``masked_equal``.
 
     Parameters
     ----------
     x : array_like
-        Array to fill.
+        Array to mask.
     value : float
         Masking value.
-    rtol : {float}, optional
+    rtol : float, optional
         Tolerance parameter.
-    atol : {float}, optional
+    atol : float, optional
         Tolerance parameter (1e-8).
     copy : {True, False}, optional
-        Whether to return a copy of x.
+        Whether to return a copy of `x`.
     shrink : {True, False}, optional
-        Whether to collapse a mask full of False to nomask
+        Whether to collapse a mask full of False to ``nomask``
+
+    Returns
+    -------
+    result : MaskedArray
+        The result of masking `x` where approximately equal to `value`.
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+    masked_equal : Mask where equal to a given value (integers).
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = np.array([1, 1.1, 2, 1.1, 3])
+    >>> ma.masked_values(x, 1.1)
+    masked_array(data = [1.0 -- 2.0 -- 3.0],
+          mask = [False  True False  True False],
+          fill_value=1.1)
+
+    Note that `mask` is set to ``nomask`` if possible.
+
+    >>> ma.masked_values(x, 1.5)
+    masked_array(data = [ 1.   1.1  2.   1.1  3. ],
+          mask = False,
+          fill_value=1.5)
+
+    For integers, the fill value will be different in general to the
+    result of ``masked_equal``.
+
+    >>> x = np.arange(5)
+    >>> x
+    array([0, 1, 2, 3, 4])
+    >>> ma.masked_values(x, 2)
+    masked_array(data = [0 1 -- 3 4],
+          mask = [False False  True False False],
+          fill_value=2)
+    >>> ma.masked_equal(x, 2)
+    masked_array(data = [0 1 -- 3 4],
+          mask = [False False  True False False],
+          fill_value=999999)
 
     """
     mabs = umath.absolute
@@ -1300,8 +1947,29 @@ def masked_values(x, value, rtol=1.e-5, atol=1.e-8, copy=True, shrink=True):
 
 def masked_invalid(a, copy=True):
     """
-    Mask the array for invalid values (NaNs or infs).
-    Any preexisting mask is conserved.
+    Mask an array where invalid values occur (NaNs or infs).
+
+    This function is a shortcut to ``masked_where``, with
+    `condition` = ~(np.isfinite(a)). Any pre-existing mask is conserved.
+    Only applies to arrays with a dtype where NaNs or infs make sense
+    (i.e. floating point types), but accepts any array_like object.
+
+    See Also
+    --------
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.arange(5, dtype=np.float)
+    >>> a[2] = np.NaN
+    >>> a[3] = np.PINF
+    >>> a
+    array([  0.,   1.,  NaN,  Inf,   4.])
+    >>> ma.masked_invalid(a)
+    masked_array(data = [0.0 1.0 -- -- 4.0],
+          mask = [False False  True  True False],
+          fill_value=1e+20)
 
     """
     a = np.array(a, copy=copy, subok=True)
@@ -2305,31 +2973,57 @@ class MaskedArray(ndarray):
 
     def compress(self, condition, axis=None, out=None):
         """
-    Return `a` where condition is ``True``.
-    If condition is a `MaskedArray`, missing values are considered as ``False``.
+        Return `a` where condition is ``True``.
 
-    Parameters
-    ----------
-    condition : var
-        Boolean 1-d array selecting which entries to return. If len(condition)
-        is less than the size of a along the axis, then output is truncated
-        to length of condition array.
-    axis : {None, int}, optional
-        Axis along which the operation must be performed.
-    out : {None, ndarray}, optional
-        Alternative output array in which to place the result. It must have
-        the same shape as the expected output but the type will be cast if
-        necessary.
+        If condition is a `MaskedArray`, missing values are considered
+        as ``False``.
 
-    Returns
-    -------
-    result : MaskedArray
-        A :class:`MaskedArray` object.
+        Parameters
+        ----------
+        condition : var
+            Boolean 1-d array selecting which entries to return. If len(condition)
+            is less than the size of a along the axis, then output is truncated
+            to length of condition array.
+        axis : {None, int}, optional
+            Axis along which the operation must be performed.
+        out : {None, ndarray}, optional
+            Alternative output array in which to place the result. It must have
+            the same shape as the expected output but the type will be cast if
+            necessary.
 
-    Warnings
-    --------
-    Please note the difference with :meth:`compressed` !
-    The output of :meth:`compress` has a mask, the output of :meth:`compressed` does not.
+        Returns
+        -------
+        result : MaskedArray
+            A :class:`MaskedArray` object.
+
+        Notes
+        -----
+        Please note the difference with :meth:`compressed` !
+        The output of :meth:`compress` has a mask, the output of
+        :meth:`compressed` does not.
+
+        Examples
+        --------
+        >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
+        >>> print x
+        [[1 -- 3]
+         [-- 5 --]
+         [7 -- 9]]
+        >>> x.compress([1, 0, 1])
+        masked_array(data = [1 3],
+              mask = [False False],
+              fill_value=999999)
+
+        >>> x.compress([1, 0, 1], axis=1)
+        masked_array(data =
+         [[1 3]
+         [-- --]
+         [7 9]],
+              mask =
+         [[False False]
+         [ True  True]
+         [False False]],
+              fill_value=999999)
 
         """
         # Get the basic components
@@ -3792,7 +4486,7 @@ class MaskedArray(ndarray):
         [[1 -- 3]
          [-- 5 --]
          [7 -- 9]]
-        >>> print x.torecords()
+        >>> print x.toflex()
         [[(1, False) (2, True) (3, False)]
          [(4, True) (5, False) (6, True)]
          [(7, False) (8, True) (9, False)]]
@@ -3880,7 +4574,54 @@ def _mareconstruct(subtype, baseclass, baseshape, basetype,):
 #---- --- Shortcuts ---
 #####---------------------------------------------------------------------------
 def isMaskedArray(x):
-    "Is x a masked array, that is, an instance of MaskedArray?"
+    """
+    Test whether input is an instance of MaskedArray.
+
+    This function returns True if `x` is an instance of MaskedArray
+    and returns False otherwise.  Any object is accepted as input.
+
+    Parameters
+    ----------
+    x : object
+        Object to test.
+
+    Returns
+    -------
+    result : bool
+        True if `x` is a MaskedArray.
+
+    See Also
+    --------
+    isMA : Alias to isMaskedArray.
+    isarray : Alias to isMaskedArray.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.eye(3, 3)
+    >>> a
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+    >>> m = ma.masked_values(a, 0)
+    >>> m
+    masked_array(data =
+     [[1.0 -- --]
+     [-- 1.0 --]
+     [-- -- 1.0]],
+          mask =
+     [[False  True  True]
+     [ True False  True]
+     [ True  True False]],
+          fill_value=0.0)
+    >>> ma.isMaskedArray(a)
+    False
+    >>> ma.isMaskedArray(m)
+    True
+    >>> ma.isMaskedArray([0, 1, 2])
+    False
+
+    """
     return isinstance(x, MaskedArray)
 isarray = isMaskedArray
 isMA = isMaskedArray  #backward compatibility
@@ -3910,7 +4651,50 @@ def array(data, dtype=None, copy=False, order=False,
 array.__doc__ = masked_array.__doc__
 
 def is_masked(x):
-    """Does x have masked values?"""
+    """
+    Determine whether input has masked values.
+
+    Accepts any object as input, but always returns False unless the
+    input is a MaskedArray containing masked values.
+
+    Parameters
+    ----------
+    x : array_like
+        Array to check for masked values.
+
+    Returns
+    -------
+    result : bool
+        True if `x` is a MaskedArray with masked values, False otherwise.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = ma.masked_equal([0, 1, 0, 2, 3], 0)
+    >>> x
+    masked_array(data = [-- 1 -- 2 3],
+          mask = [ True False  True False False],
+          fill_value=999999)
+    >>> ma.is_masked(x)
+    True
+    >>> x = ma.masked_equal([0, 1, 0, 2, 3], 42)
+    >>> x
+    masked_array(data = [0 1 0 2 3],
+          mask = False,
+          fill_value=999999)
+    >>> ma.is_masked(x)
+    False
+
+    Always returns False if `x` isn't a MaskedArray.
+
+    >>> x = [False, True, False]
+    >>> ma.is_masked(x)
+    False
+    >>> x = 'a string'
+    >>> ma.is_masked(x)
+    False
+
+    """
     m = getmask(x)
     if m is nomask:
         return False
@@ -4629,23 +5413,24 @@ def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
 
-    The tolerance values are positive, typically very small numbers.  The
-    relative difference (`rtol` * `b`) and the absolute difference (`atol`)
-    are added together to compare against the absolute difference between `a`
-    and `b`.
+    This function is equivalent to `allclose` except that masked values
+    are treated as equal (default) or unequal, depending on the `masked_equal`
+    argument.
 
     Parameters
     ----------
     a, b : array_like
         Input arrays to compare.
-    fill_value : boolean, optional
-        Whether masked values in a or b are considered equal (True) or not
-        (False).
-
+    masked_equal : boolean, optional
+        Whether masked values in `a` and `b` are considered equal (True) or not
+        (False). They are considered equal by default.
     rtol : Relative tolerance
         The relative difference is equal to `rtol` * `b`.
     atol : Absolute tolerance
         The absolute difference is equal to `atol`.
+    fill_value : boolean, optional
+        *Deprecated* - Whether masked values in a or b are considered equal
+        (True) or not (False).
 
     Returns
     -------
@@ -4656,7 +5441,8 @@ def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
 
     See Also
     --------
-    all, any, alltrue, sometrue
+    all, any
+    numpy.allclose : the non-masked allclose
 
     Notes
     -----
@@ -4667,6 +5453,32 @@ def allclose (a, b, masked_equal=True, rtol=1.e-5, atol=1.e-8, fill_value=None):
 
     Return True if all elements of a and b are equal subject to
     given tolerances.
+
+    Examples
+    --------
+    >>> a = ma.array([1e10, 1e-7, 42.0], mask=[0, 0, 1])
+    >>> a
+    masked_array(data = [10000000000.0 1e-07 --],
+                 mask = [False False  True],
+           fill_value = 1e+20)
+    >>> b = ma.array([1e10, 1e-8, -42.0], mask=[0, 0, 1])
+    >>> ma.allclose(a, b)
+    False
+    >>> a = ma.array([1e10, 1e-8, 42.0], mask=[0, 0, 1])
+    >>> b = ma.array([1.00001e10, 1e-9, -42.0], mask=[0, 0, 1])
+    >>> ma.allclose(a, b)
+    True
+    >>> ma.allclose(a, b, masked_equal=False)
+    False
+
+    Masked values are not compared directly.
+
+    >>> a = ma.array([1e10, 1e-8, 42.0], mask=[0, 0, 1])
+    >>> b = ma.array([1.00001e10, 1e-9, 42.0], mask=[0, 0, 1])
+    >>> ma.allclose(a, b)
+    True
+    >>> ma.allclose(a, b, masked_equal=False)
+    False
 
     """
     if fill_value is not None:

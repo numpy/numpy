@@ -67,13 +67,50 @@ def count_masked(arr, axis=None):
     return m.sum(axis)
 
 def masked_all(shape, dtype=float):
-    """Return an empty masked array of the given shape and dtype,
-    where all the data are masked.
+    """
+    Empty masked array with all elements masked.
+
+    Return an empty masked array of the given shape and dtype, where all the
+    data are masked.
 
     Parameters
     ----------
-        dtype : dtype, optional
-            Data type of the output.
+    shape : tuple
+        Shape of the required MaskedArray.
+    dtype : dtype, optional
+        Data type of the output.
+
+    Returns
+    -------
+    a : MaskedArray
+        A masked array with all data masked.
+
+    See Also
+    --------
+    masked_all_like : Empty masked array modelled on an existing array.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> ma.masked_all((3, 3))
+    masked_array(data =
+     [[-- -- --]
+     [-- -- --]
+     [-- -- --]],
+          mask =
+     [[ True  True  True]
+     [ True  True  True]
+     [ True  True  True]],
+          fill_value=1e+20)
+
+    The `dtype` parameter defines the underlying data type.
+
+    >>> a = ma.masked_all((3, 3))
+    >>> a.dtype
+    dtype('float64')
+    >>> a = ma.masked_all((3, 3), dtype=np.int32)
+    >>> a.dtype
+    dtype('int32')
 
     """
     a = masked_array(np.empty(shape, dtype),
@@ -81,8 +118,53 @@ def masked_all(shape, dtype=float):
     return a
 
 def masked_all_like(arr):
-    """Return an empty masked array of the same shape and dtype as
-    the array `a`, where all the data are masked.
+    """
+    Empty masked array with the properties of an existing array.
+
+    Return an empty masked array of the same shape and dtype as
+    the array `arr`, where all the data are masked.
+
+    Parameters
+    ----------
+    arr : ndarray
+        An array describing the shape and dtype of the required MaskedArray.
+
+    Returns
+    -------
+    a : MaskedArray
+        A masked array with all data masked.
+
+    Raises
+    ------
+    AttributeError
+        If `arr` doesn't have a shape attribute (i.e. not an ndarray)
+
+    See Also
+    --------
+    masked_all : Empty masked array with all elements masked.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> arr = np.zeros((2, 3), dtype=np.float32)
+    >>> arr
+    array([[ 0.,  0.,  0.],
+           [ 0.,  0.,  0.]], dtype=float32)
+    >>> ma.masked_all_like(arr)
+    masked_array(data =
+     [[-- -- --]
+     [-- -- --]],
+          mask =
+     [[ True  True  True]
+     [ True  True  True]],
+          fill_value=1e+20)
+
+    The dtype of the masked array matches the dtype of `arr`.
+
+    >>> arr.dtype
+    dtype('float32')
+    >>> ma.masked_all_like(arr).dtype
+    dtype('float32')
 
     """
     a = np.empty_like(arr).view(MaskedArray)
@@ -501,23 +583,77 @@ def compress_cols(a):
 
 def mask_rowcols(a, axis=None):
     """
+    Mask rows and/or columns of a 2D array that contain masked values.
+
     Mask whole rows and/or columns of a 2D array that contain
-    masked values.  The masking behavior is selected with the
+    masked values.  The masking behavior is selected using the
     `axis` parameter.
 
-        - If axis is None, rows and columns are masked.
-        - If axis is 0, only rows are masked.
-        - If axis is 1 or -1, only columns are masked.
+      - If `axis` is None, rows *and* columns are masked.
+      - If `axis` is 0, only rows are masked.
+      - If `axis` is 1 or -1, only columns are masked.
 
     Parameters
     ----------
+    a : array_like, MaskedArray
+        The array to mask.  If not a MaskedArray instance (or if no array
+        elements are masked).  The result is a MaskedArray with `mask` set
+        to `nomask` (False). Must be a 2D array.
     axis : int, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
+        Axis along which to perform the operation. If None, applies to a
+        flattened version of the array.
 
     Returns
     -------
-     a *pure* ndarray.
+    a : MaskedArray
+        A modified version of the input array, masked depending on the value
+        of the `axis` parameter.
+
+    Raises
+    ------
+    NotImplementedError
+        If input array `a` is not 2D.
+
+    See Also
+    --------
+    mask_rows : Mask rows of a 2D array that contain masked values.
+    mask_cols : Mask cols of a 2D array that contain masked values.
+    masked_where : Mask where a condition is met.
+
+    Notes
+    -----
+    The input array's mask is modified by this function.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a[1, 1] = 1
+    >>> a
+    array([[0, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0]])
+    >>> a = ma.masked_equal(a, 1)
+    >>> a
+    masked_array(data =
+     [[0 0 0]
+     [0 -- 0]
+     [0 0 0]],
+          mask =
+     [[False False False]
+     [False  True False]
+     [False False False]],
+          fill_value=999999)
+    >>> ma.mask_rowcols(a)
+    masked_array(data =
+     [[0 -- 0]
+     [-- -- --]
+     [0 -- 0]],
+          mask =
+     [[False  True False]
+     [ True  True  True]
+     [False  True False]],
+          fill_value=999999)
 
     """
     a = asarray(a)
@@ -537,26 +673,90 @@ def mask_rowcols(a, axis=None):
 
 def mask_rows(a, axis=None):
     """
-    Mask whole rows of a 2D array that contain masked values.
+    Mask rows of a 2D array that contain masked values.
 
-    Parameters
-    ----------
-    axis : int, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
+    This function is a shortcut to ``mask_rowcols`` with `axis` equal to 0.
+
+    See Also
+    --------
+    mask_rowcols : Mask rows and/or columns of a 2D array.
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a[1, 1] = 1
+    >>> a
+    array([[0, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0]])
+    >>> a = ma.masked_equal(a, 1)
+    >>> a
+    masked_array(data =
+     [[0 0 0]
+     [0 -- 0]
+     [0 0 0]],
+          mask =
+     [[False False False]
+     [False  True False]
+     [False False False]],
+          fill_value=999999)
+    >>> ma.mask_rows(a)
+    masked_array(data =
+     [[0 0 0]
+     [-- -- --]
+     [0 0 0]],
+          mask =
+     [[False False False]
+     [ True  True  True]
+     [False False False]],
+          fill_value=999999)
 
     """
     return mask_rowcols(a, 0)
 
 def mask_cols(a, axis=None):
     """
-    Mask whole columns of a 2D array that contain masked values.
+    Mask columns of a 2D array that contain masked values.
 
-    Parameters
-    ----------
-    axis : int, optional
-        Axis along which to perform the operation.
-        If None, applies to a flattened version of the array.
+    This function is a shortcut to ``mask_rowcols`` with `axis` equal to 1.
+
+    See Also
+    --------
+    mask_rowcols : Mask rows and/or columns of a 2D array.
+    masked_where : Mask where a condition is met.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a[1, 1] = 1
+    >>> a
+    array([[0, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0]])
+    >>> a = ma.masked_equal(a, 1)
+    >>> a
+    masked_array(data =
+     [[0 0 0]
+     [0 -- 0]
+     [0 0 0]],
+          mask =
+     [[False False False]
+     [False  True False]
+     [False False False]],
+          fill_value=999999)
+    >>> ma.mask_cols(a)
+    masked_array(data =
+     [[0 -- 0]
+     [0 -- 0]
+     [0 -- 0]],
+          mask =
+     [[False  True False]
+     [False  True False]
+     [False  True False]],
+          fill_value=999999)
 
     """
     return mask_rowcols(a, 1)

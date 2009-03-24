@@ -52,16 +52,15 @@ def ediff1d(ary, to_end=None, to_begin=None):
         If provided, this number will be taked onto the beginning of the
         returned differences.
 
-    Notes
-    -----
-    When applied to masked arrays, this function drops the mask information
-    if the `to_begin` and/or `to_end` parameters are used
-
-
     Returns
     -------
     ed : array
         The differences. Loosely, this will be (ary[1:] - ary[:-1]).
+
+    Notes
+    -----
+    When applied to masked arrays, this function drops the mask information
+    if the `to_begin` and/or `to_end` parameters are used
 
     """
     ary = np.asanyarray(ary).flat
@@ -285,10 +284,21 @@ def setmember1d(ar1, ar2):
     mask : ndarray, bool
         The values `ar1[mask]` are in `ar2`.
 
+
     See Also
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
+    Examples
+    --------
+    >>> test = np.arange(5)
+    >>> states = [0, 2]
+    >>> mask = np.setmember1d(test,states)
+    >>> mask
+    array([ True, False,  True, False, False], dtype=bool)
+    >>> test[mask]
+    array([0, 2])
 
     """
     ar1 = np.asarray( ar1 )

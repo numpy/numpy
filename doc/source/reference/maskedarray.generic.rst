@@ -30,6 +30,7 @@ The package ensures that masked entries are not used in computations.
 As an illustration, let's consider the following dataset::
 
    >>> import numpy as np
+   >>> import numpy.ma as ma
    >>> x = np.array([1, 2, 3, -1, 5])
 
 We wish to mark the fourth entry as invalid. The easiest is to create a masked
@@ -135,7 +136,7 @@ There are several ways to construct a masked array.
 Accessing the data
 ------------------
 
-The underlying data of a masked array can be accessed through several ways:
+The underlying data of a masked array can be accessed in several ways:
 
 * through the :attr:`~MaskedArray.data` attribute. The output is a view of the array as
   a :class:`numpy.ndarray` or one of its subclasses, depending on the type
@@ -148,8 +149,7 @@ The underlying data of a masked array can be accessed through several ways:
 * by using the :func:`getdata` function.
 
 
-None of these methods is completely satisfactory if some entries have been marked as invalid. As a general rule, invalid data should not be relied on.
-If a representation of the array is needed without any masked entries, it is recommended to fill the array with the :meth:`filled` method.
+None of these methods is completely satisfactory if some entries have been marked as invalid. As a general rule, where a representation of the array is required without any masked entries, it is recommended to fill the array with the :meth:`filled` method.
 
 
 
@@ -264,14 +264,14 @@ To unmask one or several specific entries, we can just assign one or several new
           fill_value = 999999)
 
 .. note::
-   Unmasking an entry by direct assignment will not work if the masked array
-   has a *hard* mask, as shown by the :attr:`~MaskedArray.hardmask` attribute.
-   This feature was introduced to prevent the overwriting of the mask.
-   To force the unmasking of an entry in such circumstance, the mask has first
-   to be softened with the :meth:`soften_mask` method before the allocation,
-   and then re-hardened with :meth:`harden_mask`::
+   Unmasking an entry by direct assignment will silently fail if the masked array
+   has a *hard* mask, as shown by the :attr:`hardmask` attribute.
+   This feature was introduced to prevent overwriting the mask.
+   To force the unmasking of an entry where the array has a hard mask, the mask must first
+   to be softened using the :meth:`soften_mask` method before the allocation. It can be re-hardened
+   with :meth:`harden_mask`::
 
-      >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
+      >>> x = ma.array([1, 2, 3], mask=[0, 0, 1], hard_mask=True)
       >>> x
       masked_array(data = [1 2 --],
                    mask = [False False  True],
@@ -287,17 +287,17 @@ To unmask one or several specific entries, we can just assign one or several new
       masked_array(data = [1 2 --],
                    mask = [False False  True],
              fill_value = 999999)
-      >>> x.soften_mask()
+      >>> x.harden_mask()
 
 
-To unmask all masked entries of a masked array, the simplest solution is to assign the constant :attr:`nomask` to the mask::
+To unmask all masked entries of a masked array (provided the mask isn't a hard mask), the simplest solution is to assign the constant :attr:`nomask` to the mask::
 
    >>> x = ma.array([1, 2, 3], mask=[0, 0, 1])
    >>> x
    masked_array(data = [1 2 --],
                 mask = [False False  True],
           fill_value = 999999)
-   >>> x.mask = nomask
+   >>> x.mask = ma.nomask
    >>> x
    masked_array(data = [1 2 3],
                 mask = [False False False],
@@ -364,14 +364,12 @@ Operations on masked arrays
 ---------------------------
 
 Arithmetic and comparison operations are supported by masked arrays.
-As much as possible, invalid entries of a masked array are not processed,
-meaning that the corresponding :attr:`~MaskedArray.data` entries *should* be
-the same before and after the operation.
+As much as possible, invalid entries of a masked array are not processed, meaning that the
+corresponding :attr:`data` entries *should* be the same before and after the operation.
 
 .. warning::
-   We need to stress that this behavior may not be systematic, that invalid
-   data may actually be affected by the operation in some cases and once again
-   that invalid data should not be relied on.
+   We need to stress that this behavior may not be systematic, that masked data may be affected
+   by the operation in some cases and therefore users should not rely on this data remaining unchanged.
 
 The :mod:`numpy.ma` module comes with a specific implementation of most
 ufuncs.

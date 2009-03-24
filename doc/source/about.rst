@@ -14,8 +14,8 @@ needed for scientific computing with Python. This package contains:
 
 Besides its obvious scientific uses, *NumPy* can also be used as an
 efficient multi-dimensional container of generic data. Arbitrary
-data-types can be defined. This allows *NumPy* to seamlessly and
-speedily integrate with a wide-variety of databases.
+data types can be defined. This allows *NumPy* to seamlessly and
+speedily integrate with a wide variety of databases.
 
 NumPy is a successor for two earlier scientific Python libraries:
 NumPy derives from the old *Numeric* code base and can be used
@@ -25,7 +25,7 @@ by *Numarray* and can also be used to replace *Numarray*.
 NumPy community
 ---------------
 
-Numpy is a distributed, volunteer open-source project. *You* can help
+Numpy is a distributed, volunteer, open-source project. *You* can help
 us make it better; if you believe something should be improved either
 in functionality or in documentation, don't hesitate to contact us --- or
 even better, contact us and participate in fixing the problem.
@@ -63,4 +63,3 @@ examples assume that you have first entered::
 >>> import numpy as np
 
 before running the examples.
-

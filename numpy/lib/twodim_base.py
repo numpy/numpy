@@ -10,7 +10,7 @@ from numpy.core.numeric import asanyarray, equal, subtract, arange, \
 
 def fliplr(m):
     """
-    Left-right flip.
+    Flip array in the left/right direction.
 
     Flip the entries in each row in the left/right direction.
     Columns are preserved, but appear in a different order than before.
@@ -33,7 +33,7 @@ def fliplr(m):
 
     Notes
     -----
-    Equivalent to A[::-1,...]. Does not require the array to be
+    Equivalent to A[:,::-1]. Does not require the array to be
     two-dimensional.
 
     Examples
@@ -60,7 +60,7 @@ def fliplr(m):
 
 def flipud(m):
     """
-    Up-down flip.
+    Flip array in the up/down direction.
 
     Flip the entries in each column in the up/down direction.
     Rows are preserved, but appear in a different order than before.
@@ -75,6 +75,11 @@ def flipud(m):
     out : array_like
         A view of `m` with the rows reversed.  Since a view is
         returned, this operation is :math:`\\mathcal O(1)`.
+
+    See Also
+    --------
+    fliplr : Flip array in the left/right direction.
+    rot90 : Rotate array counterclockwise.
 
     Notes
     -----
@@ -203,11 +208,22 @@ def diag(v, k=0):
     Parameters
     ----------
     v : array_like
-        If `v` is a 2-dimensional array, return a copy of
-        its `k`-th diagonal. If `v` is a 1-dimensional array,
-        return a 2-dimensional array with `v` on the `k`-th diagonal.
+        If `v` is a 2-D array, return a copy of its `k`-th diagonal.
+        If `v` is a 1-D array, return a 2-D array with `v` on the `k`-th
+        diagonal.
     k : int, optional
-        Diagonal in question.  The defaults is 0.
+        Diagonal in question. The default is 0.
+
+    Returns
+    -------
+    out : ndarray
+        The extracted diagonal or constructed diagonal array.
+
+    See Also
+    --------
+    diagonal : Return specified diagonals.
+    diagflat : Create a 2-D array with the flattened input as a diagonal.
+    trace : Sum along diagonals.
 
     Examples
     --------
@@ -255,7 +271,7 @@ def diag(v, k=0):
 
 def diagflat(v,k=0):
     """
-    Create a 2-dimensional array with the flattened input as a diagonal.
+    Create a two-dimensional array with the flattened input as a diagonal.
 
     Parameters
     ----------
@@ -265,9 +281,20 @@ def diagflat(v,k=0):
     k : int, optional
         Diagonal to set.  The default is 0.
 
+    Returns
+    -------
+    out : ndarray
+        The 2-D output array.
+
+    See Also
+    --------
+    diag : Matlab workalike for 1-D and 2-D arrays.
+    diagonal : Return specified diagonals.
+    trace : Sum along diagonals.
+
     Examples
     --------
-    >>> np.diagflat([[1,2],[3,4]])
+    >>> np.diagflat([[1,2], [3,4]])
     array([[1, 0, 0, 0],
            [0, 2, 0, 0],
            [0, 0, 3, 0],

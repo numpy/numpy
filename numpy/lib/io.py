@@ -212,6 +212,11 @@ def save(file, arr):
     x : array_like
         Array data.
 
+    See Also
+    --------
+    savez : Save several arrays into an .npz compressed archive
+    savetxt : Save an array to a file as plain text
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -237,21 +242,36 @@ def save(file, arr):
 
 def savez(file, *args, **kwds):
     """
-    Save several arrays into an .npz file format which is a zipped-archive
-    of arrays
+    Save several arrays into a single, compressed file with extension ".npz"
 
-    If keyword arguments are given, then filenames are taken from the keywords.
-    If arguments are passed in with no keywords, then stored file names are
-    arr_0, arr_1, etc.
+    If keyword arguments are given, the names for variables assigned to the
+    keywords are the keyword names (not the variable names in the caller).
+    If arguments are passed in with no keywords, the corresponding variable
+    names are arr_0, arr_1, etc.
 
     Parameters
     ----------
-    file : string
-        File name of .npz file.
+    file : Either the filename (string) or an open file (file-like object)
+        If file is a string, it names the output file.  ".npz" will be appended
+        if it is not already there.
     args : Arguments
-        Function arguments.
+        Any function arguments other than the file name are variables to save.
+        Since it is not possible for Python to know their names outside the
+        savez function, they will be saved with names "arr_0", "arr_1", and so
+        on.  These arguments can be any expression.
     kwds : Keyword arguments
-        Keywords.
+        All keyword=value pairs cause the value to be saved with the name of
+        the keyword.
+
+    See Also
+    --------
+    save : Save a single array to a binary file in NumPy format
+    savetxt : Save an array to a file as plain text
+
+    Notes
+    -----
+    The .npz file format is a zipped archive of files named after the variables
+    they contain.  Each file contains one variable in .npy format.
 
     """
 
@@ -509,6 +529,11 @@ def savetxt(fname, X, fmt='%.18e',delimiter=' '):
         case delimiter is ignored.
     delimiter : str
         Character separating columns.
+
+    See Also
+    --------
+    save : Save an array to a binary file in NumPy format
+    savez : Save several arrays into an .npz compressed archive
 
     Notes
     -----

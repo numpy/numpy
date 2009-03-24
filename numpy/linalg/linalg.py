@@ -202,6 +202,18 @@ def solve(a, b):
     LinAlgError
         If `a` is singular or not square.
 
+    Notes
+    -----
+
+    ``linalg.solve`` is a wrapper to the LAPACK http://www.netlib.org/lapack
+    routines `dgesv`_ and `zgesv`_.  The solution to the system of linear
+    equations is computed using an LU decomposition with partial pivoting and
+    row interchanges.
+
+    .. _dgesv: http://www.netlib.org/lapack/double/dgesv.f
+
+    .. _zgesv: http://www.netlib.org/lapack/complex16/zgesv.f
+
     Examples
     --------
     Solve the system of equations ``3 * x0 + x1 = 9`` and ``x0 + 2 * x1 = 8``:
@@ -756,16 +768,17 @@ def eig(a):
     complex arrays respectively.
 
     The number `w` is an eigenvalue of a if there exists a vector `v`
-    satisfying the equation ``dot(a,v) = w*v``. Alternately, if `w` is a root of
-    the characteristic equation ``det(a - w[i]*I) = 0``, where `det` is the
-    determinant and `I` is the identity matrix. The arrays `a`, `w`, and `v`
-    satisfy the equation ``dot(a,v[i]) = w[i]*v[:,i]``.
+    satisfying the equation ``dot(a,v) = w*v``. Alternately, if `w` is
+    a root of the characteristic equation ``det(a - w[i]*I) = 0``, where
+    `det` is the determinant and `I` is the identity matrix. The arrays
+    `a`, `w`, and `v` satisfy the equation ``dot(a,v[i]) = w[i]*v[:,i]``.
 
     The array `v` of eigenvectors may not be of maximum rank, that is, some
-    of the columns may be dependent, although roundoff error may obscure
-    that fact. If the eigenvalues are all different, then theoretically the
-    eigenvectors are independent. Likewise, the matrix of eigenvectors is
-    unitary if the matrix `a` is normal, i.e., if ``dot(a, a.H) = dot(a.H, a)``.
+    of the columns may be dependent, although roundoff error may
+    obscure that fact. If the eigenvalues are all different, then theoretically
+    the eigenvectors are independent. Likewise, the matrix of eigenvectors
+    is unitary if the matrix `a` is normal, i.e., if
+    ``dot(a, a.H) = dot(a.H, a)``.
 
     The left and right eigenvectors are not necessarily the (Hermitian)
     transposes of each other.
@@ -1332,7 +1345,7 @@ def norm(x, ord=None):
     ----------
     x : array_like, shape (M,) or (M, N)
         Input array.
-    ord : {int, 1, -1, 2, -2, inf, -inf, 'fro'}
+    ord : {2, int, inf, -inf, 'fro'}
         Order of the norm (see table under ``Notes``).
 
     Returns

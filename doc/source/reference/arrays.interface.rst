@@ -11,15 +11,18 @@ The Array Interface
 .. warning::
 
    This page describes the old, deprecated array interface. Everything still
-   works as described as of numpy 1.2 and on into the foreseeable future), but
+   works as described as of numpy 1.2 and on into the foreseeable future, but
    new development should target :pep:`3118` --
    :cfunc:`The Revised Buffer Protocol <PyObject_GetBuffer>`.
    :pep:`3118` was incorporated into Python 2.6 and 3.0, and is additionally
-   supported by Cython's numpy buffer support. (See the  Cython numpy
-   tutorial.) Cython provides a way to write code that supports the buffer
+   supported by Cython__'s numpy buffer support. (See the `Cython numpy
+   tutorial`__.) Cython provides a way to write code that supports the buffer
    protocol with Python versions older than 2.6 because it has a
    backward-compatible implementation utilizing the legacy array interface
    described here.
+
+__ http://cython.org/
+__ http://wiki.cython.org/tutorials/numpy
 
 :version: 3
 
@@ -206,6 +209,33 @@ array using only one attribute lookup and a well-defined C-structure.
    must also not reallocate their memory if other objects are
    referencing them.
 
+The PyArrayInterface structure is defined in ``numpy/ndarrayobject.h``
+as::
+
+  typedef struct {
+    int two;              /* contains the integer 2 -- simple sanity check */
+    int nd;               /* number of dimensions */
+    char typekind;        /* kind in array --- character code of typestr */
+    int itemsize;         /* size of each element */
+    int flags;            /* flags indicating how the data should be interpreted */
+                          /*   must set ARR_HAS_DESCR bit to validate descr */
+    Py_intptr_t *shape;   /* A length-nd array of shape information */
+    Py_intptr_t *strides; /* A length-nd array of stride information */
+    void *data;           /* A pointer to the first element of the array */
+    PyObject *descr;      /* NULL or data-description (same as descr key
+                                  of __array_interface__) -- must set ARR_HAS_DESCR
+                                  flag or this will be ignored. */
+  } PyArrayInterface;
+
+The flags member may consist of 5 bits showing how the data should be
+interpreted and one bit showing how the Interface should be
+interpreted.  The data-bits are :const:`CONTIGUOUS` (0x1),
+:const:`FORTRAN` (0x2), :const:`ALIGNED` (0x100), :const:`NOTSWAPPED`
+(0x200), and :const:`WRITEABLE` (0x400).  A final flag
+:const:`ARR_HAS_DESCR` (0x800) indicates whether or not this structure
+has the arrdescr field.  The field should not be accessed unless this
+flag is present.
+
 .. admonition:: New since June 16, 2006:
 
    In the past most implementations used the "desc" member of the
@@ -215,3 +245,92 @@ array using only one attribute lookup and a well-defined C-structure.
    This is now an explicit part of the interface.  Be sure to own a
    reference to the object when the :ctype:`PyCObject` is created using
    :ctype:`PyCObject_FromVoidPtrAndDesc`.
+
+
+Type description examples
+=========================
+
+For clarity it is useful to provide some examples of the type
+description and corresponding :data:`__array_interface__` 'descr'
+entries.  Thanks to Scott Gilbert for these examples:
+
+In every case, the 'descr' key is optional, but of course provides
+more information which may be important for various applications::
+
+     * Float data
+         typestr == '>f4'
+         descr == [('','>f4')]
+
+     * Complex double
+         typestr == '>c8'
+         descr == [('real','>f4'), ('imag','>f4')]
+
+     * RGB Pixel data
+         typestr == '|V3'
+         descr == [('r','|u1'), ('g','|u1'), ('b','|u1')]
+
+     * Mixed endian (weird but could happen).
+         typestr == '|V8' (or '>u8')
+         descr == [('big','>i4'), ('little','<i4')]
+
+     * Nested structure
+         struct {
+             int ival;
+             struct {
+                 unsigned short sval;
+                 unsigned char bval;
+                 unsigned char cval;
+             } sub;
+         }
+         typestr == '|V8' (or '<u8' if you want)
+         descr == [('ival','<i4'), ('sub', [('sval','<u2'), ('bval','|u1'), ('cval','|u1') ]) ]
+
+     * Nested array
+         struct {
+             int ival;
+             double data[16*4];
+         }
+         typestr == '|V516'
+         descr == [('ival','>i4'), ('data','>f8',(16,4))]
+
+     * Padded structure
+         struct {
+             int ival;
+             double dval;
+         }
+         typestr == '|V16'
+         descr == [('ival','>i4'),('','|V4'),('dval','>f8')]
+
+It should be clear that any record type could be described using this interface.
+
+Differences with Array interface (Version 2)
+============================================
+
+The version 2 interface was very similar.  The differences were
+largely asthetic.  In particular:
+
+1. The PyArrayInterface structure had no descr member at the end
+   (and therefore no flag ARR_HAS_DESCR)
+
+2. The desc member of the PyCObject returned from __array_struct__ was
+   not specified.  Usually, it was the object exposing the array (so
+   that a reference to it could be kept and destroyed when the
+   C-object was destroyed).  Now it must be a tuple whose first
+   element is a string with "PyArrayInterface Version #" and whose
+   second element is the object exposing the array.
+
+3. The tuple returned from __array_interface__['data'] used to be a
+   hex-string (now it is an integer or a long integer).
+
+4. There was no __array_interface__ attribute instead all of the keys
+   (except for version) in the __array_interface__ dictionary were
+   their own attribute: Thus to obtain the Python-side information you
+   had to access separately the attributes:
+
+   * __array_data__
+   * __array_shape__
+   * __array_strides__
+   * __array_typestr__
+   * __array_descr__
+   * __array_offset__
+   * __array_mask__
