@@ -8480,6 +8480,15 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (!m) {
         goto err;
     }
+
+#ifdef MS_WIN64
+  PyErr_WarnEx(PyExc_Warning,
+        "Windows 64 bits support is experimental, and only available for \n" \
+        "testing. You are advised not to use it for production. \n\n" \
+        "CRASHES ARE TO BE EXPECTED - PLEASE REPORT THEM TO NUMPY DEVELOPERS",
+        1);
+#endif
+
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {
