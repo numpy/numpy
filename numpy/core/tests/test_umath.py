@@ -507,7 +507,13 @@ class TestComplexFunctions(object):
         x_series = np.logspace(-20, -3.001, 200)
         x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
-        check(x_series, 2*eps)
+        if dtype is np.longcomplex:
+            # It's not guaranteed that the system-provided arc functions
+            # are accurate down to a few epsilons. (Eg. on Linux 64-bit)
+            # So, give more leeway for long complex tests here:
+            check(x_series, 50*eps)
+        else:
+            check(x_series, 2*eps)
         check(x_basic, 2*eps/1e-3)
 
         # Check a few points
