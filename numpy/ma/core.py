@@ -3025,7 +3025,7 @@ class MaskedArray(ndarray):
 
     Warnings
     --------
-        The mask is lost if out is not a valid :class:`MaskedArray` !
+    The mask is lost if out is not a valid :class:`MaskedArray` !
 
     Returns
     -------
@@ -3152,9 +3152,9 @@ class MaskedArray(ndarray):
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary.
 
-    Warning
-    -------
-        The mask is lost if out is not a valid MaskedArray !
+    Warnings
+    --------
+    The mask is lost if out is not a valid MaskedArray !
 
     Returns
     -------
