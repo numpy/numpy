@@ -3,11 +3,11 @@ How to extend NumPy
 *******************
 
 |    That which is static and repetitive is boring. That which is dynamic
-|    and random is confusing. In between lies art. 
-|    --- *John A. Locke* 
+|    and random is confusing. In between lies art.
+|    --- *John A. Locke*
 
-|    Science is a differential equation. Religion is a boundary condition. 
-|    --- *Alan Turing* 
+|    Science is a differential equation. Religion is a boundary condition.
+|    --- *Alan Turing*
 
 
 .. _`sec:Writing-an-extension`:
@@ -25,7 +25,7 @@ that numpy includes f2py so that an easy-to-use mechanisms for linking
 available. You are encouraged to use and improve this mechanism. The
 purpose of this section is not to document this tool but to document
 the more basic steps to writing an extension module that this tool
-depends on. 
+depends on.
 
 .. index::
    single: extension module
@@ -36,7 +36,7 @@ into Python as if it were a standard python file. It will contain
 objects and methods that have been defined and compiled in C code. The
 basic steps for doing this in Python are well-documented and you can
 find more information in the documentation for Python itself available
-online at `www.python.org <http://www.python.org>`_ . 
+online at `www.python.org <http://www.python.org>`_ .
 
 In addition to the Python C-API, there is a full and rich C-API for
 NumPy allowing sophisticated manipulations on a C-level. However, for
@@ -45,7 +45,7 @@ you need to do is extract a pointer to memory along with some shape
 information to pass to another calculation routine, then you will use
 very different calls, then if you are trying to create a new array-
 like type or add a new data type for ndarrays. This chapter documents
-the API calls and macros that are most commonly used. 
+the API calls and macros that are most commonly used.
 
 
 Required subroutine
@@ -63,7 +63,7 @@ to place these commands will show itself as an ugly segmentation fault
 actually possible to have multiple init{name} functions in a single
 file in which case multiple modules will be defined by that file.
 However, there are some tricks to get that to work correctly and it is
-not covered here. 
+not covered here.
 
 A minimal ``init{name}`` method looks like:
 
@@ -71,7 +71,7 @@ A minimal ``init{name}`` method looks like:
 
     PyMODINIT_FUNC
     init{name}(void)
-    { 
+    {
        (void)Py_InitModule({name}, mymethods);
        import_array();
     }
@@ -88,7 +88,7 @@ whatever you like to the module manually. An easier way to add objects
 to the module is to use one of three additional Python C-API calls
 that do not require a separate extraction of the module dictionary.
 These are documented in the Python documentation, but repeated here
-for convenience: 
+for convenience:
 
 .. cfunction:: int PyModule_AddObject(PyObject* module, char* name, PyObject* value)
 
@@ -132,12 +132,12 @@ this function, and 4) The docstring for the function. Any number of
 functions may be defined for a single module by adding more entries to
 this table. The last entry must be all NULL as shown to act as a
 sentinel. Python looks for this entry to know that all of the
-functions for the module have been defined. 
+functions for the module have been defined.
 
 The last thing that must be done to finish the extension module is to
 actually write the code that performs the desired functions. There are
 two kinds of functions: those that don't accept keyword arguments, and
-those that do. 
+those that do.
 
 
 Functions without keyword arguments
@@ -172,7 +172,7 @@ that may be of use. In particular, the :cfunc:`PyArray_DescrConverter`
 function is very useful to support arbitrary data-type specification.
 This function transforms any valid data-type Python object into a
 :ctype:`PyArray_Descr *` object. Remember to pass in the address of the
-C-variables that should be filled in. 
+C-variables that should be filled in.
 
 There are lots of examples of how to use :cfunc:`PyArg_ParseTuple`
 throughout the NumPy source code. The standard usage is like this:
@@ -196,7 +196,7 @@ was successful but the integer conversion failed, then you would need
 to release the reference count to the data-type object before
 returning. A typical way to do this is to set *dtype* to ``NULL``
 before calling :cfunc:`PyArg_ParseTuple` and then use :cfunc:`Py_XDECREF`
-on *dtype* before returning. 
+on *dtype* before returning.
 
 After the input arguments are processed, the code that actually does
 the work is written (likely calling other functions as needed). The
@@ -216,7 +216,7 @@ corresponding :ctype:`PyObject *` C-variable. You should use 'N' if you ave
 already created a reference for the object and just want to give that
 reference to the tuple. You should use 'O' if you only have a borrowed
 reference to an object and need to create one to provide for the
-tuple. 
+tuple.
 
 
 Functions with keyword arguments
@@ -243,11 +243,11 @@ char \*kwlist[], addresses...). The kwlist parameter to this function
 is a ``NULL`` -terminated array of strings providing the expected
 keyword arguments.  There should be one string for each entry in the
 format_string. Using this function will raise a TypeError if invalid
-keyword arguments are passed in. 
+keyword arguments are passed in.
 
 For more help on this function please see section 1.8 (Keyword
 Paramters for Extension Functions) of the Extending and Embedding
-tutorial in the Python documentation. 
+tutorial in the Python documentation.
 
 
 Reference counting
@@ -269,7 +269,7 @@ being not using DECREF on objects before exiting early from a routine
 due to some error. In second place, is the common error of not owning
 the reference on an object that is passed to a function or macro that
 is going to steal the reference ( *e.g.* :cfunc:`PyTuple_SET_ITEM`, and
-most functions that take :ctype:`PyArray_Descr` objects). 
+most functions that take :ctype:`PyArray_Descr` objects).
 
 .. index::
    single: reference counting
@@ -304,7 +304,7 @@ variable is deleted and the reference count decremented by one, there
 will still be that extra reference count, and the array will never be
 deallocated. You will have a reference-counting induced memory leak.
 Using the 'N' character will avoid this situation as it will return to
-the caller an object (inside the tuple) with a single reference count. 
+the caller an object (inside the tuple) with a single reference count.
 
 .. index::
    single: reference counting
@@ -318,7 +318,7 @@ Dealing with array objects
 Most extension modules for NumPy will need to access the memory for an
 ndarray object (or one of it's sub-classes). The easiest way to do
 this doesn't require you to know much about the internals of NumPy.
-The method is to 
+The method is to
 
 1. Ensure you are dealing with a well-behaved array (aligned, in machine
    byte-order and single-segment) of the correct type and number of
@@ -326,12 +326,12 @@ The method is to
 
     1. By converting it from some Python object using
        :cfunc:`PyArray_FromAny` or a macro built on it.
-    
+
     2. By constructing a new ndarray of your desired shape and type
        using :cfunc:`PyArray_NewFromDescr` or a simpler macro or function
        based on it.
-    
-    
+
+
 2. Get the shape of the array and a pointer to its actual data.
 
 3. Pass the data and shape information on to a subroutine or other
@@ -343,7 +343,7 @@ The method is to
    you can relax your requirements so as not to force a single-segment
    array and the data-copying that might result.
 
-Each of these sub-topics is covered in the following sub-sections. 
+Each of these sub-topics is covered in the following sub-sections.
 
 
 Converting an arbitrary sequence object
@@ -389,35 +389,35 @@ writeable). The syntax is
         requirements flag. A copy is made only if necessary. If you
         want to guarantee a copy, then pass in :cdata:`NPY_ENSURECOPY`
         to the requirements flag.
-    
+
     *typenum*
 
         One of the enumerated types or :cdata:`NPY_NOTYPE` if the data-type
         should be determined from the object itself. The C-based names
         can be used:
-    
+
             :cdata:`NPY_BOOL`, :cdata:`NPY_BYTE`, :cdata:`NPY_UBYTE`,
             :cdata:`NPY_SHORT`, :cdata:`NPY_USHORT`, :cdata:`NPY_INT`,
             :cdata:`NPY_UINT`, :cdata:`NPY_LONG`, :cdata:`NPY_ULONG`,
             :cdata:`NPY_LONGLONG`, :cdata:`NPY_ULONGLONG`, :cdata:`NPY_DOUBLE`,
             :cdata:`NPY_LONGDOUBLE`, :cdata:`NPY_CFLOAT`, :cdata:`NPY_CDOUBLE`,
-            :cdata:`NPY_CLONGDOUBLE`, :cdata:`NPY_OBJECT`. 
-        
+            :cdata:`NPY_CLONGDOUBLE`, :cdata:`NPY_OBJECT`.
+
         Alternatively, the bit-width names can be used as supported on the
         platform. For example:
-    
+
             :cdata:`NPY_INT8`, :cdata:`NPY_INT16`, :cdata:`NPY_INT32`,
             :cdata:`NPY_INT64`, :cdata:`NPY_UINT8`,
             :cdata:`NPY_UINT16`, :cdata:`NPY_UINT32`,
             :cdata:`NPY_UINT64`, :cdata:`NPY_FLOAT32`,
             :cdata:`NPY_FLOAT64`, :cdata:`NPY_COMPLEX64`,
             :cdata:`NPY_COMPLEX128`.
-        
+
         The object will be converted to the desired type only if it
         can be done without losing precision. Otherwise ``NULL`` will
         be returned and an error raised. Use :cdata:`NPY_FORCECAST` in the
         requirements flag to override this behavior.
-    
+
     *requirements*
 
         The memory model for an ndarray admits arbitrary strides in
@@ -431,7 +431,7 @@ writeable). The syntax is
         the array data. Both of these problems can be solved by
         converting the Python object into an array that is more
         "well-behaved" for your specific usage.
-    
+
         The requirements flag allows specification of what kind of array is
         acceptable. If the object passed in does not satisfy this requirements
         then a copy is made so that thre returned object will satisfy the
@@ -440,7 +440,7 @@ writeable). The syntax is
         returned array object. All of the flags are explained in the detailed
         API chapter. The flags most commonly needed are :cdata:`NPY_IN_ARRAY`,
         :cdata:`NPY_OUT_ARRAY`, and :cdata:`NPY_INOUT_ARRAY`:
-    
+
         .. cvar:: NPY_IN_ARRAY
 
             Equivalent to :cdata:`NPY_CONTIGUOUS` \|
@@ -448,7 +448,7 @@ writeable). The syntax is
             for arrays that must be in C-contiguous order and aligned.
             These kinds of arrays are usually input arrays for some
             algorithm.
-        
+
         .. cvar:: NPY_OUT_ARRAY
 
             Equivalent to :cdata:`NPY_CONTIGUOUS` \|
@@ -458,7 +458,7 @@ writeable). The syntax is
             as well. Such an array is usually returned as output
             (although normally such output arrays are created from
             scratch).
-        
+
         .. cvar:: NPY_INOUT_ARRAY
 
             Equivalent to :cdata:`NPY_CONTIGUOUS` \|
@@ -476,19 +476,19 @@ writeable). The syntax is
             with the :cdata:`NPY_UPDATEIFCOPY` flag set. This will
             delete the array without causing the contents to be copied
             back into the original array.
-        
-        
+
+
         Other useful flags that can be OR'd as additional requirements are:
-    
+
         .. cvar:: NPY_FORCECAST
 
             Cast to the desired type, even if it can't be done without losing
             information.
-        
+
         .. cvar:: NPY_ENSURECOPY
 
             Make sure the resulting array is a copy of the original.
-        
+
         .. cvar:: NPY_ENSUREARRAY
 
             Make sure the resulting object is an actual ndarray and not a sub-
@@ -514,7 +514,7 @@ to get an ndarray object of whatever data-type is needed. The most
 general function for doing this is :cfunc:`PyArray_NewFromDescr`. All array
 creation functions go through this heavily re-used code. Because of
 its flexibility, it can be somewhat confusing to use. As a result,
-simpler forms exist that are easier to use. 
+simpler forms exist that are easier to use.
 
 .. cfunction:: PyObject *PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
 
@@ -570,7 +570,7 @@ For arrays less than 4-dimensions there are :cfunc:`PyArray_GETPTR{k}`
 using the array strides easier. The arguments .... represent {k} non-
 negative integer indices into the array. For example, suppose ``E`` is
 a 3-dimensional ndarray. A (void*) pointer to the element ``E[i,j,k]``
-is obtained as :cfunc:`PyArray_GETPTR3` (E, i, j, k). 
+is obtained as :cfunc:`PyArray_GETPTR3` (E, i, j, k).
 
 As explained previously, C-style contiguous arrays and Fortran-style
 contiguous arrays have particular striding patterns. Two array flags
@@ -597,7 +597,7 @@ Example
 The following example shows how you might write a wrapper that accepts
 two input arguments (that will be converted to an array) and an output
 argument (that must be an array). The function returns None and
-updates the output array. 
+updates the output array.
 
 .. code-block:: c
 
@@ -606,33 +606,33 @@ updates the output array.
     {
         PyObject *arg1=NULL, *arg2=NULL, *out=NULL;
         PyObject *arr1=NULL, *arr2=NULL, *oarr=NULL;
-    
+
         if (!PyArg_ParseTuple(args, OOO&, &arg1, *arg2,
             &PyArrayType, *out)) return NULL;
-    
+
         arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY);
         if (arr1 == NULL) return NULL;
-        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_IN_ARRAY);  
+        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_IN_ARRAY);
         if (arr2 == NULL) goto fail;
         oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_INOUT_ARRAY);
         if (oarr == NULL) goto fail;
-    
+
         /* code that makes use of arguments */
-        /* You will probably need at least 
+        /* You will probably need at least
            nd = PyArray_NDIM(<..>)    -- number of dimensions
-           dims = PyArray_DIMS(<..>)  -- npy_intp array of length nd 
+           dims = PyArray_DIMS(<..>)  -- npy_intp array of length nd
                                          showing length in each dim.
            dptr = (double *)PyArray_DATA(<..>) -- pointer to data.
-      
+
            If an error occurs goto fail.
          */
-    
+
         Py_DECREF(arr1);
         Py_DECREF(arr2);
         Py_DECREF(oarr);
         Py_INCREF(Py_None);
         return Py_None;
-      
+
      fail:
         Py_XDECREF(arr1);
         Py_XDECREF(arr2);

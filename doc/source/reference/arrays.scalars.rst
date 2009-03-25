@@ -45,7 +45,7 @@ of the flexible itemsize array types (:class:`string`,
        scalar attributes are settable.
 
 .. _arrays.scalars.character-codes:
-   
+
 .. _arrays.scalars.built-in:
 
 Built-in scalar types
@@ -97,23 +97,23 @@ types is indicated: two types are compatible if their data is of the
 same size and interpreted in the same way.
 
 Booleans:
-   
+
 ===================  =============================  ===============
 Type                 Remarks                        Character code
 ===================  =============================  ===============
-:class:`bool_`       compatible: Python bool        ``'?'``        
+:class:`bool_`       compatible: Python bool        ``'?'``
 :class:`bool8`       8 bits
 ===================  =============================  ===============
 
 Integers:
 
 ===================  =============================  ===============
-:class:`byte`        compatible: C char             ``'b'``        
-:class:`short`       compatible: C short            ``'h'``        
-:class:`intc`        compatible: C int              ``'i'``        
-:class:`int_`        compatible: Python int         ``'l'``        
-:class:`longlong`    compatible: C long long        ``'q'``        
-:class:`intp`        large enough to fit a pointer  ``'p'``        
+:class:`byte`        compatible: C char             ``'b'``
+:class:`short`       compatible: C short            ``'h'``
+:class:`intc`        compatible: C int              ``'i'``
+:class:`int_`        compatible: Python int         ``'l'``
+:class:`longlong`    compatible: C long long        ``'q'``
+:class:`intp`        large enough to fit a pointer  ``'p'``
 :class:`int8`        8 bits
 :class:`int16`       16 bits
 :class:`int32`       32 bits
@@ -123,12 +123,12 @@ Integers:
 Unsigned integers:
 
 ===================  =============================  ===============
-:class:`ubyte`       compatible: C unsigned char    ``'B'``        
-:class:`ushort`      compatible: C unsigned short   ``'H'``        
-:class:`uintc`       compatible: C unsigned int     ``'I'``        
-:class:`uint`        compatible: Python int         ``'L'``        
-:class:`ulonglong`   compatible: C long long        ``'Q'``        
-:class:`uintp`       large enough to fit a pointer  ``'P'``        
+:class:`ubyte`       compatible: C unsigned char    ``'B'``
+:class:`ushort`      compatible: C unsigned short   ``'H'``
+:class:`uintc`       compatible: C unsigned int     ``'I'``
+:class:`uint`        compatible: Python int         ``'L'``
+:class:`ulonglong`   compatible: C long long        ``'Q'``
+:class:`uintp`       large enough to fit a pointer  ``'P'``
 :class:`uint8`       8 bits
 :class:`uint16`      16 bits
 :class:`uint32`      32 bits
@@ -138,10 +138,10 @@ Unsigned integers:
 Floating-point numbers:
 
 ===================  =============================  ===============
-:class:`single`      compatible: C float            ``'f'``        
+:class:`single`      compatible: C float            ``'f'``
 :class:`double`      compatible: C double
-:class:`float_`      compatible: Python float       ``'d'``        
-:class:`longfloat`   compatible: C long float       ``'g'``        
+:class:`float_`      compatible: Python float       ``'d'``
+:class:`longfloat`   compatible: C long float       ``'g'``
 :class:`float32`     32 bits
 :class:`float64`     64 bits
 :class:`float96`     92 bits, platform?
@@ -151,8 +151,8 @@ Floating-point numbers:
 Complex floating-point numbers:
 
 ===================  =============================  ===============
-:class:`csingle`                                    ``'F'``        
-:class:`complex_`    compatible: Python complex     ``'D'``        
+:class:`csingle`                                    ``'F'``
+:class:`complex_`    compatible: Python complex     ``'D'``
 :class:`clongfloat`                                 ``'G'``
 :class:`complex64`   two 32-bit floats
 :class:`complex128`  two 64-bit floats
@@ -165,7 +165,7 @@ Complex floating-point numbers:
 Any Python object:
 
 ===================  =============================  ===============
-:class:`object_`     any Python object              ``'O'``        
+:class:`object_`     any Python object              ``'O'``
 ===================  =============================  ===============
 
 .. note::

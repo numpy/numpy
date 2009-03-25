@@ -12,7 +12,7 @@ The Array Interface
 
    This page describes the old, deprecated array interface. Everything still
    works as described as of numpy 1.2 and on into the foreseeable future), but
-   new development should target :pep:`3118` -- 
+   new development should target :pep:`3118` --
    :cfunc:`The Revised Buffer Protocol <PyObject_GetBuffer>`.
    :pep:`3118` was incorporated into Python 2.6 and 3.0, and is additionally
    supported by Cython's numpy buffer support. (See the  Cython numpy
@@ -73,13 +73,13 @@ This approach to the interface consists of the object having an
        the byteorder of the data (``<``: little-endian, ``>``:
        big-endian, ``|``: not-relevant), a character code giving the
        basic type of the array, and an integer providing the number of
-       bytes the type uses.  
+       bytes the type uses.
 
        The basic type character codes are:
-       
+
        =====  ================================================================
-       ``t``  Bit field (following integer gives the number of 
-              bits in the bit field). 
+       ``t``  Bit field (following integer gives the number of
+              bits in the bit field).
        ``b``  Boolean (integer type where all values are only True or False)
        ``i``  Integer
        ``u``  Unsigned integer
@@ -169,14 +169,14 @@ This approach to the interface consists of the object having an
        <arrays.broadcasting.broadcastable>` to the shape of the
        original array.
 
-       **Default**: :const:`None` (All array values are valid) 
+       **Default**: :const:`None` (All array values are valid)
 
    **offset** (optional)
 
        An integer offset into the array data region. This can only be
        used when data is :const:`None` or returns a :class:`buffer`
        object.
-       
+
        **Default**: 0.
 
    **version** (required)
@@ -207,7 +207,7 @@ array using only one attribute lookup and a well-defined C-structure.
    referencing them.
 
 .. admonition:: New since June 16, 2006:
-    
+
    In the past most implementations used the "desc" member of the
    :ctype:`PyCObject` itself (do not confuse this with the "descr" member of
    the :ctype:`PyArrayInterface` structure above --- they are two separate

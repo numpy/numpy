@@ -149,7 +149,7 @@ def get_documented_in_lines(lines, module=None, filename=None):
     autodoc_re = re.compile(".. auto(function|method|attribute|class|exception|module)::\s*([A-Za-z0-9_.]+)\s*$")
     autosummary_re = re.compile(r'^\.\.\s+autosummary::\s*')
     module_re = re.compile(r'^\.\.\s+(current)?module::\s*([a-zA-Z0-9_.]+)\s*$')
-    autosummary_item_re = re.compile(r'^\s+([_a-zA-Z][a-zA-Z0-9_.]*)\s*')
+    autosummary_item_re = re.compile(r'^\s+([_a-zA-Z][a-zA-Z0-9_.]*)\s*.*?')
     toctree_arg_re = re.compile(r'^\s+:toctree:\s*(.*?)\s*$')
     
     documented = {}

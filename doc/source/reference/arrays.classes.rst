@@ -121,7 +121,7 @@ arrays:
     matrix-multiplication and matrix power, respectively. If your
     subroutine can accept sub-classes and you do not convert to base-class
     arrays, then you must use the ufuncs multiply and power to be sure
-    that you are performing the correct operation for all inputs. 
+    that you are performing the correct operation for all inputs.
 
 The matrix class is a Python subclass of the ndarray and can be used
 as a reference for how to construct your own subclass of the ndarray.
@@ -170,7 +170,7 @@ entire file into memory. A simple subclass of the ndarray uses a
 memory-mapped file for the data buffer of the array. For small files,
 the over-head of reading the entire file into memory is typically not
 significant, however for large files using memory mapping can save
-considerable resources. 
+considerable resources.
 
 Memory-mapped-file arrays have one additional method (besides those
 they inherit from the ndarray): :meth:`.flush() <memmap.flush>` which
@@ -182,7 +182,7 @@ array actually get written to disk.
     Memory-mapped arrays use the the Python memory-map object which (prior
     to Python 2.5) does not allow files to be larger than a certain size
     depending on the platform. This size is always < 2GB even on 64-bit
-    systems. 
+    systems.
 
 .. autosummary::
    :toctree: generated/
@@ -227,7 +227,7 @@ data-type. However, a chararray can also be created using the
 :func:`numpy.char.array` function:
 
 .. autosummary::
-   :toctree: generated/ 
+   :toctree: generated/
 
    chararray
    core.defchararray.array
@@ -235,7 +235,7 @@ data-type. However, a chararray can also be created using the
 Another difference with the standard ndarray of string data-type is
 that the chararray inherits the feature introduced by Numarray that
 white-space at the end of any element in the array will be ignored on
-item retrieval and comparison operations. 
+item retrieval and comparison operations.
 
 
 .. _arrays.classes.rec:
@@ -321,7 +321,7 @@ used as an iterator. The default behavior is equivalent to::
         val = arr[i]
 
 This default iterator selects a sub-array of dimension :math:`N-1` from the array. This can be a useful construct for defining recursive
-algorithms. To loop over the entire array requires :math:`N` for-loops. 
+algorithms. To loop over the entire array requires :math:`N` for-loops.
 
 >>> a = arange(24).reshape(3,2,4)+10
 >>> for val in a:
@@ -344,7 +344,7 @@ Flat iteration
 
 As mentioned previously, the flat attribute of ndarray objects returns
 an iterator that will cycle over the entire array in C-style
-contiguous order. 
+contiguous order.
 
 >>> for i, val in enumerate(a.flat):
 ...     if i%5 == 0: print i, val
@@ -355,7 +355,7 @@ contiguous order.
 20 30
 
 Here, I've used the built-in enumerate iterator to return the iterator
-index as well as the value. 
+index as well as the value.
 
 
 N-dimensional enumeration
@@ -367,7 +367,7 @@ N-dimensional enumeration
    ndenumerate
 
 Sometimes it may be useful to get the N-dimensional index while
-iterating. The ndenumerate iterator can achieve this. 
+iterating. The ndenumerate iterator can achieve this.
 
 >>> for i, val in ndenumerate(a):
 ...     if sum(i)%5 == 0: print i, val

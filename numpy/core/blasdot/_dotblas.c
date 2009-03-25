@@ -77,8 +77,9 @@ CDOUBLE_dot(void *a, npy_intp stridea, void *b, npy_intp strideb, void *res,
 
 static npy_bool altered=NPY_FALSE;
 
-static char doc_alterdot[] = "alterdot() changes all dot functions to use blas.";
-
+/*
+ * alterdot() changes all dot functions to use blas.
+ */
 static PyObject *
 dotblas_alterdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
@@ -112,8 +113,9 @@ dotblas_alterdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return Py_None;
 }
 
-static char doc_restoredot[] = "restoredot() restores dots to defaults.";
-
+/*
+ * restoredot() restores dots to defaults.
+ */
 static PyObject *
 dotblas_restoredot(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
@@ -196,12 +198,13 @@ _bad_strides(PyArrayObject *ap)
     return 0;
 }
 
-static char doc_matrixproduct[] = \
-    "dot(a,b)\nReturns the dot product of a and b for arrays of " \
-    "floating point types.\nLike the generic numpy equivalent the " \
-    "product sum is over\nthe last dimension of a and the second-to-last "\
-    "dimension of b.\nNB: The first argument is not conjugated.";
-
+/*
+ * dot(a,b)
+ * Returns the dot product of a and b for arrays of floating point types.
+ * Like the generic numpy equivalent the product sum is over
+ * the last dimension of a and the second-to-last dimension of b.
+ * NB: The first argument is not conjugated.;
+ */
 static PyObject *
 dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
@@ -796,11 +799,14 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 
-static char doc_innerproduct[] = \
-    "innerproduct(a,b)\nReturns the inner product of a and b for arrays of "\
-    "floating point types.\nLike the generic NumPy equivalent the product "\
-    "sum is over\nthe last dimension of a and b.\nNB: The first argument is "\
-    "not conjugated.";
+/*
+ * innerproduct(a,b)
+ *
+ * Returns the inner product of a and b for arrays of
+ * floating point types. Like the generic NumPy equivalent the product
+ * sum is over the last dimension of a and b.
+ * NB: The first argument is not conjugated.
+ */
 
 static PyObject *
 dotblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
@@ -1048,9 +1054,12 @@ dotblas_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 
-static char doc_vdot[] = "vdot(a,b)\nReturns the dot product of a and b for scalars and vectors\nof floating point and complex types.  The first argument, a, is conjugated.";
-
-
+/*
+ * vdot(a,b)
+ *
+ * Returns the dot product of a and b for scalars and vectors of
+ * floating point and complex types.  The first argument, a, is conjugated.
+ */
 static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
     PyObject *op1, *op2;
     PyArrayObject *ap1=NULL, *ap2=NULL, *ret=NULL;
@@ -1151,11 +1160,11 @@ static PyObject *dotblas_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args) {
 }
 
 static struct PyMethodDef dotblas_module_methods[] = {
-    {"dot",  (PyCFunction)dotblas_matrixproduct, 1, doc_matrixproduct},
-    {"inner",   (PyCFunction)dotblas_innerproduct,  1, doc_innerproduct},
-    {"vdot", (PyCFunction)dotblas_vdot, 1, doc_vdot},
-    {"alterdot", (PyCFunction)dotblas_alterdot, 1, doc_alterdot},
-    {"restoredot", (PyCFunction)dotblas_restoredot, 1, doc_restoredot},
+    {"dot",  (PyCFunction)dotblas_matrixproduct, 1, NULL},
+    {"inner",   (PyCFunction)dotblas_innerproduct,  1, NULL},
+    {"vdot", (PyCFunction)dotblas_vdot, 1, NULL},
+    {"alterdot", (PyCFunction)dotblas_alterdot, 1, NULL},
+    {"restoredot", (PyCFunction)dotblas_restoredot, 1, NULL},
     {NULL, NULL, 0, NULL}		/* sentinel */
 };
 

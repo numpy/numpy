@@ -12,12 +12,12 @@ Ones and zeros
 .. autosummary::
    :toctree: generated/
 
-   empty 
-   empty_like 
-   eye 
-   identity 
-   ones 
-   ones_like 
+   empty
+   empty_like
+   eye
+   identity
+   ones
+   ones_like
    zeros
    zeros_like
 
@@ -26,16 +26,16 @@ From existing data
 .. autosummary::
    :toctree: generated/
 
-   array 
-   asarray 
+   array
+   asarray
    asanyarray
    ascontiguousarray
    asmatrix
    copy
    frombuffer
-   fromfile 
-   fromfunction 
-   fromiter 
+   fromfile
+   fromfunction
+   fromiter
    loadtxt
 
 .. _routines.array-creation.rec:

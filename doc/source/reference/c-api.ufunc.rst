@@ -15,7 +15,7 @@ Constants
     ``{HANDLER}`` can be **IGNORE**, **WARN**, **RAISE**, or **CALL**
 
 .. cvar:: UFUNC_{THING}_{ERR}
-    
+
     ``{THING}`` can be **MASK**, **SHIFT**, or **FPE**, and ``{ERR}`` can
     be **DIVIDEBYZERO**, **OVERFLOW**, **UNDERFLOW**, and **INVALID**.
 
@@ -35,7 +35,7 @@ Macros
     declaration area.
 
 .. cmacro:: NPY_LOOP_END_THREADS
-    
+
     Used in universal function code to re-acquire the Python GIL if it
     was released (because loop->obj was not true).
 
@@ -71,42 +71,42 @@ Functions
     implementing the basic functionality for each supported type.
 
     :param nin:
-        
+
         The number of inputs to this operation.
 
     :param nout:
-        
+
         The number of outputs
 
     :param ntypes:
-        
+
         How many different data-type "signatures" the ufunc has implemented.
 
     :param func:
-        
+
         Must to an array of length *ntypes* containing
         :ctype:`PyUFuncGenericFunction` items. These items are pointers to
         functions that acutally implement the underlying
         (element-by-element) function :math:`N` times. T
 
     :param types:
-        
+
         Must be of length (*nin* + *nout*) \* *ntypes*, and it
         contains the data-types (built-in only) that the corresponding
         function in the *func* array can deal with.
 
     :param data:
-        
+
         Should be ``NULL`` or a pointer to an array of size *ntypes*
         . This array may contain arbitrary extra-data to be passed to
         the corresponding 1-d loop function in the func array.
 
     :param name:
-        
+
         The name for the ufunc.
 
     :param doc:
-        
+
         Allows passing in a documentation string to be stored with the
         ufunc.  The documentation string should not contain the name
         of the function or the calling signature as that will be
@@ -114,7 +114,7 @@ Functions
         accessing the **__doc__** attribute of the ufunc.
 
     :param check_return:
-        
+
         Unused and present for backwards compatibility of the C-API. A
         corresponding *check_return* integer does exist in the ufunc
         structure and it does get set with this value when the ufunc
@@ -307,7 +307,7 @@ Importing the API
 -----------------
 
 .. cvar:: PY_UFUNC_UNIQUE_SYMBOL
-    
+
 .. cvar:: NO_IMPORT_UFUNC
 
 .. cfunction:: void import_ufunc(void)
@@ -330,6 +330,6 @@ Importing the API
     global variable is either statically defined or allowed to be seen
     by other files depending on the state of
     :cdata:`Py_UFUNC_UNIQUE_SYMBOL` and :cdata:`NO_IMPORT_UFUNC`.
-    
+
 .. index::
    pair: ufunc; C-API

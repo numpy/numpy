@@ -48,4 +48,4 @@ Histograms
    histogram2d
    histogramdd
    bincount
-   digitize 
+   digitize

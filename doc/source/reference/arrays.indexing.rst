@@ -14,8 +14,8 @@ Indexing
 There are three kinds of indexing available: record access, basic
 slicing, advanced indexing. Which one occurs depends on *obj*.
 
-.. note:: 
-   
+.. note::
+
    In Python, ``x[(exp1, exp2, ..., expN)]`` is equivalent to
    ``x[exp1, exp2, ..., expN]``; the latter is just syntactic sugar
    for the former.
@@ -151,7 +151,7 @@ concepts to remember include:
   .. warning:: The above is **not** true for advanced slicing.
 
 - You may use slicing to set values in the array, but (unlike lists) you
-  can never grow the array. The size of the value to be set in 
+  can never grow the array. The size of the value to be set in
   ``x[obj] = value`` must be (broadcastable) to the same shape as
   ``x[obj]``.
 
@@ -169,7 +169,7 @@ concepts to remember include:
     of arbitrary dimension.
 
 .. data:: newaxis
- 
+
    The :const:`newaxis` object can be used in the basic slicing syntax
    discussed above. :const:`None` can also be used instead of
    :const:`newaxis`.
@@ -182,7 +182,7 @@ Advanced indexing is triggered when the selection object, *obj*, is a
 non-tuple sequence object, an :class:`ndarray` (of data type integer or bool),
 or a tuple with at least one sequence object or ndarray (of data type
 integer or bool). There are two types of advanced indexing: integer
-and Boolean. 
+and Boolean.
 
 Advanced indexing always returns a *copy* of the data (contrast with
 basic slicing that returns a :term:`view`).
@@ -200,7 +200,7 @@ tuple. The rules of advanced integer-style indexing are:
 
 - If the length of the selection tuple is larger than *N* an error is raised.
 
-- All sequences and scalars in the selection tuple are converted to 
+- All sequences and scalars in the selection tuple are converted to
   :class:`intp` indexing arrays.
 
 - All selection tuple objects must be convertible to :class:`intp`
@@ -221,7 +221,7 @@ tuple. The rules of advanced integer-style indexing are:
 
 - The shape of the output (or the needed shape of the object to be used
   for setting) is the broadcasted shape.
-    
+
 - After expanding any ellipses and filling out any missing ``:``
   objects in the selection tuple, then let :math:`N_t` be the number
   of indexing arrays, and let :math:`N_s = N - N_t` be the number of
@@ -230,9 +230,9 @@ tuple. The rules of advanced integer-style indexing are:
 
 - If :math:`N_s = 0` then the *M*-dimensional result is constructed by
   varying the index tuple ``(i_1, ..., i_M)`` over the range
-  of the result shape and for each value of the index tuple 
+  of the result shape and for each value of the index tuple
   ``(ind_1, ..., ind_M)``::
-  
+
      result[i_1, ..., i_M] == x[ind_1[i_1, ..., i_M], ind_2[i_1, ..., i_M],
                                 ..., ind_N[i_1, ..., i_M]]
 
@@ -244,7 +244,7 @@ tuple. The rules of advanced integer-style indexing are:
      *i, j, k* yields::
 
          result[i,j,k] = x[ind_1[i,j,k], ind_2[i,j,k]]
-    
+
 - If :math:`N_s > 0`, then partial indexing is done. This can be
   somewhat mind-boggling to understand, but if you think in terms of
   the shapes of the arrays involved, it can be easier to grasp what
@@ -269,7 +269,7 @@ tuple. The rules of advanced integer-style indexing are:
      we let *i, j, k* loop over the (2,3,4)-shaped subspace then
      ``result[...,i,j,k,:] = x[...,ind[i,j,k],:]``. This example
      produces the same result as :meth:`x.take(ind, axis=-2) <ndarray.take>`.
-    
+
   .. admonition:: Example
 
       Now let ``x.shape`` be (10,20,30,40,50) and suppose ``ind_1``
@@ -305,7 +305,7 @@ bounds of *x*, then an index error will be raised.
 You can also use Boolean arrays as element of the selection tuple. In
 such instances, they will always be interpreted as :meth:`nonzero(obj)
 <ndarray.nonzero>` and the equivalent integer indexing will be
-done. 
+done.
 
 .. warning::
 

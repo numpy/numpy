@@ -549,7 +549,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'inner',
+add_newdoc('numpy.core', 'inner',
     """
     inner(a, b)
 
@@ -939,6 +939,167 @@ add_newdoc('numpy.core.multiarray','getbuffer',
     read-write buffer is attempted followed by a read-only buffer.
 
     """)
+
+add_newdoc('numpy.core', 'dot',
+    """
+    dot(a, b)
+
+    Dot product of two arrays.
+
+    For 2-D arrays it is equivalent to matrix multiplication, and for 1-D
+    arrays to inner product of vectors (without complex conjugation). For
+    N dimensions it is a sum product over the last axis of `a` and
+    the second-to-last of `b`::
+
+        dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
+    Parameters
+    ----------
+    a : array_like
+        First argument.
+    b : array_like
+        Second argument.
+
+    Returns
+    -------
+    output : ndarray
+        Returns the dot product of `a` and `b`.  If `a` and `b` are both
+        scalars or both 1-D arrays then a scalar is returned; otherwise
+        an array is returned.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `a` is not the same size as
+        the second-to-last dimension of `b`.
+
+    See Also
+    --------
+    vdot : Complex-conjugating dot product.
+    tensordot : Sum products over arbitrary axes.
+
+    Examples
+    --------
+    >>> np.dot(3, 4)
+    12
+
+    Neither argument is complex-conjugated:
+
+    >>> np.dot([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    For 2-D arrays it's the matrix product:
+
+    >>> a = [[1, 0], [0, 1]]
+    >>> b = [[4, 1], [2, 2]]
+    >>> np.dot(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    >>> a = np.arange(3*4*5*6).reshape((3,4,5,6))
+    >>> b = np.arange(3*4*5*6)[::-1].reshape((5,4,6,3))
+    >>> np.dot(a, b)[2,3,2,1,2,2]
+    499128
+    >>> sum(a[2,3,2,:] * b[1,2,:,2])
+    499128
+
+    """)
+
+add_newdoc('numpy.core', 'alterdot',
+    """
+    Change `dot`, `vdot`, and `innerproduct` to use accelerated BLAS functions.
+
+    Typically, as a user of Numpy, you do not explicitly call this function. If
+    Numpy is built with an accelerated BLAS, this function is automatically
+    called when Numpy is imported.
+
+    When Numpy is built with an accelerated BLAS like ATLAS, these functions
+    are replaced to make use of the faster implementations.  The faster
+    implementations only affect float32, float64, complex64, and complex128
+    arrays. Furthermore, the BLAS API only includes matrix-matrix,
+    matrix-vector, and vector-vector products. Products of arrays with larger
+    dimensionalities use the built in functions and are not accelerated.
+
+    See Also
+    --------
+    restoredot : `restoredot` undoes the effects of `alterdot`.
+
+    """)
+
+add_newdoc('numpy.core', 'restoredot',
+    """
+    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
+    implementations.
+
+    Typically, the user will only need to call this when troubleshooting and
+    installation problem, reproducing the conditions of a build without an
+    accelerated BLAS, or when being very careful about benchmarking linear
+    algebra operations.
+
+    See Also
+    --------
+    alterdot : `restoredot` undoes the effects of `alterdot`.
+
+    """)
+
+add_newdoc('numpy.core', 'vdot',
+    """
+    Return the dot product of two vectors.
+
+    The vdot(`a`, `b`) function handles complex numbers differently than
+    dot(`a`, `b`).  If the first argument is complex the complex conjugate
+    of the first argument is used for the calculation of the dot product.
+
+    For 2-D arrays it is equivalent to matrix multiplication, and for 1-D
+    arrays to inner product of vectors (with complex conjugation of `a`).
+    For N dimensions it is a sum product over the last axis of `a` and
+    the second-to-last of `b`::
+
+        dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
+
+    Parameters
+    ----------
+    a : array_like
+        If `a` is complex the complex conjugate is taken before calculation
+        of the dot product.
+    b : array_like
+        Second argument to the dot product.
+
+    Returns
+    -------
+    output : ndarray
+        Returns dot product of `a` and `b`.  Can be an int, float, or
+        complex depending on the types of `a` and `b`.
+
+    See Also
+    --------
+    dot : Return the dot product without using the complex conjugate of the
+          first argument.
+
+    Notes
+    -----
+    The dot product is the summation of element wise multiplication.
+
+    .. math::
+     a \\cdot b = \\sum_{i=1}^n a_i^*b_i = a_1^*b_1+a_2^*b_2+\\cdots+a_n^*b_n
+
+    Examples
+    --------
+    >>> a = np.array([1+2j,3+4j])
+    >>> b = np.array([5+6j,7+8j])
+    >>> np.vdot(a, b)
+    (70-8j)
+    >>> np.vdot(b, a)
+    (70+8j)
+    >>> a = np.array([[1, 4], [5, 6]])
+    >>> b = np.array([[4, 1], [2, 2]])
+    >>> np.vdot(a, b)
+    30
+    >>> np.vdot(b, a)
+    30
+
+    """)
+
 
 ##############################################################################
 #

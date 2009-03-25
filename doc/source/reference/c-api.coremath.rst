@@ -3,6 +3,8 @@ Numpy core libraries
 
 .. sectionauthor:: David Cournapeau
 
+.. versionadded:: 1.3.0
+
 Starting from numpy 1.3.0, we are working on separating the pure C,
 "computational" code from the python dependent code. The goal is twofolds:
 making the code cleaner, and enabling code reuse by other extensions outside

@@ -86,7 +86,7 @@ Attributes and properties of masked arrays
 .. attribute:: MaskedArray.mask
 
    Returns the underlying mask, as an array with the same shape and structure
-   as the data, but where all fields are atomically booleans. 
+   as the data, but where all fields are atomically booleans.
    A value of ``True`` indicates an invalid entry.
 
 
@@ -122,7 +122,7 @@ Attributes and properties of masked arrays
    object    '?'
    string    'N/A'
    ========  ========
-   
+
 
 
 .. attribute:: MaskedArray.baseclass
@@ -319,7 +319,7 @@ Arithmetic:
 
 .. autosummary::
    :toctree: generated/
-   
+
    MaskedArray.__abs__
    MaskedArray.__add__
    MaskedArray.__radd__
@@ -356,7 +356,7 @@ Arithmetic, in-place:
 
 .. autosummary::
    :toctree: generated/
-   
+
    MaskedArray.__iadd__
    MaskedArray.__isub__
    MaskedArray.__imul__

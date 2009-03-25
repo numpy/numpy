@@ -86,7 +86,7 @@ PyArray_Type
           npy_intp *dimensions;
           npy_intp *strides;
           PyObject *base;
-          PyArray_Descr *descr;  
+          PyArray_Descr *descr;
           int flags;
           PyObject *weakreflist;
       } PyArrayObject;
@@ -182,7 +182,7 @@ PyArrayDescr_Type
 
    The format of the :ctype:`PyArray_Descr` structure that lies at the
    heart of the :cdata:`PyArrayDescr_Type` is
-   
+
    .. code-block:: c
 
       typedef struct {
@@ -236,65 +236,65 @@ PyArrayDescr_Type
     as:
 
     .. cvar:: NPY_ITEM_REFCOUNT
-    
+
     .. cvar:: NPY_ITEM_HASOBJECT
-    
+
         Indicates that items of this data-type must be reference
         counted (using :cfunc:`Py_INCREF` and :cfunc:`Py_DECREF` ).
-    
+
     .. cvar:: NPY_ITEM_LISTPICKLE
-    
+
         Indicates arrays of this data-type must be converted to a list
         before pickling.
-    
+
     .. cvar:: NPY_ITEM_IS_POINTER
-    
+
         Indicates the item is a pointer to some other data-type
-    
+
     .. cvar:: NPY_NEEDS_INIT
-    
+
         Indicates memory for this data-type must be initialized (set
         to 0) on creation.
-    
+
     .. cvar:: NPY_NEEDS_PYAPI
-    
+
         Indicates this data-type requires the Python C-API during
         access (so don't give up the GIL if array access is going to
         be needed).
-    
+
     .. cvar:: NPY_USE_GETITEM
-    
+
         On array access use the ``f->getitem`` function pointer
         instead of the standard conversion to an array scalar. Must
         use if you don't define an array scalar to go along with
         the data-type.
-    
+
     .. cvar:: NPY_USE_SETITEM
-                                                                          
+
         When creating a 0-d array from an array scalar use
         ``f->setitem`` instead of the standard copy from an array
         scalar. Must use if you don't define an array scalar to go
         along with the data-type.
-    
+
     .. cvar:: NPY_FROM_FIELDS
-    
+
         The bits that are inherited for the parent data-type if these
         bits are set in any field of the data-type. Currently (
         :cdata:`NPY_NEEDS_INIT` \| :cdata:`NPY_LIST_PICKLE` \|
         :cdata:`NPY_ITEM_REFCOUNT` \| :cdata:`NPY_NEEDS_PYAPI` ).
-    
+
     .. cvar:: NPY_OBJECT_DTYPE_FLAGS
-    
+
         Bits set for the object data-type: ( :cdata:`NPY_LIST_PICKLE`
         \| :cdata:`NPY_USE_GETITEM` \| :cdata:`NPY_ITEM_IS_POINTER` \|
         :cdata:`NPY_REFCOUNT` \| :cdata:`NPY_NEEDS_INIT` \|
         :cdata:`NPY_NEEDS_PYAPI`).
-    
+
     .. cfunction:: PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
 
         Return true if all the given flags are set for the data-type
         object.
-    
+
     .. cfunction:: PyDataType_REFCHK(PyArray_Descr *dtype)
 
         Equivalent to :cfunc:`PyDataType_FLAGCHK` (*dtype*,
@@ -333,24 +333,24 @@ PyArrayDescr_Type
     defined using
 
     .. code-block:: c
-    
+
        typedef struct {
            PyArray_Descr *base;
            PyObject *shape;
        } PyArray_ArrayDescr;
-    
+
     The elements of this structure are:
 
     .. cmember:: PyArray_Descr *PyArray_ArrayDescr.base
-    
+
         The data-type-descriptor object of the base-type.
-    
+
     .. cmember:: PyObject *PyArray_ArrayDescr.shape
-    
+
         The shape (always C-style contiguous) of the sub-array as a Python
         tuple.
-    
-    
+
+
 .. cmember:: PyObject *PyArray_Descr.fields
 
     If this is non-NULL, then this data-type-descriptor has fields
@@ -384,7 +384,7 @@ PyArrayDescr_Type
     register a user-defined data-type).
 
     .. code-block:: c
-    
+
        typedef struct {
            PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];
            PyArray_GetItemFunc *getitem;
@@ -400,14 +400,14 @@ PyArrayDescr_Type
            PyArray_FillFunc *fill;
            PyArray_FillWithScalarFunc *fillwithscalar;
            PyArray_SortFunc *sort[PyArray_NSORTS];
-           PyArray_ArgSortFunc *argsort[PyArray_NSORTS]; 
+           PyArray_ArgSortFunc *argsort[PyArray_NSORTS];
            PyObject *castdict;
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;
            int *cancastto;
            int listpickle
        } PyArray_ArrFuncs;
-    
+
     The concept of a behaved segment is used in the description of the
     function pointers. A behaved segment is one that is aligned and in
     native machine byte-order for the data-type. The ``nonzero``,
@@ -416,7 +416,7 @@ PyArrayDescr_Type
     functions require behaved memory segments.
 
     .. cmember:: void cast(void *from, void *to, npy_intp n, void *fromarr, void *toarr)
-    
+
         An array of function pointers to cast from the current type to
         all of the other builtin types. Each function casts a
         contiguous, aligned, and notswapped buffer pointed at by
@@ -425,26 +425,26 @@ PyArrayDescr_Type
         the arguments *fromarr* and *toarr* are interpreted as
         PyArrayObjects for flexible arrays to get itemsize
         information.
-    
+
     .. cmember:: PyObject *getitem(void *data, void *arr)
-    
+
         A pointer to a function that returns a standard Python object
         from a single element of the array object *arr* pointed to by
         *data*. This function must be able to deal with "misbehaved
         "(misaligned and/or swapped) arrays correctly.
-    
+
     .. cmember:: int setitem(PyObject *item, void *data, void *arr)
-    
+
         A pointer to a function that sets the Python object *item*
         into the array, *arr*, at the position pointed to by *data*
         . This function deals with "misbehaved" arrays. If successful,
         a zero is returned, otherwise, a negative one is returned (and
         a Python error set).
-    
+
     .. cmember:: void copyswapn(void *dest, npy_intp dstride, void *src, npy_intp sstride, npy_intp n, int swap, void *arr)
 
     .. cmember:: void copyswap(void *dest, void *src, int swap, void *arr)
-    
+
         These members are both pointers to functions to copy data from
         *src* to *dest* and *swap* if indicated. The value of arr is
         only used for flexible ( :cdata:`NPY_STRING`, :cdata:`NPY_UNICODE`,
@@ -457,27 +457,27 @@ PyArrayDescr_Type
         *src* do not overlap. If they overlap, then use ``memmove``
         (...) first followed by ``copyswap(n)`` with NULL valued
         ``src``.
-    
+
     .. cmember:: int compare(const void* d1, const void* d2, void* arr)
-    
+
         A pointer to a function that compares two elements of the
         array, ``arr``, pointed to by ``d1`` and ``d2``. This
         function requires behaved arrays. The return value is 1 if *
         ``d1`` > * ``d2``, 0 if * ``d1`` == * ``d2``, and -1 if *
         ``d1`` < * ``d2``. The array object arr is used to retrieve
         itemsize and field information for flexible arrays.
-    
+
     .. cmember:: int argmax(void* data, npy_intp n, npy_intp* max_ind, void* arr)
-    
+
         A pointer to a function that retrieves the index of the
         largest of ``n`` elements in ``arr`` beginning at the element
         pointed to by ``data``. This function requires that the
         memory segment be contiguous and behaved. The return value is
         always 0. The index of the largest element is returned in
         ``max_ind``.
-    
+
     .. cmember:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, npy_intp n, void* arr)
-    
+
         A pointer to a function that multiplies two ``n`` -length
         sequences together, adds them, and places the result in
         element pointed to by ``op`` of ``arr``. The start of the two
@@ -485,9 +485,9 @@ PyArrayDescr_Type
         the next element in each sequence requires a jump of ``is1``
         and ``is2`` *bytes*, respectively. This function requires
         behaved (though not necessarily contiguous) memory.
-    
+
     .. cmember:: int scanfunc(FILE* fd, void* ip , void* sep , void* arr)
-    
+
         A pointer to a function that scans (scanf style) one element
         of the corresponding type from the file descriptor ``fd`` into
         the array memory pointed to by ``ip``. The array is assumed
@@ -500,9 +500,9 @@ PyArrayDescr_Type
         that the end of file was reached before the element could be
         scanned, and -3 means that the element could not be
         interpreted from the format string. Requires a behaved array.
-    
+
     .. cmember:: int fromstr(char* str, void* ip, char** endptr, void* arr)
-    
+
         A pointer to a function that converts the string pointed to by
         ``str`` to one element of the corresponding type and places it
         in the memory location pointed to by ``ip``. After the
@@ -510,77 +510,77 @@ PyArrayDescr_Type
         string. The last argument ``arr`` is the array into which ip
         points (needed for variable-size data- types). Returns 0 on
         success or -1 on failure. Requires a behaved array.
-    
+
     .. cmember:: Bool nonzero(void* data, void* arr)
-    
+
         A pointer to a function that returns TRUE if the item of
         ``arr`` pointed to by ``data`` is nonzero. This function can
         deal with misbehaved arrays.
-    
+
     .. cmember:: void fill(void* data, npy_intp length, void* arr)
-    
+
         A pointer to a function that fills a contiguous array of given
         length with data. The first two elements of the array must
         already be filled- in. From these two values, a delta will be
         computed and the values from item 3 to the end will be
         computed by repeatedly adding this computed delta. The data
         buffer must be well-behaved.
-    
+
     .. cmember:: void fillwithscalar(void* buffer, npy_intp length, void* value, void* arr)
-    
+
         A pointer to a function that fills a contiguous ``buffer`` of
         the given ``length`` with a single scalar ``value`` whose
         address is given. The final argument is the array which is
         needed to get the itemsize for variable-length arrays.
-    
+
     .. cmember:: int sort(void* start, npy_intp length, void* arr)
-    
+
         An array of function pointers to a particular sorting
         algorithms. A particular sorting algorithm is obtained using a
         key (so far :cdata:`PyArray_QUICKSORT`, :data`PyArray_HEAPSORT`, and
         :cdata:`PyArray_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
-    
+
     .. cmember:: int argsort(void* start, npy_intp* result, npy_intp length, void \*arr)
-    
+
         An array of function pointers to sorting algorithms for this
         data type. The same sorting algorithms as for sort are
         available. The indices producing the sort are returned in
         result (which must be initialized with indices 0 to length-1
         inclusive).
-    
+
     .. cmember:: PyObject *castdict
-            
+
         Either ``NULL`` or a dictionary containing low-level casting
         functions for user- defined data-types. Each function is
         wrapped in a :ctype:`PyCObject *` and keyed by the data-type number.
-    
+
     .. cmember:: PyArray_SCALARKIND scalarkind(PyArrayObject* arr)
-    
+
         A function to determine how scalars of this type should be
         interpreted. The argument is ``NULL`` or a 0-dimensional array
         containing the data (if that is needed to determine the kind
         of scalar). The return value must be of type
         :ctype:`PyArray_SCALARKIND`.
-    
+
     .. cmember:: int **cancastscalarkindto
-        
+
         Either ``NULL`` or an array of :ctype:`PyArray_NSCALARKINDS`
         pointers. These pointers should each be either ``NULL`` or a
         pointer to an array of integers (terminated by
         :cdata:`PyArray_NOTYPE`) indicating data-types that a scalar of
         this data-type of the specified kind can be cast to safely
         (this usually means without losing precision).
-    
+
     .. cmember:: int *cancastto
-            
+
         Either ``NULL`` or an array of integers (terminated by
         :cdata:`PyArray_NOTYPE` ) indicated data-types that this data-type
         can be cast to safely (this usually means without losing
         precision).
-    
+
     .. cmember:: int listpickle
-            
+
         Unused.
 
 The :cdata:`PyArray_Type` typeobject implements many of the features of
@@ -625,7 +625,7 @@ PyUFunc_Type
    The core of the ufunc is the :ctype:`PyUFuncObject` which contains all
    the information needed to call the underlying C-code loops that
    perform the actual work. It has the following structure:
-   
+
    .. code-block:: c
 
       typedef struct {
@@ -647,24 +647,24 @@ PyUFunc_Type
       } PyUFuncObject;
 
    .. cmacro:: PyUFuncObject.PyObject_HEAD
-   
+
        required for all Python objects.
 
    .. cmember:: int PyUFuncObject.nin
-   
+
        The number of input arguments.
 
    .. cmember:: int PyUFuncObject.nout
-   
+
        The number of output arguments.
 
    .. cmember:: int PyUFuncObject.nargs
-   
+
        The total number of arguments (*nin* + *nout*). This must be
        less than :cdata:`NPY_MAXARGS`.
 
    .. cmember:: int PyUFuncObject.identity
-   
+
        Either :cdata:`PyUFunc_One`, :cdata:`PyUFunc_Zero`, or :cdata:`PyUFunc_None`
        to indicate the identity for this operation. It is only used
        for a reduce-like call on an empty array.
@@ -687,7 +687,7 @@ PyUFunc_Type
        array is ntypes.
 
    .. cmember:: void **PyUFuncObject.data
-   
+
        Extra data to be passed to the 1-d vector loops or ``NULL`` if
        no extra-data is needed. This C-array must be the same size (
        *i.e.* ntypes) as the functions array. ``NULL`` is used if
@@ -696,23 +696,23 @@ PyUFunc_Type
        receive a pointer to the actual function to call.
 
    .. cmember:: int PyUFuncObject.ntypes
-   
+
        The number of supported data types for the ufunc. This number
        specifies how many different 1-d loops (of the builtin data types) are
        available.
 
    .. cmember:: int PyUFuncObject.check_return
-   
+
        Obsolete and unused. However, it is set by the corresponding entry in
        the main ufunc creation routine: :cfunc:`PyUFunc_FromFuncAndData` (...).
 
    .. cmember:: char *PyUFuncObject.name
-   
+
        A string name for the ufunc. This is used dynamically to build
        the __doc\__ attribute of ufuncs.
 
    .. cmember:: char *PyUFuncObject.types
-   
+
        An array of *nargs* :math:`\times` *ntypes* 8-bit type_numbers
        which contains the type signature for the function for each of
        the supported (builtin) data types. For each of the *ntypes*
@@ -722,24 +722,24 @@ PyUFunc_Type
        and mixed-type ufuncs are supported.
 
    .. cmember:: char *PyUFuncObject.doc
-   
+
        Documentation for the ufunc. Should not contain the function
        signature as this is generated dynamically when __doc\__ is
        retrieved.
 
    .. cmember:: void *PyUFuncObject.ptr
-   
+
        Any dynamically allocated memory. Currently, this is used for dynamic
        ufuncs created from a python function to store room for the types,
        data, and name members.
 
    .. cmember:: PyObject *PyUFuncObject.obj
-   
+
        For ufuncs dynamically created from python functions, this member
        holds a reference to the underlying Python function.
 
    .. cmember:: PyObject *PyUFuncObject.userloops
-   
+
        A dictionary of user-defined 1-d vector loops (stored as CObject ptrs)
        for user-defined types. A loop may be registered by the user for any
        user-defined type. It is retrieved by type number. User defined type
@@ -758,7 +758,7 @@ PyArrayIter_Type
    interface is implemented so that the iterator object can be indexed
    (using 1-d indexing), and a few methods are implemented through the
    tp_methods table. This object implements the next method and can be
-   used anywhere an iterator can be used in Python. 
+   used anywhere an iterator can be used in Python.
 
 .. ctype:: PyArrayIterObject
 
@@ -793,54 +793,54 @@ PyArrayIter_Type
       } PyArrayIterObject;
 
    .. cmember:: int PyArrayIterObject.nd_m1
-   
+
        :math:`N-1` where :math:`N` is the number of dimensions in the
        underlying array.
 
    .. cmember:: npy_intp PyArrayIterObject.index
-   
+
        The current 1-d index into the array.
 
    .. cmember:: npy_intp PyArrayIterObject.size
-   
+
        The total size of the underlying array.
 
    .. cmember:: npy_intp *PyArrayIterObject.coordinates
-   
+
        An :math:`N` -dimensional index into the array.
 
    .. cmember:: npy_intp *PyArrayIterObject.dims_m1
-   
+
        The size of the array minus 1 in each dimension.
 
    .. cmember:: npy_intp *PyArrayIterObject.strides
-   
+
        The strides of the array. How many bytes needed to jump to the next
        element in each dimension.
 
    .. cmember:: npy_intp *PyArrayIterObject.backstrides
-   
+
        How many bytes needed to jump from the end of a dimension back
        to its beginning. Note that *backstrides* [k]= *strides* [k]*d
        *ims_m1* [k], but it is stored here as an optimization.
 
    .. cmember:: npy_intp *PyArrayIterObject.factors
-   
+
        This array is used in computing an N-d index from a 1-d index. It
        contains needed products of the dimensions.
 
    .. cmember:: PyArrayObject *PyArrayIterObject.ao
-   
+
        A pointer to the underlying ndarray this iterator was created to
        represent.
 
    .. cmember:: char *PyArrayIterObject.dataptr
-   
+
        This member points to an element in the ndarray indicated by the
        index.
 
    .. cmember:: Bool PyArrayIterObject.contiguous
-   
+
        This flag is true if the underlying array is
        :cdata:`NPY_C_CONTIGUOUS`. It is used to simplify calculations when
        possible.
@@ -887,32 +887,32 @@ PyArrayMultiIter_Type
       } PyArrayMultiIterObject;
 
    .. cmacro:: PyArrayMultiIterObject.PyObject_HEAD
-   
+
        Needed at the start of every Python object (holds reference count and
        type identification).
 
    .. cmember:: int PyArrayMultiIterObject.numiter
-   
+
        The number of arrays that need to be broadcast to the same shape.
 
    .. cmember:: npy_intp PyArrayMultiIterObject.size
-   
+
        The total broadcasted size.
 
    .. cmember:: npy_intp PyArrayMultiIterObject.index
-   
+
        The current (1-d) index into the broadcasted result.
 
    .. cmember:: int PyArrayMultiIterObject.nd
-   
+
        The number of dimensions in the broadcasted result.
 
    .. cmember:: npy_intp *PyArrayMultiIterObject.dimensions
-   
+
        The shape of the broadcasted result (only ``nd`` slots are used).
 
    .. cmember:: PyArrayIterObject **PyArrayMultiIterObject.iters
-   
+
        An array of iterator objects that holds the iterators for the arrays
        to be broadcast together. On return, the iterators are adjusted for
        broadcasting.
@@ -971,7 +971,7 @@ PyArray_Dims
 
    This structure is very useful when shape and/or strides information is
    supposed to be interpreted. The structure is:
-   
+
    .. code-block:: c
 
       typedef struct {
@@ -979,15 +979,15 @@ PyArray_Dims
           int len;
       } PyArray_Dims;
 
-   The members of this structure are 
+   The members of this structure are
 
    .. cmember:: npy_intp *PyArray_Dims.ptr
-   
+
        A pointer to a list of (:ctype:`npy_intp`) integers which usually
        represent array shape or array strides.
 
    .. cmember:: int PyArray_Dims.len
-   
+
        The length of the list of integers. It is assumed safe to
        access *ptr* [0] to *ptr* [len-1].
 
@@ -1013,29 +1013,29 @@ PyArray_Chunk
           int flags;
       } PyArray_Chunk;
 
-   The members are 
+   The members are
 
    .. cmacro:: PyArray_Chunk.PyObject_HEAD
-   
+
        Necessary for all Python objects. Included here so that the
        :ctype:`PyArray_Chunk` structure matches that of the buffer object
        (at least to the len member).
 
    .. cmember:: PyObject *PyArray_Chunk.base
-   
+
        The Python object this chunk of memory comes from. Needed so that
        memory can be accounted for properly.
 
    .. cmember:: void *PyArray_Chunk.ptr
-   
+
        A pointer to the start of the single-segment chunk of memory.
 
    .. cmember:: npy_intp PyArray_Chunk.len
-   
+
        The length of the segment in bytes.
 
    .. cmember:: int PyArray_Chunk.flags
-   
+
        Any data flags (*e.g.* :cdata:`NPY_WRITEABLE` ) that should be used
        to interpret the memory.
 
@@ -1075,15 +1075,15 @@ PyArrayInterface
       } PyArrayInterface;
 
    .. cmember:: int PyArrayInterface.two
-                
+
        the integer 2 as a sanity check.
 
    .. cmember:: int PyArrayInterface.nd
-                
+
        the number of dimensions in the array.
 
    .. cmember:: char PyArrayInterface.typekind
-                
+
        A character indicating what kind of array is present according to the
        typestring convention with 't' -> bitfield, 'b' -> Boolean, 'i' ->
        signed integer, 'u' -> unsigned integer, 'f' -> floating point, 'c' ->
@@ -1113,16 +1113,16 @@ PyArrayInterface
        An array containing the size of the array in each dimension.
 
    .. cmember:: npy_intp *PyArrayInterface.strides
-                
+
        An array containing the number of bytes to jump to get to the next
        element in each dimension.
 
    .. cmember:: void *PyArrayInterface.data
-                
+
        A pointer *to* the first element of the array.
 
    .. cmember:: PyObject *PyArrayInterface.descr
-                
+
        A Python object describing the data-type in more detail (same
        as the *descr* key in :obj:`__array_interface__`). This can be
        ``NULL`` if *typekind* and *itemsize* provide enough
@@ -1136,7 +1136,7 @@ Internally used structures
 Internally, the code uses some additional Python objects primarily for
 memory management. These types are not accessible directly from
 Python, and are not exposed to the C-API. They are included here only
-for completeness and assistance in understanding the code. 
+for completeness and assistance in understanding the code.
 
 
 .. ctype:: PyUFuncLoopObject
@@ -1158,7 +1158,7 @@ for completeness and assistance in understanding the code.
 
    A simple linked-list of C-structures containing the information needed
    to define a 1-d loop for a ufunc for every defined signature of a
-   user-defined data-type. 
+   user-defined data-type.
 
 .. cvar:: PyArrayMapIter_Type
 

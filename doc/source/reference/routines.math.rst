@@ -8,14 +8,14 @@ Trigonometric functions
 .. autosummary::
    :toctree: generated/
 
-   sin 
-   cos 
+   sin
+   cos
    tan
-   arcsin 
-   arccos 
-   arctan 
-   hypot 
-   arctan2 
+   arcsin
+   arccos
+   arctan
+   hypot
+   arctan2
    degrees
    radians
    unwrap
@@ -25,12 +25,12 @@ Hyperbolic functions
 .. autosummary::
    :toctree: generated/
 
-   sinh 
-   cosh 
-   tanh 
-   arcsinh 
-   arccosh 
-   arctanh 
+   sinh
+   cosh
+   tanh
+   arcsinh
+   arccosh
+   arctanh
 
 Rounding
 --------
@@ -40,24 +40,24 @@ Rounding
    around
    round_
    rint
-   fix 
-   floor 
-   ceil 
+   fix
+   floor
+   ceil
 
 Sums, products, differences
 ---------------------------
 .. autosummary::
    :toctree: generated/
 
-   prod 
+   prod
    sum
    nansum
-   cumprod 
-   cumsum 
+   cumprod
+   cumsum
    diff
    ediff1d
    gradient
-   cross 
+   cross
    trapz
 
 Exponents and logarithms
@@ -117,7 +117,7 @@ Handling complex numbers
    angle
    real
    imag
-   conj 
+   conj
 
 
 Miscellaneous
@@ -126,7 +126,7 @@ Miscellaneous
    :toctree: generated/
 
    convolve
-   clip 
+   clip
 
    sqrt
    square

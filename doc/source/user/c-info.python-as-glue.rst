@@ -3,12 +3,12 @@ Using Python as glue
 ********************
 
 |    There is no conversation more boring than the one where everybody
-|    agrees. 
-|    --- *Michel de Montaigne* 
+|    agrees.
+|    --- *Michel de Montaigne*
 
 |    Duct tape is like the force. It has a light side, and a dark side, and
-|    it holds the universe together. 
-|    --- *Carl Zwanzig* 
+|    it holds the universe together.
+|    --- *Carl Zwanzig*
 
 Many people like to say that Python is a fantastic glue language.
 Hopefully, this Chapter will convince you that this is true. The first
@@ -19,21 +19,21 @@ Perl, in addition, the ability to easily extend Python made it
 relatively easy to create new classes and types specifically adapted
 to the problems being solved. From the interactions of these early
 contributors, Numeric emerged as an array-like object that could be
-used to pass data between these applications. 
+used to pass data between these applications.
 
 As Numeric has matured and developed into NumPy, people have been able
 to write more code directly in NumPy. Often this code is fast-enough
 for production use, but there are still times that there is a need to
 access compiled code. Either to get that last bit of efficiency out of
 the algorithm or to make it easier to access widely-available codes
-written in C/C++ or Fortran. 
+written in C/C++ or Fortran.
 
 This chapter will review many of the tools that are available for the
 purpose of accessing code written in other compiled languages. There
 are many resources available for learning to call other compiled
 libraries from Python and the purpose of this Chapter is not to make
 you an expert. The main goal is to make you aware of some of the
-possibilities so that you will know what to "Google" in order to learn more. 
+possibilities so that you will know what to "Google" in order to learn more.
 
 The http://www.scipy.org website also contains a great deal of useful
 information about many of these tools. For example, there is a nice
@@ -42,7 +42,7 @@ http://www.scipy.org/PerformancePython. This link provides several
 ways to solve the same problem showing how to use and connect with
 compiled code to get the best performance. In the process you can get
 a taste for several of the approaches that will be discussed in this
-chapter. 
+chapter.
 
 
 Calling other compiled libraries from Python
@@ -60,21 +60,21 @@ critical portions of your code). Therefore one of the most common
 needs is to call out from Python code to a fast, machine-code routine
 (e.g. compiled using C/C++ or Fortran). The fact that this is
 relatively easy to do is a big reason why Python is such an excellent
-high-level language for scientific and engineering programming. 
+high-level language for scientific and engineering programming.
 
 Their are two basic approaches to calling compiled code: writing an
 extension module that is then imported to Python using the import
 command, or calling a shared-library subroutine directly from Python
 using the ctypes module (included in the standard distribution with
 Python 2.5). The first method is the most common (but with the
-inclusion of ctypes into Python 2.5 this status may change). 
+inclusion of ctypes into Python 2.5 this status may change).
 
 .. warning::
 
     Calling C-code from Python can result in Python crashes if you are not
     careful. None of the approaches in this chapter are immune. You have
     to know something about the way data is handled by both NumPy and by
-    the third-party library being used. 
+    the third-party library being used.
 
 
 Hand-generated wrappers
@@ -89,7 +89,7 @@ between Python objects and C data-types. For standard C data-types
 there is probably already a built-in converter. For others you may
 need to write your own converter and use the "O&" format string which
 allows you to specify a function that will be used to perform the
-conversion from the Python object to whatever C-structures are needed. 
+conversion from the Python object to whatever C-structures are needed.
 
 Once the conversions to the appropriate C-structures and C data-types
 have been performed, the next step in the wrapper is to call the
@@ -100,7 +100,7 @@ using your compiler and platform. This can vary somewhat platforms and
 compilers (which is another reason f2py makes life much simpler for
 interfacing Fortran code) but generally involves underscore mangling
 of the name and the fact that all variables are passed by reference
-(i.e. all arguments are pointers). 
+(i.e. all arguments are pointers).
 
 The advantage of the hand-generated wrapper is that you have complete
 control over how the C-library gets used and called which can lead to
@@ -113,7 +113,7 @@ regimented, code-generation procedures have been developed to make
 this process easier. One of these code- generation techniques is
 distributed with NumPy and allows easy integration with Fortran and
 (simple) C code. This package, f2py, will be covered briefly in the
-next session. 
+next session.
 
 
 f2py
@@ -124,7 +124,7 @@ interfaces to routines in Fortran 77/90/95 code. It has the ability to
 parse Fortran 77/90/95 code and automatically generate Python
 signatures for the subroutines it encounters, or you can guide how the
 subroutine interfaces with Python by constructing an interface-
-defintion-file (or modifying the f2py-produced one). 
+defintion-file (or modifying the f2py-produced one).
 
 .. index::
    single: f2py
@@ -148,7 +148,7 @@ example. Here is one of the subroutines contained in a file named
           DO 20 J = 1, N
              C(J) = A(J)+B(J)
      20   CONTINUE
-          END  
+          END
 
 This routine simply adds the elements in two contiguous arrays and
 places the result in a third. The memory for all three arrays must be
@@ -160,7 +160,7 @@ routine can be automatically generated by f2py::
 You should be able to run this command assuming your search-path is
 set-up properly. This command will produce an extension module named
 addmodule.c in the current directory. This extension module can now be
-compiled and used from Python just like any other extension module. 
+compiled and used from Python just like any other extension module.
 
 
 Creating a compiled extension module
@@ -181,13 +181,13 @@ information about how the module method may be called:
 
     >>> import add
     >>> print add.zadd.__doc__
-    zadd - Function signature: 
+    zadd - Function signature:
       zadd(a,b,c,n)
-    Required arguments: 
+    Required arguments:
       a : input rank-1 array('D') with bounds (*)
       b : input rank-1 array('D') with bounds (*)
       c : input rank-1 array('D') with bounds (*)
-      n : input int   
+      n : input int
 
 
 Improving the basic interface
@@ -200,13 +200,13 @@ attempt to convert all arguments to their required types (and shapes)
 and issue an error if unsuccessful. However, because it knows nothing
 about the semantics of the arguments (such that C is an output and n
 should really match the array sizes), it is possible to abuse this
-function in ways that can cause Python to crash. For example: 
+function in ways that can cause Python to crash. For example:
 
     >>> add.zadd([1,2,3],[1,2],[3,4],1000)
 
 will cause a program crash on most systems. Under the covers, the
 lists are being converted to proper arrays but then the underlying add
-loop is told to cycle way beyond the borders of the allocated memory. 
+loop is told to cycle way beyond the borders of the allocated memory.
 
 In order to improve the interface, directives should be provided. This
 is accomplished by constructing an interface definition file. It is
@@ -221,11 +221,11 @@ section of this file corresponding to zadd is:
 
 .. code-block:: none
 
-    subroutine zadd(a,b,c,n) ! in :add:add.f 
-       double complex dimension(*) :: a 
-       double complex dimension(*) :: b 
-       double complex dimension(*) :: c 
-       integer :: n 
+    subroutine zadd(a,b,c,n) ! in :add:add.f
+       double complex dimension(*) :: a
+       double complex dimension(*) :: b
+       double complex dimension(*) :: c
+       integer :: n
     end subroutine zadd
 
 By placing intent directives and checking code, the interface can be
@@ -234,11 +234,11 @@ to use and more robust.
 
 .. code-block:: none
 
-    subroutine zadd(a,b,c,n) ! in :add:add.f 
-       double complex dimension(n) :: a 
-       double complex dimension(n) :: b 
-       double complex intent(out),dimension(n) :: c 
-       integer intent(hide),depend(a) :: n=len(a) 
+    subroutine zadd(a,b,c,n) ! in :add:add.f
+       double complex dimension(n) :: a
+       double complex dimension(n) :: b
+       double complex intent(out),dimension(n) :: c
+       integer intent(hide),depend(a) :: n=len(a)
     end subroutine zadd
 
 The intent directive, intent(out) is used to tell f2py that ``c`` is
@@ -248,25 +248,25 @@ to not allow the user to specify the variable, ``n``, but instead to
 get it from the size of ``a``. The depend( ``a`` ) directive is
 necessary to tell f2py that the value of n depends on the input a (so
 that it won't try to create the variable n until the variable a is
-created). 
+created).
 
 The new interface has docstring:
 
     >>> print add.zadd.__doc__
-    zadd - Function signature: 
-      c = zadd(a,b) 
-    Required arguments: 
-      a : input rank-1 array('D') with bounds (n) 
-      b : input rank-1 array('D') with bounds (n) 
-    Return objects: 
-      c : rank-1 array('D') with bounds (n) 
+    zadd - Function signature:
+      c = zadd(a,b)
+    Required arguments:
+      a : input rank-1 array('D') with bounds (n)
+      b : input rank-1 array('D') with bounds (n)
+    Return objects:
+      c : rank-1 array('D') with bounds (n)
 
-Now, the function can be called in a much more robust way: 
+Now, the function can be called in a much more robust way:
 
     >>> add.zadd([1,2,3],[4,5,6])
     array([ 5.+0.j,  7.+0.j,  9.+0.j])
 
-Notice the automatic conversion to the correct format that occurred. 
+Notice the automatic conversion to the correct format that occurred.
 
 
 Inserting directives in Fortran source
@@ -305,7 +305,7 @@ contained A(N) instead of A(\*) and so forth with B and C, then I
 could obtain (nearly) the same interface simply by placing the
 INTENT(OUT) :: C comment line in the source code. The only difference
 is that N would be an optional input that would default to the length
-of A. 
+of A.
 
 
 A filtering example
@@ -315,7 +315,7 @@ For comparison with the other methods to be discussed. Here is another
 example of a function that filters a two-dimensional array of double
 precision floating-point numbers using a fixed averaging filter. The
 advantage of using Fortran to index into multi-dimensional arrays
-should be clear from this example. 
+should be clear from this example.
 
 .. code-block:: none
 
@@ -329,7 +329,7 @@ should be clear from this example.
     CF2PY INTENT(HIDE) :: M
           DO 20 I = 2,M-1
              DO 40 J=2,N-1
-                B(I,J) = A(I,J) + 
+                B(I,J) = A(I,J) +
          $           (A(I-1,J)+A(I+1,J) +
          $            A(I,J-1)+A(I,J+1) )*0.5D0 +
          $           (A(I-1,J-1) + A(I-1,J+1) +
@@ -345,7 +345,7 @@ filter using::
 
 This will produce an extension module named filter.so in the current
 directory with a method named dfilter2d that returns a filtered
-version of the input. 
+version of the input.
 
 
 Calling f2py from Python
@@ -367,7 +367,7 @@ executed using Python code is:
 
 The source string can be any valid Fortran code. If you want to save
 the extension-module source code then a suitable file-name can be
-provided by the source_fn keyword to the compile function. 
+provided by the source_fn keyword to the compile function.
 
 
 Automatic extension module generation
@@ -387,7 +387,7 @@ so that it would be loaded as f2py_examples.add) is:
         config = Configuration('f2py_examples',parent_package, top_path)
         config.add_extension('add', sources=['add.pyf','add.f'])
         return config
-    
+
     if __name__ == '__main__':
         from numpy.distutils.core import setup
         setup(**configuration(top_path='').todict())
@@ -401,7 +401,7 @@ packages directory for the version of Python you are using. For the
 resulting package to work, you need to create a file named __init__.py
 (in the same directory as add.pyf). Notice the extension module is
 defined entirely in terms of the "add.pyf" and "add.f" files. The
-conversion of the .pyf file to a .c file is handled by numpy.disutils. 
+conversion of the .pyf file to a .c file is handled by numpy.disutils.
 
 
 Conclusion
@@ -413,7 +413,7 @@ for f2py found in the numpy/f2py/docs directory where-ever NumPy is
 installed on your system (usually under site-packages). There is also
 more information on using f2py (including how to use it to wrap C
 codes) at http://www.scipy.org/Cookbook under the "Using NumPy with
-Other Languages" heading. 
+Other Languages" heading.
 
 The f2py method of linking compiled code is currently the most
 sophisticated and integrated approach. It allows clean separation of
@@ -427,7 +427,7 @@ is still the easiest way to write fast and clear code for scientific
 computing. It handles complex numbers, and multi-dimensional indexing
 in the most straightforward way. Be aware, however, that some Fortran
 compilers will not be able to optimize code as well as good hand-
-written C-code. 
+written C-code.
 
 .. index::
    single: f2py
@@ -443,7 +443,7 @@ temporary variables, to directly "inline" C/C++ code into Python, or
 to create a fully-named extension module.  You must either install
 scipy or get the weave package separately and install it using the
 standard python setup.py install. You must also have a C/C++-compiler
-installed and useable by Python distutils in order to use weave. 
+installed and useable by Python distutils in order to use weave.
 
 .. index::
    single: weave
@@ -451,7 +451,7 @@ installed and useable by Python distutils in order to use weave.
 Somewhat dated, but still useful documentation for weave can be found
 at the link http://www.scipy/Weave. There are also many examples found
 in the examples directory which is installed under the weave directory
-in the place where weave is installed on your system. 
+in the place where weave is installed on your system.
 
 
 Speed up code involving arrays (also see scipy.numexpr)
@@ -470,7 +470,7 @@ quickly than the equivalent NumPy expression. This is especially true
 if your array sizes are large and the expression would require NumPy
 to create several temporaries. Only expressions involving basic
 arithmetic operations and basic array slicing can be converted to
-Blitz C++ code. 
+Blitz C++ code.
 
 For example, consider the expression::
 
@@ -489,12 +489,12 @@ execution time is only about 0.20 seconds (about 0.14 seconds spent in
 weave and the rest in allocating space for d). Thus, we've sped up the
 code by a factor of 2 using only a simnple command (weave.blitz). Your
 mileage may vary, but factors of 2-8 speed-ups are possible with this
-very simple technique. 
+very simple technique.
 
 If you are interested in using weave in this way, then you should also
 look at scipy.numexpr which is another similar way to speed up
 expressions by eliminating the need for temporary variables. Using
-numexpr does not require a C/C++ compiler. 
+numexpr does not require a C/C++ compiler.
 
 
 Inline C-code
@@ -514,24 +514,24 @@ following example shows how to use weave on basic Python objects:
 
 .. code-block:: python
 
-    code = r""" 
-    int i; 
-    py::tuple results(2); 
-    for (i=0; i<a.length(); i++) { 
+    code = r"""
+    int i;
+    py::tuple results(2);
+    for (i=0; i<a.length(); i++) {
          a[i] = i;
-    } 
-    results[0] = 3.0; 
-    results[1] = 4.0; 
+    }
+    results[0] = 3.0;
+    results[1] = 4.0;
     return_val = results;
-    """ 
-    a = [None]*10 
+    """
+    a = [None]*10
     res = weave.inline(code,['a'])
 
 The C++ code shown in the code string uses the name 'a' to refer to
 the Python list that is passed in. Because the Python List is a
 mutable type, the elements of the list itself are modified by the C++
 code. A set of C++ classes are used to access Python objects using
-simple syntax. 
+simple syntax.
 
 The main advantage of using C-code, however, is to speed up processing
 on an array of data. Accessing a NumPy array in C++ code using weave,
@@ -540,16 +540,16 @@ arrays to C++ code. The default converter creates 5 variables for the
 C-code for every NumPy array passed in to weave.inline. The following
 table shows these variables which can all be used in the C++ code. The
 table assumes that ``myvar`` is the name of the array in Python with
-data-type {dtype} (i.e.  float64, float32, int8, etc.) 
+data-type {dtype} (i.e.  float64, float32, int8, etc.)
 
 ===========  ==============  =========================================
-Variable     Type            Contents                                   
+Variable     Type            Contents
 ===========  ==============  =========================================
-myvar        {dtype}*        Pointer to the first element of the array  
-Nmyvar       npy_intp*       A pointer to the dimensions array          
-Smyvar       npy_intp*       A pointer to the strides array             
-Dmyvar       int             The number of dimensions                   
-myvar_array  PyArrayObject*  The entire structure for the array         
+myvar        {dtype}*        Pointer to the first element of the array
+Nmyvar       npy_intp*       A pointer to the dimensions array
+Smyvar       npy_intp*       A pointer to the strides array
+Dmyvar       int             The number of dimensions
+myvar_array  PyArrayObject*  The entire structure for the array
 ===========  ==============  =========================================
 
 The in-lined code can contain references to any of these variables as
@@ -561,7 +561,7 @@ checking (be-sure to use the correct macro and ensure the array is
 aligned and in correct byte-swap order in order to get useful
 results). The following code shows how you might use these variables
 and macros to code a loop in C that computes a simple 2-d weighted
-averaging filter. 
+averaging filter.
 
 .. code-block:: c++
 
@@ -582,7 +582,7 @@ The above code doesn't have any error checking and so could fail with
 a Python crash if, ``a`` had the wrong number of dimensions, or ``b``
 did not have the same shape as ``a``. However, it could be placed
 inside a standard Python function with the necessary error checking to
-produce a robust but fast subroutine. 
+produce a robust but fast subroutine.
 
 One final note about weave.inline: if you have additional code you
 want to include in the final extension module such as supporting
@@ -592,7 +592,7 @@ support_code=support)``. If you need the extension module to link
 against an additional library then you can also pass in
 distutils-style keyword arguments such as library_dirs, libraries,
 and/or runtime_library_dirs which point to the appropriate libraries
-and directories. 
+and directories.
 
 Simplify creation of an extension module
 ----------------------------------------
@@ -604,9 +604,9 @@ codes to execute in C, it would be better to make them all separate
 functions in a single extension module with multiple functions. You
 can also use the tools weave provides to produce this larger extension
 module. In fact, the weave.inline function just uses these more
-general tools to do its work. 
+general tools to do its work.
 
-The approach is to: 
+The approach is to:
 
 1. construct a extension module object using
    ext_tools.ext_module(``module_name``);
@@ -626,7 +626,7 @@ The approach is to:
 
 Several examples are available in the examples directory where weave
 is installed on your system. Look particularly at ramp2.py,
-increment_example.py and fibonacii.py 
+increment_example.py and fibonacii.py
 
 
 Conclusion
@@ -643,7 +643,7 @@ normal way *(* using a setup.py file). While you can use weave to
 build larger extension modules with many methods, creating methods
 with a variable- number of arguments is not possible. Thus, for a more
 sophisticated module, you will still probably want a Python-layer that
-calls the weave-produced extension. 
+calls the weave-produced extension.
 
 .. index::
    single: weave
@@ -661,7 +661,7 @@ to interface to a large library of code. However, if you are writing
 an extension module that will include quite a bit of your own
 algorithmic code, as well, then Pyrex is a good match. A big weakness
 perhaps is the inability to easily and quickly access the elements of
-a multidimensional array. 
+a multidimensional array.
 
 .. index::
    single: pyrex
@@ -678,12 +678,12 @@ write in a setup.py file:
     from Pyrex.Distutils import build_ext
     from distutils.extension import Extension
     from distutils.core import setup
-    
+
     import numpy
     py_ext = Extension('mine', ['mine.pyx'],
              include_dirs=[numpy.get_include()])
-    
-    setup(name='mine', description='Nothing', 
+
+    setup(name='mine', description='Nothing',
           ext_modules=[pyx_ext],
           cmdclass = {'build_ext':build_ext})
 
@@ -694,7 +694,7 @@ also include support for automatically producing the extension-module
 and linking it from a ``.pyx`` file. It works so that if the user does
 not have Pyrex installed, then it looks for a file with the same
 file-name but a ``.c`` extension which it then uses instead of trying
-to produce the ``.c`` file again. 
+to produce the ``.c`` file again.
 
 Pyrex does not natively understand NumPy arrays. However, it is not
 difficult to include information that lets Pyrex deal with them
@@ -709,7 +709,7 @@ located in the .../site-packages/numpy/doc/pyrex directory where you
 have Python installed. There is also an example in that directory of
 using Pyrex to construct a simple extension module. It shows that
 Pyrex looks a lot like Python but also contains some new syntax that
-is necessary in order to get C-like speed. 
+is necessary in order to get C-like speed.
 
 If you just use Pyrex to compile a standard Python module, then you
 will get a C-extension module that runs either as fast or, possibly,
@@ -724,7 +724,7 @@ use a special construct to create for loops:
 
 Let's look at two examples we've seen before to see how they might be
 implemented using Pyrex. These examples were compiled into extension
-modules using Pyrex-0.9.3.1. 
+modules using Pyrex-0.9.3.1.
 
 
 Pyrex-add
@@ -739,16 +739,16 @@ functions we previously implemented using f2py:
     from c_numpy cimport import_array, ndarray, npy_intp, npy_cdouble, \
          npy_cfloat, NPY_DOUBLE, NPY_CDOUBLE, NPY_FLOAT, \
          NPY_CFLOAT
-    
+
     #We need to initialize NumPy
     import_array()
-    
+
     def zadd(object ao, object bo):
         cdef ndarray c, a, b
         cdef npy_intp i
-        a = c_numpy.PyArray_ContiguousFromAny(ao, 
+        a = c_numpy.PyArray_ContiguousFromAny(ao,
                       NPY_CDOUBLE, 1, 1)
-        b = c_numpy.PyArray_ContiguousFromAny(bo, 
+        b = c_numpy.PyArray_ContiguousFromAny(bo,
                       NPY_CDOUBLE, 1, 1)
         c = c_numpy.PyArray_SimpleNew(a.nd, a.dimensions,
                      a.descr.type_num)
@@ -778,7 +778,7 @@ Python objects, Pyrex inserts the checks for NULL into the C-code for
 you and returns with failure if need be. There is also a way to get
 Pyrex to automatically check for exceptions when you call functions
 that don't return Python objects. See the documentation of Pyrex for
-details. 
+details.
 
 
 Pyrex-filter
@@ -787,15 +787,15 @@ Pyrex-filter
 The two-dimensional example we created using weave is a bit uglierto
 implement in Pyrex because two-dimensional indexing using Pyrex is not
 as simple. But, it is straightforward (and possibly faster because of
-pre-computed indices). Here is the Pyrex-file I named image.pyx. 
+pre-computed indices). Here is the Pyrex-file I named image.pyx.
 
 .. code-block:: none
 
     cimport c_numpy
-    from c_numpy cimport import_array, ndarray, npy_intp,\ 
+    from c_numpy cimport import_array, ndarray, npy_intp,\
          NPY_DOUBLE, NPY_CDOUBLE, \
          NPY_FLOAT, NPY_CFLOAT, NPY_ALIGNED \
-    
+
     #We need to initialize NumPy
     import_array()
     def filter(object ao):
@@ -803,7 +803,7 @@ pre-computed indices). Here is the Pyrex-file I named image.pyx.
         cdef npy_intp i, j, M, N, oS
         cdef npy_intp r,rm1,rp1,c,cm1,cp1
         cdef double value
-        # Require an ALIGNED array 
+        # Require an ALIGNED array
         # (but not necessarily contiguous)
         #  We will use strides to access the elements.
         a = c_numpy.PyArray_FROMANY(ao, NPY_DOUBLE, \
@@ -829,7 +829,7 @@ pre-computed indices). Here is the Pyrex-file I named image.pyx.
                     (<double *>(a.data+rp1+c))[0] + \
                     (<double *>(a.data+r+cm1))[0] + \
                     (<double *>(a.data+r+cp1))[0])*0.5 + \
-                   ((<double *>(a.data+rm1+cm1))[0] + \ 
+                   ((<double *>(a.data+rm1+cm1))[0] + \
                     (<double *>(a.data+rp1+cm1))[0] + \
                     (<double *>(a.data+rp1+cp1))[0] + \
                     (<double *>(a.data+rm1+cp1))[0])*0.25
@@ -849,7 +849,7 @@ particularly easy to understand what is happening. A 2-d image, ``in``
 Conclusion
 ----------
 
-There are several disadvantages of using Pyrex: 
+There are several disadvantages of using Pyrex:
 
 1. The syntax for Pyrex can get a bit bulky, and it can be confusing at
    first to understand what kind of objects you are getting and how to
@@ -859,13 +859,13 @@ There are several disadvantages of using Pyrex:
    mismatches can result in failures such as
 
     1. Pyrex failing to generate the extension module source code,
-    
+
     2. Compiler failure while generating the extension module binary due to
        incorrect C syntax,
-    
+
     3. Python failure when trying to use the module.
-    
-    
+
+
 3. It is easy to lose a clean separation between Python and C which makes
    re-using your C-code for other non-Python-related projects more
    difficult.
@@ -886,7 +886,7 @@ be over-looked. It is especially useful for people that can't or won't
 write C-code or Fortran code. But, if you are already able to write
 simple subroutines in C or Fortran, then I would use one of the other
 approaches such as f2py (for Fortran), ctypes (for C shared-
-libraries), or weave (for inline C-code). 
+libraries), or weave (for inline C-code).
 
 .. index::
    single: pyrex
@@ -910,7 +910,7 @@ location. The responsibility is then on you that the subroutine will
 not access memory outside the actual array area. But, if you don't
 mind living a little dangerously ctypes can be an effective tool for
 quickly taking advantage of a large shared library (or writing
-extended functionality in your own shared library). 
+extended functionality in your own shared library).
 
 .. index::
    single: ctypes
@@ -926,9 +926,9 @@ extension-module interface. However, this overhead should be neglible
 if the C-routine being called is doing any significant amount of work.
 If you are a great Python programmer with weak C-skills, ctypes is an
 easy way to write a useful interface to a (shared) library of compiled
-code. 
+code.
 
-To use c-types you must 
+To use c-types you must
 
 1. Have a shared library.
 
@@ -945,7 +945,7 @@ Having a shared library
 There are several requirements for a shared library that can be used
 with c-types that are platform specific. This guide assumes you have
 some familiarity with making a shared library on your system (or
-simply have a shared library available to you). Items to remember are: 
+simply have a shared library available to you). Items to remember are:
 
 - A shared library must be compiled in a special way ( *e.g.* using
   the -shared flag with gcc).
@@ -953,25 +953,25 @@ simply have a shared library available to you). Items to remember are:
 - On some platforms (*e.g.* Windows) , a shared library requires a
   .def file that specifies the functions to be exported. For example a
   mylib.def file might contain.
-    
+
   ::
-  
+
       LIBRARY mylib.dll
       EXPORTS
       cool_function1
       cool_function2
-    
+
   Alternatively, you may be able to use the storage-class specifier
   __declspec(dllexport) in the C-definition of the function to avoid the
-  need for this .def file. 
-    
+  need for this .def file.
+
 There is no standard way in Python distutils to create a standard
 shared library (an extension module is a "special" shared library
 Python understands) in a cross-platform manner. Thus, a big
 disadvantage of ctypes at the time of writing this book is that it is
 difficult to distribute in a cross-platform manner a Python extension
 that uses c-types and includes your own code which should be compiled
-as a shared library on the users system. 
+as a shared library on the users system.
 
 
 Loading the shared library
@@ -994,7 +994,7 @@ foolproof. Complicating matters, different platforms have different
 default extensions used by shared libraries (e.g. .dll -- Windows, .so
 -- Linux, .dylib -- Mac OS X). This must also be taken into account if
 you are using c-types to wrap code that needs to work on several
-platforms. 
+platforms.
 
 NumPy provides a convenience function called
 :func:`ctypeslib.load_library` (name, path). This function takes the name
@@ -1005,13 +1005,13 @@ cannot be found or raises an ImportError if the ctypes module is not
 available. (Windows users: the ctypes library object loaded using
 :func:`load_library` is always loaded assuming cdecl calling convention.
 See the ctypes documentation under ctypes.windll and/or ctypes.oledll
-for ways to load libraries under other calling conventions). 
+for ways to load libraries under other calling conventions).
 
 The functions in the shared library are available as attributes of the
 ctypes library object (returned from :func:`ctypeslib.load_library`) or
 as items using ``lib['func_name']`` syntax. The latter method for
 retrieving a function name is particularly useful if the function name
-contains characters that are not allowable in Python variable names. 
+contains characters that are not allowable in Python variable names.
 
 
 Converting arguments
@@ -1022,7 +1022,7 @@ converted as needed to equivalent c-types arguments The None object is
 also converted automatically to a NULL pointer. All other Python
 objects must be converted to ctypes-specific types. There are two ways
 around this restriction that allow c-types to integrate with other
-objects. 
+objects.
 
 1. Don't set the argtypes attribute of the function object and define an
    :obj:`_as_parameter_` method for the object you want to pass in. The
@@ -1042,7 +1042,7 @@ associated. As a result, one can pass this ctypes attribute object
 directly to a function expecting a pointer to the data in your
 ndarray. The caller must be sure that the ndarray object is of the
 correct type, shape, and has the correct flags set or risk nasty
-crashes if the data-pointer to inappropriate arrays are passsed in. 
+crashes if the data-pointer to inappropriate arrays are passsed in.
 
 To implement the second method, NumPy provides the class-factory
 function :func:`ndpointer` in the :mod:`ctypeslib` module. This
@@ -1057,7 +1057,7 @@ number-of-dimensions, the shape, and/or the state of the flags on any
 array passed. The return value of the from_param method is the ctypes
 attribute of the array which (because it contains the _as_parameter\_
 attribute pointing to the array data area) can be used by ctypes
-directly. 
+directly.
 
 The ctypes attribute of an ndarray is also endowed with additional
 attributes that may be convenient when passing additional information
@@ -1075,7 +1075,7 @@ the shape/strides arrays using an underlying base type of your choice.
 For convenience, the **ctypeslib** module also contains **c_intp** as
 a ctypes integer data-type whose size is the same as the size of
 ``c_void_p`` on the platform (it's value is None if ctypes is not
-installed). 
+installed).
 
 
 Calling the function
@@ -1105,7 +1105,7 @@ the function in order to have ctypes check the types of the input
 arguments when the function is called. Use the :func:`ndpointer` factory
 function to generate a ready-made class for data-type, shape, and
 flags checking on your new function. The :func:`ndpointer` function has the
-signature 
+signature
 
 .. function:: ndpointer(dtype=None, ndim=None, shape=None, flags=None)
 
@@ -1127,7 +1127,7 @@ area of an ndarray. You may still want to wrap the function in an
 additional Python wrapper to make it user-friendly (hiding some
 obvious arguments and making some arguments output arguments). In this
 process, the **requires** function in NumPy may be useful to return the right kind of array from
-a given input. 
+a given input.
 
 
 Complete example
@@ -1149,8 +1149,8 @@ dfilter2d. The zadd function is:
         while (n--) {
             c->real = a->real + b->real;
             c->imag = a->imag + b->imag;
-            a++; b++; c++; 
-        }       
+            a++; b++; c++;
+        }
     }
 
 with similar code for cadd, dadd, and sadd that handles complex float,
@@ -1163,16 +1163,16 @@ double, and float data-types, respectively:
             while (n--) {
                     c->real = a->real + b->real;
                     c->imag = a->imag + b->imag;
-                    a++; b++; c++; 
-            }       
+                    a++; b++; c++;
+            }
     }
-    void dadd(double *a, double *b, double *c, long n) 
+    void dadd(double *a, double *b, double *c, long n)
     {
             while (n--) {
                     *c++ = *a++ + *b++;
-            }       
+            }
     }
-    void sadd(float *a, float *b, float *c, long n) 
+    void sadd(float *a, float *b, float *c, long n)
     {
             while (n--) {
                     *c++ = *a++ + *b++;
@@ -1183,17 +1183,17 @@ The code.c file also contains the function dfilter2d:
 
 .. code-block:: c
 
-    /* Assumes b is contiguous and 
+    /* Assumes b is contiguous and
        a has strides that are multiples of sizeof(double)
     */
-    void 
+    void
     dfilter2d(double *a, double *b, int *astrides, int *dims)
     {
         int i, j, M, N, S0, S1;
         int r, c, rm1, rp1, cp1, cm1;
-    
+
         M = dims[0]; N = dims[1];
-        S0 = astrides[0]/sizeof(double); 
+        S0 = astrides[0]/sizeof(double);
         S1=astrides[1]/sizeof(double);
         for (i=1; i<M-1; i++) {
             r = i*S0; rp1 = r+S0; rm1 = r-S0;
@@ -1220,7 +1220,7 @@ Linux system this is accomplished using::
 Which creates a shared_library named code.so in the current directory.
 On Windows don't forget to either add __declspec(dllexport) in front
 of void on the line preceeding each function definition, or write a
-code.def file that lists the names of the functions to be exported. 
+code.def file that lists the names of the functions to be exported.
 
 A suitable Python interface to this shared library should be
 constructed. To do this create a file named interface.py with the
@@ -1229,10 +1229,10 @@ following lines at the top:
 .. code-block:: python
 
     __all__ = ['add', 'filter2d']
-    
+
     import numpy as N
     import os
-    
+
     _path = os.path.dirname('__file__')
     lib = N.ctypeslib.load_library('code', _path)
     _typedict = {'zadd' : complex, 'sadd' : N.single,
@@ -1241,11 +1241,11 @@ following lines at the top:
         val = getattr(lib, name)
         val.restype = None
         _type = _typedict[name]
-        val.argtypes = [N.ctypeslib.ndpointer(_type, 
+        val.argtypes = [N.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type, 
+                        N.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type, 
+                        N.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous,'\
                                 'writeable'),
                         N.ctypeslib.c_intp]
@@ -1255,7 +1255,7 @@ same path as this file. It then adds a return type of void to the
 functions contained in the library. It also adds argument checking to
 the functions in the library so that ndarrays can be passed as the
 first three arguments along with an integer (large enough to hold a
-pointer on the platform) as the fourth argument. 
+pointer on the platform) as the fourth argument.
 
 Setting up the filtering function is similar and allows the filtering
 function to be called with ndarray arguments as the first two
@@ -1269,9 +1269,9 @@ strides and shape of an ndarray) as the last two arguments.:
                                            flags='aligned'),
                               N.ctypeslib.ndpointer(float, ndim=2,
                                      flags='aligned, contiguous,'\
-                                           'writeable'), 
-                              ctypes.POINTER(N.ctypeslib.c_intp), 
-                              ctypes.POINTER(N.ctypeslib.c_intp)] 
+                                           'writeable'),
+                              ctypes.POINTER(N.ctypeslib.c_intp),
+                              ctypes.POINTER(N.ctypeslib.c_intp)]
 
 Next, define a simple selection function that chooses which addition
 function to call in the shared library based on the data-type:
@@ -1322,23 +1322,23 @@ Conclusion
    single: ctypes
 
 Using ctypes is a powerful way to connect Python with arbitrary
-C-code. It's advantages for extending Python include 
+C-code. It's advantages for extending Python include
 
 - clean separation of C-code from Python code
 
     - no need to learn a new syntax except Python and C
-    
+
     - allows re-use of C-code
-    
+
     - functionality in shared libraries written for other purposes can be
       obtained with a simple Python wrapper and search for the library.
-    
-    
+
+
 - easy integration with NumPy through the ctypes attribute
 
 - full argument checking with the ndpointer class factory
 
-It's disadvantages include 
+It's disadvantages include
 
 - It is difficult to distribute an extension module made using ctypes
   because of a lack of support for building shared libraries in
@@ -1356,7 +1356,7 @@ package creation. However, ctypes is a close second and will probably
 be growing in popularity now that it is part of the Python
 distribution. This should bring more features to ctypes that should
 eliminate the difficulty in extending Python and distributing the
-extension using ctypes. 
+extension using ctypes.
 
 
 Additional tools you may find useful
@@ -1373,7 +1373,7 @@ provided here would be quickly dated. Do not assume that just because
 it is included in this list, I don't think the package deserves your
 attention. I'm including information about these packages because many
 people have found them useful and I'd like to give you as many options
-as possible for tackling the problem of easily integrating your code. 
+as possible for tackling the problem of easily integrating your code.
 
 
 SWIG
@@ -1399,7 +1399,7 @@ methods that have emerged that are more targeted to Python. SWIG can
 actually target extensions for several languages, but the typemaps
 usually have to be language-specific. Nonetheless, with modifications
 to the Python-specific typemaps, SWIG can be used to interface a
-library with other languages such as Perl, Tcl, and Ruby. 
+library with other languages such as Perl, Tcl, and Ruby.
 
 My experience with SWIG has been generally positive in that it is
 relatively easy to use and quite powerful. I used to use it quite
@@ -1409,7 +1409,7 @@ must be done using the concept of typemaps which are not Python
 specific and are written in a C-like syntax. Therefore, I tend to
 prefer other gluing strategies and would only attempt to use SWIG to
 wrap a very-large C/C++ library. Nonetheless, there are others who use
-SWIG quite happily. 
+SWIG quite happily.
 
 
 SIP
@@ -1426,7 +1426,7 @@ but the interface file looks a lot like a C/C++ header file. While SIP
 is not a full C++ parser, it understands quite a bit of C++ syntax as
 well as its own special directives that allow modification of how the
 Python binding is accomplished. It also allows the user to define
-mappings between Python types and C/C++ structrues and classes. 
+mappings between Python types and C/C++ structrues and classes.
 
 
 Boost Python
@@ -1445,7 +1445,7 @@ have not used Boost.Python because I am not a big user of C++ and
 using Boost to wrap simple C-subroutines is usually over-kill. It's
 primary purpose is to make C++ classes available in Python. So, if you
 have a set of C++ classes that need to be integrated cleanly into
-Python, consider learning about and using Boost.Python. 
+Python, consider learning about and using Boost.Python.
 
 
 Instant
@@ -1469,18 +1469,18 @@ arrays (adapted from the test2 included in the Instant distribution):
     PyObject* add(PyObject* a_, PyObject* b_){
       /*
       various checks
-      */ 
+      */
       PyArrayObject* a=(PyArrayObject*) a_;
       PyArrayObject* b=(PyArrayObject*) b_;
       int n = a->dimensions[0];
       int dims[1];
-      dims[0] = n; 
+      dims[0] = n;
       PyArrayObject* ret;
-      ret = (PyArrayObject*) PyArray_FromDims(1, dims, NPY_DOUBLE); 
+      ret = (PyArrayObject*) PyArray_FromDims(1, dims, NPY_DOUBLE);
       int i;
       char *aj=a->data;
       char *bj=b->data;
-      double *retj = (double *)ret->data; 
+      double *retj = (double *)ret->data;
       for (i=0; i < n; i++) {
         *retj++ = *((double *)aj) + *((double *)bj);
         aj += a->strides[0];
@@ -1500,7 +1500,7 @@ arrays (adapted from the test2 included in the Instant distribution):
     d = test2b_ext.add(a,b)
 
 Except perhaps for the dependence on SWIG, Instant is a
-straightforward utility for writing extension modules. 
+straightforward utility for writing extension modules.
 
 
 PyInline
@@ -1509,7 +1509,7 @@ PyInline
 This is a much older module that allows automatic building of
 extension modules so that C-code can be included with Python code.
 It's latest release (version 0.03) was in 2001, and it appears that it
-is not being updated. 
+is not being updated.
 
 
 PyFort
@@ -1520,4 +1520,4 @@ into Python with support for Numeric arrays. It was written by Paul
 Dubois, a distinguished computer scientist and the very first
 maintainer of Numeric (now retired). It is worth mentioning in the
 hopes that somebody will update PyFort to work with NumPy arrays as
-well which now support either Fortran or C-style contiguous arrays. 
+well which now support either Fortran or C-style contiguous arrays.
