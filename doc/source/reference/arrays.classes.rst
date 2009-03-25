@@ -13,7 +13,7 @@ difficult decision, and can be simply a matter of choice. NumPy has
 several tools for simplifying how your new object interacts with other
 array objects, and so the choice may not be significant in the
 end. One way to simplify the question is by asking yourself if the
-object you are interested can be replaced as a single array or does it
+object you are interested in can be replaced as a single array or does it
 really require two or more arrays at its core.
 
 Note that :func:`asarray` always returns the base-class ndarray. If
@@ -24,7 +24,7 @@ principal a subclass could redefine any aspect of the array and
 therefore, under strict guidelines, :func:`asanyarray` would rarely be
 useful. However, most subclasses of the arrayobject will not
 redefine certain aspects of the array object such as the buffer
-interface, or the attributes of the array. One of important example,
+interface, or the attributes of the array. One important example,
 however, of why your subroutine may not be able to handle an arbitrary
 subclass of an array is that matrices redefine the "*" operator to be
 matrix-multiplication, rather than element-by-element multiplication.
@@ -77,7 +77,7 @@ Matrix objects
 
 :class:`matrix` objects inherit from the ndarray and therefore, they
 have the same attributes and methods of ndarrays. There are six
-important differences of matrix objects, however that may lead to
+important differences of matrix objects, however, that may lead to
 unexpected results when you use matrices but expect them to act like
 arrays:
 

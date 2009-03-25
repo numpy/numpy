@@ -43,20 +43,20 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
 
 def asfarray(a, dtype=_nx.float_):
     """
-    Return an array converted to float type.
+    Return an array converted to a float type.
 
     Parameters
     ----------
     a : array_like
-        Input array.
-    dtype : string or dtype object, optional
-        Float type code to coerce input array `a`.  If one of the 'int' dtype,
-        it is replaced with float64.
+        The input array.
+    dtype : str or dtype object, optional
+        Float type code to coerce input array `a`.  If `dtype` is one of the
+        'int' dtypes, it is replaced with float64.
 
     Returns
     -------
-    out : ndarray, float
-        Input `a` as a float ndarray.
+    out : ndarray
+        The input `a` as a float ndarray.
 
     Examples
     --------
@@ -126,9 +126,10 @@ def imag(val):
 
 def iscomplex(x):
     """
-    Return a bool array, True if element is complex (non-zero imaginary part).
+    Returns a bool array, where True if input element is complex.
 
-    For scalars, return a boolean.
+    What is tested is whether the input has a non-zero imaginary part, not if
+    the input type is complex.
 
     Parameters
     ----------
@@ -140,11 +141,16 @@ def iscomplex(x):
     out : ndarray, bool
         Output array.
 
+    See Also
+    --------
+    isreal: Returns a bool array, where True if input element is real.
+    iscomplexobj: Return True if x is a complex type or an array of complex
+                  numbers.
+
     Examples
     --------
-    >>> x = np.array([1,2,3.j])
-    >>> np.iscomplex(x)
-    array([False, False,  True], dtype=bool)
+    >>> np.iscomplex([1+1j, 1+0j, 4.5, 3, 2, 2j])
+    array([ True, False, False, False, False,  True], dtype=bool)
 
     """
     ax = asanyarray(x)
@@ -155,9 +161,10 @@ def iscomplex(x):
 
 def isreal(x):
     """
-    Returns a bool array where True if the corresponding input element is real.
+    Returns a bool array, where True if input element is real.
 
-    True if complex part is zero.
+    If the input value has a complex type but with complex part zero, the
+    return value is True.
 
     Parameters
     ----------
@@ -169,6 +176,12 @@ def isreal(x):
     out : ndarray, bool
         Boolean array of same shape as `x`.
 
+    See Also
+    --------
+    iscomplex: Return a bool array, where True if input element is complex
+               (non-zero imaginary part).
+    isrealobj: Return True if x is not a complex type.
+
     Examples
     --------
     >>> np.isreal([1+1j, 1+0j, 4.5, 3, 2, 2j])
@@ -178,16 +191,70 @@ def isreal(x):
     return imag(x) == 0
 
 def iscomplexobj(x):
-    """Return True if x is a complex type or an array of complex numbers.
+    """
+    Return True if x is a complex type or an array of complex numbers.
 
-    Unlike iscomplex(x), complex(3.0) is considered a complex object.
+    The type of the input is checked, not the value. So even if the input
+    has an imaginary part equal to zero, `iscomplexobj` evaluates to True
+    if the data type is complex.
+
+    Parameters
+    ----------
+    x : any
+        The input can be of any type and shape.
+
+    Returns
+    -------
+    y : bool
+        The return value, True if `x` is of a complex type.
+
+    See Also
+    --------
+    isrealobj, iscomplex
+
+    Examples
+    --------
+    >>> np.iscomplexobj(1)
+    False
+    >>> np.iscomplexobj(1+0j)
+    True
+    np.iscomplexobj([3, 1+0j, True])
+    True
+
     """
     return issubclass( asarray(x).dtype.type, _nx.complexfloating)
 
 def isrealobj(x):
-    """Return True if x is not a complex type.
+    """
+    Return True if x is a not complex type or an array of complex numbers.
 
-    Unlike isreal(x), complex(3.0) is considered a complex object.
+    The type of the input is checked, not the value. So even if the input
+    has an imaginary part equal to zero, `isrealobj` evaluates to False
+    if the data type is complex.
+
+    Parameters
+    ----------
+    x : any
+        The input can be of any type and shape.
+
+    Returns
+    -------
+    y : bool
+        The return value, False if `x` is of a complex type.
+
+    See Also
+    --------
+    iscomplexobj, isreal
+
+    Examples
+    --------
+    >>> np.isrealobj(1)
+    True
+    >>> np.isrealobj(1+0j)
+    False
+    >>> np.isrealobj([3, 1+0j, True])
+    False
+
     """
     return not issubclass( asarray(x).dtype.type, _nx.complexfloating)
 
@@ -200,7 +267,11 @@ def _getmaxmin(t):
 
 def nan_to_num(x):
     """
-    Replace nan with zero and inf with large numbers.
+    Replace nan with zero and inf with finite numbers.
+
+    Returns an array or scalar replacing Not a Number (NaN) with zero,
+    (positive) infinity with a very large number and negative infinity
+    with a very small (or negative) number.
 
     Parameters
     ----------
@@ -209,10 +280,26 @@ def nan_to_num(x):
 
     Returns
     -------
-    out : ndarray
-        Array with the same shape and dtype as `x`.  Nan is replaced
-        by zero, and inf (-inf) is replaced by the largest (smallest)
-        floating point value that fits in the output dtype.
+    out : ndarray, float
+        Array with the same shape as `x` and dtype of the element in `x`  with
+        the greatest precision. NaN is replaced by zero, and infinity
+        (-infinity) is replaced by the largest (smallest or most negative)
+        floating point value that fits in the output dtype. All finite numbers
+        are upcast to the output dtype (default float64).
+
+    See Also
+    --------
+    isinf : Shows which elements are negative or negative infinity.
+    isneginf : Shows which elements are negative infinity.
+    isposinf : Shows which elements are positive infinity.
+    isnan : Shows which elements are Not a Number (NaN).
+    isfinite : Shows which elements are finite (not NaN, not infinity)
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+
 
     Examples
     --------
@@ -263,8 +350,9 @@ def real_if_close(a,tol=100):
     ----------
     a : array_like
         Input array.
-    tol : scalar
-        Tolerance for the complex part of the elements in the array.
+    tol : float
+        Tolerance in machine epsilons for the complex part of the elements
+        in the array.
 
     Returns
     -------
@@ -285,12 +373,12 @@ def real_if_close(a,tol=100):
 
     Examples
     --------
-    >>> np.finfo(np.float).eps      # DOCTEST +skip
+    >>> np.finfo(np.float).eps
     2.2204460492503131e-16
 
-    >>> np.real_if_close([2.1 + 4e-14j], tol = 1000)
+    >>> np.real_if_close([2.1 + 4e-14j], tol=1000)
     array([ 2.1])
-    >>> np.real_if_close([2.1 + 4e-13j], tol = 1000)
+    >>> np.real_if_close([2.1 + 4e-13j], tol=1000)
     array([ 2.1 +4.00000000e-13j])
 
     """
@@ -313,17 +401,17 @@ def asscalar(a):
     Parameters
     ----------
     a : ndarray
-        Input array.
+        Input array of size 1.
 
     Returns
     -------
     out : scalar
-        Scalar of size 1 array.
+        Scalar representation of `a`. The input data type is preserved.
 
     Examples
     --------
     >>> np.asscalar(np.array([24]))
-    >>> 24
+    24
 
     """
     return a.item()

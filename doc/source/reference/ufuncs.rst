@@ -46,7 +46,7 @@ understood by four rules:
 2. The size in each dimension of the output shape is the maximum of all
    the input shapes in that dimension.
 
-3. An input can be used in the calculation if it's shape in a particular
+3. An input can be used in the calculation if its shape in a particular
    dimension either matches the output shape or has value exactly 1.
 
 4. If an input has a dimension size of 1 in its shape, the first data
@@ -89,7 +89,7 @@ is true:
      to the other rows,
 
    - *c* acts like a (1,6) array and therefore like a (5,6) array
-     where ``c[:]` is broadcast to every row, and finally,
+     where ``c[:]`` is broadcast to every row, and finally,
 
    - *d* acts like a (5,6) array where the single value is repeated.
 
@@ -332,7 +332,7 @@ and a *dtype* keyword, and the arrays must all have dimension >=
 1. The *axis* keyword specifies which axis of the array the reduction
 will take place over and may be negative, but must be an integer. The
 *dtype* keyword allows you to manage a very common problem that arises
-when naively using `{op}.reduce <ufunc.reduce>`. Sometimes you may
+when naively using :ref:`{op}.reduce <ufunc.reduce>`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
 elements, but the result does not fit into the data type of the
 array. This commonly happens if you have an array of single-byte

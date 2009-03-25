@@ -468,26 +468,11 @@ add_newdoc('numpy.core.umath', 'arctanh',
 
 add_newdoc('numpy.core.umath', 'bitwise_and',
     """
-    Compute bit-wise AND of two arrays, element-wise.
+    Compute the bit-wise AND of two arrays element-wise.
 
-    When calculating the bit-wise AND between two elements, ``x`` and ``y``,
-    each element is first converted to its binary representation (which works
-    just like the decimal system, only now we're using 2 instead of 10):
-
-    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
-              y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
-
-    where ``W`` is the bit-width of the type (i.e., 8 for a byte or uint8),
-    and each :math:`a_i` and :math:`b_j` is either 0 or 1.  For example, 13
-    is represented as ``00001101``, which translates to
-    :math:`2^4 + 2^3 + 2`.
-
-    The bit-wise operator is the result of
-
-    .. math:: z = \\sum_{i=0}^{i=W-1} (a_i \\wedge b_i) \\cdot 2^i,
-
-    where :math:`\\wedge` is the AND operator, which yields one whenever
-    both :math:`a_i` and :math:`b_i` are 1.
+    Computes the bit-wise AND of the underlying binary representation of
+    the integers in the input arrays. This ufunc implements the C/Python
+    operator ``&``.
 
     Parameters
     ----------
@@ -501,14 +486,15 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
 
     See Also
     --------
-    bitwise_or, bitwise_xor
     logical_and
+    bitwise_or
+    bitwise_xor
     binary_repr :
         Return the binary representation of the input number as a string.
 
     Examples
     --------
-    We have seen that 13 is represented by ``00001101``.  Similary, 17 is
+    The number 13 is represented by ``00001101``.  Likewise, 17 is
     represented by ``00010001``.  The bit-wise AND of 13 and 17 is
     therefore ``000000001``, or 1:
 
@@ -533,26 +519,11 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
 
 add_newdoc('numpy.core.umath', 'bitwise_or',
     """
-    Compute bit-wise OR of two arrays, element-wise.
+    Compute the bit-wise OR of two arrays element-wise.
 
-    When calculating the bit-wise OR between two elements, ``x`` and ``y``,
-    each element is first converted to its binary representation (which works
-    just like the decimal system, only now we are using 2 instead of 10):
-
-    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
-              y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
-
-    where ``W`` is the bit-width of the type (i.e., 8 for a byte or uint8),
-    and each :math:`a_i` and :math:`b_j` is either 0 or 1.  For example, 13
-    is represented as ``00001101``, which translates to
-    :math:`2^4 + 2^3 + 2`.
-
-    The bit-wise operator is the result of
-
-    .. math:: z = \\sum_{i=0}^{i=W-1} (a_i \\vee b_i) \\cdot 2^i,
-
-    where :math:`\\vee` is the OR operator, which yields one whenever
-    either :math:`a_i` or :math:`b_i` is 1.
+    Computes the bit-wise OR of the underlying binary representation of
+    the integers in the input arrays. This ufunc implements the C/Python
+    operator ``|``.
 
     Parameters
     ----------
@@ -566,16 +537,17 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
     See Also
     --------
-    bitwise_and, bitwise_xor
     logical_or
+    bitwise_and
+    bitwise_xor
     binary_repr :
         Return the binary representation of the input number as a string.
 
     Examples
     --------
-    We've seen that 13 is represented by ``00001101``.  Similary, 16 is
-    represented by ``00010000``.  The bit-wise OR of 13 and 16 is
-    therefore ``000111011``, or 29:
+    The number 13 has the binaray representation ``00001101``. Likewise,
+    16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
+    then ``000111011``, or 29:
 
     >>> np.bitwise_or(13, 16)
     29
@@ -601,26 +573,11 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
 add_newdoc('numpy.core.umath', 'bitwise_xor',
     """
-    Compute bit-wise XOR of two arrays, element-wise.
+    Compute the bit-wise XOR of two arrays element-wise.
 
-    When calculating the bit-wise XOR between two elements, ``x`` and ``y``,
-    each element is first converted to its binary representation (which works
-    just like the decimal system, only now we are using 2 instead of 10):
-
-    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i\\\\
-              y = \\sum_{i=0}^{W-1} b_i \\cdot 2^i,
-
-    where ``W`` is the bit-width of the type (i.e., 8 for a byte or uint8),
-    and each :math:`a_i` and :math:`b_j` is either 0 or 1.  For example, 13
-    is represented as ``00001101``, which translates to
-    :math:`2^4 + 2^3 + 2`.
-
-    The bit-wise operator is the result of
-
-    .. math:: z = \\sum_{i=0}^{i=W-1} (a_i \\oplus b_i) \\cdot 2^i,
-
-    where :math:`\\oplus` is the XOR operator, which yields one whenever
-    either :math:`a_i` or :math:`b_i` is 1, but not both.
+    Computes the bit-wise XOR of the underlying binary representation of
+    the integers in the input arrays. This ufunc implements the C/Python
+    operator ``^``.
 
     Parameters
     ----------
@@ -629,19 +586,20 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
 
     Returns
     -------
-    out : ndarray
+    out : array_like
         Result.
 
     See Also
     --------
-    bitwise_and, bitwise_or
     logical_xor
+    bitwise_and
+    bitwise_or
     binary_repr :
         Return the binary representation of the input number as a string.
 
     Examples
     --------
-    We've seen that 13 is represented by ``00001101``.  Similary, 17 is
+    The number 13 is represented by ``00001101``. Likewise, 17 is
     represented by ``00010001``.  The bit-wise XOR of 13 and 17 is
     therefore ``00011100``, or 28:
 
@@ -679,6 +637,10 @@ add_newdoc('numpy.core.umath', 'ceil',
     y : {ndarray, scalar}
         The ceiling of each element in `x`.
 
+    See Also
+    --------
+    floor, trunc, rint
+
     Examples
     --------
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
@@ -705,10 +667,14 @@ add_newdoc('numpy.core.umath', 'trunc',
     y : {ndarray, scalar}
         The truncated value of each element in `x`.
 
+    See Also
+    --------
+    ceil, floor, rint
+
     Examples
     --------
     >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
-    >>> np.ceil(a)
+    >>> np.trunc(a)
     array([-1., -1., -0.,  0.,  1.,  1.,  2.])
 
     Notes
@@ -804,26 +770,21 @@ add_newdoc('numpy.core.umath', 'degrees',
 
 add_newdoc('numpy.core.umath', 'rad2deg',
     """
-    Convert angles from radians to degrees. This is the same
-    function as degrees but is preferred because its more
-    descriptive name.
+    Convert angles from radians to degrees.
 
     Parameters
     ----------
     x : array_like
-      Angle in radians.
+        Angle in radians.
 
     Returns
     -------
     y : ndarray
-      The corresponding angle in degrees.
-
+        The corresponding angle in degrees.
 
     See Also
     --------
-    degrees : Convert angles from radians to degrees.
     deg2rad : Convert angles from degrees to radians.
-    radians : Convert angles from degrees to radians.
     unwrap : Remove large jumps in angle by wrapping.
 
     Notes
@@ -911,7 +872,7 @@ add_newdoc('numpy.core.umath', 'divide',
 
 add_newdoc('numpy.core.umath', 'equal',
     """
-    Returns elementwise x1 == x2 in a bool array.
+    Return (x1 == x2) element-wise.
 
     Parameters
     ----------
@@ -920,8 +881,23 @@ add_newdoc('numpy.core.umath', 'equal',
 
     Returns
     -------
-    out : boolean
-        The elementwise test `x1` == `x2`.
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
+
+    See Also
+    --------
+    not_equal, greater_equal, less_equal, greater, less
+
+    Examples
+    --------
+    >>> np.equal([0, 1, 3], np.arange(3))
+    array([ True,  True, False], dtype=bool)
+
+    What is compared are values, not types. So an int (1) and an array of
+    length one can evaluate as True:
+
+    >>> np.equal(1, np.ones(1))
+    array([ True], dtype=bool)
 
     """)
 
@@ -1005,32 +981,33 @@ add_newdoc('numpy.core.umath', 'exp2',
 
 add_newdoc('numpy.core.umath', 'expm1',
     """
-    Return the exponential of the elements in the array minus one.
+    Compute ``exp(x) - 1`` for all elements in the array.
 
     Parameters
     ----------
     x : array_like
-        Input values.
+       Input values.
 
     Returns
     -------
     out : ndarray
-        Element-wise exponential minus one: ``out=exp(x)-1``.
+        Element-wise exponential minus one: ``out = exp(x) - 1``.
 
     See Also
     --------
-    log1p : ``log(1+x)``, the inverse of expm1.
+    log1p : ``log(1 + x)``, the inverse of expm1.
 
 
     Notes
     -----
-    This function provides greater precision than using ``exp(x)-1``
-    for small values of `x`.
+    This function provides greater precision than the formula ``exp(x) - 1``
+    for small values of ``x``.
 
     Examples
     --------
-    Since the series expansion of ``e**x = 1 + x + x**2/2! + x**3/3! + ...``,
-    for very small `x` we expect that ``e**x -1 ~ x + x**2/2``:
+    The true value of ``exp(1e-10) - 1`` is ``1.00000000005e-10`` to
+    about 32 significant digits. This example shows the superiority of
+    expm1 in this case.
 
     >>> np.expm1(1e-10)
     1.00000000005e-10
@@ -1088,11 +1065,15 @@ add_newdoc('numpy.core.umath', 'floor',
     y : {ndarray, scalar}
         The floor of each element in `x`.
 
+    See Also
+    --------
+    ceil, trunc, rint
+
     Notes
     -----
     Some spreadsheet programs calculate the "floor-towards-zero", in other
     words ``floor(-2.5) == -2``.  NumPy, however, uses the a definition of
-    `floor` such that `floor(-2.5) == -3``.
+    `floor` such that `floor(-2.5) == -3`.
 
     Examples
     --------
@@ -1206,7 +1187,7 @@ add_newdoc('numpy.core.umath', 'greater',
 
 add_newdoc('numpy.core.umath', 'greater_equal',
     """
-    Element-wise True if first array is greater or equal than second array.
+    Return (x1 >= x2) element-wise.
 
     Parameters
     ----------
@@ -1215,17 +1196,17 @@ add_newdoc('numpy.core.umath', 'greater_equal',
 
     Returns
     -------
-    out : ndarray, bool
-        Output array.
+    out : {ndarray, bool}
+        Output array of bools, or a single bool if x1 and x2 are scalars.
 
     See Also
     --------
-    greater, less, less_equal, equal
+    greater, less, less_equal, equal, not_equal
 
     Examples
     --------
-    >>> np.greater_equal([4,2],[2,2])
-    array([ True, True], dtype=bool)
+    >>> np.greater_equal([4, 2, 1], [2, 2, 2])
+    array([ True, True, False], dtype=bool)
 
     """)
 
@@ -1256,22 +1237,9 @@ add_newdoc('numpy.core.umath', 'invert',
     """
     Compute bit-wise inversion, or bit-wise NOT, element-wise.
 
-    When calculating the bit-wise NOT of an element ``x``, each element is
-    first converted to its binary representation (which works
-    just like the decimal system, only now we're using 2 instead of 10):
-
-    .. math:: x = \\sum_{i=0}^{W-1} a_i \\cdot 2^i
-
-    where ``W`` is the bit-width of the type (i.e., 8 for a byte or uint8),
-    and each :math:`a_i` is either 0 or 1.  For example, 13 is represented
-    as ``00001101``, which translates to :math:`2^4 + 2^3 + 2`.
-
-    The bit-wise operator is the result of
-
-    .. math:: z = \\sum_{i=0}^{i=W-1} (\\lnot a_i) \\cdot 2^i,
-
-    where :math:`\\lnot` is the NOT operator, which yields 1 whenever
-    :math:`a_i` is 0 and yields 0 whenever :math:`a_i` is 1.
+    Computes the bit-wise NOT of the underlying binary representation of
+    the integers in the input arrays. This ufunc implements the C/Python
+    operator ``~``.
 
     For signed integer inputs, the two's complement is returned.
     In a two's-complement system negative numbers are represented by the two's
@@ -1282,12 +1250,12 @@ add_newdoc('numpy.core.umath', 'invert',
 
     Parameters
     ----------
-    x1 : ndarray
+    x1 : array_like
         Only integer types are handled (including booleans).
 
     Returns
     -------
-    out : ndarray
+    out : array_like
         Result.
 
     See Also
@@ -1347,39 +1315,36 @@ add_newdoc('numpy.core.umath', 'invert',
 
 add_newdoc('numpy.core.umath', 'isfinite',
     """
-    Returns True for each element that is a finite number.
-
-    Shows which elements of the input are finite (not infinity or not
-    Not a Number).
+    Test element-wise for finite-ness (not infinity or not Not a Number),
+    return result as bool array.
 
     Parameters
     ----------
     x : array_like
-      Input values.
+        Input values.
     y : array_like, optional
-      A boolean array with the same shape and type as `x` to store the result.
+        A boolean array with the same shape and type as `x` to store the
+        result.
 
     Returns
     -------
     y : ndarray, bool
-      For scalar input data, the result is a new numpy boolean with value True
-      if the input data is finite; otherwise the value is False (input is
-      either positive infinity, negative infinity or Not a Number).
+        For scalar input, the result is a new boolean with value True
+        if the input is finite; otherwise the value is False (input is
+        either positive infinity, negative infinity or Not a Number).
 
-      For array input data, the result is an numpy boolean array with the same
-      dimensions as the input and the values are True if the corresponding
-      element of the input is finite; otherwise the values are False (element
-      is either positive infinity, negative infinity or Not a Number). If the
-      second argument is supplied then an numpy integer array is returned with
-      values 0 or 1 corresponding to False and True, respectively.
+        For array input, the result is a boolean array with the same
+        dimensions as the input and the values are True if the corresponding
+        element of the input is finite; otherwise the values are False (element
+        is either positive infinity, negative infinity or Not a Number). If a
+        second argument is supplied the result is stored there. If the type of
+        that array is a numeric type the result is represented as zeros and
+        ones, if the type is boolean then as False and True. The return value
+        `y` is then a reference to that array.
 
     See Also
     --------
-    isinf : Shows which elements are negative or negative infinity.
-    isneginf : Shows which elements are negative infinity.
-    isposinf : Shows which elements are positive infinity.
-    isnan : Shows which elements are Not a Number (NaN).
-
+    isinf, isneginf, isposinf, isnan
 
     Notes
     -----
@@ -1390,9 +1355,8 @@ add_newdoc('numpy.core.umath', 'isfinite',
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
     Also that positive infinity is not equivalent to negative infinity. But
     infinity is equivalent to positive infinity.
-
-    Errors result if second argument is also supplied with scalar input or
-    if first and second arguments have different shapes.
+    Errors result if the second argument is also supplied when `x` is a scalar
+    input, or if first and second arguments have different shapes.
 
     Examples
     --------
@@ -1408,9 +1372,10 @@ add_newdoc('numpy.core.umath', 'isfinite',
     False
     >>> np.isfinite([np.log(-1.),1.,np.log(0)])
     array([False,  True, False], dtype=bool)
-    >>> x=np.array([-np.inf, 0., np.inf])
-    >>> y=np.array([2,2,2])
-    >>> np.isfinite(x,y)
+
+    >>> x = np.array([-np.inf, 0., np.inf])
+    >>> y = np.array([2, 2, 2])
+    >>> np.isfinite(x, y)
     array([0, 1, 0])
     >>> y
     array([0, 1, 0])
@@ -1419,45 +1384,39 @@ add_newdoc('numpy.core.umath', 'isfinite',
 
 add_newdoc('numpy.core.umath', 'isinf',
     """
-    Shows which elements of the input are positive or negative infinity.
-    Returns a numpy boolean scalar or array resulting from an element-wise test
-    for positive or negative infinity.
+    Test element-wise for positive or negative infinity, return result as bool
+    array.
 
     Parameters
     ----------
     x : array_like
-      input values
+        Input values
     y : array_like, optional
-      An array with the same shape as `x` to store the result.
+        An array with the same shape as `x` to store the result.
 
     Returns
     -------
     y : {ndarray, bool}
-      For scalar input data, the result is a new numpy boolean with value True
-      if the input data is positive or negative infinity; otherwise the value
-      is False.
+        For scalar input, the result is a new boolean with value True
+        if the input is positive or negative infinity; otherwise the value
+        is False.
 
-      For array input data, the result is an numpy boolean array with the same
-      dimensions as the input and the values are True if the corresponding
-      element of the input is positive or negative infinity; otherwise the
-      values are False.  If the second argument is supplied then an numpy
-      integer array is returned with values 0 or 1 corresponding to False and
-      True, respectively.
+        For array input, the result is a boolean array with the same
+        dimensions as the input and the values are True if the corresponding
+        element of the input is positive or negative infinity; otherwise the
+        values are False.  If a second argument is supplied the result is
+        stored there. If the type of that array is a numeric type the result
+        is represented as zeros and ones, if the type is boolean then as
+        False and True. The return value `y` is then a reference to that array.
 
     See Also
     --------
-    isneginf : Shows which elements are negative infinity.
-    isposinf : Shows which elements are positive infinity.
-    isnan : Shows which elements are Not a Number (NaN).
-    isfinite: Shows which elements are not: Not a number, positive and
-             negative infinity
+    isneginf, isposinf, isnan, isfinite
 
     Notes
     -----
     Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
-    (IEEE 754). This means that Not a Number is not equivalent to infinity.
-    Also that positive infinity is not equivalent to negative infinity. But
-    infinity is equivalent to positive infinity.
+    (IEEE 754).
 
     Errors result if second argument is also supplied with scalar input or
     if first and second arguments have different shapes.
@@ -1472,9 +1431,10 @@ add_newdoc('numpy.core.umath', 'isinf',
     True
     >>> np.isinf([np.inf, -np.inf, 1.0, np.nan])
     array([ True,  True, False, False], dtype=bool)
-    >>> x=np.array([-np.inf, 0., np.inf])
-    >>> y=np.array([2,2,2])
-    >>> np.isinf(x,y)
+
+    >>> x = np.array([-np.inf, 0., np.inf])
+    >>> y = np.array([2, 2, 2])
+    >>> np.isinf(x, y)
     array([1, 0, 1])
     >>> y
     array([1, 0, 1])
@@ -1483,31 +1443,26 @@ add_newdoc('numpy.core.umath', 'isinf',
 
 add_newdoc('numpy.core.umath', 'isnan',
     """
-    Returns a numpy boolean scalar or array resulting from an element-wise test
-    for Not a Number (NaN).
+    Test element-wise for Not a Number (NaN), return result as a bool array.
 
     Parameters
     ----------
     x : array_like
-      input data.
+        Input array.
 
     Returns
     -------
     y : {ndarray, bool}
-      For scalar input data, the result is a new numpy boolean with value True
-      if the input data is NaN; otherwise the value is False.
+        For scalar input, the result is a new boolean with value True
+        if the input is NaN; otherwise the value is False.
 
-      For array input data, the result is an numpy boolean array with the same
-      dimensions as the input and the values are True if the corresponding
-      element of the input is Not a Number; otherwise the values are False.
+        For array input, the result is a boolean array with the same
+        dimensions as the input and the values are True if the corresponding
+        element of the input is NaN; otherwise the values are False.
 
     See Also
     --------
-    isinf : Tests for infinity.
-    isneginf : Tests for negative infinity.
-    isposinf : Tests for positive infinity.
-    isfinite : Shows which elements are not: Not a number, positive infinity
-               and negative infinity
+    isinf, isneginf, isposinf, isfinite
 
     Notes
     -----
@@ -1553,6 +1508,13 @@ add_newdoc('numpy.core.umath', 'left_shift',
 
     Examples
     --------
+    >>> np.binary_repr(5)
+    '101'
+    >>> np.left_shift(5, 2)
+    20
+    >>> np.binary_repr(20)
+    '10100'
+
     >>> np.left_shift(5, [1,2,3])
     array([10, 20, 40])
 
@@ -1560,7 +1522,7 @@ add_newdoc('numpy.core.umath', 'left_shift',
 
 add_newdoc('numpy.core.umath', 'less',
     """
-    Returns (x1 < x2) element-wise.
+    Return (x1 < x2) element-wise.
 
     Parameters
     ----------
@@ -1574,18 +1536,18 @@ add_newdoc('numpy.core.umath', 'less',
 
     See Also
     --------
-    less_equal
+    less_equal, greater, greater_equal, equal, not_equal
 
     Examples
     --------
-    >>> np.less([1,2],[2,2])
+    >>> np.less([1, 2], [2, 2])
     array([ True, False], dtype=bool)
 
     """)
 
 add_newdoc('numpy.core.umath', 'less_equal',
     """
-    Returns (x1 <= x2) element-wise.
+    Return (x1 <= x2) element-wise.
 
     Parameters
     ----------
@@ -1599,11 +1561,11 @@ add_newdoc('numpy.core.umath', 'less_equal',
 
     See Also
     --------
-    less
+    less, greater_equal, greater, equal, not_equal
 
     Examples
     --------
-    >>> np.less_equal([1,2,3],[2,2,2])
+    >>> np.less_equal([1, 2, 3], [2, 2, 2])
     array([ True,  True, False], dtype=bool)
 
     """)
@@ -1841,15 +1803,14 @@ add_newdoc('numpy.core.umath', 'logical_and',
     Parameters
     ----------
     x1, x2 : array_like
-        Logical AND is applied to the elements of `x1` and `x2`.
-        They have to be of the same shape.
+        Input arrays. `x1` and `x2` must be of the same shape.
 
 
     Returns
     -------
     y : {ndarray, bool}
         Boolean result with the same shape as `x1` and `x2` of the logical
-        AND operation on elements of `x1` and `x2`.
+        AND operation on corresponding elements of `x1` and `x2`.
 
     See Also
     --------
@@ -2012,13 +1973,18 @@ add_newdoc('numpy.core.umath', 'minimum',
     """
     Element-wise minimum of array elements.
 
-    Compare two arrays and returns a new array containing
-    the element-wise minima.
+    Compare two arrays and returns a new array containing the element-wise
+    minima. If one of the elements being compared is a nan, then that element
+    is returned. If both elements are nans then the first is returned. The
+    latter distinction is important for complex nans, which are defined as at
+    least one of the real or imaginary parts being a nan. The net effect is
+    that nans are propagated.
 
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared.
+        The arrays holding the elements to be compared. They must have
+        the same shape.
 
     Returns
     -------
@@ -2029,12 +1995,16 @@ add_newdoc('numpy.core.umath', 'minimum',
     See Also
     --------
     maximum :
-        element-wise maximum
+      element-wise minimum that propagates nans.
+    fmax :
+      element-wise maximum that ignores nans unless both inputs are nans.
+    fmin :
+      element-wise minimum that ignores nans unless both inputs are nans.
 
     Notes
     -----
-    Equivalent to ``np.where(x1 < x2, x1, x2)`` but faster and does proper
-    broadcasting.
+    The minimum is equivalent to ``np.where(x1 <= x2, x1, x2)`` when neither
+    x1 nor x2 are nans, but it is faster and does proper broadcasting.
 
     Examples
     --------
@@ -2045,17 +2015,118 @@ add_newdoc('numpy.core.umath', 'minimum',
     array([[ 0.5,  0. ],
            [ 0. ,  1. ]])
 
+    >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
+    array([ NaN,  NaN,  NaN])
+
     """)
 
 add_newdoc('numpy.core.umath', 'fmax',
     """
+    fmax(x1, x2[, out])
+
+    Element-wise maximum of array elements.
+
+    Compare two arrays and returns a new array containing the element-wise
+    maxima. If one of the elements being compared is a nan, then the non-nan
+    element is returned. If both elements are nans then the first is returned.
+    The latter distinction is important for complex nans, which are defined as
+    at least one of the real or imaginary parts being a nan. The net effect is
+    that nans are ignored when possible.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        The arrays holding the elements to be compared. They must have
+        the same shape.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
+        both  `x1` and `x2` are scalars.
+
+    See Also
+    --------
+    fmin :
+      element-wise minimum that ignores nans unless both inputs are nans.
+    maximum :
+      element-wise maximum that propagates nans.
+    minimum :
+      element-wise minimum that propagates nans.
+
+    Notes
+    -----
     .. versionadded:: 1.3.0
+
+    The fmax is equivalent to ``np.where(x1 >= x2, x1, x2)`` when neither
+    x1 nor x2 are nans, but it is faster and does proper broadcasting.
+
+    Examples
+    --------
+    >>> np.fmax([2, 3, 4], [1, 5, 2])
+    array([ 2.,  5.,  4.])
+
+    >>> np.fmax(np.eye(2), [0.5, 2])
+    array([[ 1. ,  2. ],
+           [ 0.5,  2. ]])
+
+    >>> np.fmax([np.nan, 0, np.nan],[0, np.nan, np.nan])
+    array([  0.,   0.,  NaN])
 
     """)
 
 add_newdoc('numpy.core.umath', 'fmin',
     """
+    fmin(x1, x2[, out])
+
+    Element-wise minimum of array elements.
+
+    Compare two arrays and returns a new array containing the element-wise
+    minima. If one of the elements being compared is a nan, then the non-nan
+    element is returned. If both elements are nans then the first is returned.
+    The latter distinction is important for complex nans, which are defined as
+    at least one of the real or imaginary parts being a nan. The net effect is
+    that nans are ignored when possible.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        The arrays holding the elements to be compared. They must have
+        the same shape.
+
+    Returns
+    -------
+    y : {ndarray, scalar}
+        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
+        both  `x1` and `x2` are scalars.
+
+    See Also
+    --------
+    fmax :
+      element-wise maximum that ignores nans unless both inputs are nans.
+    maximum :
+      element-wise maximum that propagates nans.
+    minimum :
+      element-wise minimum that propagates nans.
+
+    Notes
+    -----
     .. versionadded:: 1.3.0
+
+    The fmin is equivalent to ``np.where(x1 <= x2, x1, x2)`` when neither
+    x1 nor x2 are nans, but it is faster and does proper broadcasting.
+
+    Examples
+    --------
+    >>> np.fmin([2, 3, 4], [1, 5, 2])
+    array([2, 5, 4])
+
+    >>> np.fmin(np.eye(2), [0.5, 2])
+    array([[ 1. ,  2. ],
+           [ 0.5,  2. ]])
+
+    >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
+    array([  0.,   0.,  NaN])
 
     """)
 
@@ -2250,24 +2321,21 @@ add_newdoc('numpy.core.umath', 'radians',
 
 add_newdoc('numpy.core.umath', 'deg2rad',
     """
-    Convert angles from degrees to radians. This is the same
-    function as radians, but deg2rad is a more descriptive name.
+    Convert angles from degrees to radians.
 
     Parameters
     ----------
     x : array_like
-      Angles in degrees.
+        Angles in degrees.
 
     Returns
     -------
     y : ndarray
-      The corresponding angle in radians.
+        The corresponding angle in radians.
 
     See Also
     --------
-    radians : Convert angles from degrees to radians.
     rad2deg : Convert angles from radians to degrees.
-    degrees : Convert angles from radians to degrees.
     unwrap : Remove large jumps in angle by wrapping.
 
     Notes
@@ -2369,6 +2437,13 @@ add_newdoc('numpy.core.umath', 'right_shift',
 
     Examples
     --------
+    >>> np.binary_repr(10)
+    '1010'
+    >>> np.right_shift(10, 1)
+    5
+    >>> np.binary_repr(5)
+    '101'
+
     >>> np.right_shift(10, [1,2,3])
     array([5, 2, 1])
 
@@ -2385,14 +2460,18 @@ add_newdoc('numpy.core.umath', 'rint',
 
     Returns
     -------
-    out : ndarray
+    out : {ndarray, scalar}
         Output array is same shape and type as `x`.
+
+    See Also
+    --------
+    ceil, floor, trunc
 
     Examples
     --------
-    >>> a = [-4.1, -3.6, -2.5, 0.1, 2.5, 3.1, 3.9]
+    >>> a = np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0])
     >>> np.rint(a)
-    array([-4., -4., -2.,  0.,  2.,  3.,  4.])
+    array([-2., -2., -0.,  0.,  2.,  2.,  2.])
 
     """)
 

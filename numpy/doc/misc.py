@@ -95,7 +95,7 @@ Examples:
 
 Interfacing to C:
 -----------------
-Only a survey the choices. Little detail on how each works.
+Only a survey of the choices. Little detail on how each works.
 
 1) Bare metal, wrap your own C-code manually.
 

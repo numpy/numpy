@@ -149,15 +149,21 @@ get_numpy_include = deprecate(get_include, 'get_numpy_include', 'get_include')
 #--------------------------------------------
 
 def byte_bounds(a):
-    """(low, high) are pointers to the end-points of an array
+    """
+    Returns pointers to the end-points of an array.
 
-    low is the first byte
-    high is just *past* the last byte
+    Parameters
+    ----------
+    a : ndarray
+        Input array. It must conform to the Python-side of the array interface.
 
-    If the array is not single-segment, then it may not actually
-    use every byte between these bounds.
+    Returns
+    -------
+    (low, high) : tuple of 2 integers
+        The first integer is the first byte of the array, the second integer is
+        just past the last byte of the array.  If `a` is not contiguous it
+        would not use every byte between the (`low`, `high`) values.
 
-    The array provided must conform to the Python-side of the array interface
     """
     ai = a.__array_interface__
     a_data = ai['data'][0]
@@ -228,10 +234,8 @@ def who(vardict=None):
     >>> np.whos(d)
     Name            Shape            Bytes            Type
     ===========================================================
-    <BLANKLINE>
     y               3                24               float64
     x               2                16               float64
-    <BLANKLINE>
     Upper bound on total bytes  =       40
 
     """

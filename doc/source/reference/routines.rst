@@ -27,6 +27,7 @@ Routines
    routines.ma
    routines.help
    routines.other
+   routines.testing
    routines.emath
    routines.matlib
    routines.dual

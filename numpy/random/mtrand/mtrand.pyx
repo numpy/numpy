@@ -583,9 +583,22 @@ cdef class RandomState:
         """
         get_state()
 
-        Return a tuple representing the internal state of the generator::
+        Return a tuple representing the internal state of the generator.
 
-            ('MT19937', int key[624], int pos, int has_gauss, float cached_gaussian)
+        Returns
+        -------
+        out : tuple(string, list of 624 integers, int, int, float)
+            The returned tuple has the following items:
+
+            1. the string 'MT19937'
+            2. a list of 624 integer keys
+            3. an integer pos
+            4. an integer has_gauss
+            5. and a float cached_gaussian
+
+        See Also
+        --------
+        set_state
 
         """
         cdef ndarray state "arrayObject_state"
@@ -601,8 +614,28 @@ cdef class RandomState:
 
         Set the state from a tuple.
 
-        state = ('MT19937', int key[624], int pos, int has_gauss, float cached_gaussian)
+        Parameters
+        ----------
+        state : tuple(string, list of 624 ints, int, int, float)
+            The `state` tuple is made up of
 
+            1. the string 'MT19937'
+            2. a list of 624 integer keys
+            3. an integer pos
+            4. an integer has_gauss
+            5. and a float for the cached_gaussian
+
+        Returns
+        -------
+        out : None
+            Returns 'None' on success.
+
+        See Also
+        --------
+        get_state
+
+        Notes
+        -----
         For backwards compatibility, the following form is also accepted
         although it is missing some information about the cached Gaussian value.
 
@@ -648,6 +681,16 @@ cdef class RandomState:
         random_sample(size=None)
 
         Return random floats in the half-open interval [0.0, 1.0).
+
+        Parameters
+        ----------
+        size : shape tuple, optional
+            Defines the shape of the returned array of random floats.
+
+        Returns
+        -------
+        out : ndarray, floats
+            Array of random of floats with shape of `size`.
 
         """
         return cont0_array(self.internal_state, rk_double, size)
@@ -911,7 +954,19 @@ cdef class RandomState:
         """
         standard_normal(size=None)
 
-        Standard Normal distribution (mean=0, stdev=1).
+        Returns samples from a Standard Normal distribution (mean=0, stdev=1).
+
+        Parameters
+        ----------
+        size : int, shape tuple, optional
+            Returns the number of samples required to satisfy the `size` parameter.
+            If not given or 'None' indicates to return one sample.
+
+        Returns
+        -------
+        out : float, ndarray
+            Samples the Standard Normal distribution with a shape satisfying the
+            `size` parameter.
 
         """
         return cont0_array(self.internal_state, rk_gauss, size)
@@ -1083,10 +1138,12 @@ cdef class RandomState:
 
         Its probability density function is
 
-        .. math:: f(x; \\lambda) = \\lambda \\exp(-\\lambda x),
+        .. math:: f(x; \\frac{1}{\\beta}) = \\frac{1}{\\beta} \\exp(-\\frac{x}{\\beta}),
 
-        for ``x > 0`` and 0 elsewhere.  :math:`lambda` is
-        known as the rate parameter.
+        for ``x > 0`` and 0 elsewhere. :math:`\\beta` is the scale parameter,
+        which is the inverse of the rate parameter :math:`\\lambda = 1/\\beta`.
+        The rate parameter is an alternative, widely used parameterization
+        of the exponential distribution [3]_.
 
         The exponential distribution is a continuous analogue of the
         geometric distribution.  It describes many common situations, such as
@@ -1096,7 +1153,7 @@ cdef class RandomState:
         Parameters
         ----------
         scale : float
-            The rate parameter, :math:`\\lambda`.
+            The scale parameter, :math:`\\beta = 1/\\lambda`.
         size : tuple of ints
             Number of samples to draw.  The output is shaped
             according to `size`.
@@ -1107,6 +1164,8 @@ cdef class RandomState:
                Random Signal Principles", 4th ed, 2001, p. 57.
         .. [2] "Poisson Process", Wikipedia,
                http://en.wikipedia.org/wiki/Poisson_process
+        .. [3] "Exponential Distribution, Wikipedia,
+               http://en.wikipedia.org/wiki/Exponential_distribution
 
         """
         cdef ndarray oscale
@@ -1800,11 +1859,11 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> def weib(x,n,a):
-        ...     return (a/n)*(x/n)**(a-1)*exp(-(x/n)**a)
+        ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
 
-        >>> count, bins, ignored = plt.hist(numpy.random.weibull(5.,1000))
+        >>> count, bins, ignored = plt.hist(np.random.weibull(5.,1000))
+        >>> x = np.arange(1,100.)/50.
         >>> scale = count.max()/weib(x, 1., 5.).max()
-        >>> x = arange(1,100.)/50.
         >>> plt.plot(x, weib(x, 1., 5.)*scale)
         >>> plt.show()
 

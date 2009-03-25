@@ -34,7 +34,7 @@ def unravel_index(x,dims):
 
     Examples
     --------
-    >>> arr = np.ones((5,4))
+    >>> arr = np.arange(20).reshape(5,4)
     >>> arr
     array([[ 0,  1,  2,  3],
            [ 4,  5,  6,  7],
@@ -130,7 +130,6 @@ class nd_grid(object):
             [2, 2, 2, 2, 2],
             [3, 3, 3, 3, 3],
             [4, 4, 4, 4, 4]],
-    <BLANKLINE>
            [[0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4],
@@ -396,11 +395,20 @@ class ndenumerate(object):
 
 
 class ndindex(object):
-    """Pass in a sequence of integers corresponding
-    to the number of dimensions in the counter.  This iterator
-    will then return an N-dimensional counter.
+    """
+    An N-dimensional iterator object to index arrays.
 
-    Example:
+    Given the shape of an array, an `ndindex` instance iterates over
+    the N-dimensional index of the array. At each iteration, the index of the
+    last dimension is incremented by one.
+
+    Parameters
+    ----------
+    `*args` : integers
+      The size of each dimension in the counter.
+
+    Examples
+    --------
     >>> for index in np.ndindex(3,2,1):
     ...     print index
     (0, 0, 0)

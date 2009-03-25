@@ -54,19 +54,24 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     ----------
     a : array_like
         The source array.
-    indices : array_like, int
+    indices : array_like
         The indices of the values to extract.
     axis : int, optional
-        The axis over which to select values.  By default, the
-        flattened input array is used.
+        The axis over which to select values. By default, the flattened
+        input array is used.
     out : ndarray, optional
         If provided, the result will be placed in this array. It should
         be of the appropriate shape and dtype.
     mode : {'raise', 'wrap', 'clip'}, optional
         Specifies how out-of-bounds indices will behave.
-        'raise' -- raise an error
-        'wrap' -- wrap around
-        'clip' -- clip to the range
+
+        * 'raise' -- raise an error (default)
+        * 'wrap' -- wrap around
+        * 'clip' -- clip to the range
+
+        'clip' mode means that all indices that are too large are replaced
+        by the index that addresses the last element along that axis. Note
+        that this disables indexing with negative numbers.
 
     Returns
     -------
@@ -84,7 +89,8 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     >>> np.take(a, indices)
     array([4, 3, 6])
 
-    In this example if `a` is a ndarray, "fancy" indexing can be used.
+    In this example if `a` is an ndarray, "fancy" indexing can be used.
+
     >>> a = np.array(a)
     >>> a[indices]
     array([4, 3, 6])
@@ -132,6 +138,7 @@ def reshape(a, newshape, order='C'):
     array([1, 2, 3, 4, 5, 6])
     >>> np.reshape(a, 6, order='F')
     array([1, 4, 2, 5, 3, 6])
+
     >>> np.reshape(a, (3,-1))       # the unspecified value is inferred to be 2
     array([[1, 2],
            [3, 4],
@@ -251,42 +258,49 @@ def put(a, ind, v, mode='raise'):
     """
     Changes specific elements of one array by replacing from another array.
 
-    Set `a`.flat[n] = `v`\\[n] for all n in `ind`.  If `v` is shorter than
-    `ind`, it will repeat which is different than `a[ind]` = `v`.
+    The indexing works on the flattened target array, `put` is roughly
+    equivalent to:
+
+    ::
+
+        for i, val in zip(ind, v):
+            x.flat[i] = val
 
     Parameters
     ----------
-    a : array_like (contiguous)
+    a : ndarray
         Target array.
     ind : array_like
         Target indices, interpreted as integers.
     v : array_like
-        Values to place in `a` at target indices.
+        Values to place in `a` at target indices. If `v` is shorter than
+        `ind` it will be repeated as necessary.
     mode : {'raise', 'wrap', 'clip'}, optional
         Specifies how out-of-bounds indices will behave.
 
-    * 'raise' -- raise an error
-    * 'wrap' -- wrap around
-    * 'clip' -- clip to the range
+        * 'raise' -- raise an error (default)
+        * 'wrap' -- wrap around
+        * 'clip' -- clip to the range
 
-    Notes
-    -----
-    If `v` is shorter than `mask` it will be repeated as necessary.  In
-    particular `v` can be a scalar or length 1 array.  The routine put
-    is the equivalent of the following (although the loop is in C for
-    speed):
-    ::
+        'clip' mode means that all indices that are too large are replaced
+        by the index that addresses the last element along that axis. Note
+        that this disables indexing with negative numbers.
 
-        ind = array(indices, copy=False)
-        v = array(values, copy=False).astype(a.dtype)
-        for i in ind: a.flat[i] = v[i]
+    See Also
+    --------
+    putmask, place
 
     Examples
     --------
     >>> x = np.arange(5)
-    >>> np.put(x,[0,2,4],[-1,-2,-3])
-    >>> print x
-    [-1  1 -2  3 -3]
+    >>> np.put(x, [0, 2], [-44, -55])
+    >>> x
+    array([-44,   1, -55,   3,   4])
+
+    >>> x = np.arange(5)
+    >>> np.put(x, 22, -5, mode='clip')
+    >>> x
+    array([ 0,  1,  2,  3, -5])
 
     """
     return a.put(ind, v, mode)
@@ -323,14 +337,12 @@ def swapaxes(a, axis1, axis2):
     >>> x
     array([[[0, 1],
             [2, 3]],
-    <BLANKLINE>
            [[4, 5],
             [6, 7]]])
 
     >>> np.swapaxes(x,0,2)
     array([[[0, 4],
             [2, 6]],
-    <BLANKLINE>
            [[1, 5],
             [3, 7]]])
 
@@ -491,8 +503,9 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     ----------
     a : array_like
         Array to sort.
-    axis : int, optional
-        Axis along which to sort.  If not given, the flattened array is used.
+    axis : int or None, optional
+        Axis along which to sort.  The default is -1 (the last axis). If None,
+        the flattened array is used.
     kind : {'quicksort', 'mergesort', 'heapsort'}, optional
         Sorting algorithm.
     order : list, optional
@@ -629,7 +642,7 @@ def searchsorted(a, v, side='left'):
 
     Parameters
     ----------
-    a : 1-D array_like of shape (N,)
+    a : 1-D array_like
         Input array, sorted in ascending order.
     v : array_like
         Values to insert into `a`.
@@ -645,7 +658,7 @@ def searchsorted(a, v, side='left'):
 
     See Also
     --------
-    sort : In-place sort.
+    sort : Return a sorted copy of an array.
     histogram : Produce histogram from 1-D data.
 
     Notes
@@ -833,43 +846,44 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """
     Return the sum along diagonals of the array.
 
-    If a is 2-d, returns the sum along the diagonal of self with the given
-    offset, i.e., the collection of elements of the form a[i,i+offset]. If
-    a has more than two dimensions, then the axes specified by axis1 and
-    axis2 are used to determine the 2-d subarray whose trace is returned.
-    The shape of the resulting array can be determined by removing axis1
-    and axis2 and appending an index to the right equal to the size of the
-    resulting diagonals.
+    If `a` is 2-D, the sum along its diagonal with the given offset
+    is returned, i.e., the sum of elements ``a[i,i+offset]`` for all i.
+
+    If `a` has more than two dimensions, then the axes specified by axis1 and
+    axis2 are used to determine the 2-D sub-arrays whose traces are returned.
+    The shape of the resulting array is the same as that of `a` with `axis1`
+    and `axis2` removed.
 
     Parameters
     ----------
     a : array_like
-        Array from whis the diagonals are taken.
-    offset : integer, optional
+        Input array, from which the diagonals are taken.
+    offset : int, optional
         Offset of the diagonal from the main diagonal. Can be both positive
-        and negative. Defaults to main diagonal.
-    axis1 : integer, optional
-        Axis to be used as the first axis of the 2-d subarrays from which
-        the diagonals should be taken. Defaults to first axis.
-    axis2 : integer, optional
-        Axis to be used as the second axis of the 2-d subarrays from which
-        the diagonals should be taken. Defaults to second axis.
+        and negative. Defaults to 0.
+    axis1, axis2 : int, optional
+        Axes to be used as the first and second axis of the 2-D sub-arrays
+        from which the diagonals should be taken. Defaults are the first two
+        axes of `a`.
     dtype : dtype, optional
-        Determines the type of the returned array and of the accumulator
-        where the elements are summed. If dtype has the value None and a is
+        Determines the data-type of the returned array and of the accumulator
+        where the elements are summed. If dtype has the value None and `a` is
         of integer type of precision less than the default integer
         precision, then the default integer precision is used. Otherwise,
-        the precision is the same as that of a.
-    out : array, optional
-        Array into which the sum can be placed. Its type is preserved and
+        the precision is the same as that of `a`.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and
         it must be of the right shape to hold the output.
 
     Returns
     -------
     sum_along_diagonals : ndarray
-        If a is 2-d, a 0-d array containing the diagonal is
-        returned.  If a has larger dimensions, then an array of
-        diagonals is returned.
+        If `a` is 2-D, the sum along the diagonal is returned.  If `a` has
+        larger dimensions, then an array of sums along diagonals is returned.
+
+    See Also
+    --------
+    diag, diagonal, diagflat
 
     Examples
     --------
@@ -879,6 +893,10 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     >>> np.trace(a)
     array([6, 8])
 
+    >>> a = np.arange(24).reshape((2,2,2,3))
+    >>> np.trace(a).shape
+    (2, 3)
+
     """
     return asarray(a).trace(offset, axis1, axis2, dtype, out)
 
@@ -886,14 +904,14 @@ def ravel(a, order='C'):
     """
     Return a flattened array.
 
-    A 1-d array, containing the elements of the input, is returned.  A copy is
+    A 1-D array, containing the elements of the input, is returned.  A copy is
     made only if needed.
 
     Parameters
     ----------
     a : array_like
         Input array.  The elements in `a` are read in the order specified by
-        `order`, and packed as a 1-dimensional array.
+        `order`, and packed as a 1-D array.
     order : {'C','F'}, optional
         The elements of `a` are read in this order.  It can be either
         'C' for row-major order, or `F` for column-major order.
@@ -902,8 +920,7 @@ def ravel(a, order='C'):
     Returns
     -------
     1d_array : ndarray
-        Output of the same dtype as `a`, and of shape ``(a.size(),)`` (or
-        ``(np.prod(a.shape),)``).
+        Output of the same dtype as `a`, and of shape ``(a.size(),)``.
 
     See Also
     --------
@@ -914,7 +931,7 @@ def ravel(a, order='C'):
     Notes
     -----
     In row-major order, the row index varies the slowest, and the column
-    index the quickest.  This can be generalised to multiple dimensions,
+    index the quickest.  This can be generalized to multiple dimensions,
     where row-major order implies that the index along the first axis
     varies slowest, and the index along the last quickest.  The opposite holds
     for Fortran-, or column-major, mode.
@@ -991,6 +1008,24 @@ def nonzero(a):
     array([[0, 0],
            [1, 1],
            [2, 2]])
+
+    A common use for ``nonzero`` is to find the indices of an array, where
+    a condition is True.  Given an array `a`, the condition `a` > 3 is a
+    boolean array and since False is interpreted as 0, np.nonzero(a > 3)
+    yields the indices of the `a` where the condition is true.
+
+    >>> a = np.array([[1,2,3],[4,5,6],[7,8,9]])
+    >>> a > 3
+    array([[False, False, False],
+           [ True,  True,  True],
+           [ True,  True,  True]], dtype=bool)
+    >>> np.nonzero(a > 3)
+    (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
+
+    The ``nonzero`` method of the boolean array can also be called.
+
+    >>> (a > 3).nonzero()
+    (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
     """
     try:
@@ -1269,24 +1304,27 @@ def alltrue (a, axis=None, out=None):
 
 def any(a,axis=None, out=None):
     """
-    Test whether any elements of an array evaluate to True along an axis.
+    Test whether any array element along a given axis evaluates to True.
 
     Parameters
     ----------
     a : array_like
-        Input array.
+        Input array or object that can be converted to an array.
     axis : int, optional
-        Axis over which to perform the operation.
-        If None, use a flattened input array and return a bool.
+        Axis along which an logical OR is performed.
+        The default (`axis` = `None`) is to perform a logical OR
+        over a flattened input array. `axis` may be negative, in which
+        case it counts from the last to the first axis.
     out : ndarray, optional
-        Array into which the result is placed. Its type is preserved
-        and it must be of the right shape to hold the output.
+        Alternative output array in which to place the result.
+        It must have the same shape as the expected output and
+        the type is preserved.
 
     Returns
     -------
-    out : ndarray
-        A logical OR is performed along `axis`, and the result placed
-        in `out`.  If `out` was not specified, a new output array is created.
+    any : ndarray, bool
+        A new boolean or array is returned unless `out` is
+        specified, in which case a reference to `out` is returned.
 
     See Also
     --------
@@ -1294,7 +1332,8 @@ def any(a,axis=None, out=None):
 
     Notes
     -----
-    Since NaN is not equal to zero, NaN evaluates to True.
+    Not a Number (NaN), positive infinity and negative infinity
+    evaluate to `True` because these are not equal to zero.
 
     Examples
     --------
@@ -1310,6 +1349,11 @@ def any(a,axis=None, out=None):
     >>> np.any(np.nan)
     True
 
+    >>> o=np.array([False])
+    >>> z=np.any([-1, 4, 5], out=o)
+    >>> id(z), id(o), z
+    (28224368, 28224368, array([ True], dtype=bool))
+
     """
     try:
         any = a.any
@@ -1320,24 +1364,27 @@ def any(a,axis=None, out=None):
 
 def all(a,axis=None, out=None):
     """
-    Returns True if all elements evaluate to True.
+    Test whether all array elements along a given axis evaluate to True.
 
     Parameters
     ----------
     a : array_like
-        Input array.
+        Input array or object that can be converted to an array.
     axis : int, optional
-        Axis over which to perform the operation.
-        If None, use a flattened input array and return a bool.
+        Axis along which an logical AND is performed.
+        The default (`axis` = `None`) is to perform a logical AND
+        over a flattened input array. `axis` may be negative, in which
+        case it counts from the last to the first axis.
     out : ndarray, optional
-        Array into which the result is placed. Its type is preserved
-        and it must be of the right shape to hold the output.
+        Alternative output array in which to place the result.
+        It must have the same shape as the expected output and
+        the type is preserved.
 
     Returns
     -------
-    out : ndarray, bool
-        A logical AND is performed along `axis`, and the result placed
-        in `out`.  If `out` was not specified, a new output array is created.
+    all : ndarray, bool
+        A new boolean or array is returned unless `out` is
+        specified, in which case a reference to `out` is returned.
 
     See Also
     --------
@@ -1345,7 +1392,8 @@ def all(a,axis=None, out=None):
 
     Notes
     -----
-    Since NaN is not equal to zero, NaN evaluates to True.
+    Not a Number (NaN), positive infinity and negative infinity
+    evaluate to `True` because these are not equal to zero.
 
     Examples
     --------
@@ -1360,6 +1408,11 @@ def all(a,axis=None, out=None):
 
     >>> np.all([1.0, np.nan])
     True
+
+    >>> o=np.array([False])
+    >>> z=np.all([-1, 4, 5], out=o)
+    >>> id(z), id(o), z
+    (28293632, 28293632, array([ True], dtype=bool))
 
     """
     try:
@@ -1508,6 +1561,17 @@ def amax(a, axis=None, out=None):
         A new array or a scalar with the result, or a reference to `out`
         if it was specified.
 
+    See Also
+    --------
+    nanmax: nan values are ignored instead of being propagated
+    fmax: same behavior as the C99 fmax function
+
+    Notes
+    -----
+    NaN values are propagated, that is if at least one item is nan, the
+    corresponding max value will be nan as well. To ignore NaN values (matlab
+    behavior), please use nanmax.
+
     Examples
     --------
     >>> a = np.arange(4).reshape((2,2))
@@ -1519,17 +1583,6 @@ def amax(a, axis=None, out=None):
     >>> np.amax(a, axis=1)
     array([1, 3])
 
-    Notes
-    -----
-    NaN values are propagated, that is if at least one item is nan, the
-    corresponding max value will be nan as well. To ignore NaN values (matlab
-    behavior), please use nanmax.
-
-    See Also
-    --------
-    nanmax: nan values are ignored instead of being propagated
-    fmax: same behavior as the C99 fmax function
-	
     """
     try:
         amax = a.max
@@ -1558,6 +1611,17 @@ def amin(a, axis=None, out=None):
         A new array or a scalar with the result, or a reference to `out` if it
         was specified.
 
+    See Also
+    --------
+    nanmin: nan values are ignored instead of being propagated
+    fmin: same behavior as the C99 fmin function
+
+    Notes
+    -----
+    NaN values are propagated, that is if at least one item is nan, the
+    corresponding min value will be nan as well. To ignore NaN values (matlab
+    behavior), please use nanmin.
+
     Examples
     --------
     >>> a = np.arange(4).reshape((2,2))
@@ -1571,16 +1635,6 @@ def amin(a, axis=None, out=None):
     >>> np.amin(a, axis=1)         # Minima along the second axis
     array([0, 2])
 
-    Notes
-    -----
-    NaN values are propagated, that is if at least one item is nan, the
-    corresponding min value will be nan as well. To ignore NaN values (matlab
-    behavior), please use nanmin.
-
-    See Also
-    --------
-    nanmin: nan values are ignored instead of being propagated
-    fmin: same behavior as the C99 fmin function
     """
     try:
         amin = a.min
@@ -2064,7 +2118,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     ddof : int, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
-        By default `ddof` is zero (biased estimate).
+        By default `ddof` is zero.
 
     Returns
     -------
@@ -2080,11 +2134,16 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     Notes
     -----
     The standard deviation is the square root of the average of the squared
-    deviations from the mean, i.e., ``var = sqrt(mean(abs(x - x.mean())**2))``.
+    deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
 
     The mean is normally calculated as ``x.sum() / N``, where
     ``N = len(x)``.  If, however, `ddof` is specified, the divisor ``N - ddof``
-    is used instead.
+    is used instead. In standard statistical practice, ``ddof=1`` provides an
+    unbiased estimator of the variance of the infinite population. ``ddof=0``
+    provides a maximum likelihood estimate of the variance for normally
+    distributed variables. The standard deviation computed in this function
+    is the square root of the estimated variance, so even with ``ddof=1``, it
+    will not be an unbiased estimate of the standard deviation per se.
 
     Note that, for complex numbers, std takes the absolute
     value before squaring, so that the result is always real and nonnegative.

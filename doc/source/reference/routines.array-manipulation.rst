@@ -3,8 +3,6 @@ Array manipulation routines
 
 .. currentmodule:: numpy
 
-.. toctree::
-
 Changing array shape
 ====================
 .. autosummary::
@@ -21,7 +19,6 @@ Transpose-like operations
 .. autosummary::
    :toctree: generated/
 
-
    rollaxis
    swapaxes
    ndarray.T
@@ -31,7 +28,6 @@ Changing number of dimensions
 =============================
 .. autosummary::
    :toctree: generated/
-
 
    atleast_1d
    atleast_2d
@@ -59,7 +55,6 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   append
    column_stack
    concatenate
    dstack
@@ -92,6 +87,7 @@ Adding and removing elements
 
    delete
    insert
+   append
    resize
    trim_zeros
    unique

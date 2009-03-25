@@ -76,6 +76,7 @@ Numerical ranges
    logspace
    meshgrid
    mgrid
+   ogrid
 
 Building matrices
 -----------------

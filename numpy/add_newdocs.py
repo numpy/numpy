@@ -63,6 +63,43 @@ add_newdoc('numpy.core', 'flatiter', ('copy',
 
 add_newdoc('numpy.core', 'broadcast',
     """
+    Produce an object that mimics broadcasting.
+
+    Parameters
+    ----------
+    in1, in2, ... : array_like
+        Input parameters.
+
+    Returns
+    -------
+    b : broadcast object
+        Broadcast the input parameters against one another, and
+        return an object that encapsulates the result.
+        Amongst others, it has ``shape`` and ``nd`` properties, and
+        may be used as an iterator.
+
+    Examples
+    --------
+    Manually adding two vectors, using broadcasting:
+
+    >>> x = np.array([[1], [2], [3]])
+    >>> y = np.array([4, 5, 6])
+    >>> b = np.broadcast(x, y)
+
+    >>> out = np.empty(b.shape)
+    >>> out.flat = [u+v for (u,v) in b]
+    >>> out
+    array([[ 5.,  6.,  7.],
+           [ 6.,  7.,  8.],
+           [ 7.,  8.,  9.]])
+
+    Compare against built-in broadcasting:
+
+    >>> x + y
+    array([[5, 6, 7],
+           [6, 7, 8],
+           [7, 8, 9]])
+
     """)
 
 # attributes
@@ -106,7 +143,7 @@ add_newdoc('numpy.core', 'broadcast', ('size',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, copy=True, order=None, subok=True, ndmin=True)
+    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=True)
 
     Create an array.
 
@@ -137,7 +174,7 @@ add_newdoc('numpy.core.multiarray', 'array',
         discontiguous).
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise
-        the returned array will be forced to be a base-class array.
+        the returned array will be forced to be a base-class array (default).
     ndmin : int, optional
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be pre-pended to the shape as
@@ -546,6 +583,9 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     array([[1, 2],
            [3, 4],
            [5, 6]])
+    >>> np.concatenate((a, b.T), axis=1)
+    array([[1, 2, 5],
+           [3, 4, 6]])
 
     """)
 
@@ -834,20 +874,22 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
     """
     lexsort(keys, axis=-1)
 
-    Perform an indirect sort using a list of keys.
+    Perform an indirect sort using a sequence of keys.
 
-    Imagine three input keys, ``a``, ``b`` and ``c``.  These can be seen as
-    columns in a spreadsheet.  The first row of the spreadsheet would
-    therefore be ``a[0], b[0], c[0]``.  Lexical sorting orders the different
-    rows by first sorting on the on first column (key), then the second,
-    and so forth.  At each step, the previous ordering is preserved
-    when equal keys are encountered.
+    Given multiple sorting keys, which can be interpreted as columns in a
+    spreadsheet, lexsort returns an array of integer indices that describes
+    the sort order by multiple columns. The last key in the sequence is used
+    for the primary sort order, the second-to-last key for the secondary sort
+    order, and so on. The keys argument must be a sequence of objects that
+    can be converted to arrays of the same shape. If a 2D array is provided
+    for the keys argument, it's rows are interpreted as the sorting keys and
+    sorting is according to the last row, second last row etc.
 
     Parameters
     ----------
     keys : (k,N) array or tuple containing k (N,)-shaped sequences
-        The `k` different "columns" to be sorted.  The last column is the
-        primary sort column.
+        The `k` different "columns" to be sorted.  The last column (or row if
+        `keys` is a 2D array) is the primary sort key.
     axis : int, optional
         Axis to be indirectly sorted.  By default, sort over the last axis.
 
@@ -879,22 +921,22 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
 
     >>> a = [1,5,1,4,3,4,4] # First column
     >>> b = [9,4,0,4,0,2,1] # Second column
-    >>> ind = np.lexsort((b,a)) # Sort by second, then first column
+    >>> ind = np.lexsort((b,a)) # Sort by a, then by b
     >>> print ind
     [2 0 4 6 5 3 1]
 
     >>> [(a[i],b[i]) for i in ind]
     [(1, 0), (1, 9), (3, 0), (4, 1), (4, 2), (4, 4), (5, 4)]
 
-    Note that the first elements are sorted.  For each first element,
-    the second elements are also sorted.
+    Note that sorting is first according to the elements of ``a``.
+    Secondary sorting is according to the elements of ``b``.
 
     A normal ``argsort`` would have yielded:
 
     >>> [(a[i],b[i]) for i in np.argsort(a)]
     [(1, 9), (1, 0), (3, 0), (4, 4), (4, 2), (4, 1), (5, 4)]
 
-    Structured arrays are sorted lexically:
+    Structured arrays are sorted lexically by ``argsort``:
 
     >>> x = np.array([(1,9), (5,4), (1,0), (4,4), (3,0), (4,2), (4,1)],
     ...              dtype=np.dtype([('x', int), ('y', int)]))
@@ -1158,6 +1200,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     nbytes : int
         The total number of bytes required to store the array data,
         i.e., ``itemsize * size``.
+    ndim : int
+        The number of dimensions that the array has.
     shape : tuple of ints
         Shape of the array.
     strides : tuple of ints
@@ -1383,16 +1427,32 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('flat',
     """
-    A 1-d flat iterator.
+    A 1-D flat iterator over the array.
+
+    This is a `flatiter` instance, which acts similarly to a Python iterator.
+
+    See Also
+    --------
+    flatten : Return a copy of the array collapsed into one dimension.
+    flatiter
 
     Examples
     --------
-    >>> x = np.arange(3*4*5)
-    >>> x.shape = (3,4,5)
-    >>> x.flat[19]
-    19
-    >>> x.T.flat[19]
-    31
+    >>> x = np.arange(1, 7).reshape(2, 3)
+    >>> x
+    array([[1, 2, 3],
+           [4, 5, 6]])
+    >>> x.flat[3]
+    4
+    >>> x.T
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
+    >>> x.T.flat[3]
+    5
+
+    >>> type(x.flat)
+    <type 'numpy.flatiter'>
 
     """))
 
@@ -1440,6 +1500,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('real',
     array([ 1.        ,  0.70710678])
     >>> x.real.dtype
     dtype('float64')
+
+    See Also
+    --------
+    numpy.real : equivalent function
 
     """))
 
@@ -1935,7 +1999,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
     """
     a.flatten(order='C')
 
-    Collapse an array into one dimension.
+    Return a copy of the array collapsed into one dimension.
 
     Parameters
     ----------
@@ -1947,6 +2011,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flatten',
     -------
     y : ndarray
         A copy of the input array, flattened to one dimension.
+
+    See Also
+    --------
+    ravel : Return a flattened array.
+    flat : A 1-D flat iterator over the array.
 
     Examples
     --------
@@ -2024,36 +2093,44 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
-    """a.newbyteorder(byteorder)
+    """
+    arr.newbyteorder(new_order='S')
 
-    Equivalent to a.view(a.dtype.newbytorder(byteorder))
+    Return the array with the same data viewed with a different byte order.
 
-    Return array with dtype changed to interpret array data as
-    specified byte order.
+    Equivalent to::
 
-    Changes are also made in all fields and sub-arrays of the array
-    data type.
+        arr.view(arr.dtype.newbytorder(new_order))
+
+    Changes are also made in all fields and sub-arrays of the array data
+    type.
+
+
 
     Parameters
     ----------
     new_order : string, optional
-        Byte order to force; a value from the byte order
-        specifications below.  The default value ('S') results in
-        swapping the current byte order.
-        `new_order` codes can be any of:
+        Byte order to force; a value from the byte order specifications
+        above. `new_order` codes can be any of::
+
+         * 'S' - swap dtype from current to opposite endian
          * {'<', 'L'} - little endian
          * {'>', 'B'} - big endian
          * {'=', 'N'} - native order
-         * 'S' - swap dtype from current to opposite endian
          * {'|', 'I'} - ignore (no change to byte order)
-        The code does a case-insensitive check on the first letter of
-        `new_order` for these alternatives.  For example, any of '>'
-        or 'B' or 'b' or 'brian' are valid to specify big-endian.
+
+        The default value ('S') results in swapping the current
+        byte order. The code does a case-insensitive check on the first
+        letter of `new_order` for the alternatives above.  For example,
+        any of 'B' or 'b' or 'biggish' are valid to specify big-endian.
+
 
     Returns
     -------
     new_arr : array
-        array with the given change to the dtype byte order.
+        New array object with the dtype reflecting given change to the
+        byte order.
+
     """))
 
 
@@ -2123,19 +2200,20 @@ add_newdoc('numpy.core.multiarray', 'putmask',
 
     Changes elements of an array based on conditional and input values.
 
-    Sets `a`.flat[n] = `values`\\[n] for each n where `mask`.flat[n] is true.
+    Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
 
     If `values` is not the same size as `a` and `mask` then it will repeat.
-    This gives behavior different from `a[mask] = values`.
+    This gives behavior different from ``a[mask] = values``.
 
     Parameters
     ----------
     a : array_like
-        Array to put data into
+        Target array.
     mask : array_like
-        Boolean mask array
+        Boolean mask array. It has to be the same shape as `a`.
     values : array_like
-        Values to put
+        Values to put into `a` where `mask` is True. If `values` is smaller
+        than `a` it will be repeated.
 
     See Also
     --------
@@ -2143,21 +2221,18 @@ add_newdoc('numpy.core.multiarray', 'putmask',
 
     Examples
     --------
-    >>> a = np.array([10,20,30,40])
-    >>> mask = np.array([True,False,True,True])
-    >>> a.putmask([60,70,80,90], mask)
-    >>> a
-    array([60, 20, 80, 90])
-    >>> a = np.array([10,20,30,40])
-    >>> a[mask]
-    array([60, 80, 90])
-    >>> a[mask] = np.array([60,70,80,90])
-    >>> a
-    array([60, 20, 70, 80])
-    >>> a.putmask([10,90], mask)
-    >>> a
-    array([10, 20, 10, 90])
-    >>> np.putmask(a, mask, [60,70,80,90])
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> np.putmask(x, x>2, x**2)
+    >>> x
+    array([[ 0,  1,  2],
+           [ 9, 16, 25]])
+
+    If `values` is smaller than `a` it is repeated:
+
+    >>> x = np.arange(5)
+    >>> np.putmask(x, x>1, [-33, -44])
+    >>> x
+    array([  0,   1, -33, -44, -33])
 
     """)
 
@@ -2173,6 +2248,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',
     See Also
     --------
     numpy.ravel : equivalent function
+
+    ndarray.flat : a flat iterator on the array.
 
     """))
 
@@ -2471,7 +2548,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Return the array as a possibly nested list.
 
-    Return a copy of the array data as a hierarchical Python list.
+    Return a copy of the array data as a (nested) Python list.
     Data items are converted to the nearest compatible Python type.
 
     Parameters
@@ -2531,12 +2608,18 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('trace',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
-    """a.transpose(*axes)
+    """
+    a.transpose(*axes)
 
     Returns a view of 'a' with axes transposed. If no axes are given,
     or None is passed, switches the order of the axes. For a 2-d
     array, this is the usual matrix transpose. If axes are given,
     they describe how the axes are permuted.
+
+    See Also
+    --------
+    ndarray.T : array property returning the array transposed
+
 
     Examples
     --------
@@ -2621,14 +2704,80 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy.core.umath', 'frexp',
     """
+    Return normalized fraction and exponent of 2, element-wise of input array.
+
+    Returns (`out1`, `out2`) from equation `x` = `out1` * ( 2 ** `out2` )
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+
+    Returns
+    -------
+    (out1, out2) : tuple of ndarray, (float, int)
+        The `out1` ndarray is a float array with numbers between -1 and 1.
+        The `out2` array is an int array represent the exponent of 2.
+
+    Examples
+    --------
+    >>> y1,y2 = np.frexp([3.4, 5.7, 1, 10, -100, 0])
+    >>> y1
+    array([ 0.85   ,  0.7125 ,  0.5    ,  0.625  , -0.78125,  0.     ])
+    >>> y2
+    array([2, 3, 1, 4, 7, 0], dtype=int32)
+    >>> y1 * 2**y2
+    array([   3.4,    5.7,    1. ,   10. , -100. ,    0. ])
+
     """)
 
 add_newdoc('numpy.core.umath', 'frompyfunc',
     """
+    frompyfunc(func, nin, nout)
+
+    Takes an arbitrary Python function and returns a ufunc.
+
+    Parameters
+    ----------
+    func : Python function
+        An arbitrary Python function.
+    nin : int
+        The number of input arguments.
+    nout : int
+        The number of objects returned by `func`.
+
+    Returns
+    -------
+    out : ufunc
+        Returns a Numpy universal function (``ufunc`` object).
+
+    Notes
+    -----
+    The returned ufunc always returns PyObject arrays.
+
     """)
 
 add_newdoc('numpy.core.umath', 'ldexp',
     """
+    Compute y = x1 * 2**x2.
+
+    Parameters
+    ----------
+    x1 : array_like
+        The significand.
+    x2 : array_like
+        The exponent.
+
+    Returns
+    -------
+    y : array_like
+        y = x1 * 2**x2
+
+    Examples
+    --------
+    >>> np.ldexp(5., 2)
+    20.
+
     """)
 
 add_newdoc('numpy.core.umath','geterrobj',
@@ -2669,29 +2818,66 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 
 add_newdoc('numpy.lib._compiled_base', 'digitize',
     """
-    digitize(x,bins)
+    digitize(x, bins)
 
-    Return the index of the bin to which each value of x belongs.
+    Return the indices of the bins to which each value in input array belongs.
 
-    Each index i returned is such that bins[i-1] <= x < bins[i] if
-    bins is monotonically increasing, or bins [i-1] > x >= bins[i] if
-    bins is monotonically decreasing.
+    Each index returned is such that `bins[i-1]` <= `x` < `bins[i]` if `bins`
+    is monotonically increasing, or `bins[i-1]` > `x` >= `bins[i]` if `bins`
+    is monotonically decreasing. Beyond the bounds of `bins`, 0 or len(`bins`)
+    is returned as appropriate.
 
-    Beyond the bounds of the bins 0 or len(bins) is returned as appropriate.
+    Parameters
+    ----------
+    x : array_like
+        Input array to be binned.
+    bins : array_like
+        Array of bins.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of indices of same shape as `x`.
+
+    Examples
+    --------
+    >>> x = np.array([0.2, 6.4, 3.0, 1.6])
+    >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
+    >>> d = np.digitize(x,bins)
+    >>> d
+    array([1, 4, 3, 2])
+    >>> for n in range(len(x)):
+    ...   print bins[d[n]-1], "<=", x[n], "<", bins[d[n]]
+    ...
+    0.0 <= 0.2 < 1.0
+    4.0 <= 6.4 < 10.0
+    2.5 <= 3.0 < 4.0
+    1.0 <= 1.6 < 2.5
+
     """)
 
 add_newdoc('numpy.lib._compiled_base', 'bincount',
     """
-    bincount(x,weights=None)
+    bincount(x, weights=None)
 
-    Return the number of occurrences of each value in x.
+    Return the number of occurrences of each value in array of nonnegative
+    integers.
 
-    x must be a list of non-negative integers.  The output, b[i],
-    represents the number of times that i is found in x.  If weights
-    is specified, every occurrence of i at a position p contributes
-    weights[p] instead of 1.
+    The output, b[i], represents the number of times that i is found in `x`.
+    If `weights` is specified, every occurrence of i at a position p
+    contributes `weights` [p] instead of 1.
 
-    See also: histogram, digitize, unique.
+    Parameters
+    ----------
+    x : array_like, 1 dimension, nonnegative integers
+        Input array.
+    weights : array_like, same shape as `x`, optional
+        Weights.
+
+    See Also
+    --------
+    histogram, digitize, unique
+
     """)
 
 add_newdoc('numpy.lib._compiled_base', 'add_docstring',
@@ -2706,40 +2892,89 @@ add_newdoc('numpy.lib._compiled_base', 'add_docstring',
 
 add_newdoc('numpy.lib._compiled_base', 'packbits',
     """
-    out = numpy.packbits(myarray, axis=None)
+    packbits(myarray, axis=None)
 
-    myarray : an integer type array whose elements should be packed to bits
+    Packs the elements of a binary-valued array into bits in a uint8 array.
 
-    This routine packs the elements of a binary-valued dataset into a
-    NumPy array of type uint8 ('B') whose bits correspond to
-    the logical (0 or nonzero) value of the input elements.
-    The dimension over-which bit-packing is done is given by axis.
-    The shape of the output has the same number of dimensions as the input
-    (unless axis is None, in which case the output is 1-d).
+    The result is padded to full bytes by inserting zero bits at the end.
 
-    Example:
-    >>> a = array([[[1,0,1],
-    ...             [0,1,0]],
-    ...            [[1,1,0],
-    ...             [0,0,1]]])
-    >>> b = numpy.packbits(a,axis=-1)
+    Parameters
+    ----------
+    myarray : array_like
+        An integer type array whose elements should be packed to bits.
+    axis : int, optional
+        The dimension over which bit-packing is done.
+        ``None`` implies packing the flattened array.
+
+    Returns
+    -------
+    packed : ndarray
+        Array of type uint8 whose elements represent bits corresponding to the
+        logical (0 or nonzero) value of the input elements. The shape of
+        `packed` has the same number of dimensions as the input (unless `axis`
+        is None, in which case the output is 1-D).
+
+    See Also
+    --------
+    unpackbits: Unpacks elements of a uint8 array into a binary-valued output
+                array.
+
+    Examples
+    --------
+    >>> a = np.array([[[1,0,1],
+    ...                [0,1,0]],
+    ...               [[1,1,0],
+    ...                [0,0,1]]])
+    >>> b = np.packbits(a, axis=-1)
     >>> b
     array([[[160],[64]],[[192],[32]]], dtype=uint8)
 
-    Note that 160 = 128 + 32
-              192 = 128 + 64
+    Note that in binary 160 = 1010 0000, 64 = 0100 0000, 192 = 1100 0000,
+    and 32 = 0010 0000.
+
     """)
 
 add_newdoc('numpy.lib._compiled_base', 'unpackbits',
     """
-    out = numpy.unpackbits(myarray, axis=None)
+    unpackbits(myarray, axis=None)
 
-    myarray - array of uint8 type where each element represents a bit-field
-        that should be unpacked into a boolean output array
+    Unpacks elements of a uint8 array into a binary-valued output array.
 
-        The shape of the output array is either 1-d (if axis is None) or
-        the same shape as the input array with unpacking done along the
-        axis specified.
+    Each element of `myarray` represents a bit-field that should be unpacked
+    into a binary-valued output array. The shape of the output array is either
+    1-D (if `axis` is None) or the same shape as the input array with unpacking
+    done along the axis specified.
+
+    Parameters
+    ----------
+    myarray : ndarray, uint8 type
+       Input array.
+    axis : int, optional
+       Unpacks along this axis.
+
+    Returns
+    -------
+    unpacked : ndarray, uint8 type
+       The elements are binary-valued (0 or 1).
+
+    See Also
+    --------
+    packbits : Packs the elements of a binary-valued array into bits in a uint8
+               array.
+
+    Examples
+    --------
+    >>> a = np.array([[2], [7], [23]], dtype=np.uint8)
+    >>> a
+    array([[ 2],
+           [ 7],
+           [23]], dtype=uint8)
+    >>> b = np.unpackbits(a, axis=1)
+    >>> b
+    array([[0, 0, 0, 0, 0, 0, 1, 0],
+           [0, 0, 0, 0, 0, 1, 1, 1],
+           [0, 0, 0, 1, 0, 1, 1, 1]], dtype=uint8)
+
     """)
 
 
@@ -3094,22 +3329,30 @@ add_newdoc('numpy.core.multiarray', 'dtype',
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('alignment',
     """
+    The required alignment (bytes) of this data-type according to the compiler.
+
+    More information is available in the C-API section of the manual.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
-    '''
-    byteorder
-
-    String giving byteorder of dtype
+    """
+    A character indicating the byte-order of this data-type object.
 
     One of:
-    * '=' - native byteorder
-    * '<' - little endian
-    * '>' - big endian
-    * '|' - endian not relevant
+
+    ===  ==============
+    '='  native
+    '<'  little-endian
+    '>'  big-endian
+    '|'  not applicable
+    ===  ==============
+
+    All built-in data-type objects have byteorder either '=' or '|'.
 
     Examples
     --------
+
     >>> dt = np.dtype('i2')
     >>> dt.byteorder
     '='
@@ -3132,45 +3375,79 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
     >>> dt = np.dtype(swapped_code + 'i2')
     >>> dt.byteorder == swapped_code
     True
-    '''))
+
+    """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('char',
-    """
-    """))
+    """A unique character code for each of the 21 different built-in types."""))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     """
+    Array-interface compliant full description of the data-type.
+
+    The format is that required by the 'descr' key in the
+    `__array_interface__` attribute.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
     """
+    Dictionary showing any named fields defined for this data type, or None.
+
+    The dictionary is indexed by keys that are the names of the fields.
+    Each entry in the dictionary is a tuple fully describing the field::
+
+      (dtype, offset[, title])
+
+    If present, the optional title can be any object (if it is string
+    or unicode then it will also be a key in the fields dictionary,
+    otherwise it's meta-data). Notice also, that the first two elements
+    of the tuple can be passed directly as arguments to the `ndarray.getfield`
+    and `ndarray.setfield` methods.
+
+    See Also
+    --------
+    ndarray.getfield, ndarray.setfield
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('flags',
     """
+    Bit-flags describing how this data type is to be interpreted.
+
+    Bit-masks are in `numpy.core.multiarray` as the constants
+    `ITEM_HASOBJECT`, `LIST_PICKLE`, `ITEM_IS_POINTER`, `NEEDS_INIT`,
+    `NEEDS_PYAPI`, `USE_GETITEM`, `USE_SETITEM`. A full explanation
+    of these flags is in C-API documentation; they are largely useful
+    for user-defined data-types.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('hasobject',
     """
+    Boolean indicating whether this dtype contains any reference-counted
+    objects in any fields or sub-dtypes.
+
+    Recall that what is actually in the ndarray memory representing
+    the Python object is the memory address of that object (a pointer).
+    Special handling may be required, and this attribute is useful for
+    distinguishing data types that may contain arbitrary Python objects
+    and data-types that won't.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
     """
-    isbuiltin
+    Integer indicating how this dtype relates to the built-in dtypes.
 
-    Value identifying if numpy dtype is a numpy builtin type
-
-    Read-only
-
-    Returns
-    -------
-    val : {0,1,2}
-       0 if this is a structured array type, with fields
-       1 if this is a dtype compiled into numpy (such as ints, floats etc)
-       2 if the dtype is for a user-defined numpy type
-         A user-defined type uses the numpy C-API machinery to extend
-         numpy to handle a new array type.  See the Guide to Numpy for
-         details.
+    =  ========================================================================
+    0  if this is a structured array type, with fields
+    1  if this is a dtype compiled into numpy (such as ints, floats etc)
+    2  if the dtype is for a user-defined numpy type
+       A user-defined type uses the numpy C-API machinery to extend
+       numpy to handle a new array type.  See the Guide to Numpy for
+       details.
+    =  ========================================================================
 
     Examples
     --------
@@ -3183,47 +3460,81 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isbuiltin',
     >>> dt = np.dtype([('field1', 'f8')])
     >>> dt.isbuiltin
     0
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('isnative',
     """
+    Boolean indicating whether the byte order of this dtype is native
+    to the platform.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
     """
+    The element size of this data-type object.
+
+    For 18 of the 21 types this number is fixed by the data-type.
+    For the flexible data-types, this number can be anything.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
     """
+    A character code (one of 'biufcSUV') identifying the general kind of data.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('name',
     """
+    A bit-width name for this data-type.
+
+    Un-sized flexible data-type objects do not have this attribute.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('names',
     """
+    Ordered list of field names, or ``None`` if there are no fields.
+
+    The names are ordered according to increasing byte offset.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('num',
     """
+    A unique number for each of the 21 different built-in types.
+
+    These are roughly ordered from least-to-most precision.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('shape',
     """
+    Shape tuple of the sub-array if this data type describes a sub-array,
+    and ``()`` otherwise.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('str',
-    """
-    """))
+    """The array-protocol typestring of this data-type object."""))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('subdtype',
     """
+    Tuple ``(item_dtype, shape)`` if this `dtype` describes a sub-array, and
+    None otherwise.
+
+    The *shape* is the fixed shape of the sub-array described by this
+    data type, and *item_dtype* the data type of the array.
+
+    If a field whose dtype object has this attribute is retrieved,
+    then the extra dimensions implied by *shape* are tacked on to
+    the end of the retrieved array.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('type',
-    """
-    """))
+    """The type object used to instantiate a scalar of this data-type."""))
 
 ##############################################################################
 #
@@ -3232,7 +3543,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('type',
 ##############################################################################
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
-    '''
+    """
     newbyteorder(new_order='S')
 
     Return a new dtype with a different byte order.
@@ -3245,12 +3556,14 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
         Byte order to force; a value from the byte order
         specifications below.  The default value ('S') results in
         swapping the current byte order.
-        `new_order` codes can be any of:
+        `new_order` codes can be any of::
+
+         * 'S' - swap dtype from current to opposite endian
          * {'<', 'L'} - little endian
          * {'>', 'B'} - big endian
          * {'=', 'N'} - native order
-         * 'S' - swap dtype from current to opposite endian
          * {'|', 'I'} - ignore (no change to byte order)
+
         The code does a case-insensitive check on the first letter of
         `new_order` for these alternatives.  For example, any of '>'
         or 'B' or 'b' or 'brian' are valid to specify big-endian.
@@ -3259,6 +3572,10 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     -------
     new_dtype : dtype
         New dtype object with the given change to the byte order.
+
+    Notes
+    -----
+    Changes are also made in all fields and sub-arrays of the data type.
 
     Examples
     --------
@@ -3288,7 +3605,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
     True
     >>> np.dtype('>i2') == native_dt.newbyteorder('B')
     True
-    '''))
+
+    """))
 
 
 ##############################################################################
@@ -3299,69 +3617,84 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 
 add_newdoc('numpy.lib.index_tricks', 'mgrid',
     """
-    Construct a multi-dimensional filled "meshgrid".
+    `nd_grid` instance which returns a dense multi-dimensional "meshgrid".
 
-    Returns a mesh-grid when indexed.  The dimension and number of the
-    output arrays are equal to the number of indexing dimensions.  If
-    the step length is not a complex number, then the stop is not
-    inclusive.
+    An instance of `numpy.lib.index_tricks.nd_grid` which returns an dense
+    (or fleshed out) mesh-grid when indexed, so that each returned argument
+    has the same shape.  The dimensions and number of the output arrays are
+    equal to the number of indexing dimensions.  If the step length is not a
+    complex number, then the stop is not inclusive.
 
-    However, if the step length is a **complex number** (e.g. 5j),
-    then the integer part of its magnitude is interpreted as
-    specifying the number of points to create between the start and
-    stop values, where the stop value **is inclusive**.
+    However, if the step length is a **complex number** (e.g. 5j), then
+    the integer part of its magnitude is interpreted as specifying the
+    number of points to create between the start and stop values, where
+    the stop value **is inclusive**.
 
-    See also
+    Returns
+    ----------
+    mesh-grid `ndarrays` all of the same dimensions
+
+    See Also
     --------
-    ogrid
+    numpy.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    ogrid : like mgrid but returns open (not fleshed out) mesh grids
+    r_ : array concatenator
 
     Examples
     --------
-    >>> np.mgrid[0:5,0:5]
+    >>> mgrid[0:5,0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
             [2, 2, 2, 2, 2],
             [3, 3, 3, 3, 3],
             [4, 4, 4, 4, 4]],
-    <BLANKLINE>
            [[0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4],
             [0, 1, 2, 3, 4]]])
-    >>> np.mgrid[-1:1:5j]
+    >>> mgrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
+
     """)
 
 add_newdoc('numpy.lib.index_tricks', 'ogrid',
     """
-    Construct a multi-dimensional open "meshgrid".
+    `nd_grid` instance which returns an open multi-dimensional "meshgrid".
 
-    Returns an 'open' mesh-grid when indexed.  The dimension and
-    number of the output arrays are equal to the number of indexing
-    dimensions.  If the step length is not a complex number, then the
-    stop is not inclusive.
+    An instance of `numpy.lib.index_tricks.nd_grid` which returns an open
+    (i.e. not fleshed out) mesh-grid when indexed, so that only one dimension
+    of each returned array is greater than 1.  The dimension and number of the
+    output arrays are equal to the number of indexing dimensions.  If the step
+    length is not a complex number, then the stop is not inclusive.
 
-    The returned mesh-grid is open (or not fleshed out), so that only
-    one-dimension of each returned argument is greater than 1
+    However, if the step length is a **complex number** (e.g. 5j), then
+    the integer part of its magnitude is interpreted as specifying the
+    number of points to create between the start and stop values, where
+    the stop value **is inclusive**.
 
-    If the step length is a **complex number** (e.g. 5j), then the
-    integer part of its magnitude is interpreted as specifying the
-    number of points to create between the start and stop values,
-    where the stop value **is inclusive**.
+    Returns
+    ----------
+    mesh-grid `ndarrays` with only one dimension :math:`\\neq 1`
 
-    See also
+    See Also
     --------
-    mgrid
+    np.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
+    r_ : array concatenator
 
     Examples
     --------
-    >>> np.ogrid[0:5,0:5]
+    >>> from numpy import ogrid
+    >>> ogrid[-1:1:5j]
+    array([-1. , -0.5,  0. ,  0.5,  1. ])
+    >>> ogrid[0:5,0:5]
     [array([[0],
             [1],
             [2],
             [3],
             [4]]), array([[0, 1, 2, 3, 4]])]
+
     """)
 
    
@@ -3537,6 +3870,35 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('min',
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('newbyteorder',
     """
+    newbyteorder(new_order='S')
+
+    Return a new dtype with a different byte order.
+
+    Changes are also made in all fields and sub-arrays of the data type.
+
+    The `new_order` code can be any from the following:
+
+    * {'<', 'L'} - little endian
+    * {'>', 'B'} - big endian
+    * {'=', 'N'} - native order
+    * 'S' - swap dtype from current to opposite endian
+    * {'|', 'I'} - ignore (no change to byte order)
+
+    Parameters
+    ----------
+    new_order : string, optional
+        Byte order to force; a value from the byte order specifications
+        above.  The default value ('S') results in swapping the current
+        byte order. The code does a case-insensitive check on the first
+        letter of `new_order` for the alternatives above.  For example,
+        any of 'B' or 'b' or 'biggish' are valid to specify big-endian.
+
+
+    Returns
+    -------
+    new_dtype : dtype
+        New dtype object with the given change to the byte order.
+
     """))
 
 add_newdoc('numpy.core.numerictypes', 'generic', ('nonzero',
@@ -3647,8 +4009,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 ##############################################################################
 
 add_newdoc('numpy.core.numerictypes', 'bool_',
-    """
-    """)
+    """Boolean. Character code ``?``.""")
 
 add_newdoc('numpy.core.numerictypes', 'complex64',
     """
@@ -3663,12 +4024,10 @@ add_newdoc('numpy.core.numerictypes', 'complex256',
     """)
 
 add_newdoc('numpy.core.numerictypes', 'float32',
-    """
-    """)
+    """32-bit floating-point number. Character code ``f``.""")
 
 add_newdoc('numpy.core.numerictypes', 'float64',
-    """
-    """)
+    """64-bit floating-point number. Character code ``d``.""")
 
 add_newdoc('numpy.core.numerictypes', 'float96',
     """
@@ -3679,20 +4038,16 @@ add_newdoc('numpy.core.numerictypes', 'float128',
     """)
 
 add_newdoc('numpy.core.numerictypes', 'int8',
-    """
-    """)
+    """8-bit integer. Character code ``b``.""")
 
 add_newdoc('numpy.core.numerictypes', 'int16',
-    """
-    """)
+    """16-bit integer. Character code ``h``.""")
 
 add_newdoc('numpy.core.numerictypes', 'int32',
-    """
-    """)
+    """32-bit integer. Character code ``i4``.""")
 
 add_newdoc('numpy.core.numerictypes', 'int64',
-    """
-    """)
+    """64-bit integer. Character code ``i8``.""")
 
 add_newdoc('numpy.core.numerictypes', 'object_',
     """

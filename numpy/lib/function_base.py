@@ -242,7 +242,6 @@ def histogram(a, bins=10, range=None, normed=False, weights=None, new=None):
         Return the bin edges ``(length(hist)+1)``.
         With ``new=False``, return the left bin edges (``length(hist)``).
 
-
     See Also
     --------
     histogramdd
@@ -1241,8 +1240,9 @@ def sort_complex(a):
     --------
     >>> np.sort_complex([5, 3, 6, 2, 1])
     array([ 1.+0.j,  2.+0.j,  3.+0.j,  5.+0.j,  6.+0.j])
-    >>> np.sort_complex([5 + 2j, 3 - 1j, 6 - 2j, 2 - 3j, 1 - 5j])
-    array([ 1.-5.j,  2.-3.j,  3.-1.j,  5.+2.j,  6.-2.j])
+
+    >>> np.sort_complex([1 + 2j, 2 - 1j, 3 - 2j, 3 - 3j, 3 + 5j])
+    array([ 1.+2.j,  2.-1.j,  3.-5.j,  3.-3.j,  3.+2.j])
 
     """
     b = array(a,copy=True)
@@ -1259,21 +1259,35 @@ def sort_complex(a):
 
 def trim_zeros(filt, trim='fb'):
     """
-    Trim the leading and trailing zeros from a 1D array.
+    Trim the leading and/or trailing zeros from a 1-D array or sequence.
 
     Parameters
     ----------
-    filt : array_like
+    filt : 1-D array or sequence
         Input array.
-    trim : string, optional
+    trim : str, optional
         A string with 'f' representing trim from front and 'b' to trim from
-        back.
+        back. Default is 'fb', trim zeros from both front and back of the
+        array.
+
+    Returns
+    -------
+    trimmed : 1-D array or sequence
+        The result of trimming the input. The input data type is preserved.
 
     Examples
     --------
-    >>> a = np.array((0, 0, 0, 1, 2, 3, 2, 1, 0))
+    >>> a = np.array((0, 0, 0, 1, 2, 3, 0, 2, 1, 0))
     >>> np.trim_zeros(a)
-    array([1, 2, 3, 2, 1])
+    array([1, 2, 3, 0, 2, 1])
+
+    >>> np.trim_zeros(a, 'b')
+    array([0, 0, 0, 1, 2, 3, 0, 2, 1])
+
+    The input data type is preserved, list/tuple in means list/tuple out.
+
+    >>> np.trim_zeros([0, 1, 2, 0])
+    [1, 2]
 
     """
     first = 0
@@ -1299,7 +1313,7 @@ def unique(x):
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray or sequence
         Input array.
 
     Returns
@@ -1314,6 +1328,9 @@ def unique(x):
     >>> a = np.array([[1, 1], [2, 3]])
     >>> np.unique(a)
     array([1, 2, 3])
+
+    >>> np.unique([True, True, False])
+    array([False,  True], dtype=bool)
 
     """
     try:
@@ -1719,39 +1736,64 @@ def _get_nargs(obj):
 
 class vectorize(object):
     """
-    vectorize(somefunction, otypes=None, doc=None)
+    vectorize(pyfunc, otypes='', doc=None)
 
     Generalized function class.
 
-    Define a vectorized function which takes nested sequence
+    Define a vectorized function which takes a nested sequence
     of objects or numpy arrays as inputs and returns a
-    numpy array as output, evaluating the function over successive
-    tuples of the input arrays like the python map function except it uses
-    the broadcasting rules of numpy.
+    numpy array as output. The vectorized function evaluates `pyfunc` over
+    successive tuples of the input arrays like the python map function,
+    except it uses the broadcasting rules of numpy.
 
-    Data-type of output of vectorized is determined by calling the function
-    with the first element of the input.  This can be avoided by specifying
-    the otypes argument as either a string of typecode characters or a list
-    of data-types specifiers.  There should be one data-type specifier for
-    each output.
+    The data type of the output of `vectorized` is determined by calling
+    the function with the first element of the input.  This can be avoided
+    by specifying the `otypes` argument.
 
     Parameters
     ----------
-    f : callable
-      A Python function or method.
+    pyfunc : callable
+        A python function or method.
+    otypes : str or list of dtypes, optional
+        The output data type. It must be specified as either a string of
+        typecode characters or a list of data type specifiers. There should
+        be one data type specifier for each output.
+    doc : str, optional
+        The docstring for the function. If None, the docstring will be the
+        `pyfunc` one.
 
     Examples
     --------
     >>> def myfunc(a, b):
-    ...    if a > b:
-    ...        return a-b
-    ...    else:
-    ...        return a+b
+    ...     \"\"\"Return a-b if a>b, otherwise return a+b\"\"\"
+    ...     if a > b:
+    ...         return a - b
+    ...     else:
+    ...         return a + b
 
     >>> vfunc = np.vectorize(myfunc)
-
     >>> vfunc([1, 2, 3, 4], 2)
     array([3, 4, 1, 2])
+
+    The docstring is taken from the input function to `vectorize` unless it
+    is specified
+
+    >>> vfunc.__doc__
+    'Return a-b if a>b, otherwise return a+b'
+    >>> vfunc = np.vectorize(myfunc, doc='Vectorized `myfunc`')
+    >>> vfunc.__doc__
+    'Vectorized `myfunc`'
+
+    The output type is determined by evaluating the first element of the input,
+    unless it is specified
+
+    >>> out = vfunc([1, 2, 3, 4], 2)
+    >>> type(out[0])
+    <type 'numpy.int32'>
+    >>> vfunc = np.vectorize(myfunc, otypes=[np.float])
+    >>> out = vfunc([1, 2, 3, 4], 2)
+    >>> type(out[0])
+    <type 'numpy.float64'>
 
     """
     def __init__(self, pyfunc, otypes='', doc=None):
@@ -2675,8 +2717,8 @@ def median(a, axis=None, out=None, overwrite_input=False):
     a : array_like
         Input array or object that can be converted to an array.
     axis : {None, int}, optional
-        Axis along which the medians are computed. The default (axis=None) is to
-        compute the median along a flattened version of the array.
+        Axis along which the medians are computed. The default (axis=None)
+        is to compute the median along a flattened version of the array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -2840,30 +2882,29 @@ def meshgrid(x,y):
     """
     Return coordinate matrices from two coordinate vectors.
 
-
-
-
     Parameters
     ----------
     x, y : ndarray
-        Two 1D arrays representing the x and y coordinates
+        Two 1-D arrays representing the x and y coordinates of a grid.
 
     Returns
     -------
     X, Y : ndarray
-        For vectors `x`, `y` with lengths Nx=len(`x`) and Ny=len(`y`),
-        return `X`, `Y` where `X` and `Y` are (Ny, Nx) shaped arrays
+        For vectors `x`, `y` with lengths ``Nx=len(x)`` and ``Ny=len(y)``,
+        return `X`, `Y` where `X` and `Y` are ``(Ny, Nx)`` shaped arrays
         with the elements of `x` and y repeated to fill the matrix along
         the first dimension for `x`, the second for `y`.
 
     See Also
     --------
-    numpy.mgrid : Construct a multi-dimensional "meshgrid"
-                               using indexing notation.
+    index_tricks.mgrid : Construct a multi-dimensional "meshgrid"
+                         using indexing notation.
+    index_tricks.ogrid : Construct an open multi-dimensional "meshgrid"
+                         using indexing notation.
 
     Examples
     --------
-    >>> X, Y = numpy.meshgrid([1,2,3], [4,5,6,7])
+    >>> X, Y = np.meshgrid([1,2,3], [4,5,6,7])
     >>> X
     array([[1, 2, 3],
            [1, 2, 3],
@@ -2874,6 +2915,13 @@ def meshgrid(x,y):
            [5, 5, 5],
            [6, 6, 6],
            [7, 7, 7]])
+
+    `meshgrid` is very useful to evaluate functions on a grid.
+
+    >>> x = np.arange(-5, 5, 0.1)
+    >>> y = np.arange(-5, 5, 0.1)
+    >>> xx, yy = np.meshgrid(x, y)
+    >>> z = np.sin(xx**2+yy**2)/(xx**2+yy**2)
 
     """
     x = asarray(x)
@@ -2894,20 +2942,27 @@ def delete(arr, obj, axis=None):
     ----------
     arr : array_like
       Input array.
-    obj : slice, integer or an array of integers
+    obj : slice, int or array of ints
       Indicate which sub-arrays to remove.
-    axis : integer, optional
+    axis : int, optional
       The axis along which to delete the subarray defined by `obj`.
       If `axis` is None, `obj` is applied to the flattened array.
 
+    Returns
+    -------
+    out : ndarray
+        A copy of `arr` with the elements specified by `obj` removed. Note
+        that `delete` does not occur in-place. If `axis` is None, `out` is
+        a flattened array.
+
     See Also
     --------
-    insert : Insert values into an array.
-    append : Append values at the end of an array.
+    insert : Insert elements into an array.
+    append : Append elements at the end of an array.
 
     Examples
     --------
-    >>> arr = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]])
+    >>> arr = np.array([[1,2,3,4], [5,6,7,8], [9,10,11,12]])
     >>> arr
     array([[ 1,  2,  3,  4],
            [ 5,  6,  7,  8],
@@ -2915,6 +2970,7 @@ def delete(arr, obj, axis=None):
     >>> np.delete(arr, 1, 0)
     array([[ 1,  2,  3,  4],
            [ 9, 10, 11, 12]])
+
     >>> np.delete(arr, np.s_[::2], 1)
     array([[ 2,  4],
            [ 6,  8],
@@ -3012,25 +3068,52 @@ def insert(arr, obj, values, axis=None):
     ----------
     arr : array_like
         Input array.
-    obj : {integer, slice, integer array_like}
+    obj : int, slice, or array of ints
         Insert `values` before `obj` indices.
-    values :
-        Values to insert into `arr`.
+    values : array_like
+        Values to insert into `arr`. If the type of `values` is different
+        from that of `arr`, `values` is converted to the type of `arr`.
     axis : int, optional
-        Axis along which to insert `values`.  If `axis` is None then ravel
-        `arr` first.
+        Axis along which to insert `values`.  If `axis` is None then `arr`
+        is flattened first.
+
+    Returns
+    -------
+    out : ndarray
+        A copy of `arr` with `values` inserted.  Note that `insert`
+        does not occur in-place: a new array is returned. If
+        `axis` is None, `out` is a flattened array.
+
+    See Also
+    --------
+    append : Append elements at the end of an array.
+    delete : Delete elements from an array.
 
     Examples
     --------
-    >>> a = np.array([[1,2,3],
-    ...               [4,5,6],
-    ...               [7,8,9]])
-    >>> np.insert(a, [1,2], [[4],[5]], axis=0)
-    array([[1, 2, 3],
-           [4, 4, 4],
-           [4, 5, 6],
-           [5, 5, 5],
-           [7, 8, 9]])
+    >>> a = np.array([[1, 1], [2, 2], [3, 3]])
+    >>> a
+    array([[1, 1],
+           [2, 2],
+           [3, 3]])
+    >>> np.insert(a, 1, 5)
+    array([1, 5, 1, 2, 2, 3, 3])
+    >>> np.insert(a, 1, 5, axis=1)
+    array([[1, 5, 1],
+           [2, 5, 2],
+           [3, 5, 3]])
+
+    >>> b = a.flatten()
+    >>> b
+    array([1, 1, 2, 2, 3, 3])
+    >>> np.insert(b, [2, 2], [5, 6])
+    array([1, 1, 5, 6, 2, 2, 3, 3])
+
+    >>> np.insert(b, slice(2, 4), [5, 6])
+    array([1, 1, 5, 2, 6, 2, 3, 3])
+
+    >>> np.insert(b, [2, 2], [7.13, False])
+    array([1, 1, 7, 0, 2, 2, 3, 3])
 
     """
     wrap = None
@@ -3121,12 +3204,20 @@ def append(arr, values, axis=None):
     -------
     out : ndarray
         A copy of `arr` with `values` appended to `axis`.  Note that `append`
-        does not occur in-place: a new array is allocated and filled.
+        does not occur in-place: a new array is allocated and filled.  If
+        `axis` is None, `out` is a flattened array.
+
+    See Also
+    --------
+    insert : Insert elements into an array.
+    delete : Delete elements from an array.
 
     Examples
     --------
     >>> np.append([1, 2, 3], [[4, 5, 6], [7, 8, 9]])
     array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    When `axis` is specified, `values` must have the correct shape.
 
     >>> np.append([[1, 2, 3], [4, 5, 6]], [[7, 8, 9]], axis=0)
     array([[1, 2, 3],
