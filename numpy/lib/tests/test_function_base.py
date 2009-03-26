@@ -754,6 +754,10 @@ class TestNaNFuncts(TestCase):
                                    [ 0.59541557,  0.87964135,  0.70543747],
                                    [ 0.91084584,  0.84386844,  0.37068164]]))
 
+    def test_nanmin_allnan_on_axis(self):
+        assert_equal(isnan(nanmin([[nan]*2]*3, axis=1)),
+                     [True, True, True])
+
 
 class TestCorrCoef(TestCase):
     def test_simple(self):
