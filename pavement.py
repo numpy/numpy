@@ -110,3 +110,9 @@ def html(options):
     builtdocs = paver.path.path("doc") / options.sphinx.builddir / "html"
     HTML_DESTDIR.rmtree()
     builtdocs.copytree(HTML_DESTDIR)
+
+@task
+def sdist():
+    # To be sure to bypass paver when building sdist... paver + numpy.distutils
+    # do not play well together.
+    sh('python setup.py sdist --formats=gztar,zip')
