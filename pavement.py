@@ -122,6 +122,48 @@ def html(options):
     HTML_DESTDIR.rmtree()
     builtdocs.copytree(HTML_DESTDIR)
 
+def _latex_paths():
+    """look up the options that determine where all of the files are."""
+    opts = options
+    docroot = paver.path.path(opts.get('docroot', 'docs'))
+    if not docroot.exists():
+        raise BuildFailure("Sphinx documentation root (%s) does not exist."
+                % docroot)
+    builddir = docroot / opts.get("builddir", ".build")
+    builddir.mkdir()
+    srcdir = docroot / opts.get("sourcedir", "")
+    if not srcdir.exists():
+        raise BuildFailure("Sphinx source file dir (%s) does not exist"
+                % srcdir)
+    latexdir = builddir / "latex"
+    latexdir.mkdir()
+    return Bunch(locals())
+
+@task
+def latex():
+    """Build samplerate's documentation and install it into
+    scikits/samplerate/docs"""
+    paths = _latex_paths()
+    sphinxopts = ['', '-b', 'latex', paths.srcdir, paths.latexdir]
+    #dry("sphinx-build %s" % (" ".join(sphinxopts),), sphinx.main, sphinxopts)
+    subprocess.check_call(["make", "latex"], cwd="doc")
+
+@task
+@needs('latex')
+def pdf():
+    paths = _latex_paths()
+    def build_latex():
+        subprocess.check_call(["make", "all-pdf"], cwd=paths.latexdir)
+    dry("Build pdf doc", build_latex)
+
+    PDF_DESTDIR.rmtree()
+    PDF_DESTDIR.makedirs()
+
+    user = paths.latexdir / "numpy-user.pdf"
+    user.copy(PDF_DESTDIR / "userguide.pdf")
+    ref = paths.latexdir / "numpy-ref.pdf"
+    ref.copy(PDF_DESTDIR / "reference.pdf")
+
 @task
 def sdist():
     # To be sure to bypass paver when building sdist... paver + numpy.distutils
@@ -192,7 +234,7 @@ def bdist_mpkg():
 	sh("python setupegg.py bdist_mpkg")
 
 @task
-#@needs("bdist_mpkg", "doc")
+@needs("bdist_mpkg", "pdf")
 def dmg():
     pyver = ".".join([str(i) for i in sys.version_info[:2]])
 
@@ -214,8 +256,18 @@ def dmg():
     mpkg_source.copytree(content / mpkg_tn)
 
     # Copy docs into image source
-    html_docs = HTML_DESTDIR
-    html_docs.copytree(content / "Documentation" / "html")
+
+    #html_docs = HTML_DESTDIR
+    #html_docs.copytree(content / "Documentation" / "html")
+
+    pdf_docs = DMG_CONTENT / "Documentation"
+    pdf_docs.rmtree()
+    pdf_docs.makedirs()
+
+    user = PDF_DESTDIR / "userguide.pdf"
+    user.copy(pdf_docs / "userguide.pdf")
+    ref = PDF_DESTDIR / "reference.pdf"
+    ref.copy(pdf_docs / "reference.pdf")
 
     # Build the dmg
     cmd = ["./create-dmg", "--window-size", "500", "500", "--background",
