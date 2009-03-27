@@ -34,18 +34,18 @@ Operating System :: Unix
 Operating System :: MacOS
 """
 
-NAME                = 'numpy',
-MAINTAINER          = "NumPy Developers",
-MAINTAINER_EMAIL    = "numpy-discussion@scipy.org",
-DESCRIPTION         = DOCLINES[0],
-LONG_DESCRIPTION    = "\n".join(DOCLINES[2:]),
-URL                 = "http://numpy.scipy.org",
-DOWNLOAD_URL        = "http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103",
-LICENSE             = 'BSD',
-CLASSIFIERS         = filter(None, CLASSIFIERS.split('\n')),
-AUTHOR              = "Travis E. Oliphant, et.al.",
-AUTHOR_EMAIL        = "oliphant@enthought.com",
-PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+NAME                = 'numpy'
+MAINTAINER          = "NumPy Developers"
+MAINTAINER_EMAIL    = "numpy-discussion@scipy.org"
+DESCRIPTION         = DOCLINES[0]
+LONG_DESCRIPTION    = "\n".join(DOCLINES[2:])
+URL                 = "http://numpy.scipy.org"
+DOWNLOAD_URL        = "http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103"
+LICENSE             = 'BSD'
+CLASSIFIERS         = filter(None, CLASSIFIERS.split('\n'))
+AUTHOR              = "Travis E. Oliphant, et.al."
+AUTHOR_EMAIL        = "oliphant@enthought.com"
+PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 4
 MICRO               = 0
