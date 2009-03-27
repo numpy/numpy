@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import re
 try:
     from hash import md5
 except ImportError:
@@ -22,7 +23,8 @@ import paver
 import paver.doctools
 import paver.path
 from paver.easy import options, Bunch, task, needs, dry, sh, call_task
-from paver.setuputils import setup
+
+from setup import FULLVERSION
 
 # Wine config for win32 builds
 WINE_SITE_CFG = ""
@@ -158,3 +160,49 @@ def _bdist_wininst(pyver):
         if exists:
             paver.path.path('site.cfg.bak').move(site)
 
+# Mac OS X installer
+def macosx_version():
+    if not sys.platform == 'darwin':
+        raise ValueError("Not darwin ??")
+    st = subprocess.Popen(["sw_vers"], stdout=subprocess.PIPE)
+    out = st.stdout.readlines()
+    ver = re.compile("ProductVersion:\s+([0-9]+)\.([0-9]+)\.([0-9]+)")
+    for i in out:
+        m = ver.match(i)
+        if m:
+            return m.groups()
+
+def mpkg_name():
+    maj, min = macosx_version()[:2]
+    pyver = ".".join([str(i) for i in sys.version_info[:2]])
+    return "numpy-%s-py%s-macosx%s.%s.mpkg" % \
+            (FULLVERSION, pyver, maj, min)
+
+@task
+@needs("setuptools.bdist_mpkg", "doc")
+def dmg():
+    pyver = ".".join([str(i) for i in sys.version_info[:2]])
+    builddir = paver.path.path("build") / "dmg"
+    builddir.rmtree()
+    builddir.mkdir()
+
+    # Copy mpkg into image source
+    mpkg_n = mpkg_name()
+    mpkg = paver.path.path("dist") / mpkg_n
+    mpkg.copytree(builddir / mpkg_n)
+    tmpkg = builddir / mpkg_n
+    tmpkg.rename(builddir / ("numpy-%s-py%s.mpkg" % (FULLVERSION, pyver)))
+
+    # Copy docs into image source
+    doc_root = paver.path.path(builddir) / "docs"
+    html_docs = paver.path.path("docs") / "html"
+    #pdf_docs = paver.path.path("docs") / "pdf" / "numpy.pdf"
+    html_docs.copytree(doc_root / "html")
+    #pdf_docs.copy(doc_root / "numpy.pdf")
+
+    # Build the dmg
+    image_name = "numpy-%s.dmg" % FULLVERSION
+    image = paver.path.path(image_name)
+    image.remove()
+    cmd = ["hdiutil", "create", image_name, "-srcdir", str(builddir)]
+    sh(" ".join(cmd))
