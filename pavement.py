@@ -37,7 +37,7 @@ HTML_DESTDIR = paver.path.path('build') / 'html'
 
 RELEASE = 'doc/release/1.3.0-notes.rst'
 LOG_START = 'tags/1.2.0'
-LOG_END = 'master'
+LOG_END = '1.3.x'
 BOOTSTRAP_DIR = "bootstrap"
 BOOTSTRAP_PYEXEC = "%s/bin/python" % BOOTSTRAP_DIR
 BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
