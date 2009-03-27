@@ -34,6 +34,19 @@ Operating System :: Unix
 Operating System :: MacOS
 """
 
+NAME                = 'numpy',
+MAINTAINER          = "NumPy Developers",
+MAINTAINER_EMAIL    = "numpy-discussion@scipy.org",
+DESCRIPTION         = DOCLINES[0],
+LONG_DESCRIPTION    = "\n".join(DOCLINES[2:]),
+URL                 = "http://numpy.scipy.org",
+DOWNLOAD_URL        = "http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103",
+LICENSE             = 'BSD',
+CLASSIFIERS         = filter(None, CLASSIFIERS.split('\n')),
+AUTHOR              = "Travis E. Oliphant, et.al.",
+AUTHOR_EMAIL        = "oliphant@enthought.com",
+PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
 if os.path.exists('MANIFEST'): os.remove('MANIFEST')
@@ -74,18 +87,18 @@ def setup_package():
 
     try:
         setup(
-            name = 'numpy',
-            maintainer = "NumPy Developers",
-            maintainer_email = "numpy-discussion@scipy.org",
-            description = DOCLINES[0],
-            long_description = "\n".join(DOCLINES[2:]),
-            url = "http://numpy.scipy.org",
-            download_url = "http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103",
-            license = 'BSD',
-            classifiers=filter(None, CLASSIFIERS.split('\n')),
-            author = "Travis E. Oliphant, et.al.",
-            author_email = "oliphant@enthought.com",
-            platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
+            name=NAME,
+            maintainer=MAINTAINER,
+            maintainer_email=MAINTAINER_EMAIL,
+            description=DESCRIPTION,
+            long_description=LONG_DESCRIPTION,
+            url=URL,
+            download_url=DOWNLOAD_URL,
+            license=LICENSE,
+            classifiers=CLASSIFIERS,
+            author=AUTHOR,
+            author_email=AUTHOR_EMAIL,
+            platforms=PLATFORMS,
             configuration=configuration )
     finally:
         del sys.path[0]
