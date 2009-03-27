@@ -43,6 +43,8 @@ BOOTSTRAP_DIR = "bootstrap"
 BOOTSTRAP_PYEXEC = "%s/bin/python" % BOOTSTRAP_DIR
 BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
 
+DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
+
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT))
 
@@ -179,6 +181,12 @@ def mpkg_name():
     return "numpy-%s-py%s-macosx%s.%s.mpkg" % \
             (FULLVERSION, pyver, maj, min)
 
+def dmg_name():
+    maj, min = macosx_version()[:2]
+    pyver = ".".join([str(i) for i in sys.version_info[:2]])
+    return "numpy-%s-py%s-macosx%s.%s.dmg" % \
+            (FULLVERSION, pyver, maj, min)
+
 @task
 def bdist_mpkg():
 	sh("python setupegg.py bdist_mpkg")
@@ -187,24 +195,37 @@ def bdist_mpkg():
 #@needs("bdist_mpkg", "doc")
 def dmg():
     pyver = ".".join([str(i) for i in sys.version_info[:2]])
-    builddir = paver.path.path("build") / "dmg"
-    builddir.rmtree()
-    builddir.mkdir()
+
+    dmg_n = dmg_name()
+    dmg = paver.path.path('numpy-macosx-installer') / dmg_n
+    if dmg.exists():
+        dmg.remove()
+
+	# Clean the image source
+    content = DMG_CONTENT
+    content.rmtree()
+    content.mkdir()
 
     # Copy mpkg into image source
     mpkg_n = mpkg_name()
-    mpkg = paver.path.path("dist") / mpkg_n
-    mpkg.copytree(builddir / mpkg_n)
-    tmpkg = builddir / mpkg_n
-    tmpkg.rename(builddir / ("numpy-%s-py%s.mpkg" % (FULLVERSION, pyver)))
+    mpkg_tn = "numpy-%s-py%s.mpkg" % (FULLVERSION, pyver)
+    mpkg_source = paver.path.path("dist") / mpkg_n
+    mpkg_target = content / mpkg_tn
+    mpkg_source.copytree(content / mpkg_tn)
 
     # Copy docs into image source
-    doc_root = paver.path.path(builddir) / "docs"
-    html_docs = paver.path.path("docs") / "html"
-    #pdf_docs = paver.path.path("docs") / "pdf" / "numpy.pdf"
-    html_docs.copytree(doc_root / "html")
-    #pdf_docs.copy(doc_root / "numpy.pdf")
+    html_docs = HTML_DESTDIR
+    html_docs.copytree(content / "Documentation" / "html")
 
+    # Build the dmg
+    cmd = ["./create-dmg", "--window-size", "500", "500", "--background",
+        "art/dmgbackground.png", "--icon-size", "128", "--icon", mpkg_tn, 
+        "125", "320", "--icon", "Documentation", "375", "320", "--volname", "numpy",
+        dmg_n, "./content"]
+    subprocess.check_call(cmd, cwd="numpy-macosx-installer")
+    
+@task
+def simple_dmg():
     # Build the dmg
     image_name = "numpy-%s.dmg" % FULLVERSION
     image = paver.path.path(image_name)
