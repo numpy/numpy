@@ -19,6 +19,7 @@ import __builtin__
 import subprocess
 import os
 import sys
+import re
 
 CLASSIFIERS = """\
 Development Status :: 5 - Production/Stable
