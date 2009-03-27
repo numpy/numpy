@@ -86,7 +86,7 @@ def svn_version():
 def write_version_py(filename='numpy/version.py'):
     cnt = """
 # THIS FILE IS GENERATED FROM NUMPY SETUP.PY
-Short_version='%(version)s'
+short_version='%(version)s'
 version='%(version)s'
 release=%(isrelease)s
 
