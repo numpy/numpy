@@ -54,26 +54,48 @@ MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
     
-# Return the svn version as a string, raise a ValueError otherwise
-def svn_version():
-    out = subprocess.Popen(['svn', 'info'], stdout = subprocess.PIPE).communicate()[0]
-    r = re.compile('Revision: ([0-9]+)')
-    svnver = None
-    for line in out.split('\n'):
-        m = r.match(line)
-        if m:
-            svnver = m.group(1)
+# Return the svn version as a string (copied from setuptools)
+def svn_revision():
+    revision = 0
+    urlre = re.compile('url="([^"]+)"')
+    revre = re.compile('committed-rev="(\d+)"')
 
-    if not svnver:
-        raise ValueError("Error while parsing svn version ?")
-    return svnver
+    for base,dirs,files in os.walk(os.curdir):
+        if '.svn' not in dirs:
+            dirs[:] = []
+            continue    # no sense walking uncontrolled subdirs
+        dirs.remove('.svn')
+        f = open(os.path.join(base,'.svn','entries'))
+        data = f.read()
+        f.close()
+
+        if data.startswith('9') or data.startswith('8'):
+            data = map(str.splitlines,data.split('\n\x0c\n'))
+            del data[0][0]  # get rid of the '8' or '9'
+            dirurl = data[0][3]
+            localrev = max([int(d[9]) for d in data if len(d)>9 and d[9]]+[0])
+        elif data.startswith('<?xml'):
+            dirurl = urlre.search(data).group(1)    # get repository URL
+            localrev = max([int(m.group(1)) for m in revre.finditer(data)]+[0])
+        else:
+            log.warn("unrecognized .svn/entries format; skipping %s", base)
+            dirs[:] = []
+            continue
+        if base==os.curdir:
+            base_url = dirurl+'/'   # save the root url
+        elif not dirurl.startswith(base_url):
+            dirs[:] = []
+            continue    # not part of the same svn tree, skip it
+        revision = max(revision, localrev)
+
+    return str(revision)
 
 FULLVERSION = VERSION
 if not ISRELEASED:
     FULLVERSION += '.dev'
     # If in git or something, bypass the svn rev
     if os.path.exists('.svn'):
-        FULLVERSION += svn_version()
+        FULLVERSION += svn_revision()
 
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
