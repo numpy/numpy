@@ -52,23 +52,6 @@ MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
     
-FULLVERSION = VERSION
-if not ISRELEASED:
-    FULLVERSION += '.dev'
-    # If in git or something, bypass the svn rev
-    if os.path.exists('.svn.'):
-        FULLVERSION += svn_version()
-
-# BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
-# update it when the contents of directories change.
-if os.path.exists('MANIFEST'): os.remove('MANIFEST')
-
-# This is a bit hackish: we are setting a global variable so that the main
-# numpy __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet.  While ugly, it's
-# a lot more robust than what was previously being used.
-__builtin__.__NUMPY_SETUP__ = True
-
 # Return the svn version as a string, raise a ValueError otherwise
 def svn_version():
     out = subprocess.Popen(['svn', 'info'], stdout = subprocess.PIPE).communicate()[0]
@@ -82,6 +65,23 @@ def svn_version():
     if not svnver:
         raise ValueError("Error while parsing svn version ?")
     return svnver
+
+FULLVERSION = VERSION
+if not ISRELEASED:
+    FULLVERSION += '.dev'
+    # If in git or something, bypass the svn rev
+    if os.path.exists('.svn'):
+        FULLVERSION += svn_version()
+
+# BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
+# update it when the contents of directories change.
+if os.path.exists('MANIFEST'): os.remove('MANIFEST')
+
+# This is a bit hackish: we are setting a global variable so that the main
+# numpy __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.  While ugly, it's
+# a lot more robust than what was previously being used.
+__builtin__.__NUMPY_SETUP__ = True
 
 def write_version_py(filename='numpy/version.py'):
     cnt = """
