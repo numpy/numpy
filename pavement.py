@@ -24,7 +24,8 @@ import paver.doctools
 import paver.path
 from paver.easy import options, Bunch, task, needs, dry, sh, call_task
 
-from setup import FULLVERSION
+setup_py = __import__("setup")
+FULLVERSION = setup_py.FULLVERSION
 
 # Wine config for win32 builds
 WINE_SITE_CFG = ""
@@ -179,7 +180,11 @@ def mpkg_name():
             (FULLVERSION, pyver, maj, min)
 
 @task
-@needs("setuptools.bdist_mpkg", "doc")
+def bdist_mpkg():
+	sh("python setupegg.py bdist_mpkg")
+
+@task
+#@needs("bdist_mpkg", "doc")
 def dmg():
     pyver = ".".join([str(i) for i in sys.version_info[:2]])
     builddir = paver.path.path("build") / "dmg"
