@@ -47,10 +47,10 @@ AUTHOR              = "Travis E. Oliphant, et.al."
 AUTHOR_EMAIL        = "oliphant@enthought.com"
 PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
-MINOR               = 4
+MINOR               = 3
 MICRO               = 0
 ISRELEASED          = False
-VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+VERSION             = '%d.%d.%db1' % (MAJOR, MINOR, MICRO)
     
 FULLVERSION = VERSION
 if not ISRELEASED:
