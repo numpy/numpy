@@ -46,8 +46,18 @@ CLASSIFIERS         = filter(None, CLASSIFIERS.split('\n')),
 AUTHOR              = "Travis E. Oliphant, et.al.",
 AUTHOR_EMAIL        = "oliphant@enthought.com",
 PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
-VERSION             = '1.4.0'
+MAJOR               = 1
+MINOR               = 4
+MICRO               = 0
 ISRELEASED          = False
+VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
+    
+FULLVERSION = VERSION
+if not ISRELEASED:
+    FULLVERSION += '.dev'
+    # If in git or something, bypass the svn rev
+    if os.path.exists('.svn.'):
+        FULLVERSION += svn_version()
 
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
@@ -58,6 +68,20 @@ if os.path.exists('MANIFEST'): os.remove('MANIFEST')
 # avoid attempting to load components that aren't built yet.  While ugly, it's
 # a lot more robust than what was previously being used.
 __builtin__.__NUMPY_SETUP__ = True
+
+# Return the svn version as a string, raise a ValueError otherwise
+def svn_version():
+    out = subprocess.Popen(['svn', 'info'], stdout = subprocess.PIPE).communicate()[0]
+    r = re.compile('Revision: ([0-9]+)')
+    svnver = None
+    for line in out.split('\n'):
+        m = r.match(line)
+        if m:
+            svnver = m.group(1)
+
+    if not svnver:
+        raise ValueError("Error while parsing svn version ?")
+    return svnver
 
 def write_version_py(filename='numpy/version.py'):
     cnt = """
