@@ -65,6 +65,8 @@ WINE_SITE_CFG = ""
 WINE_PY25 = "/home/david/.wine/drive_c/Python25/python.exe"
 WINE_PY26 = "/home/david/.wine/drive_c/Python26/python.exe"
 WINE_PYS = {'2.6' : WINE_PY26, '2.5': WINE_PY25}
+SUPERPACK_BUILD = 'build-superpack'
+SUPERPACK_BINDIR = os.path.join(SUPERPACK_BUILD, 'binaries')
 
 PDF_DESTDIR = paver.path.path('build') / 'pdf'
 HTML_DESTDIR = paver.path.path('build') / 'html'
@@ -78,9 +80,11 @@ BOOTSTRAP_SCRIPT = "%s/bootstrap.py" % BOOTSTRAP_DIR
 
 DMG_CONTENT = paver.path.path('numpy-macosx-installer') / 'content'
 
+INSTALLERS_DIR = 'installers'
+
 options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'),
         virtualenv=Bunch(script_name=BOOTSTRAP_SCRIPT),
-        wininst=Bunch(pyver="2.5"))
+        wininst=Bunch(pyver="2.5", scratch=True))
 
 # Bootstrap stuff
 @task
@@ -105,9 +109,17 @@ def clean():
 def clean_bootstrap():
     paver.path.path('bootstrap').rmtree()
 
+@task
+@needs('clean', 'clean_bootstrap')
+def nuke():
+    """Remove everything: build dir, installers, bootstrap dirs, etc..."""
+    d = [SUPERPACK_BUILD, INSTALLERS_DIR]
+    for i in d:
+        paver.path.path(i).rmtree()
+
 # NOTES/Changelog stuff
 def compute_md5():
-    released = paver.path.path('installers').listdir()
+    released = paver.path.path(INSTALLERS_DIR).listdir()
     checksums = []
     for f in released:
         m = md5.md5(open(f, 'r').read())
@@ -236,38 +248,59 @@ def wininst_name(pyver, ismsi=False):
     name = "numpy-%s.win32-py%s%s" % (FULLVERSION, pyver, ext)
     return name
 
-def bdist_wininst_arch(pyver, arch):
+def bdist_wininst_arch(pyver, arch, scratch=True):
     """Arch specific wininst build."""
+    if scratch:
+        paver.path.path('build').rmtree()
+
+    if not os.path.exists(SUPERPACK_BINDIR):
+        os.makedirs(SUPERPACK_BINDIR)
     _bdist_wininst(pyver, SITECFG[arch])
     source = os.path.join('dist', wininst_name(pyver))
-    target = os.path.join('dist', internal_wininst_name(arch))
+    target = os.path.join(SUPERPACK_BINDIR, internal_wininst_name(arch))
     if os.path.exists(target):
         os.remove(target)
     os.rename(source, target)
 
+def prepare_nsis_script(pyver, numver):
+    if not os.path.exists(SUPERPACK_BUILD):
+        os.makedirs(SUPERPACK_BUILD)
+
+    tpl = os.path.join('tools/win32build/nsis_scripts', 'numpy-superinstaller.nsi.in')
+    source = open(tpl, 'r')
+    target = open(os.path.join(SUPERPACK_BUILD, 'numpy-superinstaller.nsi'), 'w')
+
+    installer_name = 'numpy-%s-win32-superpack-python%s.exe' % (numver, pyver)
+    cnt = "".join(source.readlines())
+    cnt = cnt.replace('@NUMPY_INSTALLER_NAME@', installer_name)
+    for arch in ['nosse', 'sse2', 'sse3']:
+        cnt = cnt.replace('@%s_BINARY@' % arch.upper(),
+                          internal_wininst_name(arch))
+
+    target.write(cnt)
+
 @task
-@needs('clean')
 def bdist_wininst_nosse(options):
     """Build the nosse wininst installer."""
-    bdist_wininst_arch(options.wininst.pyver, 'nosse')
+    bdist_wininst_arch(options.wininst.pyver, 'nosse', scratch=options.wininst.scratch)
 
 @task
-@needs('clean')
 def bdist_wininst_sse2(options):
     """Build the sse2 wininst installer."""
-    bdist_wininst_arch(options.wininst.pyver, 'sse2')
+    bdist_wininst_arch(options.wininst.pyver, 'sse2', scratch=options.wininst.scratch)
 
 @task
-@needs('clean')
 def bdist_wininst_sse3(options):
     """Build the sse3 wininst installer."""
-    bdist_wininst_arch(options.wininst.pyver, 'sse3')
+    bdist_wininst_arch(options.wininst.pyver, 'sse3', scratch=options.wininst.scratch)
 
 @task
-@needs('bdist_wininst_nosse', 'bdist_wininst_sse2', 'bdist_wininst_sse3')
-def bdist_wininst_all(options):
+#@needs('bdist_wininst_nosse', 'bdist_wininst_sse2', 'bdist_wininst_sse3')
+def bdist_superpack(options):
     """Build all arch specific wininst installers."""
-    pass
+    prepare_nsis_script(options.wininst.pyver, FULLVERSION)
+    subprocess.check_call(['makensis', 'numpy-superinstaller.nsi'],
+            cwd=SUPERPACK_BUILD)
 
 @task
 @needs('clean', 'bdist_wininst')
