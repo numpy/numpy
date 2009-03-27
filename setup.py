@@ -61,7 +61,8 @@ __builtin__.__NUMPY_SETUP__ = True
 
 def write_version_py(filename='numpy/version.py'):
     cnt = """
-short_version='%(version)s'
+# THIS FILE IS GENERATED FROM NUMPY SETUP.PY
+Short_version='%(version)s'
 version='%(version)s'
 release=%(isrelease)s
 
