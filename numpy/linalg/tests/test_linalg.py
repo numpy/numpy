@@ -240,22 +240,22 @@ class HermitianTestCase(object):
 
 class TestEigvalsh(HermitianTestCase, TestCase):
     def do(self, a):
+        # note that eigenvalue arrays must be sorted since
+        # their order isn't guaranteed.
         ev = linalg.eigvalsh(a)
-        # flip resulting eigenvalue array, since they are returned in
-        # reverse order from the values given by linal.eig
-        ev = ev[::-1]
-
         evalues, evectors = linalg.eig(a)
+        ev.sort()
+        evalues.sort()
         assert_almost_equal(ev, evalues)
 
 class TestEigh(HermitianTestCase, TestCase):
     def do(self, a):
+        # note that eigenvalue arrays must be sorted since
+        # their order isn't guaranteed.
         ev, evc = linalg.eigh(a)
-        # flip resulting eigenvalue array, since they are returned in
-        # reverse order from the values given by linal.eig
-        ev = ev[::-1]
-
         evalues, evectors = linalg.eig(a)
+        ev.sort()
+        evalues.sort()
         assert_almost_equal(ev, evalues)
 
 class _TestNorm(TestCase):

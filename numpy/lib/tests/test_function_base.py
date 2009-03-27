@@ -755,7 +755,7 @@ class TestNaNFuncts(TestCase):
                                    [ 0.91084584,  0.84386844,  0.37068164]]))
 
     def test_nanmin_allnan_on_axis(self):
-        assert_equal(isnan(nanmin([[nan]*2]*3, axis=1)),
+        assert_array_equal(isnan(nanmin([[nan]*2]*3, axis=1)),
                      [True, True, True])
 
 
