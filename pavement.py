@@ -1,3 +1,36 @@
+"""
+Building a fancy dmg from scratch
+=================================
+
+Clone the numpy-macosx-installer git repo from on github into the source tree
+(numpy-macosx-installer should be in the same directory as setup.py). Then, do
+as follows::
+
+    paver clean clean_bootstrap
+    paver bootstrap && source boostrap/bin/activate
+    python setupegg.py install
+    paver dmg
+
+Building a simple (no-superpack) windows installer from wine
+============================================================
+
+It assumes that blas/lapack are in c:\local\lib inside drive_c. Build python
+2.5 and python 2.6 installers.
+
+    paver clean
+    paver bdist_wininst
+
+Building changelog + notes
+==========================
+
+Assumes you have git and the binaries/tarballs in installers/::
+
+    paver write_release
+    paver write_note
+
+This automatically put the checksum into NOTES.txt, and write the Changelog
+which can be uploaded to sourceforge.
+"""
 import os
 import sys
 import subprocess
