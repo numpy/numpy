@@ -23,11 +23,16 @@ import paver.path
 from paver.easy import options, Bunch, task, needs, dry, sh, call_task
 from paver.setuputils import setup
 
-# NOTES/Changelog stuff
+PDF_DESTDIR = paver.path.path('build') / 'pdf'
+HTML_DESTDIR = paver.path.path('build') / 'html'
+
 RELEASE = 'doc/release/1.3.0-notes.rst'
 LOG_START = 'tags/1.2.0'
 LOG_END = 'master'
 
+options(sphinx=Bunch(builddir="build", sourcedir="source", docroot='doc'))
+
+# NOTES/Changelog stuff
 def compute_md5():
     released = paver.path.path('installers').listdir()
     checksums = []
@@ -68,3 +73,12 @@ def write_release():
 @task
 def write_log():
     write_log_task()
+
+# Doc build stuff
+@task
+@needs('paver.doctools.html')
+def html(options):
+    """Build numpy documentation and put it into build/docs"""
+    builtdocs = paver.path.path("docs") / options.sphinx.builddir / "html"
+    HTML_DESTDIR.rmtree()
+    builtdocs.copytree(HTML_DESTDIR)
